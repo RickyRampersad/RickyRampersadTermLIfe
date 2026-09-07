@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent portal — donthaveanagent.com</title>
+<meta name="description" content="Branch agents: log in to see your assigned clients and their progress.">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect width='88' height='88' rx='22' fill='%230F1A2B'/%3E%3Cdefs%3E%3CclipPath id='fk1'%3E%3Crect x='30' y='26' width='15' height='36'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg transform='rotate(-40 44 44)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3Crect x='31' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FF5C4D' stroke-width='6.6'/%3E%3Cg clip-path='url(%23fk1)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#FFF6F4; --card:#FFFFFF; --ink:#231512; --muted:#6E5A50;
+    --ox:#FF5C4D; --deep:#1B2A44; --line:#E4D6C6; --chip:#FFF6F4;
+    --good:#1E7D4F; --warn:#A05E03; --bad:#FF8A7E;
+    --disp:'Montserrat',Arial,sans-serif; --body:'DM Sans',Arial,sans-serif;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--paper);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;min-height:100vh}
+  a{color:var(--ox)}
+  .top{background:#fff;border-bottom:1px solid var(--line);padding:14px 18px}
+  .top-in{max-width:860px;margin:0 auto;display:flex;align-items:center;gap:13px}
+  .top svg{width:40px;height:40px;flex:none}
+  .wm{font-family:var(--disp);line-height:1.05}
+  .wm .t{font-size:10.5px;font-weight:600;letter-spacing:.3em;color:var(--ox);text-transform:uppercase}
+  .wm .b{font-size:19px;font-weight:800}
+  .wm .b span{color:var(--ox)}
+  .top .role{margin-left:auto;font-family:var(--disp);font-weight:700;font-size:11px;letter-spacing:.22em;
+             text-transform:uppercase;color:var(--muted)}
+  .wrap{max-width:860px;margin:0 auto;padding:34px 18px 70px}
+  h1{font-family:var(--disp);font-weight:800;font-size:clamp(26px,5vw,34px);letter-spacing:-.4px;margin-bottom:8px}
+  .lede{color:var(--muted);max-width:58ch}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:22px}
+  label{display:block;font-family:var(--disp);font-weight:700;font-size:12.5px;letter-spacing:.08em;
+        text-transform:uppercase;color:var(--muted);margin:14px 0 6px}
+  input{width:100%;padding:13px 15px;border:1.6px solid var(--line);border-radius:11px;font:inherit;
+        background:#FFF6F4;color:var(--ink)}
+  input:focus{outline:none;border-color:var(--ox)}
+  .btn{display:inline-block;background:var(--deep);color:#FFF6F4;font-family:var(--disp);font-weight:800;
+       font-size:15.5px;border:none;border-radius:12px;padding:14px 26px;margin-top:18px;cursor:pointer}
+  .btn:focus-visible{outline:3px solid var(--ox);outline-offset:2px}
+  .btn.ghost{background:transparent;color:var(--ox);border:1.6px solid var(--line)}
+  .err{display:none;background:#FBE9E7;border-left:4px solid var(--bad);border-radius:0 10px 10px 0;
+       padding:12px 15px;margin-top:16px;font-size:14.5px}
+  .hint{font-size:13.5px;color:var(--muted);margin-top:14px}
+  /* book */
+  #book{display:none}
+  .hello{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .hello .out{font-size:13.5px}
+  .stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}
+  .stat{background:var(--card);border:1px solid var(--line);border-top:5px solid var(--ox);border-radius:14px;
+        padding:16px 18px}
+  .stat .n{font-family:var(--disp);font-weight:800;font-size:34px;font-variant-numeric:tabular-nums}
+  .stat .l{font-size:12.5px;color:var(--muted);font-family:var(--disp);font-weight:700;letter-spacing:.1em;
+           text-transform:uppercase}
+  .client{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;margin-top:14px}
+  .c-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+  .c-head b{font-family:var(--disp);font-weight:800;font-size:18.5px}
+  .c-head .ref{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .pill{font-family:var(--disp);font-weight:700;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;
+        border-radius:99px;padding:4px 11px;margin-left:auto}
+  .pill.open{background:var(--chip);color:var(--warn);border:1px solid var(--line)}
+  .pill.done{background:#E8F5EE;color:var(--good);border:1px solid #CBE7D7}
+  .stages{display:flex;gap:6px;margin:14px 0 4px;flex-wrap:wrap}
+  .stg{font-size:12px;font-family:var(--disp);font-weight:600;padding:5px 11px;border-radius:99px;
+       background:var(--chip);border:1px solid var(--line);color:var(--muted)}
+  .stg.on{background:var(--deep);border-color:var(--deep);color:#FFF6F4}
+  .meta{font-size:13.5px;color:var(--muted);margin-top:8px}
+  .meta b{color:var(--ink)}
+  .flag{display:inline-block;background:#FBE9E7;color:var(--bad);border:1px solid #F0CCC7;border-radius:8px;
+        font-size:12.5px;font-weight:600;padding:3px 10px;margin-top:10px}
+  .flag.chase{background:#FDF3E4;color:var(--warn);border-color:#EBD9BC}
+  .demo-band{background:var(--deep);color:#FFF6F4;border-radius:12px;padding:10px 16px;margin-top:18px;
+             font-size:13.5px;display:none}
+  .foot{max-width:860px;margin:30px auto 0;padding:0 18px;font-size:12.5px;color:var(--muted)}
+  /* films */
+  .vwrap{position:relative;border-radius:16px;overflow:hidden;background:#0F1A2B;aspect-ratio:16/9;
+    box-shadow:0 14px 34px rgba(15,26,43,.26);margin-top:14px}
+  .vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#0F1A2B}
+  .vcover{position:absolute;inset:0;display:grid;place-items:center;border:none;cursor:pointer;color:#FFF6F4;
+    font:inherit;background:radial-gradient(circle at 50% 46%,rgba(15,26,43,.28),rgba(15,26,43,.6) 62%,rgba(15,26,43,.8))}
+  .vcover.gone{display:none}
+  .vplay{width:74px;height:74px;border-radius:50%;background:rgba(255,246,244,.16);
+    border:2px solid rgba(255,246,244,.6);display:flex;align-items:center;justify-content:center}
+  .vplay i{display:block;width:0;height:0;border-style:solid;border-width:12px 0 12px 20px;
+    border-color:transparent transparent transparent #FFF6F4;margin-left:5px}
+  .vlab{position:absolute;left:18px;bottom:16px;font-weight:800;font-size:15px;text-shadow:0 2px 10px rgba(15,26,43,.85)}
+  .vlen{position:absolute;right:18px;bottom:18px;font-size:11px;letter-spacing:.14em;color:#FFE9E5;font-weight:700;
+    text-shadow:0 2px 10px rgba(15,26,43,.85)}
+  .sharebox{background:var(--chip);border:1px solid var(--line);border-radius:14px;padding:18px 20px;margin-top:16px}
+  .sharebox h3{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:6px}
+  .sharebox p{font-size:13.5px;color:var(--muted)}
+  .sharerow{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+  .sharerow .btn{margin-top:0;font-size:13.5px;padding:11px 18px}
+  .twobooks{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+  .twobooks>*{min-width:0}
+  .bk{border:1px solid var(--line);border-radius:14px;padding:16px 17px;background:var(--paper)}
+  .bk.own{background:var(--deep);border-color:var(--deep);color:#FFF6F4}
+  .bkh{font-family:var(--disp);font-weight:800;font-size:14px;margin-bottom:5px}
+  .bk.own .bkh{color:#FFF6F4}
+  .bkp{font-size:12.5px;color:var(--muted);line-height:1.5}
+  .bk.own .bkp{color:#FFE9E5}
+  .bknums{display:flex;gap:14px;flex-wrap:wrap;margin-top:11px}
+  .bknums span{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .bk.own .bknums span{color:#FFE9E5}
+  .bknums b{display:block;font-family:var(--disp);font-weight:900;font-size:24px;color:var(--deep);
+    line-height:1.1;font-variant-numeric:tabular-nums}
+  .bk.own .bknums b{color:#FFF6F4}
+  .win{margin-top:11px;padding-top:9px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+  .bk.own .win{border-top-color:rgba(255,246,244,.25);color:#FFE9E5}
+  .win b{font-family:var(--disp);font-weight:900;font-size:15px;color:var(--ox)}
+  .bk.own .win b{color:#FFC2BA}
+  @media(max-width:560px){.twobooks{grid-template-columns:1fr}}
+  .dash{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px 22px;margin-top:18px}
+  .dash h3{font-family:var(--disp);font-weight:800;font-size:16px;margin-bottom:3px}
+  .dash .dsub{font-size:13px;color:var(--muted);margin-bottom:14px}
+  .funnel{display:flex;flex-direction:column;gap:9px}
+  .fr{display:flex;align-items:center;gap:11px}
+  .fr .fl{width:104px;font-size:13px;font-weight:700;font-family:var(--disp);text-align:right;color:var(--muted)}
+  .fr .ft{flex:1;height:26px;border-radius:8px;background:var(--chip);overflow:hidden;position:relative}
+  .fr .fb{display:block;height:100%;background:var(--deep);border-radius:8px;min-width:3px;
+    transition:width .6s cubic-bezier(.2,.8,.3,1)}
+  .fr.o .fb{background:var(--ox)} .fr.s .fb{background:#A8323F} .fr.r .fb{background:var(--good)}
+  .fr .fv{width:38px;font-family:var(--disp);font-weight:800;font-size:16px;font-variant-numeric:tabular-nums}
+  .conv{display:flex;gap:14px;flex-wrap:wrap;margin-top:14px;padding-top:13px;border-top:1px solid var(--line);
+    font-size:13px;color:var(--muted)}
+  .conv b{font-family:var(--disp);color:var(--deep);font-size:15px}
+  .recent{margin-top:14px;font-size:13px;color:var(--muted)}
+  .recent div{padding:5px 0;border-bottom:1px dashed var(--line);display:flex;gap:10px}
+  .recent div:last-child{border-bottom:none}
+  .recent .ev{font-weight:700;color:var(--ox);width:66px;text-transform:capitalize}
+  @media(max-width:560px){ .stats{grid-template-columns:1fr 1fr} .stat:first-child{grid-column:1/-1}
+    .fr .fl{width:74px;font-size:12px} }
+
+
+body.onDark #chrome .mark rect:first-of-type{fill:#FFF6F4}
+body.onDark #chrome .mark text{fill:#0F1A2B}
+.scene.dark .biglogo rect:first-of-type{fill:#FFF6F4}
+.scene.dark .biglogo text{fill:#0F1A2B}
+</style>
+<!-- Music: "Inspired" by Kevin MacLeod (incompetech.com) — licensed under Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/ -->
+</head>
+<body>
+<header class="top"><div class="top-in">
+  <svg viewBox="0 0 88 88" aria-hidden="true"><rect width="88" height="88" rx="22" fill="#0F1A2B"/><defs><clipPath id="nk1"><rect x="30" y="26" width="15" height="36"/></clipPath></defs><g transform="rotate(-40 44 44)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/><rect x="31" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FF5C4D" stroke-width="6.6"/><g clip-path="url(#nk1)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/></g></g></svg>
+  <div class="wm"><div class="t">Don't have</div><div class="b">an agent<span>.com</span></div></div>
+  <div class="role">Agent portal</div>
+</div></header>
+
+<div class="wrap">
+  <div id="login">
+    <h1>Your book, live.</h1>
+    <p class="lede">Every client assigned to you, and where each one stands — the same progress your client
+    sees, plus what still needs you. Sign in with your name and the portal code the branch set for you.</p>
+    <div class="card" style="max-width:460px">
+      <form id="f">
+        <label for="agent">Your name (as in the skill bank)</label>
+        <input id="agent" autocomplete="name" placeholder="e.g. Fawaaz">
+        <label for="code">Portal code</label>
+        <input id="code" autocomplete="off" placeholder="Branch code or your own" style="text-transform:uppercase">
+        <div class="err" id="err"></div>
+        <button class="btn" type="submit">Open my book →</button>
+        <button class="btn ghost" type="button" id="demoBtn">See a demo book</button>
+      </form>
+      <p class="hint" style="margin-bottom:0">No code yet? Ask branch support — codes live beside your name in the Agent Skill Bank.
+      This page shows progress only, never a client's answers.</p>
+    </div>
+
+    <div class="card" style="max-width:640px;border-left:5px solid var(--ox)">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:6px">Four films, and which is which</h3>
+      <ul style="font-size:13.5px;color:var(--muted);margin:0 0 0 17px;padding:0;line-height:1.65">
+        <li><b>Your side of the link</b> — what <i>you</i> see once you send it. Start here.</li>
+        <li><b>The short orientation</b> — signing in and finding your book.</li>
+        <li><b>What happens after they press send</b> — the process, for a client who asks.</li>
+        <li><b>The film you send clients</b> — the one your link opens with.</li>
+      </ul>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">Your side of the link</h3>
+      <p style="font-size:14px;color:var(--muted)">You send the link — then what? This is your half: your name
+      travelling inside the link, the opens and starts landing in your book, your two books kept apart, and the
+      brief that reaches you before you dial, opening with the client&rsquo;s own words and a list titled
+      <b>before you call</b>.</p>
+      <div class="vwrap">
+        <video id="sideVid" playsinline preload="metadata" poster="agent-side-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-your-side.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="sideCover" type="button" aria-label="Play the film about what you see, one minute twenty-three seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">Your side of the link</span>
+          <span class="vlen">1:23 · captioned · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" href="dhaa-your-side.mp4" download>Download</a>
+        <a class="btn ghost" href="agent-side-film.html" target="_blank">Open it full screen</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The short orientation</h3>
+      <p style="font-size:14px;color:var(--muted)">Seventy-four seconds: log in, send your link, watch what
+      came back. Share it with any agent joining the branch.</p>
+      <div class="vwrap">
+        <video id="teamVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-agent-film.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="teamCover" type="button" aria-label="Play the agent film, seventy-four seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">The agent film</span><span class="vlen">1:14 · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" id="waTeam" href="#" target="_blank" rel="noopener">Send to an agent</a>
+        <a class="btn ghost" href="dhaa-agent-film.mp4" download>Download</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">What happens after they press send</h3>
+      <p style="font-size:14px;color:var(--muted)">The process itself, step by step — the reference and code,
+      the form completed for them, the two emails, the worklist row with <b>your</b> name on it, the chase
+      every two days, the overdue alert to the branch manager, the six-month check-up and the birthday review.
+      Use it to answer &ldquo;what actually happens?&rdquo; — for a client, or for a new member of staff.</p>
+      <div class="vwrap">
+        <video id="procVid" playsinline preload="metadata" poster="process-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-process.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="procCover" type="button" aria-label="Play the process film, one minute forty-three seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">What happens next</span>
+          <span class="vlen">1:43 · captioned · sound on</span>
+        </button>
+      </div>
+      <div class="sharerow" style="margin-top:12px">
+        <a class="btn ghost" href="dhaa-process.mp4" download>Download</a>
+        <a class="btn ghost" href="process-film.html" target="_blank">Open it full screen</a>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:640px">
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:17px;margin-bottom:4px">The film you send clients</h3>
+      <p style="font-size:14px;color:var(--muted)">This is what a client sees when they open your link — why
+      an agent matters, what quietly goes wrong without one, what this branch does that nobody else does, and
+      a code they can scan to start. It opens with <b>&ldquo;your agent sent you this&rdquo;</b>. Watch it
+      once, then send <a href="how-we-work.html" target="_blank">the page</a>, which carries this film plus
+      the whole process step by step and a start button on every screen.</p>
+      <div class="vwrap">
+        <video id="agentVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg" controlsList="nodownload">
+          <source src="dhaa-film.mp4" type="video/mp4">
+        </video>
+        <button class="vcover" id="agentCover" type="button" aria-label="Play the client film, two minutes twenty-two seconds, sound on">
+          <span class="vplay"><i></i></span>
+          <span class="vlab">Why this matters</span>
+          <span class="vlen">2:22 · captioned · sound on</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="book">
+    <div class="demo-band" id="demoBand"><b>Demo book.</b> Sample data — this is what an agent sees once their
+    portal code is set. Sign out to try your own.</div>
+    <div class="hello">
+      <div><h1 id="hi">Good day.</h1><p class="lede" id="skills"></p></div>
+      <a href="/wall.html" class="out" style="margin-right:10px">The branch wall →</a>
+      <a href="#" class="out" id="out">Sign out</a>
+    </div>
+    <div class="stats">
+      <div class="stat"><div class="n" id="sAssigned">0</div><div class="l">Assigned by branch</div></div>
+      <div class="stat"><div class="n" id="sOpen">0</div><div class="l">In progress</div></div>
+      <div class="stat"><div class="n" id="sDone">0</div><div class="l">Completed</div></div>
+    </div>
+    <div class="dash" id="dash"></div>
+
+    <h3 style="font-family:var(--disp);font-weight:800;font-size:16px;margin-top:22px">
+      Clients the branch assigned to you</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:2px">Orphans who asked us for an agent — you
+      were matched to them. Work these first; they are already expecting a call.</p>
+    <div id="list"></div>
+
+    <div id="ownWrap" hidden>
+      <h3 style="font-family:var(--disp);font-weight:800;font-size:16px;margin-top:22px">
+        Clients you brought in yourself</h3>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:2px">People you sent your own link to who went
+        on to file a review. Nobody assigned these — they are yours from the first message.</p>
+      <div id="listOwn"></div>
+    </div>
+
+    <div class="sharebox">
+      <h3>Send a client the film</h3>
+      <p>The film shows a client exactly what we do — their own numbers worked out in front of them, a score
+      with the gaps named, every document prepared for them, and a review every six months and every birthday
+      month for life. It ends on a code they can scan to start, or a day and a time for you to call. Send the
+      link after a meeting, or the file straight into a chat.</p>
+      <div class="sharerow">
+        <a class="btn" id="waFilm" href="#" target="_blank" rel="noopener">Send by WhatsApp</a>
+        <button class="btn ghost" id="copyFilm" type="button">Copy the link</button>
+        <a class="btn ghost" href="dhaa-film.mp4" download>Download the video</a>
+        <a class="btn ghost" href="how-we-work.html" target="_blank">Open the page yourself</a>
+      </div>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:12px">Your personal link:
+        <code id="shareLink" style="background:#fff;border:1px solid var(--line);border-radius:6px;padding:2px 7px;
+        font-size:12px">https://donthaveanagent.com/how-we-work</code><br>
+        Anyone who starts a review from it is recorded as <b>your</b> introduction — in the sheet and in the
+        email that reaches support.</p>
+      <p style="font-size:12.5px;color:var(--muted);margin-top:10px">Working an orphan file instead? Send the
+      same link — the film speaks to anyone whose policy has nobody beside it. Prefer it full screen with no
+      page around it? <a href="client-film.html" target="_blank">Here it is on its own</a>.</p>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">A Ricky Rampersad Branch project · your insurance company ·
+This portal shows status only — client answers never appear here.</footer>
+
+<script>
+const CONFIG = { API_URL: "https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec" };
+
+const DEMO = {
+  ok: true, agent: "Fawaaz", skills: "Plain-language, patient with first-timers · Evenings + Saturdays",
+  stats: { assigned: 4, open: 3, completed: 1 },
+  link: { sent: 12, opened: 9, started: 5, calls: 2, reviews: 3, completed: 2, callbacks: 1,
+          recent: [{when:"22 Aug, 2:14 PM",ev:"open"},{when:"22 Aug, 11:02 AM",ev:"start"},
+                   {when:"21 Aug, 4:47 PM",ev:"open"},{when:"21 Aug, 9:30 AM",ev:"call"}] },
+  clients: [
+    { ref: "DHA-260813-0003", who: "Keisha Boodoo", kind: "individual", filed: "13 August 2026",
+      priority: "ACTION", status: "In progress", signed: true, letterOut: false, source: "branch",
+      lastUpdate: "15 August 2026", phone: "(868) 555-0161", stageNote: "Papers out for digital signature" },
+    { ref: "DHAG-260811-0002", who: "Trini Fabrication Ltd", kind: "group", filed: "11 August 2026",
+      priority: "ACTION", status: "In progress", signed: false, letterOut: true, source: "branch",
+      lastUpdate: "16 August 2026", phone: "(868) 555-0173", stageNote: "Awaiting stamped letter — chase day 4" },
+    { ref: "DHA-260816-0006", who: "Marcus Alleyne", kind: "individual", filed: "16 August 2026",
+      priority: "HIGH", status: "In progress", signed: false, letterOut: false, source: "both",
+      lastUpdate: "", phone: "(868) 555-0129", stageNote: "Assigned today — introduce yourself" },
+    { ref: "DHA-260722-0001", who: "Denise Ramkissoon", kind: "individual", filed: "22 July 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "branch",
+      lastUpdate: "5 August 2026", phone: "(868) 555-0147", stageNote: "" },
+    { ref: "DHA-260805-0004", who: "Anand Maharaj", kind: "individual", filed: "5 August 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "own",
+      lastUpdate: "12 August 2026", phone: "(868) 555-0192", stageNote: "" },
+    { ref: "DHA-260729-0002", who: "Sherry-Ann Joseph", kind: "individual", filed: "29 July 2026",
+      priority: "NORMAL", status: "Completed", signed: true, letterOut: false, source: "own",
+      lastUpdate: "8 August 2026", phone: "(868) 555-0118", stageNote: "" },
+  ],
+};
+
+const $ = s => document.querySelector(s);
+
+function stageOf(c) {
+  if (c.status === "Completed") return 4;
+  if (c.signed) return 3;
+  if (c.letterOut) return 3;
+  return 2;
+}
+
+function render(data, demo) {
+  $("#login").style.display = "none";
+  $("#book").style.display = "block";
+  $("#demoBand").style.display = demo ? "block" : "none";
+  $("#hi").textContent = "Good day, " + data.agent + ".";
+  $("#skills").textContent = data.skills ? "Matched on: " + data.skills : "";
+  $("#sAssigned").textContent = data.stats.assigned;
+  $("#sOpen").textContent = data.stats.open;
+  $("#sDone").textContent = data.stats.completed;
+
+  /* Two books, kept apart on purpose:
+       · the branch assigned these — an orphan asked us for an agent
+       · these came from the agent's own link — people they found      */
+  const L = data.link || { sent:0, opened:0, started:0, calls:0, reviews:0, completed:0, callbacks:0, recent:[] };
+  const dash = document.getElementById("dash");
+  if (dash) {
+    const mx = Math.max(L.sent, L.opened, L.started, L.reviews, 1);
+    const bar = (cls, label, v) =>
+      `<div class="fr ${cls}"><span class="fl">${label}</span>` +
+      `<span class="ft"><i class="fb" style="width:${Math.round(100*v/mx)}%"></i></span>` +
+      `<span class="fv">${v}</span></div>`;
+    const pct = (a,b) => b ? Math.round(100*a/b) + "%" : "—";
+    const S = data.stats;
+    dash.innerHTML =
+      `<div class="twobooks">
+         <div class="bk">
+           <div class="bkh">Given to you by the branch</div>
+           <p class="bkp">Orphan clients who asked us for an agent. We matched them to you and briefed you —
+             they are listed below.</p>
+           <div class="bknums"><span><b>${S.assigned}</b>assigned</span><span><b>${S.open}</b>in progress</span>
+             <span><b>${S.completed}</b>completed</span></div>
+           <div class="win">Closed <b>${pct(S.completed, S.assigned)}</b> of what you were given</div>
+         </div>
+         <div class="bk own">
+           <div class="bkh">Won by you</div>
+           <p class="bkp">People you found yourself and sent your own link to. Every one of these is your
+             introduction, credited to you.</p>
+           <div class="bknums"><span><b>${L.reviews}</b>reviews in</span><span><b>${L.completed||0}</b>completed</span>
+             <span><b>${L.callbacks||0}</b>call-backs</span></div>
+           <div class="win">Win rate <b>${pct(L.reviews, L.sent)}</b> of everything you sent</div>
+         </div>
+       </div>
+
+       <h3 style="margin-top:20px">Your own introductions, step by step</h3>
+       <div class="dsub">What happened after you sent your link. It updates as clients open it.</div>
+       <div class="funnel">${bar("","Sent",L.sent)}${bar("o","Opened",L.opened)}` +
+      `${bar("s","Started",L.started)}${bar("r","Reviews in",L.reviews)}</div>
+       <div class="conv"><span>Opened <b>${pct(L.opened,L.sent)}</b> of sends</span>` +
+      `<span>Started <b>${pct(L.started,L.opened)}</b> of opens</span>` +
+      `<span>Completed <b>${pct(L.reviews,L.started)}</b> of starts</span>` +
+      (L.calls ? `<span>Called or messaged <b>${L.calls}</b></span>` : "") + `</div>` +
+      (L.recent && L.recent.length
+        ? `<div class="recent"><b style="color:var(--ink)">Latest activity</b>` +
+          L.recent.map(r => `<div><span class="ev">${r.ev}</span><span>${r.when}</span></div>`).join("") + `</div>`
+        : `<div class="recent">Nothing yet — send your link and opens appear here.</div>`) +
+      `<button class="btn ghost" id="logSend" style="margin-top:14px;font-size:13.5px;padding:10px 16px">I just sent my link</button>`;
+    const ls = document.getElementById("logSend");
+    if (ls) ls.addEventListener("click", async () => {
+      if (!CONFIG.API_URL) { ls.textContent = "Switches on with the backend"; ls.disabled = true; return; }
+      ls.disabled = true; ls.textContent = "Recording…";
+      try {
+        await fetch(CONFIG.API_URL + "?action=logsend&agent=" + encodeURIComponent(window.__agentName || "") +
+                    "&code=" + encodeURIComponent(window.__agentCode || ""));
+        data.link = Object.assign({}, L, { sent: L.sent + 1 });
+        render(data, demo);
+      } catch (e) { ls.textContent = "Could not record — try again"; ls.disabled = false; }
+    });
+  }
+
+  const names = ["Received", "Verifying & preparing", c => c.kind === "group" ? "Letter out" : "Signature out", "Complete"];
+  const card = c => {
+    const st = stageOf(c);
+    const chips = names.map((n, i) => {
+      const label = typeof n === "function" ? n(c) : n;
+      return '<span class="stg' + (i + 1 <= st ? " on" : "") + '">' + label + "</span>";
+    }).join("");
+    return '<div class="client">' +
+      '<div class="c-head"><b>' + c.who + "</b>" +
+      '<span class="ref">' + c.ref + " · filed " + c.filed + "</span>" +
+      '<span class="pill ' + (c.status === "Completed" ? "done\">Completed" : "open\">In progress") + "</span></div>" +
+      '<div class="stages">' + chips + "</div>" +
+      (c.source === "both" ? '<div class="meta"><b>You introduced this one — the branch then assigned them to you.</b></div>' : "") +
+      (c.stageNote ? '<div class="meta"><b>' + c.stageNote + "</b></div>" : "") +
+      '<div class="meta">' + (c.lastUpdate ? "Client last updated <b>" + c.lastUpdate + "</b> · " : "") +
+        (c.phone ? 'Reach them: <b><a href="tel:' + c.phone.replace(/[^\d+]/g, "") + '">' + c.phone + "</a></b>" : "") + "</div>" +
+      (c.letterOut ? '<div class="flag chase">Stamped letter outstanding — system chasing every 2 days</div>' : "") +
+      (c.priority === "URGENT" || c.priority === "HIGH"
+        ? '<div class="flag">' + c.priority + " — the 1-business-day promise applies</div>" : "") +
+      "</div>";
+  };
+
+  /* Older deployments send no source field — treat those as branch-assigned,
+     which is what the list held before the own-introductions book existed. */
+  const all = data.clients || [];
+  const assigned = all.filter(c => !c.source || c.source === "branch" || c.source === "both");
+  const own = all.filter(c => c.source === "own" || c.source === "both");
+
+  $("#list").innerHTML = assigned.length ? assigned.map(card).join("")
+    : '<div class="client"><div class="meta">Nothing assigned to you yet. When an orphan asks us for an ' +
+      'agent and you are the match, they appear here and you are emailed their brief.</div></div>';
+
+  $("#ownWrap").hidden = !own.length;
+  $("#listOwn").innerHTML = own.map(card).join("");
+}
+
+(function(){
+  var tv=document.getElementById("teamVid"), tc=document.getElementById("teamCover");
+  if(tv&&tc){
+    tc.addEventListener("click", function(){ tc.classList.add("gone"); tv.setAttribute("controls",""); tv.play(); });
+    tv.addEventListener("ended", function(){ tc.classList.remove("gone"); tv.removeAttribute("controls"); tv.currentTime=0; });
+  }
+  var wt=document.getElementById("waTeam");
+  if(wt) wt.href="https://wa.me/?text="+encodeURIComponent(
+    "This is how the branch system works for us — 74 seconds, worth watching before you start: "
+    +"https://donthaveanagent.com/agent-film — then log in at https://donthaveanagent.com/agents");
+})();
+(function(){
+  var sv=document.getElementById("sideVid"), sc=document.getElementById("sideCover");
+  if(sv&&sc){
+    sc.addEventListener("click", function(){ sc.classList.add("gone"); sv.setAttribute("controls",""); sv.play(); });
+    sv.addEventListener("ended", function(){ sc.classList.remove("gone"); sv.removeAttribute("controls"); sv.currentTime=0; });
+  }
+})();
+(function(){
+  var pv=document.getElementById("procVid"), pc=document.getElementById("procCover");
+  if(pv&&pc){
+    pc.addEventListener("click", function(){ pc.classList.add("gone"); pv.setAttribute("controls",""); pv.play(); });
+    pv.addEventListener("ended", function(){ pc.classList.remove("gone"); pv.removeAttribute("controls"); pv.currentTime=0; });
+  }
+})();
+(function(){
+  var v=document.getElementById("agentVid"), c=document.getElementById("agentCover");
+  if(v&&c){
+    c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
+    v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
+  }
+  /* the link carries the agent's name, so a review that comes back is
+     credited to them in the sheet and in the team email */
+  var who = (window.__agentName || "").trim();
+  var LINK = "https://donthaveanagent.com/how-we-work" + (who ? "?a=" + encodeURIComponent(who) : "");
+  var MSG = "Good to meet you. This is how our branch works — about ninety seconds, worth a look: "
+          + LINK + " — you can start the free review right from that page.";
+  var wa=document.getElementById("waFilm");
+  if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
+  window.__setShareLink = function(){
+    var w=(window.__agentName||"").trim();
+    LINK="https://donthaveanagent.com/how-we-work"+(w?"?a="+encodeURIComponent(w):"");
+    MSG="Good to meet you. This is how our branch works — about ninety seconds, worth a look: "
+       +LINK+" — you can start the free review right from that page.";
+    if(wa) wa.href="https://wa.me/?text="+encodeURIComponent(MSG);
+    var sl=document.getElementById("shareLink"); if(sl) sl.textContent=LINK;
+  };
+  var cp=document.getElementById("copyFilm");
+  if(cp) cp.addEventListener("click", function(){
+    var done=function(){ cp.textContent="Copied ✓"; setTimeout(function(){cp.textContent="Copy the link";},1600); };
+    if(navigator.clipboard) navigator.clipboard.writeText(LINK).then(done,done); else done();
+  });
+})();
+
+$("#demoBtn").addEventListener("click", () => { window.__agentName = DEMO.agent;
+  if (window.__setShareLink) window.__setShareLink(); render(DEMO, true); });
+if (new URLSearchParams(location.search).get("demo")) render(DEMO, true);
+
+$("#out").addEventListener("click", e => { e.preventDefault(); location.href = location.pathname; });
+
+$("#f").addEventListener("submit", async e => {
+  e.preventDefault();
+  const err = $("#err");
+  err.style.display = "none";
+  const agent = $("#agent").value.trim(), code = $("#code").value.trim();
+  if (!agent || !code) { err.textContent = "Enter your name and your portal code."; err.style.display = "block"; return; }
+  if (!CONFIG.API_URL) {
+    err.innerHTML = "The live book switches on when the branch connects the backend. " +
+      "Until then, <b>See a demo book</b> shows exactly how it works.";
+    err.style.display = "block"; return;
+  }
+  try {
+    const res = await fetch(CONFIG.API_URL + "?action=agentbook&agent=" + encodeURIComponent(agent) +
+                            "&code=" + encodeURIComponent(code));
+    const data = await res.json();
+    if (!data.ok) { err.textContent = data.error || "Could not open your book."; err.style.display = "block"; return; }
+    data.clients.forEach(c => c.stageNote = "");
+    window.__agentName = data.agent;
+    window.__agentCode = code;
+    if (window.__setShareLink) window.__setShareLink();
+    render(data, false);
+  } catch (ex) {
+    err.textContent = "Connection problem — try again in a minute.";
+    err.style.display = "block";
+  }
+});
+</script>
+<p style="text-align:center;font-size:11.5px;color:#6B7C96;margin:18px auto 6px;max-width:760px">Music: &ldquo;Inspired&rdquo; by Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener" style="color:#6B7C96">incompetech.com</a>), licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener" style="color:#6B7C96">CC BY 4.0</a>.</p>
+</body>
+</html>

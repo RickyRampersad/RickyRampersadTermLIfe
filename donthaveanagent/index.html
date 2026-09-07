@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Don't Have An Agent — your policy still counts</title>
+<meta name="description" content="Your agent left. Your policy didn't. A free four-minute policy review for Trinidad &amp; Tobago policyholders nobody has called in years — check your records, name a real person, no cost and no obligation. A Ricky Rampersad project."/>
+<meta property="og:title" content="Don't Have An Agent"/>
+<meta property="og:description" content="Your agent left. Your policy didn't. Free four-minute policy review — no cost, no obligation."/>
+<meta property="og:image" content="https://donthaveanagent.com/share.png"/>
+<meta property="og:type" content="website"/>
+<meta name="theme-color" content="#FFF6F4"/>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 88 88'%3E%3Crect width='88' height='88' rx='22' fill='%230F1A2B'/%3E%3Cdefs%3E%3CclipPath id='fk1'%3E%3Crect x='30' y='26' width='15' height='36'/%3E%3C/clipPath%3E%3C/defs%3E%3Cg transform='rotate(-40 44 44)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3Crect x='31' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FF5C4D' stroke-width='6.6'/%3E%3Cg clip-path='url(%23fk1)'%3E%3Crect x='12' y='31.5' width='45.5' height='25' rx='12.5' fill='none' stroke='%23FFF6F4' stroke-width='6.6'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════════════════════════
+   BRAND TOKENS — Ricky Rampersad Branch · your insurer
+   Gold-forward on deep navy, which is the insurer house look and the
+   warmest, most inviting version of it.
+
+   The signal pair is REVERSED from the first build, and it is better this
+   way round: GOLD is the resolved, valuable, assigned state — a person, a
+   review done, a claim paid. SLATE is the absence: the empty agent slot,
+   the years nobody called. Gold is what you want; grey is what you have.
+   Keep that opposition if this is ever re-skinned for resale.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════════════
+   BRAND TOKENS — Ivory & Forest
+   Warm paper and deep green. No yellow, no blue — the two the brand has
+   ruled out. Clay is the warm secondary; slate is the absence colour.
+
+   The signal pair: GREEN is the resolved, assigned, valuable state.
+   SLATE is the empty agent slot. Keep them opposed if this is re-skinned.
+
+   Switching the whole product to another palette is this block plus the
+   matching one in review.html and agent/index.html — nothing else.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --bg:      #FFF6F4;
+  --bg2:     #FFE9E5;
+  --card:    #FFFFFF;
+  --card2:   #FFF6F4;
+  --line:    rgba(15,26,43,.10);
+  --line2:   rgba(255,92,77,.30);
+  --text:    #0F1A2B;
+  --muted:   #6A5C7A;
+  --muted2:  #8D82A0;
+
+  --gold:    #FF5C4D;
+  --gold2:   #1B2A44;
+  --gold3:   #6B7C96;
+  --amber:   #FF8A7E;
+  --slate:   #8D82A0;
+  --red:     #FF8A7E;
+
+  --gold-soft:  rgba(255,92,77,.10);
+  --gold-soft2: rgba(255,92,77,.05);
+  --slate-soft: rgba(155,150,160,.20);
+
+  --head: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --body: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --r: 16px; --rl: 24px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--body); background: var(--bg); color: var(--text);
+  line-height: 1.65; overflow-x: hidden; -webkit-font-smoothing: antialiased;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(255,92,77,.10), transparent),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg2) 55%, var(--bg) 100%);
+  background-attachment: fixed;
+}
+h1, h2, h3, h4, .num { font-family: var(--head); letter-spacing: -.02em; line-height: 1.14; }
+a { color: inherit; text-decoration: none; }
+svg { display: block; }
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+
+/* ── logo ───────────────────────────────────────────────────────────── */
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-mark { width: 38px; height: 38px; flex-shrink: 0; }
+.logo-word { font-family: var(--head); display: flex; flex-direction: column; line-height: 1; white-space: nowrap; }
+.logo-word .l1 { font-size: 10px; font-weight: 600; letter-spacing: .17em; text-transform: uppercase; color: var(--muted2); margin-bottom: 3px; }
+.logo-word .l2 { font-size: 17px; font-weight: 800; letter-spacing: -.025em; }
+.logo-word .dot { color: var(--gold); font-weight: 600; font-size: 12.5px; margin-left: 1px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pop  { 0% { transform: scale(0); opacity: 0; } 70% { transform: scale(1.18); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes solidify { to { stroke-dasharray: 130 0; opacity: 1; } }
+.logo-mark .ring  { transform-origin: 44px 41px; }
+.hero-mark .ring  { animation: spin 9s linear 0s 2, solidify .7s ease 2.1s forwards; }
+.hero-mark .badge { opacity: 0; animation: pop .55s cubic-bezier(.2,1.5,.4,1) 2.5s forwards; }
+/* Everywhere except the animated hero mark, the badge is simply present. */
+.logo-mark .badge { opacity: 1; }
+
+/* ── nav ────────────────────────────────────────────────────────────── */
+.nav { position: sticky; top: 0; z-index: 90; background: rgba(255,246,244,.93); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.nav-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; height: 70px; display: flex; align-items: center; gap: 24px; }
+.nav-links { display: flex; gap: 22px; margin-left: auto; align-items: center; }
+.nav-links a { font-size: 14px; color: var(--muted); font-weight: 500; transition: color .16s; }
+.nav-links a:hover { color: var(--text); }
+/* The CTA is a button first and a nav link second — `.nav-links a` would
+   otherwise win on specificity and paint its text muted grey on gold. */
+.nav-links a.btn-go { color: #FFFFFF; }
+.nav-links a.btn-line { color: var(--text); }
+@media (max-width: 900px) { .nav-links a:not(.btn) { display: none; } }
+.by-branch { display: flex; align-items: center; gap: 9px; border-left: 1px solid var(--line); padding-left: 15px; }
+.by-branch svg { width: 26px; height: 26px; flex-shrink: 0; }
+.by-branch span { font-family: var(--head); font-size: 9px; font-weight: 600; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--muted2); line-height: 1.5; }
+.by-branch span b { display: block; font-size: 10.5px; letter-spacing: .07em; color: var(--gold); font-weight: 800; }
+.by-branch span i { font-style: normal; display: block; }
+@media (max-width: 900px) { .by-branch { border: none; padding-left: 0; gap: 7px; } .by-branch span { font-size: 8px; } }
+/* Below 430px the endorsement keeps the shield and the branch name and drops
+   the connective words, so the nav CTA is never pushed off the screen. */
+@media (max-width: 430px) {
+  .nav-in { gap: 8px; padding: 0 14px; }
+  .by-branch svg { width: 20px; height: 20px; }
+  .by-branch span i { display: none; }
+  .by-branch span b { font-size: 9px; letter-spacing: .04em; }
+  .nav-links a.btn-cta, .nav-links a.btn-go { padding: 9px 13px; font-size: 12.5px; }
+}
+
+/* ── buttons ────────────────────────────────────────────────────────── */
+.btn { font-family: var(--head); font-weight: 700; font-size: 15px; cursor: pointer; border: none; border-radius: 13px;
+  padding: 14px 26px; transition: all .18s ease; display: inline-flex; align-items: center; justify-content: center; gap: 9px; }
+.btn-go { background: linear-gradient(135deg, var(--gold3), var(--gold)); color: #FFFFFF; box-shadow: 0 6px 24px rgba(255,92,77,.24); }
+.btn-go:hover { background: linear-gradient(135deg, #6B7C96, var(--gold3)); transform: translateY(-2px); box-shadow: 0 12px 34px rgba(255,92,77,.34); }
+.btn-gold { background: linear-gradient(135deg, var(--gold), var(--gold2)); color: #FFFFFF; }
+.btn-gold:hover { transform: translateY(-2px); }
+.btn-line { background: rgba(15,26,43,.05); border: 1.5px solid var(--line2); color: var(--text); }
+.btn-line:hover { border-color: var(--gold); background: var(--gold-soft); }
+.btn-sm { padding: 10px 18px; font-size: 13.5px; border-radius: 11px; }
+
+/* ── hero ───────────────────────────────────────────────────────────── */
+.hero { position: relative; padding: 68px 0 56px; overflow: hidden; }
+.hero::before { content: ""; position: absolute; inset: -30% 0 auto 0; height: 640px; pointer-events: none;
+  background: radial-gradient(ellipse 58% 55% at 18% 0%, rgba(255,92,77,.16), transparent 70%),
+              radial-gradient(ellipse 55% 50% at 86% 14%, rgba(255,138,126,.10), transparent 70%); }
+.hero-in { position: relative; display: grid; grid-template-columns: 1.08fr .92fr; gap: 50px; align-items: start; }
+.hero-in > * { min-width: 0; }
+@media (max-width: 960px) { .hero-in { grid-template-columns: 1fr; gap: 36px; } }
+
+.eyebrow { display: inline-flex; align-items: center; gap: 9px; font-family: var(--head); font-size: 12px; font-weight: 700;
+  color: var(--gold); background: var(--gold-soft); border: 1px solid rgba(255,92,77,.3);
+  padding: 7px 15px; border-radius: 99px; margin-bottom: 22px; letter-spacing: .01em; }
+.eyebrow .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); animation: pulse 2.2s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: .4; transform: scale(1.5); } }
+
+h1.hero-h { font-size: clamp(36px, 6.2vw, 60px); font-weight: 900; margin-bottom: 20px; }
+h1.hero-h .strike { color: var(--muted2); position: relative; white-space: nowrap; }
+h1.hero-h .strike::after {
+  content: ""; position: absolute; left: -1.5%; right: -1.5%; top: 54%; height: 4px;
+  background: var(--gold); border-radius: 3px; transform: scaleX(0); transform-origin: left;
+  animation: strike .65s cubic-bezier(.5,0,.3,1) .5s forwards;
+}
+@keyframes strike { to { transform: scaleX(1); } }
+h1.hero-h em { font-style: normal; color: var(--gold); }
+
+.hero-sub { font-size: clamp(16px, 2vw, 18.5px); color: var(--muted); max-width: 560px; margin-bottom: 13px; }
+.hero-sub b { color: var(--text); font-weight: 500; }
+.hero-note { font-size: 13.5px; color: var(--muted2); max-width: 545px; margin-bottom: 28px; }
+.hero-note a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── the gap diagram ────────────────────────────────────────────────── */
+.gapfig { width: 100%; max-width: 620px; }
+.gapfig .track-broken { stroke-dasharray: 7 7; animation: dash 1.4s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -28; } }
+.gapfig .fixed { opacity: 0; animation: fadein .6s ease 3.1s forwards; }
+.gapfig .broken { animation: fadeout .5s ease 3.1s forwards; }
+/* The line runs x=92→428, so the dash must be at least 336 or the draw
+   animation stops halfway and the link to the insurer never appears. */
+.gapfig .track-fixed { stroke-dasharray: 340; stroke-dashoffset: 340; animation: draw 1.1s ease 3.2s forwards; }
+@keyframes fadein  { to { opacity: 1; } }
+@keyframes fadeout { to { opacity: 0; } }
+@keyframes draw    { to { stroke-dashoffset: 0; } }
+
+.focus-note { font-size: 13.6px; color: var(--muted); max-width: 560px; margin-bottom: 26px;
+  background: var(--gold-soft2); border-left: 3px solid var(--gold); border-radius: 0 12px 12px 0; padding: 13px 16px; line-height: 1.62; }
+.focus-note b { color: var(--text); font-weight: 500; }
+
+/* ── compliance badge ───────────────────────────────────────────────── */
+.compliance-badge { display: flex; gap: 13px; align-items: flex-start; margin-top: 18px;
+  background: var(--gold-soft); border: 1px solid rgba(255,92,77,.26); border-radius: 14px; padding: 14px 16px; }
+.compliance-badge svg { width: 30px; height: 30px; flex-shrink: 0; }
+.compliance-badge b { display: block; font-family: var(--head); font-weight: 700; font-size: 13.5px; margin-bottom: 3px; }
+.compliance-badge div { font-size: 12.7px; color: var(--muted); line-height: 1.55; }
+.compliance-badge a { color: var(--gold); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ── the gap band ───────────────────────────────────────────────────── */
+.gapband { padding: 66px 0; border-block: 1px solid var(--line); background: rgba(236,238,241,.6); }
+.gapband-in { display: grid; grid-template-columns: .82fr 1.18fr; gap: 44px; align-items: center; }
+.gapband-in > * { min-width: 0; }
+@media (max-width: 980px) { .gapband-in { grid-template-columns: 1fr; gap: 30px; } }
+.gapband-txt h2 { font-size: clamp(23px, 3.2vw, 32px); font-weight: 900; margin-bottom: 13px; }
+.gapband-txt h2 em { font-style: normal; color: var(--gold); }
+.gapband-txt p { font-size: 15px; color: var(--muted); line-height: 1.7; }
+.gapband-fig { display: flex; justify-content: center; }
+
+/* One grid cell holding the check card and the compliance note beneath it. */
+.hero-side { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── the two doors ──────────────────────────────────────────────────── */
+.doors { display: grid; gap: 14px; grid-template-columns: 1fr 1fr; margin-bottom: 20px; }
+@media (max-width: 640px) { .doors { grid-template-columns: 1fr; } }
+.door { position: relative; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
+  border-radius: var(--rl); padding: 22px 21px; transition: transform .2s, border-color .2s, box-shadow .2s; overflow: hidden; }
+.door::after { content: ""; position: absolute; inset: 0 0 auto 0; height: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold)); opacity: 0; transition: opacity .2s; }
+.door:hover { transform: translateY(-4px); border-color: var(--line2); box-shadow: 0 18px 44px rgba(15,26,43,.11); }
+.door:hover::after { opacity: 1; }
+.door .di { width: 42px; height: 42px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
+.door.a .di { background: var(--gold-soft); border: 1px solid rgba(255,92,77,.34); }
+.door.b .di { background: var(--gold-soft); border: 1px solid rgba(255,92,77,.32); }
+.door .di svg { width: 21px; height: 21px; }
+.door h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+.door p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+.door .go { display: inline-flex; align-items: center; gap: 6px; margin-top: 13px; font-family: var(--head); font-weight: 700; font-size: 13.5px; }
+.door.a .go { color: var(--gold); }
+.door.b .go { color: var(--gold); }
+
+.trust-strip { display: flex; flex-wrap: wrap; gap: 8px; }
+.trust-strip span { font-size: 12.5px; color: var(--muted); background: rgba(15,26,43,.042); border: 1px solid var(--line); padding: 7px 13px; border-radius: 99px; }
+.trust-strip b { color: var(--gold); }
+
+/* ── check card ─────────────────────────────────────────────────────── */
+.check-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
+  border-radius: var(--rl); padding: 24px 22px; box-shadow: 0 24px 60px rgba(15,26,43,.10); }
+.check-card h3 { font-size: 17px; font-weight: 800; margin-bottom: 4px; }
+.check-card .cc-sub { font-size: 13px; color: var(--muted); margin-bottom: 18px; }
+.cq { margin-bottom: 15px; }
+.cq p { font-size: 13.6px; font-weight: 500; margin-bottom: 9px; }
+.cq-opts { display: flex; gap: 7px; flex-wrap: wrap; }
+.cq-opts button { font: inherit; font-size: 12.8px; cursor: pointer; color: var(--muted); background: rgba(15,26,43,.042);
+  border: 1.5px solid var(--line); border-radius: 10px; padding: 8px 13px; transition: all .15s; }
+.cq-opts button:hover { border-color: var(--line2); color: var(--text); }
+.cq-opts button.on { background: var(--gold-soft); border-color: var(--gold); color: var(--text); font-weight: 500; }
+.cq-opts button.on.warn { background: var(--gold-soft); border-color: var(--gold); }
+.gauge { margin-top: 18px; padding-top: 18px; border-top: 1px solid var(--line); }
+.gauge-bar { height: 8px; border-radius: 99px; background: rgba(15,26,43,.07); overflow: hidden; margin-bottom: 12px; }
+.gauge-fill { height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold), var(--gold)); transition: width .5s cubic-bezier(.4,0,.2,1); }
+.gauge-txt { font-size: 13.4px; color: var(--muted); line-height: 1.6; min-height: 44px; }
+.gauge-txt b { color: var(--text); }
+.gauge .btn { width: 100%; margin-top: 13px; }
+
+/* ── sections ───────────────────────────────────────────────────────── */
+section { padding: 84px 0; }
+.alt { background: rgba(236,238,241,.7); border-block: 1px solid var(--line); }
+.sec-label { font-family: var(--head); font-size: 12px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); margin-bottom: 14px; }
+h2.sec-h { font-size: clamp(27px, 4.4vw, 42px); font-weight: 900; margin-bottom: 16px; }
+h2.sec-h em { font-style: normal; color: var(--gold); }
+.sec-sub { font-size: 16.5px; color: var(--muted); max-width: 680px; margin-bottom: 42px; }
+
+/* ── local (T&T) hero figure ────────────────────────────────────────── */
+.tt-figure { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid rgba(255,92,77,.24);
+  border-radius: var(--rl); padding: 30px 28px; margin-bottom: 20px; }
+.tt-row { display: grid; grid-template-columns: 190px 1fr; gap: 18px; align-items: center; margin-bottom: 20px; }
+@media (max-width: 700px) { .tt-row { grid-template-columns: 1fr; gap: 8px; } }
+.tt-row:last-child { margin-bottom: 0; }
+.tt-label { font-size: 13.6px; color: var(--muted); line-height: 1.45; }
+.tt-label b { display: block; color: var(--text); font-family: var(--head); font-weight: 700; font-size: 15px; }
+.tt-bar { position: relative; height: 46px; border-radius: 10px; background: rgba(15,26,43,.05); overflow: hidden; }
+.tt-bar span { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 10px; transition: width 1.4s cubic-bezier(.2,.8,.3,1); }
+.tt-bar.big span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+.tt-bar.small span { background: linear-gradient(90deg, var(--gold2), var(--gold)); }
+.tt-bar em { position: absolute; top: 50%; transform: translateY(-50%); left: 14px; font-style: normal;
+  font-family: var(--head); font-weight: 800; font-size: 17px; color: #06121e; white-space: nowrap; }
+/* The small bar is only 3% wide — its label has to sit beside it, not in it. */
+.tt-bar em.out { left: 62px; color: var(--gold); font-size: 15px; }
+@media (max-width: 520px) { .tt-bar em { font-size: 13.5px; } .tt-bar em.out { font-size: 12.5px; left: 56px; } }
+.tt-punch { font-size: 17px; line-height: 1.6; color: var(--text); border-top: 1px solid var(--line); padding-top: 20px; margin-top: 22px; }
+.tt-punch b { color: var(--gold); }
+
+/* ── stats ──────────────────────────────────────────────────────────── */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 940px) { .stats { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 540px) { .stats { grid-template-columns: 1fr; } }
+.stat { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--r); padding: 24px 20px; }
+.stat .num { font-size: 46px; font-weight: 900; color: var(--gold); line-height: 1; margin-bottom: 10px; }
+.statbar { height: 6px; border-radius: 99px; background: rgba(15,26,43,.06); overflow: hidden; margin-bottom: 13px; }
+.statbar i { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--gold2), var(--gold)); transition: width 1.3s cubic-bezier(.2,.8,.3,1); }
+.stat p { font-size: 14px; color: var(--text); line-height: 1.5; margin-bottom: 9px; }
+.stat p b { color: var(--gold); font-weight: 500; }
+.stat cite { font-size: 11.4px; color: var(--muted2); font-style: normal; }
+
+/* ── timeline ───────────────────────────────────────────────────────── */
+.tl-track { position: relative; height: 46px; margin-bottom: 18px; }
+.tl-track::before { content: ""; position: absolute; left: 0; right: 0; top: 21px; height: 3px; border-radius: 3px;
+  background: linear-gradient(90deg, var(--gold), var(--gold), var(--red)); opacity: .32; }
+.tl-tabs { position: relative; display: flex; justify-content: space-between; }
+.tl-tabs button { position: relative; font-family: var(--head); font-weight: 700; font-size: 13px; cursor: pointer;
+  color: var(--muted); background: var(--bg2); border: 1.5px solid var(--line); border-radius: 99px; padding: 9px 17px; transition: all .18s; }
+.tl-tabs button:hover { color: var(--text); border-color: var(--line2); }
+.tl-tabs button.on { background: var(--gold); border-color: var(--gold); color: #1a1405; transform: scale(1.06); }
+@media (max-width: 620px) { .tl-tabs { flex-wrap: wrap; gap: 8px; justify-content: flex-start; } .tl-track::before { display: none; } .tl-track { height: auto; } }
+.tl-body { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; min-height: 220px; }
+.tl-body h3 { font-size: 21px; font-weight: 800; margin-bottom: 10px; }
+.tl-body h3 span { color: var(--gold); }
+.tl-body > p { font-size: 15px; color: var(--muted); margin-bottom: 18px; max-width: 660px; }
+.tl-body ul { list-style: none; display: grid; gap: 10px; }
+.tl-body li { display: flex; gap: 12px; font-size: 14.3px; color: var(--text); align-items: flex-start; line-height: 1.55; }
+.tl-body li svg { width: 17px; height: 17px; flex-shrink: 0; margin-top: 3px; }
+.tl-fade { animation: fade .35s ease; }
+@keyframes fade { from { opacity: 0; transform: translateY(7px); } to { opacity: 1; transform: none; } }
+
+/* ── promise / not ──────────────────────────────────────────────────── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 860px) { .two-col { grid-template-columns: 1fr; } }
+.panel { border-radius: var(--rl); padding: 26px 24px; border: 1px solid var(--line); }
+.panel.yes { background: linear-gradient(158deg, rgba(255,92,77,.10), rgba(255,92,77,.03)); border-color: rgba(255,92,77,.28); }
+.panel.no  { background: linear-gradient(158deg, rgba(15,26,43,.038), rgba(15,26,43,.014)); }
+.panel h3 { font-size: 18px; font-weight: 800; margin-bottom: 16px; display: flex; align-items: center; gap: 10px; }
+.panel h3 svg { width: 21px; height: 21px; }
+.panel ul { list-style: none; display: grid; gap: 13px; }
+.panel li { display: flex; gap: 12px; font-size: 14.5px; line-height: 1.55; align-items: flex-start; }
+.panel li svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 4px; }
+.panel li b { display: block; margin-bottom: 2px; }
+.panel li span span { color: var(--muted); font-size: 13.6px; }
+
+/* ── who ────────────────────────────────────────────────────────────── */
+.who { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+@media (max-width: 860px) { .who { grid-template-columns: 1fr; } }
+.lanes { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.lanes > * { min-width: 0; }
+@media (max-width: 760px) { .lanes { grid-template-columns: 1fr; } }
+.lane { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line);
+  border-radius: var(--rl); padding: 26px 24px; display: flex; flex-direction: column; }
+.lane:hover { border-color: var(--line2); }
+.lane-head { display: flex; gap: 14px; align-items: center; margin-bottom: 18px; }
+.lane-head > div { min-width: 0; }
+.lane .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft);
+  border: 1px solid rgba(255,92,77,.32); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
+.lane .wi svg { width: 23px; height: 23px; }
+.lane-head h3 { font-size: 19px; font-weight: 800; }
+.lane-head p { font-size: 13px; color: var(--muted); }
+.steps { position: relative; flex: 1; margin-bottom: 20px; }
+.steps::before { content: ""; position: absolute; left: 17px; top: 14px; bottom: 14px; width: 2px;
+  background: linear-gradient(180deg, var(--gold) 0%, rgba(255,92,77,.15) 100%); }
+.stp { position: relative; display: flex; gap: 13px; padding: 0 0 20px 0; align-items: flex-start; }
+.stp:last-child { padding-bottom: 0; }
+.sic { position: relative; z-index: 1; flex: 0 0 36px; width: 36px; height: 36px; border-radius: 11px;
+  display: flex; align-items: center; justify-content: center; }
+.sic svg { width: 19px; height: 19px; }
+.stp.you .sic { background: var(--card); border: 1.6px solid rgba(255,92,77,.45); color: var(--gold); }
+.stp.us .sic { background: var(--gold); border: 1.6px solid var(--gold); color: #fff; }
+.stp .tag { position: absolute; left: 40px; top: -7px; font: 800 9px var(--head); letter-spacing: .14em;
+  text-transform: uppercase; padding: 2px 8px; border-radius: 99px; background: var(--card);
+  border: 1px solid rgba(255,92,77,.4); color: var(--gold); }
+.stp .tag.us-t { background: var(--gold); color: #fff; border-color: var(--gold); }
+.stp > div { padding-top: 6px; min-width: 0; }
+.stp b { display: block; font-family: var(--head); font-size: 14.6px; margin-bottom: 3px; }
+.stp p { font-size: 13px; color: var(--muted); line-height: 1.55; }
+.stp p b { display: inline; font-family: var(--body); font-size: inherit; color: var(--text); }
+.lane .btn { width: 100%; }
+/* staggered entrance for the steps */
+.lane.rv .stp { opacity: 0; transform: translateX(-10px); transition: opacity .5s ease, transform .5s ease; }
+.lane.rv.in .stp { opacity: 1; transform: none; }
+.lane.rv.in .stp:nth-child(1) { transition-delay: .1s } .lane.rv.in .stp:nth-child(2) { transition-delay: .25s }
+.lane.rv.in .stp:nth-child(3) { transition-delay: .4s } .lane.rv.in .stp:nth-child(4) { transition-delay: .55s }
+@media (prefers-reduced-motion: reduce) { .lane.rv .stp { opacity: 1; transform: none; transition: none; } }
+.mgr { display: flex; gap: 26px; align-items: flex-start; background: linear-gradient(135deg, #FF5C4D, #1B2A44);
+  color: #fff; border-radius: var(--rl); padding: 30px 28px; }
+.mgr-mark { flex: 0 0 auto; text-align: center; }
+.mgr-mark svg { width: 74px; height: 74px; margin: 0 auto 10px; }
+.mgr-mark span { display: block; font: 800 13.5px var(--head); line-height: 1.3; color: #fff; }
+.mgr-mark i { font: 600 10.5px var(--head); font-style: normal; letter-spacing: .12em; text-transform: uppercase; color: rgba(255,255,255,.65); }
+.mgr-body p { font-size: 14.6px; line-height: 1.65; color: rgba(255,255,255,.88); margin-bottom: 11px; }
+.mgr-body b { color: #fff; }
+.mgr-body ul { list-style: none; display: grid; gap: 7px; margin: 0 0 13px; }
+.mgr-body li { font-size: 13.8px; color: rgba(255,255,255,.88); padding-left: 22px; position: relative; }
+.mgr-body li::before { content: "✓"; position: absolute; left: 0; color: #fff; font-weight: 800; }
+.mgr-close { font-weight: 600; color: #fff !important; margin-bottom: 0 !important; }
+@media (max-width: 640px) { .mgr { flex-direction: column; gap: 16px; } }
+.who-card { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--rl); padding: 28px 26px; transition: border-color .2s, transform .2s; }
+.who-card:hover { border-color: var(--line2); transform: translateY(-3px); }
+.who-card .wi { width: 46px; height: 46px; border-radius: 13px; background: var(--gold-soft); border: 1px solid rgba(255,92,77,.32); display: flex; align-items: center; justify-content: center; margin-bottom: 15px; }
+.who-card .wi svg { width: 23px; height: 23px; }
+.who-card h3 { font-size: 19px; font-weight: 800; margin-bottom: 8px; }
+.who-card > p { font-size: 14.4px; color: var(--muted); margin-bottom: 16px; }
+.who-card ul { list-style: none; display: grid; gap: 8px; margin-bottom: 20px; }
+.who-card li { font-size: 13.7px; color: var(--muted); display: flex; gap: 9px; align-items: flex-start; }
+.who-card li svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 4px; }
+
+/* ── local rights ───────────────────────────────────────────────────── */
+.local { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 860px) { .local { grid-template-columns: 1fr; } }
+.local-item { background: rgba(15,26,43,.038); border: 1px solid var(--line); border-radius: var(--r); padding: 22px 20px; }
+.local-item .li-ic { width: 38px; height: 38px; border-radius: 11px; background: var(--gold-soft); border: 1px solid rgba(255,92,77,.28); display: flex; align-items: center; justify-content: center; margin-bottom: 13px; }
+.local-item .li-ic svg { width: 19px; height: 19px; }
+.local-item h4 { font-size: 15.5px; font-weight: 800; margin-bottom: 7px; }
+.local-item p { font-size: 13.6px; color: var(--muted); line-height: 1.65; }
+.local-item p b { color: var(--gold); font-weight: 500; }
+
+/* ── faq ────────────────────────────────────────────────────────────── */
+.faq { display: grid; gap: 10px; max-width: 840px; }
+.faq details { background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line); border-radius: var(--r); overflow: hidden; transition: border-color .18s; }
+.faq details[open] { border-color: var(--line2); }
+.faq summary { cursor: pointer; padding: 18px 22px; font-family: var(--head); font-weight: 700; font-size: 15.5px; list-style: none; display: flex; align-items: center; gap: 14px; }
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary::after { content: "+"; margin-left: auto; color: var(--gold); font-size: 22px; font-weight: 300; transition: transform .22s; flex-shrink: 0; }
+.faq details[open] summary::after { transform: rotate(45deg); }
+.faq .a { padding: 0 22px 20px; font-size: 14.6px; color: var(--muted); line-height: 1.72; }
+.faq .a b { color: var(--text); font-weight: 500; }
+.faq .a a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── cta ────────────────────────────────────────────────────────────── */
+.cta-box { position: relative; text-align: center; background: linear-gradient(158deg, var(--card), var(--card2));
+  border: 1px solid rgba(255,92,77,.28); border-radius: 28px; padding: 54px 32px; overflow: hidden; }
+.cta-box::before { content: ""; position: absolute; inset: -60% 0 auto 0; height: 320px;
+  background: radial-gradient(ellipse 50% 60% at 50% 100%, rgba(255,92,77,.18), transparent 70%); pointer-events: none; }
+.cta-box h2 { position: relative; font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin-bottom: 14px; }
+.cta-box p { position: relative; font-size: 16.5px; color: var(--muted); max-width: 540px; margin: 0 auto 28px; }
+.cta-actions { position: relative; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+/* ── footer ─────────────────────────────────────────────────────────── */
+footer { border-top: 1px solid var(--line); padding: 46px 0 60px; background: rgba(236,238,241,.72); }
+.foot-top { display: flex; justify-content: space-between; gap: 30px; flex-wrap: wrap; margin-bottom: 28px; align-items: flex-start; }
+.foot-links { display: flex; gap: 26px; flex-wrap: wrap; }
+.foot-links a { font-size: 14px; color: var(--muted); }
+.foot-links a:hover { color: var(--text); }
+.legal { font-size: 12px; color: var(--muted2); line-height: 1.78; max-width: 940px; }
+.legal a { color: var(--muted); text-decoration: underline; text-underline-offset: 2px; }
+
+/* ── sticky ─────────────────────────────────────────────────────────── */
+.sticky { position: fixed; left: 0; right: 0; bottom: 0; z-index: 80; background: rgba(255,246,244,.96); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line); padding: 12px 0; transform: translateY(105%); transition: transform .3s ease; }
+.sticky.on { transform: none; }
+.sticky-in { max-width: 1120px; margin: 0 auto; padding: 0 22px; display: flex; align-items: center; gap: 16px; }
+.sticky-txt { font-size: 14px; font-weight: 500; }
+.sticky-txt span { color: var(--muted); font-size: 13px; display: block; }
+.sticky .btn { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 560px) { .sticky-txt span { display: none; } .sticky-txt { font-size: 13px; } }
+
+.rv { opacity: 0; transform: translateY(20px); transition: opacity .6s ease, transform .6s ease; }
+.rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .rv { opacity: 1; transform: none; transition: none; }
+  *, *::before, *::after { animation-duration: .001s !important; animation-delay: 0s !important; transition-duration: .05s !important; }
+}
+
+/* ── modal ──────────────────────────────────────────────────────────── */
+.modal { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(15,26,43,.55); backdrop-filter: blur(7px); align-items: center; justify-content: center; padding: 20px; }
+.modal.on { display: flex; }
+.modal-box { width: min(500px, 100%); background: linear-gradient(158deg, var(--card), var(--card2)); border: 1px solid var(--line2);
+  border-radius: var(--rl); padding: 30px 28px; max-height: 90vh; overflow-y: auto; animation: fade .28s ease; }
+.modal-box h3 { font-size: 21px; font-weight: 800; margin-bottom: 8px; }
+.modal-box > p { font-size: 14.5px; color: var(--muted); margin-bottom: 20px; }
+.modal-box label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 14px 0 6px; }
+.modal-box input { width: 100%; font: inherit; font-size: 15px; color: var(--text); background: rgba(15,26,43,.035);
+  border: 1px solid var(--line2); border-radius: 11px; padding: 12px 14px; }
+.modal-box input:focus { outline: none; border-color: var(--gold); }
+.modal-box .btn { width: 100%; margin-top: 18px; }
+.modal-x { float: right; background: rgba(15,26,43,.055); border: 1px solid var(--line); color: var(--muted); cursor: pointer; border-radius: 50%; width: 32px; height: 32px; font-size: 15px; }
+.or { text-align: center; font-size: 13px; color: var(--muted2); margin: 16px 0 4px; }
+
+
+body.onDark #chrome .mark rect:first-of-type{fill:#FFF6F4}
+body.onDark #chrome .mark text{fill:#0F1A2B}
+.scene.dark .biglogo rect:first-of-type{fill:#FFF6F4}
+.scene.dark .biglogo text{fill:#0F1A2B}
+</style>
+<!-- Music: "Inspired" by Kevin MacLeod (incompetech.com) — licensed under Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/ -->
+</head>
+<body>
+
+<!-- reusable icons -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5l5.5 5.5L20 6.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h13m-5-6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M9.5 14.5l5-5M8 12l-2 2a3.5 3.5 0 105 5l2-2M16 12l2-2a3.5 3.5 0 10-5-5l-2 2" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-hand" viewBox="0 0 24 24"><path d="M12 3v9M8 6v6M16 6v7M5 11v4a7 7 0 0014 0v-3" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-person" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6" fill="currentColor"/><path d="M4.5 20a7.5 7.5 0 0115 0" fill="currentColor"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V6l8-3 8 3v15" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M9 21v-5h6v5M8 10h2M14 10h2M8 13.5h2M14 13.5h2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2l8 3.5v6c0 5.2-3.4 8.6-8 10.5-4.6-1.9-8-5.3-8-10.5v-6z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M12 7v5.5l3.5 2" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 7h14M7.5 7l-3 6h6zM16.5 7l-3 6h6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-form" viewBox="0 0 24 24"><rect x="5" y="3" width="14" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 8h7M8.5 11.5h7M8.5 15h4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-prep" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="5.6" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M15 15l5.5 5.5" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><path d="M8.2 10.5h4.6M10.5 8.2v4.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></symbol>
+  <symbol id="i-signph" viewBox="0 0 24 24"><rect x="7" y="2.5" width="10" height="19" rx="2.4" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 13.5c1.2-2.4 2.2-2.6 2.8-1 .6 1.6 1.4 1.6 2.7-.6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M11 18.4h2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-stamp" viewBox="0 0 24 24"><path d="M9 10V5.8A2.8 2.8 0 0112 3a2.8 2.8 0 013 2.8V10" fill="none" stroke="currentColor" stroke-width="2.1"/><path d="M5.5 14c0-2.2 2.9-4 6.5-4s6.5 1.8 6.5 4v1.5h-13z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M4.5 19.5h15" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-loop" viewBox="0 0 24 24"><path d="M4.5 10a8 8 0 0114-2.5M19.5 14a8 8 0 01-14 2.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/><path d="M18.5 3.5v4h-4M5.5 20.5v-4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shieldck" viewBox="0 0 24 24"><path d="M12 2l8 3.5v6c0 5.2-3.4 8.6-8 10.5-4.6-1.9-8-5.3-8-10.5v-6z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 12l2.6 2.6 4.6-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3l9.5 17H2.5z" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linejoin="round"/><path d="M12 9.5v4.5M12 17.2v.1" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></symbol>
+</defs></svg>
+
+<!-- ══════════ NAV ══════════ -->
+<nav class="nav">
+  <div class="nav-in">
+    <a class="logo" href="#top">
+      <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
+        <rect width="88" height="88" rx="22" fill="#0F1A2B"/><defs><clipPath id="nk1"><rect x="30" y="26" width="15" height="36"/></clipPath></defs><g transform="rotate(-40 44 44)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/><rect x="31" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FF5C4D" stroke-width="6.6"/><g clip-path="url(#nk1)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/></g></g>
+      </svg>
+      <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
+    </a>
+    <a class="by-branch" href="https://rickyrampersadbranch.com" target="_blank" rel="noopener"
+       title="Visit the Ricky Rampersad Branch site">
+      <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#1B2A44"/>
+          <path d="M28 44L39 55L60 31" stroke="#FFF6F4" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      <span><i>a</i><b>Ricky Rampersad Branch</b><i>initiative</i></span>
+    </a>
+    <div class="nav-links">
+      <a href="how-we-work.html">How we work</a>
+      <a href="#film">The film</a>
+      <a href="#local">Trinidad &amp; Tobago</a>
+      <a href="#truth">The evidence</a>
+      <a href="#promise">What we do</a>
+      <a href="#faq">Questions</a>
+      <a class="btn btn-go btn-sm" href="review.html?from=client">Start free review</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════ HERO ══════════ -->
+<div id="top"></div>
+<header class="hero">
+  <div class="wrap hero-in">
+    <div>
+      <div class="eyebrow"><span class="dot"></span>A Ricky Rampersad Branch project · for policyholders nobody calls</div>
+
+      <h1 class="hero-h">Your agent left.<br><span class="strike">Your policy didn't.</span><br><em>Let's fix the gap.</em></h1>
+
+      <p class="hero-sub">
+        If the person who sold you your policy has retired, resigned or simply stopped calling,
+        you have an <b>orphan policy</b>. It is not rare and it is not your fault. Here in Trinidad
+        &amp; Tobago, <b>one insurer alone carries over 70,000 policies</b> — and the whole country has
+        roughly <b>2,180 registered sales representatives</b>, across every company and every class
+        of insurance combined.
+      </p>
+      <p class="focus-note">
+        <b>This is a Ricky Rampersad Branch project</b> — built by our own team for orphan policyholders,
+        and for anyone who simply isn't being serviced and wants one of our agents assigned to them.
+        We service policies issued by <b>your insurance company</b> — that is who our team
+        is licensed with. Not sure who issued yours? Start the review anyway: we check, we fix your records,
+        and if your policy turns out to be with another company we tell you plainly and point you to them —
+        no guessing, no games. The branch is led personally by Ricky Rampersad —
+        Branch Manager, and still a servicing agent to his own clients — with a team of skilled, licensed
+        your insurer agents behind him, so a change of servicing agent moves fast and lands with a person,
+        not a queue.
+      </p>
+      <p class="hero-note">
+        Your cover is still completely valid. The insurance company's obligations never depended on
+        one person staying in the job. What you've lost isn't the policy — it's the human being who
+        was supposed to check it still fits. <a href="#local">Here's the local arithmetic.</a>
+      </p>
+
+
+      <div class="doors">
+        <button class="door a" onclick="openAgentLink()">
+          <div class="di" style="color:var(--gold)"><svg><use href="#i-link"/></svg></div>
+          <h3>My agent sent me</h3>
+          <p>You have a link, a code, or someone asked you to complete this. Your details are already filled in.</p>
+          <span class="go">Continue with my link <svg width="15" height="15"><use href="#i-arrow"/></svg></span>
+        </button>
+        <button class="door b" onclick="location.href='review.html?from=client'">
+          <div class="di" style="color:var(--gold)"><svg><use href="#i-hand"/></svg></div>
+          <h3>I'm here on my own</h3>
+          <p>Nobody sent you. You have a policy somewhere and no idea who looks after it. Start here.</p>
+          <span class="go">Claim my policy review <svg width="15" height="15"><use href="#i-arrow"/></svg></span>
+        </button>
+      </div>
+
+      <div class="trust-strip">
+        <span><b>✓</b> No cost, ever</span>
+        <span><b>✓</b> No obligation to buy</span>
+        <span><b>✓</b> About 4 minutes</span>
+        <span><b>✓</b> No policy number needed</span>
+      </div>
+
+
+
+    </div>
+
+    <!-- right column: the live check, then the compliance note -->
+    <div class="hero-side">
+      <div class="check-card rv" id="check">
+        <svg class="logo-mark hero-mark" style="width:48px;height:48px;margin-bottom:14px" viewBox="0 0 88 88" aria-hidden="true">
+        <rect width="88" height="88" rx="22" fill="#0F1A2B"/><defs><clipPath id="nk2"><rect x="30" y="26" width="15" height="36"/></clipPath></defs><g transform="rotate(-40 44 44)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/><rect x="31" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FF5C4D" stroke-width="6.6"/><g clip-path="url(#nk2)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/></g></g>
+      </svg>
+        <h3>Are you an orphan policyholder?</h3>
+        <p class="cc-sub">Four taps. Nothing is sent anywhere — this runs entirely in your browser.</p>
+        <div id="checkQs"></div>
+        <div class="gauge">
+          <div class="gauge-bar"><div class="gauge-fill" id="gaugeFill"></div></div>
+          <div class="gauge-txt" id="gaugeTxt">Answer the four above and we'll tell you straight.</div>
+          <a class="btn btn-go" id="gaugeCta" href="review.html?from=client" style="display:none">Start my free review →</a>
+        </div>
+      </div>
+
+      <div class="compliance-badge rv">
+          <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#1B2A44"/>
+          <path d="M28 44L39 55L60 31" stroke="#FFF6F4" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+          <div>
+            <b>Licensed, and on the public record</b>
+            Reviews are carried out by Ricky Rampersad and his team of licensed agents, registered under the
+            <a href="https://www.central-bank.org.tt/registered-intermediaries-and-insurance-companies/" target="_blank" rel="noopener">Insurance Act, 2018</a>.
+            Look us up on the Central Bank's register before you tell us anything — that is what it is for.
+            We service policies issued by <b>your insurance company</b>; if yours turns out to be
+            with another company, we tell you plainly and point you to them.
+          </div>
+        </div>
+    </div>
+  </div>
+</header>
+
+<!-- ══════════ THE GAP, DRAWN ══════════ -->
+<section class="gapband">
+  <div class="wrap">
+    <div class="gapband-in rv">
+      <div class="gapband-txt">
+        <div class="sec-label">How it actually works</div>
+        <h2>The contract never broke.<br><em>Only the link to a person did.</em></h2>
+        <p>Your policy is an agreement between you and the insurance company. An agent is how you
+           reach it — and when that person leaves, the agreement carries on untouched while the
+           connection quietly goes dead. Putting a named human back in the middle is the entire job.</p>
+      </div>
+      <div class="gapband-fig">
+      <svg class="gapfig" viewBox="0 0 520 120" role="img" aria-label="You, a missing agent, and your insurer — the gap closes">
+        <!-- you -->
+        <circle cx="58" cy="56" r="30" fill="rgba(255,92,77,.13)" stroke="#FF5C4D" stroke-width="2"/>
+        <g transform="translate(40,38) scale(1.5)" fill="#FF5C4D"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+        <text x="58" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#6A5C7A">You</text>
+
+        <!-- insurer -->
+        <circle cx="462" cy="56" r="30" fill="rgba(255,92,77,.13)" stroke="#FF5C4D" stroke-width="2"/>
+        <g transform="translate(444,38) scale(1.5)" fill="none" stroke="#FF5C4D" stroke-width="2.1" stroke-linejoin="round">
+          <path d="M4 21V6l8-3 8 3v15"/><path d="M9 21v-5h6v5" stroke-linecap="round"/>
+        </g>
+        <text x="462" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#6A5C7A">Your insurer</text>
+
+        <!-- broken state: the gap is grey, because absence is not a colour you want -->
+        <g class="broken">
+          <line class="track-broken" x1="92" y1="56" x2="228" y2="56" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <line class="track-broken" x1="292" y1="56" x2="428" y2="56" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(155,150,160,.16)" stroke="#8D82A0" stroke-width="2.5" stroke-dasharray="7 6"/>
+          <path d="M250 46l20 20M270 46l-20 20" stroke="#8D82A0" stroke-width="3" stroke-linecap="round"/>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#8D82A0">No agent</text>
+        </g>
+
+        <!-- fixed state: gold, because that is the thing worth having -->
+        <g class="fixed">
+          <line class="track-fixed" x1="92" y1="56" x2="428" y2="56" stroke="#FF5C4D" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="260" cy="56" r="30" fill="rgba(255,92,77,.18)" stroke="#FF5C4D" stroke-width="2.5"/>
+          <g transform="translate(242,38) scale(1.5)" fill="#FF5C4D"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20a7.5 7.5 0 0115 0"/></g>
+          <circle cx="282" cy="78" r="11" fill="#FF5C4D"/>
+          <path d="M277 78l3.5 3.5L288 74" stroke="#FFFFFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="260" y="108" text-anchor="middle" font-family="Montserrat,sans-serif" font-size="12" font-weight="700" fill="#FF5C4D">Your agent</text>
+        </g>
+      </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ THE FILM ══════════ -->
+<section id="film">
+  <div class="wrap">
+    <div class="film-kick rv">THE FILM · 2 MIN 22 · NARRATED · CAPTIONED · SOUND ON</div>
+    <h2 class="sec-h rv">Watch what happens<br><em>when somebody finally calls.</em></h2>
+    <p class="film-lede rv">The whole journey — the orphan policy, the four-minute review, the papers that
+    arrive already filled in, and the person whose name ends up beside yours.</p>
+    <div class="vwrap rv">
+      <video id="dhaaVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg"
+             controlsList="nodownload">
+        <source src="dhaa-film.mp4" type="video/mp4">
+        Your browser cannot play this video — <a href="client-film.html">watch it here instead</a>.
+      </video>
+      <button class="vcover" id="vcover" type="button" aria-label="Play the narrated film, 2 minutes 22 seconds, sound on">
+        <span class="vplay"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg></span>
+        <span class="vlab">Play the film</span>
+        <span class="vlen">2:22 · captioned · sound on</span>
+      </button>
+    </div>
+    <p class="film-foot rv">Want the whole process, step by step?
+      <a href="how-we-work.html">See exactly how we work →</a>
+      &nbsp;·&nbsp; <a href="process-film.html">What happens after you press send</a>
+      &nbsp;·&nbsp; <a href="client-film.html">Full-screen film</a></p>
+  </div>
+</section>
+
+<!-- ══════════ LOCAL — leads the evidence ══════════ -->
+<!-- ══════════ SEND IT — the agent's move ══════════ -->
+<section id="sendit">
+  <div class="wrap">
+    <div class="kicker rv">THE PROFESSIONAL ANSWER</div>
+    <h2 class="sec-h rv">If you met them,<br><em>send them here.</em></h2>
+    <div class="send-grid rv">
+      <div class="send-card">
+        <h3>For our agents</h3>
+        <p>Every week you meet someone who says the same sentence: <b>“nobody looks after my policy.”</b>
+        The professional answer is no longer a shrug — it is this link. Send it while you are still
+        standing there. The review takes four minutes, and it lands with our support team before you
+        are back in your car.</p>
+        <div class="send-actions">
+          <a class="btn btn-go" id="waShare" href="#" target="_blank" rel="noopener">Send by WhatsApp →</a>
+          <button class="btn btn-line" id="copyLinkBtn" type="button">Copy the link</button>
+        </div>
+        <p class="send-note">Working a case of your own? Use your console link instead — the reply
+        arrives carrying your name.</p>
+      </div>
+      <div class="send-card flip">
+        <h3>If someone sent you this</h3>
+        <p>That was not marketing. One of our agents met you, heard that nobody calls you, and did
+        what a professional is supposed to do: brought you to the branch that fixes it. Four minutes
+        from now, your file is open and a person is responsible for you — by name.</p>
+        <a class="btn btn-line" href="review.html?from=client">Start my free review →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="local">
+  <div class="wrap">
+    <div class="sec-label rv">Trinidad &amp; Tobago</div>
+    <h2 class="sec-h rv">The arithmetic that <em>ends the argument</em></h2>
+    <p class="sec-sub rv">
+      You're entitled to ask whether foreign statistics apply here. So start with ours —
+      two published local numbers, side by side.
+    </p>
+
+    <div class="tt-figure rv" id="ttFig">
+      <div class="tt-row">
+        <div class="tt-label"><b>70,000+</b>life policies underwritten by <b style="display:inline;font-size:inherit">your insurance company</b> alone</div>
+        <div class="tt-bar big"><span data-w="100"></span><em>Over 70,000 policies · one insurer</em></div>
+      </div>
+      <div class="tt-row">
+        <div class="tt-label"><b>~2,180</b>registered sales representatives in the <b style="display:inline;font-size:inherit">entire country</b></div>
+        <div class="tt-bar small"><span data-w="3.1"></span><em class="out">~2,180 · the whole country, every insurer</em></div>
+      </div>
+      <div class="tt-label" style="margin-top:-8px;font-size:12.6px">
+        That second bar is to scale. It covers <b style="display:inline;font-size:inherit;color:var(--muted)">every</b> insurer, agency and
+        brokerage in Trinidad &amp; Tobago, and motor and property as well as life.
+      </div>
+
+      <p class="tt-punch">
+        One company. Seventy thousand policies. About two thousand registered representatives in the
+        whole of Trinidad and Tobago — spread across every insurer and every class of business at once.
+        <br><br><b>There have never been enough people in this industry for every policy in the country
+        to have somebody actively watching it.</b> That is not a scandal. It is arithmetic. But it does
+        mean that if nobody has called you in years, you are not an unlucky exception — you are the
+        ordinary case.
+      </p>
+    </div>
+
+    <p class="legal rv">
+      Sources: representative count — our own tally of the
+      <a href="https://www.central-bank.org.tt/wp-content/uploads/2025/03/sales-representatives-registered-as-at-jan2025.pdf" target="_blank" rel="noopener">Central Bank of Trinidad and Tobago's public register of sales representatives, 1 January 2025</a>
+      (70 pages, all insurers and intermediaries). It is our count of a published register, not an official
+      total the Bank publishes, and the register is a snapshot — people join and leave constantly.
+      Full workings in our <a href="RESEARCH.md">research brief</a>.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ THE LOCAL COST ══════════ -->
+<section>
+  <div class="wrap">
+    <div class="sec-label rv">What it costs, here</div>
+    <h2 class="sec-h rv">People don't cancel because they<br><em>stopped loving their families</em></h2>
+    <p class="sec-sub rv">
+      They cancel because it got hard and there was nobody to ask. There is published Trinidadian
+      evidence for exactly that.
+    </p>
+
+    <div class="tl-body rv" style="border-color:rgba(255,92,77,.28)">
+      <h3><span>2021</span> · individual life premiums fell 14%</h3>
+      <p style="font-size:16px;color:var(--text);border-left:3px solid var(--gold);padding-left:16px;margin-bottom:18px">
+        “…may have resulted from the delayed impact of policyholders <b style="color:var(--gold)">discontinuing their
+        policies in 2020, as they could no longer afford the premiums</b>.”
+      </p>
+      <p style="font-size:13.4px;color:var(--muted2);margin-bottom:20px">
+        EY, <i>Trinidad and Tobago 2021 insurance statistics</i>, compiled from the Insurance Act annual
+        statements filed with the Central Bank through ATTIC.
+      </p>
+      <ul>
+        <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>A policyholder with an agent</b> gets told the options: reduce the sum assured, make the policy paid-up, use the cash value to carry the premiums, change the frequency, take a premium holiday.</span></li>
+        <li><svg style="color:var(--gold)"><use href="#i-warn"/></svg><span><b>A policyholder with nobody to call</b> stops paying — and loses the policy along with everything already paid into it.</span></li>
+      </ul>
+      <p style="margin-top:20px;margin-bottom:0;font-size:15.5px;color:var(--text)">
+        Same person, same financial pressure. The only difference is whether somebody picked up the phone.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ WORLDWIDE EVIDENCE ══════════ -->
+<section class="alt" id="truth">
+  <div class="wrap">
+    <div class="sec-label rv">The wider pattern</div>
+    <h2 class="sec-h rv">It isn't just you. <em>It's most people.</em></h2>
+    <p class="sec-sub rv">
+      These are the largest published studies on the subject, and they're international.
+      They don't measure Trinidad — they measure the profession, and we share it.
+    </p>
+    <div class="stats">
+      <div class="stat rv"><div class="num" data-count="40" data-suffix="%">0%</div>
+        <div class="statbar"><i data-w="40"></i></div>
+        <p>of life insurance policies have <b>no active agent</b> servicing them.</p>
+        <cite>ThinkAdvisor, reported by Sureify</cite></div>
+      <div class="stat rv"><div class="num" data-count="43" data-suffix="%">0%</div>
+        <div class="statbar"><i data-w="43"></i></div>
+        <p>have had <b>no contact at all</b> from an agent or adviser in over three years.</p>
+        <cite>J.D. Power, 2025 U.S. Individual Life Insurance Study</cite></div>
+      <div class="stat rv"><div class="num" data-count="19" data-suffix="%">0%</div>
+        <div class="statbar"><i data-w="19"></i></div>
+        <p>— only this many — describe their relationship with their adviser as <b>trusted</b>.</p>
+        <cite>J.D. Power, 2025</cite></div>
+      <div class="stat rv"><div class="num" data-count="90" data-suffix="%">0%</div>
+        <div class="statbar"><i data-w="90"></i></div>
+        <p>never updated their cover after a <b>major life change</b> — a marriage, a baby, a mortgage.</p>
+        <cite>Western &amp; Southern survey, n=1,009</cite></div>
+    </div>
+    <p class="legal rv" style="margin-top:22px">
+      United States figures, cited to describe a pattern our profession shares — not Trinidad &amp; Tobago
+      statistics. The local position is <a href="#local">above</a>, and every source is listed in our
+      <a href="RESEARCH.md">research brief</a>.
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ TIMELINE ══════════ -->
+<section>
+  <div class="wrap">
+    <div class="sec-label rv">The slow part</div>
+    <h2 class="sec-h rv">Nothing breaks on day one.<br><em>That's exactly the problem.</em></h2>
+    <p class="sec-sub rv">An unwatched policy doesn't fail loudly. It drifts. Pick a point on the clock.</p>
+    <div class="tl-track rv"><div class="tl-tabs" id="tlTabs"></div></div>
+    <div class="tl-body rv" id="tlBody"></div>
+  </div>
+</section>
+
+<!-- ══════════ PROMISE ══════════ -->
+<section class="alt" id="promise">
+  <div class="wrap">
+    <div class="sec-label rv">Straight answers</div>
+    <h2 class="sec-h rv">What this is — <em>and what it isn't</em></h2>
+    <p class="sec-sub rv">You have every right to assume this is a way to sell you something. So here it is
+      in two columns, before you give us a single detail.</p>
+    <div class="two-col">
+      <div class="panel yes rv">
+        <h3><svg style="color:var(--gold)"><use href="#i-check"/></svg>What you actually get</h3>
+        <ul>
+          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>A named human being.</b><span>Not a call centre. One person, with a direct number, responsible for your policy.</span></span></li>
+          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>Your records checked and corrected.</b><span>Address, date of birth, beneficiary, how you pay — the small things that delay claims.</span></span></li>
+          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>A plain-English read on what you own.</b><span>What it pays, when, and to whom. Only 15% of policyholders can say that today.</span></span></li>
+          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>A Policy Location Record.</b><span>One page your family can find, listing what exists and who to call. Free, whether or not you ever speak to us again.</span></span></li>
+          <li><svg style="color:var(--gold)"><use href="#i-check"/></svg><span><b>A date for the next review.</b><span>Set in our system, not dependent on anyone remembering.</span></span></li>
+        </ul>
+      </div>
+      <div class="panel no rv">
+        <h3><svg style="color:var(--muted2)"><use href="#i-x"/></svg>What this is not</h3>
+        <ul>
+          <li><svg style="color:var(--muted2)"><use href="#i-x"/></svg><span><b>Not a cost.</b><span>There is no fee for a service review. There never has been.</span></span></li>
+          <li><svg style="color:var(--muted2)"><use href="#i-x"/></svg><span><b>Not a change to your policy.</b><span>Nothing here alters your cover, premium or benefits. A servicing agent is who looks after you, not what you own.</span></span></li>
+          <li><svg style="color:var(--muted2)"><use href="#i-x"/></svg><span><b>Not a cancellation.</b><span>We will never suggest replacing a policy that is doing its job. Older policies are often better than anything sold today.</span></span></li>
+          <li><svg style="color:var(--muted2)"><use href="#i-x"/></svg><span><b>Not a sales call in disguise.</b><span>Arrive here on your own and the product questions are switched off entirely. You get asked one thing: what would you like help with.</span></span></li>
+          <li><svg style="color:var(--muted2)"><use href="#i-x"/></svg><span><b>Not a data grab.</b><span>No ID numbers, no bank details, no medical history. None of it belongs in a service review.</span></span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ WHO — THE TWO LANES ══════════ -->
+<section>
+  <div class="wrap">
+    <div class="sec-label rv">How it works</div>
+    <h2 class="sec-h rv">You do the easy part. <em>We do the rest.</em></h2>
+    <p class="sec-sub rv">Two lanes, one rule: the paperwork is our job, not yours. Watch who does what.</p>
+
+    <div class="lanes">
+
+      <!-- individual lane -->
+      <div class="lane rv">
+        <div class="lane-head">
+          <div class="wi" style="color:var(--gold)"><svg><use href="#i-person"/></svg></div>
+          <div><h3>Individuals &amp; families</h3>
+          <p>You don't even need your policy number.</p></div>
+        </div>
+        <div class="steps">
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-form"/></svg></span>
+            <div><b>Fill the basic questionnaire</b>
+            <p>Plain questions, about 4 minutes, skip anything. No policy number needed.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-prep"/></svg></span>
+            <div><b>We prepare everything</b>
+            <p>Our support team verifies your answers, traces and <b>fills in all the policy numbers</b>, and populates every document for you.</p></div></div>
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-signph"/></svg></span>
+            <div><b>Sign digitally, on your phone</b>
+            <p>Your papers arrive ready-made. Nothing to print, nothing typed twice.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-shieldck"/></svg></span>
+            <div><b>Filed, tracked, confirmed</b>
+            <p>Watch it move with your access code — and hear from us every 2 days until it's done.</p></div></div>
+        </div>
+        <a class="btn btn-go" href="review.html?from=client&amp;type=individual">Start my review →</a>
+      </div>
+
+      <!-- corporate lane -->
+      <div class="lane rv">
+        <div class="lane-head">
+          <div class="wi" style="color:var(--gold)"><svg><use href="#i-building"/></svg></div>
+          <div><h3>Corporate &amp; company plans</h3>
+          <p>A short set for HR, finance or a director.</p></div>
+        </div>
+        <div class="steps">
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-form"/></svg></span>
+            <div><b>Fill the short corporate set</b>
+            <p>Company, contact, where the plan stands. A few minutes, mostly taps.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-prep"/></svg></span>
+            <div><b>We prepare your letter</b>
+            <p>Your change of agent letter arrives by email, every detail filled in, ready for your letterhead.</p></div></div>
+          <div class="stp you"><span class="tag">You</span><span class="sic"><svg><use href="#i-stamp"/></svg></span>
+            <div><b>Print · stamp · sign · send back</b>
+            <p>The insurer requires the company stamp on your letterhead. Reply with a photo or scan, or hand it to us.</p></div></div>
+          <div class="stp us"><span class="tag us-t">Us</span><span class="sic"><svg><use href="#i-loop"/></svg></span>
+            <div><b>We follow up until it's in</b>
+            <p>Every 2 days, referencing our previous correspondence — it never slips through, and it stops the moment we receive it.</p></div></div>
+        </div>
+        <a class="btn btn-line" href="review.html?from=client&amp;type=group">Start our corporate review →</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ THE MANAGER ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-label rv">Who is behind this</div>
+    <h2 class="sec-h rv">You're dealing with <em>Ricky Rampersad</em> — and his team.</h2>
+    <p class="sec-sub rv">This review is the first step of an onboarding, not a form into a void. It ends with a
+      name, a number, and a branch that answers.</p>
+
+    <div class="mgr rv">
+      <div class="mgr-mark" aria-hidden="true">
+        <svg viewBox="0 0 88 88">
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#1B2A44"/>
+          <path d="M28 44L39 55L60 31" stroke="#FFF6F4" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span>Ricky Rampersad<br><i>Branch Manager</i></span>
+      </div>
+      <div class="mgr-body">
+        <p><b>Branch Manager, Ricky Rampersad Branch · your insurance company.</b>
+          Branch Manager — and still a servicing agent to his own clients — leading a team of skilled,
+          licensed your insurer agents on one idea: nobody who holds a policy should ever feel forgotten.</p>
+        <p>The branch pairs old-fashioned service — a person who answers, visits and follows through — with tools
+          most agencies don't have:</p>
+        <ul>
+          <li>Guided digital reviews, for a person or a whole company</li>
+          <li>Documents populated for you, sent for digital signature</li>
+          <li>Live progress tracking with your own access code</li>
+          <li>An update every 2 days until the work is done — automatic, not remembered</li>
+        </ul>
+        <p class="mgr-close">Whether it's your family's policy or your company's plan, from the moment you press
+          send you are dealing with Ricky and his team.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ LOCAL RIGHTS ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="sec-label rv">Your rights under local law</div>
+    <h2 class="sec-h rv">The <em>Insurance Act, 2018</em></h2>
+    <p class="sec-sub rv">Your position doesn't depend on your agent turning up. It's written into statute.</p>
+    <div class="local">
+      <div class="local-item rv">
+        <div class="li-ic" style="color:var(--gold)"><svg><use href="#i-shield"/></svg></div>
+        <h4>Your policy is with the company</h4>
+        <p>Not with an individual. When an agent leaves, the insurer's obligations — collecting premiums, servicing the policy, paying claims — carry on exactly as before.</p>
+      </div>
+      <div class="local-item rv">
+        <div class="li-ic" style="color:var(--gold)"><svg><use href="#i-clock"/></svg></div>
+        <h4>Money can sit unclaimed for years</h4>
+        <p>Under section 197, sums payable but unclaimed for <b>seven years</b> after maturity are reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens.</p>
+      </div>
+      <div class="local-item rv">
+        <div class="li-ic" style="color:var(--gold)"><svg><use href="#i-scale"/></svg></div>
+        <h4>Every agent must be registered — publicly</h4>
+        <p>Agents, agencies, salespersons and brokers must be registered under the Act, and <b>the register is public</b>. You can look up anyone who contacts you, including us.</p>
+      </div>
+    </div>
+    <p class="legal rv" style="margin-top:20px">
+      <a href="https://www.central-bank.org.tt/resources/insurance-act-2018/" target="_blank" rel="noopener">Insurance Act, 2018 — Central Bank of Trinidad and Tobago</a> ·
+      <a href="https://www.central-bank.org.tt/resources/circular-letter-standardized-reporting-of-unclaimed-monies-under-section-1975-of-the-insurance-act-2018/" target="_blank" rel="noopener">unclaimed monies, s.197(5)</a> ·
+      <a href="https://www.central-bank.org.tt/registered-intermediaries-and-insurance-companies/" target="_blank" rel="noopener">registered intermediaries and insurance companies</a>
+    </p>
+  </div>
+</section>
+
+<!-- ══════════ FAQ ══════════ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="sec-label rv">Before you start</div>
+    <h2 class="sec-h rv">The questions <em>you're actually thinking</em></h2>
+    <p class="sec-sub rv">Including the awkward ones.</p>
+    <div class="faq">
+      <details class="rv"><summary>What if I don't know my policy number?</summary>
+        <div class="a">Then don't give us one. Most people don't have it, and the form never requires it —
+        that's a deliberate design decision, not an oversight. Your name, date of birth and a contact number
+        are enough for us to trace a policy. <b>Not knowing what you own is the normal condition</b>, not an
+        embarrassing one: only 15% of policyholders say they completely understand their policy.</div></details>
+
+      <details class="rv"><summary>Is this really free? What's the catch?</summary>
+        <div class="a">It's free, and the catch is the honest one: we're an agency, and a proportion of people
+        we help will eventually ask us to do more. That's the whole business model. <b>What we don't do is
+        make the review conditional on it.</b> You can complete this, take your Policy Location Record, get
+        your records fixed, and never speak to us again. That happens regularly and it's fine.</div></details>
+
+      <details class="rv"><summary>Will this change my policy or my premium?</summary>
+        <div class="a">No. A servicing agent is <b>who looks after you</b>, not <b>what you own</b>. Your
+        cover, premium, benefits, maturity date and every guarantee in your contract are untouched. If you
+        also ask us to change something — a beneficiary, an address, how you pay — that's a separate,
+        explicit request, and the insurer confirms it to you in writing before it takes effect.</div></details>
+
+      <details class="rv"><summary>Are you going to try to sell me a new policy?</summary>
+        <div class="a">If you came here on your own, the product questions are <b>switched off entirely</b> —
+        the form doesn't ask what you'd like to buy, only what you'd like help with. If your agent sent you
+        the link, the coverage questions are included, because a relationship already exists and a review
+        without them isn't much of a review. Either way: <b>we will never advise you to cancel or replace a
+        policy that's doing its job.</b> Old policies are frequently better than what's sold today.</div></details>
+
+      <details class="rv"><summary>I can't afford my premium any more. Is it too late?</summary>
+        <div class="a">Usually not — and this is the single most important question on this page.
+        Depending on the policy and how long it has run, you may be able to <b>reduce the sum assured, make
+        it paid-up, use the built-up cash value to carry the premiums, change the payment frequency, or take
+        a premium holiday</b>. Even a policy that has already lapsed can sometimes be reinstated. The worst
+        outcome is stopping quietly, because that's the one where you lose everything you've already paid in.
+        <b>Ask before you stop.</b> It costs nothing to find out.</div></details>
+
+      <details class="rv"><summary>Nobody has called me in years. Why should I trust this?</summary>
+        <div class="a">That's fair, and we won't argue you out of it. The industry earned that.
+        What we'd say is: judge it by what happens next rather than by what we claim here. You'll get a
+        written confirmation with a reference number, a named person and a response time. If we miss it,
+        you have it in writing — and our own system chases us when we're late. You can also look us up on the
+        <a href="https://www.central-bank.org.tt/registered-intermediaries-and-insurance-companies/" target="_blank" rel="noopener">Central Bank's public register</a> before you tell us anything.</div></details>
+
+      <details class="rv"><summary>What happens to my information?</summary>
+        <div class="a">It goes to our office to service your policy and to the insurer's customer service
+        department for anything that needs their action — a record correction, a change of servicing agent.
+        Nowhere else. We don't ask for ID numbers, bank details or medical history, and we don't sell data.
+        Marketing consent is a separate, optional tick that changes nothing about your service if you decline.</div></details>
+
+      <details class="rv"><summary>My agent died, or I genuinely don't know who they were.</summary>
+        <div class="a">This is more common than you'd think, and it's exactly who this is for. Start the
+        review, say so in the "what would you like help with" box, and we'll trace the policy from your name
+        and date of birth. If you're a family member who's found paperwork for someone who has passed away,
+        say that too — <b>we'll help you either way, and there's no charge for looking.</b></div></details>
+
+      <details class="rv"><summary>I'm an agent. Can I use this for my own clients?</summary>
+        <div class="a">Yes — that's the other half of the product. The <a href="agent/">agent console</a>
+        generates a personal, prefilled link for each client and a ready-to-send message. Reviews come back
+        tagged to you, with the coverage questions switched on.</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ THE STANDARD ══════════ -->
+<section class="stdband" id="standard">
+  <div class="wrap">
+    <div class="kicker light rv">THE STANDARD IS THE SYSTEM</div>
+    <h2 class="rv">The kind of branch you<br><em>put your name next to.</em></h2>
+    <div class="std-grid rv">
+      <div class="std"><b>4<i>min</i></b><span>the whole review, from your phone</span></div>
+      <div class="std"><b>100<i>%</i></b><span>papers populated before you sign a thing</span></div>
+      <div class="std"><b>2<i>days</i></b><span>the longest you will wait to hear from us</span></div>
+      <div class="std"><b>1<i>code</i></b><span>your file, watched live, by you</span></div>
+      <div class="std"><b>6<i>mo</i></b><span>the automatic “what has changed?” check-up</span></div>
+      <div class="std"><b>∞</b><span>your review, every birthday month, for life</span></div>
+    </div>
+    <p class="std-foot rv">This is the second platform this branch has built in-house.
+    <a href="https://factfind360.com" target="_blank" rel="noopener">FactFind360</a> writes every
+    recommendation down properly; this one makes sure nobody is left without a person.
+    <b>Two platforms. One standard. One branch.</b></p>
+  </div>
+</section>
+
+<!-- ══════════ CTA ══════════ -->
+<section class="alt">
+  <div class="wrap">
+    <div class="cta-box rv">
+      <p class="cta-ask">Ask when your agent last called you.<br>If the answer is a shrug — you know where we are.</p>
+      <h2>Four minutes. No cost.<br>Somebody who answers.</h2>
+      <p>You've already paid for the policy. This is about making sure it does what you bought it to do.</p>
+      <div class="cta-actions">
+        <a class="btn btn-go" href="review.html?from=client">Claim my policy review →</a>
+        <button class="btn btn-line" onclick="openAgentLink()">I have a link from my agent</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ FOOTER ══════════ -->
+<footer>
+  <div class="wrap">
+    <div class="foot-top">
+      <div>
+        <a class="logo" href="#top" style="margin-bottom:10px">
+          <svg class="logo-mark" viewBox="0 0 88 88" aria-hidden="true">
+        <rect width="88" height="88" rx="22" fill="#0F1A2B"/><defs><clipPath id="nk3"><rect x="30" y="26" width="15" height="36"/></clipPath></defs><g transform="rotate(-40 44 44)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/><rect x="31" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FF5C4D" stroke-width="6.6"/><g clip-path="url(#nk3)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/></g></g>
+      </svg>
+          <span class="logo-word"><span class="l1">don't have</span><span class="l2">an agent<span class="dot">.com</span></span></span>
+        </a>
+        <div class="by-branch" style="border:none;padding:0;margin-top:4px">
+          <svg viewBox="0 0 88 88" aria-hidden="true">
+          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="#1B2A44"/>
+          <path d="M28 44L39 55L60 31" stroke="#FFF6F4" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+          <span><i>a</i><b>Ricky Rampersad Branch</b><i>initiative</i></span>
+        </div>
+      </div>
+      <div class="foot-links">
+        <a href="review.html?from=client">Start a review</a>
+        <a href="status.html">Track my request</a>
+        <a href="#local">Trinidad &amp; Tobago</a>
+        <a href="#faq">Questions</a>
+        <a href="RESEARCH.md">Our research</a>
+        <a href="agent/">For agents</a>
+        <a href="https://rickyrampersadbranch.com" target="_blank" rel="noopener">rickyrampersadbranch.com</a>
+        <a id="footMail" href="#">Contact</a>
+      </div>
+    </div>
+    <p class="legal" id="legal"></p>
+  </div>
+</footer>
+
+<div class="sticky" id="sticky">
+  <div class="sticky-in">
+    <div class="sticky-txt">Still have an unwatched policy?<span>Four minutes, no cost, no obligation.</span></div>
+    <a class="btn btn-go btn-sm" href="review.html?from=client">Start free review →</a>
+  </div>
+</div>
+
+<div class="modal" id="linkModal" onclick="if(event.target===this)closeAgentLink()">
+  <div class="modal-box">
+    <button class="modal-x" onclick="closeAgentLink()">✕</button>
+    <h3>Continue with your link</h3>
+    <p>Your agent will have sent you a personal link by email or WhatsApp — it opens this review with your
+       details already filled in. Can't find it? Either option below works just as well.</p>
+    <label for="mCode">Reference code from your message</label>
+    <input id="mCode" type="text" placeholder="e.g. DHA-260812-4821" autocomplete="off">
+    <button class="btn btn-go" onclick="goWithCode()">Continue →</button>
+    <div class="or">— or —</div>
+    <a class="btn btn-line" style="width:100%" href="review.html?from=agent">I don't have the code, start anyway</a>
+    <p style="font-size:12.5px;color:var(--muted2);margin-top:16px;text-align:center">
+      Nothing is lost either way. We match you by name and date of birth.</p>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════
+   DON'T HAVE AN AGENT — landing page
+   A Ricky Rampersad project.
+
+   White-labelling: the palette is the :root block at the top of the
+   stylesheet, and everything agency-specific is BRAND below. Gold means
+   unassigned, teal means resolved — keep those opposed if re-skinning.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+const BRAND = {
+  agency:    "Ricky Rampersad Branch",
+  agent:     "Ricky Rampersad",
+  carrier:   "your insurance company",
+  email:     "ricky.rampersad@myguardiangroup.com",
+  phone:     "(868) 678-5921",
+  country:   "Trinidad & Tobago",
+  regulator: "the Central Bank of Trinidad and Tobago",
+};
+
+/* ── the 60-second check ────────────────────────────────────────────────
+   Four questions, in-browser only, nothing transmitted. Somebody ignored
+   for six years will not hand over an email address to find out whether
+   they've been ignored.                                                  */
+const CHECK = [
+  { q: "When did someone last review this policy with you?",
+    opts: [ { t: "Within a year", s: 0 }, { t: "1–3 years", s: 1 }, { t: "Over 3 years", s: 2 }, { t: "Never", s: 3 } ] },
+  { q: "Do you know who your servicing agent is today?",
+    opts: [ { t: "Yes", s: 0 }, { t: "I know the name, but not how to reach them", s: 2 }, { t: "No idea", s: 3 } ] },
+  { q: "Could you say what your policy pays, and to whom?",
+    opts: [ { t: "Confidently", s: 0 }, { t: "Roughly", s: 1 }, { t: "Not really", s: 3 } ] },
+  { q: "Has anything big changed since you took it out?",
+    opts: [ { t: "Nothing much", s: 0 }, { t: "One or two things", s: 2 }, { t: "A lot", s: 3 } ] },
+];
+const answers = {};
+
+function renderCheck() {
+  document.getElementById("checkQs").innerHTML = CHECK.map((c, i) =>
+    '<div class="cq"><p>' + (i + 1) + ". " + c.q + '</p><div class="cq-opts" data-q="' + i + '">' +
+    c.opts.map((o, j) => '<button type="button" data-j="' + j + '" class="' +
+      (answers[i] === j ? "on" + (o.s >= 2 ? " warn" : "") : "") + '">' + o.t + "</button>").join("") +
+    "</div></div>").join("");
+  document.querySelectorAll("#checkQs .cq-opts").forEach((box) => {
+    box.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+      answers[box.dataset.q] = Number(b.dataset.j);
+      renderCheck(); scoreCheck();
+    }));
+  });
+}
+
+function scoreCheck() {
+  const done = Object.keys(answers).length;
+  const max = CHECK.reduce((t, c) => t + Math.max.apply(null, c.opts.map((o) => o.s)), 0);
+  const score = Object.keys(answers).reduce((t, i) => t + CHECK[i].opts[answers[i]].s, 0);
+  const pct = Math.round((score / max) * 100);
+  document.getElementById("gaugeFill").style.width = pct + "%";
+  const txt = document.getElementById("gaugeTxt"), cta = document.getElementById("gaugeCta");
+  if (done < CHECK.length) {
+    txt.innerHTML = "Answer the four above and we'll tell you straight. <b>" + done + " of 4.</b>";
+    cta.style.display = "none";
+    return;
+  }
+  cta.style.display = "";
+  if (pct >= 65) {
+    txt.innerHTML = "<b>You're an orphan policyholder.</b> Nobody is watching this policy, and on the numbers " +
+      "you're in the largest group there is. Nothing is broken — but nothing is being checked either.";
+  } else if (pct >= 35) {
+    txt.innerHTML = "<b>You're drifting.</b> There's a relationship on paper, but it isn't doing much. " +
+      "That's usually where the small, expensive gaps open up.";
+  } else if (pct > 0) {
+    txt.innerHTML = "<b>You're in decent shape.</b> Somebody is paying attention. A four-minute check " +
+      "still costs you nothing, and it's how you find the one thing that's slipped.";
+  } else {
+    txt.innerHTML = "<b>Genuinely well looked after.</b> That puts you in the 19%. Keep whoever is doing it.";
+  }
+}
+
+/* ── what goes wrong, over time ───────────────────────────────────────── */
+const TIMELINE = [
+  { k: "Year 1", h: "Nothing at all", lead: "And this is why it's so easy to leave alone.", tone: "check",
+    items: ["Premiums keep collecting, cover keeps running.",
+            "Your policy is completely valid — the contract is with the insurer, not the agent.",
+            "You may not even know your agent has gone. Most people find out by trying to call."] },
+  { k: "Year 3", h: "The record drifts", lead: "Small things go out of date, and nobody is checking them.", tone: "warn",
+    items: ["You move house. The insurer's post goes to the old address.",
+            "A marriage, a baby, a mortgage — the cover was sized for a different life. Over 90% never update it.",
+            "The beneficiary is whoever you named years ago. Policies pay who is named, not who you meant.",
+            "A premium bounces after a bank change and the notice goes to the old address."] },
+  { k: "Year 5", h: "Money starts being left behind", lead: "Now it's costing something real.", tone: "warn",
+    items: ["Premiums get hard, nobody explains the options, and the policy is quietly discontinued — the exact thing EY recorded across Trinidad in 2020.",
+            "A policy matures and the cheque goes nowhere — under T&amp;T law it can sit seven years before it's reported unclaimed.",
+            "Benefits you're entitled to sit unused because nobody told you they existed.",
+            "Cover that should have been increased at each life stage never was."] },
+  { k: "Year 10+", h: "Your family finds out the hard way", lead: "This is the part that actually matters.", tone: "warn",
+    items: ["Only 29% of beneficiaries know the name of the insurance company.",
+            "Only 25% know the benefit amount. Fewer still know where the documents are.",
+            "One in every 600 policies is never claimed at all when the insured dies.",
+            "The claim that does get made is delayed for weeks by a wrong date of birth or an out-of-date beneficiary — corrections that take four minutes while you're alive."] },
+];
+
+let tlAt = 0;
+function renderTimeline() {
+  document.getElementById("tlTabs").innerHTML = TIMELINE.map((t, i) =>
+    '<button class="' + (i === tlAt ? "on" : "") + '" data-i="' + i + '">' + t.k + "</button>").join("");
+  document.querySelectorAll("#tlTabs button").forEach((b) => b.addEventListener("click", () => {
+    tlAt = Number(b.dataset.i); renderTimeline();
+  }));
+  const t = TIMELINE[tlAt];
+  const ic = t.tone === "check" ? "i-check" : "i-warn";
+  const col = t.tone === "check" ? "var(--gold)" : "var(--gold)";
+  document.getElementById("tlBody").innerHTML =
+    '<div class="tl-fade"><h3><span>' + t.k + "</span> · " + t.h + "</h3><p>" + t.lead + "</p><ul>" +
+    t.items.map((i) => '<li><svg style="color:' + col + '"><use href="#' + ic + '"/></svg><span>' + i + "</span></li>").join("") +
+    "</ul></div>";
+}
+
+/* ── counters + bars, held until they're on screen ─────────────────────
+   The movement is what makes somebody read a number instead of skim it. */
+function runCounter(el) {
+  if (el._done) return;
+  el._done = true;
+  const target = Number(el.dataset.count), suffix = el.dataset.suffix || "", dur = 1100, t0 = performance.now();
+  (function frame(now) {
+    const p = Math.min(1, (now - t0) / dur);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3))) + suffix;
+    if (p < 1) requestAnimationFrame(frame);
+  })(t0);
+}
+function runBar(el) {
+  if (el._done) return;
+  el._done = true;
+  requestAnimationFrame(() => { el.style.width = el.dataset.w + "%"; });
+}
+
+const io = new IntersectionObserver((entries) => {
+  entries.forEach((e) => {
+    if (!e.isIntersecting) return;
+    e.target.classList.add("in");
+    e.target.querySelectorAll("[data-count]").forEach(runCounter);
+    e.target.querySelectorAll("[data-w]").forEach(runBar);
+    io.unobserve(e.target);
+  });
+}, { threshold: 0.16, rootMargin: "0px 0px -40px 0px" });
+
+/* ── agent-link modal ──────────────────────────────────────────────── */
+function openAgentLink()  { document.getElementById("linkModal").classList.add("on"); setTimeout(() => document.getElementById("mCode").focus(), 60); }
+function closeAgentLink() { document.getElementById("linkModal").classList.remove("on"); }
+function goWithCode() {
+  const c = document.getElementById("mCode").value.trim();
+  location.href = "review.html?from=agent" + (c ? "&k=" + encodeURIComponent(c) : "");
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeAgentLink();
+  if (e.key === "Enter" && document.getElementById("linkModal").classList.contains("on")) goWithCode();
+});
+
+const stickyIo = new IntersectionObserver((es) => {
+  document.getElementById("sticky").classList.toggle("on", !es[0].isIntersecting);
+}, { threshold: 0 });
+
+(function boot() {
+  renderCheck();
+  renderTimeline();
+  document.querySelectorAll(".rv").forEach((el) => io.observe(el));
+  stickyIo.observe(document.querySelector(".hero"));
+
+  document.getElementById("footMail").href = "mailto:" + BRAND.email;
+  document.getElementById("legal").innerHTML =
+    "donthaveanagent.com is a service of <b>" + BRAND.agency + "</b>, " + BRAND.country + ". " +
+    "Reviews are carried out by " + BRAND.agent + " — Branch Manager, who personally services clients — and " +
+    "his team of licensed " + BRAND.carrier + " agents, registered under the Insurance Act, 2018. A policy service review is free and carries no obligation. Nothing on this page changes " +
+    "your policy, premium or benefits — changes to policy records, including a change of servicing agent, take " +
+    "effect only once processed and confirmed in writing by your insurer, and your policy contract governs in all " +
+    "cases. Trinidad &amp; Tobago figures are sourced and linked in the sections above; the representative count is " +
+    "our own tally of a published Central Bank register, labelled as such. International figures are cited to " +
+    "describe an industry pattern and are not " + BRAND.country + " statistics. Statutory references are to the " +
+    "Insurance Act, 2018, administered by " + BRAND.regulator + ". Full sources are in our " +
+    "<a href='RESEARCH.md'>research brief</a>.<br><br>" +
+    "Contact: <a href='mailto:" + BRAND.email + "'>" + BRAND.email + "</a> · " +
+    "<a href='tel:+" + BRAND.phone.replace(/\D/g, "") + "'>" + BRAND.phone + "</a>";
+})();
+</script>
+
+<style>
+/* ── v2 additions: hear it · send it · the standard ─────────────────── */
+.kicker{font-weight:800;font-size:12.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);margin-bottom:12px}
+#sendit{padding:74px 0}
+.send-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:26px}
+.send-grid>*{min-width:0}
+.send-card{background:var(--card);border:1px solid var(--line);border-top:6px solid var(--gold);
+  border-radius:16px;padding:26px 26px 22px}
+.send-card.flip{border-top-color:var(--gold2)}
+.send-card h3{font-size:19px;font-weight:800;margin-bottom:10px;color:var(--head)}
+.send-card p{font-size:15.2px;line-height:1.62;color:var(--body)}
+.send-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.send-note{font-size:12.8px;color:var(--muted);margin-top:12px}
+.stdband{background:var(--gold2);color:#FFF6F4;padding:78px 0}
+.stdband .kicker.light{color:#FFE9E5}
+.stdband h2{font-size:clamp(27px,4.4vw,42px);font-weight:900;color:#FFF6F4;margin-bottom:8px}
+.stdband h2 em{font-style:normal;color:#FFC2BA}
+.std-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-top:30px}
+.std-grid>*{min-width:0}
+.std{background:rgba(255,246,244,.07);border:1px solid rgba(255,246,244,.18);border-radius:14px;padding:18px 18px 15px}
+.std b{display:block;font-size:38px;font-weight:900;line-height:1;color:#FFF6F4;font-variant-numeric:tabular-nums}
+.std b i{font-style:normal;font-size:16px;font-weight:800;margin-left:3px;color:#FFE9E5}
+.std span{display:block;font-size:13px;line-height:1.45;margin-top:7px;color:#FFE9E5}
+.std-foot{margin-top:26px;font-size:15px;line-height:1.65;color:#FFE9E5;max-width:640px}
+.std-foot a{color:#FFF6F4;font-weight:700}
+.std-foot b{color:#FFF6F4}
+.cta-ask{font-size:16.5px;line-height:1.55;color:var(--muted);margin-bottom:14px;font-weight:600}
+#copyToast{position:fixed;left:50%;bottom:76px;transform:translateX(-50%);background:var(--head);color:#FFF6F4;
+  padding:9px 18px;border-radius:99px;font-size:13.5px;z-index:70;display:none}
+</style>
+<div id="copyToast">Link copied — paste it anywhere</div>
+<script>
+/* ── send it ── */
+(function(){
+  var MSG = "You mentioned nobody looks after your policy. This fixes it — a free four-minute review from your phone, and a person responsible for you by name: https://donthaveanagent.com — Ricky Rampersad Branch, your insurance company.";
+  var wa = document.getElementById("waShare");
+  if (wa) wa.href = "https://wa.me/?text=" + encodeURIComponent(MSG);
+  var cp = document.getElementById("copyLinkBtn");
+  if (cp) cp.addEventListener("click", function(){
+    var done = function(){ var t=document.getElementById("copyToast"); t.style.display="block";
+      setTimeout(function(){ t.style.display="none"; }, 1800); };
+    if (navigator.clipboard && navigator.clipboard.writeText)
+      navigator.clipboard.writeText("https://donthaveanagent.com").then(done, done);
+    else done();
+  });
+})();
+</script>
+
+<style>
+/* ── the film player ───────────────────────────────────────────────── */
+#film{padding:70px 0;background:var(--gold2);color:#FFF6F4}
+#film .film-kick{font-weight:800;font-size:12px;letter-spacing:.26em;color:#FFE9E5;margin-bottom:12px}
+#film h2.sec-h{color:#FFF6F4}
+#film h2.sec-h em{color:#FFC2BA}
+.film-lede{font-size:16px;line-height:1.62;color:#FFE9E5;max-width:60ch;margin-bottom:24px}
+.vwrap{position:relative;max-width:860px;border-radius:18px;overflow:hidden;background:#0F1A2B;
+  box-shadow:0 20px 50px rgba(15,26,43,.42);aspect-ratio:16/9}
+.vwrap video{display:block;width:100%;height:100%;object-fit:cover;background:#0F1A2B}
+.vcover{position:absolute;inset:0;display:grid;place-items:center;border:none;cursor:pointer;
+  color:#FFF6F4;font:inherit;
+  background:radial-gradient(circle at 50% 46%,rgba(15,26,43,.30),rgba(15,26,43,.62) 62%,rgba(15,26,43,.82))}
+.vcover.gone{display:none}
+.vplay{width:88px;height:88px;border-radius:50%;background:rgba(255,246,244,.16);
+  border:2px solid rgba(255,246,244,.62);display:flex;align-items:center;justify-content:center}
+.vplay svg{width:38px;height:38px;margin-left:5px}
+.vcover:hover .vplay{background:rgba(255,246,244,.26)}
+.vlab{position:absolute;left:22px;bottom:20px;font-weight:800;font-size:17px;
+  text-shadow:0 2px 12px rgba(15,26,43,.85)}
+.vlen{position:absolute;right:22px;bottom:22px;font-size:12px;letter-spacing:.16em;color:#FFE9E5;
+  font-weight:700;text-shadow:0 2px 10px rgba(15,26,43,.85)}
+.film-foot{margin-top:18px;font-size:14.5px;color:#FFE9E5}
+.film-foot a{color:#FFF6F4;font-weight:700}
+@media (prefers-reduced-motion: no-preference){
+  .vplay{animation:filmpulse 2.6s ease-in-out infinite}
+  @keyframes filmpulse{0%,100%{box-shadow:0 0 0 0 rgba(255,246,244,.3)}60%{box-shadow:0 0 0 18px rgba(255,246,244,0)}}
+}
+@media(max-width:640px){.vplay{width:64px;height:64px}.vplay svg{width:26px;height:26px}
+  .vlab{font-size:14px;left:14px;bottom:14px}.vlen{font-size:10.5px;right:14px;bottom:16px}}
+</style>
+<script>
+(function(){
+  var v=document.getElementById("dhaaVid"), c=document.getElementById("vcover");
+  if(!v||!c) return;
+  c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
+  v.addEventListener("pause", function(){ if(v.currentTime===0) c.classList.remove("gone"); });
+  v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
+})();
+</script>
+<p style="text-align:center;font-size:11.5px;color:#6B7C96;margin:18px auto 6px;max-width:760px">Music: &ldquo;Inspired&rdquo; by Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener" style="color:#6B7C96">incompetech.com</a>), licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener" style="color:#6B7C96">CC BY 4.0</a>.</p>
+</body>
+</html>

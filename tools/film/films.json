@@ -1,0 +1,237 @@
+{
+ "client": {
+  "cap": "clientcapG",
+  "vox": "voc3",
+  "music": "bed-client.wav",
+  "mix": "client-mix.wav",
+  "ass": "captions-client.ass",
+  "dur": 141.8,
+  "durs": [
+   5.8,
+   12.6,
+   11.1,
+   11.5,
+   13.6,
+   9.9,
+   10.5,
+   10.9,
+   10.1,
+   12.5,
+   8.1,
+   11.2,
+   5.5
+  ],
+  "out": "dhaa-film.mp4",
+  "musicgain": 1.0,
+  "duck": 0.3,
+  "dark": [
+   0,
+   1,
+   4,
+   6,
+   11,
+   12,
+   13
+  ],
+  "ticks": [
+   [
+    96.0,
+    5,
+    0.62
+   ]
+  ],
+  "sfx": "sfx-client.wav"
+ },
+ "process": {
+  "cap": "proccap5",
+  "vox": "vop",
+  "music": "bed-process.wav",
+  "mix": "process-mix.wav",
+  "ass": "captions-process.ass",
+  "dur": 103.5,
+  "durs": [
+   7.0,
+   6.6,
+   9.8,
+   12.8,
+   11.2,
+   8.6,
+   7.6,
+   7.6,
+   8.2,
+   7.0,
+   8.2
+  ],
+  "out": "dhaa-process.mp4",
+  "musicgain": 1.0,
+  "duck": 0.3,
+  "dark": [
+   0,
+   7,
+   11
+  ],
+  "sfx": "sfx-process.wav"
+ },
+ "agentside": {
+  "cap": "ascap5",
+  "vox": "voas",
+  "music": "bed-agentside.wav",
+  "mix": "agentside-mix.wav",
+  "ass": "captions-agentside.ass",
+  "dur": 83.3,
+  "durs": [
+   5.4,
+   8.0,
+   7.4,
+   7.4,
+   6.4,
+   6.0,
+   11.8,
+   6.2,
+   7.4,
+   8.8
+  ],
+  "out": "dhaa-your-side.mp4",
+  "musicgain": 1.0,
+  "duck": 0.3,
+  "dark": [
+   0,
+   4,
+   10
+  ],
+  "ticks": [
+   [
+    40.6,
+    4,
+    0.62
+   ]
+  ],
+  "sfx": "sfx-agentside.wav"
+ },
+ "agent": {
+  "cap": "agcap5",
+  "vox": "voag",
+  "music": "bed-agent.wav",
+  "mix": "ag-mix.wav",
+  "ass": "captions-ag.ass",
+  "dur": 74.5,
+  "durs": [
+   5.6,
+   7.6,
+   7.6,
+   8.2,
+   7.6,
+   7.6,
+   7.6,
+   8.2
+  ],
+  "out": "dhaa-agent-film.mp4",
+  "musicgain": 1.0,
+  "duck": 0.3,
+  "dark": [
+   0,
+   8
+  ],
+  "sfx": "sfx-agent.wav"
+ },
+ "wall": {
+  "cap": "wallcap",
+  "vox": "vowall2",
+  "music": "bed-wall.wav",
+  "mix": "wall-mix.wav",
+  "ass": "captions-wall.ass",
+  "dur": 111.9,
+  "durs": [
+   5.5,
+   10.3,
+   7.5,
+   6.5,
+   11.6,
+   7.4,
+   13.3,
+   10.3,
+   10.8,
+   9.5,
+   8.9,
+   10.3
+  ],
+  "out": "dhaa-wall.mp4",
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "dark": [
+   0,
+   2,
+   3,
+   11
+  ],
+  "ticks": [
+   [
+    23.3,
+    7,
+    0.15
+   ]
+  ],
+  "sfx": "sfx-wall.wav",
+  "start": 176
+ },
+ "reel": {
+  "cap": "adcap",
+  "vox": "voad",
+  "music": "bed-reel.wav",
+  "mix": "reel-mix.wav",
+  "ass": "captions-reel.ass",
+  "dur": 23.5,
+  "durs": [
+   3.7,
+   4.2,
+   4.2,
+   4.6,
+   3.5,
+   3.3
+  ],
+  "out": "dhaa-ad-reel.mp4",
+  "w": 1080,
+  "h": 1920,
+  "capmode": "over",
+  "capwrap": 26,
+  "capsize": 52,
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "start": 176,
+  "dark": [
+   0,
+   4
+  ],
+  "sfx": "sfx-reel.wav"
+ },
+ "feed": {
+  "cap": "feedcap",
+  "vox": "voad",
+  "music": "bed-feed.wav",
+  "mix": "feed-mix.wav",
+  "ass": "captions-feed.ass",
+  "dur": 23.5,
+  "durs": [
+   3.7,
+   4.2,
+   4.2,
+   4.6,
+   3.5,
+   3.3
+  ],
+  "out": "dhaa-ad-feed.mp4",
+  "w": 1080,
+  "h": 1350,
+  "capmode": "over",
+  "capwrap": 30,
+  "capsize": 44,
+  "musicgain": 0.62,
+  "duck": 0.3,
+  "start": 176,
+  "dark": [
+   0,
+   4
+  ],
+  "sfx": "sfx-feed.wav"
+ }
+}

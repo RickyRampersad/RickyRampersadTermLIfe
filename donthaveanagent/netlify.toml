@@ -1,0 +1,159 @@
+# Netlify config for donthaveanagent.com
+# Publish directory is this folder; there is nothing to build.
+#
+# In Netlify: New site → import this repo → set the base/publish directory to
+# "donthaveanagent", then add donthaveanagent.com as the custom domain.
+
+[build]
+  publish = "."
+
+# ── short links an agent can text or say out loud ──────────────────────────
+# donthaveanagent.com/r/DHA-260812-A1B2 → the review with the reference attached
+[[redirects]]
+  from = "/r/*"
+  to = "/review.html?from=agent&k=:splat"
+  status = 302
+
+# The two doors, as links you can print or read down a phone
+[[redirects]]
+  from = "/start"
+  to = "/review.html?from=client"
+  status = 302
+
+[[redirects]]
+  from = "/me"
+  to = "/review.html?from=client&type=individual"
+  status = 302
+
+[[redirects]]
+  from = "/company"
+  to = "/review.html?from=client&type=group"
+  status = 302
+
+# The client film — the one an agent's link opens with. A link always plays,
+# with music; a file dropped into a chat preview can't.
+[[redirects]]
+  from = "/film"
+  to = "/client-film.html"
+  status = 302
+
+# What happens after a client presses send — the process, step by step.
+[[redirects]]
+  from = "/what-happens"
+  to = "/process-film.html"
+  status = 302
+
+# The agent's own side: what they see once they send their link.
+[[redirects]]
+  from = "/my-link"
+  to = "/agent-side-film.html"
+  status = 302
+
+[[redirects]]
+  from = "/launch"
+  to = "/client-film.html"
+  status = 302
+
+# The branch wall — one screen for the whole team, meant to be left running.
+# Behind the branch code, so the short link costs nothing to hand out.
+[[redirects]]
+  from = "/wall"
+  to = "/wall.html"
+  status = 302
+
+# The launch film for the wall — what it is and why, for the team.
+[[redirects]]
+  from = "/wall-film"
+  to = "/wall-film.html"
+  status = 302
+
+# The Facebook / Instagram ad, both cuts, as links you can send to check.
+[[redirects]]
+  from = "/ad"
+  to = "/dhaa-ad-reel.mp4"
+  status = 302
+
+[[redirects]]
+  from = "/ad-feed"
+  to = "/dhaa-ad-feed.mp4"
+  status = 302
+
+# Every film and ad on one page, to review before anything goes out. Not
+# linked from the public site and not indexed.
+[[redirects]]
+  from = "/preview"
+  to = "/preview.html"
+  status = 302
+
+# Where a client goes to watch their request move — reference + access code.
+[[redirects]]
+  from = "/track"
+  to = "/status.html"
+  status = 302
+
+# The agents' own door — name + portal code from the Agent Skill Bank.
+[[redirects]]
+  from = "/agents"
+  to = "/agents.html"
+  status = 302
+
+# The page an agent sends a client after a meeting — film plus the
+# whole process, with a start button on every screen.
+[[redirects]]
+  from = "/how-we-work"
+  to = "/how-we-work.html"
+  status = 302
+
+[[redirects]]
+  from = "/how-we-work-film"
+  to = "/how-we-work-film.html"
+  status = 302
+
+[[redirects]]
+  from = "/status"
+  to = "/status.html"
+  status = 302
+
+# ── security headers ──────────────────────────────────────────────────────
+# The review carries client records and a signature. no-referrer also stops a
+# policy number in the query string leaking through the Referer header when
+# somebody taps an outbound link.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    X-Frame-Options = "DENY"
+    Permissions-Policy = "geolocation=(), microphone=(), camera=(), interest-cohort=()"
+
+# The agent console and portal are for staff, never for search engines.
+[[headers]]
+  for = "/agent/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/agents.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+# The agent film is for the team, not for search engines.
+[[headers]]
+  for = "/agent-film.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/dhaa-agent-film.mp4"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/agent-side-film.html"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/dhaa-your-side.mp4"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow"
