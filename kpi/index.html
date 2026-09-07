@@ -1854,6 +1854,7 @@ function App() {
   // call, not only the first read of the morning — the sign-in screen comes
   // back with the reason on it.
   const [ended, setEnded] = useState(false);
+  const [bootNote, setBootNote] = useState("");
   useEffect(() => {
     const f = () => { setEnded(true); signOut(); };
     window.addEventListener(SESSION_ENDED, f);
@@ -1898,9 +1899,15 @@ function App() {
         rememberRoles(r.roster);
         if (r.schedule) SCHEDULE = r.schedule;
         if (r.kpis) KPI_CHOICES = r.kpis;
-      } else {
+      } else if (r.authRequired) {
         storeToken("");
         setToken("");
+      } else {
+        // The sheet did not answer: a dropped request, not a refused session.
+        // The session is kept, so a reload resumes it, and the sign-in screen
+        // says why it is showing. On 7 September a ten-second wobble in the
+        // office connection cost somebody her session and then her sign-in.
+        setBootNote((r && r.error) || "The sheet did not answer.");
       }
       setBooting(false);
     })();
@@ -2133,9 +2140,11 @@ function App() {
     text: "Checking your session\u2026"
   });
   if (!me) return /*#__PURE__*/React.createElement(Login, {
-    note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on." : "",
+    note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on."
+        : bootNote ? bootNote + " Your session is still here: reload the page to carry on, or sign in again." : "",
     onIn: (tok, profile, ros) => {
       setEnded(false);
+      setBootNote("");
       storeToken(tok);
       setToken(tok);
       setMe(profile);
