@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Progress &amp; KPIs | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  /* chart series — validated for this dark surface (see README) */
+  :root{ --s1:#b8862a; --s2:#0093ad; }
+  .chartwrap{position:relative}
+  .chart{width:100%;height:auto;display:block;overflow:visible}
+  .chart .grid{stroke:rgba(255,255,255,.09);stroke-width:1}
+  .chart .axis{stroke:rgba(255,255,255,.22);stroke-width:1}
+  .chart .lbl{fill:#a9bbcf;font-size:9px;font-family:'DM Sans',sans-serif}
+  .chart .formband{fill:rgba(255,255,255,.035)}
+  .chart .formtxt{fill:#a9bbcf;font-size:8.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase}
+  .chart .ln{fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round}
+  .chart .pt{stroke:#163553;stroke-width:2}
+  .chart .dlbl{font-size:10px;font-weight:700;font-family:'Montserrat',sans-serif}
+  .chart .cross{stroke:rgba(255,255,255,.35);stroke-width:1;stroke-dasharray:3 3}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:12px 0 4px;font-size:.8rem;color:var(--muted)}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+  .tip{position:absolute;pointer-events:none;background:#07131f;border:1px solid var(--line);
+       border-radius:9px;padding:9px 11px;font-size:.78rem;line-height:1.5;white-space:nowrap;
+       box-shadow:0 8px 24px rgba(0,0,0,.5);opacity:0;transition:opacity .1s;z-index:5}
+  .kpirow{display:flex;align-items:center;gap:14px;padding:15px;border-radius:13px;
+          background:rgba(0,0,0,.2);border:1px solid var(--line);margin-bottom:9px}
+  .kpirow .w{flex:none;font-family:'Montserrat',sans-serif;font-size:.7rem;color:var(--muted);
+             background:rgba(255,255,255,.06);padding:3px 8px;border-radius:99px}
+  .kpirow .v{flex:none;font-family:'Montserrat',sans-serif;font-size:1.35rem;font-weight:800;width:74px;text-align:right}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Progress &amp; KPIs</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Key performance indicators</div>
+      <h1 id="hd-title">Progress &amp; KPIs</h1>
+      <p id="hd-sub"></p>
+    </div>
+
+    <div id="nostudents" class="hidden empty">
+      <div class="ico">🎒</div><p>No student profile on this device yet.</p>
+    </div>
+
+    <div id="body" class="hidden">
+
+      <div class="card hidden" id="pickwrap" style="margin-bottom:18px">
+        <label class="fl" for="pick">Viewing</label>
+        <select class="fi" id="pick"></select>
+      </div>
+
+      <!-- ---------- readiness hero ---------- -->
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;gap:26px;align-items:center;flex-wrap:wrap">
+          <div style="flex:none" id="ri-ring"></div>
+          <div style="flex:1;min-width:230px">
+            <div class="eyebrow" style="margin-bottom:4px">Readiness index</div>
+            <h3 style="font-size:1.3rem" id="ri-band">—</h3>
+            <p class="sub" id="ri-note" style="margin-top:6px"></p>
+            <div id="ri-prov" class="hidden" style="margin-top:10px">
+              <span class="pill gold">Provisional — not enough data yet</span>
+            </div>
+          </div>
+          <div style="flex:none;text-align:center">
+            <div class="big" style="font-family:'Montserrat',sans-serif;font-size:2rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
+            <div class="lab" style="font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Subjects on<br>Grade I track</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="note gold" style="margin-bottom:8px">
+        <b>Read this before you read the numbers.</b> The readiness index is built from
+        practice inside this hub. It is <b>not a CXC prediction and not a grade</b>. Practice
+        accuracy flatters — multiple choice, no time pressure, an explanation after every
+        question — so retention and timed tests are weighted, and coverage caps the score,
+        because nobody is ready for a paper they have seen a third of. Treat a band as a
+        direction of travel, and treat school reports and real past papers as the truth.
+      </div>
+
+      <!-- ---------- the four components ---------- -->
+      <div class="section-label">What the index is made of</div>
+      <div id="parts"></div>
+
+      <!-- ---------- distinction board ---------- -->
+      <div class="section-label">Subject by subject</div>
+      <div class="rows" id="board"></div>
+
+      <!-- ---------- the five-year timeline ---------- -->
+      <div class="section-label">Form 1 to Form 5 — the record</div>
+      <div class="card" style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div>
+            <h3>Progress by school term</h3>
+            <p class="sub">One point per term. The shaded bands show which form she was in.</p>
+          </div>
+          <button class="btn ghost sm" id="tbl-toggle">Show as table</button>
+        </div>
+
+        <div id="chart-empty" class="hidden note" style="margin-top:14px"></div>
+
+        <div class="chartwrap" id="chartwrap" style="margin-top:14px">
+          <div class="legend">
+            <span><i style="background:var(--s1)"></i>Accuracy</span>
+            <span><i style="background:var(--s2)"></i>Syllabus coverage</span>
+          </div>
+          <svg class="chart" id="chart" viewBox="0 0 620 240" preserveAspectRatio="xMidYMid meet" role="img"
+               aria-labelledby="chart-title chart-desc">
+            <title id="chart-title">Accuracy and syllabus coverage by school term</title>
+            <desc id="chart-desc">A line chart with one point per school term. The same figures are available in the table view.</desc>
+          </svg>
+          <div class="tip" id="tip"></div>
+        </div>
+
+        <div class="scrollx hidden" id="tblwrap" style="margin-top:14px">
+          <table class="tbl" id="tbl"><thead><tr>
+            <th>Term</th><th>Form</th><th>Accuracy</th><th>Coverage</th><th>Questions</th>
+          </tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+
+      <!-- ---------- promotions ---------- -->
+      <div id="promo-wrap" class="hidden">
+        <div class="section-label">Form changes</div>
+        <div class="rows" id="promos"></div>
+      </div>
+
+      <!-- ---------- timed tests ---------- -->
+      <div class="section-label">Timed tests</div>
+      <div class="scrollx card">
+        <table class="tbl" id="tests"><thead><tr>
+          <th>Date</th><th>Subject</th><th>Form</th><th>Score</th><th>Time used</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+
+  $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a><a href="guides.html">Guides</a>':'')+
+    '<a href="kpi.html" class="on">KPIs</a><a href="planner.html">Planner</a>'+
+    '<a href="papers.html">Resources</a><a href="settings.html">Settings</a>';
+
+  var kids = me.role==='student' ? [me] : CSEC.students();
+  if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }
+  $('body').classList.remove('hidden');
+
+  if(me.role!=='student'){
+    $('pickwrap').classList.remove('hidden');
+    $('pick').innerHTML=kids.map(function(k){
+      return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+    }).join('');
+    $('pick').addEventListener('change',function(){ paint($('pick').value); });
+  }
+
+  var series=[], showTable=false;
+
+  function paint(id){
+    var kid=CSEC.profile(id); if(!kid) return;
+    var cd=CSEC.countdown(kid.form);
+    $('hd-title').textContent=kid.name+' — Progress & KPIs';
+    $('hd-sub').textContent='Form '+kid.form+' · '+kid.school+' · sits CSEC in '+cd.year;
+
+    /* ---------- readiness hero ---------- */
+    var R=CSEC.readiness(kid.id);
+    $('ri-ring').innerHTML=CSEC.ring(R.score,124,'Readiness index');
+    if(R.score==null){
+      $('ri-band').textContent='Not started';
+      $('ri-note').textContent='Answer some questions and the index appears here.';
+      $('ri-prov').classList.add('hidden');
+    } else if(R.thin){
+      /* Too little evidence to name a band. Say so rather than guess one. */
+      $('ri-band').textContent='Too early to say';
+      $('ri-note').textContent='Only '+R.seen+' question'+(R.seen===1?'':'s')+' answered so far. '+
+        R.need+' more and a readiness band appears here — until then the score below is just a starting point.';
+      $('ri-prov').classList.remove('hidden');
+      $('ri-prov').innerHTML='<span class="pill mute">'+R.need+' more questions needed for a band</span>';
+    } else {
+      $('ri-band').textContent=R.band.label;
+      $('ri-note').textContent=R.band.note;
+      $('ri-prov').classList.toggle('hidden',!R.provisional);
+      $('ri-prov').innerHTML='<span class="pill gold">Provisional — not enough data yet</span>';
+    }
+    var db=CSEC.distinctionBoard(kid.id);
+    $('ri-ontrack').textContent=db.onTrack;
+
+    /* ---------- the four components ---------- */
+    var P=R.parts;
+    var meta=[
+      {k:'accuracy', n:'Accuracy',  d:'Of the questions answered, how many were right.'},
+      {k:'coverage', n:'Syllabus coverage', d:'Strands attempted, out of those taught up to this form.'},
+      {k:'retention',n:'Retention', d:'Accuracy on topics revisited a week or more after first meeting them. The number that separates revision from cramming.'},
+      {k:'timed',    n:'Timed tests',d:'Average score in mock tests taken against the clock.'}
+    ];
+    $('parts').innerHTML = !P
+      ? '<div class="empty"><p>No practice recorded yet.</p></div>'
+      : meta.map(function(m){
+          var p=P[m.k];
+          var val = p.v==null ? '—' : p.v+'%';
+          var col = p.v==null ? 'var(--muted)' : p.v>=75?'var(--good)':p.v>=50?'var(--gold)':'var(--bad)';
+          var extra = m.k==='coverage' ? p.done+' of '+p.total+' strands'
+                    : m.k==='retention'? (p.n? p.n+' delayed attempts' : 'no delayed attempts yet — practise a topic again in a week')
+                    : m.k==='timed'    ? (p.n? p.n+' test'+(p.n===1?'':'s')+' taken' : 'no timed test taken yet')
+                    : p.v==null?'':'across all subjects';
+          return '<div class="kpirow">'+
+            '<span class="w">'+p.w+'%</span>'+
+            '<div class="r-text" style="flex:1"><b>'+m.n+'</b><span>'+esc(m.d)+'</span>'+
+            '<span style="color:var(--muted);font-size:.74rem">'+esc(extra)+'</span></div>'+
+            '<span class="v" style="color:'+col+'">'+val+'</span></div>';
+        }).join('');
+
+    /* ---------- distinction board ---------- */
+    $('board').innerHTML=db.rows.map(function(x){
+      var r=x.r;
+      var pill, sub, tone, w;
+      if(r.score==null){
+        pill='<span class="pill mute">not started</span>';
+        sub='No practice yet'; tone=''; w=0;
+      } else if(r.thin){
+        pill='<span class="pill mute">too early</span>';
+        sub=r.seen+' answered · '+r.need+' more for a band'; tone=''; w=0;
+      } else {
+        pill='<span class="pill '+(r.band.tone==='good'?'good':r.band.tone==='gold'?'gold':'bad')+'">'+r.band.label+'</span>';
+        sub=r.score+' readiness'+(r.provisional?' · provisional':'');
+        tone=r.score>=65?'good':r.score>=50?'warn':'bad'; w=r.score;
+      }
+      return '<div class="row"><div class="r-ico">'+x.icon+'</div>'+
+        '<div class="r-text"><b>'+esc(x.name)+'</b><span>'+esc(sub)+'</span></div>'+
+        '<div style="flex:none;width:104px"><div class="bar '+tone+'"><i style="width:'+w+'%"></i></div></div>'+
+        pill+'</div>';
+    }).join('');
+
+    /* ---------- timeline ---------- */
+    series=CSEC.termHistory(kid.id);
+    drawChart();
+    fillTable();
+
+    /* ---------- promotions ---------- */
+    var hist=CSEC.progress(kid.id).history||[];
+    $('promo-wrap').classList.toggle('hidden',!hist.length);
+    $('promos').innerHTML=hist.slice().reverse().map(function(h){
+      return '<div class="row"><div class="r-ico">🎓</div>'+
+        '<div class="r-text"><b>Form '+h.from+' → Form '+h.to+'</b>'+
+        '<span>'+esc(h.date)+' · '+esc(h.term||'')+' · left Form '+h.from+' at '+
+        (h.pct==null?'no data':h.pct+'% accuracy, '+h.coverage+'% coverage')+'</span></div></div>';
+    }).join('');
+
+    /* ---------- tests ---------- */
+    var tests=(CSEC.progress(kid.id).tests||[]).slice().reverse();
+    $('tests').querySelector('tbody').innerHTML = tests.length? tests.map(function(t){
+      var tone=t.pct>=75?'good':t.pct>=50?'gold':'bad';
+      return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.subjName)+'</td><td>'+(t.form||'—')+'</td>'+
+        '<td><span class="pill '+tone+'">'+t.pct+'%</span> '+t.correct+'/'+t.n+'</td>'+
+        '<td>'+(t.secs<60? t.secs+' sec' : Math.round(t.secs/60)+' min')+
+        ' of '+Math.round(t.limit/60)+' min</td></tr>';
+    }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No timed test taken yet. '+
+      (me.role==='student'?'<a href="test.html" style="color:var(--gold)">Sit one →</a>':'')+'</td></tr>';
+  }
+
+  /* ================= the chart ================= */
+  var W=620,H=240,ML=38,MR=54,MT=16,MB=42;
+  function x(i,n){ return n<2 ? ML+(W-ML-MR)/2 : ML + i*(W-ML-MR)/(n-1); }
+  function y(v){ return MT + (100-v)*(H-MT-MB)/100; }
+
+  function drawChart(){
+    var svg=$('chart');
+    /* keep <title>/<desc>, drop the drawn layer */
+    Array.prototype.slice.call(svg.querySelectorAll('g,path,circle,line,text,rect')).forEach(function(n){n.remove();});
+
+    if(series.length<2){
+      $('chartwrap').classList.add('hidden');
+      $('chart-empty').classList.remove('hidden');
+      $('chart-empty').innerHTML = series.length===1
+        ? '<b>One term recorded so far ('+esc(series[0].key)+').</b> The line appears once there are two terms to join — the record builds itself as she works, term by term, through to Form 5.'
+        : '<b>Nothing recorded yet.</b> The five-year record starts with the first practice session.';
+      return;
+    }
+    $('chartwrap').classList.remove('hidden');
+    $('chart-empty').classList.add('hidden');
+
+    var n=series.length, NS='http://www.w3.org/2000/svg';
+    function el(t,a){ var e=document.createElementNS(NS,t); for(var k in a) e.setAttribute(k,a[k]); return e; }
+
+    /* form bands — this is the Form 1-5 progression, made visible */
+    var runs=[], cur=null;
+    series.forEach(function(s,i){
+      if(!cur||cur.form!==s.form){ cur={form:s.form,from:i,to:i}; runs.push(cur); }
+      else cur.to=i;
+    });
+    runs.forEach(function(r){
+      var x0=r.from===0?ML:(x(r.from,n)+x(r.from-1,n))/2;
+      var x1=r.to===n-1?W-MR:(x(r.to,n)+x(r.to+1,n))/2;
+      if(runs.indexOf(r)%2===0) svg.appendChild(el('rect',{class:'formband',x:x0,y:MT,width:Math.max(0,x1-x0),height:H-MT-MB}));
+      var t=el('text',{class:'formtxt',x:(x0+x1)/2,y:MT+11,'text-anchor':'middle'});
+      t.textContent='Form '+r.form; svg.appendChild(t);
+    });
+
+    /* gridlines + y labels */
+    [0,25,50,75,100].forEach(function(v){
+      svg.appendChild(el('line',{class:'grid',x1:ML,y1:y(v),x2:W-MR,y2:y(v)}));
+      var t=el('text',{class:'lbl',x:ML-7,y:y(v)+3,'text-anchor':'end'}); t.textContent=v+'%'; svg.appendChild(t);
+    });
+    svg.appendChild(el('line',{class:'axis',x1:ML,y1:y(0),x2:W-MR,y2:y(0)}));
+
+    /* x labels — thin them if crowded */
+    var every=Math.ceil(n/8);
+    series.forEach(function(s,i){
+      if(i%every!==0 && i!==n-1) return;
+      var t=el('text',{class:'lbl',x:x(i,n),y:H-MB+16,'text-anchor':'middle'});
+      t.textContent=s.key.replace(/^\d{4}\/(\d{2}) /,"'$1 "); svg.appendChild(t);
+    });
+
+    /* the two series */
+    [{k:'pct',c:'var(--s1)',nm:'Accuracy'},{k:'coverage',c:'var(--s2)',nm:'Coverage'}].forEach(function(sr){
+      var d=series.map(function(s,i){
+        var v=s[sr.k]==null?0:s[sr.k];
+        return (i?'L':'M')+x(i,n).toFixed(1)+' '+y(v).toFixed(1);
+      }).join(' ');
+      svg.appendChild(el('path',{class:'ln',d:d,stroke:sr.c}));
+      series.forEach(function(s,i){
+        var v=s[sr.k]==null?0:s[sr.k];
+        svg.appendChild(el('circle',{class:'pt',cx:x(i,n),cy:y(v),r:4.5,fill:sr.c}));
+      });
+      /* direct label on the final point, so identity is never colour alone */
+      var last=series[n-1], lv=last[sr.k]==null?0:last[sr.k];
+      var t=el('text',{class:'dlbl',x:W-MR+8,y:y(lv)+4,fill:sr.c}); t.textContent=lv+'%';
+      svg.appendChild(t);
+    });
+
+    /* crosshair + tooltip */
+    var cross=el('line',{class:'cross',x1:0,y1:MT,x2:0,y2:y(0),opacity:0});
+    svg.appendChild(cross);
+    var hit=el('rect',{x:ML,y:MT,width:W-ML-MR,height:H-MT-MB,fill:'transparent'});
+    svg.appendChild(hit);
+    var tip=$('tip');
+    hit.addEventListener('mousemove',function(ev){
+      var box=svg.getBoundingClientRect();
+      var px=(ev.clientX-box.left)/box.width*W;
+      var i=0,best=1e9;
+      series.forEach(function(s,j){ var d=Math.abs(x(j,n)-px); if(d<best){best=d;i=j;} });
+      var s=series[i];
+      cross.setAttribute('x1',x(i,n)); cross.setAttribute('x2',x(i,n)); cross.setAttribute('opacity',1);
+      tip.innerHTML='<b>'+esc(s.key)+'</b> · Form '+s.form+'<br>Accuracy '+(s.pct==null?'—':s.pct+'%')+
+                    '<br>Coverage '+(s.coverage==null?'—':s.coverage+'%')+'<br>'+s.seen+' questions';
+      tip.style.opacity=1;
+      var lx=x(i,n)/W*box.width;
+      tip.style.left=Math.min(box.width-150,Math.max(0,lx+12))+'px';
+      tip.style.top='34px';
+    });
+    hit.addEventListener('mouseleave',function(){ cross.setAttribute('opacity',0); tip.style.opacity=0; });
+  }
+
+  function fillTable(){
+    $('tbl').querySelector('tbody').innerHTML = series.length? series.slice().reverse().map(function(s){
+      return '<tr><td>'+esc(s.key)+'</td><td>'+s.form+'</td>'+
+        '<td>'+(s.pct==null?'—':s.pct+'%')+'</td><td>'+(s.coverage==null?'—':s.coverage+'%')+'</td>'+
+        '<td>'+s.seen+'</td></tr>';
+    }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No terms recorded yet.</td></tr>';
+  }
+
+  $('tbl-toggle').addEventListener('click',function(){
+    showTable=!showTable;
+    $('tblwrap').classList.toggle('hidden',!showTable);
+    $('chartwrap').classList.toggle('hidden',showTable||series.length<2);
+    this.textContent=showTable?'Show as chart':'Show as table';
+  });
+
+  paint(kids[0].id);
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

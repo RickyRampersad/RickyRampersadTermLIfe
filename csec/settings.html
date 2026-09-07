@@ -85,6 +85,31 @@
       <div class="err" id="prof-err"></div>
     </div>
 
+    <!-- ---------- moving up a form ---------- -->
+    <div class="section-label">Moving up a form</div>
+    <div class="card" style="margin-bottom:14px" id="promo-card">
+      <p class="sub" style="margin-bottom:16px">
+        At the end of the school year, move the student up. Everything already learned carries
+        forward — she has not forgotten Form 2 mathematics — but the year is stamped into the
+        record, the syllabus for the new form opens up, and the old year stays visible on the
+        <a href="kpi.html" style="color:var(--gold)">KPI timeline</a> for all five years.
+      </p>
+      <div class="grid g2">
+        <div class="field">
+          <label class="fl" for="pr-who">Student</label>
+          <select class="fi" id="pr-who"></select>
+        </div>
+        <div class="field">
+          <label class="fl" for="pr-to">Move to</label>
+          <select class="fi" id="pr-to"></select>
+        </div>
+      </div>
+      <div id="pr-now" class="note" style="margin-bottom:14px"></div>
+      <button class="btn" id="pr-go">Move up a form</button>
+      <div class="ok hidden" id="pr-ok"></div>
+      <div class="err" id="pr-err"></div>
+    </div>
+
     <!-- ---------- backup ---------- -->
     <div class="section-label">Backup &amp; moving devices</div>
     <div class="card" style="margin-bottom:14px">
@@ -142,8 +167,9 @@
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
 
   $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
-    (me.role==='student'?'<a href="practice.html">Practice</a>':'')+
-    '<a href="planner.html">Planner</a><a href="papers.html">Past papers</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+    '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
+    '<a href="planner.html">Planner</a><a href="papers.html">Resources</a>'+
     '<a href="settings.html" class="on">Settings</a><a href="#" id="signout">Sign out</a>';
   document.getElementById('signout').addEventListener('click',function(e){
     e.preventDefault(); CSEC.signOut(); location.href='index.html';
@@ -269,6 +295,55 @@
     fr.readAsText(f);
     this.value='';
   });
+
+  /* ---------------- moving up a form ---------------- */
+  if(!targets.length){
+    $('promo-card').classList.add('hidden');
+  } else {
+    $('pr-who').innerHTML=targets.map(function(t){
+      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+    }).join('');
+
+    function paintPromo(){
+      var kid=CSEC.profile($('pr-who').value); if(!kid) return;
+      var opts='';
+      for(var f=kid.form+1; f<=5; f++) opts+='<option value="'+f+'">Form '+f+'</option>';
+      $('pr-to').innerHTML = opts || '<option value="">— already in Form 5 —</option>';
+      $('pr-go').disabled = !opts;
+
+      var ov=CSEC.overallStat(kid.id), cov=CSEC.coverage(kid.id);
+      var cd=CSEC.countdown(kid.form);
+      $('pr-now').innerHTML='<b>'+esc(kid.name)+' is in Form '+kid.form+'.</b> '+
+        (ov.seen? ov.seen+' questions answered at '+ov.pct+'% accuracy, '+cov.pct+'% of the Form '+kid.form+' syllabus met.'
+                : 'No practice recorded yet.')+
+        ' Sits CSEC in '+cd.year+'.'+
+        (kid.form===5 ? ' This is the examination year — there is nowhere further to move.' : '');
+    }
+    $('pr-who').addEventListener('change',paintPromo);
+    $('pr-to').addEventListener('change',function(){});
+    paintPromo();
+
+    $('pr-go').addEventListener('click',function(){
+      var kid=CSEC.profile($('pr-who').value); if(!kid) return;
+      var to=parseInt($('pr-to').value,10);
+      $('pr-err').textContent='';
+      if(!to){ $('pr-err').textContent='There is no form above Form 5.'; return; }
+      if(!confirm('Move '+kid.name+' from Form '+kid.form+' to Form '+to+'?\n\n'+
+                  'Practice history is kept and a snapshot of Form '+kid.form+' is written to the record. '+
+                  'This can only be undone by moving the form back in this same panel.')) return;
+      var r=CSEC.promote(kid.id,to);
+      if(!r){ $('pr-err').textContent='Could not move up.'; return; }
+      if(kid.id===me.id) me=CSEC.profile(me.id);
+      targets = me.role==='student' ? [CSEC.profile(me.id)] : CSEC.students();
+      $('pr-who').innerHTML=targets.map(function(t){
+        return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+      }).join('');
+      paintPromo();
+      if(targets.length) paintSubjects();
+      $('p-form').value=String(CSEC.profile(me.id).form);
+      flash('pr-ok','Moved from Form '+r.from+' to Form '+r.to+'. The old year is on the KPI timeline.');
+    });
+  }
 
   /* ---------------- danger zone ---------------- */
   $('do-resetprog').addEventListener('click',function(){

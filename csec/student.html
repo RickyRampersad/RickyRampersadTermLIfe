@@ -18,8 +18,11 @@
     <nav class="topnav">
       <a href="student.html" class="on">My Desk</a>
       <a href="practice.html">Practice</a>
+      <a href="test.html">Tests</a>
+      <a href="guides.html">Guides</a>
+      <a href="kpi.html">KPIs</a>
       <a href="planner.html">Planner</a>
-      <a href="papers.html">Past papers</a>
+      <a href="papers.html">Resources</a>
       <a href="settings.html">Settings</a>
       <a href="#" id="signout">Sign out</a>
     </nav>
@@ -59,6 +62,29 @@
       <div class="tile teal"><div class="big" id="t-answered">0</div><div class="lab">Questions answered</div></div>
       <div class="tile"><div class="big" id="t-acc">—</div><div class="lab">Overall accuracy</div></div>
       <div class="tile teal"><div class="big" id="t-days">—</div><div class="lab" id="t-dayslab">Days to CSEC</div></div>
+    </div>
+
+    <!-- ---------------- readiness + quick actions ---------------- -->
+    <a class="card" id="ri-strip" href="kpi.html"
+       style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-top:14px;text-decoration:none">
+      <div style="flex:none" id="ri-ring"></div>
+      <div style="flex:1;min-width:200px">
+        <div class="eyebrow" style="margin-bottom:3px">Readiness index</div>
+        <h3 id="ri-band">—</h3>
+        <p class="sub" id="ri-note"></p>
+      </div>
+      <div style="flex:none;text-align:center">
+        <div style="font-family:'Montserrat',sans-serif;font-size:1.7rem;font-weight:800;color:var(--teal)" id="ri-ontrack">0</div>
+        <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px">on Grade I<br>track</div>
+      </div>
+      <span class="r-arrow">→</span>
+    </a>
+
+    <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
+      <a class="btn teal sm" href="test.html">⏱ Sit a timed test</a>
+      <a class="btn ghost sm" href="guides.html">📐 Guided methods</a>
+      <a class="btn ghost sm" href="kpi.html">📊 My KPIs</a>
+      <a class="btn ghost sm" href="papers.html">🌍 Resources</a>
     </div>
 
     <!-- ---------------- today's plan ---------------- -->
@@ -114,6 +140,7 @@
 
 <script src="data/curriculum.js"></script>
 <script src="data/questions.js"></script>
+<script src="data/guides.js"></script>
 <script src="assets/csec.js"></script>
 <script>
 (function(){
@@ -140,6 +167,21 @@
   $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
   if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to CSEC '+cd.year; }
   else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to CSEC '+cd.year; }
+
+  /* ---------------- readiness ---------------- */
+  var R=CSEC.readiness(me.id), db=CSEC.distinctionBoard(me.id);
+  $('ri-ring').innerHTML=CSEC.ring(R.score,86,'Readiness index');
+  $('ri-ontrack').textContent=db.onTrack;
+  if(R.score==null){
+    $('ri-band').textContent='Not started';
+    $('ri-note').textContent='Answer a few questions and your readiness index appears here.';
+  } else if(R.thin){
+    $('ri-band').textContent='Too early to say';
+    $('ri-note').textContent=R.seen+' answered. '+R.need+' more questions and a readiness band appears.';
+  } else {
+    $('ri-band').textContent=R.band.label+(R.provisional?' · provisional':'');
+    $('ri-note').textContent=R.band.note;
+  }
 
   /* ---------------- focus topic ---------------- */
   var pr=CSEC.progress(me.id);
@@ -172,12 +214,19 @@
       else if(s.pct>=75)       tag='<span class="pill good">'+s.pct+'% · review</span>';
       else if(s.pct>=50)       tag='<span class="pill gold">'+s.pct+'%</span>';
       else                     tag='<span class="pill bad">'+s.pct+'% · needs work</span>';
-      return '<a class="row" href="practice.html?strand='+encodeURIComponent(r.strand)+'">'+
-        '<div class="r-ico">'+r.icon+'</div>'+
-        '<div class="r-text"><b>'+esc(r.strandName)+'</b>'+
-        '<span>'+esc(r.subjName)+' · '+esc(r.note)+'</span></div>'+
-        '<div style="flex:none;display:flex;align-items:center;gap:10px">'+tag+
-        '<span class="r-arrow">→</span></div></a>';
+      var hasGuide=(window.CSEC_GUIDES||[]).some(function(g){return g.strand===r.strand;});
+      var guide = hasGuide
+        ? '<a class="pill gold" style="text-decoration:none" href="guides.html?strand='+
+          encodeURIComponent(r.strand)+'" title="Read the method for this topic">📐 method</a>'
+        : '';
+      return '<div class="row" style="padding:0">'+
+        '<a href="practice.html?strand='+encodeURIComponent(r.strand)+'" '+
+          'style="display:flex;align-items:center;gap:13px;flex:1;padding:13px 15px;text-decoration:none;color:inherit;min-width:0">'+
+          '<div class="r-ico">'+r.icon+'</div>'+
+          '<div class="r-text"><b>'+esc(r.strandName)+'</b>'+
+          '<span>'+esc(r.subjName)+' · '+esc(r.note)+'</span></div></a>'+
+        '<div style="flex:none;display:flex;align-items:center;gap:8px;padding-right:15px">'+
+        guide+tag+'<span class="r-arrow">→</span></div></div>';
     }).join('');
   }
 

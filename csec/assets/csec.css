@@ -134,9 +134,10 @@ select.fi option{background:var(--card)}
 }
 a.row:hover{background:rgba(255,255,255,.055);border-color:rgba(239,194,75,.35)}
 .row .r-ico{font-size:1.2rem;flex:none;width:26px;text-align:center}
-.row .r-text{display:flex;flex-direction:column;min-width:0;flex:1}
-.row .r-text b{font-size:.9rem;font-weight:700}
-.row .r-text span{font-size:.78rem;color:var(--muted);line-height:1.45}
+/* standalone so it works in .row, .kpirow and anywhere else a stacked label is used */
+.r-text{display:flex;flex-direction:column;min-width:0;flex:1;gap:2px}
+.r-text b{font-size:.9rem;font-weight:700}
+.r-text span{font-size:.78rem;color:var(--muted);line-height:1.45}
 .row .r-arrow{color:var(--gold);font-size:1.05rem;flex:none}
 
 /* ---- pills ---- */
