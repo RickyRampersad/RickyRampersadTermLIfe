@@ -155,7 +155,7 @@ function wbRenewalsWall_() {
 
   // NB: plain (non-aggregate) SOQL cannot alias fields — API names throughout.
   var due = wbQ_(
-    "SELECT Contact_First_Name__c, Last_Name__c, RecordType.Name, Policy__c, " +
+    "SELECT Name, Contact_First_Name__c, Last_Name__c, RecordType.Name, Policy__c, " +
     "Vehicle__c, Vehicle_Make__c, Model__c, Motor_Vehicle_Coverage_Type__c, " +
     "Vehicle_Status__c, Property_Type__c, Next_Renewal_Date__c, Billing_Premiums__c, " +
     "Cover1__c, Depreciation_10_Option_1__c, Depreciation_15_Option_2__c, " +
@@ -192,6 +192,23 @@ function wbRenewalsWall_() {
     return 'Property';
   }
 
+  // Open tasks hanging off this month's renewals — matched on the risk
+  // record itself or the client's account. Counts only; subjects carry
+  // client names and never leave this script.
+  var linkedTasks = wbQ_(
+    "SELECT What.Name, What.Type FROM Task WHERE IsClosed = false " +
+    "AND (What.Type = 'Risk_Details__c' OR What.Type = 'Account') LIMIT 400"
+  );
+  function taskCount(riskName, account) {
+    var n = 0;
+    linkedTasks.forEach(function (t) {
+      var wn = (t.What && t.What.Name) || '';
+      if (!wn) return;
+      if (wn === riskName || (account && norm(wn) === norm(account))) n++;
+    });
+    return n;
+  }
+
   var motor = [], property = [], valMotor = [], valProperty = [];
   var compRegs = [], propDue = [];
   due.forEach(function (r) {
@@ -199,6 +216,8 @@ function wbRenewalsWall_() {
     var who = wbMask_(r.Contact_First_Name__c, r.Last_Name__c);
     var row = { d: r.Next_Renewal_Date__c, who: who,
                 prem: Math.round((r.Billing_Premiums__c || 0) * 100) / 100 };
+    var tn = taskCount(r.Name, r.Account__c);
+    if (tn) row.tasks = tn;
     if (s) { row.renewed = true; row.newPrem = Math.round((s.Billing_Premiums__c || 0) * 100) / 100;
              row.paid = Math.round((s.Payments_Made__c || 0) * 100) / 100; }
     var isMotor = r.RecordType && r.RecordType.Name === 'Motor';
@@ -338,6 +357,104 @@ function wbRenewalsWall_() {
     return { line: line, kind: kind, since: r.ActivityDate };
   });
 
+  // ---- the year so far: motor renewals Jan→now — renewed, lost, who wrote
+  // each cycle, what got paid. Lost = date passed, no next-cycle row, vehicle
+  // not sold. Same one-to-one matching as the month view, on its own pool.
+  var dueY = wbQ_(
+    "SELECT Name, Account__c, Contact_First_Name__c, Last_Name__c, Vehicle__c, Policy__c, " +
+    "Vehicle_Make__c, Motor_Vehicle_Coverage_Type__c, Vehicle_Status__c, " +
+    "Next_Renewal_Date__c, Billing_Premiums__c " +
+    "FROM Risk_Details__c WHERE Next_Renewal_Date__c = THIS_YEAR " +
+    "AND RecordType.Name = 'Motor' ORDER BY Next_Renewal_Date__c LIMIT 800"
+  );
+  var cycY = wbQ_(
+    "SELECT Vehicle__c, Policy__c, From__c, Billing_Premiums__c, Payments_Made__c, " +
+    "Risk_Classification__c, CreatedBy.Name " +
+    "FROM Risk_Details__c WHERE From__c >= LAST_N_DAYS:420 " +
+    "AND RecordType.Name = 'Motor' ORDER BY From__c LIMIT 900"
+  );
+  var poolY = cycY.map(function (c) { return c; });
+  function succY(r) {
+    var d = r.Next_Renewal_Date__c;
+    for (var i = 0; i < poolY.length; i++) {
+      var s = poolY[i];
+      if (s._used || !s.From__c || s.From__c < d) continue;
+      var v1 = norm(r.Vehicle__c), v2 = norm(s.Vehicle__c);
+      if (v1 && v2) { if (v1 === v2) { s._used = 1; return s; } continue; }
+      if (!v1 && !v2 && norm(r.Policy__c) && norm(r.Policy__c) === norm(s.Policy__c)) { s._used = 1; return s; }
+    }
+    return null;
+  }
+  var mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var todayIso = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var trendMonths = [], tTot = { due: 0, ren: 0, lost: 0, sold: 0, open: 0, lostPrem: 0, renPrem: 0 };
+  for (var mi = 0; mi <= m; mi++) trendMonths.push({ m: mNames[mi], due: 0, ren: 0, lost: 0, sold: 0, open: 0 });
+  var lostRows = [], mgrCount = {}, seenLostRegs = {}, payCycles = 0, payAmt = 0;
+  dueY.forEach(function (r) {
+    var mi = Number(r.Next_Renewal_Date__c.slice(5, 7)) - 1;
+    if (mi > m) return;                                       // future months stay out of the trend
+    var t = trendMonths[mi];
+    t.due++; tTot.due++;
+    var s = succY(r);
+    var sold = r.Vehicle_Status__c && r.Vehicle_Status__c !== 'Current';
+    if (s) {
+      t.ren++; tTot.ren++; tTot.renPrem += s.Billing_Premiums__c || 0;
+      var by = (s.CreatedBy && s.CreatedBy.Name) || 'Unrecorded';
+      mgrCount[by] = mgrCount[by] || { n: 0, prem: 0 };
+      mgrCount[by].n++; mgrCount[by].prem += s.Billing_Premiums__c || 0;
+      if ((s.Payments_Made__c || 0) > 0) { payCycles++; payAmt += s.Payments_Made__c; }
+    } else if (sold) { t.sold++; tTot.sold++; }
+    else if (r.Next_Renewal_Date__c < todayIso) {
+      t.lost++; tTot.lost++; tTot.lostPrem += r.Billing_Premiums__c || 0;
+      lostRows.push(r);
+      var k = norm(r.Vehicle__c) || r.Name;
+      seenLostRegs[k] = (seenLostRegs[k] || 0) + 1;
+    } else { t.open++; tTot.open++; }
+  });
+  trendMonths.forEach(function (t) {
+    var decided = t.due - t.sold - t.open;
+    if (decided > 0 && t.open === 0) t.ret = Math.round(t.ren / (t.due - t.sold) * 100);
+  });
+  var dupRows = 0, distinctLost = 0;
+  Object.keys(seenLostRegs).forEach(function (k) { distinctLost++; dupRows += seenLostRegs[k] - 1; });
+  // concentration: the account family carrying the most lost rows
+  var fam = {};
+  lostRows.forEach(function (r) {
+    var k = norm(r.Last_Name__c) || norm(r.Account__c);
+    fam[k] = fam[k] || { rows: 0, prem: 0, who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c) };
+    fam[k].rows++; fam[k].prem += r.Billing_Premiums__c || 0;
+  });
+  var topFam = { rows: 0, prem: 0, who: '' };
+  Object.keys(fam).forEach(function (k) { if (fam[k].rows > topFam.rows) topFam = fam[k]; });
+  // recent losses, biggest first — masked names ride the live feed only
+  var cutoff = new Date(now.getTime() - 70 * 864e5);
+  var recent = lostRows.filter(function (r) { return new Date(r.Next_Renewal_Date__c) >= cutoff; })
+    .sort(function (a, b) { return (b.Billing_Premiums__c || 0) - (a.Billing_Premiums__c || 0); })
+    .slice(0, 6).map(function (r) {
+      return { d: r.Next_Renewal_Date__c,
+               what: (r.Vehicle_Make__c || 'Vehicle') + ' · ' +
+                     (/comprehensive/i.test(r.Motor_Vehicle_Coverage_Type__c || '') ? 'comprehensive' : 'third party'),
+               who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c),
+               prem: Math.round(r.Billing_Premiums__c || 0) };
+    });
+  var gainedN = 0, gainedPrem = 0;
+  cycY.forEach(function (s) {
+    if (s.Risk_Classification__c === 'New Business' && (s.From__c || '') >= y + '-01-01') {
+      gainedN++; gainedPrem += s.Billing_Premiums__c || 0;
+    }
+  });
+  var processed = Object.keys(mgrCount).map(function (k) {
+    return { k: k, n: mgrCount[k].n, prem: Math.round(mgrCount[k].prem) };
+  }).sort(function (a, b) { return b.n - a.n; }).slice(0, 6);
+  // open renewal-subject tasks by owner
+  var rtRows = wbQ_("SELECT OwnerId, COUNT(Id) n FROM Task WHERE IsClosed = false " +
+                    "AND Subject LIKE '%renew%' GROUP BY OwnerId ORDER BY COUNT(Id) DESC LIMIT 8");
+  var rtIds = rtRows.map(function (r) { return "'" + r.OwnerId + "'"; }).join(',');
+  var rtName = {};
+  if (rtIds) wbQ_('SELECT Id, Name FROM User WHERE Id IN (' + rtIds + ')')
+    .forEach(function (u) { rtName[u.Id] = u.Name; });
+  var renewalTasks = rtRows.map(function (r) { return { k: rtName[r.OwnerId] || 'Queue', n: r.n }; });
+
   // ---- next month
   var nm = wbQ_(
     "SELECT RecordType.Name t, COUNT(Id) n, SUM(Billing_Premiums__c) prem FROM Risk_Details__c " +
@@ -355,6 +472,16 @@ function wbRenewalsWall_() {
     motor: motor,
     property: property,
     values: { motor: valMotor, property: valProperty },
+    trend: { months: trendMonths,
+             totals: { due: tTot.due, ren: tTot.ren, lost: tTot.lost, sold: tTot.sold, open: tTot.open,
+                       lostPrem: Math.round(tTot.lostPrem), renPrem: Math.round(tTot.renPrem) },
+             distinctLost: distinctLost, dupRows: dupRows,
+             gained: { n: gainedN, prem: Math.round(gainedPrem) } },
+    losing: { concentration: { label: 'One fleet relationship — ' + topFam.who,
+                               rows: topFam.rows, prem: Math.round(topFam.prem) },
+              recent: recent },
+    managers: { processed: processed, renewalTasks: renewalTasks,
+                payments: { cycles: payCycles, amt: Math.round(payAmt), written: Math.round(tTot.renPrem) } },
     tasks: { open: open, dueThisMonth: dueThisMonth, renewalSubject: renewalSubject,
              escalated: escalated, status: status, owners: owners, chase: chase },
     next: { label: names[(m + 1) % 12],

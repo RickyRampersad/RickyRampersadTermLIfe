@@ -114,7 +114,7 @@ Everything on screen comes out of Salesforce: `Risk_Details__c`,
 
 ## The renewals wall
 
-Nine slides at `/renewals/`, fourteen seconds each — the month's renewal book
+Twelve slides at `/renewals/`, fourteen seconds each — the month's renewal book
 as a working wall:
 
 1. **The month, right now** — due / renewed / still open / overdue, with the
@@ -130,12 +130,29 @@ as a working wall:
 6. **Values · property** — each sum insured, how many years it has sat
    unchanged, what it is worth today at +5%/yr rebuilding drift, and the
    riders on file
-7. **The money** — motor vs property split, the biggest renewals, and
-   re-written vs collected (reads `Payments_Made__c` on the new cycle —
-   blank until payments are posted, and the wall says so)
-8. **The work behind it** — open Tasks by owner and status, plus the renewal
-   chase ladder (payment follow-ups, waiting renewals), genericised
-9. **Already knocking** — next month's count and premium, by line
+7. **The year so far · motor** — Jan→now stacked by month: renewed, still
+   open, lost, sold, with the retention percentage under each month and the
+   gained-vs-lost picture beside it
+8. **Whom we are losing** — how concentrated the losses are, and the recent
+   walked renewals (weeks old, still recoverable), biggest first
+9. **Who is managing the renewals** — renewals processed per person (from
+   `CreatedBy` on each new cycle), open renewal tasks per owner, and how
+   much of the written premium has a payment recorded against it
+10. **The money** — motor vs property split, the biggest renewals, and
+    re-written vs collected (reads `Payments_Made__c` on the new cycle —
+    blank until payments are posted, and the wall says so)
+11. **The work behind it** — open Tasks by owner and status, plus the renewal
+    chase ladder (payment follow-ups, waiting renewals), genericised
+12. **Already knocking** — next month's count and premium, by line
+
+The registers also tie each renewal to its workload and money: a **Tasks**
+column counts open Salesforce Tasks on the risk record or the client's
+account (counts only — task subjects carry client names and never ship), and
+a **Paid** column reads `Payments_Made__c` on the renewed cycle ("not
+recorded" until a receipt is posted). "Lost" in the trend means the renewal
+date passed with no next-cycle row and the vehicle not marked Sold; the
+distinct-vehicle count is shown beside the row count because the register
+carries some vehicles twice.
 
 **The values conversation, in fields:** comprehensive motor values step DOWN —
 `Cover1__c` against the prior cycle, with the register's own prepared options

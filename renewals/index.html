@@ -85,6 +85,14 @@
   .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:24px 26px;backdrop-filter:blur(10px)}
   .panel h3{margin:0 0 16px;font-family:var(--font-d);font-size:15px;font-weight:750;letter-spacing:.02em}
 
+  .bars{display:flex;align-items:flex-end;gap:14px;height:330px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px;height:100%}
+  .bar .amt{font-size:13px;color:var(--dim);font-variant-numeric:tabular-nums;font-weight:650;white-space:nowrap}
+  .bar i{display:block;width:100%;border-radius:3px;transform-origin:bottom;transition:transform .9s var(--ease)}
+  .slide:not(.on) .bar i{transform:scaleY(0)}
+  .bar .lab{font-size:13px;color:var(--faint);font-weight:600}
+  .bar .n{font-size:11.5px;color:var(--faint)}
+
   .rows{display:flex;flex-direction:column;gap:13px}
   .row{display:flex;align-items:center;gap:14px;font-size:16px}
   .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
@@ -196,10 +204,10 @@ var WALL_DATA = {
     {d:"2026-09-09", what:"Toyota",     cov:"Third party",   prem:1670.00, renewed:true, newPrem:1670.00, paid:0},
     {d:"2026-09-09", what:"Nissan",     cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
     {d:"2026-09-09", what:"Mitsubishi", cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
-    {d:"2026-09-12", what:"Kia",        cov:"Third party",   prem:991.55},
-    {d:"2026-09-13", what:"Kia",        cov:"Third party",   prem:1350.18, off:"Sold"},
-    {d:"2026-09-13", what:"Land Rover", cov:"Third party",   prem:1443.19},
-    {d:"2026-09-13", what:"BMW",        cov:"Third party",   prem:1350.18},
+    {d:"2026-09-12", what:"Kia",        cov:"Third party",   prem:991.55,  tasks:6},
+    {d:"2026-09-13", what:"Kia",        cov:"Third party",   prem:1350.18, off:"Sold", tasks:6},
+    {d:"2026-09-13", what:"Land Rover", cov:"Third party",   prem:1443.19, tasks:6},
+    {d:"2026-09-13", what:"BMW",        cov:"Third party",   prem:1350.18, tasks:6},
     {d:"2026-09-14", what:"Honda",      cov:"Comprehensive", prem:5109.20},
     {d:"2026-09-18", what:"Nissan",     cov:"Third party",   prem:1231.90},
     {d:"2026-09-18", what:"Hyundai",    cov:"Third party",   prem:2130.07},
@@ -243,6 +251,51 @@ var WALL_DATA = {
       {d:"2026-09-17", what:"All risk",           sum:3500000, years:4},
       {d:"2026-09-21", what:"Homeowner",          sum:1650000, years:4}
     ]
+  },
+  /* the year so far — motor renewals Jan→now. A renewal is "lost" when its
+     date passed and no next-cycle row exists (and the vehicle wasn't sold).
+     Distinct vehicles run lower than lost rows: the register carries some
+     vehicles twice (11 duplicate rows among this year's losses).          */
+  trend: {
+    months: [
+      {m:"Jan",due:26,ren:21,lost:5, sold:0,open:0,ret:81},
+      {m:"Feb",due:19,ren:13,lost:6, sold:0,open:0,ret:68},
+      {m:"Mar",due:17,ren:7, lost:8, sold:2,open:0,ret:47},
+      {m:"Apr",due:33,ren:14,lost:17,sold:2,open:0,ret:45},
+      {m:"May",due:7, ren:5, lost:2, sold:0,open:0,ret:71},
+      {m:"Jun",due:12,ren:8, lost:4, sold:0,open:0,ret:67},
+      {m:"Jul",due:9, ren:4, lost:4, sold:1,open:0,ret:50},
+      {m:"Aug",due:14,ren:11,lost:3, sold:0,open:0,ret:79},
+      {m:"Sep",due:14,ren:5, lost:0, sold:1,open:8}
+    ],
+    totals:{due:151,ren:88,lost:49,sold:6,open:8,lostPrem:169571,renPrem:322753},
+    distinctLost:38, dupRows:11,
+    gained:{n:22,prem:142517}
+  },
+  losing: {
+    concentration:{label:"One corporate fleet relationship", rows:25, prem:40839},
+    recent:[
+      {d:"2026-08-10", what:"BMW · comprehensive",    prem:56062},
+      {d:"2026-08-08", what:"Honda · comprehensive",  prem:10649},
+      {d:"2026-08-15", what:"Toyota · comprehensive", prem:10290},
+      {d:"2026-07-10", what:"MG · comprehensive",     prem:8320},
+      {d:"2026-07-30", what:"Audi · third party",     prem:1385},
+      {d:"2026-07-14", what:"Nissan · third party",   prem:1350}
+    ]
+  },
+  managers: {
+    processed:[
+      {k:"Pawan Probhu",  n:55, prem:230528},
+      {k:"Jenny Lio",     n:32, prem:89133},
+      {k:"Kamla Dookran", n:1,  prem:3093}
+    ],
+    renewalTasks:[
+      {k:"Kamla Dookran",        n:14},
+      {k:"Sasha Lalla-Jagassar", n:9},
+      {k:"Pawan Probhu",         n:4},
+      {k:"Azariah Griffith",     n:2}
+    ],
+    payments:{cycles:9, amt:30730, written:322753}
   },
   tasks: {
     open:241, dueThisMonth:151, renewalSubject:29, escalated:2,
@@ -387,6 +440,15 @@ function sRail(D){
     +'</div><div class="panel">'+svg+'</div></div>';
 }
 
+function paidCell(r){
+  if(r.paid>0) return '<td style="color:var(--good)"><b>'+money(r.paid)+'</b></td>';
+  if(r.renewed) return '<td><span class="chip warn">not recorded</span></td>';
+  return '<td style="color:var(--faint)">—</td>';
+}
+function taskCell(r){
+  return r.tasks?'<td><span class="chip" title="open Salesforce tasks on this client">📋 '+r.tasks+'</span></td>'
+               :'<td style="color:var(--faint)">—</td>';
+}
 function motorRow(r){
   var st=statusOf(r);
   return '<tr'+(st.off?' class="off"':'')+'><td>'+fmtD(r.d)+'</td>'
@@ -394,6 +456,7 @@ function motorRow(r){
     +'<td><b>'+esc(r.what)+'</b></td>'
     +'<td><span class="chip '+(r.cov==="Comprehensive"?"blue":"")+'">'+esc(r.cov)+'</span></td>'
     +'<td>'+st.chip+'</td>'
+    +taskCell(r)+paidCell(r)
     +'<td>'+money(r.renewed?(r.newPrem||r.prem):r.prem)+'</td></tr>';
 }
 function sMotor(D){
@@ -404,7 +467,7 @@ function sMotor(D){
     +'<p class="lede">'+moneyShort(s.motorBook)+' of motor premium renews this month. Comprehensive renewals carry a value conversation; third party is confirm-and-go.</p>'
     +'<div class="body"><div class="panel"><table><thead><tr><th>Due</th>'
     +(withWho?'<th>Client</th>':'')
-    +'<th>Vehicle</th><th>Cover</th><th>Status</th><th>Premium</th></tr></thead><tbody>'
+    +'<th>Vehicle</th><th>Cover</th><th>Status</th><th>Tasks</th><th>Paid</th><th>Premium</th></tr></thead><tbody>'
     +D.motor.map(motorRow).join("")
     +'</tbody></table></div></div>';
 }
@@ -416,13 +479,13 @@ function sProperty(D){
     +'<p class="lede">Property is the money of the month. Every one of these is a sums-insured review before it is a renewal — rebuilding costs move, and average punishes a stale figure.</p>'
     +'<div class="body"><div class="panel"><table><thead><tr><th>Due</th>'
     +(withWho?'<th>Client</th>':'')
-    +'<th>Risk</th><th>Type</th><th>Status</th><th>Premium</th></tr></thead><tbody>'
+    +'<th>Risk</th><th>Type</th><th>Status</th><th>Tasks</th><th>Paid</th><th>Premium</th></tr></thead><tbody>'
     +D.property.map(function(r){var st=statusOf(r);
       return '<tr><td>'+fmtD(r.d)+'</td>'
       +(r.who?'<td><b>'+esc(r.who)+'</b></td>':'')
       +'<td><b>'+esc(r.what)+'</b></td>'
       +'<td><span class="chip '+(r.type==="Commercial"?"gold":"")+'">'+esc(r.type)+'</span></td>'
-      +'<td>'+st.chip+'</td><td>'+money(r.prem)+'</td></tr>'}).join("")
+      +'<td>'+st.chip+'</td>'+taskCell(r)+paidCell(r)+'<td>'+money(r.prem)+'</td></tr>'}).join("")
     +'</tbody></table></div></div>';
 }
 
@@ -494,6 +557,93 @@ function sPropValues(D){
     +'</tbody></table></div>'
     +'<div class="note">The average clause on a five-year-old figure: insured at TT$3.5m, worth TT$4.5m today — a TT$100k kitchen fire pays about TT$78k. The sums-insured review is the renewal conversation, not an extra.</div>'
     +'</div>';
+}
+
+function sTrend(D){
+  var T=D.trend; if(!T) return '';
+  var mx=T.months.reduce(function(a,x){return Math.max(a,x.due)},1);
+  var bars=T.months.map(function(x){
+    var h=function(n){return Math.round(n/mx*300)};
+    var seg=function(n,color){return n?'<i style="height:'+h(n)+'px;background:'+color+'"></i>':''};
+    return '<div class="bar" style="gap:0"><div class="amt">'+x.due+'</div>'
+      +'<div style="display:flex;flex-direction:column-reverse;gap:2px;width:100%;max-width:64px;align-items:stretch">'
+      +seg(x.ren,'var(--blue)')+seg(x.open,'var(--gold)')+seg(x.lost,'var(--bad)')+seg(x.sold,'rgba(255,255,255,.25)')
+      +'</div>'
+      +'<div class="lab" style="margin-top:8px">'+esc(x.m)+'</div>'
+      +'<div class="n">'+(x.ret!=null?x.ret+'%':'in play')+'</div></div>';
+  }).join("");
+  return '<div class="kick">The year so far · motor</div>'
+    +'<h2>'+T.totals.ren+' of '+T.totals.due+' renewed — '+T.totals.lost+' rows walked, '+moneyShort(T.totals.lostPrem)+' of premium</h2>'
+    +'<p class="lede">Retention held near 80% in January, slid to 47% and 45% through March–April, and recovered to 79% by August. '
+    +'New business brought in '+T.gained.n+' risks ('+moneyShort(T.gained.prem)+') — the book is trading sideways while the renewal calls decide the year.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.6fr 1fr">'
+    +'<div class="panel"><h3>Month by month — renewed · still open · lost · sold</h3>'
+    +'<div class="legend"><span><i style="background:var(--blue)"></i>Renewed</span>'
+    +'<span><i style="background:var(--gold)"></i>Still open</span>'
+    +'<span><i style="background:var(--bad)"></i>Lost</span>'
+    +'<span><i style="background:rgba(255,255,255,.25)"></i>Sold</span>'
+    +'<span style="margin-left:auto;color:var(--faint)">% = retention of decided</span></div>'
+    +'<div class="bars" style="height:360px">'+bars+'</div></div>'
+    +'<div class="panel"><h3>The year in four numbers</h3><div class="rows" style="gap:20px">'
+    +'<div class="row"><span class="nm">Premium re-written</span><span class="val" style="width:auto;color:var(--good)">'+moneyShort(T.totals.renPrem)+'</span></div>'
+    +'<div class="row"><span class="nm">Premium lost with the '+T.totals.lost+' rows</span><span class="val" style="width:auto;color:var(--bad)">'+moneyShort(T.totals.lostPrem)+'</span></div>'
+    +'<div class="row"><span class="nm">Gained — new business</span><span class="val" style="width:auto">'+T.gained.n+' · '+moneyShort(T.gained.prem)+'</span></div>'
+    +'<div class="row"><span class="nm">Distinct vehicles lost</span><span class="val" style="width:auto">'+T.distinctLost+'</span></div>'
+    +'</div>'
+    +'<div class="note">'+T.dupRows+' of the '+T.totals.lost+' lost rows are the same vehicle entered twice on the register — clean those and the true picture sharpens.</div>'
+    +'</div></div></div>';
+}
+
+function sLosing(D){
+  var L=D.losing; if(!L) return '';
+  var mx=L.recent[0].prem||1; var t=new Date(todayISO());
+  return '<div class="kick">Whom we are losing</div>'
+    +'<h2>Half the year’s losses are one relationship</h2>'
+    +'<p class="lede">'+L.concentration.rows+' of the '+D.trend.totals.lost+' lost rows — '+moneyShort(L.concentration.prem)+' of premium — sit with '
+    +L.concentration.label.toLowerCase()+'. That is one conversation, not '+L.concentration.rows+' cold calls. The rest is singles, and the recent ones are still warm.</p>'
+    +'<div class="body"><div class="cols">'
+    +'<div class="panel"><h3>Recent losses — weeks old, still recoverable</h3><div class="rows">'
+    +L.recent.map(function(r){
+      var days=Math.max(0,Math.round((t-new Date(r.d))/864e5));
+      return '<div class="row"><span class="nm">'+esc(r.what)+' · due '+fmtD(r.d)+'</span>'
+        +'<span class="track"><i class="gold" style="width:'+Math.max(4,Math.round(r.prem/mx*100))+'%"></i></span>'
+        +'<span class="val">'+money(r.prem)+'</span>'
+        +'<span class="val" style="width:84px"><span class="chip '+(days<=45?'warn':'')+'">'+days+'d ago</span></span></div>';
+    }).join("")
+    +'</div><div class="note">The largest walked '+Math.round((t-new Date(L.recent[0].d))/864e5)+' days ago at '+moneyShort(L.recent[0].prem)+' — a call this week is worth more than everything else on this slide.</div></div>'
+    +'<div class="panel"><h3>What the losses are telling us</h3><div class="rows" style="gap:18px">'
+    +'<div class="row"><span class="nm">Concentrated — '+esc(L.concentration.label.toLowerCase())+'</span><span class="val" style="width:auto">'+L.concentration.rows+' rows</span></div>'
+    +'<div class="row"><span class="nm">Third party runs quiet — small premiums slip without a call</span><span class="val" style="width:auto">most rows</span></div>'
+    +'<div class="row"><span class="nm">Comprehensive losses are the money</span><span class="val" style="width:auto;color:var(--bad)">'+moneyShort(L.recent.slice(0,4).reduce(function(a,r){return a+r.prem},0))+' since July</span></div>'
+    +'</div>'
+    +'<div class="note">Names live in Salesforce and on the live feed — this public snapshot keeps clients anonymous by design.</div>'
+    +'</div></div></div>';
+}
+
+function sManage(D){
+  var M=D.managers; if(!M) return '';
+  var mx=M.processed[0].n||1, mt=M.renewalTasks[0].n||1;
+  var pct=Math.round(M.payments.amt/Math.max(1,M.payments.written)*100);
+  return '<div class="kick">Who is managing the renewals</div>'
+    +'<h2>Two hands wrote '+(M.processed[0].n+M.processed[1].n)+' of '+D.trend.totals.ren+' renewals this year</h2>'
+    +'<p class="lede">Every renewed cycle carries its author in Salesforce. '+esc(M.processed[0].k)+' has written '+M.processed[0].n
+    +' ('+moneyShort(M.processed[0].prem)+'), '+esc(M.processed[1].k)+' '+M.processed[1].n+' ('+moneyShort(M.processed[1].prem)+') — and the open renewal task list sits with different hands, which is worth a look.</p>'
+    +'<div class="body"><div class="cols">'
+    +'<div class="panel"><h3>Renewals processed this year — by who wrote the cycle</h3><div class="rows">'
+    +M.processed.map(function(o){
+      return '<div class="row"><span class="nm">'+esc(o.k)+'</span>'
+        +'<span class="track"><i style="width:'+Math.round(o.n/mx*100)+'%"></i></span>'
+        +'<span class="val">'+o.n+' · '+moneyShort(o.prem)+'</span></div>';
+    }).join("")
+    +'</div><div class="note">Payments recorded against those cycles: '+moneyShort(M.payments.amt)+' of '+moneyShort(M.payments.written)+' written ('+pct+'%) — if a receipt isn’t posted to Payments Made, this wall cannot count it.</div></div>'
+    +'<div class="panel"><h3>Open renewal tasks — by owner</h3><div class="rows">'
+    +M.renewalTasks.map(function(o){
+      return '<div class="row"><span class="nm">'+esc(o.k)+'</span>'
+        +'<span class="track"><i class="gold" style="width:'+Math.round(o.n/mt*100)+'%"></i></span>'
+        +'<span class="val">'+o.n+'</span></div>';
+    }).join("")
+    +'</div></div>'
+    +'</div></div>';
 }
 
 function sMoney(D){
@@ -573,7 +723,7 @@ function sNext(D){
 }
 
 /* ── deck ── */
-var BUILDERS=[sPulse,sRail,sMotor,sProperty,sMotorValues,sPropValues,sMoney,sTasks,sNext];
+var BUILDERS=[sPulse,sRail,sMotor,sProperty,sMotorValues,sPropValues,sTrend,sLosing,sManage,sMoney,sTasks,sNext];
 var DWELL=14000, cur=0, timer=null, paused=false;
 
 function render(D){
