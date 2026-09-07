@@ -265,5 +265,11 @@ const urlToken = new URLSearchParams(location.search).get("t") || new URLSearchP
 if(urlToken){ $("code-input").value=urlToken; load(urlToken); }
 else if(!CONFIG.API_URL){ /* wait for click in preview */ }
 </script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>

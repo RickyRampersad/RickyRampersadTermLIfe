@@ -170,3 +170,16 @@ system.
 **Products outside `PRODUCT_RULES` get no checks at all.** `Lifestyle Special
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.
+
+## The view counter — every page reports, one sheet records
+
+Every served HTML page carries a `<!-- rrb-views -->` beacon before `</body>`.
+It pings the Apps Script in `gs/views-counter.gs`, which appends
+`time · page · referrer` to the **"RRB Site View Counter"** spreadsheet
+(ID in the .gs). No client data — path and referrer only.
+
+- **Keep the beacon** when regenerating or rewriting a page; re-add it if lost.
+- `RRB_VIEWS_URL` in the beacon is replaced with the deployed /exec URL —
+  if you see the literal placeholder, the counter is armed but not yet live.
+- Redirect stubs (`about-us/`, `health-1/`, `xpress-life-application/`) and
+  `apps-script/` templates deliberately carry no beacon.

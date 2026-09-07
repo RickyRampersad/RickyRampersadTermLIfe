@@ -1194,5 +1194,11 @@ setInterval(refresh,REFRESH_MS);
 setInterval(()=>{ if(lastGood) render(lastGood); },60*1000);
 if(store.get()){ gate(false); refresh(); } else gate(true);
 </script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>

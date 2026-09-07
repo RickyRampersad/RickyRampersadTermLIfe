@@ -2740,5 +2740,11 @@ const ho = handoff();
 if(ho && ho.role === 'manager'){ IDENTITY = ho; AUTH = ho.code; open_(); }
 else { try{ if(sessionStorage.getItem(SESSION_KEY)==='1'){ AUTH = STAFF_CODE; open_(); } }catch(e){} }
 </script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>
