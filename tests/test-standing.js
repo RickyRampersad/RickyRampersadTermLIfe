@@ -68,10 +68,14 @@ env.__mkSheet('KPI Training', 3, TRH, [
 ]);
 env.__mkSheet('Goals', 4, ['Role','Order','Goal','Description','TargetType','Weight','Target','KpiTypes'], GOALS);
 env.__mkSheet('Competencies', 5, ['Order','Competency','Definition','Behaviours'], COMPS);
+// Named, not positional: a register row written by hand against the column
+// order of the day silently shifts every value when a column is added, and
+// the failure surfaces three tests away as a wrong competency signal.
+const att = o => env.ATT.head.map(h => (o[h] != null ? o[h] : ''));
 env.__mkSheet('Attendance', 6, env.ATT.head, [
-  ['2026-08-19','sasha','Sasha Lalla','08:04','08:04','in','','sasha',''],
-  ['2026-08-18','sasha','Sasha Lalla','08:31','09:00','in','','sasha',''],
-  ['2026-08-17','sasha','Sasha Lalla','','','absent','sick','sasha',''],
+  att({ Date:'2026-08-19', StaffId:'sasha', Name:'Sasha Lalla', FirstSignIn:'08:04', LastSeen:'16:02', SignedOut:'16:02', Status:'in', MarkedBy:'sasha' }),
+  att({ Date:'2026-08-18', StaffId:'sasha', Name:'Sasha Lalla', FirstSignIn:'08:31', LastSeen:'09:00', Status:'in', MarkedBy:'sasha' }),
+  att({ Date:'2026-08-17', StaffId:'sasha', Name:'Sasha Lalla', Status:'absent', Reason:'sick', MarkedBy:'sasha' }),
 ]);
 env.__mkSheet('Development', 7, env.HR.DEVELOP.head, [
   ['d1','sasha','','Social','Fortnightly coaching','the gap','one group application alone','done',''],

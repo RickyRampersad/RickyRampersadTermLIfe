@@ -99,5 +99,60 @@ ok('and who never signed in', line('pawan').signedIn === '' && line('pawan').abs
 const html = env.checkpointHtml_(cp);
 ok('in words, in the email', /In at 09:40/.test(html) && /Not in — sick/.test(html) && /No sign-in today/.test(html));
 
+console.log('\nSigning out closes the day:\n');
+NOW = new Date('2026-09-07T16:32:00');
+env.resetRequestMemo_(); expire();
+const so = env.signOutDay_({}, SASHA);
+ok('recorded, with the time', so.ok && so.out === '16:32' && so.date === TODAY, JSON.stringify(so));
+ok('and it says how much of the day went in', so.blocksDone === 0 && so.blocksLeft === 4, JSON.stringify(so));
+env.resetRequestMemo_(); expire();
+const backIn = env.recordAttendance_(SASHA);
+ok('the morning sign-in is untouched', backIn.at === '08:07' && backIn.first === false, JSON.stringify(backIn));
+ok('and the sign-out is on the same row, not a new one',
+   env.attendanceFor_(RICKY, TODAY, env.shiftDays_(TODAY, 1)).filter(o => o.staffId === 'sasha').length === 1);
+env.resetRequestMemo_();
+const outRow = env.attendanceFor_(RICKY, TODAY, env.shiftDays_(TODAY, 1)).find(o => o.staffId === 'sasha');
+ok('the register carries in and out', outRow.at === '08:07' && outRow.out === '16:32', JSON.stringify(outRow));
+
+console.log('\nComing back and leaving again moves the time later:\n');
+NOW = new Date('2026-09-07T17:15:00');
+env.resetRequestMemo_(); expire();
+ok('the later sign-out wins', env.signOutDay_({}, SASHA).out === '17:15');
+env.resetRequestMemo_();
+ok('and the register agrees', env.attendanceFor_(RICKY, TODAY, env.shiftDays_(TODAY, 1)).find(o => o.staffId === 'sasha').out === '17:15');
+
+console.log('\nSomebody who never signed in still gets an honest row:\n');
+NOW = new Date('2026-09-07T17:40:00');
+env.resetRequestMemo_();
+const pOut = env.signOutDay_({}, PAWAN);
+ok('the day is opened and closed at the same minute', pOut.ok && pOut.out === '17:40', JSON.stringify(pOut));
+env.resetRequestMemo_();
+const pReg = env.attendanceFor_(RICKY, TODAY, env.shiftDays_(TODAY, 1)).find(o => o.staffId === 'pawan');
+ok('and the register shows both, on one row', pReg && pReg.at === '17:40' && pReg.out === '17:40', JSON.stringify(pReg));
+
+console.log('\nThe checkpoint reads it:\n');
+env.resetRequestMemo_();
+const cpo = env.checkpointReport_(TODAY);
+const sl = cpo.lines.find(l => l.staffId === 'sasha');
+ok('the line carries the sign-out', sl.signedIn === '08:07' && sl.signedOut === '17:15', JSON.stringify({ i: sl.signedIn, o: sl.signedOut }));
+// Sasha was marked absent earlier in this test, so her line reads the reason;
+// Pawan signed in and out, which is the line the email has to say in words.
+ok('and the email says it in words for somebody who was in', /In at 17:40[^<]*out at 17:40/.test(env.checkpointHtml_(cpo)));
+ok('an absence still reads as an absence, not as hours', /Not in — on leave/.test(env.checkpointHtml_(cpo)));
+
+console.log('\nA register written before sign-out existed gains the column:\n');
+const env2 = require('./harness').makeEnv();
+env2.__mkSheet('Access', 1, ['Name','StaffId','Email','Password','Role','Unit','Active'],
+  [['Sasha Lalla','sasha','sasha@example.com','1','Sales Support Assistant','Support','Yes']]);
+env2.__mkSheet('KPI Log', 2, LOGH, []);
+env2.__mkSheet('Attendance', 3, ['Date','StaffId','Name','FirstSignIn','LastSeen','Status','Reason','MarkedBy','UpdatedAt'],
+  [[TODAY,'sasha','Sasha Lalla','08:07','08:07','in','','sasha','']]);
+env2.resetRequestMemo_();
+const sh2 = env2.attSheet_();
+ok('the column is added on the end', env2.headerOf_(sh2).indexOf('SignedOut') === 9, env2.headerOf_(sh2).join(','));
+ok('the columns already there keep their places', env2.headerOf_(sh2).slice(0, 5).join(',') === 'Date,StaffId,Name,FirstSignIn,LastSeen');
+env2.resetRequestMemo_();
+ok('and the morning already on the row survives', env2.attendanceFor_({ staffId:'sasha', manager:true }, TODAY, env2.shiftDays_(TODAY, 1))[0].at === '08:07');
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

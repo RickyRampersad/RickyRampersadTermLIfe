@@ -499,7 +499,8 @@ function AttendanceLine({ me, api, onChange, onRegister }) {
   const leads = (me.leads || []).length > 0;
   const text = !a ? "" : a.status === "absent"
     ? "Not in today · " + a.reason
-    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time") : "";
+    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time")
+             + (a.out ? " · out at " + a.out : "") : "";
   const linkBtn = (color, onClick, label) => React.createElement("button", { type: "button", onClick,
     style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color } }, label);
   return React.createElement("div", { style: { margin: "12px 0 0" } },
@@ -524,10 +525,11 @@ function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
   const byKey = {};
   ((reg && reg.ok && reg.attendance) || []).forEach(o => { byKey[o.date + "|" + o.staffId] = o; });
   const name = sid => (roster.find(p => p.staffId === sid) || {}).name || sid;
-  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason : o.at + (o.late ? " (+" + o.late + ")" : "");
+  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason
+    : o.at + (o.late ? " (+" + o.late + ")" : "") + (o.out ? " → " + o.out : "");
   const tone = o => !o ? MUTED : o.status === "absent" ? AMBER : o.late ? AMBER : INK;
   return React.createElement(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560 },
-    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in is the register. First sign-in, or the reason for not being in.", onBack: onBack }),
+    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in opens the day and signing out closes it. First sign-in, the time out, or the reason for not being in.", onBack: onBack }),
     React.createElement("div", { style: { padding: "0 18px 40px" } },
       React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", margin: "12px 0" } },
         React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, -7)), style: trendChip }, "← Week"),
@@ -545,10 +547,44 @@ function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
             days.map(d => { const o = byKey[d + "|" + sid];
               return React.createElement("td", { key: d, style: { ...regTd, color: tone(o), fontWeight: o ? 600 : 400 } }, cell(o)); })))))) : null,
       React.createElement("p", { style: { fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.5 } },
-        "A time is the first sign-in of the day. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
+        "A time is the first sign-in of the day, and the time after the arrow is when they signed out. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
 }
 const regTh = { textAlign: "left", padding: "9px 11px", fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid " + LINE, background: "#FBFAF5", whiteSpace: "nowrap" };
 const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, verticalAlign: "top" };
+
+/* Closing the day. Signing in opened it, this closes it, and the two times are
+   the hours the register shows. It names what is still unreported before it
+   asks, because the moment to notice a missing block is while you can still
+   report it, not at tomorrow's checkpoint. */
+function CloseTheDay({ entry, blocks, mail, att, onClose }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const left = (blocks || []).filter(b => !(entry && blockWorked(entry, b.id)));
+  const outstanding = []
+    .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
+    .concat(!(mail && mail.pm) ? ["the afternoon mail sweep"] : []);
+  const out = att && att.out;
+  const go = () => {
+    setBusy(true); setErr("");
+    Promise.resolve(onClose()).then(r => {
+      if (!(r && r.ok)) { setBusy(false); setErr((r && r.error) || "Not recorded. Try once more."); }
+    });
+  };
+  return h("div", { style: { ...card, marginTop: 12, borderLeft: "4px solid " + GOLD } },
+    h("div", { style: cardHead }, h("div", { style: cardTitle }, out ? "Day closed at " + out : "Close the day")),
+    h("p", { style: { fontSize: 12.5, color: MUTED, margin: "2px 0 10px", lineHeight: 1.5 } },
+      out ? "Signed out at " + out + ". Closing again moves the time later, which is right if you came back."
+          : "Signing out closes your day on the register. Your sign-in and this time are the hours it shows."),
+    outstanding.length
+      ? h("div", { style: { fontSize: 12.5, color: AMBER, fontWeight: 700, marginBottom: 10, lineHeight: 1.5 } },
+          "Still open: " + outstanding.join(" and ") + ".")
+      : h("div", { style: { fontSize: 12.5, color: GREEN, fontWeight: 700, marginBottom: 10 } },
+          "Everything is in."),
+    err ? h("div", { style: { fontSize: 12, color: RED, marginBottom: 8 } }, err) : null,
+    h("button", { type: "button", onClick: go, disabled: busy,
+                  style: { ...primaryWide, marginTop: 0, opacity: busy ? 0.6 : 1 } },
+      busy ? "Closing…" : out ? "Sign out again" : "Sign out and close the day"));
+}
 
 // ---------------------------------------------------------------------------
 //  Performance
@@ -1855,6 +1891,19 @@ function App() {
   // back with the reason on it.
   const [ended, setEnded] = useState(false);
   const [bootNote, setBootNote] = useState("");
+  // Signing out is the other half of the register. The card wants to know when
+  // the sheet refused, so it can be tried again; the header button must let a
+  // person leave the device whatever the sheet says.
+  const [closedAt, setClosedAt] = useState("");
+  const recordClose = useCallback(async () => {
+    const r = await api("signOut", {});
+    if (r && r.ok) { setClosedAt(r.out || ""); signOut(); }
+    return r;
+  }, [signOut]);
+  const leave = useCallback(async () => {
+    try { const r = await api("signOut", {}); if (r && r.ok) setClosedAt(r.out || ""); } catch (e) {}
+    signOut();
+  }, [signOut]);
   useEffect(() => {
     const f = () => { setEnded(true); signOut(); };
     window.addEventListener(SESSION_ENDED, f);
@@ -2141,9 +2190,11 @@ function App() {
   });
   if (!me) return /*#__PURE__*/React.createElement(Login, {
     note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on."
+        : closedAt ? "Day closed at " + closedAt + ". That is on the register. Sign in again if you are back."
         : bootNote ? bootNote + " Your session is still here: reload the page to carry on, or sign in again." : "",
     onIn: (tok, profile, ros) => {
       setEnded(false);
+      setClosedAt("");
       setBootNote("");
       storeToken(tok);
       setToken(tok);
@@ -2193,7 +2244,7 @@ function App() {
       letterSpacing: -0.2
     }
   }, "Ricky Rampersad's Branch"))), /*#__PURE__*/React.createElement("button", {
-    onClick: signOut,
+    onClick: leave,
     style: signOutBtn
   }, "Sign out")), /*#__PURE__*/React.createElement("h1", {
     style: {
@@ -2918,7 +2969,11 @@ function App() {
     }), active === me.staffId ? /*#__PURE__*/React.createElement("button", {
       onClick: () => setView("jobdoc"),
       style: { ...primaryWide, marginTop: 10 }
-    }, "Your job document \u2192") : null), /*#__PURE__*/React.createElement("div", {
+    }, "Your job document \u2192") : null,
+    active === me.staffId && date === todayISO() ? /*#__PURE__*/React.createElement(CloseTheDay, {
+      entry: entry, blocks: blocks, mail: mailToday[active],
+      att: attToday ? attToday[me.staffId] : null, onClose: recordClose
+    }) : null), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",
         top: 16
@@ -4435,7 +4490,8 @@ function PersonRow({
       fontWeight: 700,
       marginTop: 2
     }
-  }, att ? (att.status === "absent" ? "Not in · " + att.reason : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : ""))
+  }, att ? (att.status === "absent" ? "Not in · " + att.reason
+            : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : "") + (att.out ? " · out " + att.out : ""))
          : "No sign-in yet"))), tag && /*#__PURE__*/React.createElement("span", {
     style: pillOutline(AMBER)
   }, tag), /*#__PURE__*/React.createElement("button", {
