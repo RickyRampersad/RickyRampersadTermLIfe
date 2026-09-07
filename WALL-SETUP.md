@@ -13,6 +13,7 @@ Salesforce connection and the same Apps Script feed:
 | **Branch board** | `/board/` | the whole branch — book, renewals, claims, pipeline |
 | **Production wall** | `/board/production.html` | policies **picked up for production** — this week, this month, year to date |
 | **Production dashboard** | `/board/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
+| **Renewals wall** | `/renewals/` | **this month's motor & property renewals** — due, renewed, premiums, tasks, next month |
 
 **The basis everywhere is the branch report's "Total API": `Total_API__c`
 (client portfolio, on the production picked-up date) plus `API_Increase__c`
@@ -110,6 +111,46 @@ Seven slides at `/board/`, fourteen seconds each:
 
 Everything on screen comes out of Salesforce: `Risk_Details__c`,
 `Claims_Revised__c`, `Opportunity` and `Submission__c`.
+
+## The renewals wall
+
+Seven slides at `/renewals/`, fourteen seconds each — the month's renewal book
+as a working wall:
+
+1. **The month, right now** — due / renewed / still open / overdue, with the
+   day-of-month progress bar
+2. **The month on one line** — every renewal on a date rail, dot size =
+   premium, blue = motor, gold = property, a green ring = already re-written
+   in Salesforce, dashed line = today
+3. **Motor** — every vehicle due, cover type, status chip, premium
+4. **Property** — every property risk due, private/commercial, premium
+5. **The money** — motor vs property split, the biggest renewals, and
+   re-written vs collected (reads `Payments_Made__c` on the new cycle —
+   blank until payments are posted, and the wall says so)
+6. **The work behind it** — open Tasks by owner and status, plus the renewal
+   chase ladder (payment follow-ups, waiting renewals), genericised
+7. **Already knocking** — next month's count and premium, by line
+
+**How "renewed" is decided:** a renewal counts as renewed when its next-cycle
+`Risk_Details__c` row exists — a record with the same vehicle registration
+(motor) or policy number (property) whose `From__c` is on/after the due date.
+Rows are matched one-to-one, so three risks on one policy need three new rows.
+`Vehicle_Status__c` other than Current (e.g. Sold) shows as leaving the book.
+
+Same rules as everything else here: the baked snapshot is **fully anonymous**
+(risk types, dates, amounts — no names, policy numbers, registrations or
+addresses); the live feed adds first name + last initial only. Task subjects
+are **never** shipped raw — staff write client names and policy numbers into
+them — the feed reduces them to a kind and a date. Staff names on the task
+slide are branch staff and belong on a wall.
+
+The live feed is the same `/exec` as the other boards — `wbBuild_()` now
+carries a `renewalsWall` block (`wbRenewalsWall_()` in
+`apps-script/WallBoard.gs`). Paste the URL into `WALL_DATA_URL` at the top of
+`renewals/index.html` and the badge flips to **Live**; if the deployed script
+predates the block, the wall just stays on its snapshot. Refresh the snapshot
+by re-running the queries documented in `wbRenewalsWall_()` and updating the
+`WALL_DATA` block — and keep it anonymous when you do.
 
 ## It works the moment it's deployed
 

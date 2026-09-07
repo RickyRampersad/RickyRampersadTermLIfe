@@ -131,7 +131,128 @@ function wbBuild_() {
     legacy: wbLegacy_(),
     production: wbProduction_(),
     dashboardAdvisors: wbDashboard_(),
-    settlement: wbSettlement_()
+    settlement: wbSettlement_(),
+    renewalsWall: wbRenewalsWall_()
+  };
+}
+
+/* ===================== renewals wall (/renewals/) =====================
+   This month's motor + property renewals with renewed/paid state, the open
+   task picture, and next month's preview. Same privacy line as the rest of
+   the live feed: clients as first name + last initial, no policy numbers,
+   no registrations, no addresses — and task subjects are never shipped raw,
+   because staff write client names into them. */
+
+function wbRenewalsWall_() {
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth();
+  var names = ['January','February','March','April','May','June','July',
+               'August','September','October','November','December'];
+  function norm(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  var due = wbQ_(
+    "SELECT Contact_First_Name__c f, Last_Name__c l, RecordType.Name rt, Policy__c p, " +
+    "Vehicle__c v, Vehicle_Make__c mk, Model__c mo, Motor_Vehicle_Coverage_Type__c cov, " +
+    "Vehicle_Status__c vs, Property_Type__c pt, Next_Renewal_Date__c d, Billing_Premiums__c prem " +
+    "FROM Risk_Details__c WHERE Next_Renewal_Date__c = THIS_MONTH " +
+    "AND RecordType.Name IN ('Motor','Property') ORDER BY Next_Renewal_Date__c"
+  );
+
+  // Next-cycle rows written recently: the proof a renewal has been renewed.
+  // Consumed as they match, so three risks on one policy need three rows.
+  var succ = wbQ_(
+    "SELECT Policy__c p, Vehicle__c v, From__c f2, Billing_Premiums__c prem, Payments_Made__c paid " +
+    "FROM Risk_Details__c WHERE From__c >= LAST_N_DAYS:60 " +
+    "AND RecordType.Name IN ('Motor','Property') ORDER BY From__c"
+  );
+  function successorOf(r) {
+    for (var i = 0; i < succ.length; i++) {
+      var s = succ[i];
+      if (!s.f2 || s.f2 < r.d) continue;                       // new cycle starts on/after the due date
+      var hit = (r.v && s.v) ? norm(s.v) === norm(r.v)
+              : (r.p && s.p) ? norm(s.p) === norm(r.p) : false;
+      if (hit) { succ.splice(i, 1); return s; }
+    }
+    return null;
+  }
+  function propKind(policy) {
+    var p = norm(policy);
+    if (p.indexOf('FHO') > -1) return 'Homeowner';
+    if (p.indexOf('FAR') > -1) return 'All risk';
+    if (p.indexOf('FCP') > -1) return 'Commercial package';
+    return 'Property';
+  }
+
+  var motor = [], property = [];
+  due.forEach(function (r) {
+    var s = successorOf(r);
+    var row = { d: r.d, who: wbMask_(r.f, r.l), prem: Math.round((r.prem || 0) * 100) / 100 };
+    if (s) { row.renewed = true; row.newPrem = Math.round((s.prem || 0) * 100) / 100;
+             row.paid = Math.round((s.paid || 0) * 100) / 100; }
+    if (r.rt === 'Motor') {
+      row.what = (r.mk || 'Vehicle') + (r.mo ? ' ' + r.mo : '');
+      row.cov = /comprehensive/i.test(r.cov || '') ? 'Comprehensive' : 'Third party';
+      if (r.vs && r.vs !== 'Current') row.off = r.vs;
+      motor.push(row);
+    } else {
+      row.what = propKind(r.p);
+      row.type = r.pt || '—';
+      property.push(row);
+    }
+  });
+
+  // ---- the task picture (counts and generic lines only — never raw subjects)
+  function one(q) { return (wbQ_(q)[0] || {}).n || 0; }
+  var open = one('SELECT COUNT(Id) n FROM Task WHERE IsClosed = false');
+  var dueThisMonth = one('SELECT COUNT(Id) n FROM Task WHERE IsClosed = false AND ActivityDate = THIS_MONTH');
+  var renewalSubject = one("SELECT COUNT(Id) n FROM Task WHERE IsClosed = false AND Subject LIKE '%renew%'");
+  var status = wbQ_('SELECT Status s, COUNT(Id) n FROM Task WHERE IsClosed = false ' +
+                    'GROUP BY Status ORDER BY COUNT(Id) DESC')
+    .map(function (r) { return { k: r.s === 'In Progress' ? 'In progress'
+                                  : r.s === 'Not Started' ? 'Not started' : r.s, n: r.n }; });
+  var escalated = status.filter(function (x) { return x.k === 'Escalated'; })
+                        .reduce(function (a, x) { return a + x.n; }, 0);
+  var ownerRows = wbQ_('SELECT OwnerId oid, COUNT(Id) n FROM Task WHERE IsClosed = false ' +
+                       'GROUP BY OwnerId ORDER BY COUNT(Id) DESC LIMIT 8');
+  var ids = ownerRows.map(function (r) { return "'" + r.oid + "'"; }).join(',');
+  var nameById = {};
+  if (ids) wbQ_('SELECT Id, Name FROM User WHERE Id IN (' + ids + ')')
+    .forEach(function (u) { nameById[u.Id] = u.Name; });
+  var owners = ownerRows.map(function (r) { return { k: nameById[r.oid] || 'Queue', n: r.n }; });
+
+  // renewal chase ladder — payment follow-ups and waiting renewals, genericised
+  var chase = wbQ_(
+    "SELECT Subject s, ActivityDate ad FROM Task WHERE IsClosed = false " +
+    "AND Subject LIKE '%renew%' AND (Subject LIKE '%payment%' OR Subject LIKE '%follow up%' OR Subject LIKE '%due%') " +
+    "ORDER BY ActivityDate LIMIT 5"
+  ).map(function (r) {
+    var s = String(r.s || '');
+    var line = /FHO|FAR|FCP/i.test(s) ? 'Property' : /AP[UGC]|AOG|APC/i.test(s) ? 'Motor' : 'Renewal';
+    var kind = /payment/i.test(s) ? 'Payment follow-up — premium open' : 'Renewal due — waiting on client';
+    return { line: line, kind: kind, since: r.ad };
+  });
+
+  // ---- next month
+  var nm = wbQ_(
+    "SELECT RecordType.Name t, COUNT(Id) n, SUM(Billing_Premiums__c) prem FROM Risk_Details__c " +
+    "WHERE Next_Renewal_Date__c = NEXT_MONTH AND RecordType.Name IN ('Motor','Property') " +
+    "GROUP BY RecordType.Name"
+  );
+  var nMot = nm.filter(function (r) { return r.t === 'Motor'; })[0] || {};
+  var nPro = nm.filter(function (r) { return r.t === 'Property'; })[0] || {};
+
+  return {
+    generatedAt: new Date().toISOString(),
+    monthLabel: names[m] + ' ' + y,
+    monthStart: Utilities.formatDate(new Date(y, m, 1), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    monthDays: new Date(y, m + 1, 0).getDate(),
+    motor: motor,
+    property: property,
+    tasks: { open: open, dueThisMonth: dueThisMonth, renewalSubject: renewalSubject,
+             escalated: escalated, status: status, owners: owners, chase: chase },
+    next: { label: names[(m + 1) % 12],
+            motorN: nMot.n || 0, motorPrem: Math.round(nMot.prem || 0),
+            propN: nPro.n || 0, propPrem: Math.round(nPro.prem || 0) }
   };
 }
 
