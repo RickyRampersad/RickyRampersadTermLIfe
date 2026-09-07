@@ -234,11 +234,13 @@ var WALL_DATA = {
     {d:"2026-09-21", what:"Homeowner",          type:"Private",    prem:6558.75}
   ],
   values: {
+    /* mkt = asking-price band on T&T classifieds at snapshot time — a guide
+       for the conversation, never a figure filed for the client. */
     motor: [
-      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true},
-      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979},
-      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true},
-      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2}
+      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true, mkt:{lo:350000,hi:450000}},
+      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979, mkt:{lo:130000,hi:165000}},
+      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true, mkt:{lo:100000,hi:155000}},
+      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2, mkt:{lo:330000,hi:470000}}
     ],
     property: [
       {d:"2026-09-08", what:"Commercial package", sum:600000,  first:true},
@@ -416,11 +418,19 @@ function drawValues(){
       var move=r.renewed?'<span class="chip good">stepped −'+pct+'% ✓</span>'
         :r.stuckYears?'<span class="chip bad">unchanged '+r.stuckYears+' yrs → '+moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>'
         :'<span class="chip warn">step to '+moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>';
+      var mkt='';
+      if(r.mkt){
+        var band=moneyShort(r.mkt.lo)+'–'+moneyShort(r.mkt.hi);
+        mkt = r.cur<r.mkt.lo ? '<span class="chip warn">mkt '+band+' · below</span>'
+            : r.cur>r.mkt.hi ? '<span class="chip warn">mkt '+band+' · above</span>'
+            : '<span class="chip good">mkt '+band+' ✓</span>';
+      }
       return '<div class="row"><span class="nm">'+esc(r.what)+' · '+fmtD(r.d)+(r.who?' · '+esc(r.who):'')+'</span>'
         +'<span class="val" style="min-width:150px">'+money(r.prev)+' → '+money(r.cur)+'</span>'
+        +'<span class="val" style="min-width:170px;text-align:right">'+mkt+'</span>'
         +'<span class="val" style="min-width:210px;text-align:right">'+move+'</span></div>';
     }).join("")
-    +'</div><div class="note plain">Benefits ride along: windscreen cover and Waiver of Excess on every one of these policies.</div>';
+    +'</div><div class="note plain">Benefits ride along: windscreen cover and Waiver of Excess on every policy. Market bands are T&amp;T classifieds asking prices at snapshot time (Pin.tt, TT Motor Sales, Car Junction) — a guide only; the client confirms the figure and the approved valuation certificate binds.</div>';
   var stale=VP.filter(function(r){return (r.years||0)>=2});
   $("#valProp").innerHTML='<h3>Property — rebuilding costs drift up</h3><div class="rows">'
     +VP.map(function(r){

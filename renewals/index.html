@@ -235,11 +235,14 @@ var WALL_DATA = {
      property: sum = sum insured on the register, years = how long it has
      been unchanged, missing = no value recorded, first = first cycle.   */
   values: {
+    /* mkt = asking-price band for the same year/model on T&T classifieds
+       (Pin.tt, TT Motor Sales, Car Junction) checked at snapshot time —
+       a guide for the conversation, never a figure filed for the client. */
     motor: [
-      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true},
-      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979},
-      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true},
-      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2}
+      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true, mkt:{lo:350000,hi:450000}},
+      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979, mkt:{lo:130000,hi:165000}},
+      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true, mkt:{lo:100000,hi:155000}},
+      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2, mkt:{lo:330000,hi:470000}}
     ],
     property: [
       {d:"2026-09-08", what:"Commercial package", sum:600000,  first:true},
@@ -501,7 +504,7 @@ function sMotorValues(D){
     +(stuck?' — and one value has not moved in two years, which means premium paid on money a claim would never pay out':'')+'.</p>'
     +'<div class="body"><div class="panel"><table><thead><tr><th>Due</th>'
     +(withWho?'<th>Client</th>':'')
-    +'<th>Vehicle</th><th>Value last year</th><th>Value now</th><th>This renewal</th><th>Benefits on the policy</th></tr></thead><tbody>'
+    +'<th>Vehicle</th><th>Value last year</th><th>Value now</th><th>This renewal</th><th>Market check</th><th>Benefits on the policy</th></tr></thead><tbody>'
     +V.map(function(r){
       var pct=r.prev?Math.round((1-r.cur/r.prev)*100):0;
       var move;
@@ -510,6 +513,13 @@ function sMotorValues(D){
       else if(r.stuckYears) move='<span class="chip bad">unchanged '+r.stuckYears+' years — adjust to '
         +moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>';
       else move='<span class="chip warn">step to '+moneyShort(r.opt10)+' (−10%) or '+moneyShort(r.opt15)+' (−15%)</span>';
+      var mkt='<span style="color:var(--faint)">—</span>';
+      if(r.mkt){
+        var band=moneyShort(r.mkt.lo)+'–'+moneyShort(r.mkt.hi);
+        mkt = r.cur<r.mkt.lo ? '<span class="chip warn">'+band+' — insured below market</span>'
+            : r.cur>r.mkt.hi ? '<span class="chip warn">'+band+' — above market</span>'
+            : '<span class="chip good">'+band+' ✓ in band</span>';
+      }
       var ben=(r.ws?'<span class="chip blue">Windscreen '+moneyShort(r.ws)+(r.wsAdded?' — added ✓':'')+'</span> ':'')
         +(r.waiver?'<span class="chip">Waiver of Excess</span>':'');
       return '<tr><td>'+fmtD(r.d)+'</td>'
@@ -517,10 +527,11 @@ function sMotorValues(D){
         +'<td><b>'+esc(r.what)+'</b></td>'
         +'<td>'+money(r.prev)+'</td>'
         +'<td><b>'+money(r.cur)+'</b>'+(r.renewed&&pct?' <span style="color:var(--good)">↓</span>':'')+'</td>'
-        +'<td>'+move+'</td><td>'+ben+'</td></tr>';
+        +'<td>'+move+'</td><td>'+mkt+'</td><td>'+ben+'</td></tr>';
     }).join("")
     +'</tbody></table></div>'
     +'<div class="note">An unadjusted value is not extra cover — the insurer settles at market value, so the client pays premium on the difference and collects nothing for it. The step-down keeps the premium honest.</div>'
+    +'<div class="note" style="color:var(--dim);background:rgba(255,255,255,.04);border-color:var(--line)">Market check = asking-price band for the same year and model on T&amp;T classifieds (Pin.tt, TT Motor Sales, Car Junction), read at snapshot time. A guide for the conversation only — the client confirms the figure, and the approved valuation certificate is what binds.</div>'
     +'</div>';
 }
 

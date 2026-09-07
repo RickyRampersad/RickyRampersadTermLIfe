@@ -160,7 +160,15 @@ carries some vehicles twice.
 `Depreciation_10_Option_1__c` / `Depreciation_15_Option_2__c` as the guide
 (never `Depreciation__c`, which is the parts clause — see RENEWAL-SETUP).
 A value equal to last year's is flagged: premium is being paid on money a
-claim would not pay out. Property sums insured only go stale —
+claim would not pay out. Each comprehensive vehicle also carries a **market
+check** — the asking-price band for the same year and model on the T&T
+classifieds (Pin.tt, TT Motor Sales, Car Junction), read by hand at snapshot
+time and baked into the `values.motor` rows (`mkt:{lo,hi}`). It is a guide
+for the conversation, never a figure filed for the client: the client
+confirms their own number and the approved valuation certificate is what
+binds. There is no automated scraping — refresh the bands when you refresh
+the snapshot; live-feed rows without `mkt` simply don't show the chip.
+Property sums insured only go stale —
 `Total_Property_Cover__c` compared across the account's history; unchanged
 4+ years is flagged with the +5%/yr suggested figure (the RenewalLines
 drift), because average cuts every claim on an underinsured risk. Riders
