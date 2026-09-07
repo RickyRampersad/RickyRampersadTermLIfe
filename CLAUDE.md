@@ -259,12 +259,18 @@ bed level under the voice; the wall film uses `0.62`, about −21 dB RMS).
 
 | Film | Page | MP4 | Length |
 |---|---|---|---|
-| Client film | `client-film.html` | `dhaa-film.mp4` | 142s |
-| What happens next | `process-film.html` | `dhaa-process.mp4` | 104s |
-| The agent's side | `agent-side-film.html` | `dhaa-your-side.mp4` | 84s |
-| For agents | `agent-film.html` | `dhaa-agent-film.mp4` | 75s |
-| How we work | `how-we-work-film.html` | `dhaa-how-we-work.mp4` | 84s |
-| The branch wall | `wall-film.html` | `dhaa-wall.mp4` | 112s |
+| Client film | `client-film.html` | `dhaa-film.mp4` | 148s |
+| What happens next | `process-film.html` | `dhaa-process.mp4` | 110s |
+| The agent's side | `agent-side-film.html` | `dhaa-your-side.mp4` | 86s |
+| For agents | `agent-film.html` | `dhaa-agent-film.mp4` | 79s |
+| How we work | `how-we-work-film.html` | `dhaa-how-we-work.mp4` | 87s |
+| The branch wall | `wall-film.html` | `dhaa-wall.mp4` | 118s |
+
+All six are narrated on **`en-US-AndrewNeural` at −12%** (the ad at −8%); the
+lengths above are from the 7 September 2026 re-voice, which is also when the
+process film gained its month-by-month birthday strip and the "looked after
+by" chip on the worklist. Every film page pauses on a tap in the middle of the
+screen and carries a clock in its control row.
 
 **Never put a real client name or a real client count in an MP4.** The files
 sit at public URLs even when the pages are `noindex`. Every number on screen
@@ -337,8 +343,9 @@ libass**, Playwright with Chromium, numpy.
    **`en-US-AndrewNeural`, never the Multilingual variant** — see the house
    rule above. The Multilingual voice reads a phrase in another language when
    it feels like it, and it did exactly that on the first cut of the wall
-   film. The films made before this rule was found still carry it; the ad
-   was re-voiced. `-8%` for a short spot, `-12%` for a walkthrough.
+   film. Every film was re-voiced on the plain voice on 7 September 2026
+   with `revoice.py`; nothing published carries the Multilingual voice any
+   more. `-8%` for a short spot, `-12%` for a walkthrough.
    Then convert each to WAV — **the mixer reads `NN.wav`, not `NN.mp3`.** Miss
    this and it encodes silently with no narration; the giveaway is
    `speech covers 0% of runtime` in the mixer's own output.
