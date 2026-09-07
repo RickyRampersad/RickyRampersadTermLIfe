@@ -73,7 +73,7 @@ const ok = (what, cond, extra) => {
     const body = JSON.parse(r.request().postData() || '{}');
     const j = o => r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(o) });
     if (body.action==='login' || body.action==='me')
-      return j({ ok:true, token:'t', profile:P, roster:[P], schedule:SCH, kpis:KPIS });
+      return j({ ok:true, token:'t', profile: Object.assign({}, P, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[P], schedule:SCH, kpis:KPIS });
     if (body.action==='rows')    return j({ ok:true, rows:[], metrics:METRICS });
     if (body.action==='metrics') return j({ ok:true, metrics:METRICS });
     return j({ ok:true });

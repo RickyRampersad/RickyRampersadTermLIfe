@@ -44,6 +44,8 @@ const STANDING = { ok:true, staffId:'boss', role:'bm', quarter:'2026-Q3', from:'
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 
+const closedTasks = [];
+
 async function session(b, who, first, mail, sent) {
   const ctx = await b.newContext({ viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
   const page = await ctx.newPage();
@@ -56,6 +58,7 @@ async function session(b, who, first, mail, sent) {
       return j({ ok:true, token:'t', profile: Object.assign({}, who, { attendance: { first, at:'08:02', lastSeen:'08:02', status:'in', reason:'', late:0 } }), roster:[P, BOSS], schedule:SCH, kpis:{ ssa:[{ value:'Renewa/PDl/Bill', label:'Renewals / Premium Dues / Billing', salesforce:true }], bm:[] } });
     if (body.action === 'rows') return j({ ok:true, rows:[], metrics:METRICS, openBook:BOOK, needsReason:{}, billing:{}, attendance:{ [who.staffId]: { at:'08:02', status:'in', reason:'', late:0 } }, mail: mail || {}, ranks:['Branch Manager','Assistant Branch Manager','Unit Manager','Executive Agent','Agent'] });
     if (body.action === 'saveMail') { sent.push(body); return j({ ok:true, when: body.when, at:'08:31', ranks: body.ranks, date:'2026-09-07' }); }
+    if (body.action === 'updateTask') { closedTasks.push(body); return j({ ok:true, field: body.field, label:'Closed', value: body.value, subject:'Premium dues — Demo Manager desk' }); }
     if (body.action === 'standing') return j(STANDING);
     if (body.action === 'jobDoc') return j(DOC);
     if (body.action === 'hr') return j({ ok:true, me:{ staffId: who.staffId, role: who.role, goals:[], competencies:[], reviews:[], development:[], training:[] }, reports:[], types:[], sources:[], setup:{ goals:true, competencies:true }, standard:0.72 });
@@ -101,6 +104,21 @@ async function session(b, who, first, mail, sent) {
   const a = t.indexOf('for the Branch Manager'), e = t.indexOf('for the Executive Agent'), g = t.indexOf('Premium dues — an agent');
   ok('the Branch Manager\'s item first, then the Executive Agent\'s, then the agent\'s', a > -1 && e > a && g > e, [a, e, g].join(','));
   ok('and an agent\'s item carries no rank', !/for the Agent\b/.test(t));
+  ok('the person\'s own screens are named at the top', /Your quarter/.test(t) && /My performance/.test(t) && /Job document/.test(t));
+
+  console.log('\nClosing a task from the list:\n');
+  await s.page.locator('button:has-text("Close ✓")').first().click();
+  await s.page.waitForTimeout(200);
+  const closeBtn = s.page.locator('button:has-text("Close in Salesforce")');
+  ok('it asks for a line first', await closeBtn.count() === 1 && await closeBtn.isDisabled());
+  await s.page.locator('input[placeholder*="What was done"]').fill('Reconciled and sent the corrected statement');
+  ok('four words make it ready', !(await closeBtn.isDisabled()));
+  await closeBtn.click();
+  await s.page.waitForTimeout(700);
+  ok('one close went out', closedTasks.length === 1, String(closedTasks.length));
+  ok('for that task, as a close, with the line', closedTasks[0] && closedTasks[0].taskId === 't1' && closedTasks[0].field === 'close' && closedTasks[0].value === 'Reconciled and sent the corrected statement', JSON.stringify(closedTasks[0]));
+  t = await s.page.locator('body').innerText();
+  ok('and the task is gone from the list', !/Demo Manager desk/.test(t) && /an executive agent/.test(t));
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 

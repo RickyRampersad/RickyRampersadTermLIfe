@@ -334,6 +334,16 @@ is now read as a support desk (`ssa`); it used to fall through to the BMA.
 The People Leader is whoever the person reports to in `REPORTS_TO`, plus the
 Branch Manager for everyone. Each side writes only its own half of a review.
 
+## Closing a task from the tracker
+
+`KPI-Write.gs` closes a task as well as writing the reason and the due
+date: `updateTask` with `field: close` sets `Status = Completed` and
+appends the person's line, stamped and signed, to the task's Description.
+Fewer than four words is refused; a closed task cannot be closed again;
+own task or the Branch Manager only; every attempt is audited on the
+`KPI Salesforce Writes` tab. The cached position — counts, reasons,
+billing and the open book — is dropped so the next read is honest.
+
 ## The order of service, and the mail sweep
 
 Every list is served in one order, whatever the KPI: Branch Manager,

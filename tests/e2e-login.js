@@ -45,9 +45,9 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
       // the result page is not ready yet — twice, as it was at three o'clock
       if (loginTries <= refuseFirst)
         return route.fulfill({ status:404, contentType:'text/html', body:'Page Not Found' });
-      return reply({ ok:true, token:'tok', profile:KAMLA, roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
+      return reply({ ok:true, token:'tok', profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     }
-    if (body.action === 'me') return reply({ ok:true, profile:KAMLA, roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
+    if (body.action === 'me') return reply({ ok:true, profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'rows') return reply({ ok:true, rows:[] });
     if (body.action === 'training') return reply({ ok:true, training:[] });
     return reply({ ok:true });
