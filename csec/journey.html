@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Journey | CSEC Study Hub</title>
+<meta name="description" content="The guided journey from Form 1 to CSEC — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  /* the spine: primary → lower → upper → CSEC */
+  .spine{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+  .sg{flex:1;min-width:170px;padding:14px;border-radius:13px;border:1px solid var(--line);
+      background:rgba(0,0,0,.2)}
+  .sg.here{border-color:var(--gold);background:rgba(239,194,75,.09)}
+  .sg.ext{border-style:dashed;opacity:.72}
+  .sg b{display:block;font-family:'Montserrat',sans-serif;font-size:.92rem;margin-bottom:2px}
+  .sg .yr{font-size:.74rem;color:var(--teal);font-weight:700;letter-spacing:.4px}
+  .sg .nt{font-size:.78rem;color:var(--muted);line-height:1.55;margin-top:7px}
+
+  /* term rail */
+  .rail{display:flex;gap:9px;flex-wrap:wrap}
+  .tm{flex:1;min-width:190px;padding:15px;border-radius:13px;border:1px solid var(--line);
+      background:rgba(0,0,0,.2)}
+  .tm.now{border-color:var(--teal);background:rgba(0,207,234,.08)}
+  .tm.past{opacity:.55}
+  .tm .no{font-size:.7rem;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .tm h4{font-family:'Montserrat',sans-serif;font-size:.97rem;margin:5px 0 4px}
+  .tm .aim{font-size:.82rem;color:var(--muted);line-height:1.55}
+  .tm ul{margin:10px 0 0 17px}
+  .tm li{font-size:.8rem;color:var(--muted);line-height:1.65}
+
+  /* year accordion */
+  .yrow{border:1px solid var(--line);border-radius:14px;background:rgba(0,0,0,.18);margin-bottom:10px;padding:16px}
+  .yrow.here{border-color:var(--gold)}
+  .yrow summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+  .yrow .fno{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;
+             font-family:'Montserrat',sans-serif;font-weight:800;background:rgba(255,255,255,.07);color:var(--muted)}
+  .yrow.here .fno{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f}
+  .ms{display:flex;gap:12px;padding:13px 15px;border-radius:12px;background:rgba(0,0,0,.22);
+      border:1px solid var(--line);margin-bottom:9px}
+  .ms.now{border-color:var(--gold);background:rgba(239,194,75,.09)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>My journey</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow" id="hd-eyebrow">The guided journey</div>
+      <h1 id="hd-title">Your journey</h1>
+      <p id="hd-sub">Every year has a job. This page tells you what this one is for, what is new,
+         what you are still carrying, and what is coming.</p>
+    </div>
+
+    <!-- form selector, for anyone not signed in as a student -->
+    <div class="card hidden" id="pickwrap" style="margin-bottom:18px">
+      <label class="fl" for="formsel" id="picklabel">Show the journey for</label>
+      <select class="fi" id="formsel">
+        <option value="1">Form 1</option><option value="2">Form 2</option>
+        <option value="3">Form 3</option><option value="4">Form 4</option><option value="5">Form 5</option>
+      </select>
+    </div>
+
+    <!-- ---------- you are here ---------- -->
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;gap:22px;align-items:center;flex-wrap:wrap">
+        <div style="flex:none;width:92px;height:92px;border-radius:22px;display:grid;place-items:center;
+                    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
+          <div style="text-align:center;line-height:1.05">
+            <div style="font-family:'Montserrat',sans-serif;font-size:.62rem;font-weight:800;letter-spacing:1px">FORM</div>
+            <div style="font-family:'Montserrat',sans-serif;font-size:2.2rem;font-weight:900" id="yh-form">3</div>
+          </div>
+        </div>
+        <div style="flex:1;min-width:220px">
+          <div class="eyebrow" style="margin-bottom:3px" id="yh-stage"></div>
+          <h3 style="font-size:1.25rem" id="yh-phase"></h3>
+          <p class="sub" id="yh-focus" style="margin-top:5px"></p>
+        </div>
+        <div class="grid g2" style="flex:none;min-width:210px">
+          <div class="tile"><div class="big" id="yh-term">1</div><div class="lab">Term now</div></div>
+          <div class="tile teal"><div class="big" id="yh-exam">—</div><div class="lab" id="yh-examlab">to CSEC</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- this term ---------- -->
+    <div class="section-label">This school year, term by term <span class="pill mute" id="yr-key"></span></div>
+    <div class="rail" id="terms"></div>
+
+    <!-- ---------- new this year ---------- -->
+    <div class="section-label">New to you this year <span class="pill gold" id="new-count"></span></div>
+    <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
+      Syllabus strands that start in this form. These are the ones nobody has taught you yet,
+      so they are where a term goes wrong quietly.</p>
+    <div class="rows" id="newlist"></div>
+
+    <!-- ---------- carried forward ---------- -->
+    <div id="carry-wrap" class="hidden">
+      <div class="section-label">Carried forward — still weak from earlier years</div>
+      <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
+        Topics from a form below this one that are still under 60%. This is the debt that sinks a
+        Form 4, and it is far cheaper to clear now than later.</p>
+      <div class="rows" id="carrylist"></div>
+    </div>
+
+    <!-- ---------- milestones ---------- -->
+    <div class="section-label">Milestones ahead</div>
+    <div id="milestones"></div>
+
+    <!-- ---------- the whole spine ---------- -->
+    <div class="section-label">The whole road</div>
+    <div class="spine" id="spine"></div>
+    <p class="sub" style="color:var(--muted);font-size:.82rem;margin-bottom:16px" id="spine-note"></p>
+    <div id="years"></div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/guides.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var me=CSEC.current();
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+
+  $('nav').innerHTML = me
+    ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      '<a href="journey.html" class="on">Journey</a>'+
+      (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
+      '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
+    : '<a href="index.html">Sign in</a><a href="journey.html" class="on">Journey</a>'+
+      '<a href="guides.html">Guides</a><a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>';
+
+  /* A signed-in student sees their own year. Anyone else picks one. */
+  var isStudent = me && me.role==='student';
+  var viewForm  = isStudent ? me.form : 3;
+
+  if(!isStudent){
+    $('pickwrap').classList.remove('hidden');
+    if(me) $('picklabel').textContent='Show the journey for';
+    $('formsel').value=String(viewForm);
+    $('formsel').addEventListener('change',function(){ viewForm=parseInt(this.value,10); paint(); });
+  }
+
+  var hasGuide=function(sid){ return (window.CSEC_GUIDES||[]).some(function(g){return g.strand===sid;}); };
+
+  function strandRow(r, showPct){
+    var stat=r.stat||{pct:null};
+    var tag = !showPct ? ''
+      : stat.pct==null ? '<span class="pill mute">not started</span>'
+      : '<span class="pill '+(stat.pct>=75?'good':stat.pct>=50?'gold':'bad')+'">'+stat.pct+'%</span>';
+    var guide = hasGuide(r.strand)
+      ? '<a class="pill gold" style="text-decoration:none" href="guides.html?strand='+
+        encodeURIComponent(r.strand)+'">📐 method</a>' : '';
+    var inner='<div class="r-ico">'+r.icon+'</div>'+
+      '<div class="r-text"><b>'+esc(r.strandName)+'</b><span>'+esc(r.subjName)+' · '+esc(r.note)+'</span></div>';
+    if(isStudent){
+      return '<div class="row" style="padding:0">'+
+        '<a href="practice.html?strand='+encodeURIComponent(r.strand)+'" '+
+          'style="display:flex;align-items:center;gap:13px;flex:1;padding:13px 15px;text-decoration:none;color:inherit;min-width:0">'+
+          inner+'</a>'+
+        '<div style="flex:none;display:flex;align-items:center;gap:8px;padding-right:15px">'+
+        guide+tag+'<span class="r-arrow">→</span></div></div>';
+    }
+    return '<div class="row">'+inner+'<div style="flex:none;display:flex;gap:8px">'+guide+'</div></div>';
+  }
+
+  function paint(){
+    var year=CSEC.roadmapFor(viewForm), stage=CSEC.stageOf(viewForm);
+    var t=CSEC.termOf(), termNo=t.term;
+    var cd=CSEC.countdown(viewForm);
+
+    /* ---------- you are here ---------- */
+    $('yh-form').textContent=viewForm;
+    $('yh-stage').textContent=stage.label+' · '+t.year;
+    $('yh-phase').textContent=year.label+' — '+year.phase;
+    $('yh-focus').textContent=year.focus;
+    $('yh-term').textContent=termNo;
+    if(cd.days>400){ $('yh-exam').textContent=cd.months; $('yh-examlab').textContent='months to CSEC '+cd.year; }
+    else { $('yh-exam').textContent=cd.days; $('yh-examlab').textContent='days to CSEC '+cd.year; }
+
+    $('hd-eyebrow').textContent = isStudent ? 'Your guided journey' : 'The guided journey';
+    $('hd-title').textContent = isStudent ? me.name+' — Form '+viewForm : 'Form '+viewForm+' — the year ahead';
+    $('yr-key').textContent=t.key;
+
+    /* ---------- the three terms ---------- */
+    $('terms').innerHTML=year.terms.map(function(tm){
+      var cls = tm.n===termNo ? ' now' : (tm.n<termNo ? ' past' : '');
+      return '<div class="tm'+cls+'">'+
+        '<div class="no">Term '+tm.n+(tm.n===termNo?' · now':'')+'</div>'+
+        '<h4>'+esc(tm.title)+'</h4>'+
+        '<div class="aim">'+esc(tm.aim)+'</div>'+
+        '<ul>'+tm.do.map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul></div>';
+    }).join('');
+
+    /* ---------- new this year ---------- */
+    var nw = isStudent ? CSEC.newThisYear(me.id) : newForForm(viewForm);
+    $('new-count').textContent=nw.length+' strands';
+    $('newlist').innerHTML = nw.length
+      ? nw.map(function(r){ return strandRow(r,isStudent); }).join('')
+      : '<div class="note"><b>Nothing new starts this year.</b> '+
+        (viewForm===5
+          ? 'Form 5 is not about new content — it is about finishing the syllabus you already have and practising it under time until the paper holds no surprises.'
+          : 'Every strand in your subjects this year was already introduced below. Use the time to deepen them.')+'</div>';
+
+    /* ---------- carried forward ---------- */
+    if(isStudent){
+      var carry=CSEC.carriedForward(me.id).slice(0,8);
+      $('carry-wrap').classList.toggle('hidden',!carry.length);
+      $('carrylist').innerHTML=carry.map(function(r){ return strandRow(r,true); }).join('');
+    } else {
+      $('carry-wrap').classList.add('hidden');
+    }
+
+    /* ---------- milestones ---------- */
+    var ms=[];
+    (C.roadmap||[]).forEach(function(r){
+      if(r.form<viewForm) return;
+      (r.milestones||[]).forEach(function(m){
+        if(r.form===viewForm && m.term<termNo) return;
+        ms.push({form:r.form,term:m.term,what:m.what,why:m.why,
+                 now:(r.form===viewForm&&m.term===termNo)});
+      });
+    });
+    ms.sort(function(a,b){ return (a.form-b.form)||(a.term-b.term); });
+    $('milestones').innerHTML = ms.length? ms.map(function(m){
+      return '<div class="ms'+(m.now?' now':'')+'">'+
+        '<div style="flex:none;font-size:1.2rem">'+(m.now?'⚑':'○')+'</div>'+
+        '<div class="r-text"><b>'+esc(m.what)+(m.now?' — this term':'')+'</b>'+
+        '<span style="color:var(--teal);font-size:.74rem;font-weight:700">Form '+m.form+', Term '+m.term+'</span>'+
+        '<span>'+esc(m.why)+'</span></div></div>';
+    }).join('') : '<div class="note">No milestones left — the examinations are the last one.</div>';
+
+    /* ---------- the spine ---------- */
+    $('spine').innerHTML=(C.stages||[]).map(function(sg){
+      var here = sg.forms && sg.forms.indexOf(viewForm)>-1;
+      return '<div class="sg'+(here?' here':'')+(sg.external?' ext':'')+'">'+
+        '<span class="yr">'+esc(sg.years)+'</span>'+
+        '<b>'+esc(sg.label)+(here?' · you are here':'')+'</b>'+
+        '<span class="yr" style="color:var(--gold)">ends at '+esc(sg.exam)+'</span>'+
+        '<div class="nt">'+esc(sg.note)+'</div></div>';
+    }).join('');
+    $('spine-note').textContent='Primary is shown dashed because it is served by a separate site. '+
+      'The two are designed to join, so a student can be followed from Infant 1 to CSEC.';
+
+    /* ---------- every year, expandable ---------- */
+    $('years').innerHTML=(C.roadmap||[]).map(function(r){
+      var here=r.form===viewForm;
+      return '<details class="yrow'+(here?' here':'')+'"'+(here?' open':'')+'>'+
+        '<summary><span class="fno">'+r.form+'</span>'+
+        '<span style="flex:1;min-width:160px">'+
+          '<b style="font-family:Montserrat,sans-serif;font-size:1rem;display:block">'+esc(r.label)+' · '+esc(r.phase)+'</b>'+
+          '<span style="font-size:.79rem;color:var(--muted)">'+esc(r.focus)+'</span></span>'+
+        (here?'<span class="pill gold">you are here</span>':'')+
+        '<span class="r-arrow">▾</span></summary>'+
+        '<div style="margin-top:14px">'+
+          '<div class="rail">'+r.terms.map(function(tm){
+            return '<div class="tm'+(here&&tm.n===termNo?' now':'')+'">'+
+              '<div class="no">Term '+tm.n+'</div><h4>'+esc(tm.title)+'</h4>'+
+              '<div class="aim">'+esc(tm.aim)+'</div>'+
+              '<ul>'+tm.do.map(function(d){return '<li>'+esc(d)+'</li>';}).join('')+'</ul></div>';
+          }).join('')+'</div>'+
+          '<div class="section-label">Goals for the year</div>'+
+          '<ul style="margin-left:18px;color:var(--muted);font-size:.86rem;line-height:1.75">'+
+            r.goals.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>'+
+        '</div></details>';
+    }).join('');
+  }
+
+  /* When nobody is signed in there is no progress, so derive the new strands
+     from the curriculum alone using the default subject selection. */
+  function newForForm(form){
+    var out=[];
+    (C.defaultSelection||[]).forEach(function(id){
+      var subj=C.subjects[id]; if(!subj) return;
+      subj.strands.forEach(function(t){
+        var now=t.forms.indexOf(form)>-1;
+        var before=form>1 && t.forms.indexOf(form-1)>-1;
+        if(now&&!before) out.push({subj:id,subjName:subj.name,icon:subj.icon,
+                                   strand:t.id,strandName:t.name,note:t.note,stat:{pct:null}});
+      });
+    });
+    return out;
+  }
+
+  paint();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

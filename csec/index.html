@@ -8,6 +8,17 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .formpick{display:grid;grid-template-columns:repeat(5,1fr);gap:7px}
+  .formpick button{padding:11px 4px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(0,0,0,.24);color:var(--text);cursor:pointer;font-family:inherit;
+    display:flex;flex-direction:column;align-items:center;gap:3px;transition:all .15s ease}
+  .formpick button:hover{border-color:var(--teal)}
+  .formpick button b{font-family:'Montserrat',sans-serif;font-size:1.25rem;font-weight:800;line-height:1}
+  .formpick button span{font-size:.6rem;color:var(--muted);text-align:center;line-height:1.2}
+  .formpick button.on{background:linear-gradient(135deg,var(--gold),var(--gold2));border-color:transparent;color:#07131f}
+  .formpick button.on span{color:rgba(7,19,31,.75)}
+</style>
 </head>
 <body>
 
@@ -17,8 +28,9 @@
     <div class="brandtext"><b>CSEC Study Hub</b><span>Form 1 – Form 5</span></div>
     <nav class="topnav">
       <a href="index.html" class="on">Sign in</a>
+      <a href="journey.html">Journey</a>
       <a href="guides.html">Guides</a>
-      <a href="planner.html">Planner</a>
+      <a href="planner.html">Syllabus</a>
       <a href="papers.html">Resources</a>
     </nav>
   </div>
@@ -106,14 +118,19 @@
           </select>
         </div>
         <div class="field" id="c-formwrap">
-          <label class="fl" for="c-form">Current form</label>
-          <select class="fi" id="c-form">
-            <option value="1">Form 1</option>
-            <option value="2" selected>Form 2</option>
-            <option value="3">Form 3</option>
-            <option value="4">Form 4</option>
-            <option value="5">Form 5</option>
-          </select>
+          <label class="fl">Which form is she in right now?</label>
+          <p style="font-size:.79rem;color:var(--muted);line-height:1.55;margin:-2px 0 9px">
+            This drives everything — the daily plan, the syllabus, the milestones and the countdown.
+            You move up a form each year in Settings, and the old year stays on the record.</p>
+          <div class="formpick" id="c-form">
+            <button type="button" data-f="1"><b>1</b><span>Foundations</span></button>
+            <button type="button" data-f="2"><b>2</b><span>Building</span></button>
+            <button type="button" data-f="3"><b>3</b><span>Choosing</span></button>
+            <button type="button" data-f="4"><b>4</b><span>CSEC yr 1</span></button>
+            <button type="button" data-f="5"><b>5</b><span>Exam year</span></button>
+          </div>
+          <p style="font-size:.78rem;color:var(--muted);margin-top:9px" id="c-formnote">
+            Nothing selected yet.</p>
         </div>
         <div class="field">
           <label class="fl" for="c-school">School</label>
@@ -221,6 +238,27 @@
 
   $('si-back').addEventListener('click',function(){show('rolepick');});
   $('c-back').addEventListener('click',function(){fillProfiles();show('signin');});
+  /* Nothing is pre-selected: a silently wrong default would quietly mis-set the
+     syllabus, the milestones and the countdown for the next five years. */
+  var pickedForm=null;
+  var FORMNOTE={
+    1:'Form 1 — the foundation year. Sits CSEC in five years.',
+    2:'Form 2 — building the base. Sits CSEC in four years.',
+    3:'Form 3 — the subject-choice year. Sits CSEC in three years.',
+    4:'Form 4 — the CSEC syllabus starts, and so does the SBA.',
+    5:'Form 5 — the examination year.'
+  };
+  Array.prototype.forEach.call($('c-form').children,function(b){
+    b.addEventListener('click',function(){
+      pickedForm=parseInt(b.getAttribute('data-f'),10);
+      Array.prototype.forEach.call($('c-form').children,function(o){
+        o.classList.toggle('on',o===b);
+      });
+      $('c-formnote').textContent=FORMNOTE[pickedForm];
+      $('c-err').textContent='';
+    });
+  });
+
   $('si-new').addEventListener('click',function(){
     $('c-role').value=role;
     $('c-formwrap').classList.toggle('hidden',role!=='student');
@@ -242,11 +280,17 @@
   $('c-go').addEventListener('click',function(){
     var name=$('c-name').value.trim();
     var pin=$('c-pin').value.trim();
+    var role2=$('c-role').value;
     if(!name){ $('c-err').textContent='Please enter a name.'; return; }
+    if(role2==='student' && !pickedForm){
+      $('c-err').textContent='Please choose which form she is in — it decides what the hub teaches.';
+      $('c-form').scrollIntoView({behavior:'smooth',block:'center'});
+      return;
+    }
     if(!/^\d{4,6}$/.test(pin)){ $('c-err').textContent='PIN must be 4 to 6 digits.'; return; }
     var p=CSEC.createProfile({
-      name:name, role:$('c-role').value,
-      form:parseInt($('c-form').value,10)||2,
+      name:name, role:role2,
+      form:pickedForm||3,
       school:$('c-school').value.trim(), pin:pin
     });
     CSEC.signIn(p.id,pin);

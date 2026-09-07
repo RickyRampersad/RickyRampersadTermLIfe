@@ -165,9 +165,11 @@
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
 
   $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
-    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a><a href="guides.html">Guides</a>':'')+
-    '<a href="kpi.html" class="on">KPIs</a><a href="planner.html">Planner</a>'+
-    '<a href="papers.html">Resources</a><a href="settings.html">Settings</a>';
+    '<a href="journey.html">Journey</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+    '<a href="guides.html">Guides</a><a href="kpi.html" class="on">KPIs</a>'+
+    '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'+
+    '<a href="settings.html">Settings</a>';
 
   var kids = me.role==='student' ? [me] : CSEC.students();
   if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }

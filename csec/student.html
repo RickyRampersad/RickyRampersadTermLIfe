@@ -17,11 +17,12 @@
     <div class="brandtext"><b>CSEC Study Hub</b><span id="nav-who">My Desk</span></div>
     <nav class="topnav">
       <a href="student.html" class="on">My Desk</a>
+      <a href="journey.html">Journey</a>
       <a href="practice.html">Practice</a>
       <a href="test.html">Tests</a>
       <a href="guides.html">Guides</a>
       <a href="kpi.html">KPIs</a>
-      <a href="planner.html">Planner</a>
+      <a href="planner.html">Syllabus</a>
       <a href="papers.html">Resources</a>
       <a href="settings.html">Settings</a>
       <a href="#" id="signout">Sign out</a>
@@ -80,8 +81,26 @@
       <span class="r-arrow">→</span>
     </a>
 
+    <a class="card" id="jn-card" href="journey.html"
+       style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:14px;text-decoration:none">
+      <div style="flex:none;width:60px;height:60px;border-radius:16px;display:grid;place-items:center;
+                  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f">
+        <div style="text-align:center;line-height:1.05">
+          <div style="font-family:'Montserrat',sans-serif;font-size:.52rem;font-weight:800;letter-spacing:1px">FORM</div>
+          <div style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:900" id="jn-form">3</div>
+        </div>
+      </div>
+      <div style="flex:1;min-width:200px">
+        <div class="eyebrow" style="margin-bottom:3px" id="jn-term"></div>
+        <h3 id="jn-title"></h3>
+        <p class="sub" id="jn-aim"></p>
+      </div>
+      <span class="r-arrow">→</span>
+    </a>
+
     <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:14px">
       <a class="btn teal sm" href="test.html">⏱ Sit a timed test</a>
+      <a class="btn ghost sm" href="journey.html">🧭 My journey</a>
       <a class="btn ghost sm" href="guides.html">📐 Guided methods</a>
       <a class="btn ghost sm" href="kpi.html">📊 My KPIs</a>
       <a class="btn ghost sm" href="papers.html">🌍 Resources</a>
@@ -167,6 +186,18 @@
   $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
   if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to CSEC '+cd.year; }
   else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to CSEC '+cd.year; }
+
+  /* ---------------- this year, this term ---------------- */
+  var J=CSEC.journeyNow(me.id);
+  if(J){
+    $('jn-form').textContent=J.form;
+    $('jn-term').textContent=J.stage.label+' · Term '+J.termNo+' · '+J.schoolYear;
+    $('jn-title').textContent=J.term.title;
+    $('jn-aim').textContent=J.term.aim+(J.milestones.length&&J.milestones[0].now
+      ? '  ⚑ '+J.milestones[0].what+' falls this term.' : '');
+  } else {
+    $('jn-card').classList.add('hidden');
+  }
 
   /* ---------------- readiness ---------------- */
   var R=CSEC.readiness(me.id), db=CSEC.distinctionBoard(me.id);

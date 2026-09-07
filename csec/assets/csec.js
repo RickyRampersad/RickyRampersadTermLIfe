@@ -199,6 +199,87 @@
     return { from: from, to: to };
   }
 
+  /* ---------------------------- the journey ---------------------------- */
+  function stageOf(form) {
+    var st = (C.stages || []).filter(function (s) {
+      return s.forms && s.forms.indexOf(form) > -1;
+    });
+    return st[0] || null;
+  }
+  function roadmapFor(form) {
+    var r = (C.roadmap || []).filter(function (x) { return x.form === form; });
+    return r[0] || null;
+  }
+
+  /* Where the student is standing right now: form, term, what the term is for,
+     and what is coming. This is what makes the year guided rather than a list. */
+  function journeyNow(studentId) {
+    var prof = profile(studentId); if (!prof) return null;
+    var t = termOf(), year = roadmapFor(prof.form);
+    if (!year) return null;
+    var term = year.terms.filter(function (x) { return x.n === t.term; })[0] || year.terms[0];
+
+    /* Milestones still ahead, nearest first, across the remaining forms. */
+    var ahead = [];
+    (C.roadmap || []).forEach(function (r) {
+      if (r.form < prof.form) return;
+      (r.milestones || []).forEach(function (m) {
+        if (r.form === prof.form && m.term < t.term) return;
+        ahead.push({ form: r.form, term: m.term, what: m.what, why: m.why,
+                     when: 'Form ' + r.form + ', Term ' + m.term,
+                     now: r.form === prof.form && m.term === t.term });
+      });
+    });
+    ahead.sort(function (a, b) { return (a.form - b.form) || (a.term - b.term); });
+
+    return {
+      form: prof.form, stage: stageOf(prof.form), year: year,
+      term: term, termNo: t.term, termKey: t.key, schoolYear: t.year,
+      milestones: ahead, exam: countdown(prof.form)
+    };
+  }
+
+  /* Strands that are NEW to the student this year — taught in this form but not
+     in the one below. This is "pull in what is relevant for the year she is in". */
+  function newThisYear(studentId) {
+    var prof = profile(studentId); if (!prof) return [];
+    var out = [];
+    (prof.subjects || []).forEach(function (id) {
+      var subj = C.subjects[id]; if (!subj) return;
+      subj.strands.forEach(function (t) {
+        var now = t.forms.indexOf(prof.form) > -1;
+        var before = prof.form > 1 && t.forms.indexOf(prof.form - 1) > -1;
+        if (now && !before) {
+          out.push({ subj: id, subjName: subj.name, icon: subj.icon,
+                     strand: t.id, strandName: t.name, note: t.note,
+                     stat: strandStat(studentId, t.id) });
+        }
+      });
+    });
+    return out;
+  }
+
+  /* Strands from earlier forms that are still weak — the debt carried into
+     this year, which is what actually sinks a Form 4. */
+  function carriedForward(studentId, maxPct) {
+    var prof = profile(studentId); if (!prof) return [];
+    var cap = maxPct == null ? 60 : maxPct, out = [];
+    (prof.subjects || []).forEach(function (id) {
+      var subj = C.subjects[id]; if (!subj) return;
+      subj.strands.forEach(function (t) {
+        var earlier = t.forms.some(function (f) { return f < prof.form; });
+        if (!earlier) return;
+        var st = strandStat(studentId, t.id);
+        if (st.pct != null && st.pct < cap && st.seen >= 2) {
+          out.push({ subj: id, subjName: subj.name, icon: subj.icon,
+                     strand: t.id, strandName: t.name, note: t.note, stat: st });
+        }
+      });
+    });
+    out.sort(function (a, b) { return a.stat.pct - b.stat.pct; });
+    return out;
+  }
+
   /* ------------------------------- KPIs -------------------------------- */
   /* Syllabus coverage: strands attempted, against those taught up to the
      student's current form. Judging a Form 2 against the Form 5 syllabus
@@ -590,6 +671,8 @@
     planFor: planFor, weakSpots: weakSpots,
     examYear: examYear, countdown: countdown,
     termOf: termOf, snapshotTerm: snapshotTerm, termHistory: termHistory, promote: promote,
+    stageOf: stageOf, roadmapFor: roadmapFor, journeyNow: journeyNow,
+    newThisYear: newThisYear, carriedForward: carriedForward,
     coverage: coverage, retention: retention, testStat: testStat, recordTest: recordTest,
     readiness: readiness, band: band, distinctionBoard: distinctionBoard,
     exportAll: exportAll, importAll: importAll,

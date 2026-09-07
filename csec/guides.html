@@ -73,11 +73,12 @@
 
   $('nav').innerHTML = me
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      '<a href="journey.html">Journey</a>'+
       (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
       '<a href="guides.html" class="on">Guides</a><a href="kpi.html">KPIs</a>'+
-      '<a href="planner.html">Planner</a><a href="papers.html">Resources</a>'
-    : '<a href="index.html">Sign in</a><a href="guides.html" class="on">Guides</a>'+
-      '<a href="planner.html">Planner</a><a href="papers.html">Resources</a>';
+      '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'
+    : '<a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html" class="on">Guides</a>'+
+      '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>';
 
   /* subjects that actually have a guide */
   var have={}; G.forEach(function(g){ have[g.subj]=true; });

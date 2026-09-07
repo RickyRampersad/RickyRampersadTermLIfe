@@ -17,10 +17,11 @@ Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 | `practice.html` | The practice engine — CSEC-style questions with reasoning and exam technique |
 | `parent.html` | Read-only progress view with a plain-language summary and session history |
 | `teacher.html` | Class roster, class-wide weak strands, and focus-topic assignment |
+| `journey.html` | The guided journey — what this term is for, what is new this year, what is carried forward, every milestone ahead |
 | `test.html` | Timed mock tests under examination conditions — no feedback until submission |
 | `kpi.html` | Readiness index, projected grade bands, and the Form 1–5 term-by-term record |
 | `guides.html` | Guided worked methods — how to attack the highest-value question types |
-| `planner.html` | Form 1–5 roadmap, CSEC countdown, and the full syllabus strand browser |
+| `planner.html` | Syllabus browser — every strand, the forms it is taught in, and progress on it |
 | `papers.html` | Verified links to official, international and Ministry resources |
 | `settings.html` | Subject selection, form promotion, profile, backup / restore, data clearing |
 
@@ -106,6 +107,71 @@ morning. Output is capped at two strands per subject so the plan spreads.
 **Form gating.** `questionsFor()` will not serve material more than one form
 ahead of the student, and the plan only draws strands taught in the student's
 current form. A Form 2 student is never handed Form 5 vectors.
+
+---
+
+## The guided journey
+
+The form is the input that drives everything, so it is chosen deliberately: the
+create-profile screen has **no pre-selected form**. A silently wrong default
+would mis-set the syllabus, the milestones and the countdown for five years, so
+creation is blocked until a form is tapped, and each option says what that year
+means before you pick it.
+
+From that one input, `journey.html` pulls in what is relevant:
+
+- **Where you are standing.** Form, stage, school year, and which of the three
+  terms is running now — derived from the date, not typed in.
+- **What this term is for.** Every form is broken into T1/T2/T3, each with an
+  aim and three concrete things to do. The current term is highlighted; past
+  terms dim.
+- **New to you this year.** `newThisYear()` returns strands taught in this form
+  but *not* in the one below — the material nobody has covered yet, which is
+  where a term goes wrong quietly. Form 3 has 20 of them; Form 5 has none, and
+  the page says so rather than showing an empty list.
+- **Carried forward.** `carriedForward()` returns strands from earlier forms
+  still under 60%. This is the debt that sinks a Form 4, and it is far cheaper
+  to clear in Form 2.
+- **Milestones ahead**, nearest first, with the current term's flagged:
+  Form 3 T3 subject selection, Form 4 T1 SBA begins, Form 5 T2 SBA submission,
+  Form 5 T3 the examinations.
+
+The page works signed out too, with a form selector, so a parent can look at
+what Form 1 or Form 4 involves before anyone has a profile.
+
+---
+
+## Joining the primary site
+
+`curriculum.js` carries a `stages` array — the spine from Infant 1 to CSEC:
+
+| Stage | Years | Ends at | |
+|---|---|---|---|
+| `primary` | Infant 1 - Standard 5 | SEA | `external: true` |
+| `lower` | Form 1 - Form 3 | Subject selection | forms 1-3 |
+| `upper` | Form 4 - Form 5 | CSEC | forms 4-5 |
+
+Primary is listed but marked `external`, and renders dashed on the journey
+spine, because it is served by a separate site. It sits in the data so a student
+can see where they came from, and so the two can be joined without reshaping
+anything.
+
+**To join the primary site**, in rough order of effort:
+
+1. Give `primary` a `forms` array (or an equivalent `standards` array) and a
+   `url`. The spine renders whatever stages it is given; drop the `external`
+   flag and it stops rendering dashed.
+2. Extend `roadmap` with entries for the primary years in the same shape —
+   `terms[]` with `aim` and `do[]`, plus `milestones[]`. `journeyNow()`,
+   `newThisYear()` and `carriedForward()` are written against the shape, not
+   against Forms 1-5, so they work unchanged.
+3. `examYear()` and `countdown()` in `csec.js` assume five forms to CSEC and are
+   the one place that hard-codes the ladder. A primary student needs a countdown
+   to **SEA**, not to CSEC, so that function needs a stage check.
+4. Add primary subjects to `subjects` with `forms` values on the primary scale,
+   keeping the strand-id prefixes distinct.
+
+Nothing else in the hub knows how many years there are.
 
 ---
 
@@ -299,10 +365,12 @@ are the rest) — tick the real timetable and save. Everything downstream follow
    their own phone and turn the teacher view into a real class register.
 4. **More guided methods.** 16 covers the highest-value question types; English B,
    Spanish, French, Social Studies and PE have none yet.
-5. **Past-paper practice log** — a place to record scores on real CXC papers
+5. **Join the primary site** — see *Joining the primary site* above. The data
+   model is ready; the countdown is the one function needing a stage check.
+6. **Past-paper practice log** — a place to record scores on real CXC papers
    worked under time, alongside the hub's own timed tests.
-6. **SBA tracker** for Forms 4–5, since SBA deadlines cost more grades than
+7. **SBA tracker** for Forms 4–5, since SBA deadlines cost more grades than
    content gaps do.
-7. **Calibrate the readiness weights** once there is a real CSEC result to check
+8. **Calibrate the readiness weights** once there is a real CSEC result to check
    them against. The 40/25/20/15 split is a considered starting point, not a
    fitted model, and it should be corrected by evidence when evidence exists.
