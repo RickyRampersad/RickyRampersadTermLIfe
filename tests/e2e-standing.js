@@ -61,6 +61,7 @@ async function session(b, withStanding, noted) {
   await page.route('**/macros/s/**', async r => {
     const body = JSON.parse(r.request().postData() || '{}');
     const j = o => r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(o) });
+    if (body.action !== 'login' && body.token !== 't') return j({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login' || body.action === 'me')
       return j({ ok:true, token:'t', profile: Object.assign({}, P, { attendance: { first:false, at:'08:02', lastSeen:'11:30', status:'in', reason:'', late:0 } }), roster:[P], schedule:SCH, kpis:{ ssa:[] } });
     if (body.action === 'rows') return j({ ok:true, rows:[], metrics:{ ok:false, reason:'notConfigured' }, attendance:{} });

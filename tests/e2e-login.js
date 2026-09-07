@@ -40,6 +40,7 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   await page.route('**/macros/s/**', async route => {
     const body = JSON.parse(route.request().postData() || '{}');
     const reply = j => route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(j) });
+    if (body.action !== 'login' && body.token !== 'tok') return reply({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login') {
       loginTries++;
       // the result page is not ready yet — twice, as it was at three o'clock

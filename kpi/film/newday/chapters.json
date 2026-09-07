@@ -1,0 +1,57 @@
+[
+ {
+  "n": 1,
+  "start": 0.0,
+  "label": "The new day"
+ },
+ {
+  "n": 2,
+  "start": 4.88,
+  "label": "Sign in when you arrive. That is your attendance."
+ },
+ {
+  "n": 3,
+  "start": 11.15,
+  "label": "Your plan. In the order of service."
+ },
+ {
+  "n": 4,
+  "start": 19.24,
+  "label": "Mail, rank by rank. Morning and after lunch."
+ },
+ {
+  "n": 5,
+  "start": 27.05,
+  "label": "When a block ends, say what landed."
+ },
+ {
+  "n": 6,
+  "start": 32.31,
+  "label": "Close it where it is listed. With a line."
+ },
+ {
+  "n": 7,
+  "start": 40.28,
+  "label": "Your quarter, building every day."
+ },
+ {
+  "n": 8,
+  "start": 47.39,
+  "label": "Trained on. Still to cover."
+ },
+ {
+  "n": 9,
+  "start": 53.73,
+  "label": "The checkpoint reads it all."
+ },
+ {
+  "n": 10,
+  "start": 60.48,
+  "label": "Nothing typed twice. Nothing from memory."
+ },
+ {
+  "n": 11,
+  "start": 65.41,
+  "label": "rickyrampersadbranch.com /howwework"
+ }
+]
