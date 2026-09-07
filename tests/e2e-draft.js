@@ -49,6 +49,7 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   await page.route('**/macros/s/**', async route => {
     const body = JSON.parse(route.request().postData() || '{}');
     const reply = j => route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(j) });
+    if (body.action !== 'login' && body.token !== 'tok') return reply({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login')
       return reply({ ok:true, token:'tok', profile: Object.assign({}, PERSON, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[PERSON], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'me')

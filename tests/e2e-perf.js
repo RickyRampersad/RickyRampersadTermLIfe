@@ -75,6 +75,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   await page.route('**/macros/s/**', async r => {
     const body = JSON.parse(r.request().postData() || '{}');
     const j = o => r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(o) });
+    if (body.action !== 'login' && body.token !== 't') return j({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login' || body.action === 'me') return j({ ok:true, token:'t', profile:P, roster:[P], schedule:SCH, kpis:{ ssa:[] } });
     if (body.action === 'rows') return j({ ok:true, rows:[], metrics:{ ok:false, reason:'notConfigured' } });
     if (body.action === 'hr') return j(HR);

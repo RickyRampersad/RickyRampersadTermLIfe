@@ -46,7 +46,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 
 const closedTasks = [];
 
-async function session(b, who, first, mail, sent) {
+async function session(b, who, first, mail, sent, ended) {
   const ctx = await b.newContext({ viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
   const page = await ctx.newPage();
   const errors = [];
@@ -54,6 +54,10 @@ async function session(b, who, first, mail, sent) {
   await page.route('**/macros/s/**', async r => {
     const body = JSON.parse(r.request().postData() || '{}');
     const j = o => r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(o) });
+    // The real sheet refuses any call without the session token, and this
+    // stub does too — the page only proves it carries the token if a
+    // forgotten one costs the test something.
+    if (body.action !== 'login' && (body.token !== 't' || (ended && ended()))) return j({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login' || body.action === 'me')
       return j({ ok:true, token:'t', profile: Object.assign({}, who, { attendance: { first, at:'08:02', lastSeen:'08:02', status:'in', reason:'', late:0 } }), roster:[P, BOSS], schedule:SCH, kpis:{ ssa:[{ value:'Renewa/PDl/Bill', label:'Renewals / Premium Dues / Billing', salesforce:true }], bm:[] } });
     if (body.action === 'rows') return j({ ok:true, rows:[], metrics:METRICS, openBook:BOOK, needsReason:{}, billing:{}, attendance:{ [who.staffId]: { at:'08:02', status:'in', reason:'', late:0 } }, mail: mail || {}, ranks:['Branch Manager','Assistant Branch Manager','Unit Manager','Executive Agent','Agent'] });
@@ -93,6 +97,7 @@ async function session(b, who, first, mail, sent) {
   await s.page.click('button:has-text("Mark the morning sweep done")');
   await s.page.waitForTimeout(700);
   ok('one record went out', sent.length === 1, String(sent.length));
+  ok('carrying the session token', sent[0] && sent[0].token === 't', JSON.stringify(sent[0]));
   ok('with the five answers, the half of the day, and nothing else', sent[0] && sent[0].when === 'am' && sent[0].staffId === 'demo' && JSON.stringify(sent[0].ranks) === JSON.stringify({ bm:'done', abm:'none', um:'done', ea:'none', ag:'done' }), JSON.stringify(sent[0]));
   t = await s.page.locator('body').innerText();
   ok('and the plan says it was swept, with the time', /Morning mail swept at 08:31/.test(t) && /Branch ✓/.test(t) && /Assistant –/.test(t));
@@ -134,6 +139,22 @@ async function session(b, who, first, mail, sent) {
   await s.page.waitForTimeout(900);
   t = await s.page.locator('body').innerText();
   ok('the document renders, sections in the paper\'s order', /Your job document/i.test(t) && t.indexOf('Reports to the Regional Manager') < t.indexOf('Build and run a salesforce') && t.indexOf('Build and run a salesforce') < t.indexOf('Branch target met each quarter'));
+  ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
+  await s.ctx.close();
+
+  console.log('\nWhen the session really ends:\n');
+  const gate = { ended:false };
+  s = await session(b, P, false, {}, sent, () => gate.ended);
+  t = await s.page.locator('body').innerText();
+  ok('the day is on screen', /Morning mail/.test(t) && await s.page.locator('button:has-text("Sign in")').count() === 0);
+  gate.ended = true;
+  await s.page.click('button:has-text("Job document")');
+  await s.page.waitForTimeout(900);
+  t = await s.page.locator('body').innerText();
+  ok('the next call sends the person to the sign-in screen', await s.page.locator('button:has-text("Sign in")').count() === 1, t.slice(0, 160));
+  ok('with the reason on it', /Your session ended/.test(t) && /sign in again/i.test(t));
+  ok('not "sign in again" under a button on a page with no sign-in', !/Morning mail/.test(t));
+  ok('and the stored token is gone', (await s.page.evaluate(() => localStorage.getItem('rrb_kpi_token') || '')) === '');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 

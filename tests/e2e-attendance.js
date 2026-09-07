@@ -50,6 +50,7 @@ async function session(b, who, attendance, rowsAttendance, absents) {
   await page.route('**/macros/s/**', async r => {
     const body = JSON.parse(r.request().postData() || '{}');
     const j = o => r.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(o) });
+    if (body.action !== 'login' && body.token !== 't') return j({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'login' || body.action === 'me')
       return j({ ok:true, token:'t', profile: Object.assign({}, who, { attendance }), roster:[P, TWO, BOSS], schedule:SCH, kpis:{ ssa:[], bm:[] } });
     if (body.action === 'rows') return j(Object.assign({ ok:true, rows:[], metrics:{ ok:false, reason:'notConfigured' } }, rowsAttendance ? { attendance: rowsAttendance } : {}));

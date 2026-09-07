@@ -1335,11 +1335,26 @@ const configured = () => APPS_SCRIPT_URL && APPS_SCRIPT_URL.indexOf("PASTE_") !=
 // somebody who has just typed out a whole block back to a login screen — the
 // most expensive possible failure. So: try again once, quietly, before saying
 // anything went wrong.
+// Every request after sign-in carries the session token, attached here and
+// nowhere else. It used to be each caller's job to pass it, and every call
+// added since the reviews — the quarter, the mail sweep, the register, the job
+// document, closing a task — left it out. The test servers never minded, so on
+// the first morning of the new day two people who had just signed in pressed
+// "Mark the morning sweep done" and were told their session had expired.
+function withToken(action, payload) {
+  const body = { action, ...payload };
+  if (!body.token && action !== "login" && action !== "ping") {
+    const t = readStoredToken();
+    if (t) body.token = t;
+  }
+  return body;
+}
+
 async function apiOnce(action, payload) {
   const res = await fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify({ action, ...payload })
+    body: JSON.stringify(withToken(action, payload))
   });
   // Apps Script answers a POST with a 302 to a one-shot result URL. When the
   // script is busy that result is not always there yet, and the browser sees a
@@ -1376,6 +1391,10 @@ async function api(action, payload, onAttempt) {
     if (onAttempt) { try { onAttempt(attempt + 1); } catch (e) {} }
     try {
       const out = await apiOnce(action, payload);
+      // The sheet refusing the token is not a failed request; it is the end
+      // of the session. Say so where the sign-in is, not under a button on a
+      // page that has nothing to sign in to.
+      if (out && out.authRequired) { storeToken(""); window.dispatchEvent(new Event(SESSION_ENDED)); }
       if (out && out.ok) return out;
       if (out && !out._retry) return out;      // a real answer, just not a happy one
       last = out;
@@ -1400,6 +1419,7 @@ async function api(action, payload, onAttempt) {
 }
 
 const TOKEN_KEY = "rrb_kpi_token";
+const SESSION_ENDED = "rrb-session-ended";
 const readStoredToken = () => {
   try {
     return localStorage.getItem(TOKEN_KEY) || "";
@@ -1830,6 +1850,15 @@ function App() {
     setEntry(null);
     setView("home");
   }, []);
+  // Tokens last twelve hours. When the sheet says one has ended — on any
+  // call, not only the first read of the morning — the sign-in screen comes
+  // back with the reason on it.
+  const [ended, setEnded] = useState(false);
+  useEffect(() => {
+    const f = () => { setEnded(true); signOut(); };
+    window.addEventListener(SESSION_ENDED, f);
+    return () => window.removeEventListener(SESSION_ENDED, f);
+  }, [signOut]);
 
   // Somebody who can only see themselves has no list to choose from, so making
   // them click their own name to reach their own blocks is a step that asks a
@@ -2104,7 +2133,9 @@ function App() {
     text: "Checking your session\u2026"
   });
   if (!me) return /*#__PURE__*/React.createElement(Login, {
+    note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on." : "",
     onIn: (tok, profile, ros) => {
+      setEnded(false);
       storeToken(tok);
       setToken(tok);
       setMe(profile);
@@ -4077,7 +4108,8 @@ function App() {
 //  Sign in
 // ===========================================================================
 function Login({
-  onIn
+  onIn,
+  note
 }) {
   const [who, setWho] = useState("");
   const [pw, setPw] = useState("");
@@ -4169,7 +4201,18 @@ function Login({
     autoComplete: "current-password",
     placeholder: "\u2022\u2022\u2022\u2022",
     style: inp
-  })), err && /*#__PURE__*/React.createElement("div", {
+  })), note && !err && /*#__PURE__*/React.createElement("div", {
+    style: {
+      border: "1px solid " + GOLD,
+      background: GOLD_SOFT,
+      borderRadius: 9,
+      padding: "9px 11px",
+      fontSize: 12.5,
+      color: INK,
+      marginBottom: 10,
+      lineHeight: 1.4
+    }
+  }, note), err && /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#FBE9E7",
       border: "1px solid " + RED,

@@ -425,8 +425,14 @@ the page as it stands.
 
 ## If something looks wrong
 
-**"Session expired. Sign in again."** — tokens last 12 hours. Expected each
-morning.
+**"Session expired. Sign in again."** — tokens last 12 hours, so this is
+expected each morning: the page goes back to the sign-in screen and says so.
+Before 7 September the page could show it *under a button* while the day was
+still on screen — every call added since the reviews (the mail sweep, the
+quarter, the register, the job document, closing a task) was sent without the
+token, so a person who had just signed in was told they had not. The token is
+attached to every call now. Anyone still seeing it that way is on a page
+loaded before the fix: reload.
 
 **"Unreadable reply from the sheet."** — the deployment is not set to
 **Anyone**, or the last change was never published as a new version. See §3.
