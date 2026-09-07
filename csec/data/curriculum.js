@@ -1,0 +1,365 @@
+/* CSEC Study Hub — curriculum registry
+ * Subjects, syllabus strands and the Form 1-5 progression.
+ *
+ * Strands follow the CSEC syllabus section structure so that practice,
+ * mastery and the daily plan all key off the same names the examiner uses.
+ * `forms` marks the forms in which a strand is normally taught, which is what
+ * lets Form 2 and Form 3 see a plan that is not full of Form 5 material.
+ */
+window.CSEC_CURRICULUM = {
+
+  /* Which 14 subjects are selected by default. Editable in Settings -> Subjects. */
+  defaultSelection: [
+    'english-a','english-b','mathematics','spanish','french',
+    'physics','chemistry','biology','geography','history',
+    'social-studies','visual-arts','physical-education','information-technology'
+  ],
+
+  subjects: {
+    'english-a': {
+      name: 'English A', short: 'Eng A', icon: '✍️', group: 'Languages',
+      blurb: 'Comprehension, summary and the four essay types.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (essays & summary) · SBA',
+      strands: [
+        { id:'ea-comp',   name:'Comprehension & Understanding', forms:[1,2,3,4,5], note:'Reading for literal, inferential and evaluative meaning.' },
+        { id:'ea-summary',name:'Summary Writing',               forms:[2,3,4,5],   note:'Reducing a passage to its argument in your own words, to a word limit.' },
+        { id:'ea-grammar',name:'Grammar & Mechanics',           forms:[1,2,3,4,5], note:'Agreement, tense, punctuation, sentence structure.' },
+        { id:'ea-vocab',  name:'Vocabulary & Word Choice',      forms:[1,2,3,4,5],  note:'Register, connotation, precision.' },
+        { id:'ea-narr',   name:'Narrative & Descriptive Writing',forms:[1,2,3,4,5], note:'Story and description — the Section B options.' },
+        { id:'ea-arg',    name:'Argumentative & Expository Writing',forms:[3,4,5],  note:'Taking a position and defending it; explaining a process.' },
+        { id:'ea-persuade',name:'Persuasive Writing & Register', forms:[4,5],       note:'Writing for a stated audience and purpose.' },
+        { id:'ea-sba',    name:'School-Based Assessment',        forms:[4,5],       note:'Portfolio: plan of inquiry, artefacts, written report, reflections.' }
+      ]
+    },
+    'english-b': {
+      name: 'English B', short: 'Eng B', icon: '📖', group: 'Languages',
+      blurb: 'Literature — poetry, prose and drama.',
+      papers: 'Paper 02 (essays on set texts) · SBA',
+      strands: [
+        { id:'eb-poetry', name:'Poetry',              forms:[1,2,3,4,5], note:'Imagery, tone, mood, form, sound devices.' },
+        { id:'eb-prose',  name:'Prose Fiction',       forms:[2,3,4,5],   note:'Novel study — plot, character, theme, setting, narrative voice.' },
+        { id:'eb-drama',  name:'Drama',               forms:[3,4,5],     note:'Play study — conflict, stagecraft, dramatic irony.' },
+        { id:'eb-short',  name:'Short Stories',       forms:[1,2,3,4,5], note:'Compression, twist, single effect.' },
+        { id:'eb-devices',name:'Literary Devices',    forms:[1,2,3,4,5], note:'Metaphor, simile, personification, symbolism, irony.' },
+        { id:'eb-essay',  name:'Literature Essay Craft',forms:[3,4,5],   note:'Point-Evidence-Explanation, quoting accurately, answering the question asked.' }
+      ]
+    },
+    'mathematics': {
+      name: 'Mathematics', short: 'Maths', icon: '📐', group: 'Core',
+      blurb: 'The nine CSEC Mathematics sections.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'ma-number', name:'Number Theory & Computation', forms:[1,2,3,4,5], note:'Fractions, decimals, ratio, percentage, indices, standard form.' },
+        { id:'ma-consumer',name:'Consumer Arithmetic',        forms:[2,3,4,5],   note:'Wages, discount, VAT, interest, hire purchase, currency.' },
+        { id:'ma-sets',   name:'Sets',                        forms:[1,2,3,4,5], note:'Venn diagrams, union, intersection, complement, problem solving.' },
+        { id:'ma-measure',name:'Measurement',                 forms:[1,2,3,4,5], note:'Perimeter, area, volume, scale, rates, compound shapes.' },
+        { id:'ma-stats',  name:'Statistics',                  forms:[2,3,4,5],   note:'Mean, median, mode, tables, charts, cumulative frequency, probability.' },
+        { id:'ma-algebra',name:'Algebra',                     forms:[1,2,3,4,5], note:'Expressions, equations, factorising, simultaneous, quadratics.' },
+        { id:'ma-relations',name:'Relations, Functions & Graphs',forms:[3,4,5],  note:'Mapping, notation, linear and quadratic graphs, gradient, inequalities.' },
+        { id:'ma-geom',   name:'Geometry & Trigonometry',     forms:[2,3,4,5],   note:'Angles, polygons, circles, transformations, Pythagoras, sine/cosine rule.' },
+        { id:'ma-vectors',name:'Vectors & Matrices',          forms:[4,5],       note:'Vector notation and algebra, matrix operations, transformations.' }
+      ]
+    },
+    'spanish': {
+      name: 'Spanish', short: 'Span', icon: '🇪🇸', group: 'Languages',
+      blurb: 'The four skills across the CSEC themes.',
+      papers: 'Paper 01 (listening & reading) · Paper 02 (writing) · Paper 03 (oral)',
+      strands: [
+        { id:'sp-listen', name:'Listening Comprehension', forms:[1,2,3,4,5], note:'Understanding spoken Spanish at natural pace.' },
+        { id:'sp-read',   name:'Reading Comprehension',   forms:[1,2,3,4,5], note:'Signs, notices, letters, articles.' },
+        { id:'sp-speak',  name:'Oral & Pronunciation',    forms:[1,2,3,4,5], note:'Responding to situations, picture description, conversation.' },
+        { id:'sp-write',  name:'Directed & Free Writing', forms:[2,3,4,5],   note:'Notes, letters, compositions to a word count.' },
+        { id:'sp-gram',   name:'Grammar & Verb Tenses',   forms:[1,2,3,4,5], note:'Present, preterite, imperfect, future, subjunctive; ser vs estar.' },
+        { id:'sp-themes', name:'Themes & Vocabulary',     forms:[1,2,3,4,5], note:'Personal ID, home, school, food, health, travel, work, environment.' }
+      ]
+    },
+    'french': {
+      name: 'French', short: 'Fren', icon: '🇫🇷', group: 'Languages',
+      blurb: 'The four skills across the CSEC themes.',
+      papers: 'Paper 01 (listening & reading) · Paper 02 (writing) · Paper 03 (oral)',
+      strands: [
+        { id:'fr-listen', name:'Listening Comprehension', forms:[1,2,3,4,5], note:'Understanding spoken French at natural pace.' },
+        { id:'fr-read',   name:'Reading Comprehension',   forms:[1,2,3,4,5], note:'Signs, notices, letters, articles.' },
+        { id:'fr-speak',  name:'Oral & Pronunciation',    forms:[1,2,3,4,5], note:'Responding to situations, picture description, conversation.' },
+        { id:'fr-write',  name:'Directed & Free Writing', forms:[2,3,4,5],   note:'Notes, letters, compositions to a word count.' },
+        { id:'fr-gram',   name:'Grammar & Verb Tenses',   forms:[1,2,3,4,5], note:'Présent, passé composé, imparfait, futur, subjonctif; avoir vs être.' },
+        { id:'fr-themes', name:'Themes & Vocabulary',     forms:[1,2,3,4,5], note:'Personal ID, home, school, food, health, travel, work, environment.' }
+      ]
+    },
+    'physics': {
+      name: 'Physics', short: 'Phys', icon: '⚛️', group: 'Sciences',
+      blurb: 'Mechanics through to the physics of the atom.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured & essay) · SBA',
+      strands: [
+        { id:'ph-measure',name:'Measurement & SI Units',      forms:[1,2,3,4,5], note:'Quantities, prefixes, significant figures, uncertainty.' },
+        { id:'ph-mech',   name:'Mechanics',                   forms:[2,3,4,5],   note:'Motion, forces, Newton’s laws, moments, density, pressure, energy.' },
+        { id:'ph-thermal',name:'Thermal Physics & Kinetic Theory',forms:[3,4,5], note:'Temperature, heat capacity, latent heat, gas laws, transfer.' },
+        { id:'ph-waves',  name:'Waves & Optics',              forms:[2,3,4,5],   note:'Wave properties, sound, light, reflection, refraction, lenses.' },
+        { id:'ph-elec',   name:'Electricity & Magnetism',     forms:[3,4,5],     note:'Circuits, Ohm’s law, electrostatics, magnetic effects, induction.' },
+        { id:'ph-atom',   name:'The Physics of the Atom',     forms:[4,5],       note:'Atomic models, radioactivity, half-life, nuclear energy.' }
+      ]
+    },
+    'chemistry': {
+      name: 'Chemistry', short: 'Chem', icon: '🧪', group: 'Sciences',
+      blurb: 'Principles, organic and inorganic chemistry.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured & essay) · SBA',
+      strands: [
+        { id:'ch-matter', name:'States of Matter & Separation',forms:[1,2,3,4,5], note:'Particle theory, mixtures, filtration, distillation, chromatography.' },
+        { id:'ch-atomic', name:'Atomic Structure & Bonding',   forms:[2,3,4,5],   note:'Electron configuration, periodic table, ionic, covalent, metallic.' },
+        { id:'ch-mole',   name:'The Mole Concept',             forms:[3,4,5],     note:'Formulae, equations, molar mass, concentration, titration.' },
+        { id:'ch-acids',  name:'Acids, Bases & Salts',         forms:[2,3,4,5],   note:'pH, neutralisation, salt preparation, indicators.' },
+        { id:'ch-redox',  name:'Oxidation-Reduction & Electrochemistry',forms:[4,5],note:'Redox, reactivity series, electrolysis, corrosion.' },
+        { id:'ch-organic',name:'Organic Chemistry',            forms:[4,5],       note:'Hydrocarbons, homologous series, alcohols, acids, polymers.' },
+        { id:'ch-inorg',  name:'Inorganic & Industrial Chemistry',forms:[4,5],    note:'Metals, non-metals, qualitative analysis, industrial processes.' }
+      ]
+    },
+    'biology': {
+      name: 'Biology', short: 'Bio', icon: '🧬', group: 'Sciences',
+      blurb: 'Living organisms, life processes and continuity.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured & essay) · SBA',
+      strands: [
+        { id:'bi-cells',  name:'Cells & Cell Processes',      forms:[1,2,3,4,5], note:'Cell structure, diffusion, osmosis, active transport.' },
+        { id:'bi-env',    name:'Living Organisms & the Environment',forms:[1,2,3,4,5],note:'Classification, ecosystems, food chains, cycles, conservation.' },
+        { id:'bi-nutri',  name:'Nutrition & Transport',        forms:[2,3,4,5],   note:'Photosynthesis, digestion, circulation, transpiration.' },
+        { id:'bi-resp',   name:'Respiration & Excretion',      forms:[3,4,5],     note:'Aerobic/anaerobic respiration, gas exchange, kidney, skin.' },
+        { id:'bi-coord',  name:'Coordination & Movement',      forms:[3,4,5],     note:'Nervous system, hormones, skeleton, muscles, homeostasis.' },
+        { id:'bi-repro',  name:'Reproduction & Growth',        forms:[2,3,4,5],   note:'Plant and human reproduction, fertilisation, development.' },
+        { id:'bi-genes',  name:'Continuity & Variation',       forms:[4,5],       note:'Mitosis, meiosis, genetics, inheritance, natural selection.' },
+        { id:'bi-health', name:'Disease & Its Impact',         forms:[3,4,5],     note:'Pathogens, transmission, immunity, lifestyle disease.' }
+      ]
+    },
+    'geography': {
+      name: 'Geography', short: 'Geog', icon: '🗺️', group: 'Humanities',
+      blurb: 'Natural systems, human systems and map work.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured) · SBA fieldwork',
+      strands: [
+        { id:'ge-maps',   name:'Map Reading & Field Skills',  forms:[1,2,3,4,5], note:'Grid references, scale, contours, cross-sections, bearings.' },
+        { id:'ge-tectonic',name:'Tectonic & Landform Processes',forms:[2,3,4,5], note:'Plates, earthquakes, volcanoes, weathering, rivers, coasts, karst.' },
+        { id:'ge-weather',name:'Weather, Climate & Vegetation',forms:[1,2,3,4,5],note:'Elements of weather, instruments, Caribbean climate, hurricanes.' },
+        { id:'ge-pop',    name:'Population & Settlement',      forms:[2,3,4,5],   note:'Density, migration, urbanisation, settlement patterns.' },
+        { id:'ge-econ',   name:'Economic Activity',            forms:[3,4,5],     note:'Agriculture, fishing, mining, manufacturing, tourism in the Caribbean.' },
+        { id:'ge-hazard', name:'Natural Hazards & Sustainability',forms:[3,4,5],  note:'Hazard risk, mitigation, resource use, environmental management.' }
+      ]
+    },
+    'history': {
+      name: 'History', short: 'Hist', icon: '🏛️', group: 'Humanities',
+      blurb: 'Caribbean history — the CSEC themes.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (essays) · SBA',
+      strands: [
+        { id:'hi-indigenous',name:'Indigenous Peoples & Europeans',forms:[1,2,3,4,5],note:'Taino, Kalinago, encounter, conquest, early settlement.' },
+        { id:'hi-slavery', name:'Caribbean Economy & Slavery',  forms:[2,3,4,5],  note:'Sugar revolution, the trade in enslaved Africans, plantation society.' },
+        { id:'hi-resist',  name:'Resistance & Revolt',          forms:[2,3,4,5],  note:'Day-to-day resistance, maroons, Haitian Revolution, major revolts.' },
+        { id:'hi-emanc',   name:'Movements Towards Emancipation',forms:[3,4,5],   note:'Abolitionists, apprenticeship, emancipation and its terms.' },
+        { id:'hi-adjust',  name:'Adjustments to Emancipation',  forms:[3,4,5],    note:'Peasantry, indentureship, immigration, changing labour.' },
+        { id:'hi-indep',   name:'Movements Towards Independence',forms:[4,5],     note:'Labour unrest, Federation, nationalism, independence.' },
+        { id:'hi-society', name:'Caribbean Society 1900-1985',  forms:[4,5],      note:'US influence, migration, culture, regional integration.' },
+        { id:'hi-skills',  name:'Source Analysis & Essay Craft',forms:[1,2,3,4,5],note:'Reading sources, cause and effect, structuring a history essay.' }
+      ]
+    },
+    'social-studies': {
+      name: 'Social Studies', short: 'Soc', icon: '🏘️', group: 'Humanities',
+      blurb: 'Individual and society, development, integration.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured & essay) · SBA',
+      strands: [
+        { id:'ss-family', name:'Individual, Family & Society',  forms:[1,2,3,4,5], note:'Family types, socialisation, roles, institutions.' },
+        { id:'ss-gov',    name:'Government & Citizenship',      forms:[2,3,4,5],   note:'Systems of government, elections, rights and responsibilities.' },
+        { id:'ss-dev',    name:'Sustainable Development & Resources',forms:[3,4,5],note:'Resource use, development indicators, environment.' },
+        { id:'ss-region', name:'Regional Integration',          forms:[3,4,5],     note:'CARICOM, CSME, benefits and challenges of integration.' },
+        { id:'ss-issues', name:'Social Issues & Problems',      forms:[2,3,4,5],   note:'Crime, unemployment, poverty, health, responses.' },
+        { id:'ss-research',name:'Research Methods & SBA',       forms:[4,5],       note:'Statement of problem, questionnaires, presenting findings.' }
+      ]
+    },
+    'visual-arts': {
+      name: 'Visual Arts', short: 'Art', icon: '🎨', group: 'Expressive',
+      blurb: 'Drawing, design, craft and art history.',
+      papers: 'Paper 01 (written) · Portfolio & studio pieces',
+      strands: [
+        { id:'va-draw',   name:'Drawing & Observation',        forms:[1,2,3,4,5], note:'Line, proportion, shading, perspective, still life, figure.' },
+        { id:'va-elements',name:'Elements & Principles of Design',forms:[1,2,3,4,5],note:'Line, shape, colour, texture; balance, rhythm, contrast, unity.' },
+        { id:'va-print',  name:'Print, Textile & Graphic Design',forms:[2,3,4,5],  note:'Lino, screen, batik, tie-dye, lettering, layout.' },
+        { id:'va-3d',     name:'Ceramics & Sculpture',          forms:[2,3,4,5],   note:'Pinch, coil, slab, modelling, carving, construction.' },
+        { id:'va-history',name:'Art History & Appreciation',    forms:[3,4,5],     note:'Caribbean and world art movements, critique vocabulary.' },
+        { id:'va-portfolio',name:'Portfolio & Studio Practice', forms:[4,5],       note:'Theme development, sketchbook, reflection, presentation.' }
+      ]
+    },
+    'physical-education': {
+      name: 'Physical Education & Sport', short: 'PE', icon: '🏅', group: 'Expressive',
+      blurb: 'Anatomy, fitness, nutrition and sport.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · Practical & SBA',
+      strands: [
+        { id:'pe-anatomy',name:'Anatomy & Physiology',         forms:[2,3,4,5],   note:'Skeleton, muscles, heart, lungs, energy systems.' },
+        { id:'pe-fitness',name:'Fitness & Training Principles', forms:[1,2,3,4,5], note:'Components of fitness, FITT, training methods, testing.' },
+        { id:'pe-nutri',  name:'Nutrition & Healthy Lifestyle', forms:[1,2,3,4,5], note:'Nutrients, energy balance, hydration, lifestyle disease.' },
+        { id:'pe-injury', name:'Safety, Injury & First Aid',    forms:[2,3,4,5],   note:'Prevention, RICE, common sports injuries.' },
+        { id:'pe-games',  name:'Games, Rules & Officiating',    forms:[1,2,3,4,5], note:'Skills, tactics, rules and officiating of chosen sports.' },
+        { id:'pe-sport',  name:'Sport in Society',              forms:[3,4,5],     note:'History, organisation, ethics, doping, Caribbean sport.' }
+      ]
+    },
+    'information-technology': {
+      name: 'Information Technology', short: 'IT', icon: '💻', group: 'Technical',
+      blurb: 'Hardware, problem solving, programming and productivity.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured) · Paper 03 SBA (practical)',
+      strands: [
+        { id:'it-hardware',name:'Fundamentals of Hardware & Software',forms:[1,2,3,4,5],note:'Input/output, storage, memory, system and application software.' },
+        { id:'it-data',   name:'Data Representation & Networks',forms:[2,3,4,5],   note:'Binary, ASCII, file sizes, LAN/WAN, the internet.' },
+        { id:'it-solve',  name:'Problem Solving & Program Design',forms:[3,4,5],   note:'IPO charts, algorithms, pseudocode, flowcharts, trace tables.' },
+        { id:'it-program',name:'Programming',                   forms:[4,5],       note:'Pascal/C constructs, sequence, selection, iteration, arrays.' },
+        { id:'it-productivity',name:'Word Processing & Spreadsheets',forms:[1,2,3,4,5],note:'Formatting, mail merge, formulae, functions, charts.' },
+        { id:'it-database',name:'Database & Web Page Design',    forms:[3,4,5],     note:'Tables, queries, reports; HTML page structure.' },
+        { id:'it-impact', name:'Implications of ICT',            forms:[1,2,3,4,5], note:'Ethics, security, privacy, careers, social impact.' }
+      ]
+    },
+
+    /* ---- Offered by the school but not in the default 14. Switch on in Settings. ---- */
+    'integrated-science': {
+      name: 'Integrated Science', short: 'Int Sci', icon: '🔬', group: 'Sciences',
+      blurb: 'Combined science for the lower forms.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'is-organism',name:'The Organism & Life Processes', forms:[1,2,3],  note:'Cells, systems, nutrition, respiration.' },
+        { id:'is-home',   name:'The Home & Workplace',           forms:[1,2,3],  note:'Electricity, machines, safety, materials.' },
+        { id:'is-env',    name:'The Environment',                forms:[1,2,3],  note:'Ecosystems, pollution, conservation, energy.' },
+        { id:'is-method', name:'Scientific Method & Measurement',forms:[1,2,3],  note:'Variables, fair testing, recording, graphing.' }
+      ]
+    },
+    'food-nutrition': {
+      name: 'Food, Nutrition & Health', short: 'Food', icon: '🍲', group: 'Technical',
+      blurb: 'Nutrition science and food management.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'fn-nutrients',name:'Nutrients & Nutrition',   forms:[1,2,3,4,5], note:'Macronutrients, micronutrients, deficiency, RDA.' },
+        { id:'fn-meal',   name:'Meal Planning & Management',forms:[2,3,4,5],   note:'Dietary needs, budgeting, menus.' },
+        { id:'fn-safety', name:'Food Safety & Hygiene',     forms:[1,2,3,4,5], note:'Contamination, storage, preservation.' },
+        { id:'fn-prep',   name:'Food Preparation & Science',forms:[2,3,4,5],   note:'Cooking methods, effects of heat on nutrients.' }
+      ]
+    },
+    'principles-of-business': {
+      name: 'Principles of Business', short: 'POB', icon: '🏢', group: 'Business',
+      blurb: 'Business organisation, production and finance.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'pb-nature', name:'Nature of Business',        forms:[3,4,5], note:'Types of business, ownership, stakeholders.' },
+        { id:'pb-internal',name:'Internal Organisation',    forms:[3,4,5], note:'Management functions, structure, communication.' },
+        { id:'pb-prod',   name:'Production & Marketing',    forms:[4,5],   note:'Factors of production, marketing mix, distribution.' },
+        { id:'pb-finance',name:'Business Finance & Trade',  forms:[4,5],   note:'Sources of finance, banking, international trade.' }
+      ]
+    },
+    'principles-of-accounts': {
+      name: 'Principles of Accounts', short: 'POA', icon: '📒', group: 'Business',
+      blurb: 'Double entry through to final accounts.',
+      papers: 'Paper 01 (60 MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'pa-double', name:'Double Entry & Ledgers',    forms:[3,4,5], note:'Accounting equation, journals, ledgers, trial balance.' },
+        { id:'pa-final',  name:'Final Accounts',            forms:[4,5],   note:'Trading, profit and loss, balance sheet, adjustments.' },
+        { id:'pa-control',name:'Control & Reconciliation',  forms:[4,5],   note:'Bank reconciliation, control accounts, errors.' },
+        { id:'pa-special',name:'Specialised Accounting',    forms:[5],     note:'Partnerships, companies, co-operatives, manufacturing.' }
+      ]
+    },
+    'additional-mathematics': {
+      name: 'Additional Mathematics', short: 'Add Ma', icon: '∫', group: 'Core',
+      blurb: 'The bridge from CSEC Maths to CAPE.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'am-algebra',name:'Algebra & Functions',       forms:[4,5], note:'Quadratics, indices, logs, series, remainder theorem.' },
+        { id:'am-coord',  name:'Coordinate Geometry & Trig',forms:[4,5], note:'Lines, circles, identities, radians.' },
+        { id:'am-calc',   name:'Introductory Calculus',     forms:[5],   note:'Differentiation, integration, applications.' },
+        { id:'am-stats',  name:'Statistics & Probability',  forms:[5],   note:'Data, permutations, combinations, probability.' }
+      ]
+    },
+    'music': {
+      name: 'Music', short: 'Music', icon: '🎼', group: 'Expressive',
+      blurb: 'Performing, composing and listening.',
+      papers: 'Paper 01 (listening) · Portfolio · Performance',
+      strands: [
+        { id:'mu-theory', name:'Music Theory & Notation',   forms:[1,2,3,4,5], note:'Pitch, rhythm, key signatures, intervals, chords.' },
+        { id:'mu-listen', name:'Listening & Analysis',      forms:[1,2,3,4,5], note:'Texture, form, instrumentation, Caribbean genres.' },
+        { id:'mu-perform',name:'Performance',               forms:[1,2,3,4,5], note:'Solo and ensemble, technique, interpretation.' },
+        { id:'mu-compose',name:'Composing & Arranging',     forms:[3,4,5],     note:'Melody writing, harmony, arrangement.' }
+      ]
+    },
+    'religious-education': {
+      name: 'Religious Education', short: 'RE', icon: '🕊️', group: 'Humanities',
+      blurb: 'World religions and ethics.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'re-world',  name:'World Religions',           forms:[1,2,3,4,5], note:'Beliefs, practices and festivals of the major faiths.' },
+        { id:'re-texts',  name:'Sacred Texts & Teachings',  forms:[2,3,4,5],   note:'Scripture, interpretation, key figures.' },
+        { id:'re-ethics', name:'Ethics & Moral Reasoning',  forms:[3,4,5],     note:'Right and wrong, conscience, applied ethics.' },
+        { id:'re-society',name:'Religion in Caribbean Society',forms:[3,4,5],  note:'Plural society, tolerance, religion and social change.' }
+      ]
+    },
+    'technical-drawing': {
+      name: 'Technical Drawing', short: 'TD', icon: '📏', group: 'Technical',
+      blurb: 'Geometric, mechanical and building drawing.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (drawing) · SBA',
+      strands: [
+        { id:'td-geometry',name:'Plane & Solid Geometry',   forms:[1,2,3,4,5], note:'Constructions, loci, tangents, development.' },
+        { id:'td-ortho',  name:'Orthographic & Pictorial',  forms:[2,3,4,5],   note:'First/third angle, isometric, oblique, sectioning.' },
+        { id:'td-mech',   name:'Mechanical Drawing',        forms:[4,5],       note:'Fasteners, assemblies, dimensioning conventions.' },
+        { id:'td-build',  name:'Building Drawing',          forms:[4,5],       note:'Floor plans, elevations, symbols, site plans.' }
+      ]
+    },
+    'agricultural-science': {
+      name: 'Agricultural Science', short: 'Ag Sci', icon: '🌱', group: 'Sciences',
+      blurb: 'Crop and animal production.',
+      papers: 'Paper 01 (MCQ) · Paper 02 (structured) · SBA',
+      strands: [
+        { id:'ag-soil',   name:'Soils & Plant Nutrition',   forms:[1,2,3,4,5], note:'Soil types, pH, fertilisers, conservation.' },
+        { id:'ag-crop',   name:'Crop Production',           forms:[2,3,4,5],   note:'Propagation, pests, disease, harvesting.' },
+        { id:'ag-animal', name:'Animal Production',         forms:[3,4,5],     note:'Livestock, feeding, housing, health.' },
+        { id:'ag-business',name:'Agribusiness & Environment',forms:[4,5],      note:'Farm records, marketing, sustainability.' }
+      ]
+    }
+  },
+
+  /* Form 1-5 roadmap. Shown on the planner so a Form 2 student can see where
+     this is going without being handed a Form 5 workload today. */
+  roadmap: [
+    { form:1, label:'Form 1', phase:'Foundations',
+      focus:'Settle the habits. Neat notes, homework done the day it is set, reading every night.',
+      goals:['Build a study routine you can keep','Master number and grammar basics','Read one book a month for English B','Learn how to take notes that you can revise from'] },
+    { form:2, label:'Form 2', phase:'Building',
+      focus:'Widen the base. This is the year the sciences and languages start to separate.',
+      goals:['Keep every subject above 60%','Start a vocabulary book for Spanish and French','Learn algebra properly — it carries Forms 3 to 5','Practise timed questions once a week'] },
+    { form:3, label:'Form 3', phase:'Choosing',
+      focus:'The subject-choice year. Your Form 3 marks decide which CSEC subjects are open to you.',
+      goals:['Identify your strongest 8-10 subjects','Fix any weak strand before it becomes a CSEC topic','Sit past-paper style questions in Maths and English','Choose CSEC subjects with evidence, not guesswork'] },
+    { form:4, label:'Form 4', phase:'CSEC Year One',
+      focus:'The syllabus starts for real. Half of CSEC content is covered this year.',
+      goals:['Start SBA work early — do not leave it to Form 5','Cover the Form 4 half of each syllabus','Begin working through specimen papers','Keep a corrections book of every mistake'] },
+    { form:5, label:'Form 5', phase:'Examination Year',
+      focus:'Finish the syllabus, then practise under time until the paper holds no surprises.',
+      goals:['Complete and submit every SBA on time','Work past papers to time, then mark against the scheme','Target Grade I in your strongest subjects','Rest properly in the week before the exam'] }
+  ],
+
+  /* Verified official and reputable sources. Checked reachable 7 Sep 2026.
+     Nothing copyrighted is copied into this repository — these are links out. */
+  resources: {
+    official: [
+      { name:'CXC Store — Syllabuses & Subject Reports', url:'https://cxc-store.com/syllabuses-subject-reports',
+        cost:'Free', note:'The official CSEC syllabus for every subject, plus specimen papers, mark schemes and subject reports. This is the document the examiner works from — download the syllabus for each of your subjects first.' },
+      { name:'CXC Store — CSEC Past Papers', url:'https://cxc-store.com/past-papers/csec',
+        cost:'Paid eBooks', note:'The only official source of complete CSEC past papers. CXC sells them as eBooks; they are copyright CXC, which is why this hub links to them rather than hosting copies.' },
+      { name:'CXC — Caribbean Examinations Council', url:'https://www.cxc.org/',
+        cost:'Free', note:'Examination timetables, registration information and candidate notices.' },
+      { name:'MOE T&T — School Learning Management System', url:'https://learn.moe.gov.tt/',
+        cost:'Free', note:'The Ministry’s own platform. Carries CSEC past-paper worked solutions and CPDD activity sheets for Trinidad and Tobago students, including Form 5 Mathematics.' },
+      { name:'MOE T&T — Secondary School Resources', url:'https://www.moe.gov.tt/secondary-resources/',
+        cost:'Free', note:'Ministry resource index for secondary students.' },
+      { name:'MOE T&T — Curriculum Resources', url:'https://www.moe.gov.tt/curriculum-resources/',
+        cost:'Free', note:'National curriculum documents by subject and form — this is what the Form 1-3 school syllabus is built on.' },
+      { name:'MOE T&T — Examinations Portal', url:'https://exams.moe.gov.tt/',
+        cost:'Free', note:'Local examination administration, registration and results.' },
+      { name:'MOE T&T — Resources Index', url:'https://www.moe.gov.tt/resources/',
+        cost:'Free', note:'Top-level index of every Ministry resource page.' }
+    ],
+    school: [
+      { name:'Lakshmi Girls’ Hindu College', url:'https://www.lakshmigirlshindu.com/',
+        cost:'Free', note:'School site — calendar, notices and the subject offering. St Augustine, Trinidad.' }
+    ],
+    community: [
+      { name:'Kerwin Springer — Student Support', url:'https://www.kerwinspringer.com/',
+        cost:'Free & paid', note:'Widely used Trinidadian CSEC tutorials and worked past-paper solutions. Not affiliated with CXC.' }
+    ]
+  }
+};

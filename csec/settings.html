@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Settings | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .subjpick{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px}
+  .sp{display:flex;align-items:center;gap:10px;padding:11px 13px;border-radius:11px;cursor:pointer;
+      background:rgba(0,0,0,.2);border:1px solid var(--line);font-size:.87rem;transition:all .15s ease}
+  .sp:hover{border-color:rgba(0,207,234,.4)}
+  .sp.on{background:rgba(239,194,75,.11);border-color:rgba(239,194,75,.45)}
+  .sp input{accent-color:var(--gold);width:17px;height:17px;flex:none}
+  .sp .gp{font-size:.68rem;color:var(--muted);display:block}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Settings</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Settings</div>
+      <h1>Settings</h1>
+      <p id="hd-sub"></p>
+    </div>
+
+    <!-- ---------- subjects ---------- -->
+    <div class="section-label">Subjects <span class="pill gold" id="sc"></span></div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="field" id="whowrap">
+        <label class="fl" for="who">Editing subjects for</label>
+        <select class="fi" id="who"></select>
+      </div>
+      <p class="sub" style="margin-bottom:14px">
+        Tick every subject you actually take. This drives the daily plan, the mastery rings and the
+        syllabus browser — so it is worth getting exactly right.
+      </p>
+      <div class="subjpick" id="subjpick"></div>
+      <div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn" id="save-subj">Save subjects</button>
+        <button class="btn ghost" id="reset-subj">Reset to the default 14</button>
+      </div>
+      <div class="ok hidden" id="subj-ok"></div>
+    </div>
+
+    <!-- ---------- profile ---------- -->
+    <div class="section-label">Your profile</div>
+    <div class="card" style="margin-bottom:14px">
+      <div class="grid g2">
+        <div class="field">
+          <label class="fl" for="p-name">Name</label>
+          <input class="fi" id="p-name"/>
+        </div>
+        <div class="field" id="p-formwrap">
+          <label class="fl" for="p-form">Current form</label>
+          <select class="fi" id="p-form">
+            <option value="1">Form 1</option><option value="2">Form 2</option><option value="3">Form 3</option>
+            <option value="4">Form 4</option><option value="5">Form 5</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label class="fl" for="p-school">School</label>
+        <input class="fi" id="p-school"/>
+      </div>
+      <div class="field">
+        <label class="fl" for="p-pin">Change PIN (leave blank to keep the current one)</label>
+        <input class="fi" id="p-pin" type="password" inputmode="numeric" maxlength="6" placeholder="4 to 6 digits"/>
+      </div>
+      <button class="btn" id="save-prof">Save profile</button>
+      <div class="ok hidden" id="prof-ok"></div>
+      <div class="err" id="prof-err"></div>
+    </div>
+
+    <!-- ---------- backup ---------- -->
+    <div class="section-label">Backup &amp; moving devices</div>
+    <div class="card" style="margin-bottom:14px">
+      <p class="sub" style="margin-bottom:16px">
+        There is no server behind this hub, so progress lives in this browser and nowhere else.
+        Clearing your browser data erases it. Export a backup file now and again — and always before
+        changing phone or laptop.
+      </p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+        <button class="btn teal" id="do-export">⬇ Export backup</button>
+        <label class="btn ghost" style="cursor:pointer;margin:0">
+          ⬆ Restore from backup
+          <input type="file" id="do-import" accept="application/json,.json" class="hidden"/>
+        </label>
+      </div>
+      <div class="ok hidden" id="bk-ok"></div>
+      <div class="err" id="bk-err"></div>
+    </div>
+
+    <!-- ---------- danger ---------- -->
+    <div class="section-label">Clearing data</div>
+    <div class="card">
+      <p class="sub" style="margin-bottom:16px">
+        Both of these are permanent and cannot be undone. Export a backup first if there is any doubt.
+      </p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn ghost" id="do-resetprog">Reset my practice history</button>
+        <button class="btn ghost" id="do-delete" style="border-color:rgba(248,113,113,.4);color:#f87171">Delete this profile</button>
+      </div>
+      <div class="ok hidden" id="dz-ok"></div>
+    </div>
+
+    <div class="note" style="margin-top:22px">
+      <b>What "sign in" means here.</b> These pages are static files served from a web host, with no
+      database behind them. A profile and its PIN are stored in this browser, which keeps profiles
+      apart on a shared device — it is not a security boundary, and anyone with the device and a
+      little determination can read the stored data. Do not put anything confidential in a name or
+      a note.
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+
+  $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a>':'')+
+    '<a href="planner.html">Planner</a><a href="papers.html">Past papers</a>'+
+    '<a href="settings.html" class="on">Settings</a><a href="#" id="signout">Sign out</a>';
+  document.getElementById('signout').addEventListener('click',function(e){
+    e.preventDefault(); CSEC.signOut(); location.href='index.html';
+  });
+
+  $('hd-sub').textContent='Signed in as '+me.name+' ('+me.role+').';
+
+  function flash(id,msg){
+    var el=$(id); el.textContent=msg; el.classList.remove('hidden');
+    setTimeout(function(){ el.classList.add('hidden'); },3400);
+  }
+
+  /* ---------------- who am I editing ---------------- */
+  var targets = me.role==='student' ? [me] : CSEC.students();
+  if(!targets.length){
+    $('whowrap').innerHTML='<p class="sub">No student profile on this device yet.</p>';
+    $('subjpick').innerHTML='';
+  } else {
+    $('who').innerHTML=targets.map(function(t){
+      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+    }).join('');
+    if(me.role==='student') $('whowrap').classList.add('hidden');
+    $('who').addEventListener('change',paintSubjects);
+  }
+
+  function targetId(){ return targets.length ? $('who').value : null; }
+
+  /* ---------------- subject picker ---------------- */
+  function paintSubjects(){
+    var id=targetId(); if(!id) return;
+    var t=CSEC.profile(id), chosen=t.subjects||[];
+    var groups={};
+    Object.keys(C.subjects).forEach(function(sid){
+      var s=C.subjects[sid];
+      (groups[s.group]=groups[s.group]||[]).push(sid);
+    });
+    var html='';
+    Object.keys(groups).forEach(function(g){
+      groups[g].forEach(function(sid){
+        var s=C.subjects[sid], on=chosen.indexOf(sid)>-1;
+        html+='<label class="sp'+(on?' on':'')+'" data-id="'+esc(sid)+'">'+
+          '<input type="checkbox" '+(on?'checked':'')+'/>'+
+          '<span>'+s.icon+' '+esc(s.name)+'<span class="gp">'+esc(g)+'</span></span></label>';
+      });
+    });
+    $('subjpick').innerHTML=html;
+    Array.prototype.forEach.call($('subjpick').children,function(l){
+      l.querySelector('input').addEventListener('change',function(){
+        l.classList.toggle('on',this.checked); count();
+      });
+    });
+    count();
+  }
+  function picked(){
+    return Array.prototype.filter.call($('subjpick').children,function(l){
+      return l.querySelector('input').checked;
+    }).map(function(l){ return l.getAttribute('data-id'); });
+  }
+  function count(){ $('sc').textContent=picked().length+' selected'; }
+
+  if(targets.length) paintSubjects();
+
+  $('save-subj').addEventListener('click',function(){
+    var id=targetId(); if(!id) return;
+    var list=picked();
+    if(!list.length){ flash('subj-ok','Pick at least one subject.'); return; }
+    CSEC.updateProfile(id,{subjects:list});
+    if(id===me.id) me=CSEC.profile(id);
+    flash('subj-ok','Saved — '+list.length+' subjects.');
+  });
+  $('reset-subj').addEventListener('click',function(){
+    var id=targetId(); if(!id) return;
+    CSEC.updateProfile(id,{subjects:C.defaultSelection.slice()});
+    if(id===me.id) me=CSEC.profile(id);
+    paintSubjects(); flash('subj-ok','Reset to the default 14 subjects.');
+  });
+
+  /* ---------------- profile ---------------- */
+  $('p-name').value=me.name;
+  $('p-school').value=me.school||'';
+  $('p-form').value=String(me.form||2);
+  if(me.role!=='student') $('p-formwrap').classList.add('hidden');
+
+  $('save-prof').addEventListener('click',function(){
+    var name=$('p-name').value.trim();
+    var pin=$('p-pin').value.trim();
+    $('prof-err').textContent='';
+    if(!name){ $('prof-err').textContent='A name is required.'; return; }
+    if(pin && !/^\d{4,6}$/.test(pin)){ $('prof-err').textContent='PIN must be 4 to 6 digits.'; return; }
+    var patch={name:name,school:$('p-school').value.trim(),form:parseInt($('p-form').value,10)||me.form};
+    if(pin) patch.pin=pin;
+    CSEC.updateProfile(me.id,patch);
+    me=CSEC.profile(me.id);
+    $('p-pin').value='';
+    flash('prof-ok','Profile saved.');
+  });
+
+  /* ---------------- backup ---------------- */
+  $('do-export').addEventListener('click',function(){
+    var blob=new Blob([JSON.stringify(CSEC.exportAll(),null,2)],{type:'application/json'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='csec-study-hub-backup-'+CSEC.today()+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },500);
+    flash('bk-ok','Backup downloaded.');
+  });
+
+  $('do-import').addEventListener('change',function(){
+    var f=this.files && this.files[0]; if(!f) return;
+    $('bk-err').textContent='';
+    var fr=new FileReader();
+    fr.onload=function(){
+      var dump;
+      try{ dump=JSON.parse(fr.result); }
+      catch(e){ $('bk-err').textContent='That file is not readable JSON.'; return; }
+      if(!confirm('Restore this backup? Profiles already on this device are kept; matching progress is overwritten.')) return;
+      var r=CSEC.importAll(dump,'merge');
+      if(!r.ok){ $('bk-err').textContent=r.msg; return; }
+      flash('bk-ok',r.msg+' Reloading…');
+      setTimeout(function(){ location.reload(); },900);
+    };
+    fr.readAsText(f);
+    this.value='';
+  });
+
+  /* ---------------- danger zone ---------------- */
+  $('do-resetprog').addEventListener('click',function(){
+    var id = me.role==='student' ? me.id : targetId();
+    if(!id){ return; }
+    var who=CSEC.profile(id);
+    if(!confirm('Erase all practice history for '+who.name+'? This cannot be undone.')) return;
+    CSEC.saveProgress(id,{strands:{},sessions:[],days:[],notes:{},goals:{}});
+    flash('dz-ok','Practice history cleared for '+who.name+'.');
+  });
+
+  $('do-delete').addEventListener('click',function(){
+    if(!confirm('Delete the profile "'+me.name+'" and all of its progress? This cannot be undone.')) return;
+    CSEC.deleteProfile(me.id);
+    CSEC.signOut();
+    location.href='index.html';
+  });
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

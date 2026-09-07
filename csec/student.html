@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>My Desk | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span id="nav-who">My Desk</span></div>
+    <nav class="topnav">
+      <a href="student.html" class="on">My Desk</a>
+      <a href="practice.html">Practice</a>
+      <a href="planner.html">Planner</a>
+      <a href="papers.html">Past papers</a>
+      <a href="settings.html">Settings</a>
+      <a href="#" id="signout">Sign out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow" id="hd-eyebrow">Good day</div>
+      <h1 id="hd-title">My Desk</h1>
+      <p id="hd-sub"></p>
+    </div>
+
+    <!-- ---------------- focus topic set by a teacher ---------------- -->
+    <div id="focus-wrap" class="hidden" style="margin-bottom:20px">
+      <div class="card" style="border-color:rgba(0,207,234,.4)">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="font-size:1.6rem" id="focus-ico">🎯</div>
+          <div style="flex:1;min-width:210px">
+            <div class="eyebrow" style="margin-bottom:4px">Focus topic set by <span id="focus-by"></span></div>
+            <h3 id="focus-name"></h3>
+            <p class="sub" id="focus-note"></p>
+          </div>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:center">
+            <a class="btn sm" id="focus-go">Practise it →</a>
+            <button class="btn ghost sm" id="focus-clear">Done</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------------- headline numbers ---------------- -->
+    <div class="grid g4">
+      <div class="tile"><div class="big" id="t-streak">0</div><div class="lab">Day streak</div></div>
+      <div class="tile teal"><div class="big" id="t-answered">0</div><div class="lab">Questions answered</div></div>
+      <div class="tile"><div class="big" id="t-acc">—</div><div class="lab">Overall accuracy</div></div>
+      <div class="tile teal"><div class="big" id="t-days">—</div><div class="lab" id="t-dayslab">Days to CSEC</div></div>
+    </div>
+
+    <!-- ---------------- today's plan ---------------- -->
+    <div class="section-label">Your plan for today</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:space-between">
+        <div style="flex:1;min-width:210px">
+          <h3 id="plan-h">Six things worth doing today</h3>
+          <p class="sub" id="plan-sub">Chosen from what you have missed, what is due for review, and what you have not started.</p>
+        </div>
+        <a class="btn" id="plan-all" href="practice.html?mode=plan">Start today's plan →</a>
+      </div>
+    </div>
+    <div class="rows" id="plan"></div>
+
+    <!-- ---------------- weak spots ---------------- -->
+    <div id="weak-wrap" class="hidden">
+      <div class="section-label">Where the marks are leaking</div>
+      <div class="rows" id="weak"></div>
+    </div>
+
+    <!-- ---------------- subjects ---------------- -->
+    <div class="section-label">Your subjects <span class="pill mute" id="subj-count"></span></div>
+    <div class="grid g4" id="subjects"></div>
+
+    <!-- ---------------- habit ---------------- -->
+    <div class="section-label">The habit</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>Last 28 days</h3>
+        <p class="sub" style="margin-bottom:14px">Each square is a day. Gold means you practised.</p>
+        <div id="grid"></div>
+        <p class="sub" style="margin-top:14px" id="streak-line"></p>
+      </div>
+      <div class="card">
+        <h3>Study timer</h3>
+        <p class="sub" style="margin-bottom:14px">Twenty-five minutes of work, five minutes off. Start it, put the phone face down.</p>
+        <div style="font-family:'Montserrat',sans-serif;font-size:2.6rem;font-weight:800;color:var(--gold);text-align:center;margin:6px 0 14px" id="clock">25:00</div>
+        <div style="display:flex;gap:9px;justify-content:center;flex-wrap:wrap">
+          <button class="btn sm" id="tm-go">Start</button>
+          <button class="btn ghost sm" id="tm-reset">Reset</button>
+          <button class="btn ghost sm" id="tm-break">5 min break</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['student']); if(!me) return;
+  var $=function(id){return document.getElementById(id);};
+  var esc=CSEC.esc;
+
+  document.getElementById('signout').addEventListener('click',function(e){
+    e.preventDefault(); CSEC.signOut(); location.href='index.html';
+  });
+
+  /* ---------------- header ---------------- */
+  var h=new Date().getHours();
+  $('hd-eyebrow').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+' · Form '+me.form;
+  $('hd-title').textContent=me.name;
+  $('nav-who').textContent='Form '+me.form;
+  var cd=CSEC.countdown(me.form);
+  $('hd-sub').textContent=me.school+' · You sit CSEC in '+cd.year+'.';
+
+  /* ---------------- tiles ---------------- */
+  var st=CSEC.streak(me.id), ov=CSEC.overallStat(me.id);
+  $('t-streak').textContent=st.current;
+  $('t-answered').textContent=ov.seen;
+  $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
+  if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to CSEC '+cd.year; }
+  else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to CSEC '+cd.year; }
+
+  /* ---------------- focus topic ---------------- */
+  var pr=CSEC.progress(me.id);
+  var focus=(pr.goals||{}).focus;
+  if(focus){
+    $('focus-wrap').classList.remove('hidden');
+    $('focus-ico').textContent=focus.icon||'🎯';
+    $('focus-by').textContent=focus.by||'your teacher';
+    $('focus-name').textContent=focus.strandName+' — '+focus.subjName;
+    $('focus-note').textContent=focus.note||'Practise this topic until it is solid.';
+    $('focus-go').href='practice.html?strand='+encodeURIComponent(focus.strand);
+    $('focus-clear').addEventListener('click',function(){
+      var q=CSEC.progress(me.id);
+      if(q.goals) delete q.goals.focus;
+      CSEC.saveProgress(me.id,q);
+      $('focus-wrap').classList.add('hidden');
+    });
+  }
+
+  /* ---------------- today's plan ---------------- */
+  var plan=CSEC.planFor(me.id,6);
+  if(!plan.length){
+    $('plan').innerHTML='<div class="empty"><div class="ico">📚</div>'+
+      '<p>No topics available yet. Check that your subjects are set in <a href="settings.html" style="color:var(--gold)">Settings</a>.</p></div>';
+    $('plan-all').classList.add('hidden');
+  } else {
+    $('plan').innerHTML=plan.map(function(r){
+      var s=r.stat, tag;
+      if(s.pct==null)          tag='<span class="pill mute">Not started</span>';
+      else if(s.pct>=75)       tag='<span class="pill good">'+s.pct+'% · review</span>';
+      else if(s.pct>=50)       tag='<span class="pill gold">'+s.pct+'%</span>';
+      else                     tag='<span class="pill bad">'+s.pct+'% · needs work</span>';
+      return '<a class="row" href="practice.html?strand='+encodeURIComponent(r.strand)+'">'+
+        '<div class="r-ico">'+r.icon+'</div>'+
+        '<div class="r-text"><b>'+esc(r.strandName)+'</b>'+
+        '<span>'+esc(r.subjName)+' · '+esc(r.note)+'</span></div>'+
+        '<div style="flex:none;display:flex;align-items:center;gap:10px">'+tag+
+        '<span class="r-arrow">→</span></div></a>';
+    }).join('');
+  }
+
+  /* ---------------- weak spots ---------------- */
+  var weak=CSEC.weakSpots(me.id,5).filter(function(w){return w.pct<75;});
+  if(weak.length){
+    $('weak-wrap').classList.remove('hidden');
+    $('weak').innerHTML=weak.map(function(w){
+      return '<a class="row" href="practice.html?strand='+encodeURIComponent(w.strand)+'">'+
+        '<div class="r-ico">'+w.icon+'</div>'+
+        '<div class="r-text"><b>'+esc(w.strandName)+'</b>'+
+        '<span>'+esc(w.subjName)+' · '+w.seen+' answered</span></div>'+
+        '<div style="flex:none;width:110px">'+
+        '<div class="bar '+(w.pct>=50?'warn':'bad')+'"><i style="width:'+w.pct+'%"></i></div>'+
+        '<div style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:4px">'+w.pct+'%</div>'+
+        '</div><span class="r-arrow">→</span></a>';
+    }).join('');
+  }
+
+  /* ---------------- subjects ---------------- */
+  $('subj-count').textContent=(me.subjects||[]).length+' subjects';
+  $('subjects').innerHTML=(me.subjects||[]).map(function(id){
+    var s=CSEC.curriculum.subjects[id]; if(!s) return '';
+    var st=CSEC.subjectStat(me.id,id);
+    return '<a class="subj-card" href="practice.html?subject='+encodeURIComponent(id)+'">'+
+      CSEC.ring(st.pct,78,s.name+' mastery')+
+      '<div class="nm">'+esc(s.name)+'</div>'+
+      '<div class="meta">'+(st.seen? st.correct+'/'+st.seen+' correct' : 'Not started')+'</div></a>';
+  }).join('');
+
+  /* ---------------- habit ---------------- */
+  $('grid').innerHTML=CSEC.streakGrid(me.id);
+  $('streak-line').textContent= st.current
+    ? 'Current streak '+st.current+' day'+(st.current===1?'':'s')+'. Best so far '+st.best+'.'
+    : 'No streak yet. Answer one question today and it begins.';
+
+  /* ---------------- pomodoro ---------------- */
+  var left=25*60, tick=null;
+  function paint(){
+    var m=Math.floor(left/60), s=left%60;
+    $('clock').textContent=m+':'+(s<10?'0':'')+s;
+  }
+  function stop(){ clearInterval(tick); tick=null; $('tm-go').textContent='Start'; }
+  $('tm-go').addEventListener('click',function(){
+    if(tick){ stop(); return; }
+    $('tm-go').textContent='Pause';
+    tick=setInterval(function(){
+      left--; paint();
+      if(left<=0){ stop(); $('clock').textContent='Done'; try{ new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=').play(); }catch(e){} }
+    },1000);
+  });
+  $('tm-reset').addEventListener('click',function(){ stop(); left=25*60; paint(); });
+  $('tm-break').addEventListener('click',function(){ stop(); left=5*60; paint(); });
+  paint();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
