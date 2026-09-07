@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-07b';
+var SCRIPT_VERSION = '2026-09-07c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1922,9 +1922,25 @@ function json_(obj) {
    memo that outlives its request is a memo serving yesterday's roster. */
 function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; _rankMemo = null; }
 
+/* Branch Intelligence lives in this project too, and a script project may
+   declare doGet and doPost exactly once — so Intelligence.gs ships with its
+   own pair at the foot of the file, to be deleted when it joins a project that
+   already has a router. These two hand its actions over.
+   intelRoute_ does its own authentication: the five wall reads are
+   unauthenticated on purpose, because a screen on a wall has nobody to sign it
+   in, and in exchange they return aggregates only; everything else goes
+   through iSession_. So they are routed before the tracker's token check,
+   which would otherwise refuse them — which is exactly what the wall got on
+   7 September, "Session expired" to a television.
+   Both are guarded on typeof, so the tracker still runs in a project that has
+   no Intelligence.gs in it. */
 function doGet(e) {
   resetRequestMemo_();
   var p = (e && e.parameter) || {};
+  // A survey link in a client's e-mail is a GET and nothing else answers it.
+  if (typeof iSurveyClick_ === 'function') {
+    try { var page = iSurveyClick_(e); if (page) return page; } catch (err) {}
+  }
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -1936,6 +1952,14 @@ function doPost(e) {
   resetRequestMemo_();
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+  if (typeof intelRoute_ === 'function') {
+    try {
+      var hit = intelRoute_(body);      // null for anything not an intel.* action
+      if (hit) return hit;
+    } catch (err) {
+      return json_({ ok: false, error: String(err && err.message || err) });
+    }
+  }
   try {
     return json_(handle_(body.action || 'save', body, body.token));
   } catch (err) {

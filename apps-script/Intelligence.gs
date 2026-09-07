@@ -4306,10 +4306,20 @@ function iDialog_(title, text) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   WEB APP ENTRY POINTS
-   DELETE THIS BLOCK if this script project already declares doGet/doPost —
-   see intelSelfTest(), which tells you which case you are in. A project may
-   declare each of them exactly once, and the second declaration silently wins.
+   WEB APP ENTRY POINTS  —  the two functions below, and nothing else
+   DELETE THESE TWO FUNCTIONS if this script project already declares
+   doGet/doPost — see intelSelfTest(), which tells you which case you are in.
+   A project may declare each of them exactly once, and the second declaration
+   silently wins, so left in they take over the host's router and its sign-in
+   stops working.
+   They are NOT at the end of the file: the block ends at the next banner,
+   "WHAT IS IN OUR POSSESSION", a few lines down. Delete as far as that and no
+   further.
+   Having deleted them, add one line inside the host's own doPost, straight
+   after it parses the body:
+       var hit = intelRoute_(b); if (hit) return hit;
+   and, if the host serves the client survey links, one inside its doGet:
+       var page = iSurveyClick_(e); if (page) return page;
    ══════════════════════════════════════════════════════════════════════════ */
 
 function doGet(e) {

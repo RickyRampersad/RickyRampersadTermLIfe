@@ -63,6 +63,8 @@ function makeEnv(opts = {}) {
     console, JSON, Math, Date, String, Number, Boolean, Object, Array, RegExp, Error, isNaN, parseInt, parseFloat,
     __calls: calls, __sheets: sheets, __mkSheet: mkSheet,
     SpreadsheetApp: {
+      // Two names for one thing, and the two scripts use one each.
+      getActiveSpreadsheet: () => g.SpreadsheetApp.getActive(),
       getActive: () => ({
         getSheets: () => Object.values(sheets),
         getSheetByName: n => sheets[n] || null,
@@ -72,6 +74,15 @@ function makeEnv(opts = {}) {
     },
     LockService: { getScriptLock: () => ({ waitLock: () => { if (opts.lockBusy) throw new Error('Could not acquire lock'); }, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => cacheStub },
+    /* Enough of ContentService to drive doGet and doPost. Most tests call the
+       handlers directly, but the web entry points are where two scripts
+       sharing one project meet, and that seam is worth testing through. */
+    ContentService: {
+      MimeType: { JSON: 'application/json', TEXT: 'text/plain', HTML: 'text/html' },
+      createTextOutput: t => ({ _t: String(t == null ? '' : t),
+                                setMimeType() { return this; },
+                                getContent() { return this._t; } })
+    },
     PropertiesService: { getScriptProperties: () => ({ getProperty: () => null, setProperty: () => {} }) },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
