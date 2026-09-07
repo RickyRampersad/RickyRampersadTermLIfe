@@ -14,6 +14,7 @@ Salesforce connection and the same Apps Script feed:
 | **Production wall** | `/board/production.html` | policies **picked up for production** — this week, this month, year to date |
 | **Production dashboard** | `/board/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
 | **Renewals wall** | `/renewals/` | **this month's motor & property renewals** — due, renewed, premiums, tasks, next month |
+| **Renewals dashboard** | `/renewals/dashboard.html` | the interactive desk view — line/status filters, sortable register, values, trend, people |
 
 **The basis everywhere is the branch report's "Total API": `Total_API__c`
 (client portfolio, on the production picked-up date) plus `API_Increase__c`
@@ -179,13 +180,22 @@ are **never** shipped raw — staff write client names and policy numbers into
 them — the feed reduces them to a kind and a date. Staff names on the task
 slide are branch staff and belong on a wall.
 
+**The dashboard** (`/renewals/dashboard.html`) is the same data as a desk
+view instead of a rotation: line and status filter chips that recompute the
+KPI row, a merged motor+property register sortable by due date or premium,
+the values panels, the year trend, the losing and people panels, and next
+month. **▶ Run** cycles section to section every 12 seconds like a wall;
+any scroll, click or key hands control back. The wall and the dashboard
+carry the same baked snapshot — refresh both files together.
+
 The live feed is the same `/exec` as the other boards — `wbBuild_()` now
 carries a `renewalsWall` block (`wbRenewalsWall_()` in
 `apps-script/WallBoard.gs`). Paste the URL into `WALL_DATA_URL` at the top of
-`renewals/index.html` and the badge flips to **Live**; if the deployed script
-predates the block, the wall just stays on its snapshot. Refresh the snapshot
-by re-running the queries documented in `wbRenewalsWall_()` and updating the
-`WALL_DATA` block — and keep it anonymous when you do.
+`renewals/index.html` **and** `renewals/dashboard.html` and the badge flips
+to **Live**; if the deployed script predates the block, both just stay on
+their snapshot. Refresh the snapshot by re-running the queries documented in
+`wbRenewalsWall_()` and updating the `WALL_DATA` block — and keep it
+anonymous when you do.
 
 ## It works the moment it's deployed
 
