@@ -357,6 +357,36 @@ window.CSEC_CURRICULUM = {
       { name:'Lakshmi Girls’ Hindu College', url:'https://www.lakshmigirlshindu.com/',
         cost:'Free', note:'School site — calendar, notices and the subject offering. St Augustine, Trinidad.' }
     ],
+    /* International, free, and genuinely useful for CSEC even though none of it
+       is written for CXC. Alignment is noted honestly on each one — a Form 3
+       student sent to a US or UK course that does not match the syllabus wastes
+       the evening. All checked reachable 7 Sep 2026. */
+    international: [
+      { name:'Khan Academy', url:'https://www.khanacademy.org/', cost:'Free', subj:'Maths, Sciences, Economics',
+        note:'Guided practice with step-by-step hints and video for every topic. Strongest match to CSEC in Mathematics — algebra, geometry, trigonometry and statistics map almost directly. Built on the US curriculum, so skip the US-history and SAT sections.' },
+      { name:'BBC Bitesize — GCSE', url:'https://www.bbc.co.uk/bitesize', cost:'Free', subj:'All core subjects',
+        note:'Short revision pages with a quiz at the end of each. GCSE sits at almost the same level as CSEC and the science and maths content overlaps heavily. English literature texts differ, so use it for technique rather than set texts.' },
+      { name:'PhET Interactive Simulations', url:'https://phet.colorado.edu/', cost:'Free', subj:'Physics, Chemistry, Biology, Maths',
+        note:'University of Colorado simulations — circuits, forces, waves, gas laws, acids and bases. The fastest way to understand a science topic you cannot picture, and useful preparation before a school laboratory session.' },
+      { name:'OpenStax', url:'https://openstax.org/', cost:'Free', subj:'Sciences, Maths',
+        note:'Full peer-reviewed textbooks as free PDFs. Pitched above CSEC in places, but excellent when a school textbook explains something badly and you want a second explanation.' },
+      { name:'Desmos Graphing Calculator', url:'https://www.desmos.com/calculator', cost:'Free', subj:'Mathematics',
+        note:'Plot any function instantly. Use it to check graph questions and to see what changing a coefficient actually does — that intuition is what Relations, Functions and Graphs is testing.' },
+      { name:'GeoGebra', url:'https://www.geogebra.org/', cost:'Free', subj:'Mathematics',
+        note:'Geometry, transformations and constructions you can drag. Particularly good for the Geometry and Trigonometry section and for seeing why a construction works.' },
+      { name:'LibreTexts', url:'https://libretexts.org/', cost:'Free', subj:'Sciences, Maths',
+        note:'Very large open library of chemistry, physics and biology explanations. Best used to look up one specific concept rather than to read through.' },
+      { name:'Project Gutenberg', url:'https://www.gutenberg.org/', cost:'Free', subj:'English B',
+        note:'Free out-of-copyright literature. Useful for background reading and for older set texts, though most current CSEC set texts are still in copyright and will not be here.' },
+      { name:'CommonLit', url:'https://www.commonlit.org/', cost:'Free', subj:'English A, English B',
+        note:'Graded passages with comprehension questions — close to the English A comprehension format, and good practice at reading for inference.' },
+      { name:'Wolfram Alpha', url:'https://www.wolframalpha.com/', cost:'Free tier', subj:'Mathematics, Sciences',
+        note:'Checks an answer and shows the steps on the free tier for many problems. Use it to check work you have already attempted, never to produce work you have not.' },
+      { name:'MIT OpenCourseWare', url:'https://ocw.mit.edu/', cost:'Free', subj:'Maths, Sciences',
+        note:'University-level material. Well beyond CSEC, but worth knowing about for a Form 5 student deciding whether to take a subject at CAPE.' },
+      { name:'Save My Exams', url:'https://www.savemyexams.com/', cost:'Free & paid', subj:'Sciences, Maths',
+        note:'Revision notes and topic questions written for UK exam boards. Structure and question style are close enough to be useful practice; the syllabus is not identical, so check against the CSEC syllabus before relying on it.' }
+    ],
     community: [
       { name:'Kerwin Springer — Student Support', url:'https://www.kerwinspringer.com/',
         cost:'Free & paid', note:'Widely used Trinidadian CSEC tutorials and worked past-paper solutions. Not affiliated with CXC.' }

@@ -88,7 +88,10 @@
   /* ------------------------------ progress ----------------------------- */
   /* progress = {strands:{id:{seen,correct,run,ease,interval,due,last}},
                  sessions:[...], days:[iso], notes:{}, goals:{}}          */
-  function blankProgress() { return { strands: {}, sessions: [], days: [], notes: {}, goals: {} }; }
+  function blankProgress() {
+    return { strands: {}, sessions: [], days: [], notes: {}, goals: {},
+             history: [], tests: [], terms: {} };
+  }
   function progress(studentId) { return read('progress.' + studentId, blankProgress()); }
   function saveProgress(studentId, p) { write('progress.' + studentId, p); }
 
@@ -111,8 +114,13 @@
       s.ease = Math.max(1.3, s.ease - 0.2);
       s.interval = 0;                      /* a miss is due again immediately */
     }
+    if (!s.first) s.first = Date.now();
     s.last = Date.now();
     s.due = Date.now() + s.interval * 86400000;
+    /* Attempt log. Retention — can she still do it a week later? — is the
+       single best predictor of an examination grade, and it cannot be
+       computed from running totals alone. Capped so storage stays small. */
+    s.log = (s.log || []).concat([{ t: s.last, c: wasCorrect ? 1 : 0 }]).slice(-24);
     p.strands[question.strand] = s;
     saveProgress(studentId, p);
     return s;
@@ -128,8 +136,220 @@
     if (p.sessions.length > 400) p.sessions = p.sessions.slice(-400);
     if (p.days.indexOf(today()) === -1) p.days.push(today());
     saveProgress(studentId, p);
+    snapshotTerm(studentId);
     return p;
   }
+
+  /* Trinidad and Tobago school year: Term 1 Sept-Dec, Term 2 Jan-Mar,
+     Term 3 Apr-Jul. Returns e.g. {key:'2026/27 T1', year:'2026/27', term:1}. */
+  function termOf(d) {
+    d = d || new Date();
+    var m = d.getMonth(), y = d.getFullYear(), term, startYear;
+    if (m >= 8)      { term = 1; startYear = y; }
+    else if (m <= 3) { term = 2; startYear = y - 1; }
+    else             { term = 3; startYear = y - 1; }
+    var label = startYear + '/' + String((startYear + 1) % 100).padStart(2, '0');
+    return { key: label + ' T' + term, year: label, term: term, startYear: startYear };
+  }
+
+  /* One snapshot per term, overwritten as the term goes on, so the timeline
+     always shows where each term actually finished. */
+  function snapshotTerm(studentId) {
+    var prof = profile(studentId); if (!prof) return;
+    var p = progress(studentId), t = termOf();
+    var subs = {};
+    (prof.subjects || []).forEach(function (id) {
+      var st = subjectStat(studentId, id);
+      if (st.seen) subs[id] = { pct: st.pct, seen: st.seen };
+    });
+    var ov = overallStat(studentId);
+    p.terms = p.terms || {};
+    p.terms[t.key] = {
+      key: t.key, year: t.year, term: t.term, form: prof.form,
+      at: Date.now(), pct: ov.pct, seen: ov.seen,
+      coverage: coverage(studentId).pct, subjects: subs
+    };
+    saveProgress(studentId, p);
+  }
+
+  /* Ordered oldest-first, which is how the timeline reads. */
+  function termHistory(studentId) {
+    var p = progress(studentId);
+    return Object.keys(p.terms || {})
+      .map(function (k) { return p.terms[k]; })
+      .sort(function (a, b) { return a.at - b.at; });
+  }
+
+  /* Moving up a form. Mastery carries forward — she has not forgotten Form 2
+     maths — but the year is stamped into the record so the history survives. */
+  function promote(studentId, toForm) {
+    var prof = profile(studentId); if (!prof) return null;
+    var from = prof.form, to = toForm || Math.min(5, from + 1);
+    if (to === from) return null;
+    snapshotTerm(studentId);
+    var p = progress(studentId), ov = overallStat(studentId);
+    p.history = p.history || [];
+    p.history.push({
+      at: Date.now(), date: today(), from: from, to: to,
+      pct: ov.pct, seen: ov.seen, coverage: coverage(studentId).pct,
+      term: termOf().key
+    });
+    saveProgress(studentId, p);
+    updateProfile(studentId, { form: to });
+    return { from: from, to: to };
+  }
+
+  /* ------------------------------- KPIs -------------------------------- */
+  /* Syllabus coverage: strands attempted, against those taught up to the
+     student's current form. Judging a Form 2 against the Form 5 syllabus
+     would be meaningless. */
+  function coverage(studentId, subjId) {
+    var prof = profile(studentId); if (!prof) return { pct: 0, done: 0, total: 0 };
+    var p = progress(studentId), done = 0, total = 0;
+    var list = subjId ? [subjId] : (prof.subjects || []);
+    list.forEach(function (id) {
+      var subj = C.subjects[id]; if (!subj) return;
+      subj.strands.forEach(function (t) {
+        var taught = t.forms.some(function (f) { return f <= prof.form; });
+        if (!taught) return;
+        total++;
+        var st = p.strands[t.id];
+        if (st && st.seen) done++;
+      });
+    });
+    return { pct: total ? Math.round(100 * done / total) : 0, done: done, total: total };
+  }
+
+  /* Retention: accuracy on attempts made at least 7 days after a strand was
+     first seen. This is what separates a student who has revised from one who
+     has crammed, and it is the number worth arguing about. */
+  function retention(studentId, subjId) {
+    var prof = profile(studentId); if (!prof) return { pct: null, n: 0 };
+    var p = progress(studentId), n = 0, ok = 0;
+    var list = subjId ? [subjId] : (prof.subjects || []);
+    list.forEach(function (id) {
+      var subj = C.subjects[id]; if (!subj) return;
+      subj.strands.forEach(function (t) {
+        var st = p.strands[t.id];
+        if (!st || !st.first || !st.log) return;
+        st.log.forEach(function (a) {
+          if (a.t - st.first >= 7 * 86400000) { n++; ok += a.c; }
+        });
+      });
+    });
+    return { pct: n ? Math.round(100 * ok / n) : null, n: n };
+  }
+
+  /* Timed-test performance, overall or for one subject. */
+  function testStat(studentId, subjId) {
+    var p = progress(studentId);
+    var list = (p.tests || []).filter(function (t) { return !subjId || t.subj === subjId; });
+    if (!list.length) return { pct: null, n: 0, best: null, last: null };
+    var sum = 0, best = 0;
+    list.forEach(function (t) { sum += t.pct; if (t.pct > best) best = t.pct; });
+    return { pct: Math.round(sum / list.length), n: list.length, best: best, last: list[list.length - 1] };
+  }
+
+  function recordTest(studentId, result) {
+    var p = progress(studentId);
+    p.tests = p.tests || [];
+    p.tests.push({
+      at: Date.now(), date: today(), subj: result.subj || 'mixed',
+      subjName: result.subjName || 'Mixed', n: result.n || 0,
+      correct: result.correct || 0, pct: result.pct || 0,
+      secs: result.secs || 0, limit: result.limit || 0,
+      form: (profile(studentId) || {}).form, strands: result.strands || {}
+    });
+    if (p.tests.length > 200) p.tests = p.tests.slice(-200);
+    if (p.days.indexOf(today()) === -1) p.days.push(today());
+    saveProgress(studentId, p);
+    snapshotTerm(studentId);
+    return p;
+  }
+
+  /* Readiness Index 0-100.
+   *
+   * This is an INTERNAL indicator built from practice inside this hub. It is
+   * not a CXC prediction and must never be presented as one. Practice accuracy
+   * flatters — multiple choice, no time pressure, feedback on every question —
+   * so retention and timed tests carry weight, and coverage caps the score
+   * because you cannot be ready for a paper you have only seen a third of.
+   *
+   *   accuracy   40%   can she do it at all
+   *   coverage   25%   has she met the syllabus
+   *   retention  20%   can she still do it a week later
+   *   timed      15%   can she do it against the clock
+   *
+   * Where retention or timed data is missing, a discounted proxy stands in and
+   * the result is flagged provisional rather than quietly inflated.
+   */
+  function readiness(studentId, subjId) {
+    var acc = subjId ? subjectStat(studentId, subjId) : overallStat(studentId);
+    if (!acc.seen) return { score: null, provisional: true, thin: true, band: null, parts: null, seen: 0 };
+
+    var cov = coverage(studentId, subjId);
+    var ret = retention(studentId, subjId);
+    var tst = testStat(studentId, subjId);
+    var provisional = acc.seen < 10 || ret.pct === null || tst.pct === null;
+
+    var retVal = ret.pct === null ? acc.pct * 0.85 : ret.pct;
+    var tstVal = tst.pct === null ? acc.pct * 0.80 : tst.pct;
+
+    var score = Math.round(acc.pct * 0.40 + cov.pct * 0.25 + retVal * 0.20 + tstVal * 0.15);
+    score = Math.max(0, Math.min(100, score));
+
+    /* Below this much evidence a band would be noise. One lucky answer must not
+       read as "Grade II track", and ten questions must not read as a crisis. */
+    var floor = subjId ? 5 : 15;
+    var thin = acc.seen < floor;
+
+    return {
+      score: score, provisional: provisional, thin: thin, need: floor - acc.seen,
+      band: thin ? null : band(score), seen: acc.seen,
+      parts: {
+        accuracy:  { v: acc.pct, w: 40 },
+        coverage:  { v: cov.pct, w: 25, done: cov.done, total: cov.total },
+        retention: { v: ret.pct, w: 20, n: ret.n, proxy: ret.pct === null },
+        timed:     { v: tst.pct, w: 15, n: tst.n, proxy: tst.pct === null }
+      }
+    };
+  }
+
+  /* Bands are named for the CSEC grade they track towards, never stated as the
+     grade itself. CSEC awards Grades I to VI; I, II and III are passes. */
+  function band(score) {
+    if (score == null)  return null;
+    if (score >= 80)    return { key: 'I',   label: 'Grade I track',  tone: 'good', note: 'Distinction territory. Hold it with timed papers.' };
+    if (score >= 65)    return { key: 'II',  label: 'Grade II track', tone: 'good', note: 'A strong pass. Coverage and timed work close the gap to Grade I.' };
+    if (score >= 50)    return { key: 'III', label: 'Grade III track',tone: 'gold', note: 'A pass, but not a comfortable one. Target the weakest strands.' };
+    if (score >= 35)    return { key: 'IV',  label: 'Below pass',     tone: 'bad',  note: 'Not yet at a passing standard. This subject needs regular time.' };
+    return                     { key: 'V',   label: 'Serious gap',    tone: 'bad',  note: 'Start from the syllabus and rebuild this one strand at a time.' };
+  }
+
+  /* How many subjects are tracking towards Grade I, and which are furthest off. */
+  function distinctionBoard(studentId) {
+    var prof = profile(studentId); if (!prof) return { onTrack: 0, total: 0, rows: [] };
+    var rows = (prof.subjects || []).map(function (id) {
+      var r = readiness(studentId, id);
+      return { subj: id, name: (C.subjects[id] || {}).name || id,
+               icon: (C.subjects[id] || {}).icon || '📘', r: r };
+    });
+    /* Rank on evidence, not just on score — a thin 75 is not better than a
+       well-practised 68, and sorting it above would send her to the wrong subject. */
+    function tier(x) { return x.r.score == null ? 2 : x.r.thin ? 1 : 0; }
+    rows.sort(function (a, b) {
+      if (tier(a) !== tier(b)) return tier(a) - tier(b);
+      if (a.r.score == null) return 0;
+      return b.r.score - a.r.score;
+    });
+    return {
+      onTrack: rows.filter(function (x) { return !x.r.thin && x.r.score >= 80; }).length,
+      started: rows.filter(function (x) { return x.r.score != null; }).length,
+      total: rows.length, rows: rows
+    };
+  }
+
+
 
   /* Consecutive days ending today or yesterday. */
   function streak(studentId) {
@@ -369,6 +589,9 @@
     questionsFor: questionsFor, shuffle: shuffle,
     planFor: planFor, weakSpots: weakSpots,
     examYear: examYear, countdown: countdown,
+    termOf: termOf, snapshotTerm: snapshotTerm, termHistory: termHistory, promote: promote,
+    coverage: coverage, retention: retention, testStat: testStat, recordTest: recordTest,
+    readiness: readiness, band: band, distinctionBoard: distinctionBoard,
     exportAll: exportAll, importAll: importAll,
     esc: esc, ring: ring, streakGrid: streakGrid, today: today
   };

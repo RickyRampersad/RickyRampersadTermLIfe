@@ -17,9 +17,12 @@ Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 | `practice.html` | The practice engine — CSEC-style questions with reasoning and exam technique |
 | `parent.html` | Read-only progress view with a plain-language summary and session history |
 | `teacher.html` | Class roster, class-wide weak strands, and focus-topic assignment |
+| `test.html` | Timed mock tests under examination conditions — no feedback until submission |
+| `kpi.html` | Readiness index, projected grade bands, and the Form 1–5 term-by-term record |
+| `guides.html` | Guided worked methods — how to attack the highest-value question types |
 | `planner.html` | Form 1–5 roadmap, CSEC countdown, and the full syllabus strand browser |
-| `papers.html` | Verified links to official syllabuses, past papers and Ministry resources |
-| `settings.html` | Subject selection, profile, backup / restore, data clearing |
+| `papers.html` | Verified links to official, international and Ministry resources |
+| `settings.html` | Subject selection, form promotion, profile, backup / restore, data clearing |
 
 ---
 
@@ -69,6 +72,16 @@ checked reachable on 7 September 2026), with a per-subject syllabus download
 checklist. The practice content in this hub is **original** — written for the hub
 in CSEC Paper 01 style and tagged to syllabus strands.
 
+### International resources
+
+The same page lists 12 free international sources — Khan Academy, BBC Bitesize,
+PhET, OpenStax, Desmos, GeoGebra, LibreTexts, Project Gutenberg, CommonLit,
+Wolfram Alpha, MIT OpenCourseWare and Save My Exams. **None is written for CXC**,
+so each carries an honest note on how well it aligns and where it does not:
+Khan Academy's mathematics maps almost directly, BBC Bitesize's GCSE science
+overlaps heavily, English literature set texts do not transfer at all. CK-12 and
+Quizlet were excluded because they returned 403 to verification.
+
 ---
 
 ## How the study model works
@@ -93,6 +106,115 @@ morning. Output is capped at two strands per subject so the plan spreads.
 **Form gating.** `questionsFor()` will not serve material more than one form
 ahead of the student, and the plan only draws strands taught in the student's
 current form. A Form 2 student is never handed Form 5 vectors.
+
+---
+
+## Tracking a student across five years
+
+The form is not just a filter — it is the spine of the record.
+
+**Term snapshots.** Every practice session and test writes a snapshot for the
+current school term (T1 Sept–Dec, T2 Jan–Mar, T3 Apr–Jul), overwritten as the
+term goes on so it always reflects where the term finished. Fifteen terms
+across Forms 1–5 become fifteen points on the KPI timeline.
+
+**Promotion.** Settings → *Moving up a form* moves a student up. Mastery carries
+forward — she has not forgotten Form 2 mathematics — but a `history` entry
+records the date, the term, and the accuracy and coverage she left the year on.
+The syllabus for the new form opens up, which means **coverage correctly drops**
+on promotion: 5 of 7 Maths strands as a Form 2 is 5 of 9 as a Form 5.
+
+**The timeline chart** on `kpi.html` plots accuracy and syllabus coverage per
+term, with shaded bands showing which form each term belonged to.
+
+---
+
+## The KPI model
+
+`readiness(studentId, subjId)` returns a **Readiness Index** from 0 to 100:
+
+| Component | Weight | What it asks |
+|---|---|---|
+| Accuracy | 40% | Can she do it at all |
+| Syllabus coverage | 25% | Has she met the syllabus taught to her form |
+| Retention | 20% | Can she still do it a week later |
+| Timed tests | 15% | Can she do it against the clock |
+
+**Retention is the interesting one.** It is accuracy on attempts made at least
+seven days after a strand was first seen — the difference between a student who
+has revised and one who crammed. It needs a per-attempt log, which is why each
+strand keeps a capped `log` array rather than running totals alone.
+
+Where retention or timed data is missing, a discounted proxy stands in
+(accuracy × 0.85 and × 0.80) and the result is flagged `provisional` rather than
+quietly inflated.
+
+**Bands are named for the grade they track towards, never stated as the grade.**
+≥80 Grade I track, ≥65 Grade II, ≥50 Grade III, ≥35 below pass, under that a
+serious gap. CSEC awards Grades I–VI; I, II and III are passes.
+
+### Honesty rules built into the model
+
+- **It is not a CXC prediction.** It is derived from practice inside this hub,
+  which flatters: multiple choice, no time pressure, an explanation after every
+  question. The disclaimer sits above the numbers on `kpi.html`, not in a footnote.
+- **Thin evidence shows no band at all.** Below 5 answers in a subject (15
+  overall) `readiness()` returns `thin: true` and `band: null`, and the UI says
+  "too early to say". Without this, one lucky answer displayed as "Grade II
+  track" — which it did, until the browser screenshot caught it.
+- **The distinction board ranks on evidence, not score.** Well-evidenced
+  subjects sort above thin ones, so a thin 75 never outranks a practised 68 and
+  send her to the wrong subject. `onTrack` ignores thin subjects entirely.
+
+---
+
+## Timed tests
+
+`test.html` runs 10/20/30 questions at roughly the CSEC Paper 01 pace of 90
+seconds each. No feedback until submission, a clock that auto-submits at zero, a
+question map with flagging, and a full review of every question afterwards.
+Answers still feed the mastery model, and the result is stored in `progress.tests`
+and weighted into the readiness index.
+
+The verdict after a test comments on **pace as well as score** — finishing in
+under half the time is reported as a problem, because it usually is.
+
+---
+
+## Guided methods
+
+`data/guides.js` holds 16 worked methods for the question types that carry the
+most marks. Each is: when to use it, the method as numbered steps, one fully
+worked example with every line explained, and the mistakes that lose marks.
+
+A strand with a guide gets a **📐 method** link on the daily plan, and a weak
+topic in a test result links straight to it. Same shape as a question:
+
+```js
+{ id:'g-ma-quad', subj:'mathematics', strand:'ma-algebra', form:3,
+  title:'…', when:'…',
+  steps:[{do:'…', note:'…'}],
+  worked:{ problem:'…', lines:[{work:'…', note:'…'}] },
+  pitfalls:['…'] }
+```
+
+---
+
+## The chart palette
+
+The KPI timeline uses `#b8862a` (accuracy) and `#0093ad` (coverage) — **not** the
+branch display gold and teal, which fail the dark-surface lightness band. These
+two pass all six checks of the dataviz validator against the `#163553` card
+surface: lightness band, chroma floor, CVD separation (ΔE 17.3 protan / 21.0
+tritan), normal-vision separation (ΔE 21.8) and 3:1 contrast. Re-run before
+changing them:
+
+```bash
+node scripts/validate_palette.js "#b8862a,#0093ad" --mode dark --surface "#163553"
+```
+
+Identity is never colour alone: two series carry a legend, direct value labels on
+the final point, and a table view toggle.
 
 ---
 
@@ -175,7 +297,12 @@ are the rest) — tick the real timetable and save. Everything downstream follow
 3. **Real accounts and cross-device sync** via an Apps Script + Sheets endpoint,
    following `gs/views-counter.gs`. That would let a parent see progress from
    their own phone and turn the teacher view into a real class register.
-4. **Past-paper practice log** — a place to record scores on real CXC papers
-   worked under time, which is the Form 4–5 half of preparation.
-5. **SBA tracker** for Forms 4–5, since SBA deadlines cost more grades than
+4. **More guided methods.** 16 covers the highest-value question types; English B,
+   Spanish, French, Social Studies and PE have none yet.
+5. **Past-paper practice log** — a place to record scores on real CXC papers
+   worked under time, alongside the hub's own timed tests.
+6. **SBA tracker** for Forms 4–5, since SBA deadlines cost more grades than
    content gaps do.
+7. **Calibrate the readiness weights** once there is a real CSEC result to check
+   them against. The 40/25/20/15 split is a considered starting point, not a
+   fitted model, and it should be corrected by evidence when evidence exists.

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Past Papers &amp; Syllabuses | CSEC Study Hub</title>
+<title>Resources &amp; Past Papers | CSEC Study Hub</title>
 <meta name="description" content="Where to get official CSEC syllabuses, specimen papers, mark schemes and past papers — direct links to CXC and the Trinidad and Tobago Ministry of Education."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -14,7 +14,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>CSEC Study Hub</b><span>Past papers</span></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Resources</span></div>
     <nav class="topnav" id="nav"></nav>
   </div>
 </header>
@@ -24,7 +24,7 @@
 
     <div class="pagehead">
       <div class="eyebrow">Official sources</div>
-      <h1>Past papers, syllabuses and mark schemes</h1>
+      <h1>Resources, past papers and syllabuses</h1>
       <p>Every link here goes to the organisation that actually publishes the material — CXC, which
          sets the examination, and the Trinidad and Tobago Ministry of Education. All links checked
          reachable on 7 September 2026.</p>
@@ -40,6 +40,13 @@
 
     <div class="section-label">Official — CXC and the Ministry</div>
     <div class="rows" id="official"></div>
+
+    <div class="section-label">International — free, and worth the time</div>
+    <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
+      None of these is written for CXC, so alignment is noted on each one. Used well they are the
+      best free tutoring available anywhere; used carelessly they teach a syllabus you are not
+      sitting. Check against the CSEC syllabus before you rely on any of them.</p>
+    <div class="rows" id="international"></div>
 
     <div class="section-label">Your school</div>
     <div class="rows" id="school"></div>
@@ -106,9 +113,11 @@
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
   $('nav').innerHTML = me
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
-      (me.role==='student'?'<a href="practice.html">Practice</a>':'')+
-      '<a href="planner.html">Planner</a><a href="papers.html" class="on">Past papers</a><a href="settings.html">Settings</a>'
-    : '<a href="index.html">Sign in</a><a href="planner.html">Planner</a><a href="papers.html" class="on">Past papers</a>';
+      (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
+      '<a href="planner.html">Planner</a><a href="papers.html" class="on">Resources</a><a href="settings.html">Settings</a>'
+    : '<a href="index.html">Sign in</a><a href="guides.html">Guides</a>'+
+      '<a href="planner.html">Planner</a><a href="papers.html" class="on">Resources</a>';
 
   function render(id,items,icon){
     $(id).innerHTML=items.map(function(r){
@@ -121,6 +130,19 @@
         '<div style="flex:none">'+cost+'</div><span class="r-arrow">↗</span></a>';
     }).join('');
   }
+  function renderIntl(){
+    $('international').innerHTML=C.resources.international.map(function(r){
+      var cost = r.cost==='Free' ? '<span class="pill good">Free</span>'
+               : '<span class="pill gold">'+esc(r.cost)+'</span>';
+      return '<a class="row" href="'+esc(r.url)+'" target="_blank" rel="noopener">'+
+        '<div class="r-ico">🌍</div>'+
+        '<div class="r-text"><b>'+esc(r.name)+'</b>'+
+        '<span style="color:var(--teal);font-size:.74rem">'+esc(r.subj)+'</span>'+
+        '<span>'+esc(r.note)+'</span></div>'+
+        '<div style="flex:none">'+cost+'</div><span class="r-arrow">↗</span></a>';
+    }).join('');
+  }
+  renderIntl();
   render('official', C.resources.official,  '🏛️');
   render('school',   C.resources.school,    '🏫');
   render('community',C.resources.community, '🎓');

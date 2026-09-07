@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Guided Methods | CSEC Study Hub</title>
+<meta name="description" content="Step-by-step worked methods for the CSEC question types that carry the most marks — with a full worked example and the mistakes that lose marks."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .step{display:flex;gap:13px;padding:13px 0;border-bottom:1px solid var(--line)}
+  .step:last-child{border-bottom:none}
+  .step .n{flex:none;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;
+           background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;
+           font-family:'Montserrat',sans-serif;font-weight:800;font-size:.78rem}
+  .step b{display:block;font-size:.93rem;margin-bottom:3px}
+  .step span{font-size:.83rem;color:var(--muted);line-height:1.6}
+  .wline{display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+  .wline:last-child{border-bottom:none}
+  .wline .w{flex:none;min-width:210px;font-family:'Montserrat',sans-serif;font-size:.9rem;font-weight:600;color:var(--text)}
+  .wline .c{font-size:.83rem;color:var(--muted);line-height:1.6}
+  .pit li{font-size:.87rem;line-height:1.7;color:var(--muted);margin-left:18px}
+  .pit li::marker{color:var(--bad)}
+  @media (max-width:640px){ .wline{flex-direction:column;gap:4px} .wline .w{min-width:0} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Guided methods</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Guided learning</div>
+      <h1>How to actually do it</h1>
+      <p>Knowing a topic and knowing how to attack its questions are different things. Each method
+         below is the order to work in, one fully worked example with every line explained, and the
+         mistakes that lose marks in the examination.</p>
+    </div>
+
+    <div class="card" style="margin-bottom:18px">
+      <label class="fl" for="filt">Show methods for</label>
+      <select class="fi" id="filt"></select>
+    </div>
+
+    <div id="list"></div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/guides.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var G=window.CSEC_GUIDES||[];
+  var me=CSEC.current();
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+
+  $('nav').innerHTML = me
+    ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      '<a href="guides.html" class="on">Guides</a><a href="kpi.html">KPIs</a>'+
+      '<a href="planner.html">Planner</a><a href="papers.html">Resources</a>'
+    : '<a href="index.html">Sign in</a><a href="guides.html" class="on">Guides</a>'+
+      '<a href="planner.html">Planner</a><a href="papers.html">Resources</a>';
+
+  /* subjects that actually have a guide */
+  var have={}; G.forEach(function(g){ have[g.subj]=true; });
+  var subs=Object.keys(have);
+  $('filt').innerHTML='<option value="all">All subjects — '+G.length+' methods</option>'+
+    subs.map(function(id){
+      var s=C.subjects[id]||{name:id,icon:'📘'};
+      var n=G.filter(function(g){return g.subj===id;}).length;
+      return '<option value="'+esc(id)+'">'+s.icon+'  '+esc(s.name)+' ('+n+')</option>';
+    }).join('');
+
+  var params=new URLSearchParams(location.search);
+  var wantStrand=params.get('strand'), wantId=params.get('id');
+  if(wantStrand){
+    var hit=G.filter(function(g){return g.strand===wantStrand;})[0];
+    if(hit) $('filt').value=hit.subj;
+  }
+
+  function strandName(id){
+    for(var s in C.subjects){
+      var f=C.subjects[s].strands.filter(function(t){return t.id===id;});
+      if(f.length) return f[0].name;
+    }
+    return '';
+  }
+
+  function card(g,open){
+    var s=C.subjects[g.subj]||{name:g.subj,icon:'📘'};
+    var stat = me && me.role==='student' ? CSEC.strandStat(me.id,g.strand) : null;
+    var badge = !stat ? ''
+      : stat.pct==null ? '<span class="pill mute">not started</span>'
+      : '<span class="pill '+(stat.pct>=75?'good':stat.pct>=50?'gold':'bad')+'">'+stat.pct+'% so far</span>';
+
+    return '<details class="card" style="margin-bottom:12px"'+(open?' open':'')+' id="g-'+esc(g.id)+'">'+
+      '<summary style="cursor:pointer;list-style:none;display:flex;align-items:center;gap:13px;flex-wrap:wrap">'+
+        '<span style="font-size:1.35rem">'+s.icon+'</span>'+
+        '<span style="flex:1;min-width:180px">'+
+          '<b style="font-family:Montserrat,sans-serif;font-size:1.02rem;display:block">'+esc(g.title)+'</b>'+
+          '<span style="font-size:.79rem;color:var(--muted)">'+esc(s.name)+' · '+esc(strandName(g.strand))+' · Form '+g.form+'+</span>'+
+        '</span>'+ badge +'<span class="r-arrow">▾</span>'+
+      '</summary>'+
+
+      '<div style="margin-top:18px">'+
+        '<div class="note" style="margin-bottom:18px"><b>When to use it.</b> '+esc(g.when)+'</div>'+
+
+        '<div class="section-label" style="margin-top:0">The method</div>'+
+        '<div>'+g.steps.map(function(st,i){
+          return '<div class="step"><span class="n">'+(i+1)+'</span><span>'+
+            '<b>'+esc(st.do)+'</b><span>'+esc(st.note)+'</span></span></div>';
+        }).join('')+'</div>'+
+
+        '<div class="section-label">Worked example</div>'+
+        '<div class="card" style="background:rgba(0,0,0,.24)">'+
+          '<p style="font-weight:600;margin-bottom:14px;font-size:.95rem">'+esc(g.worked.problem)+'</p>'+
+          g.worked.lines.map(function(l){
+            return '<div class="wline"><span class="w">'+esc(l.work)+'</span><span class="c">'+esc(l.note)+'</span></div>';
+          }).join('')+
+        '</div>'+
+
+        '<div class="section-label">Where the marks go</div>'+
+        '<ul class="pit">'+g.pitfalls.map(function(p){ return '<li>'+esc(p)+'</li>'; }).join('')+'</ul>'+
+
+        (me && me.role==='student'
+          ? '<div style="margin-top:20px;display:flex;gap:9px;flex-wrap:wrap">'+
+            '<a class="btn sm" href="practice.html?strand='+encodeURIComponent(g.strand)+'">Practise this now →</a>'+
+            '<a class="btn ghost sm" href="planner.html">See it in the syllabus</a></div>'
+          : '')+
+      '</div></details>';
+  }
+
+  function paint(){
+    var v=$('filt').value;
+    var list = v==='all' ? G : G.filter(function(g){ return g.subj===v; });
+    /* open the one that was deep-linked, otherwise leave them closed */
+    $('list').innerHTML=list.map(function(g){
+      return card(g, (wantId&&g.id===wantId) || (wantStrand&&g.strand===wantStrand));
+    }).join('');
+    var target=(wantId||wantStrand)? $('list').querySelector('details[open]') : null;
+    if(target) target.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+  $('filt').addEventListener('change',function(){ wantId=wantStrand=null; paint(); });
+  paint();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
