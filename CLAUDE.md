@@ -203,6 +203,28 @@ Guardian Life of the Caribbean, Trinidad & Tobago. Two products live here:
 
 Both talk to one Apps Script backend, `apps-script/Service.gs`.
 
+### What the domain is actually serving — check before believing a report
+
+On 7 September 2026 donthaveanagent.com was still serving a **snapshot from
+22 August**: the oxblood theme, the 78-second launch film, three old MP4s,
+and a 404 for everything made since (`client-film.html`, `process-film.html`,
+`wall.html`, `preview.html`, the ad). `main` has never carried a
+`donthaveanagent/` folder, so that snapshot did not come from a git deploy —
+it is a manual upload, or a build that has been failing since.
+
+So a note like "the birthday is not in one and in the other" is usually the
+old cut on the domain against the new cut in the chat. Before hunting a bug,
+`curl -sI https://donthaveanagent.com/<file>` and compare `Content-Length`
+with the file in the repository.
+
+To put the current site live: merge the branch, then in Netlify confirm the
+site is **linked to this repository**, production branch `main`, base
+directory `donthaveanagent`. If the site was created by dragging a folder, it
+is not linked to anything — either link it (Site configuration → Build &
+deploy → Continuous deployment) or download the repository zip and drag the
+`donthaveanagent` folder onto Netlify Drop again. A drag-and-drop deploy
+replaces every file, so it must be the whole folder every time.
+
 ---
 
 ## Where the soundtrack is stored
@@ -248,6 +270,28 @@ bed level under the voice; the wall film uses `0.62`, about −21 dB RMS).
 sit at public URLs even when the pages are `noindex`. Every number on screen
 is illustrative.
 
+### The player — every embedded film goes through `player.js`
+
+A `<video>` with no `controls` is a film nobody can pause. The site pages
+used to switch the browser's controls on after the cover was tapped, which
+on a phone means a bar that hides itself in two seconds and a viewer who
+cannot find the way back. `donthaveanagent/player.js` replaces that on every
+`.vwrap` that holds a `<video>` and a `.vcover`:
+
+- tap the picture to pause and to resume, with a glyph that flashes
+- a seekable rail with **a dot for every scene** and the scene's name beside it
+- elapsed / total, mute, full screen; the rail folds away while playing and a
+  thin line at the foot keeps showing progress
+
+The scene dots come from `data-scenes` (the film's `durs` out of `films.json`)
+and the names from `data-chapters` (each scene's eyebrow in the film's own
+page). **`tools/film/chapters.py` writes both onto every page** — run it after
+any film is re-timed, never type them. A page that includes `player.js` must
+not also switch native `controls` on; the two fight over the same taps.
+
+`preview.html` (`/preview`) lists every film and both ad cuts through the
+same player, grouped by who sees them. It is the place to check a cut.
+
 ### The social ad
 
 Two cuts of one 23-second spot, both from `donthaveanagent/ad-reel.html`:
@@ -261,6 +305,24 @@ step. Copy, targeting and the rebuild commands are in
 `capmode: "strip"` — picture cropped, captions in a band beneath. The ads use
 `"over"` — captions burned across the frame with an outline, because most of
 the audience watches with the sound off.
+
+### Re-voicing one — `revoice.py`
+
+When only the voice has to change, the words are already approved and the
+scenes only need re-timing to the new read:
+
+```bash
+cd <scratch>            # the vox directories live outside the repository
+python3 tools/film/revoice.py client voc3 voc4 donthaveanagent/client-film.html
+```
+
+It reads each scene's line back out of the old `NN.vtt`, renders it on
+`en-US-AndrewNeural`, keeps the air every scene had around its old line
+(floored at 1.2 s), rewrites `data-d` in scene order, and updates `durs`,
+`dur` and the tick cues in `films.json`. Then `record.js` and `mixany.py` as
+below. The wall page is generated, so after re-voicing it `wall-timing.json`
+is rewritten and `build-wallfilm.py` must reproduce the same `data-d` — the
+Phase A script asserts exactly that.
 
 ### Rebuilding one
 
@@ -294,7 +356,8 @@ libass**, Playwright with Chromium, numpy.
    python3 usetrack.py audio/inspired-kevin-macleod.mp3
    ```
 
-4. **Record** with `record-film.js` (Playwright, 1280×720). Run it with
+4. **Record** with `record.js <page> <capture-dir> <seconds>` (Playwright,
+   1280×720; `record-film.js` is the wall-only original). Run it with
    nothing else on the machine — CPU contention corrupts the capture timeline
    and the encode will be rejected.
 

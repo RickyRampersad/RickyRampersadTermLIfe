@@ -67,6 +67,12 @@ input::placeholder{color:var(--muted2);letter-spacing:.05em}
   border-radius:99px;padding:6px 13px}
 .state-line{font-size:13.5px;color:var(--muted);margin-top:6px}
 .state-line b.ok{color:var(--good)}
+.hands{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:14px;background:var(--surface);border:1px solid var(--line);
+  border-left:6px solid var(--oxblood);border-radius:12px;padding:11px 16px}
+.hands .hk{font:800 10px var(--head);letter-spacing:.16em;text-transform:uppercase;color:var(--oxblood);white-space:nowrap}
+.hands b{font:800 15px var(--head);color:var(--text)}
+.hands .hs{font-size:12.5px;color:var(--muted);flex:1 1 100%}
+.hands.named .hs{flex-basis:auto}
 
 .timeline{margin-top:24px;position:relative;padding-left:34px}
 .timeline::before{content:"";position:absolute;left:12px;top:10px;bottom:10px;width:2px;
@@ -148,6 +154,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       <span class="route-chip" id="pvRoute" style="display:none"></span>
     </div>
     <div class="state-line" id="pvState"></div>
+    <div class="hands" id="pvHands"><span class="hk">In whose hands</span><b id="pvHandsWho">The branch team</b><span class="hs" id="pvHandsNote">a named person is being matched to you — you will be told who</span></div>
 
     <div class="card">
       <div class="timeline" id="pvTimeline"></div>
@@ -225,6 +232,13 @@ function render(d) {
   $("#pvWho").textContent = d.kind === "group" ? "Company plan review" : "Policy review";
   $("#pvRef").textContent = d.ref;
   if (d.route) { const r = $("#pvRoute"); r.textContent = d.route; r.style.display = "inline-block"; }
+  /* whose hands the file is in — the "Looked after by" column, read plainly */
+  const route = String(d.route || "").trim();
+  const named = /^matched:\s*/i.test(route) ? route.replace(/^matched:\s*/i, "") : "";
+  const hands = $("#pvHands"); hands.classList.toggle("named", !!named);
+  if (named) { $("#pvHandsWho").textContent = named; $("#pvHandsNote").textContent = "your agent — the person responsible for your file, by name"; }
+  else if (route) { $("#pvHandsWho").textContent = route; $("#pvHandsNote").textContent = "the team responsible for your file"; }
+  else { $("#pvHandsWho").textContent = "The branch team"; $("#pvHandsNote").textContent = d.status === "Completed" ? "handled and confirmed in writing" : "a named person is being matched to you — you will be told who"; }
 
   const done = d.status === "Completed";
   $("#pvState").innerHTML = done

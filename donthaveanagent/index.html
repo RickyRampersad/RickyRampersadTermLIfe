@@ -666,7 +666,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
     arrive already filled in, and the person whose name ends up beside yours.</p>
     <div class="vwrap rv">
       <video id="dhaaVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg"
-             controlsList="nodownload">
+             controlsList="nodownload" data-scenes="5.8,12.6,11.1,11.5,13.6,9.9,10.5,10.9,10.1,12.5,8.1,11.2,5.5" data-chapters="Your agent left. Your policy didn’t|Agents retire. They move. They pass away|There are two ways you are watching this|Either way, here is what we find|The part nobody tells you|That is what an active agent is|And on the day it matters|And this is who is behind them|This is not a mock-up|In the week that follows|And you see it for yourself|Whatever is stopping you|And at the end of it">
         <source src="dhaa-film.mp4" type="video/mp4">
         Your browser cannot play this video — <a href="client-film.html">watch it here instead</a>.
       </video>
@@ -1413,15 +1413,7 @@ const stickyIo = new IntersectionObserver((es) => {
 @media(max-width:640px){.vplay{width:64px;height:64px}.vplay svg{width:26px;height:26px}
   .vlab{font-size:14px;left:14px;bottom:14px}.vlen{font-size:10.5px;right:14px;bottom:16px}}
 </style>
-<script>
-(function(){
-  var v=document.getElementById("dhaaVid"), c=document.getElementById("vcover");
-  if(!v||!c) return;
-  c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
-  v.addEventListener("pause", function(){ if(v.currentTime===0) c.classList.remove("gone"); });
-  v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
-})();
-</script>
 <p style="text-align:center;font-size:11.5px;color:#6B7C96;margin:18px auto 6px;max-width:760px">Music: &ldquo;Inspired&rdquo; by Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener" style="color:#6B7C96">incompetech.com</a>), licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener" style="color:#6B7C96">CC BY 4.0</a>.</p>
+<script src="player.js" defer></script>
 </body>
 </html>

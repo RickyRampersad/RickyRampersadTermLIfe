@@ -185,7 +185,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       brief that reaches you before you dial, opening with the client&rsquo;s own words and a list titled
       <b>before you call</b>.</p>
       <div class="vwrap">
-        <video id="sideVid" playsinline preload="metadata" poster="agent-side-poster.jpg" controlsList="nodownload">
+        <video id="sideVid" playsinline preload="metadata" poster="agent-side-poster.jpg" controlsList="nodownload" data-scenes="5.4,8,7.4,7.4,6.4,6,11.8,6.2,7.4,8.8" data-chapters="For the agent|It is your link, not ours|And you stop guessing|Two books, never added together|Before you dial|What they told us|And a list you did not have to make|By the time you ring|Your book is live|And then they stay yours">
           <source src="dhaa-your-side.mp4" type="video/mp4">
         </video>
         <button class="vcover" id="sideCover" type="button" aria-label="Play the film about what you see, one minute twenty-three seconds, sound on">
@@ -205,7 +205,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       <p style="font-size:14px;color:var(--muted)">Seventy-four seconds: log in, send your link, watch what
       came back. Share it with any agent joining the branch.</p>
       <div class="vwrap">
-        <video id="teamVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload">
+        <video id="teamVid" playsinline preload="metadata" poster="agent-film-poster.jpg" controlsList="nodownload" data-scenes="5.6,7.6,7.6,8.2,7.6,7.6,7.6,8.2" data-chapters="For the agents of this branch|Step one|Step two|Step three|What lands on you|Before you dial|The support engine|And they stay yours">
           <source src="dhaa-agent-film.mp4" type="video/mp4">
         </video>
         <button class="vcover" id="teamCover" type="button" aria-label="Play the agent film, seventy-four seconds, sound on">
@@ -226,7 +226,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       every two days, the overdue alert to the branch manager, the six-month check-up and the birthday review.
       Use it to answer &ldquo;what actually happens?&rdquo; — for a client, or for a new member of staff.</p>
       <div class="vwrap">
-        <video id="procVid" playsinline preload="metadata" poster="process-film-poster.jpg" controlsList="nodownload">
+        <video id="procVid" playsinline preload="metadata" poster="process-film-poster.jpg" controlsList="nodownload" data-scenes="7,6.6,9.8,12.8,11.2,8.6,7.6,7.6,8.2,7,8.2" data-chapters="What happens after you press send|Within seconds|Step one|And it stays one document|Step two|Step three|Then the chasing starts|And if we are late|Meanwhile|At six months|And every year after that">
           <source src="dhaa-process.mp4" type="video/mp4">
         </video>
         <button class="vcover" id="procCover" type="button" aria-label="Play the process film, one minute forty-three seconds, sound on">
@@ -249,7 +249,7 @@ body.onDark #chrome .mark text{fill:#0F1A2B}
       once, then send <a href="how-we-work.html" target="_blank">the page</a>, which carries this film plus
       the whole process step by step and a start button on every screen.</p>
       <div class="vwrap">
-        <video id="agentVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg" controlsList="nodownload">
+        <video id="agentVid" playsinline preload="metadata" poster="dhaa-film-poster.jpg" controlsList="nodownload" data-scenes="5.8,12.6,11.1,11.5,13.6,9.9,10.5,10.9,10.1,12.5,8.1,11.2,5.5" data-chapters="Your agent left. Your policy didn’t|Agents retire. They move. They pass away|There are two ways you are watching this|Either way, here is what we find|The part nobody tells you|That is what an active agent is|And on the day it matters|And this is who is behind them|This is not a mock-up|In the week that follows|And you see it for yourself|Whatever is stopping you|And at the end of it">
           <source src="dhaa-film.mp4" type="video/mp4">
         </video>
         <button class="vcover" id="agentCover" type="button" aria-label="Play the client film, two minutes twenty-two seconds, sound on">
@@ -463,36 +463,12 @@ function render(data, demo) {
 }
 
 (function(){
-  var tv=document.getElementById("teamVid"), tc=document.getElementById("teamCover");
-  if(tv&&tc){
-    tc.addEventListener("click", function(){ tc.classList.add("gone"); tv.setAttribute("controls",""); tv.play(); });
-    tv.addEventListener("ended", function(){ tc.classList.remove("gone"); tv.removeAttribute("controls"); tv.currentTime=0; });
-  }
   var wt=document.getElementById("waTeam");
   if(wt) wt.href="https://wa.me/?text="+encodeURIComponent(
     "This is how the branch system works for us — 74 seconds, worth watching before you start: "
     +"https://donthaveanagent.com/agent-film — then log in at https://donthaveanagent.com/agents");
 })();
 (function(){
-  var sv=document.getElementById("sideVid"), sc=document.getElementById("sideCover");
-  if(sv&&sc){
-    sc.addEventListener("click", function(){ sc.classList.add("gone"); sv.setAttribute("controls",""); sv.play(); });
-    sv.addEventListener("ended", function(){ sc.classList.remove("gone"); sv.removeAttribute("controls"); sv.currentTime=0; });
-  }
-})();
-(function(){
-  var pv=document.getElementById("procVid"), pc=document.getElementById("procCover");
-  if(pv&&pc){
-    pc.addEventListener("click", function(){ pc.classList.add("gone"); pv.setAttribute("controls",""); pv.play(); });
-    pv.addEventListener("ended", function(){ pc.classList.remove("gone"); pv.removeAttribute("controls"); pv.currentTime=0; });
-  }
-})();
-(function(){
-  var v=document.getElementById("agentVid"), c=document.getElementById("agentCover");
-  if(v&&c){
-    c.addEventListener("click", function(){ c.classList.add("gone"); v.setAttribute("controls",""); v.play(); });
-    v.addEventListener("ended", function(){ c.classList.remove("gone"); v.removeAttribute("controls"); v.currentTime=0; });
-  }
   /* the link carries the agent's name, so a review that comes back is
      credited to them in the sheet and in the team email */
   var who = (window.__agentName || "").trim();
@@ -550,5 +526,6 @@ $("#f").addEventListener("submit", async e => {
 });
 </script>
 <p style="text-align:center;font-size:11.5px;color:#6B7C96;margin:18px auto 6px;max-width:760px">Music: &ldquo;Inspired&rdquo; by Kevin MacLeod (<a href="https://incompetech.com" target="_blank" rel="noopener" style="color:#6B7C96">incompetech.com</a>), licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener" style="color:#6B7C96">CC BY 4.0</a>.</p>
+<script src="player.js" defer></script>
 </body>
 </html>
