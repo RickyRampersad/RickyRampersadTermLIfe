@@ -13,10 +13,10 @@ const ROOT = path.join(__dirname, '..');
 const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
 const PORT = 8808;
 const TYPES = { '.html':'text/html', '.js':'application/javascript', '.css':'text/css', '.png':'image/png', '.jpg':'image/jpeg', '.svg':'image/svg+xml' };
-let hung = null;                                   // a story made to never answer
+let hung = null, hungAsks = 0;                     // a story made to never answer
 const server = http.createServer((req, res) => {
   let f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
-  if (hung && f.endsWith(hung)) return;            // never answers: the wall must cope
+  if (hung && f.endsWith(hung)) { hungAsks++; return; }   // never answers: the wall must cope
   if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
   if (!fs.existsSync(f)) { res.writeHead(404); return res.end('no'); }
   res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
@@ -67,6 +67,13 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('it has moved on by itself within the dwell', (await visible(s.page))[0] >= 1, JSON.stringify(await visible(s.page)));
   await s.page.screenshot({ path: '/tmp/intelwall-slide.png' });
 
+  console.log('\nThe first turn comes early:\n');
+  const e = await open(b, '');                    // the real dwells: 26s for the first story
+  await e.page.waitForTimeout(14000);
+  ok('with no dwell given, the wall has moved off the first story inside fifteen seconds', (await visible(e.page))[0] === 1, JSON.stringify(await visible(e.page)));
+  ok('no javascript errors', e.errors.length === 0, e.errors.join(' | '));
+  await e.ctx.close();
+
   console.log('\nThe keys:\n');
   await s.page.keyboard.press('5');  await s.page.waitForTimeout(300);
   ok('a number jumps to that story', JSON.stringify(await visible(s.page)) === '[4]');
@@ -87,13 +94,14 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
 
   console.log('\nA story that never loads:\n');
   hung = '/intelligence/wall/licence.html';
-  s = await open(b, '?secs=2&grace=1');
+  s = await open(b, '?secs=2&grace=1&retry=4');
   await s.page.waitForTimeout(13500);          // past its grace, and a few turns
   // sampled well inside the dwell, or the samples alias to the turning and see the same story every time
   const seen = new Set();
   for (let i = 0; i < 20; i++) { seen.add((await visible(s.page))[0]); await s.page.waitForTimeout(500); }
   ok('the silent one is skipped and the other four keep turning', !seen.has(3) && seen.size === 4, [...seen].join(','));
   ok('and it is struck through on the rail', await s.page.locator('.dot.dead').count() === 1);
+  ok('and asked for again rather than given up on for the day', hungAsks >= 2, 'asked ' + hungAsks + ' time(s)');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
   hung = null;
