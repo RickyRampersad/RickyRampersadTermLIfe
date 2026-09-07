@@ -194,6 +194,19 @@ em{font-style:normal;color:var(--ox)}
   #bars i.run::after{animation:none;transform:scaleX(1)}
 }
 @media (max-width:520px){ .mini-lanes{grid-template-columns:1fr} }
+/* ── the middle of the screen pauses; the clock says where we are ── */
+#zM{position:fixed;top:0;bottom:70px;left:26%;right:26%;z-index:49;cursor:pointer}
+#pflash{position:fixed;left:50%;top:50%;width:86px;height:86px;margin:-43px 0 0 -43px;border-radius:50%;z-index:58;
+  background:rgba(15,26,43,.66);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.7);
+  pointer-events:none;font:900 30px var(--head);line-height:1}
+#pflash.go{animation:pflash .8s ease forwards}
+@keyframes pflash{0%{opacity:0;transform:scale(.7)}25%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
+#clock{font:700 11.5px var(--head);letter-spacing:.06em;color:var(--muted);font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.9);border:1.5px solid var(--line);border-radius:99px;padding:9px 14px;backdrop-filter:blur(6px)}
+body.paused #clock{color:var(--ox);border-color:var(--ox)}
+body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
+@media(max-width:780px){.tlrow{flex-wrap:wrap;max-width:330px;margin:0 auto;gap:5px}
+  .tlrow i{flex:0 0 11px;height:11px;max-width:11px}}
 </style>
 <!-- Music: "Inspired" by Kevin MacLeod (incompetech.com) — licensed under Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/ -->
 </head>
@@ -397,7 +410,10 @@ em{font-style:normal;color:var(--ox)}
 
 <div class="tapzone" id="zL" aria-label="Previous"></div>
 <div class="tapzone" id="zR" aria-label="Next"></div>
+<div class="tapzone" id="zM" aria-label="Pause or play"></div>
+<div id="pflash" aria-hidden="true">⏸</div>
 <div id="ctrl">
+  <span id="clock">0:00 / 0:00</span>
   <button id="muteBtn">🔊 Music</button>
   <button id="pauseBtn">⏸ Pause</button>
   <button onclick="go(SC.length-1)">Skip to the end ⏭</button>
@@ -558,6 +574,35 @@ document.getElementById("playBtn").addEventListener("click", () => {
   startMusic();
   go(0);
 });
+/* the middle of the screen pauses and resumes — like holding a story */
+(function(){
+  var zm = document.getElementById("zM"), fl = document.getElementById("pflash");
+  if (!zm) return;
+  zm.addEventListener("click", function(){
+    if (cur < 0) return;
+    pauseToggle();
+    fl.textContent = paused ? "⏸" : "▶";
+    fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go");
+  });
+})();
+
+/* the clock — where the film is, read off the scene schedule */
+(function(){
+  var ck = document.getElementById("clock"); if (!ck) return;
+  var D = SC.map(function(s){ return +s.dataset.d; });
+  var TOTAL = D.reduce(function(a, d){ return a + (d === 99999 ? 0 : d); }, 0);
+  var fmt = function(ms){ var s = Math.max(0, Math.round(ms/1000)); return Math.floor(s/60) + ":" + ("0" + s%60).slice(-2); };
+  var t0 = null, base = 0, frozen = 0;
+  var _go = go;
+  go = function(n){ _go(n); base = 0; for (var i = 0; i < cur; i++) base += (D[i] === 99999 ? 0 : D[i]); t0 = performance.now(); };
+  (function tick(){
+    var el = cur < 0 ? 0 : (paused ? frozen : base + (performance.now() - t0));
+    if (!paused) frozen = el;
+    if (cur === SC.length - 1) el = TOTAL;
+    ck.textContent = fmt(Math.min(el, TOTAL)) + " / " + fmt(TOTAL);
+    requestAnimationFrame(tick);
+  })();
+})();
 </script>
 </body>
 </html>

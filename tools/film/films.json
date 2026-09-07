@@ -1,25 +1,25 @@
 {
  "client": {
-  "cap": "clientcapG",
-  "vox": "voc3",
+  "cap": "cap2-client",
+  "vox": "voc4",
   "music": "bed-client.wav",
   "mix": "client-mix.wav",
   "ass": "captions-client.ass",
-  "dur": 141.8,
+  "dur": 148.11,
   "durs": [
-   5.8,
-   12.6,
-   11.1,
-   11.5,
-   13.6,
-   9.9,
-   10.5,
+   5.9,
+   12.4,
+   11.8,
+   12.2,
+   14.9,
+   10.6,
    10.9,
-   10.1,
-   12.5,
-   8.1,
-   11.2,
-   5.5
+   11.0,
+   10.6,
+   13.1,
+   8.6,
+   11.6,
+   5.6
   ],
   "out": "dhaa-film.mp4",
   "musicgain": 1.0,
@@ -35,7 +35,7 @@
   ],
   "ticks": [
    [
-    96.0,
+    100.3,
     5,
     0.62
    ]
@@ -43,24 +43,24 @@
   "sfx": "sfx-client.wav"
  },
  "process": {
-  "cap": "proccap5",
-  "vox": "vop",
+  "cap": "cap2-process",
+  "vox": "vop2",
   "music": "bed-process.wav",
   "mix": "process-mix.wav",
   "ass": "captions-process.ass",
-  "dur": 103.5,
+  "dur": 109.84,
   "durs": [
-   7.0,
-   6.6,
-   9.8,
-   12.8,
-   11.2,
-   8.6,
+   7.7,
+   6.7,
+   10.6,
+   13.4,
+   11.9,
+   9.6,
+   7.7,
+   8.1,
+   8.9,
    7.6,
-   7.6,
-   8.2,
-   7.0,
-   8.2
+   8.5
   ],
   "out": "dhaa-process.mp4",
   "musicgain": 1.0,
@@ -73,23 +73,23 @@
   "sfx": "sfx-process.wav"
  },
  "agentside": {
-  "cap": "ascap5",
-  "vox": "voas",
+  "cap": "cap2-agentside",
+  "vox": "voas2",
   "music": "bed-agentside.wav",
   "mix": "agentside-mix.wav",
   "ass": "captions-agentside.ass",
-  "dur": 83.3,
+  "dur": 86.46,
   "durs": [
    5.4,
-   8.0,
+   8.5,
+   7.6,
+   7.3,
+   6.7,
+   6.8,
+   12.4,
+   6.7,
    7.4,
-   7.4,
-   6.4,
-   6.0,
-   11.8,
-   6.2,
-   7.4,
-   8.8
+   8.9
   ],
   "out": "dhaa-your-side.mp4",
   "musicgain": 1.0,
@@ -101,7 +101,7 @@
   ],
   "ticks": [
    [
-    40.6,
+    42.3,
     4,
     0.62
    ]
@@ -109,21 +109,21 @@
   "sfx": "sfx-agentside.wav"
  },
  "agent": {
-  "cap": "agcap5",
-  "vox": "voag",
+  "cap": "cap2-agent",
+  "vox": "voag2",
   "music": "bed-agent.wav",
   "mix": "ag-mix.wav",
   "ass": "captions-ag.ass",
-  "dur": 74.5,
+  "dur": 78.66,
   "durs": [
-   5.6,
-   7.6,
-   7.6,
+   6.2,
+   8.1,
+   8.4,
+   8.6,
    8.2,
-   7.6,
-   7.6,
-   7.6,
-   8.2
+   7.9,
+   7.5,
+   8.8
   ],
   "out": "dhaa-agent-film.mp4",
   "musicgain": 1.0,
@@ -135,25 +135,25 @@
   "sfx": "sfx-agent.wav"
  },
  "wall": {
-  "cap": "wallcap",
-  "vox": "vowall2",
+  "cap": "cap2-wall",
+  "vox": "vowall3",
   "music": "bed-wall.wav",
   "mix": "wall-mix.wav",
   "ass": "captions-wall.ass",
-  "dur": 111.9,
+  "dur": 117.8,
   "durs": [
-   5.5,
-   10.3,
-   7.5,
-   6.5,
-   11.6,
-   7.4,
-   13.3,
-   10.3,
-   10.8,
+   5.7,
+   10.4,
+   8.1,
+   6.8,
+   12.3,
+   7.9,
+   14.1,
+   11.0,
+   10.9,
+   10.4,
    9.5,
-   8.9,
-   10.3
+   10.7
   ],
   "out": "dhaa-wall.mp4",
   "musicgain": 0.62,
@@ -166,7 +166,7 @@
   ],
   "ticks": [
    [
-    23.3,
+    24.2,
     7,
     0.15
    ]
@@ -233,5 +233,30 @@
    4
   ],
   "sfx": "sfx-feed.wav"
+ },
+ "work": {
+  "cap": "cap2-work",
+  "vox": "vow2",
+  "music": "bed-work.wav",
+  "mix": "work-mix.wav",
+  "ass": "captions-work.ass",
+  "dur": 86.9,
+  "durs": [
+   5.4,
+   7.7,
+   7.9,
+   8.4,
+   7.9,
+   8.0,
+   8.5,
+   8.2,
+   8.3,
+   8.4
+  ],
+  "out": "dhaa-how-we-work.mp4",
+  "musicgain": 1.0,
+  "duck": 0.3,
+  "dark": [],
+  "sfx": "sfx-work.wav"
  }
 }

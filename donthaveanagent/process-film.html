@@ -342,6 +342,50 @@ em{font-style:normal;color:var(--ox)}
   #bars i.run::after{animation:none;transform:scaleX(1)}
 }
 @media (max-width:520px){ .mini-lanes{grid-template-columns:1fr} }
+/* ── the middle of the screen pauses; the clock says where we are ── */
+#zM{position:fixed;top:0;bottom:70px;left:26%;right:26%;z-index:49;cursor:pointer}
+#pflash{position:fixed;left:50%;top:50%;width:86px;height:86px;margin:-43px 0 0 -43px;border-radius:50%;z-index:58;
+  background:rgba(15,26,43,.66);color:#fff;display:grid;place-items:center;opacity:0;transform:scale(.7);
+  pointer-events:none;font:900 30px var(--head);line-height:1}
+#pflash.go{animation:pflash .8s ease forwards}
+@keyframes pflash{0%{opacity:0;transform:scale(.7)}25%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}
+#clock{font:700 11.5px var(--head);letter-spacing:.06em;color:var(--muted);font-variant-numeric:tabular-nums;
+  background:rgba(255,255,255,.9);border:1.5px solid var(--line);border-radius:99px;padding:9px 14px;backdrop-filter:blur(6px)}
+body.paused #clock{color:var(--ox);border-color:var(--ox)}
+body.paused #pauseBtn{color:var(--ox);border-color:var(--ox)}
+@media(max-width:780px){.tlrow{flex-wrap:wrap;max-width:330px;margin:0 auto;gap:5px}
+  .tlrow i{flex:0 0 11px;height:11px;max-width:11px}}
+/* ── the year, month by month ── */
+.bstrip{max-width:660px;margin:18px auto 0}
+.bmonths{display:grid;grid-template-columns:repeat(12,1fr);gap:6px}
+.bmonths span{position:relative;display:block;background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px 0 12px;
+  font:800 11px var(--head);letter-spacing:.08em;text-transform:uppercase;color:var(--muted2);opacity:0;transform:translateY(10px)}
+.scene.on .bmonths span{animation:mpop .45s cubic-bezier(.2,1.1,.4,1) forwards;animation-delay:calc(.55s + var(--i)*.07s)}
+@keyframes mpop{to{opacity:1;transform:none}}
+.bmonths span i{position:absolute;left:50%;top:-11px;transform:translateX(-50%) scale(0);width:22px;height:22px;border-radius:50%;
+  font:900 12px var(--head);font-style:normal;display:grid;place-items:center;color:#fff;letter-spacing:0}
+.bmonths .bday{border-color:var(--ox);color:var(--ox);background:rgba(255,92,77,.08)}
+.bmonths .bday i{background:var(--ox)}
+.bmonths .chk{border-color:#2F8F5B;color:#2F8F5B;background:rgba(47,143,91,.08)}
+.bmonths .chk i{background:#2F8F5B}
+.scene.on .bmonths .bday{animation:mpop .45s .69s cubic-bezier(.2,1.1,.4,1) forwards,bglow 1.8s 1.8s ease-in-out infinite}
+@keyframes bglow{50%{box-shadow:0 0 0 7px rgba(255,92,77,.14)}}
+.scene.on .bmonths .bday i{animation:ipop .5s 1.75s cubic-bezier(.2,1.4,.4,1) forwards}
+.scene.on .bmonths .chk i{animation:ipop .5s 2.3s cubic-bezier(.2,1.4,.4,1) forwards}
+@keyframes ipop{to{transform:translateX(-50%) scale(1)}}
+.blegend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.blegend b{font:700 12.5px var(--head)} .blegend .l1{color:var(--ox)} .blegend .l2{color:#2F8F5B}
+.byears{margin-top:14px}
+.byears b{display:block;font:900 clamp(26px,4.5vw,40px)/1 var(--head);color:var(--ox);letter-spacing:-.02em}
+.byears > span{display:block;font-size:13.5px;line-height:1.5;color:var(--muted);max-width:54ch;margin:7px auto 0}
+@media(max-width:700px){.bmonths{grid-template-columns:repeat(6,1fr)}.bmonths span{padding:12px 0 10px;font-size:10px}}
+/* ── whose hands the file is in ── */
+.hands{display:inline-flex;align-items:center;gap:12px;margin:14px auto 0;background:#fff;border:1px solid var(--line);
+  border-left:6px solid var(--ox);border-radius:12px;padding:10px 16px;text-align:left;box-shadow:0 8px 22px rgba(15,26,43,.08)}
+.hands .hk{font:800 10px var(--head);letter-spacing:.16em;text-transform:uppercase;color:var(--ox);white-space:nowrap}
+.hands b{font:800 15px var(--head);color:var(--ink);white-space:nowrap}
+.hands .hs{font-size:12px;line-height:1.4;color:var(--muted)}
+@media(max-width:700px){.hands{flex-wrap:wrap;gap:4px 10px}}
 </style>
 <!-- Music: "Inspired" by Kevin MacLeod (incompetech.com) — licensed under Creative Commons: By Attribution 4.0 — https://creativecommons.org/licenses/by/4.0/ -->
 </head>
@@ -374,7 +418,7 @@ em{font-style:normal;color:var(--ox)}
 <!-- 1 · title -->
 <div class="vig"></div>
 <div class="grain"></div>
-<section class="scene dark" data-d="7000">
+<section class="scene dark" data-d="7700">
   <div class="inner">
     <svg class="biglogo st" viewBox="0 0 88 88" aria-hidden="true">
       <rect width="88" height="88" rx="22" fill="#0F1A2B"/><defs><clipPath id="nk3"><rect x="30" y="26" width="15" height="36"/></clipPath></defs><g transform="rotate(-40 44 44)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/><rect x="31" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FF5C4D" stroke-width="6.6"/><g clip-path="url(#nk3)"><rect x="12" y="31.5" width="45.5" height="25" rx="12.5" fill="none" stroke="#FFF6F4" stroke-width="6.6"/></g></g>
@@ -384,7 +428,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="6600">
+<section class="scene" data-d="6700">
   <div class="inner">
     <div class="eyebrow st">Within seconds</div>
     <h2 class="st d1">A reference, and a code<br><em>that is yours alone.</em></h2>
@@ -395,7 +439,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="9800">
+<section class="scene" data-d="10600">
   <div class="inner">
     <div class="eyebrow st">Step one</div>
     <h2 class="st d1">Your answers go onto<br><em>the real form.</em></h2>
@@ -411,7 +455,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="12800">
+<section class="scene" data-d="13400">
   <div class="inner">
     <div class="eyebrow st">And it stays one document</div>
     <h2 class="st d1">Nothing is sent<br><em>in pieces.</em></h2>
@@ -423,7 +467,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="11200">
+<section class="scene" data-d="11900">
   <div class="inner">
     <div class="eyebrow st">Step two</div>
     <h2 class="st d1">Two emails leave<br><em>at the same moment.</em></h2>
@@ -437,7 +481,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="8600">
+<section class="scene" data-d="9600">
   <div class="inner">
     <div class="eyebrow st">Step three</div>
     <h2 class="st d1">You are on the worklist<br><em>before anyone speaks.</em></h2>
@@ -446,11 +490,12 @@ em{font-style:normal;color:var(--ox)}
       <div class="rr"><span>SQ-260822-0001</span><span>Anisa Mohammed</span><span><i class="tag open">Open</i></span>
         <span><i class="tag urg">Urgent</i></span><span>Fawaaz Mohammed</span></div>
     </div>
-    <p class="big-sub st d3">Including the name of the agent whose link you came through — so the introduction is theirs, on the record.</p>
+    <div class="hands st d3"><span class="hk">Looked after by</span><b>Fawaaz Mohammed</b><span class="hs">the agent whose link you came through — your file is in his hands from the first minute</span></div>
+    <p class="big-sub st d4">Including the name of the agent whose link you came through — so the introduction is theirs, on the record.</p>
   </div>
 </section>
 
-<section class="scene" data-d="7600">
+<section class="scene" data-d="7700">
   <div class="inner">
     <div class="eyebrow st">Then the chasing starts</div>
     <h2 class="st d1">And it is us<br><em>chasing us.</em></h2>
@@ -460,7 +505,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene dark" data-d="7600">
+<section class="scene dark" data-d="8100">
   <div class="inner">
     <div class="eyebrow st">And if we are late</div>
     <h2 class="st d1">The alert comes<br><em>to me.</em></h2>
@@ -473,7 +518,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="8200">
+<section class="scene" data-d="8900">
   <div class="inner">
     <div class="eyebrow st">Meanwhile</div>
     <h2 class="st d1">You can watch it move.</h2>
@@ -488,7 +533,7 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="7000">
+<section class="scene" data-d="7600">
   <div class="inner">
     <div class="eyebrow st">At six months</div>
     <h2 class="st d1">“What has changed?”<br><em>asked automatically.</em></h2>
@@ -500,13 +545,15 @@ em{font-style:normal;color:var(--ox)}
   </div>
 </section>
 
-<section class="scene" data-d="8200">
+<section class="scene" data-d="8500">
   <div class="inner">
     <div class="eyebrow st">And every year after that</div>
     <h2 class="st d1">In your birthday month.<br><em>For life.</em></h2>
-    <div class="track st d2">
-      <div class="tk"><span class="td">✓</span><span><b>A full review, every year</b><span>Taken from your date of birth on the form — so it happens whether we remember or not.</span></span></div>
+    <div class="bstrip st d2" aria-label="A year, month by month: the birthday-month review and the check-up six months on">
+      <div class="bmonths"><span style="--i:0">Jan</span><span style="--i:1">Feb</span><span class="bday" style="--i:2">Mar<i>★</i></span><span style="--i:3">Apr</span><span style="--i:4">May</span><span style="--i:5">Jun</span><span style="--i:6">Jul</span><span style="--i:7">Aug</span><span class="chk" style="--i:8">Sep<i>✓</i></span><span style="--i:9">Oct</span><span style="--i:10">Nov</span><span style="--i:11">Dec</span></div>
+      <div class="blegend"><b class="l1">★ Full review — your birthday month</b><b class="l2">✓ Check-up — six months on</b></div>
     </div>
+    <div class="byears st d4"><b data-count="2" data-suffix=" dates a year">2 dates a year</b><span>The same two, every year, taken from the date of birth on your form — so it happens whether or not anybody remembers.</span></div>
   </div>
 </section>
 
@@ -532,7 +579,10 @@ em{font-style:normal;color:var(--ox)}
 
 <div class="tapzone" id="zL" aria-label="Previous"></div>
 <div class="tapzone" id="zR" aria-label="Next"></div>
+<div class="tapzone" id="zM" aria-label="Pause or play"></div>
+<div id="pflash" aria-hidden="true">⏸</div>
 <div id="ctrl">
+  <span id="clock">0:00 / 0:00</span>
   <button id="muteBtn">🔊 Music</button>
   <button id="pauseBtn">⏸ Pause</button>
   <button onclick="go(SC.length-1)">Skip to the end ⏭</button>
@@ -726,6 +776,35 @@ document.getElementById("playBtn").addEventListener("click", () => {
     var on = document.querySelector(".scene.on");
     document.body.classList.toggle("onDark", !!(on && on.classList.contains("dark")));
   }).observe(document.body, {subtree:true, attributes:true, attributeFilter:["class"]});
+})();
+/* the middle of the screen pauses and resumes — like holding a story */
+(function(){
+  var zm = document.getElementById("zM"), fl = document.getElementById("pflash");
+  if (!zm) return;
+  zm.addEventListener("click", function(){
+    if (cur < 0) return;
+    pauseToggle();
+    fl.textContent = paused ? "⏸" : "▶";
+    fl.classList.remove("go"); void fl.offsetWidth; fl.classList.add("go");
+  });
+})();
+
+/* the clock — where the film is, read off the scene schedule */
+(function(){
+  var ck = document.getElementById("clock"); if (!ck) return;
+  var D = SC.map(function(s){ return +s.dataset.d; });
+  var TOTAL = D.reduce(function(a, d){ return a + (d === 99999 ? 0 : d); }, 0);
+  var fmt = function(ms){ var s = Math.max(0, Math.round(ms/1000)); return Math.floor(s/60) + ":" + ("0" + s%60).slice(-2); };
+  var t0 = null, base = 0, frozen = 0;
+  var _go = go;
+  go = function(n){ _go(n); base = 0; for (var i = 0; i < cur; i++) base += (D[i] === 99999 ? 0 : D[i]); t0 = performance.now(); };
+  (function tick(){
+    var el = cur < 0 ? 0 : (paused ? frozen : base + (performance.now() - t0));
+    if (!paused) frozen = el;
+    if (cur === SC.length - 1) el = TOTAL;
+    ck.textContent = fmt(Math.min(el, TOTAL)) + " / " + fmt(TOTAL);
+    requestAnimationFrame(tick);
+  })();
 })();
 </script>
 </body>
