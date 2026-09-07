@@ -590,7 +590,7 @@ function sTrend(D){
     +'<div class="row"><span class="nm">Gained — new business</span><span class="val" style="width:auto">'+T.gained.n+' · '+moneyShort(T.gained.prem)+'</span></div>'
     +'<div class="row"><span class="nm">Distinct vehicles lost</span><span class="val" style="width:auto">'+T.distinctLost+'</span></div>'
     +'</div>'
-    +'<div class="note">'+T.dupRows+' of the '+T.totals.lost+' lost rows are the same vehicle entered twice on the register — clean those and the true picture sharpens.</div>'
+    +'<div class="note">'+T.dupRows+' of the '+T.totals.lost+' lost rows are the same vehicle entered twice, and April’s block of sixteen identical TT$1,275 entries (the same eight vehicles under two accounts) reads as placeholder data, not real lapses — verify in Salesforce before counting them lost.</div>'
     +'</div></div></div>';
 }
 
@@ -613,8 +613,8 @@ function sLosing(D){
     +'</div><div class="note">The largest walked '+Math.round((t-new Date(L.recent[0].d))/864e5)+' days ago at '+moneyShort(L.recent[0].prem)+' — a call this week is worth more than everything else on this slide.</div></div>'
     +'<div class="panel"><h3>What the losses are telling us</h3><div class="rows" style="gap:18px">'
     +'<div class="row"><span class="nm">Concentrated — '+esc(L.concentration.label.toLowerCase())+'</span><span class="val" style="width:auto">'+L.concentration.rows+' rows</span></div>'
-    +'<div class="row"><span class="nm">Third party runs quiet — small premiums slip without a call</span><span class="val" style="width:auto">most rows</span></div>'
-    +'<div class="row"><span class="nm">Comprehensive losses are the money</span><span class="val" style="width:auto;color:var(--bad)">'+moneyShort(L.recent.slice(0,4).reduce(function(a,r){return a+r.prem},0))+' since July</span></div>'
+    +'<div class="row"><span class="nm">…but audited, most of that block reads as duplicate placeholder rows — and the relationship’s flagship vehicle renewed in August</span><span class="val" style="width:auto">verify, don’t write off</span></div>'
+    +'<div class="row"><span class="nm">Comprehensive losses are the money — and they are real (checked against each vehicle’s own multi-year history)</span><span class="val" style="width:auto;color:var(--bad)">'+moneyShort(L.recent.slice(0,4).reduce(function(a,r){return a+r.prem},0))+' since July</span></div>'
     +'</div>'
     +'<div class="note">Names live in Salesforce and on the live feed — this public snapshot keeps clients anonymous by design.</div>'
     +'</div></div></div>';
