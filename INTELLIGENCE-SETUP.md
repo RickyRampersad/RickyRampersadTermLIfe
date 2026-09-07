@@ -366,6 +366,18 @@ rate is noise.
 `/intelligence/wall/` — **one screen**, not a slideshow, about premiums crossing
 the 45-day line. Same design system as `/board/` and the benefits wall.
 
+**For the television, use `/intelwall`.** It forwards to
+`/intelligence/wall/all.html`, which mounts all five screens once and turns
+between them — premium dues, in our possession, with the agent, the licence
+year, birthdays — in the order the film introduces them. Each holds for about
+twenty seconds; `?secs=30` makes every one hold thirty. Arrow keys step, the
+number keys jump, space holds, `F` is full screen; the rail along the bottom
+shows only while the mouse moves. The five pages are not reloaded on each turn:
+they load once and refresh themselves every thirty minutes, so streaming costs
+the sheet no more than one standing screen did. A screen that never loads is
+struck through on the rail and skipped, and the player restarts itself once
+every twelve hours (`?reload=6` for six) so a week-long run cannot go stale.
+
 Forty-five days is the line worth watching. Past the grace period, so the policy
 is genuinely in trouble; early enough that a phone call still fixes it.
 

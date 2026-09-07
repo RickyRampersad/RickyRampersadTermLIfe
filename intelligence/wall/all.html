@@ -1,0 +1,259 @@
+<!doctype html>
+<!-- The Branch Intelligence Wall — all five stories, one address.
+     
+     The five screens were built as five standing pages, each designed to hold a
+     television on its own. On the branch floor that meant somebody had to choose
+     one and the other four were never seen. This streams them.
+
+     Why all five are mounted at once and never reloaded:
+     each story page reads Salesforce when it loads and refreshes itself every
+     thirty minutes. If the wall swapped one iframe's src every twenty seconds,
+     that would be a fresh read of the branch's whole task position roughly every
+     twenty seconds, all day — hundreds of times the load the pages were written
+     for, against the same Apps Script the tracker depends on. Mounting all five
+     once costs five reads at boot and then ten reads an hour, exactly what a
+     single standing screen costs. Rotation is then only a matter of which one
+     is showing.
+
+     Hidden slides are visibility:hidden rather than display:none, so their
+     timers keep running and their thirty-minute refresh still happens; a
+     display:none iframe is not rendered but its page is also never laid out,
+     and these pages measure themselves to fit the screen. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#061c31">
+<title>The Branch Intelligence Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --gold:#efc24b; --gold2:#c9942c;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#061c31;color:var(--ink);font-family:var(--font-b);overflow:hidden}
+
+  /* The slides. All five live here for the life of the page. */
+  .stage{position:fixed;inset:0;background:#061c31}
+  .slide{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
+    opacity:0;visibility:hidden;transition:opacity .55s ease}
+  .slide.on{opacity:1;visibility:visible}
+
+  /* The boot card, over the top until the first story has painted. */
+  #boot{position:fixed;inset:0;z-index:40;display:grid;place-items:center;
+    background:linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%);
+    transition:opacity .5s ease}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .in{display:flex;align-items:center;gap:16px}
+  #boot .mark{width:54px;height:54px;border-radius:15px;overflow:hidden;background:#07131f;
+    display:grid;place-items:center;flex:none}
+  #boot .mark img{width:54px;height:54px;display:block}
+  #boot h1{margin:0;font-family:var(--font-d);font-size:23px;font-weight:800;letter-spacing:-.4px}
+  #boot p{margin:3px 0 0;font-size:13px;color:var(--dim)}
+
+  /* The rail: which story is up, and how long it has left. Sits over the
+     bottom of the slide and fades out so it is not part of the picture. */
+  #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    padding:34px 26px 15px;display:flex;align-items:center;gap:10px;
+    background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
+    transition:opacity .45s ease}
+  #rail.hide{opacity:0;pointer-events:none}
+  .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
+    color:var(--dim);font:600 12px var(--font-b);padding:6px 13px;border-radius:999px;
+    cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
+  .dot:hover{color:var(--ink)}
+  .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
+    border-color:#c9942c;font-weight:700}
+  .dot.dead{opacity:.35;text-decoration:line-through}
+  .grow{flex:1}
+  #state{font:600 12px var(--font-b);color:var(--faint);white-space:nowrap;
+    font-variant-numeric:tabular-nums}
+  #state b{color:var(--dim);font-weight:700}
+
+  /* Time to the next story. A line, not a number: readable from the far side
+     of the floor and invisible when you are not looking for it. */
+  #bar{position:fixed;left:0;top:0;height:3px;width:0;z-index:31;
+    background:linear-gradient(90deg,var(--gold2),var(--gold));
+    box-shadow:0 0 12px rgba(239,194,75,.5)}
+  #bar.paused{background:var(--faint);box-shadow:none}
+
+  @media print{#rail,#bar,#boot{display:none}}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage"></div>
+<div id="bar"></div>
+
+<div id="rail" class="hide">
+  <div id="dots" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+  <span class="grow"></span>
+  <span id="state"></span>
+</div>
+
+<div id="boot">
+  <div class="in">
+    <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+    <div>
+      <h1>The Branch Intelligence Wall</h1>
+      <p>Five screens, one after another. Reading Salesforce…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* The five, in the order the film introduces them. `secs` is how long each
+   holds the screen; the denser a screen is, the longer it earns. */
+var SLIDES = [
+  { file:'index.html',      tab:'Premium dues',      secs:26 },
+  { file:'possession.html', tab:'In our possession', secs:22 },
+  { file:'delivery.html',   tab:'With the agent',    secs:22 },
+  { file:'licence.html',    tab:'The licence year',  secs:22 },
+  { file:'book.html',       tab:'Birthdays today',   secs:18 }
+];
+
+var Q = new URLSearchParams(location.search);
+/* ?secs=30 gives every story the same dwell — for a screen being watched
+   rather than glanced at. */
+var WANT = Number(Q.get('secs')) || 0;
+var FIXED = WANT ? Math.max(2, Math.min(600, WANT)) : 0;
+/* A page held open for days will eventually be a page nobody has reloaded for
+   days. This starts it again at a slide boundary, twelve hours in by default,
+   so a leak or a stale asset cannot accumulate for a week. */
+var RELOAD_AFTER_MS = Math.max(1, Number(Q.get('reload') || 12)) * 3600 * 1000;
+/* How long a story gets to load before the wall stops waiting for it. */
+var GRACE_MS = Math.max(1, Number(Q.get('grace') || 30)) * 1000;
+var BORN = Date.now();
+
+var stage = document.getElementById('stage'),
+    dots  = document.getElementById('dots'),
+    rail  = document.getElementById('rail'),
+    bar   = document.getElementById('bar'),
+    state = document.getElementById('state'),
+    boot  = document.getElementById('boot');
+
+var at = -1, paused = false, started = 0, holdFor = 0, bootGone = false;
+
+/* Build the frames and the buttons. The first story is asked for at once and
+   the rest follow a few seconds apart, because five heavy pages starting
+   together on branch wifi is how the first one ends up slow.
+
+   An iframe with no src fires a load event for its blank page the moment it
+   is attached — so every frame would count as loaded before it held anything.
+   The listener goes on only when the story is asked for, and only a load that
+   is actually the story counts. */
+SLIDES.forEach(function (s, i) {
+  var f = document.createElement('iframe');
+  f.className = 'slide';
+  f.title = s.tab;
+  f.setAttribute('scrolling', 'no');
+  s.el = f;
+  stage.appendChild(f);
+
+  var b = document.createElement('button');
+  b.className = 'dot';
+  b.type = 'button';
+  b.textContent = (i + 1) + '. ' + s.tab;
+  b.onclick = function () { show(i); rest(); };
+  s.dot = b;
+  dots.appendChild(b);
+
+  setTimeout(function () {
+    f.addEventListener('load', function () {
+      var here = '';
+      try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
+      if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
+      s.ready = true; s.dead = false; b.classList.remove('dead');
+    });
+    f.src = s.file;
+    /* A story that never answers must not hold the wall. Past the grace an
+       unloaded frame is skipped until it does come good. */
+    setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
+  }, 2500 * i);
+});
+
+/* The next story to show: one that has painted, before one still loading,
+   before one given up on — and if every one is silent, keep turning anyway. */
+function nextLive(from) {
+  var j, k;
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (SLIDES[j].ready) return j; }
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (!SLIDES[j].dead) return j; }
+  return (from + 1) % SLIDES.length;
+}
+
+function show(i) {
+  if (i === at) { started = Date.now(); return; }       // the only one worth showing: hold it
+  SLIDES.forEach(function (s, k) { s.el.classList.toggle('on', k === i); s.dot.classList.toggle('on', k === i); });
+  at = i;
+  holdFor = (FIXED || SLIDES[i].secs) * 1000;
+  started = Date.now();
+}
+
+function step() { show(nextLive(at)); }
+function rest() { started = Date.now(); }               // a click buys a full turn
+
+/* One clock drives the bar and the turning, so the line on screen is the truth
+   about when the next story comes. It runs on an interval rather than an
+   animation frame: a television browser that has been left alone slows
+   animation frames right down, and a wall that stops turning when nobody is
+   touching it is the opposite of a wall. */
+function tick() {
+  if (!paused && holdFor) {
+    var gone = Date.now() - started;
+    bar.style.width = Math.min(100, gone / holdFor * 100) + '%';
+    if (gone >= holdFor) {
+      if (Date.now() - BORN > RELOAD_AFTER_MS) return location.reload();
+      step();
+    }
+  }
+  /* The boot card lifts once the story on screen has painted — or after the
+     grace, so a silent feed cannot leave the card up for good. */
+  if (!bootGone && ((at > -1 && SLIDES[at].ready) || Date.now() - BORN > GRACE_MS)) {
+    bootGone = true;
+    boot.classList.add('gone');
+    setTimeout(function () { boot.style.display = 'none'; }, 600);
+  }
+  state.textContent = paused ? 'paused · space to go on'
+    : (at + 1) + ' of ' + SLIDES.length + ' · next in ' + Math.max(0, Math.ceil((holdFor - (Date.now() - started)) / 1000)) + 's';
+}
+
+document.addEventListener('keydown', function (e) {
+  var k = e.key;
+  if (k === ' ') { e.preventDefault(); paused = !paused; bar.classList.toggle('paused', paused); rest(); }
+  else if (k === 'ArrowRight') { step(); rest(); }
+  else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); }
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); }
+});
+
+/* The rail is for the person setting the screen up, not for the floor. */
+var hideAt;
+function wake() {
+  rail.classList.remove('hide');
+  clearTimeout(hideAt);
+  hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
+}
+['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
+wake();
+
+show(0);
+setInterval(tick, 200);
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
