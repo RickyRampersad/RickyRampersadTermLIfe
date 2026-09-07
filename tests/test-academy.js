@@ -40,14 +40,14 @@ const setCell = (sheet, row, col, v) => { env.__sheets[sheet]._grid[row - 1][col
 env.academySetup();
 ok('setup makes the three tabs with their headers in row 1',
    ['Users', 'Progress', 'Activity'].every(n => env.__sheets[n] && env.__sheets[n]._grid.length === 1) &&
-   cell('Users', 1, 1) === 'Email' && cell('Users', 1, 8) === 'Hash');
+   cell('Users', 1, 1) === 'Email' && cell('Users', 1, 8) === 'Hash' && cell('Users', 1, 12) === 'SEA Year');
 ok('setup generates a signing secret', (props.ACADEMY_SECRET || '').length > 40);
 ok('the engine answers a GET', /running/.test(env.doGet().getContent()));
 
 // The Academy adds rows by hand: e-mail, name, role, and for a parent the
 // child's e-mail. Everything else stays blank.
 const U = env.__sheets.Users;
-U.appendRow(['Aisha@Example.com ', 'Aisha Ali', 'Student', '', '', '', '', '', '', '', '']);       // row 2
+U.appendRow(['Aisha@Example.com ', 'Aisha Ali', 'Student', '', '', '', '', '', '', '', '', 2029]);   // row 2 — S.E.A. in 2029
 U.appendRow(['dad@example.com', 'Imran Ali', 'parent', 'aisha@example.com', '', '', '', '', '', '', '']); // row 3
 U.appendRow(['miss@example.com', 'Ms Ramlal', 'teacher', '', '', '', '', '', '', '', '']);        // row 4
 U.appendRow(['off@example.com', 'Switched Off', 'student', '', 'disabled', '', '', '', '', '', '']); // row 5
@@ -70,6 +70,9 @@ ok('a short password is refused', post({ action: 'setpassword', email: 'aisha@ex
 const first = post({ action: 'setpassword', email: 'aisha@example.com', password: 'mango-tree-2027' });
 ok('choosing a password signs the student straight in',
    first.ok && typeof first.token === 'string' && first.user.role === 'student' && first.user.name === 'Aisha Ali');
+ok('the sign-in carries the year of the S.E.A., so the app can place the child', first.user.seaYear === 2029);
+ok('a row with no S.E.A. year hands back null, not zero', post({ action: 'lookup', email: 'miss@example.com' }).ok &&
+   env.auser_('miss@example.com').seaYear === null);
 ok('the sheet now holds a salt and a 64-character hash, never the password',
    /^[0-9a-f]{64}$/.test(cell('Users', 2, 8)) && cell('Users', 2, 7).length > 20 &&
    !JSON.stringify(U._grid).includes('mango-tree-2027'));
@@ -121,6 +124,7 @@ ok('the parent chooses a password and is in', dad.ok && dad.user.role === 'paren
 ok('the parent is told which child is linked', dad.user.student && dad.user.student.email === 'aisha@example.com' && dad.user.student.name === 'Aisha Ali');
 ok("the parent is handed the child's progress, by the child's name",
    dad.child && dad.child.name === 'Aisha Ali' && dad.child.progress.exams.length === 2);
+ok("and the child's S.E.A. year, so the parent is placed where the child is", dad.child.seaYear === 2029);
 ok('the parent has no progress of their own yet', dad.progress === null);
 const miss = post({ action: 'setpassword', email: 'miss@example.com', password: 'chalk-and-talk-5' });
 ok('a teacher is never handed a child', miss.ok && miss.user.role === 'teacher' && miss.child === null);

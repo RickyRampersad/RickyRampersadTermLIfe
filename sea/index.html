@@ -283,6 +283,24 @@ textarea.essay:focus{border-color:var(--teal)}
   padding:.8rem 1rem;font-size:13.5px;color:var(--muted)}
 .note b{color:var(--ink)}
 
+/* ---- the journey: seven years, one destination ---- */
+.journey{display:flex;gap:.35rem;align-items:stretch;overflow-x:auto;padding-bottom:.2rem}
+.journey .step{flex:1;min-width:86px;border:1px solid var(--rule);border-radius:9px;padding:.55rem .5rem;text-align:center;
+  font-size:12px;color:var(--muted);background:var(--surface2);position:relative}
+.journey .step b{display:block;font-family:var(--display);font-size:13.5px;color:var(--ink)}
+.journey .step.done{opacity:.55}
+.journey .step[aria-current="step"]{background:var(--navy);border-color:var(--navy);color:#9FB3C4}
+.journey .step[aria-current="step"] b{color:#fff}
+.journey .step.sea{border-color:var(--gold2)}
+.journey .step.sea b{color:var(--gold2)}
+.journey .step[aria-current="step"].sea{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold2);color:#3a2a08}
+.journey .step[aria-current="step"].sea b{color:#07131f}
+.levelpick{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem}
+.levelpick button{background:var(--surface2);border:1px solid var(--rule);border-radius:8px;padding:.5rem .8rem;cursor:pointer;
+  font-weight:700;font-size:13px;color:var(--ink)}
+.levelpick button:hover{border-color:var(--teal)}
+.levelpick button.sea{border-color:var(--gold2);color:var(--goldInk)}
+
 /* ---- sponsors: parent-facing, one per slot, never inside a question ---- */
 .sponsor{display:flex;gap:.85rem;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);
   border-radius:10px;padding:.7rem 1rem;box-shadow:var(--shadow)}
@@ -406,6 +424,13 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <p id="homeLead"></p>
   </div>
 
+  <div class="card" id="journeyCard" style="margin-bottom:1.2rem">
+    <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:baseline;margin-bottom:.7rem">
+      <p class="label">The journey</p><p class="muted" style="font-size:13px" id="journeyCap"></p></div>
+    <div class="journey" id="journey"></div>
+    <div id="levelPick"></div>
+  </div>
+
   <div class="grid g4" style="margin-bottom:1.2rem">
     <div class="stat"><p class="label">Questions available</p><div class="n" id="hQ">0</div>
       <p class="muted" style="font-size:12.5px;margin-top:.2rem">across four strands</p></div>
@@ -463,6 +488,10 @@ footer .l{display:flex;gap:.6rem;align-items:center}
 
   <div class="card" style="margin-bottom:1.1rem">
     <div style="display:flex;gap:1rem;flex-wrap:wrap;align-items:flex-end">
+      <div style="flex-basis:100%">
+        <p class="label" style="margin-bottom:.4rem">Class</p>
+        <div class="chips" id="pLevel"></div>
+      </div>
       <div>
         <p class="label" style="margin-bottom:.4rem">Strand</p>
         <div class="chips" id="pStrand"></div>
@@ -619,8 +648,8 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="pagehead">
     <p class="label">Syllabus</p>
     <h1>Everything that can be asked</h1>
-    <p>From the Ministry&rsquo;s Assessment Framework for SEA 2025&ndash;2028. Tick a topic when it is
-       secure; the ticks are saved in this browser.</p>
+    <p>What the S.E.A. tests &mdash; where all seven years lead. From the Ministry&rsquo;s Assessment
+       Framework for SEA 2025&ndash;2028. Tick a topic when it is secure; the ticks are saved in this browser.</p>
   </div>
   <div class="grid g2" style="align-items:start">
     <div class="stack" id="sylMath"></div>
@@ -686,6 +715,37 @@ const TKEY = "rrb.sea.token";
            writing  the essay paper
            report   the mock examination report
    ============================================================ */
+/* ============================================================
+   Levels. Seven years of primary school, and the S.E.A. at the end.
+
+   A child is placed by ONE number — the year they will sit the S.E.A. —
+   which never needs updating: the level is worked out from the date, and
+   moves up by itself every September. School years end in the calendar
+   year the S.E.A. is sat in.
+   ============================================================ */
+const LEVELS = [
+  {k:"inf1", name:"Infant 1",   age:"5–6"},
+  {k:"inf2", name:"Infant 2",   age:"6–7"},
+  {k:"std1", name:"Standard 1", age:"7–8"},
+  {k:"std2", name:"Standard 2", age:"8–9"},
+  {k:"std3", name:"Standard 3", age:"9–10"},
+  {k:"std4", name:"Standard 4", age:"10–11"},
+  {k:"std5", name:"Standard 5", age:"11–12", sea:true}
+];
+const LEVEL_INDEX = Object.fromEntries(LEVELS.map((l,i) => [l.k, i]));
+function schoolYear(d){ d = d || new Date(); return d.getMonth() >= 8 ? d.getFullYear() + 1 : d.getFullYear(); }
+function levelIndexFor(seaYear, d){ return 6 - (Number(seaYear) - schoolYear(d)); }      // 6 = Standard 5
+function seaYearFor(levelIndex, d){ return schoolYear(d) + (6 - levelIndex); }
+
+/* Which S.E.A.-bank questions suit an earlier class. Everything else in that
+   bank is Standard 5. The lower-class bank below carries its own level. */
+const LEVEL_OF = {
+  N01:"std4", N02:"std4", N06:"std4", N07:"std4", N10:"std4", N11:"std4", N12:"std4", N14:"std4", N15:"std4", N25:"std4",
+  G01:"std4", G03:"std3", G04:"std4", G05:"std3", G06:"std3", G09:"std3", G10:"std4",
+  M01:"std4", M02:"std3", M03:"std4", M05:"std3", M06:"std4", M07:"std3", M11:"std4", M15:"std4",
+  S01:"std4", S02:"std4", S04:"std4", S05:"std4", S07:"std3"
+};
+
 const SPONSOR_SLOTS = ["title","papers","writing","report"];
 const SPONSORS = (typeof window !== "undefined" && window.SPONSORS_OVERRIDE) || [
   // {slot:"title", name:"Charran's Chaguanas", tag:"Books for the S.E.A. year", cta:"Visit the store",
@@ -1236,7 +1296,147 @@ const QUESTIONS = [
 {id:"S11",strand:"Statistics",topic:"Interpreting graphs",proc:"Applying",sec:2,marks:2,
  q:"On a bar graph each square stands for 4 people. One bar is 7 squares tall. How many people does that bar represent?",
  a:["28"],
- exp:"Multiply the number of squares by the scale: 7 &times; 4 = <b>28 people</b>."}
+ exp:"Multiply the number of squares by the scale: 7 &times; 4 = <b>28 people</b>."},
+
+/* ---------------- INFANT 1 ---------------- */
+{id:"I1-01",level:"inf1",strand:"Number",topic:"Counting",proc:"Knowing",sec:1,marks:1,
+ q:"Count the stars. &nbsp; <span style='font-size:22px;letter-spacing:.1em'>&#9733;&#9733;&#9733;&#9733;&#9733;&#9733;&#9733;</span>",
+ a:["7","seven"], ask:"Touch each star once as you count, so none is counted twice.",
+ step:"Say the numbers out loud, one number for each star, and the last number you say is the answer.",
+ exp:"One, two, three, four, five, six, <b>seven</b>. There are 7 stars."},
+{id:"I1-02",level:"inf1",strand:"Number",topic:"Counting",proc:"Knowing",sec:1,marks:1,
+ q:"What number comes just after 9?", a:["10","ten"],
+ ask:"Count on one more from 9.", step:"Say 7, 8, 9 &mdash; and then keep going one more.",
+ exp:"After 9 comes <b>10</b>."},
+{id:"I1-03",level:"inf1",strand:"Number",topic:"Adding",proc:"Applying",sec:1,marks:1,
+ q:"3 + 2 = ?", a:["5","five"],
+ ask:"Adding means putting the two groups together.", step:"Hold up 3 fingers on one hand and 2 on the other, and count them all.",
+ exp:"3 and 2 more make <b>5</b>."},
+{id:"I1-04",level:"inf1",strand:"Geometry",topic:"Shapes",proc:"Knowing",sec:1,marks:1,
+ q:"How many sides does a triangle have?", a:["3","three"],
+ ask:"The sides are the straight lines around the edge.", step:"Draw a triangle in the air with your finger and count the lines you draw.",
+ exp:"A triangle has <b>3</b> sides. Tri means three."},
+{id:"I1-05",level:"inf1",strand:"Measurement",topic:"Comparing",proc:"Knowing",sec:1,marks:1,
+ q:"Which is longer &mdash; a pencil or a bus?", a:["bus","a bus","the bus"],
+ ask:"Longer means it stretches further from end to end.", step:"Picture them side by side. Which one goes on further?",
+ exp:"A <b>bus</b> is much longer than a pencil."},
+{id:"I1-06",level:"inf1",strand:"Statistics",topic:"Picture graphs",proc:"Applying",sec:1,marks:1,
+ q:"A picture graph shows <span style='font-size:20px'>&#127822;&#127822;&#127822;</span> for apples and <span style='font-size:20px'>&#127820;&#127820;</span> for bananas. How many more apples than bananas?",
+ a:["1","one"], ask:"“How many more” means find the difference between the two rows.",
+ step:"Match each banana to an apple. The apples left over with no partner are the answer.",
+ exp:"3 apples, 2 bananas. 3 &minus; 2 = <b>1</b> more apple."},
+
+/* ---------------- INFANT 2 ---------------- */
+{id:"I2-01",level:"inf2",strand:"Number",topic:"Adding",proc:"Applying",sec:1,marks:1,
+ q:"12 + 6 = ?", a:["18","eighteen"],
+ ask:"Start from the bigger number and count on.", step:"Say 12, then count on six more: 13, 14, 15&hellip;",
+ exp:"12 and 6 more: 13, 14, 15, 16, 17, <b>18</b>."},
+{id:"I2-02",level:"inf2",strand:"Number",topic:"Taking away",proc:"Applying",sec:1,marks:1,
+ q:"15 &minus; 7 = ?", a:["8","eight"],
+ ask:"Taking away means counting back.", step:"Start at 15 and count back seven: 14, 13, 12&hellip;",
+ exp:"15 count back 7: 14, 13, 12, 11, 10, 9, <b>8</b>."},
+{id:"I2-03",level:"inf2",strand:"Number",topic:"Tens and ones",proc:"Knowing",sec:1,marks:1,
+ q:"In the number 43, how many tens are there?", a:["4","four"],
+ ask:"Two-digit numbers are made of tens and ones. The tens digit comes first.", step:"Say the number: forty-three. Forty is how many tens?",
+ exp:"43 is 4 tens and 3 ones. There are <b>4</b> tens."},
+{id:"I2-04",level:"inf2",strand:"Geometry",topic:"Shapes",proc:"Knowing",sec:1,marks:1,
+ q:"Name the shape with four equal sides and four square corners.", a:["square","a square"],
+ ask:"Four sides all the same, and every corner like the corner of a page.", step:"Think of a window pane, or one face of a dice.",
+ exp:"Four equal sides and four right angles: a <b>square</b>."},
+{id:"I2-05",level:"inf2",strand:"Measurement",topic:"Time",proc:"Knowing",sec:1,marks:1,
+ q:"How many days are there in one week?", a:["7","seven"],
+ ask:"Say the days of the week in order, starting from Sunday.", step:"Count them on your fingers as you say them.",
+ exp:"Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday: <b>7</b> days."},
+{id:"I2-06",level:"inf2",strand:"Statistics",topic:"Reading data",proc:"Applying",sec:1,marks:1,
+ q:"In a class, 6 children like mango best and 4 like orange best. How many children were asked?", a:["10","ten"],
+ ask:"Every child picked one fruit, so add the two groups.", step:"Put the mango group and the orange group together.",
+ exp:"6 + 4 = <b>10</b> children."},
+
+/* ---------------- STANDARD 1 ---------------- */
+{id:"S1-01",level:"std1",strand:"Number",topic:"Times tables",proc:"Knowing",sec:1,marks:1,
+ q:"5 &times; 4 = ?", a:["20","twenty"],
+ ask:"Five times four is five, four times over.", step:"Count in fives: 5, 10, 15&hellip; four times.",
+ exp:"5, 10, 15, <b>20</b>."},
+{id:"S1-02",level:"std1",strand:"Number",topic:"Place value",proc:"Knowing",sec:1,marks:1,
+ q:"Write 300 + 40 + 7 as one number.", a:["347"],
+ ask:"Each part goes into its own column: hundreds, tens, ones.", step:"Write the 3 in the hundreds place, the 4 in the tens, the 7 in the ones.",
+ exp:"3 hundreds, 4 tens, 7 ones: <b>347</b>."},
+{id:"S1-03",level:"std1",strand:"Number",topic:"Fractions",proc:"Applying",sec:1,marks:1,
+ q:"What is half of 18?", a:["9","nine"],
+ ask:"Half means two equal shares.", step:"Share 18 between two people, one each at a time, until it is all gone.",
+ exp:"18 shared into two equal groups is <b>9</b> and 9."},
+{id:"S1-04",level:"std1",strand:"Geometry",topic:"Shapes",proc:"Knowing",sec:1,marks:1,
+ q:"How many corners does a rectangle have?", a:["4","four"],
+ ask:"A corner is where two sides meet.", step:"Trace a rectangle with your finger and stop at each turn.",
+ exp:"A rectangle has <b>4</b> corners."},
+{id:"S1-05",level:"std1",strand:"Measurement",topic:"Length",proc:"Knowing",sec:1,marks:1,
+ q:"How many centimetres are there in 1 metre?", a:["100"],
+ ask:"The metre is the long one; the centimetre is the small one.", step:"Picture the metre rule in class and the small marks all along it.",
+ exp:"1 metre = <b>100</b> centimetres."},
+{id:"S1-06",level:"std1",strand:"Statistics",topic:"Block graphs",proc:"Applying",sec:1,marks:1,
+ q:"On a block graph, 5 children chose red and 8 chose blue. How many more chose blue?", a:["3","three"],
+ ask:"“How many more” is a difference.", step:"Take the smaller number away from the bigger one.",
+ exp:"8 &minus; 5 = <b>3</b> more children."},
+
+/* ---------------- STANDARD 2 ---------------- */
+{id:"S2-01",level:"std2",strand:"Number",topic:"Dividing",proc:"Knowing",sec:1,marks:1,
+ q:"36 &divide; 4 = ?", a:["9","nine"],
+ ask:"How many fours make 36?", step:"Count in fours until you reach 36, and count how many times you said a number.",
+ exp:"4, 8, 12, 16, 20, 24, 28, 32, 36 &mdash; nine fours. 36 &divide; 4 = <b>9</b>."},
+{id:"S2-02",level:"std2",strand:"Number",topic:"Rounding",proc:"Knowing",sec:1,marks:1,
+ q:"Round 47 to the nearest ten.", a:["50","fifty"],
+ ask:"Which two tens is 47 between, and which is it nearer?", step:"Look at the ones digit. 5 or more goes up.",
+ exp:"47 sits between 40 and 50, and is nearer <b>50</b>."},
+{id:"S2-03",level:"std2",strand:"Number",topic:"Fractions",proc:"Applying",sec:1,marks:1,
+ q:`Find ${F(1,4)} of 20.`, a:["5","five"],
+ ask:"A quarter is one of four equal shares.", step:"Share 20 into four equal groups.",
+ exp:"20 shared into four equal groups is <b>5</b> each."},
+{id:"S2-04",level:"std2",strand:"Geometry",topic:"Symmetry",proc:"Knowing",sec:1,marks:1,
+ q:"How many lines of symmetry does a rectangle have?", a:["2","two"],
+ ask:"A line of symmetry folds the shape exactly onto itself.", step:"Try folding across the middle both ways. Then try a diagonal &mdash; do the halves match?",
+ exp:"Across the middle both ways works; the diagonals do not. A rectangle has <b>2</b> lines of symmetry."},
+{id:"S2-05",level:"std2",strand:"Measurement",topic:"Perimeter",proc:"Applying",sec:1,marks:1,
+ q:"A square has sides of 6 cm. What is its perimeter?", unit:"cm", a:["24"],
+ ask:"Perimeter is the distance all the way round the outside.", step:"A square has four sides the same. Add all four.",
+ exp:"6 + 6 + 6 + 6 = <b>24 cm</b>."},
+{id:"S2-06",level:"std2",strand:"Measurement",topic:"Money",proc:"Applying",sec:1,marks:1,
+ q:"A pencil costs 75 cents. How much change do you get from $1?", unit:"cents", a:["25"],
+ ask:"Change is what is left of the dollar after paying.", step:"A dollar is 100 cents. Take the price away from 100.",
+ exp:"100 &minus; 75 = <b>25 cents</b>."},
+{id:"S2-07",level:"std2",strand:"Statistics",topic:"Tally charts",proc:"Applying",sec:1,marks:1,
+ q:"A tally chart shows cats <span class='mono'>&#8741;&#8741; ||</span> (seven) and dogs <span class='mono'>&#8741;&#8741; |</span> (five). How many pets altogether?", a:["12","twelve"],
+ ask:"Altogether means add the two groups.", step:"Read each tally first, then put them together.",
+ exp:"7 + 5 = <b>12</b> pets."},
+
+/* ---------------- STANDARD 3 ---------------- */
+{id:"S3-01",level:"std3",strand:"Number",topic:"Multiplying",proc:"Knowing",sec:1,marks:1,
+ q:"234 &times; 3 = ?", a:["702"],
+ ask:"Multiply one column at a time, starting from the ones.", step:"3 &times; 4 first, then 3 &times; 3 tens, then 3 &times; 2 hundreds &mdash; and carry when a column goes past 9.",
+ exp:"3 &times; 4 = 12, write 2 carry 1. 3 &times; 3 = 9, plus 1 = 10, write 0 carry 1. 3 &times; 2 = 6, plus 1 = 7. Answer <b>702</b>."},
+{id:"S3-02",level:"std3",strand:"Number",topic:"Fractions",proc:"Applying",sec:1,marks:1,
+ q:`Write ${F(3,4)} as eighths.`, a:["6/8"],
+ ask:"The same amount, cut into smaller pieces.", step:"Every quarter is two eighths, so double the top and the bottom.",
+ exp:F(3,4) + " = <b>" + F(6,8) + "</b>."},
+{id:"S3-03",level:"std3",strand:"Number",topic:"Decimals",proc:"Knowing",sec:1,marks:1,
+ q:"Write 0&middot;5 as a fraction in its lowest terms.", a:["1/2","half","ahalf"],
+ ask:"0&middot;5 is five tenths.", step:"Write five over ten, then simplify.",
+ exp:"0&middot;5 = " + F(5,10) + " = <b>" + F(1,2) + "</b>."},
+{id:"S3-04",level:"std3",strand:"Geometry",topic:"Angles",proc:"Knowing",sec:1,marks:1,
+ q:"An angle of exactly 90&deg; is called a &hellip; angle.", a:["right","right angle","a right angle"],
+ ask:"It is the angle at the corner of a page.", step:"Its name is the opposite of wrong.",
+ exp:"90&deg; is a <b>right</b> angle."},
+{id:"S3-05",level:"std3",strand:"Measurement",topic:"Area",proc:"Applying",sec:1,marks:1,
+ q:"A rectangle is 5 cm long and 3 cm wide. What is its area?", unit:"cm²", a:["15"],
+ ask:"Area is how many centimetre squares fit inside.", step:"Imagine 3 rows of 5 squares, then count them &mdash; or multiply.",
+ exp:"5 &times; 3 = <b>15 cm&sup2;</b>."},
+{id:"S3-06",level:"std3",strand:"Measurement",topic:"Time",proc:"Applying",sec:1,marks:1,
+ q:"A lesson starts at 9:15 and lasts 45 minutes. At what time does it end?", a:["10:00","10","1000","10.00","10 o'clock","10oclock"],
+ ask:"Count on from the start time in minutes.", step:"From 9:15, add 45 minutes: first 15 to reach the half hour, then the rest.",
+ exp:"9:15 + 15 min = 9:30. Then 30 more = <b>10:00</b>."},
+{id:"S3-07",level:"std3",strand:"Statistics",topic:"Pictographs",proc:"Applying",sec:1,marks:1,
+ q:"On a pictograph each <span style='font-size:20px'>&#127822;</span> stands for 2 apples. A row shows <span style='font-size:20px'>&#127822;&#127822;&#127822;&#127822;</span>. How many apples is that?", a:["8","eight"],
+ ask:"The key changes what a picture is worth.", step:"Count the pictures, then multiply by what each one stands for.",
+ exp:"4 pictures &times; 2 apples = <b>8</b> apples."}
 ];
 /* ============================================================
    Official papers — every link points at the Ministry's own copy
@@ -1524,6 +1724,7 @@ S11:{ask:"The height of the bar is not the answer on its own — the key changes
      step:"Multiply the number of squares by whatever one square stands for.", hfig:"barScale"}
 };
 QUESTIONS.forEach(q => Object.assign(q, HINTS[q.id] || {}));
+QUESTIONS.forEach(q => { if(!q.level){ q.level = LEVEL_OF[q.id] || "std5"; q.sea = true; } });
 
 /* ============================================================
    Storage — per device, per browser. Nothing leaves it.
@@ -1535,7 +1736,7 @@ function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e
 function rec(id){ return store.seen[id] || (store.seen[id] = {att:0, right:false, clean:false, hints:0}); }
 
 /* ---- the Academy backend, when there is one ---- */
-let token = null, syncTimer = null, me = null, childName = "", childProgress = null;
+let token = null, syncTimer = null, me = null, childName = "", childProgress = null, childSeaYear = null;
 async function api(action, body){
   const r = await fetch(ACADEMY_API, {method:"POST", headers:{"Content-Type":"text/plain;charset=utf-8"},
     body: JSON.stringify(Object.assign({action}, body || {}))});
@@ -1571,6 +1772,18 @@ function adoptProgress(remote){
 }
 /* A parent looks at the child's progress, not their own. */
 function viewProgress(){ return (role === "parent" && childProgress) ? childProgress : store; }
+
+/* The S.E.A. year comes from the sheet when there is one, else from a pick
+   made on this device. A parent is placed where the child is. */
+function seaYearFromSheet(){
+  if(role === "parent") return childSeaYear || null;
+  return (me && me.seaYear) ? Number(me.seaYear) : null;
+}
+function currentSeaYear(){ return seaYearFromSheet() || store.seaYear || null; }
+function currentLevelIndex(){
+  const y = currentSeaYear(); if(!y) return null;
+  return Math.max(0, Math.min(6, levelIndexFor(y)));
+}
 
 /* ============================================================
    Marking
@@ -1758,27 +1971,52 @@ function enter(r, user, payload){
   role = r; me = user || null;
   if(payload){
     adoptProgress(payload.progress);
-    if(r === "parent" && payload.child){ childName = payload.child.name || ""; childProgress = payload.child.progress || {}; }
+    if(r === "parent" && payload.child){
+      childName = payload.child.name || ""; childProgress = payload.child.progress || {};
+      childSeaYear = payload.child.seaYear ? Number(payload.child.seaYear) : null;
+    }
   }
   $("#gate").hidden = true;
   $("#app").hidden = false;
-  $("#rolePill").textContent = ROLES[r].label + (me && me.name ? " · " + me.name.split(" ")[0] : "");
+  paintWho(); buildNav();
   $("#resetBtn").hidden = (r === "parent");
-  $("#nav").innerHTML = CAN[r].views
-    .map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
+  pLevelSel = currentLevelIndex() === null ? 6 : currentLevelIndex();
   renderRoleCopy();
-  pTopics(); pBuild(true);      // needs the role: it decides which rungs open
+  pLevels(); pTopics(); pBuild(true);      // needs the role: it decides which rungs open
   renderKey();
   $("#examPrint").hidden = (r !== "teacher");
   const want = location.hash.slice(1);
-  show(CAN[r].views.includes(want) ? want : "home");
+  show(views().includes(want) ? want : "home");
+}
+
+/* The mock paper is the S.E.A. paper. It opens in Standard 4, when the
+   child can sit it for practice, and is not put in front of an Infant. A
+   teacher always has it. */
+function views(){
+  const li = currentLevelIndex();
+  return CAN[role].views.filter(v => v !== "exam" || role === "teacher" || li === null || li >= 5);
+}
+function buildNav(){
+  $("#nav").innerHTML = views().map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
+}
+function paintWho(){
+  const li = currentLevelIndex();
+  $("#rolePill").textContent = ROLES[role].label
+    + (me && me.name ? " · " + me.name.split(" ")[0] : "")
+    + (li !== null && role !== "teacher" ? " · " + LEVELS[li].name : "");
+}
+/* A class picked on this device: the year of the S.E.A. is what is kept. */
+function setLevel(li){
+  store.seaYear = li === null ? null : seaYearFor(li); save();
+  pLevelSel = currentLevelIndex() === null ? 6 : currentLevelIndex();
+  paintWho(); buildNav(); pLevels(); pTopics(); pBuild(true); renderHome();
 }
 
 /* ============================================================
    Views
    ============================================================ */
 function show(name){
-  if(!CAN[role].views.includes(name)) name = "home";
+  if(!views().includes(name)) name = "home";
   $$(".view").forEach(v => v.hidden = (v.id !== "v-"+name));
   $$("#nav button").forEach(b => b.setAttribute("aria-current", b.dataset.view===name ? "page" : "false"));
   if(location.hash.slice(1) !== name) history.replaceState(null,"","#"+name);
@@ -1860,7 +2098,37 @@ function strandStat(s){
           pct: pool.length ? Math.round(done.length/pool.length*100) : 0,
           acc: done.length ? Math.round(clean/done.length*100) : null};
 }
+function renderJourney(){
+  const li = currentLevelIndex(), y = currentSeaYear(), teach = role === "teacher";
+  $("#journey").innerHTML = LEVELS.map((l,i) =>
+    `<div class="step${l.sea ? " sea" : ""}${li !== null && i < li ? " done" : ""}"${li === i ? ' aria-current="step"' : ""}>
+       <b>${l.name}${l.sea ? " · S.E.A." : ""}</b>ages ${l.age}</div>`).join("");
+  let cap = "Seven years of primary school, and the S.E.A. at the end of them.";
+  if(!teach && li !== null){
+    const gap = 6 - li;
+    const who = role === "parent" ? (childName ? childName.split(" ")[0] + " is" : "Your child is") : "You are";
+    const W = ["","one","two","three","four","five","six"];
+    cap = `${who} in <b>${LEVELS[li].name}</b> &middot; S.E.A. in <b>${y}</b>` +
+          (gap ? ` &middot; ${W[gap]} more class${gap > 1 ? "es" : ""} after this one` : " &middot; this is the year");
+  }
+  $("#journeyCap").innerHTML = cap;
+  if(teach){ $("#levelPick").innerHTML = ""; return; }
+  if(li === null){
+    $("#levelPick").innerHTML = `<p style="margin-top:.85rem;font-weight:700">${role === "parent" ? "Which class is your child in?" : "Which class are you in?"}</p>
+      <div class="levelpick">${LEVELS.map((l,i) => `<button class="${l.sea ? "sea" : ""}" data-li="${i}">${l.name}</button>`).join("")}</div>
+      <p class="muted" style="font-size:12.5px;margin-top:.5rem">The app moves you up a class every September by itself.</p>`;
+  } else {
+    $("#levelPick").innerHTML = seaYearFromSheet() ? ""
+      : `<div style="margin-top:.7rem"><button class="btn ghost sm" id="levelChange">Not the right class? Change it</button></div>`;
+  }
+}
+$("#levelPick").addEventListener("click", e => {
+  const b = e.target.closest("[data-li]"); if(b){ setLevel(Number(b.dataset.li)); return; }
+  if(e.target.closest("#levelChange")) setLevel(null);
+});
+
 function renderHome(){
+  renderJourney();
   const P = viewProgress(), seen = P.seen || {}, exams = P.exams || [];
   const ids = Object.keys(seen).filter(k => seen[k].att > 0);
   const clean = ids.filter(k => seen[k].clean).length;
@@ -1909,17 +2177,34 @@ $("#resetBtn").addEventListener("click", () => {
 /* ============================================================
    Practice — the hint ladder
    ============================================================ */
-let pFilter = "All", pTopic = "All", pList = [], pIdx = 0, pSession = {n:0, ok:0};
+let pFilter = "All", pTopic = "All", pList = [], pIdx = 0, pSession = {n:0, ok:0}, pLevelSel = 6;
 
-const pPool = () => QUESTIONS.filter(q =>
+/* A class chip shows that class's own questions. Standard 4 and 5 are the
+   S.E.A. bank — Standard 5 is all of it, Standard 4 what suits Standard 4. */
+function levelOk(q){
+  if(pLevelSel === null) return true;
+  const qi = LEVEL_INDEX[q.level];
+  return pLevelSel >= 5 ? (!!q.sea && qi <= pLevelSel) : qi === pLevelSel;
+}
+const pPool = () => QUESTIONS.filter(q => levelOk(q) &&
   (pFilter === "All" || q.strand === pFilter) && (pTopic === "All" || q.topic === pTopic));
+function pLevels(){
+  $("#pLevel").innerHTML = LEVELS.map((l,i) =>
+    `<button class="chip" data-li="${i}" aria-pressed="${pLevelSel === i}">${l.name}${l.sea ? " · S.E.A." : ""}</button>`).join("")
+    + `<button class="chip" data-li="all" aria-pressed="${pLevelSel === null}">All</button>`;
+}
+$("#pLevel").addEventListener("click", e => {
+  const b = e.target.closest(".chip"); if(!b) return;
+  pLevelSel = b.dataset.li === "all" ? null : Number(b.dataset.li);
+  pLevels(); pTopics(); pBuild(true);
+});
 function pBuild(reshuffle){
   const pool = pPool();
   pList = reshuffle ? shuffle(pool) : pool;
   pIdx = 0; pRender();
 }
 function pTopics(){
-  const set = new Set(QUESTIONS.filter(q => pFilter === "All" || q.strand === pFilter).map(q => q.topic));
+  const set = new Set(QUESTIONS.filter(q => levelOk(q) && (pFilter === "All" || q.strand === pFilter)).map(q => q.topic));
   const opts = ["All", ...Array.from(set).sort()];
   if(!opts.includes(pTopic)) pTopic = "All";
   $("#pTopic").innerHTML = opts.map(t => `<option${t === pTopic ? " selected" : ""}>${t}</option>`).join("");
@@ -1946,8 +2231,9 @@ const RUNGS = [
 ];
 
 function pRender(){
+  const lv = pLevelSel === null ? "All classes" : LEVELS[pLevelSel].name;
   $("#pCount").textContent = pList.length
-    ? `Question ${pIdx+1} of ${pList.length} in this set.` : "No questions match that filter.";
+    ? `${lv} · question ${pIdx+1} of ${pList.length} in this set.` : `${lv} · no questions match that filter yet.`;
   $("#pSession").textContent = pSession.n ? `This session: ${pSession.ok} of ${pSession.n} right` : "";
   $("#pPrev").disabled = pIdx <= 0;
   $("#pNext").disabled = pIdx >= pList.length - 1;
@@ -2055,7 +2341,7 @@ const BLUEPRINT = {
   3:{Number:1,  Geometry:1, Measurement:1, Statistics:1}
 };
 let exam = null, examTimer = null;
-const poolFor = (sec,strand) => QUESTIONS.filter(q => q.sec === sec && q.strand === strand);
+const poolFor = (sec,strand) => QUESTIONS.filter(q => q.sea && q.sec === sec && q.strand === strand);
 
 function buildPaper(){
   const picked = {1:[],2:[],3:[]}, short = [];

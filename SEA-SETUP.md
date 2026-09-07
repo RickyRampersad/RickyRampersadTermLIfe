@@ -223,6 +223,35 @@ its place, and that the `.mark` rule still matches what CLAUDE.md sets out.
 That check exists because a screen has twice shipped with an invented mark
 beside three screens carrying the real one.
 
+## Seven years, one destination
+
+The app covers primary school from Infant 1 to Standard 5, with the S.E.A. at
+the end of it. A child is placed by **one number — the year they will sit the
+S.E.A.** — and the class is worked out from the date: school years end in the
+calendar year the S.E.A. is sat in, so a child sitting it in 2029 is in
+Standard 3 in September 2026 and moves to Standard 4 in September 2027 with
+nobody touching anything. `levelIndexFor` and `seaYearFor` in the page are the
+whole rule, and `tests/test-sea.js` pins them to fixed dates.
+
+Where the number comes from: the **SEA Year** column of the Users sheet when
+the backend is deployed (a parent is placed where the child is); otherwise a
+class picked on the device the first time Home opens. A teacher is never asked.
+
+What a class sees:
+
+| Class | Practice | Mock paper |
+|---|---|---|
+| Infant 1 – Standard 3 | That class's own bank, plus any S.E.A. question tagged for it (`LEVEL_OF`) | Not offered |
+| Standard 4 | The S.E.A. bank filtered to what suits Standard 4 | Yes, for practice |
+| Standard 5 | The whole S.E.A. bank | Yes |
+
+Every question carries a `level`. The 71 examination-style questions also carry
+`sea:true`, and **only those** can enter a mock paper — the test checks a lower
+class's question never does. The lower-class bank (`I1-`, `I2-`, `S1-`, `S2-`,
+`S3-` ids) is a first six or seven questions per class so no class opens
+empty. It is a start, not a syllabus: the full seven-year bank is the real
+content job, and it wants a primary teacher writing beside whoever types.
+
 ## Sponsors
 
 Families never pay; sponsors pay for the reach. `SPONSORS` at the top of the

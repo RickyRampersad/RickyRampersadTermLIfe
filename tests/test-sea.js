@@ -33,8 +33,8 @@ vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
 vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
-  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, isRight };', sandbox);
-const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, isRight } = sandbox.__bank;
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
+const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -72,14 +72,14 @@ const BLUEPRINT = { 1: { Number:10, Geometry:3, Measurement:4, Statistics:3 },
                     3: { Number:1,  Geometry:1, Measurement:1, Statistics:1 } };
 const thin = [];
 for (const sec of [1, 2, 3]) for (const st of STRANDS) {
-  const have = QUESTIONS.filter(q => q.sec === sec && q.strand === st).length;
+  const have = QUESTIONS.filter(q => q.sea && q.sec === sec && q.strand === st).length;
   if (have < BLUEPRINT[sec][st]) thin.push(`Section ${sec} ${st}: ${have} of ${BLUEPRINT[sec][st]}`);
 }
 ok('the bank can fill every slot in the Ministry blueprint', thin.length === 0, thin.join('; '));
 
 // Section II must be able to reach its official 39 marks, which needs both
 // 2-mark and 3-mark items to swap between.
-const s2 = QUESTIONS.filter(q => q.sec === 2);
+const s2 = QUESTIONS.filter(q => q.sea && q.sec === 2);
 ok('Section II has both 2-mark and 3-mark items to tune with',
    s2.some(q => q.marks === 2) && s2.some(q => q.marks === 3));
 
@@ -102,7 +102,13 @@ const RECOMPUTED = {
   S01: 3, S02: (4 + 7 + 9 + 12) / 4, S03: (12 + 15 + 18 + 11 + 14) / 5,
   S04: 15 - 8, S05: 12 + 8 + 15 + 5, S07: 5 * 2 + 2,
   S08: 20 * 5 - (18 + 22 + 15 + 25), S09: (6 + 8 + 8 + 9 + 14) / 5,
-  S10: 60 * 0.25, S11: 7 * 4
+  S10: 60 * 0.25, S11: 7 * 4,
+  // the lower-class bank
+  'I1-01': 7, 'I1-02': 10, 'I1-03': 3 + 2, 'I1-04': 3, 'I1-06': 3 - 2,
+  'I2-01': 12 + 6, 'I2-02': 15 - 7, 'I2-03': 4, 'I2-05': 7, 'I2-06': 6 + 4,
+  'S1-01': 5 * 4, 'S1-02': 300 + 40 + 7, 'S1-03': 18 / 2, 'S1-04': 4, 'S1-05': 100, 'S1-06': 8 - 5,
+  'S2-01': 36 / 4, 'S2-02': 50, 'S2-03': 20 / 4, 'S2-04': 2, 'S2-05': 6 * 4, 'S2-06': 100 - 75, 'S2-07': 7 + 5,
+  'S3-01': 234 * 3, 'S3-05': 5 * 3, 'S3-07': 4 * 2
 };
 const drift = [];
 let checked = 0;
@@ -215,6 +221,29 @@ ok('no substitute mark is drawn in place of it',
    !/<text[^>]*>\s*RR\s*</.test(page) && !/<text[^>]*>\s*RD\s*</.test(page));
 ok('the mark is styled the way CLAUDE.md sets out',
    /\.mark\{[^}]*border-radius:13px/.test(page) && /\.mark img\{[^}]*width:100%/.test(page));
+
+// ---- levels ----------------------------------------------------------------------
+// Seven years, one destination. A child is placed by the year of their S.E.A.
+// and moved up every September by the calendar, never by hand.
+const badLevel = QUESTIONS.filter(q => !(q.level in LEVEL_INDEX)).map(q => q.id);
+ok('every question sits in one of the seven classes', badLevel.length === 0, badLevel.join(', '));
+const sea = QUESTIONS.filter(q => q.sea);
+ok('the S.E.A. bank is the 71 examination-style questions and nothing from the lower classes',
+   sea.length === 71 && sea.every(q => /^[NGMS]\d\d$/.test(q.id)) && sea.every(q => LEVEL_INDEX[q.level] >= 4));
+ok('every lower-class question is a one-mark item that never enters a mock paper',
+   QUESTIONS.filter(q => !q.sea).every(q => q.sec === 1 && q.marks === 1 && LEVEL_INDEX[q.level] <= 4));
+const perLevel = Object.fromEntries(LEVELS.map(l => [l.k, QUESTIONS.filter(q => q.level === l.k).length]));
+ok(`no class is empty (${Object.values(perLevel).join('/')})`, Object.values(perLevel).every(n => n >= 6));
+const sep2026 = new Date(2026, 8, 7), jun2027 = new Date(2027, 5, 1), sep2027 = new Date(2027, 8, 1);
+ok('the school year that starts in September is named for the year it ends in',
+   schoolYear(sep2026) === 2027 && schoolYear(jun2027) === 2027 && schoolYear(sep2027) === 2028);
+ok('a child sitting the S.E.A. in 2027 is in Standard 5 now', LEVELS[levelIndexFor(2027, sep2026)].k === 'std5');
+ok('a child sitting it in 2029 is in Standard 3 now, still in June, and in Standard 4 the next September',
+   LEVELS[levelIndexFor(2029, sep2026)].k === 'std3' && LEVELS[levelIndexFor(2029, jun2027)].k === 'std3' &&
+   LEVELS[levelIndexFor(2029, sep2027)].k === 'std4');
+ok('a child who starts Infant 1 this September sits the S.E.A. in 2033', seaYearFor(0, sep2026) === 2033);
+ok('picking a class and reading it back round-trips for every class',
+   LEVELS.every((l, i) => levelIndexFor(seaYearFor(i, sep2026), sep2026) === i));
 
 // ---- sponsors ------------------------------------------------------------------
 const spBad = [];

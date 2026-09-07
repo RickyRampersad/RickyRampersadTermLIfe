@@ -37,9 +37,12 @@
  *
  *  ── TABS (academySetup creates them) ────────────────────────────────
  *  Users    : Email | Name | Role | Student Email | Status | Paid Until |
- *             Salt | Hash | Created | Last Sign-in | Note
+ *             Salt | Hash | Created | Last Sign-in | Note | SEA Year
  *             Role is student, parent or teacher. A parent's Student
  *             Email links them to one child. Leave Salt and Hash blank.
+ *             SEA Year is the year the child will sit the S.E.A. — one
+ *             number that never needs updating: the app works out the
+ *             class from it and moves the child up every September.
  *  Progress : Email | Updated | JSON        ← one row per person
  *  Activity : At | Email | Did | Note
  *
@@ -72,7 +75,7 @@ var ACADEMY_ROLES = { student: 1, parent: 1, teacher: 1 };
 function academySetup() {
   var ss = SpreadsheetApp.getActive();
   var want = {};
-  want[ACADEMY.USERS]    = ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created','Last Sign-in','Note'];
+  want[ACADEMY.USERS]    = ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created','Last Sign-in','Note','SEA Year'];
   want[ACADEMY.PROGRESS] = ['Email','Updated','JSON'];
   want[ACADEMY.ACTIVITY] = ['At','Email','Did','Note'];
   Object.keys(want).forEach(function (name) {
@@ -198,7 +201,7 @@ function academySave_(b) {
 function asession_(u) {
   var out = {
     token: atoken_(u),
-    user: { email: u.email, name: u.name, role: u.role,
+    user: { email: u.email, name: u.name, role: u.role, seaYear: u.seaYear,
             student: null, paidUntil: u.paidUntil ? adate_(u.paidUntil) : '' },
     progress: aprogress_(u.email),
     child: null
@@ -206,7 +209,7 @@ function asession_(u) {
   if (u.role === 'parent' && u.student) {
     var c = auser_(u.student);
     out.user.student = { email: u.student, name: c ? c.name : '' };
-    out.child = { name: c ? c.name : '', email: u.student, progress: aprogress_(u.student) };
+    out.child = { name: c ? c.name : '', email: u.student, seaYear: c ? c.seaYear : null, progress: aprogress_(u.student) };
   }
   return out;
 }
@@ -237,7 +240,8 @@ function auser_(email) {
       status: String(r.status || '').trim().toLowerCase(),
       paidUntil: r['paid until'] || '',
       salt: String(r.salt || ''),
-      hash: String(r.hash || '')
+      hash: String(r.hash || ''),
+      seaYear: Number(r['sea year']) || null
     };
   }
   return null;

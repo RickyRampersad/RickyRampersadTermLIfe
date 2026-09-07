@@ -60,17 +60,49 @@ const ok = (what, cond, extra) => {
   await page.fill('#gateCode', 'NOPE');
   await page.click('#gateGo');
   ok('a wrong code is refused', (await page.textContent('#gateErr')).length > 0 && await page.isHidden('#app'));
-  const signIn = async (roleName, code) => {
+  const signIn = async (roleName, code, placeIn = 6) => {
     await page.evaluate(() => { sessionStorage.clear(); });
     await page.goto(URL, { waitUntil: 'networkidle' });
     await page.click(`#roles .role[data-role="${roleName}"]`);
     await page.fill('#gateCode', code);
     await page.click('#gateGo');
     await page.waitForSelector('#app:not([hidden])');
+    if (placeIn !== null && await page.$('#levelPick [data-li]')) await page.click(`#levelPick [data-li="${placeIn}"]`);
   };
-  await signIn('student', 'RRB2027');
+  // ---- seven years, one destination ------------------------------------------
+  await signIn('student', 'RRB2027', null);
   ok('the student code opens the app', await page.isVisible('#app') &&
-     (await page.textContent('#rolePill')) === 'Student');
+     (await page.textContent('#rolePill')).startsWith('Student'));
+  ok('a student who has not been placed is asked which class they are in',
+     (await page.$$eval('#levelPick [data-li]', n => n.length)) === 7);
+  ok('the journey shows all seven classes with the S.E.A. at the end',
+     (await page.$$eval('#journey .step', n => n.length)) === 7 &&
+     /S\.E\.A\./.test(await page.textContent('#journey .step:last-child')));
+  await page.click('#levelPick [data-li="4"]');            // Standard 3
+  const cap = () => page.textContent('#journeyCap');
+  ok('picking Standard 3 places the child and names the S.E.A. year',
+     /Standard 3/.test(await cap()) && /S\.E\.A\. in \d{4}/.test(await cap()) && /two more classes after this one/.test(await cap()));
+  ok('the pill says the class', /Standard 3/.test(await page.textContent('#rolePill')));
+  ok('an earlier class is not offered the S.E.A. mock paper', (await page.$('#nav button[data-view="exam"]')) === null);
+  await page.click('#nav button[data-view="practice"]');
+  ok("practice opens on the child's own class",
+     (await page.$eval('#pLevel .chip[aria-pressed="true"]', b => b.dataset.li)) === '4' &&
+     /Standard 3 · question 1 of \d+/.test(await page.textContent('#pCount')));
+  const std3Ids = await page.evaluate(() => pList.map(q => q.id));
+  ok('and it is that class\'s own bank plus the S.E.A. questions suited to it, nothing from the infants',
+     std3Ids.filter(id => /^S3-/.test(id)).length === 7 && std3Ids.every(id => /^S3-/.test(id) || /^[NGMS]\d\d$/.test(id)));
+  await page.click('#pLevel .chip[data-li="0"]');
+  ok('Infant 1 has its own questions', await page.evaluate(() => pList.length >= 6 && pList.every(q => /^I1-/.test(q.id))));
+  await page.click('#nav button[data-view="home"]');
+  await page.click('#levelChange');
+  ok('the class can be changed if it was picked wrong', (await page.$$eval('#levelPick [data-li]', n => n.length)) === 7);
+  await page.click('#levelPick [data-li="6"]');            // Standard 5
+  ok('Standard 5 gets the mock paper', (await page.$('#nav button[data-view="exam"]')) !== null && /this is the year/.test(await cap()));
+  await page.click('#nav button[data-view="practice"]');
+  const std5Ids = await page.evaluate(() => pList.map(q => q.id));
+  ok('Standard 5 practice is the whole S.E.A. bank and nothing from the infants',
+     std5Ids.length === 71 && std5Ids.every(id => /^[NGMS]\d\d$/.test(id)));
+  await page.click('#nav button[data-view="home"]');
 
   // ---- every section opens -------------------------------------------------
   for (const v of ['practice', 'exam', 'writing', 'papers', 'syllabus', 'home']) {
@@ -198,7 +230,7 @@ const ok = (what, cond, extra) => {
 
   // ---- parent and teacher see everything at once ---------------------------
   await signIn('parent', 'RRBPARENT');
-  ok('the parent code opens the app', (await page.textContent('#rolePill')) === 'Parent');
+  ok('the parent code opens the app', (await page.textContent('#rolePill')).startsWith('Parent'));
   await page.click('#nav button[data-view="practice"]');
   const parentRungs = await page.$$eval('#pRungs .rung', n => n.map(b => b.disabled));
   ok('a parent has the whole ladder open without attempting anything',
@@ -209,7 +241,8 @@ const ok = (what, cond, extra) => {
   ok('a parent is not given the mock exam', (await page.$('#nav button[data-view="exam"]')) === null);
 
   await signIn('teacher', 'RRBTEACHER');
-  ok('the teacher code opens the app', (await page.textContent('#rolePill')) === 'Teacher');
+  ok('the teacher code opens the app', (await page.textContent('#rolePill')).startsWith('Teacher'));
+  ok('a teacher is not asked which class they are in', (await page.$('#levelPick [data-li]')) === null);
   const tViews = await page.$$eval('#nav button', n => n.map(b => b.dataset.view));
   ok('a teacher gets every section including the key',
      ['home','practice','exam','writing','papers','syllabus','key'].every(v => tViews.includes(v)),
@@ -219,10 +252,11 @@ const ok = (what, cond, extra) => {
 
   // Every question in the key must carry all four rungs.
   await page.click('#nav button[data-view="key"]');
+  const total = await page.evaluate(() => QUESTIONS.length);
   const keyBlocks = await page.$$eval('#kHost > .card > div', n => n.length);
   const keyHints  = await page.$$eval('#kHost .hint', n => n.length);
-  ok(`the key holds all 71 questions with four rungs each (${keyBlocks} blocks, ${keyHints} rungs)`,
-     keyBlocks === 71 && keyHints === 71 * 4);
+  ok(`the key holds every question with four rungs each (${keyBlocks} blocks, ${keyHints} rungs)`,
+     keyBlocks === total && keyHints === total * 4);
 
   // ---- the branch mark, on screen ------------------------------------------
   const marks = await page.$$eval('.mark img', n => n.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth })));
@@ -276,7 +310,7 @@ const ok = (what, cond, extra) => {
   await page.setViewportSize({ width: 1180, height: 900 });
   const FAKE = 'https://academy.test/exec';
   const users = {
-    'aisha@example.com': { name: 'Aisha Ali', role: 'student', hash: null, student: '' },
+    'aisha@example.com': { name: 'Aisha Ali', role: 'student', hash: null, student: '', seaYear: 2029 },
     'dad@example.com':   { name: 'Imran Ali', role: 'parent',  hash: null, student: 'aisha@example.com' },
     'off@example.com':   { name: 'Off',       role: 'student', hash: null, status: 'disabled' }
   };
@@ -285,8 +319,8 @@ const ok = (what, cond, extra) => {
   const session = email => {
     const u = users[email];
     const out = { ok: true, token: 'tok-' + email, progress: progress[email] || null, child: null,
-      user: { email, name: u.name, role: u.role, student: u.student ? { email: u.student, name: users[u.student].name } : null } };
-    if (u.role === 'parent' && u.student) out.child = { name: users[u.student].name, email: u.student, progress: progress[u.student] || null };
+      user:{email,name:u.name,role:u.role,seaYear:u.seaYear||null, student: u.student ? { email: u.student, name: users[u.student].name } : null } };
+    if (u.role === 'parent' && u.student) out.child={name:users[u.student].name,email:u.student,seaYear:users[u.student].seaYear||null, progress: progress[u.student] || null };
     return out;
   };
   await page.route(FAKE, async route => {
@@ -336,7 +370,9 @@ const ok = (what, cond, extra) => {
   await page.fill('#gPass1', 'mango-tree-2027'); await page.fill('#gPass2', 'mango-tree-2027'); await page.click('#gGo');
   await page.waitForSelector('#app:not([hidden])');
   ok('choosing a password signs the student in, by name',
-     (await page.textContent('#rolePill')) === 'Student · Aisha' && (await page.$('#nav button[data-view="key"]')) === null);
+     (await page.textContent('#rolePill')) .startsWith('Student · Aisha') && (await page.$('#nav button[data-view="key"]')) === null);
+  ok('and is placed by the sheet, so is not asked for a class',
+     /Standard 3/.test(await page.textContent('#rolePill')) && (await page.$('#levelPick [data-li]')) === null);
 
   // Progress goes up after a change, and comes back on the next device.
   await page.click('#nav button[data-view="practice"]');
@@ -373,8 +409,9 @@ const ok = (what, cond, extra) => {
   await page.fill('#gPass1', 'doubles-and-chutney'); await page.fill('#gPass2', 'doubles-and-chutney'); await page.click('#gGo');
   await page.waitForSelector('#app:not([hidden])');
   ok('the parent is in, by name, with the key and without the mock exam',
-     (await page.textContent('#rolePill')) === 'Parent · Imran' &&
+     (await page.textContent('#rolePill')).startsWith('Parent · Imran') &&
      (await page.$('#nav button[data-view="key"]')) !== null && (await page.$('#nav button[data-view="exam"]')) === null);
+  ok('the parent is placed where the child is', /Aisha is in <b>Standard 3<\/b>/.test(await page.innerHTML('#journeyCap')));
   ok("the parent's home is the child's progress, by the child's name",
      /Aisha's progress/.test(await page.textContent('#homeKicker')) && (await page.textContent('#hA')) === '1');
   ok('a parent cannot clear the child\'s progress', await page.isHidden('#resetBtn'));

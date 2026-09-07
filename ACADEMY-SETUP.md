@@ -40,6 +40,7 @@ the gate, so the live site never stops working.
 | Student Email | for a parent | Links the parent to one child. That child's progress is what the parent sees. |
 | Status | to switch off | `disabled` refuses them at once — even a sign-in already open |
 | Paid Until | to sell a season | A date. Access runs to the end of that day, then they are refused with a message naming the Academy. Blank = no end. |
+| SEA Year | yes, for a child | The year they will sit the S.E.A. — e.g. `2029`. One number, never updated: the app works out the class and moves them up every September. A parent's row needs none; they are placed where their child is. |
 | Salt, Hash | **never** | Filled in when they choose a password |
 | Created, Last Sign-in, Note | no | |
 
@@ -52,7 +53,7 @@ password choice. Never a password.
 
 | To… | Do |
 |---|---|
-| Add a family | A row for the child (`student`) and a row for the parent (`parent`, with the child's e-mail in Student Email). Tell them the site address. |
+| Add a family | A row for the child (`student`, with the S.E.A. year) and a row for the parent (`parent`, with the child's e-mail in Student Email). Tell them the site address. |
 | Reset a password | Clear the **Salt** and **Hash** cells on their row. Next sign-in they choose a new one. |
 | Switch someone off | `disabled` in Status. |
 | Sell a season | A date in Paid Until. Extend it when they pay again. |
