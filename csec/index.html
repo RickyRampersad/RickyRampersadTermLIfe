@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CSEC Study Hub | Form 1 to Form 5 Exam Preparation</title>
+<meta name="description" content="A CSEC / CXC study hub for Trinidad and Tobago secondary students — daily practice, syllabus mastery tracking, and official past-paper resources from Form 1 through Form 5."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Form 1 – Form 5</span></div>
+    <nav class="topnav">
+      <a href="index.html" class="on">Sign in</a>
+      <a href="planner.html">Planner</a>
+      <a href="papers.html">Past papers</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">CSEC · CXC · Trinidad &amp; Tobago</div>
+      <h1>Five years of preparation, one subject at a time.</h1>
+      <p>Daily practice tied to the actual CSEC syllabus, mastery tracked strand by strand, and a
+         straight line from Form 1 to the examination hall. Sign in to pick up where you left off.</p>
+    </div>
+
+    <!-- ============ WHO ARE YOU ============ -->
+    <div id="rolepick">
+      <div class="section-label">Choose your sign-in</div>
+      <div class="grid g3">
+        <button class="card subj-card" data-role="student" style="cursor:pointer">
+          <div class="ico">🎒</div>
+          <div class="nm">Student</div>
+          <div class="meta">Your daily plan, practice and progress</div>
+        </button>
+        <button class="card subj-card" data-role="parent" style="cursor:pointer">
+          <div class="ico">👪</div>
+          <div class="nm">Parent</div>
+          <div class="meta">See how your child is really doing</div>
+        </button>
+        <button class="card subj-card" data-role="teacher" style="cursor:pointer">
+          <div class="ico">🍎</div>
+          <div class="nm">Teacher</div>
+          <div class="meta">Class view and focus topics</div>
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ SIGN IN ============ -->
+    <div id="signin" class="hidden" style="margin-top:24px">
+      <div class="card narrow" style="margin:0 auto">
+        <h3 id="si-title">Sign in</h3>
+        <p class="sub" style="margin-bottom:16px">Pick your profile and enter your PIN.</p>
+
+        <div id="si-has">
+          <div class="field">
+            <label class="fl" for="si-who">Profile</label>
+            <select class="fi" id="si-who"></select>
+          </div>
+          <div class="field">
+            <label class="fl" for="si-pin">PIN</label>
+            <input class="fi" id="si-pin" type="password" inputmode="numeric" autocomplete="off" placeholder="4 digits"/>
+          </div>
+          <button class="btn wide" id="si-go">Sign in →</button>
+          <div class="err" id="si-err"></div>
+        </div>
+
+        <div id="si-none" class="hidden empty">
+          <div class="ico">👋</div>
+          <p>No <b id="si-rolename">student</b> profile on this device yet.<br>Create one to get started.</p>
+        </div>
+
+        <div style="margin-top:16px;display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn ghost sm" id="si-new">+ Create a profile</button>
+          <button class="btn ghost sm" id="si-back">← Change role</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CREATE PROFILE ============ -->
+    <div id="create" class="hidden" style="margin-top:24px">
+      <div class="card narrow" style="margin:0 auto">
+        <h3>Create a profile</h3>
+        <p class="sub" style="margin-bottom:16px">This is stored on this device only. Nothing is uploaded.</p>
+
+        <div class="field">
+          <label class="fl" for="c-name">Name</label>
+          <input class="fi" id="c-name" placeholder="e.g. Anaya"/>
+        </div>
+        <div class="field">
+          <label class="fl" for="c-role">Role</label>
+          <select class="fi" id="c-role">
+            <option value="student">Student</option>
+            <option value="parent">Parent</option>
+            <option value="teacher">Teacher</option>
+          </select>
+        </div>
+        <div class="field" id="c-formwrap">
+          <label class="fl" for="c-form">Current form</label>
+          <select class="fi" id="c-form">
+            <option value="1">Form 1</option>
+            <option value="2" selected>Form 2</option>
+            <option value="3">Form 3</option>
+            <option value="4">Form 4</option>
+            <option value="5">Form 5</option>
+          </select>
+        </div>
+        <div class="field">
+          <label class="fl" for="c-school">School</label>
+          <input class="fi" id="c-school" value="Lakshmi Girls’ Hindu College"/>
+        </div>
+        <div class="field">
+          <label class="fl" for="c-pin">Choose a PIN (4 digits)</label>
+          <input class="fi" id="c-pin" type="password" inputmode="numeric" maxlength="6" placeholder="e.g. 2468"/>
+        </div>
+
+        <button class="btn wide" id="c-go">Create profile →</button>
+        <div class="err" id="c-err"></div>
+        <div style="margin-top:14px">
+          <button class="btn ghost sm" id="c-back">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ WHAT THIS IS ============ -->
+    <div class="section-label">What is inside</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>🎯 A plan for today, not a pile of papers</h3>
+        <p class="sub">The hub looks at what you have got wrong, what you have not seen, and what is due
+        for review, then hands you six things to work on. Answer a question wrong and that topic comes
+        back tomorrow. Get it right repeatedly and the gap widens.</p>
+      </div>
+      <div class="card">
+        <h3>📊 Mastery by syllabus strand</h3>
+        <p class="sub">Progress is tracked against the actual CSEC syllabus sections — not "Maths 62%"
+        but "Consumer Arithmetic 45%, Algebra 81%". That is the difference between knowing you are
+        behind and knowing what to do about it.</p>
+      </div>
+      <div class="card">
+        <h3>📚 Official sources, properly linked</h3>
+        <p class="sub">Every CSEC syllabus, specimen paper and mark scheme is free from CXC, and the
+        Ministry of Education carries worked solutions for T&amp;T students. The hub points you at the
+        real ones rather than a copy of unknown vintage.</p>
+      </div>
+      <div class="card">
+        <h3>🧭 Form 1 to Form 5, in order</h3>
+        <p class="sub">Form 3 is when subject choices are made and Form 4 is when the syllabus starts
+        for real. The planner shows the whole road, and only sets work from the forms you have
+        actually reached.</p>
+      </div>
+    </div>
+
+    <div class="note" style="margin-top:22px">
+      <b>About these sign-ins.</b> This site is served as static pages, so there is no server to hold
+      accounts. A profile and its PIN live in this browser on this device, which keeps a younger
+      sibling out of the wrong profile — it is not a security boundary and it will not stop a
+      determined person. Progress does not sync between devices on its own; use
+      <b>Settings → Backup</b> to move it.
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub · Built for Trinidad &amp; Tobago students
+  </div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var role='student';
+  var $=function(id){return document.getElementById(id);};
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+
+  /* Already signed in? Go straight through. */
+  var cur=CSEC.current();
+  if(cur){ location.href=HOME[cur.role]||'student.html'; return; }
+
+  function show(which){
+    ['rolepick','signin','create'].forEach(function(id){
+      $(id).classList.toggle('hidden', id!==which);
+    });
+  }
+
+  function fillProfiles(){
+    var list=CSEC.profiles().filter(function(p){return p.role===role;});
+    var sel=$('si-who'); sel.innerHTML='';
+    list.forEach(function(p){
+      var o=document.createElement('option');
+      o.value=p.id;
+      o.textContent=p.name+(p.role==='student'?' — Form '+p.form:'');
+      sel.appendChild(o);
+    });
+    $('si-has').classList.toggle('hidden',!list.length);
+    $('si-none').classList.toggle('hidden',!!list.length);
+    $('si-rolename').textContent=role;
+    $('si-title').textContent='Sign in as '+role;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('[data-role]'),function(b){
+    b.addEventListener('click',function(){
+      role=b.getAttribute('data-role');
+      fillProfiles(); show('signin'); $('si-err').textContent='';
+    });
+  });
+
+  $('si-back').addEventListener('click',function(){show('rolepick');});
+  $('c-back').addEventListener('click',function(){fillProfiles();show('signin');});
+  $('si-new').addEventListener('click',function(){
+    $('c-role').value=role;
+    $('c-formwrap').classList.toggle('hidden',role!=='student');
+    $('c-err').textContent=''; show('create'); $('c-name').focus();
+  });
+  $('c-role').addEventListener('change',function(){
+    $('c-formwrap').classList.toggle('hidden',$('c-role').value!=='student');
+  });
+
+  function doSignIn(){
+    var id=$('si-who').value, pin=$('si-pin').value;
+    var r=CSEC.signIn(id,pin);
+    if(!r.ok){ $('si-err').textContent=r.msg; return; }
+    location.href=HOME[r.profile.role]||'student.html';
+  }
+  $('si-go').addEventListener('click',doSignIn);
+  $('si-pin').addEventListener('keydown',function(e){ if(e.key==='Enter') doSignIn(); });
+
+  $('c-go').addEventListener('click',function(){
+    var name=$('c-name').value.trim();
+    var pin=$('c-pin').value.trim();
+    if(!name){ $('c-err').textContent='Please enter a name.'; return; }
+    if(!/^\d{4,6}$/.test(pin)){ $('c-err').textContent='PIN must be 4 to 6 digits.'; return; }
+    var p=CSEC.createProfile({
+      name:name, role:$('c-role').value,
+      form:parseInt($('c-form').value,10)||2,
+      school:$('c-school').value.trim(), pin:pin
+    });
+    CSEC.signIn(p.id,pin);
+    location.href=HOME[p.role]||'student.html';
+  });
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Parent View | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Parent view</span></div>
+    <nav class="topnav">
+      <a href="parent.html" class="on">Progress</a>
+      <a href="planner.html">Planner</a>
+      <a href="papers.html">Past papers</a>
+      <a href="settings.html">Settings</a>
+      <a href="#" id="signout">Sign out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Parent view</div>
+      <h1 id="hd-title">Progress</h1>
+      <p id="hd-sub">An honest picture of what is going well and what is not.</p>
+    </div>
+
+    <div id="nostudents" class="hidden empty">
+      <div class="ico">🎒</div>
+      <p>There is no student profile on this device yet.<br>
+      Create one from the <a href="index.html" style="color:var(--gold)">sign-in page</a> and the progress will appear here.</p>
+    </div>
+
+    <div id="body" class="hidden">
+      <div class="card" style="margin-bottom:18px">
+        <label class="fl" for="pick">Viewing</label>
+        <select class="fi" id="pick"></select>
+      </div>
+
+      <div class="grid g4">
+        <div class="tile"><div class="big" id="t-streak">0</div><div class="lab">Day streak</div></div>
+        <div class="tile teal"><div class="big" id="t-answered">0</div><div class="lab">Questions answered</div></div>
+        <div class="tile"><div class="big" id="t-acc">—</div><div class="lab">Overall accuracy</div></div>
+        <div class="tile teal"><div class="big" id="t-week">0</div><div class="lab">Sessions this week</div></div>
+      </div>
+
+      <div class="section-label">The honest summary</div>
+      <div class="note gold" id="summary"></div>
+
+      <div class="section-label">Practice over the last 28 days</div>
+      <div class="card">
+        <div id="grid"></div>
+        <p class="sub" style="margin-top:14px" id="streak-line"></p>
+      </div>
+
+      <div class="section-label">Subject by subject</div>
+      <div class="grid g4" id="subjects"></div>
+
+      <div id="weak-wrap" class="hidden">
+        <div class="section-label">The three topics to ask about tonight</div>
+        <div class="rows" id="weak"></div>
+        <div class="note" style="margin-top:14px">
+          These are the syllabus topics with the lowest accuracy and enough attempts to be meaningful.
+          Asking "show me a question on <i>this</i>" is more useful than asking whether homework is done.
+        </div>
+      </div>
+
+      <div class="section-label">Recent sessions</div>
+      <div class="scrollx card">
+        <table class="tbl" id="sessions"><thead><tr>
+          <th>Date</th><th>Focus</th><th>Answered</th><th>Correct</th><th>Time</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="section-label">How to help without hovering</div>
+      <div class="grid g2">
+        <div class="card">
+          <h3>Ask for the mistake, not the mark</h3>
+          <p class="sub">"What did you get wrong today and why?" tells you far more than a percentage.
+          Every question in the hub shows its reasoning, so the answer to that question is always available.</p>
+        </div>
+        <div class="card">
+          <h3>Protect the streak, not the hour</h3>
+          <p class="sub">Ten questions a night, every night, beats three hours on a Sunday. The streak
+          square on this page is the number to watch — gaps in it explain most falling marks.</p>
+        </div>
+        <div class="card">
+          <h3>Form 3 is the decision year</h3>
+          <p class="sub">Subject choices for CSEC are made on Form 3 performance. A weak strand fixed
+          in Form 2 costs an evening; the same gap in Form 4 costs a grade.</p>
+        </div>
+        <div class="card">
+          <h3>Download the syllabus</h3>
+          <p class="sub">CXC publishes every CSEC syllabus free. It lists exactly what the examiner can
+          ask. <a href="papers.html" style="color:var(--gold)">The Past papers page</a> links each one.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['parent','teacher']); if(!me) return;
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+
+  $('signout').addEventListener('click',function(e){e.preventDefault();CSEC.signOut();location.href='index.html';});
+
+  var kids=CSEC.students();
+  if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }
+  $('body').classList.remove('hidden');
+
+  $('pick').innerHTML=kids.map(function(k){
+    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+  }).join('');
+  $('pick').addEventListener('change',function(){ paint($('pick').value); });
+
+  function paint(id){
+    var kid=CSEC.profile(id); if(!kid) return;
+    var st=CSEC.streak(kid.id), ov=CSEC.overallStat(kid.id), pr=CSEC.progress(kid.id);
+    var cd=CSEC.countdown(kid.form);
+
+    $('hd-title').textContent=kid.name;
+    $('hd-sub').textContent=kid.school+' · Form '+kid.form+' · sits CSEC in '+cd.year;
+
+    /* sessions in the last 7 days */
+    var weekAgo=Date.now()-7*86400000;
+    var week=pr.sessions.filter(function(s){return s.at>weekAgo;});
+
+    $('t-streak').textContent=st.current;
+    $('t-answered').textContent=ov.seen;
+    $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
+    $('t-week').textContent=week.length;
+
+    /* ---- the summary, written plainly ---- */
+    var lines=[];
+    if(!ov.seen){
+      lines.push('<b>'+esc(kid.name)+' has not answered any questions yet.</b> Nothing here is a judgement on the work being done at school — the hub simply has no data until practice starts.');
+    } else {
+      lines.push('<b>'+esc(kid.name)+' has answered '+ov.seen+' questions with '+ov.pct+'% accuracy across '+ov.subjectsStarted+' of '+(kid.subjects||[]).length+' subjects.</b>');
+      if(st.current>=5) lines.push('The streak is '+st.current+' days — that is the habit working, and it is the single best predictor of the eventual grade.');
+      else if(st.current>0) lines.push('Current streak is '+st.current+' day'+(st.current===1?'':'s')+'. Getting that above five is worth more than any single long session.');
+      else lines.push('There is no active streak. The last practice was '+(pr.days.length? 'on '+pr.days[pr.days.length-1] : 'never')+'.');
+
+      var untouched=(kid.subjects||[]).filter(function(s){ return !CSEC.subjectStat(kid.id,s).seen; });
+      if(untouched.length) lines.push('Not yet started: '+untouched.map(function(s){return esc((C.subjects[s]||{}).name||s);}).join(', ')+'.');
+    }
+    $('summary').innerHTML=lines.join('<br><br>');
+
+    /* ---- habit ---- */
+    $('grid').innerHTML=CSEC.streakGrid(kid.id);
+    $('streak-line').textContent=st.current
+      ? 'Current streak '+st.current+' day'+(st.current===1?'':'s')+'. Best so far '+st.best+'.'
+      : 'No active streak.';
+
+    /* ---- subjects ---- */
+    $('subjects').innerHTML=(kid.subjects||[]).map(function(sid){
+      var s=C.subjects[sid]; if(!s) return '';
+      var ss=CSEC.subjectStat(kid.id,sid);
+      return '<div class="subj-card">'+CSEC.ring(ss.pct,78,s.name+' mastery')+
+        '<div class="nm">'+esc(s.name)+'</div>'+
+        '<div class="meta">'+(ss.seen? ss.correct+'/'+ss.seen+' correct' : 'Not started')+'</div></div>';
+    }).join('');
+
+    /* ---- weak spots ---- */
+    var weak=CSEC.weakSpots(kid.id,3).filter(function(w){return w.pct<75;});
+    $('weak-wrap').classList.toggle('hidden',!weak.length);
+    $('weak').innerHTML=weak.map(function(w){
+      return '<div class="row"><div class="r-ico">'+w.icon+'</div>'+
+        '<div class="r-text"><b>'+esc(w.strandName)+'</b><span>'+esc(w.subjName)+' · '+w.seen+' answered</span></div>'+
+        '<div style="flex:none;width:110px"><div class="bar '+(w.pct>=50?'warn':'bad')+'">'+
+        '<i style="width:'+w.pct+'%"></i></div>'+
+        '<div style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:4px">'+w.pct+'%</div></div></div>';
+    }).join('');
+
+    /* ---- sessions ---- */
+    var tb=$('sessions').querySelector('tbody');
+    var recent=pr.sessions.slice(-12).reverse();
+    tb.innerHTML=recent.length? recent.map(function(s){
+      return '<tr><td>'+esc(s.date)+'</td><td>'+esc(s.subj)+'</td><td>'+s.n+'</td>'+
+        '<td>'+s.correct+' ('+(s.n?Math.round(100*s.correct/s.n):0)+'%)</td>'+
+        '<td>'+(s.secs<60? s.secs+'s' : Math.round(s.secs/60)+'m')+'</td></tr>';
+    }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No sessions recorded yet.</td></tr>';
+  }
+
+  paint(kids[0].id);
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

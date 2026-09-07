@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Teacher View | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Teacher view</span></div>
+    <nav class="topnav">
+      <a href="teacher.html" class="on">Class</a>
+      <a href="parent.html">Individual</a>
+      <a href="planner.html">Planner</a>
+      <a href="papers.html">Past papers</a>
+      <a href="settings.html">Settings</a>
+      <a href="#" id="signout">Sign out</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Teacher view</div>
+      <h1 id="hd-title">Class</h1>
+      <p id="hd-sub">Every student profile on this device, with the topics that need attention.</p>
+    </div>
+
+    <div id="nostudents" class="hidden empty">
+      <div class="ico">🎒</div>
+      <p>No student profiles on this device yet.<br>
+      Each student creates a profile from the <a href="index.html" style="color:var(--gold)">sign-in page</a>.</p>
+    </div>
+
+    <div id="body" class="hidden">
+
+      <div class="grid g4">
+        <div class="tile"><div class="big" id="t-students">0</div><div class="lab">Students</div></div>
+        <div class="tile teal"><div class="big" id="t-answered">0</div><div class="lab">Questions answered</div></div>
+        <div class="tile"><div class="big" id="t-acc">—</div><div class="lab">Class accuracy</div></div>
+        <div class="tile teal"><div class="big" id="t-active">0</div><div class="lab">Active this week</div></div>
+      </div>
+
+      <div class="section-label">Roster</div>
+      <div class="scrollx card">
+        <table class="tbl" id="roster"><thead><tr>
+          <th>Student</th><th>Form</th><th>Answered</th><th>Accuracy</th><th>Streak</th><th>Last active</th><th>Weakest topic</th>
+        </tr></thead><tbody></tbody></table>
+      </div>
+
+      <div class="section-label">Where the class is weakest</div>
+      <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
+        Strands with the lowest combined accuracy across every student on this device. Anything appearing
+        here with several students behind it is worth a lesson, not a worksheet.</p>
+      <div class="rows" id="classweak"></div>
+
+      <div class="section-label">Set a focus topic</div>
+      <div class="card">
+        <p class="sub" style="margin-bottom:16px">
+          A focus topic appears at the top of the student's desk with your note attached, until they
+          clear it. Use it to point at one thing, not five.</p>
+        <div class="grid g2">
+          <div class="field">
+            <label class="fl" for="f-student">Student</label>
+            <select class="fi" id="f-student"></select>
+          </div>
+          <div class="field">
+            <label class="fl" for="f-strand">Topic</label>
+            <select class="fi" id="f-strand"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label class="fl" for="f-note">Note to the student</label>
+          <input class="fi" id="f-note" placeholder="e.g. Ten questions on this before Friday."/>
+        </div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn" id="f-set">Set focus topic</button>
+          <button class="btn ghost" id="f-clear">Clear focus</button>
+        </div>
+        <div class="ok hidden" id="f-ok"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['teacher']); if(!me) return;
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+
+  $('signout').addEventListener('click',function(e){e.preventDefault();CSEC.signOut();location.href='index.html';});
+
+  var kids=CSEC.students();
+  if(!kids.length){ $('nostudents').classList.remove('hidden'); return; }
+  $('body').classList.remove('hidden');
+  $('hd-sub').textContent=kids.length+' student profile'+(kids.length===1?'':'s')+' on this device.';
+
+  /* ---------------- headline ---------------- */
+  var seen=0, correct=0, active=0, weekAgo=Date.now()-7*86400000;
+  kids.forEach(function(k){
+    var ov=CSEC.overallStat(k.id); seen+=ov.seen; correct+=ov.correct;
+    if(CSEC.progress(k.id).sessions.some(function(s){return s.at>weekAgo;})) active++;
+  });
+  $('t-students').textContent=kids.length;
+  $('t-answered').textContent=seen;
+  $('t-acc').textContent=seen?Math.round(100*correct/seen)+'%':'—';
+  $('t-active').textContent=active;
+
+  /* ---------------- roster ---------------- */
+  $('roster').querySelector('tbody').innerHTML=kids.map(function(k){
+    var ov=CSEC.overallStat(k.id), st=CSEC.streak(k.id), pr=CSEC.progress(k.id);
+    var last=pr.days.length? pr.days[pr.days.length-1] : '—';
+    var w=CSEC.weakSpots(k.id,1)[0];
+    var accCell = ov.pct==null ? '<span class="pill mute">no data</span>'
+      : '<span class="pill '+(ov.pct>=75?'good':ov.pct>=50?'gold':'bad')+'">'+ov.pct+'%</span>';
+    return '<tr><td><b>'+esc(k.name)+'</b></td><td>'+k.form+'</td><td>'+ov.seen+'</td>'+
+      '<td>'+accCell+'</td><td>'+st.current+'</td><td>'+esc(last)+'</td>'+
+      '<td>'+(w? esc(w.strandName)+' <span style="color:var(--muted)">('+w.pct+'%)</span>' : '<span style="color:var(--muted)">—</span>')+'</td></tr>';
+  }).join('');
+
+  /* ---------------- class weak strands ---------------- */
+  var agg={};
+  kids.forEach(function(k){
+    var pr=CSEC.progress(k.id);
+    for(var sid in pr.strands){
+      var s=pr.strands[sid];
+      if(!s.seen) continue;
+      agg[sid]=agg[sid]||{seen:0,correct:0,kids:0};
+      agg[sid].seen+=s.seen; agg[sid].correct+=s.correct; agg[sid].kids++;
+    }
+  });
+  function locate(id){
+    for(var s in C.subjects){
+      var f=C.subjects[s].strands.filter(function(t){return t.id===id;});
+      if(f.length) return {subj:C.subjects[s],strand:f[0]};
+    }
+    return null;
+  }
+  var rows=Object.keys(agg).map(function(id){
+    var a=agg[id], loc=locate(id);
+    return loc? {id:id,pct:Math.round(100*a.correct/a.seen),seen:a.seen,kids:a.kids,loc:loc} : null;
+  }).filter(function(r){ return r && r.seen>=3; }).sort(function(a,b){return a.pct-b.pct;}).slice(0,6);
+
+  $('classweak').innerHTML=rows.length? rows.map(function(r){
+    return '<div class="row"><div class="r-ico">'+r.loc.subj.icon+'</div>'+
+      '<div class="r-text"><b>'+esc(r.loc.strand.name)+'</b>'+
+      '<span>'+esc(r.loc.subj.name)+' · '+r.seen+' answers from '+r.kids+' student'+(r.kids===1?'':'s')+'</span></div>'+
+      '<div style="flex:none;width:110px"><div class="bar '+(r.pct>=75?'good':r.pct>=50?'warn':'bad')+'">'+
+      '<i style="width:'+r.pct+'%"></i></div>'+
+      '<div style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:4px">'+r.pct+'%</div></div></div>';
+  }).join('') : '<div class="empty"><p>Not enough practice recorded yet to rank topics.</p></div>';
+
+  /* ---------------- focus topic ---------------- */
+  $('f-student').innerHTML=kids.map(function(k){
+    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+  }).join('');
+
+  function fillStrands(){
+    var kid=CSEC.profile($('f-student').value); if(!kid) return;
+    var html='';
+    (kid.subjects||[]).forEach(function(sid){
+      var s=C.subjects[sid]; if(!s) return;
+      html+='<optgroup label="'+esc(s.name)+'">';
+      s.strands.forEach(function(t){
+        if(t.forms.indexOf(kid.form)===-1) return;
+        html+='<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
+      });
+      html+='</optgroup>';
+    });
+    $('f-strand').innerHTML=html;
+  }
+  $('f-student').addEventListener('change',fillStrands);
+  fillStrands();
+
+  function flash(msg){
+    $('f-ok').textContent=msg; $('f-ok').classList.remove('hidden');
+    setTimeout(function(){ $('f-ok').classList.add('hidden'); },3200);
+  }
+
+  $('f-set').addEventListener('click',function(){
+    var kid=CSEC.profile($('f-student').value); if(!kid) return;
+    var sid=$('f-strand').value, loc=locate(sid);
+    if(!loc){ flash('Pick a topic first.'); return; }
+    var pr=CSEC.progress(kid.id);
+    pr.goals=pr.goals||{};
+    pr.goals.focus={
+      strand:sid, strandName:loc.strand.name, subjName:loc.subj.name, icon:loc.subj.icon,
+      note:$('f-note').value.trim(), by:me.name, at:Date.now()
+    };
+    CSEC.saveProgress(kid.id,pr);
+    flash('Focus topic set for '+kid.name+'. It will show at the top of their desk.');
+  });
+
+  $('f-clear').addEventListener('click',function(){
+    var kid=CSEC.profile($('f-student').value); if(!kid) return;
+    var pr=CSEC.progress(kid.id);
+    if(pr.goals) delete pr.goals.focus;
+    CSEC.saveProgress(kid.id,pr);
+    flash('Focus topic cleared for '+kid.name+'.');
+  });
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

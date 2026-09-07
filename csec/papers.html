@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Past Papers &amp; Syllabuses | CSEC Study Hub</title>
+<meta name="description" content="Where to get official CSEC syllabuses, specimen papers, mark schemes and past papers — direct links to CXC and the Trinidad and Tobago Ministry of Education."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Past papers</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Official sources</div>
+      <h1>Past papers, syllabuses and mark schemes</h1>
+      <p>Every link here goes to the organisation that actually publishes the material — CXC, which
+         sets the examination, and the Trinidad and Tobago Ministry of Education. All links checked
+         reachable on 7 September 2026.</p>
+    </div>
+
+    <div class="note gold">
+      <b>Start with the syllabus, not the past papers.</b> CXC publishes the full CSEC syllabus for
+      every subject <b>free</b>, along with specimen papers, mark schemes and subject reports. The
+      syllabus lists precisely what an examiner may ask and how each paper is weighted — it is the
+      single most useful document in your preparation, and almost nobody downloads it. Complete past
+      papers are a separate, paid product sold by CXC as eBooks.
+    </div>
+
+    <div class="section-label">Official — CXC and the Ministry</div>
+    <div class="rows" id="official"></div>
+
+    <div class="section-label">Your school</div>
+    <div class="rows" id="school"></div>
+
+    <div class="section-label">Other widely used help</div>
+    <div class="rows" id="community"></div>
+
+    <div class="section-label">Syllabuses to download for your subjects</div>
+    <div class="card" style="margin-bottom:14px">
+      <p class="sub">Work through this list once, at the start of the year. Open the CXC syllabus
+      section and download the PDF for each subject you take, then keep them in one folder. Tick them
+      off here — the list is saved on this device.</p>
+      <div style="margin-top:14px">
+        <a class="btn teal" href="https://cxc-store.com/syllabuses-subject-reports" target="_blank" rel="noopener">
+          Open the CXC syllabus library ↗</a>
+      </div>
+    </div>
+    <div class="rows" id="checklist"></div>
+
+    <div class="section-label">Why this hub links out instead of hosting copies</div>
+    <div class="grid g2">
+      <div class="card">
+        <h3>CSEC past papers are copyright CXC</h3>
+        <p class="sub">CXC owns the examination papers and sells them through its own store. Scraping
+        them and republishing them on a public website would be copying someone else's work without
+        permission — so this hub sends you to the source instead. The syllabuses, specimen papers and
+        mark schemes are free there anyway, and they are the more useful half.</p>
+      </div>
+      <div class="card">
+        <h3>Third-party copies are of unknown vintage</h3>
+        <p class="sub">Sites offering free CSEC past-paper PDFs are common. Some are accurate; many
+        carry papers from a superseded syllabus, and none of them tell you which. Practising a topic
+        that was removed from the syllabus is worse than not practising at all.</p>
+      </div>
+      <div class="card">
+        <h3>The practice bank here is original</h3>
+        <p class="sub">Every question in <a href="practice.html" style="color:var(--gold)">Practice</a>
+        was written for this hub in CSEC Paper 01 style and tagged to a syllabus strand. It is not a
+        copy of any past paper, which is why it can sit here freely — and why it can be added to
+        whenever a topic needs more coverage.</p>
+      </div>
+      <div class="card">
+        <h3>Use both</h3>
+        <p class="sub">The hub builds the habit and finds your weak strands. Real past papers, worked
+        under time in the months before the examination, build the stamina and the timing. Neither
+        one replaces the other.</p>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var me=CSEC.current();
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+  $('nav').innerHTML = me
+    ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      (me.role==='student'?'<a href="practice.html">Practice</a>':'')+
+      '<a href="planner.html">Planner</a><a href="papers.html" class="on">Past papers</a><a href="settings.html">Settings</a>'
+    : '<a href="index.html">Sign in</a><a href="planner.html">Planner</a><a href="papers.html" class="on">Past papers</a>';
+
+  function render(id,items,icon){
+    $(id).innerHTML=items.map(function(r){
+      var cost = r.cost==='Free' ? '<span class="pill good">Free</span>'
+               : r.cost.indexOf('Paid')===0 ? '<span class="pill gold">'+esc(r.cost)+'</span>'
+               : '<span class="pill mute">'+esc(r.cost)+'</span>';
+      return '<a class="row" href="'+esc(r.url)+'" target="_blank" rel="noopener">'+
+        '<div class="r-ico">'+icon+'</div>'+
+        '<div class="r-text"><b>'+esc(r.name)+'</b><span>'+esc(r.note)+'</span></div>'+
+        '<div style="flex:none">'+cost+'</div><span class="r-arrow">↗</span></a>';
+    }).join('');
+  }
+  render('official', C.resources.official,  '🏛️');
+  render('school',   C.resources.school,    '🏫');
+  render('community',C.resources.community, '🎓');
+
+  /* ---- per-subject syllabus checklist, saved on this device ---- */
+  var KEY='csec.syllabus.done';
+  function readDone(){ try{ return JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ return {}; } }
+  function writeDone(o){ try{ localStorage.setItem(KEY,JSON.stringify(o)); }catch(e){} }
+
+  var subjects = me && me.role==='student' && me.subjects && me.subjects.length
+    ? me.subjects : C.defaultSelection;
+  var done=readDone();
+
+  function paint(){
+    $('checklist').innerHTML=subjects.map(function(id){
+      var s=C.subjects[id]; if(!s) return '';
+      var on=!!done[id];
+      return '<button class="row" data-id="'+esc(id)+'" style="cursor:pointer;text-align:left">'+
+        '<div class="r-ico">'+(on?'✅':s.icon)+'</div>'+
+        '<div class="r-text"><b'+(on?' style="opacity:.55;text-decoration:line-through"':'')+'>'+esc(s.name)+'</b>'+
+        '<span>'+esc(s.papers)+'</span></div>'+
+        '<span class="pill '+(on?'good':'mute')+'">'+(on?'downloaded':'to do')+'</span></button>';
+    }).join('');
+    Array.prototype.forEach.call($('checklist').children,function(b){
+      b.addEventListener('click',function(){
+        var id=b.getAttribute('data-id');
+        if(done[id]) delete done[id]; else done[id]=1;
+        writeDone(done); paint();
+      });
+    });
+  }
+  paint();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

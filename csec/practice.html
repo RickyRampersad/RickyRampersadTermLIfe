@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Practice | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Practice</span></div>
+    <nav class="topnav">
+      <a href="student.html">My Desk</a>
+      <a href="practice.html" class="on">Practice</a>
+      <a href="planner.html">Planner</a>
+      <a href="papers.html">Past papers</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap narrow">
+
+    <!-- =============== SET UP =============== -->
+    <section id="setup">
+      <div class="pagehead">
+        <div class="eyebrow" id="s-eyebrow">Practice</div>
+        <h1 id="s-title">Ready when you are</h1>
+        <p id="s-sub"></p>
+      </div>
+
+      <div class="card">
+        <div class="field">
+          <label class="fl" for="s-what">What are you practising?</label>
+          <select class="fi" id="s-what"></select>
+        </div>
+        <div class="field">
+          <label class="fl" for="s-len">How many questions?</label>
+          <select class="fi" id="s-len">
+            <option value="5">5 — a quick warm-up</option>
+            <option value="10" selected>10 — the daily habit</option>
+            <option value="20">20 — a proper session</option>
+          </select>
+        </div>
+        <button class="btn wide" id="s-go">Begin →</button>
+        <div class="err" id="s-err"></div>
+      </div>
+
+      <div class="note" style="margin-top:18px">
+        <b>How this works.</b> You get the answer and the reasoning immediately, because a mistake you
+        do not understand is a mistake you will make again. Every question is tagged to a CSEC
+        syllabus strand — miss one and that strand comes back tomorrow.
+      </div>
+    </section>
+
+    <!-- =============== QUESTION =============== -->
+    <section id="quiz" class="hidden">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
+        <div style="flex:1;min-width:150px">
+          <div class="bar"><i id="q-prog" style="width:0%"></i></div>
+        </div>
+        <span class="pill mute" id="q-count">1 / 10</span>
+        <span class="pill gold" id="q-score">0 correct</span>
+      </div>
+
+      <div class="qcard">
+        <div class="qmeta">
+          <span class="pill" id="q-subj"></span>
+          <span id="q-strand"></span>
+        </div>
+        <div class="qstem" id="q-stem"></div>
+        <div class="opts" id="q-opts"></div>
+        <div id="q-fb" class="hidden"></div>
+        <div style="margin-top:20px;display:flex;gap:10px;justify-content:flex-end">
+          <button class="btn hidden" id="q-next">Next →</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;text-align:center">
+        <button class="btn ghost sm" id="q-quit">End session</button>
+      </div>
+    </section>
+
+    <!-- =============== RESULTS =============== -->
+    <section id="done" class="hidden">
+      <div class="pagehead" style="text-align:center">
+        <div class="eyebrow" id="d-eyebrow">Session complete</div>
+        <h1 id="d-title"></h1>
+        <p id="d-sub" style="margin-left:auto;margin-right:auto"></p>
+      </div>
+
+      <div style="text-align:center;margin-bottom:22px" id="d-ring"></div>
+
+      <div class="grid g3" style="margin-bottom:22px">
+        <div class="tile"><div class="big" id="d-correct">0</div><div class="lab">Correct</div></div>
+        <div class="tile teal"><div class="big" id="d-total">0</div><div class="lab">Answered</div></div>
+        <div class="tile"><div class="big" id="d-time">0m</div><div class="lab">Time on task</div></div>
+      </div>
+
+      <div class="section-label">How each topic went</div>
+      <div class="rows" id="d-breakdown"></div>
+
+      <div id="d-advice" class="note gold" style="margin-top:20px"></div>
+
+      <div style="margin-top:22px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+        <button class="btn" id="d-again">Practise again</button>
+        <a class="btn ghost" href="student.html">Back to My Desk</a>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var me=CSEC.requireRole(['student']); if(!me) return;
+  var $=function(id){return document.getElementById(id);};
+  var esc=CSEC.esc, C=CSEC.curriculum;
+
+  var params=new URLSearchParams(location.search);
+  var deck=[], orders=[], idx=0, correct=0, started=0, answered=[], label='Mixed practice';
+
+  /* The bank stores the correct option first, which keeps the data file easy to
+     write and to review. Presenting it that way would be useless, so the four
+     options are shuffled for every question, every time it is shown — a student
+     who meets the same question twice gets a different order. */
+  function orderFor(q){
+    var ix=[]; for(var i=0;i<q.opts.length;i++) ix.push(i);
+    return CSEC.shuffle(ix);
+  }
+
+  /* ---------- build the "what am I practising" list ---------- */
+  var opts=[{v:'plan',   t:'★ Today’s plan — your six weakest topics'},
+            {v:'mixed',  t:'Mixed — everything I take'}];
+  (me.subjects||[]).forEach(function(id){
+    var s=C.subjects[id]; if(!s) return;
+    opts.push({v:'subject:'+id,t:s.icon+'  '+s.name});
+    s.strands.forEach(function(t){
+      if(t.forms.indexOf(me.form)===-1) return;
+      opts.push({v:'strand:'+t.id,t:'      └ '+t.name});
+    });
+  });
+  $('s-what').innerHTML=opts.map(function(o){
+    return '<option value="'+esc(o.v)+'">'+esc(o.t)+'</option>';
+  }).join('');
+
+  /* Deep links from the dashboard preselect the right thing. */
+  if(params.get('mode')==='plan')       $('s-what').value='plan';
+  else if(params.get('strand'))         $('s-what').value='strand:'+params.get('strand');
+  else if(params.get('subject'))        $('s-what').value='subject:'+params.get('subject');
+  $('s-sub').textContent='Form '+me.form+' · questions are drawn from your syllabus up to one form ahead.';
+
+  /* ---------- assemble the deck ---------- */
+  function build(){
+    var what=$('s-what').value, n=parseInt($('s-len').value,10)||10, pool;
+
+    if(what==='plan'){
+      var plan=CSEC.planFor(me.id,6);
+      var ids=plan.map(function(r){return r.strand;});
+      pool=CSEC.questionsFor(me.subjects,me.form,ids);
+      label='Today’s plan';
+    } else if(what.indexOf('subject:')===0){
+      var sid=what.slice(8);
+      pool=CSEC.questionsFor([sid],me.form);
+      label=(C.subjects[sid]||{}).name||'Subject';
+    } else if(what.indexOf('strand:')===0){
+      var tid=what.slice(7);
+      pool=CSEC.questionsFor(me.subjects,me.form,[tid]);
+      label=strandName(tid);
+    } else {
+      pool=CSEC.questionsFor(me.subjects,me.form);
+      label='Mixed practice';
+    }
+    if(!pool.length) return null;
+
+    /* Put the least-practised questions first, then take n. */
+    var pr=CSEC.progress(me.id).strands;
+    pool=CSEC.shuffle(pool).sort(function(a,b){
+      var sa=pr[a.strand], sb=pr[b.strand];
+      return (sa?sa.seen:0)-(sb?sb.seen:0);
+    });
+    return pool.slice(0,Math.min(n,pool.length));
+  }
+
+  function strandName(id){
+    for(var s in C.subjects){
+      var f=C.subjects[s].strands.filter(function(t){return t.id===id;});
+      if(f.length) return f[0].name;
+    }
+    return 'Topic';
+  }
+  function subjectOf(q){ return (C.subjects[q.subj]||{}).name||q.subj; }
+
+  /* ---------- start ---------- */
+  function begin(){
+    deck=build();
+    if(!deck||!deck.length){
+      $('s-err').textContent='There are no questions in the bank for that selection yet. Try Mixed, or a different topic.';
+      return;
+    }
+    orders=deck.map(orderFor);
+    idx=0; correct=0; answered=[]; started=Date.now();
+    $('setup').classList.add('hidden');
+    $('done').classList.add('hidden');
+    $('quiz').classList.remove('hidden');
+    render();
+  }
+  $('s-go').addEventListener('click',begin);
+
+  /* ---------- render one question ---------- */
+  function render(){
+    var q=deck[idx];
+    $('q-count').textContent=(idx+1)+' / '+deck.length;
+    $('q-score').textContent=correct+' correct';
+    $('q-prog').style.width=Math.round(100*idx/deck.length)+'%';
+    $('q-subj').textContent=subjectOf(q);
+    $('q-strand').textContent=strandName(q.strand)+' · Form '+q.form+'+';
+    $('q-stem').textContent=q.q;
+    $('q-fb').classList.add('hidden');
+    $('q-fb').innerHTML='';
+    $('q-next').classList.add('hidden');
+
+    var letters=['A','B','C','D'], ord=orders[idx];
+    $('q-opts').innerHTML=ord.map(function(orig,i){
+      return '<button class="opt" data-i="'+i+'"><span class="k">'+letters[i]+'</span><span>'+esc(q.opts[orig])+'</span></button>';
+    }).join('');
+
+    Array.prototype.forEach.call($('q-opts').children,function(b){
+      b.addEventListener('click',function(){ answer(parseInt(b.getAttribute('data-i'),10)); });
+    });
+  }
+
+  /* ---------- answer + feedback ---------- */
+  function answer(picked){
+    var q=deck[idx], ord=orders[idx];
+    var rightSlot=ord.indexOf(q.a);          /* where the answer is on screen */
+    var right=(ord[picked]===q.a);
+    if(right) correct++;
+    answered.push({q:q,right:right});
+    CSEC.recordAnswer(me.id,q,right);
+
+    Array.prototype.forEach.call($('q-opts').children,function(b,i){
+      b.disabled=true;
+      if(i===rightSlot) b.classList.add('right');
+      else if(i===picked) b.classList.add('wrong');
+    });
+
+    var html='<div class="feedback">'+
+      '<h4>'+(right?'Correct':'Not quite — the answer is '+['A','B','C','D'][rightSlot])+'</h4>'+
+      '<p>'+esc(q.why)+'</p>';
+    if(q.tech) html+='<div class="tech"><h4>Exam technique</h4><p>'+esc(q.tech)+'</p></div>';
+    html+='</div>';
+    $('q-fb').innerHTML=html;
+    $('q-fb').classList.remove('hidden');
+    $('q-next').classList.remove('hidden');
+    $('q-next').textContent=(idx+1>=deck.length)?'See results →':'Next →';
+    $('q-score').textContent=correct+' correct';
+    $('q-next').focus();
+  }
+
+  $('q-next').addEventListener('click',function(){
+    idx++;
+    if(idx>=deck.length) finish(); else render();
+  });
+  $('q-quit').addEventListener('click',function(){
+    if(answered.length) finish(); else location.href='student.html';
+  });
+
+  /* ---------- results ---------- */
+  function finish(){
+    var secs=Math.round((Date.now()-started)/1000);
+    CSEC.recordSession(me.id,{subj:label,n:answered.length,correct:correct,secs:secs});
+
+    var pct=answered.length?Math.round(100*correct/answered.length):0;
+    $('quiz').classList.add('hidden');
+    $('done').classList.remove('hidden');
+
+    $('d-title').textContent = pct>=80?'Strong session.' : pct>=60?'Solid work.' : pct>=40?'Worth the effort.' : 'Now you know where to aim.';
+    $('d-sub').textContent   = label+' · '+correct+' of '+answered.length+' correct.';
+    $('d-ring').innerHTML=CSEC.ring(pct,132,'Session score '+pct+' per cent');
+    $('d-correct').textContent=correct;
+    $('d-total').textContent=answered.length;
+    $('d-time').textContent=(secs<60? secs+'s' : Math.round(secs/60)+'m');
+
+    /* per-strand breakdown for this session */
+    var by={};
+    answered.forEach(function(a){
+      var k=a.q.strand;
+      by[k]=by[k]||{n:0,c:0,subj:a.q.subj};
+      by[k].n++; if(a.right) by[k].c++;
+    });
+    $('d-breakdown').innerHTML=Object.keys(by).map(function(k){
+      var b=by[k], p=Math.round(100*b.c/b.n);
+      var s=C.subjects[b.subj]||{icon:'📘',name:''};
+      return '<a class="row" href="practice.html?strand='+encodeURIComponent(k)+'">'+
+        '<div class="r-ico">'+s.icon+'</div>'+
+        '<div class="r-text"><b>'+esc(strandName(k))+'</b><span>'+esc(s.name)+' · '+b.c+' of '+b.n+'</span></div>'+
+        '<div style="flex:none;width:96px"><div class="bar '+(p>=75?'good':p>=50?'warn':'bad')+'">'+
+        '<i style="width:'+p+'%"></i></div></div>'+
+        '<span class="r-arrow">→</span></a>';
+    }).join('');
+
+    /* one concrete next step, not a pep talk */
+    var worst=Object.keys(by).sort(function(a,b){
+      return (by[a].c/by[a].n)-(by[b].c/by[b].n);
+    })[0];
+    var advice;
+    if(!worst) advice='Come back tomorrow and keep the streak alive.';
+    else if(by[worst].c===by[worst].n && pct===100)
+      advice='<b>Clean sheet.</b> Everything here is scheduled to come back in a few days. Move on to a topic you have not started — your desk will suggest one.';
+    else
+      advice='<b>Next step:</b> '+esc(strandName(worst))+' was your weakest topic in this session ('+
+             by[worst].c+' of '+by[worst].n+'). Read the syllabus section for it, then practise that '+
+             'strand on its own before you mix it back in.';
+    $('d-advice').innerHTML=advice;
+  }
+
+  $('d-again').addEventListener('click',function(){
+    $('done').classList.add('hidden');
+    $('setup').classList.remove('hidden');
+    $('s-err').textContent='';
+  });
+
+  /* Deep-linked? Start immediately rather than making them press twice. */
+  if(params.get('mode')||params.get('strand')||params.get('subject')) begin();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

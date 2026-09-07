@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Planner | CSEC Study Hub</title>
+<meta name="description" content="The Form 1 to Form 5 road to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .road{display:flex;flex-direction:column;gap:12px}
+  .yr{display:flex;gap:16px;align-items:flex-start;padding:18px;border-radius:16px;
+      background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line)}
+  .yr.now{border-color:var(--gold);box-shadow:0 0 0 1px rgba(239,194,75,.28)}
+  .yr .no{flex:none;width:52px;height:52px;border-radius:13px;display:grid;place-items:center;
+          font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.15rem;
+          background:rgba(255,255,255,.07);color:var(--muted)}
+  .yr.now .no{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f}
+  .yr ul{margin:10px 0 0 18px;color:var(--muted);font-size:.86rem;line-height:1.75}
+  .strand{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;
+          background:rgba(0,0,0,.2);border:1px solid var(--line)}
+  .strand .fms{flex:none;display:flex;gap:3px}
+  .strand .fms i{width:19px;height:19px;border-radius:5px;display:grid;place-items:center;
+                 font-style:normal;font-size:.66rem;font-weight:700;background:rgba(255,255,255,.07);color:var(--muted)}
+  .strand .fms i.on{background:rgba(0,207,234,.22);color:var(--teal)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Planner</span></div>
+    <nav class="topnav" id="nav"></nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap">
+
+    <div class="pagehead">
+      <div class="eyebrow">Form 1 → Form 5</div>
+      <h1>The road to CSEC</h1>
+      <p>CSEC is written in Form 5, but it is decided long before that. Form 3 sets which subjects
+         are open to you and Form 4 covers half the syllabus. This is the whole road in order.</p>
+    </div>
+
+    <!-- ---------- countdown ---------- -->
+    <div class="card" style="margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <label class="fl" for="formsel">I am currently in</label>
+          <select class="fi" id="formsel" style="max-width:230px">
+            <option value="1">Form 1</option><option value="2" selected>Form 2</option>
+            <option value="3">Form 3</option><option value="4">Form 4</option><option value="5">Form 5</option>
+          </select>
+        </div>
+        <div class="grid g3" style="flex:2;min-width:280px">
+          <div class="tile"><div class="big" id="cd-year">—</div><div class="lab">CSEC year</div></div>
+          <div class="tile teal"><div class="big" id="cd-months">—</div><div class="lab">Months away</div></div>
+          <div class="tile"><div class="big" id="cd-days">—</div><div class="lab">Days away</div></div>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:14px">
+        CSEC examinations are written in May and June. The countdown runs to 1 May of your examination year.
+      </p>
+    </div>
+
+    <!-- ---------- roadmap ---------- -->
+    <div class="section-label">Year by year</div>
+    <div class="road" id="road"></div>
+
+    <!-- ---------- syllabus browser ---------- -->
+    <div class="section-label">Syllabus browser</div>
+    <div class="card" style="margin-bottom:14px">
+      <label class="fl" for="subjsel">Show the syllabus strands for</label>
+      <select class="fi" id="subjsel"></select>
+      <p class="sub" style="margin-top:12px" id="subjmeta"></p>
+    </div>
+    <div class="rows" id="strands"></div>
+
+    <div class="note" style="margin-top:20px">
+      <b>These strands follow the CSEC syllabus sections.</b> The syllabus itself is published free by
+      CXC and lists exactly what an examiner is allowed to ask — download it for each of your subjects
+      from the <a href="papers.html" style="color:var(--gold)">Past papers page</a>. The blue markers show
+      the forms in which a strand is normally taught in Trinidad and Tobago; schools vary, so treat
+      them as a guide rather than a timetable.
+    </div>
+
+  </div>
+</main>
+
+<footer class="foot">
+  <div class="wrap"><a href="../index.html">← Ricky Rampersad Branch</a> · CSEC Study Hub</div>
+</footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="assets/csec.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
+  var me=CSEC.current();
+
+  /* nav depends on whether anyone is signed in */
+  var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
+  $('nav').innerHTML = me
+    ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
+      (me.role==='student'?'<a href="practice.html">Practice</a>':'')+
+      '<a href="planner.html" class="on">Planner</a><a href="papers.html">Past papers</a><a href="settings.html">Settings</a>'
+    : '<a href="index.html">Sign in</a><a href="planner.html" class="on">Planner</a><a href="papers.html">Past papers</a>';
+
+  var form = me && me.role==='student' ? me.form : 2;
+  $('formsel').value=String(form);
+
+  /* ---------------- countdown + roadmap ---------------- */
+  function paintForm(){
+    form=parseInt($('formsel').value,10)||2;
+    var cd=CSEC.countdown(form);
+    $('cd-year').textContent=cd.year;
+    $('cd-months').textContent=cd.months;
+    $('cd-days').textContent=cd.days;
+
+    $('road').innerHTML=C.roadmap.map(function(y){
+      var isNow=(y.form===form);
+      return '<div class="yr'+(isNow?' now':'')+'">'+
+        '<div class="no">'+y.form+'</div>'+
+        '<div style="flex:1;min-width:0">'+
+          '<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:4px">'+
+            '<h3 style="font-family:Montserrat,sans-serif;font-size:1.02rem;font-weight:700">'+esc(y.label)+' · '+esc(y.phase)+'</h3>'+
+            (isNow?'<span class="pill gold">You are here</span>':'')+
+          '</div>'+
+          '<p class="sub">'+esc(y.focus)+'</p>'+
+          '<ul>'+y.goals.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>'+
+        '</div></div>';
+    }).join('');
+  }
+  $('formsel').addEventListener('change',function(){ paintForm(); paintSubject(); });
+  paintForm();
+
+  /* ---------------- syllabus browser ---------------- */
+  var list = me && me.role==='student' && me.subjects && me.subjects.length
+    ? me.subjects : C.defaultSelection;
+  var seen={}; var all=list.concat(Object.keys(C.subjects)).filter(function(id){
+    if(seen[id]||!C.subjects[id]) return false; seen[id]=true; return true;
+  });
+  $('subjsel').innerHTML=all.map(function(id){
+    return '<option value="'+esc(id)+'">'+C.subjects[id].icon+'  '+esc(C.subjects[id].name)+'</option>';
+  }).join('');
+
+  function paintSubject(){
+    var s=C.subjects[$('subjsel').value]; if(!s) return;
+    $('subjmeta').innerHTML='<b>'+esc(s.blurb)+'</b><br>'+esc(s.papers);
+    $('strands').innerHTML=s.strands.map(function(t){
+      var marks='';
+      for(var f=1;f<=5;f++){
+        marks+='<i class="'+(t.forms.indexOf(f)>-1?'on':'')+'" title="Form '+f+'">'+f+'</i>';
+      }
+      var stat = me && me.role==='student' ? CSEC.strandStat(me.id,t.id) : null;
+      var badge = !stat ? ''
+        : stat.pct==null ? '<span class="pill mute">not started</span>'
+        : '<span class="pill '+(stat.pct>=75?'good':stat.pct>=50?'gold':'bad')+'">'+stat.pct+'%</span>';
+      return '<div class="strand">'+
+        '<div class="fms">'+marks+'</div>'+
+        '<div class="r-text" style="flex:1"><b>'+esc(t.name)+'</b><span>'+esc(t.note)+'</span></div>'+
+        badge+'</div>';
+    }).join('');
+  }
+  $('subjsel').addEventListener('change',paintSubject);
+  paintSubject();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
