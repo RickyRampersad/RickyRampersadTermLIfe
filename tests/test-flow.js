@@ -115,5 +115,24 @@ ok('and for one who did not', line('kamla').mailAM === '' && line('kamla').mailP
 const html = env.checkpointHtml_(cp);
 ok('in words, in the email', /Mail: morning 08:25 · afternoon 13:35/.test(html) && /No mail sweep recorded/.test(html));
 
+console.log('\nA trigger fires with its own event object, not a date:\n');
+env.resetRequestMemo_();
+// What Apps Script actually hands a time-based trigger.
+const EVT = { authMode: 'FULL', triggerUid: '5417290', 'day-of-month': 19, 'week-of-year': 34 };
+ok('an event object is not a day', env.dayArg_(EVT) === '' && env.dayArg_(null) === '' && env.dayArg_(new Date('nope')) === '');
+ok('a real date is', env.dayArg_('2026-08-17') === '2026-08-17');
+env.resetRequestMemo_();
+const cpT = env.checkpointReport_(EVT);
+ok('so the checkpoint reports today, not the epoch', cpT.date === today, cpT.date);
+ok('and sees the desks that logged', (cpT.lines.find(l => l.staffId === 'sasha') || {}).mailAM === '08:25');
+ok('nobody is marked silent who is not', cpT.lines.filter(l => l.mailAM).length > 0);
+env.resetRequestMemo_();
+ok('an explicit date is still honoured', env.checkpointReport_('2026-08-17').date === '2026-08-17');
+env.resetRequestMemo_();
+ok('and no argument still means today', env.checkpointReport_().date === today);
+env.resetRequestMemo_();
+ok('the weekly summary takes the same guard', env.weeklyReport_(EVT).weekStart === env.weekStart_(today), env.weeklyReport_(EVT).weekStart);
+ok('and a header never turns rubbish into a date', !/1970/.test(env.prettyDate_(EVT)) && !/1970/.test(env.shortDate_(EVT)), env.prettyDate_(EVT));
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06e';
+var SCRIPT_VERSION = '2026-09-07a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -777,6 +777,25 @@ function isoDay_(v) {
 }
 
 function todayISO_() { return Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd'); }
+
+/* Which day a report is for, when the caller may not be a person.
+   Apps Script hands a time-based trigger its own event object as the first
+   argument — {authMode, triggerUid, 'day-of-month', …} — not a date. Taken as
+   "which day", it matches no entry, so every desk reads as silent, and the
+   header formats an unparseable value as the epoch. That is exactly how the
+   3pm checkpoint went out on 7 September dated Thursday 1 January 1970 with
+   the whole branch marked "No entry", on a day the branch had closed 33 tasks.
+   Only a string or a Date that resolves to a real day counts; anything else is
+   nothing, and the caller falls back to today. */
+function dayArg_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return isNaN(v.getTime()) ? '' : isoDay_(v);
+  }
+  if (typeof v !== 'string' && typeof v !== 'number') return '';
+  var s = isoDay_(v);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
 
 function shiftDays_(iso, n) {
   var p = iso.split('-');
@@ -1687,7 +1706,7 @@ function openBlockers_(e) {
 /** The 3pm cut. Blocks 1-3 are done by then; the last block is not, so it is
  *  reported as outstanding rather than as a gap. */
 function checkpointReport_(date) {
-  var day = date || todayISO_();
+  var day = dayArg_(date) || todayISO_();
   var people = publicRoster_();
   var byId = {};
   latestEntries_().forEach(function (e) { if (e.Date === day) byId[e.StaffId] = e; });
@@ -1784,7 +1803,7 @@ function trainingDetail_(rows, register, days) {
 
 /** The week, Monday to Friday, with last week alongside it for direction. */
 function weeklyReport_(anyDateInWeek) {
-  var monday = weekStart_(anyDateInWeek || todayISO_());
+  var monday = weekStart_(dayArg_(anyDateInWeek) || todayISO_());
   var days = weekDays_(monday);
   var prevDays = weekDays_(shiftDays_(monday, -7));
   var entries = latestEntries_();
@@ -2096,15 +2115,20 @@ function esc_(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/* Neither of these may invent a date. Given something that is not a day they
+   return it unchanged: a header reading "[object Object]" is obviously broken,
+   where "Thursday 1 January 1970" reads like a real report about a quiet day. */
 function prettyDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEEE d MMMM yyyy');
 }
 
 function shortDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEE d MMM');
 }
 

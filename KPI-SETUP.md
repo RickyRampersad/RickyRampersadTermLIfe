@@ -434,6 +434,12 @@ token, so a person who had just signed in was told they had not. The token is
 attached to every call now. Anyone still seeing it that way is on a page
 loaded before the fix: reload.
 
+**A report dated "Thursday 1 January 1970", with every desk marked "No
+entry"** — the checkpoint or the weekly summary ran with a trigger's event
+object where a date belongs, matched no rows, and formatted the unparseable
+value as the epoch. Fixed in `2026-09-07a`; if you see it again, the workbook
+is running an older script, so redeploy.
+
 **"Unreadable reply from the sheet."** — the deployment is not set to
 **Anyone**, or the last change was never published as a new version. See §3.
 
