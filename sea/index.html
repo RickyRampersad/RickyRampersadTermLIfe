@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>RRB Academy — S.E.A. Practice</title>
+<title>RRB Academy — S.E.A. and CSEC</title>
 <meta name="description" content="Ricky Rampersad Branch Academy. Every official S.E.A. past paper, and practice built to the Ministry's own assessment framework — for students, parents and teachers.">
 <link rel="icon" href="../favicon.svg">
 <meta name="theme-color" content="#07131f">
@@ -166,6 +166,7 @@ th{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--mu
 .tag.g{background:#EEE7F7;color:#553F86}
 .tag.m{background:#FBF0D9;color:#7A5810}
 .tag.s{background:#E3F2E9;color:#1B6142}
+.tag.a{background:#FBE4E9;color:#8A2A45}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.n{background:#0B333C;color:#7FDCEC}
 :root:not([data-theme="light"]) .tag.g{background:#251E3B;color:#B9A9E6}
 :root:not([data-theme="light"]) .tag.m{background:#3A2D11;color:#EFC24B}
@@ -174,6 +175,8 @@ th{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--mu
 :root[data-theme="dark"] .tag.g{background:#251E3B;color:#B9A9E6}
 :root[data-theme="dark"] .tag.m{background:#3A2D11;color:#EFC24B}
 :root[data-theme="dark"] .tag.s{background:#12301F;color:#7FCCA4}
+:root[data-theme="dark"] .tag.a{background:#3A1520;color:#F0A3B8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.a{background:#3A1520;color:#F0A3B8}}
 
 /* ================= question card ================= */
 .qcard{background:var(--surface);border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:var(--shadow)}
@@ -295,6 +298,7 @@ textarea.essay:focus{border-color:var(--teal)}
 .journey .step.sea b{color:var(--gold2)}
 .journey .step[aria-current="step"].sea{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold2);color:#3a2a08}
 .journey .step[aria-current="step"].sea b{color:#07131f}
+.journey .gap{flex:none;width:1px;background:var(--gold2);opacity:.6;margin:0 .15rem}
 .levelpick{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem}
 .levelpick button{background:var(--surface2);border:1px solid var(--rule);border-radius:8px;padding:.5rem .8rem;cursor:pointer;
   font-weight:700;font-size:13px;color:var(--ink)}
@@ -344,7 +348,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="gatebox">
     <div class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></div>
     <p class="kicker">Ricky Rampersad Branch</p>
-    <h1>Academy &middot; S.E.A. Practice</h1>
+    <h1>Academy &middot; S.E.A. and CSEC</h1>
     <p class="sub" id="gateSub">Every official past paper, and practice built to the Ministry&rsquo;s own
        assessment framework. Choose who is signing in.</p>
 
@@ -402,7 +406,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="hin">
     <div class="brand">
       <div class="mark"><img src="../logo-mark.png" alt=""></div>
-      <div><b>RRB Academy</b><small>S.E.A. Practice</small></div>
+      <div><b>RRB Academy</b><small>S.E.A. &middot; CSEC</small></div>
     </div>
     <nav id="nav" aria-label="Sections"></nav>
     <div class="whoami">
@@ -464,6 +468,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
       <div class="card">
         <p class="label">The examination</p>
         <h2 style="margin:.2rem 0 .8rem">What the day looks like</h2>
+        <div id="factsSea">
         <div class="scroll"><table>
           <thead><tr><th>Paper</th><th>Time</th><th>Items</th><th>Marks</th><th>Weight</th></tr></thead>
           <tbody>
@@ -473,6 +478,19 @@ footer .l{display:flex;gap:.6rem;align-items:center}
           </tbody></table></div>
         <p class="note" style="margin-top:.9rem">Weighted 100&thinsp;:&thinsp;60&thinsp;:&thinsp;40 into one
           composite score. Mathematics carries the most, which is why it is the paper practised here.</p>
+        </div>
+        <div id="factsCsec" hidden>
+        <div class="scroll"><table>
+          <thead><tr><th>CSEC Mathematics</th><th>Time</th><th>What</th><th>Weight</th></tr></thead>
+          <tbody>
+            <tr><td><b>Paper 1</b></td><td class="mono">1 h 30</td><td>60 multiple-choice items</td><td class="mono">30&thinsp;%</td></tr>
+            <tr><td><b>Paper 2</b></td><td class="mono">2 h 40</td><td>Structured and extended answers</td><td class="mono">50&thinsp;%</td></tr>
+            <tr><td><b>Paper 3 &middot; SBA</b></td><td class="mono">in school</td><td>The school-based project</td><td class="mono">20&thinsp;%</td></tr>
+          </tbody></table></div>
+        <p class="note" style="margin-top:.9rem">Sat in May&ndash;June of Form 5. The syllabus is free from CXC; its past papers are sold,
+          so this app links to CXC and never copies them.
+          <a href="https://www.cxc.org/wp-content/uploads/2018/11/CSEC-Mathematics-AmendedOct2025.pdf" target="_blank" rel="noopener">CSEC Mathematics syllabus</a>.</p>
+        </div>
       </div>
     </div>
   </div>
@@ -623,7 +641,23 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="card" style="margin-bottom:1.1rem"><div class="chips" id="paperFilter"></div></div>
   <div class="card" id="paperList"></div>
   <div class="card" style="margin-top:1.1rem">
-    <p class="label">Older papers, and what is not public</p>
+    <p class="label">CSEC &middot; Forms 1 to 5</p>
+    <h2 style="margin:.2rem 0 .7rem">From CXC, and only from CXC</h2>
+    <p class="muted" style="margin-bottom:.85rem">The Caribbean Examinations Council gives its syllabuses and specimen papers away and
+      <b>sells</b> its past papers. Sites offering them free are copying them. This app links to CXC and nothing else.</p>
+    <div class="paper"><div class="yr" style="font-size:.9rem">CXC</div>
+      <div class="nm"><b>CSEC Mathematics syllabus</b><small>Effective from May&ndash;June 2027 &middot; what can be asked, and the paper structure</small></div>
+      <a class="dl" href="https://www.cxc.org/wp-content/uploads/2018/11/CSEC-Mathematics-AmendedOct2025.pdf" target="_blank" rel="noopener">PDF &nearr;</a></div>
+    <div class="paper"><div class="yr" style="font-size:.9rem">CXC</div>
+      <div class="nm"><b>Specimen papers</b><small>Mathematics and English A, free</small></div>
+      <a class="dl" href="https://www.cxc.org/specimen-papers/" target="_blank" rel="noopener">Open &nearr;</a></div>
+    <div class="paper"><div class="yr" style="font-size:.9rem">CXC</div>
+      <div class="nm"><b>Past papers, mark schemes and subject reports</b><small>The CXC Store &mdash; sold by the examiners</small></div>
+      <a class="dl" href="https://www.cxc-store.com/" target="_blank" rel="noopener">Open &nearr;</a></div>
+  </div>
+
+  <div class="card" style="margin-top:1.1rem">
+    <p class="label">Older S.E.A. papers, and what is not public</p>
     <h2 style="margin:.2rem 0 .7rem">2001 to 2020</h2>
     <p class="muted" style="margin-bottom:.85rem">
       The Ministry&rsquo;s public download page carries 2021 onwards. Earlier papers &mdash; the ones in the
@@ -648,12 +682,13 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="pagehead">
     <p class="label">Syllabus</p>
     <h1>Everything that can be asked</h1>
-    <p>What the S.E.A. tests &mdash; where all seven years lead. From the Ministry&rsquo;s Assessment
-       Framework for SEA 2025&ndash;2028. Tick a topic when it is secure; the ticks are saved in this browser.</p>
+    <p>What the two examinations test. The S.E.A. from the Ministry&rsquo;s Assessment Framework for SEA
+       2025&ndash;2028; CSEC Mathematics from the CXC syllabus. Tick a topic when it is secure; the ticks are saved in this browser.</p>
   </div>
   <div class="grid g2" style="align-items:start">
     <div class="stack" id="sylMath"></div>
     <div class="stack" id="sylEla"></div>
+    <div class="stack" id="sylCsec"></div>
   </div>
 </section>
 
@@ -677,7 +712,7 @@ footer .l{display:flex;gap:.6rem;align-items:center}
 
 <footer><div class="fin">
   <div class="l"><div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div><b>Ricky Rampersad Branch Academy</b> &middot; S.E.A. Practice</div></div>
+    <div><b>Ricky Rampersad Branch Academy</b> &middot; S.E.A. and CSEC</div></div>
   <div>Past papers &copy; Ministry of Education, Trinidad &amp; Tobago. Linked, never re-hosted.</div>
 </div></footer>
 </div>
@@ -724,18 +759,26 @@ const TKEY = "rrb.sea.token";
    year the S.E.A. is sat in.
    ============================================================ */
 const LEVELS = [
-  {k:"inf1", name:"Infant 1",   age:"5–6"},
-  {k:"inf2", name:"Infant 2",   age:"6–7"},
-  {k:"std1", name:"Standard 1", age:"7–8"},
-  {k:"std2", name:"Standard 2", age:"8–9"},
-  {k:"std3", name:"Standard 3", age:"9–10"},
-  {k:"std4", name:"Standard 4", age:"10–11"},
-  {k:"std5", name:"Standard 5", age:"11–12", sea:true}
+  {k:"inf1",  name:"Infant 1",   age:"5–6",   stage:"primary"},
+  {k:"inf2",  name:"Infant 2",   age:"6–7",   stage:"primary"},
+  {k:"std1",  name:"Standard 1", age:"7–8",   stage:"primary"},
+  {k:"std2",  name:"Standard 2", age:"8–9",   stage:"primary"},
+  {k:"std3",  name:"Standard 3", age:"9–10",  stage:"primary"},
+  {k:"std4",  name:"Standard 4", age:"10–11", stage:"primary"},
+  {k:"std5",  name:"Standard 5", age:"11–12", stage:"primary", sea:true},
+  {k:"form1", name:"Form 1",     age:"12–13", stage:"secondary"},
+  {k:"form2", name:"Form 2",     age:"13–14", stage:"secondary"},
+  {k:"form3", name:"Form 3",     age:"14–15", stage:"secondary"},
+  {k:"form4", name:"Form 4",     age:"15–16", stage:"secondary"},
+  {k:"form5", name:"Form 5",     age:"16–17", stage:"secondary", csec:true}
 ];
 const LEVEL_INDEX = Object.fromEntries(LEVELS.map((l,i) => [l.k, i]));
+const LAST = LEVELS.length - 1;                                                          // 11 = Form 5
 function schoolYear(d){ d = d || new Date(); return d.getMonth() >= 8 ? d.getFullYear() + 1 : d.getFullYear(); }
-function levelIndexFor(seaYear, d){ return 6 - (Number(seaYear) - schoolYear(d)); }      // 6 = Standard 5
+function levelIndexFor(seaYear, d){ return 6 - (Number(seaYear) - schoolYear(d)); }      // 6 = Standard 5; 7–11 = Forms
 function seaYearFor(levelIndex, d){ return schoolYear(d) + (6 - levelIndex); }
+const csecYearFor = seaYear => Number(seaYear) + 5;                                      // Form 5 is five school years on
+const stageOf = li => LEVELS[li].stage;
 
 /* Which S.E.A.-bank questions suit an earlier class. Everything else in that
    bank is Standard 5. The lower-class bank below carries its own level. */
@@ -1436,7 +1479,138 @@ const QUESTIONS = [
 {id:"S3-07",level:"std3",strand:"Statistics",topic:"Pictographs",proc:"Applying",sec:1,marks:1,
  q:"On a pictograph each <span style='font-size:20px'>&#127822;</span> stands for 2 apples. A row shows <span style='font-size:20px'>&#127822;&#127822;&#127822;&#127822;</span>. How many apples is that?", a:["8","eight"],
  ask:"The key changes what a picture is worth.", step:"Count the pictures, then multiply by what each one stands for.",
- exp:"4 pictures &times; 2 apples = <b>8</b> apples."}
+ exp:"4 pictures &times; 2 apples = <b>8</b> apples."},
+
+/* ---------------- FORM 1 ---------------- */
+{id:"F1-01",level:"form1",strand:"Number",topic:"Directed numbers",proc:"Knowing",sec:1,marks:1,
+ q:"(&minus;7) + 12 = ?", a:["5"],
+ ask:"Start at &minus;7 on a number line and move 12 to the right.", step:"Count up from &minus;7: seven steps reach 0, and the rest carry on past it.",
+ exp:"&minus;7 + 7 = 0, then 5 more: <b>5</b>."},
+{id:"F1-02",level:"form1",strand:"Number",topic:"Order of operations",proc:"Knowing",sec:1,marks:1,
+ q:"Work out 3 + 4 &times; 2.", a:["11"],
+ ask:"Multiplication happens before addition, whatever order it is written in.", step:"Do 4 &times; 2 first, then add the 3.",
+ exp:"4 &times; 2 = 8, then 3 + 8 = <b>11</b>. (Not 14.)"},
+{id:"F1-03",level:"form1",strand:"Number",topic:"HCF and LCM",proc:"Applying",sec:1,marks:1,
+ q:"Find the highest common factor of 24 and 36.", a:["12"],
+ ask:"The highest common factor is the biggest number that divides into both.", step:"Break each number into primes and take only what they share.",
+ exp:"24 = 2&sup3; &times; 3 and 36 = 2&sup2; &times; 3&sup2;. Shared: 2&sup2; &times; 3 = <b>12</b>."},
+{id:"F1-04",level:"form1",strand:"Algebra",topic:"Simplifying",proc:"Knowing",sec:1,marks:1,
+ q:"Simplify 3x + 5x &minus; 2x.", a:["6x"],
+ ask:"These are all the same kind of term, so they can be collected.", step:"Add and subtract the numbers in front of x, and keep the x.",
+ exp:"3 + 5 &minus; 2 = 6, so <b>6x</b>."},
+{id:"F1-05",level:"form1",strand:"Measurement",topic:"Area",proc:"Applying",sec:1,marks:1,
+ q:"A rectangle is 12 cm by 7 cm. Find its area.", unit:"cm²", a:["84"],
+ ask:"Area is length times width.", step:"Multiply 12 by 7.",
+ exp:"12 &times; 7 = <b>84 cm&sup2;</b>."},
+{id:"F1-06",level:"form1",strand:"Geometry",topic:"Angles",proc:"Applying",sec:1,marks:1,
+ q:"Two angles on a straight line measure 115&deg; and x. Find x.", unit:"°", a:["65"],
+ ask:"Angles on a straight line add up to 180&deg;.", step:"Take 115 away from 180.",
+ exp:"180 &minus; 115 = <b>65&deg;</b>."},
+
+/* ---------------- FORM 2 ---------------- */
+{id:"F2-01",level:"form2",strand:"Number",topic:"Ratio",proc:"Applying",sec:1,marks:1,
+ q:"$360 is shared in the ratio 2 : 7. What is the larger share?", unit:"$", a:["280"],
+ ask:"A ratio says how many equal parts each person gets.", step:"Add the parts to find how many there are, find what one part is worth, then multiply.",
+ exp:"2 + 7 = 9 parts. One part = 360 &divide; 9 = $40. Larger share = 7 &times; 40 = <b>$280</b>."},
+{id:"F2-02",level:"form2",strand:"Number",topic:"Percentages",proc:"Applying",sec:1,marks:1,
+ q:"A shirt costs $80 and is reduced by 15&thinsp;%. What is the sale price?", unit:"$", a:["68"],
+ ask:"The reduction comes off the price, so the answer is less than $80.", step:"Find 15&thinsp;% of 80, then take it away.",
+ exp:"15&thinsp;% of 80 = 12. 80 &minus; 12 = <b>$68</b>."},
+{id:"F2-03",level:"form2",strand:"Algebra",topic:"Linear equations",proc:"Applying",sec:1,marks:1,
+ q:"Solve 3x &minus; 4 = 11.", a:["5","x=5"],
+ ask:"Undo what has been done to x, in reverse order.", step:"Add 4 to both sides first, then divide both sides by 3.",
+ exp:"3x = 15, so x = <b>5</b>."},
+{id:"F2-04",level:"form2",strand:"Algebra",topic:"Expanding",proc:"Knowing",sec:1,marks:1,
+ q:"Expand 4(2x + 3).", a:["8x+12","8x + 12"],
+ ask:"Everything inside the bracket is multiplied by the 4.", step:"Multiply 4 by 2x, then 4 by 3, and keep the plus between them.",
+ exp:"4 &times; 2x = 8x and 4 &times; 3 = 12: <b>8x + 12</b>."},
+{id:"F2-05",level:"form2",strand:"Geometry",topic:"Angles",proc:"Applying",sec:1,marks:1,
+ q:"Three angles of a quadrilateral are 90&deg;, 85&deg; and 110&deg;. Find the fourth.", unit:"°", a:["75"],
+ ask:"The four angles of a quadrilateral add up to 360&deg;.", step:"Add the three you have, then take the total away from 360.",
+ exp:"90 + 85 + 110 = 285. 360 &minus; 285 = <b>75&deg;</b>."},
+{id:"F2-06",level:"form2",strand:"Statistics",topic:"Median",proc:"Applying",sec:1,marks:1,
+ q:"Find the median of 7, 3, 9, 4, 6.", a:["6"],
+ ask:"The median is the middle value once the numbers are in order.", step:"Put them in order first, then pick the one in the middle.",
+ exp:"In order: 3, 4, 6, 7, 9. The middle one is <b>6</b>."},
+
+/* ---------------- FORM 3 ---------------- */
+{id:"F3-01",level:"form3",strand:"Algebra",topic:"Simultaneous equations",proc:"Applying",sec:1,marks:1,
+ q:"x + y = 10 and x &minus; y = 4. Find x.", a:["7","x=7"],
+ ask:"Add the two equations and y disappears.", step:"Adding gives 2x = 14.",
+ exp:"(x + y) + (x &minus; y) = 10 + 4, so 2x = 14 and x = <b>7</b>. (Then y = 3.)"},
+{id:"F3-02",level:"form3",strand:"Geometry",topic:"Pythagoras",proc:"Applying",sec:1,marks:1,
+ q:"A right-angled triangle has shorter sides of 6 cm and 8 cm. Find the hypotenuse.", unit:"cm", a:["10"],
+ ask:"Pythagoras: the square on the hypotenuse equals the squares on the other two sides added together.",
+ step:"Square 6 and 8, add them, then take the square root.",
+ exp:"36 + 64 = 100, and &radic;100 = <b>10 cm</b>."},
+{id:"F3-03",level:"form3",strand:"Measurement",topic:"Volume",proc:"Applying",sec:1,marks:1,
+ q:`Find the volume of a cylinder with radius 7 cm and height 10 cm. Use &pi; = ${F(22,7)}.`, unit:"cm³", a:["1540"],
+ ask:"Volume of a cylinder = area of the circular end &times; height.", step:"Find &pi;r&sup2; with r = 7 first &mdash; the sevens cancel nicely &mdash; then multiply by the height.",
+ exp:F(22,7) + " &times; 7 &times; 7 = 154. Then 154 &times; 10 = <b>1&thinsp;540 cm&sup3;</b>."},
+{id:"F3-04",level:"form3",strand:"Number",topic:"Consumer arithmetic",proc:"Applying",sec:1,marks:1,
+ q:"Find the simple interest on $2&nbsp;000 at 5&thinsp;% per year for 3 years.", unit:"$", a:["300"],
+ ask:"Simple interest is principal &times; rate &times; time.", step:"Find 5&thinsp;% of 2&nbsp;000 for one year, then multiply by the years.",
+ exp:"5&thinsp;% of 2&nbsp;000 = 100 a year. 100 &times; 3 = <b>$300</b>."},
+{id:"F3-05",level:"form3",strand:"Statistics",topic:"Probability",proc:"Applying",sec:1,marks:1,
+ q:"A bag holds 3 red and 5 blue marbles. One is taken at random. What is the probability that it is red? Give a fraction in lowest terms.", a:["3/8"],
+ ask:"Probability is the number of ways it can happen over the number of ways anything can happen.", step:"Red marbles on top, all the marbles underneath.",
+ exp:"3 red out of 3 + 5 = 8 marbles: <b>" + F(3,8) + "</b>."},
+{id:"F3-06",level:"form3",strand:"Algebra",topic:"Inequalities",proc:"Applying",sec:1,marks:1,
+ q:"Solve the inequality 2x + 1 &lt; 9.", a:["x<4","<4"],
+ ask:"Treat it like an equation until the last step.", step:"Take 1 from both sides, then divide by 2. The sign stays the same because you divided by a positive number.",
+ exp:"2x &lt; 8, so <b>x &lt; 4</b>."},
+
+/* ---------------- FORM 4 ---------------- */
+{id:"F4-01",level:"form4",strand:"Algebra",topic:"Factorising",proc:"Applying",sec:1,marks:1,
+ q:"Factorise x&sup2; + 5x + 6.", a:["(x+2)(x+3)","(x+3)(x+2)"],
+ ask:"Two numbers that multiply to 6 and add to 5.", step:"Try the factor pairs of 6 until one pair also adds to 5.",
+ exp:"2 &times; 3 = 6 and 2 + 3 = 5, so <b>(x + 2)(x + 3)</b>."},
+{id:"F4-02",level:"form4",strand:"Algebra",topic:"Quadratics",proc:"Applying",sec:1,marks:1,
+ q:"Solve x&sup2; &minus; 9 = 0, giving the positive root.", a:["3","x=3"],
+ ask:"A difference of two squares &mdash; or take the 9 across and square-root.", step:"x&sup2; = 9. Which positive number squares to 9?",
+ exp:"x&sup2; = 9, so x = <b>3</b> (or &minus;3)."},
+{id:"F4-03",level:"form4",strand:"Algebra",topic:"Functions",proc:"Applying",sec:1,marks:1,
+ q:"f(x) = 2x + 3. Find f(4).", a:["11"],
+ ask:"Replace every x with 4.", step:"Work out 2 &times; 4, then add 3.",
+ exp:"f(4) = 2(4) + 3 = 8 + 3 = <b>11</b>."},
+{id:"F4-04",level:"form4",strand:"Number",topic:"Standard form",proc:"Knowing",sec:1,marks:1,
+ q:"Write 45&nbsp;000 in standard form.", a:["4.5×10^4","4.5x10^4","4.5*10^4","4.5×10⁴","4.5x10⁴","4.5e4"],
+ ask:"Standard form is a number between 1 and 10, times a power of ten.", step:"Move the decimal point until one digit is in front of it, and count the moves.",
+ exp:"45&nbsp;000 = <b>4&middot;5 &times; 10&#8308;</b> &mdash; the point moved four places."},
+{id:"F4-05",level:"form4",strand:"Geometry",topic:"Trigonometry",proc:"Applying",sec:1,marks:1,
+ q:"In a right-angled triangle the side opposite the angle is 5 cm and the hypotenuse is 10 cm. Find the angle.", unit:"°", a:["30"],
+ ask:"Opposite and hypotenuse together: that is the sine ratio.", step:"sin &theta; = 5/10. Which angle has a sine of one half?",
+ exp:"sin &theta; = 0&middot;5, so &theta; = <b>30&deg;</b>."},
+{id:"F4-06",level:"form4",strand:"Number",topic:"Indices",proc:"Knowing",sec:1,marks:1,
+ q:"Simplify 2&sup3; &times; 2&#8308;, giving the answer as a power of 2.", a:["2^7","2⁷","128"],
+ ask:"When the bases are the same, the powers add.", step:"Keep the base 2 and add the two indices.",
+ exp:"2&sup3; &times; 2&#8308; = 2&#8311; = <b>2<sup>7</sup></b> (which is 128)."},
+
+/* ---------------- FORM 5 ---------------- */
+{id:"F5-01",level:"form5",strand:"Algebra",topic:"Variation",proc:"Applying",sec:1,marks:1,
+ q:"y varies directly as x, and y = 12 when x = 3. Find y when x = 5.", a:["20"],
+ ask:"Direct variation means y = kx. Find k first.", step:"Use the pair you were given to find k, then use k with the new x.",
+ exp:"12 = 3k, so k = 4. Then y = 4 &times; 5 = <b>20</b>."},
+{id:"F5-02",level:"form5",strand:"Algebra",topic:"Matrices",proc:"Knowing",sec:1,marks:1,
+ q:"Find the determinant of the matrix with rows (3&nbsp;&nbsp;1) and (4&nbsp;&nbsp;2).", a:["2"],
+ ask:"For a two-by-two matrix the determinant is ad &minus; bc.", step:"Multiply the top-left by the bottom-right, then take away the top-right times the bottom-left.",
+ exp:"(3)(2) &minus; (1)(4) = 6 &minus; 4 = <b>2</b>."},
+{id:"F5-03",level:"form5",strand:"Geometry",topic:"Transformations",proc:"Applying",sec:1,marks:1,
+ q:"The point P(2, 5) is reflected in the x-axis. Give the coordinates of its image.", a:["(2,-5)","2,-5","(2,−5)"],
+ ask:"Reflecting in the x-axis keeps x the same and flips the sign of y.", step:"Leave the 2 alone; change the 5.",
+ exp:"P(2, 5) &rarr; <b>(2, &minus;5)</b>."},
+{id:"F5-04",level:"form5",strand:"Statistics",topic:"Mean",proc:"Reasoning",sec:1,marks:1,
+ q:"The mean of five numbers is 8. Four of them are 6, 7, 9 and 10. Find the fifth.", a:["8"],
+ ask:"Mean &times; how many = the total.", step:"Multiply the mean by five for the total, then take away the four you know.",
+ exp:"Total = 8 &times; 5 = 40. 6 + 7 + 9 + 10 = 32. Fifth = 40 &minus; 32 = <b>8</b>."},
+{id:"F5-05",level:"form5",strand:"Measurement",topic:"Pythagoras",proc:"Applying",sec:1,marks:1,
+ q:"A ladder 10 m long leans against a wall with its foot 6 m from the wall. How far up the wall does it reach?", unit:"m", a:["8"],
+ ask:"Ladder, wall and ground make a right-angled triangle, and the ladder is the hypotenuse.", step:"Square the ladder, take away the square of the ground distance, then square-root.",
+ exp:"10&sup2; &minus; 6&sup2; = 100 &minus; 36 = 64, and &radic;64 = <b>8 m</b>."},
+{id:"F5-06",level:"form5",strand:"Number",topic:"Consumer arithmetic",proc:"Applying",sec:1,marks:1,
+ q:"A phone is bought on hire purchase: a deposit of $500 and 12 monthly payments of $150. What is the total hire-purchase price?", unit:"$", a:["2300"],
+ ask:"Deposit plus every instalment.", step:"Multiply the monthly payment by 12, then add the deposit.",
+ exp:"12 &times; 150 = 1&thinsp;800. 1&thinsp;800 + 500 = <b>$2&thinsp;300</b>."}
 ];
 /* ============================================================
    Official papers — every link points at the Ministry's own copy
@@ -1727,6 +1901,40 @@ QUESTIONS.forEach(q => Object.assign(q, HINTS[q.id] || {}));
 QUESTIONS.forEach(q => { if(!q.level){ q.level = LEVEL_OF[q.id] || "std5"; q.sea = true; } });
 
 /* ============================================================
+   CSEC Mathematics — the nine sections of the CXC syllabus
+   ============================================================ */
+const SYL_CSEC = [
+  ["Number Theory and Computation",[
+    "Natural, whole, integer, rational and real numbers","Directed numbers and the order of operations",
+    "Factors, multiples, primes, HCF and LCM","Fractions, decimals and percentages","Standard form and significant figures","Number bases"]],
+  ["Consumer Arithmetic",[
+    "Profit, loss and discount","Simple and compound interest","Hire purchase and mortgages",
+    "Wages, salaries, tax and utility bills","Rates and exchange rates"]],
+  ["Sets",[
+    "Set notation, subsets, the universal and empty sets","Union, intersection and complement",
+    "Venn diagrams with two and three sets","Problems solved with Venn diagrams"]],
+  ["Measurement",[
+    "Perimeter and area, including circles and sectors","Surface area and volume of prisms, cylinders, cones and spheres",
+    "Scale drawings, maps and bearings","Units, conversion and estimation"]],
+  ["Statistics",[
+    "Frequency tables, bar charts, pie charts and histograms","Mean, median and mode; range and quartiles",
+    "Cumulative frequency curves","Probability of simple and combined events"]],
+  ["Algebra",[
+    "Simplifying, expanding and factorising","Linear equations and inequalities","Simultaneous equations",
+    "Quadratics: factorising, the formula, completing the square","Indices and algebraic fractions","Changing the subject of a formula"]],
+  ["Relations, Functions and Graphs",[
+    "Coordinates and straight lines: gradient and intercept","Functions, inverse and composite functions",
+    "Quadratic graphs, maximum and minimum","Direct and inverse variation","Linear programming","Distance–time and speed–time graphs"]],
+  ["Geometry and Trigonometry",[
+    "Angles, parallel lines and polygons","Circle theorems","Congruence and similarity",
+    "Pythagoras and the trigonometric ratios","Sine rule, cosine rule and the area of a triangle",
+    "Bearings, elevation and depression","Constructions and transformations: reflection, rotation, translation, enlargement"]],
+  ["Vectors and Matrices",[
+    "Vector notation, addition, scalar multiples and magnitude","Position vectors and collinearity",
+    "Matrix addition, multiplication, determinant and inverse","Matrices as transformations"]]
+];
+
+/* ============================================================
    Storage — per device, per browser. Nothing leaves it.
    ============================================================ */
 const KEY = "rrb.sea.v2";
@@ -1782,7 +1990,7 @@ function seaYearFromSheet(){
 function currentSeaYear(){ return seaYearFromSheet() || store.seaYear || null; }
 function currentLevelIndex(){
   const y = currentSeaYear(); if(!y) return null;
-  return Math.max(0, Math.min(6, levelIndexFor(y)));
+  return Math.max(0, Math.min(LAST, levelIndexFor(y)));
 }
 
 /* ============================================================
@@ -1824,8 +2032,10 @@ function isRight(q, typed){
    ============================================================ */
 const $  = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
-const STRANDS = ["Number","Geometry","Measurement","Statistics"];
-const TAGCLS  = {Number:"n",Geometry:"g",Measurement:"m",Statistics:"s"};
+const STRANDS = ["Number","Geometry","Measurement","Statistics"];            // the S.E.A. paper's four
+const STRANDS_SEC = ["Number","Algebra","Geometry","Measurement","Statistics"]; // CSEC adds algebra
+const TAGCLS  = {Number:"n",Algebra:"a",Geometry:"g",Measurement:"m",Statistics:"s"};
+const strandsFor = stage => stage === "secondary" ? STRANDS_SEC : STRANDS;
 const shuffle = a => { const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
 const mmss = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 const esc  = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
@@ -1982,7 +2192,7 @@ function enter(r, user, payload){
   $("#resetBtn").hidden = (r === "parent");
   pLevelSel = currentLevelIndex() === null ? 6 : currentLevelIndex();
   renderRoleCopy();
-  pLevels(); pTopics(); pBuild(true);      // needs the role: it decides which rungs open
+  pLevels(); pStrands(); pTopics(); pBuild(true);      // needs the role: it decides which rungs open
   renderKey();
   $("#examPrint").hidden = (r !== "teacher");
   const want = location.hash.slice(1);
@@ -1994,7 +2204,7 @@ function enter(r, user, payload){
    teacher always has it. */
 function views(){
   const li = currentLevelIndex();
-  return CAN[role].views.filter(v => v !== "exam" || role === "teacher" || li === null || li >= 5);
+  return CAN[role].views.filter(v => v !== "exam" || role === "teacher" || li === null || (li >= 5 && li <= 6));
 }
 function buildNav(){
   $("#nav").innerHTML = views().map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
@@ -2009,7 +2219,7 @@ function paintWho(){
 function setLevel(li){
   store.seaYear = li === null ? null : seaYearFor(li); save();
   pLevelSel = currentLevelIndex() === null ? 6 : currentLevelIndex();
-  paintWho(); buildNav(); pLevels(); pTopics(); pBuild(true); renderHome();
+  paintWho(); buildNav(); pLevels(); pStrands(); pTopics(); pBuild(true); renderHome();
 }
 
 /* ============================================================
@@ -2101,22 +2311,28 @@ function strandStat(s){
 function renderJourney(){
   const li = currentLevelIndex(), y = currentSeaYear(), teach = role === "teacher";
   $("#journey").innerHTML = LEVELS.map((l,i) =>
-    `<div class="step${l.sea ? " sea" : ""}${li !== null && i < li ? " done" : ""}"${li === i ? ' aria-current="step"' : ""}>
-       <b>${l.name}${l.sea ? " · S.E.A." : ""}</b>ages ${l.age}</div>`).join("");
-  let cap = "Seven years of primary school, and the S.E.A. at the end of them.";
+    `<div class="step${l.sea || l.csec ? " sea" : ""}${li !== null && i < li ? " done" : ""}"${li === i ? ' aria-current="step"' : ""}>
+       <b>${l.name}${l.sea ? " · S.E.A." : l.csec ? " · CSEC" : ""}</b>ages ${l.age}</div>` + (l.sea ? `<div class="gap"></div>` : "")).join("");
+  let cap = "Twelve years of school, and two examinations: the S.E.A. after Standard 5, CSEC after Form 5.";
   if(!teach && li !== null){
-    const gap = 6 - li;
     const who = role === "parent" ? (childName ? childName.split(" ")[0] + " is" : "Your child is") : "You are";
     const W = ["","one","two","three","four","five","six"];
-    cap = `${who} in <b>${LEVELS[li].name}</b> &middot; S.E.A. in <b>${y}</b>` +
-          (gap ? ` &middot; ${W[gap]} more class${gap > 1 ? "es" : ""} after this one` : " &middot; this is the year");
+    if(stageOf(li) === "primary"){
+      const gap = 6 - li;
+      cap = `${who} in <b>${LEVELS[li].name}</b> &middot; S.E.A. in <b>${y}</b>` +
+            (gap ? ` &middot; ${W[gap]} more class${gap > 1 ? "es" : ""} after this one` : " &middot; this is the year");
+    } else {
+      const gap = LAST - li;
+      cap = `${who} in <b>${LEVELS[li].name}</b> &middot; CSEC in <b>${csecYearFor(y)}</b>` +
+            (gap ? ` &middot; ${W[gap]} more form${gap > 1 ? "s" : ""} after this one` : " &middot; this is the year");
+    }
   }
   $("#journeyCap").innerHTML = cap;
   if(teach){ $("#levelPick").innerHTML = ""; return; }
   if(li === null){
     $("#levelPick").innerHTML = `<p style="margin-top:.85rem;font-weight:700">${role === "parent" ? "Which class is your child in?" : "Which class are you in?"}</p>
-      <div class="levelpick">${LEVELS.map((l,i) => `<button class="${l.sea ? "sea" : ""}" data-li="${i}">${l.name}</button>`).join("")}</div>
-      <p class="muted" style="font-size:12.5px;margin-top:.5rem">The app moves you up a class every September by itself.</p>`;
+      <div class="levelpick">${LEVELS.map((l,i) => `<button class="${l.sea || l.csec ? "sea" : ""}" data-li="${i}">${l.name}</button>`).join("")}</div>
+      <p class="muted" style="font-size:12.5px;margin-top:.5rem">Primary on the left, secondary on the right. The app moves you up a class every September by itself.</p>`;
   } else {
     $("#levelPick").innerHTML = seaYearFromSheet() ? ""
       : `<div style="margin-top:.7rem"><button class="btn ghost sm" id="levelChange">Not the right class? Change it</button></div>`;
@@ -2141,7 +2357,9 @@ function renderHome(){
   const best = exams.length ? Math.max(...exams.map(e => e.score)) : null;
   $("#hEBest").textContent = best === null ? "none sat yet" : `best ${best} / 75`;
 
-  $("#hStrands").innerHTML = STRANDS.map(s => {
+  const st = currentLevelIndex() === null ? "primary" : stageOf(currentLevelIndex());
+  $("#factsSea").hidden = st !== "primary"; $("#factsCsec").hidden = st !== "secondary";
+  $("#hStrands").innerHTML = strandsFor(st).map(s => {
     const t = strandStat(s);
     return `<div style="margin-bottom:.9rem">
       <div style="display:flex;justify-content:space-between;font-size:13.5px;gap:.5rem">
@@ -2150,7 +2368,7 @@ function renderHome(){
   }).join("");
 
   // Say the one useful thing, rather than showing four bars and leaving it there.
-  const tried = STRANDS.map(s => ({s, ...strandStat(s)})).filter(t => t.done >= 3);
+  const tried = strandsFor(st).map(s => ({s, ...strandStat(s)})).filter(t => t.done >= 3);
   let advice;
   if(role === "parent" && ACADEMY_API && !childProgress){
     advice = `<p class="note">No student is linked to this account yet. Ask the Academy to put the child's
@@ -2162,7 +2380,7 @@ function renderHome(){
     const worst = tried.reduce((a,b) => a.acc <= b.acc ? a : b);
     const marks = {Number:34, Geometry:11, Measurement:18, Statistics:12}[worst.s];
     advice = `<p class="note"><b>${worst.s}</b> is the weakest so far — ${worst.acc}&thinsp;% clean over
-      ${worst.done} question${worst.done>1?"s":""}. It is worth <b>${marks} of the 75 marks</b> on the paper.
+      ${worst.done} question${worst.done>1?"s":""}.${st === "primary" && marks ? ` It is worth <b>${marks} of the 75 marks</b> on the paper.` : ""}
       ${role === "student" ? "Filter Practice to that strand next." : "That is the strand to sit down with."}</p>`;
   }
   $("#hAdvice").innerHTML = advice;
@@ -2184,19 +2402,19 @@ let pFilter = "All", pTopic = "All", pList = [], pIdx = 0, pSession = {n:0, ok:0
 function levelOk(q){
   if(pLevelSel === null) return true;
   const qi = LEVEL_INDEX[q.level];
-  return pLevelSel >= 5 ? (!!q.sea && qi <= pLevelSel) : qi === pLevelSel;
+  return (pLevelSel === 5 || pLevelSel === 6) ? (!!q.sea && qi <= pLevelSel) : qi === pLevelSel;
 }
 const pPool = () => QUESTIONS.filter(q => levelOk(q) &&
   (pFilter === "All" || q.strand === pFilter) && (pTopic === "All" || q.topic === pTopic));
 function pLevels(){
   $("#pLevel").innerHTML = LEVELS.map((l,i) =>
-    `<button class="chip" data-li="${i}" aria-pressed="${pLevelSel === i}">${l.name}${l.sea ? " · S.E.A." : ""}</button>`).join("")
+    `<button class="chip" data-li="${i}" aria-pressed="${pLevelSel === i}">${l.name}${l.sea ? " · S.E.A." : l.csec ? " · CSEC" : ""}</button>`).join("")
     + `<button class="chip" data-li="all" aria-pressed="${pLevelSel === null}">All</button>`;
 }
 $("#pLevel").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;
   pLevelSel = b.dataset.li === "all" ? null : Number(b.dataset.li);
-  pLevels(); pTopics(); pBuild(true);
+  pLevels(); pStrands(); pTopics(); pBuild(true);
 });
 function pBuild(reshuffle){
   const pool = pPool();
@@ -2209,8 +2427,13 @@ function pTopics(){
   if(!opts.includes(pTopic)) pTopic = "All";
   $("#pTopic").innerHTML = opts.map(t => `<option${t === pTopic ? " selected" : ""}>${t}</option>`).join("");
 }
-$("#pStrand").innerHTML = ["All", ...STRANDS]
-  .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === "All"}">${s}</button>`).join("");
+function pStrands(){
+  const list = pLevelSel === null ? STRANDS_SEC : strandsFor(stageOf(pLevelSel));
+  if(pFilter !== "All" && !list.includes(pFilter)) pFilter = "All";
+  $("#pStrand").innerHTML = ["All", ...list]
+    .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === pFilter}">${s}</button>`).join("");
+}
+pStrands();
 $("#pStrand").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;
   pFilter = b.dataset.s;
@@ -2620,6 +2843,7 @@ function renderSyllabus(){
         }).join("")}</ul></details>`).join("");
   $("#sylMath").innerHTML = block(SYL_MATH, "Mathematics — 40 items, 75 marks, 75 minutes");
   $("#sylEla").innerHTML  = block(SYL_ELA,  "English Language Arts — 36 items, 64 marks, 75 minutes");
+  $("#sylCsec").innerHTML = block(SYL_CSEC, "CSEC Mathematics — Paper 1 · 60 items · Paper 2 · SBA");
 }
 document.addEventListener("change", e => {
   const c = e.target.closest("input[data-syl]"); if(!c) return;
@@ -2631,7 +2855,7 @@ renderSyllabus();
    Answer key — parents and teachers only
    ============================================================ */
 let kFilter = "All";
-$("#kStrand").innerHTML = ["All", ...STRANDS]
+$("#kStrand").innerHTML = ["All", ...STRANDS_SEC]
   .map(s => `<button class="chip" data-s="${s}" aria-pressed="${s === "All"}">${s}</button>`).join("");
 $("#kStrand").addEventListener("click", e => {
   const b = e.target.closest(".chip"); if(!b) return;

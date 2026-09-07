@@ -74,10 +74,11 @@ const ok = (what, cond, extra) => {
   ok('the student code opens the app', await page.isVisible('#app') &&
      (await page.textContent('#rolePill')).startsWith('Student'));
   ok('a student who has not been placed is asked which class they are in',
-     (await page.$$eval('#levelPick [data-li]', n => n.length)) === 7);
-  ok('the journey shows all seven classes with the S.E.A. at the end',
-     (await page.$$eval('#journey .step', n => n.length)) === 7 &&
-     /S\.E\.A\./.test(await page.textContent('#journey .step:last-child')));
+     (await page.$$eval('#levelPick [data-li]', n => n.length)) === 12);
+  ok('the journey shows all twelve classes, with the S.E.A. and CSEC marked as the destinations',
+     (await page.$$eval('#journey .step', n => n.length)) === 12 &&
+     (await page.$$eval('#journey .step.sea', n => n.map(x => x.textContent))).join(' ').includes('S.E.A.') &&
+     /CSEC/.test(await page.textContent('#journey .step:last-child')));
   await page.click('#levelPick [data-li="4"]');            // Standard 3
   const cap = () => page.textContent('#journeyCap');
   ok('picking Standard 3 places the child and names the S.E.A. year',
@@ -95,7 +96,17 @@ const ok = (what, cond, extra) => {
   ok('Infant 1 has its own questions', await page.evaluate(() => pList.length >= 6 && pList.every(q => /^I1-/.test(q.id))));
   await page.click('#nav button[data-view="home"]');
   await page.click('#levelChange');
-  ok('the class can be changed if it was picked wrong', (await page.$$eval('#levelPick [data-li]', n => n.length)) === 7);
+  ok('the class can be changed if it was picked wrong', (await page.$$eval('#levelPick [data-li]', n => n.length)) === 12);
+  await page.click('#levelPick [data-li="9"]');            // Form 3
+  ok('a Form 3 student is told the CSEC year and the forms still to come',
+     /Form 3/.test(await cap()) && /CSEC in \d{4}/.test(await cap()) && /two more forms after this one/.test(await cap()));
+  ok('a secondary student is not offered the S.E.A. mock paper', (await page.$('#nav button[data-view="exam"]')) === null);
+  await page.click('#nav button[data-view="practice"]');
+  ok("Form 3 practice is Form 3's own bank, and Algebra is now a strand",
+     await page.evaluate(() => pList.length >= 6 && pList.every(q => /^F3-/.test(q.id))) &&
+     (await page.$('#pStrand .chip[data-s="Algebra"]')) !== null);
+  await page.click('#nav button[data-view="home"]');
+  await page.click('#levelChange');
   await page.click('#levelPick [data-li="6"]');            // Standard 5
   ok('Standard 5 gets the mock paper', (await page.$('#nav button[data-view="exam"]')) !== null && /this is the year/.test(await cap()));
   await page.click('#nav button[data-view="practice"]');

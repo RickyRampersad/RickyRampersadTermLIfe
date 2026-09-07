@@ -42,7 +42,8 @@ const ok = (what, cond, extra) => {
   if (!cond) fails++;
 };
 
-const STRANDS = ['Number', 'Geometry', 'Measurement', 'Statistics'];
+const STRANDS = ['Number', 'Geometry', 'Measurement', 'Statistics'];            // the S.E.A. paper's four
+const STRANDS_ALL = ['Number', 'Algebra', 'Geometry', 'Measurement', 'Statistics']; // Algebra joins at secondary
 const PROCS   = ['Knowing', 'Applying', 'Reasoning'];
 
 // ---- every item well formed, and self-consistent ----------------------------
@@ -52,7 +53,7 @@ for (const q of QUESTIONS) {
   const p = m => problems.push(q.id + ': ' + m);
   if (seen.has(q.id)) p('duplicate id');
   seen.add(q.id);
-  if (!STRANDS.includes(q.strand)) p('unknown strand ' + q.strand);
+  if (!STRANDS_ALL.includes(q.strand)) p('unknown strand ' + q.strand);
   if (!PROCS.includes(q.proc))     p('unknown thinking process ' + q.proc);
   if (![1, 2, 3].includes(q.sec))  p('section must be 1, 2 or 3');
   // Section marks are fixed by the framework, not by taste.
@@ -108,7 +109,13 @@ const RECOMPUTED = {
   'I2-01': 12 + 6, 'I2-02': 15 - 7, 'I2-03': 4, 'I2-05': 7, 'I2-06': 6 + 4,
   'S1-01': 5 * 4, 'S1-02': 300 + 40 + 7, 'S1-03': 18 / 2, 'S1-04': 4, 'S1-05': 100, 'S1-06': 8 - 5,
   'S2-01': 36 / 4, 'S2-02': 50, 'S2-03': 20 / 4, 'S2-04': 2, 'S2-05': 6 * 4, 'S2-06': 100 - 75, 'S2-07': 7 + 5,
-  'S3-01': 234 * 3, 'S3-05': 5 * 3, 'S3-07': 4 * 2
+  'S3-01': 234 * 3, 'S3-05': 5 * 3, 'S3-07': 4 * 2,
+  // the CSEC track
+  'F1-01': -7 + 12, 'F1-02': 3 + 4 * 2, 'F1-03': 12, 'F1-05': 12 * 7, 'F1-06': 180 - 115,
+  'F2-01': 360 / 9 * 7, 'F2-02': 80 * 0.85, 'F2-03': (11 + 4) / 3, 'F2-05': 360 - 90 - 85 - 110, 'F2-06': 6,
+  'F3-01': 7, 'F3-02': Math.sqrt(36 + 64), 'F3-03': 22 / 7 * 49 * 10, 'F3-04': 2000 * 0.05 * 3,
+  'F4-02': 3, 'F4-03': 2 * 4 + 3, 'F4-05': 30,
+  'F5-01': 12 / 3 * 5, 'F5-02': 3 * 2 - 1 * 4, 'F5-04': 8 * 5 - (6 + 7 + 9 + 10), 'F5-05': Math.sqrt(100 - 36), 'F5-06': 500 + 12 * 150
 };
 const drift = [];
 let checked = 0;
@@ -226,12 +233,17 @@ ok('the mark is styled the way CLAUDE.md sets out',
 // Seven years, one destination. A child is placed by the year of their S.E.A.
 // and moved up every September by the calendar, never by hand.
 const badLevel = QUESTIONS.filter(q => !(q.level in LEVEL_INDEX)).map(q => q.id);
-ok('every question sits in one of the seven classes', badLevel.length === 0, badLevel.join(', '));
+ok('every question sits in one of the twelve classes', badLevel.length === 0, badLevel.join(', '));
+ok('twelve classes, two destinations', LEVELS.length === 12 && LEVELS.filter(l => l.sea || l.csec).length === 2 &&
+   LEVELS[6].sea && LEVELS[11].csec);
 const sea = QUESTIONS.filter(q => q.sea);
 ok('the S.E.A. bank is the 71 examination-style questions and nothing from the lower classes',
    sea.length === 71 && sea.every(q => /^[NGMS]\d\d$/.test(q.id)) && sea.every(q => LEVEL_INDEX[q.level] >= 4));
-ok('every lower-class question is a one-mark item that never enters a mock paper',
-   QUESTIONS.filter(q => !q.sea).every(q => q.sec === 1 && q.marks === 1 && LEVEL_INDEX[q.level] <= 4));
+ok('every question outside the S.E.A. bank is a one-mark item that never enters a mock paper',
+   QUESTIONS.filter(q => !q.sea).every(q => q.sec === 1 && q.marks === 1 && ![5, 6].includes(LEVEL_INDEX[q.level])));
+ok('every Form has its own questions and Algebra appears only at secondary',
+   ['form1','form2','form3','form4','form5'].every(k => QUESTIONS.filter(q => q.level === k).length >= 6) &&
+   QUESTIONS.filter(q => q.strand === 'Algebra').every(q => LEVEL_INDEX[q.level] >= 7));
 const perLevel = Object.fromEntries(LEVELS.map(l => [l.k, QUESTIONS.filter(q => q.level === l.k).length]));
 ok(`no class is empty (${Object.values(perLevel).join('/')})`, Object.values(perLevel).every(n => n >= 6));
 const sep2026 = new Date(2026, 8, 7), jun2027 = new Date(2027, 5, 1), sep2027 = new Date(2027, 8, 1);
@@ -242,6 +254,9 @@ ok('a child sitting it in 2029 is in Standard 3 now, still in June, and in Stand
    LEVELS[levelIndexFor(2029, sep2026)].k === 'std3' && LEVELS[levelIndexFor(2029, jun2027)].k === 'std3' &&
    LEVELS[levelIndexFor(2029, sep2027)].k === 'std4');
 ok('a child who starts Infant 1 this September sits the S.E.A. in 2033', seaYearFor(0, sep2026) === 2033);
+ok('a child who sat the S.E.A. in 2027 is in Form 1 the September after, and Form 5 four years later',
+   LEVELS[levelIndexFor(2027, sep2027)].k === 'form1' && LEVELS[levelIndexFor(2027, new Date(2031, 8, 1))].k === 'form5');
+ok('a child who sat the S.E.A. in 2024 is in Form 3 now', LEVELS[levelIndexFor(2024, sep2026)].k === 'form3');
 ok('picking a class and reading it back round-trips for every class',
    LEVELS.every((l, i) => levelIndexFor(seaYearFor(i, sep2026), sep2026) === i));
 

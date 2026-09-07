@@ -223,15 +223,17 @@ its place, and that the `.mark` rule still matches what CLAUDE.md sets out.
 That check exists because a screen has twice shipped with an invented mark
 beside three screens carrying the real one.
 
-## Seven years, one destination
+## Twelve years, two destinations
 
-The app covers primary school from Infant 1 to Standard 5, with the S.E.A. at
-the end of it. A child is placed by **one number — the year they will sit the
-S.E.A.** — and the class is worked out from the date: school years end in the
-calendar year the S.E.A. is sat in, so a child sitting it in 2029 is in
-Standard 3 in September 2026 and moves to Standard 4 in September 2027 with
-nobody touching anything. `levelIndexFor` and `seaYearFor` in the page are the
-whole rule, and `tests/test-sea.js` pins them to fixed dates.
+The app covers school from Infant 1 to Form 5: seven years of primary with
+the S.E.A. at the end, then five of secondary with CSEC at the end. A child is
+placed by **one number — the year they will sit the S.E.A.** — and the class
+is worked out from the date: school years end in the calendar year the S.E.A.
+is sat in, so a child sitting it in 2029 is in Standard 3 in September 2026,
+Standard 4 in September 2027, Form 1 in September 2029, and sits CSEC in
+2034. `levelIndexFor`, `seaYearFor` and `csecYearFor` in the page are the
+whole rule, and `tests/test-sea.js` pins them to fixed dates. For a child
+already at secondary school the number is simply the year their S.E.A. was.
 
 Where the number comes from: the **SEA Year** column of the Users sheet when
 the backend is deployed (a parent is placed where the child is); otherwise a
@@ -242,15 +244,31 @@ What a class sees:
 | Class | Practice | Mock paper |
 |---|---|---|
 | Infant 1 – Standard 3 | That class's own bank, plus any S.E.A. question tagged for it (`LEVEL_OF`) | Not offered |
-| Standard 4 | The S.E.A. bank filtered to what suits Standard 4 | Yes, for practice |
-| Standard 5 | The whole S.E.A. bank | Yes |
+| Standard 4 | The S.E.A. bank filtered to what suits Standard 4 | The S.E.A. paper, for practice |
+| Standard 5 | The whole S.E.A. bank | The S.E.A. paper |
+| Form 1 – Form 5 | That Form's own bank; Algebra joins the strands | None yet — see below |
 
 Every question carries a `level`. The 71 examination-style questions also carry
-`sea:true`, and **only those** can enter a mock paper — the test checks a lower
-class's question never does. The lower-class bank (`I1-`, `I2-`, `S1-`, `S2-`,
-`S3-` ids) is a first six or seven questions per class so no class opens
-empty. It is a start, not a syllabus: the full seven-year bank is the real
-content job, and it wants a primary teacher writing beside whoever types.
+`sea:true`, and **only those** can enter a mock paper — the test checks a
+lower class's or a Form's question never does. The lower-class bank (`I1-`,
+`I2-`, `S1-`, `S2-`, `S3-`) and the CSEC-track bank (`F1-` to `F5-`) are a
+first six or seven questions per class so no class opens empty. They are a
+start, not a syllabus: the full twelve-year bank is the real content job, and
+it wants a primary teacher and a secondary maths teacher writing beside
+whoever types.
+
+**CSEC has no mock paper yet.** Paper 1 is sixty multiple-choice items in
+ninety minutes, and the bank is short-answer, so a faithful mock needs a
+multiple-choice bank first. Home shows the real paper structure — Paper 1
+30 %, Paper 2 50 %, SBA 20 % — from the CXC syllabus, and the Syllabus page
+carries its nine sections.
+
+**CXC sells its past papers.** The Ministry gives the S.E.A. papers away; the
+Caribbean Examinations Council gives away syllabuses and specimen papers and
+sells past papers through the CXC Store. The Papers page links to those three
+and to nothing else. Sites offering CSEC papers free are copying them, and the
+app must never link to one — the same rule as the S.E.A. papers, applied to a
+body that charges.
 
 ## Sponsors
 
