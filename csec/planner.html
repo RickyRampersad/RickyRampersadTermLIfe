@@ -3,21 +3,12 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Planner | CSEC Study Hub</title>
+<title>Syllabus Browser | CSEC Study Hub</title>
 <meta name="description" content="The Form 1 to Form 5 road to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/csec.css"/>
 <style>
-  .road{display:flex;flex-direction:column;gap:12px}
-  .yr{display:flex;gap:16px;align-items:flex-start;padding:18px;border-radius:16px;
-      background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line)}
-  .yr.now{border-color:var(--gold);box-shadow:0 0 0 1px rgba(239,194,75,.28)}
-  .yr .no{flex:none;width:52px;height:52px;border-radius:13px;display:grid;place-items:center;
-          font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.15rem;
-          background:rgba(255,255,255,.07);color:var(--muted)}
-  .yr.now .no{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f}
-  .yr ul{margin:10px 0 0 18px;color:var(--muted);font-size:.86rem;line-height:1.75}
   .strand{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;
           background:rgba(0,0,0,.2);border:1px solid var(--line)}
   .strand .fms{flex:none;display:flex;gap:3px}
@@ -31,7 +22,7 @@
 <header class="top">
   <div class="wrap topbar">
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
-    <div class="brandtext"><b>CSEC Study Hub</b><span>Planner</span></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>Syllabus</span></div>
     <nav class="topnav" id="nav"></nav>
   </div>
 </header>
@@ -41,9 +32,10 @@
 
     <div class="pagehead">
       <div class="eyebrow">Form 1 → Form 5</div>
-      <h1>The road to CSEC</h1>
-      <p>CSEC is written in Form 5, but it is decided long before that. Form 3 sets which subjects
-         are open to you and Form 4 covers half the syllabus. This is the whole road in order.</p>
+      <h1>The syllabus, strand by strand</h1>
+      <p>Every CSEC syllabus section for every subject, with the forms each is normally taught in
+         and how you are doing on it. For what each <i>year</i> is for, see
+         <a href="journey.html" style="color:var(--gold)">your journey →</a></p>
     </div>
 
     <!-- ---------- countdown ---------- -->
@@ -67,9 +59,15 @@
       </p>
     </div>
 
-    <!-- ---------- roadmap ---------- -->
-    <div class="section-label">Year by year</div>
-    <div class="road" id="road"></div>
+    <a class="card" href="journey.html" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin:14px 0;text-decoration:none">
+      <div style="font-size:1.7rem">🧭</div>
+      <div style="flex:1;min-width:200px">
+        <h3>What is this year actually for?</h3>
+        <p class="sub">The guided journey breaks each form into its three terms, shows what is new
+        this year, what you are still carrying from below, and every milestone to CSEC.</p>
+      </div>
+      <span class="r-arrow">→</span>
+    </a>
 
     <!-- ---------- syllabus browser ---------- -->
     <div class="section-label">Syllabus browser</div>
@@ -107,11 +105,12 @@
   var HOME={student:'student.html',parent:'parent.html',teacher:'teacher.html'};
   $('nav').innerHTML = me
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
-      (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      '<a href="journey.html">Journey</a>'+
+    (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
       '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
-      '<a href="planner.html" class="on">Planner</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
-    : '<a href="index.html">Sign in</a><a href="guides.html">Guides</a>'+
-      '<a href="planner.html" class="on">Planner</a><a href="papers.html">Resources</a>';
+      '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
+    : '<a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
+      '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a>';
 
   var form = me && me.role==='student' ? me.form : 2;
   $('formsel').value=String(form);
@@ -124,19 +123,6 @@
     $('cd-months').textContent=cd.months;
     $('cd-days').textContent=cd.days;
 
-    $('road').innerHTML=C.roadmap.map(function(y){
-      var isNow=(y.form===form);
-      return '<div class="yr'+(isNow?' now':'')+'">'+
-        '<div class="no">'+y.form+'</div>'+
-        '<div style="flex:1;min-width:0">'+
-          '<div style="display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:4px">'+
-            '<h3 style="font-family:Montserrat,sans-serif;font-size:1.02rem;font-weight:700">'+esc(y.label)+' · '+esc(y.phase)+'</h3>'+
-            (isNow?'<span class="pill gold">You are here</span>':'')+
-          '</div>'+
-          '<p class="sub">'+esc(y.focus)+'</p>'+
-          '<ul>'+y.goals.map(function(g){return '<li>'+esc(g)+'</li>';}).join('')+'</ul>'+
-        '</div></div>';
-    }).join('');
   }
   $('formsel').addEventListener('change',function(){ paintForm(); paintSubject(); });
   paintForm();

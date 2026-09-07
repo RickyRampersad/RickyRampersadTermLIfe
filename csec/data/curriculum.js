@@ -312,24 +312,99 @@ window.CSEC_CURRICULUM = {
     }
   },
 
-  /* Form 1-5 roadmap. Shown on the planner so a Form 2 student can see where
-     this is going without being handed a Form 5 workload today. */
+  /* The whole spine, primary through to CSEC.
+   *
+   * Primary is listed but marked external: it is served by a separate site.
+   * It sits here so the journey shows a student where they have come from, and
+   * so the two can be joined later without reshaping this file — see README,
+   * "Joining the primary site". */
+  stages: [
+    { key:'primary', label:'Primary school', years:'Infant 1 – Standard 5', exam:'SEA',
+      external:true,
+      note:'Seven years to the Secondary Entrance Assessment, which decides the secondary school. Covered by a separate site.' },
+    { key:'lower', label:'Lower secondary', years:'Form 1 – Form 3', exam:'Subject selection',
+      forms:[1,2,3],
+      note:'Three years to build the base and to earn the right to choose. Form 3 results decide which CSEC subjects are open to you.' },
+    { key:'upper', label:'Upper secondary', years:'Form 4 – Form 5', exam:'CSEC',
+      forms:[4,5],
+      note:'Two years on the CSEC syllabus itself, with School-Based Assessment running alongside from the start of Form 4.' }
+  ],
+
+  /* Form 1-5 roadmap, now term by term. Each form knows what its three terms
+     are for, and which milestones fall in them, so the journey can tell a
+     student what THIS term is for rather than what the next five years are. */
   roadmap: [
-    { form:1, label:'Form 1', phase:'Foundations',
+    { form:1, label:'Form 1', phase:'Foundations', stage:'lower',
       focus:'Settle the habits. Neat notes, homework done the day it is set, reading every night.',
-      goals:['Build a study routine you can keep','Master number and grammar basics','Read one book a month for English B','Learn how to take notes that you can revise from'] },
-    { form:2, label:'Form 2', phase:'Building',
+      goals:['Build a study routine you can keep','Master number and grammar basics','Read one book a month for English B','Learn how to take notes that you can revise from'],
+      terms:[
+        { n:1, title:'Settling in', aim:'Get organised before the work gets hard.',
+          do:['Set a fixed time and place for homework','Start one notebook per subject and keep it neat','Ask in class the first time something does not make sense'] },
+        { n:2, title:'Finding your footing', aim:'Turn effort into marks.',
+          do:['Learn what each teacher actually marks','Practise number and grammar until they are automatic','Start the vocabulary book for Spanish and French'] },
+        { n:3, title:'First full exams', aim:'Learn how to revise, not just how to work.',
+          do:['Revise from your own notes, not the textbook','Sit past school papers to time','Find out which subjects you enjoy — it matters by Form 3'] }
+      ],
+      milestones:[] },
+
+    { form:2, label:'Form 2', phase:'Building', stage:'lower',
       focus:'Widen the base. This is the year the sciences and languages start to separate.',
-      goals:['Keep every subject above 60%','Start a vocabulary book for Spanish and French','Learn algebra properly — it carries Forms 3 to 5','Practise timed questions once a week'] },
-    { form:3, label:'Form 3', phase:'Choosing',
+      goals:['Keep every subject above 60%','Start a vocabulary book for Spanish and French','Learn algebra properly — it carries Forms 3 to 5','Practise timed questions once a week'],
+      terms:[
+        { n:1, title:'Widen the base', aim:'Meet the new subjects properly.',
+          do:['Get algebra right early — everything after it depends on it','Keep up in both languages; a term behind is hard to recover','Start using the guided methods for question types you fumble'] },
+        { n:2, title:'Where the gaps show', aim:'Find your weak strands while they are still small.',
+          do:['Work the daily plan every night','Sit a timed test in Maths and English once a month','Fix anything under 50% before it becomes a Form 3 topic'] },
+        { n:3, title:'Looking ahead', aim:'Start thinking about Form 3 and subject choice.',
+          do:['Notice which subjects you are actually good at','Push two subjects towards 75%','Read the CSEC syllabus for one subject you are curious about'] }
+      ],
+      milestones:[] },
+
+    { form:3, label:'Form 3', phase:'Choosing', stage:'lower',
       focus:'The subject-choice year. Your Form 3 marks decide which CSEC subjects are open to you.',
-      goals:['Identify your strongest 8-10 subjects','Fix any weak strand before it becomes a CSEC topic','Sit past-paper style questions in Maths and English','Choose CSEC subjects with evidence, not guesswork'] },
-    { form:4, label:'Form 4', phase:'CSEC Year One',
+      goals:['Identify your strongest 8-10 subjects','Fix any weak strand before it becomes a CSEC topic','Sit past-paper style questions in Maths and English','Choose CSEC subjects with evidence, not guesswork'],
+      terms:[
+        { n:1, title:'Audit yourself honestly', aim:'Know where you stand in all fourteen.',
+          do:['Get every subject onto the KPI board with real practice behind it','Rank your subjects by readiness, not by which teacher you like','Start the weakest three now — there is still time this year'] },
+        { n:2, title:'Build the evidence', aim:'Mid-year results are what the school will look at.',
+          do:['Push your likely CSEC subjects hardest','Sit timed tests in the subjects you intend to keep','Talk to teachers about what each CSEC subject actually demands'] },
+        { n:3, title:'Choose, then close the gaps', aim:'Pick your CSEC subjects and go into Form 4 ready.',
+          do:['Choose 8-10 subjects on evidence from this hub and from school reports','Clear every strand under 50% in the subjects you have chosen','Download the CSEC syllabus for each chosen subject'] }
+      ],
+      milestones:[
+        { term:3, what:'CSEC subject selection', why:'The school asks you to choose the 8-10 subjects you will sit. It is very hard to change later, so choose on evidence.' }
+      ] },
+
+    { form:4, label:'Form 4', phase:'CSEC Year One', stage:'upper',
       focus:'The syllabus starts for real. Half of CSEC content is covered this year.',
-      goals:['Start SBA work early — do not leave it to Form 5','Cover the Form 4 half of each syllabus','Begin working through specimen papers','Keep a corrections book of every mistake'] },
-    { form:5, label:'Form 5', phase:'Examination Year',
+      goals:['Start SBA work early — do not leave it to Form 5','Cover the Form 4 half of each syllabus','Begin working through specimen papers','Keep a corrections book of every mistake'],
+      terms:[
+        { n:1, title:'The syllabus begins', aim:'Get onto the real CSEC content and start the SBA.',
+          do:['Read the syllabus for every subject in the first month','Find out the SBA requirement for each subject and start','Set up a corrections book and use it after every test'] },
+        { n:2, title:'Half the syllabus', aim:'Keep pace and gather SBA data.',
+          do:['Collect SBA data and evidence now, while there is time','Work specimen papers section by section','Keep coverage climbing — the KPI board shows where you have not been'] },
+        { n:3, title:'Consolidate', aim:'Finish Form 4 with drafts done and no gaps behind you.',
+          do:['Have a full SBA draft for every subject that needs one','Sit a full timed paper in your two hardest subjects','Fix everything still under 50% before the holidays'] }
+      ],
+      milestones:[
+        { term:1, what:'School-Based Assessment begins', why:'SBA counts towards the final CSEC grade in most subjects. Students who leave it to Form 5 lose marks they could have had.' }
+      ] },
+
+    { form:5, label:'Form 5', phase:'Examination Year', stage:'upper',
       focus:'Finish the syllabus, then practise under time until the paper holds no surprises.',
-      goals:['Complete and submit every SBA on time','Work past papers to time, then mark against the scheme','Target Grade I in your strongest subjects','Rest properly in the week before the exam'] }
+      goals:['Complete and submit every SBA on time','Work past papers to time, then mark against the scheme','Target Grade I in your strongest subjects','Rest properly in the week before the exam'],
+      terms:[
+        { n:1, title:'Finish the content', aim:'Close the syllabus and finish the SBA.',
+          do:['Complete the remaining syllabus in every subject','Finish every SBA to submission standard','Start working whole past papers to time'] },
+        { n:2, title:'Papers, to time, every week', aim:'Turn knowledge into marks under pressure.',
+          do:['Submit every SBA by the deadline','Work a full past paper each week and mark it against the scheme','Use the corrections book — repeat mistakes are the cheapest marks to win back'] },
+        { n:3, title:'The examinations', aim:'Arrive rested and practised.',
+          do:['Revise from your corrections book, not from scratch','Keep sitting timed papers until the format is dull','Sleep properly in the week before — it is worth more than one more night of cramming'] }
+      ],
+      milestones:[
+        { term:2, what:'SBA submission deadline', why:'SBA marks are submitted to CXC during the second term. A late or missing SBA costs a grade outright.' },
+        { term:3, what:'CSEC examinations', why:'Written in May and June. Everything from Form 1 has been building to these weeks.' }
+      ] }
   ],
 
   /* Verified official and reputable sources. Checked reachable 7 Sep 2026.
