@@ -114,7 +114,7 @@ Everything on screen comes out of Salesforce: `Risk_Details__c`,
 
 ## The renewals wall
 
-Seven slides at `/renewals/`, fourteen seconds each — the month's renewal book
+Nine slides at `/renewals/`, fourteen seconds each — the month's renewal book
 as a working wall:
 
 1. **The month, right now** — due / renewed / still open / overdue, with the
@@ -124,12 +124,30 @@ as a working wall:
    in Salesforce, dashed line = today
 3. **Motor** — every vehicle due, cover type, status chip, premium
 4. **Property** — every property risk due, private/commercial, premium
-5. **The money** — motor vs property split, the biggest renewals, and
+5. **Values · motor comprehensive** — last year's insured value against this
+   year's, whether the renewal took the prepared step-down, and the benefits
+   on each policy (windscreen cover, Waiver of Excess)
+6. **Values · property** — each sum insured, how many years it has sat
+   unchanged, what it is worth today at +5%/yr rebuilding drift, and the
+   riders on file
+7. **The money** — motor vs property split, the biggest renewals, and
    re-written vs collected (reads `Payments_Made__c` on the new cycle —
    blank until payments are posted, and the wall says so)
-6. **The work behind it** — open Tasks by owner and status, plus the renewal
+8. **The work behind it** — open Tasks by owner and status, plus the renewal
    chase ladder (payment follow-ups, waiting renewals), genericised
-7. **Already knocking** — next month's count and premium, by line
+9. **Already knocking** — next month's count and premium, by line
+
+**The values conversation, in fields:** comprehensive motor values step DOWN —
+`Cover1__c` against the prior cycle, with the register's own prepared options
+`Depreciation_10_Option_1__c` / `Depreciation_15_Option_2__c` as the guide
+(never `Depreciation__c`, which is the parts clause — see RENEWAL-SETUP).
+A value equal to last year's is flagged: premium is being paid on money a
+claim would not pay out. Property sums insured only go stale —
+`Total_Property_Cover__c` compared across the account's history; unchanged
+4+ years is flagged with the +5%/yr suggested figure (the RenewalLines
+drift), because average cuts every claim on an underinsured risk. Riders
+(burglary, stock, contents, liability, pool, electronics, WC) are read off
+the current row and shown as chips; blank riders show "confirm at renewal".
 
 **How "renewed" is decided:** a renewal counts as renewed when its next-cycle
 `Risk_Details__c` row exists — a record with the same vehicle registration

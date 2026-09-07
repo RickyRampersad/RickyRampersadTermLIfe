@@ -216,6 +216,34 @@ var WALL_DATA = {
     {d:"2026-09-17", what:"All risk",           type:"Commercial", prem:20776.00},
     {d:"2026-09-21", what:"Homeowner",          type:"Private",    prem:6558.75}
   ],
+  /* the values conversation — comprehensive motor steps DOWN (the register
+     carries a prepared 10% and 15% option per vehicle: Depreciation_10/15
+     option fields — never Depreciation__c, which is the parts clause);
+     property rebuilding costs drift UP (~5%/yr, the RenewalLines constant),
+     so an unchanged sum insured is an average-clause exposure.
+     motor: prev = last cycle's insured value, cur = this cycle's (or the
+     renewed figure), opt10/opt15 = the prepared step for this renewal,
+     ws = windscreen cover, waiver = Waiver of Excess on the policy.
+     property: sum = sum insured on the register, years = how long it has
+     been unchanged, missing = no value recorded, first = first cycle.   */
+  values: {
+    motor: [
+      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true},
+      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979},
+      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true},
+      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2}
+    ],
+    property: [
+      {d:"2026-09-08", what:"Commercial package", sum:600000,  first:true},
+      {d:"2026-09-11", what:"Homeowner",          sum:3000000, years:4},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-16", what:"Homeowner",          sum:3500000, years:5},
+      {d:"2026-09-17", what:"All risk",           sum:3500000, years:4},
+      {d:"2026-09-21", what:"Homeowner",          sum:1650000, years:4}
+    ]
+  },
   tasks: {
     open:241, dueThisMonth:151, renewalSubject:29, escalated:2,
     status:[
@@ -398,6 +426,76 @@ function sProperty(D){
     +'</tbody></table></div></div>';
 }
 
+function sMotorValues(D){
+  var V=(D.values||{}).motor||[];
+  var stepped=V.filter(function(r){return r.renewed && r.cur<r.prev}).length;
+  var stuck=V.filter(function(r){return r.stuckYears}).length;
+  var withWho=V.some(function(r){return r.who});
+  return '<div class="kick">Values · motor comprehensive</div>'
+    +'<h2>Vehicles depreciate — the value steps down at renewal</h2>'
+    +'<p class="lede">The register carries a prepared <b>−10%</b> and <b>−15%</b> figure for every comprehensive vehicle. '
+    +stepped+' of this month’s '+V.length+' have already taken the step'
+    +(stuck?' — and one value has not moved in two years, which means premium paid on money a claim would never pay out':'')+'.</p>'
+    +'<div class="body"><div class="panel"><table><thead><tr><th>Due</th>'
+    +(withWho?'<th>Client</th>':'')
+    +'<th>Vehicle</th><th>Value last year</th><th>Value now</th><th>This renewal</th><th>Benefits on the policy</th></tr></thead><tbody>'
+    +V.map(function(r){
+      var pct=r.prev?Math.round((1-r.cur/r.prev)*100):0;
+      var move;
+      if(r.renewed) move='<span class="chip good">stepped −'+pct+'% ✓</span>'
+        +(r.premSaved?' <span class="chip good">premium −'+money(r.premSaved)+'</span>':'');
+      else if(r.stuckYears) move='<span class="chip bad">unchanged '+r.stuckYears+' years — adjust to '
+        +moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>';
+      else move='<span class="chip warn">step to '+moneyShort(r.opt10)+' (−10%) or '+moneyShort(r.opt15)+' (−15%)</span>';
+      var ben=(r.ws?'<span class="chip blue">Windscreen '+moneyShort(r.ws)+(r.wsAdded?' — added ✓':'')+'</span> ':'')
+        +(r.waiver?'<span class="chip">Waiver of Excess</span>':'');
+      return '<tr><td>'+fmtD(r.d)+'</td>'
+        +(r.who?'<td><b>'+esc(r.who)+'</b></td>':'')
+        +'<td><b>'+esc(r.what)+'</b></td>'
+        +'<td>'+money(r.prev)+'</td>'
+        +'<td><b>'+money(r.cur)+'</b>'+(r.renewed&&pct?' <span style="color:var(--good)">↓</span>':'')+'</td>'
+        +'<td>'+move+'</td><td>'+ben+'</td></tr>';
+    }).join("")
+    +'</tbody></table></div>'
+    +'<div class="note">An unadjusted value is not extra cover — the insurer settles at market value, so the client pays premium on the difference and collects nothing for it. The step-down keeps the premium honest.</div>'
+    +'</div>';
+}
+
+function sPropValues(D){
+  var V=(D.values||{}).property||[];
+  var withWho=V.some(function(r){return r.who});
+  var DRIFT=0.05; // rebuilding-cost drift, per RenewalLines
+  function suggest(r){return Math.round(r.sum*Math.pow(1+DRIFT,r.years||0)/10000)*10000}
+  var stale=V.filter(function(r){return (r.years||0)>=2}), miss=V.filter(function(r){return r.missing});
+  var staleSum=stale.reduce(function(a,r){return a+r.sum},0);
+  return '<div class="kick">Values · property</div>'
+    +'<h2>Rebuilding costs rise — '+moneyShort(staleSum)+' insured on figures '+(stale.length?stale[0].years:0)+'+ years old</h2>'
+    +'<p class="lede">'+stale.length+' of this month’s property risks carry a sum insured that has not moved in four or more years'
+    +(miss.length?', and '+miss.length+' have no value on the register at all':'')
+    +'. Under average, a stale figure cuts every claim — not just a total loss.</p>'
+    +'<div class="body"><div class="panel"><table><thead><tr><th>Due</th>'
+    +(withWho?'<th>Client</th>':'')
+    +'<th>Risk</th><th>Sum insured</th><th>Unchanged</th><th>Worth today at +5%/yr</th><th>Riders on file</th></tr></thead><tbody>'
+    +V.map(function(r){
+      var sums,unch,sug;
+      if(r.missing){ sums='—'; unch='<span class="chip bad">no value on the register</span>'; sug='<span class="chip bad">enter it before renewal</span>'; }
+      else if(r.first){ sums='<b>'+money(r.sum)+'</b>'; unch='<span class="chip">first cycle</span>'; sug='<span class="chip">baseline set this year</span>'; }
+      else { var sg=suggest(r), gap=Math.round((sg/r.sum-1)*100);
+        sums='<b>'+money(r.sum)+'</b>';
+        unch='<span class="chip '+((r.years||0)>=4?'bad':'warn')+'">'+r.years+' years</span>';
+        sug='<b>'+moneyShort(sg)+'</b> <span style="color:var(--warn)">+'+gap+'%</span>'; }
+      var riders=r.riders&&r.riders.length
+        ? r.riders.map(function(x){return '<span class="chip blue">'+esc(x)+'</span>'}).join(' ')
+        : '<span class="chip">none recorded — confirm</span>';
+      return '<tr><td>'+fmtD(r.d)+'</td>'
+        +(r.who?'<td><b>'+esc(r.who)+'</b></td>':'')
+        +'<td><b>'+esc(r.what)+'</b></td><td>'+sums+'</td><td>'+unch+'</td><td>'+sug+'</td><td>'+riders+'</td></tr>';
+    }).join("")
+    +'</tbody></table></div>'
+    +'<div class="note">The average clause on a five-year-old figure: insured at TT$3.5m, worth TT$4.5m today — a TT$100k kitchen fire pays about TT$78k. The sums-insured review is the renewal conversation, not an extra.</div>'
+    +'</div>';
+}
+
 function sMoney(D){
   var s=sums(D);
   var pm=Math.round(s.motorBook), pp=Math.round(s.propBook), tot=pm+pp;
@@ -475,7 +573,7 @@ function sNext(D){
 }
 
 /* ── deck ── */
-var BUILDERS=[sPulse,sRail,sMotor,sProperty,sMoney,sTasks,sNext];
+var BUILDERS=[sPulse,sRail,sMotor,sProperty,sMotorValues,sPropValues,sMoney,sTasks,sNext];
 var DWELL=14000, cur=0, timer=null, paused=false;
 
 function render(D){
