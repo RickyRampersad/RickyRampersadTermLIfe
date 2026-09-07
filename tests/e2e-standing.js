@@ -136,7 +136,8 @@ async function session(b, withStanding, noted) {
   console.log('\nAn older server that says nothing about standing:\n');
   s = await session(b, false, noted);
   t = await s.page.locator('body').innerText();
-  ok('the day opens with no quarter card and no error', /Submit each block as it ends/.test(t) && !/Your quarter/.test(t));
+  // The strip still names "Your quarter" as a door; what must be absent is the card itself.
+  ok('the day opens with no quarter card and no error', /Submit each block as it ends/.test(t) && !/Your quarter · /.test(t) && !/days in · /.test(t));
   await s.page.click('button:has-text("← Branch")');
   await s.page.waitForTimeout(400);
   await s.page.click('button:has-text("My performance")');

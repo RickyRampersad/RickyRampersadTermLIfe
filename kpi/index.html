@@ -413,7 +413,11 @@ function LateByAgent({ items }) {
 //
 // Capped, because a block can hold seventy-six. A list nobody scrolls to the
 // bottom of teaches people the screen is decorative.
-function OpenList({ items }) {
+function OpenList({ items: all, api, onSaved }) {
+  // Closed from here, gone from here — the server's copy catches up on the
+  // next read, but the list must not show a task the person just closed.
+  const [closed, setClosed] = useState({});
+  const items = all.filter(t => !closed[t.id]);
   if (!items.length) return null;
   const SHOW = 8;
   const late = items.filter(t => t.late).length;
@@ -457,7 +461,10 @@ function OpenList({ items }) {
          // without it was worked in the last week and is somebody's already.
          t.needs ? /*#__PURE__*/React.createElement("span", {
            style: { color: AMBER }
-         }, "  \u00b7 untouched " + t.touched + " days") : null))),
+         }, "  \u00b7 untouched " + t.touched + " days") : null),
+      api ? /*#__PURE__*/React.createElement(CloseTask, {
+        t: t, api: api, onClosed: id => { setClosed(c => ({ ...c, [id]: true })); if (onSaved) onSaved(); }
+      }) : null)),
     items.length > SHOW ? React.createElement("div", {
       style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
     }, "and " + (items.length - SHOW) + " more") : null);
@@ -594,6 +601,47 @@ function Half({ label, mine, rating, note, extra, onSave, busy }) {
              busy ? "Saving…" : "Save") : null);
 }
 
+// ---- closing a task from the list ----------------------------------------------
+
+/** Close a task where it is listed, with a line of what was done. The line
+ *  goes onto the task in Salesforce, appended to its description, and the
+ *  close is audited. No line, no close. */
+function CloseTask({ t, api, onClosed }) {
+  const [open, setOpen] = useState(false);
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const ready = note.trim().split(/\s+/).filter(Boolean).length >= 4;
+  const link = (label, onClick, color) => h("button", { type: "button", onClick,
+    style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 11.5, fontWeight: 700, color: color || GREEN } }, label);
+  const send = () => {
+    setBusy(true); setErr("");
+    api("updateTask", { taskId: t.id, field: "close", value: note.trim() }).then(r => {
+      setBusy(false);
+      if (r && r.ok) { setOpen(false); onClosed(t.id); } else setErr((r && r.error) || "Not closed.");
+    });
+  };
+  if (!open) return h("div", { style: { marginTop: 4 } }, link("Close ✓", () => setOpen(true)));
+  return h("div", { style: { marginTop: 6, padding: "8px 10px", background: "#F3FAF5", border: "1px solid " + LINE, borderRadius: 8 } },
+    h("input", { value: note, onChange: e => setNote(e.target.value), placeholder: "What was done, in a line — it goes on the task",
+      style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 12.5, padding: "7px 9px", border: "1px solid " + LINE, borderRadius: 7 } }),
+    err ? h("div", { style: { fontSize: 11.5, color: RED, marginTop: 4 } }, err) : null,
+    h("div", { style: { display: "flex", gap: 12, marginTop: 6, alignItems: "center" } },
+      h("button", { type: "button", disabled: busy || !ready, onClick: send,
+        style: { font: "inherit", fontSize: 12, fontWeight: 800, cursor: "pointer", padding: "6px 11px", borderRadius: 999, border: "none",
+                 background: GREEN, color: "#fff", opacity: busy || !ready ? .5 : 1 } }, busy ? "Closing…" : "Close in Salesforce"),
+      link("Cancel", () => { setOpen(false); setNote(""); setErr(""); }, MUTED)));
+}
+
+/** The person's own screens, named where they work. */
+function YouStrip({ me, active, onQuarter, onPerf, onDoc, onRegister }) {
+  if (active !== me.staffId) return null;
+  const chip = (label, onClick) => h("button", { type: "button", onClick, style: trendChip }, label);
+  return h("div", { style: { display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0 2px" } },
+    chip("Your quarter", onQuarter), chip("My performance", onPerf), chip("Job document", onDoc),
+    (me.leads || []).length ? chip("Team register", onRegister) : null);
+}
+
 // ---- the order of service, and the mail sweep ---------------------------------
 
 const RANK_ROWS = [["bm", "Branch Manager"], ["abm", "Assistant Branch Manager"], ["um", "Unit Managers"],
@@ -693,7 +741,7 @@ const evidenceLine = (ev, sf) => {
 function YourQuarter({ s, onPerf, onMoments }) {
   if (!s || !s.ok || !Array.isArray(s.goals) || !s.setup) return null;
   const tone = g => g.landed == null ? MUTED : (g.target && g.landed < Number(g.target)) ? AMBER : GREEN;
-  return h("div", { style: { ...card, marginTop: 16, borderLeft: "4px solid " + GOLD } },
+  return h("div", { id: "quarter", style: { ...card, marginTop: 16, borderLeft: "4px solid " + GOLD } },
     h("div", { style: cardHead },
       h("span", { style: cardTitle }, "Your quarter · " + s.quarter.replace("-", " ")),
       h("span", { style: { fontSize: 11.5, fontWeight: 800, color: GOLD } }, s.daysIn + " days in · " + s.daysLeft + " left")),
@@ -2379,7 +2427,12 @@ function App() {
       tenure: prof.tenure,
       onBack: () => setView("home")
     }), /*#__PURE__*/React.createElement("div", { style: { padding: "0 18px 40px" } },
-
+      /*#__PURE__*/React.createElement(YouStrip, {
+        me: me, active: active,
+        onQuarter: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
+        onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
+        onDoc: () => setView("jobdoc"), onRegister: () => setView("register")
+      }),
       active === me.staffId ? /*#__PURE__*/React.createElement(AttendanceLine, {
         me: me, api: api, onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); },
         onRegister: () => setView("register")
@@ -2442,7 +2495,8 @@ function App() {
                   " you closed in the last 60 days."));
           })(),
           book ? /*#__PURE__*/React.createElement(OpenList, {
-            items: picked.reduce((a, k) => a.concat(book[k] || []), [])
+            items: picked.reduce((a, k) => a.concat(book[k] || []), []),
+            api: mine ? api : null, onSaved: loadRows
           }) : null,
           picked.length ? /*#__PURE__*/React.createElement(Chips, {
             label: "How long do you think this needs?",
@@ -2503,7 +2557,12 @@ function App() {
       style: { background: "none", border: "none", padding: "12px 0 2px",
                cursor: "pointer", font: "inherit", fontSize: 12.5,
                fontWeight: 700, color: GOLD }
-    }, "\u2190 Plan the day"), /*#__PURE__*/React.createElement("div", {
+    }, "\u2190 Plan the day"), /*#__PURE__*/React.createElement(YouStrip, {
+      me: me, active: active,
+      onQuarter: () => { const el = document.getElementById("quarter"); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); },
+      onPerf: () => { setPerfWho(active); setPerfTab("goals"); setView("perf"); },
+      onDoc: () => setView("jobdoc"), onRegister: () => setView("register")
+    }), /*#__PURE__*/React.createElement("div", {
       style: dateBar
     }, /*#__PURE__*/React.createElement("label", {
       style: {
@@ -2575,9 +2634,9 @@ function App() {
         gap: 20,
         alignItems: "start"
       } : null
-    }, /*#__PURE__*/React.createElement("div", null, mine ? /*#__PURE__*/React.createElement(MailSweep, {
+    }, /*#__PURE__*/React.createElement("div", null, active === me.staffId ? /*#__PURE__*/React.createElement(MailSweep, {
       when: "am", mail: mailToday[active], onSave: ranks => saveMail(active, "am", ranks)
-    }) : null, mine && (new Date().getHours() >= 12 || (mailToday[active] && mailToday[active].am)) ? /*#__PURE__*/React.createElement(MailSweep, {
+    }) : null, active === me.staffId && (new Date().getHours() >= 12 || (mailToday[active] && mailToday[active].am)) ? /*#__PURE__*/React.createElement(MailSweep, {
       when: "pm", mail: mailToday[active], onSave: ranks => saveMail(active, "pm", ranks)
     }) : null, blocks.map(b => {
       const bl = entry.blocks[b.id] || blankBlock();
@@ -4786,14 +4845,15 @@ function NeedsReason({
       margin: "0 0 10px",
       lineHeight: 1.45
     }
-  }, "The due date has passed and the Task Update Reason is empty. Put a line in Salesforce saying what it is waiting on and who owns the next step \u2014 a rolled date is not an actioned task."), show.map(t => /*#__PURE__*/React.createElement(TaskRow, {
-    key: t.id,
-    t: t,
-    api: api,
-    token: token,
-    showDate: !t.due,
-    onSaved: onSaved
-  })), items.length > show.length && /*#__PURE__*/React.createElement("div", {
+  }, "The due date has passed and the Task Update Reason is empty. Put a line in Salesforce saying what it is waiting on and who owns the next step \u2014 a rolled date is not an actioned task."), show.map(t => /*#__PURE__*/React.createElement(React.Fragment, { key: t.id },
+    /*#__PURE__*/React.createElement(TaskRow, {
+      t: t,
+      api: api,
+      token: token,
+      showDate: !t.due,
+      onSaved: onSaved
+    }),
+    /*#__PURE__*/React.createElement(CloseTask, { t: t, api: api, onClosed: () => { if (onSaved) onSaved(); } }))), items.length > show.length && /*#__PURE__*/React.createElement("div", {
     style: {
       fontSize: 11.5,
       color: MUTED,

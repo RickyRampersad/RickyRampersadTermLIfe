@@ -21,7 +21,9 @@ const server = http.createServer((q,r) => {
   fs.createReadStream(f).pipe(r);
 });
 
-const today = new Date().toISOString().slice(0,10);
+// The wall's day is the branch's day. Between midnight and four in the
+// morning UTC the two differ, and a row dated by UTC is tomorrow's to the wall.
+const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Port_of_Spain' });
 const ROSTER = [
   { staffId:'sasha', name:'Sasha Lalla', tier:'support', tierLabel:'Sales Support', tierOrder:4, role:'ssa', manager:false },
   { staffId:'liz',   name:'Elizabeth Lee', tier:'bma', tierLabel:'Branch Manager’s Assistant', tierOrder:2, role:'bma', manager:false },

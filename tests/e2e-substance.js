@@ -36,7 +36,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   await page.route('**/macros/s/**', async r => {
     const body = JSON.parse(r.request().postData()||'{}');
     const j = o => r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(o)});
-    if (body.action==='login'||body.action==='me') return j({ok:true,token:'t',profile:P,roster:[P],schedule:SCH,kpis:{}});
+    if (body.action==='login'||body.action==='me') return j({ok:true,token:'t',profile: Object.assign({}, P, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }),roster:[P],schedule:SCH,kpis:{}});
     if (body.action==='rows') return j({ok:true,rows:[]});
     if (body.action==='training') return j({ok:true,training:[]});
     if (body.action==='saveBlock') { sent++; lastPayload = body;

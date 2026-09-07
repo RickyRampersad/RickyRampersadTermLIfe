@@ -50,9 +50,9 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
     const body = JSON.parse(route.request().postData() || '{}');
     const reply = j => route.fulfill({ status:200, contentType:'application/json', body:JSON.stringify(j) });
     if (body.action === 'login')
-      return reply({ ok:true, token:'tok', profile:PERSON, roster:[PERSON], schedule:SCHEDULE, kpis:{} });
+      return reply({ ok:true, token:'tok', profile: Object.assign({}, PERSON, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[PERSON], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'me')
-      return reply({ ok:true, profile:PERSON, roster:[PERSON], schedule:SCHEDULE, kpis:{} });
+      return reply({ ok:true, profile: Object.assign({}, PERSON, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[PERSON], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'rows')    return reply({ ok:true, rows:[] });
     if (body.action === 'training')return reply({ ok:true, training:[] });
     if (body.action === 'saveBlock') {

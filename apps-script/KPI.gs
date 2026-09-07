@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06d';
+var SCRIPT_VERSION = '2026-09-06e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',

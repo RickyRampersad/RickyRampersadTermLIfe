@@ -5,13 +5,15 @@
  * live client records — so it is a separate file on purpose. Paste it in when
  * you want the capability; leave it out and the tracker is read-only.
  *
- * WHAT IT CAN CHANGE — two fields, and nothing else, whatever is posted:
+ * WHAT IT CAN CHANGE — three things, and nothing else, whatever is posted:
  *
  *     Task_Update_Reason__c    why an overdue task is late
  *     ActivityDate             the due date
+ *     Status -> Completed      closing a task, with a line of what was done
+ *                              appended to its Description — never a bare close
  *
- * It cannot close a task, reassign one, change a status, or alter anything a
- * client sees.
+ * It cannot reassign a task, reopen one, set any other status, or alter
+ * anything a client sees.
  *
  * WHO CAN CHANGE IT
  *   · A person may edit a task they own.
@@ -29,8 +31,10 @@
 
 var WRITE_FIELDS = {
   reason: { sf: 'Task_Update_Reason_c__c', label: 'Reason' },
-  due:    { sf: 'ActivityDate',            label: 'Due date' }
+  due:    { sf: 'ActivityDate',            label: 'Due date' },
+  close:  { sf: 'Status',                  label: 'Closed' }
 };
+var CLOSE_MIN_WORDS = 4;
 
 var AUDIT_TAB = 'KPI Salesforce Writes';
 var AUDIT_HEADERS = ['When', 'StaffId', 'Name', 'TaskId', 'Field', 'Was', 'Now', 'Result'];
@@ -101,6 +105,13 @@ function updateTask_(data, profile) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return { ok: false, error: 'Use a real date.' };
     if (value < todayISO_()) return { ok: false, error: 'A new due date cannot be in the past.' };
   }
+  if (key === 'close') {
+    // The branch rule: a task moved with nothing written on it did not
+    // happen. A close is the biggest move there is.
+    if (value.replace(/\s+/g, ' ').split(' ').filter(String).length < CLOSE_MIN_WORDS) {
+      return { ok: false, error: 'Say what was done — a line, not a word.' };
+    }
+  }
 
   // Whose task is it, and is that a branch person at all?
   var users = sfkUsers_();
@@ -109,7 +120,7 @@ function updateTask_(data, profile) {
 
   var recs;
   try {
-    recs = sfkQuery_('SELECT Id, OwnerId, Subject, ActivityDate, Task_Update_Reason_c__c ' +
+    recs = sfkQuery_('SELECT Id, OwnerId, Subject, ActivityDate, Task_Update_Reason_c__c, Status, Description ' +
                      "FROM Task WHERE Id = '" + taskId + "'");
   } catch (e) {
     return { ok: false, error: 'Could not read that task: ' + String(e && e.message || e) };
@@ -123,9 +134,20 @@ function updateTask_(data, profile) {
     return { ok: false, error: 'That is not your task.' };
   }
 
-  var was = key === 'due' ? task.ActivityDate : task.Task_Update_Reason_c__c;
+  var was = key === 'due' ? task.ActivityDate : key === 'close' ? task.Status : task.Task_Update_Reason_c__c;
   var body = {};
-  body[spec.sf] = value;
+  if (key === 'close') {
+    if (task.Status === 'Completed') return { ok: false, error: 'Already closed.' };
+    body.Status = 'Completed';
+    // Appended, never replaced: whatever was written before stays.
+    var at = new Date();
+    var stamp = '[' + Utilities.formatDate(at, CONFIG.TZ, 'yyyy-MM-dd') + ' ' +
+                Utilities.formatDate(at, CONFIG.TZ, 'HH:mm') + ' · ' + profile.name + '] ';
+    var before = String(task.Description || '').replace(/\s+$/, '');
+    body.Description = (before ? before + '\n' : '') + stamp + value;
+  } else {
+    body[spec.sf] = value;
+  }
 
   try {
     sfkPatch_(taskId, body);
@@ -136,10 +158,11 @@ function updateTask_(data, profile) {
 
   audit_(profile, taskId, spec.label, was, value, 'ok');
 
-  // This person's cached position is now stale.
+  // This person's cached position is now stale — the counts, the reasons,
+  // the billing check, and the open book the plan reads from.
   var c = CacheService.getScriptCache();
   var day = todayISO_();
-  ['sfk_m_', 'sfk_nr_', 'sfk_bill_'].forEach(function (pre) { c.remove(pre + day); });
+  ['sfk_m_', 'sfk_nr_', 'sfk_bill_', 'sfk_ob_'].forEach(function (pre) { c.remove(pre + day); });
 
   return { ok: true, field: key, label: spec.label, value: value, subject: task.Subject };
 }
