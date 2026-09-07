@@ -61,8 +61,8 @@
   <div class="links">
     <a class="lnk" href="/kpi/"><b>/kpi</b>
       <span>The tracker itself. Sign in with your agent number.</span></a>
-    <a class="lnk" href="/manual/"><b>/manual</b>
-      <span>The written manual and workflow — every screen in words.</span></a>
+    <a class="lnk" href="/howwework/"><b>/howwework</b>
+      <span>How we work — the operating model, by role, every screen in words.</span></a>
     <a class="lnk" href="/training/"><b>/training</b>
       <span>The full four-minute film, for anyone starting from scratch.</span></a>
   </div>
@@ -86,6 +86,12 @@
       });
     })
     .catch(() => { box.previousElementSibling.remove(); box.remove(); });
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>

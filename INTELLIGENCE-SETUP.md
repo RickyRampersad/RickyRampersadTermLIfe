@@ -840,6 +840,580 @@ hand-edit the timings in `film.html`; they are measured off the rendered audio
 and regenerated. The README beside those scripts carries the rest, including
 the edge-tts proxy fix.
 
+
+### Birthdays today — `intelligence/wall/book.html`
+
+Action `intel.book`. Paste the `/exec` URL into `BOOK_URL`.
+
+**A day's work, not a year's position.** The other four walls measure a premium
+that stopped, a contract nobody delivered, a licence nobody renewed. This one is
+a prompt: whose birthday it is **today**, and what to say to them. It was built
+first as a branch-wide client analysis — 13,304 clients, tenure bands, cover mix
+— and that was the wrong shape. A daily prompt that opens with how many clients
+the branch has ever had is a report. So the wall shows today and only today: the
+twenty eight people, one row each. The branch-wide bands are still computed and
+still in the feed for the app to read; they are simply not what this screen is
+for.
+
+**Why it exists at all.** The birthday letter has gone to these clients for
+years, so the relationship is already built. What the letter has never done is
+ask for the second policy. That part is the agent's, on the day.
+
+#### Nothing about a client reaches this wall
+
+It carried two initials per client for a day, and the branch's answer was the
+right one: **an agent already has these clients in their own portal**, so the
+wall does not need to identify anybody — it needs to say which conversation to
+have. What goes out is what every other wall sends, counts and bands:
+
+| On the wall | Never on the wall |
+|---|---|
+| How many people are in each life stage | Any name or initial |
+| What that stage is short of, with a count | Any date of birth |
+| How many policies they hold between them | Any policy number, premium or sum assured |
+| Which towns they are in, as counts | Any address |
+| Which agents they belong to | |
+
+`INTEL_BOOK_INITIALS` still exists and now has nothing to switch off. It is kept
+because a version of this wall on a screen that is not public may want the
+letters back.
+
+#### Every band ends with an instruction
+
+The bands used to name a topic. They give an order now, because a topic is
+something to think about and an order is something to do:
+
+| Band | The line on the wall |
+|---|---|
+| Starting out | Call and quote critical illness at the age they are today. |
+| Family years | Call and ask who depends on this income. Then quote critical illness. |
+| Peak earning | Call and take the sum assured up to what they earn now. |
+| Retirement in sight | Call and book the pension review before the year end. |
+| Already retired | Call and offer health and final expenses. Leave the life cover alone. |
+
+Every one of them starts with the same word on purpose. The hero carries the
+same point in three: **nothing beats a call — the letter is sent, the review is
+not.**
+
+#### Today's pointer
+
+One line, chosen every morning from the people actually on the screen. It tests,
+in order of how much it should change what somebody does: a whole band missing
+the same cover, then one agent holding a third or more of the morning, then how
+many have gone quiet, then how many hold a single policy, then the median
+tenure. **If nothing clears its threshold it says nothing at all** — a wall that
+prints the same advice daily stops being read by the end of the first week, and
+an invented insight on a quiet day costs more than a blank space.
+
+Every branch of it is a fact about the cohort. None of them is a claim about a
+product, and none is a claim about a person.
+
+#### Every agent is on the wall, by name
+
+The branch's note on the first cut was that it could only see the four unit
+heads, and it was right about what mattered: **a wall meant to move agents has
+to have the agents on it.** Two things were happening.
+
+The **demo screenshot** was mock data, and the mock listed the four managers —
+so the picture said "managers only" while the code said otherwise. That was mine
+and it is fixed; the mock now carries a realistic roll and the month
+leaderboard is keyed on the agent, exactly as the builder keys it.
+
+But **four names is four names**, however they are chosen. There are 22 agents
+with a client having a birthday on 6 September and a ranked top-four shows
+eighteen of them nothing. So the years card now carries **the roll**: every
+agent with a birthday today, named, with their count, gold if at least one of
+theirs carries a gap. An agent walking past looks for one thing on this wall and
+it is their own name.
+
+The ranked panel underneath stays, because it answers a different question —
+*who should be pushed today*, sorted by gaps rather than by count — and it now
+shows the unit only when the unit is not the agent's own name.
+
+**The town line was removed to make room.** It was never asked for and was the
+least actionable thing on the screen. `today.towns` is still in the feed for the
+app.
+
+#### Growth on plans the branch already has
+
+The branch asked what a call is actually worth, and `Policy_Increases__c` is the
+only object that answers it — 1,113 rows in the org, 49 on this branch in 2026,
+and it carries `Years_In_Force__c`, the one field anywhere that says how old a
+plan was when somebody grew it.
+
+**Two corrections are applied and both change the answer.** *Mirrored cases*: a
+split case is entered once per agent at the full amount — same day, same figure,
+two names — so three of the 46 rows are second halves and are folded. *Agents who
+have left* are dropped first, and one whole case disappears with them, a TT$9,000
+increase entered by two agents who have both gone. What survives is **43 plans
+grown in 2026 for TT$310,184, median TT$1,858**.
+
+| Month | Plans grown |
+|---|---|
+| Jan–Jun | 5, 5, 9, 14, 6, 2 |
+| **July** | **none** |
+| Aug | 2 |
+| **September** | **none — 16 days since the last one** |
+
+**And the finding is the opposite of what the room expects.** The median increase
+on a plan in force eleven years or more is **TT$1,816**; on a plan under eleven
+it is **TT$1,858**. They are the same number. The totals look otherwise only
+because three large cases sit in the young bands. So the instruction is not
+*chase the twenty-year clients* — it is that **the age of the plan does not
+decide the size of the increase, so every client is worth the same call.** That
+is the line on the card, and it is the sharpest argument the birthday wall has.
+
+The names on this object are **first names only**. They resolve to the roster
+where exactly one person carries that first name — every first name on this
+branch's roster is unique, so nothing is guessed, and an unmatched one keeps the
+first name rather than being attributed to somebody.
+
+#### Nobody logs a call, so the wall does not count one
+
+A *"reviews logged this month"* row stood on the ledger for a day, and the
+branch's answer to it was the right one: **nobody logs a call, and agents are
+not Salesforce users.** A zero there did not mean nobody called — it meant
+nobody writes calls down, which is a fact about the system and not about the
+agents. For the record, the objects that might have held one:
+
+| Object | Rows | Last entry |
+|---|---|---|
+| `Review__c` | 147 | meeting dated **16 November 2022** |
+| `Fact_Finds__c` | 1 | — |
+| `Fact_Finding_Interviews__c` | 253 | 22 June 2026, entered by staff |
+
+So the wall measures **what came back**, which is the only evidence a
+conversation happened: an **additional policy** taken out (the ledger's second
+row — of the birthdays already gone by this month, how many bought anything
+since) and an **increase on a plan the client already had** (the fourth row —
+how many this month, and how long since the last). Both are read from the
+portfolio and the increases object; neither is inferred. The review query is
+gone from the builder and there is an assertion that no review count reaches
+the feed, so it cannot creep back.
+
+#### A coverless row is not a policy
+
+September read *12 policies to 7 clients* and the branch had actually written
+**4 policies to 4 clients**. Two causes, both now handled: the two agents who
+have left carried three of those clients, and a split case is entered once per
+agent where **only one half carries the sum assured** — the other has every
+coverage column empty. `iBookCovered_` tests all seven columns, and a row with
+nothing in any of them no longer counts as a policy sold.
+
+#### Agents who have left the branch
+
+`INTEL_EXCLUDE_AGENTS` is the list, it is a **Script Property**, and the walls
+are only ever as right as that one cell. Two things to know about it:
+
+**The surnames have to match.** `iExcludes_` compares surname first and only
+then the given names, so a given name typed against the wrong surname excludes
+nobody — and it fails silently, leaving the agent on every wall. The unit test's
+stub carried exactly that typo against one of the two names, which meant the
+test named the agent it was supposed to be proving and proved nothing about
+them. The stub now matches the documented value and there is an assertion that
+neither name reaches the feed — not a client, not a policy, not a birthday, not
+a name.
+
+**The feed now counts what it dropped.** `quality.excluded` is the number of
+rows removed and `quality.excludedNames` is how many names the property held, so
+a blank or misspelled property shows up as a zero in the feed rather than as a
+name on a wall in front of the branch.
+
+Everywhere else these two appeared was a **baked snapshot**, not a live feed —
+`WALL45_URL`, `WALL_DATA_URL` on both boards, and the benefits roster are all
+static:
+
+| Where | What changed |
+|---|---|
+| `intelligence/wall/index.html` | The name comes off the agent list, and the headline was **double-counting** them: it read 41 policies / 37,012.20 / 38 clients while `bands[0]` read 36 / 33,189.40 and `households` read 33 — a difference of exactly one excluded agent's 5 policies at 3,822.80. All three agree now. `tenure` and `billing` still sum to 41 and need the source to re-split; wire `WALL45_URL` and the snapshot rebuilds with the exclusion applied in one pass. |
+| `benefits/index.html` | Both roster rows removed, so neither appears in the advisor picker. |
+| `board/dashboard.html` | Every total on that board is reduced from `advisors`, so deleting the rows outright would have quietly restated the branch year by **104 applications and TT$466,940**. They are folded into one unnamed row instead, flagged `left` so no leaderboard prints it. |
+| `board/production.html` | Rows removed from the leaderboard and the latest list. Its year total is baked and its `monthly` breakdown cannot be re-split from the file, so the branch figure is unchanged and the page now says why: *the branch year includes business written by agents who have since left.* |
+
+The rule underneath all of it: **a name comes off a wall the day somebody leaves;
+the business they wrote stays in the branch's year, because the branch wrote it.**
+
+#### Vested and inactive books are on the wall too
+
+Asked for by the branch — *"include inactive agents that we need to assign"* —
+and it turned out to be the largest thing this wall was hiding.
+
+The in-force extract carries a servicing-agent status. The builder used it as a
+filter and dropped every row whose agent was not Active, so those clients
+vanished from the wall entirely. Measured on the branch book:
+
+| | |
+|---|---|
+| Servicing agent codes on the in-force extract | 61 |
+| Active | 33 |
+| Inactive | 19 |
+| Vested | 9 |
+| **Clients behind those 28 agents** | **2,266** |
+| **Live policies they hold** | **3,216** |
+| **With a September birthday** | **184** |
+
+So 2,266 clients holding 3,216 live policies were invisible, and 184 of them got
+the branch's birthday email this month with nobody assigned to follow it up. A
+vested or inactive servicing agent is not a reason to hide the client — it is
+the reason to call them.
+
+The row is kept and flagged now. On the wall it reads as a gold line: *N sit on
+a book whose agent has vested or left — **assign them***, with the agents named
+and their status, and the branch-wide figure beside it. In the feed it is
+`today.unassigned`, `today.unassignedAgents` and `unassigned{clients, policies,
+month}`.
+
+**A client can sit on two books at once.** If any of their policies is serviced
+by somebody still working, that is the name the wall prints and the client is
+not counted as unassigned — they simply also have history with somebody who
+left. Only a client with no active servicer anywhere is one the branch has to
+reassign, and the test covers the case where the inactive row is read first.
+
+The header and the footer used to say **active agents only**. They do not any
+more, because that is no longer true and a wall whose footer disagrees with its
+figures is worse than one with no footer at all.
+
+#### Less on it, not more
+
+The branch's note was that it had begun to look cluttered, and it was right.
+Removed: the narrative paragraph on the seven-year card (the headline already
+says it), the *"Missing critical illness — 4 of 4"* line on every band (the facts
+row above it already says *4 carry a gap*), four of the five lines in the
+birthday-effect finding, the keyboard hint, and the whole *"Still ahead this
+month, by agent"* panel — which said what the day strip beside it and the agent
+roll above it were both already saying. The growth card took its place.
+
+**And the confidentiality line is on the wall now, not under it.** It used to be
+half of a grey source line. It is a bordered teal pill at the front of the
+footer: *No client is on this wall. No name, no policy number, no date of birth,
+no premium — counts and bands only, because the agent already has their own
+clients in their portal.* This screen hangs in a room clients walk through, and
+the branch asked for the promise to be legible rather than implied.
+
+#### How it is meant to look from the door
+
+The wall hangs in a room people walk through, and it has to read from the back
+of it. The pass that got it there is all colour and light and **no height** —
+this layout has three fixed rows totalling 968px and not a spare pixel anywhere,
+so every effect below is either a colour, an `inset` shadow or a filter.
+
+- **A spotlight, not a flat field.** One radial gradient on the body gives the
+  cards an edge to catch and the wall a top.
+- **The five bands read as one journey, cool to warm.** Bright teal at the start
+  of a working life through to the branch gold at the end of it, and the accent
+  runs through each band's label, its number, its meter and its instruction. A
+  3px rule on top of five cards would have cost fifteen pixels, so it is an
+  `inset` shadow. **Gold still means a gap on every band** — the accent says
+  which stage, gold says something is missing, and that has to mean one thing
+  across all five.
+- **The runway is lit and the spent days are not.** Today's bar burns, the days
+  ahead glow, the days gone are grey.
+- **Every headline number carries its own light** — the hero, the seven, the
+  ledger's four, the leaderboard's.
+
+**And the footer was sitting on the bottom row.** Fixed rows plus a fixed footer
+means any change to the header height slides the last row underneath it, which
+is exactly what a bigger `h1` did: the source line was drawn across the cards and
+no per-card check could see it, because nothing was clipped. The header gives
+back eight pixels and the gaps four. `booku.js` now fails the whole wall if the
+lowest card's bottom crosses the footer's top.
+
+#### Who is calling today
+
+The branch's own question in one panel: today is the sixth, these are the agents
+whose clients are having it, how many of theirs carry a gap, and how many have
+gone quiet. The round-number birthdays moved up to the top of the wall and now
+carry the agent's name on the chip itself — a milestone nobody is told about is
+just another Tuesday.
+
+#### Round numbers get their own chip
+
+Milestone birthdays — 21, 25, 30, 40, 50, 60, 65, 70, 75, 80 — with the agent
+whose client it is on the chip. A round number is the birthday somebody
+remembers being called on.
+
+**Every count is stated.** The chip read `Turning 50 · Gary Sookdeo, Tricia
+Baksh` and the branch's own question back was *"actually how much? Is it two
+giving fifty?"* — which is exactly what that chip left open. It reads
+`Turning 50 | 2 | Gary Sookdeo 1 · Tricia Baksh 1` now: the total on the chip,
+and a number against every name on it. On 6 September the branch's three are one
+client each at 40, 50 and 65.
+
+#### Two that bit
+
+**`var` hoisting made "bought this month" zero for the whole branch.** The month
+cursor — `mm`, `dd`, `yy` — was declared below the row loop and read inside it,
+so every comparison ran against `undefined` and no policy was ever counted as
+issued this month. Zero is a plausible number for a quiet month; nothing on the
+wall could have shown it was wrong. The unit test did, because the fixture was
+built with clients who *had* bought. The declaration is above the loop now with
+a note saying why it has to stay there. This is the second time hoisting has put
+a confident wrong number on this wall (the first printed "0 policies") — in a
+file this long, compute before you read, and test the number rather than the
+shape.
+
+**A modifier class collided with a standalone rule.** The projection row was
+`<div class="led ahead">` and `.ahead` was already the agents panel's column
+header — uppercase, letter-spaced, four columns, children right-aligned. It
+matched on the second class name, so the forecast rendered as a table header and
+ran out of the bottom of the card. It is `.led.proj` now. One file, one
+stylesheet, one namespace: a modifier has to be unique across the whole wall,
+and `booku.js` now fails any body-text slot that comes out uppercase or
+right-aligned.
+
+**And `flex:1` hides an overflow from both measurements.** `.ledger` is a column
+flex with `flex:1;min-height:0`, so it shrank to its allotted height and let its
+last row hang below the card. `offsetHeight` reported the height it was given,
+`scrollHeight` reported no overflow, and both harnesses passed a card that was
+visibly cut in the screenshot. `fit3.js` now asks any column flex with
+`flex-grow > 0` what its own children come to, rather than what it was handed.
+
+#### It is a phone as well as a wall
+
+Below 1200px the grid unwinds to two columns and the page is allowed to scroll;
+below 760 it is one column, the seven-year card stacks, and the day strip thins
+its labels to every fifth day. **Every media query lives at the end of the
+stylesheet**, which is not tidiness: they used to sit in the middle, above rules
+of the same specificity, so `.years .yside{width:340px}` two hundred lines below
+beat `width:auto` inside the phone query and the wall silently kept its desktop
+widths on a 390px screen. Media queries add no specificity; only source order
+decides.
+
+#### Seven years of birthday emails, and what they did not do
+
+The branch has wished these clients a happy birthday automatically for the
+better part of a decade. That is the argument for the wall and it leads it: the
+relationship is already built and already paid for, and what the letter has
+never done is ask a question.
+
+**46,790 emails over the seven years, and about 9,387 more every year.** The
+annual figure is the number of branch clients with a birth date on file — one
+client, one email, every year. The seven-year total beside it is a sum and not a
+multiplication: every client contributes one a year for as long as they have
+actually been on the book, capped at the seven years the automation has run, so
+a client of two years adds two and not seven. 9,387 x 7 is 65,709 and the branch
+could not defend it, which is why the wall does not print it. The hero counts
+today's: **twenty eight went out this morning, from the branch, in the agent's
+name**, before anybody sat down.
+
+Measured on the branch book on 6 September 2026, one query per year:
+
+| Clients with a birth date whose first policy is at least | |
+|---|---|
+| 1 year old | 8,408 |
+| 2 years | 7,779 |
+| 3 years | 7,165 |
+| 4 years | 6,624 |
+| 5 years | 6,062 |
+| 6 years | 5,534 |
+| 7 years | 5,218 |
+| **Total emails** | **46,790** |
+
+#### Twenty eight emails, twenty four clients
+
+The automation mails a **contact** with a birthday. It does not check whether
+that contact still holds anything, and four of the twenty eight who got one this
+morning hold nothing at all — every policy surrendered, lapsed or matured. So a
+hero reading 24 under the words "emails sent this morning" would quietly
+disagree with the branch's own send report, and the four people it dropped are
+the most interesting names on the list: a former client, on their birthday, who
+has just heard from the branch.
+
+They are kept out of the bands, because they hold nothing to band and nothing to
+count, and reported on their own line with the agent who last had them. The
+number is `today.emails` (28) against `today.n` (24) and `today.lapsed` (4);
+every band total, policy count and gap on the wall is of the 24.
+
+#### The month, reviewed
+
+The branch asked it plainly: *from the first to the first, has anything been
+sold to these clients?* Four rows, and the third is why the fourth is honest.
+
+| Row | 6 September 2026 |
+|---|---|
+| Birthdays whose day has already gone this month | **172** — that many emails |
+| Of those clients, who bought while the month was running | **none** |
+| What the branch wrote in the same six days | 12 policies, 7 clients |
+| Where the month lands at that pace | 60 policies by the 30th |
+
+899 clients on the branch book have a September birthday; 172 have already had
+it and 727 are still to come.
+
+**The zero is the point, so it gets its own sentence** rather than reading "0 of
+those clients bought something — 0 policies". *The email went; nothing came back yet.* That is the whole argument for the wall, stated in the branch's own
+numbers on the morning it is true.
+
+**One near miss worth recording.** A client with a **22 September** birthday
+took out two policies on the 2nd, and an earlier reading of this counted them as
+a birthday client who converted. They are not: their birthday has not happened
+yet this month, so no email has been sent to them and nothing about the campaign
+explains the sale. The month ledger counts only birthdays whose day has already
+passed, which is why it reads zero and not one.
+
+**No percentage.** Zero out of a hundred and seventy-two printed as 0.0% reads
+like a measured conversion rate, and six days is not long enough to have one.
+The counts say the same thing and cannot be mistaken for a finding. The
+seasonality measurement above already answers the question a rate would be
+reaching for: birthday month and buying month are barely related.
+
+**The forecast is a run rate, not a trend.** What has been written, over the
+share of the month that has been used. Six days is not enough shape to fit a
+trend line to, and a straight run rate is a claim anybody in the room can check
+in their head — so the basis is printed beside it, *6 of 30 days*.
+
+**And they do not buy at birthday time**, which is worth knowing before anybody
+builds a campaign on the idea. Measured across the branch: **8.7%** of policies
+were issued in the client's own birth month against a one-in-twelve baseline of
+**8.3%**. That is nothing. The birthday is the reason to call. It is not the
+reason they buy — so the call has to carry a question rather than a greeting,
+and the wall says so beside the claim rather than leaving it to be assumed.
+
+#### Five bands, and what each one is short of
+
+The wall was a list before this, and a list is a spreadsheet. Twenty eight rows
+sorted by tenure tells an agent nothing an export could not. What makes it a
+wall is the grouping: **five life stages**, each with the cover that stage is
+typically missing, how many of them carry it, and one sentence about what to
+say. An agent finds their own name on the band, reads the line above it, and
+knows the conversation before they open their portal.
+
+| Band | Age | What it checks | What the wall says to do |
+|---|---|---|---|
+| Starting out | under 30 | critical illness | The cheapest CI they will ever buy, and a health plan before anything is on the record |
+| Family years | 30 to 44 | critical illness | A mortgage and children behind the cover. CI first, then education savings |
+| Peak earning | 45 to 54 | nothing bought recently | The sum assured was set on an older salary. Review it, and ask about income protection |
+| Retirement in sight | 55 to 64 | a pension | The annuity window is closing. Pension top-up while contributions still have years to run |
+| Already retired | 65 and over | a health plan | Health and final expenses. **Do not touch the life cover** — s131 makes replacing it personal |
+
+**Each band checks its own gap, not the biggest one.** The first cut took
+whichever gap had the highest count in the band and four of the five came out
+saying "a health plan", because almost nobody in this book holds health. True,
+and useless — a wall that gives every life stage the same answer has stopped
+being a segmentation. Each band now names the gap its own advice is about, so
+the evidence line and the conversation line agree.
+
+Age is the band because it is present on 100% of rows, true of everybody on the
+list, and the thing that actually decides which product is right. The talking
+points are branch policy rather than data, so they live in `IBOOK_BANDS` in the
+script — once — instead of in the wall's HTML, and the screen and the app cannot
+drift apart on what the branch says about a sixty five year old.
+
+**Empty bands are drawn dim, not dropped.** A morning with nobody approaching
+retirement is worth seeing, and a wall whose panels move about from day to day
+cannot be read at a glance.
+
+#### Households: the data will not carry it
+
+Asked for and not built, because three candidate keys were tested and none of
+them is a household:
+
+| | |
+|---|---|
+| `Relationship_Group__c` | 127 rows of 24,680, 20 distinct — the object exists and is not used |
+| `Account__c` | on 100% of rows, but one account holds **2,953** clients and the next 507 — it is a group or corporate key, not a family |
+| `Contact.MailingStreet` | 8,654 distinct strings across 9,367 clients — 92% unique, so it groups almost nobody, and what it does group could as easily be an apartment block |
+
+Surname plus town was considered and rejected: 3,408 surnames across 9,367
+clients in a country where Mohammed, Persad and Ramnarine are common would
+manufacture families that do not exist, and a wrong household in front of an
+agent is worse than none.
+
+`Relationship_Groups__c` is the right home for it and it is empty. If the branch
+starts populating it, the wall can read it.
+
+#### The horizon is today and the rest of this month
+
+The wall carried a twelve-month graph of when the book buys. It does not any
+more, because the branch's horizon is not the year: an agent standing in front
+of the screen on the sixth wants to know what today is and what is left before
+the month runs out, and January to December answers neither.
+
+**The month, day by day.** One column per day — thirty or thirty-one, taken from
+the month itself so the last day of a long month is never silently dropped.
+Spent days are dimmed rather than removed, because the shape of a month half
+gone is the point of looking at it; today is lit; the days ahead are the runway.
+Weekday letters underneath, so a Saturday reads as a Saturday.
+
+**Still ahead this month, by agent** — and sorted by what is left rather than by
+the month's total. The agent with forty birthdays already behind them is not the
+one to push today. Each row shows how many are still to come, how many of those
+are today, and the month's total behind it.
+
+(If the buying-season graph is wanted back, it is four lines in the builder —
+November and December were the peak, 1,494 and 1,460 against February's 1,091.)
+
+#### The three panels underneath
+
+**Most birthdays this month, by agent** — the branch asked to see who has the
+most coming so that person can be pushed. The second number on each row is how
+many of theirs carry a gap, because forty birthdays with no gaps is a quieter
+month than twenty with twenty.
+
+**Where today's clients are** — town, from the mailing address, populated on
+**72%** of the branch's rows. Chaguanas leads the book at 1,303 clients, then
+Couva, Sangre Grande, Cunupia and Arima. **In the feed only** — it was on the
+wall and the agent roll took its place.
+
+**What today's already hold** — the cover carried by the people on this list,
+not by the branch.
+
+Clicking an agent, a town or a kind of cover holds the whole list to it, which
+is how an agent finds their own four out of the twenty eight.
+
+#### The one prompt per row
+
+An agent reading a wall across a room takes one thing away from a row, so each
+row says the most sellable true thing and stops. The order matters — no cover at
+all beats a missing rider, and a missing rider beats a client who has simply
+gone quiet:
+
+1. `no cover we can read`
+2. `no life cover`
+3. `no critical illness`
+4. `nothing new in N years`
+5. `no health`
+6. `one policy only`
+
+Rows with a prompt sort to the top, then by how long they have been a client: a
+thirty year client with a gap is the best call on the wall.
+
+#### Birthdays are the top of the wall, by client and by agent
+
+The hero is how many clients have a birthday **today**, with the milestone ages
+beside it — turning 30, 40, 50, 65 are advice triggers, not greetings. The age
+comes from the birth year rather than `Current_Age__c`, which is ambiguous on
+the day itself.
+
+Next to it, **today by agent**: whose clients they are, how many of those
+already carry the life-without-critical-illness gap, and how many have bought
+nothing in five years. A birthday on its own is a greeting; a birthday beside a
+gap is a conversation, and that is the whole reason the three numbers sit on one
+row.
+
+#### Three readings of the same book
+
+| Panel | What it answers |
+|---|---|
+| **The gap, by age** | Where the 4,501 actually sit. The dim bar is everyone that age, the bright one is the gap, so 900 in a band of 3,000 does not read the same as 900 in a band of 1,100. |
+| **Since their last policy** | How cold the call is. |
+| **Aged since they bought** | The distance between the decision and the person who made it — `Current_Age__c` minus the `Issue_Age__c` on their *first* policy. |
+
+That last one is the least obvious and the most useful. A client who took cover
+at twenty eight and is fifty five today is carrying a twenty seven year old
+decision: different income, different dependants, different everything.
+`Issue_Age__c` is on **76%** of rows, which is what makes it possible.
+
+The age has to travel with the first policy rather than being the smallest issue
+age on the book — otherwise a rider written years later on a different life gets
+picked up as the start of the relationship.
+
+#### One property
+
+| Property | Default | What it does |
+|---|---|---|
+| `INTEL_BOOK_QUIET_YEARS` | `5` | Years since a client's last policy before they count as quiet |
+| `INTEL_BOOK_INITIALS` | `on` | `off` replaces every client's initials with a dash |
+
 ## 3c. What the Act actually says, per wall
 
 Read out of the Act itself, not recalled. Earlier drafts of this file got s268

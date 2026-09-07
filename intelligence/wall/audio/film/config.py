@@ -18,8 +18,10 @@ OUT      = 'film.html'
 LEAD     = 1.20     # silence before the first word
 GAP      = 0.85     # was 0.55. The read was rushed; this is most of the fix.
 CHORD    = 8.70     # house spec, see CLAUDE.md — do not drift
-NCHORDS  = 23       # 23 x 8.7 = 200.1s; the last two are both D, so the
-                    # close rings out under the card instead of stopping
+NCHORDS  = 33       # was 23. The fifth wall added eight lines and the read
+                    # now ends at 275s, so the bed is four turns of the phrase
+                    # (287.1s) and a final D — more chords, never a longer one.
+                    # The close card gets the last twelve seconds to ring out.
 SHOT_MAX = 2600     # zoom scenes magnify, so the stills are stored bigger
 
 LINES = [
@@ -30,7 +32,7 @@ LINES = [
     # the announcement
     "That stops now.",
     "This is the Branch Intelligence Wall.",
-    "Four screens. Live on the branch floor, twenty four hours a day.",
+    "Five screens. Live on the branch floor, twenty four hours a day.",
     # why it matters
     "Start with why this matters.",
     "The Insurance Act binds every registrant to the market conduct standards in Schedule Eleven.",
@@ -59,6 +61,18 @@ LINES = [
     "Look closer. Life on one line. General on the other. Some agents hold both.",
     "The Act is plain. No person shall perform the functions of a sales representative during any period in which he is not registered.",
     "And a licence is not renewed without continuing professional development.",
+    # wall five — birthdays today. NO CHANGING NUMBERS: not the count of emails,
+    # not the count of years, not a dollar figure. Every one of those moves on
+    # the next rebuild and the audio does not. The one figure spoken is the
+    # statutory penalty, which is the Act's and does not move.
+    "The fifth wall is birthdays. Whose birthday it is, today.",
+    "Every morning, for years, this branch has emailed every client whose birthday it is. In your name. Nobody had to be reminded, and nobody had to write it.",
+    "What the email has never done is ask a question. That part is yours.",
+    "Look closer. Everyone with a birthday today, in the band their age puts them in. What that band is short of. And the conversation it is owed.",
+    "Every agent with a client on this list is named on it. Find yourself, from across the room.",
+    "Look closer. This panel is growth on the plans the branch already holds. And the age of a plan does not decide the size of the increase. Every client is worth the same call.",
+    "The Act is sharp here. No sales representative shall cause a policyholder to replace a policy without first discussing the disadvantages of giving up the old one. The penalty is one million, five hundred thousand dollars. And two years.",
+    "And no client is on this wall. No name. No policy number. No date of birth. You already have your own clients, in your portal.",
     # the close
     "Every wall names the agent. It names the unit. And it names the manager.",
     "Nobody on this wall is only being watched.",
@@ -77,11 +91,15 @@ SCENE_LINES = [
     ('s13', [21]),        ('s14', [22]),       ('s15', [23]),
     # wall four — licences: whole, the months, life against general, the Act
     ('s16', [24, 25]),    ('s17', [26]),       ('s18', [27]),  ('s19', [28, 29]),
+    # wall five — birthdays: whole, the hero, the bands, the roll, the growth
+    # panel, the Act, and the promise about clients
+    ('s20', [30, 31]),    ('s21', [32]),       ('s22', [33]),  ('s23', [34]),
+    ('s24', [35]),        ('s25', [36]),       ('s26', [37]),
     # the close
-    ('s20', [30, 31]),    ('s21', [32]),       ('s22', [33]),
+    ('s27', [38, 39]),    ('s28', [40]),       ('s29', [41]),
 ]
 
 SHOT_FILES = {'w45': 'f2-w45.png', 'w60': 'f2-w60.png', 'poss': 'f2-poss.png',
               'dlv': 'f2-dlv.png', 'lic':  'f2-lic.png',
-              'filt': 'f2-possfilt.png'}
+              'filt': 'f2-possfilt.png', 'book': 'f2-book.png'}
 MARK = 'mark.png'

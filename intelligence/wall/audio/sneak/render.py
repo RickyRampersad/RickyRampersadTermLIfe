@@ -24,6 +24,7 @@ LINES = [
     "Every contract sitting in our cabinet.",
     "Every contract an agent has not delivered.",
     "Every licence. Life and general. Month by month.",
+    "Every client whose birthday it is. This morning. In your name.",
     "It names the agent.",
     "It names the unit, and it names the manager.",
     "Nobody on this wall is only being watched.",

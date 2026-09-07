@@ -137,7 +137,7 @@
     color:var(--faint)}
   .then .tag.g{color:var(--gold)}
 
-  /* the four walls */
+  /* the five walls */
   .walls{display:grid;grid-template-columns:1fr 1fr;gap:22px}
   .wall{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     overflow:hidden;display:flex;flex-direction:column;transition:.2s var(--ease)}
@@ -194,7 +194,7 @@
     <span>Guardian Life · Chaguanas, Trinidad</span></div>
   <nav>
     <a href="#film">The film</a>
-    <a href="#walls">The four walls</a>
+    <a href="#walls">The five walls</a>
     <a href="#act">Market conduct</a>
   </nav>
 </header>
@@ -295,7 +295,7 @@
 </section>
 
 <section id="walls">
-  <div class="eyebrow">The four walls</div>
+  <div class="eyebrow">The five walls</div>
   <h2>What is on the board.</h2>
   <p class="sub">Every screen shows <b>aggregates and our own staff</b> — counts, money,
     bands, agents and units. No client name, contact or policy number reaches any of them,
@@ -352,6 +352,30 @@
           agent may carry a life licence and a general one on separate anniversaries. A
           renewal that passed with nothing closed against it sits at the top.</p>
         <a class="go" href="/intelligence/wall/licence.html">Open the wall →</a>
+      </div>
+    </div>
+
+    <div class="wall">
+      <a class="shot" href="shots/book.jpg"><img src="shots/book-sm.jpg" width="960" height="540"
+        alt="The client book" loading="lazy"></a>
+      <div class="body">
+        <div class="n">Today, and only today</div>
+        <h3>Birthdays today</h3>
+        <p>The one wall here that is not about something going wrong, and the only one
+          that is a day's work rather than a year's position. Whose birthday it is
+          <b>today</b>, grouped into five life stages, with what each stage is short of
+          and the conversation it is owed &mdash; and <b>every agent named on it</b>, so
+          the person who should pick up the phone can find themselves from across the
+          room. The birthday letter has gone out automatically for seven years
+          &mdash; <b>46,790 of them</b> &mdash; and what it has never done is ask a
+          question. It reviews the month behind it, carries the <b>2,266 clients whose
+          servicing agent has vested or left</b>, and measures what a call is actually
+          worth: <b>43 existing plans grown this year for TT$310,184</b>, where the age
+          of the plan turns out not to decide the size of the increase. No client
+          reaches this wall &mdash; counts and bands, like the other four. <b>The picture
+          is the layout, not a reading</b> &mdash; the figures in it are placeholders
+          until the Salesforce feed is connected.</p>
+        <a class="go" href="/intelligence/wall/book.html">Open the wall →</a>
       </div>
     </div>
 
@@ -421,7 +445,7 @@
     </div>
     <div>
       <h3>The wall is live</h3>
-      <p>The four screens re-read their source and repaint on the floor. What you see on
+      <p>The five screens re-read their source and repaint on the floor. What you see on
         the wall on a Tuesday is Tuesday's position, not a report somebody built on
         Friday.</p>
     </div>
@@ -441,7 +465,10 @@
     <div>
       <h3>Aggregates only</h3>
       <p>The walls are unauthenticated by design — a screen on a wall has nobody to sign
-        it in. In exchange they receive counts and bands, never client rows.</p>
+        it in. In exchange they receive counts and bands, never client rows. The birthday
+        wall briefly carried two initials per client and does not any more: an agent
+        already has these clients in their own portal, so the wall does not need to
+        identify anybody — it needs to say which conversation to have.</p>
     </div>
     <div>
       <h3>Nightly, from source</h3>
@@ -463,5 +490,11 @@
 </footer>
 
 </div>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>

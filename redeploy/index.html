@@ -240,7 +240,7 @@ const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66Q
 
 // Bumped in the same commit as apps-script/KPI.gs. The check is simply:
 // does the workbook say it is running this, or something older?
-const WANT="2026-09-04b";
+const WANT="2026-09-06d";
 
 const out=document.getElementById("out"), go=document.getElementById("go");
 
@@ -306,6 +306,12 @@ go.onclick=async()=>{
     go.disabled=false; go.textContent="Check it again";
   }
 };
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>

@@ -106,6 +106,27 @@ licence, no file to ship.
 - Sits well under the voice, lifts into the reveal, opens out for the close —
   the only two places a bed like this should be noticed
 
+## WhatsApp messages to the branch — short, or nobody reads it
+
+Every message written for the branch group follows the same four rules, and the
+first one is the one that keeps getting broken:
+
+| | |
+|---|---|
+| **Compact** | Under about 120 words. A 280-word message is a memo, and a memo in a WhatsApp group is scrolled past. |
+| **Motivating** | Address the agent, not the branch. "Your name is on it", not "agents can see their names". |
+| **Innovative** | Lead with the number nobody in the room already knows. One finding, not five. |
+| **Prompts a comeback** | End with a specific ask that is easy to answer — *"Reply with one client you're calling Monday."* A message with nothing to reply to gets no replies. |
+
+Shape: a bold one-line headline, two or three short paragraphs, one bulletless
+finding, the ask. WhatsApp bold is `*single asterisks*`. No hard line wraps
+inside a paragraph — WhatsApp reflows, and wrapped text arrives ragged on a
+phone. Long-form detail belongs in the reply to the branch manager, not in the
+group message.
+
+If the picture carries a caveat banner ("preview · sample figures"), the message
+does not need to repeat it.
+
 ## Hosting — the two chains never touch
 
 | Source | Host | Serves |
@@ -149,6 +170,19 @@ system.
 **Products outside `PRODUCT_RULES` get no checks at all.** `Lifestyle Special
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.
+
+## The view counter — every page reports, one sheet records
+
+Every served HTML page carries a `<!-- rrb-views -->` beacon before `</body>`.
+It pings the Apps Script in `gs/views-counter.gs`, which appends
+`time · page · referrer` to the **"RRB Site View Counter"** spreadsheet
+(ID in the .gs). No client data — path and referrer only.
+
+- **Keep the beacon** when regenerating or rewriting a page; re-add it if lost.
+- `RRB_VIEWS_URL` in the beacon is replaced with the deployed /exec URL —
+  if you see the literal placeholder, the counter is armed but not yet live.
+- Redirect stubs (`about-us/`, `health-1/`, `xpress-life-application/`) and
+  `apps-script/` templates deliberately carry no beacon.
 
 ---
 ---

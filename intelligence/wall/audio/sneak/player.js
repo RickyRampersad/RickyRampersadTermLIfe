@@ -48,7 +48,10 @@ Object.keys(VO_DATA).forEach(function(k){
 const CH_D=[146.83,220.00,293.66], CH_Fsm=[185.00,277.18,369.99],
       CH_Bm=[123.47,185.00,246.94], CH_G=[196.00,293.66,392.00],
       CH_A=[220.00,329.63,440.00];
-const PROG=[CH_D,CH_Fsm,CH_Bm,CH_G,CH_D];
+/* Six chords, not five: the fifth wall added a line and the bed had to grow
+   by one chord rather than by a longer one. It still lands home on D — twice,
+   so the last card rings out. */
+const PROG=[CH_D,CH_Fsm,CH_Bm,CH_G,CH_D,CH_D];
 const CHORD=/*__CHORD__*/;
 
 /* Low while he speaks, up in the gaps. Both numbers are quiet on purpose: a

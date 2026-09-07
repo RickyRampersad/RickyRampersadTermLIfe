@@ -253,7 +253,9 @@ var PROD_DATA = {
     {a:"Fawwaz M.",    n:28, api:352783},
     {a:"Randolph G.",  n:23, api:347321},
     {a:"Ricky R.",     n:22, api:309970},
-    {a:"Aleema M.",    n:58, api:254893},
+    /* An agent who has left the branch stood here at 58 / TT$254,893. The name
+       comes off; the branch's year does not change, because the branch wrote
+       that business — see the note under the year figure. */
     {a:"Premchand D.", n:20, api:234947},
     {a:"John B.",      n:55, api:214990}
   ],
@@ -265,9 +267,7 @@ var PROD_DATA = {
     {a:"Gary S.",    d:"2026-08-21", api:12145},
     {a:"Premchand D.",d:"2026-08-21", api:11623},
     {a:"Varun S.",   d:"2026-08-21", api:5960},
-    {a:"Naila S.",   d:"2026-08-21", api:3456},
-    {a:"Javid A.",   d:"2026-08-21", api:2795},
-    {a:"Aleema M.",  d:"2026-08-21", api:2795}
+    {a:"Naila S.",   d:"2026-08-21", api:3456}
   ]
 };
 
@@ -394,7 +394,9 @@ function sLeaders(D){
   }).join("");
   return '<div class="kick">Leaderboard · year to date</div>'
     +'<h2>Who is carrying the year</h2>'
-    +'<p class="lede">Total API — new business plus increases — per advisor in '+D.ytd.year+'. Gold ranks are the top three.</p>'
+    +'<p class="lede">Total API — new business plus increases — per advisor in '+D.ytd.year+'. '
+    +'Gold ranks are the top three. <b>The branch year above includes business written by '
+    +'agents who have since left</b>, so the rows here do not sum to it.</p>'
     +'<div class="body"><div class="panel"><div class="rows">'+rows+'</div></div></div>';
 }
 function sLatest(D){
@@ -587,6 +589,12 @@ function refresh(){
 render(PROD_DATA);
 refresh();
 setInterval(refresh, 15*60*1000);
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>

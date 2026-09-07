@@ -2800,6 +2800,7 @@ function intelRoute_(b) {
   if (action === 'intel.delivery') return iActDelivery_(b);
   if (action === 'intel.licence')  return iActLicence_(b);
   if (action === 'intel.possession') return iActPossession_(b);
+  if (action === 'intel.book')       return iActBook_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -2885,7 +2886,12 @@ var IWALL_BANDS = [45, 60, 90];
 /* ── Agents whose book should not count in the branch view ─────────────────
    Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
    writes them. Matching is on the same normalised key as everywhere else, so
-   "Aleema Mohammed-Ali" and "ALEEMA MOHAMMED ALI" are the same person.
+   "Anne Mohammed-Ali" and "ANNE MOHAMMED ALI" are the same person.
+
+   THE SURNAMES HAVE TO MATCH — see iExcludes_ below. A given name typed against
+   the wrong surname excludes nobody, and the failure is silent: the agent
+   simply stays on every wall. Copy the name off the dues book rather than
+   typing it from memory, and check quality.excluded on the next build.
 
    Read this before adding a name. Excluding an agent does NOT settle their
    premiums — it only stops them being counted here. Their clients still owe
@@ -2905,13 +2911,13 @@ function iExcluded_() {
 /* Does this agent name fall under an exclusion?
 
    Exact keys are not enough, and the delivery wall proved it: the dues book
-   writes "Aleema Mohammed-Ali" and the in-force book writes "ALEEMA LEYYA
-   MOHAMMED-ALI" — same person, one middle name apart. An exclusion that
-   matched one book and not the other put a removed agent back on a screen,
-   which is exactly the instruction not being honoured.
+   writes a name as "Given Surname-Surname" and the in-force book writes
+   "GIVEN MIDDLE SURNAME-SURNAME" — same person, one middle name apart. An
+   exclusion that matched one book and not the other put a removed agent back
+   on a screen, which is exactly the instruction not being honoured.
 
    So: exact, or every token of the excluded name present in the candidate
-   (and the surnames equal). "Aleema Mohammed Ali" is inside "Aleema Leyya
+   (and the surnames equal). "Anne Mohammed Ali" is inside "Anne Leyya
    Mohammed Ali"; "Meera Persad Khan" is not inside "Mohan Khan". This is
    deliberately NOT the surname-plus-initial test that the security review
    flagged — that one matched different people. */
@@ -5329,6 +5335,970 @@ function iBuildPossession_() {
 
 function iActPossession_(b) {
   var d = iBuildPossession_();
+  return iOk_({ data: d });
+}
+
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE CLIENT BOOK — who we already have, and what they are missing
+   ══════════════════════════════════════════════════════════════════════════
+   Every other wall in this branch measures something that has gone wrong. This
+   one measures what is already ours: 13,304 people who have bought from this
+   branch, what cover they carry, how long they have been with us, and where
+   the obvious gap is.
+
+   IT NAMES NOBODY. The counts below are clients, and a client is a count — no
+   name, no policy number, no date of birth, no premium reaches this wall. It
+   hangs in a room clients walk through, and this is the one wall whose subject
+   is the client rather than the agent. The agent's own named list lives behind
+   the sign-in on the app, scoped to their book, where it always has.
+
+   COVER IS READ FROM THE COVERAGE COLUMNS, NEVER FROM A PRODUCT NAME. TYPE__c
+   is populated on 627 of 55,062 rows across the org — 1% — so it cannot be the
+   record type, and the house rule is not to guess a classification from a name
+   (Life Secure and Tophat both read as life and are neither). Life_Coverage__c
+   above zero means the policy carries life cover. That is a fact in the data
+   rather than an inference about a product.
+
+   AND THE STATUS FIELD CANNOT BE TRUSTED, which is the single most important
+   thing to know about this wall. Policy_Status_Description_R__c mixes proper
+   picklist labels with raw AS400 codes and blanks — measured on the branch's
+   own 24,680 rows:
+
+       Premium Paying   3,639      1      5,284       (blank)   5,412
+       Surrendered      1,451      E      1,229       ELV       1,473
+       Lapsed             494      B      1,162       RFC         770
+
+   So roughly a fifth of the book says "1" and another fifth says nothing.
+   Anything recognisably dead is dropped; everything else is counted and the
+   number we could not read is put on the wall in the open. A cross-sell wall
+   that quietly treated a surrendered policy as cover in force would send an
+   agent to a client who cancelled two years ago, and that call is worse than
+   no call.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IBOOK = {
+  OBJECT: 'CLIENT_PORTFOLIO__c',
+  QUIET:  5,      // years since the last policy before a client is "quiet"
+  WEEK:   7       // days ahead counted as "this week" for birthdays
+};
+
+/* Statuses that mean the policy is gone. Written out rather than pattern
+   matched, because "Not taken" and "Not Proceeded With" are different things
+   and neither contains a word the other does. Anything not on either list is
+   counted as unknown and reported — never assumed alive, never assumed dead. */
+var IBOOK_DEAD = ['surrendered', 'lapsed', 'lapse no value', 'lapse w/value',
+                  'death', 'matured', 'expired', 'not taken', 'not proceeded with',
+                  'file closed', 'rejected', 'declined', 'postponed', 'converted',
+                  'vested annuity'];
+var IBOOK_ALIVE = ['premium paying', 'paid up', 'waiver of prem'];
+
+function iBookState_(s) {
+  var t = String(s || '').trim().toLowerCase();
+  if (!t) return 'unknown';
+  if (IBOOK_DEAD.indexOf(t) > -1) return 'dead';
+  if (IBOOK_ALIVE.indexOf(t) > -1) return 'alive';
+  return 'unknown';
+}
+
+function iBookQuiet_() { return Math.round(iNum_(iProp_('INTEL_BOOK_QUIET_YEARS'))) || IBOOK.QUIET; }
+
+/* A date the book cannot have reached yet is not a date. Four rows in the
+   branch's own book carry issue dates in 2035, 2047 and 2076; left alone, the
+   2076 one makes its client permanently "bought this year" and drags the
+   branch's median tenure with it. */
+function iBookDate_(v, today) {
+  var d = iDate_(v);
+  if (!d) return null;
+  var y = d.getFullYear();
+  if (y < 1940 || d.getTime() > today.getTime()) return null;
+  return d;
+}
+
+/* ── initials, and the reasoning behind them ──────────────────────────────
+   THE WALL IS UNAUTHENTICATED AND THE SITE IS PUBLIC. Every other figure that
+   reaches it is a count. These two letters are the one exception, and they are
+   there because the branch asked for them and gave the reason: the birthday
+   letter has gone out to these clients for years, the relationship is already
+   built, and an agent standing in front of the wall has to know which of their
+   own clients today is. Two letters and a town does that for the person who
+   already knows them and for nobody else.
+
+   What still never reaches the wall: the name, the date of birth, the policy
+   number, the premium, the sum assured, the street. Age is the age they turn
+   today, which is the reason they are on the screen at all.
+
+   Set INTEL_BOOK_INITIALS to "off" and the letters become a dash, everything
+   else on the wall keeps working, and it is one property rather than a rebuild. */
+function iBookInitials_(first, last) {
+  if (!/^on$/i.test(iProp_('INTEL_BOOK_INITIALS') || 'on')) return '—';
+  var a = String(first || '').trim(), b = String(last || '').trim();
+  var i = (a ? a.charAt(0) : '') + (b ? b.charAt(0) : '');
+  return i.toUpperCase() || '—';
+}
+
+/* Salesforce stores the town shouted — CHAGUANAS, SANGRE GRANDE. A wall in
+   title case reads as a place rather than as a database. */
+function iBookTown_(t) {
+  return String(t || '').trim().toLowerCase().replace(/(^|[\s-])([a-z])/g,
+    function (m, p, ch) { return p + ch.toUpperCase(); });
+}
+
+/* One reason to call, not five. An agent reading a wall across a room takes one
+   thing away from a row, so the row says the most sellable true thing about
+   that client and stops. Order matters: no cover at all beats a missing rider,
+   and a missing rider beats a client who has simply gone quiet. */
+function iBookPrompt_(c, quietYears, today) {
+  var DAY = 86400000, YEAR = 365.25;
+  var since = c.last ? (today - c.last) / DAY / YEAR : null;
+  if (!c.life && !c.ci && !c.health && !c.pension) return 'no cover we can read';
+  if (!c.life)                return 'no life cover';
+  if (c.life && !c.ci)        return 'no critical illness';
+  if (since !== null && since >= quietYears) return 'nothing new in ' + Math.floor(since) + ' years';
+  if (c.life && !c.health)    return 'no health';
+  if (c.n === 1)              return 'one policy only';
+  return '';
+}
+
+/* ── the bands, and what each one is actually short of ───────────────────────
+   THE WALL WAS A LIST AND A LIST IS A SPREADSHEET. Twenty eight rows sorted by
+   tenure tells an agent nothing they could not have got from an export. What
+   makes it a wall is the grouping: five life stages, each with the cover that
+   stage is typically missing, the people in it, and one sentence about what to
+   say. An agent scans for their own initials, reads the line above them, and
+   knows the conversation before they dial.
+
+   AGE IS THE BAND because it is the one thing that is true of everybody on the
+   list, present on 100% of rows, and the thing that actually decides which
+   product is right. What they are missing is then read out of the coverage
+   columns within the band, so the prompt is derived from the two of them
+   together rather than asserted.
+
+   The talking points are branch policy, not data — they are written here, once,
+   rather than pasted into the wall's HTML, so the screen and the app cannot
+   drift apart on what the branch says about a sixty five year old. */
+var IBOOK_BANDS = [
+  { k: 'Starting out', act: 'Call and quote critical illness at the age they are today.',      range: 'under 30',  lo: 0,  hi: 30, want: 'ci',
+    talk: 'The cheapest critical illness they will ever buy, and a health plan '
+        + 'before anything is on the record.' },
+  { k: 'Family years', act: 'Call and ask who depends on this income. Then quote critical illness.',      range: '30 to 44',  lo: 30, hi: 45, want: 'ci',
+    talk: 'A mortgage and children behind the cover. Critical illness first, '
+        + 'then education savings.' },
+  { k: 'Peak earning', act: 'Call and take the sum assured up to what they earn now.',      range: '45 to 54',  lo: 45, hi: 55, want: 'stale',
+    talk: 'The sum assured was set on an older salary. Review it, and ask about '
+        + 'income protection.' },
+  { k: 'Retirement in sight', act: 'Call and book the pension review before the year end.', range: '55 to 64', lo: 55, hi: 65, want: 'pension',
+    talk: 'The annuity window is closing. Pension top-up while contributions '
+        + 'still have years to run.' },
+  { k: 'Already retired', act: 'Call and offer health and final expenses. Leave the life cover alone.',   range: '65 and over', lo: 65, hi: 999, want: 'health',
+    talk: 'Health and final expenses. Do not touch the life cover — s131 makes '
+        + 'replacing it personal.' }
+];
+
+/* What this band is short of — THE THING ITS OWN TALKING POINT IS ABOUT, not
+   the biggest number in it. The first cut took whichever gap had the highest
+   count and four of the five bands came out saying "a health plan", because
+   almost nobody in this book holds health. True, and useless: a wall that gives
+   every life stage the same answer has stopped being a segmentation. Each band
+   now names the gap its own advice is about, so the evidence line and the
+   conversation line agree. */
+var IBOOK_WANTS = {
+  ci:      ['critical illness', function (p) { return p.life && !p.ci; }],
+  life:    ['life cover',       function (p) { return !p.life; }],
+  health:  ['a health plan',    function (p) { return !p.health; }],
+  pension: ['a pension',        function (p) { return !p.pension; }],
+  stale:   ['anything recent',  function (p) { return p.stale; }]
+};
+function iBookMissing_(people, want) {
+  var t = IBOOK_WANTS[want] || IBOOK_WANTS.ci;
+  var n = people.filter(t[1]).length;
+  return n ? { k: t[0], n: n } : null;
+}
+
+/* ── the tip ──────────────────────────────────────────────────────────────
+   ONE POINTER, CHOSEN FROM TODAY'S ACTUAL PEOPLE. A wall that prints the same
+   piece of advice every morning stops being read by the end of the first week.
+   This picks the most striking thing that is TRUE OF THE TWENTY EIGHT ON THE
+   SCREEN, tested in order of how much it should change what somebody does, and
+   says nothing at all if none of the tests clears its threshold — an invented
+   insight on a quiet day costs more than a blank line.
+
+   Every branch of this is a fact about the cohort, never a claim about a
+   product and never a claim about an individual. */
+function iBookTip_(list, bands, byAgent, quietYears) {
+  if (!list.length) return null;
+  var n = list.length;
+
+  /* A whole band missing the same cover is the strongest thing a day can say. */
+  for (var i = 0; i < bands.length; i++) {
+    var b = bands[i];
+    if (b.n >= 3 && b.missing && b.missing.n === b.n)
+      return { k: 'Every one of them',
+               t: 'All ' + b.n + ' in ' + b.k.toLowerCase() + ' are missing '
+                  + b.missing.k + '. One call, one script, ' + b.n + ' times.' };
+  }
+
+  /* One agent holding most of the morning. */
+  var top = byAgent[0];
+  if (top && top.n >= 3 && top.n / n >= 0.3)
+    return { k: top.k,
+             t: 'has ' + top.n + ' of today\u2019s ' + n + '. That is one sitting, '
+                + 'not a day of phone calls.' };
+
+  var quiet = list.filter(function (t) { return t.stale; }).length;
+  if (quiet >= Math.max(3, n * 0.3))
+    return { k: quiet + ' have gone quiet',
+             t: 'nothing new in ' + quietYears + ' years or more. The birthday is the '
+                + 'reason to ring; the review is the reason to visit.' };
+
+  var one = list.filter(function (t) { return t.policies === 1; }).length;
+  if (one >= Math.max(3, n * 0.3))
+    return { k: one + ' hold one policy',
+             t: 'and nothing else. They bought once and were never asked a second time.' };
+
+  var yrs = list.map(function (t) { return t.years; })
+                .filter(function (v) { return v != null; })
+                .sort(function (a, b) { return a - b; });
+  if (yrs.length && yrs[Math.floor(yrs.length / 2)] >= 10)
+    return { k: yrs[Math.floor(yrs.length / 2)] + ' years, median',
+             t: 'is how long today\u2019s list has been with this branch. Half of them '
+                + 'were clients before the wall existed.' };
+
+  return null;
+}
+
+/* Does this row carry any cover at all? Seven columns, and a row with nothing in
+   any of them is not a policy — it is the second agent's half of a split case. */
+function iBookCovered_(x) {
+  return iNum_(x.Life_Coverage__c) > 0 || iNum_(x.Critical_Illness_Coverage__c) > 0 ||
+         iNum_(x.Health_Premium__c) > 0 || iNum_(x.ADDAP_Coverage__c) > 0 ||
+         iNum_(x.Pension_Premiums__c) > 0 || iNum_(x.Savings_Coverage__c) > 0 ||
+         iNum_(x.Total_Personal_Accident_Premium__c) > 0;
+}
+
+function iBookBand_(years, bands) {
+  for (var i = 0; i < bands.length; i++) if (years < bands[i][1]) return bands[i][0];
+  return bands[bands.length - 1][0];
+}
+
+/* ── GROWTH ON PLANS THE BRANCH ALREADY HAS ────────────────────────────────
+   Policy_Increases__c is the branch's own record of an existing plan being
+   increased — 1,113 rows in the org, 49 of them on this branch in 2026. It
+   carries Years_In_Force__c, which is the only field anywhere that says how old
+   the plan was when somebody grew it, and that is the question the birthday
+   wall is really asking: is it worth calling a client you have had for years?
+
+   TWO CORRECTIONS ARE APPLIED HERE AND BOTH CHANGE THE ANSWER.
+
+   MIRRORED CASES. A split case is entered once per agent at the FULL amount —
+   same day, same figure, two names. Counting both doubles it. Three of the 46
+   branch rows for 2026 are the second half of a pair, and the branch's own
+   dashboard already flags the pattern. Same date + same amount + same plan age
+   + a different agent is treated as one case.
+
+   AGENTS WHO HAVE LEFT are dropped first, and one whole case disappears when
+   they are: a TT$9,000 increase entered by two agents who have both gone.
+
+   The names on this object are FIRST NAMES ONLY. They are mapped to the roster
+   where exactly one person carries that first name — every first name on this
+   branch's roster is unique, so nothing is guessed; anything unmatched keeps
+   the first name rather than being attributed to somebody. */
+/* NO REVIEW COUNT, ON PURPOSE. A "reviews logged this month" row stood on the
+   wall for a day and the branch's answer was the right one: nobody logs a call,
+   agents are not Salesforce users, and Review__c died in November 2022. A zero
+   there did not mean nobody called — it meant nobody writes calls down, which
+   is a fact about the system and not about the agents. The only evidence that a
+   conversation happened is what came back from it: an additional policy, or an
+   increase on a plan the client already had. Both are measured below and both
+   are what the ledger reports instead. */
+/*  ── the growth query ── */
+function iBookGrowth_(today, unitKeys, skip, roster) {
+  var yy = today.getFullYear(), rows = [];
+  try {
+    rows = sfQuery_(
+      'SELECT Agent__c, Unit__c, Submitted_Date__c, API_Increase__c, Years_In_Force__c ' +
+      'FROM Policy_Increases__c WHERE Submitted_Date__c >= ' + yy + '-01-01');
+  } catch (err) { return null; }
+  if (!rows || !rows.length) return null;
+
+  var seen = {}, kept = [];
+  rows.forEach(function (x) {
+    if (!unitKeys[iPossUnitKey_(x.Unit__c)]) return;
+    var who = String(x.Agent__c || '').trim();
+    var full = roster[iNameKey_(who)] || who;
+    if (iExcludes_(skip, full) || iExcludes_(skip, who)) return;
+    var d = iDate_(x.Submitted_Date__c); if (!d) return;
+    var api = iNum_(x.API_Increase__c), yrs = Math.max(0, Math.round(iNum_(x.Years_In_Force__c)));
+    var key = d.getTime() + '|' + api.toFixed(2) + '|' + yrs;
+    if (seen[key] && seen[key] !== full) return;              // the mirror half
+    seen[key] = full;
+    kept.push({ who: full, at: d, api: api, yrs: yrs });
+  });
+  if (!kept.length) return null;
+
+  var mm = today.getMonth() + 1;
+  var byMonth = [], MON = ['January','February','March','April','May','June','July',
+                           'August','September','October','November','December'];
+  for (var i = 0; i < 12; i++) byMonth.push({ m: i + 1, k: MON[i].slice(0, 3), n: 0, api: 0 });
+  var AGE = [['Under 1 year',1],['1-2 years',3],['3-5 years',6],['6-10 years',11],
+             ['11-20 years',21],['Over 20 years',1e9]];
+  var ages = {}, byAgent = {}, older = [], younger = [], last = null;
+  AGE.forEach(function (b) { ages[b[0]] = { k: b[0], n: 0, api: 0 }; });
+
+  kept.forEach(function (r) {
+    if (r.at.getFullYear() !== yy) return;
+    var b = byMonth[r.at.getMonth()];
+    b.n++; b.api += r.api;
+    var band = ages[iBookBand_(r.yrs, AGE)];
+    band.n++; band.api += r.api;
+    (r.yrs >= 11 ? older : younger).push(r.api);
+    var a = byAgent[r.who];
+    if (!a) a = byAgent[r.who] = { k: r.who, n: 0, api: 0 };
+    a.n++; a.api += r.api;
+    if (!last || r.at > last) last = r.at;
+  });
+
+  function med(v) {
+    if (!v.length) return null;
+    var w = v.slice().sort(function (x, y) { return x - y; }), h = w.length >> 1;
+    return w.length % 2 ? w[h] : Math.round((w[h - 1] + w[h]) / 2);
+  }
+  var all = kept.filter(function (r) { return r.at.getFullYear() === yy; });
+  var thisMonth = byMonth[mm - 1];
+
+  /* THE FINDING, AND IT IS NOT THE ONE ANYBODY EXPECTS. A plan in force eleven
+     years or more does NOT carry a bigger increase — the medians are within a
+     few dollars of each other. The totals look otherwise only because three
+     large cases sit in the young bands. So the instruction that comes out of
+     this is the opposite of rationing the call to old clients: the size of the
+     increase does not depend on the age of the plan, so every client is worth
+     the same call. */
+  return {
+    year: yy,
+    cases: all.length,
+    api: Math.round(all.reduce(function (s, r) { return s + r.api; }, 0)),
+    median: med(all.map(function (r) { return r.api; })),
+    month: { n: thisMonth.n, api: Math.round(thisMonth.api) },
+    lastAt: last ? iIso_(last) : null,
+    daysSince: last ? Math.round((today - last) / 86400000) : null,
+    byMonth: byMonth.map(function (b) {
+      return { m: b.m, k: b.k, n: b.n, api: Math.round(b.api), now: b.m === mm };
+    }),
+    ages: AGE.map(function (b) {
+      return { k: b[0], n: ages[b[0]].n, api: Math.round(ages[b[0]].api) };
+    }),
+    byAgent: Object.keys(byAgent).map(function (k) {
+      return { k: k, n: byAgent[k].n, api: Math.round(byAgent[k].api) }; })
+      .sort(function (a, b) { return b.api - a.api; }),
+    ageEffect: { old: med(older), young: med(younger),
+                 oldN: older.length, youngN: younger.length }
+  };
+}
+
+function iBuildBook_() {
+  var today = iToday_(), DAY = 86400000, YEAR = 365.25;
+  var skip = iExcluded_(), quietYears = iBookQuiet_();
+
+  /* Same joins as every other screen: the access list is the org chart. */
+  var units = iBuildUnits_(), unitKeys = {}, personOfCode = {}, unitOfCode = {};
+  Object.keys(units).forEach(function (u) {
+    unitKeys[iPossUnitKey_(u)] = u;
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (c) { unitOfCode[c] = u; if (m.name) personOfCode[c] = m.name; }
+    });
+  });
+
+  /* First name -> roster name. Every first name on this branch's roster is
+     unique, so nothing here is a guess; a first name carried by two people maps
+     to neither. Policy_Increases__c stores first names only. */
+  var roster = {}, firstSeen = {};
+  Object.keys(units).forEach(function (u) {
+    units[u].forEach(function (m) {
+      var fn = iNameKey_(String(m.name || '').split(' ')[0]);
+      if (!fn) return;
+      firstSeen[fn] = (firstSeen[fn] || 0) + 1;
+      roster[fn] = m.name;
+    });
+  });
+  Object.keys(firstSeen).forEach(function (fn) { if (firstSeen[fn] > 1) delete roster[fn]; });
+
+  var statusOf = {}, sh = iTabInforce_();
+  if (sh) {
+    var f = iReadCols_(sh, { agentId: ['servicing agent id'],
+                             aStatus: ['servicing agent status'] });
+    for (var r = 0; r < f.rows; r++) {
+      var sc = iCode_(String(f.get('agentId', r)).trim());
+      if (sc && !statusOf[sc]) statusOf[sc] = String(f.get('aStatus', r)).trim();
+    }
+  }
+  function activeAgent(code) { var s = statusOf[iCode_(code)]; return !s || /^active$/i.test(s); }
+
+  var rows = [], sfError = '';
+  try {
+    rows = sfQuery_(
+      'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
+      'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
+      'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c, ' +
+      'Contact__r.FirstName, Contact__r.LastName, Contact__r.MailingCity ' +
+      'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
+  } catch (err) {
+    sfError = String(err && err.message ? err.message : err);
+  }
+  if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
+
+  /* ── fold policies into clients ───────────────────────────────────────── */
+  /* THE MONTH CURSOR IS DECLARED HERE, ABOVE THE ROW LOOP, AND THAT MATTERS.
+     It was written below the loop and read inside it, so `var` hoisting handed
+     the comparison `undefined` on every row and "bought this month" came out
+     zero for the whole branch — a plausible number for a quiet month, and
+     wrong. Nothing on the wall could have shown it; the unit test did. */
+  var mm = today.getMonth() + 1, dd = today.getDate(), yy = today.getFullYear();
+  var byClient = {}, offBranch = 0, notActive = 0, dead = 0, unknown = 0, noClient = 0;
+  /* CLIENTS WHOSE EVERY POLICY IS GONE. They are dropped from the book, and
+     they should be — a surrendered policy is not cover. But the birthday email
+     still goes to them, because the automation mails a contact and not a
+     policy: 28 went out on 6 September and only 24 of those people hold
+     anything. The other four were clients once and are not now, and on a
+     birthday they are the easiest call of the day. Kept aside here, then
+     cleared of anyone who turns out to hold something live. */
+  var gone = {}, excluded = 0;
+
+  rows.forEach(function (x) {
+    var key = String(x.Contact__c || '');
+    if (!key) { noClient++; return; }
+
+    var id   = iIdentity_(String(x.AgentName__c || '').trim(), '', '');
+    var code = iCode_(id.agentId);
+    var name = personOfCode[code] || id.agentName || '(none)';
+    var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
+    if (!unit) { offBranch++; return; }
+    /* AGENTS WHO HAVE LEFT THE BRANCH ARE DROPPED OUTRIGHT — not flagged like a
+       vested servicer, removed. The list is INTEL_EXCLUDE_AGENTS and it is a
+       Script Property, so the wall is only as right as that cell: iExcludes_
+       requires the SURNAMES to match, so a given name typed against the wrong
+       surname excludes nobody and does it silently. Counted from here on, so the feed can
+       prove the property is doing its job instead of the branch discovering it
+       from a name on the wall. */
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) { excluded++; return; }
+    /* A VESTED OR INACTIVE SERVICING AGENT IS NOT A REASON TO HIDE THE CLIENT.
+       This used to drop the row, and dropping it hid 2,266 clients holding
+       3,216 live policies behind 28 agents who have retired or left — 184 of
+       them with a September birthday, every one of whom got the branch's email
+       this morning with nobody assigned to follow it up. The row stays and is
+       flagged instead, which is the difference between a wall that reports the
+       branch and a wall that reports the roster. */
+    var isActive = activeAgent(code);
+    if (!isActive) notActive++;
+
+    var state = iBookState_(x.Policy_Status_Description_R__c);
+    if (state === 'dead') {
+      dead++;
+      var gd = iDate_(x.Date_Of_Birth__c);
+      if (gd && gd.getFullYear() > 1900 && !gone[key])
+        gone[key] = { agent: name, dobM: gd.getMonth() + 1, dobD: gd.getDate(),
+                      dobY: gd.getFullYear() };
+      return;
+    }
+    if (state === 'unknown') unknown++;
+
+    var c = byClient[key];
+    if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
+                                  live: isActive, status: isActive ? '' : (statusOf[code] || 'Inactive'),
+                                  dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
+                                  firstAge: null, ini: '', town: '', months: [], onBday: false,
+                                  boughtThisMonth: 0,
+                                  life: false, ci: false, health: false, add: false,
+                                  pa: false, pension: false, savings: false };
+    /* A client can sit on two books at once. If any of them belongs to somebody
+       still working, that is the name to put on the wall — the client is not
+       unassigned, they simply also have history with somebody who left. Only a
+       client with no active servicer anywhere is one the branch has to reassign. */
+    else if (!c.live && isActive) { c.agent = name; c.unit = unit; c.live = true; c.status = ''; }
+    c.n++;
+
+    if (c.age === null && iNum_(x.Current_Age__c) > 0) c.age = Math.round(iNum_(x.Current_Age__c));
+
+    /* INITIALS, NOT NAMES. See the note above iBookInitials_ — this is the only
+       thing about a client that reaches the wall, and it reaches it because the
+       branch asked for it: an agent reads their own client out of two letters
+       and a town, and nobody else does. */
+    if (!c.ini && x.Contact__r) c.ini = iBookInitials_(x.Contact__r.FirstName, x.Contact__r.LastName);
+    if (!c.town && x.Contact__r && x.Contact__r.MailingCity)
+      c.town = iBookTown_(x.Contact__r.MailingCity);
+    if (!c.dobM) {
+      var dob = iDate_(x.Date_Of_Birth__c);
+      if (dob && dob.getFullYear() > 1900) {
+        c.dobY = dob.getFullYear(); c.dobM = dob.getMonth() + 1; c.dobD = dob.getDate();
+      }
+    }
+    var iss = iBookDate_(x.ISSUE_DATE__c, today);
+    if (iss) {
+      c.months.push(iss.getMonth() + 1);
+      /* DO THEY BUY AT BIRTHDAY TIME? Measured rather than assumed, because the
+         whole wall rests on the answer. Same calendar month as their birthday,
+         against a one-in-twelve baseline. On this branch it comes out at 8.7%
+         against 8.3% — which is nothing. The birthday is the reason to call.
+         It is not the reason they buy, and a wall that implied otherwise would
+         be selling its own agents a story. */
+      if (c.dobM && iss.getMonth() + 1 === c.dobM) c.onBday = true;
+      /* Issued inside the month we are standing in — the measure of whether the
+         birthday campaign converts, rather than whether it is delivered.
+
+         ONLY A ROW THAT CARRIES COVER COUNTS AS A POLICY. A split case is
+         entered once per agent and only one of the two halves carries the sum
+         assured; the other is an attribution shell with every coverage column
+         empty. Counting rows made September read 12 policies to 7 clients when
+         the branch had actually written 4 policies to 4 clients. */
+      if (iss.getFullYear() === yy && iss.getMonth() + 1 === mm && iBookCovered_(x))
+        c.boughtThisMonth++;
+      /* The age they were when they FIRST bought travels with the first policy,
+         so the two have to move together — taking the smallest issue age on the
+         book would pick up a rider written years later on a different life. */
+      if (!c.first || iss < c.first) {
+        c.first = iss;
+        c.firstAge = iNum_(x.Issue_Age__c) > 0 ? Math.round(iNum_(x.Issue_Age__c)) : null;
+      }
+      if (!c.last  || iss > c.last)  c.last  = iss;
+    }
+    if (iNum_(x.Life_Coverage__c) > 0)                   c.life = true;
+    if (iNum_(x.Critical_Illness_Coverage__c) > 0)       c.ci = true;
+    if (iNum_(x.Health_Premium__c) > 0)                  c.health = true;
+    if (iNum_(x.ADDAP_Coverage__c) > 0)                  c.add = true;
+    if (iNum_(x.Total_Personal_Accident_Premium__c) > 0) c.pa = true;
+    if (iNum_(x.Pension_Premiums__c) > 0)                c.pension = true;
+    if (iNum_(x.Savings_Coverage__c) > 0)                c.savings = true;
+  });
+
+  var keys = Object.keys(byClient);
+  if (!keys.length) return { configured: false, error: 'No branch clients matched.' };
+
+  /* Anyone holding something live is not "gone", however many lapsed policies
+     sits behind them. What is left is the former client, and the ones with a
+     birthday today are counted with their agent attached. */
+  keys.forEach(function (k) { delete gone[k]; });
+  var goneToday = 0, goneAgents = {};
+  Object.keys(gone).forEach(function (k) {
+    var gc = gone[k];
+    if (gc.dobM !== mm || gc.dobD !== dd) return;
+    goneToday++;
+    goneAgents[gc.agent] = (goneAgents[gc.agent] || 0) + 1;
+  });
+
+  /* ── the bands ────────────────────────────────────────────────────────── */
+  var TEN = [['Under 1 year',1],['1-2 years',2],['2-5 years',5],['5-10 years',10],
+             ['10-20 years',20],['Over 20 years',1e9]];
+  var AGE = [['Under 25',25],['25-34',35],['35-44',45],['45-54',55],['55-64',65],['65 +',1e9]];
+  var LAST= [['Under 1 year',1],['1-2 years',2],['2-5 years',5],['5-10 years',10],
+             ['Over 10 years',1e9]];
+  function tally(bands) {
+    var m = {}; bands.forEach(function (b) { m[b[0]] = 0; }); return m;
+  }
+  var tenure = tally(TEN), ages = tally(AGE), lastBuy = tally(LAST);
+
+
+  /* Cover the client is missing, banded by their age — because the gap is not
+     spread evenly and the wall should say where it actually sits. A forty year
+     old with no critical illness is a different conversation from a
+     seventy year old with none, and only one of them is a sale. */
+  var AGED = [['Same age or close',6],['6-10 years older',11],
+              ['11-20 years older',21],['Over 20 years older',1e9]];
+  var gapAge = {}, agedBand = tally(AGED);
+  AGE.forEach(function (b) { gapAge[b[0]] = 0; });
+
+  var cover = { Life:0, 'Critical illness':0, Health:0, 'Accident (ADD&P)':0,
+                'Personal accident':0, Pension:0, Savings:0 };
+  var gapLifeNoCi = 0, gapLifeNoHealth = 0, gapOne = 0, gapQuiet = 0, gapNoCover = 0;
+  var bdayToday = 0, bdayWeek = 0, bdayAges = [], bdayAgents = {}, milestones = {};
+  /* Today's people, in full — this wall is a day's work, not a year's summary.
+     And the month, by agent, because the branch wants to see who has the most
+     of them coming and push that person. */
+  var todayList = [], todayTowns = {}, todayHolds = {}, monthN = 0, monthAgents = {};
+  /* THE MONTH, DAY BY DAY. The wall's horizon is today and the rest of this
+     month — not the year. An agent standing in front of it on the sixth wants
+     to know what today is and what is coming before the month runs out, and a
+     twelve-month graph answers neither. Days in the month first, so the last
+     day of a thirty-one day month is not silently dropped in a thirty day one. */
+  var daysInMonth = new Date(yy, mm, 0).getDate();
+  var monthDays = [];
+  for (var di = 1; di <= daysInMonth; di++) monthDays.push(0);
+  var monthAhead = 0;
+  /* ROUND NUMBERS ARE THE ONES WORTH A CALL RATHER THAN A LETTER, and the
+     branch asked for them by name. Tracked with the agent attached, because a
+     milestone nobody is told about is just another Tuesday. */
+  var MILES = [21, 25, 30, 40, 50, 60, 65, 70, 75, 80];
+  var mileAgents = {};
+  var agents = {}, noDob = 0, noIssue = 0, tenures = [], noIssueAge = 0;
+  var bdaySame = 0, bdayBase = 0, withDob = 0, sevenYearEmails = 0;
+  /* WHAT THE MONTH HAS ACTUALLY DONE. Birthdays whose day has already gone,
+     against what those same clients bought while the month was running. The
+     branch sends the emails either way; this is the only line on the wall that
+     says whether anything came back. */
+  var mtdBdays = 0, mtdSold = 0, mtdSoldPol = 0, branchSold = 0, branchSoldPol = 0;
+  /* THE BOOKS WITH NOBODY ON THEM. A servicing agent who has vested or left
+     still has clients, and those clients still get the birthday email. Counted
+     branch-wide, for the month, and for today with the agent named, because the
+     branch's question is not how many there are — it is which books to hand
+     out. */
+  var unClients = 0, unPolicies = 0, unMonth = 0, unToday = 0, unAgents = {};
+
+  keys.forEach(function (k) {
+    var c = byClient[k];
+    var a = agents[c.agent];
+    if (!a) a = agents[c.agent] = { k: c.agent, unit: c.unit, clients: 0,
+                                    bday: 0, gap: 0, quiet: 0 };
+    a.clients++;
+
+    if (c.age !== null) ages[iBookBand_(c.age, AGE)]++;
+
+    if (c.first) {
+      var yrs = (today - c.first) / DAY / YEAR;
+      tenure[iBookBand_(yrs, TEN)]++;
+      tenures.push(yrs);
+    } else { noIssue++; }
+
+    if (c.last) {
+      var since = (today - c.last) / DAY / YEAR;
+      lastBuy[iBookBand_(since, LAST)]++;
+      if (since >= quietYears) { gapQuiet++; a.quiet++; }
+    }
+
+    if (c.dobM) {
+      withDob++;
+      /* One birthday a year for as long as they have been a client, capped at
+         the seven years the automation has been running. Counted rather than
+         estimated — a client of two years got two, not seven. */
+      var yrsClient = c.first ? Math.floor((today - c.first) / DAY / YEAR) : 0;
+      sevenYearEmails += Math.max(0, Math.min(7, yrsClient));
+    }
+    if (c.boughtThisMonth) { branchSold++; branchSoldPol += c.boughtThisMonth; }
+    if (!c.live) {
+      unClients++; unPolicies += c.n;
+      if (c.dobM === mm) unMonth++;
+      if (c.dobM === mm && c.dobD === dd) {
+        unToday++;
+        var ua = unAgents[c.agent];
+        if (!ua) ua = unAgents[c.agent] = { k: c.agent, status: c.status || 'Inactive', n: 0 };
+        ua.n++;
+      }
+    }
+    if (c.dobM === mm && c.dobD <= dd) {
+      mtdBdays++;
+      if (c.boughtThisMonth) { mtdSold++; mtdSoldPol += c.boughtThisMonth; }
+    }
+    if (c.dobM && c.months.length) { bdayBase++; if (c.onBday) bdaySame++; }
+
+    if (c.life)    cover.Life++;
+    if (c.ci)      cover['Critical illness']++;
+    if (c.health)  cover.Health++;
+    if (c.add)     cover['Accident (ADD&P)']++;
+    if (c.pa)      cover['Personal accident']++;
+    if (c.pension) cover.Pension++;
+    if (c.savings) cover.Savings++;
+
+    if (c.life && !c.ci) {
+      gapLifeNoCi++; a.gap++;
+      if (c.age !== null) gapAge[iBookBand_(c.age, AGE)]++;
+    }
+    if (c.life && !c.health) gapLifeNoHealth++;
+    if (c.n === 1)           gapOne++;
+    if (!c.life && !c.ci && !c.health && !c.add && !c.pa && !c.pension && !c.savings)
+      gapNoCover++;
+
+    /* HOW MUCH THEY HAVE AGED SINCE THEY BOUGHT. A client who took cover at
+       twenty eight and is now fifty five is carrying a twenty seven year old
+       decision — different income, different dependants, different everything.
+       Issue_Age__c is on 76% of rows, which makes this one of the few genuinely
+       new things the portfolio can say. */
+    if (c.age !== null && c.firstAge !== null && c.age >= c.firstAge)
+      agedBand[iBookBand_(c.age - c.firstAge, AGED)]++;
+    else noIssueAge++;
+
+    if (!c.dobM) { noDob++; return; }
+    if (c.dobM === mm) {
+      monthN++;
+      if (c.dobD >= 1 && c.dobD <= daysInMonth) monthDays[c.dobD - 1]++;
+      var ma = monthAgents[c.agent];
+      if (!ma) ma = monthAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0,
+                                             today: 0, ahead: 0 };
+      ma.n++;
+      if (c.life && !c.ci) ma.gap++;
+      /* Today is today; anything after it is the runway. Yesterday is neither —
+         it is already spent, and a wall that counts it is padding a number. */
+      if (c.dobD === dd) ma.today++;
+      else if (c.dobD > dd) { ma.ahead++; monthAhead++; }
+    }
+    if (c.dobM === mm && c.dobD === dd) {
+      bdayToday++; a.bday++;
+      if (c.age !== null) bdayAges.push(c.age);
+      /* by agent, and whether that client is one of the ones carrying the gap —
+         which is the difference between a greeting and a reason to call */
+      var ba = bdayAgents[c.agent];
+      if (!ba) ba = bdayAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0, quiet: 0 };
+      ba.n++;
+      if (c.life && !c.ci) ba.gap++;
+      if (c.last && (today - c.last) / DAY / YEAR >= quietYears) ba.quiet++;
+
+      var holds = [];
+      if (c.life)    holds.push('Life');
+      if (c.ci)      holds.push('CI');
+      if (c.health)  holds.push('Health');
+      if (c.add)     holds.push('Accident');
+      if (c.pension) holds.push('Pension');
+      if (c.savings) holds.push('Savings');
+      holds.forEach(function (h) { todayHolds[h] = (todayHolds[h] || 0) + 1; });
+      if (c.town) todayTowns[c.town] = (todayTowns[c.town] || 0) + 1;
+
+      /* NO PERSON REACHES THE FEED ANY MORE. The wall carried two initials for
+         a while and the branch's answer was the right one: an agent already has
+         these clients in their portal, so the wall does not need to identify
+         anybody — it needs to tell them which conversation to have. What goes
+         out now is what every other wall sends: counts and bands. */
+      todayList.push({
+        life: c.life, ci: c.ci, health: c.health, pension: c.pension,
+        stale: !!(c.last && (today - c.last) / DAY / YEAR >= quietYears),
+        turning: c.dobY ? yy - c.dobY : null,
+        years: c.first ? Math.floor((today - c.first) / DAY / YEAR) : null,
+        town: c.town || '',
+        agent: c.agent, unit: c.unit,
+        holds: holds, policies: c.n, onBday: c.onBday,
+        last: c.last ? Math.floor((today - c.last) / DAY / YEAR) : null,
+        prompt: iBookPrompt_(c, quietYears, today)
+      });
+      /* the age they are turning, from the birth year — not from Current_Age__c,
+         which is ambiguous on the day itself */
+      if (c.dobY) {
+        var turning = yy - c.dobY;
+        if (MILES.indexOf(turning) > -1) {
+          milestones[turning] = (milestones[turning] || 0) + 1;
+          if (!mileAgents[turning]) mileAgents[turning] = {};
+          mileAgents[turning][c.agent] = (mileAgents[turning][c.agent] || 0) + 1;
+        }
+      }
+    } else {
+      /* "this week" walks forward day by day rather than comparing dates, so
+         it crosses a month end and a year end without a special case. */
+      for (var i = 1; i <= IBOOK.WEEK; i++) {
+        var d = new Date(today.getTime() + i * DAY);
+        if (c.dobM === d.getMonth() + 1 && c.dobD === d.getDate()) { bdayWeek++; break; }
+      }
+    }
+  });
+
+  function list(map) {
+    return Object.keys(map).map(function (k) { return { k: k, n: map[k] }; });
+  }
+  function med(a) {
+    if (!a.length) return null;
+    var s = a.slice().sort(function (x, y) { return x - y; });
+    return s[Math.floor(s.length / 2)];
+  }
+
+  var byAgent = Object.keys(agents).map(function (k) { return agents[k]; })
+    .sort(function (a, b) { return b.gap - a.gap || b.clients - a.clients; });
+
+  var out = {
+    configured: true,
+    generatedAt: iIso_(today),
+    quietYears: quietYears,
+    clients:  keys.length,
+    policies: keys.reduce(function (s, k) { return s + byClient[k].n; }, 0),
+    /* TODAY IS THE WALL. The branch-wide bands below it are still computed and
+       still in the feed — the app reads them — but they are not what this screen
+       shows any more. A daily prompt that opens with how many clients the branch
+       has ever had is a report; this one opens with the twenty eight people
+       whose birthday it is and what to say to them. */
+    today: {
+      n: bdayToday,
+      week: bdayWeek,
+      medianAge: med(bdayAges),
+      withGap: todayList.filter(function (t) { return /critical illness|life cover|no cover/.test(t.prompt); }).length,
+      quiet:   todayList.filter(function (t) { return /nothing new/.test(t.prompt); }).length,
+      /* Sorted so the sellable rows are at the top of the list an agent reads
+         first, then by how long they have been a client — a thirty year client
+         with a gap is the best call on the wall. */
+      clients: todayList.sort(function (a, b) {
+        var ap = a.prompt ? 0 : 1, bp = b.prompt ? 0 : 1;
+        return ap - bp || (b.years || 0) - (a.years || 0);
+      }),
+      /* FIVE BANDS, EVERY PERSON IN EXACTLY ONE. Age decides the band and the
+         coverage columns decide what the band is short of, so the prompt comes
+         out of the two together. Empty bands are kept rather than dropped: a
+         morning with nobody in the retirement band is itself worth seeing, and
+         a wall whose panels move around from day to day cannot be read at a
+         glance. */
+      bands: IBOOK_BANDS.map(function (b) {
+        var inBand = todayList.filter(function (t) {
+          return t.turning != null && t.turning >= b.lo && t.turning < b.hi;
+        });
+        var byAg = {};
+        inBand.forEach(function (t) { byAg[t.agent] = (byAg[t.agent] || 0) + 1; });
+        var yrs = inBand.map(function (t) { return t.years; })
+                        .filter(function (y) { return y != null; });
+        return {
+          k: b.k, range: b.range, talk: b.talk, act: b.act, n: inBand.length,
+          gap: inBand.filter(function (t) { return !!t.prompt; }).length,
+          policies: inBand.reduce(function (a, t) { return a + t.policies; }, 0),
+          medianYears: (function () {
+            var y = inBand.map(function (t) { return t.years; })
+                          .filter(function (v) { return v != null; })
+                          .sort(function (a, b) { return a - b; });
+            return y.length ? y[Math.floor(y.length / 2)] : null;
+          })(),
+          missing: iBookMissing_(inBand, b.want),
+          longest: yrs.length ? Math.max.apply(null, yrs) : null,
+          agents: Object.keys(byAg).map(function (k) { return { k: k, n: byAg[k] }; })
+                    .sort(function (x, y) { return y.n - x.n; })
+        };
+      }),
+      tip: null,   /* filled in below, once the bands exist */
+      /* Nobody's age is unknown on this list — they are on it because it is
+         their birthday — but a client whose birth year never made it into
+         Salesforce would fall through every band, so they are counted. */
+      unbanded: todayList.filter(function (t) { return t.turning == null; }).length,
+      /* CAPACITY. How many policies the people on today's list already carry —
+         one is a relationship that was never built on, four is a client who
+         says yes. */
+      policiesHeld: (function () {
+        var b = { '1 policy': 0, '2 policies': 0, '3 policies': 0, '4 or more': 0 };
+        todayList.forEach(function (t) {
+          b[t.policies === 1 ? '1 policy' : t.policies === 2 ? '2 policies'
+            : t.policies === 3 ? '3 policies' : '4 or more']++;
+        });
+        return Object.keys(b).map(function (k) { return { k: k, n: b[k] }; });
+      })(),
+      lastBought: (function () {
+        var b = tally(LAST);
+        todayList.forEach(function (t) {
+          if (t.last != null) b[iBookBand_(t.last, LAST)]++;
+        });
+        return LAST.map(function (x) { return { k: x[0], n: b[x[0]] }; });
+      })(),
+      towns: Object.keys(todayTowns).map(function (k) { return { k: k, n: todayTowns[k] }; })
+               .sort(function (a, b) { return b.n - a.n; }),
+      holds: Object.keys(todayHolds).map(function (k) { return { k: k, n: todayHolds[k] }; })
+               .sort(function (a, b) { return b.n - a.n; }),
+      byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
+                 .sort(function (a, b) { return b.gap - a.gap || b.n - a.n; }),
+      milestones: MILES.filter(function (m) { return milestones[m]; })
+        .map(function (m) {
+          return { k: 'Turning ' + m, age: m, n: milestones[m],
+                   agents: Object.keys(mileAgents[m] || {})
+                             .map(function (a) { return { k: a, n: mileAgents[m][a] }; })
+                             .sort(function (x, y) { return y.n - x.n; }) };
+        })
+      ,
+      /* THE FOUR THE WALL WOULD OTHERWISE NEVER MENTION. Everyone with a
+         birthday today whose every policy has gone — surrendered, lapsed,
+         matured. The email reached them this morning like everybody else. They
+         are not in any band, because they hold nothing to band, so they are
+         reported on their own with the agent who last had them. */
+      /* Today's clients whose servicing agent has vested or left. Named, because
+         "four need reassigning" is a statistic and "Narada Latchman, vested, 2"
+         is a decision the branch manager can make standing in front of it. */
+      unassigned: unToday,
+      unassignedAgents: Object.keys(unAgents).map(function (k) { return unAgents[k]; })
+                          .sort(function (a, b) { return b.n - a.n; }),
+      lapsed: goneToday,
+      lapsedAgents: Object.keys(goneAgents).map(function (k) {
+                      return { k: k, n: goneAgents[k] }; })
+                      .sort(function (a, b) { return b.n - a.n; }),
+      emails: bdayToday + goneToday
+    },
+    month: {
+      n: monthN,
+      name: ['January','February','March','April','May','June','July','August',
+             'September','October','November','December'][mm - 1],
+      day: dd,
+      ahead: monthAhead,
+      /* The month reviewed from the first to today, which is the branch's own
+         way of asking it. */
+      soFar: mtdBdays,
+      sold: { clients: mtdSold, policies: mtdSoldPol },
+      soldBranch: { clients: branchSold, policies: branchSoldPol },
+      /* WHERE THE MONTH LANDS IF NOTHING CHANGES. The plainest projection there
+         is — what has been written, over the share of the month that has been
+         used. It is deliberately not a trend line: six days is not enough shape
+         to fit one to, and a straight run rate is a claim anybody in the room
+         can check in their head. The basis is published beside it for exactly
+         that reason. */
+      forecast: { policies: Math.round(branchSoldPol / dd * daysInMonth),
+                  clients:  Math.round(branchSold / dd * daysInMonth),
+                  basis: dd, of: daysInMonth },
+      days: monthDays.map(function (v, i) {
+        var d = new Date(yy, mm - 1, i + 1);
+        return { d: i + 1, n: v, past: i + 1 < dd, today: i + 1 === dd,
+                 dow: ['S','M','T','W','T','F','S'][d.getDay()] };
+      }),
+      /* Sorted by what is still to come rather than by the month's total: the
+         agent with forty already behind them is not the one to push today. */
+      byAgent: Object.keys(monthAgents).map(function (k) { return monthAgents[k]; })
+                 .sort(function (a, b) { return b.ahead - a.ahead || b.n - a.n; })
+    },
+    birthdays: {
+      today: bdayToday, week: bdayWeek, medianAge: med(bdayAges),
+      byAgent: Object.keys(bdayAgents).map(function (k) { return bdayAgents[k]; })
+                 .sort(function (a, b) { return b.gap - a.gap || b.n - a.n; }),
+      milestones: MILES.filter(function (m) { return milestones[m]; })
+                       .map(function (m) { return { k: 'Turning ' + m, n: milestones[m] }; })
+    },
+    /* One client with a birth date on file is one letter a year, every year —
+       and the seven year total beside it is a sum, not a multiplication. Every
+       client contributes one a year for as long as they have actually been on
+       the book, capped at the seven years the automation has run, so a client
+       of two years adds two. 10,010 x 7 would be a bigger number and one the
+       branch could not defend if anybody asked. */
+    lettersAYear: withDob,
+    sevenYearEmails: sevenYearEmails,
+    /* The branch's orphan book, whole: clients and live policies whose
+       servicing agent is no longer active, and how many of them have a birthday
+       in the month on screen. */
+    unassigned: { clients: unClients, policies: unPolicies, month: unMonth },
+    /* Growth on plans the branch already holds — the other half of the same
+       argument the birthday wall makes, and the only place either screen can
+       say what a call is actually worth. */
+    growth: iBookGrowth_(today, unitKeys, skip, roster),
+    /* Reported with its baseline, because a percentage on its own invites the
+       reader to see a pattern in one in twelve. */
+    birthdayEffect: { same: bdaySame, of: bdayBase,
+                      pct: bdayBase ? Math.round(bdaySame / bdayBase * 1000) / 10 : null,
+                      baseline: 8.3 },
+    gapByAge: AGE.map(function (b) {
+      return { k: b[0], n: gapAge[b[0]], of: ages[b[0]] };
+    }),
+    aged: AGED.map(function (b) { return { k: b[0], n: agedBand[b[0]] }; }),
+    tenure:  TEN.map(function (b) { return { k: b[0], n: tenure[b[0]] }; }),
+    ages:    AGE.map(function (b) { return { k: b[0], n: ages[b[0]] }; }),
+    lastBuy: LAST.map(function (b) { return { k: b[0], n: lastBuy[b[0]] }; }),
+    medianTenure: med(tenures) === null ? null : Math.round(med(tenures) * 10) / 10,
+    cover: list(cover).sort(function (a, b) { return b.n - a.n; }),
+    gaps: [
+      { k: 'Life, no critical illness', n: gapLifeNoCi },
+      { k: 'Life, no health',           n: gapLifeNoHealth },
+      { k: 'Nothing new in ' + quietYears + ' years', n: gapQuiet },
+      { k: 'One policy only',           n: gapOne },
+      { k: 'No cover we can read',      n: gapNoCover }
+    ],
+    byAgent: byAgent,
+    quality: {
+      unknownStatus: unknown, deadDropped: dead, offBranch: offBranch,
+      notActive: notActive, excluded: excluded,
+      excludedNames: Object.keys(skip).length,
+      noClientLink: noClient, noDob: noDob, noIssueDate: noIssue,
+      noIssueAge: noIssueAge,
+      noTown: todayList.filter(function (t) { return !t.town; }).length
+    }
+  };
+
+  /* The tip needs the bands, and the bands are built inside the object above —
+     so it is filled in once, here, rather than computing the bands twice. */
+  out.today.tip = iBookTip_(todayList, out.today.bands, out.today.byAgent, quietYears);
+  return out;
+}
+
+function iActBook_(b) {
+  var d = iBuildBook_();
   return iOk_({ data: d });
 }
 

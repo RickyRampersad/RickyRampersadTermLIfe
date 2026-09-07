@@ -269,7 +269,16 @@ var WALL45_URL = "";   // ← Apps Script /exec URL, or "" for the snapshot
 
 var WALL45 = {
   generatedAt:"2026-09-04", asOf:"2026-08-25",
-  headline:{policies:41,modal:37012.20,clients:38},
+  /* THE HEADLINE USED TO DOUBLE-COUNT AN EXCLUDED AGENT. It read 41 policies /
+     37,012.20 / 38 clients while bands[0] read 36 / 33,189.40 and households
+     read 33 clients — the difference was exactly one agent who has left the
+     branch, 5 policies at 3,822.80. Removed here and from the agent and unit
+     rows, so all three now agree.
+     STILL TO RECONCILE: `tenure` and `billing` below both sum to 41, because
+     re-splitting those five across their buckets needs the source rather than
+     this file. Wire WALL45_URL and the whole snapshot is rebuilt with the
+     exclusion applied in one pass. */
+  headline:{policies:36,modal:33189.40,clients:33},
   wave:{date:"2026-09-11",label:"Friday 11 September",policies:345,modal:248064.68,paidTo:"28 July"},
   line:[{off:-7,n:20},{off:-6,n:40},{off:-5,n:29},{off:-4,n:27},{off:-3,n:28},{off:-2,n:32},
         {off:-1,n:37},{off:0,n:41},{off:1,n:41},{off:2,n:44},{off:3,n:41},{off:4,n:63},
@@ -282,13 +291,12 @@ var WALL45 = {
            {k:"Pre Authorized Cheque",n:9,prem:5001.53,auto:true},
            {k:"Salary Deduction",n:7,prem:7635.14,auto:true},
            {k:"Direct Bill",n:7,prem:13289.64,auto:false}],
-  units:[{k:"Ricky Rampersad",n:15,prem:17720.79,agents:5},
+  units:[{k:"Ricky Rampersad",n:10,prem:13897.99,agents:4},
          {k:"Kerwyn Ramroach",n:12,prem:5488.63,agents:4},
          {k:"Akaash Kalladeen",n:6,prem:6851.99,agents:3},
          {k:"Gary Sookdeo",n:6,prem:5995.94,agents:3},
          {k:"Unassigned",n:2,prem:954.85,agents:2}],
-  agents:[{k:"Aleema Mohammed-Ali",n:5,prem:3822.80,med:4.4,unit:"Ricky Rampersad"},
-    {k:"Kerwyn Ramroach",n:5,prem:2293.93,med:7.6,unit:"Kerwyn Ramroach"},
+  agents:[{k:"Kerwyn Ramroach",n:5,prem:2293.93,med:7.6,unit:"Kerwyn Ramroach"},
     {k:"Gary Sookdeo",n:4,prem:3813.53,med:6.7,unit:"Gary Sookdeo"},
     {k:"Meera Persad-Khan",n:4,prem:2391.14,med:6.7,unit:"Ricky Rampersad"},
     {k:"Dhalina Heeraman",n:4,prem:1961.12,med:0.8,unit:"Kerwyn Ramroach"},

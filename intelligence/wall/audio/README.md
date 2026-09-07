@@ -4,8 +4,8 @@ Two, sharing one builder.
 
 | | | |
 |---|---|---|
-| `film/` → `../film.html` | **95 s** | the explainer: the problem, the announcement, all four walls, the Act |
-| `sneak/` → `../sneak.html` | **40 s** | the trailer: Monday, and what lands on the wall |
+| `film/` → `../film.html` | **287 s** | the explainer: the problem, the announcement, all five walls, the Act |
+| `sneak/` → `../sneak.html` | **52 s** | the trailer: Monday, and what lands on the wall |
 
 ```
 cd film   && ./render.py          # narration -> line01..N.mp3
@@ -15,8 +15,9 @@ cd ..
 ```
 
 `<shots-dir>` holds 1920×1080 captures named `f-w45.png`, `f-w60.png`,
-`f-w90.png`, `f-poss.png`, `f-dlv.png`, `f-lic.png`, `f-possfilt.png` and
-`mark.png`. They are the evidence the film makes a claim about, so a stale
+`f-w90.png`, `f-poss.png`, `f-dlv.png`, `f-lic.png`, `f-possfilt.png`,
+`f-book.png` and `mark.png` (the explainer reads the `f2-` set, captured at
+device scale 2 for its zooms). They are the evidence the film makes a claim about, so a stale
 capture is worse than no capture — recapture when a wall changes.
 
 Each film directory carries its own `config.py`, `head.html`, `scenes.html`,
@@ -35,8 +36,15 @@ every scene boundary just before its first line. Change a line and rebuild; do
 not hand-edit numbers in the output.
 
 **The chord length never moves.** 8.7 s, in both films and in
-`benefits/launch-eb.html`. What changes is how many: eleven for the explainer
-(95.7 s), five for the sneak peek (43.5 s). Both land home on D. If a film does
+`benefits/launch-eb.html`. What changes is how many: thirty three for the
+explainer (287.1 s — eleven at 95.7 s before the walls were stopped on, twenty
+three before the fifth wall went in), six for the sneak peek (52.2 s, up from
+five). Both land home on D.
+
+**The sneak's `render.py` carries its own copy of `LINES`.** It does not read
+`config.py`, so a line added to the config alone renders nothing and the build
+stops on a missing MP3. Add the line in both places, or the film silently keeps
+the old read. If a film does
 not fit its bed, change the film or add a chord — never the chord.
 
 **The pace is the only difference in tone.** Same voice: `en-US-AndrewNeural`,
