@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<script>
+/* This page takes a PIN, so it will not render over plain http.
+   The site answers on http as well as https and does not redirect — that is
+   the "Enforce HTTPS" box in the repository's Pages settings, and until it
+   is ticked Safari tries http first on a typed address and warns that the
+   connection is not secure. This sends the browser to the secure address
+   before anything is drawn, so a PIN is never typed into an http page.
+   It is a guard, not the fix: the checkbox is the fix, and it protects
+   /claims/ and /service/ too. */
+if (location.protocol === "http:" && location.hostname.indexOf("localhost") === -1) {
+  location.replace("https://" + location.host + location.pathname + location.search + location.hash);
+}
+</script>
 <title>Branch Meeting Builder | Ricky Rampersad Branch</title>
 <meta name="robots" content="noindex"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>

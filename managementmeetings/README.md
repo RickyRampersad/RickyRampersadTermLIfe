@@ -29,6 +29,23 @@ because the branch treats it as a factual observation of the record.
 
 ---
 
+## Enforce HTTPS — do this once, for the whole site
+
+**Repository → Settings → Pages → tick "Enforce HTTPS".**
+
+Without it GitHub Pages answers on plain `http` as well as `https` and never
+redirects between them. Safari on iOS tries `http` first for a typed address,
+lands on the insecure copy and warns that the connection is not secure — which
+is exactly what it should do, because on that copy a PIN travels in the clear.
+
+It is not this app's problem alone. Every page is affected, and `/claims/`
+and `/service/` matter more: they take ID documents, bank particulars and
+client signatures. One checkbox fixes all of them.
+
+This page carries its own guard — it sends the browser to `https` before
+drawing anything, so a PIN is never typed into an `http` page. That is belt
+and braces, not the fix. Tick the box.
+
 ## Getting in
 
 Two doors, and they do different jobs.
