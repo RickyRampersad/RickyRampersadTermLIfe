@@ -65,10 +65,10 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
 
-# The Meeting Builder holds branch attendance, presenters' material and the
+# The Management Meetings app holds branch attendance, presenters' material and the
 # minutes. It is staff-and-agent only and must never be framed or indexed.
 [[headers]]
-  for = "/meetings/*"
+  for = "/managementmeetings/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"

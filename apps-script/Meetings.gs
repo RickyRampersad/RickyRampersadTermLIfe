@@ -120,7 +120,19 @@ var MEET = {
   TAB_ATTENDANCE: 'Attendance',
   TAB_ACTIONS:    'Actions',
   TAB_MINUTES:    'Minutes',
-  TAB_LOG:        'Log'
+  TAB_ARCHIVE:    'Archive',
+  TAB_LOG:        'Log',
+
+  /* A sheet cell holds 50,000 characters. A long set of minutes runs past
+     that, so a document's text is split across numbered chunk rows and
+     stitched back together on the way out. */
+  CHUNK_CHARS: 45000,
+
+  /* Indexing converts each document through Drive, which is slow enough
+     that a big folder would run past the six-minute execution limit. Each
+     run stops after this many and reports what is left; running it again
+     picks up where it stopped. */
+  INDEX_BATCH: 15
 };
 
 /* The sections a branch meeting runs through. Taken from the
@@ -168,6 +180,9 @@ var SCHEMA = {
             'Notes', 'Origin Meeting', 'Created', 'Created By', 'Updated', 'Completed'],
 
   Minutes: ['ID', 'Meeting ID', 'Order', 'Section', 'Body', 'Visibility', 'Author', 'Updated'],
+
+  Archive: ['ID', 'Meeting ID', 'Title', 'Date', 'Year', 'Type', 'Source File ID',
+            'Drive Link', 'Visibility', 'Chunk', 'Text', 'Words', 'Indexed By', 'Indexed At'],
 
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
@@ -1937,6 +1952,346 @@ function tidyName_(name) {
   return out.replace(/\s{2,}/g, ' ').trim();
 }
 
+/* ======================== the searchable archive ======================== */
+/*
+ *  Registering a past meeting as a row with a Drive link is not much use:
+ *  opening it needs Drive permission on the file, and nothing about it is
+ *  searchable. So the archive pulls the WORDS out of each document and
+ *  keeps them in the sheet. Once that is done the branch can search five
+ *  months of minutes for "clawback" or "Fact Find" and get the meetings
+ *  back, in the app, without anybody touching Drive.
+ *
+ *  Extraction goes through Drive's own converter: copy the .docx (or PDF,
+ *  which is OCR'd on the way) into a Google Doc, read the text, throw the
+ *  copy away. That happens over the REST API with the script's own token,
+ *  so there is no advanced service to switch on by hand.
+ *
+ *  Past minutes name agents against persistency, clawback and licensing,
+ *  so an indexed document is STAFF-ONLY until somebody decides otherwise.
+ */
+
+function archiveRows_() { return readTab_(MEET.TAB_ARCHIVE); }
+
+/** All chunks of one document, stitched back into a single string. */
+function archiveText_(rows) {
+  return rows.sort(function (a, b) { return num_(a['Chunk']) - num_(b['Chunk']); })
+             .map(function (r) { return str_(r['Text']); }).join('');
+}
+
+/** Group the chunk rows by document. */
+function archiveDocs_() {
+  var byId = {};
+  archiveRows_().forEach(function (r) {
+    var id = str_(r['ID']);
+    if (!byId[id]) byId[id] = { id: id, meta: r, chunks: [] };
+    byId[id].chunks.push(r);
+  });
+  return Object.keys(byId).map(function (id) { return byId[id]; });
+}
+
+function archiveCard_(doc) {
+  var m = doc.meta;
+  return {
+    id: str_(m['ID']),
+    meetingId: str_(m['Meeting ID']),
+    title: str_(m['Title']),
+    date: fmtDate_(m['Date']),
+    dateISO: iso_(asDate_(m['Date'])),
+    year: str_(m['Year']),
+    type: str_(m['Type']),
+    link: str_(m['Drive Link']),
+    visibility: cleanVisibility_(m['Visibility']),
+    words: num_(m['Words']),
+    indexedAt: fmtStamp_(m['Indexed At'])
+  };
+}
+
+/** Pull the text out of one Drive file. */
+function extractText_(fileId, mime) {
+  if (mime === 'application/vnd.google-apps.document') {
+    return DocumentApp.openById(fileId).getBody().getText();
+  }
+
+  // Everything else goes through Drive's converter. A PDF is OCR'd on the
+  // way, which is why scanned minutes end up searchable too.
+  var res = UrlFetchApp.fetch(
+    'https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(fileId) +
+    '/copy?fields=id&supportsAllDrives=true',
+    {
+      method: 'post',
+      contentType: 'application/json',
+      headers: { Authorization: 'Bearer ' + ScriptApp.getOAuthToken() },
+      payload: JSON.stringify({ mimeType: 'application/vnd.google-apps.document' }),
+      muteHttpExceptions: true
+    });
+
+  if (res.getResponseCode() !== 200) {
+    throw new Error('Could not read that document (' + res.getResponseCode() + ').');
+  }
+
+  var copyId = JSON.parse(res.getContentText()).id;
+  try {
+    return DocumentApp.openById(copyId).getBody().getText();
+  } finally {
+    // The converted copy is scratch. Leaving it behind would litter Drive
+    // with a duplicate of every document in the archive.
+    try { DriveApp.getFileById(copyId).setTrashed(true); } catch (err) { /* already gone */ }
+  }
+}
+
+/** Write one document's text into the sheet, split across chunk rows. */
+function storeText_(rec, text, actor) {
+  var clean = String(text || '').replace(/\r\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+  var words = clean ? clean.split(/\s+/).length : 0;
+  var chunk = 1;
+
+  for (var i = 0; i < clean.length || chunk === 1; i += MEET.CHUNK_CHARS) {
+    appendRow_(MEET.TAB_ARCHIVE, {
+      'ID': rec.id, 'Meeting ID': rec.meetingId, 'Title': rec.title, 'Date': rec.date,
+      'Year': rec.year, 'Type': rec.type, 'Source File ID': rec.fileId,
+      'Drive Link': rec.link, 'Visibility': rec.visibility,
+      'Chunk': chunk, 'Text': clean.substr(i, MEET.CHUNK_CHARS),
+      'Words': words, 'Indexed By': actor, 'Indexed At': new Date()
+    });
+    chunk++;
+    if (!clean.length) break;
+  }
+  return words;
+}
+
+/** Index every meeting document that is registered but has no text yet.
+ *  Safe to run repeatedly; it only ever picks up what is missing. */
+function indexArchive() {
+  var indexed = {};
+  archiveRows_().forEach(function (r) { indexed[str_(r['Source File ID'])] = 1; });
+
+  var pending = meetingRows_().filter(function (m) {
+    var link = str_(m['Archive Link']);
+    if (!link) return false;
+    var id = fileIdFromUrl_(link);
+    return id && !indexed[id];
+  });
+
+  var done = 0, failed = [];
+  pending.slice(0, MEET.INDEX_BATCH).forEach(function (m) {
+    var fileId = fileIdFromUrl_(str_(m['Archive Link']));
+    try {
+      var file = DriveApp.getFileById(fileId);
+      var date = asDate_(m['Date']) || new Date();
+      storeText_({
+        id: uid_('ARC'), meetingId: str_(m['ID']), title: str_(m['Title']), date: date,
+        year: Utilities.formatDate(date, tz_(), 'yyyy'), type: str_(m['Type']),
+        fileId: fileId, link: str_(m['Archive Link']), visibility: 'staff'
+      }, extractText_(fileId, file.getMimeType()), 'index');
+      done++;
+    } catch (err) {
+      failed.push(str_(m['Title']) + ': ' + (err && err.message ? err.message : err));
+    }
+  });
+
+  var left = Math.max(0, pending.length - MEET.INDEX_BATCH);
+  log_('index-archive', 'system', '', done + ' indexed',
+    left + ' still to do' + (failed.length ? ', ' + failed.length + ' failed' : ''));
+  return { indexed: done, remaining: left, failed: failed };
+}
+
+/** "https://drive.google.com/file/d/FILEID/view" -> "FILEID" */
+function fileIdFromUrl_(url) {
+  var m = String(url || '').match(/\/d\/([A-Za-z0-9_-]{20,})/) ||
+          String(url || '').match(/[?&]id=([A-Za-z0-9_-]{20,})/);
+  return m ? m[1] : '';
+}
+
+/* ---- what the app calls ---- */
+
+/** Browse: every indexed meeting the person may see, grouped by year. */
+function apiArchive_(token) {
+  var me = requireUser_(token);
+  var m = null;
+  var docs = archiveDocs_()
+    .filter(function (d) { return canSee_(me, d.meta['Visibility'], m); })
+    .map(archiveCard_);
+
+  docs.sort(function (a, b) { return (b.dateISO || '').localeCompare(a.dateISO || ''); });
+
+  var years = {}, types = {};
+  docs.forEach(function (d) {
+    years[d.year] = (years[d.year] || 0) + 1;
+    types[d.type] = (types[d.type] || 0) + 1;
+  });
+
+  return {
+    ok: true, user: publicUser_(me), documents: docs,
+    years: Object.keys(years).sort().reverse().map(function (y) { return { year: y, count: years[y] }; }),
+    types: Object.keys(types).sort().map(function (t) { return { type: t, count: types[t] }; }),
+    canManage: isStaff_(me)
+  };
+}
+
+/** Search the words of every meeting the person may see. */
+function apiArchiveSearch_(token, q, year, type) {
+  var me = requireUser_(token);
+  var needle = str_(q).toLowerCase();
+  if (needle.length < 2) return { ok: false, error: 'Type at least two characters to search.' };
+
+  var results = [];
+  archiveDocs_().forEach(function (d) {
+    if (!canSee_(me, d.meta['Visibility'], null)) return;
+    var card = archiveCard_(d);
+    if (year && card.year !== str_(year)) return;
+    if (type && card.type !== str_(type)) return;
+
+    var text = archiveText_(d.chunks);
+    var hay = text.toLowerCase();
+    var titleHit = card.title.toLowerCase().indexOf(needle) > -1;
+
+    var hits = [], at = hay.indexOf(needle);
+    while (at > -1 && hits.length < 5) {
+      hits.push(snippet_(text, at, needle.length));
+      at = hay.indexOf(needle, at + needle.length);
+    }
+
+    // Total occurrences, so a meeting that discussed something at length
+    // ranks above one that mentioned it once.
+    var count = 0, scan = hay.indexOf(needle);
+    while (scan > -1) { count++; scan = hay.indexOf(needle, scan + needle.length); }
+
+    if (count || titleHit) {
+      card.matches = count;
+      card.inTitle = titleHit;
+      card.snippets = hits;
+      results.push(card);
+    }
+  });
+
+  results.sort(function (a, b) {
+    if (a.inTitle !== b.inTitle) return a.inTitle ? -1 : 1;
+    return b.matches - a.matches;
+  });
+
+  log_('archive-search', me.name, me.role, needle, results.length + ' meeting(s)');
+  return { ok: true, query: str_(q), results: results, count: results.length };
+}
+
+/** A readable line either side of the match, cut at word boundaries. */
+function snippet_(text, at, len) {
+  var from = Math.max(0, at - 110);
+  var to = Math.min(text.length, at + len + 110);
+  var out = text.substring(from, to).replace(/\s+/g, ' ').trim();
+  if (from > 0) out = '…' + out.replace(/^\S+\s/, '');
+  if (to < text.length) out = out.replace(/\s\S+$/, '') + '…';
+  return out;
+}
+
+/** One document in full, for reading in the app. */
+function apiArchiveDoc_(token, id) {
+  var me = requireUser_(token);
+  var doc = archiveDocs_().filter(function (d) { return d.id === str_(id); })[0];
+  if (!doc) return { ok: false, error: 'That document is not in the archive.' };
+  if (!canSee_(me, doc.meta['Visibility'], null)) {
+    log_('denied', me.name, me.role, str_(id), 'Tried to open a staff-only archive document');
+    return { ok: false, error: 'That document is not shared with you.' };
+  }
+  var card = archiveCard_(doc);
+  card.text = archiveText_(doc.chunks);
+  log_('archive-read', me.name, me.role, card.title, '');
+  return { ok: true, document: card };
+}
+
+/** Staff adding a past meeting through the app: the file goes to Drive, the
+ *  words go into the sheet, and it is searchable straight away. */
+function apiArchiveUpload_(body) {
+  var me = requireStaff_(body.token);
+  var name = str_(body.name);
+  var data = str_(body.data);
+  if (!name || !data) return { ok: false, error: 'Choose a document to add.' };
+
+  var comma = data.indexOf(',');
+  var bytes;
+  try { bytes = Utilities.base64Decode(comma > -1 ? data.slice(comma + 1) : data); }
+  catch (err) { return { ok: false, error: 'That file could not be read.' }; }
+  if (bytes.length > MEET.MAX_UPLOAD_MB * 1024 * 1024) {
+    return { ok: false, error: 'That file is over ' + MEET.MAX_UPLOAD_MB + ' MB.' };
+  }
+
+  var mime = str_(body.mime) || 'application/octet-stream';
+  var folder = archiveFolder_();
+  var file = folder.createFile(Utilities.newBlob(bytes, mime, name));
+  file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+
+  var date = asDate_(body.date) || dateFromName_(name) || new Date();
+  var title = str_(body.title) || tidyName_(name.replace(/\.(docx?|pdf)$/i, ''));
+  var type = MEETING_TYPES.indexOf(str_(body.type)) > -1 ? str_(body.type) : 'Branch Meeting';
+
+  var text;
+  try { text = extractText_(file.getId(), mime); }
+  catch (err) {
+    file.setTrashed(true);
+    return { ok: false, error: 'Could not read the words out of that document. ' +
+      'Word documents, Google Docs and PDFs work; other formats do not.' };
+  }
+
+  // A row on Meetings too, so a past meeting sits in the same list as
+  // every other one rather than in a separate world.
+  var meetingId = uid_('MTG');
+  appendRow_(MEET.TAB_MEETINGS, {
+    'ID': meetingId, 'Ref': 'RRB-ARCHIVE-' + Utilities.formatDate(date, tz_(), 'yyyy-MM-dd'),
+    'Type': type, 'Title': title, 'Subtitle': 'Archived record', 'Week': weekOf_(date),
+    'Date': date, 'Format': 'In-person', 'Location': MEET.BRANCH, 'Chair': MEET.ADMIN_EMAIL,
+    'Status': 'closed', 'Minutes Status': 'published', 'Archive Link': file.getUrl(),
+    'Purpose': 'Added to the archive from the app.', 'Created By': me.email,
+    'Created': new Date(), 'Updated': new Date()
+  });
+
+  var words = storeText_({
+    id: uid_('ARC'), meetingId: meetingId, title: title, date: date,
+    year: Utilities.formatDate(date, tz_(), 'yyyy'), type: type,
+    fileId: file.getId(), link: file.getUrl(),
+    visibility: cleanVisibility_(body.visibility || 'staff')
+  }, text, me.name);
+
+  log_('archive-add', me.name, me.role, title, words + ' words indexed');
+  return { ok: true, title: title, words: words, date: fmtDate_(date) };
+}
+
+/** One private folder for archived meeting documents. */
+function archiveFolder_() {
+  var root = materialsFolder_();
+  var it = root.getFoldersByName('Past meetings');
+  return it.hasNext() ? it.next() : root.createFolder('Past meetings');
+}
+
+/** Staff opening a past meeting up to the whole branch, or closing it again. */
+function apiArchiveVisibility_(body) {
+  var me = requireStaff_(body.token);
+  var vis = cleanVisibility_(body.visibility);
+  var rows = archiveRows_().filter(function (r) { return str_(r['ID']) === str_(body.id); });
+  if (!rows.length) return { ok: false, error: 'That document is not in the archive.' };
+  rows.forEach(function (r) { setCell_(MEET.TAB_ARCHIVE, r._row, 'Visibility', vis); });
+  log_('archive-visibility', me.name, me.role, str_(rows[0]['Title']), 'Now ' + vis);
+  return { ok: true, visibility: vis };
+}
+
+/** Staff removing a document from the archive. */
+function apiArchiveDelete_(body) {
+  var me = requireStaff_(body.token);
+  var rows = archiveRows_().filter(function (r) { return str_(r['ID']) === str_(body.id); });
+  if (!rows.length) return { ok: false, error: 'That document is not in the archive.' };
+  var title = str_(rows[0]['Title']);
+  // Bottom up: deleting a row shifts every row below it.
+  rows.map(function (r) { return r._row; }).sort(function (a, b) { return b - a; })
+      .forEach(function (rowIndex) { tab_(MEET.TAB_ARCHIVE).deleteRow(rowIndex); });
+  log_('archive-delete', me.name, me.role, title, 'Removed from the archive');
+  return { ok: true };
+}
+
+/** Index in the background, from the app, a batch at a time. */
+function apiArchiveIndex_(body) {
+  requireStaff_(body.token);
+  var out = indexArchive();
+  return { ok: true, indexed: out.indexed, remaining: out.remaining, failed: out.failed };
+}
+
 /* ======================== the log ======================== */
 
 function apiLog_(token, limit) {
@@ -2003,6 +2358,9 @@ function doGet(e) {
       case 'actions':    out = apiActions_(p.token, p.id); break;
       case 'file':       out = apiFile_(p.token, p.id); break;
       case 'people':     out = apiPeople_(p.token); break;
+      case 'archive':    out = apiArchive_(p.token); break;
+      case 'search':     out = apiArchiveSearch_(p.token, p.q, p.year, p.type); break;
+      case 'document':   out = apiArchiveDoc_(p.token, p.id); break;
       case 'log':        out = apiLog_(p.token, p.limit); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
@@ -2053,6 +2411,11 @@ function doPost(e) {
 
       case 'savePerson':     out = apiSavePerson_(body); break;
 
+      case 'archiveUpload':     out = apiArchiveUpload_(body); break;
+      case 'archiveVisibility': out = apiArchiveVisibility_(body); break;
+      case 'archiveDelete':     out = apiArchiveDelete_(body); break;
+      case 'archiveIndex':      out = apiArchiveIndex_(body); break;
+
       default:               out = { ok: false, error: 'Unknown action.' };
     }
   } catch (err) {
@@ -2072,6 +2435,7 @@ function onOpen() {
   SpreadsheetApp.getUi().createMenu('Branch Meetings')
     .addItem('⚙️  Set up / repair tabs', 'setupMeetings')
     .addItem('📥  Import the meeting archive', 'promptImportArchive')
+    .addItem('🔎  Index the archive for searching', 'promptIndexArchive')
     .addSeparator()
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
@@ -2090,7 +2454,22 @@ function promptImportArchive() {
   if (!id) return;
   var out = importArchive(id);
   ui.alert('Archive imported.\n\n' + out.added + ' meeting(s) added, ' +
-    out.skipped + ' already in the app.');
+    out.skipped + ' skipped (already here, or not a meeting document).\n\n' +
+    'They are listed now, but not yet searchable. Run ' +
+    '"Index the archive for searching" next to read the words out of each ' +
+    'document — that is what makes the search work.');
+}
+
+function promptIndexArchive() {
+  var ui = SpreadsheetApp.getUi();
+  var out = indexArchive();
+  ui.alert('Archive indexing\n\n' +
+    out.indexed + ' meeting(s) read and made searchable.\n' +
+    (out.remaining
+      ? out.remaining + ' still to do — run this again to continue. ' +
+        'It works in batches so it never runs past the execution limit.'
+      : 'Nothing left to index.') +
+    (out.failed.length ? '\n\nCould not read:\n' + out.failed.join('\n') : ''));
 }
 
 function showAppUrl() {

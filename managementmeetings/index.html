@@ -334,7 +334,7 @@
 </div>
 
 <script>
-/* Clickjacking guard. netlify.toml sets X-Frame-Options on /meetings/*,
+/* Clickjacking guard. netlify.toml sets X-Frame-Options on /managementmeetings/*,
    but GitHub Pages — which serves this domain today — cannot send headers
    at all, and a CSP frame-ancestors rule is ignored in a meta tag. So the
    page refuses to be framed itself, and the protection travels with the
@@ -557,7 +557,8 @@ function tabsFor() {
   var t = [
     { id: "home", label: "Meetings" },
     { id: "prep", label: "My Prep" },
-    { id: "actions", label: "Action Items" }
+    { id: "actions", label: "Action Items" },
+    { id: "archive", label: "Past Meetings" }
   ];
   if (S.user && (S.user.role === "staff" || S.user.role === "manager")) {
     t.push({ id: "register", label: "Register" });
@@ -615,6 +616,8 @@ function render() {
     case "register": return viewRegister();
     case "people":   return viewPeople();
     case "minutes":  return viewMinutes();
+    case "archive":  return viewArchive();
+    case "document": return viewDocument();
     case "build":    return viewBuild();
     default:         return viewHome();
   }
@@ -1977,6 +1980,313 @@ function minuteModal(s, meetingId) {
       closeModal();
       viewMinutes();
     }).catch(function () { $("mi-go").disabled = false; say("mi-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- past meetings: the searchable archive ---------------- */
+/*
+ *  Five months of minutes were spread across two Drive folders under two
+ *  Google accounts, with the same document filed three times. This screen
+ *  is the answer to that: one place, searched by the words inside the
+ *  documents rather than by remembering what a file was called.
+ */
+
+var AR = { q: "", year: "", type: "", data: null, results: null };
+
+function viewArchive() {
+  if (!AR.data) {
+    loading("Opening the archive…");
+    return apiGet("archive", { token: S.token }).then(guard).then(function (res) {
+      if (!res.ok) throw new Error(res.error);
+      AR.data = res;
+      drawArchive();
+    }).catch(function (e) {
+      $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+    });
+  }
+  drawArchive();
+}
+
+function drawArchive() {
+  var d = AR.data;
+  var docs = d.documents;
+
+  var out = '<div class="page-head"><div class="kicker">' + docs.length + " meeting" +
+    (docs.length === 1 ? "" : "s") + " on the record</div>" +
+    "<h1>Past meetings</h1><p>" +
+    (docs.length
+      ? "Search the words inside every past set of minutes — a name, a policy number, " +
+        "a decision you half remember. Not the file names: the contents."
+      : "Nothing in the archive yet.") + "</p></div>";
+
+  // ---- search ----
+  out += '<div class="card"><div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end">' +
+    '<div class="field" style="flex:1;min-width:220px;margin-bottom:0">' +
+    '<label for="ar-q">Search every meeting</label>' +
+    '<input id="ar-q" type="search" placeholder="clawback · persistency · Fact Find · a name…" value="' +
+    esc(AR.q) + '"/></div>' +
+    '<div class="field" style="margin-bottom:0;min-width:120px"><label for="ar-year">Year</label>' +
+    '<select id="ar-year"><option value="">Any year</option>' +
+    d.years.map(function (y) {
+      return '<option value="' + esc(y.year) + '"' + (y.year === AR.year ? " selected" : "") + ">" +
+        esc(y.year) + " (" + y.count + ")</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field" style="margin-bottom:0;min-width:150px"><label for="ar-type">Type</label>' +
+    '<select id="ar-type"><option value="">Any type</option>' +
+    d.types.map(function (t) {
+      return '<option value="' + esc(t.type) + '"' + (t.type === AR.type ? " selected" : "") + ">" +
+        esc(t.type) + " (" + t.count + ")</option>";
+    }).join("") + "</select></div>" +
+    '<button class="btn auto" id="ar-go" style="margin-bottom:0">Search</button>' +
+    (AR.results ? '<button class="btn ghost auto" id="ar-clear" style="margin-bottom:0">Clear</button>' : "") +
+    "</div>";
+
+  if (d.canManage) {
+    out += '<div class="btn-row" style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">' +
+      '<button class="btn teal sm" id="ar-add">+ Add a past meeting</button>' +
+      '<button class="btn ghost sm" id="ar-index">Index for searching</button></div>';
+  }
+  out += "</div>";
+
+  // ---- results, or the shelf ----
+  if (AR.results) {
+    out += '<section><div class="section-label">' +
+      (AR.results.length ? AR.results.length + ' meeting' + (AR.results.length === 1 ? "" : "s") +
+        ' mention "' + esc(AR.q) + '"' : 'Nothing found for "' + esc(AR.q) + '"') + "</div>";
+    out += AR.results.length
+      ? AR.results.map(resultCard).join("")
+      : '<div class="empty"><span class="big">🔍</span>No meeting mentions that.<br>' +
+        "Try a shorter word, or check the year and type filters.</div>";
+    out += "</section>";
+  } else if (!docs.length) {
+    out += '<div class="empty"><span class="big">🗂️</span>' +
+      (d.canManage
+        ? "No past meetings indexed yet.<br>Use <b>Add a past meeting</b> to put one in, or " +
+          "<b>Index for searching</b> to read the ones already imported from Drive."
+        : "Branch staff have not put the past meetings in yet.") + "</div>";
+  } else {
+    // Grouped by year, newest first — the shelf you browse when you are
+    // not looking for anything in particular.
+    var byYear = {};
+    docs.forEach(function (x) { (byYear[x.year] = byYear[x.year] || []).push(x); });
+    Object.keys(byYear).sort().reverse().forEach(function (y) {
+      out += '<section><div class="section-label">' + esc(y) + " — " + byYear[y].length +
+        " meeting" + (byYear[y].length === 1 ? "" : "s") + "</div>" +
+        byYear[y].map(function (x) { return archiveRow(x, d.canManage); }).join("") + "</section>";
+    });
+  }
+
+  $("view").innerHTML = out;
+  wireArchive();
+}
+
+function archiveRow(x, canManage) {
+  var dd = dayOf(x.dateISO);
+  return '<button class="mtg" data-doc="' + esc(x.id) + '">' +
+    '<div class="when"><b>' + dd.d + "</b><span>" + dd.m + "</span></div>" +
+    '<div class="body"><b>' + esc(x.title) + "</b>" +
+    '<div class="meta">' + esc(x.type) + " · " + esc(x.date) +
+    (x.words ? " · " + x.words.toLocaleString() + " words" : "") + "</div>" +
+    '<div class="tags">' + visBadge(x.visibility) +
+    (canManage ? ' <span class="badge b-dim">Indexed ' + esc(x.indexedAt) + "</span>" : "") +
+    "</div></div></button>";
+}
+
+function resultCard(x) {
+  return '<div class="card"><div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">' +
+    '<div style="flex:1;min-width:200px"><h3>' + esc(x.title) + "</h3>" +
+    '<div class="meta">' + esc(x.type) + " · " + esc(x.date) + "</div></div>" +
+    "<div>" + visBadge(x.visibility) +
+    ' <span class="badge b-amber">' + x.matches + " mention" + (x.matches === 1 ? "" : "s") + "</span>" +
+    (x.inTitle ? ' <span class="badge b-green">In the title</span>' : "") + "</div></div>" +
+    '<div style="margin-top:11px">' + x.snippets.map(function (sn) {
+      return '<div style="font-size:12.5px;line-height:1.75;color:var(--muted);padding:9px 12px;' +
+        'background:rgba(0,0,0,.2);border-left:2px solid var(--gold);border-radius:0 8px 8px 0;' +
+        'margin-bottom:7px">' + highlight(sn, AR.q) + "</div>";
+    }).join("") + "</div>" +
+    '<div class="btn-row" style="margin-top:10px">' +
+    '<button class="btn teal sm" data-doc="' + esc(x.id) + '">Read the minutes</button></div></div>';
+}
+
+/** Mark the search term inside an already-escaped snippet. */
+function highlight(text, q) {
+  var safe = esc(text);
+  if (!q) return safe;
+  var needle = esc(q).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return safe.replace(new RegExp(needle, "gi"), function (m) {
+    return '<mark style="background:rgba(239,194,75,.28);color:var(--text);' +
+      'padding:1px 3px;border-radius:3px">' + m + "</mark>";
+  });
+}
+
+function wireArchive() {
+  var run = function () {
+    AR.q = $("ar-q").value.trim();
+    AR.year = $("ar-year").value;
+    AR.type = $("ar-type").value;
+    if (AR.q.length < 2) { AR.results = null; return drawArchive(); }
+    loading("Searching every meeting…");
+    apiGet("search", { token: S.token, q: AR.q, year: AR.year, type: AR.type })
+      .then(guard).then(function (res) {
+        if (!res.ok) { AR.results = null; drawArchive(); return alertModal("Search", res.error); }
+        AR.results = res.results;
+        drawArchive();
+      }).catch(function () {
+        AR.results = null; drawArchive();
+        alertModal("No connection", "Could not reach the branch system.");
+      });
+  };
+
+  $("ar-go").onclick = run;
+  $("ar-q").addEventListener("keydown", function (e) { if (e.key === "Enter") run(); });
+  var cl = $("ar-clear");
+  if (cl) cl.onclick = function () { AR.q = ""; AR.results = null; drawArchive(); };
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-doc]"), function (b) {
+    b.onclick = function () { go("document", b.getAttribute("data-doc")); };
+  });
+
+  var add = $("ar-add");
+  if (add) add.onclick = archiveUploadModal;
+
+  var ix = $("ar-index");
+  if (ix) ix.onclick = function () {
+    ix.disabled = true;
+    ix.innerHTML = '<span class="spin"></span> Reading documents…';
+    post("archiveIndex", {}).then(guard).then(function (res) {
+      ix.disabled = false; ix.textContent = "Index for searching";
+      if (!res.ok) return alertModal("Not done", res.error);
+      AR.data = null;
+      alertModal("Indexing",
+        res.indexed + " meeting(s) read and made searchable." +
+        (res.remaining ? "\n\n" + res.remaining + " still to do — press it again to continue. " +
+          "It works in batches so it never runs past Google's time limit." : "") +
+        (res.failed && res.failed.length ? "\n\nCould not read:\n" + res.failed.join("\n") : ""));
+      viewArchive();
+    }).catch(function () {
+      ix.disabled = false; ix.textContent = "Index for searching";
+      alertModal("No connection", "Could not reach the branch system.");
+    });
+  };
+}
+
+/* ---- reading one past meeting ---- */
+
+function viewDocument() {
+  loading("Opening the minutes…");
+  apiGet("document", { token: S.token, id: S.meetingId }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+    var x = res.document;
+    var canManage = AR.data && AR.data.canManage;
+
+    var out = '<div class="page-head"><a class="back" id="doc-back">← Past meetings</a>' +
+      '<div class="kicker">' + esc(x.type) + " · " + esc(x.date) +
+      (x.words ? " · " + x.words.toLocaleString() + " words" : "") + "</div>" +
+      "<h1>" + esc(x.title) + "</h1></div>";
+
+    out += '<div class="card flat"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">' +
+      visBadge(x.visibility) +
+      (canManage
+        ? '<button class="btn ghost sm" data-vis="' + (x.visibility === "all" ? "staff" : "all") + '">' +
+          (x.visibility === "all" ? "Make it staff-only" : "Share with the whole branch") + "</button>" +
+          '<button class="btn ghost sm" id="doc-del">Remove from the archive</button>'
+        : "") +
+      '<button class="btn ghost sm" onclick="window.print()" style="margin-left:auto">Print / save as PDF</button>' +
+      "</div></div>";
+
+    out += '<div class="card"><div style="font-size:13.5px;line-height:1.85;color:var(--text);' +
+      'white-space:pre-wrap;word-break:break-word">' +
+      (AR.q ? highlight(x.text, AR.q) : escLines(x.text)) + "</div></div>";
+
+    $("view").innerHTML = out;
+    $("doc-back").onclick = function () { go("archive"); };
+
+    Array.prototype.forEach.call(document.querySelectorAll("[data-vis]"), function (b) {
+      b.onclick = function () {
+        post("archiveVisibility", { id: x.id, visibility: b.getAttribute("data-vis") })
+          .then(guard).then(function (r2) {
+            if (!r2.ok) return alertModal("Not done", r2.error);
+            AR.data = null;
+            viewDocument();
+          });
+      };
+    });
+    var del = $("doc-del");
+    if (del) del.onclick = function () {
+      confirmModal("Remove from the archive",
+        "The words come out of the branch record and it stops being searchable. " +
+        "The original document stays in Drive.",
+        "Remove it", function () {
+          post("archiveDelete", { id: x.id }).then(guard).then(function () {
+            AR.data = null; go("archive");
+          });
+        });
+    };
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+/* ---- adding a past meeting ---- */
+
+function archiveUploadModal() {
+  var types = (S.home && S.home.types) || ["Branch Meeting"];
+  openModal("Add a past meeting",
+    "A Word document, Google Doc or PDF. The words are read out of it and put in the branch " +
+    "record, so it is searchable straight away. A scanned PDF is read too.",
+    '<div class="field"><label for="av-file">The document</label>' +
+    '<input id="av-file" type="file" accept=".doc,.docx,.pdf,application/pdf,' +
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document"/></div>' +
+    '<div class="row2">' +
+    '<div class="field"><label for="av-date">Date of the meeting</label>' +
+    '<input id="av-date" type="date"/></div>' +
+    '<div class="field"><label for="av-type">Type</label><select id="av-type">' +
+    types.map(function (t) { return '<option value="' + esc(t) + '">' + esc(t) + "</option>"; }).join("") +
+    "</select></div></div>" +
+    '<div class="field"><label for="av-title">Title</label>' +
+    '<input id="av-title" placeholder="Leave empty to take it from the file name"/></div>' +
+    '<div class="field"><label for="av-vis">Who may read it</label><select id="av-vis">' +
+    '<option value="staff">Staff only — the safe default</option>' +
+    '<option value="all">Everyone in the branch</option></select></div>' +
+    '<div class="hint">Past minutes name agents against persistency, clawback and licensing, ' +
+    "so staff-only is the default. You can open one up afterwards.</div>" +
+    '<div class="msg" id="av-msg"></div>' +
+    '<div class="btn-row" style="margin-top:14px"><button class="btn auto" id="av-go">Add it</button>' +
+    '<button class="btn ghost auto" id="av-cancel">Cancel</button></div>');
+
+  $("av-cancel").onclick = closeModal;
+  $("av-go").onclick = function () {
+    var file = $("av-file").files[0];
+    if (!file) return say("av-msg", "Choose a document.");
+    var btn = $("av-go");
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Reading it…';
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      post("archiveUpload", {
+        name: file.name, mime: file.type || "application/octet-stream",
+        data: String(reader.result), date: $("av-date").value,
+        type: $("av-type").value, title: $("av-title").value.trim(),
+        visibility: $("av-vis").value
+      }).then(guard).then(function (res) {
+        btn.disabled = false; btn.textContent = "Add it";
+        if (!res.ok) return say("av-msg", res.error);
+        closeModal();
+        AR.data = null;
+        alertModal("Added", '"' + res.title + '" (' + res.date + ") is in the archive — " +
+          res.words.toLocaleString() + " words, searchable now.");
+        viewArchive();
+      }).catch(function () {
+        btn.disabled = false; btn.textContent = "Add it";
+        say("av-msg", "That did not go through. Try again, or a smaller file.");
+      });
+    };
+    reader.onerror = function () {
+      btn.disabled = false; btn.textContent = "Add it";
+      say("av-msg", "That file could not be read.");
+    };
+    reader.readAsDataURL(file);
   };
 }
 

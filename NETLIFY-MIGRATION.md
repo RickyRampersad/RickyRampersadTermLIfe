@@ -65,7 +65,7 @@ is free to get wrong. On the `.netlify.app` address, check:
 - [ ] `/renew` redirects to `/renewal/`.
 - [ ] `/claim` redirects to `/claims/`.
 - [ ] `/staff.html` and `/agent.html` open and unlock with their codes.
-- [ ] `/meetings/` loads.
+- [ ] `/managementmeetings/` loads.
 
 If any of those are wrong, fix them before step 3. After step 3 the site
 is live to clients.

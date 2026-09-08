@@ -1,5 +1,7 @@
 # Branch Meeting Builder
 
+Lives at **rickyrampersadbranch.com/managementmeetings**
+
 The whole meeting in one place: the agenda, what each person is presenting,
 who was in the room, the action tracker and the minutes.
 
@@ -72,7 +74,7 @@ Points — not for distribution"* section, which staff should not see either.
 5. **Deploy → New deployment → Web app.** Execute as **Me**, access
    **Anyone**. Copy the `/exec` URL.
 6. **Paste that URL** into `CONFIG.API_URL` at the top of
-   `meetings/index.html`, and commit.
+   `managementmeetings/index.html`, and commit.
 7. **Add your people** — the *People* screen in the app, or the *People* tab
    in the Sheet. Email, name, role, unit. Everyone then sets their own PIN
    using the branch code.
@@ -82,17 +84,64 @@ to work.
 
 ### Bringing in the past meetings
 
-From the Sheet: **Branch Meetings → Import the meeting archive**, and paste
-the Drive folder id — or several, separated by commas.
+Two steps, because they do different things.
+
+**1. Import** — from the Sheet: **Branch Meetings → Import the meeting
+archive**, and paste the Drive folder id, or several separated by commas.
+This registers each document as a past meeting.
 
 The same minutes exist in more than one folder, under more than one Google
 account, sometimes with a `(1)` on the end. The import matches on the tidied
 title *and* the date, not just the file link, so a meeting that appears three
-times is registered once. Running it again never duplicates anything.
+times is registered once. Only Word documents, Google Docs and PDFs are
+considered — a spreadsheet that happens to be in the folder is skipped.
+Running it again never duplicates anything.
+
+**2. Index** — **Branch Meetings → Index the archive for searching**. This is
+the step that makes search work: it reads the *words* out of each document and
+keeps them in the sheet.
+
+Until a document is indexed it is only a link, and a link is no use to anyone
+without Drive permission on the file. Once indexed, the branch can search five
+months of minutes for "clawback" or a client's name and get the meetings back
+inside the app, with the passage quoted, without anybody touching Drive.
+
+Indexing converts each document through Drive — a PDF is OCR'd on the way, so
+scanned minutes become searchable too. It is slow enough that it works in
+batches of 15 and reports what is left; press it again to continue. It never
+runs past Google's six-minute limit and never re-reads a document it has
+already done.
 
 Documents from the same date with genuinely different names — an agenda, the
 minutes, and a deep-dive of the same meeting — come in as separate entries,
 which is usually what you want. Merge them by hand if you would rather not.
+
+---
+
+## Past meetings
+
+The **Past Meetings** tab is the branch's own record, searchable.
+
+**Searching** looks inside the documents, not at their names. Type `clawback`
+and you get every meeting that discussed it, ranked by how much it came up,
+with the passage quoted and the word marked. Narrow by year or by meeting
+type. Open a result and the whole document is there to read, with your search
+term still highlighted.
+
+**Browsing** with an empty search box gives you the shelf: every meeting
+grouped by year, newest first.
+
+**Adding one** — staff press *Add a past meeting*, pick a Word document, Google
+Doc or PDF, and it is read, filed and searchable in one step. The date is taken
+from the file name if you do not set one.
+
+**Who can read them.** An indexed document is **staff-only** by default,
+deliberately: past minutes name agents against persistency red zones, clawback
+and licensing. Staff can open any single document up to the whole branch, or
+close it again, from the document itself. Agents only ever see what has been
+opened up — a staff-only document does not appear in their list and does not
+match their searches, because the filtering happens on the server before
+anything is sent.
 
 ---
 
@@ -145,9 +194,10 @@ when it is being called overdue.
 | | Where |
 | --- | --- |
 | People, meetings, agendas, attendance, actions, minutes | Tabs in the private `Branch Meetings` Google Sheet |
-| Uploaded material | A private Drive folder, one sub-folder per meeting |
+| The words of every past meeting, for searching | The `Archive` tab, split across chunk rows past the 50,000-character cell limit |
+| Uploaded material | A private Drive folder, one sub-folder per meeting; past meetings under `Past meetings` |
 | Audit trail — every sign-in, correction, upload and publish | The `Log` tab |
-| This app | `meetings/index.html` in this repository |
+| This app | `managementmeetings/index.html` in this repository |
 
 **Nothing but the program is in this repository.** No names, no attendance, no
 reports, no minutes. The repo is public; the Sheet and the Drive folder are
