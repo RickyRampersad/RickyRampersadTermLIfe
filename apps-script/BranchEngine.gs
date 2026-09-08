@@ -1346,6 +1346,110 @@ function bClassify_(status) {
 
 var BEN_DAY = 24 * 3600 * 1000;
 
+/* ── what a client may see of their own account's activity ──
+   1,080 Salesforce tasks sit against the ten group accounts, and most of
+   them an employer must never read. D Rampersad's account alone carries
+   "Administrative Forms to Sign Off — Avinash & Karleene Rampersad
+   (Keyperson Insurance)", an individual's premium notice for Laurance
+   Sookbir, and a personal health renewal for Nirmal Rampersad. The HR
+   administrator who signs in is not entitled to any of it.
+
+   So this is an allow-list, not a filter. A task is invisible unless its
+   subject is recognisably about the SCHEME — the group life, health or
+   pension renewal and billing tasks the branch raises every month. Anything
+   unrecognised stays internal, which is the right way round: a task we
+   forgot to classify is hidden rather than leaked.
+
+   The deny list is a second gate over the top, for subjects that match a
+   scheme pattern by accident and still must not go out. */
+var BEN_TASK_ALLOW = [
+  /\bT\s*-\s*(LIFE|HEALTH|PENSIONS?)\s+GROUP\b/i,
+  /\bGROUP\s+(LIFE|HEALTH|PENSION)\b/i,
+  /\bgroup\s+billing\b/i
+];
+var BEN_TASK_DENY = [
+  /keyperson|keyman|key\s*person/i,
+  /\$Record\./,                       /* a merge field that never resolved */
+  /\bDRAFT\b/i,
+  /WEEKLY TASK UPDATE/i,
+  /\bcommission|\bpersuasion|\bcancellation notice\b/i
+];
+
+function bTaskVisible_(subject) {
+  var s = String(subject || '').trim();
+  if (!s) return false;
+  for (var d = 0; d < BEN_TASK_DENY.length; d++) if (BEN_TASK_DENY[d].test(s)) return false;
+  for (var a = 0; a < BEN_TASK_ALLOW.length; a++) if (BEN_TASK_ALLOW[a].test(s)) return true;
+  return false;
+}
+
+/* Scheme-level activity on the group's own account. Read-only, and the
+   allow-list runs before anything is returned rather than in the page —
+   what the browser never receives cannot be read out of it. */
+function bGroupTasks_(group) {
+  if (typeof sfQuery_ !== 'function') return [];
+  var like = bAcctLike_(group).replace(/'/g, "\\'");
+  var rows;
+  try {
+    rows = sfQuery_(
+      "SELECT Id, Subject, Status, ActivityDate, CreatedDate, Owner.Name, Account.Name "
+      + "FROM Task WHERE AccountId != null AND Account.Name LIKE '" + like + "' "
+      + "ORDER BY CreatedDate DESC LIMIT 300");
+  } catch (e) { return []; }
+  var out = [];
+  (rows || []).forEach(function (t) {
+    if (!bTaskVisible_(t.Subject)) return;
+    var st = String(t.Status || '');
+    out.push({
+      source: 'branch',
+      ref: String(t.Id || ''),
+      subject: String(t.Subject || '').replace(/<[^>]*>/g, '').trim(),
+      status: st,
+      /* Three Salesforce statuses, two words a client understands. */
+      open: !/complete|closed/i.test(st),
+      withWhom: (t.Owner && t.Owner.Name) || '',
+      due: t.ActivityDate || null,
+      at: String(t.CreatedDate || '').slice(0, 10)
+    });
+  });
+  return out;
+}
+
+/* A query the employer raised from a billing email. Already ours, already
+   attributed to their month — this only reads it back to them, which is the
+   half of the loop that was missing: they could raise one and then never
+   see it again. */
+function bGroupQueries_(group) {
+  var want = String(group || '').trim().toUpperCase();
+  var out = [];
+  bsubs_().forEach(function (s) {
+    if (!s || !s.group) return;
+    if (String(s.group.id || '').trim().toUpperCase() !== want &&
+        String(s.group.name || '').trim().toUpperCase() !== want) return;
+    var d = s.dunning || {};
+    if (!d.verdict) return;
+    var reply = null, repliedAt = null;
+    (s.events || []).forEach(function (e) {
+      if (/REPLIED|ANSWERED/i.test(String(e.did || '')) && e.note) { reply = e.note; repliedAt = e.at; }
+    });
+    out.push({
+      source: 'billing',
+      ref: s.id,
+      month: s.monthLabel,
+      subject: d.verdict === 'query'
+        ? 'Query on the ' + s.monthLabel + ' billing'
+        : s.monthLabel + ' billing confirmed as correct',
+      reasons: d.reasons || [],
+      note: d.note || '',
+      status: d.verdict === 'query' ? (s.state === 'SETTLED' ? 'Settled' : 'With the branch') : 'Confirmed',
+      open: d.verdict === 'query' && s.state !== 'SETTLED',
+      reply: reply, repliedAt: repliedAt ? String(new Date(repliedAt)).slice(0, 15) : null,
+      at: d.repliedAt ? String(new Date(d.repliedAt)).slice(0, 15) : ''
+    });
+  });
+  return out;
+}
+
 /* A LIKE that finds the account however the book spells it. The two longest
    words in order survive LIMITED against LTD, doubled spaces and the odd
    full stop — the differences that made an exact match report honest
@@ -1999,6 +2103,10 @@ function benGroupView_(p) {
     group: group, shown: true, read: new Date().toISOString(),
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
     members: bMemberCover_(rows),
+    /* Both feeds, newest first, so the employer reads one list rather than
+       learning which of our systems a question happened to land in. */
+    queries: bGroupQueries_(group).concat(bGroupTasks_(group))
+      .sort(function (a, b) { return String(b.at || '') < String(a.at || '') ? -1 : 1; }),
     billsByLine: byLine,
     /* owned  — demonstrably the employer's, by the ownership field
        unclear — no owner recorded, so it could be either

@@ -6,143 +6,245 @@
 <meta name="robots" content="noindex"/>
 <title>Group Account — Ricky Rampersad Branch</title>
 <style>
+/* ══════════════════════════════════════════════════════════════════════
+   GROUP ACCOUNT — the employer's own portal.
+
+   Rebuilt for clients rather than for us. The old page was an admin panel
+   with a SAMPLE banner across the top; this one has to open in front of a
+   payroll manager at Xtra Foods and read as their account at their
+   insurer. So: their company name is the largest thing on the page, the
+   branch furniture recedes, and the sample apparatus is gone from every
+   view a real client can reach.
+
+   Colour is Guardian's, used the way a bank uses colour — navy carries
+   structure, gold marks the one thing that needs attention and nothing
+   else. A page where four things are gold is a page with no emphasis.
+   ══════════════════════════════════════════════════════════════════════ */
 :root{
-  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
-  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
-  --slate:#5C7080; --line:#D3DEE7;
-  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
+  --navy:#06303A; --navy2:#0A4655; --blue:#0E7E92; --gold:#E08A1E; --lightblue:#E8F4F6;
+  --ink:#10222F; --paper:#F4F7F9; --surface:#FFF; --surface2:#EFF4F7;
+  --slate:#5A6E7C; --line:#DBE4EA; --line2:#EDF1F5;
+  --go:#1B7350; --warn:#9A6714; --stop:#A2342A;
   --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
   --display:Optima,"Palatino Linotype",Georgia,serif;
   --mono:ui-monospace,"SF Mono",Menlo,monospace;
+  --lift:0 1px 2px rgba(6,48,58,.05), 0 6px 18px -8px rgba(6,48,58,.14);
+  --lift2:0 2px 4px rgba(6,48,58,.06), 0 18px 40px -18px rgba(6,48,58,.28);
+  --r:10px;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
-  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
-  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  --ink:#DEE9F0; --paper:#061019; --surface:#0C1F2B; --surface2:#122B3A;
+  --navy:#8FC0DE; --navy2:#6FA9CC; --blue:#5CAFC6; --lightblue:#102636; --slate:#93A9B8;
+  --line:#1C3A4C; --line2:#16303F;
+  --go:#54B389; --warn:#D8A65C; --stop:#D97064;
+  --lift:0 1px 2px rgba(0,0,0,.4); --lift2:0 18px 40px -18px rgba(0,0,0,.7);
 }}
 :root[data-theme="dark"]{
-  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
-  --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
-  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
+  --ink:#DEE9F0; --paper:#061019; --surface:#0C1F2B; --surface2:#122B3A;
+  --navy:#8FC0DE; --navy2:#6FA9CC; --blue:#5CAFC6; --lightblue:#102636; --slate:#93A9B8;
+  --line:#1C3A4C; --line2:#16303F;
+  --go:#54B389; --warn:#D8A65C; --stop:#D97064;
+  --lift:0 1px 2px rgba(0,0,0,.4); --lift2:0 18px 40px -18px rgba(0,0,0,.7);
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
-h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
+/* The demo bar and the account band are both display:flex, which beats the
+   browser's own [hidden] rule. Without this the sample switcher stays on
+   screen for a live client no matter what the script says. */
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.62;
+  -webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.18;letter-spacing:-.01em}
 p{margin:0}
-button,input,select{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
-.label{font-size:10.5px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--slate)}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+a{color:var(--blue);text-underline-offset:2px}
+.label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--slate)}
 .mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.note{font-size:12.5px;color:var(--slate);line-height:1.55}
+
+/* ── the branch bar, staff only ─────────────────────────────────────────
+   A client never sees this. It is the demo switcher and it used to sit
+   across the top of every view saying SAMPLE. */
+.demobar{background:var(--navy);color:#fff;padding:.55rem 1.6rem;display:flex;align-items:center;gap:1rem;
+  flex-wrap:wrap;font-size:12px}
+.demobar b{font-weight:700;letter-spacing:.14em;font-size:10px;text-transform:uppercase;
+  background:var(--gold);color:#10222F;padding:.15rem .5rem;border-radius:3px}
+.demobar .who{margin-left:auto;display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
+.demobar button{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:#fff;border-radius:4px;
+  padding:.25rem .7rem;cursor:pointer;font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:600}
+.demobar button:hover{background:rgba(255,255,255,.2)}
+.demobar button[aria-pressed="true"]{background:#fff;border-color:#fff;color:var(--navy)}
+
+/* ── header ── */
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+.hin{max-width:1200px;margin:0 auto;padding:.9rem 1.6rem;display:flex;align-items:center;gap:1.6rem;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:.7rem;margin-right:auto;text-decoration:none;color:inherit}
+.logo svg{width:36px;height:36px;flex:none}
+.logo b{display:block;font-family:var(--display);font-size:16px;font-weight:600;color:var(--navy);line-height:1.1}
+.logo span span{display:block;font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--slate);font-weight:700;margin-top:1px}
+nav{display:flex;gap:.15rem;font-size:13.5px;flex-wrap:wrap}
+nav a{color:var(--slate);text-decoration:none;cursor:pointer;padding:.4rem .7rem;border-radius:6px;
+  white-space:nowrap;transition:background .15s,color .15s}
+nav a:hover{color:var(--navy);background:var(--surface2)}
+nav a.on{color:#fff;background:var(--navy);font-weight:600}
+:root[data-theme="dark"] nav a.on{color:var(--paper)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav a.on{color:var(--paper)}}
+.me{text-align:right;line-height:1.3}
+.me b{display:block;font-size:13px;color:var(--navy);font-weight:600}
+
+/* ── the account band: whose account this is ── */
+.acctband{background:linear-gradient(105deg,var(--navy),var(--navy2));color:#fff}
+.acctin{max-width:1200px;margin:0 auto;padding:1.5rem 1.6rem 1.6rem;display:flex;align-items:flex-end;
+  justify-content:space-between;gap:1.2rem;flex-wrap:wrap}
+.acctin .label{color:#9EC9D8}
+.acctin h2{font-size:1.75rem;color:#fff;margin-top:.15rem;letter-spacing:-.015em}
+.acctin .sub{color:#B9D8E3;font-size:13px;margin-top:.3rem}
+.acctchips{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:20px;
+  padding:.3rem .8rem;font-size:12px;color:#fff;white-space:nowrap}
+.chip b{font-family:var(--mono);font-weight:700}
+
+main{max-width:1200px;margin:0 auto;padding:2.2rem 1.6rem 5rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:1.5rem 1.6rem;
+  box-shadow:var(--lift)}
+.stack{display:flex;flex-direction:column;gap:1.5rem}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem}
+h1.page{font-size:1.85rem;color:var(--navy);margin-top:.2rem}
+
+.btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:7px;padding:.55rem 1.1rem;
+  cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  text-decoration:none;display:inline-block;box-shadow:var(--lift);transition:background .15s,transform .06s}
+.btn:hover{background:var(--navy);border-color:var(--navy)}
+.btn:active{transform:translateY(1px)}
+.btn.ghost{background:var(--surface);color:var(--blue);border-color:var(--line);box-shadow:none}
+.btn.ghost:hover{background:var(--lightblue);border-color:var(--blue);color:var(--blue)}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--lift)}
+th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid var(--line2)}
+thead th{background:var(--surface2);font-size:10px;letter-spacing:.13em;text-transform:uppercase;color:var(--slate);
+  font-weight:700;white-space:nowrap;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface2)}
+td.r,th.r{text-align:right}
+tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surface2)}
+
+.pill{display:inline-block;border-radius:20px;padding:.18rem .6rem;font-size:10px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.p-ok{background:#DCF0E6;color:var(--go)} .p-warn{background:#FBEFD7;color:var(--warn)}
+.p-bad{background:#F9E1DD;color:var(--stop)} .p-info{background:var(--lightblue);color:var(--blue)}
+.p-mute{background:var(--surface2);color:var(--slate)}
+:root[data-theme="dark"] .p-ok,:root[data-theme="dark"] .p-warn,:root[data-theme="dark"] .p-bad{background:var(--surface2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .p-ok,:root:not([data-theme="light"]) .p-warn,
+  :root:not([data-theme="light"]) .p-bad{background:var(--surface2)}}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:1rem}
+.stats .card{padding:1.15rem 1.25rem}
+.stats .v{font-family:var(--mono);font-size:1.7rem;font-variant-numeric:tabular-nums;color:var(--navy);
+  margin-top:.25rem;line-height:1.1;letter-spacing:-.02em}
+.stats .v.bad{color:var(--stop)}
+.sub{font-size:11.5px;color:var(--slate);margin-top:.25rem;line-height:1.45}
+.owe{color:var(--stop);font-weight:700}
+tbody tr.owing{background:#FDF7EA}
+tbody tr.owing:hover{background:#FBF1DC}
+:root[data-theme="dark"] tbody tr.owing{background:#241D12}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#241D12}}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem 1.5rem;margin:.9rem 0 0}
+dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
+
+.alert{border-radius:var(--r);padding:1rem 1.2rem;font-size:13.5px;line-height:1.6;border-left-width:4px}
+.a-warn{border:1px solid #E6C88C;border-left:4px solid var(--gold);background:#FDF7EA}
+.a-bad{border:1px solid #E0AEA6;border-left:4px solid var(--stop);background:#FBEDEA}
+.a-ok{border:1px solid #A6D6BC;border-left:4px solid var(--go);background:#ECF7F1}
+.a-info{border:1px solid #A5CCD9;border-left:4px solid var(--blue);background:#EDF6F9}
+:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .a-warn,:root:not([data-theme="light"]) .a-bad,
+  :root:not([data-theme="light"]) .a-ok,:root:not([data-theme="light"]) .a-info{background:var(--surface2)}}
+.alert b{color:var(--ink)}
+
+/* ── sign in ── */
+.gate{max-width:400px;margin:5rem auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:14px;padding:2.2rem 2rem;box-shadow:var(--lift2);text-align:center}
+.gate h1{font-size:1.5rem;color:var(--navy)}
+.gate input{width:100%;padding:.8rem .95rem;border:1px solid var(--line);border-radius:8px;background:var(--paper);
+  text-align:center;letter-spacing:.2em;font-family:var(--mono);font-size:15.5px;text-transform:uppercase}
+.gate input::placeholder{letter-spacing:.16em;font-size:12px;color:var(--slate);text-transform:uppercase}
+.gate input:focus{background:var(--surface);border-color:var(--blue)}
+.gatefoot{margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--line2);font-size:12px;color:var(--slate)}
+
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(172px,1fr));gap:.75rem}
+.month{border:1px solid var(--line);border-radius:8px;padding:.85rem .95rem;background:var(--surface);
+  cursor:pointer;text-align:left;transition:border-color .15s,box-shadow .15s}
+.month:hover{border-color:var(--blue);box-shadow:var(--lift)}
+.month.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold),var(--lift)}
+.month b{display:block;font-size:14px;color:var(--navy)}
+.month span{font-size:12px;color:var(--slate);font-family:var(--mono)}
+.bars{display:flex;flex-direction:column;gap:.55rem;margin-top:.9rem}
+.bar{display:flex;align-items:center;gap:.7rem;font-size:13px}
+.bar .bn{width:118px;flex:none;color:var(--slate);font-size:12px}
+.bar .bt{flex:1;background:var(--surface2);border-radius:20px;height:14px;overflow:hidden}
+.bar .bt i{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--navy2));border-radius:20px}
+.bar .bv{width:112px;text-align:right;flex:none;font-family:var(--mono);font-size:12.5px}
+.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem}
+.tabs button{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:.4rem .95rem;
+  font-size:12.5px;cursor:pointer;color:var(--slate)}
+.tabs button:hover{border-color:var(--blue);color:var(--blue)}
+.tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+:root[data-theme="dark"] .tabs button.on{color:var(--paper)}
+.scroll{max-height:420px;overflow:auto}
+
+/* ── terminations: the four stages ── */
 .trow{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:flex-start}
-.tstages{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.9rem}
-.tstage{flex:1;min-width:132px;border:1px solid var(--line);border-radius:6px;padding:.5rem .6rem;
-  display:flex;flex-direction:column;gap:.1rem;background:var(--paper)}
-.tstage .tdot{width:15px;height:15px;border-radius:50%;background:var(--surface2);color:var(--slate);
-  font-size:9px;line-height:15px;text-align:center;font-weight:700}
+.tstages{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.95rem}
+.tstage{flex:1;min-width:134px;border:1px solid var(--line);border-radius:8px;padding:.55rem .7rem;
+  display:flex;flex-direction:column;gap:.12rem;background:var(--paper)}
+.tstage .tdot{width:16px;height:16px;border-radius:50%;background:var(--surface2);color:var(--slate);
+  font-size:9px;line-height:16px;text-align:center;font-weight:700}
 .tstage .tlabel{font-size:12.5px;font-weight:600;line-height:1.3}
 .tstage .tsub{font-size:11px;color:var(--slate)}
 .tstage.done .tdot{background:var(--go);color:#fff}
 .tstage.now{border-color:var(--gold);box-shadow:inset 3px 0 0 var(--gold)}
 .tstage.now .tdot{background:var(--gold);color:#fff}
 .tstage.todo{opacity:.5}
-a{color:var(--blue)}
 
-.demobar{background:var(--navy);color:#fff;padding:.5rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;font-size:12.5px}
-.demobar b{font-weight:700;letter-spacing:.05em}
-.demobar .who{margin-left:auto;display:flex;gap:.35rem;align-items:center;flex-wrap:wrap}
-.demobar button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);color:#fff;border-radius:3px;
-  padding:.25rem .7rem;cursor:pointer;font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:600}
-.demobar button[aria-pressed="true"]{background:var(--gold);border-color:var(--gold);color:#1a1a1a}
+/* ── queries ── */
+.qrow{border:1px solid var(--line);border-radius:var(--r);background:var(--surface);padding:1rem 1.2rem;
+  margin-bottom:.7rem;box-shadow:var(--lift);border-left:4px solid var(--line)}
+.qrow.open{border-left-color:var(--gold)}
+.qrow.done{border-left-color:var(--go)}
+.qhead{display:flex;justify-content:space-between;gap:.8rem;flex-wrap:wrap;align-items:flex-start}
+.qhead b{font-size:14.5px;color:var(--navy);font-weight:600}
+.qmeta{font-size:11.5px;color:var(--slate);margin-top:.2rem}
+.qbody{font-size:13.5px;margin-top:.6rem;padding-top:.6rem;border-top:1px solid var(--line2)}
+.qreasons{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.5rem}
+.qsrc{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--slate);
+  border:1px solid var(--line);border-radius:3px;padding:.1rem .4rem}
 
-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
-.hin{max-width:1180px;margin:0 auto;padding:.85rem 1.5rem;display:flex;align-items:center;gap:1.5rem;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:.65rem;margin-right:auto;text-decoration:none;color:inherit}
-.logo svg{width:34px;height:34px}
-.logo b{display:block;font-family:var(--display);font-size:15.5px;font-weight:600;color:var(--navy);line-height:1.1}
-.logo span span{display:block;font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--slate);font-weight:600}
-nav{display:flex;gap:1.25rem;font-size:14px}
-nav a{color:inherit;text-decoration:none;cursor:pointer;padding-bottom:2px;border-bottom:2px solid transparent}
-nav a:hover{color:var(--blue)}
-nav a.on{border-bottom-color:var(--gold);color:var(--navy);font-weight:600}
-.me{text-align:right;line-height:1.25}
-.me b{display:block;font-size:13.5px}
-
-main{max-width:1180px;margin:0 auto;padding:2.2rem 1.5rem 4rem}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:1.5rem}
-.stack{display:flex;flex-direction:column;gap:1.4rem}
-.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem}
-h1.page{font-size:1.9rem;color:var(--navy);margin-top:.2rem}
-.btn{background:var(--blue);color:#fff;border:1px solid var(--blue);border-radius:4px;padding:.5rem 1rem;cursor:pointer;
-  font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;text-decoration:none;display:inline-block}
-.btn:hover{background:var(--navy);border-color:var(--navy)}
-.btn.ghost{background:none;color:var(--blue);border-color:var(--line)}
-.btn.ghost:hover{background:var(--lightblue);border-color:var(--blue)}
-
-table{width:100%;border-collapse:collapse;font-size:14px}
-.tw{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
-th,td{padding:.6rem .9rem;text-align:left;border-bottom:1px solid var(--line)}
-thead th{background:var(--surface2);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--slate);font-weight:700;white-space:nowrap}
-tbody tr:last-child td{border-bottom:0}
-td.r,th.r{text-align:right}
-tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surface2)}
-
-.pill{display:inline-block;border-radius:3px;padding:.15rem .45rem;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;white-space:nowrap}
-.p-ok{background:#D8F0E3;color:var(--go)} .p-warn{background:#FDF0D8;color:var(--warn)}
-.p-bad{background:#F8DEDA;color:var(--stop)} .p-info{background:var(--lightblue);color:var(--blue)}
-.p-mute{background:var(--surface2);color:var(--slate)}
-
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:1rem}
-.stats .card{padding:1.1rem}
-.stats .v{font-family:var(--mono);font-size:1.55rem;font-variant-numeric:tabular-nums;color:var(--navy);margin-top:.2rem;line-height:1.15}
-.stats .v.bad{color:var(--stop,#A93B2B)}
-.sub{font-size:11.5px;color:var(--slate);margin-top:.2rem;line-height:1.4}
-.owe{color:var(--stop,#A93B2B);font-weight:700}
-tbody tr.owing{background:#FDF6E7}
-:root[data-theme="dark"] tbody tr.owing{background:#2A2113}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#2A2113}}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
-@media(max-width:900px){.grid2{grid-template-columns:1fr}}
-dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.85rem 1.4rem;margin:.9rem 0 0}
-dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
-.note{font-size:12.5px;color:var(--slate)}
-.alert{border-radius:6px;padding:1rem 1.15rem;font-size:13.5px;line-height:1.6}
-.a-warn{border:1px solid #E8C98A;background:#FDF6E7} .a-bad{border:1px solid #E3B0A8;background:#FCEEEB}
-.a-ok{border:1px solid #A9D8BF;background:#EDF8F2} .a-info{border:1px solid #A8CEDA;background:#EEF7FA}
-:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .a-warn,:root:not([data-theme="light"]) .a-bad,
-  :root:not([data-theme="light"]) .a-ok,:root:not([data-theme="light"]) .a-info{background:var(--surface2)}}
-.alert b{color:var(--ink)}
-
-.gate{max-width:430px;margin:4rem auto;text-align:center}
-.gate input{width:100%;padding:.75rem .9rem;border:1px solid var(--line);border-radius:5px;background:var(--paper);
-  text-align:center;letter-spacing:.22em;font-family:var(--mono);font-size:16px;text-transform:uppercase}
-.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:.7rem}
-.month{border:1px solid var(--line);border-radius:6px;padding:.8rem .9rem;background:var(--surface);cursor:pointer;text-align:left}
-.month:hover{border-color:var(--blue)}
-.month.on{border-color:var(--gold);box-shadow:inset 0 0 0 1px var(--gold)}
-.month b{display:block;font-size:14px;color:var(--navy)}
-.month span{font-size:12px;color:var(--slate);font-family:var(--mono)}
-.bars{display:flex;flex-direction:column;gap:.5rem;margin-top:.9rem}
-.bar{display:flex;align-items:center;gap:.7rem;font-size:13px}
-.bar .bn{width:118px;flex:none;color:var(--slate);font-size:12px}
-.bar .bt{flex:1;background:var(--surface2);border-radius:3px;height:15px;overflow:hidden}
-.bar .bt i{display:block;height:100%;background:var(--blue)}
-.bar .bv{width:112px;text-align:right;flex:none;font-family:var(--mono);font-size:12.5px}
-.tabs{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1.2rem}
-.tabs button{background:none;border:1px solid var(--line);border-radius:5px;padding:.45rem .85rem;font-size:12.5px;cursor:pointer;color:var(--slate)}
-.tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
-:root[data-theme="dark"] .tabs button.on{color:var(--paper)}
-.scroll{max-height:420px;overflow:auto}
-@media print{.demobar,header,.tabs,.btn,.noprint{display:none!important} body{background:#fff} .card,.tw{break-inside:avoid}
+@media(max-width:640px){
+  .hin{padding:.8rem 1rem;gap:.9rem}
+  .acctin{padding:1.2rem 1rem 1.3rem}
+  .acctin h2{font-size:1.35rem}
+  main{padding:1.5rem 1rem 4rem}
+  .card{padding:1.2rem 1.1rem}
+  h1.page{font-size:1.5rem}
+  .me{display:none}
+}
+@media print{.demobar,header,.acctband,.tabs,.btn,.noprint{display:none!important}
+  body{background:#fff} .card,.tw{break-inside:avoid;box-shadow:none}
   /* The page furniture is hidden when printing, so a statement handed to an
      employee would otherwise arrive with no idea who sent it. */
-  .printonly{display:block!important;border-bottom:2px solid #0B3C46;padding-bottom:.5rem;margin-bottom:1rem}}
+  .printonly{display:block!important;border-bottom:2px solid #06303A;padding-bottom:.5rem;margin-bottom:1rem}}
 .printonly{display:none}
 </style>
 </head>
 <body>
 
-<div class="demobar">
+<!-- The demo switcher. Hidden the moment a real company signs in — a client
+     must never be shown that there is a sample mode, still less be offered
+     the buttons to walk into it. -->
+<div class="demobar" id="demobar">
   <b id="barTag">SAMPLE</b><span id="barText">Invented names and certificate numbers — real rate structure. Nothing here is client data.</span>
   <div class="who">
     <button data-as="employer" aria-pressed="true">Employer</button>
@@ -168,6 +270,19 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
     <div class="me" id="me"></div>
   </div>
 </header>
+
+<!-- Whose account this is, said once and said large. An employer signing in
+     should see their own name before they see ours. -->
+<div class="acctband" id="acctband" hidden>
+  <div class="acctin">
+    <div>
+      <span class="label">Employee benefits account</span>
+      <h2 id="acctName"></h2>
+      <p class="sub" id="acctSub"></p>
+    </div>
+    <div class="acctchips" id="acctChips"></div>
+  </div>
+</div>
 
 <main id="main"></main>
 
@@ -1351,7 +1466,7 @@ function goMovement(){
   location.href = 'movement.html';
 }
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
-            employer_live:[['history','History'],['members','Your people'],
+            employer_live:[['history','History'],['queries','Queries'],['members','Your people'],
                            ['pending','Pending applications'],
                            ['leavers','Terminations'],['pension','Pension'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
@@ -1505,6 +1620,33 @@ function check(){
   </div>`;
 }
 
+/* The band under the header. It carries the one thing the client came to
+   confirm — that this is their account — and the two or three figures they
+   would otherwise go looking for. Only what we actually hold: the counts
+   come from the branch record and are simply absent until it loads. */
+function acctBand(){
+  const band = $('acctband'); if(!band) return;
+  const employer = as === 'employer_live' || as === 'employer';
+  band.hidden = !employer;
+  if(!employer) return;
+  const name = as === 'employer_live' ? (LIVE && LIVE.name) : GROUP.company;
+  $('acctName').textContent = name || 'Your company';
+  $('acctSub').textContent = as === 'employer_live'
+    ? (LIVE && LIVE.admin ? LIVE.admin + ' · plan administrator' : 'Plan administrator')
+    : 'Sample account — invented members, real rate structure';
+
+  const chips = [];
+  if(GV_STATE === 'ready' && GV.inForce){
+    if(GV.inForce.life)    chips.push(['On group life', GV.inForce.life]);
+    if(GV.inForce.health)  chips.push(['On group health', GV.inForce.health]);
+    if(GV.inForce.pension) chips.push(['On pension', GV.inForce.pension]);
+    const open = (GV.queries || []).filter(q => q.open).length;
+    if(open) chips.push(['Open with us', open]);
+  }
+  $('acctChips').innerHTML = chips
+    .map(([l,v]) => `<span class="chip">${esc(l)} <b>${v}</b></span>`).join('');
+}
+
 function render(){
   /* The moment a real document is read, this stops being a sample — say so,
      rather than leaving a banner up that claims no client data is present. */
@@ -1515,20 +1657,32 @@ function render(){
       ? 'Read from your own documents, in this browser. Nothing was uploaded, and closing the tab clears it.'
       : 'Invented names and certificate numbers — real rate structure. Nothing here is client data.';
   }
-  if(!authed){ $('nav').innerHTML=''; $('me').innerHTML='<span class="label">Not signed in</span>'; $('main').innerHTML=gate(); return; }
+  /* A live client never sees the demo apparatus. Not the SAMPLE flag, not
+     the Employer/Employee switcher — a payroll manager offered a button
+     that walks her into invented data is a payroll manager who stops
+     trusting the real figures beside it. */
+  const live = as === 'employer_live';
+  if($('demobar')) $('demobar').hidden = live;
+
+  if(!authed){
+    $('nav').innerHTML=''; $('me').innerHTML='<span class="label">Not signed in</span>';
+    if($('acctband')) $('acctband').hidden = true;
+    $('main').innerHTML=gate(); return;
+  }
   const tabs=TABS[as];
   if(!tabs.some(t=>t[0]===tab)) tab=tabs[0][0];
   $('nav').innerHTML=tabs.map(([k,l])=>`<a data-go="${k}" class="${tab===k?'on':''}">${l}</a>`).join('');
-  $('me').innerHTML = as==='employer_live'
-    ? `<b>${esc(LIVE.name)}</b><span class="label">Employer account</span>`
+  /* The band under the header already carries the company in full, so the
+     corner names the person instead of saying it twice — and gives them a
+     way out, which a portal opened on a shared HR machine has to have. */
+  $('me').innerHTML = live
+    ? `<b>${esc((LIVE && LIVE.admin) || LIVE.name)}</b>`
+      + `<button class="btn ghost" style="padding:.2rem .6rem;font-size:9.5px;margin-top:.2rem" data-signout>Sign out</button>`
     : as==='employer'
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
-  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,pending,leavers,pension})[tab]();
-  if(as==='employer_live' && $('barTag')){
-    $('barTag').textContent = 'YOUR ACCOUNT';
-    $('barText').textContent = 'Signed in with your company portal code. These are your months as the branch holds them.';
-  }
+  acctBand();
+  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,queries,pending,leavers,pension})[tab]();
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
@@ -1565,7 +1719,12 @@ async function loadGroupView(code, pw){
     if(d && d.ok && d.shown){ GV = d; GV_STATE = 'ready'; }
     else { GV_STATE = 'off'; GV_WHY = (d && (d.why || d.error)) || 'Not available yet.'; }
   }catch(e){ GV_STATE = 'error'; GV_WHY = 'Could not reach the branch just now.'; }
-  if(tab==='pending'||tab==='leavers') render();
+  /* Repaint whatever they are looking at. The record arrives after the page
+     does — it used to refresh only two of the tabs, so an employer landing
+     on History saw an account band with no figures in it and a Queries tab
+     that stayed on "reading the branch record" until they clicked away and
+     back. */
+  render();
 }
 
 const gvAge = d => d == null ? '' : d < 1 ? 'today' : d === 1 ? '1 day'
@@ -1733,6 +1892,75 @@ function statement(m){
     <p class="note" style="margin-top:1rem">Prepared for ${esc(m.name)} from Guardian's records on
       ${esc(String(GV.read||'').slice(0,10))}. Figures are as Guardian holds them today and can change when your
       salary or your plan changes. This statement describes your cover; it is not the policy itself.</p>`;
+}
+
+/* ══════════════════ QUERIES ══════════════════
+   Until now an employer could raise a query from a billing email and then
+   never see it again. They pressed a button and it disappeared into us —
+   which meant the next thing they did was email to ask whether we had got
+   it, which is the chasing the query was supposed to replace.
+
+   Two feeds arrive already joined by the engine:
+
+     billing  — what they flagged on a month, and our answer
+     branch   — the scheme-level tasks we raise on their account, so the
+                renewal or billing job they are waiting on is visible
+                without them having to ask whose desk it is on
+
+   The branch feed is allow-listed server-side, not here. Their account also
+   carries individual policies and the owners' keyperson cover, and none of
+   that is theirs to read. What the browser never receives cannot leak. */
+function queries(){
+  const title = 'Queries';
+  const blurb = 'Everything open between your company and the branch — what you have raised on a billing, '
+    + 'and the work we have running on your schemes. Nothing here needs chasing; if it is open, it is with us.';
+  if(GV_STATE !== 'ready') return gvWaiting(title, blurb);
+
+  const all = GV.queries || [];
+  const open = all.filter(q => q.open);
+  const done = all.filter(q => !q.open);
+
+  if(!all.length) return gvShell(title, blurb, `<div class="card">
+    <p><b>Nothing open.</b> No queries raised and nothing outstanding on your schemes.</p>
+    <p class="note" style="margin-top:.5rem">Every billing we send carries a link — one tap confirms it is right,
+      or tells us what is wrong. Whatever you raise there appears here.</p></div>`);
+
+  const row = q => `<div class="qrow ${q.open ? 'open' : 'done'}">
+    <div class="qhead">
+      <div>
+        <b>${esc(q.subject)}</b>
+        <div class="qmeta">
+          <span class="qsrc">${q.source === 'billing' ? 'Your query' : 'Branch'}</span>
+          ${q.at ? ' · ' + esc(q.at) : ''}${q.withWhom ? ' · with ' + esc(q.withWhom) : ''}
+          ${q.due ? ' · due ' + esc(String(q.due).slice(0,10)) : ''}
+        </div>
+      </div>
+      <span class="pill ${q.open ? 'p-warn' : 'p-ok'}">${esc(q.status || (q.open ? 'Open' : 'Closed'))}</span>
+    </div>
+    ${(q.reasons && q.reasons.length) ? `<div class="qreasons">${
+      q.reasons.map(r => `<span class="pill p-info">${esc(r)}</span>`).join('')}</div>` : ''}
+    ${q.note ? `<div class="qbody">${esc(q.note)}</div>` : ''}
+    ${q.reply ? `<div class="qbody"><span class="label">Our reply${q.repliedAt ? ' · ' + esc(q.repliedAt) : ''}</span>
+      <p style="margin-top:.3rem">${esc(q.reply)}</p></div>` : ''}
+  </div>`;
+
+  return gvShell(title, blurb, `
+    <div class="stats" style="margin-bottom:1.4rem">
+      <div class="card"><span class="label">Open with us</span><div class="v">${open.length}</div>
+        <div class="note">${open.length ? 'we are on these' : 'nothing outstanding'}</div></div>
+      <div class="card"><span class="label">Closed</span><div class="v">${done.length}</div>
+        <div class="note">this year</div></div>
+      <div class="card"><span class="label">Raised by you</span><div class="v">${all.filter(q=>q.source==='billing').length}</div>
+        <div class="note">from a billing email</div></div>
+    </div>
+    ${open.length ? `<h2 style="font-size:1.05rem;color:var(--navy);margin:0 0 .3rem">Open</h2>
+      <p class="note" style="margin-bottom:.8rem">With us now. You do not need to follow any of these up.</p>
+      ${open.map(row).join('')}` : ''}
+    ${done.length ? `<h2 style="font-size:1.05rem;color:var(--navy);margin:1.6rem 0 .8rem">Closed</h2>
+      ${done.slice(0,25).map(row).join('')}
+      ${done.length > 25 ? `<p class="note">and ${done.length - 25} older, on request.</p>` : ''}` : ''}
+    <p class="note" style="margin-top:1rem">Read ${esc(String(GV.read||'').slice(0,10))}. Items marked
+      <b>Branch</b> are jobs we raised on your schemes — you see the scheme work, not our internal file.</p>`);
 }
 
 function pending(){
@@ -1917,16 +2145,31 @@ function pension(){
       forms.</p>`);
 }
 
+/* The first thing every client sees. It used to advertise the sample codes
+   underneath the password box, which is not something a company's payroll
+   manager should be shown on the page holding their premium figures. The
+   demo codes still work — they are simply no longer published here. */
 function gate(){
-  return `<div class="card gate">
-    <h1 style="font-size:1.4rem;color:var(--navy)">Group account</h1>
-    <p class="note" style="margin:.5rem 0 1.1rem">Company administrators: sign in with the login and password the
-      branch gave you — you will see your own company's billing and nothing else.</p>
-    <input id="code" placeholder="LOGIN" autocomplete="off">
-    <input id="pw" type="password" placeholder="PASSWORD" autocomplete="off" style="margin-top:.6rem">
-    <button class="btn" style="width:100%;margin-top:.8rem" data-signin>Sign in</button>
+  return `<div class="gate">
+    <svg viewBox="0 0 64 64" width="46" height="46" aria-hidden="true" style="margin-bottom:.4rem">
+      <defs><linearGradient id="gN" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0D5361"/><stop offset="1" stop-color="#04252C"/></linearGradient>
+      <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16A5BB"/><stop offset="1" stop-color="#086274"/></linearGradient></defs>
+      <path d="M32 4 L56 12.5 V30 C56 45.5 46 56.5 32 61 C18 56.5 8 45.5 8 30 V12.5 Z" fill="url(#gN)"/>
+      <path d="M32 9.5 L50.7 16.2 V30 C50.7 42.4 42.5 51.6 32 55.5 C21.5 51.6 13.3 42.4 13.3 30 V16.2 Z" fill="url(#gB)" stroke="#F08A24" stroke-width="1.1"/>
+      <g fill="#BDEBEA"><circle cx="22.3" cy="26.8" r="3.3"/><path d="M17.1 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/><circle cx="41.7" cy="26.8" r="3.3"/><path d="M36.5 42.6 v-1.9 a5.2 5.2 0 0 1 10.4 0 v1.9 Z"/></g>
+      <g fill="#F08A24"><circle cx="32" cy="25" r="4.8"/><path d="M24.2 46 v-2.7 a7.8 7.8 0 0 1 15.6 0 v2.7 Z"/></g>
+    </svg>
+    <h1>Your group account</h1>
+    <p class="note" style="margin:.5rem 0 1.3rem">Sign in with the login and password your branch gave you.
+      You will see your own company and nothing else.</p>
+    <input id="code" placeholder="Login" autocomplete="username">
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" style="margin-top:.6rem">
+    <button class="btn" style="width:100%;margin-top:.9rem" data-signin>Sign in</button>
     <p class="note" id="gerr" style="margin-top:.8rem;min-height:1.2em"></p>
-    <p class="note" style="margin-top:.4rem">Sample codes — <b>GROUP26</b> for the employer, <b>STAFF26</b> for an employee.</p>
+    <div class="gatefoot">
+      Ricky Rampersad Branch · Guardian Life of the Caribbean<br>
+      Chaguanas · <b>678-5921</b>, any hour
+    </div>
   </div>`;
 }
 
@@ -1978,7 +2221,15 @@ function liveRow(r){
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-movement],[data-member],#theme'); if(!t) return;
+  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-signout],[data-movement],[data-member],#theme'); if(!t) return;
+  /* Everything the session held goes, including the login the movement form
+     would have used. On a shared machine the next person gets the gate. */
+  if(t.hasAttribute('data-signout')){
+    AUTH={code:'',pw:''}; LIVE=null; GV=null; GV_STATE='idle'; MPICK=null; MSEARCH='';
+    authed=false; as='employer'; tab='overview';
+    try{ sessionStorage.removeItem('rrb-movement'); }catch(err){}
+    render(); window.scrollTo({top:0}); return;
+  }
   if(t.id==='theme'){ const r=document.documentElement;
     r.dataset.theme = r.dataset.theme==='dark' ? 'light' : 'dark'; return; }
   /* The link's href already points at the form, so this only adds the
