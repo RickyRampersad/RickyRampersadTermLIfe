@@ -623,7 +623,7 @@ const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, vertical
    the hours the register shows. It names what is still unreported before it
    asks, because the moment to notice a missing block is while you can still
    report it, not at tomorrow's checkpoint. */
-function CloseTheDay({ entry, blocks, mail, att, onClose }) {
+function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
   const left = (blocks || []).filter(b => !(entry && blockWorked(entry, b.id)));
@@ -631,6 +631,12 @@ function CloseTheDay({ entry, blocks, mail, att, onClose }) {
     .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
     .concat(!(mail && mail.pm) ? ["the afternoon mail sweep"] : []);
   const out = att && att.out;
+  const today = todayISO();
+  const writtenToday = ((standing && standing.ok &&
+    []
+      .concat((standing.asks || []).reduce((a, x) => a.concat(x.dates || []), []))
+      .concat((standing.thanked || []).map(t => t.date))) || [])
+    .filter(d => d === today).length;
   const go = () => {
     setBusy(true); setErr("");
     Promise.resolve(onClose()).then(r => {
@@ -647,6 +653,19 @@ function CloseTheDay({ entry, blocks, mail, att, onClose }) {
           "Still open: " + outstanding.join(" and ") + ".")
       : h("div", { style: { fontSize: 12.5, color: GREEN, fontWeight: 700, marginBottom: 10 } },
           "Everything is in."),
+    /* Asked here because this is the last screen of the day and the answer is
+       still in the person's head. It is not a gate — a day that was quiet
+       closes with nothing written — but the question is put every evening,
+       which is the only way the quarterly stops being a memory test. */
+    onWritten ? h("div", { style: { borderTop: "1px solid " + LINE, paddingTop: 10, marginBottom: 10 } },
+      h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK, marginBottom: 3 } },
+        "Anything you were written to about today?"),
+      h("div", { style: { fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 7 } },
+        "A reminder, an instruction, a thank-you — from the Branch Manager, head office or a client. It goes against the competency it touches, and the same thing asked twice is counted."),
+      writtenToday
+        ? h("div", { style: { fontSize: 12.5, fontWeight: 700, color: GREEN } },
+            writtenToday + " noted today")
+        : h("button", { type: "button", onClick: onWritten, style: trendChip }, "Note it before you go")) : null,
     err ? h("div", { style: { fontSize: 12, color: RED, marginBottom: 8 } }, err) : null,
     h("button", { type: "button", onClick: go, disabled: busy,
                   style: { ...primaryWide, marginTop: 0, opacity: busy ? 0.6 : 1 } },
@@ -864,10 +883,32 @@ function YourQuarter({ s, onPerf, onMoments }) {
         return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
           c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
       })) : null,
+    (s.asks && s.asks.length) || (s.thanked && s.thanked.length) ? h(WrittenStrip, { s: s }) : null,
     s.training ? h(TrainingStrip, { tr: s.training }) : null,
     h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
-      h("button", { type: "button", onClick: onMoments, style: trendChip }, "Note a moment"),
+      h("button", { type: "button", onClick: onMoments, style: trendChip }, "What you were written to about"),
       h("button", { type: "button", onClick: onPerf, style: trendChip }, "Where you stand →")));
+}
+
+/* What was asked more than once, and what was said thank you for. The count
+   is the point: one line reading "asked 4 times" is the fact a quarterly
+   needs, and it is counted off the record rather than remembered. */
+function WrittenStrip({ s }) {
+  const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "10px 0 3px" } }, t);
+  const asks = (s.asks || []).filter(a => a.n > 1), once = (s.asks || []).filter(a => a.n === 1);
+  return h("div", null,
+    asks.length ? h("div", null, lbl("Asked more than once"),
+      asks.map((a, i) => h("div", { key: i, style: { fontSize: 12.5, color: AMBER, fontWeight: 700, lineHeight: 1.5 } },
+        a.about, h("span", { style: { color: INK } }, " — asked " + a.n + " times"),
+        h("span", { style: { color: MUTED, fontWeight: 500 } },
+          (a.from && a.from.length ? " · by the " + a.from.join(", ").replace(/^the /, "") : "") +
+          (a.last ? " · last on " + shortDate(a.last) : "") + (a.competency ? " · " + a.competency : ""))))) : null,
+    once.length ? h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: asks.length ? 5 : 8 } },
+      once.length + " other thing" + (once.length === 1 ? "" : "s") + " asked once, and done") : null,
+    (s.thanked || []).length ? h("div", null, lbl("Thanked for"),
+      s.thanked.slice(0, 4).map((t, i) => h("div", { key: i, style: { fontSize: 12.5, color: INK, lineHeight: 1.5 } },
+        h("span", { style: { color: GREEN, fontWeight: 700 } }, shortDate(t.date)), " — " + t.what,
+        h("span", { style: { color: MUTED } }, t.source ? " · from " + t.source : "")))) : null);
 }
 
 /** Trained on, and still to cover — from the training log, the training
@@ -918,18 +959,44 @@ function CompEvidence({ c, who }) {
         shortDate(m.date) + " — " + m.what + (m.by && m.by !== who ? " · noted by their People Leader" : "")))) : null);
 }
 
+const MOMENT_KINDS = [{ v: "Asked", label: "Asked or reminded" },
+                      { v: "Thanked", label: "Thanked or commended" },
+                      { v: "Noted", label: "Noted for the record" }];
+const MOMENT_SOURCES = ["Branch Manager", "Unit Manager", "Head office", "A client", "A colleague", "Myself"];
+const KIND_TONE = { Asked: AMBER, Thanked: GREEN, Noted: GOLD };
+
+/* A moment used to be one line against a competency. What it could not carry
+   was who it came from, whether it was an ask or a thank-you, and what it was
+   about — and the last of those is what makes a repeat countable. Nobody
+   writes "this is the fourth reminder"; they write "the spreadsheet" four
+   times, and the tracker counts. So the subject is asked for on an ask and
+   optional on the rest. */
 function MomentForm({ comps, mine, onSave, busy }) {
   const [c, setC] = useState(comps[0] ? comps[0].competency : "");
+  const [kind, setKind] = useState("Asked");
+  const [source, setSource] = useState(mine ? "Branch Manager" : "Myself");
+  const [about, setAbout] = useState("");
   const [what, setWhat] = useState("");
-  const ready = c && what.trim().split(/\s+/).length >= 3;
+  const asked = kind === "Asked";
+  const ready = c && what.trim().split(/\s+/).length >= 3 && (!asked || about.trim());
+  const field = (v, set, ph, mt) => h("input", { value: v, onChange: e => set(e.target.value), placeholder: ph,
+    style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px",
+             border: "1px solid " + LINE, borderRadius: 8, marginTop: mt } });
   return h("div", { style: card },
-    h("div", { style: cardHead }, h("span", { style: cardTitle }, "Note a moment")),
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, "What were you written to about?")),
     h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.5 } },
-      (mine ? "Something you did" : "Something they did") + " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+      (mine ? "What was asked of you, what you were thanked for, or something you did"
+            : "What was asked of them, what they were thanked for, or something they did") +
+      " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+    h(Chips, { label: "Was it", options: MOMENT_KINDS, value: kind, onPick: v => setKind(v || kind), tone: KIND_TONE }),
+    h(Chips, { label: "Who from", options: MOMENT_SOURCES.map(x => ({ v: x, label: x })), value: source, onPick: v => setSource(v || source) }),
     h(Chips, { label: "Competency", options: comps.map(x => ({ v: x.competency, label: x.competency })), value: c, onPick: v => setC(v || c) }),
-    h("input", { value: what, onChange: e => setWhat(e.target.value), placeholder: "What happened, in a line",
-      style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
-    h("button", { type: "button", disabled: busy || !ready, onClick: () => { onSave({ competency: c, what: what.trim() }); setWhat(""); },
+    asked ? field(about, setAbout, "What it was about — a few words, the same words each time", 8) : null,
+    asked ? h("p", { style: { fontSize: 11.5, color: MUTED, margin: "4px 0 0", lineHeight: 1.45 } },
+      "Use the same few words when it is the same thing. That is how a second and a fourth ask are counted rather than remembered.") : null,
+    field(what, setWhat, asked ? "What was said, in a line" : "What happened, in a line", 8),
+    h("button", { type: "button", disabled: busy || !ready,
+      onClick: () => { onSave({ competency: c, what: what.trim(), kind: kind, source: source, about: about.trim() }); setWhat(""); setAbout(""); },
       style: { ...trendChip, marginTop: 8, opacity: busy || !ready ? .5 : 1 } }, busy ? "Noting…" : "Note it"));
 }
 
@@ -3058,7 +3125,9 @@ function App() {
     }, "Your job document \u2192") : null,
     active === me.staffId && date === todayISO() ? /*#__PURE__*/React.createElement(CloseTheDay, {
       entry: entry, blocks: blocks, mail: mailToday[active],
-      att: attToday ? attToday[me.staffId] : null, onClose: recordClose
+      att: attToday ? attToday[me.staffId] : null, onClose: recordClose,
+      standing: standing[me.staffId],
+      onWritten: () => { setPerfWho(me.staffId); setPerfTab("competencies"); setView("perf"); }
     }) : null), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",

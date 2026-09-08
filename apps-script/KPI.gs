@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-08a';
+var SCRIPT_VERSION = '2026-09-09a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3750,6 +3750,7 @@ function hrBundle_(profile) {
     return { staffId: sid, name: p.name || sid, role: p.role || '', latest: rv[0] || null, reviews: rv };
   });
   return { ok: true, me: me, reports: reports, types: REVIEW_TYPES, sources: SOURCES,
+           momentKinds: MOMENT_KINDS, momentSources: MOMENT_SOURCES,
            setup: { goals: !!goals, competencies: !!comps }, standard: OPR_MIN };
 }
 
@@ -3928,8 +3929,75 @@ function mailToday_(profile, date) {
 // ---------------------------------------------------------------------------
 
 var MOM = { must: ['MomentId', 'StaffId', 'Competency'], name: 'Moments',
-            head: ['MomentId', 'StaffId', 'Date', 'Competency', 'What', 'By', 'UpdatedAt'] };
+            head: ['MomentId', 'StaffId', 'Date', 'Competency', 'What',
+                   'Kind', 'Source', 'About', 'By', 'UpdatedAt'] };
 var MOMENT_MAX = 300;
+var MOMENT_ABOUT_MAX = 80;
+
+/* WHAT A PERSON WAS WRITTEN TO ABOUT, AND WHAT THEY WERE THANKED FOR.
+   A moment used to be one thing: a line against a competency. The branch's
+   own question on 8 September was sharper than that — Elizabeth had been
+   reminded four times that morning about the same spreadsheet, and nothing
+   in the record could say so. What is missing from a bare line is who it
+   came from, whether it was an ask or a thank-you, and what it was about.
+
+   The last of those is the one that matters most, because it is what makes a
+   repeat countable. A person will never write "this is the fourth reminder";
+   they will write "the spreadsheet" four times, and the tracker can count. */
+var MOMENT_KINDS = [
+  { v: 'Asked',   label: 'Asked or reminded' },
+  { v: 'Thanked', label: 'Thanked or commended' },
+  { v: 'Noted',   label: 'Noted for the record' }
+];
+var MOMENT_SOURCES = ['Branch Manager', 'Unit Manager', 'Head office',
+                      'A client', 'A colleague', 'Myself'];
+
+/* The Moments tab predates Kind, Source and About, so they are added to the
+   end of whatever is there rather than assumed — the same way the register
+   gained SignedOut. Every write goes through the header, never a fixed
+   position, so a tab somebody has reordered by hand still lands correctly. */
+function ensureMomentColumns_(sh) {
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var add = [];
+  ['Kind', 'Source', 'About'].forEach(function (c) { if (head.indexOf(c) < 0) add.push(c); });
+  if (add.length) {
+    sh.getRange(1, head.length + 1, 1, add.length).setValues([add]);
+    head = head.concat(add);
+  }
+  return head;
+}
+
+function appendByHead_(sh, head, obj) {
+  sh.appendRow(head.map(function (h) { return obj.hasOwnProperty(h) ? obj[h] : ''; }));
+}
+
+/* The same thing asked more than once. One line saying "asked four times,
+   from the Branch Manager" is the fact an appraisal needs, and counting is
+   the only honest way to get it. Grouped on a normalised subject so
+   "Morning spreadsheet" and "morning spreadsheet." are one thing. */
+function momentAsks_(moments) {
+  var by = {};
+  (moments || []).forEach(function (m) {
+    if (m.kind !== 'Asked') return;
+    var k = String(m.about || m.what || '').toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!k) return;
+    var g = by[k] || (by[k] = { about: m.about || m.what, n: 0, dates: [],
+                                competency: m.competency, sources: {} });
+    g.n++;
+    g.dates.push(m.date);
+    if (m.source) g.sources[m.source] = 1;
+  });
+  return Object.keys(by).map(function (k) {
+    var g = by[k];
+    g.dates.sort();
+    g.last = g.dates[g.dates.length - 1];
+    g.from = Object.keys(g.sources);
+    delete g.sources;
+    return g;
+  }).sort(function (a, b) { return b.n - a.n || String(b.last).localeCompare(String(a.last)); });
+}
 
 /** Mondays to Fridays in [from, to). */
 function workdays_(from, to) {
@@ -3948,7 +4016,11 @@ function momentsFor_(staffId, from, to) {
     return String(m.StaffId) === staffId && d >= from && d < to;
   }).map(function (m) {
     return { id: String(m.MomentId || ''), date: isoDay_(m.Date), competency: String(m.Competency || ''),
-             what: String(m.What || ''), by: String(m.By || '') };
+             what: String(m.What || ''), by: String(m.By || ''),
+             /* Rows written before these columns existed read as 'Noted',
+                which is what they were: a line against a competency. */
+             kind: String(m.Kind || '') || 'Noted',
+             source: String(m.Source || ''), about: String(m.About || '') };
   }).sort(function (a, b) { return b.date.localeCompare(a.date); });
 }
 
@@ -3963,12 +4035,31 @@ function noteMoment_(data, profile) {
   var what = String(data.what || '').replace(/\s+/g, ' ').trim();
   if (what.split(' ').length < 3) return { ok: false, error: 'Say what happened — a line, not a word.' };
   what = what.slice(0, MOMENT_MAX);
+
+  var kind = String(data.kind || 'Noted').trim();
+  if (!MOMENT_KINDS.some(function (k) { return k.v === kind; })) {
+    return { ok: false, error: 'Say whether you were asked, thanked, or noting it for the record.' };
+  }
+  var source = String(data.source || '').trim();
+  if (source && MOMENT_SOURCES.indexOf(source) < 0) return { ok: false, error: 'Pick who it came from from the list.' };
+  /* An ask with no subject cannot be counted against the next one, and the
+     count is the whole point — so it is required for an ask and optional for
+     the rest. */
+  var about = String(data.about || '').replace(/\s+/g, ' ').trim().slice(0, MOMENT_ABOUT_MAX);
+  if (kind === 'Asked' && !about) {
+    return { ok: false, error: 'Say what it was about in a few words — that is what counts a repeat.' };
+  }
+
   var day = isoDay_(data.date) || todayISO_();
   var id = staffId + '-' + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var sh = hrTab_(MOM, true), now = new Date();
-  sh.appendRow([id, staffId, day, name, what, profile.staffId, now]);
+  appendByHead_(sh, ensureMomentColumns_(sh), {
+    MomentId: id, StaffId: staffId, Date: day, Competency: name, What: what,
+    Kind: kind, Source: source, About: about, By: profile.staffId, UpdatedAt: now
+  });
   forgetHr_(MOM);
-  return { ok: true, id: id, date: day, competency: name, what: what, by: profile.staffId };
+  return { ok: true, id: id, date: day, competency: name, what: what,
+           kind: kind, source: source, about: about, by: profile.staffId };
 }
 
 /** Training logged in the period: sessions this person gave, and sessions
@@ -4168,9 +4259,16 @@ function standing_(profile, staffId) {
              signals: competencySignals_(c.competency, f), lines: competencyLines_(c.competency, f),
              moments: moments.filter(function (m) { return m.competency === c.competency; }) };
   });
+  /* What was asked of this person more than once, and what they were thanked
+     for — read off the same moments, so the quarter view and the appraisal
+     cannot disagree about either. */
+  var asks = momentAsks_(moments);
   return { ok: true, staffId: staffId, role: role, quarter: q, from: from, to: to, today: today,
            daysIn: workdays_(from, to), daysLeft: workdays_(to, qr.to),
            goals: outGoals, competencies: outComps, facts: f,
+           asks: asks,
+           thanked: moments.filter(function (m) { return m.kind === 'Thanked'; }),
+           written: moments.filter(function (m) { return m.kind !== 'Noted'; }).length,
            training: trainingStanding_(staffId, from, to),
            jobDoc: !!jobDoc_(role),
            salesforce: !!closed, setup: { goals: !!goals, competencies: !!comps },

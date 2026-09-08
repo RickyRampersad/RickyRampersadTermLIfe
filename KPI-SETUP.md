@@ -385,6 +385,40 @@ Date · Competency · What · By · UpdatedAt`. A person or their People Leader
 notes a line against a competency on the day; reviews show the moments that
 fall in their period.
 
+## What a person was written to about
+
+A "moment" used to be one line against a competency. On 8 September the branch
+asked the sharper question: somebody had been reminded four times that morning
+about the same spreadsheet, and nothing in the record could say so.
+
+A moment now carries three more things:
+
+| | |
+|---|---|
+| **Was it** | *Asked or reminded* · *Thanked or commended* · *Noted for the record* |
+| **Who from** | Branch Manager · Unit Manager · Head office · A client · A colleague · Myself |
+| **About** | a few words naming the subject — required on an ask, optional on the rest |
+
+**The subject is the part that matters**, because it is what makes a repeat
+countable. Nobody ever writes "this is the fourth reminder"; they write "the
+spreadsheet" four times, and the tracker counts. Use the same few words each
+time and the quarter card reads *"Morning spreadsheet — asked 4 times · by the
+Branch Manager · last on 8 Sep"*. The matching ignores case, spacing and
+punctuation, so "morning spreadsheet." and "Morning  Spreadsheet" are one thing.
+
+The question is put at the end of every day, on the close-the-day card, because
+that is the last screen of the day and the answer is still in the person's head.
+It is not a gate — a quiet day closes with nothing written.
+
+All of it lands on the **Moments** tab and feeds the competency it names, so
+the quarterly is a read-off rather than a memory test. The three columns are
+added to whatever is already on that tab, and every write goes through the
+header rather than a fixed position, so nothing already recorded moves and a
+tab somebody has reordered by hand still lands correctly. Moments written
+before this change read as *Noted for the record*, which is what they were.
+
+---
+
 ## Attendance
 
 Signing in opens the day and signing out closes it. Those two times are the
