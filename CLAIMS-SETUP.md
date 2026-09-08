@@ -15,6 +15,9 @@ other end:
   support** and to you,
 - a **thank-you and acknowledgement** to the client listing what arrived and
   what is still outstanding,
+- **passwordless sign-in**: clients see all their claims and upload
+  outstanding documents directly; staff get a full dashboard at
+  `/claims/staff.html`,
 - **automatic follow-up** that chases the client for missing documents and
   nudges the desk on stalled claims, and stops the moment the claim closes.
 
@@ -132,9 +135,13 @@ const CONFIG = {
 Commit and push — Netlify redeploys automatically. The orange "Preview mode"
 banner disappears once `API_URL` is set; that is how you know it is live.
 
-**Test it:** file a claim against yourself with a photo attached. You should
-get the acknowledgement with the PDF, and the desk email should land with the
-Drive folder link.
+**Test it safely:** in the sheet, **Claims TT menu → 🧪 Turn test mode ON**
+— every email (desk, client, chase, sign-in codes) is then rerouted to your
+own inbox with a `[TEST]` banner naming the real recipients, so nothing can
+reach a client or Guardian while you experiment. File a claim against
+yourself with a photo attached: you should get the acknowledgement with the
+PDF and the desk email with the Drive folder link, both marked `[TEST]`.
+Turn test mode OFF from the same menu when you go live.
 
 ---
 
@@ -144,11 +151,44 @@ This is the part that removes most of the pain. A claimant types their number
 plate; the vehicle, chassis number, engine number, policy number, cover type
 and their own contact details fill themselves in.
 
-### Build the register
+### Connect Salesforce — no CSVs, ever
 
-The Salesforce export is **not kept in this repository** (client data, public
-repo). Put your local copy at `data/risk-details.csv` — the path is
-gitignored — then:
+The system reads Salesforce itself. Once connected:
+
+- the **registers rebuild themselves nightly (~3am)** from `CLIENT
+  PORTFOLIO` (policies — Record Type separates health/life/pension) and
+  `Risk Details` (vehicles, with the per-year merge that recovers old
+  chassis numbers),
+- a policy the sync hasn't seen yet is **looked up live** at claim time, and
+- every filed claim **writes itself into `Claims__c`** — Opened, dated,
+  policy-linked — so the branch ledger stops depending on manual typing.
+  (Skipped automatically in test mode.)
+
+**One-time admin step in Salesforce** (Setup → App Manager → New Connected
+App):
+
+1. Enable OAuth Settings; callback URL can be `https://localhost` (unused).
+2. Scopes: *Manage user data via APIs (api)*.
+3. Tick **Enable Client Credentials Flow**, and under the app's *Manage →
+   Edit Policies*, set the **Run As** user — an integration (or your own)
+   user with read access to `CLIENT_PORTFOLIO__c` and `Risk_Details__c` and
+   create access to `Claims__c`.
+4. Copy the **Consumer Key** and **Consumer Secret**.
+
+Then in the Claims TT sheet: **Claims TT menu → ☁️ Connect Salesforce**,
+paste your My Domain URL (`https://yourorg.my.salesforce.com`), the key and
+the secret. They are stored in Script Properties — never in code, because
+`Claims.gs` sits in a public repository. The menu's *Sync registers from
+Salesforce now* fills both tabs immediately; the nightly trigger keeps them
+fresh from then on.
+
+### Fallback: building registers by hand
+
+Until Salesforce is connected (or if the Connected App is ever down), the
+registers can be built from report exports with the two scripts below —
+the same tabs, the same behavior, just manual. The export is **not kept in
+this repository** (client data, public repo). Put your local copy at
+`data/risk-details.csv` — the path is gitignored — then:
 
 ```bash
 python3 data/build-vehicle-register.py
@@ -180,10 +220,36 @@ vehicle, which is where 66 of the duplicate records went.
 ### Import it
 
 In the **Claims TT** sheet, open the `Vehicle Register` tab, then
-**File → Import → Upload → `data/vehicle-register.csv` → Replace current sheet**.
+**File → Import → Upload → `vehicle-register.csv` → Replace current sheet**.
 Prefill is live immediately; no redeploy needed.
 
 Re-run the script and re-import whenever you refresh the Salesforce export.
+
+### The policy register — health, life, pension prefill
+
+Motor answers to a number plate; every other line answers to its **policy or
+plan number**, served from the `Policy Register` tab. It is built from
+Salesforce `CLIENT PORTFOLIO` (the Record Type column is what separates
+HEALTH / LIFE / PENSION) by `data/build-policy-register.py`:
+
+```bash
+# from a Salesforce report export (Record Type, POLICY #, Product Name,
+# Contact: Full Name, Email, Home Tele, Home Phone, Date Of Birth):
+python3 data/build-policy-register.py --report portfolio-export.csv
+```
+
+Import `policy-register.csv` into the **`Policy Register`** tab the same way.
+The first build (September 2026, health only) came out at **1,915 distinct
+policies — 80% verifiable online**: the claimant proves the policy is theirs
+with the last four digits of the mobile on file **or their date of birth**
+(76% of health policies carry a DOB). The lookup uses an indexed exact-match
+search, so the tab can grow to the full 55,000-portfolio book without
+slowing down.
+
+The same two-stage privacy rule applies: a policy number alone reveals only
+the line and product name — never a name or contact detail — until the
+verification question is answered, and five wrong answers lock the policy
+out for fifteen minutes.
 
 ### How the privacy split works
 
@@ -250,6 +316,42 @@ ever lost to a dropped connection.
 
 ---
 
+## Logins — how sign-in works with no passwords
+
+Nobody in this system has a password. Signing in means: give us your email
+(clients may also use their mobile number), we email a **6-digit code**, you
+type it back. Codes last 10 minutes, allow 5 attempts, and at most 3 are sent
+per hour per person — so there is nothing to forget, reset, phish, or leak.
+
+**Clients** sign in on the claims page under *Your claims*. They see every
+claim they have (matched by the email or mobile on their claims), its status
+on a progress line, what is still outstanding — and an **Upload now** button
+beside each outstanding document that puts the file straight into the claim's
+Drive folder, marks it received, and logs it. When the last outstanding
+document arrives, a claim waiting on documents moves itself back to *Under
+review*. Sessions last 30 days on that device. Clients with no email on file
+can't receive codes — for them the **quick check** (reference + last 4 mobile
+digits) still works, so nobody is locked out.
+
+**Staff** sign in at `/claims/staff.html` — but only emails listed on the
+**`Staff` tab** of the Claims TT sheet (`Email, Name, Role, Active`) with
+`Active=Y` ever receive a code. `setupClaims` seeds you as `Admin`; add each
+team member as a row. Removing someone = set Active to `N` (their next
+sign-in fails; their current session dies within 12 hours). The dashboard
+gives them the pipeline (counts by status), search, and per-claim: full
+detail, the documents with Drive links, editing what's outstanding, a
+one-click chase email, status changes (optionally emailing the client),
+assignment, and internal notes the client never sees. **Every staff action is
+written to the Claim Log with the staff member's name** — that's the
+accountability trail.
+
+**You** are simply staff with the `Admin` role — and you keep the Google
+Sheet itself as the master console for anything the dashboard doesn't cover.
+
+Uploads are locked accordingly: during filing the browser holds a one-time
+upload key, and after filing only a signed-in owner of the claim, or staff,
+can add files. A guessed claim reference alone can do nothing.
+
 ## Day-to-day: the Claims TT menu
 
 | Menu item | What it does |
@@ -277,6 +379,15 @@ every failure.
 
 Runs daily at ~9am.
 
+- **The 10-working-day review.** Every acknowledgement promises the client a
+  review within 10 working days — the same turnaround the old health e-form
+  promised — and the system holds the branch to it. Each claim gets a
+  `Review Due` date on filing (weekends and the T&T holidays in
+  `CLAIMS.HOLIDAYS` skipped; top up the moveable holidays once a year). On
+  that day, the assigned staff member (or the desk, if unassigned) receives
+  the review checklist: check the carrier portal, deal with anything
+  outstanding, update the status, tell the client. The staff dashboard flags
+  the claim with **⚑ review due** until it moves.
 - **Chasing the client** at 3, 7, 14, 21 and 30 days while anything is
   outstanding. One email per claim per day, never a burst. The last one says
   it is the last and hands over to a phone call.
@@ -284,7 +395,8 @@ Runs daily at ~9am.
   with the folder link and whether the hold-up is the client or us.
 - **It stops** the moment `Status` becomes `Settled`, `Declined` or `Closed`.
 
-Cadences are `CHASE_DAYS` and `DESK_NUDGE_DAYS` in the config.
+Cadences are `REVIEW_WORKING_DAYS`, `CHASE_DAYS` and `DESK_NUDGE_DAYS` in the
+config.
 
 ---
 
@@ -352,8 +464,14 @@ done.
 - [ ] **Apps Script `/exec` URL** → `CONFIG.API_URL` in `claims/index.html`
 - [ ] **`SITE_KEY`** changed from the default, in both files
 - [ ] **Claims desk addresses** confirmed for health, life and pension
-- [ ] **Vehicle register** imported into the `Vehicle Register` tab (the CSV
-      was delivered privately in the Claude session; or rebuild it locally)
+- [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
+      sign in at `/claims/staff.html`
+- [ ] **Salesforce Connected App** created by an admin (see *Connect
+      Salesforce* above) and its key/secret entered via the Claims TT menu —
+      this switches on nightly register sync, live policy lookup, and
+      automatic `Claims__c` write-back. Until then, the register CSVs
+      delivered privately in the Claude session work as a manual fallback.
+- [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
 - [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old
       value was published on the public site
 - [ ] **Git history**: purge the client-data commits, or make the repo
