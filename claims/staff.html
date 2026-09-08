@@ -324,6 +324,7 @@ function renderList() {
       '<div class="rc-who"><b>' + esc(c.name) + "</b><span>" + esc(c.type) +
         (c.subtype ? " — " + esc(c.subtype) : "") + "</span></div>" +
       '<div class="rc-flags">' +
+        (c.reviewOverdue ? '<span class="quiet">⚑ review due</span> · ' : "") +
         (c.missing.length ? '<span class="owe">⏳ ' + c.missing.length + " outstanding</span> · " : "") +
         (quiet ? '<span class="quiet">' + c.quietDays + "d quiet</span> · " : "") +
         (c.assigned ? esc(c.assigned) : "unassigned") +
@@ -360,7 +361,9 @@ function renderDrawer() {
     '<div class="d-sec"><h3>Claim</h3><dl class="kv">' +
       kv("Client", c.name) + kv("Type", c.type + (c.subtype ? " — " + c.subtype : "")) +
       kv("Policy #", c.policy) + kv("Mobile", c.mobile) + kv("Email", c.email) +
-      kv("Filed", c.filed) + kv("Location", c.location) + kv("Estimated", c.amount) +
+      kv("Filed", c.filed) +
+      kv("Review due", c.reviewDue ? c.reviewDue + (c.reviewOverdue ? " — due now" : "") : "") +
+      kv("Location", c.location) + kv("Estimated", c.amount) +
       kv("What happened", c.description) +
     "</dl></div>" +
 

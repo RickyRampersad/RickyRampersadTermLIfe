@@ -426,13 +426,13 @@
             <span class="lk-ico" aria-hidden="true">⚡</span>
             <div>
               <b>Save yourself the typing</b>
-              <span>Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.</span>
+              <span id="lk-blurb">Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.</span>
             </div>
           </div>
 
           <div class="lookup-row" id="lk-step-find">
             <div class="field">
-              <label for="lk-q">Number plate or policy number</label>
+              <label for="lk-q" id="lk-q-label">Number plate or policy number</label>
               <input id="lk-q" type="text" placeholder="PDL 4471" autocomplete="off" spellcheck="false" />
             </div>
             <button class="btn btn-teal" type="button" id="lk-find">Find my policy</button>
@@ -1428,8 +1428,18 @@ const PREFILL_MAP = {
 
 function showLookup() {
   const box = $("lookup");
-  const eligible = (state.type === "motor" || state.type === "property") && !lookup.dismissed;
-  box.hidden = !eligible || !CONFIG.API_URL;
+  box.hidden = lookup.dismissed || !CONFIG.API_URL || !state.type;
+  if (box.hidden) return;
+  // Motor and property answer to a plate; everything else to a policy/plan number.
+  if (state.type === "motor" || state.type === "property") {
+    $("lk-blurb").textContent = "Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.";
+    $("lk-q-label").textContent = "Number plate or policy number";
+    $("lk-q").placeholder = "PDL 4471";
+  } else {
+    $("lk-blurb").textContent = "Enter your policy or plan number and we'll fill in your details from our records — after you confirm it's yours.";
+    $("lk-q-label").textContent = "Policy or plan number";
+    $("lk-q").placeholder = "TQG0897-00014-00";
+  }
 }
 
 function lkMessage(id, html) {
@@ -1479,6 +1489,7 @@ function renderVerifyMethod() {
   $("lk-answer-label").textContent = m.label;
   $("lk-answer-hint").textContent = m.hint || "";
   $("lk-answer").value = "";
+  $("lk-answer").type = m.id === "dob" ? "date" : "text";
   $("lk-answer").setAttribute("inputmode", m.id === "mobile" ? "numeric" : "text");
   $("lk-answer").focus();
 

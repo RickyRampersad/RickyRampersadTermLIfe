@@ -89,9 +89,51 @@ var CLAIMS = {
   // of hunting for their chassis number at the roadside.
   REGISTER_SHEET: 'Vehicle Register',
 
+  // Built by data/build-policy-register.py from CLIENT_PORTFOLIO__c — the
+  // non-motor twin of the vehicle register. Health, life, pension and
+  // personal-accident claimants type their policy or plan number and their
+  // details fill themselves in.
+  POLICY_REGISTER_SHEET: 'Policy Register',
+
   // Who may open the staff dashboard (claims/staff.html): one row per person
   // on this tab — Email, Name, Role, Active. Only Active=Y emails can sign in.
   STAFF_SHEET: 'Staff',
+
+  /* ---- the 10-working-day promise --------------------------- */
+
+  // The acknowledgement tells the client their claim will be reviewed within
+  // this many WORKING days (weekends and the holidays below skipped) — the
+  // same turnaround the branch has always promised on the health form. When
+  // the date arrives and the claim is still open, the assigned staff member
+  // gets the review checklist automatically.
+  REVIEW_WORKING_DAYS: 10,
+
+  // Trinidad & Tobago non-working days. Fixed-date holidays recur every
+  // year; the moveable ones (Carnival, Good Friday, Easter Monday, Corpus
+  // Christi, Eid, Divali) must be topped up each year — one minute, once a
+  // year, from any public holiday calendar.
+  HOLIDAYS: [
+    // fixed — every year
+    '01-01',            // New Year's Day
+    '03-30',            // Spiritual Baptist Liberation Day
+    '05-30',            // Indian Arrival Day
+    '06-19',            // Labour Day
+    '08-01',            // Emancipation Day
+    '08-31',            // Independence Day
+    '09-24',            // Republic Day
+    '12-25', '12-26',   // Christmas, Boxing Day
+    // moveable — listed per year (branch also closes Carnival Mon/Tue)
+    '2026-02-16', '2026-02-17',   // Carnival
+    '2026-03-20',                 // Eid-ul-Fitr (approx.)
+    '2026-04-03', '2026-04-06',   // Good Friday, Easter Monday
+    '2026-06-04',                 // Corpus Christi
+    '2026-11-08',                 // Divali (approx.)
+    '2027-02-08', '2027-02-09',   // Carnival
+    '2027-03-10',                 // Eid-ul-Fitr (approx.)
+    '2027-03-26', '2027-03-29',   // Good Friday, Easter Monday
+    '2027-05-27',                 // Corpus Christi
+    '2027-10-29',                 // Divali (approx.)
+  ],
 
   /* ---- sign-in (one-time codes, no passwords) ------------- */
 
@@ -218,8 +260,30 @@ var CLAIM_COLUMNS = [
   'Estimated Amount (TT$)', 'Police Report #', 'Police Station',
   'Third Party', 'Bank Details', 'Files', 'Missing Documents',
   'Drive Folder', 'Claim Form PDF', 'Assigned To', 'Internal Notes',
-  'Follow-ups Sent', 'Last Updated',
+  'Follow-ups Sent', 'Review Due', 'Last Updated',
 ];
+
+/* ---- working-day arithmetic ---- */
+
+function isWorkingDay_(d) {
+  var day = d.getDay();
+  if (day === 0 || day === 6) return false;
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  var full = Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+  var monthDay = Utilities.formatDate(d, tz, 'MM-dd');
+  return CLAIMS.HOLIDAYS.indexOf(full) < 0 && CLAIMS.HOLIDAYS.indexOf(monthDay) < 0;
+}
+
+/** The date n working days after `from` — the 10-working-day promise. */
+function addWorkingDays_(from, n) {
+  var d = new Date(from.getTime());
+  var added = 0;
+  while (added < n) {
+    d.setDate(d.getDate() + 1);
+    if (isWorkingDay_(d)) added++;
+  }
+  return d;
+}
 
 function claimsSheet_() {
   var sh = namedSheet_(CLAIMS.CLAIMS_SHEET, CLAIM_COLUMNS);
@@ -683,6 +747,8 @@ function apiStaffData_(b) {
         files: filesForRef_(g('Reference')),
         folder: g('Drive Folder'), pdf: g('Claim Form PDF'),
         assigned: g('Assigned To'), notes: g('Internal Notes'),
+        reviewDue: fmtOrBlank_(claimField_(hit, 'Review Due')),
+        reviewOverdue: !!claimField_(hit, 'Review Due') && daysSince_(claimField_(hit, 'Review Due')) >= 0,
       });
     });
   }
@@ -841,7 +907,9 @@ function apiClaimStart_(b) {
     'Third Party': thirdParty, 'Bank Details': bank, 'Files': 0,
     'Missing Documents': '', 'Drive Folder': folder.getUrl(),
     'Claim Form PDF': '', 'Assigned To': '', 'Internal Notes': '',
-    'Follow-ups Sent': '', 'Last Updated': new Date(),
+    'Follow-ups Sent': '',
+    'Review Due': addWorkingDays_(new Date(), CLAIMS.REVIEW_WORKING_DAYS),
+    'Last Updated': new Date(),
   });
 
   logClaim_(ref, 'claim-opened', 'client',
@@ -1007,6 +1075,7 @@ function claimObject_(hit) {
     location: g('Location'), description: g('Description'), amount: g('Estimated Amount (TT$)'),
     policeReport: g('Police Report #'), policeStation: g('Police Station'),
     thirdParty: g('Third Party'), bank: g('Bank Details'), folder: g('Drive Folder'),
+    assigned: g('Assigned To'), reviewDue: claimField_(hit, 'Review Due'),
   };
 }
 
@@ -1075,6 +1144,43 @@ function findVehicle_(query) {
   return null;
 }
 
+/* ---- the non-motor register: health, life, pension, PA ---- */
+
+function policyRegisterSheet_() {
+  return namedSheet_(CLAIMS.POLICY_REGISTER_SHEET, [
+    'Policy Key', 'Policy #', 'Line', 'Client', 'Email', 'Mobile',
+    'DOB', 'Product', 'Expiry', 'Portfolio',
+  ]);
+}
+
+/**
+ * Exact-match lookup by normalized policy number. TextFinder, not a full
+ * read: the health register alone is ~2,000 rows and life/pension will take
+ * it past 50,000 — scanning that on every keystroke would melt the quota.
+ */
+function findPolicyRecord_(query) {
+  var key = normKey_(query);
+  if (key.length < 4) return null;
+  var sh = policyRegisterSheet_();
+  if (sh.getLastRow() < 2) return null;
+  var hit = sh.getRange(2, 1, sh.getLastRow() - 1, 1)
+    .createTextFinder(key).matchEntireCell(true).findNext();
+  if (!hit) return null;
+  var values = sh.getRange(hit.getRow(), 1, 1, sh.getLastColumn()).getValues()[0];
+  var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0];
+  var o = {};
+  headers.forEach(function (h, i) { o[String(h).trim()] = values[i]; });
+  return o;
+}
+
+function dobKey_(value) {
+  // The register holds yyyy-MM-dd; sheet may coerce it to a Date object.
+  if (value instanceof Date) {
+    return Utilities.formatDate(value, Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyyMMdd');
+  }
+  return String(value || '').replace(/\D/g, '');
+}
+
 /**
  * Five wrong answers on the same plate within fifteen minutes and it stops
  * talking. Enough to stop someone working through last-four-digit guesses,
@@ -1089,44 +1195,66 @@ function verifyThrottle_(key, spend) {
   return true;
 }
 
-/** Stage 1 — confirm the vehicle without giving anything away. */
-function apiFindPolicy_(query) {
-  var row = findVehicle_(query);
-  if (!row) {
-    return { ok: true, found: false,
-      message: 'We could not match that. Check the plate or policy number — or just fill the form in by hand, it only takes a little longer.' };
-  }
-
-  var mobile4 = last4_(row['Mobile']);
-  var policyKey = normKey_(row['Policy Key'] || row['Policy #']);
-  var descr = [row['Year'], row['Make'], row['Model']].filter(String).join(' ').trim();
-
+/** The verification questions a given register row supports. */
+function verifyMethods_(row, includePolicyNumber) {
   var methods = [];
-  if (mobile4.length === 4) {
+  if (last4_(row['Mobile']).length === 4) {
     methods.push({ id: 'mobile', label: 'The last 4 digits of your mobile number',
       hint: 'The number we have on file for this policy.' });
   }
-  if (policyKey.length >= 5) {
+  if (dobKey_(row['DOB']).length === 8) {
+    methods.push({ id: 'dob', label: 'Your date of birth',
+      hint: 'As it appears on the policy.' });
+  }
+  if (includePolicyNumber && normKey_(row['Policy Key'] || row['Policy #']).length >= 5) {
     methods.push({ id: 'policy', label: 'Your policy number',
       hint: 'On your certificate of insurance or renewal notice.' });
   }
-  if (!methods.length) {
-    return { ok: true, found: false,
-      message: 'We found the vehicle but have no way to confirm it is yours online. Fill the form in by hand and we will match it up at our end.' };
+  return methods;
+}
+
+/** Stage 1 — confirm we hold the policy without giving anything away.
+ *  Vehicles answer to a plate or policy number; everything else (health,
+ *  life, pension, PA) answers to its policy/plan number. */
+function apiFindPolicy_(query) {
+  var vehicle = findVehicle_(query);
+  if (vehicle) {
+    var descr = [vehicle['Year'], vehicle['Make'], vehicle['Model']].filter(String).join(' ').trim();
+    var vMethods = verifyMethods_(vehicle, true);
+    if (!vMethods.length) {
+      return { ok: true, found: false,
+        message: 'We found the vehicle but have no way to confirm it is yours online. Fill the form in by hand and we will match it up at our end.' };
+    }
+    return { ok: true, found: true, source: 'vehicle',
+      vehicle: descr || 'Vehicle on file',
+      coverage: String(vehicle['Coverage Type'] || ''), methods: vMethods };
   }
 
-  return {
-    ok: true, found: true,
-    vehicle: descr || 'Vehicle on file',
-    coverage: String(row['Coverage Type'] || ''),
-    methods: methods,
-  };
+  var policy = findPolicyRecord_(query);
+  if (policy) {
+    // Reveal only what the policy number itself already implies.
+    var line = String(policy['Line'] || 'Policy');
+    var product = String(policy['Product'] || '');
+    var pMethods = verifyMethods_(policy, false);
+    if (!pMethods.length) {
+      return { ok: true, found: false,
+        message: 'We found the policy but have no way to confirm it is yours online. Fill the form in by hand and we will match it up at our end.' };
+    }
+    return { ok: true, found: true, source: 'policy',
+      vehicle: line + ' policy' + (product ? ' — ' + product : ''),
+      coverage: '', methods: pMethods };
+  }
+
+  return { ok: true, found: false,
+    message: 'We could not match that. Check the number — or just fill the form in by hand, it only takes a little longer.' };
 }
 
 /** Stage 2 — they answered; hand over the record. */
 function apiVerifyPolicy_(b) {
   var query = clean_(b.query, 40);
   var row = findVehicle_(query);
+  var source = 'vehicle';
+  if (!row) { row = findPolicyRecord_(query); source = 'policy'; }
   if (!row) return { ok: false, error: 'We could not match that policy.' };
 
   if (!verifyThrottle_(query, false)) {
@@ -1140,7 +1268,10 @@ function apiVerifyPolicy_(b) {
   if (method === 'mobile') {
     var given = String(answer).replace(/\D/g, '').slice(-4);
     ok = given.length === 4 && given === last4_(row['Mobile']);
-  } else if (method === 'policy') {
+  } else if (method === 'dob') {
+    var want = dobKey_(row['DOB']);
+    ok = want.length === 8 && dobKey_(answer) === want;
+  } else if (method === 'policy' && source === 'vehicle') {
     var pk = normKey_(row['Policy Key'] || row['Policy #']);
     ok = pk.length >= 5 && normKey_(answer) === pk;
   }
@@ -1151,19 +1282,24 @@ function apiVerifyPolicy_(b) {
   }
 
   var val = function (f) { return String(row[f] === null || row[f] === undefined ? '' : row[f]).trim(); };
-  logClaim_('(lookup)', 'policy-prefill', 'client', 'Matched ' + val('Vehicle Reg') + ' via ' + method);
 
-  return {
-    ok: true,
-    prefill: {
+  if (source === 'vehicle') {
+    logClaim_('(lookup)', 'policy-prefill', 'client', 'Matched ' + val('Vehicle Reg') + ' via ' + method);
+    return { ok: true, prefill: {
       vehicleReg: val('Vehicle Reg'), vehicleMake: [val('Make'), val('Model')].filter(String).join(' '),
       vehicleYear: val('Year'), chassis: val('Chassis #'), engine: val('Engine #'),
       policy: val('Policy #'), coverage: val('Coverage Type'),
       insuredValue: val('Insured Value (TT$)'), windscreen: val('Windscreen (TT$)'),
       carrier: val('Carrier'), coverFrom: val('Cover From'), coverTo: val('Cover To'),
       name: val('Client'), email: val('Email'), mobile: val('Mobile'),
-    },
-  };
+    } };
+  }
+
+  logClaim_('(lookup)', 'policy-prefill', 'client', 'Matched ' + val('Line') + ' policy via ' + method);
+  return { ok: true, prefill: {
+    policy: val('Policy #'), coverage: [val('Line'), val('Product')].filter(String).join(' — '),
+    name: val('Client'), email: String(val('Email')).toLowerCase(), mobile: val('Mobile'),
+  } };
 }
 
 
@@ -1309,6 +1445,11 @@ function ackClient_(claim, files, missing, form) {
       '<li style="margin:6px 0">Where an inspection is needed, an adjuster or approved assessor contacts you directly to arrange it.</li>' +
       '<li style="margin:6px 0">We tell you what is covered, what your excess is, and what the settlement looks like.</li>' +
       '</ol>' +
+      (claim.reviewDue
+        ? '<p>Please allow <b>' + CLAIMS.REVIEW_WORKING_DAYS + ' working days</b> for processing — your claim is scheduled for review by <b>' +
+          esc_(fmtOrBlank_(claim.reviewDue)) + '</b>, and our team is reminded of it automatically on that day. ' +
+          'You can check where things stand any time by signing in on the claims page.</p>'
+        : '') +
       noteBox_('<b style="color:#a05e03">Please do not start repairs</b> until the claim has been inspected or you have written approval — ' +
         'work done beforehand may not be reimbursed.') +
       (form ? '<p>Your completed <b>claim form</b> is attached — keep it for your records. You do not need to print, sign or return it; you completed and declared it online.</p>' : '') +
@@ -1498,7 +1639,20 @@ function claimsFollowUp() {
       }
     }
 
-    // 2. Nothing has moved on our side.
+    // 2. The 10-working-day promise has come due: the claim gets its review.
+    var due = claimField_(hit, 'Review Due');
+    if (due && daysSince_(due) >= 0 && sent.indexOf('review-10wd') < 0) {
+      try {
+        sendReviewDue_(claim, missing);
+        markSent_(hit, 'review-10wd');
+        logClaim_(claim.ref, 'review-due', 'system',
+          CLAIMS.REVIEW_WORKING_DAYS + ' working days reached · assigned: ' + (claim.assigned || 'nobody'));
+      } catch (err) {
+        logClaim_(claim.ref, 'review-due-failed', 'system', String(err));
+      }
+    }
+
+    // 3. Nothing has moved on our side.
     for (var k = 0; k < CLAIMS.DESK_NUDGE_DAYS.length; k++) {
       var nday = CLAIMS.DESK_NUDGE_DAYS[k];
       var nmark = 'desk-' + nday;
@@ -1539,6 +1693,64 @@ function sendChase_(claim, missing, n, total) {
       closing +
       '<p>Any question, call me on <b>' + esc_(CLAIMS.AGENT_PHONE) + '</b>.</p>' + sig_(),
       'Documents outstanding'),
+  });
+}
+
+/** Staff email address for an "Assigned To" name, if they're on the Staff tab. */
+function staffEmailForName_(name) {
+  var want = String(name || '').trim().toLowerCase();
+  if (!want) return '';
+  var sh = staffSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return '';
+  var rows = sh.getRange(2, 1, last - 1, 4).getValues();
+  for (var i = 0; i < rows.length; i++) {
+    if (/^y/i.test(String(rows[i][3])) &&
+        (String(rows[i][1]).trim().toLowerCase() === want || String(rows[i][0]).trim().toLowerCase() === want)) {
+      return String(rows[i][0]).trim();
+    }
+  }
+  return '';
+}
+
+/**
+ * The 10-working-day review. The client was promised it in their
+ * acknowledgement; this is the staff side of the same promise, with the
+ * exact steps so nobody has to guess what "check the portal" means.
+ */
+function sendReviewDue_(claim, missing) {
+  var to = staffEmailForName_(claim.assigned) || deskFor_(typeKeyFromLabel_(claim.type));
+  var steps = [
+    '<b>Check the carrier portal / system</b> for this claim' + (claim.policy ? ' (policy <b>' + esc_(claim.policy) + '</b>)' : '') + ' — has the carrier logged, assessed or paid it?',
+    missing.length
+      ? '<b>Outstanding from the client:</b> ' + esc_(missing.join(', ')) + ' — the automatic reminders are running; call if they have gone quiet.'
+      : '<b>Nothing is outstanding from the client</b> — any delay from here is ours or the carrier’s to explain.',
+    '<b>Update the claim status</b> on the dashboard or the sheet so the record reflects what you found.',
+    '<b>Tell the client where things stand</b> — use "Email the client this update" when you change the status, or call. They were promised news by today.',
+    'If the carrier has paid: record it, set the status to <b>Settled</b>, and the follow-ups stop by themselves.',
+  ];
+  sendMail_({
+    to: to, cc: ccList_(), name: CLAIMS.FROM_NAME,
+    subject: '🗓 10-working-day review due — claim ' + claim.ref + ' — ' + claim.name,
+    htmlBody:
+      '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433">' +
+      '<div style="background:' + CBRAND.navy + ';color:#fff;padding:14px 18px;border-radius:8px 8px 0 0">' +
+      '<b>Review due today — ' + esc_(claim.ref) + '</b></div>' +
+      '<table style="border-collapse:collapse;width:100%;max-width:640px">' +
+      tr_('Client', esc_(claim.name) + ' · ' + esc_(claim.mobile)) +
+      tr_('Claim', esc_(claim.type) + (claim.subtype ? ' — ' + esc_(claim.subtype) : '')) +
+      tr_('Status', esc_(claim.status)) +
+      tr_('Assigned to', esc_(claim.assigned || 'nobody yet — please pick it up')) +
+      '</table>' +
+      '<p style="margin:16px 0 6px"><b>The review, step by step:</b></p>' +
+      '<ol style="padding-left:20px;line-height:1.7">' +
+      steps.map(function (s) { return '<li style="margin:6px 0">' + s + '</li>'; }).join('') +
+      '</ol>' +
+      '<p style="margin:16px 0"><a href="' + esc_(claim.folder) + '" style="background:' + CBRAND.gold +
+      ';color:' + CBRAND.navy + ';text-decoration:none;font-weight:bold;padding:12px 26px;border-radius:8px;display:inline-block">' +
+      'Open the claim folder</a></p>' +
+      '<p style="color:#5a6b80;font-size:12px">Sent automatically ' + CLAIMS.REVIEW_WORKING_DAYS +
+      ' working days after filing — the turnaround the client was promised in their acknowledgement.</p></div>',
   });
 }
 
@@ -1669,7 +1881,7 @@ function sweepAbandonedParts() {
 /* ============================ setup & menu ============================ */
 
 function setupClaims() {
-  filesSheet_(); logSheet_(); registerSheet_();
+  filesSheet_(); logSheet_(); registerSheet_(); policyRegisterSheet_();
   var root = rootFolder_();
 
   // Staff tab: seed you as Admin so the staff dashboard works immediately.
@@ -1697,13 +1909,17 @@ function setupClaims() {
   SpreadsheetApp.getUi().alert(
     'Claims TT is ready.\n\n' +
     'Tabs: ' + CLAIMS.CLAIMS_SHEET + ', ' + CLAIMS.FILES_SHEET + ', ' +
-      CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' + CLAIMS.STAFF_SHEET + '\n' +
+      CLAIMS.LOG_SHEET + ', ' + CLAIMS.REGISTER_SHEET + ', ' +
+      CLAIMS.POLICY_REGISTER_SHEET + ', ' + CLAIMS.STAFF_SHEET + '\n' +
     'Staff sign-in: add each staff email to the ' + CLAIMS.STAFF_SHEET + ' tab (Active=Y); ' +
       'they sign in at /claims/staff.html with a code emailed to them\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
-    'Automatic follow-up: installed, runs daily ~9am\n' +
+    'Automatic follow-up: installed, runs daily ~9am (incl. the ' +
+      CLAIMS.REVIEW_WORKING_DAYS + '-working-day review)\n' +
     'Vehicle register: ' + vehicles + ' vehicle(s)' +
-      (vehicles ? '' : ' — import data/vehicle-register.csv to switch on policy prefill') + '\n\n' +
+      (vehicles ? '' : ' — import vehicle-register.csv to switch on motor prefill') + '\n' +
+    'Policy register: ' + (Math.max(policyRegisterSheet_().getLastRow() - 1, 0)) + ' policy(ies)' +
+      ' — import policy-register.csv for health/life prefill\n\n' +
     'Next: Deploy → New deployment → Web app (execute as Me, access Anyone), ' +
     'then paste the /exec URL into CONFIG.API_URL in claims/index.html.');
 }

@@ -187,10 +187,36 @@ vehicle, which is where 66 of the duplicate records went.
 ### Import it
 
 In the **Claims TT** sheet, open the `Vehicle Register` tab, then
-**File → Import → Upload → `data/vehicle-register.csv` → Replace current sheet**.
+**File → Import → Upload → `vehicle-register.csv` → Replace current sheet**.
 Prefill is live immediately; no redeploy needed.
 
 Re-run the script and re-import whenever you refresh the Salesforce export.
+
+### The policy register — health, life, pension prefill
+
+Motor answers to a number plate; every other line answers to its **policy or
+plan number**, served from the `Policy Register` tab. It is built from
+Salesforce `CLIENT PORTFOLIO` (the Record Type column is what separates
+HEALTH / LIFE / PENSION) by `data/build-policy-register.py`:
+
+```bash
+# from a Salesforce report export (Record Type, POLICY #, Product Name,
+# Contact: Full Name, Email, Home Tele, Home Phone, Date Of Birth):
+python3 data/build-policy-register.py --report portfolio-export.csv
+```
+
+Import `policy-register.csv` into the **`Policy Register`** tab the same way.
+The first build (September 2026, health only) came out at **1,915 distinct
+policies — 80% verifiable online**: the claimant proves the policy is theirs
+with the last four digits of the mobile on file **or their date of birth**
+(76% of health policies carry a DOB). The lookup uses an indexed exact-match
+search, so the tab can grow to the full 55,000-portfolio book without
+slowing down.
+
+The same two-stage privacy rule applies: a policy number alone reveals only
+the line and product name — never a name or contact detail — until the
+verification question is answered, and five wrong answers lock the policy
+out for fifteen minutes.
 
 ### How the privacy split works
 
@@ -320,6 +346,15 @@ every failure.
 
 Runs daily at ~9am.
 
+- **The 10-working-day review.** Every acknowledgement promises the client a
+  review within 10 working days — the same turnaround the old health e-form
+  promised — and the system holds the branch to it. Each claim gets a
+  `Review Due` date on filing (weekends and the T&T holidays in
+  `CLAIMS.HOLIDAYS` skipped; top up the moveable holidays once a year). On
+  that day, the assigned staff member (or the desk, if unassigned) receives
+  the review checklist: check the carrier portal, deal with anything
+  outstanding, update the status, tell the client. The staff dashboard flags
+  the claim with **⚑ review due** until it moves.
 - **Chasing the client** at 3, 7, 14, 21 and 30 days while anything is
   outstanding. One email per claim per day, never a burst. The last one says
   it is the last and hands over to a phone call.
@@ -327,7 +362,8 @@ Runs daily at ~9am.
   with the folder link and whether the hold-up is the client or us.
 - **It stops** the moment `Status` becomes `Settled`, `Declined` or `Closed`.
 
-Cadences are `CHASE_DAYS` and `DESK_NUDGE_DAYS` in the config.
+Cadences are `REVIEW_WORKING_DAYS`, `CHASE_DAYS` and `DESK_NUDGE_DAYS` in the
+config.
 
 ---
 
@@ -399,6 +435,11 @@ done.
       sign in at `/claims/staff.html`
 - [ ] **Vehicle register** imported into the `Vehicle Register` tab (the CSV
       was delivered privately in the Claude session; or rebuild it locally)
+- [ ] **Policy register** (health — 1,915 policies, delivered privately in
+      the Claude session) imported into the `Policy Register` tab; life and
+      pension follow from a Salesforce report export via
+      `data/build-policy-register.py`
+- [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
 - [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old
       value was published on the public site
 - [ ] **Git history**: purge the client-data commits, or make the repo
