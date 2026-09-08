@@ -98,7 +98,26 @@ function makeEnv(opts = {}) {
       computeHmacSha256Signature: () => [1, 2, 3]
     },
     UrlFetchApp: { fetch: () => { throw new Error('no network in harness'); } },
-    ScriptApp: { getProjectTriggers: () => [], newTrigger: () => ({ timeBased: () => ({ everyDays: () => ({ atHour: () => ({ create: () => {} }) }) }) }) }
+    Logger: { log: () => {} },
+    /* Enough of ScriptApp to count what an installer installs. Every builder
+       method is accepted and remembered, so a test can say "five triggers,
+       three of them daily" rather than only "it did not throw". */
+    ScriptApp: (() => {
+      const triggers = [];
+      const builder = handler => {
+        const t = { handler, chain: [] };
+        const b = new Proxy({}, { get: (_, k) => k === 'create'
+          ? () => { const rec = { getHandlerFunction: () => t.handler, chain: t.chain }; triggers.push(rec); return rec; }
+          : (...a) => { t.chain.push(k + '(' + a.map(String).join(',') + ')'); return b; } });
+        return b;
+      };
+      return {
+        WeekDay: { MONDAY:'MONDAY', TUESDAY:'TUESDAY', WEDNESDAY:'WEDNESDAY', THURSDAY:'THURSDAY', FRIDAY:'FRIDAY', SATURDAY:'SATURDAY', SUNDAY:'SUNDAY' },
+        getProjectTriggers: () => triggers.slice(),
+        deleteTrigger: t => { const i = triggers.indexOf(t); if (i > -1) triggers.splice(i, 1); },
+        newTrigger: handler => builder(handler)
+      };
+    })()
   };
   g.globalThis = g;
   vm.createContext(g);

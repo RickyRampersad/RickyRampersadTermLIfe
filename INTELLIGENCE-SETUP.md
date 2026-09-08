@@ -172,7 +172,14 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the four triggers and prints the self test.
+rebuild, installs the six triggers and prints the self test.
+
+**"This script has too many triggers"** on that step means the host project
+is spending its twenty on something else. The tracker before `2026-09-08a`
+installed fifteen weekday triggers; paste the current `KPI.gs`, deploy a new
+version, run its `installTriggers` (which replaces them with five), then run
+**`intelInstallTriggers`** on its own — the tabs and the rebuild from the first
+attempt are already done and need not be repeated.
 
 Every code change needs **Deploy → Manage deployments → Edit → New version**.
 Saving the file is not deploying it.

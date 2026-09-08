@@ -103,6 +103,14 @@ ok('and the banner it names is really the next one',
    /WHAT IS IN OUR POSSESSION/.test(intel.slice(intel.indexOf('/* ═', CUT + 40), intel.indexOf('/* ═', CUT + 40) + 120)));
 ok('and what to add to the host instead', /var hit = intelRoute_\(b\); if \(hit\) return hit;/.test(intel));
 
+console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
+env.installTriggers();
+env.intelInstallTriggers();
+const all = env.ScriptApp.getProjectTriggers();
+ok('eleven triggers in all', all.length === 11, String(all.length));
+ok('which leaves room, where seventeen plus six did not', all.length <= 20);
+ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
+
 fs.unlinkSync(both);
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

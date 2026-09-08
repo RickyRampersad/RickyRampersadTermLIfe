@@ -106,11 +106,20 @@ first.
 ## 4. Turn on the emails
 
 Run **`installTriggers`** once from the editor and grant it permission when
-asked. That sets up:
+asked. That sets up five triggers:
 
 - **3pm checkpoint**, weekdays — who has logged, who has not, who is behind, and
   every blocker raised so far
+- **Staff nudges**, weekdays at noon and three
 - **Weekly summary**, Friday 5pm — the week against the week before
+- **Warm-up**, every ten minutes in office hours
+
+The checkpoint and the nudges are one daily trigger each and skip the weekend
+themselves. They used to be five weekday copies each, fifteen triggers, and a
+script project holds at most twenty — the day Branch Intelligence joined this
+project its own six could not be installed ("This script has too many
+triggers"). Re-running `installTriggers` on a project that still has the
+fifteen replaces them with the five.
 
 Apps Script fires a time trigger within the hour it is given, so the checkpoint
 lands between 3 and 4 — while the last block is still running and there is
