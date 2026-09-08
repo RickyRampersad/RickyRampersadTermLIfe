@@ -282,6 +282,31 @@ source.
 
 ---
 
+## Reading the documents themselves
+
+Some uploads carry their own answers, so the system reads them back out.
+When a client attaches a **driver's permit**, a **police report**, a
+**certificate of insurance**, or a **medical receipt**, the photo is read
+and a chip appears under it — *"📖 Read from your photo: Permit #20154321 —
+Use these"*. One tap fills the matching fields. Nothing is ever filled
+silently, and a field the client already typed is never touched; a failed
+read simply shows nothing.
+
+Two engines, best available wins:
+
+1. **Gemini vision** (optional, best — reads handwriting): get a key at
+   aistudio.google.com, then **Claims TT menu → 📖 Connect Gemini**.
+   ⚠ Documents are sent to Google's Gemini API, and on the **free tier
+   Google may use them to improve its models** — for medical documents use
+   a paid key, or skip Gemini entirely.
+2. **Drive OCR** (default, private): in the Apps Script editor, click **+**
+   beside *Services* and add **Drive API**. Conversion happens inside your
+   own Google account and the temporary file is deleted immediately.
+   Printed documents only.
+
+With neither configured, scanning stands down and the form works exactly
+as before.
+
 ## What the client sees
 
 ```

@@ -749,6 +749,149 @@ function syncSalesforceNow() {
 }
 
 
+/* ============================ reading the documents ============================
+
+ * The client photographs a driver's permit, a police report, a receipt —
+ * and the photo itself carries the answers. This reads them back out and
+ * OFFERS them; nothing is filled in without the client tapping "use these",
+ * and nothing they already typed is ever overwritten.
+ *
+ * Two engines, best available wins:
+ *   1. Gemini vision — reads print AND handwriting, returns clean fields.
+ *      Needs GEMINI_API_KEY in Script Properties (menu: Connect Gemini).
+ *      ⚠ Documents are sent to Google's Gemini API; on the FREE tier Google
+ *      may use them to improve its models. For medical documents use a paid
+ *      key or leave Gemini off — the OCR path below stays inside Workspace.
+ *   2. Drive OCR — the Advanced Drive Service converts the image to text
+ *      inside your own Google account (enable "Drive API" under Services in
+ *      the Apps Script editor). Print only, but private by construction.
+ * Neither configured → scanning quietly does nothing; the form still works.
+ * ============================================================================ */
+
+var SCANNABLE_DOCS = {
+  permit:        ['driverName', 'driverPermit'],
+  police:        ['policeReport', 'policeStation'],
+  certinsurance: ['policy', 'vehicleReg', 'chassis'],
+  receipt:       ['amount', 'provider', 'incidentDate'],
+};
+
+function apiScanDoc_(b) {
+  var docId = clean_(b.doc, 30);
+  if (!SCANNABLE_DOCS[docId]) return { ok: false };
+  var data = String(b.data || '');
+  if (!data || data.length > 2200000) return { ok: false };
+  try {
+    var fields = geminiExtract_(data, clean_(b.mime, 60) || 'image/jpeg', docId);
+    if (!fields) {
+      var text = ocrText_(Utilities.newBlob(Utilities.base64Decode(data),
+        clean_(b.mime, 60) || 'image/jpeg', 'scan'));
+      if (text) fields = parseScan_(docId, text);
+    }
+    if (!fields) return { ok: false };
+    var out = {};
+    var any = false;
+    SCANNABLE_DOCS[docId].forEach(function (f) {
+      var v = clean_(fields[f], 160);
+      if (v && !/^(unknown|n\/?a|none|null)$/i.test(v)) { out[f] = v; any = true; }
+    });
+    return any ? { ok: true, fields: out } : { ok: false };
+  } catch (err) {
+    logClaim_('(scan)', 'scan-failed', 'system', docId + ' · ' + String(err).slice(0, 200));
+    return { ok: false };
+  }
+}
+
+/** Image → text inside your own Google account. Needs the Advanced Drive
+ *  Service switched on; absent, returns '' and scanning stands down. */
+function ocrText_(blob) {
+  if (typeof Drive === 'undefined' || !Drive.Files || !Drive.Files.insert) return '';
+  var doc = Drive.Files.insert({ title: '~claims-scan', mimeType: MimeType.GOOGLE_DOCS },
+    blob, { ocr: true, ocrLanguage: 'en' });
+  try {
+    return DocumentApp.openById(doc.id).getBody().getText() || '';
+  } finally {
+    try { Drive.Files.remove(doc.id); }
+    catch (e) { try { DriveApp.getFileById(doc.id).setTrashed(true); } catch (e2) {} }
+  }
+}
+
+/** Gemini vision, when a key is on file. Returns {field: value} or null. */
+function geminiExtract_(b64, mime, docId) {
+  var key = PropertiesService.getScriptProperties().getProperty('GEMINI_API_KEY');
+  if (!key) return null;
+  var asks = {
+    permit: 'a Trinidad & Tobago driver\'s permit. Return JSON with keys driverName (the holder\'s full name) and driverPermit (the permit number).',
+    police: 'a police report or station diary extract. Return JSON with keys policeReport (the report/reference number) and policeStation (the station name).',
+    certinsurance: 'a certificate of motor insurance or policy schedule. Return JSON with keys policy (policy number), vehicleReg (vehicle registration), chassis (chassis number).',
+    receipt: 'a medical receipt or invoice. Return JSON with keys amount (the TOTAL paid, digits only), provider (the doctor/clinic/pharmacy name), incidentDate (date of service as YYYY-MM-DD).',
+  };
+  var res = UrlFetchApp.fetch(
+    'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + key, {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      payload: JSON.stringify({
+        contents: [{ parts: [
+          { text: 'This photo is ' + asks[docId] + ' Only include a key when you can actually read its value. Reply with the JSON object alone, no prose, no code fences.' },
+          { inline_data: { mime_type: mime, data: b64 } },
+        ] }],
+        generationConfig: { temperature: 0 },
+      }),
+    });
+  if (res.getResponseCode() !== 200) return null;
+  try {
+    var text = JSON.parse(res.getContentText()).candidates[0].content.parts[0].text;
+    return JSON.parse(text.replace(/^```(?:json)?\s*|\s*```$/g, ''));
+  } catch (err) { return null; }
+}
+
+/** OCR text → fields, by unexciting patterns. Suggestions only, so a miss
+ *  costs nothing and a hit saves the typing. */
+function parseScan_(docId, text) {
+  var out = {};
+  var m;
+  var line1 = function (re) { m = text.match(re); return m ? m[1].trim() : ''; };
+  if (docId === 'permit') {
+    out.driverPermit = line1(/(?:permit|licen[cs]e)[^0-9]{0,25}(\d{5,12})/i);
+    out.driverName = line1(/(?:name)[:\s]{1,8}([A-Z][A-Za-z'-]+(?:\s+[A-Z][A-Za-z'-]+){1,3})/);
+  } else if (docId === 'police') {
+    out.policeReport = line1(/(?:report|ref(?:erence)?|extract|diary)[^A-Z0-9]{0,15}#?\s*([A-Z0-9][A-Z0-9\/\-]{3,20})/i);
+    out.policeStation = line1(/([A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+){0,3})\s+Police\s+(?:Station|Post)/i);
+    if (out.policeStation) out.policeStation += ' Police Station';
+  } else if (docId === 'certinsurance') {
+    out.policy = line1(/(?:policy|certificate)[^A-Z0-9]{0,20}((?:TT\s?)?[A-Z]{2,4}[\s\-]?\d{5,10}(?:[\s\-]\d{1,6})?)/i);
+    out.vehicleReg = line1(/\b([HPRT][A-Z]{2}\s?\d{3,4})\b/);
+    out.chassis = line1(/(?:chassis|vin)[^A-Z0-9]{0,15}([A-Z0-9]{10,17})/i);
+  } else if (docId === 'receipt') {
+    var best = 0;
+    var re = /(?:total|amount\s+(?:paid|due)|balance)[^0-9$]{0,15}\$?\s*([\d,]+(?:\.\d{2})?)/ig;
+    while ((m = re.exec(text))) {
+      var v = Number(m[1].replace(/,/g, ''));
+      if (v > best) best = v;
+    }
+    if (best) out.amount = String(best);
+    out.incidentDate = line1(/\b(20\d{2}[\-\/]\d{1,2}[\-\/]\d{1,2})\b/) ||
+      line1(/\b(\d{1,2}[\-\/]\d{1,2}[\-\/]20\d{2})\b/);
+    var first = text.split('\n').map(function (s) { return s.trim(); })
+      .filter(function (s) { return s.length > 3 && !/receipt|invoice|bill|statement/i.test(s); })[0];
+    if (first && /[A-Za-z]{3}/.test(first)) out.provider = first.slice(0, 80);
+  }
+  return out;
+}
+
+function connectGemini() {
+  var ui = SpreadsheetApp.getUi();
+  var r = ui.prompt('Gemini API key (optional)',
+    'From aistudio.google.com → Get API key. Powers reading handwriting off uploaded documents.\n\n' +
+    '⚠ On the FREE tier Google may use submitted content to improve its models — for medical documents ' +
+    'use a paid key, or leave this blank and the private Drive OCR path is used instead.\n\nKey:',
+    ui.ButtonSet.OK_CANCEL);
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+  var key = r.getResponseText().trim();
+  var p = PropertiesService.getScriptProperties();
+  if (key) { p.setProperty('GEMINI_API_KEY', key); ui.alert('Gemini connected — document reading upgraded.'); }
+  else { p.deleteProperty('GEMINI_API_KEY'); ui.alert('Gemini key cleared — Drive OCR (private, print-only) is used.'); }
+}
+
+
 /* ============================ sign-in: codes & sessions ============================
 
  * "Log in" here means: tell us your email (or mobile), we email you a
@@ -1142,6 +1285,7 @@ function doPost(e) {
       case 'myClaims':     out = apiMyClaims_(body); break;
       case 'staffData':    out = apiStaffData_(body); break;
       case 'staffAction':  out = apiStaffAction_(body); break;
+      case 'scanDoc':      out = apiScanDoc_(body); break;
       default:             out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) {
@@ -2229,6 +2373,7 @@ function onOpen() {
     .addSeparator()
     .addItem('☁️ Connect Salesforce (one-time)', 'connectSalesforce')
     .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
+    .addItem('📖 Connect Gemini for document reading (optional)', 'connectGemini')
     .addSeparator()
     .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
     .addItem('Turn test mode OFF (live emails)', 'testModeOff_')

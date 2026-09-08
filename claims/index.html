@@ -216,6 +216,12 @@
   .thumb .rm:hover{background:var(--red)}
   .thumb.bad{border-color:var(--red)}
   .thumb .warn{font-size:.68rem;color:var(--red);padding:0 6px 5px;font-weight:700}
+  .scan-tip{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--teal-50);border:1px solid #CBEAE8;border-radius:var(--radius-sm);padding:10px 14px;margin-top:12px;font-size:.88rem}
+  .scan-tip b{color:var(--teal-600)}
+  .scan-tip .vals{flex:1;min-width:180px}
+  .scan-tip button{background:var(--teal-500);color:#fff;border:none;border-radius:999px;padding:8px 16px;font-weight:700;font-size:.84rem;cursor:pointer}
+  .scan-tip.applied{background:var(--green-50);border-color:#BFE5CF}
+  .scan-tip.applied b{color:var(--green)}
 
   /* ── review ── */
   .review{border:1.5px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
@@ -1278,6 +1284,8 @@ function docCard(d) {
   actions.appendChild(input);
   actions.appendChild(skip);
   renderThumbs(card, d);
+  // A read that was offered earlier survives the step being re-rendered.
+  (state.files[d.id] || []).forEach((entry) => renderScanTip(card, entry));
   return card;
 }
 
@@ -1342,8 +1350,72 @@ async function addFiles(d, incoming) {
     }
     renderThumbs(card, d);
     updateDocStates();
+    scanAttachment(d, entry, card);   // fire-and-forget: offers what the photo says
   }
   updateDocStates();
+}
+
+/* ── reading the photo itself ──
+   Some documents carry their own answers. When one of these is attached,
+   the (already compressed) photo goes to the backend, which reads it and
+   sends back what it found. The client taps "Use these" — nothing is ever
+   filled in silently, and nothing already typed is touched. */
+const SCAN_TARGETS = {
+  permit:        { fields: ["driverName", "driverPermit"] },
+  police:        { fields: ["policeReport", "policeStation"] },
+  certinsurance: { fields: ["policy", "vehicleReg", "chassis"] },
+  receipt:       { fields: ["amount", "provider", "incidentDate"] },
+};
+const SCAN_LABELS = {
+  driverName: "Driver", driverPermit: "Permit #", policeReport: "Report #",
+  policeStation: "Station", policy: "Policy #", vehicleReg: "Reg",
+  chassis: "Chassis", amount: "Total TT$", provider: "Provider", incidentDate: "Date",
+};
+
+async function scanAttachment(d, entry, card) {
+  const target = SCAN_TARGETS[d.id];
+  if (!target || !CONFIG.API_URL || entry.error) return;
+  if (card.querySelector(".scan-tip")) return;                       // one read per document
+  if (!target.fields.some((f) => !String(state.answers[f] || "").trim())) return;  // nothing left to fill
+
+  try {
+    const b64 = await toBase64(entry.file);
+    if (b64.length > 2000000) return;
+    const res = await api({ action: "scanDoc", doc: d.id,
+      mime: entry.file.type || "image/jpeg", data: b64 });
+    const found = res.fields || {};
+    const usable = target.fields.filter((f) =>
+      found[f] && !String(state.answers[f] || "").trim());
+    if (!usable.length) return;
+
+    entry.scan = { found: found, usable: usable, applied: false };
+    renderScanTip(card, entry);
+  } catch (err) { /* a failed read costs nothing */ }
+}
+
+function renderScanTip(card, entry) {
+  if (!card || !entry.scan || entry.scan.applied || card.querySelector(".scan-tip")) return;
+  const s = entry.scan;
+  const tip = el("div", "scan-tip");
+  tip.innerHTML =
+    '<span class="vals"><b>📖 Read from your photo:</b> ' +
+    s.usable.map((f) => SCAN_LABELS[f] + " " + esc(s.found[f])).join(" · ") + "</span>";
+  const use = el("button", null, "Use these");
+  use.type = "button";
+  use.addEventListener("click", () => {
+    s.usable.forEach((f) => {
+      if (!String(state.answers[f] || "").trim()) {
+        state.answers[f] = s.found[f];
+        if (!lookup.filled.includes(f)) lookup.filled.push(f);
+      }
+    });
+    s.applied = true;
+    saveDraft();
+    tip.classList.add("applied");
+    tip.innerHTML = "<span class=\"vals\"><b>✓ Filled in.</b> Check them on the Details step — correct anything we misread.</span>";
+  });
+  tip.appendChild(use);
+  card.appendChild(tip);
 }
 
 /**
