@@ -3111,6 +3111,39 @@ function iExcludes_(skip, name) {
   return false;
 }
 
+/* Set who is left off every wall — from the editor, so nobody has to open the
+   Script Properties page, and rebuilt at once so it takes effect before the
+   night rather than after it. The names are given here and stored in this
+   project's properties; NONE is ever written to a file, because the repository
+   is public. iExcludes_ matches on surname plus every given token, so
+   "Anne Mohammed-Ali" catches the book's "A00001 - Anne Mohammed-Ali" too.
+   intelExclude adds to whoever is already there; it never silently drops one. */
+function intelExclude(names) {
+  if (typeof names !== 'string' || !names.trim()) {
+    return 'Usage: intelExclude("Given Surname, Given Surname") — adds them and rebuilds.\n' +
+           'See who is off now with intelExcluded(); clear the list with intelExcludeClear().';
+  }
+  var have = iExcluded_();
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  names.split(',').forEach(function (n) {
+    n = n.trim();
+    if (n && !iExcludes_(have, n)) { list.push(n); have[iNameKey_(n)] = true; }
+  });
+  iSetProp_('INTEL_EXCLUDE_AGENTS', list.join(', '));
+  return intelExcluded() + '\n\n' + intelRebuildWall();
+}
+function intelExcludeClear() {
+  iSetProp_('INTEL_EXCLUDE_AGENTS', '');
+  return 'Exclusion list cleared.\n\n' + intelRebuildWall();
+}
+function intelExcluded() {
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  return list.length ? 'Off every wall (' + list.length + '): ' + list.join(', ')
+                     : 'Nobody is excluded. Add with intelExclude("Given Surname, ...").';
+}
+
 function iBuildWall45_(target) {
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
@@ -5941,9 +5974,14 @@ function iBuildBook_() {
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
       'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
-      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c, ' +
-      'Contact__r.FirstName, Contact__r.LastName, Contact__r.MailingCity ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
       'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
+  /* NO Contact__r JOIN HERE, AND THAT IS THE WHOLE FIX. The book is 54,310
+     policy rows; pulling the contact behind every one of them to read a name
+     and a town put this build past the six-minute ceiling and left the slide
+     blank. FirstName and LastName fed initials that stopped reaching the wall
+     months ago, and the town is needed only for today's birthdays — a hundred
+     names, not fifty thousand — so it is fetched for them alone, below. */
   } catch (err) {
     sfError = String(err && err.message ? err.message : err);
   }
@@ -6008,7 +6046,7 @@ function iBuildBook_() {
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   live: isActive, status: isActive ? '' : (statusOf[code] || 'Inactive'),
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
-                                  firstAge: null, ini: '', town: '', months: [], onBday: false,
+                                  firstAge: null, town: '', months: [], onBday: false,
                                   boughtThisMonth: 0,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
@@ -6025,9 +6063,6 @@ function iBuildBook_() {
        thing about a client that reaches the wall, and it reaches it because the
        branch asked for it: an agent reads their own client out of two letters
        and a town, and nobody else does. */
-    if (!c.ini && x.Contact__r) c.ini = iBookInitials_(x.Contact__r.FirstName, x.Contact__r.LastName);
-    if (!c.town && x.Contact__r && x.Contact__r.MailingCity)
-      c.town = iBookTown_(x.Contact__r.MailingCity);
     if (!c.dobM) {
       var dob = iDate_(x.Date_Of_Birth__c);
       if (dob && dob.getFullYear() > 1900) {
@@ -6079,6 +6114,27 @@ function iBuildBook_() {
      sits behind them. What is left is the former client, and the ones with a
      birthday today are counted with their agent attached. */
   keys.forEach(function (k) { delete gone[k]; });
+
+  /* The town, for today's birthdays only — the one client detail the wall
+     shows, fetched now for the hundred-odd people it is about rather than
+     joined onto every policy row in the query above. iBookTown_ title-cases
+     the shouted CHAGUANAS the export stores; a town that never arrives is a
+     nicety the list stands without. */
+  var todayIds = keys.filter(function (k) {
+    var c = byClient[k]; return c.dobM === mm && c.dobD === dd;
+  });
+  for (var ti = 0; ti < todayIds.length; ti += 200) {
+    var inList = todayIds.slice(ti, ti + 200)
+      .map(function (id) { return "'" + String(id).replace(/'/g, '') + "'"; }).join(',');
+    try {
+      iSfQuery_('SELECT Id, MailingCity FROM Contact WHERE Id IN (' + inList + ')')
+        .forEach(function (p) {
+          var c = byClient[String(p.Id)];
+          if (c && !c.town && p.MailingCity) c.town = iBookTown_(p.MailingCity);
+        });
+    } catch (e) { /* leave the towns blank rather than fail the whole screen */ }
+  }
+
   var goneToday = 0, goneAgents = {};
   Object.keys(gone).forEach(function (k) {
     var gc = gone[k];

@@ -99,5 +99,36 @@ env.iTabDues_(); env.iTabDues_();
 ok('the first lookup reads the headers', once > 0, String(once));
 ok('the second and third read nothing', env.__calls.getLastColumn - before === once, String(env.__calls.getLastColumn - before));
 
+
+console.log('\nWho is left off the wall — set from the editor, no name in the repo:\n');
+// A settable in-memory Script Properties store, since the helper reads and writes it.
+const store = {};
+env.PropertiesService.getScriptProperties = () => ({
+  getProperty: k => (k in store ? store[k] : null),
+  setProperty: (k, v) => { store[k] = String(v); }
+});
+env._intelSs = null;
+ok('nobody is off to begin with', /Nobody is excluded/.test(env.intelExcluded()));
+let out = env.intelExclude('Anne Mohammed-Ali, Kiran Ali');
+ok('two names go on, and the store holds them', store.INTEL_EXCLUDE_AGENTS === 'Anne Mohammed-Ali, Kiran Ali', store.INTEL_EXCLUDE_AGENTS);
+ok('and setting them rebuilt the wall', /wall45 built at/.test(out));
+ok('the book spelling with the code prefix is caught too', env.iExcludes_(env.iExcluded_(), 'A00001 - Anne Mohammed-Ali') && env.iExcludes_(env.iExcluded_(), 'A00002 - Kiran Ali'));
+ok('the two do not catch each other, though they share a surname', !env.iExcludes_({ 'anne mohammed ali': true }, 'Kiran Ali') && !env.iExcludes_({ 'kiran ali': true }, 'Anne Mohammed-Ali'));
+env.intelExclude('Kiran Ali');
+ok('adding one already there does not double it', store.INTEL_EXCLUDE_AGENTS === 'Anne Mohammed-Ali, Kiran Ali', store.INTEL_EXCLUDE_AGENTS);
+env.intelExclude('Pat Example');
+ok('a third, different name is added', /Pat Example/.test(store.INTEL_EXCLUDE_AGENTS) && env.intelExcluded().indexOf('(3)') > -1, store.INTEL_EXCLUDE_AGENTS);
+env.intelExcludeClear();
+ok('and the list clears', !store.INTEL_EXCLUDE_AGENTS && /Nobody is excluded/.test(env.intelExcluded()));
+
+console.log('\nThe birthdays query no longer joins the contact onto all 54,000 rows:\n');
+const intel = require('fs').readFileSync(require('path').join(__dirname, '..', 'apps-script/Intelligence.gs'), 'utf8');
+const bookQ = intel.slice(intel.indexOf('function iBuildBook_'), intel.indexOf('function iBuildBook_') + 6000);
+ok('the book query drops Contact__r.FirstName / LastName', !/Contact__r\.FirstName/.test(bookQ) && !/Contact__r\.LastName/.test(bookQ));
+ok('and does not join the contact in the 54k-row pull at all', !/Contact__r\.MailingCity ' \+/.test(bookQ) && !/FROM ' \+ IBOOK\.OBJECT[\s\S]{0,40}Contact__r/.test(bookQ));
+ok('town is fetched for today\'s birthdays alone, from Contact', /SELECT Id, MailingCity FROM Contact WHERE Id IN/.test(intel));
+ok('in chunks, so a long list does not overflow one query', /ti \+= 200/.test(intel));
+ok('and a town that never arrives does not fail the screen', /leave the towns blank rather than fail/.test(intel));
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
