@@ -33,10 +33,28 @@
   to = "/renewal/"
   status = 302
 
+# Short links for the service questionnaire — these are what an agent texts or
+# WhatsApps a client. /sq/individual and /sq/group skip the chooser screen.
+[[redirects]]
+  from = "/sq"
+  to = "/service/"
+  status = 302
+
+[[redirects]]
+  from = "/sq/individual"
+  to = "/service/?type=individual"
+  status = 302
+
+[[redirects]]
+  from = "/sq/group"
+  to = "/service/?type=group"
+  status = 302
+
 # KPI tracker short links — what staff are told in the training film:
 # /kpi is the tracker, /training this film, /manual the written guide,
 # /wall the live office screen. The rotating Salesforce board that used to
 # live at /wall/ is now /board/ — see WALL-SETUP.md.
+# (donthaveanagent.com has its own /wall on its own site; the two never meet.)
 [[redirects]]
   from = "/training"
   to = "/kpi/training/"
@@ -70,6 +88,19 @@
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
+
+# The service questionnaire carries client records and a signature — same
+# treatment as claims: never framed, never cached on a shared branch machine,
+# and no-referrer so policy numbers cannot leak through the Referer header if
+# a client taps a link from the page.
+[[headers]]
+  for = "/service/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=()"
 
 # Claims carries ID documents, medical detail and bank particulars.
 # no-store keeps it out of shared-device browser caches; no-referrer stops
