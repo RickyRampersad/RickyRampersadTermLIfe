@@ -109,6 +109,25 @@ ok('and intel.ping says so', post({ action: 'intel.ping' }).workbook === 'by id'
 env._intelSs = null; env.iSs_();
 ok('and again on the next request', (env.__calls.openById || []).length === 2);
 
+console.log('\nSalesforce goes through whichever helper the project has:\n');
+// In the tracker's project there is no SalesforceSync.gs, so no sfQuery_ —
+// the possession and book screens said "sfQuery_ is not defined" on 7 September.
+const seen = [];
+env.sfkQuery_ = soql => { seen.push('sfk:' + soql); return [{ Id: 'a' }]; };
+env.sfkToken_ = () => ({ instance_url: 'https://k', access_token: 'k' });
+ok('no sfQuery_ in the tracker\'s project', typeof env.sfQuery_ !== 'function');
+ok('so it asks the tracker\'s sfkQuery_', env.iSfQuery_('SELECT Id FROM Task')[0].Id === 'a' && seen.join() === 'sfk:SELECT Id FROM Task', seen.join());
+ok('and the tracker\'s token', env.iSfToken_().instance_url === 'https://k');
+ok('and the self test names it', env.iSfHelper_() === 'sfkQuery_ (KPI.gs)', env.iSfHelper_());
+env.sfQuery_ = soql => { seen.push('sf:' + soql); return [{ Id: 'b' }]; };
+ok('with SalesforceSync.gs present, that one comes first', env.iSfQuery_('x')[0].Id === 'b' && seen[seen.length - 1] === 'sf:x');
+// A function declaration is a non-configurable global, so delete is a no-op
+// on the tracker's real sfkQuery_; blanking it is what "neither" looks like.
+env.sfQuery_ = undefined; env.sfkQuery_ = undefined;
+let noHelper = '';
+try { env.iSfQuery_('x'); } catch (e) { noHelper = e.message; }
+ok('with neither, it says so in words', /No Salesforce helper in this project/.test(noHelper), noHelper);
+
 console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
 env.installTriggers();
 env.intelInstallTriggers();

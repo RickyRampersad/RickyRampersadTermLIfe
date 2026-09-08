@@ -148,6 +148,19 @@ purpose, because a screen on a wall has nobody to sign it in, and in exchange
 they return aggregates only. Called after the check, every wall screen gets
 "Session expired. Sign in again."
 
+### Salesforce, through whichever helper the project has
+
+The licence, possession and book screens ask Salesforce. `Intelligence.gs`
+does not carry a Salesforce client of its own: it goes through
+`SalesforceSync.gs`'s `sfQuery_` when that file is in the project, and the
+tracker's `sfkQuery_` (in `KPI.gs`) when it is not — the same SOQL in, the
+same records out, the same `SF_KEY` / `SF_SECRET` / `SF_USER` / `SF_PASS`
+properties behind both. So inside the tracker's project, which already talks
+to Salesforce, those three screens need nothing more. (Before this, pasted
+into the tracker, they answered "sfQuery_ is not defined".) With neither
+helper present they say "No Salesforce helper in this project" rather than
+drawing an empty screen.
+
 ### Which workbook it reads
 
 By default the code reads the spreadsheet it is bound to. In the tracker's
