@@ -46,6 +46,22 @@ This page carries its own guard — it sends the browser to `https` before
 drawing anything, so a PIN is never typed into an `http` page. That is belt
 and braces, not the fix. Tick the box.
 
+## Seeing it work before it matters
+
+Signing in to an empty app shows nothing, and nothing is hard to judge. From
+the sheet: **Branch Meetings → Create a sample meeting.**
+
+It builds one finished meeting — a running order with real clock times, a
+register with all five groups (including the no-entry group, which is the
+point), eight contributions on the floor, an action tracker with one item
+deliberately overdue, and published minutes. It uses the real People tab,
+because a register full of invented names tells you nothing about how yours
+will look.
+
+The meeting is titled **SAMPLE**, its purpose says plainly that it did not
+happen and the attendance is invented, and **Remove the sample meeting**
+takes every row of it back out.
+
 ## Getting in
 
 Two doors, and they do different jobs.

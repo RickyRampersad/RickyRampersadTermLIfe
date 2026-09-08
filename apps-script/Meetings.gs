@@ -343,6 +343,20 @@ function appendRow_(name, obj) {
   sh.appendRow(head.map(function (h) { return (h in obj) ? obj[h] : ''; }));
 }
 
+/** Append many rows in one write. Reads the headers once and lands the lot
+ *  in a single setValues, instead of a round trip per row. */
+function appendRows_(name, objs) {
+  if (!objs || !objs.length) return 0;
+  var sh = tab_(name);
+  var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var rows = objs.map(function (o) {
+    return head.map(function (h) { return (h in o) ? o[h] : ''; });
+  });
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows);
+  return rows.length;
+}
+
 /** The private Drive folder holding presenters' materials. */
 function materialsFolder_() {
   var props = PropertiesService.getScriptProperties();
@@ -2918,6 +2932,266 @@ function apiArchiveIndex_(body) {
   return { ok: true, indexed: out.indexed, remaining: out.remaining, failed: out.failed };
 }
 
+/* ======================== a sample meeting ======================== */
+/*
+ *  Signing in to an empty app shows nothing, and nothing is hard to judge.
+ *  This builds one finished meeting — agenda with real clock times, a
+ *  register with all five groups including no-entry, contributions on the
+ *  floor, an action tracker and published minutes — so the branch can see
+ *  the thing working before a real meeting depends on it.
+ *
+ *  It uses the real People tab, because a register full of invented names
+ *  tells you nothing about how yours will look. Every row it writes is
+ *  marked SAMPLE and removeSampleMeeting() takes all of it back out.
+ */
+
+var SAMPLE_TAG = 'SAMPLE';
+
+function seedSampleMeeting() {
+  if (meetingRows_().some(function (m) { return str_(m['Ref']) === 'RRB-SAMPLE'; })) {
+    var msg = 'The sample meeting is already there. Run removeSampleMeeting() first if you want a fresh one.';
+    Logger.log(msg);
+    return msg;
+  }
+
+  var people = roster_();
+  if (people.length < 4) {
+    var warn = 'Put the branch on the People tab first — the sample builds its register from it.';
+    Logger.log(warn);
+    return warn;
+  }
+
+  var byRole = function (r) { return people.filter(function (p) { return p.role === r; }); };
+  var manager = byRole('manager')[0] || people[0];
+  var staff = byRole('staff');
+  var agents = byRole('agent');
+
+  // Last Wednesday, 9am — the branch's usual slot.
+  var when = new Date();
+  when.setDate(when.getDate() - ((when.getDay() + 4) % 7 || 7));
+  when.setHours(0, 0, 0, 0);
+  var start = new Date(when.getTime()); start.setHours(9, 0, 0, 0);
+
+  var meetingId = uid_('MTG');
+  appendRow_(MEET.TAB_MEETINGS, {
+    'ID': meetingId, 'Ref': 'RRB-SAMPLE', 'Type': 'Branch Meeting',
+    'Title': 'SAMPLE — Branch Meeting', 'Subtitle': 'Example data, safe to delete',
+    'Week': weekOf_(when), 'Date': when, 'Start': '09:00', 'End': '10:00',
+    'Format': 'In-person', 'Location': '9–13 Endeavour 1st Street, Chaguanas',
+    'Chair': manager.email, 'Status': 'closed', 'Late After (min)': 10,
+    'Minutes Status': 'published', 'Scope': 'branch',
+    'Topics': 'Persistency, Clawback, Fact Find',
+    'Mission Statement': 'We will deliver increased financial freedom for our clients ' +
+      'through positive interaction powered by technology.',
+    'Purpose': 'This meeting did not happen. It is example data so the branch can see ' +
+      'the app working — the running order, the register, the floor, the tracker and the ' +
+      'minutes — before a real meeting depends on it. The attendance below is invented. ' +
+      'Remove it from the sheet menu when you have finished looking.',
+    'Created By': SAMPLE_TAG, 'Created': new Date(), 'Updated': new Date()
+  });
+
+  // ---- the running order ----
+  var agenda = [
+    [0, 'Opening | Mission Statement | Moment of Silence', 5, manager, 'all', 'Standard opening.', ''],
+    [0, 'Attendance Register Check', 5, manager, 'all', 'Everyone logs in before we open. The app is the register.', 'Attendance'],
+    [0, 'Review of Minutes & Action Items Tracker', 10, manager, 'all', 'Carry-forward items first.', ''],
+    [1, 'Correspondence & Administrative Reminders', 8, staff[0] || manager, 'all',
+     'Reinstatement campaign extended to 30 September. Policy owner and payer must be the same person — applications are not accepted otherwise.', ''],
+    [2, 'Persistency — 2-Year & 5-Year', 8, staff[1] || manager, 'staff',
+     'Red / orange / green. The branch holds itself to 90% against the 75% threshold.', 'Persistency'],
+    [2, 'Scripts & Clawback Report', 6, staff[1] || manager, 'staff',
+     'Dispatch inside the 20-business-day window. Contracts returned for correction need Sales Admin emailed so the dispatch date is adjusted.', 'Clawback'],
+    [2, '85-Day Premium Due & Lapse Activity', 8, staff[2] || manager, 'staff',
+     'Standing item. Escalation at day 45, 60 and 90.', 'Premium Due & Lapse'],
+    [4, 'Digital Innovation — Fact Find 360', 10, manager, 'all',
+     'Digital needs analysis, client e-signature, manager approval queue. Schedule 11 requires a fact find be taken, retained and available for inspection.', 'Fact Find'],
+    [6, 'Other Items', 5, null, 'all', '', ''],
+    [7, 'Closing Remarks', 5, manager, 'all', '', '']
+  ];
+
+  var agendaRows = [], agendaIds = [];
+  agenda.forEach(function (a, i) {
+    var id = uid_('AGD');
+    agendaIds.push(id);
+    agendaRows.push({
+      'ID': id, 'Meeting ID': meetingId, 'Order': (i + 1) * 10,
+      'Section': SECTIONS[a[0]], 'Title': a[1], 'Detail': a[5],
+      'Presenter Email': a[3] ? a[3].email : '', 'Presenter Name': a[3] ? a[3].name : '',
+      'Allotted (min)': a[2], 'Visibility': a[4],
+      'Materials Required': a[4] === 'staff' ? 'Y' : 'N',
+      'Ready': a[4] === 'staff' ? 'Y' : 'N', 'Topics': a[6],
+      'Status': 'Done', 'Created By': SAMPLE_TAG, 'Created': new Date()
+    });
+  });
+  appendRows_(MEET.TAB_AGENDA, agendaRows);
+
+  // ---- the register: present, late, excused, absent, and no entry at all ----
+  var att = [], n = agents.length;
+  var lateOne = agents[n - 1], excusedOne = agents[n - 2], absentOne = agents[n - 3];
+  // The last two agents are left out entirely, so the no-entry group — the
+  // observation the Q1 minutes record in its own right — is not empty.
+  var noEntry = [agents[n - 4], agents[n - 5]].filter(Boolean);
+
+  people.forEach(function (p) {
+    if (noEntry.some(function (x) { return x.email === p.email; })) return;
+
+    var row = { 'ID': uid_('ATT'), 'Meeting ID': meetingId, 'Email': p.email,
+      'Name': p.name, 'Role': p.role, 'Unit': p.unit, 'Recorded By': SAMPLE_TAG };
+
+    if (excusedOne && p.email === excusedOne.email) {
+      row['Status'] = 'excused'; row['Method'] = 'self-excused';
+      row['Signed In'] = new Date(start.getTime() - 3600000);
+      row['Reason'] = 'Sick leave';
+    } else if (absentOne && p.email === absentOne.email) {
+      row['Status'] = 'absent'; row['Method'] = 'manual';
+      row['Signed In'] = start; row['Reason'] = 'No reason logged';
+    } else if (lateOne && p.email === lateOne.email) {
+      row['Status'] = 'late'; row['Method'] = 'login';
+      row['Signed In'] = new Date(start.getTime() + 26 * 60000);
+      row['Minutes Late'] = 26;
+      row['Reason'] = 'Traffic on the highway';
+    } else {
+      row['Status'] = 'present'; row['Method'] = 'login';
+      row['Signed In'] = new Date(start.getTime() - Math.round(Math.random() * 12) * 60000);
+      row['Minutes Late'] = 0;
+    }
+    att.push(row);
+  });
+  appendRows_(MEET.TAB_ATTENDANCE, att);
+
+  // ---- one session, finished, running slightly over ----
+  var allotted = agenda.reduce(function (t, a) { return t + a[2]; }, 0);
+  appendRow_(MEET.TAB_SESSIONS, {
+    'ID': uid_('SES'), 'Meeting ID': meetingId, 'Started': start, 'Started By': manager.name,
+    'Ended': new Date(start.getTime() + (allotted + 12) * 60000), 'Ended By': manager.name,
+    'Minutes Run': allotted + 12, 'Allotted': allotted, 'Notice Given': 'Y',
+    'Recording Note': 'Example session — no recording attached.'
+  });
+
+  // ---- the floor ----
+  var speak = function (who, mins, kind, body, topic, agIdx, vis) {
+    return { 'ID': uid_('CON'), 'Meeting ID': meetingId, 'Agenda ID': agendaIds[agIdx],
+      'When': new Date(start.getTime() + mins * 60000), 'Offset (min)': mins,
+      'Email': who.email, 'Name': who.name, 'Role': who.role, 'Kind': kind,
+      'Body': body, 'Topics': topic, 'Visibility': vis || 'all' };
+  };
+  var a0 = agents[0] || manager, a1 = agents[1] || manager, a2 = agents[2] || manager;
+  appendRows_(MEET.TAB_CONTRIB, [
+    speak(manager, 3, 'Point', 'Phones away for the next forty-five minutes, please.', '', 0),
+    speak(a0, 22, 'Question', 'My five-year measure shows red. I settled two of those cases myself — can that be reconfirmed before it goes to the report?', 'Persistency', 4, 'staff'),
+    speak(staff[1] || manager, 24, 'Answer', 'I will pull the underlying policies and come back by Friday.', 'Persistency', 4, 'staff'),
+    speak(manager, 26, 'Decision', 'Any 5-year figure queried in this room gets reconfirmed before it goes on a report. Nobody is managed against a number we have not checked.', 'Persistency', 4, 'staff'),
+    speak(a1, 40, 'Concern', 'Clients are still hitting the MyGG portal error on a first premium payment. Two this week.', '', 5),
+    speak(manager, 42, 'Commitment', 'Send the screenshots today and I will escalate them together rather than one at a time.', '', 5),
+    speak(a2, 55, 'Point', 'The fact find took about five minutes after the client meeting and the closing interview was far easier for it.', 'Fact Find', 7),
+    speak(manager, 58, 'Decision', 'Fact Find 360 is the branch standard from Monday. Ask me if you want a walk-through.', 'Fact Find', 7)
+  ]);
+
+  // ---- the tracker ----
+  var due = function (d) { var x = new Date(start.getTime()); x.setDate(x.getDate() + d); return fmtDate_(x); };
+  appendRows_(MEET.TAB_ACTIONS, [
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Reconfirm the queried 5-year persistency figure',
+      'Owner': (staff[1] || manager).name, 'Initiated By': a0.name, 'Due': due(3), 'Status': 'Open',
+      'Notes': 'Raised on the floor', 'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Send MyGG portal screenshots for escalation',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': due(1), 'Status': 'Open',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Adopt Fact Find 360 for client engagements',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': due(4), 'Status': 'In Progress',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Submit weekly pulse reports',
+      'Owner': 'All Agents', 'Initiated By': manager.name, 'Due': 'Weekly', 'Status': 'Standing',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start },
+    { 'ID': uid_('ACT'), 'Meeting ID': meetingId, 'Item': 'Chase the outstanding production letter sign-offs',
+      'Owner': (staff[0] || manager).name, 'Initiated By': manager.name, 'Due': due(-6), 'Status': 'Open',
+      'Notes': 'Deliberately overdue, so the tracker shows what overdue looks like',
+      'Origin Meeting': meetingId, 'Created': start, 'Created By': SAMPLE_TAG, 'Updated': start }
+  ]);
+
+  // ---- minutes, drawn from the record ----
+  var reg = register_({ ID: meetingId }, att);
+  var names = function (l) { return l.length ? l.map(function (p) { return p.name; }).join('  |  ') : '—'; };
+  appendRows_(MEET.TAB_MINUTES, [
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 10, 'Section': 'Purpose',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Example minutes. This meeting did not take place — the attendance and the ' +
+        'contributions below are invented so the branch can see the finished shape of a record.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 20,
+      'Section': 'Attendance Record — Digital Register', 'Visibility': 'staff',
+      'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Signing in to the meeting is the register.\n\n' +
+        'PRESENT (' + reg.counts.present + ')\n' + names(reg.groups.present) + '\n\n' +
+        'LATE (' + reg.counts.late + ')\n' + (reg.groups.late.map(function (p) {
+          return p.name + ' — ' + p.late + ' min late (' + p.reason + ')'; }).join('\n') || '—') + '\n\n' +
+        'EXCUSED (' + reg.counts.excused + ')\n' + (reg.groups.excused.map(function (p) {
+          return p.name + ' — ' + p.reason; }).join('\n') || '—') + '\n\n' +
+        'ABSENT (' + reg.counts.absent + ')\n' + (reg.groups.absent.map(function (p) {
+          return p.name + ' — ' + p.reason; }).join('\n') || '—') + '\n\n' +
+        'NO ENTRY IN THE REGISTER (' + reg.counts.noEntry + ')\n' + names(reg.groups.noEntry) + '\n' +
+        'Neither present, absent, excused nor late. Signing in is the branch standard for a ' +
+        'scheduled meeting; where an active agent has not engaged with it, that is recorded as a ' +
+        'factual observation of the record and carried to the one-on-one with their manager.\n\n' +
+        'Roll: ' + reg.counts.roll + '  |  In the room: ' + reg.counts.here +
+        '  |  Engagement: ' + reg.counts.rate + '%' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 30, 'Section': 'Persistency',
+      'Visibility': 'staff', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Reviewed on the red / orange / green tracking. A queried 5-year figure is to be ' +
+        'reconfirmed before it goes on a report — the branch does not manage anyone against a ' +
+        'number it has not checked. Internal target remains 90% against the 75% threshold.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 40, 'Section': 'Digital Innovation',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Fact Find 360 becomes the branch standard. Schedule 11 of the Insurance Act ' +
+        'requires that a fact find be taken, retained and available for inspection; this is the ' +
+        'branch’s mechanism for meeting that consistently.' },
+    { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 50, 'Section': 'Closing',
+      'Visibility': 'all', 'Author': SAMPLE_TAG, 'Updated': new Date(),
+      'Body': 'Meeting closed. Ran ' + (allotted + 12) + ' minutes against ' + allotted + ' allotted.' }
+  ]);
+
+  log_('seed-sample', SAMPLE_TAG, '', 'RRB-SAMPLE',
+    agendaRows.length + ' agenda items, ' + att.length + ' on the register');
+
+  var out = 'Sample meeting created.\n' +
+    agendaRows.length + ' agenda items · ' + att.length + ' on the register (' +
+    reg.counts.present + ' present, ' + reg.counts.late + ' late, ' + reg.counts.excused +
+    ' excused, ' + reg.counts.absent + ' absent, ' + reg.counts.noEntry + ' no entry) · ' +
+    '8 contributions · 5 action items · 5 minute sections.\n\n' +
+    'Open the app and it is at the top of the list. Remove it with ' +
+    'removeSampleMeeting() or from the Branch Meetings menu.';
+  Logger.log(out);
+  return out;
+}
+
+function seedSampleMeetingFromMenu() {
+  SpreadsheetApp.getUi().alert(seedSampleMeeting());
+}
+
+/** Take every sample row back out, leaving real meetings untouched. */
+function removeSampleMeeting() {
+  var m = meetingRows_().filter(function (x) { return str_(x['Ref']) === 'RRB-SAMPLE'; })[0];
+  if (!m) { Logger.log('No sample meeting to remove.'); return 'No sample meeting to remove.'; }
+  var id = str_(m['ID']);
+
+  var removed = 0;
+  [MEET.TAB_AGENDA, MEET.TAB_ATTENDANCE, MEET.TAB_ACTIONS, MEET.TAB_MINUTES,
+   MEET.TAB_CONTRIB, MEET.TAB_SESSIONS, MEET.TAB_UPLOADS].forEach(function (t) {
+    var rows = readTab_(t).filter(function (r) { return str_(r['Meeting ID']) === id; });
+    // Bottom up: deleting a row shifts every row beneath it.
+    rows.map(function (r) { return r._row; }).sort(function (a, b) { return b - a; })
+        .forEach(function (n) { tab_(t).deleteRow(n); removed++; });
+  });
+  tab_(MEET.TAB_MEETINGS).deleteRow(m._row);
+
+  log_('remove-sample', SAMPLE_TAG, '', 'RRB-SAMPLE', removed + ' rows removed');
+  var out = 'Sample meeting removed — ' + removed + ' rows, plus the meeting itself.';
+  Logger.log(out);
+  return out;
+}
+
+function removeSampleMeetingFromMenu() {
+  SpreadsheetApp.getUi().alert(removeSampleMeeting());
+}
+
 /* ======================== the log ======================== */
 
 function apiLog_(token, limit) {
@@ -3077,6 +3351,9 @@ function onOpen() {
     .addItem('⚙️  Set up / repair tabs', 'setupMeetingsFromMenu')
     .addItem('📥  Import the meeting archive', 'promptImportArchive')
     .addItem('🔎  Index the archive for searching', 'promptIndexArchive')
+    .addSeparator()
+    .addItem('🧪  Create a sample meeting', 'seedSampleMeetingFromMenu')
+    .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
     .addSeparator()
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
