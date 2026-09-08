@@ -209,7 +209,7 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the six triggers and prints the self test.
+rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
 
 **"This script has too many triggers"** on that step means the host project
 is spending its twenty on something else. The tracker before `2026-09-08a`
@@ -229,6 +229,48 @@ Saving the file is not deploying it.
 | `INTEL_APP_URL` | the address the e-mails link to. |
 | `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. |
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
+
+---
+
+## 3½. The wall store — five screens built once a night
+
+The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
+`intel.possession`, `intel.book`) are **not computed when a screen asks**. On
+8 September they were, and it looked like this:
+
+| feed | computed live |
+|---|---|
+| 45-day line | 155 s |
+| contract delivery | 28 s |
+| licence year | 25 s |
+| possession | 31 s |
+| birthdays | never finished — 54,310 portfolio rows do not fit in one web request |
+
+A television reloading five of those every half hour would have spent the
+project's daily runtime by lunch, and the tracker's sign-in runs in the same
+project. So each feed is built **once a night, one execution each** —
+`intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
+`intelRebuildPossession`, `intelRebuildBook`, at three in the morning, an hour
+after `intelRebuild` — and kept in the hidden tab **`_Intel Wall`**, one row
+per feed. A request reads its row in about a second and answers with
+`stored: "<when it was built>"`; the screen's own "built …" line shows the
+date.
+
+- **With no stored copy yet**, a request builds the feed live and stores it,
+  so the first morning works. After pasting, run **`intelRebuildWall`** once
+  from the editor to fill all five without waiting for the night; it stores
+  each as it lands, so a run the six-minute ceiling ends still leaves the
+  fast ones in place.
+- **A bad night never pins a bad screen.** A build that errors, or comes back
+  "not configured", is refused by the rebuild (the trigger log keeps the
+  reason) and the screen keeps last night's good copy.
+- The tab lookup (`iFindTab_`) and header reads are memoised per execution;
+  they were re-scanning every sheet in the workbook for every tab every
+  builder asked for.
+
+`intelInstallTriggers` now installs eleven; with the tracker's five that is
+sixteen, under the project's limit of twenty. `tests/test-wallstore.js`
+drives all of it through the tracker's real `doPost`.
 
 ---
 
