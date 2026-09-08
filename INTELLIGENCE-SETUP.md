@@ -115,18 +115,40 @@ has a `doGet`/`doPost`**.
 ### If the project already has a router
 
 A script project may declare `doGet` and `doPost` exactly once, and a second
-declaration silently wins. If `BranchEngine.gs` is in the same project:
+declaration silently wins — so left in place, Intelligence's pair takes over the
+host's router and **the host's own sign-in stops working**. That is what to
+expect if the tracker suddenly answers "Unknown action: login".
 
-- **Delete** the `doGet`/`doPost` block at the very bottom of `Intelligence.gs`
-  (it is marked, and it is the last thing in the file).
+This applies to the branch tracker (`KPI.gs`) as well as `BranchEngine.gs`. As
+of September 2026 the intelligence code and the tracker share one project and
+one deployment, and `KPI.gs` already carries both lines below.
+
+- **Delete the two functions** under the banner `WEB APP ENTRY POINTS` in
+  `Intelligence.gs`. They are **not** at the end of the file: about four
+  thousand lines follow them. The block ends at the next banner,
+  `WHAT IS IN OUR POSSESSION`. Delete as far as that and no further.
 - Add one line inside the existing `doPost`, straight after it parses the body:
 
   ```js
   var hit = intelRoute_(b); if (hit) return hit;
   ```
 
+- And, if the host serves the client survey links, one inside its `doGet`:
+
+  ```js
+  var page = iSurveyClick_(e); if (page) return page;
+  ```
+
 `intelRoute_` returns `null` for anything that is not an `intel.*` action, so
-the rest of that function keeps working exactly as it did.
+the rest of that function keeps working exactly as it did. It must be called
+**before** the host's own token check: the five wall reads carry no token on
+purpose, because a screen on a wall has nobody to sign it in, and in exchange
+they return aggregates only. Called after the check, every wall screen gets
+"Session expired. Sign in again." — which is what the branch's television
+showed on 7 September.
+
+`tests/test-intelroute.js` drives the tracker's own `doPost` with the bodies the
+wall and the app send, and checks both halves still work.
 
 If the self test says no other router was found, leave the block where it is.
 

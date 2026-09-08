@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06e';
+var SCRIPT_VERSION = '2026-09-07d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -777,6 +777,25 @@ function isoDay_(v) {
 }
 
 function todayISO_() { return Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd'); }
+
+/* Which day a report is for, when the caller may not be a person.
+   Apps Script hands a time-based trigger its own event object as the first
+   argument — {authMode, triggerUid, 'day-of-month', …} — not a date. Taken as
+   "which day", it matches no entry, so every desk reads as silent, and the
+   header formats an unparseable value as the epoch. That is exactly how the
+   3pm checkpoint went out on 7 September dated Thursday 1 January 1970 with
+   the whole branch marked "No entry", on a day the branch had closed 33 tasks.
+   Only a string or a Date that resolves to a real day counts; anything else is
+   nothing, and the caller falls back to today. */
+function dayArg_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return isNaN(v.getTime()) ? '' : isoDay_(v);
+  }
+  if (typeof v !== 'string' && typeof v !== 'number') return '';
+  var s = isoDay_(v);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
 
 function shiftDays_(iso, n) {
   var p = iso.split('-');
@@ -1687,7 +1706,7 @@ function openBlockers_(e) {
 /** The 3pm cut. Blocks 1-3 are done by then; the last block is not, so it is
  *  reported as outstanding rather than as a gap. */
 function checkpointReport_(date) {
-  var day = date || todayISO_();
+  var day = dayArg_(date) || todayISO_();
   var people = publicRoster_();
   var byId = {};
   latestEntries_().forEach(function (e) { if (e.Date === day) byId[e.StaffId] = e; });
@@ -1707,6 +1726,7 @@ function checkpointReport_(date) {
     return {
       staffId: p.staffId, name: p.name, unit: p.unit,
       signedIn: a && a.at ? a.at : '',
+      signedOut: a && a.out ? a.out : '',
       absent: a && a.status === 'absent' ? (a.reason || 'not in') : '',
       late: a ? a.late : 0,
       mailAM: (e && parseMail_(e.MailAM) || {}).at || '',
@@ -1784,7 +1804,7 @@ function trainingDetail_(rows, register, days) {
 
 /** The week, Monday to Friday, with last week alongside it for direction. */
 function weeklyReport_(anyDateInWeek) {
-  var monday = weekStart_(anyDateInWeek || todayISO_());
+  var monday = weekStart_(dayArg_(anyDateInWeek) || todayISO_());
   var days = weekDays_(monday);
   var prevDays = weekDays_(shiftDays_(monday, -7));
   var entries = latestEntries_();
@@ -1902,9 +1922,25 @@ function json_(obj) {
    memo that outlives its request is a memo serving yesterday's roster. */
 function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; _rankMemo = null; }
 
+/* Branch Intelligence lives in this project too, and a script project may
+   declare doGet and doPost exactly once — so Intelligence.gs ships with its
+   own pair at the foot of the file, to be deleted when it joins a project that
+   already has a router. These two hand its actions over.
+   intelRoute_ does its own authentication: the five wall reads are
+   unauthenticated on purpose, because a screen on a wall has nobody to sign it
+   in, and in exchange they return aggregates only; everything else goes
+   through iSession_. So they are routed before the tracker's token check,
+   which would otherwise refuse them — which is exactly what the wall got on
+   7 September, "Session expired" to a television.
+   Both are guarded on typeof, so the tracker still runs in a project that has
+   no Intelligence.gs in it. */
 function doGet(e) {
   resetRequestMemo_();
   var p = (e && e.parameter) || {};
+  // A survey link in a client's e-mail is a GET and nothing else answers it.
+  if (typeof iSurveyClick_ === 'function') {
+    try { var page = iSurveyClick_(e); if (page) return page; } catch (err) {}
+  }
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -1916,6 +1952,14 @@ function doPost(e) {
   resetRequestMemo_();
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+  if (typeof intelRoute_ === 'function') {
+    try {
+      var hit = intelRoute_(body);      // null for anything not an intel.* action
+      if (hit) return hit;
+    } catch (err) {
+      return json_({ ok: false, error: String(err && err.message || err) });
+    }
+  }
   try {
     return json_(handle_(body.action || 'save', body, body.token));
   } catch (err) {
@@ -1924,7 +1968,18 @@ function doPost(e) {
 }
 
 function handle_(action, data, token) {
-  if (action === 'ping') return { ok: true, today: todayISO_(), version: SCRIPT_VERSION };
+  /* Which files this project actually has in it. The tracker runs with any of
+     the three missing, and each absence shows up somewhere else entirely —
+     "Editing tasks is not switched on" under a Close button, a wall that says
+     no feed. On 7 September closing a task from the tracker did nothing and
+     there was no way to ask the script what it was carrying. Now there is. */
+  if (action === 'ping') {
+    return { ok: true, today: todayISO_(), version: SCRIPT_VERSION,
+             has: { write:   typeof updateTask_ === 'function',
+                    waiting: typeof sfkWaitingSafe_ === 'function',
+                    intel:   typeof intelRoute_ === 'function',
+                    salesforce: sfkConfigured_() } };
+  }
   if (action === 'login') return login_(data.who || data.email, data.password);
 
   var profile = readToken_(token);
@@ -1941,6 +1996,9 @@ function handle_(action, data, token) {
 
     case 'absent':
       return markAbsent_(data, profile);
+
+    case 'signOut':
+      return signOutDay_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -2096,15 +2154,20 @@ function esc_(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/* Neither of these may invent a date. Given something that is not a day they
+   return it unchanged: a header reading "[object Object]" is obviously broken,
+   where "Thursday 1 January 1970" reads like a real report about a quiet day. */
 function prettyDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEEE d MMMM yyyy');
 }
 
 function shortDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEE d MMM');
 }
 
@@ -2207,7 +2270,8 @@ function checkpointHtml_(r) {
       '</tr></table>' +
       '<div style="font-size:12px;color:' + (l.absent ? MAIL.amber : MAIL.muted) + ';margin-top:5px">' +
         (l.absent ? 'Not in — ' + esc_(l.absent)
-                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '')
+                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '') +
+                                 (l.signedOut ? ' · out at ' + esc_(l.signedOut) : '')
                   : 'No sign-in today') + '</div>' +
       '<div style="font-size:12px;color:' + (l.mailAM || l.mailPM ? MAIL.muted : MAIL.amber) + ';margin-top:3px">' +
         (l.mailAM || l.mailPM
@@ -4115,8 +4179,8 @@ function standing_(profile, staffId) {
 // ---------------------------------------------------------------------------
 
 var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
-            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'Status', 'Reason',
-                   'MarkedBy', 'UpdatedAt'] };
+            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'SignedOut', 'Status',
+                   'Reason', 'MarkedBy', 'UpdatedAt'] };
 var ATT_GRACE_MIN = 10;
 
 /** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
@@ -4142,11 +4206,26 @@ function lateBy_(staffId, at) {
 
 function attSheet_() {
   var sh = hrTab_(ATT, false);
-  if (sh) return sh;
+  if (sh) return ensureAttColumns_(sh);
   sh = hrTab_(ATT, true);
   // "08:07" typed into a fresh cell becomes a time value; kept as text the
-  // register reads back exactly what was written.
-  try { sh.getRange('D:E').setNumberFormat('@'); } catch (e) {}
+  // register reads back exactly what was written. D to F: in, last seen, out.
+  try { sh.getRange('D:F').setNumberFormat('@'); } catch (e) {}
+  return sh;
+}
+
+/** A register written before sign-out existed has no SignedOut column, and a
+ *  write to a column that is not there is silently dropped. Added once, on the
+ *  end, so the columns a person already reads keep their places. */
+function ensureAttColumns_(sh) {
+  var head = headerOf_(sh);
+  var missing = ATT.head.filter(function (c) { return head.indexOf(c) === -1; });
+  if (!missing.length) return sh;
+  var at = sh.getLastColumn() + 1;
+  sh.getRange(1, at, 1, missing.length).setValues([missing]);
+  try { sh.getRange(2, at, Math.max(sh.getMaxRows() - 1, 1), missing.length).setNumberFormat('@'); } catch (e) {}
+  forgetHeader_(sh);
+  forgetHr_(ATT);
   return sh;
 }
 
@@ -4175,8 +4254,9 @@ function attRow_(rows, day, staffId) {
 
 function attOut_(r, staffId) {
   var at = timeStr_(r.FirstSignIn);
-  return { at: at, lastSeen: timeStr_(r.LastSeen), status: String(r.Status || 'in'),
-           reason: String(r.Reason || ''), late: at ? lateBy_(staffId, at) : 0 };
+  return { at: at, lastSeen: timeStr_(r.LastSeen), out: timeStr_(r.SignedOut),
+           status: String(r.Status || 'in'), reason: String(r.Reason || ''),
+           late: at ? lateBy_(staffId, at) : 0 };
 }
 
 /** Called on sign-in and on session resume. Cheap on repeats: the day's
@@ -4193,7 +4273,8 @@ function recordAttendance_(profile) {
     out = attOut_(found.row, sid); out.first = false;
   } else {
     var o = { Date: day, StaffId: sid, Name: profile.name || sid, FirstSignIn: hhmm_(now),
-              LastSeen: hhmm_(now), Status: 'in', Reason: '', MarkedBy: sid, UpdatedAt: now };
+              LastSeen: hhmm_(now), SignedOut: '', Status: 'in', Reason: '', MarkedBy: sid,
+              UpdatedAt: now };
     sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
     out = attOut_(o, sid); out.first = true;
   }
@@ -4202,6 +4283,35 @@ function recordAttendance_(profile) {
   // must land on the day, not the plan.
   try { cache.put(key, JSON.stringify(Object.assign({}, out, { first: false })), 1800); } catch (e) {}
   return out;
+}
+
+/** Closing the day. The other half of the register: signing in opens the day,
+ *  this closes it, and the two times are the hours the person was here.
+ *
+ *  Only ever your own — a manager may mark somebody absent, because that is a
+ *  fact they can know, but nobody else can say when you finished.
+ *
+ *  Coming back and signing out again simply moves the time later, which is
+ *  what a person who stepped out and returned would want it to say. */
+function signOutDay_(data, profile) {
+  var day = todayISO_(), sid = profile.staffId;
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date(), at = hhmm_(now);
+  var found = attRow_(rows, day, sid);
+  if (!found) {
+    // No row at all: the register would otherwise show a day that was closed
+    // but never opened. Open it first, at the same minute, and say so.
+    recordAttendance_(profile);
+    rows = sheetObjects_(attSheet_());
+    found = attRow_(rows, day, sid);
+  }
+  if (!found) return { ok: false, error: 'The register did not answer. Try once more.' };
+  writeRow_(sh, found.at, colMap_(sh), { SignedOut: at, LastSeen: at, UpdatedAt: now });
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + sid + '_' + day); } catch (e) {}
+
+  var done = blocksSubmittedOn_(sid, day);
+  return { ok: true, date: day, staffId: sid, out: at,
+           blocksDone: done.length, blocksLeft: BLOCK_IDS.length - done.length };
 }
 
 /** "Not in today", with the reason. Self, or the People Leader for a report. */
@@ -4217,7 +4327,7 @@ function markAbsent_(data, profile) {
   if (found) writeRow_(sh, found.at, colMap_(sh), patch);
   else {
     var name = (publicRoster_().filter(function (p) { return p.staffId === staffId; })[0] || {}).name || staffId;
-    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '' }, patch);
+    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '', SignedOut: '' }, patch);
     sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
   }
   forgetHr_(ATT);

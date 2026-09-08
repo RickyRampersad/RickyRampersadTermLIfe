@@ -240,16 +240,37 @@ const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66Q
 
 // Bumped in the same commit as apps-script/KPI.gs. The check is simply:
 // does the workbook say it is running this, or something older?
-const WANT="2026-09-06e";
+const WANT="2026-09-07d";
 
 const out=document.getElementById("out"), go=document.getElementById("go");
+
+/* The project is four files and the tracker runs without three of them, each
+   absence surfacing far from its cause: no KPI-Write and a Close button says
+   editing is not switched on; no Intelligence and every wall screen reads no
+   feed. Say plainly which are in. */
+function parts(runs){
+  const h=(runs.map(r=>r.has).find(Boolean))||null;
+  if(!h) return "";
+  const row=(on,yes,no)=>'<div style="margin-top:5px">'+(on?"✓ ":"✗ ")+"<b>"+(on?yes:no)+"</b></div>";
+  const miss=[];
+  if(!h.write) miss.push("KPI-Write.gs");
+  if(!h.waiting) miss.push("KPI-Waiting.gs");
+  return '<div style="margin-top:12px;font-size:14px;line-height:1.5">'+
+    row(h.write,"Closing a task works","KPI-Write.gs is not in the project — Close does nothing")+
+    row(h.waiting,"Who we are waiting on works","KPI-Waiting.gs is not in the project")+
+    row(h.intel,"The intelligence wall is served from here","Intelligence.gs is not in the project — the wall screens read no feed")+
+    row(h.salesforce,"Salesforce is connected","Salesforce is not connected — add SF_KEY, SF_SECRET, SF_USER and SF_PASS to Script Properties")+
+    (miss.length?'<div style="margin-top:9px">Add '+miss.join(" and ")+
+      ' as <b>a new file</b> in the same project, then deploy a new version again.</div>':"")+
+    "</div>";
+}
 
 async function ping(){
   const t0=performance.now();
   const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
                             body:JSON.stringify({action:"ping"})});
   const j=await r.json();
-  return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok)};
+  return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok), has:j&&j.has||null};
 }
 
 function show(cls,title,body,small){
@@ -289,7 +310,7 @@ go.onclick=async()=>{
     } else if(v===WANT){
       show("ok","Done — the new script is live",
         "The workbook is answering as version <b>"+v+"</b>, which is the one "+
-        "you just deployed. Nothing else to do. "+speed,
+        "you just deployed. "+speed+parts(runs),
         "Timed at "+times+" (average "+(avg/1000).toFixed(1)+"s)");
     } else {
       show("hm","A different version is live",

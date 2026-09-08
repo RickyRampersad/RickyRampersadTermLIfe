@@ -378,13 +378,34 @@ fall in their period.
 
 ## Attendance
 
-Signing in is the attendance register. The script creates an `Attendance`
-tab on first sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen ·
+Signing in opens the day and signing out closes it. Those two times are the
+hours the register shows. The script creates an `Attendance` tab on first
+sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen · SignedOut ·
 Status · Reason · MarkedBy · UpdatedAt`. The first sign-in of the day is the
 start time; later ones refresh `LastSeen`. "Not in today" writes `Status =
 absent` with the reason, by the person or their People Leader. Start time is
 compared with the first token of the person's `hours` in `SCHEDULE`, with a
 ten-minute grace. The JotForm register can be retired once this is live.
+
+### Signing out
+
+**Close the day** sits at the foot of a person's own day, under their job
+document, and names what is still unreported before it asks — blocks not
+submitted, an afternoon sweep not marked. It writes `SignedOut`, then signs
+the device out; the sign-in screen says the day was closed and at what time.
+The **Sign out** button in the header records the same thing, but always lets
+a person leave even if the sheet does not answer.
+
+Only your own: a manager may mark somebody absent, because that is a fact they
+can know, but nobody else can say when you finished. Signing back in leaves the
+morning untouched, and closing again simply moves the time later, which is what
+somebody who stepped out and came back would want it to say. Somebody who
+closes a day they never opened gets one row with both times the same, rather
+than a day that was closed but never started.
+
+A register created before September 2026 has no `SignedOut` column. It is added
+on the end the first time the tab is read, so the columns already there keep
+their places.
 
 ## What changed
 
@@ -433,6 +454,12 @@ quarter, the register, the job document, closing a task) was sent without the
 token, so a person who had just signed in was told they had not. The token is
 attached to every call now. Anyone still seeing it that way is on a page
 loaded before the fix: reload.
+
+**A report dated "Thursday 1 January 1970", with every desk marked "No
+entry"** — the checkpoint or the weekly summary ran with a trigger's event
+object where a date belongs, matched no rows, and formatted the unparseable
+value as the epoch. Fixed in `2026-09-07a`; if you see it again, the workbook
+is running an older script, so redeploy.
 
 **"Unreadable reply from the sheet."** — the deployment is not set to
 **Anyone**, or the last change was never published as a new version. See §3.

@@ -38,11 +38,11 @@ let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 
 const WEEK = { ok:true, from:'2026-09-07', to:'2026-09-14', people:['boss','demo','two'], attendance:[
-  { date:'2026-09-07', staffId:'boss', at:'07:52', lastSeen:'07:52', status:'in', reason:'', late:0, markedBy:'boss' },
+  { date:'2026-09-07', staffId:'boss', at:'07:52', lastSeen:'16:41', out:'16:41', status:'in', reason:'', late:0, markedBy:'boss' },
   { date:'2026-09-07', staffId:'demo', at:'08:31', lastSeen:'11:02', status:'in', reason:'', late:31, markedBy:'demo' },
   { date:'2026-09-07', staffId:'two', at:'', lastSeen:'', status:'absent', reason:'sick', late:0, markedBy:'boss' } ] };
 
-async function session(b, who, attendance, rowsAttendance, absents) {
+async function session(b, who, attendance, rowsAttendance, absents, outs) {
   const ctx = await b.newContext({ viewport:{ width:390, height:844 }, isMobile:true, hasTouch:true });
   const page = await ctx.newPage();
   const errors = [];
@@ -56,6 +56,7 @@ async function session(b, who, attendance, rowsAttendance, absents) {
     if (body.action === 'rows') return j(Object.assign({ ok:true, rows:[], metrics:{ ok:false, reason:'notConfigured' } }, rowsAttendance ? { attendance: rowsAttendance } : {}));
     if (body.action === 'attendance') return j(WEEK);
     if (body.action === 'absent') { absents.push(body); return j({ ok:true, date:'2026-09-07', staffId: who.staffId, status:'absent', reason: body.reason }); }
+    if (body.action === 'signOut') { (outs || []).push(body); return j({ ok:true, date:'2026-09-07', staffId: who.staffId, out:'16:32', blocksDone:1, blocksLeft:3 }); }
     return j({ ok:true });
   });
   await page.clock.setFixedTime(new Date('2026-09-07T11:30:00'));   // well after ten
@@ -119,8 +120,41 @@ async function session(b, who, attendance, rowsAttendance, absents) {
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 
+  console.log('\nClosing the day is the other half of the register:\n');
+  const outs = [];
+  s = await session(b, P, { first:false, at:'08:04', lastSeen:'15:50', status:'in', reason:'', late:0 },
+                    { demo:{ at:'08:04', status:'in', reason:'', late:0 } }, absents, outs);
+  t = await s.page.locator('body').innerText();
+  ok('the day carries a card to close it', /Close the day/.test(t), t.slice(0, 120));
+  ok('which names what is still unreported', /Still open: 4 blocks not reported and the afternoon mail sweep/.test(t),
+     (t.match(/Still open:[^\n]*/) || [''])[0]);
+  ok('and says what signing out means', /Signing out closes your day on the register/.test(t));
+  await s.page.click('button:has-text("Sign out and close the day")');
+  await s.page.waitForTimeout(1200);
+  ok('one sign-out went out, carrying the session', outs.length === 1 && outs[0].token === 't', JSON.stringify(outs[0]));
+  t = await s.page.locator('body').innerText();
+  ok('the person is signed out of the device', await s.page.locator('button:has-text("Sign in")').count() === 1);
+  ok('and told the day was closed, with the time', /Day closed at 16:32/.test(t), t.slice(0, 200));
+  ok('the session is gone from the device', (await s.page.evaluate(() => localStorage.getItem('rrb_kpi_token') || '')) === '');
+  ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
+  await s.ctx.close();
+
+  console.log('\nA day already closed says so, and the register shows both times:\n');
+  s = await session(b, BOSS, { first:false, at:'07:52', lastSeen:'16:41', out:'16:41', status:'in', reason:'', late:0 },
+    { boss:{ at:'07:52', out:'16:41', status:'in', reason:'', late:0 }, demo:{ at:'08:31', status:'in', reason:'', late:31 } }, absents, outs);
+  t = await s.page.locator('body').innerText();
+  ok('his own line carries the time out', /In at 07:52 · on time · out at 16:41/.test(t), (t.match(/In at [^\n]{0,70}/) || [''])[0]);
+  ok('and the team row does too', /In at 07:52 · out 16:41/.test(t), (t.match(/In at 07:52[^\n]{0,40}/g) || []).join(' | '));
+  await s.page.click('button:has-text("Attendance register")');
+  await s.page.waitForTimeout(900);
+  t = await s.page.locator('body').innerText();
+  ok('the register shows in and out on one cell', /07:52 → 16:41/.test(t), (t.match(/07:52[^\n]{0,20}/) || [''])[0]);
+  ok('and explains the arrow', /the time after the arrow is when they signed out/.test(t));
+  ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
+  await s.ctx.close();
+
   console.log('\nAn older server that says nothing about attendance:\n');
-  s = await session(b, BOSS, undefined, null, absents);
+  s = await session(b, BOSS, undefined, null, absents, []);
   t = await s.page.locator('body').innerText();
   ok('the team list does not claim nobody signed in', !/No sign-in yet/.test(t));
   ok('and the branch opens as before', /the team|submit each block/i.test(t), t.slice(0, 120));

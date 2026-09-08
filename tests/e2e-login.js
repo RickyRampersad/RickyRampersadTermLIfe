@@ -29,7 +29,7 @@ const SCHEDULE = { kamla: { start:'08:00', end:'16:00', lunch:'12:00-13:00',
   blocks: { KPI1:{time:'8 – 10am', focus:'Branch administration'}, KPI2:{time:'10 – 12pm', focus:'Contracts'},
             PM1:{time:'1 – 3pm', focus:'Reporting'}, PM2:{time:'3 – 4pm', focus:'Task management'} } } };
 
-let fails = 0, loginTries = 0, refuseFirst = 2;
+let fails = 0, loginTries = 0, refuseFirst = 2, meDown = 0, meRefuse = false;
 const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')); if(!c) fails++; };
 
 (async () => {
@@ -48,6 +48,8 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
         return route.fulfill({ status:404, contentType:'text/html', body:'Page Not Found' });
       return reply({ ok:true, token:'tok', profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     }
+    if (body.action === 'me' && meDown > 0) { meDown--; return route.abort('connectionreset'); }
+    if (body.action === 'me' && meRefuse) return reply({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
     if (body.action === 'me') return reply({ ok:true, profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'rows') return reply({ ok:true, rows:[] });
     if (body.action === 'training') return reply({ ok:true, training:[] });
@@ -102,6 +104,30 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   const msg = await page.locator('text=/busy, not broken/').count();
   ok('the message says busy, not broken', msg > 0);
   ok('and it stopped after three tries', loginTries === 3, loginTries + ' attempts');
+
+  console.log('\nA dropped request while the page starts must not cost her the session:\n');
+  await page.evaluate(() => { localStorage.clear(); localStorage.setItem('rrb_kpi_token', 'tok'); });
+  meDown = 99; refuseFirst = 0; loginTries = 0;
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(6500);                 // three tries, 1.5 s and 3 s apart
+  const kept = await page.evaluate(() => localStorage.getItem('rrb_kpi_token'));
+  ok('the sign-in screen shows', await page.locator('button:has-text("Sign in")').count() === 1);
+  ok('and says the sheet did not answer, not that she was signed out', await page.locator('text=/did not answer/').count() > 0);
+  ok('and says a reload carries on', await page.locator('text=/reload the page to carry on/').count() > 0);
+  ok('the session is still on the device', kept === 'tok', String(kept));
+  meDown = 0;
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(1500);
+  ok('when the sheet answers again, a reload resumes the day without a sign-in', await page.locator('text=YOUR DAY').count() > 0 && await page.locator('button:has-text("Sign in")').count() === 0);
+
+  console.log('\nWhereas a session the sheet refuses is cleared, as before:\n');
+  await page.evaluate(() => localStorage.setItem('rrb_kpi_token', 'stale'));
+  meRefuse = true;
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(1500);
+  ok('the sign-in screen shows with the session-ended note', await page.locator('button:has-text("Sign in")').count() === 1 && await page.locator('text=/Your session ended/').count() > 0);
+  ok('and the stale session is gone from the device', (await page.evaluate(() => localStorage.getItem('rrb_kpi_token') || '')) === '');
+  meRefuse = false;
 
   await browser.close(); server.close();
   console.log('\n' + (fails ? fails + ' FAILED' : 'all green') + '\n');

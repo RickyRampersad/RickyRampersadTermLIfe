@@ -121,7 +121,10 @@ var SLIDES = [
   { file:'book.html',       tab:'Birthdays today',   secs:18 }
 ];
 
-var Q = new URLSearchParams(location.search);
+/* The query, read by hand: a television browser from 2016 has no URLSearchParams. */
+var Q = { get: function (k) {
+  var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1]) : null; } };
 /* ?secs=30 gives every story the same dwell — for a screen being watched
    rather than glanced at. */
 var WANT = Number(Q.get('secs')) || 0;
@@ -130,8 +133,15 @@ var FIXED = WANT ? Math.max(2, Math.min(600, WANT)) : 0;
    days. This starts it again at a slide boundary, twelve hours in by default,
    so a leak or a stale asset cannot accumulate for a week. */
 var RELOAD_AFTER_MS = Math.max(1, Number(Q.get('reload') || 12)) * 3600 * 1000;
-/* How long a story gets to load before the wall stops waiting for it. */
+/* How long a story gets to load before the wall stops waiting for it, and how
+   often a story that failed is asked for again. A television that lost its
+   wifi for a minute while the wall was starting would otherwise show one
+   screen until the next restart. */
 var GRACE_MS = Math.max(1, Number(Q.get('grace') || 30)) * 1000;
+var RETRY_MS = Math.max(1, Number(Q.get('retry') || 120)) * 1000;
+/* The first screen turns early — a person checking that the wall works should
+   not have to stand there for half a minute to find out. */
+var FIRST_TURN_MS = 12000;
 var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
@@ -167,19 +177,30 @@ SLIDES.forEach(function (s, i) {
   s.dot = b;
   dots.appendChild(b);
 
-  setTimeout(function () {
-    f.addEventListener('load', function () {
-      var here = '';
-      try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
-      if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
-      s.ready = true; s.dead = false; b.classList.remove('dead');
-    });
-    f.src = s.file;
+  f.addEventListener('load', function () {
+    var here = '';
+    try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
+    if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
+    s.ready = true; s.dead = false; b.classList.remove('dead');
+  });
+  s.ask = function () {
+    s.asked = Date.now();
+    f.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
     /* A story that never answers must not hold the wall. Past the grace an
        unloaded frame is skipped until it does come good. */
     setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
-  }, 2500 * i);
+  };
+  setTimeout(s.ask, 2500 * i);
 });
+
+/* A story given up on is asked for again, every couple of minutes, until it
+   comes good. `here` in the load handler still matches: the query is not part
+   of the pathname. */
+function retryDead() {
+  SLIDES.forEach(function (s) {
+    if (s.dead && !s.ready && Date.now() - s.asked > RETRY_MS) s.ask();
+  });
+}
 
 /* The next story to show: one that has painted, before one still loading,
    before one given up on — and if every one is silent, keep turning anyway. */
@@ -192,9 +213,17 @@ function nextLive(from) {
 
 function show(i) {
   if (i === at) { started = Date.now(); return; }       // the only one worth showing: hold it
-  SLIDES.forEach(function (s, k) { s.el.classList.toggle('on', k === i); s.dot.classList.toggle('on', k === i); });
+  SLIDES.forEach(function (s, k) {
+    /* add/remove rather than toggle(name, force): old television WebKit and IE
+       ignore the second argument and flip every slide. */
+    var on = k === i;
+    s.el.classList[on ? 'add' : 'remove']('on');
+    s.dot.classList[on ? 'add' : 'remove']('on');
+  });
+  var firstTurn = at === -1;
   at = i;
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
+  if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
   started = Date.now();
 }
 
@@ -215,6 +244,7 @@ function tick() {
       step();
     }
   }
+  retryDead();
   /* The boot card lifts once the story on screen has painted — or after the
      grace, so a silent feed cannot leave the card up for good. */
   if (!bootGone && ((at > -1 && SLIDES[at].ready) || Date.now() - BORN > GRACE_MS)) {
