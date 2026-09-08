@@ -106,7 +106,11 @@ async function session(b, who, first, mail, sent, ended) {
   // KPI 1 is pre-picked from the schedule, so its list is already on the plan.
   await s.page.waitForTimeout(400);
   t = await s.page.locator('body').innerText();
-  const a = t.indexOf('for the Branch Manager'), e = t.indexOf('for the Executive Agent'), g = t.indexOf('Premium dues — an agent');
+  // The queue itself, from its label down. Above it sits the summary strip,
+  // which quotes the three open longest by age — a thing to read, not the
+  // order to work in, so it is not what this measures.
+  const q = t.slice(Math.max(0, t.search(/what is in it/i)));
+  const a = q.indexOf('for the Branch Manager'), e = q.indexOf('for the Executive Agent'), g = q.indexOf('Premium dues — an agent');
   ok('the Branch Manager\'s item first, then the Executive Agent\'s, then the agent\'s', a > -1 && e > a && g > e, [a, e, g].join(','));
   ok('and an agent\'s item carries no rank', !/for the Agent\b/.test(t));
   ok('the person\'s own screens are named at the top', /Your quarter/.test(t) && /My performance/.test(t) && /Job document/.test(t));

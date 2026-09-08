@@ -413,6 +413,49 @@ function LateByAgent({ items }) {
 //
 // Capped, because a block can hold seventy-six. A list nobody scrolls to the
 // bottom of teaches people the screen is decorative.
+// The bands a task's age falls into. Coarse on purpose: a wall of exact days
+// is a spreadsheet, four bands is a picture.
+const AGE_BANDS = [["≤ 7 days", 7], ["8–30", 30], ["31–60", 60], ["61+", Infinity]];
+const ageBand = a => AGE_BANDS.find(b => a <= b[1])[0];
+
+// One line of facts under a task: how old, when it is due or how far over,
+// who it is for, whose client, its status, and whether it has gone quiet.
+// The same line everywhere a task is listed, so a person reads it once.
+function BookMeta({ t }) {
+  const over = t.late;
+  return React.createElement("div", {
+    style: { fontSize: 11.5, marginTop: 2, fontWeight: 700, color: over ? AMBER : MUTED, lineHeight: 1.5 }
+  },
+    over ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
+         : (t.age > 0 ? t.age + " day" + (t.age === 1 ? "" : "s") + " open" : "new")
+           + (t.due ? " · due " + shortDate(t.due) : " · no due date"),
+    t["for"] ? React.createElement("span", { style: { color: GOLD } }, " · for the " + t["for"]) : null,
+    t.agent ? " · " + t.agent : "",
+    t.status ? " · " + t.status : "",
+    // The queue is ordered by this, so it has to be visible. Everything
+    // without it was worked in the last week and is somebody's already.
+    t.needs ? React.createElement("span", { style: { color: AMBER } }, "  · untouched " + t.touched + " days") : null,
+    // Why is it still here. A task that is late or has aged without a word on
+    // it is the one the manager will ask about, so the list asks first.
+    (over || t.age >= 14) ? React.createElement("span", {
+      style: { color: t.hasReason ? MUTED : AMBER, fontWeight: t.hasReason ? 500 : 800 }
+    }, t.hasReason ? "  · reason on it" : "  · no reason on it yet") : null);
+}
+
+function BookRow({ t, api, onClosed }) {
+  return React.createElement("div", { key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" } },
+    React.createElement("div", { style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 } },
+      t.subject || "(no subject)"),
+    React.createElement(BookMeta, { t: t }),
+    api ? React.createElement(CloseTask, { t: t, api: api, onClosed: onClosed }) : null);
+}
+
+// What is in a block, sized before it is listed. The branch's note on the
+// first cut was that fifteen titles under a chip is a pile, not a plan: the
+// person cannot see how old the pile is, which of it has gone quiet, or where
+// to start. So the numbers come first, then the shape of the ages, then the
+// three that have been open longest — pulled up with whether anybody has
+// written why — and only then the queue.
 function OpenList({ items: all, api, onSaved }) {
   // Closed from here, gone from here — the server's copy catches up on the
   // next read, but the list must not show a task the person just closed.
@@ -420,7 +463,11 @@ function OpenList({ items: all, api, onSaved }) {
   const items = all.filter(t => !closed[t.id]);
   if (!items.length) return null;
   const SHOW = 8;
+  const onClosed = id => { setClosed(c => ({ ...c, [id]: true })); if (onSaved) onSaved(); };
   const late = items.filter(t => t.late).length;
+  const quiet = items.filter(t => t.needs).length;
+  const noWhy = items.filter(t => (t.late || t.age >= 14) && !t.hasReason).length;
+  const oldest = items.reduce((m, t) => Math.max(m, t.age || 0), 0);
 
   // One agent holding several of them is one conversation, not several. Same
   // reasoning as LateByAgent, and it matters more here: this is the list you
@@ -430,44 +477,64 @@ function OpenList({ items: all, api, onSaved }) {
   const top = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
   const together = top && by[top] > 2 ? by[top] + " of them for " + top : "";
 
-  return React.createElement("div", { style: { marginTop: 11 } },
+  // The three open longest, as a strip to read — the working list below keeps
+  // its queue order (who it is for, untouched first, earliest due first),
+  // because that order is the branch's decision about where to start, and a
+  // list that reshuffles by age would put a forty-day task nobody is waiting
+  // on above the Branch Manager's.
+  const byAge = items.slice().sort((a, b) => (b.age || 0) - (a.age || 0));
+  const longest = items.length >= 2 ? byAge.slice(0, 3).filter(t => (t.age || 0) > 0) : [];
+
+  const bands = AGE_BANDS.map(b => ({ k: b[0], n: 0 }));
+  items.forEach(t => { bands[AGE_BANDS.findIndex(b => (t.age || 0) <= b[1])].n++; });
+  const most = Math.max(1, ...bands.map(b => b.n));
+
+  const label = (text, extra) => React.createElement("div", {
+    style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "12px 0 5px" }
+  }, text, extra || null);
+  const stat = (n, what, tone) => React.createElement("div", { style: { minWidth: 92 } },
+    React.createElement("div", { style: { fontSize: 22, fontWeight: 800, lineHeight: 1.05, color: tone || "#FFFFFF" } }, n),
+    React.createElement("div", { style: { fontSize: 11, color: GOLD_SOFT, marginTop: 2, lineHeight: 1.3 } }, what));
+
+  return React.createElement("div", { style: { marginTop: 12 } },
+    // The numbers. Dark, like the day band above, because it is the same kind
+    // of statement: how much, how late, how quiet, how old.
     React.createElement("div", {
-      style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em",
-               textTransform: "uppercase", color: GOLD, marginBottom: 5 }
-    }, "What is in it",
-       late ? React.createElement("span", {
-         key: "l", style: { color: AMBER }
-       }, "  \u00b7 " + late + " late") : null),
+      style: { background: NAVY, borderRadius: 10, padding: "11px 13px", display: "flex", flexWrap: "wrap", gap: "10px 18px", alignItems: "flex-start" }
+    },
+      stat(items.length, "in the list"),
+      stat(late, late ? "late" : "late — none", late ? AMBER : "#FFFFFF"),
+      stat(quiet, "untouched a week or more", quiet ? AMBER : "#FFFFFF"),
+      stat(oldest + (oldest === 1 ? " day" : " days"), "the oldest"),
+      noWhy ? stat(noWhy, "old or late, no reason yet", AMBER) : null),
+
+    // The shape of the ages: four bars, read at a glance.
+    React.createElement("div", { style: { display: "flex", gap: 8, margin: "9px 0 0" } },
+      bands.map(b => React.createElement("div", { key: b.k, style: { flex: 1, minWidth: 0 } },
+        React.createElement("div", { style: { height: 6, borderRadius: 3, background: "#EEF0F3", overflow: "hidden" } },
+          React.createElement("div", { style: { height: "100%", width: Math.round(b.n / most * 100) + "%",
+            background: b.k === "61+" ? AMBER : b.k === "31–60" ? GOLD : NAVY, borderRadius: 3 } })),
+        React.createElement("div", { style: { fontSize: 11, color: MUTED, marginTop: 3, fontWeight: 700, whiteSpace: "nowrap" } },
+          b.k, React.createElement("span", { style: { color: INK, marginLeft: 5 } }, String(b.n)))))),
+
     // Not in the uppercase label. That is somebody's name, and this is the
     // line that turns six separate chases into one conversation.
-    together ? React.createElement("div", {
-      style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "0 0 7px" }
-    }, together) : null,
-    items.slice(0, SHOW).map(t => React.createElement("div", {
-      key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" }
-    },
-      React.createElement("div", {
-        style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
-      }, t.subject || "(no subject)"),
-      React.createElement("div", {
-        style: { fontSize: 11.5, marginTop: 2, fontWeight: 700,
-                 color: t.late ? AMBER : MUTED }
-      }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
-                : (t.due ? "due " + shortDate(t.due) : "no due date"),
-         t["for"] ? /*#__PURE__*/React.createElement("span", { style: { color: GOLD } }, " \u00b7 for the " + t["for"]) : null,
-         t.agent ? " \u00b7 " + t.agent : "",
-         t.status ? " \u00b7 " + t.status : "",
-         // The queue is ordered by this, so it has to be visible. Everything
-         // without it was worked in the last week and is somebody's already.
-         t.needs ? /*#__PURE__*/React.createElement("span", {
-           style: { color: AMBER }
-         }, "  \u00b7 untouched " + t.touched + " days") : null),
-      api ? /*#__PURE__*/React.createElement(CloseTask, {
-        t: t, api: api, onClosed: id => { setClosed(c => ({ ...c, [id]: true })); if (onSaved) onSaved(); }
-      }) : null)),
-    items.length > SHOW ? React.createElement("div", {
-      style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
-    }, "and " + (items.length - SHOW) + " more") : null);
+    together ? React.createElement("div", { style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "10px 0 0" } }, together) : null,
+
+    longest.length ? label("The longest open", React.createElement("span", { style: { color: MUTED, letterSpacing: 0, textTransform: "none", fontWeight: 600 } }, "  · why are these still here?")) : null,
+    longest.length ? React.createElement("div", { style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + AMBER, borderRadius: 8, padding: "7px 11px" } },
+      longest.map(t => React.createElement("div", { key: t.id, style: { fontSize: 12, color: INK, lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+        React.createElement("b", { style: { color: AMBER } }, (t.age || 0) + " days"),
+        " · " + (t.subject || "(no subject)"),
+        t.agent ? React.createElement("span", { style: { color: MUTED } }, " · " + t.agent) : null,
+        React.createElement("span", { style: { color: t.hasReason ? MUTED : AMBER, fontWeight: 700 } },
+          t.hasReason ? " · reason on it" : " · no reason on it yet")))) : null,
+
+    label("What is in it",
+      late ? React.createElement("span", { key: "l", style: { color: AMBER } }, "  · " + late + " late") : null),
+    items.slice(0, SHOW).map(t => React.createElement(BookRow, { key: t.id, t: t, api: api, onClosed: onClosed })),
+    items.length > SHOW ? React.createElement("div", { style: { fontSize: 11.5, color: MUTED, paddingTop: 7 } },
+      "and " + (items.length - SHOW) + " more") : null);
 }
 
 // ---------------------------------------------------------------------------
@@ -1147,59 +1214,72 @@ function Signoff({ rv, side, onSave, busy }) {
 
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
-  const chip = k => {
-    const live = on.indexOf(k.value) > -1;
-    const m = mine && mine[k.value];
-    const b = branch && branch[k.value];
+  const counts = k => {
+    const m = mine && mine[k.value], b = branch && branch[k.value];
+    const need = m ? (m.needs || 0) : 0;
+    return { m, b, need };
+  };
 
-    // The count is the point of the chip, not decoration. A block set aside
-    // for licensing with three tasks in it does not need two hours, and the
-    // only way anyone knew that before was to go and look.
-    // What the chip says is the number a person can act on, not the number
-    // that frightens them. Kamla holds seventy open tasks and nine that have
-    // not been touched in a week; "70 open" is true and useless, "9 need you"
-    // is true and is her morning.
-    const tail = [];
+  // What the chip says is the number a person can act on, not the number
+  // that frightens them. Kamla holds seventy open tasks and nine that have
+  // not been touched in a week; "70 open" is true and useless, "9 need you"
+  // is true and is her morning.
+  const tail = (k, live) => {
+    const { m, b, need } = counts(k), out = [];
     if (m && (m.open || m.overdue)) {
-      const need = m.needs || 0;
       const head = need ? need + " need you of " + (m.open || 0)
                         : (m.open || 0) + " open, all in hand";
-      tail.push(React.createElement("span", {
-        key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) }
-      }, " \u00b7 " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
+      out.push(React.createElement("span", { key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) } },
+        " · " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
     }
-    if (b && b.open) {
-      tail.push(React.createElement("span", {
-        key: "b", style: { color: MUTED, fontWeight: 500 }
-      }, "  " + b.open + " in the branch"));
+    if (b && b.open) out.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  " + b.open + " in the branch"));
+    return out;
+  };
+
+  // Picked: a tile, not a chip. The label on one line and the numbers on the
+  // next, big enough to be the thing the eye lands on — this is what the block
+  // is for, and the first cut had it the same size as the seventeen it is not.
+  const tile = k => {
+    const { m, b, need } = counts(k);
+    const numbers = [];
+    if (m && (m.open || m.overdue)) {
+      numbers.push(need
+        ? React.createElement("span", { key: "n" }, React.createElement("b", { style: { color: AMBER } }, need + " need you"), " of " + (m.open || 0) + " open")
+        : React.createElement("span", { key: "n" }, React.createElement("b", null, (m.open || 0) + " open"), ", all in hand"));
+      if (m.overdue) numbers.push(React.createElement("span", { key: "l", style: { color: AMBER } }, ", " + m.overdue + " late"));
     }
+    if (b && b.open) numbers.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  ·  " + b.open + " in the branch"));
     return React.createElement("button", {
       key: k.value, type: "button", onClick: () => onToggle(k.value),
-      style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
-               padding: "7px 11px", borderRadius: 999, textAlign: "left",
-               border: "1px solid " + (live ? GOLD : LINE),
-               background: live ? "#FBF3DF" : "#FFFFFF",
-               color: live ? INK : MUTED }
-    }, (live ? "\u2713 " : "") + k.label, tail);
+      style: { font: "inherit", cursor: "pointer", textAlign: "left", flex: "1 1 260px",
+               padding: "10px 13px", borderRadius: 12, border: "1.5px solid " + GOLD, background: "#FBF3DF", color: INK }
+    },
+      React.createElement("div", { style: { fontSize: 14, fontWeight: 800, lineHeight: 1.3 } }, "✓ " + k.label),
+      numbers.length ? React.createElement("div", { style: { fontSize: 13.5, marginTop: 3, lineHeight: 1.35, fontWeight: 600 } }, numbers) : null);
   };
-  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
+  const chip = k => React.createElement("button", {
+    key: k.value, type: "button", onClick: () => onToggle(k.value),
+    style: { font: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", padding: "5px 9px", borderRadius: 999,
+             textAlign: "left", border: "1px solid " + LINE, background: "#FFFFFF", color: MUTED }
+  }, k.label, tail(k, false));
+
+  const group = (label, list, big) => !list.length ? null : React.createElement("div", { key: label },
     React.createElement("div", {
-      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
-               color: MUTED, margin: "2px 0 6px" }
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: big ? GOLD : MUTED, margin: "2px 0 6px" }
     }, label),
-    React.createElement("div", {
-      style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
-    }, list.map(chip)));
+    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 } }, list.map(big ? tile : chip)));
+
   // The two groups are not "types" and "other" — they are work Salesforce
   // holds tasks for, and work it does not. Say that, and only promise numbers
   // when there are numbers to show.
-  const numbered = opts.filter(k => k.salesforce);
+  const picked = opts.filter(k => on.indexOf(k.value) > -1);
+  const numbered = opts.filter(k => k.salesforce && on.indexOf(k.value) < 0);
+  const words = opts.filter(k => !k.salesforce && on.indexOf(k.value) < 0);
   const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
   return React.createElement("div", null,
-    group(anyCount ? "Your Salesforce tasks \u2014 open, and how many are late"
-                   : "Work Salesforce holds tasks for", numbered),
-    group("Work with no Salesforce task \u2014 write these in words",
-          opts.filter(k => !k.salesforce)));
+    group("This block is for", picked, true),
+    group(picked.length ? "Add another" : (anyCount ? "Your Salesforce tasks — open, and how many are late" : "Work Salesforce holds tasks for"), numbered),
+    group(picked.length ? "Or work with no Salesforce task — written in words" : "Work with no Salesforce task — write these in words", words));
 }
 
 function KpiHint({ kpi, live }) {
@@ -2550,6 +2630,12 @@ function App() {
         /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5 } },
           covered.length
             ? sum("open") + " open \u00b7 " + sum("overdue") + " already late"
+              + (book ? (() => {
+                  // The oldest thing in what is planned, from the book itself.
+                  const ages = covered.reduce((a, k) => a.concat((book[k] || []).map(t => t.age || 0)), []);
+                  const oldest = ages.length ? Math.max.apply(null, ages) : 0;
+                  return oldest ? " \u00b7 oldest " + oldest + " days" : "";
+                })() : "")
             : "Tick a block below and this fills in.")) : null,
 
       // The blocks themselves.
