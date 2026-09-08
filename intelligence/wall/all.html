@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- The Branch Intelligence Wall — all five stories, one address.
-     
+
      The five screens were built as five standing pages, each designed to hold a
      television on its own. On the branch floor that meant somebody had to choose
      one and the other four were never seen. This streams them.
@@ -18,7 +18,21 @@
      Hidden slides are visibility:hidden rather than display:none, so their
      timers keep running and their thirty-minute refresh still happens; a
      display:none iframe is not rendered but its page is also never laid out,
-     and these pages measure themselves to fit the screen. -->
+     and these pages measure themselves to fit the screen.
+
+     What is always on screen, and what only appears when somebody reaches for
+     it: the timer — which story, and how long until the next — stays on every
+     slide, with the gold line across the top, because a person on the floor
+     asked how long a screen runs and could not tell. The rail with the stops
+     and the controls fades after a few seconds; it is for whoever is setting
+     the screen up. Pause, and it stays.
+
+     Every story narrates. A slide tells this player when its voice starts and
+     stops (postMessage), and the player holds that slide until the voice is
+     done rather than turning mid-sentence; the rail's Narrate asks the story on
+     screen to speak. The stories are same-origin, so the mouse, a tap or a key
+     inside a story reaches this player too — otherwise the first click into a
+     slide would take the keys away from the wall for good. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -60,13 +74,37 @@
   #boot h1{margin:0;font-family:var(--font-d);font-size:23px;font-weight:800;letter-spacing:-.4px}
   #boot p{margin:3px 0 0;font-size:13px;color:var(--dim)}
 
-  /* The rail: which story is up, and how long it has left. Sits over the
-     bottom of the slide and fades out so it is not part of the picture. */
+  /* The line across the top: time to the next story. Thick enough to be read
+     from the far side of the floor. */
+  #bar{position:fixed;left:0;top:0;height:5px;width:0;z-index:31;
+    background:linear-gradient(90deg,var(--gold2),var(--gold));
+    box-shadow:0 0 14px rgba(239,194,75,.55)}
+  #bar.paused{background:var(--faint);box-shadow:none}
+
+  /* The timer. Always on, on every slide: which story, and how long it has
+     left, with its own small track for a screen whose top edge is cut off. */
+  #hud{position:fixed;right:18px;bottom:14px;z-index:32;display:flex;align-items:center;gap:11px;
+    padding:8px 13px;border-radius:999px;background:rgba(6,28,49,.8);border:1px solid var(--line);
+    box-shadow:0 4px 18px rgba(0,0,0,.35);font:600 13px var(--font-b);color:var(--dim);
+    white-space:nowrap;font-variant-numeric:tabular-nums}
+  #hud b{color:var(--ink);font-weight:700}
+  #hud .sep{color:var(--faint)}
+  #hud .track{width:110px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;flex:none}
+  #hud .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+  #hud.paused .track i{background:var(--faint)}
+  #hud.nar .track i{background:var(--blue)}
+  #hud.nar #left{color:var(--blue)}
+
+  /* The rail: the stops and the controls. For the person setting the screen up,
+     so it fades — unless the wall is paused, when it stays. It keeps clear of
+     the timer on the right. */
   #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
-    padding:34px 26px 15px;display:flex;align-items:center;gap:10px;
+    padding:34px 440px 15px 26px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;
     background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
     transition:opacity .45s ease}
   #rail.hide{opacity:0;pointer-events:none}
+  #dots,.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .ctl{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
   .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
     color:var(--dim);font:600 12px var(--font-b);padding:6px 13px;border-radius:999px;
     cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
@@ -74,19 +112,16 @@
   .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
     border-color:#c9942c;font-weight:700}
   .dot.dead{opacity:.35;text-decoration:line-through}
-  .grow{flex:1}
-  #state{font:600 12px var(--font-b);color:var(--faint);white-space:nowrap;
-    font-variant-numeric:tabular-nums}
-  #state b{color:var(--dim);font-weight:700}
+  .ctl .dot{font-size:13px;padding:6px 12px}
 
-  /* Time to the next story. A line, not a number: readable from the far side
-     of the floor and invisible when you are not looking for it. */
-  #bar{position:fixed;left:0;top:0;height:3px;width:0;z-index:31;
-    background:linear-gradient(90deg,var(--gold2),var(--gold));
-    box-shadow:0 0 12px rgba(239,194,75,.5)}
-  #bar.paused{background:var(--faint);box-shadow:none}
-
-  @media print{#rail,#bar,#boot{display:none}}
+  @media (max-width:760px){
+    #rail{padding:22px 12px 58px 12px}
+    .ctl{margin-left:0;padding-left:0;border-left:0}
+    #hud{right:10px;bottom:10px;padding:7px 11px;font-size:12px;gap:9px}
+    #hud .tab,#hud .tabsep{display:none}
+    #hud .track{width:72px}
+  }
+  @media print{#rail,#bar,#boot,#hud{display:none}}
 </style>
 </head>
 <body>
@@ -94,10 +129,19 @@
 <div class="stage" id="stage"></div>
 <div id="bar"></div>
 
+<div id="hud">
+  <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
+  <span class="track"><i id="fill"></i></span>
+</div>
+
 <div id="rail" class="hide">
-  <div id="dots" style="display:flex;gap:8px;flex-wrap:wrap"></div>
-  <span class="grow"></span>
-  <span id="state"></span>
+  <div id="dots"></div>
+  <div class="ctl">
+    <button class="dot" type="button" id="prev" title="previous story (←)">‹</button>
+    <button class="dot" type="button" id="pp" title="pause or go on (space)">⏸ Pause</button>
+    <button class="dot" type="button" id="next" title="next story (→)">›</button>
+    <button class="dot" type="button" id="nar" title="narrate this story (n)">▶ Narrate</button>
+  </div>
 </div>
 
 <div id="boot">
@@ -142,16 +186,25 @@ var RETRY_MS = Math.max(1, Number(Q.get('retry') || 120)) * 1000;
 /* The first screen turns early — a person checking that the wall works should
    not have to stand there for half a minute to find out. */
 var FIRST_TURN_MS = 12000;
+/* After a story's voice ends, it keeps the screen this long before the wall
+   turns: the last line needs a moment to land. */
+var AFTER_VOICE_MS = 6000;
 var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
     dots  = document.getElementById('dots'),
     rail  = document.getElementById('rail'),
     bar   = document.getElementById('bar'),
-    state = document.getElementById('state'),
+    fill  = document.getElementById('fill'),
+    hud   = document.getElementById('hud'),
+    pos   = document.getElementById('pos'),
+    tab   = document.getElementById('tab'),
+    left  = document.getElementById('left'),
+    pp    = document.getElementById('pp'),
+    nar   = document.getElementById('nar'),
     boot  = document.getElementById('boot');
 
-var at = -1, paused = false, started = 0, holdFor = 0, bootGone = false;
+var at = -1, paused = false, narrating = false, started = 0, holdFor = 0, bootGone = false;
 
 /* Build the frames and the buttons. The first story is asked for at once and
    the rest follow a few seconds apart, because five heavy pages starting
@@ -182,6 +235,14 @@ SLIDES.forEach(function (s, i) {
     try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
     if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
     s.ready = true; s.dead = false; b.classList.remove('dead');
+    /* The story is ours (same origin), so what happens inside it reaches the
+       wall: a mouse or a finger wakes the rail, a key drives the turning. */
+    try {
+      var d = f.contentDocument;
+      d.addEventListener('mousemove', wake);
+      d.addEventListener('touchstart', wake);
+      d.addEventListener('keydown', keys);
+    } catch (e) {}
   });
   s.ask = function () {
     s.asked = Date.now();
@@ -211,8 +272,14 @@ function nextLive(from) {
   return (from + 1) % SLIDES.length;
 }
 
+function tell(i, msg) {
+  try { SLIDES[i].el.contentWindow.postMessage(msg, '*'); } catch (e) {}
+}
+
 function show(i) {
   if (i === at) { started = Date.now(); return; }       // the only one worth showing: hold it
+  if (narrating && at > -1) tell(at, { rrb:'hush' });    // turning away ends the voice
+  setNarrating(false);
   SLIDES.forEach(function (s, k) {
     /* add/remove rather than toggle(name, force): old television WebKit and IE
        ignore the second argument and flip every slide. */
@@ -225,25 +292,55 @@ function show(i) {
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
   if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
   started = Date.now();
+  pos.textContent = (i + 1) + ' of ' + SLIDES.length;
+  tab.textContent = SLIDES[i].tab;
 }
 
 function step() { show(nextLive(at)); }
 function rest() { started = Date.now(); }               // a click buys a full turn
 
-/* One clock drives the bar and the turning, so the line on screen is the truth
-   about when the next story comes. It runs on an interval rather than an
-   animation frame: a television browser that has been left alone slows
-   animation frames right down, and a wall that stops turning when nobody is
-   touching it is the opposite of a wall. */
+function setPaused(v) {
+  paused = !!v;
+  bar.classList[paused ? 'add' : 'remove']('paused');
+  hud.classList[paused ? 'add' : 'remove']('paused');
+  pp.textContent = paused ? '▶ Play' : '⏸ Pause';
+  rest(); wake();
+}
+function setNarrating(v) {
+  narrating = !!v;
+  hud.classList[narrating ? 'add' : 'remove']('nar');
+  nar.textContent = narrating ? '■ Stop' : '▶ Narrate';
+  nar.classList[narrating ? 'add' : 'remove']('on');
+}
+
+/* A story says when its voice starts and stops. While it speaks the wall
+   holds it; when it stops, the story keeps the screen a few seconds more. */
+window.addEventListener('message', function (e) {
+  var d = e.data || {};
+  if (d.rrb !== 'narration') return;
+  setNarrating(d.on);
+  if (!d.on) started = Date.now() - Math.max(0, holdFor - AFTER_VOICE_MS);
+  wake();
+});
+
+/* One clock drives the line, the timer and the turning, so what is on screen
+   is the truth about when the next story comes. It runs on an interval rather
+   than an animation frame: a television browser that has been left alone
+   slows animation frames right down, and a wall that stops turning when
+   nobody is touching it is the opposite of a wall. */
 function tick() {
-  if (!paused && holdFor) {
+  var pct = 0, secsLeft = 0;
+  if (holdFor) {
     var gone = Date.now() - started;
-    bar.style.width = Math.min(100, gone / holdFor * 100) + '%';
-    if (gone >= holdFor) {
+    pct = Math.min(100, gone / holdFor * 100);
+    secsLeft = Math.max(0, Math.ceil((holdFor - gone) / 1000));
+    if (!paused && !narrating && gone >= holdFor) {
       if (Date.now() - BORN > RELOAD_AFTER_MS) return location.reload();
       step();
     }
   }
+  bar.style.width = pct + '%';
+  fill.style.width = pct + '%';
   retryDead();
   /* The boot card lifts once the story on screen has painted — or after the
      grace, so a silent feed cannot leave the card up for good. */
@@ -252,30 +349,42 @@ function tick() {
     boot.classList.add('gone');
     setTimeout(function () { boot.style.display = 'none'; }, 600);
   }
-  state.textContent = paused ? 'paused · space to go on'
-    : (at + 1) + ' of ' + SLIDES.length + ' · next in ' + Math.max(0, Math.ceil((holdFor - (Date.now() - started)) / 1000)) + 's';
+  left.textContent = paused ? 'paused · space or ▶ to go on'
+    : narrating ? 'narrating · holds'
+    : 'next in ' + secsLeft + 's';
 }
 
-document.addEventListener('keydown', function (e) {
+function keys(e) {
   var k = e.key;
-  if (k === ' ') { e.preventDefault(); paused = !paused; bar.classList.toggle('paused', paused); rest(); }
-  else if (k === 'ArrowRight') { step(); rest(); }
-  else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); }
+  if (k === ' ') { e.preventDefault(); setPaused(!paused); }
+  else if (k === 'ArrowRight') { step(); rest(); wake(); }
+  else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); }
   else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
-  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); }
-});
+  else if (k === 'n' || k === 'N') { narrate(); }
+  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); wake(); }
+}
+document.addEventListener('keydown', keys);
 
-/* The rail is for the person setting the screen up, not for the floor. */
+/* The rail's Narrate asks the story on screen to speak, or to stop. */
+function narrate() { if (at > -1) { tell(at, { rrb:'narrate' }); rest(); wake(); } }
+pp.onclick = function () { setPaused(!paused); };
+document.getElementById('next').onclick = function () { step(); rest(); wake(); };
+document.getElementById('prev').onclick = function () { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); };
+nar.onclick = narrate;
+
+/* The rail is for the person setting the screen up, not for the floor — so it
+   fades, unless the wall is paused, when it stays until it goes on. */
 var hideAt;
 function wake() {
   rail.classList.remove('hide');
   clearTimeout(hideAt);
-  hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
+  if (!paused) hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
 }
 ['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
 wake();
 
 show(0);
+tick();
 setInterval(tick, 200);
 </script>
 

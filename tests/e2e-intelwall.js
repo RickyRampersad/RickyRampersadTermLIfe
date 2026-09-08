@@ -7,6 +7,10 @@
 // moves on by itself, answers the keys, skips a story that never loads, and
 // that the short link lands on it — against the real story pages, with their
 // Salesforce feed stubbed silent.
+//
+// And what a person on the floor asked for on 8 September: the timer and the
+// line on every slide, not just the first; play and pause throughout — a
+// voice on every screen, and the wall holding a screen while it speaks.
 const { chromium } = require('playwright');
 const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.join(__dirname, '..');
@@ -89,6 +93,73 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.mouse.move(600, 600);
   await s.page.locator('.dot', { hasText: 'With the agent' }).click(); await s.page.waitForTimeout(300);
   ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[2]');
+
+  console.log('\nThe timer is on every slide, and so is the line:\n');
+  const hudBox = () => s.page.evaluate(() => { const r = document.getElementById('hud').getBoundingClientRect();
+    const cs = getComputedStyle(document.getElementById('hud'));
+    return { in: r.right <= innerWidth && r.bottom <= innerHeight && r.width > 80, op: cs.opacity, vis: cs.visibility }; });
+  await s.page.mouse.move(5, 5); await s.page.waitForTimeout(4600);        // the rail has faded by now
+  ok('the rail has faded', await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide')));
+  let hb = await hudBox();
+  ok('but the timer is still on screen', hb.in && hb.op === '1' && hb.vis === 'visible', JSON.stringify(hb));
+  const hudText = () => s.page.locator('#state').innerText();
+  ok('it says which story and how long is left', /3 of 5/.test(await hudText()) && /With the agent/.test(await hudText()) && /next in \d+s/.test(await hudText()), await hudText());
+  const barH = await s.page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('bar')).height));
+  ok('the line across the top is thick enough to see', barH >= 5, barH + 'px');
+  await s.page.keyboard.press('4'); await s.page.waitForTimeout(300);     // a fresh turn, so the line is near its start
+  const w1 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
+  await s.page.waitForTimeout(1000);
+  const w2 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
+  const f2 = await s.page.evaluate(() => parseFloat(document.getElementById('fill').style.width));
+  ok('and it runs, in step with the timer\'s own track', w2 > w1 && Math.abs(w2 - f2) < 2, w1 + ' -> ' + w2 + ' / ' + f2);
+  await s.page.keyboard.press('5'); await s.page.waitForTimeout(300);
+  ok('on the last story it still shows', /5 of 5/.test(await hudText()) && /Birthdays today/.test(await hudText()) && (await hudBox()).in);
+
+  console.log('\nPlay and pause, on the rail, on every slide:\n');
+  await s.page.mouse.move(600, 600); await s.page.waitForTimeout(200);
+  ok('the rail carries pause, previous, next and narrate', await s.page.evaluate(() => ['pp','prev','next','nar'].every(id => !!document.getElementById(id))));
+  await s.page.locator('#pp').click();
+  const held = (await visible(s.page))[0];
+  await s.page.waitForTimeout(6500);
+  ok('pause holds the story past its dwell', (await visible(s.page))[0] === held && /paused/.test(await hudText()), await hudText());
+  ok('and the rail stays while paused', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
+  ok('the button now offers play', /Play/.test(await s.page.locator('#pp').innerText()));
+  await s.page.locator('#pp').click(); await s.page.waitForTimeout(200);
+  ok('play goes on', !/paused/.test(await hudText()) && /Pause/.test(await s.page.locator('#pp').innerText()));
+  await s.page.locator('#next').click(); await s.page.waitForTimeout(300);
+  ok('next moves on', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
+  await s.page.locator('#prev').click(); await s.page.waitForTimeout(300);
+  ok('previous goes back', JSON.stringify(await visible(s.page)) === '[4]', JSON.stringify(await visible(s.page)));
+
+  console.log('\nA story that speaks holds the wall:\n');
+  await s.page.keyboard.press('1'); await s.page.waitForTimeout(300);
+  const story = s.page.frames().find(f => f.url().endsWith('/index.html'));
+  ok('the first story is up and reachable', !!story && JSON.stringify(await visible(s.page)) === '[0]');
+  await story.evaluate(() => { window.__nar = 0; window.__hush = 0; window.toggleSound = () => { window.__nar++; };
+    window.addEventListener('message', e => { if (e.data && e.data.rrb === 'hush') window.__hush++; }); });
+  await s.page.locator('#nar').click(); await s.page.waitForTimeout(300);
+  ok('the rail\'s Narrate asks the story on screen to speak', await story.evaluate(() => window.__nar) === 1);
+  await story.evaluate(() => parent.postMessage({ rrb:'narration', on:true }, '*'));
+  await s.page.waitForTimeout(6500);                                        // well past the 5s dwell
+  ok('while it speaks the wall holds it', JSON.stringify(await visible(s.page)) === '[0]' && /narrating/.test(await hudText()), await hudText());
+  ok('and the rail says so', /Stop/.test(await s.page.locator('#nar').innerText()));
+  await story.evaluate(() => parent.postMessage({ rrb:'narration', on:false }, '*'));
+  await s.page.waitForTimeout(1500);
+  ok('when the voice stops the story keeps the screen a moment', JSON.stringify(await visible(s.page)) === '[0]');
+  await s.page.waitForTimeout(6000);
+  ok('then the wall goes on', (await visible(s.page))[0] === 1, JSON.stringify(await visible(s.page)));
+  await s.page.keyboard.press('1'); await s.page.waitForTimeout(300);
+  await story.evaluate(() => parent.postMessage({ rrb:'narration', on:true }, '*'));
+  await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
+  ok('turning away asks the story to hush', await story.evaluate(() => window.__hush) === 1 && !/narrating/.test(await hudText()));
+
+  console.log('\nThe keys reach the wall from inside a story:\n');
+  await s.page.keyboard.press('2'); await s.page.waitForTimeout(300);
+  const inside = s.page.frames().find(f => f.url().endsWith('/possession.html'));
+  await inside.locator('body').click({ position: { x: 300, y: 500 } });       // focus is now inside the frame
+  await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
+  ok('a key pressed inside a story still turns the wall', JSON.stringify(await visible(s.page)) === '[2]', JSON.stringify(await visible(s.page)));
+  ok('and a mouse inside a story wakes the rail', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 
@@ -119,6 +190,19 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('carries the view beacon', /<!-- rrb-views -->/.test(html));
   ok('uses the branch mark, not a substitute', /logo-mark\.png/.test(html) && !/RR<\/|>RR</.test(html));
   ok('names no colleague and no client', !/sasha|kamla|elizabeth|azariah|pawan|kerwyn|akaash|gary/i.test(html));
+
+  console.log('\nEvery story narrates, in the one voice:\n');
+  for (const f of ORDER) {
+    const h = fs.readFileSync(path.join(ROOT, 'intelligence/wall', f), 'utf8');
+    const block = (h.match(/var NARRATION = \[([\s\S]*?)\n\];/) || ['', ''])[1];
+    const lines = (block.match(/\{t:"/g) || []).length;
+    ok(f + ' has the Narrate button, ' + lines + ' spoken lines folded in, and tells the wall when it speaks',
+       /id="sound"/.test(h) && lines >= 6 && /rrb:"narration"/.test(h) && /d\.rrb==="narrate"/.test(h) && /<!-- rrb-views -->/.test(h));
+  }
+  const voice = fs.readFileSync(path.join(ROOT, 'intelligence/wall/audio/lines.py'), 'utf8');
+  ok('the voice is the branch\'s, not the Multilingual one', /VOICE = 'en-US-AndrewNeural'/.test(voice) && !/Multilingual'/.test(voice) && /RATE = '-12%'/.test(voice));
+  const spoken = [...voice.matchAll(/^\s+"([^"]+)",\s*$/gm)].map(m => m[1]);
+  ok('no figure is spoken — the screen carries the numbers', spoken.length >= 40 && spoken.every(l => !/\d/.test(l)), spoken.filter(l => /\d/.test(l)).join(' | '));
   console.log('\n  screenshot: /tmp/intelwall-slide.png');
 
   await b.close(); server.close();
