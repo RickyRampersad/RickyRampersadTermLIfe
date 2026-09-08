@@ -26,7 +26,7 @@
   h1,h2,h3,h4{font-family:'Montserrat',sans-serif}
 
   /* ---------- sign in ---------- */
-  #gate{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
+  #gate,#door{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;
     background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(239,194,75,.09),transparent)}
   .gate-card{width:min(420px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
@@ -263,8 +263,40 @@
 </head>
 <body>
 
+<!-- ======================= THE DOOR: branch access code ======================= -->
+<!-- The same gate as staff.html and agent.html, using the same codes, so the
+     app is reached the way every other part of the site is. The personal
+     sign-in behind it is what identifies the person — a shared code cannot
+     tell you who walked in, and the register depends on knowing. -->
+<div id="door">
+  <div class="gate-card">
+    <svg class="shield" viewBox="0 0 88 88" aria-hidden="true">
+      <defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
+      </linearGradient></defs>
+      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gd)"/>
+      <rect x="32" y="38" width="24" height="19" rx="4" fill="#07131f"/>
+      <path d="M37 38v-5a7 7 0 0114 0v5" stroke="#07131f" stroke-width="4.5" fill="none"/>
+      <circle cx="44" cy="47" r="3" fill="#efc24b"/>
+    </svg>
+    <h1>Management Meetings</h1>
+    <p class="sub">Ricky Rampersad Branch<br>Enter your branch access code.</p>
+    <div class="field">
+      <label for="dr-code">Access code</label>
+      <input id="dr-code" type="password" autocomplete="off" placeholder="ACCESS CODE"
+             style="text-align:center;letter-spacing:2px;font-family:'Montserrat',sans-serif;font-weight:700"/>
+    </div>
+    <button class="btn" id="dr-go">Enter</button>
+    <div class="msg" id="dr-msg"></div>
+    <p class="hint">The same code as the Staff and Agent portals. You will sign in
+      with your own email and PIN on the next screen — that is what puts you on
+      the attendance register.</p>
+    <div class="switch"><a href="https://rickyrampersadbranch.com/staff.html">← Back to the portal</a></div>
+  </div>
+</div>
+
 <!-- ============================ SIGN IN ============================ -->
-<div id="gate">
+<div id="gate" style="display:none">
   <div class="gate-card">
     <svg class="shield" viewBox="0 0 88 88" aria-hidden="true">
       <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
@@ -402,6 +434,13 @@ var CONFIG = {
 
 var TOKEN_KEY = "rrb-meetings-token";
 
+/* The branch access codes, the same ones the Staff and Agent portals use.
+   This is the front door only — it says you belong to the branch, not who
+   you are. Attendance needs a name, so the personal sign-in behind it is
+   what actually identifies anyone. */
+var DOOR_KEY = "rrb-mm-door";
+var DOOR_CODES = ["STAFF2026", "AGENT2026"];
+
 var S = {
   token: null,
   user: null,
@@ -519,7 +558,22 @@ function guard(res) {
 
 /* ---------------- sign in ---------------- */
 
+function doorOpen() {
+  try { return sessionStorage.getItem(DOOR_KEY) === "1"; } catch (e) { return false; }
+}
+
+function openDoor() {
+  var v = $("dr-code").value.trim().toUpperCase();
+  if (DOOR_CODES.indexOf(v) === -1) {
+    return say("dr-msg", "That code is not right. It is the same one as the Staff or Agent portal.");
+  }
+  try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (e) { /* private mode */ }
+  $("door").style.display = "none";
+  resume();
+}
+
 function showGate(which) {
+  $("door").style.display = "none";
   $("gate").style.display = "flex";
   $("app").style.display = "none";
   $("gate-login").style.display = which === "enrol" ? "none" : "block";
@@ -528,6 +582,7 @@ function showGate(which) {
 
 function signOutLocal() {
   try { localStorage.removeItem(TOKEN_KEY); } catch (e) { /* private mode */ }
+  if (S.tick) { clearInterval(S.tick); S.tick = null; }
   S.token = null; S.user = null; S.home = null; S.view = "home";
   showGate("login");
 }
@@ -2954,7 +3009,25 @@ function setupNotice() {
 function boot() {
   $("yr").textContent = new Date().getFullYear();
 
-  if (!CONFIG.API_URL) return setupNotice();
+  // The door still applies when the backend is not connected — the setup
+  // notice describes the branch's own system and is not for passers-by.
+  if (!CONFIG.API_URL) {
+    if (!doorOpen()) {
+      $("door").style.display = "flex";
+      $("dr-go").onclick = function () {
+        var v = $("dr-code").value.trim().toUpperCase();
+        if (DOOR_CODES.indexOf(v) === -1) {
+          return say("dr-msg", "That code is not right. It is the same one as the Staff or Agent portal.");
+        }
+        try { sessionStorage.setItem(DOOR_KEY, "1"); } catch (e) { /* private mode */ }
+        setupNotice();
+      };
+      $("dr-code").addEventListener("keydown", function (e) { if (e.key === "Enter") $("dr-go").click(); });
+      $("dr-code").focus();
+      return;
+    }
+    return setupNotice();
+  }
 
   $("li-go").onclick = doLogin;
   $("en-go").onclick = doEnrol;
@@ -2977,6 +3050,20 @@ function boot() {
     if (t) apiPost({ action: "signOut", token: t }).catch(function () { /* already gone */ });
   };
 
+  $("dr-go").onclick = openDoor;
+  $("dr-code").addEventListener("keydown", function (e) { if (e.key === "Enter") openDoor(); });
+
+  if (!doorOpen()) {
+    $("door").style.display = "flex";
+    $("dr-code").focus();
+    return;
+  }
+  $("door").style.display = "none";
+  resume();
+}
+
+/** Behind the door: pick up a remembered session, or ask who you are. */
+function resume() {
   var saved = null;
   try { saved = localStorage.getItem(TOKEN_KEY); } catch (e) { /* private mode */ }
   if (!saved) return showGate("login");

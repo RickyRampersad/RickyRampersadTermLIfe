@@ -29,6 +29,23 @@ because the branch treats it as a factual observation of the record.
 
 ---
 
+## Getting in
+
+Two doors, and they do different jobs.
+
+**The branch access code** is the same one the Staff and Agent portals use —
+`STAFF2026` or `AGENT2026`. It is the front door, exactly as on the rest of
+the site, and it says you belong to the branch.
+
+**Your own email and PIN** is the second, and it cannot be dropped. A shared
+code cannot tell you who walked in, and the whole point of this app is that
+signing in *is* the attendance register. The code gets you to the door; the
+PIN is what puts your name on the record.
+
+You set your PIN once, the first time, against an email the branch has already
+put on the People tab. Change the access codes in `managementmeetings/index.html`
+(`DOOR_CODES`) if you ever change them on the portals.
+
 ## Who sees what
 
 Roles are assigned by the branch on the **People** tab. Nobody picks their own
