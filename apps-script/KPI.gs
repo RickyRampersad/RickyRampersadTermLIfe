@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-07c';
+var SCRIPT_VERSION = '2026-09-07d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1968,7 +1968,18 @@ function doPost(e) {
 }
 
 function handle_(action, data, token) {
-  if (action === 'ping') return { ok: true, today: todayISO_(), version: SCRIPT_VERSION };
+  /* Which files this project actually has in it. The tracker runs with any of
+     the three missing, and each absence shows up somewhere else entirely —
+     "Editing tasks is not switched on" under a Close button, a wall that says
+     no feed. On 7 September closing a task from the tracker did nothing and
+     there was no way to ask the script what it was carrying. Now there is. */
+  if (action === 'ping') {
+    return { ok: true, today: todayISO_(), version: SCRIPT_VERSION,
+             has: { write:   typeof updateTask_ === 'function',
+                    waiting: typeof sfkWaitingSafe_ === 'function',
+                    intel:   typeof intelRoute_ === 'function',
+                    salesforce: sfkConfigured_() } };
+  }
   if (action === 'login') return login_(data.who || data.email, data.password);
 
   var profile = readToken_(token);

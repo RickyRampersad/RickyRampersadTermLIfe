@@ -63,6 +63,12 @@ ok('and it is the intelligence refusal, not the tracker\'s', !priv.authRequired,
 
 console.log('\nThe tracker is untouched:\n');
 ok('ping still answers with the version', get({ action: 'ping' }).version === env.SCRIPT_VERSION);
+
+console.log('\nAnd ping says which files the project is carrying:\n');
+const withIntel = get({ action: 'ping' }).has;
+ok('it reports the four parts', withIntel && ['write','waiting','intel','salesforce'].every(k => k in withIntel), JSON.stringify(withIntel));
+ok('intelligence is in this one', withIntel.intel === true);
+ok('and the write path is not, because KPI-Write.gs is a separate file', withIntel.write === false, JSON.stringify(withIntel));
 const noTok = post({ action: 'rows' });
 ok('a tracker action with no token is still refused', noTok.ok === false && noTok.authRequired === true, JSON.stringify(noTok));
 const login = post({ action: 'login', who: 'sasha@example.com', password: '1' });
@@ -75,7 +81,9 @@ const alone = makeEnv();
 process.env.GS_PATH = both;
 alone.__mkSheet('Access', 1, ['Name','StaffId','Email','Password','Role','Unit','Active'], []);
 alone.__mkSheet('KPI Log', 2, ['Timestamp','Date','StaffId','Name','Grade','Status'], []);
-ok('the tracker still answers ping', JSON.parse(alone.doGet({ parameter: { action: 'ping' } }).getContent()).ok === true);
+const aloneHas = JSON.parse(alone.doGet({ parameter: { action: 'ping' } }).getContent());
+ok('the tracker still answers ping', aloneHas.ok === true);
+ok('and says the intelligence code is not here', aloneHas.has && aloneHas.has.intel === false, JSON.stringify(aloneHas.has));
 ok('and an intel action falls through to the token check',
    JSON.parse(alone.doPost({ postData: { contents: '{"action":"intel.book"}' } }).getContent()).authRequired === true);
 
