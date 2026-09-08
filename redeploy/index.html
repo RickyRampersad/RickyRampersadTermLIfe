@@ -270,7 +270,8 @@ async function ping(){
   const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
                             body:JSON.stringify({action:"ping"})});
   const j=await r.json();
-  return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok), has:j&&j.has||null};
+  return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok), has:j&&j.has||null,
+          error:j&&j.error||""};
 }
 
 function show(cls,title,body,small){
@@ -285,6 +286,18 @@ go.onclick=async()=>{
     const runs=[];
     for(let i=0;i<3;i++) runs.push(await ping());
     const bad=runs.filter(r=>!r.ok).length;
+    // The tracker always knows "ping". Only one thing answers "Unknown action: ping" —
+    // an Intelligence.gs that still declares its own doPost, declared after the
+    // tracker's and so winning. Its sign-in answers "Unknown action: login" the same way.
+    if(runs.some(r=>/^Unknown action: ping/.test(r.error))){
+      show("no","Intelligence.gs has taken over the tracker",
+        "The workbook answers <b>Unknown action: ping</b>, which the tracker never says. The "+
+        "Intelligence.gs in the project still declares its own <b>doGet</b> and <b>doPost</b>; "+
+        "declared second, they win, and staff sign-in answers \"Unknown action: login\". "+
+        "Paste the current Intelligence.gs over that file (it declares neither any more), "+
+        "then <b>Manage deployments → pencil → New version</b>.");
+      return;
+    }
     if(bad===runs.length){
       show("no","Could not reach the workbook",
         "The script did not answer at all. Check the deployment exists under "+

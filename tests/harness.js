@@ -65,6 +65,8 @@ function makeEnv(opts = {}) {
     SpreadsheetApp: {
       // Two names for one thing, and the two scripts use one each.
       getActiveSpreadsheet: () => g.SpreadsheetApp.getActive(),
+      // Opening another workbook by ID hands back this same one, and says so.
+      openById: id => { calls.openById = (calls.openById || []).concat(id); return g.SpreadsheetApp.getActive(); },
       getActive: () => ({
         getSheets: () => Object.values(sheets),
         getSheetByName: n => sheets[n] || null,

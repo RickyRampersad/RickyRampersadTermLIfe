@@ -31,10 +31,22 @@
 
    DEPLOYING BESIDE AN EXISTING SCRIPT
    ───────────────────────────────────
-   A script project may declare doGet and doPost exactly once. If this project
-   already has them (BranchEngine.gs does), do NOT paste the block at the
-   bottom of this file — add one line to the existing doPost instead. Run
-   intelSelfTest() and it will tell you which case you are in and what to do.
+   A script project may declare doGet and doPost exactly once, and a second
+   declaration silently wins. So this file declares NEITHER. Its entry points
+   are intelDoGet_ and intelDoPost_, and the host's own doGet/doPost hand over
+   to them (KPI.gs does; see its doPost). On 7 September this file still
+   carried a doGet/doPost of its own, it was pasted whole into the tracker's
+   project, and the tracker's sign-in answered "Unknown action: login" until
+   this file was pasted back without them. Pasting it whole is safe now.
+   Run intelSelfTest() and it will say which case you are in and what to do.
+
+   WHICH WORKBOOK
+   ──────────────
+   By default the code reads the spreadsheet it is bound to. In the tracker's
+   project that is the tracker's workbook, which holds none of the eight
+   export tabs — every screen then says "No dues tab found". Set the Script
+   Property INTEL_WORKBOOK_ID to the branch workbook's ID and it reads that
+   one instead, from wherever it lives.
    ══════════════════════════════════════════════════════════════════════════ */
 
 var INTEL = {
@@ -151,7 +163,7 @@ function iIso_(d) {
 }
 
 function iTz_() {
-  return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
+  return iSs_().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
 }
 
 function iMoney_(n) {
@@ -187,7 +199,20 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-function iSs_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+var INTEL_VERSION = '2026-09-08a';
+
+/* The workbook the intelligence reads. Bound by default; by ID when the
+   Script Property INTEL_WORKBOOK_ID is set, so the code can live in the
+   tracker's project and still read the branch workbook's eight export tabs.
+   Memoised per request: openById is a network call, and one screen makes
+   dozens of reads. */
+var _intelSs = null;
+function iSs_() {
+  if (_intelSs) return _intelSs;
+  var id = iProp_('INTEL_WORKBOOK_ID');
+  _intelSs = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+  return _intelSs;
+}
 function iProp_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
 function iSetProp_(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
 
@@ -2788,6 +2813,9 @@ function intelRoute_(b) {
   if (action.indexOf('intel.') !== 0) return null;
 
   if (action === 'intel.signin') return iActSignin_(b);
+  /* Which Intelligence.gs a project is carrying, from outside, with no token:
+     the answer to "did the paste take". Nothing in it but the build. */
+  if (action === 'intel.ping') return iJson_(intelHealth_());
 
   /* The wall screen is unauthenticated on purpose. It hangs on a wall — there is
      nobody to sign it in, and a token baked into a page served from a public
@@ -4176,19 +4204,31 @@ function intelSelfTest() {
 
   var hasDoPost = false;
   try { hasDoPost = typeof doPost === 'function'; } catch (err) { hasDoPost = false; }
-  var otherRouter = false;
-  try { otherRouter = typeof benSignin_ === 'function' || typeof quoteDoPost_ === 'function'; } catch (err2) {}
-  if (otherRouter) {
+  var tracker = false, engine = false;
+  try { tracker = typeof handle_ === 'function' && typeof SCRIPT_VERSION === 'string'; } catch (err2) {}
+  try { engine = typeof benSignin_ === 'function' || typeof quoteDoPost_ === 'function'; } catch (err3) {}
+  if (tracker) {
+    line('This project is the branch tracker (KPI.gs ' + SCRIPT_VERSION + '). Its doPost hands');
+    line('  intel.* actions here and its doGet serves the survey links. Nothing to add.');
+  } else if (engine) {
     line('This project already contains another web-app router (BranchEngine).');
-    line('  Do NOT keep the doGet/doPost block at the bottom of this file. Instead add');
-    line('  this as the FIRST line inside the existing doPost, after it parses the body:');
+    line('  Add this as the FIRST line inside its doPost, after it parses the body:');
     line('      var hit = intelRoute_(b); if (hit) return hit;');
-    line('  intelRoute_ returns null for anything that is not an intel.* action, so the');
-    line('  rest of that function keeps working exactly as it did.');
+    line('  and this inside its doGet, so a client\'s survey link is answered:');
+    line('      var page = iSurveyClick_(e); if (page) return page;');
+  } else if (!hasDoPost) {
+    line('No web-app router in this project. This file declares none of its own, so add');
+    line('  these two lines anywhere in the project and deploy:');
+    line('      function doGet(e)  { return intelDoGet_(e); }');
+    line('      function doPost(e) { return intelDoPost_(e); }');
   } else {
-    line('No other router detected — the doGet/doPost block at the bottom of this file is');
-    line('  the one that will serve the app. Nothing to change.');
+    line('This project has a doPost of its own. Make sure it calls intelRoute_(b) before');
+    line('  anything else, or the wall screens are refused.');
   }
+  var wb = iProp_('INTEL_WORKBOOK_ID');
+  line(wb ? 'Reading the workbook set in INTEL_WORKBOOK_ID.'
+          : 'Reading the workbook this script is bound to. If that is the tracker\'s, set');
+  if (!wb) line('  INTEL_WORKBOOK_ID to the branch workbook\'s ID in Script Properties.');
   line('');
 
   var cache = iLoadCache_();
@@ -4306,32 +4346,31 @@ function iDialog_(title, text) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   WEB APP ENTRY POINTS  —  the two functions below, and nothing else
-   DELETE THESE TWO FUNCTIONS if this script project already declares
-   doGet/doPost — see intelSelfTest(), which tells you which case you are in.
-   A project may declare each of them exactly once, and the second declaration
-   silently wins, so left in they take over the host's router and its sign-in
-   stops working.
-   They are NOT at the end of the file: the block ends at the next banner,
-   "WHAT IS IN OUR POSSESSION", a few lines down. Delete as far as that and no
-   further.
-   Having deleted them, add one line inside the host's own doPost, straight
-   after it parses the body:
-       var hit = intelRoute_(b); if (hit) return hit;
-   and, if the host serves the client survey links, one inside its doGet:
-       var page = iSurveyClick_(e); if (page) return page;
+   WEB APP ENTRY POINTS
+   Deliberately NOT named doGet and doPost. A project may declare each of
+   those exactly once and the second declaration silently wins; named as they
+   were, pasting this file into the tracker's project took over its router and
+   its sign-in answered "Unknown action: login". The host's own doGet/doPost
+   call these (KPI.gs does). A project with no router of its own adds:
+       function doGet(e)  { return intelDoGet_(e); }
+       function doPost(e) { return intelDoPost_(e); }
    ══════════════════════════════════════════════════════════════════════════ */
 
-function doGet(e) {
+function intelDoGet_(e) {
   /* A survey click arrives here — it is a link in a mail client, so it can
      only ever be a GET. Everything else keeps the old health response. */
   var hit = iSurveyClick_(e);
   if (hit) return hit;
-  return iJson_({ ok: true, service: 'Branch Intelligence',
-                  built: iProp_('INTEL_LAST_BUILD') || 'never' });
+  return iJson_(intelHealth_());
 }
 
-function doPost(e) {
+function intelHealth_() {
+  return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
+           built: iProp_('INTEL_LAST_BUILD') || 'never',
+           workbook: iProp_('INTEL_WORKBOOK_ID') ? 'by id' : 'bound' };
+}
+
+function intelDoPost_(e) {
   try {
     /* The private-message form posts form-encoded, not JSON — handle it before
        trying to parse a body that was never JSON in the first place. */
