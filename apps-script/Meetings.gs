@@ -256,12 +256,27 @@ function setupMeetings() {
 
   log_('setup', 'system', '', 'Meeting Builder set up', 'Tabs, Drive folder and manager seeded');
 
-  SpreadsheetApp.getUi().alert(
-    'Branch Meeting Builder is ready.\n\n' +
-    'Tabs created: ' + Object.keys(SCHEMA).join(', ') + '\n' +
-    'Materials folder: ' + materialsFolder_().getName() + '\n\n' +
+  // Deliberately no dialog here. SpreadsheetApp.getUi().alert() draws in the
+  // SHEET's window, so running this from the Apps Script editor — which is
+  // how it is meant to be run — leaves it waiting for a click on a dialog
+  // nobody is looking at, until the six-minute limit kills it. The work is
+  // long finished by then; the timeout only looks like a failure. The
+  // summary goes to the execution log instead, which is on screen already.
+  var summary = 'Branch Meeting Builder is ready.\n' +
+    'Tabs: ' + Object.keys(SCHEMA).join(', ') + '\n' +
+    'Materials folder: ' + materialsFolder_().getName() + '\n' +
+    'Topics seeded: ' + topicList_().length + '\n\n' +
     'Next: Deploy > New deployment > Web app (Execute as: Me, Access: Anyone), ' +
-    'then paste the /exec URL into CONFIG.API_URL in meetings/index.html.');
+    'then paste the /exec URL into CONFIG.API_URL in managementmeetings/index.html.';
+  Logger.log(summary);
+  return summary;
+}
+
+/** The menu version, which may safely show a dialog because the person
+ *  clicking the menu is by definition looking at the sheet. */
+function setupMeetingsFromMenu() {
+  var summary = setupMeetings();
+  SpreadsheetApp.getUi().alert(summary);
 }
 
 function ensureTab_(ss, name, headers) {
@@ -3059,7 +3074,7 @@ function json_(obj) {
 
 function onOpen() {
   SpreadsheetApp.getUi().createMenu('Branch Meetings')
-    .addItem('⚙️  Set up / repair tabs', 'setupMeetings')
+    .addItem('⚙️  Set up / repair tabs', 'setupMeetingsFromMenu')
     .addItem('📥  Import the meeting archive', 'promptImportArchive')
     .addItem('🔎  Index the archive for searching', 'promptIndexArchive')
     .addSeparator()
@@ -3087,9 +3102,10 @@ function promptImportArchive() {
 }
 
 function promptIndexArchive() {
-  var ui = SpreadsheetApp.getUi();
   var out = indexArchive();
-  ui.alert('Archive indexing\n\n' +
+  // Menu-only, for the same reason as setupMeetingsFromMenu. Run
+  // indexArchive() directly from the editor and read the log.
+  SpreadsheetApp.getUi().alert('Archive indexing\n\n' +
     out.indexed + ' meeting(s) read and made searchable.\n' +
     (out.remaining
       ? out.remaining + ' still to do — run this again to continue. ' +

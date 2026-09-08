@@ -87,7 +87,15 @@ Points — not for distribution"* section, which staff should not see either.
      Change it after everyone has enrolled.
    - `LATE_AFTER_MINUTES` — how late is late. Default 10.
 4. **Run `setupMeetings()`** once and grant the permissions it asks for. It
-   builds every tab and creates the private Drive folder for materials.
+   builds every tab, creates the private Drive folder and seeds the topics.
+   It takes about forty seconds and writes its summary to the execution log.
+
+   > It shows no dialog, on purpose. A dialog from the script editor draws in
+   > the *sheet's* window, so it would sit waiting for a click nobody is
+   > looking at until the six-minute limit killed it — a timeout that looks
+   > like a failure long after the work has finished. The same job from the
+   > sheet's own **Branch Meetings** menu does show a dialog, because whoever
+   > clicked the menu is looking at the sheet.
 5. **Deploy → New deployment → Web app.** Execute as **Me**, access
    **Anyone**. Copy the `/exec` URL.
 6. **Paste that URL** into `CONFIG.API_URL` at the top of
