@@ -94,20 +94,25 @@ const iping = post({ action: 'intel.ping' });
 ok('and intel.ping says which build is in the project, with no token', iping.ok && iping.version === env.INTEL_VERSION && iping.service === 'Branch Intelligence', JSON.stringify(iping));
 ok('and nothing else', Object.keys(iping).sort().join() === 'built,ok,service,version,workbook', JSON.stringify(iping));
 
-console.log('\nIt reads the branch workbook by ID when told to, from inside the tracker\'s project:\n');
+console.log('\nIt reads the branch workbook from inside the tracker\'s project, with nothing set:\n');
 // Every web request is a fresh execution, so the memo starts empty each time;
 // here one environment stands in for several requests, so it is emptied by hand.
-env._intelSs = null;
-env.iSs_();
-ok('with nothing set it reads the workbook it is bound to', !(env.__calls.openById || []).length && post({ action: 'intel.ping' }).workbook === 'bound');
-env.PropertiesService.getScriptProperties = () => ({ getProperty: k => k === 'INTEL_WORKBOOK_ID' ? 'the-branch-workbook' : null, setProperty: () => {} });
-env._intelSs = null;
+// props() is "the next request": a property value, an empty memo, and the
+// harness's record of openById calls wiped, since the sign-in above already
+// opened the workbook once.
+const props = v => { env.PropertiesService.getScriptProperties = () => ({ getProperty: k => k === 'INTEL_WORKBOOK_ID' ? v : null, setProperty: () => {} }); env._intelSs = null; env.__calls.openById = []; };
+props(null);
 env.iSs_(); env.iSs_(); env.iTz_();
-ok('with INTEL_WORKBOOK_ID set it opens that one', (env.__calls.openById || []).join() === 'the-branch-workbook', JSON.stringify(env.__calls.openById));
+ok('the branch workbook is named in the file', /^[A-Za-z0-9_-]{30,}$/.test(env.INTEL.WORKBOOK), env.INTEL.WORKBOOK);
+ok('and with nothing set, that is the one it opens', (env.__calls.openById || []).join() === env.INTEL.WORKBOOK, JSON.stringify(env.__calls.openById));
 ok('once per request, not once per read', (env.__calls.openById || []).length === 1);
-ok('and intel.ping says so', post({ action: 'intel.ping' }).workbook === 'by id');
-env._intelSs = null; env.iSs_();
-ok('and again on the next request', (env.__calls.openById || []).length === 2);
+ok('and intel.ping says so', post({ action: 'intel.ping' }).workbook === 'default');
+props('the-other-workbook'); env.iSs_();
+ok('INTEL_WORKBOOK_ID points it at another', (env.__calls.openById || []).slice(-1)[0] === 'the-other-workbook' && post({ action: 'intel.ping' }).workbook === 'by id');
+props('bound'); env.iSs_();
+ok('and "bound" reads the attached one without opening anything', env.__calls.openById.length === 0 && post({ action: 'intel.ping' }).workbook === 'bound');
+props(null); env.iSs_(); env.iSs_();
+ok('and the next request opens it again, once', env.__calls.openById.join() === env.INTEL.WORKBOOK);
 
 console.log('\nSalesforce goes through whichever helper the project has:\n');
 // In the tracker's project there is no SalesforceSync.gs, so no sfQuery_ —
