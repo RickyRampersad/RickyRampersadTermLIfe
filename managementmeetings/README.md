@@ -145,6 +145,95 @@ anything is sent.
 
 ---
 
+## Running the meeting
+
+**Start it.** The clock starts when you press start, not at the time the
+meeting was scheduled for. A running meeting shows the elapsed time against
+the total the agenda allowed, and turns red once it is over. The branch's own
+agendas say "25 MIN STRICT"; this is that, kept honestly.
+
+Starting also asks you to confirm the room has been told it is being recorded.
+Tick it only if it is true — it goes on the session record as the branch's
+evidence that notice was given.
+
+**On now.** Press it beside an agenda item and everyone's screen shows what
+the room is on, and how long it has been on it.
+
+**Finish it.** The run time goes on the record beside the allotted time, the
+meeting closes and check-in ends.
+
+### The floor
+
+Signing in says you were there. The floor says what you brought.
+
+Anyone the register shows as present or late can put a **Point, Question,
+Answer, Decision, Concern, Commitment or Apology** on the record while the
+meeting runs. Each is stamped with the minute of the meeting and the item it
+came under, so the record reads in order afterwards instead of as a pile of
+notes. Tag it with a topic and it joins the thread across every other meeting.
+
+Nobody can log a contribution in somebody else's name: the author comes from
+who is signed in, not from anything the browser says. You can correct your
+own; staff can correct any. A correction is stamped as edited.
+
+Staff also see **who held the floor** — and, more to the point, who was in the
+room with nothing on the record.
+
+### Recording
+
+Two things, because they are different jobs.
+
+**The full meeting** is whatever Teams already records and transcribes. Paste
+the recording and transcript links onto the session and they sit with the
+record instead of somewhere else entirely. An eighty-minute audio file cannot
+be assembled inside Apps Script's memory, so the app does not pretend to be
+the place it lives.
+
+**Short clips** record in the app — a decision as it was worded, an agent's
+contribution, a segment worth keeping. Press record, speak, stop; the clip
+attaches to the next thing you put on the record, so the audio and the words
+go on together. It stops itself at fifteen minutes. Clips are private in
+Drive and served only to people allowed to see them, like every other file.
+
+---
+
+## Who a meeting is for
+
+Visibility hides one agenda item. **Scope** decides whether the meeting exists
+at all for a given person, which is a different question.
+
+| Scope | Who it exists for |
+| --- | --- |
+| **Branch** | Everyone. The weekly branch meeting. |
+| **Staff** | Staff and the manager. An agent does not see the meeting, the register, or that it happened. |
+| **One-to-one** | The two people in the room, plus the branch manager. A manager reviewing an agent's persistency is not branch business. |
+| **Client** | The agent whose client it is, plus the branch manager. Not other agents, and not branch staff. |
+
+A meeting outside your scope returns the same "no longer exists" as one that
+was deleted — telling someone a meeting exists but is not for them tells them
+it happened.
+
+Only branch meetings count toward an attendance rate. A one-to-one is not
+something the rest of the branch failed to attend.
+
+---
+
+## Topics
+
+Clawback, persistency, the 85-day report, fact find compliance and licensing
+come back week after week. Spelled differently each time, they stay thirty
+separate mentions.
+
+**Topics** is one shared list — seeded with the subjects the branch's own
+minutes return to — and a meeting, an agenda item or a contribution is tagged
+from it. Open a topic and you get every meeting that touched it, newest first,
+with the agenda items and the contributions underneath.
+
+That answers the question minutes cannot: not "what happened on 21 August"
+but "what has this branch actually said about clawback since March".
+
+---
+
 ## Running a meeting
 
 **Before.** Build it — type, date, start time, chair, location. *Use the

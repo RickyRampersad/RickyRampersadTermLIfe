@@ -151,6 +151,44 @@
   .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
     color:var(--green);display:grid;place-items:center;font-size:26px;margin:0 auto 12px}
 
+  /* ---------- running the meeting ---------- */
+  .live{background:linear-gradient(150deg,rgba(255,122,122,.12),rgba(239,194,75,.07));
+    border:1px solid rgba(255,122,122,.34);border-radius:18px;padding:18px 20px;margin-bottom:14px}
+  .live.idle{background:rgba(255,255,255,.03);border-color:var(--line)}
+  .live-top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;
+    animation:pulse 1.6s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.8)}}
+  .live-clock{font-family:'Montserrat',sans-serif;font-weight:900;font-size:30px;line-height:1;
+    letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+  .live-clock.over{color:var(--red)}
+  .live-meta{font-size:12px;color:var(--muted);line-height:1.6}
+  .live-now{background:rgba(0,0,0,.25);border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px}
+  .live-now b{font-family:'Montserrat',sans-serif;font-size:13.5px}
+
+  /* ---------- the floor ---------- */
+  .said{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
+  .said:last-child{border-bottom:none}
+  .said .av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;
+    font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px;
+    background:rgba(0,207,234,.14);color:var(--teal);border:1px solid rgba(0,207,234,.28)}
+  .said .av.staff{background:rgba(239,194,75,.14);color:var(--gold);border-color:rgba(239,194,75,.3)}
+  .said .c{flex:1;min-width:0}
+  .said .c .hd{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
+  .said .c .hd b{font-family:'Montserrat',sans-serif;font-size:12.5px}
+  .said .c .hd .t{font-size:11px;color:var(--dim);font-variant-numeric:tabular-nums}
+  .said .c .bd{font-size:13px;line-height:1.7;white-space:pre-wrap}
+  .said .c .tp{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap}
+
+  .rec-btn{display:inline-flex;align-items:center;gap:8px}
+  .rec-btn.on{background:linear-gradient(135deg,#ff7a7a,#d94c4c);color:#2b0808}
+  .rec-time{font-variant-numeric:tabular-nums;font-weight:800}
+
+  .topic-chip{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;
+    background:rgba(167,139,250,.14);color:var(--violet);border:1px solid rgba(167,139,250,.3);
+    cursor:pointer;font-weight:600}
+  .topic-chip:hover{background:rgba(167,139,250,.24)}
+
   /* ---------- agenda ---------- */
   .ag{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
   .ag:last-child{border-bottom:none}
@@ -558,7 +596,8 @@ function tabsFor() {
     { id: "home", label: "Meetings" },
     { id: "prep", label: "My Prep" },
     { id: "actions", label: "Action Items" },
-    { id: "archive", label: "Past Meetings" }
+    { id: "archive", label: "Past Meetings" },
+    { id: "topics", label: "Topics" }
   ];
   if (S.user && (S.user.role === "staff" || S.user.role === "manager")) {
     t.push({ id: "register", label: "Register" });
@@ -618,6 +657,8 @@ function render() {
     case "minutes":  return viewMinutes();
     case "archive":  return viewArchive();
     case "document": return viewDocument();
+    case "topics":   return viewTopics();
+    case "topic":    return viewTopic();
     case "build":    return viewBuild();
     default:         return viewHome();
   }
@@ -872,7 +913,8 @@ function drawMeeting() {
   }
   out += "</div>";
 
-  // Check-in, right at the top where it cannot be missed.
+  // The clock, then check-in. Both belong above everything else.
+  out += liveBlock(d);
   if (m.status !== "closed" && !m.archiveLink) out += checkinBlock(m);
 
   if (m.mission) {
@@ -895,6 +937,9 @@ function drawMeeting() {
     out += '<div class="card">' + d.agenda.map(agendaRow).join("") + "</div>";
   }
   out += "</section>";
+
+  // ---- the floor ----
+  out += floorSection(d);
 
   // ---- attendance ----
   if (d.register) {
@@ -970,6 +1015,161 @@ function drawMeeting() {
       });
   };
   wireMaterials();
+  wireLive(d);
+  wireFloor(d);
+}
+
+/* ---------------- running the meeting ---------------- */
+
+function liveBlock(d) {
+  var m = d.meeting, sn = d.session;
+  if (m.archiveLink) return "";
+
+  // Running: the clock, what item the room is on, and the finish button.
+  if (sn && sn.running) {
+    var over = sn.allotted && sn.elapsed > sn.allotted;
+    return '<div class="live"><div class="live-top">' +
+      '<span class="live-dot"></span>' +
+      '<span class="live-clock' + (over ? " over" : "") + '" id="lv-clock">' +
+      clockText(sn.elapsed) + "</span>" +
+      '<div class="live-meta">Started ' + esc(sn.started) + " by " + esc(sn.startedBy) +
+      (sn.allotted ? "<br>" + sn.allotted + " minutes on the agenda" +
+        (over ? " — <b style=\"color:var(--red)\">" + (sn.elapsed - sn.allotted) + " over</b>" : "") : "") +
+      "</div>" +
+      (d.canRun ? '<button class="btn danger auto sm" id="lv-end" style="margin-left:auto">Finish the meeting</button>' : "") +
+      "</div>" +
+      (sn.currentTitle
+        ? '<div class="live-now">On now: <b>' + esc(sn.currentTitle) + "</b>" +
+          (sn.currentAllotted ? " · " + sn.itemElapsed + " of " + sn.currentAllotted + " min" : "") + "</div>"
+        : (d.canRun && d.agenda.length
+            ? '<div class="live-now">Nothing marked as the current item — press <b>On now</b> beside one.</div>'
+            : "")) +
+      "</div>";
+  }
+
+  // Finished: what it cost, and where the recording is.
+  if (sn && sn.ended) {
+    return '<div class="live idle"><div class="live-top">' +
+      '<span class="live-clock">' + clockText(sn.elapsed) + "</span>" +
+      '<div class="live-meta">Ran ' + sn.elapsed + " minutes" +
+      (sn.allotted ? " against " + sn.allotted + " allotted" : "") +
+      "<br>" + esc(sn.started) + " to " + esc(sn.ended) + "</div>" +
+      (d.canRun ? '<button class="btn ghost auto sm" id="lv-rec" style="margin-left:auto">Recording &amp; transcript</button>' : "") +
+      "</div>" +
+      (sn.recordingLink || sn.transcriptLink
+        ? '<div class="live-now">' +
+          (sn.recordingLink ? '<a href="' + esc(sn.recordingLink) + '" target="_blank" rel="noopener" style="color:var(--teal)">▶ Recording</a>' : "") +
+          (sn.recordingLink && sn.transcriptLink ? " &nbsp;·&nbsp; " : "") +
+          (sn.transcriptLink ? '<a href="' + esc(sn.transcriptLink) + '" target="_blank" rel="noopener" style="color:var(--teal)">📄 Transcript</a>' : "") +
+          (sn.recordingNote ? "<br>" + esc(sn.recordingNote) : "") + "</div>"
+        : (d.canRun ? '<div class="live-now">No recording linked yet.</div>' : "")) +
+      "</div>";
+  }
+
+  // Not started. Only staff can start it.
+  if (!d.canRun) return "";
+  return '<div class="live idle"><div class="live-top">' +
+    '<div class="live-meta" style="flex:1"><b style="color:var(--text);font-size:13.5px;' +
+    'font-family:Montserrat">The meeting has not started</b><br>' +
+    "Starting it puts the clock on the record and opens the floor for contributions." +
+    (d.agenda.length ? " " + d.agenda.reduce(function (n, a) { return n + a.minutes; }, 0) +
+      " minutes are on the agenda." : "") + "</div>" +
+    '<button class="btn auto sm" id="lv-start">Start the meeting</button></div></div>';
+}
+
+function clockText(mins) {
+  var h = Math.floor(mins / 60), mm = mins % 60;
+  return (h ? h + ":" + String(mm).padStart(2, "0") : String(mm)) + (h ? "" : " min");
+}
+
+function wireLive(d) {
+  var m = d.meeting, sn = d.session;
+
+  var st = $("lv-start");
+  if (st) st.onclick = function () { startSessionModal(m.id); };
+
+  var en = $("lv-end");
+  if (en) en.onclick = function () {
+    confirmModal("Finish the meeting",
+      "The clock stops and the run time goes on the record beside the time the agenda allowed. " +
+      "The meeting closes and check-in ends.",
+      "Finish it", function () {
+        post("endSession", { meetingId: m.id }).then(guard).then(function (res) {
+          if (!res.ok) return alertModal("Not done", res.error);
+          alertModal("Finished", "Ran " + res.ran + " minutes" +
+            (res.allotted ? " against " + res.allotted + " allotted." : "."));
+          loadMeeting(m.id);
+        });
+      });
+  };
+
+  var rc = $("lv-rec");
+  if (rc) rc.onclick = function () { recordingModal(m.id, sn); };
+
+  // The clock ticks locally so it does not hammer the sheet. Every render
+  // clears the previous one, so views never stack up timers.
+  if (S.tick) { clearInterval(S.tick); S.tick = null; }
+  if (sn && sn.running) {
+    var base = sn.elapsed, t0 = Date.now();
+    S.tick = setInterval(function () {
+      var el = $("lv-clock");
+      if (!el) { clearInterval(S.tick); S.tick = null; return; }
+      var now = base + Math.floor((Date.now() - t0) / 60000);
+      el.textContent = clockText(now);
+      if (sn.allotted && now > sn.allotted) el.classList.add("over");
+    }, 20000);
+  }
+}
+
+function startSessionModal(id) {
+  openModal("Start the meeting",
+    "The clock starts now and the floor opens. Everyone signed in can put a point, " +
+    "a question or a decision on the record as it happens.",
+    '<div class="field"><label><input type="checkbox" id="ss-notice" style="width:auto;margin-right:8px" checked/> ' +
+    "The room has been told the meeting is being recorded</label></div>" +
+    '<div class="hint">Tick this only if it is true. It goes on the session record, and it is ' +
+    "the branch's evidence that notice was given before anything was captured.</div>" +
+    '<div class="msg" id="ss-msg"></div>' +
+    '<div class="btn-row" style="margin-top:14px"><button class="btn auto" id="ss-go">Start it</button>' +
+    '<button class="btn ghost auto" id="ss-cancel">Cancel</button></div>');
+  $("ss-cancel").onclick = closeModal;
+  $("ss-go").onclick = function () {
+    $("ss-go").disabled = true;
+    post("startSession", { meetingId: id, noticeGiven: $("ss-notice").checked })
+      .then(guard).then(function (res) {
+        $("ss-go").disabled = false;
+        if (!res.ok) return say("ss-msg", res.error);
+        closeModal();
+        loadMeeting(id);
+      }).catch(function () { $("ss-go").disabled = false; say("ss-msg", "No connection — try again."); });
+  };
+}
+
+function recordingModal(id, sn) {
+  sn = sn || {};
+  openModal("Recording and transcript",
+    "Teams already records the meeting and writes the transcript. Paste the links here so they " +
+    "sit with the record instead of somewhere else entirely.",
+    '<div class="field"><label for="rc-rec">Recording link</label>' +
+    '<input id="rc-rec" type="url" placeholder="https://…" value="' + esc(sn.recordingLink || "") + '"/></div>' +
+    '<div class="field"><label for="rc-tr">Transcript link</label>' +
+    '<input id="rc-tr" type="url" placeholder="https://…" value="' + esc(sn.transcriptLink || "") + '"/></div>' +
+    '<div class="field"><label for="rc-note">Note</label>' +
+    '<input id="rc-note" placeholder="e.g. audio unclear from 0:40" value="' + esc(sn.recordingNote || "") + '"/></div>' +
+    '<div class="msg" id="rc-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="rc-go">Save</button>' +
+    '<button class="btn ghost auto" id="rc-cancel">Cancel</button></div>');
+  $("rc-cancel").onclick = closeModal;
+  $("rc-go").onclick = function () {
+    $("rc-go").disabled = true;
+    post("attachRecording", { meetingId: id, recordingLink: $("rc-rec").value.trim(),
+      transcriptLink: $("rc-tr").value.trim(), note: $("rc-note").value.trim() })
+      .then(guard).then(function (res) {
+        $("rc-go").disabled = false;
+        if (!res.ok) return say("rc-msg", res.error);
+        closeModal(); loadMeeting(id);
+      }).catch(function () { $("rc-go").disabled = false; say("rc-msg", "No connection — try again."); });
+  };
 }
 
 function checkinBlock(m) {
@@ -1005,14 +1205,26 @@ function agendaRow(a) {
   }
   if (a.reviewedBy) tags += ' <span class="badge b-dim">Checked by ' + esc(a.reviewedBy) + "</span>";
   if (a.mine) tags += ' <span class="badge b-amber">Yours</span>';
+  if (a.topics) {
+    tags += " " + a.topics.split(",").map(function (t) {
+      return '<span class="topic-chip" data-topic="' + esc(t.trim()) + '">' + esc(t.trim()) + "</span>";
+    }).join(" ");
+  }
 
-  return '<div class="ag">' +
+  var live = S.detail && S.detail.session && S.detail.session.running && S.detail.canRun;
+  var isNow = S.detail && S.detail.session && S.detail.session.currentAgendaId === a.id;
+
+  return '<div class="ag"' + (isNow ? ' style="background:rgba(239,194,75,.06);border-radius:10px"' : "") + ">" +
     '<div class="clock">' + esc(a.clock) + (a.minutes ? '<br><span style="color:var(--dim);font-weight:400;font-size:10.5px">' + a.minutes + " min</span>" : "") + "</div>" +
     '<div class="main"><b>' + esc(a.title) + "</b>" +
     (a.section ? '<div style="font-size:10.5px;color:var(--gold2);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">' + esc(a.section) + "</div>" : "") +
     (a.detail ? '<div class="det">' + escLines(a.detail) + "</div>" : "") +
     (a.presenter ? '<div class="who2">Presented by <b style="color:var(--text)">' + esc(a.presenter) + "</b></div>" : "") +
-    '<div class="tags">' + tags + "</div>" +
+    '<div class="tags">' + tags +
+    (live ? (isNow
+      ? ' <span class="badge b-green">On now</span>'
+      : ' <button class="btn ghost sm" style="padding:3px 9px;font-size:10.5px" data-now="' +
+        esc(a.id) + '">On now</button>') : "") + "</div>" +
     a.materials.map(materialRow).join("") +
     (a.mine && !a.materials.length
       ? '<div style="margin-top:9px"><button class="btn teal sm" data-upload="' + esc(a.id) + '">Upload what you are presenting</button></div>'
@@ -1036,6 +1248,12 @@ function materialRow(u) {
 }
 
 function wireMaterials() {
+  Array.prototype.forEach.call(document.querySelectorAll("[data-now]"), function (b) {
+    b.onclick = function () {
+      post("currentItem", { meetingId: S.meetingId, agendaId: b.getAttribute("data-now") })
+        .then(guard).then(function () { loadMeeting(S.meetingId); });
+    };
+  });
   Array.prototype.forEach.call(document.querySelectorAll("[data-file]"), function (b) {
     b.onclick = function () { openMaterial(b.getAttribute("data-file"), b); };
   });
@@ -1067,6 +1285,261 @@ function openMaterial(id, btn) {
       if (btn) { btn.disabled = false; btn.textContent = label; }
       alertModal("No connection", "Could not fetch that file.");
     });
+}
+
+/* ---------------- the floor: who contributed what ---------------- */
+/*
+ *  Signing in says you were there. This says what you brought. Each entry
+ *  is stamped with the minute of the meeting and the item it came under,
+ *  so the record reads in order afterwards rather than as a pile of notes.
+ */
+
+function floorSection(d) {
+  var m = d.meeting, sn = d.session, list = d.contributions || [];
+  var mine = m.me && (m.me.status === "present" || m.me.status === "late");
+  var live = sn && sn.running;
+
+  var out = '<section><div class="section-label">The floor' +
+    (list.length ? " — " + list.length + " contribution" + (list.length === 1 ? "" : "s") : "") +
+    "</div>";
+
+  // The composer, only while the meeting is running and only for people
+  // the register says are in the room.
+  if (live && mine) {
+    out += '<div class="card"><div class="row2" style="margin-bottom:10px">' +
+      '<div class="field" style="margin-bottom:0"><label for="fl-kind">What is this</label>' +
+      '<select id="fl-kind">' + (d.kinds || ["Point"]).map(function (k) {
+        return '<option value="' + esc(k) + '">' + esc(k) + "</option>";
+      }).join("") + "</select></div>" +
+      '<div class="field" style="margin-bottom:0"><label for="fl-topic">Topic</label>' +
+      '<select id="fl-topic"><option value="">None</option>' +
+      (d.topicList || []).map(function (t) {
+        return '<option value="' + esc(t) + '">' + esc(t) + "</option>";
+      }).join("") + "</select></div></div>" +
+      '<div class="field"><label for="fl-body">On the record</label>' +
+      '<textarea id="fl-body" placeholder="What you said, asked, decided or committed to…"></textarea></div>' +
+      '<div class="msg" id="fl-msg"></div>' +
+      '<div class="btn-row"><button class="btn teal sm" id="fl-go">Put it on the record</button>' +
+      '<button class="btn ghost sm rec-btn" id="fl-rec">🎙️ Record a clip</button>' +
+      (isStaff() ? '<select id="fl-vis" style="width:auto;padding:8px 11px;font-size:12px">' +
+        '<option value="all">Everyone</option><option value="staff">Staff only</option></select>' : "") +
+      "</div>" +
+      '<div class="hint" id="fl-rechint" style="display:none"></div></div>';
+  } else if (live && !mine) {
+    out += '<div class="card flat"><div style="font-size:13px;color:var(--muted);line-height:1.7">' +
+      "Sign in to the meeting above and the floor opens — you can put a point, a question or " +
+      "a commitment on the record as it happens.</div></div>";
+  }
+
+  if (!list.length) {
+    out += '<div class="empty" style="padding:26px"><span class="big">💬</span>' +
+      (live ? "Nothing on the record yet." : "No contributions were logged for this meeting.") +
+      "</div></section>";
+    return out;
+  }
+
+  out += '<div class="card">' + list.map(function (c) {
+    var staffy = c.role === "staff" || c.role === "manager";
+    var canEdit = (S.user && c.email === S.user.email) || isStaff();
+    return '<div class="said"><div class="av' + (staffy ? " staff" : "") + '">' +
+      esc(initials(c.name)) + "</div>" +
+      '<div class="c"><div class="hd"><b>' + esc(c.name) + "</b>" +
+      '<span class="badge ' + kindBadge(c.kind) + '">' + esc(c.kind) + "</span>" +
+      (c.visibility !== "all" ? " " + visBadge(c.visibility) : "") +
+      '<span class="t">' + esc(c.time) + (c.offset ? " · " + c.offset + " min in" : "") + "</span>" +
+      (canEdit ? '<button class="btn ghost sm" style="margin-left:auto;padding:3px 8px;font-size:10.5px" ' +
+        'data-con="' + esc(c.id) + '">Edit</button>' : "") + "</div>" +
+      '<div class="bd">' + escLines(c.body) + "</div>" +
+      (c.topics || c.clipId
+        ? '<div class="tp">' +
+          (c.topics ? c.topics.split(",").map(function (t) {
+            return '<span class="topic-chip" data-topic="' + esc(t.trim()) + '">' + esc(t.trim()) + "</span>";
+          }).join("") : "") +
+          (c.clipId ? '<button class="btn ghost sm" data-file="' + esc(c.clipId) + '">🎙️ Play clip</button>' : "") +
+          "</div>"
+        : "") +
+      "</div></div>";
+  }).join("") + "</div>";
+
+  // Staff see who held the floor and, more usefully, who did not.
+  if (d.floor && d.floor.spoke.length) {
+    out += '<div class="card flat"><div class="section-label" style="margin-bottom:10px">Who held the floor</div>' +
+      '<div class="chips">' + d.floor.spoke.map(function (p) {
+        return '<span class="chip gold">' + esc(p.name) + '<span class="t">' + p.count + "</span></span>";
+      }).join("") + "</div>" +
+      (d.floor.silent.length
+        ? '<div style="margin-top:12px;font-size:12px;color:var(--muted);line-height:1.7">' +
+          "In the room, nothing on the record — " + d.floor.silent.length + ":</div>" +
+          '<div class="chips" style="margin-top:7px">' + d.floor.silent.map(function (p) {
+            return '<span class="chip">' + esc(p.name) + "</span>";
+          }).join("") + "</div>"
+        : '<div style="margin-top:12px;font-size:12px;color:var(--green)">Everyone in the room contributed.</div>') +
+      "</div>";
+  }
+
+  return out + "</section>";
+}
+
+function kindBadge(k) {
+  return k === "Decision" ? "b-green" : k === "Concern" ? "b-red"
+    : k === "Question" ? "b-all" : k === "Commitment" ? "b-amber"
+    : k === "Apology" ? "b-dim" : "b-dim";
+}
+
+function wireFloor(d) {
+  var m = d.meeting;
+
+  var go = $("fl-go");
+  if (go) go.onclick = function () {
+    var body = $("fl-body").value.trim();
+    if (body.length < 2) return say("fl-msg", "Write what you want on the record.");
+    go.disabled = true;
+    post("contribute", {
+      meetingId: m.id, body: body, kind: $("fl-kind").value,
+      topics: $("fl-topic").value, agendaId: (d.session && d.session.currentAgendaId) || "",
+      visibility: $("fl-vis") ? $("fl-vis").value : "all",
+      clipId: S.pendingClip || ""
+    }).then(guard).then(function (res) {
+      go.disabled = false;
+      if (!res.ok) return say("fl-msg", res.error);
+      S.pendingClip = null;
+      loadMeeting(m.id);
+    }).catch(function () { go.disabled = false; say("fl-msg", "No connection — try again."); });
+  };
+
+  var rec = $("fl-rec");
+  if (rec) rec.onclick = function () { toggleRecording(m.id, d.maxClipMinutes || 15); };
+
+  Array.prototype.forEach.call(document.querySelectorAll("[data-con]"), function (b) {
+    b.onclick = function () {
+      var c = d.contributions.filter(function (x) { return x.id === b.getAttribute("data-con"); })[0];
+      contributionModal(c, m.id, d);
+    };
+  });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-topic]"), function (b) {
+    b.onclick = function () { go2topic(b.getAttribute("data-topic")); };
+  });
+}
+
+function contributionModal(c, meetingId, d) {
+  openModal("Edit the record",
+    "Corrections are stamped, so the record shows it was changed.",
+    '<div class="field"><label for="ce-kind">What is this</label><select id="ce-kind">' +
+    (d.kinds || []).map(function (k) {
+      return '<option value="' + esc(k) + '"' + (k === c.kind ? " selected" : "") + ">" + esc(k) + "</option>";
+    }).join("") + "</select></div>" +
+    '<div class="field"><label for="ce-body">On the record</label>' +
+    '<textarea id="ce-body">' + esc(c.body) + "</textarea></div>" +
+    '<div class="msg" id="ce-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="ce-go">Save</button>' +
+    '<button class="btn danger auto" id="ce-del">Remove</button>' +
+    '<button class="btn ghost auto" id="ce-cancel">Cancel</button></div>');
+  $("ce-cancel").onclick = closeModal;
+  $("ce-del").onclick = function () {
+    confirmModal("Remove this", "It comes off the record for good.", "Remove it", function () {
+      post("editContribution", { id: c.id, remove: true }).then(guard).then(function () {
+        closeModal(); loadMeeting(meetingId);
+      });
+    });
+  };
+  $("ce-go").onclick = function () {
+    $("ce-go").disabled = true;
+    post("editContribution", { id: c.id, body: $("ce-body").value.trim(), kind: $("ce-kind").value })
+      .then(guard).then(function (res) {
+        $("ce-go").disabled = false;
+        if (!res.ok) return say("ce-msg", res.error);
+        closeModal(); loadMeeting(meetingId);
+      }).catch(function () { $("ce-go").disabled = false; say("ce-msg", "No connection — try again."); });
+  };
+}
+
+/* ---------------- the clip recorder ---------------- */
+/*
+ *  Short captures only — a decision as it was worded, an agent's
+ *  contribution. The whole meeting is what Teams records; its link goes on
+ *  the session. The recorder stops itself at the limit rather than letting
+ *  someone produce a file that cannot be uploaded.
+ */
+
+var REC = { rec: null, chunks: [], t0: 0, tick: null, stream: null };
+
+function toggleRecording(meetingId, maxMin) {
+  if (REC.rec && REC.rec.state === "recording") return stopRecording(meetingId);
+
+  if (!navigator.mediaDevices || !window.MediaRecorder) {
+    return alertModal("Not available",
+      "This browser cannot record. Chrome, Edge or Safari on a recent version can. " +
+      "The Teams recording link still attaches to the session either way.");
+  }
+
+  navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    REC.stream = stream;
+    REC.chunks = [];
+    // Mono and low bitrate: this is speech, and the file has to fit through
+    // Apps Script.
+    var opts = { audioBitsPerSecond: 32000 };
+    try { REC.rec = new MediaRecorder(stream, Object.assign({ mimeType: "audio/webm" }, opts)); }
+    catch (e) { REC.rec = new MediaRecorder(stream, opts); }
+
+    REC.rec.ondataavailable = function (e) { if (e.data && e.data.size) REC.chunks.push(e.data); };
+    REC.rec.start(1000);
+    REC.t0 = Date.now();
+
+    var btn = $("fl-rec"), hint = $("fl-rechint");
+    if (hint) {
+      hint.style.display = "block";
+      hint.innerHTML = "Recording. Everyone in the room should know. " +
+        "Stops itself at " + maxMin + " minutes.";
+    }
+    REC.tick = setInterval(function () {
+      var secs = Math.floor((Date.now() - REC.t0) / 1000);
+      if (btn) btn.innerHTML = '⏹️ Stop <span class="rec-time">' +
+        Math.floor(secs / 60) + ":" + String(secs % 60).padStart(2, "0") + "</span>";
+      if (btn) btn.classList.add("on");
+      if (secs >= maxMin * 60) stopRecording(meetingId);
+    }, 500);
+  }).catch(function () {
+    alertModal("No microphone",
+      "The browser would not give access to the microphone. Check the site's permissions " +
+      "and that nothing else is using it.");
+  });
+}
+
+function stopRecording(meetingId) {
+  if (!REC.rec || REC.rec.state !== "recording") return;
+  clearInterval(REC.tick);
+
+  REC.rec.onstop = function () {
+    if (REC.stream) REC.stream.getTracks().forEach(function (t) { t.stop(); });
+    var blob = new Blob(REC.chunks, { type: REC.rec.mimeType || "audio/webm" });
+    var btn = $("fl-rec"), hint = $("fl-rechint");
+    if (btn) { btn.classList.remove("on"); btn.innerHTML = '<span class="spin"></span> Saving…'; }
+
+    var reader = new FileReader();
+    reader.onload = function () {
+      post("uploadClip", {
+        meetingId: meetingId, data: String(reader.result),
+        mime: blob.type, summary: "Voice note"
+      }).then(guard).then(function (res) {
+        if (btn) btn.innerHTML = "🎙️ Record a clip";
+        if (!res.ok) { if (hint) hint.style.display = "none"; return alertModal("Not saved", res.error); }
+        // Held against the next contribution so the clip and the words go
+        // on the record together.
+        S.pendingClip = res.id;
+        if (hint) {
+          hint.style.display = "block";
+          hint.innerHTML = '<b style="color:var(--green)">Clip saved.</b> It attaches to the ' +
+            "next thing you put on the record — write a line and press " +
+            "<b>Put it on the record</b>.";
+        }
+      }).catch(function () {
+        if (btn) btn.innerHTML = "🎙️ Record a clip";
+        alertModal("Not saved", "The clip did not upload. Try a shorter one.");
+      });
+    };
+    reader.readAsDataURL(blob);
+  };
+  REC.rec.stop();
 }
 
 /* ---------------- the register ---------------- */
@@ -1677,6 +2150,29 @@ function buildForm(d) {
     '<div class="field"><label for="b-guest">Guest</label>' +
     '<input id="b-guest" placeholder="e.g. VP Sales" value="' + esc(m.guest || "") + '"/></div></div>' +
 
+    '<div class="field"><label for="b-scope">Who this meeting is for</label><select id="b-scope">' +
+    [["branch", "The branch — everyone can see it"],
+     ["staff", "Staff only — agents never see it happened"],
+     ["one-to-one", "One-to-one — the two in the room, plus the branch manager"],
+     ["client", "Client meeting — the agent whose client it is, plus the branch manager"]]
+      .map(function (o) {
+        return '<option value="' + o[0] + '"' + (o[0] === (m.scope || "branch") ? " selected" : "") + ">" + esc(o[1]) + "</option>";
+      }).join("") + "</select>" +
+    '<div class="hint">This is not the same as hiding an agenda item. A staff meeting does not ' +
+    "appear for an agent at all — not the meeting, not the register, not that it took place.</div></div>" +
+
+    '<div id="b-scoped" style="display:none">' +
+    '<div class="field"><label for="b-parts">Who else is in the room</label>' +
+    '<input id="b-parts" placeholder="Their work emails, separated by commas" value="' +
+      esc(m.participants || "") + '"/></div>' +
+    '<div class="field"><label for="b-client">Client reference</label>' +
+    '<input id="b-client" placeholder="Policy or client reference — for a client meeting" value="' +
+      esc(m.clientRef || "") + '"/></div></div>' +
+
+    '<div class="field"><label for="b-topics">Topics</label>' +
+    '<input id="b-topics" placeholder="Persistency, Clawback, Fact Find — separated by commas" value="' +
+      esc(m.topics || "") + '"/></div>' +
+
     '<div class="row2">' +
     '<div class="field"><label for="b-pre">Pre-read</label>' +
     '<input id="b-pre" placeholder="What went out beforehand" value="' + esc(m.preRead || "") + '"/></div>' +
@@ -1734,6 +2230,14 @@ function buildForm(d) {
 
   $("view").innerHTML = out;
 
+  // The participant boxes only matter for a meeting with a restricted room.
+  var scopeSel = $("b-scope"), scoped = $("b-scoped");
+  var syncScope = function () {
+    scoped.style.display = (scopeSel.value === "one-to-one" || scopeSel.value === "client") ? "block" : "none";
+  };
+  scopeSel.onchange = syncScope;
+  syncScope();
+
   var bb = $("b-back"); if (bb) bb.onclick = function () { go("meeting", m.id); };
   var bo = $("b-open"); if (bo) bo.onclick = function () { go("meeting", m.id); };
 
@@ -1746,7 +2250,9 @@ function buildForm(d) {
       chair: $("b-chair").value, guest: $("b-guest").value.trim(), status: $("b-status").value,
       lateAfter: $("b-late").value, week: $("b-week").value.trim(), preRead: $("b-pre").value.trim(),
       anchor: $("b-anchor").value.trim(), mission: $("b-mission").value.trim(),
-      purpose: $("b-purpose").value.trim()
+      purpose: $("b-purpose").value.trim(), scope: $("b-scope").value,
+      participants: $("b-parts").value.trim(), clientRef: $("b-client").value.trim(),
+      topics: $("b-topics").value.trim()
     }).then(guard).then(function (res) {
       $("b-save").disabled = false;
       if (!res.ok) return say("b-msg", res.error);
@@ -1831,6 +2337,11 @@ function agendaModal(a, meetingId) {
     [["all", "Everyone in the room"], ["staff", "Staff only"], ["chair", "Chair only"]].map(function (v) {
       return '<option value="' + v[0] + '"' + (v[0] === (a.visibility || "all") ? " selected" : "") + ">" + v[1] + "</option>";
     }).join("") + "</select></div></div>" +
+    '<div class="field"><label for="ag-topics">Topics</label>' +
+    '<input id="ag-topics" placeholder="Separated by commas" value="' + esc(a.topics || "") + '" list="ag-topiclist"/>' +
+    '<datalist id="ag-topiclist">' + ((S.home && S.home.topicList) || []).map(function (t) {
+      return '<option value="' + esc(t) + '">';
+    }).join("") + "</datalist></div>" +
     '<div class="field"><label><input type="checkbox" id="ag-req" style="width:auto;margin-right:8px"' +
     (a.materialsRequired ? " checked" : "") + "/> The presenter must upload material beforehand</label></div>" +
     '<div class="msg" id="ag-msg"></div>' +
@@ -1853,6 +2364,7 @@ function agendaModal(a, meetingId) {
       id: a.id || "", meetingId: meetingId, title: title, section: $("ag-sec").value,
       detail: $("ag-det").value.trim(), presenterEmail: $("ag-who").value,
       minutes: $("ag-min").value, visibility: $("ag-vis").value,
+      topics: $("ag-topics").value.trim(),
       materialsRequired: $("ag-req").checked
     }).then(guard).then(function (res) {
       $("ag-go").disabled = false;
@@ -2287,6 +2799,140 @@ function archiveUploadModal() {
       say("av-msg", "That file could not be read.");
     };
     reader.readAsDataURL(file);
+  };
+}
+
+/* ---------------- topics: the same subjects, joined up ---------------- */
+/*
+ *  Clawback, persistency, the 85-day report and fact find compliance come
+ *  back week after week. Tagged from one shared list, they stop being
+ *  thirty separate mentions and become one thread you can follow.
+ */
+
+function go2topic(name) { S.topicName = name; go("topic"); }
+
+function viewTopics() {
+  loading("Loading the topics…");
+  apiGet("topics", { token: S.token }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+
+    var byCat = {};
+    res.topics.forEach(function (t) { (byCat[t.category || "Other"] = byCat[t.category || "Other"] || []).push(t); });
+
+    var live = res.topics.filter(function (t) { return t.meetings; });
+    var out = '<div class="page-head"><div class="kicker">' + res.topics.length + " topics · " +
+      live.length + " with something against them</div>" +
+      "<h1>Topics</h1><p>One shared list, so the same subject is spelled the same way every " +
+      "week. Open one to see every meeting that touched it, newest first.</p></div>";
+
+    Object.keys(byCat).sort().forEach(function (cat) {
+      out += '<section><div class="section-label">' + esc(cat) + "</div><div class=\"grid2\">" +
+        byCat[cat].map(function (t) {
+          var busy = t.meetings || t.contributions;
+          return '<button class="card" style="text-align:left;cursor:pointer;width:100%" data-topic="' + esc(t.name) + '">' +
+            '<div style="display:flex;gap:8px;align-items:center;margin-bottom:3px">' +
+            '<b style="font-family:Montserrat;font-size:14px;flex:1">' + esc(t.name) + "</b>" +
+            (busy
+              ? '<span class="badge b-amber">' + t.meetings + " meeting" + (t.meetings === 1 ? "" : "s") + "</span>"
+              : '<span class="badge b-dim">Not used yet</span>') + "</div>" +
+            (t.description ? '<div class="meta">' + esc(t.description) + "</div>" : "") +
+            (t.contributions ? '<div class="meta" style="margin-top:4px;color:var(--dim)">' +
+              t.contributions + " contribution" + (t.contributions === 1 ? "" : "s") + "</div>" : "") +
+            "</button>";
+        }).join("") + "</div></section>";
+    });
+
+    if (res.canManage) {
+      out += '<div class="btn-row" style="margin-top:16px">' +
+        '<button class="btn teal sm" id="tp-add">+ Add a topic</button></div>';
+    }
+
+    $("view").innerHTML = out;
+    Array.prototype.forEach.call(document.querySelectorAll("[data-topic]"), function (b) {
+      b.onclick = function () { go2topic(b.getAttribute("data-topic")); };
+    });
+    var add = $("tp-add");
+    if (add) add.onclick = function () { topicModal(); };
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function viewTopic() {
+  loading("Following the thread…");
+  apiGet("topic", { token: S.token, name: S.topicName }).then(guard).then(function (res) {
+    if (!res.ok) throw new Error(res.error);
+
+    var out = '<div class="page-head"><a class="back" id="tp-back">← All topics</a>' +
+      '<div class="kicker">' + res.count + " meeting" + (res.count === 1 ? "" : "s") + "</div>" +
+      "<h1>" + esc(res.topic) + "</h1>" +
+      "<p>Everything the branch has said about this, newest first.</p></div>";
+
+    if (!res.timeline.length) {
+      out += '<div class="empty"><span class="big">🏷️</span>Nothing tagged with this yet.<br>' +
+        "Tag an agenda item or a contribution and it will show up here.</div>";
+    } else {
+      out += res.timeline.map(function (t) {
+        return '<div class="card"><div style="display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap">' +
+          '<div style="flex:1;min-width:200px"><h3>' + esc(t.meeting.title) + "</h3>" +
+          '<div class="meta">' + esc(t.meeting.type) + " · " + esc(t.meeting.date) + "</div></div>" +
+          '<button class="btn ghost sm" data-open="' + esc(t.meeting.id) + '">Open</button></div>' +
+          (t.items.length
+            ? '<div style="margin-top:11px">' + t.items.map(function (a) {
+                return '<div style="padding:9px 12px;background:rgba(0,0,0,.2);border-left:2px solid var(--gold);' +
+                  'border-radius:0 8px 8px 0;margin-bottom:6px">' +
+                  '<b style="font-family:Montserrat;font-size:12.5px">' + esc(a.title) + "</b>" +
+                  (a.presenter ? '<span style="color:var(--dim);font-size:11.5px"> · ' + esc(a.presenter) + "</span>" : "") +
+                  (a.detail ? '<div style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:4px">' +
+                    escLines(a.detail) + "</div>" : "") + "</div>";
+              }).join("") + "</div>"
+            : "") +
+          (t.contributions.length
+            ? '<div style="margin-top:9px">' + t.contributions.map(function (c) {
+                return '<div class="said" style="border-bottom:none;padding:8px 0">' +
+                  '<div class="av' + (c.role === "agent" ? "" : " staff") + '">' + esc(initials(c.name)) + "</div>" +
+                  '<div class="c"><div class="hd"><b>' + esc(c.name) + "</b>" +
+                  '<span class="badge ' + kindBadge(c.kind) + '">' + esc(c.kind) + "</span></div>" +
+                  '<div class="bd">' + escLines(c.body) + "</div></div></div>";
+              }).join("") + "</div>"
+            : "") +
+          "</div>";
+      }).join("");
+    }
+
+    $("view").innerHTML = out;
+    $("tp-back").onclick = function () { go("topics"); };
+    wireMeetingRows();
+  }).catch(function (e) {
+    $("view").innerHTML = '<div class="empty"><span class="big">⚠️</span>' + esc(e.message) + "</div>";
+  });
+}
+
+function topicModal(t) {
+  t = t || {};
+  openModal(t.name ? "Edit the topic" : "Add a topic",
+    "Keep the list short. A topic earns its place by coming back.",
+    '<div class="field"><label for="tm-name">Name</label>' +
+    '<input id="tm-name" value="' + esc(t.name || "") + '"/></div>' +
+    '<div class="field"><label for="tm-cat">Category</label>' +
+    '<input id="tm-cat" placeholder="Compliance · Retention · Performance…" value="' + esc(t.category || "") + '"/></div>' +
+    '<div class="field"><label for="tm-desc">What it covers</label>' +
+    '<input id="tm-desc" value="' + esc(t.description || "") + '"/></div>' +
+    '<div class="msg" id="tm-msg"></div>' +
+    '<div class="btn-row"><button class="btn auto" id="tm-go">Save</button>' +
+    '<button class="btn ghost auto" id="tm-cancel">Cancel</button></div>');
+  $("tm-cancel").onclick = closeModal;
+  $("tm-go").onclick = function () {
+    var name = $("tm-name").value.trim();
+    if (!name) return say("tm-msg", "Give the topic a name.");
+    $("tm-go").disabled = true;
+    post("saveTopic", { id: t.id || "", name: name, category: $("tm-cat").value.trim(),
+      description: $("tm-desc").value.trim() })
+      .then(guard).then(function (res) {
+        $("tm-go").disabled = false;
+        if (!res.ok) return say("tm-msg", res.error);
+        closeModal(); viewTopics();
+      }).catch(function () { $("tm-go").disabled = false; say("tm-msg", "No connection — try again."); });
   };
 }
 

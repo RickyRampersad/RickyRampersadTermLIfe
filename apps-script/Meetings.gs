@@ -121,7 +121,17 @@ var MEET = {
   TAB_ACTIONS:    'Actions',
   TAB_MINUTES:    'Minutes',
   TAB_ARCHIVE:    'Archive',
+  TAB_SESSIONS:   'Sessions',
+  TAB_CONTRIB:    'Contributions',
+  TAB_TOPICS:     'Topics',
   TAB_LOG:        'Log',
+
+  /* An audio clip recorded in the app. Apps Script has to hold the whole
+     thing in memory as base64, so this is deliberately short: it is for a
+     contribution, a decision or a segment — not the whole meeting. The
+     full recording is the one Teams already makes; attach its link to the
+     session instead. */
+  MAX_CLIP_MINUTES: 15,
 
   /* A sheet cell holds 50,000 characters. A long set of minutes runs past
      that, so a document's text is split across numbered chunk rows and
@@ -151,7 +161,33 @@ var SECTIONS = [
 
 /* The kinds of meeting the branch actually holds. */
 var MEETING_TYPES = ['Branch Meeting', 'Staff Meeting', 'Managers Meeting',
-                     'One-on-One', 'Quarterly Review', 'Resolution Meeting', 'Training Session'];
+                     'One-on-One', 'Quarterly Review', 'Resolution Meeting',
+                     'Training Session', 'Client Meeting'];
+
+/*  Who a meeting is FOR, which is a different question from what is on its
+ *  agenda. Visibility controls a single item; scope controls whether the
+ *  meeting exists at all for a given person.
+ *
+ *    branch      Everyone. The weekly branch meeting.
+ *    staff       Staff and the manager. Agents never see it — not the
+ *                meeting, not the register, not that it happened.
+ *    one-to-one  The two people in the room, plus the branch manager. A
+ *                manager reviewing an agent's persistency is not branch
+ *                business.
+ *    client      The agent whose client it is, plus the branch manager.
+ *                These carry client detail, and the branch's standing rule
+ *                is that client information travels no further than it has
+ *                to.
+ */
+var MEETING_SCOPES = ['branch', 'staff', 'one-to-one', 'client'];
+
+function cleanScope_(v) {
+  v = low_(v);
+  return MEETING_SCOPES.indexOf(v) === -1 ? 'branch' : v;
+}
+
+/* What a person may log during a meeting. */
+var CONTRIB_KINDS = ['Point', 'Question', 'Answer', 'Decision', 'Concern', 'Commitment', 'Apology'];
 
 /* Action item statuses, in the branch's own wording. */
 var ACTION_STATUSES = ['Not Started', 'Open', 'In Progress', 'Overdue', 'Standing', 'Complete'];
@@ -163,11 +199,12 @@ var SCHEMA = {
   Meetings: ['ID', 'Ref', 'Type', 'Title', 'Subtitle', 'Week', 'Date', 'Start', 'End', 'Format',
              'Location', 'Chair', 'Guest', 'Status', 'Check-In Opens', 'Check-In Closes',
              'Late After (min)', 'Materials Due', 'Pre-Read', 'Anchor Document', 'Mission Statement',
-             'Purpose', 'Minutes Status', 'Archive Link', 'Created By', 'Created', 'Updated'],
+             'Purpose', 'Minutes Status', 'Archive Link', 'Scope', 'Participants',
+             'Client Ref', 'Topics', 'Created By', 'Created', 'Updated'],
 
   Agenda: ['ID', 'Meeting ID', 'Order', 'Section', 'Title', 'Detail', 'Presenter Email',
            'Presenter Name', 'Allotted (min)', 'Visibility', 'Materials Required', 'Ready',
-           'Ready At', 'Reviewed By', 'Status', 'Created By', 'Created'],
+           'Ready At', 'Reviewed By', 'Topics', 'Status', 'Created By', 'Created'],
 
   Uploads: ['ID', 'Meeting ID', 'Agenda ID', 'Owner Email', 'Owner Name', 'Kind', 'File Name',
             'File ID', 'Link', 'Mime', 'Size', 'Visibility', 'Summary', 'Reviewed By',
@@ -184,6 +221,15 @@ var SCHEMA = {
   Archive: ['ID', 'Meeting ID', 'Title', 'Date', 'Year', 'Type', 'Source File ID',
             'Drive Link', 'Visibility', 'Chunk', 'Text', 'Words', 'Indexed By', 'Indexed At'],
 
+  Sessions: ['ID', 'Meeting ID', 'Started', 'Started By', 'Ended', 'Ended By',
+             'Minutes Run', 'Allotted', 'Notice Given', 'Recording Link',
+             'Transcript Link', 'Recording Note', 'Current Agenda ID', 'Item Started'],
+
+  Contributions: ['ID', 'Meeting ID', 'Agenda ID', 'When', 'Offset (min)', 'Email', 'Name',
+                  'Role', 'Kind', 'Body', 'Topics', 'Visibility', 'Clip Upload ID', 'Edited'],
+
+  Topics: ['ID', 'Name', 'Category', 'Description', 'Active', 'Created By', 'Created'],
+
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
 
@@ -198,6 +244,7 @@ function setupMeetings() {
   });
 
   materialsFolder_();          // creates the Drive folder on first call
+  topicsSheetSeeded_();        // the branch's recurring subjects, ready to tag
 
   // Seed the branch manager so there is always one way in.
   var people = readPeople_();
@@ -456,6 +503,40 @@ function canSee_(person, visibility, meeting) {
   return isStaff_(person);
 }
 
+/** Whether a meeting exists at all for this person.
+ *
+ *  canSee_ decides whether one agenda item, upload or minute section is
+ *  shown. This decides whether the whole meeting is. A staff meeting is not
+ *  a branch meeting with some items hidden — an agent should not know it
+ *  happened, who was at it, or that they were not.
+ */
+function canOpenMeeting_(person, m) {
+  if (!person || !m) return false;
+  if (person.role === 'manager') return true;
+
+  var status = low_(m['Status']) || 'draft';
+  if ((status === 'draft' || status === 'cancelled') && !isStaff_(person)) return false;
+
+  switch (cleanScope_(m['Scope'])) {
+    case 'staff':
+      return isStaff_(person);
+    case 'one-to-one':
+    case 'client':
+      // Only the people actually in the room. The branch manager is
+      // already through, above.
+      return low_(m['Chair']) === person.email || isParticipant_(m, person);
+    default:
+      return true;
+  }
+}
+
+/** The Participants cell is a comma-separated list of emails. */
+function isParticipant_(m, person) {
+  return str_(m['Participants']).toLowerCase()
+    .split(/[,;]/).map(function (x) { return x.trim(); })
+    .indexOf(person.email) > -1;
+}
+
 var VISIBILITIES = ['all', 'staff', 'chair'];
 
 function cleanVisibility_(v) {
@@ -683,6 +764,10 @@ function meetingCard_(m, person, myAttendance) {
     chair: str_(m['Chair']),
     guest: str_(m['Guest']),
     status: low_(m['Status']) || 'draft',
+    scope: cleanScope_(m['Scope']),
+    participants: isStaff_(person) ? str_(m['Participants']) : '',
+    clientRef: isStaff_(person) ? str_(m['Client Ref']) : '',
+    topics: str_(m['Topics']),
     minutesStatus: low_(m['Minutes Status']) || 'none',
     // Sent back so the builder re-opens on the grace period this
     // meeting actually uses, rather than resetting it to the default.
@@ -717,11 +802,7 @@ function apiMeetings_(token) {
     }
   });
 
-  var rows = meetingRows_().filter(function (m) {
-    var st = low_(m['Status']) || 'draft';
-    if (st === 'draft' || st === 'cancelled') return isStaff_(me);
-    return true;
-  });
+  var rows = meetingRows_().filter(function (m) { return canOpenMeeting_(me, m); });
 
   rows.sort(function (a, b) {
     var da = asDate_(a['Date']), db = asDate_(b['Date']);
@@ -741,9 +822,11 @@ function apiMeeting_(token, id) {
   var me = requireUser_(token);
   var m = findMeeting_(id);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
-  var st = low_(m['Status']) || 'draft';
-  if ((st === 'draft' || st === 'cancelled') && !isStaff_(me)) {
-    return { ok: false, error: 'That meeting is not open yet.' };
+  if (!canOpenMeeting_(me, m)) {
+    // Deliberately the same wording as a missing meeting. Telling someone a
+    // meeting exists but is not for them tells them it happened.
+    log_('denied', me.name, me.role, str_(id), 'Meeting outside their scope');
+    return { ok: false, error: 'That meeting no longer exists.' };
   }
 
   var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
@@ -800,6 +883,7 @@ function apiMeeting_(token, id) {
       materialsRequired: yes_(a['Materials Required']) && str_(a['Materials Required']) !== '',
       ready: str_(a['Ready']).toUpperCase() === 'Y',
       readyAt: fmtStamp_(a['Ready At']),
+      topics: str_(a['Topics']),
       reviewedBy: str_(a['Reviewed By']),
       status: str_(a['Status']),
       materials: items.map(function (u) { return uploadCard_(u); })
@@ -834,16 +918,27 @@ function apiMeeting_(token, id) {
         })
     : [];
 
+  var contributions = contributionsFor_(m, me);
+
   var out = {
     ok: true, user: publicUser_(me), meeting: card,
     agenda: visibleAgenda, actions: actions, minutes: minutes,
     minutesPublished: minutesPublished,
-    sections: SECTIONS
+    sections: SECTIONS,
+    session: sessionCard_(sessionFor_(m['ID']), agenda),
+    contributions: contributions,
+    kinds: CONTRIB_KINDS,
+    topicList: topicList_().map(function (t) { return t.name; }),
+    canRun: isStaff_(me),
+    maxClipMinutes: MEET.MAX_CLIP_MINUTES
   };
 
   // The register itself is staff material. An agent sees that they
   // are counted, never who else was or was not there.
-  if (isStaff_(me)) out.register = register_(m, att);
+  if (isStaff_(me)) {
+    out.register = register_(m, att);
+    out.floor = floorStats_(contributions, out.register);
+  }
   else out.presentCount = att.filter(function (a) {
     return ['present', 'late'].indexOf(low_(a['Status'])) > -1;
   }).length;
@@ -1101,9 +1196,11 @@ function apiRegister_(token, meetingId) {
  *  a one-on-one. Who keeps logging, who never does. */
 function apiAttendanceHistory_(token) {
   var me = requireStaff_(token);
+  // Only branch meetings count toward an attendance rate. A one-to-one or a
+  // client meeting is not something the whole branch failed to attend.
   var meetings = meetingRows_().filter(function (m) {
     var st = low_(m['Status']);
-    return st !== 'draft' && st !== 'cancelled';
+    return st !== 'draft' && st !== 'cancelled' && cleanScope_(m['Scope']) === 'branch';
   });
   var ids = {};
   meetings.forEach(function (m) { ids[str_(m['ID'])] = m; });
@@ -1173,6 +1270,10 @@ function apiSaveMeeting_(body) {
     'Anchor Document': str_(body.anchor),
     'Mission Statement': str_(body.mission),
     'Purpose': str_(body.purpose),
+    'Scope': cleanScope_(body.scope),
+    'Participants': str_(body.participants),
+    'Client Ref': str_(body.clientRef),
+    'Topics': str_(body.topics),
     'Updated': new Date()
   };
 
@@ -1234,6 +1335,7 @@ function apiSaveAgenda_(body) {
     'Allotted (min)': num_(body.minutes) || 5,
     'Visibility': cleanVisibility_(body.visibility),
     'Materials Required': body.materialsRequired ? 'Y' : 'N',
+    'Topics': str_(body.topics),
     'Status': str_(body.status) || 'Planned'
   };
 
@@ -1952,6 +2054,515 @@ function tidyName_(name) {
   return out.replace(/\s{2,}/g, ' ').trim();
 }
 
+/* ======================== running the meeting ======================== */
+/*
+ *  A session is one actual run of a meeting: started at, finished at, and
+ *  what was happening in between. The branch's agendas say "25 MIN STRICT"
+ *  and the August minutes record the chair asking for 45 minutes of
+ *  attention, so the clock is not decoration — it is the thing being
+ *  managed.
+ *
+ *  Recording: the full audio is whatever Teams already makes, and its link
+ *  is attached to the session so the recording stops living apart from the
+ *  record. Short clips recorded in the app hang off a contribution.
+ */
+
+function sessionFor_(meetingId) {
+  var rows = readTab_(MEET.TAB_SESSIONS).filter(function (r) {
+    return str_(r['Meeting ID']) === str_(meetingId);
+  });
+  // The live one is the session with no end time; otherwise the last.
+  return rows.filter(function (r) { return !asDate_(r['Ended']); })[0] ||
+         rows[rows.length - 1] || null;
+}
+
+function sessionCard_(sn, agenda) {
+  if (!sn) return null;
+  var started = asDate_(sn['Started']);
+  var ended = asDate_(sn['Ended']);
+  var running = !!(started && !ended);
+  var elapsed = started
+    ? Math.round(((ended ? ended.getTime() : Date.now()) - started.getTime()) / 60000)
+    : 0;
+
+  var currentId = str_(sn['Current Agenda ID']);
+  var current = null;
+  if (currentId && agenda) {
+    agenda.forEach(function (a) { if (str_(a['ID']) === currentId) current = a; });
+  }
+  var itemStarted = asDate_(sn['Item Started']);
+
+  return {
+    id: str_(sn['ID']),
+    running: running,
+    started: started ? fmtStamp_(started) : '',
+    startedISO: iso_(started),
+    startedBy: str_(sn['Started By']),
+    ended: ended ? fmtStamp_(ended) : '',
+    endedBy: str_(sn['Ended By']),
+    elapsed: elapsed,
+    allotted: num_(sn['Allotted']),
+    over: num_(sn['Allotted']) ? elapsed - num_(sn['Allotted']) : 0,
+    noticeGiven: str_(sn['Notice Given']).toUpperCase() === 'Y',
+    recordingLink: str_(sn['Recording Link']),
+    transcriptLink: str_(sn['Transcript Link']),
+    recordingNote: str_(sn['Recording Note']),
+    currentAgendaId: currentId,
+    currentTitle: current ? str_(current['Title']) : '',
+    currentAllotted: current ? num_(current['Allotted (min)']) : 0,
+    itemElapsed: itemStarted ? Math.round((Date.now() - itemStarted.getTime()) / 60000) : 0
+  };
+}
+
+/** Start the meeting. The clock starts here, not at the scheduled time. */
+function apiStartSession_(body) {
+  var me = requireStaff_(body.token);
+  var m = findMeeting_(body.meetingId);
+  if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+
+  var live = readTab_(MEET.TAB_SESSIONS).filter(function (r) {
+    return str_(r['Meeting ID']) === str_(m['ID']) && !asDate_(r['Ended']);
+  })[0];
+  if (live) return { ok: false, error: 'This meeting is already running.' };
+
+  var allotted = readTab_(MEET.TAB_AGENDA)
+    .filter(function (a) { return str_(a['Meeting ID']) === str_(m['ID']); })
+    .reduce(function (n, a) { return n + num_(a['Allotted (min)']); }, 0);
+
+  var id = uid_('SES');
+  appendRow_(MEET.TAB_SESSIONS, {
+    'ID': id, 'Meeting ID': str_(m['ID']), 'Started': new Date(), 'Started By': me.name,
+    'Allotted': allotted, 'Notice Given': body.noticeGiven ? 'Y' : 'N'
+  });
+
+  // Starting the meeting is what "live" means, so the status follows.
+  setCell_(MEET.TAB_MEETINGS, m._row, 'Status', 'live');
+  log_('session-start', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    allotted ? allotted + ' minutes on the agenda' : 'no agenda timings set');
+  return { ok: true, id: id };
+}
+
+/** Finish it. The run time goes on the record beside the allotted time. */
+function apiEndSession_(body) {
+  var me = requireStaff_(body.token);
+  var m = findMeeting_(body.meetingId);
+  if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+
+  var sn = readTab_(MEET.TAB_SESSIONS).filter(function (r) {
+    return str_(r['Meeting ID']) === str_(m['ID']) && !asDate_(r['Ended']);
+  })[0];
+  if (!sn) return { ok: false, error: 'This meeting is not running.' };
+
+  var started = asDate_(sn['Started']) || new Date();
+  var ended = new Date();
+  var ran = Math.round((ended.getTime() - started.getTime()) / 60000);
+
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Ended', ended);
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Ended By', me.name);
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Minutes Run', ran);
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Current Agenda ID', '');
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Item Started', '');
+
+  setCell_(MEET.TAB_MEETINGS, m._row, 'Status', 'closed');
+  log_('session-end', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    'Ran ' + ran + ' min against ' + num_(sn['Allotted']) + ' allotted');
+  return { ok: true, ran: ran, allotted: num_(sn['Allotted']) };
+}
+
+/** Move the room on to the next item. Everyone's screen follows. */
+function apiSetCurrentItem_(body) {
+  var me = requireStaff_(body.token);
+  var sn = sessionFor_(body.meetingId);
+  if (!sn || asDate_(sn['Ended'])) return { ok: false, error: 'This meeting is not running.' };
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Current Agenda ID', str_(body.agendaId));
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Item Started', new Date());
+  return { ok: true };
+}
+
+/** Attach the Teams recording and transcript to the session. */
+function apiAttachRecording_(body) {
+  var me = requireStaff_(body.token);
+  var sn = sessionFor_(body.meetingId);
+  if (!sn) return { ok: false, error: 'This meeting has not been run yet.' };
+
+  var rec = str_(body.recordingLink), tr = str_(body.transcriptLink);
+  if (rec && !/^https?:\/\//i.test(rec)) return { ok: false, error: 'Paste a full recording link.' };
+  if (tr && !/^https?:\/\//i.test(tr)) return { ok: false, error: 'Paste a full transcript link.' };
+
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Recording Link', rec);
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Transcript Link', tr);
+  setCell_(MEET.TAB_SESSIONS, sn._row, 'Recording Note', str_(body.note));
+  log_('attach-recording', me.name, me.role, str_(body.meetingId),
+    (rec ? 'recording ' : '') + (tr ? 'transcript' : ''));
+  return { ok: true };
+}
+
+/* ======================== contributions ======================== */
+/*
+ *  Signing in says you were there. A contribution says what you brought.
+ *  Each one is stamped with the minute of the meeting it came at and the
+ *  agenda item it came under, so the record reads in order afterwards
+ *  rather than as a pile of notes.
+ *
+ *  Anyone signed in and present may log their own. Nobody may log one in
+ *  somebody else's name — the server takes the author from the token, not
+ *  from what the browser claims.
+ */
+
+function contribCard_(c) {
+  return {
+    id: str_(c['ID']),
+    meetingId: str_(c['Meeting ID']),
+    agendaId: str_(c['Agenda ID']),
+    when: fmtStamp_(c['When']),
+    time: fmtTime_(c['When']),
+    offset: num_(c['Offset (min)']),
+    email: low_(c['Email']),
+    name: str_(c['Name']),
+    role: low_(c['Role']),
+    kind: str_(c['Kind']) || 'Point',
+    body: str_(c['Body']),
+    topics: str_(c['Topics']),
+    visibility: cleanVisibility_(c['Visibility']),
+    clipId: str_(c['Clip Upload ID']),
+    edited: fmtStamp_(c['Edited'])
+  };
+}
+
+function apiAddContribution_(body) {
+  var me = requireUser_(body.token);
+  var m = findMeeting_(body.meetingId);
+  if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+  if (!canOpenMeeting_(me, m)) return { ok: false, error: 'That meeting no longer exists.' };
+
+  var text = str_(body.body);
+  if (text.length < 2) return { ok: false, error: 'Write what you want on the record.' };
+
+  // You have to be in the room. The register already knows whether you are.
+  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
+  })[0];
+  if (!att || ['present', 'late'].indexOf(low_(att['Status'])) === -1) {
+    return { ok: false, error: 'Sign in to the meeting first — that is what puts you in the room.' };
+  }
+
+  var sn = sessionFor_(m['ID']);
+  var started = sn ? asDate_(sn['Started']) : null;
+  var offset = started ? Math.round((Date.now() - started.getTime()) / 60000) : 0;
+
+  var kind = CONTRIB_KINDS.indexOf(str_(body.kind)) > -1 ? str_(body.kind) : 'Point';
+  var agendaId = str_(body.agendaId) || (sn ? str_(sn['Current Agenda ID']) : '');
+
+  var id = uid_('CON');
+  appendRow_(MEET.TAB_CONTRIB, {
+    'ID': id, 'Meeting ID': str_(m['ID']), 'Agenda ID': agendaId, 'When': new Date(),
+    'Offset (min)': offset, 'Email': me.email, 'Name': me.name, 'Role': me.role,
+    'Kind': kind, 'Body': text, 'Topics': str_(body.topics),
+    'Visibility': cleanVisibility_(body.visibility || 'all'),
+    'Clip Upload ID': str_(body.clipId)
+  });
+
+  log_('contribution', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    kind + ': ' + text.slice(0, 60));
+  return { ok: true, id: id };
+}
+
+/** Your own, or staff tidying the record. Editing stamps the edit. */
+function apiEditContribution_(body) {
+  var me = requireUser_(body.token);
+  var row = readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+    return str_(c['ID']) === str_(body.id);
+  })[0];
+  if (!row) return { ok: false, error: 'That contribution is no longer there.' };
+  if (low_(row['Email']) !== me.email && !isStaff_(me)) {
+    return { ok: false, error: 'That is somebody else\'s contribution.' };
+  }
+  if (body.remove) {
+    tab_(MEET.TAB_CONTRIB).deleteRow(row._row);
+    log_('contribution-delete', me.name, me.role, str_(body.id), str_(row['Body']).slice(0, 60));
+    return { ok: true, removed: true };
+  }
+  if (str_(body.body)) setCell_(MEET.TAB_CONTRIB, row._row, 'Body', str_(body.body));
+  if (str_(body.kind) && CONTRIB_KINDS.indexOf(str_(body.kind)) > -1) {
+    setCell_(MEET.TAB_CONTRIB, row._row, 'Kind', str_(body.kind));
+  }
+  if (body.topics !== undefined) setCell_(MEET.TAB_CONTRIB, row._row, 'Topics', str_(body.topics));
+  if (body.visibility) setCell_(MEET.TAB_CONTRIB, row._row, 'Visibility', cleanVisibility_(body.visibility));
+  setCell_(MEET.TAB_CONTRIB, row._row, 'Edited', new Date());
+  log_('contribution-edit', me.name, me.role, str_(body.id), '');
+  return { ok: true };
+}
+
+/** The floor of one meeting, in the order it happened. */
+function contributionsFor_(m, person) {
+  return readTab_(MEET.TAB_CONTRIB)
+    .filter(function (c) { return str_(c['Meeting ID']) === str_(m['ID']); })
+    .filter(function (c) { return canSee_(person, c['Visibility'], m); })
+    .sort(function (a, b) {
+      var da = asDate_(a['When']), db = asDate_(b['When']);
+      return (da ? da.getTime() : 0) - (db ? db.getTime() : 0);
+    })
+    .map(contribCard_);
+}
+
+/** Who actually said something, and how much. Silence is visible too. */
+function floorStats_(contribs, register) {
+  var per = {};
+  contribs.forEach(function (c) {
+    if (!per[c.email]) per[c.email] = { email: c.email, name: c.name, role: c.role, count: 0, kinds: {} };
+    per[c.email].count++;
+    per[c.email].kinds[c.kind] = (per[c.email].kinds[c.kind] || 0) + 1;
+  });
+
+  var spoke = Object.keys(per).map(function (e) { return per[e]; })
+    .sort(function (a, b) { return b.count - a.count; });
+
+  var silent = [];
+  if (register) {
+    ['present', 'late'].forEach(function (g) {
+      (register.groups[g] || []).forEach(function (p) {
+        if (!per[p.email]) silent.push({ email: p.email, name: p.name, role: p.role });
+      });
+    });
+    silent.sort(function (a, b) { return a.name.localeCompare(b.name); });
+  }
+
+  return { total: contribs.length, spoke: spoke, silent: silent };
+}
+
+/* ======================== topics ======================== */
+/*
+ *  The same subjects come back week after week — clawback, persistency,
+ *  the 85-day report, fact find compliance, licensing. Without a shared
+ *  vocabulary each meeting spells them differently and none of it joins up.
+ *
+ *  So topics are a controlled list the branch keeps, and a meeting, an
+ *  agenda item or a contribution is tagged from it. The topic index then
+ *  answers the question the minutes cannot: what has this branch actually
+ *  said about clawback since March, and in which meetings.
+ */
+
+/* Seeded on first run from the subjects the branch's own minutes return to. */
+var SEED_TOPICS = [
+  ['Persistency', 'Quality of business', '2-year and 5-year, red/orange/green tracking'],
+  ['Clawback', 'Quality of business', 'Dispatch inside the 20-business-day window'],
+  ['Fact Find', 'Compliance', 'Schedule 11 — taken, retained, available for inspection'],
+  ['85-Day Report', 'Retention', 'Standing item at every branch meeting'],
+  ['Premium Due & Lapse', 'Retention', 'Escalation at day 45, 60 and 90'],
+  ['Licensing', 'Compliance', 'Central Bank approvals by renewal month'],
+  ['Outstanding Requirements', 'Operations', '5-day turnaround, 20-day file closure'],
+  ['Attendance', 'Operations', 'The digital register'],
+  ['Goal Planning', 'Performance', 'Submission and manager enforcement'],
+  ['Recruiting', 'Manpower', 'Pipeline and selection'],
+  ['Training & Development', 'Manpower', 'Coaching cadence and study requirements'],
+  ['Digital Innovation', 'Strategy', 'Branch automation and the paperless branch'],
+  ['Data Governance', 'Compliance', ''],
+  ['Client Service', 'Client', 'Surveys, callbacks, servicing gaps'],
+  ['Production & Quota', 'Performance', 'API against quota by unit and tenure']
+];
+
+function topicsSheetSeeded_() {
+  var sh = tab_(MEET.TAB_TOPICS);
+  if (sh.getLastRow() > 1) return;
+  SEED_TOPICS.forEach(function (t) {
+    appendRow_(MEET.TAB_TOPICS, {
+      'ID': uid_('TOP'), 'Name': t[0], 'Category': t[1], 'Description': t[2],
+      'Active': 'Y', 'Created By': 'setup', 'Created': new Date()
+    });
+  });
+}
+
+function topicList_() {
+  topicsSheetSeeded_();
+  return readTab_(MEET.TAB_TOPICS)
+    .filter(function (t) { return yes_(t['Active']); })
+    .map(function (t) {
+      return { id: str_(t['ID']), name: str_(t['Name']), category: str_(t['Category']),
+               description: str_(t['Description']) };
+    })
+    .sort(function (a, b) {
+      return (a.category || '').localeCompare(b.category || '') || a.name.localeCompare(b.name);
+    });
+}
+
+/** A tag cell holds names separated by commas. */
+function tagsOf_(v) {
+  return str_(v).split(/[,;]/).map(function (x) { return x.trim(); }).filter(Boolean);
+}
+
+function apiTopics_(token) {
+  var me = requireUser_(token);
+  var topics = topicList_();
+
+  var meetings = meetingRows_().filter(function (m) { return canOpenMeeting_(me, m); });
+  var contribs = readTab_(MEET.TAB_CONTRIB);
+  var agenda = readTab_(MEET.TAB_AGENDA);
+  var open = {};
+  meetings.forEach(function (m) { open[str_(m['ID'])] = m; });
+
+  var counts = {};
+  var bump = function (name, what) {
+    var k = name.toLowerCase();
+    if (!counts[k]) counts[k] = { meetings: {}, items: 0, contributions: 0 };
+    if (what) counts[k][what]++;
+  };
+
+  meetings.forEach(function (m) {
+    tagsOf_(m['Topics']).forEach(function (t) {
+      bump(t); counts[t.toLowerCase()].meetings[str_(m['ID'])] = 1;
+    });
+  });
+  agenda.forEach(function (a) {
+    var m = open[str_(a['Meeting ID'])];
+    if (!m || !canSee_(me, a['Visibility'], m)) return;
+    tagsOf_(a['Topics'] || '').forEach(function (t) {
+      bump(t, 'items'); counts[t.toLowerCase()].meetings[str_(a['Meeting ID'])] = 1;
+    });
+  });
+  contribs.forEach(function (c) {
+    var m = open[str_(c['Meeting ID'])];
+    if (!m || !canSee_(me, c['Visibility'], m)) return;
+    tagsOf_(c['Topics']).forEach(function (t) {
+      bump(t, 'contributions'); counts[t.toLowerCase()].meetings[str_(c['Meeting ID'])] = 1;
+    });
+  });
+
+  return {
+    ok: true,
+    canManage: isStaff_(me),
+    kinds: CONTRIB_KINDS,
+    topics: topics.map(function (t) {
+      var c = counts[t.name.toLowerCase()] || { meetings: {}, items: 0, contributions: 0 };
+      t.meetings = Object.keys(c.meetings).length;
+      t.items = c.items;
+      t.contributions = c.contributions;
+      return t;
+    })
+  };
+}
+
+/** Everything the branch has said about one topic, newest first. */
+function apiTopic_(token, name) {
+  var me = requireUser_(token);
+  var want = str_(name).toLowerCase();
+  if (!want) return { ok: false, error: 'Pick a topic.' };
+
+  var meetings = meetingRows_().filter(function (m) { return canOpenMeeting_(me, m); });
+  var byId = {};
+  meetings.forEach(function (m) { byId[str_(m['ID'])] = m; });
+
+  var hasTag = function (v) {
+    return tagsOf_(v).some(function (t) { return t.toLowerCase() === want; });
+  };
+
+  var out = [];
+  meetings.forEach(function (m) {
+    var items = readTab_(MEET.TAB_AGENDA).filter(function (a) {
+      return str_(a['Meeting ID']) === str_(m['ID']) && hasTag(a['Topics'] || '') &&
+             canSee_(me, a['Visibility'], m);
+    });
+    var says = readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+      return str_(c['Meeting ID']) === str_(m['ID']) && hasTag(c['Topics']) &&
+             canSee_(me, c['Visibility'], m);
+    });
+    if (!hasTag(m['Topics']) && !items.length && !says.length) return;
+
+    out.push({
+      meeting: { id: str_(m['ID']), title: str_(m['Title']), type: str_(m['Type']),
+                 date: fmtDate_(m['Date']), dateISO: iso_(asDate_(m['Date'])) },
+      items: items.map(function (a) {
+        return { title: str_(a['Title']), detail: str_(a['Detail']),
+                 presenter: str_(a['Presenter Name']) };
+      }),
+      contributions: says.map(contribCard_)
+    });
+  });
+
+  out.sort(function (a, b) {
+    return (b.meeting.dateISO || '').localeCompare(a.meeting.dateISO || '');
+  });
+
+  log_('topic-read', me.name, me.role, str_(name), out.length + ' meeting(s)');
+  return { ok: true, topic: str_(name), timeline: out, count: out.length };
+}
+
+function apiSaveTopic_(body) {
+  var me = requireStaff_(body.token);
+  var name = str_(body.name);
+  if (!name) return { ok: false, error: 'Give the topic a name.' };
+  topicsSheetSeeded_();
+
+  var row = readTab_(MEET.TAB_TOPICS).filter(function (t) {
+    return str_(t['ID']) === str_(body.id) ||
+           (!str_(body.id) && str_(t['Name']).toLowerCase() === name.toLowerCase());
+  })[0];
+
+  if (row) {
+    setCell_(MEET.TAB_TOPICS, row._row, 'Name', name);
+    setCell_(MEET.TAB_TOPICS, row._row, 'Category', str_(body.category));
+    setCell_(MEET.TAB_TOPICS, row._row, 'Description', str_(body.description));
+    setCell_(MEET.TAB_TOPICS, row._row, 'Active', body.active === false ? 'N' : 'Y');
+    log_('topic-edit', me.name, me.role, name, '');
+    return { ok: true };
+  }
+
+  appendRow_(MEET.TAB_TOPICS, {
+    'ID': uid_('TOP'), 'Name': name, 'Category': str_(body.category),
+    'Description': str_(body.description), 'Active': 'Y',
+    'Created By': me.email, 'Created': new Date()
+  });
+  log_('topic-new', me.name, me.role, name, '');
+  return { ok: true };
+}
+
+/* ======================== short audio clips ======================== */
+/*
+ *  Not the meeting recording — Teams does that, and an eighty-minute file
+ *  cannot be assembled inside Apps Script's memory. This is for a short
+ *  capture: a decision as it was worded, an agent's contribution, a
+ *  motivation segment worth keeping. It hangs off a contribution and lives
+ *  in the same private Drive folder as everything else.
+ */
+
+function apiUploadClip_(body) {
+  var me = requireUser_(body.token);
+  var m = findMeeting_(body.meetingId);
+  if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+  if (!canOpenMeeting_(me, m)) return { ok: false, error: 'That meeting no longer exists.' };
+
+  var data = str_(body.data);
+  if (!data) return { ok: false, error: 'Nothing was recorded.' };
+  var comma = data.indexOf(',');
+  var bytes;
+  try { bytes = Utilities.base64Decode(comma > -1 ? data.slice(comma + 1) : data); }
+  catch (err) { return { ok: false, error: 'That recording could not be read.' }; }
+
+  if (bytes.length > MEET.MAX_UPLOAD_MB * 1024 * 1024) {
+    return { ok: false, error: 'That clip is too long. Keep it under ' +
+      MEET.MAX_CLIP_MINUTES + ' minutes, or attach the Teams recording to the session instead.' };
+  }
+
+  var mime = str_(body.mime) || 'audio/webm';
+  var stamp = Utilities.formatDate(new Date(), tz_(), 'yyyy-MM-dd HHmm');
+  var name = me.name + ' — ' + stamp + '.' + (mime.indexOf('mp4') > -1 ? 'm4a' : 'webm');
+
+  var file = meetingFolder_(m).createFile(Utilities.newBlob(bytes, mime, name));
+  file.setSharing(DriveApp.Access.PRIVATE, DriveApp.Permission.NONE);
+
+  var id = uid_('UPL');
+  appendRow_(MEET.TAB_UPLOADS, {
+    'ID': id, 'Meeting ID': str_(m['ID']), 'Agenda ID': str_(body.agendaId),
+    'Owner Email': me.email, 'Owner Name': me.name, 'Kind': 'audio',
+    'File Name': name, 'File ID': file.getId(), 'Mime': mime, 'Size': bytes.length,
+    'Visibility': cleanVisibility_(body.visibility || 'all'),
+    'Summary': str_(body.summary) || 'Voice note', 'Uploaded': new Date()
+  });
+
+  log_('clip', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    Math.round(bytes.length / 1024) + ' KB');
+  return { ok: true, id: id, name: name };
+}
+
 /* ======================== the searchable archive ======================== */
 /*
  *  Registering a past meeting as a row with a Drive link is not much use:
@@ -2325,7 +2936,9 @@ function apiHome_(token) {
   var out = {
     ok: true, user: publicUser_(me), meetings: list.meetings,
     next: live || next, actions: actions.actions, actionCounts: actions.counts,
-    types: MEETING_TYPES, sections: SECTIONS, statuses: ACTION_STATUSES
+    types: MEETING_TYPES, sections: SECTIONS, statuses: ACTION_STATUSES,
+    scopes: MEETING_SCOPES, kinds: CONTRIB_KINDS,
+    topicList: topicList_().map(function (t) { return t.name; })
   };
 
   if (isStaff_(me)) {
@@ -2359,6 +2972,8 @@ function doGet(e) {
       case 'file':       out = apiFile_(p.token, p.id); break;
       case 'people':     out = apiPeople_(p.token); break;
       case 'archive':    out = apiArchive_(p.token); break;
+      case 'topics':     out = apiTopics_(p.token); break;
+      case 'topic':      out = apiTopic_(p.token, p.name); break;
       case 'search':     out = apiArchiveSearch_(p.token, p.q, p.year, p.type); break;
       case 'document':   out = apiArchiveDoc_(p.token, p.id); break;
       case 'log':        out = apiLog_(p.token, p.limit); break;
@@ -2415,6 +3030,17 @@ function doPost(e) {
       case 'archiveVisibility': out = apiArchiveVisibility_(body); break;
       case 'archiveDelete':     out = apiArchiveDelete_(body); break;
       case 'archiveIndex':      out = apiArchiveIndex_(body); break;
+
+      case 'startSession':      out = apiStartSession_(body); break;
+      case 'endSession':        out = apiEndSession_(body); break;
+      case 'currentItem':       out = apiSetCurrentItem_(body); break;
+      case 'attachRecording':   out = apiAttachRecording_(body); break;
+
+      case 'contribute':        out = apiAddContribution_(body); break;
+      case 'editContribution':  out = apiEditContribution_(body); break;
+      case 'uploadClip':        out = apiUploadClip_(body); break;
+
+      case 'saveTopic':         out = apiSaveTopic_(body); break;
 
       default:               out = { ok: false, error: 'Unknown action.' };
     }
