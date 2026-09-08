@@ -57,8 +57,26 @@ const line = env.intelRebuildWall45();
 ok('the rebuild says what it did', /^wall45 built at \d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}\S* in \d+s$/.test(line), line);
 fresh(); r = post({ action: 'intel.wall' });
 ok('the next request carries the rebuilt copy', r.data.build === 3 && built.wall45 === 3, JSON.stringify(r.data));
-const all = env.intelRebuildWall().split('\n');
-ok('intelRebuildWall does all five, in order, the birthdays last', all.length === 5 && /^wall45/.test(all[0]) && /^book/.test(all[4]), all.join(' | '));
+console.log('\nAll five from the editor, without hitting the six-minute ceiling:\n');
+// On 8 September the old intelRebuildWall tried all five in one execution and
+// Apps Script killed it at six minutes with no report of what it had done.
+Object.keys(built).forEach(k => { built[k] = 0; });
+env.__sheets['_Intel Wall']._grid.length = 0;
+let wallOut = env.intelRebuildWall();
+ok('from cold it builds every feed', Object.values(built).every(n => n === 1), JSON.stringify(built));
+ok('fastest first, the 45-day line last', wallOut.indexOf('possession') < wallOut.indexOf('wall45'), wallOut.split('\n')[1]);
+ok('and says so plainly', /Every wall feed is built/.test(wallOut) && /of the six-minute limit/.test(wallOut), wallOut.split('\n').slice(-2).join(' '));
+wallOut = env.intelRebuildWall();
+ok('run again the same day, it rebuilds nothing', Object.values(built).every(n => n === 1), JSON.stringify(built));
+ok('and says the copies were left alone', /Already built today, left alone/.test(wallOut), wallOut.split('\n')[0]);
+wallOut = env.intelRebuildWallForce();
+ok('forced, it rebuilds every one', Object.values(built).every(n => n === 2), JSON.stringify(built));
+ok('the budget stops short of the six-minute ceiling', env.IWALL_BUDGET_MS < 6 * 60 * 1000 && env.IWALL_BUDGET_MS >= 3 * 60 * 1000, String(env.IWALL_BUDGET_MS));
+// A feed that will not build must not take the run down with it.
+env.iBuildLicence_ = () => { throw new Error('Salesforce said no'); };
+wallOut = env.intelRebuildWallForce();
+ok('one feed failing does not stop the others', /Would not build/.test(wallOut) && /licence — licence: Salesforce said no|licence — Salesforce said no/.test(wallOut), wallOut);
+ok('and the rest still built', built.wall45 === 3, String(built.wall45));
 
 console.log('\nA bad night never pins a bad screen:\n');
 env.iBuildDelivery_ = () => ({ error: 'No in-force tab found.' });
