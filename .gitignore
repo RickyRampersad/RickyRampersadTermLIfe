@@ -9,3 +9,4 @@ data/*.csv
 data/*.json
 
 node_modules/
+__pycache__/

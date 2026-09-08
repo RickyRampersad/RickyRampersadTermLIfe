@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 132" width="700" height="132">
+  <title>don't have an agent — Ricky Rampersad</title>
+  <defs><clipPath id="kH"><rect x="40" y="34" width="21" height="50"/></clipPath></defs><g transform="translate(4 6) scale(0.85) "><g transform="rotate(-40 60 60)"><rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#0F1A2B" stroke-width="9"/><rect x="42" y="43" width="62" height="34" rx="17" fill="none" stroke="#FF5C4D" stroke-width="9"/><g clip-path="url(#kH)"><rect x="16" y="43" width="62" height="34" rx="17" fill="none" stroke="#0F1A2B" stroke-width="9"/></g></g></g>
+  <text x="126" y="62" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="52" letter-spacing="-2" fill="#0F1A2B" opacity="0.42">don&#8217;t</text>
+  <path d="M114 54 Q170 40 228 46 T272 39" stroke="#FF5C4D" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <text x="286" y="62" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="900"
+        font-size="52" letter-spacing="-2" fill="#0F1A2B">have an agent</text>
+  <rect x="127" y="86" width="537" height="2" fill="#FF5C4D" opacity="0.5"/>
+  <text x="127" y="112" font-family="Montserrat, Helvetica, Arial, sans-serif" font-weight="700"
+        font-size="14" letter-spacing="8.4" fill="#6B7C96">RICKY RAMPERSAD</text>
+</svg>

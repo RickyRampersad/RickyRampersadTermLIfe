@@ -1,0 +1,398 @@
+<!doctype html>
+<!-- The Branch Intelligence Wall — all five stories, one address.
+
+     The five screens were built as five standing pages, each designed to hold a
+     television on its own. On the branch floor that meant somebody had to choose
+     one and the other four were never seen. This streams them.
+
+     Why all five are mounted at once and never reloaded:
+     each story page reads Salesforce when it loads and refreshes itself every
+     thirty minutes. If the wall swapped one iframe's src every twenty seconds,
+     that would be a fresh read of the branch's whole task position roughly every
+     twenty seconds, all day — hundreds of times the load the pages were written
+     for, against the same Apps Script the tracker depends on. Mounting all five
+     once costs five reads at boot and then ten reads an hour, exactly what a
+     single standing screen costs. Rotation is then only a matter of which one
+     is showing.
+
+     Hidden slides are visibility:hidden rather than display:none, so their
+     timers keep running and their thirty-minute refresh still happens; a
+     display:none iframe is not rendered but its page is also never laid out,
+     and these pages measure themselves to fit the screen.
+
+     What is always on screen, and what only appears when somebody reaches for
+     it: the timer — which story, and how long until the next — stays on every
+     slide, with the gold line across the top, because a person on the floor
+     asked how long a screen runs and could not tell. The rail with the stops
+     and the controls fades after a few seconds; it is for whoever is setting
+     the screen up. Pause, and it stays.
+
+     Every story narrates. A slide tells this player when its voice starts and
+     stops (postMessage), and the player holds that slide until the voice is
+     done rather than turning mid-sentence; the rail's Narrate asks the story on
+     screen to speak. The stories are same-origin, so the mouse, a tap or a key
+     inside a story reaches this player too — otherwise the first click into a
+     slide would take the keys away from the wall for good. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#061c31">
+<title>The Branch Intelligence Wall</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --gold:#efc24b; --gold2:#c9942c;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:#061c31;color:var(--ink);font-family:var(--font-b);overflow:hidden}
+
+  /* The slides. All five live here for the life of the page. */
+  .stage{position:fixed;inset:0;background:#061c31}
+  .slide{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
+    opacity:0;visibility:hidden;transition:opacity .55s ease}
+  .slide.on{opacity:1;visibility:visible}
+
+  /* The boot card, over the top until the first story has painted. */
+  #boot{position:fixed;inset:0;z-index:40;display:grid;place-items:center;
+    background:linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%);
+    transition:opacity .5s ease}
+  #boot.gone{opacity:0;pointer-events:none}
+  #boot .in{display:flex;align-items:center;gap:16px}
+  #boot .mark{width:54px;height:54px;border-radius:15px;overflow:hidden;background:#07131f;
+    display:grid;place-items:center;flex:none}
+  #boot .mark img{width:54px;height:54px;display:block}
+  #boot h1{margin:0;font-family:var(--font-d);font-size:23px;font-weight:800;letter-spacing:-.4px}
+  #boot p{margin:3px 0 0;font-size:13px;color:var(--dim)}
+
+  /* The line across the top: time to the next story. Thick enough to be read
+     from the far side of the floor. */
+  #bar{position:fixed;left:0;top:0;height:5px;width:0;z-index:31;
+    background:linear-gradient(90deg,var(--gold2),var(--gold));
+    box-shadow:0 0 14px rgba(239,194,75,.55)}
+  #bar.paused{background:var(--faint);box-shadow:none}
+
+  /* The timer. Always on, on every slide: which story, and how long it has
+     left, with its own small track for a screen whose top edge is cut off. */
+  #hud{position:fixed;right:18px;bottom:14px;z-index:32;display:flex;align-items:center;gap:11px;
+    padding:8px 13px;border-radius:999px;background:rgba(6,28,49,.8);border:1px solid var(--line);
+    box-shadow:0 4px 18px rgba(0,0,0,.35);font:600 13px var(--font-b);color:var(--dim);
+    white-space:nowrap;font-variant-numeric:tabular-nums}
+  #hud b{color:var(--ink);font-weight:700}
+  #hud .sep{color:var(--faint)}
+  #hud .track{width:110px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;flex:none}
+  #hud .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+  #hud.paused .track i{background:var(--faint)}
+  #hud.nar .track i{background:var(--blue)}
+  #hud.nar #left{color:var(--blue)}
+
+  /* The rail: the stops and the controls. For the person setting the screen up,
+     so it fades — unless the wall is paused, when it stays. It keeps clear of
+     the timer on the right. */
+  #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
+    padding:34px 440px 15px 26px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;
+    background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
+    transition:opacity .45s ease}
+  #rail.hide{opacity:0;pointer-events:none}
+  #dots,.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .ctl{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
+  .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
+    color:var(--dim);font:600 12px var(--font-b);padding:6px 13px;border-radius:999px;
+    cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
+  .dot:hover{color:var(--ink)}
+  .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
+    border-color:#c9942c;font-weight:700}
+  .dot.dead{opacity:.35;text-decoration:line-through}
+  .ctl .dot{font-size:13px;padding:6px 12px}
+
+  @media (max-width:760px){
+    #rail{padding:22px 12px 58px 12px}
+    .ctl{margin-left:0;padding-left:0;border-left:0}
+    #hud{right:10px;bottom:10px;padding:7px 11px;font-size:12px;gap:9px}
+    #hud .tab,#hud .tabsep{display:none}
+    #hud .track{width:72px}
+  }
+  @media print{#rail,#bar,#boot,#hud{display:none}}
+</style>
+</head>
+<body>
+
+<div class="stage" id="stage"></div>
+<div id="bar"></div>
+
+<div id="hud">
+  <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
+  <span class="track"><i id="fill"></i></span>
+</div>
+
+<div id="rail" class="hide">
+  <div id="dots"></div>
+  <div class="ctl">
+    <button class="dot" type="button" id="prev" title="previous story (←)">‹</button>
+    <button class="dot" type="button" id="pp" title="pause or go on (space)">⏸ Pause</button>
+    <button class="dot" type="button" id="next" title="next story (→)">›</button>
+    <button class="dot" type="button" id="nar" title="narrate this story (n)">▶ Narrate</button>
+  </div>
+</div>
+
+<div id="boot">
+  <div class="in">
+    <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+    <div>
+      <h1>The Branch Intelligence Wall</h1>
+      <p>Five screens, one after another. Reading Salesforce…</p>
+    </div>
+  </div>
+</div>
+
+<script>
+/* The five, in the order the film introduces them. `secs` is how long each
+   holds the screen; the denser a screen is, the longer it earns. */
+var SLIDES = [
+  { file:'index.html',      tab:'Premium dues',      secs:26 },
+  { file:'possession.html', tab:'In our possession', secs:22 },
+  { file:'delivery.html',   tab:'With the agent',    secs:22 },
+  { file:'licence.html',    tab:'The licence year',  secs:22 },
+  { file:'book.html',       tab:'Birthdays today',   secs:18 }
+];
+
+/* The query, read by hand: a television browser from 2016 has no URLSearchParams. */
+var Q = { get: function (k) {
+  var m = new RegExp('[?&]' + k + '=([^&]*)').exec(location.search);
+  return m ? decodeURIComponent(m[1]) : null; } };
+/* ?secs=30 gives every story the same dwell — for a screen being watched
+   rather than glanced at. */
+var WANT = Number(Q.get('secs')) || 0;
+var FIXED = WANT ? Math.max(2, Math.min(600, WANT)) : 0;
+/* A page held open for days will eventually be a page nobody has reloaded for
+   days. This starts it again at a slide boundary, twelve hours in by default,
+   so a leak or a stale asset cannot accumulate for a week. */
+var RELOAD_AFTER_MS = Math.max(1, Number(Q.get('reload') || 12)) * 3600 * 1000;
+/* How long a story gets to load before the wall stops waiting for it, and how
+   often a story that failed is asked for again. A television that lost its
+   wifi for a minute while the wall was starting would otherwise show one
+   screen until the next restart. */
+var GRACE_MS = Math.max(1, Number(Q.get('grace') || 30)) * 1000;
+var RETRY_MS = Math.max(1, Number(Q.get('retry') || 120)) * 1000;
+/* The first screen turns early — a person checking that the wall works should
+   not have to stand there for half a minute to find out. */
+var FIRST_TURN_MS = 12000;
+/* After a story's voice ends, it keeps the screen this long before the wall
+   turns: the last line needs a moment to land. */
+var AFTER_VOICE_MS = 6000;
+var BORN = Date.now();
+
+var stage = document.getElementById('stage'),
+    dots  = document.getElementById('dots'),
+    rail  = document.getElementById('rail'),
+    bar   = document.getElementById('bar'),
+    fill  = document.getElementById('fill'),
+    hud   = document.getElementById('hud'),
+    pos   = document.getElementById('pos'),
+    tab   = document.getElementById('tab'),
+    left  = document.getElementById('left'),
+    pp    = document.getElementById('pp'),
+    nar   = document.getElementById('nar'),
+    boot  = document.getElementById('boot');
+
+var at = -1, paused = false, narrating = false, started = 0, holdFor = 0, bootGone = false;
+
+/* Build the frames and the buttons. The first story is asked for at once and
+   the rest follow a few seconds apart, because five heavy pages starting
+   together on branch wifi is how the first one ends up slow.
+
+   An iframe with no src fires a load event for its blank page the moment it
+   is attached — so every frame would count as loaded before it held anything.
+   The listener goes on only when the story is asked for, and only a load that
+   is actually the story counts. */
+SLIDES.forEach(function (s, i) {
+  var f = document.createElement('iframe');
+  f.className = 'slide';
+  f.title = s.tab;
+  f.setAttribute('scrolling', 'no');
+  s.el = f;
+  stage.appendChild(f);
+
+  var b = document.createElement('button');
+  b.className = 'dot';
+  b.type = 'button';
+  b.textContent = (i + 1) + '. ' + s.tab;
+  b.onclick = function () { show(i); rest(); };
+  s.dot = b;
+  dots.appendChild(b);
+
+  f.addEventListener('load', function () {
+    var here = '';
+    try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
+    if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
+    s.ready = true; s.dead = false; b.classList.remove('dead');
+    /* The story is ours (same origin), so what happens inside it reaches the
+       wall: a mouse or a finger wakes the rail, a key drives the turning. */
+    try {
+      var d = f.contentDocument;
+      d.addEventListener('mousemove', wake);
+      d.addEventListener('touchstart', wake);
+      d.addEventListener('keydown', keys);
+    } catch (e) {}
+  });
+  s.ask = function () {
+    s.asked = Date.now();
+    f.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
+    /* A story that never answers must not hold the wall. Past the grace an
+       unloaded frame is skipped until it does come good. */
+    setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
+  };
+  setTimeout(s.ask, 2500 * i);
+});
+
+/* A story given up on is asked for again, every couple of minutes, until it
+   comes good. `here` in the load handler still matches: the query is not part
+   of the pathname. */
+function retryDead() {
+  SLIDES.forEach(function (s) {
+    if (s.dead && !s.ready && Date.now() - s.asked > RETRY_MS) s.ask();
+  });
+}
+
+/* The next story to show: one that has painted, before one still loading,
+   before one given up on — and if every one is silent, keep turning anyway. */
+function nextLive(from) {
+  var j, k;
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (SLIDES[j].ready) return j; }
+  for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (!SLIDES[j].dead) return j; }
+  return (from + 1) % SLIDES.length;
+}
+
+function tell(i, msg) {
+  try { SLIDES[i].el.contentWindow.postMessage(msg, '*'); } catch (e) {}
+}
+
+function show(i) {
+  if (i === at) { started = Date.now(); return; }       // the only one worth showing: hold it
+  if (narrating && at > -1) tell(at, { rrb:'hush' });    // turning away ends the voice
+  setNarrating(false);
+  SLIDES.forEach(function (s, k) {
+    /* add/remove rather than toggle(name, force): old television WebKit and IE
+       ignore the second argument and flip every slide. */
+    var on = k === i;
+    s.el.classList[on ? 'add' : 'remove']('on');
+    s.dot.classList[on ? 'add' : 'remove']('on');
+  });
+  var firstTurn = at === -1;
+  at = i;
+  holdFor = (FIXED || SLIDES[i].secs) * 1000;
+  if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
+  started = Date.now();
+  pos.textContent = (i + 1) + ' of ' + SLIDES.length;
+  tab.textContent = SLIDES[i].tab;
+}
+
+function step() { show(nextLive(at)); }
+function rest() { started = Date.now(); }               // a click buys a full turn
+
+function setPaused(v) {
+  paused = !!v;
+  bar.classList[paused ? 'add' : 'remove']('paused');
+  hud.classList[paused ? 'add' : 'remove']('paused');
+  pp.textContent = paused ? '▶ Play' : '⏸ Pause';
+  rest(); wake();
+}
+function setNarrating(v) {
+  narrating = !!v;
+  hud.classList[narrating ? 'add' : 'remove']('nar');
+  nar.textContent = narrating ? '■ Stop' : '▶ Narrate';
+  nar.classList[narrating ? 'add' : 'remove']('on');
+}
+
+/* A story says when its voice starts and stops. While it speaks the wall
+   holds it; when it stops, the story keeps the screen a few seconds more. */
+window.addEventListener('message', function (e) {
+  var d = e.data || {};
+  if (d.rrb !== 'narration') return;
+  setNarrating(d.on);
+  if (!d.on) started = Date.now() - Math.max(0, holdFor - AFTER_VOICE_MS);
+  wake();
+});
+
+/* One clock drives the line, the timer and the turning, so what is on screen
+   is the truth about when the next story comes. It runs on an interval rather
+   than an animation frame: a television browser that has been left alone
+   slows animation frames right down, and a wall that stops turning when
+   nobody is touching it is the opposite of a wall. */
+function tick() {
+  var pct = 0, secsLeft = 0;
+  if (holdFor) {
+    var gone = Date.now() - started;
+    pct = Math.min(100, gone / holdFor * 100);
+    secsLeft = Math.max(0, Math.ceil((holdFor - gone) / 1000));
+    if (!paused && !narrating && gone >= holdFor) {
+      if (Date.now() - BORN > RELOAD_AFTER_MS) return location.reload();
+      step();
+    }
+  }
+  bar.style.width = pct + '%';
+  fill.style.width = pct + '%';
+  retryDead();
+  /* The boot card lifts once the story on screen has painted — or after the
+     grace, so a silent feed cannot leave the card up for good. */
+  if (!bootGone && ((at > -1 && SLIDES[at].ready) || Date.now() - BORN > GRACE_MS)) {
+    bootGone = true;
+    boot.classList.add('gone');
+    setTimeout(function () { boot.style.display = 'none'; }, 600);
+  }
+  left.textContent = paused ? 'paused · space or ▶ to go on'
+    : narrating ? 'narrating · holds'
+    : 'next in ' + secsLeft + 's';
+}
+
+function keys(e) {
+  var k = e.key;
+  if (k === ' ') { e.preventDefault(); setPaused(!paused); }
+  else if (k === 'ArrowRight') { step(); rest(); wake(); }
+  else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); }
+  else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  else if (k === 'n' || k === 'N') { narrate(); }
+  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); wake(); }
+}
+document.addEventListener('keydown', keys);
+
+/* The rail's Narrate asks the story on screen to speak, or to stop. */
+function narrate() { if (at > -1) { tell(at, { rrb:'narrate' }); rest(); wake(); } }
+pp.onclick = function () { setPaused(!paused); };
+document.getElementById('next').onclick = function () { step(); rest(); wake(); };
+document.getElementById('prev').onclick = function () { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); };
+nar.onclick = narrate;
+
+/* The rail is for the person setting the screen up, not for the floor — so it
+   fades, unless the wall is paused, when it stays until it goes on. */
+var hideAt;
+function wake() {
+  rail.classList.remove('hide');
+  clearTimeout(hideAt);
+  if (!paused) hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
+}
+['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
+wake();
+
+show(0);
+tick();
+setInterval(tick, 200);
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
