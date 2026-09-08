@@ -65,6 +65,7 @@ var INTEL = {
   WORKBOOK:       '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
 
   CACHE_TAB:      '_Intel Cache',
+  WALL_TAB:       '_Intel Wall',      // one row per wall feed, built nightly, read in a second
   ACTIONS_TAB:    'Intel Actions',
   SESSIONS_TAB:   'Intel Sessions',
 
@@ -213,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-08b';
+var INTEL_VERSION = '2026-09-08c';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -257,17 +258,33 @@ function iSfHelper_() {
 function iProp_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
 function iSetProp_(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
 
+/* Both memoised for the life of one execution. Every builder asks for its
+   tabs by column names, and iFindTab_ answers by reading the header row of
+   every sheet in the workbook — dozens of round trips, repeated for every
+   tab a builder wants, on a workbook with fifty thousand-row extracts. Once
+   per execution is the right number. (Apps Script starts every request and
+   every trigger run with fresh globals, so nothing here goes stale.) */
+var _intelHeadMemo = {}, _intelTabMemo = {};
 function iHeaders_(sh) {
-  var lastCol = sh.getLastColumn();
-  if (lastCol < 1) return [];
-  return sh.getRange(1, 1, 1, lastCol).getValues()[0]
-    .map(function (h) { return String(h).trim().toLowerCase(); });
+  var id = String((sh.getSheetId && sh.getSheetId()) || (sh.getName && sh.getName()) || '');
+  if (id && _intelHeadMemo.hasOwnProperty(id)) return _intelHeadMemo[id];
+  var lastCol = sh.getLastColumn(), head = [];
+  if (lastCol >= 1) {
+    head = sh.getRange(1, 1, 1, lastCol).getValues()[0]
+      .map(function (h) { return String(h).trim().toLowerCase(); });
+  }
+  if (id) _intelHeadMemo[id] = head;
+  return head;
 }
 
 /* A tab qualifies when it carries every column in `must`. Ties break on row
    count: the fullest tab wins, because the workbook keeps empty duplicates of
    several extracts and reading one of those reports "nothing outstanding". */
 function iFindTab_(key, must) {
+  if (_intelTabMemo.hasOwnProperty(key)) return _intelTabMemo[key];
+  return (_intelTabMemo[key] = iFindTabNow_(key, must));
+}
+function iFindTabNow_(key, must) {
   var override = iProp_('INTEL_TAB_' + key);
   if (override) {
     var o = iSs_().getSheetByName(override);
@@ -2076,6 +2093,95 @@ function iSaveCache_(obj) {
   return chunks.length;
 }
 
+/* ── THE WALL STORE ──────────────────────────────────────────────────────────
+   Five screens on a television, each of them a full read of the branch's
+   book. Built on demand, on 8 September, they took 25 to 155 seconds each and
+   the birthdays screen never finished — fifty-four thousand portfolio rows do
+   not fit in one web request. Worse, a television reloading five of them
+   every half hour would spend the project's daily runtime by lunch and take
+   the tracker's sign-in down with it.
+
+   So each feed is built once a night, one execution each (intelRebuildWall45
+   … intelRebuildBook, at three in the morning, inside the six-minute ceiling),
+   and kept here: one row per feed, the JSON in 45,000-character cells. A
+   request reads its row in about a second. With no stored copy yet, a request
+   builds the feed live and stores it, so the first morning works too; a copy
+   that is an error, or not configured, is never stored — a bad night must not
+   pin a bad screen. The screen's own "built …" line says the date. */
+function iWallSheet_() { return iSheet_(INTEL.WALL_TAB); }
+function iWallRow_(sh, key) {
+  var last = sh.getLastRow();
+  if (last < 1) return 0;
+  var keys = sh.getRange(1, 1, last, 1).getValues();
+  for (var i = 0; i < keys.length; i++) if (String(keys[i][0]) === key) return i + 1;
+  return 0;
+}
+function iWallSave_(key, payload) {
+  var sh = iWallSheet_();
+  var json = JSON.stringify(payload), chunks = [];
+  for (var i = 0; i < json.length; i += INTEL.CACHE_CHUNK) chunks.push(json.substr(i, INTEL.CACHE_CHUNK));
+  var builtAt = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm');
+  var row = iWallRow_(sh, key) || sh.getLastRow() + 1;
+  var cells = [key, builtAt, json.length].concat(chunks);
+  var wide = Math.max(sh.getLastColumn(), cells.length);
+  while (cells.length < wide) cells.push('');            // the tail of a longer, older copy
+  sh.getRange(row, 1, 1, cells.length).setValues([cells]);
+  try { sh.hideSheet(); } catch (e) {}
+  return builtAt;
+}
+function iWallLoad_(key) {
+  var sh = iSs_().getSheetByName(INTEL.WALL_TAB);
+  if (!sh) return null;
+  var row = iWallRow_(sh, key);
+  if (!row) return null;
+  var cells = sh.getRange(row, 1, 1, Math.max(4, sh.getLastColumn())).getValues()[0];
+  var len = Number(cells[2]) || 0, json = '';
+  for (var i = 3; i < cells.length && cells[i] !== '' && cells[i] != null; i++) json += String(cells[i]);
+  if (!len || json.length !== len) return null;          // half-written: as good as none
+  try { return { builtAt: String(cells[1]), payload: JSON.parse(json) }; } catch (e) { return null; }
+}
+/* A payload the screen should not keep: an error, or "not configured". */
+function iWallBad_(d, check) {
+  if (check) return check(d);
+  return d && d.error ? String(d.error) : '';
+}
+/* One feed for a screen: the stored copy if there is one; built, stored and
+   served if not. `check` says which built results are errors for this screen. */
+function iWallServe_(key, build, check) {
+  var had = iWallLoad_(key);
+  if (had) return iOk_({ data: had.payload, stored: had.builtAt });
+  var d = build();
+  var bad = iWallBad_(d, check);
+  if (bad) return iErr_(bad);
+  if (d && d.configured !== false) {
+    try { iWallSave_(key, d); } catch (e) {}
+  }
+  return iOk_({ data: d });
+}
+/* One feed for the night: built and stored, or an error the trigger log keeps. */
+function iWallRebuild_(key, build, check) {
+  var started = new Date();
+  var d = build();
+  var bad = iWallBad_(d, check) || (d && d.configured === false ? (d.error || 'not configured') : '');
+  if (bad) throw new Error(key + ': ' + bad);
+  var at = iWallSave_(key, d);
+  return key + ' built at ' + at + ' in ' + Math.round((new Date() - started) / 1000) + 's';
+}
+function iLicenceBad_(d) { return d && d.error && !d.roster ? String(d.error) : ''; }
+function intelRebuildWall45()     { return iWallRebuild_('wall45',     function () { return iBuildWall45_(45); }); }
+function intelRebuildDelivery()   { return iWallRebuild_('delivery',   function () { return iBuildDelivery_(); }); }
+function intelRebuildLicence()    { return iWallRebuild_('licence',    function () { return iBuildLicence_(); }, iLicenceBad_); }
+function intelRebuildPossession() { return iWallRebuild_('possession', function () { return iBuildPossession_(); }); }
+function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
+/* All five, for the editor, the slowest last: each is stored as it lands, so
+   an execution the six-minute ceiling ends still leaves the others in place. */
+function intelRebuildWall() {
+  var lines = [];
+  [intelRebuildWall45, intelRebuildDelivery, intelRebuildLicence, intelRebuildPossession, intelRebuildBook]
+    .forEach(function (f) { try { lines.push(f()); } catch (e) { lines.push(String(e && e.message || e)); } });
+  return lines.join('\n');
+}
+
 function iLoadCache_() {
   var sh = iSs_().getSheetByName(INTEL.CACHE_TAB);
   if (!sh || sh.getLastRow() < 2) return null;
@@ -2945,9 +3051,7 @@ function iActWall45_(b) {
   if (IWALL_BANDS.indexOf(band) < 0) {
     return iErr_('Band must be one of ' + IWALL_BANDS.join(', ') + ' — got ' + band + '.');
   }
-  var d = iBuildWall45_(band);
-  if (d.error) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('wall' + band, function () { return iBuildWall45_(band); });
 }
 
 var IWALL_BANDS = [45, 60, 90];
@@ -3005,6 +3109,39 @@ function iExcludes_(skip, name) {
     if (all) return true;
   }
   return false;
+}
+
+/* Set who is left off every wall — from the editor, so nobody has to open the
+   Script Properties page, and rebuilt at once so it takes effect before the
+   night rather than after it. The names are given here and stored in this
+   project's properties; NONE is ever written to a file, because the repository
+   is public. iExcludes_ matches on surname plus every given token, so
+   "Anne Mohammed-Ali" catches the book's "A00001 - Anne Mohammed-Ali" too.
+   intelExclude adds to whoever is already there; it never silently drops one. */
+function intelExclude(names) {
+  if (typeof names !== 'string' || !names.trim()) {
+    return 'Usage: intelExclude("Given Surname, Given Surname") — adds them and rebuilds.\n' +
+           'See who is off now with intelExcluded(); clear the list with intelExcludeClear().';
+  }
+  var have = iExcluded_();
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  names.split(',').forEach(function (n) {
+    n = n.trim();
+    if (n && !iExcludes_(have, n)) { list.push(n); have[iNameKey_(n)] = true; }
+  });
+  iSetProp_('INTEL_EXCLUDE_AGENTS', list.join(', '));
+  return intelExcluded() + '\n\n' + intelRebuildWall();
+}
+function intelExcludeClear() {
+  iSetProp_('INTEL_EXCLUDE_AGENTS', '');
+  return 'Exclusion list cleared.\n\n' + intelRebuildWall();
+}
+function intelExcluded() {
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  return list.length ? 'Off every wall (' + list.length + '): ' + list.join(', ')
+                     : 'Nobody is excluded. Add with intelExclude("Given Surname, ...").';
 }
 
 function iBuildWall45_(target) {
@@ -3672,7 +3809,9 @@ function iRecentActions_(session) {
 
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
-                'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp'];
+                'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
+                'intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
+                'intelRebuildPossession', 'intelRebuildBook'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -3685,6 +3824,13 @@ function intelInstallTriggers() {
      end of the month — a thank-you a fortnight late reads as an audit, not a
      courtesy, and the two-day promise has already been broken by then. */
   ScriptApp.newTrigger('intelSurveyFollowUp').timeBased().atHour(9).everyDays(1).create();
+  /* The wall's five feeds, one execution each so every one gets the full
+     six minutes, an hour after the snapshot. Eleven here and the tracker's
+     five is sixteen, under the project limit of twenty. */
+  ['intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
+   'intelRebuildPossession', 'intelRebuildBook'].forEach(function (fn) {
+    ScriptApp.newTrigger(fn).timeBased().atHour(3).everyDays(1).create();
+  });
   return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
          'or every one of these fires an hour out.';
 }
@@ -4699,9 +4845,7 @@ function iBuildDelivery_() {
 }
 
 function iActDelivery_(b) {
-  var d = iBuildDelivery_();
-  if (d.error) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('delivery', function () { return iBuildDelivery_(); });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5230,9 +5374,7 @@ function iBuildLicence_() {
 }
 
 function iActLicence_(b) {
-  var d = iBuildLicence_();
-  if (d.error && !d.roster) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('licence', function () { return iBuildLicence_(); }, iLicenceBad_);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5427,8 +5569,7 @@ function iBuildPossession_() {
 }
 
 function iActPossession_(b) {
-  var d = iBuildPossession_();
-  return iOk_({ data: d });
+  return iWallServe_('possession', function () { return iBuildPossession_(); }, function () { return ''; });
 }
 
 
@@ -5833,9 +5974,14 @@ function iBuildBook_() {
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
       'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
-      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c, ' +
-      'Contact__r.FirstName, Contact__r.LastName, Contact__r.MailingCity ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
       'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
+  /* NO Contact__r JOIN HERE, AND THAT IS THE WHOLE FIX. The book is 54,310
+     policy rows; pulling the contact behind every one of them to read a name
+     and a town put this build past the six-minute ceiling and left the slide
+     blank. FirstName and LastName fed initials that stopped reaching the wall
+     months ago, and the town is needed only for today's birthdays — a hundred
+     names, not fifty thousand — so it is fetched for them alone, below. */
   } catch (err) {
     sfError = String(err && err.message ? err.message : err);
   }
@@ -5900,7 +6046,7 @@ function iBuildBook_() {
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   live: isActive, status: isActive ? '' : (statusOf[code] || 'Inactive'),
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
-                                  firstAge: null, ini: '', town: '', months: [], onBday: false,
+                                  firstAge: null, town: '', months: [], onBday: false,
                                   boughtThisMonth: 0,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
@@ -5917,9 +6063,6 @@ function iBuildBook_() {
        thing about a client that reaches the wall, and it reaches it because the
        branch asked for it: an agent reads their own client out of two letters
        and a town, and nobody else does. */
-    if (!c.ini && x.Contact__r) c.ini = iBookInitials_(x.Contact__r.FirstName, x.Contact__r.LastName);
-    if (!c.town && x.Contact__r && x.Contact__r.MailingCity)
-      c.town = iBookTown_(x.Contact__r.MailingCity);
     if (!c.dobM) {
       var dob = iDate_(x.Date_Of_Birth__c);
       if (dob && dob.getFullYear() > 1900) {
@@ -5971,6 +6114,27 @@ function iBuildBook_() {
      sits behind them. What is left is the former client, and the ones with a
      birthday today are counted with their agent attached. */
   keys.forEach(function (k) { delete gone[k]; });
+
+  /* The town, for today's birthdays only — the one client detail the wall
+     shows, fetched now for the hundred-odd people it is about rather than
+     joined onto every policy row in the query above. iBookTown_ title-cases
+     the shouted CHAGUANAS the export stores; a town that never arrives is a
+     nicety the list stands without. */
+  var todayIds = keys.filter(function (k) {
+    var c = byClient[k]; return c.dobM === mm && c.dobD === dd;
+  });
+  for (var ti = 0; ti < todayIds.length; ti += 200) {
+    var inList = todayIds.slice(ti, ti + 200)
+      .map(function (id) { return "'" + String(id).replace(/'/g, '') + "'"; }).join(',');
+    try {
+      iSfQuery_('SELECT Id, MailingCity FROM Contact WHERE Id IN (' + inList + ')')
+        .forEach(function (p) {
+          var c = byClient[String(p.Id)];
+          if (c && !c.town && p.MailingCity) c.town = iBookTown_(p.MailingCity);
+        });
+    } catch (e) { /* leave the towns blank rather than fail the whole screen */ }
+  }
+
   var goneToday = 0, goneAgents = {};
   Object.keys(gone).forEach(function (k) {
     var gc = gone[k];
@@ -6387,12 +6551,51 @@ function iBuildBook_() {
   /* The tip needs the bands, and the bands are built inside the object above —
      so it is filled in once, here, rather than computing the bands twice. */
   out.today.tip = iBookTip_(todayList, out.today.bands, out.today.byAgent, quietYears);
+  out.team = iBookTeam_(today, personOfCode, unitOfCode);
+  return out;
+}
+
+/* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
+   Everything else on the screen is a client to call; this is the person in the
+   room, and the branch asked for it to be big. Agents carry a Birthdate on
+   their Salesforce contact, so the active roster — the access list, by agent
+   code — is asked, in one small query. The people without a code, the support
+   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
+   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
+   shipped: the wall hangs in a room clients walk through. */
+function iBookTeam_(today, personOfCode, unitOfCode) {
+  var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
+  function add(name, unit, agent) {
+    var k = iNameKey_(name);
+    if (!k || seen[k]) return;
+    seen[k] = true;
+    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+  }
+  var codes = Object.keys(personOfCode || {});
+  for (var i = 0; i < codes.length; i += 200) {
+    var inList = codes.slice(i, i + 200)
+      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
+    if (!inList) continue;
+    try {
+      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
+                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
+        .forEach(function (c) {
+          var d = iDate_(c.Birthdate);
+          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
+          var code = iCode_(c.Agent__c);
+          add(personOfCode[code] || c.Name, unitOfCode[code], true);
+        });
+    } catch (e) { /* the day's calls stand without it */ }
+  }
+  String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
+    var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
+    if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
+  });
   return out;
 }
 
 function iActBook_(b) {
-  var d = iBuildBook_();
-  return iOk_({ data: d });
+  return iWallServe_('book', function () { return iBuildBook_(); }, function () { return ''; });
 }
 
 

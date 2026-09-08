@@ -161,6 +161,27 @@ into the tracker, they answered "sfQuery_ is not defined".) With neither
 helper present they say "No Salesforce helper in this project" rather than
 drawing an empty screen.
 
+### Our own birthdays, big on the wall
+
+The birthdays screen is a day's client calls; the branch asked for the person
+in the room to be bigger than any of them. When one of our own has a birthday
+the screen opens on a gold band — *Happy birthday, Pat!* — and the player
+carries the wish on every slide for the day.
+
+Agents come from their Salesforce contact's **Birthdate**, asked for the active
+roster by agent code in one small query during the nightly build. People with
+no agent code — the support desk, the manager — go in the Script Property
+**`INTEL_TEAM_BIRTHDAYS`** as `MM-DD Name` entries, comma-separated:
+
+```
+INTEL_TEAM_BIRTHDAYS = 03-14 Kim Support, 11-02 Pat Example
+```
+
+Names stay in the project's properties, never in this repository. No age is
+shipped: the wall hangs in a room clients walk through. The band is built with
+the birthdays feed at three in the morning, so a name added during the day
+shows after `intelRebuildBook` (or `intelRebuildWall`) is run.
+
 ### Which workbook it reads
 
 The branch workbook — `INTEL.WORKBOOK` at the top of the file, the ID in this
@@ -209,7 +230,7 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the six triggers and prints the self test.
+rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
 
 **"This script has too many triggers"** on that step means the host project
 is spending its twenty on something else. The tracker before `2026-09-08a`
@@ -229,6 +250,48 @@ Saving the file is not deploying it.
 | `INTEL_APP_URL` | the address the e-mails link to. |
 | `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. |
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
+
+---
+
+## 3½. The wall store — five screens built once a night
+
+The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
+`intel.possession`, `intel.book`) are **not computed when a screen asks**. On
+8 September they were, and it looked like this:
+
+| feed | computed live |
+|---|---|
+| 45-day line | 155 s |
+| contract delivery | 28 s |
+| licence year | 25 s |
+| possession | 31 s |
+| birthdays | never finished — 54,310 portfolio rows do not fit in one web request |
+
+A television reloading five of those every half hour would have spent the
+project's daily runtime by lunch, and the tracker's sign-in runs in the same
+project. So each feed is built **once a night, one execution each** —
+`intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
+`intelRebuildPossession`, `intelRebuildBook`, at three in the morning, an hour
+after `intelRebuild` — and kept in the hidden tab **`_Intel Wall`**, one row
+per feed. A request reads its row in about a second and answers with
+`stored: "<when it was built>"`; the screen's own "built …" line shows the
+date.
+
+- **With no stored copy yet**, a request builds the feed live and stores it,
+  so the first morning works. After pasting, run **`intelRebuildWall`** once
+  from the editor to fill all five without waiting for the night; it stores
+  each as it lands, so a run the six-minute ceiling ends still leaves the
+  fast ones in place.
+- **A bad night never pins a bad screen.** A build that errors, or comes back
+  "not configured", is refused by the rebuild (the trigger log keeps the
+  reason) and the screen keeps last night's good copy.
+- The tab lookup (`iFindTab_`) and header reads are memoised per execution;
+  they were re-scanning every sheet in the workbook for every tab every
+  builder asked for.
+
+`intelInstallTriggers` now installs eleven; with the tracker's five that is
+sixteen, under the project's limit of twenty. `tests/test-wallstore.js`
+drives all of it through the tracker's real `doPost`.
 
 ---
 
@@ -512,17 +575,24 @@ or `snapshot`, so nobody quotes a stale figure believing it is current.
 
 ### Taking an agent out of the branch view
 
-Set `INTEL_EXCLUDE_AGENTS` to a comma-separated list of names **as the dues book
-writes them** — matching is on the same normalised key used everywhere, so
-capitals and punctuation do not matter.
+From the editor, so nobody has to find the Script Properties page:
 
 ```
-INTEL_EXCLUDE_AGENTS = Aleema Mohammed-Ali, Javid Ali
+intelExclude("Given Surname, Given Surname")   // adds them, rebuilds the five feeds
+intelExcluded()                                 // who is off now
+intelExcludeClear()                             // empties the list, rebuilds
 ```
 
-**Excluding an agent does not settle their premiums.** On the current book those
-two carry **420 overdue policies and TT$360,782** between them, across 268
-clients. Taking them out removes that from every screen and every count — the
+The names go into the Script Property `INTEL_EXCLUDE_AGENTS` and nowhere
+else — this repository is public. Matching is on the same normalised key used
+everywhere, surname plus every given token, so `Anne Mohammed-Ali` also
+catches the policy book's `A00001 - Anne Mohammed-Ali`, and capitals and
+punctuation do not matter. It takes effect the moment the rebuild finishes,
+not at the next nightly build.
+
+**Excluding an agent does not settle their premiums.** On the current book the
+two taken out on 8 September carry **420 overdue policies and TT$360,782**
+between them, across 268 clients. Taking them out removes that from every screen and every count — the
 money is still owed, and now nobody is looking at it. So an exclusion is a
 decision to hand that book to somebody, not a way to make it disappear.
 

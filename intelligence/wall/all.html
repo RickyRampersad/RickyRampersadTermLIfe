@@ -121,13 +121,27 @@
     #hud .tab,#hud .tabsep{display:none}
     #hud .track{width:72px}
   }
-  @media print{#rail,#bar,#boot,#hud{display:none}}
+  /* Our own birthday, on every slide: the birthdays story says who, and the
+     wish rides the whole wall for the day. Top centre, clear of the stories'
+     titles and clocks; on a phone it sits above the timer. */
+  #cake{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:32;display:flex;align-items:center;gap:10px;
+    padding:8px 16px;border-radius:999px;background:linear-gradient(120deg,#efc24b,#c9942c);color:#07131f;
+    box-shadow:0 8px 26px rgba(239,194,75,.35);font:700 14px var(--font-b);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+  #cake[hidden]{display:none}
+  #cake .i{font-size:20px;line-height:1}
+  #cake span{font-weight:600;opacity:.8}
+  @media (max-width:760px){
+    #cake{top:auto;bottom:54px;left:10px;right:10px;transform:none;max-width:none;font-size:13px;padding:7px 12px}
+  }
+  @media print{#rail,#bar,#boot,#hud,#cake{display:none}}
 </style>
 </head>
 <body>
 
 <div class="stage" id="stage"></div>
 <div id="bar"></div>
+
+<div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b><span>— happy birthday from all of us</span></div>
 
 <div id="hud">
   <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
@@ -201,6 +215,8 @@ var stage = document.getElementById('stage'),
     tab   = document.getElementById('tab'),
     left  = document.getElementById('left'),
     pp    = document.getElementById('pp'),
+    cake  = document.getElementById('cake'),
+    cakeWho = document.getElementById('cakeWho'),
     nar   = document.getElementById('nar'),
     boot  = document.getElementById('boot');
 
@@ -317,6 +333,15 @@ function setNarrating(v) {
    holds it; when it stops, the story keeps the screen a few seconds more. */
 window.addEventListener('message', function (e) {
   var d = e.data || {};
+  /* The birthdays story says whose birthday it is on the branch; the wish
+     then rides every slide. First names only, up on the wall. */
+  if (d.rrb === 'celebrate') {
+    var firsts = (d.names || []).map(function (n) { return String(n || '').split(' ')[0]; }).filter(Boolean);
+    cakeWho.textContent = firsts.length < 2 ? firsts.join('')
+      : firsts.slice(0, -1).join(', ') + ' and ' + firsts[firsts.length - 1];
+    cake.hidden = !firsts.length;
+    return;
+  }
   if (d.rrb !== 'narration') return;
   setNarrating(d.on);
   if (!d.on) started = Date.now() - Math.max(0, holdFor - AFTER_VOICE_MS);

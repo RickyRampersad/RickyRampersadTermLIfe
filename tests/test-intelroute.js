@@ -137,9 +137,10 @@ console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
 env.installTriggers();
 env.intelInstallTriggers();
 const all = env.ScriptApp.getProjectTriggers();
-ok('eleven triggers in all', all.length === 11, String(all.length));
+ok('sixteen triggers in all — the tracker\'s five, the intelligence\'s six, and the wall\'s five nightly builds', all.length === 16, String(all.length));
 ok('which leaves room, where seventeen plus six did not', all.length <= 20);
 ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
+ok('and each wall feed has its own night-time build', ['intelRebuildWall45','intelRebuildDelivery','intelRebuildLicence','intelRebuildPossession','intelRebuildBook'].every(fn => all.some(t => t.getHandlerFunction() === fn)));
 
 fs.unlinkSync(both);
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');

@@ -676,6 +676,21 @@
   .btn:hover:not(:disabled){color:var(--ink);border-color:rgba(255,255,255,.25)}
   .btn:disabled{opacity:.4;cursor:default}
   .btn.on{background:linear-gradient(120deg,#efc24b,#c9942c);color:#04223b;border-color:transparent}
+
+  /* Our own birthday. The one gold band on the screen, so it reads first. */
+  #cake{margin:0 26px 12px;padding:16px 22px;border-radius:16px;display:flex;align-items:center;gap:18px;
+    background:linear-gradient(120deg,#efc24b,#c9942c);color:#07131f;
+    box-shadow:0 12px 34px rgba(239,194,75,.28)}
+  #cake[hidden]{display:none}
+  #cake .cakeIcon{font-size:42px;line-height:1}
+  #cake b{display:block;font:800 30px/1.1 var(--font-d);letter-spacing:-.5px}
+  #cake span{font:600 14px var(--font-b);opacity:.78}
+  @media (max-width:760px){
+    #cake{margin:0 12px 10px;padding:12px 14px;gap:12px}
+    #cake .cakeIcon{font-size:30px}
+    #cake b{font-size:21px}
+    #cake span{font-size:12px}
+  }
 </style>
 </head>
 <body>
@@ -693,6 +708,13 @@
     <span id="clock"></span>
   </div>
 </header>
+
+<!-- Our own birthday, when it is one: big, gold, above everything. Filled by
+     paint() from the feed's `team`; hidden on every other day. -->
+<div id="cake" hidden>
+  <span class="cakeIcon">🎂</span>
+  <div><b id="cakeWho"></b><span id="cakeSub"></span></div>
+</div>
 
 <main>
   <section class="card hero">
@@ -861,6 +883,20 @@ var ACTS = [
 
 function paint(){
   var D=BOOK, T=(D&&D.today)||{};
+  /* Our own birthday first. Names as the roster writes them; the greeting
+     uses first names, the line under it the whole name and the unit. The
+     player above this frame is told too, so the wish rides every slide. */
+  var team=(D&&D.team)||[], cake=$("#cake");
+  if(cake){
+    if(team.length){
+      var firsts=team.map(function(t){return String(t.name||"").split(" ")[0];});
+      var who=firsts.length===1?firsts[0]:firsts.slice(0,-1).join(", ")+" and "+firsts[firsts.length-1];
+      $("#cakeWho").textContent="Happy birthday, "+who+"!";
+      $("#cakeSub").textContent=team.map(function(t){return t.name+(t.unit?" · "+t.unit:"");}).join("  ·  ")+"  —  from all of us at the branch";
+      cake.hidden=false;
+    } else cake.hidden=true;
+  }
+  try{ if(parent!==window) parent.postMessage({rrb:"celebrate", names:team.map(function(t){return String(t.name||"");})},"*"); }catch(e){}
 
   if(!D.configured){
     $("#chip").className="";
