@@ -411,7 +411,12 @@ if (window.top !== window.self) { window.top.location = window.self.location; }
  * ================================================================ */
 
 var CONFIG = {
-  API_URL: ""   // e.g. "https://script.google.com/macros/s/AKfy…/exec"
+  // The deployed Meetings.gs web app. Public by necessity — the browser has
+  // to reach it — and safe to be: every call but `ping` requires a token, and
+  // a token only comes from an email already on the People tab. Re-deploy
+  // with Deploy > Manage deployments > pencil > New version to keep this URL;
+  // "New deployment" issues a different one and this line must then change.
+  API_URL: "https://script.google.com/macros/s/AKfycbxSSMiXYI1A2dEAr-sOBH0rs8T81jENFnQSNqh0sM6jTOe4ANhI4xxoytPR5TGLAARf/exec"
 };
 
 var TOKEN_KEY = "rrb-meetings-token";
