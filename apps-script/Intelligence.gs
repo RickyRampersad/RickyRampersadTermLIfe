@@ -42,14 +42,28 @@
 
    WHICH WORKBOOK
    ──────────────
-   By default the code reads the spreadsheet it is bound to. In the tracker's
-   project that is the tracker's workbook, which holds none of the eight
-   export tabs — every screen then says "No dues tab found". Set the Script
-   Property INTEL_WORKBOOK_ID to the branch workbook's ID and it reads that
-   one instead, from wherever it lives.
+   The branch workbook, INTEL.WORKBOOK, from whichever project the code runs
+   in — the tracker's project is bound to the tracker's workbook, which holds
+   none of the eight export tabs, and reading that one made every screen say
+   "No dues tab found". The Script Property INTEL_WORKBOOK_ID overrides it:
+   another workbook's ID, or the word "bound" to read the attached one. The
+   first run after the paste asks once for permission to open the second
+   workbook; accept it.
+
+   SALESFORCE
+   ──────────
+   Goes through whichever helper the project has — SalesforceSync.gs's
+   sfQuery_ or the tracker's sfkQuery_ (see iSfQuery_). Both read the same
+   SF_* Script Properties, so a project that already talks to Salesforce
+   needs nothing more for the licence, possession and book screens.
    ══════════════════════════════════════════════════════════════════════════ */
 
 var INTEL = {
+  // The branch workbook — the eight export tabs live here, whichever project
+  // the code runs in. Script Property INTEL_WORKBOOK_ID overrides it; the word
+  // "bound" there means "read the spreadsheet this script is attached to".
+  WORKBOOK:       '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
+
   CACHE_TAB:      '_Intel Cache',
   ACTIONS_TAB:    'Intel Actions',
   SESSIONS_TAB:   'Intel Sessions',
@@ -199,20 +213,47 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-08a';
+var INTEL_VERSION = '2026-09-08b';
 
-/* The workbook the intelligence reads. Bound by default; by ID when the
-   Script Property INTEL_WORKBOOK_ID is set, so the code can live in the
-   tracker's project and still read the branch workbook's eight export tabs.
-   Memoised per request: openById is a network call, and one screen makes
-   dozens of reads. */
+/* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
+   unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
+   or the word "bound" for the spreadsheet this script is attached to. So the
+   code can live in the tracker's project, bound to the tracker's workbook,
+   and still read the eight export tabs with nothing set. Memoised per
+   request: openById is a network call, and one screen makes dozens of reads. */
 var _intelSs = null;
+function iWorkbook_() {
+  var id = iProp_('INTEL_WORKBOOK_ID') || INTEL.WORKBOOK || 'bound';
+  return { id: id, how: /^bound$/i.test(id) ? 'bound' : (iProp_('INTEL_WORKBOOK_ID') ? 'by id' : 'default') };
+}
 function iSs_() {
   if (_intelSs) return _intelSs;
-  var id = iProp_('INTEL_WORKBOOK_ID');
-  _intelSs = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.getActiveSpreadsheet();
+  var wb = iWorkbook_();
+  _intelSs = wb.how === 'bound' ? SpreadsheetApp.getActiveSpreadsheet() : SpreadsheetApp.openById(wb.id);
   return _intelSs;
 }
+/* Salesforce, through whichever helper the project has. SalesforceSync.gs
+   gives sfQuery_ and sfToken_; the tracker (KPI.gs) gives sfkQuery_ and
+   sfkToken_ — the same SOQL in, the same records out, the same SF_KEY /
+   SF_SECRET / SF_USER / SF_PASS properties behind them. Inside the tracker's
+   project on 7 September the possession and book screens said
+   "sfQuery_ is not defined", because this file asked for one by name. */
+function iSfQuery_(soql) {
+  if (typeof sfQuery_ === 'function')  return sfQuery_(soql);
+  if (typeof sfkQuery_ === 'function') return sfkQuery_(soql);
+  throw new Error('No Salesforce helper in this project: add SalesforceSync.gs, or run this inside the tracker.');
+}
+function iSfToken_() {
+  if (typeof sfToken_ === 'function')  return sfToken_();
+  if (typeof sfkToken_ === 'function') return sfkToken_();
+  throw new Error('No Salesforce helper in this project: add SalesforceSync.gs, or run this inside the tracker.');
+}
+function iSfHelper_() {
+  if (typeof sfQuery_ === 'function')  return 'sfQuery_ (SalesforceSync.gs)';
+  if (typeof sfkQuery_ === 'function') return 'sfkQuery_ (KPI.gs)';
+  return '';
+}
+
 function iProp_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
 function iSetProp_(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
 
@@ -4225,10 +4266,13 @@ function intelSelfTest() {
     line('This project has a doPost of its own. Make sure it calls intelRoute_(b) before');
     line('  anything else, or the wall screens are refused.');
   }
-  var wb = iProp_('INTEL_WORKBOOK_ID');
-  line(wb ? 'Reading the workbook set in INTEL_WORKBOOK_ID.'
-          : 'Reading the workbook this script is bound to. If that is the tracker\'s, set');
-  if (!wb) line('  INTEL_WORKBOOK_ID to the branch workbook\'s ID in Script Properties.');
+  var wb = iWorkbook_();
+  line(wb.how === 'bound' ? 'Reading the workbook this script is bound to (INTEL_WORKBOOK_ID says "bound").'
+     : wb.how === 'by id' ? 'Reading the workbook set in INTEL_WORKBOOK_ID.'
+     : 'Reading the branch workbook, INTEL.WORKBOOK. Set INTEL_WORKBOOK_ID to read another.');
+  var sfh = iSfHelper_();
+  line(sfh ? 'Salesforce through ' + sfh + '.'
+           : 'No Salesforce helper here: the licence, possession and book screens will say so.');
   line('');
 
   var cache = iLoadCache_();
@@ -4367,7 +4411,7 @@ function intelDoGet_(e) {
 function intelHealth_() {
   return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
            built: iProp_('INTEL_LAST_BUILD') || 'never',
-           workbook: iProp_('INTEL_WORKBOOK_ID') ? 'by id' : 'bound' };
+           workbook: iWorkbook_().how };
 }
 
 function intelDoPost_(e) {
@@ -4807,7 +4851,7 @@ function iBuildLicence_() {
   var quoted = codes.map(function (c) { return "'" + c.replace(/'/g, '') + "'"; }).join(',');
   var contacts = [], tasks = [], sfError = '';
   try {
-    contacts = sfQuery_(
+    contacts = iSfQuery_(
       'SELECT Name, Agent__c, Agent_Type__c, License_Renewal_Month_Life__c, ' +
       'License_Life_Renewal_Day__c, License_Date_Life__c ' +
       'FROM Contact WHERE Agent__c IN (' + quoted + ') ' +
@@ -4819,7 +4863,7 @@ function iBuildLicence_() {
        WHERE clause and not filtered afterwards. */
     /* CreatedDate and Who are what turn this from a list into an insight:
        how long a thing has been outstanding, and who it is sitting with. */
-    tasks = sfQuery_(
+    tasks = iSfQuery_(
       'SELECT Id, Subject, Status, ActivityDate, CreatedDate, LastModifiedDate, ' +
       'IsClosed, Who.Name FROM Task ' +
       "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
@@ -5285,7 +5329,7 @@ function iBuildPossession_() {
 
   var rows = [], sfError = '';
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT AgentName__c, Unit__c, Date_Policy_Contract_Recieved__c, ' +
       'Date_Contract_Given_to_Agent__c, Date_Ack_Letter_Received_from_Agent__c ' +
       'FROM ' + IPOSS.OBJECT + ' ' +
@@ -5664,7 +5708,7 @@ function iBookBand_(years, bands) {
 function iBookGrowth_(today, unitKeys, skip, roster) {
   var yy = today.getFullYear(), rows = [];
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT Agent__c, Unit__c, Submitted_Date__c, API_Increase__c, Years_In_Force__c ' +
       'FROM Policy_Increases__c WHERE Submitted_Date__c >= ' + yy + '-01-01');
   } catch (err) { return null; }
@@ -5785,7 +5829,7 @@ function iBuildBook_() {
 
   var rows = [], sfError = '';
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
       'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
@@ -6415,7 +6459,7 @@ var IDCOL = { TOKEN:1, RECEIVED:2, POLICY:3, CLIENT:4, EMAIL:5, AGENT:6, AGENTMA
    mentions a contract being received, and prints the two lines to paste into
    Script Properties. */
 function intelContractDiscover() {
-  var tok = sfToken_();
+  var tok = iSfToken_();
   var objs = String(iProp_('INTEL_SF_OBJECTS') ||
     'Policy__c,Client_Portfolio__c,Risk_Details__c,Opportunity,Submission__c,Policy_Increases__c')
     .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
@@ -6486,7 +6530,7 @@ function intelContractScan() {
   if (!q) return 'Not configured yet. Run intelContractDiscover() and set ' +
                  'INTEL_SF_OBJECT and INTEL_SF_RECEIVED_FIELD.';
   var recs;
-  try { recs = sfQuery_(q.soql); }
+  try { recs = iSfQuery_(q.soql); }
   catch (e) { return 'Salesforce said: ' + e.message + '\n\nQuery was:\n' + q.soql; }
   var sh = iDlvTab_(), known = {};
   var last = sh.getLastRow();

@@ -148,18 +148,37 @@ purpose, because a screen on a wall has nobody to sign it in, and in exchange
 they return aggregates only. Called after the check, every wall screen gets
 "Session expired. Sign in again."
 
+### Salesforce, through whichever helper the project has
+
+The licence, possession and book screens ask Salesforce. `Intelligence.gs`
+does not carry a Salesforce client of its own: it goes through
+`SalesforceSync.gs`'s `sfQuery_` when that file is in the project, and the
+tracker's `sfkQuery_` (in `KPI.gs`) when it is not — the same SOQL in, the
+same records out, the same `SF_KEY` / `SF_SECRET` / `SF_USER` / `SF_PASS`
+properties behind both. So inside the tracker's project, which already talks
+to Salesforce, those three screens need nothing more. (Before this, pasted
+into the tracker, they answered "sfQuery_ is not defined".) With neither
+helper present they say "No Salesforce helper in this project" rather than
+drawing an empty screen.
+
 ### Which workbook it reads
 
-By default the code reads the spreadsheet it is bound to. In the tracker's
-project that is the **tracker's** workbook, which holds none of the eight
-export tabs, and every screen then says "No dues tab found", "No in-force tab
-found", "No active agents found on the access list".
+The branch workbook — `INTEL.WORKBOOK` at the top of the file, the ID in this
+guide's first paragraph — from whichever project the code runs in. The
+tracker's project is bound to the *tracker's* workbook, which holds none of
+the eight export tabs, and reading that one made every screen say "No dues
+tab found", "No in-force tab found", "No active agents found on the access
+list". Nothing needs setting.
 
-Set the Script Property **`INTEL_WORKBOOK_ID`** to the branch workbook's ID
-(the long string in its URL between `/d/` and `/edit`) and it reads that one
-instead. Everything the code creates — the actions log, sessions, the
-snapshot — goes into that workbook too. `intelSelfTest` says which workbook it
-is reading.
+The Script Property **`INTEL_WORKBOOK_ID`** overrides it: another workbook's
+ID (the long string in its URL between `/d/` and `/edit`), or the word
+`bound` to read the spreadsheet the script is attached to. Everything the
+code creates — the actions log, sessions, the snapshot, the watchlists —
+goes into whichever workbook it reads. `intelSelfTest` and `intel.ping` both
+say which.
+
+Opening a second workbook needs one more permission than reading the bound
+one. The first function you run after the paste asks for it once; accept it.
 
 `tests/test-intelroute.js` concatenates the two files exactly as Apps Script
 loads them and drives the tracker's own `doPost` with the bodies the wall and
