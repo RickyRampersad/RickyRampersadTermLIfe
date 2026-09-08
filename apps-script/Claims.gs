@@ -1638,10 +1638,12 @@ function tr_(k, v) {
 }
 
 function brandWrap_(inner, tag) {
+  // The masthead is the branch's real mark, as a HOSTED PNG — Gmail strips
+  // SVG and blocks data: URIs, so anything else arrives as an empty box.
   return '<div style="font-family:Arial,sans-serif;font-size:14px;color:#1a2433;max-width:640px">' +
     '<div style="background:' + CBRAND.navy + ';color:#fff;padding:18px 22px;border-radius:10px 10px 0 0">' +
     '<table width="100%"><tr>' +
-    '<td width="46" valign="middle"><table cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;background:' + CBRAND.gold + ';border-radius:8px 8px 14px 14px;text-align:center;font-size:20px;font-weight:bold;color:' + CBRAND.navy + '">🛡</td></tr></table></td>' +
+    '<td width="46" valign="middle"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="38" height="38" alt="" style="display:block;border-radius:8px"></td>' +
     '<td valign="middle" style="padding-left:10px"><b style="font-size:18px">Claims TT</b><br>' +
     '<span style="color:#b7c9de;font-size:12px">' + (tag || 'Claim submission') + ' · by ' + esc_(CLAIMS.AGENT_NAME) + '</span></td>' +
     '<td align="right" style="color:' + CBRAND.gold + ';font-size:11px;letter-spacing:2px"><b>CLAIMS</b></td></tr></table></div>' +

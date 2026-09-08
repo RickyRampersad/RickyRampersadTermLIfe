@@ -18,7 +18,7 @@
 <meta property="og:title" content="Claims TT — File your insurance claim online" />
 <meta property="og:description" content="Motor, health, property and life claims. Photograph your documents, upload securely, get a claim reference in minutes." />
 <meta property="og:type" content="website" />
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230E2A47'/%3E%3Ctext y='70' x='50' text-anchor='middle' font-size='58'%3E🛡%3C/text%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <style>
   :root{
     --navy-900:#0E2A47;
@@ -76,7 +76,8 @@
   header{position:sticky;top:0;z-index:60;backdrop-filter:blur(14px);background:rgba(244,248,251,.9);border-bottom:1px solid rgba(20,57,95,.08)}
   .nav{display:flex;align-items:center;justify-content:space-between;height:68px;gap:14px}
   .logo{display:flex;align-items:center;gap:11px;font-weight:800;font-size:1.02rem;letter-spacing:-.01em;color:var(--navy-900);text-decoration:none}
-  .logo-badge{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--navy-800),var(--teal-600));display:grid;place-items:center;color:#fff;flex:none;font-size:19px}
+  .logo-badge{width:40px;height:40px;border-radius:12px;background:#07131f;display:grid;place-items:center;flex:none;overflow:hidden}
+  .logo-badge img{width:100%;height:100%;display:block}
   .logo small{display:block;font-size:.71rem;font-weight:600;color:var(--muted);letter-spacing:0;white-space:nowrap}
   @media(max-width:420px){.logo span{font-size:.95rem}.logo small{font-size:.66rem}}
   .nav-actions{display:flex;align-items:center;gap:10px}
@@ -329,7 +330,7 @@
 <header>
   <div class="wrap nav">
     <a class="logo" href="/">
-      <span class="logo-badge" aria-hidden="true">🛡</span>
+      <span class="logo-badge" aria-hidden="true"><img src="/logo-mark.png" alt="" /></span>
       <span>Claims&nbsp;TT<small>Ricky Rampersad Branch</small></span>
     </a>
     <div class="nav-actions">
