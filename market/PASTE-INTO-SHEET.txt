@@ -1,0 +1,127 @@
+Symbol	Ticker	Name	Group	Price	PrevClose	Tradeable
+DJI	INDEXDJX:.DJI	Dow Jones Industrial Average	Index	=IFERROR(GOOGLEFINANCE("INDEXDJX:.DJI","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXDJX:.DJI","closeyest"),"")	no
+IXIC	INDEXNASDAQ:.IXIC	Nasdaq Composite	Index	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.IXIC","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXNASDAQ:.IXIC","closeyest"),"")	no
+INX	INDEXSP:.INX	S&P 500	Index	=IFERROR(GOOGLEFINANCE("INDEXSP:.INX","price"),"")	=IFERROR(GOOGLEFINANCE("INDEXSP:.INX","closeyest"),"")	no
+DIA	DIA	Dow Jones (DIA fund)	Index trackers	=IFERROR(GOOGLEFINANCE("DIA","price"),"")	=IFERROR(GOOGLEFINANCE("DIA","closeyest"),"")	yes
+QQQ	QQQ	Nasdaq 100 (QQQ fund)	Index trackers	=IFERROR(GOOGLEFINANCE("QQQ","price"),"")	=IFERROR(GOOGLEFINANCE("QQQ","closeyest"),"")	yes
+SPY	SPY	S&P 500 (SPY fund)	Index trackers	=IFERROR(GOOGLEFINANCE("SPY","price"),"")	=IFERROR(GOOGLEFINANCE("SPY","closeyest"),"")	yes
+AAPL	AAPL	Apple	Dow Jones 30	=IFERROR(GOOGLEFINANCE("AAPL","price"),"")	=IFERROR(GOOGLEFINANCE("AAPL","closeyest"),"")	yes
+AMGN	AMGN	Amgen	Dow Jones 30	=IFERROR(GOOGLEFINANCE("AMGN","price"),"")	=IFERROR(GOOGLEFINANCE("AMGN","closeyest"),"")	yes
+AMZN	AMZN	Amazon	Dow Jones 30	=IFERROR(GOOGLEFINANCE("AMZN","price"),"")	=IFERROR(GOOGLEFINANCE("AMZN","closeyest"),"")	yes
+AXP	AXP	American Express	Dow Jones 30	=IFERROR(GOOGLEFINANCE("AXP","price"),"")	=IFERROR(GOOGLEFINANCE("AXP","closeyest"),"")	yes
+BA	BA	Boeing	Dow Jones 30	=IFERROR(GOOGLEFINANCE("BA","price"),"")	=IFERROR(GOOGLEFINANCE("BA","closeyest"),"")	yes
+CAT	CAT	Caterpillar	Dow Jones 30	=IFERROR(GOOGLEFINANCE("CAT","price"),"")	=IFERROR(GOOGLEFINANCE("CAT","closeyest"),"")	yes
+CRM	CRM	Salesforce	Dow Jones 30	=IFERROR(GOOGLEFINANCE("CRM","price"),"")	=IFERROR(GOOGLEFINANCE("CRM","closeyest"),"")	yes
+CSCO	CSCO	Cisco	Dow Jones 30	=IFERROR(GOOGLEFINANCE("CSCO","price"),"")	=IFERROR(GOOGLEFINANCE("CSCO","closeyest"),"")	yes
+CVX	CVX	Chevron	Dow Jones 30	=IFERROR(GOOGLEFINANCE("CVX","price"),"")	=IFERROR(GOOGLEFINANCE("CVX","closeyest"),"")	yes
+DIS	DIS	Walt Disney	Dow Jones 30	=IFERROR(GOOGLEFINANCE("DIS","price"),"")	=IFERROR(GOOGLEFINANCE("DIS","closeyest"),"")	yes
+GS	GS	Goldman Sachs	Dow Jones 30	=IFERROR(GOOGLEFINANCE("GS","price"),"")	=IFERROR(GOOGLEFINANCE("GS","closeyest"),"")	yes
+HD	HD	Home Depot	Dow Jones 30	=IFERROR(GOOGLEFINANCE("HD","price"),"")	=IFERROR(GOOGLEFINANCE("HD","closeyest"),"")	yes
+HON	HON	Honeywell	Dow Jones 30	=IFERROR(GOOGLEFINANCE("HON","price"),"")	=IFERROR(GOOGLEFINANCE("HON","closeyest"),"")	yes
+IBM	IBM	IBM	Dow Jones 30	=IFERROR(GOOGLEFINANCE("IBM","price"),"")	=IFERROR(GOOGLEFINANCE("IBM","closeyest"),"")	yes
+JNJ	JNJ	Johnson & Johnson	Dow Jones 30	=IFERROR(GOOGLEFINANCE("JNJ","price"),"")	=IFERROR(GOOGLEFINANCE("JNJ","closeyest"),"")	yes
+JPM	JPM	JPMorgan Chase	Dow Jones 30	=IFERROR(GOOGLEFINANCE("JPM","price"),"")	=IFERROR(GOOGLEFINANCE("JPM","closeyest"),"")	yes
+KO	KO	Coca-Cola	Dow Jones 30	=IFERROR(GOOGLEFINANCE("KO","price"),"")	=IFERROR(GOOGLEFINANCE("KO","closeyest"),"")	yes
+MCD	MCD	McDonald's	Dow Jones 30	=IFERROR(GOOGLEFINANCE("MCD","price"),"")	=IFERROR(GOOGLEFINANCE("MCD","closeyest"),"")	yes
+MMM	MMM	3M	Dow Jones 30	=IFERROR(GOOGLEFINANCE("MMM","price"),"")	=IFERROR(GOOGLEFINANCE("MMM","closeyest"),"")	yes
+MRK	MRK	Merck	Dow Jones 30	=IFERROR(GOOGLEFINANCE("MRK","price"),"")	=IFERROR(GOOGLEFINANCE("MRK","closeyest"),"")	yes
+MSFT	MSFT	Microsoft	Dow Jones 30	=IFERROR(GOOGLEFINANCE("MSFT","price"),"")	=IFERROR(GOOGLEFINANCE("MSFT","closeyest"),"")	yes
+NKE	NKE	Nike	Dow Jones 30	=IFERROR(GOOGLEFINANCE("NKE","price"),"")	=IFERROR(GOOGLEFINANCE("NKE","closeyest"),"")	yes
+NVDA	NVDA	NVIDIA	Dow Jones 30	=IFERROR(GOOGLEFINANCE("NVDA","price"),"")	=IFERROR(GOOGLEFINANCE("NVDA","closeyest"),"")	yes
+PG	PG	Procter & Gamble	Dow Jones 30	=IFERROR(GOOGLEFINANCE("PG","price"),"")	=IFERROR(GOOGLEFINANCE("PG","closeyest"),"")	yes
+SHW	SHW	Sherwin-Williams	Dow Jones 30	=IFERROR(GOOGLEFINANCE("SHW","price"),"")	=IFERROR(GOOGLEFINANCE("SHW","closeyest"),"")	yes
+TRV	TRV	Travelers	Dow Jones 30	=IFERROR(GOOGLEFINANCE("TRV","price"),"")	=IFERROR(GOOGLEFINANCE("TRV","closeyest"),"")	yes
+UNH	UNH	UnitedHealth	Dow Jones 30	=IFERROR(GOOGLEFINANCE("UNH","price"),"")	=IFERROR(GOOGLEFINANCE("UNH","closeyest"),"")	yes
+V	V	Visa	Dow Jones 30	=IFERROR(GOOGLEFINANCE("V","price"),"")	=IFERROR(GOOGLEFINANCE("V","closeyest"),"")	yes
+VZ	VZ	Verizon	Dow Jones 30	=IFERROR(GOOGLEFINANCE("VZ","price"),"")	=IFERROR(GOOGLEFINANCE("VZ","closeyest"),"")	yes
+WMT	WMT	Walmart	Dow Jones 30	=IFERROR(GOOGLEFINANCE("WMT","price"),"")	=IFERROR(GOOGLEFINANCE("WMT","closeyest"),"")	yes
+ABNB	ABNB	Airbnb	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ABNB","price"),"")	=IFERROR(GOOGLEFINANCE("ABNB","closeyest"),"")	yes
+ADBE	ADBE	Adobe	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ADBE","price"),"")	=IFERROR(GOOGLEFINANCE("ADBE","closeyest"),"")	yes
+ADI	ADI	Analog Devices	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ADI","price"),"")	=IFERROR(GOOGLEFINANCE("ADI","closeyest"),"")	yes
+ADP	ADP	ADP	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ADP","price"),"")	=IFERROR(GOOGLEFINANCE("ADP","closeyest"),"")	yes
+ADSK	ADSK	Autodesk	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ADSK","price"),"")	=IFERROR(GOOGLEFINANCE("ADSK","closeyest"),"")	yes
+AEP	AEP	American Electric Power	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AEP","price"),"")	=IFERROR(GOOGLEFINANCE("AEP","closeyest"),"")	yes
+AMAT	AMAT	Applied Materials	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AMAT","price"),"")	=IFERROR(GOOGLEFINANCE("AMAT","closeyest"),"")	yes
+AMD	AMD	AMD	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AMD","price"),"")	=IFERROR(GOOGLEFINANCE("AMD","closeyest"),"")	yes
+ANSS	ANSS	Ansys	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ANSS","price"),"")	=IFERROR(GOOGLEFINANCE("ANSS","closeyest"),"")	yes
+APP	APP	AppLovin	Nasdaq 100	=IFERROR(GOOGLEFINANCE("APP","price"),"")	=IFERROR(GOOGLEFINANCE("APP","closeyest"),"")	yes
+ARM	ARM	Arm Holdings	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ARM","price"),"")	=IFERROR(GOOGLEFINANCE("ARM","closeyest"),"")	yes
+ASML	ASML	ASML	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ASML","price"),"")	=IFERROR(GOOGLEFINANCE("ASML","closeyest"),"")	yes
+AVGO	AVGO	Broadcom	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AVGO","price"),"")	=IFERROR(GOOGLEFINANCE("AVGO","closeyest"),"")	yes
+AXON	AXON	Axon Enterprise	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AXON","price"),"")	=IFERROR(GOOGLEFINANCE("AXON","closeyest"),"")	yes
+AZN	AZN	AstraZeneca	Nasdaq 100	=IFERROR(GOOGLEFINANCE("AZN","price"),"")	=IFERROR(GOOGLEFINANCE("AZN","closeyest"),"")	yes
+BIIB	BIIB	Biogen	Nasdaq 100	=IFERROR(GOOGLEFINANCE("BIIB","price"),"")	=IFERROR(GOOGLEFINANCE("BIIB","closeyest"),"")	yes
+BKNG	BKNG	Booking Holdings	Nasdaq 100	=IFERROR(GOOGLEFINANCE("BKNG","price"),"")	=IFERROR(GOOGLEFINANCE("BKNG","closeyest"),"")	yes
+BKR	BKR	Baker Hughes	Nasdaq 100	=IFERROR(GOOGLEFINANCE("BKR","price"),"")	=IFERROR(GOOGLEFINANCE("BKR","closeyest"),"")	yes
+CDNS	CDNS	Cadence Design	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CDNS","price"),"")	=IFERROR(GOOGLEFINANCE("CDNS","closeyest"),"")	yes
+CDW	CDW	CDW	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CDW","price"),"")	=IFERROR(GOOGLEFINANCE("CDW","closeyest"),"")	yes
+CEG	CEG	Constellation Energy	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CEG","price"),"")	=IFERROR(GOOGLEFINANCE("CEG","closeyest"),"")	yes
+CHTR	CHTR	Charter Communications	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CHTR","price"),"")	=IFERROR(GOOGLEFINANCE("CHTR","closeyest"),"")	yes
+CMCSA	CMCSA	Comcast	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CMCSA","price"),"")	=IFERROR(GOOGLEFINANCE("CMCSA","closeyest"),"")	yes
+COST	COST	Costco	Nasdaq 100	=IFERROR(GOOGLEFINANCE("COST","price"),"")	=IFERROR(GOOGLEFINANCE("COST","closeyest"),"")	yes
+CPRT	CPRT	Copart	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CPRT","price"),"")	=IFERROR(GOOGLEFINANCE("CPRT","closeyest"),"")	yes
+CRWD	CRWD	CrowdStrike	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CRWD","price"),"")	=IFERROR(GOOGLEFINANCE("CRWD","closeyest"),"")	yes
+CSGP	CSGP	CoStar Group	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CSGP","price"),"")	=IFERROR(GOOGLEFINANCE("CSGP","closeyest"),"")	yes
+CSX	CSX	CSX	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CSX","price"),"")	=IFERROR(GOOGLEFINANCE("CSX","closeyest"),"")	yes
+CTAS	CTAS	Cintas	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CTAS","price"),"")	=IFERROR(GOOGLEFINANCE("CTAS","closeyest"),"")	yes
+CTSH	CTSH	Cognizant	Nasdaq 100	=IFERROR(GOOGLEFINANCE("CTSH","price"),"")	=IFERROR(GOOGLEFINANCE("CTSH","closeyest"),"")	yes
+DASH	DASH	DoorDash	Nasdaq 100	=IFERROR(GOOGLEFINANCE("DASH","price"),"")	=IFERROR(GOOGLEFINANCE("DASH","closeyest"),"")	yes
+DDOG	DDOG	Datadog	Nasdaq 100	=IFERROR(GOOGLEFINANCE("DDOG","price"),"")	=IFERROR(GOOGLEFINANCE("DDOG","closeyest"),"")	yes
+DXCM	DXCM	DexCom	Nasdaq 100	=IFERROR(GOOGLEFINANCE("DXCM","price"),"")	=IFERROR(GOOGLEFINANCE("DXCM","closeyest"),"")	yes
+EA	EA	Electronic Arts	Nasdaq 100	=IFERROR(GOOGLEFINANCE("EA","price"),"")	=IFERROR(GOOGLEFINANCE("EA","closeyest"),"")	yes
+EXC	EXC	Exelon	Nasdaq 100	=IFERROR(GOOGLEFINANCE("EXC","price"),"")	=IFERROR(GOOGLEFINANCE("EXC","closeyest"),"")	yes
+FANG	FANG	Diamondback Energy	Nasdaq 100	=IFERROR(GOOGLEFINANCE("FANG","price"),"")	=IFERROR(GOOGLEFINANCE("FANG","closeyest"),"")	yes
+FAST	FAST	Fastenal	Nasdaq 100	=IFERROR(GOOGLEFINANCE("FAST","price"),"")	=IFERROR(GOOGLEFINANCE("FAST","closeyest"),"")	yes
+FTNT	FTNT	Fortinet	Nasdaq 100	=IFERROR(GOOGLEFINANCE("FTNT","price"),"")	=IFERROR(GOOGLEFINANCE("FTNT","closeyest"),"")	yes
+GEHC	GEHC	GE HealthCare	Nasdaq 100	=IFERROR(GOOGLEFINANCE("GEHC","price"),"")	=IFERROR(GOOGLEFINANCE("GEHC","closeyest"),"")	yes
+GFS	GFS	GlobalFoundries	Nasdaq 100	=IFERROR(GOOGLEFINANCE("GFS","price"),"")	=IFERROR(GOOGLEFINANCE("GFS","closeyest"),"")	yes
+GILD	GILD	Gilead Sciences	Nasdaq 100	=IFERROR(GOOGLEFINANCE("GILD","price"),"")	=IFERROR(GOOGLEFINANCE("GILD","closeyest"),"")	yes
+GOOGL	GOOGL	Alphabet (Google)	Nasdaq 100	=IFERROR(GOOGLEFINANCE("GOOGL","price"),"")	=IFERROR(GOOGLEFINANCE("GOOGL","closeyest"),"")	yes
+IDXX	IDXX	IDEXX Laboratories	Nasdaq 100	=IFERROR(GOOGLEFINANCE("IDXX","price"),"")	=IFERROR(GOOGLEFINANCE("IDXX","closeyest"),"")	yes
+INTC	INTC	Intel	Nasdaq 100	=IFERROR(GOOGLEFINANCE("INTC","price"),"")	=IFERROR(GOOGLEFINANCE("INTC","closeyest"),"")	yes
+INTU	INTU	Intuit	Nasdaq 100	=IFERROR(GOOGLEFINANCE("INTU","price"),"")	=IFERROR(GOOGLEFINANCE("INTU","closeyest"),"")	yes
+ISRG	ISRG	Intuitive Surgical	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ISRG","price"),"")	=IFERROR(GOOGLEFINANCE("ISRG","closeyest"),"")	yes
+KDP	KDP	Keurig Dr Pepper	Nasdaq 100	=IFERROR(GOOGLEFINANCE("KDP","price"),"")	=IFERROR(GOOGLEFINANCE("KDP","closeyest"),"")	yes
+KHC	KHC	Kraft Heinz	Nasdaq 100	=IFERROR(GOOGLEFINANCE("KHC","price"),"")	=IFERROR(GOOGLEFINANCE("KHC","closeyest"),"")	yes
+KLAC	KLAC	KLA Corporation	Nasdaq 100	=IFERROR(GOOGLEFINANCE("KLAC","price"),"")	=IFERROR(GOOGLEFINANCE("KLAC","closeyest"),"")	yes
+LIN	LIN	Linde	Nasdaq 100	=IFERROR(GOOGLEFINANCE("LIN","price"),"")	=IFERROR(GOOGLEFINANCE("LIN","closeyest"),"")	yes
+LRCX	LRCX	Lam Research	Nasdaq 100	=IFERROR(GOOGLEFINANCE("LRCX","price"),"")	=IFERROR(GOOGLEFINANCE("LRCX","closeyest"),"")	yes
+LULU	LULU	Lululemon	Nasdaq 100	=IFERROR(GOOGLEFINANCE("LULU","price"),"")	=IFERROR(GOOGLEFINANCE("LULU","closeyest"),"")	yes
+MAR	MAR	Marriott	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MAR","price"),"")	=IFERROR(GOOGLEFINANCE("MAR","closeyest"),"")	yes
+MCHP	MCHP	Microchip Technology	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MCHP","price"),"")	=IFERROR(GOOGLEFINANCE("MCHP","closeyest"),"")	yes
+MDLZ	MDLZ	Mondelez	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MDLZ","price"),"")	=IFERROR(GOOGLEFINANCE("MDLZ","closeyest"),"")	yes
+MELI	MELI	MercadoLibre	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MELI","price"),"")	=IFERROR(GOOGLEFINANCE("MELI","closeyest"),"")	yes
+META	META	Meta (Facebook)	Nasdaq 100	=IFERROR(GOOGLEFINANCE("META","price"),"")	=IFERROR(GOOGLEFINANCE("META","closeyest"),"")	yes
+MNST	MNST	Monster Beverage	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MNST","price"),"")	=IFERROR(GOOGLEFINANCE("MNST","closeyest"),"")	yes
+MRVL	MRVL	Marvell Technology	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MRVL","price"),"")	=IFERROR(GOOGLEFINANCE("MRVL","closeyest"),"")	yes
+MU	MU	Micron Technology	Nasdaq 100	=IFERROR(GOOGLEFINANCE("MU","price"),"")	=IFERROR(GOOGLEFINANCE("MU","closeyest"),"")	yes
+NFLX	NFLX	Netflix	Nasdaq 100	=IFERROR(GOOGLEFINANCE("NFLX","price"),"")	=IFERROR(GOOGLEFINANCE("NFLX","closeyest"),"")	yes
+NXPI	NXPI	NXP Semiconductors	Nasdaq 100	=IFERROR(GOOGLEFINANCE("NXPI","price"),"")	=IFERROR(GOOGLEFINANCE("NXPI","closeyest"),"")	yes
+ODFL	ODFL	Old Dominion Freight	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ODFL","price"),"")	=IFERROR(GOOGLEFINANCE("ODFL","closeyest"),"")	yes
+ON	ON	ON Semiconductor	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ON","price"),"")	=IFERROR(GOOGLEFINANCE("ON","closeyest"),"")	yes
+ORLY	ORLY	O'Reilly Automotive	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ORLY","price"),"")	=IFERROR(GOOGLEFINANCE("ORLY","closeyest"),"")	yes
+PANW	PANW	Palo Alto Networks	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PANW","price"),"")	=IFERROR(GOOGLEFINANCE("PANW","closeyest"),"")	yes
+PAYX	PAYX	Paychex	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PAYX","price"),"")	=IFERROR(GOOGLEFINANCE("PAYX","closeyest"),"")	yes
+PCAR	PCAR	PACCAR	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PCAR","price"),"")	=IFERROR(GOOGLEFINANCE("PCAR","closeyest"),"")	yes
+PDD	PDD	PDD Holdings	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PDD","price"),"")	=IFERROR(GOOGLEFINANCE("PDD","closeyest"),"")	yes
+PEP	PEP	PepsiCo	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PEP","price"),"")	=IFERROR(GOOGLEFINANCE("PEP","closeyest"),"")	yes
+PLTR	PLTR	Palantir	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PLTR","price"),"")	=IFERROR(GOOGLEFINANCE("PLTR","closeyest"),"")	yes
+PYPL	PYPL	PayPal	Nasdaq 100	=IFERROR(GOOGLEFINANCE("PYPL","price"),"")	=IFERROR(GOOGLEFINANCE("PYPL","closeyest"),"")	yes
+QCOM	QCOM	Qualcomm	Nasdaq 100	=IFERROR(GOOGLEFINANCE("QCOM","price"),"")	=IFERROR(GOOGLEFINANCE("QCOM","closeyest"),"")	yes
+REGN	REGN	Regeneron	Nasdaq 100	=IFERROR(GOOGLEFINANCE("REGN","price"),"")	=IFERROR(GOOGLEFINANCE("REGN","closeyest"),"")	yes
+ROP	ROP	Roper Technologies	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ROP","price"),"")	=IFERROR(GOOGLEFINANCE("ROP","closeyest"),"")	yes
+ROST	ROST	Ross Stores	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ROST","price"),"")	=IFERROR(GOOGLEFINANCE("ROST","closeyest"),"")	yes
+SBUX	SBUX	Starbucks	Nasdaq 100	=IFERROR(GOOGLEFINANCE("SBUX","price"),"")	=IFERROR(GOOGLEFINANCE("SBUX","closeyest"),"")	yes
+SNPS	SNPS	Synopsys	Nasdaq 100	=IFERROR(GOOGLEFINANCE("SNPS","price"),"")	=IFERROR(GOOGLEFINANCE("SNPS","closeyest"),"")	yes
+TEAM	TEAM	Atlassian	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TEAM","price"),"")	=IFERROR(GOOGLEFINANCE("TEAM","closeyest"),"")	yes
+TMUS	TMUS	T-Mobile	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TMUS","price"),"")	=IFERROR(GOOGLEFINANCE("TMUS","closeyest"),"")	yes
+TSLA	TSLA	Tesla	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TSLA","price"),"")	=IFERROR(GOOGLEFINANCE("TSLA","closeyest"),"")	yes
+TTD	TTD	The Trade Desk	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TTD","price"),"")	=IFERROR(GOOGLEFINANCE("TTD","closeyest"),"")	yes
+TTWO	TTWO	Take-Two Interactive	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TTWO","price"),"")	=IFERROR(GOOGLEFINANCE("TTWO","closeyest"),"")	yes
+TXN	TXN	Texas Instruments	Nasdaq 100	=IFERROR(GOOGLEFINANCE("TXN","price"),"")	=IFERROR(GOOGLEFINANCE("TXN","closeyest"),"")	yes
+VRSK	VRSK	Verisk Analytics	Nasdaq 100	=IFERROR(GOOGLEFINANCE("VRSK","price"),"")	=IFERROR(GOOGLEFINANCE("VRSK","closeyest"),"")	yes
+VRTX	VRTX	Vertex Pharmaceuticals	Nasdaq 100	=IFERROR(GOOGLEFINANCE("VRTX","price"),"")	=IFERROR(GOOGLEFINANCE("VRTX","closeyest"),"")	yes
+WBD	WBD	Warner Bros. Discovery	Nasdaq 100	=IFERROR(GOOGLEFINANCE("WBD","price"),"")	=IFERROR(GOOGLEFINANCE("WBD","closeyest"),"")	yes
+WDAY	WDAY	Workday	Nasdaq 100	=IFERROR(GOOGLEFINANCE("WDAY","price"),"")	=IFERROR(GOOGLEFINANCE("WDAY","closeyest"),"")	yes
+XEL	XEL	Xcel Energy	Nasdaq 100	=IFERROR(GOOGLEFINANCE("XEL","price"),"")	=IFERROR(GOOGLEFINANCE("XEL","closeyest"),"")	yes
+ZS	ZS	Zscaler	Nasdaq 100	=IFERROR(GOOGLEFINANCE("ZS","price"),"")	=IFERROR(GOOGLEFINANCE("ZS","closeyest"),"")	yes

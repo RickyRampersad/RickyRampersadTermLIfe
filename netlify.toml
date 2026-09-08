@@ -1,6 +1,19 @@
-# Netlify configuration for the renewal portal and Claims TT.
+# Netlify configuration for rickyrampersadbranch.com.
+#
+# The site is plain static files with no build step: every page is committed
+# as-is and the publish directory is the repository root. Stated explicitly
+# so Netlify never tries to detect a framework and run a build that does not
+# exist.
+[build]
+  publish = "."
+  command = ""
+
 
 # ── Client data must never be served ────────────────────────────────
+# These two rules only take effect on Netlify. While the domain pointed at
+# GitHub Pages this whole file was ignored, and /apps-script/Code.gs was
+# downloadable from the live site. Verify both return 404 after any host
+# change — see NETLIFY-MIGRATION.md.
 # /data/ holds the Salesforce exports — client names, emails, mobiles,
 # chassis numbers, policy numbers and premiums. The publish directory is
 # the repository root, so without this rule every one of those files is
@@ -49,6 +62,43 @@
   to = "/renewal/"
   status = 302
 
+# Short links for the service questionnaire — these are what an agent texts or
+# WhatsApps a client. /sq/individual and /sq/group skip the chooser screen.
+[[redirects]]
+  from = "/sq"
+  to = "/service/"
+  status = 302
+
+[[redirects]]
+  from = "/sq/individual"
+  to = "/service/?type=individual"
+  status = 302
+
+[[redirects]]
+  from = "/sq/group"
+  to = "/service/?type=group"
+  status = 302
+
+# KPI tracker short links — what staff are told in the training film:
+# /kpi is the tracker, /training this film, /manual the written guide,
+# /wall the live office screen. The rotating Salesforce board that used to
+# live at /wall/ is now /board/ — see WALL-SETUP.md.
+# (donthaveanagent.com has its own /wall on its own site; the two never meet.)
+[[redirects]]
+  from = "/training"
+  to = "/kpi/training/"
+  status = 302
+
+[[redirects]]
+  from = "/manual"
+  to = "/kpi/manual/"
+  status = 302
+
+[[redirects]]
+  from = "/wall"
+  to = "/kpi/wall/"
+  status = 302
+
 # Claims short links: /claim, and /claim/motor → the motor claim pre-selected.
 [[redirects]]
   from = "/claim"
@@ -68,6 +118,34 @@
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "no-referrer"
 
+# The service questionnaire carries client records and a signature — same
+# treatment as claims: never framed, never cached on a shared branch machine,
+# and no-referrer so policy numbers cannot leak through the Referer header if
+# a client taps a link from the page.
+[[headers]]
+  for = "/service/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# The Management Meetings app holds branch attendance, presenters' material,
+# the minutes and the searchable archive of past meetings. Never framed, never
+# indexed, and not cached on a shared branch machine — the register and the
+# minutes are as sensitive as anything else behind a portal here.
+[[headers]]
+  for = "/managementmeetings/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"
+    Permissions-Policy = "geolocation=(), payment=()"
+
+
 # Claims carries ID documents, medical detail and bank particulars.
 # no-store keeps it out of shared-device browser caches; no-referrer stops
 # the claim reference leaking to anything the page links out to.
@@ -79,3 +157,15 @@
     Referrer-Policy = "no-referrer"
     Cache-Control = "no-store"
     Permissions-Policy = "geolocation=(), microphone=(), payment=()"
+
+# The KPI tracker holds staff performance records and keeps a session token in
+# the browser. Same treatment as the renewal and claims portals: never framed,
+# never cached on a shared branch machine, and no referrer leaking the page on
+# the way out.
+[[headers]]
+  for = "/kpi/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+    Cache-Control = "no-store"

@@ -1,0 +1,25 @@
+[
+ {"n":1,  "say":"The new day. Here is what changed, and what it asks of you.",
+          "kicker":"", "cap":"The new day", "sub":"What changed, and what it asks of you · September 2026", "shot":null},
+
+ {"n":2,  "say":"Sign in when you arrive. That is your attendance now. There is no register to fill.",
+          "kicker":"One", "cap":"Sign in when you arrive.\nThat is your attendance.", "shot":"signin.png"},
+ {"n":3,  "say":"Your first sign-in opens on your plan. What needs you, in the order of service. Branch Manager first.",
+          "kicker":"Two", "cap":"Your plan.\nIn the order of service.", "shot":"order.png"},
+ {"n":4,  "say":"Answer the mail before anything else. Morning, and again after lunch. Mark each rank as you clear it.",
+          "kicker":"Three", "cap":"Mail, rank by rank.\nMorning and after lunch.", "shot":"sweep.png"},
+ {"n":5,  "say":"Work the block. When it ends, tap it and say what landed.",
+          "kicker":"Four", "cap":"When a block ends,\nsay what landed.", "shot":"met.png"},
+ {"n":6,  "say":"Close a task where it is listed. Write the line of what was done. It closes in Salesforce with your line on it.",
+          "kicker":"Five", "cap":"Close it where it is listed.\nWith a line.", "shot":"close.png"},
+ {"n":7,  "say":"Under your blocks is your quarter. Every goal on your form, with what the record says beneath it.",
+          "kicker":"Six", "cap":"Your quarter,\nbuilding every day.", "shot":"quarter.png"},
+ {"n":8,  "say":"What you were trained on. What is still to cover. Your job document, one tap away.",
+          "kicker":"Six", "cap":"Trained on.\nStill to cover.", "shot":"training.png"},
+ {"n":9,  "say":"At three, the checkpoint reads it all. Your sign-in, your sweeps, your blocks.",
+          "kicker":"Three o'clock", "cap":"The checkpoint\nreads it all.", "shot":null},
+ {"n":10, "say":"Nothing typed twice. Nothing from memory at four o'clock.",
+          "kicker":"", "cap":"Nothing typed twice.\nNothing from memory.", "shot":null},
+ {"n":11, "say":"The manual is at ricky rampersad branch dot com, slash how we work. The wall is up. Sign in tomorrow, and the day is already laid out.",
+          "kicker":"", "cap":"rickyrampersadbranch.com\n/howwework", "sub":"The wall is up. Sign in tomorrow, and the day is already laid out.", "shot":null}
+]
