@@ -460,6 +460,295 @@ function last4_(mobile) {
 }
 
 
+/* ============================ Salesforce ============================
+
+ * The system reads Salesforce itself — no CSV exports, no imports.
+ *
+ *   1. NIGHTLY SYNC (~3am): CLIENT PORTFOLIO and Risk Details are pulled
+ *      over the REST API and rebuilt into the Policy Register and Vehicle
+ *      Register tabs. The tabs are just a fast, normalized index — the
+ *      truth stays in Salesforce.
+ *   2. LIVE FALLBACK: a policy the sync hasn't seen yet (sold this
+ *      morning, fixed this morning) is looked up in Salesforce directly
+ *      at claim time.
+ *   3. WRITE-BACK: every filed claim becomes a Claims__c record —
+ *      Opened, dated, policy-linked — so the branch ledger fills itself
+ *      in instead of depending on someone remembering to type it.
+ *
+ * Credentials: a Connected App (client-credentials flow) that a
+ * Salesforce admin creates once — see CLAIMS-SETUP.md. The consumer key
+ * and secret are stored in SCRIPT PROPERTIES via the "Connect
+ * Salesforce" menu, NEVER in this file: this file is served on the
+ * public website. Until credentials are entered, everything degrades
+ * gracefully to the register tabs.
+ * =================================================================== */
+
+function sfProps_() {
+  var p = PropertiesService.getScriptProperties();
+  return {
+    domain: p.getProperty('SF_DOMAIN') || '',        // e.g. https://yourorg.my.salesforce.com
+    id: p.getProperty('SF_CLIENT_ID') || '',
+    secret: p.getProperty('SF_CLIENT_SECRET') || '',
+    writeClaims: p.getProperty('SF_WRITE_CLAIMS') !== 'off',   // on by default once connected
+  };
+}
+
+function sfConnected_() {
+  var c = sfProps_();
+  return !!(c.domain && c.id && c.secret);
+}
+
+/** OAuth client-credentials token, cached for ~50 minutes. */
+function sfToken_() {
+  var cache = CacheService.getScriptCache();
+  var cached = cache.get('sf-token');
+  if (cached) return cached;
+  var c = sfProps_();
+  if (!sfConnected_()) throw new Error('Salesforce is not connected.');
+  var res = UrlFetchApp.fetch(c.domain + '/services/oauth2/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'client_credentials', client_id: c.id, client_secret: c.secret },
+  });
+  var body = JSON.parse(res.getContentText() || '{}');
+  if (res.getResponseCode() !== 200 || !body.access_token) {
+    throw new Error('Salesforce sign-in failed: ' + (body.error_description || body.error || res.getResponseCode()));
+  }
+  cache.put('sf-token', body.access_token, 3000);
+  return body.access_token;
+}
+
+/** Run a SOQL query over REST, following pagination to the end. */
+function sfQuery_(soql) {
+  var c = sfProps_();
+  var records = [];
+  var url = c.domain + '/services/data/v60.0/query?q=' + encodeURIComponent(soql);
+  for (var hop = 0; hop < 40 && url; hop++) {
+    var res = UrlFetchApp.fetch(url, {
+      headers: { Authorization: 'Bearer ' + sfToken_() }, muteHttpExceptions: true,
+    });
+    var body = JSON.parse(res.getContentText() || '{}');
+    if (res.getResponseCode() !== 200) {
+      throw new Error('Salesforce query failed: ' + (body[0] && body[0].message || res.getResponseCode()));
+    }
+    records = records.concat(body.records || []);
+    url = body.nextRecordsUrl ? c.domain + body.nextRecordsUrl : '';
+  }
+  return records;
+}
+
+/** Create one record. Returns the new Id, or throws. */
+function sfCreate_(objectName, fields) {
+  var c = sfProps_();
+  var res = UrlFetchApp.fetch(c.domain + '/services/data/v60.0/sobjects/' + objectName, {
+    method: 'post', contentType: 'application/json',
+    headers: { Authorization: 'Bearer ' + sfToken_() },
+    payload: JSON.stringify(fields), muteHttpExceptions: true,
+  });
+  var body = JSON.parse(res.getContentText() || '{}');
+  if (res.getResponseCode() >= 300 || !body.id) {
+    throw new Error('Salesforce create failed: ' +
+      ((body[0] && body[0].message) || body.message || res.getContentText().slice(0, 200)));
+  }
+  return body.id;
+}
+
+/* ---- nightly register sync ---- */
+
+/** CLIENT PORTFOLIO → Policy Register tab. Record Type separates the lines. */
+function syncPolicyRegister() {
+  var rows = sfQuery_(
+    "SELECT Name, RecordType.Name, POLICY__c, Product_Name__c, Contact__r.Name, " +
+    "Email__c, Home_Tele__c, Home_Phone__c, Date_Of_Birth__c, Expiry_Date__c " +
+    "FROM CLIENT_PORTFOLIO__c WHERE POLICY__c != null");
+  var seen = {};
+  var out = [];
+  rows.forEach(function (r) {
+    var key = normKey_(r.POLICY__c);
+    if (key.length < 4 || seen[key]) return;
+    seen[key] = true;
+    var mobile = String(r.Home_Tele__c || '').replace(/\D/g, '').length >= 7 ? r.Home_Tele__c : (r.Home_Phone__c || '');
+    out.push([
+      key, String(r.POLICY__c || ''), String((r.RecordType || {}).Name || ''),
+      String((r.Contact__r || {}).Name || r.Name || ''),
+      String(r.Email__c || '').toLowerCase(), String(mobile || ''),
+      String(r.Date_Of_Birth__c || ''), String(r.Product_Name__c || ''),
+      String(r.Expiry_Date__c || ''), String(r.Name || ''),
+    ]);
+  });
+  var sh = policyRegisterSheet_();
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  if (out.length) sh.getRange(2, 1, out.length, out[0].length).setValues(out);
+  logClaim_('(sync)', 'policy-register-synced', 'system', out.length + ' policies from Salesforce');
+  return out.length;
+}
+
+/** Risk Details → Vehicle Register tab, with the per-year merge that
+ *  recovers a chassis number recorded once in 2019 and never again. */
+function syncVehicleRegister() {
+  // Field names verified against the live org: the plate is Vehicle__c, the
+  // make Vehicle_Make__c, the model year Year_of_Manufacture__c (Year__c is
+  // the policy year), the sum insured Cover1__c, and the client hangs off
+  // the Insured__c contact lookup.
+  var rows = sfQuery_(
+    "SELECT Policy__c, Vehicle__c, Vehicle_Make__c, Model__c, Year_of_Manufacture__c, " +
+    "Chassis__c, Engine__c, Motor_Vehicle_Coverage_Type__c, Cover1__c, Windscreen__c, " +
+    "Carrier__c, From__c, To__c, Vehicle_Status__c, Contact__c, Email__c, " +
+    "Insured__r.Name, Insured__r.Email, Insured__r.MobilePhone " +
+    "FROM Risk_Details__c WHERE Vehicle__c != null ORDER BY To__c NULLS FIRST");
+  var byKey = {};
+  rows.forEach(function (r) {
+    var key = normKey_(r.Vehicle__c);
+    if (key.length < 4 || key.length > 8 || !/\d/.test(key)) return;
+    var prev = byKey[key] || {};
+    // Later rows (newer cover) overwrite; blanks never erase what an older year knew.
+    var merged = {};
+    ['Vehicle__c', 'Vehicle_Make__c', 'Model__c', 'Year_of_Manufacture__c', 'Chassis__c',
+     'Engine__c', 'Motor_Vehicle_Coverage_Type__c', 'Cover1__c', 'Windscreen__c',
+     'Carrier__c', 'From__c', 'To__c', 'Vehicle_Status__c', 'Policy__c'].forEach(function (f) {
+      merged[f] = (r[f] !== null && r[f] !== undefined && String(r[f]).trim() !== '') ? r[f] : prev[f];
+    });
+    var contact = r.Insured__r || {};
+    merged.client = contact.Name || r.Contact__c || prev.client || '';
+    merged.email = contact.Email || r.Email__c || prev.email || '';
+    merged.mobile = contact.MobilePhone || prev.mobile || '';
+    byKey[key] = merged;
+  });
+  var out = Object.keys(byKey).map(function (key) {
+    var m = byKey[key];
+    return [key, String(m.Vehicle__c || ''), normKey_(m.Policy__c), String(m.Policy__c || ''),
+      String(m.client || ''), String(m.email || '').toLowerCase(), String(m.mobile || ''),
+      String(m.Vehicle_Make__c || ''), String(m.Model__c || ''), String(m.Year_of_Manufacture__c || ''),
+      String(m.Chassis__c || ''), String(m.Engine__c || ''), String(m.Motor_Vehicle_Coverage_Type__c || ''),
+      String(m.Cover1__c || ''), String(m.Windscreen__c || ''), String(m.Carrier__c || ''),
+      String(m.From__c || ''), String(m.To__c || ''), String(m.Vehicle_Status__c || ''), ''];
+  });
+  var sh = registerSheet_();
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  if (out.length) sh.getRange(2, 1, out.length, out[0].length).setValues(out);
+  logClaim_('(sync)', 'vehicle-register-synced', 'system', out.length + ' vehicles from Salesforce');
+  return out.length;
+}
+
+/** The nightly job. Each register fails independently — one bad field
+ *  name in one object must not take down the other register. */
+function salesforceNightlySync() {
+  if (!sfConnected_()) return;
+  var notes = [];
+  try { notes.push(syncPolicyRegister() + ' policies'); }
+  catch (err) { logClaim_('(sync)', 'policy-sync-failed', 'system', String(err)); notes.push('policies FAILED'); }
+  try { notes.push(syncVehicleRegister() + ' vehicles'); }
+  catch (err) { logClaim_('(sync)', 'vehicle-sync-failed', 'system', String(err)); notes.push('vehicles FAILED'); }
+  return notes.join(', ');
+}
+
+/* ---- live fallback lookup ---- */
+
+/** A policy the nightly sync hasn't seen yet: ask Salesforce directly.
+ *  SOQL cannot normalize, so the common punctuation variants are tried. */
+function sfFindPortfolio_(query) {
+  if (!sfConnected_()) return null;
+  var raw = String(query || '').trim();
+  var variants = {};
+  [raw, raw.toUpperCase(), raw.replace(/\s+/g, ''), raw.toUpperCase().replace(/\s+/g, ''),
+   raw.toUpperCase().replace(/[^A-Z0-9]+/g, ' '), raw.toUpperCase().replace(/[^A-Z0-9]+/g, '-')]
+    .forEach(function (v) { if (v) variants[v.replace(/'/g, '')] = true; });
+  var list = Object.keys(variants).map(function (v) { return "'" + v + "'"; }).join(',');
+  try {
+    var rows = sfQuery_(
+      "SELECT Name, RecordType.Name, POLICY__c, Product_Name__c, Contact__r.Name, " +
+      "Email__c, Home_Tele__c, Home_Phone__c, Date_Of_Birth__c " +
+      "FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (" + list + ") LIMIT 2");
+    // Normalized comparison decides; exactly one match or nothing.
+    var key = normKey_(query);
+    var hits = rows.filter(function (r) { return normKey_(r.POLICY__c) === key; });
+    if (hits.length !== 1) return null;
+    var r = hits[0];
+    var mobile = String(r.Home_Tele__c || '').replace(/\D/g, '').length >= 7 ? r.Home_Tele__c : (r.Home_Phone__c || '');
+    return {
+      'Policy Key': key, 'Policy #': String(r.POLICY__c || ''),
+      'Line': String((r.RecordType || {}).Name || ''), 'Client': String((r.Contact__r || {}).Name || r.Name || ''),
+      'Email': String(r.Email__c || '').toLowerCase(), 'Mobile': String(mobile || ''),
+      'DOB': String(r.Date_Of_Birth__c || ''), 'Product': String(r.Product_Name__c || ''),
+    };
+  } catch (err) {
+    logClaim_('(lookup)', 'sf-live-lookup-failed', 'system', String(err));
+    return null;
+  }
+}
+
+/* ---- claim write-back ---- */
+
+/** Every filed claim becomes a Claims__c row in the branch ledger. */
+function sfLogClaim_(claim) {
+  if (!sfConnected_() || !sfProps_().writeClaims) return '';
+  if (testMode_()) { logClaim_(claim.ref, 'sf-writeback-skipped', 'system', 'test mode'); return ''; }
+  var typeMap = {
+    'Motor': { cat: 'General Insurance', type: 'General' },
+    'Home / Property': { cat: 'General Insurance', type: 'General' },
+    'Health / Medical': { cat: 'Health', type: 'Medical' },
+    'Life / Critical Illness': { cat: 'Life & Critical Illness', type: 'Life' },
+    'Pension / Annuity': { cat: 'Life & Critical Illness', type: 'Maturity' },
+  };
+  var m = typeMap[claim.type] || { cat: 'General Insurance', type: 'General' };
+  var amount = Number(String(claim.amount).replace(/[^0-9.]/g, '')) || 0;
+  var id = sfCreate_('Claims__c', {
+    Name: claim.ref,
+    Policy__c: claim.policy || null,
+    Claim_Number__c: claim.ref,
+    Claim_Status__c: 'Opened',
+    Claim_Category__c: m.cat,
+    Type_Of_Claim__c: m.type,
+    Date_Submitted__c: Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'America/Port_of_Spain', 'yyyy-MM-dd'),
+    Date_of_Service__c: /^\d{4}-\d{2}-\d{2}$/.test(claim.incidentDate) ? claim.incidentDate : null,
+    Patient_s_Name__c: String(claim.name).slice(0, 100),
+    Amount__c: amount,
+    Submitted_Charges__c: amount || null,
+  });
+  logClaim_(claim.ref, 'sf-claim-created', 'system', 'Claims__c/' + id);
+  return id;
+}
+
+/* ---- menu plumbing ---- */
+
+function connectSalesforce() {
+  var ui = SpreadsheetApp.getUi();
+  var p = PropertiesService.getScriptProperties();
+  var domain = ui.prompt('Salesforce — step 1 of 3',
+    'Your My Domain URL, e.g.\nhttps://yourorg.my.salesforce.com', ui.ButtonSet.OK_CANCEL);
+  if (domain.getSelectedButton() !== ui.Button.OK) return;
+  var id = ui.prompt('Salesforce — step 2 of 3', 'Connected App CONSUMER KEY:', ui.ButtonSet.OK_CANCEL);
+  if (id.getSelectedButton() !== ui.Button.OK) return;
+  var secret = ui.prompt('Salesforce — step 3 of 3', 'Connected App CONSUMER SECRET:', ui.ButtonSet.OK_CANCEL);
+  if (secret.getSelectedButton() !== ui.Button.OK) return;
+  p.setProperty('SF_DOMAIN', domain.getResponseText().trim().replace(/\/+$/, ''));
+  p.setProperty('SF_CLIENT_ID', id.getResponseText().trim());
+  p.setProperty('SF_CLIENT_SECRET', secret.getResponseText().trim());
+  CacheService.getScriptCache().remove('sf-token');
+  try {
+    sfToken_();
+    installSfTrigger_();
+    ui.alert('✅ Connected. The registers will sync nightly (~3am).\n\nRun "Sync registers from Salesforce now" to fill them immediately.');
+  } catch (err) {
+    ui.alert('Connection failed:\n\n' + err + '\n\nCheck the domain URL and that the Connected App has the client-credentials flow enabled with a run-as user.');
+  }
+}
+
+function installSfTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'salesforceNightlySync') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('salesforceNightlySync').timeBased().everyDays(1).atHour(3).create();
+}
+
+function syncSalesforceNow() {
+  if (!sfConnected_()) {
+    SpreadsheetApp.getUi().alert('Connect Salesforce first (Claims TT menu → Connect Salesforce).');
+    return;
+  }
+  SpreadsheetApp.getUi().alert('Synced: ' + salesforceNightlySync());
+}
+
+
 /* ============================ sign-in: codes & sessions ============================
 
  * "Log in" here means: tell us your email (or mobile), we email you a
@@ -1054,6 +1343,10 @@ function apiClaimFinish_(b) {
   logClaim_(ref, 'claim-submitted', 'client',
     files.length + ' document(s)' + (missing.length ? ' · outstanding: ' + missing.join(', ') : ''));
 
+  // The branch ledger writes itself: one Claims__c row per filed claim.
+  try { sfLogClaim_(claim); }
+  catch (err) { logClaim_(ref, 'sf-writeback-failed', 'system', String(err)); }
+
   return { ok: true, ref: ref, files: files.length, missing: missing };
 }
 
@@ -1230,7 +1523,7 @@ function apiFindPolicy_(query) {
       coverage: String(vehicle['Coverage Type'] || ''), methods: vMethods };
   }
 
-  var policy = findPolicyRecord_(query);
+  var policy = findPolicyRecord_(query) || sfFindPortfolio_(query);
   if (policy) {
     // Reveal only what the policy number itself already implies.
     var line = String(policy['Line'] || 'Policy');
@@ -1254,7 +1547,7 @@ function apiVerifyPolicy_(b) {
   var query = clean_(b.query, 40);
   var row = findVehicle_(query);
   var source = 'vehicle';
-  if (!row) { row = findPolicyRecord_(query); source = 'policy'; }
+  if (!row) { row = findPolicyRecord_(query) || sfFindPortfolio_(query); source = 'policy'; }
   if (!row) return { ok: false, error: 'We could not match that policy.' };
 
   if (!verifyThrottle_(query, false)) {
@@ -1931,6 +2224,9 @@ function onOpen() {
     .addItem('Open the claims Drive folder', 'openClaimsFolder')
     .addItem('Email the client their new status', 'notifyStatusChange')
     .addItem('Chase outstanding documents now', 'chaseMissingDocuments')
+    .addSeparator()
+    .addItem('☁️ Connect Salesforce (one-time)', 'connectSalesforce')
+    .addItem('Sync registers from Salesforce now', 'syncSalesforceNow')
     .addSeparator()
     .addItem('🧪 Turn test mode ON (emails only reach you)', 'testModeOn_')
     .addItem('Turn test mode OFF (live emails)', 'testModeOff_')

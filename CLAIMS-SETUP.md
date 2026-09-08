@@ -151,11 +151,44 @@ This is the part that removes most of the pain. A claimant types their number
 plate; the vehicle, chassis number, engine number, policy number, cover type
 and their own contact details fill themselves in.
 
-### Build the register
+### Connect Salesforce — no CSVs, ever
 
-The Salesforce export is **not kept in this repository** (client data, public
-repo). Put your local copy at `data/risk-details.csv` — the path is
-gitignored — then:
+The system reads Salesforce itself. Once connected:
+
+- the **registers rebuild themselves nightly (~3am)** from `CLIENT
+  PORTFOLIO` (policies — Record Type separates health/life/pension) and
+  `Risk Details` (vehicles, with the per-year merge that recovers old
+  chassis numbers),
+- a policy the sync hasn't seen yet is **looked up live** at claim time, and
+- every filed claim **writes itself into `Claims__c`** — Opened, dated,
+  policy-linked — so the branch ledger stops depending on manual typing.
+  (Skipped automatically in test mode.)
+
+**One-time admin step in Salesforce** (Setup → App Manager → New Connected
+App):
+
+1. Enable OAuth Settings; callback URL can be `https://localhost` (unused).
+2. Scopes: *Manage user data via APIs (api)*.
+3. Tick **Enable Client Credentials Flow**, and under the app's *Manage →
+   Edit Policies*, set the **Run As** user — an integration (or your own)
+   user with read access to `CLIENT_PORTFOLIO__c` and `Risk_Details__c` and
+   create access to `Claims__c`.
+4. Copy the **Consumer Key** and **Consumer Secret**.
+
+Then in the Claims TT sheet: **Claims TT menu → ☁️ Connect Salesforce**,
+paste your My Domain URL (`https://yourorg.my.salesforce.com`), the key and
+the secret. They are stored in Script Properties — never in code, because
+`Claims.gs` sits in a public repository. The menu's *Sync registers from
+Salesforce now* fills both tabs immediately; the nightly trigger keeps them
+fresh from then on.
+
+### Fallback: building registers by hand
+
+Until Salesforce is connected (or if the Connected App is ever down), the
+registers can be built from report exports with the two scripts below —
+the same tabs, the same behavior, just manual. The export is **not kept in
+this repository** (client data, public repo). Put your local copy at
+`data/risk-details.csv` — the path is gitignored — then:
 
 ```bash
 python3 data/build-vehicle-register.py
@@ -433,12 +466,11 @@ done.
 - [ ] **Claims desk addresses** confirmed for health, life and pension
 - [ ] **Staff emails** added to the `Staff` tab (Active=Y) so the team can
       sign in at `/claims/staff.html`
-- [ ] **Vehicle register** imported into the `Vehicle Register` tab (the CSV
-      was delivered privately in the Claude session; or rebuild it locally)
-- [ ] **Policy register** (health — 1,915 policies, delivered privately in
-      the Claude session) imported into the `Policy Register` tab; life and
-      pension follow from a Salesforce report export via
-      `data/build-policy-register.py`
+- [ ] **Salesforce Connected App** created by an admin (see *Connect
+      Salesforce* above) and its key/secret entered via the Claims TT menu —
+      this switches on nightly register sync, live policy lookup, and
+      automatic `Claims__c` write-back. Until then, the register CSVs
+      delivered privately in the Claude session work as a manual fallback.
 - [ ] **Moveable T&T holidays** topped up in `CLAIMS.HOLIDAYS` each January
 - [ ] **Rotate `STAFF_KEY`** in the Apps Script copy of `Code.gs` — the old
       value was published on the public site
