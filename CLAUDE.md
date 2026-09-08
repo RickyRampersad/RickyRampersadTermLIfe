@@ -148,3 +148,27 @@ So, when appending:
 
 A marker alone is not enough: it lives inside the block being pasted, so it
 cannot tell "never pasted" apart from "never deployed". The self-check can.
+
+## Apps Script — a gated action must never go in `cacheableActions`
+
+`doGet` caches some replies under the key
+`"rrb_" + action + code + year`. **There is no token in that key.** So a
+sign-in-gated action added to that list is gated only until the first
+authorised read: the reply is stored, and for the next `ttl` seconds anyone
+with the URL and no sign-in gets the stored copy back. The wall re-reads its
+feeds every few minutes, so the copy never expires.
+
+On 8 September 2026 the `ratings` action — every advisor's average and the
+clients' own words — was readable from outside for that reason, on both
+deployments, for most of a day. Found by probing `?action=ratings` with no
+token and getting data instead of "Sign in to see ratings."
+
+Rules:
+
+- **Nothing that calls `rrbAuthorize_` goes in `cacheableActions`.** If it
+  must be cached, the key has to carry the token — and then it is per-person
+  and barely worth caching.
+- **After every deploy, probe each gated action from outside with no token**
+  (`settlement`, `ratings`, `submitted`, `clear_cache`). The only acceptable
+  answer is a sign-in error. `?action=zzz` proves the build; it does not
+  prove the gates.
