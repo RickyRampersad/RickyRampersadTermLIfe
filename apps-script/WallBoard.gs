@@ -104,29 +104,38 @@ function wbBuild_() {
       'WHERE CreatedDate = LAST_N_MONTHS:12 GROUP BY Carrier__c ORDER BY COUNT(Id) DESC'
     ).map(function (r) { return { k: r.k || 'Not recorded', n: r.n }; }),
     renewals: wbQ_(
-      'SELECT Contact_First_Name__c f, Last_Name__c l, Vehicle_Make__c mk, Policy__c p, ' +
-      'Next_Renewal_Date__c d, Billing_Premiums__c prem FROM Risk_Details__c ' +
+      // NO FIELD ALIASES. Salesforce allows aliasing only in aggregate
+      // queries — "SELECT Policy__c p" fails the whole call with
+      // MALFORMED_QUERY: "only aggregate expressions use field aliasing".
+      // The aliases were here once and every slide fed by this query came
+      // back empty. Read the real field names off the record instead.
+      'SELECT Contact_First_Name__c, Last_Name__c, Vehicle_Make__c, Policy__c, ' +
+      'Next_Renewal_Date__c, Billing_Premiums__c FROM Risk_Details__c ' +
       'WHERE Next_Renewal_Date__c >= TODAY AND Next_Renewal_Date__c <= NEXT_N_DAYS:45 ' +
       'ORDER BY Next_Renewal_Date__c LIMIT 10'
     ).map(function (r) {
       return {
-        who: wbMask_(r.f, r.l),
-        what: r.mk ? r.mk + ' · motor' : wbRiskLabel_(r.p),
-        when: r.d, prem: Math.round(r.prem || 0)
+        who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c),
+        what: r.Vehicle_Make__c ? r.Vehicle_Make__c + ' · motor' : wbRiskLabel_(r.Policy__c),
+        when: r.Next_Renewal_Date__c, prem: Math.round(r.Billing_Premiums__c || 0)
       };
     }),
     claimTypes: claimTypes,
     oldestClaims: wbQ_(
-      'SELECT Claim_Reference__c ref, Claim_Type__c t, Days_Pending__c d FROM Claims_Revised__c ' +
+      'SELECT Claim_Reference__c, Claim_Type__c, Days_Pending__c FROM Claims_Revised__c ' +
       "WHERE Claim_Status__c = 'Opened' ORDER BY Days_Pending__c DESC NULLS LAST LIMIT 6"
     ).map(function (r) {
-      return { ref: r.ref || '(no reference)', type: r.t || 'Unclassified', days: Math.round(r.d || 0) };
+      return {
+        ref: wbClaimRef_(r.Claim_Reference__c),
+        type: r.Claim_Type__c || 'Unclassified',
+        days: Math.round(r.Days_Pending__c || 0)
+      };
     }),
     topOpps: wbQ_(
-      'SELECT Name, StageName s, Amount a FROM Opportunity WHERE IsClosed = false ' +
+      'SELECT Name, StageName, Amount FROM Opportunity WHERE IsClosed = false ' +
       'ORDER BY Amount DESC NULLS LAST LIMIT 7'
     ).map(function (r) {
-      return { name: wbOppLabel_(r.Name), stage: r.s, amt: Math.round(r.a || 0) };
+      return { name: wbOppLabel_(r.Name), stage: wbStage_(r.StageName), amt: Math.round(r.Amount || 0) };
     }),
     legacy: wbLegacy_(),
     production: wbProduction_(),
@@ -405,17 +414,17 @@ function wbSendProductionReport() {
 // labels can say which week each bar is, whatever Salesforce's locale week is.
 function wbWeekly_() {
   var recs = wbQ_(
-    'SELECT Production_Picked_up_Date__c d, Total_API__c api FROM CLIENT_PORTFOLIO__c ' +
+    'SELECT Production_Picked_up_Date__c, Total_API__c FROM CLIENT_PORTFOLIO__c ' +
     'WHERE Production_Picked_up_Date__c = LAST_N_DAYS:70'
   );
   var buckets = {};
   recs.forEach(function (r) {
-    var dt = new Date(r.d + 'T12:00:00Z');
+    var dt = new Date(r.Production_Picked_up_Date__c + 'T12:00:00Z');
     var day = (dt.getUTCDay() + 6) % 7;                       // Monday = 0
     var mon = new Date(dt.getTime() - day * 864e5);
     var key = Utilities.formatDate(mon, 'UTC', 'yyyy-MM-dd');
     if (!buckets[key]) buckets[key] = { n: 0, api: 0, mon: mon };
-    buckets[key].n++; buckets[key].api += (r.api || 0);
+    buckets[key].n++; buckets[key].api += (r.Total_API__c || 0);
   });
   var keys = Object.keys(buckets).sort().slice(-9);
   return keys.map(function (k, i) {
@@ -473,6 +482,39 @@ function wbRiskLabel_(policy) {
   if (p.indexOf('AP') > -1) return 'Motor';
   return 'Policy';
 }
+
+// A claim reference is "07252023JOT0028" — a date, the insured's initials and
+// a sequence. This feed sits on an "Anyone" URL and goes on a wall the whole
+// office walks past, so the reference is cut to its last four. That is enough
+// to find the file in Salesforce and not enough to identify anybody from the
+// screen. Named references that carry no client ("TBA", "Pre-Certification")
+// read as words, so they are kept whole.
+function wbClaimRef_(ref) {
+  var s = String(ref || '').trim();
+  if (!s) return '(no reference)';
+  if (/^TBA$/i.test(s)) return '(reference TBA)';
+  var tail = s.match(/(\d{3,})\s*$/);
+  if (!tail) return s;                       // "Pre-Certification" — a word, not a file number
+  var seq = tail[1].slice(-4);
+  // Anything readable in front ("Best Doctors - 503") is kept as the label;
+  // a bare code ("07252023JOT0028") is announced as a claim.
+  var head = (s.match(/^[A-Za-z][A-Za-z ]*/) || [''])[0].replace(/\s+$/, '');
+  return (head ? head + ' ' : 'Claim ') + '…' + seq;
+}
+
+// Salesforce stage names as the branch says them, not as the picklist spells
+// them. "Proposal/Price Quote" on a wall reads like a database field.
+var WB_STAGE = {
+  'Proposal/Price Quote': 'Proposal / quote',
+  'Value Proposition': 'Value proposition',
+  'Id. Decision Makers': 'Id. decision makers',
+  'Negotiation/Review': 'Negotiation / review',
+  'Perception Analysis': 'Perception analysis',
+  'Needs Analysis': 'Needs analysis',
+  'Qualification': 'Qualification',
+  'Prospecting': 'Prospecting'
+};
+function wbStage_(s) { return WB_STAGE[s] || s || ''; }
 
 // Opportunity names carry full client names ("OPP Life - Sean Sookoo") —
 // trim the prefix and shorten the person to first name + initial.
