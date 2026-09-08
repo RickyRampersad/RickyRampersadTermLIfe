@@ -30,7 +30,11 @@
     background:var(--bg);background-image:radial-gradient(ellipse 60% 40% at 50% 25%,rgba(239,194,75,.09),transparent)}
   .gate-card{width:min(420px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
-  .gate-card svg.shield{width:58px;height:58px;display:block;margin:0 auto 14px}
+  /* The branch mark is logo-mark.png — a gold shield carrying a white check.
+     Nothing here draws a substitute; see CLAUDE.md. */
+  .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+  .gate-card .mark{width:58px;height:58px;margin:0 auto 14px}
   .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--gold);margin-bottom:6px}
   .gate-card .sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.6}
   label{display:block;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
@@ -68,7 +72,7 @@
   .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
   .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:60px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;min-width:0}
-  .nav-brand svg{width:30px;height:30px;flex-shrink:0}
+  .nav-brand .mark{width:30px;height:30px;flex-shrink:0}
   .nav-brand b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15;display:block}
   .nav-brand span{font-size:10.5px;color:var(--dim)}
   .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);white-space:nowrap}
@@ -270,15 +274,7 @@
      tell you who walked in, and the register depends on knowing. -->
 <div id="door">
   <div class="gate-card">
-    <svg class="shield" viewBox="0 0 88 88" aria-hidden="true">
-      <defs><linearGradient id="gd" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-      </linearGradient></defs>
-      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gd)"/>
-      <rect x="32" y="38" width="24" height="19" rx="4" fill="#07131f"/>
-      <path d="M37 38v-5a7 7 0 0114 0v5" stroke="#07131f" stroke-width="4.5" fill="none"/>
-      <circle cx="44" cy="47" r="3" fill="#efc24b"/>
-    </svg>
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
     <h1>Management Meetings</h1>
     <p class="sub">Ricky Rampersad Branch<br>Enter your branch access code.</p>
     <div class="field">
@@ -298,14 +294,7 @@
 <!-- ============================ SIGN IN ============================ -->
 <div id="gate" style="display:none">
   <div class="gate-card">
-    <svg class="shield" viewBox="0 0 88 88" aria-hidden="true">
-      <defs><linearGradient id="gg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-      </linearGradient></defs>
-      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gg)"/>
-      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-      <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
 
     <!-- sign in -->
     <div id="gate-login">
@@ -361,14 +350,7 @@
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="https://rickyrampersadbranch.com/staff.html">
-        <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <div class="mark"><img src="/logo-mark.png" alt=""></div>
         <b>Meeting Builder<span>Ricky Rampersad Branch</span></b>
       </a>
       <div class="who">
@@ -3091,6 +3073,12 @@ function resume() {
 }
 
 boot();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>
