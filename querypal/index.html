@@ -1751,16 +1751,25 @@ function agentLogin(){
   if(!num&&!pwd){out.innerHTML='<div class="trackcard">Enter your agent number and password — both are on the branch list.</div>';return;}
   const btn=document.getElementById('agentGo');btn.disabled=true;btn.textContent='Checking…';
   const done=()=>{btn.disabled=false;btn.textContent='Sign in';};
-  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),10000);
-  fetch(SHEET_WEBHOOK_URL+'?action=agentauth&num='+encodeURIComponent(num)+'&pwd='+encodeURIComponent(pwd)+'&code='+encodeURIComponent(num||pwd),{signal:ctl.signal})
-    .then(r=>r.json()).then(d=>{
-      clearTimeout(to);done();
-      if(d&&d.ok===true)gatePass(num||pwd,d.name||'',d.email||'',d.role||'agent');
-      else if(d&&d.ok===false&&d.why==='pwd'){_gateTries++;out.innerHTML='<div class="trackcard">That password doesn\'t match this agent number — check your entry and try again.</div>';if(_gateTries>=5){_gateLockTil=Date.now()+60000;_gateTries=0;}}
-      else if(d&&d.ok===false)gateFail(out);
-      else gateOffline(num||pwd,out);
-    })
-    .catch(()=>{clearTimeout(to);done();gateOffline(num||pwd,out);});
+  /* Apps Script cold-starts can take well past ten seconds; giving up early
+     showed people a stale "backend not installed" card while their perfectly
+     good sign-in was still in flight. Wait longer, and retry once by itself
+     before declaring the service unreachable. */
+  const attempt=(triesLeft)=>{
+    const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),30000);
+    fetch(SHEET_WEBHOOK_URL+'?action=agentauth&num='+encodeURIComponent(num)+'&pwd='+encodeURIComponent(pwd)+'&code='+encodeURIComponent(num||pwd),{signal:ctl.signal})
+      .then(r=>r.json()).then(d=>{
+        clearTimeout(to);done();
+        if(d&&d.ok===true)gatePass(num||pwd,d.name||'',d.email||'',d.role||'agent');
+        else if(d&&d.ok===false&&d.why==='pwd'){_gateTries++;out.innerHTML='<div class="trackcard">That password doesn\'t match this agent number — check the Password column on your row of the branch list, then try again (capitals don\'t matter, spaces do).</div>';if(_gateTries>=5){_gateLockTil=Date.now()+60000;_gateTries=0;}}
+        else if(d&&d.ok===false)gateFail(out);
+        else gateOffline(num||pwd,out);
+      })
+      .catch(()=>{clearTimeout(to);
+        if(triesLeft>0){btn.textContent='Still checking…';attempt(triesLeft-1);return;}
+        done();gateOffline(num||pwd,out);});
+  };
+  attempt(1);
 }
 function gatePass(code,name,email,role){
   agentAuth={code:code,name:name,email:email,role:(role||'agent')};
@@ -2482,9 +2491,11 @@ function gateFail(out){
   out.innerHTML='<div class="trackcard">That password isn\'t on the branch list — check it and try again (it\'s not case-sensitive).</div>';
 }
 function gateOffline(code,out){
-  /* Old Apps Script deployed (no live check yet): branch master code keeps the team working */
+  /* The sign-in service really did not answer — usually Google waking the
+     script up, and a second try lands. The master codes keep working offline
+     so the branch is never locked out by a slow morning. */
   if(code.toUpperCase()==='260026'||code.toUpperCase()==='RRB2026'){gatePass(code,'','','branch');return;}
-  out.innerHTML='<div class="trackcard"><b>Live code check isn\'t switched on yet.</b><br>Install the upgraded Apps Script (QueryPal_Backend_v6.gs) to activate it — until then agents can use the branch master code.</div>';
+  out.innerHTML='<div class="trackcard"><b>The sign-in service didn\'t answer just now.</b><br>This is usually Google waking the script up — wait a few seconds and press Sign in again. If it keeps happening, email the branch.</div>';
 }
 
 function tatNum(t){const n=parseInt(t);return isNaN(n)?null:n;}
