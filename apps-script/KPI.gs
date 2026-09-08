@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-07d';
+var SCRIPT_VERSION = '2026-09-08a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2293,6 +2293,7 @@ function checkpointHtml_(r) {
 }
 
 function sendCheckpoint(dateOpt) {
+  if (firedAtWeekend_(dateOpt)) return 'Weekend — no checkpoint.';
   var r = checkpointReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
@@ -2490,6 +2491,19 @@ function listTriggers() {
  *  It is not a guarantee — Google does not promise a warm container — but it
  *  costs one trivial execution every ten minutes and the alternative is a
  *  member of staff staring at "Signing in" for half a minute. */
+/* Whether a timed run should happen at all. A script project may carry at
+   most twenty triggers, and this one used to spend fifteen of them on five
+   weekday copies each of the checkpoint and the two nudges — so the day Branch
+   Intelligence joined the project, its own six could not be installed: "This
+   script has too many triggers". Each of those three now runs once a day and
+   asks this instead. A person running the function from the editor is not a
+   trigger and is never turned away; only a fire on a Saturday or Sunday is. */
+function firedAtWeekend_(e) {
+  if (!e || !e.triggerUid) return false;    // a person, not the clock
+  var d = new Date().getDay();
+  return d === 0 || d === 6;
+}
+
 function keepWarm() {
   var h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
   var d = new Date().getDay();
@@ -2510,20 +2524,17 @@ function installTriggers() {
     }
   });
 
-  // 3pm checkpoint, Monday to Friday. Apps Script fires within the hour, so
-  // the mail lands between 3 and 4 — while the last block is still running.
-  ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(function (d) {
-    ScriptApp.newTrigger('sendCheckpoint').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
-  });
+  // 3pm checkpoint. Apps Script fires within the hour, so the mail lands
+  // between 3 and 4 — while the last block is still running. One trigger a
+  // day, not one per weekday: the function turns a weekend fire away itself
+  // (firedAtWeekend_), and the twenty-trigger limit on a project is shared
+  // with Branch Intelligence.
+  ScriptApp.newTrigger('sendCheckpoint').timeBased()
+    .everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
   // Staff nudges. Noon for a blank morning, three for an unfinished day.
-  ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(function (d) {
-    ScriptApp.newTrigger('remindMidday').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(12).create();
-    ScriptApp.newTrigger('remindCheckpoint').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
-  });
+  ScriptApp.newTrigger('remindMidday').timeBased().everyDays(1).atHour(12).create();
+  ScriptApp.newTrigger('remindCheckpoint').timeBased().everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
   // Weekly summary, Friday evening once the day is in.
   ScriptApp.newTrigger('sendWeekly').timeBased()
@@ -2532,9 +2543,10 @@ function installTriggers() {
   // And one that keeps the project awake, so nobody pays the cold start.
   ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
 
-  var msg = 'Triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
+  var msg = 'Five triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
-            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
+            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + '). The three daily ones skip weekends themselves. ' +
+            'A project may hold twenty; Branch Intelligence needs six of the rest.';
   if (removed.length) {
     msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
            'version: ' + removed.join(', ') + '.';
@@ -2673,7 +2685,8 @@ function nudge_(staffId, date, missing, heading, message) {
 
 /** Noon. Anyone whose morning is still blank hears about it while the
  *  afternoon can still be salvaged. */
-function remindMidday() {
+function remindMidday(e) {
+  if (firedAtWeekend_(e)) return 'Weekend — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];
@@ -2699,7 +2712,8 @@ function remindMidday() {
 
 /** Three o'clock. Blocks 1–3 should be behind them; the last runs to 4.
  *  Whoever is short gets the list, and is asked for the day's close-off. */
-function remindCheckpoint() {
+function remindCheckpoint(e) {
+  if (firedAtWeekend_(e)) return 'Weekend — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];

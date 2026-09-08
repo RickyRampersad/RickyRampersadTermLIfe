@@ -134,5 +134,34 @@ env.resetRequestMemo_();
 ok('the weekly summary takes the same guard', env.weeklyReport_(EVT).weekStart === env.weekStart_(today), env.weeklyReport_(EVT).weekStart);
 ok('and a header never turns rubbish into a date', !/1970/.test(env.prettyDate_(EVT)) && !/1970/.test(env.shortDate_(EVT)), env.prettyDate_(EVT));
 
+console.log('\nFive triggers, not seventeen — a project holds twenty and shares them:\n');
+env.resetRequestMemo_();
+env.installTriggers();
+let installed = env.ScriptApp.getProjectTriggers();
+const handlers = installed.map(t => t.getHandlerFunction()).sort().join();
+ok('five are installed', installed.length === 5, String(installed.length));
+ok('one of each', handlers === 'keepWarm,remindCheckpoint,remindMidday,sendCheckpoint,sendWeekly', handlers);
+ok('the checkpoint and the two nudges run daily', installed.filter(t => /everyDays\(1\)/.test(t.chain.join()) && /remind|sendCheckpoint/.test(t.getHandlerFunction())).length === 3);
+env.installTriggers();
+ok('running the installer again leaves five, not ten', env.ScriptApp.getProjectTriggers().length === 5);
+
+console.log('\nAnd the daily ones turn a weekend fire away themselves:\n');
+const mailBefore = () => env.__calls.mail;
+const FIRE = { authMode: 'FULL', triggerUid: '8811', 'day-of-month': 22 };
+NOW = new Date('2026-08-22T15:05:00');                      // a Saturday
+env.resetRequestMemo_();
+let m0 = mailBefore();
+ok('the checkpoint fired on a Saturday sends nothing', /Weekend/.test(env.sendCheckpoint(FIRE)) && mailBefore() === m0);
+ok('nor does the midday nudge', /Weekend/.test(env.remindMidday(FIRE)) && mailBefore() === m0);
+ok('nor the three o\'clock one', /Weekend/.test(env.remindCheckpoint(FIRE)) && mailBefore() === m0);
+env.resetRequestMemo_();
+env.sendCheckpoint();
+ok('but a person running it on a Saturday from the editor still gets the mail', mailBefore() === m0 + 1);
+NOW = new Date('2026-08-19T15:05:00');                      // back to the Wednesday
+env.resetRequestMemo_();
+m0 = mailBefore();
+env.sendCheckpoint(FIRE);
+ok('and on a weekday the trigger sends as before', mailBefore() === m0 + 1);
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
