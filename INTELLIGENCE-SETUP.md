@@ -112,45 +112,63 @@ The self test prints which tabs it resolved, which access lists it found, how
 weak the codes are, and — the important one — **whether this project already
 has a `doGet`/`doPost`**.
 
-### If the project already has a router
+### It declares no `doGet`/`doPost` of its own
 
 A script project may declare `doGet` and `doPost` exactly once, and a second
-declaration silently wins — so left in place, Intelligence's pair takes over the
-host's router and **the host's own sign-in stops working**. That is what to
-expect if the tracker suddenly answers "Unknown action: login".
+declaration silently wins. Until 8 September this file carried a pair of its
+own at a banner four thousand lines from the end; pasted whole into the
+tracker's project they took over its router, and the tracker's sign-in
+answered "Unknown action: login" until the file was pasted back without them.
 
-This applies to the branch tracker (`KPI.gs`) as well as `BranchEngine.gs`. As
-of September 2026 the intelligence code and the tracker share one project and
-one deployment, and `KPI.gs` already carries both lines below.
+So the file now declares **neither**. Its entry points are `intelDoGet_` and
+`intelDoPost_`, and the host's own router hands over to them:
 
-- **Delete the two functions** under the banner `WEB APP ENTRY POINTS` in
-  `Intelligence.gs`. They are **not** at the end of the file: about four
-  thousand lines follow them. The block ends at the next banner,
-  `WHAT IS IN OUR POSSESSION`. Delete as far as that and no further.
-- Add one line inside the existing `doPost`, straight after it parses the body:
+- **The branch tracker (`KPI.gs`)** already does, in its `doPost` and `doGet`.
+  Paste `Intelligence.gs` in whole; there is nothing to delete and nothing to
+  add. `intelSelfTest` says "This project is the branch tracker".
+- **`BranchEngine.gs`**: add one line inside its `doPost`, straight after it
+  parses the body, and one inside its `doGet`:
 
   ```js
   var hit = intelRoute_(b); if (hit) return hit;
-  ```
-
-- And, if the host serves the client survey links, one inside its `doGet`:
-
-  ```js
   var page = iSurveyClick_(e); if (page) return page;
   ```
 
+- **A project with no router at all** adds two lines anywhere and deploys:
+
+  ```js
+  function doGet(e)  { return intelDoGet_(e); }
+  function doPost(e) { return intelDoPost_(e); }
+  ```
+
 `intelRoute_` returns `null` for anything that is not an `intel.*` action, so
-the rest of that function keeps working exactly as it did. It must be called
+the rest of a host's `doPost` keeps working exactly as it did. It must be called
 **before** the host's own token check: the five wall reads carry no token on
 purpose, because a screen on a wall has nobody to sign it in, and in exchange
 they return aggregates only. Called after the check, every wall screen gets
-"Session expired. Sign in again." — which is what the branch's television
-showed on 7 September.
+"Session expired. Sign in again."
 
-`tests/test-intelroute.js` drives the tracker's own `doPost` with the bodies the
-wall and the app send, and checks both halves still work.
+### Which workbook it reads
 
-If the self test says no other router was found, leave the block where it is.
+By default the code reads the spreadsheet it is bound to. In the tracker's
+project that is the **tracker's** workbook, which holds none of the eight
+export tabs, and every screen then says "No dues tab found", "No in-force tab
+found", "No active agents found on the access list".
+
+Set the Script Property **`INTEL_WORKBOOK_ID`** to the branch workbook's ID
+(the long string in its URL between `/d/` and `/edit`) and it reads that one
+instead. Everything the code creates — the actions log, sessions, the
+snapshot — goes into that workbook too. `intelSelfTest` says which workbook it
+is reading.
+
+`tests/test-intelroute.js` concatenates the two files exactly as Apps Script
+loads them and drives the tracker's own `doPost` with the bodies the wall and
+the app send; it fails the moment a `doGet` or `doPost` reappears in this file.
+
+To see which build a project is carrying without opening the editor, POST
+`{"action":"intel.ping"}` to its `/exec`: it answers with the version, when
+the snapshot was last built, and whether it is reading the bound workbook or
+the one in `INTEL_WORKBOOK_ID`. It carries no token and returns nothing else.
 
 ---
 

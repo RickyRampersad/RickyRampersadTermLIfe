@@ -1,11 +1,13 @@
 // Branch Intelligence shares the tracker's script project and its deployment.
 //
-// A script project may declare doGet and doPost exactly once, so Intelligence.gs
-// ships with its own pair at the foot of the file, to be deleted when it joins a
-// project that already has a router. On 7 September it was pasted into the
-// tracker's project and its block correctly removed — and then every wall screen
-// got "Session expired. Sign in again." from the tracker's token check, because
-// nothing handed intel.* actions over. A television has nobody to sign it in.
+// A script project may declare doGet and doPost exactly once, and the second
+// declaration silently wins. Intelligence.gs therefore declares neither — its
+// entry points are intelDoGet_/intelDoPost_ and the tracker's router hands over
+// to them. Both halves of that were learned the hard way on 7 September: first
+// every wall screen got "Session expired. Sign in again." because nothing handed
+// intel.* actions past the tracker's token check (a television has nobody to
+// sign it in); then the file was pasted whole, its own doPost won, and staff
+// sign-in answered "Unknown action: login".
 //
 // This drives the tracker's own doPost with the bodies the wall and the app
 // actually send.
@@ -14,14 +16,10 @@ const ROOT = path.join(__dirname, '..');
 // The two files are separate in the repository and one project at runtime.
 const both = path.join(os.tmpdir(), 'kpi-intel-' + process.pid + '.gs');
 const intel = fs.readFileSync(path.join(ROOT, 'apps-script/Intelligence.gs'), 'utf8');
-// As deployed: the marked block at the foot of Intelligence.gs is deleted when
-// it joins a project that already has a router. Left in, its doGet and doPost
-// are declared second and silently win, and the tracker's own sign-in stops
-// working — which is what this concatenation showed the first time it ran.
-const CUT = intel.indexOf('   WEB APP ENTRY POINTS');
-if (CUT < 0) throw new Error('Intelligence.gs no longer marks its web app entry points — check the block this test removes.');
-const head = intel.lastIndexOf('/* ═', CUT);
-fs.writeFileSync(both, fs.readFileSync(path.join(ROOT, 'apps-script/KPI.gs'), 'utf8') + '\n' + intel.slice(0, head));
+// Pasted whole, as a person does: concatenated after KPI.gs exactly as Apps
+// Script loads a project. If a doGet or doPost ever comes back into
+// Intelligence.gs, the tracker tests below fail the way the branch did.
+fs.writeFileSync(both, fs.readFileSync(path.join(ROOT, 'apps-script/KPI.gs'), 'utf8') + '\n' + intel);
 process.env.GS_PATH = both;
 const { makeEnv } = require('./harness');
 let fails = 0;
@@ -87,21 +85,29 @@ ok('and says the intelligence code is not here', aloneHas.has && aloneHas.has.in
 ok('and an intel action falls through to the token check',
    JSON.parse(alone.doPost({ postData: { contents: '{"action":"intel.book"}' } }).getContent()).authRequired === true);
 
-console.log('\nAnd the block that must be deleted is still marked and self-contained:\n');
-ok('Intelligence.gs marks its web app entry points', CUT > 0);
-ok('it says to delete them when the project already has a router', /DELETE THESE TWO FUNCTIONS/.test(intel));
-// It is not the last thing in the file — thousands of lines follow it — so
-// what matters is that the block is self-contained: between its banner and the
-// next one there are exactly doGet and doPost, and deleting to there is safe.
-const block = intel.slice(CUT, intel.indexOf('/* ═', CUT + 40));
-ok('the block holds exactly doGet and doPost',
-   (block.match(/^function \w+/gm) || []).join(' ') === 'function doGet function doPost',
-   (block.match(/^function \w+/gm) || []).join(' '));
-// It sits four thousand lines from the end, so it has to say where it stops.
-ok('and it says where it ends, because it is not at the end of the file', /NOT at the end of the file/.test(intel));
-ok('and the banner it names is really the next one',
-   /WHAT IS IN OUR POSSESSION/.test(intel.slice(intel.indexOf('/* ═', CUT + 40), intel.indexOf('/* ═', CUT + 40) + 120)));
-ok('and what to add to the host instead', /var hit = intelRoute_\(b\); if \(hit\) return hit;/.test(intel));
+console.log('\nIntelligence.gs can be pasted whole, because it declares no router of its own:\n');
+ok('no doGet or doPost anywhere in it', !/^function do(Get|Post)\(/m.test(intel));
+ok('its entry points are intelDoGet_ and intelDoPost_', /^function intelDoGet_\(/m.test(intel) && /^function intelDoPost_\(/m.test(intel));
+ok('and they answer', typeof env.intelDoGet_ === 'function' && JSON.parse(env.intelDoGet_({ parameter: {} }).getContent()).service === 'Branch Intelligence');
+ok('the file says what a project with no router adds', /function doGet\(e\)\s*\{ return intelDoGet_\(e\); \}/.test(intel));
+const iping = post({ action: 'intel.ping' });
+ok('and intel.ping says which build is in the project, with no token', iping.ok && iping.version === env.INTEL_VERSION && iping.service === 'Branch Intelligence', JSON.stringify(iping));
+ok('and nothing else', Object.keys(iping).sort().join() === 'built,ok,service,version,workbook', JSON.stringify(iping));
+
+console.log('\nIt reads the branch workbook by ID when told to, from inside the tracker\'s project:\n');
+// Every web request is a fresh execution, so the memo starts empty each time;
+// here one environment stands in for several requests, so it is emptied by hand.
+env._intelSs = null;
+env.iSs_();
+ok('with nothing set it reads the workbook it is bound to', !(env.__calls.openById || []).length && post({ action: 'intel.ping' }).workbook === 'bound');
+env.PropertiesService.getScriptProperties = () => ({ getProperty: k => k === 'INTEL_WORKBOOK_ID' ? 'the-branch-workbook' : null, setProperty: () => {} });
+env._intelSs = null;
+env.iSs_(); env.iSs_(); env.iTz_();
+ok('with INTEL_WORKBOOK_ID set it opens that one', (env.__calls.openById || []).join() === 'the-branch-workbook', JSON.stringify(env.__calls.openById));
+ok('once per request, not once per read', (env.__calls.openById || []).length === 1);
+ok('and intel.ping says so', post({ action: 'intel.ping' }).workbook === 'by id');
+env._intelSs = null; env.iSs_();
+ok('and again on the next request', (env.__calls.openById || []).length === 2);
 
 console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
 env.installTriggers();

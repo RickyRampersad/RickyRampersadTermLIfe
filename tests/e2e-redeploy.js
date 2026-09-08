@@ -1,10 +1,12 @@
-// The page Kamla uses, and the four answers it can give.
+// The page Kamla uses, and the five answers it can give.
 //
 // The point of this page is that whoever does the deployment finds out
 // themselves whether it worked, instead of messaging somebody and waiting.
-// So the four outcomes have to be right, and the wrong-turn case — "New
+// So the five outcomes have to be right, and the wrong-turn case — "New
 // deployment" instead of "New version" — has to say so in words rather than
-// leave them staring at a green tick that means nothing.
+// leave them staring at a green tick that means nothing. The fifth is the
+// 7 September one: an Intelligence.gs pasted in with a doPost of its own, which
+// answered every tracker action, "ping" included, with "Unknown action".
 //
 // Run: node tests/e2e-redeploy.js   (needs playwright + a chromium on disk)
 const { chromium } = require('playwright');
@@ -35,6 +37,10 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   await page.route('**/macros/s/**', async r => {
     if (mode === 'dead') return r.abort();
+    // The exact bytes the old Intelligence.gs's doPost sent back for the
+    // tracker's ping, reproduced from the file in tests/test-intelroute.js.
+    if (mode === 'taken') return r.fulfill({status:200,contentType:'application/json',
+                                            body:JSON.stringify({ ok:false, error:'Unknown action: ping' })});
     const body = { ok:true, today:'2026-09-03' };
     if (mode === 'new')  body.version = WANT;
     if (mode === 'other') body.version = '2026-08-30';
@@ -68,6 +74,14 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   t = await run();
   ok('it says the versions do not match', /A different version is live/.test(t), t.split('\n')[0]);
   ok('and shows both numbers', /2026-08-30/.test(t) && t.indexOf(WANT) > -1);
+
+  console.log('\nIntelligence.gs was pasted in with its own doPost, and took the router over:\n');
+  mode='taken';
+  t = await run();
+  ok('it says the intelligence file has taken over', /Intelligence\.gs has taken over the tracker/.test(t), t.split('\n')[0]);
+  ok('names what staff are seeing', /Unknown action: login/.test(t));
+  ok('and the way out is a paste and a New version, not a New deployment',
+     /Paste the current Intelligence\.gs/.test(t) && /New version/.test(t) && !/New deployment/.test(t));
 
   console.log('\nThe workbook cannot be reached:\n');
   mode='dead';
