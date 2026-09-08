@@ -206,7 +206,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-08a';
+var INTEL_VERSION = '2026-09-08b';
 
 /* The workbook the intelligence reads. Bound by default; by ID when the
    Script Property INTEL_WORKBOOK_ID is set, so the code can live in the
