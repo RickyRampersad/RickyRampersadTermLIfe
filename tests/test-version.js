@@ -11,6 +11,7 @@ let fails = 0;
 const ok = (l, c, x = '') => { console.log((c ? '  PASS  ' : '  FAIL  ') + l + (x ? '  ' + x : '')); if (!c) fails++; };
 
 const gs = fs.readFileSync(path.join(ROOT, 'apps-script/KPI.gs'), 'utf8');
+const igs = fs.readFileSync(path.join(ROOT, 'apps-script/Intelligence.gs'), 'utf8');
 const page = fs.readFileSync(path.join(ROOT, 'redeploy/index.html'), 'utf8');
 const setup = fs.readFileSync(path.join(ROOT, 'KPI-SETUP.md'), 'utf8');
 
@@ -23,6 +24,17 @@ ok('the redeploy page names the one it expects', !!want, 'no WANT in redeploy/in
 ok('and they are the same', scriptVersion === want, scriptVersion + ' vs ' + want);
 ok('the version reads as a date with a letter', /^\d{4}-\d{2}-\d{2}[a-z]$/.test(scriptVersion || ''), scriptVersion);
 ok('the setup notes say to bump both in one commit', /Bump it in the same\s+commit/.test(setup));
+
+// The wall's data script is a second file with a second build, and on 8
+// September the tracker was current while it was a night behind — every
+// light green, every wall screen empty. The page has to know both.
+const intelVersion = (igs.match(/var INTEL_VERSION = '([^']+)';/) || [])[1];
+const wantIntel = (page.match(/const WANT_INTEL="([^"]+)";/) || [])[1];
+console.log('\nAnd the wall\'s data script, separately:\n');
+ok('Intelligence.gs names its build', !!intelVersion, 'no INTEL_VERSION');
+ok('the redeploy page names the one it expects', !!wantIntel, 'no WANT_INTEL in redeploy/index.html');
+ok('and they are the same', intelVersion === wantIntel, intelVersion + ' vs ' + wantIntel);
+ok('the page links both files to paste', /apps-script\/KPI\.gs/.test(page) && /apps-script\/Intelligence\.gs/.test(page));
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

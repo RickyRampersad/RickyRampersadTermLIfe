@@ -130,17 +130,27 @@
          with <code>Code.gs</code> at the top of the file list on the left.</p>
       <div class="note warn"><span class="lbl">The file is Code.gs</span>
         In the repository this file is called <code>KPI.gs</code>; in the Apps
-        Script project it is called <b>Code.gs</b>. Same file, two names. The
-        others — <code>Reports.gs</code>, <code>KPI-Waiting.gs</code>,
-        <code>KPI-Write.gs</code> — are separate and must not be touched.</div>
+        Script project it is called <b>Code.gs</b>. Same file, two names.
+        <b>Intelligence.gs</b> is the wall's data script and is pasted the same
+        way, over its own file. The others — <code>Reports.gs</code>,
+        <code>KPI-Waiting.gs</code>, <code>KPI-Write.gs</code> — are separate
+        and must not be touched.</div>
     </div></div>
 
     <div class="step"><div class="num">2</div><div>
-      <h3>Get the new file</h3>
-      <p>Open <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/KPI.gs">the new code</a>
-         in another tab. Click anywhere in the text, then press
-         <b>Ctrl&nbsp;+&nbsp;A</b> and <b>Ctrl&nbsp;+&nbsp;C</b>
-         (on a Mac, <b>⌘&nbsp;A</b> then <b>⌘&nbsp;C</b>).</p>
+      <h3>Get the new files — there are two</h3>
+      <p>Open <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/KPI.gs">the tracker's code</a>
+         (goes into <b>Code.gs</b>) and
+         <a href="https://raw.githubusercontent.com/RickyRampersad/RickyRampersadTermLIfe/main/apps-script/Intelligence.gs">the wall's data script</a>
+         (goes into <b>Intelligence.gs</b>), each in another tab. In each, click
+         anywhere in the text, then press <b>Ctrl&nbsp;+&nbsp;A</b> and
+         <b>Ctrl&nbsp;+&nbsp;C</b> (on a Mac, <b>⌘&nbsp;A</b> then <b>⌘&nbsp;C</b>).</p>
+      <div class="note warn"><span class="lbl">Merging on GitHub does not do this</span>
+        The website updates itself when a change is merged. The script does
+        not — it lives in Google's editor, and only a paste and a new version
+        change it. On 8 September the wall's look updated on merge and its
+        data stayed empty for the night, because the data script had not been
+        pasted since the fix went in.</div>
       <p class="seen">You should see: the whole page highlighted before you copy.</p>
     </div></div>
 
@@ -156,9 +166,12 @@
         of over it, leaving one file with both scripts in it — 5,729 lines where
         there should have been about 3,100. Everything looked saved and nothing
         changed. Emptying the file first makes that impossible.</div>
-      <p class="seen">You should see: the last line number is about
-         <b>3,401</b>. If it is five or six thousand, the old code is still
-         in there — select all, delete, paste again.</p>
+      <p>Then the same for the second file: click <b>Intelligence.gs</b> in the
+         list, select all, delete, paste the wall's data script, save.</p>
+      <p class="seen">You should see: the last line number about
+         <b>4,873</b> in Code.gs and about <b>7,864</b> in Intelligence.gs.
+         If either is roughly double that, the old code is still in there —
+         select all, delete, paste again.</p>
     </div></div>
 
     <div class="step"><div class="num">4</div><div>
@@ -219,6 +232,10 @@
       Almost always step 4 — <b>New deployment</b> was used instead of
       <b>Manage deployments → pencil → New version</b>. Go back and edit the
       existing deployment.</div>
+    <div class="note warn"><span class="lbl">The check says the tracker is current but the wall's script is not</span>
+      Code.gs was pasted and versioned; Intelligence.gs was not — or was pasted
+      from an older copy. Step 2 and 3 again for the second file only, then
+      step 4. Every wall screen stays empty until then.</div>
     <div class="note stop"><span class="lbl">Red marks in the editor</span>
       The paste went in on top of the old code rather than over it. Select all
       (<b>Ctrl&nbsp;+&nbsp;A</b>) in the editor, delete, then paste again.</div>
@@ -241,6 +258,10 @@ const EXEC="https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66Q
 // Bumped in the same commit as apps-script/KPI.gs. The check is simply:
 // does the workbook say it is running this, or something older?
 const WANT="2026-09-08a";
+// The wall's data script has its own build, answered by intel.ping. The tracker
+// can be current while this one is a night behind — which is exactly how the
+// wall stayed empty on 8 September with every other light green.
+const WANT_INTEL="2026-09-08b";
 
 const out=document.getElementById("out"), go=document.getElementById("go");
 
@@ -272,6 +293,31 @@ async function ping(){
   const j=await r.json();
   return {ms:Math.round(performance.now()-t0), version:j&&j.version||null, ok:!!(j&&j.ok), has:j&&j.has||null,
           error:j&&j.error||""};
+}
+
+async function intelPing(){
+  try{
+    const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
+                              body:JSON.stringify({action:"intel.ping"})});
+    const j=await r.json();
+    return {version:j&&j.version||null, workbook:j&&j.workbook||"", ok:!!(j&&j.ok), error:j&&j.error||""};
+  }catch(e){ return {version:null, workbook:"", ok:false, error:String(e)}; }
+}
+/* What the wall's data script says about itself, in words: current, behind,
+   or not answering. Only asked once the tracker is known to be current. */
+function wallVerdict(w){
+  if(!w.ok||!w.version){
+    return {cur:false, line:'<div style="margin-top:5px">✗ <b>The wall\'s data script did not answer</b> — '+
+      'it is in the project but an older build than this page knows, or it was not pasted at all.</div>'};
+  }
+  if(w.version===WANT_INTEL){
+    const wb=w.workbook==="bound"?" — but it is reading the workbook it is bound to, not the branch workbook: "+
+      "INTEL_WORKBOOK_ID has been set to <b>bound</b> by hand, and the screens will be empty until that is cleared":
+      " and reading the branch workbook";
+    return {cur:w.workbook!=="bound", line:'<div style="margin-top:5px">'+(w.workbook==="bound"?"✗ ":"✓ ")+
+      "<b>The wall\'s data script is current</b> ("+w.version+")"+wb+".</div>"};
+  }
+  return {cur:false, stale:w.version, line:""};
 }
 
 function show(cls,title,body,small){
@@ -321,10 +367,24 @@ go.onclick=async()=>{
         "deployment that is already there.",
         "Timed at "+times);
     } else if(v===WANT){
-      show("ok","Done — the new script is live",
-        "The workbook is answering as version <b>"+v+"</b>, which is the one "+
-        "you just deployed. "+speed+parts(runs),
-        "Timed at "+times+" (average "+(avg/1000).toFixed(1)+"s)");
+      const h=(runs.map(r=>r.has).find(Boolean))||{};
+      const w=h.intel?wallVerdict(await intelPing()):null;
+      if(w&&w.stale){
+        show("hm","The tracker is current. The wall\'s data script is not.",
+          "Code.gs is answering as version <b>"+v+"</b> — good. But the workbook answers "+
+          "Intelligence.gs <b>"+w.stale+"</b>, and this page expected <b>"+WANT_INTEL+"</b>. "+
+          "Every wall screen stays empty until it is current: the fix that fills them is in the "+
+          "newer file, and merging it on GitHub did not put it in the editor.<br><br>"+
+          "Do steps 2 and 3 for the <b>second file only</b> — paste the wall\'s data script "+
+          "over <b>Intelligence.gs</b> — then step 4, <b>Manage deployments → pencil → New version</b>. "+
+          "The tracker keeps working meanwhile."+parts(runs),
+          "Timed at "+times);
+      } else {
+        show(w&&!w.cur?"hm":"ok", w&&!w.cur?"The tracker is live; the wall needs one more thing":"Done — the new script is live",
+          "The workbook is answering as version <b>"+v+"</b>, which is the one "+
+          "you just deployed. "+speed+parts(runs)+(w?'<div style="font-size:14px;line-height:1.5">'+w.line+"</div>":""),
+          "Timed at "+times+" (average "+(avg/1000).toFixed(1)+"s)");
+      }
     } else {
       show("hm","A different version is live",
         "The workbook says <b>"+v+"</b>, and this page expected <b>"+WANT+"</b>. "+
