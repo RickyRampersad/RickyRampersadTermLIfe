@@ -161,6 +161,27 @@ into the tracker, they answered "sfQuery_ is not defined".) With neither
 helper present they say "No Salesforce helper in this project" rather than
 drawing an empty screen.
 
+### Our own birthdays, big on the wall
+
+The birthdays screen is a day's client calls; the branch asked for the person
+in the room to be bigger than any of them. When one of our own has a birthday
+the screen opens on a gold band — *Happy birthday, Pat!* — and the player
+carries the wish on every slide for the day.
+
+Agents come from their Salesforce contact's **Birthdate**, asked for the active
+roster by agent code in one small query during the nightly build. People with
+no agent code — the support desk, the manager — go in the Script Property
+**`INTEL_TEAM_BIRTHDAYS`** as `MM-DD Name` entries, comma-separated:
+
+```
+INTEL_TEAM_BIRTHDAYS = 03-14 Kim Support, 11-02 Pat Example
+```
+
+Names stay in the project's properties, never in this repository. No age is
+shipped: the wall hangs in a room clients walk through. The band is built with
+the birthdays feed at three in the morning, so a name added during the day
+shows after `intelRebuildBook` (or `intelRebuildWall`) is run.
+
 ### Which workbook it reads
 
 The branch workbook — `INTEL.WORKBOOK` at the top of the file, the ID in this
@@ -554,17 +575,24 @@ or `snapshot`, so nobody quotes a stale figure believing it is current.
 
 ### Taking an agent out of the branch view
 
-Set `INTEL_EXCLUDE_AGENTS` to a comma-separated list of names **as the dues book
-writes them** — matching is on the same normalised key used everywhere, so
-capitals and punctuation do not matter.
+From the editor, so nobody has to find the Script Properties page:
 
 ```
-INTEL_EXCLUDE_AGENTS = Aleema Mohammed-Ali, Javid Ali
+intelExclude("Given Surname, Given Surname")   // adds them, rebuilds the five feeds
+intelExcluded()                                 // who is off now
+intelExcludeClear()                             // empties the list, rebuilds
 ```
 
-**Excluding an agent does not settle their premiums.** On the current book those
-two carry **420 overdue policies and TT$360,782** between them, across 268
-clients. Taking them out removes that from every screen and every count — the
+The names go into the Script Property `INTEL_EXCLUDE_AGENTS` and nowhere
+else — this repository is public. Matching is on the same normalised key used
+everywhere, surname plus every given token, so `Anne Mohammed-Ali` also
+catches the policy book's `A00001 - Anne Mohammed-Ali`, and capitals and
+punctuation do not matter. It takes effect the moment the rebuild finishes,
+not at the next nightly build.
+
+**Excluding an agent does not settle their premiums.** On the current book the
+two taken out on 8 September carry **420 overdue policies and TT$360,782**
+between them, across 268 clients. Taking them out removes that from every screen and every count — the
 money is still owed, and now nobody is looking at it. So an exclusion is a
 decision to hand that book to somebody, not a way to make it disappear.
 

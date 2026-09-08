@@ -130,5 +130,27 @@ ok('town is fetched for today\'s birthdays alone, from Contact', /SELECT Id, Mai
 ok('in chunks, so a long list does not overflow one query', /ti \+= 200/.test(intel));
 ok('and a town that never arrives does not fail the screen', /leave the towns blank rather than fail/.test(intel));
 
+
+console.log('\nOur own birthdays — the person in the room, big on the wall:\n');
+const asked = [];
+env.iSfQuery_ = soql => { asked.push(soql); return [
+  { Name: 'Pat Example', Agent__c: 'A00001', Birthdate: '1980-09-08' },     // today
+  { Name: 'Sam Sample',  Agent__c: 'A00002', Birthdate: '1975-03-08' },     // another month, same day
+  { Name: 'Lee Placeholder', Agent__c: 'A00003', Birthdate: '1990-09-08' } // today, but not on the roster map: still named
+]; };
+store.INTEL_TEAM_BIRTHDAYS = '09-08 Kim Support, 12-25 Someone Else, 9/8 Pat Example';
+const roster = { A00001: 'Pat Example', A00002: 'Sam Sample' }, units = { A00001: 'Unit One', A00002: 'Unit Two' };
+const team = env.iBookTeam_(new Date(2026, 8, 8), roster, units);
+ok('the roster is asked in one query, by agent code', asked.length === 1 && /Agent__c IN \('A00001','A00002'\)/.test(asked[0]) && /Birthdate != null/.test(asked[0]), asked[0]);
+ok('the agent whose birthday is today is named, with their unit', team.some(t => t.name === 'Pat Example' && t.unit === 'Unit One' && t.agent));
+ok('a birthday on the same day of another month is not', !team.some(t => t.name === 'Sam Sample'));
+ok('a support name from the property counts too, and is not an agent', team.some(t => t.name === 'Kim Support' && !t.agent));
+ok('the property\'s other date does not', !team.some(t => t.name === 'Someone Else'));
+ok('and a name in both places is one person, not two', team.filter(t => /Pat Example/.test(t.name)).length === 1, JSON.stringify(team));
+ok('no age travels to the wall', team.every(t => !('turning' in t) && !('age' in t)));
+ok('the book feed ships it', /out\.team = iBookTeam_\(today, personOfCode, unitOfCode\);/.test(intel));
+const book = require('fs').readFileSync(require('path').join(__dirname, '..', 'intelligence/wall/book.html'), 'utf8');
+ok('the birthdays screen has the gold band and tells the player', /id="cake"/.test(book) && /rrb:"celebrate"/.test(book) && /Happy birthday, /.test(book));
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

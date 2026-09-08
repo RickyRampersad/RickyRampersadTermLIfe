@@ -153,6 +153,17 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
   ok('turning away asks the story to hush', await story.evaluate(() => window.__hush) === 1 && !/narrating/.test(await hudText()));
 
+  console.log('\nA birthday on the branch rides every slide:\n');
+  await story.evaluate(() => parent.postMessage({ rrb:'celebrate', names:['Pat Example', 'Kim Support'] }, '*'));
+  await s.page.waitForTimeout(300);
+  const cakeText = () => s.page.evaluate(() => { const c = document.getElementById('cake'); return c.hidden ? '' : c.innerText; });
+  ok('the wish appears, first names only', /Pat and Kim/.test(await cakeText()) && !/Example/.test(await cakeText()), await cakeText());
+  await s.page.keyboard.press('3'); await s.page.waitForTimeout(300);
+  ok('and stays up on another slide', /Pat and Kim/.test(await cakeText()));
+  await story.evaluate(() => parent.postMessage({ rrb:'celebrate', names:[] }, '*'));
+  await s.page.waitForTimeout(200);
+  ok('and goes when there is nobody', (await cakeText()) === '');
+
   console.log('\nThe keys reach the wall from inside a story:\n');
   await s.page.keyboard.press('2'); await s.page.waitForTimeout(300);
   const inside = s.page.frames().find(f => f.url().endsWith('/possession.html'));

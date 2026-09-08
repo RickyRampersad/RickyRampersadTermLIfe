@@ -6551,6 +6551,46 @@ function iBuildBook_() {
   /* The tip needs the bands, and the bands are built inside the object above —
      so it is filled in once, here, rather than computing the bands twice. */
   out.today.tip = iBookTip_(todayList, out.today.bands, out.today.byAgent, quietYears);
+  out.team = iBookTeam_(today, personOfCode, unitOfCode);
+  return out;
+}
+
+/* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
+   Everything else on the screen is a client to call; this is the person in the
+   room, and the branch asked for it to be big. Agents carry a Birthdate on
+   their Salesforce contact, so the active roster — the access list, by agent
+   code — is asked, in one small query. The people without a code, the support
+   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
+   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
+   shipped: the wall hangs in a room clients walk through. */
+function iBookTeam_(today, personOfCode, unitOfCode) {
+  var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
+  function add(name, unit, agent) {
+    var k = iNameKey_(name);
+    if (!k || seen[k]) return;
+    seen[k] = true;
+    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+  }
+  var codes = Object.keys(personOfCode || {});
+  for (var i = 0; i < codes.length; i += 200) {
+    var inList = codes.slice(i, i + 200)
+      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
+    if (!inList) continue;
+    try {
+      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
+                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
+        .forEach(function (c) {
+          var d = iDate_(c.Birthdate);
+          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
+          var code = iCode_(c.Agent__c);
+          add(personOfCode[code] || c.Name, unitOfCode[code], true);
+        });
+    } catch (e) { /* the day's calls stand without it */ }
+  }
+  String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
+    var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
+    if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
+  });
   return out;
 }
 
