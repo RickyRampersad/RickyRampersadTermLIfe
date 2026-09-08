@@ -79,10 +79,16 @@ var MEET = {
      credential, and it is useless on its own, because the email must
      already be on the People tab.
 
-     Set it ONLY in your Apps Script copy, never in this repository:
-     this file sits in a public repo, so any value committed here is
-     public. Change it again once everyone has enrolled. */
-  JOIN_CODE: 'CHANGE-ME-in-Apps-Script-only',
+     The real value lives in Script Properties, not here, for two
+     reasons. This file sits in a public repository, so anything
+     committed here is public. And the check runs inside doPost, which
+     serves a PINNED SNAPSHOT of the code — editing this line and saving
+     changes nothing until a new version is deployed, which is a trap
+     that costs an afternoon. A property is read live.
+
+     Set it from the sheet: Branch Meetings → Set the branch code. This
+     line is only the fallback, used until a property exists. */
+  JOIN_CODE: 'CHANGE-ME-from-the-Branch-Meetings-menu',
 
   /* Each person picks their own PIN to sign in. */
   PIN_MIN: 4,
@@ -389,6 +395,14 @@ function low_(v) { return str_(v).toLowerCase(); }
 function num_(v) { var n = Number(v); return isNaN(n) ? 0 : n; }
 function yes_(v) { return str_(v).toUpperCase() !== 'N' && str_(v) !== 'false'; }
 
+/** The branch code people type once when setting a PIN. Script Properties
+ *  first, so changing it takes effect immediately; the constant is only the
+ *  fallback for a script that has never had one set. */
+function joinCode_() {
+  var v = PropertiesService.getScriptProperties().getProperty('JOIN_CODE');
+  return str_(v) || String(MEET.JOIN_CODE);
+}
+
 function tz_() { return Session.getScriptTimeZone() || 'America/Port_of_Spain'; }
 function iso_(d) { return d instanceof Date ? d.toISOString() : ''; }
 
@@ -585,7 +599,7 @@ function apiEnrol_(body) {
   var join = str_(body.joinCode).toUpperCase();
 
   if (email.indexOf('@') < 1) return { ok: false, error: 'Enter your work email address.' };
-  if (join !== String(MEET.JOIN_CODE).toUpperCase()) {
+  if (join !== joinCode_().toUpperCase()) {
     return { ok: false, error: 'That branch code is not right. Ask the branch manager for it.' };
   }
   var bad = checkPin_(pin);
@@ -3355,6 +3369,7 @@ function onOpen() {
     .addItem('🧪  Create a sample meeting', 'seedSampleMeetingFromMenu')
     .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
     .addSeparator()
+    .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
 }
@@ -3389,6 +3404,24 @@ function promptIndexArchive() {
         'It works in batches so it never runs past the execution limit.'
       : 'Nothing left to index.') +
     (out.failed.length ? '\n\nCould not read:\n' + out.failed.join('\n') : ''));
+}
+
+/** Set the branch code without redeploying. */
+function promptBranchCode() {
+  var ui = SpreadsheetApp.getUi();
+  var now = joinCode_();
+  var res = ui.prompt('The branch code',
+    'People type this once, when they set their PIN.\n\n' +
+    'It is now: ' + now + '\n\n' +
+    'Type a new one and press OK, or Cancel to leave it alone.\n' +
+    'It takes effect immediately — no redeploy.', ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var v = res.getResponseText().trim();
+  if (!v) return;
+  PropertiesService.getScriptProperties().setProperty('JOIN_CODE', v);
+  log_('branch-code', 'menu', '', 'JOIN_CODE', 'Changed');
+  ui.alert('The branch code is now:\n\n' + v + '\n\n' +
+    'Anyone setting up a PIN types this. Change it again once everyone has enrolled.');
 }
 
 function showAppUrl() {

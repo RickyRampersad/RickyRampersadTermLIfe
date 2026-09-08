@@ -29,6 +29,24 @@ because the branch treats it as a factual observation of the record.
 
 ---
 
+## The branch code
+
+People type it once, when they set a PIN. Set it from the sheet:
+**Branch Meetings → 🔑 Set the branch code.** The same menu shows the current
+one, so nobody is ever locked out of their own system.
+
+It is kept in Script Properties rather than in the file, for two reasons.
+This repository is public, so a value committed here would be public. And the
+check runs inside `doPost`, which serves a **pinned snapshot** of the code —
+editing the constant and saving changes nothing until a new version is
+deployed. A property is read live, so the menu takes effect immediately.
+
+> **Redeploying, when you do need it.** Anything that changes `doGet` or
+> `doPost` — the API the browser talks to — needs
+> **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**. That
+> keeps the same `/exec` URL. *New deployment* issues a different URL and
+> disconnects the page. Menu items and sheet-side work take effect on save.
+
 ## Enforce HTTPS — do this once, for the whole site
 
 **Repository → Settings → Pages → tick "Enforce HTTPS".**
@@ -114,11 +132,11 @@ Points — not for distribution"* section, which staff should not see either.
 1. **Make a Google Sheet** called `Branch Meetings`, then
    **Extensions → Apps Script**.
 2. **Paste in** `apps-script/Meetings.gs` from this repository and save.
-3. **Set three values** at the top of the file:
+3. **Set two values** at the top of the file:
    - `ADMIN_EMAIL` — your work email. You are seeded as manager.
-   - `JOIN_CODE` — what people type once, the first time they set a PIN.
-     Change it after everyone has enrolled.
    - `LATE_AFTER_MINUTES` — how late is late. Default 10.
+
+   The branch code is **not** set here — see below.
 4. **Run `setupMeetings()`** once and grant the permissions it asks for. It
    builds every tab, creates the private Drive folder and seeds the topics.
    It takes about forty seconds and writes its summary to the execution log.
