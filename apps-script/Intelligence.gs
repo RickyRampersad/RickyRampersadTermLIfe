@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-08c';
+var INTEL_VERSION = '2026-09-08d';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -2173,14 +2173,64 @@ function intelRebuildDelivery()   { return iWallRebuild_('delivery',   function 
 function intelRebuildLicence()    { return iWallRebuild_('licence',    function () { return iBuildLicence_(); }, iLicenceBad_); }
 function intelRebuildPossession() { return iWallRebuild_('possession', function () { return iBuildPossession_(); }); }
 function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
-/* All five, for the editor, the slowest last: each is stored as it lands, so
-   an execution the six-minute ceiling ends still leaves the others in place. */
-function intelRebuildWall() {
-  var lines = [];
-  [intelRebuildWall45, intelRebuildDelivery, intelRebuildLicence, intelRebuildPossession, intelRebuildBook]
-    .forEach(function (f) { try { lines.push(f()); } catch (e) { lines.push(String(e && e.message || e)); } });
-  return lines.join('\n');
+/* All five from the editor — and it must not simply try all five, because they
+   do not fit. Run on the morning of 8 September it reached the six-minute
+   ceiling and Apps Script killed it: "Exceeded maximum execution time", with
+   no report of what it had managed. The 45-day line alone took 155 seconds
+   live, and four of the others together take another two minutes.
+
+   So: fastest first, a copy already built today is left alone, and the run
+   stops itself with a minute to spare and says what is left. Call it again
+   and it carries on from there — two runs build all five from cold, and a
+   third is a no-op. Nothing is lost to a stopped run either way, because each
+   feed is stored the moment it lands. */
+var IWALL_BUDGET_MS = 4.5 * 60 * 1000;      // the ceiling is 6 minutes; stop short of it
+
+/* Fastest first, measured against the live branch on 8 September: possession
+   16s, licence 25s, delivery 28s, birthdays about a minute and a half since
+   the contact join came out, the 45-day line 155s. Ordered this way a single
+   run gets four of the five. */
+var IWALL_FEEDS = [
+  { key: 'possession', run: function () { return intelRebuildPossession(); } },
+  { key: 'licence',    run: function () { return intelRebuildLicence(); } },
+  { key: 'delivery',   run: function () { return intelRebuildDelivery(); } },
+  { key: 'book',       run: function () { return intelRebuildBook(); } },
+  { key: 'wall45',     run: function () { return intelRebuildWall45(); } }
+];
+
+/* Was this feed's stored copy built today? A copy from last night is fresh
+   enough for the wall and does not need rebuilding by hand. */
+function iWallFresh_(key) {
+  var had = iWallLoad_(key);
+  return !!(had && String(had.builtAt || '').slice(0, 10) === iIso_(iToday_()));
 }
+
+function iWallRunAll_(force) {
+  var started = new Date(), built = [], fresh = [], left = [], failed = [];
+  IWALL_FEEDS.forEach(function (f) {
+    if (!force && iWallFresh_(f.key)) { fresh.push(f.key); return; }
+    if (new Date() - started > IWALL_BUDGET_MS) { left.push(f.key); return; }
+    try { built.push(f.run()); }
+    catch (e) { failed.push(f.key + ' — ' + String(e && e.message || e)); }
+  });
+  var out = [];
+  if (built.length)  out.push('Built now:\n  ' + built.join('\n  '));
+  if (fresh.length)  out.push('Already built today, left alone: ' + fresh.join(', '));
+  if (failed.length) out.push('Would not build:\n  ' + failed.join('\n  '));
+  if (left.length) {
+    out.push('Not reached before the time limit: ' + left.join(', ') +
+             '\n  Run intelRebuildWall() again — it carries on from here.');
+  } else if (!failed.length) {
+    out.push('Every wall feed is built. The screens will answer in about a second.');
+  }
+  out.push('(' + Math.round((new Date() - started) / 1000) + 's of the six-minute limit.)');
+  return out.join('\n\n');
+}
+
+function intelRebuildWall()      { return iWallRunAll_(false); }
+/* Rebuild every feed even if today's copy exists — for when the answer has
+   changed rather than the day: a new exclusion, a corrected tab. */
+function intelRebuildWallForce() { return iWallRunAll_(true); }
 
 function iLoadCache_() {
   var sh = iSs_().getSheetByName(INTEL.CACHE_TAB);
@@ -3131,11 +3181,15 @@ function intelExclude(names) {
     if (n && !iExcludes_(have, n)) { list.push(n); have[iNameKey_(n)] = true; }
   });
   iSetProp_('INTEL_EXCLUDE_AGENTS', list.join(', '));
-  return intelExcluded() + '\n\n' + intelRebuildWall();
+  /* Forced, because the day's copies are fresh but now wrong — and time-boxed,
+     because five full rebuilds do not fit in one execution. Whatever is not
+     reached keeps yesterday's copy until the next run or tonight's triggers,
+     and the report says which. */
+  return intelExcluded() + '\n\n' + iWallRunAll_(true);
 }
 function intelExcludeClear() {
   iSetProp_('INTEL_EXCLUDE_AGENTS', '');
-  return 'Exclusion list cleared.\n\n' + intelRebuildWall();
+  return 'Exclusion list cleared.\n\n' + iWallRunAll_(true);
 }
 function intelExcluded() {
   var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')

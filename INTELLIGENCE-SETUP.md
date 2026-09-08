@@ -278,10 +278,18 @@ per feed. A request reads its row in about a second and answers with
 date.
 
 - **With no stored copy yet**, a request builds the feed live and stores it,
-  so the first morning works. After pasting, run **`intelRebuildWall`** once
-  from the editor to fill all five without waiting for the night; it stores
-  each as it lands, so a run the six-minute ceiling ends still leaves the
-  fast ones in place.
+  so the first morning works. After pasting, run **`intelRebuildWall`** from
+  the editor to fill all five without waiting for the night.
+
+  **It will not do all five in one go, and it does not try.** Run as a single
+  execution on the morning of 8 September, the five together reached the
+  six-minute ceiling and Apps Script killed the run with no report of what it
+  had managed. So it now goes fastest first (possession 16s, licence 25s,
+  delivery 28s, birthdays about 90s, the 45-day line 155s), leaves alone any
+  copy already built today, and stops itself at four and a half minutes saying
+  what is left. **Run it again and it carries on** — two runs build all five
+  from cold, a third is a no-op. `intelRebuildWallForce` rebuilds even today's
+  copies, for when the answer changed rather than the day.
 - **A bad night never pins a bad screen.** A build that errors, or comes back
   "not configured", is refused by the rebuild (the trigger log keeps the
   reason) and the screen keeps last night's good copy.

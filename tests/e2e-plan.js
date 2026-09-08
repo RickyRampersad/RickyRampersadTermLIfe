@@ -155,6 +155,31 @@ const ok = (what, cond, extra) => {
   ok('three for one agent is called out as one conversation',
      /3 of them for A\. Advisor/.test(plan),
      (plan.match(/\d+ of them for [^\n]{0,20}/) || ['not found'])[0]);
+  console.log('\nThe pile is sized and shaped before it is listed — the note from the floor on 8 September:\n');
+  // "It clicks fifteen tasks that are opened. It should contain the days
+  // outstanding … quantifying the fifteen in bigger … zoom into the ones that
+  // are aging very long and why … it's looking jumbled."
+  ok('the numbers come first: how many, how many late, how many quiet, the oldest',
+     /4\s*\n?in the list/.test(plan) && /1\s*\n?untouched a week or more/.test(plan) && /40 days\s*\n?the oldest/.test(plan),
+     (plan.match(/in the list[\s\S]{0,80}/) || ['not found'])[0].replace(/\n/g, ' / '));
+  ok('then the shape of the ages, in four bands',
+     /≤ 7 days\s*1/.test(plan) && /8–30\s*2/.test(plan) && /31–60\s*1/.test(plan) && /61\+\s*0/.test(plan),
+     (plan.match(/≤ 7 days[\s\S]{0,60}/) || ['not found'])[0].replace(/\n/g, ' / '));
+  ok('then the longest open, pulled up and asked why', /The longest open/i.test(plan) && /why are these still here/i.test(plan));
+  ok('every task says how many days it has been open, not only when it is due',
+     /40 days open · due 7 Sep/i.test(plan) && /5 days open · due 9 Sep/i.test(plan),
+     (plan.match(/\d+ days open[^\n]{0,40}/g) || ['not found']).join(' | '));
+  ok('and an old one with nothing written on it says so', /40 days open[^\n]*no reason on it yet/.test(plan));
+  ok('the day band names the oldest thing in what is planned', /17 open · 1 already late · oldest 40 days/.test(plan));
+  const sizes = await page.evaluate(() => {
+    const px = el => parseFloat(getComputedStyle(el).fontSize);
+    const tile = [...document.querySelectorAll('button')].find(b => /Renewals \/ Premium Dues/.test(b.textContent) && /✓/.test(b.textContent));
+    const chip = [...document.querySelectorAll('button')].find(b => /Licensing \/ Staffing/.test(b.textContent));
+    return { tile: px(tile.firstElementChild), chip: px(chip) };
+  });
+  ok('what the block is for is bigger than what it is not', sizes.tile > sizes.chip, JSON.stringify(sizes));
+  ok('and the block says what it is for, in words', /This block is for/i.test(plan) && /Add another/i.test(plan));
+
   console.log('\nA thin block says so before two hours go into it:\n');
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first();
   ok('licensing shows one of three needing them', /1 need you of 3/.test(await lic.textContent()));
