@@ -439,11 +439,30 @@ function boot(){
   $("#src").textContent="Salesforce client portfolio · contracts received "+POSS.fromYear
     + " onward · built "+POSS.generatedAt+" · active agents only · aggregates, no client detail";
 }
+/* ONE MISSED READ USED TO COST HALF AN HOUR. Seven screens post to the same
+   Apps Script within seconds of each other when the wall boots and again on
+   every refresh, and Google drops one of those now and then — a reset, a
+   queue, a cold container. The page fetched once, fell into its catch, and sat
+   on "no feed" until the next thirty-minute tick, which is exactly what the
+   branch kept seeing on "some walls" while the others were fine.
+
+   Three tries, four seconds apart, before anything is called broken. A feed
+   that answers on the second attempt is a feed that answers. */
+function feed(url, body, tries){
+  tries = tries === undefined ? 3 : tries;
+  return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+                    body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(function(err){
+      if(tries<=1) throw err;
+      return new Promise(function(go){ setTimeout(go,4000); })
+        .then(function(){ return feed(url,body,tries-1); });
+    });
+}
+
 function load(){
   if(!POSS_URL){ boot(); return; }
-  fetch(POSS_URL,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
-                  body:JSON.stringify({action:"intel.possession"})})
-    .then(function(r){return r.json()})
+  feed(POSS_URL,{action:"intel.possession"})
     .then(function(j){
       if(!j||!j.ok||!j.data) throw new Error("bad feed");
       POSS=j.data; FILTER=null; boot();
