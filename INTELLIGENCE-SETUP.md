@@ -334,7 +334,12 @@ date.
   builder asked for.
 
 `intelInstallTriggers` now installs eleven; with the tracker's five that is
-sixteen, under the project's limit of twenty. `tests/test-wallstore.js`
+sixteen, under the project's limit of twenty. **Each wall feed rebuilds in its
+own hour** — the 45-day line at 3, possession 4, licence 5, delivery 6,
+birthdays 7. They all fired at three to begin with and competed: on 9 September
+four rebuilt between 03:23 and 03:55 and the 45-day line, the one that takes
+155 seconds, was still serving Monday's copy. The slowest goes first and every
+one is finished long before the branch opens. `tests/test-wallstore.js`
 drives all of it through the tracker's real `doPost`.
 
 ---

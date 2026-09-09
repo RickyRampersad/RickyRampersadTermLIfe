@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-09a';
+var INTEL_VERSION = '2026-09-09b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -3971,12 +3971,16 @@ function intelInstallTriggers() {
      end of the month — a thank-you a fortnight late reads as an audit, not a
      courtesy, and the two-day promise has already been broken by then. */
   ScriptApp.newTrigger('intelSurveyFollowUp').timeBased().atHour(9).everyDays(1).create();
-  /* The wall's five feeds, one execution each so every one gets the full
-     six minutes, an hour after the snapshot. Eleven here and the tracker's
-     five is sixteen, under the project limit of twenty. */
-  ['intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
-   'intelRebuildPossession', 'intelRebuildBook'].forEach(function (fn) {
-    ScriptApp.newTrigger(fn).timeBased().atHour(3).everyDays(1).create();
+  /* The wall's five feeds, one execution each so every one gets the full six
+     minutes — AND AN HOUR EACH TO ITSELF. All five used to fire at three and
+     compete: on 9 September four of them rebuilt between 03:23 and 03:55 and
+     the 45-day line, the one that takes 155 seconds, was still serving
+     Monday's copy. The slowest goes first and every one is finished long
+     before the branch opens. Eleven here and the tracker's five is sixteen,
+     under the project limit of twenty. */
+  [['intelRebuildWall45', 3], ['intelRebuildPossession', 4], ['intelRebuildLicence', 5],
+   ['intelRebuildDelivery', 6], ['intelRebuildBook', 7]].forEach(function (t) {
+    ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
   });
   return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
          'or every one of these fires an hour out.';

@@ -146,6 +146,13 @@ ok('sixteen triggers in all — the tracker\'s five, the intelligence\'s six, an
 ok('which leaves room, where seventeen plus six did not', all.length <= 20);
 ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
 ok('and each wall feed has its own night-time build', ['intelRebuildWall45','intelRebuildDelivery','intelRebuildLicence','intelRebuildPossession','intelRebuildBook'].every(fn => all.some(t => t.getHandlerFunction() === fn)));
+// All five used to fire at three and compete; the 155-second one lost and
+// served a two-day-old copy while the other four rebuilt around it.
+const wallHours = all.filter(t => /^intelRebuild(Wall45|Possession|Licence|Delivery|Book)$/.test(t.getHandlerFunction()))
+  .map(t => (t.chain.join().match(/atHour\((\d+)\)/) || [])[1]);
+ok('and no two of them share an hour', new Set(wallHours).size === 5, wallHours.join(','));
+ok('the slowest goes first, and all five are done before the branch opens',
+   wallHours.every(h => Number(h) >= 2 && Number(h) <= 7), wallHours.join(','));
 
 fs.unlinkSync(both);
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
