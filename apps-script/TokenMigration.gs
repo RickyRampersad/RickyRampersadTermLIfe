@@ -67,34 +67,84 @@ function tmProp_(name) {
   return null;
 }
 
+/* Property-name aliases. Different scripts in this estate were written with
+   different conventions — SF_KEY vs SF_CLIENT_ID, SF_PASS vs SF_PASSWORD —
+   so accept any of them rather than demanding one house style. First match
+   with a value wins. */
+var TM_ALIAS = {
+  clientId:     ['SF_CLIENT_ID', 'SF_KEY', 'SF_CONSUMER_KEY'],
+  clientSecret: ['SF_CLIENT_SECRET', 'SF_SECRET', 'SF_CONSUMER_SECRET'],
+  username:     ['SF_USERNAME', 'SF_USER'],
+  password:     ['SF_PASSWORD', 'SF_PASS'],
+  secToken:     ['SF_SECURITY_TOKEN', 'SF_TOKEN'],
+  refresh:      ['SF_REFRESH_TOKEN'],
+  loginUrl:     ['SF_LOGIN_URL', 'SF_INSTANCE_URL'],
+};
+function tmAny_(kind) {
+  var names = TM_ALIAS[kind] || [];
+  for (var i = 0; i < names.length; i++) {
+    var v = tmProp_(names[i]);
+    if (v) return v;
+  }
+  return null;
+}
+
+/**
+ * Get an access token. Prefers the refresh-token grant, because that is what
+ * this project already has working and it survives password changes and MFA.
+ * Falls back to the username-password grant (password + security token
+ * concatenated) when no refresh token is stored.
+ *
+ * NB the cache is kept under TM_ACCESS, not SF_TOKEN — SF_TOKEN here holds
+ * the Salesforce SECURITY TOKEN, and overwriting it would break the other
+ * scripts in this project.
+ */
 function tmToken_() {
   var p = tmProps_();
-  var cached = p.getProperty('SF_TOKEN'), when = Number(p.getProperty('SF_TOKEN_AT') || 0);
+  var cached = p.getProperty('TM_ACCESS'), when = Number(p.getProperty('TM_ACCESS_AT') || 0);
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
-  var key = tmProp_('SF_KEY'), secret = tmProp_('SF_SECRET');
-  var user = tmProp_('SF_USER'), pass = tmProp_('SF_PASS');
-  if (!key || !secret || !user || !pass)
-    throw new Error('Salesforce is not set up in this project.\n\nScript Properties need SF_KEY, SF_SECRET, ' +
-      'SF_USER and SF_PASS (password + security token, no space between them).\n\n' +
-      'Project Settings → Script Properties → Add script property. Run tmCheck() to re-test.');
+  var id = tmAny_('clientId'), secret = tmAny_('clientSecret');
+  var login = (tmAny_('loginUrl') || 'https://login.salesforce.com').replace(/\/+$/, '');
+  var refresh = tmAny_('refresh');
+  if (!id || !secret)
+    throw new Error('Salesforce client credentials not found.\n\nExpected one of ' +
+      TM_ALIAS.clientId.join(' / ') + ' and ' + TM_ALIAS.clientSecret.join(' / ') +
+      ' in Script Properties. Run tmCheck() to see what is actually stored.');
 
-  var res = UrlFetchApp.fetch('https://login.salesforce.com/services/oauth2/token', {
-    method: 'post', muteHttpExceptions: true,
-    payload: { grant_type: 'password', client_id: key, client_secret: secret,
-               username: user, password: pass },
+  var payload, mode;
+  if (refresh) {
+    mode = 'refresh_token';
+    payload = { grant_type: 'refresh_token', client_id: id, client_secret: secret, refresh_token: refresh };
+  } else {
+    var user = tmAny_('username'), pass = tmAny_('password'), sec = tmAny_('secToken');
+    if (!user || !pass)
+      throw new Error('No refresh token, and no username/password either.\n\nStore SF_REFRESH_TOKEN, ' +
+        'or SF_USERNAME plus SF_PASSWORD (and SF_TOKEN for the security token). Run tmCheck().');
+    mode = 'password';
+    payload = { grant_type: 'password', client_id: id, client_secret: secret,
+                username: user, password: pass + (sec || '') };
+  }
+
+  var res = UrlFetchApp.fetch(login + '/services/oauth2/token', {
+    method: 'post', muteHttpExceptions: true, payload: payload,
   });
   var body = res.getContentText();
   if (res.getResponseCode() !== 200) {
     var hint = '';
-    if (body.indexOf('invalid_grant') > -1)
-      hint = '\n\nUsual causes: SF_PASS must be your password with the security token appended (no space), ' +
-             'and the Connected App must allow "All users may self-authorize".';
-    throw new Error('Salesforce login failed: ' + body + hint);
+    if (body.indexOf('expired access/refresh token') > -1 || body.indexOf('invalid_grant') > -1) {
+      hint = mode === 'refresh_token'
+        ? '\n\nThe stored SF_REFRESH_TOKEN is expired or revoked — re-run whatever authorises this project ' +
+          '(sfAuth, in the script that set it up) to mint a fresh one.'
+        : '\n\nFor the password grant, SF_PASSWORD must be the password and SF_TOKEN the security token — ' +
+          'this code joins them for you. Also check the org allows username-password flows.';
+    }
+    throw new Error('Salesforce login failed (' + mode + ' grant): ' + body + hint);
   }
   var tok = JSON.parse(body);
-  p.setProperty('SF_TOKEN', JSON.stringify(tok));
-  p.setProperty('SF_TOKEN_AT', String(new Date().getTime()));
+  if (!tok.instance_url) tok.instance_url = login;           // refresh grant may omit it
+  p.setProperty('TM_ACCESS', JSON.stringify(tok));
+  p.setProperty('TM_ACCESS_AT', String(new Date().getTime()));
   return tok;
 }
 
@@ -125,17 +175,24 @@ function tmQuery_(soql) {
 function tmCheck() {
   var lines = [];
   var all = tmProps_().getProperties();
-  var names = Object.keys(all).filter(function (k) { return k !== 'SF_TOKEN' && k !== 'SF_TOKEN_AT'; });
-  lines.push('Script Properties actually in this project (' + names.length + '):');
-  names.forEach(function (k) {
+  var names = Object.keys(all).filter(function (k) { return k.indexOf('TM_ACCESS') !== 0; });
+  lines.push('Script Properties in this project (' + names.length + ') — values masked:');
+  names.sort().forEach(function (k) {
     var v = String(all[k] || '');
-    lines.push('   "' + k + '"  =  ' + (v ? v.slice(0, 6) + '…(' + v.length + ' chars)' : '(empty)'));
+    lines.push('   "' + k + '"  =  ' + (v ? v.slice(0, 4) + '…(' + v.length + ' chars)' : '(empty)'));
   });
   lines.push('');
-  ['SF_KEY', 'SF_SECRET', 'SF_USER', 'SF_PASS'].forEach(function (k) {
-    var v = tmProp_(k);
-    lines.push((v ? '✅' : '❌') + ' ' + k + (v && !all[k] ? '  (matched a differently-spelled property — fix the name when you can)' : ''));
-  });
+  lines.push('What the migration needs, and where it found it:');
+  [['clientId', 'consumer key'], ['clientSecret', 'consumer secret'],
+   ['refresh', 'refresh token (preferred)'], ['username', 'username'],
+   ['password', 'password'], ['secToken', 'security token'], ['loginUrl', 'login URL']]
+    .forEach(function (pair) {
+      var kind = pair[0], found = null;
+      (TM_ALIAS[kind] || []).forEach(function (n) { if (!found && tmProp_(n)) found = n; });
+      lines.push((found ? '✅' : (kind === 'refresh' || kind === 'loginUrl' || kind === 'secToken' ? '·' : '❌')) +
+        ' ' + pair[1] + (found ? '  ← ' + found : '  (none of: ' + (TM_ALIAS[kind] || []).join(', ') + ')'));
+    });
+  lines.push('');
   try {
     var tok = tmToken_();
     lines.push('✅ Salesforce login OK — ' + tok.instance_url);
