@@ -49,13 +49,31 @@ var TM = {
 
 function tmProps_() { return PropertiesService.getScriptProperties(); }
 
+/**
+ * Forgiving property lookup. Script Property names are case- and
+ * whitespace-sensitive, and a stray space or a lower-case letter is
+ * invisible in the UI — so match exactly first, then fall back to a
+ * trimmed, upper-cased comparison across every key in the project.
+ */
+function tmProp_(name) {
+  var p = tmProps_();
+  var exact = p.getProperty(name);
+  if (exact) return exact;
+  var all = p.getProperties();
+  var want = String(name).replace(/[^A-Za-z]/g, '').toUpperCase();
+  for (var k in all) {
+    if (String(k).replace(/[^A-Za-z]/g, '').toUpperCase() === want && all[k]) return all[k];
+  }
+  return null;
+}
+
 function tmToken_() {
   var p = tmProps_();
   var cached = p.getProperty('SF_TOKEN'), when = Number(p.getProperty('SF_TOKEN_AT') || 0);
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
-  var key = p.getProperty('SF_KEY'), secret = p.getProperty('SF_SECRET');
-  var user = p.getProperty('SF_USER'), pass = p.getProperty('SF_PASS');
+  var key = tmProp_('SF_KEY'), secret = tmProp_('SF_SECRET');
+  var user = tmProp_('SF_USER'), pass = tmProp_('SF_PASS');
   if (!key || !secret || !user || !pass)
     throw new Error('Salesforce is not set up in this project.\n\nScript Properties need SF_KEY, SF_SECRET, ' +
       'SF_USER and SF_PASS (password + security token, no space between them).\n\n' +
@@ -106,9 +124,17 @@ function tmQuery_(soql) {
 /** Diagnose everything this migration depends on. Run me first if stuck. */
 function tmCheck() {
   var lines = [];
-  var p = tmProps_();
+  var all = tmProps_().getProperties();
+  var names = Object.keys(all).filter(function (k) { return k !== 'SF_TOKEN' && k !== 'SF_TOKEN_AT'; });
+  lines.push('Script Properties actually in this project (' + names.length + '):');
+  names.forEach(function (k) {
+    var v = String(all[k] || '');
+    lines.push('   "' + k + '"  =  ' + (v ? v.slice(0, 6) + '…(' + v.length + ' chars)' : '(empty)'));
+  });
+  lines.push('');
   ['SF_KEY', 'SF_SECRET', 'SF_USER', 'SF_PASS'].forEach(function (k) {
-    lines.push((p.getProperty(k) ? '✅' : '❌') + ' Script Property ' + k);
+    var v = tmProp_(k);
+    lines.push((v ? '✅' : '❌') + ' ' + k + (v && !all[k] ? '  (matched a differently-spelled property — fix the name when you can)' : ''));
   });
   try {
     var tok = tmToken_();
