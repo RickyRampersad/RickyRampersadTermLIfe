@@ -1,5 +1,37 @@
 User-agent: *
 Allow: /
+
+# Branch-internal tools and dashboards — not for search results.
+# NOTE: robots.txt is a crawling hint, not access control. Nothing here is
+# protected by being listed; see README.md on hosting and what is public.
 Disallow: /kpi/
+Disallow: /board/
+Disallow: /dash/
+Disallow: /dashboard/
+Disallow: /intelligence/
+Disallow: /intelligencewalldemo/
+Disallow: /intelwall/
+Disallow: /managementmeetings/
+Disallow: /market/
+Disallow: /meet/
+Disallow: /production/
+Disallow: /prospecting/
+Disallow: /wall/
+Disallow: /training/
+Disallow: /newday/
+Disallow: /draft/
+Disallow: /sneak/
+Disallow: /update/
+Disallow: /redeploy/
+Disallow: /fix/
+Disallow: /manual/
+Disallow: /docs/
+Disallow: /gs/
+Disallow: /tools/
+Disallow: /tests/
+Disallow: /apps-script/
+Disallow: /data/
+Disallow: /agent.html
+Disallow: /staff.html
 
 Sitemap: https://rickyrampersadbranch.com/sitemap.xml

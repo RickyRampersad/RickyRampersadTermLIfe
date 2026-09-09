@@ -439,5 +439,11 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape") toggleDraw
 try { state.token = localStorage.getItem(TOKEN_KEY) || ""; } catch (err) {}
 if (state.token && CONFIG.API_URL) load().catch(() => signOut(true));
 </script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>

@@ -16,6 +16,12 @@
 <meta name="description" content="Ricky Rampersad Branch — instant life insurance quotes, online applications, health enrollment, motor & property quotations, and client services. Get covered today."/>
 <link rel="canonical" href="https://rickyrampersadbranch.com/"/>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link rel="apple-touch-icon" href="/logo-mark.png"/>
+<link rel="manifest" href="/site.webmanifest"/>
+<meta name="theme-color" content="#07131f"/>
+<meta name="author" content="Ricky Rampersad Branch — Guardian Life of the Caribbean"/>
+<meta name="geo.region" content="TT-CTT"/>
+<meta name="geo.placename" content="Chaguanas, Trinidad and Tobago"/>
 <meta property="og:type" content="website"/>
 <meta property="og:site_name" content="Ricky Rampersad Branch"/>
 <meta property="og:title" content="Ricky Rampersad Branch | Life, Health, Motor & Property Insurance"/>
@@ -26,6 +32,8 @@
 <meta property="og:image:height" content="630"/>
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:image" content="https://rickyrampersadbranch.com/og-image.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -845,9 +853,116 @@
   footer .f-links { display: flex; justify-content: center; gap: 18px; flex-wrap: wrap; margin: 14px 0; }
   footer .f-links a { color: var(--muted); font-size: 12.5px; text-decoration: none; }
   footer .f-links a:hover { color: var(--teal); }
+
+  /* ── CONTACT ── */
+  .contact-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(215px, 1fr));
+    gap: 14px; margin-top: 22px;
+  }
+  .cc {
+    display: flex; flex-direction: column; gap: 6px;
+    background: linear-gradient(160deg, var(--card), var(--card2));
+    border: 1px solid var(--line); border-radius: 16px;
+    padding: 20px 18px; text-decoration: none; color: var(--text);
+    transition: transform .18s, border-color .18s, box-shadow .18s;
+  }
+  .cc:hover, .cc:focus-visible {
+    transform: translateY(-3px); border-color: rgba(0,207,234,.45);
+    box-shadow: 0 14px 32px rgba(0,0,0,.34);
+  }
+  .cc-ico { font-size: 22px; line-height: 1; }
+  .cc-lbl {
+    font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase; color: var(--teal);
+  }
+  .cc-val {
+    font-family: 'Montserrat', sans-serif; font-weight: 800;
+    font-size: 16px; line-height: 1.35; overflow-wrap: anywhere;
+  }
+  .cc-note { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .cc-val.cc-em { font-size: 14px; letter-spacing: -.1px; }
+  .cc-gold { border-color: rgba(239,194,75,.34); }
+  .cc-gold .cc-lbl { color: var(--gold); }
+  .cc-gold:hover, .cc-gold:focus-visible { border-color: rgba(239,194,75,.65); }
+
+  .hours-strip {
+    margin-top: 14px; display: flex; flex-wrap: wrap; align-items: center;
+    gap: 10px 18px; padding: 14px 18px;
+    background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 14px;
+    font-size: 13px; color: var(--muted); line-height: 1.6;
+  }
+  .hours-strip b { color: var(--text); font-family: 'Montserrat', sans-serif; font-weight: 700; }
+  .open-pill {
+    display: inline-flex; align-items: center; gap: 7px;
+    font-family: 'Montserrat', sans-serif; font-size: 11.5px; font-weight: 700;
+    padding: 5px 11px; border-radius: 999px; white-space: nowrap;
+  }
+  .open-pill.is-open { background: rgba(0,207,234,.14); color: var(--teal); border: 1px solid rgba(0,207,234,.35); }
+  .open-pill.is-shut { background: rgba(255,255,255,.06); color: var(--muted); border: 1px solid var(--line); }
+  .open-pill i {
+    width: 7px; height: 7px; border-radius: 50%; background: currentColor;
+    display: block; flex-shrink: 0;
+  }
+  .open-pill.is-open i { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+
+  /* ── FAQ ── */
+  .faq { margin-top: 22px; display: grid; gap: 10px; }
+  .faq details {
+    background: rgba(0,0,0,.22); border: 1px solid var(--line);
+    border-radius: 14px; overflow: hidden; transition: border-color .18s;
+  }
+  .faq details[open] { border-color: rgba(0,207,234,.34); background: rgba(0,207,234,.05); }
+  .faq summary {
+    cursor: pointer; list-style: none; padding: 16px 48px 16px 18px; position: relative;
+    font-family: 'Montserrat', sans-serif; font-weight: 700; font-size: 14.5px;
+    line-height: 1.5; color: var(--text);
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary:hover { color: var(--teal); }
+  .faq summary:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+  .faq summary::after {
+    content: '+'; position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    font-size: 22px; font-weight: 400; color: var(--gold); line-height: 1;
+    transition: transform .2s;
+  }
+  .faq details[open] summary::after { content: '\2013'; }
+  .faq .faq-a { padding: 0 18px 17px; font-size: 13.5px; color: var(--muted); line-height: 1.75; }
+  .faq .faq-a a { color: var(--teal); font-weight: 600; }
+
+  /* ── SKIP LINK ── */
+  .skip {
+    position: absolute; left: -9999px; top: 8px; z-index: 200;
+    background: var(--gold); color: #07131f; padding: 10px 16px; border-radius: 10px;
+    font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 13px;
+    text-decoration: none;
+  }
+  .skip:focus { left: 8px; }
+  .sr-only {
+    position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+  }
+
+  /* Visible keyboard focus across the page */
+  a:focus-visible, button:focus-visible, summary:focus-visible {
+    outline: 2px solid var(--teal); outline-offset: 3px;
+  }
+
+  /* ── NAV TAP-TO-CALL ── */
+  .nav-tel {
+    display: inline-flex; align-items: center; gap: 6px;
+    text-decoration: none; color: var(--gold);
+    font-family: 'Montserrat', sans-serif; font-size: 12.5px; font-weight: 800;
+    padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(239,194,75,.3);
+    white-space: nowrap; transition: background .18s, border-color .18s;
+  }
+  .nav-tel:hover { background: rgba(239,194,75,.12); border-color: rgba(239,194,75,.6); }
+  @media (max-width: 720px) { .nav-tel span { display: none; } }
 </style>
 </head>
 <body>
+
+<a class="skip" href="#main">Skip to content</a>
 
 <!-- NAV -->
 <nav class="nav">
@@ -873,10 +988,14 @@
       <a href="#clients">Clients</a>
       <a href="#careers">Careers</a>
       <a href="#portals">Portals</a>
-      <a class="nav-cta" href="#" onclick="openProfiler(); return false;">Get a Quote</a>
+      <a href="#contact">Contact</a>
+      <a class="nav-tel" href="tel:+18686785921" aria-label="Call the branch on 868 678 5921">&#128222;<span>(868) 678-5921</span></a>
+      <a class="nav-cta" href="#quotes" onclick="openProfiler(); return false;">Get a Quote</a>
     </div>
   </div>
 </nav>
+
+<main id="main">
 
 <!-- HERO -->
 <header class="hero" id="top">
@@ -886,7 +1005,7 @@
     <div>
       <div class="kicker"><span class="dot"></span>Ricky Rampersad Branch · Online Now</div>
       <h1>Protecting your
-        <span class="rotator-line"><span class="rotator" id="rotator">family</span></span>
+        <span class="rotator-line"><span class="rotator" id="rotator">family</span></span><span class="sr-only"> and everything else that matters to you</span>
       </h1>
       <p class="sub">Life, critical illness, health, pensions, motor, property and employee benefits — with online quotes and applications you can start from your phone in minutes.</p>
       <div class="hero-actions">
@@ -1233,6 +1352,79 @@
     </div>
   </section>
 
+
+  <!-- FAQ -->
+  <section id="faq">
+    <div class="section-label reveal">Questions</div>
+    <h2 class="reveal">The things people ask us first</h2>
+    <p class="section-sub reveal">Straight answers, including the ones where the answer is &ldquo;no&rdquo;.</p>
+    <div class="faq">
+
+      <details class="reveal">
+        <summary>What does life insurance actually cost me?</summary>
+        <div class="faq-a">It depends on your age, your health and how much cover you want &mdash; which is why every
+          product on this page opens its own quotation rather than showing one price. Xpress Life is the fastest way to
+          see a real number: five health questions, no medicals, and a quote in one sitting. If you would rather work
+          out how much cover you need before you price it, start with the
+          <a href="https://factfind360.com" target="_blank" rel="noopener">FactFind360 needs analysis</a>.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>Do I have to take a medical exam?</summary>
+        <div class="faq-a">Not for Xpress Life &mdash; it is a simplified instant-issue product for qualifying
+          applicants, and five health questions replace the medical. Larger sums assured and some other products are
+          underwritten normally, and we tell you up front if a medical is needed before you commit to anything.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>Do I need to come into the office?</summary>
+        <div class="faq-a">No. Quotes, applications, claims, renewals and service reviews all run online from your
+          phone, and they reach the branch team directly. You are welcome to come in &mdash; we are at 9&ndash;13
+          Endeavour 1st Street, Chaguanas, Monday to Friday &mdash; but nothing on this site requires it.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>My agent retired or stopped calling. What do I do?</summary>
+        <div class="faq-a">You have what the industry calls an <b>orphan policy</b>, and it is more common than most
+          people think. We trace the policy, fix your records and tell you honestly what we can and cannot do &mdash;
+          free, with no obligation to buy anything, in about four minutes. That is the whole purpose of
+          <a href="https://donthaveanagent.com" target="_blank" rel="noopener">donthaveanagent.com</a>.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>Can you service a policy from another insurance company?</summary>
+        <div class="faq-a">Not usually, and we would rather say so than waste your time. We service policies issued by
+          <b>Guardian Life of the Caribbean</b>. If your policy is with another insurer we will tell you plainly and
+          point you to the right place &mdash; and we will still answer your question while you are here.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>How do I file a claim?</summary>
+        <div class="faq-a">Through <a href="claims/">Claims TT</a>. Photograph your documents, upload them from your
+          phone, and you get a claim reference at the end &mdash; usually about ten minutes. You can
+          <a href="claims/#track">track the claim</a> afterwards and see exactly which documents we are still waiting
+          on. If you would rather do it by phone, call the branch on
+          <a href="tel:+18686785921">(868) 678-5921</a>.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>Is my information safe on these forms?</summary>
+        <div class="faq-a">Yes. Every form on this site is served over HTTPS and submits straight to the branch
+          team &mdash; client records live in our secured systems, never on this website. We ask only for what the
+          product or the claim actually needs.</div>
+      </details>
+
+      <details class="reveal">
+        <summary>I want to become an advisor. How does that work?</summary>
+        <div class="faq-a">There are five gates, deliberately: apply and screen, meet the Branch Manager, discovery
+          sessions, a scientific assessment, then final selection. Applications are reviewed within 48 hours, newcomers
+          are fully trained before they are contracted, and conversations with practising advisors are confidential.
+          Start at <a href="#careers">the Careers section</a> above.</div>
+      </details>
+
+    </div>
+  </section>
+
   <!-- CAREERS -->
   <section id="careers" class="careers">
     <div class="careers-glow"></div>
@@ -1369,18 +1561,71 @@
     </div>
   </section>
 
+  <!-- CONTACT -->
+  <section id="contact">
+    <div class="section-label reveal">Contact</div>
+    <h2 class="reveal">Talk to a real person at the branch</h2>
+    <p class="section-sub reveal">Everything here starts online &mdash; but there is always someone to call, and an
+      office you can walk into.</p>
+
+    <div class="contact-grid">
+      <a class="cc cc-gold reveal" href="tel:+18686785921">
+        <span class="cc-ico" aria-hidden="true">&#128222;</span>
+        <span class="cc-lbl">Call the branch</span>
+        <span class="cc-val">(868) 678-5921</span>
+        <span class="cc-note">Monday to Friday, 8:00am &ndash; 4:00pm</span>
+      </a>
+      <a class="cc reveal" href="https://wa.me/18686785921" target="_blank" rel="noopener">
+        <span class="cc-ico" aria-hidden="true">&#128172;</span>
+        <span class="cc-lbl">WhatsApp</span>
+        <span class="cc-val">Message the branch</span>
+        <span class="cc-note">Quickest for a short question or a photo of a document.</span>
+      </a>
+      <a class="cc reveal" href="mailto:support@rickyrampersadbranch.com">
+        <span class="cc-ico" aria-hidden="true">&#9993;</span>
+        <span class="cc-lbl">Email</span>
+        <span class="cc-val cc-em">support@<wbr>rickyrampersadbranch.com</span>
+        <span class="cc-note">Policy servicing, claims and general branch support.</span>
+      </a>
+      <a class="cc reveal" href="https://www.google.com/maps/search/?api=1&amp;query=9-13+Endeavour+1st+Street+Chaguanas+Trinidad" target="_blank" rel="noopener">
+        <span class="cc-ico" aria-hidden="true">&#128205;</span>
+        <span class="cc-lbl">Visit us</span>
+        <span class="cc-val">9&ndash;13 Endeavour 1st Street</span>
+        <span class="cc-note">Chaguanas, Trinidad and Tobago &mdash; open in Maps &#8599;</span>
+      </a>
+    </div>
+
+    <div class="hours-strip reveal">
+      <span class="open-pill is-shut" id="openNow"><i></i><span id="openTxt">Branch hours</span></span>
+      <span><b>Monday to Friday</b> &nbsp;8:00am &ndash; 4:00pm &nbsp;&middot;&nbsp; closed weekends and public holidays</span>
+      <span>Quotes, claims and applications on this site are open <b>24/7</b>.</span>
+    </div>
+
+    <p class="section-sub reveal" style="margin-top:18px">
+      Ricky Rampersad Branch &middot; Guardian Life of the Caribbean Limited &middot; Chaguanas, Trinidad and Tobago
+    </p>
+  </section>
+
 </div>
+
+</main>
 
 <!-- FOOTER -->
 <footer>
   <div class="wrap">
     <div class="f-brand">Ricky Rampersad Branch</div>
-    <p>Life · Health · Motor · Property</p>
+    <p>Life &middot; Health &middot; Motor &middot; Property</p>
+    <p>9&ndash;13 Endeavour 1st Street, Chaguanas, Trinidad and Tobago<br>
+      <a href="tel:+18686785921" style="color:var(--gold);font-weight:700;text-decoration:none">(868) 678-5921</a>
+      &nbsp;&middot;&nbsp;
+      <a href="mailto:support@rickyrampersadbranch.com" style="color:var(--teal);text-decoration:none">support@rickyrampersadbranch.com</a></p>
     <div class="f-links">
       <a href="https://form.jotform.com/203424506456048" target="_blank" rel="noopener">Xpress Life Application</a>
       <a href="#quotes">Quotes</a>
       <a href="#clients">Client Services</a>
       <a href="#careers">Careers</a>
+      <a href="#faq">FAQ</a>
+      <a href="#contact">Contact</a>
       <a href="https://donthaveanagent.com" target="_blank" rel="noopener">donthaveanagent.com</a>
     </div>
     <p>© 2026 Ricky Rampersad Branch. All rights reserved.</p>
@@ -1388,7 +1633,7 @@
 </footer>
 
 <!-- SHIELD HELPER -->
-<button id="helpBtn" onclick="helpToggle()" aria-label="How can we help?" title="How can we help?">
+<button id="helpBtn" onclick="helpToggle()" aria-label="How can we help?" title="How can we help?" aria-expanded="false" aria-controls="helpPanel">
   <svg viewBox="0 0 88 88" aria-hidden="true">
     <defs>
       <linearGradient id="ghelp" x1="0" y1="0" x2="1" y2="1">
@@ -1401,7 +1646,7 @@
   </svg>
 </button>
 
-<div id="helpPanel" role="dialog" aria-label="How can we help?">
+<div id="helpPanel" role="dialog" aria-label="How can we help?" aria-hidden="true">
   <div class="help-head">
     <svg viewBox="0 0 88 88" aria-hidden="true">
       <defs>
@@ -1469,11 +1714,11 @@
 </div>
 
 <!-- QUOTE PROFILER MODAL -->
-<div id="profiler" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
+<div id="profiler" role="dialog" aria-modal="true" aria-labelledby="pfTitle" aria-hidden="true" style="display:none; position:fixed; inset:0; z-index:500; align-items:center; justify-content:center; background:rgba(4,10,17,.82); backdrop-filter:blur(6px); padding:16px;">
   <div style="width:min(560px,100%); max-height:88vh; overflow-y:auto; background:linear-gradient(160deg,var(--card),var(--card2)); border:1px solid rgba(0,207,234,.3); border-radius:22px; padding:28px;">
     <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
       <button id="pfBack" onclick="pfHome()" style="display:none; background:none; border:none; color:var(--teal); cursor:pointer; font-family:'Montserrat',sans-serif; font-weight:700; font-size:13px;">← Back</button>
-      <button onclick="closeProfiler()" style="margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--muted); cursor:pointer; border-radius:50%; width:32px; height:32px; font-size:15px;">✕</button>
+      <button onclick="closeProfiler()" aria-label="Close" style="margin-left:auto; background:rgba(255,255,255,.06); border:1px solid var(--line); color:var(--muted); cursor:pointer; border-radius:50%; width:32px; height:32px; font-size:15px;">✕</button>
     </div>
     <h3 id="pfTitle" style="font-family:'Montserrat',sans-serif; font-weight:800; font-size:20px; margin-bottom:4px;"></h3>
     <p id="pfSub" style="font-size:13px; color:var(--muted); margin-bottom:18px; line-height:1.6;"></p>
@@ -1557,15 +1802,79 @@
       box.appendChild(el);
     });
   }
-  function openProfiler() { pfRender('home'); document.getElementById('profiler').style.display = 'flex'; document.body.style.overflow = 'hidden'; }
-  function closeProfiler() { document.getElementById('profiler').style.display = 'none'; document.body.style.overflow = ''; }
+  // Focus management: a modal you can tab out of is a modal a keyboard user loses.
+  var FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+  var lastFocus = null;
+
+  // Only what is actually on screen counts: the profiler's "Back" button is
+  // display:none on the first pane, and focusing a hidden element is a no-op
+  // that silently leaves focus outside the dialog.
+  function focusables(box) {
+    return Array.prototype.filter.call(box.querySelectorAll(FOCUSABLE), function (el) {
+      return el.offsetWidth || el.offsetHeight || el.getClientRects().length;
+    });
+  }
+
+  function focusFirst(box) {
+    var items = focusables(box);
+    if (items.length) items[0].focus();
+  }
+
+  function trapFocus(box, e) {
+    var items = focusables(box);
+    if (!items.length) return;
+    var first = items[0], last = items[items.length - 1];
+    if (!box.contains(document.activeElement)) { e.preventDefault(); first.focus(); return; }
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  }
+
+  function openProfiler() {
+    lastFocus = document.activeElement;
+    pfRender('home');
+    var box = document.getElementById('profiler');
+    box.style.display = 'flex';
+    box.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    focusFirst(box);
+  }
+  function closeProfiler() {
+    var box = document.getElementById('profiler');
+    if (box.style.display === 'none') return;
+    box.style.display = 'none';
+    box.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+    if (lastFocus && lastFocus.focus) lastFocus.focus();
+    lastFocus = null;
+  }
   function pfHome() { pfRender('home'); }
   document.getElementById('profiler').addEventListener('click', function (e) { if (e.target === this) closeProfiler(); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closeProfiler(); helpClose(); } });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { closeProfiler(); helpClose(); return; }
+    if (e.key !== 'Tab') return;
+    var pf = document.getElementById('profiler');
+    if (pf.style.display === 'flex') { trapFocus(pf, e); return; }
+    var hp = document.getElementById('helpPanel');
+    if (hp.classList.contains('open')) trapFocus(hp, e);
+  });
 
   // ── SHIELD HELPER ──
-  function helpToggle() { document.getElementById('helpPanel').classList.toggle('open'); }
-  function helpClose() { document.getElementById('helpPanel').classList.remove('open'); }
+  function helpToggle() {
+    var panel = document.getElementById('helpPanel');
+    var open = panel.classList.toggle('open');
+    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    document.getElementById('helpBtn').setAttribute('aria-expanded', open ? 'true' : 'false');
+    if (open) focusFirst(panel);
+  }
+  function helpClose() {
+    var panel = document.getElementById('helpPanel');
+    if (!panel.classList.contains('open')) return;
+    panel.classList.remove('open');
+    panel.setAttribute('aria-hidden', 'true');
+    var btn = document.getElementById('helpBtn');
+    btn.setAttribute('aria-expanded', 'false');
+    btn.focus();
+  }
   document.addEventListener('click', function (e) {
     var panel = document.getElementById('helpPanel');
     var btn = document.getElementById('helpBtn');
@@ -1640,6 +1949,247 @@
     });
   }, { threshold: 0.5 });
   document.querySelectorAll('[data-count]').forEach(function (el) { statIO.observe(el); });
+
+  // ── IS THE BRANCH OPEN RIGHT NOW ──
+  // Trinidad is America/Port_of_Spain, UTC-4 all year (no DST), so a fixed
+  // offset is a safe fallback where Intl time zones are unavailable.
+  function branchNow() {
+    try {
+      var parts = new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'America/Port_of_Spain', hour12: false,
+        weekday: 'short', hour: '2-digit', minute: '2-digit'
+      }).formatToParts(new Date());
+      var g = {};
+      parts.forEach(function (x) { g[x.type] = x.value; });
+      var days = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+      if (g.weekday in days) {
+        return { day: days[g.weekday], mins: (+g.hour) * 60 + (+g.minute) };
+      }
+    } catch (err) { /* fall through */ }
+    var t = new Date(Date.now() - 4 * 3600 * 1000);
+    return { day: t.getUTCDay(), mins: t.getUTCHours() * 60 + t.getUTCMinutes() };
+  }
+
+  function paintOpen() {
+    var pill = document.getElementById('openNow');
+    var txt = document.getElementById('openTxt');
+    if (!pill || !txt) return;
+    var n = branchNow();
+    var open = n.day >= 1 && n.day <= 5 && n.mins >= 8 * 60 && n.mins < 16 * 60;
+    pill.classList.toggle('is-open', open);
+    pill.classList.toggle('is-shut', !open);
+    txt.textContent = open ? 'Open now' : 'Closed right now';
+    pill.title = open
+      ? 'The branch is open — call (868) 678-5921'
+      : 'The branch is closed, but quotes, claims and applications on this site are always open.';
+  }
+  paintOpen();
+  setInterval(paintOpen, 60000);
+</script>
+<!-- Structured data: local business, site and FAQ. The FAQ entries are
+     generated from the visible FAQ section above — keep them in step. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "InsuranceAgency",
+      "@id": "https://rickyrampersadbranch.com/#branch",
+      "name": "Ricky Rampersad Branch",
+      "legalName": "Ricky Rampersad Branch — Guardian Life of the Caribbean Limited",
+      "description": "Insurance branch in Chaguanas, Trinidad and Tobago. Life, critical illness, health, pensions, motor, property and employee benefits, with online quotes, applications, claims and policy servicing.",
+      "url": "https://rickyrampersadbranch.com/",
+      "logo": "https://rickyrampersadbranch.com/logo-mark.png",
+      "image": "https://rickyrampersadbranch.com/og-image.png",
+      "telephone": "+1-868-678-5921",
+      "email": "support@rickyrampersadbranch.com",
+      "priceRange": "$$",
+      "parentOrganization": {
+        "@type": "Organization",
+        "name": "Guardian Life of the Caribbean Limited"
+      },
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "9–13 Endeavour 1st Street",
+        "addressLocality": "Chaguanas",
+        "addressCountry": "TT"
+      },
+      "areaServed": {
+        "@type": "Country",
+        "name": "Trinidad and Tobago"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday"
+          ],
+          "opens": "08:00",
+          "closes": "16:00"
+        }
+      ],
+      "sameAs": [
+        "https://donthaveanagent.com",
+        "https://xpresslifett.com",
+        "https://factfind360.com"
+      ],
+      "hasOfferCatalog": {
+        "@type": "OfferCatalog",
+        "name": "Insurance products",
+        "itemListElement": [
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Life insurance",
+              "serviceType": "Life insurance"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Critical illness cover",
+              "serviceType": "Critical illness cover"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Health insurance",
+              "serviceType": "Health insurance"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Personal accident and income protection",
+              "serviceType": "Personal accident and income protection"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Motor insurance",
+              "serviceType": "Motor insurance"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Property insurance",
+              "serviceType": "Property insurance"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Pensions and retirement planning",
+              "serviceType": "Pensions and retirement planning"
+            }
+          },
+          {
+            "@type": "Offer",
+            "itemOffered": {
+              "@type": "Service",
+              "name": "Employee benefits and group plans",
+              "serviceType": "Employee benefits and group plans"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://rickyrampersadbranch.com/#website",
+      "url": "https://rickyrampersadbranch.com/",
+      "name": "Ricky Rampersad Branch",
+      "publisher": {
+        "@id": "https://rickyrampersadbranch.com/#branch"
+      },
+      "inLanguage": "en-TT"
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://rickyrampersadbranch.com/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What does life insurance actually cost me?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on your age, your health and how much cover you want — which is why every product on this page opens its own quotation rather than showing one price. Xpress Life is the fastest way to see a real number: five health questions, no medicals, and a quote in one sitting. If you would rather work out how much cover you need before you price it, start with the FactFind360 needs analysis."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I have to take a medical exam?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not for Xpress Life — it is a simplified instant-issue product for qualifying applicants, and five health questions replace the medical. Larger sums assured and some other products are underwritten normally, and we tell you up front if a medical is needed before you commit to anything."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do I need to come into the office?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Quotes, applications, claims, renewals and service reviews all run online from your phone, and they reach the branch team directly. You are welcome to come in — we are at 9–13 Endeavour 1st Street, Chaguanas, Monday to Friday — but nothing on this site requires it."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "My agent retired or stopped calling. What do I do?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "You have what the industry calls an orphan policy, and it is more common than most people think. We trace the policy, fix your records and tell you honestly what we can and cannot do — free, with no obligation to buy anything, in about four minutes. That is the whole purpose of donthaveanagent.com."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you service a policy from another insurance company?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Not usually, and we would rather say so than waste your time. We service policies issued by Guardian Life of the Caribbean. If your policy is with another insurer we will tell you plainly and point you to the right place — and we will still answer your question while you are here."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I file a claim?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Through Claims TT. Photograph your documents, upload them from your phone, and you get a claim reference at the end — usually about ten minutes. You can track the claim afterwards and see exactly which documents we are still waiting on. If you would rather do it by phone, call the branch on (868) 678-5921."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my information safe on these forms?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Every form on this site is served over HTTPS and submits straight to the branch team — client records live in our secured systems, never on this website. We ask only for what the product or the claim actually needs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "I want to become an advisor. How does that work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "There are five gates, deliberately: apply and screen, meet the Branch Manager, discovery sessions, a scientific assessment, then final selection. Applications are reviewed within 48 hours, newcomers are fully trained before they are contracted, and conversations with practising advisors are confidential. Start at the Careers section above."
+          }
+        }
+      ]
+    }
+  ]
+}
 </script>
 <!-- rrb-views -->
 <script>
