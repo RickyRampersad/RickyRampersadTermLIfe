@@ -395,9 +395,16 @@ A moment now carries three more things:
 
 | | |
 |---|---|
-| **Was it** | *Asked or reminded* · *Thanked or commended* · *Noted for the record* |
+| **Was it** | *Asked or reminded* · *Where I fell short* · *Thanked or commended* · *Noted for the record* |
 | **Who from** | Branch Manager · Unit Manager · Head office · A client · A colleague · Myself |
 | **About** | a few words naming the subject — required on an ask, optional on the rest |
+
+**Where I fell short** is the one the branch asked for by name. It is not the
+same as being asked: an ask comes from outside, a shortfall is owned before
+anybody has had to write about it, and in a review those are not the same
+sentence. It is counted the same way — the second time the same thing is
+missed is the finding — and it reads against the same competency and the same
+job document.
 
 **The subject is the part that matters**, because it is what makes a repeat
 countable. Nobody ever writes "this is the fourth reminder"; they write "the
@@ -406,9 +413,32 @@ time and the quarter card reads *"Morning spreadsheet — asked 4 times · by th
 Branch Manager · last on 8 Sep"*. The matching ignores case, spacing and
 punctuation, so "morning spreadsheet." and "Morning  Spreadsheet" are one thing.
 
-The question is put at the end of every day, on the close-the-day card, because
-that is the last screen of the day and the answer is still in the person's head.
-It is not a gate — a quiet day closes with nothing written.
+The question is put at the end of every day, on the close-the-day card —
+*"Anything you were written to about, or fell short on, today?"* — because that
+is the last screen of the day and the answer is still in the person's head. It
+is not a gate: a quiet day closes with nothing written.
+
+## The branch works around the clock
+
+Nothing in the tracker keeps office hours any more.
+
+- **The script is kept warm every ten minutes, at every hour, on every day.**
+  It used to stand down overnight and at weekends, which meant the container
+  was cold at exactly the times somebody working late or on a Saturday came to
+  sign in — half a minute of "Signing in" for the person least able to ask
+  anybody about it.
+- **The checkpoint and the two nudges no longer ask what day it is.** They ask
+  the day's own record: nobody signed in and nothing filed means there is
+  nothing to send, on any day of the week; one person at a desk means there is,
+  on any day of the week. A Saturday the branch worked gets its checkpoint. If
+  the record cannot be read the mail goes out anyway — a checkpoint nobody
+  needed is a smaller failure than a day that went unreported.
+
+One thing still assumes a five-day week and is left that way deliberately: the
+quarter's **"days in, days left"** counts Mondays to Fridays, and the mail-sweep
+ratios on the competencies are measured against that. Counting weekends there
+would quietly raise everybody's denominator and make the same work look worse.
+Say the word and it changes.
 
 All of it lands on the **Moments** tab and feeds the competency it names, so
 the quarterly is a read-off rather than a memory test. The three columns are

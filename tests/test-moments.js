@@ -56,12 +56,27 @@ ok('and it names who kept asking', asks[0].from.join() === 'Branch Manager', ask
 ok('with the day it was last asked', asks[0].last === env.todayISO_(), asks[0].last);
 ok('a thank-you is not counted as an ask', !asks.some(a => /thank/i.test(a.about)));
 
+console.log('\nWhat a person says they fell short on, before anybody writes to them:\n');
+// The branch asked for this by name: a record that only holds what other
+// people noticed is a record of supervision, not of somebody's quarter.
+ok('a shortfall needs a subject too, for the same reason an ask does',
+   !note({ competency: 'Reliability', what: 'Did not get to the upload today', kind: 'Short' }).ok);
+let sr = note({ competency: 'Reliability', what: 'Forgot the upload again, will set an alarm', kind: 'Short', about: 'Branch portfolio upload', source: 'Myself' });
+ok('with one, it is written and owned', sr.ok && sr.kind === 'Short' && sr.source === 'Myself', JSON.stringify(sr));
+note({ competency: 'Reliability', what: 'Missed it a second time', kind: 'Short', about: 'branch portfolio upload.', source: 'Myself' });
+env.forgetHr_(env.MOM);
+const mine2 = env.momentsFor_('liz', '2026-09-01', '2026-12-31');
+const shorts = env.momentAsks_(mine2, 'Short');
+ok('two shortfalls on the one thing count as one line, twice', shorts.length === 1 && shorts[0].n === 2, JSON.stringify(shorts.map(x => x.about + '×' + x.n)));
+ok('and a shortfall is not counted as an ask', !env.momentAsks_(mine2).some(a => /branch portfolio/i.test(a.about)),
+   env.momentAsks_(mine2).map(a => a.about).join(' | '));
+
 console.log('\nRows written before today read as what they were:\n');
 const old = mine.filter(m => m.id === 'old-1')[0];
 ok('a moment from before the change is a plain note', old && old.kind === 'Noted' && old.about === '' && old.source === '', JSON.stringify(old));
 
 console.log('\nAnd the form is told what it may offer:\n');
-ok('three kinds, the ask first', env.MOMENT_KINDS.map(k => k.v).join() === 'Asked,Thanked,Noted');
+ok('four kinds, the ask first and the shortfall second', env.MOMENT_KINDS.map(k => k.v).join() === 'Asked,Short,Thanked,Noted', env.MOMENT_KINDS.map(k => k.v).join());
 ok('each with words a person would use', env.MOMENT_KINDS.every(k => /\s/.test(k.label)), JSON.stringify(env.MOMENT_KINDS.map(k => k.label)));
 ok('and the sources include the ones that write to this branch',
    env.MOMENT_SOURCES.indexOf('Branch Manager') > -1 && env.MOMENT_SOURCES.indexOf('Head office') > -1 && env.MOMENT_SOURCES.indexOf('A client') > -1);

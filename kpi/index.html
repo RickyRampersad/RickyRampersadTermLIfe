@@ -659,9 +659,9 @@ function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten })
        which is the only way the quarterly stops being a memory test. */
     onWritten ? h("div", { style: { borderTop: "1px solid " + LINE, paddingTop: 10, marginBottom: 10 } },
       h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK, marginBottom: 3 } },
-        "Anything you were written to about today?"),
+        "Anything you were written to about, or fell short on, today?"),
       h("div", { style: { fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 7 } },
-        "A reminder, an instruction, a thank-you — from the Branch Manager, head office or a client. It goes against the competency it touches, and the same thing asked twice is counted."),
+        "A reminder, an instruction, a thank-you — or something you know you fell short on today. It goes against the competency it touches and the job document, and the same thing twice is counted."),
       writtenToday
         ? h("div", { style: { fontSize: 12.5, fontWeight: 700, color: GREEN } },
             writtenToday + " noted today")
@@ -883,7 +883,8 @@ function YourQuarter({ s, onPerf, onMoments }) {
         return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
           c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
       })) : null,
-    (s.asks && s.asks.length) || (s.thanked && s.thanked.length) ? h(WrittenStrip, { s: s }) : null,
+    (s.asks && s.asks.length) || (s.thanked && s.thanked.length) || (s.shortfalls && s.shortfalls.length)
+      ? h(WrittenStrip, { s: s }) : null,
     s.training ? h(TrainingStrip, { tr: s.training }) : null,
     h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
       h("button", { type: "button", onClick: onMoments, style: trendChip }, "What you were written to about"),
@@ -896,7 +897,13 @@ function YourQuarter({ s, onPerf, onMoments }) {
 function WrittenStrip({ s }) {
   const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "10px 0 3px" } }, t);
   const asks = (s.asks || []).filter(a => a.n > 1), once = (s.asks || []).filter(a => a.n === 1);
+  const shorts = s.shortfalls || [];
   return h("div", null,
+    shorts.length ? h("div", null, lbl("Where you said you fell short"),
+      shorts.map((a, i) => h("div", { key: i, style: { fontSize: 12.5, color: INK, fontWeight: 600, lineHeight: 1.5 } },
+        a.about, a.n > 1 ? h("span", { style: { color: AMBER, fontWeight: 700 } }, " — " + a.n + " times") : null,
+        h("span", { style: { color: MUTED, fontWeight: 500 } },
+          (a.last ? " · last on " + shortDate(a.last) : "") + (a.competency ? " · " + a.competency : ""))))) : null,
     asks.length ? h("div", null, lbl("Asked more than once"),
       asks.map((a, i) => h("div", { key: i, style: { fontSize: 12.5, color: AMBER, fontWeight: 700, lineHeight: 1.5 } },
         a.about, h("span", { style: { color: INK } }, " — asked " + a.n + " times"),
@@ -960,10 +967,11 @@ function CompEvidence({ c, who }) {
 }
 
 const MOMENT_KINDS = [{ v: "Asked", label: "Asked or reminded" },
+                      { v: "Short", label: "Where I fell short" },
                       { v: "Thanked", label: "Thanked or commended" },
                       { v: "Noted", label: "Noted for the record" }];
 const MOMENT_SOURCES = ["Branch Manager", "Unit Manager", "Head office", "A client", "A colleague", "Myself"];
-const KIND_TONE = { Asked: AMBER, Thanked: GREEN, Noted: GOLD };
+const KIND_TONE = { Asked: AMBER, Short: AMBER, Thanked: GREEN, Noted: GOLD };
 
 /* A moment used to be one line against a competency. What it could not carry
    was who it came from, whether it was an ask or a thank-you, and what it was
@@ -977,7 +985,8 @@ function MomentForm({ comps, mine, onSave, busy }) {
   const [source, setSource] = useState(mine ? "Branch Manager" : "Myself");
   const [about, setAbout] = useState("");
   const [what, setWhat] = useState("");
-  const asked = kind === "Asked";
+  // Both of these are counted against a repeat, so both need the subject.
+  const asked = kind === "Asked" || kind === "Short";
   const ready = c && what.trim().split(/\s+/).length >= 3 && (!asked || about.trim());
   const field = (v, set, ph, mt) => h("input", { value: v, onChange: e => set(e.target.value), placeholder: ph,
     style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px",
@@ -991,10 +1000,13 @@ function MomentForm({ comps, mine, onSave, busy }) {
     h(Chips, { label: "Was it", options: MOMENT_KINDS, value: kind, onPick: v => setKind(v || kind), tone: KIND_TONE }),
     h(Chips, { label: "Who from", options: MOMENT_SOURCES.map(x => ({ v: x, label: x })), value: source, onPick: v => setSource(v || source) }),
     h(Chips, { label: "Competency", options: comps.map(x => ({ v: x.competency, label: x.competency })), value: c, onPick: v => setC(v || c) }),
-    asked ? field(about, setAbout, "What it was about — a few words, the same words each time", 8) : null,
+    asked ? field(about, setAbout, kind === "Short"
+      ? "What you fell short on — a few words, the same words each time"
+      : "What it was about — a few words, the same words each time", 8) : null,
     asked ? h("p", { style: { fontSize: 11.5, color: MUTED, margin: "4px 0 0", lineHeight: 1.45 } },
       "Use the same few words when it is the same thing. That is how a second and a fourth ask are counted rather than remembered.") : null,
-    field(what, setWhat, asked ? "What was said, in a line" : "What happened, in a line", 8),
+    field(what, setWhat, kind === "Short" ? "What happened, and what you will do differently"
+      : kind === "Asked" ? "What was said, in a line" : "What happened, in a line", 8),
     h("button", { type: "button", disabled: busy || !ready,
       onClick: () => { onSave({ competency: c, what: what.trim(), kind: kind, source: source, about: about.trim() }); setWhat(""); setAbout(""); },
       style: { ...trendChip, marginTop: 8, opacity: busy || !ready ? .5 : 1 } }, busy ? "Noting…" : "Note it"));

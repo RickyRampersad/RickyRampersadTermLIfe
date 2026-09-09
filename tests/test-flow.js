@@ -43,6 +43,10 @@ env.__mkSheet('KPI Log', 2, LOGH, [
   row('2026-08-18', 'sasha', 'Sasha Lalla', '09:50|bm:done,abm:done,um:none,ea:none,ag:done', '', 'Dues — 9 processed'),
 ]);
 env.__mkSheet('KPI Training', 3, TRH, []);
+// The checkpoint now asks the day's own record whether anybody worked, so the
+// register has to exist for it to read.
+env.__mkSheet('Attendance', 7, ['Date','StaffId','Name','FirstSignIn','LastSeen','SignedOut',
+                                'Status','Reason','MarkedBy','UpdatedAt'], []);
 env.__mkSheet('Ranks', 4, ['Name','Rank'], [['Aidan Eugene','Executive Agent'], ['Neil Ramnanan','Exec. Agent'], ['Nerisa Arman','Unit Manager']]);
 env.__mkSheet('Competencies', 5, ['Order','Competency','Definition','Behaviours'],
   [[1,'Courtesy & Interpersonal Skills','d','one'], [2,'Responsiveness','d','one']]);
@@ -145,18 +149,37 @@ ok('the checkpoint and the two nudges run daily', installed.filter(t => /everyDa
 env.installTriggers();
 ok('running the installer again leaves five, not ten', env.ScriptApp.getProjectTriggers().length === 5);
 
-console.log('\nAnd the daily ones turn a weekend fire away themselves:\n');
+console.log('\nThe branch works around the clock, so the day\'s record decides, not the calendar:\n');
 const mailBefore = () => env.__calls.mail;
 const FIRE = { authMode: 'FULL', triggerUid: '8811', 'day-of-month': 22 };
-NOW = new Date('2026-08-22T15:05:00');                      // a Saturday
+// A Saturday nobody worked: the register is empty and nothing was filed.
+NOW = new Date('2026-08-22T15:05:00');
 env.resetRequestMemo_();
 let m0 = mailBefore();
-ok('the checkpoint fired on a Saturday sends nothing', /Weekend/.test(env.sendCheckpoint(FIRE)) && mailBefore() === m0);
-ok('nor does the midday nudge', /Weekend/.test(env.remindMidday(FIRE)) && mailBefore() === m0);
-ok('nor the three o\'clock one', /Weekend/.test(env.remindCheckpoint(FIRE)) && mailBefore() === m0);
+ok('a Saturday nobody worked sends nothing', /Nobody signed in/.test(env.sendCheckpoint(FIRE)) && mailBefore() === m0);
+ok('nor does the midday nudge', /Nobody signed in/.test(env.remindMidday(FIRE)) && mailBefore() === m0);
+ok('nor the three o\'clock one', /Nobody signed in/.test(env.remindCheckpoint(FIRE)) && mailBefore() === m0);
+
+// The same Saturday, with somebody at a desk. This is the case the old
+// weekday rule got wrong: it refused a day the branch had actually worked.
+const satRow = { Date: '2026-08-22', StaffId: 'sasha', Name: 'Sasha Lalla', FirstSignIn: '08:04', Status: 'in' };
+env.__sheets['Attendance']._grid.push(env.ATT.head.map(h => satRow[h] || ''));
+env.resetRequestMemo_();
+ok('but a Saturday somebody worked gets its checkpoint', !/Nobody signed in/.test(env.sendCheckpoint(FIRE)) && mailBefore() > m0);
+m0 = mailBefore();
+env.__sheets['Attendance']._grid.pop();
 env.resetRequestMemo_();
 env.sendCheckpoint();
-ok('but a person running it on a Saturday from the editor still gets the mail', mailBefore() === m0 + 1);
+ok('and a person running it from the editor is never turned away', mailBefore() === m0 + 1);
+
+console.log('\nAnd the script is kept warm at every hour, not only office ones:\n');
+const reads = env.__calls.getValue;
+NOW = new Date('2026-08-22T23:40:00');                      // a Saturday night
+env.keepWarm();
+ok('a Saturday night still warms it', env.__calls.getValue > reads, 'reads ' + reads + ' -> ' + env.__calls.getValue);
+NOW = new Date('2026-08-19T03:15:00');                      // a Wednesday, small hours
+env.keepWarm();
+ok('and so does three in the morning', env.__calls.getValue > reads + 1);
 NOW = new Date('2026-08-19T15:05:00');                      // back to the Wednesday
 env.resetRequestMemo_();
 m0 = mailBefore();

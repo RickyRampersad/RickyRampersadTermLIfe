@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-09a';
+var SCRIPT_VERSION = '2026-09-09b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2293,7 +2293,7 @@ function checkpointHtml_(r) {
 }
 
 function sendCheckpoint(dateOpt) {
-  if (firedAtWeekend_(dateOpt)) return 'Weekend — no checkpoint.';
+  if (nothingToReport_(dateOpt)) return 'Nobody signed in and nothing was filed — no checkpoint.';
   var r = checkpointReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
@@ -2491,24 +2491,44 @@ function listTriggers() {
  *  It is not a guarantee — Google does not promise a warm container — but it
  *  costs one trivial execution every ten minutes and the alternative is a
  *  member of staff staring at "Signing in" for half a minute. */
-/* Whether a timed run should happen at all. A script project may carry at
-   most twenty triggers, and this one used to spend fifteen of them on five
-   weekday copies each of the checkpoint and the two nudges — so the day Branch
-   Intelligence joined the project, its own six could not be installed: "This
-   script has too many triggers". Each of those three now runs once a day and
-   asks this instead. A person running the function from the editor is not a
-   trigger and is never turned away; only a fire on a Saturday or Sunday is. */
-function firedAtWeekend_(e) {
+/* Whether a timed run has anything to report.
+
+   THE CALENDAR NO LONGER DECIDES. This used to skip Saturday and Sunday
+   outright, which is a rule about office hours and not about this branch —
+   the branch works around the clock, and a Saturday somebody actually worked
+   deserves its checkpoint every bit as much as a Tuesday. So the day's own
+   record decides instead: nobody signed in and nothing filed means there is
+   nothing to send, on any day of the week; one person at a desk means there
+   is, on any day of the week.
+
+   That is also the rule that was really wanted when the weekday copies were
+   collapsed. A script project carries at most twenty triggers, and this one
+   used to spend fifteen on five weekday copies each of the checkpoint and the
+   two nudges — so the day Branch Intelligence joined, its six could not be
+   installed. Each of the three now runs once a day and asks this.
+
+   If the record cannot be read, the mail goes out: a checkpoint nobody needed
+   is a smaller failure than a day that went unreported. A person running the
+   function from the editor is never turned away. */
+function nothingToReport_(e) {
   if (!e || !e.triggerUid) return false;    // a person, not the clock
-  var d = new Date().getDay();
-  return d === 0 || d === 6;
+  var day = todayISO_();
+  try {
+    var att = attendanceFor_({ staffId: '', manager: true }, day, shiftDays_(day, 1)) || [];
+    if (att.some(function (o) { return o.at || o.status === 'absent'; })) return false;
+  } catch (err) { return false; }
+  try {
+    if (allEntries_().some(function (r) { return String(r.Date || '').slice(0, 10) === day; })) return false;
+  } catch (err2) { return false; }
+  return true;
 }
 
+/* Every ten minutes, every hour, every day of the week. It used to stand down
+   overnight and at weekends, which meant the container was cold at exactly the
+   times somebody working late or on a Saturday came to sign in — half a minute
+   of "Signing in" for the person least able to ask anybody about it. It reads
+   one cell; running it round the clock costs nothing worth counting. */
 function keepWarm() {
-  var h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
-  var d = new Date().getDay();
-  if (d === 0 || d === 6) return;      // not at the weekend
-  if (h < 7 || h > 18) return;         // not overnight
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
 }
 
@@ -2527,7 +2547,7 @@ function installTriggers() {
   // 3pm checkpoint. Apps Script fires within the hour, so the mail lands
   // between 3 and 4 — while the last block is still running. One trigger a
   // day, not one per weekday: the function turns a weekend fire away itself
-  // (firedAtWeekend_), and the twenty-trigger limit on a project is shared
+  // (nothingToReport_), and the twenty-trigger limit on a project is shared
   // with Branch Intelligence.
   ScriptApp.newTrigger('sendCheckpoint').timeBased()
     .everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
@@ -2686,7 +2706,7 @@ function nudge_(staffId, date, missing, heading, message) {
 /** Noon. Anyone whose morning is still blank hears about it while the
  *  afternoon can still be salvaged. */
 function remindMidday(e) {
-  if (firedAtWeekend_(e)) return 'Weekend — nobody nudged.';
+  if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];
@@ -2713,7 +2733,7 @@ function remindMidday(e) {
 /** Three o'clock. Blocks 1–3 should be behind them; the last runs to 4.
  *  Whoever is short gets the list, and is asked for the day's close-off. */
 function remindCheckpoint(e) {
-  if (firedAtWeekend_(e)) return 'Weekend — nobody nudged.';
+  if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];
@@ -3944,8 +3964,15 @@ var MOMENT_ABOUT_MAX = 80;
    The last of those is the one that matters most, because it is what makes a
    repeat countable. A person will never write "this is the fourth reminder";
    they will write "the spreadsheet" four times, and the tracker can count. */
+/* Four kinds, and the fourth is the one the branch asked for by name: a
+   person saying where they fell short themselves, before anybody writes to
+   them about it. It is not the same as being asked — an ask comes from
+   outside and a shortfall is owned — and a record that only holds what other
+   people noticed is a record of supervision rather than of a person's
+   quarter. It reads against the same competency and the same job document. */
 var MOMENT_KINDS = [
   { v: 'Asked',   label: 'Asked or reminded' },
+  { v: 'Short',   label: 'Where I fell short' },
   { v: 'Thanked', label: 'Thanked or commended' },
   { v: 'Noted',   label: 'Noted for the record' }
 ];
@@ -3976,10 +4003,11 @@ function appendByHead_(sh, head, obj) {
    from the Branch Manager" is the fact an appraisal needs, and counting is
    the only honest way to get it. Grouped on a normalised subject so
    "Morning spreadsheet" and "morning spreadsheet." are one thing. */
-function momentAsks_(moments) {
+function momentAsks_(moments, kind) {
+  var want = kind || 'Asked';
   var by = {};
   (moments || []).forEach(function (m) {
-    if (m.kind !== 'Asked') return;
+    if (m.kind !== want) return;
     var k = String(m.about || m.what || '').toLowerCase()
       .replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
     if (!k) return;
@@ -4046,7 +4074,9 @@ function noteMoment_(data, profile) {
      count is the whole point — so it is required for an ask and optional for
      the rest. */
   var about = String(data.about || '').replace(/\s+/g, ' ').trim().slice(0, MOMENT_ABOUT_MAX);
-  if (kind === 'Asked' && !about) {
+  /* A shortfall is counted the same way an ask is, and for the same reason:
+     the second time the same thing is missed is the finding, not the first. */
+  if ((kind === 'Asked' || kind === 'Short') && !about) {
     return { ok: false, error: 'Say what it was about in a few words — that is what counts a repeat.' };
   }
 
@@ -4263,10 +4293,13 @@ function standing_(profile, staffId) {
      for — read off the same moments, so the quarter view and the appraisal
      cannot disagree about either. */
   var asks = momentAsks_(moments);
+  /* Owned before anybody had to write about it — kept apart from the asks,
+     because in a review those two sentences are not the same sentence. */
+  var shortfalls = momentAsks_(moments, 'Short');
   return { ok: true, staffId: staffId, role: role, quarter: q, from: from, to: to, today: today,
            daysIn: workdays_(from, to), daysLeft: workdays_(to, qr.to),
            goals: outGoals, competencies: outComps, facts: f,
-           asks: asks,
+           asks: asks, shortfalls: shortfalls,
            thanked: moments.filter(function (m) { return m.kind === 'Thanked'; }),
            written: moments.filter(function (m) { return m.kind !== 'Noted'; }).length,
            training: trainingStanding_(staffId, from, to),
