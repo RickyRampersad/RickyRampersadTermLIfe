@@ -43,6 +43,10 @@ const COMPS = [
   { competency:'Positive Energy', definition:'Lifts the room.', behaviours:['Smiles'], signals:[], lines:[], moments:[] } ];
 const STANDING = { ok:true, staffId:'demo', role:'ssa', quarter:'2026-Q3', from:'2026-07-01', to:'2026-09-08', today:'2026-09-07',
                    daysIn:49, daysLeft:17, goals:GOALS, competencies:COMPS, salesforce:true, setup:{ goals:true, competencies:true }, side:'self',
+                   asks:[{ about:'Morning spreadsheet', n:4, dates:['2026-09-02','2026-09-04','2026-09-05','2026-09-08'], last:'2026-09-08', competency:'Reliability', from:['Branch Manager'] },
+                         { about:'Filing the renewal pack', n:1, dates:['2026-08-28'], last:'2026-08-28', competency:'Reliability', from:['Unit Manager'] }],
+                   thanked:[{ id:'t1', date:'2026-08-30', competency:'Customer Service', what:'Client wrote in to say she was looked after', kind:'Thanked', source:'A client', about:'' }],
+                   written:5,
                    training:{ covered:[{ date:'2026-08-12', topic:'AS400 screens', trainer:'Demo Lead', achieved:'', result:'Confident' }], taught:[],
                               planned:[{ activity:'Ingenium end to end', objective:'', dates:'Sept – Oct', facilitator:'' }], signedOff:1, planTotal:2,
                               actions:[{ action:'Run the dues list alone', source:'Experiential', why:'' }], actionsDone:0 }, jobDoc:true };
@@ -93,6 +97,16 @@ async function session(b, withStanding, noted) {
   ok('and how it stands against the target', /landed 78% · target 90%/.test(t) && /landed 100% · target 90%/.test(t));
   ok('a goal with no blocks says so', /no blocks yet/.test(t));
   ok('the competencies with how much sits behind each', /Customer Service · 1 moment/.test(t));
+  // Elizabeth was reminded four times in one morning about the same
+  // spreadsheet and nothing in the record could say so. The count is read off
+  // the moments rather than remembered by anybody.
+  ok('the thing asked four times is named, with the count',
+     /Morning spreadsheet — asked 4 times/.test(t), (t.match(/Morning spreadsheet[^\n]{0,80}/) || ['not found'])[0]);
+  ok('and who kept asking, and when it was last asked',
+     /by the Branch Manager/.test(t) && /last on 8 Sep/i.test(t), (t.match(/asked 4 times[^\n]{0,90}/) || [''])[0]);
+  ok('the one-off is counted but not listed', /1 other thing asked once, and done/.test(t));
+  ok('and what she was thanked for is on the same card',
+     /Thanked for/i.test(t) && /Client wrote in to say she was looked after/.test(t));
   ok('what they were trained on this quarter', /12 Aug — AS400 screens · with Demo Lead · Confident/.test(t), (t.match(/12 Aug[^\n]*/) || [''])[0]);
   ok('and what is still to cover, from the plan and the development actions', /Ingenium end to end · Sept – Oct/.test(t) && /Run the dues list alone · experiential/.test(t));
   ok('with the plan\'s count', /1 of 2 on the training plan signed off/.test(t));
@@ -122,12 +136,35 @@ async function session(b, withStanding, noted) {
   ok('and its moments', /20 Aug — Calmed a client who had been told three different things/.test(t));
   ok('one with nothing on record says so', /Nothing on record yet. Note a moment when this shows./.test(t));
 
-  console.log('\nNoting a moment:\n');
+  console.log('\nWhat she was written to about — an ask, which is what the form opens on:\n');
+  // Elizabeth was reminded four times in one morning about the same
+  // spreadsheet and nothing in the record could say so. An ask now carries who
+  // it came from and what it was about, and the subject is what counts the
+  // repeat — so the form will not take an ask without one.
   await s.page.click('button:has-text("Positive Energy")');
+  ok('the form opens on the ask, and asks for the subject',
+     await s.page.locator('input[placeholder^="What it was about"]').count() === 1);
+  await s.page.locator('input[placeholder="What was said, in a line"]').fill('Reminded again to fill the morning spreadsheet');
+  ok('an ask with no subject cannot be sent',
+     await s.page.locator('button:has-text("Note it")').isDisabled());
+  await s.page.locator('input[placeholder^="What it was about"]').fill('Morning spreadsheet');
+  await s.page.click('button:has-text("Note it")');
+  await s.page.waitForTimeout(700);
+  ok('it goes out as an ask, with who from and what about',
+     noted.length === 1 && noted[0].kind === 'Asked' && noted[0].about === 'Morning spreadsheet' &&
+     noted[0].source === 'Branch Manager' && /morning spreadsheet/i.test(noted[0].what),
+     JSON.stringify(noted[0]));
+
+  console.log('\nAnd a plain note, which needs no subject:\n');
+  await s.page.click('button:has-text("Noted for the record")');
+  await s.page.waitForTimeout(200);
+  ok('the subject field goes away', await s.page.locator('input[placeholder^="What it was about"]').count() === 0);
   await s.page.locator('input[placeholder="What happened, in a line"]').fill('Covered the front desk through lunch so nobody waited');
   await s.page.click('button:has-text("Note it")');
   await s.page.waitForTimeout(700);
-  ok('one moment went out', noted.length === 1, String(noted.length));
+  ok('two moments went out', noted.length === 2, String(noted.length));
+  ok('the second is a plain note', noted[1] && noted[1].kind === 'Noted' && !noted[1].about, JSON.stringify(noted[1]));
+  noted.shift();   // the assertions below are about the plain note
   ok('with the competency and the line, and nothing else', noted[0] && noted[0].competency === 'Positive Energy' && /Covered the front desk/.test(noted[0].what) && noted[0].staffId === 'demo' && noted[0].rating === undefined, JSON.stringify(noted[0]));
   t = await s.page.locator('body').innerText();
   ok('and the screen says so', /Noted\./.test(t));

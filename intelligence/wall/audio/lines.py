@@ -18,6 +18,24 @@ RATE = '-12%'
 
 # Keyed by page: audio/narration/<key>/lineNN.mp3 folds into ../<key>.html.
 WALLS = {
+    'day': [                                     # The Day So Far
+        "This is the branch's own day.",
+        "Every other screen on this wall is about the client book. This one is about us.",
+        "The big number is what the branch has closed today.",
+        "Beside each desk, what is still open, what is late, and what has gone quiet.",
+        "Quiet means nobody has touched it in a week. A task with a date next month and no movement is not in hand.",
+        "The bars on the right are the day's blocks, and whether each has been filed.",
+        "No client is named here. Counts only.",
+    ],
+    'blocks': [                                  # The Day In Blocks
+        "This is how the day was spent.",
+        "Four blocks, and what each one is for.",
+        "The number is how many desks have filed that block.",
+        "A block is filed when somebody writes what they actually did in it.",
+        "Green means filed. Gold means still owed.",
+        "A day with every block filed is a day the branch can account for.",
+        "That is the whole ask.",
+    ],
     'index': [                                   # The 45-Day Line
         "This is the forty five day line.",
         "Past the grace period. Still early enough that a phone call works.",

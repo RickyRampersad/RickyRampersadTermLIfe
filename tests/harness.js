@@ -7,7 +7,7 @@ function makeEnv(opts = {}) {
                       put: (k, v) => { cacheMap[k] = String(v); },
                       remove: k => { delete cacheMap[k]; },
                       removeAll: ks => ks.forEach(k => delete cacheMap[k]) };
-  const calls = { getValues: 0, setValue: 0, setValues: 0, getLastRow: 0,
+  const calls = { getValues: 0, getValue: 0, setValue: 0, setValues: 0, getLastRow: 0,
                   getLastColumn: 0, appendRow: 0, deleteRow: 0, mail: 0 };
   const sheets = {};
 
@@ -39,6 +39,11 @@ function makeEnv(opts = {}) {
             out.push(seg);
           }
           return out;
+        },
+        getValue() {
+          calls.getValue++;
+          const row = grid[r - 1] || [];
+          return row[c - 1] === undefined ? '' : row[c - 1];
         },
         setValue(v) {
           calls.setValue++;

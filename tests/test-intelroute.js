@@ -33,7 +33,7 @@ env.__mkSheet('KPI Log', 2, ['Timestamp','Date','StaffId','Name','Grade','Status
 // Each wall read is stubbed: this is about the routing, not about what the
 // branch's figures happen to be today.
 const asked = [];
-['iActWall45_', 'iActDelivery_', 'iActLicence_', 'iActPossession_', 'iActBook_'].forEach(fn => {
+['iActWall45_', 'iActDelivery_', 'iActLicence_', 'iActPossession_', 'iActBook_', 'iActDay_'].forEach(fn => {
   env[fn] = b => { asked.push(fn); return env.iOk_({ from: fn, data: { rows: [] } }); };
 });
 const post = body => {
@@ -84,6 +84,11 @@ ok('the tracker still answers ping', aloneHas.ok === true);
 ok('and says the intelligence code is not here', aloneHas.has && aloneHas.has.intel === false, JSON.stringify(aloneHas.has));
 ok('and an intel action falls through to the token check',
    JSON.parse(alone.doPost({ postData: { contents: '{"action":"intel.book"}' } }).getContent()).authRequired === true);
+
+console.log('\nThe branch\'s own day is a wall read too — no token, aggregates only:\n');
+const day = post({ action: 'intel.day' });
+ok('it answers without a token', day.ok && !day.authRequired, JSON.stringify(day).slice(0, 90));
+ok('and it is the day handler that answered', asked.indexOf('iActDay_') > -1, asked.join());
 
 console.log('\nIntelligence.gs can be pasted whole, because it declares no router of its own:\n');
 ok('no doGet or doPost anywhere in it', !/^function do(Get|Post)\(/m.test(intel));
@@ -141,6 +146,13 @@ ok('sixteen triggers in all — the tracker\'s five, the intelligence\'s six, an
 ok('which leaves room, where seventeen plus six did not', all.length <= 20);
 ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
 ok('and each wall feed has its own night-time build', ['intelRebuildWall45','intelRebuildDelivery','intelRebuildLicence','intelRebuildPossession','intelRebuildBook'].every(fn => all.some(t => t.getHandlerFunction() === fn)));
+// All five used to fire at three and compete; the 155-second one lost and
+// served a two-day-old copy while the other four rebuilt around it.
+const wallHours = all.filter(t => /^intelRebuild(Wall45|Possession|Licence|Delivery|Book)$/.test(t.getHandlerFunction()))
+  .map(t => (t.chain.join().match(/atHour\((\d+)\)/) || [])[1]);
+ok('and no two of them share an hour', new Set(wallHours).size === 5, wallHours.join(','));
+ok('the slowest goes first, and all five are done before the branch opens',
+   wallHours.every(h => Number(h) >= 2 && Number(h) <= 7), wallHours.join(','));
 
 fs.unlinkSync(both);
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');

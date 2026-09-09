@@ -253,6 +253,42 @@ Saving the file is not deploying it.
 
 ---
 
+## 3¼. The branch's own day — two screens the wall did not have
+
+For a fortnight every screen on the wall was about the **client book**: what is
+owed, what is undelivered, whose licence is up, whose birthday it is. Not one
+of them said how the branch itself was doing today. These two do, and they open
+the rotation because a room reads the top of the hour.
+
+| Screen | What it answers |
+|---|---|
+| **The day so far** (`day.html`) | Salesforce tasks closed today per desk, what is still open, late and gone quiet, who signed in, and which of the day's blocks each desk has filed |
+| **The day in blocks** (`blocks.html`) | The four blocks, what each is for, and how many desks have filed each one |
+
+Both read one feed, **`intel.day`**, and it differs from the other five in two
+ways that matter:
+
+- **It is live, not stored.** "How the day is going" cannot be a copy built at
+  three in the morning, so this feed skips the wall store. It is cheap anyway —
+  the tracker caches its Salesforce read for twelve minutes, so most of these
+  never reach Salesforce. The screens refresh every five minutes rather than
+  every thirty.
+- **It reads the tracker.** `sfkMetricsSafe_`, `publicRoster_`,
+  `latestEntries_` and `attendanceToday_` all live in `KPI.gs`, so this screen
+  only works with both files in one project — which is how the branch runs it.
+  Without the tracker it says so rather than drawing zeros.
+
+**Aggregates only, like every other wall read.** Counts, and the branch's own
+staff names — which are already on the wall in that office — and never a task
+subject, a client or a policy number. `wallData_` in `KPI.gs` carries subjects
+and stays manager-only for exactly that reason; these screens have no sign-in
+and hang where clients walk past.
+
+A block only counts against a desk that is **scheduled** for it. Counting every
+block for everybody made a four-block branch look permanently a quarter behind.
+
+---
+
 ## 3½. The wall store — five screens built once a night
 
 The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
@@ -298,7 +334,12 @@ date.
   builder asked for.
 
 `intelInstallTriggers` now installs eleven; with the tracker's five that is
-sixteen, under the project's limit of twenty. `tests/test-wallstore.js`
+sixteen, under the project's limit of twenty. **Each wall feed rebuilds in its
+own hour** — the 45-day line at 3, possession 4, licence 5, delivery 6,
+birthdays 7. They all fired at three to begin with and competed: on 9 September
+four rebuilt between 03:23 and 03:55 and the 45-day line, the one that takes
+155 seconds, was still serving Monday's copy. The slowest goes first and every
+one is finished long before the branch opens. `tests/test-wallstore.js`
 drives all of it through the tracker's real `doPost`.
 
 ---
