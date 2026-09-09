@@ -9,9 +9,14 @@
  *
  * WHY THIS FILE AND NOT A SCRIPT ON MY SIDE: ~1,000 rows need writing.
  * Salesforce's composite API takes 200 records per call, so this does the
- * whole book in a handful of requests. It reuses the SalesforceSync
- * connection already stored in Script Properties — if ☁ sfTest works, this
- * works. Every function is prefixed tm so nothing collides.
+ * whole book in a handful of requests.
+ *
+ * SELF-CONTAINED. It carries its own Salesforce login and query helpers, so
+ * it runs whether or not SalesforceSync.gs or WallBoard.gs are in the
+ * project. It reads the SAME Script Properties they use — SF_KEY, SF_SECRET,
+ * SF_USER, SF_PASS — so there is nothing new to configure if the sync has
+ * ever worked here. Every function is prefixed tm so nothing collides.
+ * Run tmCheck() first if anything looks off; it diagnoses the connection.
  *
  * ORDER OF OPERATIONS
  *   1. tmDryRun()      — reports exactly what WOULD change. Writes nothing.
@@ -35,6 +40,93 @@ var TM = {
   SHEET_ACCOUNT: 'Client Account',
   SHEET_TOKEN: 'Token',
 };
+
+/* ===================== Salesforce connection (own copy) =====================
+   Deliberately duplicated rather than borrowed: this file must run in a
+   project that may not contain SalesforceSync.gs. Same Script Properties,
+   same 50-minute token cache, so it shares the session with the sync when
+   both are present. */
+
+function tmProps_() { return PropertiesService.getScriptProperties(); }
+
+function tmToken_() {
+  var p = tmProps_();
+  var cached = p.getProperty('SF_TOKEN'), when = Number(p.getProperty('SF_TOKEN_AT') || 0);
+  if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
+
+  var key = p.getProperty('SF_KEY'), secret = p.getProperty('SF_SECRET');
+  var user = p.getProperty('SF_USER'), pass = p.getProperty('SF_PASS');
+  if (!key || !secret || !user || !pass)
+    throw new Error('Salesforce is not set up in this project.\n\nScript Properties need SF_KEY, SF_SECRET, ' +
+      'SF_USER and SF_PASS (password + security token, no space between them).\n\n' +
+      'Project Settings → Script Properties → Add script property. Run tmCheck() to re-test.');
+
+  var res = UrlFetchApp.fetch('https://login.salesforce.com/services/oauth2/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { grant_type: 'password', client_id: key, client_secret: secret,
+               username: user, password: pass },
+  });
+  var body = res.getContentText();
+  if (res.getResponseCode() !== 200) {
+    var hint = '';
+    if (body.indexOf('invalid_grant') > -1)
+      hint = '\n\nUsual causes: SF_PASS must be your password with the security token appended (no space), ' +
+             'and the Connected App must allow "All users may self-authorize".';
+    throw new Error('Salesforce login failed: ' + body + hint);
+  }
+  var tok = JSON.parse(body);
+  p.setProperty('SF_TOKEN', JSON.stringify(tok));
+  p.setProperty('SF_TOKEN_AT', String(new Date().getTime()));
+  return tok;
+}
+
+/** SOQL, following pagination. */
+function tmQuery_(soql) {
+  var tok = tmToken_();
+  var url = tok.instance_url + '/services/data/' + TM.API + '/query?q=' + encodeURIComponent(soql);
+  var out = [];
+  while (url) {
+    var res = UrlFetchApp.fetch(url, {
+      headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true,
+    });
+    if (res.getResponseCode() === 401) {                    // token died mid-flight — one retry
+      tmProps_().deleteProperty('SF_TOKEN');
+      tok = tmToken_();
+      res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true });
+    }
+    if (res.getResponseCode() !== 200)
+      throw new Error('SOQL failed (' + res.getResponseCode() + '): ' + res.getContentText().slice(0, 300));
+    var j = JSON.parse(res.getContentText());
+    out = out.concat(j.records || []);
+    url = j.nextRecordsUrl ? tok.instance_url + j.nextRecordsUrl : null;
+  }
+  return out;
+}
+
+/** Diagnose everything this migration depends on. Run me first if stuck. */
+function tmCheck() {
+  var lines = [];
+  var p = tmProps_();
+  ['SF_KEY', 'SF_SECRET', 'SF_USER', 'SF_PASS'].forEach(function (k) {
+    lines.push((p.getProperty(k) ? '✅' : '❌') + ' Script Property ' + k);
+  });
+  try {
+    var tok = tmToken_();
+    lines.push('✅ Salesforce login OK — ' + tok.instance_url);
+  } catch (e) { lines.push('❌ Salesforce login: ' + e.message); }
+  try {
+    var n = tmQuery_('SELECT COUNT(Id) n FROM Risk_Details__c WHERE Portal_Token__c != null');
+    lines.push('✅ Portal_Token__c exists — ' + ((n[0] && n[0].n) || 0) + ' rows already carry one');
+  } catch (e) { lines.push('❌ Portal_Token__c: ' + e.message); }
+  try {
+    var sh = renewalsSheet_();
+    lines.push('✅ Renewals tab found — ' + (sh.getLastRow() - 1) + ' rows');
+  } catch (e) { lines.push('❌ Renewals tab: ' + e.message + '  (is this the renewal sheet\'s project?)'); }
+  var msg = lines.join('\n');
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert('Token migration — connection check\n\n' + msg); } catch (e) {}
+  return msg;
+}
 
 /* ============================ the sheet side ============================ */
 
@@ -65,7 +157,7 @@ function tmSheetTokens_() {
 /* ========================== the Salesforce side ========================== */
 
 function tmRisks_() {
-  return sfQuery_(
+  return tmQuery_(
     'SELECT Id, Account__c, Portal_Token__c FROM Risk_Details__c ' +
     'WHERE Account__c != null ORDER BY Account__c'
   );
@@ -74,7 +166,7 @@ function tmRisks_() {
 /** Bulk PATCH via the composite sobjects endpoint, 200 at a time. */
 function tmWrite_(updates) {
   if (!updates.length) return { ok: 0, fail: 0, errors: [] };
-  var tok = sfToken_();
+  var tok = tmToken_();
   var ok = 0, fail = 0, errors = [];
   for (var i = 0; i < updates.length; i += TM.BATCH) {
     var slice = updates.slice(i, i + TM.BATCH);
@@ -227,6 +319,7 @@ function tmVerify() {
 /** Menu — appears under its own heading so it can't be clicked by accident. */
 function tmOnOpen() {
   SpreadsheetApp.getUi().createMenu('🔑 Token Migration')
+    .addItem('0. Check the connection', 'tmCheck')
     .addItem('1. Dry run (writes nothing)', 'tmDryRun')
     .addItem('2. Migrate sheet tokens → Salesforce', 'tmMigrate')
     .addSeparator()
