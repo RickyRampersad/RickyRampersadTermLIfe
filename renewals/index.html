@@ -323,6 +323,9 @@ var WALL_DATA = {
       {line:"Property", kind:"Renewal due — waiting on client",                since:"2026-09-04"}
     ]
   },
+  /* payments post on TRANSACTIONS__c, not the risk rows — the month's
+     collected figure reads from there (motor + property record types) */
+  billing: {month:"September 2026", motorPaid:13887, propPaid:0},
   next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
 };
 
@@ -445,6 +448,7 @@ function sRail(D){
 
 function paidCell(r){
   if(r.paid>0) return '<td style="color:var(--good)"><b>'+money(r.paid)+'</b></td>';
+  if(r.acctPaid>0) return '<td><span class="chip good">'+money(r.acctPaid)+' on acct</span></td>';
   if(r.renewed) return '<td><span class="chip warn">not recorded</span></td>';
   return '<td style="color:var(--faint)">—</td>';
 }
@@ -663,9 +667,10 @@ function sMoney(D){
   var C=2*Math.PI*74, fm=pm/tot;
   var top=D.motor.concat(D.property).slice().sort(function(a,b){return (b.prem||0)-(a.prem||0)}).slice(0,5);
   var mx=top[0].prem||1;
+  var coll=(D.billing?(D.billing.motorPaid||0)+(D.billing.propPaid||0):s.collected);
   return '<div class="kick">The money</div>'
     +'<h2>'+moneyShort(tot)+' renews this month — property carries '+Math.round(pp/tot*100)+'% of it</h2>'
-    +'<p class="lede">Renewed so far: <b style="color:var(--good)">'+money(s.written)+'</b> re-written · payments recorded against the new cycles: <b style="color:var(--warn)">'+money(s.collected)+'</b>.</p>'
+    +'<p class="lede">Renewed so far: <b style="color:var(--good)">'+money(s.written)+'</b> re-written · collected on the transactions ledger: <b style="color:var(--good)">'+money(coll)+'</b>.</p>'
     +'<div class="body"><div class="cols">'
     +'<div class="panel"><h3>Biggest renewals of the month</h3><div class="rows">'
     +top.map(function(r){
@@ -687,7 +692,7 @@ function sMoney(D){
     +'<div><i style="background:#37b1ec"></i>Motor · '+s.motorN+' risks<b>'+moneyShort(pm)+'</b></div>'
     +'<div><i style="background:#f5b93b"></i>Property · '+s.propN+' risks<b>'+moneyShort(pp)+'</b></div>'
     +'</div></div>'
-    +(s.collected===0?'<div class="note">No payments recorded yet against this month’s renewed cycles — as receipts land, post them to Payments Made in Salesforce and this wall starts counting the money in.</div>':'')
+    +'<div class="note">Payments post on the TRANSACTIONS ledger, and motor already shows '+money(D.billing?D.billing.motorPaid:0)+' in for the month — property transactions carry TT$0 billed, so reconcile the ledger and the property side lights up too.</div>'
     +'</div>'
     +'</div></div>';
 }

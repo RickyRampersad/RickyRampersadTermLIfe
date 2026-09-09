@@ -611,6 +611,10 @@ function clientPage_(p) {
     history: token ? historyForToken_(token) : [],
     comms: token ? commsForToken_(token) : [],
     vehicles: rows.length ? vehiclesForClient_(rows[0].client, rows[0].token, rows[0].email) : [],
+    // cross-sell: a client whose rows are all motor gets the home card
+    crossSell: (rows.length && typeof lineOf_ === 'function' &&
+                !rows.some(function (r) { return lineOf_(r.coverage, r.policy) === 'property'; }))
+               ? 'home' : '',
     agent: { name: CONFIG.AGENT_NAME, phone: CONFIG.AGENT_PHONE },
   });
   return t.evaluate().setTitle('Guardian Group — Policy Renewal')

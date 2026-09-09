@@ -218,6 +218,7 @@ function wbRenewalsWall_() {
                 prem: Math.round((r.Billing_Premiums__c || 0) * 100) / 100 };
     var tn = taskCount(r.Name, r.Account__c);
     if (tn) row.tasks = tn;
+    row.__acct = r.Account__c;                                // consumed by the intel pass below
     if (s) { row.renewed = true; row.newPrem = Math.round((s.Billing_Premiums__c || 0) * 100) / 100;
              row.paid = Math.round((s.Payments_Made__c || 0) * 100) / 100; }
     var isMotor = r.RecordType && r.RecordType.Name === 'Motor';
@@ -325,6 +326,84 @@ function wbRenewalsWall_() {
       });
     }
   }
+
+  // ---- the billing month, off TRANSACTIONS__c: this is where payments
+  // actually post (Payments_Made__c on risk rows stays empty), and it
+  // covers every line of the book, not just motor and property.
+  var billingTypes = wbQ_(
+    'SELECT RecordType.Name t, COUNT(Id) n, SUM(Total_Premium__c) prem, ' +
+    'SUM(Payments_Made__c) paid, SUM(Premium_Owed_Rev__c) owed ' +
+    'FROM TRANSACTIONS__c WHERE Renewal_Month__c = ' + (m + 1) +
+    ' AND Renewal_Year__c = ' + y + ' GROUP BY RecordType.Name ORDER BY COUNT(Id) DESC'
+  ).map(function (r) {
+    return { k: String(r.t || '?').replace(/^T-?\s*/i, ''), n: r.n,
+             prem: Math.round(r.prem || 0), paid: Math.round(r.paid || 0),
+             owed: (r.owed || 0) > 0 ? Math.round(r.owed) : 0 };
+  });
+  function typePaid(name) {
+    var hit = billingTypes.filter(function (x) { return new RegExp(name, 'i').test(x.k); })[0];
+    return hit ? hit.paid : 0;
+  }
+  // per-client payment state for this month's motor/property renewals
+  var payTx = wbQ_(
+    "SELECT ACCOUNT_NAME__c, Payments_Made__c, Premium_Owed_Rev__c FROM TRANSACTIONS__c " +
+    'WHERE Renewal_Month__c = ' + (m + 1) + ' AND Renewal_Year__c = ' + y +
+    " AND (RecordType.Name = 'T-MOTOR' OR RecordType.Name = 'T-PROPERTY') LIMIT 200"
+  );
+  var paidByAcct = {};
+  payTx.forEach(function (t) {
+    var k = norm(t.ACCOUNT_NAME__c);
+    if (!k) return;
+    paidByAcct[k] = (paidByAcct[k] || 0) + (t.Payments_Made__c || 0);
+  });
+
+  // ---- loyalty + cross-sell per renewal client, from the whole register
+  var dueAccts = {};
+  due.forEach(function (r) { if (r.Account__c) dueAccts[r.Account__c] = 1; });
+  var acctIntel = {};
+  var acctNames = Object.keys(dueAccts);
+  if (acctNames.length) {
+    var inList = acctNames.map(function (a) { return "'" + a.replace(/'/g, "\\'") + "'"; }).join(',');
+    wbQ_('SELECT Account__c, RecordType.Name, From__c FROM Risk_Details__c ' +
+         'WHERE Account__c IN (' + inList + ') LIMIT 2000')
+      .forEach(function (h) {
+        var k = norm(h.Account__c);
+        var o = acctIntel[k] = acctIntel[k] || { first: '9999', types: {} };
+        if (h.From__c && h.From__c < o.first) o.first = h.From__c;
+        if (h.RecordType && h.RecordType.Name) o.types[h.RecordType.Name] = 1;
+      });
+  }
+  function intelFor(acct) {
+    var o = acctIntel[norm(acct)];
+    if (!o) return null;
+    var yrs = o.first !== '9999' ? (y - Number(o.first.slice(0, 4))) : 0;
+    var gap = (o.types.Motor && !o.types.Property) ? 'home'
+            : (o.types.Property && !o.types.Motor) ? 'motor' : '';
+    return { yrs: yrs, gap: gap };
+  }
+  // stamp payment + intel onto the month's rows (live feed only — this
+  // never reaches the baked snapshot). acctPaid is the client's payments
+  // on this month's motor/property transactions — account level, because
+  // a receipt covers the account, not one risk row.
+  motor.concat(property).forEach(function (row) {
+    var a = row.__acct; delete row.__acct;
+    if (!a) return;
+    var p = paidByAcct[norm(a)];
+    if (p) row.acctPaid = Math.round(p);
+    var iv = intelFor(a);
+    if (iv) { row.yrs = iv.yrs; if (iv.gap) row.gap = iv.gap; }
+  });
+  var intelAgg = { clients: acctNames.length, sevenPlus: 0, motorOnly: 0, propertyOnly: 0, healthGap: 0, sumYears: 0 };
+  acctNames.forEach(function (a) {
+    var iv = intelFor(a);
+    if (!iv) return;
+    intelAgg.sumYears += iv.yrs;
+    if (iv.yrs >= 7) intelAgg.sevenPlus++;
+    if (iv.gap === 'home') intelAgg.motorOnly++;
+    if (iv.gap === 'motor') intelAgg.propertyOnly++;
+    var o = acctIntel[norm(a)];
+    if (o && !o.types.Health) intelAgg.healthGap++;
+  });
 
   // ---- the task picture (counts and generic lines only — never raw subjects)
   function one(q) { return (wbQ_(q)[0] || {}).n || 0; }
@@ -472,6 +551,12 @@ function wbRenewalsWall_() {
     motor: motor,
     property: property,
     values: { motor: valMotor, property: valProperty },
+    billing: { month: names[m] + ' ' + y, types: billingTypes,
+               motorPaid: typePaid('motor'), propPaid: typePaid('property') },
+    intel: { clients: intelAgg.clients,
+             avgYears: intelAgg.clients ? Math.round(intelAgg.sumYears / intelAgg.clients * 10) / 10 : 0,
+             sevenPlus: intelAgg.sevenPlus, motorOnly: intelAgg.motorOnly,
+             propertyOnly: intelAgg.propertyOnly, healthGap: intelAgg.healthGap },
     trend: { months: trendMonths,
              totals: { due: tTot.due, ren: tTot.ren, lost: tTot.lost, sold: tTot.sold, open: tTot.open,
                        lostPrem: Math.round(tTot.lostPrem), renPrem: Math.round(tTot.renPrem) },

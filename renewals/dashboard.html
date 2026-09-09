@@ -190,6 +190,14 @@
     </div>
   </div>
 
+  <div class="sec" id="secBilling">
+    <div class="kick">The billing month — every line, off the transactions ledger</div>
+    <div class="grid g2">
+      <div class="panel" id="billPanel"></div>
+      <div class="panel" id="intelPanel"></div>
+    </div>
+  </div>
+
   <div class="sec" id="secNext">
     <div class="kick">Already knocking</div>
     <div class="grid g5" id="nextKpis" style="grid-template-columns:repeat(3,1fr)"></div>
@@ -316,6 +324,29 @@ var WALL_DATA = {
       {line:"Property", kind:"Renewal due — waiting on client",                since:"2026-09-04"}
     ]
   },
+  /* the billing month, straight off TRANSACTIONS__c — every line of the
+     book that renews this month, by record type, with what has actually
+     been paid. This is where payments post (Payments_Made__c on the risk
+     rows stays empty), so Collected reads from here.                    */
+  billing: {
+    month:"September 2026",
+    types:[
+      {k:"Health · individual", n:42, prem:290477,  paid:42318},
+      {k:"Health · group",      n:9,  prem:199085,  paid:0, owed:115895},
+      {k:"Motor",               n:9,  prem:31840,   paid:13887},
+      {k:"Pensions · group",    n:8,  prem:219121,  paid:0, owed:197286},
+      {k:"Property",            n:6,  prem:0,       paid:0},
+      {k:"Life · group",        n:5,  prem:0,       paid:0},
+      {k:"Loans & rentals",     n:2,  prem:16000,   paid:0, owed:16000}
+    ],
+    motorPaid:13887, propPaid:0
+  },
+  /* loyalty + cross-sell across this month's renewal clients, aggregated
+     from the whole register (anonymous counts only in this public file) */
+  intel: {
+    avgYears:5.7, maxYears:7, sevenPlus:4,
+    motorOnly:3, propertyOnly:2, healthGap:15, clients:15
+  },
   next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
 };
 
@@ -373,7 +404,10 @@ function drawKpis(){
   var open=rows.filter(function(r){return !r.renewed&&!r.off});
   var overdue=open.filter(function(r){return r.d<t});
   var openBook=open.reduce(function(a,r){return a+(r.prem||0)},0);
-  var collected=ren.reduce(function(a,r){return a+(r.paid||0)},0);
+  // payments post on TRANSACTIONS, not the risk rows — read them from there
+  var B=WALL_DATA.billing;
+  var collected=B?( (F.line!=="property"?(B.motorPaid||0):0) + (F.line!=="motor"?(B.propPaid||0):0) )
+                :ren.reduce(function(a,r){return a+(r.paid||0)},0);
   var label=(F.line==="all"?"Motor & property":F.line==="motor"?"Motor":"Property");
   $("#kpiKick").textContent=esc(WALL_DATA.monthLabel)+" · "+label;
   $("#kpis").innerHTML=
@@ -381,7 +415,7 @@ function drawKpis(){
     +'<div class="kpi gold"><div class="k">Renewed</div><div class="v">'+ren.length+'</div><div class="d">'+moneyShort(ren.reduce(function(a,r){return a+(r.newPrem||r.prem||0)},0))+' re-written</div></div>'
     +'<div class="kpi"><div class="k">Still open</div><div class="v">'+open.length+'</div><div class="d">'+moneyShort(openBook)+' to bring home</div></div>'
     +'<div class="kpi"><div class="k">Overdue</div><div class="v">'+overdue.length+'</div><div class="d">'+(overdue.length?'call these first':'nothing due is unrenewed')+'</div></div>'
-    +'<div class="kpi"><div class="k">Collected</div><div class="v"><small>TT$</small>'+Math.round(collected).toLocaleString()+'</div><div class="d">'+(collected?'posted to Payments Made':'no payments recorded yet')+'</div></div>';
+    +'<div class="kpi"><div class="k">Collected</div><div class="v"><small>TT$</small>'+Math.round(collected).toLocaleString()+'</div><div class="d">'+(collected?'posted on transactions':'no payments recorded yet')+'</div></div>';
 }
 function drawReg(){
   var rows=filtered(); var withWho=rows.some(function(r){return r.who});
@@ -395,10 +429,14 @@ function drawReg(){
       ?'<span class="chip '+(r.cov==="Comprehensive"?"blue":"")+'">'+esc(r.cov)+'</span>'
       :'<span class="chip '+(r.type==="Commercial"?"gold":"")+'">'+esc(r.type)+'</span>';
     var paid=r.paid>0?'<td style="color:var(--good)"><b>'+money(r.paid)+'</b></td>'
+      :r.acctPaid>0?'<td><span class="chip good">'+money(r.acctPaid)+' on acct</span></td>'
       :r.renewed?'<td><span class="chip warn">not recorded</span></td>':'<td style="color:var(--faint)">—</td>';
+    var whoCell=withWho?'<td><b>'+esc(r.who||"")+'</b>'
+      +(r.yrs?' <span class="chip gold" title="years with the branch">★ '+r.yrs+'y</span>':'')
+      +(r.gap?' <span class="chip blue">offer '+esc(r.gap)+'</span>':'')+'</td>':'';
     return '<tr'+(st.key==="off"?' class="off"':'')+'><td>'+fmtD(r.d)+'</td>'
       +'<td><span class="chip '+(r.line==="Motor"?"blue":"gold")+'">'+r.line+'</span></td>'
-      +(withWho?'<td><b>'+esc(r.who||"")+'</b></td>':'')
+      +whoCell
       +'<td><b>'+esc(r.what)+'</b></td><td>'+detail+'</td><td>'+st.chip+'</td>'
       +'<td>'+(r.tasks?'<span class="chip" title="open Salesforce tasks on this client">📋 '+r.tasks+'</span>':'<span style="color:var(--faint)">—</span>')+'</td>'
       +paid+'<td>'+money(r.renewed?(r.newPrem||r.prem):r.prem)+'</td></tr>';
@@ -497,6 +535,36 @@ function drawPeople(){
         +'<span class="val"><span class="chip '+(days>=30?'bad':days>=10?'warn':'')+'">'+days+' days</span></span></div>';}).join("")
     +'</div><div class="note plain">'+T.open+' tasks open branch-wide · '+T.dueThisMonth+' due this month · '+T.renewalSubject+' carry a renewal in the subject.</div>';
 }
+function drawBilling(){
+  var B=WALL_DATA.billing, I=WALL_DATA.intel;
+  if(B){
+    var tb=B.types.reduce(function(a,x){return a+(x.prem||0)},0);
+    var tp=B.types.reduce(function(a,x){return a+(x.paid||0)},0);
+    $("#billPanel").innerHTML='<h3>'+esc(B.month)+' renewals on TRANSACTIONS — by record type</h3>'
+      +'<table><thead><tr><th>Line</th><th>Renewals</th><th>Billed</th><th>Paid</th><th>Owed (where recorded)</th></tr></thead><tbody>'
+      +B.types.map(function(x){
+        return '<tr><td><b>'+esc(x.k)+'</b></td><td>'+x.n+'</td>'
+          +'<td>'+(x.prem?money(x.prem):'<span style="color:var(--faint)">—</span>')+'</td>'
+          +'<td>'+(x.paid?'<b style="color:var(--good)">'+money(x.paid)+'</b>':'<span style="color:var(--faint)">—</span>')+'</td>'
+          +'<td>'+(x.owed>0?'<span class="chip warn">'+money(x.owed)+'</span>':'<span style="color:var(--faint)">—</span>')+'</td></tr>';
+      }).join("")
+      +'<tr><td><b>All lines</b></td><td><b>'+B.types.reduce(function(a,x){return a+x.n},0)+'</b></td>'
+      +'<td><b>'+money(tb)+'</b></td><td><b style="color:var(--good)">'+money(tp)+'</b></td><td></td></tr>'
+      +'</tbody></table>'
+      +'<div class="note plain">This is the whole book — health, pensions, life and loans renew this month too, not just motor and property. Property transactions carry TT$0 billed and the owed field runs inconsistent — reconcile the ledger and every number here sharpens.</div>';
+  }
+  if(I){
+    $("#intelPanel").innerHTML='<h3>Loyalty &amp; cross-sell — this month’s '+I.clients+' renewal clients</h3>'
+      +'<div class="rows" style="gap:14px">'
+      +'<div class="row"><span class="nm">Average years with the branch</span><span class="val" style="color:var(--gold)">'+I.avgYears+' yrs</span></div>'
+      +'<div class="row"><span class="nm">Seven-year clients renewing this month — say thank you</span><span class="val">'+I.sevenPlus+'</span></div>'
+      +'<div class="row"><span class="nm">Motor-only clients — the home conversation</span><span class="val" style="color:var(--blue)">'+I.motorOnly+'</span></div>'
+      +'<div class="row"><span class="nm">Property-only clients — the motor conversation</span><span class="val" style="color:var(--gold)">'+I.propertyOnly+'</span></div>'
+      +'<div class="row"><span class="nm">No health on the risk register — check transactions, then ask</span><span class="val">'+I.healthGap+' of '+I.clients+'</span></div>'
+      +'</div>'
+      +'<div class="note plain">The client sees their side in the portal: years-of-loyalty line, full renewal history, value-over-time — every renewal email is an experience, not an invoice. Names ride the live feed only.</div>';
+  }
+}
 function drawNext(){
   var N=WALL_DATA.next; var tot=N.motorPrem+N.propPrem;
   $("#nextKpis").innerHTML=
@@ -505,7 +573,7 @@ function drawNext(){
     +'<div class="kpi"><div class="k">Premium to protect</div><div class="v"><small>TT$</small>'+Math.round(tot/1000)+'<small>k</small></div><div class="d">book the calls this week</div></div>';
 }
 function render(){
-  drawKpis();drawReg();drawValues();drawTrend();drawLosing();drawPeople();drawNext();
+  drawKpis();drawReg();drawValues();drawTrend();drawLosing();drawPeople();drawBilling();drawNext();
   var t=new Date(WALL_DATA.generatedAt);
   $("#src").textContent="Data: Salesforce · pulled "
     +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
@@ -527,7 +595,7 @@ $("#filters").addEventListener("click",function(e){
 });
 
 /* ▶ Run — cycle section to section like a wall; any interaction hands control back */
-var SECS=["secKpi","secReg","secValues","secTrend","secLosing","secPeople","secNext"];
+var SECS=["secKpi","secReg","secValues","secTrend","secLosing","secPeople","secBilling","secNext"];
 var runTimer=null, runIdx=0;
 function stopRun(){if(runTimer){clearInterval(runTimer);runTimer=null;$("#runBtn").classList.remove("on");$("#runBtn").textContent="▶ Run";}}
 $("#runBtn").onclick=function(){
