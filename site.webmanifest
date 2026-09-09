@@ -1,0 +1,23 @@
+{
+  "name": "Ricky Rampersad Branch",
+  "short_name": "RR Branch",
+  "description": "Life, health, motor and property insurance for Trinidad and Tobago — quotes, applications, claims and policy servicing online.",
+  "start_url": "/?src=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07131f",
+  "theme_color": "#07131f",
+  "lang": "en-TT",
+  "categories": ["finance", "business"],
+  "icons": [
+    { "src": "/logo-mark.png", "sizes": "352x352", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Get a quote",   "url": "/#quotes",  "description": "Life, health, motor, property and more" },
+    { "name": "File a claim",  "url": "/claims/",  "description": "Claims TT — upload from your phone" },
+    { "name": "Renew a policy","url": "/renewal/", "description": "Motor and property renewals" },
+    { "name": "Call the branch","url": "/#contact","description": "(868) 678-5921" }
+  ]
+}
