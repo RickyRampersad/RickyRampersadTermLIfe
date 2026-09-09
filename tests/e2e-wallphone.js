@@ -26,6 +26,8 @@ let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 
 const SCREENS = [
+  ['The day so far',     '/intelligence/wall/day.html'],
+  ['The day in blocks',  '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Whose hands',        '/intelligence/wall/possession.html'],
   ['Contract delivery',  '/intelligence/wall/delivery.html'],

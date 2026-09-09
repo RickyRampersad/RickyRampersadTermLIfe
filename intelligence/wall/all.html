@@ -172,6 +172,13 @@
 /* The five, in the order the film introduces them. `secs` is how long each
    holds the screen; the denser a screen is, the longer it earns. */
 var SLIDES = [
+  /* The branch's own day opens the rotation. The five that follow are the
+     client book — what is owed, undelivered, expiring, whose birthday it is —
+     and for a fortnight that was the whole wall, with nothing on it about how
+     the branch itself was doing today. These two answer that, and they go
+     first because a room reads the top of the hour. */
+  { file:'day.html',        tab:'The day so far',    secs:24 },
+  { file:'blocks.html',     tab:'The day in blocks', secs:20 },
   { file:'index.html',      tab:'Premium dues',      secs:26 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
