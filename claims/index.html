@@ -86,7 +86,9 @@
   @media(max-width:620px){.nav-tel span{display:none}}
 
   /* ── hero ── */
-  .hero{background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 62%,var(--teal-600) 132%);color:#fff;padding:54px 0 60px}
+  .hero{background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 62%,var(--teal-600) 132%);color:#fff;padding:38px 0 42px}
+  .hero .wrap,#file .wrap{max-width:880px}
+  #file{padding-top:36px}
   .hero .eyebrow{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:var(--gold)}
   .hero h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:14px}
   .hero p{color:#CFE0EE;max-width:620px;font-size:1.05rem}
@@ -160,6 +162,30 @@
   .fieldset-title{grid-column:1/-1;font-weight:800;font-size:.78rem;letter-spacing:.11em;text-transform:uppercase;color:var(--teal-600);margin-top:10px;padding-top:18px;border-top:1px solid var(--line)}
   .fieldset-title:first-child{margin-top:0;padding-top:0;border-top:none}
   .fieldset-note{grid-column:1/-1;color:var(--muted);font-size:.87rem;margin-top:-6px}
+
+  /* ── who's claiming (identity first) ── */
+  .who{background:linear-gradient(150deg,var(--teal-50),#F4FBFA);border:1.5px solid #CBEAE8;border-radius:var(--radius-md);padding:20px;margin-bottom:26px}
+  .who h3{font-size:1.05rem;font-weight:800;margin-bottom:4px}
+  .who>p{color:var(--muted);font-size:.9rem;margin-bottom:14px}
+  .who-row{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end}
+  @media(max-width:560px){.who-row{grid-template-columns:1fr}}
+  .who .field input{background:#fff}
+  .who-skip{margin-top:12px}
+  .task-chips{display:flex;gap:10px;flex-wrap:wrap;margin:4px 0 16px}
+  .task-chip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:8px 16px;font-size:.87rem;font-weight:700;text-decoration:none;color:var(--ink)}
+  .task-chip.open{border-color:#F0E0BE;background:var(--gold-50)}
+  .task-chip .dot{width:9px;height:9px;border-radius:50%;background:var(--muted)}
+  .task-chip.open .dot{background:var(--gold)}
+  .pol-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+  .pol-card{text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:16px;cursor:pointer;transition:border-color .15s,transform .15s}
+  .pol-card:hover{border-color:var(--teal-500);transform:translateY(-2px)}
+  .pol-card .pl{font-size:.7rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--teal-600);margin-bottom:4px}
+  .pol-card b{display:block;font-size:.98rem;margin-bottom:2px}
+  .pol-card span{font-size:.85rem;color:var(--muted);display:block}
+  .pol-card .go2{display:inline-block;margin-top:8px;font-size:.82rem;font-weight:800;color:var(--teal-600)}
+  .who-hello{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+  .who-hello b{font-size:1.02rem}
+  .change-type{background:none;border:none;color:var(--teal-600);font-weight:700;font-size:.88rem;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:6px 0}
 
   /* ── policy prefill ── */
   .lookup{background:linear-gradient(150deg,var(--teal-50),#F4FBFA);border:1.5px solid #CBEAE8;border-radius:var(--radius-md);padding:18px 20px;margin-bottom:26px}
@@ -349,33 +375,16 @@
 <!-- ══════════════ HERO ══════════════ -->
 <div class="hero">
   <div class="wrap">
-    <span class="eyebrow">Trinidad &amp; Tobago · Motor · Health · Property · Life</span>
-    <h1>Something happened.<br />Let's get your claim moving.</h1>
-    <p>File your claim from your phone in about ten minutes. Photograph your documents, upload them straight to our claims file, and walk away with a reference number — no queue, no folder of paper, no trip to the branch.</p>
+    <span class="eyebrow">Trinidad &amp; Tobago · Motor · Health · Property · Life · Pension</span>
+    <h1>Let's get your claim moving.</h1>
+    <p>About ten minutes on your phone. Existing clients sign in and their policy numbers come to them; documents are phone photos; the reference is instant.</p>
     <div class="hero-actions">
       <a class="btn btn-gold" href="#file">Start my claim</a>
-      <a class="btn btn-ghost" href="#track">Check an existing claim</a>
-    </div>
-    <div class="hero-facts">
-      <div class="fact"><b>4 lines</b><span>Motor, health, property &amp; life</span></div>
-      <div class="fact"><b>~10 min</b><span>Typical time to file</span></div>
-      <div class="fact"><b>Phone photos</b><span>Accepted for every document</span></div>
-      <div class="fact"><b>Instant ref</b><span>Quote it on any call</span></div>
+      <a class="btn btn-ghost" href="#track">My claims</a>
     </div>
   </div>
 </div>
 
-<!-- ══════════════ FIRST STEPS ══════════════ -->
-<div class="steps-strip">
-  <div class="wrap">
-    <h2>⏱️ Just happened? Do these four things first.</h2>
-    <div class="first-steps">
-      <div class="fs"><b>1. Make everyone safe</b><span>Injuries first. Ambulance 811, Police 999, Fire 990. Nothing on this page matters more than that.</span></div>
-      <div class="fs"><b>2. Report it to the police</b><span>For any motor accident, theft, burglary or malicious damage — report at the nearest station and ask for the report or station diary extract number.</span></div>
-      <div class="fs"><b>3. Photograph everything</b><span>Damage, the whole scene, both vehicles, number plates, the road, and the other driver's permit and insurance certificate. Take more than you think you need.</span></div>
-      <div class="fs"><b>4. Admit nothing, repair nothing</b><span>Never accept blame at the scene, and don't start repairs until the claim is inspected or approved in writing.</span></div>
-    </div>
-  </div>
 </div>
 
 <!-- ══════════════ THE WIZARD ══════════════ -->
@@ -404,8 +413,49 @@
       <!-- STEP 1 — type -->
       <div class="panel" id="step-0" role="tabpanel">
         <div class="panel-head">
-          <h2>What kind of claim is this?</h2>
-          <p>Pick the policy you are claiming against. We will only ask for the documents that actually apply to it.</p>
+          <h2>Let's start with you</h2>
+          <p>Existing clients: sign in and your policy numbers and open claims come to you — no typing, no hunting for paper.</p>
+        </div>
+
+        <!-- existing client, identity first -->
+        <div class="who" id="who-box">
+          <div id="who-out">
+            <h3>🔑 Already our client?</h3>
+            <p>Enter your email or mobile — we email you a 6-digit code, and your policies appear with their numbers filled in.</p>
+            <div class="who-row" id="who-step-id">
+              <div class="field">
+                <label for="w-id">Your email or mobile number</label>
+                <input id="w-id" type="text" placeholder="you@example.com or 868 555 1234" autocomplete="email" />
+              </div>
+              <button class="btn btn-teal" type="button" id="w-send">Email me a code</button>
+            </div>
+            <div class="who-row" id="who-step-code" hidden>
+              <div class="field">
+                <label for="w-code">The 6-digit code from your email</label>
+                <input id="w-code" type="text" inputmode="numeric" maxlength="6" placeholder="123456" autocomplete="one-time-code" />
+              </div>
+              <button class="btn btn-teal" type="button" id="w-verify">Sign in</button>
+            </div>
+            <div class="notice bad" id="w-err" hidden style="margin:14px 0 0"></div>
+            <div class="notice info" id="w-msg" hidden style="margin:14px 0 0"></div>
+            <button class="skip-btn who-skip" type="button" id="w-skip">I'm new here — continue without signing in</button>
+          </div>
+
+          <div id="who-in" hidden>
+            <div class="who-hello">
+              <b id="w-hello">Welcome back</b>
+              <button class="skip-btn" type="button" id="w-signout">Not you? Sign out</button>
+            </div>
+            <div class="task-chips" id="w-tasks"></div>
+            <p style="color:var(--muted);font-size:.9rem;margin-bottom:12px" id="w-pol-lead">Which policy are you claiming on? Tap it — the number and your details fill themselves in.</p>
+            <div class="pol-grid" id="w-policies"></div>
+            <button class="skip-btn who-skip" type="button" id="w-not-these" hidden>My claim isn't on one of these policies</button>
+          </div>
+        </div>
+
+        <div id="type-head" style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <h3 class="h3" style="margin:0" id="type-head-label">Or pick the kind of claim</h3>
+          <button class="change-type" type="button" id="change-type" hidden>Change claim type</button>
         </div>
         <div class="type-grid" id="type-grid"></div>
         <div class="subwrap" id="subwrap" hidden>
@@ -590,6 +640,18 @@
     </p>
   </div>
 </section>
+
+<!-- ══════════════ FIRST STEPS ══════════════ -->
+<div class="steps-strip">
+  <div class="wrap">
+    <h2>⏱️ Just happened? Do these four things first.</h2>
+    <div class="first-steps">
+      <div class="fs"><b>1. Make everyone safe</b><span>Injuries first. Ambulance 811, Police 999, Fire 990. Nothing on this page matters more than that.</span></div>
+      <div class="fs"><b>2. Report it to the police</b><span>For any motor accident, theft, burglary or malicious damage — report at the nearest station and ask for the report or station diary extract number.</span></div>
+      <div class="fs"><b>3. Photograph everything</b><span>Damage, the whole scene, both vehicles, number plates, the road, and the other driver's permit and insurance certificate. Take more than you think you need.</span></div>
+      <div class="fs"><b>4. Admit nothing, repair nothing</b><span>Never accept blame at the scene, and don't start repairs until the claim is inspected or approved in writing.</span></div>
+    </div>
+  </div>
 
 <!-- ══════════════ TRACK / MY CLAIMS ══════════════ -->
 <section id="track" style="background:#fff;border-block:1px solid var(--line)">
@@ -1104,10 +1166,17 @@ function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (err) 
 /* ══════════════════════════════════════════════════════════════
    STEP 1 — type & sub-type
    ══════════════════════════════════════════════════════════════ */
+let typePickerOpen = false;   // once a line is chosen, the others get out of the way
+
 function renderTypes() {
   const grid = $("type-grid");
   grid.innerHTML = "";
+  const collapsed = state.type && !typePickerOpen;
+  $("change-type").hidden = !collapsed;
+  $("type-head-label").textContent = collapsed ? "Your claim" : "Or pick the kind of claim";
+
   Object.keys(TYPES).forEach((key) => {
+    if (collapsed && key !== state.type) return;   // health chosen → only health remains
     const t = TYPES[key];
     const card = el("button", "type-card");
     card.type = "button";
@@ -1122,6 +1191,7 @@ function renderTypes() {
         state.files = {};
         state.skipped = {};
       }
+      typePickerOpen = false;
       renderTypes();
       renderSubtypes();
       saveDraft();
@@ -1130,6 +1200,11 @@ function renderTypes() {
     grid.appendChild(card);
   });
 }
+
+$("change-type").addEventListener("click", () => {
+  typePickerOpen = true;
+  renderTypes();
+});
 
 function renderSubtypes() {
   const wrap = $("subwrap");
@@ -2153,6 +2228,7 @@ function acctSignOut(silent) {
   $("acct-out").hidden = false;
   $("acct-step-id").hidden = false;
   $("acct-step-code").hidden = true;
+  whoReset();   // the greeting box at the top signs out with it
 }
 
 function renderMyClaims(claims) {
@@ -2233,6 +2309,175 @@ async function acctUpload(claim, docLabel, files, row, pick) {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   WHO'S CLAIMING — identity before anything else
+
+   An existing client signs in with email or mobile, proves it with
+   the emailed code, and the branch's side of the conversation opens:
+   their policies with the numbers already on them, their open claims,
+   their closed ones. Tap the policy — line, number and contact details
+   fill in, and every other line of business gets out of the way.
+   ══════════════════════════════════════════════════════════════ */
+function whoMsg(id, html) {
+  ["w-err", "w-msg"].forEach((k) => { $(k).hidden = true; });
+  if (!id) return;
+  $(id).innerHTML = html;
+  $(id).hidden = false;
+}
+
+async function whoSend() {
+  const identity = $("w-id").value.trim();
+  if (identity.length < 5) { whoMsg("w-err", "Enter the email or mobile number we have on file for you."); return; }
+  if (!CONFIG.API_URL) { whoMsg("w-err", "Sign-in isn't connected yet — pick your claim type below instead."); return; }
+  const btn = $("w-send");
+  btn.disabled = true; btn.textContent = "Sending…";
+  try {
+    const data = await api({ action: "requestCode", kind: "client", identity: identity });
+    acct.identity = identity;
+    if (data.sent === false) { whoMsg("w-err", esc(data.message)); return; }
+    whoMsg("w-msg", esc(data.message || "Code sent — check your inbox."));
+    $("who-step-id").hidden = true;
+    $("who-step-code").hidden = false;
+    $("w-code").focus();
+  } catch (err) {
+    whoMsg("w-err", "We couldn't send a code just now — pick your claim type below and carry on.");
+  } finally {
+    btn.disabled = false; btn.textContent = "Email me a code";
+  }
+}
+
+async function whoVerify() {
+  const code = $("w-code").value.trim();
+  if (code.length !== 6) { whoMsg("w-err", "The code is 6 digits — it's in the email we just sent."); return; }
+  const btn = $("w-verify");
+  btn.disabled = true; btn.textContent = "Checking…";
+  try {
+    const data = await api({ action: "verifyCode", kind: "client", identity: acct.identity, code: code });
+    acct.token = data.token;
+    try { localStorage.setItem(TOKEN_KEY, data.token); } catch (err) {}
+    whoMsg(null);
+    await whoLoad();
+    acctLoad();   // the "Your claims" section further down signs in too
+  } catch (err) {
+    whoMsg("w-err", esc(err && err.message ? err.message : "That code did not match."));
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign in";
+  }
+}
+
+async function whoLoad() {
+  if (!acct.token || !CONFIG.API_URL) return false;
+  let data;
+  try {
+    data = await api({ action: "myProfile", token: acct.token });
+  } catch (err) { return false; }
+
+  $("who-out").hidden = true;
+  $("who-in").hidden = false;
+  const first = String((data.contact || {}).name || "").split(" ")[0];
+  $("w-hello").textContent = first ? "Welcome back, " + first : "Welcome back";
+
+  const tasks = $("w-tasks");
+  tasks.innerHTML = "";
+  (data.open || []).forEach((c) => {
+    const chip = el("a", "task-chip open");
+    chip.href = "#track";
+    chip.innerHTML = '<span class="dot"></span>' + esc(c.ref) + " — " + esc(c.status) +
+      (c.missing && c.missing.length ? " · " + c.missing.length + " document" + (c.missing.length === 1 ? "" : "s") + " needed" : "");
+    tasks.appendChild(chip);
+  });
+  if ((data.closed || []).length) {
+    const done = el("a", "task-chip");
+    done.href = "#track";
+    done.innerHTML = '<span class="dot"></span>' + data.closed.length +
+      " closed claim" + (data.closed.length === 1 ? "" : "s");
+    tasks.appendChild(done);
+  }
+  if (!tasks.children.length) {
+    tasks.appendChild(el("span", "task-chip", '<span class="dot"></span>No claims on file — this would be your first'));
+  }
+
+  const box = $("w-policies");
+  box.innerHTML = "";
+  (data.policies || []).forEach((p) => {
+    const card = el("button", "pol-card");
+    card.type = "button";
+    card.innerHTML =
+      '<div class="pl">' + esc(p.line || "Policy") + "</div>" +
+      "<b>" + esc(p.product || "Policy on file") + "</b>" +
+      "<span>" + esc(p.policy || "number on request") + "</span>" +
+      '<span class="go2">Claim on this policy →</span>';
+    card.addEventListener("click", () => chooseProfilePolicy(p));
+    box.appendChild(card);
+  });
+  const hasPolicies = (data.policies || []).length > 0;
+  $("w-pol-lead").hidden = !hasPolicies;
+  $("w-not-these").hidden = !hasPolicies;
+  if (!hasPolicies) {
+    box.appendChild(el("div", "notice info",
+      "You're signed in, but no policy matched this email or mobile in our records. Pick your claim type below — we'll match the policy at our end."));
+  }
+  // With their policies on screen, the generic picker is noise — tuck it away.
+  setPickerVisible(!hasPolicies || !!state.type);
+  return true;
+}
+
+function setPickerVisible(v) {
+  $("type-head").style.display = v ? "" : "none";
+  $("type-grid").style.display = v ? "" : "none";
+}
+
+function lineToType(line) {
+  const l = String(line || "").toLowerCase();
+  if (/motor/.test(l)) return "motor";
+  if (/health/.test(l)) return "health";
+  if (/life|critical|accident/.test(l)) return "life";
+  if (/pension|annuit|invest/.test(l)) return "pension";
+  if (/propert|fire|home|burglary/.test(l)) return "property";
+  return "";
+}
+
+function chooseProfilePolicy(p) {
+  const t = lineToType(p.line);
+  if (t && TYPES[t]) {
+    if (state.type !== t) { state.subtype = ""; state.files = {}; state.skipped = {}; }
+    state.type = t;
+    typePickerOpen = false;
+  } else {
+    typePickerOpen = true;   // odd line — let them pick, but keep the prefill
+  }
+  lookup.dismissed = true;   // the plate/policy lookup would only repeat this
+  applyPrefill(p.prefill || {});
+  setPickerVisible(true);    // back, but collapsed to the one chosen line
+  renderTypes();
+  renderSubtypes();
+  saveDraft();
+  const target = t ? $("subwrap") : $("type-grid");
+  if (target) target.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
+
+function whoReset() {
+  $("who-out").hidden = false;
+  $("who-in").hidden = true;
+  $("who-step-id").hidden = false;
+  $("who-step-code").hidden = true;
+  whoMsg(null);
+  setPickerVisible(true);
+}
+
+$("w-send").addEventListener("click", whoSend);
+$("w-verify").addEventListener("click", whoVerify);
+$("w-id").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); whoSend(); } });
+$("w-code").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); whoVerify(); } });
+$("w-skip").addEventListener("click", () => { $("who-box").hidden = true; });
+$("w-not-these").addEventListener("click", () => {
+  typePickerOpen = true;
+  setPickerVisible(true);
+  renderTypes();
+  $("type-grid").scrollIntoView({ behavior: "smooth", block: "nearest" });
+});
+$("w-signout").addEventListener("click", () => { whoReset(); acctSignOut(false); });
+
 $("a-send").addEventListener("click", acctSendCode);
 $("a-resend").addEventListener("click", () => { $("acct-step-id").hidden = false; $("acct-step-code").hidden = true; acctSendCode(); });
 $("a-verify").addEventListener("click", acctVerify);
@@ -2300,9 +2545,9 @@ if (loadDraft()) $("draft-banner").hidden = false;
 renderTypes();
 if (state.type) renderSubtypes();
 
-// A returning client with a live session goes straight to their claims.
+// A returning client with a live session is greeted by name, policies ready.
 try { acct.token = localStorage.getItem(TOKEN_KEY) || ""; } catch (err) {}
-if (acct.token) acctLoad();
+if (acct.token) { whoLoad(); acctLoad(); }
 
 // Deep link: /claims/?type=motor&sub=accident
 const params = new URLSearchParams(location.search);

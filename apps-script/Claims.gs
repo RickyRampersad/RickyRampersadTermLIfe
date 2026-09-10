@@ -1116,6 +1116,78 @@ function clientClaimView_(hit) {
   };
 }
 
+/** Every policy the registers hold for a signed-in identity — this is the
+ *  "existing client types nothing" path: email or mobile in, verified by the
+ *  emailed code, and their policy numbers come back with the line each one
+ *  belongs to (the CLIENT PORTFOLIO record type). */
+function policiesForIdentity_(identity) {
+  var id = normIdentity_(identity);
+  if (!id) return [];
+  var out = [];
+
+  // Policy register: indexed search on the matching column, never a full read.
+  var sh = policyRegisterSheet_();
+  if (sh.getLastRow() > 1) {
+    var headers = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
+    var col = headers.indexOf(id.kind === 'email' ? 'Email' : 'Mobile') + 1;
+    if (col > 0) {
+      var finder = sh.getRange(2, col, sh.getLastRow() - 1, 1)
+        .createTextFinder(id.kind === 'email' ? id.value : id.value.slice(-7));
+      if (id.kind === 'email') finder.matchEntireCell(true);
+      finder.findAll().slice(0, 20).forEach(function (cell) {
+        var v = sh.getRange(cell.getRow(), 1, 1, sh.getLastColumn()).getValues()[0];
+        var o = {};
+        headers.forEach(function (h, i) { o[h] = v[i]; });
+        out.push({
+          line: String(o['Line'] || ''), policy: String(o['Policy #'] || ''),
+          product: String(o['Product'] || ''),
+          prefill: { policy: String(o['Policy #'] || ''),
+            coverage: [o['Line'], o['Product']].filter(String).join(' — '),
+            name: String(o['Client'] || ''), email: String(o['Email'] || '').toLowerCase(),
+            mobile: String(o['Mobile'] || '') },
+        });
+      });
+    }
+  }
+
+  // Vehicle register is small — read and filter, and hand back the full
+  // vehicle prefill: the code in their inbox proved more than a last-4 would.
+  registerRows_().forEach(function (r) {
+    var em = String(r['Email'] || '').toLowerCase();
+    var mb = String(r['Mobile'] || '').replace(/\D/g, '');
+    var match = id.kind === 'email' ? (em && em === id.value)
+      : (mb && mb.slice(-7) === id.value.slice(-7));
+    if (!match) return;
+    var val = function (f) { return String(r[f] === null || r[f] === undefined ? '' : r[f]).trim(); };
+    out.push({
+      line: 'Motor', policy: val('Policy #'),
+      product: [val('Year'), val('Make'), val('Model')].filter(String).join(' ') +
+        (val('Vehicle Reg') ? ' · ' + val('Vehicle Reg') : ''),
+      prefill: { vehicleReg: val('Vehicle Reg'),
+        vehicleMake: [val('Make'), val('Model')].filter(String).join(' '),
+        vehicleYear: val('Year'), chassis: val('Chassis #'), engine: val('Engine #'),
+        policy: val('Policy #'), coverage: val('Coverage Type'),
+        name: val('Client'), email: em, mobile: val('Mobile') },
+    });
+  });
+
+  return out.slice(0, 20);
+}
+
+/** The signed-in client's whole picture: their policies, their open claims,
+ *  their closed ones — what the branch knows, shown before they type a thing. */
+function apiMyProfile_(b) {
+  var sess = getSession_(b.token, 'client');
+  if (!sess) return { ok: false, error: 'signed-out' };
+  var policies = policiesForIdentity_(sess.id);
+  var claims = claimsForIdentity_(sess.id).map(clientClaimView_).reverse();
+  var contact = policies.length ? policies[0].prefill : {};
+  return { ok: true, policies: policies,
+    open: claims.filter(function (c) { return !c.closed; }),
+    closed: claims.filter(function (c) { return c.closed; }),
+    contact: { name: contact.name || '', email: contact.email || '', mobile: contact.mobile || '' } };
+}
+
 function apiMyClaims_(b) {
   var sess = getSession_(b.token, 'client');
   if (!sess) return { ok: false, error: 'signed-out' };
@@ -1283,6 +1355,7 @@ function doPost(e) {
       case 'verifyCode':   out = apiVerifyCode_(body); break;
       case 'signOut':      out = apiSignOut_(body); break;
       case 'myClaims':     out = apiMyClaims_(body); break;
+      case 'myProfile':    out = apiMyProfile_(body); break;
       case 'staffData':    out = apiStaffData_(body); break;
       case 'staffAction':  out = apiStaffAction_(body); break;
       case 'scanDoc':      out = apiScanDoc_(body); break;
