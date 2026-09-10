@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-09b';
+var INTEL_VERSION = '2026-09-10a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -3116,7 +3116,36 @@ function iActSignout_(b) {
    the morning, so this one feed skips the wall store. It is cheap anyway:
    sfkMetricsSafe_ is cached by the tracker for twelve minutes, so most of
    these never reach Salesforce at all.                                     */
+/* THE ONE LIVE FEED ON THE WALL, AND WHY IT IS HELD FOR THREE MINUTES.
+   The other five screens read a stored build; this one reads Salesforce, the
+   register and the day's entries every time it is asked, because "the day so
+   far" is worthless a half-hour old. Two screens asking every five minutes is
+   twenty-four full branch reads an hour against the same script the tracker
+   signs people in through — and on the morning of 10 September the branch
+   could not sign in at all. The screens ask less often now, and what they ask
+   for is held here for three minutes, so the second screen's question costs
+   nothing and a person signing in is not queued behind it. */
+var IDAY_HOLD_S = 180;
+
 function iActDay_(b) {
+  var key = 'iday_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var built = iDayBuild_(b);
+  if (built && built.data) {
+    try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(built.data), IDAY_HOLD_S); } catch (e2) {}
+  }
+  return built && built.data ? iOk_({ data: built.data }) : built;
+}
+
+/** Everything above is about how often; this is the day itself. Returns
+ *  { data: … } so the wrapper can store the payload rather than the envelope. */
+function iDayBuild_(b) {
   if (typeof sfkMetricsSafe_ !== 'function' || typeof publicRoster_ !== 'function') {
     return iErr_('The day screen reads the tracker, and the tracker is not in this project.');
   }
@@ -3170,7 +3199,7 @@ function iActDay_(b) {
      be where the day is actually happening. */
   desks.sort(function (x, y) { return (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0); });
 
-  return iOk_({ data: {
+  return { data: {
     generatedAt: today,
     at: Utilities.formatDate(new Date(), tz, 'HH:mm'),
     configured: !!(m && m.ok),
@@ -3186,7 +3215,7 @@ function iActDay_(b) {
       });
       return per ? { perDay: Math.round(per), share: Math.round(t.closed / per * 100) } : null;
     })()
-  } });
+  } };
 }
 
 function iActWall45_(b) {
@@ -3963,10 +3992,20 @@ function intelInstallTriggers() {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('intelRebuild').timeBased().atHour(2).everyDays(1).create();
-  ScriptApp.newTrigger('intelAgentDigest').timeBased().atHour(7).everyDays(1).create();
-  ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
-  ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(8).create();
-  ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(8).create();
+  /* THE BRANCH SIGNS IN FROM SEVEN. Nothing this project runs may still be
+     running then. The digests used to go at seven and the policy-book rebuild
+     with them — a fifty-four-thousand-row Salesforce pull — and on the
+     morning of 10 September the whole branch met "the sheet did not answer"
+     on the sign-in screen. Apps Script fires a time trigger anywhere inside
+     its hour, so an hour-seven job is an eight-o'clock job as often as not.
+     Everything scheduled here now finishes before six. */
+  ScriptApp.newTrigger('intelAgentDigest').timeBased().atHour(6).everyDays(1).create();
+  ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(6).create();
+  /* Monthly, and still not at eight: eight o'clock is Elizabeth's start, and
+     a job that only bites twelve times a year is a job nobody connects to the
+     morning it bites on. */
+  ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(6).create();
+  ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(6).create();
   /* Thanks and follow-ups go out the morning after somebody answers, not at the
      end of the month — a thank-you a fortnight late reads as an audit, not a
      courtesy, and the two-day promise has already been broken by then. */
@@ -3975,15 +4014,18 @@ function intelInstallTriggers() {
      minutes — AND AN HOUR EACH TO ITSELF. All five used to fire at three and
      compete: on 9 September four of them rebuilt between 03:23 and 03:55 and
      the 45-day line, the one that takes 155 seconds, was still serving
-     Monday's copy. The slowest goes first and every one is finished long
-     before the branch opens. Eleven here and the tracker's five is sixteen,
-     under the project limit of twenty. */
-  [['intelRebuildWall45', 3], ['intelRebuildPossession', 4], ['intelRebuildLicence', 5],
-   ['intelRebuildDelivery', 6], ['intelRebuildBook', 7]].forEach(function (t) {
+     Monday's copy. Spreading them fixed that and created a worse fault — the
+     last one landed at seven, on top of the branch signing in. They are all
+     in the small hours now, slowest first, and the last of them is done by
+     five. Eleven here and the tracker's six is seventeen, under the project
+     limit of twenty. */
+  [['intelRebuildWall45', 0], ['intelRebuildBook', 1], ['intelRebuildPossession', 3],
+   ['intelRebuildLicence', 4], ['intelRebuildDelivery', 5]].forEach(function (t) {
     ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
   });
-  return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
-         'or every one of these fires an hour out.';
+  return 'Installed — eleven, all of them finished before six, because the branch ' +
+         'signs in from seven. Check Project Settings → Time zone reads ' +
+         '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
 }
 
 function iSend_(to, subject, html) {

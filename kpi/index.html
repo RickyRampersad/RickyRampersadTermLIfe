@@ -1590,12 +1590,32 @@ function withToken(action, payload) {
   return body;
 }
 
+/* How long one attempt is given, and how many attempts there are.
+   Apps Script answers this project in a couple of seconds when it is warm and
+   in twenty-five to thirty when it is not — a nightly rebuild still running,
+   or a container that has gone cold. Nothing here used to set a limit, so the
+   phone's own gave up first, threw, and the branch read "the sheet did not
+   answer" on the sign-in screen at a quarter past seven. Thirty-five seconds
+   is longer than the slowest honest answer measured on this project; the
+   attempt after a slow one is usually quick, because the first one warmed it. */
+const API_TIMEOUT_MS = 35000;
+const API_TRIES = 4;
+
 async function apiOnce(action, payload) {
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(withToken(action, payload))
-  });
+  /* AbortController rather than the phone's own limit: a timeout we set is a
+     timeout we can retry: one the browser sets is a thrown fetch we cannot
+     tell apart from a dropped connection. */
+  const ctl = typeof AbortController === "function" ? new AbortController() : null;
+  const bell = ctl ? setTimeout(() => { try { ctl.abort(); } catch (e) {} }, API_TIMEOUT_MS) : null;
+  let res;
+  try {
+    res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(withToken(action, payload)),
+      signal: ctl ? ctl.signal : undefined
+    });
+  } finally { if (bell) clearTimeout(bell); }
   // Apps Script answers a POST with a 302 to a one-shot result URL. When the
   // script is busy that result is not always there yet, and the browser sees a
   // 404 — which is not "no such endpoint", it is "not ready". Treating it as
@@ -1626,7 +1646,7 @@ async function apiOnce(action, payload) {
 async function api(action, payload, onAttempt) {
   if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
   let last = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < API_TRIES; attempt++) {
     if (attempt) await new Promise(r => setTimeout(r, attempt * 1500));
     if (onAttempt) { try { onAttempt(attempt + 1); } catch (e) {} }
     try {
@@ -1644,8 +1664,14 @@ async function api(action, payload, onAttempt) {
       // dropping a slow request. Say both, and blame neither: the last time
       // this message mentioned a connection, somebody restarted their phone
       // over a fault in this script.
-      last = { ok: false,
-        error: "The sheet did not answer. It is slow today, so a weak signal can drop the request — press Sign in once more, and tell the Branch Manager if it keeps happening." };
+      /* An attempt we cut short and a connection that dropped read the same
+         to a person and are not the same thing, and neither is their fault.
+         Say which, say that trying again is already happening, and do not
+         ask anybody to press anything while it is. */
+      last = { ok: false, _retry: true,
+        error: (e && e.name === "AbortError")
+          ? "The sheet is taking longer than usual to answer. Trying again…"
+          : "The connection dropped before the sheet answered. Trying again…" };
     }
   }
   // Every attempt is spent. "Trying again..." was true a moment ago and is not
@@ -1653,7 +1679,8 @@ async function api(action, payload, onAttempt) {
   // happening.
   if (last && last._retry) {
     last = { ok: false,
-      error: "The sheet did not answer after three tries. It is busy, not broken — wait a moment and press Submit again." };
+      error: "The sheet did not answer, after " + API_TRIES + " tries over about two minutes. " +
+             "It is busy, not broken. Give it a minute and go again — and tell the Branch Manager if it keeps happening." };
   }
   return last;
 }
@@ -4510,7 +4537,7 @@ function Login({
     }
   }, busy
        ? (tryNo > 1
-            ? "Still trying… (" + tryNo + " of 3)"
+            ? "Still trying… (" + tryNo + " of " + API_TRIES + ")"
             : "Signing in… this can take a few seconds")
        : "Sign in"), /*#__PURE__*/React.createElement("p", {
     style: {

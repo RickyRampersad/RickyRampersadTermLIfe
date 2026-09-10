@@ -214,7 +214,12 @@ function load(){
 /* The day moves while the wall is up, so this one refreshes every five
    minutes rather than every thirty like the book screens. It is cheap: the
    tracker caches the Salesforce read for twelve. */
-load(); setInterval(load,5*60*1000);
+/* Ten minutes, not five. This is the one screen on the wall that reads
+   Salesforce live, and two of them asking every five minutes is twenty-four
+   full branch reads an hour through the same script the branch signs in
+   through. The server holds each build for three minutes as well, so the
+   second screen's question costs nothing. */
+load(); setInterval(load,10*60*1000);
 
 function paint(){
   var b=D.branch||{}, blocks=D.blocks||[];
