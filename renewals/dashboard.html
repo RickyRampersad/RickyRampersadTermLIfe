@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renewals Dashboard | Ricky Rampersad Branch</title>
+<meta name="description" content="Interactive renewals dashboard — this month's motor and property renewals, values, trend, tasks and payments, pulled from Salesforce.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as /renewals/ (the wall) and /board/dashboard.html —
+     a desk view, so the page scrolls; the wall rotates. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:14px;
+    padding:14px 26px;background:rgba(6,25,45,.82);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .live{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;color:var(--dim);white-space:nowrap}
+  .live i{width:8px;height:8px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good)}
+  .btn{font:650 12.5px var(--font-b);color:var(--ink);background:rgba(255,255,255,.08);
+    border:1px solid var(--line);border-radius:10px;padding:8px 14px;cursor:pointer}
+  .btn:hover{background:rgba(255,255,255,.14)}
+  .btn.on{background:var(--grad);border-color:transparent}
+
+  .wrap{max-width:1280px;margin:0 auto;padding:22px 26px 60px}
+  .filters{position:sticky;top:69px;z-index:25;display:flex;gap:8px;flex-wrap:wrap;align-items:center;
+    padding:12px 0;background:linear-gradient(#061c31f0,#061c31d8);}
+  .fchip{font:650 12.5px var(--font-b);color:var(--dim);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:20px;padding:7px 15px;cursor:pointer;user-select:none}
+  .fchip:hover{color:var(--ink)}
+  .fchip.on{color:#07131f;background:var(--grad-gold);border-color:transparent;font-weight:750}
+  .fsep{width:1px;height:22px;background:var(--line);margin:0 6px}
+
+  .sec{margin:26px 0}
+  .sec .kick{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);font-weight:700;margin:0 0 12px}
+  .grid{display:grid;gap:16px}
+  .g5{grid-template-columns:repeat(5,1fr)}
+  .g2{grid-template-columns:1.25fr 1fr}
+  .g22{grid-template-columns:1fr 1fr}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+  .kpi .k{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .kpi .v{font-family:var(--font-d);font-size:38px;font-weight:800;letter-spacing:-1.4px;margin-top:8px;
+    font-variant-numeric:tabular-nums;line-height:1}
+  .kpi .v small{font-size:17px;color:var(--dim);font-weight:700}
+  .kpi .d{font-size:12.5px;color:var(--dim);margin-top:8px}
+  .kpi.accent .v{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .kpi.gold .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 22px}
+  .panel h3{margin:0 0 14px;font-family:var(--font-d);font-size:14.5px;font-weight:750}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:650;
+    text-align:left;padding:0 12px 10px;white-space:nowrap}
+  th.sort{cursor:pointer;user-select:none}
+  th.sort:hover{color:var(--ink)}
+  th.sort.on{color:var(--gold)}
+  td{padding:9px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}
+  td:last-child,th:last-child{text-align:right}
+  td b{font-weight:700}
+  tr.off td{opacity:.42}
+  .chip{display:inline-block;font-size:11.5px;font-weight:650;padding:3px 11px;border-radius:20px;
+    border:1px solid var(--line);background:rgba(0,0,0,.2);color:var(--dim);white-space:nowrap}
+  .chip.good{color:var(--good);border-color:rgba(52,211,153,.35)}
+  .chip.warn{color:var(--warn);border-color:rgba(251,191,36,.35)}
+  .chip.bad{color:var(--bad);border-color:rgba(251,113,133,.35)}
+  .chip.blue{color:var(--blue);border-color:rgba(55,177,236,.35)}
+  .chip.gold{color:var(--gold);border-color:rgba(245,185,59,.35)}
+
+  .rows{display:flex;flex-direction:column;gap:11px}
+  .row{display:flex;align-items:center;gap:12px;font-size:14px}
+  .row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+  .row .track{flex:1.2;height:10px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+  .row .track i{display:block;height:100%;background:var(--grad);border-radius:6px}
+  .row .track i.gold{background:var(--grad-gold)}
+  .row .val{min-width:90px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700;font-size:13.5px}
+
+  .bars{display:flex;align-items:flex-end;gap:12px;height:250px}
+  .bar{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:7px;height:100%}
+  .bar .amt{font-size:12px;color:var(--dim);font-weight:650}
+  .bar i{display:block;width:100%;border-radius:3px}
+  .bar .lab{font-size:12px;color:var(--faint);font-weight:600}
+  .bar .n{font-size:11px;color:var(--faint)}
+  .legend{display:flex;gap:18px;font-size:12.5px;color:var(--dim);margin:0 0 12px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .legend i{width:11px;height:11px;border-radius:3px}
+  .note{margin-top:14px;font-size:12.5px;color:var(--warn);background:rgba(251,191,36,.07);
+    border:1px solid rgba(251,191,36,.25);border-radius:10px;padding:10px 14px}
+  .note.plain{color:var(--dim);background:rgba(255,255,255,.04);border-color:var(--line)}
+  footer{max-width:1280px;margin:0 auto;padding:0 26px 30px;font-size:11.5px;color:var(--faint)}
+
+  @media (max-width:1000px){
+    .g5{grid-template-columns:repeat(2,1fr)}
+    .g2,.g22{grid-template-columns:1fr}
+    .filters{top:63px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Renewals Dashboard</h1>
+    <div class="sub">Motor &amp; property · Ricky Rampersad Branch · Salesforce</div>
+  </div>
+  <div class="right">
+    <button class="btn" id="runBtn" title="cycle section to section like the wall">▶ Run</button>
+    <a class="btn" href="./" style="text-decoration:none" title="the rotating wall">Wall</a>
+    <span class="live" id="live"><i></i><span id="liveTxt">Snapshot</span></span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="filters" id="filters">
+    <span class="fchip on" data-line="all">All lines</span>
+    <span class="fchip" data-line="motor">Motor</span>
+    <span class="fchip" data-line="property">Property</span>
+    <span class="fsep"></span>
+    <span class="fchip on" data-st="all">Every status</span>
+    <span class="fchip" data-st="renewed">Renewed</span>
+    <span class="fchip" data-st="open">Still open</span>
+    <span class="fchip" data-st="off">Leaving</span>
+  </div>
+
+  <div class="sec" id="secKpi"><div class="kick" id="kpiKick"></div><div class="grid g5" id="kpis"></div></div>
+
+  <div class="sec" id="secReg">
+    <div class="kick">The register — every renewal, its tasks and its money</div>
+    <div class="panel"><table id="reg"><thead></thead><tbody></tbody></table>
+    <div class="note plain" id="regNote"></div></div>
+  </div>
+
+  <div class="sec" id="secValues">
+    <div class="kick">The values conversation</div>
+    <div class="grid g22">
+      <div class="panel" id="valMotor"></div>
+      <div class="panel" id="valProp"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secTrend">
+    <div class="kick">The year so far · motor</div>
+    <div class="grid g2">
+      <div class="panel" id="trendChart"></div>
+      <div class="panel" id="trendSide"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secLosing">
+    <div class="kick">Whom we are losing</div>
+    <div class="grid g2">
+      <div class="panel" id="loseRecent"></div>
+      <div class="panel" id="loseRead"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secPeople">
+    <div class="kick">Who is managing the renewals</div>
+    <div class="grid g22">
+      <div class="panel" id="mgrPanel"></div>
+      <div class="panel" id="taskPanel"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secBilling">
+    <div class="kick">The billing month — every line, off the transactions ledger</div>
+    <div class="grid g2">
+      <div class="panel" id="billPanel"></div>
+      <div class="panel" id="intelPanel"></div>
+    </div>
+  </div>
+
+  <div class="sec" id="secNext">
+    <div class="kick">Already knocking</div>
+    <div class="grid g5" id="nextKpis" style="grid-template-columns:repeat(3,1fr)"></div>
+  </div>
+</div>
+<footer id="src"></footer>
+
+<script>
+/* Snapshot pulled straight from Salesforce — same data block as the wall
+   (/renewals/index.html); refresh both together. Anonymous by design: this
+   file sits in a public repo. Names appear only on the live feed. */
+var WALL_DATA_URL = "";   // ← Apps Script /exec URL, or leave "" for snapshot
+
+var WALL_DATA = {
+  generatedAt: "2026-09-07T14:21:00Z",
+  monthLabel: "September 2026",
+  monthStart: "2026-09-01", monthDays: 30,
+  motor: [
+    {d:"2026-09-04", what:"Jeep",       cov:"Comprehensive", prem:0,       renewed:true, newPrem:9104.30, paid:0},
+    {d:"2026-09-05", what:"Nissan",     cov:"Comprehensive", prem:9143.88, renewed:true, newPrem:7165.06, paid:0},
+    {d:"2026-09-09", what:"Toyota",     cov:"Third party",   prem:1670.00, renewed:true, newPrem:1670.00, paid:0},
+    {d:"2026-09-09", what:"Nissan",     cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
+    {d:"2026-09-09", what:"Mitsubishi", cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
+    {d:"2026-09-12", what:"Kia",        cov:"Third party",   prem:991.55,  tasks:6},
+    {d:"2026-09-13", what:"Kia",        cov:"Third party",   prem:1350.18, off:"Sold", tasks:6},
+    {d:"2026-09-13", what:"Land Rover", cov:"Third party",   prem:1443.19, tasks:6},
+    {d:"2026-09-13", what:"BMW",        cov:"Third party",   prem:1350.18, tasks:6},
+    {d:"2026-09-14", what:"Honda",      cov:"Comprehensive", prem:5109.20},
+    {d:"2026-09-18", what:"Nissan",     cov:"Third party",   prem:1231.90},
+    {d:"2026-09-18", what:"Hyundai",    cov:"Third party",   prem:2130.07},
+    {d:"2026-09-23", what:"Land Rover", cov:"Comprehensive", prem:11894.80},
+    {d:"2026-09-30", what:"Toyota",     cov:"Third party",   prem:2696.64}
+  ],
+  property: [
+    {d:"2026-09-08", what:"Commercial package", type:"Commercial", prem:27030.00},
+    {d:"2026-09-11", what:"Homeowner",          type:"Private",    prem:11130.00},
+    {d:"2026-09-13", what:"All risk",           type:"Commercial", prem:25609.60},
+    {d:"2026-09-13", what:"All risk",           type:"Commercial", prem:12804.80},
+    {d:"2026-09-13", what:"All risk",           type:"Commercial", prem:25577.65},
+    {d:"2026-09-16", what:"Homeowner",          type:"Private",    prem:12985.00},
+    {d:"2026-09-17", what:"All risk",           type:"Commercial", prem:20776.00},
+    {d:"2026-09-21", what:"Homeowner",          type:"Private",    prem:6558.75}
+  ],
+  values: {
+    /* mkt = asking-price band on T&T classifieds at snapshot time — a guide
+       for the conversation, never a figure filed for the client. */
+    motor: [
+      {d:"2026-09-04", what:"Jeep",       prev:350000, cur:315000, renewed:true,  ws:15000, waiver:true, wsAdded:true, mkt:{lo:350000,hi:450000}},
+      {d:"2026-09-05", what:"Nissan",     prev:148750, cur:126438, renewed:true,  ws:15000, waiver:true, premSaved:1979, mkt:{lo:130000,hi:165000}},
+      {d:"2026-09-14", what:"Honda",      prev:125000, cur:112500, renewed:false, opt10:101250, opt15:95625,  ws:10000, waiver:true, mkt:{lo:100000,hi:155000}},
+      {d:"2026-09-23", what:"Land Rover", prev:450000, cur:450000, renewed:false, opt10:405000, opt15:382500, ws:5000,  waiver:true, stuckYears:2, mkt:{lo:330000,hi:470000}}
+    ],
+    property: [
+      {d:"2026-09-08", what:"Commercial package", sum:600000,  first:true},
+      {d:"2026-09-11", what:"Homeowner",          sum:3000000, years:4},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-13", what:"All risk",           missing:true},
+      {d:"2026-09-16", what:"Homeowner",          sum:3500000, years:5},
+      {d:"2026-09-17", what:"All risk",           sum:3500000, years:4},
+      {d:"2026-09-21", what:"Homeowner",          sum:1650000, years:4}
+    ]
+  },
+  trend: {
+    months: [
+      {m:"Jan",due:26,ren:21,lost:5, sold:0,open:0,ret:81},
+      {m:"Feb",due:19,ren:13,lost:6, sold:0,open:0,ret:68},
+      {m:"Mar",due:17,ren:7, lost:8, sold:2,open:0,ret:47},
+      {m:"Apr",due:33,ren:14,lost:17,sold:2,open:0,ret:45},
+      {m:"May",due:7, ren:5, lost:2, sold:0,open:0,ret:71},
+      {m:"Jun",due:12,ren:8, lost:4, sold:0,open:0,ret:67},
+      {m:"Jul",due:9, ren:4, lost:4, sold:1,open:0,ret:50},
+      {m:"Aug",due:14,ren:11,lost:3, sold:0,open:0,ret:79},
+      {m:"Sep",due:14,ren:5, lost:0, sold:1,open:8}
+    ],
+    totals:{due:151,ren:88,lost:49,sold:6,open:8,lostPrem:169571,renPrem:322753},
+    distinctLost:38, dupRows:11,
+    gained:{n:22,prem:142517}
+  },
+  losing: {
+    concentration:{label:"One corporate fleet relationship", rows:25, prem:40839},
+    recent:[
+      {d:"2026-08-10", what:"BMW · comprehensive",    prem:56062},
+      {d:"2026-08-08", what:"Honda · comprehensive",  prem:10649},
+      {d:"2026-08-15", what:"Toyota · comprehensive", prem:10290},
+      {d:"2026-07-10", what:"MG · comprehensive",     prem:8320},
+      {d:"2026-07-30", what:"Audi · third party",     prem:1385},
+      {d:"2026-07-14", what:"Nissan · third party",   prem:1350}
+    ]
+  },
+  managers: {
+    processed:[
+      {k:"Pawan Probhu",  n:55, prem:230528},
+      {k:"Jenny Lio",     n:32, prem:89133},
+      {k:"Kamla Dookran", n:1,  prem:3093}
+    ],
+    renewalTasks:[
+      {k:"Kamla Dookran",        n:14},
+      {k:"Sasha Lalla-Jagassar", n:9},
+      {k:"Pawan Probhu",         n:4},
+      {k:"Azariah Griffith",     n:2}
+    ],
+    payments:{cycles:9, amt:30730, written:322753}
+  },
+  tasks: {
+    open:241, dueThisMonth:151, renewalSubject:29, escalated:2,
+    status:[
+      {k:"Waiting on someone else", n:142},
+      {k:"In progress",             n:79},
+      {k:"Not started",             n:18},
+      {k:"Escalated",               n:2}
+    ],
+    owners:[
+      {k:"Ricky Rampersad",       n:88},
+      {k:"Kamla Dookran",         n:70},
+      {k:"Sasha Lalla-Jagassar",  n:37},
+      {k:"Azariah Griffith",      n:24},
+      {k:"Pawan Probhu",          n:15},
+      {k:"Elizabeth Lee",         n:7}
+    ],
+    chase:[
+      {line:"Property", kind:"Payment follow-up — renewed July, premium open", since:"2026-07-23"},
+      {line:"Property", kind:"Payment follow-up — renewed July, premium open", since:"2026-07-25"},
+      {line:"Property", kind:"Renewal due — waiting on client",                since:"2026-09-04"}
+    ]
+  },
+  /* the billing month, straight off TRANSACTIONS__c — every line of the
+     book that renews this month, by record type, with what has actually
+     been paid. This is where payments post (Payments_Made__c on the risk
+     rows stays empty), so Collected reads from here.                    */
+  billing: {
+    month:"September 2026",
+    types:[
+      {k:"Health · individual", n:42, prem:290477,  paid:42318},
+      {k:"Health · group",      n:9,  prem:199085,  paid:0, owed:115895},
+      {k:"Motor",               n:9,  prem:31840,   paid:13887},
+      {k:"Pensions · group",    n:8,  prem:219121,  paid:0, owed:197286},
+      {k:"Property",            n:6,  prem:0,       paid:0},
+      {k:"Life · group",        n:5,  prem:0,       paid:0},
+      {k:"Loans & rentals",     n:2,  prem:16000,   paid:0, owed:16000}
+    ],
+    motorPaid:13887, propPaid:0
+  },
+  /* loyalty + cross-sell across this month's renewal clients, aggregated
+     from the whole register (anonymous counts only in this public file) */
+  intel: {
+    avgYears:5.7, maxYears:7, sevenPlus:4,
+    motorOnly:3, propertyOnly:2, healthGap:15, clients:15
+  },
+  next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
+};
+
+/* ── helpers ── */
+function $(s){return document.querySelector(s)}
+function money(n){return "TT$"+Math.round(n).toLocaleString("en-US")}
+function moneyShort(n){
+  if(n>=1e6) return "TT$"+(n/1e6).toFixed(2).replace(/\.?0+$/,"")+"m";
+  if(n>=1e3) return "TT$"+(n/1e3).toFixed(1).replace(/\.0$/,"")+"k";
+  return "TT$"+Math.round(n);
+}
+function fmtD(iso){var d=new Date(iso+"T12:00:00");
+  return d.toLocaleDateString("en-GB",{day:"numeric",month:"short"})}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})}
+function todayISO(){var n=new Date();
+  return n.getFullYear()+"-"+String(n.getMonth()+1).padStart(2,"0")+"-"+String(n.getDate()).padStart(2,"0")}
+function statusOf(r){
+  if(r.off) return {chip:'<span class="chip">'+esc(r.off)+' — leaving</span>', key:"off"};
+  if(r.renewed) return {chip:'<span class="chip good">Renewed ✓</span>', key:"renewed"};
+  var t=todayISO();
+  if(r.d < t) return {chip:'<span class="chip bad">Overdue — call</span>', key:"open"};
+  var days=Math.round((new Date(r.d)-new Date(t))/864e5);
+  if(days<=7) return {chip:'<span class="chip warn">Due in '+days+'d</span>', key:"open"};
+  return {chip:'<span class="chip">Due '+fmtD(r.d)+'</span>', key:"open"};
+}
+
+/* ── state ── */
+var F={line:"all", st:"all", sort:"d", dir:1};
+
+function allRows(){
+  var rows=[];
+  WALL_DATA.motor.forEach(function(r){var o=Object.assign({},r);o.line="Motor";rows.push(o)});
+  WALL_DATA.property.forEach(function(r){var o=Object.assign({},r);o.line="Property";rows.push(o)});
+  return rows;
+}
+function filtered(){
+  return allRows().filter(function(r){
+    if(F.line!=="all" && r.line.toLowerCase()!==F.line) return false;
+    var k=statusOf(r).key;
+    if(F.st!=="all" && k!==F.st) return false;
+    return true;
+  }).sort(function(a,b){
+    var va=F.sort==="prem"?(a.renewed?(a.newPrem||a.prem):a.prem):a.d;
+    var vb=F.sort==="prem"?(b.renewed?(b.newPrem||b.prem):b.prem):b.d;
+    return (va<vb?-1:va>vb?1:0)*F.dir;
+  });
+}
+
+/* ── sections ── */
+function drawKpis(){
+  var rows=filtered(), t=todayISO();
+  var ren=rows.filter(function(r){return r.renewed});
+  var off=rows.filter(function(r){return r.off});
+  var open=rows.filter(function(r){return !r.renewed&&!r.off});
+  var overdue=open.filter(function(r){return r.d<t});
+  var openBook=open.reduce(function(a,r){return a+(r.prem||0)},0);
+  // payments post on TRANSACTIONS, not the risk rows — read them from there
+  var B=WALL_DATA.billing;
+  var collected=B?( (F.line!=="property"?(B.motorPaid||0):0) + (F.line!=="motor"?(B.propPaid||0):0) )
+                :ren.reduce(function(a,r){return a+(r.paid||0)},0);
+  var label=(F.line==="all"?"Motor & property":F.line==="motor"?"Motor":"Property");
+  $("#kpiKick").textContent=esc(WALL_DATA.monthLabel)+" · "+label;
+  $("#kpis").innerHTML=
+    '<div class="kpi accent"><div class="k">Due</div><div class="v">'+rows.length+'</div><div class="d">'+moneyShort(rows.reduce(function(a,r){return a+(r.prem||0)},0))+' on the book</div></div>'
+    +'<div class="kpi gold"><div class="k">Renewed</div><div class="v">'+ren.length+'</div><div class="d">'+moneyShort(ren.reduce(function(a,r){return a+(r.newPrem||r.prem||0)},0))+' re-written</div></div>'
+    +'<div class="kpi"><div class="k">Still open</div><div class="v">'+open.length+'</div><div class="d">'+moneyShort(openBook)+' to bring home</div></div>'
+    +'<div class="kpi"><div class="k">Overdue</div><div class="v">'+overdue.length+'</div><div class="d">'+(overdue.length?'call these first':'nothing due is unrenewed')+'</div></div>'
+    +'<div class="kpi"><div class="k">Collected</div><div class="v"><small>TT$</small>'+Math.round(collected).toLocaleString()+'</div><div class="d">'+(collected?'posted on transactions':'no payments recorded yet')+'</div></div>';
+}
+function drawReg(){
+  var rows=filtered(); var withWho=rows.some(function(r){return r.who});
+  var arrow=function(k){return F.sort===k?(F.dir>0?" ↑":" ↓"):""};
+  $("#reg thead").innerHTML='<tr><th class="sort'+(F.sort==="d"?" on":"")+'" data-k="d">Due'+arrow("d")+'</th>'
+    +'<th>Line</th>'+(withWho?'<th>Client</th>':'')+'<th>Risk</th><th>Detail</th><th>Status</th><th>Tasks</th><th>Paid</th>'
+    +'<th class="sort'+(F.sort==="prem"?" on":"")+'" data-k="prem">Premium'+arrow("prem")+'</th></tr>';
+  $("#reg tbody").innerHTML=rows.map(function(r){
+    var st=statusOf(r);
+    var detail=r.line==="Motor"
+      ?'<span class="chip '+(r.cov==="Comprehensive"?"blue":"")+'">'+esc(r.cov)+'</span>'
+      :'<span class="chip '+(r.type==="Commercial"?"gold":"")+'">'+esc(r.type)+'</span>';
+    var paid=r.paid>0?'<td style="color:var(--good)"><b>'+money(r.paid)+'</b></td>'
+      :r.acctPaid>0?'<td><span class="chip good">'+money(r.acctPaid)+' on acct</span></td>'
+      :r.renewed?'<td><span class="chip warn">not recorded</span></td>':'<td style="color:var(--faint)">—</td>';
+    var whoCell=withWho?'<td><b>'+esc(r.who||"")+'</b>'
+      +(r.yrs?' <span class="chip gold" title="years with the branch">★ '+r.yrs+'y</span>':'')
+      +(r.gap?' <span class="chip blue">offer '+esc(r.gap)+'</span>':'')+'</td>':'';
+    return '<tr'+(st.key==="off"?' class="off"':'')+'><td>'+fmtD(r.d)+'</td>'
+      +'<td><span class="chip '+(r.line==="Motor"?"blue":"gold")+'">'+r.line+'</span></td>'
+      +whoCell
+      +'<td><b>'+esc(r.what)+'</b></td><td>'+detail+'</td><td>'+st.chip+'</td>'
+      +'<td>'+(r.tasks?'<span class="chip" title="open Salesforce tasks on this client">📋 '+r.tasks+'</span>':'<span style="color:var(--faint)">—</span>')+'</td>'
+      +paid+'<td>'+money(r.renewed?(r.newPrem||r.prem):r.prem)+'</td></tr>';
+  }).join("")||'<tr><td colspan="9" style="color:var(--faint)">Nothing matches this filter.</td></tr>';
+  $("#regNote").textContent=rows.length+" of "+allRows().length+" renewals shown · Tasks counts open Salesforce tasks on the risk or the client's account · Paid reads Payments Made on the renewed cycle";
+  document.querySelectorAll("#reg th.sort").forEach(function(th){
+    th.onclick=function(){var k=th.getAttribute("data-k");
+      if(F.sort===k)F.dir=-F.dir;else{F.sort=k;F.dir=1;}
+      drawReg();};
+  });
+}
+function drawValues(){
+  var VM=WALL_DATA.values.motor, VP=WALL_DATA.values.property, DRIFT=0.05;
+  $("#valMotor").innerHTML='<h3>Motor comprehensive — the value steps down</h3><div class="rows">'
+    +VM.map(function(r){
+      var pct=r.prev?Math.round((1-r.cur/r.prev)*100):0;
+      var move=r.renewed?'<span class="chip good">stepped −'+pct+'% ✓</span>'
+        :r.stuckYears?'<span class="chip bad">unchanged '+r.stuckYears+' yrs → '+moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>'
+        :'<span class="chip warn">step to '+moneyShort(r.opt10)+' / '+moneyShort(r.opt15)+'</span>';
+      var mkt='';
+      if(r.mkt){
+        var band=moneyShort(r.mkt.lo)+'–'+moneyShort(r.mkt.hi);
+        mkt = r.cur<r.mkt.lo ? '<span class="chip warn">mkt '+band+' · below</span>'
+            : r.cur>r.mkt.hi ? '<span class="chip warn">mkt '+band+' · above</span>'
+            : '<span class="chip good">mkt '+band+' ✓</span>';
+      }
+      return '<div class="row"><span class="nm">'+esc(r.what)+' · '+fmtD(r.d)+(r.who?' · '+esc(r.who):'')+'</span>'
+        +'<span class="val" style="min-width:150px">'+money(r.prev)+' → '+money(r.cur)+'</span>'
+        +'<span class="val" style="min-width:170px;text-align:right">'+mkt+'</span>'
+        +'<span class="val" style="min-width:210px;text-align:right">'+move+'</span></div>';
+    }).join("")
+    +'</div><div class="note plain">Benefits ride along: windscreen cover and Waiver of Excess on every policy. Market bands are T&amp;T classifieds asking prices at snapshot time (Pin.tt, TT Motor Sales, Car Junction) — a guide only; the client confirms the figure and the approved valuation certificate binds.</div>';
+  var stale=VP.filter(function(r){return (r.years||0)>=2});
+  $("#valProp").innerHTML='<h3>Property — rebuilding costs drift up</h3><div class="rows">'
+    +VP.map(function(r){
+      if(r.missing) return '<div class="row"><span class="nm">'+esc(r.what)+' · '+fmtD(r.d)+'</span><span class="val" style="min-width:230px;text-align:right"><span class="chip bad">no value on the register</span></span></div>';
+      if(r.first)   return '<div class="row"><span class="nm">'+esc(r.what)+' · '+fmtD(r.d)+'</span><span class="val">'+moneyShort(r.sum)+'</span><span class="val" style="min-width:150px"><span class="chip">first cycle</span></span></div>';
+      var sg=Math.round(r.sum*Math.pow(1+DRIFT,r.years)/10000)*10000;
+      return '<div class="row"><span class="nm">'+esc(r.what)+' · '+fmtD(r.d)+'</span><span class="val">'+moneyShort(r.sum)+'</span>'
+        +'<span class="val" style="min-width:150px"><span class="chip '+((r.years||0)>=4?'bad':'warn')+'">'+r.years+' yrs → '+moneyShort(sg)+'</span></span></div>';
+    }).join("")
+    +'</div><div class="note">'+stale.length+' sums insured unchanged 4+ years — under average, a stale figure cuts every claim.</div>';
+}
+function drawTrend(){
+  var T=WALL_DATA.trend; var mx=T.months.reduce(function(a,x){return Math.max(a,x.due)},1);
+  $("#trendChart").innerHTML='<h3>Month by month — renewed · open · lost · sold</h3>'
+    +'<div class="legend"><span><i style="background:var(--blue)"></i>Renewed</span><span><i style="background:var(--gold)"></i>Still open</span><span><i style="background:var(--bad)"></i>Lost</span><span><i style="background:rgba(255,255,255,.25)"></i>Sold</span></div>'
+    +'<div class="bars">'+T.months.map(function(x){
+      var h=function(n){return Math.round(n/mx*190)};
+      var seg=function(n,c){return n?'<i style="height:'+h(n)+'px;background:'+c+'"></i>':''};
+      return '<div class="bar"><div class="amt">'+x.due+'</div>'
+        +'<div style="display:flex;flex-direction:column-reverse;gap:2px;width:100%;max-width:46px">'
+        +seg(x.ren,'var(--blue)')+seg(x.open,'var(--gold)')+seg(x.lost,'var(--bad)')+seg(x.sold,'rgba(255,255,255,.25)')+'</div>'
+        +'<div class="lab">'+esc(x.m)+'</div><div class="n">'+(x.ret!=null?x.ret+'%':'…')+'</div></div>';
+    }).join("")+'</div>';
+  $("#trendSide").innerHTML='<h3>The year in numbers</h3><div class="rows" style="gap:14px">'
+    +'<div class="row"><span class="nm">Due · renewed</span><span class="val">'+T.totals.due+' · '+T.totals.ren+'</span></div>'
+    +'<div class="row"><span class="nm">Premium re-written</span><span class="val" style="color:var(--good)">'+moneyShort(T.totals.renPrem)+'</span></div>'
+    +'<div class="row"><span class="nm">Rows lost · premium</span><span class="val" style="color:var(--bad)">'+T.totals.lost+' · '+moneyShort(T.totals.lostPrem)+'</span></div>'
+    +'<div class="row"><span class="nm">Distinct vehicles lost</span><span class="val">'+T.distinctLost+'</span></div>'
+    +'<div class="row"><span class="nm">Gained — new business</span><span class="val">'+T.gained.n+' · '+moneyShort(T.gained.prem)+'</span></div>'
+    +'</div><div class="note">'+T.dupRows+' lost rows are duplicates, and April’s block of identical entries reads as placeholder data — verify before counting them lost.</div>';
+}
+function drawLosing(){
+  var L=WALL_DATA.losing; var mx=L.recent[0].prem||1; var t=new Date(todayISO());
+  $("#loseRecent").innerHTML='<h3>Recent losses — weeks old, still recoverable</h3><div class="rows">'
+    +L.recent.map(function(r){
+      var days=Math.max(0,Math.round((t-new Date(r.d))/864e5));
+      return '<div class="row"><span class="nm">'+esc(r.what)+(r.who?' · '+esc(r.who):'')+' · due '+fmtD(r.d)+'</span>'
+        +'<span class="track"><i class="gold" style="width:'+Math.max(4,Math.round(r.prem/mx*100))+'%"></i></span>'
+        +'<span class="val">'+money(r.prem)+'</span>'
+        +'<span class="val" style="min-width:74px"><span class="chip '+(days<=45?'warn':'')+'">'+days+'d</span></span></div>';
+    }).join("")+'</div>';
+  $("#loseRead").innerHTML='<h3>What the losses are telling us</h3><div class="rows" style="gap:14px">'
+    +'<div class="row"><span class="nm">Concentrated — '+esc(L.concentration.label.toLowerCase())+'</span><span class="val">'+L.concentration.rows+' rows</span></div>'
+    +'<div class="row"><span class="nm">Audited: most of that block reads as duplicate placeholder rows; the relationship’s flagship vehicle renewed in August</span><span class="val" style="min-width:120px">verify first</span></div>'
+    +'<div class="row"><span class="nm">The comprehensive losses are real — each checked against its own history</span><span class="val" style="color:var(--bad)">'+moneyShort(L.recent.slice(0,4).reduce(function(a,r){return a+r.prem},0))+'</span></div>'
+    +'</div><div class="note plain">Names live in Salesforce and on the live feed — this public snapshot keeps clients anonymous by design.</div>';
+}
+function drawPeople(){
+  var M=WALL_DATA.managers; var mx=M.processed[0].n||1, mt=M.renewalTasks[0].n||1;
+  var pct=Math.round(M.payments.amt/Math.max(1,M.payments.written)*100);
+  $("#mgrPanel").innerHTML='<h3>Renewals processed this year — by who wrote the cycle</h3><div class="rows">'
+    +M.processed.map(function(o){return '<div class="row"><span class="nm">'+esc(o.k)+'</span>'
+      +'<span class="track"><i style="width:'+Math.round(o.n/mx*100)+'%"></i></span>'
+      +'<span class="val">'+o.n+' · '+moneyShort(o.prem)+'</span></div>';}).join("")
+    +'</div><div class="note">Payments recorded: '+moneyShort(M.payments.amt)+' of '+moneyShort(M.payments.written)+' written ('+pct+'%).</div>';
+  var T=WALL_DATA.tasks; var t=new Date(todayISO());
+  $("#taskPanel").innerHTML='<h3>Open renewal tasks — and the chase</h3><div class="rows">'
+    +M.renewalTasks.map(function(o){return '<div class="row"><span class="nm">'+esc(o.k)+'</span>'
+      +'<span class="track"><i class="gold" style="width:'+Math.round(o.n/mt*100)+'%"></i></span>'
+      +'<span class="val">'+o.n+'</span></div>';}).join("")
+    +'<div style="height:6px"></div>'
+    +T.chase.map(function(c){var days=Math.max(0,Math.round((t-new Date(c.since))/864e5));
+      return '<div class="row"><span class="nm">'+esc(c.line)+' — '+esc(c.kind)+'</span>'
+        +'<span class="val"><span class="chip '+(days>=30?'bad':days>=10?'warn':'')+'">'+days+' days</span></span></div>';}).join("")
+    +'</div><div class="note plain">'+T.open+' tasks open branch-wide · '+T.dueThisMonth+' due this month · '+T.renewalSubject+' carry a renewal in the subject.</div>';
+}
+function drawBilling(){
+  var B=WALL_DATA.billing, I=WALL_DATA.intel;
+  if(B){
+    var tb=B.types.reduce(function(a,x){return a+(x.prem||0)},0);
+    var tp=B.types.reduce(function(a,x){return a+(x.paid||0)},0);
+    $("#billPanel").innerHTML='<h3>'+esc(B.month)+' renewals on TRANSACTIONS — by record type</h3>'
+      +'<table><thead><tr><th>Line</th><th>Renewals</th><th>Billed</th><th>Paid</th><th>Owed (where recorded)</th></tr></thead><tbody>'
+      +B.types.map(function(x){
+        return '<tr><td><b>'+esc(x.k)+'</b></td><td>'+x.n+'</td>'
+          +'<td>'+(x.prem?money(x.prem):'<span style="color:var(--faint)">—</span>')+'</td>'
+          +'<td>'+(x.paid?'<b style="color:var(--good)">'+money(x.paid)+'</b>':'<span style="color:var(--faint)">—</span>')+'</td>'
+          +'<td>'+(x.owed>0?'<span class="chip warn">'+money(x.owed)+'</span>':'<span style="color:var(--faint)">—</span>')+'</td></tr>';
+      }).join("")
+      +'<tr><td><b>All lines</b></td><td><b>'+B.types.reduce(function(a,x){return a+x.n},0)+'</b></td>'
+      +'<td><b>'+money(tb)+'</b></td><td><b style="color:var(--good)">'+money(tp)+'</b></td><td></td></tr>'
+      +'</tbody></table>'
+      +'<div class="note plain">This is the whole book — health, pensions, life and loans renew this month too, not just motor and property. Property transactions carry TT$0 billed and the owed field runs inconsistent — reconcile the ledger and every number here sharpens.</div>';
+  }
+  if(I){
+    $("#intelPanel").innerHTML='<h3>Loyalty &amp; cross-sell — this month’s '+I.clients+' renewal clients</h3>'
+      +'<div class="rows" style="gap:14px">'
+      +'<div class="row"><span class="nm">Average years with the branch</span><span class="val" style="color:var(--gold)">'+I.avgYears+' yrs</span></div>'
+      +'<div class="row"><span class="nm">Seven-year clients renewing this month — say thank you</span><span class="val">'+I.sevenPlus+'</span></div>'
+      +'<div class="row"><span class="nm">Motor-only clients — the home conversation</span><span class="val" style="color:var(--blue)">'+I.motorOnly+'</span></div>'
+      +'<div class="row"><span class="nm">Property-only clients — the motor conversation</span><span class="val" style="color:var(--gold)">'+I.propertyOnly+'</span></div>'
+      +'<div class="row"><span class="nm">No health on the risk register — check transactions, then ask</span><span class="val">'+I.healthGap+' of '+I.clients+'</span></div>'
+      +'</div>'
+      +'<div class="note plain">The client sees their side in the portal: years-of-loyalty line, full renewal history, value-over-time — every renewal email is an experience, not an invoice. Names ride the live feed only.</div>';
+  }
+}
+function drawNext(){
+  var N=WALL_DATA.next; var tot=N.motorPrem+N.propPrem;
+  $("#nextKpis").innerHTML=
+    '<div class="kpi accent"><div class="k">'+esc(N.label)+' · motor</div><div class="v">'+N.motorN+'</div><div class="d">'+moneyShort(N.motorPrem)+'</div></div>'
+    +'<div class="kpi gold"><div class="k">'+esc(N.label)+' · property</div><div class="v">'+N.propN+'</div><div class="d">'+moneyShort(N.propPrem)+'</div></div>'
+    +'<div class="kpi"><div class="k">Premium to protect</div><div class="v"><small>TT$</small>'+Math.round(tot/1000)+'<small>k</small></div><div class="d">book the calls this week</div></div>';
+}
+function render(){
+  drawKpis();drawReg();drawValues();drawTrend();drawLosing();drawPeople();drawBilling();drawNext();
+  var t=new Date(WALL_DATA.generatedAt);
+  $("#src").textContent="Data: Salesforce · pulled "
+    +t.toLocaleDateString("en-GB",{day:"numeric",month:"short"})+" "
+    +t.toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"})
+    +" · snapshot is anonymised — wire the feed for names · the rotating wall lives at /renewals/";
+}
+
+/* filters */
+$("#filters").addEventListener("click",function(e){
+  var c=e.target.closest(".fchip"); if(!c) return;
+  if(c.hasAttribute("data-line")){
+    document.querySelectorAll("[data-line]").forEach(function(x){x.classList.remove("on")});
+    c.classList.add("on"); F.line=c.getAttribute("data-line");
+  }else{
+    document.querySelectorAll("[data-st]").forEach(function(x){x.classList.remove("on")});
+    c.classList.add("on"); F.st=c.getAttribute("data-st");
+  }
+  drawKpis();drawReg();
+});
+
+/* ▶ Run — cycle section to section like a wall; any interaction hands control back */
+var SECS=["secKpi","secReg","secValues","secTrend","secLosing","secPeople","secBilling","secNext"];
+var runTimer=null, runIdx=0;
+function stopRun(){if(runTimer){clearInterval(runTimer);runTimer=null;$("#runBtn").classList.remove("on");$("#runBtn").textContent="▶ Run";}}
+$("#runBtn").onclick=function(){
+  if(runTimer){stopRun();return;}
+  $("#runBtn").classList.add("on");$("#runBtn").textContent="◼ Stop";
+  runIdx=0;
+  document.getElementById(SECS[0]).scrollIntoView({behavior:"smooth"});
+  runTimer=setInterval(function(){
+    runIdx=(runIdx+1)%SECS.length;
+    document.getElementById(SECS[runIdx]).scrollIntoView({behavior:"smooth",block:"start"});
+  },12000);
+};
+["wheel","pointerdown","keydown","touchstart"].forEach(function(ev){
+  window.addEventListener(ev,function(e){
+    if(runTimer && !(e.target && e.target.id==="runBtn")) stopRun();
+  },{passive:true});
+});
+
+/* live feed — same /exec as every board; reads the payload's renewalsWall block */
+function refresh(){
+  if(!WALL_DATA_URL) return;
+  fetch(WALL_DATA_URL,{redirect:"follow"}).then(function(r){return r.json()})
+    .then(function(j){
+      if(j && j.renewalsWall && j.renewalsWall.motor){
+        WALL_DATA=j.renewalsWall; render();
+        $("#live").classList.add("on"); $("#liveTxt").textContent="Live";
+      }
+    }).catch(function(){ /* snapshot stays */ });
+}
+render();
+refresh();
+setInterval(refresh, 15*60*1000);
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
