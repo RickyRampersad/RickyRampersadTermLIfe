@@ -65,6 +65,29 @@
   .kpi b{display:block;font-size:1.45rem;font-weight:800}
   .kpi span{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
 
+  .viewtabs{display:flex;gap:8px;margin-bottom:16px}
+  .viewtabs button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 20px;font-weight:800;font-size:.9rem;cursor:pointer;color:var(--muted)}
+  .viewtabs button.on{background:var(--navy-900);border-color:var(--navy-900);color:#fff}
+  .typebar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  .tchip{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 16px;font-weight:700;font-size:.85rem;cursor:pointer;color:var(--muted)}
+  .tchip.on{background:var(--teal-50);border-color:var(--teal-600);color:var(--teal-600)}
+  .sf-note{color:var(--muted);font-weight:600}
+  details.sfwrap{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:var(--radius-md)}
+  details.sfwrap summary{padding:14px 18px;font-weight:800;cursor:pointer;list-style:none;font-size:.95rem}
+  details.sfwrap summary::-webkit-details-marker{display:none}
+  details.sfwrap .list{padding:0 14px 14px}
+  .sf-card{cursor:default}
+  .sf-card:hover{border-color:var(--line);box-shadow:none}
+  .team-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:18px}
+  .officer{background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);padding:16px 18px}
+  .officer b{display:block;font-size:1rem;margin-bottom:8px}
+  .onums{display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:.86rem;color:var(--muted)}
+  .onums span b{display:inline;font-size:1.05rem;color:var(--ink);margin-right:4px}
+  .ttable{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:var(--radius-md);overflow:hidden}
+  .ttable th,.ttable td{padding:11px 14px;text-align:left;font-size:.9rem;border-bottom:1px solid #EEF3F8}
+  .ttable th{background:#F7FAFC;font-size:.74rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+  .ttable td b{font-variant-numeric:tabular-nums}
+  .callout{background:var(--red-50);border-left:4px solid var(--red);border-radius:var(--radius-sm);padding:12px 16px;font-size:.92rem;margin-bottom:16px}
   .toolbar{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
   .toolbar input{flex:1;min-width:220px;padding:11px 14px;border:1.5px solid var(--line);border-radius:999px;font-size:.95rem;background:#fff}
   .toolbar input:focus{outline:none;border-color:var(--teal-500)}
@@ -156,13 +179,34 @@
 <!-- ── dashboard ── -->
 <main id="dash" hidden>
   <div class="wrap">
-    <div class="kpis" id="kpis"></div>
-    <div class="toolbar">
-      <input id="search" type="search" placeholder="Search name, reference, policy, reg…" />
-      <button class="btn btn-ghost btn-sm" type="button" id="refresh">↻ Refresh</button>
+    <div class="viewtabs">
+      <button type="button" id="view-claims" class="on">Claims</button>
+      <button type="button" id="view-team">📊 Team</button>
     </div>
-    <div class="list" id="list"></div>
-    <p class="empty" id="empty" hidden>No claims match.</p>
+
+    <div id="claims-view">
+      <div class="kpis" id="kpis"></div>
+      <div class="typebar" id="typebar"></div>
+      <div class="toolbar">
+        <input id="search" type="search" placeholder="Search name, reference, policy, reg…" />
+        <button class="btn btn-ghost btn-sm" type="button" id="refresh">↻ Refresh</button>
+      </div>
+      <div class="list" id="list"></div>
+      <p class="empty" id="empty" hidden>No claims match.</p>
+      <details class="sfwrap" id="sf-open-wrap" hidden>
+        <summary>🗄 Open in Salesforce but never filed here (<span id="sf-open-n">0</span>) — oldest first</summary>
+        <div class="list" id="sf-open-list"></div>
+      </details>
+    </div>
+
+    <div id="team-view" hidden>
+      <div class="callout" id="team-unassigned" hidden></div>
+      <h3 style="font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:10px">Who is solving the claims</h3>
+      <div class="team-grid" id="team-officers"></div>
+      <h3 style="font-size:.78rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:22px 0 10px">By claim type</h3>
+      <div style="overflow-x:auto"><table class="ttable" id="team-types"></table></div>
+      <p style="color:var(--muted);font-size:.82rem;margin-top:12px">Closed counts and days-to-close come from the last year of Salesforce claims (date closed − date submitted). Actions and resolved-here counts come from this dashboard's own log, last 30 days.</p>
+    </div>
   </div>
 </main>
 
@@ -190,7 +234,15 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-const state = { token: "", email: "", data: null, filter: "", query: "", open: null };
+const state = { token: "", email: "", data: null, filter: "", typeFilter: "", query: "", open: null };
+const TYPE_FILTERS = [
+  { key: "", label: "All types" },
+  { key: "motor", label: "Motor" },
+  { key: "health", label: "Health" },
+  { key: "property", label: "Property" },
+  { key: "life", label: "Life" },
+  { key: "pension", label: "Pension" },
+];
 
 async function api(payload) {
   const res = await fetch(CONFIG.API_URL, {
@@ -277,7 +329,10 @@ async function load() {
   $("who").hidden = false;
   $("who-name").textContent = data.me.name + " · " + data.me.role;
   renderKpis();
+  renderTypebar();
   renderList();
+  renderSfOpen();
+  renderTeam();
   if (state.open) {
     const fresh = data.claims.find((c) => c.ref === state.open.ref);
     if (fresh) { state.open = fresh; renderDrawer(); }
@@ -302,11 +357,87 @@ function renderKpis() {
 
 function matches(c) {
   if (state.filter && c.status !== state.filter) return false;
+  if (state.typeFilter && !String(c.type || "").toLowerCase().includes(state.typeFilter)) return false;
   if (!state.filter && !state.query && ["Settled", "Declined", "Closed"].includes(c.status)) return false;
   if (!state.query) return true;
   const q = state.query.toLowerCase();
   return [c.ref, c.name, c.policy, c.type, c.subtype, c.mobile, c.email, c.assigned, c.description]
     .some((v) => String(v || "").toLowerCase().includes(q));
+}
+
+function renderTypebar() {
+  const bar = $("typebar");
+  bar.innerHTML = "";
+  TYPE_FILTERS.forEach((t) => {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tchip" + (state.typeFilter === t.key ? " on" : "");
+    b.textContent = t.label;
+    b.addEventListener("click", () => { state.typeFilter = t.key; renderTypebar(); renderList(); });
+    bar.appendChild(b);
+  });
+}
+
+/* The claims Salesforce knows about that never came through the site —
+   the backlog this dashboard exists to drain. Oldest first. */
+function renderSfOpen() {
+  const rows = (state.data.sfOpen || []);
+  $("sf-open-wrap").hidden = !rows.length;
+  $("sf-open-n").textContent = rows.length;
+  const box = $("sf-open-list");
+  box.innerHTML = "";
+  rows.forEach((r) => {
+    const div = document.createElement("div");
+    div.className = "row-card sf-card";
+    div.innerHTML =
+      '<div class="rc-ref">' + esc(r.name || r.ref || "—") + "<small>" + esc(r.type || "") + "</small></div>" +
+      '<div class="rc-who"><b>' + esc(r.client || "(no contact)") + "</b><span>" + esc(r.policy || "") + "</span></div>" +
+      '<div class="rc-flags">' +
+        (r.days !== "" && r.days !== undefined ? '<span class="quiet">' + r.days + " days open</span> · " : "") +
+        (r.openReqs ? '<span class="owe">' + r.openReqs + " req" + (r.openReqs === 1 ? "" : "s") + " open</span> · " : "") +
+        (r.officer ? esc(r.officer) : '<span class="quiet">unassigned</span>') +
+      "</div>" +
+      '<span class="pill p-Awaiting">SF · Opened</span>';
+    box.appendChild(div);
+  });
+}
+
+function renderTeam() {
+  const perf = (state.data.perf || { officers: [], types: [] });
+  const un = (state.data.sfOpen || []).filter((r) => !r.officer).length;
+  $("team-unassigned").hidden = !un;
+  if (un) $("team-unassigned").innerHTML =
+    "<b>" + un + " open claim" + (un === 1 ? "" : "s") + " in Salesforce with no claims officer.</b> " +
+    "They're in the list under the Claims tab — assign them or they age quietly.";
+
+  const grid = $("team-officers");
+  grid.innerHTML = "";
+  perf.officers.forEach((o) => {
+    const card = document.createElement("div");
+    card.className = "officer";
+    card.innerHTML = "<b>" + esc(o.name) + "</b><div class='onums'>" +
+      "<span><b>" + o.open + "</b>open now</span>" +
+      "<span><b>" + o.closed + "</b>closed · 1y</span>" +
+      "<span><b>" + (o.avgDays === "" ? "—" : o.avgDays) + "</b>avg days</span>" +
+      "<span><b>" + o.resolved + "</b>resolved here · 30d</span>" +
+      "<span><b>" + o.actions + "</b>actions · 30d</span>" +
+      "</div>";
+    grid.appendChild(card);
+  });
+  if (!perf.officers.length) grid.innerHTML = '<p class="empty">No officer activity yet.</p>';
+
+  const table = $("team-types");
+  table.innerHTML = "<tr><th>Claim type</th><th>Open in Salesforce</th><th>Avg days to close · 1y</th></tr>" +
+    perf.types.map((t) =>
+      "<tr><td>" + esc(t.type) + "</td><td><b>" + t.sfOpen + "</b></td><td><b>" +
+      (t.avgClose === "" ? "—" : t.avgClose) + "</b></td></tr>").join("");
+}
+
+function setView(team) {
+  $("claims-view").hidden = team;
+  $("team-view").hidden = !team;
+  $("view-claims").classList.toggle("on", !team);
+  $("view-team").classList.toggle("on", team);
 }
 
 function renderList() {
@@ -325,6 +456,9 @@ function renderList() {
       '<div class="rc-who"><b>' + esc(c.name) + "</b><span>" + esc(c.type) +
         (c.subtype ? " — " + esc(c.subtype) : "") + "</span></div>" +
       '<div class="rc-flags">' +
+        (c.sf ? (c.sf.status === "Closed"
+          ? '<span style="color:var(--green);font-weight:700">SF closed ✓</span> · '
+          : '<span class="owe">SF open' + (c.sf.openReqs ? " · " + c.sf.openReqs + " req" + (c.sf.openReqs === 1 ? "" : "s") : "") + "</span> · ") : "") +
         (c.reviewOverdue ? '<span class="quiet">⚑ review due</span> · ' : "") +
         (c.missing.length ? '<span class="owe">⏳ ' + c.missing.length + " outstanding</span> · " : "") +
         (quiet ? '<span class="quiet">' + c.quietDays + "d quiet</span> · " : "") +
@@ -375,6 +509,12 @@ function renderDrawer() {
       (c.pdf ? '<a class="btn btn-ghost btn-sm" href="' + esc(c.pdf) + '" target="_blank" rel="noopener">📄 Claim form PDF</a>' : "") + "</p>" : "") +
     "</div>" +
 
+    (c.sf ? '<div class="d-sec"><h3>Salesforce says</h3><dl class="kv">' +
+      kv("Status", c.sf.status + (c.sf.days !== "" && c.sf.days !== undefined ? " · " + c.sf.days + " days" : "")) +
+      kv("Claims officer", c.sf.officer || "unassigned") +
+      kv("Open requirements", c.sf.openReqs ? c.sf.reqs || String(c.sf.openReqs) : "none") +
+      kv("Paid", c.sf.paid ? "TT$" + c.sf.paid : "") +
+    "</dl></div>" : "") +
     '<div class="d-sec"><h3>Waiting on the client</h3><div id="d-missing">' +
       (c.missing.map((m, i) => '<span class="miss-chip">' + esc(m) +
         '<button type="button" data-drop="' + i + '" title="Mark received / stop chasing">✕</button></span>').join("") ||
@@ -431,6 +571,8 @@ $("g-email").addEventListener("keydown", (e) => { if (e.key === "Enter") sendCod
 $("g-code").addEventListener("keydown", (e) => { if (e.key === "Enter") verifyCode(); });
 $("signout").addEventListener("click", () => signOut(false));
 $("refresh").addEventListener("click", () => load().catch(() => signOut(true)));
+$("view-claims").addEventListener("click", () => setView(false));
+$("view-team").addEventListener("click", () => setView(true));
 $("search").addEventListener("input", (e) => { state.query = e.target.value.trim(); renderList(); });
 $("d-close").addEventListener("click", () => toggleDrawer(false));
 $("scrim").addEventListener("click", () => toggleDrawer(false));

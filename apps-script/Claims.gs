@@ -95,6 +95,12 @@ var CLAIMS = {
   // details fill themselves in.
   POLICY_REGISTER_SHEET: 'Policy Register',
 
+  // The branch claims ledger, mirrored from Salesforce Claims_Revised__c by
+  // the nightly sync: open/closed, claim type, claims officer, open
+  // requirements. The dashboard reads it to show what Salesforce thinks of
+  // every claim — and which Salesforce claims never came through the site.
+  SF_CLAIMS_SHEET: 'SF Claims',
+
   // Who may open the staff dashboard (claims/staff.html): one row per person
   // on this tab — Email, Name, Role, Active. Only Active=Y emails can sign in.
   STAFF_SHEET: 'Staff',
@@ -629,8 +635,53 @@ function syncVehicleRegister() {
   return out.length;
 }
 
-/** The nightly job. Each register fails independently — one bad field
- *  name in one object must not take down the other register. */
+/** Claims_Revised__c → the SF Claims tab: every open claim plus the last
+ *  year of closed ones (for the team's solve-time numbers), each carrying
+ *  its type, its claims officer, and its still-open requirements. Days-to-
+ *  close is computed from the two dates — the org's Days O/S formula keeps
+ *  counting after closure, so its closed values mislead. */
+function syncSalesforceClaims() {
+  var rows = sfQuery_(
+    "SELECT Name, Claim_Reference__c, Claim_Status__c, Claim_Type__c, Contact__r.Name, " +
+    "Policy__c, Claims_Officer__r.Name, Date_Claim_Submitted__c, Date_Closed__c, Claims_Paid__c, " +
+    "(SELECT Requirement_Ordered__c FROM Requirement__r WHERE Status__c = 'Opened') " +
+    "FROM Claims_Revised__c " +
+    "WHERE Claim_Status__c = 'Opened' OR Claim_Status__c = null OR Date_Closed__c = LAST_N_DAYS:365");
+  var today = new Date();
+  var out = rows.map(function (r) {
+    var reqs = ((r.Requirement__r || {}).records || []).map(function (q) {
+      return String(q.Requirement_Ordered__c || '').trim();
+    }).filter(String);
+    var submitted = r.Date_Claim_Submitted__c ? new Date(r.Date_Claim_Submitted__c) : null;
+    var closed = r.Date_Closed__c ? new Date(r.Date_Closed__c) : null;
+    var days = '';
+    if (submitted && !isNaN(submitted)) {
+      var until = closed && !isNaN(closed) ? closed : today;
+      days = Math.max(Math.round((until - submitted) / 86400000), 0);
+    }
+    return [String(r.Name || ''), String(r.Claim_Reference__c || ''),
+      String(r.Claim_Status__c || 'Opened'), String(r.Claim_Type__c || ''),
+      String((r.Contact__r || {}).Name || ''), String(r.Policy__c || ''),
+      String((r.Claims_Officer__r || {}).Name || ''),
+      String(r.Date_Claim_Submitted__c || ''), String(r.Date_Closed__c || ''),
+      days, reqs.length, reqs.join('; '), r.Claims_Paid__c || ''];
+  });
+  var sh = sfClaimsSheet_();
+  if (sh.getLastRow() > 1) sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).clearContent();
+  if (out.length) sh.getRange(2, 1, out.length, out[0].length).setValues(out);
+  logClaim_('(sync)', 'sf-claims-synced', 'system', out.length + ' claims from Salesforce');
+  return out.length;
+}
+
+function sfClaimsSheet_() {
+  return namedSheet_(CLAIMS.SF_CLAIMS_SHEET, [
+    'SF Name', 'Reference', 'Status', 'Type', 'Client', 'Policy #', 'Officer',
+    'Submitted', 'Closed', 'Days', 'Open Reqs', 'Reqs', 'Paid (TT$)',
+  ]);
+}
+
+/** The nightly job. Each part fails independently — one bad field
+ *  name in one object must not take down the others. */
 function salesforceNightlySync() {
   if (!sfConnected_()) return;
   var notes = [];
@@ -638,6 +689,8 @@ function salesforceNightlySync() {
   catch (err) { logClaim_('(sync)', 'policy-sync-failed', 'system', String(err)); notes.push('policies FAILED'); }
   try { notes.push(syncVehicleRegister() + ' vehicles'); }
   catch (err) { logClaim_('(sync)', 'vehicle-sync-failed', 'system', String(err)); notes.push('vehicles FAILED'); }
+  try { notes.push(syncSalesforceClaims() + ' SF claims'); }
+  catch (err) { logClaim_('(sync)', 'sf-claims-sync-failed', 'system', String(err)); notes.push('SF claims FAILED'); }
   return notes.join(', ');
 }
 
@@ -1259,8 +1312,104 @@ function apiStaffData_(b) {
   var kpis = {};
   CLAIMS.STATUSES.forEach(function (s) { kpis[s] = 0; });
   claims.forEach(function (c) { if (kpis[c.status] !== undefined) kpis[c.status]++; });
+
+  var sf = sfPicture_(claims);
   return { ok: true, me: { name: staff.name, role: staff.role }, claims: claims.reverse(),
-    staff: staffNames_(), statuses: CLAIMS.STATUSES, kpis: kpis };
+    staff: staffNames_(), statuses: CLAIMS.STATUSES, kpis: kpis,
+    sfOpen: sf.open, perf: sf.perf };
+}
+
+/** What Salesforce says about every claim, stitched onto the dashboard:
+ *  each site claim gains its SF status/officer/open requirements when the
+ *  reference or policy number matches; SF-open claims that never came
+ *  through the site are listed on their own; and the closed year yields
+ *  the team numbers — who closes what, in how many days, by type. */
+function sfPicture_(claims) {
+  var empty = { open: [], perf: { types: [], officers: [] } };
+  var sh = sfClaimsSheet_();
+  var last = sh.getLastRow();
+  if (last < 2) return empty;
+  var rows = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+
+  var byRef = {}, byPolicy = {};
+  claims.forEach(function (c) {
+    if (c.ref) byRef[normKey_(c.ref)] = c;
+    if (c.policy) byPolicy[normKey_(c.policy)] = c;
+  });
+
+  var open = [];
+  var typeAgg = {};   // type -> {sfOpen, closed, daySum}
+  var offAgg = {};    // officer -> {closed, daySum, open}
+
+  rows.forEach(function (r) {
+    var rec = { name: String(r[0] || ''), ref: String(r[1] || ''), status: String(r[2] || 'Opened'),
+      type: String(r[3] || 'Other'), client: String(r[4] || ''), policy: String(r[5] || ''),
+      officer: String(r[6] || ''), days: r[9] === '' ? '' : Number(r[9] || 0),
+      openReqs: Number(r[10] || 0), reqs: String(r[11] || ''), paid: r[12] };
+    var isOpen = rec.status !== 'Closed';
+
+    var t = typeAgg[rec.type] = typeAgg[rec.type] || { sfOpen: 0, closed: 0, daySum: 0 };
+    if (isOpen) t.sfOpen++;
+    else if (rec.days !== '') { t.closed++; t.daySum += rec.days; }
+    if (rec.officer) {
+      var o = offAgg[rec.officer] = offAgg[rec.officer] || { closed: 0, daySum: 0, open: 0 };
+      if (isOpen) o.open++;
+      else if (rec.days !== '') { o.closed++; o.daySum += rec.days; }
+    }
+
+    var local = byRef[normKey_(rec.ref)] || byPolicy[normKey_(rec.policy)];
+    if (local) {
+      local.sf = { status: rec.status, officer: rec.officer,
+        openReqs: rec.openReqs, reqs: rec.reqs, days: rec.days, paid: rec.paid };
+    } else if (isOpen) {
+      open.push(rec);
+    }
+  });
+  open.sort(function (a, b) { return Number(b.days || 0) - Number(a.days || 0); });
+
+  // The site's own trail: actions and resolutions per staff member, last 30 days.
+  var actAgg = {};
+  var log = logSheet_();
+  var lastLog = log.getLastRow();
+  if (lastLog > 1) {
+    var from = Math.max(2, lastLog - 1500);
+    var cutoff = Date.now() - 30 * 864e5;
+    log.getRange(from, 1, lastLog - from + 1, 5).getValues().forEach(function (l) {
+      var when = l[0] instanceof Date ? l[0].getTime() : new Date(l[0]).getTime();
+      var by = String(l[3] || '');
+      if (isNaN(when) || when < cutoff || !by || by === 'client' || by === 'system') return;
+      var a = actAgg[by] = actAgg[by] || { actions: 0, resolved: 0 };
+      a.actions++;
+      if (String(l[2]) === 'status-changed' && /^(Settled|Closed|Declined)/.test(String(l[4] || ''))) a.resolved++;
+    });
+  }
+  var emailToName = {};
+  var ss = staffSheet_();
+  if (ss.getLastRow() > 1) {
+    ss.getRange(2, 1, ss.getLastRow() - 1, 2).getValues().forEach(function (s) {
+      emailToName[String(s[0]).trim().toLowerCase()] = String(s[1] || s[0]);
+    });
+  }
+  Object.keys(actAgg).forEach(function (email) {
+    var name = emailToName[email.toLowerCase()] || email;
+    var o = offAgg[name] = offAgg[name] || { closed: 0, daySum: 0, open: 0 };
+    o.actions = actAgg[email].actions;
+    o.resolved = actAgg[email].resolved;
+  });
+
+  return { open: open.slice(0, 50), perf: {
+    types: Object.keys(typeAgg).map(function (k) {
+      var t = typeAgg[k];
+      return { type: k, sfOpen: t.sfOpen,
+        avgClose: t.closed ? Math.round(t.daySum / t.closed) : '' };
+    }).sort(function (a, b) { return b.sfOpen - a.sfOpen; }),
+    officers: Object.keys(offAgg).map(function (k) {
+      var o = offAgg[k];
+      return { name: k, open: o.open || 0, closed: o.closed || 0,
+        avgDays: o.closed ? Math.round(o.daySum / o.closed) : '',
+        actions: o.actions || 0, resolved: o.resolved || 0 };
+    }).sort(function (a, b) { return (b.closed + b.resolved * 2) - (a.closed + a.resolved * 2); }),
+  } };
 }
 
 function apiStaffAction_(b) {
@@ -2393,7 +2542,7 @@ function sweepAbandonedParts() {
 /* ============================ setup & menu ============================ */
 
 function setupClaims() {
-  filesSheet_(); logSheet_(); registerSheet_(); policyRegisterSheet_();
+  filesSheet_(); logSheet_(); registerSheet_(); policyRegisterSheet_(); sfClaimsSheet_();
   var root = rootFolder_();
 
   // Staff tab: seed you as Admin so the staff dashboard works immediately.
