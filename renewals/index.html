@@ -191,7 +191,7 @@
 var WALL_DATA_URL = "";   // ← Apps Script /exec URL, or leave "" for snapshot
 
 var WALL_DATA = {
-  generatedAt: "2026-09-07T14:21:00Z",
+  generatedAt: "2026-09-10T15:00:00Z",
   monthLabel: "September 2026",
   monthStart: "2026-09-01", monthDays: 30,
   /* one row per renewal due this month; renewed = the next-cycle record
@@ -199,20 +199,20 @@ var WALL_DATA = {
      paid = payments recorded on the new cycle so far; off = leaving the
      book (vehicle sold). who: appears on the live feed only.            */
   motor: [
-    {d:"2026-09-04", what:"Jeep",       cov:"Comprehensive", prem:0,       renewed:true, newPrem:9104.30, paid:0},
-    {d:"2026-09-05", what:"Nissan",     cov:"Comprehensive", prem:9143.88, renewed:true, newPrem:7165.06, paid:0},
-    {d:"2026-09-09", what:"Toyota",     cov:"Third party",   prem:1670.00, renewed:true, newPrem:1670.00, paid:0},
-    {d:"2026-09-09", what:"Nissan",     cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
-    {d:"2026-09-09", what:"Mitsubishi", cov:"Third party",   prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
-    {d:"2026-09-12", what:"Kia",        cov:"Third party",   prem:991.55,  tasks:6},
-    {d:"2026-09-13", what:"Kia",        cov:"Third party",   prem:1350.18, off:"Sold", tasks:6},
-    {d:"2026-09-13", what:"Land Rover", cov:"Third party",   prem:1443.19, tasks:6},
-    {d:"2026-09-13", what:"BMW",        cov:"Third party",   prem:1350.18, tasks:6},
-    {d:"2026-09-14", what:"Honda",      cov:"Comprehensive", prem:5109.20},
-    {d:"2026-09-18", what:"Nissan",     cov:"Third party",   prem:1231.90},
-    {d:"2026-09-18", what:"Hyundai",    cov:"Third party",   prem:2130.07},
+    {d:"2026-09-04", what:"Jeep", cov:"Comprehensive", prem:0.00, renewed:true, newPrem:9104.30, paid:0},
+    {d:"2026-09-05", what:"Nissan", cov:"Comprehensive", prem:9143.88, renewed:true, newPrem:7165.06, paid:0},
+    {d:"2026-09-09", what:"Toyota", cov:"Third party", prem:1670.00, renewed:true, newPrem:1670.00, paid:0},
+    {d:"2026-09-09", what:"Nissan", cov:"Third party", prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
+    {d:"2026-09-09", what:"Mitsubishi", cov:"Third party", prem:1556.25, renewed:true, newPrem:1556.25, paid:0},
+    {d:"2026-09-12", what:"Kia", cov:"Third party", prem:991.55, renewed:true, newPrem:1715.08, paid:0, tasks:6},
+    {d:"2026-09-13", what:"Kia", cov:"Third party", prem:1350.18, off:"Sold", tasks:6},
+    {d:"2026-09-13", what:"Land Rover", cov:"Third party", prem:1443.19, renewed:true, newPrem:1443.19, paid:0, tasks:6},
+    {d:"2026-09-13", what:"BMW", cov:"Third party", prem:1350.18, renewed:true, newPrem:1350.18, paid:0, tasks:6},
+    {d:"2026-09-14", what:"Honda", cov:"Comprehensive", prem:5109.20},
+    {d:"2026-09-18", what:"Nissan", cov:"Third party", prem:1231.90},
+    {d:"2026-09-18", what:"Hyundai", cov:"Third party", prem:2130.07},
     {d:"2026-09-23", what:"Land Rover", cov:"Comprehensive", prem:11894.80},
-    {d:"2026-09-30", what:"Toyota",     cov:"Third party",   prem:2696.64}
+    {d:"2026-09-30", what:"Toyota", cov:"Third party", prem:2696.64}
   ],
   property: [
     {d:"2026-09-08", what:"Commercial package", type:"Commercial", prem:27030.00},
