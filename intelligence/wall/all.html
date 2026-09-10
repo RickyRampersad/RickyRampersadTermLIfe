@@ -30,7 +30,10 @@
      Every story narrates. A slide tells this player when its voice starts and
      stops (postMessage), and the player holds that slide until the voice is
      done rather than turning mid-sentence; the rail's Narrate asks the story on
-     screen to speak. The stories are same-origin, so the mouse, a tap or a key
+     screen to speak. Every hold on this wall expires — a voice, a pause,
+     anything else — because a wall that has stopped turning is read by the
+     room as a wall that has died, and on 10 September one line of audio that
+     never finished did exactly that. The stories are same-origin, so the mouse, a tap or a key
      inside a story reaches this player too — otherwise the first click into a
      slide would take the keys away from the wall for good. -->
 <html lang="en">
@@ -59,7 +62,7 @@
   /* The slides. All five live here for the life of the page. */
   .stage{position:fixed;inset:0;background:#061c31}
   .slide{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
-    opacity:0;visibility:hidden;transition:opacity .55s ease}
+    background:#061c31;opacity:0;visibility:hidden;transition:opacity .55s ease}
   .slide.on{opacity:1;visibility:visible}
 
   /* The boot card, over the top until the first story has painted. */
@@ -210,6 +213,25 @@ var FIRST_TURN_MS = 12000;
 /* After a story's voice ends, it keeps the screen this long before the wall
    turns: the last line needs a moment to land. */
 var AFTER_VOICE_MS = 6000;
+/* Nothing may stop the wall for good — not a story, and not a person.
+   A story tells the player when its voice starts and stops, and the player
+   holds that story while it speaks. Nothing capped the hold, and on
+   10 September the branch found the wall static: one line of narration had
+   errored, the audio element never fired `ended`, so the story never said it
+   had stopped, and the wall held that screen all morning. Pause had the same
+   shape — whoever pressed it was not coming back to press play.
+   Both holds now expire. The cap sits far past the longest narration on the
+   wall, so a voice is never cut off inside a sentence; the pause is long
+   enough to set a screen up in and short enough that a wall left paused is
+   turning again before the floor notices. */
+var NARCAP_MS = Math.max(5, Number(Q.get('narcap') || 150)) * 1000;
+var RESUME_MS = Math.max(5, Number(Q.get('resume') || 300)) * 1000;
+/* And the last word, on its own clock, because the surest way to stop a wall
+   is a fault in the thing that turns it. This is set past every honest hold
+   added together — a pause waiting to heal, a voice running to its cap, the
+   longest dwell — so reaching it means something nobody thought of, and the
+   answer to that on a wall is always the same: turn. */
+var NEVER_STILL_MS = 10 * 60 * 1000;
 var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
@@ -228,6 +250,9 @@ var stage = document.getElementById('stage'),
     boot  = document.getElementById('boot');
 
 var at = -1, paused = false, narrating = false, started = 0, holdFor = 0, bootGone = false;
+/* When the voice was declared on, when the pause was taken, and when the wall
+   last actually turned. */
+var spokeAt = 0, heldAt = 0, turnedAt = Date.now();
 
 /* Build the frames and the buttons. The first story is asked for at once and
    the rest follow a few seconds apart, because five heavy pages starting
@@ -314,7 +339,7 @@ function show(i) {
   at = i;
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
   if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
-  started = Date.now();
+  started = turnedAt = Date.now();
   pos.textContent = (i + 1) + ' of ' + SLIDES.length;
   tab.textContent = SLIDES[i].tab;
 }
@@ -323,6 +348,7 @@ function step() { show(nextLive(at)); }
 function rest() { started = Date.now(); }               // a click buys a full turn
 
 function setPaused(v) {
+  if (v && !paused) heldAt = Date.now();
   paused = !!v;
   bar.classList[paused ? 'add' : 'remove']('paused');
   hud.classList[paused ? 'add' : 'remove']('paused');
@@ -330,6 +356,7 @@ function setPaused(v) {
   rest(); wake();
 }
 function setNarrating(v) {
+  if (v && !narrating) spokeAt = Date.now();
   narrating = !!v;
   hud.classList[narrating ? 'add' : 'remove']('nar');
   nar.textContent = narrating ? '■ Stop' : '▶ Narrate';
@@ -350,8 +377,12 @@ window.addEventListener('message', function (e) {
     return;
   }
   if (d.rrb !== 'narration') return;
+  var was = narrating;
   setNarrating(d.on);
-  if (!d.on) started = Date.now() - Math.max(0, holdFor - AFTER_VOICE_MS);
+  /* Only a voice the wall was actually holding for earns the beat at the end;
+     a story reporting a voice the wall has already given up on does not get
+     to start the hold again. */
+  if (!d.on && was) started = Date.now() - Math.max(0, holdFor - AFTER_VOICE_MS);
   wake();
 });
 
@@ -361,9 +392,18 @@ window.addEventListener('message', function (e) {
    slows animation frames right down, and a wall that stops turning when
    nobody is touching it is the opposite of a wall. */
 function tick() {
-  var pct = 0, secsLeft = 0;
+  var now = Date.now(), pct = 0, secsLeft = 0;
+
+  /* Before anything else, let go of a hold that has outstayed its reason. */
+  if (narrating && now - spokeAt > NARCAP_MS) {
+    tell(at, { rrb:'hush' });
+    setNarrating(false);
+    started = now - holdFor;                    // and turn, rather than start the dwell again
+  }
+  if (paused && now - heldAt > RESUME_MS) setPaused(false);
+
   if (holdFor) {
-    var gone = Date.now() - started;
+    var gone = now - started;
     pct = Math.min(100, gone / holdFor * 100);
     secsLeft = Math.max(0, Math.ceil((holdFor - gone) / 1000));
     if (!paused && !narrating && gone >= holdFor) {
@@ -381,8 +421,11 @@ function tick() {
     boot.classList.add('gone');
     setTimeout(function () { boot.style.display = 'none'; }, 600);
   }
+  /* One story loaded and no other is a wall that cannot turn — say so,
+     rather than let the floor read a working screen as a dead one. */
   left.textContent = paused ? 'paused · space or ▶ to go on'
     : narrating ? 'narrating · holds'
+    : nextLive(at) === at ? 'only this story has loaded'
     : 'next in ' + secsLeft + 's';
 }
 
@@ -414,6 +457,18 @@ function wake() {
 }
 ['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
 wake();
+
+/* The last word, on its own clock: if nothing has turned in ten minutes,
+   everything holding the wall is let go and the wall turns. It runs apart
+   from tick() on purpose — a fault inside the clock that turns the wall is
+   exactly the fault this is here for. */
+setInterval(function () {
+  if (Date.now() - turnedAt < NEVER_STILL_MS) return;
+  if (paused) setPaused(false);
+  if (narrating) { tell(at, { rrb:'hush' }); setNarrating(false); }
+  step();
+  turnedAt = Date.now();                         // parked on the only story loaded: do not thrash
+}, 15000);
 
 show(0);
 tick();
