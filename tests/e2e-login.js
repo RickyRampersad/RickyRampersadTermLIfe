@@ -89,7 +89,7 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   clearInterval(watch);
   const labels = [...seen];
   ok('it says it is still trying', labels.some(l => /Still trying/.test(l)), labels.join(' | '));
-  ok('and counts the attempt', labels.some(l => /\(2 of 3\)|\(3 of 3\)/.test(l)), labels.join(' | '));
+  ok('and counts the attempt', labels.some(l => /\(\d of \d\)/.test(l)), labels.join(' | '));
   ok('the button was never left blank', !labels.some(l => l === ''));
 
   console.log('\nAnd when the sheet really is unreachable, she is told plainly:\n');
@@ -100,16 +100,21 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   await i2[0].fill('KD001');
   await i2[1].fill('1');
   await page.click('button:has-text("Sign in")');
-  await page.waitForTimeout(9000);
+  // Four tries, 1.5s / 3s / 4.5s apart — a slow sheet is given longer than it
+  // was, because on 10 September three was not enough and the branch was
+  // locked out at a quarter past seven.
+  for (let w = 0; w < 30 && !(await page.locator('text=/busy, not broken/').count()); w++) await page.waitForTimeout(500);
   const msg = await page.locator('text=/busy, not broken/').count();
   ok('the message says busy, not broken', msg > 0);
-  ok('and it stopped after three tries', loginTries === 3, loginTries + ' attempts');
+  ok('and it stopped after four tries', loginTries === 4, loginTries + ' attempts');
 
   console.log('\nA dropped request while the page starts must not cost her the session:\n');
   await page.evaluate(() => { localStorage.clear(); localStorage.setItem('rrb_kpi_token', 'tok'); });
   meDown = 99; refuseFirst = 0; loginTries = 0;
   await page.reload({ waitUntil: 'networkidle' });
-  await page.waitForTimeout(6500);                 // three tries, 1.5 s and 3 s apart
+  // four tries, 1.5s / 3s / 4.5s apart
+  for (let w = 0; w < 30 && !(await page.locator('button:has-text("Sign in")').count()); w++) await page.waitForTimeout(500);
+  await page.waitForTimeout(500);
   const kept = await page.evaluate(() => localStorage.getItem('rrb_kpi_token'));
   ok('the sign-in screen shows', await page.locator('button:has-text("Sign in")').count() === 1);
   ok('and says the sheet did not answer, not that she was signed out', await page.locator('text=/did not answer/').count() > 0);

@@ -623,9 +623,21 @@ const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, vertical
    the hours the register shows. It names what is still unreported before it
    asks, because the moment to notice a missing block is while you can still
    report it, not at tomorrow's checkpoint. */
+/* CLOSING THE DAY, AND THE LIST THAT COMES WITH IT.
+   Signing out used to be a button and a sentence about what was still open.
+   The branch asked for the other half on 10 September: gauge what was
+   actually done, and ask while the person is still at the desk.
+   So the list is here, from the Closeout Items tab. Whatever the sheet can
+   already see — blocks reported, the afternoon sweep, anything written to
+   you today — ticks itself and shows what it read; only what cannot be seen
+   is put as a question. It is still not a gate. A person may sign out with
+   things open, and the register says so; what they cannot do any more is
+   leave without being asked. */
 function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten }) {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const [co, setCo] = useState(null);
+  const [ticking, setTicking] = useState("");
   const left = (blocks || []).filter(b => !(entry && blockWorked(entry, b.id)));
   const outstanding = []
     .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
@@ -637,41 +649,74 @@ function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten })
       .concat((standing.asks || []).reduce((a, x) => a.concat(x.dates || []), []))
       .concat((standing.thanked || []).map(t => t.date))) || [])
     .filter(d => d === today).length;
+  /* Re-read after a moment is filed, so the "written to" line stops asking
+     the second it has an answer. */
+  useEffect(() => {
+    let alive = true;
+    api("closeout", {}).then(r => { if (alive && r && r.ok) setCo(r); });
+    return () => { alive = false; };
+  }, [writtenToday]);
+  const doTick = id => {
+    setTicking(id);
+    api("tickCloseout", { itemId: id }).then(r => {
+      setTicking("");
+      if (r && r.ok) setCo(r); else setErr((r && r.error) || "Not recorded. Try once more.");
+    });
+  };
   const go = () => {
     setBusy(true); setErr("");
     Promise.resolve(onClose()).then(r => {
       if (!(r && r.ok)) { setBusy(false); setErr((r && r.error) || "Not recorded. Try once more."); }
     });
   };
+  const tap = (label, onClick, color) => h("button", { type: "button", onClick,
+    style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit",
+             fontSize: 11.5, fontWeight: 800, color: color || GOLD } }, label);
+  const listed = co && co.of;
+  const line = r => h("div", { key: r.id,
+      style: { display: "flex", gap: 8, alignItems: "flex-start", padding: "7px 0",
+               borderTop: "1px solid " + LINE } },
+    h("span", { style: { fontSize: 13, lineHeight: 1.3, color: r.done ? GREEN : AMBER, fontWeight: 800 } },
+      r.done ? "✓" : "○"),
+    h("div", { style: { flex: 1, minWidth: 0 } },
+      h("div", { style: { fontSize: 12.5, fontWeight: 600, color: r.done ? MUTED : INK, lineHeight: 1.4 } }, r.item),
+      r.detail ? h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 1 } }, r.detail) : null,
+      r.done ? null
+        : h("div", { style: { display: "flex", gap: 12, marginTop: 4, flexWrap: "wrap" } },
+            /* The one line whose answer is a screen rather than a tick gets
+               the screen offered first, and the honest "there was nothing"
+               beside it. */
+            r.auto === "written" && onWritten ? tap("Note it", onWritten) : null,
+            tap(ticking === r.id ? "…" : r.auto === "written" ? "Nothing today" : "Mark it done",
+                () => doTick(r.id), GREEN))));
+
   return h("div", { style: { ...card, marginTop: 12, borderLeft: "4px solid " + GOLD } },
     h("div", { style: cardHead }, h("div", { style: cardTitle }, out ? "Day closed at " + out : "Close the day")),
     h("p", { style: { fontSize: 12.5, color: MUTED, margin: "2px 0 10px", lineHeight: 1.5 } },
       out ? "Signed out at " + out + ". Closing again moves the time later, which is right if you came back."
           : "Signing out closes your day on the register. Your sign-in and this time are the hours it shows."),
-    outstanding.length
-      ? h("div", { style: { fontSize: 12.5, color: AMBER, fontWeight: 700, marginBottom: 10, lineHeight: 1.5 } },
-          "Still open: " + outstanding.join(" and ") + ".")
-      : h("div", { style: { fontSize: 12.5, color: GREEN, fontWeight: 700, marginBottom: 10 } },
-          "Everything is in."),
-    /* Asked here because this is the last screen of the day and the answer is
-       still in the person's head. It is not a gate — a day that was quiet
-       closes with nothing written — but the question is put every evening,
-       which is the only way the quarterly stops being a memory test. */
-    onWritten ? h("div", { style: { borderTop: "1px solid " + LINE, paddingTop: 10, marginBottom: 10 } },
-      h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK, marginBottom: 3 } },
-        "Anything you were written to about, or fell short on, today?"),
-      h("div", { style: { fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 7 } },
-        "A reminder, an instruction, a thank-you — or something you know you fell short on today. It goes against the competency it touches and the job document, and the same thing twice is counted."),
-      writtenToday
-        ? h("div", { style: { fontSize: 12.5, fontWeight: 700, color: GREEN } },
-            writtenToday + " noted today")
-        : h("button", { type: "button", onClick: onWritten, style: trendChip }, "Note it before you go")) : null,
+    listed
+      ? h("div", { style: { marginBottom: 10 } },
+          h("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
+                              color: co.complete ? GREEN : AMBER, marginBottom: 2 } }, "Before you leave"),
+          h("div", { style: { fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 2 } },
+            co.complete
+              ? "Everything on your list is in."
+              : co.left + (co.left === 1 ? " thing" : " things") + " of " + co.of +
+                " still open. The ticked ones checked themselves."),
+          co.items.map(line))
+      /* Until the list answers — a slow read, or a tab that has none — the
+         day still has to say what is outstanding. */
+      : (outstanding.length
+          ? h("div", { style: { fontSize: 12.5, color: AMBER, fontWeight: 700, marginBottom: 10, lineHeight: 1.5 } },
+              "Still open: " + outstanding.join(" and ") + ".")
+          : h("div", { style: { fontSize: 12.5, color: GREEN, fontWeight: 700, marginBottom: 10 } },
+              "Everything is in.")),
     err ? h("div", { style: { fontSize: 12, color: RED, marginBottom: 8 } }, err) : null,
     h("button", { type: "button", onClick: go, disabled: busy,
                   style: { ...primaryWide, marginTop: 0, opacity: busy ? 0.6 : 1 } },
       busy ? "Closing…" : out ? "Sign out again" : "Sign out and close the day"));
 }
-
 // ---------------------------------------------------------------------------
 //  Performance
 //
@@ -1545,12 +1590,32 @@ function withToken(action, payload) {
   return body;
 }
 
+/* How long one attempt is given, and how many attempts there are.
+   Apps Script answers this project in a couple of seconds when it is warm and
+   in twenty-five to thirty when it is not — a nightly rebuild still running,
+   or a container that has gone cold. Nothing here used to set a limit, so the
+   phone's own gave up first, threw, and the branch read "the sheet did not
+   answer" on the sign-in screen at a quarter past seven. Thirty-five seconds
+   is longer than the slowest honest answer measured on this project; the
+   attempt after a slow one is usually quick, because the first one warmed it. */
+const API_TIMEOUT_MS = 35000;
+const API_TRIES = 4;
+
 async function apiOnce(action, payload) {
-  const res = await fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    headers: { "Content-Type": "text/plain;charset=utf-8" },
-    body: JSON.stringify(withToken(action, payload))
-  });
+  /* AbortController rather than the phone's own limit: a timeout we set is a
+     timeout we can retry: one the browser sets is a thrown fetch we cannot
+     tell apart from a dropped connection. */
+  const ctl = typeof AbortController === "function" ? new AbortController() : null;
+  const bell = ctl ? setTimeout(() => { try { ctl.abort(); } catch (e) {} }, API_TIMEOUT_MS) : null;
+  let res;
+  try {
+    res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(withToken(action, payload)),
+      signal: ctl ? ctl.signal : undefined
+    });
+  } finally { if (bell) clearTimeout(bell); }
   // Apps Script answers a POST with a 302 to a one-shot result URL. When the
   // script is busy that result is not always there yet, and the browser sees a
   // 404 — which is not "no such endpoint", it is "not ready". Treating it as
@@ -1581,7 +1646,7 @@ async function apiOnce(action, payload) {
 async function api(action, payload, onAttempt) {
   if (!configured()) return { ok: false, error: "No Apps Script URL set in this file." };
   let last = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < API_TRIES; attempt++) {
     if (attempt) await new Promise(r => setTimeout(r, attempt * 1500));
     if (onAttempt) { try { onAttempt(attempt + 1); } catch (e) {} }
     try {
@@ -1599,8 +1664,14 @@ async function api(action, payload, onAttempt) {
       // dropping a slow request. Say both, and blame neither: the last time
       // this message mentioned a connection, somebody restarted their phone
       // over a fault in this script.
-      last = { ok: false,
-        error: "The sheet did not answer. It is slow today, so a weak signal can drop the request — press Sign in once more, and tell the Branch Manager if it keeps happening." };
+      /* An attempt we cut short and a connection that dropped read the same
+         to a person and are not the same thing, and neither is their fault.
+         Say which, say that trying again is already happening, and do not
+         ask anybody to press anything while it is. */
+      last = { ok: false, _retry: true,
+        error: (e && e.name === "AbortError")
+          ? "The sheet is taking longer than usual to answer. Trying again…"
+          : "The connection dropped before the sheet answered. Trying again…" };
     }
   }
   // Every attempt is spent. "Trying again..." was true a moment ago and is not
@@ -1608,7 +1679,8 @@ async function api(action, payload, onAttempt) {
   // happening.
   if (last && last._retry) {
     last = { ok: false,
-      error: "The sheet did not answer after three tries. It is busy, not broken — wait a moment and press Submit again." };
+      error: "The sheet did not answer, after " + API_TRIES + " tries over about two minutes. " +
+             "It is busy, not broken. Give it a minute and go again — and tell the Branch Manager if it keeps happening." };
   }
   return last;
 }
@@ -4465,7 +4537,7 @@ function Login({
     }
   }, busy
        ? (tryNo > 1
-            ? "Still trying… (" + tryNo + " of 3)"
+            ? "Still trying… (" + tryNo + " of " + API_TRIES + ")"
             : "Signing in… this can take a few seconds")
        : "Sign in"), /*#__PURE__*/React.createElement("p", {
     style: {

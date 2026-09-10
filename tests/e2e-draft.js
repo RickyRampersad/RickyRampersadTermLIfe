@@ -103,7 +103,8 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   const askFirst = await page.locator('button:has-text("Send it anyway")').count();
   ok('it asks once, because the entry reads thin', askFirst > 0);
   await page.click('button:has-text("Send it anyway")');
-  await page.waitForTimeout(9000);
+  // Four tries now, not three, so the last word comes later than it did.
+  for (let w = 0; w < 30 && !(await page.locator('text=/busy, not broken|saved on this phone/').count()); w++) await page.waitForTimeout(500);
   ok('it retried instead of giving up on the first 404', saveAttempts >= 3, saveAttempts + ' attempts');
   const msg = await page.locator('text=/busy, not broken|saved on this phone/').count();
   ok('she is told her words are safe', msg > 0);

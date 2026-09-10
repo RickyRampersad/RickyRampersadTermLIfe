@@ -142,7 +142,7 @@ console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
 env.installTriggers();
 env.intelInstallTriggers();
 const all = env.ScriptApp.getProjectTriggers();
-ok('sixteen triggers in all — the tracker\'s five, the intelligence\'s six, and the wall\'s five nightly builds', all.length === 16, String(all.length));
+ok('seventeen triggers in all — the tracker\'s six, the intelligence\'s six, and the wall\'s five nightly builds', all.length === 17, String(all.length));
 ok('which leaves room, where seventeen plus six did not', all.length <= 20);
 ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
 ok('and each wall feed has its own night-time build', ['intelRebuildWall45','intelRebuildDelivery','intelRebuildLicence','intelRebuildPossession','intelRebuildBook'].every(fn => all.some(t => t.getHandlerFunction() === fn)));
@@ -151,8 +151,13 @@ ok('and each wall feed has its own night-time build', ['intelRebuildWall45','int
 const wallHours = all.filter(t => /^intelRebuild(Wall45|Possession|Licence|Delivery|Book)$/.test(t.getHandlerFunction()))
   .map(t => (t.chain.join().match(/atHour\((\d+)\)/) || [])[1]);
 ok('and no two of them share an hour', new Set(wallHours).size === 5, wallHours.join(','));
-ok('the slowest goes first, and all five are done before the branch opens',
-   wallHours.every(h => Number(h) >= 2 && Number(h) <= 7), wallHours.join(','));
+// And "before the branch opens" has to mean it. Spreading them into an hour
+// each put the last one at seven, which is when the branch signs in — on
+// 10 September the whole floor met "the sheet did not answer" instead of a
+// tracker. Apps Script fires anywhere inside the hour it is given, so the
+// last of these must be given an hour that ends well before seven.
+ok('the slowest goes first, and every one of them is finished before six',
+   wallHours.every(h => Number(h) >= 0 && Number(h) <= 5), wallHours.join(','));
 
 fs.unlinkSync(both);
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
