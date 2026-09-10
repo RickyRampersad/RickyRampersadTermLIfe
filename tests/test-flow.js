@@ -43,6 +43,10 @@ env.__mkSheet('KPI Log', 2, LOGH, [
   row('2026-08-18', 'sasha', 'Sasha Lalla', '09:50|bm:done,abm:done,um:none,ea:none,ag:done', '', 'Dues — 9 processed'),
 ]);
 env.__mkSheet('KPI Training', 3, TRH, []);
+// The checkpoint now asks the day's own record whether anybody worked, so the
+// register has to exist for it to read.
+env.__mkSheet('Attendance', 7, ['Date','StaffId','Name','FirstSignIn','LastSeen','SignedOut',
+                                'Status','Reason','MarkedBy','UpdatedAt'], []);
 env.__mkSheet('Ranks', 4, ['Name','Rank'], [['Aidan Eugene','Executive Agent'], ['Neil Ramnanan','Exec. Agent'], ['Nerisa Arman','Unit Manager']]);
 env.__mkSheet('Competencies', 5, ['Order','Competency','Definition','Behaviours'],
   [[1,'Courtesy & Interpersonal Skills','d','one'], [2,'Responsiveness','d','one']]);
@@ -114,6 +118,73 @@ ok('for the person who swept', line('sasha').mailAM === '08:25' && line('sasha')
 ok('and for one who did not', line('kamla').mailAM === '' && line('kamla').mailPM === '');
 const html = env.checkpointHtml_(cp);
 ok('in words, in the email', /Mail: morning 08:25 · afternoon 13:35/.test(html) && /No mail sweep recorded/.test(html));
+
+console.log('\nA trigger fires with its own event object, not a date:\n');
+env.resetRequestMemo_();
+// What Apps Script actually hands a time-based trigger.
+const EVT = { authMode: 'FULL', triggerUid: '5417290', 'day-of-month': 19, 'week-of-year': 34 };
+ok('an event object is not a day', env.dayArg_(EVT) === '' && env.dayArg_(null) === '' && env.dayArg_(new Date('nope')) === '');
+ok('a real date is', env.dayArg_('2026-08-17') === '2026-08-17');
+env.resetRequestMemo_();
+const cpT = env.checkpointReport_(EVT);
+ok('so the checkpoint reports today, not the epoch', cpT.date === today, cpT.date);
+ok('and sees the desks that logged', (cpT.lines.find(l => l.staffId === 'sasha') || {}).mailAM === '08:25');
+ok('nobody is marked silent who is not', cpT.lines.filter(l => l.mailAM).length > 0);
+env.resetRequestMemo_();
+ok('an explicit date is still honoured', env.checkpointReport_('2026-08-17').date === '2026-08-17');
+env.resetRequestMemo_();
+ok('and no argument still means today', env.checkpointReport_().date === today);
+env.resetRequestMemo_();
+ok('the weekly summary takes the same guard', env.weeklyReport_(EVT).weekStart === env.weekStart_(today), env.weeklyReport_(EVT).weekStart);
+ok('and a header never turns rubbish into a date', !/1970/.test(env.prettyDate_(EVT)) && !/1970/.test(env.shortDate_(EVT)), env.prettyDate_(EVT));
+
+console.log('\nFive triggers, not seventeen — a project holds twenty and shares them:\n');
+env.resetRequestMemo_();
+env.installTriggers();
+let installed = env.ScriptApp.getProjectTriggers();
+const handlers = installed.map(t => t.getHandlerFunction()).sort().join();
+ok('five are installed', installed.length === 5, String(installed.length));
+ok('one of each', handlers === 'keepWarm,remindCheckpoint,remindMidday,sendCheckpoint,sendWeekly', handlers);
+ok('the checkpoint and the two nudges run daily', installed.filter(t => /everyDays\(1\)/.test(t.chain.join()) && /remind|sendCheckpoint/.test(t.getHandlerFunction())).length === 3);
+env.installTriggers();
+ok('running the installer again leaves five, not ten', env.ScriptApp.getProjectTriggers().length === 5);
+
+console.log('\nThe branch works around the clock, so the day\'s record decides, not the calendar:\n');
+const mailBefore = () => env.__calls.mail;
+const FIRE = { authMode: 'FULL', triggerUid: '8811', 'day-of-month': 22 };
+// A Saturday nobody worked: the register is empty and nothing was filed.
+NOW = new Date('2026-08-22T15:05:00');
+env.resetRequestMemo_();
+let m0 = mailBefore();
+ok('a Saturday nobody worked sends nothing', /Nobody signed in/.test(env.sendCheckpoint(FIRE)) && mailBefore() === m0);
+ok('nor does the midday nudge', /Nobody signed in/.test(env.remindMidday(FIRE)) && mailBefore() === m0);
+ok('nor the three o\'clock one', /Nobody signed in/.test(env.remindCheckpoint(FIRE)) && mailBefore() === m0);
+
+// The same Saturday, with somebody at a desk. This is the case the old
+// weekday rule got wrong: it refused a day the branch had actually worked.
+const satRow = { Date: '2026-08-22', StaffId: 'sasha', Name: 'Sasha Lalla', FirstSignIn: '08:04', Status: 'in' };
+env.__sheets['Attendance']._grid.push(env.ATT.head.map(h => satRow[h] || ''));
+env.resetRequestMemo_();
+ok('but a Saturday somebody worked gets its checkpoint', !/Nobody signed in/.test(env.sendCheckpoint(FIRE)) && mailBefore() > m0);
+m0 = mailBefore();
+env.__sheets['Attendance']._grid.pop();
+env.resetRequestMemo_();
+env.sendCheckpoint();
+ok('and a person running it from the editor is never turned away', mailBefore() === m0 + 1);
+
+console.log('\nAnd the script is kept warm at every hour, not only office ones:\n');
+const reads = env.__calls.getValue;
+NOW = new Date('2026-08-22T23:40:00');                      // a Saturday night
+env.keepWarm();
+ok('a Saturday night still warms it', env.__calls.getValue > reads, 'reads ' + reads + ' -> ' + env.__calls.getValue);
+NOW = new Date('2026-08-19T03:15:00');                      // a Wednesday, small hours
+env.keepWarm();
+ok('and so does three in the morning', env.__calls.getValue > reads + 1);
+NOW = new Date('2026-08-19T15:05:00');                      // back to the Wednesday
+env.resetRequestMemo_();
+m0 = mailBefore();
+env.sendCheckpoint(FIRE);
+ok('and on a weekday the trigger sends as before', mailBefore() === m0 + 1);
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

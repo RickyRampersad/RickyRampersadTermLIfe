@@ -31,14 +31,41 @@
 
    DEPLOYING BESIDE AN EXISTING SCRIPT
    ───────────────────────────────────
-   A script project may declare doGet and doPost exactly once. If this project
-   already has them (BranchEngine.gs does), do NOT paste the block at the
-   bottom of this file — add one line to the existing doPost instead. Run
-   intelSelfTest() and it will tell you which case you are in and what to do.
+   A script project may declare doGet and doPost exactly once, and a second
+   declaration silently wins. So this file declares NEITHER. Its entry points
+   are intelDoGet_ and intelDoPost_, and the host's own doGet/doPost hand over
+   to them (KPI.gs does; see its doPost). On 7 September this file still
+   carried a doGet/doPost of its own, it was pasted whole into the tracker's
+   project, and the tracker's sign-in answered "Unknown action: login" until
+   this file was pasted back without them. Pasting it whole is safe now.
+   Run intelSelfTest() and it will say which case you are in and what to do.
+
+   WHICH WORKBOOK
+   ──────────────
+   The branch workbook, INTEL.WORKBOOK, from whichever project the code runs
+   in — the tracker's project is bound to the tracker's workbook, which holds
+   none of the eight export tabs, and reading that one made every screen say
+   "No dues tab found". The Script Property INTEL_WORKBOOK_ID overrides it:
+   another workbook's ID, or the word "bound" to read the attached one. The
+   first run after the paste asks once for permission to open the second
+   workbook; accept it.
+
+   SALESFORCE
+   ──────────
+   Goes through whichever helper the project has — SalesforceSync.gs's
+   sfQuery_ or the tracker's sfkQuery_ (see iSfQuery_). Both read the same
+   SF_* Script Properties, so a project that already talks to Salesforce
+   needs nothing more for the licence, possession and book screens.
    ══════════════════════════════════════════════════════════════════════════ */
 
 var INTEL = {
+  // The branch workbook — the eight export tabs live here, whichever project
+  // the code runs in. Script Property INTEL_WORKBOOK_ID overrides it; the word
+  // "bound" there means "read the spreadsheet this script is attached to".
+  WORKBOOK:       '1T1SG3mgs5QV5LuF3JTpmn1zFldhGjOQNoe0YCMhWxjs',
+
   CACHE_TAB:      '_Intel Cache',
+  WALL_TAB:       '_Intel Wall',      // one row per wall feed, built nightly, read in a second
   ACTIONS_TAB:    'Intel Actions',
   SESSIONS_TAB:   'Intel Sessions',
 
@@ -151,7 +178,7 @@ function iIso_(d) {
 }
 
 function iTz_() {
-  return SpreadsheetApp.getActiveSpreadsheet().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
+  return iSs_().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
 }
 
 function iMoney_(n) {
@@ -187,21 +214,77 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-function iSs_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+var INTEL_VERSION = '2026-09-09b';
+
+/* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
+   unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
+   or the word "bound" for the spreadsheet this script is attached to. So the
+   code can live in the tracker's project, bound to the tracker's workbook,
+   and still read the eight export tabs with nothing set. Memoised per
+   request: openById is a network call, and one screen makes dozens of reads. */
+var _intelSs = null;
+function iWorkbook_() {
+  var id = iProp_('INTEL_WORKBOOK_ID') || INTEL.WORKBOOK || 'bound';
+  return { id: id, how: /^bound$/i.test(id) ? 'bound' : (iProp_('INTEL_WORKBOOK_ID') ? 'by id' : 'default') };
+}
+function iSs_() {
+  if (_intelSs) return _intelSs;
+  var wb = iWorkbook_();
+  _intelSs = wb.how === 'bound' ? SpreadsheetApp.getActiveSpreadsheet() : SpreadsheetApp.openById(wb.id);
+  return _intelSs;
+}
+/* Salesforce, through whichever helper the project has. SalesforceSync.gs
+   gives sfQuery_ and sfToken_; the tracker (KPI.gs) gives sfkQuery_ and
+   sfkToken_ — the same SOQL in, the same records out, the same SF_KEY /
+   SF_SECRET / SF_USER / SF_PASS properties behind them. Inside the tracker's
+   project on 7 September the possession and book screens said
+   "sfQuery_ is not defined", because this file asked for one by name. */
+function iSfQuery_(soql) {
+  if (typeof sfQuery_ === 'function')  return sfQuery_(soql);
+  if (typeof sfkQuery_ === 'function') return sfkQuery_(soql);
+  throw new Error('No Salesforce helper in this project: add SalesforceSync.gs, or run this inside the tracker.');
+}
+function iSfToken_() {
+  if (typeof sfToken_ === 'function')  return sfToken_();
+  if (typeof sfkToken_ === 'function') return sfkToken_();
+  throw new Error('No Salesforce helper in this project: add SalesforceSync.gs, or run this inside the tracker.');
+}
+function iSfHelper_() {
+  if (typeof sfQuery_ === 'function')  return 'sfQuery_ (SalesforceSync.gs)';
+  if (typeof sfkQuery_ === 'function') return 'sfkQuery_ (KPI.gs)';
+  return '';
+}
+
 function iProp_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
 function iSetProp_(k, v) { PropertiesService.getScriptProperties().setProperty(k, String(v)); }
 
+/* Both memoised for the life of one execution. Every builder asks for its
+   tabs by column names, and iFindTab_ answers by reading the header row of
+   every sheet in the workbook — dozens of round trips, repeated for every
+   tab a builder wants, on a workbook with fifty thousand-row extracts. Once
+   per execution is the right number. (Apps Script starts every request and
+   every trigger run with fresh globals, so nothing here goes stale.) */
+var _intelHeadMemo = {}, _intelTabMemo = {};
 function iHeaders_(sh) {
-  var lastCol = sh.getLastColumn();
-  if (lastCol < 1) return [];
-  return sh.getRange(1, 1, 1, lastCol).getValues()[0]
-    .map(function (h) { return String(h).trim().toLowerCase(); });
+  var id = String((sh.getSheetId && sh.getSheetId()) || (sh.getName && sh.getName()) || '');
+  if (id && _intelHeadMemo.hasOwnProperty(id)) return _intelHeadMemo[id];
+  var lastCol = sh.getLastColumn(), head = [];
+  if (lastCol >= 1) {
+    head = sh.getRange(1, 1, 1, lastCol).getValues()[0]
+      .map(function (h) { return String(h).trim().toLowerCase(); });
+  }
+  if (id) _intelHeadMemo[id] = head;
+  return head;
 }
 
 /* A tab qualifies when it carries every column in `must`. Ties break on row
    count: the fullest tab wins, because the workbook keeps empty duplicates of
    several extracts and reading one of those reports "nothing outstanding". */
 function iFindTab_(key, must) {
+  if (_intelTabMemo.hasOwnProperty(key)) return _intelTabMemo[key];
+  return (_intelTabMemo[key] = iFindTabNow_(key, must));
+}
+function iFindTabNow_(key, must) {
   var override = iProp_('INTEL_TAB_' + key);
   if (override) {
     var o = iSs_().getSheetByName(override);
@@ -2010,6 +2093,145 @@ function iSaveCache_(obj) {
   return chunks.length;
 }
 
+/* ── THE WALL STORE ──────────────────────────────────────────────────────────
+   Five screens on a television, each of them a full read of the branch's
+   book. Built on demand, on 8 September, they took 25 to 155 seconds each and
+   the birthdays screen never finished — fifty-four thousand portfolio rows do
+   not fit in one web request. Worse, a television reloading five of them
+   every half hour would spend the project's daily runtime by lunch and take
+   the tracker's sign-in down with it.
+
+   So each feed is built once a night, one execution each (intelRebuildWall45
+   … intelRebuildBook, at three in the morning, inside the six-minute ceiling),
+   and kept here: one row per feed, the JSON in 45,000-character cells. A
+   request reads its row in about a second. With no stored copy yet, a request
+   builds the feed live and stores it, so the first morning works too; a copy
+   that is an error, or not configured, is never stored — a bad night must not
+   pin a bad screen. The screen's own "built …" line says the date. */
+function iWallSheet_() { return iSheet_(INTEL.WALL_TAB); }
+function iWallRow_(sh, key) {
+  var last = sh.getLastRow();
+  if (last < 1) return 0;
+  var keys = sh.getRange(1, 1, last, 1).getValues();
+  for (var i = 0; i < keys.length; i++) if (String(keys[i][0]) === key) return i + 1;
+  return 0;
+}
+function iWallSave_(key, payload) {
+  var sh = iWallSheet_();
+  var json = JSON.stringify(payload), chunks = [];
+  for (var i = 0; i < json.length; i += INTEL.CACHE_CHUNK) chunks.push(json.substr(i, INTEL.CACHE_CHUNK));
+  var builtAt = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm');
+  var row = iWallRow_(sh, key) || sh.getLastRow() + 1;
+  var cells = [key, builtAt, json.length].concat(chunks);
+  var wide = Math.max(sh.getLastColumn(), cells.length);
+  while (cells.length < wide) cells.push('');            // the tail of a longer, older copy
+  sh.getRange(row, 1, 1, cells.length).setValues([cells]);
+  try { sh.hideSheet(); } catch (e) {}
+  return builtAt;
+}
+function iWallLoad_(key) {
+  var sh = iSs_().getSheetByName(INTEL.WALL_TAB);
+  if (!sh) return null;
+  var row = iWallRow_(sh, key);
+  if (!row) return null;
+  var cells = sh.getRange(row, 1, 1, Math.max(4, sh.getLastColumn())).getValues()[0];
+  var len = Number(cells[2]) || 0, json = '';
+  for (var i = 3; i < cells.length && cells[i] !== '' && cells[i] != null; i++) json += String(cells[i]);
+  if (!len || json.length !== len) return null;          // half-written: as good as none
+  try { return { builtAt: String(cells[1]), payload: JSON.parse(json) }; } catch (e) { return null; }
+}
+/* A payload the screen should not keep: an error, or "not configured". */
+function iWallBad_(d, check) {
+  if (check) return check(d);
+  return d && d.error ? String(d.error) : '';
+}
+/* One feed for a screen: the stored copy if there is one; built, stored and
+   served if not. `check` says which built results are errors for this screen. */
+function iWallServe_(key, build, check) {
+  var had = iWallLoad_(key);
+  if (had) return iOk_({ data: had.payload, stored: had.builtAt });
+  var d = build();
+  var bad = iWallBad_(d, check);
+  if (bad) return iErr_(bad);
+  if (d && d.configured !== false) {
+    try { iWallSave_(key, d); } catch (e) {}
+  }
+  return iOk_({ data: d });
+}
+/* One feed for the night: built and stored, or an error the trigger log keeps. */
+function iWallRebuild_(key, build, check) {
+  var started = new Date();
+  var d = build();
+  var bad = iWallBad_(d, check) || (d && d.configured === false ? (d.error || 'not configured') : '');
+  if (bad) throw new Error(key + ': ' + bad);
+  var at = iWallSave_(key, d);
+  return key + ' built at ' + at + ' in ' + Math.round((new Date() - started) / 1000) + 's';
+}
+function iLicenceBad_(d) { return d && d.error && !d.roster ? String(d.error) : ''; }
+function intelRebuildWall45()     { return iWallRebuild_('wall45',     function () { return iBuildWall45_(45); }); }
+function intelRebuildDelivery()   { return iWallRebuild_('delivery',   function () { return iBuildDelivery_(); }); }
+function intelRebuildLicence()    { return iWallRebuild_('licence',    function () { return iBuildLicence_(); }, iLicenceBad_); }
+function intelRebuildPossession() { return iWallRebuild_('possession', function () { return iBuildPossession_(); }); }
+function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
+/* All five from the editor — and it must not simply try all five, because they
+   do not fit. Run on the morning of 8 September it reached the six-minute
+   ceiling and Apps Script killed it: "Exceeded maximum execution time", with
+   no report of what it had managed. The 45-day line alone took 155 seconds
+   live, and four of the others together take another two minutes.
+
+   So: fastest first, a copy already built today is left alone, and the run
+   stops itself with a minute to spare and says what is left. Call it again
+   and it carries on from there — two runs build all five from cold, and a
+   third is a no-op. Nothing is lost to a stopped run either way, because each
+   feed is stored the moment it lands. */
+var IWALL_BUDGET_MS = 4.5 * 60 * 1000;      // the ceiling is 6 minutes; stop short of it
+
+/* Fastest first, measured against the live branch on 8 September: possession
+   16s, licence 25s, delivery 28s, birthdays about a minute and a half since
+   the contact join came out, the 45-day line 155s. Ordered this way a single
+   run gets four of the five. */
+var IWALL_FEEDS = [
+  { key: 'possession', run: function () { return intelRebuildPossession(); } },
+  { key: 'licence',    run: function () { return intelRebuildLicence(); } },
+  { key: 'delivery',   run: function () { return intelRebuildDelivery(); } },
+  { key: 'book',       run: function () { return intelRebuildBook(); } },
+  { key: 'wall45',     run: function () { return intelRebuildWall45(); } }
+];
+
+/* Was this feed's stored copy built today? A copy from last night is fresh
+   enough for the wall and does not need rebuilding by hand. */
+function iWallFresh_(key) {
+  var had = iWallLoad_(key);
+  return !!(had && String(had.builtAt || '').slice(0, 10) === iIso_(iToday_()));
+}
+
+function iWallRunAll_(force) {
+  var started = new Date(), built = [], fresh = [], left = [], failed = [];
+  IWALL_FEEDS.forEach(function (f) {
+    if (!force && iWallFresh_(f.key)) { fresh.push(f.key); return; }
+    if (new Date() - started > IWALL_BUDGET_MS) { left.push(f.key); return; }
+    try { built.push(f.run()); }
+    catch (e) { failed.push(f.key + ' — ' + String(e && e.message || e)); }
+  });
+  var out = [];
+  if (built.length)  out.push('Built now:\n  ' + built.join('\n  '));
+  if (fresh.length)  out.push('Already built today, left alone: ' + fresh.join(', '));
+  if (failed.length) out.push('Would not build:\n  ' + failed.join('\n  '));
+  if (left.length) {
+    out.push('Not reached before the time limit: ' + left.join(', ') +
+             '\n  Run intelRebuildWall() again — it carries on from here.');
+  } else if (!failed.length) {
+    out.push('Every wall feed is built. The screens will answer in about a second.');
+  }
+  out.push('(' + Math.round((new Date() - started) / 1000) + 's of the six-minute limit.)');
+  return out.join('\n\n');
+}
+
+function intelRebuildWall()      { return iWallRunAll_(false); }
+/* Rebuild every feed even if today's copy exists — for when the answer has
+   changed rather than the day: a new exclusion, a corrected tab. */
+function intelRebuildWallForce() { return iWallRunAll_(true); }
+
 function iLoadCache_() {
   var sh = iSs_().getSheetByName(INTEL.CACHE_TAB);
   if (!sh || sh.getLastRow() < 2) return null;
@@ -2788,6 +3010,9 @@ function intelRoute_(b) {
   if (action.indexOf('intel.') !== 0) return null;
 
   if (action === 'intel.signin') return iActSignin_(b);
+  /* Which Intelligence.gs a project is carrying, from outside, with no token:
+     the answer to "did the paste take". Nothing in it but the build. */
+  if (action === 'intel.ping') return iJson_(intelHealth_());
 
   /* The wall screen is unauthenticated on purpose. It hangs on a wall — there is
      nobody to sign it in, and a token baked into a page served from a public
@@ -2796,6 +3021,7 @@ function intelRoute_(b) {
      the names of our own agents and units. No client rows ever reach it. Anyone
      who finds the URL learns the branch's arrears summary and nothing about a
      single client. Keep it that way — see iBuildWall45_. */
+  if (action === 'intel.day') return iActDay_(b);
   if (action === 'intel.wall') return iActWall45_(b);
   if (action === 'intel.delivery') return iActDelivery_(b);
   if (action === 'intel.licence')  return iActLicence_(b);
@@ -2871,14 +3097,104 @@ function iActSignout_(b) {
    Each response also carries `bands`, a one-line summary of all three, so a
    wall can show where its own band sits against the other two without a
    second call. */
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BRANCH'S OWN DAY
+   ══════════════════════════════════════════════════════════════════════════
+   The five screens before this one are all about the client book — what is
+   owed, what is undelivered, whose licence is up, whose birthday it is. Not
+   one of them says how the branch itself is doing today, which is what the
+   room actually asked for: the Salesforce tasks, what has been actioned, and
+   how the day's blocks are going.
+
+   AGGREGATES ONLY, like every other wall read. Counts, and the branch's own
+   staff names — which are already on the wall in this office — and never a
+   task subject, a client, or a policy number. wallData_ in KPI.gs carries
+   subjects and stays manager-only for exactly that reason; this screen has no
+   sign-in and hangs where clients walk past.
+
+   LIVE, NOT STORED. "How the day is going" cannot be a copy built at three in
+   the morning, so this one feed skips the wall store. It is cheap anyway:
+   sfkMetricsSafe_ is cached by the tracker for twelve minutes, so most of
+   these never reach Salesforce at all.                                     */
+function iActDay_(b) {
+  if (typeof sfkMetricsSafe_ !== 'function' || typeof publicRoster_ !== 'function') {
+    return iErr_('The day screen reads the tracker, and the tracker is not in this project.');
+  }
+  var today = todayISO_(), m = sfkMetricsSafe_(), tz = iTz_();
+  var att = {}, entry = {};
+  try {
+    att = attendanceToday_({ staffId: '', manager: true }) || {};
+  } catch (e) {}
+  try {
+    latestEntries_().forEach(function (r) {
+      if (String(r.Date || '').slice(0, 10) === today) entry[String(r.StaffId)] = r;
+    });
+  } catch (e2) {}
+
+  var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
+  var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
+  var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
+
+  publicRoster_().forEach(function (p) {
+    var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
+    var a = att[p.staffId] || null, e = entry[p.staffId] || null;
+    var sched = (typeof SCHEDULE !== 'undefined' && SCHEDULE[p.staffId] && SCHEDULE[p.staffId].blocks) || {};
+    var mine = blockIds.map(function (id, i) {
+      var has = !!(e && String(e[id + '_Actioned'] || '').trim());
+      var sb = sched[id];
+      /* A block nobody is scheduled for is not a block anybody owes. Counting
+         it made a four-block branch look permanently a quarter behind. */
+      if (sb) {
+        blocks[i].of++; t.of++;
+        if (has) { blocks[i].done++; t.done++; }
+        if (!blocks[i].label) { blocks[i].label = String(sb.focus || ''); blocks[i].time = String(sb.time || ''); }
+      }
+      return sb ? (has ? 'done' : 'due') : '';
+    });
+    var d = {
+      name: p.name, role: p.role || '',
+      closed: s ? (s.closed || 0) : null, open: s ? (s.open || 0) : null,
+      overdue: s ? (s.overdue || 0) : null, needs: s ? (s.needs || 0) : null,
+      blocks: mine,
+      'in': a && a.status !== 'absent' ? (a.at || '') : '',
+      out: a ? (a.out || '') : '', late: a ? (a.late || 0) : 0,
+      absent: !!(a && a.status === 'absent')
+    };
+    if (s) { t.closed += d.closed; t.open += d.open; t.overdue += d.overdue; t.needs += d.needs; }
+    if (d.absent) t.absent++;
+    else if (d['in']) { t['in']++; if (d.out) t.out++; }
+    desks.push(d);
+  });
+
+  /* The busiest desk first — a wall is read from the top, and the top should
+     be where the day is actually happening. */
+  desks.sort(function (x, y) { return (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0); });
+
+  return iOk_({ data: {
+    generatedAt: today,
+    at: Utilities.formatDate(new Date(), tz, 'HH:mm'),
+    configured: !!(m && m.ok),
+    error: m && m.ok ? '' : 'Salesforce is not answering, so the task counts are blank.',
+    branch: t, desks: desks, blocks: blocks,
+    /* What the branch closed today against what it closes on an average day
+       this quarter, so a slow morning reads as slow rather than as a number. */
+    pace: (function () {
+      var per = 0;
+      publicRoster_().forEach(function (p) {
+        var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
+        if (s && s.rateAll && s.rateAll.enough) per += s.rateAll.perDay || 0;
+      });
+      return per ? { perDay: Math.round(per), share: Math.round(t.closed / per * 100) } : null;
+    })()
+  } });
+}
+
 function iActWall45_(b) {
   var band = Math.round(iNum_((b && b.band) || 45)) || 45;
   if (IWALL_BANDS.indexOf(band) < 0) {
     return iErr_('Band must be one of ' + IWALL_BANDS.join(', ') + ' — got ' + band + '.');
   }
-  var d = iBuildWall45_(band);
-  if (d.error) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('wall' + band, function () { return iBuildWall45_(band); });
 }
 
 var IWALL_BANDS = [45, 60, 90];
@@ -2936,6 +3252,43 @@ function iExcludes_(skip, name) {
     if (all) return true;
   }
   return false;
+}
+
+/* Set who is left off every wall — from the editor, so nobody has to open the
+   Script Properties page, and rebuilt at once so it takes effect before the
+   night rather than after it. The names are given here and stored in this
+   project's properties; NONE is ever written to a file, because the repository
+   is public. iExcludes_ matches on surname plus every given token, so
+   "Anne Mohammed-Ali" catches the book's "A00001 - Anne Mohammed-Ali" too.
+   intelExclude adds to whoever is already there; it never silently drops one. */
+function intelExclude(names) {
+  if (typeof names !== 'string' || !names.trim()) {
+    return 'Usage: intelExclude("Given Surname, Given Surname") — adds them and rebuilds.\n' +
+           'See who is off now with intelExcluded(); clear the list with intelExcludeClear().';
+  }
+  var have = iExcluded_();
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  names.split(',').forEach(function (n) {
+    n = n.trim();
+    if (n && !iExcludes_(have, n)) { list.push(n); have[iNameKey_(n)] = true; }
+  });
+  iSetProp_('INTEL_EXCLUDE_AGENTS', list.join(', '));
+  /* Forced, because the day's copies are fresh but now wrong — and time-boxed,
+     because five full rebuilds do not fit in one execution. Whatever is not
+     reached keeps yesterday's copy until the next run or tonight's triggers,
+     and the report says which. */
+  return intelExcluded() + '\n\n' + iWallRunAll_(true);
+}
+function intelExcludeClear() {
+  iSetProp_('INTEL_EXCLUDE_AGENTS', '');
+  return 'Exclusion list cleared.\n\n' + iWallRunAll_(true);
+}
+function intelExcluded() {
+  var list = String(iProp_('INTEL_EXCLUDE_AGENTS') || '')
+    .split(',').map(function (s) { return s.trim(); }).filter(Boolean);
+  return list.length ? 'Off every wall (' + list.length + '): ' + list.join(', ')
+                     : 'Nobody is excluded. Add with intelExclude("Given Surname, ...").';
 }
 
 function iBuildWall45_(target) {
@@ -3603,7 +3956,9 @@ function iRecentActions_(session) {
 
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
-                'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp'];
+                'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
+                'intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
+                'intelRebuildPossession', 'intelRebuildBook'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -3616,6 +3971,17 @@ function intelInstallTriggers() {
      end of the month — a thank-you a fortnight late reads as an audit, not a
      courtesy, and the two-day promise has already been broken by then. */
   ScriptApp.newTrigger('intelSurveyFollowUp').timeBased().atHour(9).everyDays(1).create();
+  /* The wall's five feeds, one execution each so every one gets the full six
+     minutes — AND AN HOUR EACH TO ITSELF. All five used to fire at three and
+     compete: on 9 September four of them rebuilt between 03:23 and 03:55 and
+     the 45-day line, the one that takes 155 seconds, was still serving
+     Monday's copy. The slowest goes first and every one is finished long
+     before the branch opens. Eleven here and the tracker's five is sixteen,
+     under the project limit of twenty. */
+  [['intelRebuildWall45', 3], ['intelRebuildPossession', 4], ['intelRebuildLicence', 5],
+   ['intelRebuildDelivery', 6], ['intelRebuildBook', 7]].forEach(function (t) {
+    ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
+  });
   return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
          'or every one of these fires an hour out.';
 }
@@ -4176,19 +4542,34 @@ function intelSelfTest() {
 
   var hasDoPost = false;
   try { hasDoPost = typeof doPost === 'function'; } catch (err) { hasDoPost = false; }
-  var otherRouter = false;
-  try { otherRouter = typeof benSignin_ === 'function' || typeof quoteDoPost_ === 'function'; } catch (err2) {}
-  if (otherRouter) {
+  var tracker = false, engine = false;
+  try { tracker = typeof handle_ === 'function' && typeof SCRIPT_VERSION === 'string'; } catch (err2) {}
+  try { engine = typeof benSignin_ === 'function' || typeof quoteDoPost_ === 'function'; } catch (err3) {}
+  if (tracker) {
+    line('This project is the branch tracker (KPI.gs ' + SCRIPT_VERSION + '). Its doPost hands');
+    line('  intel.* actions here and its doGet serves the survey links. Nothing to add.');
+  } else if (engine) {
     line('This project already contains another web-app router (BranchEngine).');
-    line('  Do NOT keep the doGet/doPost block at the bottom of this file. Instead add');
-    line('  this as the FIRST line inside the existing doPost, after it parses the body:');
+    line('  Add this as the FIRST line inside its doPost, after it parses the body:');
     line('      var hit = intelRoute_(b); if (hit) return hit;');
-    line('  intelRoute_ returns null for anything that is not an intel.* action, so the');
-    line('  rest of that function keeps working exactly as it did.');
+    line('  and this inside its doGet, so a client\'s survey link is answered:');
+    line('      var page = iSurveyClick_(e); if (page) return page;');
+  } else if (!hasDoPost) {
+    line('No web-app router in this project. This file declares none of its own, so add');
+    line('  these two lines anywhere in the project and deploy:');
+    line('      function doGet(e)  { return intelDoGet_(e); }');
+    line('      function doPost(e) { return intelDoPost_(e); }');
   } else {
-    line('No other router detected — the doGet/doPost block at the bottom of this file is');
-    line('  the one that will serve the app. Nothing to change.');
+    line('This project has a doPost of its own. Make sure it calls intelRoute_(b) before');
+    line('  anything else, or the wall screens are refused.');
   }
+  var wb = iWorkbook_();
+  line(wb.how === 'bound' ? 'Reading the workbook this script is bound to (INTEL_WORKBOOK_ID says "bound").'
+     : wb.how === 'by id' ? 'Reading the workbook set in INTEL_WORKBOOK_ID.'
+     : 'Reading the branch workbook, INTEL.WORKBOOK. Set INTEL_WORKBOOK_ID to read another.');
+  var sfh = iSfHelper_();
+  line(sfh ? 'Salesforce through ' + sfh + '.'
+           : 'No Salesforce helper here: the licence, possession and book screens will say so.');
   line('');
 
   var cache = iLoadCache_();
@@ -4307,21 +4688,30 @@ function iDialog_(title, text) {
 
 /* ══════════════════════════════════════════════════════════════════════════
    WEB APP ENTRY POINTS
-   DELETE THIS BLOCK if this script project already declares doGet/doPost —
-   see intelSelfTest(), which tells you which case you are in. A project may
-   declare each of them exactly once, and the second declaration silently wins.
+   Deliberately NOT named doGet and doPost. A project may declare each of
+   those exactly once and the second declaration silently wins; named as they
+   were, pasting this file into the tracker's project took over its router and
+   its sign-in answered "Unknown action: login". The host's own doGet/doPost
+   call these (KPI.gs does). A project with no router of its own adds:
+       function doGet(e)  { return intelDoGet_(e); }
+       function doPost(e) { return intelDoPost_(e); }
    ══════════════════════════════════════════════════════════════════════════ */
 
-function doGet(e) {
+function intelDoGet_(e) {
   /* A survey click arrives here — it is a link in a mail client, so it can
      only ever be a GET. Everything else keeps the old health response. */
   var hit = iSurveyClick_(e);
   if (hit) return hit;
-  return iJson_({ ok: true, service: 'Branch Intelligence',
-                  built: iProp_('INTEL_LAST_BUILD') || 'never' });
+  return iJson_(intelHealth_());
 }
 
-function doPost(e) {
+function intelHealth_() {
+  return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
+           built: iProp_('INTEL_LAST_BUILD') || 'never',
+           workbook: iWorkbook_().how };
+}
+
+function intelDoPost_(e) {
   try {
     /* The private-message form posts form-encoded, not JSON — handle it before
        trying to parse a body that was never JSON in the first place. */
@@ -4606,9 +4996,7 @@ function iBuildDelivery_() {
 }
 
 function iActDelivery_(b) {
-  var d = iBuildDelivery_();
-  if (d.error) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('delivery', function () { return iBuildDelivery_(); });
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -4758,7 +5146,7 @@ function iBuildLicence_() {
   var quoted = codes.map(function (c) { return "'" + c.replace(/'/g, '') + "'"; }).join(',');
   var contacts = [], tasks = [], sfError = '';
   try {
-    contacts = sfQuery_(
+    contacts = iSfQuery_(
       'SELECT Name, Agent__c, Agent_Type__c, License_Renewal_Month_Life__c, ' +
       'License_Life_Renewal_Day__c, License_Date_Life__c ' +
       'FROM Contact WHERE Agent__c IN (' + quoted + ') ' +
@@ -4770,7 +5158,7 @@ function iBuildLicence_() {
        WHERE clause and not filtered afterwards. */
     /* CreatedDate and Who are what turn this from a list into an insight:
        how long a thing has been outstanding, and who it is sitting with. */
-    tasks = sfQuery_(
+    tasks = iSfQuery_(
       'SELECT Id, Subject, Status, ActivityDate, CreatedDate, LastModifiedDate, ' +
       'IsClosed, Who.Name FROM Task ' +
       "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
@@ -5137,9 +5525,7 @@ function iBuildLicence_() {
 }
 
 function iActLicence_(b) {
-  var d = iBuildLicence_();
-  if (d.error && !d.roster) return iErr_(d.error);
-  return iOk_({ data: d });
+  return iWallServe_('licence', function () { return iBuildLicence_(); }, iLicenceBad_);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -5236,7 +5622,7 @@ function iBuildPossession_() {
 
   var rows = [], sfError = '';
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT AgentName__c, Unit__c, Date_Policy_Contract_Recieved__c, ' +
       'Date_Contract_Given_to_Agent__c, Date_Ack_Letter_Received_from_Agent__c ' +
       'FROM ' + IPOSS.OBJECT + ' ' +
@@ -5334,8 +5720,7 @@ function iBuildPossession_() {
 }
 
 function iActPossession_(b) {
-  var d = iBuildPossession_();
-  return iOk_({ data: d });
+  return iWallServe_('possession', function () { return iBuildPossession_(); }, function () { return ''; });
 }
 
 
@@ -5615,7 +6000,7 @@ function iBookBand_(years, bands) {
 function iBookGrowth_(today, unitKeys, skip, roster) {
   var yy = today.getFullYear(), rows = [];
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT Agent__c, Unit__c, Submitted_Date__c, API_Increase__c, Years_In_Force__c ' +
       'FROM Policy_Increases__c WHERE Submitted_Date__c >= ' + yy + '-01-01');
   } catch (err) { return null; }
@@ -5736,13 +6121,18 @@ function iBuildBook_() {
 
   var rows = [], sfError = '';
   try {
-    rows = sfQuery_(
+    rows = iSfQuery_(
       'SELECT Contact__c, AgentName__c, Unit__c, Date_Of_Birth__c, Current_Age__c, ' +
       'ISSUE_DATE__c, Issue_Age__c, Policy_Status_Description_R__c, Life_Coverage__c, ' +
       'Critical_Illness_Coverage__c, Health_Premium__c, ADDAP_Coverage__c, ' +
-      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c, ' +
-      'Contact__r.FirstName, Contact__r.LastName, Contact__r.MailingCity ' +
+      'Pension_Premiums__c, Savings_Coverage__c, Total_Personal_Accident_Premium__c ' +
       'FROM ' + IBOOK.OBJECT + ' WHERE Contact__c != null');
+  /* NO Contact__r JOIN HERE, AND THAT IS THE WHOLE FIX. The book is 54,310
+     policy rows; pulling the contact behind every one of them to read a name
+     and a town put this build past the six-minute ceiling and left the slide
+     blank. FirstName and LastName fed initials that stopped reaching the wall
+     months ago, and the town is needed only for today's birthdays — a hundred
+     names, not fifty thousand — so it is fetched for them alone, below. */
   } catch (err) {
     sfError = String(err && err.message ? err.message : err);
   }
@@ -5807,7 +6197,7 @@ function iBuildBook_() {
     if (!c) c = byClient[key] = { agent: name, unit: unit, n: 0, age: null,
                                   live: isActive, status: isActive ? '' : (statusOf[code] || 'Inactive'),
                                   dobY: 0, dobM: 0, dobD: 0, first: null, last: null,
-                                  firstAge: null, ini: '', town: '', months: [], onBday: false,
+                                  firstAge: null, town: '', months: [], onBday: false,
                                   boughtThisMonth: 0,
                                   life: false, ci: false, health: false, add: false,
                                   pa: false, pension: false, savings: false };
@@ -5824,9 +6214,6 @@ function iBuildBook_() {
        thing about a client that reaches the wall, and it reaches it because the
        branch asked for it: an agent reads their own client out of two letters
        and a town, and nobody else does. */
-    if (!c.ini && x.Contact__r) c.ini = iBookInitials_(x.Contact__r.FirstName, x.Contact__r.LastName);
-    if (!c.town && x.Contact__r && x.Contact__r.MailingCity)
-      c.town = iBookTown_(x.Contact__r.MailingCity);
     if (!c.dobM) {
       var dob = iDate_(x.Date_Of_Birth__c);
       if (dob && dob.getFullYear() > 1900) {
@@ -5878,6 +6265,27 @@ function iBuildBook_() {
      sits behind them. What is left is the former client, and the ones with a
      birthday today are counted with their agent attached. */
   keys.forEach(function (k) { delete gone[k]; });
+
+  /* The town, for today's birthdays only — the one client detail the wall
+     shows, fetched now for the hundred-odd people it is about rather than
+     joined onto every policy row in the query above. iBookTown_ title-cases
+     the shouted CHAGUANAS the export stores; a town that never arrives is a
+     nicety the list stands without. */
+  var todayIds = keys.filter(function (k) {
+    var c = byClient[k]; return c.dobM === mm && c.dobD === dd;
+  });
+  for (var ti = 0; ti < todayIds.length; ti += 200) {
+    var inList = todayIds.slice(ti, ti + 200)
+      .map(function (id) { return "'" + String(id).replace(/'/g, '') + "'"; }).join(',');
+    try {
+      iSfQuery_('SELECT Id, MailingCity FROM Contact WHERE Id IN (' + inList + ')')
+        .forEach(function (p) {
+          var c = byClient[String(p.Id)];
+          if (c && !c.town && p.MailingCity) c.town = iBookTown_(p.MailingCity);
+        });
+    } catch (e) { /* leave the towns blank rather than fail the whole screen */ }
+  }
+
   var goneToday = 0, goneAgents = {};
   Object.keys(gone).forEach(function (k) {
     var gc = gone[k];
@@ -6294,12 +6702,51 @@ function iBuildBook_() {
   /* The tip needs the bands, and the bands are built inside the object above —
      so it is filled in once, here, rather than computing the bands twice. */
   out.today.tip = iBookTip_(todayList, out.today.bands, out.today.byAgent, quietYears);
+  out.team = iBookTeam_(today, personOfCode, unitOfCode);
+  return out;
+}
+
+/* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
+   Everything else on the screen is a client to call; this is the person in the
+   room, and the branch asked for it to be big. Agents carry a Birthdate on
+   their Salesforce contact, so the active roster — the access list, by agent
+   code — is asked, in one small query. The people without a code, the support
+   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
+   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
+   shipped: the wall hangs in a room clients walk through. */
+function iBookTeam_(today, personOfCode, unitOfCode) {
+  var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
+  function add(name, unit, agent) {
+    var k = iNameKey_(name);
+    if (!k || seen[k]) return;
+    seen[k] = true;
+    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+  }
+  var codes = Object.keys(personOfCode || {});
+  for (var i = 0; i < codes.length; i += 200) {
+    var inList = codes.slice(i, i + 200)
+      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
+    if (!inList) continue;
+    try {
+      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
+                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
+        .forEach(function (c) {
+          var d = iDate_(c.Birthdate);
+          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
+          var code = iCode_(c.Agent__c);
+          add(personOfCode[code] || c.Name, unitOfCode[code], true);
+        });
+    } catch (e) { /* the day's calls stand without it */ }
+  }
+  String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
+    var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
+    if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
+  });
   return out;
 }
 
 function iActBook_(b) {
-  var d = iBuildBook_();
-  return iOk_({ data: d });
+  return iWallServe_('book', function () { return iBuildBook_(); }, function () { return ''; });
 }
 
 
@@ -6366,7 +6813,7 @@ var IDCOL = { TOKEN:1, RECEIVED:2, POLICY:3, CLIENT:4, EMAIL:5, AGENT:6, AGENTMA
    mentions a contract being received, and prints the two lines to paste into
    Script Properties. */
 function intelContractDiscover() {
-  var tok = sfToken_();
+  var tok = iSfToken_();
   var objs = String(iProp_('INTEL_SF_OBJECTS') ||
     'Policy__c,Client_Portfolio__c,Risk_Details__c,Opportunity,Submission__c,Policy_Increases__c')
     .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
@@ -6437,7 +6884,7 @@ function intelContractScan() {
   if (!q) return 'Not configured yet. Run intelContractDiscover() and set ' +
                  'INTEL_SF_OBJECT and INTEL_SF_RECEIVED_FIELD.';
   var recs;
-  try { recs = sfQuery_(q.soql); }
+  try { recs = iSfQuery_(q.soql); }
   catch (e) { return 'Salesforce said: ' + e.message + '\n\nQuery was:\n' + q.soql; }
   var sh = iDlvTab_(), known = {};
   var last = sh.getLastRow();

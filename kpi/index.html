@@ -413,6 +413,49 @@ function LateByAgent({ items }) {
 //
 // Capped, because a block can hold seventy-six. A list nobody scrolls to the
 // bottom of teaches people the screen is decorative.
+// The bands a task's age falls into. Coarse on purpose: a wall of exact days
+// is a spreadsheet, four bands is a picture.
+const AGE_BANDS = [["≤ 7 days", 7], ["8–30", 30], ["31–60", 60], ["61+", Infinity]];
+const ageBand = a => AGE_BANDS.find(b => a <= b[1])[0];
+
+// One line of facts under a task: how old, when it is due or how far over,
+// who it is for, whose client, its status, and whether it has gone quiet.
+// The same line everywhere a task is listed, so a person reads it once.
+function BookMeta({ t }) {
+  const over = t.late;
+  return React.createElement("div", {
+    style: { fontSize: 11.5, marginTop: 2, fontWeight: 700, color: over ? AMBER : MUTED, lineHeight: 1.5 }
+  },
+    over ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
+         : (t.age > 0 ? t.age + " day" + (t.age === 1 ? "" : "s") + " open" : "new")
+           + (t.due ? " · due " + shortDate(t.due) : " · no due date"),
+    t["for"] ? React.createElement("span", { style: { color: GOLD } }, " · for the " + t["for"]) : null,
+    t.agent ? " · " + t.agent : "",
+    t.status ? " · " + t.status : "",
+    // The queue is ordered by this, so it has to be visible. Everything
+    // without it was worked in the last week and is somebody's already.
+    t.needs ? React.createElement("span", { style: { color: AMBER } }, "  · untouched " + t.touched + " days") : null,
+    // Why is it still here. A task that is late or has aged without a word on
+    // it is the one the manager will ask about, so the list asks first.
+    (over || t.age >= 14) ? React.createElement("span", {
+      style: { color: t.hasReason ? MUTED : AMBER, fontWeight: t.hasReason ? 500 : 800 }
+    }, t.hasReason ? "  · reason on it" : "  · no reason on it yet") : null);
+}
+
+function BookRow({ t, api, onClosed }) {
+  return React.createElement("div", { key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" } },
+    React.createElement("div", { style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 } },
+      t.subject || "(no subject)"),
+    React.createElement(BookMeta, { t: t }),
+    api ? React.createElement(CloseTask, { t: t, api: api, onClosed: onClosed }) : null);
+}
+
+// What is in a block, sized before it is listed. The branch's note on the
+// first cut was that fifteen titles under a chip is a pile, not a plan: the
+// person cannot see how old the pile is, which of it has gone quiet, or where
+// to start. So the numbers come first, then the shape of the ages, then the
+// three that have been open longest — pulled up with whether anybody has
+// written why — and only then the queue.
 function OpenList({ items: all, api, onSaved }) {
   // Closed from here, gone from here — the server's copy catches up on the
   // next read, but the list must not show a task the person just closed.
@@ -420,7 +463,11 @@ function OpenList({ items: all, api, onSaved }) {
   const items = all.filter(t => !closed[t.id]);
   if (!items.length) return null;
   const SHOW = 8;
+  const onClosed = id => { setClosed(c => ({ ...c, [id]: true })); if (onSaved) onSaved(); };
   const late = items.filter(t => t.late).length;
+  const quiet = items.filter(t => t.needs).length;
+  const noWhy = items.filter(t => (t.late || t.age >= 14) && !t.hasReason).length;
+  const oldest = items.reduce((m, t) => Math.max(m, t.age || 0), 0);
 
   // One agent holding several of them is one conversation, not several. Same
   // reasoning as LateByAgent, and it matters more here: this is the list you
@@ -430,44 +477,64 @@ function OpenList({ items: all, api, onSaved }) {
   const top = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
   const together = top && by[top] > 2 ? by[top] + " of them for " + top : "";
 
-  return React.createElement("div", { style: { marginTop: 11 } },
+  // The three open longest, as a strip to read — the working list below keeps
+  // its queue order (who it is for, untouched first, earliest due first),
+  // because that order is the branch's decision about where to start, and a
+  // list that reshuffles by age would put a forty-day task nobody is waiting
+  // on above the Branch Manager's.
+  const byAge = items.slice().sort((a, b) => (b.age || 0) - (a.age || 0));
+  const longest = items.length >= 2 ? byAge.slice(0, 3).filter(t => (t.age || 0) > 0) : [];
+
+  const bands = AGE_BANDS.map(b => ({ k: b[0], n: 0 }));
+  items.forEach(t => { bands[AGE_BANDS.findIndex(b => (t.age || 0) <= b[1])].n++; });
+  const most = Math.max(1, ...bands.map(b => b.n));
+
+  const label = (text, extra) => React.createElement("div", {
+    style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "12px 0 5px" }
+  }, text, extra || null);
+  const stat = (n, what, tone) => React.createElement("div", { style: { minWidth: 92 } },
+    React.createElement("div", { style: { fontSize: 22, fontWeight: 800, lineHeight: 1.05, color: tone || "#FFFFFF" } }, n),
+    React.createElement("div", { style: { fontSize: 11, color: GOLD_SOFT, marginTop: 2, lineHeight: 1.3 } }, what));
+
+  return React.createElement("div", { style: { marginTop: 12 } },
+    // The numbers. Dark, like the day band above, because it is the same kind
+    // of statement: how much, how late, how quiet, how old.
     React.createElement("div", {
-      style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em",
-               textTransform: "uppercase", color: GOLD, marginBottom: 5 }
-    }, "What is in it",
-       late ? React.createElement("span", {
-         key: "l", style: { color: AMBER }
-       }, "  \u00b7 " + late + " late") : null),
+      style: { background: NAVY, borderRadius: 10, padding: "11px 13px", display: "flex", flexWrap: "wrap", gap: "10px 18px", alignItems: "flex-start" }
+    },
+      stat(items.length, "in the list"),
+      stat(late, late ? "late" : "late — none", late ? AMBER : "#FFFFFF"),
+      stat(quiet, "untouched a week or more", quiet ? AMBER : "#FFFFFF"),
+      stat(oldest + (oldest === 1 ? " day" : " days"), "the oldest"),
+      noWhy ? stat(noWhy, "old or late, no reason yet", AMBER) : null),
+
+    // The shape of the ages: four bars, read at a glance.
+    React.createElement("div", { style: { display: "flex", gap: 8, margin: "9px 0 0" } },
+      bands.map(b => React.createElement("div", { key: b.k, style: { flex: 1, minWidth: 0 } },
+        React.createElement("div", { style: { height: 6, borderRadius: 3, background: "#EEF0F3", overflow: "hidden" } },
+          React.createElement("div", { style: { height: "100%", width: Math.round(b.n / most * 100) + "%",
+            background: b.k === "61+" ? AMBER : b.k === "31–60" ? GOLD : NAVY, borderRadius: 3 } })),
+        React.createElement("div", { style: { fontSize: 11, color: MUTED, marginTop: 3, fontWeight: 700, whiteSpace: "nowrap" } },
+          b.k, React.createElement("span", { style: { color: INK, marginLeft: 5 } }, String(b.n)))))),
+
     // Not in the uppercase label. That is somebody's name, and this is the
     // line that turns six separate chases into one conversation.
-    together ? React.createElement("div", {
-      style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "0 0 7px" }
-    }, together) : null,
-    items.slice(0, SHOW).map(t => React.createElement("div", {
-      key: t.id, style: { borderTop: "1px solid " + LINE, padding: "7px 0" }
-    },
-      React.createElement("div", {
-        style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 }
-      }, t.subject || "(no subject)"),
-      React.createElement("div", {
-        style: { fontSize: 11.5, marginTop: 2, fontWeight: 700,
-                 color: t.late ? AMBER : MUTED }
-      }, t.late ? t.age + " day" + (t.age === 1 ? "" : "s") + " over"
-                : (t.due ? "due " + shortDate(t.due) : "no due date"),
-         t["for"] ? /*#__PURE__*/React.createElement("span", { style: { color: GOLD } }, " \u00b7 for the " + t["for"]) : null,
-         t.agent ? " \u00b7 " + t.agent : "",
-         t.status ? " \u00b7 " + t.status : "",
-         // The queue is ordered by this, so it has to be visible. Everything
-         // without it was worked in the last week and is somebody's already.
-         t.needs ? /*#__PURE__*/React.createElement("span", {
-           style: { color: AMBER }
-         }, "  \u00b7 untouched " + t.touched + " days") : null),
-      api ? /*#__PURE__*/React.createElement(CloseTask, {
-        t: t, api: api, onClosed: id => { setClosed(c => ({ ...c, [id]: true })); if (onSaved) onSaved(); }
-      }) : null)),
-    items.length > SHOW ? React.createElement("div", {
-      style: { fontSize: 11.5, color: MUTED, paddingTop: 7 }
-    }, "and " + (items.length - SHOW) + " more") : null);
+    together ? React.createElement("div", { style: { fontSize: 12, color: MUTED, fontWeight: 700, margin: "10px 0 0" } }, together) : null,
+
+    longest.length ? label("The longest open", React.createElement("span", { style: { color: MUTED, letterSpacing: 0, textTransform: "none", fontWeight: 600 } }, "  · why are these still here?")) : null,
+    longest.length ? React.createElement("div", { style: { background: "#FBF9F3", border: "1px solid " + LINE, borderLeft: "3px solid " + AMBER, borderRadius: 8, padding: "7px 11px" } },
+      longest.map(t => React.createElement("div", { key: t.id, style: { fontSize: 12, color: INK, lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" } },
+        React.createElement("b", { style: { color: AMBER } }, (t.age || 0) + " days"),
+        " · " + (t.subject || "(no subject)"),
+        t.agent ? React.createElement("span", { style: { color: MUTED } }, " · " + t.agent) : null,
+        React.createElement("span", { style: { color: t.hasReason ? MUTED : AMBER, fontWeight: 700 } },
+          t.hasReason ? " · reason on it" : " · no reason on it yet")))) : null,
+
+    label("What is in it",
+      late ? React.createElement("span", { key: "l", style: { color: AMBER } }, "  · " + late + " late") : null),
+    items.slice(0, SHOW).map(t => React.createElement(BookRow, { key: t.id, t: t, api: api, onClosed: onClosed })),
+    items.length > SHOW ? React.createElement("div", { style: { fontSize: 11.5, color: MUTED, paddingTop: 7 } },
+      "and " + (items.length - SHOW) + " more") : null);
 }
 
 // ---------------------------------------------------------------------------
@@ -499,7 +566,8 @@ function AttendanceLine({ me, api, onChange, onRegister }) {
   const leads = (me.leads || []).length > 0;
   const text = !a ? "" : a.status === "absent"
     ? "Not in today · " + a.reason
-    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time") : "";
+    : a.at ? "In at " + a.at + (a.late ? " · " + a.late + " minutes after your start" : " · on time")
+             + (a.out ? " · out at " + a.out : "") : "";
   const linkBtn = (color, onClick, label) => React.createElement("button", { type: "button", onClick,
     style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 700, color } }, label);
   return React.createElement("div", { style: { margin: "12px 0 0" } },
@@ -524,10 +592,11 @@ function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
   const byKey = {};
   ((reg && reg.ok && reg.attendance) || []).forEach(o => { byKey[o.date + "|" + o.staffId] = o; });
   const name = sid => (roster.find(p => p.staffId === sid) || {}).name || sid;
-  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason : o.at + (o.late ? " (+" + o.late + ")" : "");
+  const cell = o => !o ? "—" : o.status === "absent" ? "not in · " + o.reason
+    : o.at + (o.late ? " (+" + o.late + ")" : "") + (o.out ? " → " + o.out : "");
   const tone = o => !o ? MUTED : o.status === "absent" ? AMBER : o.late ? AMBER : INK;
   return React.createElement(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560 },
-    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in is the register. First sign-in, or the reason for not being in.", onBack: onBack }),
+    React.createElement(SubHeader, { title: "Attendance register", sub: "Signing in opens the day and signing out closes it. First sign-in, the time out, or the reason for not being in.", onBack: onBack }),
     React.createElement("div", { style: { padding: "0 18px 40px" } },
       React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", margin: "12px 0" } },
         React.createElement("button", { type: "button", onClick: () => setWeekOf(shiftDays(weekOf, -7)), style: trendChip }, "← Week"),
@@ -545,10 +614,63 @@ function RegisterView({ me, roster, reg, weekOf, setWeekOf, vp, onBack }) {
             days.map(d => { const o = byKey[d + "|" + sid];
               return React.createElement("td", { key: d, style: { ...regTd, color: tone(o), fontWeight: o ? 600 : 400 } }, cell(o)); })))))) : null,
       React.createElement("p", { style: { fontSize: 11.5, color: MUTED, marginTop: 10, lineHeight: 1.5 } },
-        "A time is the first sign-in of the day. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
+        "A time is the first sign-in of the day, and the time after the arrow is when they signed out. (+n) is minutes after that person's own start, past a ten-minute grace. — is no sign-in and nothing said.")));
 }
 const regTh = { textAlign: "left", padding: "9px 11px", fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: MUTED, borderBottom: "1px solid " + LINE, background: "#FBFAF5", whiteSpace: "nowrap" };
 const regTd = { padding: "9px 11px", borderBottom: "1px solid " + LINE, verticalAlign: "top" };
+
+/* Closing the day. Signing in opened it, this closes it, and the two times are
+   the hours the register shows. It names what is still unreported before it
+   asks, because the moment to notice a missing block is while you can still
+   report it, not at tomorrow's checkpoint. */
+function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten }) {
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const left = (blocks || []).filter(b => !(entry && blockWorked(entry, b.id)));
+  const outstanding = []
+    .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
+    .concat(!(mail && mail.pm) ? ["the afternoon mail sweep"] : []);
+  const out = att && att.out;
+  const today = todayISO();
+  const writtenToday = ((standing && standing.ok &&
+    []
+      .concat((standing.asks || []).reduce((a, x) => a.concat(x.dates || []), []))
+      .concat((standing.thanked || []).map(t => t.date))) || [])
+    .filter(d => d === today).length;
+  const go = () => {
+    setBusy(true); setErr("");
+    Promise.resolve(onClose()).then(r => {
+      if (!(r && r.ok)) { setBusy(false); setErr((r && r.error) || "Not recorded. Try once more."); }
+    });
+  };
+  return h("div", { style: { ...card, marginTop: 12, borderLeft: "4px solid " + GOLD } },
+    h("div", { style: cardHead }, h("div", { style: cardTitle }, out ? "Day closed at " + out : "Close the day")),
+    h("p", { style: { fontSize: 12.5, color: MUTED, margin: "2px 0 10px", lineHeight: 1.5 } },
+      out ? "Signed out at " + out + ". Closing again moves the time later, which is right if you came back."
+          : "Signing out closes your day on the register. Your sign-in and this time are the hours it shows."),
+    outstanding.length
+      ? h("div", { style: { fontSize: 12.5, color: AMBER, fontWeight: 700, marginBottom: 10, lineHeight: 1.5 } },
+          "Still open: " + outstanding.join(" and ") + ".")
+      : h("div", { style: { fontSize: 12.5, color: GREEN, fontWeight: 700, marginBottom: 10 } },
+          "Everything is in."),
+    /* Asked here because this is the last screen of the day and the answer is
+       still in the person's head. It is not a gate — a day that was quiet
+       closes with nothing written — but the question is put every evening,
+       which is the only way the quarterly stops being a memory test. */
+    onWritten ? h("div", { style: { borderTop: "1px solid " + LINE, paddingTop: 10, marginBottom: 10 } },
+      h("div", { style: { fontSize: 12.5, fontWeight: 700, color: INK, marginBottom: 3 } },
+        "Anything you were written to about, or fell short on, today?"),
+      h("div", { style: { fontSize: 12, color: MUTED, lineHeight: 1.5, marginBottom: 7 } },
+        "A reminder, an instruction, a thank-you — or something you know you fell short on today. It goes against the competency it touches and the job document, and the same thing twice is counted."),
+      writtenToday
+        ? h("div", { style: { fontSize: 12.5, fontWeight: 700, color: GREEN } },
+            writtenToday + " noted today")
+        : h("button", { type: "button", onClick: onWritten, style: trendChip }, "Note it before you go")) : null,
+    err ? h("div", { style: { fontSize: 12, color: RED, marginBottom: 8 } }, err) : null,
+    h("button", { type: "button", onClick: go, disabled: busy,
+                  style: { ...primaryWide, marginTop: 0, opacity: busy ? 0.6 : 1 } },
+      busy ? "Closing…" : out ? "Sign out again" : "Sign out and close the day"));
+}
 
 // ---------------------------------------------------------------------------
 //  Performance
@@ -761,10 +883,39 @@ function YourQuarter({ s, onPerf, onMoments }) {
         return h("span", { key: c.competency, style: pillOutline(n ? INK : MUTED) },
           c.competency + (c.moments && c.moments.length ? " · " + c.moments.length + " moment" + (c.moments.length === 1 ? "" : "s") : ""));
       })) : null,
+    (s.asks && s.asks.length) || (s.thanked && s.thanked.length) || (s.shortfalls && s.shortfalls.length)
+      ? h(WrittenStrip, { s: s }) : null,
     s.training ? h(TrainingStrip, { tr: s.training }) : null,
     h("div", { style: { display: "flex", gap: 10, marginTop: 10, flexWrap: "wrap" } },
-      h("button", { type: "button", onClick: onMoments, style: trendChip }, "Note a moment"),
+      h("button", { type: "button", onClick: onMoments, style: trendChip }, "What you were written to about"),
       h("button", { type: "button", onClick: onPerf, style: trendChip }, "Where you stand →")));
+}
+
+/* What was asked more than once, and what was said thank you for. The count
+   is the point: one line reading "asked 4 times" is the fact a quarterly
+   needs, and it is counted off the record rather than remembered. */
+function WrittenStrip({ s }) {
+  const lbl = t => h("div", { style: { fontSize: 10.5, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "10px 0 3px" } }, t);
+  const asks = (s.asks || []).filter(a => a.n > 1), once = (s.asks || []).filter(a => a.n === 1);
+  const shorts = s.shortfalls || [];
+  return h("div", null,
+    shorts.length ? h("div", null, lbl("Where you said you fell short"),
+      shorts.map((a, i) => h("div", { key: i, style: { fontSize: 12.5, color: INK, fontWeight: 600, lineHeight: 1.5 } },
+        a.about, a.n > 1 ? h("span", { style: { color: AMBER, fontWeight: 700 } }, " — " + a.n + " times") : null,
+        h("span", { style: { color: MUTED, fontWeight: 500 } },
+          (a.last ? " · last on " + shortDate(a.last) : "") + (a.competency ? " · " + a.competency : ""))))) : null,
+    asks.length ? h("div", null, lbl("Asked more than once"),
+      asks.map((a, i) => h("div", { key: i, style: { fontSize: 12.5, color: AMBER, fontWeight: 700, lineHeight: 1.5 } },
+        a.about, h("span", { style: { color: INK } }, " — asked " + a.n + " times"),
+        h("span", { style: { color: MUTED, fontWeight: 500 } },
+          (a.from && a.from.length ? " · by the " + a.from.join(", ").replace(/^the /, "") : "") +
+          (a.last ? " · last on " + shortDate(a.last) : "") + (a.competency ? " · " + a.competency : ""))))) : null,
+    once.length ? h("div", { style: { fontSize: 11.5, color: MUTED, marginTop: asks.length ? 5 : 8 } },
+      once.length + " other thing" + (once.length === 1 ? "" : "s") + " asked once, and done") : null,
+    (s.thanked || []).length ? h("div", null, lbl("Thanked for"),
+      s.thanked.slice(0, 4).map((t, i) => h("div", { key: i, style: { fontSize: 12.5, color: INK, lineHeight: 1.5 } },
+        h("span", { style: { color: GREEN, fontWeight: 700 } }, shortDate(t.date)), " — " + t.what,
+        h("span", { style: { color: MUTED } }, t.source ? " · from " + t.source : "")))) : null);
 }
 
 /** Trained on, and still to cover — from the training log, the training
@@ -815,18 +966,49 @@ function CompEvidence({ c, who }) {
         shortDate(m.date) + " — " + m.what + (m.by && m.by !== who ? " · noted by their People Leader" : "")))) : null);
 }
 
+const MOMENT_KINDS = [{ v: "Asked", label: "Asked or reminded" },
+                      { v: "Short", label: "Where I fell short" },
+                      { v: "Thanked", label: "Thanked or commended" },
+                      { v: "Noted", label: "Noted for the record" }];
+const MOMENT_SOURCES = ["Branch Manager", "Unit Manager", "Head office", "A client", "A colleague", "Myself"];
+const KIND_TONE = { Asked: AMBER, Short: AMBER, Thanked: GREEN, Noted: GOLD };
+
+/* A moment used to be one line against a competency. What it could not carry
+   was who it came from, whether it was an ask or a thank-you, and what it was
+   about — and the last of those is what makes a repeat countable. Nobody
+   writes "this is the fourth reminder"; they write "the spreadsheet" four
+   times, and the tracker counts. So the subject is asked for on an ask and
+   optional on the rest. */
 function MomentForm({ comps, mine, onSave, busy }) {
   const [c, setC] = useState(comps[0] ? comps[0].competency : "");
+  const [kind, setKind] = useState("Asked");
+  const [source, setSource] = useState(mine ? "Branch Manager" : "Myself");
+  const [about, setAbout] = useState("");
   const [what, setWhat] = useState("");
-  const ready = c && what.trim().split(/\s+/).length >= 3;
+  // Both of these are counted against a repeat, so both need the subject.
+  const asked = kind === "Asked" || kind === "Short";
+  const ready = c && what.trim().split(/\s+/).length >= 3 && (!asked || about.trim());
+  const field = (v, set, ph, mt) => h("input", { value: v, onChange: e => set(e.target.value), placeholder: ph,
+    style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px",
+             border: "1px solid " + LINE, borderRadius: 8, marginTop: mt } });
   return h("div", { style: card },
-    h("div", { style: cardHead }, h("span", { style: cardTitle }, "Note a moment")),
+    h("div", { style: cardHead }, h("span", { style: cardTitle }, "What were you written to about?")),
     h("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.5 } },
-      (mine ? "Something you did" : "Something they did") + " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+      (mine ? "What was asked of you, what you were thanked for, or something you did"
+            : "What was asked of them, what they were thanked for, or something they did") +
+      " that shows one of these. A line, on the day it happened, so the quarterly is a read-off and not a memory test."),
+    h(Chips, { label: "Was it", options: MOMENT_KINDS, value: kind, onPick: v => setKind(v || kind), tone: KIND_TONE }),
+    h(Chips, { label: "Who from", options: MOMENT_SOURCES.map(x => ({ v: x, label: x })), value: source, onPick: v => setSource(v || source) }),
     h(Chips, { label: "Competency", options: comps.map(x => ({ v: x.competency, label: x.competency })), value: c, onPick: v => setC(v || c) }),
-    h("input", { value: what, onChange: e => setWhat(e.target.value), placeholder: "What happened, in a line",
-      style: { width: "100%", boxSizing: "border-box", font: "inherit", fontSize: 13, padding: "8px 10px", border: "1px solid " + LINE, borderRadius: 8, marginTop: 8 } }),
-    h("button", { type: "button", disabled: busy || !ready, onClick: () => { onSave({ competency: c, what: what.trim() }); setWhat(""); },
+    asked ? field(about, setAbout, kind === "Short"
+      ? "What you fell short on — a few words, the same words each time"
+      : "What it was about — a few words, the same words each time", 8) : null,
+    asked ? h("p", { style: { fontSize: 11.5, color: MUTED, margin: "4px 0 0", lineHeight: 1.45 } },
+      "Use the same few words when it is the same thing. That is how a second and a fourth ask are counted rather than remembered.") : null,
+    field(what, setWhat, kind === "Short" ? "What happened, and what you will do differently"
+      : kind === "Asked" ? "What was said, in a line" : "What happened, in a line", 8),
+    h("button", { type: "button", disabled: busy || !ready,
+      onClick: () => { onSave({ competency: c, what: what.trim(), kind: kind, source: source, about: about.trim() }); setWhat(""); setAbout(""); },
       style: { ...trendChip, marginTop: 8, opacity: busy || !ready ? .5 : 1 } }, busy ? "Noting…" : "Note it"));
 }
 
@@ -1111,59 +1293,72 @@ function Signoff({ rv, side, onSave, busy }) {
 
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
-  const chip = k => {
-    const live = on.indexOf(k.value) > -1;
-    const m = mine && mine[k.value];
-    const b = branch && branch[k.value];
+  const counts = k => {
+    const m = mine && mine[k.value], b = branch && branch[k.value];
+    const need = m ? (m.needs || 0) : 0;
+    return { m, b, need };
+  };
 
-    // The count is the point of the chip, not decoration. A block set aside
-    // for licensing with three tasks in it does not need two hours, and the
-    // only way anyone knew that before was to go and look.
-    // What the chip says is the number a person can act on, not the number
-    // that frightens them. Kamla holds seventy open tasks and nine that have
-    // not been touched in a week; "70 open" is true and useless, "9 need you"
-    // is true and is her morning.
-    const tail = [];
+  // What the chip says is the number a person can act on, not the number
+  // that frightens them. Kamla holds seventy open tasks and nine that have
+  // not been touched in a week; "70 open" is true and useless, "9 need you"
+  // is true and is her morning.
+  const tail = (k, live) => {
+    const { m, b, need } = counts(k), out = [];
     if (m && (m.open || m.overdue)) {
-      const need = m.needs || 0;
       const head = need ? need + " need you of " + (m.open || 0)
                         : (m.open || 0) + " open, all in hand";
-      tail.push(React.createElement("span", {
-        key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) }
-      }, " \u00b7 " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
+      out.push(React.createElement("span", { key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) } },
+        " · " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
     }
-    if (b && b.open) {
-      tail.push(React.createElement("span", {
-        key: "b", style: { color: MUTED, fontWeight: 500 }
-      }, "  " + b.open + " in the branch"));
+    if (b && b.open) out.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  " + b.open + " in the branch"));
+    return out;
+  };
+
+  // Picked: a tile, not a chip. The label on one line and the numbers on the
+  // next, big enough to be the thing the eye lands on — this is what the block
+  // is for, and the first cut had it the same size as the seventeen it is not.
+  const tile = k => {
+    const { m, b, need } = counts(k);
+    const numbers = [];
+    if (m && (m.open || m.overdue)) {
+      numbers.push(need
+        ? React.createElement("span", { key: "n" }, React.createElement("b", { style: { color: AMBER } }, need + " need you"), " of " + (m.open || 0) + " open")
+        : React.createElement("span", { key: "n" }, React.createElement("b", null, (m.open || 0) + " open"), ", all in hand"));
+      if (m.overdue) numbers.push(React.createElement("span", { key: "l", style: { color: AMBER } }, ", " + m.overdue + " late"));
     }
+    if (b && b.open) numbers.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  ·  " + b.open + " in the branch"));
     return React.createElement("button", {
       key: k.value, type: "button", onClick: () => onToggle(k.value),
-      style: { font: "inherit", fontSize: 12.5, fontWeight: live ? 700 : 500, cursor: "pointer",
-               padding: "7px 11px", borderRadius: 999, textAlign: "left",
-               border: "1px solid " + (live ? GOLD : LINE),
-               background: live ? "#FBF3DF" : "#FFFFFF",
-               color: live ? INK : MUTED }
-    }, (live ? "\u2713 " : "") + k.label, tail);
+      style: { font: "inherit", cursor: "pointer", textAlign: "left", flex: "1 1 260px",
+               padding: "10px 13px", borderRadius: 12, border: "1.5px solid " + GOLD, background: "#FBF3DF", color: INK }
+    },
+      React.createElement("div", { style: { fontSize: 14, fontWeight: 800, lineHeight: 1.3 } }, "✓ " + k.label),
+      numbers.length ? React.createElement("div", { style: { fontSize: 13.5, marginTop: 3, lineHeight: 1.35, fontWeight: 600 } }, numbers) : null);
   };
-  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label },
+  const chip = k => React.createElement("button", {
+    key: k.value, type: "button", onClick: () => onToggle(k.value),
+    style: { font: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", padding: "5px 9px", borderRadius: 999,
+             textAlign: "left", border: "1px solid " + LINE, background: "#FFFFFF", color: MUTED }
+  }, k.label, tail(k, false));
+
+  const group = (label, list, big) => !list.length ? null : React.createElement("div", { key: label },
     React.createElement("div", {
-      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase",
-               color: MUTED, margin: "2px 0 6px" }
+      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: big ? GOLD : MUTED, margin: "2px 0 6px" }
     }, label),
-    React.createElement("div", {
-      style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 }
-    }, list.map(chip)));
+    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 } }, list.map(big ? tile : chip)));
+
   // The two groups are not "types" and "other" — they are work Salesforce
   // holds tasks for, and work it does not. Say that, and only promise numbers
   // when there are numbers to show.
-  const numbered = opts.filter(k => k.salesforce);
+  const picked = opts.filter(k => on.indexOf(k.value) > -1);
+  const numbered = opts.filter(k => k.salesforce && on.indexOf(k.value) < 0);
+  const words = opts.filter(k => !k.salesforce && on.indexOf(k.value) < 0);
   const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
   return React.createElement("div", null,
-    group(anyCount ? "Your Salesforce tasks \u2014 open, and how many are late"
-                   : "Work Salesforce holds tasks for", numbered),
-    group("Work with no Salesforce task \u2014 write these in words",
-          opts.filter(k => !k.salesforce)));
+    group("This block is for", picked, true),
+    group(picked.length ? "Add another" : (anyCount ? "Your Salesforce tasks — open, and how many are late" : "Work Salesforce holds tasks for"), numbered),
+    group(picked.length ? "Or work with no Salesforce task — written in words" : "Work with no Salesforce task — write these in words", words));
 }
 
 function KpiHint({ kpi, live }) {
@@ -1854,6 +2049,20 @@ function App() {
   // call, not only the first read of the morning — the sign-in screen comes
   // back with the reason on it.
   const [ended, setEnded] = useState(false);
+  const [bootNote, setBootNote] = useState("");
+  // Signing out is the other half of the register. The card wants to know when
+  // the sheet refused, so it can be tried again; the header button must let a
+  // person leave the device whatever the sheet says.
+  const [closedAt, setClosedAt] = useState("");
+  const recordClose = useCallback(async () => {
+    const r = await api("signOut", {});
+    if (r && r.ok) { setClosedAt(r.out || ""); signOut(); }
+    return r;
+  }, [signOut]);
+  const leave = useCallback(async () => {
+    try { const r = await api("signOut", {}); if (r && r.ok) setClosedAt(r.out || ""); } catch (e) {}
+    signOut();
+  }, [signOut]);
   useEffect(() => {
     const f = () => { setEnded(true); signOut(); };
     window.addEventListener(SESSION_ENDED, f);
@@ -1898,9 +2107,15 @@ function App() {
         rememberRoles(r.roster);
         if (r.schedule) SCHEDULE = r.schedule;
         if (r.kpis) KPI_CHOICES = r.kpis;
-      } else {
+      } else if (r.authRequired) {
         storeToken("");
         setToken("");
+      } else {
+        // The sheet did not answer: a dropped request, not a refused session.
+        // The session is kept, so a reload resumes it, and the sign-in screen
+        // says why it is showing. On 7 September a ten-second wobble in the
+        // office connection cost somebody her session and then her sign-in.
+        setBootNote((r && r.error) || "The sheet did not answer.");
       }
       setBooting(false);
     })();
@@ -2133,9 +2348,13 @@ function App() {
     text: "Checking your session\u2026"
   });
   if (!me) return /*#__PURE__*/React.createElement(Login, {
-    note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on." : "",
+    note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on."
+        : closedAt ? "Day closed at " + closedAt + ". That is on the register. Sign in again if you are back."
+        : bootNote ? bootNote + " Your session is still here: reload the page to carry on, or sign in again." : "",
     onIn: (tok, profile, ros) => {
       setEnded(false);
+      setClosedAt("");
+      setBootNote("");
       storeToken(tok);
       setToken(tok);
       setMe(profile);
@@ -2184,7 +2403,7 @@ function App() {
       letterSpacing: -0.2
     }
   }, "Ricky Rampersad's Branch"))), /*#__PURE__*/React.createElement("button", {
-    onClick: signOut,
+    onClick: leave,
     style: signOutBtn
   }, "Sign out")), /*#__PURE__*/React.createElement("h1", {
     style: {
@@ -2490,6 +2709,12 @@ function App() {
         /*#__PURE__*/React.createElement("div", { style: { fontSize: 15, lineHeight: 1.5 } },
           covered.length
             ? sum("open") + " open \u00b7 " + sum("overdue") + " already late"
+              + (book ? (() => {
+                  // The oldest thing in what is planned, from the book itself.
+                  const ages = covered.reduce((a, k) => a.concat((book[k] || []).map(t => t.age || 0)), []);
+                  const oldest = ages.length ? Math.max.apply(null, ages) : 0;
+                  return oldest ? " \u00b7 oldest " + oldest + " days" : "";
+                })() : "")
             : "Tick a block below and this fills in.")) : null,
 
       // The blocks themselves.
@@ -2909,7 +3134,13 @@ function App() {
     }), active === me.staffId ? /*#__PURE__*/React.createElement("button", {
       onClick: () => setView("jobdoc"),
       style: { ...primaryWide, marginTop: 10 }
-    }, "Your job document \u2192") : null), /*#__PURE__*/React.createElement("div", {
+    }, "Your job document \u2192") : null,
+    active === me.staffId && date === todayISO() ? /*#__PURE__*/React.createElement(CloseTheDay, {
+      entry: entry, blocks: blocks, mail: mailToday[active],
+      att: attToday ? attToday[me.staffId] : null, onClose: recordClose,
+      standing: standing[me.staffId],
+      onWritten: () => { setPerfWho(me.staffId); setPerfTab("competencies"); setView("perf"); }
+    }) : null), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         position: "sticky",
         top: 16
@@ -4426,7 +4657,8 @@ function PersonRow({
       fontWeight: 700,
       marginTop: 2
     }
-  }, att ? (att.status === "absent" ? "Not in · " + att.reason : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : ""))
+  }, att ? (att.status === "absent" ? "Not in · " + att.reason
+            : "In at " + att.at + (att.late ? " · " + att.late + " min after start" : "") + (att.out ? " · out " + att.out : ""))
          : "No sign-in yet"))), tag && /*#__PURE__*/React.createElement("span", {
     style: pillOutline(AMBER)
   }, tag), /*#__PURE__*/React.createElement("button", {

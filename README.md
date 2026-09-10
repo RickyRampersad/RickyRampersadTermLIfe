@@ -1,7 +1,14 @@
 # Ricky Rampersad Branch — Website
 
 This repository **is the live public website** at https://rickyrampersadbranch.com
-(GitHub Pages serves every file on `main`).
+(every file on `main` is served as-is — there is no build step).
+
+> **Hosting is moving from GitHub Pages to Netlify.** GitHub Pages ignores
+> `netlify.toml`, so the rules blocking `/apps-script/*` and `/data/*` have
+> never been in effect and backend source is downloadable from the live
+> site today. `NETLIFY-MIGRATION.md` has the runbook. Note that moving host
+> does **not** make it safe to commit secrets: this repo is public on
+> GitHub regardless of what serves the website.
 
 ## ⛔ NEVER commit client data
 
@@ -24,4 +31,6 @@ with a full history rewrite. Do not make it a third time.
 - `index.html` — homepage · `agent.html` / `staff.html` — code-locked portals
 - `renewal/`, `renewalpal/`, `renewal-gateway/` — renewal system
 - `claims/` — Claims TT intake · `market/` — Branch Trading League
+- `managementmeetings/` — Branch Meeting Builder: agenda, materials, attendance
+  (signing in is the register), action tracker and minutes
 - `apps-script/` — backend source (deployed to Google Apps Script, not run here)

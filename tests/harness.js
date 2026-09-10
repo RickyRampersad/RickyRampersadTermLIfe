@@ -7,7 +7,7 @@ function makeEnv(opts = {}) {
                       put: (k, v) => { cacheMap[k] = String(v); },
                       remove: k => { delete cacheMap[k]; },
                       removeAll: ks => ks.forEach(k => delete cacheMap[k]) };
-  const calls = { getValues: 0, setValue: 0, setValues: 0, getLastRow: 0,
+  const calls = { getValues: 0, getValue: 0, setValue: 0, setValues: 0, getLastRow: 0,
                   getLastColumn: 0, appendRow: 0, deleteRow: 0, mail: 0 };
   const sheets = {};
 
@@ -40,6 +40,11 @@ function makeEnv(opts = {}) {
           }
           return out;
         },
+        getValue() {
+          calls.getValue++;
+          const row = grid[r - 1] || [];
+          return row[c - 1] === undefined ? '' : row[c - 1];
+        },
         setValue(v) {
           calls.setValue++;
           while (grid.length < r) grid.push([]);
@@ -63,6 +68,10 @@ function makeEnv(opts = {}) {
     console, JSON, Math, Date, String, Number, Boolean, Object, Array, RegExp, Error, isNaN, parseInt, parseFloat,
     __calls: calls, __sheets: sheets, __mkSheet: mkSheet,
     SpreadsheetApp: {
+      // Two names for one thing, and the two scripts use one each.
+      getActiveSpreadsheet: () => g.SpreadsheetApp.getActive(),
+      // Opening another workbook by ID hands back this same one, and says so.
+      openById: id => { calls.openById = (calls.openById || []).concat(id); return g.SpreadsheetApp.getActive(); },
       getActive: () => ({
         getSheets: () => Object.values(sheets),
         getSheetByName: n => sheets[n] || null,
@@ -72,6 +81,15 @@ function makeEnv(opts = {}) {
     },
     LockService: { getScriptLock: () => ({ waitLock: () => { if (opts.lockBusy) throw new Error('Could not acquire lock'); }, releaseLock: () => {} }) },
     CacheService: { getScriptCache: () => cacheStub },
+    /* Enough of ContentService to drive doGet and doPost. Most tests call the
+       handlers directly, but the web entry points are where two scripts
+       sharing one project meet, and that seam is worth testing through. */
+    ContentService: {
+      MimeType: { JSON: 'application/json', TEXT: 'text/plain', HTML: 'text/html' },
+      createTextOutput: t => ({ _t: String(t == null ? '' : t),
+                                setMimeType() { return this; },
+                                getContent() { return this._t; } })
+    },
     PropertiesService: { getScriptProperties: () => ({ getProperty: () => null, setProperty: () => {} }) },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
@@ -87,7 +105,26 @@ function makeEnv(opts = {}) {
       computeHmacSha256Signature: () => [1, 2, 3]
     },
     UrlFetchApp: { fetch: () => { throw new Error('no network in harness'); } },
-    ScriptApp: { getProjectTriggers: () => [], newTrigger: () => ({ timeBased: () => ({ everyDays: () => ({ atHour: () => ({ create: () => {} }) }) }) }) }
+    Logger: { log: () => {} },
+    /* Enough of ScriptApp to count what an installer installs. Every builder
+       method is accepted and remembered, so a test can say "five triggers,
+       three of them daily" rather than only "it did not throw". */
+    ScriptApp: (() => {
+      const triggers = [];
+      const builder = handler => {
+        const t = { handler, chain: [] };
+        const b = new Proxy({}, { get: (_, k) => k === 'create'
+          ? () => { const rec = { getHandlerFunction: () => t.handler, chain: t.chain }; triggers.push(rec); return rec; }
+          : (...a) => { t.chain.push(k + '(' + a.map(String).join(',') + ')'); return b; } });
+        return b;
+      };
+      return {
+        WeekDay: { MONDAY:'MONDAY', TUESDAY:'TUESDAY', WEDNESDAY:'WEDNESDAY', THURSDAY:'THURSDAY', FRIDAY:'FRIDAY', SATURDAY:'SATURDAY', SUNDAY:'SUNDAY' },
+        getProjectTriggers: () => triggers.slice(),
+        deleteTrigger: t => { const i = triggers.indexOf(t); if (i > -1) triggers.splice(i, 1); },
+        newTrigger: handler => builder(handler)
+      };
+    })()
   };
   g.globalThis = g;
   vm.createContext(g);

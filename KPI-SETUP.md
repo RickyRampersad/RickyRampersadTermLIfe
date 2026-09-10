@@ -106,11 +106,20 @@ first.
 ## 4. Turn on the emails
 
 Run **`installTriggers`** once from the editor and grant it permission when
-asked. That sets up:
+asked. That sets up five triggers:
 
 - **3pm checkpoint**, weekdays — who has logged, who has not, who is behind, and
   every blocker raised so far
+- **Staff nudges**, weekdays at noon and three
 - **Weekly summary**, Friday 5pm — the week against the week before
+- **Warm-up**, every ten minutes in office hours
+
+The checkpoint and the nudges are one daily trigger each and skip the weekend
+themselves. They used to be five weekday copies each, fifteen triggers, and a
+script project holds at most twenty — the day Branch Intelligence joined this
+project its own six could not be installed ("This script has too many
+triggers"). Re-running `installTriggers` on a project that still has the
+fifteen replaces them with the five.
 
 Apps Script fires a time trigger within the hour it is given, so the checkpoint
 lands between 3 and 4 — while the last block is still running and there is
@@ -376,15 +385,100 @@ Date · Competency · What · By · UpdatedAt`. A person or their People Leader
 notes a line against a competency on the day; reviews show the moments that
 fall in their period.
 
+## What a person was written to about
+
+A "moment" used to be one line against a competency. On 8 September the branch
+asked the sharper question: somebody had been reminded four times that morning
+about the same spreadsheet, and nothing in the record could say so.
+
+A moment now carries three more things:
+
+| | |
+|---|---|
+| **Was it** | *Asked or reminded* · *Where I fell short* · *Thanked or commended* · *Noted for the record* |
+| **Who from** | Branch Manager · Unit Manager · Head office · A client · A colleague · Myself |
+| **About** | a few words naming the subject — required on an ask, optional on the rest |
+
+**Where I fell short** is the one the branch asked for by name. It is not the
+same as being asked: an ask comes from outside, a shortfall is owned before
+anybody has had to write about it, and in a review those are not the same
+sentence. It is counted the same way — the second time the same thing is
+missed is the finding — and it reads against the same competency and the same
+job document.
+
+**The subject is the part that matters**, because it is what makes a repeat
+countable. Nobody ever writes "this is the fourth reminder"; they write "the
+spreadsheet" four times, and the tracker counts. Use the same few words each
+time and the quarter card reads *"Morning spreadsheet — asked 4 times · by the
+Branch Manager · last on 8 Sep"*. The matching ignores case, spacing and
+punctuation, so "morning spreadsheet." and "Morning  Spreadsheet" are one thing.
+
+The question is put at the end of every day, on the close-the-day card —
+*"Anything you were written to about, or fell short on, today?"* — because that
+is the last screen of the day and the answer is still in the person's head. It
+is not a gate: a quiet day closes with nothing written.
+
+## The branch works around the clock
+
+Nothing in the tracker keeps office hours any more.
+
+- **The script is kept warm every ten minutes, at every hour, on every day.**
+  It used to stand down overnight and at weekends, which meant the container
+  was cold at exactly the times somebody working late or on a Saturday came to
+  sign in — half a minute of "Signing in" for the person least able to ask
+  anybody about it.
+- **The checkpoint and the two nudges no longer ask what day it is.** They ask
+  the day's own record: nobody signed in and nothing filed means there is
+  nothing to send, on any day of the week; one person at a desk means there is,
+  on any day of the week. A Saturday the branch worked gets its checkpoint. If
+  the record cannot be read the mail goes out anyway — a checkpoint nobody
+  needed is a smaller failure than a day that went unreported.
+
+One thing still assumes a five-day week and is left that way deliberately: the
+quarter's **"days in, days left"** counts Mondays to Fridays, and the mail-sweep
+ratios on the competencies are measured against that. Counting weekends there
+would quietly raise everybody's denominator and make the same work look worse.
+Say the word and it changes.
+
+All of it lands on the **Moments** tab and feeds the competency it names, so
+the quarterly is a read-off rather than a memory test. The three columns are
+added to whatever is already on that tab, and every write goes through the
+header rather than a fixed position, so nothing already recorded moves and a
+tab somebody has reordered by hand still lands correctly. Moments written
+before this change read as *Noted for the record*, which is what they were.
+
+---
+
 ## Attendance
 
-Signing in is the attendance register. The script creates an `Attendance`
-tab on first sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen ·
+Signing in opens the day and signing out closes it. Those two times are the
+hours the register shows. The script creates an `Attendance` tab on first
+sign-in: `Date · StaffId · Name · FirstSignIn · LastSeen · SignedOut ·
 Status · Reason · MarkedBy · UpdatedAt`. The first sign-in of the day is the
 start time; later ones refresh `LastSeen`. "Not in today" writes `Status =
 absent` with the reason, by the person or their People Leader. Start time is
 compared with the first token of the person's `hours` in `SCHEDULE`, with a
 ten-minute grace. The JotForm register can be retired once this is live.
+
+### Signing out
+
+**Close the day** sits at the foot of a person's own day, under their job
+document, and names what is still unreported before it asks — blocks not
+submitted, an afternoon sweep not marked. It writes `SignedOut`, then signs
+the device out; the sign-in screen says the day was closed and at what time.
+The **Sign out** button in the header records the same thing, but always lets
+a person leave even if the sheet does not answer.
+
+Only your own: a manager may mark somebody absent, because that is a fact they
+can know, but nobody else can say when you finished. Signing back in leaves the
+morning untouched, and closing again simply moves the time later, which is what
+somebody who stepped out and came back would want it to say. Somebody who
+closes a day they never opened gets one row with both times the same, rather
+than a day that was closed but never started.
+
+A register created before September 2026 has no `SignedOut` column. It is added
+on the end the first time the tab is read, so the columns already there keep
+their places.
 
 ## What changed
 
@@ -433,6 +527,12 @@ quarter, the register, the job document, closing a task) was sent without the
 token, so a person who had just signed in was told they had not. The token is
 attached to every call now. Anyone still seeing it that way is on a page
 loaded before the fix: reload.
+
+**A report dated "Thursday 1 January 1970", with every desk marked "No
+entry"** — the checkpoint or the weekly summary ran with a trigger's event
+object where a date belongs, matched no rows, and formatted the unparseable
+value as the epoch. Fixed in `2026-09-07a`; if you see it again, the workbook
+is running an older script, so redeploy.
 
 **"Unreadable reply from the sheet."** — the deployment is not set to
 **Anyone**, or the last change was never published as a new version. See §3.

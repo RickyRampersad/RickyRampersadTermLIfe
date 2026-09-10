@@ -112,23 +112,103 @@ The self test prints which tabs it resolved, which access lists it found, how
 weak the codes are, and — the important one — **whether this project already
 has a `doGet`/`doPost`**.
 
-### If the project already has a router
+### It declares no `doGet`/`doPost` of its own
 
 A script project may declare `doGet` and `doPost` exactly once, and a second
-declaration silently wins. If `BranchEngine.gs` is in the same project:
+declaration silently wins. Until 8 September this file carried a pair of its
+own at a banner four thousand lines from the end; pasted whole into the
+tracker's project they took over its router, and the tracker's sign-in
+answered "Unknown action: login" until the file was pasted back without them.
 
-- **Delete** the `doGet`/`doPost` block at the very bottom of `Intelligence.gs`
-  (it is marked, and it is the last thing in the file).
-- Add one line inside the existing `doPost`, straight after it parses the body:
+So the file now declares **neither**. Its entry points are `intelDoGet_` and
+`intelDoPost_`, and the host's own router hands over to them:
+
+- **The branch tracker (`KPI.gs`)** already does, in its `doPost` and `doGet`.
+  Paste `Intelligence.gs` in whole; there is nothing to delete and nothing to
+  add. `intelSelfTest` says "This project is the branch tracker".
+- **`BranchEngine.gs`**: add one line inside its `doPost`, straight after it
+  parses the body, and one inside its `doGet`:
 
   ```js
   var hit = intelRoute_(b); if (hit) return hit;
+  var page = iSurveyClick_(e); if (page) return page;
+  ```
+
+- **A project with no router at all** adds two lines anywhere and deploys:
+
+  ```js
+  function doGet(e)  { return intelDoGet_(e); }
+  function doPost(e) { return intelDoPost_(e); }
   ```
 
 `intelRoute_` returns `null` for anything that is not an `intel.*` action, so
-the rest of that function keeps working exactly as it did.
+the rest of a host's `doPost` keeps working exactly as it did. It must be called
+**before** the host's own token check: the five wall reads carry no token on
+purpose, because a screen on a wall has nobody to sign it in, and in exchange
+they return aggregates only. Called after the check, every wall screen gets
+"Session expired. Sign in again."
 
-If the self test says no other router was found, leave the block where it is.
+### Salesforce, through whichever helper the project has
+
+The licence, possession and book screens ask Salesforce. `Intelligence.gs`
+does not carry a Salesforce client of its own: it goes through
+`SalesforceSync.gs`'s `sfQuery_` when that file is in the project, and the
+tracker's `sfkQuery_` (in `KPI.gs`) when it is not — the same SOQL in, the
+same records out, the same `SF_KEY` / `SF_SECRET` / `SF_USER` / `SF_PASS`
+properties behind both. So inside the tracker's project, which already talks
+to Salesforce, those three screens need nothing more. (Before this, pasted
+into the tracker, they answered "sfQuery_ is not defined".) With neither
+helper present they say "No Salesforce helper in this project" rather than
+drawing an empty screen.
+
+### Our own birthdays, big on the wall
+
+The birthdays screen is a day's client calls; the branch asked for the person
+in the room to be bigger than any of them. When one of our own has a birthday
+the screen opens on a gold band — *Happy birthday, Pat!* — and the player
+carries the wish on every slide for the day.
+
+Agents come from their Salesforce contact's **Birthdate**, asked for the active
+roster by agent code in one small query during the nightly build. People with
+no agent code — the support desk, the manager — go in the Script Property
+**`INTEL_TEAM_BIRTHDAYS`** as `MM-DD Name` entries, comma-separated:
+
+```
+INTEL_TEAM_BIRTHDAYS = 03-14 Kim Support, 11-02 Pat Example
+```
+
+Names stay in the project's properties, never in this repository. No age is
+shipped: the wall hangs in a room clients walk through. The band is built with
+the birthdays feed at three in the morning, so a name added during the day
+shows after `intelRebuildBook` (or `intelRebuildWall`) is run.
+
+### Which workbook it reads
+
+The branch workbook — `INTEL.WORKBOOK` at the top of the file, the ID in this
+guide's first paragraph — from whichever project the code runs in. The
+tracker's project is bound to the *tracker's* workbook, which holds none of
+the eight export tabs, and reading that one made every screen say "No dues
+tab found", "No in-force tab found", "No active agents found on the access
+list". Nothing needs setting.
+
+The Script Property **`INTEL_WORKBOOK_ID`** overrides it: another workbook's
+ID (the long string in its URL between `/d/` and `/edit`), or the word
+`bound` to read the spreadsheet the script is attached to. Everything the
+code creates — the actions log, sessions, the snapshot, the watchlists —
+goes into whichever workbook it reads. `intelSelfTest` and `intel.ping` both
+say which.
+
+Opening a second workbook needs one more permission than reading the bound
+one. The first function you run after the paste asks for it once; accept it.
+
+`tests/test-intelroute.js` concatenates the two files exactly as Apps Script
+loads them and drives the tracker's own `doPost` with the bodies the wall and
+the app send; it fails the moment a `doGet` or `doPost` reappears in this file.
+
+To see which build a project is carrying without opening the editor, POST
+`{"action":"intel.ping"}` to its `/exec`: it answers with the version, when
+the snapshot was last built, and whether it is reading the bound workbook or
+the one in `INTEL_WORKBOOK_ID`. It carries no token and returns nothing else.
 
 ---
 
@@ -150,7 +230,14 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the four triggers and prints the self test.
+rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
+
+**"This script has too many triggers"** on that step means the host project
+is spending its twenty on something else. The tracker before `2026-09-08a`
+installed fifteen weekday triggers; paste the current `KPI.gs`, deploy a new
+version, run its `installTriggers` (which replaces them with five), then run
+**`intelInstallTriggers`** on its own — the tabs and the rebuild from the first
+attempt are already done and need not be repeated.
 
 Every code change needs **Deploy → Manage deployments → Edit → New version**.
 Saving the file is not deploying it.
@@ -163,6 +250,97 @@ Saving the file is not deploying it.
 | `INTEL_APP_URL` | the address the e-mails link to. |
 | `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. |
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
+
+---
+
+## 3¼. The branch's own day — two screens the wall did not have
+
+For a fortnight every screen on the wall was about the **client book**: what is
+owed, what is undelivered, whose licence is up, whose birthday it is. Not one
+of them said how the branch itself was doing today. These two do, and they open
+the rotation because a room reads the top of the hour.
+
+| Screen | What it answers |
+|---|---|
+| **The day so far** (`day.html`) | Salesforce tasks closed today per desk, what is still open, late and gone quiet, who signed in, and which of the day's blocks each desk has filed |
+| **The day in blocks** (`blocks.html`) | The four blocks, what each is for, and how many desks have filed each one |
+
+Both read one feed, **`intel.day`**, and it differs from the other five in two
+ways that matter:
+
+- **It is live, not stored.** "How the day is going" cannot be a copy built at
+  three in the morning, so this feed skips the wall store. It is cheap anyway —
+  the tracker caches its Salesforce read for twelve minutes, so most of these
+  never reach Salesforce. The screens refresh every five minutes rather than
+  every thirty.
+- **It reads the tracker.** `sfkMetricsSafe_`, `publicRoster_`,
+  `latestEntries_` and `attendanceToday_` all live in `KPI.gs`, so this screen
+  only works with both files in one project — which is how the branch runs it.
+  Without the tracker it says so rather than drawing zeros.
+
+**Aggregates only, like every other wall read.** Counts, and the branch's own
+staff names — which are already on the wall in that office — and never a task
+subject, a client or a policy number. `wallData_` in `KPI.gs` carries subjects
+and stays manager-only for exactly that reason; these screens have no sign-in
+and hang where clients walk past.
+
+A block only counts against a desk that is **scheduled** for it. Counting every
+block for everybody made a four-block branch look permanently a quarter behind.
+
+---
+
+## 3½. The wall store — five screens built once a night
+
+The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
+`intel.possession`, `intel.book`) are **not computed when a screen asks**. On
+8 September they were, and it looked like this:
+
+| feed | computed live |
+|---|---|
+| 45-day line | 155 s |
+| contract delivery | 28 s |
+| licence year | 25 s |
+| possession | 31 s |
+| birthdays | never finished — 54,310 portfolio rows do not fit in one web request |
+
+A television reloading five of those every half hour would have spent the
+project's daily runtime by lunch, and the tracker's sign-in runs in the same
+project. So each feed is built **once a night, one execution each** —
+`intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
+`intelRebuildPossession`, `intelRebuildBook`, at three in the morning, an hour
+after `intelRebuild` — and kept in the hidden tab **`_Intel Wall`**, one row
+per feed. A request reads its row in about a second and answers with
+`stored: "<when it was built>"`; the screen's own "built …" line shows the
+date.
+
+- **With no stored copy yet**, a request builds the feed live and stores it,
+  so the first morning works. After pasting, run **`intelRebuildWall`** from
+  the editor to fill all five without waiting for the night.
+
+  **It will not do all five in one go, and it does not try.** Run as a single
+  execution on the morning of 8 September, the five together reached the
+  six-minute ceiling and Apps Script killed the run with no report of what it
+  had managed. So it now goes fastest first (possession 16s, licence 25s,
+  delivery 28s, birthdays about 90s, the 45-day line 155s), leaves alone any
+  copy already built today, and stops itself at four and a half minutes saying
+  what is left. **Run it again and it carries on** — two runs build all five
+  from cold, a third is a no-op. `intelRebuildWallForce` rebuilds even today's
+  copies, for when the answer changed rather than the day.
+- **A bad night never pins a bad screen.** A build that errors, or comes back
+  "not configured", is refused by the rebuild (the trigger log keeps the
+  reason) and the screen keeps last night's good copy.
+- The tab lookup (`iFindTab_`) and header reads are memoised per execution;
+  they were re-scanning every sheet in the workbook for every tab every
+  builder asked for.
+
+`intelInstallTriggers` now installs eleven; with the tracker's five that is
+sixteen, under the project's limit of twenty. **Each wall feed rebuilds in its
+own hour** — the 45-day line at 3, possession 4, licence 5, delivery 6,
+birthdays 7. They all fired at three to begin with and competed: on 9 September
+four rebuilt between 03:23 and 03:55 and the 45-day line, the one that takes
+155 seconds, was still serving Monday's copy. The slowest goes first and every
+one is finished long before the branch opens. `tests/test-wallstore.js`
+drives all of it through the tracker's real `doPost`.
 
 ---
 
@@ -366,6 +544,18 @@ rate is noise.
 `/intelligence/wall/` — **one screen**, not a slideshow, about premiums crossing
 the 45-day line. Same design system as `/board/` and the benefits wall.
 
+**For the television, use `/intelwall`.** It forwards to
+`/intelligence/wall/all.html`, which mounts all five screens once and turns
+between them — premium dues, in our possession, with the agent, the licence
+year, birthdays — in the order the film introduces them. Each holds for about
+twenty seconds; `?secs=30` makes every one hold thirty. Arrow keys step, the
+number keys jump, space holds, `F` is full screen; the rail along the bottom
+shows only while the mouse moves. The five pages are not reloaded on each turn:
+they load once and refresh themselves every thirty minutes, so streaming costs
+the sheet no more than one standing screen did. A screen that never loads is
+struck through on the rail and skipped, and the player restarts itself once
+every twelve hours (`?reload=6` for six) so a week-long run cannot go stale.
+
 Forty-five days is the line worth watching. Past the grace period, so the policy
 is genuinely in trouble; early enough that a phone call still fixes it.
 
@@ -434,17 +624,24 @@ or `snapshot`, so nobody quotes a stale figure believing it is current.
 
 ### Taking an agent out of the branch view
 
-Set `INTEL_EXCLUDE_AGENTS` to a comma-separated list of names **as the dues book
-writes them** — matching is on the same normalised key used everywhere, so
-capitals and punctuation do not matter.
+From the editor, so nobody has to find the Script Properties page:
 
 ```
-INTEL_EXCLUDE_AGENTS = Aleema Mohammed-Ali, Javid Ali
+intelExclude("Given Surname, Given Surname")   // adds them, rebuilds the five feeds
+intelExcluded()                                 // who is off now
+intelExcludeClear()                             // empties the list, rebuilds
 ```
 
-**Excluding an agent does not settle their premiums.** On the current book those
-two carry **420 overdue policies and TT$360,782** between them, across 268
-clients. Taking them out removes that from every screen and every count — the
+The names go into the Script Property `INTEL_EXCLUDE_AGENTS` and nowhere
+else — this repository is public. Matching is on the same normalised key used
+everywhere, surname plus every given token, so `Anne Mohammed-Ali` also
+catches the policy book's `A00001 - Anne Mohammed-Ali`, and capitals and
+punctuation do not matter. It takes effect the moment the rebuild finishes,
+not at the next nightly build.
+
+**Excluding an agent does not settle their premiums.** On the current book the
+two taken out on 8 September carry **420 overdue policies and TT$360,782**
+between them, across 268 clients. Taking them out removes that from every screen and every count — the
 money is still owed, and now nobody is looking at it. So an exclusion is a
 decision to hand that book to somebody, not a way to make it disappear.
 

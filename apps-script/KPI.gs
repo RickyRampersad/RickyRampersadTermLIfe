@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-06e';
+var SCRIPT_VERSION = '2026-09-09b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -777,6 +777,25 @@ function isoDay_(v) {
 }
 
 function todayISO_() { return Utilities.formatDate(new Date(), CONFIG.TZ, 'yyyy-MM-dd'); }
+
+/* Which day a report is for, when the caller may not be a person.
+   Apps Script hands a time-based trigger its own event object as the first
+   argument — {authMode, triggerUid, 'day-of-month', …} — not a date. Taken as
+   "which day", it matches no entry, so every desk reads as silent, and the
+   header formats an unparseable value as the epoch. That is exactly how the
+   3pm checkpoint went out on 7 September dated Thursday 1 January 1970 with
+   the whole branch marked "No entry", on a day the branch had closed 33 tasks.
+   Only a string or a Date that resolves to a real day counts; anything else is
+   nothing, and the caller falls back to today. */
+function dayArg_(v) {
+  if (v == null || v === '') return '';
+  if (Object.prototype.toString.call(v) === '[object Date]') {
+    return isNaN(v.getTime()) ? '' : isoDay_(v);
+  }
+  if (typeof v !== 'string' && typeof v !== 'number') return '';
+  var s = isoDay_(v);
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+}
 
 function shiftDays_(iso, n) {
   var p = iso.split('-');
@@ -1687,7 +1706,7 @@ function openBlockers_(e) {
 /** The 3pm cut. Blocks 1-3 are done by then; the last block is not, so it is
  *  reported as outstanding rather than as a gap. */
 function checkpointReport_(date) {
-  var day = date || todayISO_();
+  var day = dayArg_(date) || todayISO_();
   var people = publicRoster_();
   var byId = {};
   latestEntries_().forEach(function (e) { if (e.Date === day) byId[e.StaffId] = e; });
@@ -1707,6 +1726,7 @@ function checkpointReport_(date) {
     return {
       staffId: p.staffId, name: p.name, unit: p.unit,
       signedIn: a && a.at ? a.at : '',
+      signedOut: a && a.out ? a.out : '',
       absent: a && a.status === 'absent' ? (a.reason || 'not in') : '',
       late: a ? a.late : 0,
       mailAM: (e && parseMail_(e.MailAM) || {}).at || '',
@@ -1784,7 +1804,7 @@ function trainingDetail_(rows, register, days) {
 
 /** The week, Monday to Friday, with last week alongside it for direction. */
 function weeklyReport_(anyDateInWeek) {
-  var monday = weekStart_(anyDateInWeek || todayISO_());
+  var monday = weekStart_(dayArg_(anyDateInWeek) || todayISO_());
   var days = weekDays_(monday);
   var prevDays = weekDays_(shiftDays_(monday, -7));
   var entries = latestEntries_();
@@ -1902,9 +1922,25 @@ function json_(obj) {
    memo that outlives its request is a memo serving yesterday's roster. */
 function resetRequestMemo_() { _tabMemo = {}; _rosterMemo = null; _headMemo = {}; _hrMemo = {}; _rankMemo = null; }
 
+/* Branch Intelligence lives in this project too, and a script project may
+   declare doGet and doPost exactly once — so Intelligence.gs ships with its
+   own pair at the foot of the file, to be deleted when it joins a project that
+   already has a router. These two hand its actions over.
+   intelRoute_ does its own authentication: the five wall reads are
+   unauthenticated on purpose, because a screen on a wall has nobody to sign it
+   in, and in exchange they return aggregates only; everything else goes
+   through iSession_. So they are routed before the tracker's token check,
+   which would otherwise refuse them — which is exactly what the wall got on
+   7 September, "Session expired" to a television.
+   Both are guarded on typeof, so the tracker still runs in a project that has
+   no Intelligence.gs in it. */
 function doGet(e) {
   resetRequestMemo_();
   var p = (e && e.parameter) || {};
+  // A survey link in a client's e-mail is a GET and nothing else answers it.
+  if (typeof iSurveyClick_ === 'function') {
+    try { var page = iSurveyClick_(e); if (page) return page; } catch (err) {}
+  }
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -1916,6 +1952,14 @@ function doPost(e) {
   resetRequestMemo_();
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+  if (typeof intelRoute_ === 'function') {
+    try {
+      var hit = intelRoute_(body);      // null for anything not an intel.* action
+      if (hit) return hit;
+    } catch (err) {
+      return json_({ ok: false, error: String(err && err.message || err) });
+    }
+  }
   try {
     return json_(handle_(body.action || 'save', body, body.token));
   } catch (err) {
@@ -1924,7 +1968,18 @@ function doPost(e) {
 }
 
 function handle_(action, data, token) {
-  if (action === 'ping') return { ok: true, today: todayISO_(), version: SCRIPT_VERSION };
+  /* Which files this project actually has in it. The tracker runs with any of
+     the three missing, and each absence shows up somewhere else entirely —
+     "Editing tasks is not switched on" under a Close button, a wall that says
+     no feed. On 7 September closing a task from the tracker did nothing and
+     there was no way to ask the script what it was carrying. Now there is. */
+  if (action === 'ping') {
+    return { ok: true, today: todayISO_(), version: SCRIPT_VERSION,
+             has: { write:   typeof updateTask_ === 'function',
+                    waiting: typeof sfkWaitingSafe_ === 'function',
+                    intel:   typeof intelRoute_ === 'function',
+                    salesforce: sfkConfigured_() } };
+  }
   if (action === 'login') return login_(data.who || data.email, data.password);
 
   var profile = readToken_(token);
@@ -1941,6 +1996,9 @@ function handle_(action, data, token) {
 
     case 'absent':
       return markAbsent_(data, profile);
+
+    case 'signOut':
+      return signOutDay_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -2096,15 +2154,20 @@ function esc_(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+/* Neither of these may invent a date. Given something that is not a day they
+   return it unchanged: a header reading "[object Object]" is obviously broken,
+   where "Thursday 1 January 1970" reads like a real report about a quiet day. */
 function prettyDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEEE d MMMM yyyy');
 }
 
 function shortDate_(iso) {
   var p = String(iso).split('-');
   var d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  if (isNaN(d.getTime())) return String(iso);
   return Utilities.formatDate(d, 'UTC', 'EEE d MMM');
 }
 
@@ -2207,7 +2270,8 @@ function checkpointHtml_(r) {
       '</tr></table>' +
       '<div style="font-size:12px;color:' + (l.absent ? MAIL.amber : MAIL.muted) + ';margin-top:5px">' +
         (l.absent ? 'Not in — ' + esc_(l.absent)
-                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '')
+                  : l.signedIn ? 'In at ' + esc_(l.signedIn) + (l.late ? ' · ' + l.late + ' min after their start' : '') +
+                                 (l.signedOut ? ' · out at ' + esc_(l.signedOut) : '')
                   : 'No sign-in today') + '</div>' +
       '<div style="font-size:12px;color:' + (l.mailAM || l.mailPM ? MAIL.muted : MAIL.amber) + ';margin-top:3px">' +
         (l.mailAM || l.mailPM
@@ -2229,6 +2293,7 @@ function checkpointHtml_(r) {
 }
 
 function sendCheckpoint(dateOpt) {
+  if (nothingToReport_(dateOpt)) return 'Nobody signed in and nothing was filed — no checkpoint.';
   var r = checkpointReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
@@ -2426,11 +2491,44 @@ function listTriggers() {
  *  It is not a guarantee — Google does not promise a warm container — but it
  *  costs one trivial execution every ten minutes and the alternative is a
  *  member of staff staring at "Signing in" for half a minute. */
+/* Whether a timed run has anything to report.
+
+   THE CALENDAR NO LONGER DECIDES. This used to skip Saturday and Sunday
+   outright, which is a rule about office hours and not about this branch —
+   the branch works around the clock, and a Saturday somebody actually worked
+   deserves its checkpoint every bit as much as a Tuesday. So the day's own
+   record decides instead: nobody signed in and nothing filed means there is
+   nothing to send, on any day of the week; one person at a desk means there
+   is, on any day of the week.
+
+   That is also the rule that was really wanted when the weekday copies were
+   collapsed. A script project carries at most twenty triggers, and this one
+   used to spend fifteen on five weekday copies each of the checkpoint and the
+   two nudges — so the day Branch Intelligence joined, its six could not be
+   installed. Each of the three now runs once a day and asks this.
+
+   If the record cannot be read, the mail goes out: a checkpoint nobody needed
+   is a smaller failure than a day that went unreported. A person running the
+   function from the editor is never turned away. */
+function nothingToReport_(e) {
+  if (!e || !e.triggerUid) return false;    // a person, not the clock
+  var day = todayISO_();
+  try {
+    var att = attendanceFor_({ staffId: '', manager: true }, day, shiftDays_(day, 1)) || [];
+    if (att.some(function (o) { return o.at || o.status === 'absent'; })) return false;
+  } catch (err) { return false; }
+  try {
+    if (allEntries_().some(function (r) { return String(r.Date || '').slice(0, 10) === day; })) return false;
+  } catch (err2) { return false; }
+  return true;
+}
+
+/* Every ten minutes, every hour, every day of the week. It used to stand down
+   overnight and at weekends, which meant the container was cold at exactly the
+   times somebody working late or on a Saturday came to sign in — half a minute
+   of "Signing in" for the person least able to ask anybody about it. It reads
+   one cell; running it round the clock costs nothing worth counting. */
 function keepWarm() {
-  var h = Number(Utilities.formatDate(new Date(), CONFIG.TZ, 'H'));
-  var d = new Date().getDay();
-  if (d === 0 || d === 6) return;      // not at the weekend
-  if (h < 7 || h > 18) return;         // not overnight
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
 }
 
@@ -2446,20 +2544,17 @@ function installTriggers() {
     }
   });
 
-  // 3pm checkpoint, Monday to Friday. Apps Script fires within the hour, so
-  // the mail lands between 3 and 4 — while the last block is still running.
-  ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(function (d) {
-    ScriptApp.newTrigger('sendCheckpoint').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
-  });
+  // 3pm checkpoint. Apps Script fires within the hour, so the mail lands
+  // between 3 and 4 — while the last block is still running. One trigger a
+  // day, not one per weekday: the function turns a weekend fire away itself
+  // (nothingToReport_), and the twenty-trigger limit on a project is shared
+  // with Branch Intelligence.
+  ScriptApp.newTrigger('sendCheckpoint').timeBased()
+    .everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
   // Staff nudges. Noon for a blank morning, three for an unfinished day.
-  ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY'].forEach(function (d) {
-    ScriptApp.newTrigger('remindMidday').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(12).create();
-    ScriptApp.newTrigger('remindCheckpoint').timeBased()
-      .onWeekDay(ScriptApp.WeekDay[d]).atHour(CONFIG.CHECKPOINT_HOUR).create();
-  });
+  ScriptApp.newTrigger('remindMidday').timeBased().everyDays(1).atHour(12).create();
+  ScriptApp.newTrigger('remindCheckpoint').timeBased().everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
   // Weekly summary, Friday evening once the day is in.
   ScriptApp.newTrigger('sendWeekly').timeBased()
@@ -2468,9 +2563,10 @@ function installTriggers() {
   // And one that keeps the project awake, so nobody pays the cold start.
   ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
 
-  var msg = 'Triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
+  var msg = 'Five triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
-            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + ').';
+            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + '). The three daily ones skip weekends themselves. ' +
+            'A project may hold twenty; Branch Intelligence needs six of the rest.';
   if (removed.length) {
     msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
            'version: ' + removed.join(', ') + '.';
@@ -2609,7 +2705,8 @@ function nudge_(staffId, date, missing, heading, message) {
 
 /** Noon. Anyone whose morning is still blank hears about it while the
  *  afternoon can still be salvaged. */
-function remindMidday() {
+function remindMidday(e) {
+  if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];
@@ -2635,7 +2732,8 @@ function remindMidday() {
 
 /** Three o'clock. Blocks 1–3 should be behind them; the last runs to 4.
  *  Whoever is short gets the list, and is asked for the day's close-off. */
-function remindCheckpoint() {
+function remindCheckpoint(e) {
+  if (nothingToReport_(e)) return 'Nobody signed in and nothing was filed — nobody nudged.';
   var date = todayISO_();
   var people = publicRoster_();
   var sent = [];
@@ -3672,6 +3770,7 @@ function hrBundle_(profile) {
     return { staffId: sid, name: p.name || sid, role: p.role || '', latest: rv[0] || null, reviews: rv };
   });
   return { ok: true, me: me, reports: reports, types: REVIEW_TYPES, sources: SOURCES,
+           momentKinds: MOMENT_KINDS, momentSources: MOMENT_SOURCES,
            setup: { goals: !!goals, competencies: !!comps }, standard: OPR_MIN };
 }
 
@@ -3850,8 +3949,83 @@ function mailToday_(profile, date) {
 // ---------------------------------------------------------------------------
 
 var MOM = { must: ['MomentId', 'StaffId', 'Competency'], name: 'Moments',
-            head: ['MomentId', 'StaffId', 'Date', 'Competency', 'What', 'By', 'UpdatedAt'] };
+            head: ['MomentId', 'StaffId', 'Date', 'Competency', 'What',
+                   'Kind', 'Source', 'About', 'By', 'UpdatedAt'] };
 var MOMENT_MAX = 300;
+var MOMENT_ABOUT_MAX = 80;
+
+/* WHAT A PERSON WAS WRITTEN TO ABOUT, AND WHAT THEY WERE THANKED FOR.
+   A moment used to be one thing: a line against a competency. The branch's
+   own question on 8 September was sharper than that — Elizabeth had been
+   reminded four times that morning about the same spreadsheet, and nothing
+   in the record could say so. What is missing from a bare line is who it
+   came from, whether it was an ask or a thank-you, and what it was about.
+
+   The last of those is the one that matters most, because it is what makes a
+   repeat countable. A person will never write "this is the fourth reminder";
+   they will write "the spreadsheet" four times, and the tracker can count. */
+/* Four kinds, and the fourth is the one the branch asked for by name: a
+   person saying where they fell short themselves, before anybody writes to
+   them about it. It is not the same as being asked — an ask comes from
+   outside and a shortfall is owned — and a record that only holds what other
+   people noticed is a record of supervision rather than of a person's
+   quarter. It reads against the same competency and the same job document. */
+var MOMENT_KINDS = [
+  { v: 'Asked',   label: 'Asked or reminded' },
+  { v: 'Short',   label: 'Where I fell short' },
+  { v: 'Thanked', label: 'Thanked or commended' },
+  { v: 'Noted',   label: 'Noted for the record' }
+];
+var MOMENT_SOURCES = ['Branch Manager', 'Unit Manager', 'Head office',
+                      'A client', 'A colleague', 'Myself'];
+
+/* The Moments tab predates Kind, Source and About, so they are added to the
+   end of whatever is there rather than assumed — the same way the register
+   gained SignedOut. Every write goes through the header, never a fixed
+   position, so a tab somebody has reordered by hand still lands correctly. */
+function ensureMomentColumns_(sh) {
+  var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var add = [];
+  ['Kind', 'Source', 'About'].forEach(function (c) { if (head.indexOf(c) < 0) add.push(c); });
+  if (add.length) {
+    sh.getRange(1, head.length + 1, 1, add.length).setValues([add]);
+    head = head.concat(add);
+  }
+  return head;
+}
+
+function appendByHead_(sh, head, obj) {
+  sh.appendRow(head.map(function (h) { return obj.hasOwnProperty(h) ? obj[h] : ''; }));
+}
+
+/* The same thing asked more than once. One line saying "asked four times,
+   from the Branch Manager" is the fact an appraisal needs, and counting is
+   the only honest way to get it. Grouped on a normalised subject so
+   "Morning spreadsheet" and "morning spreadsheet." are one thing. */
+function momentAsks_(moments, kind) {
+  var want = kind || 'Asked';
+  var by = {};
+  (moments || []).forEach(function (m) {
+    if (m.kind !== want) return;
+    var k = String(m.about || m.what || '').toLowerCase()
+      .replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!k) return;
+    var g = by[k] || (by[k] = { about: m.about || m.what, n: 0, dates: [],
+                                competency: m.competency, sources: {} });
+    g.n++;
+    g.dates.push(m.date);
+    if (m.source) g.sources[m.source] = 1;
+  });
+  return Object.keys(by).map(function (k) {
+    var g = by[k];
+    g.dates.sort();
+    g.last = g.dates[g.dates.length - 1];
+    g.from = Object.keys(g.sources);
+    delete g.sources;
+    return g;
+  }).sort(function (a, b) { return b.n - a.n || String(b.last).localeCompare(String(a.last)); });
+}
 
 /** Mondays to Fridays in [from, to). */
 function workdays_(from, to) {
@@ -3870,7 +4044,11 @@ function momentsFor_(staffId, from, to) {
     return String(m.StaffId) === staffId && d >= from && d < to;
   }).map(function (m) {
     return { id: String(m.MomentId || ''), date: isoDay_(m.Date), competency: String(m.Competency || ''),
-             what: String(m.What || ''), by: String(m.By || '') };
+             what: String(m.What || ''), by: String(m.By || ''),
+             /* Rows written before these columns existed read as 'Noted',
+                which is what they were: a line against a competency. */
+             kind: String(m.Kind || '') || 'Noted',
+             source: String(m.Source || ''), about: String(m.About || '') };
   }).sort(function (a, b) { return b.date.localeCompare(a.date); });
 }
 
@@ -3885,12 +4063,33 @@ function noteMoment_(data, profile) {
   var what = String(data.what || '').replace(/\s+/g, ' ').trim();
   if (what.split(' ').length < 3) return { ok: false, error: 'Say what happened — a line, not a word.' };
   what = what.slice(0, MOMENT_MAX);
+
+  var kind = String(data.kind || 'Noted').trim();
+  if (!MOMENT_KINDS.some(function (k) { return k.v === kind; })) {
+    return { ok: false, error: 'Say whether you were asked, thanked, or noting it for the record.' };
+  }
+  var source = String(data.source || '').trim();
+  if (source && MOMENT_SOURCES.indexOf(source) < 0) return { ok: false, error: 'Pick who it came from from the list.' };
+  /* An ask with no subject cannot be counted against the next one, and the
+     count is the whole point — so it is required for an ask and optional for
+     the rest. */
+  var about = String(data.about || '').replace(/\s+/g, ' ').trim().slice(0, MOMENT_ABOUT_MAX);
+  /* A shortfall is counted the same way an ask is, and for the same reason:
+     the second time the same thing is missed is the finding, not the first. */
+  if ((kind === 'Asked' || kind === 'Short') && !about) {
+    return { ok: false, error: 'Say what it was about in a few words — that is what counts a repeat.' };
+  }
+
   var day = isoDay_(data.date) || todayISO_();
   var id = staffId + '-' + Utilities.getUuid().replace(/-/g, '').slice(0, 8);
   var sh = hrTab_(MOM, true), now = new Date();
-  sh.appendRow([id, staffId, day, name, what, profile.staffId, now]);
+  appendByHead_(sh, ensureMomentColumns_(sh), {
+    MomentId: id, StaffId: staffId, Date: day, Competency: name, What: what,
+    Kind: kind, Source: source, About: about, By: profile.staffId, UpdatedAt: now
+  });
   forgetHr_(MOM);
-  return { ok: true, id: id, date: day, competency: name, what: what, by: profile.staffId };
+  return { ok: true, id: id, date: day, competency: name, what: what,
+           kind: kind, source: source, about: about, by: profile.staffId };
 }
 
 /** Training logged in the period: sessions this person gave, and sessions
@@ -4090,9 +4289,19 @@ function standing_(profile, staffId) {
              signals: competencySignals_(c.competency, f), lines: competencyLines_(c.competency, f),
              moments: moments.filter(function (m) { return m.competency === c.competency; }) };
   });
+  /* What was asked of this person more than once, and what they were thanked
+     for — read off the same moments, so the quarter view and the appraisal
+     cannot disagree about either. */
+  var asks = momentAsks_(moments);
+  /* Owned before anybody had to write about it — kept apart from the asks,
+     because in a review those two sentences are not the same sentence. */
+  var shortfalls = momentAsks_(moments, 'Short');
   return { ok: true, staffId: staffId, role: role, quarter: q, from: from, to: to, today: today,
            daysIn: workdays_(from, to), daysLeft: workdays_(to, qr.to),
            goals: outGoals, competencies: outComps, facts: f,
+           asks: asks, shortfalls: shortfalls,
+           thanked: moments.filter(function (m) { return m.kind === 'Thanked'; }),
+           written: moments.filter(function (m) { return m.kind !== 'Noted'; }).length,
            training: trainingStanding_(staffId, from, to),
            jobDoc: !!jobDoc_(role),
            salesforce: !!closed, setup: { goals: !!goals, competencies: !!comps },
@@ -4115,8 +4324,8 @@ function standing_(profile, staffId) {
 // ---------------------------------------------------------------------------
 
 var ATT = { must: ['Date', 'StaffId', 'FirstSignIn'], name: 'Attendance',
-            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'Status', 'Reason',
-                   'MarkedBy', 'UpdatedAt'] };
+            head: ['Date', 'StaffId', 'Name', 'FirstSignIn', 'LastSeen', 'SignedOut', 'Status',
+                   'Reason', 'MarkedBy', 'UpdatedAt'] };
 var ATT_GRACE_MIN = 10;
 
 /** "8am – 4pm" -> 480. The first token of the hours string, in minutes. */
@@ -4142,11 +4351,26 @@ function lateBy_(staffId, at) {
 
 function attSheet_() {
   var sh = hrTab_(ATT, false);
-  if (sh) return sh;
+  if (sh) return ensureAttColumns_(sh);
   sh = hrTab_(ATT, true);
   // "08:07" typed into a fresh cell becomes a time value; kept as text the
-  // register reads back exactly what was written.
-  try { sh.getRange('D:E').setNumberFormat('@'); } catch (e) {}
+  // register reads back exactly what was written. D to F: in, last seen, out.
+  try { sh.getRange('D:F').setNumberFormat('@'); } catch (e) {}
+  return sh;
+}
+
+/** A register written before sign-out existed has no SignedOut column, and a
+ *  write to a column that is not there is silently dropped. Added once, on the
+ *  end, so the columns a person already reads keep their places. */
+function ensureAttColumns_(sh) {
+  var head = headerOf_(sh);
+  var missing = ATT.head.filter(function (c) { return head.indexOf(c) === -1; });
+  if (!missing.length) return sh;
+  var at = sh.getLastColumn() + 1;
+  sh.getRange(1, at, 1, missing.length).setValues([missing]);
+  try { sh.getRange(2, at, Math.max(sh.getMaxRows() - 1, 1), missing.length).setNumberFormat('@'); } catch (e) {}
+  forgetHeader_(sh);
+  forgetHr_(ATT);
   return sh;
 }
 
@@ -4175,8 +4399,9 @@ function attRow_(rows, day, staffId) {
 
 function attOut_(r, staffId) {
   var at = timeStr_(r.FirstSignIn);
-  return { at: at, lastSeen: timeStr_(r.LastSeen), status: String(r.Status || 'in'),
-           reason: String(r.Reason || ''), late: at ? lateBy_(staffId, at) : 0 };
+  return { at: at, lastSeen: timeStr_(r.LastSeen), out: timeStr_(r.SignedOut),
+           status: String(r.Status || 'in'), reason: String(r.Reason || ''),
+           late: at ? lateBy_(staffId, at) : 0 };
 }
 
 /** Called on sign-in and on session resume. Cheap on repeats: the day's
@@ -4193,7 +4418,8 @@ function recordAttendance_(profile) {
     out = attOut_(found.row, sid); out.first = false;
   } else {
     var o = { Date: day, StaffId: sid, Name: profile.name || sid, FirstSignIn: hhmm_(now),
-              LastSeen: hhmm_(now), Status: 'in', Reason: '', MarkedBy: sid, UpdatedAt: now };
+              LastSeen: hhmm_(now), SignedOut: '', Status: 'in', Reason: '', MarkedBy: sid,
+              UpdatedAt: now };
     sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
     out = attOut_(o, sid); out.first = true;
   }
@@ -4202,6 +4428,35 @@ function recordAttendance_(profile) {
   // must land on the day, not the plan.
   try { cache.put(key, JSON.stringify(Object.assign({}, out, { first: false })), 1800); } catch (e) {}
   return out;
+}
+
+/** Closing the day. The other half of the register: signing in opens the day,
+ *  this closes it, and the two times are the hours the person was here.
+ *
+ *  Only ever your own — a manager may mark somebody absent, because that is a
+ *  fact they can know, but nobody else can say when you finished.
+ *
+ *  Coming back and signing out again simply moves the time later, which is
+ *  what a person who stepped out and returned would want it to say. */
+function signOutDay_(data, profile) {
+  var day = todayISO_(), sid = profile.staffId;
+  var sh = attSheet_(), rows = sheetObjects_(sh), now = new Date(), at = hhmm_(now);
+  var found = attRow_(rows, day, sid);
+  if (!found) {
+    // No row at all: the register would otherwise show a day that was closed
+    // but never opened. Open it first, at the same minute, and say so.
+    recordAttendance_(profile);
+    rows = sheetObjects_(attSheet_());
+    found = attRow_(rows, day, sid);
+  }
+  if (!found) return { ok: false, error: 'The register did not answer. Try once more.' };
+  writeRow_(sh, found.at, colMap_(sh), { SignedOut: at, LastSeen: at, UpdatedAt: now });
+  forgetHr_(ATT);
+  try { CacheService.getScriptCache().remove('att_' + sid + '_' + day); } catch (e) {}
+
+  var done = blocksSubmittedOn_(sid, day);
+  return { ok: true, date: day, staffId: sid, out: at,
+           blocksDone: done.length, blocksLeft: BLOCK_IDS.length - done.length };
 }
 
 /** "Not in today", with the reason. Self, or the People Leader for a report. */
@@ -4217,7 +4472,7 @@ function markAbsent_(data, profile) {
   if (found) writeRow_(sh, found.at, colMap_(sh), patch);
   else {
     var name = (publicRoster_().filter(function (p) { return p.staffId === staffId; })[0] || {}).name || staffId;
-    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '' }, patch);
+    var o = Object.assign({ Date: day, StaffId: staffId, Name: name, FirstSignIn: '', LastSeen: '', SignedOut: '' }, patch);
     sh.appendRow(ATT.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
   }
   forgetHr_(ATT);

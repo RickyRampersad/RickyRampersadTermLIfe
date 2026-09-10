@@ -1,10 +1,12 @@
-// The page Kamla uses, and the four answers it can give.
+// The page Kamla uses, and the five answers it can give.
 //
 // The point of this page is that whoever does the deployment finds out
 // themselves whether it worked, instead of messaging somebody and waiting.
-// So the four outcomes have to be right, and the wrong-turn case — "New
+// So the five outcomes have to be right, and the wrong-turn case — "New
 // deployment" instead of "New version" — has to say so in words rather than
-// leave them staring at a green tick that means nothing.
+// leave them staring at a green tick that means nothing. The fifth is the
+// 7 September one: an Intelligence.gs pasted in with a doPost of its own, which
+// answered every tracker action, "ping" included, with "Unknown action".
 //
 // Run: node tests/e2e-redeploy.js   (needs playwright + a chromium on disk)
 const { chromium } = require('playwright');
@@ -21,9 +23,10 @@ const srv = http.createServer((q,r)=>{
 
 // The expected version is read out of the page itself, so bumping
 // SCRIPT_VERSION never leaves this test asserting a stale string.
-const WANT = (fs.readFileSync(path.join(ROOT,'redeploy','index.html'),'utf8')
-  .match(/const WANT="([^"]+)"/) || [])[1];
-if (!WANT) { console.log('  FAIL  could not read WANT from the page'); process.exit(1); }
+const PAGE = fs.readFileSync(path.join(ROOT,'redeploy','index.html'),'utf8');
+const WANT = (PAGE.match(/const WANT="([^"]+)"/) || [])[1];
+const WANT_INTEL = (PAGE.match(/const WANT_INTEL="([^"]+)"/) || [])[1];
+if (!WANT || !WANT_INTEL) { console.log('  FAIL  could not read WANT / WANT_INTEL from the page'); process.exit(1); }
 let mode = 'old', fails = 0;
 const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(!c)fails++;};
 
@@ -35,8 +38,20 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   await page.route('**/macros/s/**', async r => {
     if (mode === 'dead') return r.abort();
+    // The exact bytes the old Intelligence.gs's doPost sent back for the
+    // tracker's ping, reproduced from the file in tests/test-intelroute.js.
+    if (mode === 'taken') return r.fulfill({status:200,contentType:'application/json',
+                                            body:JSON.stringify({ ok:false, error:'Unknown action: ping' })});
+    let ask = {}; try { ask = JSON.parse(r.request().postData() || '{}'); } catch (e) {}
+    // The wall's data script answers for itself. 'stalewall' is 8 September:
+    // the tracker current, Intelligence.gs a night behind, bound to the wrong workbook.
+    if (ask.action === 'intel.ping') {
+      const w = mode === 'stalewall' ? { ok:true, service:'Branch Intelligence', version:'2026-09-08a', workbook:'bound' }
+                                     : { ok:true, service:'Branch Intelligence', version:WANT_INTEL, workbook:'default' };
+      return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(w)});
+    }
     const body = { ok:true, today:'2026-09-03' };
-    if (mode === 'new')  body.version = WANT;
+    if (mode === 'new' || mode === 'stalewall') { body.version = WANT; body.has = { write:true, waiting:true, intel:true, salesforce:true }; }
     if (mode === 'other') body.version = '2026-08-30';
     return r.fulfill({status:200,contentType:'application/json',body:JSON.stringify(body)});
   });
@@ -62,12 +77,29 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
   ok('it says done', /Done — the new script is live/.test(t), t.split('\n')[0]);
   ok('it names the version', t.indexOf(WANT) > -1, WANT);
   ok('and reports the speed', /Timed at/.test(t) && /average/.test(t));
+  ok('and says the wall\'s data script is current too', /wall.s data script is current/.test(t) && t.indexOf(WANT_INTEL) > -1, t);
+
+  console.log('\nShe pasted Code.gs and not Intelligence.gs — 8 September:\n');
+  mode='stalewall';
+  t = await run();
+  ok('it does not say done', !/Done — the new script is live/.test(t), t.split('\n')[0]);
+  ok('it says the tracker is current and the wall\'s script is not', /tracker is current\. The wall.s data script is not/.test(t), t.split('\n')[0]);
+  ok('names both builds', /2026-09-08a/.test(t) && t.indexOf(WANT_INTEL) > -1);
+  ok('says merging did not do it, and what will', /merging it on GitHub did not/.test(t) && /Intelligence\.gs/.test(t) && /New version/.test(t));
 
   console.log('\nShe copied an older file:\n');
   mode='other';
   t = await run();
   ok('it says the versions do not match', /A different version is live/.test(t), t.split('\n')[0]);
   ok('and shows both numbers', /2026-08-30/.test(t) && t.indexOf(WANT) > -1);
+
+  console.log('\nIntelligence.gs was pasted in with its own doPost, and took the router over:\n');
+  mode='taken';
+  t = await run();
+  ok('it says the intelligence file has taken over', /Intelligence\.gs has taken over the tracker/.test(t), t.split('\n')[0]);
+  ok('names what staff are seeing', /Unknown action: login/.test(t));
+  ok('and the way out is a paste and a New version, not a New deployment',
+     /Paste the current Intelligence\.gs/.test(t) && /New version/.test(t) && !/New deployment/.test(t));
 
   console.log('\nThe workbook cannot be reached:\n');
   mode='dead';
