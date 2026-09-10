@@ -550,16 +550,31 @@ function toggleSound(){
 }
 function endNarration(){
   playing=false;
-  if(audio){ try{ audio.pause(); }catch(e){} }
+  clearGuard();
+  if(audio){ try{ audio.pause(); }catch(e){} audio.onended=audio.onerror=null; }
   stopBed();
   $("#sound").classList.remove("on"); $("#sound").textContent="▶ Narrate";
   tellWall(false);
 }
+/* A line that dies must not take the wall down with it. The player above
+   holds this screen while the voice runs, and it learns the voice has
+   stopped only from `endNarration`. So a line that errors, or that stalls
+   with the element firing neither `ended` nor `error`, has to be given up
+   on here — on 10 September one that did left the wall on one screen all
+   morning. The guard is the line's own measured length plus a wide margin,
+   so a slow load is waited for and a dead one is not. */
+var guard=null;
+function clearGuard(){ if(guard){ clearTimeout(guard); guard=null; } }
 function next(){
   if(!playing||aIdx>=NARRATION.length) return endNarration();
-  audio=new Audio(NARRATION[aIdx].a);
-  audio.onended=function(){ aIdx++; setTimeout(next,700); };   // a beat after each line
-  audio.play().catch(endNarration);
+  clearGuard();
+  var line=NARRATION[aIdx], mine=audio=new Audio(line.a), moved=false;
+  function on(){ if(moved||audio!==mine) return; moved=true; clearGuard(); aIdx++; setTimeout(next,700); }
+  function off(){ if(moved||audio!==mine) return; moved=true; endNarration(); }
+  audio.onended=on;                                            // a beat after each line
+  audio.onerror=off;
+  guard=setTimeout(on,((line.s||3.4)+8)*1000);
+  audio.play().catch(off);
 }
 /* The rail's Narrate asks this screen to speak; turning away asks it to hush. */
 window.addEventListener("message", function(e){
