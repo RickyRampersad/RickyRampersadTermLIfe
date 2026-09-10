@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-10a';
+var SCRIPT_VERSION = '2026-09-10b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2462,7 +2462,7 @@ function sendWeekly(dateOpt) {
 /** Everything this tool installs. Anything else in the project is somebody
  *  else's and is left alone. */
 var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint',
-                   'sendCloseout', 'keepWarm'];
+                   'sendCloseout', 'sendBranchPulse', 'keepWarm'];
 
 /** Handlers from earlier versions of this tool. Replacing the code does not
  *  remove the triggers that call it — they are stored against the project, not
@@ -2571,6 +2571,11 @@ function installTriggers() {
   ScriptApp.newTrigger('remindMidday').timeBased().everyDays(1).atHour(12).create();
   ScriptApp.newTrigger('remindCheckpoint').timeBased().everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
+  // Two o'clock: the branch's own message, written and handed over ready to
+  // send. Two hours left in the day, which is what makes it a prompt rather
+  // than a report.
+  ScriptApp.newTrigger('sendBranchPulse').timeBased().everyDays(1).atHour(PULSE_HOUR).create();
+
   // Before you leave, at a quarter to four. Late enough that the answer is
   // the day's, early enough that a person can still act on what is missing —
   // nearMinute is Apps Script's word for "about then", which is as close as
@@ -2585,11 +2590,13 @@ function installTriggers() {
   // And one that keeps the project awake, so nobody pays the cold start.
   ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
 
-  var msg = 'Six triggers installed. Warm-up every 10 minutes, round the clock. Staff nudges at 12:00 and ' +
+  var msg = 'Seven triggers installed. Warm-up every 10 minutes, round the clock. Staff nudges at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
-            ':00, before-you-leave close-out ' + CLOSEOUT_HOUR + ':' + CLOSEOUT_MINUTE +
+            ':00, the branch message at ' + PULSE_HOUR + ':00, before-you-leave close-out ' +
+            CLOSEOUT_HOUR + ':' + CLOSEOUT_MINUTE +
             ', weekly summary Friday 17:00 (' + CONFIG.TZ + '). The daily ones turn a day nobody ' +
-            'opened away themselves. A project may hold twenty; Branch Intelligence needs eleven of the rest.';
+            'opened away themselves. Seven here and Branch Intelligence\'s eleven is eighteen, ' +
+            'under the project limit of twenty.';
   if (removed.length) {
     msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
            'version: ' + removed.join(', ') + '.';
@@ -4535,6 +4542,135 @@ function attendanceToday_(profile) {
   var day = todayISO_(), m = {};
   attendanceFor_(profile, day, shiftDays_(day, 1)).forEach(function (o) { m[o.staffId] = o; });
   return m;
+}
+
+// ---------------------------------------------------------------------------
+//  Two o'clock: the branch's own message, written and ready to send
+//
+//  WHY THE LAST TAP IS A PERSON'S, AND CANNOT BE ANYTHING ELSE.
+//  There is no way for this script to post into a WhatsApp group. Meta's
+//  WhatsApp Business API sends to individual numbers and has never supported
+//  groups; the same is true of every reseller built on it. The libraries that
+//  do post to groups drive a logged-in copy of WhatsApp Web from a server,
+//  which is against WhatsApp's terms and gets the number banned — and the
+//  number here is the branch's. So this writes the message and hands it over
+//  ready: an e-mail at two with the text, and a link that opens WhatsApp with
+//  it already typed. Pick the group, press send. Two taps, and nothing about
+//  the branch's number is at risk.
+//
+//  WHAT IT SAYS, AND WHY IT IS ONE THING.
+//  The house rules for a message to the branch group are in CLAUDE.md and the
+//  first one is the one that keeps getting broken: under about 120 words. A
+//  280-word message is a memo, and a memo in a WhatsApp group is scrolled
+//  past. So the message leads with the number nobody in the room already
+//  knows, names the person in front — not the people behind, because a daily
+//  naming of who is last is corrosive and would be read once — carries ONE
+//  finding, and ends with an ask that can be answered in a line.
+//
+//  Two o'clock and not three: the 3pm checkpoint is the manager's read of the
+//  day. This is the branch's, and it lands with two working hours left in it,
+//  which is the difference between a prompt and a report.
+// ---------------------------------------------------------------------------
+
+var PULSE_HOUR = 14;
+
+/** The strongest true thing about the day so far, and the ask that follows
+ *  from it. One finding — whichever of these is first and real. */
+function pulseFinding_(r) {
+  var t = r.totals || {};
+  if (t.overdue > 0) {
+    return { text: t.overdue + ' tasks across the branch are overdue right now. A line of reason on each is ' +
+                   'the fastest hour anybody will spend today — a task with a reason on it stops being chased.',
+             ask: 'Reply with one you are clearing before four.' };
+  }
+  if (r.silent && r.silent.length) {
+    return { text: r.silent.length + ' of ' + r.headcount + (r.silent.length === 1 ? ' desks has' : ' desks have') +
+                   ' logged nothing at all yet today. ' +
+                   'The three o’clock branch report reads what is in the sheet, not what was done.',
+             ask: 'Reply when yours is in.' };
+  }
+  if (t.aged60 > 0) {
+    return { text: t.aged60 + ' tasks have not been touched in sixty days. Those are the ones a client ' +
+                   'remembers, and the ones nobody opens.',
+             ask: 'Reply with one sixty-day task you are opening this afternoon.' };
+  }
+  if (r.behind && r.behind.length) {
+    return { text: (r.behind.length === 1 ? 'One of us is' : r.behind.length + ' of us are') +
+                   ' short of three blocks with two hours left. ' +
+                   'A block written at four from memory is not the same record as one written when it ended.',
+             ask: 'Reply with the block you are closing next.' };
+  }
+  return { text: 'Every desk has reported and nothing is overdue. That is a first, and it is worth saying out loud.',
+           ask: 'Reply with the one client you are calling before you leave.' };
+}
+
+/** The message itself. WhatsApp bold is *single asterisks* and it reflows its
+ *  own lines, so a paragraph is one line here — wrapped text arrives ragged
+ *  on a phone. */
+function branchPulseText_(r) {
+  var t = r.totals || {}, live = (r.lines || []).filter(function (l) { return l.fromSalesforce; }).length > 0;
+  var ranked = (r.lines || []).filter(function (l) { return (l.closed || 0) > 0; })
+    .sort(function (a, b) { return (b.closed || 0) - (a.closed || 0); });
+  var first = ranked[0], second = ranked[1];
+
+  var head = live && t.closed
+    ? '*Two o’clock — ' + t.closed + ' closed so far today.*'
+    : '*Two o’clock.*';
+
+  var lead = first
+    ? firstName_(first.name) + ' is in front with ' + first.closed +
+      (second && second.closed ? ', ' + firstName_(second.name) + ' right behind on ' + second.closed + '.' : '.')
+    : (r.reported ? r.reported + ' of ' + r.headcount + ' desks have reported so far.' : '');
+
+  var f = pulseFinding_(r);
+  return [head, lead, f.text, f.ask].filter(Boolean).join('\n\n');
+}
+
+function firstName_(n) { return String(n || '').trim().split(/\s+/)[0] || String(n || ''); }
+
+/** Open WhatsApp with the message already typed. wa.me with no number is the
+ *  share sheet: pick the group, press send. */
+function pulseWaLink_(text) {
+  return 'https://wa.me/?text=' + encodeURIComponent(text);
+}
+
+/** Written by hand from the editor, to read it before anybody else does. */
+function branchPulse(dateOpt) {
+  var text = branchPulseText_(checkpointReport_(dateOpt));
+  Logger.log(text);
+  return text;
+}
+
+/** Two o'clock. The message, the link that sends it, and nothing else — this
+ *  is a prompt to press send, not a report to read. */
+function sendBranchPulse(dateOpt) {
+  if (nothingToReport_(dateOpt)) return 'Nobody signed in and nothing was filed — no two o’clock message.';
+  var r = checkpointReport_(dateOpt);
+  var text = branchPulseText_(r);
+  var words = text.split(/\s+/).filter(Boolean).length;
+
+  MailApp.sendEmail({
+    to: managerEmails_().join(','),
+    subject: 'For the branch group · ' + shortDate_(r.date) + ' · ' + words + ' words',
+    htmlBody: shell_('Ready for the group', prettyDate_(r.date) + ' · two o’clock',
+      '<a href="' + esc_(pulseWaLink_(text)) + '" ' +
+        'style="display:block;text-align:center;padding:14px 18px;border-radius:10px;background:#25D366;' +
+        'color:#06301a;text-decoration:none;font-size:16px;font-weight:800;margin-bottom:14px">' +
+        'Open WhatsApp with this typed →</a>' +
+      '<div style="font-size:12.5px;color:' + MAIL.muted + ';text-align:center;margin:-6px 0 16px">' +
+        'Pick the Branch Admin group and press send. WhatsApp has no way to let a script post ' +
+        'to a group itself — that last tap has to be yours.</div>' +
+      sectionLabel_('The message · ' + words + ' words') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.gold +
+        ';border-radius:9px;padding:14px 16px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;' +
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif">' + esc_(text) + '</div>' +
+      '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:14px">' +
+        'Written from the day’s own record at two, so the number in the first line is one ' +
+        'nobody in the group has seen yet. Change any of it before you send — it is a draft, ' +
+        'not a broadcast.</div>')
+  });
+  Logger.log(text);
+  return 'Two o’clock message ready (' + words + ' words), sent to ' + managerEmails_().join(', ') + '.';
 }
 
 // ---------------------------------------------------------------------------
