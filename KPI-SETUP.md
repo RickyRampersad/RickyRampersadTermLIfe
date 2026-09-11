@@ -480,6 +480,109 @@ A register created before September 2026 has no `SignedOut` column. It is added
 on the end the first time the tab is read, so the columns already there keep
 their places.
 
+## Two o'clock — the branch's own message
+
+A daily trigger at 14:00 writes the message for the WhatsApp group from the
+day's own record and e-mails it to you ready to send, with a green button that
+opens WhatsApp with the text already typed. Pick the group, press send.
+
+**The last tap has to be yours, and that is not a shortcut.** Nothing can post
+into a WhatsApp group. Meta's WhatsApp Business API sends to individual
+numbers and has never supported groups, and neither does any reseller built on
+it. The libraries that *do* post to groups drive a logged-in copy of WhatsApp
+Web from a server — against WhatsApp's terms, and the number that gets banned
+for it is the branch's. Two taps is the honest version.
+
+**What it says.** The house rules for a group message are at the top of
+`CLAUDE.md`, and the message follows them: under 120 words, a bold one-line
+headline, the number nobody in the room already knows in the first line,
+**one** finding, and an ask that can be answered in a line.
+
+It names **who is in front**, never who is behind. A daily naming of who is
+last in a group chat is read once. Where a shortfall is the finding it is
+always a count — *"one of us is short of three blocks"*, never a name.
+
+The finding is whichever of these is first and true:
+
+1. tasks overdue across the branch
+2. desks that have logged nothing at all yet
+3. tasks untouched for sixty days
+4. desks short of three blocks with two hours left
+5. nothing wrong — which is said out loud rather than skipped
+
+Each one carries its own ask, so the last line always follows from the one
+before it.
+
+```javascript
+branchPulse()        // read today's message without sending anything
+sendBranchPulse()    // build it and mail it over, as the 14:00 trigger does
+```
+
+Two o'clock and not three: the 3pm checkpoint is the manager's read of the
+day. This is the branch's, and it lands with two working hours left in it —
+which is the difference between a prompt and a report. A day nobody opened
+gets no message.
+
+## Before you leave — the close-out
+
+The register said a person was here. It never said what they left behind them.
+The close-out is the other half: a short list, the same one every evening, of
+what has to be true before somebody goes home.
+
+**It never asks what the sheet can already see.** Blocks reported, the
+afternoon mail sweep, anything written to you today — all three tick
+themselves and show the evidence they read (`4 of 4 reported`, `swept at
+14:10`). Only what cannot be seen is put as a question. A checklist that makes
+a person re-assert what the system already knows is one they learn to tick
+without reading.
+
+**The list is yours, not the script's.** It lives on a `Closeout Items` tab,
+created with four seeded lines the first time anything asks for it:
+
+| Column | What it holds |
+|---|---|
+| `ItemId` | A short key. Anything unique; `closeoutAdd` makes one from the wording. |
+| `Item` | What the person reads. |
+| `Who` | `All`, a role (`bm`, `um`, `bma`, `abm`, `ssa`, `pa`), a name, or a staff id. A comma-separated list works. |
+| `Auto` | Blank for a question. `blocks`, `mail` or `written` for a line that checks itself. |
+| `Order` | Where it sits in the list. |
+| `Active` | `No` takes it off tonight's list without deleting it. |
+| `Note` | For whoever edits the tab. Nobody on the floor sees it. |
+
+The fourth seeded line — *Branch portfolio uploaded* — ships with `Active =
+No` on purpose. It is the shape of a branch rule rather than a branch rule.
+Switch it on, narrow `Who` to the desk it belongs to, or write your own.
+
+From the editor, one line does it:
+
+```javascript
+closeoutAdd('Upload the branch portfolio', 'azariah')   // or a role, or All
+closeoutList()                                          // what is on the list, and for whom
+closeoutDay()                                           // what the branch left behind today
+```
+
+**It is asked in two places, and one tick answers both.** On the screen, under
+**Close the day**, while the person is signing out. And by e-mail at a quarter
+to four — because the people who most need the question are the ones who have
+not opened the tracker since lunch. Every open line in that mail is a link;
+tapping it records the line at the minute it was tapped and shows what is
+left, from the phone, with nobody signed in. The link is signed, and it is
+good for one person on one day.
+
+Nobody who did not sign in is written to. A day that was never opened is
+absent, and an absent day has nothing to close. Nobody already clear is
+written to either.
+
+It is **not a gate**. A person may sign out with things open and the register
+says so. What they can no longer do is leave without being asked.
+
+Answers land on a `Closeout Log` tab: `Date · StaffId · Name · ItemId · Item ·
+Status · Reason · At · Source`, one row per line per day, rewritten in place.
+`Source` says whether it came from the screen or the mail. Where somebody
+ticked an automatic line the sheet disagrees with, the list reads *said done
+at 15:47* rather than the count that contradicts them — their word, marked as
+their word.
+
 ## What changed
 
 **Submit now tells you the truth.** It used to post with `mode: "no-cors"`,

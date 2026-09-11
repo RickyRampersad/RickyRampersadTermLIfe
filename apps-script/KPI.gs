@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-09b';
+var SCRIPT_VERSION = '2026-09-10b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1941,6 +1941,8 @@ function doGet(e) {
   if (typeof iSurveyClick_ === 'function') {
     try { var page = iSurveyClick_(e); if (page) return page; } catch (err) {}
   }
+  // And so is a tick from the quarter-to-four close-out.
+  try { var co = closeoutClick_(e); if (co) return co; } catch (err) {}
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -1999,6 +2001,19 @@ function handle_(action, data, token) {
 
     case 'signOut':
       return signOutDay_(data, profile);
+
+    case 'closeout': {
+      var coWho = String(data.staffId || profile.staffId);
+      if (coWho !== profile.staffId && !isLeadOf_(profile, coWho) && !profile.manager) {
+        return { ok: false, error: 'Not yours to read.' };
+      }
+      var coP = rosterPerson_(coWho);
+      if (!coP) return { ok: false, error: 'Not on the register.' };
+      return closeoutFor_(coP, data.date);
+    }
+
+    case 'tickCloseout':
+      return tickCloseout_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -2447,7 +2462,7 @@ function sendWeekly(dateOpt) {
 /** Everything this tool installs. Anything else in the project is somebody
  *  else's and is left alone. */
 var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint',
-                   'keepWarm'];
+                   'sendCloseout', 'sendBranchPulse', 'keepWarm'];
 
 /** Handlers from earlier versions of this tool. Replacing the code does not
  *  remove the triggers that call it — they are stored against the project, not
@@ -2556,6 +2571,18 @@ function installTriggers() {
   ScriptApp.newTrigger('remindMidday').timeBased().everyDays(1).atHour(12).create();
   ScriptApp.newTrigger('remindCheckpoint').timeBased().everyDays(1).atHour(CONFIG.CHECKPOINT_HOUR).create();
 
+  // Two o'clock: the branch's own message, written and handed over ready to
+  // send. Two hours left in the day, which is what makes it a prompt rather
+  // than a report.
+  ScriptApp.newTrigger('sendBranchPulse').timeBased().everyDays(1).atHour(PULSE_HOUR).create();
+
+  // Before you leave, at a quarter to four. Late enough that the answer is
+  // the day's, early enough that a person can still act on what is missing —
+  // nearMinute is Apps Script's word for "about then", which is as close as
+  // a time-based trigger gets.
+  ScriptApp.newTrigger('sendCloseout').timeBased()
+    .everyDays(1).atHour(CLOSEOUT_HOUR).nearMinute(CLOSEOUT_MINUTE).create();
+
   // Weekly summary, Friday evening once the day is in.
   ScriptApp.newTrigger('sendWeekly').timeBased()
     .onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(17).create();
@@ -2563,10 +2590,13 @@ function installTriggers() {
   // And one that keeps the project awake, so nobody pays the cold start.
   ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
 
-  var msg = 'Five triggers installed. Warm-up every 10 minutes 7am-6pm weekdays. Staff nudges weekdays at 12:00 and ' +
+  var msg = 'Seven triggers installed. Warm-up every 10 minutes, round the clock. Staff nudges at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
-            ':00, weekly summary Friday 17:00 (' + CONFIG.TZ + '). The three daily ones skip weekends themselves. ' +
-            'A project may hold twenty; Branch Intelligence needs six of the rest.';
+            ':00, the branch message at ' + PULSE_HOUR + ':00, before-you-leave close-out ' +
+            CLOSEOUT_HOUR + ':' + CLOSEOUT_MINUTE +
+            ', weekly summary Friday 17:00 (' + CONFIG.TZ + '). The daily ones turn a day nobody ' +
+            'opened away themselves. Seven here and Branch Intelligence\'s eleven is eighteen, ' +
+            'under the project limit of twenty.';
   if (removed.length) {
     msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
            'version: ' + removed.join(', ') + '.';
@@ -4512,6 +4542,575 @@ function attendanceToday_(profile) {
   var day = todayISO_(), m = {};
   attendanceFor_(profile, day, shiftDays_(day, 1)).forEach(function (o) { m[o.staffId] = o; });
   return m;
+}
+
+// ---------------------------------------------------------------------------
+//  Two o'clock: the branch's own message, written and ready to send
+//
+//  WHY THE LAST TAP IS A PERSON'S, AND CANNOT BE ANYTHING ELSE.
+//  There is no way for this script to post into a WhatsApp group. Meta's
+//  WhatsApp Business API sends to individual numbers and has never supported
+//  groups; the same is true of every reseller built on it. The libraries that
+//  do post to groups drive a logged-in copy of WhatsApp Web from a server,
+//  which is against WhatsApp's terms and gets the number banned — and the
+//  number here is the branch's. So this writes the message and hands it over
+//  ready: an e-mail at two with the text, and a link that opens WhatsApp with
+//  it already typed. Pick the group, press send. Two taps, and nothing about
+//  the branch's number is at risk.
+//
+//  WHAT IT SAYS, AND WHY IT IS ONE THING.
+//  The house rules for a message to the branch group are in CLAUDE.md and the
+//  first one is the one that keeps getting broken: under about 120 words. A
+//  280-word message is a memo, and a memo in a WhatsApp group is scrolled
+//  past. So the message leads with the number nobody in the room already
+//  knows, names the person in front — not the people behind, because a daily
+//  naming of who is last is corrosive and would be read once — carries ONE
+//  finding, and ends with an ask that can be answered in a line.
+//
+//  Two o'clock and not three: the 3pm checkpoint is the manager's read of the
+//  day. This is the branch's, and it lands with two working hours left in it,
+//  which is the difference between a prompt and a report.
+// ---------------------------------------------------------------------------
+
+var PULSE_HOUR = 14;
+
+/** The strongest true thing about the day so far, and the ask that follows
+ *  from it. One finding — whichever of these is first and real. */
+function pulseFinding_(r) {
+  var t = r.totals || {};
+  if (t.overdue > 0) {
+    return { text: t.overdue + ' tasks across the branch are overdue right now. A line of reason on each is ' +
+                   'the fastest hour anybody will spend today — a task with a reason on it stops being chased.',
+             ask: 'Reply with one you are clearing before four.' };
+  }
+  if (r.silent && r.silent.length) {
+    return { text: r.silent.length + ' of ' + r.headcount + (r.silent.length === 1 ? ' desks has' : ' desks have') +
+                   ' logged nothing at all yet today. ' +
+                   'The three o’clock branch report reads what is in the sheet, not what was done.',
+             ask: 'Reply when yours is in.' };
+  }
+  if (t.aged60 > 0) {
+    return { text: t.aged60 + ' tasks have not been touched in sixty days. Those are the ones a client ' +
+                   'remembers, and the ones nobody opens.',
+             ask: 'Reply with one sixty-day task you are opening this afternoon.' };
+  }
+  if (r.behind && r.behind.length) {
+    return { text: (r.behind.length === 1 ? 'One of us is' : r.behind.length + ' of us are') +
+                   ' short of three blocks with two hours left. ' +
+                   'A block written at four from memory is not the same record as one written when it ended.',
+             ask: 'Reply with the block you are closing next.' };
+  }
+  return { text: 'Every desk has reported and nothing is overdue. That is a first, and it is worth saying out loud.',
+           ask: 'Reply with the one client you are calling before you leave.' };
+}
+
+/** The message itself. WhatsApp bold is *single asterisks* and it reflows its
+ *  own lines, so a paragraph is one line here — wrapped text arrives ragged
+ *  on a phone. */
+function branchPulseText_(r) {
+  var t = r.totals || {}, live = (r.lines || []).filter(function (l) { return l.fromSalesforce; }).length > 0;
+  var ranked = (r.lines || []).filter(function (l) { return (l.closed || 0) > 0; })
+    .sort(function (a, b) { return (b.closed || 0) - (a.closed || 0); });
+  var first = ranked[0], second = ranked[1];
+
+  var head = live && t.closed
+    ? '*Two o’clock — ' + t.closed + ' closed so far today.*'
+    : '*Two o’clock.*';
+
+  var lead = first
+    ? firstName_(first.name) + ' is in front with ' + first.closed +
+      (second && second.closed ? ', ' + firstName_(second.name) + ' right behind on ' + second.closed + '.' : '.')
+    : (r.reported ? r.reported + ' of ' + r.headcount + ' desks have reported so far.' : '');
+
+  var f = pulseFinding_(r);
+  return [head, lead, f.text, f.ask].filter(Boolean).join('\n\n');
+}
+
+function firstName_(n) { return String(n || '').trim().split(/\s+/)[0] || String(n || ''); }
+
+/** Open WhatsApp with the message already typed. wa.me with no number is the
+ *  share sheet: pick the group, press send. */
+function pulseWaLink_(text) {
+  return 'https://wa.me/?text=' + encodeURIComponent(text);
+}
+
+/** Written by hand from the editor, to read it before anybody else does. */
+function branchPulse(dateOpt) {
+  var text = branchPulseText_(checkpointReport_(dateOpt));
+  Logger.log(text);
+  return text;
+}
+
+/** Two o'clock. The message, the link that sends it, and nothing else — this
+ *  is a prompt to press send, not a report to read. */
+function sendBranchPulse(dateOpt) {
+  if (nothingToReport_(dateOpt)) return 'Nobody signed in and nothing was filed — no two o’clock message.';
+  var r = checkpointReport_(dateOpt);
+  var text = branchPulseText_(r);
+  var words = text.split(/\s+/).filter(Boolean).length;
+
+  MailApp.sendEmail({
+    to: managerEmails_().join(','),
+    subject: 'For the branch group · ' + shortDate_(r.date) + ' · ' + words + ' words',
+    htmlBody: shell_('Ready for the group', prettyDate_(r.date) + ' · two o’clock',
+      '<a href="' + esc_(pulseWaLink_(text)) + '" ' +
+        'style="display:block;text-align:center;padding:14px 18px;border-radius:10px;background:#25D366;' +
+        'color:#06301a;text-decoration:none;font-size:16px;font-weight:800;margin-bottom:14px">' +
+        'Open WhatsApp with this typed →</a>' +
+      '<div style="font-size:12.5px;color:' + MAIL.muted + ';text-align:center;margin:-6px 0 16px">' +
+        'Pick the Branch Admin group and press send. WhatsApp has no way to let a script post ' +
+        'to a group itself — that last tap has to be yours.</div>' +
+      sectionLabel_('The message · ' + words + ' words') +
+      '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.gold +
+        ';border-radius:9px;padding:14px 16px;font-size:14.5px;line-height:1.6;white-space:pre-wrap;' +
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',sans-serif">' + esc_(text) + '</div>' +
+      '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:14px">' +
+        'Written from the day’s own record at two, so the number in the first line is one ' +
+        'nobody in the group has seen yet. Change any of it before you send — it is a draft, ' +
+        'not a broadcast.</div>')
+  });
+  Logger.log(text);
+  return 'Two o’clock message ready (' + words + ' words), sent to ' + managerEmails_().join(', ') + '.';
+}
+
+// ---------------------------------------------------------------------------
+//  Before you leave — the close-out
+//
+//  The register says a person was here. It has never said what they left
+//  behind them. Signing in opens the day, signing out closes it, and between
+//  those two times the only record was whatever they chose to type into a
+//  block. The branch's question on 10 September was the right one: gauge what
+//  was actually done, and ask it while the person is still at the desk.
+//
+//  So the last thing a day does is ask. A short list, the same one every
+//  evening, of the things that have to be true before somebody leaves.
+//
+//  Two rules make it worth answering.
+//
+//  The first: THE LIST NEVER ASKS WHAT IT CAN ALREADY SEE. Blocks reported,
+//  the afternoon mail sweep, anything written to you today — the sheet holds
+//  all three, so those tick themselves and show their own evidence. A
+//  checklist that makes a person re-assert what the system already knows is a
+//  checklist they learn to tick without reading, and then it is worth
+//  nothing. Only what cannot be seen is actually asked.
+//
+//  The second: THE LIST IS THE BRANCH'S, NOT THIS FILE'S. It lives on the
+//  Closeout Items tab, so the Branch Manager adds "upload the branch
+//  portfolio" the morning after the fourth reminder, without a deployment.
+//  closeoutAdd() does it from the editor in one line.
+//
+//  It is asked in two places, and the same tick answers both. On the screen,
+//  under Close the day, while the person is signing out. And at a quarter to
+//  four by e-mail, because the people who most need the question are the ones
+//  who have not opened the tracker since lunch — every unticked line is a
+//  link, and clicking it records it and shows what is left.
+//
+//  Nobody who did not sign in is asked anything. A day that was never opened
+//  is absent, and an absent day has nothing to close.
+// ---------------------------------------------------------------------------
+
+var CLO  = { must: ['ItemId', 'Item', 'Who'], name: 'Closeout Items',
+             head: ['ItemId', 'Item', 'Who', 'Auto', 'Order', 'Active', 'Note'] };
+var CLOG = { must: ['Date', 'StaffId', 'ItemId'], name: 'Closeout Log',
+             head: ['Date', 'StaffId', 'Name', 'ItemId', 'Item', 'Status', 'Reason', 'At', 'Source'] };
+
+var CLOSEOUT_HOUR = 15, CLOSEOUT_MINUTE = 45;   // a quarter to four
+
+/* What the tab is seeded with the first time it is opened.
+   The three that check themselves are the three the sheet already answers.
+   The fourth ships switched off on purpose: it is the shape of a branch rule
+   rather than a branch rule, and a checklist that tells somebody to do
+   something nobody asked of them is worse than a short checklist. Switch it
+   on, edit it, or add your own — Who takes a role (bm, um, bma, sales
+   support), a name, or a staff id, and All means everybody. */
+var CLOSEOUT_SEED = [
+  { ItemId: 'blocks',    Item: 'Every block reported',
+    Who: 'All', Auto: 'blocks', Order: 10, Active: 'Yes',
+    Note: 'Checks itself against the day’s entries.' },
+  { ItemId: 'mail',      Item: 'Afternoon mail sweep cleared',
+    Who: 'All', Auto: 'mail', Order: 20, Active: 'Yes',
+    Note: 'Checks itself against the PM sweep on the day’s row.' },
+  { ItemId: 'written',   Item: 'Anything you were written to about, or fell short on, noted',
+    Who: 'All', Auto: 'written', Order: 30, Active: 'Yes',
+    Note: 'Checks itself against Moments dated today.' },
+  { ItemId: 'portfolio', Item: 'Branch portfolio uploaded',
+    Who: 'All', Auto: '', Order: 40, Active: 'No',
+    Note: 'An example. Set Active to Yes, narrow Who to the desk it belongs to, or write your own.' }
+];
+
+function closeoutSheet_() {
+  var sh = hrTab_(CLO, false);
+  if (sh) return sh;
+  sh = hrTab_(CLO, true);
+  CLOSEOUT_SEED.forEach(function (s) {
+    sh.appendRow(CLO.head.map(function (h) { return s[h] != null ? s[h] : ''; }));
+  });
+  forgetHr_(CLO);
+  return sh;
+}
+
+function closeoutLogSheet_() { return hrTab_(CLOG, true); }
+
+/** Does one line of the list apply to one person? Who is read generously:
+ *  blank or All is everybody, and anything else is matched against the role
+ *  key, the words of the title, the staff id and the name — because the
+ *  person editing that column is typing what they call the desk, not a key
+ *  from this file. */
+function closeoutApplies_(who, person) {
+  var w = String(who == null ? '' : who).trim().toLowerCase();
+  if (!w || w === 'all' || w === 'everyone' || w === 'everybody') return true;
+  var sid = String(person.staffId || '').toLowerCase();
+  var name = String(person.name || '').toLowerCase();
+  var key = String(person.role || '').toLowerCase();          // publicRoster_ already resolved it
+  var title = normRole_((person.unit || '') + ' ' + (person.grade || ''));
+  return w.split(/\s*[,;|]\s*/).filter(String).some(function (p) {
+    return p === sid || p === name || p === key ||
+           name.indexOf(p) > -1 || title.indexOf(p) > -1;
+  });
+}
+
+/** The list for one person, in order, actives only. */
+function closeoutItems_(person) {
+  closeoutSheet_();
+  return (hrRows_(CLO, true) || [])
+    .filter(function (r) {
+      var on = String(r.Active == null ? 'yes' : r.Active).trim().toLowerCase();
+      if (on === 'no' || on === 'false' || on === '0') return false;
+      return String(r.Item || '').trim() && closeoutApplies_(r.Who, person);
+    })
+    .sort(function (a, b) { return (Number(a.Order) || 0) - (Number(b.Order) || 0); })
+    .map(function (r) {
+      return { id: String(r.ItemId || r.Item).trim(), item: String(r.Item).trim(),
+               auto: String(r.Auto || '').trim().toLowerCase() };
+    });
+}
+
+/** The three the sheet can answer on its own, with the evidence each one
+ *  reads from — the evidence is the point, not the tick. */
+function closeoutAuto_(staffId, day) {
+  var out = {};
+
+  var due = Object.keys(scheduleFor_(staffId).blocks || {});
+  if (!due.length) due = BLOCK_IDS.slice();
+  var done = blocksSubmittedOn_(staffId, day);
+  out.blocks = { ok: done.length >= due.length,
+                 detail: done.length + ' of ' + due.length + ' reported' };
+
+  var pm = null;
+  latestEntries_().forEach(function (e) {
+    if (e.Date === day && String(e.StaffId) === String(staffId)) pm = parseMail_(e.MailPM);
+  });
+  out.mail = { ok: !!pm, detail: pm ? 'swept at ' + pm.at : 'not swept' };
+
+  var n = momentsFor_(String(staffId), day, shiftDays_(day, 1)).length;
+  out.written = { ok: n > 0, detail: n ? (n === 1 ? '1 noted today' : n + ' noted today')
+                                      : 'nothing noted today' };
+  return out;
+}
+
+/** What has already been answered by hand, keyed by item. */
+function closeoutTicks_(staffId, day) {
+  var m = {};
+  (hrRows_(CLOG, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day || String(r.StaffId) !== String(staffId)) return;
+    m[String(r.ItemId)] = { status: String(r.Status || ''), reason: String(r.Reason || ''),
+                            at: timeStr_(r.At) || String(r.At || ''), source: String(r.Source || '') };
+  });
+  return m;
+}
+
+/** One person's close-out for one day: every line, whether it is answered,
+ *  and how it came to be answered. */
+function closeoutFor_(person, date) {
+  var day = isoDay_(date) || todayISO_();
+  var sid = String(person.staffId);
+  var items = closeoutItems_(person);
+  var auto = closeoutAuto_(sid, day);
+  var ticks = closeoutTicks_(sid, day);
+
+  var rows = items.map(function (it) {
+    var a = it.auto ? auto[it.auto] : null;
+    var t = ticks[it.id];
+    /* An automatic line the sheet can see is done, is done — a person cannot
+       be asked to tick what is already true, and cannot untick it either.
+       An automatic line that is NOT satisfied still takes a hand tick, so
+       somebody who did the thing outside the tracker can say so. */
+    if (a && a.ok) {
+      return { id: it.id, item: it.item, auto: it.auto, done: true,
+               detail: a.detail, by: 'checked', at: '', reason: '' };
+    }
+    if (t && /^done$/i.test(t.status)) {
+      /* A person has said an automatic line is done while the sheet still
+         says otherwise — they did it somewhere the tracker cannot see. The
+         line reads as their word, not as the count that disagrees with it,
+         because "Every block reported ✓ · 0 of 4 reported" is a sentence
+         nobody can act on. */
+      return { id: it.id, item: it.item, auto: it.auto, done: true,
+               detail: a ? ('said done' + (t.at ? ' at ' + t.at : '')) : '',
+               by: t.source || 'ticked', at: t.at, reason: '' };
+    }
+    return { id: it.id, item: it.item, auto: it.auto, done: false,
+             detail: a ? a.detail : '',
+             by: t ? (t.source || 'answered') : '', at: t ? t.at : '',
+             reason: t && /^not done$/i.test(t.status) ? (t.reason || 'not done') : '' };
+  });
+
+  var left = rows.filter(function (r) { return !r.done; }).length;
+  return { ok: true, date: day, staffId: sid, name: person.name || sid,
+           items: rows, of: rows.length, left: left, complete: rows.length > 0 && left === 0 };
+}
+
+/** Record one answer. Written in place, so the log reads as a day's register
+ *  rather than a stream of every time somebody changed their mind. */
+function closeoutWrite_(person, day, itemId, status, reason, source) {
+  var sh = closeoutLogSheet_(), rows = sheetObjects_(sh), now = new Date();
+  var sid = String(person.staffId), at = hhmm_(now);
+  var found = null;
+  rows.forEach(function (r, i) {
+    if (isoDay_(r.Date) === day && String(r.StaffId) === sid && String(r.ItemId) === String(itemId)) {
+      found = i + 2;
+    }
+  });
+  var label = '';
+  closeoutItems_(person).forEach(function (it) { if (it.id === String(itemId)) label = it.item; });
+  var patch = { Date: day, StaffId: sid, Name: person.name || sid, ItemId: String(itemId),
+                Item: label, Status: status, Reason: reason || '', At: at, Source: source || 'screen' };
+  if (found) writeRow_(sh, found, colMap_(sh), patch);
+  else sh.appendRow(CLOG.head.map(function (h) { return patch[h] != null ? patch[h] : ''; }));
+  forgetHr_(CLOG);
+  return at;
+}
+
+function tickCloseout_(data, profile) {
+  var person = rosterPerson_(profile.staffId) || profile;
+  var day = isoDay_(data.date) || todayISO_();
+  var itemId = String(data.itemId || '').trim();
+  if (!itemId) return { ok: false, error: 'Which one?' };
+  var status = /^not/i.test(String(data.status || '')) ? 'Not done' : 'Done';
+  var reason = String(data.reason || '').trim();
+  if (status === 'Not done' && !reason) return { ok: false, error: 'Say what stopped it — one line is enough.' };
+  var known = closeoutItems_(person).some(function (it) { return it.id === itemId; });
+  if (!known) return { ok: false, error: 'That is not on your list.' };
+  closeoutWrite_(person, day, itemId, status, reason, 'screen');
+  return closeoutFor_(person, day);
+}
+
+/** The roster row behind a signed-in profile, so Who can be matched against
+ *  the title and not only the id. */
+function rosterPerson_(staffId) {
+  var hit = null;
+  publicRoster_().forEach(function (p) { if (String(p.staffId) === String(staffId)) hit = p; });
+  return hit;
+}
+
+// ---- the link in the e-mail ----------------------------------------------
+//  A tick has to work from the phone that opened the mail, with nobody
+//  signed in — so the link carries its own proof. It is a signature over the
+//  person and the day, which means it opens one person's list, for one day,
+//  and is worth nothing tomorrow.
+
+function closeoutSecret_() {
+  var props = PropertiesService.getScriptProperties();
+  var s = props.getProperty('CLOSEOUT_SECRET');
+  if (!s) { s = Utilities.getUuid() + Utilities.getUuid(); props.setProperty('CLOSEOUT_SECRET', s); }
+  return s;
+}
+
+function closeoutSig_(staffId, day) {
+  var raw = Utilities.computeHmacSha256Signature(String(staffId) + '|' + String(day), closeoutSecret_());
+  return Utilities.base64EncodeWebSafe(raw).replace(/=+$/, '').slice(0, 22);
+}
+
+function closeoutUrl_(staffId, day, itemId) {
+  var base = PropertiesService.getScriptProperties().getProperty('KPI_EXEC_URL') ||
+             ScriptApp.getService().getUrl() || '';
+  return base + '?co=' + encodeURIComponent(staffId) + '&d=' + encodeURIComponent(day) +
+         '&k=' + encodeURIComponent(closeoutSig_(staffId, day)) +
+         (itemId ? '&i=' + encodeURIComponent(itemId) : '');
+}
+
+/** The GET behind every tick link. Returns a page, or null when the request
+ *  is not one of ours — doGet hands it every GET before falling through to
+ *  the JSON API. */
+function closeoutClick_(e) {
+  var p = (e && e.parameter) || {};
+  var sid = String(p.co || '').trim();
+  if (!sid) return null;
+  var day = isoDay_(p.d) || todayISO_();
+  if (String(p.k || '') !== closeoutSig_(sid, day)) {
+    return closeoutPage_('That link has expired.',
+      'Close-out links are good for the day they were sent. Open the tracker and close the day there.', null);
+  }
+  var person = rosterPerson_(sid);
+  if (!person) return closeoutPage_('That link has expired.', 'The desk is no longer on the register.', null);
+
+  var itemId = String(p.i || '').trim();
+  if (itemId && closeoutItems_(person).some(function (it) { return it.id === itemId; })) {
+    closeoutWrite_(person, day, itemId, 'Done', '', 'email');
+  }
+  var state = closeoutFor_(person, day);
+  return closeoutPage_(
+    state.complete ? 'That is the day closed.' : 'Recorded.',
+    state.complete
+      ? 'Everything on your list is in for ' + prettyDate_(day) + '. Nothing further tonight.'
+      : 'Tap anything else you have done. What is left is below.',
+    state);
+}
+
+function closeoutPage_(head, body, state) {
+  var rows = !state ? '' : state.items.map(function (r) {
+    if (r.done) {
+      return '<div style="display:flex;gap:10px;align-items:flex-start;padding:11px 0;border-bottom:1px solid #e8eaf0">' +
+        '<span style="color:#2C7A57;font-weight:800">&#10003;</span>' +
+        '<span><b style="color:#1F2433">' + esc_(r.item) + '</b>' +
+        (r.detail ? '<span style="color:#6A7180"> &middot; ' + esc_(r.detail) + '</span>' : '') + '</span></div>';
+    }
+    return '<div style="padding:11px 0;border-bottom:1px solid #e8eaf0">' +
+      '<a href="' + esc_(closeoutUrl_(state.staffId, state.date, r.id)) + '" ' +
+        'style="display:block;text-decoration:none;color:#16264F"><b>' + esc_(r.item) + '</b>' +
+      (r.detail ? '<span style="color:#6A7180"> &middot; ' + esc_(r.detail) + '</span>' : '') +
+      '<div style="margin-top:5px;font-size:13px;font-weight:700;color:#B0791C">Tap to mark it done &rarr;</div>' +
+      '</a></div>';
+  }).join('');
+
+  var html = '<!doctype html><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>Before you leave</title>' +
+    '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
+      'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+      'Ricky Rampersad Branch</div>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(head) + '</h1>' +
+    '<p style="margin:0 0 18px;color:#6A7180">' + esc_(body) + '</p>' +
+    (rows ? '<div style="border-top:1px solid #e8eaf0">' + rows + '</div>' : '') +
+    '</div>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+// ---- the quarter-to-four mail ---------------------------------------------
+
+function closeoutMailHtml_(state) {
+  var rows = state.items.map(function (r) {
+    if (r.done) {
+      return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.green +
+        ';border-radius:9px;padding:11px 14px;margin-bottom:8px">' +
+        '<span style="color:' + MAIL.green + ';font-weight:700">&#10003;</span> ' +
+        '<span style="font-size:14px">' + esc_(r.item) + '</span>' +
+        (r.detail ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:2px">' + esc_(r.detail) + '</div>' : '') +
+        '</div>';
+    }
+    return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber +
+      ';border-radius:9px;padding:11px 14px;margin-bottom:8px">' +
+      '<div style="font-size:14px">' + esc_(r.item) + '</div>' +
+      (r.detail ? '<div style="font-size:12px;color:' + MAIL.muted + ';margin-top:2px">' + esc_(r.detail) + '</div>' : '') +
+      '<a href="' + esc_(closeoutUrl_(state.staffId, state.date, r.id)) + '" ' +
+        'style="display:inline-block;margin-top:8px;padding:7px 15px;border-radius:999px;background:' + MAIL.navy +
+        ';color:#fff;text-decoration:none;font-size:12.5px;font-weight:700">Mark it done</a>' +
+      '</div>';
+  }).join('');
+
+  var lead = state.complete
+    ? 'Everything on your list is already in. Nothing to do — this is the receipt.'
+    : (state.left === state.of
+        ? 'None of it is in yet. There is a working hour left; tap each one as you finish it.'
+        : state.left + ' of ' + state.of + ' still to go. Tap each one as you finish it.');
+
+  return shell_('Before you leave', esc_(state.name) + ' · ' + prettyDate_(state.date),
+    '<div style="background:' + MAIL.paper + ';border:1px solid ' + MAIL.gold +
+      ';border-radius:10px;padding:13px 15px;font-size:14px;line-height:1.55;margin-bottom:16px">' +
+      lead + '</div>' +
+    sectionLabel_('Your list') + rows +
+    '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55;margin-top:6px">' +
+      'Tapping records it against today, on the register, at the minute you tapped. ' +
+      'The list is the branch’s — if something on it is not yours, say so and it comes off.' +
+    '</div>');
+}
+
+/** Quarter to four, to everybody whose day is open. Nobody who did not sign
+ *  in is written to: an unopened day is an absent day, and there is nothing
+ *  in it to close. */
+function sendCloseout(dateOpt) {
+  var day = isoDay_(dateOpt && dateOpt.date) || isoDay_(dateOpt) || todayISO_();
+  if (nothingToReport_(dateOpt)) return 'Nobody signed in — no close-out sent.';
+
+  var open = {};
+  (hrRows_(ATT, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== day) return;
+    var st = String(r.Status || 'in').toLowerCase();
+    if (st === 'absent') return;
+    if (timeStr_(r.FirstSignIn)) open[String(r.StaffId)] = true;
+  });
+
+  var sent = [], clear = [];
+  publicRoster_().forEach(function (p) {
+    if (!open[String(p.staffId)]) return;
+    var to = emailFor_(p.staffId);
+    if (!to) return;
+    var state = closeoutFor_(p, day);
+    if (!state.of) return;                       // an empty list is not worth an e-mail
+    if (state.complete) { clear.push(p.name); return; }
+    MailApp.sendEmail({
+      to: to,
+      subject: 'Before you leave · ' + shortDate_(day) + ' · ' + state.left +
+               (state.left === 1 ? ' thing left' : ' things left'),
+      htmlBody: closeoutMailHtml_(state)
+    });
+    sent.push(p.name + ' (' + state.left + ')');
+  });
+
+  var msg = (sent.length ? 'Close-out sent to: ' + sent.join(', ') : 'Close-out: nobody had anything outstanding')
+          + (clear.length ? '. Already clear: ' + clear.join(', ') : '') + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+// ---- editing the list from the editor -------------------------------------
+
+/** Add a line to the close-out. closeoutAdd('Upload the branch portfolio')
+ *  puts it in front of everybody tonight; a second argument narrows it to a
+ *  desk — a role (bma, um, bm, sales support), a name, or a staff id. */
+function closeoutAdd(item, who) {
+  var text = String(item || '').trim();
+  if (!text) throw new Error('closeoutAdd("what has to be true before they leave", "who")');
+  var sh = closeoutSheet_(), rows = hrRows_(CLO, true) || [];
+  var id = text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 32);
+  var taken = {}; rows.forEach(function (r) { taken[String(r.ItemId)] = 1; });
+  var base = id, n = 2; while (taken[id]) id = base + '-' + (n++);
+  var order = rows.reduce(function (a, r) { return Math.max(a, Number(r.Order) || 0); }, 0) + 10;
+  sh.appendRow(CLO.head.map(function (h) {
+    return { ItemId: id, Item: text, Who: String(who || 'All'), Auto: '', Order: order,
+             Active: 'Yes', Note: '' }[h];
+  }));
+  forgetHr_(CLO);
+  return 'Added "' + text + '" for ' + (who || 'All') + '. It is on the list from this evening.';
+}
+
+/** What is on the list, and who each line is for. */
+function closeoutList() {
+  closeoutSheet_();
+  var out = (hrRows_(CLO, true) || []).map(function (r) {
+    return (String(r.Active).toLowerCase() === 'no' ? '  ·  ' : '  ✓  ') +
+      String(r.Item) + '   [' + String(r.Who || 'All') + ']' +
+      (r.Auto ? '   checks itself (' + r.Auto + ')' : '');
+  }).join('\n');
+  Logger.log(out);
+  return out;
+}
+
+/** What the whole branch left behind on a day — the manager's read. */
+function closeoutDay(dateOpt) {
+  var day = isoDay_(dateOpt) || todayISO_();
+  var lines = publicRoster_().map(function (p) {
+    var s = closeoutFor_(p, day);
+    if (!s.of) return null;
+    return p.name + ': ' + (s.of - s.left) + ' of ' + s.of +
+      (s.left ? '  — left: ' + s.items.filter(function (r) { return !r.done; })
+                                      .map(function (r) { return r.item; }).join('; ') : '');
+  }).filter(Boolean).join('\n');
+  Logger.log(lines);
+  return lines;
 }
 
 // ---------------------------------------------------------------------------

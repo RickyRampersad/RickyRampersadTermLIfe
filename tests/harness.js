@@ -90,7 +90,15 @@ function makeEnv(opts = {}) {
                                 setMimeType() { return this; },
                                 getContent() { return this._t; } })
     },
-    PropertiesService: { getScriptProperties: () => ({ getProperty: () => null, setProperty: () => {} }) },
+    /* A real little store, not a pair of stubs: a secret written on first
+       use has to read back the same on the second, or every signature the
+       script makes is a different one. */
+    PropertiesService: (() => { const store = Object.assign({}, opts.props || {});
+      const api = { getProperty: k => (k in store ? store[k] : null),
+                    setProperty: (k, v) => { store[k] = String(v); return api; },
+                    deleteProperty: k => { delete store[k]; return api; },
+                    getProperties: () => Object.assign({}, store) };
+      return { getScriptProperties: () => api }; })(),
     Session: { getEffectiveUser: () => ({ getEmail: () => 'ricky@example.com' }) },
     MailApp: { sendEmail: () => { calls.mail++; if (opts.mailThrows) throw new Error('Service invoked too many times'); } },
     Utilities: {
@@ -98,13 +106,42 @@ function makeEnv(opts = {}) {
         const p = n => String(n).padStart(2, '0');
         if (f === 'HH:mm') return p(d.getHours()) + ':' + p(d.getMinutes());
         if (f === 'yyyy-MM-dd') return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+        // Every date a person reads is built in UTC by prettyDate_/shortDate_,
+        // so an e-mail's own subject line stayed an ISO timestamp in tests and
+        // nothing could assert on it.
+        const DAY = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+        if (f === 'EEE d MMM') return DAY[d.getUTCDay()].slice(0, 3) + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()].slice(0, 3);
+        if (f === 'EEEE d MMMM yyyy') return DAY[d.getUTCDay()] + ' ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear();
         return d.toISOString();
       },
       getUuid: () => 'uuid-' + Math.random().toString(36).slice(2),
       base64Encode: s => Buffer.from(String(s)).toString('base64'),
-      computeHmacSha256Signature: () => [1, 2, 3]
+      base64EncodeWebSafe: b => Buffer.from(Array.isArray(b) ? b : String(b))
+        .toString('base64').replace(/\+/g, '-').replace(/\//g, '_'),
+      /* Not real HMAC — a deterministic digest of the message and the key,
+         which is what a signature has to be for a test to tell a good link
+         from a forged one. */
+      computeHmacSha256Signature: (msg, key) => {
+        const s = String(key) + '|' + String(msg); const out = [];
+        for (let i = 0; i < 32; i++) {
+          let n = i * 31 + 7;
+          for (let j = 0; j < s.length; j++) n = (n * 33 + s.charCodeAt(j) + i) & 0xff;
+          out.push(n);
+        }
+        return out;
+      }
     },
     UrlFetchApp: { fetch: () => { throw new Error('no network in harness'); } },
+    /* Enough of HtmlService to read back what a page says. */
+    HtmlService: {
+      XFrameOptionsMode: { ALLOWALL: 'ALLOWALL', DEFAULT: 'DEFAULT' },
+      createHtmlOutput: html => ({ _h: String(html == null ? '' : html),
+                                   addMetaTag() { return this; },
+                                   setXFrameOptionsMode() { return this; },
+                                   setTitle() { return this; },
+                                   getContent() { return this._h; } })
+    },
     Logger: { log: () => {} },
     /* Enough of ScriptApp to count what an installer installs. Every builder
        method is accepted and remembered, so a test can say "five triggers,
@@ -120,6 +157,7 @@ function makeEnv(opts = {}) {
       };
       return {
         WeekDay: { MONDAY:'MONDAY', TUESDAY:'TUESDAY', WEDNESDAY:'WEDNESDAY', THURSDAY:'THURSDAY', FRIDAY:'FRIDAY', SATURDAY:'SATURDAY', SUNDAY:'SUNDAY' },
+        getService: () => ({ getUrl: () => 'https://script.example/exec' }),
         getProjectTriggers: () => triggers.slice(),
         deleteTrigger: t => { const i = triggers.indexOf(t); if (i > -1) triggers.splice(i, 1); },
         newTrigger: handler => builder(handler)
