@@ -166,7 +166,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p>Five screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Seven screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -232,6 +232,30 @@ var RESUME_MS = Math.max(5, Number(Q.get('resume') || 300)) * 1000;
    longest dwell — so reaching it means something nobody thought of, and the
    answer to that on a wall is always the same: turn. */
 var NEVER_STILL_MS = 10 * 60 * 1000;
+/* ONE AT A TIME ON A PHONE.
+   The seven stories are mounted together and never reloaded, and the comment
+   at the top of this file explains why: a wall runs all day, and swapping one
+   iframe's src every twenty seconds would read the branch's whole position
+   hundreds of times an hour. That reasoning is about a television. It is
+   wrong about a phone, and on 11 September the Branch Manager could not open
+   /intelwall on an iPhone at all.
+   Seven documents is two megabytes, of which one and three-quarters is the
+   narration folded in as base64 — each story holding a quarter-megabyte
+   string, its own timers and its own feed, all live at once. Mobile Safari
+   drops a tab that does that, and the person is left looking at nothing.
+   Nothing about the original reasoning applies here: a phone is one person
+   for a minute or two, not a screen running ten hours, and six of the seven
+   feeds read a stored build anyway. So below the wall breakpoint there is ONE
+   frame and its src changes. ?mount=all forces the television's behaviour on
+   a phone, ?mount=one forces the phone's on anything. */
+var LONE = (function () {
+  var want = Q.get('mount');
+  if (want === 'all') return false;
+  if (want === 'one') return true;
+  try { return !!(window.matchMedia && window.matchMedia('(max-width: 760px)').matches); }
+  catch (e) { return false; }
+})();
+
 var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
@@ -262,13 +286,27 @@ var spokeAt = 0, heldAt = 0, turnedAt = Date.now();
    is attached — so every frame would count as loaded before it held anything.
    The listener goes on only when the story is asked for, and only a load that
    is actually the story counts. */
+/* On a phone every story points at the same frame; on a wall each has its
+   own. Everything after this reads s.el and does not care which it is. */
+var lone = null;
+if (LONE) {
+  lone = document.createElement('iframe');
+  lone.className = 'slide on';            // the only one there is, so always shown
+  lone.setAttribute('scrolling', 'no');
+  stage.appendChild(lone);
+  lone.addEventListener('load', function () { loneLoaded(); });
+}
+
 SLIDES.forEach(function (s, i) {
-  var f = document.createElement('iframe');
-  f.className = 'slide';
-  f.title = s.tab;
-  f.setAttribute('scrolling', 'no');
+  var f = lone;
+  if (!f) {
+    f = document.createElement('iframe');
+    f.className = 'slide';
+    f.title = s.tab;
+    f.setAttribute('scrolling', 'no');
+    stage.appendChild(f);
+  }
   s.el = f;
-  stage.appendChild(f);
 
   var b = document.createElement('button');
   b.className = 'dot';
@@ -278,29 +316,47 @@ SLIDES.forEach(function (s, i) {
   s.dot = b;
   dots.appendChild(b);
 
-  f.addEventListener('load', function () {
-    var here = '';
-    try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
-    if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
-    s.ready = true; s.dead = false; b.classList.remove('dead');
-    /* The story is ours (same origin), so what happens inside it reaches the
-       wall: a mouse or a finger wakes the rail, a key drives the turning. */
-    try {
-      var d = f.contentDocument;
-      d.addEventListener('mousemove', wake);
-      d.addEventListener('touchstart', wake);
-      d.addEventListener('keydown', keys);
-    } catch (e) {}
-  });
+  if (!LONE) {
+    f.addEventListener('load', function () {
+      var here = '';
+      try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
+      if (here.indexOf(s.file) < 0) return;      // the blank page, not the story
+      s.ready = true; s.dead = false; b.classList.remove('dead');
+      adopt(f);
+    });
+  }
   s.ask = function () {
     s.asked = Date.now();
-    f.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
+    s.el.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
     /* A story that never answers must not hold the wall. Past the grace an
        unloaded frame is skipped until it does come good. */
     setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
   };
-  setTimeout(s.ask, 2500 * i);
+  if (!LONE) setTimeout(s.ask, 2500 * i);
 });
+
+/* The story is ours (same origin), so what happens inside it reaches the
+   wall: a mouse or a finger wakes the rail, a key drives the turning. */
+function adopt(f) {
+  try {
+    var d = f.contentDocument;
+    d.addEventListener('mousemove', wake);
+    d.addEventListener('touchstart', wake);
+    d.addEventListener('keydown', keys);
+  } catch (e) {}
+}
+
+/* One frame, so the load belongs to whichever story was last asked for. */
+function loneLoaded() {
+  var s = SLIDES[at];
+  if (!s) return;
+  var here = '';
+  try { here = lone.contentWindow.location.pathname; } catch (e) { here = s.file; }
+  if (here.indexOf(s.file) < 0) return;
+  s.ready = true; s.dead = false; s.dot.classList.remove('dead');
+  lone.title = s.tab;
+  adopt(lone);
+}
 
 /* A story given up on is asked for again, every couple of minutes, until it
    comes good. `here` in the load handler still matches: the query is not part
@@ -315,6 +371,9 @@ function retryDead() {
    before one given up on — and if every one is silent, keep turning anyway. */
 function nextLive(from) {
   var j, k;
+  /* One frame means nothing is loaded ahead of time, so there is nothing to
+     prefer — the next story is simply the next one. */
+  if (LONE) return (from + 1) % SLIDES.length;
   for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (SLIDES[j].ready) return j; }
   for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (!SLIDES[j].dead) return j; }
   return (from + 1) % SLIDES.length;
@@ -332,11 +391,14 @@ function show(i) {
     /* add/remove rather than toggle(name, force): old television WebKit and IE
        ignore the second argument and flip every slide. */
     var on = k === i;
-    s.el.classList[on ? 'add' : 'remove']('on');
+    if (!LONE) s.el.classList[on ? 'add' : 'remove']('on');
     s.dot.classList[on ? 'add' : 'remove']('on');
   });
   var firstTurn = at === -1;
   at = i;
+  /* On a phone the turn IS the load: ask for the story now, and let go of the
+     one before it. */
+  if (LONE) { SLIDES[i].ready = false; SLIDES[i].ask(); }
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
   if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
   started = turnedAt = Date.now();
@@ -416,7 +478,7 @@ function tick() {
   retryDead();
   /* The boot card lifts once the story on screen has painted — or after the
      grace, so a silent feed cannot leave the card up for good. */
-  if (!bootGone && ((at > -1 && SLIDES[at].ready) || Date.now() - BORN > GRACE_MS)) {
+  if (!bootGone && ((at > -1 && SLIDES[at].ready) || now - BORN > GRACE_MS)) {
     bootGone = true;
     boot.classList.add('gone');
     setTimeout(function () { boot.style.display = 'none'; }, 600);
@@ -425,6 +487,7 @@ function tick() {
      rather than let the floor read a working screen as a dead one. */
   left.textContent = paused ? 'paused · space or ▶ to go on'
     : narrating ? 'narrating · holds'
+    : (LONE && at > -1 && !SLIDES[at].ready) ? 'fetching…'
     : nextLive(at) === at ? 'only this story has loaded'
     : 'next in ' + secsLeft + 's';
 }
@@ -469,6 +532,14 @@ setInterval(function () {
   step();
   turnedAt = Date.now();                         // parked on the only story loaded: do not thrash
 }, 15000);
+
+/* Say which way it is running, on the card a person is already looking at. */
+if (LONE) {
+  try {
+    document.getElementById('bootSub').textContent =
+      'Seven screens, one after another. One at a time on a phone.';
+  } catch (e) {}
+}
 
 show(0);
 tick();
