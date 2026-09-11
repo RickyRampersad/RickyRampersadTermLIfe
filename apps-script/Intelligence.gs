@@ -653,11 +653,15 @@ function iBuildPending_(today) {
     branch: ['branch'], reqt: ['reqt'], reqtDt: ['reqtdt'],
     agentId: ['agentid'], agent: ['agent name'], lapsed: ['reqtdayslapsed'],
     branchName: ['branchname'], susp: ['pol_misc_susp_amt'], clientId: ['clientid'],
+    /* Column O. Blank means no premium has been paid on the case at all —
+       which is a different problem from money sitting in suspense, and the
+       one that matters most on a case with nothing else outstanding. */
+    prem: ['pol_misc_prem'],
     where: ['being processed in'], pay: ['payment method']
   });
 
   var rows = [], byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {};
-  var suspense = 0, suspenseCases = 0, stale = 0;
+  var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0;
   var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
 
   for (var r = 0; r < d.rows; r++) {
@@ -683,8 +687,11 @@ function iBuildPending_(today) {
     var agent    = String(d.get('agent', r)).trim() || '(unassigned)';
     var unit     = String(d.get('branchName', r)).trim() || '(unassigned)';
     var susp     = iNum_(d.get('susp', r));
+    var premRaw  = d.get('prem', r);
+    var paid     = !(premRaw === '' || premRaw == null || iNum_(premRaw) === 0);
 
     if (susp > 0) { suspense += susp; suspenseCases++; }
+    if (!paid) unpaidCases++;
     byStatus[status]     = (byStatus[status] || 0) + 1;
     byDecision[decision] = (byDecision[decision] || 0) + 1;
     if (!byAgent[agent]) byAgent[agent] = { cases: 0, susp: 0, oldest: 0 };
@@ -703,6 +710,7 @@ function iBuildPending_(today) {
       policy: policy, client: String(d.get('client', r)).trim(),
       clientId: String(d.get('clientId', r)).trim(),
       status: status, decision: decision, agent: agent, unit: unit,
+      premium: paid ? iNum_(premRaw) : 0, paid: paid,
       requirement: String(d.get('reqt', r)).trim(),
       submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
       age: age, suspense: susp,
@@ -715,6 +723,7 @@ function iBuildPending_(today) {
 
   return {
     total: rows.length, suspense: suspense, suspenseCases: suspenseCases, stale: stale,
+    unpaidCases: unpaidCases,
     ageing: AGE, byStatus: byStatus, byDecision: byDecision,
     byAgent: Object.keys(byAgent).map(function (k) {
       return { agent: k, cases: byAgent[k].cases, susp: byAgent[k].susp, oldest: byAgent[k].oldest };
@@ -860,6 +869,166 @@ function iBranchPending_() {
   return out;
 }
 
+/* ── Whose move is it ──────────────────────────────────────────────────────
+   THE RULE THE BRANCH ASKED FOR, IN ONE SENTENCE: never chase an agent about
+   something the agent cannot do anything about.
+
+   A pending list that says "sixty-one cases outstanding" invites exactly
+   that. Somebody reads the number, rings round every agent, and half those
+   calls are about a blood profile sitting at a lab — which teaches an agent
+   that being chased means nothing, and the next call, the one that mattered,
+   is ignored too. The cost of chasing badly is not the wasted call. It is
+   the chase that stops working.
+
+   So every case is put in exactly one bucket, and only two of them are
+   anybody's to work today:
+
+     READY    no requirement left, and no premium in. Nothing to underwrite.
+              Somebody has to collect money. This is the best case on the
+              whole screen and the easiest to miss, because a case with no
+              outstanding requirement looks finished on every other view.
+     AGENT    at least one requirement that is the agent's to get — a
+              signature, a proof of address, a declaration.
+     CLIENT   the client has to answer, and the agent has already asked.
+     ROUTINE  underwriting's own work, already in motion. LEAVE IT ALONE.
+     ISSUE    nothing outstanding and the premium is in. Ours is done; head
+              office has to settle it. Chase them, not the branch.
+
+   WHAT DECIDES THE BUCKET IS THE DATA, NOT A GUESS.
+   A requirement with an ordered date is in motion whatever its code says —
+   a medical that has been booked is not the agent's to hurry. Only an
+   un-ordered requirement is anybody's move, and then the code decides
+   whose. The map below is the branch's to change: INTEL_REQ_OWNERS takes
+   "MDMED=agent,PRADD=routine" and wins over every line of it.            */
+
+var IREQ_OWNER_DEFAULT = {
+  /* The client's paperwork and the client's money. An agent can get these
+     this afternoon. */
+  FUTPY: 'agent', DECLF: 'agent', PRADD: 'agent', AGEAD: 'agent',
+  REINC: 'agent', FACTF: 'agent', VERFY: 'agent',
+  /* The client has to answer this themselves. */
+  PCFEV: 'client',
+  /* Underwriting's own, whoever ordered it. */
+  MDMED: 'routine', MICRO: 'routine', OFT: 'routine', BP: 'routine',
+  EKG: 'routine', 'IMP HIST': 'routine', INFCR: 'routine', ATTPH: 'routine'
+};
+
+function iReqOwners_() {
+  var map = {};
+  Object.keys(IREQ_OWNER_DEFAULT).forEach(function (k) { map[k] = IREQ_OWNER_DEFAULT[k]; });
+  var raw = iProp_('INTEL_REQ_OWNERS');
+  if (raw) {
+    String(raw).split(',').forEach(function (bit) {
+      var kv = bit.split('=');
+      if (kv.length !== 2) return;
+      var code = String(kv[0]).trim().toUpperCase(), who = String(kv[1]).trim().toLowerCase();
+      if (code && /^(agent|client|routine)$/.test(who)) map[code] = who;
+    });
+  }
+  return map;
+}
+
+/** An ordered requirement is in motion and belongs to nobody on this floor. */
+function iReqOwner_(code, ordered, map) {
+  if (ordered) return 'routine';
+  return map[String(code || '').trim().toUpperCase()] || 'routine';
+}
+
+var IPEND_BUCKETS = [
+  { key: 'ready',   label: 'Ready to settle',  note: 'no requirement left, no premium in — collect' },
+  { key: 'agent',   label: 'The agent’s move', note: 'a requirement the agent can get' },
+  { key: 'client',  label: 'The client’s move', note: 'asked, and waiting on an answer' },
+  { key: 'routine', label: 'Already in motion', note: 'underwriting’s own — do not chase' },
+  { key: 'issue',   label: 'With head office', note: 'nothing outstanding, premium in' }
+];
+
+/** The join nobody had done: a pending case against its own open
+ *  requirements, and the premium column that says whether any money has
+ *  arrived. Counts only — every policy number and client name stays in
+ *  this function. */
+function iPendTriage_(extract, reqs) {
+  if (!extract || !extract.rows) return null;
+  var map = iReqOwners_(), skip = iExcluded_();
+
+  var openBy = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    (openBy[k] = openBy[k] || []).push(q);
+  });
+
+  var counts = {}, oldestIn = {}, byAgent = {};
+  IPEND_BUCKETS.forEach(function (b) { counts[b.key] = 0; oldestIn[b.key] = 0; });
+  var readyAgeing = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var readyOldest = 0, readyMoney = 0, matched = 0, unmatched = 0;
+
+  extract.rows.forEach(function (row) {
+    var agent = String(row.agent || '').trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) return;
+
+    var here = openBy[String(row.policy || '').trim()] || [];
+    if (here.length) matched++; else unmatched++;
+
+    var owners = {};
+    here.forEach(function (q) { owners[iReqOwner_(q.code, q.ordered, map)] = true; });
+
+    var bucket;
+    if (!here.length) bucket = row.paid ? 'issue' : 'ready';
+    else if (owners.agent) bucket = 'agent';
+    else if (owners.client) bucket = 'client';
+    else bucket = 'routine';
+
+    counts[bucket]++;
+    var age = row.age || 0;
+    if (age > oldestIn[bucket]) oldestIn[bucket] = age;
+
+    if (bucket === 'ready') {
+      var band = iPendBand_(row.age);
+      if (band) readyAgeing[band]++;
+      if (age > readyOldest) readyOldest = age;
+      readyMoney += iNum_(row.suspense);
+    }
+
+    if (!byAgent[agent]) {
+      byAgent[agent] = { agent: agent, ready: 0, actionable: 0, oldest: 0, quiet: 0, routine: 0 };
+    }
+    var a = byAgent[agent];
+    if (bucket === 'ready') { a.ready++; a.actionable++; }
+    else if (bucket === 'agent') a.actionable++;
+    else if (bucket === 'routine') a.routine++;
+    if ((bucket === 'ready' || bucket === 'agent') && age > a.oldest) a.oldest = age;
+    /* A chase that was closed with the case still pending is the worst
+       state there is: it reads as handled and nothing is happening. */
+    if (row.chase === 'closed') a.quiet++;
+  });
+
+  var workable = counts.ready + counts.agent;
+  /* Ranked by what is actually theirs to do, then by how long the worst of
+     it has waited. Not by case count — an agent with twenty cases all at
+     the lab is not the one to call. */
+  var culprits = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .filter(function (a) { return a.actionable > 0 || a.quiet > 0; })
+    .sort(function (x, y) { return (y.actionable - x.actionable) || (y.oldest - x.oldest) || (y.quiet - x.quiet); });
+
+  return {
+    buckets: IPEND_BUCKETS.map(function (b) {
+      return { key: b.key, label: b.label, note: b.note, n: counts[b.key], oldest: oldestIn[b.key] };
+    }),
+    workable: workable,
+    waiting: counts.client + counts.routine + counts.issue,
+    ready: { cases: counts.ready, oldest: readyOldest, held: readyMoney, ageing: readyAgeing,
+             agents: Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+               .filter(function (a) { return a.ready > 0; })
+               .sort(function (x, y) { return (y.ready - x.ready) || (y.oldest - x.oldest); })
+               .slice(0, 10) },
+    culprits: culprits.slice(0, 10),
+    /* How much of the pending list could be joined to a requirement at all.
+       A low number means the two extracts are out of step, and every bucket
+       below it should be read with that in mind. */
+    matched: matched, unmatched: unmatched
+  };
+}
+
 /** Three sources, as the wall may see them. Aggregates only.
  *
  *  THE THIRD IS THE AUTHORITY ON WHAT IS HOLDING A CASE.
@@ -890,7 +1059,7 @@ function iPendingWall_() {
      done: nobody has ever raised a task on this case; somebody has one open;
      or the last one was closed and the case is still pending, which is the
      worst of the three because it looks handled and is not. */
-  var chase = null;
+  var chase = null, work = null;
   if (extract && extract.rows) {
     try {
       var tasks = iBuildTasks_(today);
@@ -899,9 +1068,23 @@ function iPendingWall_() {
         iJoinChases_(joined);
         chase = { never: extract.chaseNever || 0, live: extract.chaseLive || 0,
                   quiet: extract.chaseClosed || 0 };
+        /* The chase log's own health, by the field the KPI list is aligned
+           to. Counts and ages only — a task subject carries client names
+           and policy numbers and never leaves iBuildTasks_. */
+        work = { open: tasks.openCount || 0, closed: tasks.closed || 0,
+                 noType: tasks.noType || 0, unassigned: tasks.unassigned || 0,
+                 oldest: tasks.oldestOpen || 0, median: tasks.medianOpen || 0,
+                 stale: tasks.staleOpen || 0,
+                 byType: (tasks.byType || []).slice(0, 8) };
       } else if (tasks && tasks.error) { notes.push(tasks.error); }
     } catch (e4) { notes.push('The chase log would not read: ' + (e4 && e4.message || e4)); }
   }
+
+  /* After the chase join, never before it — the triage reads each row's
+     chase state, and a row that has not been joined yet says nothing. */
+  var triage = null;
+  try { triage = iPendTriage_(extract, reqs); }
+  catch (e5) { notes.push('The triage would not run: ' + (e5 && e5.message || e5)); }
 
   if (!branch && !extract && !reqs) {
     return { configured: false, generatedAt: today,
@@ -984,10 +1167,18 @@ function iPendingWall_() {
     money: {
       held: extract ? extract.suspense : null,
       heldCases: extract ? extract.suspenseCases : null,
+      /* Column O blank is the plainest statement on the sheet: not one
+         dollar has come in on this case. Counted, because on a case with
+         nothing else outstanding it is the only thing left to do. */
+      unpaidCases: extract ? extract.unpaidCases : null,
       unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
     },
+    /* Whose move is it, who can be worked today, and who is holding it up. */
+    triage: triage,
     /* Who is on it, from the branch's own chase log. */
     chase: chase,
+    /* And what the chasing itself consists of, by Task Type. */
+    work: work,
     suspense: extract ? extract.suspense : null,
     suspenseCases: extract ? extract.suspenseCases : null,
     notes: notes
@@ -1032,8 +1223,8 @@ function iBuildTasks_(today) {
     type: ['task type'], created: ['created by'], contact: ['contact']
   });
 
-  var open = [], byAssignee = {}, byContact = {}, byPolicy = {};
-  var closed = 0;
+  var open = [], byAssignee = {}, byContact = {}, byPolicy = {}, byType = {};
+  var closed = 0, noType = 0, osAges = [];
 
   for (var r = 0; r < d.rows; r++) {
     var subject = String(d.get('subject', r)).trim();
@@ -1067,6 +1258,22 @@ function iBuildTasks_(today) {
     var contact = String(d.get('contact', r)).trim() || '(none)';
     byContact[contact] = (byContact[contact] || 0) + 1;
 
+    /* WHAT THE BRANCH IS ACTUALLY CHASING, AND FOR HOW LONG.
+       Task Type is the field the whole KPI list is aligned to, and until now
+       this builder read the column and threw it away. An open chase is only
+       worth having if somebody can say what it is for and how long it has
+       been open — and a task with no type at all cannot be counted against
+       any KPI, which is why the untyped ones are counted on their own. */
+    var type = String(d.get('type', r)).trim();
+    if (!type) { noType++; type = '(no task type)'; }
+    var os = iNum_(d.get('os', r));
+    if (!os && quiet) os = quiet;
+    if (os > 0 && os < 3650) osAges.push(os);
+    if (!byType[type]) byType[type] = { n: 0, oldest: 0, stale: 0 };
+    byType[type].n++;
+    if (os > byType[type].oldest && os < 3650) byType[type].oldest = os;
+    if (os > 30) byType[type].stale++;
+
     open.push({
       subject: subject, status: status, assigned: assigned,
       agent: String(d.get('agent', r)).trim(),
@@ -1077,8 +1284,18 @@ function iBuildTasks_(today) {
 
   open.sort(function (a, b) { return (b.quiet || 0) - (a.quiet || 0); });
 
+  osAges.sort(function (a, b) { return a - b; });
   return {
     openCount: open.length, closed: closed,
+    /* An open chase that nobody can name is not a chase. */
+    noType: noType,
+    unassigned: byAssignee['(unassigned)'] || 0,
+    oldestOpen: osAges.length ? osAges[osAges.length - 1] : 0,
+    medianOpen: osAges.length ? osAges[Math.floor(osAges.length / 2)] : 0,
+    staleOpen: osAges.filter(function (a) { return a > 30; }).length,
+    byType: Object.keys(byType).map(function (k) {
+      return { name: k, n: byType[k].n, oldest: byType[k].oldest, stale: byType[k].stale };
+    }).sort(function (a, b) { return b.n - a.n; }),
     byAssignee: Object.keys(byAssignee).map(function (k) { return { who: k, n: byAssignee[k] }; })
       .sort(function (a, b) { return b.n - a.n; }),
     byContact: Object.keys(byContact).map(function (k) { return { who: k, n: byContact[k] }; })
@@ -1159,6 +1376,9 @@ function iBuildReqs_(today) {
 
     open.push({
       policy: policy, code: code, label: iReqLabel_(code), category: cat,
+      /* Ordered means it is already in motion — a medical booked, a blood
+         profile at the lab. Nobody should be chased about those. */
+      ordered: !!iDate_(d.get('ordered', r)),
       comment: String(d.get('comment', r)).trim(),
       orderedFor: [String(d.get('first', r)).trim(), String(d.get('last', r)).trim()]
         .filter(String).join(' '),

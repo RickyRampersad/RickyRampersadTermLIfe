@@ -166,7 +166,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p id="bootSub">Eight screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Eleven screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -186,6 +186,11 @@ var SLIDES = [
      a policy yet, and it is the only screen here that can still be changed
      by somebody picking up a phone this afternoon. */
   { file:'pending.html',    tab:'What is pending',   secs:22 },
+  /* The three that turn the pending list into a morning's work: what can be
+     collected, whose move each case is, and who is actually holding it up. */
+  { file:'ready.html',      tab:'Ready to settle',   secs:20 },
+  { file:'triage.html',     tab:'Whose move is it',  secs:22 },
+  { file:'culprits.html',   tab:'Who is holding it up', secs:22 },
   { file:'index.html',      tab:'Premium dues',      secs:26 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
@@ -336,7 +341,10 @@ SLIDES.forEach(function (s, i) {
        unloaded frame is skipped until it does come good. */
     setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
   };
-  if (!LONE) setTimeout(s.ask, 2500 * i);
+  /* Spread the boot so eleven heavy pages do not start together on branch
+     wifi — but not so far that the last one is a half-minute behind the
+     first. Eleven at 1.5s is fifteen seconds end to end. */
+  if (!LONE) setTimeout(s.ask, 1500 * i);
 });
 
 /* The story is ours (same origin), so what happens inside it reaches the
@@ -503,7 +511,12 @@ function keys(e) {
   else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); }
   else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
   else if (k === 'n' || k === 'N') { narrate(); }
-  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); wake(); }
+  /* Number keys are compared as NUMBERS, not as text. Past nine stories
+     String(SLIDES.length) is "11", and "2" <= "11" is false in a string
+     comparison — so the moment the wall grew past nine screens every key
+     but 1 stopped working, silently. Nine is the most a single keypress can
+     reach; the rail has the rest. */
+  else if (k.length === 1 && k >= '1' && k <= '9' && Number(k) <= SLIDES.length) { show(Number(k) - 1); rest(); wake(); }
 }
 document.addEventListener('keydown', keys);
 
@@ -541,7 +554,7 @@ setInterval(function () {
 if (LONE) {
   try {
     document.getElementById('bootSub').textContent =
-      'Eight screens, one after another. One at a time on a phone.';
+      'Eleven screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
 

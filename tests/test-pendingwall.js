@@ -149,6 +149,111 @@ const rblob = JSON.stringify(R);
 ok('no insured name reaches the screen', rblob.indexOf('INSUREDFIRST') < 0 && rblob.indexOf('INSUREDLAST') < 0);
 ok('and still no policy number', rblob.indexOf('POLICY-') < 0);
 
+console.log('\nWhose move is it — the rule that a chase has to earn:\n');
+// A pending list that says "sixty-one outstanding" gets every agent rung
+// about a blood profile sitting at a lab, and the next call — the one that
+// mattered — is ignored. So every case lands in exactly one bucket and only
+// two of them are anybody's to work today. Invented throughout.
+const PHEAD = ['YR','MTH','POLICY','DECISIONTYPE','CLIENT NAME','STATUS','SUBMITDT','BRANCH',
+               'REQT','REQTDT','AGENTID','AGENT NAME','REQTDAYSLAPSED','BRANCHNAME',
+               'POL_MISC_SUSP_AMT','CLIENTID','BEING PROCESSED IN','PAYMENT METHOD','POL_MISC_PREM'];
+const prow = (policy, agent, reqtDt, susp, prem) =>
+  [2026, 9, policy, 'OR', 'CLIENTNAME-' + policy, '3', '2026-08-01', 'CHAG', 'Reqt', reqtDt,
+   'A1', agent, 0, 'AK', susp, 'CID-' + policy, 'Branch', 'DD', prem];
+env.__mkSheet('URPPBIEX - Reqt', 4, PHEAD, [
+  prow('P-READY',   'Anand Pretend', '2026-08-01', 0,   ''),     // clear, nothing paid
+  prow('P-ISSUE',   'Anand Pretend', '2026-08-01', 0,   500),    // clear and paid
+  prow('P-AGENT',   'Anand Pretend', '2026-07-01', 0,   ''),     // proof of address, not ordered
+  prow('P-ROUTINE', 'Beena Pretend', '2026-08-20', 250, 800),    // medical, ordered
+  prow('P-CLIENT',  'Beena Pretend', '2026-06-01', 0,   300),    // waiting on the client
+  prow('P-SKIP',    'Gone Away',     '2026-06-01', 0,   ''),     // excluded agent
+]);
+const rsheet = env.__sheets['RR_UWPRO_INSURED_Requirement'];
+[['RQ-10','P-AGENT','PRADD','Documents','','2026-07-01','',''],
+ ['RQ-11','P-ROUTINE','MDMED','Medical','','2026-08-20','','2026-08-21'],   // ordered
+ ['RQ-12','P-CLIENT','PCFEV','Client','','2026-06-01','',''],
+ ['RQ-13','P-SKIP','PRADD','Documents','','2026-06-01','','']
+].forEach(r => rsheet.appendRow(r.concat(['INSUREDFIRST-X','INSUREDLAST-X'])));
+env._intelTabMemo = {}; env._intelHeadMemo = {};
+
+const T = env.iPendingWall_().triage;
+const bucket = {}; (T.buckets||[]).forEach(b => { bucket[b.key] = b.n; });
+ok('a case with nothing outstanding and no premium is ready to settle', bucket.ready === 1, JSON.stringify(bucket));
+ok('the same case with a premium in is head office\u2019s, not ours', bucket.issue === 1, JSON.stringify(bucket));
+ok('an un-ordered proof of address is the agent\u2019s move', bucket.agent === 1, JSON.stringify(bucket));
+ok('a medical already ordered is in motion, and nobody\u2019s to chase', bucket.routine === 1, JSON.stringify(bucket));
+ok('a client confirmation is the client\u2019s move', bucket.client === 1, JSON.stringify(bucket));
+ok('the excluded agent\u2019s case is in no bucket at all',
+   (T.buckets||[]).reduce((a,b) => a + b.n, 0) === 5, JSON.stringify(bucket));
+
+ok('only ready and the agent\u2019s move can be worked today', T.workable === 2, String(T.workable));
+ok('everything else is waiting on somebody who is already on it', T.waiting === 3, String(T.waiting));
+ok('every bucket carries how long its worst case has waited',
+   (T.buckets||[]).every(b => b.n === 0 || b.oldest > 0), JSON.stringify(T.buckets));
+
+console.log('\nAn ordered requirement is in motion whatever its code says:\n');
+ok('ordered beats the code', env.iReqOwner_('PRADD', true, env.iReqOwners_()) === 'routine');
+ok('and un-ordered lets the code decide', env.iReqOwner_('PRADD', false, env.iReqOwners_()) === 'agent');
+ok('a code nobody mapped is left alone rather than blamed on an agent',
+   env.iReqOwner_('WHATISTHIS', false, env.iReqOwners_()) === 'routine');
+const owned = makeEnv({ props: { INTEL_REQ_OWNERS: 'MDMED=agent,PRADD=routine' } });
+ok('and the branch can overrule every line of the map',
+   owned.iReqOwner_('MDMED', false, owned.iReqOwners_()) === 'agent' &&
+   owned.iReqOwner_('PRADD', false, owned.iReqOwners_()) === 'routine');
+
+console.log('\nReady to settle is its own screen, because it is the easiest to miss:\n');
+ok('it is counted on its own', T.ready.cases === 1, JSON.stringify(T.ready));
+ok('with the agent who can collect it named', (T.ready.agents||[])[0].agent === 'Anand Pretend',
+   JSON.stringify(T.ready.agents));
+ok('and how long it has sat', T.ready.oldest > 0, String(T.ready.oldest));
+
+console.log('\nWho is holding it up — ranked by what is theirs, not by how many they have:\n');
+const c = T.culprits || [];
+ok('the agent with work to do is first', c[0] && c[0].agent === 'Anand Pretend', JSON.stringify(c));
+ok('counted on what is actually theirs', c[0] && c[0].actionable === 2, JSON.stringify(c[0]));
+ok('an agent whose cases are all in motion is not a culprit',
+   !c.some(x => x.agent === 'Beena Pretend' && x.actionable > 0), JSON.stringify(c));
+ok('the excluded agent is nowhere in it', !c.some(x => x.agent === 'Gone Away'));
+ok('no client or policy number in any of it',
+   JSON.stringify(T).indexOf('CLIENTNAME') < 0 && JSON.stringify(T).indexOf('P-READY') < 0 &&
+   JSON.stringify(T).indexOf('CID-') < 0, JSON.stringify(T).slice(0, 200));
+
+console.log('\nAnd the premium column says plainly when nothing has come in:\n');
+const M = env.iPendingWall_().money;
+ok('cases with a blank premium are counted', M.unpaidCases === 3, JSON.stringify(M));
+ok('separately from money already held', M.held === 250, JSON.stringify(M));
+
+console.log('\nThe Salesforce chase log, by the field the KPI list is aligned to:\n');
+// SFTASK MGT. The subject carries the policy number and the client's name,
+// which is how a task is joined to a case — and why nothing but counts and
+// ages ever leaves the builder. Invented rows throughout.
+env.__mkSheet('SFTASK MGT', 5,
+  ['SUBJECT','TASK TYPE','STATUS','ASSIGNED','DAYS O/S','LAST MODIFIED DATE',
+   'DAYS SINCE LAST ACTIVITY','AGENT','CONTACT','CREATED BY','DATE'],
+  [
+    ['Follow up with UW- 1000894223 CLIENTNAME-T1','Pending','Open','Desk One',   12,'2026-08-30',0,'Anand Pretend','CLIENTNAME-T1','x','2026-08-30'],
+    ['Follow up with UW- 1000894224 CLIENTNAME-T2','Pending','Open','Desk One',   64,'2026-07-09',0,'Anand Pretend','CLIENTNAME-T2','x','2026-07-09'],
+    ['Premium- 5004278954 CLIENTNAME-T3','Premium','Open','Desk Two',              5,'2026-09-06',0,'Beena Pretend','CLIENTNAME-T3','x','2026-09-06'],
+    ['Requirement chase 1000894371 CLIENTNAME-T4','','Open','(unassigned)',       40,'2026-08-02',0,'Beena Pretend','CLIENTNAME-T4','x','2026-08-02'],
+    ['Follow up with UW- 1000899306 CLIENTNAME-T5','Pending','Completed','Desk One',3,'2026-09-08',0,'Anand Pretend','CLIENTNAME-T5','x','2026-09-08'],
+  ]);
+env._intelTabMemo = {}; env._intelHeadMemo = {};
+const W = env.iPendingWall_().work;
+ok('the chase log is read', !!W, JSON.stringify(W));
+ok('open and closed are counted apart', W.open === 4 && W.closed === 1, JSON.stringify(W));
+const types = {}; (W.byType||[]).forEach(t => { types[t.name] = t; });
+ok('open tasks are grouped by Task Type', types['Pending'].n === 2, JSON.stringify(W.byType));
+ok('with the oldest of each', types['Pending'].oldest === 64, JSON.stringify(types['Pending']));
+ok('a completed task is not counted as work', !Object.keys(types).some(k => types[k].n > 2));
+ok('an open task with no Task Type is named as such, not folded in',
+   !!types['(no task type)'] && W.noType === 1, JSON.stringify(W.byType));
+ok('and one assigned to nobody is counted', W.unassigned === 1, String(W.unassigned));
+ok('the middle age of an open chase is there', W.median > 0, String(W.median));
+ok('and how many have been open over a month', W.stale === 2, String(W.stale));
+ok('no client, no policy number and no subject line leaves the builder',
+   JSON.stringify(W).indexOf('CLIENTNAME') < 0 && JSON.stringify(W).indexOf('1000894') < 0 &&
+   JSON.stringify(W).indexOf('Follow up') < 0, JSON.stringify(W));
+
 console.log('\nA workbook with no pending list anywhere:\n');
 const bare = makeEnv();
 bare.__mkSheet('Something Else', 1, ['a', 'b'], [['1', '2']]);

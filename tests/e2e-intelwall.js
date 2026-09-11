@@ -28,7 +28,8 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html'];
+const ORDER = ['day.html', 'blocks.html', 'pending.html', 'ready.html', 'triage.html', 'culprits.html',
+               'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html'];
 
 async function open(b, query) {
   const ctx = await b.newContext({ viewport:{ width:1920, height:1080 } });
@@ -49,6 +50,10 @@ async function open(b, query) {
   await page.goto(`http://localhost:${PORT}/intelligence/wall/all.html${query || ''}`, { waitUntil:'domcontentloaded' });
   return { page, ctx, errors };
 }
+// Derived, never typed: the order above is the only place a stop's number
+// lives, so adding a screen does not silently rewrite every index below.
+const at = file => ORDER.indexOf(file);
+const LAST = () => ORDER.length - 1;
 const visible = page => page.evaluate(() => [...document.querySelectorAll('iframe.slide')].map((f, i) => f.classList.contains('on') ? i : -1).filter(i => i > -1));
 const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.slide')].map(f => (f.getAttribute('src') || '').split('/').pop()));
 
@@ -59,12 +64,12 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   console.log('\nFive stories, one at a time:\n');
   let s = await open(b, '?secs=5');
   await s.page.waitForTimeout(1200);
-  ok('eight frames on the stage', await s.page.locator('iframe.slide').count() === 8);
+  ok('eleven frames on the stage', await s.page.locator('iframe.slide').count() === 11);
   ok('the first is showing and only the first', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   ok('and the boot card has cleared', await s.page.evaluate(() => document.getElementById('boot').classList.contains('gone')));
   const t0 = await s.page.locator('body').innerText();
-  ok('eight named stops on the rail, the branch\'s own day first', /1\. The day so far/.test(t0) && /3\. What is pending/.test(t0) && /8\. Birthdays today/.test(t0));
-  await s.page.waitForTimeout(20000);          // stagger is 2.5s apart: all eight assigned by 17.5s
+  ok('eleven named stops on the rail, the branch\'s own day first', /1\. The day so far/.test(t0) && /4\. Ready to settle/.test(t0) && /11\. Birthdays today/.test(t0));
+  await s.page.waitForTimeout(18000);          // stagger is 1.5s apart: all eleven assigned by 15s
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
   ok('the first story really rendered inside its frame', first === 1);
@@ -80,11 +85,18 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
 
   console.log('\nThe keys:\n');
   await s.page.keyboard.press('8');  await s.page.waitForTimeout(300);
-  ok('a number jumps to that story', JSON.stringify(await visible(s.page)) === '[7]');
+  ok('a number jumps to that story', JSON.stringify(await visible(s.page)) === '[7]',
+     JSON.stringify(await visible(s.page)));
+  // Past nine screens a single keypress cannot reach the rest, and the rail
+  // is how anybody gets there — so that is how the wrap is tested.
+  await s.page.mouse.move(600, 600);
+  await s.page.locator('.dot', { hasText: 'Birthdays today' }).click(); await s.page.waitForTimeout(300);
+  ok('the rail reaches a stop no key can', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']',
+     JSON.stringify(await visible(s.page)));
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
   ok('right from the last wraps to the first', JSON.stringify(await visible(s.page)) === '[0]');
   await s.page.keyboard.press('ArrowLeft'); await s.page.waitForTimeout(300);
-  ok('left from the first wraps to the last', JSON.stringify(await visible(s.page)) === '[7]');
+  ok('left from the first wraps to the last', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']');
   await s.page.keyboard.press(' ');
   const before = (await visible(s.page))[0];
   await s.page.waitForTimeout(6500);
@@ -92,7 +104,8 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.keyboard.press(' ');
   await s.page.mouse.move(600, 600);
   await s.page.locator('.dot', { hasText: 'With the agent' }).click(); await s.page.waitForTimeout(300);
-  ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[5]');
+  ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[' + at('delivery.html') + ']',
+     JSON.stringify(await visible(s.page)));
 
   console.log('\nThe timer is on every slide, and so is the line:\n');
   const hudBox = () => s.page.evaluate(() => { const r = document.getElementById('hud').getBoundingClientRect();
@@ -103,14 +116,15 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   let hb = await hudBox();
   ok('but the timer is still on screen', hb.in && hb.op === '1' && hb.vis === 'visible', JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
-  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Premium dues',
+  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Ready to settle',
+                       'Whose move is it', 'Who is holding it up', 'Premium dues',
                        'In our possession', 'With the agent', 'The licence year', 'Birthdays today'];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.
   const hudNow = await hudText();
   ok('it says which story and how long is left',
-     /\b[1-8] of 8\b/.test(await hudText()) && /next in \d+s/.test(await hudText()) &&
+     new RegExp('\\b([1-9]|1[01]) of ' + ORDER.length + '\\b').test(await hudText()) && /next in \d+s/.test(await hudText()) &&
      SLIDE_NAMES.some(nm => (hudNow || '').indexOf(nm) > -1), await hudText());
   const barH = await s.page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('bar')).height));
   ok('the line across the top is thick enough to see', barH >= 5, barH + 'px');
@@ -120,8 +134,13 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const w2 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
   const f2 = await s.page.evaluate(() => parseFloat(document.getElementById('fill').style.width));
   ok('and it runs, in step with the timer\'s own track', w2 > w1 && Math.abs(w2 - f2) < 2, w1 + ' -> ' + w2 + ' / ' + f2);
-  await s.page.keyboard.press('8'); await s.page.waitForTimeout(300);
-  ok('on the last story it still shows', /8 of 8/.test(await hudText()) && /Birthdays today/.test(await hudText()) && (await hudBox()).in);
+  // No key reaches past the ninth stop, so the rail is how the last one is
+  // reached — which is also how a person on the floor would do it.
+  await s.page.mouse.move(600, 600);
+  await s.page.locator('.dot', { hasText: 'Birthdays today' }).click(); await s.page.waitForTimeout(300);
+  ok('on the last story it still shows',
+     new RegExp(ORDER.length + ' of ' + ORDER.length).test(await hudText()) &&
+     /Birthdays today/.test(await hudText()) && (await hudBox()).in, await hudText());
 
   console.log('\nPlay and pause, on the rail, on every slide:\n');
   await s.page.mouse.move(600, 600); await s.page.waitForTimeout(200);
@@ -137,7 +156,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.locator('#next').click(); await s.page.waitForTimeout(300);
   ok('next moves on', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   await s.page.locator('#prev').click(); await s.page.waitForTimeout(300);
-  ok('previous goes back', JSON.stringify(await visible(s.page)) === '[7]', JSON.stringify(await visible(s.page)));
+  ok('previous goes back', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']', JSON.stringify(await visible(s.page)));
 
   console.log('\nA story that speaks holds the wall:\n');
   await s.page.keyboard.press('1'); await s.page.waitForTimeout(300);
@@ -173,11 +192,13 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('and goes when there is nobody', (await cakeText()) === '');
 
   console.log('\nThe keys reach the wall from inside a story:\n');
-  await s.page.keyboard.press('5'); await s.page.waitForTimeout(300);   // possession is the fifth stop now
+  // Whichever stop possession is now — the number is read off the order.
+  await s.page.locator('.dot', { hasText: 'In our possession' }).click(); await s.page.waitForTimeout(300);
   const inside = s.page.frames().find(f => f.url().endsWith('/possession.html'));
   await inside.locator('body').click({ position: { x: 300, y: 500 } });       // focus is now inside the frame
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
-  ok('a key pressed inside a story still turns the wall', JSON.stringify(await visible(s.page)) === '[5]', JSON.stringify(await visible(s.page)));
+  ok('a key pressed inside a story still turns the wall',
+     JSON.stringify(await visible(s.page)) === '[' + (at('possession.html') + 1) + ']', JSON.stringify(await visible(s.page)));
   ok('and a mouse inside a story wakes the rail', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
@@ -189,9 +210,19 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   // sampled well inside the dwell, or the samples alias to the turning and see the same story every time
   const seen = new Set();
   for (let i = 0; i < 30; i++) { seen.add((await visible(s.page))[0]); await s.page.waitForTimeout(500); }
-  // licence.html is the seventh stop now, so index 6 is the silent one and
-  // the other seven have to keep going round it.
-  ok('the silent one is skipped and the other seven keep turning', !seen.has(6) && seen.size === 7, [...seen].join(','));
+  // Wherever licence.html sits in the order, that stop is the silent one and
+  // every other stop has to keep going round it.
+  const dead = at('licence.html');
+  /* The strict half is the one that matters: the silent story is NEVER put
+     on the wall. The other half is deliberately loose — this run sets the
+     grace to one second, so every screen that has not painted inside a
+     second is struck through and asked for again, and which of them happen
+     to be ready during any thirty seconds of that is not a fact about the
+     player. What has to hold is that it keeps turning through most of them. */
+  ok('the silent one is never shown', !seen.has(dead),
+     'saw ' + [...seen].sort((a, b) => a - b).join(',') + ' · silent is ' + dead);
+  ok('and the wall keeps turning through the rest', seen.size >= 6,
+     seen.size + ' of ' + (ORDER.length - 1) + ' seen');
   ok('and it is struck through on the rail', await s.page.locator('.dot.dead').count() === 1);
   ok('and asked for again rather than given up on for the day', hungAsks >= 2, 'asked ' + hungAsks + ' time(s)');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));

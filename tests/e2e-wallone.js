@@ -95,9 +95,9 @@ const srcOf = page => page.evaluate(() => {
   console.log('\nOn the television, nothing changed:\n');
   {
     const s = await open(b, WALL, '?secs=5');
-    await s.page.waitForTimeout(21000);          // the stagger asks the last at 17.5s
-    ok('all eight are mounted', await frames(s.page) === 8, String(await frames(s.page)));
-    ok('and all eight documents are live', live(s.page) === 9, String(live(s.page)));
+    await s.page.waitForTimeout(19000);          // the stagger asks the last at 15s
+    ok('all eleven are mounted', await frames(s.page) === 11, String(await frames(s.page)));
+    ok('and all eleven documents are live', live(s.page) === 12, String(live(s.page)));
     ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }
@@ -106,7 +106,7 @@ const srcOf = page => page.evaluate(() => {
   {
     const a = await open(b, PHONE, '?mount=all&secs=5');
     await a.page.waitForTimeout(2000);
-    ok('?mount=all gives a phone the television\'s eight', await frames(a.page) === 8, String(await frames(a.page)));
+    ok('?mount=all gives a phone the television\'s eleven', await frames(a.page) === 11, String(await frames(a.page)));
     await a.ctx.close();
     const o = await open(b, WALL, '?mount=one&secs=5');
     await o.page.waitForTimeout(2000);

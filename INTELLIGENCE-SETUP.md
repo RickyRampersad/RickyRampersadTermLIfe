@@ -449,6 +449,81 @@ Twelve lines, `en-US-AndrewNeural` at `-12%`, rendered by
 No figure is spoken — every number on this screen moves and the audio does
 not, so the screen carries the arithmetic and the voice carries the meaning.
 
+## 3⅞. Three slides that turn the pending list into a morning's work
+
+A pending list that says "sixty-one outstanding" gets every agent rung about
+a blood profile sitting at a lab. The agent learns that being chased means
+nothing, and the next chase — the one that mattered — is ignored too. **The
+cost of chasing badly is not the wasted call. It is that the chase stops
+working.** These three exist to stop that.
+
+They all read `intel.pending`, so four screens cost one build and one cache.
+
+### Ready To Settle — `ready.html`
+
+Cases with **no requirement left and no premium paid**. Nothing to
+underwrite; somebody has to collect money. These are the best cases on the
+wall and the easiest to miss, because a case with no outstanding requirement
+looks finished on every other view. Column O — `POL_MISC_PREM` — blank is the
+plainest statement on the sheet: not a dollar has come in.
+
+### Whose Move Is It — `triage.html`
+
+Every pending case in **exactly one** bucket:
+
+| | |
+|---|---|
+| **Ready to settle** | no requirement left, no premium in — collect |
+| **The agent's move** | a requirement the agent can actually get |
+| **The client's move** | asked, and waiting on an answer |
+| **Already in motion** | underwriting's own — **do not chase** |
+| **With head office** | nothing outstanding, premium in — chase them, not the branch |
+
+Only the first two are workable today. The screen shows that as one number
+against the other.
+
+**What decides the bucket is the data, not a guess.** A requirement with an
+**ordered date** is in motion whatever its code says — a medical already
+booked is not the agent's to hurry. Only an un-ordered requirement is
+anybody's move, and then the code decides whose:
+
+- **the agent's** — `FUTPY`, `DECLF`, `PRADD`, `AGEAD`, `REINC`, `FACTF`, `VERFY`
+- **the client's** — `PCFEV`
+- **underwriting's** — `MDMED`, `MICRO`, `OFT`, `BP`, `EKG`, `IMP HIST`, `INFCR`, `ATTPH`
+
+A code nobody has mapped is treated as underwriting's, never as the agent's —
+an unknown code must not put a name on the culprits screen.
+
+`INTEL_REQ_OWNERS` overrules every line of that: `MDMED=agent,PRADD=routine`.
+
+### Who Is Holding It Up — `culprits.html`
+
+Agents ranked by **what is actually theirs** — ready plus their own
+requirements — never by case count. An agent with twenty cases all at the lab
+is not the one to call, and the screen says how many of theirs are in motion
+beside their name so nobody reads the ranking wrong.
+
+The last column is the one to watch: **a chase closed with the case still
+pending**. That is the worst state in the system because it reads as handled.
+
+### And the chase log itself, by Task Type
+
+`SFTASK MGT` carries the field the whole KPI list is aligned to, and the
+builder read the column and threw it away. It is now counted, on the
+culprits screen, because the state of the chasing is part of who is holding
+things up:
+
+- **open chases by Task Type**, each with the oldest of its kind
+- **the middle age of an open chase** — a chase open six weeks is not a chase
+- **how many are open over a month**
+- **how many carry no Task Type at all** — those cannot be counted against
+  any KPI, so they are named rather than folded into the others
+- **how many are assigned to nobody**
+
+A task subject carries the client's name and the policy number — that is how
+a task is joined to a case — so nothing but counts and ages ever leaves
+`iBuildTasks_`. The test asserts that directly.
+
 ## 3b. How old is each source
 
 The extracts do not refresh together, and until this was measured nobody could
