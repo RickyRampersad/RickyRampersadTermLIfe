@@ -166,7 +166,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p id="bootSub">Seven screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Eight screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -182,6 +182,10 @@ var SLIDES = [
      first because a room reads the top of the hour. */
   { file:'day.html',        tab:'The day so far',    secs:24 },
   { file:'blocks.html',     tab:'The day in blocks', secs:20 },
+  /* The pipeline, before the book: a case pending is one that has not become
+     a policy yet, and it is the only screen here that can still be changed
+     by somebody picking up a phone this afternoon. */
+  { file:'pending.html',    tab:'What is pending',   secs:22 },
   { file:'index.html',      tab:'Premium dues',      secs:26 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
@@ -537,7 +541,7 @@ setInterval(function () {
 if (LONE) {
   try {
     document.getElementById('bootSub').textContent =
-      'Seven screens, one after another. One at a time on a phone.';
+      'Eight screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
 

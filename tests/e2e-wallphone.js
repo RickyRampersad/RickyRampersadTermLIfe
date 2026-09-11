@@ -27,6 +27,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 
 const SCREENS = [
   ['The day so far',     '/intelligence/wall/day.html'],
+  ['What is pending',    '/intelligence/wall/pending.html'],
   ['The day in blocks',  '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Whose hands',        '/intelligence/wall/possession.html'],

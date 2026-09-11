@@ -370,6 +370,85 @@ withheld is itself the disclosure. Where a client is shared across two agents,
 the agent sees their own policies and a **count** of the others, so nobody is
 misled into thinking they have the whole picture.
 
+## 3¾. The pending wall — the eighth screen
+
+The eighth screen on the wall: everything submitted and not yet issued, how
+long it has waited, and what is holding it. `intelligence/wall/pending.html`,
+third in the rotation — after the two day screens and before the client book,
+because a pending case is the only thing on that wall somebody can still
+change this afternoon.
+
+**It reads three sources, and takes the best answer each can give.**
+
+| Source | Tab it looks for | What only it knows |
+|---|---|---|
+| The branch's own lists | any tab with `Agent`, `Client`, `App Received Date` | the unit, the agent, and a comment saying what the case is waiting on |
+| The Guardian pending extract | `Policy`, `DecisionType`, `ReqtdaysLapsed` | `POL_MISC_SUSP_AMT` — the client's own money, already paid, that cannot be applied until the case closes |
+| The requirements extract | `insured_requirement_id`, `requirement_code`, `policy_number` | the requirement codes, which are the underwriter's own answer to what is outstanding |
+
+The branch keeps **more than one** of its own lists, so every tab of that shape
+is read rather than the biggest one. `INTEL_TABS_BRANCHPEND` overrides with a
+comma-separated list of tab names if the detection ever picks up something it
+should not.
+
+**What is holding them** comes from the requirement codes where the extract is
+present — `MDMED` reads as *Medical examination*, `ATTPH` as *Attending
+physician's statement*, and the screen says so. Without it, the branch's own
+comments are read by keyword against the words the branch actually uses —
+medical, direct debit, signature or authority, first premium, documents — and
+**anything matching none of them is counted as Other rather than guessed at**.
+Other growing large is the signal to add a bucket, not to widen one. The screen
+always says which of the three answered.
+
+**Age comes from the date, never the days column.** `Days` and
+`ReqtdaysLapsed` are typed and drift — one of them reaches 8,128, which is not
+a case that waited twenty-two years. Anything over ten years is dropped rather
+than shown.
+
+**No client reaches this screen.** The wall actions carry no token, because a
+screen on a wall has nobody to sign it in, and in exchange they return
+aggregates only. Every row of every one of these sources is a named client with
+a policy number against them; they are counted and thrown away. What leaves is
+money, ages, units, reasons, and the names of our own agents.
+`tests/test-pendingwall.js` asserts that directly — the fixture's client names
+and policy numbers must not appear anywhere in the payload.
+
+### Two kinds of money, and they are opposites
+
+The screen carries both and never adds them together, because they want
+different things done this afternoon.
+
+- **Paid, and we cannot apply it yet** — `POL_MISC_SUSP_AMT` from the pending
+  extract. The client has handed the money over and it sits in suspense until
+  the case closes. That is a file to finish, and it is ours.
+- **Waiting on the client's first premium** — requirement code `FUTPY`. The
+  money has never arrived. That is a call to make, and it is theirs.
+
+A screen that showed one total would tell nobody which of those it was.
+
+### Who is on it
+
+From the Tasks tab — the branch's own record of chasing head office. Every
+task keeps the policy it names, so this is a lookup rather than a search, and
+it comes back in three states because they need three different actions:
+
+| | |
+|---|---|
+| **Nobody has ever raised a task** | No task of any kind has named this case. Raise one. |
+| **Somebody has one open** | It is in hand. Leave it. |
+| **The chase was closed, the case was not** | The worst of the three, because it reads as handled. Find out why the last one was closed with the file still open. |
+
+It reads live and the build is held for three minutes, like the day screen,
+because the branch edits these lists during the day and a case cleared at ten
+should be off the wall by lunch. No extra trigger.
+
+### It narrates, like every other screen
+
+Twelve lines, `en-US-AndrewNeural` at `-12%`, rendered by
+`audio/build-voice.py pending` and folded in by `audio/embed-audio.py pending`.
+No figure is spoken — every number on this screen moves and the audio does
+not, so the screen carries the arithmetic and the voice carries the meaning.
+
 ## 3b. How old is each source
 
 The extracts do not refresh together, and until this was measured nobody could

@@ -76,7 +76,7 @@ const srcOf = page => page.evaluate(() => {
     }
     ok('it moves through the stories on its own', seen.size >= 3, [...seen].join(' → '));
     ok('in the order the rail lists them',
-       [...seen].slice(0, 3).join() === 'day.html,blocks.html,index.html', [...seen].join(' → '));
+       [...seen].slice(0, 3).join() === 'day.html,blocks.html,pending.html', [...seen].join(' → '));
     ok('and never holds more than one at a time', live(s.page) === 2, String(live(s.page)));
     ok('the timer is still counting', /next in \d+s|fetching/.test(await s.page.locator('#state').innerText()),
        await s.page.locator('#state').innerText());
@@ -95,9 +95,9 @@ const srcOf = page => page.evaluate(() => {
   console.log('\nOn the television, nothing changed:\n');
   {
     const s = await open(b, WALL, '?secs=5');
-    await s.page.waitForTimeout(18000);          // the stagger asks the last at 15s
-    ok('all seven are mounted', await frames(s.page) === 7, String(await frames(s.page)));
-    ok('and all seven documents are live', live(s.page) === 8, String(live(s.page)));
+    await s.page.waitForTimeout(21000);          // the stagger asks the last at 17.5s
+    ok('all eight are mounted', await frames(s.page) === 8, String(await frames(s.page)));
+    ok('and all eight documents are live', live(s.page) === 9, String(live(s.page)));
     ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }
@@ -106,7 +106,7 @@ const srcOf = page => page.evaluate(() => {
   {
     const a = await open(b, PHONE, '?mount=all&secs=5');
     await a.page.waitForTimeout(2000);
-    ok('?mount=all gives a phone the television\'s seven', await frames(a.page) === 7, String(await frames(a.page)));
+    ok('?mount=all gives a phone the television\'s eight', await frames(a.page) === 8, String(await frames(a.page)));
     await a.ctx.close();
     const o = await open(b, WALL, '?mount=one&secs=5');
     await o.page.waitForTimeout(2000);

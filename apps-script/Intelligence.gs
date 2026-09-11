@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-10a';
+var INTEL_VERSION = '2026-09-11a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -724,6 +724,291 @@ function iBuildPending_(today) {
     }).sort(function (a, b) { return b.cases - a.cases; }),
     rows: rows
   };
+}
+
+/* ── The pending wall ───────────────────────────────────────────────────────
+   What is submitted and not yet issued, and what is holding each one.
+
+   TWO SOURCES, BECAUSE THE BRANCH KEEPS TWO.
+   iBuildPending_ above reads the Guardian extract — Policy, DecisionType,
+   ReqtdaysLapsed, and POL_MISC_SUSP_AMT, the client's own money sitting in
+   suspense until the case closes. The branch also keeps its own working
+   lists on the portfolio workbook, and those are a different shape
+   altogether: Unit, Agent, Number, Client, Days, App Received Date,
+   Comments. No decision code, no suspense, and the comment — "full med, OFT
+   and POA", "direct debit to be amended", "first premium" — is the only
+   place that says what the case is actually waiting on.
+
+   The extract knows the money. The branch's own list knows the reason, and
+   it is the one a unit manager updates on a Monday. So both are read, and
+   whichever exists answers. There is more than one of the branch's lists,
+   so every tab of that shape is collected rather than the biggest of them.
+
+   NO CLIENT REACHES THIS SCREEN. The wall actions carry no token — a screen
+   on a wall has nobody to sign it in — and in exchange they return
+   aggregates only. Every row here holds a client's name and a policy
+   number; they are counted and thrown away, and what leaves is money, ages,
+   units, reasons, and the names of our own agents. Keep it that way.  */
+
+var IPEND_HOLD_S = 180;      // the same three minutes the day screen is held for
+
+/** Every tab of the branch's own pending shape, not just the biggest — the
+ *  branch keeps more than one. INTEL_TABS_BRANCHPEND overrides with a
+ *  comma-separated list of tab names. */
+function iBranchPendTabs_() {
+  var named = iProp_('INTEL_TABS_BRANCHPEND');
+  var out = [];
+  if (named) {
+    named.split(',').forEach(function (n) {
+      var sh = iSs_().getSheetByName(String(n).trim());
+      if (sh) out.push(sh);
+    });
+    if (out.length) return out;
+  }
+  var must = ['agent', 'client', 'app received'];
+  iSs_().getSheets().forEach(function (sh) {
+    if (sh.getLastRow() < 2) return;
+    var head = iHeaders_(sh);
+    var ok = must.every(function (m) {
+      return head.some(function (h) { return h === m || h.indexOf(m) === 0; });
+    });
+    if (ok) out.push(sh);
+  });
+  return out;
+}
+
+/* WHAT IS HOLDING A CASE, READ OUT OF A SENTENCE SOMEBODY TYPED.
+   The comment column is free text — it is how the branch talks to itself,
+   not a field. These are the branch's own recurring words, matched as
+   keywords, and anything that matches none of them is counted as Other
+   rather than guessed at. Other growing large is the signal to add a
+   bucket, not to widen one. */
+var IPEND_REASONS = [
+  { key: 'medical',   label: 'Medical',            rx: /\b(med|medical|oft|ecg|blood|lab|urine|nurse|doctor|physician|x-?ray|apf)\b/i },
+  { key: 'bank',      label: 'Bank or direct debit', rx: /\b(dd|direct debit|bank|void ch|salary deduct|standing order|account)\b/i },
+  { key: 'signature', label: 'Signature or authority', rx: /\b(sign|signature|signed|poa|power of attorney|authoris|authoriz|consent)\b/i },
+  { key: 'premium',   label: 'First premium',      rx: /(1st premium|first premium|initial (deposit|premium)|payment (due|outstanding))/i },
+  { key: 'documents', label: 'Documents',          rx: /\b(doc|docs|document|id|identification|birth|school|certificate|copies|copy|proof|passport|permit)\b/i }
+];
+function iPendReason_(text) {
+  var t = String(text || '');
+  for (var i = 0; i < IPEND_REASONS.length; i++) {
+    if (IPEND_REASONS[i].rx.test(t)) return IPEND_REASONS[i].label;
+  }
+  return t.trim() ? 'Other' : 'No reason written';
+}
+
+function iPendBand_(age) {
+  if (age == null) return null;
+  return age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
+       : age <= 180 ? '91-180' : '180+';
+}
+
+/** The branch's own lists, folded into counts. */
+function iBranchPending_() {
+  var tabs = iBranchPendTabs_();
+  if (!tabs.length) return null;
+  var today = iToday_(), skip = iExcluded_();
+  var out = { total: 0, oldest: 0, tabs: tabs.length, excluded: 0,
+              ageing: { '0-30':0, '31-60':0, '61-90':0, '91-180':0, '180+':0 },
+              byAgent: {}, byUnit: {}, byReason: {}, stale: 0, noReason: 0 };
+
+  tabs.forEach(function (sh) {
+    var d = iReadCols_(sh, {
+      unit: ['unit'], agent: ['agent'], policy: ['number', 'policy'],
+      client: ['client'], days: ['days'], received: ['app received'],
+      comment: ['comment']
+    });
+    for (var r = 0; r < d.rows; r++) {
+      /* The client's name is read only to know the row is a case and not a
+         blank line. It is never carried any further than this loop. */
+      var isCase = String(d.get('client', r)).trim() || String(d.get('policy', r)).trim();
+      if (!isCase) continue;
+
+      var agent = String(d.get('agent', r)).trim() || '(unassigned)';
+      if (iExcludes_(skip, agent)) { out.excluded++; continue; }
+
+      /* Days is typed by hand and drifts; the received date is the fact.
+         The typed figure is the fallback when there is no date. */
+      var got = iDate_(d.get('received', r));
+      var age = got ? iDays_(got, today) : null;
+      if (age === null) {
+        var claimed = iNum_(d.get('days', r));
+        age = (claimed > 0 && claimed < 3650) ? claimed : null;
+      }
+      if (age !== null && (age < 0 || age > 3650)) age = null;
+
+      var unit = String(d.get('unit', r)).trim() || '(no unit)';
+      var comment = String(d.get('comment', r));
+      var reason = iPendReason_(comment);
+
+      out.total++;
+      if (reason === 'No reason written') out.noReason++;
+      var band = iPendBand_(age);
+      if (band) out.ageing[band]++;
+      if (age !== null) {
+        if (age > 90) out.stale++;
+        if (age > out.oldest) out.oldest = age;
+      }
+      if (!out.byAgent[agent]) out.byAgent[agent] = { cases: 0, oldest: 0 };
+      out.byAgent[agent].cases++;
+      if (age !== null && age > out.byAgent[agent].oldest) out.byAgent[agent].oldest = age;
+      out.byUnit[unit] = (out.byUnit[unit] || 0) + 1;
+      out.byReason[reason] = (out.byReason[reason] || 0) + 1;
+    }
+  });
+  return out;
+}
+
+/** Three sources, as the wall may see them. Aggregates only.
+ *
+ *  THE THIRD IS THE AUTHORITY ON WHAT IS HOLDING A CASE.
+ *  iBuildReqs_ reads RR_UWPRO_INSURED_Requirement — one row per requirement,
+ *  deduplicated by insured_requirement_id because the extract repeats a
+ *  requirement once per history row, closed ones dropped, each carrying a
+ *  code that IREQ_CODES turns into words: a medical examination, proof of
+ *  address, an attending physician's statement. That is the real answer to
+ *  "what is this case waiting on", and it beats reading a sentence somebody
+ *  typed in a comment column. The comments are the fallback for a branch
+ *  that has the working lists and not the extract. */
+function iPendingWall_() {
+  var today = iToday_();
+  var branch = null, extract = null, reqs = null, notes = [];
+  try { branch = iBranchPending_(); } catch (e) { notes.push('The branch lists would not read: ' + (e && e.message || e)); }
+  try {
+    var p = iBuildPending_(today);
+    if (p && !p.error) extract = p; else if (p && p.error) notes.push(p.error);
+  } catch (e2) { notes.push('The pending extract would not read: ' + (e2 && e2.message || e2)); }
+  try {
+    var q = iBuildReqs_(today);
+    if (q && !q.error) reqs = q; else if (q && q.error) notes.push(q.error);
+  } catch (e3) { notes.push('The requirements extract would not read: ' + (e3 && e3.message || e3)); }
+
+  /* WHO IS ON IT. The Tasks tab is the branch's own record of chasing head
+     office, and every task keeps the policy it names — so this is a lookup,
+     not a search. Three states, because they want three different things
+     done: nobody has ever raised a task on this case; somebody has one open;
+     or the last one was closed and the case is still pending, which is the
+     worst of the three because it looks handled and is not. */
+  var chase = null;
+  if (extract && extract.rows) {
+    try {
+      var tasks = iBuildTasks_(today);
+      if (tasks && !tasks.error) {
+        var joined = { tasks: tasks, pending: extract };
+        iJoinChases_(joined);
+        chase = { never: extract.chaseNever || 0, live: extract.chaseLive || 0,
+                  quiet: extract.chaseClosed || 0 };
+      } else if (tasks && tasks.error) { notes.push(tasks.error); }
+    } catch (e4) { notes.push('The chase log would not read: ' + (e4 && e4.message || e4)); }
+  }
+
+  if (!branch && !extract && !reqs) {
+    return { configured: false, generatedAt: today,
+             error: 'No pending list found. The branch’s own sheets need Agent, Client and App Received Date; ' +
+                    'the Guardian extract needs Policy, DecisionType and ReqtdaysLapsed; ' +
+                    'the requirements extract needs insured_requirement_id, requirement_code and policy_number.' };
+  }
+
+  var skip = iExcluded_();
+  var pair = function (o) {
+    return Object.keys(o || {}).map(function (k) { return { name: k, n: o[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  };
+
+  /* The branch's list is the one a person updates, so it is the count on
+     screen. The extract carries the money and the decision codes, which the
+     branch's list has no column for. */
+  var counted = branch || extract || { total: null, ageing: {}, stale: null };
+  var total = counted.total;
+  var ageing = counted.ageing || {};
+  var stale = counted.stale;
+  var oldest = branch ? branch.oldest : 0;
+  if (!branch && extract) {
+    (extract.rows || []).forEach(function (r) { if (r.age && r.age > oldest) oldest = r.age; });
+  }
+  if (!branch && !extract && reqs) {
+    /* Only the requirements extract is here. It counts requirements rather
+       than cases, and the screen must not pass one off as the other — the
+       case count is the number of policies they sit on. */
+    total = reqs.policies;
+    ageing = reqs.ageing || {};
+    stale = (ageing['91-180'] || 0) + (ageing['181-365'] || 0) + (ageing['365+'] || 0);
+    oldest = reqs.oldest || 0;
+  }
+
+  var agents = branch
+    ? Object.keys(branch.byAgent).map(function (k) {
+        return { agent: k, cases: branch.byAgent[k].cases, oldest: branch.byAgent[k].oldest, susp: 0 };
+      })
+    : ((extract && extract.byAgent) || []).filter(function (a) { return !iExcludes_(skip, a.agent); })
+        .map(function (a) { return { agent: a.agent, cases: a.cases, oldest: a.oldest, susp: a.susp }; });
+  agents.sort(function (a, b) { return b.cases - a.cases || b.oldest - a.oldest; });
+
+  return {
+    configured: true,
+    generatedAt: today,
+    at: Utilities.formatDate(new Date(), iTz_(), 'HH:mm'),
+    source: [branch ? 'branch lists' : '', extract ? 'pending extract' : '',
+             reqs ? 'requirements extract' : ''].filter(String).join(' + '),
+    lists: branch ? branch.tabs : 0,
+    total: total,
+    stale: stale,
+    oldest: oldest,
+    noReason: branch ? branch.noReason : null,
+    excluded: branch ? branch.excluded : 0,
+    ageing: ageing,
+    /* What is stopping them. The requirement codes first, because they are
+       the underwriter's own answer; the branch's comments next, read by
+       keyword; the pending extract's decision codes last. */
+    reasonsFrom: reqs ? 'requirement codes' : (branch ? 'what the branch wrote' : 'decision codes'),
+    reasons: reqs ? (reqs.byCode || []).map(function (c) { return { name: c.label, n: c.n }; })
+           : (branch ? pair(branch.byReason) : pair((extract && extract.byDecision) || {})),
+    /* Every open requirement, how long they have been open, and how many
+       cases they sit on. Counts only — no policy number and no insured. */
+    requirements: reqs ? {
+      open: reqs.openCount, policies: reqs.policies, median: reqs.medianAge,
+      oldest: reqs.oldest, overYear: reqs.overYear, closedThisYear: reqs.closedThisYear,
+      ageing: reqs.ageing
+    } : null,
+    units: branch ? pair(branch.byUnit)
+                  : (((extract && extract.byUnit) || []).map(function (u) { return { name: u.unit, n: u.cases }; })),
+    agents: agents.slice(0, 12),
+    /* TWO KINDS OF MONEY, AND THEY ARE OPPOSITES.
+       Held: the client has paid and we cannot apply it until the case
+       closes — POL_MISC_SUSP_AMT, the branch's own money problem.
+       Unpaid: the case is waiting on a first or future premium that has
+       never arrived — requirement code FUTPY, the client's. One is a file
+       to finish, the other is a call to make, and a screen that adds them
+       together tells nobody what to do this afternoon. */
+    money: {
+      held: extract ? extract.suspense : null,
+      heldCases: extract ? extract.suspenseCases : null,
+      unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
+    },
+    /* Who is on it, from the branch's own chase log. */
+    chase: chase,
+    suspense: extract ? extract.suspense : null,
+    suspenseCases: extract ? extract.suspenseCases : null,
+    notes: notes
+  };
+}
+
+/** The wall's pending feed. Live, held for three minutes — the branch's own
+ *  lists are edited during the day, and a case cleared at ten should be off
+ *  the screen by lunch. */
+function iActPending_(b) {
+  var key = 'ipend_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPendingWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPEND_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
 }
 
 /* ── The chase log ────────────────────────────────────────────────────────
@@ -3027,6 +3312,7 @@ function intelRoute_(b) {
   if (action === 'intel.licence')  return iActLicence_(b);
   if (action === 'intel.possession') return iActPossession_(b);
   if (action === 'intel.book')       return iActBook_(b);
+  if (action === 'intel.pending')    return iActPending_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
