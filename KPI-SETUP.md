@@ -480,6 +480,65 @@ A register created before September 2026 has no `SignedOut` column. It is added
 on the end the first time the tab is read, so the columns already there keep
 their places.
 
+## Policy status codes — filling them in from the underwriting extract
+
+`CLIENT_PORTFOLIO__c` carries a status **description** on most pending records
+and no **code**. The description cannot be turned into the code by rule, and
+it is worth being plain about why, because it looks as though it should be.
+The pending codes are a two-by-two:
+
+| Code | Errors | Outstanding requirement | Underwriting |
+|---|---|---|---|
+| `PCCU` | no | no | incomplete |
+| `PCRU` | no | **yes** | incomplete |
+| `PECU` | **yes** | no | incomplete |
+| `PERU` | **yes** | **yes** | incomplete |
+| `PCRC` / `PERC` | | | complete |
+
+"Underwriting incomplete" fixes the last letter and nothing else. Whether a
+case has errors is recorded nowhere in Salesforce, so the code has to come
+from the extract that knows it — `RR_UWPRO_INSURED_Requirement`, **column A**.
+
+**Two fields are labelled "Policy Status Code".** Both exist on the object and
+picking the wrong one puts the value where no report will look:
+
+| API name | Type | What the branch actually puts in it |
+|---|---|---|
+| `Policy_Status_Code__c` | free text | the inforce and lapsed codes — 1, E, ELV, B, RFC, RNP |
+| `Policy_Status_Cose__c` | picklist — *the API name really is spelled that way* | the **pending** codes |
+
+Against "Underwriting incomplete" the branch has used the picklist on 72
+records and the text field on 4, so the sync writes the picklist. `PSC.field`
+changes that if it is ever wrong.
+
+### Running it
+
+```javascript
+syncPolicyStatusCodes()          // changes NOTHING — reads, matches, reports
+syncPolicyStatusCodesForReal()   // applies it
+```
+
+**Read the dry run before the real one.** It prints a count of every code it
+found in column A, which is the quickest way to confirm that column holds what
+it is supposed to, and it names the field it would write in full.
+
+What it will not do:
+
+- **write a code the picklist does not contain.** Anything else is refused by
+  name and its policies are left alone — Salesforce would either reject it or,
+  on a permissive org, quietly store a value no report can read.
+- **guess when a policy carries two different codes** across its rows. Those
+  policies are dropped from the run and named in the report so the sheet can
+  be fixed.
+- **rewrite a value that is already correct.** Only blanks and genuine
+  differences are sent.
+
+It patches through `composite/sobjects` in batches of 200 with
+`allOrNone: false`, so one bad record cannot take a batch down with it, and
+every run is written to the `KPI Salesforce Writes` tab like every other write
+this file makes. It stops at four and a half minutes and says how much is
+left; running it again carries on.
+
 ## Two o'clock — the branch's own message
 
 A daily trigger at 14:00 writes the message for the WhatsApp group from the
