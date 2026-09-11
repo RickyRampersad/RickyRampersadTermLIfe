@@ -96,8 +96,12 @@ const srcOf = page => page.evaluate(() => {
   {
     const s = await open(b, WALL, '?secs=5');
     await s.page.waitForTimeout(19000);          // the stagger asks the last at 15s
-    ok('all eleven are mounted', await frames(s.page) === 11, String(await frames(s.page)));
-    ok('and all eleven documents are live', live(s.page) === 12, String(live(s.page)));
+    // Derived from the player's own list, never typed: a twelfth screen must
+    // not need this file edited to stay honest. Live documents are the frames
+    // plus the page holding them.
+    const N = await s.page.evaluate(() => SLIDES.length);
+    ok('all ' + N + ' are mounted', await frames(s.page) === N, String(await frames(s.page)));
+    ok('and all ' + N + ' documents are live', live(s.page) === N + 1, String(live(s.page)));
     ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }
@@ -106,7 +110,8 @@ const srcOf = page => page.evaluate(() => {
   {
     const a = await open(b, PHONE, '?mount=all&secs=5');
     await a.page.waitForTimeout(2000);
-    ok('?mount=all gives a phone the television\'s eleven', await frames(a.page) === 11, String(await frames(a.page)));
+    const NA = await a.page.evaluate(() => SLIDES.length);
+    ok('?mount=all gives a phone the television\'s ' + NA, await frames(a.page) === NA, String(await frames(a.page)));
     await a.ctx.close();
     const o = await open(b, WALL, '?mount=one&secs=5');
     await o.page.waitForTimeout(2000);

@@ -29,7 +29,9 @@ const server = http.createServer((req, res) => {
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 const ORDER = ['day.html', 'blocks.html', 'pending.html', 'ready.html', 'triage.html', 'culprits.html',
-               'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html'];
+               'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html',
+               'conversion.html'];
+const LAST_TAB = 'Conversions';   // the rail label of ORDER's last stop
 
 async function open(b, query) {
   const ctx = await b.newContext({ viewport:{ width:1920, height:1080 } });
@@ -64,12 +66,15 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   console.log('\nFive stories, one at a time:\n');
   let s = await open(b, '?secs=5');
   await s.page.waitForTimeout(1200);
-  ok('eleven frames on the stage', await s.page.locator('iframe.slide').count() === 11);
+  ok(ORDER.length + ' frames on the stage', await s.page.locator('iframe.slide').count() === ORDER.length,
+     String(await s.page.locator('iframe.slide').count()));
   ok('the first is showing and only the first', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   ok('and the boot card has cleared', await s.page.evaluate(() => document.getElementById('boot').classList.contains('gone')));
   const t0 = await s.page.locator('body').innerText();
-  ok('eleven named stops on the rail, the branch\'s own day first', /1\. The day so far/.test(t0) && /4\. Ready to settle/.test(t0) && /11\. Birthdays today/.test(t0));
-  await s.page.waitForTimeout(18000);          // stagger is 1.5s apart: all eleven assigned by 15s
+  ok(ORDER.length + ' named stops on the rail, the branch\'s own day first',
+     /1\. The day so far/.test(t0) && /4\. Ready to settle/.test(t0) &&
+     new RegExp('\\b' + ORDER.length + '\\. ' + LAST_TAB).test(t0));
+  await s.page.waitForTimeout(20000);          // stagger is 1.5s apart: every frame assigned inside this
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
   ok('the first story really rendered inside its frame', first === 1);
@@ -90,7 +95,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   // Past nine screens a single keypress cannot reach the rest, and the rail
   // is how anybody gets there — so that is how the wrap is tested.
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: 'Birthdays today' }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('.dot', { hasText: LAST_TAB }).click(); await s.page.waitForTimeout(300);
   ok('the rail reaches a stop no key can', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']',
      JSON.stringify(await visible(s.page)));
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
@@ -118,13 +123,14 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const hudText = () => s.page.locator('#state').innerText();
   const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Ready to settle',
                        'Whose move is it', 'Who is holding it up', 'Premium dues',
-                       'In our possession', 'With the agent', 'The licence year', 'Birthdays today'];
+                       'In our possession', 'With the agent', 'The licence year', 'Birthdays today',
+                       LAST_TAB];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.
   const hudNow = await hudText();
   ok('it says which story and how long is left',
-     new RegExp('\\b([1-9]|1[01]) of ' + ORDER.length + '\\b').test(await hudText()) && /next in \d+s/.test(await hudText()) &&
+     new RegExp('\\b([1-9]|[12]\\d) of ' + ORDER.length + '\\b').test(await hudText()) && /next in \d+s/.test(await hudText()) &&
      SLIDE_NAMES.some(nm => (hudNow || '').indexOf(nm) > -1), await hudText());
   const barH = await s.page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('bar')).height));
   ok('the line across the top is thick enough to see', barH >= 5, barH + 'px');
@@ -137,10 +143,10 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   // No key reaches past the ninth stop, so the rail is how the last one is
   // reached — which is also how a person on the floor would do it.
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: 'Birthdays today' }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('.dot', { hasText: LAST_TAB }).click(); await s.page.waitForTimeout(300);
   ok('on the last story it still shows',
      new RegExp(ORDER.length + ' of ' + ORDER.length).test(await hudText()) &&
-     /Birthdays today/.test(await hudText()) && (await hudBox()).in, await hudText());
+     new RegExp(LAST_TAB).test(await hudText()) && (await hudBox()).in, await hudText());
 
   console.log('\nPlay and pause, on the rail, on every slide:\n');
   await s.page.mouse.move(600, 600); await s.page.waitForTimeout(200);

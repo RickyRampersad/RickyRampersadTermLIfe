@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-11a';
+var INTEL_VERSION = '2026-09-11b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1199,6 +1199,232 @@ function iActPending_(b) {
   }
   var data = iPendingWall_();
   try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPEND_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVERSIONS — THE TERM BOOK THAT IS ALLOWED TO BECOME SOMETHING ELSE
+
+   A term policy is a promise with a date on it. Some of those promises carry
+   a conversion privilege: the client may exchange the term for permanent
+   cover with no medical, no questions asked and no chance of being declined.
+   The privilege is worth most to exactly the people least likely to pass a
+   medical, and it is worth nothing the day after it runs out.
+
+   Salesforce spells the product out in Life_Plan_01__c, and once you have
+   read enough of them the code stops being a code:
+
+       F   Flexi            E   Evolution
+       C   Convertible      N   Non-convertible
+       T   Term
+       65  the age the cover runs to (a small number is a term in years)
+
+   Checked against the branch's own book: every FNT85 on file expires between
+   the client's eighty-fourth and eighty-fifth birthday, and every FCT20
+   twenty years after its issue date. So the three letters are reliable, and
+   the three letters are all this needs — whether a policy may be converted
+   is a matter of which letter sits in the middle.
+
+   THE NUMBER IS NOT RELIABLE AND IS NOT USED. Two codes on file are mis-keyed
+   (FNT81 and FNT851, both of them plainly FNT85 1), and the real expiry date
+   is on the record anyway. Decode the letters, read the date.
+
+   ONE CAVEAT, AND IT MATTERS. On the Evolution plans the expiry date held in
+   Salesforce is the plan's own maturity rather than the term rider's end: an
+   ECT65 issued to a client born in 2002 carries an expiry in 2102, which is
+   age ninety-nine, not sixty-five. A countdown to expiry is therefore honest
+   on the Flexi book and meaningless on the Evolution book, and the deadline
+   list below counts down the Flexi only. Both books are in the birthday list,
+   because the birthday is a fact about the client, not about the plan.
+
+   WHY A MONTH. Conversion is priced at attained age. The cheapest day to
+   convert is the day before a birthday, the dearest is the day after, and the
+   branch already works a birthday-month rhythm for its service reviews. So
+   the month's birthdays are the worklist, and the ones whose birthday has not
+   arrived yet are the urgent half of it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ICONV_HOLD_S  = 15 * 60;  // a Salesforce read, held a quarter of an hour
+var ICONV_OBJECT  = 'CLIENT_PORTFOLIO__c';
+var ICONV_INFORCE = 'PREMIUM PAYING';   // stored upper, and SOQL '=' ignores case
+var ICONV_SOON_Y  = 10;       // how far ahead the Flexi deadline list looks
+var ICONV_TOP     = 14;       // agents on screen
+
+/* The four plan families in this book. The middle letter carries the answer.
+   ECU's third letter is not documented anywhere the branch can see, so it is
+   labelled by its code rather than by a guess at what the U stands for. */
+var ICONV_FAMILIES = [
+  { code: 'FCT', family: 'flexi',     convertible: true,  label: 'Flexi convertible term' },
+  { code: 'FNT', family: 'flexi',     convertible: false, label: 'Flexi non-convertible term' },
+  { code: 'ECT', family: 'evolution', convertible: true,  label: 'Evolution convertible term' },
+  { code: 'ECU', family: 'evolution', convertible: true,  label: 'Evolution convertible (ECU)' }
+];
+
+var ICONV_MONTHS = ['January','February','March','April','May','June','July',
+                    'August','September','October','November','December'];
+
+/* Read a plan code. Returns null for everything that is not one of the four
+   term families — whole life, pensions, motor, the typed-out descriptions —
+   so a caller can filter on the return value alone. */
+function iConvPlan_(raw) {
+  var s = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, ' ').trim();
+  var m = /^(FCT|FNT|ECT|ECU)\s*\d/.exec(s);
+  if (!m) return null;
+  var code = m[1];
+  for (var i = 0; i < ICONV_FAMILIES.length; i++) {
+    if (ICONV_FAMILIES[i].code === code) return ICONV_FAMILIES[i];
+  }
+  return null;
+}
+
+/* The SOQL half of the same fact, so the filter and the decoder cannot drift
+   apart: whichever families iConvPlan_ calls convertible are the families
+   this asks Salesforce for. */
+function iConvLike_(convertible) {
+  var fams = ICONV_FAMILIES.filter(function (f) { return f.convertible === convertible; });
+  return '(' + fams.map(function (f) {
+    return "Life_Plan_01__c LIKE '" + f.code + "%'";
+  }).join(' OR ') + ')';
+}
+
+function iConvInforce_() {
+  return "Policy_Status_Description__c = '" + ICONV_INFORCE + "'" +
+         ' AND Life_Coverage__c > 0 AND Life_Coverage_Expiry__c >= TODAY';
+}
+
+function iConvOne_(rows, keys) {
+  var r = (rows && rows[0]) || {}, out = {};
+  keys.forEach(function (k) { out[k] = iNum_(r[k]); });
+  return out;
+}
+
+/* ── The month's conversion worklist ──────────────────────────────────────
+   Six aggregate reads, none of which brings a client name or a policy number
+   back with it. Salesforce does the counting; this only shapes the answer.  */
+function iConversionWall_() {
+  var today = iToday_();
+  var month = today.getMonth() + 1, dayOf = today.getDate();
+  var notes = [];
+
+  /* iSfQuery_ always exists — it is a shim. What may not exist is a helper
+     behind it, and then every read below would throw the same message six
+     times over. Ask once, up front, and say it plainly. */
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project. ' +
+                    'Paste KPI.gs alongside Intelligence.gs, or add SalesforceSync.gs.' };
+  }
+  var ask = iSfQuery_;
+
+  var conv = iConvLike_(true), nonconv = iConvLike_(false), live = iConvInforce_();
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var birthday = ' AND CALENDAR_MONTH(Date_Of_Birth__c) = ' + month;
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* Whose they are, and the biggest single case each one is holding. MAX is
+     the whole reason the top case needs no second query and no policy
+     number — the figure is what an agent recognises, and nothing else. */
+  var byAgent = q('SELECT AGENT__r.Name ag, COUNT(Id) n, SUM(Life_Coverage__c) cover,' +
+                  ' SUM(Life_Premium__c) prem, MAX(Life_Coverage__c) top' +
+                  from + conv + ' AND ' + live + birthday +
+                  ' GROUP BY AGENT__r.Name ORDER BY SUM(Life_Coverage__c) DESC LIMIT 200');
+
+  /* The urgent half: the birthday has not happened yet, so today's age still
+     buys today's rate. */
+  var ahead = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                from + conv + ' AND ' + live + birthday +
+                ' AND DAY_IN_MONTH(Date_Of_Birth__c) >= ' + dayOf);
+
+  var mixRows = q('SELECT Life_Plan_01__c pc, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                  from + conv + ' AND ' + live + birthday +
+                  ' GROUP BY Life_Plan_01__c ORDER BY SUM(Life_Coverage__c) DESC LIMIT 100');
+
+  var poolConv = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + conv + ' AND ' + live);
+  var poolNon  = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + nonconv + ' AND ' + live);
+
+  /* The Flexi deadline list. Evolution is left out on purpose — see the
+     caveat at the head of this section. */
+  var soonRows = q('SELECT CALENDAR_YEAR(Life_Coverage_Expiry__c) yr, COUNT(Id) n,' +
+                   ' SUM(Life_Coverage__c) cover' +
+                   from + "Life_Plan_01__c LIKE 'FCT%' AND " + live +
+                   ' AND Life_Coverage_Expiry__c <= NEXT_N_YEARS:' + ICONV_SOON_Y +
+                   ' GROUP BY CALENDAR_YEAR(Life_Coverage_Expiry__c)' +
+                   ' ORDER BY CALENDAR_YEAR(Life_Coverage_Expiry__c) LIMIT 40');
+
+  if (byAgent === null && poolConv === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  var skip = iExcluded_();
+  var cases = 0, cover = 0, prem = 0;
+  var agents = (byAgent || []).filter(function (r) {
+    return r.ag && !iExcludes_(skip, r.ag);
+  }).map(function (r) {
+    cases += iNum_(r.n); cover += iNum_(r.cover); prem += iNum_(r.prem);
+    return { name: String(r.ag), n: iNum_(r.n), cover: iNum_(r.cover),
+             prem: iNum_(r.prem), top: iNum_(r.top) };
+  });
+  var unnamed = (byAgent || []).filter(function (r) { return !r.ag; })
+    .reduce(function (a, r) { return a + iNum_(r.n); }, 0);
+
+  /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
+     FCT65 are one product typed three ways and a wall that lists them
+     separately is a wall nobody trusts. */
+  var byFam = {}, unknown = 0;
+  (mixRows || []).forEach(function (r) {
+    var f = iConvPlan_(r.pc);
+    if (!f) { unknown += iNum_(r.n); return; }
+    var slot = byFam[f.code] || (byFam[f.code] = { code: f.code, label: f.label, n: 0, cover: 0 });
+    slot.n += iNum_(r.n); slot.cover += iNum_(r.cover);
+  });
+  var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
+    .sort(function (a, b) { return b.cover - a.cover; });
+  if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
+
+  var soon = (soonRows || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var soonTotal = soon.reduce(function (a, r) {
+    return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
+
+  return {
+    configured: true,
+    generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()],
+    day: dayOf,
+    years: ICONV_SOON_Y,
+    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed,
+            ahead: iConvOne_(ahead, ['n', 'cover']) },
+    agents: agents.slice(0, ICONV_TOP),
+    agentCount: agents.length,
+    mix: mix,
+    pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
+            nonconv: iConvOne_(poolNon, ['n', 'cover', 'prem']) },
+    soon: soon,
+    soonTotal: soonTotal,
+    notes: notes
+  };
+}
+
+function iActConversion_(b) {
+  var key = 'iconv_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iConversionWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), ICONV_HOLD_S); } catch (e2) {}
   return iOk_({ data: data });
 }
 
@@ -3533,6 +3759,7 @@ function intelRoute_(b) {
   if (action === 'intel.possession') return iActPossession_(b);
   if (action === 'intel.book')       return iActBook_(b);
   if (action === 'intel.pending')    return iActPending_(b);
+  if (action === 'intel.conversion') return iActConversion_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');

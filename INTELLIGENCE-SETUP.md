@@ -1765,6 +1765,86 @@ picked up as the start of the relationship.
 | `INTEL_BOOK_QUIET_YEARS` | `5` | Years since a client's last policy before they count as quiet |
 | `INTEL_BOOK_INITIALS` | `on` | `off` replaces every client's initials with a dash |
 
+### Conversions this month — `intelligence/wall/conversion.html`
+
+Action `intel.conversion`. Paste the `/exec` URL into `CONV_URL`.
+
+**The only screen on the wall that reads Salesforce rather than the workbook.**
+Everything else here comes out of the Branch Portfolio tabs; the term book and
+its dates do not exist there in a usable shape, and they do exist in
+`CLIENT_PORTFOLIO__c` on 5,406 records. So this one asks Salesforce six
+aggregate questions and holds the answer for fifteen minutes.
+
+#### The plan code is the product
+
+`Life_Plan_01__c` is not a label, it is a spelling:
+
+| | |
+|---|---|
+| **F** | Flexi |
+| **E** | Evolution |
+| **C** | **Convertible** — may be exchanged for permanent cover, no medical, no questions, no chance of being declined |
+| **N** | **Non-convertible** — no right at all; a fresh application and fresh underwriting |
+| **T** | Term |
+| `65` | the age the cover runs to (a small number is a term in years) |
+
+Checked against the branch's own book before it was believed: **every FNT85 on
+file expires between the client's 84th and 85th birthday**, and every FCT20
+twenty years after its issue date. The letters are reliable. The number is not
+— two codes are mis-keyed, `FNT81` and `FNT851`, and both are plainly `FNT85 1`
+— so the reader decodes the letters and the screen reads the real expiry date
+off the record. A typing slip must never hand a client a privilege the contract
+does not give them, which is why the decoder is tested against every spelling
+in the portfolio, mis-keys included.
+
+#### The Evolution expiry date is the plan's, not the term's
+
+An `ECT65` issued to a client born in 2002 carries `Life_Coverage_Expiry__c` of
+**2102** — age ninety-nine, not sixty-five. On the Evolution plans that field is
+the contract's own maturity, not the term rider's end. So:
+
+- **the birthday list includes Evolution**, because a birthday is a fact about
+  the client and not about the plan;
+- **the deadline panel is Flexi only** (`FCT%`), because a countdown on an
+  Evolution row would be arithmetic on the wrong date.
+
+The test asserts the deadline query names `FCT%` and never `ECT%` or `ECU%`.
+`ECU`'s third letter is not documented anywhere the branch can see, so it is
+labelled by its code rather than by a guess at what the U stands for.
+
+#### Why a month, and why the gold half
+
+Conversion is priced at **attained age**. The cheapest day to convert is the day
+before a birthday and the dearest is the day after, and the branch already works
+a birthday-month rhythm for service reviews. So the worklist is the month's
+birthdays, and the gold figure is the half whose birthday **has not happened
+yet** — counted with `DAY_IN_MONTH(Date_Of_Birth__c) >= today`. That is the only
+urgency on the wall that expires on a date everybody in the room can name.
+
+#### What is on it
+
+| Panel | What it answers |
+|---|---|
+| The hero | Cover that can be converted this month, and how much of it still has the birthday ahead |
+| Which agent, and how much cover | Every agent, their case count, their cover, and their **single biggest case** — the figure an agent recognises without being told a name |
+| The chips | The plan families, with `FCT65 1`, `FCT651` and `FCT65` collapsed onto one chip, because three typings of one product on a wall is a wall nobody trusts |
+| The deadline | Flexi cover that simply ends, by year, for the next ten |
+| The amber tile | The non-convertible book — not a worse lead, a different one |
+
+**Nothing client-level leaves.** The biggest case is a sum assured with no
+policy number and no name against it; agent names are our own people, as on
+every other wall. `MAX(Life_Coverage__c)` in the same aggregate is the whole
+reason no second, row-level query is needed.
+
+#### Four constants
+
+| In `Intelligence.gs` | Default | What it does |
+|---|---|---|
+| `ICONV_HOLD_S` | `900` | How long a Salesforce read is held — a birthday does not move |
+| `ICONV_SOON_Y` | `10` | How far ahead the Flexi deadline panel looks |
+| `ICONV_TOP` | `14` | Agents on screen |
+| `ICONV_FAMILIES` | four rows | The plan families. **The SOQL filters are generated from this table**, so the reader and the query cannot drift apart — add a family here and both halves learn it at once |
+
 ## 3c. What the Act actually says, per wall
 
 Read out of the Act itself, not recalled. Earlier drafts of this file got s268

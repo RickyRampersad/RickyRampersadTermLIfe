@@ -36,6 +36,18 @@ WALLS = {
         "A day with every block filed is a day the branch can account for.",
         "That is the whole ask.",
     ],
+    'conversion': [                              # Conversions This Month
+        "These are term policies that are allowed to become something else.",
+        "The plan code says which ones. A C in the middle means convertible.",
+        "Convertible means permanent cover with no medical, no questions, and no chance of being declined.",
+        "It is worth the most to the client least likely to pass a medical.",
+        "Conversion is priced at the age the client has reached.",
+        "So the cheapest day to do it is the day before a birthday, and the dearest is the day after.",
+        "That is why this list is the month's birthdays, and why the gold figure is the half still to come.",
+        "Beside each agent is the cover they are holding and their single biggest case.",
+        "The last panel is the other kind of deadline. Cover that simply ends.",
+        "No client is named here. Cover and counts only.",
+    ],
     'pending': [                                 # What Is Pending
         "This is what is submitted and not yet issued.",
         "It is the only screen on this wall that somebody can still change this afternoon.",

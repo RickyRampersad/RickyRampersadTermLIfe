@@ -37,6 +37,7 @@ const SCREENS = [
   ['Contract delivery',  '/intelligence/wall/delivery.html'],
   ['The licence year',   '/intelligence/wall/licence.html'],
   ['Birthdays today',    '/intelligence/wall/book.html'],
+  ['Conversions',        '/intelligence/wall/conversion.html'],
 ];
 
 /* Two blocks of text drawn over each other. Only leaf elements that actually
