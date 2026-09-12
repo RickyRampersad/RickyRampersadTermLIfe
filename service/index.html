@@ -623,6 +623,19 @@ const INDIVIDUAL = [
   { id: "otherGuardianWhat", label: "Which ones?", type: "text", showIf: { id: "otherGuardian", is: "Yes" },
     placeholder: "Policy numbers or type — whatever you remember" },
 
+  /* The household pair — deliberately carries no `paper:` key, so it stays off
+     page 1 of form 2000-03-147 and lands in the addendum instead. Q7 above asks
+     what else is theirs; this asks who else is in the house, which the records
+     have never held. Both front doors ask it, or the Household column cannot
+     tell "no household" apart from "never asked". */
+  { id: "householdOther", label: "Does anyone else in your home hold a policy with Guardian Life?",
+    type: "yesnona", flag: "household",
+    help: "A husband or wife, a parent, a grown child at the same address — a policy of their own, not yours." },
+  { id: "householdWho", label: "Who, and how are they related to you?", type: "textarea",
+    showIf: { id: "householdOther", not: "No" }, flag: "household",
+    placeholder: "A first name and the relationship is plenty — \"my wife Anne\", \"my son\". No policy numbers needed.",
+    help: "Enough for us to keep the household together when we decide who looks after you." },
+
   { id: "otherCompany", label: "Do you own policies with any other insurance company?", type: "yesnona",
     paper: "Q8 — Do you own any other Policies?" },
   { id: "otherCompanyWhat", label: "With whom, and what type?", type: "text", showIf: { id: "otherCompany", is: "Yes" },

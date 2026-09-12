@@ -833,6 +833,11 @@ function sheetFor_(isGroup) {
                   // shown to the client — see ServiceSalesforce.gs.
                   'Traced', 'Policy #s (traced)', 'Cover traced', 'Premium owing',
                   'Agent on record',
+                  // Who else is in the house, in the client's own words. The
+                  // records carry no household at all, so this column is the
+                  // only one there is — sort a book by it before splitting it
+                  // between agents. Capture only; nothing is written back.
+                  'Household',
                   // Compliance record. These four are the auditable trail for a
                   // registered agent: what the client declared, what they agreed
                   // we could do with it, whether they opted into marketing, and
@@ -874,6 +879,28 @@ function teamBankSheet_() {
     } catch (e) {}
   }
   return sh;
+}
+
+/**
+ * Who else lives in this house, in one sortable cell.
+ *
+ * Assignment is the entire reason it exists. A household split across three
+ * agents is three calls to one address and nobody holding the whole picture,
+ * and the records cannot prevent that: Relationship_Groups__c has been empty
+ * since 2017, and surnames alone guess wrong in both directions. The client
+ * is the only reliable source, so we ask them and we write down what they say.
+ *
+ * Capture only — this is never written back to Salesforce, and it is never
+ * shown to the client. Asking who is in a household is fine; telling somebody
+ * who holds an unauthenticated link what we know about their relatives is not.
+ */
+function householdSummary_(body) {
+  var a = answersById_(body);
+  var said = String(a.householdOther || '').trim();
+  if (!said) return '';
+  if (/^no\b/i.test(said)) return 'No';
+  var who = String(a.householdWho || '').replace(/\s+/g, ' ').trim();
+  return (/not sure/i.test(said) ? 'Not sure' : 'Yes') + (who ? ' — ' + who.slice(0, 200) : '');
 }
 
 /**
@@ -925,6 +952,11 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     'Cover traced': t.coverTraced || '',
     'Premium owing': t.premiumOwing || '',
     'Agent on record': t.agentOnRecord || '',
+
+    /* The household, as the client described it. Salesforce has a household
+       object and it has been empty since 2017, so there is nothing to read —
+       this is the branch's own record, and the only one. */
+    'Household': householdSummary_(body),
 
     /* Who the client chose to be looked after by — the in-house team direct,
        or an agent matched to the brief they wrote. Drives the assignment. */
@@ -1347,6 +1379,11 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     if (f.flag === 'agent')   actions.push(badge_('AGENT', '#1B2A44') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    /* Not an action to process — a fact about who this client is. It rides
+       here because the brief is what an agent actually reads before calling,
+       and calling one half of a household without knowing about the other
+       half is the mistake this question exists to stop. */
+    if (f.flag === 'household') actions.push(badge_('HOUSEHOLD', '#6B7C96') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
