@@ -1775,42 +1775,88 @@ its dates do not exist there in a usable shape, and they do exist in
 `CLIENT_PORTFOLIO__c` on 5,406 records. So this one asks Salesforce six
 aggregate questions and holds the answer for fifteen minutes.
 
-#### The plan code is the product
+#### Only term converts, and the book proves it twice
 
-`Life_Plan_01__c` is not a label, it is a spelling:
+The branch manager's rule, given on 12 September 2026: **only term can be
+converted; Econolife and Liberator to 65 expire only.** The Branch Portfolio
+dues book says the same thing from the other direction — it carries a status
+called **`Converted`**, and:
+
+| Plan family | Ever written | Ever converted |
+|---|---|---|
+| **FCT** — Revised Flexi Term | 1,438 | **48** |
+| CLT65 | 15 | 1 |
+| FNT — Flexi Term, non-convertible | 78 | **0** |
+| LB / LIB — Liberator | 1,327 | **0** |
+| NLE — Newlife 2000 | 450 | **0** |
+| ECT | 1,221 | **0** |
+| LIFEV — Life Evolution Liberator | 5,859 | **0** |
+
+So `ICONV_FAMILIES` has **three** kinds, not two:
+
+| Kind | Families | What the screen does with it |
+|---|---|---|
+| `convert` | `FCT` | The hero, the agent table, the plan chips. The only pool a conversion list may use. |
+| `expire` | `FNT`, `LB`, `LIB`, `NLE`, `ECONO` | The amber tile and the deadline panel. Cover that ends with nothing to exchange it for. |
+| `unsettled` | `ECT`, `ECU` | Counted, named, and in **neither** total. |
+
+**Longest prefix wins** in `iConvPlan_`, or `LB` would answer for every
+Liberator code spelled `LIB`.
+
+#### The plan code is still a spelling
 
 | | |
 |---|---|
 | **F** | Flexi |
-| **E** | Evolution |
-| **C** | **Convertible** — may be exchanged for permanent cover, no medical, no questions, no chance of being declined |
-| **N** | **Non-convertible** — no right at all; a fresh application and fresh underwriting |
+| **C** | **Convertible** — may be exchanged for permanent cover, no medical, no chance of being declined |
+| **N** | **Non-convertible** — `FNT85 1` carries the plan name "Flexi Term To Age 85 (Non-Convertible)" verbatim |
 | **T** | Term |
 | `65` | the age the cover runs to (a small number is a term in years) |
 
-Checked against the branch's own book before it was believed: **every FNT85 on
-file expires between the client's 84th and 85th birthday**, and every FCT20
-twenty years after its issue date. The letters are reliable. The number is not
-— two codes are mis-keyed, `FNT81` and `FNT851`, and both are plainly `FNT85 1`
-— so the reader decodes the letters and the screen reads the real expiry date
-off the record. A typing slip must never hand a client a privilege the contract
-does not give them, which is why the decoder is tested against every spelling
-in the portfolio, mis-keys included.
+Salesforce's own `PLAN_NAME__c` confirms the rest: `FCT65 1` → "Revised Flexi
+Term to age", `FCT10 1` → "Revised Flexi Term 10 Yr", `LB75 1` → "Life
+Evolution Liberator", `NLE 1` → "Newlife 2000", `CRIEV1` → "Life Evolution
+Rejuventor".
 
-#### The Evolution expiry date is the plan's, not the term's
+Checked against the book before any of it was believed: **every FNT85 on file
+expires between the client's 84th and 85th birthday**, and every FCT20 twenty
+years after its issue date. Two codes are mis-keyed — `FNT81` and `FNT851`,
+both plainly `FNT85 1` — so the decoder reads the leading letters and the
+screen reads the real expiry date off the record.
 
-An `ECT65` issued to a client born in 2002 carries `Life_Coverage_Expiry__c` of
-**2102** — age ninety-nine, not sixty-five. On the Evolution plans that field is
-the contract's own maturity, not the term rider's end. So:
+#### Why ECT is in neither column
 
-- **the birthday list includes Evolution**, because a birthday is a fact about
-  the client and not about the plan;
-- **the deadline panel is Flexi only** (`FCT%`), because a countdown on an
-  Evolution row would be arithmetic on the wrong date.
+`ECT` has 1,221 records and there is no honest place to put them yet.
 
-The test asserts the deadline query names `FCT%` and never `ECT%` or `ECU%`.
-`ECU`'s third letter is not documented anywhere the branch can see, so it is
-labelled by its code rather than by a guess at what the U stands for.
+- Its `PLAN_NAME__c` is self-referential on every record but one, and that one
+  reads **"Econo Life to Age 65"** against the code `ECT651`. That would make
+  ECT an Econolife, which *expires* at 65.
+- But the **expiry dates** on the ECT records land at age **ninety-nine or a
+  hundred** — an `ECT65` on a client born 2002 carries an expiry of 2102.
+- And 48 of the 49 conversions on the book went **FCT → ECT**, which is the
+  behaviour of a destination product, not of a term that expires.
+
+One of those facts is wrong and the workbook cannot say which. So the feed
+returns `pool.unsettled` and the screen prints the question. **A wall the whole
+branch walks past does not get to guess at $1.2bn of cover.** When somebody who
+knows the product answers, move `ECT` and `ECU` to the right `kind` in
+`ICONV_FAMILIES` and both halves of the code learn it at once.
+
+#### What a conversion is actually worth
+
+Measured on this branch, not quoted from a brochure. Forty-five of the
+forty-nine `Converted` policies matched to the policy that replaced them (same
+client number, issued within a year of the term going off the books):
+
+| | |
+|---|---|
+| Annual premium given up on the term | **$130,206** |
+| Annual premium written on the replacement | **$337,847** |
+| Uplift | **+$207,640 — 2.6×** |
+| Average per conversion | **+$4,614** |
+
+Nine conversions in 2024, ten in 2025, four so far in 2026 — 23 of the 48 in
+three years. Sixteen of the 48 are the branch manager's own.
 
 #### Why a month, and why the gold half
 

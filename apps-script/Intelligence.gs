@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-11b';
+var INTEL_VERSION = '2026-09-12a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1247,43 +1247,69 @@ function iActPending_(b) {
 var ICONV_HOLD_S  = 15 * 60;  // a Salesforce read, held a quarter of an hour
 var ICONV_OBJECT  = 'CLIENT_PORTFOLIO__c';
 var ICONV_INFORCE = 'PREMIUM PAYING';   // stored upper, and SOQL '=' ignores case
-var ICONV_SOON_Y  = 10;       // how far ahead the Flexi deadline list looks
+var ICONV_SOON_Y  = 10;       // how far ahead the deadline list looks
 var ICONV_TOP     = 14;       // agents on screen
 
-/* The four plan families in this book. The middle letter carries the answer.
-   ECU's third letter is not documented anywhere the branch can see, so it is
-   labelled by its code rather than by a guess at what the U stands for. */
+/* ── WHICH PLANS CONVERT, AND HOW THAT WAS SETTLED ───────────────────────
+   Not by reading the letters. The branch's own dues book has a status called
+   "Converted" and 49 policies carry it: 48 are FCT and the 49th is CLT65.
+   Across the same book, ZERO of 1,327 Liberator, ZERO of 450 Newlife 2000,
+   ZERO of 78 FNT and ZERO of 1,221 ECT have ever carried it. The branch
+   manager's rule on 12 September 2026 was the same sentence from the other
+   direction: only term converts, and Econolife and Liberator to 65 expire.
+
+   So the table below is three kinds, not two:
+
+     convert    FCT — a right to exchange the term for permanent cover with
+                no medical. This is the only pool a conversion list may use.
+     expire     the cover ends on a date and there is nothing to exchange it
+                for. A fresh application, fresh underwriting, and it has to
+                happen before the date, not after it.
+     unsettled  ECT and ECU. Left out of BOTH totals on purpose — see below.
+
+   WHY ECT IS COUNTED IN NEITHER. Its plan name is self-referential on every
+   record but one, and that one reads "Econo Life to Age 65" against the code
+   ECT651 — which would make ECT an Econolife that expires at 65. But the
+   expiry DATE on the ECT records lands at age ninety-nine or a hundred, not
+   sixty-five. One of those two facts is wrong and the workbook cannot say
+   which, so 1,221 policies sit outside both figures until somebody who knows
+   the product says. A wall the whole branch walks past does not get to guess
+   at that: it prints the question instead. */
 var ICONV_FAMILIES = [
-  { code: 'FCT', family: 'flexi',     convertible: true,  label: 'Flexi convertible term' },
-  { code: 'FNT', family: 'flexi',     convertible: false, label: 'Flexi non-convertible term' },
-  { code: 'ECT', family: 'evolution', convertible: true,  label: 'Evolution convertible term' },
-  { code: 'ECU', family: 'evolution', convertible: true,  label: 'Evolution convertible (ECU)' }
+  { like: 'FCT',   kind: 'convert',   label: 'Revised Flexi Term (convertible)' },
+  { like: 'FNT',   kind: 'expire',    label: 'Flexi Term, non-convertible' },
+  { like: 'LIB',   kind: 'expire',    label: 'Liberator' },
+  { like: 'LB',    kind: 'expire',    label: 'Liberator' },
+  { like: 'NLE',   kind: 'expire',    label: 'Newlife 2000' },
+  { like: 'ECONO', kind: 'expire',    label: 'Econo Life' },
+  { like: 'ECT',   kind: 'unsettled', label: 'ECT — Econolife or Evolution, to confirm' },
+  { like: 'ECU',   kind: 'unsettled', label: 'ECU — to confirm' }
 ];
 
 var ICONV_MONTHS = ['January','February','March','April','May','June','July',
                     'August','September','October','November','December'];
 
-/* Read a plan code. Returns null for everything that is not one of the four
-   term families — whole life, pensions, motor, the typed-out descriptions —
-   so a caller can filter on the return value alone. */
+/* Read a plan code. Returns null for everything outside the table — whole
+   life, pensions, critical illness, motor — so a caller can filter on the
+   return value alone. Longest prefix first, or LB would answer for LIB. */
 function iConvPlan_(raw) {
   var s = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, ' ').trim();
-  var m = /^(FCT|FNT|ECT|ECU)\s*\d/.exec(s);
-  if (!m) return null;
-  var code = m[1];
+  if (!s) return null;
+  var best = null;
   for (var i = 0; i < ICONV_FAMILIES.length; i++) {
-    if (ICONV_FAMILIES[i].code === code) return ICONV_FAMILIES[i];
+    var f = ICONV_FAMILIES[i];
+    if (s.indexOf(f.like) === 0 && (!best || f.like.length > best.like.length)) best = f;
   }
-  return null;
+  return best;
 }
 
-/* The SOQL half of the same fact, so the filter and the decoder cannot drift
+/* The SOQL half of the same table, so the filter and the reader cannot drift
    apart: whichever families iConvPlan_ calls convertible are the families
    this asks Salesforce for. */
-function iConvLike_(convertible) {
-  var fams = ICONV_FAMILIES.filter(function (f) { return f.convertible === convertible; });
+function iConvLike_(kind) {
+  var fams = ICONV_FAMILIES.filter(function (f) { return f.kind === kind; });
   return '(' + fams.map(function (f) {
-    return "Life_Plan_01__c LIKE '" + f.code + "%'";
+    return "Life_Plan_01__c LIKE '" + f.like + "%'";
   }).join(' OR ') + ')';
 }
 
@@ -1306,9 +1332,6 @@ function iConversionWall_() {
   var month = today.getMonth() + 1, dayOf = today.getDate();
   var notes = [];
 
-  /* iSfQuery_ always exists — it is a shim. What may not exist is a helper
-     behind it, and then every read below would throw the same message six
-     times over. Ask once, up front, and say it plainly. */
   var helper = '';
   try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
   if (!helper) {
@@ -1318,7 +1341,8 @@ function iConversionWall_() {
   }
   var ask = iSfQuery_;
 
-  var conv = iConvLike_(true), nonconv = iConvLike_(false), live = iConvInforce_();
+  var conv = iConvLike_('convert'), gone = iConvLike_('expire'), open_ = iConvLike_('unsettled');
+  var live = iConvInforce_();
   var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
   var birthday = ' AND CALENDAR_MONTH(Date_Of_Birth__c) = ' + month;
   var q = function (soql) {
@@ -1346,14 +1370,18 @@ function iConversionWall_() {
 
   var poolConv = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
                    from + conv + ' AND ' + live);
-  var poolNon  = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
-                   from + nonconv + ' AND ' + live);
+  var poolGone = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + gone + ' AND ' + live);
+  var poolOpen = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                   from + open_ + ' AND ' + live);
 
-  /* The Flexi deadline list. Evolution is left out on purpose — see the
-     caveat at the head of this section. */
+  /* THE DEADLINE, and it is now the right book. It used to count down the
+     convertible pool, which was the wrong story: a policy you may convert has
+     no deadline worth a wall until its privilege closes. A policy that simply
+     ends has a date, and after that date the client has nothing. */
   var soonRows = q('SELECT CALENDAR_YEAR(Life_Coverage_Expiry__c) yr, COUNT(Id) n,' +
                    ' SUM(Life_Coverage__c) cover' +
-                   from + "Life_Plan_01__c LIKE 'FCT%' AND " + live +
+                   from + gone + ' AND ' + live +
                    ' AND Life_Coverage_Expiry__c <= NEXT_N_YEARS:' + ICONV_SOON_Y +
                    ' GROUP BY CALENDAR_YEAR(Life_Coverage_Expiry__c)' +
                    ' ORDER BY CALENDAR_YEAR(Life_Coverage_Expiry__c) LIMIT 40');
@@ -1381,8 +1409,8 @@ function iConversionWall_() {
   var byFam = {}, unknown = 0;
   (mixRows || []).forEach(function (r) {
     var f = iConvPlan_(r.pc);
-    if (!f) { unknown += iNum_(r.n); return; }
-    var slot = byFam[f.code] || (byFam[f.code] = { code: f.code, label: f.label, n: 0, cover: 0 });
+    if (!f || f.kind !== 'convert') { unknown += iNum_(r.n); return; }
+    var slot = byFam[f.like] || (byFam[f.like] = { code: f.like, label: f.label, n: 0, cover: 0 });
     slot.n += iNum_(r.n); slot.cover += iNum_(r.cover);
   });
   var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
@@ -1394,6 +1422,14 @@ function iConversionWall_() {
   });
   var soonTotal = soon.reduce(function (a, r) {
     return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
+
+  /* The open question, printed rather than guessed at. */
+  var open = iConvOne_(poolOpen, ['n', 'cover']);
+  if (open.n) {
+    notes.push(open.n + ' ECT policies are in neither figure: the one plan name on file reads ' +
+               '“Econo Life to Age 65”, and the expiry dates on them land at ninety-nine. ' +
+               'Confirm which and they join a column.');
+  }
 
   return {
     configured: true,
@@ -1407,7 +1443,8 @@ function iConversionWall_() {
     agentCount: agents.length,
     mix: mix,
     pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
-            nonconv: iConvOne_(poolNon, ['n', 'cover', 'prem']) },
+            nonconv: iConvOne_(poolGone, ['n', 'cover', 'prem']),
+            unsettled: open },
     soon: soon,
     soonTotal: soonTotal,
     notes: notes

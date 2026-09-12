@@ -27,14 +27,31 @@ env.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDat
    mis-keys are FNT81 and FNT851, and both have to stay non-convertible: a
    typing slip must never hand a client a privilege the contract does not. */
 console.log('\nThe plan code says whether it may be converted:\n');
-const decode = c => { const f = env.iConvPlan_(c); return f ? f.code + (f.convertible ? '+' : '-') : 'null'; };
-[['FCT65 1', 'FCT+'], ['FCT651', 'FCT+'], ['FCT65', 'FCT+'], ['FCT5  1', 'FCT+'], ['FCT20 1', 'FCT+'],
- ['ECT65 1', 'ECT+'], ['ECT851', 'ECT+'], ['ECU65 1', 'ECU+'],
- ['FNT85 1', 'FNT-'], ['FNT851', 'FNT-'], ['FNT81', 'FNT-'], ['FNT75', 'FNT-'],
- ['fnt85 1', 'FNT-'],
+const decode = c => { const f = env.iConvPlan_(c); return f ? f.like + ':' + f.kind : 'null'; };
+[// Only Flexi Term converts. Forty-eight of the branch's forty-nine recorded
+ // conversions are FCT, and the branch manager's rule is the same sentence.
+ ['FCT65 1', 'FCT:convert'], ['FCT651', 'FCT:convert'], ['FCT65', 'FCT:convert'],
+ ['FCT5  1', 'FCT:convert'], ['FCT20 1', 'FCT:convert'],
+ // These expire and there is nothing to exchange them for. FNT says so in its
+ // own plan name; Liberator and Newlife were named by the branch, and zero of
+ // 1,327 Liberator and zero of 450 Newlife have ever carried "Converted".
+ ['FNT85 1', 'FNT:expire'], ['FNT851', 'FNT:expire'], ['FNT81', 'FNT:expire'],
+ ['FNT75', 'FNT:expire'], ['fnt85 1', 'FNT:expire'],
+ ['LB75 1', 'LB:expire'], ['LB65', 'LB:expire'], ['LB100 1', 'LB:expire'],
+ ['LIB 65', 'LIB:expire'], ['LIB65', 'LIB:expire'], ['Lib 65', 'LIB:expire'],
+ ['LIBERATOR', 'LIB:expire'],
+ ['NLE65', 'NLE:expire'], ['NLE  1', 'NLE:expire'], ['NLE 65', 'NLE:expire'],
+ ['Econo Life to Age 65', 'ECONO:expire'], ['Econo Life 65', 'ECONO:expire'],
+ // ECT is in neither pool on purpose: its one readable plan name says
+ // "Econo Life to Age 65" and its expiry dates land at ninety-nine.
+ ['ECT65 1', 'ECT:unsettled'], ['ECT851', 'ECT:unsettled'], ['ECU65 1', 'ECU:unsettled'],
  ['LIFEV 1', 'null'], ['LIFE EVOLUTION LIBERATOR', 'null'], ['Homeowners', 'null'],
- ['Motor', 'null'], ['ECT', 'null'], ['', 'null'], [null, 'null']
+ ['Motor', 'null'], ['', 'null'], [null, 'null']
 ].forEach(([code, want]) => ok(String(code) + ' → ' + want, decode(code) === want, decode(code)));
+
+// LB must never answer for LIB — longest prefix wins, or every Liberator row
+// would be filed under the wrong label.
+ok('LIB beats LB on a Liberator code', decode('LIB 65') === 'LIB:expire', decode('LIB 65'));
 
 /* ── 2. The reader and the filter are one fact ────────────────────────────
    The screen decodes plan codes in JavaScript and asks Salesforce for them in
@@ -42,12 +59,16 @@ const decode = c => { const f = env.iConvPlan_(c); return f ? f.code + (f.conver
    under-counts, so the SOQL is generated from the same table the reader uses
    and this checks both directions. */
 console.log('\nThe SOQL asks for exactly the families the reader calls convertible:\n');
-const yes = env.iConvLike_(true), no = env.iConvLike_(false);
-ok('convertible filter names FCT, ECT, ECU', /FCT%/.test(yes) && /ECT%/.test(yes) && /ECU%/.test(yes), yes);
-ok('convertible filter never names FNT', !/FNT/.test(yes), yes);
-ok('non-convertible filter is FNT and nothing else', /FNT%/.test(no) && !/FCT|ECT|ECU/.test(no), no);
-ok('every family in the table appears in one filter or the other',
-   env.ICONV_FAMILIES.every(f => (f.convertible ? yes : no).indexOf(f.code + '%') > -1));
+const yes = env.iConvLike_('convert'), no = env.iConvLike_('expire'), maybe = env.iConvLike_('unsettled');
+ok('the convertible filter is FCT and nothing else',
+   /'FCT%'/.test(yes) && !/FNT|LB|LIB|NLE|ECT|ECU/.test(yes), yes);
+ok('the expiring filter names FNT, Liberator, Newlife and Econo Life',
+   ["'FNT%'", "'LB%'", "'LIB%'", "'NLE%'", "'ECONO%'"].every(k => no.indexOf(k) > -1), no);
+ok('the expiring filter never names FCT', !/'FCT%'/.test(no), no);
+ok('ECT and ECU are in their own filter, in neither total',
+   /'ECT%'/.test(maybe) && /'ECU%'/.test(maybe) && !/ECT|ECU/.test(yes) && !/ECT|ECU/.test(no), maybe);
+ok('every family in the table appears in exactly one filter',
+   env.ICONV_FAMILIES.every(f => [yes, no, maybe].filter(x => x.indexOf("'" + f.like + "%'") > -1).length === 1));
 
 /* ── 3. The book, as Salesforce would answer it ───────────────────────────
    Invented throughout. No client of this branch is in this repository. The
@@ -66,7 +87,8 @@ const agg = {
   conv:   [{ n: 1172, cover: 1687790726, prem: 900000 }],
   non:    [{ n: 39,   cover: 85100000,   prem: 139941 }],
   soon:   [{ yr: 2028, n: 3, cover: 3600000 }, { yr: 2029, n: 5, cover: 4000000 },
-           { yr: 2035, n: 7, cover: 7700000 }]
+           { yr: 2035, n: 7, cover: 7700000 }],
+  unsettled: [{ n: 1221, cover: 1194000000 }]
 };
 env.sfQuery_ = function (soql) {
   asked.push(soql);
@@ -74,7 +96,8 @@ env.sfQuery_ = function (soql) {
   if (/DAY_IN_MONTH/.test(soql))                    return agg.ahead;
   if (/GROUP BY Life_Plan_01__c/.test(soql))        return agg.mix;
   if (/CALENDAR_YEAR/.test(soql))                   return agg.soon;
-  if (/FNT%/.test(soql))                            return agg.non;
+  if (/'ECT%'/.test(soql))                          return agg.unsettled;
+  if (/'FNT%'/.test(soql))                          return agg.non;
   return agg.conv;
 };
 
@@ -97,6 +120,12 @@ ok('a plan code nobody can read is said out loud, not dropped silently',
    (d.notes || []).some(s => /cannot read/.test(s)), JSON.stringify(d.notes));
 ok('the pool and the book with no right at all are both there',
    d.pool.conv.n === 1172 && d.pool.nonconv.n === 39);
+/* The wall prints the open question rather than picking an answer. 1,221
+   policies is far too much cover to fold into either column on a guess. */
+ok('the unsettled plan codes are counted, and named as unsettled',
+   d.pool.unsettled.n === 1221 &&
+   (d.notes || []).some(x => /ECT policies are in neither figure/.test(x)),
+   JSON.stringify(d.pool.unsettled) + ' ' + JSON.stringify(d.notes));
 ok('the deadline list totals its years', d.soonTotal.n === 15 && d.soonTotal.cover === 15300000,
    JSON.stringify(d.soonTotal));
 
@@ -107,12 +136,16 @@ ok('only policies still paying', asked.every(q => /PREMIUM PAYING/.test(q)), Str
 ok('only cover that has not already expired', asked.every(q => /Life_Coverage_Expiry__c >= TODAY/.test(q)));
 ok('this month’s birthdays, by month number', /CALENDAR_MONTH\(Date_Of_Birth__c\) = 9/.test(all));
 ok('the urgent half, by day of month', /DAY_IN_MONTH\(Date_Of_Birth__c\) >= 11/.test(all));
-/* Evolution's expiry date is the plan's maturity, not the term's end — an
-   ECT65 on a client born in 2002 expires in 2102. A countdown that included
-   it would be arithmetic on the wrong date. */
+/* The deadline counts down the book that ENDS, never the book that converts.
+   A policy you may convert has no date worth a wall until its privilege
+   closes; a Liberator to sixty-five has a date, and after it the client has
+   nothing. Pointing this panel at the convertible pool was the original
+   mistake and this is the assertion that stops it coming back. */
 const deadline = asked.filter(q => /CALENDAR_YEAR/.test(q))[0] || '';
-ok('the deadline counts down Flexi only, never Evolution',
-   /LIKE 'FCT%'/.test(deadline) && !/LIKE 'ECT%'|LIKE 'ECU%'/.test(deadline), deadline.slice(0, 120));
+ok('the deadline counts down the expiring book',
+   ["'FNT%'", "'LB%'", "'LIB%'", "'NLE%'"].every(k => deadline.indexOf(k) > -1), deadline.slice(0, 160));
+ok('and never the convertible book', !/'FCT%'/.test(deadline), deadline.slice(0, 160));
+ok('nor the two plan codes nobody has settled', !/'ECT%'|'ECU%'/.test(deadline), deadline.slice(0, 160));
 // The object itself is CLIENT_PORTFOLIO__c and the agent is AGENT__r.Name;
 // neither is a client. Anything else that could name one is not asked for.
 ok('nothing was asked for that names a client',
@@ -145,7 +178,7 @@ ok('with no Salesforce in the project at all, it says so once and not six times'
 
 /* ── 7. The wall asks without a token ────────────────────────────────────── */
 console.log('\nThe wall action needs no sign-in:\n');
-env.sfQuery_ = function (soql) { asked.push(soql); return /FNT%/.test(soql) ? agg.non : agg.conv; };
+env.sfQuery_ = function (soql) { asked.push(soql); return /'FNT%'/.test(soql) ? agg.non : agg.conv; };
 const r = JSON.parse(env.intelDoPost_({ postData: { contents: JSON.stringify({ action: 'intel.conversion' }) } })
                         .getContent());
 ok('intel.conversion answers', r.ok === true, JSON.stringify(r).slice(0, 160));
