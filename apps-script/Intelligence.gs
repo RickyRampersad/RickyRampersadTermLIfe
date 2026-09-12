@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-12c';
+var INTEL_VERSION = '2026-09-12d';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1432,9 +1432,14 @@ function iConversionWall_() {
 
      The policy number is read and never leaves this function. It exists only
      to find the row in the dues tab. */
+  /* NO ALIASES, AND NO DAY_IN_MONTH. Salesforce allows field aliasing only in
+     an aggregate query, and a row-level SELECT carrying "DAY_IN_MONTH(x) dom"
+     is rejected outright — "only aggregate expressions use field aliasing" —
+     which would have emptied this whole screen on the live org. The day of
+     the month is arithmetic on a date the query already returns, so it is
+     worked out below instead of asked for. */
   var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
-                ' Life_Plan_01__c, DAY_IN_MONTH(Date_Of_Birth__c) dom,' +
-                ' Date_Of_Birth__c, Life_Coverage_Expiry__c' +
+                ' Life_Plan_01__c, Date_Of_Birth__c, Life_Coverage_Expiry__c' +
                 from + conv + ' AND ' + live + birthday +
                 ' ORDER BY Life_Coverage__c DESC LIMIT 900');
 
@@ -1516,15 +1521,16 @@ function iConversionWall_() {
       if (st === 'collect') slot.collect++;
     }
     cases++; cover += c; prem += pm;
-    if (iNum_(r.dom) >= dayOf) { ahead.n++; ahead.cover += c; }
+    var dobR = iDate_(r.Date_Of_Birth__c);
+    if (dobR && dobR.getDate() >= dayOf) { ahead.n++; ahead.cover += c; }
 
     /* THE DAY, AND THE AGE THEY TURN ON IT. Both are what an agent says on the
        phone: "you turn thirty-eight on the twenty-third, and the price is set
        by the age you are when you sign." The age the policy was WRITTEN at
        does not come into that conversation, which is why it is no longer on
        the screen. */
-    var dob = iDate_(r.Date_Of_Birth__c), exp = iDate_(r.Life_Coverage_Expiry__c);
-    var dom = iNum_(r.dom), past = dom < dayOf;
+    var dob = dobR, exp = iDate_(r.Life_Coverage_Expiry__c);
+    var dom = dob ? dob.getDate() : 0, past = !!dom && dom < dayOf;
     var turning = dob ? today.getFullYear() - dob.getFullYear() : null;
     if (dom) {
       var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: past });
@@ -1580,7 +1586,8 @@ function iConversionWall_() {
     return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
 
   /* Econo Life, Liberator and Rejuvenator are in neither figure on purpose:
-     nothing about them ends on a date, so a conversion list cannot use them.
+     their LIFE cover ends on no date, so a conversion list cannot use them —
+     their riders do end, and that is iRidersWall_, not this screen.
      The count is here only so the room knows what this screen is NOT about. */
   var perma = iConvOne_(poolPerm, ['n', 'cover']);
 
@@ -1645,7 +1652,9 @@ function iConversionWall_() {
    The critical illness rider alone carries more cover than the entire term
    book, on 3,102 policies, and almost nobody looks at it.
 
-   WHY THIS SCREEN CARRIES NO DEADLINE PANEL. Nothing here expires. The dates
+   WHY THIS SCREEN CARRIES NO DEADLINE PANEL. No LIFE cover here expires —
+   but the riders on these same policies do, every one of them, and that is a
+   screen of its own: see iRidersWall_. The dates
    that matter are the maturity date where one is held and the issue date,
    which is how long the policy has been paying — and on the Liberator the
    issue date IS the opportunity.
@@ -1886,6 +1895,284 @@ function iActPermanent_(b) {
   }
   var data = iPermanentWall_();
   try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPERM_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RIDERS ON A CLOCK — intelligence/wall/riders.html · action intel.riders
+   ══════════════════════════════════════════════════════════════════════════
+   The branch's own correction, and it was the right one: EVERY RIDER HAS AN
+   EXPIRY. The permanent screen says the life cover does not end on a date,
+   and that is true — but the critical illness, the accidental death, the
+   waiver of premium and the disability income riding on that same policy all
+   do. A client who has been told "this is for life" is holding one contract
+   where half of it is and half of it is not.
+
+   So this screen is the rider book against the calendar, and it was asked
+   for as "the riders expiring this month". The month leads it. But the month
+   is thin — in September 2026 exactly one rider expires on the whole book —
+   and a screen that is blank eleven months in twelve is a screen nobody
+   looks at. So the month sits beside the two piles that are never empty:
+
+     ALREADY GONE, STILL ON THE BOOKS. 74 riders whose expiry date has
+     passed on a policy Salesforce still calls premium paying. Either the
+     client is paying for cover that is not there, or the branch is
+     reporting cover that is not there. Both are worth a call.
+
+     NO EXPIRY DATE AT ALL. Of 5,924 riders in force, 3,280 carry no end
+     date. Nobody can ring a client about a date that is not recorded, so
+     this is the number that decides how complete every other figure here
+     can be, and it is said out loud rather than quietly left out.
+
+   THE HERO is the one that pays for the screen: the cover that rides on a
+   policy whose own life cover never ends. $601m of critical illness on 1,092
+   whole-life policies, $489k of premium — all of it on a clock the client
+   has probably never seen. That is not a data problem. That is the branch's
+   best conversation.
+
+   WHAT IS DELIBERATELY NOT HERE. No client, no policy number. The row-level
+   reads pull POLICY__c to test it against the branch's dues tab and it never
+   leaves this function — the same rule the conversion screen follows.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IRID_HOLD_S = 15 * 60;
+var IRID_TOP    = 12;      // agents on screen
+var IRID_SOON_M = 12;      // the window the screen calls "coming up"
+
+/* The four riders, each with the three fields that describe it and the words
+   the branch uses for what it does. WP carries no sum assured — it pays the
+   premium rather than a benefit — so its presence is tested on the premium. */
+var IRID_KINDS = [
+  { key: 'ci', lab: 'Critical illness', does: 'pays on diagnosis',
+    has: 'Critical_Illness_Coverage__c', cover: 'Critical_Illness_Coverage__c',
+    prem: 'Critical_Illness_Premium__c', exp: 'Critical_Illness_Expiry__c' },
+  { key: 'ad', lab: 'Accidental death', does: 'accident only',
+    has: 'ADDAP_Coverage__c', cover: 'ADDAP_Coverage__c',
+    prem: 'ADDAP_Premium__c', exp: 'ADDAP_Expiry_Date__c' },
+  { key: 'wp', lab: 'Waiver of premium', does: 'pays the premium if they cannot',
+    has: 'WP_Premium__c', cover: null,
+    prem: 'WP_Premium__c', exp: 'WP_Expiry__c' },
+  { key: 'di', lab: 'Disability income', does: 'a monthly benefit',
+    has: 'DI_bENEFIT__c', cover: 'DI_bENEFIT__c',
+    prem: 'DI_Premium__c', exp: 'DI_Exipry__c' }
+];
+
+function iRidKind_(key) {
+  for (var i = 0; i < IRID_KINDS.length; i++) if (IRID_KINDS[i].key === key) return IRID_KINDS[i];
+  return null;
+}
+
+/* In force, on the branch's own terms: premium paying. The rider clause is
+   added per kind, because a policy holding one rider and not another must
+   not be counted in the other's denominator. */
+function iRidLive_() {
+  return "Policy_Status_Description__c = 'PREMIUM PAYING'";
+}
+
+function iRidersWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iRidLive_();
+  /* Every row-level read below asks for plain field names and no aliases.
+     Salesforce allows aliasing only in an aggregate query, and it rejects a
+     row-level SELECT that carries one outright, so the fields are read back
+     by their own names and the day of the month is arithmetic on the date. */
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* THE BOOK, one read per rider. It was one read for all four — COUNT(field)
+     counts the rows where that field is set, which looked like a free way to
+     get four riders and their dated counts in a single query. It was not:
+     COUNT counts a field set to ZERO as set, and 144 policies carry a
+     critical illness coverage of nothing. That put 144 phantom riders in the
+     denominator and the same 144 into the blind spot. So each rider is asked
+     for on its own terms — the cover, or for the waiver the premium, has to
+     be greater than nought — which is also the population every other read on
+     this screen uses. Four queries, and they agree with each other. */
+  var B = {};
+  IRID_KINDS.forEach(function (k) {
+    var r = q('SELECT COUNT(Id) n, COUNT(' + k.exp + ') d, SUM(' + k.prem + ') p' +
+              (k.cover ? ', SUM(' + k.cover + ') c' : '') +
+              from + live + ' AND ' + k.has + ' > 0');
+    var row = (r && r[0]) || null;
+    B[k.key] = row ? { n: iNum_(row.n), d: iNum_(row.d), p: iNum_(row.p),
+                       c: k.cover ? iNum_(row.c) : null } : null;
+  });
+
+  var skip = iExcluded_();
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var zero = function () { return { n: 0, cover: 0, prem: 0 }; };
+  var gone = zero(), month = zero(), ahead = zero(), forever = zero(), blank = zero();
+  var byAg = {}, days = {}, months = {}, kinds = [];
+  var dayOf = today.getDate();
+  var lost = 0;   /* rows the dues tab says are not live after all */
+
+  IRID_KINDS.forEach(function (k) {
+    var b = B[k.key] || { n: 0, d: 0, p: 0, c: k.cover ? 0 : null };
+    var row = { key: k.key, lab: k.lab, does: k.does,
+                have: b.n, dated: b.d, cover: b.c, prem: b.p,
+                gone: zero(), month: zero(), ahead: zero(), forever: zero() };
+    row.blank = Math.max(0, row.have - row.dated);
+    blank.n += row.blank;
+
+    /* ALREADY GONE. Row level, because this is the list somebody has to work
+       and it has to name the agent holding it. Small by nature — it is the
+       tail of a book, not the book. */
+    var goneRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                     (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                     from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' < TODAY' +
+                     ' ORDER BY ' + k.exp + ' DESC LIMIT 400');
+    (goneRows || []).forEach(function (r) {
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { lost++; return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) return;
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var xp = iDate_(r[k.exp]);
+      row.gone.n++; row.gone.cover += c; row.gone.prem += pm;
+      gone.n++; gone.cover += c; gone.prem += pm;
+      var a = byAg[ag || '—'] || (byAg[ag || '—'] =
+        { name: ag || 'no agent on the record', n: 0, cover: 0, prem: 0, oldest: null, collect: 0 });
+      a.n++; a.cover += c; a.prem += pm;
+      if (st === 'collect') a.collect++;
+      if (xp && (!a.oldest || xp < a.oldest)) a.oldest = xp;
+    });
+
+    /* THE WINDOW AHEAD, and the month inside it. One read per rider covers
+       both — the month is the near end of the same list. */
+    var upRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                   (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' >= THIS_MONTH AND ' + k.exp + ' <= NEXT_N_MONTHS:' + IRID_SOON_M +
+                   ' ORDER BY ' + k.exp + ' LIMIT 400');
+    (upRows || []).forEach(function (r) {
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { lost++; return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) return;
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var xp = iDate_(r[k.exp]);
+      if (!xp) return;
+      row.ahead.n++; row.ahead.cover += c; row.ahead.prem += pm;
+      ahead.n++; ahead.cover += c; ahead.prem += pm;
+      var ym = xp.getFullYear() + '-' + ('0' + (xp.getMonth() + 1)).slice(-2);
+      var mo = months[ym] || (months[ym] = { ym: ym, lab: ICONV_MONTHS[xp.getMonth()] + ' ' + xp.getFullYear(),
+                                             n: 0, cover: 0 });
+      mo.n++; mo.cover += c;
+      /* THIS MONTH, day by day — the same strip the conversion screen uses,
+         because an agent reads a month the same way whatever is ending. */
+      if (xp.getFullYear() === today.getFullYear() && xp.getMonth() === today.getMonth()) {
+        var dom = xp.getDate();
+        row.month.n++; row.month.cover += c; row.month.prem += pm;
+        month.n++; month.cover += c; month.prem += pm;
+        if (dom) {
+          var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: dom < dayOf, kinds: {} });
+          slot.n++; slot.cover += c; slot.kinds[k.key] = (slot.kinds[k.key] || 0) + 1;
+        }
+      }
+    });
+
+    /* THE HERO, per rider: still to come, on a policy whose life cover has no
+       end date of its own. The client keeps the policy for life and loses
+       this. Aggregate — nobody works this list row by row, it is the size of
+       the thing that matters. */
+    if (k.cover) {
+      var fRow = q('SELECT COUNT(Id) n, SUM(' + k.cover + ') cov, SUM(' + k.prem + ') prm' +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' > TODAY AND Life_Coverage_Expiry__c = null');
+      var F = (fRow && fRow[0]) || null;
+      if (F) {
+        row.forever = { n: iNum_(F.n), cover: iNum_(F.cov), prem: iNum_(F.prm) };
+        forever.n += row.forever.n; forever.cover += row.forever.cover; forever.prem += row.forever.prem;
+      }
+    }
+    kinds.push(row);
+  });
+
+  var answered = IRID_KINDS.some(function (k) { return !!B[k.key]; });
+  if (!answered && !kinds.length) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  var book = kinds.reduce(function (a, k) {
+    return { n: a.n + k.have, dated: a.dated + k.dated, blank: a.blank + k.blank,
+             cover: a.cover + (k.cover || 0), prem: a.prem + k.prem };
+  }, { n: 0, dated: 0, blank: 0, cover: 0, prem: 0 });
+
+  /* Who holds the ones that have already gone. Ordered by cover, because
+     this pile is not a race against a date — it is worth what it is worth. */
+  var agents = Object.keys(byAg).map(function (key) {
+    var a = byAg[key];
+    a.oldest = a.oldest ? a.oldest.getFullYear() : null;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover || b.n - a.n; });
+
+  if (lost) {
+    notes.push(lost + ' riders are off these lists — the dues tab says the policy has lapsed, ' +
+               'been surrendered or matured. Salesforce still shows it paying.');
+  }
+  if (book.blank) {
+    notes.push(book.blank + ' of the ' + book.n + ' riders in force carry no expiry date at all, so ' +
+               'no screen can tell you when they end.');
+  }
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()], day: dayOf,
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
+    window: IRID_SOON_M,
+    head: forever,
+    book: book,
+    gone: gone,
+    thisMonth: month,
+    ahead: ahead,
+    days: Object.keys(days).map(function (d) { return days[d]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    months: Object.keys(months).sort().map(function (m) { return months[m]; }),
+    kinds: kinds,
+    agents: agents.slice(0, IRID_TOP),
+    agentCount: agents.length,
+    duesRead: !!dues,
+    notes: notes
+  };
+}
+
+/* The dues tab's verdict on one policy, in the three words the rest of the
+   wall already uses. A policy the tab has never heard of counts as ready —
+   usually business too new to be in the extract. */
+function iRidState_(dues, num) {
+  if (!dues || !num) return 'ready';
+  var hit = dues.by[String(num).trim()];
+  return hit ? hit.state : 'ready';
+}
+
+function iActRiders_(b) {
+  var key = 'irid_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iRidersWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IRID_HOLD_S); } catch (e2) {}
   return iOk_({ data: data });
 }
 
@@ -4236,6 +4523,7 @@ function intelRoute_(b) {
   if (action === 'intel.pending')    return iActPending_(b);
   if (action === 'intel.conversion') return iActConversion_(b);
   if (action === 'intel.permanent')  return iActPermanent_(b);
+  if (action === 'intel.riders')     return iActRiders_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');

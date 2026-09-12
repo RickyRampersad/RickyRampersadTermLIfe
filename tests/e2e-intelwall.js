@@ -30,8 +30,8 @@ let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 const ORDER = ['day.html', 'blocks.html', 'pending.html', 'ready.html', 'triage.html', 'culprits.html',
                'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html',
-               'conversion.html', 'permanent.html'];
-const LAST_TAB = 'The permanent book';   // the rail label of ORDER's last stop
+               'conversion.html', 'permanent.html', 'riders.html'];
+const LAST_TAB = 'Riders on a clock';    // the rail label of ORDER's last stop
 
 async function open(b, query) {
   const ctx = await b.newContext({ viewport:{ width:1920, height:1080 } });

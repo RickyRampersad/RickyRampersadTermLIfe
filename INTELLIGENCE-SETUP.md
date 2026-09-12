@@ -2026,6 +2026,91 @@ reason no second, row-level query is needed.
 | `ICONV_TOP` | `14` | Agents on screen |
 | `ICONV_FAMILIES` | four rows | The plan families. **The SOQL filters are generated from this table**, so the reader and the query cannot drift apart — add a family here and both halves learn it at once |
 
+## 3j. Riders on a clock — `intelligence/wall/riders.html`
+
+Action `intel.riders`. Paste the `/exec` URL into `RID_URL`.
+
+The branch's own correction, on 12 September 2026, and it overturned a line
+that had been on two screens and in the documentation:
+
+> *"All riders have expiry, and another wall should show the expiry riders
+> this month with deep insights."*
+
+The permanent screen says its cover does not end on a date. That is true of
+the **life** cover and false of everything riding on it. Salesforce carries a
+separate expiry for each rider, and they are real dates:
+
+| Rider | Expiry field | Presence tested on |
+|---|---|---|
+| Critical illness | `Critical_Illness_Expiry__c` | `Critical_Illness_Coverage__c` |
+| Accidental death | `ADDAP_Expiry_Date__c` | `ADDAP_Coverage__c` |
+| Waiver of premium | `WP_Expiry__c` | `WP_Premium__c` |
+| Disability income | **`DI_Exipry__c`** | `DI_bENEFIT__c` |
+
+**Two of those field names are misspelled in Salesforce and both are correct
+as written.** `DI_Exipry__c` is the disability income expiry — "Exipry" — and
+`DI_bENEFIT__c` is its benefit. A tidy-up that "corrects" either one returns
+nothing and empties that column silently, so `test-riders.js` asserts them
+letter by letter.
+
+**Waiver of premium carries no sum assured**, because it pays the premium
+rather than a benefit. Its `cover` is `null` and not `0`, so it never lands in
+a cover total as a zero.
+
+### The month leads it, and the month is thin
+
+It was asked for as "the riders expiring this month", so the month leads: the
+same **day strip** the conversions screen draws — a cell per day, gold for a
+date still to come, grey and struck through for one gone, today ringed — with
+a line under it naming *which* rider ends on each day, because "something
+expires on the 24th" is not a call anybody can make.
+
+But in September 2026 exactly **one** rider expires on the whole book, and
+across the next twelve months about seven. A screen that is blank eleven
+months in twelve is a screen nobody looks at, so the month sits beside the two
+piles that are never blank:
+
+| On the screen | September 2026 | Why it is there |
+|---|---|---|
+| **Hero** — rider cover on policies that never end | **$642m** on 1,306 policies, $498k a year | The client was told the policy is for life. It is. The rider on it is not, and nobody has had that date in front of them. |
+| **Already gone, policy still paying** | **74** riders, $26.1m, $24k a year | Either the client is paying for cover that is not there, or the branch is reporting cover that is not there. Both are a phone call. |
+| **No end date recorded at all** | **3,280** of 5,924 riders in force | Nobody can ring a client about a date that was never written down. This number is the honest limit on every other figure here. |
+
+The blind spot is stated on the face of the screen rather than left out:
+**5,924 riders in force and only 2,644 carry an expiry date.** Per rider it is
+worse than it sounds — critical illness is 1,343 short of a date, the waiver
+1,133, accidental death 803.
+
+### What an agent works from it
+
+The one table that names people is **who holds the riders that have already
+expired** — 18 agents, ordered by cover, each row carrying how many, how many
+have a premium to collect first, and the year the oldest of them expired. Every
+row is tested against the branch's dues tab exactly as the conversions screen
+is: a lapsed policy comes off the list *and* out of the totals, and the branch
+is told how many came off.
+
+Beneath it, the four riders with their expiry position side by side — in force,
+with a date, already gone, cover, premium — which is the table that makes the
+argument in one look.
+
+### What is deliberately not here
+
+No client and no policy number. The row-level reads pull `POLICY__c` because
+the dues tab is keyed on it, and it never leaves the function — the same rule
+the conversion screen follows, asserted the same way.
+
+### Thirteen queries, cached a quarter of an hour
+
+One aggregate read gives every rider's in-force count, dated count, cover and
+premium at once, because `COUNT(field)` counts the rows where that field is
+set — so the gap between two counts in one query *is* the blind spot. Then per
+rider: one row-level read for what has already gone (it has to name agents),
+one for the twelve months ahead (the month is the near end of the same list),
+and one aggregate for what rides on a policy with no life expiry of its own.
+`IRID_HOLD_S` holds the answer for fifteen minutes.
+
+
 ## 3c. What the Act actually says, per wall
 
 Read out of the Act itself, not recalled. Earlier drafts of this file got s268

@@ -47,7 +47,8 @@ const PAGES = [
   ['The licence year',  '/intelligence/wall/licence.html'],
   ['Birthdays today',   '/intelligence/wall/book.html'],
   ['Conversions',       '/intelligence/wall/conversion.html'],
-  ['The permanent book', '/intelligence/wall/permanent.html']
+  ['The permanent book', '/intelligence/wall/permanent.html'],
+  ['Riders on a clock', '/intelligence/wall/riders.html']
 ];
 
 // What a leaf element that carries words looks like, and where it sits. The
@@ -119,6 +120,43 @@ const CONV = { ok: true, data: {
     .map((y, i) => ({ yr: y, n: i + 1, cover: (i + 1) * 500000 })),
   soonTotal: { n: 55, cover: 27500000 },
   notes: ['5 of this month\u2019s birthdays are on policies the dues tab says have lapsed.']
+} };
+
+/* A rider month, invented. Two days with something on them — one gone, one
+   still to come — plus the two piles that are never empty, because it is
+   those the screen has to hold when the month is thin. */
+const RID = { ok: true, data: {
+  configured: true, generatedAt: '2026-09-12', month: 'September', day: 12,
+  daysInMonth: 30, window: 12, duesRead: true,
+  head: { n: 1306, cover: 642083002, prem: 497952 },
+  book: { n: 5924, dated: 2644, blank: 3280, cover: 1540686000, prem: 1586000 },
+  gone: { n: 74, cover: 26125856, prem: 24040 },
+  thisMonth: { n: 3, cover: 350000, prem: 200 },
+  ahead: { n: 9, cover: 2100000, prem: 1400 },
+  days: [{ day: 5, n: 1, cover: 250000, past: true, kinds: { ci: 1 } },
+         { day: 24, n: 2, cover: 100000, past: false, kinds: { ad: 1, wp: 1 } }],
+  months: [{ ym: '2026-09', lab: 'September 2026', n: 3, cover: 350000 },
+           { ym: '2026-11', lab: 'November 2026', n: 2, cover: 750000 },
+           { ym: '2027-02', lab: 'February 2027', n: 4, cover: 1000000 }],
+  kinds: [
+    { key: 'ci', lab: 'Critical illness', does: 'pays on diagnosis', have: 2958, dated: 1615,
+      blank: 1343, cover: 1277983100, prem: 1370913, gone: { n: 51, cover: 23166342, prem: 23457 },
+      month: { n: 1 }, ahead: { n: 5 }, forever: { n: 1092, cover: 601071002, prem: 488772 } },
+    { key: 'ad', lab: 'Accidental death', does: 'accident only', have: 1320, dated: 517,
+      blank: 803, cover: 262587454, prem: 36254, gone: { n: 15, cover: 2955514, prem: 30 },
+      month: { n: 1 }, ahead: { n: 1 }, forever: { n: 210, cover: 41000000, prem: 9000 } },
+    { key: 'wp', lab: 'Waiver of premium', does: 'pays the premium if they cannot', have: 1616,
+      dated: 483, blank: 1133, cover: null, prem: 177222, gone: { n: 7, cover: 0, prem: 508 },
+      month: { n: 1 }, ahead: { n: 2 }, forever: { n: 0, cover: 0, prem: 0 } },
+    { key: 'di', lab: 'Disability income', does: 'a monthly benefit', have: 30, dated: 29,
+      blank: 1, cover: 115429, prem: 1802, gone: { n: 1, cover: 3000, prem: 45 },
+      month: { n: 0 }, ahead: { n: 1 }, forever: { n: 4, cover: 12000, prem: 180 } }
+  ],
+  agents: 'Ada Bram Cleo Dev Esme Finn Gale Hana Iris Jude Kit Lena'.split(' ')
+    .map((nm, i) => ({ name: nm + ' Quill', n: 12 - i, collect: i % 3 ? 1 : 0,
+                       oldest: 2015 + i, cover: (12 - i) * 400000, prem: (12 - i) * 300 })),
+  agentCount: 18,
+  notes: ['3,280 of the 5,924 riders in force carry no expiry date at all, so no screen can tell you when they end.']
 } };
 
 async function fresh(b, w, h, feed) {
@@ -209,10 +247,52 @@ async function fresh(b, w, h, feed) {
     await s.ctx.close();
   }
 
+  /* ── The riders screen, at every size ────────────────────────────────────
+     The month is the thin part of this screen and the two piles are the thick
+     part, so what has to survive a short screen is the strip and the four
+     riders — not the agent list, which is the one allowed to give way. */
+  console.log('\nAnd riders on a clock holds at every size:\n');
+  for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
+                             [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
+    const s = await fresh(b, w, h, RID);
+    await s.page.goto(`http://localhost:${PORT}/intelligence/wall/riders.html`, { waitUntil: 'domcontentloaded' });
+    await s.page.waitForTimeout(1300);
+    const m = await s.page.evaluate(MEASURE);
+    ok(tag.padEnd(22) + ' nothing below the fold, nothing cut through it',
+       m.overflow <= 2 && m.sideways <= 2 && !m.below.length && !m.through.length,
+       'overflow ' + m.overflow + 'px, below ' + JSON.stringify(m.below.slice(0, 2)) +
+       ', through ' + JSON.stringify(m.through.slice(0, 2)));
+    const r = await s.page.evaluate(() => ({
+      cells: document.querySelectorAll('#rCalCells b').length,
+      marked: document.querySelectorAll('#rCalCells b.has').length,
+      today: document.querySelectorAll('#rCalCells b.today').length,
+      days: document.querySelectorAll('#rDays div').length,
+      kinds: document.querySelectorAll('#rKinds .crow').length,
+      agents: document.querySelectorAll('#rList .crow').length,
+      owns: /more agents below the fold/.test(document.getElementById('rNote').textContent || ''),
+      named: (document.getElementById('rDays').textContent || '')
+    }));
+    /* All four riders, always. A screen that exists to show the four of them
+       and quietly drops one is worse than no screen. */
+    ok(tag.padEnd(22) + ' all four riders are drawn, and the month is whole',
+       r.kinds === 4 && r.cells === 30 && r.marked === 2 && r.today === 1,
+       JSON.stringify(r));
+    /* And each day says WHICH rider, because "something expires on the 24th"
+       is not a call anybody can make. */
+    ok(tag.padEnd(22) + ' each day names the rider that ends on it',
+       r.days === 2 && /Critical illness/.test(r.named) && /Accidental death/.test(r.named),
+       JSON.stringify(r.named.slice(0, 80)));
+    ok(tag.padEnd(22) + ' draws ' + r.agents + ' of twelve agent rows' +
+       (r.owns ? ', and owns up to the rest' : ''),
+       r.agents >= 3 && (r.agents === 12 || r.owns),
+       r.agents + ' rows, admits to the remainder: ' + r.owns);
+    await s.ctx.close();
+  }
+
   /* ── The rail ─────────────────────────────────────────────────────────────
      Two rows of stops at most, the controls beside them and not underneath,
      and the timer clear of both. */
-  console.log('\nThe rail, with thirteen stops on it:\n');
+  console.log('\nThe rail, with fourteen stops on it:\n');
   for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
                              [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
     const s = await fresh(b, w, h);
@@ -234,7 +314,7 @@ async function fresh(b, w, h, feed) {
         lifted: document.body.classList.contains('railup')
       };
     });
-    ok(tag.padEnd(22) + ' thirteen stops on at most two rows', m.rows <= 2 && m.stops === 13,
+    ok(tag.padEnd(22) + ' fourteen stops on at most two rows', m.rows <= 2 && m.stops === 14,
        m.stops + ' stops on ' + m.rows + ' rows');
     ok(tag.padEnd(22) + ' no stop lands on the timer', !m.onTimer.length, JSON.stringify(m.onTimer));
     ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnTimer);

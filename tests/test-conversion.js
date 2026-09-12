@@ -108,25 +108,25 @@ const agg = {
     /* Born 1986, written 2016 at thirty, ten years in force, twenty-three to
        run — the arithmetic the screen has to do, laid out so a wrong answer
        is obvious. */
-    { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1', dom: 20,
+    { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1',
       Date_Of_Birth__c: '1986-09-20', ISSUE_DATE__c: '2016-09-20', Life_Coverage_Expiry__c: '2049-09-20' },
-    /* Written at fifty, two years in force, and the contract runs out inside
-       two years — the row the runway exists to put first. */
+    /* The contract itself runs out inside two years, which is the one thing
+       about an expiry date this screen still reports. */
     { POLICY__c: 'POL-READY-B',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 6000000, Life_Premium__c: 3000, Life_Plan_01__c: 'FCT651',  dom: 3,
       Date_Of_Birth__c: '1974-09-03', ISSUE_DATE__c: '2024-09-03', Life_Coverage_Expiry__c: '2027-06-01' },
-    { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1', dom: 28,
+    { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1',
       Date_Of_Birth__c: '1990-09-28', ISSUE_DATE__c: '2020-09-28', Life_Coverage_Expiry__c: '2033-09-28' },
-    { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1', dom: 15,
+    { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1',
       Date_Of_Birth__c: '1980-09-15', ISSUE_DATE__c: '2010-09-15', Life_Coverage_Expiry__c: '2065-09-15' },
-    { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1', dom: 25,
+    { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1',
       Date_Of_Birth__c: '1970-09-25', ISSUE_DATE__c: '2005-09-25', Life_Coverage_Expiry__c: '2055-09-25' },
-    { POLICY__c: 'POL-EXCLUDED',  AGENT__r: { Name: 'Gone Away' },     Life_Coverage__c: 8000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT65 1', dom: 12,
+    { POLICY__c: 'POL-EXCLUDED',  AGENT__r: { Name: 'Gone Away' },     Life_Coverage__c: 8000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT65 1',
       Date_Of_Birth__c: '1975-09-12', ISSUE_DATE__c: '2015-09-12', Life_Coverage_Expiry__c: '2040-09-12' },
-    /* No expiry date at all: it must not land in a runway band, and it must
-       be counted as such rather than silently dropped. */
+    /* No expiry date at all: it must be counted as such rather than silently
+       dropped, and it must not reach the contract-running-out figure. */
     { POLICY__c: 'POL-BRANDNEW',  AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 1000000, Life_Premium__c: 500,  Life_Plan_01__c: 'FCT65',   dom: 30,
       Date_Of_Birth__c: '1996-09-30', ISSUE_DATE__c: '2026-09-01', Life_Coverage_Expiry__c: null },
-    { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS', dom: 1,
+    { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS',
       Date_Of_Birth__c: '1988-09-01', ISSUE_DATE__c: '2018-09-01', Life_Coverage_Expiry__c: '2048-09-01' }
   ],
   conv:   [{ n: 1172, cover: 1687790726, prem: 900000 }],
@@ -191,9 +191,10 @@ ok('and how many of theirs need collecting first',
    day, the age they turn on it, and the order to ring them in — and this is
    the assertion that stops a future version drifting back to arithmetic
    nobody can use. */
-ok('the query asks for the date of birth and the day of the month',
+ok('the query asks for the date of birth, and works the day out itself',
    /Date_Of_Birth__c/.test(asked.join('\n')) &&
-   /DAY_IN_MONTH\(Date_Of_Birth__c\) dom/.test(asked.join('\n')));
+   !/DAY_IN_MONTH/.test(asked.join('\n')),
+   'DAY_IN_MONTH in a row-level SELECT is a malformed query — see the shape check below');
 ok('the month comes back day by day', (d.days || []).length === 5,
    JSON.stringify(d.days));
 ok('a day still to come is not marked past',
@@ -266,8 +267,10 @@ ok('only cover that has not already expired', asked.every(q => /Life_Coverage_Ex
 ok('this month’s birthdays, by month number', /CALENDAR_MONTH\(Date_Of_Birth__c\) = 9/.test(all));
 /* The day of the month comes back on every row rather than as a second
    aggregate, because the row has to be looked up in the dues tab anyway. */
-ok('the day of the month comes back on each row',
-   /DAY_IN_MONTH\(Date_Of_Birth__c\) dom/.test(all));
+ok('the date of birth comes back on each row, and the day is worked out here',
+   /Date_Of_Birth__c/.test(all) && !/DAY_IN_MONTH/.test(all) &&
+   (d.days || []).some(x => x.day === 20),
+   'the 20th is in the fixture as a date, never as a day');
 ok('and the policy number with it, so the dues tab can be searched',
    /SELECT POLICY__c/.test(all));
 /* The deadline counts down the book that ENDS, never the book that converts.
@@ -317,6 +320,23 @@ const r = JSON.parse(env.intelDoPost_({ postData: { contents: JSON.stringify({ a
                         .getContent());
 ok('intel.conversion answers', r.ok === true, JSON.stringify(r).slice(0, 160));
 ok('and hands back the screen’s data', !!(r.data && r.data.configured));
+
+/* ── The shape of the reads themselves ────────────────────────────────────
+   Salesforce allows field aliasing ONLY in an aggregate query. A row-level
+   SELECT carrying "DAY_IN_MONTH(Date_Of_Birth__c) dom" is rejected outright —
+   "only aggregate expressions use field aliasing" — and this screen asked for
+   exactly that until 12 September 2026, which would have emptied the month,
+   the day strip and the agent table on the live org while every test passed.
+   So the shape of the query is now asserted, not just its answer. */
+console.log('\nAnd the reads are shaped the way Salesforce will accept:\n');
+const rowLevel = asked.filter(q => !/\bCOUNT\(|\bSUM\(|GROUP BY/.test(q));
+ok('there is a row-level read to check', rowLevel.length > 0, String(asked.length) + ' queries');
+rowLevel.forEach(q => {
+  const list = q.slice(q.indexOf('SELECT ') + 7, q.indexOf(' FROM '));
+  const aliased = list.split(',').map(x => x.trim()).filter(x => /\s/.test(x));
+  ok('no field aliasing in a row-level read', aliased.length === 0, JSON.stringify(aliased));
+  ok('and no aggregate function in one either', !/DAY_IN_MONTH|CALENDAR_(YEAR|MONTH)\(/.test(list), list);
+});
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nAll good.\n');
 process.exit(fails ? 1 : 0);
