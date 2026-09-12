@@ -185,13 +185,30 @@ same applies to `Liberator-Rej-Original-with-Saver` and
 
 `drive.google.com/drive/folders/1NTrhF6ZolS1zS295jdsubWYeF_oUrcwU` — two
 libraries, the life side (Pension · Personal Accident · Life · Group) and
-sixteen general-insurance lines. **Filed where it says, not where it belongs**:
+sixteen general-insurance lines.
 
-| File | Sits in | Actually is |
-|---|---|---|
-| `Life-Secure (3).pdf` | Personal Accident | a pension product |
-| `LIFECARE QUANTUM AND PROVISOR` | Group | its first line reads **INDIVIDUAL HEALTH POLICY** |
-| `Xpress-Life.pdf` / `Xpress-Life (1).pdf` | Life | the same file twice |
+**The life-side files are real clients' policies, not blank specimens.**
+Found 12 September 2026 while verifying duplicates: `Life-Secure` is Sooklal
+Ganesh's policy 8003950872, `Rejuvenator_Only 2` is Alessandro Charles'
+5003233621, `Xpress-Life` is Michelle Guevara's 1000332331 — each with the
+premium, the cover, and in one case the age and sex. The general-insurance
+side is the opposite and is what a product library should look like: blank
+policy wordings, most of them marked 'specimen', no client anywhere.
+
+Treat the life-side documents as client data. Quote the wording from them;
+never the names, policy numbers or figures, and never put one in a deck.
+They should be replaced with clean specimens.
+
+Tidied the same day — three exact duplicates trashed after verifying each
+byte-identical and content-identical (`Life-Secure (3)` in Personal
+Accident, `Xpress-Life (1)`, and a loose `GG Private Motor Policy` at the
+top of General Insurance), and `Sales Support Challenges.png` moved out of
+Cyber Guard to the library root. Every general subfolder is correctly
+populated; the filing is in better shape than it first looked.
+
+`LIFECARE QUANTUM AND PROVISOR` sits in Group and its first line reads
+**INDIVIDUAL HEALTH POLICY**. Left there on purpose — the branch keeps
+health under Group, so that is a filing decision, not an error.
 
 Group health is the `MASTER GROUP SPECIMEN POLICY CONTRACT 2019`. Health
 "insures … against loss by reason of specified medical expenses" — it pays
