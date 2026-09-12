@@ -86,10 +86,17 @@
 
   /* The timer. Always on, on every slide: which story, and how long it has
      left, with its own small track for a screen whose top edge is cut off. */
+  /* WHILE THE RAIL IS UP THE TIMER SITS ABOVE IT. Reserving a gutter for the
+     timer inside the rail did not work — the timer is as wide as its text, so
+     the gutter was right at 1920 and too narrow at 1366, where a stop landed
+     on top of it. Moving the timer instead is exact at every width, and the
+     rail is only up while somebody is standing at the screen. */
   #hud{position:fixed;right:18px;bottom:14px;z-index:32;display:flex;align-items:center;gap:11px;
+    transition:bottom .3s ease;
     padding:8px 13px;border-radius:999px;background:rgba(6,28,49,.8);border:1px solid var(--line);
     box-shadow:0 4px 18px rgba(0,0,0,.35);font:600 13px var(--font-b);color:var(--dim);
     white-space:nowrap;font-variant-numeric:tabular-nums}
+  body.railup #hud{bottom:calc(var(--railh,96px) + 12px)}
   #hud b{color:var(--ink);font-weight:700}
   #hud .sep{color:var(--faint)}
   #hud .track{width:110px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;flex:none}
@@ -101,25 +108,45 @@
   /* The rail: the stops and the controls. For the person setting the screen up,
      so it fades — unless the wall is paused, when it stays. It keeps clear of
      the timer on the right. */
+  /* TWELVE STOPS HAVE TO FIT ON ONE LINE. At eleven the rail still did; the
+     twelfth wrapped it onto a second row, and a two-row rail over the foot of
+     a slide is the first thing a room notices. So the stops shrink with the
+     screen instead of wrapping, and the reserve on the right that keeps them
+     clear of the timer shrinks with them. It may still wrap below about
+     1200px — the phone layout is one column and one frame anyway. */
   #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
-    padding:34px 440px 15px 26px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;
+    padding:clamp(20px,3vh,34px) 26px clamp(10px,1.6vh,15px) 26px;
+    display:flex;flex-wrap:nowrap;align-items:center;gap:clamp(5px,.8vh,8px) clamp(6px,.6vw,10px);
     background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
     transition:opacity .45s ease}
   #rail.hide{opacity:0;pointer-events:none}
-  #dots,.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .ctl{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
+  /* THE RAIL IS TWO ROWS AT MOST, NEVER THREE. #rail used to wrap, so with
+     twelve stops the dots took two lines and pushed the controls onto a
+     third — which is what a room reads as jumbled. The rail itself no longer
+     wraps: the dots wrap inside their own block and the controls stay beside
+     them, so the worst case is two rows with Pause and Narrate on the right
+     of them rather than orphaned underneath. */
+  #dots{display:flex;gap:clamp(5px,.5vh,8px) clamp(6px,.5vw,9px);flex-wrap:wrap;
+    align-items:center;flex:1 1 auto;min-width:0}
+  /* The controls sit at the LEFT end of the rail, not the right. On the right
+     they walked into the timer the moment the dots needed two rows on a
+     1366-wide screen; on the left they are as far from it as the bar allows
+     and the reserve on the right belongs to the timer alone. */
+  .ctl{display:flex;gap:8px;align-items:center;flex:none;order:-1;
+    margin-right:14px;padding-right:14px;border-right:1px solid var(--line)}
   .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
-    color:var(--dim);font:600 12px var(--font-b);padding:6px 13px;border-radius:999px;
+    color:var(--dim);font:600 clamp(9.5px,.58vw,11.5px) var(--font-b);
+    padding:clamp(4px,.7vh,6px) clamp(7px,.56vw,11px);border-radius:999px;
     cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
   .dot:hover{color:var(--ink)}
   .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
     border-color:#c9942c;font-weight:700}
   .dot.dead{opacity:.35;text-decoration:line-through}
-  .ctl .dot{font-size:13px;padding:6px 12px}
+  .ctl .dot{font-size:clamp(11px,.68vw,13px);padding:clamp(4px,.7vh,6px) clamp(9px,.62vw,12px)}
 
   @media (max-width:760px){
-    #rail{padding:22px 12px 58px 12px}
-    .ctl{margin-left:0;padding-left:0;border-left:0}
+    #rail{padding:22px 12px 58px 12px;flex-wrap:wrap}
+    .ctl{order:0;margin-right:0;padding-right:0;border-right:0}
     #hud{right:10px;bottom:10px;padding:7px 11px;font-size:12px;gap:9px}
     #hud .tab,#hud .tabsep{display:none}
     #hud .track{width:72px}
@@ -535,10 +562,21 @@ nar.onclick = narrate;
 /* The rail is for the person setting the screen up, not for the floor — so it
    fades, unless the wall is paused, when it stays until it goes on. */
 var hideAt;
+/* body.railup is what lifts the timer clear of the rail. It is a class on the
+   body rather than a :has() selector because the wall runs on a television
+   browser that predates :has(), and a selector it cannot parse would drop the
+   rule silently and put the timer back under the stops. */
+function railup(on) {
+  document.body.classList[on ? 'add' : 'remove']('railup');
+  if (on) document.documentElement.style.setProperty('--railh', rail.offsetHeight + 'px');
+}
 function wake() {
   rail.classList.remove('hide');
+  railup(true);
   clearTimeout(hideAt);
-  if (!paused) hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
+  if (!paused) hideAt = setTimeout(function () {
+    rail.classList.add('hide'); railup(false);
+  }, 4000);
 }
 ['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
 wake();

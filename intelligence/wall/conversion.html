@@ -40,7 +40,7 @@
       radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
       linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
 
-  header{display:flex;align-items:center;gap:14px;padding:14px 26px 10px}
+  header{display:flex;align-items:center;gap:14px;padding:12px 26px 8px}
   header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
     background:#07131f;display:grid;place-items:center}
   header .mark img{width:40px;height:40px;display:block}
@@ -133,7 +133,12 @@
 <style>
   /* This screen's own rows. Everything above is the wall's, shared with every
      other story; everything below belongs to conversions alone. */
-  .stack{display:grid;grid-template-rows:auto 1fr;gap:18px;min-height:0}
+  /* Both cards get a bounded share of the column. With "auto 1fr" the agent
+     table took whatever height its rows wanted and pushed the deadline panel
+     off the bottom of a 720-high screen; with two fractions neither can
+     starve the other, and each trims its own list to what it is given. */
+  .stack{display:grid;grid-template-rows:minmax(0,1.62fr) minmax(0,1fr);
+    gap:clamp(9px,1.6vh,18px);min-height:0}
   .reqline{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
     font-size:12px;color:var(--faint);line-height:1.5}
   .reqline b{color:var(--dim);font-family:var(--font-d);font-weight:700}
@@ -141,39 +146,62 @@
   /* Four columns rather than three: this screen is asked "which agent and
      how much cover", so cover gets a column of its own and the agent's
      biggest single case gets the last one. */
-  main.conv{display:grid;gap:14px;padding:0 26px 22px;
-    grid-template-columns:minmax(320px,.86fr) 1.6fr;
-    /* auto then 1fr, or the taller right-hand stack pushes the first row
-       down and leaves a hole between the two cards on the left. */
-    grid-template-rows:auto 1fr;align-items:start}
+  /* ONE SCREEN, NEVER MORE. body is overflow:hidden on every wall page, so
+     anything past the fold is not scrolled to — it is silently gone, and at
+     1366x768 that was half this slide. The grid is therefore pinned to the
+     viewport height and every child is allowed to shrink (min-height:0),
+     which is the part CSS grid does not do on its own. */
+  main.conv{display:grid;gap:clamp(8px,1.2vh,14px);
+    padding:0 26px clamp(10px,2vh,22px);
+    grid-template-columns:minmax(300px,.82fr) 1.6fr;
+    grid-template-rows:auto minmax(0,1fr);
+    height:calc(100vh - 64px);min-height:0;align-items:stretch}
+  main.conv > .card,main.conv > .stack{min-height:0;overflow:hidden}
+  /* Every figure on this screen is sized against the viewport, so the same
+     page reads on a 1366 laptop, the branch's 1080 television and a 4K panel
+     without three sets of hand-tuned numbers. */
+  main.conv .big{font-size:clamp(42px,6.6vh,80px)}
+  main.conv .cap2{font-size:clamp(11px,1.45vh,13.5px);margin-top:clamp(4px,.8vh,9px)}
+  main.conv .split{margin-top:clamp(8px,1.4vh,16px);padding-top:clamp(7px,1.2vh,14px)}
+  main.conv .split .v{font-size:clamp(19px,2.6vh,27px)}
+  main.conv .split .k{font-size:clamp(9.5px,1.15vh,11px)}
+  main.conv .card h3{font-size:clamp(10px,1.25vh,12px)}
+  main.conv .warn{font-size:clamp(10.5px,1.3vh,12.5px);padding:clamp(6px,1vh,10px) 11px}
   /* The hero and the instruction share the left column; the stack holds the
      right. Without this the second card lands under the table. */
   main.conv > .card:nth-of-type(2){grid-column:1;grid-row:2}
   main.conv > .stack{grid-column:2;grid-row:1 / span 2}
+  /* The agent table's card takes the height it is given and the list inside
+     it is trimmed to fit by script — a wall is not scrolled, so a row that
+     does not fit must not be drawn at all. */
+  .stack > .card{display:flex;flex-direction:column;min-height:0}
+  #cList,#cYears{min-height:0;overflow:hidden;flex:1 1 auto}
+  #cMix,#cSoonSum{flex:none}
   .chead,.crow{display:grid;grid-template-columns:1fr 52px 74px 100px 100px;gap:9px;align-items:center}
   .chead{font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;
     color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
   .chead div+div,.crow div+div{text-align:right}
-  .crow{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .crow{padding:clamp(3px,.72vh,8px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
   .crow:last-child{border-bottom:none}
-  .crow .nm{font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .crow .v{font-family:var(--font-d);font-weight:700;font-size:16px;font-variant-numeric:tabular-nums}
+  .crow .nm{font-size:clamp(12px,1.55vh,15px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .v{font-family:var(--font-d);font-weight:700;font-size:clamp(12.5px,1.65vh,17px);font-variant-numeric:tabular-nums}
   .crow .v.gold{color:var(--gold)} .crow .v.amber{color:var(--gold)}
-  .crow .v.dim{color:var(--dim);font-weight:600;font-size:14px}
+  .crow .v.dim{color:var(--dim);font-weight:600;font-size:clamp(11.5px,1.45vh,14px)}
   /* The plan families, as chips — three typings of one product collapse onto
      one chip, which is the only way this reads at six feet. */
   /* Every band on the birthday wall ends with an instruction, because a topic
      is something to think about and an order is something to do. Same here. */
   .say{margin:0;padding:0;list-style:none}
-  .say li{padding:10px 0;border-bottom:1px solid rgba(255,255,255,.06);
-    font-size:13.5px;line-height:1.5;color:var(--dim)}
+  .say li{padding:clamp(5px,1.1vh,11px) 0;border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:clamp(11px,1.5vh,14px);line-height:1.45;color:var(--dim)}
   .say li:last-child{border-bottom:none}
   .say b{color:var(--ink);font-weight:700}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:clamp(5px,1vh,10px)}
   .chip{display:flex;gap:8px;align-items:baseline;padding:6px 11px;border-radius:999px;
     background:var(--card);border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
   .chip b{font-family:var(--font-d);font-size:14px;color:var(--ink)}
-  .yr{display:grid;grid-template-columns:54px 1fr 96px;gap:10px;align-items:center;margin:7px 0}
+  .yr{display:grid;grid-template-columns:54px 1fr 96px;gap:10px;align-items:center;
+    margin:clamp(3px,.62vh,7px) 0}
   .yr .lab{font:700 13px var(--font-d);color:var(--dim);font-variant-numeric:tabular-nums}
   .yr .track{height:9px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
   .yr .fill{height:100%;border-radius:99px;background:var(--grad-gold)}
@@ -215,43 +243,29 @@
     <h3 id="cTitle">Cover that can be converted</h3>
     <div class="big" id="cCover">&mdash;</div>
     <div class="cap2" id="cCap">Reading the portfolio&hellip;</div>
-    <!-- The half that still has the birthday ahead of it is the half where
-         today's age still buys today's rate. It is the only urgency on this
-         screen that expires on a known date. -->
-    <div class="split">
-      <div><div class="v amber" id="cAhead">&mdash;</div><div class="k" id="cAheadK">birthday still to come &mdash; today&rsquo;s age, today&rsquo;s rate</div></div>
-      <div><div class="v" id="cCases">&mdash;</div><div class="k">policies, across the month</div></div>
-    </div>
-    <!-- A policy in arrears cannot be converted until somebody collects, and
-         a lapsed one cannot be converted at all. Salesforce knows neither, so
-         both come off the branch's own dues tab. -->
+    <!-- ONE row of tiles, not four. This card carried eight figures and five
+         rules across it and read as a pile of numbers at six feet, which is
+         the only distance that matters. The two that decide what an agent
+         does this week are whether the policy is clear to convert or has a
+         premium to collect first; everything else is context and belongs on
+         a line of text, not in a tile. -->
     <div class="split">
       <div><div class="v good" id="cReady">&mdash;</div><div class="k">ready &mdash; in force, nothing owed</div></div>
       <div><div class="v amber" id="cCollect">&mdash;</div><div class="k">collect the premium first</div></div>
     </div>
-    <div class="split">
-      <div><div class="v" id="cPrem">&mdash;</div><div class="k">annual premium already paying on them</div></div>
-      <div><div class="v" id="cAgents">&mdash;</div><div class="k">agents hold them</div></div>
-    </div>
-    <!-- The whole book, for scale, and the part of it that carries no right
-         at all. A non-convertible term is not a worse lead; it is a different
-         one, and it needs a fresh application. -->
-    <div class="split">
-      <div><div class="v" id="cPool">&mdash;</div><div class="k" id="cPoolK">Flexi convertible term in force, every month</div></div>
-      <div><div class="v amber" id="cNon">&mdash;</div><div class="k" id="cNonK">expires, and that is all &mdash; Liberator, Newlife, non-convertible Flexi</div></div>
-    </div>
+    <div class="reqline" id="cPoolLine"></div>
     <div class="warn" id="cWarn" style="display:none"></div>
   </section>
 
   <section class="card">
     <h3>What the call is</h3>
+    <!-- Six paragraphs of it ran off the bottom of a 768-high screen and
+         nobody standing up reads sixty words anyway. Three lines, one idea
+         each, in the order the agent needs them. -->
     <ul class="say">
-      <li><b>Only term converts.</b> Flexi Term with a C in the code, and nothing else. Liberator and Newlife to sixty-five expire, and the branch book proves it &mdash; not one of them has ever been converted.</li>
-      <li><b>Convertible means no medical.</b> No questions, no evidence of health, and no chance of being declined. Say that first.</li>
-      <li><b>It has to be in force and paid up.</b> A lapsed policy cannot be converted at all, and one in arrears cannot be converted until somebody collects. The gold column is that call, and it comes first.</li>
-      <li><b>It is priced at the age they have reached.</b> Before the birthday is cheaper than after it, and that is the whole reason this list is a month.</li>
-      <li><b>The cover does not grow &mdash; the promise does.</b> Same sum assured, for life, instead of ending on a date.</li>
-      <li><b>The amber tile is a different call, and a harder one.</b> Nothing to exchange, so it is a fresh application and fresh underwriting &mdash; and it has to happen before the date, not after it.</li>
+      <li><b>Only term converts.</b> Flexi Term with a C. Liberator and Newlife to sixty-five expire &mdash; nothing to exchange.</li>
+      <li><b>In force and paid up, or not at all.</b> The gold column is the call that comes first. Collect, then convert.</li>
+      <li><b>No medical, no questions, no decline.</b> And it is priced at the age they are today, not next month.</li>
     </ul>
   </section>
 
@@ -319,43 +333,57 @@ function load(){
    hour, so a second screen asking costs nothing. Half-hourly is plenty: a
    birthday does not move. */
 load(); setInterval(load,30*60*1000);
+/* The agent list is trimmed to the rows that fit, so a resized window has to
+   redraw it. Debounced, because a drag fires this continuously. */
+var reflow=null;
+addEventListener("resize",function(){ clearTimeout(reflow); reflow=setTimeout(paint,180); });
 
+var hidden = 0;
+/* Take children off the end of a list until it fits the box it is in, and
+   report how many were taken. clientHeight is 0 before the first layout, in
+   which case nothing is trimmed and the next paint gets it right. */
+function fit(box, keep){
+  var gone = 0;
+  if (!box || !box.clientHeight) return 0;
+  while (box.children.length > keep && box.scrollHeight > box.clientHeight) {
+    box.removeChild(box.lastElementChild); gone++;
+  }
+  return gone;
+}
 function paint(){
-  var ok = !!D.configured, h = D.head || {}, ahead = h.ahead || {};
+  hidden = 0;
+  var ok = !!D.configured, h = D.head || {};
   $("#cTitle").textContent = ok ? "Cover that can be converted \u00b7 " + D.month
                                 : "Cover that can be converted";
   $("#cCover").textContent  = ok ? money(h.cover) : "\u2014";
-  $("#cAhead").textContent  = ok ? money(ahead.cover) : "\u2014";
-  $("#cAheadK").textContent = ok && ahead.n
-    ? ahead.n + " of them \u2014 birthday still to come, today\u2019s age, today\u2019s rate"
-    : "birthday still to come \u2014 today\u2019s age, today\u2019s rate";
-  $("#cCases").textContent  = ok ? n(h.cases) : "\u2014";
   var st = D.state || {};
   $("#cReady").textContent   = ok && st.ready   ? money(st.ready.cover) : "\u2014";
   $("#cCollect").textContent = ok && st.collect ? money(st.collect.cover) : "\u2014";
-  $("#cPrem").textContent   = ok ? money(h.prem) : "\u2014";
-  $("#cAgents").textContent = ok ? n(D.agentCount) : "\u2014";
 
-  var p = D.pool || {}, pc = p.conv || {}, pn = p.nonconv || {};
-  /* The prize is the pool that is actually convertible today, which is the
-     dues tab's "ready" plus its "collect first" — never the raw count. */
-  var lv = p.live || null;
-  $("#cPool").textContent = ok ? money(lv ? lv.ready.cover : pc.cover) : "\u2014";
-  $("#cPoolK").textContent = ok
-    ? (lv
-        ? lv.ready.n + " Flexi convertible policies in force and current, every month \u2014 " +
-          "and " + lv.collect.n + " more behind a premium"
-        : (pc.n ? pc.n + " Flexi convertible policies in Salesforce \u2014 not tested for arrears" : "Flexi convertible term in force"))
-    : "Flexi convertible term in force, every month";
-  $("#cNon").textContent  = ok ? money(pn.cover) : "\u2014";
-  $("#cNonK").textContent = ok && pn.n
-    ? pn.n + " policies that expire and cannot be converted \u2014 a fresh application, not a form"
-    : "expires, and that is all \u2014 Liberator, Newlife, non-convertible Flexi";
+  /* THE CAPTION CARRIES WHAT THE TILES USED TO. Policies, agents, premium and
+     the birthdays still ahead were four tiles; they are one sentence, which
+     is how a person would say it. */
+  var bits = [];
+  if (ok && h.cases) {
+    bits.push(n(h.cases) + " policies in " + D.month);
+    if (h.ahead && h.ahead.n) bits.push(h.ahead.n + " birthdays still to come");
+    if (D.agentCount) bits.push(n(D.agentCount) + " agents");
+    if (h.prem) bits.push(money(h.prem) + " of premium on them");
+  }
   $("#cCap").textContent = ok
-    ? (h.cases ? n(h.cases) + " policies whose client has a birthday in " + D.month +
-                 ", still paying, still in term"
-               : "Nobody in the convertible book has a birthday in " + D.month + ".")
+    ? (bits.length ? bits.join(" \u00b7 ")
+                   : "Nobody in the convertible book has a birthday in " + D.month + ".")
     : (D.error || "No feed yet.");
+
+  /* The whole book, for scale, on one line rather than in two big tiles. */
+  var p = D.pool || {}, pc = p.conv || {}, pn = p.nonconv || {}, lv = p.live || null;
+  var line = "";
+  if (ok) {
+    line = "<b>" + money(lv ? lv.ready.cover : pc.cover) + "</b> convertible and current across every month"
+         + (lv && lv.collect.n ? " \u00b7 <b>" + lv.collect.n + "</b> more behind a premium" : "")
+         + " \u00b7 <b>" + money(pn.cover) + "</b> that only expires";
+  }
+  $("#cPoolLine").innerHTML = line;
 
   var w = $("#cWarn"), msgs = (D.notes || []).slice(0, 2);
   if (!ok && D.error) msgs = [D.error];
@@ -364,6 +392,11 @@ function paint(){
 
   /* WHICH AGENT AND HOW MUCH COVER — the question this screen was added to
      answer, so it is the widest thing on it. */
+  /* A WALL IS NOT SCROLLED, so a row that does not fit must not be drawn —
+     on a 768-high screen the fourteenth agent was simply invisible and
+     nothing on the wall said so. Draw them all, then take them off the end
+     until the list fits its card. Measured rather than estimated: a guess at
+     the row height threw away a row that had room for it. */
   var list = $("#cList"), rows = (D.agents || []);
   list.innerHTML = rows.length ? rows.map(function(a){
     return '<div class="crow">' +
@@ -375,26 +408,32 @@ function paint(){
     '</div>';
   }).join("") : '<div class="cap">' + (ok ? "No birthdays in the convertible book this month."
                                           : "Waiting on the feed.") + '</div>';
+  hidden = fit(list, 3);
 
   var mix = $("#cMix"), fams = (D.mix || []);
   mix.innerHTML = fams.map(function(f){
     return '<span class="chip">' + esc(f.label) + ' <b>' + n(f.n) + '</b> \u00b7 ' + money(f.cover) + '</span>';
-  }).join("");
+  }).join("") + (hidden ? '<span class="chip">and <b>' + hidden + '</b> more agents below the fold</span>' : "");
 
   /* THE DEADLINE. Bars are scaled to the biggest year, because the shape of
      the next decade is what a room reads, not the absolute height. */
   var soon = (D.soon || []), max = 0;
   soon.forEach(function(r){ if(r.cover > max) max = r.cover; });
-  $("#cYears").innerHTML = soon.length ? soon.map(function(r){
+  /* Same rule as the agent table, and the rest fold into the summary line. */
+  var years = $("#cYears");
+  years.innerHTML = soon.length ? soon.map(function(r){
     var pct = max ? Math.max(3, Math.round(r.cover / max * 100)) : 0;
     return '<div class="yr"><div class="lab">' + r.yr + '</div>' +
       '<div class="track"><div class="fill" style="width:' + pct + '%"></div></div>' +
       '<div class="amt">' + money(r.cover) + ' \u00b7 ' + r.n + '</div></div>';
   }).join("") : '<div class="cap">' + (ok ? "Nothing on the Flexi book expires inside the window."
                                           : "Waiting on the feed.") + '</div>';
-  var st = D.soonTotal || {};
-  $("#cSoonSum").textContent = ok && st.n
-    ? st.n + " policies, " + money(st.cover) + " of cover, gone within " + D.years + " years. There is nothing to convert \u2014 it is a fresh application or it is nothing."
+  var yhid = fit(years, 2);
+  var tot = D.soonTotal || {};
+  $("#cSoonSum").textContent = ok && tot.n
+    ? tot.n + " policies, " + money(tot.cover) + " of cover, gone within " + D.years + " years"
+      + (yhid ? " (" + yhid + " later years not shown)" : "")
+      + ". There is nothing to convert \u2014 a fresh application, or nothing."
     : "";
   $("#cSoonH").textContent = ok ? "Cover that simply ends \u00b7 next " + D.years + " years" : "Cover that simply ends";
 }
