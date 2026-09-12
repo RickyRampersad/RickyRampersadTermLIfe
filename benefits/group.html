@@ -21,32 +21,9 @@
    structure, gold marks the one thing that needs attention and nothing
    else. A page where four things are gold is a page with no emphasis.
    ══════════════════════════════════════════════════════════════════════ */
-:root{
-  --navy:#06303A; --navy2:#0A4655; --blue:#0E7E92; --gold:#E08A1E; --lightblue:#E8F4F6;
-  --ink:#10222F; --paper:#F4F7F9; --surface:#FFF; --surface2:#EFF4F7;
-  --slate:#5A6E7C; --line:#DBE4EA; --line2:#EDF1F5;
-  --go:#1B7350; --warn:#9A6714; --stop:#A2342A;
-  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
-  --display:Optima,"Palatino Linotype",Georgia,serif;
-  --mono:ui-monospace,"SF Mono",Menlo,monospace;
-  --lift:0 1px 2px rgba(6,48,58,.05), 0 6px 18px -8px rgba(6,48,58,.14);
-  --lift2:0 2px 4px rgba(6,48,58,.06), 0 18px 40px -18px rgba(6,48,58,.28);
-  --r:10px;
-}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --ink:#DEE9F0; --paper:#061019; --surface:#0C1F2B; --surface2:#122B3A;
-  --navy:#8FC0DE; --navy2:#6FA9CC; --blue:#5CAFC6; --lightblue:#102636; --slate:#93A9B8;
-  --line:#1C3A4C; --line2:#16303F;
-  --go:#54B389; --warn:#D8A65C; --stop:#D97064;
-  --lift:0 1px 2px rgba(0,0,0,.4); --lift2:0 18px 40px -18px rgba(0,0,0,.7);
-}}
-:root[data-theme="dark"]{
-  --ink:#DEE9F0; --paper:#061019; --surface:#0C1F2B; --surface2:#122B3A;
-  --navy:#8FC0DE; --navy2:#6FA9CC; --blue:#5CAFC6; --lightblue:#102636; --slate:#93A9B8;
-  --line:#1C3A4C; --line2:#16303F;
-  --go:#54B389; --warn:#D8A65C; --stop:#D97064;
-  --lift:0 1px 2px rgba(0,0,0,.4); --lift2:0 18px 40px -18px rgba(0,0,0,.7);
-}
+:root{}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){}}
+:root[data-theme="dark"]{}
 *{box-sizing:border-box}
 /* The demo bar and the account band are both display:flex, which beats the
    browser's own [hidden] rule. Without this the sample switcher stays on
@@ -88,8 +65,8 @@ nav a{color:var(--slate);text-decoration:none;cursor:pointer;padding:.4rem .7rem
   white-space:nowrap;transition:background .15s,color .15s}
 nav a:hover{color:var(--navy);background:var(--surface2)}
 nav a.on{color:#fff;background:var(--navy);font-weight:600}
-:root[data-theme="dark"] nav a.on{color:var(--paper)}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav a.on{color:var(--paper)}}
+:root[data-theme="dark"] nav a.on{color:var(--paper); }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) nav a.on{color:var(--paper); }}
 .me{text-align:right;line-height:1.3}
 .me b{display:block;font-size:13px;color:var(--navy);font-weight:600}
 
@@ -135,9 +112,9 @@ tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surfa
 .p-ok{background:#DCF0E6;color:var(--go)} .p-warn{background:#FBEFD7;color:var(--warn)}
 .p-bad{background:#F9E1DD;color:var(--stop)} .p-info{background:var(--lightblue);color:var(--blue)}
 .p-mute{background:var(--surface2);color:var(--slate)}
-:root[data-theme="dark"] .p-ok,:root[data-theme="dark"] .p-warn,:root[data-theme="dark"] .p-bad{background:var(--surface2)}
+:root[data-theme="dark"] .p-ok,:root[data-theme="dark"] .p-warn,:root[data-theme="dark"] .p-bad{background:var(--surface2); }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .p-ok,:root:not([data-theme="light"]) .p-warn,
-  :root:not([data-theme="light"]) .p-bad{background:var(--surface2)}}
+  :root:not([data-theme="light"]) .p-bad{background:var(--surface2); }}
 
 .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:1rem}
 .stats .card{padding:1.15rem 1.25rem}
@@ -148,8 +125,8 @@ tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surfa
 .owe{color:var(--stop);font-weight:700}
 tbody tr.owing{background:#FDF7EA}
 tbody tr.owing:hover{background:#FBF1DC}
-:root[data-theme="dark"] tbody tr.owing{background:#241D12}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#241D12}}
+:root[data-theme="dark"] tbody tr.owing{background:#241D12; }
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) tbody tr.owing{background:#241D12; }}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
 @media(max-width:900px){.grid2{grid-template-columns:1fr}}
 dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem 1.5rem;margin:.9rem 0 0}
@@ -160,9 +137,9 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
 .a-bad{border:1px solid #E0AEA6;border-left:4px solid var(--stop);background:#FBEDEA}
 .a-ok{border:1px solid #A6D6BC;border-left:4px solid var(--go);background:#ECF7F1}
 .a-info{border:1px solid #A5CCD9;border-left:4px solid var(--blue);background:#EDF6F9}
-:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2)}
+:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2); }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .a-warn,:root:not([data-theme="light"]) .a-bad,
-  :root:not([data-theme="light"]) .a-ok,:root:not([data-theme="light"]) .a-info{background:var(--surface2)}}
+  :root:not([data-theme="light"]) .a-ok,:root:not([data-theme="light"]) .a-info{background:var(--surface2); }}
 .alert b{color:var(--ink)}
 
 /* ── sign in ── */
@@ -193,7 +170,7 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
   font-size:12.5px;cursor:pointer;color:var(--slate)}
 .tabs button:hover{border-color:var(--blue);color:var(--blue)}
 .tabs button.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
-:root[data-theme="dark"] .tabs button.on{color:var(--paper)}
+:root[data-theme="dark"] .tabs button.on{color:var(--paper); }
 .scroll{max-height:420px;overflow:auto}
 
 /* ── terminations: the four stages ── */

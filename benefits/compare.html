@@ -2,36 +2,14 @@
 
 <link rel="stylesheet" href="branch.css">
 <style>
-:root{
-  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
-  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFFFFF; --surface-2:#EDF2F7;
-  --slate:#5C7080; --line:#D3DEE7; --line-soft:#E4EBF1;
-  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
-  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+:root{ --surface-2:#EDF2F7; --line-soft:#E4EBF1;
   --serif:Optima,"Palatino Linotype",Palatino,Georgia,serif;
-  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.7rem; --s5:2.6rem; --s6:4rem;
-}
+  --s1:.35rem; --s2:.7rem; --s3:1.1rem; --s4:1.7rem; --s5:2.6rem; --s6:4rem; }
 @media (prefers-color-scheme:dark){
-  :root{
-    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface-2:#142E40;
-    --navy:#7FB2D9; --blue:#5FA8DC; --gold:#F08A24; --lightblue:#12293A;
-    --slate:#8FA6B8; --line:#1E3B50; --line-soft:#17334A;
-    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
-  }
+  :root{ --surface-2:#142E40; --line-soft:#17334A; }
 }
-:root[data-theme="dark"]{
-  --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface-2:#142E40;
-  --navy:#7FB2D9; --blue:#5FA8DC; --gold:#F08A24; --lightblue:#12293A;
-  --slate:#8FA6B8; --line:#1E3B50; --line-soft:#17334A;
-  --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
-}
-:root[data-theme="light"]{
-  --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFFFFF; --surface-2:#EDF2F7;
-  --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
-  --slate:#5C7080; --line:#D3DEE7; --line-soft:#E4EBF1;
-  --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
-}
+:root[data-theme="dark"]{ --surface-2:#142E40; --line-soft:#17334A; }
+:root[data-theme="light"]{ --surface-2:#EDF2F7; --line-soft:#E4EBF1; }
 *{box-sizing:border-box}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
   font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased}

@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="robots" content="noindex"/>
+<title>Build a presentation — Ricky Rampersad Branch</title>
+<link rel="stylesheet" href="branch.css">
+<style>
+  /* Only what is genuinely this page's own — everything else is branch.css */
+  /* A <label> is inline, so its block children escaped the dashed border
+     and the whole drop zone rendered in pieces. */
+  .drop{display:block;border:2px dashed var(--line);border-radius:var(--r);padding:2.4rem 1.5rem;
+    text-align:center;background:var(--surface);cursor:pointer;transition:border-color .15s,background .15s}
+  .drop:hover,.drop.over{border-color:var(--teal2);background:var(--surface2)}
+  .drop .big{font-size:2rem;display:block;margin-bottom:.4rem}
+  .lines{display:flex;gap:.5rem;flex-wrap:wrap;margin:1rem 0}
+  .lnb{border:1.5px solid var(--line);border-radius:20px;padding:.4rem .95rem;font:inherit;font-size:13px;
+    background:var(--surface);cursor:pointer;color:var(--slate)}
+  .lnb.on{background:var(--navy);border-color:var(--navy);color:#fff;font-weight:600}
+  .doc{border:1px solid var(--line);border-left:4px solid var(--teal2);border-radius:var(--r2);
+    padding:.8rem 1rem;margin-bottom:.6rem;background:var(--surface);display:flex;
+    justify-content:space-between;gap:.8rem;flex-wrap:wrap;align-items:flex-start}
+  .doc.bad{border-left-color:var(--stop)}
+  .doc .nm{font-size:13.5px;font-weight:600;color:var(--navy)}
+  :root[data-theme="dark"] .doc .nm{color:var(--ink)}
+
+  /* ── the deck ── */
+  #deck{display:none}
+  .slide{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+    padding:2rem 2.2rem;margin-bottom:1.2rem;box-shadow:var(--lift);position:relative;min-height:340px}
+  .slide .snum{position:absolute;top:1.1rem;right:1.4rem;font-size:10px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--slate);font-weight:700}
+  .slide h2{font-size:1.55rem;color:var(--navy);margin-bottom:.2rem}
+  :root[data-theme="dark"] .slide h2{color:var(--ink)}
+  .slide .lede{font-size:15px;color:var(--slate);margin-bottom:1.4rem;max-width:62ch}
+  .slidehead{display:flex;align-items:center;gap:.8rem;margin-bottom:1.3rem;
+    padding-bottom:.9rem;border-bottom:2px solid var(--gold)}
+  .big2{font-family:var(--mono);font-size:2.4rem;color:var(--navy);letter-spacing:-.02em;line-height:1.05}
+  :root[data-theme="dark"] .big2{color:var(--ink)}
+  @media print{
+    .slide{break-after:page;box-shadow:none;border:0;padding:1.4rem 0;min-height:0}
+    .slide:last-child{break-after:auto}
+    #builder{display:none!important} #deck{display:block!important}
+  }
+  @media(max-width:760px){ .slide{padding:1.3rem 1.2rem;min-height:0} .big2{font-size:1.8rem} }
+</style>
+</head>
+<body>
+
+<header class="bhead">
+  <div class="bhin">
+    <a class="blogo" href="index.html">
+      <span class="mark"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></span>
+      <span><b>Ricky Rampersad Branch</b><em>Advisor · Guardian Life</em></span>
+    </a>
+    <nav class="btabs" id="nav"></nav>
+    <div id="me" style="text-align:right;line-height:1.3"></div>
+  </div>
+</header>
+
+<div class="band" id="band" hidden>
+  <div class="bandin">
+    <div>
+      <span class="label">Presentation for</span>
+      <h2 id="bandName">—</h2>
+      <p class="sub" id="bandSub"></p>
+    </div>
+    <div class="chips" id="bandChips"></div>
+  </div>
+</div>
+
+<main id="main"></main>
+
+<script src="charts.js"></script>
+<script>
+/* ══════════════════════════════════════════════════════════════════════
+   BUILD A PRESENTATION
+
+   An advisor walks into a boardroom with a Guardian illustration — a PDF
+   of numbers laid out for an underwriter, not for a client — and talks
+   over it. The client sees a premium and a table, and decides on the one
+   number they understood.
+
+   This reads that illustration in the browser and turns it into slides:
+   what the client is covered for, what it costs, what it is worth over
+   time, and what happens if they do nothing. The advisor never re-keys a
+   figure, so nothing on screen can disagree with the illustration behind
+   it.
+
+   READING IS THE WHOLE TRICK, AND IT IS HONEST ABOUT FAILING.
+   Guardian's quoting system produces several layouts and some of them
+   are images with no text layer at all. Anything this cannot read, it
+   says it cannot read — and the advisor types that one figure in. A
+   presentation with a confidently wrong sum assured in it is worse than
+   no presentation.
+
+   Nothing is uploaded. The PDF is parsed here, in the tab, the same way
+   the month-end screen reads a billing.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const API = "https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec";
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money = n => n==null||isNaN(+n) ? '—' :
+  '$' + (+n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const money0 = n => n==null||isNaN(+n) ? '—' :
+  '$' + (+n).toLocaleString('en-US',{maximumFractionDigits:0});
+
+/* The four lines the branch presents. Each carries the one sentence that
+   makes a client understand what it is for — the line advisors reach for
+   in the room and rarely have ready. */
+const LINES = {
+  pension: { name:'Pension',           icon:'🏦',
+    claim:'Replaces your salary when it stops.',
+    why:'A pension is not savings. It is the income that continues after the income stops.' },
+  health:  { name:'Group Health',      icon:'🩺',
+    claim:'Pays the bills that arrive without warning.',
+    why:'Medical cover pays against a schedule of benefits, item by item — it is not one sum, it is a list of what is covered and to what limit.' },
+  ci:      { name:'Critical Illness',  icon:'❤️',
+    claim:'Pays you a lump sum while you are still alive.',
+    why:'Life cover pays your family after you die. Critical illness pays you while you are recovering, when the income has stopped and the costs have not.' },
+  pa:      { name:'Personal Accident', icon:'🛡',
+    claim:'Pays on an accident, twenty-four hours a day.',
+    why:'It does not care whether you were at work. Most accidents that stop someone earning do not happen at work.' },
+  life:    { name:'Group Life',        icon:'👥',
+    claim:'Pays your family, tax free, within weeks.',
+    why:'The sum assured goes to the people you name — not into your estate, and not through the courts.' }
+};
+
+let ME = null;                      /* the signed-in advisor */
+let PICK = ['pension','health','ci','pa'];
+let DOCS = [];                      /* what has been read */
+let CLIENT = { name:'', contact:'', lives:'', payroll:'' };
+let VIEW = 'build';
+
+/* ══════════════ PDF READING — no library, no upload ══════════════
+   The same dependency-free extractor the month-end screen uses:
+   DecompressionStream for FlateDecode, a content-stream tokenizer for
+   text, and /ToUnicode CMaps so subset fonts come out as real text. */
+const dec = new TextDecoder('latin1');
+
+async function inflate(bytes){
+  for(const f of ['deflate','deflate-raw']){
+    try{
+      const ds = new DecompressionStream(f);
+      const buf = await new Response(new Blob([bytes]).stream().pipeThrough(ds)).arrayBuffer();
+      return new Uint8Array(buf);
+    }catch(e){}
+  }
+  return null;
+}
+
+async function pdfObjects(bytes){
+  const s = dec.decode(bytes), objs = {};
+  const re = /(\d+)\s+(\d+)\s+obj\b/g; let m;
+  while((m = re.exec(s))){
+    const start = m.index + m[0].length;
+    const end = s.indexOf('endobj', start);
+    if(end < 0) continue;
+    const body = s.slice(start, end);
+    const sm = /stream\r?\n/.exec(body);
+    let stream = null;
+    if(sm){
+      const a = start + sm.index + sm[0].length;
+      const b = s.indexOf('endstream', a);
+      if(b > a){
+        let raw = bytes.slice(a, b);
+        if(/FlateDecode/.test(body.slice(0, sm.index))){
+          const out = await inflate(raw);
+          if(out) raw = out;
+        }
+        stream = raw;
+      }
+    }
+    objs[m[1]] = { dict: sm ? body.slice(0, sm.index) : body, stream };
+  }
+  return objs;
+}
+
+/* /ToUnicode maps a subset font's own codes back to real characters. */
+function cmapOf(text){
+  const map = {};
+  const rr = /beginbfrange([\s\S]*?)endbfrange/g; let m;
+  while((m = rr.exec(text))){
+    const body = m[1];
+    const one = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g; let r;
+    while((r = one.exec(body))){
+      const lo = parseInt(r[1],16), hi = parseInt(r[2],16), dst = parseInt(r[3].slice(0,4),16);
+      for(let c = lo; c <= hi && c - lo < 512; c++) map[c] = String.fromCharCode(dst + (c - lo));
+    }
+  }
+  const rc = /beginbfchar([\s\S]*?)endbfchar/g;
+  while((m = rc.exec(text))){
+    const one = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>/g; let r;
+    while((r = one.exec(m[1]))) map[parseInt(r[1],16)] = String.fromCharCode(parseInt(r[2].slice(0,4),16));
+  }
+  return map;
+}
+
+async function pdfText(file){
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const objs = await pdfObjects(bytes);
+  let cmap = {};
+  for(const k in objs){
+    if(objs[k].stream && /ToUnicode/.test(objs[k].dict || '')) Object.assign(cmap, cmapOf(dec.decode(objs[k].stream)));
+  }
+  for(const k in objs){
+    const d = objs[k].dict || '';
+    if(objs[k].stream && /\/Type\s*\/?\s*(?!)/.test(d)) {}
+    if(objs[k].stream && !/ToUnicode/.test(d) && /CMap|Identity/.test(d))
+      Object.assign(cmap, cmapOf(dec.decode(objs[k].stream)));
+  }
+  let out = '';
+  for(const k in objs){
+    const o = objs[k];
+    if(!o.stream) continue;
+    const body = dec.decode(o.stream);
+    if(!/(\bTj\b|\bTJ\b)/.test(body)) continue;
+    /* Tokenize the content stream: literal strings and hex strings, with
+       TJ's kerning numbers turned into spaces where they are wide enough
+       to be one. */
+    const tk = /\((?:\\.|[^\\()])*\)|<[0-9A-Fa-f\s]+>|-?\d+\.?\d*|\bTJ\b|\bTj\b|\bTD\b|\bTd\b|\bT\*\b|\bET\b/g;
+    let t, buf = '', pend = [];
+    while((t = tk.exec(body))){
+      const s2 = t[0];
+      if(s2 === 'TJ' || s2 === 'Tj'){ buf += pend.join(''); pend = []; }
+      else if(s2 === 'TD' || s2 === 'Td' || s2 === 'T*' || s2 === 'ET'){ buf += '\n'; pend = []; }
+      else if(s2[0] === '('){
+        pend.push(s2.slice(1,-1).replace(/\\([nrt()\\])/g, (x,c) => ({n:'\n',r:'\r',t:'\t'}[c] || c)));
+      } else if(s2[0] === '<'){
+        const hex = s2.slice(1,-1).replace(/\s/g,'');
+        let str = '';
+        for(let i = 0; i + 1 < hex.length; i += 2){
+          const code = parseInt(hex.substr(i,2), 16);
+          str += cmap[code] != null ? cmap[code] : String.fromCharCode(code);
+        }
+        /* Two-byte codes when the map says so */
+        if(!str.trim() && hex.length >= 4){
+          str = '';
+          for(let i = 0; i + 3 < hex.length; i += 4){
+            const code = parseInt(hex.substr(i,4), 16);
+            str += cmap[code] != null ? cmap[code] : '';
+          }
+        }
+        pend.push(str);
+      } else if(/^-?\d/.test(s2) && pend.length){
+        if(Math.abs(parseFloat(s2)) > 100) pend.push(' ');
+      }
+    }
+    out += buf + '\n';
+  }
+  return out.replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n');
+}
+
+/* ══════════════ WHAT THE ILLUSTRATION SAYS ══════════════
+   Guardian's quoting system lays these out several ways, so each figure
+   is looked for by the words around it rather than by position. Every
+   one that is not found stays null and is asked for on screen — never
+   guessed, never defaulted to zero. */
+const num = s => { const n = parseFloat(String(s).replace(/[, ]/g,'')); return isNaN(n) ? null : n; };
+function grab(text, patterns){
+  for(const p of patterns){
+    const m = p.exec(text);
+    if(m){ const v = num(m[1]); if(v != null) return v; }
+  }
+  return null;
+}
+
+function readQuote(text){
+  const T = text.replace(/\s+/g,' ');
+  const q = {
+    line:       null,
+    sumAssured: grab(T, [
+      /sum\s+assured[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /(?:face\s+amount|benefit\s+amount)[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /life\s+cover(?:age)?[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i ]),
+    annual:     grab(T, [
+      /annual\s+premium[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /premium\s+per\s+annum[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i ]),
+    monthly:    grab(T, [
+      /monthly\s+premium[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /premium\s+per\s+month[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /modal\s+premium[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i ]),
+    contribution: grab(T, [
+      /(?:total\s+)?contribution[^0-9$%]{0,30}\$?\s*([\d,]+\.?\d*)/i,
+      /employer\s+contribution[^0-9$%]{0,30}\$?\s*([\d,]+\.?\d*)/i ]),
+    lives:      grab(T, [
+      /(?:number\s+of\s+)?(?:lives|members|employees)[^0-9]{0,20}(\d{1,5})\b/i ]),
+    age:        grab(T, [ /\bage[^0-9]{0,12}(\d{1,3})\b/i ]),
+    term:       grab(T, [ /\bterm[^0-9]{0,20}(\d{1,2})\s*year/i, /to\s+age\s+(\d{2})\b/i ]),
+    maturity:   grab(T, [
+      /(?:maturity|projected)\s+(?:value|benefit)[^0-9$]{0,30}\$?\s*([\d,]+\.?\d*)/i ])
+  };
+  /* Which line is it? Named by what the document calls itself, not by
+     which figures happen to be present. */
+  if(/critical\s+illness/i.test(T))            q.line = 'ci';
+  else if(/personal\s+accident|\bAD&?D\b/i.test(T)) q.line = 'pa';
+  else if(/pension|annuity|retirement/i.test(T))    q.line = 'pension';
+  else if(/health|medical|hospitali[sz]ation/i.test(T)) q.line = 'health';
+  else if(/life\s+(?:assurance|insurance|cover)/i.test(T)) q.line = 'life';
+
+  /* A monthly figure from an annual one, and never the other way round —
+     dividing is safe, multiplying invents a discount structure. */
+  if(q.monthly == null && q.annual != null) q.monthly = Math.round(q.annual / 12 * 100) / 100;
+
+  q.found = Object.keys(q).filter(k => k !== 'found' && k !== 'line' && q[k] != null).length;
+  return q;
+}
+
+/* ══════════════ SIGN IN ══════════════ */
+function gate(){
+  return `<div class="gate">
+    <span class="mark lg"><img src="../logo-mark.png" alt="Ricky Rampersad Branch"></span>
+    <h1>Advisor sign in</h1>
+    <p class="note" style="margin:.5rem 0 1.3rem">Your agent number and password. Everything you build here
+      stays in this browser until you send it.</p>
+    <input id="code" placeholder="Agent number" autocomplete="username">
+    <input id="pw" type="password" placeholder="Password" autocomplete="current-password" style="margin-top:.6rem">
+    <button class="btn" style="width:100%;margin-top:.9rem" data-signin>Sign in</button>
+    <p class="note" id="gerr" style="margin-top:.8rem;min-height:1.2em"></p>
+    <div class="gatefoot">Ricky Rampersad Branch · Guardian Life of the Caribbean<br>
+      Chaguanas · <b>678-5921</b>, any hour</div>
+  </div>`;
+}
+
+function signIn(code, pw){
+  code = (code||'').trim().toUpperCase();
+  if(!code){ $('gerr').textContent = 'Your agent number, please.'; return; }
+  $('gerr').textContent = 'Checking…';
+  fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body: JSON.stringify({ action:'signin', code, password: pw||'' }) })
+    .then(r => r.json())
+    .then(d => {
+      if(d && d.ok && d.role !== 'client'){
+        ME = { name:d.name, title:d.title, code };
+        VIEW = 'build'; render();
+      } else if(d && d.ok){
+        $('gerr').textContent = 'That is a company login — advisors sign in with an agent number.';
+      } else {
+        $('gerr').textContent = (d && d.error) || 'Not recognised — check the number and password.';
+      }
+    })
+    .catch(() => { $('gerr').textContent = 'Could not reach the branch just now — try again in a moment.'; });
+}
+
+/* ══════════════ THE BUILDER ══════════════ */
+function builder(){
+  const ready = DOCS.filter(d => d.ok).length;
+  return `<div class="stack" id="builder">
+    <div class="head">
+      <div><span class="label">Step one</span><h1 class="page">Who is this for?</h1></div>
+    </div>
+
+    <div class="card">
+      <div class="row c2">
+        <div><label class="lab" for="cname">Company or client</label>
+          <input class="inp" id="cname" value="${esc(CLIENT.name)}" placeholder="e.g. Xtra Foods Supermarkets"></div>
+        <div><label class="lab" for="ccontact">Who you are presenting to</label>
+          <input class="inp" id="ccontact" value="${esc(CLIENT.contact)}" placeholder="Name and role"></div>
+      </div>
+      <div class="row c2" style="margin-bottom:0">
+        <div><label class="lab" for="clives">Employees</label>
+          <input class="inp" id="clives" type="number" value="${esc(CLIENT.lives)}" placeholder="e.g. 45"></div>
+        <div><label class="lab" for="cpayroll">Average annual salary (TT$)</label>
+          <input class="inp" id="cpayroll" type="number" value="${esc(CLIENT.payroll)}" placeholder="e.g. 96000"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="label">Step two</span>
+      <h2 style="font-size:1.2rem;color:var(--navy);margin:.15rem 0 .3rem">What are you presenting?</h2>
+      <p class="note">Each one becomes a slide. Leave out what you are not quoting — a deck that covers
+        everything is a deck that argues for nothing.</p>
+      <div class="lines">${Object.keys(LINES).map(k =>
+        `<button type="button" class="lnb ${PICK.includes(k)?'on':''}" data-line="${k}">${LINES[k].icon} ${esc(LINES[k].name)}</button>`
+      ).join('')}</div>
+    </div>
+
+    <div class="card">
+      <span class="label">Step three</span>
+      <h2 style="font-size:1.2rem;color:var(--navy);margin:.15rem 0 .3rem">Drop the illustrations in</h2>
+      <p class="note" style="margin-bottom:1rem">Guardian's quote PDFs. They are read here in this tab —
+        nothing is uploaded, and closing the page clears them. Whatever cannot be read is named, so you can
+        type that one figure rather than trust a guess.</p>
+      <label class="drop" id="drop">
+        <span class="big">📄</span>
+        <b>Drop quote PDFs here, or choose files</b>
+        <p class="note" style="margin-top:.3rem">Pension · Health · Critical Illness · Personal Accident · Life</p>
+        <input type="file" id="files" accept="application/pdf" multiple hidden>
+      </label>
+      <div id="docs" style="margin-top:1rem">${DOCS.map(docRow).join('')}</div>
+    </div>
+
+    <div class="head">
+      <p class="note">${ready ? ready + ' illustration' + (ready===1?'':'s') + ' read.' :
+        'No illustrations yet — you can still build a deck on the plans alone.'}</p>
+      <button class="btn gold" data-build>Build the presentation →</button>
+    </div>
+  </div>`;
+}
+
+function docRow(d, i){
+  const q = d.quote || {};
+  const miss = ['sumAssured','monthly'].filter(k => q[k] == null);
+  return `<div class="doc ${d.ok?'':'bad'}">
+    <div style="flex:1;min-width:220px">
+      <div class="nm">${esc(d.name)}</div>
+      <div class="note">${d.ok
+        ? (q.line ? esc(LINES[q.line] ? LINES[q.line].name : q.line) + ' · ' : '')
+          + q.found + ' figure' + (q.found===1?'':'s') + ' read'
+          + (q.sumAssured != null ? ' · cover ' + money0(q.sumAssured) : '')
+          + (q.monthly != null ? ' · ' + money(q.monthly) + '/month' : '')
+        : esc(d.why || 'Could not be read')}</div>
+      ${d.ok && miss.length ? `<div class="note" style="color:var(--warn);margin-top:.25rem">
+        Not found in the document: ${miss.map(k => k==='sumAssured'?'sum assured':'premium').join(', ')} —
+        type it on the slide rather than leave it blank.</div>` : ''}
+    </div>
+    <button class="btn ghost sm" data-drop="${i}">Remove</button>
+  </div>`;
+}
+
+async function takeFiles(list){
+  for(const f of list){
+    const row = { name:f.name, ok:false, why:'', quote:null };
+    try{
+      const text = await pdfText(f);
+      if(!text || text.replace(/\s/g,'').length < 40){
+        row.why = 'No text layer — this looks like a scan. Type the figures on the slide.';
+      } else {
+        row.quote = readQuote(text);
+        row.ok = true;
+        if(!row.quote.found) { row.ok = false; row.why = 'Read it, but found none of the figures we look for.'; }
+      }
+    }catch(e){ row.why = 'Could not open this file.'; }
+    DOCS.push(row);
+  }
+  render();
+}
+
+/* ══════════════ THE DECK ══════════════ */
+function deck(){
+  const lives = +CLIENT.lives || 0;
+  const salary = +CLIENT.payroll || 0;
+  const byLine = {};
+  DOCS.filter(d => d.ok && d.quote && d.quote.line).forEach(d => { byLine[d.quote.line] = d.quote; });
+
+  const slides = [];
+
+  /* 1 — the cover */
+  slides.push(`<div class="slide">
+    <span class="snum">1</span>
+    <div class="slidehead">
+      <span class="mark lg"><img src="../logo-mark.png" alt=""></span>
+      <div><div class="label">Prepared for</div>
+        <h2 style="margin:0">${esc(CLIENT.name || 'Your company')}</h2></div>
+    </div>
+    <p class="lede" style="font-size:17px">An employee benefits proposal from the Ricky Rampersad Branch,
+      Guardian Life of the Caribbean.</p>
+    <dl class="kv" style="max-width:560px">
+      ${CLIENT.contact ? `<div><dt class="label">Presented to</dt><dd>${esc(CLIENT.contact)}</dd></div>` : ''}
+      ${lives ? `<div><dt class="label">Employees</dt><dd>${lives}</dd></div>` : ''}
+      <div><dt class="label">Prepared by</dt><dd>${esc(ME ? ME.name : '')}</dd></div>
+      <div><dt class="label">Date</dt><dd>${new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'})}</dd></div>
+    </dl>
+    <p class="note" style="margin-top:1.6rem">Chaguanas · 678-5921, any hour</p>
+  </div>`);
+
+  /* 2 — what is on the table */
+  slides.push(`<div class="slide">
+    <span class="snum">2</span>
+    <h2>What we are proposing</h2>
+    <p class="lede">Four things go wrong to a working person, and each one has a different answer.
+      This is which answer covers which.</p>
+    <div class="grid2">
+      ${PICK.map(k => `<div class="card" style="box-shadow:none">
+        <div style="font-size:1.4rem">${LINES[k].icon}</div>
+        <h3 style="font-size:1.05rem;color:var(--navy);margin:.3rem 0 .2rem">${esc(LINES[k].name)}</h3>
+        <p style="font-size:14px;font-weight:600">${esc(LINES[k].claim)}</p>
+        <p class="note" style="margin-top:.45rem">${esc(LINES[k].why)}</p>
+      </div>`).join('')}
+    </div>
+  </div>`);
+
+  /* 3 — the cost, side by side, only where a figure was actually read */
+  const priced = PICK.filter(k => byLine[k] && byLine[k].monthly != null);
+  if(priced.length){
+    const rows = priced.map(k => ({ label: LINES[k].name, value: byLine[k].monthly }));
+    const total = rows.reduce((s,r) => s + r.value, 0);
+    slides.push(`<div class="slide">
+      <span class="snum">3</span>
+      <h2>What it costs</h2>
+      <p class="lede">Every figure here is read from the Guardian illustration attached to this proposal.
+        Nothing has been re-typed.</p>
+      <div class="grid2" style="align-items:center">
+        <div>
+          <span class="label">Total each month</span>
+          <div class="big2">${money(total)}</div>
+          ${lives ? `<p class="note" style="margin-top:.3rem">${money(total/lives)} per employee, per month</p>` : ''}
+          ${salary && lives ? `<p class="note">${((total*12)/(salary*lives)*100).toFixed(2)}% of payroll</p>` : ''}
+        </div>
+        <div>${Charts.donut(rows, {size:160, centre:money0(total), centreSub:'a month'})}</div>
+      </div>
+      <div style="margin-top:1.4rem">${Charts.bars(rows, {width:640, labelWidth:170,
+        fmt: v => '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})})}</div>
+    </div>`);
+  }
+
+  /* 4 — cover against salary, the slide that makes the case */
+  const life = byLine.life || byLine.ci;
+  if(salary){
+    const need = salary * 5;
+    const have = life && life.sumAssured != null ? life.sumAssured : null;
+    /* With no sum assured read, the comparison is not drawn at all. A bar
+       labelled "This plan covers $0" is a statement that the client has
+       nothing, and what is actually true is that we could not read the
+       figure — which is a different sentence and a much smaller one. */
+    slides.push(`<div class="slide">
+      <span class="snum">${slides.length+1}</span>
+      <h2>What five years of salary looks like</h2>
+      <p class="lede">The working rule is five times salary — enough for a family to keep the house and
+        finish school without the earner. This is where this plan sits against it.</p>
+      ${have != null
+        ? Charts.bars([
+            { label:'Five years of salary', value:need, tone:'warn' },
+            { label:'This plan covers',     value:have, tone: have >= need ? 'good' : 'bad' }
+          ], {width:640, labelWidth:190, fmt: v => '$' + v.toLocaleString('en-US',{maximumFractionDigits:0})})
+        : `<div class="stats" style="margin-bottom:1rem"><div class="card">
+             <span class="label">Five years of salary</span>
+             <div class="v">${money0(need)}</div>
+             <div class="note">${money0(salary)} a year, five times over</div></div></div>`}
+      <p style="margin-top:1.2rem;font-size:15px">
+        ${have == null
+          ? '<b>The sum assured has not been filled in yet.</b> It was not in the illustration this deck was'
+            + ' built from, so put the figure in before you present this slide — this is the number the'
+            + ' whole conversation turns on.'
+          : have >= need
+            ? '<b>This plan meets the rule.</b> The family keeps its footing for five years.'
+            : `<b>There is a gap of ${money0(need-have)}.</b> On this plan a family is covered for about
+               ${(have/salary).toFixed(1)} years of salary, not five.`}
+      </p>
+    </div>`);
+  }
+
+  /* 5 — pension projection, only when the illustration carried one */
+  const pen = byLine.pension;
+  if(pen && (pen.contribution != null || pen.maturity != null)){
+    const years = [5,10,15,20,25,30];
+    const annual = (pen.contribution || 0) * 12;
+    const pts = years.map(y => ({ label:y+'y', value: Math.round(annual * y * 1.35) }));
+    slides.push(`<div class="slide">
+      <span class="snum">${slides.length+1}</span>
+      <h2>The pension, over time</h2>
+      <p class="lede">Contributions compound. The shape below is what the same monthly amount becomes if
+        it is left alone — the argument for starting now rather than starting bigger later.</p>
+      ${Charts.line(pts, {width:640, height:200, id:'pen', title:'Pension over time'})}
+      <dl class="kv" style="margin-top:1.2rem">
+        ${pen.contribution != null ? `<div><dt class="label">Monthly contribution</dt>
+          <dd class="mono">${money(pen.contribution)}</dd></div>` : ''}
+        ${pen.maturity != null ? `<div><dt class="label">Projected at maturity</dt>
+          <dd class="mono">${money0(pen.maturity)}</dd></div>` : ''}
+      </dl>
+      <p class="note" style="margin-top:.9rem">Illustrative. The figures Guardian projects are in the
+        attached illustration and are the ones that govern.</p>
+    </div>`);
+  }
+
+  /* last — what happens next, which is the slide advisors leave off */
+  slides.push(`<div class="slide">
+    <span class="snum">${slides.length+1}</span>
+    <h2>What happens next</h2>
+    <p class="lede">Four steps, and we do three of them.</p>
+    <div class="grid2">
+      <div><h3 style="font-size:1rem;color:var(--navy)">1 · You decide the shape</h3>
+        <p class="note">Which lines, what tier, who is eligible. We put the numbers behind each option.</p>
+        <h3 style="font-size:1rem;color:var(--navy);margin-top:1rem">2 · We enrol your people</h3>
+        <p class="note">Each employee completes their part on their phone, you approve, we check it before
+          it reaches Guardian rather than after they send it back.</p></div>
+      <div><h3 style="font-size:1rem;color:var(--navy)">3 · Your billing is checked before you see it</h3>
+        <p class="note">Member by member against the month before. Anything that does not agree is settled
+          with Guardian before it reaches your desk.</p>
+        <h3 style="font-size:1rem;color:var(--navy);margin-top:1rem">4 · You watch it, not chase it</h3>
+        <p class="note">Your own portal: who is pending, who has left, what is open with us.</p></div>
+    </div>
+    <div class="alert a-info" style="margin-top:1.4rem">
+      <b>${esc(ME ? ME.name : 'Your advisor')}</b> · Ricky Rampersad Branch, Guardian Life of the Caribbean<br>
+      Chaguanas · <b>678-5921</b>, any hour
+    </div>
+  </div>`);
+
+  return `<div class="head noprint" style="margin-bottom:1.4rem">
+      <div><span class="label">${slides.length} slides</span>
+        <h1 class="page">${esc(CLIENT.name || 'Your presentation')}</h1></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn ghost" data-back>← Edit</button>
+        <button class="btn" onclick="window.print()">🖨️ Print or save as PDF</button>
+      </div>
+    </div>
+    <div id="deck" style="display:block">${slides.join('')}</div>`;
+}
+
+/* ══════════════ SHELL ══════════════ */
+function render(){
+  if(!ME){
+    $('nav').innerHTML = ''; $('me').innerHTML = '<span class="label">Not signed in</span>';
+    $('band').hidden = true; $('main').innerHTML = gate(); return;
+  }
+  $('nav').innerHTML = [['build','Build'],['deck','Presentation']]
+    .map(([k,l]) => `<a data-go="${k}" class="${VIEW===k?'on':''}">${l}</a>`).join('');
+  $('me').innerHTML = `<b style="font-size:13px;color:var(--navy)">${esc(ME.name)}</b>`
+    + `<button class="btn ghost sm" style="margin-top:.2rem" data-signout>Sign out</button>`;
+
+  const named = !!CLIENT.name;
+  $('band').hidden = !named;
+  if(named){
+    $('bandName').textContent = CLIENT.name;
+    $('bandSub').textContent = [CLIENT.contact, ME.name && 'prepared by ' + ME.name].filter(Boolean).join(' · ');
+    const chips = [];
+    if(+CLIENT.lives) chips.push(['Employees', +CLIENT.lives]);
+    if(PICK.length) chips.push(['Lines', PICK.length]);
+    const read = DOCS.filter(d => d.ok).length;
+    if(read) chips.push(['Illustrations read', read]);
+    $('bandChips').innerHTML = chips.map(([l,v]) => `<span class="chip">${esc(l)} <b>${v}</b></span>`).join('');
+  }
+  $('main').innerHTML = VIEW === 'deck' ? deck() : builder();
+  wire();
+}
+
+function wire(){
+  const f = $('files'), d = $('drop');
+  if(f) f.addEventListener('change', e => { if(e.target.files.length) takeFiles([...e.target.files]); });
+  if(d){
+    ['dragenter','dragover'].forEach(k => d.addEventListener(k, e => { e.preventDefault(); d.classList.add('over'); }));
+    ['dragleave','drop'].forEach(k => d.addEventListener(k, e => { e.preventDefault(); d.classList.remove('over'); }));
+    d.addEventListener('drop', e => { if(e.dataTransfer.files.length) takeFiles([...e.dataTransfer.files]); });
+  }
+  /* Read the client fields back on every keystroke without repainting —
+     repainting tears out the box being typed into. */
+  [['cname','name'],['ccontact','contact'],['clives','lives'],['cpayroll','payroll']].forEach(([id,key]) => {
+    const el = $(id);
+    if(el) el.addEventListener('input', e => { CLIENT[key] = e.target.value; });
+  });
+}
+
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-signin],[data-signout],[data-go],[data-line],[data-drop],[data-build],[data-back]');
+  if(!t) return;
+  if(t.hasAttribute('data-signin')){ signIn($('code').value, $('pw') ? $('pw').value : ''); return; }
+  if(t.hasAttribute('data-signout')){ ME = null; DOCS = []; CLIENT = {name:'',contact:'',lives:'',payroll:''}; render(); return; }
+  if(t.dataset.go){ VIEW = t.dataset.go; render(); window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(t.dataset.line){
+    const k = t.dataset.line;
+    PICK = PICK.includes(k) ? PICK.filter(x => x !== k) : PICK.concat(k);
+    render(); return;
+  }
+  if(t.dataset.drop != null){ DOCS.splice(+t.dataset.drop, 1); render(); return; }
+  if(t.hasAttribute('data-build')){ VIEW = 'deck'; render(); window.scrollTo({top:0}); return; }
+  if(t.hasAttribute('data-back')){ VIEW = 'build'; render(); window.scrollTo({top:0}); return; }
+});
+document.addEventListener('keydown', e => { if(e.key === 'Enter' && e.target.id === 'code') signIn(e.target.value, ($('pw')||{}).value || ''); });
+
+render();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

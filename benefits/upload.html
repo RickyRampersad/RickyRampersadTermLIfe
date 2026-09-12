@@ -7,25 +7,9 @@
 <title>Monthly Billing Upload | Ricky Rampersad Branch</title>
 <link rel="stylesheet" href="branch.css">
 <style>
-  :root{
-    --navy:#08333D; --blue:#0E8FA3; --gold:#F08A24; --lightblue:#E4F4F6;
-    --ink:#0E1F2E; --paper:#F7F9FB; --surface:#FFF; --surface2:#EDF2F7;
-    --slate:#5C7080; --line:#D3DEE7;
-    --go:#1F7A55; --warn:#A9701F; --stop:#A93B2B;
-    --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,sans-serif;
-    --display:Optima,"Palatino Linotype",Georgia,serif;
-    --mono:ui-monospace,"SF Mono",Menlo,monospace;
-  }
-  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
-    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
-    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
-  }}
-  :root[data-theme="dark"]{
-    --ink:#DCE7EF; --paper:#081520; --surface:#0E2231; --surface2:#142E40;
-    --navy:#7FB2D9; --blue:#5FA8DC; --lightblue:#12293A; --slate:#8FA6B8; --line:#1E3B50;
-    --go:#4FAE83; --warn:#D4A055; --stop:#D4685A;
-  }
+  :root{}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){}}
+  :root[data-theme="dark"]{}
   *{box-sizing:border-box}
   body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6}
   h1,h2,h3{font-family:var(--display);font-weight:600;margin:0;line-height:1.2}
@@ -100,7 +84,7 @@
   .alert{border-radius:6px;padding:.9rem 1.1rem;font-size:13.5px;line-height:1.6;border:1px solid;margin-top:.7rem}
   .a-ok{border-color:#A9D8BF;background:#EDF8F2} .a-warn{border-color:#E8C98A;background:#FDF6E7}
   .a-bad{border-color:#E3B0A8;background:#FCEEEB} .a-info{border-color:#A8CEDA;background:#EEF7FA}
-  :root[data-theme="dark"] .alert{background:var(--surface2)}
+  :root[data-theme="dark"] .alert{background:var(--surface2); }
   .alert b{color:var(--ink)}
   .q{border-left:3px solid var(--gold);padding:.8rem 0 .8rem 1rem;margin-top:.9rem}
   .q p{font-size:14px}
@@ -109,7 +93,7 @@
     padding:.4rem .8rem;font-size:12.5px;cursor:pointer}
   .q .ans button:hover{border-color:var(--blue);color:var(--blue)}
   .q .ans button.on{background:var(--navy);border-color:var(--navy);color:#fff}
-  :root[data-theme="dark"] .q .ans button.on{color:var(--paper)}
+  :root[data-theme="dark"] .q .ans button.on{color:var(--paper); }
   .q textarea{width:100%;margin-top:.5rem;border:1px solid var(--line);border-radius:5px;
     background:var(--paper);padding:.45rem .55rem;font-size:13px;font-family:inherit;min-height:38px}
   .note{font-size:12.5px;color:var(--slate)}

@@ -14,17 +14,13 @@
 <style>
   /* Same design system as the Query Pal wall — this is its sibling, and on a
      screen beside it the two should read as one product. */
-  :root{
-    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
-    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
-    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
-    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+  :root{ --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --blue2:#0b7fd4;
+    --good:#34d399; --bad:#fb7185;
     --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
-    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
-    --r:18px; --ease:cubic-bezier(.16,1,.3,1);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e); --ease:cubic-bezier(.16,1,.3,1);
     --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
-    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
-  }
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif; }
   *{box-sizing:border-box}
   body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
     min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
