@@ -387,6 +387,75 @@ var WALL_DATA = {
     compN: 37, compCover: 10420333, ncdBlank: 37,
     renewal: 88, newBiz: 24, unclassified: 62
   },
+  /* ── GROUP — the book the record types cannot see ────────────────────
+     Group lives on TRANSACTIONS__c under GROUP_TRANSACTION_TYPE__c, not on
+     a Risk_Details__c record type, which is exactly why every line slide
+     above misses it. prem/paid are lifetime totals on the object.
+     Read 12 September 2026.                                           */
+  group: {
+    lines: [
+      {name:"Group Health",  n:565, prem:6981362, paid:6273657},
+      {name:"Group Pension", n:391, prem:5986936, paid:3237123},
+      {name:"Group Life",    n:307, prem:2906512, paid:2271051}
+    ],
+    totals: {n:1263, prem:15874810, paid:11781831},
+    /* transaction records were created 2013–2021 and then stopped dead */
+    byYear: [
+      {y:2013,n:66},{y:2014,n:19},{y:2015,n:262},{y:2016,n:257},{y:2017,n:228},
+      {y:2018,n:123},{y:2019,n:209},{y:2020,n:88},{y:2021,n:11}
+    ],
+    lastRecord: "1 October 2021",
+    /* live group activity is in Tasks, not in transactions */
+    tasks: {y25:{n:250,accts:36}, y26:{n:394,accts:43}},
+    newGroups: 1
+  },
+  /* ── last year against this year ─────────────────────────────────────
+     Task volume by month. The system came up in September 2025, so the
+     first eight months of 2025 are not a fair comparison — the shape
+     inside 2026 is the story. September 2026 is partial, to the 12th. */
+  yoy: {
+    months: [
+      {m:"Jan", y25:5,    y26:1962},
+      {m:"Feb", y25:4,    y26:1978},
+      {m:"Mar", y25:3,    y26:1628},
+      {m:"Apr", y25:1,    y26:1660},
+      {m:"May", y25:33,   y26:1639},
+      {m:"Jun", y25:30,   y26:1732},
+      {m:"Jul", y25:67,   y26:1431},
+      {m:"Aug", y25:173,  y26:1275},
+      {m:"Sep", y25:1405, y26:689, part:true},
+      {m:"Oct", y25:1782, y26:null},
+      {m:"Nov", y25:1664, y26:null},
+      {m:"Dec", y25:1872, y26:null}
+    ],
+    tot25:7039, tot26:13994, liveFrom:"September 2025",
+    peak:{m:"February", n:1978}, trough:{m:"August", n:1275}
+  },
+  /* ── who carries the work, and how long it sits ──────────────────────
+     Turnaround is Created → LastModified on completed group tasks. The
+     auto-logged "Email:" rows close on creation, so they are excluded —
+     including them drags every average to nothing. 22 real tasks. */
+  work: {
+    owners: [
+      {k:"Sasha Lalla-Jagassar", n:4847, open:49},
+      {k:"Ricky Rampersad",      n:4019, open:14},
+      {k:"Emilia Joseph",        n:1537, open:0},
+      {k:"Azariah Griffith",     n:1263, open:36},
+      {k:"Kamla Dookran",        n:803,  open:62},
+      {k:"Ashley Rondon",        n:586,  open:0},
+      {k:"Jenny Lio",            n:389,  open:0},
+      {k:"Pawan Probhu",         n:379,  open:13},
+      {k:"Elizabeth Lee",        n:171,  open:25}
+    ],
+    byType: [
+      {k:"Group terminations",      days:34.7, n:7},
+      {k:"Group billing runs",      days:32.1, n:3},
+      {k:"Enrollments",             days:8.3,  n:3},
+      {k:"Payment received",        days:4.7,  n:4},
+      {k:"Approvals & cash",        days:0.5,  n:2}
+    ],
+    mean:18.0, median:11.3, sample:22, open:199, done:13795
+  },
   billing: {month:"September 2026", motorPaid:13887, propPaid:0},
   next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
 };
@@ -917,7 +986,118 @@ function sMix(D){
     +'</div></div>';
 }
 
-var BUILDERS=[sPulse,sRail,sYTD,sLines,sMotor,sProperty,sMotorValues,sPropValues,sTrend,sMix,sLosing,sManage,sMoney,sTasks,sNext];
+function sGroup(D){
+  var G=D.group; if(!G) return '';
+  var mx=G.lines[0].prem;
+  var rows=G.lines.map(function(l,i){
+    var c=[C_MOTOR,C_PROP,C_OTHER][i];
+    var pct=Math.round(l.paid/l.prem*100);
+    return '<div class="row"><span class="nm">'+esc(l.name)+' <span style="color:var(--faint);font-weight:500">· '+l.n+'</span></span>'
+      +'<span class="track"><i style="width:'+(l.prem/mx*100)+'%;background:'+c+'"></i></span>'
+      +'<span class="val">'+moneyShort(l.prem)+'</span>'
+      +'<span class="val" style="width:58px;color:'+(pct<60?'var(--gold)':'var(--dim)')+'">'+pct+'%</span></div>';
+  }).join("");
+  var owed=G.totals.prem-G.totals.paid;
+  var ymx=G.byYear.reduce(function(a,x){return Math.max(a,x.n)},1);
+  var bars=G.byYear.map(function(x){
+    return '<div class="bar"><div class="amt">'+x.n+'</div>'
+      +'<i style="height:'+Math.round(x.n/ymx*150)+'px;background:'+(x.y>=2020?'var(--bad)':C_OTHER)+'"></i>'
+      +'<div class="lab" style="margin-top:8px">'+String(x.y).slice(2)+'</div></div>';
+  }).join("");
+  return '<div class="kick">Group · the book the record types cannot see</div>'
+    +'<h2>'+moneyShort(G.totals.prem)+' of group premium — and not one slide before this one counted it</h2>'
+    +'<p class="lede">Group sits on the transaction object under its own type, not on a risk record type. '
+    +'Every "by line" figure on this wall is the small half of the branch: '+G.totals.n.toLocaleString("en-US")+' group transactions '
+    +'carry <strong>twelve times</strong> the premium of a full year of motor and property renewals.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.25fr 1fr">'
+    +'<div class="panel"><h3>Premium, and how much of it came in</h3>'
+    +'<div class="rows">'+rows+'</div>'
+    +'<div class="note"><strong>'+moneyShort(owed)+' is outstanding across the three</strong>, and '
+    +moneyShort(G.lines[1].prem-G.lines[1].paid)+' of it is pension alone — collected at just '
+    +Math.round(G.lines[1].paid/G.lines[1].prem*100)+'%. Health collects at '
+    +Math.round(G.lines[0].paid/G.lines[0].prem*100)+'%, so the difference is process, not the clients.</div></div>'
+    +'<div class="panel"><h3>Transaction records created, by year</h3>'
+    +'<div class="bars" style="height:200px;gap:9px">'+bars+'</div>'
+    +'<div class="note">The last group transaction record was created <strong>'+esc(G.lastRecord)+'</strong>. '
+    +'Nothing since. The business did not stop — group tasks ran '+G.tasks.y25.n+' across '+G.tasks.y25.accts+' accounts last year and '
+    +G.tasks.y26.n+' across '+G.tasks.y26.accts+' this year — so five years of group renewals and payments are being worked '
+    +'but never recorded here. That is the single biggest gap in the data.</div></div>'
+    +'</div></div>';
+}
+
+function sYoY(D){
+  var Y=D.yoy; if(!Y) return '';
+  var mx=Y.months.reduce(function(a,x){return Math.max(a,x.y25||0,x.y26||0)},1);
+  var bars=Y.months.map(function(x){
+    var h=function(n){return Math.round((n||0)/mx*280)};
+    var b=function(n,c,dim){return n==null?'<i style="height:2px;background:rgba(255,255,255,.1)"></i>'
+      :'<i style="height:'+h(n)+'px;background:'+c+(dim?';opacity:.55':'')+'"></i>'};
+    return '<div class="bar" style="gap:0">'
+      +'<div class="amt">'+(x.y26==null?'':x.y26)+'</div>'
+      +'<div style="display:flex;gap:3px;align-items:flex-end;width:100%;max-width:62px">'
+      +b(x.y25,C_OTHER)+b(x.y26,C_MOTOR,x.part)+'</div>'
+      +'<div class="lab" style="margin-top:8px">'+esc(x.m)+'</div></div>';
+  }).join("");
+  var drop=Math.round((Y.peak.n-Y.trough.n)/Y.peak.n*100);
+  return '<div class="kick">Last year against this year · activity</div>'
+    +'<h2>'+Y.tot26.toLocaleString("en-US")+' tasks this year against '+Y.tot25.toLocaleString("en-US")+' last — but the shape matters more</h2>'
+    +'<p class="lede">The system came up in <strong>'+esc(Y.liveFrom)+'</strong>, so the first eight months of last year are '
+    +'near-empty and the headline multiple means nothing. What matters is the line inside 2026: '
+    +'<strong>'+Y.peak.m+' peaked at '+Y.peak.n.toLocaleString("en-US")+' and '+Y.trough.m+' came in at '+Y.trough.n.toLocaleString("en-US")+'</strong> — '
+    +drop+'% down in six months.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.7fr 1fr">'
+    +'<div class="panel"><h3>Tasks created each month</h3>'
+    +'<div class="legend"><span><i style="background:'+C_OTHER+'"></i>2025</span>'
+    +'<span><i style="background:'+C_MOTOR+'"></i>2026</span>'
+    +'<span style="margin-left:auto;color:var(--faint)">September 2026 is partial · figure above each pair is 2026</span></div>'
+    +'<div class="bars" style="height:330px">'+bars+'</div></div>'
+    +'<div class="panel"><h3>What the slope says</h3><div class="rows" style="gap:18px">'
+    +'<div class="row"><span class="nm">Best month, 2026</span><span class="val" style="width:auto">'+Y.peak.n.toLocaleString("en-US")+'</span></div>'
+    +'<div class="row"><span class="nm">Most recent full month</span><span class="val" style="width:auto;color:var(--gold)">'+Y.trough.n.toLocaleString("en-US")+'</span></div>'
+    +'<div class="row"><span class="nm">Change</span><span class="val" style="width:auto;color:var(--bad)">−'+drop+'%</span></div>'
+    +'<div class="row"><span class="nm">Same months last year</span><span class="val" style="width:auto">4 · 173</span></div>'
+    +'</div>'
+    +'<div class="note">Six straight months of decline is not seasonality — February through August covers both quiet and busy '
+    +'renewal periods. Either the work is being done outside the system again, or it is not being done. Both are worth an answer '
+    +'before the next branch meeting.</div></div>'
+    +'</div></div>';
+}
+
+function sWork(D){
+  var W=D.work; if(!W) return '';
+  var mx=W.owners[0].n;
+  var rows=W.owners.map(function(o){
+    return '<div class="row"><span class="nm">'+esc(o.k)+'</span>'
+      +'<span class="track"><i style="width:'+(o.n/mx*100)+'%"></i></span>'
+      +'<span class="val">'+o.n.toLocaleString("en-US")+'</span>'
+      +'<span class="val" style="width:52px;color:'+(o.open>30?'var(--gold)':'var(--faint)')+'">'+(o.open||'—')+'</span></div>';
+  }).join("");
+  var tmx=W.byType[0].days;
+  var types=W.byType.map(function(t){
+    return '<div class="row"><span class="nm">'+esc(t.k)+'</span>'
+      +'<span class="track"><i style="width:'+(t.days/tmx*100)+'%;background:'+(t.days>20?'var(--grad-gold)':'var(--grad)')+'"></i></span>'
+      +'<span class="val">'+t.days.toFixed(1)+'d</span></div>';
+  }).join("");
+  return '<div class="kick">Who processes it · and how long it sits</div>'
+    +'<h2>A group termination takes five weeks. An approval takes half a day.</h2>'
+    +'<p class="lede">Measured on completed group tasks, from the moment one is raised to the moment it last moved. '
+    +'The spread is not about who is quick — it is about which queues have somewhere to wait. '
+    +'<strong>Median '+W.median+' days, mean '+W.mean+'</strong>, across '+W.sample+' real tasks.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1fr 1fr">'
+    +'<div class="panel"><h3>Turnaround by kind of task</h3>'
+    +'<div class="rows">'+types+'</div>'
+    +'<div class="note">A termination that sits for five weeks is five weeks of billing for someone who has already left the '
+    +'scheme — it shows up later as a credit, a complaint, or both. This is the queue to fix first, and it almost certainly '
+    +'waits on Head Office rather than on the branch.</div></div>'
+    +'<div class="panel"><h3>Tasks owned this year · and still open</h3>'
+    +'<div class="rows">'+rows+'</div>'
+    +'<div class="note">'+W.done.toLocaleString("en-US")+' closed against '+W.open+' still open — the branch finishes '
+    +Math.round(W.done/(W.done+W.open)*100)+'% of what it starts. The open column is where a name is waiting on someone else, '
+    +'not a measure of effort.</div></div>'
+    +'</div></div>';
+}
+
+var BUILDERS=[sPulse,sRail,sYTD,sLines,sGroup,sYoY,sMotor,sProperty,sMotorValues,sPropValues,sTrend,sMix,sWork,sLosing,sManage,sMoney,sTasks,sNext];
 var DWELL=14000, cur=0, timer=null, paused=false;
 
 function render(D){
