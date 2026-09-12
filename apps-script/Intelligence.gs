@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-12a';
+var INTEL_VERSION = '2026-09-12b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1318,6 +1318,61 @@ function iConvInforce_() {
          ' AND Life_Coverage__c > 0 AND Life_Coverage_Expiry__c >= TODAY';
 }
 
+/* ── IN FORCE, AND THE PREMIUM CURRENT ───────────────────────────────────
+   Two more rules from the branch, and neither of them can be answered out of
+   Salesforce. A lapsed policy cannot be converted, and a policy in arrears
+   cannot be converted until somebody collects — and Salesforce is stale on
+   both: it still carried a converted policy, a death and a lapse as "Premium
+   Paying" on a book checked against the dues tab on 12 September 2026, and its
+   paid-to-date was behind the tab's on 60 of 73 policies.
+
+   So status and arrears are read off the branch's own dues tab, which is the
+   same tab the 45-day wall reads, and every convertible policy lands in one
+   of three states:
+
+     ready    in force, nothing owed. Convert it.
+     collect  in force and overdue. Collect the premium first — it is a
+              conversion behind a phone call, not a dead lead.
+     gone     lapsed, surrendered, dead, matured, already converted. Off the
+              list entirely, and a wall that shows these is a wall that sends
+              agents after policies that no longer exist.
+
+   The split matters more than the total: 56% of the branch's premium-paying
+   Flexi convertible policies were flagged Overdue on the day this was
+   written. A single number would have sent every agent after all of them. */
+var ICONV_GONE = /surrender|matured|death|file clos|not proceed|not taken|expir|reject|declin|convert|lapse|paid up|vested/i;
+
+function iConvDues_() {
+  var sh = iTabDues_();
+  if (!sh) return null;
+  var d = iReadCols_(sh, {
+    number: ['number'], plan: ['plan code'], agent: ['agent'], premium: ['premium'],
+    sum: ['sum assured'], days: ['days'], status2: ['status(2)', 'status2'],
+    desc: ['status description']
+  });
+  var by = {}, pool = { ready: { n: 0, cover: 0, prem: 0 },
+                        collect: { n: 0, cover: 0, prem: 0 },
+                        gone: { n: 0, cover: 0, prem: 0 } };
+  for (var r = 0; r < d.rows; r++) {
+    var num = String(d.get('number', r)).trim();
+    if (!num || iBadNumber_(num)) continue;
+    var desc = String(d.get('desc', r)).trim();
+    var state = ICONV_GONE.test(desc) ? 'gone'
+              : /overdue/i.test(String(d.get('status2', r))) ? 'collect'
+              : 'ready';
+    /* First row wins. A policy number appearing twice in the extract is the
+       extract's problem, and picking the later row would let a stale duplicate
+       overwrite a live one. */
+    if (by[num] === undefined) by[num] = { state: state, desc: desc, days: iNum_(d.get('days', r)) };
+    var f = iConvPlan_(d.get('plan', r));
+    if (f && f.kind === 'convert') {
+      var slot = pool[state];
+      slot.n++; slot.cover += iNum_(d.get('sum', r)); slot.prem += iNum_(d.get('premium', r));
+    }
+  }
+  return { by: by, pool: pool };
+}
+
 function iConvOne_(rows, keys) {
   var r = (rows && rows[0]) || {}, out = {};
   keys.forEach(function (k) { out[k] = iNum_(r[k]); });
@@ -1350,23 +1405,19 @@ function iConversionWall_() {
     catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
   };
 
-  /* Whose they are, and the biggest single case each one is holding. MAX is
-     the whole reason the top case needs no second query and no policy
-     number — the figure is what an agent recognises, and nothing else. */
-  var byAgent = q('SELECT AGENT__r.Name ag, COUNT(Id) n, SUM(Life_Coverage__c) cover,' +
-                  ' SUM(Life_Premium__c) prem, MAX(Life_Coverage__c) top' +
-                  from + conv + ' AND ' + live + birthday +
-                  ' GROUP BY AGENT__r.Name ORDER BY SUM(Life_Coverage__c) DESC LIMIT 200');
+  /* THE MONTH'S LIST IS READ ROW BY ROW, not as an aggregate, and that is not
+     a style choice. A policy can only be converted if it is in force with the
+     premium current, and Salesforce does not know which — the dues tab does.
+     So every row has to be tested against it one at a time, and the totals
+     are added up here afterwards. It is a small list: a month's birthdays on
+     one plan family is tens of rows, not thousands.
 
-  /* The urgent half: the birthday has not happened yet, so today's age still
-     buys today's rate. */
-  var ahead = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+     The policy number is read and never leaves this function. It exists only
+     to find the row in the dues tab. */
+  var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
+                ' Life_Plan_01__c, DAY_IN_MONTH(Date_Of_Birth__c) dom' +
                 from + conv + ' AND ' + live + birthday +
-                ' AND DAY_IN_MONTH(Date_Of_Birth__c) >= ' + dayOf);
-
-  var mixRows = q('SELECT Life_Plan_01__c pc, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
-                  from + conv + ' AND ' + live + birthday +
-                  ' GROUP BY Life_Plan_01__c ORDER BY SUM(Life_Coverage__c) DESC LIMIT 100');
+                ' ORDER BY Life_Coverage__c DESC LIMIT 900');
 
   var poolConv = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
                    from + conv + ' AND ' + live);
@@ -1386,36 +1437,71 @@ function iConversionWall_() {
                    ' GROUP BY CALENDAR_YEAR(Life_Coverage_Expiry__c)' +
                    ' ORDER BY CALENDAR_YEAR(Life_Coverage_Expiry__c) LIMIT 40');
 
-  if (byAgent === null && poolConv === null) {
+  if (rowsM === null && poolConv === null) {
     return { configured: false, generatedAt: iIso_(today),
              error: notes[0] || 'Salesforce did not answer.' };
   }
 
-  var skip = iExcluded_();
-  var cases = 0, cover = 0, prem = 0;
-  var agents = (byAgent || []).filter(function (r) {
-    return r.ag && !iExcludes_(skip, r.ag);
-  }).map(function (r) {
-    cases += iNum_(r.n); cover += iNum_(r.cover); prem += iNum_(r.prem);
-    return { name: String(r.ag), n: iNum_(r.n), cover: iNum_(r.cover),
-             prem: iNum_(r.prem), top: iNum_(r.top) };
-  });
-  var unnamed = (byAgent || []).filter(function (r) { return !r.ag; })
-    .reduce(function (a, r) { return a + iNum_(r.n); }, 0);
+  /* The dues tab decides in force and current. Without it this screen still
+     works, but it cannot tell a live policy from a lapsed one, and it says so
+     on the face of it rather than quietly overstating the list. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
 
-  /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
-     FCT65 are one product typed three ways and a wall that lists them
-     separately is a wall nobody trusts. */
-  var byFam = {}, unknown = 0;
-  (mixRows || []).forEach(function (r) {
-    var f = iConvPlan_(r.pc);
-    if (!f || f.kind !== 'convert') { unknown += iNum_(r.n); return; }
-    var slot = byFam[f.like] || (byFam[f.like] = { code: f.like, label: f.label, n: 0, cover: 0 });
-    slot.n += iNum_(r.n); slot.cover += iNum_(r.cover);
+  var skip = iExcluded_();
+  var state = { ready: { n: 0, cover: 0, prem: 0 },
+                collect: { n: 0, cover: 0, prem: 0 },
+                gone: { n: 0, cover: 0, prem: 0 } };
+  var byAg = {}, byFam = {}, unknown = 0, unnamed = 0;
+  var ahead = { n: 0, cover: 0 };
+  var cases = 0, cover = 0, prem = 0;
+
+  (rowsM || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the dues tab has never heard of is treated as ready — it is
+       usually business too new to be in the extract, and dropping it would
+       hide this month's freshest cases. */
+    var st = hit ? hit.state : 'ready';
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c);
+    state[st].n++; state[st].cover += c; state[st].prem += pm;
+    if (st === 'gone') return;                       // off the list entirely
+
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (!ag) { unnamed++; }
+    else if (iExcludes_(skip, ag)) { return; }
+    else {
+      var slot = byAg[ag] || (byAg[ag] = { name: ag, n: 0, cover: 0, prem: 0, top: 0, collect: 0 });
+      slot.n++; slot.cover += c; slot.prem += pm;
+      if (c > slot.top) slot.top = c;
+      if (st === 'collect') slot.collect++;
+    }
+    cases++; cover += c; prem += pm;
+    if (iNum_(r.dom) >= dayOf) { ahead.n++; ahead.cover += c; }
+
+    /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
+       FCT65 are one product typed three ways and a wall that lists them
+       separately is a wall nobody trusts. */
+    var f = iConvPlan_(r.Life_Plan_01__c);
+    if (!f || f.kind !== 'convert') { unknown++; return; }
+    var fam = byFam[f.like] || (byFam[f.like] = { code: f.like, label: f.label, n: 0, cover: 0 });
+    fam.n++; fam.cover += c;
   });
+
+  var agents = Object.keys(byAg).map(function (k) { return byAg[k]; })
+    .sort(function (a, b) { return b.cover - a.cover; });
   var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
     .sort(function (a, b) { return b.cover - a.cover; });
   if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
+  if (state.gone.n) {
+    notes.push(state.gone.n + ' of this month’s birthdays are on policies the dues tab says have ' +
+               'lapsed, been surrendered or already converted. They are off the list — Salesforce ' +
+               'still shows them paying.');
+  }
 
   var soon = (soonRows || []).map(function (r) {
     return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
@@ -1437,14 +1523,18 @@ function iConversionWall_() {
     month: ICONV_MONTHS[today.getMonth()],
     day: dayOf,
     years: ICONV_SOON_Y,
-    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed,
-            ahead: iConvOne_(ahead, ['n', 'cover']) },
+    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead },
+    state: state,
+    duesRead: !!dues,
     agents: agents.slice(0, ICONV_TOP),
     agentCount: agents.length,
     mix: mix,
     pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
             nonconv: iConvOne_(poolGone, ['n', 'cover', 'prem']),
-            unsettled: open },
+            unsettled: open,
+            /* The same pool as conv, but split by what the branch's own
+               extract says about it. This is the honest denominator. */
+            live: dues ? dues.pool : null },
     soon: soon,
     soonTotal: soonTotal,
     notes: notes

@@ -74,16 +74,40 @@ ok('every family in the table appears in exactly one filter',
    Invented throughout. No client of this branch is in this repository. The
    stub records which SOQL it was asked for, because the filters are as much
    the subject of this test as the arithmetic. */
+/* THE DUES TAB, which is what decides in force and current. Every policy
+   number below is invented. The four states it has to produce are: a clean
+   row, an overdue row, a row the tab says has lapsed, and a row it says was
+   already converted — plus one policy the tab has never heard of. */
+const DUESH = ['Agent', 'Number', 'Client Number', 'Client', 'Premium', 'Issue Date', 'Status',
+               'Status(2)', 'Days', 'Insurance Type', 'Paid To Date', 'Sum Assured', 'Plan Code',
+               'Billing type', 'Mode', 'Status Description', 'Projected Lapse Date', 'Phone', 'email'];
+const due = (num, plan, sum, prem, st2, desc, days) =>
+  ['Anand Pretend', num, '1', 'CLIENTNAME', prem, '2020-01-01', '0', st2 || '', days || 0, '2',
+   '2026-09-28', sum, plan, 'Direct Bill', '', desc, '', '', ''];
+env.__mkSheet('Dues', 9, DUESH, [
+  due('POL-READY-A',   'FCT851', 9000000, 4000, '',        'Premium Paying'),
+  due('POL-READY-B',   'FCT651', 6000000, 3000, '',        'Premium Paying'),
+  due('POL-OVERDUE',   'FCT751', 4000000, 2000, 'Overdue', 'Premium Paying', 45),
+  due('POL-LAPSED',    'FCT851', 3000000, 1500, '',        'Lapsed'),
+  due('POL-CONVERTED', 'FCT851', 2000000, 1000, '',        'Converted'),
+  due('POL-EXCLUDED',  'FCT651', 8000000, 4000, '',        'Premium Paying'),
+  // not a convertible plan, so it must not reach the pool split at all
+  due('POL-LIBERATOR', 'LB75 1', 5000000, 2500, '',        'Premium Paying'),
+]);
+
 const asked = [];
 const agg = {
-  agents: [{ ag: 'Anand Pretend', n: 9,  cover: 24000000, prem: 12000, top: 9000000 },
-           { ag: 'Beena Pretend', n: 4,  cover: 6000000,  prem: 3000,  top: 3000000 },
-           { ag: 'Gone Away',     n: 7,  cover: 18000000, prem: 9000,  top: 8000000 },
-           { ag: null,            n: 2,  cover: 1000000,  prem: 500,   top: 500000 }],
-  ahead:  [{ n: 6, cover: 15000000 }],
-  mix:    [{ pc: 'FCT65 1', n: 5, cover: 12000000 }, { pc: 'FCT651', n: 3, cover: 8000000 },
-           { pc: 'FCT65',   n: 1, cover: 4000000 },  { pc: 'ECT65 1', n: 4, cover: 6000000 },
-           { pc: 'WHO KNOWS', n: 2, cover: 1000000 }],
+  /* Row level, because a policy has to be looked up one at a time. */
+  month: [
+    { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1', dom: 20 },
+    { POLICY__c: 'POL-READY-B',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 6000000, Life_Premium__c: 3000, Life_Plan_01__c: 'FCT651',  dom: 3 },
+    { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1', dom: 28 },
+    { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1', dom: 15 },
+    { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1', dom: 25 },
+    { POLICY__c: 'POL-EXCLUDED',  AGENT__r: { Name: 'Gone Away' },     Life_Coverage__c: 8000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT65 1', dom: 12 },
+    { POLICY__c: 'POL-BRANDNEW',  AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 1000000, Life_Premium__c: 500,  Life_Plan_01__c: 'FCT65',   dom: 30 },
+    { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS', dom: 1 }
+  ],
   conv:   [{ n: 1172, cover: 1687790726, prem: 900000 }],
   non:    [{ n: 39,   cover: 85100000,   prem: 139941 }],
   soon:   [{ yr: 2028, n: 3, cover: 3600000 }, { yr: 2029, n: 5, cover: 4000000 },
@@ -92,9 +116,7 @@ const agg = {
 };
 env.sfQuery_ = function (soql) {
   asked.push(soql);
-  if (/GROUP BY AGENT__r.Name/.test(soql))          return agg.agents;
-  if (/DAY_IN_MONTH/.test(soql))                    return agg.ahead;
-  if (/GROUP BY Life_Plan_01__c/.test(soql))        return agg.mix;
+  if (/SELECT POLICY__c/.test(soql))                return agg.month;
   if (/CALENDAR_YEAR/.test(soql))                   return agg.soon;
   if (/'ECT%'/.test(soql))                          return agg.unsettled;
   if (/'FNT%'/.test(soql))                          return agg.non;
@@ -105,17 +127,49 @@ console.log('\nWhat the wall is handed:\n');
 const d = env.iConversionWall_();
 ok('it is configured', d.configured === true, d.error || '');
 ok('the month is the month we are in', d.month === 'September', d.month);
+ok('the dues tab was read', d.duesRead === true);
+
+/* IN FORCE AND CURRENT. A lapsed policy cannot be converted and one in
+   arrears cannot be converted until somebody collects, so the three states
+   are the whole point of the screen. */
+ok('the lapsed policy is off the list', d.state.gone.n === 2 && d.state.gone.cover === 5000000,
+   JSON.stringify(d.state.gone));
+ok('and so is the one the tab says was already converted',
+   !(d.agents || []).some(a => a.n > 0 && a.name === 'Beena Pretend' && a.cover === 3000000));
+ok('the branch is told they came off, not left to wonder',
+   (d.notes || []).some(x => /lapsed, been surrendered or already converted/.test(x)),
+   JSON.stringify(d.notes));
+ok('the overdue policy stays on the list — it is a phone call, not a dead lead',
+   d.state.collect.n === 1 && d.state.collect.cover === 4000000, JSON.stringify(d.state.collect));
+ok('and the ready ones are ready', d.state.ready.n === 5, JSON.stringify(d.state.ready));
+ok('a policy the dues tab has never heard of is treated as ready, not dropped',
+   (d.agents.find(a => a.name === 'Anand Pretend') || {}).n === 3,
+   JSON.stringify(d.agents));
+
 ok('an excluded agent is not on the wall', !(d.agents || []).some(a => a.name === 'Gone Away'));
-ok('and their cover is not in the total', d.head.cover === 30000000, String(d.head.cover));
-ok('nor their cases', d.head.cases === 13, String(d.head.cases));
-ok('a policy with no agent against it is counted, not hidden', d.head.unnamed === 2, String(d.head.unnamed));
-ok('the urgent half is the birthdays still to come', d.head.ahead.n === 6 && d.head.ahead.cover === 15000000);
+ok('and their cover is not in the total', d.head.cover === 20500000, String(d.head.cover));
+ok('nor their cases', d.head.cases === 5, String(d.head.cases));
+ok('a policy with no agent against it is counted, not hidden', d.head.unnamed === 1, String(d.head.unnamed));
+/* Today is the 11th in this fixture, and the birthdays are spread either side
+   of it. Three are still to come and are neither lapsed nor somebody else's:
+   the 20th, the 28th and the 30th. */
+ok('the urgent half is the birthdays still to come',
+   d.head.ahead.n === 3 && d.head.ahead.cover === 14000000, JSON.stringify(d.head.ahead));
 ok('agents are ranked by cover', d.agents[0].name === 'Anand Pretend');
 ok('each agent carries their biggest single case', d.agents[0].top === 9000000, String(d.agents[0].top));
+ok('and how many of theirs need collecting first',
+   (d.agents.find(a => a.name === 'Beena Pretend') || {}).collect === 1,
+   JSON.stringify(d.agents));
 ok('three typings of one product are one chip',
    (d.mix.filter(m => m.code === 'FCT').length === 1) &&
-   (d.mix.find(m => m.code === 'FCT') || {}).n === 9,
+   (d.mix.find(m => m.code === 'FCT') || {}).n === 4,
    JSON.stringify(d.mix.map(m => m.code + ':' + m.n)));
+/* The honest denominator: the convertible pool split by what the branch's own
+   extract says about it, with the Liberator row excluded because it is not a
+   convertible plan at all. */
+ok('the pool is split by what the dues tab says, and only convertible plans are in it',
+   d.pool.live.ready.n === 3 && d.pool.live.collect.n === 1 && d.pool.live.gone.n === 2,
+   JSON.stringify(d.pool.live));
 ok('a plan code nobody can read is said out loud, not dropped silently',
    (d.notes || []).some(s => /cannot read/.test(s)), JSON.stringify(d.notes));
 ok('the pool and the book with no right at all are both there',
@@ -135,7 +189,12 @@ const all = asked.join('\n');
 ok('only policies still paying', asked.every(q => /PREMIUM PAYING/.test(q)), String(asked.length) + ' queries');
 ok('only cover that has not already expired', asked.every(q => /Life_Coverage_Expiry__c >= TODAY/.test(q)));
 ok('this month’s birthdays, by month number', /CALENDAR_MONTH\(Date_Of_Birth__c\) = 9/.test(all));
-ok('the urgent half, by day of month', /DAY_IN_MONTH\(Date_Of_Birth__c\) >= 11/.test(all));
+/* The day of the month comes back on every row rather than as a second
+   aggregate, because the row has to be looked up in the dues tab anyway. */
+ok('the day of the month comes back on each row',
+   /DAY_IN_MONTH\(Date_Of_Birth__c\) dom/.test(all));
+ok('and the policy number with it, so the dues tab can be searched',
+   /SELECT POLICY__c/.test(all));
 /* The deadline counts down the book that ENDS, never the book that converts.
    A policy you may convert has no date worth a wall until its privilege
    closes; a Liberator to sixty-five has a date, and after it the client has

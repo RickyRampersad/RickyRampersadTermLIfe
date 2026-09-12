@@ -1858,6 +1858,42 @@ client number, issued within a year of the term going off the books):
 Nine conversions in 2024, ten in 2025, four so far in 2026 — 23 of the 48 in
 three years. Sixteen of the 48 are the branch manager's own.
 
+#### In force, and the premium current — the two rules Salesforce cannot answer
+
+A lapsed policy **cannot be converted at all**. A policy in arrears cannot be
+converted **until somebody collects**. Neither fact is reliable in Salesforce:
+on a book checked against the dues tab on 12 September 2026 it still carried a
+converted policy, a death and a lapse as "Premium Paying", and its
+paid-to-date was behind the tab's on **60 of 73** policies.
+
+So status and arrears are read off the branch's own **dues tab** — the same
+tab the 45-day wall reads — and `iConvDues_()` puts every convertible policy
+in one of three states:
+
+| State | What the tab says | What the screen does |
+|---|---|---|
+| **ready** | in force, nothing owed | convert it |
+| **collect** | in force, `Status(2)` = Overdue | collect the premium first — a conversion behind a phone call, not a dead lead |
+| **gone** | lapsed, surrendered, dead, matured, already converted | off the list entirely |
+
+**The split matters more than the total.** On the day this was written, **335
+of the 598 premium-paying Flexi convertible policies — 56% — were flagged
+Overdue.** A single number would have sent every agent after all of them. Most
+are shallow: 198 inside a month, 95 at one to two months, 40 at two to three.
+
+Two deliberate behaviours:
+
+- **A policy the dues tab has never heard of counts as ready.** It is usually
+  business too new to be in the extract, and dropping it would hide the
+  month's freshest cases.
+- **The month's list is read row by row, not as an aggregate.** Each policy has
+  to be looked up in the tab one at a time, so the SOQL returns
+  `POLICY__c` and `DAY_IN_MONTH(Date_Of_Birth__c)` and the totals are added up
+  in Apps Script. The policy number never leaves the function — it exists only
+  to find the row. A month's birthdays on one plan family is tens of rows.
+- **With no dues tab the screen still works**, says so on its face, and calls
+  every figure an upper bound.
+
 #### Why a month, and why the gold half
 
 Conversion is priced at **attained age**. The cheapest day to convert is the day
