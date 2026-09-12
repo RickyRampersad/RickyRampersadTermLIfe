@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Your Cover, Explained | Ricky Rampersad Branch</title>
+<meta name="description" content="What your Guardian policy actually covers, what it does not, and what you already have and may not know about. Plain words, straight from the policy wording.">
+<meta name="theme-color" content="#061c31">
+<link rel="icon" href="../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as the renewals wall, /board/ and the staff walkthrough —
+     on a screen beside them this must read as the same branch. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+  img{max-width:100%}
+
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+    padding:13px 24px;background:rgba(6,25,45,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:16.5px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .callus{margin-left:auto;font-size:12.5px;font-weight:650;color:#07131f;
+    background:var(--grad-gold);padding:8px 15px;border-radius:999px;text-decoration:none;white-space:nowrap}
+
+  .rail{position:sticky;top:67px;z-index:35;display:flex;gap:6px;padding:12px 24px;
+    background:linear-gradient(#061c31f2,#061c31d0);overflow-x:auto;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail b{font:650 12.5px var(--font-b);color:var(--dim);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;white-space:nowrap;
+    transition:.25s var(--ease)}
+  .rail b:hover{color:var(--ink)}
+  .rail b.on{color:#07131f;background:var(--grad);border-color:transparent;font-weight:750}
+
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 24px 100px}
+  .panel{display:none;animation:in .45s var(--ease)}
+  .panel.on{display:block}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .kick{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:9px}
+  h2{margin:0 0 10px;font-family:var(--font-d);font-size:clamp(26px,5vw,34px);font-weight:800;letter-spacing:-1px;line-height:1.12}
+  h3{margin:34px 0 14px;font-family:var(--font-d);font-size:19px;font-weight:750;letter-spacing:-.3px;
+     display:flex;align-items:center;gap:10px}
+  h3 .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .lede{font-size:16.5px;color:var(--dim);line-height:1.62;max-width:760px;margin:0 0 10px}
+  p{line-height:1.62}
+  .src{font-size:11.5px;color:var(--faint);margin:4px 0 0;font-style:italic}
+
+  /* the benefit / gap / add cards */
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(265px,1fr))}
+  .c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
+  .c .t{font-family:var(--font-d);font-weight:750;font-size:15px;margin-bottom:6px;display:flex;
+        align-items:baseline;gap:9px;justify-content:space-between}
+  .c .amt{font-size:13px;font-weight:750;color:var(--gold);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .c p{margin:0;font-size:13.6px;color:var(--dim);line-height:1.55}
+  .c.have{border-left:3px solid var(--blue)}
+  .c.gap{border-left:3px solid var(--gold)}
+  .c.add{border-left:3px solid var(--teal)}
+  .c.add .amt{color:var(--teal)}
+
+  .pull{background:linear-gradient(120deg,rgba(245,185,59,.13),rgba(245,185,59,.05));
+    border:1px solid rgba(245,185,59,.3);border-left:4px solid var(--gold);
+    border-radius:12px;padding:17px 19px;margin:20px 0}
+  .pull b{color:var(--gold)}
+  .pull p{margin:0;font-size:14.8px;line-height:1.6}
+  .pull p+p{margin-top:9px}
+
+  /* calculators */
+  .calc{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);
+        padding:20px;margin:18px 0}
+  .calc h4{margin:0 0 4px;font-family:var(--font-d);font-size:16.5px;font-weight:750}
+  .calc .why{font-size:13.4px;color:var(--dim);margin:0 0 16px;line-height:1.55}
+  .fields{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));margin-bottom:18px}
+  .f label{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+           color:var(--faint);font-weight:650;margin-bottom:5px}
+  .f .inp{display:flex;align-items:center;background:rgba(0,0,0,.28);border:1px solid var(--line);
+          border-radius:10px;padding:0 11px;transition:.2s}
+  .f .inp:focus-within{border-color:var(--blue);background:rgba(0,0,0,.4)}
+  .f .inp span{font-size:12.5px;color:var(--faint);font-weight:650;margin-right:2px}
+  .f input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);
+           font:650 16px var(--font-b);padding:11px 0;font-variant-numeric:tabular-nums}
+
+  /* payout meter — blue = paid, gold = shortfall. Validated for CVD separation
+     (ΔE 25.0 protan); both segments also carry direct labels, so identity is
+     never colour-alone. */
+  .meter{margin-top:4px}
+  .bar{display:flex;height:38px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.05);gap:2px}
+  .bar .seg{display:grid;place-items:center;font-size:12.5px;font-weight:750;color:#07131f;
+            transition:flex-basis .5s var(--ease);min-width:0;overflow:hidden;white-space:nowrap}
+  .bar .paid{background:var(--blue);border-radius:8px 4px 4px 8px}
+  .bar .short{background:var(--gold);border-radius:4px 8px 8px 4px}
+  .keys{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap}
+  .key{display:flex;align-items:center;gap:7px;font-size:12.8px;color:var(--dim)}
+  .key i{width:11px;height:11px;border-radius:3px;flex:none}
+  .key b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .verdict{margin-top:15px;font-size:14.6px;line-height:1.6;padding:13px 15px;border-radius:11px;
+           background:rgba(0,0,0,.25);border:1px solid var(--line)}
+  .verdict.ok{border-color:rgba(55,177,236,.4)}
+  .verdict.short{border-color:rgba(245,185,59,.42)}
+  .verdict b{color:var(--gold)}
+  .verdict.ok b{color:var(--blue)}
+
+  /* NCD ladder — one series, so no legend; every step is directly labelled. */
+  .ladder{display:grid;gap:9px;margin-top:6px}
+  .rung{display:grid;grid-template-columns:76px 1fr 60px;align-items:center;gap:12px}
+  .rung .yr{font-size:12.6px;color:var(--dim);font-weight:600}
+  .rung .track{height:26px;background:rgba(255,255,255,.05);border-radius:7px;overflow:hidden}
+  .rung .fill{height:100%;background:var(--grad);border-radius:7px;transition:width .5s var(--ease)}
+  .rung .pct{font:750 14px var(--font-b);text-align:right;font-variant-numeric:tabular-nums}
+  .rung.after .fill{background:var(--grad-gold)}
+  .rung.after .pct{color:var(--gold)}
+  .toggle{display:inline-flex;background:rgba(0,0,0,.28);border:1px solid var(--line);
+          border-radius:999px;padding:4px;gap:4px;margin-bottom:16px}
+  .toggle button{background:none;border:0;color:var(--dim);font:650 12.8px var(--font-b);
+                 padding:8px 15px;border-radius:999px;cursor:pointer;transition:.22s}
+  .toggle button.on{background:var(--grad);color:#07131f;font-weight:750}
+
+  /* guided asking */
+  .ask{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:18px 0}
+  .q{margin-bottom:17px}
+  .q .qt{font-family:var(--font-d);font-size:15.5px;font-weight:700;margin-bottom:10px}
+  .opts{display:flex;gap:8px;flex-wrap:wrap}
+  .opts button{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--dim);
+               font:600 13.4px var(--font-b);padding:9px 16px;border-radius:999px;cursor:pointer;transition:.22s var(--ease)}
+  .opts button:hover{color:var(--ink);border-color:rgba(255,255,255,.25)}
+  .opts button.on{background:var(--grad);color:#07131f;border-color:transparent;font-weight:700}
+  #askOut{margin-top:6px}
+  #askOut .none{font-size:13.8px;color:var(--faint);font-style:italic}
+
+  table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13.8px}
+  .scroller{overflow-x:auto}
+  th,td{text-align:left;padding:10px 13px;border-bottom:1px solid var(--line)}
+  th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  td b{font-variant-numeric:tabular-nums}
+
+  .cta{background:linear-gradient(120deg,rgba(55,177,236,.15),rgba(15,181,165,.08));
+       border:1px solid rgba(55,177,236,.32);border-radius:var(--r);padding:24px;margin-top:34px;text-align:center}
+  .cta h4{margin:0 0 8px;font-family:var(--font-d);font-size:20px;font-weight:750}
+  .cta p{margin:0 0 17px;color:var(--dim);font-size:14.6px}
+  .cta a{display:inline-block;background:var(--grad-gold);color:#07131f;font-weight:750;font-size:14.5px;
+         padding:13px 26px;border-radius:999px;text-decoration:none}
+  footer{text-align:center;padding:30px 24px 50px;color:var(--faint);font-size:12.2px;line-height:1.7}
+
+  @media (max-width:560px){
+    header{padding:11px 16px}header .callus{display:none}
+    .rail{padding:10px 16px}.wrap{padding:22px 16px 70px}
+    .rung{grid-template-columns:58px 1fr 50px;gap:8px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Your cover, explained</h1>
+    <div class="sub">Ricky Rampersad Branch · Guardian Group</div>
+  </div>
+  <a class="callus" href="tel:+18686574645">Call the branch</a>
+</header>
+
+<nav class="rail" id="rail">
+  <b data-p="comp" class="on">Comprehensive motor</b>
+  <b data-p="tp">Third party</b>
+  <b data-p="home">Your home</b>
+  <b data-p="biz">Your business</b>
+  <b data-p="more">What else we do</b>
+</nav>
+
+<main class="wrap">
+
+<!-- ═══════════════ COMPREHENSIVE MOTOR ═══════════════ -->
+<section class="panel on" id="p-comp">
+  <div class="kick">Private Motor · Comprehensive</div>
+  <h2>You are covered for more than you think — and less than you think, in one place that matters.</h2>
+  <p class="lede">Comprehensive means Sections 1, 2, 3 and 4 of your policy are live. Section 2 pays for your own
+  car. Section 3 pays for what you do to other people. <strong>Section 4 is the part almost nobody reads</strong>
+  — and it is already paid for.</p>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>Already yours, at no extra cost</h3>
+  <div class="grid">
+    <div class="c have">
+      <div class="t">Accident cover for you and your husband or wife <span class="amt">up to 100%</span></div>
+      <p>Death, or losing sight or a hand or foot, pays the full limit of liability — and it follows you into
+      <em>any</em> private car, not only your own. If you cannot work at all, it pays $50 a week for up to 26 weeks.
+      Applies between 17 and 65.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Medical expenses <span class="amt">included</span></div>
+      <p>You, your driver, and anyone riding with you. Reasonable medical expenses for each person hurt in the
+      accident.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Your garage, if it burns <span class="amt">included</span></div>
+      <p>If your private garage is damaged by fire and no other policy covers it, this one does.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Luggage and personal effects <span class="amt">included</span></div>
+      <p>Things in the car, lost by accident, fire or theft. <strong>Not</strong> money, jewellery, cameras,
+      laptops or cell phones — those are exactly what people assume are covered.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Towing to safety <span class="amt">included</span></div>
+      <p>If the car cannot be driven after a covered accident, we pay to move it to the nearest repairer or a
+      place of safety.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Authorise your own repair <span class="amt">up to the limit</span></div>
+      <p>You do not have to wait for us to see it first. Send the estimate, the accident report form and a
+      photograph, and get on with your life.</p>
+    </div>
+  </div>
+  <p class="src">Section 4, Private Motor Vehicle Policy GG-MOT-POL-APV-10/09.</p>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>What is not covered — read this one twice</h3>
+  <div class="pull">
+    <p><b>Flood, hurricane, windstorm, tornado and earthquake are excluded from every motor policy as standard.</b>
+    In Trinidad and Tobago. That is General Exclusion 2(a), and it applies whether you are comprehensive or not.</p>
+    <p>The fix is one line on your schedule: <b>Optional Extra Benefit 1, "Special Perils"</b>, which deletes that
+    exclusion entirely. If OEB 1 is not printed on your schedule, a flooded car is your own bill. Look now — we
+    will wait.</p>
+  </div>
+  <div class="grid">
+    <div class="c gap">
+      <div class="t">Windscreen glass <span class="amt">excluded</span></div>
+      <p>A cracked windscreen on its own is not covered unless OEB 2 is on your schedule. With it, there is no
+      excess and it does not touch your No Claim Discount.</p>
+    </div>
+    <div class="c gap">
+      <div class="t">Tyres on their own <span class="amt">excluded</span></div>
+      <p>Damage to tyres is only covered if the car is damaged at the same time.</p>
+    </div>
+    <div class="c gap">
+      <div class="t">Wear, tear and breakdown <span class="amt">excluded</span></div>
+      <p>Mechanical or electrical failure is not an accident. But if the failure causes a collision, the collision
+      damage is covered.</p>
+    </div>
+    <div class="c gap">
+      <div class="t">Market value, not what you paid <span class="amt">the ceiling</span></div>
+      <p>A total loss pays the market value <em>or</em> your sum insured — whichever is <strong>lower</strong>.
+      Insuring for more than the car is worth buys you nothing. This is why the value comes down each year.</p>
+    </div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--teal)"></span>What you can add</h3>
+  <div class="grid">
+    <div class="c add">
+      <div class="t">OEB 1 · Special Perils <span class="amt">the big one</span></div>
+      <p>Deletes the flood, hurricane, windstorm and earthquake exclusion. In this country this is not an optional
+      extra so much as the point.</p>
+    </div>
+    <div class="c add">
+      <div class="t">OEB 2 · Windscreen &amp; all glass <span class="amt">no excess</span></div>
+      <p>Glass-only damage, with no excess and no effect on your NCD. Replace it and your cover reinstates free
+      once a year up to $2,500.</p>
+    </div>
+    <div class="c add">
+      <div class="t">OEB 5 · Agreed Value <span class="amt">15% a year</span></div>
+      <p>Pays your sum insured on a total loss instead of market value, less 15% a year pro-rata. <strong>It only
+      works if you give us a written valuation from an approved valuator at each renewal</strong> — without one it
+      quietly reverts to market value.</p>
+    </div>
+    <div class="c add">
+      <div class="t">OEB 6 · Hospitalisation <span class="amt">$15,000 / year</span></div>
+      <p>Surgery, ICU, room and board, ambulance. Halves at 65 and stops at 70. Pre-existing conditions from the
+      two years before you started are excluded.</p>
+    </div>
+    <div class="c add">
+      <div class="t">OEB 4 · Courtesy car <span class="amt">$100 / day</span></div>
+      <p>A replacement car, or $100 a day toward a rental, from the day we accept the claim until the repair is
+      finished.</p>
+    </div>
+    <div class="c add">
+      <div class="t">OEB 3 · Passengers <span class="amt">per seat</span></div>
+      <p>The same accident benefit you and your spouse have, extended to whoever is in the car. Worth a
+      conversation if you carry other people's children.</p>
+    </div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>What one claim actually costs you</h3>
+  <div class="calc">
+    <h4>Your No Claim Discount</h4>
+    <p class="why">The discount is not a gift, it is an asset — and a single claim can take years of it. Guardian's
+    "step back" rule softens the fall once you have reached the third year.</p>
+    <div class="toggle" id="ncdTog">
+      <button data-v="clean" class="on">No claim</button>
+      <button data-v="one">After one claim</button>
+    </div>
+    <div class="ladder" id="ladder"></div>
+    <p class="src">Section 6, comprehensive scale. Third party and third-party fire &amp; theft run 15% / 20% / 25% / 35%.</p>
+    <div class="verdict ok" id="ncdNote">Four clean years earns the maximum 60%.</div>
+  </div>
+  <div class="pull">
+    <p><b>Protected maximum NCD.</b> Once you have held our maximum discount for two consecutive years without a
+    break, one claim does not touch it at all. Ask whether you have reached that point — most long-standing clients
+    have and do not know.</p>
+  </div>
+</section>
+
+<!-- ═══════════════ THIRD PARTY ═══════════════ -->
+<section class="panel" id="p-tp">
+  <div class="kick">Private Motor · Third Party &amp; Third Party Fire and Theft</div>
+  <h2>The honest version: this protects other people from you.</h2>
+  <p class="lede">Third party is the legal minimum and it does a real job — it stands between you and a claim you
+  could never pay yourself. What it does not do is put your own car back on the road.</p>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>What happens</th><th>Third party</th><th>Fire &amp; theft</th><th>Comprehensive</th></tr></thead>
+    <tbody>
+      <tr><td>You injure someone, or damage their property</td><td>Covered</td><td>Covered</td><td>Covered</td></tr>
+      <tr><td>Legal costs and representation</td><td>Covered</td><td>Covered</td><td>Covered</td></tr>
+      <tr><td>Your car is stolen</td><td><b>No</b></td><td>Covered</td><td>Covered</td></tr>
+      <tr><td>Your car burns</td><td><b>No</b></td><td>Covered</td><td>Covered</td></tr>
+      <tr><td>You hit someone and damage your own car</td><td><b>No</b></td><td><b>No</b></td><td>Covered</td></tr>
+      <tr><td>Accident benefit for you and your spouse</td><td><b>No</b></td><td><b>No</b></td><td>Covered</td></tr>
+      <tr><td>Medical expenses for your passengers</td><td><b>No</b></td><td><b>No</b></td><td>Covered</td></tr>
+      <tr><td>Best No Claim Discount after four years</td><td>35%</td><td>35%</td><td><b>60%</b></td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="src">Sections applying to each cover type are set at the front of policy GG-MOT-POL-APV-10/09.</p>
+
+  <div class="pull">
+    <p><b>The one thing to know.</b> On third party, your own car is not insured for anything. If it is worth less
+    than about a year of the difference in premium, that is a sound decision and we will say so. If it is your way
+    to work, it usually is not.</p>
+    <p>Ask us to price both. It takes one phone call and you will know rather than guess.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>You still have these</h3>
+  <div class="grid">
+    <div class="c have">
+      <div class="t">Unlimited legal defence <span class="amt">included</span></div>
+      <p>We arrange representation at an inquest or in court, and pay the costs, for any accident covered under
+      Section 3.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Anyone you let drive <span class="amt">included</span></div>
+      <p>Your authorised driver has the same third party protection you do, as long as they keep to the terms of
+      the policy.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Emergency treatment <span class="amt">included</span></div>
+      <p>Paid for under the legislation, and it does not count as a claim against your No Claim Discount.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ HOME ═══════════════ -->
+<section class="panel" id="p-home">
+  <div class="kick">HomeGuard · Buildings and Contents</div>
+  <h2>Your house is covered for the weather. Your car is not.</h2>
+  <p class="lede">This surprises almost everyone. HomeGuard covers flood, earthquake, hurricane, tsunami and
+  landslip as <em>standard</em> causes of loss — they are causes 2, 3, 4 and 6 on your policy. The motor policy
+  excludes those same events unless you buy them back.</p>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>The extensions nobody reads</h3>
+  <p class="lede" style="margin-bottom:14px">All of these are already in your policy. They are small amounts
+  individually and they are the ones that come up in real life.</p>
+  <div class="grid">
+    <div class="c have">
+      <div class="t">Food in your freezer <span class="amt">$1,000</span></div>
+      <p>If the power is out more than 12 hours and the food spoils, that is a claim. In this country that is not
+      a hypothetical.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Locks and keys <span class="amt">$1,000</span></div>
+      <p>Lost or stolen keys, or locks damaged in a break-in — external doors, your alarm, your safe. <strong>The
+      theft excess does not apply</strong> to this one.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Your helper's belongings <span class="amt">$2,500</span></div>
+      <p>Personal effects of your domestic employee, while they are at your home.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Somewhere to live <span class="amt">10–20%</span></div>
+      <p>If the house cannot be lived in, we pay rent or comparable accommodation — up to 10% of the buildings sum
+      insured, or 20% of the contents sum insured.</p>
+    </div>
+    <div class="c have">
+      <div class="t">If the worst happens <span class="amt">$10,000</span></div>
+      <p>Fatal injury of the insured by any covered cause pays $10,000, or half the contents sum insured,
+      whichever is less.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Credit card misuse <span class="amt">$1,000</span></div>
+      <p>Your liability if a lost or stolen card is used by someone else — provided you reported it to the police.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Luggage, anywhere in the West Indies <span class="amt">$5,000</span></div>
+      <p>On holiday, not a business trip. Most people insure this separately without realising they already have it.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Garden equipment and furniture <span class="amt">$5,000</span></div>
+      <p>Kept in the open, inside your boundary. Potted plants count; the garden itself does not.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Pipes and cables underground <span class="amt">$10,000</span></div>
+      <p>Water, sewage, electricity, telephone and gas, from the house to the public main.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Glass and bathroom fittings <span class="amt">$10,000</span></div>
+      <p>Accidental breakage of fixed glass — windows, doors, skylights — and fixed sanitary ware.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Visitors' things <span class="amt">$1,000</span></div>
+      <p>Personal effects of guests staying with you.</p>
+    </div>
+    <div class="c have">
+      <div class="t">Public and personal liability <span class="amt">no excess</span></div>
+      <p>Someone hurt at your home, or damage you cause in your private life. You pay no excess on this section
+      at all.</p>
+    </div>
+  </div>
+  <p class="src">Sub-sections A and B extensions, HomeGuard policy GG-FHO-POL-04/11.</p>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>The 85% rule — the one that costs people money</h3>
+  <div class="calc">
+    <h4>What would your claim actually pay?</h4>
+    <p class="why">If your buildings sum insured is less than <strong>85% of what it would cost to rebuild</strong>,
+    you are treated as your own insurer for the difference, and every claim — not just a total loss — is cut by the
+    same proportion. Put your real numbers in.</p>
+    <div class="fields">
+      <div class="f"><label>Insured for</label>
+        <div class="inp"><span>TT$</span><input id="si" type="text" inputmode="numeric" value="1,200,000"></div></div>
+      <div class="f"><label>Cost to rebuild today</label>
+        <div class="inp"><span>TT$</span><input id="rc" type="text" inputmode="numeric" value="1,800,000"></div></div>
+      <div class="f"><label>Size of the claim</label>
+        <div class="inp"><span>TT$</span><input id="cl" type="text" inputmode="numeric" value="150,000"></div></div>
+    </div>
+    <div class="meter">
+      <div class="bar">
+        <div class="seg paid"  id="segPaid"></div>
+        <div class="seg short" id="segShort"></div>
+      </div>
+      <div class="keys">
+        <div class="key"><i style="background:var(--blue)"></i>Insurer pays <b id="kPaid">—</b></div>
+        <div class="key"><i style="background:var(--gold)"></i>You carry <b id="kShort">—</b></div>
+      </div>
+      <div class="verdict" id="avNote">—</div>
+    </div>
+    <p class="src">Section 2.1(e), HomeGuard. Contents works the same way against replacement-as-new cost.
+    Figures exclude your excess.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>The limits inside contents</h3>
+  <div class="pull">
+    <p><b>Unless an item is listed by name on your schedule</b>, contents cover pays at most:</p>
+    <p>· <b>2%</b> of the contents sum insured for any one valuable · <b>10%</b> for all valuables in a single
+    event · <b>5%</b> for any one other item, or any one piece of electronic equipment.</p>
+    <p>On TT$200,000 of contents that makes a TT$45,000 ring worth <b>TT$4,000</b> at claim time. Listing it costs
+    very little. Not listing it costs the difference.</p>
+  </div>
+  <div class="grid">
+    <div class="c gap">
+      <div class="t">Empty for 30 days <span class="amt">cover stops</span></div>
+      <p>If the house is unoccupied 30 consecutive days, theft, malicious damage and escape of water fall away.
+      Tell us before you travel — it is usually a simple endorsement.</p>
+    </div>
+    <div class="c gap">
+      <div class="t">Not maintained <span class="amt">reduced</span></div>
+      <p>If the building has not been kept in good repair, a deduction for wear and tear comes off the settlement.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Specified Personal Items <span class="amt">all risks</span></div>
+      <p>Sub-section E covers named items against almost anything, anywhere in the territorial limits — the answer
+      to the 2% problem above.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════ BUSINESS ═══════════════ -->
+<section class="panel" id="p-biz">
+  <div class="kick">Commercial</div>
+  <h2>Sixteen lines, and most businesses carry two of them.</h2>
+  <p class="lede">Almost every commercial client we renew has the building and the stock insured and nothing
+  standing behind the people, the money or the liability. These are the lines the branch places.</p>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>If you own or occupy a premises</h3>
+  <div class="grid">
+    <div class="c have"><div class="t">Fire</div><p>The building and what is in it. The starting point for
+      everything else.</p></div>
+    <div class="c have"><div class="t">Burglary</div><p>Forcible entry, stock and equipment taken.</p></div>
+    <div class="c have"><div class="t">Public Liability</div><p>A customer hurt on your floor. The claim that
+      closes small businesses.</p></div>
+    <div class="c have"><div class="t">Flexi Office</div><p>Buildings, contents, liability and business
+      interruption bundled for an office.</p></div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>If you employ people</h3>
+  <div class="grid">
+    <div class="c have"><div class="t">Workmen Compensation</div><p>Your statutory liability when a worker is
+      injured on the job.</p></div>
+    <div class="c have"><div class="t">Group Life &amp; Health</div><p>The benefit that keeps good staff. Guardian
+      writes it on the master group contract.</p></div>
+    <div class="c have"><div class="t">Personal Accident</div><p>Cover for a team that travels, drives or works
+      with equipment.</p></div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>If you move things, hold money, or advise</h3>
+  <div class="grid">
+    <div class="c have"><div class="t">Goods in Transit</div><p>Stock between your supplier, your store and your
+      customer.</p></div>
+    <div class="c have"><div class="t">Marine</div><p>Cargo in and out of Trinidad.</p></div>
+    <div class="c have"><div class="t">Money</div><p>Cash on the premises, in transit, and in the hands of the
+      person carrying it.</p></div>
+    <div class="c have"><div class="t">Professional Indemnity</div><p>If your advice or your drawing is wrong and
+      it costs a client money.</p></div>
+    <div class="c have"><div class="t">Cyber Guard</div><p>Ransomware, a compromised account, data you are
+      responsible for. New, and increasingly the first claim a business has.</p></div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>If you build, or run plant</h3>
+  <div class="grid">
+    <div class="c have"><div class="t">Contractors All Risks</div><p>The works, the site, the liability, for the
+      length of the job.</p></div>
+    <div class="c have"><div class="t">Plant, Machinery &amp; Equipment</div><p>Owned or hired, on site or in
+      transit.</p></div>
+    <div class="c have"><div class="t">Boiler &amp; Pressure Vessel</div><p>Statutory inspection and the damage an
+      explosion does.</p></div>
+    <div class="c have"><div class="t">Electronic &amp; Low Voltage</div><p>Servers, tills, control systems — the
+      equipment a fire policy treats as contents and pays like furniture.</p></div>
+  </div>
+
+  <div class="pull">
+    <p><b>One question worth asking at renewal.</b> If your premises burned tonight and you could not trade for
+    four months, what pays the salaries and the rent? If the answer is "savings", the line you are missing is
+    business interruption, and it is usually cheaper than the burglary cover you already buy.</p>
+  </div>
+</section>
+
+<!-- ═══════════════ WHAT ELSE ═══════════════ -->
+<section class="panel" id="p-more">
+  <div class="kick">The rest of the branch</div>
+  <h2>Insuring the car is the easy part.</h2>
+  <p class="lede">You already deal with us. These are the things clients most often wish they had started
+  earlier — and the earlier they start, the less they cost.</p>
+
+  <div class="ask">
+    <div class="q">
+      <div class="qt">1 · Does anyone depend on your income?</div>
+      <div class="opts" data-k="dep">
+        <button data-v="yes">Yes</button><button data-v="no">No</button>
+      </div>
+    </div>
+    <div class="q">
+      <div class="qt">2 · How is your health cover today?</div>
+      <div class="opts" data-k="health">
+        <button data-v="none">I don't have any</button>
+        <button data-v="work">Through my job</button>
+        <button data-v="own">My own plan</button>
+      </div>
+    </div>
+    <div class="q">
+      <div class="qt">3 · When you stop working, what pays you?</div>
+      <div class="opts" data-k="ret">
+        <button data-v="nothing">Haven't started</button>
+        <button data-v="nis">NIS only</button>
+        <button data-v="plan">I have a plan</button>
+      </div>
+    </div>
+    <div class="q" style="margin-bottom:6px">
+      <div class="qt">4 · Do you own the roof over your head?</div>
+      <div class="opts" data-k="home">
+        <button data-v="own">Own it</button><button data-v="rent">Rent it</button>
+      </div>
+    </div>
+    <div id="askOut"><p class="none">Answer a few and we will tell you honestly which of these is worth a
+      conversation — and which is not.</p></div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--teal)"></span>Life</h3>
+  <div class="grid">
+    <div class="c add">
+      <div class="t">Xpress Life <span class="amt">no medical</span></div>
+      <p>Straightforward cover, quickly. Premiums stop after 20 years — and in the 21st year you can surrender and
+      take back <strong>every dollar you paid in</strong>. Full cover applies from year three; years one and two pay
+      premiums back and half the sum assured.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Flexi Term <span class="amt">most cover per dollar</span></div>
+      <p>The cheapest way to make sure a mortgage and a family are not carried by one person alone.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Econolife <span class="amt">entry level</span></div>
+      <p>Protection at a premium that fits an ordinary month.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Rejuvenator &amp; Liberator <span class="amt">cover + savings</span></div>
+      <p>Protection with a savings or investment component, so the money is doing two jobs.</p>
+    </div>
+  </div>
+
+  <h3><span class="dot" style="background:var(--teal)"></span>Health, pension and people</h3>
+  <div class="grid">
+    <div class="c add">
+      <div class="t">LifeCare Quantum &amp; Provisor <span class="amt">individual health</span></div>
+      <p>Private health cover in your own name — so it does not end when a job does.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Group Life &amp; Health <span class="amt">for employers</span></div>
+      <p>Written on Guardian's master group contract. The cheapest cover most people will ever be offered.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Pension &amp; annuity <span class="amt">tax relief</span></div>
+      <p>Deferred annuity plans. NIS alone replaces a fraction of what you earn now.</p>
+    </div>
+    <div class="c add">
+      <div class="t">Personal Accident <span class="amt">low cost</span></div>
+      <p>A lump sum if an accident takes your income away. Often a few hundred dollars a year.</p>
+    </div>
+  </div>
+
+  <div class="cta">
+    <h4>Not sure what you already have?</h4>
+    <p>That is the most common answer, and it is the one worth fixing. We will read your schedule with you —
+    no charge, no obligation, about fifteen minutes.</p>
+    <a href="tel:+18686574645">Call the branch · 657-GGIL</a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Ricky Rampersad Branch · Guardian Group, Trinidad &amp; Tobago<br>
+  A plain-language summary only. Your policy schedule and wording decide every claim — where this page and your
+  policy differ, the policy governs. Sums and limits shown are the standard wordings and may be varied on your
+  own schedule.
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ── panels ─────────────────────────────────────────── */
+  var rail = document.getElementById('rail');
+  function show(id){
+    [].forEach.call(rail.children, function(b){ b.classList.toggle('on', b.dataset.p === id); });
+    [].forEach.call(document.querySelectorAll('.panel'), function(s){
+      s.classList.toggle('on', s.id === 'p-' + id);
+    });
+    try{ history.replaceState(null,'','?line=' + id); }catch(e){}
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  rail.addEventListener('click', function(e){
+    var b = e.target.closest('b[data-p]'); if (b) show(b.dataset.p);
+  });
+  // deep link, so a renewal email can drop a client straight onto their own line
+  var want = (location.search.match(/[?&]line=([a-z]+)/) || [])[1];
+  if (want && document.getElementById('p-' + want)) show(want);
+
+  /* ── the average clause ─────────────────────────────── */
+  var TT = function(n){ return n.toLocaleString('en-TT',{maximumFractionDigits:0}); };
+  function num(el){ return Math.max(0, parseFloat(String(el.value).replace(/[^0-9.]/g,'')) || 0); }
+
+  var si = document.getElementById('si'), rc = document.getElementById('rc'), cl = document.getElementById('cl');
+
+  function average(){
+    var s = num(si), r = num(rc), c = num(cl);
+    var paid, note, cls;
+
+    if (!r || !c){ paid = c; }
+    else if (s >= 0.85 * r){          // at or above the threshold — paid in full
+      paid = c;
+    } else {
+      paid = c * (s / r);             // rateable proportion, Section 2.1(e)
+    }
+    var shortfall = Math.max(0, c - paid);
+    var pctPaid = c ? (paid / c) * 100 : 100;
+
+    document.getElementById('segPaid').style.flexBasis  = pctPaid + '%';
+    document.getElementById('segShort').style.flexBasis = (100 - pctPaid) + '%';
+    document.getElementById('segPaid').textContent  = pctPaid > 14 ? Math.round(pctPaid) + '%' : '';
+    document.getElementById('segShort').textContent = (100 - pctPaid) > 14 ? Math.round(100 - pctPaid) + '%' : '';
+    document.getElementById('kPaid').textContent  = 'TT$' + TT(Math.round(paid));
+    document.getElementById('kShort').textContent = 'TT$' + TT(Math.round(shortfall));
+
+    var need = Math.ceil(0.85 * r);
+    if (!r || !c){
+      note = 'Put in what the house is insured for, what it would cost to rebuild today, and a claim you can picture.';
+      cls = '';
+    } else if (s >= r){
+      note = 'Fully insured. A TT$' + TT(c) + ' claim pays <b>TT$' + TT(Math.round(paid)) + '</b>, less your excess.';
+      cls = 'ok';
+    } else if (s >= 0.85 * r){
+      note = 'You are inside the 85% threshold, so the average clause does not bite. A TT$' + TT(c) +
+             ' claim pays <b>TT$' + TT(Math.round(paid)) + '</b>, less your excess. You have TT$' +
+             TT(Math.round(s - need)) + ' of headroom before it would.';
+      cls = 'ok';
+    } else {
+      note = 'Under-insured. You need at least <b>TT$' + TT(need) + '</b> to clear the 85% threshold — you are ' +
+             'TT$' + TT(Math.round(need - s)) + ' short. Every claim is cut to ' + Math.round(pctPaid) + '%, so ' +
+             'this TT$' + TT(c) + ' one pays <b>TT$' + TT(Math.round(paid)) + '</b> and you find <b>TT$' +
+             TT(Math.round(shortfall)) + '</b> yourself.';
+      cls = 'short';
+    }
+    var v = document.getElementById('avNote');
+    v.innerHTML = note; v.className = 'verdict ' + cls;
+  }
+
+  [si, rc, cl].forEach(function(el){
+    el.addEventListener('input', average);
+    el.addEventListener('blur', function(){
+      var n = num(el); if (n) el.value = TT(n);
+    });
+  });
+  average();
+
+  /* ── the NCD ladder ─────────────────────────────────── */
+  var NCD = [
+    { yr:'One year',   clean:30, after:0  },
+    { yr:'Two years',  clean:40, after:0  },
+    { yr:'Three years',clean:50, after:30 },
+    { yr:'Four years', clean:60, after:40 }
+  ];
+  var ladder = document.getElementById('ladder');
+  function drawNCD(mode){
+    ladder.innerHTML = NCD.map(function(r){
+      var v = mode === 'clean' ? r.clean : r.after;
+      return '<div class="rung' + (mode === 'clean' ? '' : ' after') + '">' +
+               '<div class="yr">' + r.yr + '</div>' +
+               '<div class="track"><div class="fill" style="width:' + (v / 60 * 100) + '%"></div></div>' +
+               '<div class="pct">' + v + '%</div>' +
+             '</div>';
+    }).join('');
+    document.getElementById('ncdNote').className = 'verdict ' + (mode === 'clean' ? 'ok' : 'short');
+    document.getElementById('ncdNote').innerHTML = mode === 'clean'
+      ? 'Four clean years earns the maximum <b>60%</b>.'
+      : 'One claim in your first or second year takes the discount to <b>nothing</b>. From the third year the ' +
+        '"step back" rule applies and you drop one rung instead. A second claim in the same year removes it entirely.';
+  }
+  document.getElementById('ncdTog').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-v]'); if (!b) return;
+    [].forEach.call(this.children, function(x){ x.classList.toggle('on', x === b); });
+    drawNCD(b.dataset.v);
+  });
+  drawNCD('clean');
+
+  /* ── guided asking ──────────────────────────────────── */
+  var answers = {};
+  document.querySelectorAll('.opts').forEach(function(row){
+    row.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-v]'); if (!b) return;
+      [].forEach.call(row.children, function(x){ x.classList.toggle('on', x === b); });
+      answers[row.dataset.k] = b.dataset.v;
+      advise();
+    });
+  });
+
+  function advise(){
+    var out = [];
+    if (answers.dep === 'yes')
+      out.push(['Life cover, before anything else',
+        'Someone is relying on your income. Flexi Term buys the most protection per dollar; Xpress Life needs no ' +
+        'medical and gives the premiums back in year 21.']);
+    if (answers.dep === 'no' && answers.ret === 'nothing')
+      out.push(['Skip life cover for now',
+        'Nobody depends on your income, so a big death benefit is not your priority. Put the same money toward ' +
+        'retirement instead — that is the gap that actually affects you.']);
+    if (answers.health === 'none')
+      out.push(['Health cover in your own name',
+        'LifeCare Quantum or Provisor. One serious admission without cover undoes years of saving.']);
+    if (answers.health === 'work')
+      out.push(['A top-up you keep when the job ends',
+        'Group cover is excellent and it belongs to your employer, not to you. It stops the day you leave or ' +
+        'retire — which is exactly when you need it most.']);
+    if (answers.ret === 'nis')
+      out.push(['A deferred annuity',
+        'NIS replaces only a fraction of what you earn now. Contributions attract tax relief, and starting ten ' +
+        'years earlier matters more than any rate.']);
+    if (answers.ret === 'nothing')
+      out.push(['Start the pension conversation',
+        'The single largest determinant of what you retire on is when you begin, not how much.']);
+    if (answers.home === 'own')
+      out.push(['Check your sum insured against rebuild cost',
+        'Building costs have moved. Use the calculator on the home tab — if you are under 85%, every claim is ' +
+        'cut, not only a total loss.']);
+    if (answers.home === 'rent')
+      out.push(['HomeGuard Renters',
+        'Your landlord insures the building. Your things, and your liability as a tenant, are yours to insure — ' +
+        'and it is one of the cheapest policies we write.']);
+
+    var box = document.getElementById('askOut');
+    if (!out.length){
+      box.innerHTML = '<p class="none">Answer a few and we will tell you honestly which of these is worth a ' +
+                      'conversation — and which is not.</p>';
+      return;
+    }
+    box.innerHTML = '<div class="grid">' + out.map(function(o){
+      return '<div class="c add"><div class="t">' + o[0] + '</div><p>' + o[1] + '</p></div>';
+    }).join('') + '</div>';
+  }
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
