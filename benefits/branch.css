@@ -1,0 +1,244 @@
+/* ══════════════════════════════════════════════════════════════════════
+   RICKY RAMPERSAD BRANCH — one design system, every screen
+
+   Fourteen pages had fourteen stylesheets. They drifted: three different
+   navies, four card radii, two logos, and a sign-in gate that published
+   the demo codes. A client who sees two of these pages in a week should
+   not be able to tell they were built on different days.
+
+   Load it before the page's own <style>, and let the page override only
+   what is genuinely its own.
+
+       <link rel="stylesheet" href="branch.css">
+
+   THE MARK IS A FILE, NOT A DRAWING. logo-mark.png at the site root —
+   a gold shield carrying a white check. No page draws a substitute; see
+   .mark below and the house note in CLAUDE.md.
+   ══════════════════════════════════════════════════════════════════════ */
+
+:root{
+  /* Brand — the values in IBRAND, which is what the client letters read */
+  --navy:#07131f; --navy2:#0e2433; --navy3:#16344a;
+  --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA; --teal2:#0a92a8;
+
+  /* Surfaces */
+  --ink:#0d1c28; --paper:#f5f8fa; --surface:#fff; --surface2:#eef3f7;
+  --slate:#5d7181; --line:#dce5ec; --line2:#edf2f6;
+  --go:#17724e; --warn:#94620f; --stop:#a3302a;
+
+  --sans:"Gill Sans MT","Avenir Next","Segoe UI",system-ui,-apple-system,sans-serif;
+  --display:Optima,"Palatino Linotype",Georgia,serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+
+  --lift:0 1px 2px rgba(7,19,31,.05), 0 6px 18px -8px rgba(7,19,31,.14);
+  --lift2:0 2px 6px rgba(7,19,31,.07), 0 22px 48px -20px rgba(7,19,31,.32);
+  --r:12px; --r2:8px;
+  --wide:1220px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --ink:#dfeaf2; --paper:#05101a; --surface:#0b1d29; --surface2:#112a3a;
+  --navy:#9cc8e2; --navy2:#78afd0; --navy3:#5b95b8;
+  --slate:#93a9b8; --line:#1b3a4d; --line2:#152f40;
+  --go:#55b48a; --warn:#d9a75d; --stop:#da7165;
+  --lift:0 1px 2px rgba(0,0,0,.45); --lift2:0 22px 48px -20px rgba(0,0,0,.75);
+}}
+:root[data-theme="dark"]{
+  --ink:#dfeaf2; --paper:#05101a; --surface:#0b1d29; --surface2:#112a3a;
+  --navy:#9cc8e2; --navy2:#78afd0; --navy3:#5b95b8;
+  --slate:#93a9b8; --line:#1b3a4d; --line2:#152f40;
+  --go:#55b48a; --warn:#d9a75d; --stop:#da7165;
+  --lift:0 1px 2px rgba(0,0,0,.45); --lift2:0 22px 48px -20px rgba(0,0,0,.75);
+}
+
+*{box-sizing:border-box}
+/* Several bars are display:flex, which beats the browser's own [hidden].
+   Without this a bar the script has hidden stays on screen. */
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:15px;line-height:1.62;-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4{font-family:var(--display);font-weight:600;margin:0;line-height:1.16;letter-spacing:-.012em}
+p{margin:0}
+img{max-width:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:3px}
+a{color:var(--teal2)} :root[data-theme="dark"] a{color:var(--teal)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) a{color:var(--teal)}}
+
+.label{font-size:10px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--slate)}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.note{font-size:12.5px;color:var(--slate);line-height:1.55}
+.wrap{max-width:var(--wide);margin:0 auto;padding:0 1.6rem}
+
+/* ── THE MARK ───────────────────────────────────────────────────────────
+   One file, every screen. Twice a page has shipped with an invented "RR"
+   beside three screens carrying the real shield, and a branch whose own
+   walls disagree about its logo is the first thing anybody notices. */
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center;
+  width:38px;height:38px;flex:none}
+.mark img{width:100%;height:100%;display:block}
+.mark.lg{width:58px;height:58px;border-radius:17px}
+.mark.sm{width:28px;height:28px;border-radius:9px}
+
+/* ── header ── */
+.bhead{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.bhin{max-width:var(--wide);margin:0 auto;padding:.85rem 1.6rem;display:flex;align-items:center;
+  gap:1.4rem;flex-wrap:wrap}
+.blogo{display:flex;align-items:center;gap:.7rem;margin-right:auto;text-decoration:none;color:inherit}
+.blogo b{display:block;font-family:var(--display);font-size:16px;font-weight:600;color:var(--navy);line-height:1.1}
+:root[data-theme="dark"] .blogo b{color:var(--ink)}
+.blogo em{display:block;font-style:normal;font-size:8.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--slate);font-weight:700;margin-top:1px}
+nav.btabs{display:flex;gap:.15rem;font-size:13.5px;flex-wrap:wrap}
+nav.btabs a{color:var(--slate);text-decoration:none;cursor:pointer;padding:.4rem .75rem;border-radius:7px;
+  white-space:nowrap;transition:background .15s,color .15s}
+nav.btabs a:hover{color:var(--navy);background:var(--surface2)}
+nav.btabs a.on{color:#fff;background:var(--navy);font-weight:600}
+:root[data-theme="dark"] nav.btabs a.on{color:var(--paper);background:var(--navy)}
+
+/* ── the band that says whose page this is ── */
+.band{background:linear-gradient(105deg,var(--navy),var(--navy3))}
+.bandin{max-width:var(--wide);margin:0 auto;padding:1.5rem 1.6rem 1.65rem;display:flex;
+  align-items:flex-end;justify-content:space-between;gap:1.2rem;flex-wrap:wrap;color:#fff}
+.bandin .label{color:#9ec9d8}
+.bandin h2{font-size:1.75rem;color:#fff;margin-top:.15rem}
+.bandin .sub{color:#b9d8e3;font-size:13px;margin-top:.3rem}
+.chips{display:flex;gap:.5rem;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:20px;
+  padding:.3rem .8rem;font-size:12px;color:#fff;white-space:nowrap}
+.chip b{font-family:var(--mono);font-weight:700;color:var(--gold)}
+
+main{max-width:var(--wide);margin:0 auto;padding:2.2rem 1.6rem 5rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:1.5rem 1.6rem;box-shadow:var(--lift)}
+.stack{display:flex;flex-direction:column;gap:1.5rem}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:1rem}
+h1.page{font-size:1.85rem;color:var(--navy);margin-top:.2rem}
+:root[data-theme="dark"] h1.page{color:var(--ink)}
+
+.btn{background:var(--teal2);color:#fff;border:1px solid var(--teal2);border-radius:8px;
+  padding:.58rem 1.15rem;cursor:pointer;font-size:11px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;text-decoration:none;display:inline-block;box-shadow:var(--lift);
+  transition:background .15s,transform .06s}
+.btn:hover{background:var(--navy);border-color:var(--navy);color:#fff}
+.btn:active{transform:translateY(1px)}
+.btn:disabled{opacity:.45;cursor:default;transform:none}
+.btn.ghost{background:var(--surface);color:var(--teal2);border-color:var(--line);box-shadow:none}
+.btn.ghost:hover{background:var(--surface2);border-color:var(--teal2);color:var(--teal2)}
+.btn.gold{background:var(--gold2);border-color:var(--gold2);color:#fff}
+.btn.gold:hover{background:var(--navy);border-color:var(--navy)}
+.btn.sm{padding:.32rem .75rem;font-size:9.5px}
+
+table{width:100%;border-collapse:collapse;font-size:14px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);
+  box-shadow:var(--lift)}
+th,td{padding:.7rem 1rem;text-align:left;border-bottom:1px solid var(--line2)}
+thead th{background:var(--surface2);font-size:10px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--slate);font-weight:700;white-space:nowrap;border-bottom:1px solid var(--line)}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--surface2)}
+td.r,th.r{text-align:right}
+tfoot td{border-top:2px solid var(--line);font-weight:700;background:var(--surface2)}
+
+.pill{display:inline-block;border-radius:20px;padding:.18rem .62rem;font-size:10px;font-weight:700;
+  letter-spacing:.09em;text-transform:uppercase;white-space:nowrap}
+.p-ok{background:#dcf0e6;color:var(--go)} .p-warn{background:#fbefd7;color:var(--warn)}
+.p-bad{background:#f9e1dd;color:var(--stop)} .p-info{background:#e2f4f8;color:var(--teal2)}
+.p-mute{background:var(--surface2);color:var(--slate)}
+:root[data-theme="dark"] .p-ok,:root[data-theme="dark"] .p-warn,:root[data-theme="dark"] .p-bad,
+:root[data-theme="dark"] .p-info{background:var(--surface2)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:1rem}
+.stats .card{padding:1.15rem 1.25rem}
+.stats .v{font-family:var(--mono);font-size:1.7rem;font-variant-numeric:tabular-nums;color:var(--navy);
+  margin-top:.25rem;line-height:1.1;letter-spacing:-.02em}
+:root[data-theme="dark"] .stats .v{color:var(--ink)}
+.stats .v.bad{color:var(--stop)} .stats .v.good{color:var(--go)}
+.sub{font-size:11.5px;color:var(--slate);margin-top:.25rem;line-height:1.45}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;align-items:start}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;align-items:start}
+dl.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.9rem 1.5rem;margin:.9rem 0 0}
+dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
+
+.alert{border-radius:var(--r);padding:1rem 1.2rem;font-size:13.5px;line-height:1.6;border-left-width:4px}
+.a-warn{border:1px solid #e6c88c;border-left:4px solid var(--gold2);background:#fdf7ea}
+.a-bad{border:1px solid #e0aea6;border-left:4px solid var(--stop);background:#fbedea}
+.a-ok{border:1px solid #a6d6bc;border-left:4px solid var(--go);background:#ecf7f1}
+.a-info{border:1px solid #a5ccd9;border-left:4px solid var(--teal2);background:#edf7fa}
+:root[data-theme="dark"] .a-warn,:root[data-theme="dark"] .a-bad,
+:root[data-theme="dark"] .a-ok,:root[data-theme="dark"] .a-info{background:var(--surface2)}
+.alert b{color:var(--ink)}
+
+/* ── form controls ── */
+.inp{width:100%;padding:.62rem .8rem;border:1.5px solid var(--line);border-radius:var(--r2);
+  background:var(--surface);font-size:14.5px}
+.inp:focus{outline:none;border-color:var(--teal2)}
+label.lab{font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--slate);display:block;margin-bottom:.25rem}
+.row{display:grid;gap:.8rem;margin-bottom:.8rem}
+.c2{grid-template-columns:1fr 1fr} .c3{grid-template-columns:repeat(3,1fr)}
+.c4{grid-template-columns:repeat(4,1fr)}
+
+/* ── sign in ── */
+.gate{max-width:400px;margin:5rem auto;background:var(--surface);border:1px solid var(--line);
+  border-radius:16px;padding:2.2rem 2rem;box-shadow:var(--lift2);text-align:center}
+.gate .mark{margin:0 auto .9rem}
+.gate h1{font-size:1.5rem;color:var(--navy)}
+:root[data-theme="dark"] .gate h1{color:var(--ink)}
+.gate input{width:100%;padding:.8rem .95rem;border:1px solid var(--line);border-radius:var(--r2);
+  background:var(--paper);text-align:center;letter-spacing:.2em;font-family:var(--mono);
+  font-size:15.5px;text-transform:uppercase}
+.gate input::placeholder{letter-spacing:.16em;font-size:12px;color:var(--slate)}
+.gate input:focus{background:var(--surface);border-color:var(--teal2)}
+.gatefoot{margin-top:1.5rem;padding-top:1.2rem;border-top:1px solid var(--line2);
+  font-size:12px;color:var(--slate)}
+
+/* ── progress ── */
+.pbar{height:7px;border-radius:20px;background:var(--surface2);overflow:hidden;margin:0 0 1rem}
+.pbar i{display:block;height:100%;width:0;border-radius:20px;
+  background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .3s}
+.bars{display:flex;flex-direction:column;gap:.55rem;margin-top:.9rem}
+.bar{display:flex;align-items:center;gap:.7rem;font-size:13px}
+.bar .bn{width:118px;flex:none;color:var(--slate);font-size:12px}
+.bar .bt{flex:1;background:var(--surface2);border-radius:20px;height:14px;overflow:hidden}
+.bar .bt i{display:block;height:100%;border-radius:20px;
+  background:linear-gradient(90deg,var(--teal2),var(--navy3))}
+.bar .bv{width:112px;text-align:right;flex:none;font-family:var(--mono);font-size:12.5px}
+
+/* ── charts (see charts.js) ── */
+.chart{width:100%;display:block;overflow:visible}
+.chart text{font-family:var(--sans);fill:var(--slate)}
+.chart .axis{stroke:var(--line);stroke-width:1}
+.chart .grid{stroke:var(--line2);stroke-width:1}
+.chart .val{font-family:var(--mono);fill:var(--ink);font-variant-numeric:tabular-nums}
+.legend{display:flex;gap:1rem;flex-wrap:wrap;margin-top:.8rem;font-size:12px;color:var(--slate)}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;margin-right:.35rem;
+  vertical-align:-1px}
+
+/* ── responsive: phone, tablet, desktop ── */
+@media(max-width:980px){
+  .grid3{grid-template-columns:1fr 1fr}
+  .c4{grid-template-columns:1fr 1fr}
+}
+@media(max-width:760px){
+  .grid2,.grid3{grid-template-columns:1fr}
+  .c2,.c3,.c4{grid-template-columns:1fr}
+  .bhin{padding:.75rem 1rem;gap:.8rem}
+  .bandin{padding:1.2rem 1rem 1.3rem}
+  .bandin h2{font-size:1.3rem}
+  main{padding:1.5rem 1rem 4rem}
+  .wrap{padding:0 1rem}
+  .card{padding:1.2rem 1.1rem}
+  h1.page{font-size:1.45rem}
+  .stats{grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.7rem}
+  .stats .v{font-size:1.4rem}
+  .bar .bn{width:88px} .bar .bv{width:92px}
+  th,td{padding:.55rem .7rem}
+}
+@media print{
+  .bhead,.band,.btn,.noprint,.demobar,.tabs{display:none!important}
+  body{background:#fff}
+  .card,.tw{break-inside:avoid;box-shadow:none;border-color:#ccc}
+  .printonly{display:block!important}
+}
+.printonly{display:none}
