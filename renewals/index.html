@@ -325,6 +325,68 @@ var WALL_DATA = {
   },
   /* payments post on TRANSACTIONS__c, not the risk rows — the month's
      collected figure reads from there (motor + property record types) */
+  /* ── the whole book, and the year, by LINE ───────────────────────────
+     RecordType on Risk_Details__c is the line — that single field is what
+     makes any of this sliceable, and it is why these slides exist. Counts
+     below are the entire register; ytd is the 2026 renewal year read off
+     Renewal_Date__c, month by month. Read 12 September 2026.          */
+  book: {
+    asOf: "2026-09-12", total: 2612,
+    lines: [
+      {name:"Motor",                n:1786},
+      {name:"Property",             n:621},
+      {name:"Public Liability",     n:64},
+      {name:"Health",               n:49},
+      {name:"Workers Compensation", n:41},
+      {name:"Machinery",            n:22},
+      {name:"No record type",       n:14, flag:true},
+      {name:"Life",                 n:7},
+      {name:"Bond",                 n:5},
+      {name:"Marine",               n:2},
+      {name:"Pet",                  n:1}
+    ]
+  },
+  ytd: {
+    /* Jan–Sep is decided; Oct–Dec is the forward book. other = Public
+       Liability + Workers Compensation, folded together because between
+       them they are 14 risks and four categorical hues do not separate
+       safely for colour-blind readers on this background.              */
+    months: [
+      {m:"Jan", motor:29, prop:3,  other:3, prem:103589},
+      {m:"Feb", motor:18, prop:4,  other:4, prem:419828},
+      {m:"Mar", motor:8,  prop:2,  other:0, prem:24975},
+      {m:"Apr", motor:27, prop:10, other:3, prem:199309},
+      {m:"May", motor:5,  prop:6,  other:0, prem:73688},
+      {m:"Jun", motor:11, prop:9,  other:0, prem:70989},
+      {m:"Jul", motor:6,  prop:9,  other:4, prem:237749},
+      {m:"Aug", motor:11, prop:4,  other:0, prem:127282},
+      {m:"Sep", motor:9,  prop:1,  other:0, prem:37952},
+      {m:"Oct", motor:1,  prop:0,  other:0, prem:5819,  fwd:true},
+      {m:"Nov", motor:2,  prop:0,  other:0, prem:24012, fwd:true},
+      {m:"Dec", motor:0,  prop:0,  other:0, prem:0,     fwd:true}
+    ],
+    byLine: [
+      {name:"Property",             n:48,  prem:799842},
+      {name:"Motor",                n:124, prem:399885},
+      {name:"Public Liability",     n:8,   prem:61201},
+      {name:"Workers Compensation", n:6,   prem:34434}
+    ],
+    totals: {n:186, prem:1295362},
+    fwd:    {n:3,   prem:29831}
+  },
+  /* the motor mix — the upgrade conversation and the values conversation,
+     both in one place. compCover is the sum of Cover1__c across the 37
+     comprehensive risks renewing this year. */
+  mix: {
+    cov: [
+      {name:"Private third party",      n:51, comp:false},
+      {name:"Commercial third party",   n:36, comp:false},
+      {name:"Private comprehensive",    n:31, comp:true},
+      {name:"Commercial comprehensive", n:6,  comp:true}
+    ],
+    compN: 37, compCover: 10420333, ncdBlank: 37,
+    renewal: 88, newBiz: 24, unclassified: 62
+  },
   billing: {month:"September 2026", motorPaid:13887, propPaid:0},
   next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
 };
@@ -739,7 +801,123 @@ function sNext(D){
 }
 
 /* ── deck ── */
-var BUILDERS=[sPulse,sRail,sMotor,sProperty,sMotorValues,sPropValues,sTrend,sLosing,sManage,sMoney,sTasks,sNext];
+/* ── line colours ──────────────────────────────────────────────────────
+   Motor blue, Property gold, everything else a deliberate neutral. The
+   pair separates at ΔE 25 under protanopia and the neutral clears 15
+   against both; four categorical hues collapsed to ΔE 1.5 on this
+   background, so the two small lines fold into "Other" rather than get a
+   hue that a colour-blind reader cannot tell from the blue. Every series
+   is also directly labelled, so identity is never colour alone.      */
+var C_MOTOR="#37b1ec", C_PROP="#f5b93b", C_OTHER="#cfdae6";
+
+function sYTD(D){
+  var Y=D.ytd; if(!Y) return '';
+  var mx=Y.months.reduce(function(a,x){return Math.max(a,x.motor+x.prop+x.other)},1);
+  var bars=Y.months.map(function(x){
+    var tot=x.motor+x.prop+x.other;
+    var h=function(n){return Math.round(n/mx*290)};
+    var seg=function(n,c){return n?'<i style="height:'+h(n)+'px;background:'+c+'"></i>':''};
+    return '<div class="bar" style="gap:0'+(x.fwd?';opacity:.5':'')+'">'
+      +'<div class="amt">'+(tot||'')+'</div>'
+      +'<div style="display:flex;flex-direction:column-reverse;gap:2px;width:100%;max-width:58px;align-items:stretch">'
+      +seg(x.motor,C_MOTOR)+seg(x.prop,C_PROP)+seg(x.other,C_OTHER)
+      +'</div>'
+      +'<div class="lab" style="margin-top:8px">'+esc(x.m)+'</div>'
+      +'<div class="n">'+(x.prem?moneyShort(x.prem):'—')+'</div></div>';
+  }).join("");
+  var avg=Math.round(Y.totals.prem/Y.totals.n);
+  return '<div class="kick">Year to date · every line</div>'
+    +'<h2>'+Y.totals.n+' renewals came due this year, carrying '+moneyShort(Y.totals.prem)+' of premium</h2>'
+    +'<p class="lede">Nine months decided, three still ahead. The bars are counts; the figure under each month is '
+    +'the premium riding on it — and the two rarely move together. February is the clearest case: '
+    +'<strong>26 renewals carried '+moneyShort(419828)+'</strong>, more than April’s forty.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.7fr 1fr">'
+    +'<div class="panel"><h3>Month by month — count stacked by line, premium beneath</h3>'
+    +'<div class="legend"><span><i style="background:'+C_MOTOR+'"></i>Motor</span>'
+    +'<span><i style="background:'+C_PROP+'"></i>Property</span>'
+    +'<span><i style="background:'+C_OTHER+'"></i>Other lines</span>'
+    +'<span style="margin-left:auto;color:var(--faint)">Oct–Dec is the forward book</span></div>'
+    +'<div class="bars" style="height:350px">'+bars+'</div></div>'
+    +'<div class="panel"><h3>The year in four numbers</h3><div class="rows" style="gap:20px">'
+    +'<div class="row"><span class="nm">Renewals due Jan–Sep</span><span class="val" style="width:auto">'+Y.totals.n+'</span></div>'
+    +'<div class="row"><span class="nm">Premium on them</span><span class="val" style="width:auto;color:var(--good)">'+moneyShort(Y.totals.prem)+'</span></div>'
+    +'<div class="row"><span class="nm">Average per renewal</span><span class="val" style="width:auto">'+money(avg)+'</span></div>'
+    +'<div class="row"><span class="nm">Still to come, Oct–Dec</span><span class="val" style="width:auto">'+Y.fwd.n+' · '+moneyShort(Y.fwd.prem)+'</span></div>'
+    +'</div>'
+    +'<div class="note">The quiet months are not quiet — March carried ten renewals and September one property risk. '
+    +'A month with few rows can still hold six figures, so the calling list should be built on premium at risk, not row count.</div>'
+    +'</div></div></div>';
+}
+
+function sLines(D){
+  var B=D.book, Y=D.ytd; if(!B||!Y) return '';
+  var mxB=B.lines[0].n;
+  var rowsB=B.lines.filter(function(l){return l.n>=5}).map(function(l){
+    var c=l.name==="Motor"?C_MOTOR:l.name==="Property"?C_PROP:C_OTHER;
+    return '<div class="row"><span class="nm"'+(l.flag?' style="color:var(--gold)"':'')+'>'+esc(l.name)+'</span>'
+      +'<span class="track"><i style="width:'+(l.n/mxB*100)+'%;background:'+c+'"></i></span>'
+      +'<span class="val">'+l.n.toLocaleString("en-US")+'</span></div>';
+  }).join("");
+  var mxP=Y.byLine[0].prem;
+  var rowsP=Y.byLine.map(function(l){
+    var c=l.name==="Motor"?C_MOTOR:l.name==="Property"?C_PROP:C_OTHER;
+    return '<div class="row"><span class="nm">'+esc(l.name)+' <span style="color:var(--faint);font-weight:500">· '+l.n+' risks</span></span>'
+      +'<span class="track"><i style="width:'+(l.prem/mxP*100)+'%;background:'+c+'"></i></span>'
+      +'<span class="val">'+moneyShort(l.prem)+'</span></div>';
+  }).join("");
+  return '<div class="kick">By line · where the work is and where the money is</div>'
+    +'<h2>Motor is two and a half times the work for half the money</h2>'
+    +'<p class="lede">124 motor renewals this year brought '+moneyShort(399885)+'. '
+    +'48 property renewals brought '+moneyShort(799842)+'. '
+    +'That is <strong>'+money(3225)+' a motor renewal against '+money(16663)+' a property one</strong> — '
+    +'five times the premium for the same phone call.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1fr 1fr">'
+    +'<div class="panel"><h3>The whole register — '+B.total.toLocaleString("en-US")+' risks by record type</h3>'
+    +'<div class="rows">'+rowsB+'</div>'
+    +'<div class="note">'+esc(B.lines.filter(function(l){return l.flag})[0].n)+' risks carry no record type at all, '
+    +'so they fall out of every report built this way — including this one. Worth ten minutes to classify.</div></div>'
+    +'<div class="panel"><h3>Premium this year, by line</h3>'
+    +'<div class="rows">'+rowsP+'</div>'
+    +'<div class="note">Property is 26% of the renewals and <strong>62% of the premium</strong>. '
+    +'If one line gets the careful, early, value-checked conversation, the arithmetic says it is this one.</div></div>'
+    +'</div></div>';
+}
+
+function sMix(D){
+  var M=D.mix; if(!M) return '';
+  var tot=M.cov.reduce(function(a,x){return a+x.n},0);
+  var tp=M.cov.filter(function(x){return !x.comp}).reduce(function(a,x){return a+x.n},0);
+  var mx=M.cov[0].n;
+  var rows=M.cov.map(function(x){
+    return '<div class="row"><span class="nm">'+esc(x.name)+'</span>'
+      +'<span class="track"><i style="width:'+(x.n/mx*100)+'%;background:'+(x.comp?C_MOTOR:C_OTHER)+'"></i></span>'
+      +'<span class="val">'+x.n+'</span></div>';
+  }).join("");
+  return '<div class="kick">The motor mix · insight</div>'
+    +'<h2>'+Math.round(tp/tot*100)+'% of the motor book is third party</h2>'
+    +'<p class="lede">'+tp+' of '+tot+' motor renewals this year are third party or third party fire and theft. '
+    +'Their own car is insured for nothing, and their best No Claim Discount caps at 35% instead of 60%. '
+    +'Every one of those is a costed conversation nobody has had.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1fr 1fr">'
+    +'<div class="panel"><h3>Cover type, this renewal year</h3>'
+    +'<div class="legend"><span><i style="background:'+C_MOTOR+'"></i>Comprehensive</span>'
+    +'<span><i style="background:'+C_OTHER+'"></i>Third party</span></div>'
+    +'<div class="rows">'+rows+'</div>'
+    +'<div class="note">'+M.compN+' comprehensive risks carry '+moneyShort(M.compCover)+' of sum insured between them — '
+    +'an average of '+money(Math.round(M.compCover/M.compN))+' a vehicle, and every one of those figures is a value conversation at renewal.</div></div>'
+    +'<div class="panel"><h3>Three gaps in the data itself</h3><div class="rows" style="gap:17px">'
+    +'<div class="row"><span class="nm">No NCD recorded</span><span class="val" style="width:auto;color:var(--gold)">'+M.ncdBlank+' of '+M.compN+'</span></div>'
+    +'<div class="row"><span class="nm">Classified as renewal</span><span class="val" style="width:auto">'+M.renewal+'</span></div>'
+    +'<div class="row"><span class="nm">Classified as new business</span><span class="val" style="width:auto">'+M.newBiz+'</span></div>'
+    +'<div class="row"><span class="nm">Not classified either way</span><span class="val" style="width:auto;color:var(--gold)">'+M.unclassified+'</span></div>'
+    +'</div>'
+    +'<div class="note">NCD is blank on <strong>every</strong> comprehensive risk, while Special Perils and Waiver of Excess are '
+    +'recorded on all of them — so the discipline exists, the discount just is not being captured. '
+    +'You cannot tell a client "you are at 50%, protect it" from an empty field.</div></div>'
+    +'</div></div>';
+}
+
+var BUILDERS=[sPulse,sRail,sYTD,sLines,sMotor,sProperty,sMotorValues,sPropValues,sTrend,sMix,sLosing,sManage,sMoney,sTasks,sNext];
 var DWELL=14000, cur=0, timer=null, paused=false;
 
 function render(D){
