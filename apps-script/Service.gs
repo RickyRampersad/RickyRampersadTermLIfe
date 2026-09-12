@@ -673,6 +673,20 @@ function handleSubmission_(body) {
   var accessCode = accessCode_();
   var now = new Date();
 
+  /* 0 — trace the policy against CLIENT_PORTFOLIO__c while we have the client's
+     own name, date of birth and email in hand. See ServiceSalesforce.gs: what
+     this finds goes to the worklist, the agent brief and Customer Service, and
+     never back to the browser. The returned payload below carries a reference
+     and an access code, and nothing else — that is deliberate.
+     A Salesforce outage returns { ok:false } and the review files regardless. */
+  var raw0 = rawById_(body);
+  var nm = svcSplitName_(core.clientName || raw0.lifeAssured || '');
+  body.trace = svcTraceReview_({
+    dob: core.dob || raw0.dob || '',
+    email: core.email || raw0.email || '',
+    firstName: nm.firstName, lastName: nm.lastName,
+  });
+
   /* 1 — file it */
   saveRow_(isGroup, ref, priority, now, body, accessCode);
 
@@ -814,6 +828,11 @@ function sheetFor_(isGroup) {
     sh.appendRow(['Reference', 'Timestamp', 'Priority', 'Status', 'Handled by', 'Handled on',
                   'Client', 'Company', 'Email', 'Phone', 'Insurer', 'Policy #', 'Score', 'Minutes taken',
                   'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing',
+                  // Traced from CLIENT_PORTFOLIO__c on arrival, so an agent picks
+                  // up the phone already knowing what the client holds. Never
+                  // shown to the client — see ServiceSalesforce.gs.
+                  'Traced', 'Policy #s (traced)', 'Cover traced', 'Premium owing',
+                  'Agent on record',
                   // Compliance record. These four are the auditable trail for a
                   // registered agent: what the client declared, what they agreed
                   // we could do with it, whether they opted into marketing, and
@@ -867,6 +886,7 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
   var sh = sheetFor_(isGroup);
   var c = body.core || {};
   var av0 = answersById_(body);
+  var t = body.trace || {};                 // the Salesforce trace, or {} if it never ran
 
   var vals = {
     'Reference': ref,
@@ -896,6 +916,15 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     'Sent by': (body.sentBy && body.sentBy.name) || '',
     'Link ref': body.linkRef || '',
     'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
+
+    /* What the Salesforce trace found, if it is set up. Blank means it is not
+       configured or nothing matched, and support traces by hand exactly as
+       before — the review is never held up for it. */
+    'Traced': !t.configured ? '' : (t.found ? t.found + ' found · ' + t.how : 'no match'),
+    'Policy #s (traced)': t.policyNumbers || '',
+    'Cover traced': t.coverTraced || '',
+    'Premium owing': t.premiumOwing || '',
+    'Agent on record': t.agentOnRecord || '',
 
     /* Who the client chose to be looked after by — the in-house team direct,
        or an agent matched to the brief they wrote. Drives the assignment. */
