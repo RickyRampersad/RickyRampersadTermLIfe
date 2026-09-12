@@ -457,7 +457,29 @@ var WALL_DATA = {
     mean:18.0, median:11.3, sample:22, open:199, done:13795
   },
   billing: {month:"September 2026", motorPaid:13887, propPaid:0},
-  next: {label:"October", motorN:14, motorPrem:122774.78, propN:2, propPrem:10965.00}
+  /* ── the forward book ────────────────────────────────────────────────
+     READ THIS BEFORE CHANGING THE QUERY. Risk_Details__c carries TWO
+     dates and they are a year apart:
+
+       Renewal_Date__c       the cycle that has ALREADY been written
+       Next_Renewal_Date__c  the one COMING UP  ← the forward book
+
+     An earlier cut of this wall read Renewal_Date__c for "what's next"
+     and reported 1 renewal for October. The right field says 19. Every
+     forward figure on this wall must come off Next_Renewal_Date__c.
+     Read 12 September 2026.                                           */
+  next: {
+    months: [
+      {m:"Sep", motor:14, prop:8, other:1,  prem:176647},
+      {m:"Oct", motor:14, prop:2, other:3,  prem:158340},
+      {m:"Nov", motor:96, prop:4, other:9,  prem:800951, cliff:true},
+      {m:"Dec", motor:14, prop:6, other:1,  prem:136293},
+      {m:"Jan", motor:29, prop:3, other:3,  prem:101206},
+      {m:"Feb", motor:18, prop:4, other:4,  prem:419828}
+    ],
+    totals: {n:233, prem:1793266},
+    next60: {n:60, prem:718093}
+  }
 };
 
 /* ── helpers ── */
@@ -858,14 +880,41 @@ function sTasks(D){
 }
 
 function sNext(D){
-  var N=D.next; var tot=N.motorPrem+N.propPrem;
-  return '<div class="kick">Already knocking</div>'
-    +'<h2>'+esc(N.label)+' brings '+(N.motorN+N.propN)+' more — '+moneyShort(tot)+'</h2>'
-    +'<p class="lede">The renewals renewed before their date this month were the ones called early. Book '+esc(N.label)+'’s calls this week and next month’s wall opens green.</p>'
-    +'<div class="body"><div class="big">'
-    +'<div class="b"><div class="v">'+N.motorN+'</div><div class="k">motor · '+moneyShort(N.motorPrem)+'</div></div>'
-    +'<div class="b"><div class="v">'+N.propN+'</div><div class="k">property · '+moneyShort(N.propPrem)+'</div></div>'
-    +'<div class="b"><div class="v">'+moneyShort(tot)+'</div><div class="k">premium to protect</div></div>'
+  var N=D.next; if(!N||!N.months) return '';
+  var mx=N.months.reduce(function(a,x){return Math.max(a,x.motor+x.prop+x.other)},1);
+  var bars=N.months.map(function(x){
+    var tot=x.motor+x.prop+x.other;
+    var h=function(n){return Math.round(n/mx*260)};
+    var seg=function(n,c){return n?'<i style="height:'+h(n)+'px;background:'+c+'"></i>':''};
+    return '<div class="bar" style="gap:0">'
+      +'<div class="amt"'+(x.cliff?' style="color:var(--gold);font-weight:800"':'')+'>'+tot+'</div>'
+      +'<div style="display:flex;flex-direction:column-reverse;gap:2px;width:100%;max-width:62px;align-items:stretch">'
+      +seg(x.motor,C_MOTOR)+seg(x.prop,C_PROP)+seg(x.other,C_OTHER)+'</div>'
+      +'<div class="lab" style="margin-top:8px'+(x.cliff?';color:var(--gold);font-weight:750':'')+'">'+esc(x.m)+'</div>'
+      +'<div class="n">'+moneyShort(x.prem)+'</div></div>';
+  }).join("");
+  var nov=N.months.filter(function(x){return x.cliff})[0];
+  return '<div class="kick">The forward book · what is actually coming</div>'
+    +'<h2>November brings '+(nov.motor+nov.prop+nov.other)+' renewals and '+moneyShort(nov.prem)+' in one month</h2>'
+    +'<p class="lede">'+N.totals.n+' renewals carrying <strong>'+moneyShort(N.totals.prem)+'</strong> fall due in the next six months, '
+    +'and <strong>'+N.next60.n+' of them — '+moneyShort(N.next60.prem)+' — inside the next sixty days. '
+    +'November alone is '+Math.round(nov.prem/N.totals.prem*100)+'% of the half-year.</strong> '
+    +'That month cannot be worked in November; it has to be called in October.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.6fr 1fr">'
+    +'<div class="panel"><h3>Renewals due, by month ahead</h3>'
+    +'<div class="legend"><span><i style="background:'+C_MOTOR+'"></i>Motor</span>'
+    +'<span><i style="background:'+C_PROP+'"></i>Property</span>'
+    +'<span><i style="background:'+C_OTHER+'"></i>Other lines</span>'
+    +'<span style="margin-left:auto;color:var(--faint)">premium beneath each month</span></div>'
+    +'<div class="bars" style="height:320px">'+bars+'</div></div>'
+    +'<div class="panel"><h3>What November is made of</h3><div class="rows" style="gap:18px">'
+    +'<div class="row"><span class="nm">Motor renewals</span><span class="val" style="width:auto">'+nov.motor+'</span></div>'
+    +'<div class="row"><span class="nm">Machinery, property &amp; liability</span><span class="val" style="width:auto">'+(nov.prop+nov.other)+'</span></div>'
+    +'<div class="row"><span class="nm">Premium at risk</span><span class="val" style="width:auto;color:var(--gold)">'+moneyShort(nov.prem)+'</span></div>'
+    +'<div class="row"><span class="nm">Working days in October</span><span class="val" style="width:auto">23</span></div>'
+    +'</div>'
+    +'<div class="note">Ninety-six motor renewals in one month is roughly five a working day through October if the calls start on the first. '
+    +'Leave it to November and the month decides itself.</div></div>'
     +'</div></div>';
 }
 
