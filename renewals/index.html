@@ -387,27 +387,53 @@ var WALL_DATA = {
     compN: 37, compCover: 10420333, ncdBlank: 37,
     renewal: 88, newBiz: 24, unclassified: 62
   },
-  /* ── GROUP — the book the record types cannot see ────────────────────
-     Group lives on TRANSACTIONS__c under GROUP_TRANSACTION_TYPE__c, not on
-     a Risk_Details__c record type, which is exactly why every line slide
-     above misses it. prem/paid are lifetime totals on the object.
+  /* ── GROUP — one block per scheme ────────────────────────────────────
+     HOW GROUP IS IDENTIFIED, because it is not obvious and I got it
+     wrong first time:
+
+       The individual book is Motor, Property and individual Health.
+       The group book is Group Life, Group Pension, Group Health and
+       Group Personal Accident — and it is a SEPARATE slide, not a line
+       inside the others.
+
+       A member of a scheme is a CLIENT_PORTFOLIO__c row carrying a
+       List_Bill__c. THE LIST BILL IS THE GROUPING KEY, NOT THE ACCOUNT.
+       Members frequently sit on their own household account — list bill
+       I073 spans 15 accounts and PIND-067 spans 22 — so counting group
+       size by Account undercounts every scheme.
+
+     contracts = portfolio rows; people = distinct contacts behind them.
+     A person holding pension and life in the same scheme is two
+     contracts and one person, which is why both numbers are shown.
+     Names are withheld in the snapshot as everywhere else on this wall.
      Read 12 September 2026.                                           */
   group: {
-    lines: [
-      {name:"Group Health",  n:565, prem:6981362, paid:6273657},
-      {name:"Group Pension", n:391, prem:5986936, paid:3237123},
-      {name:"Group Life",    n:307, prem:2906512, paid:2271051}
+    schemes: [
+      {k:"Facilities services",  health:0,   life:110, pension:298, people:95},
+      {k:"Supermarket group",    health:158, life:156, pension:0,   people:158, isNew:true},
+      {k:"Insurance company",    health:0,   life:107, pension:93,  people:98},
+      {k:"Distribution",         health:67,  life:83,  pension:19,  people:66},
+      {k:"Steel",                health:30,  life:0,   pension:1,   people:30},
+      {k:"Hardware & steel",     health:24,  life:5,   pension:0,   people:24},
+      {k:"Shipping",             health:0,   life:8,   pension:11,  people:17},
+      {k:"Engineering",          health:7,   life:6,   pension:0,   people:13},
+      {k:"Trading",              health:0,   life:8,   pension:3,   people:7},
+      {k:"LPG co-operative",     health:9,   life:0,   pension:0,   people:9},
+      {k:"Management services",  health:5,   life:3,   pension:0,   people:8},
+      {k:"Manufacturing",        health:0,   life:0,   pension:8,   people:8},
+      {k:"Structures",           health:0,   life:3,   pension:4,   people:4}
     ],
-    totals: {n:1263, prem:15874810, paid:11781831},
-    /* transaction records were created 2013–2021 and then stopped dead */
-    byYear: [
-      {y:2013,n:66},{y:2014,n:19},{y:2015,n:262},{y:2016,n:257},{y:2017,n:228},
-      {y:2018,n:123},{y:2019,n:209},{y:2020,n:88},{y:2021,n:11}
-    ],
-    lastRecord: "1 October 2021",
-    /* live group activity is in Tasks, not in transactions */
-    tasks: {y25:{n:250,accts:36}, y26:{n:394,accts:43}},
-    newGroups: 1
+    totals: {schemes:13, contracts:1252, people:537},
+    /* lifetime premium on TRANSACTIONS__c by GROUP_TRANSACTION_TYPE__c */
+    premium: {health:6981362, pension:5986936, life:2906512,
+              total:15874810, paid:11781831},
+    /* the faults worth fixing before any of this is billed off */
+    faults: [
+      {k:"BO87 — letter O, not zero", note:"one life member split off the insurance company's B087 scheme"},
+      {k:"TGM1099 vs TGM 1099",       note:"a missing space splits distribution's group life 62 / 4"},
+      {k:"“d” and “REPLACED” as list bills", note:"two schemes with no usable key"},
+      {k:"No Group Personal Accident", note:"not one portfolio row carries a PA list bill"}
+    ]
   },
   /* ── last year against this year ─────────────────────────────────────
      Task volume by month. The system came up in September 2025, so the
@@ -1036,41 +1062,43 @@ function sMix(D){
 }
 
 function sGroup(D){
-  var G=D.group; if(!G) return '';
-  var mx=G.lines[0].prem;
-  var rows=G.lines.map(function(l,i){
-    var c=[C_MOTOR,C_PROP,C_OTHER][i];
-    var pct=Math.round(l.paid/l.prem*100);
-    return '<div class="row"><span class="nm">'+esc(l.name)+' <span style="color:var(--faint);font-weight:500">· '+l.n+'</span></span>'
-      +'<span class="track"><i style="width:'+(l.prem/mx*100)+'%;background:'+c+'"></i></span>'
-      +'<span class="val">'+moneyShort(l.prem)+'</span>'
-      +'<span class="val" style="width:58px;color:'+(pct<60?'var(--gold)':'var(--dim)')+'">'+pct+'%</span></div>';
+  var G=D.group; if(!G||!G.schemes) return '';
+  var mx=G.schemes.reduce(function(a,x){return Math.max(a,x.health+x.life+x.pension)},1);
+  var seg=function(n,c,t){return n?'<i title="'+t+'" style="width:'+(n/mx*100)+'%;background:'+c+'"></i>':''};
+  var rows=G.schemes.map(function(x){
+    var tot=x.health+x.life+x.pension;
+    return '<div class="row"><span class="nm">'+esc(x.k)
+      +(x.isNew?' <span style="color:var(--good);font-weight:700;font-size:11.5px">NEW</span>':'')+'</span>'
+      +'<span class="track" style="display:flex;gap:2px;background:none;height:15px">'
+      +seg(x.health,C_MOTOR,'health')+seg(x.life,C_PROP,'life')+seg(x.pension,C_OTHER,'pension')+'</span>'
+      +'<span class="val">'+tot+'</span>'
+      +'<span class="val" style="width:52px;color:var(--faint);font-weight:600">'+x.people+'</span></div>';
   }).join("");
-  var owed=G.totals.prem-G.totals.paid;
-  var ymx=G.byYear.reduce(function(a,x){return Math.max(a,x.n)},1);
-  var bars=G.byYear.map(function(x){
-    return '<div class="bar"><div class="amt">'+x.n+'</div>'
-      +'<i style="height:'+Math.round(x.n/ymx*150)+'px;background:'+(x.y>=2020?'var(--bad)':C_OTHER)+'"></i>'
-      +'<div class="lab" style="margin-top:8px">'+String(x.y).slice(2)+'</div></div>';
-  }).join("");
-  return '<div class="kick">Group · the book the record types cannot see</div>'
-    +'<h2>'+moneyShort(G.totals.prem)+' of group premium — and not one slide before this one counted it</h2>'
-    +'<p class="lede">Group sits on the transaction object under its own type, not on a risk record type. '
-    +'Every "by line" figure on this wall is the small half of the branch: '+G.totals.n.toLocaleString("en-US")+' group transactions '
-    +'carry <strong>twelve times</strong> the premium of a full year of motor and property renewals.</p>'
-    +'<div class="body"><div class="cols" style="grid-template-columns:1.25fr 1fr">'
-    +'<div class="panel"><h3>Premium, and how much of it came in</h3>'
-    +'<div class="rows">'+rows+'</div>'
-    +'<div class="note"><strong>'+moneyShort(owed)+' is outstanding across the three</strong>, and '
-    +moneyShort(G.lines[1].prem-G.lines[1].paid)+' of it is pension alone — collected at just '
-    +Math.round(G.lines[1].paid/G.lines[1].prem*100)+'%. Health collects at '
-    +Math.round(G.lines[0].paid/G.lines[0].prem*100)+'%, so the difference is process, not the clients.</div></div>'
-    +'<div class="panel"><h3>Transaction records created, by year</h3>'
-    +'<div class="bars" style="height:200px;gap:9px">'+bars+'</div>'
-    +'<div class="note">The last group transaction record was created <strong>'+esc(G.lastRecord)+'</strong>. '
-    +'Nothing since. The business did not stop — group tasks ran '+G.tasks.y25.n+' across '+G.tasks.y25.accts+' accounts last year and '
-    +G.tasks.y26.n+' across '+G.tasks.y26.accts+' this year — so five years of group renewals and payments are being worked '
-    +'but never recorded here. That is the single biggest gap in the data.</div></div>'
+  var owed=G.premium.total-G.premium.paid;
+  return '<div class="kick">Group \u00b7 one block per scheme</div>'
+    +'<h2>'+G.totals.schemes+' schemes, '+G.totals.contracts.toLocaleString("en-US")+' contracts, '+G.totals.people+' people</h2>'
+    +'<p class="lede">A scheme is held together by its <strong>list bill</strong>, not by the employer\u2019s account \u2014 '
+    +'members sit on their own household records, so counting by account undercounts every one of these. '
+    +'The bar is contracts split by benefit; the grey figure on the right is the people behind them.</p>'
+    +'<div class="body"><div class="cols" style="grid-template-columns:1.5fr 1fr">'
+    +'<div class="panel"><h3>Every scheme, by contracts held</h3>'
+    +'<div class="legend"><span><i style="background:'+C_MOTOR+'"></i>Group health</span>'
+    +'<span><i style="background:'+C_PROP+'"></i>Group life</span>'
+    +'<span><i style="background:'+C_OTHER+'"></i>Group pension</span>'
+    +'<span style="margin-left:auto;color:var(--faint)">contracts \u00b7 people</span></div>'
+    +'<div class="rows" style="gap:10px">'+rows+'</div></div>'
+    +'<div class="panel"><h3>What the schemes carry</h3><div class="rows" style="gap:16px">'
+    +'<div class="row"><span class="nm">Group health premium</span><span class="val" style="width:auto">'+moneyShort(G.premium.health)+'</span></div>'
+    +'<div class="row"><span class="nm">Group pension premium</span><span class="val" style="width:auto">'+moneyShort(G.premium.pension)+'</span></div>'
+    +'<div class="row"><span class="nm">Group life premium</span><span class="val" style="width:auto">'+moneyShort(G.premium.life)+'</span></div>'
+    +'<div class="row"><span class="nm">Outstanding</span><span class="val" style="width:auto;color:var(--gold)">'+moneyShort(owed)+'</span></div>'
+    +'</div>'
+    +'<h3 style="margin-top:26px">Four faults in the keys</h3><div class="rows" style="gap:12px">'
+    + G.faults.map(function(f){
+        return '<div style="font-size:13.5px;line-height:1.5"><b style="color:var(--gold)">'+esc(f.k)+'</b>'
+          +'<div style="color:var(--dim);font-size:13px">'+esc(f.note)+'</div></div>';
+      }).join("")
+    +'</div></div>'
     +'</div></div>';
 }
 
