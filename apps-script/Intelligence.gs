@@ -1434,7 +1434,7 @@ function iConversionWall_() {
      to find the row in the dues tab. */
   var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
                 ' Life_Plan_01__c, DAY_IN_MONTH(Date_Of_Birth__c) dom,' +
-                ' Date_Of_Birth__c, ISSUE_DATE__c, Life_Coverage_Expiry__c' +
+                ' Date_Of_Birth__c, Life_Coverage_Expiry__c' +
                 from + conv + ' AND ' + live + birthday +
                 ' ORDER BY Life_Coverage__c DESC LIMIT 900');
 
@@ -1481,19 +1481,18 @@ function iConversionWall_() {
   var byAg = {}, byFam = {}, unknown = 0, unnamed = 0;
   var ahead = { n: 0, cover: 0 };
   var cases = 0, cover = 0, prem = 0;
-  /* THE RUNWAY. A conversion has to happen before the contract's own expiry,
-     and on the Flexi book that date is real — it is the day the cover stops.
-     Bucketing the month's cases by how long is left is the difference between
-     "call these twenty-one people" and "call these two first". */
-  var RUNWAY = [{ key: 'gone',  lab: 'already past',      max: 0 },
-                { key: 'y2',    lab: 'inside two years',  max: 2 },
-                { key: 'y5',    lab: 'two to five',       max: 5 },
-                { key: 'y10',   lab: 'five to ten',       max: 10 },
-                { key: 'y20',   lab: 'ten to twenty',     max: 20 },
-                { key: 'far',   lab: 'over twenty',       max: 999 }];
-  var runway = {}, noDate = 0;
-  RUNWAY.forEach(function (b) { runway[b.key] = { key: b.key, lab: b.lab, n: 0, cover: 0 }; });
-  var ageSum = 0, ageN = 0, forceSum = 0, forceN = 0, soonest = null;
+  /* THE DAY STRIP, and it replaced a runway of expiry years that answered the
+     wrong question. A Flexi term to age eighty-five written at thirty-three
+     expires in 2078; that is not a deadline an agent can act on, it is noise
+     on a wall. The deadline that matters is THIS MONTH'S BIRTHDAY, because
+     the conversion is priced at the age the client has reached — so the list
+     is the days of the month, the day each birthday falls on, and whether it
+     has gone past yet.
+
+     A day still to come is a call worth making today. A day already past is
+     this year's rate gone. That is the whole objective, and everything else
+     was in the way of it. */
+  var days = {}, noDate = 0, expSoon = { n: 0, cover: 0 };
   var yrs = function (a, b) { return (b - a) / (365.2425 * 24 * 3600 * 1000); };
 
   (rowsM || []).forEach(function (r) {
@@ -1519,29 +1518,30 @@ function iConversionWall_() {
     cases++; cover += c; prem += pm;
     if (iNum_(r.dom) >= dayOf) { ahead.n++; ahead.cover += c; }
 
-    /* Issue age is the age the policy was written at, and years in force is
-       how long it has been paying. Both are arithmetic on Salesforce's own
-       dates; neither is stored. */
-    var dob = iDate_(r.Date_Of_Birth__c), iss = iDate_(r.ISSUE_DATE__c),
-        exp = iDate_(r.Life_Coverage_Expiry__c);
-    if (dob && iss) { ageSum += yrs(dob, iss); ageN++; }
-    if (iss)        { forceSum += yrs(iss, today); forceN++; }
-    if (exp) {
-      if (!soonest || exp < soonest) soonest = exp;
-      var left = yrs(today, exp), put = RUNWAY[RUNWAY.length - 1];
-      for (var bi = 0; bi < RUNWAY.length; bi++) {
-        if (left <= RUNWAY[bi].max) { put = RUNWAY[bi]; break; }
-      }
-      runway[put.key].n++; runway[put.key].cover += c;
-      if (ag && byAg[ag]) {
-        var a2 = byAg[ag];
-        if (a2.soonest === undefined || exp < a2.soonest) a2.soonest = exp;
-      }
-    } else { noDate++; }
+    /* THE DAY, AND THE AGE THEY TURN ON IT. Both are what an agent says on the
+       phone: "you turn thirty-eight on the twenty-third, and the price is set
+       by the age you are when you sign." The age the policy was WRITTEN at
+       does not come into that conversation, which is why it is no longer on
+       the screen. */
+    var dob = iDate_(r.Date_Of_Birth__c), exp = iDate_(r.Life_Coverage_Expiry__c);
+    var dom = iNum_(r.dom), past = dom < dayOf;
+    var turning = dob ? today.getFullYear() - dob.getFullYear() : null;
+    if (dom) {
+      var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: past });
+      slot.n++; slot.cover += c;
+    }
+    /* The contract's own expiry, kept only where it is close enough to be a
+       real deadline. Everything beyond that was the noise. */
+    if (exp) { if (yrs(today, exp) <= ICONV_SOON_Y) { expSoon.n++; expSoon.cover += c; } }
+    else { noDate++; }
     if (ag && byAg[ag]) {
-      var a3 = byAg[ag];
-      if (dob && iss) { a3.ageSum = (a3.ageSum || 0) + yrs(dob, iss); a3.ageN = (a3.ageN || 0) + 1; }
-      if (iss)        { a3.fSum = (a3.fSum || 0) + yrs(iss, today);   a3.fN = (a3.fN || 0) + 1; }
+      var a2 = byAg[ag];
+      /* The soonest birthday still to come is what orders the list. A day
+         already gone this year is not a call, so it sorts last. */
+      var rank = past ? dom + 100 : dom;
+      if (a2.rank === undefined || rank < a2.rank) {
+        a2.rank = rank; a2.day = dom; a2.past = past; a2.turning = turning;
+      }
     }
 
     /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
@@ -1553,14 +1553,17 @@ function iConversionWall_() {
     fam.n++; fam.cover += c;
   });
 
+  /* ORDERED BY WHO TO RING FIRST, not by who holds the most. The agent whose
+     client turns a year older on Tuesday goes above the agent holding more
+     cover in three weeks' time, because the wall is a worklist and not a
+     league table. Cover breaks the tie. */
   var agents = Object.keys(byAg).map(function (k) {
     var a = byAg[k];
-    a.issueAge = a.ageN ? Math.round(a.ageSum / a.ageN) : null;
-    a.inForce  = a.fN   ? Math.round((a.fSum / a.fN) * 10) / 10 : null;
-    a.expires  = a.soonest ? iIso_(a.soonest) : null;
-    delete a.ageSum; delete a.ageN; delete a.fSum; delete a.fN; delete a.soonest;
+    if (a.rank === undefined) { a.rank = 999; a.day = null; a.past = null; a.turning = null; }
     return a;
-  }).sort(function (a, b) { return b.cover - a.cover; });
+  }).sort(function (a, b) {
+    return a.rank !== b.rank ? a.rank - b.rank : b.cover - a.cover;
+  });
   var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
     .sort(function (a, b) { return b.cover - a.cover; });
   if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
@@ -1588,10 +1591,14 @@ function iConversionWall_() {
     day: dayOf,
     years: ICONV_SOON_Y,
     head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead,
-            issueAge: ageN ? Math.round(ageSum / ageN) : null,
-            inForce: forceN ? Math.round((forceSum / forceN) * 10) / 10 : null,
-            soonest: soonest ? iIso_(soonest) : null, noDate: noDate },
-    runway: RUNWAY.map(function (b) { return runway[b.key]; }).filter(function (b) { return b.n; }),
+            passed: { n: cases - ahead.n, cover: cover - ahead.cover },
+            expSoon: expSoon, noDate: noDate },
+    /* Every day of the month that carries a birthday, in order, with the ones
+       already gone marked. The screen draws the whole month so a room can see
+       the shape of the week ahead, not only a total. */
+    days: Object.keys(days).map(function (k) { return days[k]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
     state: state,
     duesRead: !!dues,
     agents: agents.slice(0, ICONV_TOP),

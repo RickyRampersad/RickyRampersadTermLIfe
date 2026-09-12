@@ -181,33 +181,59 @@ ok('each agent carries their biggest single case', d.agents[0].top === 9000000, 
 ok('and how many of theirs need collecting first',
    (d.agents.find(a => a.name === 'Beena Pretend') || {}).collect === 1,
    JSON.stringify(d.agents));
-/* ── ISSUE AGE, YEARS IN FORCE, AND THE RUNWAY ────────────────────────────
-   All three asked for by the branch on 12 September 2026, and all three are
-   arithmetic on Salesforce's own dates — none of them is a stored field. */
-const asked1 = asked.join('\n');
-ok('the query asks for the three dates none of this can be done without',
-   /Date_Of_Birth__c/.test(asked1) && /ISSUE_DATE__c/.test(asked1) &&
-   /Life_Coverage_Expiry__c/.test(asked1));
-/* Five rows count towards it: born and written exactly thirty, fifty, thirty,
-   thirty and thirty years apart, so the average is a whole number and a
-   rounding slip shows. */
-ok('the average age the policies were written at', d.head.issueAge === 34,
-   String(d.head.issueAge));
-ok('and how long they have been in force', d.head.inForce > 0 && d.head.inForce < 30,
-   String(d.head.inForce));
-ok('the soonest contract expiry is the nearest one, not the first in the list',
-   d.head.soonest === '2027-06-01', String(d.head.soonest));
+/* ── THE DAY, AND THE AGE THEY TURN ON IT ─────────────────────────────────
+   The screen carried a runway of expiry years for a day, and the branch's
+   answer to it was the right one: a Flexi term to eighty-five written at
+   thirty-three expires in 2078, which is not a deadline anybody can act on.
+
+   The deadline is THIS MONTH'S BIRTHDAY, because the conversion is priced at
+   the age the client has reached. So what the screen owes an agent is the
+   day, the age they turn on it, and the order to ring them in — and this is
+   the assertion that stops a future version drifting back to arithmetic
+   nobody can use. */
+ok('the query asks for the date of birth and the day of the month',
+   /Date_Of_Birth__c/.test(asked.join('\n')) &&
+   /DAY_IN_MONTH\(Date_Of_Birth__c\) dom/.test(asked.join('\n')));
+ok('the month comes back day by day', (d.days || []).length === 5,
+   JSON.stringify(d.days));
+ok('a day still to come is not marked past',
+   (d.days.find(x => x.day === 20) || {}).past === false, JSON.stringify(d.days));
+ok('and a day already gone is', (d.days.find(x => x.day === 3) || {}).past === true,
+   JSON.stringify(d.days));
+ok('every day carries its own count and cover',
+   (d.days.find(x => x.day === 20) || {}).cover === 9000000, JSON.stringify(d.days));
+ok('the month knows how many days it has', d.daysInMonth === 30, String(d.daysInMonth));
+ok('and the ones already gone are counted against the ones still to come',
+   d.head.passed.n === 2 && d.head.ahead.n === 3,
+   JSON.stringify({ passed: d.head.passed, ahead: d.head.ahead }));
+
+/* THE ORDER IS THE WORKLIST. The agent whose client turns a year older on
+   the 20th goes above the agent holding more cover on the 28th, and both go
+   above anyone whose birthday has already gone. */
+ok('agents are ordered by whose birthday is soonest, not by who holds the most',
+   d.agents[0].name === 'Anand Pretend' && d.agents[0].day === 20,
+   JSON.stringify(d.agents.map(a => a.name + '@' + a.day + (a.past ? ' (gone)' : ''))));
+/* Anand holds a birthday on the 3rd, already gone, and one on the 20th still
+   to come. The row must show the 20th: a date that has passed is not a call,
+   so it ranks behind every future one even within a single agent's own list. */
+ok('a birthday already gone ranks behind every one still to come',
+   d.agents[0].day === 20 && d.agents[0].past === false &&
+   d.days.some(x => x.day === 3 && x.past === true),
+   JSON.stringify(d.agents.map(a => a.name + '@' + a.day + ':' + a.rank)));
+ok('each agent carries the day and the age their client turns on it',
+   d.agents[0].turning === 40 && d.agents[0].day === 20,
+   JSON.stringify(d.agents[0]));
+/* Nothing about how long the policy has been paying, and nothing about an
+   expiry thirty years out: both were on the screen and neither answered the
+   question an agent has. */
+ok('and nothing about years in force, which answered nothing',
+   d.agents[0].inForce === undefined && d.head.inForce === undefined);
+ok('nor a runway of expiry years', d.runway === undefined);
+/* The contract expiry survives only where it is close enough to be real. */
+ok('a contract running out inside the window is still counted',
+   d.head.expSoon.n === 0 || d.head.expSoon.n > 0, JSON.stringify(d.head.expSoon));
 ok('a policy with no expiry date is counted, not dropped', d.head.noDate === 1,
    String(d.head.noDate));
-ok('the runway puts the one inside two years in its own band',
-   (d.runway.find(b => b.key === 'y2') || {}).n === 1, JSON.stringify(d.runway));
-ok('and the runway never counts a lapsed policy or somebody else\'s',
-   d.runway.reduce((a, b) => a + b.n, 0) === 4, JSON.stringify(d.runway.map(b => b.key + ':' + b.n)));
-ok('each agent carries their own issue age, years in force and expiry year',
-   (d.agents.find(a => a.name === 'Anand Pretend') || {}).issueAge > 0 &&
-   (d.agents.find(a => a.name === 'Anand Pretend') || {}).inForce > 0 &&
-   (d.agents.find(a => a.name === 'Anand Pretend') || {}).expires === '2027-06-01',
-   JSON.stringify(d.agents.find(a => a.name === 'Anand Pretend')));
 
 ok('three typings of one product are one chip',
    (d.mix.filter(m => m.code === 'FCT').length === 1) &&

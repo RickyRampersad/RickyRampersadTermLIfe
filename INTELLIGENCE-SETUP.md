@@ -1796,7 +1796,7 @@ So `ICONV_FAMILIES` has **three** kinds, not two:
 
 | Kind | Families | What the screen does with it |
 |---|---|---|
-| `convert` | `FCT` | The hero, the agent table, the runway, the plan chips. The only pool a conversion list may use. |
+| `convert` | `FCT` | The hero, the day strip, the agent table, the plan chips. The only pool a conversion list may use. |
 | `expire` | `FNT` **and FNT alone** | The amber tile and the deadline panel. Term written non-convertible: the cover ends and there is nothing to exchange it for. |
 | `permanent` | `ECT`, `ECU`, `NLE`, `ECONO`, `LB`, `LIB`, `CRI`, `CR2`, `CR3`, `CR4` | Counted once, for scale, and otherwise **not this screen's business**. Nothing about them ends on a date, so they have a screen of their own — see §3i. |
 
@@ -1902,27 +1902,45 @@ Two deliberate behaviours:
 - **With no dues tab the screen still works**, says so on its face, and calls
   every figure an upper bound.
 
-#### Issue age, years in force, and the runway
+#### The day, and the age they turn on it — and the runway that was wrong
 
-All three asked for by the branch, and **none of them is a stored field** —
-each is arithmetic on Salesforce's own dates, which is why the month's list is
-read row by row rather than as an aggregate.
+This screen carried a **runway** for a day: the month's cases bucketed by how
+long was left before the contract's own expiry. The branch's answer to it was
+the right one, and it is worth writing down because it is the sort of mistake
+that looks like rigour:
 
-| On the screen | From |
+> *"The term conversion wall has all the future years… you have policies in
+> force and paid 1.6 years. What is the objective? September should have the
+> clients whose birthday is this month and day so the agents can talk to them
+> about converting before."*
+
+A Flexi term to age 85 written at 33 expires in **2078**. That is not a
+deadline anybody can act on — it is arithmetic on a wall. And "in force 1.6
+years" answers no question an agent has. Both were removed.
+
+**The deadline is this month's birthday**, because the conversion is priced at
+the age the client has reached. So the screen owes an agent three things and
+nothing else:
+
+| On the screen | What it is for |
 |---|---|
-| **Age at issue** | `ISSUE_DATE__c` − `Date_Of_Birth__c` |
-| **In force** | today − `ISSUE_DATE__c` |
-| **Expires** | `Life_Coverage_Expiry__c`, and the soonest of them per agent |
-| **The runway** | the same expiry, bucketed by how long is left |
+| **The day strip** | one cell per day of the month. Gold = a birthday still to come. Grey = one already gone, and this year's rate went with it. Today is ringed. |
+| **Birthday** | the day, as "the 23rd" — how somebody says it on the phone. Struck through once it has passed |
+| **Turning** | the age they reach on that day, which is the whole pitch: *"you turn 38 on the 23rd, and the price is set by the age you are when you sign"* |
 
-**The runway is the bar under the hero figure**, and its segments are the
-share of **cover**, not of policy count. One $34m case two years out matters
-more to a room than nine small ones twenty years out, and a bar drawn by count
-says the opposite. Red is already past, gold is inside two years, blue is two
-to five.
+**And the order is the worklist, not a league table.** Agents sort by
+**soonest birthday first**, cover only breaking the tie — so the agent whose
+client turns a year older on Tuesday sits above the agent holding more cover
+in three weeks. A date already gone ranks behind every future one, *including
+within one agent's own list*: if an agent holds the 3rd and the 20th, the row
+shows the 20th.
 
-A conversion has to happen **before** that date. After it the client has
-nothing to convert, which is the whole reason the panel exists.
+The contract's own expiry survives only as one figure in the caption, and only
+where it is inside `ICONV_SOON_Y`. Everything beyond that was the noise.
+
+`test-conversion.js` asserts the day strip, the ordering rule, and that
+`inForce` and `runway` are **gone** — so a future version cannot drift back to
+arithmetic nobody can use.
 
 ## 3i. The permanent book — `intelligence/wall/permanent.html`
 

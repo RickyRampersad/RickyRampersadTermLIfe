@@ -79,14 +79,35 @@ const MEASURE = `(() => {
    fixture that proves the trimming, and an empty feed would prove nothing. */
 const CONV = { ok: true, data: {
   configured: true, generatedAt: '2026-09-12', month: 'September', day: 12, years: 10, duesRead: true,
-  head: { cases: 21, cover: 49900000, prem: 27400, unnamed: 1, ahead: { n: 13, cover: 26300000 } },
+  head: { cases: 21, cover: 49900000, prem: 27400, unnamed: 1,
+          ahead: { n: 13, cover: 26300000 }, passed: { n: 8, cover: 23600000 },
+          expSoon: { n: 2, cover: 1900000 }, noDate: 1 },
+  /* A month with birthdays on both sides of today, so the strip has gold
+     cells, struck-through grey ones, and a ring on the 12th. */
+  days: [{ day: 3, n: 2, cover: 4100000, past: true },
+         { day: 8, n: 3, cover: 9200000, past: true },
+         { day: 11, n: 3, cover: 10300000, past: true },
+         { day: 12, n: 1, cover: 2400000, past: false },
+         { day: 15, n: 4, cover: 8800000, past: false },
+         { day: 19, n: 2, cover: 3600000, past: false },
+         { day: 23, n: 3, cover: 6200000, past: false },
+         { day: 30, n: 3, cover: 5300000, past: false }],
+  daysInMonth: 30,
   state: { ready: { n: 13, cover: 31200000, prem: 16900 },
            collect: { n: 8, cover: 18700000, prem: 10500 },
            gone: { n: 5, cover: 24100000, prem: 9800 } },
   agentCount: 14,
+  /* Ordered the way the feed orders them: soonest birthday first, the days
+     already gone at the foot. The ages are what the client turns on the day. */
   agents: 'Ada Bram Cleo Dev Esme Finn Gale Hana Iris Jude Kit Lena Mo Nell'.split(' ')
-    .map((nm, i) => ({ name: nm + ' Quill', n: 14 - i, cover: (14 - i) * 1000000,
-                       prem: (14 - i) * 300, top: (14 - i) * 400000, collect: i % 3 ? 1 : 0 })),
+    .map((nm, i) => {
+      const day = [12, 15, 15, 19, 19, 23, 23, 23, 30, 30, 30, 3, 8, 11][i];
+      const past = i >= 11;
+      return { name: nm + ' Quill', n: 14 - i, cover: (14 - i) * 1000000,
+               prem: (14 - i) * 300, top: (14 - i) * 400000, collect: i % 3 ? 1 : 0,
+               day: day, past: past, turning: 34 + i * 2,
+               rank: past ? day + 100 : day };
+    }),
   mix: [{ code: 'FCT', label: 'Revised Flexi Term (convertible)', n: 20, cover: 49400000 }],
   pool: { conv: { n: 304, cover: 493437000, prem: 229284 },
           nonconv: { n: 237, cover: 158053000, prem: 207000 },
@@ -163,6 +184,28 @@ async function fresh(b, w, h, feed) {
        (t.owns ? ', and owns up to the rest' : ''),
        t.rows >= 3 && (t.rows === 14 || t.owns),
        t.rows + ' rows, admits to the remainder: ' + t.owns);
+    /* The day strip is the whole point of the screen: a cell for every day of
+       the month, gold for a birthday still to come, grey for one already gone,
+       and a ring on today. It must survive every one of these sizes intact —
+       there is nothing to trim here, and a month missing its last week would
+       send an agent past a client without a call. */
+    const c = await s.page.evaluate(() => {
+      const cells = [...document.querySelectorAll('#cCal b')];
+      return {
+        cells: cells.length,
+        marked: cells.filter(el => el.classList.contains('has')).length,
+        gone: cells.filter(el => el.classList.contains('past')).length,
+        today: cells.filter(el => el.classList.contains('today')).length,
+        square: cells.length ? Math.abs(cells[0].getBoundingClientRect().width -
+                                        cells[0].getBoundingClientRect().height) : 99,
+        first: (document.querySelector('#cList .crow .v') || {}).textContent || ''
+      };
+    });
+    ok(tag.padEnd(22) + ' the month is whole: thirty cells, eight with a birthday, three gone, today ringed',
+       c.cells === 30 && c.marked === 8 && c.gone === 3 && c.today === 1 && c.square < 2,
+       JSON.stringify(c));
+    ok(tag.padEnd(22) + ' the agent at the top is the one whose birthday is soonest',
+       /12th/.test(c.first), 'top row reads ' + JSON.stringify(c.first));
     await s.ctx.close();
   }
 
