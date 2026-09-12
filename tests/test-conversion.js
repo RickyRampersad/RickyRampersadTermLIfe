@@ -32,26 +32,30 @@ const decode = c => { const f = env.iConvPlan_(c); return f ? f.like + ':' + f.k
  // conversions are FCT, and the branch manager's rule is the same sentence.
  ['FCT65 1', 'FCT:convert'], ['FCT651', 'FCT:convert'], ['FCT65', 'FCT:convert'],
  ['FCT5  1', 'FCT:convert'], ['FCT20 1', 'FCT:convert'],
- // These expire and there is nothing to exchange them for. FNT says so in its
- // own plan name; Liberator and Newlife were named by the branch, and zero of
- // 1,327 Liberator and zero of 450 Newlife have ever carried "Converted".
+ // FNT alone expires with nothing to exchange it for, and it says so in its
+ // own plan name: "Flexi Term To Age 85 (Non-Convertible)".
  ['FNT85 1', 'FNT:expire'], ['FNT851', 'FNT:expire'], ['FNT81', 'FNT:expire'],
  ['FNT75', 'FNT:expire'], ['fnt85 1', 'FNT:expire'],
- ['LB75 1', 'LB:expire'], ['LB65', 'LB:expire'], ['LB100 1', 'LB:expire'],
- ['LIB 65', 'LIB:expire'], ['LIB65', 'LIB:expire'], ['Lib 65', 'LIB:expire'],
- ['LIBERATOR', 'LIB:expire'],
- ['NLE65', 'NLE:expire'], ['NLE  1', 'NLE:expire'], ['NLE 65', 'NLE:expire'],
- ['Econo Life to Age 65', 'ECONO:expire'], ['Econo Life 65', 'ECONO:expire'],
- // ECT is in neither pool on purpose: its one readable plan name says
- // "Econo Life to Age 65" and its expiry dates land at ninety-nine.
- ['ECT65 1', 'ECT:unsettled'], ['ECT851', 'ECT:unsettled'], ['ECU65 1', 'ECU:unsettled'],
+ // And these are permanent: the branch settled it on 12 September 2026.
+ // Econo Life is WHOLE LIFE with the premium paid to 65 or 85, which is why
+ // its expiry date lands at ninety-nine and why 48 of the 49 conversions went
+ // FCT into ECT — it is the destination, not a lead. Liberator's premium runs
+ // to 65/75/85/100 and Rejuvenator is the critical illness cover. None of
+ // them ends on a date, so none may appear on a conversion or expiry list.
+ ['ECT65 1', 'ECT:permanent'], ['ECT851', 'ECT:permanent'], ['ECU65 1', 'ECU:permanent'],
+ ['NLE65', 'NLE:permanent'], ['NLE  1', 'NLE:permanent'],
+ ['Econo Life to Age 65', 'ECONO:permanent'], ['Econo Life 65', 'ECONO:permanent'],
+ ['LB75 1', 'LB:permanent'], ['LB65', 'LB:permanent'], ['LB100 1', 'LB:permanent'],
+ ['LIB 65', 'LIB:permanent'], ['LIB65', 'LIB:permanent'], ['LIBERATOR', 'LIB:permanent'],
+ ['CRIEV1', 'CRI:permanent'], ['CR2EV1', 'CR2:permanent'],
+ ['CR3RP 1', 'CR3:permanent'], ['CR4RP1', 'CR4:permanent'],
  ['LIFEV 1', 'null'], ['LIFE EVOLUTION LIBERATOR', 'null'], ['Homeowners', 'null'],
  ['Motor', 'null'], ['', 'null'], [null, 'null']
 ].forEach(([code, want]) => ok(String(code) + ' → ' + want, decode(code) === want, decode(code)));
 
 // LB must never answer for LIB — longest prefix wins, or every Liberator row
 // would be filed under the wrong label.
-ok('LIB beats LB on a Liberator code', decode('LIB 65') === 'LIB:expire', decode('LIB 65'));
+ok('LIB beats LB on a Liberator code', decode('LIB 65') === 'LIB:permanent', decode('LIB 65'));
 
 /* ── 2. The reader and the filter are one fact ────────────────────────────
    The screen decodes plan codes in JavaScript and asks Salesforce for them in
@@ -59,16 +63,18 @@ ok('LIB beats LB on a Liberator code', decode('LIB 65') === 'LIB:expire', decode
    under-counts, so the SOQL is generated from the same table the reader uses
    and this checks both directions. */
 console.log('\nThe SOQL asks for exactly the families the reader calls convertible:\n');
-const yes = env.iConvLike_('convert'), no = env.iConvLike_('expire'), maybe = env.iConvLike_('unsettled');
+const yes = env.iConvLike_('convert'), no = env.iConvLike_('expire'), perm = env.iConvLike_('permanent');
 ok('the convertible filter is FCT and nothing else',
-   /'FCT%'/.test(yes) && !/FNT|LB|LIB|NLE|ECT|ECU/.test(yes), yes);
-ok('the expiring filter names FNT, Liberator, Newlife and Econo Life',
-   ["'FNT%'", "'LB%'", "'LIB%'", "'NLE%'", "'ECONO%'"].every(k => no.indexOf(k) > -1), no);
-ok('the expiring filter never names FCT', !/'FCT%'/.test(no), no);
-ok('ECT and ECU are in their own filter, in neither total',
-   /'ECT%'/.test(maybe) && /'ECU%'/.test(maybe) && !/ECT|ECU/.test(yes) && !/ECT|ECU/.test(no), maybe);
+   /'FCT%'/.test(yes) && !/FNT|LB|LIB|NLE|ECT|ECU|CR/.test(yes), yes);
+ok('the expiring filter is FNT and nothing else',
+   /'FNT%'/.test(no) && !/FCT|LB|LIB|NLE|ECT|ECU|CR/.test(no), no);
+ok('the permanent filter names Econo Life, Liberator and Rejuvenator',
+   ["'ECT%'", "'ECU%'", "'NLE%'", "'ECONO%'", "'LB%'", "'LIB%'", "'CRI%'", "'CR2%'", "'CR3%'", "'CR4%'"]
+     .every(k => perm.indexOf(k) > -1), perm);
+ok('and the permanent book is on neither of the other two filters',
+   !/ECT|ECU|NLE|ECONO|LB|LIB|CR/.test(yes) && !/ECT|ECU|NLE|ECONO|LB|LIB|CR/.test(no));
 ok('every family in the table appears in exactly one filter',
-   env.ICONV_FAMILIES.every(f => [yes, no, maybe].filter(x => x.indexOf("'" + f.like + "%'") > -1).length === 1));
+   env.ICONV_FAMILIES.every(f => [yes, no, perm].filter(x => x.indexOf("'" + f.like + "%'") > -1).length === 1));
 
 /* ── 3. The book, as Salesforce would answer it ───────────────────────────
    Invented throughout. No client of this branch is in this repository. The
@@ -99,26 +105,41 @@ const asked = [];
 const agg = {
   /* Row level, because a policy has to be looked up one at a time. */
   month: [
-    { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1', dom: 20 },
-    { POLICY__c: 'POL-READY-B',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 6000000, Life_Premium__c: 3000, Life_Plan_01__c: 'FCT651',  dom: 3 },
-    { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1', dom: 28 },
-    { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1', dom: 15 },
-    { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1', dom: 25 },
-    { POLICY__c: 'POL-EXCLUDED',  AGENT__r: { Name: 'Gone Away' },     Life_Coverage__c: 8000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT65 1', dom: 12 },
-    { POLICY__c: 'POL-BRANDNEW',  AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 1000000, Life_Premium__c: 500,  Life_Plan_01__c: 'FCT65',   dom: 30 },
-    { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS', dom: 1 }
+    /* Born 1986, written 2016 at thirty, ten years in force, twenty-three to
+       run — the arithmetic the screen has to do, laid out so a wrong answer
+       is obvious. */
+    { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1', dom: 20,
+      Date_Of_Birth__c: '1986-09-20', ISSUE_DATE__c: '2016-09-20', Life_Coverage_Expiry__c: '2049-09-20' },
+    /* Written at fifty, two years in force, and the contract runs out inside
+       two years — the row the runway exists to put first. */
+    { POLICY__c: 'POL-READY-B',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 6000000, Life_Premium__c: 3000, Life_Plan_01__c: 'FCT651',  dom: 3,
+      Date_Of_Birth__c: '1974-09-03', ISSUE_DATE__c: '2024-09-03', Life_Coverage_Expiry__c: '2027-06-01' },
+    { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1', dom: 28,
+      Date_Of_Birth__c: '1990-09-28', ISSUE_DATE__c: '2020-09-28', Life_Coverage_Expiry__c: '2033-09-28' },
+    { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1', dom: 15,
+      Date_Of_Birth__c: '1980-09-15', ISSUE_DATE__c: '2010-09-15', Life_Coverage_Expiry__c: '2065-09-15' },
+    { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1', dom: 25,
+      Date_Of_Birth__c: '1970-09-25', ISSUE_DATE__c: '2005-09-25', Life_Coverage_Expiry__c: '2055-09-25' },
+    { POLICY__c: 'POL-EXCLUDED',  AGENT__r: { Name: 'Gone Away' },     Life_Coverage__c: 8000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT65 1', dom: 12,
+      Date_Of_Birth__c: '1975-09-12', ISSUE_DATE__c: '2015-09-12', Life_Coverage_Expiry__c: '2040-09-12' },
+    /* No expiry date at all: it must not land in a runway band, and it must
+       be counted as such rather than silently dropped. */
+    { POLICY__c: 'POL-BRANDNEW',  AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 1000000, Life_Premium__c: 500,  Life_Plan_01__c: 'FCT65',   dom: 30,
+      Date_Of_Birth__c: '1996-09-30', ISSUE_DATE__c: '2026-09-01', Life_Coverage_Expiry__c: null },
+    { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS', dom: 1,
+      Date_Of_Birth__c: '1988-09-01', ISSUE_DATE__c: '2018-09-01', Life_Coverage_Expiry__c: '2048-09-01' }
   ],
   conv:   [{ n: 1172, cover: 1687790726, prem: 900000 }],
   non:    [{ n: 39,   cover: 85100000,   prem: 139941 }],
   soon:   [{ yr: 2028, n: 3, cover: 3600000 }, { yr: 2029, n: 5, cover: 4000000 },
            { yr: 2035, n: 7, cover: 7700000 }],
-  unsettled: [{ n: 1221, cover: 1194000000 }]
+  permanent: [{ n: 2130, cover: 2003490817 }]
 };
 env.sfQuery_ = function (soql) {
   asked.push(soql);
   if (/SELECT POLICY__c/.test(soql))                return agg.month;
   if (/CALENDAR_YEAR/.test(soql))                   return agg.soon;
-  if (/'ECT%'/.test(soql))                          return agg.unsettled;
+  if (/'ECT%'/.test(soql))                          return agg.permanent;
   if (/'FNT%'/.test(soql))                          return agg.non;
   return agg.conv;
 };
@@ -160,6 +181,34 @@ ok('each agent carries their biggest single case', d.agents[0].top === 9000000, 
 ok('and how many of theirs need collecting first',
    (d.agents.find(a => a.name === 'Beena Pretend') || {}).collect === 1,
    JSON.stringify(d.agents));
+/* ── ISSUE AGE, YEARS IN FORCE, AND THE RUNWAY ────────────────────────────
+   All three asked for by the branch on 12 September 2026, and all three are
+   arithmetic on Salesforce's own dates — none of them is a stored field. */
+const asked1 = asked.join('\n');
+ok('the query asks for the three dates none of this can be done without',
+   /Date_Of_Birth__c/.test(asked1) && /ISSUE_DATE__c/.test(asked1) &&
+   /Life_Coverage_Expiry__c/.test(asked1));
+/* Five rows count towards it: born and written exactly thirty, fifty, thirty,
+   thirty and thirty years apart, so the average is a whole number and a
+   rounding slip shows. */
+ok('the average age the policies were written at', d.head.issueAge === 34,
+   String(d.head.issueAge));
+ok('and how long they have been in force', d.head.inForce > 0 && d.head.inForce < 30,
+   String(d.head.inForce));
+ok('the soonest contract expiry is the nearest one, not the first in the list',
+   d.head.soonest === '2027-06-01', String(d.head.soonest));
+ok('a policy with no expiry date is counted, not dropped', d.head.noDate === 1,
+   String(d.head.noDate));
+ok('the runway puts the one inside two years in its own band',
+   (d.runway.find(b => b.key === 'y2') || {}).n === 1, JSON.stringify(d.runway));
+ok('and the runway never counts a lapsed policy or somebody else\'s',
+   d.runway.reduce((a, b) => a + b.n, 0) === 4, JSON.stringify(d.runway.map(b => b.key + ':' + b.n)));
+ok('each agent carries their own issue age, years in force and expiry year',
+   (d.agents.find(a => a.name === 'Anand Pretend') || {}).issueAge > 0 &&
+   (d.agents.find(a => a.name === 'Anand Pretend') || {}).inForce > 0 &&
+   (d.agents.find(a => a.name === 'Anand Pretend') || {}).expires === '2027-06-01',
+   JSON.stringify(d.agents.find(a => a.name === 'Anand Pretend')));
+
 ok('three typings of one product are one chip',
    (d.mix.filter(m => m.code === 'FCT').length === 1) &&
    (d.mix.find(m => m.code === 'FCT') || {}).n === 4,
@@ -174,12 +223,12 @@ ok('a plan code nobody can read is said out loud, not dropped silently',
    (d.notes || []).some(s => /cannot read/.test(s)), JSON.stringify(d.notes));
 ok('the pool and the book with no right at all are both there',
    d.pool.conv.n === 1172 && d.pool.nonconv.n === 39);
-/* The wall prints the open question rather than picking an answer. 1,221
-   policies is far too much cover to fold into either column on a guess. */
-ok('the unsettled plan codes are counted, and named as unsettled',
-   d.pool.unsettled.n === 1221 &&
-   (d.notes || []).some(x => /ECT policies are in neither figure/.test(x)),
-   JSON.stringify(d.pool.unsettled) + ' ' + JSON.stringify(d.notes));
+/* The permanent book is counted so the room knows what this screen is NOT
+   about, and it appears in neither of the two figures that are the screen's
+   own work. */
+ok('the permanent book is counted, and in neither working figure',
+   d.pool.permanent.n === 2130 && d.pool.conv.n !== 2130 && d.pool.nonconv.n !== 2130,
+   JSON.stringify(d.pool));
 ok('the deadline list totals its years', d.soonTotal.n === 15 && d.soonTotal.cover === 15300000,
    JSON.stringify(d.soonTotal));
 
@@ -201,10 +250,10 @@ ok('and the policy number with it, so the dues tab can be searched',
    nothing. Pointing this panel at the convertible pool was the original
    mistake and this is the assertion that stops it coming back. */
 const deadline = asked.filter(q => /CALENDAR_YEAR/.test(q))[0] || '';
-ok('the deadline counts down the expiring book',
-   ["'FNT%'", "'LB%'", "'LIB%'", "'NLE%'"].every(k => deadline.indexOf(k) > -1), deadline.slice(0, 160));
+ok('the deadline counts down the non-convertible term', /'FNT%'/.test(deadline), deadline.slice(0, 160));
 ok('and never the convertible book', !/'FCT%'/.test(deadline), deadline.slice(0, 160));
-ok('nor the two plan codes nobody has settled', !/'ECT%'|'ECU%'/.test(deadline), deadline.slice(0, 160));
+ok('nor the permanent book, none of which ends on a date',
+   !/'ECT%'|'ECU%'|'NLE%'|'LB%'|'LIB%'|'CR[I234]%'/.test(deadline), deadline.slice(0, 160));
 // The object itself is CLIENT_PORTFOLIO__c and the agent is AGENT__r.Name;
 // neither is a client. Anything else that could name one is not asked for.
 ok('nothing was asked for that names a client',

@@ -46,7 +46,8 @@ const PAGES = [
   ['With the agent',    '/intelligence/wall/delivery.html'],
   ['The licence year',  '/intelligence/wall/licence.html'],
   ['Birthdays today',   '/intelligence/wall/book.html'],
-  ['Conversions',       '/intelligence/wall/conversion.html']
+  ['Conversions',       '/intelligence/wall/conversion.html'],
+  ['The permanent book', '/intelligence/wall/permanent.html']
 ];
 
 // What a leaf element that carries words looks like, and where it sits. The
@@ -168,7 +169,7 @@ async function fresh(b, w, h, feed) {
   /* ── The rail ─────────────────────────────────────────────────────────────
      Two rows of stops at most, the controls beside them and not underneath,
      and the timer clear of both. */
-  console.log('\nThe rail, with twelve stops on it:\n');
+  console.log('\nThe rail, with thirteen stops on it:\n');
   for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
                              [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
     const s = await fresh(b, w, h);
@@ -190,7 +191,7 @@ async function fresh(b, w, h, feed) {
         lifted: document.body.classList.contains('railup')
       };
     });
-    ok(tag.padEnd(22) + ' twelve stops on at most two rows', m.rows <= 2 && m.stops === 12,
+    ok(tag.padEnd(22) + ' thirteen stops on at most two rows', m.rows <= 2 && m.stops === 13,
        m.stops + ' stops on ' + m.rows + ' rows');
     ok(tag.padEnd(22) + ' no stop lands on the timer', !m.onTimer.length, JSON.stringify(m.onTimer));
     ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnTimer);

@@ -30,8 +30,8 @@ let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
 const ORDER = ['day.html', 'blocks.html', 'pending.html', 'ready.html', 'triage.html', 'culprits.html',
                'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html',
-               'conversion.html'];
-const LAST_TAB = 'Conversions';   // the rail label of ORDER's last stop
+               'conversion.html', 'permanent.html'];
+const LAST_TAB = 'The permanent book';   // the rail label of ORDER's last stop
 
 async function open(b, query) {
   const ctx = await b.newContext({ viewport:{ width:1920, height:1080 } });
@@ -124,7 +124,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Ready to settle',
                        'Whose move is it', 'Who is holding it up', 'Premium dues',
                        'In our possession', 'With the agent', 'The licence year', 'Birthdays today',
-                       LAST_TAB];
+                       'Conversions', LAST_TAB];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.
@@ -137,9 +137,17 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.keyboard.press('4'); await s.page.waitForTimeout(300);     // a fresh turn, so the line is near its start
   const w1 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
   await s.page.waitForTimeout(1000);
-  const w2 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
-  const f2 = await s.page.evaluate(() => parseFloat(document.getElementById('fill').style.width));
-  ok('and it runs, in step with the timer\'s own track', w2 > w1 && Math.abs(w2 - f2) < 2, w1 + ' -> ' + w2 + ' / ' + f2);
+  /* BOTH IN ONE EVALUATE. Read in two round trips these drifted by the time
+     between them — 4% on a loaded machine with thirteen slides loading — and
+     the test failed on a wall that was perfectly in step. One trip, one
+     moment, and the assertion measures the thing it claims to. */
+  const both = await s.page.evaluate(() => ({
+    bar: parseFloat(document.getElementById('bar').style.width),
+    fill: parseFloat(document.getElementById('fill').style.width)
+  }));
+  ok('and it runs, in step with the timer\'s own track',
+     both.bar > w1 && Math.abs(both.bar - both.fill) < 2,
+     w1 + ' -> ' + both.bar + ' / ' + both.fill);
   // No key reaches past the ninth stop, so the rail is how the last one is
   // reached — which is also how a person on the floor would do it.
   await s.page.mouse.move(600, 600);

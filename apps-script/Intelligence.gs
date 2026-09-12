@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-12b';
+var INTEL_VERSION = '2026-09-12c';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1250,40 +1250,52 @@ var ICONV_INFORCE = 'PREMIUM PAYING';   // stored upper, and SOQL '=' ignores ca
 var ICONV_SOON_Y  = 10;       // how far ahead the deadline list looks
 var ICONV_TOP     = 14;       // agents on screen
 
-/* ── WHICH PLANS CONVERT, AND HOW THAT WAS SETTLED ───────────────────────
-   Not by reading the letters. The branch's own dues book has a status called
-   "Converted" and 49 policies carry it: 48 are FCT and the 49th is CLT65.
-   Across the same book, ZERO of 1,327 Liberator, ZERO of 450 Newlife 2000,
-   ZERO of 78 FNT and ZERO of 1,221 ECT have ever carried it. The branch
-   manager's rule on 12 September 2026 was the same sentence from the other
-   direction: only term converts, and Econolife and Liberator to 65 expire.
+/* ── WHICH PLANS CONVERT, AND WHAT THE OTHERS ACTUALLY DO ────────────────
+   Settled twice over. The branch's dues book carries a status called
+   "Converted" and 49 policies hold it: 48 are FCT and the 49th is CLT65.
+   ZERO of 1,327 Liberator, ZERO of 450 Newlife 2000, ZERO of 78 FNT and ZERO
+   of 1,221 ECT have ever held it. The branch manager's rule is the same
+   sentence: only term converts.
 
-   So the table below is three kinds, not two:
+   What the others do was the part the workbook could not tell us, and the
+   branch told us on 12 September 2026:
 
-     convert    FCT — a right to exchange the term for permanent cover with
-                no medical. This is the only pool a conversion list may use.
-     expire     the cover ends on a date and there is nothing to exchange it
-                for. A fresh application, fresh underwriting, and it has to
-                happen before the date, not after it.
-     unsettled  ECT and ECU. Left out of BOTH totals on purpose — see below.
+     ECONO LIFE (ECT, NLE) IS WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. The "65" is the end of the premium, not
+     the end of the cover — which is why its Life_Coverage_Expiry__c lands at
+     age ninety-nine and why 48 of the 49 conversions went FCT into ECT. It is
+     the destination, not a lead.
 
-   WHY ECT IS COUNTED IN NEITHER. Its plan name is self-referential on every
-   record but one, and that one reads "Econo Life to Age 65" against the code
-   ECT651 — which would make ECT an Econolife that expires at 65. But the
-   expiry DATE on the ECT records lands at age ninety-nine or a hundred, not
-   sixty-five. One of those two facts is wrong and the workbook cannot say
-   which, so 1,221 policies sit outside both figures until somebody who knows
-   the product says. A wall the whole branch walks past does not get to guess
-   at that: it prints the question instead. */
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and it is
+     the one the branch is watching. Policies issued 2009 and earlier can
+     simply be extended, and that is an opportunity rather than a problem.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   So three kinds, and the third one is not this screen's business:
+
+     convert     FCT. A right to exchange the term for permanent cover with no
+                 medical. The only pool a conversion list may use.
+     expire      FNT, and FNT alone. Term written non-convertible: the cover
+                 ends on a date and there is nothing to exchange it for.
+     permanent   Econo Life, Liberator, Rejuvenator. Whole life or a premium
+                 paying period, with cover that does not end on a date. They
+                 have a screen of their own — iPermanentWall_ — and they are
+                 counted in neither figure here, because a conversion list
+                 that includes them is a list of things that cannot convert. */
 var ICONV_FAMILIES = [
   { like: 'FCT',   kind: 'convert',   label: 'Revised Flexi Term (convertible)' },
   { like: 'FNT',   kind: 'expire',    label: 'Flexi Term, non-convertible' },
-  { like: 'LIB',   kind: 'expire',    label: 'Liberator' },
-  { like: 'LB',    kind: 'expire',    label: 'Liberator' },
-  { like: 'NLE',   kind: 'expire',    label: 'Newlife 2000' },
-  { like: 'ECONO', kind: 'expire',    label: 'Econo Life' },
-  { like: 'ECT',   kind: 'unsettled', label: 'ECT — Econolife or Evolution, to confirm' },
-  { like: 'ECU',   kind: 'unsettled', label: 'ECU — to confirm' }
+  { like: 'ECT',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'ECU',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'NLE',   kind: 'permanent', label: 'Newlife 2000' },
+  { like: 'ECONO', kind: 'permanent', label: 'Econo Life' },
+  { like: 'LIB',   kind: 'permanent', label: 'Liberator' },
+  { like: 'LB',    kind: 'permanent', label: 'Liberator' },
+  { like: 'CRI',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR2',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR3',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR4',   kind: 'permanent', label: 'Rejuvenator' }
 ];
 
 var ICONV_MONTHS = ['January','February','March','April','May','June','July',
@@ -1350,9 +1362,12 @@ function iConvDues_() {
     sum: ['sum assured'], days: ['days'], status2: ['status(2)', 'status2'],
     desc: ['status description']
   });
-  var by = {}, pool = { ready: { n: 0, cover: 0, prem: 0 },
-                        collect: { n: 0, cover: 0, prem: 0 },
-                        gone: { n: 0, cover: 0, prem: 0 } };
+  var by = {}, pools = {};
+  var blank = function () {
+    return { ready: { n: 0, cover: 0, prem: 0 }, collect: { n: 0, cover: 0, prem: 0 },
+             gone: { n: 0, cover: 0, prem: 0 } };
+  };
+  ['convert', 'expire', 'permanent'].forEach(function (k) { pools[k] = blank(); });
   for (var r = 0; r < d.rows; r++) {
     var num = String(d.get('number', r)).trim();
     if (!num || iBadNumber_(num)) continue;
@@ -1364,13 +1379,16 @@ function iConvDues_() {
        extract's problem, and picking the later row would let a stale duplicate
        overwrite a live one. */
     if (by[num] === undefined) by[num] = { state: state, desc: desc, days: iNum_(d.get('days', r)) };
+    /* Every kind is split, not only the convertible one: the permanent screen
+       has the same two rules against it — in force, and paid to date — and it
+       reads the answer out of the same pass over the same tab. */
     var f = iConvPlan_(d.get('plan', r));
-    if (f && f.kind === 'convert') {
-      var slot = pool[state];
+    if (f && pools[f.kind]) {
+      var slot = pools[f.kind][state];
       slot.n++; slot.cover += iNum_(d.get('sum', r)); slot.prem += iNum_(d.get('premium', r));
     }
   }
-  return { by: by, pool: pool };
+  return { by: by, pool: pools.convert, pools: pools };
 }
 
 function iConvOne_(rows, keys) {
@@ -1396,7 +1414,7 @@ function iConversionWall_() {
   }
   var ask = iSfQuery_;
 
-  var conv = iConvLike_('convert'), gone = iConvLike_('expire'), open_ = iConvLike_('unsettled');
+  var conv = iConvLike_('convert'), gone = iConvLike_('expire'), perm = iConvLike_('permanent');
   var live = iConvInforce_();
   var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
   var birthday = ' AND CALENDAR_MONTH(Date_Of_Birth__c) = ' + month;
@@ -1415,7 +1433,8 @@ function iConversionWall_() {
      The policy number is read and never leaves this function. It exists only
      to find the row in the dues tab. */
   var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
-                ' Life_Plan_01__c, DAY_IN_MONTH(Date_Of_Birth__c) dom' +
+                ' Life_Plan_01__c, DAY_IN_MONTH(Date_Of_Birth__c) dom,' +
+                ' Date_Of_Birth__c, ISSUE_DATE__c, Life_Coverage_Expiry__c' +
                 from + conv + ' AND ' + live + birthday +
                 ' ORDER BY Life_Coverage__c DESC LIMIT 900');
 
@@ -1423,8 +1442,11 @@ function iConversionWall_() {
                    from + conv + ' AND ' + live);
   var poolGone = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
                    from + gone + ' AND ' + live);
-  var poolOpen = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
-                   from + open_ + ' AND ' + live);
+  /* The permanent book, as one figure and a pointer. It is not this screen's
+     work — see iPermanentWall_ — but a room looking at $67m of expiring term
+     should be able to see that it sits beside two billion that does not. */
+  var poolPerm = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                   from + perm + ' AND ' + live);
 
   /* THE DEADLINE, and it is now the right book. It used to count down the
      convertible pool, which was the wrong story: a policy you may convert has
@@ -1459,6 +1481,20 @@ function iConversionWall_() {
   var byAg = {}, byFam = {}, unknown = 0, unnamed = 0;
   var ahead = { n: 0, cover: 0 };
   var cases = 0, cover = 0, prem = 0;
+  /* THE RUNWAY. A conversion has to happen before the contract's own expiry,
+     and on the Flexi book that date is real — it is the day the cover stops.
+     Bucketing the month's cases by how long is left is the difference between
+     "call these twenty-one people" and "call these two first". */
+  var RUNWAY = [{ key: 'gone',  lab: 'already past',      max: 0 },
+                { key: 'y2',    lab: 'inside two years',  max: 2 },
+                { key: 'y5',    lab: 'two to five',       max: 5 },
+                { key: 'y10',   lab: 'five to ten',       max: 10 },
+                { key: 'y20',   lab: 'ten to twenty',     max: 20 },
+                { key: 'far',   lab: 'over twenty',       max: 999 }];
+  var runway = {}, noDate = 0;
+  RUNWAY.forEach(function (b) { runway[b.key] = { key: b.key, lab: b.lab, n: 0, cover: 0 }; });
+  var ageSum = 0, ageN = 0, forceSum = 0, forceN = 0, soonest = null;
+  var yrs = function (a, b) { return (b - a) / (365.2425 * 24 * 3600 * 1000); };
 
   (rowsM || []).forEach(function (r) {
     var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
@@ -1483,6 +1519,31 @@ function iConversionWall_() {
     cases++; cover += c; prem += pm;
     if (iNum_(r.dom) >= dayOf) { ahead.n++; ahead.cover += c; }
 
+    /* Issue age is the age the policy was written at, and years in force is
+       how long it has been paying. Both are arithmetic on Salesforce's own
+       dates; neither is stored. */
+    var dob = iDate_(r.Date_Of_Birth__c), iss = iDate_(r.ISSUE_DATE__c),
+        exp = iDate_(r.Life_Coverage_Expiry__c);
+    if (dob && iss) { ageSum += yrs(dob, iss); ageN++; }
+    if (iss)        { forceSum += yrs(iss, today); forceN++; }
+    if (exp) {
+      if (!soonest || exp < soonest) soonest = exp;
+      var left = yrs(today, exp), put = RUNWAY[RUNWAY.length - 1];
+      for (var bi = 0; bi < RUNWAY.length; bi++) {
+        if (left <= RUNWAY[bi].max) { put = RUNWAY[bi]; break; }
+      }
+      runway[put.key].n++; runway[put.key].cover += c;
+      if (ag && byAg[ag]) {
+        var a2 = byAg[ag];
+        if (a2.soonest === undefined || exp < a2.soonest) a2.soonest = exp;
+      }
+    } else { noDate++; }
+    if (ag && byAg[ag]) {
+      var a3 = byAg[ag];
+      if (dob && iss) { a3.ageSum = (a3.ageSum || 0) + yrs(dob, iss); a3.ageN = (a3.ageN || 0) + 1; }
+      if (iss)        { a3.fSum = (a3.fSum || 0) + yrs(iss, today);   a3.fN = (a3.fN || 0) + 1; }
+    }
+
     /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
        FCT65 are one product typed three ways and a wall that lists them
        separately is a wall nobody trusts. */
@@ -1492,8 +1553,14 @@ function iConversionWall_() {
     fam.n++; fam.cover += c;
   });
 
-  var agents = Object.keys(byAg).map(function (k) { return byAg[k]; })
-    .sort(function (a, b) { return b.cover - a.cover; });
+  var agents = Object.keys(byAg).map(function (k) {
+    var a = byAg[k];
+    a.issueAge = a.ageN ? Math.round(a.ageSum / a.ageN) : null;
+    a.inForce  = a.fN   ? Math.round((a.fSum / a.fN) * 10) / 10 : null;
+    a.expires  = a.soonest ? iIso_(a.soonest) : null;
+    delete a.ageSum; delete a.ageN; delete a.fSum; delete a.fN; delete a.soonest;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover; });
   var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
     .sort(function (a, b) { return b.cover - a.cover; });
   if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
@@ -1509,13 +1576,10 @@ function iConversionWall_() {
   var soonTotal = soon.reduce(function (a, r) {
     return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
 
-  /* The open question, printed rather than guessed at. */
-  var open = iConvOne_(poolOpen, ['n', 'cover']);
-  if (open.n) {
-    notes.push(open.n + ' ECT policies are in neither figure: the one plan name on file reads ' +
-               '“Econo Life to Age 65”, and the expiry dates on them land at ninety-nine. ' +
-               'Confirm which and they join a column.');
-  }
+  /* Econo Life, Liberator and Rejuvenator are in neither figure on purpose:
+     nothing about them ends on a date, so a conversion list cannot use them.
+     The count is here only so the room knows what this screen is NOT about. */
+  var perma = iConvOne_(poolPerm, ['n', 'cover']);
 
   return {
     configured: true,
@@ -1523,7 +1587,11 @@ function iConversionWall_() {
     month: ICONV_MONTHS[today.getMonth()],
     day: dayOf,
     years: ICONV_SOON_Y,
-    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead },
+    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead,
+            issueAge: ageN ? Math.round(ageSum / ageN) : null,
+            inForce: forceN ? Math.round((forceSum / forceN) * 10) / 10 : null,
+            soonest: soonest ? iIso_(soonest) : null, noDate: noDate },
+    runway: RUNWAY.map(function (b) { return runway[b.key]; }).filter(function (b) { return b.n; }),
     state: state,
     duesRead: !!dues,
     agents: agents.slice(0, ICONV_TOP),
@@ -1531,7 +1599,7 @@ function iConversionWall_() {
     mix: mix,
     pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
             nonconv: iConvOne_(poolGone, ['n', 'cover', 'prem']),
-            unsettled: open,
+            permanent: perma,
             /* The same pool as conv, but split by what the branch's own
                extract says about it. This is the honest denominator. */
             live: dues ? dues.pool : null },
@@ -1539,6 +1607,279 @@ function iConversionWall_() {
     soonTotal: soonTotal,
     notes: notes
   };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE PERMANENT BOOK — WHOLE LIFE, THE PREMIUM PERIOD, AND THE RIDERS
+
+   The conversions screen is about cover that ENDS on a date. This one is
+   about everything that does not, and it is the larger half of the branch:
+   2,130 policies, two billion dollars of cover and $2.3m of annual premium on
+   the day it was built.
+
+   Three products, and the branch's own words for them:
+
+     ECONO LIFE (ECT, NLE) is WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. Nothing to convert — it is what a term
+     converts INTO, which is why 48 of the branch's 49 conversions went FCT
+     into ECT. The "65" in ECT65 is the end of the premium, not the end of the
+     cover, and mistaking one for the other is what put 1,221 policies in the
+     wrong column for a day.
+
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and the
+     branch is watching it. POLICIES ISSUED 2009 AND EARLIER CAN SIMPLY BE
+     EXTENDED. That is the one thing on this screen an agent can act on this
+     week, so it leads it.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   And the riders, which are on the policy rather than beside it: critical
+   illness, accidental death (ADDAP), waiver of premium, disability income.
+   The critical illness rider alone carries more cover than the entire term
+   book, on 3,102 policies, and almost nobody looks at it.
+
+   WHY THIS SCREEN CARRIES NO DEADLINE PANEL. Nothing here expires. The dates
+   that matter are the maturity date where one is held and the issue date,
+   which is how long the policy has been paying — and on the Liberator the
+   issue date IS the opportunity.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IPERM_HOLD_S   = 15 * 60;
+var IPERM_EXTEND_Y = 2009;    // Liberator issued this year or earlier may extend
+var IPERM_TOP      = 12;      // agents on screen
+
+/* The premium-paying period each family runs to, in the branch's words. Shown
+   on the screen so nobody reads "to 65" as "ends at 65" again. */
+var IPERM_FAMS = [
+  { fam: 'econo', label: 'Econo Life',  sub: 'whole life \u00b7 premium to 65 or 85 \u00b7 cover for life',
+    likes: ['ECT', 'ECU', 'NLE', 'ECONO'] },
+  { fam: 'lib',   label: 'Liberator',   sub: 'premium to 65, 75, 85 or 100',
+    likes: ['LIB', 'LB'] },
+  { fam: 'rejuv', label: 'Rejuvenator', sub: 'critical illness',
+    likes: ['CRI', 'CR2', 'CR3', 'CR4'] }
+];
+
+function iPermFam_(raw) {
+  var u = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, '').trim();
+  if (!u) return null;
+  var best = null;
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) {
+      if (u.indexOf(k) === 0 && (!best || k.length > best.k.length)) best = { f: f, k: k };
+    });
+  });
+  return best ? best.f : null;
+}
+
+function iPermLike_() {
+  var out = [];
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) { out.push("Life_Plan_01__c LIKE '" + k + "%'"); });
+  });
+  return '(' + out.join(' OR ') + ')';
+}
+
+function iPermanentWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iConvInforce_().replace(' AND Life_Coverage_Expiry__c >= TODAY', '');
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* One read by plan code, folded into three families here. The codes are
+     typed a dozen ways — ECT65 1, ECT651, ECT 65 1 — and a screen that lists
+     them separately is a screen nobody trusts. */
+  var byCode = q('SELECT Life_Plan_01__c pc, COUNT(Id) n, SUM(Life_Coverage__c) cover,' +
+                 ' SUM(Life_Premium__c) prem, MIN(ISSUE_DATE__c) oldest' +
+                 from + iPermLike_() + ' AND ' + live +
+                 ' GROUP BY Life_Plan_01__c ORDER BY COUNT(Id) DESC LIMIT 200');
+
+  /* THE OPPORTUNITY, read row by row. Status alone is not enough — the branch
+     asked for in force AND paid to date, and Salesforce is stale on both — so
+     every one of these has to be looked up in the dues tab one at a time.
+     There are seventeen of them, which is what makes that affordable. */
+  var extRows = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c, ISSUE_DATE__c' +
+                  from + "(Life_Plan_01__c LIKE 'LB%' OR Life_Plan_01__c LIKE 'LIB%') AND " + live +
+                  ' AND ISSUE_DATE__c < ' + (IPERM_EXTEND_Y + 1) + '-01-01' +
+                  ' ORDER BY Life_Coverage__c DESC LIMIT 400');
+
+  /* How long the whole permanent book has been paying, by the year it was
+     written. A policy of twenty years is a different conversation from one of
+     two, and the branch has both. */
+  var ages = q('SELECT CALENDAR_YEAR(ISSUE_DATE__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live + ' AND ISSUE_DATE__c != null' +
+               ' GROUP BY CALENDAR_YEAR(ISSUE_DATE__c)' +
+               ' ORDER BY CALENDAR_YEAR(ISSUE_DATE__c) LIMIT 60');
+
+  /* Maturities, where a maturity date is held at all — 704 of the in-force
+     book carries one, and a maturity is a payment and a conversation. */
+  var mats = q('SELECT CALENDAR_YEAR(Maturity_Date__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live +
+               ' AND Maturity_Date__c >= TODAY' +
+               ' GROUP BY CALENDAR_YEAR(Maturity_Date__c)' +
+               ' ORDER BY CALENDAR_YEAR(Maturity_Date__c) LIMIT 30');
+
+  /* The riders, across the whole in-force book and not only these families —
+     a rider rides whatever it is attached to. */
+  var rid = q('SELECT COUNT(Critical_Illness_Coverage__c) cin, SUM(Critical_Illness_Coverage__c) cicov,' +
+              ' SUM(Critical_Illness_Premium__c) ciprem,' +
+              ' COUNT(ADDAP_Coverage__c) adn, SUM(ADDAP_Coverage__c) adcov, SUM(ADDAP_Premium__c) adprem,' +
+              ' COUNT(WP_Coverage__c) wpn, SUM(WP_Premium__c) wpprem,' +
+              ' COUNT(DI_bENEFIT__c) din, SUM(DI_Premium__c) diprem' +
+              from + live);
+
+  if (byCode === null && extRows === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  /* In force and paid to date, off the branch's own tab. Without it this
+     screen says so on its face and calls every figure an upper bound. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var fams = {}, unknown = 0;
+  IPERM_FAMS.forEach(function (f) {
+    fams[f.fam] = { fam: f.fam, label: f.label, sub: f.sub, n: 0, cover: 0, prem: 0, oldest: null };
+  });
+  (byCode || []).forEach(function (r) {
+    var f = iPermFam_(r.pc);
+    if (!f) { unknown += iNum_(r.n); return; }
+    var slot = fams[f.fam];
+    slot.n += iNum_(r.n); slot.cover += iNum_(r.cover); slot.prem += iNum_(r.prem);
+    var o = iDate_(r.oldest);
+    if (o && (!slot.oldest || o < slot.oldest)) slot.oldest = o;
+  });
+  var families = IPERM_FAMS.map(function (f) {
+    var slot = fams[f.fam];
+    slot.since = slot.oldest ? slot.oldest.getFullYear() : null;
+    slot.years = slot.oldest ? Math.round((today - slot.oldest) / (365.2425 * 24 * 3600 * 1000)) : null;
+    delete slot.oldest;
+    return slot;
+  });
+
+  var skip = iExcluded_();
+  var extend = { n: 0, cover: 0, prem: 0, oldest: null };
+  var extState = { ready: 0, collect: 0, gone: 0 };
+  var agIdx = {};
+  (extRows || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the tab has never heard of counts as ready — the same rule the
+       conversion screen uses, and for the same reason. */
+    var st = hit ? hit.state : 'ready';
+    extState[st]++;
+    if (st === 'gone') return;                       // not in force: off the list
+    /* An excluded agent comes out of the HEADLINE as well as the list, the
+       same way it works on the conversions screen. intelExclude names people
+       who have left the branch; leaving their cover in the figure while
+       leaving their name off it would make the total unexplainable from the
+       rows underneath it. */
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (ag && iExcludes_(skip, ag)) return;
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c), o = iDate_(r.ISSUE_DATE__c);
+    extend.n++; extend.cover += c; extend.prem += pm;
+    if (o && (!extend.oldest || o < extend.oldest)) extend.oldest = o;
+    if (!ag) return;
+    var a = agIdx[ag] || (agIdx[ag] = { name: ag, n: 0, cover: 0, prem: 0, collect: 0, oldest: null });
+    a.n++; a.cover += c; a.prem += pm;
+    if (st === 'collect') a.collect++;
+    if (o && (!a.oldest || o < a.oldest)) a.oldest = o;
+  });
+  var yrsOf = function (d0) {
+    return d0 ? Math.round((today - d0) / (365.2425 * 24 * 3600 * 1000)) : null;
+  };
+  extend.since = extend.oldest ? extend.oldest.getFullYear() : null;
+  extend.years = yrsOf(extend.oldest);
+  delete extend.oldest;
+  var extAgents = Object.keys(agIdx).map(function (k) {
+    var a = agIdx[k];
+    a.since = a.oldest ? a.oldest.getFullYear() : null;
+    a.years = yrsOf(a.oldest);
+    delete a.oldest;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover; });
+  if (extState.gone) {
+    notes.push(extState.gone + ' of the older Liberators are off the list \u2014 the dues tab says they have ' +
+               'lapsed, been surrendered or matured. Salesforce still shows them paying.');
+  }
+
+  /* Years in force, in bands rather than by year — a room reads five bands
+     and not twenty-five. */
+  var BANDS = [{ lab: 'under 2 years', max: 2 }, { lab: '2 to 5', max: 5 },
+               { lab: '5 to 10', max: 10 }, { lab: '10 to 20', max: 20 },
+               { lab: 'over 20 years', max: 999 }];
+  var bands = BANDS.map(function (b) { return { lab: b.lab, n: 0, cover: 0 }; });
+  var yr = today.getFullYear();
+  (ages || []).forEach(function (r) {
+    var old = yr - iNum_(r.yr);
+    for (var i = 0; i < BANDS.length; i++) {
+      if (old <= BANDS[i].max) { bands[i].n += iNum_(r.n); bands[i].cover += iNum_(r.cover); break; }
+    }
+  });
+
+  var maturities = (mats || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var m0 = (rid && rid[0]) || {};
+  var riders = [
+    { lab: 'Critical illness',   n: iNum_(m0.cin), cover: iNum_(m0.cicov), prem: iNum_(m0.ciprem) },
+    { lab: 'Accidental death',   n: iNum_(m0.adn), cover: iNum_(m0.adcov), prem: iNum_(m0.adprem) },
+    { lab: 'Waiver of premium',  n: iNum_(m0.wpn), cover: null,            prem: iNum_(m0.wpprem) },
+    { lab: 'Disability income',  n: iNum_(m0.din), cover: null,            prem: iNum_(m0.diprem) }
+  ].filter(function (r) { return r.n; });
+
+  if (unknown) notes.push(unknown + ' policies carry a plan code this screen cannot place.');
+
+  var tot = families.reduce(function (a, f) {
+    return { n: a.n + f.n, cover: a.cover + f.cover, prem: a.prem + f.prem };
+  }, { n: 0, cover: 0, prem: 0 });
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    extendYear: IPERM_EXTEND_Y,
+    total: tot,
+    families: families,
+    extend: extend,
+    state: extState,
+    duesRead: !!dues,
+    /* The whole permanent book split by what the branch's own extract says
+       about it — in force and current, behind a premium, or gone. */
+    live: dues ? dues.pools.permanent : null,
+    agents: extAgents.slice(0, IPERM_TOP),
+    agentCount: extAgents.length,
+    bands: bands.filter(function (b) { return b.n; }),
+    maturities: maturities,
+    riders: riders,
+    notes: notes
+  };
+}
+
+function iActPermanent_(b) {
+  var key = 'iperm_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPermanentWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPERM_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
 }
 
 function iActConversion_(b) {
@@ -3887,6 +4228,7 @@ function intelRoute_(b) {
   if (action === 'intel.book')       return iActBook_(b);
   if (action === 'intel.pending')    return iActPending_(b);
   if (action === 'intel.conversion') return iActConversion_(b);
+  if (action === 'intel.permanent')  return iActPermanent_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');

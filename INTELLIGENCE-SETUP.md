@@ -1796,9 +1796,9 @@ So `ICONV_FAMILIES` has **three** kinds, not two:
 
 | Kind | Families | What the screen does with it |
 |---|---|---|
-| `convert` | `FCT` | The hero, the agent table, the plan chips. The only pool a conversion list may use. |
-| `expire` | `FNT`, `LB`, `LIB`, `NLE`, `ECONO` | The amber tile and the deadline panel. Cover that ends with nothing to exchange it for. |
-| `unsettled` | `ECT`, `ECU` | Counted, named, and in **neither** total. |
+| `convert` | `FCT` | The hero, the agent table, the runway, the plan chips. The only pool a conversion list may use. |
+| `expire` | `FNT` **and FNT alone** | The amber tile and the deadline panel. Term written non-convertible: the cover ends and there is nothing to exchange it for. |
+| `permanent` | `ECT`, `ECU`, `NLE`, `ECONO`, `LB`, `LIB`, `CRI`, `CR2`, `CR3`, `CR4` | Counted once, for scale, and otherwise **not this screen's business**. Nothing about them ends on a date, so they have a screen of their own — see §3i. |
 
 **Longest prefix wins** in `iConvPlan_`, or `LB` would answer for every
 Liberator code spelled `LIB`.
@@ -1824,23 +1824,31 @@ years after its issue date. Two codes are mis-keyed — `FNT81` and `FNT851`,
 both plainly `FNT85 1` — so the decoder reads the leading letters and the
 screen reads the real expiry date off the record.
 
-#### Why ECT is in neither column
+#### Econo Life is whole life — the answer to the ECT question
 
-`ECT` has 1,221 records and there is no honest place to put them yet.
+For a day ECT sat in neither column, because the workbook contradicted itself:
+its one readable plan name says **"Econo Life to Age 65"**, which would make it
+expire at 65, but its expiry dates land at **ninety-nine**, and 48 of the 49
+conversions went **FCT → ECT**, which is how a destination behaves.
 
-- Its `PLAN_NAME__c` is self-referential on every record but one, and that one
-  reads **"Econo Life to Age 65"** against the code `ECT651`. That would make
-  ECT an Econolife, which *expires* at 65.
-- But the **expiry dates** on the ECT records land at age **ninety-nine or a
-  hundred** — an `ECT65` on a client born 2002 carries an expiry of 2102.
-- And 48 of the 49 conversions on the book went **FCT → ECT**, which is the
-  behaviour of a destination product, not of a term that expires.
+The branch settled it on 12 September 2026, and the answer explains all three
+facts at once:
 
-One of those facts is wrong and the workbook cannot say which. So the feed
-returns `pool.unsettled` and the screen prints the question. **A wall the whole
-branch walks past does not get to guess at $1.2bn of cover.** When somebody who
-knows the product answers, move `ECT` and `ECU` to the right `kind` in
-`ICONV_FAMILIES` and both halves of the code learn it at once.
+> **Econo Life is whole life. The premium is paid to 65 or to 85 and the life
+> cover runs for life.**
+
+So the `65` in `ECT65` is the end of the **premium**, not the end of the
+**cover**. The expiry date at ninety-nine is the contract's own maturity. And
+it is the destination of a conversion because a term converting into it is a
+term becoming permanent cover — which is the whole point.
+
+The same distinction applies to the Liberator: its premium runs to 65, 75, 85
+or 100, and none of those is an expiry either.
+
+**Mistaking a premium period for an expiry date is the single most expensive
+misreading available on this book** — it put 1,221 policies and $1.2bn of
+cover in the wrong column, and it would have sent agents to clients to warn
+them about cover that was never going to stop.
 
 #### What a conversion is actually worth
 
@@ -1893,6 +1901,79 @@ Two deliberate behaviours:
   to find the row. A month's birthdays on one plan family is tens of rows.
 - **With no dues tab the screen still works**, says so on its face, and calls
   every figure an upper bound.
+
+#### Issue age, years in force, and the runway
+
+All three asked for by the branch, and **none of them is a stored field** —
+each is arithmetic on Salesforce's own dates, which is why the month's list is
+read row by row rather than as an aggregate.
+
+| On the screen | From |
+|---|---|
+| **Age at issue** | `ISSUE_DATE__c` − `Date_Of_Birth__c` |
+| **In force** | today − `ISSUE_DATE__c` |
+| **Expires** | `Life_Coverage_Expiry__c`, and the soonest of them per agent |
+| **The runway** | the same expiry, bucketed by how long is left |
+
+**The runway is the bar under the hero figure**, and its segments are the
+share of **cover**, not of policy count. One $34m case two years out matters
+more to a room than nine small ones twenty years out, and a bar drawn by count
+says the opposite. Red is already past, gold is inside two years, blue is two
+to five.
+
+A conversion has to happen **before** that date. After it the client has
+nothing to convert, which is the whole reason the panel exists.
+
+## 3i. The permanent book — `intelligence/wall/permanent.html`
+
+Action `intel.permanent`. Paste the `/exec` URL into `PERM_URL`.
+
+**The other half of the branch, and the larger half:** 2,130 policies,
+**$2.0bn** of cover, **$2.3m** of annual premium. Nothing on it ends on a
+date, which is exactly why it could never share a screen with the
+conversions.
+
+| Product | Codes | What it is | In force |
+|---|---|---|---|
+| **Econo Life** | `ECT`, `ECU`, `NLE`, `Econo…` | **Whole life.** Premium to 65 or 85, cover for life | 1,088 · $1.37bn · $1.5m |
+| **Liberator** | `LB`, `LIB` | Premium to 65, 75, 85 or 100 | 253 · $117m · $131k |
+| **Rejuvenator** | `CRI`, `CR2`, `CR3`, `CR4` | Critical illness | 789 · $520m · $650k |
+
+**The hero is the opportunity, not the total.** A Liberator issued
+**2009 or earlier can simply be extended** — no application, no underwriting,
+no new policy. There are **17** of them on the book, **$16.4m** of cover,
+written between 2001 and 2009. `IPERM_EXTEND_Y` holds the year.
+
+**And the riders, which almost nobody opens:**
+
+| Rider | Policies | Cover | Premium |
+|---|---|---|---|
+| Critical illness | 3,102 | **$1.28bn** | $1.37m |
+| Accidental death (ADDAP) | 1,320 | $263m | $36k |
+| Waiver of premium | 1,452 | — | $177k |
+| Disability income | 30 | — | $1.8k |
+
+The critical illness rider alone carries **more cover than the entire term
+book**.
+
+#### Two rules, on this screen as much as the other
+
+The branch said it twice: **in force, and paid to date.** A lapsed Liberator
+cannot be extended, and one in arrears has a premium to collect before anybody
+talks about extending it. So `iConvDues_()` now splits **every** kind —
+`convert`, `expire` and `permanent` — in one pass over the dues tab, and the
+extension list is read **row by row** so each of the seventeen can be looked
+up in it. `state` returns `ready` / `collect` / `gone`, and the ones that are
+gone are named in a note rather than quietly dropped.
+
+#### Why there is no deadline panel here
+
+Nothing expires. The dates that matter are the **maturity date** where one is
+held (704 of the in-force book carries one) and the **issue date**, which is
+how long the policy has been paying — and on the Liberator the issue date *is*
+the opportunity. `Life_Coverage_Expiry__c >= TODAY` is deliberately **not** in
+this screen's filter; adding it would drop whole life off its own screen, and
+`test-permanent.js` asserts that it is absent.
 
 #### Why a month, and why the gold half
 

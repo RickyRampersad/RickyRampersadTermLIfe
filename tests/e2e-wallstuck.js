@@ -131,9 +131,14 @@ async function turnsWithin(page, ms) {
     // branch floor, so the wall rightly holds the one story it has. What it
     // must not do is look identical to a wall that has died.
     const s = await open(b, '?secs=4');
-    // Past the boot stagger — the stories are asked for 2.5s apart, and one
-    // arriving after the flags are set is a second story, not a park.
-    await s.page.waitForTimeout(18000);
+    // PAST THE BOOT STAGGER, and derived from the player's own list rather
+    // than typed. The stories are asked 1.5s apart, so the last one is asked
+    // at 1.5s x (count - 1) and then has to load; a story painting after the
+    // flags below are set is a second story, not a park, and the wall turns —
+    // which is the wall being right and the test being early. A hard 18s was
+    // exactly the boot stagger once a thirteenth screen was added.
+    const stagger = await s.page.evaluate(() => SLIDES.length) * 1500 + 8000;
+    await s.page.waitForTimeout(stagger);
     await s.page.evaluate(() => { SLIDES.forEach(function (x, i) { x.ready = i === at; x.dead = false; }); });
     await s.page.waitForTimeout(600);
     ok('it holds the only story it has', await turnsWithin(s.page, 6000) === false);
