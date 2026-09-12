@@ -167,6 +167,43 @@ products and are both `annuity-deferred`.
 classification from the product sheet; do not guess one into a compliance
 system.
 
+**`Rejuvenator` is critical illness.** Settled 12 September 2026 from the
+policy contract itself, not inferred: *Life Evolution Rejuvenator* pays
+"upon receipt of proof … that the Life Assured has, prior to the Maturity
+Date, suffered **Permanent Disablement or Critical Illness**". It is a
+living-benefit policy — it pays the insured while they are alive, and it is
+**not** payable on death, so it never counts toward a life total tested
+against the underwriting ceiling.
+
+It carries three different names for one thing, which is exactly why nothing
+could classify it: the product is *Rejuvenator*, the policy schedule calls
+the benefit *Disability Coverage*, and what it is, is critical illness. The
+same applies to `Liberator-Rej-Original-with-Saver` and
+`Rejuvenator-Plus-with-Investor`.
+
+### The product library
+
+`drive.google.com/drive/folders/1NTrhF6ZolS1zS295jdsubWYeF_oUrcwU` — two
+libraries, the life side (Pension · Personal Accident · Life · Group) and
+sixteen general-insurance lines. **Filed where it says, not where it belongs**:
+
+| File | Sits in | Actually is |
+|---|---|---|
+| `Life-Secure (3).pdf` | Personal Accident | a pension product |
+| `LIFECARE QUANTUM AND PROVISOR` | Group | its first line reads **INDIVIDUAL HEALTH POLICY** |
+| `Xpress-Life.pdf` / `Xpress-Life (1).pdf` | Life | the same file twice |
+
+Group health is the `MASTER GROUP SPECIMEN POLICY CONTRACT 2019`. Health
+"insures … against loss by reason of specified medical expenses" — it pays
+against a schedule of benefits item by item, and there is no single sum
+assured to quote. Never print one.
+
+**Guardian's rate cards do not go in this repository.** The root is published
+to rickyrampersadbranch.com, so committing the PA rate table would put
+Guardian's pricing on a public website; `noindex` is not privacy. Pages that
+need rates read the card the advisor uploads, in the browser, the same way
+the month-end screen reads a billing.
+
 **Products outside `PRODUCT_RULES` get no checks at all.** `Lifestyle Special
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.

@@ -65,6 +65,13 @@ has('naming why it matters', d, 'the whole conversation turns on');
 no('it does not print a zero cover figure', d, '$0');
 no('and does not claim the plan covers anything', d, 'This plan covers');
 
+console.log('\nPRODUCTS ARE NAMED, AND CLASSIFIED FROM THE CONTRACT');
+has('the pension plans are named', d, 'TopHat Special Edition');
+has('critical illness is the Rejuvenator', d, 'Life Evolution Rejuvenator');
+has('and it is called a living benefit', d, 'not payable on death');
+has('the PA riders are listed', d, 'Hospital Cash');
+has('group life names its plans', d, 'Xpress Life');
+
 console.log('\nA COST SLIDE ONLY APPEARS WHEN A PRICE WAS READ');
 no('no costs slide without an illustration', d, 'What it costs');
 

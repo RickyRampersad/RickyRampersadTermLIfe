@@ -110,22 +110,38 @@ const money0 = n => n==null||isNaN(+n) ? '—' :
 /* The four lines the branch presents. Each carries the one sentence that
    makes a client understand what it is for — the line advisors reach for
    in the room and rarely have ready. */
+/* Products named as Guardian names them, and classified from the contract
+   rather than from the title. Rejuvenator is the one that matters: the
+   product is Rejuvenator, the policy schedule calls the benefit Disability
+   Coverage, and what it is, is critical illness — three names for one
+   thing, which is why nothing automated could ever classify it. */
 const LINES = {
   pension: { name:'Pension',           icon:'🏦',
     claim:'Replaces your salary when it stops.',
-    why:'A pension is not savings. It is the income that continues after the income stops.' },
+    why:'A pension is not savings. It is the income that continues after the income stops.',
+    products:['TopHat Special Edition','Lifestyle Special Edition','Life Secure'] },
   health:  { name:'Group Health',      icon:'🩺',
     claim:'Pays the bills that arrive without warning.',
-    why:'Medical cover pays against a schedule of benefits, item by item — it is not one sum, it is a list of what is covered and to what limit.' },
+    why:'Medical cover pays against a schedule of benefits, item by item — it is not one sum, it is a list of what is covered and to what limit.',
+    products:['Master Group Policy'],
+    /* Guardian's own contract wording: it insures "against loss by reason
+       of specified medical expenses". There is no sum assured to quote, so
+       the deck never prints one. */
+    noSum:true },
   ci:      { name:'Critical Illness',  icon:'❤️',
     claim:'Pays you a lump sum while you are still alive.',
-    why:'Life cover pays your family after you die. Critical illness pays you while you are recovering, when the income has stopped and the costs have not.' },
+    why:'Life cover pays your family after you die. Critical illness pays you while you are recovering, when the income has stopped and the costs have not.',
+    products:['Life Evolution Rejuvenator','Rejuvenator Plus with Investor','Liberator with Saver'],
+    note:'Pays on Permanent Disablement or Critical Illness before the maturity date. It is a living benefit — it is not payable on death and never counts toward a life total.' },
   pa:      { name:'Personal Accident', icon:'🛡',
     claim:'Pays on an accident, twenty-four hours a day.',
-    why:'It does not care whether you were at work. Most accidents that stop someone earning do not happen at work.' },
+    why:'It does not care whether you were at work. Most accidents that stop someone earning do not happen at work.',
+    products:['Personal Accident Plan'],
+    riders:['Disability Income','Cancer','Hospital Cash','Hospital Surgical Expense','Accident Emergency Payback'] },
   life:    { name:'Group Life',        icon:'👥',
     claim:'Pays your family, tax free, within weeks.',
-    why:'The sum assured goes to the people you name — not into your estate, and not through the courts.' }
+    why:'The sum assured goes to the people you name — not into your estate, and not through the courts.',
+    products:['Flexi Term','Xpress Life','Econolife'] }
 };
 
 let ME = null;                      /* the signed-in advisor */
@@ -478,6 +494,11 @@ function deck(){
         <h3 style="font-size:1.05rem;color:var(--navy);margin:.3rem 0 .2rem">${esc(LINES[k].name)}</h3>
         <p style="font-size:14px;font-weight:600">${esc(LINES[k].claim)}</p>
         <p class="note" style="margin-top:.45rem">${esc(LINES[k].why)}</p>
+        ${LINES[k].products ? `<p class="note" style="margin-top:.55rem">
+          <span class="label">Plans</span><br>${LINES[k].products.map(esc).join(' · ')}</p>` : ''}
+        ${LINES[k].riders ? `<p class="note" style="margin-top:.4rem">
+          <span class="label">Riders available</span><br>${LINES[k].riders.map(esc).join(' · ')}</p>` : ''}
+        ${LINES[k].note ? `<p class="note" style="margin-top:.5rem;font-style:italic">${esc(LINES[k].note)}</p>` : ''}
       </div>`).join('')}
     </div>
   </div>`);
@@ -507,7 +528,12 @@ function deck(){
   }
 
   /* 4 — cover against salary, the slide that makes the case */
-  const life = byLine.life || byLine.ci;
+  /* Life cover only. It used to fall back to the critical illness figure
+     when no life illustration was read, which is the same error the fact
+     find makes: the Rejuvenator pays on Permanent Disablement or Critical
+     Illness BEFORE maturity — a living benefit, not payable on death — so
+     it cannot stand behind a slide about what a family receives. */
+  const life = byLine.life;
   if(salary){
     const need = salary * 5;
     const have = life && life.sumAssured != null ? life.sumAssured : null;
