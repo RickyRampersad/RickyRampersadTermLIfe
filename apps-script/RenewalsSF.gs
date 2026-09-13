@@ -390,3 +390,89 @@ function rsfShowStatus() {
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); }
   return msg;
 }
+
+/* ============================ preflight ============================ */
+
+/**
+ * Run this before anything else. It touches nothing — no Salesforce call,
+ * no email, no write — and answers the two questions that actually block a
+ * first run:
+ *
+ *   1. Is Code.gs complete? A part-pasted Code.gs is easy to end up with,
+ *      and the failure looks like "Script function not found" from a menu
+ *      item rather than anything obviously related.
+ *   2. Are the Salesforce credentials in THIS project? Script Properties do
+ *      not travel between projects, so credentials set up for another script
+ *      are not visible here.
+ */
+function rsfSelfCheck() {
+  var L = ['PREFLIGHT — nothing was sent, called or written', ''];
+
+  var needed = {
+    'Code.gs — menu targets': ['fillPortalLinks', 'installTriggers', 'toggleTestMode',
+                               'showStaffLink', 'showMyLink', 'linkRiskDetails', 'requireUrl_'],
+    'Code.gs — used by this file': ['sendStageEmail_', 'sendMail_', 'testMode_',
+                                    'testInbox_', 'logActivity_', 'portalLink_'],
+  };
+  var missing = [];
+  Object.keys(needed).forEach(function (group) {
+    L.push(group);
+    needed[group].forEach(function (fn) {
+      var ok = false;
+      try { ok = (typeof this[fn] === 'function'); } catch (e) {}
+      if (!ok) { try { ok = (eval('typeof ' + fn) === 'function'); } catch (e) { ok = false; } }
+      L.push('  ' + (ok ? 'OK  ' : 'MISSING  ') + fn);
+      if (!ok) missing.push(fn);
+    });
+    L.push('');
+  });
+  var stagesOk = false;
+  try { stagesOk = (typeof STAGES === 'object' && !!STAGES['30d']); } catch (e) {}
+  L.push('  ' + (stagesOk ? 'OK  ' : 'MISSING  ') + 'STAGES (the reminder ladder text)');
+  if (!stagesOk) missing.push('STAGES');
+  L.push('');
+
+  var p = PropertiesService.getScriptProperties();
+  var has = function (names) {
+    for (var i = 0; i < names.length; i++) {
+      var v = p.getProperty(names[i]);
+      if (v && String(v).trim()) return names[i] + ' (' + String(v).trim().length + ' chars)';
+    }
+    return '';
+  };
+  var creds = [
+    ['client id',     ['SF_CLIENT_ID', 'SF_KEY', 'SF_CONSUMER_KEY'],           true],
+    ['client secret', ['SF_CLIENT_SECRET', 'SF_SECRET', 'SF_CONSUMER_SECRET'], true],
+    ['refresh token', ['SF_REFRESH_TOKEN'],                                     true],
+    ['login url',     ['SF_LOGIN_URL', 'SF_INSTANCE_URL'],                     false],
+  ];
+  L.push('Salesforce credentials in THIS project');
+  var credMissing = [];
+  creds.forEach(function (c) {
+    var found = has(c[1]);
+    L.push('  ' + (found ? 'OK  ' + c[0] + ' <- ' + found
+                         : (c[2] ? 'MISSING  ' : 'optional, absent  ') + c[0] +
+                           ' (looked for ' + c[1].join(' / ') + ')'));
+    if (!found && c[2]) credMissing.push(c[0]);
+  });
+  L.push('');
+  L.push('All Script Property names present: ' + (p.getKeys().sort().join(', ') || '(none)'));
+  L.push('');
+
+  if (missing.length)
+    L.push('✗ Code.gs is incomplete — ' + missing.length + ' missing: ' + missing.join(', ') +
+           '\n  Paste the rest of Code.gs back in before going further.');
+  else L.push('✓ Code.gs is complete.');
+
+  if (credMissing.length)
+    L.push('✗ Salesforce credentials missing here: ' + credMissing.join(', ') +
+           '\n  Copy them from whichever project TokenMigration.gs runs in ' +
+           '(Project Settings -> Script Properties). They do not travel between projects.');
+  else L.push('✓ Salesforce credentials are present. rsfPreview() can run.');
+
+  L.push('');
+  L.push(testMode_() ? '🧪 Test mode is ON.' : '⚠️ Test mode is OFF — a live run would email clients.');
+
+  Logger.log(L.join('\n'));
+  return L.join('\n');
+}
