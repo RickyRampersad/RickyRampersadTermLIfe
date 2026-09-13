@@ -25,9 +25,9 @@
     <div class="pagehead">
       <div class="eyebrow">Official sources</div>
       <h1>Resources, past papers and syllabuses</h1>
-      <p>Every link here goes to the organisation that actually publishes the material — CXC, which
-         sets the examination, and the Trinidad and Tobago Ministry of Education. All links checked
-         reachable on 7 September 2026.</p>
+      <p>Every link here goes to the organisation that actually publishes the material — the
+         Trinidad and Tobago Ministry of Education, which sets SEA, and CXC, which sets CSEC. All
+         links checked reachable on 13 September 2026.</p>
     </div>
 
     <div class="note gold">
@@ -38,7 +38,15 @@
       papers are a separate, paid product sold by CXC as eBooks.
     </div>
 
-    <div class="section-label">Official — CXC and the Ministry</div>
+    <div id="sea-block">
+      <div class="section-label">Primary — SEA papers and mark schemes</div>
+      <p class="sub" style="margin:-6px 0 12px;color:var(--muted);font-size:.87rem">
+        The Ministry gives SEA past papers away free — the real ones, not imitations. For a Standard 4
+        or 5 this is the most valuable thing on this page.</p>
+      <div class="rows" id="sea"></div>
+    </div>
+
+    <div class="section-label">Secondary — CXC and the Ministry</div>
     <div class="rows" id="official"></div>
 
     <div class="section-label">International — free, and worth the time</div>
@@ -62,6 +70,8 @@
       <div style="margin-top:14px">
         <a class="btn teal" href="https://cxc-store.com/syllabuses-subject-reports" target="_blank" rel="noopener">
           Open the CXC syllabus library ↗</a>
+        <a class="btn ghost" href="https://www.moe.gov.tt/primary-school-resources/" target="_blank" rel="noopener"
+           style="margin-left:8px">Primary curriculum guides ↗</a>
       </div>
     </div>
     <div class="rows" id="checklist"></div>
@@ -146,7 +156,15 @@
     }).join('');
   }
   renderIntl();
+  render('sea',      C.resources.sea,       '✏️');
   render('official', C.resources.official,  '🏛️');
+
+  /* A Standard 3 should meet SEA material first; a Form 4 should not have to
+     scroll past it. Move the SEA block to the top for primary students. */
+  if(me && me.role==='student' && me.level<=5){
+    var seaBlock=$('sea-block');
+    seaBlock.parentNode.insertBefore(seaBlock, seaBlock.parentNode.firstElementChild.nextSibling);
+  }
   render('school',   C.resources.school,    '🏫');
   render('community',C.resources.community, '🎓');
 

@@ -641,6 +641,24 @@ window.CSEC_CURRICULUM = {
       { name:'Lakshmi Girls’ Hindu College', url:'https://www.lakshmigirlshindu.com/',
         cost:'Free', note:'School site — calendar, notices and the subject offering. St Augustine, Trinidad.' }
     ],
+    /* PRIMARY / SEA. Unlike CXC, which sells its past papers, the Ministry of
+       Education publishes SEA past papers free. For a Standard 5 this is the
+       single most valuable thing on the page. All checked 13 Sep 2026. */
+    sea: [
+      { name:'MoE \u2014 SEA 2024 & 2025 Past Papers', url:'https://moe.gov.tt/sea-2024-and-2025-past-papers/',
+        cost:'Free', note:'The real thing, free from the Ministry: Mathematics 2024 and 2025, English Language Arts 2024 and 2025, and the ELA Writing paper 2025. Work them to time in Standard 5 \u2014 nothing else prepares a child for the pace.' },
+      { name:'MoE SLMS \u2014 SEA Specimen Papers & Mark Schemes', url:'https://learn.moe.gov.tt/course/section.php?id=335805',
+        cost:'Free', note:'Specimen papers with the mark schemes, on the Ministry\u2019s own learning platform. The mark scheme matters as much as the paper: it shows exactly where marks are given and lost.' },
+      { name:'MoE SLMS \u2014 SEA Mathematics Past Papers & Activity Sheets', url:'https://learn.moe.gov.tt/course/section.php?id=335804',
+        cost:'Free', note:'CPDD activity sheets and past papers for Standard 5 Mathematics, prepared by the Ministry\u2019s own curriculum division.' },
+      { name:'MoE \u2014 SEA Assessment Framework 2025\u20132028', url:'https://storage.moe.gov.tt/wpdevelopment/2023/10/ASSESSMENT-FRAMEWORK-FOR-SEA-2025-2028.pdf',
+        cost:'Free', note:'The document the examination is built from. It names the four Mathematics strands, the English sections and their marks, and how the Writing paper is scored. This hub\u2019s primary strands were taken from it.' },
+      { name:'MoE \u2014 SEA 2026 Information Booklet', url:'https://storage.moe.gov.tt/guides/SEA-2026-Information-Booklet.pdf',
+        cost:'Free', note:'What happens on the day: the three papers, working time, and what a candidate may bring. Worth reading with your child a fortnight before.' },
+      { name:'MoE \u2014 Primary School Resources', url:'https://www.moe.gov.tt/primary-school-resources/',
+        cost:'Free', note:'The Ministry\u2019s index of primary material, including the national curriculum guides for every primary subject.' }
+    ],
+
     /* International, free, and genuinely useful for CSEC even though none of it
        is written for CXC. Alignment is noted honestly on each one — a Form 3
        student sent to a US or UK course that does not match the syllabus wastes
