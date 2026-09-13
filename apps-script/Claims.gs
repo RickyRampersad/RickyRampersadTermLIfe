@@ -54,8 +54,16 @@
 var CLAIMS = {
   /* ---- where notifications go ---------------------------- */
 
-  // The claims desk for each line of business. Any line left
-  // blank falls back to DESK_DEFAULT.
+  // The claims desk for each line of business. Any line left blank falls
+  // back to DESK_DEFAULT.
+  //
+  // ⚠ These are Guardian's desks. The branch places business with many
+  // carriers — Risk Details alone carries Tatil, Sagicor, Colfire, Beacon,
+  // Maritime, Bankers, Gulf, New India, Presidential and United — so a
+  // claim on a policy underwritten elsewhere currently still routes here
+  // and has to be forwarded by hand. The registers already hold each
+  // policy's Carrier, so routing by carrier is a small change when you
+  // want it; say so and it gets built.
   DESK: {
     motor:    'GuardianGeneralClaims@myguardiangroup.com',
     property: 'GuardianGeneralClaims@myguardiangroup.com',
@@ -196,7 +204,7 @@ var CBRAND = { navy: '#0E2A47', blue: '#1C4E80', teal: '#0E8C8C', gold: '#F2B33D
  * flipping it needs no redeploy. While ON, every email — desk, client,
  * chase, sign-in code — is rerouted to TEST_INBOX with a [TEST] subject
  * and a banner naming the real recipients. File a test claim end to end
- * and nothing ever reaches a client or Guardian.                       */
+ * and nothing ever reaches a client or a claims desk.                  */
 
 function testMode_() {
   return PropertiesService.getScriptProperties().getProperty('TEST_MODE') === 'on';
@@ -2025,7 +2033,7 @@ function noteBox_(html) {
 }
 
 function sig_() {
-  return '<p>Warm regards,<br><b>' + esc_(CLAIMS.AGENT_NAME) + '</b><br>Guardian Group' +
+  return '<p>Warm regards,<br><b>' + esc_(CLAIMS.AGENT_NAME) + '</b><br>Ricky Rampersad Branch' +
     (CLAIMS.AGENT_PHONE ? '<br>' + esc_(CLAIMS.AGENT_PHONE) : '') + '</p>';
 }
 
@@ -2159,7 +2167,7 @@ function claimFormBlob_(claim, files, missing) {
     '<table width="100%" style="border-collapse:collapse;margin-bottom:14px">' +
       '<tr><td style="background:' + CBRAND.navy + ';color:#fff;padding:16px 18px">' +
         '<div style="font-size:19px;font-weight:bold">Claim Form — ' + esc_(claim.type) + '</div>' +
-        '<div style="font-size:11px;color:#B7C9DE;margin-top:3px">Claims TT · Ricky Rampersad Branch · Guardian Group</div>' +
+        '<div style="font-size:11px;color:#B7C9DE;margin-top:3px">Claims TT · Ricky Rampersad Branch</div>' +
       '</td>' +
       '<td style="background:' + CBRAND.navy + ';color:' + CBRAND.gold + ';padding:16px 18px;text-align:right;vertical-align:middle">' +
         '<div style="font-size:9px;letter-spacing:2px;color:#B7C9DE">REFERENCE</div>' +
