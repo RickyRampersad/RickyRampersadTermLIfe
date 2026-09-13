@@ -2079,6 +2079,13 @@ function handle_(action, data, token) {
     case 'saveAppraisal':
       return saveAppraisal_(data, profile);
 
+    /* The career path tracker at /career-path-tracker/ asks for one agent's
+       own production. It is deliberately narrow: an agent gets their own row
+       and nothing else, matched on the agent number they signed in with.
+       Production.gs owns the sheet; this only reads it. */
+    case 'careerPath':
+      return careerPath_(profile);
+
     case 'metrics': {
       // Staff see their own position; the manager sees the branch.
       return { ok: true, metrics: metricsFor_(profile, data.date) };

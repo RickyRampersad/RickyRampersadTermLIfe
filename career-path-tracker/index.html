@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Path Tracker | Ricky Rampersad Branch</title>
+<meta name="description" content="Track your own career path with the Ricky Rampersad Branch — where you stand, what the next level requires, and how far you have to go.">
+<meta name="theme-color" content="#07131f">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* The branch palette from CLAUDE.md — navy, gold, teal. Same values as
+     IBRAND in Intelligence.gs, so a letter and this screen agree. */
+  :root{
+    --bg:#07131f; --bg2:#0b1c2d; --card:#122b45; --card2:#163553;
+    --ink:#edf4fb; --body:#a9bbcf; --mut:#7f94ac; --line:rgba(255,255,255,.10);
+    --gold:#efc24b; --gold2:#c9942c; --onGold:#1d1503;
+    --teal:#00CFEA; --teal2:#00A8C5; --onTeal:#02141a;
+    --good:#3ddc97; --warn:#ffb454; --late:#ff7a86;
+    --mont:'Montserrat',sans-serif; --dm:'DM Sans',system-ui,sans-serif;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-padding-top:78px}
+  body{font-family:var(--dm);background:var(--bg);color:var(--body);min-height:100vh;
+    font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -15%,rgba(0,207,234,.08),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 55%,var(--bg) 100%);
+    background-attachment:fixed}
+  h1,h2,h3{font-family:var(--mont);color:var(--ink);line-height:1.18}
+  button,input,select{font-family:inherit}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px;border-radius:6px}
+  [hidden]{display:none!important}
+
+  /* THE BRANCH MARK — the gold shield with a check, from logo-mark.png.
+     Never drawn, never a monogram. House rule, CLAUDE.md. */
+  .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+
+  /* ---------- sign in ---------- */
+  #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
+  .lcard{width:min(400px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
+    border:1px solid var(--line);border-radius:22px;padding:32px 28px;text-align:center;
+    box-shadow:0 26px 70px rgba(0,0,0,.5)}
+  .lcard .mark{width:60px;height:60px;margin:0 auto 16px}
+  .lcard h1{font-size:21px;font-weight:800;color:var(--gold);margin-bottom:6px}
+  .lcard .lsub{font-size:13px;color:var(--mut);margin-bottom:22px;line-height:1.6}
+  .lcard label{display:block;text-align:left;font-family:var(--mont);font-size:10.5px;
+    font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--body);margin:0 0 6px}
+  .lcard input{width:100%;padding:13px 15px;border-radius:12px;border:1px solid var(--line);
+    background:rgba(0,0,0,.32);color:var(--ink);outline:none;margin-bottom:15px;
+    /* 16px minimum — iOS zooms the page on a focused field smaller than this */
+    font-size:16px}
+  .lcard input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.16)}
+  .lcard .go{width:100%;padding:14px;border-radius:12px;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--onTeal);
+    font-family:var(--mont);font-size:14px;font-weight:800;letter-spacing:.4px}
+  .lcard .go:disabled{opacity:.55;cursor:not-allowed}
+  .lerr{color:#ff8a95;font-size:12.5px;margin-top:12px;min-height:16px;font-weight:600;display:none}
+  .lerr.on{display:block}
+  .lback{display:inline-block;margin-top:18px;font-size:12px;color:var(--mut);text-decoration:none}
+  .lback:hover{color:var(--teal)}
+  .peek{margin-top:18px;padding:13px 15px;border-radius:12px;background:rgba(239,194,75,.09);
+    border:1px solid rgba(239,194,75,.28);font-size:12.5px;color:var(--body);text-align:left;line-height:1.6}
+  .peek b{color:var(--gold);font-family:var(--mont);font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;display:block;margin-bottom:5px}
+  .lcard .peek button{width:100%;margin-top:10px;padding:11px 14px;border-radius:10px;
+    border:1px solid rgba(239,194,75,.45);background:rgba(239,194,75,.12);color:var(--gold);
+    cursor:pointer;font-family:var(--mont);font-size:13px;font-weight:700}
+
+  /* ---------- shell ---------- */
+  .nav{position:sticky;top:0;z-index:60;background:rgba(6,17,29,.94);
+    backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .nav-in{max-width:900px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:13px;height:62px}
+  .nav-brand{display:flex;align-items:center;gap:11px;text-decoration:none;margin-right:auto}
+  .nav-brand .mark{width:34px;height:34px;flex:none}
+  .nav-brand span{font-family:var(--mont);font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15}
+  .whobox{text-align:right;line-height:1.25}
+  .whobox b{display:block;font-family:var(--mont);font-size:13px;color:var(--ink);font-weight:700}
+  .whobox span{font-size:11px;color:var(--mut);font-variant-numeric:tabular-nums}
+  .nav button{background:transparent;border:1px solid var(--line);color:var(--body);
+    padding:8px 13px;border-radius:10px;cursor:pointer;font-family:var(--mont);font-size:12px;font-weight:700}
+  .nav button:hover{color:var(--ink);border-color:rgba(255,255,255,.28)}
+  .wrap{max-width:900px;margin:0 auto;padding:26px 18px 90px}
+  section{margin-bottom:32px}
+  .sec-label{font-family:var(--mont);font-size:10.5px;font-weight:700;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--teal);margin-bottom:11px;display:flex;align-items:center;gap:11px}
+  .sec-label::after{content:'';flex:1;height:1px;background:rgba(0,207,234,.18)}
+  .sec-sub{font-size:13.5px;color:var(--mut);margin-bottom:15px;max-width:70ch}
+  .loading{padding:44px 22px;text-align:center;color:var(--mut);font-size:14px;
+    border:1px dashed var(--line);border-radius:16px}
+
+  /* ---------- standing ---------- */
+  .hero{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:20px;padding:26px 24px;margin-bottom:28px;box-shadow:0 18px 46px rgba(0,0,0,.35)}
+  .hero-top{display:flex;gap:22px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+  .eyebrow{font-family:var(--mont);font-size:10.5px;font-weight:700;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+  .hero h1{font-size:clamp(23px,4.4vw,31px);font-weight:900;letter-spacing:-.02em;margin-bottom:6px}
+  .hero .sub{font-size:13.5px;color:var(--mut)}
+  .ring{position:relative;width:104px;height:104px;flex:none}
+  .ring svg{width:104px;height:104px;transform:rotate(-90deg)}
+  .ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+  .ring-bg{stroke:rgba(255,255,255,.09)}
+  .ring-fg{stroke:var(--teal);transition:stroke-dashoffset .9s ease}
+  .ring-val{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  .ring-val b{font-family:var(--mont);font-size:21px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums}
+  .ring-val span{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+
+  .statrow{display:flex;flex-wrap:wrap;gap:11px;margin-top:20px}
+  .stat{flex:1;min-width:126px;background:rgba(0,0,0,.24);border:1px solid var(--line);
+    border-radius:12px;padding:13px 15px}
+  .stat b{display:block;font-family:var(--mont);font-size:23px;font-weight:800;color:var(--ink);
+    line-height:1;font-variant-numeric:tabular-nums}
+  .stat span{font-size:11.5px;color:var(--mut);display:block;margin-top:5px}
+
+  /* ---------- the ladder ---------- */
+  .ladder{list-style:none;position:relative;padding-left:0}
+  .rung{position:relative;padding-left:38px;padding-bottom:14px}
+  .rung::before{content:'';position:absolute;left:9px;top:26px;bottom:-4px;width:2px;
+    background:rgba(255,255,255,.09)}
+  .rung:last-child::before{display:none}
+  .rung.done::before{background:var(--good)}
+  .rung .pip{position:absolute;left:0;top:6px;width:20px;height:20px;border-radius:50%;
+    background:var(--bg);border:2.5px solid rgba(255,255,255,.18);display:grid;place-items:center;
+    font-size:11px;font-weight:800;font-family:var(--mont);color:var(--mut)}
+  .rung.done .pip{background:var(--good);border-color:var(--good);color:#05221a}
+  .rung.now .pip{border-color:var(--teal);box-shadow:0 0 0 4px rgba(0,207,234,.18);color:var(--teal)}
+  .rcard{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:15px;padding:17px 19px;min-width:0}
+  .rung.now .rcard{border-color:rgba(0,207,234,.34)}
+  .rung.done .rcard{opacity:.82}
+  .rhead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .rname{font-family:var(--mont);font-size:16px;font-weight:800;color:var(--ink)}
+  .rtag{font-family:var(--mont);font-size:10px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;padding:3px 9px;border-radius:5px;white-space:nowrap}
+  .rtag.done{background:rgba(61,220,151,.13);border:1px solid rgba(61,220,151,.32);color:var(--good)}
+  .rtag.now{background:rgba(0,207,234,.13);border:1px solid rgba(0,207,234,.32);color:var(--teal)}
+  .rtag.next{background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--mut)}
+  .rtag.unset{background:rgba(255,180,84,.12);border:1px solid rgba(255,180,84,.32);color:var(--warn)}
+  .rwhat{font-size:13px;color:var(--mut);margin-top:6px;line-height:1.6;max-width:62ch}
+  .rpays{font-size:12.5px;color:var(--gold);margin-top:7px;font-weight:500}
+
+  .reqs{display:grid;gap:11px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+  .req{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+  .req-n{font-size:13px;color:var(--body);min-width:0}
+  .req-v{font-family:var(--mont);font-size:12.5px;font-weight:700;color:var(--ink);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .req-t{grid-column:1/-1;height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+  .req-t i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--teal));
+    transition:width .8s ease}
+  .req-t i.met{background:var(--good)}
+  .req-gap{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
+  .req-gap.met{color:var(--good)}
+
+  .notset{margin-top:14px;padding:13px 15px;border-radius:11px;background:rgba(255,180,84,.09);
+    border:1px solid rgba(255,180,84,.28);font-size:12.5px;color:var(--body);line-height:1.6}
+  .notset b{color:var(--warn);display:block;font-family:var(--mont);font-size:11.5px;margin-bottom:4px}
+
+  .note{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-left:3px solid var(--teal);border-radius:0 13px 13px 0;padding:16px 19px;margin-bottom:20px}
+  .note b{font-family:var(--mont);font-size:13.5px;color:var(--ink);display:block;margin-bottom:5px}
+  .note p{font-size:13.5px;color:var(--mut);max-width:66ch}
+  .note.gold{border-left-color:var(--gold)}
+
+  footer{margin-top:34px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:12px;color:var(--mut);line-height:1.8;text-align:center}
+  footer a{color:var(--teal);text-decoration:none}
+
+  @media(max-width:620px){
+    .wrap{padding:20px 14px 70px}
+    .hero{padding:20px 17px}
+    .rung{padding-left:32px}
+  }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- ============ SIGN IN ============ -->
+<div id="login">
+  <form class="lcard" id="loginForm">
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
+    <h1>Career Path Tracker</h1>
+    <p class="lsub">Where you stand, what the next level asks for,<br>and exactly how far you have to go.</p>
+
+    <label for="who">Agent number</label>
+    <input id="who" type="text" inputmode="numeric" autocomplete="username"
+           placeholder="Your agent number" required
+           autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="next">
+
+    <label for="pass">Password</label>
+    <input id="pass" type="password" autocomplete="current-password" placeholder="••••••••" required
+           autocapitalize="none" autocorrect="off" spellcheck="false" enterkeyhint="go">
+
+    <button type="submit" class="go" id="loginBtn">Sign in</button>
+    <div class="lerr" id="loginErr"></div>
+
+    <div class="peek">
+      <b>Same sign-in as the KPI tool</b>
+      Your agent number and the same password. An email address works too.
+      If you have never signed in, ask the Branch Manager for your password.
+      <button type="button" id="peekBtn">See the career path without signing in</button>
+    </div>
+
+    <a class="lback" href="/">← Back to the branch site</a>
+  </form>
+</div>
+
+<!-- ============ TRACKER ============ -->
+<div id="app" hidden>
+  <nav class="nav">
+    <div class="nav-in">
+      <a class="nav-brand" href="/">
+        <div class="mark"><img src="/logo-mark.png" alt=""></div>
+        <span>Ricky Rampersad<br>Branch</span>
+      </a>
+      <div class="whobox"><b id="who-name"></b><span id="who-num"></span></div>
+      <button id="signout" type="button">Sign out</button>
+    </div>
+  </nav>
+  <main class="wrap" id="view"></main>
+</div>
+
+<script>
+/* ============================================================
+   CAREER PATH TRACKER — Ricky Rampersad Branch
+   Agents sign in with their agent number and see their own
+   standing against the branch career path.
+
+   Identity and production both come from the KPI Apps Script,
+   which already accepts an agent number as the sign-in (see
+   login_ in apps-script/KPI.gs) and already holds the roster
+   and the Production sheet. One backend, one password.
+   ============================================================ */
+
+/* The deployed KPI web app. Same URL kpi/index.html uses — if that
+   deployment is ever re-issued, both files change together. */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+
+/* ============================================================
+   THE LADDER
+
+   Figures marked SOURCED are the branch's own, out of the GLOC
+   probation contract (Revised Jan 1 2018) that every recruit signs.
+
+   Figures left null are NOT SET, and the screen says so rather than
+   showing a number. A fabricated target on a screen an agent uses to
+   judge their own career is worse than no target — same rule as the
+   campaign target on the wall. Fill these in and the bars appear.
+   ============================================================ */
+const LADDER = [
+  {
+    key: 'probation',
+    name: 'Probation',
+    what: 'The first seven months under the probationary contract. Everything here is the minimum to be confirmed, not a target to aim at.',
+    pays: '',
+    months: 7,
+    reqs: [
+      { k:'apiY',   label:'Annualised premium written', target:105000, unit:'$', src:'contract' },
+      { k:'appsY',  label:'Settled applications',       target:25,     unit:'',  src:'contract' },
+      { k:'persist',label:'Persistency',                target:90,     unit:'%', src:'contract' }
+    ]
+  },
+  {
+    key: 'confirmed',
+    name: 'Confirmed Agent',
+    what: 'Twelve months in. The contract sets these as the level below which the agreement does not continue.',
+    pays: '',
+    months: 12,
+    reqs: [
+      { k:'apiY',   label:'Annualised premium written', target:250000, unit:'$', src:'contract' },
+      { k:'commY',  label:'Commissions earned',         target:100000, unit:'$', src:'contract' }
+    ]
+  },
+  {
+    key: 'executive',
+    name: 'Executive Agent',
+    what: 'The first rung above a full agency contract.',
+    pays: 'Overrides begin at this level.',
+    months: null,
+    reqs: []            /* NOT SET — the branch has not published these yet */
+  },
+  {
+    key: 'senior',
+    name: 'Senior Sales Consultant',
+    what: 'The senior producing level in the branch.',
+    pays: 'Overrides up to 10% · private office.',
+    months: null,
+    reqs: []            /* NOT SET */
+  }
+];
+
+/* MDRT is not a rung. It is an annual qualification set outside the branch
+   and the figures change every year, so it is shown as recognition rather
+   than as a step with a progress bar against a number we invented. */
+const MDRT_NOTE = 'MDRT is not a step on this ladder — it is an annual qualification ' +
+  'set by the Million Dollar Round Table, and the figures change each year. ' +
+  'This branch has qualified 23 times. Ask your manager for this year\'s numbers.';
+
+/* ============================================================
+   STATE + HELPERS
+   ============================================================ */
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g,
+  c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+let STATE = { token:null, profile:null, prod:null, peek:false };
+
+const money = n => '$' + Math.round(Number(n) || 0).toLocaleString('en-US');
+const fmtReq = (v, unit) => unit === '$' ? money(v) : unit === '%' ? v + '%' : String(v);
+
+/* Which rung an agent is on. The Production sheet's Level column and the
+   roster's Grade column are both free text typed by a person, so match
+   loosely and fall back to the first rung rather than guessing upward. */
+function rungIndexFor(profile, prod) {
+  const said = String((prod && prod.level) || (profile && profile.grade) || '').toLowerCase();
+  if (/senior|ssc|consultant/.test(said))  return 3;
+  if (/exec/.test(said))                   return 2;
+  if (/confirm|full|agent/.test(said) && !/probation|trainee/.test(said)) return 1;
+  return 0;
+}
+
+/* What the agent has actually produced, against a requirement key. */
+function actualFor(k, prod) {
+  if (!prod) return null;
+  if (k === 'apiY')  return Number(prod.apiY)  || 0;
+  if (k === 'appsY') return Number(prod.appsY) || 0;
+  if (k === 'commY') return prod.commY == null ? null : Number(prod.commY);
+  if (k === 'persist') return prod.persist == null ? null : Number(prod.persist);
+  return null;
+}
+
+/* ============================================================
+   BACKEND
+   ============================================================ */
+async function call(action, body) {
+  let res;
+  try {
+    res = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      /* text/plain keeps this a simple request, so the browser never sends a
+         CORS preflight that Apps Script cannot answer. Same as every other
+         front end on this backend. */
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ action, ...body })
+    });
+  } catch (e) {
+    /* fetch rejects with "Failed to fetch" for every network problem there is.
+       An agent on a phone at a client's house needs to know whether to try
+       again or to call somebody, so say the useful half. */
+    throw new Error('No connection to the branch system. Check your signal and try again — if it keeps failing, tell your Unit Manager.');
+  }
+  if (!res.ok) throw new Error('The branch system is not answering. Try again in a moment.');
+  return res.json();
+}
+
+async function doLogin(ev) {
+  ev.preventDefault();
+  const btn = $('loginBtn');
+  btn.disabled = true; btn.textContent = 'Signing in…';
+  try {
+    const r = await call('login', { who: $('who').value.trim(), password: $('pass').value });
+    if (!r.ok) throw new Error(r.error || 'Could not sign you in.');
+    STATE.token = r.token; STATE.profile = r.profile; STATE.peek = false;
+    try { sessionStorage.setItem('rrb-cpt', JSON.stringify({ token:r.token, profile:r.profile })); } catch (e) {}
+    await boot();
+  } catch (err) {
+    showLogin(err.message);
+  } finally {
+    btn.disabled = false; btn.textContent = 'Sign in';
+  }
+}
+
+/* Production is a separate action. If the deployed script does not carry it
+   yet, the ladder still renders — it just says the figures are not connected,
+   which is honest and useful, rather than failing the whole screen. */
+async function loadProduction() {
+  try {
+    const r = await call('careerPath', { token: STATE.token });
+    if (r && r.ok && r.production) return r.production;
+  } catch (e) {}
+  return null;
+}
+
+function showLogin(msg) {
+  $('app').hidden = true;
+  $('login').hidden = false;
+  $('loginErr').textContent = msg || '';
+  $('loginErr').classList.toggle('on', !!msg);
+}
+
+function signOut() {
+  try { sessionStorage.removeItem('rrb-cpt'); } catch (e) {}
+  STATE = { token:null, profile:null, prod:null, peek:false };
+  $('who').value = ''; $('pass').value = '';
+  showLogin('');
+}
+
+async function boot() {
+  $('login').hidden = true;
+  $('app').hidden = false;
+  const p = STATE.profile || {};
+  $('who-name').textContent = STATE.peek ? 'Preview' : (p.name || '');
+  $('who-num').textContent  = STATE.peek ? 'not signed in' : (p.agentNumber ? 'Agent ' + p.agentNumber : '');
+  $('view').innerHTML = '<div class="loading">Reading your production…</div>';
+  STATE.prod = STATE.peek ? null : await loadProduction();
+  render();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render() {
+  const p = STATE.profile || {};
+  const prod = STATE.prod;
+  const at = STATE.peek ? -1 : rungIndexFor(p, prod);
+  const next = LADDER[at + 1] || null;
+  const here = at >= 0 ? LADDER[at] : null;
+
+  /* What the ring measures. An agent on probation who has not yet met
+     probation's numbers cares about finishing probation — not about the rung
+     after it. So aim at the current rung until it is met, and only then at
+     the next one. Getting this backwards told a probationary agent they were
+     28% of the way to a level two steps from the one they are fighting. */
+  function metAll(rung) {
+    if (!rung || !rung.reqs.length || !prod) return false;
+    const known = rung.reqs.map(r => ({ r, a: actualFor(r.k, prod) })).filter(x => x.a !== null);
+    return known.length > 0 && known.every(x => x.a >= x.r.target);
+  }
+  let aim = null;
+  if (!STATE.peek && prod) {
+    if (here && here.reqs.length && !metAll(here)) aim = here;
+    else if (next && next.reqs.length)             aim = next;
+  }
+
+  let pct = null;
+  if (aim) {
+    const parts = aim.reqs
+      .map(r => ({ r, a: actualFor(r.k, prod) }))
+      .filter(x => x.a !== null);
+    if (parts.length) {
+      pct = Math.round(parts.reduce((s, x) =>
+        s + Math.min(1, x.a / x.r.target), 0) / parts.length * 100);
+    }
+  }
+  const aimLabel = aim ? (aim === here ? 'of ' + aim.name : 'to ' + aim.name) : '';
+
+  $('view').innerHTML = `
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">${STATE.peek ? 'Preview — not signed in' : 'Your career path'}</div>
+          <h1>${STATE.peek ? 'The branch career path' : esc(p.name || 'Your standing')}</h1>
+          <p class="sub">${STATE.peek
+            ? 'Sign in with your agent number to see your own figures against it.'
+            : (here ? 'You are on <b style="color:var(--ink)">' + esc(here.name) + '</b>' : 'Your level is not set in the branch sheet')
+              + (p.unit ? ' · ' + esc(p.unit) : '')}</p>
+        </div>
+        ${pct !== null ? `<div class="ring" role="img" aria-label="${pct} percent ${esc(aimLabel)}">
+          <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/>
+            <circle class="ring-fg" cx="60" cy="60" r="52"
+              style="stroke-dasharray:${2*Math.PI*52};stroke-dashoffset:${2*Math.PI*52*(1-pct/100)}"/></svg>
+          <div class="ring-val"><b>${pct}%</b><span>${esc(aim === here ? 'of this level' : 'to next')}</span></div>
+        </div>` : ''}
+      </div>
+
+      ${prod ? `<div class="statrow">
+        <div class="stat"><b>${money(prod.apiY)}</b><span>API this year</span></div>
+        <div class="stat"><b>${Number(prod.appsY) || 0}</b><span>Applications this year</span></div>
+        <div class="stat"><b>${money(prod.apiM)}</b><span>API this month</span></div>
+        <div class="stat"><b>${Number(prod.appsW) || 0}</b><span>Applications this week</span></div>
+      </div>` : ''}
+    </section>
+
+    ${!STATE.peek && !prod ? `<div class="note gold">
+      <b>Your production is not connected yet</b>
+      <p>The ladder below is real, but your own figures are not showing. The branch
+      sheet either has no Production row against your agent number, or the script
+      has not been re-deployed since this page was added. Your manager can fix both.</p>
+    </div>` : ''}
+
+    <section>
+      <div class="sec-label">The path</div>
+      <p class="sec-sub">Four levels. Each one is a standard, not an opinion &mdash; when you
+        meet the numbers, you have met them, and nobody has to be persuaded.</p>
+
+      <ol class="ladder">
+        ${LADDER.map((L, i) => rungHtml(L, i, at, prod)).join('')}
+      </ol>
+    </section>
+
+    <div class="note">
+      <b>About MDRT</b>
+      <p>${esc(MDRT_NOTE)}</p>
+    </div>
+
+    <footer>
+      <b style="color:var(--body)">Ricky Rampersad Branch</b> · Guardian Life of the Caribbean · Chaguanas Regional Centre<br>
+      Figures come from the branch Production sheet and update when it does.<br>
+      Something wrong on this screen? Tell your Unit Manager &mdash; do not work around it.
+    </footer>
+  `;
+}
+
+function rungHtml(L, i, at, prod) {
+  const done = at >= 0 && i < at;
+  const now  = at >= 0 && i === at;
+  const next = at >= 0 && i === at + 1;
+  const cls  = done ? 'done' : now ? 'now' : '';
+  const tag  = done ? '<span class="rtag done">Reached</span>'
+             : now  ? '<span class="rtag now">You are here</span>'
+             : next ? '<span class="rtag next">Next</span>'
+             : L.reqs.length ? '' : '<span class="rtag unset">Not published</span>';
+
+  return `<li class="rung ${cls}">
+    <span class="pip">${done ? '✓' : (i + 1)}</span>
+    <div class="rcard">
+      <div class="rhead"><span class="rname">${esc(L.name)}</span>${tag}</div>
+      <p class="rwhat">${esc(L.what)}${L.months ? ' Measured at ' + L.months + ' months.' : ''}</p>
+      ${L.pays ? `<p class="rpays">${esc(L.pays)}</p>` : ''}
+      ${L.reqs.length ? `<div class="reqs">${L.reqs.map(r => reqHtml(r, prod, now || next)).join('')}</div>`
+        : `<div class="notset">
+             <b>The branch has not published this level's requirements</b>
+             Nothing is shown here rather than a number somebody guessed. Once the
+             Branch Manager sets them, your progress appears automatically.
+           </div>`}
+    </div>
+  </li>`;
+}
+
+function reqHtml(r, prod, live) {
+  const a = live ? actualFor(r.k, prod) : null;
+  const target = r.target;
+  const have = a === null ? null : a;
+  const pc = have === null ? 0 : Math.min(100, Math.round(have / target * 100));
+  const met = have !== null && have >= target;
+  const gap = have === null ? '' : met
+    ? 'Met — ' + fmtReq(have, r.unit) + ' against ' + fmtReq(target, r.unit)
+    : fmtReq(target - have, r.unit) + ' to go';
+
+  return `<div class="req">
+    <span class="req-n">${esc(r.label)}</span>
+    <span class="req-v">${have === null ? fmtReq(target, r.unit) : fmtReq(have, r.unit) + ' / ' + fmtReq(target, r.unit)}</span>
+    ${have === null ? '' : `<span class="req-t"><i class="${met ? 'met' : ''}" style="width:${pc}%"></i></span>
+      <span class="req-gap ${met ? 'met' : ''}">${esc(gap)}</span>`}
+  </div>`;
+}
+
+/* ============================================================
+   START
+   ============================================================ */
+$('loginForm').onsubmit = doLogin;
+$('signout').onclick = signOut;
+$('peekBtn').onclick = () => {
+  STATE.peek = true; STATE.profile = null; STATE.token = null;
+  boot();
+};
+
+(function restore() {
+  try {
+    const saved = JSON.parse(sessionStorage.getItem('rrb-cpt') || 'null');
+    if (saved && saved.token) { STATE.token = saved.token; STATE.profile = saved.profile; boot(); return; }
+  } catch (e) {}
+  showLogin('');
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

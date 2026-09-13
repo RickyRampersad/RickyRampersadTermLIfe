@@ -305,3 +305,63 @@ function showProductionAccess() {
     '\n\nEveryone else is refused by the server, so the figures never reach their browser. ' +
     'Every view and download is recorded on the Activity tab.');
 }
+
+/* ===========================================================================
+ *  CAREER PATH TRACKER
+ *  /career-path-tracker/ signs an agent in through KPI.gs (which already
+ *  accepts an agent number) and then asks for one row: their own.
+ *
+ *  Narrow on purpose. An agent sees their own production and nothing else —
+ *  the branch view already exists on the production wall, behind its own key.
+ * =========================================================================== */
+
+/**
+ * One agent's production, matched on the agent number they signed in with.
+ * Falls back to a name match because the Production sheet's Code column and
+ * the Access tab's Agent Number column are typed by different people and do
+ * not always agree.
+ *
+ * Returns production:null rather than throwing when there is no row — the
+ * tracker then says the figures are not connected, which is the truth and is
+ * more use than an error.
+ */
+function careerPath_(profile) {
+  if (!profile) return { ok: false, error: 'Sign in again.' };
+
+  var num  = String(profile.agentNumber || '').trim().toLowerCase();
+  var name = String(profile.name || '').trim().toLowerCase();
+
+  var rows = [];
+  try { rows = prodRows_(); } catch (e) {
+    return { ok: true, production: null, note: 'Production sheet not available.' };
+  }
+
+  var mine = null;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i];
+    if (num && String(r.code || '').trim().toLowerCase() === num) { mine = r; break; }
+  }
+  if (!mine && name) {
+    for (var j = 0; j < rows.length; j++) {
+      if (String(rows[j].name || '').trim().toLowerCase() === name) { mine = rows[j]; break; }
+    }
+  }
+  if (!mine) return { ok: true, production: null, note: 'No production row for this agent.' };
+
+  /* Commissions and persistency are not columns on the Production sheet.
+     They are returned as null so the tracker leaves those requirements
+     without a bar, rather than showing a figure derived from a guess. */
+  return {
+    ok: true,
+    production: {
+      code:  mine.code,
+      level: mine.level,
+      name:  mine.name,
+      appsW: mine.appsW, apiW: mine.apiW,
+      appsM: mine.appsM, apiM: mine.apiM,
+      appsY: mine.appsY, apiY: mine.apiY,
+      commY:   null,
+      persist: null
+    }
+  };
+}
