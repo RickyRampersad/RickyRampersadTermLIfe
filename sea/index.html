@@ -737,6 +737,10 @@ footer .l{display:flex;gap:.6rem;align-items:center}
           </tbody></table></div>
         <p class="note" style="margin-top:.9rem">Weighted 100&thinsp;:&thinsp;60&thinsp;:&thinsp;40 into one
           composite score. Mathematics carries the most, which is why it is the paper practised here.</p>
+        <p class="note" style="margin-top:.6rem"><b>No calculators</b> in the Mathematics paper, and it is sat in
+          three sections: questions 1 to 20, 21 to 36, then 37 to 40. The front of the paper says
+          &ldquo;<b>Show ALL working in the spaces provided. Marks will be given for correct steps shown.</b>&rdquo;
+          &mdash; so a right answer with nothing under it throws marks away.</p>
         </div>
         <div id="factsCsec" hidden>
         <div class="scroll"><table>
@@ -861,6 +865,11 @@ footer .l{display:flex;gap:.6rem;align-items:center}
           <tr><td>Statistics</td><td class="mono">3</td><td class="mono">2</td><td class="mono">1</td><td class="mono">6</td><td class="mono">12</td></tr>
           <tr><td><b>Total</b></td><td class="mono"><b>20</b></td><td class="mono"><b>16</b></td><td class="mono"><b>4</b></td><td class="mono"><b>40</b></td><td class="mono"><b>75</b></td></tr>
         </tbody></table></div>
+      <p class="note" style="margin-bottom:1.1rem"><b>The rules on the paper itself.</b> No calculators.
+        Three sections &mdash; questions 1 to 20, then 21 to 36, then 37 to 40. Answer all forty in seventy-five
+        minutes. And, in the Ministry&rsquo;s own words on the front of the paper:
+        &ldquo;<b>Show ALL working in the spaces provided. Marks will be given for correct steps shown.</b>&rdquo;
+        That is why this app makes you work before it tells you &mdash; the steps are where the marks are.</p>
       <p class="muted" style="margin-bottom:1.1rem">Paper and pencil beside you. The clock does not stop.</p>
       <div class="btnrow">
         <button class="btn gold" id="examStart">Start the paper</button>
@@ -2436,6 +2445,17 @@ const SYL_CSEC = [
 ];
 
 /* ============================================================
+   The Ministry's blueprint for the Mathematics paper — items per strand per
+   section, from the Assessment Framework for SEA 2025–2028 and confirmed
+   against SEA MATHEMATICS 2025: twenty items, then sixteen, then four.
+   ============================================================ */
+const BLUEPRINT = {
+  1:{Number:10, Geometry:3, Measurement:4, Statistics:3},
+  2:{Number:8,  Geometry:2, Measurement:4, Statistics:2},
+  3:{Number:1,  Geometry:1, Measurement:1, Statistics:1}
+};
+
+/* ============================================================
    Storage — per device, per browser. Nothing leaves it.
    ============================================================ */
 const KEY = "rrb.sea.v2";
@@ -3138,11 +3158,6 @@ function pRender(){
 /* ============================================================
    Mock exam — no hints, no answers, while the clock runs
    ============================================================ */
-const BLUEPRINT = {
-  1:{Number:10, Geometry:3, Measurement:4, Statistics:3},
-  2:{Number:8,  Geometry:2, Measurement:4, Statistics:2},
-  3:{Number:1,  Geometry:1, Measurement:1, Statistics:1}
-};
 let exam = null, examTimer = null;
 const poolFor = (sec,strand) => QUESTIONS.filter(q => q.sea && q.sec === sec && q.strand === strand);
 

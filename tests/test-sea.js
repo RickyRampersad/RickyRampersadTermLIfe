@@ -33,9 +33,9 @@ vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
 vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
-  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, SYL_CSEC, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, SYL_CSEC, levelIndexFor, seaYearFor, schoolYear, isRight, __appBlueprint: BLUEPRINT };', sandbox);
 const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, SYL_CSEC,
-        levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
+        levelIndexFor, seaYearFor, schoolYear, isRight, __appBlueprint } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -398,6 +398,35 @@ ok('the page flags the February 2020 cover sheet against the 2025 mark scheme',
 // makes the app look wrong to the first teacher who checks it.
 ok('the page explains the ten sections on CXC\'s site and when the modules take over',
    /ten sections/.test(page) && /January\s*2027/.test(page.replace(/\s+/g, ' ')) && /May&ndash;June 2027<\/b> sitting/.test(page));
+
+// ---- the S.E.A. paper's own front page ---------------------------------------
+// Checked against SEA MATHEMATICS 2025: three sections of 20, 16 and 4 over 40
+// questions in 75 minutes, no calculators, and marks for correct steps shown.
+// The blueprint above is the framework's; this is the paper agreeing with it.
+const flat = page.replace(/\s+/g, ' ');
+ok('the app tells a child there are no calculators in the Mathematics paper', /<b>No calculators<\/b> in the Mathematics paper/.test(flat));
+ok('and gives the three sections by question number', /questions 1 to 20, 21 to 36, then 37 to 40/.test(flat));
+ok('and quotes the Ministry on marks for working shown',
+   (flat.match(/Show ALL working in the spaces provided\. Marks will be given for correct steps shown\./g) || []).length === 2);
+ok('the mock exam repeats those rules before the clock starts',
+   /The rules on the paper itself\.<\/b> No calculators\./.test(flat));
+// Nothing used to check the app's own BLUEPRINT against anything — the bank
+// depth was tested against the copy above, and the app's could have drifted
+// unnoticed. Compare the two, then compare both to the paper.
+const secTotals = { 1: 20, 2: 16, 3: 4 };
+const bpTrouble = [];
+for (const sec of [1, 2, 3]) {
+  for (const st of STRANDS) {
+    if (__appBlueprint[sec][st] !== BLUEPRINT[sec][st])
+      bpTrouble.push(`the app has Section ${sec} ${st} at ${__appBlueprint[sec][st]}, the framework says ${BLUEPRINT[sec][st]}`);
+  }
+  const n = Object.values(__appBlueprint[sec]).reduce((a, b) => a + b, 0);
+  if (n !== secTotals[sec]) bpTrouble.push(`section ${sec} is ${n} items, the 2025 paper has ${secTotals[sec]}`);
+}
+const allMarks = [1, 2, 3].reduce((t, sec) => t + Object.values(__appBlueprint[sec]).reduce((a, b) => a + b, 0), 0);
+if (allMarks !== 40) bpTrouble.push(`${allMarks} items in total, the paper has 40`);
+ok('the app\'s blueprint is the framework\'s, and its sections match the 2025 paper: 20, 16, 4',
+   bpTrouble.length === 0, bpTrouble.join('; '));
 
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');
