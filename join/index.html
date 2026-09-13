@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Become an Advisor | Ricky Rampersad Branch — Guardian Life</title>
+<meta name="description" content="A 23× MDRT branch in Chaguanas hiring life insurance advisors. Seven weeks of real work before either of us commits, a published career path, and an honest account of what it costs you.">
+<meta name="theme-color" content="#07131f">
+<meta property="og:title" content="We don't hire advisors. We build them.">
+<meta property="og:description" content="Ricky Rampersad Branch, Guardian Life of the Caribbean — Chaguanas. The whole selection process, the real numbers, and what it costs you, before you apply.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800;900&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* Branch palette from CLAUDE.md — navy, gold, teal. */
+  :root{
+    --bg:#07131f; --bg2:#0b1c2d; --card:#122b45; --card2:#163553;
+    --ink:#edf4fb; --body:#a9bbcf; --mut:#7f94ac; --line:rgba(255,255,255,.10);
+    --gold:#efc24b; --gold2:#c9942c; --onGold:#1d1503;
+    --teal:#00CFEA; --teal2:#00A8C5; --onTeal:#02141a;
+    --good:#3ddc97; --warn:#ffb454;
+    --mont:'Montserrat',sans-serif; --dm:'DM Sans',system-ui,sans-serif;
+    --wrap:1060px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;scroll-padding-top:80px}
+  body{font-family:var(--dm);background:var(--bg);color:var(--body);font-size:16px;line-height:1.68;
+    -webkit-font-smoothing:antialiased;overflow-x:hidden;
+    background-image:radial-gradient(ellipse 90% 55% at 50% -12%,rgba(0,207,234,.09),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 52%,var(--bg) 100%)}
+  h1,h2,h3,h4{font-family:var(--mont);color:var(--ink);line-height:1.15;letter-spacing:-.015em}
+  a{color:var(--teal)}
+  p{max-width:66ch}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:3px;border-radius:6px}
+
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 20px}
+  .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+
+  /* ---------- nav ---------- */
+  .nav{position:sticky;top:0;z-index:60;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);
+    border-bottom:1px solid var(--line)}
+  .nav-in{max-width:var(--wrap);margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:14px;height:64px}
+  .nav-brand{display:flex;align-items:center;gap:11px;text-decoration:none;margin-right:auto}
+  .nav-brand .mark{width:34px;height:34px;flex:none}
+  .nav-brand span{font-family:var(--mont);font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15}
+  .nav a.lnk{font-family:var(--mont);font-size:13px;font-weight:700;color:var(--body);
+    text-decoration:none;padding:8px 11px;border-radius:9px}
+  .nav a.lnk:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+  @media(max-width:780px){.nav a.lnk{display:none}}
+
+  /* ---------- buttons ---------- */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:15px 26px;
+    border-radius:13px;border:none;cursor:pointer;text-decoration:none;
+    font-family:var(--mont);font-size:14.5px;font-weight:800;letter-spacing:.3px;transition:.2s}
+  .btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--onTeal);
+    box-shadow:0 8px 28px rgba(0,207,234,.28)}
+  .btn-teal:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,207,234,.42)}
+  .btn-ghost{background:transparent;color:var(--body);border:1.5px solid var(--line)}
+  .btn-ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.3)}
+  .btn-sm{padding:11px 18px;font-size:13px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:64px 0 52px}
+  .kick{font-family:var(--mont);font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--gold);display:inline-flex;align-items:center;gap:9px;margin-bottom:20px}
+  .kick i{width:7px;height:7px;border-radius:50%;background:var(--gold);font-style:normal}
+  .hero h1{font-size:clamp(32px,6vw,58px);font-weight:900;margin-bottom:20px;max-width:17ch}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .hero .lede{font-size:clamp(17px,2.3vw,20px);color:var(--body);max-width:58ch;margin-bottom:14px}
+  .hero .lede b{color:var(--ink);font-weight:600}
+  .hero .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
+  .hero .fine{font-size:13.5px;color:var(--mut);margin-top:16px}
+
+  .proof{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-top:42px}
+  .pf{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:14px;padding:16px 18px}
+  .pf b{display:block;font-family:var(--mont);font-size:26px;font-weight:800;color:var(--gold);
+    line-height:1;font-variant-numeric:tabular-nums}
+  .pf span{display:block;font-size:12.5px;color:var(--mut);margin-top:6px;line-height:1.45}
+
+  /* ---------- sections ---------- */
+  section{padding:52px 0}
+  .eyebrow{font-family:var(--mont);font-size:11px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;
+    color:var(--teal);margin-bottom:12px;display:flex;align-items:center;gap:12px}
+  .eyebrow::after{content:'';flex:1;height:1px;background:rgba(0,207,234,.2)}
+  h2{font-size:clamp(25px,4.2vw,36px);font-weight:900;margin-bottom:14px;max-width:20ch}
+  h2 em{font-style:normal;color:var(--gold)}
+  .sub{font-size:16.5px;color:var(--body);margin-bottom:30px;max-width:62ch}
+
+  .band{background:linear-gradient(180deg,rgba(255,255,255,.022),transparent);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+
+  /* ---------- two-column cards ---------- */
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media(max-width:760px){.two{grid-template-columns:1fr}}
+  .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:17px;padding:24px 24px}
+  .card h3{font-size:18px;font-weight:800;margin-bottom:10px}
+  .card p{font-size:14.5px;color:var(--body)}
+  .card.gold{border-color:rgba(239,194,75,.3)}
+  .card.gold h3{color:var(--gold)}
+  .card ul{list-style:none;margin-top:12px;display:grid;gap:9px}
+  .card li{padding-left:22px;position:relative;font-size:14.5px;line-height:1.6}
+  .card li::before{content:'';position:absolute;left:0;top:10px;width:9px;height:2px;background:var(--teal);border-radius:2px}
+  .card.gold li::before{background:var(--gold)}
+  .card li.no::before{background:var(--warn)}
+
+  /* ---------- the process ---------- */
+  .steps{display:grid;gap:12px;counter-reset:s}
+  .step{counter-increment:s;display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:start;
+    background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:17px;padding:22px 24px}
+  .step::before{content:counter(s);font-family:var(--mont);font-size:13px;font-weight:800;
+    width:34px;height:34px;border-radius:50%;display:grid;place-items:center;
+    background:rgba(0,207,234,.12);border:1px solid rgba(0,207,234,.32);color:var(--teal)}
+  .step h3{font-size:17px;font-weight:800;margin-bottom:5px}
+  .step p{font-size:14.5px;color:var(--body)}
+  .step .when{font-family:var(--mont);font-size:11.5px;font-weight:700;color:var(--gold);
+    letter-spacing:.05em;margin-top:8px;display:block}
+
+  /* ---------- benefits ---------- */
+  .bens{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:13px}
+  .ben{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:16px;padding:22px}
+  .ben h3{font-size:16.5px;font-weight:800;margin-bottom:8px}
+  .ben p{font-size:14px;color:var(--body)}
+
+  /* ---------- cost table ---------- */
+  .costs{display:grid;gap:11px}
+  .cost{display:grid;grid-template-columns:1fr auto;gap:6px 20px;align-items:baseline;
+    background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:15px;padding:19px 22px}
+  .cost b{font-family:var(--mont);font-size:16px;font-weight:800;color:var(--ink)}
+  .cost .amt{font-family:var(--mont);font-size:15px;font-weight:800;color:var(--gold);
+    white-space:nowrap;text-align:right}
+  .cost p{grid-column:1/-1;font-size:14px;color:var(--mut);margin-top:2px}
+
+  /* ---------- faq ---------- */
+  .faq{display:grid;gap:9px}
+  details{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-radius:14px;overflow:hidden}
+  details[open]{border-color:rgba(0,207,234,.3)}
+  summary{list-style:none;cursor:pointer;padding:18px 22px;font-family:var(--mont);font-size:15.5px;
+    font-weight:700;color:var(--ink);display:flex;align-items:flex-start;gap:14px}
+  summary::-webkit-details-marker{display:none}
+  summary::after{content:'+';margin-left:auto;color:var(--teal);font-size:20px;line-height:1;flex:none}
+  details[open] summary::after{content:'\2212'}
+  details .a{padding:0 22px 20px;font-size:14.5px;color:var(--body)}
+  details .a p+p{margin-top:11px}
+
+  /* ---------- final ---------- */
+  .final{text-align:center;padding:64px 0}
+  .final h2{margin:0 auto 14px;max-width:18ch}
+  .final .sub{margin:0 auto 28px}
+  .final .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+  .final .fine{font-size:13.5px;color:var(--mut);margin:20px auto 0;max-width:52ch}
+
+  .note{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
+    border-left:3px solid var(--gold);border-radius:0 14px 14px 0;padding:20px 24px;margin-top:24px}
+  .note b{font-family:var(--mont);font-size:15px;color:var(--ink);display:block;margin-bottom:6px}
+  .note p{font-size:14.5px;color:var(--body)}
+
+  footer{border-top:1px solid var(--line);background:rgba(0,0,0,.28);padding:36px 0 44px;text-align:center}
+  footer .fb{font-family:var(--mont);font-weight:900;font-size:17px;color:var(--ink);margin-bottom:6px}
+  footer p{font-size:13px;color:var(--mut);margin:0 auto;line-height:1.9}
+  footer a{color:var(--teal);text-decoration:none}
+
+  /* sticky apply on phones */
+  .sticky{position:fixed;left:0;right:0;bottom:0;z-index:70;padding:12px 16px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(6,17,29,.96);backdrop-filter:blur(12px);border-top:1px solid var(--line);
+    display:none}
+  .sticky .btn{width:100%}
+  @media(max-width:760px){.sticky{display:block} body{padding-bottom:86px}}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-in">
+    <a class="nav-brand" href="/">
+      <div class="mark"><img src="/logo-mark.png" alt=""></div>
+      <span>Ricky Rampersad<br>Branch</span>
+    </a>
+    <a class="lnk" href="#process">The process</a>
+    <a class="lnk" href="#cost">What it costs</a>
+    <a class="lnk" href="#faq">Questions</a>
+    <a class="btn btn-teal btn-sm" href="/careers/apply.html">Apply</a>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kick"><i></i>Hiring advisors · Chaguanas, Trinidad</div>
+    <h1>We don't hire advisors.<br><em>We build them.</em></h1>
+    <p class="lede">Most people who start selling insurance are handed a rate book and wished well.
+      Here you get <b>seven weeks of real work</b> before either of us commits, a career path with the
+      numbers published, and a manager whose job is your first year.</p>
+    <p class="lede">If it isn't for you, you'll know in seven weeks instead of finding out
+      after a year of your life.</p>
+
+    <div class="cta">
+      <a class="btn btn-teal" href="/careers/apply.html">Start your application</a>
+      <a class="btn btn-ghost" href="#process">See the whole process first</a>
+    </div>
+    <p class="fine">Two minutes to apply · Reviewed within 48 hours · Confidential if you're
+      currently contracted elsewhere</p>
+
+    <div class="proof">
+      <div class="pf"><b>23&times;</b><span>MDRT qualifying branch</span></div>
+      <div class="pf"><b>32</b><span>Years in Trinidad</span></div>
+      <div class="pf"><b>7</b><span>Weeks of Discovery before you decide</span></div>
+      <div class="pf"><b>880</b><span>Market conversations our recruits have logged</span></div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ THE PROBLEM ============ -->
+<section class="band" id="problem">
+  <div class="wrap">
+    <div class="eyebrow">The problem</div>
+    <h2>The industry loses good people for <em>avoidable reasons</em></h2>
+    <p class="sub">Not because they weren't capable. Because nobody told them the truth up front,
+      and nobody was accountable for their first ninety days.</p>
+
+    <div class="two">
+      <div class="card">
+        <h3>If you're already licensed</h3>
+        <p>You're producing, but you're doing it alone. Your manager is a name on an org chart.
+          Nobody reviews your cases, nobody coaches your close, and the overrides go
+          to someone you haven't spoken to this quarter.</p>
+        <ul>
+          <li>You've hit a ceiling that isn't about your ability</li>
+          <li>Promotion looks like a favour rather than a standard</li>
+          <li>You're carrying admin that should never have been yours</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>If you're new to the industry</h3>
+        <p>You've been told the income is uncapped. You haven't been told that commission
+          takes about ninety days to become steady, that your first market is people who
+          already know you, or that most of the job is the part before the sale.</p>
+        <ul>
+          <li>Nobody explains what the work is actually like, day to day</li>
+          <li>"Training" turns out to mean a product manual</li>
+          <li>You find out it isn't for you after you've resigned from something else</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHO IT'S FOR ============ -->
+<section id="who">
+  <div class="wrap">
+    <div class="eyebrow">Who this is for</div>
+    <h2>Two roads in. <em>Both are mapped.</em></h2>
+    <p class="sub">We select from both, and the process branches at your first interview.
+      Neither is the better answer.</p>
+
+    <div class="two">
+      <div class="card gold">
+        <h3>Experienced advisors</h3>
+        <p>You hold or have held a licence and you've written business. You move faster
+          through selection because you have a record to show.</p>
+        <ul>
+          <li>You want a branch that reviews your work, not one that just counts it</li>
+          <li>You're willing to have your production and persistency looked at honestly</li>
+          <li>You're interested in a path to Executive Agent and beyond — published, with figures</li>
+        </ul>
+      </div>
+      <div class="card gold">
+        <h3>New to the industry</h3>
+        <p>You've never held a licence. You get the full build: six modules of Discovery,
+          real activity, and a manager working through it with you.</p>
+        <ul>
+          <li>You know a lot of people and you're willing to talk to them</li>
+          <li>You have enough runway to get through roughly ninety days of uneven income</li>
+          <li>You want to be trained properly rather than thrown in</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>Who this isn't for</b>
+      <p>If you need a fixed salary from month one, this isn't it — advisors are paid on
+        commission. If you can only give it evenings and weekends indefinitely, say so at the
+        start and we'll tell you honestly what that produces. And if you'd rather not be
+        measured, this is the wrong branch: everything here is counted, and you see the count.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT'S INCLUDED ============ -->
+<section class="band" id="process">
+  <div class="wrap">
+    <div class="eyebrow">What's included</div>
+    <h2>The whole process, <em>before you apply</em></h2>
+    <p class="sub">This is Guardian's Selection and Approval Process as this branch runs it.
+      You'll be told where you stand at every gate — including when the answer is no.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div>
+          <h3>Your application and a first interview</h3>
+          <p>A structured conversation with a Recruiting Manager, about an hour. We're
+            looking at how you think and what's driving this, not testing product knowledge
+            you have no reason to have yet.</p>
+          <span class="when">Week 1 · reviewed within 48 hours of applying</span>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Branch Manager review and the POP 7.0 assessment</h3>
+          <p>Guardian's own predictor of potential. It's not a test you pass by guessing
+            what we want to hear — and afterwards your manager walks you through what it
+            actually said about you.</p>
+          <span class="when">Week 1–2</span>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Discovery — six modules, twenty-one sessions</h3>
+          <p>The part most branches skip. You do the real work: build your market list,
+            make live calls, sit in on field appointments, and run market surveys with
+            people you already know. After every session you submit a debrief, your
+            manager scores it, and you get the feedback.</p>
+          <span class="when">About seven weeks · 10–15 hours a week</span>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Your selection file and the decision</h3>
+          <p>Your Branch Manager's Assistant assembles the full file. Depending on how
+            you score, the decision sits with the Branch Manager, the Vice President — Sales,
+            or a Selection Panel. You're told the outcome either way, and why.</p>
+          <span class="when">End of week 7</span>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Licensing, onboarding and your contract</h3>
+          <p>CBTT licence application, AML and OFT certification, boot camp, and your
+            probationary contract. Your BMA drives the paperwork so you can start
+            building a book.</p>
+          <span class="when">After selection · licensing timing is set by the Central Bank</span>
+        </div>
+      </div>
+      <div class="step">
+        <div>
+          <h3>Induction — seven months, with the targets in writing</h3>
+          <p>The probationary contract sets what you're working towards and you can see
+            your numbers against it whenever you want. Weekly check-ins with your manager.
+            No surprises at the end.</p>
+          <span class="when">Months 1–7 after contract</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BENEFITS ============ -->
+<section id="benefits">
+  <div class="wrap">
+    <div class="eyebrow">Why it may help you</div>
+    <h2>What you actually get <em>that you won't elsewhere</em></h2>
+    <p class="sub">Not perks. The specific things this branch does differently, and what
+      each one is worth to you.</p>
+
+    <div class="bens">
+      <div class="ben">
+        <h3>A promotion path with the numbers published</h3>
+        <p>Executive Agent, Senior Sales Consultant, and the management track up to Branch
+          Manager — every requirement is written down in the Company's Sales Career Path
+          document, and you can see your own production against it in the branch tracker.
+          Promotion stops being a conversation about who likes you.</p>
+      </div>
+      <div class="ben">
+        <h3>Your progress is visible to you, not just to us</h3>
+        <p>You sign in and see where you are, how long you've been there, every session
+          you've done and every score your manager released. Most recruits in this industry
+          find out how they're doing when someone finally tells them.</p>
+      </div>
+      <div class="ben">
+        <h3>Training that's activity, not classroom</h3>
+        <p>Discovery is ninety-six checkpoints of real work — calls you actually make,
+          appointments you actually sit in. You learn whether you can do this by doing it,
+          which is also how we learn it about you.</p>
+      </div>
+      <div class="ben">
+        <h3>A market that's already been mapped</h3>
+        <p>Our recruits have logged 880 conversations with people across Trinidad about
+          insurance and financial planning. Half say the first word they think of is
+          "security". Two in five are already considering changing their cover. You start
+          with that, instead of guessing.</p>
+      </div>
+      <div class="ben">
+        <h3>A manager who is accountable for you</h3>
+        <p>A named Recruiting Manager from your first interview to the end of probation.
+          They read your debriefs, score them, and are measured on whether you make it.
+          Their job is your first year.</p>
+      </div>
+      <div class="ben">
+        <h3>A branch that already knows how to do this</h3>
+        <p>Twenty-three MDRT qualifications and thirty-two years in Trinidad. The people
+          coaching you have been through the process they're putting you through.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ WHAT IT COSTS ============ -->
+<section class="band" id="cost">
+  <div class="wrap">
+    <div class="eyebrow">What it costs you</div>
+    <h2>There's no joining fee. <em>It still costs you something.</em></h2>
+    <p class="sub">We'd rather you see this now than discover it in week three. Nothing
+      below is a surprise we spring on people later.</p>
+
+    <div class="costs">
+      <div class="cost">
+        <b>Your time, before you earn anything</b>
+        <span class="amt">10–15 hrs / week</span>
+        <p>Discovery runs about seven weeks and it is unpaid. You are not contracted yet,
+          and you cannot sell yet.</p>
+      </div>
+      <div class="cost">
+        <b>Your licence</b>
+        <span class="amt">Central Bank fee</span>
+        <p>You need a CBTT licence to sell. The application carries a fee set by the Central
+          Bank of Trinidad and Tobago — ask us for the current figure and we'll tell you
+          before you commit. We handle the paperwork with you.</p>
+      </div>
+      <div class="cost">
+        <b>Income runway</b>
+        <span class="amt">About 90 days</span>
+        <p>Advisors are paid commission, and commission income typically takes around three
+          months to become steady. Plan for that, not for month one. If you have under
+          a month of savings, tell us — it doesn't disqualify you, but it changes how we'd
+          plan your start.</p>
+      </div>
+      <div class="cost">
+        <b>The tools you already have</b>
+        <span class="amt">Phone &amp; laptop</span>
+        <p>Applications, quotes and client files are digital. A working vehicle matters too —
+          field advisors travel to clients. If there's a gap, say so and we'll plan around it
+          rather than discover it.</p>
+      </div>
+      <div class="cost">
+        <b>The risk that we say no</b>
+        <span class="amt">Real</span>
+        <p>Not everyone who starts Discovery is offered a contract, and probation can end.
+          That is the point of a selection process. You will be told early rather than
+          strung along.</p>
+      </div>
+    </div>
+
+    <div class="note">
+      <b>About the numbers you'll see in the contract</b>
+      <p>The probationary contract states targets — annualised premium, settled applications
+        and persistency — and a twelve-month milestone. Those are the standards the contract
+        continues against. They are not a forecast of your earnings, and we won't present
+        them as one. What you earn depends on what you write. Ask us in the interview and
+        we'll walk you through how commission actually works here.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section id="faq">
+  <div class="wrap">
+    <div class="eyebrow">Questions</div>
+    <h2>The things people <em>actually ask</em></h2>
+    <p class="sub">If yours isn't here, ask it at the first interview. Nothing on this list
+      is treated as a bad question.</p>
+
+    <div class="faq">
+      <details>
+        <summary>Is this commission only?</summary>
+        <div class="a"><p>Yes. Advisors here are paid on commission, with overrides once you
+          move up the path. That is the trade: no ceiling on what you earn, and no floor
+          either. It's why we ask about your runway before you start rather than after.</p></div>
+      </details>
+      <details>
+        <summary>How long before I'm actually earning?</summary>
+        <div class="a">
+          <p>You cannot earn until you're licensed and contracted, which is typically two to
+            three months from applying — Discovery is about seven weeks, then licensing.</p>
+          <p>After that, commission income typically takes around ninety days to settle into a
+            rhythm. Anyone who tells you a precise figure for your first month is guessing.</p></div>
+      </details>
+      <details>
+        <summary>Do I need a licence before I apply?</summary>
+        <div class="a"><p>No. If you're new to the industry you'll apply for your CBTT licence
+          during onboarding and we'll handle the process with you. If you already hold one,
+          bring it — it shortens your path considerably.</p></div>
+      </details>
+      <details>
+        <summary>I already sell insurance. Do I have to start from scratch?</summary>
+        <div class="a">
+          <p>No. Selection branches at the first interview. Experienced advisors are assessed
+            on production, persistency, licence standing and why you're moving — not on the
+            beginner's programme.</p>
+          <p>And it's confidential. We understand you may still be contracted elsewhere while
+            you're talking to us.</p></div>
+      </details>
+      <details>
+        <summary>Can I do this part-time?</summary>
+        <div class="a"><p>Tell us at the start and we'll be straight with you about what part-time
+          produces. Plenty of people transition over a few months while winding down something
+          else, and that works. Indefinitely part-time generally doesn't, and we'd rather say
+          so than take you through seven weeks first.</p></div>
+      </details>
+      <details>
+        <summary>What is POP 7.0?</summary>
+        <div class="a"><p>Guardian's assessment of potential in commission sales, administered
+          through the company's system. It's not pass-or-fail in the way an exam is, and it
+          isn't the whole decision. Your manager goes through the results with you afterwards
+          — including the parts that are unflattering, because those are the useful ones.</p></div>
+      </details>
+      <details>
+        <summary>What happens if I don't get through Discovery?</summary>
+        <div class="a"><p>You'll be told, and you'll be told why. You'll have spent about seven
+          weeks finding out something true about yourself and the work, without having
+          resigned from anything. That's a considerably better outcome than discovering it
+          in month nine.</p></div>
+      </details>
+      <details>
+        <summary>What are market surveys, and do I have to do them?</summary>
+        <div class="a">
+          <p>Yes — they're part of Discovery. You have a fifteen-minute conversation with
+            someone you already know about how they see insurance and financial planning.
+            Nothing is sold, and they sign to confirm that.</p>
+          <p>They're how you find out whether you can hold a financial conversation with
+            someone who knows you — which is most of the job.</p></div>
+      </details>
+      <details>
+        <summary>Who will I be reporting to?</summary>
+        <div class="a"><p>A named Recruiting Manager from your first interview through probation,
+          with the Branch Manager reviewing the decisions at each gate. You'll know who both
+          of those people are in your first week.</p></div>
+      </details>
+      <details>
+        <summary>How do I get promoted?</summary>
+        <div class="a"><p>Against published requirements. Executive Agent, for example, asks for
+          four years contracted, $1.5m in annualised premium over two calendar years at 90%
+          persistency, a client base of at least 325, an FSCP or equivalent designation, and
+          MDRT membership within the last three years. The full document covers every position
+          on both the sales and management tracks, and the branch tracker shows you your own
+          production against it.</p></div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="final band">
+  <div class="wrap">
+    <h2>Find out in seven weeks, <em>not in a year.</em></h2>
+    <p class="sub">Two minutes to apply. A Recruiting Manager reads it and calls you within
+      48 hours, already knowing your story.</p>
+    <div class="cta">
+      <a class="btn btn-teal" href="/careers/apply.html">Start your application</a>
+      <a class="btn btn-ghost" href="tel:+18686785821">Rather talk first? 678-5821</a>
+    </div>
+    <p class="fine">Confidential for practising advisors. If we're not right for you,
+      we'll tell you early — that's the whole point of doing it this way.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div class="fb">Ricky Rampersad Branch</div>
+    <p>Guardian Life of the Caribbean · Chaguanas Regional Centre<br>
+      <a href="mailto:Ricky.Rampersad@myguardiangroup.com">Ricky.Rampersad@myguardiangroup.com</a> · 678-5821<br>
+      <a href="/">Branch site</a> · <a href="/career-path-tracker/">Career path tracker</a></p>
+  </div>
+</footer>
+
+<div class="sticky"><a class="btn btn-teal" href="/careers/apply.html">Start your application</a></div>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
