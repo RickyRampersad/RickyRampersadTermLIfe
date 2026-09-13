@@ -267,22 +267,30 @@ section('Salesforce — where the production figures come from');
   // CLIENT_PORTFOLIO__c, settled rows, summed on Total_API__c, grouped by
   // AGENT__r.Name. Rajiv's figures are the branch's real ones, already in
   // board/dashboard.html — the newest recruit, producing, with nothing last year.
-  const AGENTS = {
+  // Settled new business on CLIENT_PORTFOLIO__c, and increases on their own
+  // object with their own picked-up date — the two things the branch counts
+  // toward a probation quota.
+  const SETTLED = {
     THIS_YEAR:  [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }, { a: 'Recruit One', n: 7, api: 22506 }],
     THIS_MONTH: [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }],
     THIS_WEEK:  [{ a: 'Rajiv Soodoo', n: 2, api: 10155 }]
   };
-  let logins = 0, queries = 0, failNextWith = 0;
-  const salesforce = (url, params) => {
+  const INCREASES = {
+    THIS_YEAR:  [{ a: 'Rajiv Soodoo', n: 1, api: 5000 }],
+    THIS_MONTH: [{ a: 'Rajiv Soodoo', n: 1, api: 5000 }],
+    THIS_WEEK:  []
+  };
+  let logins = 0, queries = 0;
+  const salesforce = (url) => {
     if (/oauth2\/token/.test(url)) {
       logins++;
       return { code: 200, body: JSON.stringify({ access_token: 'tok-' + logins, instance_url: 'https://x.my.salesforce.com' }) };
     }
     queries++;
-    if (failNextWith) { const c = failNextWith; failNextWith = 0; return { code: c, body: 'nope' }; }
     const q = decodeURIComponent(url.split('q=')[1] || '');
     const win = ['THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR'].find(w => q.includes(w)) || 'THIS_YEAR';
-    return { code: 200, body: JSON.stringify({ records: AGENTS[win] || [] }) };
+    const src = /Policy_Increases__c/.test(q) ? INCREASES : SETTLED;
+    return { code: 200, body: JSON.stringify({ records: src[win] || [] }) };
   };
   const SFPROPS = { SF_KEY: 'k', SF_SECRET: 's', SF_USER: 'u', SF_PASS: 'p' };
 
@@ -301,23 +309,26 @@ section('Salesforce — where the production figures come from');
     const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
     ok(d.productionSource.source === 'sheet', 'with no Salesforce set up the figures come from the tab, as before');
     ok(d.production['A9001'].settledAPI === 0, 'and they are whatever was pasted there');
+    ok(!d.productionByName || !Object.keys(d.productionByName).length, 'and nothing is keyed by name either');
     ok(/not set up/.test(d.productionSource.reason), 'and the page is told why');
   }
   {
     const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
     const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
     ok(d.productionSource.source === 'salesforce', 'with Salesforce set up the figures come from Salesforce');
-    ok(d.production['A9001'].settledAPI === 89303 && d.production['A9001'].apps === 3,
-       "the newest recruit's settled production is live, not the stale nought on the tab");
-    ok(d.production['A9001'].weekApps === 2 && d.production['A9001'].weekAPI === 10155, 'this week comes through too');
-    ok(d.production['A9001'].monthAPI === 89303, 'and this month');
+    ok(d.production['A9001'].settledAPI === 94303 && d.production['A9001'].apps === 4,
+       "the newest recruit's production is live — $89,303 settled plus a $5,000 increase, not the stale nought on the tab");
+    ok(d.production['A9001'].weekApps === 2 && d.production['A9001'].weekAPI === 10155,
+       'this week comes through, with no increase in it to add');
+    ok(d.production['A9001'].monthAPI === 94303, 'and this month carries its increase too');
     ok(d.production['A9001'].live === true, 'the figure is marked live, so a screen can say so');
-    ok(d.production['A0001'].settledAPI === 22506, 'and the stale 999 on the other agent is replaced as well');
+    ok(d.production['A0001'].settledAPI === 22506,
+       'an agent with no increases is his settled figure alone, and the stale 999 is gone');
     ok(d.productionSource.matched === 2, 'both agents matched');
-    ok(d.productionSource.countsIncreases === false,
-       'policy increases are not counted toward probation until somebody says they are');
+    ok(d.productionSource.countsIncreases === true,
+       'policy increases count toward probation — the branch decided so on 13 September 2026');
     ok(logins === 1, 'one Salesforce login, not one per query');
-    ok(queries === 3, 'three queries: the year, the month, the week');
+    ok(queries === 6, 'six queries: the year, month and week, each for new business and increases');
   }
   {
     // The case that actually bites: a newly contracted recruit is producing in
@@ -365,7 +376,7 @@ section('Salesforce — where the production figures come from');
     // Signing in already builds the datasets, so the login IS the first screen.
     const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
     const afterFirst = g.__fetches.length;
-    ok(afterFirst === 4, `the first screen costs one login and three queries (${afterFirst})`);
+    ok(afterFirst === 7, `the first screen costs one login and six queries (${afterFirst})`);
     g.handle_('datasets', {}, BM);
     g.handle_('datasets', {}, BM);
     ok(g.__fetches.length === afterFirst, 'and the next two come out of the ten-minute cache, not out of Salesforce');
@@ -375,12 +386,76 @@ section('Salesforce — where the production figures come from');
     // The tab and Salesforce will not always spell a name the same way.
     g.__sheets['Production']._grid[1][1] = 'Rajiv  Soodoo';
     const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
-    ok(d.production['A9001'].settledAPI === 89303, 'a double space between the names still matches');
+    ok(d.production['A9001'].settledAPI === 94303, 'a double space between the names still matches');
     const h = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
     h.__sheets['Production']._grid[1][1] = 'Rajiv K. Soodoo';
     const d2 = h.handle_('datasets', {}, h.login_('Ricky Rampersad', 'bm-pass').token).datasets;
-    ok(d2.production['A9001'].settledAPI === 89303, 'and so does a middle initial on one side only');
+    ok(d2.production['A9001'].settledAPI === 94303, 'and so does a middle initial on one side only');
   }
+}
+
+section('a recruit contracted before anybody typed their agent number');
+{
+  // The case Rajiv is: contracted, settling business, and not yet on the
+  // Production tab. The induction screen looks production up by agent number,
+  // so without a fallback his figures were invisible exactly when somebody
+  // most wanted to see them.
+  const SETTLED = { THIS_YEAR: [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }], THIS_MONTH: [], THIS_WEEK: [] };
+  const salesforce = (url) => {
+    if (/oauth2\/token/.test(url)) return { code: 200, body: JSON.stringify({ access_token: 't', instance_url: 'https://x' }) };
+    const q = decodeURIComponent(url.split('q=')[1] || '');
+    if (/Policy_Increases__c/.test(q)) return { code: 200, body: JSON.stringify({ records: [] }) };
+    const win = ['THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR'].find(w => q.includes(w)) || 'THIS_YEAR';
+    return { code: 200, body: JSON.stringify({ records: SETTLED[win] || [] }) };
+  };
+  const SFPROPS = { SF_KEY: 'k', SF_SECRET: 's', SF_USER: 'u', SF_PASS: 'p' };
+
+  const g = env({ properties: SFPROPS, fetchHandler: salesforce });
+  const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
+  const rec = candidate('rajiv', 'Rajiv Soodoo', 'Akaash Kalladeen');
+  rec.meta.currentStage = 'induction';
+  g.handle_('save', { id: 'rajiv', json: JSON.stringify(rec) }, BM);
+
+  const d = g.handle_('datasets', {}, BM).datasets;
+  ok(d.productionByName['rajiv soodoo'], 'his figures are sent keyed by name, with no agent number anywhere');
+  ok(d.productionByName['rajiv soodoo'].settledAPI === 89303, 'and they are the real ones');
+  ok(!Object.keys(d.production).length, 'while nothing is invented on the agent-number side');
+
+  // Scope still holds: this is Akaash's recruit, not Gary's.
+  const gary = g.handle_('datasets', {}, g.login_('Gary Sookdeo', 'gary-pass').token).datasets;
+  ok(!gary.productionByName['rajiv soodoo'], "a Unit Manager does not get another unit's recruit by name either");
+  const ak = g.handle_('datasets', {}, g.login_('Akaash Kalladeen', 'ak-pass').token).datasets;
+  ok(ak.productionByName['rajiv soodoo'], 'the manager who recruits him does');
+}
+
+section('addRecruit, for somebody already contracted');
+{
+  const salesforce = (url) => {
+    if (/oauth2\/token/.test(url)) return { code: 200, body: JSON.stringify({ access_token: 't', instance_url: 'https://x' }) };
+    const q = decodeURIComponent(url.split('q=')[1] || '');
+    const rows = /Policy_Increases__c/.test(q) || !/THIS_YEAR/.test(q) ? [] : [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }];
+    return { code: 200, body: JSON.stringify({ records: rows }) };
+  };
+  const g = env({ properties: { SF_KEY: 'k', SF_SECRET: 's', SF_USER: 'u', SF_PASS: 'p' }, fetchHandler: salesforce });
+  const id = g.addRecruit('Rajiv Soodoo', 'Akaash Kalladeen', { stage: 'induction' });
+  ok(/^cand_/.test(id), 'it returns the new record id');
+  const row = g.__rows('Candidates')[0];
+  ok(row.Name === 'Rajiv Soodoo' && row.RecruitingManager === 'Akaash Kalladeen', 'the row carries the name and the manager');
+  ok(row.Stage === 'induction', 'at the stage asked for');
+  const rec = JSON.parse(g.handle_('get', { id }, g.login_('Ricky Rampersad', 'bm-pass').token).json);
+  ok(rec.stages.onboarding.agentNumber === '', 'the agent number is left blank rather than invented');
+  ok(rec.stages.induction.contract.probationStart === '', 'and so are the contract dates');
+  ok(g.__logs.some(l => /Still blank/.test(l)), 'and the log says which fields still need somebody');
+  ok(g.__logs.some(l => /89303|89,303/.test(l)), 'it also reports the production Salesforce already has for the name');
+  const again = g.addRecruit('Rajiv  Soodoo', 'Akaash Kalladeen', { stage: 'induction' });
+  ok(again === id && g.__rows('Candidates').length === 1, 'running it twice does not make a second Rajiv');
+  const withDates = g.addRecruit('Someone New', 'Gary Sookdeo', { stage: 'induction', agentNumber: 'A9999', probationStart: '2026-08-01', probationEnd: '2027-03-01' });
+  const rec2 = JSON.parse(g.handle_('get', { id: withDates }, g.login_('Ricky Rampersad', 'bm-pass').token).json);
+  ok(rec2.stages.onboarding.agentNumber === 'A9999' && rec2.stages.induction.contract.probationEnd === '2027-03-01',
+     'what is passed is written');
+  let threw = false;
+  try { g.addRecruit('', 'Gary Sookdeo'); } catch (e) { threw = true; }
+  ok(threw, 'a nameless recruit is refused');
 }
 
 section('the Claude proxy');

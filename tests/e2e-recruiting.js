@@ -34,10 +34,22 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const shot = async (page, name) => { if (SHOTS) { fs.mkdirSync(SHOTS, { recursive: true }); await page.screenshot({ path: path.join(SHOTS, name), fullPage: true }); } };
 
 // ---- the workbook, with a roster and a couple of figures -------------------
+// Salesforce answers with the newest recruit's real settled figures, which are
+// already in board/dashboard.html: 3 apps, $89,303, nothing last year.
+const SF_SETTLED = { THIS_YEAR: [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }], THIS_MONTH: [], THIS_WEEK: [] };
 const g = makeEnv({ gs: ROOT + '/apps-script/Recruiting.gs', strictGrid: true,
-  properties: { ANTHROPIC_API_KEY: 'sk-ant-harness' },
-  fetchHandler: () => ({ code: 200, body: JSON.stringify({ model: 'claude-opus-5', stop_reason: 'end_turn',
-    usage: { input_tokens: 9, output_tokens: 18 }, content: [{ type: 'text', text: 'A coaching brief.' }] }) }) });
+  properties: { ANTHROPIC_API_KEY: 'sk-ant-harness', SF_KEY: 'k', SF_SECRET: 's', SF_USER: 'u', SF_PASS: 'p' },
+  fetchHandler: (url) => {
+    if (/oauth2\/token/.test(url)) return { code: 200, body: JSON.stringify({ access_token: 't', instance_url: 'https://x.my.salesforce.com' }) };
+    if (/salesforce\.com/.test(url)) {
+      const q = decodeURIComponent(url.split('q=')[1] || '');
+      if (/Policy_Increases__c/.test(q)) return { code: 200, body: JSON.stringify({ records: [] }) };
+      const win = ['THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR'].find(w => q.includes(w)) || 'THIS_YEAR';
+      return { code: 200, body: JSON.stringify({ records: SF_SETTLED[win] || [] }) };
+    }
+    return { code: 200, body: JSON.stringify({ model: 'claude-opus-5', stop_reason: 'end_turn',
+      usage: { input_tokens: 9, output_tokens: 18 }, content: [{ type: 'text', text: 'A coaching brief.' }] }) };
+  } });
 g.setup();
 const acc = g.__sheets['Access'];
 acc._grid.length = 1;
@@ -191,8 +203,12 @@ const calls = [], errors = [], dialogs = [];
     await page.waitForSelector('text=A coaching brief.', { timeout: 20000 })
       .then(() => ok(true, 'the coaching brief comes back through the backend proxy'))
       .catch(() => ok(false, 'the coaching brief comes back through the backend proxy'));
-    ok(g.__fetches.length === 1 && JSON.parse(g.__fetches[0].params.payload).model === 'claude-opus-5', 'one outbound call, on claude-opus-5');
-    ok(g.__fetches[0].params.headers['x-api-key'] === 'sk-ant-harness', 'carrying the key from Script Properties, never from the page');
+    // Salesforce is called too now, so pick the Anthropic one out rather than
+    // assuming it is the only thing that went out.
+    const ai = g.__fetches.filter(f => /api\.anthropic\.com/.test(f.url));
+    ok(ai.length === 1 && JSON.parse(ai[0].params.payload).model === 'claude-opus-5', 'one call to Anthropic, on claude-opus-5');
+    ok(ai[0].params.headers['x-api-key'] === 'sk-ant-harness', 'carrying the key from Script Properties, never from the page');
+    ok(g.__fetches.some(f => /salesforce/.test(f.url)), 'and Salesforce was asked for the production figures');
     ok(g.__rows('AiLog')[0].Who === 'Ricky Rampersad', 'and the AiLog records who asked');
   }
 
@@ -218,6 +234,32 @@ const calls = [], errors = [], dialogs = [];
   await page.waitForSelector(`text=${subject}`, { timeout: 20000 })
     .then(() => ok(true, 'the manager who recruits her does see her'))
     .catch(() => ok(false, 'the manager who recruits her does see her'));
+
+  console.log('\nthe newest recruit, contracted and producing, with no agent number yet');
+  {
+    // addRecruit puts him in at the induction stage with the dates left blank.
+    const id = g.addRecruit('Rajiv Soodoo', 'Gary Sookdeo', { stage: 'induction' });
+    ok(!!id, 'addRecruit adds him with nothing invented');
+    await page.reload();
+    await page.waitForSelector('text=Rajiv Soodoo', { timeout: 20000 });
+    ok(true, 'and he appears in the pipeline');
+    await page.click('text=Rajiv Soodoo');
+    await sleep(1200);
+    const ind = page.locator('button:has-text("Induction")').first();
+    if (await ind.count()) { await ind.click({ force: true }).catch(() => {}); await sleep(900); }
+    const body = await page.locator('body').innerText();
+    ok(/89,?303/.test(body),
+       'his $89,303 reaches the induction screen through the name, with no agent number anywhere');
+    ok(/Settled production from Salesforce/.test(body), 'and the panel says where the figure came from');
+    // A recruit added this morning has no probation dates, so there is no pace
+    // to be behind. Saying otherwise is a false alarm on the one screen meant
+    // to tell a manager who genuinely needs intervention.
+    ok(/Probation dates not set/.test(body), 'with no contract dates the screen asks for them');
+    ok(!/Behind probation pace/.test(body), 'rather than calling him behind pace');
+    ok(!/100%/.test(body.split('Coaching reports')[0]), 'and nothing claims 100% of a probation that has not started');
+    ok(!/⚠|In-memory only/.test(body), 'and nothing on the screen is complaining');
+    await shot(page, '06-newest-recruit.png');
+  }
 
   ok(errors.length === 0, 'no console or page errors across the whole run' + (errors.length ? '\n       ' + errors.slice(0, 5).join('\n       ') : ''));
   ok(!g.__lockHeld(), 'the script lock is not left held');

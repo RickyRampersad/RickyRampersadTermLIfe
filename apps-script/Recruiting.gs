@@ -38,7 +38,7 @@
 /* Same reasoning as KPI.gs: from outside you cannot tell whether a paste-and-
    redeploy took. Bump this in the same commit as any change to this file; the
    page shows it, and `ping` returns it. */
-var SCRIPT_VERSION = '2026-09-13b';
+var SCRIPT_VERSION = '2026-09-13c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -480,6 +480,87 @@ function delete_(profile, id) {
   });
 }
 
+/**
+ * Add a recruit who is already contracted, without clicking through eight
+ * stages to reach the one that matters.
+ *
+ * Run it from the editor. Rajiv Soodoo, the newest recruit, contracted under
+ * Akaash and already settling business:
+ *
+ *   addRecruit('Rajiv Soodoo', 'Akaash Kalladeen', { stage: 'induction' })
+ *
+ * and with the dates, once somebody has them in front of them:
+ *
+ *   addRecruit('Rajiv Soodoo', 'Akaash Kalladeen', {
+ *     stage: 'induction', agentNumber: 'A#####',
+ *     probationStart: '2026-08-01', probationEnd: '2027-03-01',
+ *     phone: '', email: ''
+ *   })
+ *
+ * Only what is passed is written. Everything else is left blank rather than
+ * guessed — a POP score or a contract date invented here would be indistinguishable
+ * on screen from one somebody measured. The page fills in the rest of the record's
+ * shape when it loads it, so a short record here becomes a complete one there.
+ *
+ * The agent number can wait: production is matched on the name as well, so a
+ * recruit's settled figures show on the induction screen from the first sign-in.
+ */
+function addRecruit(name, recruitingManager, opts) {
+  opts = opts || {};
+  name = str_(name).trim();
+  if (!name) throw new Error('A name is needed.');
+
+  var existing = allCandidates_().filter(function (c) { return rtNameKey_(c.name) === rtNameKey_(name); })[0];
+  if (existing) {
+    Logger.log(name + ' is already here as ' + existing.id + ' at the ' + (existing.stage || 'first') + ' stage. Nothing changed.');
+    return existing.id;
+  }
+
+  var me = Session.getEffectiveUser().getEmail();
+  var asBm = roster_().filter(function (p) { return appRole_(p).role === 'BM'; })[0];
+  var profile = asBm ? profileOf_(asBm) : { name: me, email: me, role: 'BM', scope: 'all', title: 'Branch Manager' };
+
+  var stage = str_(opts.stage || 'firstInterview');
+  var rec = {
+    id: 'cand_' + Utilities.getUuid().slice(0, 8),
+    created: nowIso_(),
+    updated: nowIso_(),
+    meta: {
+      name: name,
+      recruitingManager: str_(recruitingManager),
+      branchManager: profile.name,
+      phone: str_(opts.phone),
+      email: str_(opts.email),
+      currentStage: stage
+    },
+    stages: {
+      onboarding: { agentNumber: str_(opts.agentNumber) },
+      induction: {
+        status: stage === 'induction' ? 'in_progress' : 'not_started',
+        contract: { probationStart: str_(opts.probationStart), probationEnd: str_(opts.probationEnd) }
+      }
+    }
+  };
+
+  var r = save_(profile, { id: rec.id, json: JSON.stringify(rec) });
+  if (!r.ok) throw new Error('Could not add ' + name + ': ' + r.error);
+
+  var blank = ['agentNumber', 'probationStart', 'probationEnd', 'phone', 'email']
+    .filter(function (k) { return !str_(opts[k]).trim(); });
+  Logger.log('Added ' + name + ' as ' + rec.id + ' at the ' + stage + ' stage, under ' + (recruitingManager || 'nobody yet') + '.');
+  if (blank.length) Logger.log('Still blank, to be filled in on the screen: ' + blank.join(', ') + '.');
+  if (rtSfConfigured_()) {
+    var live = null;
+    try { live = rtLiveProduction_().byName; } catch (e) {}
+    var hit = null;
+    if (live) Object.keys(live).forEach(function (n) { if (rtNameKey_(n) === rtNameKey_(name)) hit = live[n]; });
+    Logger.log(hit
+      ? 'Salesforce has ' + hit.apps + ' settled app(s) and $' + hit.settledAPI + ' for this name — it will show on the induction screen without the agent number.'
+      : 'Salesforce has no settled production under this name yet.');
+  }
+  return rec.id;
+}
+
 // ---------------------------------------------------------------------------
 //  Documents — Drive, not cells
 // ---------------------------------------------------------------------------
@@ -689,8 +770,35 @@ function datasetsFor_(profile) {
      above, so a Unit Manager's overlay covers only his own agents. */
   var liveInfo = rtApplyLiveProduction_(production);
 
-  return { production: production, cohort: cohort, managerPulse: pulse,
-           variance: variance, marketSurveys: surveys, productionSource: liveInfo };
+  /* A newly contracted recruit produces before anybody types their agent
+     number into the onboarding stage, and the induction screen looks
+     production up by that number — so their figures were invisible exactly
+     when somebody most wanted to see them. Send the live figures keyed by name
+     as well, and the page falls back to it.
+
+     Scoped the same way as everything else: a manager sees it for the
+     candidates they can see and the agents in their own cohort, nobody else. */
+  var byName = {};
+  if (liveInfo.source === 'salesforce') {
+    var allowed = {};
+    if (own) {
+      cohort.forEach(function (c) { if (c.name) allowed[rtNameKey_(c.name)] = true; });
+      allCandidates_().forEach(function (c) {
+        if (canSee_(profile, c) && c.name) allowed[rtNameKey_(c.name)] = true;
+      });
+    }
+    var live = {};
+    try { live = rtLiveProduction_().byName || {}; } catch (e) { live = {}; }
+    Object.keys(live).forEach(function (n) {
+      var k = rtNameKey_(n);
+      if (own && !allowed[k]) return;
+      byName[k] = live[n];
+    });
+  }
+
+  return { production: production, productionByName: byName, cohort: cohort,
+           managerPulse: pulse, variance: variance, marketSurveys: surveys,
+           productionSource: liveInfo };
 }
 
 // ---------------------------------------------------------------------------
@@ -716,12 +824,15 @@ var RT_SF = {
   LOGIN: 'https://login.salesforce.com',
   CACHE_MIN: 10,          // Salesforce sees at most a handful of queries an hour
   TOKEN_MIN: 50,
-  /* Whether a policy increase counts toward the probation quota. The wall board
-     keeps increases on their own footing — API_Increase__c on Policy_Increases__c
-     is the branch's confirmed Total API basis — and the branch may or may not
-     count them against a new agent's $105k. Off until somebody says otherwise,
-     because counting them silently would flatter every probation figure. */
-  COUNT_INCREASES: false
+  /* Policy increases count toward the probation quota — the branch's decision,
+     13 September 2026. They sit on Policy_Increases__c with their own picked-up
+     date, and API_Increase__c is the branch's confirmed Total API basis; do not
+     swap it for Increase_API__c, which is the joint-split field.
+
+     One difference worth knowing when a figure looks high: new business counts
+     when it SETTLES, increases count when they are PICKED UP. That is how the
+     wall board has always measured them, so the two screens agree. */
+  COUNT_INCREASES: true
 };
 
 function rtSfProps_() { return PropertiesService.getScriptProperties(); }
@@ -802,6 +913,8 @@ function rtLiveProduction_() {
     var iSel = 'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(API_Increase__c) api ';
     var iBase = 'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c';
     add(rtSfQuery_(iSel + iBase + ' = THIS_YEAR' + grp), { n: 'apps', api: 'settledAPI' });
+    add(rtSfQuery_(iSel + iBase + ' = THIS_MONTH' + grp), { n: 'monthApps', api: 'monthAPI' });
+    add(rtSfQuery_(iSel + iBase + ' = THIS_WEEK' + grp), { n: 'weekApps', api: 'weekAPI' });
   }
 
   var out = { asOf: nowIso_(), byName: byName, cached: false };

@@ -145,6 +145,34 @@ can see the names Salesforce uses before anybody signs in.
 is used, and the panel says so instead of claiming to be live. Salesforce being
 down does the same thing rather than emptying the screen.
 
+### Adding somebody already contracted
+
+A recruit who has signed and started producing does not need walking through
+eight stages. Run this from the editor:
+
+```
+addRecruit('Rajiv Soodoo', 'Akaash Kalladeen', { stage: 'induction' })
+```
+
+and again with the dates once somebody has them in front of them — it will not
+make a second record for a name already there:
+
+```
+addRecruit('Rajiv Soodoo', 'Akaash Kalladeen', {
+  stage: 'induction', agentNumber: 'A#####',
+  probationStart: '2026-08-01', probationEnd: '2027-03-01'
+})
+```
+
+Only what you pass is written; everything else is left blank rather than
+guessed, and the execution log names the fields still waiting for somebody. A
+POP score or a contract date invented at this point would be indistinguishable
+on screen from one that was measured.
+
+Until the probation dates are set the induction screen says *Probation dates not
+set* rather than judging the recruit against a clock that has not been started.
+The production figures are there from the first sign-in regardless.
+
 ### How an agent's figures find their way to a recruit
 
 Salesforce knows agents by **name**; the tracker looks production up by **agent
@@ -154,17 +182,26 @@ row. Names are matched on first and last word, so a double space or a middle
 initial on one side does not break the join.
 
 An agent settling business who has **no row on the Production tab** is named in
-`productionSource.unplaced` rather than dropped. That is exactly what a newly
-contracted recruit looks like before anybody adds them — add the row, with their
-agent number, and the figures attach themselves.
+`productionSource.unplaced` rather than dropped.
+
+The agent number can wait, though. The live figures are also sent keyed by the
+agent's name, and the induction screen falls back to that — so a recruit
+contracted this month has their settled production on screen before anybody has
+typed a number anywhere. Rajiv Soodoo's $89,303 shows on his induction screen
+with the agent number field still empty.
 
 ### Policy increases
 
-`RT_SF.COUNT_INCREASES` is **off**. Increases live on `Policy_Increases__c` with
-their own picked-up date, and the branch may or may not count them toward a new
-agent's $105,000. Counting them silently would flatter every probation figure on
-the screen, so it is a decision somebody makes rather than a default. Turn it on
-at the top of `Recruiting.gs` if the answer is yes.
+`RT_SF.COUNT_INCREASES` is **on** — the branch's decision, 13 September 2026. A
+probation figure is settled new business plus increases, the increases coming
+from `Policy_Increases__c` on `API_Increase__c`, which is the branch's confirmed
+Total API basis. Do not swap it for `Increase_API__c`; that is the joint-split
+field, and the wall board's note about it applies here too.
+
+One difference worth knowing when a figure looks higher than expected: **new
+business counts when it settles, an increase counts when it is picked up.** That
+is how the wall board has always measured them, so the two screens agree with
+each other. Setting `COUNT_INCREASES` to `false` returns to new business alone.
 
 ### What it costs Salesforce
 

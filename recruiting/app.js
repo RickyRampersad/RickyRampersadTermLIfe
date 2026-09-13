@@ -1502,7 +1502,22 @@ function bandForScore(e, t) {
   return Number.isNaN(n) ? null : a.bands.find((e) => n >= e.min && n < e.max) || a.bands[a.bands.length - 1];
 }
 // Filled from the workbook after sign-in — see loadDatasets(). Empty until then.
-let PRODUCTION_SOURCE = null;
+let PRODUCTION_SOURCE = null,
+  PRODUCTION_BY_NAME = {};
+/* Salesforce knows an agent by name, the onboarding stage knows them by agent
+   number, and a recruit contracted this month has production before anybody
+   types the number in. Match on first and last word — the same rule the server
+   uses — so the figures are there either way. */
+function nameKey(s) {
+  const w = String(s || "").toLowerCase().replace(/[^a-z\s]/g, " ").split(/\s+/).filter(Boolean);
+  return !w.length ? "" : w.length === 1 ? w[0] : `${w[0]} ${w[w.length - 1]}`;
+}
+function productionFor(candidate) {
+  const num = candidate?.stages?.onboarding?.agentNumber || "";
+  if (num && PRODUCTION_DATA[num]) return PRODUCTION_DATA[num];
+  const byName = PRODUCTION_BY_NAME[nameKey(candidate?.meta?.name)];
+  return byName || null;
+}
 // Where the production figures came from this session — Salesforce, or the
 // Production tab when Salesforce is not set up or did not answer.
 function productionSubtitle() {
@@ -9315,17 +9330,20 @@ function InductionStage({ candidate: e, persist: t }) {
   const a = e.stages.induction,
     n = (e, a) => t((t) => setPath(t, ["stages", "induction", ...e], a)),
     r = e.stages.onboarding?.agentNumber || "",
-    s = PRODUCTION_DATA[r] || null,
+    s = productionFor(e),
     o = e.stages.firstInterview?.date,
     c = o ? Math.floor((Date.now() - new Date(o).getTime()) / 864e5) : null,
     i = a.contract?.probationEnd,
     l = i ? Math.floor((new Date(i).getTime() - Date.now()) / 864e5) : null,
-    m =
-      a.contract?.probationStart && i
-        ? Math.floor((new Date(i).getTime() - new Date(a.contract.probationStart).getTime()) / 864e5)
-        : 210,
+    /* Both dates, or there is no clock. A blank contract used to fall back to
+       210 days, which made a recruit added this morning read as 100% elapsed
+       and "behind probation pace — coaching intervention required". */
+    paceKnown = !!(a.contract?.probationStart && i),
+    m = paceKnown
+      ? Math.floor((new Date(i).getTime() - new Date(a.contract.probationStart).getTime()) / 864e5)
+      : 0,
     d = m - (l || 0),
-    p = m > 0 ? Math.max(0, Math.min(100, Math.round((d / m) * 100))) : 0,
+    p = paceKnown && m > 0 ? Math.max(0, Math.min(100, Math.round((d / m) * 100))) : 0,
     u = s?.settledAPI || 0,
     h = s?.apps || 0,
     g = Math.round(0.4 * u),
@@ -9335,7 +9353,7 @@ function InductionStage({ candidate: e, persist: t }) {
     x =
       a.quotas.commissionsTarget > 0 ? Math.min(150, Math.round((g / a.quotas.commissionsTarget) * 100)) : 0,
     v = p,
-    y = b >= v - 10 && f >= v - 10,
+    y = paceKnown ? b >= v - 10 && f >= v - 10 : null,   // null — not judged, rather than judged badly
     R = e.meta.name || "[Candidate Name]",
     E = e.meta.branchManager || "Ricky Rampersad",
     w = e.meta.recruitingManager || "[Unit Manager]",
@@ -9345,7 +9363,7 @@ function InductionStage({ candidate: e, persist: t }) {
     { className: "space-y-3" },
     React.createElement(
       "div",
-      { className: "rounded-sm overflow-hidden border-2", style: { borderColor: y ? "#10b981" : "#dc2626" } },
+      { className: "rounded-sm overflow-hidden border-2", style: { borderColor: y === null ? "#d6d3d1" : y ? "#10b981" : "#dc2626" } },
       React.createElement(
         "div",
         {
@@ -9413,15 +9431,14 @@ function InductionStage({ candidate: e, persist: t }) {
                   React.createElement(
                     "span",
                     { className: "font-serif text-xl font-bold text-white leading-none" },
-                    p,
-                    "%",
+                    paceKnown ? p + "%" : "—",
                   ),
                 ),
               ),
               React.createElement(
                 "div",
                 { className: "text-[10px] text-stone-300 mt-1 uppercase tracking-wider" },
-                "Elapsed",
+                paceKnown ? "Elapsed" : "No dates set",
               ),
             ),
             null !== l &&
@@ -9453,22 +9470,25 @@ function InductionStage({ candidate: e, persist: t }) {
         "div",
         {
           className: "px-5 py-3 flex items-center gap-3",
-          style: { backgroundColor: y ? "#ecfdf5" : "#fef2f2" },
+          style: { backgroundColor: y === null ? "#fafaf9" : y ? "#ecfdf5" : "#fef2f2" },
         },
         React.createElement("div", {
-          className: "w-2 h-2 rounded-full " + (y ? "bg-emerald-500" : "bg-rose-500"),
+          className: "w-2 h-2 rounded-full " + (y === null ? "bg-stone-400" : y ? "bg-emerald-500" : "bg-rose-500"),
         }),
         React.createElement(
           "div",
-          { className: "text-sm font-semibold", style: { color: y ? "#065f46" : "#991b1b" } },
-          y ? "On pace for probation quotas" : "Behind probation pace — coaching intervention required",
+          { className: "text-sm font-semibold", style: { color: y === null ? "#57534e" : y ? "#065f46" : "#991b1b" } },
+          y === null
+            ? "Probation dates not set — add them below to track pace"
+            : y
+              ? "On pace for probation quotas"
+              : "Behind probation pace — coaching intervention required",
         ),
         React.createElement(
           "span",
           { className: "text-[10px] text-stone-500 font-mono ml-auto" },
-          "Expected by today: ",
-          v,
-          "% · API: ",
+          y === null ? "" : "Expected by today: " + v + "% · ",
+          "API: ",
           b,
           "% · Apps: ",
           f,
@@ -13576,6 +13596,7 @@ function applySession(r) {
   AGENT_MONTHLY_VARIANCE = d.variance || {};
   MARKET_SURVEYS = d.marketSurveys || {};
   PRODUCTION_SOURCE = d.productionSource || null;
+  PRODUCTION_BY_NAME = d.productionByName || {};
 }
 
 function clearUiState() {

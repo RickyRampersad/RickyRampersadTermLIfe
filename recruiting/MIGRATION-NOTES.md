@@ -176,12 +176,19 @@ the numbers. An agent producing with no row there is reported by name instead of
 being dropped — which is what a newly contracted recruit looks like before
 anybody adds them.
 
-Not connected, and deliberately: `RT_SF.COUNT_INCREASES` is off, so
-`Policy_Increases__c` does not count toward a probation quota until the branch
-says it should.
+Policy increases count toward the probation quota — the branch's decision, 13
+September 2026. `Policy_Increases__c` on `API_Increase__c`, counted when picked
+up, where new business is counted when it settles; that is how the wall board
+measures them, so the two screens agree.
 
-Still open: **Rajiv Soodoo** is the newest recruit and is already producing —
-3 apps, $89,303 settled, nothing last year — but he exists here only in
-`board/dashboard.html`. He has no Cohort row, no Production row and no candidate
-record, so the tracker cannot show him. His agent number, contract date and POP
-scores are not in this repository and are not things to guess.
+**Rajiv Soodoo**, the newest recruit, is what drove the rest of it. He is
+contracted and producing — 3 apps, $89,303 — but the induction screen looked
+production up by agent number alone, so a recruit contracted before anybody
+typed that number in had no figures at all, on the one screen that exists to
+watch a new agent. Live production is now sent keyed by name as well and the
+screen falls back to it. `addRecruit()` puts somebody already contracted
+straight in at the induction stage with nothing invented.
+
+His agent number, contract dates and POP scores are still not in this
+repository, and are not things to guess. The screen asks for them rather than
+filling them in.
