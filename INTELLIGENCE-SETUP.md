@@ -1957,12 +1957,19 @@ conversions.
 | **Liberator** | `LB`, `LIB` | Premium to 65, 75, 85 or 100 | 253 · $117m · $131k |
 | **Rejuvenator** | `CRI`, `CR2`, `CR3`, `CR4` | Critical illness | 789 · $520m · $650k |
 
-**The hero is the opportunity, not the total.** A Liberator issued
-**2009 or earlier can simply be extended** — no application, no underwriting,
-no new policy. There are **17** of them on the book, **$16.4m** of cover,
-written between 2001 and 2009. `IPERM_EXTEND_Y` holds the year.
+**The hero is the opportunity, not the total** — and what that opportunity is
+was corrected on 13 September 2026 by the company's own memorandum, which the
+next section sets out in full. In short: it is the Liberators whose **premium
+stops at 65** (13 policies, **$13.85m**), not the ones issued before 2010
+(17 policies, of which 15 already pay to 75, 85 or 100 and have nothing to
+extend), and the extension is bought with **an additional premium after full
+underwriting on the increase** — not "no application, no underwriting", which
+is what this screen said for a day.
 
-**And the riders, which almost nobody opens:**
+**And the riders, which almost nobody opens** — counted here on the presence
+of the field, which is why these numbers are a little higher than §3j's: that
+screen counts only riders with cover **greater than nought**, and 144 critical
+illness rows and 332 accidental death rows carry a coverage of zero.
 
 | Rider | Policies | Cover | Premium |
 |---|---|---|---|
@@ -1971,8 +1978,55 @@ written between 2001 and 2009. `IPERM_EXTEND_Y` holds the year.
 | Waiver of premium | 1,452 | — | $177k |
 | Disability income | 30 | — | $1.8k |
 
+**Every one of them ends on a date** — see §3j. This screen's own cover does
+not, which is why the two are separate screens.
+
 The critical illness rider alone carries **more cover than the entire term
 book**.
+
+### The extension, on the company's own terms
+
+**Source: memorandum of 6 March 2017, Norris Lovelace, VP Insurance Operations
+– Individual Life, "Age Extensions on Life Evolution Liberator."** Questions
+go to Dena Renwick, Manager, Customer Support. The screen cites the date so a
+room can check it.
+
+This screen used to lead on *"Liberator issued 2009 or earlier — just extend,
+no application, no underwriting."* **Both halves of that were wrong**, and the
+memorandum is what settled it.
+
+**Which policies.** The memorandum's history explains the confusion: extension
+used to be granted only to policies issued before 2009, at maturity, because
+Guardian had no option for a client to pay a premium beyond 65. Liberator Plus
+arrived in 2009 with 75, 85 and 100 — and that option was not given to the
+book already written. From **1 March 2017** it is. The operative sentence
+carries no issue-year limit, so what decides it is **whether the premium stops
+at 65**, because that is the policy that runs out of road.
+
+| Gate | Where it comes from |
+|---|---|
+| Premium paid to **65** (`LB65`, `LB65 1`, `LIB65`, `LIB 65`) | the plan code — `Maturity_Date__c` is empty on 244 of the 257 Liberators in force, so it cannot stand in |
+| Premium paying, **no more than three months in arrears** | the guidelines, applied against the dues tab's own `days` column (`IPERM_ARREARS_D = 92`) |
+| Sum assured **at least $100,000** | the company minimum; below it there is no extension to be had (`IPERM_MIN_SUM`) |
+| The **original** sum assured, no decreases | the guidelines |
+| **One** alteration with a premium change | after that it is client accumulation as the contract sets out. Salesforce carries no field for "already altered", so the screen cannot test this one — it says the rule instead |
+| **Never Rejuvenator** | extensions by premium are not facilitated on Rejuvenator at all, no extension of existing Rejuvenator cover to 80, and no Rejuvenator Plus to 70 by client accumulation |
+
+**And it is not free.** Full underwriting takes place on the **increased
+portion only**, at the client's current age, and **Guardian bears the cost of
+the underwriting**. If health has changed, the rating applies to the increase
+alone; if the policy was already rated, that rating carries over. The
+memorandum's own worked example: $200,000 to age 65 buys only $125,000 to age
+75 on the same $175 premium, so $75,000 has to be bought back for an extra
+$100 — **$275 for the cover the client already had.**
+
+**What the old filter cost.** Gating on the issue year found **17** in-force
+Liberators written before 2010, of which **11 already pay to 85, 3 to 75 and
+1 to 100** — fifteen policies with nothing to extend, presented as the one
+thing an agent could act on this week. The premium-period gate finds **13**,
+worth **$13.85m** of cover and **$7,638** of premium, across 9 agents. Two of
+those 13 were written before 2009; the other eleven were written between 2013
+and 2025, which is a question for the plan codes and not for this screen.
 
 #### Two rules, on this screen as much as the other
 

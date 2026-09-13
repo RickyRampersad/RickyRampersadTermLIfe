@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-12d';
+var INTEL_VERSION = '2026-09-13a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1267,8 +1267,10 @@ var ICONV_TOP     = 14;       // agents on screen
      the destination, not a lead.
 
      LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and it is
-     the one the branch is watching. Policies issued 2009 and earlier can
-     simply be extended, and that is an opportunity rather than a problem.
+     the one the branch is watching. The ones paid to 65 can be EXTENDED — for
+     an additional premium, after underwriting on the increase only. That is
+     an opportunity rather than a problem, and the company's rules for it are
+     set out at IPERM_EXTEND_AGE.
 
      REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
 
@@ -1661,8 +1663,49 @@ function iConversionWall_() {
    ══════════════════════════════════════════════════════════════════════════ */
 
 var IPERM_HOLD_S   = 15 * 60;
-var IPERM_EXTEND_Y = 2009;    // Liberator issued this year or earlier may extend
 var IPERM_TOP      = 12;      // agents on screen
+
+/* ── THE EXTENSION, on the company's own terms ─────────────────────────────
+   Memorandum, Norris Lovelace, VP Insurance Operations – Individual Life,
+   6 March 2017: "AGE EXTENSIONS ON LIFE EVOLUTION LIBERATOR". It replaced
+   what this screen used to say, and what it used to say was wrong twice over.
+
+   The history is the first paragraph: extension was granted only to policies
+   issued before 2009, at maturity, because Guardian had no option for a
+   client to pay a premium beyond 65. Liberator Plus in 2009 brought 75, 85
+   and 100 — and that option was not given to the group already written. From
+   1 MARCH 2017 it is, BY WAY OF AN ADDITIONAL PREMIUM.
+
+   So the screen used to lead on "issued 2009 or earlier — just extend, no
+   application, no underwriting". Both halves of that are wrong:
+
+     WHICH POLICIES. The operative sentence carries no issue-year limit. What
+     decides it is whether the premium stops at 65, because that is the policy
+     that runs out of road. On the in-force book that is thirteen policies —
+     and only two of them were written before 2009, so the old filter found
+     seventeen policies of which fifteen had nothing to extend.
+
+     "NO UNDERWRITING" IS FALSE. Full underwriting takes place on the
+     increased portion, at the client's current age. Guardian bears the cost
+     of it. If health has changed, the rating applies to the increase only.
+     The premium goes up: the memo's own worked example is $200,000 to age 65
+     becoming $125,000 to age 75 on the same $175, so $75,000 has to be bought
+     back at an extra $100 — $275 for the cover they already had.
+
+   And the gates, verbatim from the guidelines:
+     · premium paying and up to date — NO MORE THAN THREE MONTHS IN ARREARS
+     · the extension is on the ORIGINAL sum assured; no decreases
+     · total sum assured cannot be below the company minimum of $100,000
+     · ONE alteration only with a premium change; after that it is client
+       accumulation as the contract sets out
+     · NOT available on Rejuvenator at all, and no extension of existing
+       Rejuvenator coverage to age 80
+   Questions go to Dena Renwick, Manager, Customer Support.
+   ─────────────────────────────────────────────────────────────────────────── */
+var IPERM_EXTEND_AGE = 65;       // the premium period that runs out of road
+var IPERM_MIN_SUM    = 100000;   // the company minimum, below which no extension
+var IPERM_ARREARS_D  = 92;       // "no more than three months in arrears"
+var IPERM_MEMO       = '6 March 2017 memorandum, VP Insurance Operations';
 
 /* The premium-paying period each family runs to, in the branch's words. Shown
    on the screen so nobody reads "to 65" as "ends at 65" again. */
@@ -1685,6 +1728,18 @@ function iPermFam_(raw) {
     });
   });
   return best ? best.f : null;
+}
+
+/* Liberator with the premium paid to 65, across every way the branch types
+   it: LB65, LB65 1, LIB65, LIB 65. The number in the plan code IS the premium
+   period — it is not an expiry, and reading it as one is what put Econo Life
+   in the wrong column for a day. Maturity_Date__c cannot stand in for this:
+   it is empty on 244 of the 257 Liberators in force. */
+function iPermExtendLike_() {
+  var likes = ['LB' + IPERM_EXTEND_AGE, 'LIB' + IPERM_EXTEND_AGE, 'LIB ' + IPERM_EXTEND_AGE];
+  return '(' + likes.map(function (k) {
+    return "Life_Plan_01__c LIKE '" + k + "%'";
+  }).join(' OR ') + ')';
 }
 
 function iPermLike_() {
@@ -1720,12 +1775,12 @@ function iPermanentWall_() {
                  ' GROUP BY Life_Plan_01__c ORDER BY COUNT(Id) DESC LIMIT 200');
 
   /* THE OPPORTUNITY, read row by row. Status alone is not enough — the branch
-     asked for in force AND paid to date, and Salesforce is stale on both — so
-     every one of these has to be looked up in the dues tab one at a time.
-     There are seventeen of them, which is what makes that affordable. */
+     asked for in force AND paid to date, the memo asks for no more than three
+     months in arrears, and Salesforce is stale on both — so every one of
+     these has to be looked up in the dues tab one at a time. There are
+     thirteen of them, which is what makes that affordable. */
   var extRows = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c, ISSUE_DATE__c' +
-                  from + "(Life_Plan_01__c LIKE 'LB%' OR Life_Plan_01__c LIKE 'LIB%') AND " + live +
-                  ' AND ISSUE_DATE__c < ' + (IPERM_EXTEND_Y + 1) + '-01-01' +
+                  from + iPermExtendLike_() + ' AND ' + live +
                   ' ORDER BY Life_Coverage__c DESC LIMIT 400');
 
   /* How long the whole permanent book has been paying, by the year it was
@@ -1789,7 +1844,10 @@ function iPermanentWall_() {
 
   var skip = iExcluded_();
   var extend = { n: 0, cover: 0, prem: 0, oldest: null };
-  var extState = { ready: 0, collect: 0, gone: 0 };
+  /* Five states, not three. The memorandum draws two lines the wall used not
+     to draw: three months of arrears, and the company minimum sum assured. */
+  var extState = { ready: 0, collect: 0, behind: 0, gone: 0, small: 0 };
+  var small = { n: 0, cover: 0 };
   var agIdx = {};
   (extRows || []).forEach(function (r) {
     var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
@@ -1797,8 +1855,22 @@ function iPermanentWall_() {
     /* A policy the tab has never heard of counts as ready — the same rule the
        conversion screen uses, and for the same reason. */
     var st = hit ? hit.state : 'ready';
+    /* THE THREE-MONTH LINE. The dues tab carries the days, so the memo's own
+       rule is applied rather than approximated: in arrears but inside three
+       months is still eligible, with the premium to collect first. Past that
+       it is not eligible until the policy is brought up to date. */
+    if (st === 'collect' && hit && iNum_(hit.days) > IPERM_ARREARS_D) st = 'behind';
+    /* THE COMPANY MINIMUM. Under $100,000 there is no extension to be had,
+       whatever the policy has paid, so it is counted and named rather than
+       listed as an opportunity that does not exist. */
+    var sum = iNum_(r.Life_Coverage__c);
+    if (st !== 'gone' && sum < IPERM_MIN_SUM) {
+      extState.small++; small.n++; small.cover += sum;
+      return;
+    }
     extState[st]++;
     if (st === 'gone') return;                       // not in force: off the list
+    if (st === 'behind') return;                     // more than three months behind
     /* An excluded agent comes out of the HEADLINE as well as the list, the
        same way it works on the conversions screen. intelExclude names people
        who have left the branch; leaving their cover in the figure while
@@ -1828,9 +1900,21 @@ function iPermanentWall_() {
     delete a.oldest;
     return a;
   }).sort(function (a, b) { return b.cover - a.cover; });
+  /* One of anything reads badly on a wall, and these counts are often one. */
+  var plural = function (k, one, many) { return k === 1 ? one : many; };
   if (extState.gone) {
-    notes.push(extState.gone + ' of the older Liberators are off the list \u2014 the dues tab says they have ' +
-               'lapsed, been surrendered or matured. Salesforce still shows them paying.');
+    notes.push(extState.gone + plural(extState.gone, ' Liberator is', ' Liberators are') +
+               ' off the list \u2014 the dues tab says the policy has lapsed, been surrendered ' +
+               'or matured. Salesforce still shows it paying.');
+  }
+  if (extState.behind) {
+    notes.push(extState.behind + plural(extState.behind, ' cannot be extended', ' cannot be extended') +
+               ' until brought up to date \u2014 the memorandum allows no more than three months ' +
+               'in arrears.');
+  }
+  if (extState.small) {
+    notes.push(extState.small + plural(extState.small, ' carries', ' carry') +
+               ' less than the company minimum of $100,000, so there is no extension to be had.');
   }
 
   /* Years in force, in bands rather than by year — a room reads five bands
@@ -1866,7 +1950,11 @@ function iPermanentWall_() {
 
   return {
     configured: true, generatedAt: iIso_(today),
-    extendYear: IPERM_EXTEND_Y,
+    extendAge: IPERM_EXTEND_AGE,
+    minSum: IPERM_MIN_SUM,
+    arrearsDays: IPERM_ARREARS_D,
+    memo: IPERM_MEMO,
+    small: small,
     total: tot,
     families: families,
     extend: extend,

@@ -154,7 +154,8 @@
   .frow{align-items:start}
   .frow .v{padding-top:2px}
   @media (max-width:760px){
-    main.rid{grid-template-columns:1fr;grid-template-rows:none;padding:0 16px 18px}
+    main.rid{grid-template-columns:1fr;grid-template-rows:none;
+      height:auto;padding:0 16px 18px}
     main.rid > .card:nth-of-type(2),
     main.rid > .stack{grid-column:1;grid-row:auto}
   }
@@ -193,7 +194,12 @@
   /* The agent list takes the height it is given and is trimmed to fit by
      script — a wall is not scrolled, so a row that does not fit must not be
      drawn at all. Everything else on this card is fixed. */
-  .stack > .card{display:flex;flex-direction:column;min-height:0}
+  /* A CARD CLIPS ITS OWN CONTENT. Without this, anything that outgrows a card
+     is not clipped by the card — it spills past it and, on a short screen,
+     past the bottom of the television, where nobody can see it and no fold
+     check on the page itself will notice. The measured trim below is what
+     stops that being silent; this is the guard that stops it being visible. */
+  .stack > .card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
   #rList{min-height:0;overflow:hidden;flex:1 1 auto}
   /* Four riders, always. It is the agent list that gives way if the card is
      short — losing a rider off the bottom of a screen that exists to show
@@ -267,7 +273,8 @@
      well as the columns themselves — a grid-column set outside a query wins
      inside it, and that is what kept this page in two columns on a phone. */
   @media (max-width:760px){
-    main.rid{grid-template-columns:1fr;grid-template-rows:none;padding:0 16px 18px}
+    main.rid{grid-template-columns:1fr;grid-template-rows:none;
+      height:auto;padding:0 16px 18px}
     main.rid > .card:nth-of-type(2),
     main.rid > .stack{grid-column:1;grid-row:auto}
     .chead{display:none}
@@ -417,6 +424,25 @@ function ord(d){
   return "the " + d + sfx;
 }
 
+/* Trim a list until ITS CARD fits, not merely until the list fits its own
+   box. Everything beneath the list in these cards is fixed — a second table,
+   a chip row, a line of context — so a list that fits its own share can
+   still push the fixed part off the bottom of the screen. Measured against
+   the card, which is the thing that actually has a height. */
+function fitIn(box, keep){
+  var gone = 0;
+  if (!box) return 0;
+  var card = box.parentNode;
+  var over = function () {
+    return (card && card.scrollHeight > card.clientHeight + 1) ||
+           box.scrollHeight > box.clientHeight + 1;
+  };
+  while (box.children.length > keep && over()) {
+    box.removeChild(box.lastElementChild); gone++;
+  }
+  return gone;
+}
+
 function paint(){
   var ok = !!D.configured;
   var h = D.head || {}, bk = D.book || {}, gn = D.gone || {}, tm = D.thisMonth || {},
@@ -521,7 +547,7 @@ function paint(){
     '</div>';
   }).join("") : '<div class="cap">' + (ok ? "No rider on the book has expired on a policy still paying."
                                           : "Waiting on the feed.") + '</div>';
-  var hidden = fit(list, 3);
+  var hidden = fitIn(list, 3);
   /* The months ahead are chips and they wrap, so they give way before
      anything else. The strip itself is never trimmed — it is the screen. */
   fit($("#rMonths"), 0);
@@ -552,6 +578,14 @@ function paint(){
 }
 
 paint();
+
+/* THE TRIM HAS TO RUN AFTER THE FONT ARRIVES. The webfont is deliberately
+   non-blocking, so the first paint measures rows in the system fallback and
+   the real face swaps in afterwards — taller. The lists were trimmed against
+   the wrong height and the last row ended up sliced through the middle inside
+   its own card, which no fold check catches because the card clips it. paint()
+   is idempotent, so it is simply run again once the fonts are settled. */
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ paint(); });
 var reflow=null;
 addEventListener("resize",function(){ clearTimeout(reflow); reflow=setTimeout(paint,180); });
 </script>

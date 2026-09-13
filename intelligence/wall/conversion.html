@@ -174,7 +174,12 @@
   /* The agent table's card takes the height it is given and the list inside
      it is trimmed to fit by script — a wall is not scrolled, so a row that
      does not fit must not be drawn at all. */
-  .stack > .card{display:flex;flex-direction:column;min-height:0}
+  /* A CARD CLIPS ITS OWN CONTENT. Without this, anything that outgrows a card
+     is not clipped by the card — it spills past it and, on a short screen,
+     past the bottom of the television, where nobody can see it and no fold
+     check on the page itself will notice. The measured trim below is what
+     stops that being silent; this is the guard that stops it being visible. */
+  .stack > .card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
   #cList,#cYears{min-height:0;overflow:hidden;flex:1 1 auto}
   #cMix,#cSoonSum{flex:none}
   .chead,.crow{display:grid;grid-template-columns:1fr 62px 50px 46px 52px 88px 74px;gap:8px;align-items:center}
@@ -392,6 +397,25 @@ function fit(box, keep){
   }
   return gone;
 }
+/* Trim a list until ITS CARD fits, not merely until the list fits its own
+   box. Everything beneath the list in these cards is fixed — a second table,
+   a chip row, a line of context — so a list that fits its own share can
+   still push the fixed part off the bottom of the screen. Measured against
+   the card, which is the thing that actually has a height. */
+function fitIn(box, keep){
+  var gone = 0;
+  if (!box) return 0;
+  var card = box.parentNode;
+  var over = function () {
+    return (card && card.scrollHeight > card.clientHeight + 1) ||
+           box.scrollHeight > box.clientHeight + 1;
+  };
+  while (box.children.length > keep && over()) {
+    box.removeChild(box.lastElementChild); gone++;
+  }
+  return gone;
+}
+
 function paint(){
   hidden = 0;
   var ok = !!D.configured, h = D.head || {};
@@ -475,7 +499,7 @@ function paint(){
     '</div>';
   }).join("") : '<div class="cap">' + (ok ? "No birthdays in the convertible book this month."
                                           : "Waiting on the feed.") + '</div>';
-  hidden = fit(list, 3);
+  hidden = fitIn(list, 3);
 
   var mix = $("#cMix"), fams = (D.mix || []);
   mix.innerHTML = fams.map(function(f){
@@ -505,6 +529,14 @@ function paint(){
   $("#cSoonH").textContent = ok ? "Term that simply ends \u00b7 next " + D.years + " years" : "Term that simply ends";
 }
 paint();
+
+/* THE TRIM HAS TO RUN AFTER THE FONT ARRIVES. The webfont is deliberately
+   non-blocking, so the first paint measures rows in the system fallback and
+   the real face swaps in afterwards — taller. The lists were trimmed against
+   the wrong height and the last row ended up sliced through the middle inside
+   its own card, which no fold check catches because the card clips it. paint()
+   is idempotent, so it is simply run again once the fonts are settled. */
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ paint(); });
 </script>
 
 <script>

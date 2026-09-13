@@ -159,6 +159,43 @@ const RID = { ok: true, data: {
   notes: ['3,280 of the 5,924 riders in force carry no expiry date at all, so no screen can tell you when they end.']
 } };
 
+/* The permanent book with the memorandum's states on it: clear to extend, in
+   arrears inside three months, and over three months so not eligible yet. */
+const PERM = { ok: true, data: {
+  configured: true, generatedAt: '2026-09-13', extendAge: 65, minSum: 100000,
+  arrearsDays: 92, memo: '6 March 2017 memorandum, VP Insurance Operations',
+  total: { n: 2986, cover: 1982000000, prem: 14600000 },
+  extend: { n: 13, cover: 13850000, prem: 7638, since: 2002, years: 24 },
+  state: { ready: 9, collect: 2, behind: 1, gone: 1, small: 1 },
+  small: { n: 1, cover: 60000 },
+  duesRead: true,
+  live: { ready: { n: 1910, cover: 1268000000, prem: 9300000 },
+          collect: { n: 1076, cover: 714000000, prem: 5300000 },
+          gone: { n: 412, cover: 0, prem: 0 } },
+  families: [
+    { fam: 'econo', label: 'Econo Life', sub: 'whole life \u00b7 premium to 65 or 85 \u00b7 cover for life',
+      n: 1462, cover: 1094000000, prem: 7900000, since: 1988 },
+    { fam: 'lib', label: 'Liberator', sub: 'premium to 65, 75, 85 or 100',
+      n: 257, cover: 115000000, prem: 1300000, since: 2001 },
+    { fam: 'rejuv', label: 'Rejuvenator', sub: 'critical illness',
+      n: 320, cover: 146000000, prem: 1500000, since: 2001 }],
+  agents: 'Ada Bram Cleo Dev Esme Finn Gale Hana Iris Jude Kit Lena'.split(' ')
+    .map((nm, i) => ({ name: nm + ' Quill', n: 12 - i, collect: i % 4 ? 0 : 1,
+                       since: 2002 + i, cover: (12 - i) * 900000, prem: (12 - i) * 600 })),
+  agentCount: 14,
+  bands: [{ lab: 'under 2 years', n: 64, cover: 41000000 },
+          { lab: '2 to 5', n: 212, cover: 138000000 },
+          { lab: '5 to 10', n: 498, cover: 331000000 },
+          { lab: '10 to 20', n: 1106, cover: 742000000 },
+          { lab: 'over 20 years', n: 1106, cover: 730000000 }],
+  maturities: [{ yr: 2032, n: 1, cover: 216280 }, { yr: 2041, n: 1, cover: 6000000 }],
+  riders: [{ lab: 'Critical illness', n: 2958, cover: 1277983100, prem: 1247855 },
+           { lab: 'Accidental death', n: 988, cover: 262587454, prem: 19870 },
+           { lab: 'Waiver of premium', n: 1360, cover: null, prem: 177222 },
+           { lab: 'Disability income', n: 30, cover: 115429, prem: 1788 }],
+  notes: ['1 carries less than the company minimum of $100,000, so there is no extension to be had.']
+} };
+
 async function fresh(b, w, h, feed) {
   const ctx = await b.newContext({ viewport: { width: w, height: h } });
   const page = await ctx.newPage();
@@ -286,6 +323,42 @@ async function fresh(b, w, h, feed) {
        (r.owns ? ', and owns up to the rest' : ''),
        r.agents >= 3 && (r.agents === 12 || r.owns),
        r.agents + ' rows, admits to the remainder: ' + r.owns);
+    await s.ctx.close();
+  }
+
+  /* ── The permanent book, at every size ───────────────────────────────────
+     The extension card carries the memorandum's three states and the rules
+     card carries five lines now. Both are fixed content in a fixed column,
+     so if either outgrows a short screen it does so silently. */
+  console.log('\nAnd the permanent book holds at every size:\n');
+  for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
+                             [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
+    const s = await fresh(b, w, h, PERM);
+    await s.page.goto(`http://localhost:${PORT}/intelligence/wall/permanent.html`, { waitUntil: 'domcontentloaded' });
+    await s.page.waitForTimeout(1300);
+    const m = await s.page.evaluate(MEASURE);
+    ok(tag.padEnd(22) + ' nothing below the fold, nothing cut through it',
+       m.overflow <= 2 && m.sideways <= 2 && !m.below.length && !m.through.length,
+       'overflow ' + m.overflow + 'px, below ' + JSON.stringify(m.below.slice(0, 2)) +
+       ', through ' + JSON.stringify(m.through.slice(0, 2)));
+    /* The three products are the screen; the extension's own rules are the
+       reason it is not a one-line opportunity any more. */
+    const t = await s.page.evaluate(() => ({
+      fams: document.querySelectorAll('#pFams .crow').length,
+      rules: document.querySelectorAll('#pWhich .say li').length,
+      behind: (document.getElementById('pBehind') || {}).textContent,
+      rulesText: (document.querySelector('#pWhich .say') || {}).textContent || '',
+      cap: (document.getElementById('pCap') || {}).textContent || ''
+    }));
+    ok(tag.padEnd(22) + ' three products, and the extension rules with them',
+       t.fams === 3 && t.rules >= 3 && t.behind === '1', JSON.stringify(t));
+    /* Whatever gets trimmed, the correction survives: an agent reading three
+       of these must not be left holding the version that was wrong. */
+    ok(tag.padEnd(22) + ' the rule that it is not free survives the trim',
+       /Not free/.test(t.rulesText), t.rulesText.slice(0, 70));
+    /* THE CLAIM THAT WAS WRONG. It must never come back. */
+    ok(tag.padEnd(22) + ' it does not promise there is no underwriting',
+       !/no underwriting|no application/i.test(t.cap), t.cap.slice(0, 90));
     await s.ctx.close();
   }
 
