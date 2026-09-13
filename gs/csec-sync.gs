@@ -41,7 +41,7 @@
  * deletes the whole group. Neither is a soft delete.
  */
 
-var SHEET_ID  = 'PASTE_YOUR_SHEET_ID_HERE';
+var SHEET_ID  = '1b5kOwEP9sJSyIzgp6YeyBEi-KZO2DaacaGKNOOJMCJE';   // "RRB CSEC Sync" in Drive
 var MAX_BYTES = 180000;   // per record — a very heavy student is ~30 KB
 var MAX_ROWS  = 400;      // per group — a big class plus room to spare
 var CODE_ABC  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';  // no O/0, no I/1
