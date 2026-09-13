@@ -857,11 +857,21 @@ const CAN = {
 const NAV_LABEL = {dash:"Dashboard", home:"Home", practice:"Practice", exam:"Mock Exam", writing:"Writing",
                    papers:"Past Papers", syllabus:"Syllabus", key:"Answer Key"};
 
-/* Paste the /exec URL of apps-script/Academy.gs here. Once it is set, people
+/* The deployed /exec address of apps-script/Academy.gs. With it set, people
    sign in by e-mail and password against the Academy's Users sheet, the
    codes above are ignored, and progress follows them between devices.
-   (The browser test points this at a fake through the override.) */
-const ACADEMY_API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE) || "";
+
+   Not a secret: every family's browser calls it, so it is public by
+   design. What makes a call somebody's is the signed token, checked
+   against the sheet on every request.
+
+   The override is how the tests and the demo choose a backend — a fake
+   address for the browser test, an empty string to exercise the code
+   gate. An empty string must win over the real address, so this checks
+   for the property rather than for a truthy value. */
+const ACADEMY_API = (typeof window !== "undefined" && window.ACADEMY_API_OVERRIDE !== undefined)
+  ? window.ACADEMY_API_OVERRIDE
+  : "https://script.google.com/macros/s/AKfycbwBI6nYyhCwPCQaMgnXLXyPTWKkF-hw-Jvz_CZpZVF3SEnPSiSkvxMZkzmFTXC-cabJ/exec";
 const TKEY = "rrb.sea.token";
 
 /* ============================================================

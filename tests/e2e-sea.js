@@ -53,6 +53,10 @@ const ok = (what, cond, extra) => {
   page.on('response', r => { if (r.status() >= 400) errs.push(r.status() + ' ' + r.url()); });
 
   const URL = `http://localhost:${PORT}/sea/`;
+  // The page now ships with a real backend address. The first half of this
+  // file exercises the code gate, so ask for no backend explicitly — an
+  // empty override has to beat the deployed address, not fall back to it.
+  await page.addInitScript(() => { window.ACADEMY_API_OVERRIDE = ''; });
   await page.goto(URL, { waitUntil: 'networkidle' });
 
   // ---- the gate ------------------------------------------------------------
