@@ -160,7 +160,8 @@
       terms:    (raw.terms && typeof raw.terms === 'object') ? raw.terms : {},
       notes:    (raw.notes && typeof raw.notes === 'object') ? raw.notes : {},
       goals:    (raw.goals && typeof raw.goals === 'object') ? raw.goals : {},
-      _t:       Number(raw._t) || 0
+      _t:       Number(raw._t) || 0,
+      _v:       Number(raw._v) || 0   /* carried, or a round-trip re-migrates */
     };
   }
 
