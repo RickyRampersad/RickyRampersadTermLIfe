@@ -70,9 +70,9 @@
     </div>
 
     <div class="grid g4" style="margin-bottom:10px">
-      <div class="tile"><div class="big">10</div><div class="lab">years tracked</div></div>
-      <div class="tile teal"><div class="big">245</div><div class="lab">practice questions</div></div>
-      <div class="tile"><div class="big">16</div><div class="lab">worked methods</div></div>
+      <div class="tile"><div class="big" id="n-years">10</div><div class="lab">years tracked</div></div>
+      <div class="tile teal"><div class="big" id="n-q">677</div><div class="lab">practice questions</div></div>
+      <div class="tile"><div class="big" id="n-g">24</div><div class="lab">worked methods</div></div>
       <div class="tile teal"><div class="big">2</div><div class="lab">exams: SEA &amp; CSEC</div></div>
     </div>
 
@@ -285,7 +285,21 @@
   </div>
 </footer>
 
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/guides.js"></script>
 <script>
+/* Count from the data, never from a number typed into the page. The figures
+   in the HTML are the fallback if a data file fails to load; they were right
+   at the time of writing and will drift, which is the whole reason for this. */
+(function(){
+  function set(id,n){ var e=document.getElementById(id); if(e&&n) e.textContent=n; }
+  try{
+    set('n-q',(window.CSEC_QUESTIONS||[]).length);
+    set('n-g',(window.CSEC_GUIDES||[]).length);
+    set('n-years',((window.CSEC_CURRICULUM||{}).levels||[]).length);
+  }catch(e){}
+})();
 (function(){
   var tabs=document.querySelectorAll('.tabs button');
   Array.prototype.forEach.call(tabs,function(b){

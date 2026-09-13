@@ -317,7 +317,7 @@ under half the time is reported as a problem, because it usually is.
 
 ## Guided methods
 
-`data/guides.js` holds 16 worked methods for the question types that carry the
+`data/guides.js` holds 24 worked methods for the question types that carry the
 most marks. Each is: when to use it, the method as numbered steps, one fully
 worked example with every line explained, and the mistakes that lose marks.
 
@@ -354,20 +354,33 @@ the final point, and a table view toggle.
 
 ## What the question bank actually is
 
-Be clear about this, because it is the hub's weakest point:
+Be clear about this, because it is still the hub's weakest point:
 
 | | |
 |---|---|
-| Questions | **245**, all written for this hub |
+| Questions | **677**, all written for this hub |
+| Guided methods | **24** |
 | Strands in the default subjects | 130 |
-| Strands with at least one question | 118 |
-| Strands with **none** | 12 |
-| **Median questions per covered strand** | **2** |
+| Strands with **none** | **0** |
+| Thinnest strand | **4** questions |
+| **Median questions per strand** | **5** |
 
-Two. A student who practises one strand exhausts it in a single sitting and
-then sees repeats. That is enough to demonstrate the model and to build a
-nightly habit across subjects; it is **not** enough for a Standard 5 or a
-Form 5 to revise from. Say so to families rather than letting them discover it.
+Split by stage:
+
+| | Questions | Strands | Thinnest | Median |
+|---|---|---|---|---|
+| Primary — 5 SEA subjects | 205 | 35 | 4 | 5 |
+| Secondary — 14 CSEC subjects | 472 | 95 | 4 | 5 |
+
+Five. That is enough for a nightly habit across a whole subject list, and
+enough that no strand is a dead end any more — but a student who drills one
+strand hard still exhausts it in two or three sittings. It is **not** a
+revision bank a Form 5 can live in for a term. Say so to families rather than
+letting them discover it.
+
+The weakest part is now the **guided methods, not the questions**: 24 worked
+methods against 130 strands. A question tells a child they were wrong; a guide
+is what tells them how to be right. That is where the next effort is worth most.
 
 Nothing has been ingested from any past-paper bank. Every item is original, for
 two reasons: CXC owns the CSEC papers and sells them, and a question copied
@@ -380,11 +393,12 @@ the free half from CXC is the syllabuses, specimen papers and mark schemes.
 
 **Closing the gap, in order of value:**
 
-1. Ten questions per strand in the SEA subjects (Maths, ELA, ELA Writing) and in
-   CSEC Maths and English. That is roughly 250 more items.
-2. Primary guided methods — there are none. Long division, fractions, area and
-   the narrative-writing plan first.
-3. Everything else.
+1. **Guided methods.** One per strand in the examined core — CSEC Maths,
+   English A, the three sciences, and all five SEA subjects. That is the gap a
+   child actually feels.
+2. **Depth in the examined subjects.** Ten per strand in SEA Maths, ELA and ELA
+   Writing, and in CSEC Maths and English, where the whole cohort sits.
+3. Everything else, toward ten per strand.
 
 ---
 
@@ -393,10 +407,10 @@ the free half from CXC is the syllabuses, specimen papers and mark schemes.
 Append to `data/questions.js`. Every field is required except `tech`:
 
 ```js
-{ id:'ma21',                    // unique across the whole bank
+{ id:'ma49',                    // unique across the whole bank AND guides.js
   subj:'mathematics',           // must be a key in curriculum.js subjects
   strand:'ma-consumer',         // must belong to that subject
-  form:3,                       // earliest form this fits
+  level:8,                      // earliest level this fits (1-5 Std 1-5, 6-10 Form 1-5)
   diff:2,                       // 1 easy, 2 typical, 3 stretch
   q:'…',                        // the question stem
   opts:['…','…','…','…'],       // exactly four

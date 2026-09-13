@@ -104,13 +104,16 @@ to have been oversold.
 
 State these rather than waiting to be caught out:
 
-- **245 questions, median 2 per syllabus strand.** A student practising one
-  topic exhausts it in a sitting and then sees repeats. Enough for a nightly
-  habit across subjects; not enough to revise a subject from. Twelve strands
-  have no questions at all. Tell families this rather than letting them find it. Enough for a nightly habit, not enough
-  for a Form 5 to revise from alone. Maths is deepest at 20.
-- **16 worked methods, all secondary.** Primary has none yet — that is the first content gap to close. English B, Spanish, French, Social Studies and PE have
-  none yet.
+- **677 questions, median 5 per syllabus strand.** Every strand in every
+  default subject now carries at least four, so nothing is a dead end — but a
+  student drilling one topic hard still exhausts it in two or three sittings.
+  Enough for a nightly habit across a whole subject list; **not** a bank a Form
+  5 can revise a subject from. Say this rather than letting families find it.
+  Mathematics is deepest — 86 questions at primary, 46 at CSEC.
+- **24 worked methods against 130 strands.** This is now the real gap, and the
+  more important one: a question tells a child they were wrong, a guide tells
+  them how to be right. Mathematics has twelve of the twenty-four. Spanish,
+  French, Social Studies, Visual Arts and PE have none yet.
 - **The readiness band is unvalidated.** It has never been checked against a real
   CSEC result, because there has not been one. It is an internal indicator and
   the page says so above the number.
