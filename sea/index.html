@@ -70,7 +70,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .role:hover{background:rgba(255,255,255,.1);border-color:var(--gold)}
 .role[aria-pressed="true"]{background:rgba(239,194,75,.14);border-color:var(--gold);
   box-shadow:0 0 0 1px var(--gold) inset}
-.role .ic{font-size:24px;line-height:1;display:block;margin-bottom:.45rem}
+.role .ic{display:block;margin-bottom:.5rem;color:var(--gold)}
+.role .ic .i{width:26px;height:26px;stroke-width:1.55}
+.role[aria-pressed="true"] .ic{color:var(--gold)}
 .role b{display:block;font-size:14.5px;font-family:var(--display)}
 .role small{display:block;color:#8FA5B8;font-size:11.5px;margin-top:.15rem;line-height:1.35}
 .gatebox input{width:min(300px,100%);background:rgba(255,255,255,.07);border:1.5px solid rgba(255,255,255,.2);
@@ -131,17 +133,26 @@ details.notice .in li{margin:.25rem 0}
 .gatefoot b{color:#9FB3C4}
 
 /* ================= header ================= */
-header{background:var(--navy);position:sticky;top:0;z-index:40;box-shadow:0 1px 0 rgba(255,255,255,.07)}
+header{background:var(--navy);position:sticky;top:0;z-index:40;
+  box-shadow:0 1px 0 rgba(255,255,255,.07),0 6px 22px rgba(7,19,31,.16)}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold2) 18%,var(--gold) 50%,var(--teal) 84%,transparent);
+  opacity:.55}
 .hin{max-width:1160px;margin:0 auto;padding:.6rem 1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:.65rem;margin-right:auto;min-width:0}
 .brand .mark{width:36px;height:36px;flex:none;box-shadow:0 0 0 1px rgba(239,194,75,.3)}
 .brand b{display:block;font-family:var(--display);font-size:15.5px;color:#fff;line-height:1.15}
 .brand small{display:block;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
 nav{display:flex;gap:.15rem;flex-wrap:wrap}
-nav button{background:none;border:0;border-radius:7px;padding:.4rem .75rem;cursor:pointer;
-  font-size:13.5px;color:#9FB3C4;font-weight:600}
+nav button{background:none;border:0;border-radius:8px;padding:.42rem .7rem;cursor:pointer;
+  font-size:13.5px;color:#9FB3C4;font-weight:600;display:inline-flex;align-items:center;gap:.42rem;
+  position:relative;transition:color .16s,background .16s}
+nav button .i{opacity:.78;transition:opacity .16s,transform .16s}
 nav button:hover{background:rgba(255,255,255,.09);color:#fff}
-nav button[aria-current="page"]{background:var(--gold);color:#07131f;font-weight:700}
+nav button:hover .i{opacity:1;transform:translateY(-1px)}
+nav button[aria-current="page"]{background:linear-gradient(180deg,var(--gold),var(--gold2));
+  color:#07131f;font-weight:700;box-shadow:0 2px 10px rgba(239,194,75,.3)}
+nav button[aria-current="page"] .i{opacity:1}
 .whoami{display:flex;align-items:center;gap:.5rem}
 .whoami .pill{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
   background:rgba(0,207,234,.16);color:var(--teal);border:1px solid rgba(0,207,234,.3);
@@ -152,6 +163,14 @@ nav button[aria-current="page"]{background:var(--gold);color:#07131f;font-weight
 
 main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 .view[hidden]{display:none}
+.view{animation:slidein .34s cubic-bezier(.22,.9,.3,1) both}
+@keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.card,.qcard,.examq,.stat,.strand{transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+.stat:hover,.qcard:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(7,19,31,.06),0 14px 30px rgba(7,19,31,.1)}
+@media (prefers-reduced-motion:reduce){
+  .view{animation:none}
+  *,*::before,*::after{transition-duration:.01ms!important;animation-duration:.01ms!important}
+}
 .stack{display:flex;flex-direction:column;gap:1.15rem}
 .card{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1.4rem;box-shadow:var(--shadow)}
 .card h2{font-size:1.22rem;color:var(--ink)}
@@ -162,8 +181,11 @@ main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 .pagehead p{color:var(--muted);max-width:64ch}
 
 .btn{background:var(--navy);color:#fff;border:1px solid var(--navy);border-radius:8px;
-  padding:.55rem 1.1rem;cursor:pointer;font-size:13.5px;font-weight:700}
-.btn:hover{background:#12293d;border-color:#12293d}
+  padding:.55rem 1.1rem;cursor:pointer;font-size:13.5px;font-weight:700;
+  transition:background .16s,border-color .16s,transform .12s,box-shadow .16s}
+.btn:hover{background:#12293d;border-color:#12293d;transform:translateY(-1px)}
+.btn:active{transform:none}
+.btn.gold:hover{box-shadow:0 6px 18px rgba(239,194,75,.34)}
 .btn:disabled{opacity:.4;cursor:not-allowed}
 .btn.gold{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold2);color:#07131f;font-weight:800}
 .btn.gold:hover{filter:brightness(1.07)}
@@ -174,8 +196,10 @@ main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 
 .chips{display:flex;gap:.4rem;flex-wrap:wrap}
 .chip{background:var(--surface2);border:1px solid var(--rule);border-radius:99px;padding:.32rem .85rem;
-  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted)}
-.chip:hover{border-color:var(--teal);color:var(--ink)}
+  cursor:pointer;font-size:12.5px;font-weight:600;color:var(--muted);
+  transition:background .16s,border-color .16s,color .16s,transform .12s}
+.chip:hover{border-color:var(--teal);color:var(--ink);transform:translateY(-1px)}
+.chip:active{transform:none}
 .chip[aria-pressed="true"]{background:var(--navy);border-color:var(--navy);color:#fff}
 
 .grid{display:grid;gap:1rem}
@@ -184,6 +208,8 @@ main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 .g4{grid-template-columns:repeat(auto-fit,minmax(158px,1fr))}
 
 .stat{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:1rem 1.1rem;box-shadow:var(--shadow)}
+.statTop{display:flex;align-items:center;gap:.55rem;margin-bottom:.5rem}
+.statTop .label{margin:0}
 .stat .n{font-family:var(--display);font-size:1.95rem;font-weight:600;line-height:1.05;color:var(--ink)}
 .stat .n.gold{color:var(--gold2)}
 .stat .n.teal{color:var(--tealInk)}
@@ -248,16 +274,20 @@ input[type=text].ans.wrong{border-color:var(--stop);background:var(--stopBg)}
 .rung:hover{border-color:var(--teal)}
 .rung[data-open="1"]{background:var(--navy);border-color:var(--navy);color:#fff}
 .rung .k{font-size:10px;font-weight:800;letter-spacing:.08em;opacity:.7}
+.rung .i{width:14px;height:14px;opacity:.85}
 .rung:disabled{opacity:.4;cursor:not-allowed}
 .rung.reveal{color:var(--goldInk);border-color:var(--gold)}
 .rung.reveal[data-open="1"]{background:var(--gold);border-color:var(--gold2);color:#07131f}
 .hint{margin-top:.75rem;border-left:3px solid var(--teal);background:var(--surface2);
-  border-radius:0 9px 9px 0;padding:.85rem 1rem;font-size:14.5px;line-height:1.65}
+  border-radius:0 9px 9px 0;padding:.85rem 1rem;font-size:14.5px;line-height:1.65;
+  animation:rungopen .26s cubic-bezier(.22,.9,.3,1) both}
+@keyframes rungopen{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
 .hint.gold{border-left-color:var(--gold)}
 .hint b.h{display:block;font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--muted);margin-bottom:.3rem}
 .hint figure{max-width:340px;margin-top:.7rem}
-.locked{font-size:13px;color:var(--muted);margin-top:.6rem;display:flex;gap:.4rem;align-items:flex-start}
+.locked{font-size:13px;color:var(--muted);margin-top:.6rem;display:flex;gap:.45rem;align-items:flex-start}
+.locked .i{width:15px;height:15px;color:var(--goldInk);margin-top:.1rem}
 .locked b{color:var(--goldInk)}
 
 .verdict{margin-top:1.1rem;border-radius:9px;padding:.9rem 1.05rem;font-size:14.5px;border:1px solid transparent}
@@ -324,19 +354,54 @@ textarea.essay:focus{border-color:var(--teal)}
   padding:.8rem 1rem;font-size:13.5px;color:var(--muted)}
 .note b{color:var(--ink)}
 
+/* ---- icons: one set, sized by font-size, coloured by currentColor ---- */
+.i{width:1.15em;height:1.15em;flex:none;vertical-align:-.18em;
+  fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.i.lg{width:1.5em;height:1.5em}
+.ibox{width:34px;height:34px;border-radius:9px;display:grid;place-items:center;flex:none}
+.ibox .i{width:19px;height:19px}
+.ibox.teal{background:rgba(0,207,234,.14);color:var(--tealInk)}
+.ibox.gold{background:rgba(239,194,75,.18);color:var(--goldInk)}
+.ibox.navy{background:var(--surface2);color:var(--ink)}
+
 /* ---- the journey: seven years, one destination ---- */
-.journey{display:flex;gap:.35rem;align-items:stretch;overflow-x:auto;padding-bottom:.2rem}
-.journey .step{flex:1;min-width:74px;border:1px solid var(--rule);border-radius:9px;padding:.5rem .35rem;text-align:center;
-  font-size:11px;color:var(--muted);background:var(--surface2);position:relative;line-height:1.3}
-.journey .step b{display:block;font-family:var(--display);font-size:12.5px;color:var(--ink);margin-bottom:.15rem}
-.journey .step.done{opacity:.55}
-.journey .step[aria-current="step"]{background:var(--navy);border-color:var(--navy);color:#9FB3C4}
+.jwrap{position:relative}
+.jwrap::after{content:"";position:absolute;top:0;right:0;bottom:9px;width:46px;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--surface));border-radius:0 11px 11px 0}
+.journey{display:flex;gap:.4rem;align-items:stretch;overflow-x:auto;padding:.15rem .15rem .55rem;
+  scroll-snap-type:x proximity;scrollbar-width:thin}
+.journey::-webkit-scrollbar{height:6px}
+.journey::-webkit-scrollbar-thumb{background:var(--rule);border-radius:99px}
+.journey .step{flex:1 0 86px;scroll-snap-align:center;border:1px solid var(--rule);border-radius:11px;
+  padding:.6rem .4rem .55rem;text-align:center;font-size:10.5px;color:var(--muted);
+  background:var(--surface2);position:relative;line-height:1.3;
+  transition:transform .2s cubic-bezier(.22,.9,.3,1),box-shadow .2s,background .2s,border-color .2s}
+.journey .step .i{width:17px;height:17px;opacity:.5;margin-bottom:.2rem}
+.journey .step b{display:block;font-family:var(--display);font-size:12.5px;color:var(--ink);margin-bottom:.1rem}
+.journey .step.done{opacity:.5}
+.journey .step.done .i{opacity:.8;color:var(--goInk)}
+.journey .step[aria-current="step"]{background:var(--navy);border-color:var(--navy);color:#9FB3C4;
+  transform:translateY(-3px) scale(1.04);box-shadow:0 10px 24px rgba(7,19,31,.26);z-index:1}
 .journey .step[aria-current="step"] b{color:#fff}
+.journey .step[aria-current="step"] .i{opacity:1;color:var(--gold)}
 .journey .step.sea{border-color:var(--gold2)}
 .journey .step.sea b{color:var(--gold2)}
-.journey .step[aria-current="step"].sea{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:var(--gold2);color:#3a2a08}
-.journey .step[aria-current="step"].sea b{color:#07131f}
-.journey .gap{flex:none;width:1px;background:var(--gold2);opacity:.6;margin:0 .15rem}
+.journey .step.sea .i{opacity:.85;color:var(--gold2)}
+.journey .step[aria-current="step"].sea{background:linear-gradient(150deg,var(--gold),var(--gold2));
+  border-color:var(--gold2);color:#3a2a08;box-shadow:0 10px 26px rgba(201,148,44,.42)}
+.journey .step[aria-current="step"].sea b,
+.journey .step[aria-current="step"].sea .i{color:#07131f}
+/* In dark the navy IS the ground, so the class you are in needs an edge to sit on. */
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .journey .step[aria-current="step"]:not(.sea){
+  border-color:var(--gold2);box-shadow:0 10px 24px rgba(0,0,0,.5)}}
+:root[data-theme="dark"] .journey .step[aria-current="step"]:not(.sea){
+  border-color:var(--gold2);box-shadow:0 10px 24px rgba(0,0,0,.5)}
+.journey .gap{flex:none;width:2px;border-radius:99px;background:linear-gradient(180deg,var(--gold),var(--gold2));
+  opacity:.7;margin:.4rem .25rem}
+/* how far along the twelve years this child is */
+.jrail{height:5px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.5rem}
+.jrail i{display:block;height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .5s cubic-bezier(.22,.9,.3,1)}
 .levelpick{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem}
 .levelpick button{background:var(--surface2);border:1px solid var(--rule);border-radius:8px;padding:.5rem .8rem;cursor:pointer;
   font-weight:700;font-size:13px;color:var(--ink)}
@@ -345,8 +410,9 @@ textarea.essay:focus{border-color:var(--teal)}
 
 /* ---- sponsors: parent-facing, one per slot, never inside a question ---- */
 .sponsor{display:flex;gap:.85rem;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--rule);
-  border-radius:10px;padding:.7rem 1rem;box-shadow:var(--shadow)}
+  border-radius:10px;padding:.7rem 1rem;box-shadow:var(--shadow);transition:border-color .18s,box-shadow .18s}
 .sponsor .label{flex:none;max-width:16em;line-height:1.35}
+.sponsor:hover{border-color:var(--gold2)}
 .sponsor img{width:36px;height:36px;border-radius:7px;object-fit:contain;background:#fff;flex:none;border:1px solid var(--rule)}
 .sponsor .t{flex:1;min-width:160px;font-size:13.5px;line-height:1.35;color:var(--muted)}
 .sponsor .t b{display:block;font-family:var(--display);font-size:15.5px;color:var(--ink)}
@@ -381,6 +447,30 @@ footer .l{display:flex;gap:.6rem;align-items:center}
 </style>
 </head>
 <body>
+<!-- One stroke-drawn icon set, 24x24, coloured by currentColor so it follows the
+     theme everywhere. Adding a subject later is an icon and a data row, not a
+     new stylesheet. Nothing here draws a mark — the branch shield is a file. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3.5 10.8 12 4l8.5 6.8M5.5 9.6V20h13V9.6M9.8 20v-5.2h4.4V20"/></symbol>
+<symbol id="i-practice" viewBox="0 0 24 24"><path d="m4 20 .9-3.7L15.4 5.8a2 2 0 0 1 2.8 2.8L7.7 19.1 4 20Z"/><path d="m13.6 7.6 2.8 2.8"/></symbol>
+<symbol id="i-exam" viewBox="0 0 24 24"><circle cx="12" cy="13" r="8"/><path d="M12 8.8V13l2.8 1.8M9.2 2.8h5.6"/></symbol>
+<symbol id="i-writing" viewBox="0 0 24 24"><path d="M12 2.8 5.8 15.6 12 21.2l6.2-5.6L12 2.8Z"/><path d="M12 9.4v7.4M5.8 15.6h12.4"/></symbol>
+<symbol id="i-papers" viewBox="0 0 24 24"><path d="M9 2.8h5.4L19 7.4V19a1.8 1.8 0 0 1-1.8 1.8H9A1.8 1.8 0 0 1 7.2 19V4.6A1.8 1.8 0 0 1 9 2.8Z"/><path d="M14.2 2.8v4.8H19M4.8 6.6V21a1.8 1.8 0 0 0 1.8 1.8"/></symbol>
+<symbol id="i-syllabus" viewBox="0 0 24 24"><path d="M9.6 5.4h10.6M9.6 12h10.6M9.6 18.6h10.6"/><path d="m3.4 5.2 1.3 1.3 2.3-2.4M3.4 11.8l1.3 1.3 2.3-2.4M3.4 18.4l1.3 1.3 2.3-2.4"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="16.2" cy="7.8" r="3.6"/><path d="M13.6 10.4 3.8 20.2V21.2h3v-2h2v-2h2l2.3-2.3"/></symbol>
+<symbol id="i-dash" viewBox="0 0 24 24"><path d="M4 20.4V11M9.3 20.4V4.4M14.7 20.4v-6.6M20 20.4V8.2M2.4 22h19.2"/></symbol>
+<symbol id="i-parent" viewBox="0 0 24 24"><path d="M15.6 20.2v-1.5a3.4 3.4 0 0 0-3.4-3.4H7.4A3.4 3.4 0 0 0 4 18.7v1.5"/><circle cx="9.8" cy="8" r="3.4"/><path d="M20 20.2v-1.5a3.4 3.4 0 0 0-2.6-3.3M15.2 4.9a3.4 3.4 0 0 1 0 6.4"/></symbol>
+<symbol id="i-teacher" viewBox="0 0 24 24"><path d="M12 3.4 2.6 8.2 12 13l9.4-4.8L12 3.4Z"/><path d="M6.4 10.6v4.6c0 1.4 2.5 2.5 5.6 2.5s5.6-1.1 5.6-2.5v-4.6M21.4 8.7v5.1"/></symbol>
+<symbol id="i-academy" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.6"/><circle cx="12" cy="12" r="3.4"/><path d="M12 3.4v2.4M12 18.2v2.4M3.4 12h2.4M18.2 12h2.4"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><path d="M7.4 10.2V7.4a4.6 4.6 0 0 1 9.2 0v2.8"/><rect x="5" y="10.2" width="14" height="10.2" rx="2"/><path d="M12 14v2.6"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m4.6 12.6 4.7 4.7L19.4 7.2"/></symbol>
+<symbol id="i-hint" viewBox="0 0 24 24"><path d="M9.6 18.4h4.8M10.4 21.2h3.2"/><path d="M12 2.8a6.2 6.2 0 0 0-3.6 11.2c.6.5 1 1.2 1 2v.4h5.2v-.4c0-.8.4-1.5 1-2A6.2 6.2 0 0 0 12 2.8Z"/></symbol>
+<symbol id="i-school" viewBox="0 0 24 24"><path d="M2.6 21.2h18.8M5.2 21.2V8.4L12 4.4l6.8 4v12.8"/><path d="M9.6 21.2v-5h4.8v5M9.8 11.4h1.4M12.8 11.4h1.4"/></symbol>
+<symbol id="i-cap" viewBox="0 0 24 24"><path d="M12 3.4 2.6 8.2 12 13l9.4-4.8L12 3.4Z"/><path d="M6.4 10.6v4.6c0 1.4 2.5 2.5 5.6 2.5s5.6-1.1 5.6-2.5v-4.6"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 2.8 13.9 9l6.2 1.9-6.2 1.9L12 19.2 10.1 12.8 3.9 10.9 10.1 9 12 2.8Z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4.6 12h14.2M13.4 6.6 18.8 12l-5.4 5.4"/></symbol>
+<symbol id="i-flag" viewBox="0 0 24 24"><path d="M5.4 21.2V3.4M5.4 4.4h12.8l-2.4 4 2.4 4H5.4"/></symbol>
+</svg>
 <!-- ================= GATE ================= -->
 <div id="gate">
   <div class="gatebox">
@@ -393,13 +483,13 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <div id="gateCodes">
     <div class="roles" id="roles">
       <button class="role" data-role="student" aria-pressed="true">
-        <span class="ic" aria-hidden="true">✎</span><b>Student</b>
+        <span class="ic" aria-hidden="true"><svg class="i lg"><use href="#i-practice"></use></svg></span><b>Student</b>
         <small>Practice, hints and timed papers</small></button>
       <button class="role" data-role="parent" aria-pressed="false">
-        <span class="ic" aria-hidden="true">☗</span><b>Parent</b>
+        <span class="ic" aria-hidden="true"><svg class="i lg"><use href="#i-parent"></use></svg></span><b>Parent</b>
         <small>See progress and the full working</small></button>
       <button class="role" data-role="teacher" aria-pressed="false">
-        <span class="ic" aria-hidden="true">✦</span><b>Teacher</b>
+        <span class="ic" aria-hidden="true"><svg class="i lg"><use href="#i-teacher"></use></svg></span><b>Teacher</b>
         <small>Answer key and printable papers</small></button>
     </div>
 
@@ -440,10 +530,10 @@ footer .l{display:flex;gap:.6rem;align-items:center}
         <p class="who" id="rWho">Register your child</p>
         <div class="roles" id="rRoles" style="margin-bottom:1rem">
           <button class="role" data-r="parent" aria-pressed="true">
-            <span class="ic" aria-hidden="true">&#9751;</span><b>I am a parent</b>
+            <span class="ic" aria-hidden="true"><svg class="i lg"><use href="#i-parent"></use></svg></span><b>I am a parent</b>
             <small>Register a child and follow their practice</small></button>
           <button class="role" data-r="teacher" aria-pressed="false">
-            <span class="ic" aria-hidden="true">&#10022;</span><b>I am a teacher</b>
+            <span class="ic" aria-hidden="true"><svg class="i lg"><use href="#i-teacher"></use></svg></span><b>I am a teacher</b>
             <small>The questions, the answer key and printable papers</small></button>
         </div>
         <div class="two">
@@ -535,18 +625,23 @@ footer .l{display:flex;gap:.6rem;align-items:center}
   <div class="card" id="journeyCard" style="margin-bottom:1.2rem">
     <div style="display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;align-items:baseline;margin-bottom:.7rem">
       <p class="label">The journey</p><p class="muted" style="font-size:13px" id="journeyCap"></p></div>
-    <div class="journey" id="journey"></div>
+    <div class="jwrap"><div class="journey" id="journey"></div></div>
+    <div id="jrail"></div>
     <div id="levelPick"></div>
   </div>
 
   <div class="grid g4" style="margin-bottom:1.2rem">
-    <div class="stat"><p class="label">Questions available</p><div class="n" id="hQ">0</div>
+    <div class="stat"><div class="statTop"><span class="ibox navy"><svg class="i" aria-hidden="true"><use href="#i-syllabus"></use></svg></span><p class="label">Questions available</p></div>
+      <div class="n" id="hQ">0</div>
       <p class="muted" style="font-size:12.5px;margin-top:.2rem">across every class and strand</p></div>
-    <div class="stat"><p class="label">Attempted</p><div class="n teal" id="hA">0</div>
+    <div class="stat"><div class="statTop"><span class="ibox teal"><svg class="i" aria-hidden="true"><use href="#i-practice"></use></svg></span><p class="label">Attempted</p></div>
+      <div class="n teal" id="hA">0</div>
       <div class="bar"><i id="hABar" style="width:0%"></i></div></div>
-    <div class="stat"><p class="label">Right first time</p><div class="n gold" id="hP">&mdash;</div>
+    <div class="stat"><div class="statTop"><span class="ibox gold"><svg class="i" aria-hidden="true"><use href="#i-check"></use></svg></span><p class="label">Right first time</p></div>
+      <div class="n gold" id="hP">&mdash;</div>
       <p class="muted" style="font-size:12.5px;margin-top:.2rem">without opening a hint</p></div>
-    <div class="stat"><p class="label">Papers sat</p><div class="n" id="hE">0</div>
+    <div class="stat"><div class="statTop"><span class="ibox navy"><svg class="i" aria-hidden="true"><use href="#i-exam"></use></svg></span><p class="label">Papers sat</p></div>
+      <div class="n" id="hE">0</div>
       <p class="muted" style="font-size:12.5px;margin-top:.2rem" id="hEBest"></p></div>
   </div>
 
@@ -856,6 +951,8 @@ const CAN = {
 };
 const NAV_LABEL = {dash:"Dashboard", home:"Home", practice:"Practice", exam:"Mock Exam", writing:"Writing",
                    papers:"Past Papers", syllabus:"Syllabus", key:"Answer Key"};
+const NAV_ICON  = {dash:"dash", home:"home", practice:"practice", exam:"exam", writing:"writing",
+                   papers:"papers", syllabus:"syllabus", key:"key"};
 
 /* The deployed /exec address of apps-script/Academy.gs. With it set, people
    sign in by e-mail and password against the Academy's Users sheet, the
@@ -2177,6 +2274,7 @@ const strandsFor = stage => stage === "secondary" ? STRANDS_SEC : STRANDS;
 const shuffle = a => { const b=a.slice(); for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];} return b; };
 const mmss = s => String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
 const esc  = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const ico  = (name, cls) => `<svg class="i ${cls || ""}" aria-hidden="true"><use href="#i-${name}"></use></svg>`;
 const fig  = (k,cap) => k ? `<figure class="${WIDE_FIGS.includes(k)?"wide":""}">${SVG[k]}${cap?`<figcaption>${cap}</figcaption>`:""}</figure>` : "";
 // The papers write 1 800, not 1800. Format for display only — a[0] stays bare
 // so tests can recompute it and check no hint leaks it.
@@ -2407,7 +2505,8 @@ function views(){
   return CAN[role].views.filter(v => v !== "exam" || role === "teacher" || li === null || (li >= 5 && li <= 6));
 }
 function buildNav(){
-  $("#nav").innerHTML = views().map(v => `<button data-view="${v}">${NAV_LABEL[v]}</button>`).join("");
+  $("#nav").innerHTML = views().map(v =>
+    `<button data-view="${v}">${ico(NAV_ICON[v])}<span>${NAV_LABEL[v]}</span></button>`).join("");
 }
 function paintWho(){
   const li = currentLevelIndex();
@@ -2511,9 +2610,17 @@ function strandStat(s){
 }
 function renderJourney(){
   const li = currentLevelIndex(), y = currentSeaYear(), teach = role === "teacher";
+  const stepIcon = (l,i) => l.sea || l.csec ? "flag" : (li !== null && i < li) ? "check" : l.stage === "secondary" ? "cap" : "school";
   $("#journey").innerHTML = LEVELS.map((l,i) =>
     `<div class="step${l.sea || l.csec ? " sea" : ""}${li !== null && i < li ? " done" : ""}"${li === i ? ' aria-current="step"' : ""}>
-       <b>${l.name}${l.sea ? " · S.E.A." : l.csec ? " · CSEC" : ""}</b>ages ${l.age}</div>` + (l.sea ? `<div class="gap"></div>` : "")).join("");
+       ${ico(stepIcon(l,i))}<b>${l.name}${l.sea ? " · S.E.A." : l.csec ? " · CSEC" : ""}</b>ages ${l.age}</div>`
+     + (l.sea ? `<div class="gap"></div>` : "")).join("");
+  $("#jrail").innerHTML = li === null ? "" :
+    `<div class="jrail"><i style="width:${Math.round((li + 1) / LEVELS.length * 100)}%"></i></div>`;
+  // slide the child's own class into view on the rail
+  const here = $('#journey .step[aria-current="step"]');
+  if(here && here.scrollIntoView) here.scrollIntoView({block:"nearest", inline:"center",
+    behavior: matchMedia("(prefers-reduced-motion:reduce)").matches ? "auto" : "smooth"});
   let cap = "Twelve years of school, and two examinations: the S.E.A. after Standard 5, CSEC after Form 5.";
   if(!teach && li !== null){
     const who = role === "parent" ? (childName ? childName.split(" ")[0] + " is" : "Your child is") : "You are";
@@ -2648,10 +2755,10 @@ $("#pNext").addEventListener("click", () => { if(pIdx < pList.length-1){ pIdx++;
 
 // One rung per row. For a student each is earned; for a parent or teacher all are open.
 const RUNGS = [
-  {k:"ask",  n:"What is it asking?", cls:""},
-  {k:"step", n:"The first step",     cls:""},
-  {k:"work", n:"Show the working",   cls:""},
-  {k:"ans",  n:"The answer",         cls:"reveal"}
+  {k:"ask",  n:"What is it asking?", cls:"",       ic:"hint"},
+  {k:"step", n:"The first step",     cls:"",       ic:"arrow"},
+  {k:"work", n:"Show the working",   cls:"",       ic:"practice"},
+  {k:"ans",  n:"The answer",         cls:"reveal", ic:"check"}
 ];
 
 function pRender(){
@@ -2682,7 +2789,7 @@ function pRender(){
       <div id="pVerdict"></div>
       <div class="ladder">
         <div class="rungrow" id="pRungs">${RUNGS.map(g =>
-          `<button class="rung ${g.cls}" data-k="${g.k}"><span class="k">${RUNGS.indexOf(g)+1}</span>${g.n}</button>`).join("")}</div>
+          `<button class="rung ${g.cls}" data-k="${g.k}"><span class="k">${RUNGS.indexOf(g)+1}</span>${ico(g.ic)}${g.n}</button>`).join("")}</div>
         <div id="pHints"></div>
         <div class="locked" id="pLocked"></div>
       </div>
@@ -2720,7 +2827,7 @@ function pRender(){
     });
     const blocked = RUNGS.filter(g => !allowed(g.k));
     $("#pLocked").innerHTML = blocked.length
-      ? `<span aria-hidden="true">🔒</span><span>${
+      ? `${ico("lock")}<span>${
           allowed("step")
             ? "<b>Have a go first.</b> Type an answer and press Check — the working and the answer open straight after, right or wrong."
             : "<b>Read the pointer first,</b> or type an answer and press Check. The rest of the ladder opens from there."
@@ -3111,19 +3218,19 @@ async function renderDash(){
   const className = y => { const i = 6 - (Number(y) - schoolYear()); return LEVELS[i] ? LEVELS[i].name : y; };
   host.innerHTML = `
     <div class="dashgrid" style="margin-bottom:1.2rem">
-      <div class="stat"><p class="label">Families</p><div class="n">${nf(s.families)}</div>
+      <div class="stat"><div class="statTop"><span class="ibox navy">${ico("parent")}</span><p class="label">Families</p></div><div class="n">${nf(s.families)}</div>
         <p class="muted" style="font-size:12.5px;margin-top:.2rem">${nf(s.children)} child${s.children===1?"":"ren"} between them</p></div>
-      <div class="stat"><p class="label">Active</p><div class="n teal">${nf(s.activeFamilies)}</div>
+      <div class="stat"><div class="statTop"><span class="ibox teal">${ico("spark")}</span><p class="label">Active</p></div><div class="n teal">${nf(s.activeFamilies)}</div>
         <p class="muted" style="font-size:12.5px;margin-top:.2rem">signed in within ${d.activeDays} days</p></div>
-      <div class="stat"><p class="label">Questions attempted</p><div class="n gold">${nf(s.attempted)}</div>
+      <div class="stat"><div class="statTop"><span class="ibox gold">${ico("practice")}</span><p class="label">Questions attempted</p></div><div class="n gold">${nf(s.attempted)}</div>
         <p class="muted" style="font-size:12.5px;margin-top:.2rem">by ${nf(s.practising)} child${s.practising===1?"":"ren"}</p></div>
-      <div class="stat"><p class="label">Mock papers sat</p><div class="n">${nf(s.papers)}</div>
+      <div class="stat"><div class="statTop"><span class="ibox navy">${ico("exam")}</span><p class="label">Mock papers sat</p></div><div class="n">${nf(s.papers)}</div>
         <p class="muted" style="font-size:12.5px;margin-top:.2rem">${s.bestPaper ? "best " + s.bestPaper + " / 75" : "none yet"}</p></div>
     </div>
     <div class="grid g2" style="align-items:start">
       <div class="card gold"><p class="label">By class</p>
         <h2 style="margin:.2rem 0 .2rem">Where the children are</h2>${rankList(s.byClass, className, true)}</div>
-      <div class="card teal"><p class="label">By school</p>
+      <div class="card teal"><p class="label">${ico("school")} By school</p>
         <h2 style="margin:.2rem 0 .2rem">Which schools</h2>
         <p class="muted" style="font-size:13px">${nf(s.schoolsGiven)} of ${nf(s.children)} parents gave one. It is optional.</p>
         ${rankList(s.bySchool)}</div>
@@ -3131,7 +3238,7 @@ async function renderDash(){
     <div class="grid g2" style="align-items:start;margin-top:1.1rem">
       <div class="card"><p class="label">Registrations</p>
         <h2 style="margin:.2rem 0 .2rem">Month by month</h2>${rankList(s.byMonth)}</div>
-      <div class="card gold"><p class="label">Years until university</p>
+      <div class="card gold"><p class="label">${ico("cap")} Years until university</p>
         <h2 style="margin:.2rem 0 .2rem">When the fees start</h2>
         <p class="muted" style="font-size:13px">Five years of secondary after the S.E.A., then two of sixth
           form. Worked out from the class &mdash; nobody was asked a birthday.</p>
