@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Values at Renewal | Ricky Rampersad Branch</title>
+<meta name="description" content="How a motor sum insured and a property sum insured actually settle at claim time, market benchmarks for Trinidad and Tobago, and the Salesforce fields to change when a client agrees a new value.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+  img{max-width:100%}
+
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+    padding:13px 24px;background:rgba(6,25,45,.9);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:16.5px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .staff{margin-left:auto;font-size:10.5px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;
+    color:#07131f;background:var(--grad-gold);padding:6px 13px;border-radius:999px}
+
+  .rail{position:sticky;top:67px;z-index:35;display:flex;gap:6px;padding:12px 24px;
+    background:linear-gradient(#061c31f2,#061c31d0);overflow-x:auto;scrollbar-width:none}
+  .rail::-webkit-scrollbar{display:none}
+  .rail b{font:650 12.5px var(--font-b);color:var(--dim);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:999px;padding:8px 15px;cursor:pointer;white-space:nowrap;transition:.25s var(--ease)}
+  .rail b:hover{color:var(--ink)}
+  .rail b.on{color:#07131f;background:var(--grad);border-color:transparent;font-weight:750}
+
+  .wrap{max-width:1010px;margin:0 auto;padding:30px 24px 100px}
+  .panel{display:none;animation:in .45s var(--ease)}
+  .panel.on{display:block}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  .kick{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:9px}
+  h2{margin:0 0 10px;font-family:var(--font-d);font-size:clamp(25px,4.6vw,33px);font-weight:800;letter-spacing:-1px;line-height:1.12}
+  h3{margin:32px 0 13px;font-family:var(--font-d);font-size:18.5px;font-weight:750;letter-spacing:-.3px;
+     display:flex;align-items:center;gap:10px}
+  h3 .dot{width:9px;height:9px;border-radius:50%;flex:none}
+  .lede{font-size:16.5px;color:var(--dim);line-height:1.62;max-width:770px;margin:0 0 10px}
+  p{line-height:1.62}
+  .src{font-size:11.5px;color:var(--faint);margin:5px 0 0;font-style:italic}
+
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(265px,1fr))}
+  .two{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+  .c{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 17px}
+  .c .t{font-family:var(--font-d);font-weight:750;font-size:15px;margin-bottom:6px}
+  .c p{margin:0;font-size:13.6px;color:var(--dim);line-height:1.55}
+  .c.motor{border-left:3px solid var(--blue)}
+  .c.prop{border-left:3px solid var(--teal)}
+
+  .pull{background:linear-gradient(120deg,rgba(245,185,59,.13),rgba(245,185,59,.05));
+    border:1px solid rgba(245,185,59,.3);border-left:4px solid var(--gold);
+    border-radius:12px;padding:17px 19px;margin:20px 0}
+  .pull b{color:var(--gold)}
+  .pull p{margin:0;font-size:14.8px;line-height:1.6}
+  .pull p+p{margin-top:9px}
+
+  .calc{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:var(--r);padding:20px;margin:18px 0}
+  .calc h4{margin:0 0 4px;font-family:var(--font-d);font-size:16.5px;font-weight:750}
+  .calc .why{font-size:13.4px;color:var(--dim);margin:0 0 16px;line-height:1.55}
+  .fields{display:grid;gap:13px;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));margin-bottom:18px}
+  .f label{display:block;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
+           color:var(--faint);font-weight:650;margin-bottom:5px}
+  .f .inp{display:flex;align-items:center;background:rgba(0,0,0,.28);border:1px solid var(--line);
+          border-radius:10px;padding:0 11px;transition:.2s}
+  .f .inp:focus-within{border-color:var(--blue);background:rgba(0,0,0,.4)}
+  .f .inp span{font-size:12.5px;color:var(--faint);font-weight:650;margin-right:2px}
+  .f input,.f select{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--ink);
+           font:650 15.5px var(--font-b);padding:11px 0;font-variant-numeric:tabular-nums}
+  .f select{cursor:pointer}
+  .f select option{background:#0a2540;color:var(--ink)}
+
+  /* payout bar — blue = what the policy pays, gold = what the client carries.
+     Validated for CVD separation (ΔE 25.0 protan, 24.3 tritan); both segments
+     also carry direct labels, so identity is never colour-alone. */
+  .bar{display:flex;height:38px;border-radius:8px;overflow:hidden;background:rgba(255,255,255,.05);gap:2px}
+  .bar .seg{display:grid;place-items:center;font-size:12.5px;font-weight:750;color:#07131f;
+            transition:flex-basis .5s var(--ease);min-width:0;overflow:hidden;white-space:nowrap}
+  .bar .paid{background:var(--blue);border-radius:8px 4px 4px 8px}
+  .bar .lost{background:var(--gold);border-radius:4px 8px 8px 4px}
+  .keys{display:flex;gap:18px;margin-top:11px;flex-wrap:wrap}
+  .key{display:flex;align-items:center;gap:7px;font-size:12.8px;color:var(--dim)}
+  .key i{width:11px;height:11px;border-radius:3px;flex:none}
+  .key b{color:var(--ink);font-variant-numeric:tabular-nums}
+  .verdict{margin-top:15px;font-size:14.6px;line-height:1.6;padding:13px 15px;border-radius:11px;
+           background:rgba(0,0,0,.25);border:1px solid var(--line)}
+  .verdict.ok{border-color:rgba(55,177,236,.4)}
+  .verdict.warn{border-color:rgba(245,185,59,.42)}
+  .verdict b{color:var(--gold)}
+  .verdict.ok b{color:var(--blue)}
+
+  .tiles{display:grid;gap:11px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px}
+  .tile{background:rgba(0,0,0,.24);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+  .tile .lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  .tile .val{font:800 21px var(--font-d);margin-top:5px;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+  .tile .note{font-size:11.5px;color:var(--dim);margin-top:3px}
+  .tile.hi .val{color:var(--gold)}
+  .tile.lo .val{color:var(--blue)}
+
+  .scroller{overflow-x:auto;margin:14px 0}
+  table{width:100%;border-collapse:collapse;font-size:13.6px;min-width:520px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:650}
+  td.n{text-align:right;font-variant-numeric:tabular-nums}
+  tr.pick{cursor:pointer;transition:.18s}
+  tr.pick:hover{background:rgba(55,177,236,.09)}
+  .chip{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:999px;letter-spacing:.03em}
+  .chip.und{background:rgba(245,185,59,.18);color:var(--gold)}
+  .chip.ovr{background:rgba(55,177,236,.16);color:var(--blue)}
+  .chip.ok{background:rgba(52,211,153,.15);color:var(--good)}
+
+  pre{background:rgba(0,0,0,.4);border:1px solid var(--line);border-radius:11px;padding:15px 17px;
+      overflow-x:auto;font:500 12.7px ui-monospace,'SF Mono',Menlo,monospace;color:#cfe6fb;line-height:1.62;margin:13px 0}
+  pre .k{color:var(--gold)}
+  pre .c2{color:var(--faint)}
+  code{font:500 12.6px ui-monospace,Menlo,monospace;background:rgba(0,0,0,.34);
+       padding:2px 6px;border-radius:5px;color:#bfe0f8}
+
+  footer{text-align:center;padding:30px 24px 50px;color:var(--faint);font-size:12.2px;line-height:1.7}
+  @media (max-width:560px){
+    header{padding:11px 16px}header .staff{display:none}
+    .rail{padding:10px 16px}.wrap{padding:22px 16px 70px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Values at renewal</h1>
+    <div class="sub">How a sum insured actually settles · Ricky Rampersad Branch</div>
+  </div>
+  <span class="staff">Staff tool</span>
+</header>
+
+<nav class="rail" id="rail">
+  <b data-p="rule" class="on">The two rules</b>
+  <b data-p="motor">Value a vehicle</b>
+  <b data-p="market">Market benchmarks</b>
+  <b data-p="prop">Property &amp; average</b>
+  <b data-p="write">Changing the value</b>
+</nav>
+
+<main class="wrap">
+
+<!-- ═══════════ THE TWO RULES ═══════════ -->
+<section class="panel on" id="p-rule">
+  <div class="kick">Start here</div>
+  <h2>Motor and property settle by two different rules. Almost everyone applies the wrong one.</h2>
+  <p class="lede">There is no average clause in the motor policy. There is one in HomeGuard. Getting these the
+  wrong way round is how a renewal conversation goes wrong — and it is the single most useful thing on this page.</p>
+
+  <div class="two">
+    <div class="c motor">
+      <div class="t">Motor — the lesser of two numbers</div>
+      <p style="margin-bottom:9px">A total loss pays <strong>the market value at the time of loss, or your sum
+      insured, whichever is lower</strong>. There is no pro-rata cut. It is a ceiling, applied twice.</p>
+      <p style="margin-bottom:9px"><strong>Insured too low?</strong> You are capped at your own number. A vehicle
+      worth TT$600,000 insured at TT$300,000 pays TT$300,000.</p>
+      <p><strong>Insured too high?</strong> You collect the market value anyway. Every dollar of premium above
+      market value buys nothing at all.</p>
+      <p class="src" style="color:var(--faint)">Section 2.4.1, GG-MOT-POL-APV-10/09</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Property — the 85% average clause</div>
+      <p style="margin-bottom:9px">If the sum insured is below <strong>85% of the cost of rebuilding</strong>, you
+      are your own insurer for the difference and <strong>every claim is cut by the same proportion</strong> — not
+      just a total loss.</p>
+      <p style="margin-bottom:9px"><strong>Insured too low?</strong> A TT$100,000 kitchen fire on a house insured
+      at two-thirds of rebuild cost pays about TT$67,000.</p>
+      <p><strong>Insured too high?</strong> Also wasted — settlement is capped at the sum insured but based on
+      actual rebuilding cost.</p>
+      <p class="src" style="color:var(--faint)">Section 2.1(e), GG-FHO-POL-04/11</p>
+    </div>
+  </div>
+
+  <div class="pull">
+    <p><b>Which is why motor values come down and property values go up.</b> A vehicle depreciates, so holding an
+    old high figure is money burned on premium you can never claim. A building's rebuilding cost rises with
+    materials and labour, so holding an old figure walks the client toward the 85% cliff.</p>
+    <p>Same instruction — <b>review the figure every year</b> — pointing in opposite directions.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>The one exception worth selling</h3>
+  <p class="lede"><strong>OEB 5, Agreed Value.</strong> On a total loss it pays the sum insured regardless of
+  market value, less 15% a year pro-rata, less the excess. It converts the lesser-of rule into a known number —
+  which is what an owner of a new or high-value vehicle actually wants.</p>
+  <p class="lede"><strong>It has one condition and it is routinely missed:</strong> a written valuation from an
+  approved valuator at the start of <em>each</em> period of insurance. Without one the benefit silently reverts to
+  market value. If a schedule shows OEB 5 and the file has no current valuation, the client is paying for
+  something they will not receive.</p>
+</section>
+
+<!-- ═══════════ VALUE A VEHICLE ═══════════ -->
+<section class="panel" id="p-motor">
+  <div class="kick">Motor</div>
+  <h2>What this vehicle would actually pay on a total loss.</h2>
+  <p class="lede">Put in the year, what it is insured for now, and a market estimate — take one from the benchmark
+  tab, or from two comparable local listings. The tool shows what settles, what is wasted, and what Agreed Value
+  would change.</p>
+
+  <div class="calc">
+    <h4>Vehicle value check</h4>
+    <p class="why">Depreciation is shown at both 10% and 15% a year, matching the two options the branch already
+    models in Salesforce.</p>
+    <div class="fields">
+      <div class="f"><label>Year of manufacture</label>
+        <div class="inp"><input id="vyr" type="text" inputmode="numeric" value="2020"></div></div>
+      <div class="f"><label>Insured for now</label>
+        <div class="inp"><span>TT$</span><input id="vsi" type="text" inputmode="numeric" value="295,245"></div></div>
+      <div class="f"><label>Market estimate</label>
+        <div class="inp"><span>TT$</span><input id="vmk" type="text" inputmode="numeric" value="640,000"></div></div>
+      <div class="f"><label>Excess</label>
+        <div class="inp"><span>TT$</span><input id="vex" type="text" inputmode="numeric" value="2,500"></div></div>
+      <div class="f"><label>Months into policy year</label>
+        <div class="inp"><input id="vmo" type="text" inputmode="numeric" value="6"></div></div>
+    </div>
+
+    <div class="bar">
+      <div class="seg paid" id="vPaid"></div>
+      <div class="seg lost" id="vLost"></div>
+    </div>
+    <div class="keys">
+      <div class="key"><i style="background:var(--blue)"></i>Settles at <b id="vkPaid">—</b></div>
+      <div class="key"><i style="background:var(--gold)"></i><span id="vkLabel">Client carries</span> <b id="vkLost">—</b></div>
+    </div>
+    <div class="verdict" id="vNote">—</div>
+
+    <div class="tiles">
+      <div class="tile"><div class="lab">Age</div><div class="val" id="tAge">—</div>
+        <div class="note">years at renewal</div></div>
+      <div class="tile lo"><div class="lab">Agreed Value pays</div><div class="val" id="tAgreed">—</div>
+        <div class="note" id="tAgreedNote">OEB 5, 15%/yr pro rata</div></div>
+      <div class="tile"><div class="lab">Next year at 10%</div><div class="val" id="tD10">—</div>
+        <div class="note">step down from market</div></div>
+      <div class="tile"><div class="lab">Next year at 15%</div><div class="val" id="tD15">—</div>
+        <div class="note">step down from market</div></div>
+    </div>
+    <p class="src">Settlement figures are net of the excess. <strong>Agreed Value depreciates 15% a year pro rata
+    across the current period of insurance, not across the age of the vehicle</strong> — the sum insured is re-set
+    at each renewal from a fresh written valuation, so the clock restarts every year. Six months in, the agreed
+    figure is 92.5% of the sum insured. Without a current valuation on file the benefit reverts to market value
+    entirely.</p>
+  </div>
+
+  <div class="pull">
+    <p><b>What to say on the call.</b> Not "your value is wrong". Say: <i>"A total loss on this pays the lower of
+    the market value and what you're insured for. Right now those two numbers are far apart, and the policy pays
+    the smaller one. Let's agree the real figure so the cover matches the vehicle."</i></p>
+    <p>That is a five-minute conversation that either recovers premium or protects the client. Both are worth
+    having.</p>
+  </div>
+</section>
+
+<!-- ═══════════ MARKET BENCHMARKS ═══════════ -->
+<section class="panel" id="p-market">
+  <div class="kick">Trinidad &amp; Tobago · asking prices, September 2026</div>
+  <h2>Local comparables, from local dealers.</h2>
+  <p class="lede">Thirty-six comparables from three Trinidad sources — a franchise dealer's own pre-owned lot, an
+  importer, and the classifieds. These are <strong>asking prices</strong>, so a private sale usually settles below
+  them; treat them as the top of the band, not the middle. Tap any row to load it into the calculator.</p>
+
+  <div class="scroller">
+  <table>
+    <thead><tr><th>Vehicle</th><th>Year</th><th class="n">Asking TT$</th><th>Source</th></tr></thead>
+    <tbody id="mkt"></tbody>
+  </table>
+  </div>
+  <p class="src">Toyota Trinidad pre-owned inventory, Caribbean Automobiles (Trinidad) and Trini Motors
+  classifieds, all read 12 September 2026. Local stock only — no US or Japanese-export pricing, which runs on a
+  different market and a different duty regime. Stock turns over, so re-read before quoting, and never put a
+  single listing in a letter as "the" value.</p>
+
+  <div class="pull">
+    <p><b>How to use these properly.</b> Find the closest year and trim, take the lower of two asking prices, and
+    knock off roughly 10–15% for a private sale. That is a defensible market estimate for a renewal conversation.
+    Above about TT$400,000, do not estimate at all — send the client to an approved valuator, because that is what
+    OEB 5 requires anyway and a report ends the argument.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--teal)"></span>Approved valuators — where a real figure comes from</h3>
+  <p class="lede">Agreed Value needs <strong>a written valuation from an approved valuator at the start of each
+  period of insurance</strong>. These are the firms on the approved lists in Trinidad and Tobago.</p>
+  <div class="grid">
+    <div class="c prop">
+      <div class="t">General Adjusters Limited · San Fernando</div>
+      <p>Shopping Centre 1, Room 101F. <strong>652-0853</strong>, WhatsApp <strong>782-8735</strong>. Over 69,000
+      valuations completed, and they keep their own trend data on realistic market values for makes and models on
+      Trinidad roads. Cars, maxi taxis, vans, pickups, SUVs, trucks and equipment. Closest to the branch — this is
+      the first call.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Motor Critic Limited · St James</div>
+      <p>50 Mucurapo Road, Port of Spain. Automobile inspection and valuation.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Pioneer Claims Services</div>
+      <p>Port of Spain and San Fernando — useful when a client is at either end of the island.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Cariclaims Investigators &amp; Adjusters</div>
+      <p>Port of Spain.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Oliver Rosemin &amp; Company</div>
+      <p>Port of Spain.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">Twin Isle Adjusters</div>
+      <p>Tacarigua and Tobago — the Tobago option.</p>
+    </div>
+  </div>
+  <p class="src">Approved auto valuator lists published by Republic Bank and listed on SearchinTT, September 2026.
+  Confirm with Guardian General which firms they currently accept before committing a client to a fee.</p>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>What the local benchmarks imply</h3>
+  <p class="lede">Across these Trinidad listings a vehicle holds roughly <strong>85–90% of its value a year</strong>
+  over the first five years, then flattens hard — a 2012 Fielder asks TT$62,000 and a 2018 asks TT$58,000, which
+  is no real difference at all. Pickups hold value far better than saloons: a 2018 BT-50 asks TT$95,000 against a
+  2020 at TT$132,000 and a 2023 at TT$295,000.</p>
+  <p class="lede">Two consequences for the renewal call. On a vehicle under about six years old, stepping the value
+  down 10% a year tracks this market and 15% cuts too deep. On anything past about eight years the curve is flat,
+  so the annual reduction should stop — a client whose value keeps being cut on an old car is being quietly
+  under-insured a little more every year.</p>
+</section>
+
+<!-- ═══════════ PROPERTY ═══════════ -->
+<section class="panel" id="p-prop">
+  <div class="kick">Property</div>
+  <h2>The 85% cliff, and what a claim pays past it.</h2>
+  <p class="lede">Rebuilding cost — not market value, not what they paid. The sum insured must represent the cost
+  to rebuild to the same specification, including debris removal and professional fees.</p>
+
+  <div class="calc">
+    <h4>Average clause check</h4>
+    <p class="why">Works for buildings against rebuilding cost, and for contents against replacement-as-new cost.
+    Each item on a commercial schedule is tested separately.</p>
+    <div class="fields">
+      <div class="f"><label>Insured for</label>
+        <div class="inp"><span>TT$</span><input id="psi" type="text" inputmode="numeric" value="1,200,000"></div></div>
+      <div class="f"><label>Cost to rebuild</label>
+        <div class="inp"><span>TT$</span><input id="prc" type="text" inputmode="numeric" value="1,800,000"></div></div>
+      <div class="f"><label>Size of claim</label>
+        <div class="inp"><span>TT$</span><input id="pcl" type="text" inputmode="numeric" value="150,000"></div></div>
+    </div>
+    <div class="bar">
+      <div class="seg paid" id="pPaid"></div>
+      <div class="seg lost" id="pLost"></div>
+    </div>
+    <div class="keys">
+      <div class="key"><i style="background:var(--blue)"></i>Insurer pays <b id="pkPaid">—</b></div>
+      <div class="key"><i style="background:var(--gold)"></i>Client carries <b id="pkLost">—</b></div>
+    </div>
+    <div class="verdict" id="pNote">—</div>
+    <p class="src">Section 2.1(e) and 2.2(f), GG-FHO-POL-04/11. Figures exclude the excess.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>The two questions that set a realistic figure</h3>
+  <div class="grid">
+    <div class="c prop">
+      <div class="t">"What would it cost to build this house again today?"</div>
+      <p>Not what it is worth, not what it sold for. Square footage times current build cost per square foot, plus
+      walls, fences, tanks, the pool, plus debris removal and professional fees. The land is not insured and never
+      belongs in the figure.</p>
+    </div>
+    <div class="c prop">
+      <div class="t">"If everything inside were gone, what would replacing it cost — new?"</div>
+      <p>People under-state contents by half, because they price what they own second-hand. The policy pays
+      replacement as new, so the sum insured has to be the new price of everything.</p>
+    </div>
+  </div>
+
+  <div class="pull">
+    <p><b>And the sub-limits, which no sum insured can fix.</b> Unless an item is named on the schedule, contents
+    pays at most <b>2%</b> of the contents sum insured for any one valuable, <b>10%</b> for all valuables in one
+    event, and <b>5%</b> for any one other item or piece of electronic equipment. Listing a ring or a laptop costs
+    very little. Not listing it is the difference between a claim and a disappointment.</p>
+  </div>
+</section>
+
+<!-- ═══════════ WRITE BACK ═══════════ -->
+<section class="panel" id="p-write">
+  <div class="kick">Salesforce</div>
+  <h2>Yes — when a client agrees a new value, the field changes.</h2>
+  <p class="lede">The value lives on <code>Risk_Details__c</code> and it is writable. The object already carries
+  dedicated fields for recording an increase or a decrease and the date it takes effect, so a change leaves an
+  audit trail rather than just overwriting history.</p>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>What to write</h3>
+  <div class="scroller">
+  <table>
+    <thead><tr><th>Field</th><th>Type</th><th>What goes in it</th></tr></thead>
+    <tbody>
+      <tr><td><code>Cover1__c</code></td><td>Currency</td><td><strong>The agreed new sum insured.</strong> This is the field that matters.</td></tr>
+      <tr><td><code>Increase_Cover_1__c</code></td><td>Currency</td><td>The amount of the increase, when the value goes up.</td></tr>
+      <tr><td><code>Decrease_Cover_1__c</code></td><td>Currency</td><td>The amount of the reduction, when it comes down.</td></tr>
+      <tr><td><code>Increase_Effective_Date__c</code></td><td>Date</td><td>The date the new figure takes effect.</td></tr>
+      <tr><td><code>Premium_Increase_01__c</code></td><td>Currency</td><td>The premium effect of the change.</td></tr>
+      <tr><td><code>Depreciation_15_Option_2__c</code></td><td>Currency</td><td>The Agreed Value figure after 15% a year, if OEB 5 applies.</td></tr>
+      <tr><td><code>Total_Cover__c</code></td><td>Derived</td><td><strong>Do not write this.</strong> It recalculates itself.</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="pull">
+    <p><b>The one trap.</b> <code>Total_Cover__c</code> and <code>Total_Property_Cover__c</code> are derived. A
+    PATCH that includes them is rejected and takes the whole record with it. Send <code>Cover1__c</code> alone and
+    Salesforce recalculates the totals correctly — this was tested against the live org, and the totals came back
+    right.</p>
+  </div>
+
+  <h3><span class="dot" style="background:var(--blue)"></span>The call, then the record</h3>
+  <pre><span class="c2">// one risk, agreed on the phone — value coming down</span>
+PATCH /services/data/v67.0/sobjects/Risk_Details__c/<span class="k">{riskId}</span>
+{
+  <span class="k">"Cover1__c"</span>: 210000,
+  <span class="k">"Decrease_Cover_1__c"</span>: 85245,
+  <span class="k">"Increase_Effective_Date__c"</span>: "2026-10-01"
+}
+
+<span class="c2">// a batch of them, after a round of renewal calls
+// allOrNone:false so one bad row does not lose the others</span>
+POST /services/data/v67.0/composite/sobjects
+{
+  <span class="k">"allOrNone"</span>: false,
+  <span class="k">"records"</span>: [
+    { "attributes": {"type":"Risk_Details__c"}, "id":"<span class="k">a0G…</span>",
+      "Cover1__c": 210000, "Decrease_Cover_1__c": 85245 },
+    { "attributes": {"type":"Risk_Details__c"}, "id":"<span class="k">a0G…</span>",
+      "Cover1__c": 690000, "Increase_Cover_1__c": 60000 }
+  ]
+}</pre>
+  <p class="src">Composite takes 200 records a call. Property values go to <code>Cover1__c</code> for the building
+  and <code>Cover_General_Contents__c</code>, <code>Electronic_Equipment__c</code>, <code>Stock__c</code> and
+  <code>Plant_Equipment_Machinery__c</code> for the rest.</p>
+
+  <h3><span class="dot" style="background:var(--gold)"></span>Two data gaps worth closing first</h3>
+  <div class="grid">
+    <div class="c motor">
+      <div class="t">No NCD is recorded anywhere</div>
+      <p><code>NCD__c</code> is empty on every comprehensive motor risk in the current renewal year. Special Perils
+      and Waiver of Excess are on all of them, so the discipline exists — the discount just is not being captured.
+      You cannot tell a client "you are at 50%, protect it" from a blank field.</p>
+    </div>
+    <div class="c motor">
+      <div class="t">Make and year missing on some risks</div>
+      <p>Two vehicles carry a model but no make, because the make picklist has no <strong>BYD</strong> or
+      <strong>MG</strong> entry — both now sell here. One risk has the year sitting in
+      <code>Age_of_Vehicle__c</code> instead of <code>Year_of_Manufacture__c</code>, which makes every
+      depreciation calculation on it wrong.</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Ricky Rampersad Branch · Guardian Group, Trinidad &amp; Tobago<br>
+  Internal working tool. Policy wordings govern every settlement; the calculators here illustrate the mechanism
+  and are not a quotation or a claims decision.
+</footer>
+
+<script>
+(function(){
+  'use strict';
+
+  var rail = document.getElementById('rail');
+  function show(id){
+    [].forEach.call(rail.children, function(b){ b.classList.toggle('on', b.dataset.p === id); });
+    [].forEach.call(document.querySelectorAll('.panel'), function(s){ s.classList.toggle('on', s.id === 'p-' + id); });
+    window.scrollTo({ top:0, behavior:'smooth' });
+  }
+  rail.addEventListener('click', function(e){
+    var b = e.target.closest('b[data-p]'); if (b) show(b.dataset.p);
+  });
+
+  var TT = function(n){ return n.toLocaleString('en-TT',{ maximumFractionDigits:0 }); };
+  function num(el){ return Math.max(0, parseFloat(String(el.value).replace(/[^0-9.]/g,'')) || 0); }
+  var YEAR = 2026;
+
+  /* ── market benchmarks: Trinidad & Tobago asking prices ──────────────
+     Three local sources, read 12 September 2026 — Toyota Trinidad's own
+     pre-owned lot, Caribbean Automobiles, and Trini Motors classifieds.
+     Asking prices, so the top of the band, not the middle. */
+  var MARKET = [
+    ['Toyota Land Cruiser',   2025, 800000, 'Trini Motors'],
+    ['Toyota Prado VXL',      2019, 710000, 'Toyota Trinidad'],
+    ['Audi Q8 S Line',        2024, 625000, 'Caribbean Automobiles'],
+    ['BMW i4',                2023, 380000, 'Caribbean Automobiles'],
+    ['BMW 520i',              2017, 350000, 'Caribbean Automobiles'],
+    ['Mazda BT-50',           2023, 295000, 'Trini Motors'],
+    ['BMW X1 M Sport',        2020, 255000, 'Caribbean Automobiles'],
+    ['Mercedes C-Class',      2019, 210000, 'Trini Motors'],
+    ['Toyota Hilux',          2015, 205000, 'Toyota Trinidad'],
+    ['Toyota Rush',           2023, 190000, 'Toyota Trinidad'],
+    ['Toyota Hiace',          2018, 185000, 'Trini Motors'],
+    ['Nissan Serena',         2019, 185000, 'Trini Motors'],
+    ['Mazda CX-5',            2020, 180000, 'Toyota Trinidad'],
+    ['Toyota Hilux Champ',    2024, 175000, 'Toyota Trinidad'],
+    ['Kia Sportage GT Line',  2018, 163000, 'Caribbean Automobiles'],
+    ['Nissan Kicks',          2022, 155000, 'Trini Motors'],
+    ['Nissan Bluebird Sylphy',2020, 155000, 'Trini Motors'],
+    ['BMW 5 Series',          2014, 150000, 'Trini Motors'],
+    ['Mazda BT-50',           2020, 132000, 'Trini Motors'],
+    ['Nissan NV350',          2017, 120000, 'Trini Motors'],
+    ['Nissan X-Trail',        2018, 115000, 'Trini Motors'],
+    ['Honda Civic',           2018, 110000, 'Caribbean Automobiles'],
+    ['Nissan Caravan',        2017, 108000, 'Trini Motors'],
+    ['Mazda BT-50',           2018,  95000, 'Trini Motors'],
+    ['Kia Sportage',          2012,  89000, 'Trini Motors'],
+    ['Toyota Corolla',        2012,  85000, 'Caribbean Automobiles'],
+    ['Ford Ranger T7',        null,  85000, 'Caribbean Automobiles'],
+    ['Nissan X-Trail',        2010,  75000, 'Trini Motors'],
+    ['Toyota Fielder',        2015,  70000, 'Trini Motors'],
+    ['Toyota Aqua',           2019,  65000, 'Caribbean Automobiles'],
+    ['Kia Soul',              2018,  65000, 'Caribbean Automobiles'],
+    ['Toyota Fielder',        2012,  62000, 'Trini Motors'],
+    ['Toyota Fielder',        2018,  58000, 'Trini Motors'],
+    ['Kia Soul',              2014,  55000, 'Trini Motors'],
+    ['Kia Cerato',            2011,  42000, 'Caribbean Automobiles'],
+    ['Mitsubishi Lancer',     2006,  35000, 'Trini Motors']
+  ];
+  document.getElementById('mkt').innerHTML = MARKET.map(function(r, i){
+    return '<tr class="pick" data-i="' + i + '"><td>' + r[0] + '</td><td>' + (r[1] || '—') +
+           '</td><td class="n">' + TT(r[2]) + '</td><td style="color:var(--faint)">' + r[3] + '</td></tr>';
+  }).join('');
+  document.getElementById('mkt').addEventListener('click', function(e){
+    var tr = e.target.closest('tr[data-i]'); if (!tr) return;
+    var r = MARKET[+tr.dataset.i];
+    if (r[1]) document.getElementById('vyr').value = r[1];
+    document.getElementById('vmk').value = TT(r[2]);
+    motor(); show('motor');
+  });
+
+  /* ── motor: the lesser-of rule ─────────────────────────────────────── */
+  var vyr = document.getElementById('vyr'), vsi = document.getElementById('vsi'),
+      vmk = document.getElementById('vmk'), vex = document.getElementById('vex'),
+      vmo = document.getElementById('vmo');
+
+  function motor(){
+    var yr = num(vyr), si = num(vsi), mk = num(vmk), ex = num(vex);
+    var mo = Math.min(12, num(vmo));
+    var age = yr > 1950 && yr <= YEAR + 1 ? Math.max(0, YEAR - yr) : null;
+
+    // Section 2.4.1 — market value or sum insured, whichever is LESS
+    var settles = Math.max(0, Math.min(si, mk) - ex);
+    var ref = Math.max(si, mk);                 // the bigger of the two, for the bar
+    var pct = ref ? (settles / ref) * 100 : 0;
+    var gap = Math.max(0, ref - settles);
+
+    document.getElementById('vPaid').style.flexBasis = pct + '%';
+    document.getElementById('vLost').style.flexBasis = (100 - pct) + '%';
+    document.getElementById('vPaid').textContent = pct > 16 ? Math.round(pct) + '%' : '';
+    document.getElementById('vLost').textContent = (100 - pct) > 16 ? Math.round(100 - pct) + '%' : '';
+    document.getElementById('vkPaid').textContent = 'TT$' + TT(settles);
+    document.getElementById('vkLost').textContent = 'TT$' + TT(gap);
+
+    var note, cls, label;
+    if (!si || !mk){
+      note = 'Put in what the vehicle is insured for and a market estimate.'; cls = ''; label = 'Gap';
+    } else if (si < mk * 0.9){
+      label = 'Client loses';
+      cls = 'warn';
+      note = 'Under-insured. A total loss pays <b>TT$' + TT(settles) + '</b> on a vehicle worth about TT$' +
+             TT(mk) + ' — the policy is capped at the sum insured, so the client absorbs <b>TT$' +
+             TT(Math.max(0, mk - si)) + '</b>. Raise the figure to about TT$' + TT(mk) + '.';
+    } else if (si > mk * 1.1){
+      label = 'Premium wasted on';
+      cls = 'warn';
+      note = 'Over-insured. A total loss still pays only <b>TT$' + TT(settles) + '</b>, the market value. The ' +
+             'client is carrying <b>TT$' + TT(Math.max(0, si - mk)) + '</b> of sum insured that can never be ' +
+             'claimed — and paying premium on it every year. Bring the figure down, or put OEB 5 Agreed Value on ' +
+             'the schedule so the number actually holds.';
+    } else {
+      label = 'Excess';
+      cls = 'ok';
+      note = 'Realistic. Sum insured and market value are within 10% of each other, so a total loss settles at ' +
+             '<b>TT$' + TT(settles) + '</b> after the excess with nothing wasted and nothing exposed.';
+    }
+    document.getElementById('vkLabel').textContent = label;
+    var v = document.getElementById('vNote'); v.innerHTML = note; v.className = 'verdict ' + cls;
+
+    // OEB 5 Agreed Value: the sum insured less 15% a year applied PRO RATA across
+    // the current period of insurance — not across the vehicle's age. The sum
+    // insured is re-set at each renewal from a fresh written valuation, so the
+    // depreciation clock restarts annually. Six months in => 92.5% of the SI.
+    var agreed = Math.max(0, si * Math.max(0, 1 - 0.15 * (mo / 12)) - ex);
+    document.getElementById('tAge').textContent    = age === null ? '—' : age;
+    document.getElementById('tAgreed').textContent = si ? 'TT$' + TT(agreed) : '—';
+    document.getElementById('tAgreedNote').textContent =
+      si ? (100 - 15 * (mo / 12)).toFixed(1) + '% of sum insured' : 'OEB 5, 15%/yr pro rata';
+    document.getElementById('tD10').textContent    = mk ? 'TT$' + TT(mk * 0.90) : '—';
+    document.getElementById('tD15').textContent    = mk ? 'TT$' + TT(mk * 0.85) : '—';
+  }
+  [vyr, vsi, vmk, vex, vmo].forEach(function(el){
+    el.addEventListener('input', motor);
+    el.addEventListener('blur', function(){
+      if (el === vyr || el === vmo) return;
+      var n = num(el); if (n) el.value = TT(n);
+    });
+  });
+  motor();
+
+  /* ── property: the 85% average clause ──────────────────────────────── */
+  var psi = document.getElementById('psi'), prc = document.getElementById('prc'), pcl = document.getElementById('pcl');
+  function prop(){
+    var s = num(psi), r = num(prc), c = num(pcl);
+    var paid = (!r || !c) ? c : (s >= 0.85 * r ? c : c * (s / r));
+    var lost = Math.max(0, c - paid);
+    var pct  = c ? (paid / c) * 100 : 100;
+
+    document.getElementById('pPaid').style.flexBasis = pct + '%';
+    document.getElementById('pLost').style.flexBasis = (100 - pct) + '%';
+    document.getElementById('pPaid').textContent = pct > 16 ? Math.round(pct) + '%' : '';
+    document.getElementById('pLost').textContent = (100 - pct) > 16 ? Math.round(100 - pct) + '%' : '';
+    document.getElementById('pkPaid').textContent = 'TT$' + TT(Math.round(paid));
+    document.getElementById('pkLost').textContent = 'TT$' + TT(Math.round(lost));
+
+    var need = Math.ceil(0.85 * r), note, cls;
+    if (!r || !c){ note = 'Put in the sum insured, the cost to rebuild today, and a claim you can picture.'; cls = ''; }
+    else if (s >= 0.85 * r){
+      cls = 'ok';
+      note = 'Inside the 85% threshold, so the average clause does not bite. A TT$' + TT(c) + ' claim pays <b>TT$' +
+             TT(Math.round(paid)) + '</b>, less the excess. Headroom of TT$' + TT(Math.max(0, Math.round(s - need))) +
+             ' before it would.';
+    } else {
+      cls = 'warn';
+      note = 'Under-insured. The figure needs to reach <b>TT$' + TT(need) + '</b> to clear the threshold — it is ' +
+             'TT$' + TT(Math.round(need - s)) + ' short. Every claim is cut to ' + Math.round(pct) + '%, so this ' +
+             'TT$' + TT(c) + ' one pays <b>TT$' + TT(Math.round(paid)) + '</b> and the client finds <b>TT$' +
+             TT(Math.round(lost)) + '</b>.';
+    }
+    var v = document.getElementById('pNote'); v.innerHTML = note; v.className = 'verdict ' + cls;
+  }
+  [psi, prc, pcl].forEach(function(el){
+    el.addEventListener('input', prop);
+    el.addEventListener('blur', function(){ var n = num(el); if (n) el.value = TT(n); });
+  });
+  prop();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

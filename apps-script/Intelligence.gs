@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-08d';
+var INTEL_VERSION = '2026-09-10a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -3021,6 +3021,7 @@ function intelRoute_(b) {
      the names of our own agents and units. No client rows ever reach it. Anyone
      who finds the URL learns the branch's arrears summary and nothing about a
      single client. Keep it that way — see iBuildWall45_. */
+  if (action === 'intel.day') return iActDay_(b);
   if (action === 'intel.wall') return iActWall45_(b);
   if (action === 'intel.delivery') return iActDelivery_(b);
   if (action === 'intel.licence')  return iActLicence_(b);
@@ -3096,6 +3097,127 @@ function iActSignout_(b) {
    Each response also carries `bands`, a one-line summary of all three, so a
    wall can show where its own band sits against the other two without a
    second call. */
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BRANCH'S OWN DAY
+   ══════════════════════════════════════════════════════════════════════════
+   The five screens before this one are all about the client book — what is
+   owed, what is undelivered, whose licence is up, whose birthday it is. Not
+   one of them says how the branch itself is doing today, which is what the
+   room actually asked for: the Salesforce tasks, what has been actioned, and
+   how the day's blocks are going.
+
+   AGGREGATES ONLY, like every other wall read. Counts, and the branch's own
+   staff names — which are already on the wall in this office — and never a
+   task subject, a client, or a policy number. wallData_ in KPI.gs carries
+   subjects and stays manager-only for exactly that reason; this screen has no
+   sign-in and hangs where clients walk past.
+
+   LIVE, NOT STORED. "How the day is going" cannot be a copy built at three in
+   the morning, so this one feed skips the wall store. It is cheap anyway:
+   sfkMetricsSafe_ is cached by the tracker for twelve minutes, so most of
+   these never reach Salesforce at all.                                     */
+/* THE ONE LIVE FEED ON THE WALL, AND WHY IT IS HELD FOR THREE MINUTES.
+   The other five screens read a stored build; this one reads Salesforce, the
+   register and the day's entries every time it is asked, because "the day so
+   far" is worthless a half-hour old. Two screens asking every five minutes is
+   twenty-four full branch reads an hour against the same script the tracker
+   signs people in through — and on the morning of 10 September the branch
+   could not sign in at all. The screens ask less often now, and what they ask
+   for is held here for three minutes, so the second screen's question costs
+   nothing and a person signing in is not queued behind it. */
+var IDAY_HOLD_S = 180;
+
+function iActDay_(b) {
+  var key = 'iday_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var built = iDayBuild_(b);
+  if (built && built.data) {
+    try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(built.data), IDAY_HOLD_S); } catch (e2) {}
+  }
+  return built && built.data ? iOk_({ data: built.data }) : built;
+}
+
+/** Everything above is about how often; this is the day itself. Returns
+ *  { data: … } so the wrapper can store the payload rather than the envelope. */
+function iDayBuild_(b) {
+  if (typeof sfkMetricsSafe_ !== 'function' || typeof publicRoster_ !== 'function') {
+    return iErr_('The day screen reads the tracker, and the tracker is not in this project.');
+  }
+  var today = todayISO_(), m = sfkMetricsSafe_(), tz = iTz_();
+  var att = {}, entry = {};
+  try {
+    att = attendanceToday_({ staffId: '', manager: true }) || {};
+  } catch (e) {}
+  try {
+    latestEntries_().forEach(function (r) {
+      if (String(r.Date || '').slice(0, 10) === today) entry[String(r.StaffId)] = r;
+    });
+  } catch (e2) {}
+
+  var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
+  var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
+  var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
+
+  publicRoster_().forEach(function (p) {
+    var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
+    var a = att[p.staffId] || null, e = entry[p.staffId] || null;
+    var sched = (typeof SCHEDULE !== 'undefined' && SCHEDULE[p.staffId] && SCHEDULE[p.staffId].blocks) || {};
+    var mine = blockIds.map(function (id, i) {
+      var has = !!(e && String(e[id + '_Actioned'] || '').trim());
+      var sb = sched[id];
+      /* A block nobody is scheduled for is not a block anybody owes. Counting
+         it made a four-block branch look permanently a quarter behind. */
+      if (sb) {
+        blocks[i].of++; t.of++;
+        if (has) { blocks[i].done++; t.done++; }
+        if (!blocks[i].label) { blocks[i].label = String(sb.focus || ''); blocks[i].time = String(sb.time || ''); }
+      }
+      return sb ? (has ? 'done' : 'due') : '';
+    });
+    var d = {
+      name: p.name, role: p.role || '',
+      closed: s ? (s.closed || 0) : null, open: s ? (s.open || 0) : null,
+      overdue: s ? (s.overdue || 0) : null, needs: s ? (s.needs || 0) : null,
+      blocks: mine,
+      'in': a && a.status !== 'absent' ? (a.at || '') : '',
+      out: a ? (a.out || '') : '', late: a ? (a.late || 0) : 0,
+      absent: !!(a && a.status === 'absent')
+    };
+    if (s) { t.closed += d.closed; t.open += d.open; t.overdue += d.overdue; t.needs += d.needs; }
+    if (d.absent) t.absent++;
+    else if (d['in']) { t['in']++; if (d.out) t.out++; }
+    desks.push(d);
+  });
+
+  /* The busiest desk first — a wall is read from the top, and the top should
+     be where the day is actually happening. */
+  desks.sort(function (x, y) { return (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0); });
+
+  return { data: {
+    generatedAt: today,
+    at: Utilities.formatDate(new Date(), tz, 'HH:mm'),
+    configured: !!(m && m.ok),
+    error: m && m.ok ? '' : 'Salesforce is not answering, so the task counts are blank.',
+    branch: t, desks: desks, blocks: blocks,
+    /* What the branch closed today against what it closes on an average day
+       this quarter, so a slow morning reads as slow rather than as a number. */
+    pace: (function () {
+      var per = 0;
+      publicRoster_().forEach(function (p) {
+        var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
+        if (s && s.rateAll && s.rateAll.enough) per += s.rateAll.perDay || 0;
+      });
+      return per ? { perDay: Math.round(per), share: Math.round(t.closed / per * 100) } : null;
+    })()
+  } };
+}
+
 function iActWall45_(b) {
   var band = Math.round(iNum_((b && b.band) || 45)) || 45;
   if (IWALL_BANDS.indexOf(band) < 0) {
@@ -3870,23 +3992,40 @@ function intelInstallTriggers() {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
   ScriptApp.newTrigger('intelRebuild').timeBased().atHour(2).everyDays(1).create();
-  ScriptApp.newTrigger('intelAgentDigest').timeBased().atHour(7).everyDays(1).create();
-  ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(7).create();
-  ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(8).create();
-  ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(8).create();
+  /* THE BRANCH SIGNS IN FROM SEVEN. Nothing this project runs may still be
+     running then. The digests used to go at seven and the policy-book rebuild
+     with them — a fifty-four-thousand-row Salesforce pull — and on the
+     morning of 10 September the whole branch met "the sheet did not answer"
+     on the sign-in screen. Apps Script fires a time trigger anywhere inside
+     its hour, so an hour-seven job is an eight-o'clock job as often as not.
+     Everything scheduled here now finishes before six. */
+  ScriptApp.newTrigger('intelAgentDigest').timeBased().atHour(6).everyDays(1).create();
+  ScriptApp.newTrigger('intelManagerDigest').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(6).create();
+  /* Monthly, and still not at eight: eight o'clock is Elizabeth's start, and
+     a job that only bites twelve times a year is a job nobody connects to the
+     morning it bites on. */
+  ScriptApp.newTrigger('intelHorizonWatch').timeBased().onMonthDay(1).atHour(6).create();
+  ScriptApp.newTrigger('intelCrossSellDigest').timeBased().onMonthDay(8).atHour(6).create();
   /* Thanks and follow-ups go out the morning after somebody answers, not at the
      end of the month — a thank-you a fortnight late reads as an audit, not a
      courtesy, and the two-day promise has already been broken by then. */
   ScriptApp.newTrigger('intelSurveyFollowUp').timeBased().atHour(9).everyDays(1).create();
-  /* The wall's five feeds, one execution each so every one gets the full
-     six minutes, an hour after the snapshot. Eleven here and the tracker's
-     five is sixteen, under the project limit of twenty. */
-  ['intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
-   'intelRebuildPossession', 'intelRebuildBook'].forEach(function (fn) {
-    ScriptApp.newTrigger(fn).timeBased().atHour(3).everyDays(1).create();
+  /* The wall's five feeds, one execution each so every one gets the full six
+     minutes — AND AN HOUR EACH TO ITSELF. All five used to fire at three and
+     compete: on 9 September four of them rebuilt between 03:23 and 03:55 and
+     the 45-day line, the one that takes 155 seconds, was still serving
+     Monday's copy. Spreading them fixed that and created a worse fault — the
+     last one landed at seven, on top of the branch signing in. They are all
+     in the small hours now, slowest first, and the last of them is done by
+     five. Eleven here and the tracker's six is seventeen, under the project
+     limit of twenty. */
+  [['intelRebuildWall45', 0], ['intelRebuildBook', 1], ['intelRebuildPossession', 3],
+   ['intelRebuildLicence', 4], ['intelRebuildDelivery', 5]].forEach(function (t) {
+    ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
   });
-  return 'Installed. Check Project Settings → Time zone reads (GMT-04:00) Atlantic Time, ' +
-         'or every one of these fires an hour out.';
+  return 'Installed — eleven, all of them finished before six, because the branch ' +
+         'signs in from seven. Check Project Settings → Time zone reads ' +
+         '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
 }
 
 function iSend_(to, subject, html) {
