@@ -1452,8 +1452,8 @@ function goMovement(){
   location.href = 'movement.html';
 }
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
-            employer_live:[['dash','Overview'],['history','History'],['queries','Queries'],['members','Your people'],
-                           ['pending','Pending applications'],
+            employer_live:[['dash','Overview'],['account','Account'],['history','History'],['queries','Queries'],
+                           ['members','Your people'],['pending','Pending applications'],
                            ['leavers','Terminations'],['pension','Pension'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
 
@@ -1668,7 +1668,7 @@ function render(){
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
   acctBand();
-  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,dash,queries,pending,leavers,pension})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,dash,queries,pending,leavers,pension,account})[tab]();
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
@@ -1713,6 +1713,178 @@ async function loadGroupView(code, pw){
   render();
 }
 
+/* ══════════════ THE ACCOUNT — GUARDIAN'S OWN RENEWAL RECORDS ══════════════
+   A separate read from the roster, on purpose. The roster is the expensive
+   call; this one is small, so changing the month re-reads only this and the
+   filter answers in a moment rather than in the time it takes to re-count
+   four hundred certificates. */
+let ACC = null, ACC_STATE = 'idle', ACC_WHY = '';
+let ACC_YEAR = 0, ACC_MONTH = 0;
+
+async function loadAccount(){
+  if(!API){ ACC_STATE = 'off'; ACC_WHY = 'Not connected to the branch.'; return; }
+  ACC_STATE = 'loading'; if(tab === 'account') render();
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'account', code:AUTH.code, password:AUTH.pw,
+                             year:ACC_YEAR || '', month:ACC_MONTH || '' }) });
+    const d = await r.json();
+    if(d && d.ok && d.shown){ ACC = d; ACC_YEAR = d.year; ACC_MONTH = d.month; ACC_STATE = 'ready'; }
+    else { ACC_STATE = 'off'; ACC_WHY = (d && (d.why || d.error)) || 'Not available yet.'; }
+  }catch(e){ ACC_STATE = 'error'; ACC_WHY = 'Could not reach the branch just now.'; }
+  render();
+}
+
+const MONTH_NAME = ['','January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+const LINE_NAME = { life:'Group life', health:'Group health', pension:'Pension' };
+
+function account(){
+  const title = 'Account';
+  const blurb = 'Every renewal Guardian holds for your company, the payments against it, and the work the '
+    + 'branch has running on each one. Pick a year and a month.';
+  if(ACC_STATE === 'loading' || ACC_STATE === 'idle') return gvWaiting(title, blurb);
+  if(ACC_STATE !== 'ready')
+    return gvShell(title, blurb, `<div class="alert a-warn">${esc(ACC_WHY)}</div>`);
+
+  const t = ACC.totals || {};
+  const years = ACC.years || [];
+  const months = (ACC.monthsByYear && ACC.monthsByYear[ACC_YEAR]) || [];
+  const txns = ACC.transactions || [];
+
+  /* The filter offers the months that have something in them. A dropdown of
+     twelve months where four are populated invites an employer to conclude
+     their August is missing. */
+  const chips = `
+    <div class="card" style="margin-bottom:1.3rem">
+      <span class="label">Show me</span>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem;margin:.55rem 0 .75rem">
+        ${years.map(y => `<button class="btn ${y===ACC_YEAR?'':'ghost'} sm" data-accyear="${y}">${y}</button>`).join('')}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:.4rem">
+        <button class="btn ${!ACC_MONTH?'':'ghost'} sm" data-accmonth="0">Whole year</button>
+        ${months.map(m => `<button class="btn ${m===ACC_MONTH?'':'ghost'} sm" data-accmonth="${m}">${MONTH_NAME[m]}</button>`).join('')}
+      </div>
+    </div>`;
+
+  const window_ = ACC_MONTH ? `${MONTH_NAME[ACC_MONTH]} ${ACC_YEAR}` : String(ACC_YEAR);
+
+  if(!txns.length) return gvShell(title, blurb, chips
+    + `<div class="alert">Guardian holds no group renewal for your company in ${esc(window_)}.</div>`);
+
+  /* Received by month, oldest first, whenever the window is wider than one
+     month — a single bar is not a chart. */
+  const byMonth = {};
+  txns.forEach(x => { byMonth[x.month] = (byMonth[x.month] || 0) + (x.received || 0); });
+  const bars = Object.keys(byMonth).map(Number).sort((a,b) => a - b)
+    .map(m => ({ label: MONTH_NAME[m].slice(0,3), value: Math.round(byMonth[m]*100)/100 }));
+
+  return gvShell(title, blurb, chips + `
+    <div class="stats" style="margin-bottom:1.4rem">
+      <div class="card"><span class="label">Renewals in ${esc(window_)}</span>
+        <div class="v">${txns.length}</div>
+        <div class="note">${[...new Set(txns.map(x=>x.line))].map(l=>LINE_NAME[l]).join(' · ')}</div></div>
+      <div class="card"><span class="label">Received</span>
+        <div class="v good">${money(t.received || 0)}</div>
+        <div class="note">${t.received ? 'receipted against these renewals' : 'nothing applied yet'}</div></div>
+      <div class="card"><span class="label">Billed</span>
+        <div class="v">${t.billed == null ? '—' : money(t.billed)}</div>
+        <div class="note">${t.billed == null ? 'nothing billed on record for this window — ' : 'from the branch billing log. '
+          }Guardian does not hold a billed figure on a group renewal</div></div>
+      <div class="card"><span class="label">Work open</span>
+        <div class="v ${t.open ? 'bad' : ''}">${t.open || 0}</div>
+        <div class="note">${t.closed || 0} closed in this window</div></div>
+    </div>
+
+    ${bars.length > 1 ? `<div class="card" style="margin-bottom:1.4rem">
+      <span class="label">Received by month</span>
+      <h2 style="font-size:1.05rem;color:var(--navy);margin:.15rem 0 .9rem">${esc(window_)}</h2>
+      ${Charts.bars(bars, {width:620, height:190, id:'accpay', title:'Received by month'})}
+    </div>` : ''}
+
+    ${txns.map(x => accCard(x)).join('')}
+
+    <p class="note" style="margin-top:1.1rem">Read from Guardian's records ${esc(String(ACC.read||'').slice(0,10))}.
+      Renewal dates, policy statuses and payments are Guardian's; the billed figure is the branch's own log.</p>`);
+}
+
+function accCard(x){
+  const pays = x.payments || [], tasks = x.tasks || [];
+  const state = x.state === 'inforce' ? 'p-ok' : x.state === 'ended' ? 'p-bad' : 'p-warn';
+  return `<div class="card" style="margin-bottom:1rem">
+    <div style="display:flex;flex-wrap:wrap;gap:.6rem;align-items:baseline;justify-content:space-between">
+      <div>
+        <span class="label">${esc(LINE_NAME[x.line] || x.line)}${x.bill ? ' · ' + esc(x.bill) : ''}</span>
+        <h2 style="font-size:1.05rem;color:var(--navy);margin:.15rem 0 0">
+          Renews ${esc(x.renewal || '')}</h2>
+        <p class="note" style="margin:.2rem 0 0">${esc(x.name)}${x.recordType ? ' · ' + esc(x.recordType) : ''}</p>
+      </div>
+      <div style="text-align:right">
+        ${x.status ? `<span class="pill ${state}">${esc(x.status)}</span>` : ''}
+        <div class="mono" style="font-size:1.05rem;margin-top:.35rem">${x.received ? money(x.received) : '—'}</div>
+        <div class="note">${x.received ? 'received' : 'nothing received yet'}</div>
+      </div>
+    </div>
+
+    ${pays.length ? `<div style="overflow-x:auto;margin-top:.9rem"><table><thead><tr>
+      <th>Paid</th><th>How</th><th>Reference</th><th class="r">Amount</th></tr></thead><tbody>
+      ${pays.map(p => `<tr>
+        <td>${esc(p.on || '—')}</td>
+        <td class="note">${esc([p.how, p.bank].filter(Boolean).join(' · ') || '—')}</td>
+        <td class="note mono">${esc(p.receipt || p.cheque || p.ref || '—')}</td>
+        <td class="r mono">${p.amount == null ? '—' : money(p.amount)}</td>
+      </tr>`).join('')}
+    </tbody></table></div>`
+    : `<p class="note" style="margin-top:.8rem">No payment applied to this renewal yet.</p>`}
+
+    ${tasks.length ? `<h3 style="font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;
+      color:var(--muted);margin:1.1rem 0 .5rem">What we have running on it</h3>
+      ${tasks.map(t => accTask(t)).join('')}` : ''}
+  </div>`;
+}
+
+function accTask(t){
+  const open = QOPEN === t.ref;
+  const talk = ACC_TALK[t.ref] || [];
+  /* Two different clocks and they are never labelled the same thing: how
+     long it has been open is a complaint, how long it took to close is a
+     record. */
+  const age = t.open
+    ? (t.daysOpen == null ? '' : 'open ' + gvAge(t.daysOpen))
+    : (t.daysToClose == null ? 'closed' : 'closed in ' + gvAge(t.daysToClose));
+  return `<div style="border-left:3px solid ${t.open ? 'var(--gold)' : 'var(--line)'};
+      padding:.55rem 0 .55rem .8rem;margin-bottom:.6rem">
+    <div style="display:flex;flex-wrap:wrap;gap:.5rem;justify-content:space-between;align-items:baseline">
+      <b style="font-size:.92rem">${esc(t.subject)}</b>
+      <span class="pill ${t.open ? 'p-warn' : 'p-ok'}">${esc(t.open ? 'open' : 'done')}</span>
+    </div>
+    <p class="note" style="margin:.25rem 0 0">
+      ${[t.withWhom ? 'with ' + esc(t.withWhom) : '', t.contact ? 'for ' + esc(t.contact) : '',
+         age, t.due ? 'due ' + esc(t.due) : ''].filter(Boolean).join(' · ')}</p>
+    <div class="qtalk" style="margin-top:.6rem">
+      ${talk.map(c => `<div class="msg ${c.role === 'client' ? 'them' : 'us'}">
+        <div class="who">${esc(c.by)}${c.role === 'branch' ? ' · the branch' : ''} · ${esc(c.at)}</div>
+        <p>${esc(c.text)}</p></div>`).join('')}
+      ${open
+        ? `<div style="margin-top:.7rem">
+            <textarea class="inp" id="qtext" rows="2" placeholder="It goes onto this job in Guardian's system, where the person working it will see it…"></textarea>
+            <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center;flex-wrap:wrap">
+              <button class="btn sm" data-qsend="${esc(t.ref)}">Send</button>
+              <button class="btn ghost sm" data-qopen="">Cancel</button>
+              <span class="note" id="qerr">${esc(QERR)}</span>
+            </div></div>`
+        : `<button class="btn ghost sm" style="margin-top:.6rem" data-qopen="${esc(t.ref)}">
+             ${talk.length ? 'Add to this' : 'Comment on this'}</button>`}
+    </div>
+  </div>`;
+}
+
+/* Comments made on an account task this session. The transaction read does
+   not carry them back — they live on the Salesforce record now — so they are
+   held here to keep them on screen after Send rather than vanishing until
+   somebody opens Chatter. */
+const ACC_TALK = {};
+
 const gvAge = d => d == null ? '' : d < 1 ? 'today' : d === 1 ? '1 day'
   : d < 60 ? d + ' days' : d < 730 ? Math.round(d/30) + ' months' : (d/365).toFixed(1) + ' years';
 
@@ -1750,23 +1922,44 @@ let MSEARCH = '', MPICK = null;
    open textareas is a page where somebody types into the wrong one. */
 let QOPEN = null;
 
+/* Anything the send has to say back. It is held here rather than poked into
+   the span, because the paths that need to say something are the same paths
+   that re-render — and a message written onto an element that is about to be
+   replaced is a message nobody sees. That is how the "it did not reach
+   Guardian" warning went missing: it was set, and then the repaint that
+   showed the comment threw it away. */
+let QERR = '';
+
 async function sendComment(ref, text){
   const err = $('qerr');
-  if(!text.trim()){ if(err) err.textContent = 'Nothing to send.'; return; }
-  if(err) err.textContent = 'Sending…';
+  const say = m => { QERR = m; if($('qerr')) $('qerr').textContent = m; };
+  if(!text.trim()){ say('Nothing to send.'); return; }
+  say('Sending…');
   try{
     const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
       body: JSON.stringify({ action:'querycomment', code:AUTH.code, password:AUTH.pw,
                              thread:ref, text:text }) });
     const d = await r.json();
     if(d && d.ok){
+      /* It went to the branch either way. If it was meant to reach Guardian's
+         own record and did not, say so on the spot — a comment the employer
+         watched appear on their screen while it silently failed to reach the
+         person who has to act on it is worse than a refusal. */
+      const missed = !!(d.feed && d.feed.attempted && !d.feed.ok);
+      QERR = missed
+        ? 'Saved with the branch, but it did not reach Guardian\'s record — we will put it on manually.'
+        : '';
       /* Show it at once rather than waiting on a reload — the branch
          record is a slow read and the person has just pressed Send. */
-      const q = (GV.queries || []).find(x => x.ref === ref);
+      const q = (GV && GV.queries || []).find(x => x.ref === ref);
       if(q){ q.thread = (q.thread || []).concat([{ at:d.at, by:d.by, role:d.role, text:text }]); }
-      QOPEN = null; render();
-    } else if(err){ err.textContent = (d && d.error) || 'Could not send that.'; }
-  }catch(e){ if(err) err.textContent = 'Could not reach the branch just now.'; }
+      else ACC_TALK[ref] = (ACC_TALK[ref] || []).concat([{ at:d.at, by:d.by, role:d.role, text:text }]);
+      /* The box stays open on a miss so the warning has somewhere to sit and
+         she can see exactly which comment it was about. */
+      if(!missed) QOPEN = null;
+      render();
+    } else { say((d && d.error) || 'Could not send that.'); }
+  }catch(e){ say('Could not reach the branch just now.'); }
 }
 
 const covered = m => (m.holds.life && m.lifeCover) || (m.holds.adnd && m.adndCover);
@@ -2032,7 +2225,7 @@ function queries(){
           <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center;flex-wrap:wrap">
             <button class="btn sm" data-qsend="${esc(q.ref)}">Send</button>
             <button class="btn ghost sm" data-qopen="">Cancel</button>
-            <span class="note" id="qerr"></span>
+            <span class="note" id="qerr">${esc(QERR)}</span>
           </div></div>`
         : `<button class="btn ghost sm" style="margin-top:.6rem" data-qopen="${esc(q.ref)}">
             ${msgs.length ? 'Reply' : 'Add a comment'}</button>`}
@@ -2330,11 +2523,13 @@ function liveRow(r){
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-signout],[data-movement],[data-member],[data-qopen],[data-qsend],#theme'); if(!t) return;
+  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-signout],[data-movement],[data-member],[data-qopen],[data-qsend],[data-accyear],[data-accmonth],#theme'); if(!t) return;
   /* Everything the session held goes, including the login the movement form
      would have used. On a shared machine the next person gets the gate. */
   if(t.hasAttribute('data-signout')){
     AUTH={code:'',pw:''}; LIVE=null; GV=null; GV_STATE='idle'; MPICK=null; MSEARCH='';
+    ACC=null; ACC_STATE='idle'; ACC_YEAR=0; ACC_MONTH=0; QOPEN=null; QERR='';
+    Object.keys(ACC_TALK).forEach(k => delete ACC_TALK[k]);
     authed=false; as='employer'; tab='overview';
     try{ sessionStorage.removeItem('rrb-movement'); }catch(err){}
     render(); window.scrollTo({top:0}); return;
@@ -2348,11 +2543,21 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-movement')){ e.preventDefault(); goMovement(); return; }
   if(t.hasAttribute('data-member')){ MPICK = t.dataset.member || null; render();
     window.scrollTo({top:0,behavior:'smooth'}); return; }
-  if(t.hasAttribute('data-qopen')){ QOPEN = t.dataset.qopen || null; render(); return; }
+  if(t.hasAttribute('data-qopen')){ QOPEN = t.dataset.qopen || null; QERR = ''; render(); return; }
   if(t.hasAttribute('data-qsend')){ sendComment(t.dataset.qsend, ($('qtext')||{}).value || ''); return; }
+  /* Changing the year drops the month with it — March of one year selected
+     against a different year is a filter showing nothing and blaming the
+     data for it. */
+  if(t.hasAttribute('data-accyear')){ ACC_YEAR = Number(t.dataset.accyear); ACC_MONTH = 0;
+    QOPEN = null; QERR = ''; loadAccount(); return; }
+  if(t.hasAttribute('data-accmonth')){ ACC_MONTH = Number(t.dataset.accmonth) || 0;
+    QOPEN = null; QERR = ''; loadAccount(); return; }
   if(t.dataset.as){ as=t.dataset.as; authed=true; ME=GROUP.people[3]; tab=TABS[as][0][0]; syncBar(); render(); return; }
   if(t.hasAttribute('data-signin')){ signIn($('code').value, $('pw') ? $('pw').value : ''); return; }
-  if(t.dataset.go){ tab=t.dataset.go; MPICK=null; MSEARCH=''; render();
+  if(t.dataset.go){ tab=t.dataset.go; MPICK=null; MSEARCH=''; QOPEN=null; QERR=''; render();
+    /* Read on first open rather than at sign-in — most visits never reach
+       this tab, and it is a second call to Salesforce. */
+    if(tab === 'account' && ACC_STATE === 'idle') loadAccount();
     window.scrollTo({top:0,behavior:'smooth'}); }
 });
 /* Typed, not submitted — a search that makes you press a button is a search

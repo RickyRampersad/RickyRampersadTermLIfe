@@ -869,6 +869,7 @@ function doGet(e) {
     if (a === 'groups')    return benGroups_(e.parameter);
     if (a === 'roster')    return benRoster_(e.parameter);
     if (a === 'groupview') return benGroupView_(e.parameter);
+    if (a === 'account')   return benAccount_(e.parameter);
     if (a === 'terminations') return benTerminations_(e.parameter);
     if (a === 'ack')       return benAck_(e.parameter);
     if (a === 'rate')      return benRate_(e.parameter);
@@ -904,6 +905,7 @@ function doPost(e) {
     /* The employer portal posts this one: a client's password must never
        ride in a URL, where it lands in every proxy and history list. */
     if (b.action === 'groupview')    return benGroupView_(b);
+    if (b.action === 'account')      return benAccount_(b);
     if (b.action === 'terminations') return benTerminations_(b);
     if (b.action === 'reportleaver') return benReportTermination_(b);
     if (b.action === 'leaversent')   return benTerminationSent_(b);
@@ -1518,6 +1520,26 @@ function benQueryComment_(b) {
   bsheet_(BEN.COMMENTS_SHEET).appendRow([new Date(), thread, group, byName, role, text]);
   blog_(byName, who ? who.code : '', 'QUERY COMMENT', group, '', thread + ' — ' + text.slice(0, 90));
 
+  /* If the query came out of Salesforce, the answer goes back into Salesforce,
+     onto the record the work is being done against — so the person who has to
+     act on it reads it where they already are, rather than in an email about a
+     portal they have never opened.
+
+     It posts as the integration user, which is why the author is named in the
+     first line of the body. A Chatter post signed by an API user saying "he
+     finished on 31 July" tells nobody who said so. */
+  var feed = { attempted: false, ok: false };
+  if (bFeedTarget_(thread)) {
+    feed.attempted = true;
+    var r = bChatterPost_(thread,
+      byName + (role === 'client' ? ' — ' + group : ' (branch)')
+      + ', via the employer portal:\n\n' + text);
+    feed.ok = !!r.ok;
+    if (!r.ok) feed.why = r.why;
+    blog_(byName, who ? who.code : '', 'CHATTER', group, '',
+          thread + ' — ' + (r.ok ? 'posted' : 'not posted: ' + r.why));
+  }
+
   /* The branch hears about a client's comment at once; a client is not
      emailed for ours, because they are looking at the thread when we
      answer and a notification for something already on screen is noise. */
@@ -1534,7 +1556,7 @@ function benQueryComment_(b) {
       });
     } catch (e) {}
   }
-  return bok_({ at: bstamp_(new Date()), by: byName, role: role });
+  return bok_({ at: bstamp_(new Date()), by: byName, role: role, feed: feed });
 }
 
 /* ── what has been billed, and what has come in ──
@@ -1568,6 +1590,273 @@ function bMonthKey_(label) {
   var d = new Date(String(label || '') + ' 1');
   return isNaN(+d) ? '0000-00' :
     d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+}
+
+/* ════════════ THE ACCOUNT — ONE RENEWAL AT A TIME, FROM SALESFORCE ════════════
+
+   A transaction is Guardian's own record of one renewal of one line: the date
+   it falls due, the policy it renews, that policy's status and record type,
+   and hanging off it the payments that settled it and the tasks the branch
+   raised about it. Four questions, one object — which is why the account
+   screen reads this instead of assembling an answer out of four places.
+
+   TWO THINGS THIS HAD TO GET RIGHT.
+
+   Who the transaction belongs to. ACCOUNT_NAME__c is free text, and on this
+   book it misleads in the employer's favour: four INDIVIDUAL health policies
+   carry "D RAMPERSAD & COMPANY LTD" in that field while the lookup beside it
+   reads "RAMPERSAD, NIRMAL HH" — a director's own household cover, his policy
+   number, his renewal date. Matching on the name alone would put a man's
+   personal health policy on his company's screen. So a transaction is shown
+   only when the transaction type AND the portfolio's record type both say
+   group. Default-deny, the same rule the task allow-list runs on, for the
+   same reason: what is not recognised stays inside.
+
+   And the money. On the general side a transaction carries both halves —
+   Motor and Property rows hold what was billed and what was paid. On every
+   group transaction in the org, Premiums_Billed__c reads 0.00. Guardian
+   records what came in; it does not record what went out. So this reports
+   the payments, which are real and receipted, and reports billed as unknown
+   rather than as zero. "Billed $0.00 · received $40,814.46" against a live
+   scheme is a confident wrong number, and a confident wrong number is the
+   thing the spreadsheet kept producing — it is not an improvement to produce
+   it faster. The billed side comes from the branch's own billing log, joined
+   by month, and is labelled as ours rather than as Guardian's.
+
+   The list bill arrives on Policy_Number__c — 01_DRACO001, TGM 1099 — not on
+   LISTBILLCP__c, which is null on every record in the org. */
+
+/* Both gates. The transaction type is the explicit one: "T- PENSIONS GROUP"
+   says group where the PENSION record type cannot, since that one type covers
+   personal annuities and company schemes alike. */
+function bTxnLine_(type) {
+  var s = String(type || '').toUpperCase();
+  if (!/\bGROUP\b/.test(s)) return null;
+  if (/PENSION/.test(s)) return 'pension';
+  if (/HEALTH/.test(s))  return 'health';
+  if (/LIFE/.test(s))    return 'life';
+  return null;
+}
+
+var BEN_TXN_RT = { LIFE_GROUP: 'life', HEALTH_GROUP: 'health', PENSION: 'pension' };
+
+function bTxnDays_(from, to) {
+  var a = from ? new Date(from) : null;
+  if (!a || isNaN(+a)) return null;
+  var b = to ? new Date(to) : new Date();
+  if (isNaN(+b)) return null;
+  return Math.max(0, Math.round((b - a) / BEN_DAY));
+}
+
+function bTxnRows_(group, bills, fromYear) {
+  if (typeof sfQuery_ !== 'function')
+    throw new Error('SalesforceSync.gs is not in this project, so the account could not be read.');
+
+  var like = bAcctLike_(group).replace(/'/g, "\\'");
+  var where = "ACCOUNT_NAME__c LIKE '" + like + "' OR Account__r.Name LIKE '" + like + "'";
+  [].concat(bills || []).filter(Boolean).forEach(function (b) {
+    var v = String(b).replace(/'/g, "\\'").trim();
+    if (v) where += " OR Policy_Number__c LIKE '" + v.slice(0, 10) + "%'";
+  });
+  var since = (fromYear || new Date().getFullYear()) + '-01-01';
+
+  var recs = sfQuery_(
+    "SELECT Id, Name, ACCOUNT_NAME__c, Account__r.Name, TRANSACTION_TYPE__c, "
+    + "Renewal_Date__c, Next_Renewal_Date__c, Issue_Date__c, Policy_Number__c, "
+    + "POLICY_STATUS__c, Premiums_Billed__c, Payments_Made__c, Premium_Owed__c, "
+    + "Days_O_S__c, INSURANCE_PORTFOLIO__r.Name, "
+    + "INSURANCE_PORTFOLIO__r.RecordType.DeveloperName, "
+    + "INSURANCE_PORTFOLIO__r.Policy_Status_Description_R__c, "
+    + "INSURANCE_PORTFOLIO__r.List_Bill__c, "
+    + "(SELECT Id, Name, Payment_Made__c, Date_Paid__c, Payment_Type__c, Bank__c, "
+    + "Cheque_Reference__c, Receipt__c FROM PMTS__r), "
+    + "(SELECT Id, Subject, Status, IsClosed, Owner.Name, Who.Name, ActivityDate, "
+    + "CreatedDate, CompletedDateTime FROM Tasks) "
+    + "FROM TRANSACTIONS__c WHERE Renewal_Date__c >= " + since + " AND (" + where + ") "
+    + "ORDER BY Renewal_Date__c DESC LIMIT 500");
+
+  var out = [];
+  (recs || []).forEach(function (r) {
+    var line = bTxnLine_(r.TRANSACTION_TYPE__c);
+    if (!line) return;                                   /* not a group renewal */
+    var pf = r.INSURANCE_PORTFOLIO__r || {};
+    var rt = (pf.RecordType && pf.RecordType.DeveloperName) || '';
+    if (rt && !BEN_TXN_RT[rt]) return;                   /* an individual policy */
+
+    var d = r.Renewal_Date__c ? new Date(r.Renewal_Date__c + 'T00:00:00') : null;
+    if (!d || isNaN(+d)) return;                         /* nothing to file it under */
+
+    /* Received is real. Billed is not — see the note above — so it is left
+       null and the page says where the figure is missing from. */
+    var pays = ((r.PMTS__r && r.PMTS__r.records) || []).map(function (p) {
+      return { ref: String(p.Name || ''), amount: p.Payment_Made__c == null ? null : p.Payment_Made__c,
+               on: p.Date_Paid__c || null, how: p.Payment_Type__c || '',
+               bank: p.Bank__c || '', cheque: p.Cheque_Reference__c || '',
+               receipt: p.Receipt__c || '' };
+    }).sort(function (a, b) { return String(b.on || '') < String(a.on || '') ? -1 : 1; });
+
+    var tasks = [];
+    ((r.Tasks && r.Tasks.records) || []).forEach(function (t) {
+      if (!bTaskVisible_(t.Subject)) return;             /* the allow-list, before it leaves */
+      var closed = !!t.IsClosed;
+      tasks.push({
+        ref: String(t.Id || ''),
+        subject: String(t.Subject || '').replace(/<[^>]*>/g, '').trim(),
+        status: String(t.Status || ''), open: !closed,
+        withWhom: (t.Owner && t.Owner.Name) || '',
+        contact: (t.Who && t.Who.Name) || '',
+        due: t.ActivityDate || null,
+        at: String(t.CreatedDate || '').slice(0, 10),
+        /* One number, two meanings, and the page says which: how long it has
+           been open, or how long it took to close. */
+        daysOpen: closed ? null : bTxnDays_(t.CreatedDate, null),
+        daysToClose: closed ? bTxnDays_(t.CreatedDate, t.CompletedDateTime) : null
+      });
+    });
+
+    var got = pays.reduce(function (s, p) { return s + (p.amount || 0); }, 0);
+    out.push({
+      ref: String(r.Id || ''), name: String(r.Name || ''), line: line,
+      type: String(r.TRANSACTION_TYPE__c || '').replace(/\s+/g, ' ').trim(),
+      year: d.getFullYear(), month: d.getMonth() + 1,
+      renewal: r.Renewal_Date__c, next: r.Next_Renewal_Date__c || null,
+      issued: r.Issue_Date__c || null,
+      /* The list bill, from wherever the book happens to carry it. */
+      bill: String(r.Policy_Number__c || pf.List_Bill__c || '').trim(),
+      portfolio: String(pf.Name || ''),
+      recordType: rt ? rt.replace(/_/g, ' ').toLowerCase() : '',
+      status: String(pf.Policy_Status_Description_R__c || r.POLICY_STATUS__c || ''),
+      state: bClassify_(pf.Policy_Status_Description_R__c || r.POLICY_STATUS__c),
+      billed: r.Premiums_Billed__c ? r.Premiums_Billed__c : null,
+      received: Math.round(got * 100) / 100,
+      payments: pays, tasks: tasks,
+      daysOut: r.Days_O_S__c == null ? null : r.Days_O_S__c
+    });
+  });
+  return out;
+}
+
+/* Guardian's transactions and the branch's own billing log, on one screen,
+   told apart. The filter is a year and a month because that is how an
+   employer asks the question — "what happened in July" — and both come off
+   the renewal date rather than off a formula field, so the figure and the
+   date on screen can never disagree. */
+function benAccount_(p) {
+  var group, forBranch = false;
+  var staff = bstaff_(p.auth);
+  if (staff) { group = String(p.group || '').trim(); forBranch = true; }
+  else {
+    var row = bClientRow_(p.code, p.password);
+    if (!row) return berr_('Not on the access list — check the login and password.');
+    group = String(bfield_(row, ['company'])).trim();
+  }
+  if (!group) return berr_('That login is not attached to a company.');
+
+  var bills = [].concat(p.bills || p.bill || []).filter(Boolean);
+  if (typeof bills[0] === 'string' && bills.length === 1) bills = bills[0].split(',');
+  var from = Number(p.from || 0) || new Date().getFullYear();
+
+  var rows;
+  try { rows = bTxnRows_(group, bills, from); }
+  catch (err) { return bok_({ group: group, shown: false, why: String(err && err.message || err) }); }
+
+  /* Every year and month that actually has something in it — the filter
+     offers what exists rather than a dropdown of empty months. */
+  var years = [], months = {};
+  rows.forEach(function (r) {
+    if (years.indexOf(r.year) === -1) years.push(r.year);
+    (months[r.year] = months[r.year] || {})[r.month] = true;
+  });
+  years.sort(function (a, b) { return b - a; });
+  Object.keys(months).forEach(function (y) {
+    months[y] = Object.keys(months[y]).map(Number).sort(function (a, b) { return b - a; });
+  });
+
+  var year  = Number(p.year || 0) || years[0] || new Date().getFullYear();
+  var month = p.month === '' || p.month == null ? 0 : Number(p.month) || 0;
+  var shown = rows.filter(function (r) {
+    return r.year === year && (!month || r.month === month);
+  });
+
+  /* The branch's billing log for the same window, so billed and received sit
+     beside each other and the difference is arithmetic on screen rather than
+     a cell somebody typed. */
+  var ledger = bLedger_(group).filter(function (m) {
+    var k = bMonthKey_(m.month).split('-');
+    return Number(k[0]) === year && (!month || Number(k[1]) === month);
+  });
+
+  var received = shown.reduce(function (s, r) { return s + (r.received || 0); }, 0);
+  var billed   = ledger.reduce(function (s, m) { return s + (m.billed || 0); }, 0);
+  var open = 0, closed = 0;
+  shown.forEach(function (r) {
+    r.tasks.forEach(function (t) { t.open ? open++ : closed++; });
+  });
+
+  return bok_({
+    group: group, shown: true, read: new Date().toISOString(),
+    from: from, years: years, monthsByYear: months, year: year, month: month,
+    transactions: shown, ledger: ledger,
+    totals: {
+      renewals: shown.length,
+      received: Math.round(received * 100) / 100,
+      /* Only from our own log. Guardian does not hold a billed figure for a
+         group renewal, and this says so rather than showing a zero. */
+      billed: ledger.length ? Math.round(billed * 100) / 100 : null,
+      billedFrom: ledger.length ? 'branch' : null,
+      open: open, closed: closed
+    },
+    /* The comment box is offered only where a comment can actually land. */
+    chatter: bChatterReady_()
+  });
+}
+
+/* ── a comment that goes where the work is ──
+   The branch already writes to Chatter from the KPI tracker, so this is not
+   a new capability, only a new door onto it. A comment on a query that came
+   out of Salesforce goes back onto that Salesforce record; a comment on a
+   billing query the employer raised with us stays with us, because there is
+   no Salesforce record for it to belong to.
+
+   Two prefixes, and nothing else. The post is made by the integration user,
+   not by the employer, so anything it can be aimed at has to be named here
+   rather than taken from the request — otherwise a field on a form decides
+   which record in the org gets written to. */
+var BEN_FEED_PREFIX = { '00T': 'task', 'a03': 'transaction' };
+
+function bFeedTarget_(ref) {
+  var s = String(ref || '').trim();
+  if (!/^[a-zA-Z0-9]{15}(?:[a-zA-Z0-9]{3})?$/.test(s)) return '';
+  return BEN_FEED_PREFIX[s.slice(0, 3)] ? s : '';
+}
+
+function bChatterReady_() {
+  return typeof sfToken_ === 'function' && bprop_('BEN_CHATTER') === 'on';
+}
+
+/* Posts, and says plainly whether it posted. A comment that silently failed
+   to reach Salesforce while the employer watched it appear on their own
+   screen is the worst of the three possible outcomes. */
+function bChatterPost_(recordId, text) {
+  var id = bFeedTarget_(recordId);
+  if (!id) return { ok: false, why: 'not a record we post onto' };
+  if (!bChatterReady_()) return { ok: false, why: 'Chatter is not switched on' };
+  try {
+    var tok = sfToken_();
+    var res = UrlFetchApp.fetch(
+      tok.instance_url + '/services/data/' + SF.API + '/chatter/feed-elements', {
+        method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { Authorization: 'Bearer ' + tok.access_token },
+        payload: JSON.stringify({
+          feedElementType: 'FeedItem', subjectId: id,
+          body: { messageSegments: [{ type: 'text', text: String(text).slice(0, 9000) }] }
+        })
+      });
+    var c = res.getResponseCode();
+    if (c === 200 || c === 201)
+      return { ok: true, id: String((JSON.parse(res.getContentText()) || {}).id || '') };
+    return { ok: false, why: res.getContentText().slice(0, 200) };
+  } catch (e) { return { ok: false, why: String(e && e.message || e) }; }
 }
 
 /* A LIKE that finds the account however the book spells it. The two longest

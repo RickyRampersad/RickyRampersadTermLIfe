@@ -225,6 +225,75 @@ the month-end screen reads a billing.
 Edition` is not in the library, which is why the row carrying the largest figure
 in a case was the one row nothing validated.
 
+## The employer account — what Salesforce does and does not hold
+
+Settled 13 September 2026 by reading the org, not by assuming it.
+
+**`TRANSACTIONS__c` is one renewal of one line.** It carries the renewal date
+(`Renewal_Date__c`), the policy (`Policy_Number__c`), the type
+(`TRANSACTION_TYPE__c` — "T-LIFE GROUP", "T-HEALTH GROUP", "T- PENSIONS
+GROUP", and yes the space after the dash moves), and two lookups to
+`CLIENT_PORTFOLIO__c`. `Payments__c` hangs off it as a child through
+`PMTS__c`, with the amount, the date, the method, the bank, the cheque
+reference and the receipt. Tasks hang off it through `WhatId`. Chatter is
+enabled on both (`TRANSACTIONS__Feed`, `Payments__Feed`).
+
+**The billed figure is not there.** On Motor and Property a transaction holds
+what was billed *and* what was paid. On **every** group transaction in the
+org `Premiums_Billed__c` reads 0.00 — Guardian records what came in and does
+not record what went out. So the account screen reports payments, which are
+real and receipted, and reports billed from the branch's own log, labelled as
+the branch's. It never prints a group renewal as billed $0.00. A confident
+wrong number is what the spreadsheet kept producing; producing it faster is
+not an improvement.
+
+**`ACCOUNT_NAME__c` misleads, in the employer's favour.** Four INDIVIDUAL
+health policies on D Rampersad's book carry "D RAMPERSAD & COMPANY LTD" in
+that text field while the lookup beside them reads "RAMPERSAD, NIRMAL HH" —
+a director's own household cover, his policy number, his renewal. Matching on
+the name alone puts a man's personal health policy on his company's screen.
+A transaction is shown only when the transaction type **and** the portfolio's
+record type both say group. Default-deny, the same rule the task allow-list
+runs on.
+
+**The list bill arrives on `Policy_Number__c`** — `01_DRACO001`, `TGM 1099` —
+not on `LISTBILLCP__c`, which is null on every record in the org.
+
+**`Renewal_Year__c`, `Renewal_Month__c` and `Renewal_Month_of_Year__c` are
+formula fields.** They filter but cannot be grouped, and SOQL says so with
+"field ... can not be grouped in a query call". The engine derives year and
+month from `Renewal_Date__c` instead, so the figure and the date on screen
+cannot disagree.
+
+### Writing to Chatter is off until it is switched on
+
+A comment on a query that came out of Salesforce goes back onto that
+Salesforce record, through `/chatter/feed-elements` — the same endpoint
+`KPI-Write.gs` has been posting to. It is the portal's only write, and it is
+gated twice:
+
+- the script property **`BEN_CHATTER` must be `on`**; and
+- the target must start `00T` (Task) or `a03` (transaction). Anything else is
+  refused, because the post is made by the integration user and a field on a
+  form must not get to choose which record in the org is written to.
+
+The post names its real author in the first line, because it goes up under
+the API user's name. A Chatter post signed by an integration user saying "he
+finished on 31 July" tells nobody who said so.
+
+If the post fails, **the page says so to the employer**. A comment they
+watched appear on their own screen while it silently failed to reach the
+person who has to act on it is the worst of the three outcomes.
+
+## The benches carry invented people, always
+
+`benefits/test/` is tracked, and the repository root publishes to
+rickyrampersadbranch.com — so `benefits/test/mockapi.mjs` is served at a
+public URL. It was built on 13 September 2026 out of the real book (a named
+administrator, her members, their scheme numbers) and replaced the same day.
+Every identity in a bench fixture is invented. If a bench ever seems to need
+a real record to prove something, the bench is wrong.
+
 ## The view counter — every page reports, one sheet records
 
 Every served HTML page carries a `<!-- rrb-views -->` beacon before `</body>`.
