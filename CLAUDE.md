@@ -491,3 +491,43 @@ the addendum page, inside the same document.
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian
   is named only where it is a matter of fact: the insurer, the form, the
   customer-service desk.
+
+## Web fonts — never render-blocking
+
+A plain `<link rel="stylesheet">` to `fonts.googleapis.com` holds up first
+paint. It was on 22 pages, and DOMContentLoaded tracked Google's response
+1:1 — 62 ms when it answered instantly, 855 ms at +800 ms, 8 s when the host
+was unreachable. All of that is a blank navy screen on a phone in Chaguanas.
+
+Every page loads fonts like this instead:
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="<the css2 url>" rel="stylesheet" media="print"
+      onload="this.media='all';this.onload=null">
+<noscript><link href="<the css2 url>" rel="stylesheet"></noscript>
+```
+
+`media="print"` makes the fetch non-blocking; `onload` promotes it to `all`.
+Same fonts, same look — `document.fonts` still registers every face. Keep the
+`noscript` copy so the page is not left in a fallback font without JS.
+
+## Animate transform and opacity, nothing else
+
+Two animations were driving layout and paint every frame: `.btn-teal::after`
+animated `left` (laying out the button on an infinite loop) and
+`.careers::after` animated `background-position` (repainting a full-width band).
+Both are `translateX` now.
+
+If a sweep needs to travel further than its box, make the element wider and
+translate it — `.careers::after` is `width: 260%` and `.careers` clips it. Check
+`document.body.scrollWidth` against the viewport afterwards; a wide sweep in a
+container without `overflow: hidden` gives the whole site a sideways scroll.
+
+`will-change: transform` sits on the two `blur(70px)` hero orbs and the careers
+glow, so a 480px blur rasterises once instead of every frame. Do not scatter it
+further — each one costs a compositor layer.
+
+The `@media (prefers-reduced-motion: reduce)` block kills all of it with
+`animation: none !important`. Leave that rule in place.
