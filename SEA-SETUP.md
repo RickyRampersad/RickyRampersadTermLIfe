@@ -257,11 +257,50 @@ start, not a syllabus: the full twelve-year bank is the real content job, and
 it wants a primary teacher and a secondary maths teacher writing beside
 whoever types.
 
-**CSEC has no mock paper yet.** Paper 1 is sixty multiple-choice items in
-ninety minutes, and the bank is short-answer, so a faithful mock needs a
-multiple-choice bank first. Home shows the real paper structure — Paper 1
-30 %, Paper 2 50 %, SBA 20 % — from the CXC syllabus, and the Syllabus page
-carries its nine sections.
+## CSEC Mathematics — the syllabus that starts in 2027
+
+Everything the app says about CSEC comes from **CXC 05/G/SYLL 16, amended
+October 2025**, which is *effective for examinations from May–June 2027*. Every
+child the app will ever place in Form 5 sits in 2027 or later, so this is the
+syllabus that applies to all of them — the 2008-era nine-section shape the app
+carried before was already wrong for them.
+
+What changed, and what the app now says:
+
+- **Three modules**, not nine sections. Module 1 *Fundamentals*, Module 2
+  *Intermediate*, Module 3 *Higher Concepts* — each a minimum of 65 hours and
+  each worth **one micro-credential**. Module 1 is the pre-requisite for the
+  other two.
+- Sit all three at once (the regular examination) and grades A–C earn the
+  micro-credentials **and** the intermediate credential, which is the CSEC
+  subject. Sit them one or two at a time and there are four years to finish.
+  The SBA is required at the first sitting either way.
+- **Paper 1** — 1 h 30, 60 multiple-choice items, **20 from each module**, and
+  the specimen paper says plainly that no calculator is allowed. 30 %.
+- **Paper 2** — nine structured questions, **three from each module**; one of
+  Module 1's three is an investigation. 90 marks. 50 %.
+- **Paper 3** — the SBA project, up to 1 000 words, marked out of 30 and
+  weighted to 20, marks split 1:1:1 across the modules. Paper 032 is the
+  private-candidate alternative: 1 hour, three optional questions, answer one.
+- Marks are reported under **Conceptual Knowledge 30 %, Algorithmic Knowledge
+  40 %, Reasoning 30 %** — so recall alone reaches about a third.
+
+**Two contradictions inside CXC's own document**, both flagged rather than
+quietly resolved:
+
+1. *Paper 2's length.* The Format of the Examinations table says **2 h 30**;
+   the specimen Paper 02 is headed **2 h 40**. The app shows 2 h 30, which is
+   the syllabus's own normative table, and says on the page that the specimen
+   disagrees. Confirm with a school before timing a mock on it.
+2. *The SBA's weight.* The heading over the School-Based Assessment section
+   reads "Paper 031 (30 per cent of Total Assessment)", but both assessment
+   grids give it **20 %**, and the project is marked out of 30 raw and weighted
+   to 20. The app uses 20 %; 30 is the raw mark, not the weight.
+
+**CSEC has no mock paper yet.** Paper 1 is sixty multiple-choice items and the
+bank is short-answer, so a faithful mock needs a multiple-choice bank first —
+and under the new syllabus it needs twenty items per module, which is the
+shape to build to.
 
 **CXC sells its past papers.** The Ministry gives the S.E.A. papers away; the
 Caribbean Examinations Council gives away syllabuses and specimen papers and

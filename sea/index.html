@@ -460,6 +460,9 @@ textarea.essay:focus{border-color:var(--teal)}
 .jrail{height:5px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:.5rem}
 .jrail i{display:block;height:100%;border-radius:99px;
   background:linear-gradient(90deg,var(--teal),var(--gold));transition:width .5s cubic-bezier(.22,.9,.3,1)}
+/* the three CSEC modules sit side by side; one column each on a phone */
+.sylmods{display:grid;gap:1rem;align-items:start;grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+.sylmods > .stack{gap:1rem}
 .levelpick{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem}
 .levelpick button{background:var(--surface2);border:1px solid var(--rule);border-radius:8px;padding:.5rem .8rem;cursor:pointer;
   font-weight:700;font-size:13px;color:var(--ink)}
@@ -737,13 +740,23 @@ footer .l{display:flex;gap:.6rem;align-items:center}
         <div class="scroll"><table>
           <thead><tr><th>CSEC Mathematics</th><th>Time</th><th>What</th><th>Weight</th></tr></thead>
           <tbody>
-            <tr><td><b>Paper 1</b></td><td class="mono">1 h 30</td><td>60 multiple-choice items</td><td class="mono">30&thinsp;%</td></tr>
-            <tr><td><b>Paper 2</b></td><td class="mono">2 h 40</td><td>Structured and extended answers</td><td class="mono">50&thinsp;%</td></tr>
-            <tr><td><b>Paper 3 &middot; SBA</b></td><td class="mono">in school</td><td>The school-based project</td><td class="mono">20&thinsp;%</td></tr>
+            <tr><td><b>Paper 1</b></td><td class="mono">1 h 30</td><td>60 multiple-choice items, 20 from each module &mdash; no calculator</td><td class="mono">30&thinsp;%</td></tr>
+            <tr><td><b>Paper 2</b></td><td class="mono">2 h 30</td><td>Nine structured questions, three from each module; one of the three in Module 1 is an investigation</td><td class="mono">50&thinsp;%</td></tr>
+            <tr><td><b>Paper 3 &middot; SBA</b></td><td class="mono">in school</td><td>One project, up to 1&thinsp;000 words, marked out of 30</td><td class="mono">20&thinsp;%</td></tr>
           </tbody></table></div>
-        <p class="note" style="margin-top:.9rem">Sat in May&ndash;June of Form 5. The syllabus is free from CXC; its past papers are sold,
+        <p class="note" style="margin-top:.9rem"><b>Three modules, three micro-credentials.</b> From the May&ndash;June 2027 sitting the
+          syllabus is in three modules &mdash; Fundamentals, Intermediate, Higher Concepts &mdash; each a minimum of 65 hours and each
+          worth one micro-credential. Sit all three at once, the usual way, and grades A to C earn the micro-credentials and the
+          full CSEC subject. Sit them one or two at a time and you have four years to finish, with Module 1 first. The project
+          is required at your first sitting whichever route you take.</p>
+        <p class="note" style="margin-top:.6rem">Every question is marked under one of three headings &mdash;
+          <b>Conceptual Knowledge</b> 30&thinsp;%, <b>Algorithmic Knowledge</b> 40&thinsp;%, <b>Reasoning</b> 30&thinsp;% &mdash;
+          so recall alone reaches about a third of the marks.</p>
+        <p class="note" style="margin-top:.6rem">Sat in May&ndash;June of Form 5. The syllabus is free from CXC; its past papers are sold,
           so this app links to CXC and never copies them.
-          <a href="https://www.cxc.org/wp-content/uploads/2018/11/CSEC-Mathematics-AmendedOct2025.pdf" target="_blank" rel="noopener">CSEC Mathematics syllabus</a>.</p>
+          <a href="https://www.cxc.org/wp-content/uploads/2018/11/CSEC-Mathematics-AmendedOct2025.pdf" target="_blank" rel="noopener">CSEC Mathematics syllabus</a>
+          (CXC 05/G/SYLL 16, amended October 2025). CXC&rsquo;s own document gives Paper 2 as 2 h 30 in the syllabus and
+          2 h 40 on the specimen paper &mdash; check the time with your school before you sit a timed one.</p>
         </div>
       </div>
     </div>
@@ -937,13 +950,17 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <p class="label">Syllabus</p>
     <h1>Everything that can be asked</h1>
     <p>What the two examinations test. The S.E.A. from the Ministry&rsquo;s Assessment Framework for SEA
-       2025&ndash;2028; CSEC Mathematics from the CXC syllabus. Tick a topic when it is secure; the ticks are saved in this browser.</p>
+       2025&ndash;2028; CSEC Mathematics from CXC 05/G/SYLL 16, amended October 2025, which takes effect from the
+       May&ndash;June 2027 sitting and puts the subject into three modules. Tick a topic when it is secure; the ticks are
+       saved in this browser.</p>
   </div>
+  <p class="label" style="margin-bottom:.6rem">The S.E.A. &middot; end of Standard 5</p>
   <div class="grid g2" style="align-items:start">
     <div class="stack" id="sylMath"></div>
     <div class="stack" id="sylEla"></div>
-    <div class="stack" id="sylCsec"></div>
   </div>
+  <p class="label" style="margin:1.6rem 0 .6rem">CSEC Mathematics &middot; end of Form 5 &middot; three modules</p>
+  <div id="sylCsec" class="sylmods"></div>
 </section>
 
 <!-- ---------- ACADEMY DASHBOARD ---------- -->
@@ -2193,37 +2210,187 @@ QUESTIONS.forEach(q => Object.assign(q, HINTS[q.id] || {}));
 QUESTIONS.forEach(q => { if(!q.level){ q.level = LEVEL_OF[q.id] || "std5"; q.sea = true; } });
 
 /* ============================================================
-   CSEC Mathematics — the nine sections of the CXC syllabus
+   CSEC Mathematics — CXC 05/G/SYLL 16, amended October 2025, effective for
+   examinations from May–June 2027. Three modules, each 65 hours and each
+   carrying one micro-credential; Module 1 is the pre-requisite for the other
+   two. Topics and their order are the syllabus's own, not a rearrangement.
    ============================================================ */
 const SYL_CSEC = [
+ {n:1, name:"Fundamentals of Secondary Level Mathematics",
+  note:"65 hours &middot; Paper 1: 20 items &middot; Paper 2: 30 marks, one of the three questions an investigation",
+  topics:[
   ["Number Theory and Computation",[
-    "Natural, whole, integer, rational and real numbers","Directed numbers and the order of operations",
-    "Factors, multiples, primes, HCF and LCM","Fractions, decimals and percentages","Standard form and significant figures","Number bases"]],
+    "Natural, whole, integer, rational, irrational and real numbers, and how each sits inside the next",
+    "Powers and roots: squares, square roots, cubes, cube roots",
+    "The four operations on whole numbers, fractions and decimals, and the order of operations",
+    "Converting among fractions, decimals and percentages",
+    "Factors, multiples, HCF and LCM",
+    "Place value and face value in bases 2, 4, 8 and 10",
+    "Converting units, and the 12-hour and 24-hour clock",
+    "Significant figures and decimal places",
+    "Properties of operations: closure, associativity, commutativity, distributivity, identities and inverses",
+    "A fraction or percentage of a quantity, and the whole from a part",
+    "Scientific notation",
+    "Comparing and ordering a set of real numbers",
+    "Ratio, rates and proportion, and dividing a quantity in a given ratio",
+    "Sequences: a term from the rule, and the rule from the terms"]],
   ["Consumer Arithmetic",[
-    "Profit, loss and discount","Simple and compound interest","Hire purchase and mortgages",
-    "Wages, salaries, tax and utility bills","Rates and exchange rates"]],
+    "Discount, sales tax, profit and loss",
+    "Percentage profit and percentage loss",
+    "Marked price, selling price and cost price",
+    "Payment by instalments: hire purchase and mortgages",
+    "Simple interest",
+    "Compound interest",
+    "Appreciation and depreciation",
+    "Measures and money, including currency conversion",
+    "Rates and taxes, utilities, invoices and shopping bills",
+    "Salaries and wages, insurance and investments"]],
   ["Sets",[
-    "Set notation, subsets, the universal and empty sets","Union, intersection and complement",
-    "Venn diagrams with two and three sets","Problems solved with Venn diagrams"]],
+    "What a set is: membership, cardinality, finite and infinite, universal and empty",
+    "Describing a set in words, in set-builder notation and by listing",
+    "Subsets, and how many a set of n elements has",
+    "Intersection, union and complement of up to three sets",
+    "n(A &cup; B) = n(A) + n(B) &minus; n(A &cap; B)",
+    "Venn diagrams of up to four sets, the universal set included",
+    "Problems in number theory, algebra and geometry solved with sets"]],
   ["Measurement",[
-    "Perimeter and area, including circles and sectors","Surface area and volume of prisms, cylinders, cones and spheres",
-    "Scale drawings, maps and bearings","Units, conversion and estimation"]],
-  ["Statistics",[
-    "Frequency tables, bar charts, pie charts and histograms","Mean, median and mode; range and quartiles",
-    "Cumulative frequency curves","Probability of simple and combined events"]],
-  ["Algebra",[
-    "Simplifying, expanding and factorising","Linear equations and inequalities","Simultaneous equations",
-    "Quadratics: factorising, the formula, completing the square","Indices and algebraic fractions","Changing the subject of a formula"]],
-  ["Relations, Functions and Graphs",[
-    "Coordinates and straight lines: gradient and intercept","Functions, inverse and composite functions",
-    "Quadratic graphs, maximum and minimum","Direct and inverse variation","Linear programming","Distance–time and speed–time graphs"]],
-  ["Geometry and Trigonometry",[
-    "Angles, parallel lines and polygons","Circle theorems","Congruence and similarity",
-    "Pythagoras and the trigonometric ratios","Sine rule, cosine rule and the area of a triangle",
-    "Bearings, elevation and depression","Constructions and transformations: reflection, rotation, translation, enlargement"]],
-  ["Vectors and Matrices",[
-    "Vector notation, addition, scalar multiples and magnitude","Position vectors and collinearity",
-    "Matrix addition, multiplication, determinant and inverse","Matrices as transformations"]]
+    "Converting units of length, mass, area, volume and capacity",
+    "The right SI unit for area, volume, capacity, mass, temperature and time",
+    "Perimeter of a plane shape, compound and irregular ones included",
+    "The length of an arc of a circle",
+    "Estimating the area of a plane shape without a formula",
+    "Area of polygons, circles and a sector",
+    "Surface area of prisms, cylinders, pyramids, cones and spheres",
+    "Volume of prisms, cylinders, pyramids, cones and spheres",
+    "Time, distance and average speed",
+    "Margin of error, maximum and minimum measurements, and where error comes from",
+    "Scales and scale drawings, for distance and for area"]],
+  ["Algebra 1",[
+    "Symbols for numbers, operations, variables and relations",
+    "Translating between words and algebraic expressions",
+    "Directed numbers",
+    "Simplifying with the four operations",
+    "Binary operations other than the four",
+    "Substituting numbers for variables",
+    "Expanding and factorising with the distributive law",
+    "Algebraic fractions",
+    "The laws of indices, for integral indices",
+    "Linear equations in one unknown",
+    "A linear inequality in one unknown, its solution in set-builder notation",
+    "Changing the subject of a formula",
+    "Factorising simple expressions",
+    "Worded problems",
+    "Proving two expressions identical"]],
+  ["Introduction to Graphs",[
+    "Graphs of linear functions: y = c, x = k, y = mx + c",
+    "x-intercepts and y-intercepts, from the graph and from the algebra",
+    "Problems solved from the graph of a linear function"]]]},
+
+ {n:2, name:"Intermediate Secondary Level Mathematics",
+  note:"65 hours &middot; Paper 1: 20 items &middot; Paper 2: 30 marks over three questions",
+  topics:[
+  ["Statistics 1",[
+    "Sample statistics and population parameters",
+    "A frequency table for ungrouped, discrete data",
+    "Pie charts and bar charts",
+    "Mean, median and mode for raw ungrouped data",
+    "The four measurement scales &mdash; nominal, ordinal, interval, ratio &mdash; and which average suits",
+    "Range, interquartile range and semi-interquartile range",
+    "Reading a statistical diagram for averages, spread, trends and patterns",
+    "Comparing two sets with standard deviation (no calculation of it is required)",
+    "The proportion of a sample above or below a given value",
+    "The sample space of a simple experiment, and simple probability",
+    "Drawing an inference from statistics"]],
+  ["Algebra 2",[
+    "Factorising: the difference of two squares, perfect squares, grouping, and ax&sup2; + bx + c",
+    "Changing the subject of a formula, roots and repeated subjects included",
+    "Simultaneous linear equations in two unknowns, algebraically",
+    "Completing the square: a(x + h)&sup2; + k",
+    "Solving a quadratic by factorising, by completing the square and by the formula",
+    "One linear and one quadratic or non-linear equation together",
+    "Worded problems",
+    "Direct and inverse variation"]],
+  ["Relations, Functions and Graphs 1",[
+    "A relation: domain, range, image and co-domain",
+    "Representing a relation as ordered pairs, an arrow diagram, a graph or algebra",
+    "What makes a relation a function, and the vertical line test",
+    "Functional notation",
+    "The gradient of a straight line",
+    "The equation of a line from its graph, from two points, or from a point and the gradient",
+    "Parallel and perpendicular lines",
+    "The length and the midpoint of a line segment",
+    "Simultaneous linear equations solved graphically",
+    "Composite functions, and why fg is not gf",
+    "Inverse functions",
+    "Evaluating f(a), f&#8315;&sup1;(a) and fg(a)",
+    "The graph of a quadratic: roots, axis of symmetry, maximum and minimum",
+    "Sketching y = a(x + h)&sup2; + k and counting its roots",
+    "Reading a curve: gradient at a point, tangent, turning point"]],
+  ["Geometry and Trigonometry 1",[
+    "Points, lines, rays and planes; types of angle; faces, edges and vertices",
+    "Drawing and measuring angles and line segments with instruments",
+    "Constructions: bisecting a segment and an angle, 30&deg;, 45&deg;, 60&deg;, 90&deg;, 120&deg;, and a perpendicular from a point",
+    "Line symmetry, rotational symmetry and its order",
+    "Adjacent angles, angles at a point, supplementary, complementary and vertically opposite angles",
+    "Parallel lines and a transversal: alternate, corresponding and co-interior angles",
+    "Triangles, quadrilaterals and other polygons",
+    "Congruent triangles and similar figures",
+    "Prisms, pyramids, cylinders, cones and spheres",
+    "Pythagoras&rsquo; theorem",
+    "Sine, cosine and tangent of an acute angle",
+    "Angle of elevation, angle of depression and bearing"]],
+  ["Vectors and Matrices 1",[
+    "A vector: magnitude, direction, unit vector, scalar",
+    "Scalar multiples: parallel, equal and inverse vectors",
+    "Adding, subtracting and scaling vectors; the triangle and parallelogram laws",
+    "A matrix: row, column, square, rectangular, identity, and its order",
+    "Adding, subtracting and scaling matrices, and multiplying conformable ones",
+    "Why matrix multiplication is not commutative",
+    "Matrices used in arithmetic and algebra"]]]},
+
+ {n:3, name:"Higher Concepts in Secondary Level Mathematics",
+  note:"65 hours &middot; Paper 1: 20 items &middot; Paper 2: 30 marks over three questions",
+  topics:[
+  ["Statistics 2",[
+    "A frequency table for grouped data, and discrete against continuous variables",
+    "Class interval, boundaries, limits, midpoint and width",
+    "Line graphs, histograms of equal width, and frequency polygons",
+    "Modal class, median class and the estimated mean",
+    "Estimating range, interquartile range and semi-interquartile range for grouped data",
+    "Comparing two sets with standard deviation",
+    "The cumulative frequency curve, the ogive",
+    "Reading an ogive for the median, the quartiles and the proportion above or below a value",
+    "Experimental and theoretical probability, and contingency tables",
+    "Addition for mutually exclusive events, multiplication for independent events",
+    "Drawing an inference from statistics"]],
+  ["Relations, Functions and Graphs 2",[
+    "The graph of a linear inequality in two variables",
+    "The solution of a linear inequality in one variable, on a number line and on a graph",
+    "Linear programming in two variables",
+    "Graphs of y = ax&#8319; for n = &minus;1, &minus;2 and 3",
+    "Distance&ndash;time and speed&ndash;time graphs",
+    "Problems from graphs of linear and non-linear functions"]],
+  ["Geometry and Trigonometry 2",[
+    "The parts of a circle: radius, diameter, chord, arc, tangent, segment, sector",
+    "The circle theorems, and justifying an angle by naming the one you used",
+    "Translation in the plane by a vector",
+    "Reflection in a line, rotation about a point, and enlargement",
+    "The image of an object, and the object from its image",
+    "Describing a transformation, the centre and scale factor of an enlargement included",
+    "A combination of any two transformations",
+    "The sine rule and the cosine rule",
+    "The area of a triangle from two sides and the angle between them",
+    "The area of a segment of a circle",
+    "Bearings, written in three figures"]],
+  ["Vectors and Matrices 2",[
+    "Position and displacement vectors on the x&ndash;y plane",
+    "The magnitude and the direction of a vector, and unit vectors",
+    "Vectors in geometry: points in a straight line, and parallel lines",
+    "The determinant of a 2 &times; 2 matrix",
+    "The multiplicative inverse of a non-singular square matrix",
+    "The inverse of a non-singular 2 &times; 2 matrix",
+    "The 2 &times; 2 matrix of a transformation: reflection, rotation about the origin, enlargement from the origin",
+    "Simultaneous equations solved with matrices"]]]}
 ];
 
 /* ============================================================
@@ -3201,20 +3368,25 @@ renderPapers();
    Syllabus
    ============================================================ */
 function renderSyllabus(){
-  const block = (data, heading) =>
-    `<div class="card teal"><p class="label">${heading}</p></div>` +
+  // The tick key used to be derived from the heading's first letter, so editing a
+  // heading silently moved every tick a child had made. It is explicit now.
+  const block = (data, heading, pre, sub) =>
+    `<div class="card teal"><p class="label">${heading}</p>${
+      sub ? `<p class="muted" style="font-size:12.5px;margin-top:.3rem">${sub}</p>` : ""}</div>` +
     data.map(([title, items], gi) => `
       <details class="strand"${gi === 0 ? " open" : ""}><summary>${title}</summary>
         <ul>${items.map((it, ii) => {
-          const key = heading[0] + gi + "-" + ii;
+          const key = pre + gi + "-" + ii;
           return `<li><label style="display:flex;gap:.55rem;align-items:flex-start;cursor:pointer">
             <input type="checkbox" data-syl="${key}" ${store.syl[key] ? "checked" : ""}
               style="margin-top:.3rem;width:16px;height:16px;accent-color:var(--teal);flex:none">
             <span>${it}</span></label></li>`;
         }).join("")}</ul></details>`).join("");
-  $("#sylMath").innerHTML = block(SYL_MATH, "Mathematics — 40 items, 75 marks, 75 minutes");
-  $("#sylEla").innerHTML  = block(SYL_ELA,  "English Language Arts — 36 items, 64 marks, 75 minutes");
-  $("#sylCsec").innerHTML = block(SYL_CSEC, "CSEC Mathematics — Paper 1 · 60 items · Paper 2 · SBA");
+  $("#sylMath").innerHTML = block(SYL_MATH, "Mathematics — 40 items, 75 marks, 75 minutes", "M");
+  $("#sylEla").innerHTML  = block(SYL_ELA,  "English Language Arts — 36 items, 64 marks, 75 minutes", "E");
+  // Three modules, each its own block — a micro-credential is earned a module at a time.
+  $("#sylCsec").innerHTML = SYL_CSEC.map(m =>
+    `<div class="stack">${block(m.topics, `Module ${m.n} &middot; ${m.name}`, "C27m" + m.n + "g", m.note)}</div>`).join("");
 }
 document.addEventListener("change", e => {
   const c = e.target.closest("input[data-syl]"); if(!c) return;

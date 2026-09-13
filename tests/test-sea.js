@@ -33,8 +33,9 @@ vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
 vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
-  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
-const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, SYL_CSEC, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
+const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, SYL_CSEC,
+        levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -302,6 +303,58 @@ for (const p of PAPERS) {
 ok(`${PAPERS.length} past papers all link to the Ministry over https`, linkTrouble.length === 0, linkTrouble.join('; '));
 ok('no past paper PDF is committed to this repository',
    !fs.readdirSync(path.join(__dirname, '..', 'sea')).some(f => /\.pdf$/i.test(f)));
+
+// ---- the CSEC syllabus that starts in 2027 ----------------------------------
+// CXC 05/G/SYLL 16, amended October 2025, effective for examinations from
+// May–June 2027. The app carried the 2008-era nine-section shape until the
+// syllabus itself was read; these checks are what stops it drifting back.
+const MODULES = [
+  ['Fundamentals of Secondary Level Mathematics', ['Number Theory and Computation', 'Consumer Arithmetic',
+    'Sets', 'Measurement', 'Algebra 1', 'Introduction to Graphs']],
+  ['Intermediate Secondary Level Mathematics', ['Statistics 1', 'Algebra 2',
+    'Relations, Functions and Graphs 1', 'Geometry and Trigonometry 1', 'Vectors and Matrices 1']],
+  ['Higher Concepts in Secondary Level Mathematics', ['Statistics 2',
+    'Relations, Functions and Graphs 2', 'Geometry and Trigonometry 2', 'Vectors and Matrices 2']]
+];
+const modTrouble = [];
+if (SYL_CSEC.length !== 3) modTrouble.push(`${SYL_CSEC.length} modules, not 3`);
+MODULES.forEach(([name, topics], i) => {
+  const m = SYL_CSEC[i];
+  if (!m) return modTrouble.push(`module ${i + 1} missing`);
+  if (m.n !== i + 1)   modTrouble.push(`module ${i + 1} is numbered ${m.n}`);
+  if (m.name !== name) modTrouble.push(`module ${i + 1} is named "${m.name}"`);
+  const got = m.topics.map(t => t[0]);
+  if (got.join(' | ') !== topics.join(' | '))
+    modTrouble.push(`module ${i + 1} topics are ${got.join(', ')}`);
+  if (m.topics.some(t => t[1].length === 0)) modTrouble.push(`module ${i + 1} has an empty topic`);
+});
+ok('CSEC is the three modules of the 2027 syllabus, in the syllabus\'s own order',
+   modTrouble.length === 0, modTrouble.join('; '));
+
+// The paper, as the amended syllabus sets it out. Every number here is in the
+// Format of the Examinations tables — none of it is remembered.
+const csecFacts = page.slice(page.indexOf('id="factsCsec"'), page.indexOf('id="factsCsec"') + 3000);
+const csecSays = (what, re) => ok(`the CSEC paper says ${what}`, re.test(csecFacts), csecFacts.slice(0, 160));
+csecSays('Paper 1 is 60 items, 20 from each module', /60 multiple-choice items, 20 from each module/);
+csecSays('no calculator in Paper 1',                 /no calculator/);
+csecSays('Paper 2 is nine questions, three a module', /[Nn]ine structured questions, three from each module/);
+csecSays('one Module 1 question is the investigation', /Module 1 is an investigation/);
+csecSays('the weights are 30, 50 and 20',            /30&thinsp;%[\s\S]*50&thinsp;%[\s\S]*20&thinsp;%/);
+ok('the CSEC page names the micro-credential and the modular route',
+   /micro-credential/.test(page) && /four years to finish/.test(page));
+ok('the CSEC page carries the profile split that says recall is not enough',
+   /Conceptual Knowledge<\/b> 30/.test(page) && /Algorithmic Knowledge<\/b> 40/.test(page) && /Reasoning<\/b> 30/.test(page));
+// CXC gives Paper 2 as 2 h 30 in the syllabus and 2 h 40 on the specimen. The
+// app shows the syllabus figure and must keep saying that the two disagree.
+ok('the app shows 2 h 30 for Paper 2 and says the specimen disagrees',
+   /2 h 30/.test(csecFacts) && /2 h 40 on the specimen paper/.test(page));
+// CXC gives away its syllabuses and specimen papers and SELLS its past papers.
+// So the app may link the free things and the store, and nothing else — and
+// never a site handing CSEC past papers out for nothing.
+const cxcLinks = [...new Set(page.match(/https:\/\/[a-z0-9.-]*cxc\.org[^"']*/g) || [])];
+const cxcAllowed = u => /\/wp-content\/uploads\/.*\.pdf$|\/specimen-papers\/?$|\/syllabus|store\.cxc\.org|^https:\/\/www\.cxc\.org\/?$/.test(u);
+ok(`every CXC link is a free resource or the store (${cxcLinks.length} links)`,
+   cxcLinks.length > 0 && cxcLinks.every(cxcAllowed), cxcLinks.filter(u => !cxcAllowed(u)).join('; '));
 
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');
