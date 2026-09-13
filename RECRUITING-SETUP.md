@@ -165,6 +165,37 @@ tracker numbers the selection file 0–18 while the onboarding course was correc
 the official 17-item index, and the tracker's Form A routing still says "Selection
 Panel" where the Feb 2023 sheet says "Office of the Head of Sales".
 
+## Checking it
+
+```
+node tests/test-recruiting.js      # the backend, on a fake Sheets and Drive
+node tests/e2e-recruiting.js       # the page driving that backend in a browser
+./tests/run.sh                     # everything, including the KPI tests
+```
+
+Both run on invented fixtures, so they work on a fresh clone with no branch data
+anywhere near them. To run the same walk against the real seeded candidate:
+
+```
+RRB_SEED_DIR=/path/to/the/seed/folder node tests/test-recruiting.js
+RRB_SEED_DIR=/path/to/the/seed/folder node tests/e2e-recruiting.js
+```
+
+The e2e test needs playwright and a chromium on disk, and skips itself when
+there is neither. `tests/harness.js` fakes Sheets, Drive, Properties, the cache
+and the lock with Google's real limits switched on — a new sheet is 26 columns
+wide, a cell holds 50,000 characters, and a cache entry dies at six hours
+however long you ask for. That is not decoration: the 26-column limit is what
+caught a record over about 765 KB failing to save, which nothing would have
+found until somebody wrote a long enough coaching note.
+
+**What these cannot tell you.** They do not run Google's Sheets, Drive, quotas
+or the six-minute execution limit. Deploy it and watch the first import — a POP
+report is 1.5 MB going up and the analysis can take minutes, which is the part
+most likely to meet a limit nobody here predicted.
+
+---
+
 ## If something looks wrong
 
 | You see | It means |

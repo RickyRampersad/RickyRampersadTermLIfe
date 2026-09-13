@@ -133,3 +133,31 @@ Committing the bundle unchanged to this repository is not one of the options.
 
 Still open, unchanged by the move: the 0–18 versus 17-item numbering, the Form A
 routing language, and the onboarding course has still not arrived.
+
+## Tested (13 September 2026)
+
+`tests/test-recruiting.js` — 106 checks against the backend on a fake Sheets and
+Drive with Google's real limits enforced, 111 with the real seed. `tests/
+e2e-recruiting.js` — 28 checks driving the page in a browser against that same
+backend through `doPost`, 30 with the real seed, so nothing rests on a mock
+written to match. `tests/harness.js` was extended to serve both scripts; the
+eight existing KPI tests still pass unchanged.
+
+Two things the tests found and fixed:
+
+- **A record over about 765 KB could not be saved.** Nine headers plus eighteen
+  chunks fills a new sheet's 26 columns exactly, and `getRange` past the grid
+  throws rather than growing it. `ensureJsonColumns_` now widens the sheet
+  first. Nothing would have met this until somebody wrote a long enough
+  coaching note.
+- **An unreadable POST body was answered with a cheerful `ping`.** It now says
+  the body was not readable.
+
+Two things the tests established rather than changed: selection-file item 10
+carries no bytes of its own — it *is* the POP report, marked `sharedWithPop`,
+and the page already falls back to the `pop` key for it; and a sign-in lasts six
+hours, not the twelve the config asks for, because Google caps a cache entry
+there.
+
+Not covered: Google's own Sheets, Drive, quotas and the six-minute execution
+limit. The first real deploy is still the first real test of those.

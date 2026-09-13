@@ -38,7 +38,7 @@
 /* Same reasoning as KPI.gs: from outside you cannot tell whether a paste-and-
    redeploy took. Bump this in the same commit as any change to this file; the
    page shows it, and `ping` returns it. */
-var SCRIPT_VERSION = '2026-09-06b';
+var SCRIPT_VERSION = '2026-09-13a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -443,17 +443,28 @@ function save_(profile, data) {
   });
 }
 
-/** A record can grow past one chunk; the tab grows with it. */
+/** A record can grow past one chunk; the tab grows with it.
+ *
+ *  A sheet starts 1000 rows by 26 columns, and getRange past the last column
+ *  throws instead of growing it. Nine headers plus eighteen chunks fills those
+ *  26 exactly, so a record over about 765 KB used to fail here with "exceeds
+ *  grid limits" — which reads like a fault in this script and is really a
+ *  sheet that needs widening first. So widen it first. */
 function ensureJsonColumns_(sh, n) {
-  var head = headerOf_(sh), added = false;
-  for (var i = 1; i <= n; i++) {
-    if (col_(sh, 'Json' + i) < 0) {
-      sh.getRange(1, head.length + 1).setValue('Json' + i).setFontWeight('bold');
-      head.push('Json' + i);
-      added = true;
-    }
-  }
-  if (added) delete _headMemo[sh.getSheetId()];
+  var head = headerOf_(sh);
+  var missing = [];
+  for (var i = 1; i <= n; i++) if (col_(sh, 'Json' + i) < 0) missing.push('Json' + i);
+  if (!missing.length) return;
+
+  var needed = head.length + missing.length;
+  var max = sh.getMaxColumns();
+  if (needed > max) sh.insertColumnsAfter(max, needed - max);
+
+  missing.forEach(function (name) {
+    sh.getRange(1, head.length + 1).setValue(name).setFontWeight('bold');
+    head.push(name);
+  });
+  delete _headMemo[sh.getSheetId()];
 }
 
 function delete_(profile, id) {
@@ -826,8 +837,13 @@ function doGet(e) {
 
 function doPost(e) {
   resetRequestMemo_();
-  var body = {};
-  try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
+  var body;
+  try { body = JSON.parse(e.postData.contents); }
+  catch (err) {
+    /* Say so rather than falling through to a cheerful ping. A body that did
+       not parse is a caller with a problem, and answering "ok" hides it. */
+    return json_({ ok: false, error: 'The request body was not readable JSON.' });
+  }
   try { return json_(handle_(body.action || 'ping', body, body.token)); }
   catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
 }
