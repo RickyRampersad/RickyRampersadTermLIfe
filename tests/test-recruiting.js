@@ -261,6 +261,128 @@ section('what one unit may not see of another');
   ok(g.handle_('list', {}, GARY).list.length === 1, 'a candidate Gary has just created, with no manager set, is still his');
 }
 
+section('Salesforce — where the production figures come from');
+{
+  // A stand-in Salesforce. The shape is the one WallBoard.gs already queries:
+  // CLIENT_PORTFOLIO__c, settled rows, summed on Total_API__c, grouped by
+  // AGENT__r.Name. Rajiv's figures are the branch's real ones, already in
+  // board/dashboard.html — the newest recruit, producing, with nothing last year.
+  const AGENTS = {
+    THIS_YEAR:  [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }, { a: 'Recruit One', n: 7, api: 22506 }],
+    THIS_MONTH: [{ a: 'Rajiv Soodoo', n: 3, api: 89303 }],
+    THIS_WEEK:  [{ a: 'Rajiv Soodoo', n: 2, api: 10155 }]
+  };
+  let logins = 0, queries = 0, failNextWith = 0;
+  const salesforce = (url, params) => {
+    if (/oauth2\/token/.test(url)) {
+      logins++;
+      return { code: 200, body: JSON.stringify({ access_token: 'tok-' + logins, instance_url: 'https://x.my.salesforce.com' }) };
+    }
+    queries++;
+    if (failNextWith) { const c = failNextWith; failNextWith = 0; return { code: c, body: 'nope' }; }
+    const q = decodeURIComponent(url.split('q=')[1] || '');
+    const win = ['THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR'].find(w => q.includes(w)) || 'THIS_YEAR';
+    return { code: 200, body: JSON.stringify({ records: AGENTS[win] || [] }) };
+  };
+  const SFPROPS = { SF_KEY: 'k', SF_SECRET: 's', SF_USER: 'u', SF_PASS: 'p' };
+
+  // The Production tab is the roster of agent numbers. Rajiv has one; the
+  // figures on it are stale, because somebody pasted them a month ago.
+  function withProduction(g) {
+    g.__sheets['Production'].appendRow(['A9001', 'Rajiv Soodoo', 0, 0, 0, 0, 'Pasted before he settled anything.', '']);
+    g.__sheets['Production'].appendRow(['A0001', 'Recruit One', 1, 999, 0, 0, '', '']);
+    g.__sheets['Cohort'].appendRow(['Rajiv Soodoo', 2026, 'Akaash Kalladeen', 55, 35, 5, 10, 45, 50, 45, 4, 'proceed', 60, 'hired', 'contracted', 'A9001', '2026-07-01', '', 'active', 'Newest recruit.']);
+    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
+    return g;
+  }
+
+  {
+    const g = withProduction(env());
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.productionSource.source === 'sheet', 'with no Salesforce set up the figures come from the tab, as before');
+    ok(d.production['A9001'].settledAPI === 0, 'and they are whatever was pasted there');
+    ok(/not set up/.test(d.productionSource.reason), 'and the page is told why');
+  }
+  {
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.productionSource.source === 'salesforce', 'with Salesforce set up the figures come from Salesforce');
+    ok(d.production['A9001'].settledAPI === 89303 && d.production['A9001'].apps === 3,
+       "the newest recruit's settled production is live, not the stale nought on the tab");
+    ok(d.production['A9001'].weekApps === 2 && d.production['A9001'].weekAPI === 10155, 'this week comes through too');
+    ok(d.production['A9001'].monthAPI === 89303, 'and this month');
+    ok(d.production['A9001'].live === true, 'the figure is marked live, so a screen can say so');
+    ok(d.production['A0001'].settledAPI === 22506, 'and the stale 999 on the other agent is replaced as well');
+    ok(d.productionSource.matched === 2, 'both agents matched');
+    ok(d.productionSource.countsIncreases === false,
+       'policy increases are not counted toward probation until somebody says they are');
+    ok(logins === 1, 'one Salesforce login, not one per query');
+    ok(queries === 3, 'three queries: the year, the month, the week');
+  }
+  {
+    // The case that actually bites: a newly contracted recruit is producing in
+    // Salesforce before anybody adds him to the Production tab. He has no agent
+    // number here, so nothing can look him up — say so rather than lose him.
+    const g = env({ properties: SFPROPS, fetchHandler: salesforce });
+    g.__sheets['Production'].appendRow(['A0001', 'Recruit One', 1, 999, 0, 0, '', '']);
+    g.__sheets['Cohort'].appendRow(['Recruit One', 2025, 'Gary Sookdeo', 51, 31, -11, 24, 37, 38, 40, 5, 'caution', 45, 'hired', 'contracted', 'A0001', '2025-03-01', '', 'active', '']);
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.productionSource.unplaced.includes('Rajiv Soodoo'),
+       'an agent settling business with no row on the Production tab is named, not dropped');
+    ok(!d.production['A9001'], 'and no row is invented for him');
+  }
+  {
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
+    const d = g.handle_('datasets', {}, g.login_('Gary Sookdeo', 'gary-pass').token).datasets;
+    ok(Object.keys(d.production).length === 1 && d.production['A0001'],
+       "a Unit Manager's live figures cover his own agents and nobody else's");
+    ok(!d.production['A9001'], "and Akaash's newest recruit is not among them");
+  }
+  {
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: (u, p) => {
+      if (/oauth2\/token/.test(u)) return { code: 200, body: JSON.stringify({ access_token: 't', instance_url: 'https://x' }) };
+      return { code: 503, body: 'Salesforce is down' };
+    } }));
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.productionSource.source === 'sheet', 'when Salesforce is down the tab is used instead');
+    ok(/did not answer/.test(d.productionSource.reason), 'and the page is told that is what happened');
+    ok(d.production['A9001'].settledAPI === 0, 'with the pasted figures intact');
+    ok(d.cohort.length === 2, 'and nothing else on the screen is lost to it');
+  }
+  {
+    // A token that dies mid-flight is the ordinary case after fifty minutes.
+    let first = true;
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: (u, p) => {
+      if (/oauth2\/token/.test(u)) return { code: 200, body: JSON.stringify({ access_token: 't', instance_url: 'https://x' }) };
+      if (first) { first = false; return { code: 401, body: 'expired' }; }
+      return salesforce(u, p);
+    } }));
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.productionSource.source === 'salesforce', 'an expired token is retried once rather than shown to anybody');
+  }
+  {
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
+    // Signing in already builds the datasets, so the login IS the first screen.
+    const BM = g.login_('Ricky Rampersad', 'bm-pass').token;
+    const afterFirst = g.__fetches.length;
+    ok(afterFirst === 4, `the first screen costs one login and three queries (${afterFirst})`);
+    g.handle_('datasets', {}, BM);
+    g.handle_('datasets', {}, BM);
+    ok(g.__fetches.length === afterFirst, 'and the next two come out of the ten-minute cache, not out of Salesforce');
+  }
+  {
+    const g = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
+    // The tab and Salesforce will not always spell a name the same way.
+    g.__sheets['Production']._grid[1][1] = 'Rajiv  Soodoo';
+    const d = g.handle_('datasets', {}, g.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d.production['A9001'].settledAPI === 89303, 'a double space between the names still matches');
+    const h = withProduction(env({ properties: SFPROPS, fetchHandler: salesforce }));
+    h.__sheets['Production']._grid[1][1] = 'Rajiv K. Soodoo';
+    const d2 = h.handle_('datasets', {}, h.login_('Ricky Rampersad', 'bm-pass').token).datasets;
+    ok(d2.production['A9001'].settledAPI === 89303, 'and so does a middle initial on one side only');
+  }
+}
+
 section('the Claude proxy');
 {
   const g = env();

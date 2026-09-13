@@ -161,3 +161,27 @@ there.
 
 Not covered: Google's own Sheets, Drive, quotas and the six-minute execution
 limit. The first real deploy is still the first real test of those.
+
+## Salesforce (13 September 2026)
+
+The induction panel's *Live data from BRANCH SETTLED* label was not true: the
+figures came from a pasted Production tab. It reads Salesforce now —
+`CLIENT_PORTFOLIO__c`, settled rows, `SUM(Total_API__c)` grouped by
+`AGENT__r.Name`, which is the query `WallBoard.gs` already runs for the wall
+board, on the same four Script Properties the renewal sync uses.
+
+Salesforce knows agents by name and the tracker looks them up by agent number,
+so the Production tab is now the join between the two rather than the source of
+the numbers. An agent producing with no row there is reported by name instead of
+being dropped — which is what a newly contracted recruit looks like before
+anybody adds them.
+
+Not connected, and deliberately: `RT_SF.COUNT_INCREASES` is off, so
+`Policy_Increases__c` does not count toward a probation quota until the branch
+says it should.
+
+Still open: **Rajiv Soodoo** is the newest recruit and is already producing —
+3 apps, $89,303 settled, nothing last year — but he exists here only in
+`board/dashboard.html`. He has no Cohort row, no Production row and no candidate
+record, so the tracker cannot show him. His agent number, contract date and POP
+scores are not in this repository and are not things to guess.

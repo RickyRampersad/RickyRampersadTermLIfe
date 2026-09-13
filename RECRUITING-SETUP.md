@@ -115,7 +115,67 @@ Version: **New version** → Deploy. The URL does not change. Bump `SCRIPT_VERSI
 at the top of the file in the same commit; the page prints it in its footer, so you
 can see from the site whether the redeploy took.
 
-## 5. Bring the data in
+## 5. Connect Salesforce (optional, but it is the point of the induction screen)
+
+The induction stage measures a new agent against the probation quota, and the
+panel above it has always been labelled *Live data from BRANCH SETTLED*. Until
+now it was not live — the figures came from a Production tab somebody pasted.
+
+It reads Salesforce directly now, the same object the wall board reads:
+`CLIENT_PORTFOLIO__c`, settled rows, summed on `Total_API__c` and grouped by
+agent. Four Script Properties, the same four the renewal sync and the wall board
+already use:
+
+| Property | What it is |
+|---|---|
+| `SF_KEY` | Consumer Key from the Connected App |
+| `SF_SECRET` | Consumer Secret |
+| `SF_USER` | Salesforce username |
+| `SF_PASS` | password with the security token appended, no space |
+
+If the renewal sync works, these are the values it already has — copy them
+across. `RT_SF_TOKEN` and `RT_SF_TOKEN_AT` appear on their own; those are the
+cached session, not something you set.
+
+Run **`rtSfTest()`** from the editor before trusting a screen to it. It prints
+every agent with settled production this year and what it makes of them, so you
+can see the names Salesforce uses before anybody signs in.
+
+**Without these four the tracker works exactly as before** — the Production tab
+is used, and the panel says so instead of claiming to be live. Salesforce being
+down does the same thing rather than emptying the screen.
+
+### How an agent's figures find their way to a recruit
+
+Salesforce knows agents by **name**; the tracker looks production up by **agent
+number**. The Production tab is what joins the two: its `agentId` and `name`
+columns are the roster, and the live figure replaces whatever is pasted in the
+row. Names are matched on first and last word, so a double space or a middle
+initial on one side does not break the join.
+
+An agent settling business who has **no row on the Production tab** is named in
+`productionSource.unplaced` rather than dropped. That is exactly what a newly
+contracted recruit looks like before anybody adds them — add the row, with their
+agent number, and the figures attach themselves.
+
+### Policy increases
+
+`RT_SF.COUNT_INCREASES` is **off**. Increases live on `Policy_Increases__c` with
+their own picked-up date, and the branch may or may not count them toward a new
+agent's $105,000. Counting them silently would flatter every probation figure on
+the screen, so it is a decision somebody makes rather than a default. Turn it on
+at the top of `Recruiting.gs` if the answer is yes.
+
+### What it costs Salesforce
+
+A sign-in builds the whole screen, so the first one after a quiet ten minutes is
+one login and three queries — the year, the month and the week. Everything after
+that comes out of a ten-minute cache, so a branch full of managers opening the
+tracker is still about six queries an hour.
+
+---
+
+## 6. Bring the data in
 
 ### The figures
 

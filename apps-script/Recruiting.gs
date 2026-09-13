@@ -38,7 +38,7 @@
 /* Same reasoning as KPI.gs: from outside you cannot tell whether a paste-and-
    redeploy took. Bump this in the same commit as any change to this file; the
    page shows it, and `ping` returns it. */
-var SCRIPT_VERSION = '2026-09-13a';
+var SCRIPT_VERSION = '2026-09-13b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -684,7 +684,197 @@ function datasetsFor_(profile) {
                    range: str_(r.range), manager: str_(r.manager), flag: str_(r.flag), note: str_(r.note) };
   });
 
-  return { production: production, cohort: cohort, managerPulse: pulse, variance: variance, marketSurveys: surveys };
+  /* Salesforce is the authority on what an agent has settled; the tab supplies
+     the agent numbers the page looks them up by. Scoping has already happened
+     above, so a Unit Manager's overlay covers only his own agents. */
+  var liveInfo = rtApplyLiveProduction_(production);
+
+  return { production: production, cohort: cohort, managerPulse: pulse,
+           variance: variance, marketSurveys: surveys, productionSource: liveInfo };
+}
+
+// ---------------------------------------------------------------------------
+//  Salesforce — where the production figures actually come from
+//
+//  The induction stage measures a new agent against the probation quota, and
+//  the panel above it has always been labelled "Live data from BRANCH SETTLED".
+//  It was not live: the figures came from a Production tab somebody pasted.
+//
+//  They are live now. This reads the same object the wall board reads —
+//  CLIENT_PORTFOLIO__c, settled rows, summed on Total_API__c and grouped by
+//  agent — using the same four Script Properties the renewal sync and the wall
+//  board already use. If those are set for this project, nothing else needs
+//  configuring; if they are not, the Production tab is used exactly as before
+//  and the page says so.
+//
+//  Everything here is prefixed rtSf so that pasting this file into a project
+//  that already holds SalesforceSync.gs or WallBoard.gs collides with nothing.
+// ---------------------------------------------------------------------------
+
+var RT_SF = {
+  API: 'v64.0',
+  LOGIN: 'https://login.salesforce.com',
+  CACHE_MIN: 10,          // Salesforce sees at most a handful of queries an hour
+  TOKEN_MIN: 50,
+  /* Whether a policy increase counts toward the probation quota. The wall board
+     keeps increases on their own footing — API_Increase__c on Policy_Increases__c
+     is the branch's confirmed Total API basis — and the branch may or may not
+     count them against a new agent's $105k. Off until somebody says otherwise,
+     because counting them silently would flatter every probation figure. */
+  COUNT_INCREASES: false
+};
+
+function rtSfProps_() { return PropertiesService.getScriptProperties(); }
+
+function rtSfConfigured_() {
+  var p = rtSfProps_();
+  return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET') &&
+            p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
+}
+
+/** The same password grant the renewal sync uses, with the token kept for
+ *  fifty minutes so a page load does not cost a login. */
+function rtSfToken_() {
+  var p = rtSfProps_();
+  var cached = p.getProperty('RT_SF_TOKEN'), when = Number(p.getProperty('RT_SF_TOKEN_AT') || 0);
+  if (cached && (new Date().getTime() - when) < RT_SF.TOKEN_MIN * 60 * 1000) return JSON.parse(cached);
+
+  var res = UrlFetchApp.fetch(RT_SF.LOGIN + '/services/oauth2/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: {
+      grant_type: 'password',
+      client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET'),
+      username: p.getProperty('SF_USER'), password: p.getProperty('SF_PASS')
+    }
+  });
+  if (res.getResponseCode() !== 200) throw new Error('Salesforce login failed: ' + res.getContentText().slice(0, 200));
+  var tok = JSON.parse(res.getContentText());
+  p.setProperty('RT_SF_TOKEN', JSON.stringify(tok));
+  p.setProperty('RT_SF_TOKEN_AT', String(new Date().getTime()));
+  return tok;
+}
+
+function rtSfQuery_(soql) {
+  var tok = rtSfToken_();
+  var url = tok.instance_url + '/services/data/' + RT_SF.API + '/query?q=' + encodeURIComponent(soql);
+  var out = [];
+  while (url) {
+    var res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true });
+    if (res.getResponseCode() === 401) {          // the token died mid-flight — one retry
+      rtSfProps_().deleteProperty('RT_SF_TOKEN');
+      tok = rtSfToken_();
+      res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true });
+    }
+    if (res.getResponseCode() !== 200) throw new Error('SOQL failed (' + res.getResponseCode() + '): ' + res.getContentText().slice(0, 200));
+    var j = JSON.parse(res.getContentText());
+    out = out.concat(j.records || []);
+    url = j.nextRecordsUrl ? tok.instance_url + j.nextRecordsUrl : null;
+  }
+  return out;
+}
+
+/** Settled production per agent, this year, keyed by the agent's name as
+ *  Salesforce spells it. Cached ten minutes, so a branch full of managers
+ *  opening the tracker does not become a branch full of SOQL. */
+function rtLiveProduction_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('rt_sf_production');
+  if (hit) { var c = JSON.parse(hit); c.cached = true; return c; }
+
+  var base = 'FROM CLIENT_PORTFOLIO__c WHERE Production_Picked_up_Date__c';
+  var byName = {};
+  function add(rows, field) {
+    rows.forEach(function (r) {
+      var name = String(r.a || '').trim();
+      if (!name) return;
+      var e = byName[name] || (byName[name] = { name: name, apps: 0, settledAPI: 0, weekApps: 0, weekAPI: 0, monthApps: 0, monthAPI: 0 });
+      e[field.n] += Number(r.n || 0);
+      e[field.api] += Math.round(Number(r.api || 0));
+    });
+  }
+  var sel = 'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(Total_API__c) api ';
+  var grp = ' GROUP BY AGENT__r.Name';
+  add(rtSfQuery_(sel + base + ' = THIS_YEAR AND Date_Settled__c != null' + grp), { n: 'apps', api: 'settledAPI' });
+  add(rtSfQuery_(sel + base + ' = THIS_MONTH AND Date_Settled__c != null' + grp), { n: 'monthApps', api: 'monthAPI' });
+  add(rtSfQuery_(sel + base + ' = THIS_WEEK AND Date_Settled__c != null' + grp), { n: 'weekApps', api: 'weekAPI' });
+
+  if (RT_SF.COUNT_INCREASES) {
+    var iSel = 'SELECT AGENT__r.Name a, COUNT(Id) n, SUM(API_Increase__c) api ';
+    var iBase = 'FROM Policy_Increases__c WHERE Increase_Production_Picked_Up_Date__c';
+    add(rtSfQuery_(iSel + iBase + ' = THIS_YEAR' + grp), { n: 'apps', api: 'settledAPI' });
+  }
+
+  var out = { asOf: nowIso_(), byName: byName, cached: false };
+  cache.put('rt_sf_production', JSON.stringify(out), RT_SF.CACHE_MIN * 60);
+  return out;
+}
+
+/** Salesforce spells a name one way and the Cohort tab may spell it another —
+ *  "Rajiv Soodoo" against "Rajiv  Soodoo", or a middle initial on one side.
+ *  Compare on first and last word, lowercased, which is what the branch's own
+ *  boards already rely on. */
+function rtNameKey_(s) {
+  var w = String(s || '').toLowerCase().replace(/[^a-z\s]/g, ' ').split(/\s+/).filter(String);
+  if (!w.length) return '';
+  return w.length === 1 ? w[0] : w[0] + ' ' + w[w.length - 1];
+}
+
+/** The Production tab is the roster of agent numbers; Salesforce is the
+ *  authority on the figures. Where a name matches, the live figure wins.
+ *  Returns what happened, so the page can say where its numbers came from and
+ *  the BM can see which names did not line up. */
+function rtApplyLiveProduction_(production) {
+  if (!rtSfConfigured_()) return { source: 'sheet', reason: 'Salesforce is not set up for this project.' };
+  var live;
+  try { live = rtLiveProduction_(); }
+  catch (e) { return { source: 'sheet', reason: 'Salesforce did not answer: ' + String(e && e.message || e) }; }
+
+  var byKey = {};
+  Object.keys(live.byName).forEach(function (n) { byKey[rtNameKey_(n)] = live.byName[n]; });
+
+  var matched = 0, seen = {};
+  Object.keys(production).forEach(function (id) {
+    var hit = byKey[rtNameKey_(production[id].name)];
+    if (!hit) return;
+    production[id].apps = hit.apps;
+    production[id].settledAPI = hit.settledAPI;
+    production[id].weekApps = hit.weekApps;
+    production[id].weekAPI = hit.weekAPI;
+    production[id].monthApps = hit.monthApps;
+    production[id].monthAPI = hit.monthAPI;
+    production[id].live = true;
+    seen[rtNameKey_(production[id].name)] = true;
+    matched++;
+  });
+
+  /* An agent producing in Salesforce with no row on the Production tab has no
+     agent number here, so nothing can look them up. Name them rather than drop
+     them — that is how a newly contracted recruit shows up missing. */
+  var unplaced = Object.keys(byKey).filter(function (k) { return !seen[k]; })
+    .map(function (k) { return byKey[k].name; }).sort();
+
+  return { source: 'salesforce', asOf: live.asOf, cached: !!live.cached,
+           matched: matched, unplaced: unplaced,
+           countsIncreases: RT_SF.COUNT_INCREASES };
+}
+
+/** Run this from the editor to see what Salesforce returns before trusting a
+ *  screen to it. Prints the agents it can see and what it makes of them. */
+function rtSfTest() {
+  if (!rtSfConfigured_()) {
+    Logger.log('SF_KEY, SF_SECRET, SF_USER and SF_PASS are not all set on this project. ' +
+               'The tracker will use the Production tab.');
+    return;
+  }
+  var live = rtLiveProduction_();
+  Logger.log('Salesforce answered at ' + live.asOf + (live.cached ? ' (from cache)' : ''));
+  var names = Object.keys(live.byName).sort();
+  Logger.log(names.length + ' agent(s) with settled production this year:');
+  names.forEach(function (n) {
+    var a = live.byName[n];
+    Logger.log('  ' + n + ' — ' + a.apps + ' apps, $' + a.settledAPI.toLocaleString() +
+               ' settled (month ' + a.monthApps + '/' + a.monthAPI + ', week ' + a.weekApps + '/' + a.weekAPI + ')');
+  });
 }
 
 // ---------------------------------------------------------------------------

@@ -1502,6 +1502,18 @@ function bandForScore(e, t) {
   return Number.isNaN(n) ? null : a.bands.find((e) => n >= e.min && n < e.max) || a.bands[a.bands.length - 1];
 }
 // Filled from the workbook after sign-in — see loadDatasets(). Empty until then.
+let PRODUCTION_SOURCE = null;
+// Where the production figures came from this session — Salesforce, or the
+// Production tab when Salesforce is not set up or did not answer.
+function productionSubtitle() {
+  const s = PRODUCTION_SOURCE;
+  if (!s) return "Live data from BRANCH SETTLED";
+  if (s.source === "salesforce") {
+    const when = s.asOf ? new Date(s.asOf).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "";
+    return `Settled production from Salesforce${when ? " · read " + when : ""}${s.cached ? " (cached)" : ""}`;
+  }
+  return "From the Production tab — " + (s.reason || "Salesforce is not connected");
+}
 let PRODUCTION_DATA = {},
   MARKET_SURVEYS = {},
   MANAGER_PULSE_SUMMARY = {},
@@ -9466,7 +9478,7 @@ function InductionStage({ candidate: e, persist: t }) {
     ),
     React.createElement(
       Section,
-      { title: "Production vs probation quotas", subtitle: "Live data from BRANCH SETTLED", defaultOpen: !0 },
+      { title: "Production vs probation quotas", subtitle: productionSubtitle(), defaultOpen: !0 },
       !s &&
         React.createElement(
           "div",
@@ -12016,7 +12028,7 @@ function TrendsDashboard() {
             React.createElement(
               "div",
               { className: "text-[11px] uppercase tracking-[0.14em] text-emerald-800 font-semibold mb-1" },
-              "Cohort production (from BRANCH SETTLED)",
+              PRODUCTION_SOURCE && PRODUCTION_SOURCE.source === "salesforce" ? "Cohort production (settled, from Salesforce)" : "Cohort production (from the Production tab)",
             ),
             React.createElement(
               "div",
@@ -13563,6 +13575,7 @@ function applySession(r) {
   MANAGER_PULSE_SUMMARY = d.managerPulse || {};
   AGENT_MONTHLY_VARIANCE = d.variance || {};
   MARKET_SURVEYS = d.marketSurveys || {};
+  PRODUCTION_SOURCE = d.productionSource || null;
 }
 
 function clearUiState() {
