@@ -323,9 +323,10 @@ const ok = (what, cond, extra) => {
   const users = {
     'aisha@example.com': { name: 'Aisha Ali', role: 'student', hash: null, student: '', seaYear: 2029 },
     'dad@example.com':   { name: 'Imran Ali', role: 'parent',  hash: null, student: 'aisha@example.com' },
-    'off@example.com':   { name: 'Off',       role: 'student', hash: null, status: 'disabled' }
+    'off@example.com':   { name: 'Off',       role: 'student', hash: null, status: 'disabled' },
+    'boss@example.com':  { name: 'Ricky Rampersad', role: 'academy', hash: 'branch-and-shield', student: '' }
   };
-  const progress = {}, calls = [];
+  const progress = {}, calls = [], registered = [];
   const state = u => !u ? 'unknown' : u.status === 'disabled' ? 'disabled' : !u.hash ? 'new' : 'active';
   const session = email => {
     const u = users[email];
@@ -348,7 +349,26 @@ const ok = (what, cond, extra) => {
       else if (u.hash !== b.password) out = { ok: false, error: 'That password is not right.' };
       else out = session(email);
     } else if (b.action === 'load') out = users[who()] ? session(who()) : { ok: false, error: 'Sign in again.' };
-    else if (b.action === 'save') { progress[who()] = b.progress; out = { ok: true, updated: 'now' }; }
+    else if (b.action === 'save') { progress[b.for || who()] = b.progress; out = { ok: true, updated: 'now' }; }
+    else if (b.action === 'register') {
+      const pe = String(b.parentEmail || '').toLowerCase();
+      if (users[pe]) out = { ok: false, error: 'That e-mail is already registered.' };
+      else {
+        registered.push(b);
+        const cid = 'child:' + registered.length;
+        users[cid] = { name: b.childName, role: 'student', hash: null, student: '', seaYear: b.seaYear, school: b.school };
+        users[pe] = { name: b.parentName, role: 'parent', hash: b.password, student: cid, consent: !!b.consent };
+        out = session(pe);
+      }
+    }
+    else if (b.action === 'dashboard') {
+      out = users[who()] && users[who()].role === 'academy'
+        ? { ok: true, activeDays: 30, stats: { families: 2, children: 3, activeFamilies: 2, teachers: 1,
+            byClass: { '2031': 2, '2033': 1 }, bySchool: { 'St Joseph Boys RC': 2 }, byMonth: { '2026-09': 2 },
+            attempted: 14, papers: 1, bestPaper: 51, practising: 2, schoolsGiven: 2, interestedCount: 1,
+            interested: [{ name: 'Dev Persad', email: 'dev@example.com', school: 'Chaguanas Government', seaYear: 2033, at: '2026-09-13' }] } }
+        : { ok: false, error: 'The dashboard is for the Academy.' };
+    }
     else out = { ok: false, error: 'Unknown action.' };
     await route.fulfill({ contentType: 'application/json', body: JSON.stringify(out) });
   });
@@ -426,6 +446,81 @@ const ok = (what, cond, extra) => {
   ok("the parent's home is the child's progress, by the child's name",
      /Aisha's progress/.test(await page.textContent('#homeKicker')) && (await page.textContent('#hA')) === '1');
   ok('a parent cannot clear the child\'s progress', await page.isHidden('#resetBtn'));
+
+  // ---- registering a child, and the bargain that makes it free ---------------
+  // A free practice app asks for what it needs to teach and nothing it could
+  // sell. The marketing box is off until a parent turns it on, and what the
+  // app never asks for is as much the product as what it does.
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  ok('the sign-in screen offers to register a child', await page.isVisible('#gToReg'));
+  ok('and carries a privacy notice before anybody types anything',
+     await page.isVisible('#privacyNotice') && /never ask for/i.test(await page.textContent('#privacyNotice summary')));
+  const notice = await page.textContent('#privacyNotice');
+  ok('the notice says plainly that occupation and employer are never asked for',
+     /occupation/i.test(notice) && /employer/i.test(notice) && /surname/i.test(notice));
+  ok('and that sponsors never see a name', /[Ss]ponsors see a monthly total/.test(notice));
+
+  await page.click('#gToReg');
+  await page.waitForSelector('#gateRegister:not([hidden])');
+  const regFields = await page.$$eval('#gateRegister input, #gateRegister select',
+    n => n.map(x => (x.getAttribute('aria-label') || x.id).toLowerCase()));
+  ok('registration asks for a first name, a class, an optional school, and nothing to sell against',
+     regFields.some(f => /child's first name/.test(f)) && regFields.some(f => /child's class/.test(f)) &&
+     regFields.some(f => /school/.test(f)) &&
+     !regFields.some(f => /occupation|employer|income|salary|address|birth|surname|phone/.test(f)));
+  ok('the class list offers all twelve classes',
+     (await page.$$eval('#rChildClass option', n => n.length)) === 13);   // twelve, plus the prompt
+  ok('the marketing box exists and is NOT ticked',
+     await page.isVisible('#rConsent') && (await page.isChecked('#rConsent')) === false);
+  ok('and it says who would be contacting them, and that the app is free either way',
+     /Guardian Life/.test(await page.textContent('.optin')) && /free either way/.test(await page.textContent('.optin')));
+
+  await page.fill('#rParentName', 'Nalini Baksh');
+  await page.fill('#rParentEmail', 'nalini@example.com');
+  await page.fill('#rChildName', 'Rohan');
+  await page.click('#rGo');
+  ok('registering without a class is refused',
+     /Choose the class/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.selectOption('#rChildClass', { index: 4 });      // Standard 2
+  await page.fill('#rSchool', 'St Joseph Boys RC');
+  await page.fill('#rPass1', 'pommerac-season'); await page.fill('#rPass2', 'pommerac-seasonX');
+  await page.click('#rGo');
+  ok('two passwords that differ are refused at registration', /do not match/.test(await page.textContent('#gateErr')));
+  await page.fill('#rPass2', 'pommerac-season');
+  await page.click('#rGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the parent is registered and straight into the app, placed where the child is',
+     (await page.textContent('#rolePill')).startsWith('Parent · Nalini') &&
+     /Rohan is in <b>Standard 2<\/b>/.test(await page.innerHTML('#journeyCap')));
+  const sent = registered[registered.length - 1];
+  ok('what reached the Academy is the first name, the class, the school and nothing else',
+     sent.childName === 'Rohan' && sent.seaYear > 2000 && sent.school === 'St Joseph Boys RC' &&
+     !('occupation' in sent) && !('employer' in sent) && !('dob' in sent) && !('address' in sent));
+  ok('an untouched box is sent as a plain no', sent.consent === false);
+
+  // ---- the dashboard is the Academy's alone ----------------------------------
+  ok('a parent is not offered the dashboard', (await page.$('#nav button[data-view="dash"]')) === null);
+  await page.goto(URL + '#dash', { waitUntil: 'networkidle' });
+  ok('a parent typing the dashboard into the address bar lands on Home',
+     await page.isVisible('#v-home') && await page.isHidden('#v-dash'));
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  await page.fill('#gEmail', 'boss@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gPassRow:not([hidden])');
+  await page.fill('#gPass', 'branch-and-shield'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the Academy signs in, and the dashboard is first in the nav',
+     (await page.textContent('#rolePill')).startsWith('Academy') &&
+     (await page.$eval('#nav button', b => b.dataset.view)) === 'dash');
+  await page.click('#nav button[data-view="dash"]');
+  await page.waitForSelector('#dashHost .stat');
+  const dashText = await page.textContent('#dashHost');
+  ok('it shows families, children, practice and papers', /Families/.test(dashText) && /14/.test(dashText));
+  ok('it ranks classes and schools rather than listing children',
+     /St Joseph Boys RC/.test(dashText) && (await page.$$eval('#dashHost .rank .row', n => n.length)) >= 4);
+  ok('the only names on it are parents who ticked the box',
+     /Dev Persad/.test(dashText) && /ticked the box/.test(dashText) && !/Rohan|Aisha|Anya/.test(dashText));
 
   ok('no errors in the console', errs.length === 0, errs.join(' | '));
 

@@ -10,9 +10,38 @@
  *  and their parent can see it from their own phone.
  *
  *  ── HOW A FAMILY GETS IN ────────────────────────────────────────────
- *  You add a row to the Users tab: e-mail, name, role. That is all.
- *  The first time they type that e-mail into /sea/ they are asked to
- *  choose a password. Nobody e-mails a password to anybody.
+ *  A parent registers their own child from the sign-in screen: their
+ *  name and e-mail, the child's first name and class, and the school if
+ *  they care to give it. That writes two rows — the parent and the
+ *  child — and the parent chooses a password on the spot. Nobody e-mails
+ *  a password to anybody, and no child registers themselves.
+ *
+ *  You can still add a row by hand; the first time that e-mail is typed
+ *  into /sea/ it is asked to choose a password.
+ *
+ *  ── WHAT IS ASKED FOR, AND WHY ──────────────────────────────────────
+ *  Only what the app itself needs to work:
+ *      the child's FIRST NAME      to greet them and to label progress
+ *      the child's CLASS           to serve the right questions, and to
+ *                                  move them up every September
+ *      the SCHOOL (optional)       so a teacher can find their class and
+ *                                  the parent sees it on their own screen
+ *      the parent's NAME, E-MAIL   to sign in, and to reach them
+ *
+ *  NOT asked for, and deliberately: the child's surname, date of birth,
+ *  address, or photograph; the parent's occupation, employer, income or
+ *  address. A free practice app has no business holding those, and an
+ *  agency that collected them here would be collecting them under false
+ *  pretences. The fact find is where that conversation belongs, after a
+ *  parent has asked for it.
+ *
+ *  ── THE OPT-IN ──────────────────────────────────────────────────────
+ *  Registration carries ONE unticked box: may the branch tell them about
+ *  education savings plans. Ticking it writes "yes" and a timestamp to
+ *  the Consent columns, and puts them on the Academy dashboard's
+ *  interest list. Leaving it alone writes nothing and is the default.
+ *  Nobody who left it alone may be contacted about insurance, ever —
+ *  that is the whole bargain that makes the app free and trusted.
  *
  *  To reset a password: clear the Salt and Hash cells on their row.
  *  Next time they sign in they will be asked to choose a new one.
@@ -37,12 +66,17 @@
  *
  *  ── TABS (academySetup creates them) ────────────────────────────────
  *  Users    : Email | Name | Role | Student Email | Status | Paid Until |
- *             Salt | Hash | Created | Last Sign-in | Note | SEA Year
- *             Role is student, parent or teacher. A parent's Student
- *             Email links them to one child. Leave Salt and Hash blank.
- *             SEA Year is the year the child will sit the S.E.A. — one
- *             number that never needs updating: the app works out the
- *             class from it and moves the child up every September.
+ *             Salt | Hash | Created | Last Sign-in | Note | SEA Year |
+ *             School | Consent | Consent At | Registered By
+ *             Role is student, parent, teacher or academy. A parent's
+ *             Student Email links them to one child. Leave Salt and Hash
+ *             blank. SEA Year is the year the child will sit the S.E.A.
+ *             — one number that never needs updating: the app works out
+ *             the class from it and moves the child up every September.
+ *             A child registered by a parent has no password of its own
+ *             and an id beginning "child:" — the parent practises with
+ *             them from their own account. Give a child a real e-mail
+ *             instead and they can sign in on their own.
  *  Progress : Email | Updated | JSON        ← one row per person
  *  Activity : At | Email | Did | Note
  *
@@ -58,6 +92,12 @@
  *  The web app runs as you with access "Anyone", so the endpoints are
  *  public; the token is what makes a call somebody's. Nothing here can
  *  read the branch sheet.
+ *
+ *  A parent may read and write only their own record and their own
+ *  child's. The dashboard is aggregate — counts by class, by school, by
+ *  month — and is refused to everybody except the academy role. The one
+ *  place names appear is the interest list, and only parents who ticked
+ *  the box are on it.
  */
 
 var ACADEMY = {
@@ -66,16 +106,18 @@ var ACADEMY = {
   TOKEN_DAYS: 30,
   MAX_FAILS: 5, FAIL_WINDOW_S: 900,
   MIN_PASSWORD: 8,
-  MAX_PROGRESS: 45000     // a Sheets cell holds 50 000 characters
+  MAX_PROGRESS: 45000,    // a Sheets cell holds 50 000 characters
+  ACTIVE_DAYS: 30,        // "active" on the dashboard means signed in this recently
+  MAX_NAME: 60, MAX_SCHOOL: 120
 };
-var ACADEMY_ROLES = { student: 1, parent: 1, teacher: 1 };
+var ACADEMY_ROLES = { student: 1, parent: 1, teacher: 1, academy: 1 };
 
 /* ============================ setup ============================ */
 
 function academySetup() {
   var ss = SpreadsheetApp.getActive();
   var want = {};
-  want[ACADEMY.USERS]    = ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created','Last Sign-in','Note','SEA Year'];
+  want[ACADEMY.USERS]    = ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created','Last Sign-in','Note','SEA Year','School','Consent','Consent At','Registered By'];
   want[ACADEMY.PROGRESS] = ['Email','Updated','JSON'];
   want[ACADEMY.ACTIVITY] = ['At','Email','Did','Note'];
   Object.keys(want).forEach(function (name) {
@@ -107,6 +149,8 @@ function doPost(e) {
     if (b.action === 'signin')      return academySignin_(b);
     if (b.action === 'load')        return academyLoad_(b);
     if (b.action === 'save')        return academySave_(b);
+    if (b.action === 'register')    return academyRegister_(b);
+    if (b.action === 'dashboard')   return academyDashboard_(b);
     return aerr_('Unknown action.');
   } catch (err) { return aerr_(String(err && err.message || err)); }
 }
@@ -124,6 +168,69 @@ function academyLookup_(b) {
   var u = auser_(email);
   var s = astate_(u);
   return aok_({ state: s, name: u ? u.name : '', role: u ? u.role : '' });
+}
+
+/* ============================ register ============================ */
+
+/* A parent registers their own child. Two rows, one password, one
+   unticked box. The child gets no login of its own unless the parent
+   gives a real e-mail for it; otherwise the parent practises with them
+   from their own account, which is what an Infant 1 needs anyway. */
+function academyRegister_(b) {
+  var pEmail = anorm_(b.parentEmail), pName = aclean_(b.parentName, ACADEMY.MAX_NAME);
+  var cName  = aclean_(b.childName, ACADEMY.MAX_NAME);
+  var cEmail = anorm_(b.childEmail);
+  var school = aclean_(b.school, ACADEMY.MAX_SCHOOL);
+  var seaYear = Number(b.seaYear) || 0;
+  var pw = String(b.password || '');
+  var consent = b.consent === true || String(b.consent).toLowerCase() === 'yes';
+
+  if (!aemail_(pEmail))  return aerr_('That does not look like an e-mail address.');
+  if (!pName)            return aerr_('Give the name the Academy should call you by.');
+  if (!cName)            return aerr_("Give the child's first name.");
+  if (!seaYear || seaYear < 2000 || seaYear > 2100) return aerr_('Choose the class the child is in.');
+  if (pw.length < ACADEMY.MIN_PASSWORD) return aerr_('Choose a password of at least ' + ACADEMY.MIN_PASSWORD + ' characters.');
+  if (cEmail && !aemail_(cEmail)) return aerr_("That does not look like the child's e-mail address.");
+
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    if (auser_(pEmail)) return aerr_('That e-mail is already registered. Sign in instead, or ask the Academy for a reset.');
+    if (cEmail && auser_(cEmail)) return aerr_("That child's e-mail is already registered.");
+
+    var childId = cEmail || ('child:' + Utilities.getUuid().slice(0, 12));
+    var now = new Date();
+    var sh = asheet_(ACADEMY.USERS), col = acols_(sh);
+    var width = sh.getLastColumn();
+
+    // the child first, so the parent's row can point at a row that exists
+    var child = new Array(width).fill('');
+    child[col['email'] - 1] = childId;
+    child[col['name'] - 1] = cName;
+    child[col['role'] - 1] = 'student';
+    child[col['status'] - 1] = 'active';
+    child[col['sea year'] - 1] = seaYear;
+    child[col['created'] - 1] = now;
+    if (school) child[col['school'] - 1] = school;
+    child[col['registered by'] - 1] = pEmail;
+    sh.appendRow(child);
+
+    var parent = new Array(width).fill('');
+    parent[col['email'] - 1] = pEmail;
+    parent[col['name'] - 1] = pName;
+    parent[col['role'] - 1] = 'parent';
+    parent[col['student email'] - 1] = childId;
+    parent[col['status'] - 1] = 'active';
+    parent[col['created'] - 1] = now;
+    parent[col['last sign-in'] - 1] = now;
+    if (school) parent[col['school'] - 1] = school;
+    if (consent) { parent[col['consent'] - 1] = 'yes'; parent[col['consent at'] - 1] = now; }
+    parent[col['salt'] - 1] = Utilities.getUuid();
+    parent[col['hash'] - 1] = ahash_(pw, parent[col['salt'] - 1]);
+    sh.appendRow(parent);
+
+    alog_(pEmail, 'registered', 'child ' + childId + (consent ? ' · interested in savings plans' : ''));
+    return aok_(asession_(auser_(pEmail)));
+  } finally { lock.releaseLock(); }
 }
 
 /* ============================ set password ============================ */
@@ -182,16 +289,23 @@ function academyLoad_(b) {
 
 function academySave_(b) {
   var u = awho_(b.token);
+  /* A parent practising alongside a young child saves to the child's
+     record, not their own. Nobody may write to anybody else's. */
+  var target = u.email;
+  if (b['for'] && anorm_(b['for']) !== u.email) {
+    if (u.role !== 'parent' || anorm_(b['for']) !== u.student) return aerr_('That is not your record to save.');
+    target = anorm_(b['for']);
+  }
   var json = JSON.stringify(b.progress || {});
   if (json.length > ACADEMY.MAX_PROGRESS) return aerr_('Too much progress to save in one go — clear an old essay.');
   var lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     var sh = asheet_(ACADEMY.PROGRESS);
     var rows = arows_(sh), hit = null;
-    for (var i = 0; i < rows.length; i++) if (anorm_(rows[i].email) === u.email) { hit = rows[i]; break; }
+    for (var i = 0; i < rows.length; i++) if (anorm_(rows[i].email) === target) { hit = rows[i]; break; }
     var now = new Date();
-    if (hit) sh.getRange(hit._row, 1, 1, 3).setValues([[u.email, now, json]]);
-    else sh.appendRow([u.email, now, json]);
+    if (hit) sh.getRange(hit._row, 1, 1, 3).setValues([[target, now, json]]);
+    else sh.appendRow([target, now, json]);
     return aok_({ updated: now.toISOString() });
   } finally { lock.releaseLock(); }
 }
@@ -202,6 +316,7 @@ function asession_(u) {
   var out = {
     token: atoken_(u),
     user: { email: u.email, name: u.name, role: u.role, seaYear: u.seaYear,
+            school: u.school, consent: u.consent,
             student: null, paidUntil: u.paidUntil ? adate_(u.paidUntil) : '' },
     progress: aprogress_(u.email),
     child: null
@@ -209,7 +324,8 @@ function asession_(u) {
   if (u.role === 'parent' && u.student) {
     var c = auser_(u.student);
     out.user.student = { email: u.student, name: c ? c.name : '' };
-    out.child = { name: c ? c.name : '', email: u.student, seaYear: c ? c.seaYear : null, progress: aprogress_(u.student) };
+    out.child = { name: c ? c.name : '', email: u.student, seaYear: c ? c.seaYear : null,
+                  school: c ? c.school : '', progress: aprogress_(u.student) };
   }
   return out;
 }
@@ -221,6 +337,76 @@ function aprogress_(email) {
     try { return JSON.parse(String(rows[i].json || '{}')); } catch (e) { return {}; }
   }
   return null;
+}
+
+/* ============================ dashboard ============================ */
+
+/* Counts, not children. Who is using it, in which class, at which school,
+   and how much practice is happening — the numbers a sponsor is shown and
+   the numbers that say whether this is working. The only names here are
+   parents who ticked the box asking to hear about savings plans. */
+function academyDashboard_(b) {
+  var u = awho_(b.token);
+  if (u.role !== 'academy') return aerr_('The dashboard is for the Academy.');
+
+  var rows = arows_(asheet_(ACADEMY.USERS));
+  var prog = {}, pr = arows_(asheet_(ACADEMY.PROGRESS));
+  for (var i = 0; i < pr.length; i++) {
+    try { prog[anorm_(pr[i].email)] = JSON.parse(String(pr[i].json || '{}')); } catch (e) {}
+  }
+
+  var now = Date.now(), activeCut = now - ACADEMY.ACTIVE_DAYS * 86400000;
+  var out = {
+    families: 0, children: 0, activeFamilies: 0, teachers: 0,
+    byClass: {}, bySchool: {}, byMonth: {},
+    attempted: 0, papers: 0, bestPaper: 0, practising: 0,
+    interested: [], interestedCount: 0, schoolsGiven: 0
+  };
+
+  for (var j = 0; j < rows.length; j++) {
+    var r = rows[j], role = String(r.role || '').trim().toLowerCase();
+    if (anorm_(r.status) === 'disabled') continue;
+    var created = r.created instanceof Date ? r.created : null;
+
+    if (role === 'teacher') out.teachers++;
+
+    if (role === 'parent') {
+      out.families++;
+      var seen = r['last sign-in'] instanceof Date ? r['last sign-in'].getTime() : 0;
+      if (seen >= activeCut) out.activeFamilies++;
+      if (created) {
+        var key = created.getFullYear() + '-' + ('0' + (created.getMonth() + 1)).slice(-2);
+        out.byMonth[key] = (out.byMonth[key] || 0) + 1;
+      }
+      if (anorm_(r.consent) === 'yes') {
+        out.interestedCount++;
+        out.interested.push({
+          name: String(r.name || '').trim(), email: anorm_(r.email),
+          school: String(r.school || '').trim(),
+          seaYear: Number((auser_(anorm_(r['student email'])) || {}).seaYear) || null,
+          at: r['consent at'] instanceof Date ? adate_(r['consent at']) : ''
+        });
+      }
+    }
+
+    if (role === 'student') {
+      out.children++;
+      var y = Number(r['sea year']) || 0;
+      if (y) { var k = String(y); out.byClass[k] = (out.byClass[k] || 0) + 1; }
+      var school = String(r.school || '').trim();
+      if (school) { out.schoolsGiven++; out.bySchool[school] = (out.bySchool[school] || 0) + 1; }
+      var p = prog[anorm_(r.email)];
+      if (p) {
+        var seenN = p.seen ? Object.keys(p.seen).length : 0;
+        if (seenN) { out.attempted += seenN; out.practising++; }
+        var ex = p.exams || [];
+        out.papers += ex.length;
+        for (var e = 0; e < ex.length; e++) if (Number(ex[e].score) > out.bestPaper) out.bestPaper = Number(ex[e].score);
+      }
+    }
+  }
+  out.interested.sort(function (a, c) { return String(c.at).localeCompare(String(a.at)); });
+  return aok_({ stats: out, activeDays: ACADEMY.ACTIVE_DAYS });
 }
 
 /* ============================ users ============================ */
@@ -241,7 +427,10 @@ function auser_(email) {
       paidUntil: r['paid until'] || '',
       salt: String(r.salt || ''),
       hash: String(r.hash || ''),
-      seaYear: Number(r['sea year']) || null
+      seaYear: Number(r['sea year']) || null,
+      school: String(r.school || '').trim(),
+      consent: anorm_(r.consent) === 'yes',
+      lastSignin: r['last sign-in'] || ''
     };
   }
   return null;
@@ -347,6 +536,8 @@ function aok_(o) { o = o || {}; o.ok = true; return ajson_(o); }
 function aerr_(msg) { return ajson_({ ok: false, error: msg }); }
 
 function anorm_(s) { return String(s || '').trim().toLowerCase(); }
+/* One line of text from a form: trimmed, length-capped, no control characters. */
+function aclean_(s, max) { return String(s == null ? '' : s).replace(/[\x00-\x1f]/g, ' ').trim().slice(0, max || 120); }
 function aemail_(s) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s); }
 
 /* Rows as objects keyed by lower-cased header, and the header positions. */

@@ -9,6 +9,12 @@
 // sign-in is refused five times and then locked, the token is tampered
 // with, expired, disabled, and finally the parent asks for the child.
 //
+// It also holds the line the product is sold on: a free practice app asks
+// for what it needs to teach and nothing it could sell. Registration must
+// refuse to store an occupation or an employer, the marketing box must be
+// off unless a parent turns it on, and the dashboard must count children
+// rather than name them.
+//
 // Run: node tests/test-academy.js   (needs nothing but node)
 const crypto = require('crypto');
 process.env.GS_PATH = __dirname + '/../apps-script/Academy.gs';
@@ -40,19 +46,20 @@ const setCell = (sheet, row, col, v) => { env.__sheets[sheet]._grid[row - 1][col
 env.academySetup();
 ok('setup makes the three tabs with their headers in row 1',
    ['Users', 'Progress', 'Activity'].every(n => env.__sheets[n] && env.__sheets[n]._grid.length === 1) &&
-   cell('Users', 1, 1) === 'Email' && cell('Users', 1, 8) === 'Hash' && cell('Users', 1, 12) === 'SEA Year');
+   cell('Users', 1, 1) === 'Email' && cell('Users', 1, 8) === 'Hash' && cell('Users', 1, 12) === 'SEA Year' &&
+   cell('Users', 1, 13) === 'School' && cell('Users', 1, 14) === 'Consent');
 ok('setup generates a signing secret', (props.ACADEMY_SECRET || '').length > 40);
 ok('the engine answers a GET', /running/.test(env.doGet().getContent()));
 
 // The Academy adds rows by hand: e-mail, name, role, and for a parent the
 // child's e-mail. Everything else stays blank.
 const U = env.__sheets.Users;
-U.appendRow(['Aisha@Example.com ', 'Aisha Ali', 'Student', '', '', '', '', '', '', '', '', 2029]);   // row 2 — S.E.A. in 2029
-U.appendRow(['dad@example.com', 'Imran Ali', 'parent', 'aisha@example.com', '', '', '', '', '', '', '']); // row 3
-U.appendRow(['miss@example.com', 'Ms Ramlal', 'teacher', '', '', '', '', '', '', '', '']);        // row 4
-U.appendRow(['off@example.com', 'Switched Off', 'student', '', 'disabled', '', '', '', '', '', '']); // row 5
-U.appendRow(['late@example.com', 'Season Over', 'student', '', '', '2020-01-01', '', '', '', '', '']); // row 6
-U.appendRow(['blank@example.com', 'No Role', '', '', '', '', '', '', '', '', '']);                 // row 7
+U.appendRow(['Aisha@Example.com ', 'Aisha Ali', 'Student', '', '', '', '', '', '', '', '', 2029, '', '', '', '']);   // row 2 — S.E.A. in 2029
+U.appendRow(['dad@example.com', 'Imran Ali', 'parent', 'aisha@example.com', '', '', '', '', '', '', '', '', '', '', '']); // row 3
+U.appendRow(['miss@example.com', 'Ms Ramlal', 'teacher', '', '', '', '', '', '', '', '', '', '', '', '']);        // row 4
+U.appendRow(['off@example.com', 'Switched Off', 'student', '', 'disabled', '', '', '', '', '', '', '', '', '', '']); // row 5
+U.appendRow(['late@example.com', 'Season Over', 'student', '', '', '2020-01-01', '', '', '', '', '', '', '', '', '']); // row 6
+U.appendRow(['blank@example.com', 'No Role', '', '', '', '', '', '', '', '', '', '', '', '', '']);                 // row 7
 
 // ---- lookup ------------------------------------------------------------------
 ok('an e-mail nobody added is unknown', post({ action: 'lookup', email: 'who@example.com' }).state === 'unknown');
@@ -150,6 +157,90 @@ ok('sign-ins, refusals and password choices are all logged',
    acts.includes('sign-in') && acts.includes('sign-in-refused') && acts.includes('set-password'));
 ok('the log never contains a password',
    !JSON.stringify(env.__sheets.Activity._grid).match(/mango-tree|doubles-and|chalk-and/));
+
+// ---- a parent registers their own child --------------------------------------
+const REG = { action: 'register', parentEmail: 'nalini@example.com', parentName: 'Nalini Baksh',
+              childName: 'Rohan', seaYear: 2031, school: 'St Joseph Boys RC',
+              password: 'pommerac-season' };
+let reg = post(Object.assign({}, REG, { seaYear: 0 }));
+ok('registration insists on a class for the child', reg.ok === false && /class/.test(reg.error));
+reg = post(Object.assign({}, REG, { childName: '' }));
+ok("registration insists on the child's first name", reg.ok === false && /first name/.test(reg.error));
+reg = post(Object.assign({}, REG, { password: 'short' }));
+ok('registration insists on a real password', reg.ok === false && /8 characters/.test(reg.error));
+reg = post(Object.assign({}, REG, { parentEmail: 'aisha@example.com' }));
+ok('an e-mail already on the list cannot be registered again', reg.ok === false && /already registered/.test(reg.error));
+
+reg = post(REG);
+ok('a parent registers and is signed in on the spot', reg.ok && reg.token && reg.user.role === 'parent' && reg.user.name === 'Nalini Baksh');
+ok('the child is created with a first name, a class and a school, and no login of its own',
+   reg.child && reg.child.name === 'Rohan' && reg.child.seaYear === 2031 &&
+   reg.child.school === 'St Joseph Boys RC' && /^child:/.test(reg.child.email));
+const rohanRow = env.__sheets.Users._grid.find(r => String(r[0]).startsWith('child:'));
+ok('the child has no salt and no hash, so nobody can sign in as them', !rohanRow[6] && !rohanRow[7]);
+ok('the child row records which parent registered it', rohanRow[15] === 'nalini@example.com');
+
+// ---- the opt-in is off unless a parent turns it on ---------------------------
+const nalRow = env.__sheets.Users._grid.find(r => r[0] === 'nalini@example.com');
+ok('a registration that did not tick the box stores no consent', nalRow[13] === '' && nalRow[14] === '');
+ok('and the session says so', reg.user.consent === false);
+const opted = post(Object.assign({}, REG, { parentEmail: 'dev@example.com', parentName: 'Dev Persad',
+  childName: 'Anya', seaYear: 2033, school: 'Chaguanas Government', consent: true, password: 'sorrel-and-ginger' }));
+ok('a parent who ticks the box is recorded as consenting, with the date', opted.ok && opted.user.consent === true);
+const devRow = env.__sheets.Users._grid.find(r => r[0] === 'dev@example.com');
+ok('consent is written as a plain yes and a timestamp', devRow[13] === 'yes' && devRow[14] instanceof Date);
+
+// ---- what registration refuses to keep ---------------------------------------
+// The whole bargain: a practice app asks for what it needs to teach, and
+// nothing it could sell. Anything else sent is dropped on the floor.
+post(Object.assign({}, REG, { parentEmail: 'nosy@example.com', parentName: 'Nosy Parker',
+  childName: 'Kiran', seaYear: 2030, password: 'never-mind-that',
+  occupation: 'Engineer', employer: 'Petrotrin', income: '18000', dob: '2015-04-02',
+  address: '12 Endeavour Road', childSurname: 'Parker', phone: '868-555-0101' }));
+const sheetText = JSON.stringify(env.__sheets.Users._grid);
+ok('an occupation, an employer, an income or an address sent at registration is never stored',
+   !/Engineer|Petrotrin|18000|Endeavour|555-0101|2015-04-02/.test(sheetText));
+ok('and the activity log never holds them either', !/Engineer|Petrotrin|Endeavour/.test(JSON.stringify(env.__sheets.Activity._grid)));
+
+// ---- a parent saves their own child's practice, and nobody else's -------------
+const nalToken = reg.token;
+ok("a parent may save their own child's progress",
+   post({ action: 'save', token: nalToken, for: reg.child.email, progress: { seen: { 'N01': { att: 1 } } } }).ok);
+ok('and it lands on the child, not on the parent',
+   post({ action: 'load', token: nalToken }).child.progress.seen.N01.att === 1 &&
+   post({ action: 'load', token: nalToken }).progress === null);
+ok("a parent may not save to another family's child",
+   post({ action: 'save', token: nalToken, for: 'aisha@example.com', progress: { seen: {} } }).ok === false);
+
+// ---- the dashboard ------------------------------------------------------------
+ok('a parent is refused the dashboard', /for the Academy/.test(post({ action: 'dashboard', token: nalToken }).error));
+ok('a teacher is refused the dashboard too', /for the Academy/.test(post({ action: 'dashboard', token: miss.token }).error));
+U.appendRow(['boss@example.com', 'Ricky Rampersad', 'academy', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+const boss = post({ action: 'setpassword', email: 'boss@example.com', password: 'branch-and-shield' });
+const dash = post({ action: 'dashboard', token: boss.token });
+ok('the Academy gets the dashboard', dash.ok && dash.stats);
+ok('it counts families, children and teachers',
+   dash.stats.families === 4 && dash.stats.children === 5 && dash.stats.teachers === 1);
+ok('a switched-off child is counted nowhere', dash.stats.children === env.__sheets.Users._grid.slice(1)
+   .filter(r => String(r[2]).toLowerCase() === 'student' && String(r[4]).toLowerCase() !== 'disabled').length);
+ok('it counts children by class', dash.stats.byClass['2031'] === 1 && dash.stats.byClass['2033'] === 1);
+ok('it counts children by school, and how many gave one',
+   dash.stats.bySchool['St Joseph Boys RC'] === 2 && dash.stats.bySchool['Chaguanas Government'] === 1 &&
+   dash.stats.schoolsGiven === 3);
+ok('a child whose parent gave no school is simply absent from the school counts',
+   Object.values(dash.stats.bySchool).reduce((a, b) => a + b, 0) === dash.stats.schoolsGiven &&
+   dash.stats.schoolsGiven < dash.stats.children);
+ok('it counts practice rather than listing it, and papers sat',
+   dash.stats.attempted === 2 && dash.stats.practising === 2 && dash.stats.papers === 2);
+ok('it counts registrations by month, one entry per family',
+   Object.values(dash.stats.byMonth).reduce((a, b) => a + b, 0) === dash.stats.families);
+ok('the interest list holds only the parent who ticked the box',
+   dash.stats.interestedCount === 1 && dash.stats.interested.length === 1 &&
+   dash.stats.interested[0].email === 'dev@example.com' && dash.stats.interested[0].name === 'Dev Persad');
+ok('a parent who did not tick is nowhere in it',
+   !JSON.stringify(dash.stats.interested).includes('nalini@example.com'));
+ok("no child's name appears anywhere in the dashboard",
+   !/Rohan|Anya|Kiran|Aisha/.test(JSON.stringify(dash.stats)));
 
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');

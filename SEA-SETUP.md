@@ -270,6 +270,33 @@ and to nothing else. Sites offering CSEC papers free are copying them, and the
 app must never link to one — the same rule as the S.E.A. papers, applied to a
 body that charges.
 
+## What the app asks a family for
+
+A parent registers their own child: their name and e-mail, the child's first
+name and class, the school if they care to give it, and a password. That is the
+whole of it. The privacy notice on the sign-in screen says so in plain words,
+before anybody types anything, and `ACADEMY-SETUP.md` has the detail.
+
+**Nothing that could be sold against is collected** — no surname, no date of
+birth, no address, no occupation, no employer. Registration carries one
+**unticked** box asking whether the branch may talk to them about education
+savings plans, and nobody who leaves it alone may be contacted. Both tests hold
+that: the browser test fails if a registration field ever asks for an
+occupation or an employer, or if the box is ticked by default; the backend test
+sends those fields anyway and fails if one reaches the sheet.
+
+This is not caution for its own sake. The sponsorship proposal promises parents
+no tracking and no data sharing, and a sponsor signs on the strength of it. An
+app that quietly built a marketing file would be worth less every day it ran.
+
+## The Academy dashboard
+
+An `academy` role sees one more section: families and children, active this
+month, questions attempted, papers sat, children by class, children by school,
+registrations month by month. Counts, not children — no child's name is on it
+and no child's record opens from it. The only names are parents who ticked the
+box, and `CAN` at the top of the script is what decides who sees it.
+
 ## Sponsors
 
 Families never pay; sponsors pay for the reach. `SPONSORS` at the top of the

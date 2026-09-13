@@ -33,8 +33,8 @@ vm.createContext(sandbox);
 // The file is in strict mode, so its top-level const bindings never reach the
 // sandbox global on their own — hand them over explicitly.
 vm.runInContext(script.slice(0, cut) + script.slice(markerStart, markerEnd) +
-  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
-const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
+  '\nglobalThis.__bank = { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, levelIndexFor, seaYearFor, schoolYear, isRight };', sandbox);
+const { QUESTIONS, PAPERS, HINTS, ROLES, SVG, SPONSORS, SPONSOR_SLOTS, LEVELS, LEVEL_INDEX, CAN, levelIndexFor, seaYearFor, schoolYear, isRight } = sandbox.__bank;
 
 let fails = 0;
 const ok = (what, cond, extra) => {
@@ -213,10 +213,19 @@ ok(`${usedFigs.size} of ${Object.keys(SVG).length} figures are in use`,
 
 // ---- roles -------------------------------------------------------------------
 const roleNames = Object.keys(ROLES);
-ok('three roles are defined', roleNames.length === 3 &&
-   ['student','parent','teacher'].every(r => roleNames.includes(r)), roleNames.join(', '));
+ok('four roles are defined', roleNames.length === 4 &&
+   ['student','parent','teacher','academy'].every(r => roleNames.includes(r)), roleNames.join(', '));
 const codes = roleNames.map(r => ROLES[r].code);
-ok('each role has its own distinct code', new Set(codes).size === 3 && codes.every(c => c && c.length >= 6));
+ok('each role has its own distinct code',
+   new Set(codes).size === roleNames.length && codes.every(c => c && c.length >= 6));
+
+// Who may see what. A student is never handed the answer key; only the Academy
+// sees the dashboard. These are the two that matter if the page is ever edited.
+ok('only the Academy is given the dashboard',
+   Object.keys(CAN).filter(r => CAN[r].views.includes('dash')).join() === 'academy');
+ok('a student gets neither the answer key nor the dashboard',
+   !CAN.student.views.includes('key') && !CAN.student.views.includes('dash') &&
+   CAN.student.openAnswers === false);
 
 // ---- the branch mark ---------------------------------------------------------
 // CLAUDE.md: every screen uses logo-mark.png. Twice a screen has shipped with an
