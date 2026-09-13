@@ -68,10 +68,22 @@ function rsfToken_() {
   var cached = p.getProperty('RSF_ACCESS'), when = Number(p.getProperty('RSF_ACCESS_AT') || 0);
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
+  /* Property names drift. This project stores the consumer key as SFKEY with
+     no underscore, while other scripts in the same family write SF_KEY — an
+     exact-match lookup reports "credentials are missing" when they are
+     sitting right there. Match on letters and digits alone, so SFKEY, SF_KEY,
+     sf-key and Sf_Key all resolve to the same thing. TokenMigration.gs solves
+     this the same way, for the same reason. */
+  var norm = function (s) { return String(s).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var all = {};
+  p.getKeys().forEach(function (k) {
+    var v = p.getProperty(k);
+    if (v && String(v).trim()) all[norm(k)] = String(v).trim();
+  });
   var pick = function (names) {
     for (var i = 0; i < names.length; i++) {
-      var v = p.getProperty(names[i]);
-      if (v && String(v).trim()) return String(v).trim();
+      var v = all[norm(names[i])];
+      if (v) return v;
     }
     return '';
   };
@@ -433,10 +445,16 @@ function rsfSelfCheck() {
   L.push('');
 
   var p = PropertiesService.getScriptProperties();
+  var norm = function (s) { return String(s).toUpperCase().replace(/[^A-Z0-9]/g, ''); };
+  var all = {};
+  p.getKeys().forEach(function (k) {
+    var v = p.getProperty(k);
+    if (v && String(v).trim()) all[norm(k)] = { name: k, val: String(v).trim() };
+  });
   var has = function (names) {
     for (var i = 0; i < names.length; i++) {
-      var v = p.getProperty(names[i]);
-      if (v && String(v).trim()) return names[i] + ' (' + String(v).trim().length + ' chars)';
+      var hit = all[norm(names[i])];
+      if (hit) return hit.name + ' (' + hit.val.length + ' chars)';
     }
     return '';
   };
