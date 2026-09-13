@@ -96,6 +96,8 @@
 <script src="data/curriculum.js"></script>
 <script src="data/questions.js"></script>
 <script src="assets/csec.js"></script>
+<script src="assets/csec-config.js"></script>
+<script src="assets/csec-sync.js"></script>
 <script>
 (function(){
   var $=function(id){return document.getElementById(id);}, esc=CSEC.esc, C=CSEC.curriculum;
@@ -109,7 +111,7 @@
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
       '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
-    : '<a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
+    : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a>';
 
   var form = me && me.role==='student' ? me.form : 2;

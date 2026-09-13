@@ -85,6 +85,45 @@
       <div class="err" id="prof-err"></div>
     </div>
 
+    <!-- ---------- PINs ---------- -->
+    <div class="section-label">PINs &amp; recovery</div>
+    <div class="card" style="margin-bottom:14px">
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:18px">
+        <div style="flex:1;min-width:200px">
+          <h3>Your recovery code</h3>
+          <p class="sub">The way back in if you forget your PIN. Write it somewhere that is not this
+          device — a photograph, or the back of a school book.</p>
+        </div>
+        <div style="flex:none;text-align:center">
+          <div id="rec-code" style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:800;
+               letter-spacing:4px;color:var(--gold);background:rgba(0,0,0,.28);padding:10px 18px;
+               border-radius:11px;border:1px solid rgba(239,194,75,.35)">••••••</div>
+          <button class="btn ghost sm" id="rec-show" style="margin-top:7px">Show</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line);padding-top:18px">
+        <div class="section-label" style="margin:0 0 10px">Reset somebody else's PIN</div>
+        <p class="sub" style="margin-bottom:14px">
+          Anyone signed in on this device can reset any other profile's PIN here. That is deliberate —
+          a child who is locked out should not need a support call — and it is why the PIN keeps
+          profiles apart rather than keeping secrets.</p>
+        <div class="grid g2">
+          <div class="field">
+            <label class="fl" for="rp-who">Profile</label>
+            <select class="fi" id="rp-who"></select>
+          </div>
+          <div class="field">
+            <label class="fl" for="rp-pin">New PIN</label>
+            <input class="fi" id="rp-pin" type="password" inputmode="numeric" maxlength="6" placeholder="4 to 6 digits"/>
+          </div>
+        </div>
+        <button class="btn ghost" id="rp-go">Reset PIN</button>
+        <div class="ok hidden" id="rp-ok"></div>
+        <div class="err" id="rp-err"></div>
+      </div>
+    </div>
+
     <!-- ---------- moving up a form ---------- -->
     <div class="section-label">Moving up a form</div>
     <div class="card" style="margin-bottom:14px" id="promo-card">
@@ -108,6 +147,94 @@
       <button class="btn" id="pr-go">Move up a form</button>
       <div class="ok hidden" id="pr-ok"></div>
       <div class="err" id="pr-err"></div>
+    </div>
+
+    <!-- ---------- sync ---------- -->
+    <div class="section-label">Sync across devices <span class="pill mute" id="sy-pill">checking…</span></div>
+    <div class="card" style="margin-bottom:14px" id="sy-card">
+
+      <div id="sy-off" class="hidden note gold">
+        <b>Sync is not switched on yet.</b> The hub is working normally and everything is saved on
+        this device. Once the branch deploys the sync service, a family can share one code and see
+        the same progress on every phone and laptop. Until then use <b>Export backup</b> below.
+      </div>
+
+      <div id="sy-none" class="hidden">
+        <p class="sub" style="margin-bottom:16px">
+          Right now this device is on its own. Create a group and you get a code; enter that same
+          code on a phone, a laptop or the teacher's machine and they all show the same progress.
+        </p>
+        <div class="grid g2">
+          <div class="field">
+            <label class="fl" for="sy-label">Group name</label>
+            <input class="fi" id="sy-label" placeholder="e.g. The Rampersads"/>
+          </div>
+          <div class="field">
+            <label class="fl" for="sy-kind">Type</label>
+            <select class="fi" id="sy-kind">
+              <option value="family">Family — my children</option>
+              <option value="class">Class — my students</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn" id="sy-create">Create a group</button>
+
+        <div style="margin:22px 0 14px;border-top:1px solid var(--line);padding-top:18px">
+          <label class="fl" for="sy-join">Already have a code? Enter it here</label>
+          <div style="display:flex;gap:9px;flex-wrap:wrap">
+            <input class="fi" id="sy-join" placeholder="ABCD-EFGH" style="flex:1;min-width:170px;text-transform:uppercase"/>
+            <button class="btn ghost" id="sy-joinbtn">Join</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="sy-on" class="hidden">
+        <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-bottom:16px">
+          <div style="flex:1;min-width:200px">
+            <div class="eyebrow" style="margin-bottom:3px" id="sy-kindlabel">Family group</div>
+            <h3 id="sy-name"></h3>
+            <p class="sub" id="sy-when"></p>
+          </div>
+          <div style="flex:none;text-align:center">
+            <div style="font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Group code</div>
+            <div id="sy-code" style="font-family:'Montserrat',sans-serif;font-size:1.5rem;font-weight:800;
+                 letter-spacing:2px;color:var(--gold);background:rgba(0,0,0,.28);padding:9px 16px;
+                 border-radius:11px;border:1px solid rgba(239,194,75,.35)"></div>
+            <button class="btn ghost sm" id="sy-copy" style="margin-top:7px">Copy code</button>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn teal" id="sy-now">Sync now</button>
+          <button class="btn ghost" id="sy-leave">Stop syncing this device</button>
+        </div>
+        <div class="ok hidden" id="sy-ok"></div>
+        <div class="err" id="sy-err"></div>
+
+        <div class="note" style="margin-top:18px">
+          <b>Who can see this.</b> Anyone with the code <b id="sy-code2"></b> can read and change this
+          group's names and practice scores. There is no password behind it. Treat it like a house
+          key — give it to family and to your child's teacher, and to nobody else. If it gets out,
+          delete the group here and make a new one.
+        </div>
+
+        <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:18px">
+          <div class="section-label" style="margin:0 0 10px">Removing data from the group</div>
+          <p class="sub" style="margin-bottom:14px">
+            Both of these delete from the shared group immediately and permanently. What is on this
+            device stays until you clear it below.</p>
+          <div style="display:flex;gap:9px;flex-wrap:wrap;align-items:flex-end">
+            <div class="field" style="flex:1;min-width:190px;margin:0">
+              <label class="fl" for="sy-who">Remove one person</label>
+              <select class="fi" id="sy-who"></select>
+            </div>
+            <button class="btn ghost sm" id="sy-forgetone">Remove from group</button>
+          </div>
+          <button class="btn ghost sm" id="sy-forgetall"
+                  style="margin-top:12px;border-color:rgba(248,113,113,.4);color:#f87171">
+            Delete the whole group and everyone in it</button>
+        </div>
+      </div>
     </div>
 
     <!-- ---------- backup ---------- -->
@@ -160,6 +287,8 @@
 <script src="data/curriculum.js"></script>
 <script src="data/questions.js"></script>
 <script src="assets/csec.js"></script>
+<script src="assets/csec-config.js"></script>
+<script src="assets/csec-sync.js"></script>
 <script>
 (function(){
   var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
@@ -267,6 +396,144 @@
     $('p-pin').value='';
     flash('prof-ok','Profile saved.');
   });
+
+  /* ---------------- PINs & recovery ---------------- */
+  var recShown=false;
+  $('rec-show').addEventListener('click',function(){
+    recShown=!recShown;
+    var me2=CSEC.profile(me.id);
+    $('rec-code').textContent = recShown ? (me2.recovery||'— none —') : '••••••';
+    $('rec-show').textContent = recShown ? 'Hide' : 'Show';
+  });
+
+  function fillResetList(){
+    $('rp-who').innerHTML=CSEC.profiles().map(function(p){
+      return '<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+esc(p.role)+
+             (p.role==='student'?', Form '+p.form:'')+')</option>';
+    }).join('');
+  }
+  fillResetList();
+
+  $('rp-go').addEventListener('click',function(){
+    $('rp-err').textContent='';
+    var id=$('rp-who').value, who=CSEC.profile(id);
+    if(!who) return;
+    var r=CSEC.resetPin(id,$('rp-pin').value.trim());
+    if(!r.ok){ $('rp-err').textContent=r.msg; return; }
+    $('rp-pin').value='';
+    flash('rp-ok','PIN reset for '+who.name+'.');
+  });
+
+  /* ---------------- sync ---------------- */
+  var SY = window.CSEC_SYNC;
+
+  function syFlash(id,msg){
+    var el=$(id); el.textContent=msg; el.classList.remove('hidden');
+    setTimeout(function(){ el.classList.add('hidden'); },4200);
+  }
+  function syShow(which){
+    ['sy-off','sy-none','sy-on'].forEach(function(k){
+      $(k).classList.toggle('hidden', k!==which);
+    });
+  }
+  function syPaint(){
+    if(!SY || !SY.configured()){
+      $('sy-pill').textContent='not set up yet';
+      syShow('sy-off');
+      return;
+    }
+    var g=SY.group();
+    if(!g){ $('sy-pill').textContent='this device only'; syShow('sy-none'); return; }
+
+    $('sy-pill').textContent='on';
+    syShow('sy-on');
+    $('sy-code').textContent=g.code;
+    $('sy-code2').textContent=g.code;
+    $('sy-name').textContent=g.label||'Study group';
+    $('sy-kindlabel').textContent=(g.kind==='class'?'Class group':'Family group');
+    var st=SY.state();
+    $('sy-when').textContent = st.lastSync
+      ? 'Last synced '+new Date(st.lastSync).toLocaleString()+(st.lastResult?' · '+st.lastResult:'')
+      : 'Not synced yet — press Sync now.';
+    $('sy-who').innerHTML=CSEC.profiles().map(function(p){
+      return '<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+esc(p.role)+')</option>';
+    }).join('');
+  }
+
+  if(SY){
+    $('sy-create').addEventListener('click',function(){
+      var label=$('sy-label').value.trim()||'Study group';
+      $('sy-create').disabled=true; $('sy-create').textContent='Creating…';
+      SY.createGroup(label,$('sy-kind').value,function(r){
+        $('sy-create').disabled=false; $('sy-create').textContent='Create a group';
+        if(!r.ok){ flash('subj-ok','Could not create the group: '+(r.error||'unknown')); return; }
+        SY.syncNow(function(){ syPaint(); syFlash('sy-ok','Group created and this device added.'); });
+      });
+    });
+
+    $('sy-joinbtn').addEventListener('click',function(){
+      var code=$('sy-join').value.trim();
+      if(!code){ return; }
+      $('sy-joinbtn').disabled=true; $('sy-joinbtn').textContent='Joining…';
+      SY.joinGroup(code,function(r){
+        $('sy-joinbtn').disabled=false; $('sy-joinbtn').textContent='Join';
+        if(!r.ok){
+          var msg = r.error==='unknown_code' ? 'That code was not found. Check it and try again.'
+                  : r.error==='network' ? 'Could not reach the sync service. Check the connection.'
+                  : 'Could not join: '+(r.error||'unknown');
+          alert(msg); return;
+        }
+        SY.syncNow(function(){ syPaint(); location.reload(); });
+      });
+    });
+
+    $('sy-now').addEventListener('click',function(){
+      $('sy-now').disabled=true; $('sy-now').textContent='Syncing…';
+      $('sy-err').textContent='';
+      SY.syncNow(function(r){
+        $('sy-now').disabled=false; $('sy-now').textContent='Sync now';
+        if(!r.ok){ $('sy-err').textContent='Sync failed: '+(r.error||'unknown'); syPaint(); return; }
+        syPaint();
+        syFlash('sy-ok','Synced — sent '+r.pushed+', received '+r.applied+'.');
+        if(r.applied) setTimeout(function(){ location.reload(); },1200);
+      });
+    });
+
+    $('sy-copy').addEventListener('click',function(){
+      var g=SY.group(); if(!g) return;
+      try{ navigator.clipboard.writeText(g.code); syFlash('sy-ok','Code copied.'); }
+      catch(e){ syFlash('sy-ok','Code is '+g.code); }
+    });
+
+    $('sy-leave').addEventListener('click',function(){
+      if(!confirm('Stop syncing this device?\n\nThe group and its data stay where they are, and '+
+                  'everything on this device stays too. You can rejoin with the code at any time.')) return;
+      SY.leaveGroup(); syPaint();
+    });
+
+    $('sy-forgetone').addEventListener('click',function(){
+      var id=$('sy-who').value, who=CSEC.profile(id);
+      if(!who) return;
+      if(!confirm('Remove '+who.name+' from the shared group?\n\nTheir data is deleted from the group '+
+                  'for everyone. It stays on this device.')) return;
+      SY.forgetMe(id,function(r){
+        if(!r.ok){ $('sy-err').textContent='Could not remove: '+(r.error||'unknown'); return; }
+        syFlash('sy-ok',who.name+' removed from the group.');
+      });
+    });
+
+    $('sy-forgetall').addEventListener('click',function(){
+      var g=SY.group(); if(!g) return;
+      if(!confirm('Delete the entire group "'+(g.label||'')+'" ('+g.code+')?\n\nEveryone in it is '+
+                  'deleted from the server permanently. Other devices will stop syncing. Data already '+
+                  'on each device stays there.')) return;
+      SY.forgetGroup(function(r){
+        if(!r.ok){ $('sy-err').textContent='Could not delete: '+(r.error||'unknown'); return; }
+        syPaint(); syFlash('sy-ok','Group deleted.');
+      });
+    });
+  }
+  syPaint();
 
   /* ---------------- backup ---------------- */
   $('do-export').addEventListener('click',function(){

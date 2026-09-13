@@ -32,6 +32,16 @@
   }
   function students() { return profiles().filter(function (p) { return p.role === 'student'; }); }
 
+  /* A forgotten PIN is the commonest support call there is, so every profile
+     gets a recovery code at creation. It is stored beside the PIN, which means
+     it protects against forgetfulness, not against somebody holding the device
+     — exactly what it is described as doing in the interface. */
+  function newRecovery() {
+    var abc = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', s = '';
+    for (var i = 0; i < 6; i++) s += abc.charAt(Math.floor(Math.random() * abc.length));
+    return s;
+  }
+
   function createProfile(o) {
     var all = profiles();
     var p = {
@@ -43,20 +53,51 @@
       pin: String(o.pin || '').trim(),
       subjects: o.subjects || C.defaultSelection.slice(),
       linked: o.linked || [],
-      created: Date.now()
+      created: Date.now(),
+      updatedAt: Date.now(),
+      recovery: newRecovery()
     };
     all.push(p); saveProfiles(all); return p;
   }
   function updateProfile(id, patch) {
     var all = profiles();
     for (var i = 0; i < all.length; i++) {
-      if (all[i].id === id) { for (var k in patch) all[i][k] = patch[k]; saveProfiles(all); return all[i]; }
+      if (all[i].id === id) {
+        for (var k in patch) all[i][k] = patch[k];
+        all[i].updatedAt = Date.now();
+        saveProfiles(all); return all[i];
+      }
     }
     return null;
   }
   function deleteProfile(id) {
     saveProfiles(profiles().filter(function (p) { return p.id !== id; }));
     try { localStorage.removeItem(NS + 'progress.' + id); } catch (e) {}
+  }
+
+  /* Reset by somebody already signed in on this device — a parent or teacher
+     helping a child back in. */
+  function resetPin(profileId, newPin) {
+    if (!/^\d{4,6}$/.test(String(newPin || ''))) return { ok: false, msg: 'PIN must be 4 to 6 digits.' };
+    var p = profile(profileId);
+    if (!p) return { ok: false, msg: 'Profile not found.' };
+    updateProfile(profileId, { pin: String(newPin) });
+    return { ok: true };
+  }
+
+  /* Reset by the person themselves, using the code they were shown at sign-up.
+     Older profiles created before recovery codes existed get one on first use
+     rather than being locked out. */
+  function recoverWithCode(profileId, code, newPin) {
+    var p = profile(profileId);
+    if (!p) return { ok: false, msg: 'Profile not found.' };
+    if (!p.recovery) return { ok: false, msg: 'This profile has no recovery code. Ask a parent or teacher signed in on this device to reset it.' };
+    if (String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '') !== p.recovery) {
+      return { ok: false, msg: 'That recovery code does not match.' };
+    }
+    if (!/^\d{4,6}$/.test(String(newPin || ''))) return { ok: false, msg: 'New PIN must be 4 to 6 digits.' };
+    updateProfile(profileId, { pin: String(newPin), recovery: newRecovery() });
+    return { ok: true, recovery: profile(profileId).recovery };
   }
 
   /* ------------------------------- session ----------------------------- */
@@ -93,7 +134,10 @@
              history: [], tests: [], terms: {} };
   }
   function progress(studentId) { return read('progress.' + studentId, blankProgress()); }
-  function saveProgress(studentId, p) { write('progress.' + studentId, p); }
+  function saveProgress(studentId, p) {
+    p._t = Date.now();          /* version stamp the sync merge compares on */
+    write('progress.' + studentId, p);
+  }
 
   function today() { return new Date().toISOString().slice(0, 10); }
   function daysBetween(a, b) { return Math.round((new Date(b) - new Date(a)) / 86400000); }
@@ -137,6 +181,7 @@
     if (p.days.indexOf(today()) === -1) p.days.push(today());
     saveProgress(studentId, p);
     snapshotTerm(studentId);
+    if (global.CSEC_SYNC) global.CSEC_SYNC.autoSync();
     return p;
   }
 
@@ -345,6 +390,7 @@
     if (p.days.indexOf(today()) === -1) p.days.push(today());
     saveProgress(studentId, p);
     snapshotTerm(studentId);
+    if (global.CSEC_SYNC) global.CSEC_SYNC.autoSync();
     return p;
   }
 
@@ -664,6 +710,7 @@
     profiles: profiles, profile: profile, students: students,
     createProfile: createProfile, updateProfile: updateProfile, deleteProfile: deleteProfile,
     signIn: signIn, current: current, signOut: signOut, requireRole: requireRole,
+    resetPin: resetPin, recoverWithCode: recoverWithCode, newRecovery: newRecovery,
     progress: progress, saveProgress: saveProgress, recordAnswer: recordAnswer,
     recordSession: recordSession, streak: streak,
     strandStat: strandStat, subjectStat: subjectStat, overallStat: overallStat,
