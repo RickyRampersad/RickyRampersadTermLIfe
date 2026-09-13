@@ -24,29 +24,36 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Inter:wght@400;500;600;700;800&display=swap" />
 <style>
   :root{
-    --navy-900:#0E2A47;
-    --navy-800:#14395F;
-    --navy-700:#1C4E80;
-    --teal-600:#0E8C8C;
-    --teal-500:#12A5A0;
-    --teal-50:#E9F7F6;
-    --gold:#F2B33D;
-    --gold-ink:#5C3D00;
-    --gold-50:#FDF6E9;
-    --ink:#152435;
-    --muted:#5B7186;
-    --bg:#F4F8FB;
+    /* The house palette, at its real values. Claims had drifted to a
+       washed teal and a soft gold; these are the navy, gold and teal the
+       branch mark is actually drawn in, which is both richer on screen and
+       the thing every other branch surface already uses. */
+    --navy-900:#07131F;
+    --navy-800:#0E2440;
+    --navy-700:#16375A;
+    --teal-600:#07788C;   /* text-safe on paper */
+    --teal-500:#0FA3BC;
+    --teal-vivid:#00CFEA; /* accent, dark grounds only */
+    --teal-ink:#07788C;
+    --teal-50:#E4FAFE;
+    --gold:#EFC24B;
+    --gold-2:#C9942C;
+    --gold-ink:#4A3105;
+    --gold-50:#FDF5E2;
+    --ink:#0B1B2B;
+    --muted:#587187;
+    --bg:#F6F9FC;
     --white:#ffffff;
-    --line:#DCE7F0;
-    --red:#D64545;
-    --red-50:#FCEDED;
-    --green:#2F9E62;
-    --green-50:#EAF7F0;
+    --line:#DBE5F0;
+    --red:#D6455A;
+    --red-50:#FDEDF0;
+    --green:#14996B;
+    --green-50:#E6F7F0;
     --radius-lg:24px;
     --radius-md:16px;
     --radius-sm:12px;
-    --shadow:0 16px 40px rgba(14,42,71,.12);
-    --shadow-sm:0 4px 14px rgba(14,42,71,.08);
+    --shadow:0 16px 40px rgba(7,19,31,.13);
+    --shadow-sm:0 4px 14px rgba(7,19,31,.08);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --display:"Newsreader","Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
   }
@@ -91,6 +98,36 @@
   .nav-tel{font-weight:700;font-size:.9rem;color:var(--navy-900);text-decoration:none;padding:9px 14px;border-radius:999px}
   .nav-tel:hover{background:rgba(20,57,95,.07)}
   @media(max-width:620px){.nav-tel span{display:none}}
+
+
+  /* ── the drawn icon set ──
+     One 24px grid, one stroke weight, currentColor throughout, so an icon
+     takes the colour of whatever it sits in. <use> hides symbol content in
+     a shadow tree the page's CSS cannot select into — but stroke-dasharray
+     and stroke-dashoffset are inherited properties, so setting them on the
+     host <svg> reaches every path inside. Paired with pathLength="100" on
+     each drawable, one rule draws any icon in the same beat regardless of
+     its true length. */
+  .ic{width:1.15em;height:1.15em;flex:none;vertical-align:-.18em;fill:none;
+      stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+      /* the base sheet sets svg{display:block}; icons sit in running text */
+      display:inline-block}
+  .tico .ic,.lk-ico .ic{display:block}
+  .ic-lg{width:32px;height:32px;stroke-width:1.45}
+  @keyframes ic-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+  .ic-draw{stroke-dasharray:100;stroke-dashoffset:100;
+           animation:ic-draw .9s cubic-bezier(.33,1,.68,1) forwards}
+  .type-card:nth-child(2) .ic-draw{animation-delay:.07s}
+  .type-card:nth-child(3) .ic-draw{animation-delay:.14s}
+  .type-card:nth-child(4) .ic-draw{animation-delay:.21s}
+  .type-card:nth-child(5) .ic-draw{animation-delay:.28s}
+  .type-card .tico{color:var(--teal-ink);transition:color .22s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+  .type-card:hover .tico{transform:translateY(-2px)}
+  .type-card[aria-pressed="true"] .tico{color:var(--gold-2)}
+  @media(prefers-reduced-motion:reduce){
+    .ic-draw{animation:none;stroke-dashoffset:0}
+    .type-card:hover .tico{transform:none}
+  }
 
   /* ── hero: the aegis field ──
      A WebGL canvas sits over a CSS gradient that is a complete picture on
@@ -158,7 +195,7 @@
   .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
   .type-card{position:relative;text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:20px 18px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
   .type-card:hover{border-color:var(--teal-500);transform:translateY(-3px);box-shadow:var(--shadow-sm)}
-  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(18,165,160,.12)}
+  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(15,163,188,.15)}
   /* Emoji glyphs have wildly different intrinsic heights — fix the box so
      every card's title lands on the same baseline. */
   .type-card .tico{font-size:1.9rem;line-height:1;height:34px;display:flex;align-items:center;margin-bottom:10px}
@@ -184,7 +221,7 @@
   .field .req{color:var(--red);margin-left:2px}
   .field .hint{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:3px}
   .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:.97rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(18,165,160,.13)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,163,188,.16)}
   .field textarea{min-height:120px;resize:vertical;line-height:1.6}
   .field.bad input,.field.bad select,.field.bad textarea{border-color:var(--red);background:var(--red-50)}
   .err{display:none;color:var(--red);font-size:.82rem;font-weight:600;margin-top:5px}
@@ -390,6 +427,104 @@
 </head>
 <body>
 
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="ic-motor" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3 15.6v-2.3c0-.6.3-1.1.8-1.3l2.3-.9 1.9-3.2c.3-.5.8-.8 1.4-.8h5.2c.6 0 1.1.3 1.4.8l1.9 3.2 2.3.9c.5.2.8.7.8 1.3v2.3"/>
+      <path pathLength="100" d="M6.4 11.1h11.2"/>
+      <circle pathLength="100" cx="7.5" cy="16.4" r="1.9"/>
+      <circle pathLength="100" cx="16.5" cy="16.4" r="1.9"/>
+    </symbol>
+    <symbol id="ic-health" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="4.6" width="18" height="14.8" rx="3.4"/>
+      <path pathLength="100" d="M6.4 12.1h2.9l1.7-3.5 2.6 6.6 1.6-3.1h3.4"/>
+    </symbol>
+    <symbol id="ic-home" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.4 10.4 12 4l8.6 6.4"/>
+      <path pathLength="100" d="M5.4 11.7v7.1c0 .6.5 1.1 1.1 1.1h11c.6 0 1.1-.5 1.1-1.1v-7.1"/>
+      <path pathLength="100" d="M10 20v-4.7h4V20"/>
+    </symbol>
+    <symbol id="ic-life" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="M12 15.8c-1.8-1.2-3.1-2.3-3.1-3.8a1.9 1.9 0 0 1 3.1-1.3 1.9 1.9 0 0 1 3.1 1.3c0 1.5-1.3 2.6-3.1 3.8z"/>
+    </symbol>
+    <symbol id="ic-pension" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.5 19.6h17"/>
+      <path pathLength="100" d="M5 16.3 9.7 11l3.4 3 6-7.3"/>
+      <path pathLength="100" d="M15.3 6.3h3.8v3.8"/>
+    </symbol>
+    <symbol id="ic-phone" viewBox="0 0 24 24">
+      <path pathLength="100" d="M8.4 4.5H6.2A2.2 2.2 0 0 0 4 6.8C4 14.1 9.9 20 17.2 20a2.2 2.2 0 0 0 2.3-2.3v-2.2l-4.1-1.5-1.9 2.1a14.6 14.6 0 0 1-5.9-5.9l2.1-1.9z"/>
+    </symbol>
+    <symbol id="ic-key" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="8.2" cy="8.2" r="3.7"/>
+      <path pathLength="100" d="m10.8 10.8 9 9"/>
+      <path pathLength="100" d="m14.6 14.6 2-2M17.3 17.3l2-2"/>
+    </symbol>
+    <symbol id="ic-bolt" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.3 3 5 13.7h5.6L10.7 21 19 10.3h-5.6z"/>
+    </symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="m8.9 11.9 2.2 2.2 4-4.3"/>
+    </symbol>
+    <symbol id="ic-printer" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 9.2V4.6h10v4.6"/>
+      <path pathLength="100" d="M7 17.6H5.6A1.6 1.6 0 0 1 4 16v-4.3a2.6 2.6 0 0 1 2.6-2.6h10.8A2.6 2.6 0 0 1 20 11.7V16a1.6 1.6 0 0 1-1.6 1.6H17"/>
+      <rect pathLength="100" x="7" y="14.6" width="10" height="4.9" rx="1"/>
+    </symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="5.5" width="18" height="13" rx="2.4"/>
+      <path pathLength="100" d="m3.9 7.3 7 5.1c.7.5 1.5.5 2.2 0l7-5.1"/>
+    </symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="M12 7v5.3l3.4 2"/>
+    </symbol>
+    <symbol id="ic-clip" viewBox="0 0 24 24">
+      <path pathLength="100" d="M18.6 11.3 12 17.9a4.2 4.2 0 0 1-6-6l7.1-7.1a2.8 2.8 0 0 1 4 4l-7.1 7.1a1.4 1.4 0 0 1-2-2l6.4-6.4"/>
+    </symbol>
+    <symbol id="ic-doc" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.5 3.6H7.4A2.4 2.4 0 0 0 5 6v12.1a2.4 2.4 0 0 0 2.4 2.4h9.2a2.4 2.4 0 0 0 2.4-2.4V9.1z"/>
+      <path pathLength="100" d="M13.5 3.6v5.5H19"/>
+    </symbol>
+    <symbol id="ic-scan" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 8.2V6.3A2.3 2.3 0 0 1 6.3 4H8.2M15.8 4h1.9A2.3 2.3 0 0 1 20 6.3v1.9M20 15.8v1.9a2.3 2.3 0 0 1-2.3 2.3h-1.9M8.2 20H6.3A2.3 2.3 0 0 1 4 17.7v-1.9"/>
+      <path pathLength="100" d="M4.6 12h14.8"/>
+    </symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="m8.3 12.2 2.6 2.6 4.8-5.3"/>
+    </symbol>
+    <symbol id="ic-hourglass" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 3.9h10M7 20.1h10"/>
+      <path pathLength="100" d="M8.1 3.9v3c0 1.9 1.4 3.4 2.9 5.1-1.5 1.7-2.9 3.2-2.9 5.1v3"/>
+      <path pathLength="100" d="M15.9 3.9v3c0 1.9-1.4 3.4-2.9 5.1 1.5 1.7 2.9 3.2 2.9 5.1v3"/>
+    </symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 19.6h16"/>
+      <rect pathLength="100" x="6.1" y="10.8" width="3.5" height="8.8" rx="1.1"/>
+      <rect pathLength="100" x="14.4" y="6.4" width="3.5" height="13.2" rx="1.1"/>
+    </symbol>
+    <symbol id="ic-archive" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3.5" y="4.5" width="17" height="4.2" rx="1.4"/>
+      <path pathLength="100" d="M5.3 8.7v9.3a2.2 2.2 0 0 0 2.2 2.2h9a2.2 2.2 0 0 0 2.2-2.2V8.7"/>
+      <path pathLength="100" d="M10 12.4h4"/>
+    </symbol>
+    <symbol id="ic-flag" viewBox="0 0 24 24">
+      <path pathLength="100" d="M6 21V3.6"/>
+      <path pathLength="100" d="M6 4.6h10.9c.9 0 1.4 1 .9 1.7l-2 2.8 2 2.8c.5.7 0 1.7-.9 1.7H6"/>
+    </symbol>
+    <symbol id="ic-folder" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.6 7.4a2.2 2.2 0 0 1 2.2-2.2h3.4l2.2 2.4h6.8a2.2 2.2 0 0 1 2.2 2.2v7.2a2.2 2.2 0 0 1-2.2 2.2H5.8a2.2 2.2 0 0 1-2.2-2.2z"/>
+    </symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24">
+      <path pathLength="100" d="M20.6 3.4 10.8 13.2"/>
+      <path pathLength="100" d="M20.6 3.4 14.4 20.5l-3.6-7.3-7.3-3.6z"/>
+    </symbol>
+  </defs>
+</svg>
+
 <header>
   <div class="wrap nav">
     <a class="logo" href="/">
@@ -397,7 +532,7 @@
       <span>Claims&nbsp;TT<small>Ricky Rampersad Branch</small></span>
     </a>
     <div class="nav-actions">
-      <a class="nav-tel" href="tel:+18686785921">📞 <span>(868) 678-5921</span></a>
+      <a class="nav-tel" href="tel:+18686785921"><svg class="ic" aria-hidden="true"><use href="#ic-phone"/></svg> <span>(868) 678-5921</span></a>
       <a class="btn btn-ghost btn-sm" href="#track">Track a claim</a>
     </div>
   </div>
@@ -459,7 +594,7 @@
         <!-- existing client, identity first -->
         <div class="who" id="who-box">
           <div id="who-out">
-            <h3>🔑 Already our client?</h3>
+            <h3><svg class="ic" aria-hidden="true"><use href="#ic-key"/></svg> Already our client?</h3>
             <p>Enter your email or mobile — we email you a 6-digit code, and your policies appear with their numbers filled in.</p>
             <div class="who-row" id="who-step-id">
               <div class="field">
@@ -519,7 +654,7 @@
         <!-- policy prefill — motor & property only -->
         <div class="lookup" id="lookup" hidden>
           <div class="lookup-head">
-            <span class="lk-ico" aria-hidden="true">⚡</span>
+            <span class="lk-ico" aria-hidden="true"><svg class="ic ic-lg" aria-hidden="true"><use href="#ic-bolt"/></svg></span>
             <div>
               <b>Save yourself the typing</b>
               <span id="lk-blurb">Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.</span>
@@ -615,7 +750,7 @@
         <div class="notice bad" id="err-4" hidden></div>
         <div class="panel-foot">
           <button class="btn btn-ghost" type="button" data-back="4">← Back</button>
-          <button class="btn btn-teal" type="button" id="submit-btn">🛡 Submit my claim</button>
+          <button class="btn btn-teal" type="button" id="submit-btn"><svg class="ic" aria-hidden="true"><use href="#ic-shield"/></svg> Submit my claim</button>
         </div>
       </div>
 
@@ -652,7 +787,7 @@
         </ol>
         <div class="notice warn"><b>Please don't start repairs yet.</b> Work done before an inspection or written approval may not be reimbursed. If your vehicle is undrivable or your home is unsafe, call us first — we can authorise emergency work.</div>
         <div class="panel-foot no-print">
-          <button class="btn btn-ghost" type="button" onclick="window.print()">🖨 Print / save as PDF</button>
+          <button class="btn btn-ghost" type="button" onclick="window.print()"><svg class="ic" aria-hidden="true"><use href="#ic-printer"/></svg> Print / save as PDF</button>
           <a class="btn btn-primary" href="#track">Track this claim →</a>
         </div>
       </div>
@@ -667,7 +802,7 @@
         <div id="fallback-summary" style="margin:20px 0"></div>
         <div class="panel-foot">
           <button class="btn btn-ghost" type="button" id="fb-retry">↻ Try sending again</button>
-          <button class="btn btn-primary" type="button" id="fb-mail">✉ Re-open the email</button>
+          <button class="btn btn-primary" type="button" id="fb-mail"><svg class="ic" aria-hidden="true"><use href="#ic-mail"/></svg> Re-open the email</button>
         </div>
       </div>
     </div>
@@ -683,7 +818,7 @@
 <!-- ══════════════ FIRST STEPS ══════════════ -->
 <div class="steps-strip">
   <div class="wrap">
-    <h2>⏱️ Just happened? Do these four things first.</h2>
+    <h2><svg class="ic" aria-hidden="true"><use href="#ic-clock"/></svg> Just happened? Do these four things first.</h2>
     <div class="first-steps">
       <div class="fs"><b>1. Make everyone safe</b><span>Injuries first. Ambulance 811, Police 999, Fire 990. Nothing on this page matters more than that.</span></div>
       <div class="fs"><b>2. Report it to the police</b><span>For any motor accident, theft, burglary or malicious damage — report at the nearest station and ask for the report or station diary extract number.</span></div>
@@ -702,7 +837,7 @@
     <!-- signed-out: the two ways in -->
     <div id="acct-out">
       <div class="status-card" style="margin-bottom:18px">
-        <h3 class="h3">🔑 Sign in — see all my claims</h3>
+        <h3 class="h3"><svg class="ic" aria-hidden="true"><use href="#ic-key"/></svg> Sign in — see all my claims</h3>
         <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">No password. We email you a 6-digit code, you type it in, done.</p>
         <div class="status-form" id="acct-step-id">
           <div class="field" style="grid-column:1/-2">
@@ -724,7 +859,7 @@
       </div>
 
       <div class="status-card">
-        <h3 class="h3">⚡ Quick check — one claim, no sign-in</h3>
+        <h3 class="h3"><svg class="ic" aria-hidden="true"><use href="#ic-bolt"/></svg> Quick check — one claim, no sign-in</h3>
         <p style="color:var(--muted);font-size:.92rem;margin-bottom:16px">For anyone without an email on file: your reference plus the last four digits of the mobile you filed with.</p>
         <div class="status-form">
           <div class="field">
@@ -840,7 +975,7 @@ const CONFIG = {
    ══════════════════════════════════════════════════════════════ */
 const TYPES = {
   motor: {
-    label: "Motor", icon: "🚗",
+    label: "Motor", icon: "motor",
     blurb: "Accident, theft, windscreen, fire or flood damage involving your vehicle.",
     subtypes: [
       { id: "accident",   label: "Accident / collision" },
@@ -910,7 +1045,7 @@ const TYPES = {
   },
 
   health: {
-    label: "Health / Medical", icon: "🏥",
+    label: "Health / Medical", icon: "health",
     blurb: "Doctor visits, prescriptions, lab work, dental, optical or hospital treatment.",
     subtypes: [
       { id: "visit",     label: "Doctor visit / consultation" },
@@ -962,7 +1097,7 @@ const TYPES = {
   },
 
   property: {
-    label: "Home / Property", icon: "🏠",
+    label: "Home / Property", icon: "home",
     blurb: "Fire, burglary, storm, flood or water damage to a home, contents or business premises.",
     subtypes: [
       { id: "fire",      label: "Fire" },
@@ -1015,7 +1150,7 @@ const TYPES = {
   },
 
   life: {
-    label: "Life / Critical Illness", icon: "🕊️",
+    label: "Life / Critical Illness", icon: "life",
     blurb: "Death, critical illness, disability or personal accident benefits under a life policy.",
     subtypes: [
       { id: "death",      label: "Death claim" },
@@ -1060,7 +1195,7 @@ const TYPES = {
 };
 
 TYPES.pension = {
-  label: "Pension / Annuity", icon: "📈",
+  label: "Pension / Annuity", icon: "pension",
   blurb: "A pension or annuity reaching maturity, a withdrawal, a transfer, or a benefit after a death.",
   subtypes: [
     { id: "maturity",   label: "Plan reaching maturity" },
@@ -1154,6 +1289,7 @@ const el = (tag, cls, html) => {
   if (html !== undefined) n.innerHTML = html;
   return n;
 };
+const ICON = (n, c) => '<svg class="' + (c || "ic") + '" aria-hidden="true"><use href="#ic-' + n + '"/></svg>';
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const rid = () => Math.random().toString(36).slice(2, 10);
@@ -1221,7 +1357,7 @@ function renderTypes() {
     card.type = "button";
     card.setAttribute("aria-pressed", state.type === key ? "true" : "false");
     card.innerHTML =
-      '<div class="tico" aria-hidden="true">' + t.icon + "</div>" +
+      '<div class="tico" aria-hidden="true"><svg class="ic ic-lg ic-draw"><use href="#ic-' + t.icon + '"/></svg></div>' +
       "<b>" + t.label + "</b><span>" + t.blurb + "</span>";
     card.addEventListener("click", () => {
       if (state.type !== key) {
@@ -1368,7 +1504,8 @@ function docCard(d) {
   input.className = "sr-only";
   input.id = "file-" + d.id;
 
-  const drop = el("button", "drop", "📎 " + (d.multi !== false ? "Add photos or files" : "Add file"));
+  const drop = el("button", "drop",
+    ICON("clip") + (d.multi !== false ? " Add photos or files" : " Add file"));
   drop.type = "button";
   drop.addEventListener("click", () => input.click());
   input.addEventListener("change", () => {
@@ -1410,7 +1547,7 @@ function renderThumbs(card, d) {
     const t = el("div", "thumb" + (entry.error ? " bad" : ""));
     const isImg = /^image\//.test(entry.file.type) && entry.url;
     t.innerHTML =
-      (isImg ? '<img src="' + entry.url + '" alt="" />' : '<div class="fileico" aria-hidden="true">📄</div>') +
+      (isImg ? '<img src="' + entry.url + '" alt="" />' : '<div class="fileico" aria-hidden="true">' + ICON("doc", "ic ic-lg") + "</div>") +
       '<div class="tname">' + esc(entry.name) + "<br>" + kb(entry.size) + "</div>" +
       (entry.error ? '<div class="warn">' + esc(entry.error) + "</div>" : "");
     const rm = el("button", "rm", "✕");
@@ -1512,7 +1649,7 @@ function renderScanTip(card, entry) {
   const s = entry.scan;
   const tip = el("div", "scan-tip");
   tip.innerHTML =
-    '<span class="vals"><b>📖 Read from your photo:</b> ' +
+    '<span class="vals"><b>' + ICON("scan") + " Read from your photo:</b> " +
     s.usable.map((f) => SCAN_LABELS[f] + " " + esc(s.found[f])).join(" · ") + "</span>";
   const use = el("button", null, "Use these");
   use.type = "button";
@@ -1889,7 +2026,7 @@ function renderReview() {
   const docRows = docs.map((d) => {
     const files = state.files[d.id] || [];
     if (files.length) {
-      return '<div class="rrow"><dt>' + d.label + "</dt><dd>✅ " + files.length +
+      return '<div class="rrow"><dt>' + d.label + "</dt><dd>" + ICON("check") + " " + files.length +
         (files.length === 1 ? " file" : " files") + " — " + esc(files.map((f) => f.name).join(", ")) + "</dd></div>";
     }
     if (isRequired(d)) {
@@ -1902,7 +2039,7 @@ function renderReview() {
 
   body.innerHTML =
     '<dl class="review"><h3>The claim</h3>' +
-      '<div class="rrow"><dt>Claim type</dt><dd>' + t.icon + " " + t.label +
+      '<div class="rrow"><dt>Claim type</dt><dd>' + t.label +
         (subtypeLabel() ? " — " + esc(subtypeLabel()) : "") + "</dd></div>" +
       reviewRows(t.fields) +
     "</dl>" +
@@ -2296,7 +2433,7 @@ function renderMyClaims(claims) {
       "</div>" + line;
 
     if (c.missing.length && !c.closed) {
-      const owe = el("div", "owe", "<b>⏳ We are waiting on you for:</b>");
+      const owe = el("div", "owe", "<b>" + ICON("hourglass") + " We are waiting on you for:</b>");
       c.missing.forEach((m) => {
         const row = el("div", "owe-row");
         row.innerHTML = "<span>" + esc(m) + "</span>";
@@ -2305,7 +2442,7 @@ function renderMyClaims(claims) {
         input.multiple = true;
         input.accept = "image/*,application/pdf,.pdf,.heic,.heif";
         input.className = "sr-only";
-        const pick = el("button", "drop", "📎 Upload now");
+        const pick = el("button", "drop", ICON("clip") + " Upload now");
         pick.type = "button";
         pick.addEventListener("click", () => input.click());
         input.addEventListener("change", () => acctUpload(c, m, Array.from(input.files || []), row, pick));
@@ -2343,7 +2480,7 @@ async function acctUpload(claim, docLabel, files, row, pick) {
     setTimeout(() => acctLoad(), 900);
   } catch (err) {
     pick.disabled = false;
-    pick.textContent = "📎 Try again";
+    pick.innerHTML = ICON("clip") + " Try again";
     alert((err && err.message) ? err.message : "That upload failed — please try again.");
   }
 }

@@ -8,11 +8,12 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <style>
   :root{
-    --navy-900:#0E2A47;--navy-800:#14395F;--teal-600:#0E8C8C;--teal-500:#12A5A0;--teal-50:#E9F7F6;
-    --gold:#F2B33D;--gold-50:#FDF6E9;--ink:#152435;--muted:#5B7186;--bg:#F4F8FB;--line:#DCE7F0;
-    --red:#D64545;--red-50:#FCEDED;--green:#2F9E62;--green-50:#EAF7F0;
+    --navy-900:#07131F;--navy-800:#0E2440;--teal-600:#07788C;--teal-500:#0FA3BC;--teal-50:#E4FAFE;
+    --teal-ink:#07788C;--teal-vivid:#00CFEA;
+    --gold:#EFC24B;--gold-2:#C9942C;--gold-50:#FDF5E2;--ink:#0B1B2B;--muted:#587187;--bg:#F6F9FC;--line:#DBE5F0;
+    --red:#D6455A;--red-50:#FDEDF0;--green:#14996B;--green-50:#E6F7F0;
     --radius-lg:20px;--radius-md:14px;--radius-sm:10px;
-    --shadow:0 14px 34px rgba(14,42,71,.12);--shadow-sm:0 4px 14px rgba(14,42,71,.08);
+    --shadow:0 14px 34px rgba(7,19,31,.13);--shadow-sm:0 4px 14px rgba(7,19,31,.08);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
@@ -41,7 +42,7 @@
 
   .field label{display:block;font-weight:700;font-size:.86rem;margin-bottom:6px}
   .field input,.field select,.field textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:.95rem;font-family:inherit;background:#fff;color:var(--ink)}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(18,165,160,.13)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,163,188,.16)}
   .hint{font-size:.8rem;color:var(--muted);margin-top:5px;display:block}
   .notice{border-radius:var(--radius-md);padding:12px 16px;font-size:.9rem;margin-top:14px}
   .notice.bad{background:var(--red-50);border-left:4px solid var(--red);color:#8A2626}
@@ -64,6 +65,36 @@
   .kpi.on{border-color:var(--teal-600);background:var(--teal-50)}
   .kpi b{display:block;font-size:1.45rem;font-weight:800}
   .kpi span{font-size:.74rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+
+
+  /* ── the drawn icon set ──
+     One 24px grid, one stroke weight, currentColor throughout, so an icon
+     takes the colour of whatever it sits in. <use> hides symbol content in
+     a shadow tree the page's CSS cannot select into — but stroke-dasharray
+     and stroke-dashoffset are inherited properties, so setting them on the
+     host <svg> reaches every path inside. Paired with pathLength="100" on
+     each drawable, one rule draws any icon in the same beat regardless of
+     its true length. */
+  .ic{width:1.15em;height:1.15em;flex:none;vertical-align:-.18em;fill:none;
+      stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;
+      /* the base sheet sets svg{display:block}; icons sit in running text */
+      display:inline-block}
+  .tico .ic,.lk-ico .ic{display:block}
+  .ic-lg{width:32px;height:32px;stroke-width:1.45}
+  @keyframes ic-draw{from{stroke-dashoffset:100}to{stroke-dashoffset:0}}
+  .ic-draw{stroke-dasharray:100;stroke-dashoffset:100;
+           animation:ic-draw .9s cubic-bezier(.33,1,.68,1) forwards}
+  .type-card:nth-child(2) .ic-draw{animation-delay:.07s}
+  .type-card:nth-child(3) .ic-draw{animation-delay:.14s}
+  .type-card:nth-child(4) .ic-draw{animation-delay:.21s}
+  .type-card:nth-child(5) .ic-draw{animation-delay:.28s}
+  .type-card .tico{color:var(--teal-ink);transition:color .22s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+  .type-card:hover .tico{transform:translateY(-2px)}
+  .type-card[aria-pressed="true"] .tico{color:var(--gold-2)}
+  @media(prefers-reduced-motion:reduce){
+    .ic-draw{animation:none;stroke-dashoffset:0}
+    .type-card:hover .tico{transform:none}
+  }
 
   .viewtabs{display:flex;gap:8px;margin-bottom:16px}
   .viewtabs button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:9px 20px;font-weight:800;font-size:.9rem;cursor:pointer;color:var(--muted)}
@@ -140,6 +171,104 @@
 </head>
 <body>
 
+<svg class="sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="ic-motor" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3 15.6v-2.3c0-.6.3-1.1.8-1.3l2.3-.9 1.9-3.2c.3-.5.8-.8 1.4-.8h5.2c.6 0 1.1.3 1.4.8l1.9 3.2 2.3.9c.5.2.8.7.8 1.3v2.3"/>
+      <path pathLength="100" d="M6.4 11.1h11.2"/>
+      <circle pathLength="100" cx="7.5" cy="16.4" r="1.9"/>
+      <circle pathLength="100" cx="16.5" cy="16.4" r="1.9"/>
+    </symbol>
+    <symbol id="ic-health" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="4.6" width="18" height="14.8" rx="3.4"/>
+      <path pathLength="100" d="M6.4 12.1h2.9l1.7-3.5 2.6 6.6 1.6-3.1h3.4"/>
+    </symbol>
+    <symbol id="ic-home" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.4 10.4 12 4l8.6 6.4"/>
+      <path pathLength="100" d="M5.4 11.7v7.1c0 .6.5 1.1 1.1 1.1h11c.6 0 1.1-.5 1.1-1.1v-7.1"/>
+      <path pathLength="100" d="M10 20v-4.7h4V20"/>
+    </symbol>
+    <symbol id="ic-life" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="M12 15.8c-1.8-1.2-3.1-2.3-3.1-3.8a1.9 1.9 0 0 1 3.1-1.3 1.9 1.9 0 0 1 3.1 1.3c0 1.5-1.3 2.6-3.1 3.8z"/>
+    </symbol>
+    <symbol id="ic-pension" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.5 19.6h17"/>
+      <path pathLength="100" d="M5 16.3 9.7 11l3.4 3 6-7.3"/>
+      <path pathLength="100" d="M15.3 6.3h3.8v3.8"/>
+    </symbol>
+    <symbol id="ic-phone" viewBox="0 0 24 24">
+      <path pathLength="100" d="M8.4 4.5H6.2A2.2 2.2 0 0 0 4 6.8C4 14.1 9.9 20 17.2 20a2.2 2.2 0 0 0 2.3-2.3v-2.2l-4.1-1.5-1.9 2.1a14.6 14.6 0 0 1-5.9-5.9l2.1-1.9z"/>
+    </symbol>
+    <symbol id="ic-key" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="8.2" cy="8.2" r="3.7"/>
+      <path pathLength="100" d="m10.8 10.8 9 9"/>
+      <path pathLength="100" d="m14.6 14.6 2-2M17.3 17.3l2-2"/>
+    </symbol>
+    <symbol id="ic-bolt" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.3 3 5 13.7h5.6L10.7 21 19 10.3h-5.6z"/>
+    </symbol>
+    <symbol id="ic-shield" viewBox="0 0 24 24">
+      <path pathLength="100" d="M12 3.4 5 6.1v5.4c0 4.2 2.9 7.6 7 9.2 4.1-1.6 7-5 7-9.2V6.1z"/>
+      <path pathLength="100" d="m8.9 11.9 2.2 2.2 4-4.3"/>
+    </symbol>
+    <symbol id="ic-printer" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 9.2V4.6h10v4.6"/>
+      <path pathLength="100" d="M7 17.6H5.6A1.6 1.6 0 0 1 4 16v-4.3a2.6 2.6 0 0 1 2.6-2.6h10.8A2.6 2.6 0 0 1 20 11.7V16a1.6 1.6 0 0 1-1.6 1.6H17"/>
+      <rect pathLength="100" x="7" y="14.6" width="10" height="4.9" rx="1"/>
+    </symbol>
+    <symbol id="ic-mail" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3" y="5.5" width="18" height="13" rx="2.4"/>
+      <path pathLength="100" d="m3.9 7.3 7 5.1c.7.5 1.5.5 2.2 0l7-5.1"/>
+    </symbol>
+    <symbol id="ic-clock" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="M12 7v5.3l3.4 2"/>
+    </symbol>
+    <symbol id="ic-clip" viewBox="0 0 24 24">
+      <path pathLength="100" d="M18.6 11.3 12 17.9a4.2 4.2 0 0 1-6-6l7.1-7.1a2.8 2.8 0 0 1 4 4l-7.1 7.1a1.4 1.4 0 0 1-2-2l6.4-6.4"/>
+    </symbol>
+    <symbol id="ic-doc" viewBox="0 0 24 24">
+      <path pathLength="100" d="M13.5 3.6H7.4A2.4 2.4 0 0 0 5 6v12.1a2.4 2.4 0 0 0 2.4 2.4h9.2a2.4 2.4 0 0 0 2.4-2.4V9.1z"/>
+      <path pathLength="100" d="M13.5 3.6v5.5H19"/>
+    </symbol>
+    <symbol id="ic-scan" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 8.2V6.3A2.3 2.3 0 0 1 6.3 4H8.2M15.8 4h1.9A2.3 2.3 0 0 1 20 6.3v1.9M20 15.8v1.9a2.3 2.3 0 0 1-2.3 2.3h-1.9M8.2 20H6.3A2.3 2.3 0 0 1 4 17.7v-1.9"/>
+      <path pathLength="100" d="M4.6 12h14.8"/>
+    </symbol>
+    <symbol id="ic-check" viewBox="0 0 24 24">
+      <circle pathLength="100" cx="12" cy="12" r="8.4"/>
+      <path pathLength="100" d="m8.3 12.2 2.6 2.6 4.8-5.3"/>
+    </symbol>
+    <symbol id="ic-hourglass" viewBox="0 0 24 24">
+      <path pathLength="100" d="M7 3.9h10M7 20.1h10"/>
+      <path pathLength="100" d="M8.1 3.9v3c0 1.9 1.4 3.4 2.9 5.1-1.5 1.7-2.9 3.2-2.9 5.1v3"/>
+      <path pathLength="100" d="M15.9 3.9v3c0 1.9-1.4 3.4-2.9 5.1 1.5 1.7 2.9 3.2 2.9 5.1v3"/>
+    </symbol>
+    <symbol id="ic-chart" viewBox="0 0 24 24">
+      <path pathLength="100" d="M4 19.6h16"/>
+      <rect pathLength="100" x="6.1" y="10.8" width="3.5" height="8.8" rx="1.1"/>
+      <rect pathLength="100" x="14.4" y="6.4" width="3.5" height="13.2" rx="1.1"/>
+    </symbol>
+    <symbol id="ic-archive" viewBox="0 0 24 24">
+      <rect pathLength="100" x="3.5" y="4.5" width="17" height="4.2" rx="1.4"/>
+      <path pathLength="100" d="M5.3 8.7v9.3a2.2 2.2 0 0 0 2.2 2.2h9a2.2 2.2 0 0 0 2.2-2.2V8.7"/>
+      <path pathLength="100" d="M10 12.4h4"/>
+    </symbol>
+    <symbol id="ic-flag" viewBox="0 0 24 24">
+      <path pathLength="100" d="M6 21V3.6"/>
+      <path pathLength="100" d="M6 4.6h10.9c.9 0 1.4 1 .9 1.7l-2 2.8 2 2.8c.5.7 0 1.7-.9 1.7H6"/>
+    </symbol>
+    <symbol id="ic-folder" viewBox="0 0 24 24">
+      <path pathLength="100" d="M3.6 7.4a2.2 2.2 0 0 1 2.2-2.2h3.4l2.2 2.4h6.8a2.2 2.2 0 0 1 2.2 2.2v7.2a2.2 2.2 0 0 1-2.2 2.2H5.8a2.2 2.2 0 0 1-2.2-2.2z"/>
+    </symbol>
+    <symbol id="ic-send" viewBox="0 0 24 24">
+      <path pathLength="100" d="M20.6 3.4 10.8 13.2"/>
+      <path pathLength="100" d="M20.6 3.4 14.4 20.5l-3.6-7.3-7.3-3.6z"/>
+    </symbol>
+  </defs>
+</svg>
+
 <header>
   <div class="wrap nav">
     <a class="logo" href="./">
@@ -181,7 +310,7 @@
   <div class="wrap">
     <div class="viewtabs">
       <button type="button" id="view-claims" class="on">Claims</button>
-      <button type="button" id="view-team">📊 Team</button>
+      <button type="button" id="view-team"><svg class="ic" aria-hidden="true"><use href="#ic-chart"/></svg> Team</button>
     </div>
 
     <div id="claims-view">
@@ -194,7 +323,7 @@
       <div class="list" id="list"></div>
       <p class="empty" id="empty" hidden>No claims match.</p>
       <details class="sfwrap" id="sf-open-wrap" hidden>
-        <summary>🗄 Open in Salesforce but never filed here (<span id="sf-open-n">0</span>) — oldest first</summary>
+        <summary><svg class="ic" aria-hidden="true"><use href="#ic-archive"/></svg> Open in Salesforce but never filed here (<span id="sf-open-n">0</span>) — oldest first</summary>
         <div class="list" id="sf-open-list"></div>
       </details>
     </div>
@@ -231,6 +360,7 @@ const CONFIG = {
 
 const TOKEN_KEY = "claims-tt-staff-token";
 const $ = (id) => document.getElementById(id);
+const ICON = (n, c) => '<svg class="' + (c || "ic") + '" aria-hidden="true"><use href="#ic-' + n + '"/></svg>';
 const esc = (s) => String(s == null ? "" : s)
   .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -459,7 +589,7 @@ function renderList() {
         (c.sf ? (c.sf.status === "Closed"
           ? '<span style="color:var(--green);font-weight:700">SF closed ✓</span> · '
           : '<span class="owe">SF open' + (c.sf.openReqs ? " · " + c.sf.openReqs + " req" + (c.sf.openReqs === 1 ? "" : "s") : "") + "</span> · ") : "") +
-        (c.reviewOverdue ? '<span class="quiet">⚑ review due</span> · ' : "") +
+        (c.reviewOverdue ? '<span class="quiet">' + ICON("flag") + ' review due</span> · ' : "") +
         (c.missing.length ? '<span class="owe">⏳ ' + c.missing.length + " outstanding</span> · " : "") +
         (quiet ? '<span class="quiet">' + c.quietDays + "d quiet</span> · " : "") +
         (c.assigned ? esc(c.assigned) : "unassigned") +
@@ -505,8 +635,8 @@ function renderDrawer() {
     '<div class="d-sec"><h3>Documents (' + c.files.length + ")</h3><ul class=\"d-files\">" +
       (c.files.map((f) => '<li><b>' + esc(f.doc) + "</b> — <a href=\"" + esc(f.link) + '" target="_blank" rel="noopener">' + esc(f.name) + "</a></li>").join("") || "<li>None yet.</li>") +
     "</ul>" +
-    (c.folder ? '<p style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="' + esc(c.folder) + '" target="_blank" rel="noopener">📁 Open Drive folder</a> ' +
-      (c.pdf ? '<a class="btn btn-ghost btn-sm" href="' + esc(c.pdf) + '" target="_blank" rel="noopener">📄 Claim form PDF</a>' : "") + "</p>" : "") +
+    (c.folder ? '<p style="margin-top:10px"><a class="btn btn-ghost btn-sm" href="' + esc(c.folder) + '" target="_blank" rel="noopener">' + ICON("folder") + ' Open Drive folder</a> ' +
+      (c.pdf ? '<a class="btn btn-ghost btn-sm" href="' + esc(c.pdf) + '" target="_blank" rel="noopener">' + ICON("doc") + ' Claim form PDF</a>' : "") + "</p>" : "") +
     "</div>" +
 
     (c.sf ? '<div class="d-sec"><h3>Salesforce says</h3><dl class="kv">' +
@@ -520,7 +650,7 @@ function renderDrawer() {
         '<button type="button" data-drop="' + i + '" title="Mark received / stop chasing">✕</button></span>').join("") ||
         '<span style="font-size:.9rem;color:var(--muted)">Nothing outstanding.</span>') +
     "</div>" +
-    (c.missing.length && c.email ? '<p style="margin-top:10px"><button class="btn btn-navy btn-sm" type="button" id="d-chase">📨 Send a chase email now</button></p>' : "") +
+    (c.missing.length && c.email ? '<p style="margin-top:10px"><button class="btn btn-navy btn-sm" type="button" id="d-chase">' + ICON("send") + ' Send a chase email now</button></p>' : "") +
     "</div>" +
 
     '<div class="d-sec"><h3>Actions</h3><div class="d-actions">' +
