@@ -356,6 +356,49 @@ const cxcAllowed = u => /\/wp-content\/uploads\/.*\.pdf$|\/specimen-papers\/?$|\
 ok(`every CXC link is a free resource or the store (${cxcLinks.length} links)`,
    cxcLinks.length > 0 && cxcLinks.every(cxcAllowed), cxcLinks.filter(u => !cxcAllowed(u)).join('; '));
 
+// ---- the project: a fifth of the CSEC grade, and the part a child controls --
+// Descriptors and marks from the 2025 syllabus's own mark scheme. The rows have
+// to add up, because a mark scheme that does not is worse than none.
+const sba = page.slice(page.indexOf('The project &middot; 20&thinsp;%'), page.indexOf('Sat in May&ndash;June of Form 5'));
+const rows = [...sba.matchAll(/<tr><td><b>([^<]+)<\/b>[\s\S]*?<\/tr>/g)]
+  .map(m => ({ name: m[1].trim(), n: [...m[0].matchAll(/class="mono">(\d+|&mdash;)</g)].map(x => x[1] === '&mdash;' ? 0 : +x[1]) }));
+const body = rows.filter(r => r.name !== 'Total'), total = rows.find(r => r.name === 'Total');
+const sbaTrouble = [];
+if (body.length !== 7) sbaTrouble.push(`${body.length} descriptor rows, not 7`);
+if (!total) sbaTrouble.push('no total row');
+else {
+  for (let c = 0; c < 4; c++) {
+    const summed = body.reduce((t, r) => t + (r.n[c] || 0), 0);
+    if (summed !== total.n[c]) sbaTrouble.push(`column ${c} sums to ${summed}, total row says ${total.n[c]}`);
+  }
+  // Assessment Grid B: CK 9, AK 12, R 9 raw, weighted to 6, 8 and 6 — twenty marks.
+  if (total.n.join(',') !== '9,12,9,30') sbaTrouble.push(`total row is ${total.n.join(',')}, not 9,12,9,30`);
+  body.forEach(r => { const t = r.n[0] + r.n[1] + r.n[2];
+    if (t !== r.n[3]) sbaTrouble.push(`${r.name}: profiles make ${t}, row says ${r.n[3]}`); });
+}
+ok('the project mark scheme adds up, row by row and profile by profile',
+   sbaTrouble.length === 0, sbaTrouble.join('; '));
+
+// The two caps are in the syllabus in so many words. A child who never hears
+// them loses eight marks and does not find out why until the grade comes.
+ok('the page warns that leaving the raw data out caps Presentation of Data',
+   /raw data out of the report and\s*\n?\s*Presentation of Data is capped at <b>2 of its 8<\/b>/.test(page.replace(/\s+/g, ' ')) ||
+   /Presentation of Data is capped at <b>2 of its 8<\/b>/.test(page.replace(/\s+/g, ' ')));
+ok('the page warns that no working means no full marks for Analysis',
+   /Show no working and Analysis of\s*Data <b>cannot<\/b> be given full marks/.test(page.replace(/\s+/g, ' ')));
+ok('the page gives the word limit and what is outside it', /1&thinsp;000 words/.test(page) && /appendices do not\s*count/.test(page.replace(/\s+/g, ' ')));
+
+// The cover sheet in circulation predates the amended syllabus. A teacher
+// marking a 2027 project on the 2020 form marks the wrong descriptors.
+ok('the page flags the February 2020 cover sheet against the 2025 mark scheme',
+   /FRM\/EDPD\/621/.test(page) && /revised\s*February 2020/.test(page.replace(/\s+/g, ' ')) &&
+   /Conceptual Knowledge, Algorithmic Knowledge/.test(page.replace(/\s+/g, ' ')));
+
+// CXC's own subject page still lists ten sections. Saying nothing about that
+// makes the app look wrong to the first teacher who checks it.
+ok('the page explains the ten sections on CXC\'s site and when the modules take over',
+   /ten sections/.test(page) && /January\s*2027/.test(page.replace(/\s+/g, ' ')) && /May&ndash;June 2027<\/b> sitting/.test(page));
+
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');
 process.exit(fails ? 1 : 0);

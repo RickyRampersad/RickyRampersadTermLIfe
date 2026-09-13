@@ -297,6 +297,57 @@ quietly resolved:
    grids give it **20 %**, and the project is marked out of 30 raw and weighted
    to 20. The app uses 20 %; 30 is the raw mark, not the weight.
 
+### Why CXC's own website disagrees with the app
+
+The Mathematics subject page on cxc.org still describes the syllabus in **ten
+sections** — Computation, Number Theory, Consumer Arithmetic, Sets,
+Measurement, Statistics, Algebra, Relations Functions and Graphs, Geometry and
+Trigonometry, Vectors and Matrices. That is not stale: it is the arrangement
+for sittings **up to and including January 2027**. The three modules take over
+from the **May–June 2027** sitting.
+
+The app says so on the page, because the first teacher who checks the app
+against cxc.org will otherwise conclude the app is wrong. (For the record, the
+app's old list had *nine* sections, merging Computation into Number Theory —
+wrong for both syllabuses.)
+
+### The project — 20 % of the grade, and the part a child controls
+
+The mark scheme is in the app, from the 2025 syllabus, and `tests/test-sea.js`
+checks that it adds up: seven descriptor rows totalling **CK 9, AK 12, R 9 =
+30 raw**, weighted to 6, 8 and 6 — twenty marks.
+
+| | CK | AK | R | Marks |
+|---|---|---|---|---|
+| Project title | 2 | — | — | 2 |
+| Introduction | 3 | 3 | — | 6 |
+| Method of data collection | — | 3 | — | 3 |
+| Presentation of data | 2 | 6 | — | 8 |
+| Analysis of data | — | — | 6 | 6 |
+| Conclusion | — | — | 3 | 3 |
+| Overall presentation | 2 | — | — | 2 |
+| **Total** | **9** | **12** | **9** | **30** |
+
+Two caps are written into the mark scheme in so many words, and both are on the
+page because a child who never hears them loses the marks without learning why:
+
+- **Raw data not presented → Presentation of Data is capped at 2 of its 8**,
+  however good the charts are.
+- **No working shown → Analysis of Data cannot be given full marks.**
+
+Up to 1 000 words, not counting quotations, sources, charts, graphs, tables,
+pictures, references and appendices. Groups of up to six. The mark is split
+1:1:1 across the modules and a moderated score is reusable for four years.
+
+**The cover sheet in circulation is the old one.** `FRM/EDPD/621`, revised
+February 2020, marks out of **20** under **Knowledge, Comprehension and
+Reasoning** and carries a mark for a contents page. The 2025 syllabus marks out
+of **30** under **Conceptual Knowledge, Algorithmic Knowledge and Reasoning**
+and has no contents-page mark. The weighted profile totals are identical — 6, 8
+and 6 — so the discrepancy is easy to miss, but the descriptors are different
+and a project marked on the 2020 form is marked against the wrong ones. The app
+tells a teacher to check which sheet their school is using.
+
 **CSEC has no mock paper yet.** Paper 1 is sixty multiple-choice items and the
 bank is short-answer, so a faithful mock needs a multiple-choice bank first —
 and under the new syllabus it needs twenty items per module, which is the

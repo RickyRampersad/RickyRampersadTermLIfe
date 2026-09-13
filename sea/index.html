@@ -408,6 +408,8 @@ textarea.essay:focus{border-color:var(--teal)}
 .strand ul{margin:0;padding:.65rem 1.1rem 1rem 2.4rem}
 .strand li{margin:.3rem 0;font-size:14.5px}
 
+.note.stop{border-left-color:var(--stop);background:var(--stopBg)}
+.note.stop b{color:var(--stop)}
 .note{border-left:3px solid var(--gold);background:var(--surface2);border-radius:0 9px 9px 0;
   padding:.8rem 1rem;font-size:13.5px;color:var(--muted)}
 .note b{color:var(--ink)}
@@ -752,11 +754,51 @@ footer .l{display:flex;gap:.6rem;align-items:center}
         <p class="note" style="margin-top:.6rem">Every question is marked under one of three headings &mdash;
           <b>Conceptual Knowledge</b> 30&thinsp;%, <b>Algorithmic Knowledge</b> 40&thinsp;%, <b>Reasoning</b> 30&thinsp;% &mdash;
           so recall alone reaches about a third of the marks.</p>
-        <p class="note" style="margin-top:.6rem">Sat in May&ndash;June of Form 5. The syllabus is free from CXC; its past papers are sold,
+        <details class="strand" style="margin-top:1rem"><summary>The project &middot; 20&thinsp;% &middot; marked out of 30</summary>
+        <div class="scroll"><table>
+          <thead><tr><th>What the marker looks for</th><th>CK</th><th>AK</th><th>R</th><th>Marks</th></tr></thead>
+          <tbody>
+            <tr><td><b>Project title</b> &mdash; clear, concise, and about a real-world problem. A statement or a question.</td>
+              <td class="mono">2</td><td class="mono">&mdash;</td><td class="mono">&mdash;</td><td class="mono">2</td></tr>
+            <tr><td><b>Introduction</b> &mdash; objectives that relate to the title; the background, the purpose, and the method of analysis.</td>
+              <td class="mono">3</td><td class="mono">3</td><td class="mono">&mdash;</td><td class="mono">6</td></tr>
+            <tr><td><b>Method of data collection</b> &mdash; the method named, suited to the question, and the process described.</td>
+              <td class="mono">&mdash;</td><td class="mono">3</td><td class="mono">&mdash;</td><td class="mono">3</td></tr>
+            <tr><td><b>Presentation of data</b> &mdash; data genuinely obtained; at least one table and one chart, titled and labelled.</td>
+              <td class="mono">2</td><td class="mono">6</td><td class="mono">&mdash;</td><td class="mono">8</td></tr>
+            <tr><td><b>Analysis of data</b> &mdash; the right formulae, used on your own data, every step shown.</td>
+              <td class="mono">&mdash;</td><td class="mono">&mdash;</td><td class="mono">6</td><td class="mono">6</td></tr>
+            <tr><td><b>Conclusion</b> &mdash; follows from the analysis and answers what you set out to do.</td>
+              <td class="mono">&mdash;</td><td class="mono">&mdash;</td><td class="mono">3</td><td class="mono">3</td></tr>
+            <tr><td><b>Overall presentation</b> &mdash; laid out logically, in correct grammar.</td>
+              <td class="mono">2</td><td class="mono">&mdash;</td><td class="mono">&mdash;</td><td class="mono">2</td></tr>
+            <tr><td><b>Total</b> &mdash; weighted to 20</td>
+              <td class="mono">9</td><td class="mono">12</td><td class="mono">9</td><td class="mono">30</td></tr>
+          </tbody></table></div>
+        <p class="note" style="margin-top:.9rem"><b>Two ways the marks go, written into the syllabus itself.</b>
+          Leave the raw data out of the report and Presentation of Data is capped at <b>2 of its 8</b>, however good the
+          charts are. Show no working and Analysis of Data <b>cannot</b> be given full marks. Both are stated in the
+          mark scheme, not inferred.</p>
+        <p class="note" style="margin-top:.6rem">Up to <b>1&thinsp;000 words</b> &mdash; quotations, sources, charts, tables,
+          pictures, references and appendices do not count. Groups of up to six. The mark is split evenly across the three
+          modules, and a moderated score can be reused for four years.</p>
+        <p class="note stop" style="margin-top:.6rem"><b>Check which cover sheet your school is using.</b> The one in wide
+          circulation, <span class="mono">FRM/EDPD/621</span> revised February 2020, marks out of <b>20</b> under
+          Knowledge, Comprehension and Reasoning, and gives a mark for a contents page. The 2025 syllabus marks out of
+          <b>30</b> under Conceptual Knowledge, Algorithmic Knowledge and Reasoning, and has no contents-page mark. The
+          weighted totals are the same &mdash; 6, 8 and 6 &mdash; but the descriptors are not.</p>
+        </details>
+        <p class="note" style="margin-top:.9rem">Sat in May&ndash;June of Form 5. The syllabus is free from CXC; its past papers are sold,
           so this app links to CXC and never copies them.
           <a href="https://www.cxc.org/wp-content/uploads/2018/11/CSEC-Mathematics-AmendedOct2025.pdf" target="_blank" rel="noopener">CSEC Mathematics syllabus</a>
           (CXC 05/G/SYLL 16, amended October 2025). CXC&rsquo;s own document gives Paper 2 as 2 h 30 in the syllabus and
           2 h 40 on the specimen paper &mdash; check the time with your school before you sit a timed one.</p>
+        <p class="note" style="margin-top:.6rem"><b>Why CXC&rsquo;s own website looks different.</b> The Mathematics subject
+          page still describes the syllabus in <b>ten sections</b> &mdash; Computation, Number Theory, Consumer Arithmetic,
+          Sets, Measurement, Statistics, Algebra, Relations Functions and Graphs, Geometry and Trigonometry, Vectors and
+          Matrices. That is the arrangement for sittings up to and including <b>January 2027</b>. The three modules here
+          take over from the <b>May&ndash;June 2027</b> sitting, which is the one every child now in secondary school will
+          sit. The topics are almost all the same; what changes is how they are grouped, examined and credited.</p>
         </div>
       </div>
     </div>
