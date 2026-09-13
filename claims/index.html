@@ -19,6 +19,9 @@
 <meta property="og:description" content="Motor, health, property and life claims. Photograph your documents, upload securely, get a claim reference in minutes." />
 <meta property="og:type" content="website" />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Inter:wght@400;500;600;700;800&display=swap" />
 <style>
   :root{
     --navy-900:#0E2A47;
@@ -45,6 +48,7 @@
     --shadow:0 16px 40px rgba(14,42,71,.12);
     --shadow-sm:0 4px 14px rgba(14,42,71,.08);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --display:"Newsreader","Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
@@ -59,7 +63,8 @@
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 
   .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.78rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--teal-600);background:var(--teal-50);border:1px solid #CBEAE8;padding:7px 14px;border-radius:999px;margin-bottom:16px}
-  .h2{font-size:clamp(1.6rem,3.4vw,2.3rem);font-weight:800;letter-spacing:-.02em;line-height:1.18;margin-bottom:12px}
+  .h2{font-family:var(--display);font-size:clamp(1.8rem,3.8vw,2.7rem);font-weight:400;letter-spacing:-.018em;line-height:1.12;text-wrap:balance;margin-bottom:12px}
+  .h2 em{font-style:italic;color:var(--teal-600)}
   .h3{font-size:1.12rem;font-weight:800;letter-spacing:-.01em;margin-bottom:6px}
   .lead{color:var(--muted);max-width:660px;font-size:1.02rem}
 
@@ -68,8 +73,10 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px rgba(20,57,95,.32)}
   .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(18,165,160,.32)}
-  .btn-gold{background:var(--gold);color:var(--gold-ink);box-shadow:0 12px 26px rgba(242,179,61,.32)}
+  .btn-gold{background:linear-gradient(135deg,#f4cd63,var(--gold) 46%,#c9942c);color:#3B2600;
+    box-shadow:0 10px 26px rgba(201,148,44,.34),inset 0 1px 0 rgba(255,255,255,.45)}
   .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
+  .hero .btn-ghost{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.34);backdrop-filter:blur(6px)}
   .btn-sm{padding:9px 18px;font-size:.88rem}
 
   /* ── header ── */
@@ -85,14 +92,38 @@
   .nav-tel:hover{background:rgba(20,57,95,.07)}
   @media(max-width:620px){.nav-tel span{display:none}}
 
-  /* ── hero ── */
-  .hero{background:linear-gradient(160deg,var(--navy-900) 0%,var(--navy-700) 62%,var(--teal-600) 132%);color:#fff;padding:38px 0 42px}
+  /* ── hero: the aegis field ──
+     A WebGL canvas sits over a CSS gradient that is a complete picture on
+     its own. If the context never opens — no WebGL, Save-Data, an old
+     phone — nothing is missing; the canvas simply stays empty. */
+  .hero{position:relative;isolation:isolate;color:#fff;overflow:hidden;
+    background:
+      radial-gradient(120% 90% at 18% -10%, rgba(239,194,75,.22), transparent 58%),
+      radial-gradient(90% 70% at 88% 8%, rgba(0,207,234,.16), transparent 62%),
+      linear-gradient(168deg,#07131f 0%,#0E2A47 58%,#123453 100%)}
+  .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:-1;
+    opacity:0;transition:opacity 1.2s ease}
+  .hero canvas.lit{opacity:1}
+  .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
+    background:linear-gradient(90deg,transparent,rgba(239,194,75,.55) 22%,rgba(239,194,75,.55) 78%,transparent)}
+  .hero-inner{position:relative;z-index:1;padding:clamp(56px,9vw,104px) 0 clamp(52px,8vw,92px)}
   .hero .wrap,#file .wrap{max-width:880px}
   #file{padding-top:36px}
-  .hero .eyebrow{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.22);color:var(--gold)}
-  .hero h1{font-size:clamp(1.9rem,5vw,3rem);font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:14px}
-  .hero p{color:#CFE0EE;max-width:620px;font-size:1.05rem}
-  .hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:700;
+    letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:22px}
+  .kicker::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
+  .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:300;
+    letter-spacing:-.022em;line-height:1.02;text-wrap:balance;margin-bottom:20px}
+  .hero h1 em{font-style:italic;color:var(--gold)}
+  .lede{color:#C6DAEA;max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
+  .assur{display:flex;gap:clamp(20px,4vw,44px);flex-wrap:wrap;margin-top:clamp(36px,6vw,56px);
+    padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
+  .assur div{min-width:88px}
+  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:400;color:var(--gold);
+    line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
+  .assur dd{font-size:.8rem;color:#9FBBD2;letter-spacing:.02em;line-height:1.4}
   .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)}
   .fact b{display:block;font-size:1.3rem;font-weight:800;color:var(--gold)}
   .fact span{font-size:.82rem;color:#B9CFE2}
@@ -119,7 +150,7 @@
   .panel{padding:30px clamp(18px,4vw,38px) 34px}
   .panel[hidden]{display:none}
   .panel-head{margin-bottom:22px}
-  .panel-head h2{font-size:1.42rem;font-weight:800;letter-spacing:-.02em;margin-bottom:5px}
+  .panel-head h2{font-family:var(--display);font-size:clamp(1.5rem,2.8vw,1.95rem);font-weight:400;letter-spacing:-.015em;line-height:1.15;margin-bottom:7px}
   .panel-head p{color:var(--muted);font-size:.95rem;max-width:620px}
   .panel-foot{display:flex;gap:12px;justify-content:space-between;align-items:center;margin-top:30px;padding-top:22px;border-top:1px solid var(--line);flex-wrap:wrap}
 
@@ -373,17 +404,25 @@
 </header>
 
 <!-- ══════════════ HERO ══════════════ -->
-<div class="hero">
-  <div class="wrap">
-    <span class="eyebrow">Trinidad &amp; Tobago · Motor · Health · Property · Life · Pension</span>
-    <h1>Let's get your claim moving.</h1>
-    <p>About ten minutes on your phone. Existing clients sign in and their policy numbers come to them; documents are phone photos; the reference is instant.</p>
-    <div class="hero-actions">
-      <a class="btn btn-gold" href="#file">Start my claim</a>
-      <a class="btn btn-ghost" href="#track">My claims</a>
+<section class="hero" id="hero" aria-labelledby="hero-title">
+  <canvas id="aegis" aria-hidden="true"></canvas>
+  <div class="hero-inner">
+    <div class="wrap">
+      <p class="kicker">Trinidad &amp; Tobago · Guardian Group</p>
+      <h1 id="hero-title">A claim should feel like <em>cover</em>,<br />not paperwork.</h1>
+      <p class="lede">Motor, health, property, life and pension — filed from your phone in about ten minutes. Sign in and your policy number comes to you. Photograph the documents. Keep the reference.</p>
+      <nav class="hero-actions" aria-label="Claim actions">
+        <a class="btn btn-gold" href="#file">Start my claim</a>
+        <a class="btn btn-ghost" href="#track">My claims</a>
+      </nav>
+      <dl class="assur">
+        <div><dt>10</dt><dd>working days to review,<br />and we hold ourselves to it</dd></div>
+        <div><dt>5</dt><dd>lines of business<br />under one front door</dd></div>
+        <div><dt>0</dt><dd>passwords —<br />a code, and you're in</dd></div>
+      </dl>
     </div>
   </div>
-</div>
+</section>
 
 </div>
 
@@ -2560,6 +2599,226 @@ if (TYPES[wanted]) {
   renderSubtypes();
 }
 </script>
+<!-- ══════════════════════════════════════════════════════════════
+     THE AEGIS FIELD — the hero's ambient light
+     One fullscreen triangle, one fragment shader, no library: gold
+     caustics drifting under a faint shield tessellation. It is
+     decoration, and it behaves like decoration — it never blocks
+     paint, it stops when scrolled past or the tab is hidden, and on a
+     thin connection or an old phone it never opens a context at all.
+     The CSS gradient beneath it is a finished picture on its own.
+     ══════════════════════════════════════════════════════════════ -->
+<script type="x-shader/x-vertex" id="aegis-vs">
+attribute vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+<script type="x-shader/x-fragment" id="aegis-fs">
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform vec2  uRes;
+uniform float uTime;
+uniform vec2  uPtr;
+
+float hash(vec2 p){
+  return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+}
+
+float vnoise(vec2 p){
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i),                hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p){
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 4; i++){
+    v += a * vnoise(p);
+    p = p * 2.03 + vec2(17.3, 9.1);
+    a *= 0.5;
+  }
+  return v;
+}
+
+void main(){
+  vec2 uv = gl_FragCoord.xy / uRes;
+  vec2 p  = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
+  p += uPtr * 0.045;
+
+  float t = uTime * 0.055;
+
+  /* Domain warp — the slow drift of light through moving water. */
+  vec2  q = vec2(fbm(p * 2.1 + t), fbm(p * 2.1 + vec2(5.2, 1.3) - t * 0.8));
+  float f = fbm(p * 3.1 + q * 1.5 + t * 0.45);
+
+  /* Where the warped field crosses its own midpoint, light gathers.
+     Sharpened hard, so most of the frame stays dark and the light reads
+     as filaments rather than fog. */
+  float caustic = 1.0 - abs(f * 2.0 - 1.0);
+  caustic = pow(caustic, 4.5);
+
+  /* Light arrives from above and falls away, as it does through water. */
+  float fall = smoothstep(-0.10, 0.98, uv.y);
+  float vig  = smoothstep(1.40, 0.18, length(p));
+
+  /* The shield's scales: a whisper of tessellation, never a pattern you notice. */
+  vec2  hp = p * vec2(7.8, 9.0);
+  hp.y += mod(floor(hp.x), 2.0) * 0.5;
+  vec2  hf = abs(fract(hp) - 0.5);
+  float scale = smoothstep(0.44, 0.5, max(hf.x, hf.y));
+
+  vec3 navy = vec3(0.0275, 0.0745, 0.1216);
+  vec3 deep = vec3(0.0431, 0.1255, 0.2118);
+  vec3 gold = vec3(1.0000, 0.7843, 0.3647);
+
+  vec3 col = mix(navy, deep, fall);
+
+  /* Gold carries the light. It is allowed to actually reach gold — a
+     half-strength gold over a blue ground comes out sage, which is the
+     one colour a branch built on navy and gold must never produce. */
+  float lit = caustic * fall * vig;
+  col += gold * lit * 0.90;
+
+  /* Teal only in the thinnest filaments, as a cool rim on the warm light. */
+  col += vec3(0.0, 0.55, 0.72) * pow(caustic, 2.6) * 0.20 * fall;
+
+  col += gold * scale * 0.020 * fall;
+
+  /* A little grain, so the gradient cannot band on a wide screen. */
+  col += (hash(gl_FragCoord.xy * 0.7 + uTime) - 0.5) * 0.010;
+
+  gl_FragColor = vec4(col, 1.0);
+}
+</script>
+<script>
+(function () {
+  var cv = document.getElementById("aegis");
+  if (!cv || !window.requestAnimationFrame) return;
+
+  // Never spend a client's data or battery on decoration.
+  var net = navigator.connection || {};
+  if (net.saveData === true || /(^|-)2g$/.test(net.effectiveType || "") ||
+      (navigator.deviceMemory && navigator.deviceMemory <= 2) ||
+      (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 2)) return;
+
+  var opts = { alpha: false, antialias: false, depth: false, stencil: false,
+               preserveDrawingBuffer: false, powerPreference: "low-power",
+               failIfMajorPerformanceCaveat: true };
+  var gl = null;
+  try {
+    gl = cv.getContext("webgl2", opts) || cv.getContext("webgl", opts) ||
+         cv.getContext("experimental-webgl", opts);
+  } catch (e) { return; }
+  if (!gl) return;
+
+  function build(type, src) {
+    var s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) { gl.deleteShader(s); return null; }
+    return s;
+  }
+  var vs = build(gl.VERTEX_SHADER, document.getElementById("aegis-vs").textContent);
+  var fs = build(gl.FRAGMENT_SHADER, document.getElementById("aegis-fs").textContent);
+  if (!vs || !fs) return;
+
+  var prog = gl.createProgram();
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) return;
+  gl.useProgram(prog);
+
+  // One triangle large enough to cover the clip volume — cheaper than a quad.
+  var buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  var loc = gl.getAttribLocation(prog, "aPos");
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  var uRes = gl.getUniformLocation(prog, "uRes");
+  var uTime = gl.getUniformLocation(prog, "uTime");
+  var uPtr = gl.getUniformLocation(prog, "uPtr");
+
+  var dpr = Math.min(window.devicePixelRatio || 1, 1.75);
+  function resize() {
+    var w = Math.max(cv.clientWidth, 1), h = Math.max(cv.clientHeight, 1);
+    var W = Math.round(w * dpr), H = Math.round(h * dpr);
+    if (cv.width !== W || cv.height !== H) {
+      cv.width = W; cv.height = H;
+      gl.viewport(0, 0, W, H);
+    }
+    gl.uniform2f(uRes, cv.width, cv.height);
+  }
+
+  // Pointer parallax, lerped so it drifts rather than tracks. Fine pointers only.
+  var px = 0, py = 0, tx = 0, ty = 0;
+  if (window.matchMedia && matchMedia("(pointer: fine)").matches) {
+    addEventListener("pointermove", function (e) {
+      tx = (e.clientX / innerWidth) * 2 - 1;
+      ty = 1 - (e.clientY / innerHeight) * 2;
+    }, { passive: true });
+  }
+
+  var still = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var visible = true, onScreen = true, running = false, t0 = performance.now(), last = 0;
+  var STEP = 1000 / 30;   // ambient light does not need sixty frames a second
+
+  function frame(now) {
+    if (!running) return;
+    requestAnimationFrame(frame);
+    if (now - last < STEP) return;
+    last = now;
+    px += (tx - px) * 0.045;
+    py += (ty - py) * 0.045;
+    resize();
+    gl.uniform1f(uTime, (now - t0) / 1000);
+    gl.uniform2f(uPtr, px, py);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    cv.classList.add("lit");
+  }
+
+  function run(on) {
+    on = on && visible && !still;
+    if (on === running) return;
+    running = on;
+    if (on) { last = 0; requestAnimationFrame(frame); }
+  }
+
+  if (still) {                       // one considered frame, then silence
+    resize();
+    gl.uniform1f(uTime, 12.0);
+    gl.uniform2f(uPtr, 0, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    cv.classList.add("lit");
+  }
+
+  document.addEventListener("visibilitychange", function () {
+    visible = !document.hidden;
+    run(visible && onScreen);
+  });
+
+  var onScreen = true;
+  if (window.IntersectionObserver) {
+    new IntersectionObserver(function (es) {
+      onScreen = es[0].isIntersecting;
+      run(onScreen);
+    }, { threshold: 0 }).observe(cv);
+  }
+
+  cv.addEventListener("webglcontextlost", function (e) { e.preventDefault(); run(false); });
+  addEventListener("resize", resize, { passive: true });
+  run(true);
+})();
+</script>
+
 <!-- rrb-views -->
 <script>
 (function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
