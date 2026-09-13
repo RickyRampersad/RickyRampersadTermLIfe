@@ -20,20 +20,26 @@ owns its own.
 | Step | What |
 |---|---|
 | Extensions → Apps Script | **＋ → Script**, name it `Academy`, paste `apps-script/Academy.gs` |
-| Run `academySetup()` once | Authorise when asked. Creates the three tabs and generates the signing secret. |
+| Run `academySetup()` | Authorise when asked. Creates the three tabs, generates the signing secret, and puts **you** on the list as the `academy` role. Safe to run again — it adds any column a later version expects without touching a row. |
 | Deploy → New deployment → Web app | **Execute as: Me** · **Who has access: Anyone**. Copy the `/exec` URL. |
 | `sea/index.html` | Paste the URL into `const ACADEMY_API = ""` near the top of the script. Commit, push, merge to `main`. |
-| Users tab | Add yourself as a `teacher` and sign in. |
+| Run `academySelfTest()` | It registers a throwaway family, signs in, saves progress, tries a forged token, reads the dashboard, and deletes every row it made. It must say **ALL GOOD**. |
+| Sign in at `/sea/` | With the Google address that ran the setup. Choose a password. You land on the dashboard. |
 
 From then on the three codes in the page are ignored. Until then they are
 the gate, so the live site never stops working.
 
 ## 3. How a family gets in
 
-A parent registers their own child from the sign-in screen. They give their
-name and e-mail, the child's first name and class, the school if they care to,
-and a password. That writes two rows — the parent and the child — and signs
-them in on the spot.
+The sign-in screen asks first **who is signing up** — a parent or a teacher.
+
+A **parent** gives their name and e-mail, the child's first name and class, the
+school if they care to, and a password. That writes two rows — the parent and
+the child — and signs them in on the spot.
+
+A **teacher** gives a name, an e-mail, their school and a password. No child, and
+**no marketing box** — a teacher is not a lead. They get the questions, the
+answer key and printable papers, and never a family's record.
 
 **What is asked for, and why.** Only what the app needs to teach:
 
@@ -79,7 +85,9 @@ but `academy` — a parent and a teacher included.
 
 ## 5. The tabs
 
-**Users** — the only one you touch.
+**Users** — the only one you touch. Most rows write themselves when somebody
+registers; you touch it to switch someone off, sell a season, or reset a
+password.
 
 | Column | You fill in | Notes |
 |---|---|---|
@@ -102,19 +110,36 @@ but `academy` — a parent and a teacher included.
 **Activity** — `At | Email | Did | Note`. Every sign-in, refusal and
 password choice. Never a password.
 
-## 6. Day to day
+## 6. What the dashboard tells you that nothing else does
+
+Every child's class is on the sheet, and the class says exactly when the
+university bills start: five years of secondary after the S.E.A., then two of
+sixth form. So a child in Standard 3 today is about ten years from a first
+tuition payment.
+
+The dashboard turns that into **Years until university** — how many children are
+seven years out, eight, nine. That is the single number an education-plan
+conversation turns on, and **nobody was ever asked for a birthday to get it**. It
+is derived from the one field the app needed anyway to serve the right
+questions.
+
+Read it with the interest list beside it: the horizon says how urgent the
+conversation is, and the list says who asked to have it.
+
+## 7. Day to day
 
 | To… | Do |
 |---|---|
 | Add a family | Normally you do not — the parent registers themselves. To add one by hand: a row for the child (`student`, with the S.E.A. year) and a row for the parent (`parent`, with the child's e-mail in Student Email). |
-| Give yourself the dashboard | A row with Role `academy`. |
+| Give yourself the dashboard | `academySetup()` already did. To add somebody else: a row with Role `academy`. |
+| Check everything still works | Run `academySelfTest()`. It cleans up after itself. |
 | Take someone off the interest list | Clear their **Consent** cell. They asked to be removed; that is all it takes. |
 | Reset a password | Clear the **Salt** and **Hash** cells on their row. Next sign-in they choose a new one. |
 | Switch someone off | `disabled` in Status. |
 | Sell a season | A date in Paid Until. Extend it when they pay again. |
 | See who is using it | The Activity tab, or Last Sign-in on Users. |
 
-## 7. What is protected, and what is not
+## 8. What is protected, and what is not
 
 Passwords: a random salt and 5 000 rounds of salted SHA-256, the strongest
 hash Apps Script will run inside a request. Five wrong tries per e-mail per
@@ -133,11 +158,17 @@ fill in by hand. Nothing in this script can read the branch sheet.
 A Sheets cell holds 50 000 characters; a person's progress is a few thousand.
 A save that would not fit is refused with a reason rather than truncated.
 
-## 8. Tests
+## 9. Tests
 
 ```bash
 node tests/test-academy.js     # the real Academy.gs under the fake Sheets, with real SHA-256 and HMAC
 node tests/e2e-sea.js          # the page against a fake of the backend (needs playwright)
+```
+
+And in the Apps Script editor, against the real sheet:
+
+```
+academySelfTest()              # registers a throwaway family, checks the lot, deletes it again
 ```
 
 `test-academy.js` adds rows the way you would, chooses a password, refuses it

@@ -114,25 +114,176 @@ var ACADEMY_ROLES = { student: 1, parent: 1, teacher: 1, academy: 1 };
 
 /* ============================ setup ============================ */
 
+var ACADEMY_COLUMNS = {
+  Users:    ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created',
+             'Last Sign-in','Note','SEA Year','School','Consent','Consent At','Registered By'],
+  Progress: ['Email','Updated','JSON'],
+  Activity: ['At','Email','Did','Note']
+};
+
+/* Safe to run again, and again. It creates what is missing and adds any
+   column a later version of this file expects — a sheet set up months ago
+   is brought up to date without anybody retyping a header or losing a row. */
 function academySetup() {
-  var ss = SpreadsheetApp.getActive();
+  var ss = SpreadsheetApp.getActive(), made = [], added = [], report = [];
   var want = {};
-  want[ACADEMY.USERS]    = ['Email','Name','Role','Student Email','Status','Paid Until','Salt','Hash','Created','Last Sign-in','Note','SEA Year','School','Consent','Consent At','Registered By'];
-  want[ACADEMY.PROGRESS] = ['Email','Updated','JSON'];
-  want[ACADEMY.ACTIVITY] = ['At','Email','Did','Note'];
+  want[ACADEMY.USERS] = ACADEMY_COLUMNS.Users;
+  want[ACADEMY.PROGRESS] = ACADEMY_COLUMNS.Progress;
+  want[ACADEMY.ACTIVITY] = ACADEMY_COLUMNS.Activity;
+
   Object.keys(want).forEach(function (name) {
-    var sh = ss.getSheetByName(name);
+    var cols = want[name], sh = ss.getSheetByName(name);
     if (!sh) {
       sh = ss.insertSheet(name);
-      var head = sh.getRange(1, 1, 1, want[name].length);
-      head.setValues([want[name]]);
+      var head = sh.getRange(1, 1, 1, cols.length);
+      head.setValues([cols]);
       head.setFontWeight('bold');
       sh.setFrozenRows(1);
+      made.push(name);
+      return;
+    }
+    // Already there: append whatever this version expects and the sheet lacks.
+    var lc = Math.max(1, sh.getLastColumn());
+    var have = sh.getRange(1, 1, 1, lc).getValues()[0].map(function (h) { return String(h).trim().toLowerCase(); });
+    var missing = cols.filter(function (c) { return have.indexOf(c.toLowerCase()) === -1; });
+    if (missing.length) {
+      var at = have.filter(function (h) { return h !== ''; }).length + 1;
+      var r = sh.getRange(1, at, 1, missing.length);
+      r.setValues([missing]);
+      r.setFontWeight('bold');
+      added.push(name + ': ' + missing.join(', '));
     }
   });
+
   var p = PropertiesService.getScriptProperties();
-  if (!p.getProperty('ACADEMY_SECRET')) p.setProperty('ACADEMY_SECRET', Utilities.getUuid() + Utilities.getUuid());
-  if (!p.getProperty('ACADEMY_NAME'))   p.setProperty('ACADEMY_NAME', 'RRB Academy');
+  var fresh = !p.getProperty('ACADEMY_SECRET');
+  if (fresh) p.setProperty('ACADEMY_SECRET', Utilities.getUuid() + Utilities.getUuid());
+  if (!p.getProperty('ACADEMY_NAME')) p.setProperty('ACADEMY_NAME', 'RRB Academy');
+
+  report.push(made.length ? 'Created tabs: ' + made.join(', ') : 'All three tabs were already there.');
+  if (added.length) report.push('Added columns — ' + added.join(' · '));
+  report.push(fresh ? 'Signing secret generated.' : 'Signing secret already set (left alone).');
+
+  /* Whoever runs this owns the Academy, so give them the dashboard. */
+  var me = anorm_(Session.getEffectiveUser().getEmail());
+  if (me) {
+    var mine = auser_(me);
+    if (!mine) {
+      var sh = asheet_(ACADEMY.USERS), col = acols_(sh), row = new Array(sh.getLastColumn()).fill('');
+      row[col['email'] - 1] = me;
+      row[col['name'] - 1] = 'Academy';
+      row[col['role'] - 1] = 'academy';
+      row[col['status'] - 1] = 'active';
+      row[col['created'] - 1] = new Date();
+      sh.appendRow(row);
+      report.push('Added you (' + me + ') as the academy role. Sign in with that e-mail and choose a password.');
+    } else {
+      report.push('You (' + me + ') are already on the list as ' + (mine.role || 'no role') + '.');
+    }
+  }
+  var out = report.join('\n');
+  Logger.log(out);
+  try { SpreadsheetApp.getUi().alert('RRB Academy — setup', out, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) {}
+  return out;
+}
+
+/* ============================ self test ============================ */
+
+/* Run this after deploying and it walks the whole flow against the real
+   sheet with a throwaway family, then deletes every row it made. If it
+   says ALL GOOD, the sheet, the columns, the secret and the tokens are
+   all right and the page will work the moment its address is pasted in. */
+function academySelfTest() {
+  var out = [], pass = 0, fail = 0;
+  var t = function (what, cond, extra) {
+    out.push((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : ''));
+    cond ? pass++ : fail++;
+  };
+  var stamp = Date.now();
+  var pEmail = 'selftest-' + stamp + '@example.invalid';
+  var made = [pEmail];
+
+  try {
+    // the tabs and their columns
+    ['Users', 'Progress', 'Activity'].forEach(function (name) {
+      var sh = SpreadsheetApp.getActive().getSheetByName(name);
+      if (!sh) { t('tab "' + name + '" exists', false, 'run academySetup()'); return; }
+      var have = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0]
+        .map(function (h) { return String(h).trim().toLowerCase(); });
+      var missing = ACADEMY_COLUMNS[name].filter(function (c) { return have.indexOf(c.toLowerCase()) === -1; });
+      t('tab "' + name + '" has every column', missing.length === 0, 'missing ' + missing.join(', '));
+    });
+    t('the signing secret is set', !!aprop_('ACADEMY_SECRET'), 'run academySetup()');
+
+    // a whole family, end to end
+    var reg = JSON.parse(academyRegister_({
+      parentEmail: pEmail, parentName: 'Self Test', childName: 'Testchild',
+      seaYear: new Date().getFullYear() + 3, school: 'Self Test Primary',
+      password: 'self-test-password', consent: true
+    }).getContent());
+    t('a parent can register a child', reg.ok === true, reg.error);
+    if (reg.ok) {
+      made.push(reg.child.email);
+      t('the child is placed in a class', reg.child && reg.child.seaYear > 2000);
+      t('the consent box is recorded when ticked', reg.user.consent === true);
+
+      var signed = JSON.parse(academySignin_({ email: pEmail, password: 'self-test-password' }).getContent());
+      t('that parent can sign in again', signed.ok === true, signed.error);
+      t('a wrong password is refused',
+        JSON.parse(academySignin_({ email: pEmail, password: 'wrong-on-purpose' }).getContent()).ok === false);
+
+      var saved = JSON.parse(academySave_({ token: reg.token, 'for': reg.child.email,
+        progress: { seen: { N01: { att: 1, right: true } } } }).getContent());
+      t("progress saves to the child's record", saved.ok === true, saved.error);
+      var back = JSON.parse(academyLoad_({ token: reg.token }).getContent());
+      t('and comes back on the next sign-in',
+        back.ok && back.child && back.child.progress && back.child.progress.seen && back.child.progress.seen.N01);
+
+      t('a made-up token is refused',
+        JSON.parse(academyLoad_({ token: 'not.a.real.token' }).getContent()).ok === false);
+      t('a parent is refused the dashboard',
+        JSON.parse(academyDashboard_({ token: reg.token }).getContent()).ok === false);
+    }
+
+    // somebody with the academy role
+    var boss = null, rows = arows_(asheet_(ACADEMY.USERS));
+    for (var i = 0; i < rows.length; i++) if (String(rows[i].role || '').toLowerCase() === 'academy') { boss = rows[i]; break; }
+    t('somebody has the academy role', !!boss, 'put "academy" in the Role column of your own row');
+    if (boss && String(boss.hash || '')) {
+      var bt = atoken_(auser_(anorm_(boss.email)));
+      var dash = JSON.parse(academyDashboard_({ token: bt }).getContent());
+      t('the Academy can read the dashboard', dash.ok === true, dash.error);
+      if (dash.ok) t('and it counts without naming a child',
+        JSON.stringify(dash.stats).indexOf('Testchild') === -1);
+    } else if (boss) {
+      out.push('  note   the academy row has no password yet — sign in once at /sea/ and choose one');
+    }
+  } catch (err) {
+    t('the test ran without throwing', false, String(err && err.message || err));
+  } finally {
+    // take the throwaway family back out, whatever happened
+    var removed = 0;
+    [ACADEMY.USERS, ACADEMY.PROGRESS].forEach(function (name) {
+      var sh = SpreadsheetApp.getActive().getSheetByName(name);
+      if (!sh) return;
+      var v = sh.getDataRange().getValues();
+      for (var r = v.length; r >= 2; r--) {
+        if (made.indexOf(anorm_(v[r - 1][0])) !== -1) { sh.deleteRow(r); removed++; }
+      }
+    });
+    var act = SpreadsheetApp.getActive().getSheetByName(ACADEMY.ACTIVITY);
+    if (act) {
+      var av = act.getDataRange().getValues();
+      for (var r2 = av.length; r2 >= 2; r2--) if (made.indexOf(anorm_(av[r2 - 1][1])) !== -1) { act.deleteRow(r2); removed++; }
+    }
+    out.push('  cleaned up ' + removed + ' test row' + (removed === 1 ? '' : 's'));
+  }
+
+  var head = fail ? fail + ' FAILED, ' + pass + ' passed' : 'ALL GOOD — ' + pass + ' checks passed';
+  var text = head + '\n\n' + out.join('\n');
+  Logger.log(text);
+  try { SpreadsheetApp.getUi().alert('RRB Academy — self test', text, SpreadsheetApp.getUi().ButtonSet.OK); } catch (e) {}
+  return text;
 }
 
 /* ============================ entry points ============================ */
@@ -177,6 +328,8 @@ function academyLookup_(b) {
    gives a real e-mail for it; otherwise the parent practises with them
    from their own account, which is what an Infant 1 needs anyway. */
 function academyRegister_(b) {
+  var who = anorm_(b.role) === 'teacher' ? 'teacher' : 'parent';
+  if (who === 'teacher') return academyRegisterTeacher_(b);
   var pEmail = anorm_(b.parentEmail), pName = aclean_(b.parentName, ACADEMY.MAX_NAME);
   var cName  = aclean_(b.childName, ACADEMY.MAX_NAME);
   var cEmail = anorm_(b.childEmail);
@@ -230,6 +383,36 @@ function academyRegister_(b) {
 
     alog_(pEmail, 'registered', 'child ' + childId + (consent ? ' · interested in savings plans' : ''));
     return aok_(asession_(auser_(pEmail)));
+  } finally { lock.releaseLock(); }
+}
+
+/* A teacher signs themselves up: a name, an e-mail, the school, a password.
+   No child, and no marketing box — a teacher is not a lead. They get the
+   questions and the answer key, never a family's record. */
+function academyRegisterTeacher_(b) {
+  var email = anorm_(b.parentEmail || b.email), name = aclean_(b.parentName || b.name, ACADEMY.MAX_NAME);
+  var school = aclean_(b.school, ACADEMY.MAX_SCHOOL), pw = String(b.password || '');
+  if (!aemail_(email)) return aerr_('That does not look like an e-mail address.');
+  if (!name)           return aerr_('Give the name the Academy should call you by.');
+  if (pw.length < ACADEMY.MIN_PASSWORD) return aerr_('Choose a password of at least ' + ACADEMY.MIN_PASSWORD + ' characters.');
+
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    if (auser_(email)) return aerr_('That e-mail is already registered. Sign in instead.');
+    var now = new Date(), sh = asheet_(ACADEMY.USERS), col = acols_(sh);
+    var row = new Array(sh.getLastColumn()).fill('');
+    row[col['email'] - 1] = email;
+    row[col['name'] - 1] = name;
+    row[col['role'] - 1] = 'teacher';
+    row[col['status'] - 1] = 'active';
+    row[col['created'] - 1] = now;
+    row[col['last sign-in'] - 1] = now;
+    if (school) row[col['school'] - 1] = school;
+    row[col['salt'] - 1] = Utilities.getUuid();
+    row[col['hash'] - 1] = ahash_(pw, row[col['salt'] - 1]);
+    sh.appendRow(row);
+    alog_(email, 'registered', 'teacher' + (school ? ' · ' + school : ''));
+    return aok_(asession_(auser_(email)));
   } finally { lock.releaseLock(); }
 }
 
@@ -360,7 +543,8 @@ function academyDashboard_(b) {
     families: 0, children: 0, activeFamilies: 0, teachers: 0,
     byClass: {}, bySchool: {}, byMonth: {},
     attempted: 0, papers: 0, bestPaper: 0, practising: 0,
-    interested: [], interestedCount: 0, schoolsGiven: 0
+    interested: [], interestedCount: 0, schoolsGiven: 0,
+    horizon: {}          // years until university, worked out from the class
   };
 
   for (var j = 0; j < rows.length; j++) {
@@ -392,7 +576,16 @@ function academyDashboard_(b) {
     if (role === 'student') {
       out.children++;
       var y = Number(r['sea year']) || 0;
-      if (y) { var k = String(y); out.byClass[k] = (out.byClass[k] || 0) + 1; }
+      if (y) {
+        var k = String(y);
+        out.byClass[k] = (out.byClass[k] || 0) + 1;
+        /* Five years of secondary after the S.E.A., then two of sixth form:
+           the year the university bills start, and the only number an
+           education-plan conversation ever really turns on. It is worked
+           out from the class we already have — nobody is asked for it. */
+        var uni = y + 7, years = uni - (new Date()).getFullYear();
+        if (years >= 0) { var b2 = String(years); out.horizon[b2] = (out.horizon[b2] || 0) + 1; }
+      }
       var school = String(r.school || '').trim();
       if (school) { out.schoolsGiven++; out.bySchool[school] = (out.bySchool[school] || 0) + 1; }
       var p = prog[anorm_(r.email)];

@@ -355,9 +355,13 @@ const ok = (what, cond, extra) => {
       if (users[pe]) out = { ok: false, error: 'That e-mail is already registered.' };
       else {
         registered.push(b);
-        const cid = 'child:' + registered.length;
-        users[cid] = { name: b.childName, role: 'student', hash: null, student: '', seaYear: b.seaYear, school: b.school };
-        users[pe] = { name: b.parentName, role: 'parent', hash: b.password, student: cid, consent: !!b.consent };
+        if (b.role === 'teacher') {
+          users[pe] = { name: b.parentName, role: 'teacher', hash: b.password, student: '', school: b.school };
+        } else {
+          const cid = 'child:' + registered.length;
+          users[cid] = { name: b.childName, role: 'student', hash: null, student: '', seaYear: b.seaYear, school: b.school };
+          users[pe] = { name: b.parentName, role: 'parent', hash: b.password, student: cid, consent: !!b.consent };
+        }
         out = session(pe);
       }
     }
@@ -366,6 +370,7 @@ const ok = (what, cond, extra) => {
         ? { ok: true, activeDays: 30, stats: { families: 2, children: 3, activeFamilies: 2, teachers: 1,
             byClass: { '2031': 2, '2033': 1 }, bySchool: { 'St Joseph Boys RC': 2 }, byMonth: { '2026-09': 2 },
             attempted: 14, papers: 1, bestPaper: 51, practising: 2, schoolsGiven: 2, interestedCount: 1,
+            horizon: { '7': 2, '9': 1 },
             interested: [{ name: 'Dev Persad', email: 'dev@example.com', school: 'Chaguanas Government', seaYear: 2033, at: '2026-09-13' }] } }
         : { ok: false, error: 'The dashboard is for the Academy.' };
     }
@@ -471,8 +476,18 @@ const ok = (what, cond, extra) => {
      !regFields.some(f => /occupation|employer|income|salary|address|birth|surname|phone/.test(f)));
   ok('the class list offers all twelve classes',
      (await page.$$eval('#rChildClass option', n => n.length)) === 13);   // twelve, plus the prompt
+  ok('registration asks which of the two is signing up, with parent first',
+     (await page.$$eval('#rRoles .role', n => n.map(b => b.dataset.r))).join() === 'parent,teacher' &&
+     (await page.$eval('#rRoles .role[data-r="parent"]', b => b.getAttribute('aria-pressed'))) === 'true');
   ok('the marketing box exists and is NOT ticked',
      await page.isVisible('#rConsent') && (await page.isChecked('#rConsent')) === false);
+  await page.click('#rRoles .role[data-r="teacher"]');
+  ok('a teacher is asked for no child and shown no marketing box',
+     await page.isHidden('#rChildRow') && await page.isHidden('#rOptin') &&
+     /teacher/i.test(await page.textContent('#rWho')));
+  await page.click('#rRoles .role[data-r="parent"]');
+  ok('going back to parent brings the child and the box back',
+     await page.isVisible('#rChildRow') && await page.isVisible('#rOptin'));
   ok('and it says who would be contacting them, and that the app is free either way',
      /Guardian Life/.test(await page.textContent('.optin')) && /free either way/.test(await page.textContent('.optin')));
 
@@ -521,6 +536,9 @@ const ok = (what, cond, extra) => {
      /St Joseph Boys RC/.test(dashText) && (await page.$$eval('#dashHost .rank .row', n => n.length)) >= 4);
   ok('the only names on it are parents who ticked the box',
      /Dev Persad/.test(dashText) && /ticked the box/.test(dashText) && !/Rohan|Aisha|Anya/.test(dashText));
+  ok('it works out when the university fees start, from the class alone',
+     /[Yy]ears until university/.test(dashText) && /7 years/.test(dashText) &&
+     /nobody was asked a birthday/.test(dashText));
 
   ok('no errors in the console', errs.length === 0, errs.join(' | '));
 

@@ -28,6 +28,7 @@ env.Utilities.computeHmacSha256Signature = (value, key) => [...crypto.createHmac
 env.Utilities.base64EncodeWebSafe = s => Buffer.from(String(s), 'utf8').toString('base64url');
 env.Utilities.base64DecodeWebSafe = s => [...Buffer.from(String(s), 'base64url')];
 env.Utilities.getUuid = () => crypto.randomUUID();   // the harness's is 16 characters; a real one is 36
+env.Logger = { log: () => {} };                     // setup and the self test both report through it
 const props = {};
 env.PropertiesService = { getScriptProperties: () => ({ getProperty: k => (k in props ? props[k] : null), setProperty: (k, v) => { props[k] = String(v); } }) };
 env.ContentService = { MimeType: { JSON: 'json' },
@@ -41,13 +42,23 @@ const ok = (what, cond, extra) => {
 const post = body => JSON.parse(env.doPost({ postData: { contents: JSON.stringify(body) } }).getContent());
 const cell = (sheet, row, col) => env.__sheets[sheet]._grid[row - 1][col - 1];
 const setCell = (sheet, row, col, v) => { env.__sheets[sheet]._grid[row - 1][col - 1] = v; };
+// Look a row up by its e-mail. Hard-coded row numbers break the moment
+// anything is inserted above, and setup now adds the academy's own row.
+const rowOf = email => env.__sheets.Users._grid.findIndex(r => String(r[0]).trim().toLowerCase() === email) + 1;
 
 // ---- setup -------------------------------------------------------------------
 env.academySetup();
 ok('setup makes the three tabs with their headers in row 1',
-   ['Users', 'Progress', 'Activity'].every(n => env.__sheets[n] && env.__sheets[n]._grid.length === 1) &&
+   ['Users', 'Progress', 'Activity'].every(n => env.__sheets[n]) &&
    cell('Users', 1, 1) === 'Email' && cell('Users', 1, 8) === 'Hash' && cell('Users', 1, 12) === 'SEA Year' &&
-   cell('Users', 1, 13) === 'School' && cell('Users', 1, 14) === 'Consent');
+   cell('Users', 1, 13) === 'School' && cell('Users', 1, 14) === 'Consent' &&
+   cell('Users', 1, 16) === 'Registered By');
+ok('setup gives whoever ran it the academy role, so the dashboard is reachable',
+   rowOf('ricky@example.com') > 1 && cell('Users', rowOf('ricky@example.com'), 3) === 'academy');
+// Running it twice must be safe — that is how a sheet gets upgraded.
+const beforeAgain = env.__sheets.Users._grid.length;
+env.academySetup();
+ok('running setup again changes nothing', env.__sheets.Users._grid.length === beforeAgain);
 ok('setup generates a signing secret', (props.ACADEMY_SECRET || '').length > 40);
 ok('the engine answers a GET', /running/.test(env.doGet().getContent()));
 
@@ -80,10 +91,11 @@ ok('choosing a password signs the student straight in',
 ok('the sign-in carries the year of the S.E.A., so the app can place the child', first.user.seaYear === 2029);
 ok('a row with no S.E.A. year hands back null, not zero', post({ action: 'lookup', email: 'miss@example.com' }).ok &&
    env.auser_('miss@example.com').seaYear === null);
+const aisha = () => rowOf('aisha@example.com');
 ok('the sheet now holds a salt and a 64-character hash, never the password',
-   /^[0-9a-f]{64}$/.test(cell('Users', 2, 8)) && cell('Users', 2, 7).length > 20 &&
+   /^[0-9a-f]{64}$/.test(cell('Users', aisha(), 8)) && cell('Users', aisha(), 7).length > 20 &&
    !JSON.stringify(U._grid).includes('mango-tree-2027'));
-ok('the row is marked active', cell('Users', 2, 5) === 'active');
+ok('the row is marked active', cell('Users', aisha(), 5) === 'active');
 ok('the same e-mail is now "active" on lookup', post({ action: 'lookup', email: 'aisha@example.com' }).state === 'active');
 ok('a second attempt to set a password on that row is refused',
    /already has a password/.test(post({ action: 'setpassword', email: 'aisha@example.com', password: 'someone-else-1' }).error));
@@ -100,7 +112,7 @@ env.CacheService.getScriptCache().remove('fail:aisha@example.com');   // the fif
 const login = post({ action: 'signin', email: 'aisha@example.com', password: 'mango-tree-2027' });
 ok('the right password signs in once the wait is over', login.ok && login.user.email === 'aisha@example.com');
 ok('a fresh sign-in has no progress yet', login.progress === null && login.child === null);
-ok('Last Sign-in is stamped', cell('Users', 2, 10) instanceof Date);
+ok('Last Sign-in is stamped', cell('Users', aisha(), 10) instanceof Date);
 
 // ---- the token -----------------------------------------------------------------
 const tok = login.token;
@@ -137,18 +149,18 @@ const miss = post({ action: 'setpassword', email: 'miss@example.com', password: 
 ok('a teacher is never handed a child', miss.ok && miss.user.role === 'teacher' && miss.child === null);
 
 // ---- being switched off, and the season ending ------------------------------------
-setCell('Users', 2, 5, 'disabled');
+setCell('Users', aisha(), 5, 'disabled');
 ok('a valid token stops working the moment the row is disabled',
    /switched off/.test(post({ action: 'load', token: tok }).error));
-setCell('Users', 2, 5, 'active');
-setCell('Users', 2, 6, new Date(Date.now() - 86400000 * 2));
+setCell('Users', aisha(), 5, 'active');
+setCell('Users', aisha(), 6, new Date(Date.now() - 86400000 * 2));
 ok('a valid token stops working when Paid Until has passed',
    /access has ended/.test(post({ action: 'load', token: tok }).error));
-setCell('Users', 2, 6, new Date(Date.now() + 86400000 * 200));
+setCell('Users', aisha(), 6, new Date(Date.now() + 86400000 * 200));
 const stillIn = post({ action: 'load', token: tok });
 ok('and works again with a future Paid Until, which the page is told about',
    stillIn.ok && /^\d{4}-\d{2}-\d{2}$/.test(stillIn.user.paidUntil));
-setCell('Users', 2, 6, 'not a date at all');
+setCell('Users', aisha(), 6, 'not a date at all');
 ok('an unreadable Paid Until locks nobody out', post({ action: 'load', token: tok }).ok);
 
 // ---- the record --------------------------------------------------------------
@@ -241,6 +253,24 @@ ok('a parent who did not tick is nowhere in it',
    !JSON.stringify(dash.stats.interested).includes('nalini@example.com'));
 ok("no child's name appears anywhere in the dashboard",
    !/Rohan|Anya|Kiran|Aisha/.test(JSON.stringify(dash.stats)));
+
+// ---- a teacher signs themselves up ------------------------------------------
+const tReg = post({ action: 'register', role: 'teacher', parentEmail: 'newteach@example.com',
+                    parentName: 'Mr Sookoo', school: 'Presentation College', password: 'chalk-dust-2027' });
+ok('a teacher can register without a child', tReg.ok && tReg.user.role === 'teacher' && tReg.child === null);
+const tRow = env.__sheets.Users._grid.find(r => r[0] === 'newteach@example.com');
+ok('the teacher row carries the school and no student link', tRow[12] === 'Presentation College' && tRow[3] === '');
+ok('a teacher is never recorded as consenting to marketing', tRow[13] === '');
+ok('a teacher signing up creates no child row',
+   env.__sheets.Users._grid.filter(r => String(r[0]).startsWith('child:')).length === 3);
+
+// ---- the funding horizon: derived, never asked for ---------------------------
+const dash2 = post({ action: 'dashboard', token: boss.token });
+ok('the dashboard works out years to university from the class alone',
+   dash2.stats.horizon && Object.keys(dash2.stats.horizon).length > 0);
+ok('every child with a class is on the horizon, and none was ever asked their age',
+   Object.values(dash2.stats.horizon).reduce((a, b) => a + b, 0) ===
+   Object.values(dash2.stats.byClass).reduce((a, b) => a + b, 0));
 
 console.log();
 console.log(fails ? `  ${fails} failed` : '  all good');
