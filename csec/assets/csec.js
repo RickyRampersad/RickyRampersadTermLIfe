@@ -155,9 +155,53 @@
                  sessions:[...], days:[iso], notes:{}, goals:{}}          */
   function blankProgress() {
     return { strands: {}, sessions: [], days: [], notes: {}, goals: {},
-             history: [], tests: [], terms: {} };
+             history: [], tests: [], terms: {}, _v: 2 };
   }
-  function progress(studentId) { return read('progress.' + studentId, blankProgress()); }
+
+  /* The same lazy upgrade the profiles get, applied to the record underneath.
+     Term snapshots, timed tests and promotion rows all stamped `form` 1-5
+     before the ladder went to ten levels, and the KPI chart reads that stamp
+     to band the timeline. Left alone it renders "Level undefined" against a
+     real child's five terms of work.
+
+     Terms and tests are safe to convert on sight: nothing written after the
+     ladder change sets `form` at all. Promotion rows are not — `from: 1, to: 2`
+     is a genuine Standard 1 to Standard 2 move as well as an old Form 1 to
+     Form 2 one. So new rows carry `v: 2`, and an unmarked row is only treated
+     as old when the same record still holds a `form`-stamped term or test.
+     That evidence is reliable because promote() snapshots the term before it
+     writes the row, so the two are always written together. */
+  function migrateProgress(p) {
+    if (!p || typeof p !== 'object' || p._v >= 2) return false;
+    var sawForm = false;
+
+    Object.keys(p.terms || {}).forEach(function (k) {
+      var t = p.terms[k];
+      if (t && t.level == null && t.form != null) {
+        t.level = Number(t.form) + 5; delete t.form; sawForm = true;
+      }
+    });
+    (p.tests || []).forEach(function (t) {
+      if (t && t.level == null && t.form != null) {
+        t.level = Number(t.form) + 5; delete t.form; sawForm = true;
+      }
+    });
+    if (sawForm) {
+      (p.history || []).forEach(function (h) {
+        if (h && h.v == null && h.from != null && h.to != null) {
+          h.from = Number(h.from) + 5; h.to = Number(h.to) + 5; h.v = 2;
+        }
+      });
+    }
+    p._v = 2;
+    return true;
+  }
+
+  function progress(studentId) {
+    var p = read('progress.' + studentId, blankProgress());
+    if (migrateProgress(p)) write('progress.' + studentId, p);
+    return p;
+  }
   function saveProgress(studentId, p) {
     p._t = Date.now();          /* version stamp the sync merge compares on */
     write('progress.' + studentId, p);
@@ -259,7 +303,7 @@
     var p = progress(studentId), ov = overallStat(studentId);
     p.history = p.history || [];
     p.history.push({
-      at: Date.now(), date: today(), from: from, to: to,
+      at: Date.now(), date: today(), from: from, to: to, v: 2,
       pct: ov.pct, seen: ov.seen, coverage: coverage(studentId).pct,
       term: termOf().key
     });
@@ -294,7 +338,17 @@
      so "Standard 3" and "Form 2" never have to be spelled out in a template. */
   function levelLabel(level) {
     var l = levelInfo(level);
-    return l ? l.label : ('Level ' + level);
+    if (l) return l.label;
+    /* An old record with no level at all must read as absent, not as the
+       words "Level undefined" printed across a chart. */
+    return (level == null || isNaN(Number(level))) ? '\u2014' : ('Level ' + level);
+  }
+  /* Short form for the chart bands and table columns, with the same
+     absent-means-dash rule as levelLabel. */
+  function levelShort(level) {
+    var l = levelInfo(level);
+    if (l) return l.short;
+    return (level == null || isNaN(Number(level))) ? '\u2014' : ('L' + level);
   }
   function stageOf(level) {
     var st = (C.stages || []).filter(function (s) {
@@ -799,7 +853,7 @@
     examYear: examYear, countdown: countdown,
     termOf: termOf, snapshotTerm: snapshotTerm, termHistory: termHistory, promote: promote,
     stageOf: stageOf, roadmapFor: roadmapFor, journeyNow: journeyNow,
-    levels: C.levels, levelInfo: levelInfo, levelLabel: levelLabel, nextExam: nextExam,
+    levels: C.levels, levelInfo: levelInfo, levelLabel: levelLabel, levelShort: levelShort, nextExam: nextExam,
     defaultsFor: defaultsFor, migrateLevel: migrateLevel,
     newThisYear: newThisYear, carriedForward: carriedForward,
     coverage: coverage, retention: retention, testStat: testStat, recordTest: recordTest,

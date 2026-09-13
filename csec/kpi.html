@@ -281,7 +281,7 @@
     var tests=(CSEC.progress(kid.id).tests||[]).slice().reverse();
     $('tests').querySelector('tbody').innerHTML = tests.length? tests.map(function(t){
       var tone=t.pct>=75?'good':t.pct>=50?'gold':'bad';
-      return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.subjName)+'</td><td>'+(t.level?CSEC.levelInfo(t.level).short:'—')+'</td>'+
+      return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.subjName)+'</td><td>'+CSEC.levelShort(t.level)+'</td>'+
         '<td><span class="pill '+tone+'">'+t.pct+'%</span> '+t.correct+'/'+t.n+'</td>'+
         '<td>'+(t.secs<60? t.secs+' sec' : Math.round(t.secs/60)+' min')+
         ' of '+Math.round(t.limit/60)+' min</td></tr>';
@@ -324,7 +324,7 @@
       var x1=r.to===n-1?W-MR:(x(r.to,n)+x(r.to+1,n))/2;
       if(runs.indexOf(r)%2===0) svg.appendChild(el('rect',{class:'formband',x:x0,y:MT,width:Math.max(0,x1-x0),height:H-MT-MB}));
       var t=el('text',{class:'formtxt',x:(x0+x1)/2,y:MT+11,'text-anchor':'middle'});
-      t.textContent=(CSEC.levelInfo(r.level)||{short:'L'+r.level}).short; svg.appendChild(t);
+      t.textContent=CSEC.levelShort(r.level); svg.appendChild(t);
     });
 
     /* gridlines + y labels */
@@ -384,7 +384,7 @@
 
   function fillTable(){
     $('tbl').querySelector('tbody').innerHTML = series.length? series.slice().reverse().map(function(s){
-      return '<tr><td>'+esc(s.key)+'</td><td>'+((CSEC.levelInfo(s.level)||{short:s.level}).short)+'</td>'+
+      return '<tr><td>'+esc(s.key)+'</td><td>'+CSEC.levelShort(s.level)+'</td>'+
         '<td>'+(s.pct==null?'—':s.pct+'%')+'</td><td>'+(s.coverage==null?'—':s.coverage+'%')+'</td>'+
         '<td>'+s.seen+'</td></tr>';
     }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No terms recorded yet.</td></tr>';
