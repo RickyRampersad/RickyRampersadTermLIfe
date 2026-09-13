@@ -174,13 +174,23 @@ function rsfShift_(days) {
  * Renewals falling due in the window, normalised into the shape
  * sendStageEmail_() already expects.
  *
- * Sold vehicles are excluded, and so is anything with Send_Renewal_Reminder__c
- * explicitly false — that flag is the client's opt-out and it is honoured.
+ * Sold vehicles are excluded.
+ *
+ * Send_Renewal_Reminder__c is handled adaptively, and this matters. It is a
+ * Salesforce checkbox, so it reads false when nobody has ever ticked it —
+ * there is no null to tell "declined" apart from "never set". Right now it
+ * is false on every record in the org, so reading false as an opt-out would
+ * skip the entire book and the run would report nothing to send, which looks
+ * like the ladder working rather than the ladder blocked.
+ *
+ * So: if no row in the window has it true, the field is not in use and it is
+ * ignored. The moment anyone starts ticking it, false becomes a real
+ * decision and is honoured from then on, with no code change.
  */
 function rsfRows_() {
   var soql =
     'SELECT Id, Name, Policy__c, Next_Renewal_Date__c, Motor_Vehicle_Coverage_Type__c, ' +
-    'Property_Coverage_Type__c, Cover1__c, Premium_Due__c, Premium_Owed__c, Total_Premiums__c, ' +
+    'Property_Coverage_Type__c, Cover1__c, Premium_Due__c, Payments_Made__c, Total_Premiums__c, ' +
     'Email__c, Portal_Token__c, Account__c, Contact_First_Name__c, Last_Name__c, Salutation__c, ' +
     'Vehicle_Make__c, Model__c, Vehicle_Status__c, Send_Renewal_Reminder__c ' +
     'FROM Risk_Details__c ' +
@@ -191,7 +201,7 @@ function rsfRows_() {
 
   var today = new Date(); today.setHours(0, 0, 0, 0);
 
-  return rsfQ_(soql).map(function (r) {
+  var rows = rsfQ_(soql).map(function (r) {
     var due = r.Next_Renewal_Date__c ? new Date(r.Next_Renewal_Date__c + 'T00:00:00') : null;
     var days = due ? Math.round((due - today) / 86400000) : null;
     var cover = r.Motor_Vehicle_Coverage_Type__c || r.Property_Coverage_Type__c || 'policy';
@@ -209,11 +219,16 @@ function rsfRows_() {
       dueIso: r.Next_Renewal_Date__c || '',
       days: days,
       sumInsured: r.Cover1__c || 0,
-      balance: r.Premium_Owed__c || r.Premium_Due__c || 0,
+      balance: r.Premium_Due__c || Math.max(0, (r.Total_Premiums__c || 0) - (r.Payments_Made__c || 0)),
       token: String(r.Portal_Token__c || '').trim(),
-      optOut: r.Send_Renewal_Reminder__c === false,
+      flag: r.Send_Renewal_Reminder__c === true,
+      optOut: false,           // set below, once we know if the flag is in use
     };
   });
+
+  var flagInUse = rows.some(function (r) { return r.flag; });
+  if (flagInUse) rows.forEach(function (r) { r.optOut = !r.flag; });
+  return rows;
 }
 
 /** The stage a row is owed today, or null. Same ladder as Code.gs. */
@@ -276,7 +291,7 @@ function rsfPlan_() {
   rows.forEach(function (r) {
     var stage = rsfStage_(r.days);
     var why =
-      r.optOut          ? 'opted out (Send_Renewal_Reminder__c is false)' :
+      r.optOut          ? 'opted out (Send_Renewal_Reminder__c unticked, and the flag is in use)' :
       !r.email          ? 'no email address on the risk' :
       !r.token          ? 'no portal token — nothing to link them to' :
       !stage            ? 'not at a reminder stage today (' + r.days + ' days out)' :
