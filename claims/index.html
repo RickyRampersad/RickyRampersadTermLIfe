@@ -1441,6 +1441,7 @@ function renderTypes() {
         state.skipped = {};
       }
       typePickerOpen = false;
+      autoPolicyForType();   // signed in, and we hold one policy on this line
       renderTypes();
       renderSubtypes();
       saveDraft();
@@ -1824,11 +1825,18 @@ const PREFILL_MAP = {
   policy: "policy", name: "name", email: "email", mobile: "mobile",
 };
 
+// Motor and property answer to a plate; everything else to a policy or plan
+// number. One source of truth, so the label, the blurb and the error agree.
+function lookupNoun() {
+  return (state.type === "motor" || state.type === "property")
+    ? "number plate or policy number"
+    : "policy or plan number";
+}
+
 function showLookup() {
   const box = $("lookup");
   box.hidden = lookup.dismissed || !CONFIG.API_URL || !state.type;
   if (box.hidden) return;
-  // Motor and property answer to a plate; everything else to a policy/plan number.
   if (state.type === "motor" || state.type === "property") {
     $("lk-blurb").textContent = "Enter your number plate or policy number and we'll fill in your vehicle and contact details from our records — chassis and engine numbers included.";
     $("lk-q-label").textContent = "Number plate or policy number";
@@ -1849,7 +1857,9 @@ function lkMessage(id, html) {
 
 async function findPolicy() {
   const q = $("lk-q").value.trim();
-  if (q.length < 4) { lkMessage("lk-err", "Enter your number plate or policy number."); return; }
+  // Same wording the panel above it is using — a health claim must not be
+  // told to enter a number plate.
+  if (q.length < 4) { lkMessage("lk-err", "Enter your " + lookupNoun() + "."); return; }
 
   const btn = $("lk-find");
   btn.disabled = true;
@@ -1940,7 +1950,9 @@ function applyPrefill(prefill) {
   // The insured value is worth carrying across as context, not as the claim amount.
   if (prefill.insuredValue) state.answers.insuredValueNote = prefill.insuredValue;
 
-  lookup.filled = filled;
+  // Add to what is already marked rather than replacing it — signing in fills
+  // the contact fields before a policy is ever chosen, and those marks stay.
+  lookup.filled = Array.from(new Set((lookup.filled || []).concat(filled)));
   saveDraft();
   renderFields($("detail-fields"), currentType().fields);
   markPrefilled(filled);
@@ -2473,6 +2485,7 @@ function acctSignOut(silent) {
     api({ action: "signOut", token: acct.token }).catch(() => {});
   }
   acct.token = "";
+  profile = null;   // their policies leave with them
   try { localStorage.removeItem(TOKEN_KEY); } catch (err) {}
   $("acct-in").hidden = true;
   $("acct-out").hidden = false;
@@ -2615,12 +2628,48 @@ async function whoVerify() {
   }
 }
 
+/* The signed-in client's profile, kept in memory only — never written to the
+   draft in localStorage, which is a shared device risk on a phone. */
+let profile = null;
+
+/* Signing in already told us who they are. Their own name, e-mail and mobile
+   should never have to be typed again, whether or not they go on to pick one
+   of their policy cards. */
+function applyContact(contact) {
+  if (!contact) return [];
+  const filled = [];
+  ["name", "email", "mobile"].forEach((k) => {
+    const v = String(contact[k] || "").trim();
+    if (v && !String(state.answers[k] || "").trim()) { state.answers[k] = v; filled.push(k); }
+  });
+  if (filled.length) {
+    lookup.filled = Array.from(new Set((lookup.filled || []).concat(filled)));
+    saveDraft();
+  }
+  return filled;
+}
+
+/* And a client who picks a claim type should not then be asked to type a
+   policy number we are already holding. Exactly one policy on that line:
+   apply it. Several: their cards are on screen to choose from. None: the
+   lookup stays, as the fallback it was always meant to be. */
+function autoPolicyForType() {
+  if (!profile || !state.type || lookup.dismissed) return;
+  const hits = (profile.policies || []).filter((p) => lineToType(p.line) === state.type);
+  if (hits.length !== 1) return;
+  lookup.dismissed = true;
+  applyPrefill(hits[0].prefill || {});
+}
+
 async function whoLoad() {
   if (!acct.token || !CONFIG.API_URL) return false;
   let data;
   try {
     data = await api({ action: "myProfile", token: acct.token });
   } catch (err) { return false; }
+  profile = data;
+  applyContact(data.contact);
+  autoPolicyForType();   // they may have chosen the type before signing in
 
   $("who-out").hidden = true;
   $("who-in").hidden = false;
