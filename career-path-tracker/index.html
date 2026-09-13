@@ -154,6 +154,15 @@
   .req-gap{grid-column:1/-1;font-size:11.5px;color:var(--mut)}
   .req-gap.met{color:var(--good)}
 
+  .track{margin-bottom:26px}
+  .track-h{font-family:var(--mont);font-size:15px;font-weight:800;color:var(--gold);margin-bottom:4px}
+  .track-b{font-size:13px;color:var(--mut);margin-bottom:14px;max-width:64ch}
+  .req.plain{grid-template-columns:1fr}
+  .req-n b{display:block;font-size:13.5px;color:var(--ink);font-weight:600}
+  .req-n span{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.5}
+  .req.unread .req-n b{color:var(--warn)}
+  .rsrc{font-size:11px;color:var(--mut);margin-top:13px;padding-top:11px;border-top:1px solid var(--line)}
+
   .notset{margin-top:14px;padding:13px 15px;border-radius:11px;background:rgba(255,180,84,.09);
     border:1px solid rgba(255,180,84,.28);font-size:12.5px;color:var(--body);line-height:1.6}
   .notset b{color:var(--warn);display:block;font-family:var(--mont);font-size:11.5px;margin-bottom:4px}
@@ -240,57 +249,127 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
 
 /* ============================================================
-   THE LADDER
+   THE LADDER — Sales Career Path, Amended April 2026
 
-   Figures marked SOURCED are the branch's own, out of the GLOC
-   probation contract (Revised Jan 1 2018) that every recruit signs.
+   Every requirement below is quoted from the Company's own
+   "SALES CAREER PATH (Amended April 2026)", page numbers given.
+   Nothing here is invented. Where the source states a figure the
+   figure is used; where a clause could not be read cleanly out of
+   the PDF it says so and points at the document rather than
+   guessing a number onto a screen an agent judges a career by.
 
-   Figures left null are NOT SET, and the screen says so rather than
-   showing a number. A fabricated target on a screen an agent uses to
-   judge their own career is worse than no target — same rule as the
-   campaign target on the wall. Fill these in and the bars appear.
+   measure:{k,target} marks the one requirement per position the
+   branch Production sheet can actually check. Everything else is
+   a stated standard the agent reads and assesses honestly — which
+   is what the Company's own document is.
    ============================================================ */
+const DOC = 'Sales Career Path · Amended April 2026';
+
 const LADDER = [
   {
-    key: 'probation',
-    name: 'Probation',
-    what: 'The first seven months under the probationary contract. Everything here is the minimum to be confirmed, not a target to aim at.',
-    pays: '',
-    months: 7,
-    reqs: [
-      { k:'apiY',   label:'Annualised premium written', target:105000, unit:'$', src:'contract' },
-      { k:'appsY',  label:'Settled applications',       target:25,     unit:'',  src:'contract' },
-      { k:'persist',label:'Persistency',                target:90,     unit:'%', src:'contract' }
+    key:'agent', track:'sales', name:'Agent', page:3,
+    what:'The contracted salesperson. Everything above starts from here.',
+    reqs:[
+      { label:'Contracted salesperson with Guardian Life', detail:'Licensed and under contract.' }
+    ],
+    pays:''
+  },
+  {
+    key:'executive', track:'sales', name:'Executive Agent', page:4,
+    what:'The first appointment above a full agency contract, and the gateway to the rest of the path.',
+    pays:'Reviewed continuously — the appointment may be revoked if the conditions are not maintained for two consecutive calendar years.',
+    reqs:[
+      { label:'Four years contracted', detail:'Contracted as a salesperson with Guardian Life for at least four years before appointment.' },
+      { label:'$1,500,000 API over the previous two calendar years',
+        detail:'Total production as determined by the Company.',
+        measure:{ k:'apiY', target:1500000, note:'Measured here against your API this year — the requirement is two calendar years.' } },
+      { label:'90% persistency', detail:'Over the same two calendar years.' },
+      { label:'Client base of at least 325', detail:'Clients, not policies — active life and Individual Health, of which at least 275 must be active life clients.' },
+      { label:'FSCP™ (2015) or equivalent', detail:'Or a similar insurance designation: CFP, CLF, CLU, ChFC.' },
+      { label:'MDRT full member within the last three years', detail:'Qualified and attended, at least once in the three years before appointment.' },
+      { label:'The Company’s Mentoring programme', detail:'Attended.' },
+      { label:'Continuous professional development', detail:'In line with the insurance industry.' }
     ]
   },
   {
-    key: 'confirmed',
-    name: 'Confirmed Agent',
-    what: 'Twelve months in. The contract sets these as the level below which the agreement does not continue.',
-    pays: '',
-    months: 12,
-    reqs: [
-      { k:'apiY',   label:'Annualised premium written', target:250000, unit:'$', src:'contract' },
-      { k:'commY',  label:'Commissions earned',         target:100000, unit:'$', src:'contract' }
+    key:'senior', track:'sales', name:'Senior Sales Consultant', page:6,
+    what:'The senior producing appointment. Requested through the Branch Manager, screened and decided by the Vice President — Sales, and reviewed every six months.',
+    pays:'Reviewed bi-annually to ensure production standards are maintained.',
+    reqs:[
+      { label:'Five consecutive years as an Executive Agent', detail:'At Guardian Life of the Caribbean — or ten consecutive years in a senior sales or management position in the life insurance industry.' },
+      { label:'$2,000,000 new gross API over the previous 24 months',
+        detail:'Settled, in the twenty-four months before appointment.',
+        measure:{ k:'apiY', target:2000000, note:'Measured here against your API this year — the requirement is twenty-four months.' } },
+      { label:'Persistency not below 90%', detail:'Averaged over the last 24 months.' },
+      { label:'Client base of at least 325', detail:'Clients, not policies.' },
+      { label:'FSCP™ (2015) or equivalent', detail:'Or another insurance designation: CFP, CLF, CLU, ChFC.' }
     ]
   },
   {
-    key: 'executive',
-    name: 'Executive Agent',
-    what: 'The first rung above a full agency contract.',
-    pays: 'Overrides begin at this level.',
-    months: null,
-    reqs: []            /* NOT SET — the branch has not published these yet */
+    key:'trainee', track:'management', name:'Trainee Manager', page:9,
+    what:'The first step onto the management track, entered through the Emerging Leaders Programme. A review period, not yet a destination.',
+    pays:'Overriding commissions. Under review for a maximum of 18 months, when a decision is made on promotion to Unit Manager.',
+    reqs:[
+      { label:'Five years contracted', detail:'The agent must have been contracted for at least five years.' },
+      { label:'Client base of at least 325', detail:'Clients, not policies — of which at least 275 must be active life clients.' },
+      { label:'Recruited at least two agents', detail:'With the assistance of their manager.' },
+      { label:'FSCP (2015) or equivalent', detail:'Or another insurance designation: CFP, CLU, ChFC.' },
+      { label:'TTAIFA and CBTT development credits', detail:'Maintained continuously.' },
+      { label:'ELP and pre-management courses', detail:'Emerging Leaders Programme, Developing Future Leaders, and Business Planning.' },
+      { label:'A production requirement over the preceding two years', detail:'Stated in the document — the clause did not extract cleanly here. Read it on page 9 before relying on it.', unread:true }
+    ]
   },
   {
-    key: 'senior',
-    name: 'Senior Sales Consultant',
-    what: 'The senior producing level in the branch.',
-    pays: 'Overrides up to 10% · private office.',
-    months: null,
-    reqs: []            /* NOT SET */
+    key:'unit', track:'management', name:'Unit Manager', page:11,
+    what:'A unit of your own. Promotions are made in October or April.',
+    pays:'Overriding commissions on the unit.',
+    reqs:[
+      { label:'Six years contracted', detail:'As a Trainee Manager.' },
+      { label:'Unit producing $1,600,000 API', detail:'In the twelve months preceding an October or April appointment.',
+        measure:{ k:'unitApiY', target:1600000, note:'This is your unit\'s production, not your own.' } },
+      { label:'Contracted agents by level', detail:'5 agents in years 1–3 · 8 by >3–5 · 10 by >5–8 · 12 by >8–10 · 15 beyond 10 years. Recruited and retained, net.' },
+      { label:'Probation contract', detail:'Signed.' },
+      { label:'ELP, Business Planning, Developing Future Leaders', detail:'Pre-management courses completed.' },
+      { label:'AMTC by the end of your second year', detail:'Commenced and successfully completed.' },
+      { label:'TTAIFA and CBTT development credits', detail:'Maintained continuously.' }
+    ]
+  },
+  {
+    key:'abm', track:'management', name:'Assistant Branch Manager', page:13,
+    what:'A larger unit and a wider managerial remit. Judged on planning, recruiting, selection, training and supervision as much as on production.',
+    pays:'',
+    reqs:[
+      { label:'Three years as a Unit Manager', detail:'At least.' },
+      { label:'Twelve agents under contract', detail:'In your unit.' },
+      { label:'$6,000,000 API for the unit', detail:'In the twelve months preceding an October or April promotion.',
+        measure:{ k:'unitApiY', target:6000000, note:'Your unit\'s production.' } },
+      { label:'Met at least 80% of standard in the preceding two years', detail:'Prior to appointment.' },
+      { label:'Contracted agents by level', detail:'12 agents in years 1–3 · 15 by >3–5 · 20 beyond 5 years. Recruited and retained, net.' },
+      { label:'AMTC, Pacesetter, MAPS and AES', detail:'All recommended management training programmes completed successfully.' },
+      { label:'TTAIFA and CBTT development credits', detail:'Maintained continuously.' }
+    ]
+  },
+  {
+    key:'bm', track:'management', name:'Branch Manager', page:15,
+    what:'The branch. Appointed on the record of everything below it.',
+    pays:'',
+    reqs:[
+      { label:'Three years as an Assistant Branch Manager', detail:'At least.' },
+      { label:'Thirty agents under contract', detail:'In your unit.' },
+      { label:'$12,000,000 API', detail:'In the twelve months prior to an October or April appointment.',
+        measure:{ k:'unitApiY', target:12000000, note:'Your unit\'s production.' } },
+      { label:'Developed and appointed a Unit Manager', detail:'Who has held the position for at least one year.' },
+      { label:'CIAM designation', detail:'Attained.' },
+      { label:'Contracted agents by level', detail:'30 agents in years 1–3 · 40 by >3–6 · 50 beyond 6 years. Recruited and retained, net.' },
+      { label:'TTAIFA and CBTT development credits', detail:'Maintained continuously.' }
+    ]
   }
 ];
+
+const TRACKS = {
+  sales:      { label:'The sales track',      blurb:'Producing. You stay in front of clients and the appointments recognise the book you build.' },
+  management: { label:'The management track', blurb:'Building producers. Entered through the Emerging Leaders Programme, and measured on your unit as much as on yourself.' }
+};
 
 /* MDRT is not a rung. It is an annual qualification set outside the branch
    and the figures change every year, so it is shown as recognition rather
@@ -316,17 +395,22 @@ const fmtReq = (v, unit) => unit === '$' ? money(v) : unit === '%' ? v + '%' : S
    loosely and fall back to the first rung rather than guessing upward. */
 function rungIndexFor(profile, prod) {
   const said = String((prod && prod.level) || (profile && profile.grade) || '').toLowerCase();
-  if (/senior|ssc|consultant/.test(said))  return 3;
-  if (/exec/.test(said))                   return 2;
-  if (/confirm|full|agent/.test(said) && !/probation|trainee/.test(said)) return 1;
-  return 0;
+  if (/branch manager/.test(said) && !/assist|asst|abm/.test(said)) return idx('bm');
+  if (/assist|asst|abm/.test(said))                                 return idx('abm');
+  if (/unit manager|\bum\b/.test(said))                             return idx('unit');
+  if (/trainee/.test(said))                                         return idx('trainee');
+  if (/senior|ssc|consultant/.test(said))                           return idx('senior');
+  if (/exec/.test(said))                                            return idx('executive');
+  return idx('agent');
 }
+function idx(key) { return LADDER.findIndex(L => L.key === key); }
 
 /* What the agent has actually produced, against a requirement key. */
 function actualFor(k, prod) {
   if (!prod) return null;
   if (k === 'apiY')  return Number(prod.apiY)  || 0;
   if (k === 'appsY') return Number(prod.appsY) || 0;
+  if (k === 'unitApiY') return prod.unitApiY == null ? null : Number(prod.unitApiY);
   if (k === 'commY') return prod.commY == null ? null : Number(prod.commY);
   if (k === 'persist') return prod.persist == null ? null : Number(prod.persist);
   return null;
@@ -419,33 +503,23 @@ function render() {
   const next = LADDER[at + 1] || null;
   const here = at >= 0 ? LADDER[at] : null;
 
-  /* What the ring measures. An agent on probation who has not yet met
-     probation's numbers cares about finishing probation — not about the rung
-     after it. So aim at the current rung until it is met, and only then at
-     the next one. Getting this backwards told a probationary agent they were
-     28% of the way to a level two steps from the one they are fighting. */
-  function metAll(rung) {
-    if (!rung || !rung.reqs.length || !prod) return false;
-    const known = rung.reqs.map(r => ({ r, a: actualFor(r.k, prod) })).filter(x => x.a !== null);
-    return known.length > 0 && known.every(x => x.a >= x.r.target);
-  }
-  let aim = null;
-  if (!STATE.peek && prod) {
-    if (here && here.reqs.length && !metAll(here)) aim = here;
-    else if (next && next.reqs.length)             aim = next;
-  }
-
+  /* What the ring measures. An agent works towards the level above the one
+     they hold, so aim there. Only the one requirement per position the
+     Production sheet can actually check moves the ring — the designations,
+     client base and course requirements are standards to read, not numbers
+     this system holds, and pretending otherwise would be a lie in a ring. */
+  const aim = (!STATE.peek && next) ? next : null;
+  const aimMeasure = aim ? aim.reqs.filter(r => r.measure) : [];
   let pct = null;
-  if (aim) {
-    const parts = aim.reqs
-      .map(r => ({ r, a: actualFor(r.k, prod) }))
+  if (aim && prod && aimMeasure.length) {
+    const parts = aimMeasure
+      .map(r => ({ r, a: actualFor(r.measure.k, prod) }))
       .filter(x => x.a !== null);
     if (parts.length) {
       pct = Math.round(parts.reduce((s, x) =>
-        s + Math.min(1, x.a / x.r.target), 0) / parts.length * 100);
+        s + Math.min(1, x.a / x.r.measure.target), 0) / parts.length * 100);
     }
   }
-  const aimLabel = aim ? (aim === here ? 'of ' + aim.name : 'to ' + aim.name) : '';
 
   $('view').innerHTML = `
     <section class="hero">
@@ -458,11 +532,11 @@ function render() {
             : (here ? 'You are on <b style="color:var(--ink)">' + esc(here.name) + '</b>' : 'Your level is not set in the branch sheet')
               + (p.unit ? ' · ' + esc(p.unit) : '')}</p>
         </div>
-        ${pct !== null ? `<div class="ring" role="img" aria-label="${pct} percent ${esc(aimLabel)}">
+        ${pct !== null ? `<div class="ring" role="img" aria-label="${pct} percent of the production requirement for ${esc(aim ? aim.name : '')}">
           <svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="52"/>
             <circle class="ring-fg" cx="60" cy="60" r="52"
               style="stroke-dasharray:${2*Math.PI*52};stroke-dashoffset:${2*Math.PI*52*(1-pct/100)}"/></svg>
-          <div class="ring-val"><b>${pct}%</b><span>${esc(aim === here ? 'of this level' : 'to next')}</span></div>
+          <div class="ring-val"><b>${pct}%</b><span>on production</span></div>
         </div>` : ''}
       </div>
 
@@ -483,12 +557,19 @@ function render() {
 
     <section>
       <div class="sec-label">The path</div>
-      <p class="sec-sub">Four levels. Each one is a standard, not an opinion &mdash; when you
-        meet the numbers, you have met them, and nobody has to be persuaded.</p>
+      <p class="sec-sub">Two tracks, seven positions, every requirement quoted from the Company's
+        own <b>${esc(DOC)}</b>. These are standards, not opinions &mdash; when you meet them
+        you have met them, and nobody has to be persuaded.</p>
 
-      <ol class="ladder">
-        ${LADDER.map((L, i) => rungHtml(L, i, at, prod)).join('')}
-      </ol>
+      ${Object.keys(TRACKS).map(tk => `
+        <div class="track">
+          <div class="track-h">${esc(TRACKS[tk].label)}</div>
+          <p class="track-b">${esc(TRACKS[tk].blurb)}</p>
+          <ol class="ladder">
+            ${LADDER.map((L, i) => ({ L, i })).filter(x => x.L.track === tk)
+              .map(x => rungHtml(x.L, x.i, at, prod)).join('')}
+          </ol>
+        </div>`).join('')}
     </section>
 
     <div class="note">
@@ -509,42 +590,45 @@ function rungHtml(L, i, at, prod) {
   const now  = at >= 0 && i === at;
   const next = at >= 0 && i === at + 1;
   const cls  = done ? 'done' : now ? 'now' : '';
-  const tag  = done ? '<span class="rtag done">Reached</span>'
+  const tag  = done ? '<span class="rtag done">Held</span>'
              : now  ? '<span class="rtag now">You are here</span>'
-             : next ? '<span class="rtag next">Next</span>'
-             : L.reqs.length ? '' : '<span class="rtag unset">Not published</span>';
+             : next ? '<span class="rtag next">Next</span>' : '';
 
   return `<li class="rung ${cls}">
-    <span class="pip">${done ? '✓' : (i + 1)}</span>
+    <span class="pip">${done ? '\u2713' : (LADDER.filter(x => x.track === L.track).indexOf(L) + 1)}</span>
     <div class="rcard">
       <div class="rhead"><span class="rname">${esc(L.name)}</span>${tag}</div>
-      <p class="rwhat">${esc(L.what)}${L.months ? ' Measured at ' + L.months + ' months.' : ''}</p>
+      <p class="rwhat">${esc(L.what)}</p>
       ${L.pays ? `<p class="rpays">${esc(L.pays)}</p>` : ''}
-      ${L.reqs.length ? `<div class="reqs">${L.reqs.map(r => reqHtml(r, prod, now || next)).join('')}</div>`
-        : `<div class="notset">
-             <b>The branch has not published this level's requirements</b>
-             Nothing is shown here rather than a number somebody guessed. Once the
-             Branch Manager sets them, your progress appears automatically.
-           </div>`}
+      <div class="reqs">${L.reqs.map(r => reqHtml(r, prod, now || next)).join('')}</div>
+      <p class="rsrc">${esc(DOC)} &middot; page ${L.page}</p>
     </div>
   </li>`;
 }
 
+/* One requirement. If the Production sheet can check it and we are on or next
+   to this position, it gets a live bar and a gap. Everything else states the
+   standard — which is what the Company's document does, and is more honest
+   than a bar against a number nobody is holding. */
 function reqHtml(r, prod, live) {
-  const a = live ? actualFor(r.k, prod) : null;
-  const target = r.target;
-  const have = a === null ? null : a;
-  const pc = have === null ? 0 : Math.min(100, Math.round(have / target * 100));
+  if (!r.measure) {
+    return `<div class="req plain${r.unread ? ' unread' : ''}">
+      <span class="req-n"><b>${esc(r.label)}</b>${r.detail ? '<span>' + esc(r.detail) + '</span>' : ''}</span>
+    </div>`;
+  }
+  const have = live ? actualFor(r.measure.k, prod) : null;
+  const target = r.measure.target;
+  const pc  = have === null ? 0 : Math.min(100, Math.round(have / target * 100));
   const met = have !== null && have >= target;
   const gap = have === null ? '' : met
-    ? 'Met — ' + fmtReq(have, r.unit) + ' against ' + fmtReq(target, r.unit)
-    : fmtReq(target - have, r.unit) + ' to go';
+    ? 'Met \u2014 ' + money(have) + ' against ' + money(target)
+    : money(target - have) + ' to go';
 
   return `<div class="req">
-    <span class="req-n">${esc(r.label)}</span>
-    <span class="req-v">${have === null ? fmtReq(target, r.unit) : fmtReq(have, r.unit) + ' / ' + fmtReq(target, r.unit)}</span>
+    <span class="req-n"><b>${esc(r.label)}</b>${r.detail ? '<span>' + esc(r.detail) + '</span>' : ''}</span>
+    <span class="req-v">${have === null ? money(target) : money(have) + ' / ' + money(target)}</span>
     ${have === null ? '' : `<span class="req-t"><i class="${met ? 'met' : ''}" style="width:${pc}%"></i></span>
-      <span class="req-gap ${met ? 'met' : ''}">${esc(gap)}</span>`}
+      <span class="req-gap ${met ? 'met' : ''}">${esc(gap)}${r.measure.note ? ' \u00b7 ' + esc(r.measure.note) : ''}</span>`}
   </div>`;
 }
 
