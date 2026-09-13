@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Syllabus Browser | CSEC Study Hub</title>
-<meta name="description" content="The Form 1 to Form 5 road to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
+<meta name="description" content="The Standard 1 to Form 5 road through SEA to CSEC — what matters in each year, a countdown to the examination, and the full syllabus strand list for every subject."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/csec.css"/>
@@ -43,9 +43,17 @@
       <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
         <div style="flex:1;min-width:200px">
           <label class="fl" for="formsel">I am currently in</label>
-          <select class="fi" id="formsel" style="max-width:230px">
-            <option value="1">Form 1</option><option value="2" selected>Form 2</option>
-            <option value="3">Form 3</option><option value="4">Form 4</option><option value="5">Form 5</option>
+          <select class="fi" id="formsel" style="max-width:260px">
+            <optgroup label="Primary school">
+              <option value="1">Standard 1</option><option value="2">Standard 2</option>
+              <option value="3">Standard 3</option><option value="4">Standard 4</option>
+              <option value="5">Standard 5 — SEA year</option>
+            </optgroup>
+            <optgroup label="Secondary school">
+              <option value="6">Form 1</option><option value="7">Form 2</option>
+              <option value="8" selected>Form 3</option><option value="9">Form 4</option>
+              <option value="10">Form 5 — CSEC year</option>
+            </optgroup>
           </select>
         </div>
         <div class="grid g3" style="flex:2;min-width:280px">
@@ -64,7 +72,7 @@
       <div style="flex:1;min-width:200px">
         <h3>What is this year actually for?</h3>
         <p class="sub">The guided journey breaks each form into its three terms, shows what is new
-        this year, what you are still carrying from below, and every milestone to CSEC.</p>
+        this year, what you are still carrying from below, and every milestone ahead, through SEA and on to CSEC.</p>
       </div>
       <span class="r-arrow">→</span>
     </a>
@@ -114,12 +122,12 @@
     : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a>';
 
-  var form = me && me.role==='student' ? me.form : 2;
+  var form = me && me.role==='student' ? me.level : 8;
   $('formsel').value=String(form);
 
   /* ---------------- countdown + roadmap ---------------- */
   function paintForm(){
-    form=parseInt($('formsel').value,10)||2;
+    form=parseInt($('formsel').value,10)||8;
     var cd=CSEC.countdown(form);
     $('cd-year').textContent=cd.year;
     $('cd-months').textContent=cd.months;
@@ -145,7 +153,7 @@
     $('strands').innerHTML=s.strands.map(function(t){
       var marks='';
       for(var f=1;f<=5;f++){
-        marks+='<i class="'+(t.forms.indexOf(f)>-1?'on':'')+'" title="Form '+f+'">'+f+'</i>';
+        marks+='<i class="'+(t.levels.indexOf(f)>-1?'on':'')+'" title="'+CSEC.levelLabel(f)+'">'+f+'</i>';
       }
       var stat = me && me.role==='student' ? CSEC.strandStat(me.id,t.id) : null;
       var badge = !stat ? ''

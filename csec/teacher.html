@@ -145,7 +145,7 @@
     var w=CSEC.weakSpots(k.id,1)[0];
     var accCell = ov.pct==null ? '<span class="pill mute">no data</span>'
       : '<span class="pill '+(ov.pct>=75?'good':ov.pct>=50?'gold':'bad')+'">'+ov.pct+'%</span>';
-    return '<tr><td><b>'+esc(k.name)+'</b></td><td>'+k.form+'</td><td>'+ov.seen+'</td>'+
+    return '<tr><td><b>'+esc(k.name)+'</b></td><td>'+k.level+'</td><td>'+ov.seen+'</td>'+
       '<td>'+accCell+'</td><td>'+st.current+'</td><td>'+esc(last)+'</td>'+
       '<td>'+(w? esc(w.strandName)+' <span style="color:var(--muted)">('+w.pct+'%)</span>' : '<span style="color:var(--muted)">—</span>')+'</td></tr>';
   }).join('');
@@ -184,7 +184,7 @@
 
   /* ---------------- focus topic ---------------- */
   $('f-student').innerHTML=kids.map(function(k){
-    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — '+CSEC.levelLabel(k.level)+'</option>';
   }).join('');
 
   function fillStrands(){
@@ -194,7 +194,7 @@
       var s=C.subjects[sid]; if(!s) return;
       html+='<optgroup label="'+esc(s.name)+'">';
       s.strands.forEach(function(t){
-        if(t.forms.indexOf(kid.form)===-1) return;
+        if(t.levels.indexOf(kid.level)===-1) return;
         html+='<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>';
       });
       html+='</optgroup>';

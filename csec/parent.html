@@ -143,17 +143,17 @@
   $('body').classList.remove('hidden');
 
   $('pick').innerHTML=kids.map(function(k){
-    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+    return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — '+CSEC.levelLabel(k.level)+'</option>';
   }).join('');
   $('pick').addEventListener('change',function(){ paint($('pick').value); });
 
   function paint(id){
     var kid=CSEC.profile(id); if(!kid) return;
     var st=CSEC.streak(kid.id), ov=CSEC.overallStat(kid.id), pr=CSEC.progress(kid.id);
-    var cd=CSEC.countdown(kid.form);
+    var cd=CSEC.countdown(kid.level);
 
     $('hd-title').textContent=kid.name;
-    $('hd-sub').textContent=kid.school+' · Form '+kid.form+' · sits CSEC in '+cd.year;
+    $('hd-sub').textContent=kid.school+' · '+CSEC.levelLabel(kid.level)+' · sits '+cd.exam+' in '+cd.year;
 
     /* sessions in the last 7 days */
     var weekAgo=Date.now()-7*86400000;

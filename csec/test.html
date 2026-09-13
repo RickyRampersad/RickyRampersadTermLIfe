@@ -185,7 +185,7 @@
     var parts=$('t-len').value.split(':');
     var want=parseInt(parts[0],10), mins=parseInt(parts[1],10);
 
-    var pool = v==='mixed' ? CSEC.questionsFor(me.subjects,me.form) : CSEC.questionsFor([v],me.form);
+    var pool = v==='mixed' ? CSEC.questionsFor(me.subjects,me.level) : CSEC.questionsFor([v],me.level);
     if(pool.length<4){
       $('t-err').textContent='There are only '+pool.length+' questions in the bank for that choice — not enough for a test. Try Mixed.';
       return;

@@ -62,7 +62,7 @@
       <div class="tile"><div class="big" id="t-streak">0</div><div class="lab">Day streak</div></div>
       <div class="tile teal"><div class="big" id="t-answered">0</div><div class="lab">Questions answered</div></div>
       <div class="tile"><div class="big" id="t-acc">—</div><div class="lab">Overall accuracy</div></div>
-      <div class="tile teal"><div class="big" id="t-days">—</div><div class="lab" id="t-dayslab">Days to CSEC</div></div>
+      <div class="tile teal"><div class="big" id="t-days">—</div><div class="lab" id="t-dayslab">Days to exam</div></div>
     </div>
 
     <!-- ---------------- readiness + quick actions ---------------- -->
@@ -175,24 +175,24 @@
 
   /* ---------------- header ---------------- */
   var h=new Date().getHours();
-  $('hd-eyebrow').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+' · Form '+me.form;
+  $('hd-eyebrow').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+' · '+CSEC.levelLabel(me.level);
   $('hd-title').textContent=me.name;
-  $('nav-who').textContent='Form '+me.form;
-  var cd=CSEC.countdown(me.form);
-  $('hd-sub').textContent=me.school+' · You sit CSEC in '+cd.year+'.';
+  $('nav-who').textContent=CSEC.levelLabel(me.level);
+  var cd=CSEC.countdown(me.level);
+  $('hd-sub').textContent=me.school+' · You sit '+cd.exam+' in '+cd.year+'.';
 
   /* ---------------- tiles ---------------- */
   var st=CSEC.streak(me.id), ov=CSEC.overallStat(me.id);
   $('t-streak').textContent=st.current;
   $('t-answered').textContent=ov.seen;
   $('t-acc').textContent=ov.pct==null?'—':ov.pct+'%';
-  if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to CSEC '+cd.year; }
-  else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to CSEC '+cd.year; }
+  if(cd.days>400){ $('t-days').textContent=cd.months; $('t-dayslab').textContent='Months to '+cd.exam+' '+cd.year; }
+  else { $('t-days').textContent=cd.days; $('t-dayslab').textContent='Days to '+cd.exam+' '+cd.year; }
 
   /* ---------------- this year, this term ---------------- */
   var J=CSEC.journeyNow(me.id);
   if(J){
-    $('jn-form').textContent=J.form;
+    $('jn-form').textContent=CSEC.levelInfo(J.level).short;
     $('jn-term').textContent=J.stage.label+' · Term '+J.termNo+' · '+J.schoolYear;
     $('jn-title').textContent=J.term.title;
     $('jn-aim').textContent=J.term.aim+(J.milestones.length&&J.milestones[0].now

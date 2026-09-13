@@ -23,7 +23,26 @@
 
   /* ------------------------------ profiles ----------------------------- */
   /* profile = {id, name, role, form, school, pin, subjects[], linked[]} */
-  function profiles() { return read('profiles', []); }
+  /* Profiles written before the ladder went to ten levels stored `form` 1-5.
+     Migrate on read: Form N is level N + 5. Done here rather than in a one-off
+     script so a device that has been offline for a month still upgrades itself. */
+  function migrateLevel(p) {
+    if (p && p.level == null && p.form != null) {
+      p.level = Number(p.form) + 5;
+      delete p.form;
+    }
+    return p;
+  }
+
+  function profiles() {
+    var list = read('profiles', []);
+    var changed = false;
+    list.forEach(function (p) {
+      if (p && p.level == null && p.form != null) { migrateLevel(p); changed = true; }
+    });
+    if (changed) write('profiles', list);
+    return list;
+  }
   function saveProfiles(list) { write('profiles', list); }
   function profile(id) {
     var all = profiles();
@@ -42,16 +61,21 @@
     return s;
   }
 
+  /* A Standard 3 should not open the app to a fourteen-subject CSEC timetable. */
+  function defaultsFor(level) {
+    return level <= 5 ? (C.defaultPrimary || []).slice() : (C.defaultSelection || []).slice();
+  }
+
   function createProfile(o) {
     var all = profiles();
     var p = {
       id: 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
       name: (o.name || '').trim() || 'Unnamed',
       role: o.role || 'student',
-      form: o.form || 2,
-      school: o.school || 'Lakshmi Girls’ Hindu College',
+      level: o.level || 8,
+      school: o.school || '',
       pin: String(o.pin || '').trim(),
-      subjects: o.subjects || C.defaultSelection.slice(),
+      subjects: o.subjects || defaultsFor(o.level || 8),
       linked: o.linked || [],
       created: Date.now(),
       updatedAt: Date.now(),
@@ -210,7 +234,7 @@
     var ov = overallStat(studentId);
     p.terms = p.terms || {};
     p.terms[t.key] = {
-      key: t.key, year: t.year, term: t.term, form: prof.form,
+      key: t.key, year: t.year, term: t.term, level: prof.level,
       at: Date.now(), pct: ov.pct, seen: ov.seen,
       coverage: coverage(studentId).pct, subjects: subs
     };
@@ -227,10 +251,10 @@
 
   /* Moving up a form. Mastery carries forward — she has not forgotten Form 2
      maths — but the year is stamped into the record so the history survives. */
-  function promote(studentId, toForm) {
+  function promote(studentId, toLevel) {
     var prof = profile(studentId); if (!prof) return null;
-    var from = prof.form, to = toForm || Math.min(5, from + 1);
-    if (to === from) return null;
+    var from = prof.level, to = toLevel || Math.min(10, from + 1);
+    if (to === from || to < 1 || to > 10) return null;
     snapshotTerm(studentId);
     var p = progress(studentId), ov = overallStat(studentId);
     p.history = p.history || [];
@@ -240,19 +264,46 @@
       term: termOf().key
     });
     saveProgress(studentId, p);
-    updateProfile(studentId, { form: to });
-    return { from: from, to: to };
+
+    /* Crossing out of primary: a child arriving in Form 1 still ticked for
+       Standard-level Mathematics and ELA Writing would get a daily plan full of
+       subjects that no longer exist for them. Swap the ticks once, and only when
+       every subject they hold belongs to the stage they are leaving. */
+    var patch = { level: to };
+    var crossing = from <= 5 && to >= 6;
+    var backwards = from >= 6 && to <= 5;
+    if (crossing || backwards) {
+      var leaving = crossing ? 'primary' : 'secondary';
+      var allFromOldStage = (prof.subjects || []).length && (prof.subjects || []).every(function (id) {
+        var subj = C.subjects[id];
+        if (!subj) return false;
+        return (subj.stage === 'primary') === (leaving === 'primary');
+      });
+      if (allFromOldStage) patch.subjects = defaultsFor(to);
+    }
+    updateProfile(studentId, patch);
+    return { from: from, to: to, crossedSEA: crossing, subjectsReset: !!patch.subjects };
   }
 
   /* ---------------------------- the journey ---------------------------- */
-  function stageOf(form) {
+  function levelInfo(level) {
+    var l = (C.levels || []).filter(function (x) { return x.n === level; });
+    return l[0] || null;
+  }
+  /* The one place a level number becomes words. Everything on screen uses it,
+     so "Standard 3" and "Form 2" never have to be spelled out in a template. */
+  function levelLabel(level) {
+    var l = levelInfo(level);
+    return l ? l.label : ('Level ' + level);
+  }
+  function stageOf(level) {
     var st = (C.stages || []).filter(function (s) {
-      return s.forms && s.forms.indexOf(form) > -1;
+      return s.levels && s.levels.indexOf(level) > -1;
     });
     return st[0] || null;
   }
-  function roadmapFor(form) {
-    var r = (C.roadmap || []).filter(function (x) { return x.form === form; });
+  function roadmapFor(level) {
+    var r = (C.roadmap || []).filter(function (x) { return x.level === level; });
     return r[0] || null;
   }
 
@@ -260,27 +311,28 @@
      and what is coming. This is what makes the year guided rather than a list. */
   function journeyNow(studentId) {
     var prof = profile(studentId); if (!prof) return null;
-    var t = termOf(), year = roadmapFor(prof.form);
+    var t = termOf(), year = roadmapFor(prof.level);
     if (!year) return null;
     var term = year.terms.filter(function (x) { return x.n === t.term; })[0] || year.terms[0];
 
-    /* Milestones still ahead, nearest first, across the remaining forms. */
+    /* Milestones still ahead, nearest first, across the rest of the ladder —
+       SEA and CSEC both, so a Standard 3 can see what is coming in Form 5. */
     var ahead = [];
     (C.roadmap || []).forEach(function (r) {
-      if (r.form < prof.form) return;
+      if (r.level < prof.level) return;
       (r.milestones || []).forEach(function (m) {
-        if (r.form === prof.form && m.term < t.term) return;
-        ahead.push({ form: r.form, term: m.term, what: m.what, why: m.why,
-                     when: 'Form ' + r.form + ', Term ' + m.term,
-                     now: r.form === prof.form && m.term === t.term });
+        if (r.level === prof.level && m.term < t.term) return;
+        ahead.push({ level: r.level, term: m.term, what: m.what, why: m.why,
+                     when: levelLabel(r.level) + ', Term ' + m.term,
+                     now: r.level === prof.level && m.term === t.term });
       });
     });
-    ahead.sort(function (a, b) { return (a.form - b.form) || (a.term - b.term); });
+    ahead.sort(function (a, b) { return (a.level - b.level) || (a.term - b.term); });
 
     return {
-      form: prof.form, stage: stageOf(prof.form), year: year,
+      level: prof.level, label: levelLabel(prof.level), stage: stageOf(prof.level), year: year,
       term: term, termNo: t.term, termKey: t.key, schoolYear: t.year,
-      milestones: ahead, exam: countdown(prof.form)
+      milestones: ahead, exam: countdown(prof.level)
     };
   }
 
@@ -292,8 +344,8 @@
     (prof.subjects || []).forEach(function (id) {
       var subj = C.subjects[id]; if (!subj) return;
       subj.strands.forEach(function (t) {
-        var now = t.forms.indexOf(prof.form) > -1;
-        var before = prof.form > 1 && t.forms.indexOf(prof.form - 1) > -1;
+        var now = t.levels.indexOf(prof.level) > -1;
+        var before = prof.level > 1 && t.levels.indexOf(prof.level - 1) > -1;
         if (now && !before) {
           out.push({ subj: id, subjName: subj.name, icon: subj.icon,
                      strand: t.id, strandName: t.name, note: t.note,
@@ -312,7 +364,7 @@
     (prof.subjects || []).forEach(function (id) {
       var subj = C.subjects[id]; if (!subj) return;
       subj.strands.forEach(function (t) {
-        var earlier = t.forms.some(function (f) { return f < prof.form; });
+        var earlier = t.levels.some(function (f) { return f < prof.level; });
         if (!earlier) return;
         var st = strandStat(studentId, t.id);
         if (st.pct != null && st.pct < cap && st.seen >= 2) {
@@ -336,7 +388,7 @@
     list.forEach(function (id) {
       var subj = C.subjects[id]; if (!subj) return;
       subj.strands.forEach(function (t) {
-        var taught = t.forms.some(function (f) { return f <= prof.form; });
+        var taught = t.levels.some(function (f) { return f <= prof.level; });
         if (!taught) return;
         total++;
         var st = p.strands[t.id];
@@ -384,7 +436,7 @@
       subjName: result.subjName || 'Mixed', n: result.n || 0,
       correct: result.correct || 0, pct: result.pct || 0,
       secs: result.secs || 0, limit: result.limit || 0,
-      form: (profile(studentId) || {}).form, strands: result.strands || {}
+      level: (profile(studentId) || {}).level, strands: result.strands || {}
     });
     if (p.tests.length > 200) p.tests = p.tests.slice(-200);
     if (p.days.indexOf(today()) === -1) p.days.push(today());
@@ -536,12 +588,12 @@
   }
 
   /* ------------------------------ questions ---------------------------- */
-  function questionsFor(subjIds, form, strandIds) {
+  function questionsFor(subjIds, level, strandIds) {
     return Q.filter(function (q) {
       if (subjIds && subjIds.length && subjIds.indexOf(q.subj) === -1) return false;
       if (strandIds && strandIds.length && strandIds.indexOf(q.strand) === -1) return false;
-      /* Show material up to one form ahead — stretch, but not Form 5 in Form 2. */
-      if (form && q.form > form + 1) return false;
+      /* One level ahead is stretch; more than that is somebody else's year. */
+      if (level && q.level > level + 1) return false;
       return true;
     });
   }
@@ -577,8 +629,8 @@
       var subj = C.subjects[subjId];
       if (!subj) return;
       subj.strands.forEach(function (t) {
-        if (t.forms.indexOf(p.form) === -1) return;      /* not taught this year */
-        if (!questionsFor([subjId], p.form, [t.id]).length) return;  /* nothing to ask yet */
+        if (t.levels.indexOf(p.level) === -1) return;      /* not taught this year */
+        if (!questionsFor([subjId], p.level, [t.id]).length) return;  /* nothing to ask yet */
         var s = pr.strands[t.id];
         var score;
         if (!s || !s.seen) {
@@ -634,17 +686,45 @@
 
   /* --------------------------- exam countdown -------------------------- */
   /* CSEC sits in May/June. A Form 2 student in 2026 reaches Form 5 in 2029. */
-  function examYear(form) {
-    var now = new Date(), y = now.getFullYear();
-    /* School year rolls in September, so Sept-Dec is already the next year's cohort. */
-    var base = now.getMonth() >= 8 ? y + 1 : y;
-    return base + (5 - form);
+  /* Which examination is next, and when.
+   *
+   * Two now, not one: SEA at the end of Standard 5 (written in March) and CSEC
+   * at the end of Form 5 (May and June). A Standard 3 gets a countdown to SEA,
+   * not to an examination six years away that would mean nothing to them.
+   */
+  function nextExam(level) {
+    var stages = (C.stages || []).filter(function (st) { return st.examLevel; })
+      .sort(function (a, b) { return a.examLevel - b.examLevel; });
+    for (var i = 0; i < stages.length; i++) {
+      if (level <= stages[i].examLevel) return stages[i];
+    }
+    return stages[stages.length - 1] || null;
   }
-  function countdown(form) {
-    var y = examYear(form);
-    var exam = new Date(y + '-05-01T00:00:00');
+
+  /* The calendar year in which that examination is sat. The school year rolls in
+     September, so from September onwards we are already working towards the
+     following calendar year. */
+  function examYear(level) {
+    var st = nextExam(level);
+    if (!st) return null;
+    var now = new Date();
+    var base = now.getMonth() >= 8 ? now.getFullYear() + 1 : now.getFullYear();
+    return base + (st.examLevel - level);
+  }
+
+  function countdown(level) {
+    var st = nextExam(level);
+    if (!st) return { exam: null, year: null, days: 0, months: 0 };
+    var y = examYear(level);
+    var exam = new Date(y, st.examMonth, st.examDay || 1);
     var days = Math.max(0, Math.ceil((exam - new Date()) / 86400000));
-    return { year: y, days: days, months: Math.round(days / 30.4) };
+    return {
+      exam: st.exam,            /* 'SEA' or 'CSEC' */
+      stage: st.key,
+      year: y,
+      days: days,
+      months: Math.round(days / 30.4)
+    };
   }
 
   /* ------------------------- export / import --------------------------- */
@@ -719,6 +799,8 @@
     examYear: examYear, countdown: countdown,
     termOf: termOf, snapshotTerm: snapshotTerm, termHistory: termHistory, promote: promote,
     stageOf: stageOf, roadmapFor: roadmapFor, journeyNow: journeyNow,
+    levels: C.levels, levelInfo: levelInfo, levelLabel: levelLabel, nextExam: nextExam,
+    defaultsFor: defaultsFor, migrateLevel: migrateLevel,
     newThisYear: newThisYear, carriedForward: carriedForward,
     coverage: coverage, retention: retention, testStat: testStat, recordTest: recordTest,
     readiness: readiness, band: band, distinctionBoard: distinctionBoard,
