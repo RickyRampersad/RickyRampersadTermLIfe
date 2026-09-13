@@ -180,7 +180,7 @@
   if(me.role!=='student'){
     $('pickwrap').classList.remove('hidden');
     $('pick').innerHTML=kids.map(function(k){
-      return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — Form '+k.form+'</option>';
+      return '<option value="'+esc(k.id)+'">'+esc(k.name)+' — '+CSEC.levelLabel(k.level)+'</option>';
     }).join('');
     $('pick').addEventListener('change',function(){ paint($('pick').value); });
   }
@@ -189,9 +189,9 @@
 
   function paint(id){
     var kid=CSEC.profile(id); if(!kid) return;
-    var cd=CSEC.countdown(kid.form);
+    var cd=CSEC.countdown(kid.level);
     $('hd-title').textContent=kid.name+' — Progress & KPIs';
-    $('hd-sub').textContent='Form '+kid.form+' · '+kid.school+' · sits CSEC in '+cd.year;
+    $('hd-sub').textContent=CSEC.levelLabel(kid.level)+' · '+kid.school+' · sits '+cd.exam+' in '+cd.year;
 
     /* ---------- readiness hero ---------- */
     var R=CSEC.readiness(kid.id);
@@ -272,8 +272,8 @@
     $('promo-wrap').classList.toggle('hidden',!hist.length);
     $('promos').innerHTML=hist.slice().reverse().map(function(h){
       return '<div class="row"><div class="r-ico">🎓</div>'+
-        '<div class="r-text"><b>Form '+h.from+' → Form '+h.to+'</b>'+
-        '<span>'+esc(h.date)+' · '+esc(h.term||'')+' · left Form '+h.from+' at '+
+        '<div class="r-text"><b>'+CSEC.levelLabel(h.from)+' → '+CSEC.levelLabel(h.to)+'</b>'+
+        '<span>'+esc(h.date)+' · '+esc(h.term||'')+' · left '+CSEC.levelLabel(h.from)+' at '+
         (h.pct==null?'no data':h.pct+'% accuracy, '+h.coverage+'% coverage')+'</span></div></div>';
     }).join('');
 
@@ -281,7 +281,7 @@
     var tests=(CSEC.progress(kid.id).tests||[]).slice().reverse();
     $('tests').querySelector('tbody').innerHTML = tests.length? tests.map(function(t){
       var tone=t.pct>=75?'good':t.pct>=50?'gold':'bad';
-      return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.subjName)+'</td><td>'+(t.form||'—')+'</td>'+
+      return '<tr><td>'+esc(t.date)+'</td><td>'+esc(t.subjName)+'</td><td>'+(t.level?CSEC.levelInfo(t.level).short:'—')+'</td>'+
         '<td><span class="pill '+tone+'">'+t.pct+'%</span> '+t.correct+'/'+t.n+'</td>'+
         '<td>'+(t.secs<60? t.secs+' sec' : Math.round(t.secs/60)+' min')+
         ' of '+Math.round(t.limit/60)+' min</td></tr>';
@@ -316,7 +316,7 @@
     /* form bands — this is the Form 1-5 progression, made visible */
     var runs=[], cur=null;
     series.forEach(function(s,i){
-      if(!cur||cur.form!==s.form){ cur={form:s.form,from:i,to:i}; runs.push(cur); }
+      if(!cur||cur.level!==s.level){ cur={level:s.level,from:i,to:i}; runs.push(cur); }
       else cur.to=i;
     });
     runs.forEach(function(r){
@@ -324,7 +324,7 @@
       var x1=r.to===n-1?W-MR:(x(r.to,n)+x(r.to+1,n))/2;
       if(runs.indexOf(r)%2===0) svg.appendChild(el('rect',{class:'formband',x:x0,y:MT,width:Math.max(0,x1-x0),height:H-MT-MB}));
       var t=el('text',{class:'formtxt',x:(x0+x1)/2,y:MT+11,'text-anchor':'middle'});
-      t.textContent='Form '+r.form; svg.appendChild(t);
+      t.textContent=(CSEC.levelInfo(r.level)||{short:'L'+r.level}).short; svg.appendChild(t);
     });
 
     /* gridlines + y labels */
@@ -372,7 +372,7 @@
       series.forEach(function(s,j){ var d=Math.abs(x(j,n)-px); if(d<best){best=d;i=j;} });
       var s=series[i];
       cross.setAttribute('x1',x(i,n)); cross.setAttribute('x2',x(i,n)); cross.setAttribute('opacity',1);
-      tip.innerHTML='<b>'+esc(s.key)+'</b> · Form '+s.form+'<br>Accuracy '+(s.pct==null?'—':s.pct+'%')+
+      tip.innerHTML='<b>'+esc(s.key)+'</b> · '+CSEC.levelLabel(s.level)+'<br>Accuracy '+(s.pct==null?'—':s.pct+'%')+
                     '<br>Coverage '+(s.coverage==null?'—':s.coverage+'%')+'<br>'+s.seen+' questions';
       tip.style.opacity=1;
       var lx=x(i,n)/W*box.width;
@@ -384,7 +384,7 @@
 
   function fillTable(){
     $('tbl').querySelector('tbody').innerHTML = series.length? series.slice().reverse().map(function(s){
-      return '<tr><td>'+esc(s.key)+'</td><td>'+s.form+'</td>'+
+      return '<tr><td>'+esc(s.key)+'</td><td>'+((CSEC.levelInfo(s.level)||{short:s.level}).short)+'</td>'+
         '<td>'+(s.pct==null?'—':s.pct+'%')+'</td><td>'+(s.coverage==null?'—':s.coverage+'%')+'</td>'+
         '<td>'+s.seen+'</td></tr>';
     }).join('') : '<tr><td colspan="5" style="color:var(--muted)">No terms recorded yet.</td></tr>';

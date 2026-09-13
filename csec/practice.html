@@ -156,7 +156,7 @@
     var s=C.subjects[id]; if(!s) return;
     opts.push({v:'subject:'+id,t:s.icon+'  '+s.name});
     s.strands.forEach(function(t){
-      if(t.forms.indexOf(me.form)===-1) return;
+      if(t.levels.indexOf(me.level)===-1) return;
       opts.push({v:'strand:'+t.id,t:'      └ '+t.name});
     });
   });
@@ -168,7 +168,7 @@
   if(params.get('mode')==='plan')       $('s-what').value='plan';
   else if(params.get('strand'))         $('s-what').value='strand:'+params.get('strand');
   else if(params.get('subject'))        $('s-what').value='subject:'+params.get('subject');
-  $('s-sub').textContent='Form '+me.form+' · questions are drawn from your syllabus up to one form ahead.';
+  $('s-sub').textContent=CSEC.levelLabel(me.level)+' · questions come from your syllabus, up to one year ahead.';
 
   /* ---------- assemble the deck ---------- */
   function build(){
@@ -177,18 +177,18 @@
     if(what==='plan'){
       var plan=CSEC.planFor(me.id,6);
       var ids=plan.map(function(r){return r.strand;});
-      pool=CSEC.questionsFor(me.subjects,me.form,ids);
+      pool=CSEC.questionsFor(me.subjects,me.level,ids);
       label='Today’s plan';
     } else if(what.indexOf('subject:')===0){
       var sid=what.slice(8);
-      pool=CSEC.questionsFor([sid],me.form);
+      pool=CSEC.questionsFor([sid],me.level);
       label=(C.subjects[sid]||{}).name||'Subject';
     } else if(what.indexOf('strand:')===0){
       var tid=what.slice(7);
-      pool=CSEC.questionsFor(me.subjects,me.form,[tid]);
+      pool=CSEC.questionsFor(me.subjects,me.level,[tid]);
       label=strandName(tid);
     } else {
-      pool=CSEC.questionsFor(me.subjects,me.form);
+      pool=CSEC.questionsFor(me.subjects,me.level);
       label='Mixed practice';
     }
     if(!pool.length) return null;
@@ -234,7 +234,7 @@
     $('q-score').textContent=correct+' correct';
     $('q-prog').style.width=Math.round(100*idx/deck.length)+'%';
     $('q-subj').textContent=subjectOf(q);
-    $('q-strand').textContent=strandName(q.strand)+' · Form '+q.form+'+';
+    $('q-strand').textContent=strandName(q.strand)+' · '+CSEC.levelLabel(q.level)+' onward';
     $('q-stem').textContent=q.q;
     $('q-fb').classList.add('hidden');
     $('q-fb').innerHTML='';

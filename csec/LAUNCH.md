@@ -1,7 +1,8 @@
 # CSEC Study Hub — launch pack
 
-Launching to **Ricky Rampersad Branch client families** with secondary-school
-children. Free, no app, works in any browser.
+Launching to **Ricky Rampersad Branch client families** with school-age children
+— **Standard 1 through Form 5**, covering both SEA and CSEC. Free, no app,
+works in any browser.
 
 ---
 
@@ -27,7 +28,8 @@ announcement below promises it, so do this first.
 |---|---|
 | ☐ | On your phone: create a parent profile, **write down the recovery code** |
 | ☐ | Settings → create a family group, note the code |
-| ☐ | Create a student profile, pick the form, check the subject list |
+| ☐ | Create a student profile, pick the year (Standard or Form), check the subject list |
+| ☐ | Create a second profile at a **primary** level and confirm it counts down to SEA, not CSEC |
 | ☐ | Do ten practice questions |
 | ☐ | On a **different** device: create a profile, join with the code |
 | ☐ | Confirm the student and their progress appear |
@@ -102,9 +104,9 @@ to have been oversold.
 
 State these rather than waiting to be caught out:
 
-- **176 questions across 14 subjects.** Enough for a nightly habit, not enough
+- **245 questions across 19 subjects** (8 primary, 11 secondary with content). Enough for a nightly habit, not enough
   for a Form 5 to revise from alone. Maths is deepest at 20.
-- **16 worked methods.** English B, Spanish, French, Social Studies and PE have
+- **16 worked methods, all secondary.** Primary has none yet — that is the first content gap to close. English B, Spanish, French, Social Studies and PE have
   none yet.
 - **The readiness band is unvalidated.** It has never been checked against a real
   CSEC result, because there has not been one. It is an internal indicator and

@@ -1,8 +1,8 @@
 # CSEC Study Hub
 
-A CSEC / CXC exam-preparation module for Trinidad and Tobago secondary students,
-covering **Form 1 through Form 5**. Built for a Form 2 student at Lakshmi Girls'
-Hindu College, St Augustine, and general enough for any T&T secondary school.
+A study module for Trinidad and Tobago students covering **Standard 1 through
+Form 5** — ten years and two examinations, **SEA** and **CSEC**. Written for
+Trinidad and Tobago, free for Ricky Rampersad Branch client families.
 
 Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 
@@ -193,41 +193,57 @@ what Form 1 or Form 4 involves before anyone has a profile.
 
 ---
 
-## Joining the primary site
+## The ladder — one number, ten years
 
-`curriculum.js` carries a `stages` array — the spine from Infant 1 to CSEC:
+Everything gates on `profile.level`, a single integer from 1 to 10:
 
-| Stage | Years | Ends at | |
-|---|---|---|---|
-| `primary` | Infant 1 - Standard 5 | SEA | `external: true` |
-| `lower` | Form 1 - Form 3 | Subject selection | forms 1-3 |
-| `upper` | Form 4 - Form 5 | CSEC | forms 4-5 |
+| Level | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| **Year** | Std 1 | Std 2 | Std 3 | Std 4 | Std 5 | Form 1 | Form 2 | Form 3 | Form 4 | Form 5 |
+| **Age** | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 |
+| **Exam** | | | | | **SEA** | | | | | **CSEC** |
 
-Primary is listed but marked `external`, and renders dashed on the journey
-spine, because it is served by a separate site. It sits in the data so a student
-can see where they came from, and so the two can be joined without reshaping
-anything.
+One integer spans both halves, so strand gating, the daily plan, coverage,
+retention and the journey all work across SEA without knowing it is there.
+`C.levels` is the only place a number becomes words — `CSEC.levelLabel(3)`
+returns "Standard 3". Never spell a year out in a template.
 
-**To join the primary site**, in rough order of effort:
+**Two examinations, two countdowns.** `nextExam(level)` returns the stage whose
+`examLevel` the student has not yet passed, so a Standard 3 counts down to SEA
+in March and a Form 3 to CSEC in May. Nothing in the UI names an exam directly;
+it uses `countdown(level).exam`.
 
-1. Give `primary` a `forms` array (or an equivalent `standards` array) and a
-   `url`. The spine renders whatever stages it is given; drop the `external`
-   flag and it stops rendering dashed.
-2. Extend `roadmap` with entries for the primary years in the same shape —
-   `terms[]` with `aim` and `do[]`, plus `milestones[]`. `journeyNow()`,
-   `newThisYear()` and `carriedForward()` are written against the shape, not
-   against Forms 1-5, so they work unchanged.
-3. `examYear()` and `countdown()` in `csec.js` assume five forms to CSEC and are
-   the one place that hard-codes the ladder. A primary student needs a countdown
-   to **SEA**, not to CSEC, so that function needs a stage check.
-4. Add primary subjects to `subjects` with `forms` values on the primary scale,
-   keeping the strand-id prefixes distinct.
+**Crossing SEA.** `promote()` from level 5 to 6 also swaps the subject ticks —
+but only when every subject held belongs to the stage being left. A child
+arriving in Form 1 still ticked for ELA Writing would otherwise get a daily plan
+full of subjects that no longer exist for them.
 
-Nothing else in the hub knows how many years there are.
+**Migration.** Profiles written before this stored `form` 1-5. `profiles()`
+upgrades them on read (`level = form + 5`) and rewrites the store, so a device
+that has been offline for a month still upgrades itself.
 
 ---
 
-## Tracking a student across five years
+## Primary content
+
+Eight primary subjects, 44 strands, built from the Ministry's **SEA Assessment
+Framework 2025-2028**, which is the document the SEA is actually set from:
+
+- **Mathematics** — the four assessed strands are Number, Measurement, Geometry
+  and Statistics. 40 items in the paper.
+- **English Language Arts** — Spelling, Punctuation and Capitalisation, Standard
+  English Grammar, and Reading Comprehension. 36 items, 64 marks: 30 for
+  Section I, 34 for Section II.
+- **ELA Writing** — three items in any year, all narrative **or** all expository;
+  the student answers one, scored by two people on Content, Language Use,
+  Grammar and Mechanics, and Organisation.
+- Plus Science, Social Studies, Spanish, VAPA and Physical Education.
+
+Defaults are stage-aware: `defaultPrimary` seeds five subjects for a Standard,
+`defaultSelection` fourteen for a Form. A Standard 3 never opens the app to a
+CSEC timetable.
+
+## Tracking a student across the ten years
 
 The form is not just a filter — it is the spine of the record.
 

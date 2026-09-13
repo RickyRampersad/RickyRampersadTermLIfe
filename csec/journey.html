@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>My Journey | CSEC Study Hub</title>
-<meta name="description" content="The guided journey from Form 1 to CSEC — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
+<meta name="description" content="The guided journey from Standard 1 to CSEC — what this term is for, what is new this year, what is carried forward, and every milestone ahead."/>
 <link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="assets/csec.css"/>
@@ -67,8 +67,16 @@
     <div class="card hidden" id="pickwrap" style="margin-bottom:18px">
       <label class="fl" for="formsel" id="picklabel">Show the journey for</label>
       <select class="fi" id="formsel">
-        <option value="1">Form 1</option><option value="2">Form 2</option>
-        <option value="3">Form 3</option><option value="4">Form 4</option><option value="5">Form 5</option>
+        <optgroup label="Primary school">
+          <option value="1">Standard 1</option><option value="2">Standard 2</option>
+          <option value="3">Standard 3</option><option value="4">Standard 4</option>
+          <option value="5">Standard 5 — SEA year</option>
+        </optgroup>
+        <optgroup label="Secondary school">
+          <option value="6">Form 1</option><option value="7">Form 2</option>
+          <option value="8">Form 3</option><option value="9">Form 4</option>
+          <option value="10">Form 5 — CSEC year</option>
+        </optgroup>
       </select>
     </div>
 
@@ -89,7 +97,7 @@
         </div>
         <div class="grid g2" style="flex:none;min-width:210px">
           <div class="tile"><div class="big" id="yh-term">1</div><div class="lab">Term now</div></div>
-          <div class="tile teal"><div class="big" id="yh-exam">—</div><div class="lab" id="yh-examlab">to CSEC</div></div>
+          <div class="tile teal"><div class="big" id="yh-exam">—</div><div class="lab" id="yh-examlab">to exam</div></div>
         </div>
       </div>
     </div>
@@ -154,13 +162,13 @@
 
   /* A signed-in student sees their own year. Anyone else picks one. */
   var isStudent = me && me.role==='student';
-  var viewForm  = isStudent ? me.form : 3;
+  var viewLevel = isStudent ? me.level : 8;
 
   if(!isStudent){
     $('pickwrap').classList.remove('hidden');
     if(me) $('picklabel').textContent='Show the journey for';
-    $('formsel').value=String(viewForm);
-    $('formsel').addEventListener('change',function(){ viewForm=parseInt(this.value,10); paint(); });
+    $('formsel').value=String(viewLevel);
+    $('formsel').addEventListener('change',function(){ viewLevel=parseInt(this.value,10); paint(); });
   }
 
   var hasGuide=function(sid){ return (window.CSEC_GUIDES||[]).some(function(g){return g.strand===sid;}); };
@@ -187,21 +195,21 @@
   }
 
   function paint(){
-    var year=CSEC.roadmapFor(viewForm), stage=CSEC.stageOf(viewForm);
+    var year=CSEC.roadmapFor(viewLevel), stage=CSEC.stageOf(viewLevel);
     var t=CSEC.termOf(), termNo=t.term;
-    var cd=CSEC.countdown(viewForm);
+    var cd=CSEC.countdown(viewLevel);
 
     /* ---------- you are here ---------- */
-    $('yh-form').textContent=viewForm;
+    $('yh-form').textContent=CSEC.levelInfo(viewLevel).short;
     $('yh-stage').textContent=stage.label+' · '+t.year;
     $('yh-phase').textContent=year.label+' — '+year.phase;
     $('yh-focus').textContent=year.focus;
     $('yh-term').textContent=termNo;
-    if(cd.days>400){ $('yh-exam').textContent=cd.months; $('yh-examlab').textContent='months to CSEC '+cd.year; }
-    else { $('yh-exam').textContent=cd.days; $('yh-examlab').textContent='days to CSEC '+cd.year; }
+    if(cd.days>400){ $('yh-exam').textContent=cd.months; $('yh-examlab').textContent='months to '+cd.exam+' '+cd.year; }
+    else { $('yh-exam').textContent=cd.days; $('yh-examlab').textContent='days to '+cd.exam+' '+cd.year; }
 
     $('hd-eyebrow').textContent = isStudent ? 'Your guided journey' : 'The guided journey';
-    $('hd-title').textContent = isStudent ? me.name+' — Form '+viewForm : 'Form '+viewForm+' — the year ahead';
+    $('hd-title').textContent = isStudent ? me.name+' — '+CSEC.levelLabel(viewLevel) : CSEC.levelLabel(viewLevel)+' — the year ahead';
     $('yr-key').textContent=t.key;
 
     /* ---------- the three terms ---------- */
@@ -215,12 +223,12 @@
     }).join('');
 
     /* ---------- new this year ---------- */
-    var nw = isStudent ? CSEC.newThisYear(me.id) : newForForm(viewForm);
+    var nw = isStudent ? CSEC.newThisYear(me.id) : newForLevel(viewLevel);
     $('new-count').textContent=nw.length+' strands';
     $('newlist').innerHTML = nw.length
       ? nw.map(function(r){ return strandRow(r,isStudent); }).join('')
       : '<div class="note"><b>Nothing new starts this year.</b> '+
-        (viewForm===5
+        (viewLevel===10
           ? 'Form 5 is not about new content — it is about finishing the syllabus you already have and practising it under time until the paper holds no surprises.'
           : 'Every strand in your subjects this year was already introduced below. Use the time to deepen them.')+'</div>';
 
@@ -236,39 +244,40 @@
     /* ---------- milestones ---------- */
     var ms=[];
     (C.roadmap||[]).forEach(function(r){
-      if(r.form<viewForm) return;
+      if(r.level<viewLevel) return;
       (r.milestones||[]).forEach(function(m){
-        if(r.form===viewForm && m.term<termNo) return;
-        ms.push({form:r.form,term:m.term,what:m.what,why:m.why,
-                 now:(r.form===viewForm&&m.term===termNo)});
+        if(r.level===viewLevel && m.term<termNo) return;
+        ms.push({level:r.level,term:m.term,what:m.what,why:m.why,
+                 now:(r.level===viewLevel&&m.term===termNo)});
       });
     });
-    ms.sort(function(a,b){ return (a.form-b.form)||(a.term-b.term); });
+    ms.sort(function(a,b){ return (a.level-b.level)||(a.term-b.term); });
     $('milestones').innerHTML = ms.length? ms.map(function(m){
       return '<div class="ms'+(m.now?' now':'')+'">'+
         '<div style="flex:none;font-size:1.2rem">'+(m.now?'⚑':'○')+'</div>'+
         '<div class="r-text"><b>'+esc(m.what)+(m.now?' — this term':'')+'</b>'+
-        '<span style="color:var(--teal);font-size:.74rem;font-weight:700">Form '+m.form+', Term '+m.term+'</span>'+
+        '<span style="color:var(--teal);font-size:.74rem;font-weight:700">'+CSEC.levelLabel(m.level)+', Term '+m.term+'</span>'+
         '<span>'+esc(m.why)+'</span></div></div>';
     }).join('') : '<div class="note">No milestones left — the examinations are the last one.</div>';
 
     /* ---------- the spine ---------- */
     $('spine').innerHTML=(C.stages||[]).map(function(sg){
-      var here = sg.forms && sg.forms.indexOf(viewForm)>-1;
+      var here = sg.levels && sg.levels.indexOf(viewLevel)>-1;
       return '<div class="sg'+(here?' here':'')+(sg.external?' ext':'')+'">'+
         '<span class="yr">'+esc(sg.years)+'</span>'+
         '<b>'+esc(sg.label)+(here?' · you are here':'')+'</b>'+
         '<span class="yr" style="color:var(--gold)">ends at '+esc(sg.exam)+'</span>'+
         '<div class="nt">'+esc(sg.note)+'</div></div>';
     }).join('');
-    $('spine-note').textContent='Primary is shown dashed because it is served by a separate site. '+
-      'The two are designed to join, so a student can be followed from Infant 1 to CSEC.';
+    $('spine-note').textContent='Ten years, two examinations. SEA at the end of Standard 5 decides the '+
+      'secondary school; CSEC at the end of Form 5 decides what comes after it. The hub follows a '+
+      'student across the whole run without losing what came before.';
 
     /* ---------- every year, expandable ---------- */
     $('years').innerHTML=(C.roadmap||[]).map(function(r){
-      var here=r.form===viewForm;
+      var here=r.level===viewLevel;
       return '<details class="yrow'+(here?' here':'')+'"'+(here?' open':'')+'>'+
-        '<summary><span class="fno">'+r.form+'</span>'+
+        '<summary><span class="fno">'+CSEC.levelInfo(r.level).short+'</span>'+
         '<span style="flex:1;min-width:160px">'+
           '<b style="font-family:Montserrat,sans-serif;font-size:1rem;display:block">'+esc(r.label)+' · '+esc(r.phase)+'</b>'+
           '<span style="font-size:.79rem;color:var(--muted)">'+esc(r.focus)+'</span></span>'+
@@ -290,13 +299,16 @@
 
   /* When nobody is signed in there is no progress, so derive the new strands
      from the curriculum alone using the default subject selection. */
-  function newForForm(form){
+  function newForLevel(level){
     var out=[];
-    (C.defaultSelection||[]).forEach(function(id){
+    /* Signed out there is no profile, so seed from the defaults for that stage —
+       a Standard 2 view must not be built from a CSEC timetable. */
+    var seed = level<=5 ? (C.defaultPrimary||[]) : (C.defaultSelection||[]);
+    seed.forEach(function(id){
       var subj=C.subjects[id]; if(!subj) return;
       subj.strands.forEach(function(t){
-        var now=t.forms.indexOf(form)>-1;
-        var before=form>1 && t.forms.indexOf(form-1)>-1;
+        var now=t.levels.indexOf(level)>-1;
+        var before=level>1 && t.levels.indexOf(level-1)>-1;
         if(now&&!before) out.push({subj:id,subjName:subj.name,icon:subj.icon,
                                    strand:t.id,strandName:t.name,note:t.note,stat:{pct:null}});
       });

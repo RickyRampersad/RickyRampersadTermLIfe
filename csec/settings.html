@@ -319,7 +319,7 @@
     $('subjpick').innerHTML='';
   } else {
     $('who').innerHTML=targets.map(function(t){
-      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — '+CSEC.levelLabel(t.level)+'</option>';
     }).join('');
     if(me.role==='student') $('whowrap').classList.add('hidden');
     $('who').addEventListener('change',paintSubjects);
@@ -380,7 +380,7 @@
   /* ---------------- profile ---------------- */
   $('p-name').value=me.name;
   $('p-school').value=me.school||'';
-  $('p-form').value=String(me.form||2);
+  $('p-form').value=String(me.level||2);
   if(me.role!=='student') $('p-formwrap').classList.add('hidden');
 
   $('save-prof').addEventListener('click',function(){
@@ -389,7 +389,7 @@
     $('prof-err').textContent='';
     if(!name){ $('prof-err').textContent='A name is required.'; return; }
     if(pin && !/^\d{4,6}$/.test(pin)){ $('prof-err').textContent='PIN must be 4 to 6 digits.'; return; }
-    var patch={name:name,school:$('p-school').value.trim(),form:parseInt($('p-form').value,10)||me.form};
+    var patch={name:name,school:$('p-school').value.trim(),form:parseInt($('p-form').value,10)||me.level};
     if(pin) patch.pin=pin;
     CSEC.updateProfile(me.id,patch);
     me=CSEC.profile(me.id);
@@ -409,7 +409,7 @@
   function fillResetList(){
     $('rp-who').innerHTML=CSEC.profiles().map(function(p){
       return '<option value="'+esc(p.id)+'">'+esc(p.name)+' ('+esc(p.role)+
-             (p.role==='student'?', Form '+p.form:'')+')</option>';
+             (p.role==='student'?', '+CSEC.levelLabel(p.level):'')+')</option>';
     }).join('');
   }
   fillResetList();
@@ -569,23 +569,23 @@
     $('promo-card').classList.add('hidden');
   } else {
     $('pr-who').innerHTML=targets.map(function(t){
-      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+      return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — '+CSEC.levelLabel(t.level)+'</option>';
     }).join('');
 
     function paintPromo(){
       var kid=CSEC.profile($('pr-who').value); if(!kid) return;
       var opts='';
-      for(var f=kid.form+1; f<=5; f++) opts+='<option value="'+f+'">Form '+f+'</option>';
+      for(var f=kid.level+1; f<=10; f++) opts+='<option value="'+f+'">'+CSEC.levelLabel(f)+'</option>';
       $('pr-to').innerHTML = opts || '<option value="">— already in Form 5 —</option>';
       $('pr-go').disabled = !opts;
 
       var ov=CSEC.overallStat(kid.id), cov=CSEC.coverage(kid.id);
-      var cd=CSEC.countdown(kid.form);
-      $('pr-now').innerHTML='<b>'+esc(kid.name)+' is in Form '+kid.form+'.</b> '+
-        (ov.seen? ov.seen+' questions answered at '+ov.pct+'% accuracy, '+cov.pct+'% of the Form '+kid.form+' syllabus met.'
+      var cd=CSEC.countdown(kid.level);
+      $('pr-now').innerHTML='<b>'+esc(kid.name)+' is in '+CSEC.levelLabel(kid.level)+'.</b> '+
+        (ov.seen? ov.seen+' questions answered at '+ov.pct+'% accuracy, '+cov.pct+'% of the '+CSEC.levelLabel(kid.level)+' syllabus met.'
                 : 'No practice recorded yet.')+
-        ' Sits CSEC in '+cd.year+'.'+
-        (kid.form===5 ? ' This is the examination year — there is nowhere further to move.' : '');
+        ' Sits '+cd.exam+' in '+cd.year+'.'+
+        (kid.level===10 ? ' This is the examination year — there is nowhere further to move.' : '');
     }
     $('pr-who').addEventListener('change',paintPromo);
     $('pr-to').addEventListener('change',function(){});
@@ -596,20 +596,20 @@
       var to=parseInt($('pr-to').value,10);
       $('pr-err').textContent='';
       if(!to){ $('pr-err').textContent='There is no form above Form 5.'; return; }
-      if(!confirm('Move '+kid.name+' from Form '+kid.form+' to Form '+to+'?\n\n'+
-                  'Practice history is kept and a snapshot of Form '+kid.form+' is written to the record. '+
+      if(!confirm('Move '+kid.name+' from '+CSEC.levelLabel(kid.level)+' to '+CSEC.levelLabel(to)+'?\n\n'+
+                  'Practice history is kept and a snapshot of '+CSEC.levelLabel(kid.level)+' is written to the record. '+
                   'This can only be undone by moving the form back in this same panel.')) return;
       var r=CSEC.promote(kid.id,to);
       if(!r){ $('pr-err').textContent='Could not move up.'; return; }
       if(kid.id===me.id) me=CSEC.profile(me.id);
       targets = me.role==='student' ? [CSEC.profile(me.id)] : CSEC.students();
       $('pr-who').innerHTML=targets.map(function(t){
-        return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — Form '+t.form+'</option>';
+        return '<option value="'+esc(t.id)+'">'+esc(t.name)+' — '+CSEC.levelLabel(t.level)+'</option>';
       }).join('');
       paintPromo();
       if(targets.length) paintSubjects();
-      $('p-form').value=String(CSEC.profile(me.id).form);
-      flash('pr-ok','Moved from Form '+r.from+' to Form '+r.to+'. The old year is on the KPI timeline.');
+      $('p-form').value=String(CSEC.profile(me.id).level);
+      flash('pr-ok','Moved from '+CSEC.levelLabel(r.from)+' to '+CSEC.levelLabel(r.to)+'.'+(r.subjectsReset?' Subjects reset for the new stage.':'')+' The old year is on the KPI timeline.');
     });
   }
 

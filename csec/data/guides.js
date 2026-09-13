@@ -11,7 +11,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------------ MATHEMATICS ------------------------------ */
 {
-  id:'g-ma-linear', subj:'mathematics', strand:'ma-algebra', form:1,
+  id:'g-ma-linear', subj:'mathematics', strand:'ma-algebra', level:6,
   title:'Solving a linear equation',
   when:'Any equation where the unknown appears to the power of one and there is a single answer.',
   steps:[
@@ -38,7 +38,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-quad', subj:'mathematics', strand:'ma-algebra', form:3,
+  id:'g-ma-quad', subj:'mathematics', strand:'ma-algebra', level:8,
   title:'Factorising a quadratic',
   when:'An expression of the form x² + bx + c that you need to write as two brackets.',
   steps:[
@@ -64,7 +64,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-simul', subj:'mathematics', strand:'ma-algebra', form:3,
+  id:'g-ma-simul', subj:'mathematics', strand:'ma-algebra', level:8,
   title:'Simultaneous equations by elimination',
   when:'Two equations, two unknowns, and you are asked for both values.',
   steps:[
@@ -93,7 +93,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-sets', subj:'mathematics', strand:'ma-sets', form:2,
+  id:'g-ma-sets', subj:'mathematics', strand:'ma-sets', level:7,
   title:'Venn diagram word problems',
   when:'A question gives totals for two groups, an overlap, and asks how many are in some region.',
   steps:[
@@ -120,7 +120,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-consumer', subj:'mathematics', strand:'ma-consumer', form:3,
+  id:'g-ma-consumer', subj:'mathematics', strand:'ma-consumer', level:8,
   title:'Consumer arithmetic — the multiplier method',
   when:'Discount, VAT, mark-up, depreciation, or simple interest on a price.',
   steps:[
@@ -147,7 +147,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-trig', subj:'mathematics', strand:'ma-geom', form:4,
+  id:'g-ma-trig', subj:'mathematics', strand:'ma-geom', level:9,
   title:'Right-angled triangles — choosing Pythagoras or trigonometry',
   when:'A right-angled triangle with a missing side or angle.',
   steps:[
@@ -174,7 +174,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ma-gradient', subj:'mathematics', strand:'ma-relations', form:3,
+  id:'g-ma-gradient', subj:'mathematics', strand:'ma-relations', level:8,
   title:'Straight-line graphs — gradient and equation',
   when:'Two points, or a drawn line, and you need the gradient or the equation.',
   steps:[
@@ -203,7 +203,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------------- ENGLISH A ------------------------------- */
 {
-  id:'g-ea-summary', subj:'english-a', strand:'ea-summary', form:3,
+  id:'g-ea-summary', subj:'english-a', strand:'ea-summary', level:8,
   title:'The summary — getting full marks in the word limit',
   when:'A passage with an instruction such as "in not more than 120 words".',
   steps:[
@@ -231,7 +231,7 @@ window.CSEC_GUIDES = [
   ]
 },
 {
-  id:'g-ea-argue', subj:'english-a', strand:'ea-arg', form:4,
+  id:'g-ea-argue', subj:'english-a', strand:'ea-arg', level:9,
   title:'The argumentative essay — a structure that scores',
   when:'"Write an essay arguing for or against…" in Paper 02 Section B.',
   steps:[
@@ -262,7 +262,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------------- ENGLISH B ------------------------------- */
 {
-  id:'g-eb-pee', subj:'english-b', strand:'eb-essay', form:3,
+  id:'g-eb-pee', subj:'english-b', strand:'eb-essay', level:8,
   title:'The literature paragraph — Point, Evidence, Explanation',
   when:'Any English B essay on poetry, prose or drama.',
   steps:[
@@ -291,7 +291,7 @@ window.CSEC_GUIDES = [
 
 /* -------------------------------- HISTORY -------------------------------- */
 {
-  id:'g-hi-essay', subj:'history', strand:'hi-skills', form:4,
+  id:'g-hi-essay', subj:'history', strand:'hi-skills', level:9,
   title:'The History essay — cause, effect and evidence',
   when:'"Explain the reasons for…" or "Discuss the effects of…" in Paper 02.',
   steps:[
@@ -321,7 +321,7 @@ window.CSEC_GUIDES = [
 
 /* -------------------------------- PHYSICS -------------------------------- */
 {
-  id:'g-ph-formula', subj:'physics', strand:'ph-mech', form:3,
+  id:'g-ph-formula', subj:'physics', strand:'ph-mech', level:8,
   title:'Any physics calculation — the five-line method',
   when:'Every numerical question in Paper 02. Use the same five lines every time.',
   steps:[
@@ -350,7 +350,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------------- CHEMISTRY ------------------------------- */
 {
-  id:'g-ch-balance', subj:'chemistry', strand:'ch-mole', form:3,
+  id:'g-ch-balance', subj:'chemistry', strand:'ch-mole', level:8,
   title:'Balancing a chemical equation',
   when:'Any equation that must obey conservation of mass.',
   steps:[
@@ -379,7 +379,7 @@ window.CSEC_GUIDES = [
 
 /* -------------------------------- BIOLOGY -------------------------------- */
 {
-  id:'g-bi-punnett', subj:'biology', strand:'bi-genes', form:4,
+  id:'g-bi-punnett', subj:'biology', strand:'bi-genes', level:9,
   title:'Genetics — the Punnett square',
   when:'Any monohybrid cross asking for offspring ratios or probabilities.',
   steps:[
@@ -408,7 +408,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------------- GEOGRAPHY ------------------------------- */
 {
-  id:'g-ge-map', subj:'geography', strand:'ge-maps', form:2,
+  id:'g-ge-map', subj:'geography', strand:'ge-maps', level:7,
   title:'Map work — grid references, scale and relief',
   when:'The map extract question that opens most Geography papers.',
   steps:[
@@ -437,7 +437,7 @@ window.CSEC_GUIDES = [
 
 /* ------------------------ INFORMATION TECHNOLOGY ------------------------ */
 {
-  id:'g-it-trace', subj:'information-technology', strand:'it-solve', form:4,
+  id:'g-it-trace', subj:'information-technology', strand:'it-solve', level:9,
   title:'Trace tables — following an algorithm by hand',
   when:'"Complete the trace table" or "state the output" for a piece of pseudocode.',
   steps:[
