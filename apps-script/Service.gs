@@ -833,11 +833,12 @@ function sheetFor_(isGroup) {
                   // shown to the client — see ServiceSalesforce.gs.
                   'Traced', 'Policy #s (traced)', 'Cover traced', 'Premium owing',
                   'Agent on record',
-                  // Who else is in the house, in the client's own words. The
-                  // records carry no household at all, so this column is the
-                  // only one there is — sort a book by it before splitting it
-                  // between agents. Capture only; nothing is written back.
-                  'Household',
+                  // Who else is in the house. Three columns, three sources, on
+                  // purpose: what the client said, what the branch has already
+                  // built on the Account, and the address they share. Sort a
+                  // book by these before splitting it between agents. All read
+                  // and capture only — nothing is written back to Salesforce.
+                  'Household', 'Household (on file)', 'Address key',
                   // Compliance record. These four are the auditable trail for a
                   // registered agent: what the client declared, what they agreed
                   // we could do with it, whether they opted into marketing, and
@@ -953,10 +954,18 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     'Premium owing': t.premiumOwing || '',
     'Agent on record': t.agentOnRecord || '',
 
-    /* The household, as the client described it. Salesforce has a household
-       object and it has been empty since 2017, so there is nothing to read —
-       this is the branch's own record, and the only one. */
+    /* Three views of the same question, kept apart so they can disagree.
+       "Household" is what the client just told us. "Household (on file)" is
+       the Account the branch already built — 14,041 of them exist, named
+       "SURNAME, FIRSTNAME HH", though only about 4% carry more than one
+       member. "Address key" is the normalised street, which in one book found
+       14 shared addresses where exact matching found 3. Where the three
+       disagree, that is the row worth a person's attention. */
     'Household': householdSummary_(body),
+    'Household (on file)': t.householdName
+      ? t.householdName + (t.householdMembers > 1 ? ' · ' + t.householdMembers + ' members' : ' · 1 member')
+      : '',
+    'Address key': t.addressKey || '',
 
     /* Who the client chose to be looked after by — the in-house team direct,
        or an agent matched to the brief they wrote. Drives the assignment. */

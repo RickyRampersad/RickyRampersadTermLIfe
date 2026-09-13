@@ -53,8 +53,94 @@ var SVCSF = {
     'ISSUE_DATE__c', 'Maturity_Date__c', 'Life_Coverage_Expiry__c',
     'Writing_Agent__c', 'Assigned_Agent__c',
     'FIRST_NAME__c', 'LAST_NAME__c', 'Email__c', 'Mobile__c', 'Date_Of_Birth__c',
+    /* The household: the Account the policy hangs off, and the address, so a
+       worklist can be sorted by who lives together before it is split between
+       agents. Read only — see the household note below. */
+    'Account__c', 'Street__c', 'City__c', 'Contact__c',
   ],
+
+  /* A household with more members than this is not a household. One of the
+     policies in the book we analysed hangs off "ScotiaBank Trinidad and
+     Tobago Limited", a BUSINESS ACCOUNT carrying 15,422 contacts — group
+     naively by Account and that one client appears to live with fifteen
+     thousand people. The record-type check below is the real guard; this is
+     the belt to its braces. */
+  HH_MAX: 12,
 };
+
+/**
+ * A candidate address key: house number plus the first real word of the street.
+ *
+ * Guardian's addresses are typed freehand into one field and the same house is
+ * never spelled the same way twice. In one agent's book of 246 clients, exact
+ * matching on the street found 3 shared addresses; this rule finds 14. The
+ * variants it is built to survive, all real:
+ *
+ *     "# 8 RAPHIA DRIVE\r\nROYSTONIA"   "#8 Raphia Drive Roystonia"
+ *     "#64 LAPWING  EDINBURGH 50"       "#64 LAPWING CRESENT EDINB"
+ *     "22 SEVENTH ST"                   "22 SEVENTH STREET"
+ *     "LP 53 POPE AVE\r\nTUMPUNA RD"    "LP53 POPE AVENUE\r\nTUMPUNA ROAD"
+ *
+ * It keeps the number and one street word and throws the rest away, because
+ * everything after that — the district, the second line, the estate name — is
+ * where the spelling goes wrong. "LP" and "LOT" are dropped as prefixes but
+ * the number after them is kept: in Trinidad the light-pole number IS the
+ * house number.
+ *
+ * It is a CANDIDATE, never an automatic merge. It cannot see through a
+ * truncated field ("FOSTER ROA", "EDINB"), and two different houses on one
+ * short street will collide. Sorting a worklist by it puts likely neighbours
+ * next to each other for a person to confirm — that is all it is for.
+ */
+function svcAddrKey_(street) {
+  var s = String(street == null ? '' : street).toUpperCase();
+  s = s.replace(/[\r\n]+/g, ' ').replace(/[^A-Z0-9 ]+/g, ' ');
+  /* The lookahead rather than a closing \b is deliberate: "LP53 POPE AVENUE"
+     is written without a space as often as "LP 53", and \bLP\b does not match
+     the first one — which left the whole address unkeyed. */
+  s = s.replace(/\b(?:L\s*P|E\s*P|LOT|LT|NO|POLE|PO\s*BX|APT|BLDG|BUILDING|UNIT)(?=\s|\d|$)/g, ' ');
+  s = s.replace(/\bN\s+A\b/g, ' ');                       // the "N/A" filler line
+  s = s.replace(/\s+/g, ' ').trim();
+  var m = s.match(/^(\d+[A-Z]?(?:\s*\/\s*\d+[A-Z]?)?)\s+(.*)$/);
+  if (!m) return '';                                       // no house number, no key
+  var num = m[1].replace(/\s*\/\s*/, '/');
+  var words = m[2].split(' ').filter(Boolean);
+  if (!words.length) return '';
+  /* A first word this short is a prefix, not the street's name — take two. */
+  var SHORT = { MT: 1, ST: 1, LA: 1, LE: 1, EL: 1, SAN: 1, SANTA: 1, NEW: 1,
+                OLD: 1, UPPER: 1, LOWER: 1, NORTH: 1, SOUTH: 1, EAST: 1, WEST: 1 };
+  var name = SHORT[words[0]] && words[1] ? words[0] + ' ' + words[1] : words[0];
+  return num + ' ' + name;
+}
+
+/**
+ * The household this policy's Account represents, if it really is one.
+ *
+ * The branch has built these deliberately — 14,041 Account records on the
+ * HOUSEHOLD record type, named "SURNAME, FIRSTNAME HH" — so this reads what
+ * is already there rather than inferring anything. Two guards, both needed:
+ * the record type must be HOUSEHOLD (ScotiaBank is a BUSINESS ACCOUNT), and
+ * the membership must be plausible.
+ *
+ * Read only. Nothing here writes to Salesforce, and nothing here goes to the
+ * browser — the household reaches the agent's brief and the worklist, never
+ * the client. Telling whoever holds an unauthenticated link who else lives at
+ * an address would be the worst thing this file could do.
+ */
+function svcHouseholdFor_(accountId) {
+  if (!accountId) return null;
+  var soql = 'SELECT Id, Name, RecordType.Name, (SELECT Id FROM Contacts LIMIT ' +
+             (SVCSF.HH_MAX + 1) + ') FROM Account WHERE Id = \'' + svcSoqlLit_(accountId) + '\'';
+  var rows = svcSfQuery_(soql);
+  if (!rows || !rows.length) return null;
+  var a = rows[0];
+  var type = (a.RecordType && a.RecordType.Name) || '';
+  if (type !== 'HOUSEHOLD') return { name: '', members: 0, why: 'not a household account: ' + type };
+  var members = (a.Contacts && a.Contacts.totalSize) ||
+                (a.Contacts && a.Contacts.records && a.Contacts.records.length) || 0;
+  if (members > SVCSF.HH_MAX) return { name: '', members: 0, why: 'implausible household of ' + members };
+  return { name: a.Name || '', members: members };
+}
 
 function svcSfProps_() { return PropertiesService.getScriptProperties(); }
 
@@ -190,7 +276,16 @@ function svcTraceReview_(core) {
     if (!tries.length) return { ok: false, configured: true, why: 'no date of birth to match on' };
     for (var i = 0; i < tries.length; i++) {
       var rows = svcSfQuery_(tries[i].soql);
-      if (rows && rows.length) return svcSummarise_(rows, tries[i].how);
+      if (rows && rows.length) {
+        var out = svcSummarise_(rows, tries[i].how);
+        /* The household is a second read, and an optional one: if it fails the
+           review still files with everything else intact. */
+        try {
+          var hh = svcHouseholdFor_(rows[0].Account__c);
+          if (hh && hh.name) { out.householdName = hh.name; out.householdMembers = hh.members; }
+        } catch (e) {}
+        return out;
+      }
     }
     return { ok: true, configured: true, found: 0, how: 'no record matched' };
   } catch (e) {
@@ -223,6 +318,10 @@ function svcSummarise_(rows, how) {
     premiumBilled: billing ? money(billing) : '',
     agentOnRecord: Object.keys(agents).join(', '),
     clientId:      (rows[0] && rows[0].Client_ID__c) || '',
+    /* Sort a worklist by this and likely neighbours land next to each other.
+       A candidate for a person to confirm, never an automatic merge. */
+    addressKey:    svcAddrKey_((rows[0] && rows[0].Street__c) || ''),
+    householdName: '', householdMembers: 0,   // filled by svcTraceReview_ if the account is a real household
     /* The raw records stay available inside the script for the CS form, but
        nothing here is ever handed to a browser — see svcRedactForClient_. */
     records: rows,
