@@ -246,21 +246,29 @@ function rsfStage_(days) {
 /**
  * What has already gone out, read back off Salesforce Tasks.
  * Returns { riskId: { '30d': true, ... } }.
+ *
+ * Queried by subject tag and recency, NOT by a list of record ids. A
+ * WHERE Id IN (...) clause holding 200 eighteen-character ids URL-encodes
+ * to well over Apps Script's 2 kB UrlFetch ceiling and throws
+ * "Limit Exceeded: URLFetch URL Length". This URL is a fixed short length
+ * however large the book grows, it is one request instead of several, and
+ * auto-reminder tasks are a small set by construction. The ids are used to
+ * filter in memory afterwards.
  */
 function rsfAlreadySent_(ids) {
   var sent = {};
   if (!ids.length) return sent;
-  for (var i = 0; i < ids.length; i += 200) {
-    var chunk = ids.slice(i, i + 200)
-      .map(function (x) { return "'" + x + "'"; }).join(',');
-    rsfQ_("SELECT WhatId, Subject FROM Task WHERE WhatId IN (" + chunk + ") " +
-          "AND Subject LIKE '" + RSF.TASK_TAG + "%'")
-      .forEach(function (t) {
-        var m = /\[(\w+)\]/.exec(t.Subject || '');
-        if (!m) return;
-        (sent[t.WhatId] = sent[t.WhatId] || {})[m[1]] = true;
-      });
-  }
+  var want = {};
+  ids.forEach(function (x) { want[x] = 1; });
+
+  rsfQ_("SELECT WhatId, Subject FROM Task WHERE Subject LIKE '" + RSF.TASK_TAG + "%' " +
+        'AND CreatedDate = LAST_N_DAYS:' + (RSF.LOOKBACK + RSF.LOOKAHEAD))
+    .forEach(function (t) {
+      if (!want[t.WhatId]) return;
+      var m = /\[(\w+)\]/.exec(t.Subject || '');
+      if (!m) return;
+      (sent[t.WhatId] = sent[t.WhatId] || {})[m[1]] = true;
+    });
   return sent;
 }
 
