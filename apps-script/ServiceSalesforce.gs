@@ -94,7 +94,9 @@ var SVCSF = {
  */
 function svcAddrKey_(street) {
   var s = String(street == null ? '' : street).toUpperCase();
-  s = s.replace(/[\r\n]+/g, ' ').replace(/[^A-Z0-9 ]+/g, ' ');
+  /* The slash survives: "LP 22/2" and "LP 4/32" are whole house numbers here,
+     and splitting them on the slash threw the street name out of the key. */
+  s = s.replace(/[\r\n]+/g, ' ').replace(/[^A-Z0-9/ ]+/g, ' ');
   /* The lookahead rather than a closing \b is deliberate: "LP53 POPE AVENUE"
      is written without a space as often as "LP 53", and \bLP\b does not match
      the first one — which left the whole address unkeyed. */
@@ -103,14 +105,22 @@ function svcAddrKey_(street) {
   s = s.replace(/\s+/g, ' ').trim();
   var m = s.match(/^(\d+[A-Z]?(?:\s*\/\s*\d+[A-Z]?)?)\s+(.*)$/);
   if (!m) return '';                                       // no house number, no key
-  var num = m[1].replace(/\s*\/\s*/, '/');
+  var num = m[1].replace(/\s*\/\s*/g, '/');
   var words = m[2].split(' ').filter(Boolean);
   if (!words.length) return '';
-  /* A first word this short is a prefix, not the street's name — take two. */
-  var SHORT = { MT: 1, ST: 1, LA: 1, LE: 1, EL: 1, SAN: 1, SANTA: 1, NEW: 1,
-                OLD: 1, UPPER: 1, LOWER: 1, NORTH: 1, SOUTH: 1, EAST: 1, WEST: 1 };
-  var name = SHORT[words[0]] && words[1] ? words[0] + ' ' + words[1] : words[0];
-  return num + ' ' + name;
+  /* Keep taking words until one of them is long enough to actually be the
+     street's name. A short leading token is never the name — it is a prefix
+     ("MT HOPE", "ST JOHN", "SAN JUAN") or a unit letter ("12 C GUARACARA").
+     Stopping at the first word instead put a Gasparillo house and a Point
+     Fortin apartment under the same key, "12 C", which is exactly the false
+     merge this key must not make. */
+  var name = [], i;
+  for (i = 0; i < words.length && i < 3; i++) {
+    name.push(words[i]);
+    if (words[i].length >= 4) break;
+  }
+  if (!name.length) return '';
+  return num + ' ' + name.join(' ');
 }
 
 /**

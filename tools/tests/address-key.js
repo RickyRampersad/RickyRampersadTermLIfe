@@ -74,11 +74,25 @@ ok(K('ADELPHI ESTATE  \r\nMASON HALL') === '', 'an estate name alone is not an a
 ok(K('MALONEY HIGH RISE-BLDG 2') === '', 'a building with no number is not keyed');
 
 console.log('\n=== the prefixes Trinidad addresses actually use ===');
-ok(K('LP 145 RED HILL') === '145 RED', 'LP is dropped, its number kept', K('LP 145 RED HILL'));
+ok(K('LP 145 RED HILL') === '145 RED HILL', 'LP is dropped, its number kept', K('LP 145 RED HILL'));
 ok(K('L P 42 JEFFERS LANE') === '42 JEFFERS', 'L P spaced apart is still LP', K('L P 42 JEFFERS LANE'));
 ok(K('LOT 65 FOURTH STREET      \r\nTUMPUNA ROAD') === '65 FOURTH', 'LOT is dropped');
 ok(K('EP #59 SAMNATH STREET\r\nFIVE RIVERS') === '59 SAMNATH', 'EP is dropped');
-ok(K('$18 2ND STREET EAST\r\nCASSLETON AVENUE') === '18 2ND', 'a stray $ does not break it');
+ok(K('$18 2ND STREET EAST\r\nCASSLETON AVENUE') === '18 2ND STREET', 'a stray $ does not break it',
+   K('$18 2ND STREET EAST\r\nCASSLETON AVENUE'));
+
+console.log('\n=== a unit letter is not a street name ===');
+// Found by running this over a real book: both of these keyed to "12 C",
+// merging a Gasparillo house with a Point Fortin apartment.
+ok(K('12 C GUARACARA STREET') !== K('BUILDING 12 UNIT C           \r\nLAKEVIEW HOUSING DEVELOP'),
+   'a Gasparillo house and a Point Fortin flat are not one household',
+   K('12 C GUARACARA STREET') + ' vs ' + K('BUILDING 12 UNIT C           \r\nLAKEVIEW HOUSING DEVELOP'));
+ok(K('12 C GUARACARA STREET') === '12 C GUARACARA', 'the key runs on to the real street word');
+ok(K('LP 22/2 SEECHARAN STREET      \r\nPERSEVERANCE/ WATERLOO') === '22/2 SEECHARAN',
+   'a slashed house number keeps both halves and the street',
+   K('LP 22/2 SEECHARAN STREET      \r\nPERSEVERANCE/ WATERLOO'));
+ok(K('LP 4/32 ADRIAN TRACE  \r\nMOUNT PLEASANT') === '4/32 ADRIAN', 'and so does 4/32');
+ok(K('LP 22/2 SEECHARAN STREET') !== K('LP 22/3 SEECHARAN STREET'), 'neighbours in a slashed pair differ');
 
 console.log('\n=== the guard that stops a bank becoming a household ===');
 ok(/HH_MAX/.test(SRC) && /RecordType/.test(SRC), 'the household read checks the record type and a size cap');
