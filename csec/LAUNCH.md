@@ -12,8 +12,8 @@ announcement below promises it, so do this first.
 
 | | Step | Where |
 |---|---|---|
-| ☐ | Create a Google Sheet named **RRB CSEC Sync**, copy its ID | Drive |
-| ☐ | Paste `gs/csec-sync.gs` into a new Apps Script project, set `SHEET_ID` | script.google.com |
+| ✅ | ~~Create a Google Sheet named **RRB CSEC Sync**~~ — done, ID already in the script | [open it](https://docs.google.com/spreadsheets/d/1b5kOwEP9sJSyIzgp6YeyBEi-KZO2DaacaGKNOOJMCJE/edit) |
+| ☐ | Paste `gs/csec-sync.gs` into a new Apps Script project (`SHEET_ID` is already set) | script.google.com |
 | ☐ | Run `setup` once and authorise | Apps Script editor |
 | ☐ | Deploy → Web app → Execute as **Me**, access **Anyone** | Apps Script |
 | ☐ | Open `<exec URL>?action=ping` — expect `{"ok":true,...}` | browser |
