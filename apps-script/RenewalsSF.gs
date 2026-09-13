@@ -231,16 +231,74 @@ function rsfRows_() {
   return rows;
 }
 
-/** The stage a row is owed today, or null. Same ladder as Code.gs. */
+/**
+ * The stage a row is owed today, or null.
+ *
+ * Two deliberate differences from the ladder in Code.gs:
+ *
+ *  1. od3 starts at -1, not -3. The old bounds left days -1 and -2 matching
+ *     nothing at all: a policy that lapsed yesterday got no email, and by the
+ *     time it reached -3 the client had been uninsured for three days. The
+ *     preview caught a live client sitting in that hole.
+ *
+ *  2. od7 stops at -30. It used to be unbounded, so a policy 80 days lapsed
+ *     still drew "one of our team will call you shortly". Past a month it is
+ *     not a reminder, it is a lapse for someone to work by hand.
+ */
 function rsfStage_(days) {
   if (days === null) return null;
-  if (days <= -7)                  return 'od7';
-  if (days <= -3 && days > -30)    return 'od3';
+  if (days <= -7 && days > -30)    return 'od7';
+  if (days <= -1 && days > -7)     return 'od3';
   if (days === 0)                  return '0d';
   if (days <= 7  && days > 0)      return '7d';
   if (days <= 14 && days > 7)      return '14d';
   if (days <= 30 && days > 14)     return '30d';
   return null;
+}
+
+/* ======================= what kind of policy is this? ======================= */
+
+/**
+ * Property_Coverage_Type__c is null on every record in the org — all 87 in the
+ * current window. So the coverage-type fields cannot tell a house from a car,
+ * and the only reliable classifier left is the policy prefix.
+ *
+ *   TT A**   motor      APU APG APC APF AOG ACF ...
+ *   TT FHO   home       householders / homeowners
+ *   TT FAR   property   fire all risks (business premises and contents)
+ *   TT FCP   property   fire commercial property
+ *   TT C**   liability  CEL CPL CLC
+ *   anything else -> generic wording, no cross-sell
+ *
+ * This matters because every subject line in Code.gs says "motor policy". Left
+ * alone, the Fire All Risks client gets "One week left — your motor policy
+ * renews", a body reading "your policy policy", and a cross-sell for windscreen
+ * cover and a No Claim Discount on a car we do not insure.
+ */
+function rsfClass_(policy) {
+  var p = rsfPolKey_(policy);
+  if (/^TTA/.test(p))            return 'motor';
+  if (/^TTFHO/.test(p))          return 'home';
+  if (/^TTF(AR|CP)/.test(p))     return 'property';
+  if (/^TTC/.test(p))            return 'liability';
+  return 'other';
+}
+
+/**
+ * A policy number reduced to something two spellings of it agree on.
+ *
+ * The same policy is written "TTAPU0994275" on one risk and "TT APU 0994275"
+ * on the next, so spacing has to go. And one live record carries a CYRILLIC
+ * capital O (U+041E) inside "TT FHO 1431625" — it looks identical on screen,
+ * it never matches a search, and without folding it here that risk would form
+ * a group of its own and earn the client a second email.
+ */
+function rsfPolKey_(policy) {
+  return String(policy || '')
+    .replace(/О/g, 'O').replace(/А/g, 'A').replace(/С/g, 'C')
+    .replace(/Е/g, 'E').replace(/Р/g, 'P').replace(/Т/g, 'T')
+    .replace(/[^A-Za-z0-9]/g, '')
+    .toUpperCase();
 }
 
 /**
@@ -285,30 +343,219 @@ function rsfStamp_(row, stage) {
   });
 }
 
-/* ============================ the run ============================ */
+/* ======================= one policy, one email ======================= */
+
+/* Most urgent first. A group takes the most urgent stage any member is at. */
+var RSF_URGENCY = { od7: 0, od3: 1, '0d': 2, '7d': 3, '14d': 4, '30d': 5 };
 
 /**
  * Decide what today's run would do. Pure — touches nothing.
- * Returns { send: [...], skip: [...] }.
+ *
+ * WHY THIS GROUPS
+ * ---------------
+ * Risk_Details__c holds one row per insured thing, not per policy. Gurudutt
+ * Maharaj has three vehicles on TT APU 0854814 and Advanced Investments has
+ * four on TT APU 0994275. Sending per row put three identical "your renewal
+ * date has passed" emails in one inbox inside the same second, and the first
+ * measured run would have sent 22 emails to 15 people.
+ *
+ * So rows are grouped on client address plus policy number, the group takes
+ * the most urgent stage any of its risks is at, and the email lists every
+ * vehicle or premises on that policy. One policy, one email, one day.
  */
 function rsfPlan_() {
   var rows = rsfRows_();
   var sent = rsfAlreadySent_(rows.map(function (r) { return r.id; }));
-  var send = [], skip = [];
+  var eligible = [], skip = [];
 
   rows.forEach(function (r) {
     var stage = rsfStage_(r.days);
     var why =
-      r.optOut          ? 'opted out (Send_Renewal_Reminder__c unticked, and the flag is in use)' :
-      !r.email          ? 'no email address on the risk' :
-      !r.token          ? 'no portal token — nothing to link them to' :
-      !stage            ? 'not at a reminder stage today (' + r.days + ' days out)' :
-      (sent[r.id] && sent[r.id][stage]) ? stage + ' already sent' : '';
+      r.optOut ? 'opted out (Send_Renewal_Reminder__c unticked, and the flag is in use)' :
+      !r.email ? 'no email address on the risk' :
+      !r.token ? 'no portal token — nothing to link them to' :
+      !stage   ? 'not at a reminder stage today (' + r.days + ' days out)' : '';
     if (why) skip.push({ row: r, why: why });
-    else     send.push({ row: r, stage: stage });
+    else     eligible.push({ row: r, stage: stage });
   });
 
-  return { send: send, skip: skip, total: rows.length };
+  var byKey = {}, order = [];
+  eligible.forEach(function (e) {
+    var key = e.row.email.toLowerCase() + '|' + rsfPolKey_(e.row.policy);
+    if (!byKey[key]) { byKey[key] = { rows: [], stage: e.stage, key: key }; order.push(key); }
+    var g = byKey[key];
+    g.rows.push(e.row);
+    if (RSF_URGENCY[e.stage] < RSF_URGENCY[g.stage]) g.stage = e.stage;
+  });
+
+  var send = [];
+  order.forEach(function (k) {
+    var g = byKey[k];
+    g.lead = g.rows[0];
+    g.cls = rsfClass_(g.lead.policy);
+    // Already sent only if EVERY risk on the policy carries this stage. A risk
+    // added to the policy mid-cycle has never been told, so the group still goes.
+    var all = g.rows.every(function (r) { return sent[r.id] && sent[r.id][g.stage]; });
+    if (all) g.rows.forEach(function (r) { skip.push({ row: r, why: g.stage + ' already sent' }); });
+    else send.push(g);
+  });
+
+  return { send: send, skip: skip, total: rows.length, risks: eligible.length };
+}
+
+/* ======================= the email ======================= */
+
+/**
+ * Subject and opening line per class. Everything in Code.gs's STAGES says
+ * "motor policy", which is right for the 58 motor risks in the window and
+ * wrong for the other 29.
+ */
+var RSF_COPY = {
+  motor: {
+    noun: 'motor policy', nouns: 'motor policies',
+    '30d': 'renews on {d}. Renewal takes two minutes in our secure portal — review your cover, tell us about any changes, and send your instruction.',
+    '14d': 'renews on {d} — two weeks away. It takes two minutes online.',
+    '7d':  'renews on {d}, one week away. Renewing before the date keeps your cover and your No Claim Discount seamless.',
+    '0d':  'renews today. Send your instruction now and your protection continues without a break.',
+    'od3': 'reached its renewal date on {d}. A gap in motor cover, even a short one, leaves you personally exposed and can affect your No Claim Discount. It takes two minutes to put right.',
+    'od7': 'renewal of {d} is still open. This is our final email reminder. One of our team will call you shortly, or beat us to it and renew online now.',
+  },
+  home: {
+    noun: 'home policy', nouns: 'home policies',
+    '30d': 'renews on {d}. Renewal takes two minutes in our secure portal — check the sum insured still reflects what it would cost to rebuild today, and send your instruction.',
+    '14d': 'renews on {d} — two weeks away. Two minutes online is all it takes.',
+    '7d':  'renews on {d}, one week away. Renewing before the date keeps your home covered without a break.',
+    '0d':  'renews today. Send your instruction now and your cover continues without a gap.',
+    'od3': 'reached its renewal date on {d}. An uninsured home is an uninsured home from the first day, and fire does not wait. It takes two minutes to put right.',
+    'od7': 'renewal of {d} is still open. This is our final email reminder. One of our team will call you shortly, or renew online now.',
+  },
+  property: {
+    noun: 'property policy', nouns: 'property policies',
+    '30d': 'renews on {d}. Renewal takes two minutes in our secure portal — check the sum insured against what rebuilding and restocking would cost today, and send your instruction.',
+    '14d': 'renews on {d} — two weeks away. Two minutes online is all it takes.',
+    '7d':  'renews on {d}, one week away. Renewing before the date keeps the premises covered without a break.',
+    '0d':  'renews today. Send your instruction now and your cover continues without a gap.',
+    'od3': 'reached its renewal date on {d}. Trading from uninsured premises puts the stock, the building and the income all on the same bet. It takes two minutes to put right.',
+    'od7': 'renewal of {d} is still open. This is our final email reminder. One of our team will call you shortly, or renew online now.',
+  },
+  liability: {
+    noun: 'liability policy', nouns: 'liability policies',
+    '30d': 'renews on {d}. Renewal takes two minutes in our secure portal — check the limit still matches the size of the work you are taking on, and send your instruction.',
+    '14d': 'renews on {d} — two weeks away. Two minutes online is all it takes.',
+    '7d':  'renews on {d}, one week away. Renewing before the date keeps the cover continuous, which matters if a contract asks you to evidence it.',
+    '0d':  'renews today. Send your instruction now and your cover continues without a gap.',
+    'od3': 'reached its renewal date on {d}. A claim arising during a gap is yours to meet, and most contracts require unbroken cover. It takes two minutes to put right.',
+    'od7': 'renewal of {d} is still open. This is our final email reminder. One of our team will call you shortly, or renew online now.',
+  },
+  other: {
+    noun: 'policy', nouns: 'policies',
+    '30d': 'renews on {d}. Review your cover and send your instruction in our secure portal.',
+    '14d': 'renews on {d} — two weeks away.',
+    '7d':  'renews on {d}, one week away.',
+    '0d':  'renews today. Send your instruction now and your cover continues without a break.',
+    'od3': 'reached its renewal date on {d}. It takes two minutes to put right.',
+    'od7': 'renewal of {d} is still open. This is our final email reminder. One of our team will call you shortly.',
+  },
+};
+
+var RSF_SUBJECT = {
+  '30d': function (c, d) { return 'Your ' + c.noun + ' renews on ' + d + ' — review & renew online'; },
+  '14d': function (c, d) { return 'Two weeks to go — renew your ' + c.noun + ' by ' + d; },
+  '7d':  function (c, d) { return 'One week left — your ' + c.noun + ' renews ' + d; },
+  '0d':  function (c)    { return 'Your ' + c.noun + ' renews TODAY — one click to stay covered'; },
+  'od3': function (c)    { return 'Your ' + c.noun + ' renewal date has passed — let’s keep you covered'; },
+  'od7': function (c)    { return 'Final reminder — your ' + c.noun + ' needs attention'; },
+};
+
+/** The things on the policy, as a list the client will recognise. */
+function rsfSchedule_(g) {
+  if (g.rows.length < 2 && !g.rows[0].vehicle) return '';
+  var items = g.rows.map(function (r) {
+    var what = r.vehicle || r.coverage || 'Item';
+    var cov = r.vehicle && r.coverage && r.coverage !== 'policy' ? ' — ' + esc_(r.coverage) : '';
+    return '<li style="margin:3px 0">' + esc_(what) + cov +
+           (Number(r.sumInsured) > 0 ? ' <span style="color:#8a97a8">· insured ' +
+            fmtMoney_(r.sumInsured) + '</span>' : '') + '</li>';
+  }).join('');
+  return '<p style="margin-bottom:4px"><b>On this policy' +
+         (g.rows.length > 1 ? ' (' + g.rows.length + ')' : '') + ':</b></p>' +
+         '<ul style="margin-top:0;padding-left:20px">' + items + '</ul>';
+}
+
+/** Education and cross-sell, chosen by class. */
+function rsfEdu_(g) {
+  var anyComp = g.rows.some(function (r) { return /comprehensive/i.test(r.coverage); });
+  var anyTPO  = g.rows.some(function (r) { return /third party/i.test(r.coverage); });
+  var si = g.rows.reduce(function (a, r) { return a + (Number(r.sumInsured) || 0); }, 0);
+
+  if (g.cls === 'motor') {
+    var out = '';
+    if (anyComp) out +=
+      eduBox_('<b style="color:#9a6d0b">💡 Vehicles depreciate.</b> Your cover is written for ' +
+        (si ? '<b>' + fmtMoney_(si) + '</b>' : 'its declared value') +
+        '. A comprehensive claim settles at the market value or the sum insured, <b>whichever is lower</b> — so a figure left too high costs you premium without buying you anything. Update it in the portal.') +
+      eduBox_('<b style="color:#9a6d0b">⚠️ Change from Guardian General:</b> the <b>Waiver of Excess</b> is no longer included free after three claim-free years. It is now an optional benefit you buy, and it waives your excess if you claim. One tick in the portal.');
+    if (anyTPO) out +=
+      eduBox_('<b style="color:#9a6d0b">💡 Third party covers other people — not your own vehicle.</b> ' +
+        'Comprehensive adds accident, fire and theft cover for your car, plus a No Claim Discount that grows to 60%. Tick one box in the portal for a free comparison quote.') +
+      eduBox_('<b style="color:#9a6d0b">🆕 New benefit:</b> <b>windscreen cover</b> can now be added to Private Third Party policies — a cracked windscreen no longer comes out of your pocket.');
+    return out;
+  }
+
+  if (g.cls === 'home' || g.cls === 'property') {
+    var thing = g.cls === 'home' ? 'your home' : 'the premises';
+    return eduBox_('<b style="color:#9a6d0b">⚠️ The one thing worth checking: your sum insured.</b> ' +
+        'This policy carries an <b>average clause</b>. If ' + thing + ' is insured for less than 85% of what it ' +
+        'would cost to rebuild, a claim is reduced by the same proportion you are underinsured — and that applies ' +
+        'to <b>every</b> claim, not just a total loss.' +
+        (si ? ' You are currently insured for <b>' + fmtMoney_(si) + '</b>.' : '') +
+        '<br><br>A partial claim of $100,000 on a property insured at half its rebuilding cost pays <b>$50,000</b>. ' +
+        'Building costs have moved; the figure on your schedule may not have. Tell us in the portal and we will review it.') +
+      (g.cls === 'home'
+        ? eduBox_('<b style="color:#9a6d0b">💡 Worth knowing:</b> contents are usually covered under ' +
+            'sub-limits per category, and jewellery, cash and items taken outside the home are often capped well ' +
+            'below what people expect. If you have acquired anything significant this year, say so when you renew.')
+        : eduBox_('<b style="color:#9a6d0b">💡 The cover most businesses find out about too late:</b> ' +
+            '<b>business interruption</b>. Fire cover rebuilds the building and replaces the stock — it does not ' +
+            'replace the income lost while you are closed. Ask us for a quote when you renew.'));
+  }
+
+  if (g.cls === 'liability') {
+    return eduBox_('<b style="color:#9a6d0b">💡 Check the limit, not just the premium.</b> ' +
+      (si ? 'Your limit is <b>' + fmtMoney_(si) + '</b>. ' : '') +
+      'A liability limit set years ago against a smaller operation is the commonest gap we find at renewal — ' +
+      'and many contracts now specify a minimum. Tell us in the portal if the work has grown.');
+  }
+  return '';
+}
+
+/**
+ * Send one email for one policy. Goes through sendMail_(), so test mode
+ * reroutes it to you and strips cc/bcc/reply-to.
+ */
+function rsfSendGroup_(g) {
+  var c = RSF_COPY[g.cls] || RSF_COPY.other;
+  var lead = g.lead;
+  var subject = (RSF_SUBJECT[g.stage] || RSF_SUBJECT['30d'])(c, lead.nextDue);
+  var line = (c[g.stage] || c['30d']).replace('{d}', '<b>' + lead.nextDue + '</b>');
+  var ref = lead.policy ? ' <b>' + esc_(lead.policy) + '</b>' : '';
+  var bal = g.rows.reduce(function (a, r) { return a + (Number(r.balance) || 0); }, 0);
+
+  sendMail_({
+    to: lead.email, name: CONFIG.FROM_NAME,
+    subject: subject,
+    htmlBody: brandWrap_(
+      '<p>Dear ' + esc_((lead.contact || lead.client).split(' ')[0] || 'Valued Client') + ',</p>' +
+      '<p>Your ' + esc_(c.noun) + ref + ' ' + line + '</p>' +
+      rsfSchedule_(g) +
+      ctaBtn_(portalLink_(lead.token), 'Review & renew my policy') +
+      rsfEdu_(g) +
+      (bal > 0 ? '<div style="background:#fbe9e7;border-left:4px solid #b3261e;padding:12px 16px;margin:14px 0">' +
+        'A balance of <b>' + fmtMoney_(bal) + '</b> shows on this policy. Settling it keeps your renewal seamless.</div>' : '') +
+      '<p>Prefer to talk it through? Just reply to this email' +
+        (CONFIG.AGENT_PHONE ? ' or call ' + esc_(CONFIG.AGENT_PHONE) : '') + '.</p>' + sig_(),
+      'Policy renewal'),
+  });
 }
 
 /**
@@ -323,12 +570,22 @@ function rsfPreview() {
          ' on Next_Renewal_Date__c');
   L.push('risks in window: ' + p.total);
   L.push('');
-  L.push('WOULD SEND (' + p.send.length + ')');
+  var risks = p.send.reduce(function (a, g) { return a + g.rows.length; }, 0);
+  L.push('WOULD SEND (' + p.send.length + ' emails, covering ' + risks + ' risks)');
   if (!p.send.length) L.push('  — nothing due today');
-  p.send.forEach(function (s) {
-    L.push('  [' + s.stage + '] ' + (s.row.nextDue || '?') + '  ' +
-           (s.row.client || '').slice(0, 34) + '  ' + s.row.email);
+  p.send.forEach(function (g) {
+    L.push('  [' + g.stage + '] ' + g.cls.toUpperCase() +
+           '  ' + (g.lead.nextDue || '?') +
+           '  ' + (g.lead.client || '').slice(0, 30) +
+           '  ' + g.lead.email +
+           (g.rows.length > 1 ? '   (' + g.rows.length + ' risks on ' + g.lead.policy + ')' : ''));
   });
+
+  var byCls = {};
+  p.send.forEach(function (g) { byCls[g.cls] = (byCls[g.cls] || 0) + 1; });
+  L.push('');
+  L.push('  by class: ' + Object.keys(byCls).map(function (k) {
+    return k + ' ' + byCls[k]; }).join(' · '));
 
   var by = {};
   p.skip.forEach(function (s) { by[s.why] = (by[s.why] || 0) + 1; });
@@ -353,24 +610,27 @@ function rsfDailyAutomation() {
   var p = rsfPlan_();
   var done = 0, failed = 0;
 
-  p.send.slice(0, RSF.MAX_PER_RUN).forEach(function (s) {
+  p.send.slice(0, RSF.MAX_PER_RUN).forEach(function (g) {
     try {
-      sendStageEmail_(s.row, s.stage);
+      rsfSendGroup_(g);
       // In test mode nothing reached a client, so nothing is stamped —
       // a rehearsal must never burn a real reminder.
-      if (!testMode_()) rsfStamp_(s.row, s.stage);
+      // Every risk on the policy is stamped, not just the one that led the
+      // group, so tomorrow's dedupe holds however the group re-forms.
+      if (!testMode_()) g.rows.forEach(function (r) { rsfStamp_(r, g.stage); });
       if (typeof logActivity_ === 'function')
-        logActivity_(s.row.token, s.row.client, 'reminder-' + s.stage, 'salesforce', s.row.policy || '');
+        logActivity_(g.lead.token, g.lead.client, 'reminder-' + g.stage, 'salesforce', g.lead.policy || '');
       done++;
     } catch (err) {
       failed++;
-      Logger.log('FAILED ' + s.row.id + ' (' + s.stage + '): ' + err);
+      Logger.log('FAILED ' + g.lead.id + ' (' + g.stage + '): ' + err);
     }
   });
 
-  var msg = 'Renewal ladder: ' + done + ' sent, ' + failed + ' failed, ' +
-            p.skip.length + ' skipped, ' + p.total + ' in window' +
-            (testMode_() ? ' — TEST MODE, all rerouted to ' + testInbox_() : '');
+  var msg = 'Renewal ladder: ' + done + ' emails sent, ' + failed + ' failed, ' +
+            p.skip.length + ' risks skipped, ' + p.total + ' in window' +
+            (testMode_() ? ' — TEST MODE, all rerouted to ' + testInbox_()
+                         : ' — LIVE, these reached clients');
   Logger.log(msg);
   return msg;
 }
