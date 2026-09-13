@@ -633,6 +633,10 @@ var BEN = {
   BILLING_SHEET:  'Billing',
   ACTIVITY_SHEET: 'BenefitsActivity',
   TERMS_SHEET:    'Terminations',
+  /* A query an employer raised used to go one way: they pressed a button
+     and it vanished into us. This is the thread — theirs and ours, in the
+     order it was said, so neither side has to remember what was agreed. */
+  COMMENTS_SHEET: 'QueryComments',
   DRIVE_ROOT:     'Benefits Billing',
   FROM_NAME:      'Ricky Rampersad Branch — Employee Benefits'
 };
@@ -650,6 +654,7 @@ function benefitsSetup() {
   want[BEN.TERMS_SHEET]    = ['Id', 'Group', 'Member', 'Line', 'Last Day', 'Reason',
                               'Reported By', 'Reported At', 'State', 'Sent At',
                               'Actioned At', 'Settled At', 'Note'];
+  want[BEN.COMMENTS_SHEET] = ['At', 'Thread', 'Group', 'By', 'Role', 'Text'];
   Object.keys(want).forEach(function (name) {
     var sh = ss.getSheetByName(name);
     if (name === BEN.ADMINS_SHEET && !sh) {
@@ -902,6 +907,7 @@ function doPost(e) {
     if (b.action === 'terminations') return benTerminations_(b);
     if (b.action === 'reportleaver') return benReportTermination_(b);
     if (b.action === 'leaversent')   return benTerminationSent_(b);
+    if (b.action === 'querycomment') return benQueryComment_(b);
     if (typeof quoteDoPost_ === 'function') return quoteDoPost_(e);
     return berr_('Unknown action.');
   } catch (err) { return berr_(String(err && err.message || err)); }
@@ -1385,15 +1391,27 @@ function bTaskVisible_(subject) {
 
 /* Scheme-level activity on the group's own account. Read-only, and the
    allow-list runs before anything is returned rather than in the page —
-   what the browser never receives cannot be read out of it. */
-function bGroupTasks_(group) {
+   what the browser never receives cannot be read out of it.
+
+   Matched on the account name AND on the scheme's own list bill numbers,
+   because a task raised against the bill rather than the company would
+   otherwise be invisible to the very employer it concerns. Servus is the
+   case that proves it: the account reads SERVUS LTD, the billing is headed
+   S072 and Salesforce holds S047, and a task naming any one of the three
+   is about the same scheme. */
+function bGroupTasks_(group, bills) {
   if (typeof sfQuery_ !== 'function') return [];
   var like = bAcctLike_(group).replace(/'/g, "\\'");
+  var where = "Account.Name LIKE '" + like + "'";
+  [].concat(bills || []).filter(Boolean).forEach(function (b) {
+    var v = String(b).replace(/'/g, "\\'").trim();
+    if (v) where += " OR Subject LIKE '%" + v + "%'";
+  });
   var rows;
   try {
     rows = sfQuery_(
       "SELECT Id, Subject, Status, ActivityDate, CreatedDate, Owner.Name, Account.Name "
-      + "FROM Task WHERE AccountId != null AND Account.Name LIKE '" + like + "' "
+      + "FROM Task WHERE AccountId != null AND (" + where + ") "
       + "ORDER BY CreatedDate DESC LIMIT 300");
   } catch (e) { return []; }
   var out = [];
@@ -1448,6 +1466,108 @@ function bGroupQueries_(group) {
     });
   });
   return out;
+}
+
+/* ── the thread on a query ──
+   Both sides, in the order it was said. An employer who raises a query and
+   then has to telephone to find out what happened has not been given a
+   query system, they have been given a button. */
+function bCommentRows_(group, thread) {
+  var want = String(group || '').trim().toUpperCase();
+  var th = thread == null ? null : String(thread);
+  return brows_(bsheet_(BEN.COMMENTS_SHEET)).filter(function (r) {
+    if (String(bfield_(r, ['group'])).trim().toUpperCase() !== want) return false;
+    return th == null || String(bfield_(r, ['thread'])) === th;
+  }).map(function (r) {
+    return { at: bstamp_(bfield_(r, ['at'])), thread: String(bfield_(r, ['thread'])),
+             by: String(bfield_(r, ['by'])), role: String(bfield_(r, ['role'])),
+             text: String(bfield_(r, ['text'])) };
+  }).sort(function (a, b) { return String(a.at) < String(b.at) ? -1 : 1; });
+}
+
+function bstamp_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), 'yyyy-MM-dd HH:mm');
+  return String(v || '');
+}
+
+/* An employer or a member of staff adds to a thread. The group is read off
+   the access row for a client, never off the request — the same rule the
+   rest of the portal runs on, so nobody can write onto another company's
+   query by changing a field. */
+function benQueryComment_(b) {
+  var thread = String(b.thread || '').trim();
+  var text = String(b.text || '').trim();
+  if (!thread) return berr_('Which query?');
+  if (!text) return berr_('Nothing to say?');
+  if (text.length > 4000) return berr_('That is longer than a comment — send it to us by email.');
+
+  var who = bstaff_(b.auth), group, byName, role;
+  if (who) {
+    group = String(b.group || '').trim();
+    byName = (who.name === 'Branch admin code' && b.by) ? String(b.by) : who.name;
+    role = 'branch';
+  } else {
+    var row = bClientRow_(b.code, b.password);
+    if (!row) return berr_('Not on the access list — check the login and password.');
+    group = String(bfield_(row, ['company'])).trim();
+    byName = String(bfield_(row, ['name'])).trim() || group;
+    role = 'client';
+  }
+  if (!group) return berr_('Which group?');
+
+  bsheet_(BEN.COMMENTS_SHEET).appendRow([new Date(), thread, group, byName, role, text]);
+  blog_(byName, who ? who.code : '', 'QUERY COMMENT', group, '', thread + ' — ' + text.slice(0, 90));
+
+  /* The branch hears about a client's comment at once; a client is not
+     emailed for ours, because they are looking at the thread when we
+     answer and a notification for something already on screen is noise. */
+  if (role === 'client') {
+    try {
+      var to = [bprop_('BEN_APPROVER_EMAIL'), bprop_('BEN_NOTIFY')]
+        .filter(function (x) { return !!x; });
+      if (to.length) MailApp.sendEmail({
+        to: to.join(','), name: BEN.FROM_NAME,
+        subject: 'Query comment: ' + group,
+        body: byName + ' added to a query at ' + group + ':\n\n' + text
+          + '\n\nAnswer it on the thread so they can see it:\n'
+          + bprop_('BEN_SITE') + 'upload.html'
+      });
+    } catch (e) {}
+  }
+  return bok_({ at: bstamp_(new Date()), by: byName, role: role });
+}
+
+/* ── what has been billed, and what has come in ──
+   The Billing tab is the remittance log: one row per month per line, with
+   the payment against it. This reads it back as a ledger a client can
+   follow from billed to received, which is the question they actually ask
+   and the one the spreadsheet could never answer. */
+function bLedger_(group) {
+  var rows = bBillingRowsFor_(group);
+  var months = {};
+  rows.forEach(function (r) {
+    var k = r.month || 'unknown';
+    var m = months[k] || (months[k] = { month: k, billed: 0, paid: 0, lines: [], open: 0 });
+    m.billed += r.billed || 0;
+    m.paid   += r.paid || 0;
+    m.lines.push(r);
+  });
+  return Object.keys(months).map(function (k) {
+    var m = months[k];
+    m.open = Math.round((m.billed - m.paid) * 100) / 100;
+    /* Said in words, because "settled" and "part paid" are what a client
+       needs and a difference of zero is not self-evident on a screen. */
+    m.state = m.open <= 0.005 ? 'settled' : m.paid > 0 ? 'part paid' : 'outstanding';
+    return m;
+  }).sort(function (a, b) { return bMonthKey_(b.month) < bMonthKey_(a.month) ? -1 : 1; });
+}
+
+/* "September 2026" sorts before "August 2026" alphabetically, which puts a
+   client's ledger in an order that means nothing. */
+function bMonthKey_(label) {
+  var d = new Date(String(label || '') + ' 1');
+  return isNaN(+d) ? '0000-00' :
+    d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
 }
 
 /* A LIKE that finds the account however the book spells it. The two longest
@@ -2104,9 +2224,21 @@ function benGroupView_(p) {
     inForce: counts, pending: pending, ended: ended, tracked: tracked,
     members: bMemberCover_(rows),
     /* Both feeds, newest first, so the employer reads one list rather than
-       learning which of our systems a question happened to land in. */
-    queries: bGroupQueries_(group).concat(bGroupTasks_(group))
-      .sort(function (a, b) { return String(b.at || '') < String(a.at || '') ? -1 : 1; }),
+       learning which of our systems a question happened to land in. The
+       thread is attached to each, so a query and its conversation are one
+       thing on screen rather than two. */
+    queries: (function () {
+      var all = bGroupQueries_(group).concat(bGroupTasks_(group, bDistinctBills_(rows).map(function (b) { return b.bill; })));
+      var talk = [];
+      try { talk = bCommentRows_(group); } catch (e) {}
+      all.forEach(function (q) {
+        q.thread = talk.filter(function (c) { return c.thread === q.ref; });
+      });
+      return all.sort(function (a, b) { return String(b.at || '') < String(a.at || '') ? -1 : 1; });
+    })(),
+    /* Billed against received, month by month — the question a client asks
+       that the spreadsheet could never answer. */
+    ledger: bLedger_(group),
     billsByLine: byLine,
     /* owned  — demonstrably the employer's, by the ownership field
        unclear — no owner recorded, so it could be either

@@ -200,6 +200,20 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
 .qsrc{font-size:9.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--slate);
   border:1px solid var(--line);border-radius:3px;padding:.1rem .4rem}
 
+/* the conversation on a query */
+.qtalk{margin-top:.8rem;padding-top:.75rem;border-top:1px solid var(--line2)}
+.msg{border-radius:10px;padding:.55rem .8rem;margin-bottom:.5rem;max-width:84%;font-size:13.5px}
+.msg .who{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--slate);margin-bottom:.15rem}
+/* Theirs sits left and plain; ours sits right and tinted, so an employer
+   can see at a glance whether the last word was ours or theirs. */
+.msg.them{background:var(--surface2)}
+.msg.us{background:var(--lightblue);margin-left:auto}
+:root[data-theme="dark"] .msg.us{background:var(--surface2);box-shadow:inset 2px 0 0 var(--teal2)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .msg.us{
+  background:var(--surface2);box-shadow:inset 2px 0 0 var(--teal2)}}
+@media(max-width:560px){.msg{max-width:100%}}
+
 @media(max-width:640px){
   .hin{padding:.8rem 1rem;gap:.9rem}
   .acctin{padding:1.2rem 1rem 1.3rem}
@@ -257,6 +271,7 @@ dl.kv dt{margin-bottom:.15rem} dl.kv dd{margin:0;font-size:14px}
 
 <main id="main"></main>
 
+<script src="charts.js"></script>
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    SAMPLE DATA — invented people, real structure.
@@ -1437,7 +1452,7 @@ function goMovement(){
   location.href = 'movement.html';
 }
 const TABS={employer:[['overview','Overview'],['billing','Billing'],['history','History'],['people','People'],['check','Check my month']],
-            employer_live:[['history','History'],['queries','Queries'],['members','Your people'],
+            employer_live:[['dash','Overview'],['history','History'],['queries','Queries'],['members','Your people'],
                            ['pending','Pending applications'],
                            ['leavers','Terminations'],['pension','Pension'],['check','Check my month']],
             employee:[['mycover','My benefits']]};
@@ -1653,7 +1668,7 @@ function render(){
     ? `<b>${esc(GROUP.company)}</b><span class="label">Employer account</span>`
     : `<b>${esc(ME.first+' '+ME.last)}</b><span class="label">Cert ${esc(ME.cert)}</span>`;
   acctBand();
-  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,queries,pending,leavers,pension})[tab]();
+  $('main').innerHTML = ({overview,billing,history,people,members,check,mycover,dash,queries,pending,leavers,pension})[tab]();
   const cf=$('ckFiles');
   if(cf) cf.addEventListener('change', e => { if(e.target.files.length) checkFiles([...e.target.files]); });
 }
@@ -1731,6 +1746,28 @@ function gvWaiting(title, blurb){ return gvShell(title, blurb, gvCard()); }
    somebody's medical cover is not a smaller mistake than a wrong number,
    it is a worse one. */
 let MSEARCH = '', MPICK = null;
+/* Which query has its comment box open. One at a time — a page with six
+   open textareas is a page where somebody types into the wrong one. */
+let QOPEN = null;
+
+async function sendComment(ref, text){
+  const err = $('qerr');
+  if(!text.trim()){ if(err) err.textContent = 'Nothing to send.'; return; }
+  if(err) err.textContent = 'Sending…';
+  try{
+    const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body: JSON.stringify({ action:'querycomment', code:AUTH.code, password:AUTH.pw,
+                             thread:ref, text:text }) });
+    const d = await r.json();
+    if(d && d.ok){
+      /* Show it at once rather than waiting on a reload — the branch
+         record is a slow read and the person has just pressed Send. */
+      const q = (GV.queries || []).find(x => x.ref === ref);
+      if(q){ q.thread = (q.thread || []).concat([{ at:d.at, by:d.by, role:d.role, text:text }]); }
+      QOPEN = null; render();
+    } else if(err){ err.textContent = (d && d.error) || 'Could not send that.'; }
+  }catch(e){ if(err) err.textContent = 'Could not reach the branch just now.'; }
+}
 
 const covered = m => (m.holds.life && m.lifeCover) || (m.holds.adnd && m.adndCover);
 
@@ -1881,6 +1918,90 @@ function statement(m){
    The branch feed is allow-listed server-side, not here. Their account also
    carries individual policies and the owners' keyperson cover, and none of
    that is theirs to read. What the browser never receives cannot leak. */
+/* ══════════════════ THE ACCOUNT, AT A GLANCE ══════════════════
+   Billed against received, month by month, and the cover behind it. The
+   question an employer opens a portal to answer is "are we square?", and
+   until now the only way to answer it was to add up a spreadsheet whose
+   variance cell reads #REF!.
+
+   Every figure is the branch's own billing record. Where a month has been
+   billed and nothing received, it says outstanding rather than colouring
+   it and hoping. */
+function dash(){
+  const title = 'Overview';
+  const blurb = 'Where your account stands — what has been billed, what has reached us, and what is on cover.';
+  if(GV_STATE !== 'ready') return gvWaiting(title, blurb);
+
+  const led = GV.ledger || [];
+  const billed = led.reduce((s,m) => s + m.billed, 0);
+  const paid   = led.reduce((s,m) => s + m.paid, 0);
+  const open   = Math.round((billed - paid) * 100) / 100;
+  const owing  = led.filter(m => m.open > 0.005);
+  const inf    = GV.inForce || {};
+  const qopen  = (GV.queries || []).filter(q => q.open).length;
+
+  /* Oldest first for a trend — a chart that runs backwards is a chart
+     nobody reads correctly. */
+  const recent = led.slice(0, 12).reverse();
+  const trend = recent.map(m => ({ label: String(m.month || '').replace(/\s+\d{4}$/, '').slice(0,3), value: m.billed }));
+  const split = [
+    ['Group life', inf.life], ['Group health', inf.health], ['Pension', inf.pension]
+  ].filter(x => x[1]).map(([label,value]) => ({ label, value }));
+
+  return gvShell(title, blurb, `
+    <div class="stats" style="margin-bottom:1.4rem">
+      <div class="card"><span class="label">Billed to date</span>
+        <div class="v">${money(billed)}</div>
+        <div class="note">${led.length} month${led.length===1?'':'s'} on record</div></div>
+      <div class="card"><span class="label">Received</span>
+        <div class="v good">${money(paid)}</div>
+        <div class="note">${billed ? Math.round(paid/billed*100) : 0}% of what was billed</div></div>
+      <div class="card"><span class="label">Still open</span>
+        <div class="v ${open > 0.005 ? 'bad' : ''}">${open > 0.005 ? money(open) : '—'}</div>
+        <div class="note">${owing.length ? owing.length + ' month' + (owing.length===1?'':'s') : 'nothing outstanding'}</div></div>
+      <div class="card"><span class="label">Open with us</span>
+        <div class="v">${qopen}</div>
+        <div class="note">${qopen ? 'we are on these' : 'no open queries'}</div></div>
+    </div>
+
+    <div class="grid2">
+      ${trend.length > 1 ? `<div class="card">
+        <span class="label">Billed by month</span>
+        <h2 style="font-size:1.05rem;color:var(--navy);margin:.15rem 0 .9rem">The last ${trend.length} months</h2>
+        ${Charts.line(trend, {width:600, height:190, id:'bill', title:'Billed by month'})}
+      </div>` : ''}
+      ${split.length ? `<div class="card">
+        <span class="label">On cover</span>
+        <h2 style="font-size:1.05rem;color:var(--navy);margin:.15rem 0 .9rem">Your people by plan</h2>
+        ${Charts.donut(split, {size:150, centre:String(split.reduce((s,x)=>s+x.value,0)), centreSub:'on cover'})}
+      </div>` : ''}
+    </div>
+
+    ${owing.length ? `<div class="alert a-warn" style="margin-top:1.4rem">
+      <b>${money(open)} is showing as unpaid</b> across ${owing.map(m=>esc(m.month)).join(', ')}.
+      If you have already sent it, give us the payment reference and we will chase it internally — it usually
+      means the payment reached Guardian but has not been applied to your account yet. Nothing about your cover
+      changes while that is sorted out.</div>` : ''}
+
+    <h2 style="font-size:1.05rem;color:var(--navy);margin:1.6rem 0 .3rem">Every month, billed and received</h2>
+    <p class="note" style="margin-bottom:.9rem">Each line is what the branch holds. A month reads settled only
+      when the payment has been applied here, not when it left you.</p>
+    <div class="card" style="overflow-x:auto;padding:0"><table><thead><tr>
+      <th>Month</th><th>Lines</th><th class="r">Billed</th><th class="r">Received</th>
+      <th class="r">Open</th><th></th></tr></thead><tbody>
+      ${led.map(m => `<tr class="${m.open > 0.005 ? 'owing' : ''}">
+        <td><b>${esc(m.month)}</b></td>
+        <td class="note">${m.lines.map(l => esc(l.line)).join(' · ')}</td>
+        <td class="r mono">${money(m.billed)}</td>
+        <td class="r mono">${m.paid ? money(m.paid) : '—'}</td>
+        <td class="r mono ${m.open > 0.005 ? 'owe' : ''}">${m.open > 0.005 ? money(m.open) : '—'}</td>
+        <td><span class="pill ${m.state==='settled'?'p-ok':m.state==='part paid'?'p-warn':'p-bad'}">${esc(m.state)}</span></td>
+      </tr>`).join('')}
+    </tbody></table></div>
+    ${led.length ? '' : '<p class="note" style="margin-top:.8rem">No months on record yet.</p>'}
+    <p class="note" style="margin-top:.8rem">Read ${esc(String(GV.read||'').slice(0,10))}.</p>`);
+}
+
 function queries(){
   const title = 'Queries';
   const blurb = 'Everything open between your company and the branch — what you have raised on a billing, '
@@ -1896,6 +2017,28 @@ function queries(){
     <p class="note" style="margin-top:.5rem">Every billing we send carries a link — one tap confirms it is right,
       or tells us what is wrong. Whatever you raise there appears here.</p></div>`);
 
+  /* The thread. Both sides in the order it was said, so neither has to
+     remember what was agreed, and a box to add to it — a query you can
+     raise but not discuss is a button, not a query system. */
+  const thread = q => {
+    const msgs = q.thread || [];
+    const open = QOPEN === q.ref;
+    return `<div class="qtalk">
+      ${msgs.map(m => `<div class="msg ${m.role === 'client' ? 'them' : 'us'}">
+        <div class="who">${esc(m.by)}${m.role === 'branch' ? ' · the branch' : ''} · ${esc(m.at)}</div>
+        <p>${esc(m.text)}</p></div>`).join('')}
+      ${open ? `<div style="margin-top:.7rem">
+          <textarea class="inp" id="qtext" rows="2" placeholder="Add to this query…"></textarea>
+          <div style="display:flex;gap:.5rem;margin-top:.5rem;align-items:center;flex-wrap:wrap">
+            <button class="btn sm" data-qsend="${esc(q.ref)}">Send</button>
+            <button class="btn ghost sm" data-qopen="">Cancel</button>
+            <span class="note" id="qerr"></span>
+          </div></div>`
+        : `<button class="btn ghost sm" style="margin-top:.6rem" data-qopen="${esc(q.ref)}">
+            ${msgs.length ? 'Reply' : 'Add a comment'}</button>`}
+    </div>`;
+  };
+
   const row = q => `<div class="qrow ${q.open ? 'open' : 'done'}">
     <div class="qhead">
       <div>
@@ -1904,6 +2047,7 @@ function queries(){
           <span class="qsrc">${q.source === 'billing' ? 'Your query' : 'Branch'}</span>
           ${q.at ? ' · ' + esc(q.at) : ''}${q.withWhom ? ' · with ' + esc(q.withWhom) : ''}
           ${q.due ? ' · due ' + esc(String(q.due).slice(0,10)) : ''}
+          ${(q.thread && q.thread.length) ? ' · ' + q.thread.length + ' message' + (q.thread.length===1?'':'s') : ''}
         </div>
       </div>
       <span class="pill ${q.open ? 'p-warn' : 'p-ok'}">${esc(q.status || (q.open ? 'Open' : 'Closed'))}</span>
@@ -1913,6 +2057,7 @@ function queries(){
     ${q.note ? `<div class="qbody">${esc(q.note)}</div>` : ''}
     ${q.reply ? `<div class="qbody"><span class="label">Our reply${q.repliedAt ? ' · ' + esc(q.repliedAt) : ''}</span>
       <p style="margin-top:.3rem">${esc(q.reply)}</p></div>` : ''}
+    ${thread(q)}
   </div>`;
 
   return gvShell(title, blurb, `
@@ -2185,7 +2330,7 @@ function liveRow(r){
 function syncBar(){ document.querySelectorAll('[data-as]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.as===as))); }
 
 document.addEventListener('click',e=>{
-  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-signout],[data-movement],[data-member],#theme'); if(!t) return;
+  const t=e.target.closest('[data-go],[data-as],[data-signin],[data-signout],[data-movement],[data-member],[data-qopen],[data-qsend],#theme'); if(!t) return;
   /* Everything the session held goes, including the login the movement form
      would have used. On a shared machine the next person gets the gate. */
   if(t.hasAttribute('data-signout')){
@@ -2203,6 +2348,8 @@ document.addEventListener('click',e=>{
   if(t.hasAttribute('data-movement')){ e.preventDefault(); goMovement(); return; }
   if(t.hasAttribute('data-member')){ MPICK = t.dataset.member || null; render();
     window.scrollTo({top:0,behavior:'smooth'}); return; }
+  if(t.hasAttribute('data-qopen')){ QOPEN = t.dataset.qopen || null; render(); return; }
+  if(t.hasAttribute('data-qsend')){ sendComment(t.dataset.qsend, ($('qtext')||{}).value || ''); return; }
   if(t.dataset.as){ as=t.dataset.as; authed=true; ME=GROUP.people[3]; tab=TABS[as][0][0]; syncBar(); render(); return; }
   if(t.hasAttribute('data-signin')){ signIn($('code').value, $('pw') ? $('pw').value : ''); return; }
   if(t.dataset.go){ tab=t.dataset.go; MPICK=null; MSEARCH=''; render();

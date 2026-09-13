@@ -24,17 +24,31 @@ fuser -k $PORT/tcp 2>/dev/null; sleep 0.4
 # /logo-mark.png. Serving benefits/ as root hides that path.
 (cd "$ROOT" && exec python3 -m http.server $PORT) >/dev/null 2>&1 &
 WEB=$!
+
+# The pages point at the live Apps Script. Serve a copy under test/live/
+# with that URL swapped for the mock, so a bench never touches production.
+fuser -k 8940/tcp 8944/tcp 2>/dev/null
+node "$ROOT/benefits/test/mockapi.mjs" >/dev/null 2>&1 &
+MOCK=$!
+LIVE_URL="https://script.google.com/macros/s/AKfycbzxAl-EP_stXYGHZkkxWnei6idJ04bM5ZIUKfGxDTr-cHPH7Tt9trmAYVNPzeq9k4U56w/exec"
+rm -rf "$ROOT/benefits/test/live"; mkdir -p "$ROOT/benefits/test/live"
+for f in "$ROOT"/benefits/*.html "$ROOT"/benefits/*.css "$ROOT"/benefits/*.js; do
+  [ -f "$f" ] || continue
+  sed "s|\"$LIVE_URL\"|\"http://localhost:8940\"|" "$f" > "$ROOT/benefits/test/live/$(basename "$f")"
+done
 sleep 1.2
 
 for f in "$ROOT"/benefits/test/*.mjs; do
   name=$(basename "$f" .mjs)
+  # mockapi is the server the benches talk to, not a bench
+  [ "$name" = "mockapi" ] && continue
   [ -n "$ONLY" ] && [ "$name" != "$ONLY" ] && continue
   echo ""
   echo "──────── $name ────────"
   node "$f" || FAIL=1
 done
 
-kill $WEB 2>/dev/null
+kill $WEB $MOCK 2>/dev/null
 echo ""
 [ $FAIL -eq 0 ] && echo "ALL GREEN" || echo "SOMETHING FAILED"
 exit $FAIL
