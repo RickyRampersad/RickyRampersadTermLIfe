@@ -24,36 +24,43 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,500&family=Inter:wght@400;500;600;700;800&display=swap" />
 <style>
   :root{
-    /* The house palette, at its real values. Claims had drifted to a
-       washed teal and a soft gold; these are the navy, gold and teal the
-       branch mark is actually drawn in, which is both richer on screen and
-       the thing every other branch surface already uses. */
-    --navy-900:#07131F;
-    --navy-800:#0E2440;
-    --navy-700:#16375A;
-    --teal-600:#07788C;   /* text-safe on paper */
-    --teal-500:#0FA3BC;
-    --teal-vivid:#00CFEA; /* accent, dark grounds only */
-    --teal-ink:#07788C;
-    --teal-50:#E4FAFE;
-    --gold:#EFC24B;
-    --gold-2:#C9942C;
-    --gold-ink:#4A3105;
-    --gold-50:#FDF5E2;
-    --ink:#0B1B2B;
-    --muted:#587187;
-    --bg:#F6F9FC;
+    /* Midnight & violet. Every insurer in this market is navy; this is
+       deliberately not. Violet carries every action, lime is the highlight
+       that only ever appears against dark, and the ground is near-black so
+       both of them actually burn. */
+    --navy-900:#14121A;   /* ground */
+    --navy-800:#221E2E;   /* raised dark surface */
+    --navy-700:#2E2840;
+    --violet:#6B4BFF;
+    --violet-2:#8B72FF;
+    --violet-50:#EFECFF;
+    --lime:#C9F24D;
+    --lime-ink:#4F6B00;
+    /* the old token names still carry the accents, so every rule that
+       already referenced them keeps working and means the new thing */
+    --teal-600:#5334E0;   /* text-safe violet on paper */
+    --teal-500:#6B4BFF;
+    --teal-vivid:#8B72FF;
+    --teal-ink:#5334E0;
+    --teal-50:#EFECFF;
+    --gold:#C9F24D;
+    --gold-2:#A8D12B;
+    --gold-ink:#2C3D00;
+    --gold-50:#F4FCDC;
+    --ink:#14121A;
+    --muted:#6A6578;
+    --bg:#F6F5F8;
     --white:#ffffff;
-    --line:#DBE5F0;
-    --red:#D6455A;
-    --red-50:#FDEDF0;
-    --green:#14996B;
-    --green-50:#E6F7F0;
+    --line:#E2E0EA;
+    --red:#FF4D6A;
+    --red-50:#FFECF0;
+    --green:#14B87A;
+    --green-50:#E4F8F1;
     --radius-lg:24px;
     --radius-md:16px;
     --radius-sm:12px;
-    --shadow:0 16px 40px rgba(7,19,31,.13);
-    --shadow-sm:0 4px 14px rgba(7,19,31,.08);
+    --shadow:0 16px 40px rgba(20,18,26,.16);
+    --shadow-sm:0 4px 14px rgba(20,18,26,.10);
     --font:"Inter","SF Pro Display",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     --display:"Newsreader","Iowan Old Style","Palatino Linotype",Georgia,"Times New Roman",serif;
   }
@@ -80,8 +87,8 @@
   .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-primary{background:var(--navy-800);color:#fff;box-shadow:0 12px 26px rgba(20,57,95,.32)}
   .btn-teal{background:var(--teal-500);color:#fff;box-shadow:0 12px 26px rgba(18,165,160,.32)}
-  .btn-gold{background:linear-gradient(135deg,#f4cd63,var(--gold) 46%,#c9942c);color:#3B2600;
-    box-shadow:0 10px 26px rgba(201,148,44,.34),inset 0 1px 0 rgba(255,255,255,.45)}
+  .btn-gold{background:linear-gradient(135deg,var(--violet-2),var(--violet) 52%,#5334E0);color:#fff;
+    box-shadow:0 10px 30px rgba(107,75,255,.45),inset 0 1px 0 rgba(255,255,255,.28)}
   .btn-ghost{background:#fff;color:var(--navy-900);border:1.5px solid var(--line)}
   .hero .btn-ghost{background:rgba(255,255,255,.07);color:#fff;border-color:rgba(255,255,255,.34);backdrop-filter:blur(6px)}
   .btn-sm{padding:9px 18px;font-size:.88rem}
@@ -97,7 +104,7 @@
   .nav-actions{display:flex;align-items:center;gap:10px}
   .nav-tel{font-weight:700;font-size:.9rem;color:var(--navy-900);text-decoration:none;padding:9px 14px;border-radius:999px}
   .nav-tel:hover{background:rgba(20,57,95,.07)}
-  @media(max-width:620px){.nav-tel span{display:none}}
+  @media(max-width:700px){.nav-tel span{display:none}}
 
 
   /* ── the drawn icon set ──
@@ -129,38 +136,40 @@
     .type-card:hover .tico{transform:none}
   }
 
+
+
   /* ── hero: the aegis field ──
      A WebGL canvas sits over a CSS gradient that is a complete picture on
      its own. If the context never opens — no WebGL, Save-Data, an old
      phone — nothing is missing; the canvas simply stays empty. */
   .hero{position:relative;isolation:isolate;color:#fff;overflow:hidden;
     background:
-      radial-gradient(120% 90% at 18% -10%, rgba(239,194,75,.22), transparent 58%),
-      radial-gradient(90% 70% at 88% 8%, rgba(0,207,234,.16), transparent 62%),
-      linear-gradient(168deg,#07131f 0%,#0E2A47 58%,#123453 100%)}
+      radial-gradient(120% 90% at 16% -12%, rgba(107,75,255,.38), transparent 60%),
+      radial-gradient(90% 70% at 90% 6%, rgba(201,242,77,.14), transparent 58%),
+      linear-gradient(168deg,#14121A 0%,#221E2E 56%,#2E2840 100%)}
   .hero canvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:-1;
     opacity:0;transition:opacity 1.2s ease}
   .hero canvas.lit{opacity:1}
   .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;z-index:1;
-    background:linear-gradient(90deg,transparent,rgba(239,194,75,.55) 22%,rgba(239,194,75,.55) 78%,transparent)}
+    background:linear-gradient(90deg,transparent,rgba(139,114,255,.7) 22%,rgba(201,242,77,.55) 78%,transparent)}
   .hero-inner{position:relative;z-index:1;padding:clamp(56px,9vw,104px) 0 clamp(52px,8vw,92px)}
   .hero .wrap,#file .wrap{max-width:880px}
   #file{padding-top:36px}
 
-  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:.7rem;font-weight:700;
-    letter-spacing:.22em;text-transform:uppercase;color:var(--gold);margin-bottom:22px}
+  .kicker{display:inline-flex;align-items:center;gap:10px;font-size:.75rem;font-weight:700;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--lime);margin-bottom:22px}
   .kicker::before{content:"";width:28px;height:1px;background:currentColor;opacity:.6}
   .hero h1{font-family:var(--display);font-size:clamp(2.5rem,6.4vw,4.5rem);font-weight:300;
     letter-spacing:-.022em;line-height:1.02;text-wrap:balance;margin-bottom:20px}
-  .hero h1 em{font-style:italic;color:var(--gold)}
-  .lede{color:#C6DAEA;max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
+  .hero h1 em{font-style:italic;color:var(--lime)}
+  .lede{color:#BDB8CC;max-width:53ch;font-size:clamp(1rem,1.6vw,1.16rem);line-height:1.65}
   .hero-actions{display:flex;gap:14px;flex-wrap:wrap;margin-top:34px}
   .assur{display:flex;gap:clamp(20px,4vw,44px);flex-wrap:wrap;margin-top:clamp(36px,6vw,56px);
     padding-top:26px;border-top:1px solid rgba(255,255,255,.14)}
   .assur div{min-width:88px}
-  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:400;color:var(--gold);
+  .assur dt{font-family:var(--display);font-size:1.7rem;font-weight:400;color:var(--lime);
     line-height:1;margin-bottom:6px;font-variant-numeric:tabular-nums}
-  .assur dd{font-size:.8rem;color:#9FBBD2;letter-spacing:.02em;line-height:1.4}
+  .assur dd{font-size:.82rem;color:#9A94AB;letter-spacing:.02em;line-height:1.4}
   .hero-facts{display:flex;gap:26px;flex-wrap:wrap;margin-top:30px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)}
   .fact b{display:block;font-size:1.3rem;font-weight:800;color:var(--gold)}
   .fact span{font-size:.82rem;color:#B9CFE2}
@@ -195,7 +204,7 @@
   .type-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:14px}
   .type-card{position:relative;text-align:left;background:#fff;border:2px solid var(--line);border-radius:var(--radius-md);padding:20px 18px;cursor:pointer;transition:border-color .18s,box-shadow .18s,transform .18s}
   .type-card:hover{border-color:var(--teal-500);transform:translateY(-3px);box-shadow:var(--shadow-sm)}
-  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(15,163,188,.15)}
+  .type-card[aria-pressed="true"]{border-color:var(--teal-600);background:var(--teal-50);box-shadow:0 0 0 4px rgba(107,75,255,.16)}
   /* Emoji glyphs have wildly different intrinsic heights — fix the box so
      every card's title lands on the same baseline. */
   .type-card .tico{font-size:1.9rem;line-height:1;height:34px;display:flex;align-items:center;margin-bottom:10px}
@@ -221,7 +230,7 @@
   .field .req{color:var(--red);margin-left:2px}
   .field .hint{display:block;font-weight:500;color:var(--muted);font-size:.8rem;margin-top:3px}
   .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1.5px solid var(--line);border-radius:var(--radius-sm);font-size:.97rem;font-family:inherit;background:#fff;color:var(--ink);transition:border-color .16s,box-shadow .16s}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(15,163,188,.16)}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--teal-500);box-shadow:0 0 0 4px rgba(107,75,255,.18)}
   .field textarea{min-height:120px;resize:vertical;line-height:1.6}
   .field.bad input,.field.bad select,.field.bad textarea{border-color:var(--red);background:var(--red-50)}
   .err{display:none;color:var(--red);font-size:.82rem;font-weight:600;margin-top:5px}
@@ -422,6 +431,58 @@
     .wizard{border:none;box-shadow:none}
     .refbox{background:#fff;color:#000;border:2px solid #000}
     .refbox b,.refbox span{color:#000}
+  }
+
+  /* ── phones ──
+     Measured at 360 and 390, not guessed. Three things were wrong: the nav
+     overflowed the viewport by 13px, the five-step rail needed sideways
+     scrolling to see the step you were on, and a dozen tap targets sat
+     under Apple's 44px floor. */
+  @media (max-width:640px){
+    /* The rail keeps all five steps, but only the one you are on is
+       spelled out. A progress indicator you have to scroll is not one. */
+    .progress{overflow:visible}
+    .pstep{flex:0 0 auto;min-width:0;padding:13px 7px;font-size:0;border-bottom-width:3px}
+    .pstep .pnum{margin-right:0;width:23px;height:23px;font-size:.74rem}
+    .pstep.active{flex:1 1 auto;font-size:.73rem;padding-inline:12px}
+    .pstep.active .pnum{margin-right:7px}
+
+    /* Nothing tappable falls below the 44px floor. */
+    .nav-tel{padding:12px 10px;min-height:44px;display:inline-flex;align-items:center}
+    footer a{display:inline-block;padding:7px 0;min-height:40px;line-height:26px}
+    .skip-btn{padding:11px 4px;min-height:44px}
+    .lk-alt button,.change-type{padding:11px 0;min-height:44px}
+    .btn{padding:15px 24px}
+    .btn-sm{padding:11px 18px}
+
+    /* Nothing drops below 12px. */
+    .logo small{font-size:12px}
+    .kicker{font-size:12px;letter-spacing:.16em}
+    .section-label,.eyebrow{font-size:12px}
+
+    /* The header is the one row that cannot wrap, so everything in it
+       gives ground: the wordmark may shrink, the button loses its padding,
+       and the phone keeps only its icon. */
+    .nav{gap:10px}
+    .logo{min-width:0;flex:0 1 auto;font-size:.95rem}
+    .logo span{min-width:0;white-space:nowrap}
+    .nav-actions{flex:0 0 auto;gap:4px}
+    .nav-actions .btn{padding:11px 15px;font-size:.85rem}
+
+    /* One column, edge to edge, nothing clipped. */
+    .type-grid,.pol-grid,.first-steps{grid-template-columns:1fr}
+    .status-form{grid-template-columns:1fr}
+    .hero-actions .btn{flex:1 1 100%}
+    .assur{gap:18px}
+    .assur div{min-width:calc(50% - 9px)}
+  }
+  @media (max-width:440px){
+    /* The header cannot hold the branch line as well as the product name
+       and an action, and a clipped wordmark is worse than an absent one.
+       The hero says RICKY RAMPERSAD in lime caps two inches below. */
+    .logo small{display:none}
+    .nav-inner,.nav{gap:8px}
+    .nav-actions{gap:6px}
   }
 </style>
 </head>
@@ -2810,22 +2871,24 @@ void main(){
   vec2  hf = abs(fract(hp) - 0.5);
   float scale = smoothstep(0.44, 0.5, max(hf.x, hf.y));
 
-  vec3 navy = vec3(0.0275, 0.0745, 0.1216);
-  vec3 deep = vec3(0.0431, 0.1255, 0.2118);
-  vec3 gold = vec3(1.0000, 0.7843, 0.3647);
+  vec3 base   = vec3(0.0784, 0.0706, 0.1020);   /* #14121A near-black   */
+  vec3 deep   = vec3(0.1333, 0.1176, 0.1804);   /* #221E2E raised       */
+  vec3 violet = vec3(0.4196, 0.2941, 1.0000);   /* #6B4BFF the light    */
+  vec3 lime   = vec3(0.7882, 0.9490, 0.3020);   /* #C9F24D the filament */
 
-  vec3 col = mix(navy, deep, fall);
+  vec3 col = mix(base, deep, fall);
 
-  /* Gold carries the light. It is allowed to actually reach gold — a
-     half-strength gold over a blue ground comes out sage, which is the
-     one colour a branch built on navy and gold must never produce. */
+  /* Violet carries the light, at full strength — on a near-black ground a
+     half-strength accent just turns everything the colour of dust. */
   float lit = caustic * fall * vig;
-  col += gold * lit * 0.90;
+  col += violet * lit * 1.15;
 
-  /* Teal only in the thinnest filaments, as a cool rim on the warm light. */
-  col += vec3(0.0, 0.55, 0.72) * pow(caustic, 2.6) * 0.20 * fall;
+  /* Lime only where the filaments are thinnest and hottest, the way the
+     centre of a flame goes pale. It is what makes the field read electric
+     rather than merely purple. */
+  col += lime * pow(caustic, 3.4) * 0.42 * fall * vig;
 
-  col += gold * scale * 0.020 * fall;
+  col += violet * scale * 0.030 * fall;
 
   /* A little grain, so the gradient cannot band on a wide screen. */
   col += (hash(gl_FragCoord.xy * 0.7 + uTime) - 0.5) * 0.010;
