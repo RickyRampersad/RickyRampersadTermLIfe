@@ -42,6 +42,34 @@ the recovery code; any other profile signed in on that device resetting it from
 **Settings → PINs & recovery**; or, if the family is in a sync group, a fresh
 profile on another device joining with the group code.
 
+### Why not Salesforce — a standing decision
+
+Asked and answered on 13 September 2026: **the hub stays on Apps Script and a
+Google Sheet. Nothing goes to Salesforce.**
+
+The branch's Salesforce is Guardian Group's *production* org, and it already
+carries `Education_Needs_Assessment__c` (22 live records) linking a parent
+Contact to a child's name, date of birth and university-funding projections —
+so there was a natural hook, and a browser-to-Apps-Script-to-Salesforce route
+was technically available.
+
+It was declined for three reasons worth keeping:
+
+1. It is a corporate CRM, not the branch's system. Branch-level System
+   Administrator rights make it *possible*, which is not the same as it being
+   a branch decision to make.
+2. **It would break a promise already in print.** The FAQ and the flyer both
+   say a family can delete their data at any time. A Sheet row deletes; a
+   Salesforce record leaves field history (`Education_Needs_Assessment__History`
+   exists on that object), report snapshots and backups behind it.
+3. Salesforce sharing reaches other agents and head office. A parent handing
+   over their child's marks does not expect that audience.
+
+If this comes back, the version to revisit is **engagement only** — activated
+date, children enrolled, form levels, last active — with no marks and no
+readiness scores, and cleared with Guardian Group's data protection function
+first. Child performance data stays out.
+
 ### Sync
 
 Cross-device sync is served by `gs/csec-sync.gs`, an Apps Script web app writing
