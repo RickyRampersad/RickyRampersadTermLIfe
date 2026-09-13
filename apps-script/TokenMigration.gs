@@ -158,7 +158,14 @@ function tmQuery_(soql) {
       headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true,
     });
     if (res.getResponseCode() === 401) {                    // token died mid-flight — one retry
-      tmProps_().deleteProperty('SF_TOKEN');
+      // TM_ACCESS is this file's own cached ACCESS token, and it is the only
+      // thing that may be cleared here. SF_TOKEN holds the Salesforce SECURITY
+      // TOKEN, which is a permanent credential shared with SalesforceSync.gs,
+      // WallBoard.gs and KPI.gs — deleting it on a routine 401 (which this used
+      // to do) silently breaks the password grant for every one of them, and
+      // the value cannot be recovered without reissuing it from Salesforce.
+      tmProps_().deleteProperty('TM_ACCESS');
+      tmProps_().deleteProperty('TM_ACCESS_AT');
       tok = tmToken_();
       res = UrlFetchApp.fetch(url, { headers: { Authorization: 'Bearer ' + tok.access_token }, muteHttpExceptions: true });
     }
@@ -244,6 +251,138 @@ function tmRisks_() {
     'SELECT Id, Account__c, Portal_Token__c FROM Risk_Details__c ' +
     'WHERE Account__c != null ORDER BY Account__c'
   );
+}
+
+/**
+ * account (normalised) -> the token that account already answers to.
+ *
+ * Where an account carries more than one, the one on the most rows wins and
+ * the disagreement is logged. That happens when a client was tokenised twice
+ * by different routes, and picking the commonest keeps the most existing
+ * client links working.
+ */
+function tmAccountTokens_(risks) {
+  var counts = {};
+  risks.forEach(function (r) {
+    if (!r.Portal_Token__c) return;
+    var k = tmNorm_(r.Account__c);
+    (counts[k] = counts[k] || {})[r.Portal_Token__c] =
+      (counts[k][r.Portal_Token__c] || 0) + 1;
+  });
+  var out = {}, split = [];
+  Object.keys(counts).forEach(function (k) {
+    var toks = Object.keys(counts[k]);
+    toks.sort(function (a, b) { return counts[k][b] - counts[k][a]; });
+    out[k] = toks[0];
+    if (toks.length > 1) split.push(k + ': ' + toks.map(function (t) {
+      return t + '×' + counts[k][t]; }).join(', '));
+  });
+  if (split.length)
+    Logger.log('⚠️ accounts carrying more than one token (commonest wins): ' + split.join(' · '));
+  return out;
+}
+
+/* ================= tokens for the forward renewal book only =================
+ *
+ * tmMintMissing() writes to every row in Risk_Details__c — the whole history,
+ * thousands of rows, in one irreversible pass. That is the right tool for a
+ * one-off migration and the wrong one for closing a gap in the renewals the
+ * ladder is about to write to.
+ *
+ * These two functions do the same job across a date window: everything the
+ * renewal ladder could reach in the next year, and a month of recently lapsed
+ * business behind it. Same safety rules — an existing token is never
+ * overwritten, an account already tokenised anywhere keeps the token it has.
+ */
+
+function tmRenewalWindow_() {
+  var back = new Date(); back.setDate(back.getDate() - 30);
+  var fwd  = new Date(); fwd.setDate(fwd.getDate() + 400);
+  var iso = function (d) {
+    return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd'); };
+  return { from: iso(back), to: iso(fwd) };
+}
+
+function tmRenewalPlan_() {
+  var w = tmRenewalWindow_();
+  var due = tmQuery_(
+    'SELECT Id, Account__c, Policy__c, Next_Renewal_Date__c, Portal_Token__c, Email__c ' +
+    'FROM Risk_Details__c WHERE Account__c != null ' +
+    'AND Next_Renewal_Date__c >= ' + w.from + ' AND Next_Renewal_Date__c <= ' + w.to + ' ' +
+    'ORDER BY Next_Renewal_Date__c');
+
+  // Existing tokens are read from the WHOLE book, not just the window: an
+  // account's token often sits on a policy that renewed months ago.
+  var byAccount = tmAccountTokens_(tmRisks_());
+
+  var taken = {};
+  Object.keys(byAccount).forEach(function (k) { taken[byAccount[k]] = 1; });
+  var sheet = {};
+  try { sheet = tmSheetTokens_(); } catch (e) { Logger.log('no sheet tokens available: ' + e); }
+  Object.keys(sheet).forEach(function (k) { taken[sheet[k]] = 1; });
+
+  var mint = {}, updates = [], reuse = [], already = 0, noEmail = 0;
+  due.forEach(function (r) {
+    if (r.Portal_Token__c) { already++; return; }
+    if (!r.Email__c) noEmail++;                 // still tokenised; the address is a separate gap
+    var k = tmNorm_(r.Account__c);
+    var have = byAccount[k] || sheet[k];
+    if (have) { updates.push({ id: r.Id, token: have }); reuse.push(r); return; }
+    if (!mint[k]) {
+      var t;
+      do { t = Utilities.getUuid().replace(/-/g, '').slice(0, 8); } while (taken[t]);
+      taken[t] = 1; mint[k] = t;
+    }
+    updates.push({ id: r.Id, token: mint[k] });
+  });
+
+  return { window: w, due: due, updates: updates, reuse: reuse,
+           mint: mint, already: already, noEmail: noEmail };
+}
+
+/** Report what tokenising the forward renewal book would do. Writes nothing. */
+function tmRenewalMintDryRun() {
+  var p = tmRenewalPlan_();
+  var fresh = p.updates.length - p.reuse.length;
+  var L = [
+    'DRY RUN — nothing was written.',
+    'window: ' + p.window.from + ' to ' + p.window.to + ' on Next_Renewal_Date__c',
+    '',
+    'Renewals in window          : ' + p.due.length,
+    'Already carry a token       : ' + p.already + ' (left untouched)',
+    'Would be given a token      : ' + p.updates.length,
+    '  reusing the account’s own : ' + p.reuse.length + '  (no new link for that client)',
+    '  newly minted              : ' + fresh + '  across ' + Object.keys(p.mint).length + ' accounts',
+    '',
+    'Of those, with no email address: ' + p.noEmail + ' — tokenised, but still unreachable',
+  ];
+  if (p.reuse.length) {
+    L.push('');
+    L.push('REUSING AN EXISTING CLIENT LINK (' + Math.min(p.reuse.length, 20) + ' of ' + p.reuse.length + ')');
+    p.reuse.slice(0, 20).forEach(function (r) {
+      L.push('  ' + r.Next_Renewal_Date__c + '  ' + String(r.Account__c).slice(0, 30) +
+             '  ' + (r.Policy__c || ''));
+    });
+  }
+  Logger.log(L.join('\n'));
+  try { SpreadsheetApp.getUi().alert(L.join('\n')); } catch (e) {}
+  return L.join('\n');
+}
+
+/** Write them. Safe to re-run — an existing token is never replaced. */
+function tmRenewalMint() {
+  var p = tmRenewalPlan_();
+  var res = tmWrite_(p.updates);
+  var msg = 'RENEWAL BOOK TOKENISED\n\n' +
+    'Rows written            : ' + res.ok + '\n' +
+    'Failed                  : ' + res.fail + '\n' +
+    'Reused an existing link : ' + p.reuse.length + '\n' +
+    'New client accounts     : ' + Object.keys(p.mint).length + '\n' +
+    'Already had one         : ' + p.already + ' (left untouched)' +
+    (res.errors.length ? '\n\nErrors:\n  ' + res.errors.join('\n  ') : '');
+  Logger.log(msg);
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
+  return msg;
 }
 
 /** Bulk PATCH via the composite sobjects endpoint, 200 at a time. */
@@ -351,11 +490,21 @@ function tmMintMissing() {
   Object.keys(tokens).forEach(function (k) { taken[tokens[k]] = 1; });
   risks.forEach(function (r) { if (r.Portal_Token__c) taken[r.Portal_Token__c] = 1; });
 
-  var mint = {}, updates = [];
+  // An account already tokenised ANYWHERE in Salesforce keeps that token.
+  // A token is one client's front door, not one policy's: Brimis Court's two
+  // policies both answer to cCQvTKYZ and RPM's three to 1ulQEgqu. Minting a
+  // fresh one for a row that merely happens to be blank would hand a client a
+  // second, different link to the same portal — and the old one stays live, so
+  // nothing visibly breaks and the client simply sees half their book.
+  // Kamus Muffler, Nu-Iron and Jin Xia are all in exactly that state today.
+  var byAccount = tmAccountTokens_(risks);
+
+  var mint = {}, updates = [], reused = 0;
   risks.forEach(function (r) {
     if (r.Portal_Token__c) return;
     var k = tmNorm_(r.Account__c);
-    if (tokens[k]) return;                                  // sheet already has one for this account
+    if (byAccount[k]) { updates.push({ id: r.Id, token: byAccount[k] }); reused++; return; }
+    if (tokens[k]) { updates.push({ id: r.Id, token: tokens[k] }); reused++; return; }
     if (!mint[k]) {
       var t;
       do { t = Utilities.getUuid().replace(/-/g, '').slice(0, 8); } while (taken[t]);
@@ -363,6 +512,8 @@ function tmMintMissing() {
     }
     updates.push({ id: r.Id, token: mint[k] });
   });
+  Logger.log('reusing an existing token on ' + reused + ' rows; minting for ' +
+             Object.keys(mint).length + ' accounts that have none anywhere');
   var res = tmWrite_(updates);
   var msg = 'MINTED NEW TOKENS\n\n' +
     'New client accounts given access: ' + Object.keys(mint).length + '\n' +
@@ -406,7 +557,10 @@ function tmOnOpen() {
     .addItem('1. Dry run (writes nothing)', 'tmDryRun')
     .addItem('2. Migrate sheet tokens → Salesforce', 'tmMigrate')
     .addSeparator()
-    .addItem('3. Mint tokens for accounts with none', 'tmMintMissing')
+    .addItem('Renewal book — dry run (writes nothing)', 'tmRenewalMintDryRun')
+    .addItem('Renewal book — give every renewal a token', 'tmRenewalMint')
+    .addSeparator()
+    .addItem('3. Mint tokens for the WHOLE book', 'tmMintMissing')
     .addItem('4. Verify', 'tmVerify')
     .addToUi();
 }
