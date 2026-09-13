@@ -11,8 +11,13 @@
 :root{
   /* The branch palette — the values in IBRAND, which the client letters read. */
   --navy:#07131f; --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
-  --ink:#16202b; --muted:#5c6b7a; --rule:#e2e8ee;
-  --paper:#F5F7FA; --surface:#FFFFFF; --surface2:#EDF1F6;
+  --ink:#122234; --muted:#59697A; --rule:#DCE5EE;
+  --paper:#EBF0F6; --surface:#FFFFFF; --surface2:#F2F6FB;
+  /* the rail is the navy, given depth so it reads as a surface and not a slab */
+  --rail:linear-gradient(168deg,#0E2234,#07131f 58%); --railEdge:rgba(255,255,255,.09);
+  /* a wash of the two accents across the top of the page, barely there */
+  --wash:radial-gradient(1150px 440px at 8% -10%,rgba(0,207,234,.10),transparent 68%),
+         radial-gradient(900px 400px at 96% -4%,rgba(239,194,75,.13),transparent 70%);
   --tealInk:#0A7C8C;                 /* teal dark enough to read on white */
   --goldInk:#8A6410;
   --go:#1C7A52; --goBg:#E6F4EC; --stop:#A8362A; --stopBg:#FBEAE7; --warn:#8A6410;
@@ -26,6 +31,9 @@
   --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F;
   --muted:#8FA3B3; --rule:#22394A;
   --tealInk:#4FD8EE; --goldInk:#efc24b;
+  --rail:linear-gradient(168deg,#0C1E2E,#050E17 60%); --railEdge:rgba(255,255,255,.08);
+  --wash:radial-gradient(1150px 440px at 8% -10%,rgba(0,207,234,.07),transparent 68%),
+         radial-gradient(900px 400px at 96% -4%,rgba(239,194,75,.06),transparent 70%);
   --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
 }}
@@ -33,6 +41,9 @@
   --ink:#DDE6ED; --paper:#07131f; --surface:#0F2131; --surface2:#17303F;
   --muted:#8FA3B3; --rule:#22394A;
   --tealInk:#4FD8EE; --goldInk:#efc24b;
+  --rail:linear-gradient(168deg,#0C1E2E,#050E17 60%); --railEdge:rgba(255,255,255,.08);
+  --wash:radial-gradient(1150px 440px at 8% -10%,rgba(0,207,234,.07),transparent 68%),
+         radial-gradient(900px 400px at 96% -4%,rgba(239,194,75,.06),transparent 70%);
   --go:#4FB489; --goBg:#0F2E24; --stop:#DE8477; --stopBg:#321915; --warn:#D9AC57;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 18px rgba(0,0,0,.28);
 }
@@ -132,36 +143,80 @@ details.notice .in li{margin:.25rem 0}
 .gatefoot{margin-top:1.9rem;font-size:12px;color:#6E8497;line-height:1.7}
 .gatefoot b{color:#9FB3C4}
 
-/* ================= header ================= */
-header{background:var(--navy);position:sticky;top:0;z-index:40;
-  box-shadow:0 1px 0 rgba(255,255,255,.07),0 6px 22px rgba(7,19,31,.16)}
-header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--gold2) 18%,var(--gold) 50%,var(--teal) 84%,transparent);
-  opacity:.55}
-.hin{max-width:1160px;margin:0 auto;padding:.6rem 1.25rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:.65rem;margin-right:auto;min-width:0}
-.brand .mark{width:36px;height:36px;flex:none;box-shadow:0 0 0 1px rgba(239,194,75,.3)}
+/* ================= the shell =================
+   A rail on a desk, a tab bar in a hand. The same eight buttons with the same
+   ids either way — the nav moves, it is never rebuilt, so every section stays
+   one tap from the thumb and the reading column keeps the height of the screen.
+   Eight sections across the top of a phone wrapped onto three rows before. */
+.shell{display:flex;align-items:flex-start;min-height:100vh}
+header{flex:none;width:244px;position:sticky;top:0;height:100vh;z-index:40;
+  background:var(--rail);border-right:1px solid var(--railEdge);
+  display:flex;flex-direction:column;gap:.9rem;padding:1.2rem .8rem 1rem}
+header::after{content:"";position:absolute;top:0;bottom:0;right:0;width:2px;
+  background:linear-gradient(180deg,transparent,var(--gold2) 12%,var(--gold) 40%,var(--teal) 76%,transparent);
+  opacity:.5}
+.brand{display:flex;align-items:center;gap:.65rem;min-width:0;padding:.1rem .3rem}
+.brand .mark{width:38px;height:38px;flex:none;box-shadow:0 0 0 1px rgba(239,194,75,.32)}
 .brand b{display:block;font-family:var(--display);font-size:15.5px;color:#fff;line-height:1.15}
 .brand small{display:block;font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700}
-nav{display:flex;gap:.15rem;flex-wrap:wrap}
-nav button{background:none;border:0;border-radius:8px;padding:.42rem .7rem;cursor:pointer;
-  font-size:13.5px;color:#9FB3C4;font-weight:600;display:inline-flex;align-items:center;gap:.42rem;
-  position:relative;transition:color .16s,background .16s}
-nav button .i{opacity:.78;transition:opacity .16s,transform .16s}
-nav button:hover{background:rgba(255,255,255,.09);color:#fff}
-nav button:hover .i{opacity:1;transform:translateY(-1px)}
-nav button[aria-current="page"]{background:linear-gradient(180deg,var(--gold),var(--gold2));
-  color:#07131f;font-weight:700;box-shadow:0 2px 10px rgba(239,194,75,.3)}
+nav{display:flex;flex-direction:column;gap:.12rem;flex:1;min-height:0;overflow-y:auto}
+nav button{background:none;border:0;border-radius:9px;padding:.56rem .7rem;cursor:pointer;
+  font-size:13.5px;color:#9FB3C4;font-weight:600;display:flex;align-items:center;gap:.62rem;
+  text-align:left;position:relative;transition:color .16s,background .16s}
+nav button .i{width:18px;height:18px;opacity:.72;transition:opacity .16s,transform .16s}
+nav button:hover{background:rgba(255,255,255,.08);color:#fff}
+nav button:hover .i{opacity:1}
+nav button[aria-current="page"]{background:linear-gradient(110deg,var(--gold),var(--gold2));
+  color:#07131f;font-weight:800;box-shadow:0 5px 16px rgba(239,194,75,.26)}
 nav button[aria-current="page"] .i{opacity:1}
-.whoami{display:flex;align-items:center;gap:.5rem}
-.whoami .pill{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;
-  background:rgba(0,207,234,.16);color:var(--teal);border:1px solid rgba(0,207,234,.3);
-  border-radius:99px;padding:.2rem .6rem}
-.whoami button{background:none;border:1px solid rgba(255,255,255,.22);color:#9FB3C4;border-radius:7px;
-  padding:.28rem .6rem;font-size:11.5px;cursor:pointer;font-weight:600}
+.whoami{display:flex;flex-wrap:wrap;align-items:center;gap:.45rem;
+  padding-top:.8rem;border-top:1px solid rgba(255,255,255,.1)}
+.whoami .pill{flex:1 0 100%;text-align:center;font-size:10px;font-weight:800;letter-spacing:.12em;
+  text-transform:uppercase;background:rgba(0,207,234,.16);color:var(--teal);
+  border:1px solid rgba(0,207,234,.3);border-radius:99px;padding:.28rem .6rem}
+.whoami button{flex:1;background:none;border:1px solid rgba(255,255,255,.22);color:#9FB3C4;border-radius:7px;
+  padding:.34rem .6rem;font-size:11.5px;cursor:pointer;font-weight:600}
 .whoami button:hover{border-color:var(--gold);color:#fff}
+#themeBtn{flex:none;width:34px}
 
-main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
+.colmain{flex:1;min-width:0;min-height:100vh;display:flex;flex-direction:column;
+  background:var(--wash),var(--paper)}
+main{flex:1;width:100%;max-width:1060px;margin:0 auto;padding:2.1rem 1.9rem 4rem}
+
+/* A phone holds the nav under the thumb and gives the rest of the glass to the work. */
+@media (max-width:980px){
+  .shell{display:block}
+  header{position:sticky;top:0;width:auto;height:auto;flex-direction:row;align-items:center;
+    gap:.6rem;padding:.5rem .9rem;border-right:0;border-bottom:1px solid var(--railEdge);
+    box-shadow:0 6px 20px rgba(7,19,31,.16)}
+  header::after{top:auto;bottom:0;left:0;right:0;width:auto;height:2px;
+    background:linear-gradient(90deg,transparent,var(--gold2) 18%,var(--gold) 50%,var(--teal) 84%,transparent)}
+  .brand{padding:0;margin-right:auto;flex:1 1 auto;min-width:0;overflow:hidden}
+  .brand div{min-width:0}
+  .brand b,.brand small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .brand .mark{width:32px;height:32px}
+  nav{position:fixed;left:0;right:0;bottom:0;z-index:50;flex:none;flex-direction:row;gap:.1rem;
+    background:var(--rail);border-top:1px solid var(--railEdge);overflow-x:auto;overflow-y:hidden;
+    padding:.32rem .4rem calc(.45rem + env(safe-area-inset-bottom,0px));
+    box-shadow:0 -8px 24px rgba(7,19,31,.24)}
+  nav button{flex:1 0 auto;min-width:60px;flex-direction:column;justify-content:center;gap:.2rem;
+    padding:.42rem .4rem;font-size:9.5px;letter-spacing:.02em;text-align:center;border-radius:8px}
+  nav button .i{width:20px;height:20px}
+  .whoami{flex-wrap:nowrap;padding-top:0;border-top:0}
+  .whoami .pill{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .whoami button{flex:none}
+  main{padding:1.5rem 1.05rem 5.5rem}
+  .exambar{top:58px}
+}
+/* Below about a phone the brand, the class and the two buttons stop fitting on
+   one line — so the class and the buttons take a line of their own rather than
+   the wordmark being squeezed out of the bar. */
+@media (max-width:580px){
+  header{flex-wrap:wrap;row-gap:.45rem}
+  .whoami{flex:1 0 100%;order:2}
+  .whoami .pill{flex:1 1 auto;text-align:center}
+  .exambar{top:94px}
+}
 .view[hidden]{display:none}
 .view{animation:slidein .34s cubic-bezier(.22,.9,.3,1) both}
 @keyframes slidein{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
@@ -176,9 +231,12 @@ main{max-width:1160px;margin:0 auto;padding:1.75rem 1.25rem 5rem}
 .card h2{font-size:1.22rem;color:var(--ink)}
 .card.gold{border-left:4px solid var(--gold)}
 .card.teal{border-left:4px solid var(--teal)}
-.pagehead{margin-bottom:1.3rem}
-.pagehead h1{font-size:1.95rem;margin:.15rem 0 .35rem}
+.pagehead{margin-bottom:1.5rem;padding-top:.35rem;position:relative}
+.pagehead::before{content:"";position:absolute;top:0;left:0;width:46px;height:3px;border-radius:99px;
+  background:linear-gradient(90deg,var(--gold),var(--gold2))}
+.pagehead h1{font-size:2.15rem;margin:.5rem 0 .4rem;letter-spacing:-.012em}
 .pagehead p{color:var(--muted);max-width:64ch}
+@media (max-width:620px){.pagehead h1{font-size:1.6rem}}
 
 .btn{background:var(--navy);color:#fff;border:1px solid var(--navy);border-radius:8px;
   padding:.55rem 1.1rem;cursor:pointer;font-size:13.5px;font-weight:700;
@@ -297,7 +355,7 @@ input[type=text].ans.wrong{border-color:var(--stop);background:var(--stopBg)}
 .verdict .body{color:var(--ink);margin-top:.4rem;line-height:1.65}
 
 /* ================= exam ================= */
-.exambar{position:sticky;top:56px;z-index:30;background:var(--navy);color:#fff;border-radius:11px;
+.exambar{position:sticky;top:.75rem;z-index:30;background:var(--navy);color:#fff;border-radius:11px;
   padding:.7rem 1.1rem;display:flex;gap:1.1rem;align-items:center;flex-wrap:wrap;margin-bottom:1.1rem;
   box-shadow:0 6px 20px rgba(7,19,31,.18)}
 .exambar .label{color:var(--gold);opacity:.9}
@@ -428,17 +486,14 @@ textarea.essay:focus{border-color:var(--teal)}
 #gateSponsor .sponsor a{color:#EAF1F6;border-color:rgba(255,255,255,.28)}
 #gateSponsor .sponsor a:hover{border-color:var(--gold);background:rgba(255,255,255,.08)}
 
-footer{border-top:1px solid var(--rule);margin-top:3rem;padding:1.5rem 1.25rem 3rem;color:var(--muted);font-size:12.5px}
-footer .fin{max-width:1160px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;align-items:center}
+footer{border-top:1px solid var(--rule);margin-top:2rem;padding:1.5rem 1.9rem 2.5rem;color:var(--muted);font-size:12.5px}
+footer .fin{max-width:1060px;margin:0 auto;display:flex;gap:1rem;flex-wrap:wrap;justify-content:space-between;align-items:center}
 footer .mark{width:26px;height:26px;flex:none}
 footer .l{display:flex;gap:.6rem;align-items:center}
 
 @media (max-width:620px){
-  main{padding:1.25rem .9rem 4rem}
-  .hin{padding:.55rem .9rem;gap:.6rem}
-  .pagehead h1{font-size:1.55rem}
-  .exambar{top:0}
-  nav button{padding:.35rem .55rem;font-size:12.5px}
+  main{padding:1.35rem .9rem 5.5rem}
+  .card{padding:1.1rem}
 }
 @media print{
   header,nav,.btnrow,.exambar,.palette,footer,.ladder,#gate{display:none!important}
@@ -596,22 +651,22 @@ footer .l{display:flex;gap:.6rem;align-items:center}
 
 <!-- ================= APP ================= -->
 <div id="app" hidden>
+<div class="shell">
 <header>
-  <div class="hin">
-    <div class="brand">
-      <div class="mark"><img src="../logo-mark.png" alt=""></div>
-      <div><b>RRB Academy</b><small>S.E.A. &middot; CSEC</small></div>
-    </div>
-    <nav id="nav" aria-label="Sections"></nav>
-    <div class="whoami">
-      <span class="pill" id="rolePill">Student</span>
-      <span class="sync" id="syncDot" aria-live="polite"></span>
-      <button id="themeBtn" title="Light or dark" aria-label="Switch light or dark theme">◐</button>
-      <button id="signOut">Sign out</button>
-    </div>
+  <div class="brand">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div><b>RRB Academy</b><small>S.E.A. &middot; CSEC</small></div>
+  </div>
+  <nav id="nav" aria-label="Sections"></nav>
+  <div class="whoami">
+    <span class="pill" id="rolePill">Student</span>
+    <span class="sync" id="syncDot" aria-live="polite"></span>
+    <button id="themeBtn" title="Light or dark" aria-label="Switch light or dark theme">&#9680;</button>
+    <button id="signOut">Sign out</button>
   </div>
 </header>
 
+<div class="colmain">
 <main>
 
 <!-- ---------- HOME ---------- -->
@@ -925,6 +980,8 @@ footer .l{display:flex;gap:.6rem;align-items:center}
     <div><b>Ricky Rampersad Branch Academy</b> &middot; S.E.A. and CSEC</div></div>
   <div>Past papers &copy; Ministry of Education, Trinidad &amp; Tobago. Linked, never re-hosted.</div>
 </div></footer>
+</div>
+</div>
 </div>
 <script>
 "use strict";
@@ -2504,9 +2561,15 @@ function views(){
   const li = currentLevelIndex();
   return CAN[role].views.filter(v => v !== "exam" || role === "teacher" || li === null || (li >= 5 && li <= 6));
 }
+// Rebuilt whenever the class changes, so it has to carry its own current
+// state — before this, picking a class wiped the highlight off the nav and
+// nothing put it back until the next tap.
 function buildNav(){
+  const open = $(".view:not([hidden])");
+  const cur  = open ? open.id.slice(2) : "home";
   $("#nav").innerHTML = views().map(v =>
-    `<button data-view="${v}">${ico(NAV_ICON[v])}<span>${NAV_LABEL[v]}</span></button>`).join("");
+    `<button data-view="${v}" aria-current="${v === cur ? "page" : "false"}">${
+      ico(NAV_ICON[v])}<span>${NAV_LABEL[v]}</span></button>`).join("");
 }
 function paintWho(){
   const li = currentLevelIndex();
