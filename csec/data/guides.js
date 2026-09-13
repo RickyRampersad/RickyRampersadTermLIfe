@@ -464,3 +464,239 @@ window.CSEC_GUIDES = [
   ]
 }
 ];
+
+/* ================= PRIMARY — worked methods for Standards 1 to 5 =================
+ * Written to be read by a child, or read aloud to one. Same shape as the
+ * secondary guides: when to use it, the order to work in, one fully worked
+ * example with every line explained, and the mistakes that cost marks.
+ */
+window.CSEC_GUIDES.push(
+{
+  id:'g-pm-division', subj:'p-mathematics', strand:'pm-ops', level:4,
+  title:'Long division, one step at a time',
+  when:'Any sharing or dividing question where the number is too big to do in your head.',
+  steps:[
+    {do:'Write it out properly, with the bus stop.', note:'The big number goes inside, the one you are dividing by goes outside.'},
+    {do:'Work from the LEFT, one digit at a time.', note:'This is the opposite of adding and subtracting, which start from the right.'},
+    {do:'Ask: how many times does it go in?', note:'Write that number on top, directly above the digit you used.'},
+    {do:'Multiply and take away to find what is left.', note:'Whatever is left over is carried to the next digit.'},
+    {do:'Carry the remainder and repeat.', note:'Keep going until you run out of digits.'},
+    {do:'Check by multiplying back.', note:'Answer × divisor should give you the number you started with.'}
+  ],
+  worked:{
+    problem:'Work out 852 ÷ 6',
+    lines:[
+      {work:'6 into 8 goes 1, remainder 2', note:'Write 1 above the 8. Carry the 2 across to the next digit.'},
+      {work:'The 2 carries, making 25', note:'The carried 2 goes in front of the 5.'},
+      {work:'6 into 25 goes 4, remainder 1', note:'4 × 6 = 24, and 25 − 24 = 1. Write 4 above the 5.'},
+      {work:'The 1 carries, making 12', note:'The carried 1 goes in front of the 2.'},
+      {work:'6 into 12 goes 2, remainder 0', note:'Write 2 above the last digit. Nothing left over.'},
+      {work:'Answer: 142.  Check: 142 × 6 = 852 ✓', note:'It comes back to where we started, so it is right.'}
+    ]
+  },
+  pitfalls:[
+    'Starting from the right. Division goes left to right.',
+    'Forgetting to write a 0 on top when the divisor does not go in at all.',
+    'Not carrying the remainder to the next digit.',
+    'Never checking. One multiplication catches almost every mistake.'
+  ]
+},
+{
+  id:'g-pm-fractions', subj:'p-mathematics', strand:'pm-fractions', level:5,
+  title:'Adding fractions when the bottoms are different',
+  when:'Adding or subtracting two fractions whose bottom numbers do not match.',
+  steps:[
+    {do:'Look at the two bottom numbers.', note:'If they already match, just add the tops and stop.'},
+    {do:'Find a number both bottoms go into.', note:'Often one bottom goes into the other. If not, multiply them together.'},
+    {do:'Change each fraction so the bottoms match.', note:'Whatever you multiply the bottom by, multiply the top by the same.'},
+    {do:'Now add or subtract ONLY the tops.', note:'The bottom stays as it is. This is the rule people break.'},
+    {do:'Simplify if you can.', note:'Divide top and bottom by the same number until you cannot.'}
+  ],
+  worked:{
+    problem:'Work out 2/3 + 1/4',
+    lines:[
+      {work:'Bottoms are 3 and 4 — they do not match', note:'So we cannot add yet.'},
+      {work:'3 and 4 both go into 12', note:'12 is the smallest number they both divide into.'},
+      {work:'2/3 becomes 8/12', note:'3 × 4 = 12, so the top is multiplied by 4 too: 2 × 4 = 8.'},
+      {work:'1/4 becomes 3/12', note:'4 × 3 = 12, so 1 × 3 = 3.'},
+      {work:'8/12 + 3/12 = 11/12', note:'Add only the tops. The bottom stays 12.'},
+      {work:'11 and 12 share no factor, so 11/12 is the answer', note:'Nothing to simplify.'}
+    ]
+  },
+  pitfalls:[
+    'Adding the bottoms as well as the tops. 2/3 + 1/4 is not 3/7.',
+    'Changing the bottom but forgetting to change the top by the same amount.',
+    'Leaving the answer unsimplified when the question asks for simplest form.'
+  ]
+},
+{
+  id:'g-pm-area', subj:'p-mathematics', strand:'pm-area', level:4,
+  title:'Perimeter or area? Knowing which one they want',
+  when:'Any question about the distance around a shape or the space inside it.',
+  steps:[
+    {do:'Read the question and find the word.', note:'Around, fence, border, edge → perimeter. Cover, carpet, paint, surface → area.'},
+    {do:'Check the units in the answer choices.', note:'Perimeter is in cm or m. Area is in cm² or m². This alone often tells you.'},
+    {do:'For perimeter, add every side.', note:'For a rectangle you can do 2 × (length + width).'},
+    {do:'For area of a rectangle, multiply length × width.', note:'For a square it is side × side.'},
+    {do:'For an odd shape, cut it into rectangles.', note:'Find each area, then add them together.'},
+    {do:'Write the correct unit.', note:'An area without the little ² can lose the mark.'}
+  ],
+  worked:{
+    problem:'A garden is 9 m long and 6 m wide. Find (a) the fencing needed and (b) the grass needed.',
+    lines:[
+      {work:'(a) "Fencing" means around → perimeter', note:'The word tells you which one.'},
+      {work:'2 × (9 + 6) = 2 × 15 = 30 m', note:'Thirty metres of fence. Unit is plain metres.'},
+      {work:'(b) "Grass" means covering → area', note:'Covering the inside.'},
+      {work:'9 × 6 = 54 m²', note:'Fifty-four square metres. Note the ² this time.'},
+      {work:'Two different questions, two different answers', note:'Same shape, same numbers, completely different sums.'}
+    ]
+  },
+  pitfalls:[
+    'Multiplying when the question wanted adding, or the other way round.',
+    'Writing cm when the answer is an area and should be cm².',
+    'On a compound shape, forgetting one of the pieces.'
+  ]
+},
+{
+  id:'g-pm-percent', subj:'p-mathematics', strand:'pm-decimals', level:5,
+  title:'Finding a percentage of an amount',
+  when:'Discounts, VAT, test marks, or any question with a % sign in it.',
+  steps:[
+    {do:'Find 10% first — just divide by 10.', note:'Move the decimal point one place left. This is the easiest thing in the topic.'},
+    {do:'Build the percentage you need from 10%.', note:'20% is double it. 5% is half it. 30% is three times it.'},
+    {do:'For 50% halve it, for 25% halve it again.', note:'Half and quarter are quicker than going through 10%.'},
+    {do:'If it is a discount, take it away.', note:'If it is VAT or a rise, add it on.'},
+    {do:'Read the question again before writing the answer.', note:'Do they want the discount, or the new price?'}
+  ],
+  worked:{
+    problem:'A bicycle costs TT$1 500. There is a 30% discount. What do you pay?',
+    lines:[
+      {work:'10% of 1 500 = 150', note:'Divide by 10. That is the whole trick.'},
+      {work:'30% = 3 × 150 = 450', note:'Three lots of 10%.'},
+      {work:'It is a discount, so take it off', note:'The price goes DOWN.'},
+      {work:'1 500 − 450 = TT$1 050', note:'This is what you pay.'},
+      {work:'Check: 1 050 is 70% of 1 500 ✓', note:'If 30% came off, 70% is left. 7 × 150 = 1 050.'}
+    ]
+  },
+  pitfalls:[
+    'Giving the discount (450) when the question asked for the price (1 050).',
+    'Taking a percentage off and then adding the same percentage back, expecting the original. It does not return.',
+    'Forgetting the dollar sign and the cents on money answers.'
+  ]
+},
+{
+  id:'g-pm-time', subj:'p-mathematics', strand:'pm-time', level:4,
+  title:'Working out how long something takes',
+  when:'Journey times, timetables, or any question giving a start and a finish.',
+  steps:[
+    {do:'Write down the start time and the finish time.', note:'Put them one under the other.'},
+    {do:'Count up in whole hours first.', note:'Go as far as you can without passing the finish time.'},
+    {do:'Then count the leftover minutes.', note:'From the last whole hour to the finish.'},
+    {do:'Add the two parts together.', note:'That is your answer.'},
+    {do:'Remember minutes stop at 59.', note:'Sixty minutes becomes one hour. Time does not work in tens.'}
+  ],
+  worked:{
+    problem:'A journey starts at 10:40 a.m. and ends at 1:25 p.m. How long does it take?',
+    lines:[
+      {work:'10:40 → 11:40 → 12:40 → that is 2 hours', note:'Counting up in whole hours, stopping before we pass 1:25.'},
+      {work:'12:40 → 1:25 is the leftover', note:'Now just the minutes.'},
+      {work:'12:40 → 1:00 is 20 minutes', note:'Twenty minutes to reach the hour.'},
+      {work:'1:00 → 1:25 is 25 minutes', note:'Then twenty-five more.'},
+      {work:'20 + 25 = 45 minutes', note:'Adding the two parts of the leftover.'},
+      {work:'Total: 2 hours 45 minutes', note:'Two whole hours plus forty-five minutes.'}
+    ]
+  },
+  pitfalls:[
+    'Subtracting like ordinary numbers: 1:25 − 10:40 does not work that way.',
+    'Forgetting that the clock goes past 12 and starts again.',
+    'Writing 2.45 instead of 2 hours 45 minutes. They are not the same.'
+  ]
+},
+{
+  id:'g-pel-comprehension', subj:'p-ela', strand:'pe-fiction', level:4,
+  title:'Answering comprehension questions properly',
+  when:'Any reading passage with questions after it.',
+  steps:[
+    {do:'Read the QUESTIONS first, quickly.', note:'Then you know what to look for while reading.'},
+    {do:'Read the whole passage once, without stopping.', note:'Do not worry about words you do not know yet.'},
+    {do:'Read it again with a pencil.', note:'Underline anything that looks like an answer.'},
+    {do:'Answer in a full sentence, using the question’s words.', note:'"Why was Ria late?" → "Ria was late because..."'},
+    {do:'Point to the evidence in the passage.', note:'Even when the question does not ask for it, it keeps you honest.'},
+    {do:'Check you answered what was asked.', note:'Read your answer next to the question one last time.'}
+  ],
+  worked:{
+    problem:'Question: "How do you know Ria was nervous?" The passage says: "Ria checked the gate three times and would not sit down."',
+    lines:[
+      {work:'The passage never says the word "nervous"', note:'So this is an inference question — you work it out.'},
+      {work:'Find the clues: checking three times, not sitting', note:'These are things a nervous person does.'},
+      {work:'Answer: "Ria was nervous because she checked the gate three times and would not sit down."', note:'Full sentence, uses the question’s word, includes the evidence.'},
+      {work:'Not: "Because she was nervous."', note:'That repeats the question without proving anything.'},
+      {work:'Not: "She checked the gate three times."', note:'That is evidence with no answer attached to it.'}
+    ]
+  },
+  pitfalls:[
+    'Answering in one word when the question needs a sentence.',
+    'Copying a whole line from the passage without saying what it shows.',
+    'Answering from your own head instead of from the passage.',
+    'Running out of time because you read the passage three times before looking at the questions.'
+  ]
+},
+{
+  id:'g-pw-plan', subj:'p-ela-writing', strand:'pw-narrative', level:4,
+  title:'Planning a story before you write it',
+  when:'The SEA Writing paper, or any story you are asked to write.',
+  steps:[
+    {do:'Read all three items, then choose ONE.', note:'Pick the one you have most to say about, not the one that sounds nicest.'},
+    {do:'Spend two minutes on a plan. Only two.', note:'Three boxes on the side of the page is enough.'},
+    {do:'Box 1: how it starts.', note:'Who, where, and something already happening.'},
+    {do:'Box 2: what goes wrong.', note:'Every story needs a problem. Without one nothing happens.'},
+    {do:'Box 3: how it ends.', note:'Decide the ending BEFORE you start writing, so you do not run out.'},
+    {do:'Now write, in paragraphs.', note:'New paragraph when the time, the place or the speaker changes.'},
+    {do:'Leave two minutes to check.', note:'Capitals, full stops, and whether it actually ends.'}
+  ],
+  worked:{
+    problem:'Item: "Write a story about a day when everything went wrong."',
+    lines:[
+      {work:'Box 1 — Start: I wake late, the yard is silent, no one called me', note:'Something is already wrong on the first line. No "one day I woke up".'},
+      {work:'Box 2 — Problem: I miss the bus, and I am carrying the class project', note:'A clear problem with something at stake.'},
+      {work:'Box 3 — Ending: I arrive as it finishes, but my teacher kept a seat', note:'Decided before writing, so the story lands instead of stopping.'},
+      {work:'Opening line: "The yard was too quiet, and that was the first thing that was wrong."', note:'Starts inside the situation and raises a question.'},
+      {work:'Four paragraphs: waking, the bus, the walk, arriving', note:'One paragraph per stage. The plan gave the shape.'}
+    ]
+  },
+  pitfalls:[
+    'Writing with no plan and running out of story halfway down the page.',
+    'Ending with "and then I woke up and it was all a dream".',
+    'One long block with no paragraphs — that loses organisation marks before a word is read.',
+    'Spending ten minutes planning. Two is enough; the writing earns the marks.'
+  ]
+},
+{
+  id:'g-pw-check', subj:'p-ela-writing', strand:'pw-mechanics', level:5,
+  title:'The two-minute check that finds free marks',
+  when:'The last two minutes of any writing task, every single time.',
+  steps:[
+    {do:'Read it back in a whisper.', note:'Your ear catches what your eye slides past.'},
+    {do:'Check every sentence starts with a capital.', note:'Go through with your finger. It is the cheapest mark on the paper.'},
+    {do:'Check every sentence ends with a mark.', note:'Full stop, question mark or exclamation mark.'},
+    {do:'Check names and places have capitals.', note:'Trinidad, Arima, Monday, Mummy when used as a name.'},
+    {do:'Check you stayed in one tense.', note:'If you started in the past, stay in the past.'},
+    {do:'Check the paragraphs are visible.', note:'The marker should see them without looking for them.'}
+  ],
+  worked:{
+    problem:'A pupil wrote: "i ran to the gate. the bus was leaving it drove off without me i was upset"',
+    lines:[
+      {work:'"i" should be "I" — always a capital', note:'The word I is always capital, anywhere in a sentence.'},
+      {work:'"the bus" starts a sentence → "The bus"', note:'Capital after every full stop.'},
+      {work:'"leaving it drove off" — two sentences run together', note:'Needs a full stop after "leaving".'},
+      {work:'"without me i was upset" — same problem again', note:'Full stop after "me", then a capital I.'},
+      {work:'Corrected: "I ran to the gate. The bus was leaving. It drove off without me. I was upset."', note:'Same words, four easy marks recovered.'}
+    ]
+  },
+  pitfalls:[
+    'Handing in the moment you finish writing. The last two minutes are worth more than the last two sentences.',
+    'Checking silently. Reading aloud, even in a whisper, finds far more.',
+    'Only checking spelling. Capitals and full stops are worth more and are easier to fix.'
+  ]
+}
+);
