@@ -368,13 +368,21 @@ function rsfPlan_() {
   var sent = rsfAlreadySent_(rows.map(function (r) { return r.id; }));
   var eligible = [], skip = [];
 
+  // Stage is tested FIRST, and that ordering is the whole point of this list.
+  // Tested last, a policy 80 days lapsed with no email address was reported as
+  // "no email address on the risk" — so the window's 90 days of history piled
+  // into the reachability counts and made the book look far worse than it is.
+  // The first run read 37 missing tokens and 19 missing addresses; only 17 of
+  // those were risks the ladder would otherwise have written to today.
+  // Reachability is now only reported for a record that was actually owed an
+  // email, which turns this from a statistic into a list someone can work.
   rows.forEach(function (r) {
     var stage = rsfStage_(r.days);
     var why =
+      !stage   ? 'not at a reminder stage today (' + r.days + ' days out)' :
       r.optOut ? 'opted out (Send_Renewal_Reminder__c unticked, and the flag is in use)' :
-      !r.email ? 'no email address on the risk' :
-      !r.token ? 'no portal token — nothing to link them to' :
-      !stage   ? 'not at a reminder stage today (' + r.days + ' days out)' : '';
+      !r.email ? 'DUE TODAY but no email address on the risk' :
+      !r.token ? 'DUE TODAY but no portal token — nothing to link them to' : '';
     if (why) skip.push({ row: r, why: why });
     else     eligible.push({ row: r, stage: stage });
   });
@@ -593,6 +601,21 @@ function rsfPreview() {
   L.push('SKIPPED (' + p.skip.length + ')');
   Object.keys(by).sort(function (a, b) { return by[b] - by[a]; })
     .forEach(function (w) { L.push('  ' + by[w] + '  ' + w); });
+
+  // These are the ones worth somebody's morning: owed an email today, and we
+  // have no way to send it. Named, so they can be chased rather than counted.
+  var blocked = p.skip.filter(function (s) { return /^DUE TODAY/.test(s.why); });
+  if (blocked.length) {
+    L.push('');
+    L.push('COULD NOT REACH — owed a reminder today (' + blocked.length + ')');
+    blocked.sort(function (a, b) { return (a.row.dueIso < b.row.dueIso) ? -1 : 1; })
+      .forEach(function (s) {
+        L.push('  ' + (s.row.nextDue || '?') + '  ' + rsfClass_(s.row.policy).toUpperCase() +
+               '  ' + (s.row.client || '').slice(0, 30) +
+               '  ' + (s.row.policy || '') +
+               '  — ' + (s.row.email ? 'no token' : 'no email address'));
+      });
+  }
 
   L.push('');
   L.push(testMode_()
