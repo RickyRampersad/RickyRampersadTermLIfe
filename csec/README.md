@@ -352,6 +352,42 @@ the final point, and a table view toggle.
 
 ---
 
+## What the question bank actually is
+
+Be clear about this, because it is the hub's weakest point:
+
+| | |
+|---|---|
+| Questions | **245**, all written for this hub |
+| Strands in the default subjects | 130 |
+| Strands with at least one question | 118 |
+| Strands with **none** | 12 |
+| **Median questions per covered strand** | **2** |
+
+Two. A student who practises one strand exhausts it in a single sitting and
+then sees repeats. That is enough to demonstrate the model and to build a
+nightly habit across subjects; it is **not** enough for a Standard 5 or a
+Form 5 to revise from. Say so to families rather than letting them discover it.
+
+Nothing has been ingested from any past-paper bank. Every item is original, for
+two reasons: CXC owns the CSEC papers and sells them, and a question copied
+without its mark scheme teaches the wrong thing anyway.
+
+**The real material lives on the Resources page**, and for primary it is
+excellent — the Ministry publishes actual SEA past papers for 2024 and 2025
+free, with specimen papers and mark schemes on its learning platform. For CSEC,
+the free half from CXC is the syllabuses, specimen papers and mark schemes.
+
+**Closing the gap, in order of value:**
+
+1. Ten questions per strand in the SEA subjects (Maths, ELA, ELA Writing) and in
+   CSEC Maths and English. That is roughly 250 more items.
+2. Primary guided methods — there are none. Long division, fractions, area and
+   the narrative-writing plan first.
+3. Everything else.
+
+---
+
 ## Adding questions
 
 Append to `data/questions.js`. Every field is required except `tech`:

@@ -104,14 +104,20 @@ to have been oversold.
 
 State these rather than waiting to be caught out:
 
-- **245 questions across 19 subjects** (8 primary, 11 secondary with content). Enough for a nightly habit, not enough
+- **245 questions, median 2 per syllabus strand.** A student practising one
+  topic exhausts it in a sitting and then sees repeats. Enough for a nightly
+  habit across subjects; not enough to revise a subject from. Twelve strands
+  have no questions at all. Tell families this rather than letting them find it. Enough for a nightly habit, not enough
   for a Form 5 to revise from alone. Maths is deepest at 20.
 - **16 worked methods, all secondary.** Primary has none yet — that is the first content gap to close. English B, Spanish, French, Social Studies and PE have
   none yet.
 - **The readiness band is unvalidated.** It has never been checked against a real
   CSEC result, because there has not been one. It is an internal indicator and
   the page says so above the number.
-- **No past papers.** By choice — they are copyright CXC. The Resources page
+- **No CSEC past papers.** By choice — they are copyright CXC. **SEA past
+  papers are a different story**: the Ministry publishes 2024 and 2025 free, and
+  they are linked on the Resources page. For a Standard 4 or 5 that is the most
+  valuable thing in the hub, and it is worth saying so in the announcement. The Resources page
   links the official free syllabuses, specimen papers and mark schemes, the
   Ministry's worked solutions, and twelve international sites.
 - **Sync is last-write-wins per profile.** Two devices editing the same student
