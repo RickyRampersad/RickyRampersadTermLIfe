@@ -99,10 +99,10 @@ h2{font-family:'Montserrat',sans-serif;font-size:.76rem;letter-spacing:1.6px;tex
   nothing to install.</p>
 
   <div class="stats">
-    <div class="stat"><b>14</b><span>subjects</span></div>
-    <div class="stat"><b>176</b><span>practice questions</span></div>
-    <div class="stat"><b>16</b><span>worked methods</span></div>
-    <div class="stat"><b>5</b><span>years tracked</span></div>
+    <div class="stat"><b id="f-subj">31</b><span>subjects</span></div>
+    <div class="stat"><b id="f-q">677</b><span>practice questions</span></div>
+    <div class="stat"><b id="f-g">24</b><span>worked methods</span></div>
+    <div class="stat"><b id="f-years">10</b><span>years tracked</span></div>
     <div class="stat"><b>$0</b><span>to use</span></div>
   </div>
 
@@ -151,6 +151,24 @@ h2{font-family:'Montserrat',sans-serif;font-size:.76rem;letter-spacing:1.6px;tex
      linked: the flyer is printed and saved as a PDF, where a linked image does
      not travel. Same reasoning as the films — it is the real file, not a
      substitute for it. -->
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/guides.js"></script>
+<script>
+/* Same rule as start.html: the printed one-pager counts from the data. This
+   sheet goes out on paper, where a stale number cannot be corrected later. */
+(function(){
+  function set(id,n){ var e=document.getElementById(id); if(e&&n) e.textContent=n; }
+  try{
+    var C=window.CSEC_CURRICULUM||{};
+    set('f-q',(window.CSEC_QUESTIONS||[]).length);
+    set('f-g',(window.CSEC_GUIDES||[]).length);
+    set('f-years',(C.levels||[]).length);
+    set('f-subj',Object.keys(C.subjects||{}).length);
+  }catch(e){}
+})();
+</script>
 
 <!-- rrb-views -->
 <script>
