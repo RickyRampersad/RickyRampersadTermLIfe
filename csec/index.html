@@ -27,6 +27,7 @@
     <div class="mark"><img src="../logo-mark.png" alt=""></div>
     <div class="brandtext"><b>CSEC Study Hub</b><span>Form 1 – Form 5</span></div>
     <nav class="topnav">
+      <a href="start.html">Start here</a>
       <a href="index.html" class="on">Sign in</a>
       <a href="journey.html">Journey</a>
       <a href="guides.html">Guides</a>
@@ -85,6 +86,7 @@
           </div>
           <button class="btn wide" id="si-go">Sign in →</button>
           <div class="err" id="si-err"></div>
+          <button class="btn ghost sm" id="si-forgot" style="margin-top:10px">Forgotten the PIN?</button>
         </div>
 
         <div id="si-none" class="hidden empty">
@@ -96,6 +98,59 @@
           <button class="btn ghost sm" id="si-new">+ Create a profile</button>
           <button class="btn ghost sm" id="si-back">← Change role</button>
         </div>
+      </div>
+    </div>
+
+    <!-- ============ FORGOTTEN PIN ============ -->
+    <div id="recover" class="hidden" style="margin-top:24px">
+      <div class="card narrow" style="margin:0 auto">
+        <h3>Forgotten the PIN</h3>
+        <p class="sub" style="margin-bottom:16px">
+          Enter the six-character recovery code that was shown when this profile was made, and
+          choose a new PIN.
+        </p>
+        <div class="field">
+          <label class="fl" for="rc-who">Profile</label>
+          <select class="fi" id="rc-who"></select>
+        </div>
+        <div class="field">
+          <label class="fl" for="rc-code">Recovery code</label>
+          <input class="fi" id="rc-code" placeholder="e.g. B4KM7Q" maxlength="8" style="text-transform:uppercase"/>
+        </div>
+        <div class="field">
+          <label class="fl" for="rc-pin">New PIN (4 to 6 digits)</label>
+          <input class="fi" id="rc-pin" type="password" inputmode="numeric" maxlength="6"/>
+        </div>
+        <button class="btn wide" id="rc-go">Set the new PIN</button>
+        <div class="err" id="rc-err"></div>
+
+        <div class="note" style="margin-top:16px">
+          <b>No recovery code either?</b> If a parent or teacher is signed in on this device, they can
+          reset any PIN from <b>Settings</b>. If nobody can get in at all, and the family is using a
+          sync group, create a fresh profile on another device and join with the group code — the
+          progress comes back. Otherwise the only way in is to delete the profile, which loses
+          anything not backed up.
+        </div>
+        <div style="margin-top:14px">
+          <button class="btn ghost sm" id="rc-back">← Back</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SAVE YOUR RECOVERY CODE ============ -->
+    <div id="saved" class="hidden" style="margin-top:24px">
+      <div class="card narrow" style="margin:0 auto;text-align:center">
+        <div style="font-size:2.2rem;margin-bottom:8px">🔑</div>
+        <h3>Write this down before you go on</h3>
+        <p class="sub" style="margin-bottom:18px">
+          This is the only way back in if the PIN is forgotten. Photograph it, or write it in the
+          back of a school book. It is shown once here, and again in Settings while signed in.
+        </p>
+        <div id="sv-code" style="font-family:'Montserrat',sans-serif;font-size:2.1rem;font-weight:800;
+             letter-spacing:5px;color:var(--gold);background:rgba(0,0,0,.3);padding:16px;
+             border-radius:13px;border:1px solid rgba(239,194,75,.4);margin-bottom:8px"></div>
+        <p class="sub" id="sv-for" style="margin-bottom:18px"></p>
+        <button class="btn wide" id="sv-go">I have written it down — continue →</button>
       </div>
     </div>
 
@@ -198,6 +253,8 @@
 <script src="data/curriculum.js"></script>
 <script src="data/questions.js"></script>
 <script src="assets/csec.js"></script>
+<script src="assets/csec-config.js"></script>
+<script src="assets/csec-sync.js"></script>
 <script>
 (function(){
   var role='student';
@@ -208,8 +265,17 @@
   var cur=CSEC.current();
   if(cur){ location.href=HOME[cur.role]||'student.html'; return; }
 
+  /* A cold visitor typing rickyrampersadbranch.com/csec has never seen this
+     before. Sending them straight to a PIN box explains nothing, so first-time
+     devices get the Start here page instead. Anyone with a profile already —
+     and anyone who followed a link with ?signin — goes to the sign-in. */
+  if(!CSEC.profiles().length && !/[?&]signin/.test(location.search)){
+    location.replace('start.html');
+    return;
+  }
+
   function show(which){
-    ['rolepick','signin','create'].forEach(function(id){
+    ['rolepick','signin','create','recover','saved'].forEach(function(id){
       $(id).classList.toggle('hidden', id!==which);
     });
   }
@@ -237,6 +303,40 @@
   });
 
   $('si-back').addEventListener('click',function(){show('rolepick');});
+
+  /* ---- forgotten PIN ---- */
+  $('si-forgot').addEventListener('click',function(){
+    var list=CSEC.profiles().filter(function(p){return p.role===role;});
+    $('rc-who').innerHTML=list.map(function(p){
+      return '<option value="'+CSEC.esc(p.id)+'">'+CSEC.esc(p.name)+
+             (p.role==='student'?' — Form '+p.form:'')+'</option>';
+    }).join('');
+    $('rc-err').textContent=''; $('rc-code').value=''; $('rc-pin').value='';
+    show('recover');
+  });
+  $('rc-back').addEventListener('click',function(){ fillProfiles(); show('signin'); });
+  $('rc-go').addEventListener('click',function(){
+    var r=CSEC.recoverWithCode($('rc-who').value,$('rc-code').value,$('rc-pin').value);
+    if(!r.ok){ $('rc-err').textContent=r.msg; return; }
+    var who=CSEC.profile($('rc-who').value);
+    showSaved(r.recovery,'PIN changed for '+who.name+'. This is the NEW recovery code — the old one no longer works.',
+      function(){ fillProfiles(); show('signin'); $('si-who').value=who.id; $('si-pin').focus(); });
+  });
+
+  /* ---- the one-time recovery-code screen ----
+     One handler, one continuation. Two handlers on this button meant the page
+     briefly flashed the role picker on its way to the desk. */
+  var savedNext=null;
+  function showSaved(code, lead, next){
+    $('sv-code').textContent=code;
+    $('sv-for').textContent=lead;
+    savedNext=next;
+    show('saved');
+  }
+  $('sv-go').addEventListener('click',function(){
+    var go=savedNext; savedNext=null;
+    if(go) go(); else show('rolepick');
+  });
   $('c-back').addEventListener('click',function(){fillProfiles();show('signin');});
   /* Nothing is pre-selected: a silently wrong default would quietly mis-set the
      syllabus, the milestones and the countdown for the next five years. */
@@ -294,7 +394,10 @@
       school:$('c-school').value.trim(), pin:pin
     });
     CSEC.signIn(p.id,pin);
-    location.href=HOME[p.role]||'student.html';
+    /* Show the recovery code before letting them in — after this they may never
+       see it again until they go looking in Settings. */
+    showSaved(p.recovery,'Recovery code for '+p.name+'.',
+      function(){ location.href=HOME[p.role]||'student.html'; });
   });
 })();
 </script>

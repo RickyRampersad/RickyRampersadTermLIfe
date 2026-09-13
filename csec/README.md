@@ -17,6 +17,8 @@ Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 | `practice.html` | The practice engine — CSEC-style questions with reasoning and exam technique |
 | `parent.html` | Read-only progress view with a plain-language summary and session history |
 | `teacher.html` | Class roster, class-wide weak strands, and focus-topic assignment |
+| `start.html` | **Start here** — what it is, three-minute setup, parent and teacher guides, FAQ |
+| `flyer.html` | Printable A4 one-pager with a QR code, for a school bag or a client visit |
 | `journey.html` | The guided journey — what this term is for, what is new this year, what is carried forward, every milestone ahead |
 | `test.html` | Timed mock tests under examination conditions — no feedback until submission |
 | `kpi.html` | Readiness index, projected grade bands, and the Form 1–5 term-by-term record |
@@ -27,28 +29,50 @@ Live path: `/csec/` on rickyrampersadbranch.com (GitHub Pages).
 
 ---
 
-## The three logins, honestly described
+## Logins, sync and what they actually protect
 
-**These are device profiles, not accounts.** The site is static HTML on GitHub
-Pages — there is no server, no database and no authentication behind it. A
-profile and its PIN live in `localStorage` in one browser on one device.
+**A PIN is a profile separator, not a password.** It keeps a younger sibling out
+of the wrong profile on a shared laptop. Anyone with the device and a browser
+console can read what is stored. That is said on the sign-in page and in Settings.
 
-That is enough to keep a younger sibling out of the wrong profile and to keep
-three people's progress apart on a shared laptop. It is **not** a security
-boundary: anyone with the device and a browser console can read it. This is
-stated on the sign-in page and again in Settings, so nobody is misled.
+**Every profile gets a recovery code** at creation, shown once on a screen that
+must be dismissed, and again in Settings while signed in. A forgotten PIN is the
+commonest support call there is, so there are three ways back in, in order:
+the recovery code; any other profile signed in on that device resetting it from
+**Settings → PINs & recovery**; or, if the family is in a sync group, a fresh
+profile on another device joining with the group code.
 
-Consequences worth knowing:
+### Sync
 
-- Progress does **not** sync between devices. Use **Settings → Export backup**
-  and restore the JSON file on the other device.
-- Clearing browser data erases everything. The backup file is the only copy.
-- Parent and teacher views read the student profiles **on that same device**.
-  A parent on their own phone will see nothing until a backup is restored there.
+Cross-device sync is served by `gs/csec-sync.gs`, an Apps Script web app writing
+to a Google Sheet, following the pattern of `gs/views-counter.gs`. **A group has
+a code; the code is the credential.** There is no account and no password:
+whoever holds `ABCD-EFGH` can read and change that group's names and practice
+scores. This is stated wherever a code is shown, in the FAQ, and on the flyer —
+never softened, because it is the claim that costs trust if it turns out to have
+been oversold.
 
-Making these real accounts would need a backend. The natural fit for this repo is
-an Apps Script + Sheets endpoint, the same pattern already used by
-`gs/views-counter.gs` — see *Next steps* below.
+Set the endpoint in **one** place, `csec/assets/csec-config.js`. Leave the
+placeholder and the hub runs device-local: everything works, Settings says sync
+is not switched on, and Export backup is still offered.
+
+Two ordering rules make the merge safe, both learned from tests that caught the
+opposite behaviour:
+
+- **Pull before push.** Pushing first meant a laptop closed for a week uploaded
+  its stale copy over the teacher's update, then pulled that stale copy back.
+- **Remote wins only when genuinely newer**, compared on `profile.updatedAt` and
+  `progress._t`. A stale tab cannot roll back a night's work.
+
+Incoming records are **treated as untrusted input**, because any group member can
+write them: `cleanProfile()` and `cleanProgress()` drop anything malformed and
+coerce the rest (bad role rejected, form clamped to 1–5, name truncated, unknown
+subject ids stripped). Everything rendered from another device's data goes
+through `esc()` or `textContent`.
+
+**Deleting is real.** Settings removes one person from a group, or the whole
+group, and both delete the rows outright. Local data stays until cleared
+separately, which the confirmation says.
 
 ---
 
@@ -357,9 +381,10 @@ are the rest) — tick the real timetable and save. Everything downstream follow
 
 ## Next steps, in the order they would pay off
 
-1. **Fix the subject list** in Settings if the inferred 14 are not exact.
-2. **More questions.** 122 across 14 subjects is a working seed, not a full bank.
-   Maths, English A and English B are deepest; Visual Arts and PE are thinnest.
+1. **Deploy the sync service** — see `csec/LAUNCH.md`, section 1. Until that is
+   done the announcement's sync promise is not true and should be cut from it.
+2. **More questions.** 176 across 14 subjects, every subject at 12 or more.
+   Enough for a nightly habit, not enough for a Form 5 to revise from alone.
 3. **Real accounts and cross-device sync** via an Apps Script + Sheets endpoint,
    following `gs/views-counter.gs`. That would let a parent see progress from
    their own phone and turn the teacher view into a real class register.
