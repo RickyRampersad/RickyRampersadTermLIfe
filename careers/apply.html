@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Branch Intake — Ricky Rampersad Branch Careers</title>
+<meta name="description" content="Two-minute branch intake before the official Guardian Life application. Tell us who you are and we route you to the right Recruiting Manager.">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Archivo:wght@400;500;600&family=Space+Grotesk:wght@400;500;700&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07131f; --panel:#122b45; --panel2:#163553; --ink:#edf4fb; --body:#a9bbcf; --mut:#7f94ac;
+  --line:rgba(255,255,255,.10); --teal:#00CFEA; --teal2:#00A8C5; --onTeal:#02141a;
+  --gold:#efc24b; --gold2:#dca530; --onGold:#1d1503;
+  --deep:#040d16; --mid:#0d2137; --ok:#3ddc97; --warn:#ffb454;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--body);font-family:'Archivo',sans-serif;font-size:16px;line-height:1.6;min-height:100vh;
+ background-image:radial-gradient(ellipse 80% 50% at 50% -10%, rgba(0,207,234,.08), transparent),
+                  linear-gradient(180deg,var(--bg) 0%, #0b1c2d 55%, var(--bg) 100%)}
+h1,h2,h3{font-family:'Playfair Display',serif;color:var(--ink);line-height:1.15;letter-spacing:-.01em}
+a{color:var(--teal)}
+::selection{background:var(--teal);color:var(--onTeal)}
+
+/* nav */
+.topbar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:14px;padding:0 16px;height:64px;
+ background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.86rem;letter-spacing:.12em;text-transform:uppercase;
+ color:var(--ink);display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
+.brand b{color:var(--teal)}
+.brand svg{width:22px;height:25px;flex-shrink:0}
+.nav-link{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--body);text-decoration:none;
+ padding:8px 10px;border-radius:9px;transition:.18s}
+.nav-link:hover{color:var(--ink);background:rgba(255,255,255,.06)}
+
+/* progress */
+.pbar{height:3px;background:rgba(255,255,255,.07)}
+.pbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--teal));transition:width .35s ease}
+
+.wrap{max-width:720px;margin:0 auto;padding:0 18px}
+.head{padding:46px 0 22px;text-align:center}
+.kicker{font-family:'Space Grotesk',sans-serif;font-size:.7rem;letter-spacing:.26em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:12px}
+.head h1{font-size:clamp(1.9rem,5vw,2.7rem);font-weight:800}
+.head h1 em{font-style:italic;color:var(--gold)}
+.head p{margin-top:12px;color:var(--body);font-size:.98rem}
+
+/* card */
+.card{background:linear-gradient(160deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:20px;
+ padding:26px 24px 22px;box-shadow:0 24px 60px rgba(0,0,0,.45);margin-bottom:22px}
+@media(max-width:560px){.card{padding:20px 16px 18px;border-radius:16px}}
+.step-tag{font-family:'Space Grotesk',sans-serif;font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal);font-weight:700}
+.card h2{font-size:1.42rem;margin:8px 0 6px;font-weight:700}
+.card .lede{font-size:.93rem;color:var(--mut);margin-bottom:20px;line-height:1.6}
+
+/* fields */
+.field{margin-bottom:17px}
+label.lab{display:block;font-family:'Space Grotesk',sans-serif;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;
+ color:var(--body);font-weight:700;margin-bottom:7px}
+label.lab .req{color:var(--gold)}
+.hint{font-size:.8rem;color:var(--mut);margin-top:6px;line-height:1.5}
+input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{
+ width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);
+ color:var(--ink);font-family:'Archivo',sans-serif;font-size:15.5px;outline:none;transition:border-color .18s,box-shadow .18s}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.16)}
+select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5l4 4 4-4' fill='none' stroke='%23a9bbcf' stroke-width='2' stroke-linecap='round'/></svg>");
+ background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
+select option{background:#0d2137;color:var(--ink)}
+textarea{resize:vertical;min-height:88px}
+input.bad,select.bad{border-color:#ff6b7a;box-shadow:0 0 0 3px rgba(255,107,122,.14)}
+.err{color:#ff8a95;font-size:.82rem;margin-top:6px;display:none}
+.err.on{display:block}
+
+/* choice buttons */
+.choices{display:grid;gap:10px}
+.choices.two{grid-template-columns:1fr 1fr}
+@media(max-width:520px){.choices.two{grid-template-columns:1fr}}
+.choice{text-align:left;padding:14px 16px;border-radius:13px;border:1.5px solid var(--line);background:rgba(0,0,0,.24);
+ color:var(--ink);cursor:pointer;font-family:'Archivo',sans-serif;font-size:15px;transition:.16s;line-height:1.45}
+.choice:hover{border-color:rgba(0,207,234,.5);background:rgba(0,207,234,.07)}
+.choice.on{border-color:var(--teal);background:rgba(0,207,234,.14);box-shadow:0 0 0 3px rgba(0,207,234,.12)}
+.choice b{display:block;font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.95rem;margin-bottom:2px}
+.choice span{font-size:.83rem;color:var(--mut)}
+.choice.on span{color:var(--body)}
+
+/* buttons */
+.row{display:flex;gap:12px;align-items:center;margin-top:24px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:14px 24px;border-radius:13px;border:none;
+ font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;letter-spacing:.3px;cursor:pointer;text-decoration:none;transition:.2s}
+.btn-teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:var(--onTeal);box-shadow:0 8px 28px rgba(0,207,234,.3)}
+.btn-teal:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,207,234,.45)}
+.btn-gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:var(--onGold);box-shadow:0 8px 28px rgba(239,194,75,.25)}
+.btn-gold:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(239,194,75,.4)}
+.btn-ghost{background:transparent;color:var(--body);border:1.5px solid var(--line)}
+.btn-ghost:hover{color:var(--ink);border-color:rgba(255,255,255,.28)}
+.btn[disabled]{opacity:.5;cursor:not-allowed;transform:none!important}
+.spacer{margin-left:auto}
+
+/* consent */
+.check{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.22);cursor:pointer}
+.check input{width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--teal);cursor:pointer}
+.check span{font-size:.88rem;line-height:1.55}
+
+/* done screen */
+.ref{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(1.5rem,6vw,2.1rem);letter-spacing:.14em;
+ color:var(--gold);text-align:center;padding:18px;border:1.5px dashed rgba(239,194,75,.42);border-radius:14px;
+ background:rgba(239,194,75,.07);margin:18px 0}
+.next{display:flex;gap:14px;align-items:flex-start;padding:14px 0;border-bottom:1px solid var(--line)}
+.next:last-child{border-bottom:none}
+.next .n{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:rgba(0,207,234,.16);border:1px solid rgba(0,207,234,.4);
+ color:var(--teal);font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.82rem;display:flex;align-items:center;justify-content:center}
+.next b{color:var(--ink);font-family:'Space Grotesk',sans-serif;font-size:.95rem}
+.next p{font-size:.87rem;color:var(--mut);margin-top:2px}
+.note{font-size:.82rem;color:var(--mut);text-align:center;margin-top:16px;line-height:1.6}
+.skip{text-align:center;padding:6px 0 40px;font-size:.85rem;color:var(--mut)}
+.skip a{color:var(--body);text-decoration:underline;text-underline-offset:3px}
+.skip a:hover{color:var(--teal)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+footer{border-top:1px solid var(--line);padding:30px 0;text-align:center;font-family:'Space Grotesk',sans-serif;
+ font-size:.74rem;letter-spacing:.08em;color:var(--mut);background:var(--deep);line-height:1.9}
+</style>
+</head>
+<body>
+
+<nav class="topbar">
+  <a class="brand" href="index.html">
+    <svg viewBox="0 0 100 112" aria-hidden="true">
+      <path d="M50 4 L92 20 V52 C92 80 72 98 50 107 C28 98 8 80 8 52 V20 Z" fill="#dca530"/>
+      <path d="M50 10 L86 24 V52 C86 76 69 92 50 100 C31 92 14 76 14 52 V24 Z" fill="#efc24b"/>
+      <path d="M31 54 L45 68 L71 38" fill="none" stroke="#07131f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    RICKY <b>RAMPERSAD</b> BRANCH
+  </a>
+  <a class="nav-link" href="index.html">← Careers</a>
+</nav>
+<div class="pbar"><i id="pbar"></i></div>
+
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">Branch intake · 2 minutes</div>
+    <h1>Before the form, <em>a conversation.</em></h1>
+    <p>Guardian Life's official application asks what Head Office needs. This asks what <b>the branch</b> needs — so the right Recruiting Manager calls you, already knowing who you are. You'll be handed to the official application at the end.</p>
+  </div>
+
+  <form id="form" novalidate>
+    <div class="card" id="card"></div>
+    <div class="row" id="nav"></div>
+  </form>
+
+  <div class="skip" id="skiprow">
+    Short on time? <a href="#" id="skiplink">Skip straight to the official Guardian Life application →</a>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Ricky Rampersad Branch · Guardian Life of the Caribbean · Chaguanas Regional Centre<br>
+    Ricky.Rampersad@myguardiangroup.com · 678-5821
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   CONFIG — the only two things you ever need to change
+   ============================================================ */
+var CONFIG = {
+  /* Paste the Apps Script /exec URL from apps-script/careers-intake.gs here.
+     Leave blank and the page still works — the candidate gets their reference
+     code and the handoff, and you collect the file by email instead. */
+  WEBHOOK_URL: '',
+
+  /* The live Guardian Life / TalentNest posting. Change this when the posting rolls. */
+  TALENTNEST: 'https://guardianlifeofthecaribbean.talentnest.com/en/posting/215291/location/287275',
+
+  BRANCH: 'Chaguanas Regional Centre',
+  BRANCH_MANAGER: 'Ricky Rampersad',
+  BM_EMAIL: 'Ricky.Rampersad@myguardiangroup.com'
+};
+
+/* ============================================================
+   OPTION LISTS
+   Labels marked FORM-A must stay character-identical to the Recruit
+   Tracker's FORM_A table — that is what lets an intake answer score
+   itself on the Selection Form A without anyone retyping it.
+   ============================================================ */
+var EDUCATION = [            /* FORM-A */
+  "Less than 5 O'Levels",
+  "Less than 5 O'Levels + short cert.",
+  "5 O'Levels (Math OR English)",
+  "5 O'Levels (Math AND English)",
+  "A'Levels / Diploma",
+  "BSc / BA Degree",
+  "MBA / EMBA"
+];
+var MARITAL = [              /* FORM-A */
+  'Single',
+  'Common Law <5 yrs, no children',
+  'Common Law <5 yrs, with children',
+  'Single Parent',
+  'Common Law 5+ yrs, no children',
+  'Married, no children',
+  'Common Law 5+ yrs, with children',
+  'Married, with children'
+];
+var EMPLOY_YEARS = ['Less than 1 year','1 year','2 years','3 years','4 years','5 years',
+                    '6 years','7 years','8 years','9 years','10+ years'];   /* FORM-A */
+var REFERRAL_PATH = ['Agent referral','Walk-in','Social media','Centre of Influence',
+                     'Internal employee','Advertisement','Recruiting agency','Other'];
+var APPROACH = ['Easily','Fairly easily','With difficulty','Probably not'];  /* market survey scale */
+var REFER_ABILITY = ['Excellent','Good','Fair','Poor'];                     /* market survey scale */
+
+/* Age band from date of birth — FORM-A labels, en-dashes included */
+function ageBand(dob){
+  if(!dob) return '';
+  var d = new Date(dob); if(isNaN(d)) return '';
+  var t = new Date(), a = t.getFullYear()-d.getFullYear();
+  var m = t.getMonth()-d.getMonth();
+  if(m<0 || (m===0 && t.getDate()<d.getDate())) a--;
+  if(a<25) return 'Less than 25 yrs';
+  if(a<45) return '25 – 44 yrs';
+  if(a<55) return '45 – 54 yrs';
+  if(a<60) return '55 – 59 yrs';
+  return 'Over 60 yrs';
+}
+function ageYears(dob){
+  if(!dob) return '';
+  var d=new Date(dob); if(isNaN(d)) return '';
+  var t=new Date(), a=t.getFullYear()-d.getFullYear(), m=t.getMonth()-d.getMonth();
+  if(m<0||(m===0&&t.getDate()<d.getDate())) a--;
+  return a>0&&a<110 ? String(a) : '';
+}
+
+/* ============================================================
+   STATE
+   ============================================================ */
+var S = {
+  ref:'', track:'', name:'', email:'', phone:'', area:'', dob:'', marital:'', education:'',
+  /* experienced branch */
+  expCompany:'', expYears:'', expProduction:'', expLicence:'', expContracted:'', expPortability:'', expWhyLeaving:'',
+  /* new-to-industry branch */
+  newOccupation:'', newEmployYears:'', newRunway:'', newWhyNow:'',
+  /* everyone */
+  incomeTarget:'', commitment:'', startWhen:'', vehicle:'', byod:'', household:'',
+  networkSize:'', networkApproach:'', referAbility:'',
+  referralPath:'', referralName:'', notes:'', consent:false,
+  quiz:null
+};
+
+/* Pick up the self-assessment quiz result carried over from the careers page */
+(function(){
+  try{
+    var qp = new URLSearchParams(location.search).get('q');
+    var raw = qp || sessionStorage.getItem('rrb-careers-quiz');
+    if(raw) S.quiz = JSON.parse(raw);
+  }catch(e){}
+})();
+
+/* Restore a half-finished intake if the candidate came back */
+(function(){
+  try{
+    var d = localStorage.getItem('rrb-intake-draft');
+    if(d){ var o=JSON.parse(d); for(var k in o){ if(k in S && k!=='quiz') S[k]=o[k]; } }
+  }catch(e){}
+})();
+function saveDraft(){ try{ localStorage.setItem('rrb-intake-draft', JSON.stringify(S)); }catch(e){} }
+
+/* ============================================================
+   STEPS
+   ============================================================ */
+function stepsFor(){
+  var list = ['who','track'];
+  list.push(S.track === 'experienced' ? 'exp' : 'new');
+  return list.concat(['practical','market','source','done']);
+}
+var stepIdx = 0;
+
+var el = function(id){ return document.getElementById(id); };
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+
+function textField(key,label,type,ph,req,hint){
+  return '<div class="field"><label class="lab" for="f_'+key+'">'+label+(req?' <span class="req">*</span>':'')+'</label>'+
+    '<input id="f_'+key+'" type="'+type+'" value="'+esc(S[key])+'" placeholder="'+esc(ph||'')+'" '+
+    (type==='tel'?'inputmode="tel" ':'')+'data-k="'+key+'">'+
+    (hint?'<div class="hint">'+hint+'</div>':'')+
+    '<div class="err" id="e_'+key+'"></div></div>';
+}
+function selectField(key,label,opts,req,hint,placeholder){
+  var o = '<option value="">'+esc(placeholder||'Select…')+'</option>';
+  for(var i=0;i<opts.length;i++){
+    var v = opts[i];
+    o += '<option value="'+esc(v)+'"'+(S[key]===v?' selected':'')+'>'+esc(v)+'</option>';
+  }
+  return '<div class="field"><label class="lab" for="f_'+key+'">'+label+(req?' <span class="req">*</span>':'')+'</label>'+
+    '<select id="f_'+key+'" data-k="'+key+'">'+o+'</select>'+
+    (hint?'<div class="hint">'+hint+'</div>':'')+
+    '<div class="err" id="e_'+key+'"></div></div>';
+}
+function areaField(key,label,ph,hint){
+  return '<div class="field"><label class="lab" for="f_'+key+'">'+label+'</label>'+
+    '<textarea id="f_'+key+'" data-k="'+key+'" placeholder="'+esc(ph||'')+'">'+esc(S[key])+'</textarea>'+
+    (hint?'<div class="hint">'+hint+'</div>':'')+'</div>';
+}
+function choiceGroup(key,opts,two){
+  var h = '<div class="choices'+(two?' two':'')+'" data-choice="'+key+'">';
+  for(var i=0;i<opts.length;i++){
+    var o = opts[i];
+    h += '<button type="button" class="choice'+(S[key]===o.v?' on':'')+'" data-k="'+key+'" data-v="'+esc(o.v)+'">'+
+         '<b>'+esc(o.t)+'</b>'+(o.s?'<span>'+esc(o.s)+'</span>':'')+'</button>';
+  }
+  return h+'</div><div class="err" id="e_'+key+'"></div>';
+}
+
+var STEP = {
+  who: {
+    tag:'Step 1', title:'Who we should call',
+    lede:'The basics. A Recruiting Manager reviews every intake personally — this is how they reach you.',
+    html:function(){
+      return textField('name','Full name','text','As it appears on your ID',true) +
+             textField('email','Email','email','you@example.com',true) +
+             textField('phone','Mobile','tel','868 000 0000',true) +
+             textField('area','Area you live','text','e.g. Chaguanas, Couva, Arima',true,
+               'We run out of the Chaguanas Regional Centre. Travel time is a real factor in your first year, so we ask early.') +
+             textField('dob','Date of birth','date','',true,'Used for the selection file only.') +
+             selectField('marital','Household status',MARITAL,true,
+               'Guardian’s selection standard weighs household stability. Answer honestly — it is not a filter on its own.');
+    },
+    validate:function(){
+      var e = {};
+      if(!S.name.trim() || S.name.trim().indexOf(' ')<0) e.name='Please give your first and last name.';
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]{2,}$/.test(S.email.trim())) e.email='That email does not look right.';
+      if(S.phone.replace(/\D/g,'').length < 7) e.phone='Please give a number we can reach you on.';
+      if(!S.area.trim()) e.area='Which area do you live in?';
+      if(!S.dob) e.dob='Please give your date of birth.';
+      else if(!ageBand(S.dob)) e.dob='Please check that date.';
+      else if(ageYears(S.dob)!=='' && +ageYears(S.dob) < 18) e.dob='You must be 18 or older to hold a licence.';
+      if(!S.marital) e.marital='Please choose one.';
+      return e;
+    }
+  },
+
+  track: {
+    tag:'Step 2', title:'Which road are you on?',
+    lede:'This is the single most important question on the page. It decides everything after it — the questions you get, the manager you meet, and how fast you move.',
+    html:function(){
+      return choiceGroup('track',[
+        {v:'experienced', t:'I have sold insurance before',
+         s:'You hold or held a licence or contract — with Guardian or anyone else. Includes provisional licences and any commission-earning insurance role.'},
+        {v:'inexperienced', t:'I am new to the industry',
+         s:'You have never held an insurance licence or contract. We train from zero — most of our top producers started here.'}
+      ]) + '<div class="hint" style="margin-top:14px">Neither answer is the better one. Experienced advisors move through selection faster; newcomers get the full Discovery build. We select from both roads.</div>';
+    },
+    validate:function(){ return S.track ? {} : {track:'Please pick the one that fits.'}; }
+  },
+
+  exp: {
+    tag:'Step 3', title:'Your production record',
+    lede:'Confidential. Nothing here reaches your current company. We ask because a proven advisor should not be made to sit through a beginner’s selection process.',
+    html:function(){
+      return textField('expCompany','Current or most recent company','text','e.g. Guardian Life, Sagicor, Tatil',true) +
+             selectField('expYears','Years in the industry',EMPLOY_YEARS,true) +
+             selectField('expProduction','Annualised premium written, last 12 months',
+               ['Under $50,000','$50,000 – $105,000','$105,000 – $250,000','$250,000 – $500,000','Over $500,000','Prefer to discuss in person'],true,
+               'Our probation standard is $105,000 API. Knowing where you sit against it tells us which conversation to have.') +
+             selectField('expLicence','Licence status',
+               ['CBTT full licence — current','CBTT provisional licence — current','Licence lapsed','Never licensed (company contract only)'],true) +
+             selectField('education','Highest level of education completed',EDUCATION,true,
+               'A scored row on the Guardian selection form, asked of every candidate regardless of track.') +
+             selectField('expContracted','Are you under contract right now?',['Yes — currently contracted','No — free to contract'],true) +
+             selectField('expPortability','If you moved, would your clients follow you?',
+               ['Most of them','About half','A few','I would rebuild from scratch'],true) +
+             areaField('expWhyLeaving','Why are you looking?','The honest version. It matters more than you think.',
+               'Every experienced advisor is asked this at first interview. Answering now saves you the cold-start.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.expCompany.trim()) e.expCompany='Which company?';
+      if(!S.expYears) e.expYears='Please choose.';
+      if(!S.expProduction) e.expProduction='Please choose.';
+      if(!S.expLicence) e.expLicence='Please choose.';
+      if(!S.education) e.education='Please choose.';
+      if(!S.expContracted) e.expContracted='Please choose.';
+      if(!S.expPortability) e.expPortability='Please choose.';
+      return e;
+    }
+  },
+
+  'new': {
+    tag:'Step 3', title:'Where you’re coming from',
+    lede:'No insurance background needed. What we are measuring is whether you can survive the build — and that is mostly about runway and reason.',
+    html:function(){
+      return textField('newOccupation','What do you do now?','text','Job title, or "between roles"',true) +
+             selectField('newEmployYears','How long in your current or most recent job?',EMPLOY_YEARS,true,
+               'Stability in your last role is one of the eight rows on the Guardian selection form.') +
+             selectField('education','Highest level of education completed',EDUCATION,true,
+               'Guardian sets a minimum education standard for advisors. We would rather tell you now than at week six.') +
+             selectField('newRunway','If income started slowly, how long could you hold out?',
+               ['Less than 1 month','1 – 3 months','3 – 6 months','6 – 12 months','More than 12 months'],true,
+               'The most honest predictor of who survives year one. Commission income takes roughly 90 days to become steady — plan for that, not for month one.') +
+             areaField('newWhyNow','Why this, and why now?','What made you look at this career at this point in your life?',
+               'Write it as you would say it. Your Recruiting Manager reads this before they call.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.newOccupation.trim()) e.newOccupation='Please tell us what you do.';
+      if(!S.newEmployYears) e.newEmployYears='Please choose.';
+      if(!S.education) e.education='Please choose.';
+      if(!S.newRunway) e.newRunway='Please choose.';
+      if(!S.newWhyNow.trim() || S.newWhyNow.trim().length<15) e.newWhyNow='A sentence or two, in your own words.';
+      return e;
+    }
+  },
+
+  practical: {
+    tag:'Step 4', title:'The practical side',
+    lede:'Three things decide whether week one runs or stalls. None of them are about talent.',
+    html:function(){
+      return choiceGroup('commitment',[
+        {v:'full_time', t:'Full-time from day one', s:'This is the career, not a second income.'},
+        {v:'transition', t:'Transitioning into full-time', s:'Winding down another commitment over the first few months.'},
+        {v:'part_time', t:'Part-time for now', s:'Honest answer — we will tell you straight what that means.'}
+      ]) +
+      '<div style="height:18px"></div>' +
+      selectField('startWhen','Earliest you could start',
+        ['Immediately','Within 2 weeks','Within a month','1 – 2 months','More than 2 months'],true) +
+      selectField('vehicle','Do you have a working vehicle you can use?',['Yes','No'],true,
+        'Field advisors travel to clients. This is a scored row on the Guardian selection form, so we ask it plainly.') +
+      selectField('byod','Do you have your own smartphone and a laptop or tablet?',
+        ['Yes — both','Smartphone only','Neither right now'],true,
+        'Applications, quotes and client files are all digital. We can work around gaps, but we plan for them.') +
+      selectField('household','Have you discussed this move with your household?',
+        ['Yes — fully behind it','Discussed, still deciding','Not yet'],true,
+        'Guardian’s selection process includes a conversation with your spouse or partner. Nobody survives year one against opposition at home.') +
+      textField('incomeTarget','What do you need to earn in year one?','text','TT$ per month or per year',true,
+        'Give the number you actually need to live on, not an ambition. We will tell you honestly whether it is reachable.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.commitment) e.commitment='Please pick one.';
+      if(!S.startWhen) e.startWhen='Please choose.';
+      if(!S.vehicle) e.vehicle='Please choose.';
+      if(!S.byod) e.byod='Please choose.';
+      if(!S.household) e.household='Please choose.';
+      if(!S.incomeTarget.trim()) e.incomeTarget='A number, roughly.';
+      return e;
+    }
+  },
+
+  market: {
+    tag:'Step 5', title:'The people you already know',
+    lede:'Your first year runs on your existing network — we call it Project 100. Nobody expects a polished answer here. Estimate.',
+    html:function(){
+      return selectField('networkSize','Roughly how many people do you know well enough to phone?',
+        ['Fewer than 50','50 – 100','100 – 200','More than 200'],true,
+        'Family, friends, former colleagues, church, sport, business contacts — all of it counts.') +
+      selectField('networkApproach','Of those, how many could you comfortably approach about their finances?',
+        APPROACH.map(function(a){return a;}),true,
+        'Same wording we use on the market survey later, so your answer carries straight through.') +
+      selectField('referAbility','How would you rate your ability to get a referral?',REFER_ABILITY,true) +
+      (S.quiz ? '<div class="hint" style="margin-top:6px;padding:12px 14px;border-radius:11px;background:rgba(0,207,234,.09);border:1px solid rgba(0,207,234,.24)">'+
+        'Carried over from your 60-second test: <b style="color:#edf4fb">'+esc(S.quiz.score)+'/'+esc(S.quiz.of||5)+'</b>. '+
+        'Your Recruiting Manager sees this alongside your answers.</div>' : '');
+    },
+    validate:function(){
+      var e={};
+      if(!S.networkSize) e.networkSize='Please choose.';
+      if(!S.networkApproach) e.networkApproach='Please choose.';
+      if(!S.referAbility) e.referAbility='Please choose.';
+      return e;
+    }
+  },
+
+  source: {
+    tag:'Step 6', title:'Last thing',
+    lede:'How you found us tells us which of our channels is actually working. Then we hand you to the official application.',
+    html:function(){
+      return selectField('referralPath','How did you hear about the branch?',REFERRAL_PATH,true) +
+        ((S.referralPath==='Agent referral'||S.referralPath==='Internal employee'||S.referralPath==='Centre of Influence')
+          ? textField('referralName','Who referred you?','text','Their name',true,
+              'They get credit for it — that is how our referral culture stays alive.') : '') +
+        areaField('notes','Anything you want the branch to know?','Optional. Constraints, questions, timing, anything.') +
+        '<div class="field" style="margin-top:20px"><label class="check"><input type="checkbox" id="f_consent" data-k="consent"'+(S.consent?' checked':'')+'>'+
+        '<span>I confirm these answers are true, and I agree that Ricky Rampersad Branch and Guardian Life of the Caribbean may hold and use them to consider me for an advisor role. '+
+        'I understand this is a branch intake and that my formal application is made on the Guardian Life system on the next screen.</span></label>'+
+        '<div class="err" id="e_consent"></div></div>';
+    },
+    validate:function(){
+      var e={};
+      if(!S.referralPath) e.referralPath='Please choose.';
+      if((S.referralPath==='Agent referral'||S.referralPath==='Internal employee'||S.referralPath==='Centre of Influence') && !S.referralName.trim())
+        e.referralName='Please give their name.';
+      if(!S.consent) e.consent='Please confirm to continue.';
+      return e;
+    }
+  }
+};
+
+/* ============================================================
+   REFERENCE CODE — the join key across all three systems
+   ============================================================ */
+function makeRef(){
+  var alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   /* no I/O/0/1 — read aloud on the phone */
+  var out='';
+  for(var i=0;i<6;i++) out += alphabet.charAt(Math.floor(Math.random()*alphabet.length));
+  return 'RRB-'+out;
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function render(){
+  var steps = stepsFor();
+  var key = steps[stepIdx];
+  var pct = Math.round((stepIdx/(steps.length-1))*100);
+  el('pbar').style.width = pct+'%';
+
+  if(key === 'done'){ renderDone(); return; }
+
+  var st = STEP[key];
+  el('card').innerHTML =
+    '<div class="step-tag">'+st.tag+' of 6</div>'+
+    '<h2>'+st.title+'</h2>'+
+    '<p class="lede">'+st.lede+'</p>'+
+    st.html();
+
+  el('nav').innerHTML =
+    (stepIdx>0 ? '<button type="button" class="btn btn-ghost" id="back">← Back</button>' : '') +
+    '<button type="button" class="btn btn-teal spacer" id="next">'+
+      (key==='source' ? 'Submit and continue →' : 'Continue →')+'</button>';
+
+  var b = el('back'); if(b) b.onclick = function(){ stepIdx--; render(); window.scrollTo({top:0,behavior:'smooth'}); };
+  el('next').onclick = advance;
+  wire();
+
+  var first = el('card').querySelector('input,select,textarea');
+  if(first && window.innerWidth>720) first.focus();
+}
+
+function wire(){
+  var inputs = el('card').querySelectorAll('[data-k]');
+  for(var i=0;i<inputs.length;i++){
+    (function(n){
+      if(n.tagName==='BUTTON'){
+        n.onclick = function(){
+          var k = n.getAttribute('data-k');
+          S[k] = n.getAttribute('data-v');
+          var sibs = el('card').querySelectorAll('[data-choice="'+k+'"] .choice');
+          for(var j=0;j<sibs.length;j++) sibs[j].classList.remove('on');
+          n.classList.add('on');
+          clearErr(k); saveDraft();
+        };
+      } else if(n.type==='checkbox'){
+        n.onchange = function(){ S[n.getAttribute('data-k')] = n.checked; clearErr(n.getAttribute('data-k')); saveDraft(); };
+      } else {
+        n.oninput = function(){ S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft(); };
+        n.onchange = function(){
+          S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft();
+          /* the referrer-name field appears/disappears with the channel */
+          if(n.getAttribute('data-k')==='referralPath') render();
+        };
+      }
+    })(inputs[i]);
+  }
+}
+
+function clearErr(k){
+  var e = el('e_'+k); if(e){ e.classList.remove('on'); e.textContent=''; }
+  var f = el('f_'+k); if(f) f.classList.remove('bad');
+}
+
+function advance(){
+  var steps = stepsFor();
+  var key = steps[stepIdx];
+  var errs = STEP[key].validate();
+  var keys = Object.keys(errs);
+  if(keys.length){
+    for(var i=0;i<keys.length;i++){
+      var e = el('e_'+keys[i]);
+      if(e){ e.textContent = errs[keys[i]]; e.classList.add('on'); }
+      var f = el('f_'+keys[i]); if(f) f.classList.add('bad');
+    }
+    var firstBad = el('e_'+keys[0]);
+    if(firstBad) firstBad.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  if(key === 'source'){ submit(); return; }
+  stepIdx++;
+  /* the track choice changes which step 3 exists — recompute is automatic via stepsFor() */
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* ============================================================
+   SUBMIT
+   ============================================================ */
+function submit(){
+  el('next').disabled = true;
+  el('next').textContent = 'Sending…';
+  S.ref = S.ref || makeRef();
+
+  var payload = buildPayload();
+  postWebhook(payload);
+
+  try{ localStorage.setItem('rrb-intake-'+S.ref, JSON.stringify(payload)); }catch(e){}
+  try{ localStorage.removeItem('rrb-intake-draft'); }catch(e){}
+
+  var steps = stepsFor();
+  stepIdx = steps.length-1;
+  render();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* text/plain keeps this a simple request — no CORS preflight, which Apps
+   Script cannot answer. no-cors means we never see the response, so the
+   reference code is generated here and shown regardless. */
+function postWebhook(payload){
+  if(!CONFIG.WEBHOOK_URL) return;
+  try{
+    fetch(CONFIG.WEBHOOK_URL, {
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify(payload)
+    })['catch'](function(){});
+  }catch(e){}
+}
+
+function talentNestUrl(){
+  var u = CONFIG.TALENTNEST;
+  return u + (u.indexOf('?')<0?'?':'&') +
+    'utm_source=branch_site&utm_medium=careers&utm_campaign=selection&ref=' + encodeURIComponent(S.ref);
+}
+
+/* ============================================================
+   PAYLOAD — what actually leaves this page
+   ============================================================ */
+function buildPayload(){
+  return {
+    type:'careers_intake',
+    ref:S.ref,
+    at:new Date().toISOString(),
+    branch:CONFIG.BRANCH,
+    branchManager:CONFIG.BRANCH_MANAGER,
+    source:{
+      referralPath:S.referralPath, referralName:S.referralName,
+      landingPage:document.referrer||'', userAgent:navigator.userAgent
+    },
+    candidate:{
+      name:S.name.trim(), email:S.email.trim().toLowerCase(), phone:S.phone.trim(),
+      area:S.area.trim(), dob:S.dob, ageYears:ageYears(S.dob), ageBand:ageBand(S.dob),
+      maritalStatus:S.marital, education:S.education
+    },
+    track:S.track,
+    experienced:S.track==='experienced' ? {
+      company:S.expCompany.trim(), years:S.expYears, production:S.expProduction,
+      licence:S.expLicence, contracted:S.expContracted,
+      portability:S.expPortability, whyLeaving:S.expWhyLeaving.trim()
+    } : null,
+    newToIndustry:S.track==='inexperienced' ? {
+      occupation:S.newOccupation.trim(), employmentYears:S.newEmployYears,
+      runway:S.newRunway, whyNow:S.newWhyNow.trim()
+    } : null,
+    practical:{
+      commitment:S.commitment, startWhen:S.startWhen, vehicle:S.vehicle,
+      byod:S.byod, household:S.household, incomeTarget:S.incomeTarget.trim()
+    },
+    market:{ networkSize:S.networkSize, approachability:S.networkApproach, referAbility:S.referAbility },
+    selfAssessment:S.quiz || null,
+    notes:S.notes.trim(),
+    consent:!!S.consent,
+    /* A complete Recruit Tracker candidate record, ready to import as-is. */
+    trackerCandidate:buildTrackerCandidate()
+  };
+}
+
+/* ============================================================
+   TRACKER RECORD
+   Mirrors the Recruit Tracker v5.6 blankCandidate() shape exactly, with
+   the intake answers already in place. Import this and the First Interview
+   opens with source, background and five of Form A's eight rows filled in.
+   ============================================================ */
+function buildTrackerCandidate(){
+  var now = new Date().toISOString();
+  var blankSession = function(){ return {assigned:'',completed:'',recruitPalUpdated:'',completedItems:[],notes:''}; };
+  var blankModule  = function(){ return {sessions:{},notes:''}; };
+  var blankConfidential = function(){ return {
+    intervieweeName:'',interviewerName:'',dateCompleted:'',
+    known:{howKnown:'',howLong:'',seeOften:'',workEnv:'',why:'',recommend:''},
+    formerEmployee:{position:'',threeWords:'',winningAttitude:'',accomplishments:'',supervision:'',challenges:'',stressful:'',rehire:''},
+    ratings:{q1:'',q2:'',q3:'',q4:'',q5:'',q6:'',q7:'',q8:''},
+    open:{advice:'',trust:'',strengths:'',obstacles:'',other:''}
+  }; };
+  var blankInterviewing = function(){ return {
+    candidateRef:'',intervieweeName:'',occupation:'',age:'',knownBefore:'',relationship:'',
+    otherRelationship:'',duration:'',method:'',infoFreely:'',objectiveSubjective:'',
+    summary:'',positives:'',negatives:''
+  }; };
+
+  var whyNow = S.track==='experienced' ? S.expWhyLeaving.trim() : S.newWhyNow.trim();
+  var currentEmployment = S.track==='experienced'
+    ? (S.expCompany.trim()+' · '+S.expYears+' in industry · '+S.expContracted)
+    : (S.newOccupation.trim()+' · '+S.newEmployYears);
+  var employYears = S.track==='experienced' ? S.expYears : S.newEmployYears;
+
+  var intakeSummary =
+    'BRANCH INTAKE ' + S.ref + ' — submitted ' + now.slice(0,10) + '\n' +
+    'Track: ' + (S.track==='experienced'?'Experienced':'New to industry') + '\n' +
+    'Lives: ' + S.area.trim() + '\n' +
+    'Commitment: ' + S.commitment + ' · Can start: ' + S.startWhen + '\n' +
+    'Vehicle: ' + S.vehicle + ' · Devices: ' + S.byod + ' · Household: ' + S.household + '\n' +
+    'Year-one income needed: ' + S.incomeTarget.trim() + '\n' +
+    'Network: ' + S.networkSize + ' known · approachable ' + S.networkApproach + ' · referrals ' + S.referAbility + '\n' +
+    (S.track==='experienced'
+      ? 'Production (12m): ' + S.expProduction + ' · Licence: ' + S.expLicence + ' · Portability: ' + S.expPortability + '\n'
+      : 'Runway if income is slow: ' + S.newRunway + '\n') +
+    (S.quiz ? 'Self-assessment on careers page: ' + S.quiz.score + '/' + (S.quiz.of||5) + ' (' + S.quiz.band + ')\n' : '') +
+    (S.notes.trim() ? 'Candidate note: ' + S.notes.trim() + '\n' : '') +
+    '\nNOT YET VERIFIED — every line above is the candidate’s own answer, given before any interview.';
+
+  return {
+    id:'cand_intake_'+S.ref.replace(/[^A-Z0-9]/gi,'').toLowerCase(),
+    created:now, updated:now,
+    meta:{
+      name:S.name.trim(), phone:S.phone.trim(), email:S.email.trim().toLowerCase(),
+      address:S.area.trim(),
+      sourceType:S.referralPath, sourceDetail:S.referralName.trim() || ('Branch careers site · '+S.ref),
+      branch:CONFIG.BRANCH, recruitingManager:'', branchManager:CONFIG.BRANCH_MANAGER,
+      internalCandidate:'', currentStage:'firstInterview',
+      talentNest:{applicationId:'',candidateId:'',step:'Review Candidate',popReportId:''},
+      branchIntake:{ref:S.ref, submittedAt:now, consent:!!S.consent}
+    },
+    stages:{
+      firstInterview:{
+        status:'not_started', interviewer:'', interviewerRole:'', date:'', location:'In person',
+        personalObservation:{presentation:0,energy:0,articulation:0,listening:0,likeability:0,notes:'',proceedAfterPo:''},
+        sourceBackground:{
+          referralPath:S.referralPath,
+          referralSource:S.referralName.trim(),
+          familySituation:'Household status: '+S.marital+'. Discussed the move at home: '+S.household+'.',
+          currentEmployment:currentEmployment,
+          compensationExpectation:S.incomeTarget.trim(),
+          whyNow:whyNow
+        },
+        experienceBranch:S.track,
+        inexperienced:{
+          motivation:{score:0,notes:''}, careerCoherence:{score:0,notes:''},
+          incomeRunway:{score:0,notes:S.track==='inexperienced'?('Candidate states runway of '+S.newRunway+' if income starts slowly.'):''},
+          networkStrength:{score:0,notes:'Self-reported: knows '+S.networkSize+', can approach '+S.networkApproach+', referral ability '+S.referAbility+'.'},
+          coachability:{score:0,notes:''}, selfManagement:{score:0,notes:''}, familyBuyIn:{score:0,notes:''}
+        },
+        experienced:{
+          productionHistory:{score:0,notes:S.track==='experienced'?('Self-reported 12-month API: '+S.expProduction+' at '+S.expCompany.trim()+'.'):''},
+          persistency:{score:0,notes:''},
+          reasonLeaving:{score:0,notes:S.track==='experienced'?S.expWhyLeaving.trim():''},
+          bookPortability:{score:0,notes:S.track==='experienced'?('Self-reported: '+S.expPortability+' would follow.'):''},
+          professionalDev:{score:0,notes:''}, incomeAlignment:{score:0,notes:''},
+          familyBuyIn:{score:0,notes:''}, redFlags:{}
+        },
+        closing:{candidateQuestions:'',expectationsSet:false,candidateConcerns:''},
+        outcome:'', outcomeNotes:intakeSummary, nextStepDate:'',
+        rmComments:'', rmRecommendation:'', rmSubmittedAt:'',
+        bmReview:{reviewed:false,bmComments:'',bmDecision:'',bmReviewedAt:'',bmReviewer:''},
+        bmEmailGenerated:''
+      },
+      bmApproval:{
+        status:'not_started', meetingDate:'', present:'',
+        bmFollowUpScores:{executivePresence:0,coachabilityResponse:0,financialClarity:0,networkSpecificity:0,driveDepth:0},
+        bmFollowUpNotes:{executivePresence:'',coachabilityResponse:'',financialClarity:'',networkSpecificity:'',driveDepth:''},
+        bmObservations:'', bmConcerns:'', bmRedFlagsConfirmed:'',
+        bmDecision:'', bmDecisionDate:'', bmDecisionRationale:'',
+        bmAcknowledged:false, bmAcknowledgedDate:'', overrideBy:'', overrideReason:'',
+        pop7SentDate:'', pop7CompletedDate:'', pop7ReportCode:'', pop7CandidateLink:'', pop7Administered:false
+      },
+      pop7Review:{
+        status:'not_started', reviewer:'', date:'', probability:'',
+        scores:{ps:'',ep:'',ap:'',ip:'',sd:'',lm:'',cr:''},
+        snapshot:'', managementPreview:'', selectionConsiderations:'', trainingCoaching:'', retentionProspects:'',
+        review:{strengths:'',concerns:'',coachingRecs:''},
+        interviewAnswers:{}, rmFinalRecommendation:'', rmFinalRationale:'',
+        uploadedReport:{filename:'',uploadedAt:'',sizeKB:0},
+        aiAnalysis:{generatedAt:'',summary:'',dimensions:{},overallVerdict:'',coachingPriorities:[],raw:''}
+      },
+      discovery:{
+        status:'not_started', ggldcEnrolled:false, ggldcEmail:'', enrolledDate:'', expectedComplete:'',
+        modules:{m1:blankModule(),m2:blankModule(),m3:blankModule(),m4:blankModule(),m5:blankModule(),m6:blankModule()},
+        moduleProgress:{m1:{assigned:'',completed:'',notes:''},m2:{assigned:'',completed:'',notes:''},
+                        m3:{assigned:'',completed:'',notes:''},m4:{assigned:'',completed:'',notes:''},
+                        m5:{assigned:'',completed:'',notes:''},m6:{assigned:'',completed:'',notes:''}},
+        marketSurveys:[], orientationClasses:0,
+        discoverySummaryEval:{
+          ratings:{i1:'',i2:'',i3:'',i4:'',i5:'',i6:'',i7:'',i8:'',i9:'',i10:''},
+          comments:{i1:'',i2:'',i3:'',i4:'',i5:'',i6:'',i7:'',i8:'',i9:'',i10:''},
+          trainerName:'', date:''
+        }
+      },
+      selectionFile:{
+        status:'not_started',
+        formA:{
+          age:ageBand(S.dob),
+          education:S.education,          /* blank on the experienced track until interview */
+          discoverySummary:'',
+          employment:employYears,
+          unemployedYears:0,
+          maritalStatus:S.marital,
+          carOwnership:S.vehicle,
+          pop7:'', pop7Probability:'', incomePotential:'',
+          notes:{
+            age:'From branch intake '+S.ref, education:'From branch intake '+S.ref,
+            discoverySummary:'', employment:'Self-reported at intake — verify against employment history',
+            maritalStatus:'From branch intake '+S.ref, carOwnership:'Self-reported at intake — verify at inspection',
+            pop7:'', incomePotential:''
+          }
+        },
+        selectionRejection:{
+          tdDiscussed:'', careerPath:'', carOwnership:S.vehicle, carNotes:'', carType:'', carYear:'',
+          byod:S.byod, docPresence:{}, project100Monthly:'', checklist:{}, awardsMDRT:'',
+          orientationClasses:0, marketSurveys:0, financingAmount:'', spouseInterviewComment:'',
+          additionalNotes:'Household buy-in at intake: '+S.household
+        },
+        confidentialReport1:blankConfidential(), confidentialReport2:blankConfidential(),
+        interviewingReport1:blankInterviewing(), interviewingReport2:blankInterviewing(),
+        spouseInterview:{name:'',relationship:'',insurance:'',impressionAgent:'',publicView:'',
+                         familyReact:'',personalFeel:'',preferAnother:'',longHours:''},
+        incomePotential:{quantities:{},approach:{easily:0,fairlyEasily:0,withDifficulty:0,probablyNot:0}},
+        initialApplication:{
+          address:{current:{addr:S.area.trim(),years:'',months:''},previous:{addr:'',years:'',months:''}},
+          education:[], educationNotes:'', employment:[], organisationalActivities:[], awards:[], references:[],
+          signature:{date:'',signed:false}
+        },
+        documents:{}, documentUploads:{},
+        inspectionReport:{
+          request:{type:'',branchManager:CONFIG.BRANCH_MANAGER,unitManager:'',assistant:'',dateInterview:'',invoice:''},
+          personal:{name:S.name.trim(),sex:'',age:ageYears(S.dob),dob:S.dob,id:'',dp:'',dpExp:'',pp:'',ppExp:'',
+                    addressOnDp:'',currentAddress:S.area.trim(),phones:S.phone.trim(),marital:S.marital,
+                    companion:'',companionContact:'',companionEmployer:'',employer:''},
+          family:[],
+          medical:{height:'',weight:'',allergies:'',cigarettes:'',marijuana:'',otherDrugs:'',alcohol:'',gambling:'',health:''},
+          employment:{employer:'',address:'',duration:'',position:'',supervisor:'',supervisorContact:'',agent:'',agentContact:'',comments:''},
+          references:[], referencesComments:'',
+          financial:{vehicleInsurance:'',assets:'',liabilities:''},
+          hobbies:'',
+          criminal:{neverCharged:false,neverConvicted:false,noPending:false,noRTA:false,ttpsCheck:''},
+          remarks:'', investigator:'', investigatorContact:'', date:''
+        },
+        recommendationLetter:{date:'',body:'',authorRole:'',authorName:''},
+        circulationMemo:{date:'',from:'',to:'',body:'',issuedBy:''},
+        supportingLetter:{date:'',officer:'',body:'',authorRole:''}
+      },
+      approval:{
+        status:'not_started', route:'', submittedDate:'', submittedTo:'',
+        decision:'', decidedBy:'', decidedByRole:'', decisionDate:'', approvalMemoRef:'',
+        selectionPanel:{date:'',members:'',outcome:'',notes:''}, conditions:'', comments:''
+      },
+      onboarding:{
+        status:'not_started',
+        cbtt:{applied:'',received:'',expiry:''}, agentNumber:'', glocEmail:'',
+        aml:{started:'',completed:''}, oft:{completed:'',certSubmitted:''},
+        bootCamp:{started:'',completed:''}, induction:{started:'',completed:'',certSubmitted:''},
+        contract:{signed:'',returned:''},
+        notes:S.track==='experienced'
+          ? ('Licence status declared at intake: '+S.expLicence+'. Confirm CBTT standing before contract.')
+          : ''
+      },
+      induction:{
+        status:'not_started',
+        contract:{issued:false,issueDate:'',candidateAddress:S.area.trim(),probationStart:'',probationEnd:'',
+                  extended:false,extensionEnd:'',branchLocation:CONFIG.BRANCH,
+                  issuedBy:'Marina Whiteman',issuedByTitle:'Senior Manager, Sales Administration Department',
+                  candidateAccepted:false,candidateSignedDate:''},
+        quotas:{apiTarget:105000,commissionsTarget:42000,settledAppsTarget:25,persistencyTarget:90},
+        yearOne:{apiTarget:250000,commissionsTarget:100000,milestoneDate:''},
+        submissions:{td1Form:{submitted:false,date:''},birthCertificate:{submitted:false,date:''},
+                     nis:{submitted:false,date:''},
+                     stateLicense:{applied:false,sat:false,passed:false,certNumber:'',date:''}},
+        coachingNotes:'', weeklyCheckIns:[],
+        terminated:false, terminationDate:'', terminationReason:'', terminationClause:''
+      }
+    }
+  };
+}
+
+/* ============================================================
+   DONE SCREEN
+   ============================================================ */
+function renderDone(){
+  el('pbar').style.width='100%';
+  el('skiprow').style.display='none';
+  var first = S.name.trim().split(' ')[0];
+
+  el('card').innerHTML =
+    '<div class="step-tag">Received</div>'+
+    '<h2>Thank you, '+esc(first)+'.</h2>'+
+    '<p class="lede">Your intake is with the branch. Write this reference down — quote it in your Guardian Life application and on any call with us, and every part of your file finds itself.</p>'+
+    '<div class="ref">'+esc(S.ref)+'</div>'+
+    '<div style="margin:22px 0 6px">'+
+      '<div class="next"><div class="n">1</div><div><b>Finish the official application</b>'+
+        '<p>One more form — Guardian Life’s own system. It is the legal application; our intake is not. This takes about two minutes.</p></div></div>'+
+      '<div class="next"><div class="n">2</div><div><b>A Recruiting Manager calls you</b>'+
+        '<p>Within 48 hours, having already read your answers. You will not be asked to repeat any of this.</p></div></div>'+
+      '<div class="next"><div class="n">3</div><div><b>First interview, then POP 7.0</b>'+
+        '<p>A structured conversation, then Guardian’s assessment. Five gates in total — you will be told where you stand at each one.</p></div></div>'+
+    '</div>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<a class="btn btn-gold" id="go" href="'+esc(talentNestUrl())+'">Continue to the official application →</a>'+
+      '<button type="button" class="btn btn-ghost" id="copyref">Copy my reference</button>'+
+    '</div>'+
+    '<p class="note">Nothing is submitted to Guardian Life until you complete the next form. '+
+      'If you close this page now, email <a href="mailto:'+esc(CONFIG.BM_EMAIL)+'?subject=Branch%20intake%20'+esc(S.ref)+'">'+esc(CONFIG.BM_EMAIL)+'</a> with your reference and we will pick it up.</p>';
+
+  el('nav').innerHTML = '';
+
+  el('copyref').onclick = function(){
+    var b = el('copyref');
+    var done = function(){ b.textContent='Copied ✓'; setTimeout(function(){ b.textContent='Copy my reference'; },2200); };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(S.ref).then(done, function(){ prompt('Your reference:', S.ref); });
+    } else { prompt('Your reference:', S.ref); }
+  };
+}
+
+/* skip link — never trap an applicant behind our own form */
+el('skiplink').onclick = function(ev){
+  ev.preventDefault();
+  location.href = CONFIG.TALENTNEST + (CONFIG.TALENTNEST.indexOf('?')<0?'?':'&') +
+    'utm_source=branch_site&utm_medium=careers&utm_campaign=selection_skipped';
+};
+
+/* Enter advances, except inside a textarea */
+document.getElementById('form').addEventListener('keydown', function(ev){
+  if(ev.key==='Enter' && ev.target.tagName!=='TEXTAREA'){ ev.preventDefault(); advance(); }
+});
+
+render();
+</script>
+</body>
+</html>
