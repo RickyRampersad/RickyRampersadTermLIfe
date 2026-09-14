@@ -26,7 +26,9 @@ LOCAL = os.path.join(HERE, '..', '..', '..', 'fact-find-analyzer', 'ffproject.ht
 
 HEADLINE = 'If your income stopped tomorrow, how long would your family be alright?'
 
-# Advisors who have left. Their address stays alive, because every link they
+# Codes that are no longer on the advisor roster — whether they have left or
+# the branch simply does not attribute prospects to them. Their address stays
+# alive, because every link they
 # ever sent is still out there on somebody's phone and a 404 is the worst thing
 # a prospect can meet. But the page stops carrying their name: it drops the
 # advisor, the name and the token, so /meet/ sees the arrival as "direct" —
@@ -36,6 +38,15 @@ HEADLINE = 'If your income stopped tomorrow, how long would your family be alrig
 RETIRED = {
     'A01452': 'Richard Ramdwar',
     'A12749': 'Aidan Eugene',
+    # Taken off the advisor dropdown on the branch manager's instruction. These
+    # three are still ACTIVE on the Access tab, so the dashboard will still build
+    # them a prospect link if they sign in — which is exactly why the address has
+    # to keep resolving. Unattributed is the safe state: nothing 404s, and no
+    # enquiry is logged against somebody the branch does not treat as an advisor.
+    # If any of them is in fact prospecting, they belong back on the roster.
+    'A04020': 'Javid Ali',
+    'A04028': 'Aleema Mohammed-Ali',
+    'A13064': 'Roberta Laltoo',
 }
 BLURB = ('Sent to you by {name} · Ricky Rampersad Branch, Guardian Life. '
          'A minute to watch, then nothing to fill in — just tap what is '
@@ -109,14 +120,15 @@ RETIRED_TEMPLATE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 
-<!-- {name} — {code} — NO LONGER WITH THE BRANCH.
-     This address is kept alive on purpose. Every link {name} ever sent is
-     still on somebody's phone, and deleting the folder would turn each one
-     into a 404 for the prospect who taps it.
+<!-- {name} — {code} — NOT ON THE ADVISOR ROSTER.
+     Either they have left, or the branch does not attribute prospects to them.
+     This address is kept alive on purpose either way: every link {name} ever
+     sent is still on somebody's phone, and deleting the folder would turn each
+     one into a 404 for the prospect who taps it.
      It no longer carries their name. The advisor, the name and the tracking
      token are stripped before the redirect, so /meet/ treats the arrival as
      "direct" — nobody targeted — and the branch picks the person up rather
-     than logging a new enquiry against somebody who has left.
+     than logging the enquiry against somebody who is not taking it.
      Generated. Do not hand-edit — see meet/a/README.md. -->
 <title>{headline}</title>
 <meta property="og:type" content="website">
