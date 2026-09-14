@@ -25,6 +25,18 @@ LIVE = 'https://factfind360.com/ffproject'
 LOCAL = os.path.join(HERE, '..', '..', '..', 'fact-find-analyzer', 'ffproject.html')
 
 HEADLINE = 'If your income stopped tomorrow, how long would your family be alright?'
+
+# Advisors who have left. Their address stays alive, because every link they
+# ever sent is still out there on somebody's phone and a 404 is the worst thing
+# a prospect can meet. But the page stops carrying their name: it drops the
+# advisor, the name and the token, so /meet/ sees the arrival as "direct" —
+# nobody targeted — and the branch picks the person up instead of logging them
+# against somebody who is gone. The name here is only for the file comment, so
+# the next person can see whose address it was; it is not in the preview.
+RETIRED = {
+    'A01452': 'Richard Ramdwar',
+    'A12749': 'Aidan Eugene',
+}
 BLURB = ('Sent to you by {name} · Ricky Rampersad Branch, Guardian Life. '
          'A minute to watch, then nothing to fill in — just tap what is '
          'actually on your mind. Nothing to buy and nothing to sign.')
@@ -90,6 +102,62 @@ def roster(src):
         out.append((code, name.strip()))
     return out, where
 
+RETIRED_TEMPLATE = """<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+
+<!-- {name} — {code} — NO LONGER WITH THE BRANCH.
+     This address is kept alive on purpose. Every link {name} ever sent is
+     still on somebody's phone, and deleting the folder would turn each one
+     into a 404 for the prospect who taps it.
+     It no longer carries their name. The advisor, the name and the tracking
+     token are stripped before the redirect, so /meet/ treats the arrival as
+     "direct" — nobody targeted — and the branch picks the person up rather
+     than logging a new enquiry against somebody who has left.
+     Generated. Do not hand-edit — see meet/a/README.md. -->
+<title>{headline}</title>
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ricky Rampersad Branch · Guardian Life">
+<meta property="og:title" content="{headline}">
+<meta property="og:description" content="{blurb}">
+<meta property="og:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta property="og:url" content="https://rickyrampersadbranch.com/meet/a/{code}/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{headline}">
+<meta name="twitter:description" content="{blurb}">
+<meta name="twitter:image" content="https://rickyrampersadbranch.com/prospect-poster.jpg">
+<meta name="description" content="{blurb}">
+
+<script>
+  (function () {{
+    var q = new URLSearchParams(location.search);
+    // The three that attribute this person to an advisor who has left.
+    q.delete('a'); q.delete('n'); q.delete('t');
+    var s = q.toString();
+    location.replace('/meet/' + (s ? '?' + s : ''));
+  }})();
+</script>
+<meta http-equiv="refresh" content="0; url=/meet/">
+</head>
+<body style="font:16px/1.6 -apple-system,Arial,sans-serif;padding:40px 22px;text-align:center">
+<p>Opening&hellip; <a href="/meet/">tap here if nothing happens</a>.</p>
+</body>
+</html>
+"""
+
+RETIRED_BLURB = ('Ricky Rampersad Branch, Guardian Life. A minute to watch, then '
+                 'nothing to fill in — just tap what is actually on your mind. '
+                 'Nothing to buy and nothing to sign.')
+
+
+def retired_page(code, name):
+    return RETIRED_TEMPLATE.format(code=code, name=name, headline=HEADLINE,
+                                   blurb=RETIRED_BLURB)
+
+
 def page(code, name):
     blurb = BLURB.format(name=name)
     return TEMPLATE.format(code=code, name=name, headline=HEADLINE,
@@ -106,11 +174,13 @@ def main():
 
     people, where = roster(a.roster)
     print('roster: %d advisor(s) from %s' % (len(people), where))
+    print('retired: %d address(es) kept alive, unattributed' % len(RETIRED))
+    people = people + [(c, n) for c, n in sorted(RETIRED.items())]
 
     same = diff = new = 0
     for code, name in people:
         path = os.path.join(HERE, code, 'index.html')
-        want = page(code, name)
+        want = retired_page(code, name) if code in RETIRED else page(code, name)
         if os.path.exists(path):
             have = open(path, encoding='utf-8').read()
             if have == want:
@@ -136,7 +206,7 @@ def main():
 
     have_dirs = {d for d in os.listdir(HERE)
                  if re.fullmatch(r'A\d{5}', d) and os.path.isdir(os.path.join(HERE, d))}
-    orphan = sorted(have_dirs - {c for c, _ in people})
+    orphan = sorted(have_dirs - {c for c, _ in people} - set(RETIRED))
     print('')
     print('identical %d   differ %d   new %d   on disk with no roster entry %d'
           % (same, diff, new, len(orphan)))
