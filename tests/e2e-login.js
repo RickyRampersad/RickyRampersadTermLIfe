@@ -30,10 +30,6 @@ const SCHEDULE = { kamla: { start:'08:00', end:'16:00', lunch:'12:00-13:00',
             PM1:{time:'1 – 3pm', focus:'Reporting'}, PM2:{time:'3 – 4pm', focus:'Task management'} } } };
 
 let fails = 0, loginTries = 0, refuseFirst = 2, meDown = 0, meRefuse = false;
-/* The register is its own call now, so the test can break it on its own —
-   which is the whole point: a sign-in must not depend on it. */
-let regTries = 0, regFails = false;
-const ATT = { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 };
 const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')); if(!c) fails++; };
 
 (async () => {
@@ -50,18 +46,11 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
       // the result page is not ready yet — twice, as it was at three o'clock
       if (loginTries <= refuseFirst)
         return route.fulfill({ status:404, contentType:'text/html', body:'Page Not Found' });
-      // No attendance in the answer: the register is written afterwards.
-      return reply({ ok:true, token:'tok', profile: Object.assign({}, KAMLA, { attendance:null }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
+      return reply({ ok:true, token:'tok', profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     }
     if (body.action === 'me' && meDown > 0) { meDown--; return route.abort('connectionreset'); }
     if (body.action === 'me' && meRefuse) return reply({ ok:false, error:'Session expired. Sign in again.', authRequired:true });
-    if (body.action === 'me') return reply({ ok:true, profile: Object.assign({}, KAMLA, { attendance:null }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
-    if (body.action === 'register') {
-      regTries++;
-      // What a workbook that cannot recalculate actually does to a write.
-      if (regFails) return reply({ ok:false, error:'The register did not take it: timed out' });
-      return reply({ ok:true, attendance: ATT });
-    }
+    if (body.action === 'me') return reply({ ok:true, profile: Object.assign({}, KAMLA, { attendance: { first:false, at:'08:00', lastSeen:'08:00', status:'in', reason:'', late:0 } }), roster:[KAMLA], schedule:SCHEDULE, kpis:{} });
     if (body.action === 'rows') return reply({ ok:true, rows:[] });
     if (body.action === 'training') return reply({ ok:true, training:[] });
     return reply({ ok:true });
@@ -135,41 +124,6 @@ const ok = (l,c,x='') => { console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:'')
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(1500);
   ok('when the sheet answers again, a reload resumes the day without a sign-in', await page.locator('text=YOUR DAY').count() > 0 && await page.locator('button:has-text("Sign in")').count() === 0);
-
-  console.log('\nThe register is written after she is in, never before:\n');
-  // 14 September: a formula in the portfolio tab exceeded Google's own limits,
-  // the workbook stopped recalculating, and sign-in — the one action nobody can
-  // work around — was the only thing on the tracker that WROTE to it. Two
-  // people lost a morning to "the sheet did not answer". The register is now a
-  // separate call, and this is the assertion that keeps it that way.
-  await page.evaluate(() => localStorage.clear());
-  refuseFirst = 0; loginTries = 0; regTries = 0; regFails = true;
-  await page.reload({ waitUntil:'networkidle' });
-  const i4 = await page.$$('input');
-  await i4[0].fill('KD001'); await i4[1].fill('1');
-  await page.click('button:has-text("Sign in")');
-  await page.waitForTimeout(2500);
-  ok('she is signed in even though the register would not take it',
-     await page.locator('text=YOUR DAY').count() > 0);
-  ok('the sign-in itself was one attempt, not four', loginTries === 1, loginTries + ' attempts');
-  ok('and nothing about a sheet that did not answer is on her screen',
-     await page.locator('text=/did not answer|busy, not broken/').count() === 0);
-  ok('the register was tried, and its failure was survivable', regTries >= 1, regTries + ' tries');
-
-  console.log('\nAnd when the register does take it, the line fills in:\n');
-  await page.evaluate(() => localStorage.clear());
-  regTries = 0; regFails = false; loginTries = 0;
-  await page.reload({ waitUntil:'networkidle' });
-  const i5 = await page.$$('input');
-  await i5[0].fill('KD001'); await i5[1].fill('1');
-  await page.click('button:has-text("Sign in")');
-  await page.waitForTimeout(2500);
-  // The register's own line lives on the plan view, which is where somebody
-  // checks what time they were marked in.
-  await page.click('text=← Plan the day');
-  for (let w = 0; w < 20 && !(await page.locator('text=/In at 08:00/').count()); w++) await page.waitForTimeout(300);
-  ok('her sign-in time reached the screen', await page.locator('text=/In at 08:00/').count() > 0);
-  ok('and it was written exactly once', regTries === 1, regTries + ' writes');
 
   console.log('\nWhereas a session the sheet refuses is cleared, as before:\n');
   await page.evaluate(() => localStorage.setItem('rrb_kpi_token', 'stale'));

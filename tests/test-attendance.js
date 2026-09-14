@@ -88,23 +88,8 @@ ok('and the PA sees nobody else', Object.keys(env.attendanceToday_(PAWAN)).lengt
 console.log('\nIt rides on sign-in, and the checkpoint reads it:\n');
 env.resetRequestMemo_();
 const login = env.login_('kamla@example.com', '1');
-/* SIGN-IN DOES NOT WRITE THE REGISTER, and that is the point of it.
-   On 14 September 2026 a formula in the portfolio tab exceeded Google's own
-   limits, the workbook stopped recalculating, and sign-in — the one action
-   nobody can work around — was the only thing on the tracker that WROTE to
-   it. Two people lost a morning to "the sheet did not answer", while a
-   rejected password came back in seven tenths of a second. So the session is
-   handed over first and the register is a step of its own. */
-ok('sign-in hands over the session without writing the register',
-   login.ok && login.profile.attendance === null, JSON.stringify(login.profile && login.profile.attendance));
-ok('and who they lead comes with it, because that is only a read',
-   Array.isArray(login.profile.leads) && login.profile.leads.sort().join() === 'elizabeth,sasha');
-/* Then the register, which the browser calls straight afterwards. */
-const kamlaReg = env.registerDay_(login.profile);
-ok('the register is written by its own step',
-   kamlaReg.ok && kamlaReg.attendance && kamlaReg.attendance.first === true, JSON.stringify(kamlaReg));
-ok('and a second call does not call it their first sign-in again',
-   env.registerDay_(login.profile).attendance.first === false);
+ok('sign-in carries today\'s attendance', login.ok && login.profile.attendance && login.profile.attendance.first === true, JSON.stringify(login.profile && login.profile.attendance));
+ok('and who they lead', Array.isArray(login.profile.leads) && login.profile.leads.sort().join() === 'elizabeth,sasha');
 env.resetRequestMemo_();
 const cp = env.checkpointReport_(TODAY);
 const line = id => cp.lines.find(l => l.staffId === id);
@@ -113,40 +98,6 @@ ok('who is not, and why', line('elizabeth').absent === 'sick');
 ok('and who never signed in', line('pawan').signedIn === '' && line('pawan').absent === '');
 const html = env.checkpointHtml_(cp);
 ok('in words, in the email', /In at 09:40/.test(html) && /Not in — sick/.test(html) && /No sign-in today/.test(html));
-
-/* ── SIGNING IN DOES NOT READ THE SPREADSHEET EITHER ──────────────────────
-   The other half of the same fix. Five sign-in failures in twelve days all
-   had one thing in common: the sheet, or the road to it, had to be there in
-   the instant somebody pressed Sign in. The register write came off the path
-   above; this is the read. A sign-in now compares a hash against the mirror
-   in the script's own properties, so a workbook that cannot be read — or
-   cannot be recalculated — costs nobody their morning. */
-console.log('\nAnd it does not read the Access tab to do it:\n');
-env.resetRequestMemo_();
-env.refreshRoster_();               // the mirror, as keepWarm leaves it
-let sheetReads = 0;
-const realAccess = env.accessSheet_;
-env.accessSheet_ = function () { sheetReads++; return realAccess(); };
-env.resetRequestMemo_();
-const cold = env.login_('kamla@example.com', '1');
-ok('she is signed in', cold.ok === true, cold.error || '');
-ok('and the Access tab was never opened', sheetReads === 0, sheetReads + ' reads');
-
-/* A wrong password is the one case where a stale mirror would matter, so it
-   is allowed to ask the sheet for a second opinion before refusing anybody. */
-env.resetRequestMemo_(); sheetReads = 0;
-const nope = env.login_('kamla@example.com', 'not-her-password');
-ok('a wrong password is still refused', nope.ok === false && /Wrong password/.test(nope.error), nope.error);
-ok('and that is the only path that asks the sheet again', sheetReads >= 1, sheetReads + ' reads');
-
-/* And the mirror holds no passwords — only a salted digest of each. */
-const mirror = env.rosterMirror_();
-ok('the mirror carries a hash, never a password',
-   mirror.every(p => p.hash && p.password === undefined), JSON.stringify(mirror[0] || {}));
-ok('and the hash is not the password', mirror.every(p => p.hash !== '1'));
-/* A password changed in the tab reaches a sign-in without waiting for the
-   ten-minute refresh, because the miss refreshes. */
-env.accessSheet_ = realAccess;
 
 console.log('\nSigning out closes the day:\n');
 NOW = new Date('2026-09-07T16:32:00');

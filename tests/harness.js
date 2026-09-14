@@ -130,19 +130,6 @@ function makeEnv(opts = {}) {
           out.push(n);
         }
         return out;
-      },
-      /* Not a real SHA-256 — a deterministic digest of the bytes, which is
-         all the roster mirror needs of it: the same password must always
-         produce the same row, and two different ones must not collide. */
-      DigestAlgorithm: { SHA_256: 'SHA_256', MD5: 'MD5' },
-      computeDigest: (algo, msg) => {
-        const s2 = String(algo) + '|' + String(msg); const out = [];
-        for (let i = 0; i < 32; i++) {
-          let n = i * 17 + 3;
-          for (let j = 0; j < s2.length; j++) n = (n * 31 + s2.charCodeAt(j) + i) & 0xff;
-          out.push(n);
-        }
-        return out;
       }
     },
     UrlFetchApp: { fetch: () => { throw new Error('no network in harness'); } },
