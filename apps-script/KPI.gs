@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-10b';
+var SCRIPT_VERSION = '2026-09-14b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -834,7 +834,134 @@ function staffIdFor_(name) {
 /* Same reasoning as findTabBy_: the Access tab is read several times in a
    single request and it cannot change mid-request. */
 var _rosterMemo = null;
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE ROSTER MIRROR — why signing in no longer reads the spreadsheet
+   ══════════════════════════════════════════════════════════════════════════
+   Five sign-in failures in twelve days, every one a different cause and every
+   one the same shape: the sheet, or the road to it, was not available in the
+   moment somebody pressed Sign in.
+
+     2 Sep, 3pm  the result page was not ready while the reports ran — 404
+     3 Sep       a static button; five presses because nothing moved
+     7 Sep       a ten-second wobble on the office wifi cost a session
+    10 Sep, 7:15 three retries were not enough and the branch was locked out
+    14 Sep       the workbook could not recalculate, so the register write
+                 hung, and two people lost a morning
+
+   Each was patched where it showed. The thing they share was never fixed:
+   SIGNING IN DEPENDED ON A GOOGLE SHEET, SYNCHRONOUSLY, AT THAT INSTANT.
+   A read of the Access tab to find the person, and a write to the register to
+   record them. Both on the one action nobody in the branch can work around.
+
+   So the sheet comes off the path. The Access tab stays the only place a
+   password is edited — but a mirror of it lives in the script's own
+   properties, and that is what a sign-in reads. The happy path is now a
+   property read and a hash comparison: no Sheets call at all, nothing to
+   queue behind a trigger, nothing that can hang on a recalculation.
+
+   THE MIRROR HOLDS NO PASSWORDS. It holds a salted SHA-256 of each, so a
+   second copy of the branch's credentials does not exist anywhere. The sheet
+   remains the only place the real ones are.
+
+   STALENESS IS HANDLED WHERE IT MATTERS. A password changed a minute ago
+   would fail against an hour-old mirror — so a login that MISSES (no such
+   person, or a password that does not match) refreshes once from the sheet
+   and asks again before answering. A miss is the rare path and nobody's
+   morning depends on it; if the sheet cannot be read even then, the answer
+   comes from the mirror rather than from a timeout.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ROSTER_MIRROR_KEY = 'rrb_roster_mirror_v1';
+var ROSTER_SALT_KEY   = 'rrb_roster_salt_v1';
+var ROSTER_HOT_S      = 21600;        // six hours in the script cache
+
+/** A salt of this project's own, made once and kept. */
+function rosterSalt_() {
+  var props = PropertiesService.getScriptProperties();
+  var salt = props.getProperty(ROSTER_SALT_KEY);
+  if (!salt) {
+    salt = Utilities.getUuid();
+    props.setProperty(ROSTER_SALT_KEY, salt);
+  }
+  return salt;
+}
+
+function rosterHash_(pass) {
+  var raw = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,
+                                    rosterSalt_() + String(pass == null ? '' : pass).trim());
+  return raw.map(function (b) { return ('0' + (b & 0xFF).toString(16)).slice(-2); }).join('');
+}
+
+/** Read the Access tab and write the mirror. The only function here that
+ *  touches the spreadsheet, and nothing on the sign-in path calls it unless
+ *  the mirror is empty or a login has already missed. */
+function refreshRoster_() {
+  var people = rosterFromSheet_();
+  var mirror = people.map(function (p) {
+    return { email: p.email, name: p.name, staffId: p.staffId, agentNumber: p.agentNumber,
+             hash: rosterHash_(p.password), role: p.role, unit: p.unit, grade: p.grade,
+             active: p.active };
+  });
+  var blob = JSON.stringify({ at: new Date().toISOString(), people: mirror });
+  try { PropertiesService.getScriptProperties().setProperty(ROSTER_MIRROR_KEY, blob); } catch (e) {}
+  try { CacheService.getScriptCache().put(ROSTER_MIRROR_KEY, blob, ROSTER_HOT_S); } catch (e2) {}
+  return mirror;
+}
+
+/** The mirror, hot cache first, durable properties second. No sheet. */
+function rosterMirror_() {
+  var blob = null;
+  try { blob = CacheService.getScriptCache().get(ROSTER_MIRROR_KEY); } catch (e) {}
+  if (!blob) {
+    try {
+      blob = PropertiesService.getScriptProperties().getProperty(ROSTER_MIRROR_KEY);
+      if (blob) CacheService.getScriptCache().put(ROSTER_MIRROR_KEY, blob, ROSTER_HOT_S);
+    } catch (e2) {}
+  }
+  if (!blob) return null;
+  try {
+    var o = JSON.parse(blob);
+    return o && o.people && o.people.length ? o.people : null;
+  } catch (e3) { return null; }
+}
+
+/** When the mirror was last taken from the sheet — for the health check. */
+function rosterMirrorAt_() {
+  try {
+    var blob = PropertiesService.getScriptProperties().getProperty(ROSTER_MIRROR_KEY);
+    return blob ? (JSON.parse(blob).at || '') : '';
+  } catch (e) { return ''; }
+}
+
+/** A refresh by hand, from the editor or a menu, when somebody has just
+ *  changed a password and does not want to wait ten minutes for keepWarm. */
+function refreshRosterMirror() {
+  var m = refreshRoster_();
+  return 'Roster mirror refreshed: ' + m.length + ' people.';
+}
+/** One person out of a roster, by email or by agent number. */
+function rosterFind_(people, key) {
+  for (var i = 0; i < (people || []).length; i++) {
+    var p = people[i];
+    if (normEmail_(p.email) === key || String(p.agentNumber || '').toLowerCase() === key) return p;
+  }
+  return null;
+}
+
+/** THE ROSTER EVERY OTHER FUNCTION USES, and it does not read the sheet.
+ *  Served from the mirror; the sheet is read only when no mirror exists yet
+ *  (the first run after a paste) or when a login has missed and is asking for
+ *  a second opinion. The rows carry a `hash` rather than a `password`. */
 function roster_() {
+  var m = rosterMirror_();
+  if (m) return m;
+  return refreshRoster_();
+}
+
+/** The roster WITH passwords, straight off the Access tab. Everything that
+ *  is not a sign-in still uses roster_(); only the mirror refresh calls this. */
+function rosterFromSheet_() {
   if (_rosterMemo) return _rosterMemo;
   var sh = accessSheet_();
   if (sh.getLastRow() < 2) return [];
@@ -980,27 +1107,52 @@ function login_(who, password) {
     return { ok: false, error: 'Too many attempts. Wait fifteen minutes, or ask the Branch Manager.' };
   }
 
-  var people = roster_();
-  var person = null;
-  for (var i = 0; i < people.length; i++) {
-    var p = people[i];
-    if (normEmail_(p.email) === key || p.agentNumber.toLowerCase() === key) { person = p; break; }
+  /* THE MIRROR, NOT THE SHEET. See the note above rosterMirror_(): this is
+     the one action nobody in the branch can work around, so it does not wait
+     on a spreadsheet. A property read and a hash comparison. */
+  var want = rosterHash_(pass);
+  var person = rosterFind_(roster_(), key);
+  /* A MISS MIGHT ONLY BE A STALE MIRROR. A password changed five minutes ago
+     is the case that matters, so before refusing anybody the sheet is asked
+     once — and if the sheet cannot be read, the mirror's answer stands rather
+     than a timeout. */
+  if (!person || person.hash !== want) {
+    var fresh = null;
+    try { fresh = refreshRoster_(); } catch (e) {}
+    if (fresh) {
+      var again = rosterFind_(fresh, key);
+      if (again) person = again;
+    }
   }
   if (!person) {
     noteFailure_(key);
     return { ok: false, error: 'Not recognised. Check your email or agent number.' };
   }
   if (!person.active) return { ok: false, error: 'That account is not active. Speak to the Branch Manager.' };
-  if (String(person.password).trim() !== pass) {
+  if (person.hash !== rosterHash_(pass)) {
     noteFailure_(key);
     return { ok: false, error: 'Wrong password.' };
   }
 
   clearFailures_(key);
   var t = issueToken_(person);
-  // Signing in is the attendance register. The profile carries today's
-  // record so the browser knows whether this is the first sign-in of the day.
-  try { t.profile.attendance = recordAttendance_(t.profile); } catch (e) {}
+  /* THE REGISTER IS NOT ON THIS PATH ANY MORE.
+     Signing in used to stamp the attendance sheet before it answered, which
+     made the one action nobody can work around depend on a WRITE to the
+     workbook. On 14 September 2026 a formula in the portfolio tab exceeded
+     Google's own limits, the workbook stopped recalculating, and two people
+     could not sign in all morning — while every READ on the same workbook
+     answered in under four seconds and a rejected password came back in
+     seven tenths of one.
+
+     A try/catch was no protection: a write that HANGS never throws, so the
+     browser waited its thirty-five seconds, retried four times, and gave up
+     with "the sheet did not answer".
+
+     So the session is handed over first and the register is written by the
+     'register' action afterwards. A busy workbook now costs a blank
+     attendance line for a minute rather than somebody's morning. */
+  t.profile.attendance = null;
   t.profile.leads = leads_(t.profile);
   return { ok: true, token: t.token, profile: t.profile,
            roster: publicRoster_(), schedule: SCHEDULE };
@@ -1989,12 +2141,21 @@ function handle_(action, data, token) {
 
   switch (action) {
     case 'me':
-      // Resuming a session is a sign-in for the register's purposes: the
-      // first activity of the day is the start of the day.
-      try { profile.attendance = recordAttendance_(profile); } catch (e) {}
+      /* Resuming a session is a sign-in for the register's purposes — but it
+         is not written here either, and for the same reason as login_: this
+         is the path every reload takes, so a workbook that cannot recalculate
+         would lock out everybody who already had a session. */
+      profile.attendance = null;
       profile.leads = leads_(profile);
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
                kpis: allKpiChoices_() };
+
+    /* THE REGISTER, written after the session is already in their hands. The
+       browser calls this once it is in and does not wait on it: if it fails,
+       the person is working and the attendance line fills in on the next
+       reload. It is the only write that used to sit on the sign-in path. */
+    case 'register':
+      return registerDay_(profile);
 
     case 'absent':
       return markAbsent_(data, profile);
@@ -2543,8 +2704,15 @@ function nothingToReport_(e) {
    times somebody working late or on a Saturday came to sign in — half a minute
    of "Signing in" for the person least able to ask anybody about it. It reads
    one cell; running it round the clock costs nothing worth counting. */
+/* Every ten minutes: touch the workbook so the first real request of the
+   hour is not the one that pays for waking it, and take the roster mirror
+   with it. The mirror is what a sign-in reads (see rosterMirror_), so this
+   is what keeps it within ten minutes of the Access tab on a day when
+   nobody's login misses — and it needs no trigger of its own, which matters
+   when a project gets twenty and this one already uses eighteen. */
 function keepWarm() {
   try { ss_().getSheets()[0].getRange(1, 1).getValue(); } catch (e) {}
+  try { refreshRoster_(); } catch (e2) {}
 }
 
 function installTriggers() {
@@ -4436,6 +4604,17 @@ function attOut_(r, staffId) {
 
 /** Called on sign-in and on session resume. Cheap on repeats: the day's
  *  answer is cached for half an hour, so the read only happens once. */
+/** THE REGISTER, as its own step rather than part of signing in.
+ *
+ *  The browser calls this once the session is already in the person's hands,
+ *  and does not wait on the answer — so a workbook that cannot take a write
+ *  costs a blank attendance line rather than a morning. See login_ for what
+ *  happened on 14 September 2026 when this was inside the sign-in. */
+function registerDay_(profile) {
+  try { return { ok: true, attendance: recordAttendance_(profile) }; }
+  catch (e) { return { ok: false, error: 'The register did not take it: ' + (e && e.message || e) }; }
+}
+
 function recordAttendance_(profile) {
   var day = todayISO_(), sid = profile.staffId;
   var cache = null, key = 'att_' + sid + '_' + day;

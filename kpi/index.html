@@ -2196,6 +2196,26 @@ function App() {
     };
   }, [token]);
 
+  // THE REGISTER, and it is deliberately not part of signing in.
+  // Sign-in used to write the attendance sheet before it answered, so on
+  // 14 September a workbook that could not recalculate stopped two people
+  // working for a morning — the write never threw, it simply never returned.
+  // Now the session arrives first and this fills the register in behind it.
+  // If it fails nobody is stopped: the attendance line stays blank until the
+  // next reload, and the day still opens on the plan or the entry screen by
+  // the clock, exactly as it does against an older server.
+  useEffect(() => {
+    if (!me || !token || me.attendance) return;
+    let off = false;
+    (async () => {
+      const r = await api("register", { token });
+      if (off || !r || !r.ok || !r.attendance) return;
+      setMe(m => m ? Object.assign({}, m, { attendance: r.attendance }) : m);
+      setAttToday(a => Object.assign({}, a || {}, { [me.staffId]: r.attendance }));
+    })();
+    return () => { off = true; };
+  }, [me, token]);
+
   // Pull the rows this person is allowed to see.
   const loadRows = useCallback(async () => {
     if (!token) return;
