@@ -1274,37 +1274,127 @@
 
     go.disabled = true; go.textContent = 'Sending…';
 
-    var body = new URLSearchParams({
-      action:'book', agent:AGENT, advisor:ADVISOR, token:TOKEN,
+    /* Every copy of this booking carries the same ref, so a retry can never
+       create a second lead and the branch can drop duplicates on sight. */
+    var ref = 'L' + Date.now().toString(36) + Math.random().toString(36).slice(2,8);
+    var fields = {
+      action:'book', ref:ref, agent:AGENT, advisor:ADVISOR, token:TOKEN,
       intent:pick('intent'),
       name:nm, phone:ph, when:pick('when'), tod:pick('tod'),
       wants:chosen().join(' | '),
       need: NEED ? money(NEED) : '',
       note:document.getElementById('note').value.trim(),
-      source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO, at:new Date().toISOString()
-    });
+      source:'prospect_page', arrival:arrivalKind(nm), addressedTo:ADDRESSED_TO,
+      at:new Date().toISOString()
+    };
 
-    // no-cors means we never see the reply, so the page confirms optimistically.
-    // A booking that reached the sheet but showed an error would be worse than
-    // one that shows fine and is chased by the advisor anyway.
-    fetch(ENDPOINT, { method:'POST', mode:'no-cors', body:body, keepalive:true })
-      .catch(function(){})
-      .finally(function(){
-        ping('booked', pick('intent') + ' — ' + chosen().join(' | '));
-        document.getElementById('form').style.display = 'none';
-        var ok = document.getElementById('ok');
-        ok.style.display = 'block';
-        document.getElementById('okHead').textContent =
-          pick('intent') === 'Apply' ? 'You are in the queue.' : 'That is with ' + FIRST + '.';
-        document.getElementById('okMsg').textContent =
-          pick('when') === 'Just call me'
-            ? FIRST + ' will call you on ' + ph + '.'
-            : FIRST + ' will message you on WhatsApp to fix a time — ' +
-              pick('when').toLowerCase() + ', ' + pick('tod').toLowerCase() + '.';
-        ok.scrollIntoView({ behavior:'smooth', block:'center' });
-        setTimeout(revealFeedback, 1400);
-      });
+    /* Tell them straight away. This used to sit inside .finally(), so the
+       prospect watched "Sending..." until the server answered - and that
+       server sleeps, and can take half a minute to wake. Nobody should be
+       made to wait on our plumbing to find out their message went. */
+    showBooked(nm, ph);
+
+    /* And deliver it properly, behind them. See rrbDeliver. */
+    try { rrbDeliver(fields); } catch (e) { rrbQueuePush(fields); }
   });
+
+  /* ── THE CONFIRMATION ────────────────────────────────────────────────── */
+  function showBooked(nm, ph){
+    try {
+      ping('booked', pick('intent') + ' — ' + chosen().join(' | '));
+      document.getElementById('form').style.display = 'none';
+      var ok = document.getElementById('ok');
+      ok.style.display = 'block';
+      document.getElementById('okHead').textContent =
+        pick('intent') === 'Apply' ? 'You are in the queue.' : 'That is with ' + FIRST + '.';
+      document.getElementById('okMsg').textContent =
+        pick('when') === 'Just call me'
+          ? FIRST + ' will call you on ' + ph + '.'
+          : FIRST + ' will message you on WhatsApp to fix a time — ' +
+            pick('when').toLowerCase() + ', ' + pick('tod').toLowerCase() + '.';
+      ok.scrollIntoView({ behavior:'smooth', block:'center' });
+      setTimeout(revealFeedback, 1400);
+    } catch (e) {}
+  }
+
+  /* ── DELIVERY, WHICH USED TO BE A GUESS ───────────────────────────────────
+     This posted with mode:'no-cors', which means the page cannot read the
+     reply. So it confirmed to the prospect whatever actually happened. A
+     booking that never arrived looked exactly like one that did, on both ends
+     - the prospect was told they were in the queue, the advisor never heard,
+     and nobody could have known. That last part is the one that matters.
+
+     Three chances now, and the prospect has already been thanked before any
+     of them starts:
+
+       1. post it to the prospect server and READ the reply
+       2. if that cannot be confirmed, send it to the branch's OTHER
+          deployment - a different project on a different server, so one being
+          asleep does not take the lead with it
+       3. if that misses too, keep it on this phone and try again the next
+          time this page is opened
+
+     Every copy carries the same ref, so none of this can produce two leads. */
+  var RESCUE = 'https://script.google.com/macros/s/' +
+               'AKfycbx776ORwmwhm2u4vx2YGQPC6bRR9gTQ-Y-Yc1up0FNGkCKGaQdet-APT1PJsrAxxJ3dsQ/exec';
+  var QKEY = 'rrbUnsentBookings';
+
+  function rrbQueue(){
+    try { return JSON.parse(localStorage.getItem(QKEY) || '[]') || []; }
+    catch (e) { return []; }
+  }
+  function rrbQueueSet(a){
+    try { localStorage.setItem(QKEY, JSON.stringify(a.slice(-20))); } catch (e) {}
+  }
+  function rrbQueuePush(f){
+    var q = rrbQueue();
+    for (var i = 0; i < q.length; i++) if (q[i].ref === f.ref) return;
+    q.push(f); rrbQueueSet(q);
+  }
+  function rrbQueueDrop(ref){
+    rrbQueueSet(rrbQueue().filter(function(x){ return x.ref !== ref; }));
+  }
+
+  function rrbDeliver(f){
+    /* Held from the first attempt, so a phone that goes flat mid-request
+       still has it next time. Dropped the moment something confirms. */
+    rrbQueuePush(f);
+
+    var settled = false;
+    var finish = function(ok){
+      if (settled) return; settled = true;
+      if (ok) rrbQueueDrop(f.ref); else rrbRescue(f);
+    };
+    /* The server sleeps. Twelve seconds is generous for a wake-up and short
+       enough that the rescue still goes while the phone is awake. */
+    var timer = setTimeout(function(){ finish(false); }, 12000);
+
+    try {
+      fetch(ENDPOINT, { method:'POST', body:new URLSearchParams(f), keepalive:true })
+        .then(function(r){ clearTimeout(timer); finish(!!(r && (r.ok || r.type === 'opaque'))); })
+        .catch(function(){ clearTimeout(timer); finish(false); });
+    } catch (e) { clearTimeout(timer); finish(false); }
+  }
+
+  function rrbRescue(f){
+    try {
+      var qs = new URLSearchParams(f);
+      qs.set('action', 'leadrescue');
+      fetch(RESCUE + '?' + qs.toString(), { cache:'no-store', redirect:'follow', keepalive:true })
+        .then(function(r){ return r.json(); })
+        .then(function(j){ if (j && j.ok) rrbQueueDrop(f.ref); })
+        .catch(function(){});
+    } catch (e) {}
+  }
+
+  /* Anything a previous visit could not land. Costs nothing when the queue is
+     empty, which it is for almost everybody. */
+  try {
+    var pending = rrbQueue();
+    if (pending.length) setTimeout(function(){
+      pending.forEach(function(f){ rrbDeliver(f); });
+    }, 2500);
+  } catch (e) {}
 
   /* ── Feedback ──────────────────────────────────────────────────────────
      Shown once — either after they book, or once they have read to the bottom
