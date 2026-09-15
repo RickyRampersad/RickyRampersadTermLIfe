@@ -181,8 +181,23 @@ function iTz_() {
   return iSs_().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
 }
 
+/* EVERY MONEY FIGURE IN EVERY BRANCH INTELLIGENCE E-MAIL READ "TT$%,.2f".
+   It was Utilities.formatString('%,.2f', n). That method is sprintf-style and
+   sprintf has no thousands-grouping flag — the comma is Java's String.format,
+   a different API — so the pattern was never substituted and the literal went
+   out. On the morning of 15 September 2026 it went to an agent in a column
+   headed INSTALMENT, where a premium should have been.
+
+   The wall never showed it because the wall's pages format their own money in
+   the browser. Only the e-mails used this, in eighteen places.
+
+   No test caught it because the harness has no formatString stub, so nothing
+   in the suite had ever called this function. It does now. */
 function iMoney_(n) {
-  return 'TT$' + Utilities.formatString('%,.2f', iNum_(n)).replace(/^(-?)/, '$1');
+  var v = iNum_(n), neg = v < 0;
+  var s = Math.abs(v).toFixed(2).split('.');
+  s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (neg ? '-TT$' : 'TT$') + s.join('.');
 }
 
 /* An address the mail server will actually accept. The workbook's export put a

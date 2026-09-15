@@ -228,5 +228,29 @@ ok('the book feed ships it', /out\.team = iBookTeam_\(today, personOfCode, unitO
 const book = require('fs').readFileSync(require('path').join(__dirname, '..', 'intelligence/wall/book.html'), 'utf8');
 ok('the birthdays screen has the gold band and tells the player', /id="cake"/.test(book) && /rrb:"celebrate"/.test(book) && /Happy birthday, /.test(book));
 
+/* ── THE MONEY IN THE E-MAILS READ "TT$%,.2f" ─────────────────────────────
+   Utilities.formatString is sprintf-style, and sprintf has no
+   thousands-grouping flag — the comma is Java's String.format, a different
+   API — so '%,.2f' was never substituted and the literal went out. On the
+   morning of 15 September 2026 it reached an agent in a column headed
+   INSTALMENT, where a premium should have been.
+
+   The wall never showed it, because the wall's pages format their own money
+   in the browser. Only the e-mails used iMoney_, in eighteen places. And no
+   test caught it because the harness has no formatString stub, so nothing in
+   the suite had ever called the function at all. This is that test. */
+console.log('\nMoney, in the e-mails, where a format string used to be:\n');
+[[0, 'TT$0.00'], [5, 'TT$5.00'], [999, 'TT$999.00'], [1000, 'TT$1,000.00'],
+ [1234.5, 'TT$1,234.50'], [44410.4, 'TT$44,410.40'],
+ [1234567.891, 'TT$1,234,567.89'], [-2500, '-TT$2,500.00']
+].forEach(([n, want]) => {
+  const got = env.iMoney_(n);
+  ok(n + ' reads ' + want, got === want, got);
+});
+ok('and no format string survives anywhere in it',
+   !/%[,.\d]*f/.test(env.iMoney_(1234.5)) && !/%s|%d/.test(env.iMoney_(1234.5)), env.iMoney_(1234.5));
+/* The thing an agent actually saw. */
+ok('"TT$%,.2f" can never be printed again', env.iMoney_(1234.5) !== 'TT$%,.2f');
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
