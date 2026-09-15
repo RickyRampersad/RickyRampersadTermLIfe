@@ -232,6 +232,15 @@ Two places take it:
 Then run **`intelSetup`** once. It creates the working tabs, does the first
 rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
 
+> **This switches on mail to other people.** Six of those eleven triggers send:
+> the agent list goes to **every agent on the access list, every weekday at
+> 6am**, and the cross-sell, horizon, survey and manager mails go out on their
+> own schedules. Nothing asks first and nothing says on screen that it
+> happened. If you are not ready for that, **set `INTEL_TEST_TO` to your own
+> address first** (see the table below) — everything then comes to you,
+> subject-tagged `[TEST]`, with the intended recipient named at the top — and
+> run **Who gets whose list** before you clear it.
+
 **"This script has too many triggers"** on that step means the host project
 is spending its twenty on something else. The tracker before `2026-09-08a`
 installed fifteen weekday triggers; paste the current `KPI.gs`, deploy a new
@@ -606,6 +615,41 @@ Role column is the only place the app can learn it.
 The digests follow the same rule — staff and managers are skipped by the agent,
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
+
+### Whose list goes to whose address
+
+Ask this of the digests before you switch them on, and again after any change
+to the access list, because nothing in a sent message shows it went to the
+wrong person.
+
+Run **Branch Intelligence → Who gets whose list** (`intelAddressCheck()`). It
+prints, and sends nothing:
+
+- every agent on the access list, their address, and **how many overdue
+  policies that address would receive**
+- any two people on the list whose **surname and first initial are the same**
+- agents with **no e-mail address** (silently skipped by every digest) and
+  agents with **no agent number** (matched by name only, the weaker of the two)
+- names in the dues extract that **reach no address at all** — a book the
+  branch manager sees and the agent does not
+
+**Why the check exists.** An agent's rows are found by name, because a name is
+all the dues, pending and requirement extracts carry. The extracts spell one
+person three ways, so the last test is a loose one: same surname, same first
+initial, same person. In this branch's book that also matches **two pairs of different
+people** — four separate Contact records, one pair holding **171 and 17**
+premium-paying policies and the other **91 and 89**. The names are not written
+down here, because this repository is published; the check prints them.
+
+Until 15 September 2026 each of those four was sent the other's clients every
+morning. The access list is now the authority on who is a separate person: a
+name or an agent number belonging to somebody else on it stops the loose test
+dead, while one person's three spellings still come to them.
+
+**This depends on both names being on the access list.** Take one of a pair off
+and the other starts receiving their clients again — which is exactly what the
+check reports, so it cannot happen quietly. `tests/test-address.js` holds the
+proof, with pretend names in the same shape.
 
 ### Today
 

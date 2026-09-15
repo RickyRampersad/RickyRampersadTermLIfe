@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-15a';
+var INTEL_VERSION = '2026-09-15b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -4213,6 +4213,45 @@ function iNameKey_(s) {
     .replace(/[^a-z]+/g, ' ').trim();
 }
 
+/* ── who else is on the access list ──────────────────────────────────────
+   The loose surname test below is what lets one person's rows be recognised
+   under three spellings. It must never reach across two different people, and
+   in this branch's own book it does: there are two pairs of agents — four
+   separate Contact records, one pair holding 171 and 17 premium-paying
+   policies and the other 91 and 89 — whose surname and first initial are the
+   same. Surname plus first initial cannot tell them apart, so until
+   15 September 2026 each of those four received the other's clients in the
+   daily list. Run intelAddressCheck() to see the pairs by name; they are not
+   written into this file, which is published.
+
+   The access list is the authority on who is a separate person, so a name or
+   a code that belongs to somebody else on it is never mine, however close it
+   reads.
+
+   Memoised for the execution, not cached across them: the agent digest scopes
+   forty people in one run and would otherwise read the tab forty times, but a
+   roster edit must take effect on the next run and not ten minutes later. */
+var IROSTER_MEMO = null;
+function iRosterClaims_() {
+  if (IROSTER_MEMO) return IROSTER_MEMO;
+  var names = {}, ids = {};
+  try {
+    var dir = iAgentDirectory_() || {};
+    Object.keys(dir).forEach(function (key) {
+      var p = dir[key] || {};
+      var nk = iNameKey_(p.agentName) || iNameKey_(p.name);
+      if (nk) names[nk] = p.name || p.agentName || nk;
+      var code = iCode_(p.agentId);
+      if (code) ids[code] = p.name || p.agentName || code;
+    });
+  } catch (e) {
+    /* No access list reachable — claim nothing rather than scope nobody. The
+       behaviour then is exactly what it was before this guard existed. */
+  }
+  IROSTER_MEMO = { names: names, ids: ids };
+  return IROSTER_MEMO;
+}
+
 function iSameAgent_(a, b) {
   var x = iNameKey_(a), y = iNameKey_(b);
   if (!x || !y) return false;
@@ -4261,17 +4300,32 @@ function iScope_(cache, session) {
     }
     if (g !== undefined) groups[g] = 1;
   });
+  /* Every name and code on the access list that is not one of this team's, so
+     the loose test at the end of isMine cannot fold another agent's book into
+     this one. See iRosterClaims_ for the two pairs of names in this branch
+     that surname-plus-initial cannot tell apart. */
+  var claims = iRosterClaims_(), otherNames = {}, otherIds = {};
+  Object.keys(claims.names).forEach(function (k) { if (!names[k]) otherNames[k] = 1; });
+  Object.keys(claims.ids).forEach(function (c) { if (!ids[c]) otherIds[c] = 1; });
   /* Name first, because that is all the dues, pending and requirement extracts
      carry. The in-force book also carries a Servicing Agent Id, and matching on
      it catches the rows where the branch wrote the agency's company name —
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
     var who = x[key || 'agent'];
-    if (x.agentId && ids[iCode_(x.agentId)]) return true;
+    var code = x.agentId ? iCode_(x.agentId) : '';
+    if (code && ids[code]) return true;
     var k = iNameKey_(who);
     if (k && names[k]) return true;
     var g = aliasIdx[k];
     if (g !== undefined && groups[g]) return true;
+    /* This row is spelled exactly as somebody else on the access list, or
+       carries their agent number, so it is theirs. Stopping here rather than
+       falling through is the whole point: the test below cannot tell two
+       agents who share a surname and a first initial apart, and it is the
+       only thing that was deciding these rows. */
+    if (code && otherIds[code]) return false;
+    if (k && otherNames[k]) return false;
     /* Last resort: the loose surname test, which is what catches the extracts
        spelling the same person three different ways. */
     for (var i = 0; i < team.length; i++) if (iSameAgent_(who, team[i].name)) return true;
@@ -6230,6 +6284,146 @@ function intelSelfTest() {
   return text;
 }
 
+/* ── who gets whose list ─────────────────────────────────────────────────
+   The one question the daily agent list has to answer before it is allowed
+   to send: does each address receive its own book and nobody else's? Three
+   things can break that, and none of them is visible in a sent message —
+   a roster name the extracts never use (an empty list, and the agent
+   assumes there is nothing to work), a name the extracts use that no
+   roster row claims (a book nobody is sent), and two agents whose surname
+   and first initial are the same (each sent the other's clients, which is
+   the one that was live until the guard in isMine went in).
+
+   Prints, sends nothing, and names no client. Run it after any change to
+   the access list. */
+function intelAddressCheck() {
+  var out = [];
+  function line(s) { out.push(s); }
+  var dir = iAgentDirectory_() || {};
+  var keys = Object.keys(dir);
+
+  line('BRANCH INTELLIGENCE — who gets whose list');
+  line('Access list: ' + keys.length + ' people');
+  line('');
+
+  /* ── the two agents the loose test cannot separate ───────────────────── */
+  var people = keys.map(function (k) { return dir[k]; });
+  var clash = [];
+  for (var i = 0; i < people.length; i++) for (var j = i + 1; j < people.length; j++) {
+    var a = people[i], b = people[j];
+    var ka = iNameKey_(a.agentName) || iNameKey_(a.name);
+    var kb = iNameKey_(b.agentName) || iNameKey_(b.name);
+    if (!ka || !kb || ka === kb) continue;
+    if (iSameAgent_(ka, kb)) clash.push([a, b]);
+  }
+  if (clash.length) {
+    line('Same surname and first initial — kept apart by the access list:');
+    clash.forEach(function (p) {
+      line('  ' + p[0].name + '  <->  ' + p[1].name);
+      line('      ' + (p[0].agentId || 'NO AGENT NUMBER') + ' / ' +
+                      (p[1].agentId || 'NO AGENT NUMBER'));
+    });
+    line('  Both rows must stay on the access list for this to hold. Take one off');
+    line('  and the other starts receiving their clients again.');
+    line('');
+  } else {
+    line('No two people on the access list share a surname and a first initial.');
+    line('');
+  }
+
+  /* ── a row that was swallowed is an agent who is never written to ──── */
+  var seen = {}, twice = [], rows = 0;
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    /* Only the columns this needs. The access tab also holds every staff
+       member's code and none of that belongs in a printed report. */
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']),
+        cActive = iCol_(head, ['active']);
+    if (cName < 0) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    vals.forEach(function (row) {
+      var nm = String(row[cName]).trim();
+      if (!nm) return;
+      if (cActive >= 0 && /^(no|inactive|disabled|off)$/i.test(String(row[cActive]).trim())) return;
+      rows++;
+      var id = iIdentity_(nm, cAgent >= 0 ? row[cAgent] : '', cNum >= 0 ? row[cNum] : '');
+      var k = iNameKey_(id.agentName) || id.agentId;
+      if (!k) return;
+      if (seen[k]) { if (twice.indexOf(k) === -1) twice.push(k); seen[k].push(nm); }
+      else seen[k] = [nm];
+    });
+  });
+  if (twice.length) {
+    line('Two access rows that read as the same person — only the first is written to:');
+    twice.forEach(function (k) { line('  ' + seen[k].join('   |   ')); });
+    line('  Give them different Agent Name spellings, or take the stale row off.');
+    line('');
+  }
+  if (rows !== keys.length) {
+    line('Active access rows: ' + rows + ', addresses built: ' + keys.length +
+         '  — ' + Math.abs(rows - keys.length) + ' row(s) did not become a person.');
+    line('');
+  }
+
+  /* ── an address for everybody, and an agent number with it ───────────── */
+  var noMail = [], noNum = [];
+  people.forEach(function (p) {
+    if (iRoleOf_(p.role) !== 'agent') return;
+    if (!p.email) noMail.push(p.name);
+    if (!p.agentId) noNum.push(p.name);
+  });
+  line('Agents with no e-mail address: ' + (noMail.length ? noMail.join(', ') : 'none'));
+  if (noMail.length) line('  These are skipped silently by every digest.');
+  line('Agents with no agent number: ' + (noNum.length ? noNum.join(', ') : 'none'));
+  if (noNum.length) line('  Their rows are matched by name only, which is the weaker of the two.');
+  line('');
+
+  /* ── the books, against the roster ───────────────────────────────────── */
+  var cache = iLoadCache_();
+  if (!cache) { line('No cache — run intelRebuild() first to check the books.'); }
+  else if (!cache.dues || cache.dues.error) { line('Dues not built, so books cannot be checked.'); }
+  else {
+    var extract = (cache.dues.byAgent || []).map(function (r) { return r.agent; })
+      .filter(function (n) { return n && String(n).trim(); });
+    var claimed = {};
+    line('Overdue policies each address would receive:');
+    people.filter(function (p) { return iRoleOf_(p.role) === 'agent' && p.email; })
+      .sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); })
+      .forEach(function (p) {
+        var mine = iScope_(cache, { role: 'agent', agentName: p.agentName,
+                                    agentId: p.agentId, name: p.name });
+        var chase = (mine.dues && mine.dues.chase ? mine.dues.chase : []);
+        var names = {};
+        chase.forEach(function (x) { var k = iNameKey_(x.agent); if (k) names[k] = 1; });
+        Object.keys(names).forEach(function (k) { claimed[k] = 1; });
+        line('  ' + (p.name + '                              ').slice(0, 30) +
+             (('      ' + chase.length).slice(-6)) + '   ' + p.email +
+             (Object.keys(names).length > 1
+               ? '\n        filed under: ' + Object.keys(names).sort().join(' · ') : ''));
+      });
+    line('');
+    var orphan = [];
+    extract.forEach(function (n) {
+      var k = iNameKey_(n);
+      if (k && !claimed[k]) orphan.push(n);
+    });
+    line('Names in the dues extract that reach no address: ' +
+         (orphan.length ? orphan.length : 'none'));
+    orphan.sort().forEach(function (n) { line('  ' + n); });
+    if (orphan.length) {
+      line('  Each of these is a book the branch manager sees and the agent does not.');
+      line('  Either the spelling differs from the access list, or the person has left.');
+    }
+  }
+
+  var text = out.join('\n');
+  Logger.log(text);
+  return text;
+}
+
 /* A one-character access code is not a password. The workbook has several.
    This measures the problem so the self test can name it. */
 function iWeakCodes_() {
@@ -6308,6 +6502,7 @@ function onOpen() {
     SpreadsheetApp.getUi().createMenu('Branch Intelligence')
       .addItem('Rebuild now', 'intelRebuild')
       .addItem('Self test', 'intelSelfTestDialog_')
+      .addItem('Who gets whose list', 'intelAddressCheckDialog_')
       .addSeparator()
       .addItem('Send agent digests now', 'intelAgentDigest')
       .addItem('Send manager digest now', 'intelManagerDigest')
@@ -6320,6 +6515,7 @@ function onOpen() {
 }
 
 function intelSelfTestDialog_() { iDialog_('Self test', intelSelfTest()); }
+function intelAddressCheckDialog_() { iDialog_('Who gets whose list', intelAddressCheck()); }
 function intelIssueCodesDialog_() { iDialog_('Access codes', intelIssueCodes()); }
 function iDialog_(title, text) {
   var html = HtmlService.createHtmlOutput(
