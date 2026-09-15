@@ -214,7 +214,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-13a';
+var INTEL_VERSION = '2026-09-15a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -8335,36 +8335,73 @@ function iBuildBook_() {
 
 /* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
    Everything else on the screen is a client to call; this is the person in the
-   room, and the branch asked for it to be big. Agents carry a Birthdate on
-   their Salesforce contact, so the active roster — the access list, by agent
-   code — is asked, in one small query. The people without a code, the support
-   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
-   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
-   shipped: the wall hangs in a room clients walk through. */
+   room, and the branch asked for it to be big.
+
+   AND IT WISHED THE WRONG PEOPLE, ON THE WRONG DAY, FOR WEEKS. On 15 September
+   2026 the wall said "Happy birthday, Gary and Kerwyn" to two agents whose
+   birthdays are 27 August and 21 March. The query was:
+
+     SELECT Name, Agent__c, Birthdate FROM Contact
+      WHERE Birthdate != null AND Agent__c IN (<the branch's agent codes>)
+
+   Agent__c on a Contact is WHOSE CLIENT THIS IS. So it found the CLIENTS of
+   those agents, kept the ones with a birthday today — and then printed the
+   AGENT'S name from personOfCode. Every client birthday on the book became a
+   staff birthday, attributed to whoever sold the policy.
+
+   Contact carries a RECORD TYPE and it has always had the answer: AGENT (90
+   records, 84 with a birthdate) and STAFF (36, 27) are us; CLIENT (12,608) and
+   ORPHAN (23,804) are not. So the record type is the filter, the date is
+   matched in Salesforce rather than in script, and the answer is narrowed to
+   the names on this branch's own roster — the org's ninety agents are not all
+   ours, and another branch's birthday has no business on this wall.
+
+   The people without an agent code, the support desk and the manager, are
+   named in the Script Property INTEL_TEAM_BIRTHDAYS as "MM-DD Name, MM-DD
+   Name", which stays out of the repository. No age is shipped: the wall hangs
+   in a room clients walk through. */
+var IBOOK_US = ['AGENT', 'STAFF'];   // the Contact record types that are us
+
 function iBookTeam_(today, personOfCode, unitOfCode) {
   var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
   function add(name, unit, agent) {
     var k = iNameKey_(name);
     if (!k || seen[k]) return;
     seen[k] = true;
-    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+    /* Units here are named after the person who runs them, so "Gary Sookdeo ·
+       Gary Sookdeo" is what the screen printed. A unit is worth saying only
+       when it is not the person's own name. */
+    var u = String(unit || '').trim();
+    out.push({ name: String(name).trim(),
+               unit: iNameKey_(u) === k ? '' : u,
+               agent: !!agent });
   }
-  var codes = Object.keys(personOfCode || {});
-  for (var i = 0; i < codes.length; i += 200) {
-    var inList = codes.slice(i, i + 200)
-      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
-    if (!inList) continue;
-    try {
-      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
-                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
-        .forEach(function (c) {
-          var d = iDate_(c.Birthdate);
-          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
-          var code = iCode_(c.Agent__c);
-          add(personOfCode[code] || c.Name, unitOfCode[code], true);
-        });
-    } catch (e) { /* the day's calls stand without it */ }
-  }
+
+  /* WHO IS OURS. The roster's own names, so that one of the org's ninety
+     agents who does not work here cannot appear on this branch's wall. */
+  var ours = {}, unitOfName = {};
+  Object.keys(personOfCode || {}).forEach(function (code) {
+    var k = iNameKey_(personOfCode[code]);
+    if (!k) return;
+    ours[k] = personOfCode[code];
+    if ((unitOfCode || {})[code]) unitOfName[k] = unitOfCode[code];
+  });
+
+  /* ONE query, and the record type does the work. Salesforce matches the day
+     as well, so a date this script misreads cannot put somebody on the wall. */
+  try {
+    var rows = iSfQuery_('SELECT Name, RecordType.Name, Birthdate FROM Contact' +
+                         " WHERE Birthdate != null AND RecordType.Name IN ('" +
+                         IBOOK_US.join("','") + "')" +
+                         ' AND CALENDAR_MONTH(Birthdate) = ' + mm +
+                         ' AND DAY_IN_MONTH(Birthdate) = ' + dd + ' LIMIT 200') || [];
+    rows.forEach(function (c) {
+      var k = iNameKey_(c.Name);
+      if (!k || !ours[k]) return;            // ours only, by name
+      add(ours[k], unitOfName[k], true);     // the roster's spelling wins
+    });
+  } catch (e) { /* the day's calls stand without it */ }
+
   String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
     var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
     if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
