@@ -539,6 +539,66 @@ every run is written to the `KPI Salesforce Writes` tab like every other write
 this file makes. It stops at four and a half minutes and says how much is
 left; running it again carries on.
 
+## Paid to date — from the sheet that knows it into the system that does not
+
+`syncPaidToDate()` / `syncPaidToDateForReal()` in `KPI-Write.gs`. Same machine
+as the policy status codes, pointed at one more field.
+
+**Why it exists.** Salesforce cannot drive a forty-five day letter because
+Salesforce does not know what has been paid. Of 9,933 premium-paying policies
+carrying a paid-to date:
+
+| Paid-to date says | Policies |
+|---|---|
+| 2026 | 3,073 |
+| 2025 | 1,919 |
+| 2024 | 3,349 |
+| 2023 or older | ~1,500 |
+
+**More than half the book is marked premium paying with a date over a year
+old.** Another 381 carry no date at all, and a few are simply wrong — 2029,
+2035, 2040, 2051, and one that says **2065**. The branch's dues extract is
+right and already in the workbook, so the sheet is the input and Salesforce is
+the output.
+
+### The rule that makes it safe: a paid-to date only ever moves FORWARD
+
+The extract is only as fresh as its last download — three weeks old on the day
+this was written. A blanket overwrite would push dates **backwards** for
+everybody who has paid since, and the branch would then chase people who are
+up to date, in writing, on the strength of its own screen.
+
+So a row is written only where the sheet's date is **later** than the one
+Salesforce holds, or where Salesforce holds none. Anything earlier is left
+alone, counted, and the first few are named in the report with both dates. A
+stale sheet can then fail to help, which is recoverable. It cannot do harm,
+which is not.
+
+`test-paidtodate.js` puts that rule in one assertion in capital letters, and
+it is the assertion to keep: **the one that would go backwards is not in the
+batch.**
+
+### What else it refuses
+
+- **a date more than `PTD.maxAheadDays` (400) ahead** — that is a typo, not a
+  payment. The 2065 already sitting in Salesforce is what happens when nobody
+  checks
+- **a date nothing can read** — counted and reported, never guessed at
+- **any field but `Paid_To_Date__c`.** The test asserts the payload carries
+  exactly `id`, `attributes` and that one field
+
+**Direction of truth is per field, never per record.** The sheet is right
+about paid-to date and status. **Salesforce is right about sum assured** — the
+extract zeroes it on anything off-book, which is how four policies came to
+show the wrong cover. Nothing here touches it.
+
+A policy appearing twice in the extract keeps the **later** date, because a
+later row is a later payment and never a correction downwards.
+
+Batches of 200 through `composite/sobjects` with `allOrNone: false`, audited
+on the `KPI Salesforce Writes` tab, stopping at four and a half minutes and
+saying how much is left.
+
 ## Two o'clock — the branch's own message
 
 A daily trigger at 14:00 writes the message for the WhatsApp group from the

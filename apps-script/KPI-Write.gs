@@ -647,3 +647,205 @@ function syncPolicyCodes_(commit) {
   Logger.log(out);
   return out;
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   PAID TO DATE, FROM THE SHEET INTO SALESFORCE
+   ══════════════════════════════════════════════════════════════════════════
+   Salesforce cannot drive a forty-five day letter, because Salesforce does
+   not know what has been paid. Of 9,933 premium-paying policies carrying a
+   paid-to date, 3,349 say 2024 and 1,919 say 2025 — more than half the book
+   marked premium paying with a date over a year old. Another 381 carry no
+   date at all, and a handful are simply wrong: 2029, 2035, 2040, 2051, and
+   one that says 2065.
+
+   The branch's own dues extract is right, and it is already in the workbook.
+   So it is the input and Salesforce is the output, one field at a time — the
+   same machine as syncPolicyStatusCodes, pointed at Paid_To_Date__c.
+
+   THE ONE RULE THAT MAKES THIS SAFE: A PAID-TO DATE ONLY EVER MOVES FORWARD.
+
+   The extract is only as fresh as its last download — three weeks old on the
+   day this was written. A blanket overwrite would push dates BACKWARDS for
+   every client who has paid since, and the branch would then chase people who
+   are up to date, in writing, having been told by its own screen that they
+   were in arrears. So a row is written only where the sheet's date is LATER
+   than the one Salesforce holds, or where Salesforce holds none. A stale
+   sheet can then fail to help, which is recoverable, but it cannot do harm,
+   which is not.
+
+   And the direction of truth is per field, never per record. The sheet is
+   right about paid-to date and status; SALESFORCE IS RIGHT ABOUT SUM ASSURED,
+   because the extract zeroes it on anything off-book. Nothing here touches
+   any field but the one it names.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var PTD = {
+  object: 'CLIENT_PORTFOLIO__c',
+  keyField: 'POLICY__c',
+  field: 'Paid_To_Date__c',
+  batch: 200,                 // the sObject Collections limit per call
+  inChunk: 300,               // policy numbers per SOQL IN list
+  budgetMs: 4.5 * 60 * 1000,  // Apps Script stops at six minutes
+  /* A date the sheet offers that is further ahead than this many days is not
+     a payment, it is a typo. The 2065 already in Salesforce is what happens
+     when nobody checks. */
+  maxAheadDays: 400
+};
+
+function syncPaidToDate()        { return syncPaidToDate_(false); }
+function syncPaidToDateForReal()  { return syncPaidToDate_(true); }
+
+/** Policy number -> the latest paid-to date the sheet holds for it. The dues
+ *  extract carries a policy more than once; the LATEST date wins, because a
+ *  later row is a later payment and never a correction downwards. */
+function ptdFromSheet_() {
+  if (typeof iTabDues_ !== 'function') {
+    return { error: 'Intelligence.gs is not in this project, and it is what finds the dues tab.' };
+  }
+  var sh = iTabDues_();
+  if (!sh) return { error: 'No dues tab found in the intelligence workbook.' };
+
+  var d = iReadCols_(sh, {
+    number: ['number'], paid: ['paid to date'], desc: ['status description'],
+    days: ['days'], premium: ['premium']
+  });
+  if (!d.rows) return { error: 'The tab "' + sh.getName() + '" has no rows.' };
+  if (!d.has('number')) return { error: 'The dues tab has no Number column.' };
+  if (!d.has('paid'))   return { error: 'The dues tab has no "Paid To Date" column.' };
+
+  var map = {}, rows = 0, blank = 0, unreadable = 0, silly = 0, dupes = 0;
+  var today = iToday_(), ahead = new Date(today.getTime() + PTD.maxAheadDays * 864e5);
+  for (var r = 0; r < d.rows; r++) {
+    var num = String(d.get('number', r)).trim();
+    if (!num || iBadNumber_(num)) continue;
+    rows++;
+    var raw = d.get('paid', r);
+    if (raw === '' || raw == null) { blank++; continue; }
+    var when = iDate_(raw);
+    if (!when) { unreadable++; continue; }
+    if (when > ahead) { silly++; continue; }
+    if (map[num] === undefined) map[num] = when;
+    else { dupes++; if (when > map[num]) map[num] = when; }
+  }
+  return { tab: sh.getName(), rows: rows, blank: blank, unreadable: unreadable,
+           silly: silly, dupes: dupes, policies: Object.keys(map).length, map: map };
+}
+
+function syncPaidToDate_(commit) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_()) {
+    var no = 'Salesforce is not connected.'; Logger.log(no); return no;
+  }
+  var started = Date.now();
+  var sheet = ptdFromSheet_();
+  if (sheet.error) { Logger.log(sheet.error); return sheet.error; }
+
+  var pols = Object.keys(sheet.map);
+  var plan = [], same = 0, behind = 0, blankInSf = 0, notFound = 0, checked = 0, ranOut = false;
+  var examples = [], backwards = [];
+
+  for (var i = 0; i < pols.length; i += PTD.inChunk) {
+    if (Date.now() - started > PTD.budgetMs) { ranOut = true; break; }
+    var slice = pols.slice(i, i + PTD.inChunk);
+    checked += slice.length;
+    var soql = 'SELECT Id, ' + PTD.keyField + ', ' + PTD.field +
+               ' FROM ' + PTD.object + ' WHERE ' + PTD.keyField + ' IN (' +
+               slice.map(pscQuote_).join(',') + ')';
+    var recs = sfkQuery_(soql) || [];
+    var seen = {};
+    recs.forEach(function (rec) {
+      var pol = String(rec[PTD.keyField] || '').trim();
+      seen[pol] = true;
+      var want = sheet.map[pol];
+      var have = rec[PTD.field] ? iDate_(rec[PTD.field]) : null;
+      /* FORWARD ONLY. Salesforce blank is a gap the sheet can fill; a date
+         the sheet says is EARLIER is the stale extract talking, and writing
+         it would tell the branch to chase somebody who has paid. */
+      if (!have) blankInSf++;
+      else if (+have === +want) { same++; return; }
+      else if (want < have) {
+        behind++;
+        if (backwards.length < 5) {
+          backwards.push(pol + ': sheet says ' + iIso_(want) + ', Salesforce has ' + iIso_(have));
+        }
+        return;
+      }
+      plan.push({ id: rec.Id, policy: pol, was: have ? iIso_(have) : '', now: iIso_(want) });
+      if (examples.length < 5) {
+        examples.push(pol + '  ' + (have ? iIso_(have) : '(blank)') + ' -> ' + iIso_(want));
+      }
+    });
+    slice.forEach(function (p) { if (!seen[p]) notFound++; });
+  }
+
+  var head = [
+    'Paid To Date  ·  "' + sheet.tab + '" -> ' + PTD.object + '.' + PTD.field,
+    sheet.rows + ' row(s) read · ' + sheet.policies + ' policy number(s) with a readable date',
+    ''
+  ];
+  var body = [
+    plan.length + ' record(s) would move FORWARD (' + blankInSf + ' of them from blank)',
+    same + ' already match',
+    behind + ' left alone — the sheet is BEHIND Salesforce on these, which is the extract being stale',
+    notFound + ' policy number(s) are not on ' + PTD.object,
+    sheet.blank ? sheet.blank + ' row(s) have no paid-to date in the sheet' : '',
+    sheet.unreadable ? sheet.unreadable + ' row(s) carry a date nothing could read' : '',
+    sheet.silly ? sheet.silly + ' row(s) REFUSED — a date more than ' + PTD.maxAheadDays + ' days ahead is a typo, not a payment' : '',
+    sheet.dupes ? sheet.dupes + ' duplicate row(s) folded — the latest date won' : '',
+    ranOut ? 'RAN OUT OF TIME after checking ' + checked + ' of ' + pols.length + ' — run it again to carry on.' : ''
+  ].filter(String);
+
+  if (examples.length) {
+    body.push('', 'Moving forward, first ' + examples.length + ':');
+    examples.forEach(function (e) { body.push('   ' + e); });
+  }
+  if (backwards.length) {
+    body.push('', 'Left alone because the sheet is behind, first ' + backwards.length + ':');
+    backwards.forEach(function (e) { body.push('   ' + e); });
+  }
+
+  if (!commit) {
+    var dry = head.concat(['DRY RUN — nothing has been changed.', '']).concat(body)
+      .concat(['', 'Run syncPaidToDateForReal() to apply it.']).join('\n');
+    Logger.log(dry);
+    return dry;
+  }
+
+  var tok = sfkToken_(), done = 0, failed = 0, firstError = '';
+  for (var j = 0; j < plan.length; j += PTD.batch) {
+    if (Date.now() - started > PTD.budgetMs) { ranOut = true; break; }
+    var batch = plan.slice(j, j + PTD.batch).map(function (p) {
+      var rec = { attributes: { type: PTD.object }, id: p.id };
+      rec[PTD.field] = p.now;                       // a date field takes YYYY-MM-DD
+      return rec;
+    });
+    var res = UrlFetchApp.fetch(tok.instance_url + '/services/data/' + SFK.API + '/composite/sobjects', {
+      method: 'patch', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok.access_token },
+      payload: JSON.stringify({ allOrNone: false, records: batch })
+    });
+    if (res.getResponseCode() !== 200) {
+      failed += batch.length;
+      if (!firstError) firstError = res.getContentText().slice(0, 300);
+      continue;
+    }
+    JSON.parse(res.getContentText()).forEach(function (r) {
+      if (r.success) done++;
+      else { failed++; if (!firstError) firstError = JSON.stringify(r.errors).slice(0, 300); }
+    });
+  }
+
+  if (typeof audit_ === 'function') {
+    audit_({ staffId: 'maintenance', name: 'Paid-to-date sync' }, 'BATCH:' + plan.length,
+           PTD.field, '(from ' + sheet.tab + ', forward only)', 'per policy',
+           done + ' set, ' + failed + ' failed' + (firstError ? ' — ' + firstError : ''));
+  }
+
+  var out = head.concat([
+    'Set ' + done + ' of ' + plan.length + ' record(s).',
+    failed ? failed + ' failed. First error: ' + firstError : 'None failed.',
+    ranOut ? 'Stopped on the six-minute limit — run it again to finish the rest.' : '',
+    ''
+  ]).concat(body).join('\n');
+  Logger.log(out);
+  return out;
+}
