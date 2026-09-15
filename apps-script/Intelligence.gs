@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-15b';
+var INTEL_VERSION = '2026-09-15c';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -5682,6 +5682,37 @@ function intelInstallTriggers() {
          '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
 }
 
+/* NOTHING REACHES AN AGENT UNTIL SOMEBODY SWITCHES IT ON BY HAND.
+
+   Asked for on 15 September 2026 — the morning three agents each opened
+   another agent's clients — in these words: "moving forward you are to ask my
+   permission on any emails going out to agents and clients."
+
+   A promise made in a conversation cannot bind a trigger that fires at six the
+   next morning, so the permission is made structural instead. The client
+   letters have always worked this way: INTEL_SURVEY_LIVE has to be typed out
+   as "send to clients" before one is sent. This is the same switch for the
+   agent mail, and its default is off.
+
+   Off does not mean silent. With nothing set, every message goes to the branch
+   manager with the intended recipient named across the top — so a run that
+   would have written to twenty-eight agents arrives as twenty-eight previews
+   in one inbox, which is the thing that would have caught both of this
+   morning's defects before either left the building. */
+var IAGENT_LIVE_PHRASE = 'send to agents';
+function iAgentLive_() {
+  return String(iProp_('INTEL_AGENT_LIVE') || '').trim().toLowerCase() === IAGENT_LIVE_PHRASE;
+}
+
+/* Where a held message goes. The manager property first, then the account the
+   script runs as — which is the person who owns the project and therefore the
+   person whose permission this is. */
+function iHoldTo_() {
+  var mgr = String(iProp_('INTEL_MANAGER_EMAIL') || '').split(',')[0].trim();
+  if (mgr) return mgr;
+  try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
+}
+
 function iSend_(to, subject, html) {
   var test = iProp_('INTEL_TEST_TO');
   var real = to;
@@ -5691,6 +5722,21 @@ function iSend_(to, subject, html) {
            iEsc_(real) + '</div>' + html;
     to = test;
     subject = '[TEST] ' + subject;
+  } else if (!iAgentLive_()) {
+    /* Held. If there is nowhere to hold it, it does not go — an undeliverable
+       preview is a nuisance, a message to an agent who was never approved is
+       the thing this exists to prevent. */
+    var hold = iHoldTo_();
+    if (!hold) return false;
+    if (iEmail_(hold) !== iEmail_(real)) {
+      html = '<div style="background:#00254d;color:#fff;padding:10px 14px;font:700 13px sans-serif;' +
+             'border-radius:8px;margin-bottom:14px">HELD — this would have gone to ' +
+             iEsc_(real) + '. Nothing was sent to them.<div style="font-weight:400;opacity:.85;' +
+             'margin-top:5px">To send for real, set the Script Property ' +
+             '<b>INTEL_AGENT_LIVE</b> to <b>' + IAGENT_LIVE_PHRASE + '</b>.</div></div>' + html;
+      subject = '[HELD] ' + subject;
+    }
+    to = hold;
   }
   if (!to) return false;
   MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: 'Branch Intelligence' });
@@ -6276,8 +6322,18 @@ function intelSelfTest() {
    'intelCrossSellDigest'].forEach(function (f) {
     line('  trigger ' + f + ': ' + (triggers.indexOf(f) !== -1 ? 'installed' : 'MISSING — run intelInstallTriggers()'));
   });
-  if (iProp_('INTEL_TEST_TO')) line('');
-  if (iProp_('INTEL_TEST_TO')) line('TEST MODE IS ON — all mail goes to ' + iProp_('INTEL_TEST_TO'));
+  line('');
+  line('Can mail leave the building?');
+  line('  To agents:  ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+        : (iAgentLive_() ? 'YES — INTEL_AGENT_LIVE is set. Agents receive their own mail.'
+                         : 'no — held, previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all'))));
+  line('  To clients: ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode'
+        : (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase() === ISURVEY.LIVE_PHRASE
+           ? 'YES — INTEL_SURVEY_LIVE is set. Clients receive letters.' : 'no — dry run only')));
+  line('  Switch either on deliberately: INTEL_AGENT_LIVE = ' + IAGENT_LIVE_PHRASE +
+       ', INTEL_SURVEY_LIVE = ' + ISURVEY.LIVE_PHRASE + '.');
 
   var text = out.join('\n');
   Logger.log(text);
@@ -6304,6 +6360,12 @@ function intelAddressCheck() {
 
   line('BRANCH INTELLIGENCE — who gets whose list');
   line('Access list: ' + keys.length + ' people');
+  line(iProp_('INTEL_TEST_TO')
+       ? 'Mail to agents: NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+       : (iAgentLive_()
+          ? 'Mail to agents: YES — INTEL_AGENT_LIVE is set, so the addresses below receive their own mail.'
+          : 'Mail to agents: HELD — previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all') +
+            '. The addresses below are who WOULD receive it.'));
   line('');
 
   /* ── the two agents the loose test cannot separate ───────────────────── */

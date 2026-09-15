@@ -232,14 +232,16 @@ Two places take it:
 Then run **`intelSetup`** once. It creates the working tabs, does the first
 rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
 
-> **This switches on mail to other people.** Six of those eleven triggers send:
-> the agent list goes to **every agent on the access list, every weekday at
-> 6am**, and the cross-sell, horizon, survey and manager mails go out on their
-> own schedules. Nothing asks first and nothing says on screen that it
-> happened. If you are not ready for that, **set `INTEL_TEST_TO` to your own
-> address first** (see the table below) — everything then comes to you,
-> subject-tagged `[TEST]`, with the intended recipient named at the top — and
-> run **Who gets whose list** before you clear it.
+> **Six of those eleven triggers send mail**, the agent list every weekday at
+> 6am. **Since `2026-09-15c` none of it reaches an agent or a client until
+> somebody switches it on by hand** — `INTEL_AGENT_LIVE` for agents,
+> `INTEL_SURVEY_LIVE` for clients, both in the table below, both requiring a
+> phrase typed out in full. Until then every message goes to
+> `INTEL_MANAGER_EMAIL` tagged `[HELD]`, naming who it was for.
+>
+> So a fresh install is safe to run, and the first morning's digest arrives as
+> one preview per agent in your own inbox. Read them, run **Who gets whose
+> list**, and only then set `INTEL_AGENT_LIVE`.
 
 **"This script has too many triggers"** on that step means the host project
 is spending its twenty on something else. The tracker before `2026-09-08a`
@@ -257,7 +259,9 @@ Saving the file is not deploying it.
 |---|---|
 | `INTEL_MANAGER_EMAIL` | who the Monday digest goes to. Commas for several. Unset, it goes to everyone with a manager-ish role on an access list. |
 | `INTEL_APP_URL` | the address the e-mails link to. |
-| `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. |
+| `INTEL_AGENT_LIVE` | **permission to write to an agent.** Must read exactly `send to agents`. Unset — the shipped default — every agent message goes to `INTEL_MANAGER_EMAIL` instead, subject-tagged `[HELD]` and banner-marked with who it was for. `yes`, `true`, `1` and `on` are **not** permission. |
+| `INTEL_SURVEY_LIVE` | the same switch for client letters. Must read exactly `send to clients`. |
+| `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. Outranks both switches above. |
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
 
 ---
@@ -615,6 +619,39 @@ Role column is the only place the app can learn it.
 The digests follow the same rule — staff and managers are skipped by the agent,
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
+
+### Nothing reaches an agent until you say so
+
+Asked for on 15 September 2026, in these words: *"moving forward you are to ask
+my permission on any emails going out to agents and clients."*
+
+A promise made in conversation cannot bind a trigger that fires at six the next
+morning, so the permission is in the code. `iSend_` — the one path every agent
+message takes — holds the message unless `INTEL_AGENT_LIVE` reads exactly
+**`send to agents`**. Client letters already worked this way, on
+`INTEL_SURVEY_LIVE` and **`send to clients`**.
+
+**Off is not silence.** A held run goes to `INTEL_MANAGER_EMAIL`, one message
+per intended recipient, `[HELD]` in the subject and a navy banner across the
+top naming the agent it was for and how to switch it on. Twenty-eight agents
+means twenty-eight previews in one inbox — which is what would have caught
+both of the 15 September defects before either left the building.
+
+**The phrase is the point.** `yes`, `true`, `1`, `on`, `send`, `SEND TO AGENT`
+and `send to clients` are all refused. A switch that a single word can flip is
+one that gets flipped by somebody tidying a properties page.
+
+Two things it deliberately does **not** hold:
+
+- **The client's private line.** A confidential message written on a survey
+  goes straight to the manager and is never redirected, not even by test mode.
+- **Staff mail from the tracker.** `KPI.gs` sends staff their own submission
+  receipts and their midday and 3pm reminders. Those are the tracker working,
+  addressed to the person who triggered them, and they are outside this switch.
+
+`intelSelfTest()` and **Who gets whose list** both open by saying, in one line
+each, whether mail can currently reach an agent or a client.
+`tests/test-sendgate.js` holds it.
 
 ### Whose list goes to whose address
 
