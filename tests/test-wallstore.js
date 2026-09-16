@@ -30,6 +30,7 @@ stub('iBuildDelivery_', 'delivery');
 stub('iBuildLicence_', 'licence', { configured: true, roster: { active: 32 } });
 stub('iBuildPossession_', 'possession', { configured: true, total: 730 });
 stub('iBuildBook_', 'book', { configured: true, today: { n: 9 } });
+stub('iPendingWall_', 'pending', { configured: true, total: 12 });
 const fresh = () => { env._intelSs = null; env._intelTabMemo = {}; env._intelHeadMemo = {}; };
 
 console.log('\nA screen asks, and the feed is built once and kept:\n');
@@ -46,8 +47,8 @@ fresh();
 r = post({ action: 'intel.wall', band: 60 });
 ok('another band is its own feed, built on its own', r.ok && built.wall45 === 2 && env.__sheets['_Intel Wall']._grid.length === 2);
 
-console.log('\nThe other four, the same way:\n');
-for (const [action, key] of [['intel.delivery','delivery'], ['intel.licence','licence'], ['intel.possession','possession'], ['intel.book','book']]) {
+console.log('\nThe other five, the same way:\n');
+for (const [action, key] of [['intel.delivery','delivery'], ['intel.licence','licence'], ['intel.possession','possession'], ['intel.book','book'], ['intel.pending','pending']]) {
   fresh(); post({ action }); fresh(); const again = post({ action });
   ok(action + ' builds once and then reads the store', again.ok && again.data.from === key && built[key] === 1 && !!again.stored, 'built ' + built[key]);
 }
@@ -251,6 +252,25 @@ ok('and no format string survives anywhere in it',
    !/%[,.\d]*f/.test(env.iMoney_(1234.5)) && !/%s|%d/.test(env.iMoney_(1234.5)), env.iMoney_(1234.5));
 /* The thing an agent actually saw. */
 ok('"TT$%,.2f" can never be printed again', env.iMoney_(1234.5) !== 'TT$%,.2f');
+
+console.log('\nThe pending screen: stored like the others, live on request, refreshed on the odd hours:\n');
+// On 16 September the first ask after the deploy took 131 seconds live and the
+// copy was held for three minutes, so the slide was blank more often than not.
+{
+  const was = built.pending;
+  fresh(); let p = post({ action: 'intel.pending', fresh: true });
+  ok('{fresh:true} builds it live', p.ok && built.pending === was + 1 && !p.stored, 'built ' + built.pending);
+  fresh(); p = post({ action: 'intel.pending' });
+  ok('and the next ask reads that build from the store', p.ok && !!p.stored && p.data.build === built.pending, JSON.stringify(p).slice(0, 100));
+  const keys = env.IWALL_FEEDS.map(f => f.key);
+  ok('the night list has it, before the 45-day line', keys.indexOf('pending') > -1 && keys.indexOf('pending') < keys.indexOf('wall45'), keys.join(' '));
+  const n = built.pending;
+  ok('the refresh does nothing at three in the morning', /not this hour/.test(env.intelPendingRefresh(null, 3)) && built.pending === n);
+  ok('nor at seven, when the branch signs in', /not this hour/.test(env.intelPendingRefresh(null, 7)) && built.pending === n);
+  ok('nor on an even hour', /not this hour/.test(env.intelPendingRefresh(null, 12)) && built.pending === n);
+  ok('but at eleven it rebuilds the copy', /^pending built at/.test(env.intelPendingRefresh(null, 11)) && built.pending === n + 1);
+  ok('and at five, for the night copy', /^pending built at/.test(env.intelPendingRefresh(null, 5)));
+}
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
