@@ -537,6 +537,61 @@ A task subject carries the client's name and the policy number — that is how
 a task is joined to a case — so nothing but counts and ages ever leaves
 `iBuildTasks_`. The test asserts that directly.
 
+## 3a½. The day in blocks — one row per desk, one clock
+
+Slide 2 of 14. It was four cards reading "3 of 6 filed", which is a progress bar
+about paperwork. Asked for on 16 September 2026 to "make an impact", and the
+thing the branch manager actually plans his morning from is who is doing what
+right now — so it is one row per desk against one shared clock.
+
+**Ordered by who answers to whom**, not by output: Branch Manager, Assistant
+Branch Manager, Unit Managers, BME, Sales Support, and anyone whose Role column
+matches none of those under "Also on the floor" rather than dropped. Within a
+tier it is alphabetical — sorting by who closed most inside a tier is the league
+table again, one level down. The tiers are matched loosely on the Role column
+because that column is typed by hand.
+
+**Four bands: 5–10am, 10–12pm, 1–3pm, 3–4pm**, the live one marked NOW. The
+first band is wide deliberately: the branch is called from seven but people
+arrive across a spread and the block is not owed until ten, so a band labelled
+"8 – 10am" made an early start look like no start. The band is the window the
+work is allowed to happen in, not one person's shift — each desk's own hours
+stay in the tracker's `SCHEDULE`, which is unchanged.
+
+**A dot per block per desk**, and the dot carries the meaning:
+
+| | |
+|---|---|
+| green, filled | closed something |
+| blue, filled | moved it on |
+| gold, filled | waiting on somebody — a blocker is named |
+| red outline | past its hour and not filed |
+| blank | not scheduled for that desk — an empty cell, not a failure |
+
+Beside each dot is **the task type** — `Premium Dues`, `Lic/Staffing/SA/HR`,
+`Reinstatements`, `Query Pal`. That was already in `SCHEDULE[staff].blocks[id].kpi`
+and the wall had never shown it. Under it, what actually moved, counted off the
+desk's own words in the tracker's free-text boxes: *"3 closed · 4 moved"*. Those
+are how many things they listed, not figures from Salesforce — the trustworthy
+per-person numbers are the closed / open / overdue on the right.
+
+**It needs the paste.** `iDayBuild_` gained a `bx` field carrying the state, the
+task type and the counts. It was **added beside** the existing `blocks` array of
+four strings rather than replacing it, because `day.html` has read that shape
+since it was built and rewriting a working slide to no purpose is how screens
+break. A page that has not been republished simply does not look at `bx`, and the
+slide draws the same picture with less in it — the layout is not waiting on a
+deployment.
+
+**Nothing is clipped silently.** The wall has no scrollbar, and inside the player
+the frame is 46 pixels shorter than the screen — about one desk's worth. `fitIn()`
+drops whole desks off the foot and the legend says how many did not fit. It
+measures the last desk's bottom edge against the top of the legend, because the
+first cut compared `scrollHeight` against `clientHeight`, which does not grow on a
+flex column whose overflow is visible: it reported a perfect fit while the last
+desk sat underneath the legend. At the three television sizes all ten desks fit
+and nothing is dropped.
+
 ## 3b. How old is each source
 
 The extracts do not refresh together, and until this was measured nobody could
@@ -619,6 +674,36 @@ Role column is the only place the app can learn it.
 The digests follow the same rule — staff and managers are skipped by the agent,
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
+
+### The chrome is one line across the top
+
+Everything that is not the slide sits on one line at the top: the controls, which
+story of fourteen and how long it has left, the progress track, the fourteen
+stops, and whose birthday it is. **The slides start underneath it** — `.stage`
+is offset by the line's measured height — so nothing is laid over a slide at
+either end. The only thing left at the foot is the five-pixel progress line.
+
+It used to be three things stacked over the foot of every slide: the rail, the
+timer pill and (briefly) the stale-code bar. The note back on 16 September 2026
+was that it was blocking the bottom of the slide. Moving it to the top on its
+own was not the fix — laid over a slide it covered the headline instead, which
+is the same fault facing the other way. The line has to own a strip the slides
+do not draw into.
+
+**The stops are numbers.** Fourteen names needed two rows at 1366px, and a rail
+on two rows is not a line; the name of the stop you are on is spelled out beside
+them and the rest are on the hover. On a phone the stops go entirely — fourteen
+of them plus the controls do not cross 390 pixels, and the arrows are how a
+phone turns the wall.
+
+**The birthday greeting is on the line**, to the right. It was across the top
+centre, where the slides put their own headline, and against the right-hand edge
+it covered a table row. On the line it is on every screen all day, never moves,
+and covers nothing.
+
+`tests/e2e-wallfit.js` proves the line at five screen sizes: one row of stops,
+nothing overlapping the position text, the line at the top, the slide starting
+below it, and nothing leaving the screen.
 
 ### The wall says when it is running old code
 

@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-16a';
+var INTEL_VERSION = '2026-09-16b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -4799,6 +4799,18 @@ function iActDay_(b) {
 
 /** Everything above is about how often; this is the day itself. Returns
  *  { data: … } so the wrapper can store the payload rather than the envelope. */
+/* How many things a desk listed in one of the tracker's free-text boxes. They
+   write a line each, or separate with a semicolon, or with a comma, and any of
+   the three has to count as more than one. A box with words in it is always at
+   least one thing, which is why an empty count and an empty box differ. */
+function iDayItems_(s) {
+  var v = String(s || '').trim();
+  if (!v) return 0;
+  var parts = v.split(/[\n;]+|,(?=\s)/).map(function (x) { return x.trim(); })
+    .filter(function (x) { return /[a-z0-9]/i.test(x); });
+  return Math.max(1, parts.length);
+}
+
 function iDayBuild_(b) {
   if (typeof sfkMetricsSafe_ !== 'function' || typeof publicRoster_ !== 'function') {
     return iErr_('The day screen reads the tracker, and the tracker is not in this project.');
@@ -4814,6 +4826,7 @@ function iDayBuild_(b) {
     });
   } catch (e2) {}
 
+  var hourNow = Number(Utilities.formatDate(new Date(), tz, 'H')) || 0;
   var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
   var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
   var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
@@ -4822,6 +4835,14 @@ function iDayBuild_(b) {
     var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
     var a = att[p.staffId] || null, e = entry[p.staffId] || null;
     var sched = (typeof SCHEDULE !== 'undefined' && SCHEDULE[p.staffId] && SCHEDULE[p.staffId].blocks) || {};
+    /* ADDED ALONGSIDE, NOT INSTEAD OF. day.html reads desks[].blocks as four
+       strings and has done since the screen was built; changing that shape to
+       carry more would have rewritten a working slide to no purpose. bx is the
+       same four blocks with what the wall could not previously say: the task
+       type this block is for, and whether the desk moved something, closed
+       something, or is stuck. A page that has not been republished yet simply
+       does not look at it. */
+    var bx = [];
     var mine = blockIds.map(function (id, i) {
       var has = !!(e && String(e[id + '_Actioned'] || '').trim());
       var sb = sched[id];
@@ -4832,13 +4853,41 @@ function iDayBuild_(b) {
         if (has) { blocks[i].done++; t.done++; }
         if (!blocks[i].label) { blocks[i].label = String(sb.focus || ''); blocks[i].time = String(sb.time || ''); }
       }
+
+      /* The five states a block can be in, and the order matters: a block with
+         a blocker on it is not "done" however much was actioned, and a block
+         nobody has reached yet is not late. Anything not scheduled is blank —
+         an empty cell, not a failure. */
+      var txt = function (f) { return e ? String(e[id + '_' + f] || '').trim() : ''; };
+      var moved = txt('Actioned'), closed = txt('Resolved'), stuck = txt('Blocker');
+      var due = (typeof BLOCK_DUE_HOUR !== 'undefined' && BLOCK_DUE_HOUR[id]) || 0;
+      var state = '';
+      if (sb) {
+        if (stuck) state = 'stuck';
+        else if (closed) state = 'closed';
+        else if (moved) state = 'moved';
+        else if (due && hourNow >= due) state = 'late';
+        else state = 'pending';
+      }
+      bx.push({
+        id: id, state: state,
+        kpi: sb ? String(sb.kpi || '') : '',
+        focus: sb ? String(sb.focus || '') : '',
+        time: sb ? String(sb.time || '') : '',
+        due: due,
+        /* Counted off the desk's own words. These are free-text boxes, so this
+           is how many things they listed, not a figure from Salesforce — the
+           trustworthy per-person numbers are closed/open/overdue below. */
+        moved: iDayItems_(moved), closed: iDayItems_(closed),
+        stuck: !!stuck
+      });
       return sb ? (has ? 'done' : 'due') : '';
     });
     var d = {
       name: p.name, role: p.role || '',
       closed: s ? (s.closed || 0) : null, open: s ? (s.open || 0) : null,
       overdue: s ? (s.overdue || 0) : null, needs: s ? (s.needs || 0) : null,
-      blocks: mine,
+      blocks: mine, bx: bx,
       'in': a && a.status !== 'absent' ? (a.at || '') : '',
       out: a ? (a.out || '') : '', late: a ? (a.late || 0) : 0,
       absent: !!(a && a.status === 'absent')
