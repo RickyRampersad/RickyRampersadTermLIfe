@@ -242,12 +242,16 @@ var SLIDES = [
      a policy yet, and it is the only screen here that can still be changed
      by somebody picking up a phone this afternoon. */
   { file:'pending.html',    tab:'What is pending',   secs:22 },
-  /* The three that turn the pending list into a morning's work: what can be
-     collected, whose move each case is, and who is actually holding it up. */
-  { file:'ready.html',      tab:'Ready to settle',   secs:20 },
-  { file:'triage.html',     tab:'Whose move is it',  secs:22 },
-  { file:'culprits.html',   tab:'Who is holding it up', secs:22 },
+  /* Ready to settle, whose move is it and who is holding it up were three
+     slides here until 17 September 2026. All three read the pending feed, and
+     the rebuilt pending screen now carries what they said — what can be
+     worked today, and which agent is holding which requirement back. */
   { file:'index.html',      tab:'Premium dues',      secs:26 },
+  /* Lapses have their own screen since 17 September 2026: the dues line is
+     policies still alive on a paid-to clock, lapses are what was lost on a
+     lapse-date clock, and two clocks on one slide is the disagreement the
+     dues domain already carried. The link between them is one counter. */
+  { file:'lapses.html',     tab:'Lapses',            secs:24 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
   { file:'licence.html',    tab:'The licence year',  secs:22 },
@@ -262,7 +266,6 @@ var SLIDES = [
      date, so it could never share a screen with the conversions — but the
      Liberators whose premium stops at 65 can be extended for an additional
      premium, and that is the one thing on it an agent can act on this week. */
-  { file:'permanent.html',  tab:'The permanent book', secs:24 },
   /* EVERY RIDER HAS AN EXPIRY — the branch's own correction, and the reason
      this screen exists. The critical illness riding on a whole-life policy
      stops on a date even though the policy it rides on never does, and on
@@ -652,7 +655,7 @@ if (LONE) {
 
    It fails quiet: a wall that cannot reach the script already says "no feed"
    on every screen, and a second red bar for the same fault is noise. */
-var WANT_SCRIPT = '2026-09-16b';
+var WANT_SCRIPT = '2026-09-17a';
 var PING_URL = 'https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';
 
 function versionCheck() {

@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-16b';
+var INTEL_VERSION = '2026-09-17a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -5735,8 +5735,15 @@ function iDayBuild_(b) {
      desk first, because a wall is read from the top and the top of each
      band should be where the day is actually happening. The pages take this
      order as given; they do not sort on a role string of their own. */
+  /* The branch manager heads his own band. The tracker's TIER table folds
+     the branch manager and the unit managers into one "Management" band, and
+     on 17 September 2026 that put him fourth in it, under a unit manager who
+     had closed more. The room reads the top of the screen as who the branch
+     answers to, so the role code decides before the day's output does. */
+  function bmFirst(d) { return String(d.role || '').toLowerCase() === 'bm' ? 0 : 1; }
   desks.sort(function (x, y) {
-    return (x.tierOrder - y.tierOrder) || (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0);
+    return (x.tierOrder - y.tierOrder) || (bmFirst(x) - bmFirst(y))
+        || (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0);
   });
   t.periods = (periods && periods.branch) || null;
 
@@ -11528,7 +11535,11 @@ function iBuildSurveyStats_() {
   var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
-    if (String(r[17]) === 'live') out.live++;
+    /* MODE is written as "live · cleared <hash> by <who>", never the bare word,
+       so an exact match counted zero live letters forever. Prefix, like the
+       dues reader at iSurveyByClient_. Found 17 September 2026 while joining
+       the letters to the dues lines. */
+    if (/^live/i.test(String(r[17] || '').trim())) out.live++;
     out.sent++;
     var b = String(r[9] || '—'), u = String(r[7] || 'Unassigned');
     if (!band[b]) band[b] = { k: b, sent: 0, resp: 0, sum: 0 };

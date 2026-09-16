@@ -462,62 +462,17 @@ Twelve lines, `en-US-AndrewNeural` at `-12%`, rendered by
 No figure is spoken — every number on this screen moves and the audio does
 not, so the screen carries the arithmetic and the voice carries the meaning.
 
-## 3⅞. Three slides that turn the pending list into a morning's work
+## 3⅞. Three slides that folded into the pending wall
 
-A pending list that says "sixty-one outstanding" gets every agent rung about
-a blood profile sitting at a lab. The agent learns that being chased means
-nothing, and the next chase — the one that mattered — is ignored too. **The
-cost of chasing badly is not the wasted call. It is that the chase stops
-working.** These three exist to stop that.
-
-They all read `intel.pending`, so four screens cost one build and one cache.
-
-### Ready To Settle — `ready.html`
-
-Cases with **no requirement left and no premium paid**. Nothing to
-underwrite; somebody has to collect money. These are the best cases on the
-wall and the easiest to miss, because a case with no outstanding requirement
-looks finished on every other view. Column O — `POL_MISC_PREM` — blank is the
-plainest statement on the sheet: not a dollar has come in.
-
-### Whose Move Is It — `triage.html`
-
-Every pending case in **exactly one** bucket:
-
-| | |
-|---|---|
-| **Ready to settle** | no requirement left, no premium in — collect |
-| **The agent's move** | a requirement the agent can actually get |
-| **The client's move** | asked, and waiting on an answer |
-| **Already in motion** | underwriting's own — **do not chase** |
-| **With head office** | nothing outstanding, premium in — chase them, not the branch |
-
-Only the first two are workable today. The screen shows that as one number
-against the other.
-
-**What decides the bucket is the data, not a guess.** A requirement with an
-**ordered date** is in motion whatever its code says — a medical already
-booked is not the agent's to hurry. Only an un-ordered requirement is
-anybody's move, and then the code decides whose:
-
-- **the agent's** — `FUTPY`, `DECLF`, `PRADD`, `AGEAD`, `REINC`, `FACTF`, `VERFY`
-- **the client's** — `PCFEV`
-- **underwriting's** — `MDMED`, `MICRO`, `OFT`, `BP`, `EKG`, `IMP HIST`, `INFCR`, `ATTPH`
-
-A code nobody has mapped is treated as underwriting's, never as the agent's —
-an unknown code must not put a name on the culprits screen.
-
-`INTEL_REQ_OWNERS` overrules every line of that: `MDMED=agent,PRADD=routine`.
-
-### Who Is Holding It Up — `culprits.html`
-
-Agents ranked by **what is actually theirs** — ready plus their own
-requirements — never by case count. An agent with twenty cases all at the lab
-is not the one to call, and the screen says how many of theirs are in motion
-beside their name so nobody reads the ranking wrong.
-
-The last column is the one to watch: **a chase closed with the case still
-pending**. That is the worst state in the system because it reads as handled.
+Until 17 September 2026 the pending feed drove three more slides — *Ready To
+Settle* (`ready.html`), *Whose Move Is It* (`triage.html`) and *Who Is Holding
+It Up* (`culprits.html`). The branch manager's note was that they duplicated
+the pending screen, and he was right: all three read `intel.pending` and cut
+it three ways. They are gone, and the rebuilt pending screen (§ 3¾) carries
+what they said — what can be worked today, by status; which agent is holding
+which requirement back, split cash · routine · medical; and what settled today,
+this week and this month. The builders behind them (`iPendTriage_`, `triage.*`
+on the payload) stay, because the pending screen is what reads them now.
 
 ### And the chase log itself, by Task Type
 
@@ -591,6 +546,30 @@ first cut compared `scrollHeight` against `clientHeight`, which does not grow on
 flex column whose overflow is visible: it reported a perfect fit while the last
 desk sat underneath the legend. At the three television sizes all ten desks fit
 and nothing is dropped.
+
+## 3a¾. Lapses — `lapses.html`, slide 5
+
+Its own screen since 17 September 2026, on the branch manager's "I'm guided by
+you". The reason is two clocks: the dues line is Status-2 rows on a paid-to
+clock — policies still alive that can be saved — and lapses are Status-1 rows
+on a lapse-date clock — what was lost. On one slide they dilute each other, and
+July's 1,187 (three and a half times any other month this year, unexplained)
+needs a screen where the month-by-month shape is visible. The link between the
+two slides is one counter on the dues line: *lapsed this month*.
+
+Read straight off the dues tab by `iLapsesWall_` (`intel.lapses`, no sign-in,
+aggregates only — the payload is walked in `tests/test-lapses.js` for any
+client or policy key). This month · this quarter · year to date, each with
+policies, modal, annualised (×12), median years in force, and how many went
+inside a year and inside two; a twelve-column month strip; by agent with the
+same figures; tenure bands. `defects` says how many lapsed rows carry no usable
+lapse date or issue date, because a lapse with no date cannot be placed and a
+tenure with no issue date cannot be measured — and both are said on the screen
+rather than dropped.
+
+Excluded agents come out by name and are counted. Narration is not yet built
+for this page (`audio/lines.py` has no `lapses` key); the Narrate button is
+inert until it is.
 
 ## 3b. How old is each source
 
@@ -678,7 +657,7 @@ ten pointless e-mails a day.
 ### The chrome is one line across the top
 
 Everything that is not the slide sits on one line at the top: the controls, which
-story of fourteen and how long it has left, the progress track, the fourteen
+story of eleven and how long it has left, the progress track, the eleven
 stops, and whose birthday it is. **The slides start underneath it** — `.stage`
 is offset by the line's measured height — so nothing is laid over a slide at
 either end. The only thing left at the foot is the five-pixel progress line.
@@ -692,7 +671,7 @@ do not draw into.
 
 **The stops are numbers.** Fourteen names needed two rows at 1366px, and a rail
 on two rows is not a line; the name of the stop you are on is spelled out beside
-them and the rest are on the hover. On a phone the stops go entirely — fourteen
+them and the rest are on the hover. On a phone the stops go entirely — eleven
 of them plus the controls do not cross 390 pixels, and the arrows are how a
 phone turns the wall.
 
@@ -2178,7 +2157,13 @@ where it is inside `ICONV_SOON_Y`. Everything beyond that was the noise.
 `inForce` and `runway` are **gone** — so a future version cannot drift back to
 arithmetic nobody can use.
 
-## 3i. The permanent book — `intelligence/wall/permanent.html`
+## 3i. The permanent book — off the wall since 17 September 2026
+
+> **This slide is no longer in the running order.** The branch manager took it
+> off on 17 September 2026. `iPermanentWall_` and the `intel.permanent` route
+> stay — the extension rules below are the company's, and the signed-in app
+> still reads them — but `permanent.html` is deleted and the wall does not
+> show it. What follows is kept as the record of the domain.
 
 Action `intel.permanent`. Paste the `/exec` URL into `PERM_URL`.
 

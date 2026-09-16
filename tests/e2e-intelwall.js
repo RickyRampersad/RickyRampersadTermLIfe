@@ -28,9 +28,9 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'ready.html', 'triage.html', 'culprits.html',
-               'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html',
-               'conversion.html', 'permanent.html', 'riders.html'];
+const ORDER = ['day.html', 'blocks.html', 'pending.html', 'index.html', 'lapses.html',
+               'possession.html', 'delivery.html', 'licence.html', 'book.html',
+               'conversion.html', 'riders.html'];
 const LAST_TAB = 'Riders on a clock';    // the rail label of ORDER's last stop
 
 async function open(b, query) {
@@ -83,7 +83,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
      stops.every((d, i) => d.n === String(i + 1)), JSON.stringify(stops.map(d => d.n)));
   ok('  the branch\'s own day first', stops[0] && stops[0].name === 'The day so far',
      stops[0] && stops[0].name);
-  ok('  Ready to settle fourth', stops[3] && stops[3].name === 'Ready to settle',
+  ok('  Premium dues fourth', stops[3] && stops[3].name === 'Premium dues',
      stops[3] && stops[3].name);
   ok('  and ' + LAST_TAB + ' last',
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,
@@ -146,10 +146,9 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('the line has not faded', hb.op === '1' && hb.vis === 'visible' && hb.top === 0, JSON.stringify(hb));
   ok('and the timer is on it, on screen', hb.in && hb.stateIn, JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
-  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Ready to settle',
-                       'Whose move is it', 'Who is holding it up', 'Premium dues',
-                       'In our possession', 'With the agent', 'The licence year', 'Birthdays today',
-                       'Conversions', LAST_TAB];
+  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Premium dues',
+                       'Lapses', 'In our possession', 'With the agent', 'The licence year',
+                       'Birthdays today', 'Conversions', LAST_TAB];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.

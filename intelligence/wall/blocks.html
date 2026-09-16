@@ -389,7 +389,8 @@ function paint(){
      table again, one level down. */
   var groups = tiersOf(desks);
   groups.forEach(function(g){
-    g.rows.sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); });
+    /* Feed order inside a tier: the branch manager first, then the busiest
+       desk. Alphabetical here on 17 September put a unit manager above him. */
   });
   var label = groups.length > 1 || (groups[0] && groups[0].label);
 
