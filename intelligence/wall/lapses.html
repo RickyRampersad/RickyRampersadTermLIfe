@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lapses On A Calendar</title>
+<meta name="description" content="What the branch lost this year: lapses this month, this quarter and since 1 January, month by month, who held them, and how long each policy had lived before it went.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- THE FONT MUST NOT BLOCK THE PICTURE. A plain stylesheet link in the head is
+     render-blocking: until it answers, the screen is blank. Measured at 12.5s on
+     a link that was merely slow, and a wall screen on branch wifi is exactly
+     where that happens. Loading it as print media and promoting it on load makes
+     it non-blocking — the system fallback in every font stack shows instantly
+     and the webfont swaps in when it arrives. noscript keeps it working with
+     scripting off. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#efc24b; --gold2:#c9942c;
+    --grey:#5b7590; --good:#34d399; --red:#f0776a;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#efc24b,#c9942c);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;min-height:100vh}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 10% -8%,rgba(239,194,75,.16),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:12px 26px 8px}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .live.on i{background:var(--good);animation:pulse 2.2s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+  #clock{font-family:var(--font-d);font-weight:700;font-size:15px;
+    font-variant-numeric:tabular-nums;color:var(--dim)}
+  .btn{background:var(--card);border:1px solid var(--line);color:var(--dim);border-radius:9px;
+    font:600 12px var(--font-b);padding:7px 12px;cursor:pointer;white-space:nowrap}
+  .btn:hover:not(:disabled){color:var(--ink);border-color:rgba(255,255,255,.25)}
+  .btn:disabled{opacity:.4;cursor:default}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:clamp(10px,1.6vh,16px) 18px;display:flex;flex-direction:column;min-height:0}
+  .card h3{margin:0 0 2px;font:800 clamp(10px,1.25vh,12px) var(--font-b);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:clamp(10.5px,1.3vh,11.5px);color:var(--faint);margin:0 0 clamp(5px,1vh,10px);line-height:1.45}
+  .big{font-family:var(--font-d);font-weight:800;font-size:clamp(42px,6.6vh,80px);line-height:.9;
+    letter-spacing:-3px;background:var(--grad-gold);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .cap2{font-size:clamp(11px,1.45vh,13.5px);color:var(--dim);margin-top:clamp(4px,.8vh,9px);line-height:1.45}
+  .cap2 b{color:var(--ink)}
+  /* THE THREE WINDOWS, SIDE BY SIDE. Month, quarter, year — the same three
+     figures at the same size, so nobody reads the month as the year. */
+  .split{display:flex;gap:clamp(8px,1.2vw,18px);margin-top:clamp(8px,1.4vh,16px);
+    padding-top:clamp(7px,1.2vh,14px);border-top:1px solid var(--line)}
+  .split div{flex:1;min-width:0}
+  .split .v{font-family:var(--font-d);font-weight:800;font-size:clamp(19px,2.6vh,27px);letter-spacing:-.6px}
+  .split .k{font-size:clamp(9.5px,1.15vh,11px);color:var(--faint);margin-top:2px;line-height:1.3}
+  .split .k b{color:var(--dim);font-weight:600}
+  .amber{color:var(--gold)} .good{color:var(--good)} .red{color:var(--red)}
+  .reqline{margin-top:clamp(6px,1vh,10px);padding-top:clamp(5px,.9vh,9px);border-top:1px solid var(--line);
+    font-size:clamp(10.5px,1.3vh,12px);color:var(--faint);line-height:1.5}
+  .reqline b{color:var(--dim);font-family:var(--font-d);font-weight:700}
+  .reqline:empty{display:none}
+  .warn{background:rgba(239,194,75,.1);border:1px solid rgba(239,194,75,.34);
+    border-radius:12px;padding:clamp(6px,1vh,10px) 11px;font-size:clamp(10.5px,1.3vh,12.5px);
+    color:var(--dim);margin-top:clamp(6px,1vh,10px);line-height:1.4}
+
+  /* ONE SCREEN, NEVER MORE. body is overflow:hidden on every wall page, so
+     anything past the fold is not scrolled to — it is silently gone. The grid
+     is pinned to the viewport height and every child is allowed to shrink
+     (min-height:0), which is the part CSS grid does not do on its own. Inside
+     the player the frame is 46px shorter than the screen, so 1280x720 is
+     really 1280x674 and that is the height this page is measured at. */
+  main.lap{display:grid;gap:clamp(8px,1.2vh,14px);
+    padding:0 26px clamp(10px,2vh,22px);
+    grid-template-columns:minmax(300px,.86fr) 1.6fr;
+    grid-template-rows:auto minmax(0,1fr);
+    height:calc(100vh - 64px);min-height:0;align-items:stretch}
+  main.lap > .card,main.lap > .stack{min-height:0;overflow:hidden}
+  main.lap > .card:nth-of-type(2){grid-column:1;grid-row:2}
+  main.lap > .stack{grid-column:2;grid-row:1 / span 2}
+  /* The strip is a fixed-height picture and the table is a list that trims,
+     so the strip gets what it needs and the table takes the rest. */
+  .stack{display:grid;grid-template-rows:auto minmax(0,1fr);gap:clamp(8px,1.2vh,14px);min-height:0}
+  .stack > .card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  #lList{min-height:0;overflow:hidden;flex:1 1 auto}
+  #lNote{flex:none}
+
+  /* THE MONTH STRIP. Twelve columns, one per month of the year, the bar
+     scaled to the tallest month — which is the month the screen exists to
+     point at. Months still to come are drawn empty so the year reads as a
+     year and not as "nine months so far". Today's month carries a ring, the
+     same mark the conversion strip uses for today. */
+  .strip{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(4px,.6vw,10px);
+    align-items:end;height:clamp(96px,17vh,190px);margin-top:clamp(6px,1vh,10px)}
+  .mcol{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;
+    height:100%;min-width:0;border-radius:6px;border:1px solid transparent;padding:3px 2px 4px}
+  .mcol.now{border-color:var(--blue);box-shadow:0 0 0 1px var(--blue) inset}
+  .mcol .n{flex:none;font:800 clamp(11px,1.5vh,15px) var(--font-d);color:var(--ink);
+    font-variant-numeric:tabular-nums;line-height:1;margin-bottom:4px}
+  .mcol .n.zero{color:var(--faint);font-weight:600}
+  /* THE BAR IS A SHARE OF THE ROOM LEFT, NOT OF THE COLUMN. Sized against the
+     column, a bar at 100% was fighting the count above it and the label
+     beneath it for the same height and flex shrank it — so on a laptop July
+     and August came out the same height and the tallest month was not
+     visibly the tallest. The bar lives in a box that takes what the labels
+     leave, and its percentage is of that. */
+  .mcol .box{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:flex-end}
+  .mcol .bar{width:100%;border-radius:4px 4px 2px 2px;background:var(--grad-gold);
+    min-height:2px;transition:height .6s var(--ease)}
+  .mcol.peak .bar{background:linear-gradient(180deg,#f7d97a,#c9942c)}
+  .mcol.ahead .bar{background:rgba(255,255,255,.06)}
+  .mcol .m{flex:none;font:600 clamp(9px,1.15vh,11px) var(--font-b);letter-spacing:.06em;
+    text-transform:uppercase;color:var(--faint);margin-top:5px}
+  .mcol.peak .m,.mcol.now .m{color:var(--dim)}
+  .mcol .amt{flex:none;font:600 clamp(8.5px,1.05vh,10.5px) var(--font-b);color:var(--faint);
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+
+  /* THE TABLE: agent, then the three windows, then how old their lapses were.
+     Six columns, the number columns narrow, the name takes the rest. */
+  .chead,.crow{display:grid;grid-template-columns:1fr 66px 66px 74px 70px 74px;
+    gap:8px;align-items:center}
+  .chead{font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .chead div+div,.crow div+div{text-align:right}
+  .crow{padding:clamp(3px,.72vh,8px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .crow:last-child{border-bottom:none}
+  .crow .nm{font-size:clamp(12px,1.55vh,15px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .crow .v{font-family:var(--font-d);font-weight:700;font-size:clamp(12.5px,1.65vh,17px);font-variant-numeric:tabular-nums}
+  .crow .v.gold{color:var(--gold)} .crow .v.amber{color:var(--gold)} .crow .v.red{color:var(--red)}
+  .crow .v.dim{color:var(--dim);font-weight:600;font-size:clamp(11.5px,1.45vh,14px)}
+  .crow .v.zero{color:var(--faint);font-weight:500}
+
+  /* TENURE AT LAPSE: five bars, the first one the one that matters. A policy
+     that goes inside its first year is a sale that did not hold, and the bar
+     is red so the room does not have to read the label to know that. */
+  .yr{display:grid;grid-template-columns:minmax(92px,auto) 1fr 40px 48px;gap:10px;align-items:center;
+    margin:clamp(3px,.62vh,7px) 0}
+  .yr .lab{font:600 clamp(11px,1.4vh,13px) var(--font-b);color:var(--dim);white-space:nowrap}
+  .yr .track{height:clamp(7px,1.1vh,10px);border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}
+  .yr .fill{height:100%;border-radius:99px;background:var(--grad-gold);transition:width .6s var(--ease)}
+  .yr.first .fill{background:linear-gradient(120deg,#f0776a,#c9473a)}
+  .yr .amt{font:700 clamp(12px,1.55vh,14px) var(--font-d);text-align:right;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .yr .q{font:600 clamp(10px,1.2vh,11.5px) var(--font-b);text-align:right;font-variant-numeric:tabular-nums;color:var(--faint)}
+  .yhead{display:grid;grid-template-columns:minmax(92px,auto) 1fr 40px 48px;gap:10px;
+    font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    padding-bottom:4px;border-bottom:1px solid var(--line);margin-bottom:2px}
+  .yhead div+div{text-align:right}
+  #lBands{min-height:0;overflow:hidden}
+  .say{margin:clamp(6px,1vh,10px) 0 0;padding:0;list-style:none;min-height:0;overflow:hidden}
+  .say li{padding:clamp(4px,.9vh,9px) 0;border-top:1px solid rgba(255,255,255,.06);
+    font-size:clamp(10.5px,1.4vh,13px);line-height:1.45;color:var(--dim)}
+  .say b{color:var(--ink);font-weight:700}
+
+  /* On a phone the grid stacks and the page scrolls. The strip keeps its
+     twelve columns — a year is twelve months on any screen. */
+  @media (max-width:760px){
+    body{overflow:auto}
+    header{flex-wrap:wrap;padding:12px 12px 8px;gap:10px}
+    header h1{font-size:15px}
+    header .sub{font-size:10.5px}
+    header .right{margin-left:0;width:100%}
+    main.lap{grid-template-columns:1fr;grid-template-rows:none;height:auto;padding:0 12px 18px;gap:12px}
+    main.lap > .card:nth-of-type(2),
+    main.lap > .stack{grid-column:1;grid-row:auto}
+    .stack{grid-template-rows:none}
+    .card{padding:13px 14px}
+    .big{font-size:52px;letter-spacing:-2px}
+    .chead{display:none}
+    .crow{grid-template-columns:1fr 36px 36px 44px 44px 44px;gap:5px}
+    .crow .nm{font-size:13.5px}
+    .crow .v{font-size:13.5px}
+    .strip{height:120px}
+    .mcol .amt{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Lapses On A Calendar</h1>
+    <div class="sub">What the book lost this year &middot; which month took it &middot; how long each policy had lived</div>
+  </div>
+  <div class="right">
+    <button class="btn" id="sound" onclick="toggleSound()">&#9654; Narrate</button>
+    <span class="live" id="live"><i></i><span id="liveTxt">no feed</span></span>
+    <span id="clock"></span>
+  </div>
+</header>
+
+<main class="lap">
+  <section class="card">
+    <!-- THE HERO: policies lost since 1 January, and the premium that went
+         with them for a year. The month and the quarter sit beneath it at the
+         same size as the year, so the three read as three windows on one
+         thing and not as a headline with footnotes. -->
+    <h3 id="lTitle">Lapsed since 1 January</h3>
+    <div class="big" id="lYear">&mdash;</div>
+    <div class="cap2" id="lCap">Reading the dues tab&hellip;</div>
+    <div class="split" id="lWins">
+      <div><div class="v amber" id="lMonthN">&mdash;</div><div class="k" id="lMonthK">this month</div></div>
+      <div><div class="v" id="lQuarterN">&mdash;</div><div class="k" id="lQuarterK">this quarter</div></div>
+      <div><div class="v" id="lYearN">&mdash;</div><div class="k" id="lYearK">year to date</div></div>
+    </div>
+    <div class="split">
+      <div><div class="v" id="lMedian">&mdash;</div><div class="k">median years in force at lapse</div></div>
+      <div><div class="v red" id="lUnder1">&mdash;</div><div class="k">went inside their first year</div></div>
+    </div>
+    <div class="reqline" id="lLine"></div>
+    <div class="warn" id="lWarn" style="display:none"></div>
+  </section>
+
+  <section class="card" id="lTenure">
+    <h3>How long they had lived</h3>
+    <p class="cap" id="lTenCap">Issue date to lapse date, year to date &middot; the quarter beside it</p>
+    <div class="yhead"><div>In force for</div><div></div><div>Year</div><div>Qtr</div></div>
+    <div id="lBands"></div>
+    <!-- Two lines, one idea each: what a first-year lapse is, and what a
+         ten-year one is. They are different calls. -->
+    <ul class="say" id="lSay">
+      <li><b>Inside the first year is a sale that did not hold.</b> The client did not change their mind about insurance. They changed their mind about this policy, and there is a reason.</li>
+      <li><b>Past ten years is a client who stopped paying.</b> A conversation, not a complaint &mdash; and often a reinstatement.</li>
+    </ul>
+  </section>
+
+  <div class="stack">
+    <section class="card">
+      <h3 id="lStripH">The year, month by month</h3>
+      <p class="cap" id="lStripCap"></p>
+      <div class="strip" id="lStrip"></div>
+    </section>
+
+    <section class="card">
+      <h3>Who held them</h3>
+      <p class="cap">Every lapse on the branch&rsquo;s own dues tab, by the agent on the record &mdash; no client and no policy number reaches this screen.</p>
+      <div class="chead"><div>Agent</div><div>This month</div><div>Quarter</div><div>Year to date</div><div>Median yrs</div><div>Under a year</div></div>
+      <div id="lList"></div>
+      <div class="reqline" id="lNote"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+
+var LAP_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+var D = { configured:false, error:"No feed yet." };
+function $(s){return document.querySelector(s)}
+function n(v){ return v==null ? "—" : Number(v).toLocaleString("en-US"); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function money(v){
+  if(v==null) return "—";
+  v = Number(v);
+  if(v >= 1e9) return "$" + (v/1e9).toFixed(2).replace(/0$/,"") + "bn";
+  if(v >= 1e6) return "$" + (v/1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/,"") + "m";
+  if(v >= 1e4) return "$" + Math.round(v/1e3) + "k";
+  return "$" + Math.round(v).toLocaleString("en-US");
+}
+function yrs(v){ return v==null ? "–" : (Math.round(v*10)/10).toFixed(1); }
+function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) }
+setInterval(tick,10000); tick();
+
+function feed(url, body, tries){
+  tries = tries === undefined ? 3 : tries;
+  return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
+                    body:JSON.stringify(body)})
+    .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+    .catch(function(err){
+      if(tries<=1) throw err;
+      return new Promise(function(go){ setTimeout(go,4000); })
+        .then(function(){ return feed(url,body,tries-1); });
+    });
+}
+
+function load(){
+  feed(LAP_URL,{action:"intel.lapses"})
+    .then(function(j){
+      if(!j||!j.ok||!j.data) throw new Error("bad feed");
+      D=j.data; paint();
+      $("#live").classList.add("on"); $("#liveTxt").textContent="live";
+    })
+    .catch(function(){ $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; paint(); });
+}
+/* A lapse is on the dues tab the morning after it happens and not before, so
+   nothing here moves inside a day. Half-hourly is generous and the server
+   holds each read for a quarter of an hour. */
+load(); setInterval(load,30*60*1000);
+
+/* Trim a list until ITS CARD fits, not merely until the list fits its own
+   box. The line under the list is fixed, so a list that fits its own share
+   can still push that line off the bottom of the screen. Measured against
+   the card, which is the thing that actually has a height. Same rule as
+   every other wall screen: a television is not scrolled, so a row that does
+   not fit must not be drawn — and the screen says how many it did not draw. */
+function fitIn(box, keep){
+  var gone = 0;
+  if (!box) return 0;
+  var card = box.parentNode;
+  var over = function () {
+    return (card && card.scrollHeight > card.clientHeight + 1) ||
+           box.scrollHeight > box.clientHeight + 1;
+  };
+  while (box.children.length > keep && over()) {
+    box.removeChild(box.lastElementChild); gone++;
+  }
+  return gone;
+}
+
+var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function paint(){
+  var ok = !!D.configured;
+  var W = D.windows || {}, y = W.year || {}, q = W.quarter || {}, m = W.month || {};
+  var ex = D.excluded || {}, df = D.defects || {};
+
+  /* ── THE HERO ──────────────────────────────────────────────────────── */
+  $("#lTitle").textContent = ok ? "Lapsed since 1 January " + D.year : "Lapsed since 1 January";
+  $("#lYear").textContent = ok ? n(y.policies) : "—";
+  var bits = [];
+  if (ok) {
+    bits.push((y.policies === 1 ? "policy" : "policies") + " lapsed this year");
+    if (y.annualised) bits.push("<b>" + money(y.annualised) + "</b> a year of premium went with them");
+  }
+  $("#lCap").innerHTML = ok ? bits.join(" · ") : esc(D.error || "No feed yet.");
+
+  $("#lMonthN").textContent   = ok ? n(m.policies) : "—";
+  $("#lQuarterN").textContent = ok ? n(q.policies) : "—";
+  $("#lYearN").textContent    = ok ? n(y.policies) : "—";
+  $("#lMonthK").innerHTML   = ok ? esc(D.month) + " · <b>" + money(m.annualised) + "</b>/yr" : "this month";
+  $("#lQuarterK").innerHTML = ok ? esc(D.quarter) + " · <b>" + money(q.annualised) + "</b>/yr" : "this quarter";
+  $("#lYearK").innerHTML    = ok ? "year to date · <b>" + money(y.annualised) + "</b>/yr" : "year to date";
+
+  $("#lMedian").textContent = ok ? yrs(y.medianYears) : "—";
+  $("#lUnder1").textContent = ok ? n(y.under1y) : "—";
+
+  /* What was taken off, and what could not be placed. Every screen that
+     excludes says how much it removed; every screen that reads a date says
+     how many it could not read. */
+  var line = [];
+  if (ok && ex.policies) line.push("<b>" + n(ex.policies) + "</b> " + (ex.policies === 1 ? "lapse" : "lapses") +
+                                   " on <b>" + money(ex.annualised) + "</b> a year left off with " +
+                                   (ex.agents === 1 ? "an excluded agent" : n(ex.agents) + " excluded agents"));
+  if (ok && df.noLapseDate) line.push("<b>" + n(df.noLapseDate) + "</b> lapsed with no lapse date, so in no month");
+  if (ok && df.noIssueDate) line.push("<b>" + n(df.noIssueDate) + "</b> with no usable issue date, so in no band");
+  if (ok && D.lapsed && D.lapsed.earlier) line.push("<b>" + n(D.lapsed.earlier) + "</b> from earlier years, not counted");
+  $("#lLine").innerHTML = line.join(" · ");
+
+  var w = $("#lWarn"), msgs = [];
+  if (!ok && D.error) msgs = [D.error];
+  w.style.display = msgs.length ? "block" : "none";
+  w.textContent = msgs.join("  ·  ");
+
+  /* ── THE MONTH STRIP ───────────────────────────────────────────────────
+     Twelve columns whatever the feed sent: the months still to come are
+     drawn empty, so the year reads as a year. The tallest month is marked,
+     because that is the one the branch should be asking about. */
+  var bm = D.byMonth || [], byIdx = {};
+  bm.forEach(function(x, i){ byIdx[x.ym ? +x.ym.slice(5, 7) - 1 : i] = x; });
+  var peak = 0, peakIdx = -1;
+  bm.forEach(function(x, i){ if (x.policies > peak) { peak = x.policies; peakIdx = x.ym ? +x.ym.slice(5, 7) - 1 : i; } });
+  var nowIdx = ok ? D.monthIndex : new Date().getMonth();
+  var cols = [];
+  for (var i = 0; i < 12; i++) {
+    var hit = byIdx[i], cls = ["mcol"];
+    var ahead = ok ? i > nowIdx : true;
+    if (ahead) cls.push("ahead");
+    if (i === nowIdx && ok) cls.push("now");
+    if (i === peakIdx && peak) cls.push("peak");
+    var cnt = hit ? hit.policies : 0;
+    var h = peak ? Math.max(2, Math.round(cnt / peak * 100)) : 2;
+    cols.push('<div class="' + cls.join(" ") + '">' +
+      (ahead ? '' : '<div class="n' + (cnt ? '' : ' zero') + '">' + n(cnt) + '</div>') +
+      '<div class="box"><div class="bar" style="height:' + (ahead ? 2 : h) + '%"></div></div>' +
+      '<div class="m">' + MON[i] + '</div>' +
+      (hit && hit.modal ? '<div class="amt">' + money(hit.modal * 12) + '</div>' : '') +
+    '</div>');
+  }
+  $("#lStrip").innerHTML = cols.join("");
+  $("#lStripH").textContent = ok ? "The year, month by month · " + D.year : "The year, month by month";
+  $("#lStripCap").textContent = !ok ? ""
+    : peak ? MON[peakIdx] === MON[nowIdx]
+        ? "This month is already the worst of the year, with " + n(peak) + " gone and days still to run."
+        : (["January","February","March","April","May","June","July","August","September","October","November","December"][peakIdx]) +
+          " took the most: " + n(peak) + (peak === 1 ? " policy" : " policies") +
+          (byIdx[peakIdx] && byIdx[peakIdx].modal ? ", " + money(byIdx[peakIdx].modal * 12) + " a year." : ".")
+      : "Nothing on the dues tab has lapsed this year.";
+
+  /* ── WHO HELD THEM ─────────────────────────────────────────────────── */
+  var list = $("#lList"), rows = (D.agents || []);
+  list.innerHTML = rows.length ? rows.map(function(a){
+    return '<div class="crow">' +
+      '<div class="nm">' + esc(a.agent) + '</div>' +
+      '<div class="v' + (a.month ? ' amber' : ' zero') + '">' + (a.month ? n(a.month) : "–") + '</div>' +
+      '<div class="v' + (a.quarter ? ' dim' : ' zero') + '">' + (a.quarter ? n(a.quarter) : "–") + '</div>' +
+      '<div class="v gold">' + n(a.policies) + '</div>' +
+      '<div class="v dim">' + yrs(a.medianYears) + '</div>' +
+      '<div class="v' + (a.under1y ? ' red' : ' zero') + '">' + (a.under1y ? n(a.under1y) : "–") + '</div>' +
+    '</div>';
+  }).join("") : '<div class="cap">' + (ok ? "No lapse on the dues tab this year." : "Waiting on the feed.") + '</div>';
+  /* THE LINE UNDER THE LIST IS WRITTEN BEFORE THE LIST IS TRIMMED. On the
+     first paint it was empty, an empty reqline is display:none, and so the
+     list was measured against a card with one more line of room than it
+     would have once the sentence went in — the twelfth row fitted, the
+     sentence appeared beneath it, and the row was sliced through the middle
+     inside its own card, where no fold check on the page could see it. So
+     the sentence goes in first, the list is trimmed against it, and it is
+     rewritten with the count; if that clause makes it wrap, one more pass. */
+  var more = (D.agentCount || 0) - rows.length, hidden = 0;
+  var note = function () {
+    $("#lNote").innerHTML = ok
+      ? "Year to date: <b>" + n(y.policies) + "</b> lapses across <b>" + n(D.agentCount) + "</b> agents" +
+        (y.under2y ? " · <b>" + n(y.under2y) + "</b> had not reached a second anniversary" : "") +
+        (hidden + more > 0 ? " · <b>" + (hidden + more) + "</b> more agents below the fold." : ".")
+      : (hidden ? "<b>" + hidden + "</b> more agents below the fold." : "Waiting on the feed.");
+  };
+  note();
+  hidden = fitIn(list, 3); note();
+  hidden += fitIn(list, 3); note();
+
+  /* ── TENURE AT LAPSE ───────────────────────────────────────────────── */
+  var bands = y.bands || [], qb = {};
+  (q.bands || []).forEach(function(b){ qb[b.key] = b.n; });
+  var top = bands.reduce(function(a, b){ return Math.max(a, b.n); }, 0);
+  $("#lBands").innerHTML = bands.length ? bands.map(function(b, i){
+    return '<div class="yr' + (i === 0 ? ' first' : '') + '">' +
+      '<div class="lab">' + esc(b.lab) + '</div>' +
+      '<div class="track"><div class="fill" style="width:' + (top ? Math.round(b.n / top * 100) : 0) + '%"></div></div>' +
+      '<div class="amt">' + n(b.n) + '</div>' +
+      '<div class="q">' + (qb[b.key] ? n(qb[b.key]) : "–") + '</div>' +
+    '</div>';
+  }).join("") : '<div class="cap">' + (ok ? "No issue dates to read." : "Waiting on the feed.") + '</div>';
+  /* The two sentences give way before the bands do: a band off the bottom
+     is a number lost, a sentence off the bottom is a sentence lost. */
+  var say = $("#lSay"), card = $("#lTenure");
+  while (say.children.length && card.scrollHeight > card.clientHeight + 1) say.removeChild(say.lastElementChild);
+}
+
+paint();
+
+/* THE TRIM HAS TO RUN AFTER THE FONT ARRIVES. The webfont is deliberately
+   non-blocking, so the first paint measures rows in the system fallback and
+   the real face swaps in afterwards — taller. paint() is idempotent, so it
+   is simply run again once the fonts are settled. */
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(function(){ paint(); });
+var reflow=null;
+addEventListener("resize",function(){ clearTimeout(reflow); reflow=setTimeout(paint,180); });
+</script>
+
+<script>
+/* ── narration ───────────────────────────────────────────────────────────────
+   Every screen on the wall narrates, in the one voice, so the wall sounds like
+   one branch. A wall is not a film: it is on all day in a room where people
+   are working, so sound is opt-in, finite, and stops dead when the voice does.
+   Press Narrate and you get about forty seconds; then silence until somebody
+   asks again. The lines are in audio/lines.py; the audio below is folded in
+   by audio/embed-audio.py, because a linked MP3 is silent inside the wall's
+   iframe. The player (all.html) is told when a screen is speaking so it holds
+   that screen, and it can ask this screen to speak — the rail's Narrate. */
+var NARRATION = [];
+   // not voiced yet — the audio is built by audio/build-voice.py from the
+   // lines in audio/lines.py, then folded in here by audio/embed-audio.py
+
+var audio=null, aIdx=0, playing=false, bactx=null;
+/* The bed: the branch theme, played rather than loaded — D, F#m, Bm, G, D on
+   soft pads, five chords at 8.7s, landing home on D. */
+var BED = [
+  [146.83,220.00,293.66], [185.00,277.18,369.99],
+  [123.47,185.00,246.94], [196.00,293.66,392.00],
+  [146.83,220.00,293.66]
+];
+function startBed(secs){
+  try{
+    bactx = new (window.AudioContext||window.webkitAudioContext)();
+    var bus=bactx.createGain(); bus.gain.value=0;
+    var lp=bactx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=900; lp.Q.value=0.4;
+    bus.connect(lp); lp.connect(bactx.destination);
+    var t0=bactx.currentTime+0.05, CH=8.7;
+    BED.forEach(function(chord,ci){
+      var on=t0+ci*CH, off=on+CH+2.8;
+      chord.forEach(function(f,vi){
+        [["sawtooth",-6,0.055],["sawtooth",7,0.055],["triangle",0,0.030]].forEach(function(v){
+          var o=bactx.createOscillator(), g=bactx.createGain();
+          o.type=v[0]; o.frequency.value = v[0]==="triangle" ? f*2 : f; o.detune.value=v[1];
+          g.gain.setValueAtTime(0.0001,on);
+          g.gain.exponentialRampToValueAtTime(v[2]/(vi+1.4), on+2.4);
+          g.gain.setValueAtTime(v[2]/(vi+1.4), off-2.4);
+          g.gain.exponentialRampToValueAtTime(0.0001, off);
+          o.connect(g); g.connect(bus); o.start(on); o.stop(off+0.1);
+        });
+      });
+      var sub=bactx.createOscillator(), sg=bactx.createGain();
+      sub.type="sine"; sub.frequency.value=chord[0]/2;
+      sg.gain.setValueAtTime(0.0001,on);
+      sg.gain.exponentialRampToValueAtTime(0.075,on+2.6);
+      sg.gain.setValueAtTime(0.075,off-2.4);
+      sg.gain.exponentialRampToValueAtTime(0.0001,off);
+      sub.connect(sg); sg.connect(bus); sub.start(on); sub.stop(off+0.1);
+    });
+    var g=bus.gain, T=bactx.currentTime, end=Math.max(secs,12);
+    g.setValueAtTime(0,T);
+    g.linearRampToValueAtTime(0.26, T+2.2);
+    g.linearRampToValueAtTime(0.15, T+4.4);
+    g.linearRampToValueAtTime(0.15, T+end-4.0);
+    g.linearRampToValueAtTime(0.30, T+end-2.4);
+    g.linearRampToValueAtTime(0.0,  T+end);
+  }catch(e){ bactx=null; }
+}
+function stopBed(){ try{ bactx && bactx.close(); }catch(e){} bactx=null; }
+
+/* The player above this frame is told when the voice starts and stops. */
+function tellWall(on){
+  try{ if(parent!==window) parent.postMessage({rrb:"narration", on:!!on}, "*"); }catch(e){}
+}
+function toggleSound(){
+  if(!NARRATION.length) return;
+  if(playing) return endNarration();
+  playing=true; aIdx=0;
+  $("#sound").classList.add("on"); $("#sound").textContent="■ Stop";
+  var secs=NARRATION.reduce(function(a,n){ return a+(n.s||3.4)+0.7; }, 1.0);
+  startBed(secs);
+  tellWall(true);
+  next();
+}
+function endNarration(){
+  playing=false;
+  clearGuard();
+  if(audio){ try{ audio.pause(); }catch(e){} audio.onended=audio.onerror=null; }
+  stopBed();
+  $("#sound").classList.remove("on"); $("#sound").textContent="▶ Narrate";
+  tellWall(false);
+}
+/* A line that dies must not take the wall down with it. The player above
+   holds this screen while the voice runs, and it learns the voice has
+   stopped only from `endNarration`. So a line that errors, or that stalls
+   with the element firing neither `ended` nor `error`, has to be given up
+   on here — on 10 September one that did left the wall on one screen all
+   morning. The guard is the line's own measured length plus a wide margin,
+   so a slow load is waited for and a dead one is not. */
+var guard=null;
+function clearGuard(){ if(guard){ clearTimeout(guard); guard=null; } }
+function next(){
+  if(!playing||aIdx>=NARRATION.length) return endNarration();
+  clearGuard();
+  var line=NARRATION[aIdx], mine=audio=new Audio(line.a), moved=false;
+  function on(){ if(moved||audio!==mine) return; moved=true; clearGuard(); aIdx++; setTimeout(next,700); }
+  function off(){ if(moved||audio!==mine) return; moved=true; endNarration(); }
+  audio.onended=on;                                            // a beat after each line
+  audio.onerror=off;
+  guard=setTimeout(on,((line.s||3.4)+8)*1000);
+  audio.play().catch(off);
+}
+/* The rail's Narrate asks this screen to speak; turning away asks it to hush. */
+window.addEventListener("message", function(e){
+  var d=e.data||{};
+  if(d.rrb==="narrate") toggleSound();
+  else if(d.rrb==="hush" && playing) endNarration();
+});
+(function(){
+  var b=$("#sound"); if(!b) return;
+  b.disabled = !NARRATION.length;
+  b.title = NARRATION.length ? "" : "Narration not built yet — run audio/build-voice.py";
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
