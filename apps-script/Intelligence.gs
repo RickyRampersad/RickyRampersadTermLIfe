@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17b';
+var INTEL_VERSION = '2026-09-17c';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -674,6 +674,59 @@ function iBuildDues_(today) {
    path honoured INTEL_EXCLUDE_AGENTS, so the headline counted an excluded
    agent's policies while the buckets under it did not, and the two never
    added up. Whatever is taken out is reported — see iExcluded_.            */
+/* THE BOOK TAB, READ BY POLICY NUMBER FOR THE PENDING SCREEN. Seen on the
+   evening of 16 September: the pending extract carries none of the
+   policy-level columns, but the Branch Portfolio's book tab — the one the
+   dues screen reads — holds STATUS DESCRIPTION, APP RECEIVED DATE, SUM
+   ASSURED, PREMIUM and MODE for every policy by NUMBER. So a column the
+   pending extract lacks is read from the book instead of reported missing.
+   Only the columns asked for are read; null when the book is not there or
+   carries none of them. Numbers are compared on their digits, so one export's
+   5002958818 and another's "5002958818 " are one policy. The book's PREMIUM is
+   modal, and MODE says how many a year — 12, 4, 2 or 1; anything else is not
+   annualised, because a guess at a premium on a wall reads as a fact. */
+function iPendBook_(wanted) {
+  if (!wanted || !wanted.length) return null;
+  var sh = null;
+  try { sh = iTabDues_(); } catch (e) {}
+  if (!sh) return null;
+  var d = iReadCols_(sh, {
+    number: ['number'],
+    statusDesc: ['status description', 'policy status description'],
+    appReceived: ['app received date', 'application received date'],
+    sumInsured: ['sum assured', 'sum insured'],
+    premMonthly: ['premium'],
+    mode: ['mode']
+  });
+  if (!d.has || !d.has('number')) return null;
+  var have = wanted.filter(function (k) { return d.has(k); });
+  if (!have.length) return null;
+  var idx = {};
+  for (var r = 0; r < d.rows; r++) {
+    var key = iPolicyKey_(d.get('number', r));
+    if (key && !idx.hasOwnProperty(key)) idx[key] = r;
+  }
+  return {
+    cols: have,
+    has: function (k) { return have.indexOf(k) !== -1; },
+    get: function (k, policy) {
+      var r = idx[iPolicyKey_(policy)];
+      return r === undefined ? '' : d.get(k, r);
+    },
+    mode: function (policy) {
+      if (!d.has('mode')) return null;
+      var r = idx[iPolicyKey_(policy)];
+      var m = r === undefined ? 0 : iNum_(d.get('mode', r));
+      return (m === 1 || m === 2 || m === 4 || m === 12) ? m : null;
+    }
+  };
+}
+function iPolicyKey_(v) {
+  var s = String(v == null ? '' : v).trim();
+  var digits = s.replace(/\D/g, '');
+  return digits.length >= 6 ? digits : s.toUpperCase();
+}
+
 function iBuildPending_(today) {
   var sh = iTabPending_();
   if (!sh) return { error: 'No pending tab found (needs Policy, DecisionType, ReqtdaysLapsed).' };
@@ -705,10 +758,18 @@ function iBuildPending_(today) {
     uwDate: ['last underwriting date', 'last uw date', 'underwriting date']
   });
   var has = function (k) { return !!(d.has && d.has(k)); };
+  /* What the pending tab does not carry, the book does — see iPendBook_. */
+  var book = iPendBook_(['statusDesc', 'appReceived', 'sumInsured', 'premMonthly']
+    .filter(function (k) { return !has(k); }));
+  var hasP = function (k) { return has(k) || !!(book && book.has(k)); };
+  var getP = function (k, r, policy) {
+    if (has(k)) return d.get(k, r);
+    return (book && book.has(k)) ? book.get(k, policy) : '';
+  };
   var POLICY_COLS = { statusDesc: 'status description', appReceived: 'app received date',
                       sumInsured: 'sum insured', premMonthly: 'monthly premium',
                       cwa: 'cash with app', uwId: 'underwriter id', uwDate: 'last underwriting date' };
-  var missing = Object.keys(POLICY_COLS).filter(function (k) { return !has(k); })
+  var missing = Object.keys(POLICY_COLS).filter(function (k) { return !hasP(k); })
     .map(function (k) { return POLICY_COLS[k]; });
 
   var skip = iExcluded_();
@@ -748,8 +809,16 @@ function iBuildPending_(today) {
          Suspense and premium are policy figures repeated on every row, so
          they are taken once and never summed across the requirements —
          summing them is how a $250 suspense would read as $750. */
-      var premMonthly = has('premMonthly') ? iNum_(d.get('premMonthly', r)) : null;
-      var appReceived = has('appReceived') ? iDate_(d.get('appReceived', r)) : null;
+      var premMonthly = null, api = null;
+      if (has('premMonthly')) {
+        premMonthly = iNum_(d.get('premMonthly', r));
+        api = Math.round(premMonthly * 12 * 100) / 100;
+      } else if (book && book.has('premMonthly')) {
+        var modal = iNum_(book.get('premMonthly', policy)), mode = book.mode(policy);
+        if (mode === 12) premMonthly = modal;
+        if (mode) api = Math.round(modal * mode * 100) / 100;
+      }
+      var appReceived = hasP('appReceived') ? iDate_(getP('appReceived', r, policy)) : null;
       var cwaRaw = has('cwa') ? d.get('cwa', r) : null;
       row = byPolicy[policy] = {
         policy: policy, client: String(d.get('client', r)).trim(),
@@ -764,12 +833,12 @@ function iBuildPending_(today) {
         where: String(d.get('where', r)).trim(),
         payment: String(d.get('pay', r)).trim(),
         /* Policy-level, null when the column is not in the extract. */
-        statusDesc: has('statusDesc') ? (String(d.get('statusDesc', r)).trim() || '(none)') : null,
+        statusDesc: hasP('statusDesc') ? (String(getP('statusDesc', r, policy)).trim() || '(none)') : null,
         appReceived: appReceived ? iIso_(appReceived) : '',
         daysPending: appReceived ? iDays_(appReceived, today) : null,
-        sumInsured: has('sumInsured') ? iNum_(d.get('sumInsured', r)) : null,
+        sumInsured: hasP('sumInsured') ? iNum_(getP('sumInsured', r, policy)) : null,
         premMonthly: premMonthly,
-        api: premMonthly === null ? null : Math.round(premMonthly * 12 * 100) / 100,
+        api: api,
         cwa: has('cwa') ? iNum_(cwaRaw) : null,
         noCash: has('cwa') ? (cwaRaw === '' || cwaRaw == null || iNum_(cwaRaw) === 0) : null,
         uwId: has('uwId') ? String(d.get('uwId', r)).trim() : null,
@@ -835,8 +904,9 @@ function iBuildPending_(today) {
                 rows: excludedRows },
     /* The policy-level fields, and which of them the extract does not carry. */
     missing: missing,
-    byStatusDesc: has('statusDesc') ? byStatusDesc : null,
-    api: has('premMonthly') ? Math.round(api * 100) / 100 : null,
+    byStatusDesc: hasP('statusDesc') ? byStatusDesc : null,
+    fromBook: book ? book.cols.map(function (k) { return POLICY_COLS[k]; }) : [],
+    api: hasP('premMonthly') ? Math.round(api * 100) / 100 : null,
     noCash: has('cwa') ? noCash : null,
     rows: rows
   };
@@ -888,13 +958,25 @@ function iBranchPendTabs_() {
      shape, and on 16 September 2026 the extract was read twice: once as
      the extract and once as a "branch list", with the list's row count
      leading the screen over the extract's policy count. */
-  var extract = null;
-  try { extract = iTabPending_(); } catch (e) {}
-  var extractId = extract ? String(extract.getSheetId()) : '';
+  /* And on the evening of 16 September, with the pending extract excluded,
+     the screen said 20,392 policies pending: the DUES tab — the whole book,
+     AGENT, CLIENT, APP RECEIVED DATE and all — had been taken for a branch
+     list. So every Guardian extract this script knows is excluded by sheet
+     id, and a tab carrying an extract's own columns (STATUS DESCRIPTION,
+     PAID TO DATE, PLAN CODE) is not a list whatever else its header says. */
+  var extractIds = {};
+  [iTabPending_, iTabDues_, iTabInforce_, iTabReqs_, iTabTasks_, iTabSettled_, iTabMagnum_, iTabAccess_]
+    .forEach(function (find) {
+      var sh = null;
+      try { sh = find(); } catch (e) {}
+      if (sh) extractIds[String(sh.getSheetId())] = 1;
+    });
+  var never = ['status description', 'paid to date', 'plan code'];
   iSs_().getSheets().forEach(function (sh) {
     if (sh.getLastRow() < 2) return;
-    if (extractId && String(sh.getSheetId()) === extractId) return;
+    if (extractIds[String(sh.getSheetId())]) return;
     var head = iHeaders_(sh);
+    if (never.some(function (n) { return head.indexOf(n) !== -1; })) return;
     var ok = must.every(function (m) {
       return head.some(function (h) { return h === m || h.indexOf(m) === 0; });
     });
@@ -1445,6 +1527,7 @@ function iPendingWall_() {
        column is not in the extract. */
     policy: extract ? {
       byStatusDesc: extract.byStatusDesc ? pair(extract.byStatusDesc) : null,
+      fromBook: extract.fromBook || [],
       api: extract.api, noCash: extract.noCash,
       daysPending: (function () {
         var ds = (extract.rows || []).map(function (x) { return x.daysPending; })
