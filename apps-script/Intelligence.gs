@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17a';
+var INTEL_VERSION = '2026-09-17b';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1494,9 +1494,24 @@ function iPendingWall_() {
 /** The wall's pending feed. Live, held for three minutes — the branch's own
  *  lists are edited during the day, and a case cleared at ten should be off
  *  the screen by lunch. */
+/* THE PENDING SCREEN READS A STORED COPY, LIKE THE BOOK SCREENS. On the
+   evening of 16 September the first ask after the deploy took 131 seconds —
+   the Branch Portfolio's pending and requirements tabs, then Salesforce for
+   what settled — and the copy was held for three minutes, so a wall that
+   re-asks every ten was blank far more often than not. Now the copy in
+   _Intel Wall answers in about a second. intelPendingRefresh rebuilds it on
+   a trigger through the day, so a case cleared at ten is off the wall by
+   lunch; the three-minute cache still covers two screens asking at once; and
+   {fresh:true} asks for a live build, which also replaces the stored copy. */
 function iActPending_(b) {
+  var live = !!(b && b.fresh);
+  if (!live) {
+    var had = null;
+    try { had = iWallLoad_('pending'); } catch (e0) {}
+    if (had) return iOk_({ data: had.payload, stored: had.builtAt });
+  }
   var key = 'ipend_' + iIso_(iToday_()), cache = null;
-  if (!(b && b.fresh)) {
+  if (!live) {
     try {
       cache = CacheService.getScriptCache();
       var hit = cache.get(key);
@@ -1505,6 +1520,9 @@ function iActPending_(b) {
   }
   var data = iPendingWall_();
   try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPEND_HOLD_S); } catch (e2) {}
+  if (data && data.configured !== false && !data.error) {
+    try { iWallSave_('pending', data); } catch (e3) {}
+  }
   return iOk_({ data: data });
 }
 
@@ -4518,6 +4536,17 @@ function intelRebuildWall45()     { return iWallRebuild_('wall45',     function 
 function intelRebuildDelivery()   { return iWallRebuild_('delivery',   function () { return iBuildDelivery_(); }); }
 function intelRebuildLicence()    { return iWallRebuild_('licence',    function () { return iBuildLicence_(); }, iLicenceBad_); }
 function intelRebuildPossession() { return iWallRebuild_('possession', function () { return iBuildPossession_(); }); }
+function intelRebuildPending()    { return iWallRebuild_('pending',    function () { return iPendingWall_(); }); }
+/* Hourly on a trigger, acting on the odd hours from five to seven in the
+   evening: five is the night copy, nine to nineteen keep the day's clearances
+   on the wall, and seven is skipped because the branch signs in then. Eight
+   builds of about two minutes is a quarter of an hour of the project's day.
+   The hour can be handed in, so the gate is testable without a clock. */
+function intelPendingRefresh(e, hour) {
+  var h = hour === undefined ? Number(Utilities.formatDate(new Date(), iTz_(), 'H')) : Number(hour);
+  if (h % 2 !== 1 || h < 5 || h > 19 || h === 7) return 'pending: not this hour (' + h + ')';
+  return intelRebuildPending();
+}
 function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
 /* All five from the editor — and it must not simply try all five, because they
    do not fit. Run on the morning of 8 September it reached the six-minute
@@ -4534,13 +4563,14 @@ var IWALL_BUDGET_MS = 4.5 * 60 * 1000;      // the ceiling is 6 minutes; stop sh
 
 /* Fastest first, measured against the live branch on 8 September: possession
    16s, licence 25s, delivery 28s, birthdays about a minute and a half since
-   the contact join came out, the 45-day line 155s. Ordered this way a single
-   run gets four of the five. */
+   the contact join came out, pending about 130s, the 45-day line 155s.
+   Ordered this way a single run gets four of the six. */
 var IWALL_FEEDS = [
   { key: 'possession', run: function () { return intelRebuildPossession(); } },
   { key: 'licence',    run: function () { return intelRebuildLicence(); } },
   { key: 'delivery',   run: function () { return intelRebuildDelivery(); } },
   { key: 'book',       run: function () { return intelRebuildBook(); } },
+  { key: 'pending',    run: function () { return intelRebuildPending(); } },
   { key: 'wall45',     run: function () { return intelRebuildWall45(); } }
 ];
 
@@ -6825,7 +6855,7 @@ function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
                 'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
                 'intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
-                'intelRebuildPossession', 'intelRebuildBook'];
+                'intelRebuildPossession', 'intelRebuildBook', 'intelPendingRefresh'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -6855,14 +6885,21 @@ function intelInstallTriggers() {
      Monday's copy. Spreading them fixed that and created a worse fault — the
      last one landed at seven, on top of the branch signing in. They are all
      in the small hours now, slowest first, and the last of them is done by
-     five. Eleven here and the tracker's six is seventeen, under the project
+     five. Twelve here and the tracker's seven is nineteen, under the project
      limit of twenty. */
   [['intelRebuildWall45', 0], ['intelRebuildBook', 1], ['intelRebuildPossession', 3],
    ['intelRebuildLicence', 4], ['intelRebuildDelivery', 5]].forEach(function (t) {
     ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
   });
-  return 'Installed — eleven, all of them finished before six, because the branch ' +
-         'signs in from seven. Check Project Settings → Time zone reads ' +
+  /* The pending screen's copy is the one that has to move during the day —
+     the branch clears cases between nine and five and a cleared case should
+     be off the wall by lunch. One hourly trigger; the function itself acts
+     only on the odd hours from five to seven in the evening, and never at
+     seven in the morning. */
+  ScriptApp.newTrigger('intelPendingRefresh').timeBased().everyHours(1).create();
+  return 'Installed — twelve: eleven finished before six, because the branch ' +
+         'signs in from seven, and the pending refresh on the odd hours of the day. ' +
+         'Check Project Settings → Time zone reads ' +
          '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
 }
 

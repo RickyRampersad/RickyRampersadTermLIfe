@@ -230,9 +230,9 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
+rebuild, installs the twelve triggers (six for the intelligence, five nightly wall builds, and the pending screen's daytime refresh) and prints the self test.
 
-> **Six of those eleven triggers send mail**, the agent list every weekday at
+> **Six of those twelve triggers send mail**, the agent list every weekday at
 > 6am. **Since `2026-09-15c` none of it reaches an agent or a client until
 > somebody switches it on by hand** — `INTEL_AGENT_LIVE` for agents,
 > `INTEL_SURVEY_LIVE` for clients, both in the table below, both requiring a
@@ -320,23 +320,25 @@ A television reloading five of those every half hour would have spent the
 project's daily runtime by lunch, and the tracker's sign-in runs in the same
 project. So each feed is built **once a night, one execution each** —
 `intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
-`intelRebuildPossession`, `intelRebuildBook`, at three in the morning, an hour
-after `intelRebuild` — and kept in the hidden tab **`_Intel Wall`**, one row
+`intelRebuildPossession`, `intelRebuildBook`, in the small hours an hour apart,
+and `intelRebuildPending` (which also refreshes through the day — see §3) —
+and kept in the hidden tab **`_Intel Wall`**, one row
 per feed. A request reads its row in about a second and answers with
 `stored: "<when it was built>"`; the screen's own "built …" line shows the
 date.
 
 - **With no stored copy yet**, a request builds the feed live and stores it,
   so the first morning works. After pasting, run **`intelRebuildWall`** from
-  the editor to fill all five without waiting for the night.
+  the editor to fill all six without waiting for the night.
 
-  **It will not do all five in one go, and it does not try.** Run as a single
+  **It will not do all six in one go, and it does not try.** Run as a single
   execution on the morning of 8 September, the five together reached the
   six-minute ceiling and Apps Script killed the run with no report of what it
   had managed. So it now goes fastest first (possession 16s, licence 25s,
-  delivery 28s, birthdays about 90s, the 45-day line 155s), leaves alone any
+  delivery 28s, birthdays about 90s, pending about 130s, the 45-day line
+  155s), leaves alone any
   copy already built today, and stops itself at four and a half minutes saying
-  what is left. **Run it again and it carries on** — two runs build all five
+  what is left. **Run it again and it carries on** — two runs build all six
   from cold, a third is a no-op. `intelRebuildWallForce` rebuilds even today's
   copies, for when the answer changed rather than the day.
 - **A bad night never pins a bad screen.** A build that errors, or comes back
@@ -451,9 +453,16 @@ it comes back in three states because they need three different actions:
 | **Somebody has one open** | It is in hand. Leave it. |
 | **The chase was closed, the case was not** | The worst of the three, because it reads as handled. Find out why the last one was closed with the file still open. |
 
-It reads live and the build is held for three minutes, like the day screen,
-because the branch edits these lists during the day and a case cleared at ten
-should be off the wall by lunch. No extra trigger.
+It is served from a stored copy in `_Intel Wall`, like the book screens. The
+first ask after the 17 September deploy took 131 seconds live — the Branch
+Portfolio's pending and requirements tabs, then Salesforce for what settled —
+and a copy held for three minutes left the slide blank more often than not.
+`intelPendingRefresh` (one hourly trigger, acting at five in the morning and
+then on the odd hours from nine to seven in the evening, never at seven in the
+morning when the branch signs in) rebuilds it, so a case cleared at ten is off
+the wall by lunch. `intelRebuildPending` does the same from the editor, and
+`{action:'intel.pending', fresh:true}` builds live and replaces the copy. It is
+also in `intelRebuildWall`'s list, just before the 45-day line.
 
 ### It narrates, like every other screen
 
