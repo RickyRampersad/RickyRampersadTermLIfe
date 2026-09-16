@@ -135,5 +135,65 @@ console.log('\nA full agent digest run, nothing switched on — the 6am case:\n'
      g.sent.every(o => /\[HELD\]/.test(o.subject) && /would have gone to/.test(o.htmlBody)));
 }
 
+/* ── the panic button, and the thing it must not undo ──────────────── */
+console.log('\nintelMailOff() — for the morning somebody has no time to paste anything:\n');
+{
+  const g = gate({ INTEL_MANAGER_EMAIL: BOSS, INTEL_AGENT_LIVE: 'send to agents',
+                   INTEL_SURVEY_LIVE: 'send to clients' });
+  const said = g.env.intelMailOff();
+  ok('it sends nothing itself', g.sent.length === 0, String(g.sent.length));
+  ok('it sets test mode to the manager', g.env.iProp_('INTEL_TEST_TO') === BOSS,
+     g.env.iProp_('INTEL_TEST_TO'));
+  ok('  and says so in words the reader can act on', /MAIL IS OFF/.test(said) && said.indexOf(BOSS) !== -1);
+  ok('  including that there is nothing to deploy', /nothing to deploy/i.test(said));
+
+  // Live switches left alone: this is a hold, not a reconfiguration.
+  ok('it does not clear the agent switch', g.env.iProp_('INTEL_AGENT_LIVE') === 'send to agents');
+  ok('it does not clear the client switch', g.env.iProp_('INTEL_SURVEY_LIVE') === 'send to clients');
+
+  // ...and with it held, a full digest run reaches no agent even though live is set.
+  g.env.__mkSheet('Access', 1,
+    ['Name', 'Email', 'Access Code', 'Role', 'Unit', 'Agent Name (exactly as in data)', 'Agent Number', 'Active'],
+    [['Anand Pretend', AGENT, '1', 'Agent', 'Unit 1', 'Anand Pretend', 'A101', 'Yes']]);
+  g.env.iLoadCache_ = () => ({
+    dues: { chase: [{ agent: 'Anand Pretend', policy: '1', client: 'C1', modal: 100, days: 70, bucket: '61-90', reachable: true }],
+            byAgent: [], ageingByAgent: {}, counts: {}, buckets: ['61-90'], defects: {} },
+    aliases: [], units: {} });
+  try { g.env.intelAgentDigest(); } catch (e) { /* reported below */ }
+  ok('a digest run after it reaches no agent', g.sent.every(o => o.to === BOSS),
+     JSON.stringify(g.sent.map(o => o.to)));
+}
+
+console.log('\nintelMailOn() clears the hold and NOTHING else:\n');
+{
+  const g = gate({ INTEL_MANAGER_EMAIL: BOSS, INTEL_TEST_TO: BOSS });
+  const said = g.env.intelMailOn();
+  ok('test mode is cleared', !g.env.iProp_('INTEL_TEST_TO'), g.env.iProp_('INTEL_TEST_TO'));
+  ok('it did NOT switch agent mail on', !g.env.iAgentLive_());
+  ok('  and says so', /still HELD/.test(said), said.split('\n')[2] || said.slice(0, 80));
+  ok('  naming the phrase that would', said.indexOf('send to agents') !== -1);
+  ok('it points at the address check first', /intelAddressCheck/.test(said));
+  ok('it sends nothing', g.sent.length === 0);
+
+  // With the hold cleared and the switch set, mail flows — the two are independent.
+  const live = gate({ INTEL_MANAGER_EMAIL: BOSS, INTEL_TEST_TO: BOSS, INTEL_AGENT_LIVE: 'send to agents' });
+  live.env.intelMailOn();
+  live.env.iSend_(AGENT, 'Your branch list', '<p>x</p>');
+  ok('both switches cleared and set together do reach the agent',
+     live.sent[0] && live.sent[0].to === AGENT, live.sent[0] && live.sent[0].to);
+}
+
+console.log("\nWith nowhere to hold it, mail off refuses rather than pretending:\n");
+{
+  const env = makeEnv({ props: {} });
+  const sent = [];
+  env.MailApp = { sendEmail: o => { sent.push(o); } };
+  env.Session = { getEffectiveUser: () => ({ getEmail: () => '' }) };
+  env.__mkSheet('KPI Log', 1, ['Timestamp', 'Date', 'StaffId', 'Name', 'Grade', 'Status'], []);
+  const said = env.intelMailOff();
+  ok('it says what to set first', /INTEL_MANAGER_EMAIL/.test(said), said.slice(0, 70));
+  ok('  and did not set test mode to nothing', !env.iProp_('INTEL_TEST_TO'));
+}
+
 console.log('');
 process.exit(fails ? 1 : 0);

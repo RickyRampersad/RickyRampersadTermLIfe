@@ -620,6 +620,29 @@ The digests follow the same rule — staff and managers are skipped by the agent
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
 
+### Mail off, right now, with nothing to deploy
+
+**Branch Intelligence → MAIL OFF — hold everything to me** (`intelMailOff()`).
+
+It sets `INTEL_TEST_TO` to your own address and reports what it did. That takes
+effect the moment it runs — no paste, no new version — and it holds **all six
+senders**, not just the daily list: the agent list, the Monday manager digest,
+the monthly horizon notice, the cross-sell list, the survey follow-ups and the
+client letters. The triggers still fire, so the next morning's run arrives in
+your inbox as previews of what would have gone out.
+
+This exists because of the morning of 16 September 2026: the daily list reached
+twenty-eight agents for the third day running while its fix sat unpasted, and
+the only ways to stop it were deleting six triggers one at a time in the editor
+or hand-typing a script property. Neither is a thing to be doing at ten past
+seven. **Deleting the `intelAgentDigest` trigger is the wrong move** — it stops
+that one and leaves the other five armed.
+
+**Mail on — clear test mode** (`intelMailOn()`) reverses it, and deliberately
+does nothing else: agents stay held until `INTEL_AGENT_LIVE` is set, and it
+says so on screen rather than leaving you to find out. Two switches, two
+deliberate acts.
+
 ### Nothing reaches an agent until you say so
 
 Asked for on 15 September 2026, in these words: *"moving forward you are to ask

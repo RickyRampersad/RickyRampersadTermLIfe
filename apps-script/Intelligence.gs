@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-15c';
+var INTEL_VERSION = '2026-09-16a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -5637,6 +5637,55 @@ function iRecentActions_(session) {
    was really for. Clients and agents cannot receive test traffic.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── turning the mail off, in one click ───────────────────────────────────
+   On the morning of 16 September 2026 the daily list went to twenty-eight
+   agents for the third day running while its fix sat unpasted in a
+   repository, and the only ways to stop it were to delete six triggers one
+   at a time in the editor or to hand-type a script property. Neither is
+   something to be doing at ten past seven.
+
+   So: two functions, both safe to run from the menu, neither of which sends
+   anything. intelMailOff() takes effect immediately and needs no deployment,
+   which is the point — the paste is exactly what somebody has not had time
+   to do. */
+function intelMailOff() {
+  var to = iHoldTo_() || (function () {
+    try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
+  })();
+  if (!to) {
+    return 'Set INTEL_MANAGER_EMAIL first — there is nowhere to send the held mail, ' +
+           'and this must never quietly leave the mail switched on.';
+  }
+  iSetProp_('INTEL_TEST_TO', to);
+  var was = String(iProp_('INTEL_SURVEY_LIVE') || '').trim();
+  return 'MAIL IS OFF. Every message from this project now goes to ' + to +
+         ', tagged [TEST], naming who it was for. That is true of all six senders — ' +
+         'the daily agent list, the Monday manager digest, the monthly horizon notice, ' +
+         'the cross-sell list, the survey follow-ups and the client letters.\n\n' +
+         'It took effect the moment you ran this. There is nothing to deploy.\n\n' +
+         'The triggers still fire, so tomorrow you will receive the whole run as ' +
+         'previews and can read what would have gone out.\n\n' +
+         'To put it back: intelMailOn(), which only clears this switch — ' +
+         (was ? 'INTEL_SURVEY_LIVE is set to "' + was + '", so client letters resume when you do.'
+              : 'agents and clients each still need their own switch after that.');
+}
+
+/* Clearing test mode does NOT start mail to agents — INTEL_AGENT_LIVE still
+   has to be set for that, and this function will not set it. Two switches,
+   two deliberate acts; that is the whole design. */
+function intelMailOn() {
+  PropertiesService.getScriptProperties().deleteProperty('INTEL_TEST_TO');
+  return 'Test mode cleared.\n\n' +
+         'Mail to agents: ' + (iAgentLive_()
+           ? 'ON — INTEL_AGENT_LIVE is set, so agents will receive their own lists.'
+           : 'still HELD. Nothing reaches an agent until INTEL_AGENT_LIVE reads exactly "' +
+             IAGENT_LIVE_PHRASE + '". Held mail goes to ' + (iHoldTo_() || 'NOBODY')) + '\n' +
+         'Mail to clients: ' + (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase()
+             === ISURVEY.LIVE_PHRASE
+           ? 'ON — INTEL_SURVEY_LIVE is set.' : 'off — dry run only.') + '\n\n' +
+         'Run intelAddressCheck() before switching agents on.';
+}
+
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
                 'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
@@ -6566,6 +6615,9 @@ function onOpen() {
       .addItem('Self test', 'intelSelfTestDialog_')
       .addItem('Who gets whose list', 'intelAddressCheckDialog_')
       .addSeparator()
+      .addItem('MAIL OFF — hold everything to me', 'intelMailOffDialog_')
+      .addItem('Mail on — clear test mode', 'intelMailOnDialog_')
+      .addSeparator()
       .addItem('Send agent digests now', 'intelAgentDigest')
       .addItem('Send manager digest now', 'intelManagerDigest')
       .addItem('Send horizon notices now', 'intelHorizonWatch')
@@ -6578,6 +6630,8 @@ function onOpen() {
 
 function intelSelfTestDialog_() { iDialog_('Self test', intelSelfTest()); }
 function intelAddressCheckDialog_() { iDialog_('Who gets whose list', intelAddressCheck()); }
+function intelMailOffDialog_() { iDialog_('Mail off', intelMailOff()); }
+function intelMailOnDialog_() { iDialog_('Mail on', intelMailOn()); }
 function intelIssueCodesDialog_() { iDialog_('Access codes', intelIssueCodes()); }
 function iDialog_(title, text) {
   var html = HtmlService.createHtmlOutput(
