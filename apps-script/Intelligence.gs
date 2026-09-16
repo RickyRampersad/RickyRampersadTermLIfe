@@ -2570,6 +2570,240 @@ function iActRiders_(b) {
   return iOk_({ data: data });
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   LAPSES ON A CALENDAR — intelligence/wall/lapses.html · action intel.lapses
+   ══════════════════════════════════════════════════════════════════════════
+   The dues tab carries every lapse the branch has ever had, and the nightly
+   rebuild reads them — but only to list the ones inside the last 365 days,
+   client by client, for the sign-in screens. Nothing on the wall said how
+   many policies the branch LOST this year, or which month took the most of
+   them, or how old they were when they went. Those three are the questions
+   a branch manager asks first, and they are answered here.
+
+   THREE WINDOWS, ALL CALENDAR. This month, this quarter and the year to date
+   — from 1 January, never a rolling 365 days. A rolling year moves every
+   morning and nobody can say what it was last Tuesday; the calendar year is
+   what the branch's own targets are written against, so the wall speaks the
+   same language.
+
+   THE MONTH STRIP is the reason the screen exists. Twelve columns, one per
+   month of this year, and the tallest one is the month the branch should be
+   asking about. On the real book that was July, by a distance.
+
+   TENURE AT LAPSE. The issue date has been read off the dues tab since the
+   first build and was never used for anything. Lapse date minus issue date
+   is how long the policy lived, and a policy that lapses inside its first
+   year is a sale that did not hold — a different conversation from a
+   ten-year policy whose client changed their mind. So each window carries
+   its years-in-force in five bands and a median, and every agent's row
+   carries their own median and their own count under a year.
+
+   WHAT IS DELIBERATELY NOT HERE. No client, no policy number, no contact
+   detail: the screen is unauthenticated, like every other wall action, so
+   it is aggregates and the names of our own agents and nothing else. The
+   test walks the payload for any key that smells of a client.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ILAP_HOLD_S = 15 * 60;
+var ILAP_TOP    = 12;      // agents on screen
+
+/* Years in force at the moment of lapse, in the five bands the screen draws.
+   The first band is the one that matters most, so it is the narrowest. */
+var ILAP_BANDS = [
+  { key: 'u1',  lab: 'under a year',   lo: 0,  hi: 1 },
+  { key: 'y1',  lab: '1 to 2 years',   lo: 1,  hi: 2 },
+  { key: 'y2',  lab: '2 to 5 years',   lo: 2,  hi: 5 },
+  { key: 'y5',  lab: '5 to 10 years',  lo: 5,  hi: 10 },
+  { key: 'y10', lab: '10 years and over', lo: 10, hi: Infinity }
+];
+
+function iLapBand_(years) {
+  for (var i = 0; i < ILAP_BANDS.length; i++) {
+    if (years >= ILAP_BANDS[i].lo && years < ILAP_BANDS[i].hi) return ILAP_BANDS[i].key;
+  }
+  return null;
+}
+
+/* The middle value, to one decimal. Null when there is nothing to take the
+   middle of — a dash on screen, never a zero that reads as "brand new". */
+function iLapMedian_(xs) {
+  if (!xs || !xs.length) return null;
+  var s = xs.slice().sort(function (a, b) { return a - b; });
+  var mid = Math.floor(s.length / 2);
+  var m = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  return Math.round(m * 10) / 10;
+}
+
+function iLapWindow_(lab) {
+  var bands = {};
+  ILAP_BANDS.forEach(function (b) { bands[b.key] = 0; });
+  return { lab: lab, policies: 0, modal: 0, annualised: 0, years: [], under1y: 0, under2y: 0,
+           noIssue: 0, bands: bands, agents: {} };
+}
+
+function iLapsesWall_() {
+  var today = iToday_(), notes = [];
+  var sh = iTabDues_();
+  if (!sh) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'No dues tab found (needs Agent, Client Number, Premium, Status Description).' };
+  }
+  /* Read straight off the tab, the same columns the nightly build reads. This
+     does not go through the cache on purpose: the cache holds a year of
+     lapses row by row for the sign-in screens, and a wall action that read
+     it would be holding client rows it has no business holding. */
+  var d = iReadCols_(sh, {
+    agent: ['agent'], premium: ['premium'], issue: ['issue date'],
+    status: ['status'], lapseDate: ['projected lapse date']
+  });
+  if (!d.has('lapseDate')) {
+    notes.push('The dues tab has no "projected lapse date" column, so no lapse can be placed in a month.');
+  }
+  if (!d.has('issue')) {
+    notes.push('The dues tab has no "issue date" column, so nothing here can say how long a policy lived.');
+  }
+
+  var skip = iExcluded_();
+  var y0 = today.getFullYear(), m0 = today.getMonth(), q0 = m0 - (m0 % 3);
+  var yearStart = new Date(y0, 0, 1), qStart = new Date(y0, q0, 1), mStart = new Date(y0, m0, 1);
+
+  var W = { month: iLapWindow_('this month'), quarter: iLapWindow_('this quarter'),
+            year: iLapWindow_('year to date') };
+  var byMonth = [];
+  for (var mm = 0; mm <= m0; mm++) {
+    byMonth.push({ ym: y0 + '-' + ('0' + (mm + 1)).slice(-2), lab: ICONV_MONTHS[mm].slice(0, 3),
+                   policies: 0, modal: 0 });
+  }
+  var defects = { noLapseDate: 0, noIssueDate: 0, futureLapseDate: 0 };
+  var lapsed = 0, earlier = 0;
+  var excluded = { policies: 0, modal: 0, names: {} };
+
+  for (var r = 0; r < d.rows; r++) {
+    if (String(d.get('status', r)).trim() !== '1') continue;
+    var agent = String(d.get('agent', r)).trim();
+    if (!agent && !String(d.get('premium', r)).trim()) continue;
+    lapsed++;
+
+    var lapsedOn = iDate_(d.get('lapseDate', r));
+    if (!lapsedOn) { defects.noLapseDate++; continue; }
+    var ago = iDays_(lapsedOn, today);
+    /* The nightly build skips a lapse dated after today for the same reason:
+       a "projected" date ahead of us is a policy in its grace period, not one
+       that has gone. It is counted so the number is not silently lost. */
+    if (ago < 0) { defects.futureLapseDate++; continue; }
+    if (lapsedOn < yearStart) { earlier++; continue; }
+
+    var modal = iNum_(d.get('premium', r));
+    /* An excluded agent's lapses come off every window — and are counted, so
+       the screen can say what it took away. The book still lost them. */
+    if (agent && iExcludes_(skip, agent)) {
+      excluded.policies++; excluded.modal += modal; excluded.names[agent] = true;
+      continue;
+    }
+
+    var issued = iDate_(d.get('issue', r));
+    var years = null;
+    if (!issued) defects.noIssueDate++;
+    else {
+      years = (lapsedOn.getTime() - issued.getTime()) / (365.25 * 86400000);
+      /* Issued after it lapsed is a date typed wrong, and it would land in
+         "under a year" as if it were a sale that did not hold. */
+      if (years < 0) { years = null; defects.noIssueDate++; }
+    }
+
+    var slot = byMonth[lapsedOn.getMonth()];
+    slot.policies++; slot.modal += modal;
+
+    var wins = [W.year];
+    if (lapsedOn >= qStart) wins.push(W.quarter);
+    if (lapsedOn >= mStart) wins.push(W.month);
+    wins.forEach(function (w) {
+      w.policies++; w.modal += modal;
+      var a = w.agents[agent || '—'] || (w.agents[agent || '—'] =
+        { agent: agent || 'no agent on the record', policies: 0, modal: 0, years: [], under1y: 0, under2y: 0 });
+      a.policies++; a.modal += modal;
+      if (years === null) { w.noIssue++; return; }
+      w.years.push(years); a.years.push(years);
+      var band = iLapBand_(years);
+      if (band) w.bands[band]++;
+      if (years < 1) { w.under1y++; a.under1y++; }
+      /* Under two INCLUDES under one — it is "did not reach the second
+         anniversary", not a band of its own. The bands carry the split. */
+      if (years < 2) { w.under2y++; a.under2y++; }
+    });
+  }
+
+  /* Every agent on the year, ordered by what they lost — and each agent's
+     line carries the three windows, so the table reads across. */
+  var agentsOut = Object.keys(W.year.agents).map(function (k) {
+    var y = W.year.agents[k], q = W.quarter.agents[k], m = W.month.agents[k];
+    return { agent: y.agent,
+             month: m ? m.policies : 0, quarter: q ? q.policies : 0,
+             policies: y.policies, modal: y.modal, annualised: y.modal * 12,
+             medianYears: iLapMedian_(y.years), under1y: y.under1y, under2y: y.under2y };
+  }).sort(function (a, b) { return b.policies - a.policies || b.modal - a.modal; });
+
+  var windows = {};
+  Object.keys(W).forEach(function (k) {
+    var w = W[k];
+    var bands = ILAP_BANDS.map(function (b) { return { key: b.key, lab: b.lab, n: w.bands[b.key] }; });
+    var byAgent = Object.keys(w.agents).map(function (n) {
+      var a = w.agents[n];
+      return { agent: a.agent, policies: a.policies, modal: a.modal,
+               medianYears: iLapMedian_(a.years), under1y: a.under1y, under2y: a.under2y };
+    }).sort(function (a, b) { return b.policies - a.policies || b.modal - a.modal; });
+    windows[k] = { lab: w.lab, policies: w.policies, modal: w.modal, annualised: w.modal * 12,
+                   medianYears: iLapMedian_(w.years), under1y: w.under1y, under2y: w.under2y,
+                   noIssue: w.noIssue, bands: bands, byAgent: byAgent };
+  });
+
+  var exNames = Object.keys(excluded.names).length;
+  if (excluded.policies) {
+    notes.push(excluded.policies + (excluded.policies === 1 ? ' lapse' : ' lapses') + ' this year, ' +
+               iMoney_(excluded.modal * 12) + ' a year, ' +
+               (exNames === 1 ? 'belong to an agent' : 'belong to ' + exNames + ' agents') +
+               ' left off every wall, and are not counted here.');
+  }
+  if (defects.noLapseDate) {
+    notes.push(defects.noLapseDate + ' lapsed ' + (defects.noLapseDate === 1 ? 'policy carries' : 'policies carry') +
+               ' no lapse date, so nothing can say which month took ' +
+               (defects.noLapseDate === 1 ? 'it' : 'them') + '.');
+  }
+  if (defects.noIssueDate) {
+    notes.push(defects.noIssueDate + ' of this year’s lapses carry no usable issue date, so the tenure ' +
+               'bands and medians are read off the rest.');
+  }
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    year: y0, month: ICONV_MONTHS[m0], monthIndex: m0,
+    quarter: 'Q' + (Math.floor(m0 / 3) + 1),
+    windows: windows,
+    byMonth: byMonth,
+    agents: agentsOut.slice(0, ILAP_TOP),
+    agentCount: agentsOut.length,
+    lapsed: { total: lapsed, earlier: earlier },
+    excluded: { policies: excluded.policies, modal: excluded.modal,
+                annualised: excluded.modal * 12, agents: exNames },
+    defects: defects,
+    notes: notes
+  };
+}
+
+function iActLapses_(b) {
+  var key = 'ilap_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iLapsesWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), ILAP_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
 function iActConversion_(b) {
   var key = 'iconv_' + iIso_(iToday_()), cache = null;
   if (!(b && b.fresh)) {
@@ -5059,6 +5293,7 @@ function intelRoute_(b) {
   if (action === 'intel.conversion') return iActConversion_(b);
   if (action === 'intel.permanent')  return iActPermanent_(b);
   if (action === 'intel.riders')     return iActRiders_(b);
+  if (action === 'intel.lapses')     return iActLapses_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
