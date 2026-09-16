@@ -5396,6 +5396,101 @@ function iActWall45_(b) {
 
 var IWALL_BANDS = [45, 60, 90];
 
+/* ── The three lines are ranges, not days ─────────────────────────────────
+   Until 16 September 2026 a band was one day: `days === 60` was "the 60-day
+   line", so the 60 screen showed the fifteen policies that happened to be
+   exactly sixty days unpaid that morning and nothing about the four hundred
+   sitting between sixty and ninety. A wall that names a line and then shows
+   one day of it is a wall that changes completely between Monday and Tuesday
+   for no reason anybody on the floor did anything about.
+
+   So each band is the stretch it owns: 45 is 45–59 days unpaid, 60 is 60–89,
+   90 is everything from ninety on, and a policy is in exactly one of them.
+   `onLine` (that day exactly) and `past` (that many days or more) are still
+   published — the day-line is what the hero counts and the narration reads,
+   and the running total is what the chrome names. */
+function iWallBandOf_(days) {
+  for (var i = IWALL_BANDS.length - 1; i >= 0; i--) if (days >= IWALL_BANDS[i]) return IWALL_BANDS[i];
+  return null;
+}
+function iWallBandRange_(b) {
+  var i = IWALL_BANDS.indexOf(b);
+  var to = i >= 0 && i < IWALL_BANDS.length - 1 ? IWALL_BANDS[i + 1] - 1 : null;
+  return { from: b, to: to, label: to === null ? b + ' days and over' : b + '–' + to + ' days' };
+}
+/* How long a policy has been INSIDE its band — the ageing the 90 screen is
+   read by. Ninety days and a year are both "over 90", and they are not the
+   same conversation. The 45 and 60 stretches are cut in thirds so the screen
+   can say whether the band is mostly new arrivals or mostly about to leave. */
+var IWALL_AGEING = {
+  45: [[45, 49], [50, 54], [55, 59]],
+  60: [[60, 69], [70, 79], [80, 89]],
+  90: [[90, 119], [120, 179], [180, 364], [365, 100000]]
+};
+function iWallAgeingLabel_(r) { return r[1] >= 100000 ? r[0] + '+ days' : r[0] + '–' + r[1] + ' days'; }
+function iWallAgeingOf_(b, days) {
+  var t = IWALL_AGEING[b] || [];
+  for (var i = 0; i < t.length; i++) if (days >= t[i][0] && days <= t[i][1]) return iWallAgeingLabel_(t[i]);
+  return null;
+}
+
+/* ── The letters, read once and joined by client number ───────────────────
+   One row per client per letter on the survey tab. This reads the tab ONCE
+   per build and keeps the latest LIVE row for each client. A dry run and a
+   test send write rows of exactly the same shape, and neither is a letter
+   anybody received, so they are ignored; MODE is written as
+   "live · cleared <hash> by <who>", which is why this is a prefix test and
+   not an equality.
+
+   THE JOIN KEY IS THE CLIENT NUMBER, never the policy. The letter went to a
+   person, and a person with three policies on the line got one letter. A
+   join on POLICY (column 6) finds it for one of the three and calls the
+   other two silent.
+
+   Nothing here leaves the server as a row. iBuildWall45_ folds these into
+   counts per band, per agent and per ageing bucket, because the wall that
+   reads them is unauthenticated. */
+function iWallSurveyMap_() {
+  var out = { byClient: {}, rows: 0, live: 0, ignored: 0 };
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return out;
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  vals.forEach(function (r) {
+    out.rows++;
+    if (!/^live/i.test(String(r[ISCOL.MODE - 1] || '').trim())) { out.ignored++; return; }
+    var who = String(r[ISCOL.CLIENTNO - 1] || '').trim();
+    var sent = iDate_(r[ISCOL.SENT - 1]);
+    if (!who || !sent) { out.ignored++; return; }
+    out.live++;
+    var have = out.byClient[who];
+    if (have && have.sentAt >= sent.getTime()) return;
+    var rating = Number(r[ISCOL.RATING - 1]);
+    var rated = rating >= 1 && rating <= 5;
+    var heard = String(r[ISCOL.HEARD - 1] || '').trim();
+    var asked = String(r[ISCOL.ASKED - 1] || '').split(',')
+      .map(function (k) { return k.trim(); }).filter(Boolean);
+    var outcome = String(r[ISCOL.OUTCOME - 1] || '').trim();
+    out.byClient[who] = {
+      sentAt: sent.getTime(), sent: iIso_(sent),
+      respondedAt: iIso_(iDate_(r[ISCOL.RATEDAT - 1]) || iDate_(r[ISCOL.ASKEDAT - 1])),
+      rating: rated ? rating : null,
+      /* A reply is a rating, a yes or no on hearing from the agent, or one
+         of the four taps. Anything else is silence, however long ago. */
+      cameBack: rated || heard === 'Yes' || heard === 'No' || asked.length > 0,
+      low: !!iSurveyFollowUp_isLow_(rating, heard),
+      heard: heard, asked: asked,
+      followup: String(r[ISCOL.FOLLOWUP - 1] || '').trim(),
+      owner: !!String(r[ISCOL.OWNER - 1] || '').trim(),
+      closed: !!String(r[ISCOL.CLOSED - 1] || '').trim(),
+      /* intelSurveyClose writes "(none recorded)" when nobody typed one. */
+      outcome: !!outcome && outcome !== '(none recorded)',
+      optedOut: !!String(r[ISCOL.OPTOUT - 1] || '').trim()
+    };
+  });
+  return out;
+}
+
 /* ── Agents whose book should not count in the branch view ─────────────────
    Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
    writes them. Matching is on the same normalised key as everywhere else, so
@@ -5523,7 +5618,7 @@ function iBuildWall45_(target) {
   var d = iReadCols_(sh, {
     agent: ['agent'], clientNo: ['client number'], premium: ['premium'],
     issue: ['issue date'], status: ['status'], paidTo: ['paid to date'],
-    billing: ['billing type'], days: ['days']
+    billing: ['billing type'], days: ['days'], lapseDate: ['projected lapse date']
   });
 
   var today = iToday_(), DAY = 86400000;
@@ -5569,17 +5664,49 @@ function iBuildWall45_(target) {
      value they agree on. */
   var cutVotes = {};
 
-  var skip = iExcluded_(), removed = { policies: 0, prem: 0, onLine: 0 };
+  var skip = iExcluded_(), removed = { policies: 0, prem: 0, onLine: 0, lapsed: 0, bands: {} };
+
+  /* The three lines as stretches, and the letters against them — see
+     iWallBandOf_ and iWallSurveyMap_. Money is counted per policy. Anything
+     about a letter is counted per CLIENT, because a client with two policies
+     in the band got one letter and gave one answer, and counting the answer
+     twice is how a reply rate ends up over a hundred. */
+  var lanes = {};
+  IWALL_BANDS.forEach(function (b) {
+    removed.bands[b] = { policies: 0, prem: 0 };
+    lanes[b] = { policies: 0, prem: 0, clients: {}, agents: {}, ageing: {} };
+    IWALL_AGEING[b].forEach(function (rg) {
+      var k = iWallAgeingLabel_(rg);
+      lanes[b].ageing[k] = { k: k, n: 0, prem: 0, clients: {} };
+    });
+  });
+  var letters = iWallSurveyMap_();
+  /* The one number that ties this screen to the lapses slide: policies the
+     extract says lapsed in the current month. Same definition as lapsedRecent
+     on the dues screen — status 1, the projected lapse date already passed —
+     narrowed to this month. */
+  var lapsedMonth = { policies: 0, prem: 0 };
 
   for (var r = 0; r < d.rows; r++) {
-    if (String(d.get('status', r)).trim() !== '2') continue;
+    var status = String(d.get('status', r)).trim();
+    if (status === '1') {
+      var gone = iDate_(d.get('lapseDate', r)), ago = iDays_(gone, today);
+      if (gone && ago >= 0 && gone.getFullYear() === today.getFullYear() && gone.getMonth() === today.getMonth()) {
+        if (iExcludes_(skip, d.get('agent', r))) removed.lapsed++;
+        else { lapsedMonth.policies++; lapsedMonth.prem += iNum_(d.get('premium', r)); }
+      }
+      continue;
+    }
+    if (status !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
     if (!paid) continue;
     var days = Math.round((today - paid) / DAY);
     if (days <= 0 || days > 4000) continue;
+    var inBand = iWallBandOf_(days);
     if (iExcludes_(skip, d.get('agent', r))) {
       removed.policies++; removed.prem += iNum_(d.get('premium', r));
       if (days === TARGET) removed.onLine++;
+      if (inBand) { removed.bands[inBand].policies++; removed.bands[inBand].prem += iNum_(d.get('premium', r)); }
       continue;
     }
     overdue++;
@@ -5595,6 +5722,17 @@ function iBuildWall45_(target) {
       if (days === b) { bandTally[b].onLine++; bandTally[b].prem += prem; }
       if (days >= b)  { bandTally[b].past++;   bandTally[b].pastPrem += prem; }
     });
+    if (inBand) {
+      var L = lanes[inBand], who = String(d.get('clientNo', r)).trim(),
+          an = String(d.get('agent', r)).trim() || '(no agent)';
+      L.policies++; L.prem += prem;
+      if (who) L.clients[who] = 1;
+      var A = L.agents[an] || (L.agents[an] = { k: an, n: 0, prem: 0, clients: {} });
+      A.n++; A.prem += prem;
+      if (who) A.clients[who] = 1;
+      var ak = iWallAgeingOf_(inBand, days);
+      if (ak) { L.ageing[ak].n++; L.ageing[ak].prem += prem; if (who) L.ageing[ak].clients[who] = 1; }
+    }
 
     /* offset: how many days from today this policy crosses 45 */
     var off = TARGET - days;
@@ -5733,16 +5871,42 @@ function iBuildWall45_(target) {
     billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
     band: TARGET,
     bands: IWALL_BANDS.map(function (b) {
-      var x = bandTally[b];
-      return { band: b, onLine: x.onLine, prem: Math.round(x.prem * 100) / 100,
-               past: x.past, pastPrem: Math.round(x.pastPrem * 100) / 100 };
+      var x = bandTally[b], L = lanes[b], R = iWallBandRange_(b);
+      return { band: b, from: R.from, to: R.to, label: R.label,
+               onLine: x.onLine, prem: Math.round(x.prem * 100) / 100,
+               past: x.past, pastPrem: Math.round(x.pastPrem * 100) / 100,
+               /* the stretch itself */
+               policies: L.policies, premium: Math.round(L.prem * 100) / 100,
+               clients: Object.keys(L.clients).length,
+               agentCount: Object.keys(L.agents).length,
+               agents: Object.keys(L.agents).map(function (k) { return iWallLaneRow_(L.agents[k], letters); })
+                 .sort(function (p, q) { return q.n - p.n || q.prem - p.prem; }).slice(0, 12),
+               /* in the table's own order, oldest last, so the bars read as a timeline */
+               ageing: IWALL_AGEING[b].map(function (rg) { return iWallLaneRow_(L.ageing[iWallAgeingLabel_(rg)], letters); }),
+               survey: iWallLaneSurvey_(L.clients, letters),
+               excluded: { policies: removed.bands[b].policies,
+                           prem: Math.round(removed.bands[b].prem * 100) / 100 } };
     }),
+    /* What the survey tab looked like when this was built, so the screen can
+       say how many rows it set aside rather than quietly reading a dry run
+       as a campaign. */
+    letters: { rows: letters.rows, live: letters.live, ignored: letters.ignored,
+               clients: Object.keys(letters.byClient).length },
+    lapsedThisMonth: { policies: lapsedMonth.policies,
+                       prem: Math.round(lapsedMonth.prem * 100) / 100,
+                       month: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                               'August', 'September', 'October', 'November', 'December'][today.getMonth()] },
     households: households,
     /* Never silent about what an exclusion took out — see iExcluded_. */
     excluded: { names: Object.keys(iExcluded_()).length,
                 policies: removed.policies,
                 prem: Math.round(removed.prem * 100) / 100,
-                onLine: removed.onLine },
+                onLine: removed.onLine,
+                lapsed: removed.lapsed,
+                bands: IWALL_BANDS.map(function (b) {
+                  return { band: b, policies: removed.bands[b].policies,
+                           prem: Math.round(removed.bands[b].prem * 100) / 100 };
+                }) },
     /* Cross-tabs, so the wall can be clicked into without ever holding a row.
        Ship the 41 rows and a screen in a public room could be filtered down to
        one line — agent, tenure, premium — which for a cohort this small is a
@@ -5798,6 +5962,55 @@ function iWall45Cross_(sel, unitFor, BANDS, AUTO) {
   group('tenure', bandOf);
   group('billing', function (x) { return x.billing; });
   return out;
+}
+
+/* The letters folded over one set of clients — a band, one agent's share of
+   it, or one ageing bucket. Counts only.
+
+   `contacted` is OWNER or CLOSED set on the client's latest live letter. That
+   is a BRANCH follow-up recorded on the survey tab — the desk or a manager
+   picking a low answer up — and it is the only contact the system can see.
+   No field anywhere records that the AGENT rang the client, so the screen
+   must say "branch follow-up recorded" and never "contacted by the agent";
+   the difference is the whole point of the 60 lane.
+
+   `why` is worked out from the rating and the heard field, not read back
+   from the FOLLOWUP text, and OUTCOME is counted as present or absent
+   rather than published: an outcome is typed by staff and can carry a
+   client's name, and this goes to a screen with no sign-in. */
+function iWallLaneSurvey_(clientMap, letters) {
+  var s = { clients: 0, sent: 0, cameBack: 0, silent: 0, low: 0, heardNo: 0, optedOut: 0,
+            contacted: 0, notContacted: 0,
+            asked: { review: 0, issue: 0, private: 0, help: 0, stop: 0 }, askedAny: 0,
+            why: { rating: 0, notHeard: 0 }, followups: 0, open: 0, closed: 0, outcomes: 0 };
+  Object.keys(clientMap).forEach(function (who) {
+    s.clients++;
+    var L = letters.byClient[who];
+    if (!L) return;
+    s.sent++;
+    if (L.cameBack) s.cameBack++; else s.silent++;
+    if (L.low) s.low++;
+    if (L.heard === 'No') s.heardNo++;
+    if (L.optedOut) s.optedOut++;
+    if (L.asked.length) s.askedAny++;
+    L.asked.forEach(function (k) { if (s.asked.hasOwnProperty(k)) s.asked[k]++; });
+    if (L.followup) {
+      s.followups++;
+      if (L.rating !== null && L.rating <= 3) s.why.rating++;
+      else if (L.heard === 'No') s.why.notHeard++;
+      if (L.closed) s.closed++; else s.open++;
+    }
+    if (L.owner || L.closed) s.contacted++; else s.notContacted++;
+    if (L.outcome) s.outcomes++;
+  });
+  return s;
+}
+function iWallLaneRow_(o, letters) {
+  var s = iWallLaneSurvey_(o.clients, letters);
+  return { k: o.k, n: o.n, prem: Math.round(o.prem * 100) / 100, clients: s.clients,
+           sent: s.sent, cameBack: s.cameBack, silent: s.silent, low: s.low,
+           contacted: s.contacted, notContacted: s.notContacted,
+           askedAny: s.askedAny, outcomes: s.outcomes, open: s.open };
 }
 
 function iActData_(b, session) {
