@@ -6860,6 +6860,11 @@ function iBuildDelivery_() {
   for (var sr = 0; sr < d.rows; sr++) {
     var sc = iCode_(String(d.get('agentId', sr)).trim());
     if (!sc || statusOf[sc]) continue;
+    /* The same exclusion the row loop applies, applied here too. Until
+       16 September 2026 this map was built before the exclusion ran, so an
+       agent the branch had asked to leave off every wall was still counted
+       in the "N active agents" roster line — off the list, in the total. */
+    if (iExcludes_(skip, String(d.get('agent', sr)).trim())) continue;
     statusOf[sc] = { status: String(d.get('aStatus', sr)).trim() || 'Unknown',
                      ended: String(d.get('aEnd', sr)).trim() };
   }
@@ -6871,12 +6876,16 @@ function iBuildDelivery_() {
   var live = [], before = 0, beforeOldest = 0, byCat = {}, dispatchPending = 0;
   var delivered = 0, deliveredWithin = 0, deliveredBefore = 0;
   var gone = [];                         // outstanding, agent no longer active
+  var skipped = 0, skippedNames = {};    // what INTEL_EXCLUDE_AGENTS removed
 
   for (var r = 0; r < d.rows; r++) {
     var cat = String(d.get('cat', r)).trim();
     if (!cat) continue;
     var rawAgent = String(d.get('agent', r)).trim();
-    if (iExcludes_(skip, rawAgent)) continue;
+    /* Counted, not silently dropped. Every screen that excludes has to say
+       how much it removed — see iExcluded_ — and this one did not, so a book
+       handed to nobody looked like a book with nothing outstanding. */
+    if (iExcludes_(skip, rawAgent)) { skipped++; skippedNames[iNameKey_(rawAgent)] = 1; continue; }
     var code = String(d.get('agentId', r)).trim();
 
     /* No dispatch date and no year. Head office has not sent it, so it is not
@@ -7007,7 +7016,10 @@ function iBuildDelivery_() {
                 oldest: ages.length ? ages[ages.length - 1] : 0,
                 median: ages.length ? ages[Math.floor(ages.length / 2)] : 0 },
     ageing: ageing,
-    agents: agentRows.slice(0, 24),
+    /* The whole roster, not the top 24. The wall showed 18 of the 24 it was
+       handed and said so; it now measures how many rows fit on the screen it
+       is on, which only works if it is given every one. */
+    agents: agentRows,
     units: tally(function (x) { return x.unit; }),
     plans: tally(function (x) { return x.plan || '(none)'; }).slice(0, 5),
     /* Delivered, and how quickly — the only service-standard measure this
@@ -7037,6 +7049,10 @@ function iBuildDelivery_() {
                 rows: gone.map(function (x) {
                   return { agent: x.agent, status: x.status, ended: x.ended,
                            age: x.age, unit: x.unit }; }) },
+    /* Rows and distinct names INTEL_EXCLUDE_AGENTS took off this wall. The
+       names themselves are not carried — the property has them, and the wall
+       has no business printing a name it was told to leave off. */
+    excluded: { rows: skipped, agents: Object.keys(skippedNames).length },
     roster: { active: Object.keys(statusOf).filter(function (c) { return isActive(c); }).length,
               inactive: Object.keys(statusOf).filter(function (c) {
                 return /^inactive$/i.test((statusOf[c] || {}).status); }).length,
@@ -7683,6 +7699,23 @@ function iBuildPossession_() {
   if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
 
   var cabinet = [], withAgent = [], acked = 0, offBranch = 0, notActive = 0;
+  var skipped = 0, skippedNames = {};
+
+  /* EVERY STATE, PER PERSON. Until 16 September 2026 an acknowledged row
+     returned before it reached any per-agent key, so the wall could name who
+     was holding a contract unsigned but not who had got theirs signed — an
+     agent with six out and forty acknowledged read the same as one with six
+     out and none. This tally sees every row that survives the scope tests,
+     keyed on the resolved person, and the wall reads all four columns off it.
+     The three lists above still drive the ageing bands and are left as they
+     were, so the branch totals here must equal theirs — the test holds that. */
+  var full = {};
+  function person(name, code, unit) {
+    if (!full[name]) full[name] = { k: name, code: code, unit: unit, total: 0, cabinet: 0,
+                                    given: 0, acknowledged: 0, outstanding: 0,
+                                    oldest: 0, over90: 0 };
+    return full[name];
+  }
 
   rows.forEach(function (x) {
     var raw = String(x.AgentName__c || '').trim();
@@ -7691,13 +7724,30 @@ function iBuildPossession_() {
     var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
 
     if (!unit) { offBranch++; return; }          // another branch's book
-    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
+    /* Counted, not dropped on the floor: the wall has to say how much an
+       exclusion removed, or a book nobody is chasing looks like a clean one. */
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) {
+      skipped++; skippedNames[iNameKey_(name)] = 1; return;
+    }
     if (!active(code)) { notActive++; return; }
-
-    if (x.Date_Ack_Letter_Received_from_Agent__c) { acked++; return; }
 
     var got = iDate_(x.Date_Policy_Contract_Recieved__c);
     var gave = iDate_(x.Date_Contract_Given_to_Agent__c);
+    var ack = !!x.Date_Ack_Letter_Received_from_Agent__c;
+    var p = person(name, code, unit);
+    p.total++;
+    if (ack) p.acknowledged++;
+    if (gave) p.given++;
+    if (!gave && !ack) p.cabinet++;
+    if (gave && !ack) {
+      p.outstanding++;
+      var outAge = Math.round((today - gave) / DAY);
+      if (outAge > p.oldest) p.oldest = outAge;
+      if (outAge > IPOSS.OLD) p.over90++;
+    }
+
+    if (ack) { acked++; return; }
+
     if (gave) {
       withAgent.push({ agent: name, code: code, unit: unit,
                        age: Math.round((today - gave) / DAY),
@@ -7745,6 +7795,21 @@ function iBuildPossession_() {
                         .sort(function (a, b) { return a - b; });
 
   var total = cabinet.length + withAgent.length + acked;
+
+  /* Outstanding first, then the oldest of them, then who has the most still
+     on our shelf — the order a manager walks the room in. `n` is kept as an
+     alias of outstanding so the same row shape reads on every wall. */
+  var byAgentFull = Object.keys(full).map(function (k) {
+    var p = full[k]; p.n = p.outstanding; return p;
+  }).sort(function (a, b) {
+    return b.outstanding - a.outstanding || b.oldest - a.oldest ||
+           b.cabinet - a.cabinet || b.acknowledged - a.acknowledged || (a.k < b.k ? -1 : 1);
+  });
+  var states = byAgentFull.reduce(function (m, p) {
+    m.total += p.total; m.cabinet += p.cabinet; m.given += p.given;
+    m.outstanding += p.outstanding; m.acknowledged += p.acknowledged; return m;
+  }, { total: 0, cabinet: 0, given: 0, outstanding: 0, acknowledged: 0 });
+
   return {
     generatedAt: iIso_(today),
     configured: true,
@@ -7758,14 +7823,26 @@ function iBuildPossession_() {
     withAgent: stat(withAgent),
     cabinetAgeing: ageing(cabinet),
     agentAgeing: ageing(withAgent),
-    byAgent: tally(withAgent, function (x) { return x.agent; }).slice(0, 24),
+    /* No slices. The wall used to be handed the top 24 and the top 8 and
+       showed 18 and 8 of them; it now measures what fits on the screen it is
+       on and says how many it left off, which only works if it is given the
+       whole list. */
+    byAgent: tally(withAgent, function (x) { return x.agent; }),
     byUnit: tally(withAgent, function (x) { return x.unit; }),
-    cabinetBy: tally(cabinet, function (x) { return x.agent; }).slice(0, 8),
+    cabinetBy: tally(cabinet, function (x) { return x.agent; }),
+    /* Every agent with a contract received this year, in every state — the
+       per-person picture the three lists above cannot give. */
+    byAgentFull: byAgentFull,
+    states: states,
     handover: { n: handed.length,
                 median: handed.length ? handed[Math.floor(handed.length / 2)] : 0,
                 sameDay: handed.filter(function (v) { return v === 0; }).length,
                 overPromise: handed.filter(function (v) { return v > promise; }).length },
-    excluded: { offBranch: offBranch, notActive: notActive }
+    /* `rows` and `agents` are what INTEL_EXCLUDE_AGENTS removed — the same two
+       keys the delivery wall publishes, so both screens can say it the same
+       way. Nobody's name is carried; the property already has them. */
+    excluded: { offBranch: offBranch, notActive: notActive,
+                rows: skipped, agents: Object.keys(skippedNames).length }
   };
 }
 
