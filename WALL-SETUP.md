@@ -13,6 +13,8 @@ Salesforce connection and the same Apps Script feed:
 | **Branch board** | `/board/` | the whole branch — book, renewals, claims, pipeline |
 | **Production wall** | `/board/production.html` | policies **picked up for production** — this week, this month, year to date |
 | **Production dashboard** | `/board/dashboard.html` | the interactive view — periods, teams, sortable advisors, held-back deep dive, data health |
+| **Renewals wall** | `/renewals/` | **this month's motor & property renewals** — due, renewed, premiums, tasks, next month |
+| **Renewals dashboard** | `/renewals/dashboard.html` | the interactive desk view — line/status filters, sortable register, values, trend, people |
 
 **The basis everywhere is the branch report's "Total API": `Total_API__c`
 (client portfolio, on the production picked-up date) plus `API_Increase__c`
@@ -110,6 +112,98 @@ Seven slides at `/board/`, fourteen seconds each:
 
 Everything on screen comes out of Salesforce: `Risk_Details__c`,
 `Claims_Revised__c`, `Opportunity` and `Submission__c`.
+
+## The renewals wall
+
+Twelve slides at `/renewals/`, fourteen seconds each — the month's renewal book
+as a working wall:
+
+1. **The month, right now** — due / renewed / still open / overdue, with the
+   day-of-month progress bar
+2. **The month on one line** — every renewal on a date rail, dot size =
+   premium, blue = motor, gold = property, a green ring = already re-written
+   in Salesforce, dashed line = today
+3. **Motor** — every vehicle due, cover type, status chip, premium
+4. **Property** — every property risk due, private/commercial, premium
+5. **Values · motor comprehensive** — last year's insured value against this
+   year's, whether the renewal took the prepared step-down, and the benefits
+   on each policy (windscreen cover, Waiver of Excess)
+6. **Values · property** — each sum insured, how many years it has sat
+   unchanged, what it is worth today at +5%/yr rebuilding drift, and the
+   riders on file
+7. **The year so far · motor** — Jan→now stacked by month: renewed, still
+   open, lost, sold, with the retention percentage under each month and the
+   gained-vs-lost picture beside it
+8. **Whom we are losing** — how concentrated the losses are, and the recent
+   walked renewals (weeks old, still recoverable), biggest first
+9. **Who is managing the renewals** — renewals processed per person (from
+   `CreatedBy` on each new cycle), open renewal tasks per owner, and how
+   much of the written premium has a payment recorded against it
+10. **The money** — motor vs property split, the biggest renewals, and
+    re-written vs collected (reads `Payments_Made__c` on the new cycle —
+    blank until payments are posted, and the wall says so)
+11. **The work behind it** — open Tasks by owner and status, plus the renewal
+    chase ladder (payment follow-ups, waiting renewals), genericised
+12. **Already knocking** — next month's count and premium, by line
+
+The registers also tie each renewal to its workload and money: a **Tasks**
+column counts open Salesforce Tasks on the risk record or the client's
+account (counts only — task subjects carry client names and never ship), and
+a **Paid** column reads `Payments_Made__c` on the renewed cycle ("not
+recorded" until a receipt is posted). "Lost" in the trend means the renewal
+date passed with no next-cycle row and the vehicle not marked Sold; the
+distinct-vehicle count is shown beside the row count because the register
+carries some vehicles twice.
+
+**The values conversation, in fields:** comprehensive motor values step DOWN —
+`Cover1__c` against the prior cycle, with the register's own prepared options
+`Depreciation_10_Option_1__c` / `Depreciation_15_Option_2__c` as the guide
+(never `Depreciation__c`, which is the parts clause — see RENEWAL-SETUP).
+A value equal to last year's is flagged: premium is being paid on money a
+claim would not pay out. Each comprehensive vehicle also carries a **market
+check** — the asking-price band for the same year and model on the T&T
+classifieds (Pin.tt, TT Motor Sales, Car Junction), read by hand at snapshot
+time and baked into the `values.motor` rows (`mkt:{lo,hi}`). It is a guide
+for the conversation, never a figure filed for the client: the client
+confirms their own number and the approved valuation certificate is what
+binds. There is no automated scraping — refresh the bands when you refresh
+the snapshot; live-feed rows without `mkt` simply don't show the chip.
+Property sums insured only go stale —
+`Total_Property_Cover__c` compared across the account's history; unchanged
+4+ years is flagged with the +5%/yr suggested figure (the RenewalLines
+drift), because average cuts every claim on an underinsured risk. Riders
+(burglary, stock, contents, liability, pool, electronics, WC) are read off
+the current row and shown as chips; blank riders show "confirm at renewal".
+
+**How "renewed" is decided:** a renewal counts as renewed when its next-cycle
+`Risk_Details__c` row exists — a record with the same vehicle registration
+(motor) or policy number (property) whose `From__c` is on/after the due date.
+Rows are matched one-to-one, so three risks on one policy need three new rows.
+`Vehicle_Status__c` other than Current (e.g. Sold) shows as leaving the book.
+
+Same rules as everything else here: the baked snapshot is **fully anonymous**
+(risk types, dates, amounts — no names, policy numbers, registrations or
+addresses); the live feed adds first name + last initial only. Task subjects
+are **never** shipped raw — staff write client names and policy numbers into
+them — the feed reduces them to a kind and a date. Staff names on the task
+slide are branch staff and belong on a wall.
+
+**The dashboard** (`/renewals/dashboard.html`) is the same data as a desk
+view instead of a rotation: line and status filter chips that recompute the
+KPI row, a merged motor+property register sortable by due date or premium,
+the values panels, the year trend, the losing and people panels, and next
+month. **▶ Run** cycles section to section every 12 seconds like a wall;
+any scroll, click or key hands control back. The wall and the dashboard
+carry the same baked snapshot — refresh both files together.
+
+The live feed is the same `/exec` as the other boards — `wbBuild_()` now
+carries a `renewalsWall` block (`wbRenewalsWall_()` in
+`apps-script/WallBoard.gs`). Paste the URL into `WALL_DATA_URL` at the top of
+`renewals/index.html` **and** `renewals/dashboard.html` and the badge flips
+to **Live**; if the deployed script predates the block, both just stay on
+their snapshot. Refresh the snapshot by re-running the queries documented in
+`wbRenewalsWall_()` and updating the `WALL_DATA` block — and keep it
+anonymous when you do.
 
 ## It works the moment it's deployed
 

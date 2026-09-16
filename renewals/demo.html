@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renewals — Staff Walkthrough | Ricky Rampersad Branch</title>
+<meta name="description" content="A guided, clickable walkthrough of the renewal system for branch staff. Sample data only — nothing here sends an email or touches a client file.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Same design system as the renewals wall and /board/ — on a screen beside
+     them this must read as the same product. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --teal:#0fb5a5;
+    --good:#34d399; --warn:#fbbf24; --bad:#fb7185; --gold:#f5b93b;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 12% -8%,rgba(55,177,236,.22),transparent 60%),
+      radial-gradient(900px 600px at 92% 4%,rgba(11,127,212,.20),transparent 62%),
+      radial-gradient(800px 700px at 60% 108%,rgba(15,181,165,.13),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:14px;
+    padding:13px 24px;background:rgba(6,25,45,.88);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:16.5px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  .demo-badge{margin-left:auto;font-size:11px;font-weight:750;letter-spacing:.12em;text-transform:uppercase;
+    color:#07131f;background:var(--grad-gold);padding:6px 13px;border-radius:999px}
+
+  .rail{position:sticky;top:67px;z-index:35;display:flex;gap:6px;padding:12px 24px;
+    background:linear-gradient(#061c31f2,#061c31d0);overflow-x:auto}
+  .rail b{font:650 12px var(--font-b);color:var(--dim);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;white-space:nowrap;transition:.25s var(--ease)}
+  .rail b:hover{color:var(--ink)}
+  .rail b.on{color:#07131f;background:var(--grad);border-color:transparent;font-weight:750}
+  .rail b .num{opacity:.6;margin-right:5px}
+
+  .wrap{max-width:1060px;margin:0 auto;padding:28px 24px 90px}
+  .step{display:none;animation:in .45s var(--ease)}
+  .step.on{display:block}
+  @keyframes in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  .kick{font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--blue);font-weight:700;margin-bottom:9px}
+  h2{margin:0 0 10px;font-family:var(--font-d);font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+  .lede{font-size:16.5px;color:var(--dim);line-height:1.6;max-width:760px;margin:0 0 24px}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 24px;margin-bottom:16px}
+  .panel h3{margin:0 0 14px;font-family:var(--font-d);font-size:15px;font-weight:750}
+  .grid{display:grid;gap:14px}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:1fr 1fr}
+  .kpi{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+  .kpi .v{font-family:var(--font-d);font-size:36px;font-weight:800;letter-spacing:-1.4px;line-height:1;
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .kpi.gold .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text}
+  .kpi .k{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);font-weight:650;margin-top:9px}
+  .kpi .d{font-size:12.5px;color:var(--dim);margin-top:6px}
+
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  th{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);font-weight:650;text-align:left;padding:0 11px 9px}
+  td{padding:10px 11px;border-top:1px solid var(--line)}
+  td:last-child,th:last-child{text-align:right}
+  tr{transition:background .3s var(--ease)}
+  tr.done{background:rgba(52,211,153,.09)}
+  .chip{display:inline-block;font-size:11.5px;font-weight:650;padding:3px 11px;border-radius:999px;
+    border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--dim);white-space:nowrap}
+  .chip.good{color:var(--good);border-color:rgba(52,211,153,.38)}
+  .chip.warn{color:var(--warn);border-color:rgba(251,191,36,.38)}
+  .chip.bad{color:var(--bad);border-color:rgba(251,113,133,.38)}
+  .chip.blue{color:var(--blue);border-color:rgba(55,177,236,.38)}
+
+  .btn{font:700 13px var(--font-b);color:#07131f;background:var(--grad-gold);border:none;
+    border-radius:10px;padding:9px 15px;cursor:pointer;transition:.2s var(--ease)}
+  .btn:hover{filter:brightness(1.08)}
+  .btn:active{transform:translateY(1px)}
+  .btn:disabled{opacity:.45;cursor:default;filter:none}
+  .btn.ghost{background:rgba(255,255,255,.08);color:var(--ink);border:1px solid var(--line)}
+  .nav{display:flex;gap:10px;align-items:center;margin-top:26px}
+  .nav .sp{margin-left:auto;font-size:12.5px;color:var(--faint)}
+
+  .note{font-size:13px;color:var(--warn);background:rgba(251,191,36,.07);
+    border:1px solid rgba(251,191,36,.25);border-radius:11px;padding:11px 15px;margin-top:14px}
+  .note.plain{color:var(--dim);background:rgba(255,255,255,.04);border-color:var(--line)}
+  .note.good{color:var(--good);background:rgba(52,211,153,.07);border-color:rgba(52,211,153,.25)}
+
+  .phone{max-width:340px;margin:0 auto;background:#07131f;border:1px solid var(--line);
+    border-radius:26px;padding:16px 15px;box-shadow:0 18px 50px rgba(0,0,0,.4)}
+  .phone .ph-h{display:flex;align-items:center;gap:9px;padding-bottom:11px;border-bottom:1px solid var(--line)}
+  .phone .ph-h i{width:26px;height:26px;border-radius:8px;background:var(--grad-gold);display:block}
+  .phone .ph-h b{font:800 12.5px var(--font-d)}
+  .phone .ln{font-size:12.5px;color:var(--dim);margin:11px 0}
+  .phone .big{font-family:var(--font-d);font-size:21px;font-weight:800;color:var(--ink)}
+  .loyal{background:rgba(245,185,59,.1);border:1px solid rgba(245,185,59,.3);border-radius:10px;
+    padding:9px 12px;font-size:12.5px;color:var(--gold);margin:11px 0}
+
+  .tabs{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap}
+  .tabs b{font:650 12.5px var(--font-b);color:var(--dim);background:rgba(255,255,255,.06);
+    border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer}
+  .tabs b.on{color:#07131f;background:var(--grad);border-color:transparent;font-weight:750}
+
+  .check{display:flex;align-items:flex-start;gap:11px;padding:12px 0;border-top:1px solid var(--line);cursor:pointer}
+  .check:first-child{border-top:none}
+  .check i{width:22px;height:22px;flex:none;border-radius:7px;border:2px solid var(--line);
+    display:grid;place-items:center;font-size:13px;color:transparent;transition:.2s var(--ease)}
+  .check.on i{background:var(--good);border-color:var(--good);color:#07131f}
+  .check b{display:block;font-size:14.5px;font-weight:650}
+  .check span{display:block;font-size:13px;color:var(--dim);margin-top:3px;line-height:1.5}
+
+  #toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,80px);z-index:90;
+    background:var(--good);color:#07131f;font:700 13.5px var(--font-b);padding:12px 20px;border-radius:12px;
+    box-shadow:0 12px 34px rgba(0,0,0,.4);opacity:0;transition:.4s var(--ease);pointer-events:none}
+  #toast.on{transform:translate(-50%,0);opacity:1}
+
+  footer{max-width:1060px;margin:0 auto;padding:0 24px 34px;font-size:11.5px;color:var(--faint)}
+  @media(max-width:820px){ .g3,.g2{grid-template-columns:1fr} h2{font-size:26px} }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div>
+    <h1>Renewals — Staff Walkthrough</h1>
+    <div class="sub">Ricky Rampersad Branch · Guardian Group</div>
+  </div>
+  <span class="demo-badge">Demo · sample data</span>
+</header>
+
+<div class="rail" id="rail"></div>
+
+<div class="wrap">
+
+  <!-- 1 ───────────────────────────────────────────────── -->
+  <section class="step on">
+    <div class="kick">Why this exists</div>
+    <h2>A renewal is a phone call we either make, or lose.</h2>
+    <p class="lede">Nothing about our book is broken. What slips is the <b>follow-up</b> — the call that doesn't get made because nobody could see, on a Monday morning, which twenty clients were up this fortnight. This system makes that list, sends the first contact for you, and shows who has answered.</p>
+
+    <div class="grid g3">
+      <div class="kpi"><div class="v">151</div><div class="k">Motor renewals due this year</div><div class="d">to the end of September</div></div>
+      <div class="kpi gold"><div class="v">88</div><div class="k">Renewed</div><div class="d">58% of the book</div></div>
+      <div class="kpi"><div class="v">49</div><div class="k">Walked</div><div class="d">TT$169.6k of premium</div></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <h3>What the year actually looked like</h3>
+      <p style="font-size:14.5px;color:var(--dim);line-height:1.65;margin:0">
+        Retention was <b style="color:var(--good)">81% in January</b>. By March and April it was <b style="color:var(--bad)">47% and 45%</b>. By August it was back to <b style="color:var(--good)">79%</b>.
+        The book didn't change in those months. The <b>calling</b> did. That swing is worth about <b>TT$85,000</b> a year,
+        and it is the entire reason this exists.
+      </p>
+      <div class="note plain">Every figure on this page is real, taken from Salesforce — except the client names, which are invented. Nothing here can send an email or change a policy.</div>
+    </div>
+    <div class="nav"><button class="btn" data-go="1">Next — what the client sees →</button><span class="sp">1 of 5</span></div>
+  </section>
+
+  <!-- 2 ───────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="kick">Their side</div>
+    <h2>The client gets a link, not a form.</h2>
+    <p class="lede">One tap from the renewal e-mail opens their own page. No password, no app, no branch visit. They see what they have, what it costs, how long they've been with us — and they answer in about two minutes.</p>
+
+    <div class="tabs" id="cTabs">
+      <b class="on" data-c="comp">Comprehensive motor</b>
+      <b data-c="tp">Third party motor</b>
+      <b data-c="prop">Property</b>
+    </div>
+
+    <div class="grid g2">
+      <div class="phone" id="phone"></div>
+      <div>
+        <div class="panel" id="cWhy"></div>
+        <div class="note good">Because they answer on their own page, their instruction lands in writing — with a timestamp and an audit trail. Nobody has to remember what was agreed on a call.</div>
+      </div>
+    </div>
+    <div class="nav"><button class="btn ghost" data-go="0">← Back</button><button class="btn" data-go="2">Next — your dashboard →</button><span class="sp">2 of 5</span></div>
+  </section>
+
+  <!-- 3 ───────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="kick">Your side · try it</div>
+    <h2>Your Monday list, and one click each.</h2>
+    <p class="lede">Sign in once with your work e-mail and your access code. Filter to <b>Due in 14 days</b> and you have the fortnight's calls in front of you. <b>Click a Send button below</b> — this is exactly how it behaves, without sending anything.</p>
+
+    <div class="panel">
+      <h3>Renewal pipeline — due in the next 14 days</h3>
+      <table>
+        <thead><tr><th>Due</th><th>Client</th><th>Risk</th><th>Premium</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="pipe"></tbody>
+      </table>
+      <div class="note plain" id="pipeNote">Sample clients — invented names, real shapes. Nothing is sent.</div>
+    </div>
+
+    <div class="grid g3">
+      <div class="kpi"><div class="v" id="mSent">0</div><div class="k">Invites you've sent</div><div class="d">in this demo</div></div>
+      <div class="kpi gold"><div class="v" id="mLeft">6</div><div class="k">Still to contact</div><div class="d">this fortnight</div></div>
+      <div class="kpi"><div class="v" id="mMin">0</div><div class="k">Minutes spent</div><div class="d">about 15 seconds each</div></div>
+    </div>
+    <div class="nav"><button class="btn ghost" data-go="1">← Back</button><button class="btn" data-go="3">Next — the branch wall →</button><span class="sp">3 of 5</span></div>
+  </section>
+
+  <!-- 4 ───────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="kick">The wall</div>
+    <h2>The screen everyone walks past.</h2>
+    <p class="lede">The same numbers, on a rotating board for the branch. Nobody has to ask how the month is going — and nobody has to build a report to answer it.</p>
+
+    <div class="grid g2">
+      <div class="panel">
+        <h3>What rotates on it</h3>
+        <div style="font-size:14px;line-height:2;color:var(--dim)">
+          The month at a glance · every renewal on a date rail · the motor register · the property register ·
+          <b style="color:var(--ink)">values — motor</b> (last year's insured value against this year's, and the market check) ·
+          <b style="color:var(--ink)">values — property</b> (how stale each sum insured is) ·
+          the year's trend · whom we're losing · who's processing the renewals · the money · open tasks · next month.
+        </div>
+      </div>
+      <div class="panel">
+        <h3>See it yourself</h3>
+        <p style="font-size:14px;color:var(--dim);line-height:1.65">Both are live on the branch site right now, and both work on a phone.</p>
+        <p style="margin:14px 0 0"><a class="btn" href="./" style="text-decoration:none;display:inline-block">Open the wall</a>
+        <a class="btn ghost" href="./dashboard.html" style="text-decoration:none;display:inline-block;margin-left:8px">Open the dashboard</a></p>
+        <div class="note plain">On the wall: ←/→ changes slide, space pauses, <b>F</b> is full screen. On the dashboard, <b>▶ Run</b> cycles it like a wall until you touch it.</div>
+      </div>
+    </div>
+    <div class="nav"><button class="btn ghost" data-go="2">← Back</button><button class="btn" data-go="4">Last — what we need from you →</button><span class="sp">4 of 5</span></div>
+  </section>
+
+  <!-- 5 ───────────────────────────────────────────────── -->
+  <section class="step">
+    <div class="kick">Your part</div>
+    <h2>Three habits, and the system runs itself.</h2>
+    <p class="lede">None of this works on its own. These are the three things that have to happen in Salesforce for the board to tell the truth — tick them as we go through.</p>
+
+    <div class="panel" id="habits"></div>
+
+    <div class="panel">
+      <h3>Why the third one matters most</h3>
+      <p style="font-size:14.5px;color:var(--dim);line-height:1.65;margin:0">
+        This year we re-wrote <b style="color:var(--good)">TT$322,800</b> of premium. Payments are recorded against
+        <b style="color:var(--warn)">TT$30,700</b> of it — about <b>10%</b>. The money is almost certainly collected;
+        it just isn't on the record. Until a receipt is posted, the board can't count it, and neither can head office.
+      </p>
+    </div>
+
+    <div class="note good">Questions, or something doesn't look right on your list? Tell Ricky — a wrong figure on a wall everyone walks past is worse than no wall, so say so early.</div>
+    <div class="nav"><button class="btn ghost" data-go="3">← Back</button><button class="btn" data-go="0">Start again</button><span class="sp">5 of 5</span></div>
+  </section>
+
+</div>
+
+<footer id="src"></footer>
+<div id="toast"></div>
+
+<script>
+var $=function(s){return document.querySelector(s)};
+var STEPS=["Why this exists","What the client sees","Your dashboard","The branch wall","Your part"];
+
+/* rail */
+var rail=$("#rail");
+rail.innerHTML=STEPS.map(function(s,i){
+  return '<b data-go="'+i+'"'+(i===0?' class="on"':'')+'><span class="num">'+(i+1)+'</span>'+s+'</b>';
+}).join("");
+function go(i){
+  document.querySelectorAll(".step").forEach(function(s,j){s.classList.toggle("on",j===i)});
+  document.querySelectorAll("#rail b").forEach(function(b,j){b.classList.toggle("on",j===i)});
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.addEventListener("click",function(e){
+  var t=e.target.closest("[data-go]"); if(!t) return;
+  go(Number(t.getAttribute("data-go")));
+});
+
+/* toast */
+var tTimer=null;
+function toast(msg){
+  var el=$("#toast"); el.textContent=msg; el.classList.add("on");
+  clearTimeout(tTimer); tTimer=setTimeout(function(){el.classList.remove("on")},2600);
+}
+
+/* ── step 2 · the client's page ── */
+var CLIENTS={
+  comp:{
+    head:"Your motor renewal", who:"Anisa M.", policy:"Comprehensive · Honda Civic",
+    due:"14 September", prem:"TT$5,109", years:6,
+    rows:[["Insured for","TT$112,500"],["Windscreen","TT$10,000"],["Waiver of Excess","On the policy"]],
+    why:"<h3>What they're asked</h3><p style='font-size:14px;color:var(--dim);line-height:1.7;margin:0'>A comprehensive vehicle <b style='color:var(--ink)'>loses value every year</b>, so the page shows what it was insured for last year, what it is insured for now, and a guide range for this year — built from that vehicle's own history. <b style='color:var(--ink)'>They type the figure, never us.</b> Insuring above market value means paying premium on money a claim will never pay out.</p>"
+  },
+  tp:{
+    head:"Your motor renewal", who:"Devon R.", policy:"Third party · Nissan",
+    due:"18 September", prem:"TT$1,232", years:4,
+    rows:[["Cover","Third party only"],["Windscreen","Not yet added"],["NCD","Protected"]],
+    why:"<h3>What they're asked</h3><p style='font-size:14px;color:var(--dim);line-height:1.7;margin:0'>Nothing to value — it's confirm and go. The only two things we offer are the <b style='color:var(--ink)'>new windscreen cover</b> (a cracked windscreen used to come entirely out of their pocket) and a free comprehensive comparison. Both are one tick. Third party is where most of our losses happen, because a small premium slips quietly when nobody calls.</p>"
+  },
+  prop:{
+    head:"Your property renewal", who:"Marlon B.", policy:"Homeowner · Chaguanas",
+    due:"16 September", prem:"TT$12,985", years:5,
+    rows:[["Sum insured","TT$3,500,000"],["Unchanged for","5 years"],["Worth today","≈ TT$4,470,000"]],
+    why:"<h3>What they're asked</h3><p style='font-size:14px;color:var(--dim);line-height:1.7;margin:0'>Property goes the <b style='color:var(--ink)'>other way</b> — rebuilding costs rise about 5% a year. A sum insured that hasn't moved in five years is the dangerous one, because of the <b style='color:var(--ink)'>average clause</b>: insured at TT$3.5m when it would cost TT$4.5m to rebuild, a TT$100,000 kitchen fire pays about <b style='color:var(--bad)'>TT$78,000</b>. Not just a total loss — <b>every</b> claim.</p>"
+  }
+};
+function drawClient(k){
+  var c=CLIENTS[k];
+  $("#phone").innerHTML=
+    '<div class="ph-h"><i></i><b>Guardian Renewals</b></div>'
+    +'<div class="ln">'+c.head+'</div>'
+    +'<div class="big">'+c.who+'</div>'
+    +'<div class="ln">'+c.policy+'</div>'
+    +'<div class="loyal">🏆 Insured with us since 20'+(26-c.years)+' — <b>'+c.years+' years</b>. Thank you.</div>'
+    +'<table style="font-size:12.5px">'+c.rows.map(function(r){
+        return '<tr><td style="color:var(--faint);padding:7px 0">'+r[0]+'</td><td style="text-align:right;padding:7px 0"><b>'+r[1]+'</b></td></tr>';
+      }).join("")+'</table>'
+    +'<div class="ln" style="margin-top:12px">Renews <b style="color:var(--ink)">'+c.due+'</b> · '+c.prem+'</div>'
+    +'<div style="display:flex;gap:7px;margin-top:12px">'
+    +'<span class="chip good" style="flex:1;text-align:center">✅ Renew</span>'
+    +'<span class="chip" style="flex:1;text-align:center">✏️ Changes</span>'
+    +'<span class="chip" style="flex:1;text-align:center">📞 Call me</span></div>';
+  $("#cWhy").innerHTML=c.why;
+}
+$("#cTabs").addEventListener("click",function(e){
+  var b=e.target.closest("b"); if(!b) return;
+  document.querySelectorAll("#cTabs b").forEach(function(x){x.classList.remove("on")});
+  b.classList.add("on"); drawClient(b.getAttribute("data-c"));
+});
+drawClient("comp");
+
+/* ── step 3 · the pipeline you can click ── */
+var PIPE=[
+  {d:"12 Sep", who:"Anisa M.",   risk:"Motor · third party",  prem:"TT$992",    st:"due"},
+  {d:"13 Sep", who:"Devon R.",   risk:"Motor · third party",  prem:"TT$1,443",  st:"due"},
+  {d:"14 Sep", who:"Priya S.",   risk:"Motor · comprehensive",prem:"TT$5,109",  st:"due"},
+  {d:"16 Sep", who:"Marlon B.",  risk:"Property · homeowner", prem:"TT$12,985", st:"due"},
+  {d:"17 Sep", who:"Kalifa J.",  risk:"Property · all risk",  prem:"TT$20,776", st:"due"},
+  {d:"18 Sep", who:"Terrence A.",risk:"Motor · third party",  prem:"TT$2,130",  st:"overdue"},
+];
+var sent=0;
+function drawPipe(){
+  $("#pipe").innerHTML=PIPE.map(function(r,i){
+    var status=r.done?'<span class="chip good">Invited ✓</span>'
+      :r.st==="overdue"?'<span class="chip bad">Overdue — call</span>'
+      :'<span class="chip warn">Due soon</span>';
+    var act=r.done?'<span class="chip good">Sent</span>'
+      :'<button class="btn" data-send="'+i+'">✉ Send invite</button>';
+    return '<tr'+(r.done?' class="done"':'')+'><td>'+r.d+'</td><td><b>'+r.who+'</b></td><td>'+r.risk+'</td><td>'+r.prem+'</td><td>'+status+'</td><td>'+act+'</td></tr>';
+  }).join("");
+  $("#mSent").textContent=sent;
+  $("#mLeft").textContent=PIPE.length-sent;
+  $("#mMin").textContent=(sent*0.25).toFixed(2).replace(/\.00$/,"0");
+  if(sent===PIPE.length){
+    $("#pipeNote").innerHTML='<b style="color:var(--good)">That is the fortnight cleared</b> — six clients contacted in about a minute and a half. Every one of them is now logged against your name on the audit trail.';
+  }
+}
+document.addEventListener("click",function(e){
+  var b=e.target.closest("[data-send]"); if(!b) return;
+  var i=Number(b.getAttribute("data-send"));
+  if(PIPE[i].done) return;
+  PIPE[i].done=true; sent++;
+  drawPipe();
+  toast("Invite sent to "+PIPE[i].who+"  ·  demo only, no email left the building");
+});
+drawPipe();
+
+/* ── step 5 · the three habits ── */
+var HABITS=[
+  ["Send the invite, or make the call","Filter to <b>Due in 14 days</b> and work the list. The system sends the reminders on its own at 30, 14 and 7 days — but a client who hasn't answered by the due date needs a person, not another e-mail."],
+  ["Write the new cycle in Salesforce","A renewal only counts when the next-cycle record exists. That record is what turns the client green on the board, and it carries your name as the person who did it."],
+  ["Post the payment when it comes in","Put the receipt against the policy. If it isn't recorded, the board shows the premium as outstanding — and right now that's true of about 90% of what we've re-written this year."]
+];
+$("#habits").innerHTML=HABITS.map(function(h,i){
+  return '<div class="check" data-h="'+i+'"><i>✓</i><div><b>'+(i+1)+'. '+h[0]+'</b><span>'+h[1]+'</span></div></div>';
+}).join("");
+$("#habits").addEventListener("click",function(e){
+  var c=e.target.closest(".check"); if(!c) return;
+  c.classList.toggle("on");
+  if(document.querySelectorAll("#habits .check.on").length===HABITS.length) toast("That's the whole job. Everything else is automatic.");
+});
+
+$("#src").textContent="Walkthrough for branch staff · figures from Salesforce, client names invented · nothing on this page sends an email or changes a record";
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

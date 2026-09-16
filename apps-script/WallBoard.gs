@@ -103,35 +103,475 @@ function wbBuild_() {
       'SELECT Carrier__c k, COUNT(Id) n FROM Risk_Details__c ' +
       'WHERE CreatedDate = LAST_N_MONTHS:12 GROUP BY Carrier__c ORDER BY COUNT(Id) DESC'
     ).map(function (r) { return { k: r.k || 'Not recorded', n: r.n }; }),
+    // NB: SOQL only allows field aliases in aggregate queries — plain
+    // queries must use the API names and read them off the record verbatim.
     renewals: wbQ_(
-      'SELECT Contact_First_Name__c f, Last_Name__c l, Vehicle_Make__c mk, Policy__c p, ' +
-      'Next_Renewal_Date__c d, Billing_Premiums__c prem FROM Risk_Details__c ' +
+      'SELECT Contact_First_Name__c, Last_Name__c, Vehicle_Make__c, Policy__c, ' +
+      'Next_Renewal_Date__c, Billing_Premiums__c FROM Risk_Details__c ' +
       'WHERE Next_Renewal_Date__c >= TODAY AND Next_Renewal_Date__c <= NEXT_N_DAYS:45 ' +
       'ORDER BY Next_Renewal_Date__c LIMIT 10'
     ).map(function (r) {
       return {
-        who: wbMask_(r.f, r.l),
-        what: r.mk ? r.mk + ' · motor' : wbRiskLabel_(r.p),
-        when: r.d, prem: Math.round(r.prem || 0)
+        who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c),
+        what: r.Vehicle_Make__c ? r.Vehicle_Make__c + ' · motor' : wbRiskLabel_(r.Policy__c),
+        when: r.Next_Renewal_Date__c, prem: Math.round(r.Billing_Premiums__c || 0)
       };
     }),
     claimTypes: claimTypes,
     oldestClaims: wbQ_(
-      'SELECT Claim_Reference__c ref, Claim_Type__c t, Days_Pending__c d FROM Claims_Revised__c ' +
+      'SELECT Claim_Reference__c, Claim_Type__c, Days_Pending__c FROM Claims_Revised__c ' +
       "WHERE Claim_Status__c = 'Opened' ORDER BY Days_Pending__c DESC NULLS LAST LIMIT 6"
     ).map(function (r) {
-      return { ref: r.ref || '(no reference)', type: r.t || 'Unclassified', days: Math.round(r.d || 0) };
+      return { ref: r.Claim_Reference__c || '(no reference)', type: r.Claim_Type__c || 'Unclassified',
+               days: Math.round(r.Days_Pending__c || 0) };
     }),
     topOpps: wbQ_(
-      'SELECT Name, StageName s, Amount a FROM Opportunity WHERE IsClosed = false ' +
+      'SELECT Name, StageName, Amount FROM Opportunity WHERE IsClosed = false ' +
       'ORDER BY Amount DESC NULLS LAST LIMIT 7'
     ).map(function (r) {
-      return { name: wbOppLabel_(r.Name), stage: r.s, amt: Math.round(r.a || 0) };
+      return { name: wbOppLabel_(r.Name), stage: r.StageName, amt: Math.round(r.Amount || 0) };
     }),
     legacy: wbLegacy_(),
     production: wbProduction_(),
     dashboardAdvisors: wbDashboard_(),
-    settlement: wbSettlement_()
+    settlement: wbSettlement_(),
+    renewalsWall: wbRenewalsWall_()
+  };
+}
+
+/* ===================== renewals wall (/renewals/) =====================
+   This month's motor + property renewals with renewed/paid state, the open
+   task picture, and next month's preview. Same privacy line as the rest of
+   the live feed: clients as first name + last initial, no policy numbers,
+   no registrations, no addresses — and task subjects are never shipped raw,
+   because staff write client names into them. */
+
+function wbRenewalsWall_() {
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth();
+  var names = ['January','February','March','April','May','June','July',
+               'August','September','October','November','December'];
+  function norm(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+
+  // NB: plain (non-aggregate) SOQL cannot alias fields — API names throughout.
+  var due = wbQ_(
+    "SELECT Name, Contact_First_Name__c, Last_Name__c, RecordType.Name, Policy__c, " +
+    "Vehicle__c, Vehicle_Make__c, Model__c, Motor_Vehicle_Coverage_Type__c, " +
+    "Vehicle_Status__c, Property_Type__c, Next_Renewal_Date__c, Billing_Premiums__c, " +
+    "Cover1__c, Depreciation_10_Option_1__c, Depreciation_15_Option_2__c, " +
+    "Windscreen__c, Waiver_of_Excess__c, Total_Property_Cover__c, Account__c, Risk_Location__c, " +
+    "Burglary__c, Stock__c, General_Contents__c, Public_Liability_Cover__c, " +
+    "Swimming_Pool__c, Electronic_Equipment__c, WC_Cover__c " +
+    "FROM Risk_Details__c WHERE Next_Renewal_Date__c = THIS_MONTH " +
+    "AND RecordType.Name IN ('Motor','Property') ORDER BY Next_Renewal_Date__c"
+  );
+
+  // Next-cycle rows written recently: the proof a renewal has been renewed.
+  // Consumed as they match, so three risks on one policy need three rows.
+  var succ = wbQ_(
+    "SELECT Policy__c, Vehicle__c, From__c, Billing_Premiums__c, Payments_Made__c, " +
+    "Cover1__c, Windscreen__c " +
+    "FROM Risk_Details__c WHERE From__c >= LAST_N_DAYS:60 " +
+    "AND RecordType.Name IN ('Motor','Property') ORDER BY From__c"
+  );
+  function successorOf(r) {
+    for (var i = 0; i < succ.length; i++) {
+      var s = succ[i];
+      if (!s.From__c || s.From__c < r.Next_Renewal_Date__c) continue; // new cycle starts on/after the due date
+      var hit = (r.Vehicle__c && s.Vehicle__c) ? norm(s.Vehicle__c) === norm(r.Vehicle__c)
+              : (r.Policy__c && s.Policy__c) ? norm(s.Policy__c) === norm(r.Policy__c) : false;
+      if (hit) { succ.splice(i, 1); return s; }
+    }
+    return null;
+  }
+  function propKind(policy) {
+    var p = norm(policy);
+    if (p.indexOf('FHO') > -1) return 'Homeowner';
+    if (p.indexOf('FAR') > -1) return 'All risk';
+    if (p.indexOf('FCP') > -1) return 'Commercial package';
+    return 'Property';
+  }
+
+  // Open tasks hanging off this month's renewals — matched on the risk
+  // record itself or the client's account. Counts only; subjects carry
+  // client names and never leave this script.
+  var linkedTasks = wbQ_(
+    "SELECT What.Name, What.Type FROM Task WHERE IsClosed = false " +
+    "AND (What.Type = 'Risk_Details__c' OR What.Type = 'Account') LIMIT 400"
+  );
+  function taskCount(riskName, account) {
+    var n = 0;
+    linkedTasks.forEach(function (t) {
+      var wn = (t.What && t.What.Name) || '';
+      if (!wn) return;
+      if (wn === riskName || (account && norm(wn) === norm(account))) n++;
+    });
+    return n;
+  }
+
+  var motor = [], property = [], valMotor = [], valProperty = [];
+  var compRegs = [], propDue = [];
+  due.forEach(function (r) {
+    var s = successorOf(r);
+    var who = wbMask_(r.Contact_First_Name__c, r.Last_Name__c);
+    var row = { d: r.Next_Renewal_Date__c, who: who,
+                prem: Math.round((r.Billing_Premiums__c || 0) * 100) / 100 };
+    var tn = taskCount(r.Name, r.Account__c);
+    if (tn) row.tasks = tn;
+    row.__acct = r.Account__c;                                // consumed by the intel pass below
+    if (s) { row.renewed = true; row.newPrem = Math.round((s.Billing_Premiums__c || 0) * 100) / 100;
+             row.paid = Math.round((s.Payments_Made__c || 0) * 100) / 100; }
+    var isMotor = r.RecordType && r.RecordType.Name === 'Motor';
+    if (isMotor) {
+      row.what = (r.Vehicle_Make__c || 'Vehicle') + (r.Model__c ? ' ' + r.Model__c : '');
+      row.cov = /comprehensive/i.test(r.Motor_Vehicle_Coverage_Type__c || '') ? 'Comprehensive' : 'Third party';
+      if (r.Vehicle_Status__c && r.Vehicle_Status__c !== 'Current') row.off = r.Vehicle_Status__c;
+      motor.push(row);
+      // the depreciation conversation — comprehensive only
+      if (row.cov === 'Comprehensive' && !row.off) {
+        if (r.Vehicle__c) compRegs.push(r.Vehicle__c);
+        valMotor.push({
+          d: row.d, who: who, what: r.Vehicle_Make__c || 'Vehicle', _reg: r.Vehicle__c,
+          cur: s ? Math.round(s.Cover1__c || 0) : Math.round(r.Cover1__c || 0),
+          _expiring: Math.round(r.Cover1__c || 0),
+          renewed: !!s,
+          opt10: Math.round(r.Depreciation_10_Option_1__c || 0),
+          opt15: Math.round(r.Depreciation_15_Option_2__c || 0),
+          ws: Math.round((s ? s.Windscreen__c : r.Windscreen__c) || 0),
+          wsAdded: !!(s && s.Windscreen__c && !r.Windscreen__c),
+          waiver: !!r.Waiver_of_Excess__c,
+          premSaved: (s && r.Billing_Premiums__c > 0 && s.Billing_Premiums__c < r.Billing_Premiums__c)
+            ? Math.round(r.Billing_Premiums__c - s.Billing_Premiums__c) : 0,
+        });
+      }
+    } else {
+      row.what = propKind(r.Policy__c);
+      row.type = r.Property_Type__c || '—';
+      property.push(row);
+      // the appreciation conversation — sums insured and riders
+      var riders = [];
+      if (r.Burglary__c) riders.push('Burglary');
+      if (r.Stock__c) riders.push('Stock');
+      if (r.General_Contents__c) riders.push('Contents');
+      if (r.Public_Liability_Cover__c) riders.push('Public liability');
+      if (r.Swimming_Pool__c) riders.push('Pool');
+      if (r.Electronic_Equipment__c) riders.push('Electronics');
+      if (r.WC_Cover__c) riders.push('WC');
+      var sum = Math.round(r.Total_Property_Cover__c || 0);
+      propDue.push({ acct: r.Account__c, pol: r.Policy__c, loc: r.Risk_Location__c, sum: sum });
+      valProperty.push(sum > 0
+        ? { d: row.d, who: who, what: row.what, sum: sum, riders: riders }
+        : { d: row.d, who: who, what: row.what, missing: true, riders: riders });
+    }
+  });
+
+  // Motor: last cycle's value per comprehensive vehicle (for the "last year →
+  // this year" pair). One query across the regs; latest row before the
+  // current cycle wins.
+  if (compRegs.length) {
+    var regList = compRegs.map(function (v) { return "'" + String(v).replace(/'/g, "\\'") + "'"; }).join(',');
+    var hist = wbQ_(
+      'SELECT Vehicle__c, From__c, Cover1__c FROM Risk_Details__c ' +
+      "WHERE RecordType.Name = 'Motor' AND Vehicle__c IN (" + regList + ') ORDER BY From__c'
+    );
+    valMotor.forEach(function (m) {
+      var prev = 0;
+      hist.forEach(function (h) {
+        if (norm(h.Vehicle__c) !== norm(m._reg)) return;
+        var v = Math.round(h.Cover1__c || 0);
+        if (!v) return;
+        if (v === m._expiring || v === m.cur) return;          // the current/renewed cycle itself
+        prev = v;                                              // last different value before it
+      });
+      m.prev = prev || m._expiring;
+      if (m.renewed && m._expiring) m.prev = m._expiring;      // renewed: expiring value is "last year"
+      if (!m.renewed && !prev) m.prev = m._expiring;           // no history: show the standing figure
+      if (!m.renewed && m.prev === m._expiring && m._expiring) m.stuckYears = 2;
+      delete m._reg; delete m._expiring;
+    });
+  }
+
+  // Property: how long each sum insured has sat unchanged, from the same
+  // account's history (zero/blank rows are gaps, not changes).
+  if (propDue.length) {
+    var accts = {};
+    propDue.forEach(function (p) { if (p.acct) accts[p.acct] = 1; });
+    var acctList = Object.keys(accts).map(function (a) { return "'" + a.replace(/'/g, "\\'") + "'"; }).join(',');
+    if (acctList) {
+      var ph = wbQ_(
+        'SELECT Account__c, Policy__c, Risk_Location__c, From__c, Total_Property_Cover__c ' +
+        "FROM Risk_Details__c WHERE RecordType.Name = 'Property' AND Account__c IN (" + acctList + ') ' +
+        'ORDER BY From__c'
+      );
+      valProperty.forEach(function (p, i) {
+        var d0 = propDue[i];
+        if (!p.sum) return;
+        var firstSame = null, seen = 0;
+        ph.forEach(function (h) {
+          var v = Math.round(h.Total_Property_Cover__c || 0);
+          if (!v) return;
+          var samePol = d0.pol && h.Policy__c && norm(h.Policy__c) === norm(d0.pol);
+          var sameLoc = d0.loc && h.Risk_Location__c &&
+            norm(h.Risk_Location__c).slice(0, 14) === norm(d0.loc).slice(0, 14);
+          if (!samePol && !sameLoc) return;
+          seen++;
+          if (v === p.sum) { if (!firstSame) firstSame = h.From__c; }
+          else firstSame = null;                               // value moved — restart the run
+        });
+        if (seen <= 1) p.first = true;
+        else if (firstSame) {
+          var yrs = Math.floor((new Date() - new Date(firstSame)) / 31557600000);
+          if (yrs >= 1) p.years = yrs;
+        }
+      });
+    }
+  }
+
+  // ---- the billing month, off TRANSACTIONS__c: this is where payments
+  // actually post (Payments_Made__c on risk rows stays empty), and it
+  // covers every line of the book, not just motor and property.
+  var billingTypes = wbQ_(
+    'SELECT RecordType.Name t, COUNT(Id) n, SUM(Total_Premium__c) prem, ' +
+    'SUM(Payments_Made__c) paid, SUM(Premium_Owed_Rev__c) owed ' +
+    'FROM TRANSACTIONS__c WHERE Renewal_Month__c = ' + (m + 1) +
+    ' AND Renewal_Year__c = ' + y + ' GROUP BY RecordType.Name ORDER BY COUNT(Id) DESC'
+  ).map(function (r) {
+    return { k: String(r.t || '?').replace(/^T-?\s*/i, ''), n: r.n,
+             prem: Math.round(r.prem || 0), paid: Math.round(r.paid || 0),
+             owed: (r.owed || 0) > 0 ? Math.round(r.owed) : 0 };
+  });
+  function typePaid(name) {
+    var hit = billingTypes.filter(function (x) { return new RegExp(name, 'i').test(x.k); })[0];
+    return hit ? hit.paid : 0;
+  }
+  // per-client payment state for this month's motor/property renewals
+  var payTx = wbQ_(
+    "SELECT ACCOUNT_NAME__c, Payments_Made__c, Premium_Owed_Rev__c FROM TRANSACTIONS__c " +
+    'WHERE Renewal_Month__c = ' + (m + 1) + ' AND Renewal_Year__c = ' + y +
+    " AND (RecordType.Name = 'T-MOTOR' OR RecordType.Name = 'T-PROPERTY') LIMIT 200"
+  );
+  var paidByAcct = {};
+  payTx.forEach(function (t) {
+    var k = norm(t.ACCOUNT_NAME__c);
+    if (!k) return;
+    paidByAcct[k] = (paidByAcct[k] || 0) + (t.Payments_Made__c || 0);
+  });
+
+  // ---- loyalty + cross-sell per renewal client, from the whole register
+  var dueAccts = {};
+  due.forEach(function (r) { if (r.Account__c) dueAccts[r.Account__c] = 1; });
+  var acctIntel = {};
+  var acctNames = Object.keys(dueAccts);
+  if (acctNames.length) {
+    var inList = acctNames.map(function (a) { return "'" + a.replace(/'/g, "\\'") + "'"; }).join(',');
+    wbQ_('SELECT Account__c, RecordType.Name, From__c FROM Risk_Details__c ' +
+         'WHERE Account__c IN (' + inList + ') LIMIT 2000')
+      .forEach(function (h) {
+        var k = norm(h.Account__c);
+        var o = acctIntel[k] = acctIntel[k] || { first: '9999', types: {} };
+        if (h.From__c && h.From__c < o.first) o.first = h.From__c;
+        if (h.RecordType && h.RecordType.Name) o.types[h.RecordType.Name] = 1;
+      });
+  }
+  function intelFor(acct) {
+    var o = acctIntel[norm(acct)];
+    if (!o) return null;
+    var yrs = o.first !== '9999' ? (y - Number(o.first.slice(0, 4))) : 0;
+    var gap = (o.types.Motor && !o.types.Property) ? 'home'
+            : (o.types.Property && !o.types.Motor) ? 'motor' : '';
+    return { yrs: yrs, gap: gap };
+  }
+  // stamp payment + intel onto the month's rows (live feed only — this
+  // never reaches the baked snapshot). acctPaid is the client's payments
+  // on this month's motor/property transactions — account level, because
+  // a receipt covers the account, not one risk row.
+  motor.concat(property).forEach(function (row) {
+    var a = row.__acct; delete row.__acct;
+    if (!a) return;
+    var p = paidByAcct[norm(a)];
+    if (p) row.acctPaid = Math.round(p);
+    var iv = intelFor(a);
+    if (iv) { row.yrs = iv.yrs; if (iv.gap) row.gap = iv.gap; }
+  });
+  var intelAgg = { clients: acctNames.length, sevenPlus: 0, motorOnly: 0, propertyOnly: 0, healthGap: 0, sumYears: 0 };
+  acctNames.forEach(function (a) {
+    var iv = intelFor(a);
+    if (!iv) return;
+    intelAgg.sumYears += iv.yrs;
+    if (iv.yrs >= 7) intelAgg.sevenPlus++;
+    if (iv.gap === 'home') intelAgg.motorOnly++;
+    if (iv.gap === 'motor') intelAgg.propertyOnly++;
+    var o = acctIntel[norm(a)];
+    if (o && !o.types.Health) intelAgg.healthGap++;
+  });
+
+  // ---- the task picture (counts and generic lines only — never raw subjects)
+  function one(q) { return (wbQ_(q)[0] || {}).n || 0; }
+  var open = one('SELECT COUNT(Id) n FROM Task WHERE IsClosed = false');
+  var dueThisMonth = one('SELECT COUNT(Id) n FROM Task WHERE IsClosed = false AND ActivityDate = THIS_MONTH');
+  var renewalSubject = one("SELECT COUNT(Id) n FROM Task WHERE IsClosed = false AND Subject LIKE '%renew%'");
+  var status = wbQ_('SELECT Status s, COUNT(Id) n FROM Task WHERE IsClosed = false ' +
+                    'GROUP BY Status ORDER BY COUNT(Id) DESC')
+    .map(function (r) { return { k: r.s === 'In Progress' ? 'In progress'
+                                  : r.s === 'Not Started' ? 'Not started' : r.s, n: r.n }; });
+  var escalated = status.filter(function (x) { return x.k === 'Escalated'; })
+                        .reduce(function (a, x) { return a + x.n; }, 0);
+  var ownerRows = wbQ_('SELECT OwnerId oid, COUNT(Id) n FROM Task WHERE IsClosed = false ' +
+                       'GROUP BY OwnerId ORDER BY COUNT(Id) DESC LIMIT 8');
+  var ids = ownerRows.map(function (r) { return "'" + r.oid + "'"; }).join(',');
+  var nameById = {};
+  if (ids) wbQ_('SELECT Id, Name FROM User WHERE Id IN (' + ids + ')')
+    .forEach(function (u) { nameById[u.Id] = u.Name; });
+  var owners = ownerRows.map(function (r) { return { k: nameById[r.oid] || 'Queue', n: r.n }; });
+
+  // renewal chase ladder — payment follow-ups and waiting renewals, genericised
+  var chase = wbQ_(
+    "SELECT Subject, ActivityDate FROM Task WHERE IsClosed = false " +
+    "AND Subject LIKE '%renew%' AND (Subject LIKE '%payment%' OR Subject LIKE '%follow up%' OR Subject LIKE '%due%') " +
+    "ORDER BY ActivityDate LIMIT 5"
+  ).map(function (r) {
+    var s = String(r.Subject || '');
+    var line = /FHO|FAR|FCP/i.test(s) ? 'Property' : /AP[UGC]|AOG|APC/i.test(s) ? 'Motor' : 'Renewal';
+    var kind = /payment/i.test(s) ? 'Payment follow-up — premium open' : 'Renewal due — waiting on client';
+    return { line: line, kind: kind, since: r.ActivityDate };
+  });
+
+  // ---- the year so far: motor renewals Jan→now — renewed, lost, who wrote
+  // each cycle, what got paid. Lost = date passed, no next-cycle row, vehicle
+  // not sold. Same one-to-one matching as the month view, on its own pool.
+  var dueY = wbQ_(
+    "SELECT Name, Account__c, Contact_First_Name__c, Last_Name__c, Vehicle__c, Policy__c, " +
+    "Vehicle_Make__c, Motor_Vehicle_Coverage_Type__c, Vehicle_Status__c, " +
+    "Next_Renewal_Date__c, Billing_Premiums__c " +
+    "FROM Risk_Details__c WHERE Next_Renewal_Date__c = THIS_YEAR " +
+    "AND RecordType.Name = 'Motor' ORDER BY Next_Renewal_Date__c LIMIT 800"
+  );
+  var cycY = wbQ_(
+    "SELECT Vehicle__c, Policy__c, From__c, Billing_Premiums__c, Payments_Made__c, " +
+    "Risk_Classification__c, CreatedBy.Name " +
+    "FROM Risk_Details__c WHERE From__c >= LAST_N_DAYS:420 " +
+    "AND RecordType.Name = 'Motor' ORDER BY From__c LIMIT 900"
+  );
+  var poolY = cycY.map(function (c) { return c; });
+  function succY(r) {
+    var d = r.Next_Renewal_Date__c;
+    for (var i = 0; i < poolY.length; i++) {
+      var s = poolY[i];
+      if (s._used || !s.From__c || s.From__c < d) continue;
+      var v1 = norm(r.Vehicle__c), v2 = norm(s.Vehicle__c);
+      if (v1 && v2) { if (v1 === v2) { s._used = 1; return s; } continue; }
+      if (!v1 && !v2 && norm(r.Policy__c) && norm(r.Policy__c) === norm(s.Policy__c)) { s._used = 1; return s; }
+    }
+    return null;
+  }
+  var mNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var todayIso = Utilities.formatDate(now, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var trendMonths = [], tTot = { due: 0, ren: 0, lost: 0, sold: 0, open: 0, lostPrem: 0, renPrem: 0 };
+  for (var mi = 0; mi <= m; mi++) trendMonths.push({ m: mNames[mi], due: 0, ren: 0, lost: 0, sold: 0, open: 0 });
+  var lostRows = [], mgrCount = {}, seenLostRegs = {}, payCycles = 0, payAmt = 0;
+  dueY.forEach(function (r) {
+    var mi = Number(r.Next_Renewal_Date__c.slice(5, 7)) - 1;
+    if (mi > m) return;                                       // future months stay out of the trend
+    var t = trendMonths[mi];
+    t.due++; tTot.due++;
+    var s = succY(r);
+    var sold = r.Vehicle_Status__c && r.Vehicle_Status__c !== 'Current';
+    if (s) {
+      t.ren++; tTot.ren++; tTot.renPrem += s.Billing_Premiums__c || 0;
+      var by = (s.CreatedBy && s.CreatedBy.Name) || 'Unrecorded';
+      mgrCount[by] = mgrCount[by] || { n: 0, prem: 0 };
+      mgrCount[by].n++; mgrCount[by].prem += s.Billing_Premiums__c || 0;
+      if ((s.Payments_Made__c || 0) > 0) { payCycles++; payAmt += s.Payments_Made__c; }
+    } else if (sold) { t.sold++; tTot.sold++; }
+    else if (r.Next_Renewal_Date__c < todayIso) {
+      t.lost++; tTot.lost++; tTot.lostPrem += r.Billing_Premiums__c || 0;
+      lostRows.push(r);
+      var k = norm(r.Vehicle__c) || r.Name;
+      seenLostRegs[k] = (seenLostRegs[k] || 0) + 1;
+    } else { t.open++; tTot.open++; }
+  });
+  trendMonths.forEach(function (t) {
+    var decided = t.due - t.sold - t.open;
+    if (decided > 0 && t.open === 0) t.ret = Math.round(t.ren / (t.due - t.sold) * 100);
+  });
+  var dupRows = 0, distinctLost = 0;
+  Object.keys(seenLostRegs).forEach(function (k) { distinctLost++; dupRows += seenLostRegs[k] - 1; });
+  // concentration: the account family carrying the most lost rows
+  var fam = {};
+  lostRows.forEach(function (r) {
+    var k = norm(r.Last_Name__c) || norm(r.Account__c);
+    fam[k] = fam[k] || { rows: 0, prem: 0, who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c) };
+    fam[k].rows++; fam[k].prem += r.Billing_Premiums__c || 0;
+  });
+  var topFam = { rows: 0, prem: 0, who: '' };
+  Object.keys(fam).forEach(function (k) { if (fam[k].rows > topFam.rows) topFam = fam[k]; });
+  // recent losses, biggest first — masked names ride the live feed only
+  var cutoff = new Date(now.getTime() - 70 * 864e5);
+  var recent = lostRows.filter(function (r) { return new Date(r.Next_Renewal_Date__c) >= cutoff; })
+    .sort(function (a, b) { return (b.Billing_Premiums__c || 0) - (a.Billing_Premiums__c || 0); })
+    .slice(0, 6).map(function (r) {
+      return { d: r.Next_Renewal_Date__c,
+               what: (r.Vehicle_Make__c || 'Vehicle') + ' · ' +
+                     (/comprehensive/i.test(r.Motor_Vehicle_Coverage_Type__c || '') ? 'comprehensive' : 'third party'),
+               who: wbMask_(r.Contact_First_Name__c, r.Last_Name__c),
+               prem: Math.round(r.Billing_Premiums__c || 0) };
+    });
+  var gainedN = 0, gainedPrem = 0;
+  cycY.forEach(function (s) {
+    if (s.Risk_Classification__c === 'New Business' && (s.From__c || '') >= y + '-01-01') {
+      gainedN++; gainedPrem += s.Billing_Premiums__c || 0;
+    }
+  });
+  var processed = Object.keys(mgrCount).map(function (k) {
+    return { k: k, n: mgrCount[k].n, prem: Math.round(mgrCount[k].prem) };
+  }).sort(function (a, b) { return b.n - a.n; }).slice(0, 6);
+  // open renewal-subject tasks by owner
+  var rtRows = wbQ_("SELECT OwnerId, COUNT(Id) n FROM Task WHERE IsClosed = false " +
+                    "AND Subject LIKE '%renew%' GROUP BY OwnerId ORDER BY COUNT(Id) DESC LIMIT 8");
+  var rtIds = rtRows.map(function (r) { return "'" + r.OwnerId + "'"; }).join(',');
+  var rtName = {};
+  if (rtIds) wbQ_('SELECT Id, Name FROM User WHERE Id IN (' + rtIds + ')')
+    .forEach(function (u) { rtName[u.Id] = u.Name; });
+  var renewalTasks = rtRows.map(function (r) { return { k: rtName[r.OwnerId] || 'Queue', n: r.n }; });
+
+  // ---- next month
+  var nm = wbQ_(
+    "SELECT RecordType.Name t, COUNT(Id) n, SUM(Billing_Premiums__c) prem FROM Risk_Details__c " +
+    "WHERE Next_Renewal_Date__c = NEXT_MONTH AND RecordType.Name IN ('Motor','Property') " +
+    "GROUP BY RecordType.Name"
+  );
+  var nMot = nm.filter(function (r) { return r.t === 'Motor'; })[0] || {};
+  var nPro = nm.filter(function (r) { return r.t === 'Property'; })[0] || {};
+
+  return {
+    generatedAt: new Date().toISOString(),
+    monthLabel: names[m] + ' ' + y,
+    monthStart: Utilities.formatDate(new Date(y, m, 1), Session.getScriptTimeZone(), 'yyyy-MM-dd'),
+    monthDays: new Date(y, m + 1, 0).getDate(),
+    motor: motor,
+    property: property,
+    values: { motor: valMotor, property: valProperty },
+    billing: { month: names[m] + ' ' + y, types: billingTypes,
+               motorPaid: typePaid('motor'), propPaid: typePaid('property') },
+    intel: { clients: intelAgg.clients,
+             avgYears: intelAgg.clients ? Math.round(intelAgg.sumYears / intelAgg.clients * 10) / 10 : 0,
+             sevenPlus: intelAgg.sevenPlus, motorOnly: intelAgg.motorOnly,
+             propertyOnly: intelAgg.propertyOnly, healthGap: intelAgg.healthGap },
+    trend: { months: trendMonths,
+             totals: { due: tTot.due, ren: tTot.ren, lost: tTot.lost, sold: tTot.sold, open: tTot.open,
+                       lostPrem: Math.round(tTot.lostPrem), renPrem: Math.round(tTot.renPrem) },
+             distinctLost: distinctLost, dupRows: dupRows,
+             gained: { n: gainedN, prem: Math.round(gainedPrem) } },
+    losing: { concentration: { label: 'One fleet relationship — ' + topFam.who,
+                               rows: topFam.rows, prem: Math.round(topFam.prem) },
+              recent: recent },
+    managers: { processed: processed, renewalTasks: renewalTasks,
+                payments: { cycles: payCycles, amt: Math.round(payAmt), written: Math.round(tTot.renPrem) } },
+    tasks: { open: open, dueThisMonth: dueThisMonth, renewalSubject: renewalSubject,
+             escalated: escalated, status: status, owners: owners, chase: chase },
+    next: { label: names[(m + 1) % 12],
+            motorN: nMot.n || 0, motorPrem: Math.round(nMot.prem || 0),
+            propN: nPro.n || 0, propPrem: Math.round(nPro.prem || 0) }
   };
 }
 
@@ -405,17 +845,17 @@ function wbSendProductionReport() {
 // labels can say which week each bar is, whatever Salesforce's locale week is.
 function wbWeekly_() {
   var recs = wbQ_(
-    'SELECT Production_Picked_up_Date__c d, Total_API__c api FROM CLIENT_PORTFOLIO__c ' +
+    'SELECT Production_Picked_up_Date__c, Total_API__c FROM CLIENT_PORTFOLIO__c ' +
     'WHERE Production_Picked_up_Date__c = LAST_N_DAYS:70'
   );
   var buckets = {};
   recs.forEach(function (r) {
-    var dt = new Date(r.d + 'T12:00:00Z');
+    var dt = new Date(r.Production_Picked_up_Date__c + 'T12:00:00Z');
     var day = (dt.getUTCDay() + 6) % 7;                       // Monday = 0
     var mon = new Date(dt.getTime() - day * 864e5);
     var key = Utilities.formatDate(mon, 'UTC', 'yyyy-MM-dd');
     if (!buckets[key]) buckets[key] = { n: 0, api: 0, mon: mon };
-    buckets[key].n++; buckets[key].api += (r.api || 0);
+    buckets[key].n++; buckets[key].api += (r.Total_API__c || 0);
   });
   var keys = Object.keys(buckets).sort().slice(-9);
   return keys.map(function (k, i) {

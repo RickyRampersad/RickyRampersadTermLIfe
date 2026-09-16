@@ -282,6 +282,13 @@ function render(){
     </div>`;
   }
   html += `<div class="card"><h2>Your renewal history</h2><div id="hist">${histTable(DATA.history)}</div></div>`;
+  if(DATA.crossSell==='home') html += `<div class="card"><h2>🏡 One branch for everything you protect</h2>
+    <p>You trust us with your vehicle — thank you. Many of our motor clients also place their <b>home</b> with the branch,
+    and it gets the same careful treatment you see on this page: the rebuilding value reviewed every year so the
+    <b>average clause</b> never catches you short, your contents and extras on the record, and one person to call
+    when anything happens.</p>
+    <p><b>Want a no-obligation home quote with your renewal?</b> Add a line in the "changes" box above, choose
+    "Please call me", or ring ${esc(DATA.agent&&DATA.agent.phone||'')} — we'll take it from there.</p></div>`;
   html += commsCard();
   app.innerHTML = html;
 
