@@ -182,8 +182,15 @@
   .stack > .card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
   #cList,#cYears{min-height:0;overflow:hidden;flex:1 1 auto}
   #cMix,#cSoonSum{flex:none}
-  .chead,.crow{display:grid;grid-template-columns:1fr 62px 50px 46px 52px 88px 74px;gap:8px;align-items:center}
-  .chead{font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;
+  /* TEN TRACKS. Issued, issue age and age joined the seven on 16 September
+     2026, and the grid was measured again inside the player frame at 1366x768
+     (1366x722 once the rail has its 46px): the name column keeps about
+     250px, no heading runs into its neighbour, and the same fourteen-agent
+     fixture still trims to the rows that fit. The three new tracks and a tighter gap paid for it — the
+     cover and biggest tracks gave up a few pixels each, which the money
+     format never needed. */
+  .chead,.crow{display:grid;grid-template-columns:1fr 60px 52px 66px 44px 40px 42px 52px 82px 70px;gap:7px;align-items:center}
+  .chead{font:600 10px var(--font-b);letter-spacing:.07em;text-transform:uppercase;
     color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
   .chead div+div,.crow div+div{text-align:right}
   .crow{padding:clamp(3px,.72vh,8px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
@@ -191,6 +198,22 @@
   .crow .nm{font-size:clamp(12px,1.55vh,15px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .crow .v{font-family:var(--font-d);font-weight:700;font-size:clamp(12.5px,1.65vh,17px);font-variant-numeric:tabular-nums}
   .crow .v.gold{color:var(--gold)} .crow .v.amber{color:var(--gold)}
+  /* SEASONED: over a year in force. Past the contestability window, with a
+     payment history the underwriter will read — the case to lead with, so
+     the row carries a gold edge and the issued cell goes gold with it. A row
+     under a year is drawn plain; a row with no issue date is neither and its
+     issued cell says so with a dash. */
+  /* The edge sits in the card's own gutter so the names stay in one line
+     with the rows that have no edge. The LIST is what reaches into the
+     gutter, not the row: #cList clips its overflow, so an edge drawn on a
+     row pulled left of the list was simply never seen. */
+  #cList{margin-left:-9px}
+  .crow{padding-left:9px}
+  .crow.seasoned{box-shadow:inset 3px 0 0 var(--gold2)}
+  .crow.seasoned .v.iss{color:var(--gold)}
+  /* An issue age worked out from the two years rather than read from the
+     record is marked, because a guess printed as a fact gets corrected. */
+  .crow .v.est{font-style:italic;opacity:.85}
   /* A birthday already gone is struck through: this year's rate went with it,
      and the row is there so nobody rings about a price that has moved. */
   .crow .v.dim.was{text-decoration:line-through;text-decoration-thickness:1px;opacity:.75}
@@ -243,7 +266,12 @@
     main.conv > .stack{grid-column:1;grid-row:auto}
     .chead{display:none}
     .crow{grid-template-columns:1fr 26px 30px 60px 56px;gap:5px;row-gap:2px}
-    .crow div:nth-child(4),.crow div:nth-child(5){display:none}
+    /* Issued, issue age, age, cases and collect all go on a phone; the
+       birthday, the age they turn and the two money columns stay. */
+    .crow div:nth-child(4),.crow div:nth-child(5),.crow div:nth-child(6),
+    .crow div:nth-child(7),.crow div:nth-child(8){display:none}
+    #cList{margin-left:-7px}
+    .crow{padding-left:7px}
     .crow .nm{font-size:13.5px}
     .crow .v{font-size:13.5px}
     .yr{grid-template-columns:42px 1fr 88px;gap:8px}
@@ -313,7 +341,7 @@
     <section class="card">
       <h3>Which agent, and how much cover</h3>
       <p class="cap">Soonest birthday first, because that is the order to ring them in. In force and tested against the branch&rsquo;s own dues tab &mdash; no client and no policy number reaches this screen.</p>
-      <div class="chead"><div>Agent</div><div>Birthday</div><div>Turning</div><div>Cases</div><div>Collect<br>first</div><div>Cover</div><div>Biggest</div></div>
+      <div class="chead"><div>Agent</div><div>Birthday</div><div>Turning</div><div>Issued</div><div>Issue<br>age</div><div>Age</div><div>Cases</div><div>Collect<br>first</div><div>Cover</div><div>Biggest</div></div>
       <div id="cList"></div>
       <div class="chips" id="cMix"></div>
     </section>
@@ -351,6 +379,14 @@ function money(v){
   if(v >= 1e6) return "$" + (v/1e6).toFixed(v >= 1e7 ? 0 : 1).replace(/\.0$/,"") + "m";
   if(v >= 1e4) return "$" + Math.round(v/1e3) + "k";
   return "$" + Math.round(v).toLocaleString("en-US");
+}
+/* "Sep 2016" — the month and the year are what an agent says; the day of an
+   issue date is nothing to anybody. A row with no date gets a dash, and the
+   head says how many of those there are. */
+var MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function issued(iso){
+  var m = /^(\d{4})-(\d{2})/.exec(String(iso || ""));
+  return m ? MON[+m[2] - 1] + " " + m[1] : "\u2013";
 }
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) }
 setInterval(tick,10000); tick();
@@ -434,6 +470,14 @@ function paint(){
     bits.push(n(h.cases) + " policies in " + D.month);
     if (h.ahead && h.ahead.n) bits.push(h.ahead.n + " birthdays still to come");
     if (D.agentCount) bits.push(n(D.agentCount) + " agents");
+    /* Seasoned against under a year, and the rows that could not be placed
+       because the record carries no issue date — said, never hidden. */
+    var inf = h.inForce || null, df = D.defects || {};
+    if (inf) {
+      bits.push((inf.seasoned.n || 0) + " seasoned over a year" +
+                (inf.fresh.n ? ", " + inf.fresh.n + " under a year" : "") +
+                (df.noIssueDate ? ", " + df.noIssueDate + " with no issue date" : ""));
+    }
     if (h.expSoon && h.expSoon.n) bits.push(h.expSoon.n + " with a contract running out inside " + D.years + " years");
   }
   $("#cCap").textContent = ok
@@ -487,11 +531,18 @@ function paint(){
      the row height threw away a row that had room for it. */
   var list = $("#cList"), rows = (D.agents || []);
   list.innerHTML = rows.length ? rows.map(function(a){
-    return '<div class="crow">' +
+    /* Issued, issue age and age belong to the same case that sets the day,
+       so the row is one conversation. A seasoned case — over a year paying —
+       gets the gold edge; see the head for how many there are. */
+    return '<div class="crow' + (a.seasoned ? ' seasoned' : '') + '">' +
       '<div class="nm">' + esc(a.name) + '</div>' +
       '<div class="v' + (a.past ? ' dim was' : ' good') + '">' +
         (a.day ? ord(a.day) : "\u2013") + '</div>' +
       '<div class="v dim">' + (a.turning == null ? "\u2013" : a.turning) + '</div>' +
+      '<div class="v dim iss">' + issued(a.issued) + '</div>' +
+      '<div class="v dim' + (a.estAge ? ' est' : '') + '" title="' + (a.estAge ? 'worked out from the two years' : '') + '">' +
+        (a.issueAge == null ? "\u2013" : a.issueAge) + '</div>' +
+      '<div class="v dim">' + (a.age == null ? "\u2013" : a.age) + '</div>' +
       '<div class="v dim">' + n(a.n) + '</div>' +
       '<div class="v' + (a.collect ? ' amber' : ' dim') + '">' + (a.collect ? n(a.collect) : "\u2013") + '</div>' +
       '<div class="v gold">' + money(a.cover) + '</div>' +
