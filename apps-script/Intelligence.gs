@@ -1746,8 +1746,13 @@ function iConversionWall_() {
      which would have emptied this whole screen on the live org. The day of
      the month is arithmetic on a date the query already returns, so it is
      worked out below instead of asked for. */
+  /* ISSUE_DATE__c, Issue_Age__c and Current_Age__c were added on 16 September
+     2026, checked against the live object the same day: the issue date is on
+     95% of rows, the issue age on 87%, the current age on all of them. Plain
+     field names, for the reason in the paragraph above. */
   var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
-                ' Life_Plan_01__c, Date_Of_Birth__c, Life_Coverage_Expiry__c' +
+                ' Life_Plan_01__c, Date_Of_Birth__c, Life_Coverage_Expiry__c,' +
+                ' ISSUE_DATE__c, Issue_Age__c, Current_Age__c' +
                 from + conv + ' AND ' + live + birthday +
                 ' ORDER BY Life_Coverage__c DESC LIMIT 900');
 
@@ -1788,6 +1793,32 @@ function iConversionWall_() {
   }
 
   var skip = iExcluded_();
+  /* A MEMBER OF STAFF IS NEVER A DESK ON THIS WALL. The branch manager saw a
+     staff member's name in the agent table on 16 September 2026, and it must
+     not happen again. It happens because Salesforce's agent of record is
+     whoever the case was parked under, and a book that has lost its agent is
+     sometimes parked under sales support — so their name arrives in
+     AGENT__r.Name looking exactly like an agent's. The access tab is the
+     authority on who is staff: any ACTIVE row whose role reads as support
+     (iRoleOf_ says 'staff' or 'staff-lead' — managers and unit managers do
+     write business and stay) is a name this table refuses. Matched with the
+     same loose rule the exclusion list uses, because the two books spell one
+     person two ways. The cases themselves are NOT removed: the birthday is
+     real and somebody still has to ring, so they stay in the totals and the
+     day strip, and the note below says how many are on nobody's desk. */
+  var staff = {};
+  try {
+    var dir = iAgentDirectory_();
+    Object.keys(dir).forEach(function (k) {
+      var role = iRoleOf_(dir[k].role);
+      if (role !== 'staff' && role !== 'staff-lead') return;
+      [dir[k].name, dir[k].agentName].forEach(function (nm) {
+        var key = iNameKey_(nm);
+        if (key) staff[key] = true;
+      });
+    });
+  } catch (eA) { notes.push('The access tab would not read, so staff names are not screened: ' + (eA && eA.message || eA)); }
+  var dropped = { excluded: { n: 0, cover: 0 }, staff: { n: 0, cover: 0 } };
   var state = { ready: { n: 0, cover: 0, prem: 0 },
                 collect: { n: 0, cover: 0, prem: 0 },
                 gone: { n: 0, cover: 0, prem: 0 } };
@@ -1807,6 +1838,17 @@ function iConversionWall_() {
      was in the way of it. */
   var days = {}, noDate = 0, expSoon = { n: 0, cover: 0 };
   var yrs = function (a, b) { return (b - a) / (365.2425 * 24 * 3600 * 1000); };
+  /* HOW LONG IT HAS BEEN PAYING, back on the screen. It was taken off on
+     12 September 2026 as answering nothing, and the branch asked for it back
+     on the 16th with a reason the first cut did not have: a term that has
+     been in force over a year is SEASONED — past the contestability window,
+     with a payment history the underwriter will read — and that is the case
+     to lead with on the call. So every row is split at one year, a row with
+     no issue date is counted as such rather than dropped, and the issue age
+     comes from Salesforce where it holds one and from the two years where it
+     does not, flagged so the wall can say which. */
+  var inForce = { seasoned: { n: 0, cover: 0 }, fresh: { n: 0, cover: 0 } };
+  var defects = { noIssueDate: 0, estAge: 0 };
 
   (rowsM || []).forEach(function (r) {
     var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
@@ -1821,7 +1863,9 @@ function iConversionWall_() {
 
     var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
     if (!ag) { unnamed++; }
-    else if (iExcludes_(skip, ag)) { return; }
+    else if (iExcludes_(skip, ag)) { dropped.excluded.n++; dropped.excluded.cover += c; return; }
+    /* Staff: off the desk table, still in every total below this line. */
+    else if (iExcludes_(staff, ag)) { dropped.staff.n++; dropped.staff.cover += c; ag = ''; }
     else {
       var slot = byAg[ag] || (byAg[ag] = { name: ag, n: 0, cover: 0, prem: 0, top: 0, collect: 0 });
       slot.n++; slot.cover += c; slot.prem += pm;
@@ -1835,11 +1879,30 @@ function iConversionWall_() {
     /* THE DAY, AND THE AGE THEY TURN ON IT. Both are what an agent says on the
        phone: "you turn thirty-eight on the twenty-third, and the price is set
        by the age you are when you sign." The age the policy was WRITTEN at
-       does not come into that conversation, which is why it is no longer on
-       the screen. */
+       was taken off the screen on 12 September 2026 as not part of that
+       conversation, and put back on the 16th when the branch made the case
+       for it: written at thirty and paying ten years is a client the
+       underwriter already trusts, and the agent should say so. */
     var dob = dobR, exp = iDate_(r.Life_Coverage_Expiry__c);
     var dom = dob ? dob.getDate() : 0, past = !!dom && dom < dayOf;
     var turning = dob ? today.getFullYear() - dob.getFullYear() : null;
+    var issued = iDate_(r.ISSUE_DATE__c);
+    var inForceY = issued ? Math.round(yrs(issued, today) * 10) / 10 : null;
+    var seasoned = issued ? inForceY > 1 : null;
+    if (!issued) defects.noIssueDate++;
+    else if (seasoned) { inForce.seasoned.n++; inForce.seasoned.cover += c; }
+    else { inForce.fresh.n++; inForce.fresh.cover += c; }
+    /* Issue_Age__c is blank on one row in eight. Issue year less birth year is
+       within a year of the truth and is flagged as an estimate, because a
+       wall that prints a guess as a fact is a wall the underwriter corrects. */
+    var issueAge = null, estAge = false;
+    if (r.Issue_Age__c !== null && r.Issue_Age__c !== undefined && r.Issue_Age__c !== '') {
+      issueAge = iNum_(r.Issue_Age__c);
+    } else if (issued && dob) {
+      issueAge = issued.getFullYear() - dob.getFullYear(); estAge = true; defects.estAge++;
+    }
+    var age = (r.Current_Age__c !== null && r.Current_Age__c !== undefined && r.Current_Age__c !== '')
+      ? iNum_(r.Current_Age__c) : null;
     if (dom) {
       var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: past });
       slot.n++; slot.cover += c;
@@ -1855,7 +1918,13 @@ function iConversionWall_() {
       var rank = past ? dom + 100 : dom;
       if (a2.rank === undefined || rank < a2.rank) {
         a2.rank = rank; a2.day = dom; a2.past = past; a2.turning = turning;
+        /* The same case that sets the day sets these, so the row reads as
+           one conversation: this birthday, this age, this history. */
+        a2.issued = issued ? iIso_(issued) : null;
+        a2.issueAge = issueAge; a2.estAge = estAge; a2.age = age;
+        a2.yearsInForce = inForceY; a2.seasoned = seasoned;
       }
+      if (seasoned) a2.seasonedN = (a2.seasonedN || 0) + 1;
     }
 
     /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
@@ -1881,6 +1950,15 @@ function iConversionWall_() {
   var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
     .sort(function (a, b) { return b.cover - a.cover; });
   if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
+  if (dropped.staff.n) {
+    notes.push(dropped.staff.n + ' of this month’s cases (' + iMoney_(dropped.staff.cover) +
+               ') are written under a staff member’s name, not an agent’s. They are in the totals ' +
+               'and on nobody’s desk.');
+  }
+  if (dropped.excluded.n) {
+    notes.push(dropped.excluded.n + ' cases (' + iMoney_(dropped.excluded.cover) +
+               ') under an excluded agent are left off this screen entirely.');
+  }
   if (state.gone.n) {
     notes.push(state.gone.n + ' of this month’s birthdays are on policies the dues tab says have ' +
                'lapsed, been surrendered or already converted. They are off the list — Salesforce ' +
@@ -1907,7 +1985,14 @@ function iConversionWall_() {
     years: ICONV_SOON_Y,
     head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead,
             passed: { n: cases - ahead.n, cover: cover - ahead.cover },
-            expSoon: expSoon, noDate: noDate },
+            expSoon: expSoon, noDate: noDate,
+            /* Seasoned against under a year, over the same cases as the rest
+               of head. A row with no issue date is in neither; see defects. */
+            inForce: inForce },
+    defects: defects,
+    /* What this screen took off, and how much. Excluded agents are gone from
+       every figure; staff are gone from the desks only. */
+    dropped: dropped,
     /* Every day of the month that carries a birthday, in order, with the ones
        already gone marked. The screen draws the whole month so a room can see
        the shape of the week ahead, not only a total. */

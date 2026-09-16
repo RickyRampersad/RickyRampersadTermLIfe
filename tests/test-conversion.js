@@ -109,13 +109,18 @@ const agg = {
        run — the arithmetic the screen has to do, laid out so a wrong answer
        is obvious. */
     { POLICY__c: 'POL-READY-A',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 9000000, Life_Premium__c: 4000, Life_Plan_01__c: 'FCT85 1',
-      Date_Of_Birth__c: '1986-09-20', ISSUE_DATE__c: '2016-09-20', Life_Coverage_Expiry__c: '2049-09-20' },
+      Date_Of_Birth__c: '1986-09-20', ISSUE_DATE__c: '2016-09-20', Life_Coverage_Expiry__c: '2049-09-20',
+      Issue_Age__c: 30, Current_Age__c: 39 },
     /* The contract itself runs out inside two years, which is the one thing
        about an expiry date this screen still reports. */
+    /* No Issue_Age__c — the one row in eight that has none. The screen works
+       it out from the two years and says it did. */
     { POLICY__c: 'POL-READY-B',   AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 6000000, Life_Premium__c: 3000, Life_Plan_01__c: 'FCT651',  dom: 3,
-      Date_Of_Birth__c: '1974-09-03', ISSUE_DATE__c: '2024-09-03', Life_Coverage_Expiry__c: '2027-06-01' },
+      Date_Of_Birth__c: '1974-09-03', ISSUE_DATE__c: '2024-09-03', Life_Coverage_Expiry__c: '2027-06-01',
+      Issue_Age__c: null, Current_Age__c: 52 },
     { POLICY__c: 'POL-OVERDUE',   AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 4000000, Life_Premium__c: 2000, Life_Plan_01__c: 'FCT75 1',
-      Date_Of_Birth__c: '1990-09-28', ISSUE_DATE__c: '2020-09-28', Life_Coverage_Expiry__c: '2033-09-28' },
+      Date_Of_Birth__c: '1990-09-28', ISSUE_DATE__c: '2020-09-28', Life_Coverage_Expiry__c: '2033-09-28',
+      Issue_Age__c: 30, Current_Age__c: 35 },
     { POLICY__c: 'POL-LAPSED',    AGENT__r: { Name: 'Beena Pretend' }, Life_Coverage__c: 3000000, Life_Premium__c: 1500, Life_Plan_01__c: 'FCT85 1',
       Date_Of_Birth__c: '1980-09-15', ISSUE_DATE__c: '2010-09-15', Life_Coverage_Expiry__c: '2065-09-15' },
     { POLICY__c: 'POL-CONVERTED', AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 2000000, Life_Premium__c: 1000, Life_Plan_01__c: 'FCT85 1',
@@ -125,9 +130,13 @@ const agg = {
     /* No expiry date at all: it must be counted as such rather than silently
        dropped, and it must not reach the contract-running-out figure. */
     { POLICY__c: 'POL-BRANDNEW',  AGENT__r: { Name: 'Anand Pretend' }, Life_Coverage__c: 1000000, Life_Premium__c: 500,  Life_Plan_01__c: 'FCT65',   dom: 30,
-      Date_Of_Birth__c: '1996-09-30', ISSUE_DATE__c: '2026-09-01', Life_Coverage_Expiry__c: null },
+      Date_Of_Birth__c: '1996-09-30', ISSUE_DATE__c: '2026-09-01', Life_Coverage_Expiry__c: null,
+      Issue_Age__c: 29, Current_Age__c: 29 },
+    /* No issue date at all — one row in twenty on the live object. It must be
+       counted as such, not dropped, and it can be neither seasoned nor new. */
     { POLICY__c: 'POL-NOAGENT',   AGENT__r: null,                      Life_Coverage__c: 500000,  Life_Premium__c: 250,  Life_Plan_01__c: 'WHO KNOWS',
-      Date_Of_Birth__c: '1988-09-01', ISSUE_DATE__c: '2018-09-01', Life_Coverage_Expiry__c: '2048-09-01' }
+      Date_Of_Birth__c: '1988-09-01', ISSUE_DATE__c: null, Life_Coverage_Expiry__c: '2048-09-01',
+      Issue_Age__c: 30, Current_Age__c: 38 }
   ],
   conv:   [{ n: 1172, cover: 1687790726, prem: 900000 }],
   non:    [{ n: 39,   cover: 85100000,   prem: 139941 }],
@@ -171,6 +180,9 @@ ok('an excluded agent is not on the wall', !(d.agents || []).some(a => a.name ==
 ok('and their cover is not in the total', d.head.cover === 20500000, String(d.head.cover));
 ok('nor their cases', d.head.cases === 5, String(d.head.cases));
 ok('a policy with no agent against it is counted, not hidden', d.head.unnamed === 1, String(d.head.unnamed));
+ok('and the screen says how much the exclusion removed',
+   d.dropped.excluded.n === 1 && d.dropped.excluded.cover === 8000000 &&
+   (d.notes || []).some(x => /excluded agent/.test(x)), JSON.stringify(d.dropped));
 /* Today is the 11th in this fixture, and the birthdays are spread either side
    of it. Three are still to come and are neither lapsed nor somebody else's:
    the 20th, the 28th and the 30th. */
@@ -224,11 +236,37 @@ ok('a birthday already gone ranks behind every one still to come',
 ok('each agent carries the day and the age their client turns on it',
    d.agents[0].turning === 40 && d.agents[0].day === 20,
    JSON.stringify(d.agents[0]));
-/* Nothing about how long the policy has been paying, and nothing about an
-   expiry thirty years out: both were on the screen and neither answered the
-   question an agent has. */
-ok('and nothing about years in force, which answered nothing',
-   d.agents[0].inForce === undefined && d.head.inForce === undefined);
+/* ── SEASONED, AND HOW LONG IT HAS BEEN PAYING ────────────────────────────
+   Years in force came OFF this screen on 12 September 2026 as answering
+   nothing, and this file asserted its absence. The branch asked for it back
+   on the 16th with the reason the first cut lacked: a term that has paid for
+   more than a year is seasoned — past the contestability window, with a
+   payment history — and that is the case an agent leads with. So the
+   assertion is reversed on purpose. What stays gone is the runway of expiry
+   years, which really did answer nothing. */
+ok('years in force is back, on the same case that sets the day',
+   d.agents[0].yearsInForce === 10 && d.agents[0].issued === '2016-09-20',
+   JSON.stringify(d.agents[0]));
+ok('and that case is seasoned — over a year paying', d.agents[0].seasoned === true);
+ok('the issue age comes from Salesforce where it holds one',
+   d.agents[0].issueAge === 30 && d.agents[0].estAge === false, JSON.stringify(d.agents[0]));
+ok('and the current age with it', d.agents[0].age === 39, String(d.agents[0].age));
+ok('an agent knows how many of theirs are seasoned',
+   (d.agents.find(a => a.name === 'Anand Pretend') || {}).seasonedN === 2, JSON.stringify(d.agents));
+/* The head splits the month at one year: three of the five counted cases have
+   paid for more than a year, one was written this month, and the one with no
+   issue date is in neither — it is a defect, said out loud. */
+ok('the head counts seasoned against under a year',
+   d.head.inForce.seasoned.n === 3 && d.head.inForce.seasoned.cover === 19000000 &&
+   d.head.inForce.fresh.n === 1 && d.head.inForce.fresh.cover === 1000000,
+   JSON.stringify(d.head.inForce));
+ok('a row with no issue date is counted as such, not dropped',
+   d.defects.noIssueDate === 1 && d.head.cases === 5, JSON.stringify(d.defects));
+/* Beena's lead case is the overdue one on the 28th; Anand's second case has
+   no Issue_Age__c, so the fallback is exercised on a row that is not a lead.
+   The defect count is what proves it ran. */
+ok('a missing issue age is worked out from the two years, and flagged',
+   d.defects.estAge === 1, JSON.stringify(d.defects));
 ok('nor a runway of expiry years', d.runway === undefined);
 /* The contract expiry survives only where it is close enough to be real. */
 ok('a contract running out inside the window is still counted',
@@ -273,6 +311,8 @@ ok('the date of birth comes back on each row, and the day is worked out here',
    'the 20th is in the fixture as a date, never as a day');
 ok('and the policy number with it, so the dues tab can be searched',
    /SELECT POLICY__c/.test(all));
+ok('and the issue date, the issue age and the current age, as plain fields',
+   /ISSUE_DATE__c, Issue_Age__c, Current_Age__c/.test(all));
 /* The deadline counts down the book that ENDS, never the book that converts.
    A policy you may convert has no date worth a wall until its privilege
    closes; a Liberator to sixty-five has a date, and after it the client has
@@ -320,6 +360,60 @@ const r = JSON.parse(env.intelDoPost_({ postData: { contents: JSON.stringify({ a
                         .getContent());
 ok('intel.conversion answers', r.ok === true, JSON.stringify(r).slice(0, 160));
 ok('and hands back the screen’s data', !!(r.data && r.data.configured));
+
+/* ── 8. A member of staff is never a desk ─────────────────────────────────
+   The branch manager saw a staff member's name in the agent table on
+   16 September 2026. Salesforce's agent of record is whoever the case is
+   parked under, and a book that has lost its agent is sometimes parked under
+   sales support — so the name arrives looking like an agent's. The access
+   tab is the authority on who is staff, and only its ACTIVE rows vouch for
+   anyone: a person who has left is not on the list any more, so their name
+   is whatever Salesforce says it is. The cases are not removed — the birthday
+   is real — so they stay in the totals and the screen says how many are on
+   nobody's desk. */
+console.log('\nA member of staff is never a desk on this wall:\n');
+env.__mkSheet('Access', 1, ['Name', 'StaffId', 'Email', 'Password', 'Role', 'Unit', 'Active'],
+  [['Anand Pretend',   'anand', 'anand@example.com', '1', 'Agent',         'Unit 1',  'Yes'],
+   ['Carl Fictitious', 'carl',  'carl@example.com',  '1', 'Sales Support', 'Support', 'Yes'],
+   ['Dina Sample',     'dina',  'dina@example.com',  '1', 'Sales Support', 'Support', 'No'],
+   ['Ricky Rampersad', 'ricky', 'ricky@example.com', '1', 'Branch Manager', 'Branch', 'Yes']]);
+const staffRows = agg.month.concat([
+  /* Parked under sales support, spelt the way Salesforce spells it. */
+  { POLICY__c: 'POL-STAFF',   AGENT__r: { Name: 'CARL FICTITIOUS' }, Life_Coverage__c: 700000, Life_Premium__c: 350, Life_Plan_01__c: 'FCT85 1',
+    Date_Of_Birth__c: '1985-09-22', ISSUE_DATE__c: '2019-09-22', Life_Coverage_Expiry__c: '2070-09-22',
+    Issue_Age__c: 34, Current_Age__c: 40 },
+  /* Under somebody the access tab no longer vouches for. */
+  { POLICY__c: 'POL-EXSTAFF', AGENT__r: { Name: 'Dina Sample' }, Life_Coverage__c: 300000, Life_Premium__c: 150, Life_Plan_01__c: 'FCT65 1',
+    Date_Of_Birth__c: '1982-09-26', ISSUE_DATE__c: '2021-09-26', Life_Coverage_Expiry__c: '2047-09-26',
+    Issue_Age__c: 39, Current_Age__c: 43 }
+]);
+asked.length = 0;
+env.sfQuery_ = function (soql) {
+  asked.push(soql);
+  if (/SELECT POLICY__c/.test(soql))                return staffRows;
+  if (/CALENDAR_YEAR/.test(soql))                   return agg.soon;
+  if (/'ECT%'/.test(soql))                          return agg.permanent;
+  if (/'FNT%'/.test(soql))                          return agg.non;
+  return agg.conv;
+};
+const s8 = env.iConversionWall_();
+ok('the staff member is not a row on the wall', !(s8.agents || []).some(a => /Fictitious/i.test(a.name)),
+   JSON.stringify((s8.agents || []).map(a => a.name)));
+ok('and their name is nowhere in the payload at all', JSON.stringify(s8).toLowerCase().indexOf('fictitious') === -1);
+ok('the case itself is still counted — the birthday is real',
+   s8.head.cases === 7 && s8.head.cover === 21500000 && (s8.days.find(x => x.day === 22) || {}).n === 1,
+   JSON.stringify({ cases: s8.head.cases, cover: s8.head.cover }));
+ok('and the screen says how much sits on nobody\'s desk',
+   s8.dropped.staff.n === 1 && s8.dropped.staff.cover === 700000 &&
+   (s8.notes || []).some(x => /staff member/.test(x)), JSON.stringify(s8.dropped) + ' ' + JSON.stringify(s8.notes));
+ok('an agent on the access tab as an agent is still a desk',
+   (s8.agents || []).some(a => a.name === 'Anand Pretend'));
+ok('a name the access tab no longer vouches for is left as Salesforce has it',
+   (s8.agents || []).some(a => a.name === 'Dina Sample'), JSON.stringify((s8.agents || []).map(a => a.name)));
+/* The payload guard, again, on the answer that carried the new fields. */
+const flat8 = JSON.stringify(s8);
+['POLICY__c', 'policy', 'Date_Of_Birth', 'dob', 'client'].forEach(k =>
+  ok('no ' + k + ' in the payload with the new columns on it', flat8.toLowerCase().indexOf(k.toLowerCase()) === -1));
 
 /* ── The shape of the reads themselves ────────────────────────────────────
    Salesforce allows field aliasing ONLY in an aggregate query. A row-level
