@@ -122,7 +122,14 @@
   .row.zero{opacity:.35;cursor:default}
 
   .agents{grid-column:1/3}
+  /* A column is never narrower than a name. Without the floor the grid
+     squeezed a fourth column into the card rather than overflowing it, so
+     thirty agents "fit" at 1280 wide as thirty ellipses — and the page's
+     measuring, which trims the list to what is inside the card, saw nothing
+     to trim. With it a column that does not fit hangs off the edge, is
+     measured, and comes out. */
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
+    grid-auto-columns:minmax(230px,1fr);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
   .arow{display:grid;grid-template-columns:1fr 30px 48px;align-items:baseline;gap:8px;
     padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px}
@@ -318,6 +325,49 @@ function bars(host,list,dim,tone){
   });
 }
 
+
+/* SHOW EVERY AGENT THAT FITS, MEASURED RATHER THAN GUESSED. The list is a
+   column-major grid of nine rows, clipped at the card's edge, and the page
+   used to slice it at eighteen and say "top 18 shown" — on a 1920 wall the
+   card holds a third column and six agents were left off a screen with room
+   for them. So the whole list is drawn, each row is measured against the
+   card and the fold, and the ones past either edge are taken back out. The
+   count is what the caption reports. A card with no size yet — a hidden
+   frame, a print — shows everything rather than nothing. */
+function fitList(host, items, render){
+  function draw(list){ host.innerHTML=list.map(render).join(""); }
+  host.style.gridTemplateRows="";
+  draw(items);
+  var box=host.getBoundingClientRect();
+  if(!box.width||!box.height||!items.length) return items.length;
+  /* A wall never scrolls, so its fold is the bottom of the screen; a phone
+     scrolls, so its only edge is the card's own. */
+  var wall=getComputedStyle(document.body).overflowY==="hidden";
+  function floor(){ return wall?Math.min(box.bottom,window.innerHeight):box.bottom; }
+  var kids=host.children;
+  /* Column-major: the first column is the leading run of items, and the rows
+     that fit are the ones of it above the fold. Fewer rows than the stylesheet
+     asks for means the grid is re-cut to that many, so a short screen loses
+     agents off the end of the list rather than off the foot of every column. */
+  if(getComputedStyle(host).gridAutoFlow.indexOf("column")===0){
+    var rows=getComputedStyle(host).gridTemplateRows.split(" ").length, fit=0;
+    for(var i=0;i<kids.length&&i<rows;i++){
+      if(kids[i].getBoundingClientRect().bottom<=floor()+1) fit=i+1; else break;
+    }
+    if(fit&&fit<rows){ host.style.gridTemplateRows="repeat("+fit+",auto)"; draw(items); box=host.getBoundingClientRect(); }
+  }
+  var n=0;
+  for(var j=0;j<kids.length;j++){
+    var r=kids[j].getBoundingClientRect();
+    if(r.right<=box.right+1 && r.bottom<=floor()+1) n=j+1; else break;
+  }
+  /* A card entirely past the fold can show nobody, and "top 0 shown" is not
+     a sentence anyone should read: it is drawn whole and left to the fold. */
+  if(!n){ draw(items); return items.length; }
+  if(n<items.length) draw(items.slice(0,n));
+  return n;
+}
+
 function paint(){
   var D=DLV, h=D.headline;
   $("#chip").className = FILTER?"on":"";
@@ -355,25 +405,8 @@ function paint(){
   bars($("#rUnit"), D.units, "unit", "gold");
   bars($("#rPlan"), D.plans, "plan", "accent");
 
-  /* Outstanding beside delivered, because six waiting against four delivered
-     is a different conversation from six against forty. Sorted with the
-     outstanding first — an agent with none has nothing to answer for and
-     belongs further down, not off the wall. */
-  var ag=D.agents.filter(function(x){ return !FILTER||FILTER.dim!=="unit"||x.unit===FILTER.key; });
-  var out=ag.filter(function(x){return x.n}), total=ag.length;
-  ag=ag.slice(0,18);
-  $("#agentCap").innerHTML=out.length+' of the '+total+' active agents who handled a '
-    + D.fromYear+' contract still have one waiting'+(total>18?', top 18 shown':'')
-    + '. <b style="color:var(--dim)">out</b> · <b style="color:var(--dim)">delivered</b> '
-    + '· <b style="color:var(--dim)">oldest</b>';
-  $("#aList").innerHTML=ag.map(function(x,i){
-    return '<div class="arow'+(x.n&&i<3?' top':'')+(x.n?'':' quiet')+'"><div class="nm">'+esc(x.k)
-      + '<em>'+esc(x.unit||"")+(x.done?' · '+x.done+' delivered, '+x.fast+' inside 30 days':'')+'</em></div>'
-      + '<div class="n">'+(x.n||'·')+'</div>'
-      + '<div class="d">'+(x.oldest?x.oldest+'d':'—')+'</div></div>';
-  }).join("");
 
-  var H=D.history, B=D.before||{}, DP=D.departed||{n:0}, RO=D.roster||{};
+  var H=D.history, B=D.before||{}, DP=D.departed||{n:0}, RO=D.roster||{}, EX=D.excluded||{};
   $("#histBody").innerHTML=
     '<div class="sgrid">'
     + '<div class="'+(H.rate>=85?'accent':'gold')+'"><div class="v">'+H.rate+'%</div>'
@@ -409,8 +442,42 @@ function paint(){
     + 'deliveries that happened and were never recorded — a records job, not a delivery one — '
     + 'so counting them would send the desk hunting through 2018. '
     + 'Roster is the <b>'+RO.active+' active</b> agents; '+RO.inactive+' inactive and '
-    + RO.vested+' vested are not shown.</p>';
+    + RO.vested+' vested are not shown.'
+    /* An exclusion is a decision to hand a book to somebody, not a way to make
+       it disappear — so the wall says what it left off, every time. */
+    + (EX.rows ? ' <b>'+EX.rows+' contract'+(EX.rows===1?'':'s')+'</b> from '+EX.agents
+        + ' excluded agent'+(EX.agents===1?'':'s')+' '+(EX.rows===1?'is':'are')
+        + ' left off this wall and counted nowhere on it.' : '')
+    + '</p>';
+
+  /* THE LIST IS MEASURED LAST. The card beside it is filled first, and when
+     that one is the taller of the two the grid row grows and the row above
+     gives way, which moves this card on the screen. Measuring before that
+     happened counted rows against a fold that then moved, and at 720 high
+     two rows were drawn that nobody could see. */
+  /* Outstanding beside delivered, because six waiting against four delivered
+     is a different conversation from six against forty. Sorted with the
+     outstanding first — an agent with none has nothing to answer for and
+     belongs further down, not off the wall. */
+  var ag=D.agents.filter(function(x){ return !FILTER||FILTER.dim!=="unit"||x.unit===FILTER.key; });
+  var out=ag.filter(function(x){return x.n}), total=ag.length;
+  var shown=fitList($("#aList"), ag, function(x,i){
+    return '<div class="arow'+(x.n&&i<3?' top':'')+(x.n?'':' quiet')+'"><div class="nm">'+esc(x.k)
+      + '<em>'+esc(x.unit||"")+(x.done?' · '+x.done+' delivered, '+x.fast+' inside 30 days':'')+'</em></div>'
+      + '<div class="n">'+(x.n||'·')+'</div>'
+      + '<div class="d">'+(x.oldest?x.oldest+'d':'—')+'</div></div>';
+  });
+  $("#agentCap").innerHTML=out.length+' of the '+total+' active agents who handled a '
+    + D.fromYear+' contract still have one waiting'+(shown<total?', top '+shown+' shown':'')
+    + '. <b style="color:var(--dim)">out</b> · <b style="color:var(--dim)">delivered</b> '
+    + '· <b style="color:var(--dim)">oldest</b>';
 }
+/* The agent list is measured against the card, so a frame that changes size
+   has to be measured again — and so does one whose webfont arrives after the
+   first paint, since the rows are a little taller in it. */
+var refit=null;
+window.addEventListener("resize",function(){ clearTimeout(refit); refit=setTimeout(paint,150); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ paint(); });
 
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
   {hour:"2-digit",minute:"2-digit"}) }
@@ -419,9 +486,12 @@ setInterval(tick,10000); tick();
 function boot(){
   paint();
   $("#hYear").textContent=DLV.fromYear;
+  var ex=DLV.excluded||{};
   $("#src").textContent="In-force export · "+DLV.fromYear+" onward · built "+DLV.generatedAt
     + " · active agents only · aggregates, no client detail · branch standard "
-    + DLV.promise+" days";
+    + DLV.promise+" days"
+    + (ex.rows ? " · "+ex.rows+" contract"+(ex.rows===1?"":"s")+" from "+ex.agents
+        + " excluded agent"+(ex.agents===1?"":"s")+" left off" : "");
 }
 /* ONE MISSED READ USED TO COST HALF AN HOUR. Seven screens post to the same
    Apps Script within seconds of each other when the wall boots and again on
