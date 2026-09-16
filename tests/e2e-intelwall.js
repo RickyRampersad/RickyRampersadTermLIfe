@@ -70,10 +70,27 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
      String(await s.page.locator('iframe.slide').count()));
   ok('the first is showing and only the first', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   ok('and the boot card has cleared', await s.page.evaluate(() => document.getElementById('boot').classList.contains('gone')));
-  const t0 = await s.page.locator('body').innerText();
-  ok(ORDER.length + ' named stops on the rail, the branch\'s own day first',
-     /1\. The day so far/.test(t0) && /4\. Ready to settle/.test(t0) &&
-     new RegExp('\\b' + ORDER.length + '\\. ' + LAST_TAB).test(t0));
+  /* THE STOPS ARE NUMBERS SINCE 16 SEPTEMBER 2026. The chrome is one line
+     across the top now, and fourteen names needed two rows at 1366px — a rail
+     on two rows is not a line. The name of each stop moved to its title, and
+     the name of the one you are ON is spelled out in #state beside them. So
+     what is checked here is the same thing by its new shape: fourteen stops,
+     in the film's order, the branch's own day first and the riders last. */
+  const stops = await s.page.evaluate(() => [...document.querySelectorAll('#dots .dot')]
+    .map(d => ({ n: d.textContent.trim(), name: d.getAttribute('title') || '' })));
+  ok(ORDER.length + ' stops on the line', stops.length === ORDER.length, String(stops.length));
+  ok('  numbered 1 to ' + ORDER.length + ' in order',
+     stops.every((d, i) => d.n === String(i + 1)), JSON.stringify(stops.map(d => d.n)));
+  ok('  the branch\'s own day first', stops[0] && stops[0].name === 'The day so far',
+     stops[0] && stops[0].name);
+  ok('  Ready to settle fourth', stops[3] && stops[3].name === 'Ready to settle',
+     stops[3] && stops[3].name);
+  ok('  and ' + LAST_TAB + ' last',
+     stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,
+     stops[ORDER.length - 1] && stops[ORDER.length - 1].name);
+  ok('  the story you are on is named beside them',
+     /The day so far/.test(await s.page.locator('#state').innerText()),
+     await s.page.locator('#state').innerText());
   await s.page.waitForTimeout(20000);          // stagger is 1.5s apart: every frame assigned inside this
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
@@ -95,7 +112,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   // Past nine screens a single keypress cannot reach the rest, and the rail
   // is how anybody gets there — so that is how the wrap is tested.
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: LAST_TAB }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('#dots .dot[title="' + LAST_TAB + '"]').click(); await s.page.waitForTimeout(300);
   ok('the rail reaches a stop no key can', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']',
      JSON.stringify(await visible(s.page)));
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
@@ -108,18 +125,26 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('space holds the story past its dwell', (await visible(s.page))[0] === before && /paused/.test(await s.page.locator('#state').innerText()));
   await s.page.keyboard.press(' ');
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: 'With the agent' }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('#dots .dot[title="With the agent"]').click(); await s.page.waitForTimeout(300);
   ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[' + at('delivery.html') + ']',
      JSON.stringify(await visible(s.page)));
 
   console.log('\nThe timer is on every slide, and so is the line:\n');
-  const hudBox = () => s.page.evaluate(() => { const r = document.getElementById('hud').getBoundingClientRect();
-    const cs = getComputedStyle(document.getElementById('hud'));
-    return { in: r.right <= innerWidth && r.bottom <= innerHeight && r.width > 80, op: cs.opacity, vis: cs.visibility }; });
-  await s.page.mouse.move(5, 5); await s.page.waitForTimeout(4600);        // the rail has faded by now
-  ok('the rail has faded', await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide')));
-  let hb = await hudBox();
-  ok('but the timer is still on screen', hb.in && hb.op === '1' && hb.vis === 'visible', JSON.stringify(hb));
+  /* THE LINE DOES NOT FADE ANY MORE. It used to, because it was laid over the
+     foot of the slide. Since 16 September 2026 it has a strip of its own that
+     no slide draws into, so there is nothing to hide from — and a wall whose
+     controls appear only if you wave at it is a wall nobody can find the
+     controls on. What is checked now is that it is there, whole, all the time. */
+  const lineBox = () => s.page.evaluate(() => {
+    const el = document.getElementById('chrome'), r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    const st = document.getElementById('state').getBoundingClientRect();
+    return { in: r.right <= innerWidth && r.bottom <= innerHeight && r.width > 80,
+             top: Math.round(r.top), op: cs.opacity, vis: cs.visibility,
+             stateIn: st.right <= innerWidth && st.width > 60 }; });
+  await s.page.mouse.move(5, 5); await s.page.waitForTimeout(4600);        // long enough for the old fade
+  let hb = await lineBox();
+  ok('the line has not faded', hb.op === '1' && hb.vis === 'visible' && hb.top === 0, JSON.stringify(hb));
+  ok('and the timer is on it, on screen', hb.in && hb.stateIn, JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
   const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Ready to settle',
                        'Whose move is it', 'Who is holding it up', 'Premium dues',
@@ -151,10 +176,10 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   // No key reaches past the ninth stop, so the rail is how the last one is
   // reached — which is also how a person on the floor would do it.
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: LAST_TAB }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('#dots .dot[title="' + LAST_TAB + '"]').click(); await s.page.waitForTimeout(300);
   ok('on the last story it still shows',
      new RegExp(ORDER.length + ' of ' + ORDER.length).test(await hudText()) &&
-     new RegExp(LAST_TAB).test(await hudText()) && (await hudBox()).in, await hudText());
+     new RegExp(LAST_TAB).test(await hudText()) && (await lineBox()).in, await hudText());
 
   console.log('\nPlay and pause, on the rail, on every slide:\n');
   await s.page.mouse.move(600, 600); await s.page.waitForTimeout(200);
@@ -163,7 +188,7 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const held = (await visible(s.page))[0];
   await s.page.waitForTimeout(6500);
   ok('pause holds the story past its dwell', (await visible(s.page))[0] === held && /paused/.test(await hudText()), await hudText());
-  ok('and the rail stays while paused', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
+  ok('and the line is still there while paused', (await lineBox()).op === '1');
   ok('the button now offers play', /Play/.test(await s.page.locator('#pp').innerText()));
   await s.page.locator('#pp').click(); await s.page.waitForTimeout(200);
   ok('play goes on', !/paused/.test(await hudText()) && /Pause/.test(await s.page.locator('#pp').innerText()));
@@ -207,13 +232,13 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
 
   console.log('\nThe keys reach the wall from inside a story:\n');
   // Whichever stop possession is now — the number is read off the order.
-  await s.page.locator('.dot', { hasText: 'In our possession' }).click(); await s.page.waitForTimeout(300);
+  await s.page.locator('#dots .dot[title=\"' + 'In our possession' + '\"]').click(); await s.page.waitForTimeout(300);
   const inside = s.page.frames().find(f => f.url().endsWith('/possession.html'));
   await inside.locator('body').click({ position: { x: 300, y: 500 } });       // focus is now inside the frame
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
   ok('a key pressed inside a story still turns the wall',
      JSON.stringify(await visible(s.page)) === '[' + (at('possession.html') + 1) + ']', JSON.stringify(await visible(s.page)));
-  ok('and a mouse inside a story wakes the rail', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
+  ok('and the line is still there after a mouse inside a story', (await lineBox()).op === '1');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 

@@ -81,12 +81,25 @@ const srcOf = page => page.evaluate(() => {
     ok('the timer is still counting', /next in \d+s|fetching/.test(await s.page.locator('#state').innerText()),
        await s.page.locator('#state').innerText());
 
-    console.log('\nThe rail still drives it:\n');
-    await s.page.locator('#hud').tap();
-    await s.page.waitForTimeout(400);
-    await s.page.locator('.dot', { hasText: 'Birthdays today' }).tap();
+    console.log('\nThe controls still drive it:\n');
+    /* THE NUMBERED STOPS ARE NOT ON A PHONE, ON PURPOSE. The chrome is one line
+       across the top since 16 September, and fourteen stops plus the controls
+       plus which-story-of-fourteen do not fit across 390 pixels — the birthday
+       chip was being pushed off the edge. So the phone keeps the controls and
+       the position, and loses the stops. Which means the thing to prove here is
+       the arrows, because on a phone they are the only way through. */
+    const hidden = await s.page.evaluate(() =>
+      getComputedStyle(document.getElementById('dots')).display === 'none');
+    ok('the fourteen stops are not on a phone', hidden);
+    const before = await srcOf(s.page);
+    await s.page.locator('#next').tap();
     await s.page.waitForTimeout(2500);
-    ok('a stop on the rail goes there', (await srcOf(s.page)) === 'book.html', await srcOf(s.page));
+    const after = await srcOf(s.page);
+    ok('the next arrow turns the wall', after !== before, before + ' → ' + after);
+    await s.page.locator('#prev').tap();
+    await s.page.waitForTimeout(2500);
+    ok('  and the previous one turns it back', (await srcOf(s.page)) === before,
+       before + ' vs ' + (await srcOf(s.page)));
     ok('still one document', live(s.page) === 2, String(live(s.page)));
     ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();

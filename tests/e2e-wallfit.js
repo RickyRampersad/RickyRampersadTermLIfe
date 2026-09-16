@@ -365,34 +365,55 @@ async function fresh(b, w, h, feed) {
   /* ── The rail ─────────────────────────────────────────────────────────────
      Two rows of stops at most, the controls beside them and not underneath,
      and the timer clear of both. */
-  console.log('\nThe rail, with fourteen stops on it:\n');
+  console.log('\nThe chrome line, with fourteen stops on it:\n');
+  /* IT IS ONE LINE ACROSS THE TOP NOW, AND IT OWNS ITS OWN STRIP. It used to be
+     three things stacked over the foot of the slide — the rail, the timer pill
+     and the stale-code bar — and the note back was that it was blocking the
+     bottom. Moving it to the top was not enough by itself: laid over a slide it
+     covered the headline instead, so .stage starts underneath it. Fourteen
+     names never fit a line, so the stops are numbers and the name of the one
+     you are on is spelled out beside them. */
   for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
                              [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
     const s = await fresh(b, w, h);
     await s.page.goto(`http://localhost:${PORT}/intelligence/wall/all.html?secs=600`, { waitUntil: 'domcontentloaded' });
     await s.page.waitForTimeout(2500);
-    await s.page.mouse.move(w / 2, h - 40);
-    await s.page.waitForTimeout(700);
     const m = await s.page.evaluate(() => {
       const box = el => el.getBoundingClientRect();
       const hits = (a, t) => !(a.right < t.left || a.left > t.right || a.bottom < t.top || a.top > t.bottom);
-      const hud = box(document.getElementById('hud'));
+      const chrome = box(document.getElementById('chrome'));
+      const stage = box(document.getElementById('stage'));
+      const state = box(document.getElementById('state'));
       const dots = [...document.querySelectorAll('#dots .dot')];
+      const phone = window.innerWidth <= 760;
       return {
         stops: dots.length,
-        rows: new Set(dots.map(d => Math.round(box(d).top))).size,
-        onTimer: dots.filter(d => hits(box(d), hud)).map(d => d.textContent.trim()),
-        ctlOnTimer: hits(box(document.querySelector('.ctl')), hud),
-        ctlLeftOfDots: box(document.querySelector('.ctl')).left < box(dots[0]).left,
-        lifted: document.body.classList.contains('railup')
+        rows: dots.length ? new Set(dots.map(d => Math.round(box(d).top))).size : 1,
+        numbersOnly: dots.every(d => /^\d+$/.test(d.textContent.trim())),
+        named: dots.every(d => (d.getAttribute('title') || '').length > 2),
+        onState: dots.filter(d => hits(box(d), state)).map(d => d.textContent.trim()),
+        ctlOnState: hits(box(document.querySelector('.ctl')), state),
+        ctlLeftOfDots: dots.length ? box(document.querySelector('.ctl')).left < box(dots[0]).left : true,
+        chromeTop: Math.round(chrome.top), chromeH: Math.round(chrome.height),
+        stageTop: Math.round(stage.top),
+        overflowsLine: document.getElementById('chrome').scrollWidth
+                     - document.getElementById('chrome').clientWidth,
+        sideways: document.documentElement.scrollWidth - window.innerWidth,
+        phone: phone
       };
     });
-    ok(tag.padEnd(22) + ' fourteen stops on at most two rows', m.rows <= 2 && m.stops === 14,
+    ok(tag.padEnd(22) + ' fourteen stops on ONE row', m.rows === 1 && m.stops === 14,
        m.stops + ' stops on ' + m.rows + ' rows');
-    ok(tag.padEnd(22) + ' no stop lands on the timer', !m.onTimer.length, JSON.stringify(m.onTimer));
-    ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnTimer);
-    ok(tag.padEnd(22) + ' the controls lead the rail rather than trail it', m.ctlLeftOfDots);
-    ok(tag.padEnd(22) + ' and the timer has stepped up out of the way', m.lifted);
+    ok(tag.padEnd(22) + ' the stops are numbers, not names', m.numbersOnly);
+    ok(tag.padEnd(22) + '   with the name on the hover', m.named);
+    ok(tag.padEnd(22) + ' no stop lands on the position text', !m.onState.length, JSON.stringify(m.onState));
+    ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnState);
+    ok(tag.padEnd(22) + ' the controls lead the line rather than trail it', m.ctlLeftOfDots);
+    ok(tag.padEnd(22) + ' the line is at the top', m.chromeTop === 0, 'top ' + m.chromeTop);
+    ok(tag.padEnd(22) + ' the slide starts below it, not under it',
+       m.stageTop >= m.chromeH, 'stage ' + m.stageTop + ' vs line ' + m.chromeH);
+    ok(tag.padEnd(22) + ' nothing on the line leaves the screen',
+       m.overflowsLine === 0 && m.sideways === 0, JSON.stringify(m));
     ok(tag.padEnd(22) + ' no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }

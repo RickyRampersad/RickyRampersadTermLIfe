@@ -56,7 +56,8 @@ ok('there is somewhere to show it', /id="stale"/.test(wall) &&
 ok('it names both builds in the bar, not just "out of date"',
    /staleGot'\)\.textContent = got/.test(wall) && /staleWant'\)\.textContent = WANT_SCRIPT/.test(wall));
 ok('it hides itself again once the paste is done', /el\.hidden = !bad/.test(wall));
-ok('it tells the reader what to actually do', /Manage deployments/.test(wall));
+ok('it tells the reader what to actually do',
+   /Paste Intelligence\.gs/.test(wall) && /New version/.test(wall));
 ok('a feed that cannot be reached does not raise it',
    /\.catch\(function \(\) \{\}\)/.test(wall));
 
