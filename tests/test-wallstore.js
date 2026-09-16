@@ -149,26 +149,108 @@ ok('in chunks, so a long list does not overflow one query', /ti \+= 200/.test(in
 ok('and a town that never arrives does not fail the screen', /leave the towns blank rather than fail/.test(intel));
 
 
+/* ── OUR OWN BIRTHDAYS, AND THE ONE IT GOT WRONG ─────────────────────────
+   On 15 September 2026 the wall wished "Gary and Kerwyn" a happy birthday.
+   Gary Sookdeo's birthday is 27 August and Kerwyn Ramroach's is 21 March, and
+   nobody on AGENT or STAFF had one that day at all. The query asked for
+
+     Contact WHERE Agent__c IN (<the branch's agent codes>)
+
+   and Agent__c on a Contact is WHOSE CLIENT THIS IS — it is set on the agent's
+   own record AND on every client that agent services, which the licence-year
+   screen documents in a comment and works around with a licence-month filter.
+   The birthday screen had no such guard: it took each match and printed the
+   AGENT'S name, so every client birthday became a staff birthday.
+
+   THE FIXTURE IS WHY IT SURVIVED. It held nothing but agents, so no assertion
+   could ever have caught a client being read — and one of them, "not on the
+   roster map: still named", asserted the wrong behaviour outright. Both are
+   corrected below: the rows now include the clients and orphans that actually
+   come back, and a contact who is not on this branch's roster stays off this
+   branch's wall. */
 console.log('\nOur own birthdays — the person in the room, big on the wall:\n');
 const asked = [];
 env.iSfQuery_ = soql => { asked.push(soql); return [
-  { Name: 'Pat Example', Agent__c: 'A00001', Birthdate: '1980-09-08' },     // today
-  { Name: 'Sam Sample',  Agent__c: 'A00002', Birthdate: '1975-03-08' },     // another month, same day
-  { Name: 'Lee Placeholder', Agent__c: 'A00003', Birthdate: '1990-09-08' } // today, but not on the roster map: still named
+  { Name: 'Pat Example', RecordType: { Name: 'AGENT' }, Birthdate: '1980-09-08' },
+  { Name: 'Dev Desk',    RecordType: { Name: 'STAFF' }, Birthdate: '1991-09-08' },
+  /* Another branch's agent. Ninety agents carry this record type across the
+     org and they are not all ours. */
+  { Name: 'Lee Elsewhere', RecordType: { Name: 'AGENT' }, Birthdate: '1990-09-08' }
 ]; };
 store.INTEL_TEAM_BIRTHDAYS = '09-08 Kim Support, 12-25 Someone Else, 9/8 Pat Example';
-const roster = { A00001: 'Pat Example', A00002: 'Sam Sample' }, units = { A00001: 'Unit One', A00002: 'Unit Two' };
+const roster = { A00001: 'Pat Example', A00002: 'Sam Sample', A00003: 'Dev Desk',
+                 A00004: 'Gale Quill' };
+const units  = { A00001: 'Unit One', A00002: 'Unit Two', A00003: 'Support',
+                 /* units here are named after the person who runs them */
+                 A00004: 'Gale Quill' };
 const team = env.iBookTeam_(new Date(2026, 8, 8), roster, units);
-ok('the roster is asked in one query, by agent code', asked.length === 1 && /Agent__c IN \('A00001','A00002'\)/.test(asked[0]) && /Birthdate != null/.test(asked[0]), asked[0]);
-ok('the agent whose birthday is today is named, with their unit', team.some(t => t.name === 'Pat Example' && t.unit === 'Unit One' && t.agent));
-ok('a birthday on the same day of another month is not', !team.some(t => t.name === 'Sam Sample'));
+
+ok('ONE query, and the record type is what says these are us',
+   asked.length === 1 && /RecordType\.Name IN \('AGENT','STAFF'\)/.test(asked[0]), asked[0]);
+ok('it never asks by servicing agent code again, which is what found the clients',
+   !/Agent__c IN/.test(asked[0]), asked[0]);
+ok('and Salesforce matches the day, so a date this script misreads cannot reach the wall',
+   /CALENDAR_MONTH\(Birthdate\) = 9/.test(asked[0]) && /DAY_IN_MONTH\(Birthdate\) = 8/.test(asked[0]),
+   asked[0]);
+ok('the agent whose birthday is today is named, with their unit',
+   team.some(t => t.name === 'Pat Example' && t.unit === 'Unit One' && t.agent), JSON.stringify(team));
+ok('so is the staff member — STAFF is us as much as AGENT is',
+   team.some(t => t.name === 'Dev Desk' && t.agent), JSON.stringify(team));
+ok('AN AGENT WHO IS NOT ON THIS BRANCH\'S ROSTER IS NOT ON THIS BRANCH\'S WALL',
+   !team.some(t => /Lee Elsewhere/.test(t.name)), JSON.stringify(team));
 ok('a support name from the property counts too, and is not an agent', team.some(t => t.name === 'Kim Support' && !t.agent));
 ok('the property\'s other date does not', !team.some(t => t.name === 'Someone Else'));
 ok('and a name in both places is one person, not two', team.filter(t => /Pat Example/.test(t.name)).length === 1, JSON.stringify(team));
 ok('no age travels to the wall', team.every(t => !('turning' in t) && !('age' in t)));
+
+/* A unit named after the person who runs it printed "Gary Sookdeo · Gary
+   Sookdeo" across the gold band. */
+const solo = env.iBookTeam_(new Date(2026, 8, 8),
+  { A00004: 'Gale Quill' }, { A00004: 'Gale Quill' });
+env.iSfQuery_ = () => [{ Name: 'Gale Quill', RecordType: { Name: 'AGENT' }, Birthdate: '1984-09-08' }];
+const solo2 = env.iBookTeam_(new Date(2026, 8, 8), { A00004: 'Gale Quill' }, { A00004: 'Gale Quill' });
+ok('a unit named after the person is not printed twice beside them',
+   solo2.every(t => t.unit !== t.name), JSON.stringify(solo2));
+
+/* THE BUG ITSELF, as an assertion: the clients and orphans that the old query
+   returned must not reach the wall even when their birthday is today. */
+env.iSfQuery_ = () => [
+  { Name: 'A Client Person',  RecordType: { Name: 'CLIENT' }, Birthdate: '1970-09-08' },
+  { Name: 'An Orphan Person', RecordType: { Name: 'ORPHAN' }, Birthdate: '1965-09-08' },
+  { Name: 'Pat Example',      RecordType: { Name: 'AGENT' },  Birthdate: '1980-09-08' }
+];
+const mixed = env.iBookTeam_(new Date(2026, 8, 8), roster, units);
+ok('a CLIENT with a birthday today is not wished a happy birthday on the wall',
+   !mixed.some(t => /A Client Person/.test(t.name)), JSON.stringify(mixed));
+ok('nor an ORPHAN', !mixed.some(t => /An Orphan Person/.test(t.name)), JSON.stringify(mixed));
+ok('and the one who really is ours still is', mixed.some(t => t.name === 'Pat Example'));
 ok('the book feed ships it', /out\.team = iBookTeam_\(today, personOfCode, unitOfCode\);/.test(intel));
 const book = require('fs').readFileSync(require('path').join(__dirname, '..', 'intelligence/wall/book.html'), 'utf8');
 ok('the birthdays screen has the gold band and tells the player', /id="cake"/.test(book) && /rrb:"celebrate"/.test(book) && /Happy birthday, /.test(book));
+
+/* ── THE MONEY IN THE E-MAILS READ "TT$%,.2f" ─────────────────────────────
+   Utilities.formatString is sprintf-style, and sprintf has no
+   thousands-grouping flag — the comma is Java's String.format, a different
+   API — so '%,.2f' was never substituted and the literal went out. On the
+   morning of 15 September 2026 it reached an agent in a column headed
+   INSTALMENT, where a premium should have been.
+
+   The wall never showed it, because the wall's pages format their own money
+   in the browser. Only the e-mails used iMoney_, in eighteen places. And no
+   test caught it because the harness has no formatString stub, so nothing in
+   the suite had ever called the function at all. This is that test. */
+console.log('\nMoney, in the e-mails, where a format string used to be:\n');
+[[0, 'TT$0.00'], [5, 'TT$5.00'], [999, 'TT$999.00'], [1000, 'TT$1,000.00'],
+ [1234.5, 'TT$1,234.50'], [44410.4, 'TT$44,410.40'],
+ [1234567.891, 'TT$1,234,567.89'], [-2500, '-TT$2,500.00']
+].forEach(([n, want]) => {
+  const got = env.iMoney_(n);
+  ok(n + ' reads ' + want, got === want, got);
+});
+ok('and no format string survives anywhere in it',
+   !/%[,.\d]*f/.test(env.iMoney_(1234.5)) && !/%s|%d/.test(env.iMoney_(1234.5)), env.iMoney_(1234.5));
+/* The thing an agent actually saw. */
+ok('"TT$%,.2f" can never be printed again', env.iMoney_(1234.5) !== 'TT$%,.2f');
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

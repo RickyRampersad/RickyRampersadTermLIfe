@@ -27,12 +27,19 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 
 const SCREENS = [
   ['The day so far',     '/intelligence/wall/day.html'],
+  ['What is pending',    '/intelligence/wall/pending.html'],
+  ['Ready to settle',    '/intelligence/wall/ready.html'],
+  ['Whose move is it',   '/intelligence/wall/triage.html'],
+  ['Who is holding up',  '/intelligence/wall/culprits.html'],
   ['The day in blocks',  '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Whose hands',        '/intelligence/wall/possession.html'],
   ['Contract delivery',  '/intelligence/wall/delivery.html'],
   ['The licence year',   '/intelligence/wall/licence.html'],
   ['Birthdays today',    '/intelligence/wall/book.html'],
+  ['Conversions',        '/intelligence/wall/conversion.html'],
+  ['The permanent book', '/intelligence/wall/permanent.html'],
+  ['Riders on a clock',  '/intelligence/wall/riders.html'],
 ];
 
 /* Two blocks of text drawn over each other. Only leaf elements that actually

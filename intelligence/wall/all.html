@@ -86,10 +86,17 @@
 
   /* The timer. Always on, on every slide: which story, and how long it has
      left, with its own small track for a screen whose top edge is cut off. */
+  /* WHILE THE RAIL IS UP THE TIMER SITS ABOVE IT. Reserving a gutter for the
+     timer inside the rail did not work — the timer is as wide as its text, so
+     the gutter was right at 1920 and too narrow at 1366, where a stop landed
+     on top of it. Moving the timer instead is exact at every width, and the
+     rail is only up while somebody is standing at the screen. */
   #hud{position:fixed;right:18px;bottom:14px;z-index:32;display:flex;align-items:center;gap:11px;
+    transition:bottom .3s ease;
     padding:8px 13px;border-radius:999px;background:rgba(6,28,49,.8);border:1px solid var(--line);
     box-shadow:0 4px 18px rgba(0,0,0,.35);font:600 13px var(--font-b);color:var(--dim);
     white-space:nowrap;font-variant-numeric:tabular-nums}
+  body.railup #hud{bottom:calc(var(--railh,96px) + 12px)}
   #hud b{color:var(--ink);font-weight:700}
   #hud .sep{color:var(--faint)}
   #hud .track{width:110px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;flex:none}
@@ -101,25 +108,45 @@
   /* The rail: the stops and the controls. For the person setting the screen up,
      so it fades — unless the wall is paused, when it stays. It keeps clear of
      the timer on the right. */
+  /* TWELVE STOPS HAVE TO FIT ON ONE LINE. At eleven the rail still did; the
+     twelfth wrapped it onto a second row, and a two-row rail over the foot of
+     a slide is the first thing a room notices. So the stops shrink with the
+     screen instead of wrapping, and the reserve on the right that keeps them
+     clear of the timer shrinks with them. It may still wrap below about
+     1200px — the phone layout is one column and one frame anyway. */
   #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
-    padding:34px 440px 15px 26px;display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;
+    padding:clamp(20px,3vh,34px) 26px clamp(10px,1.6vh,15px) 26px;
+    display:flex;flex-wrap:nowrap;align-items:center;gap:clamp(5px,.8vh,8px) clamp(6px,.6vw,10px);
     background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
     transition:opacity .45s ease}
   #rail.hide{opacity:0;pointer-events:none}
-  #dots,.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-  .ctl{margin-left:14px;padding-left:14px;border-left:1px solid var(--line)}
+  /* THE RAIL IS TWO ROWS AT MOST, NEVER THREE. #rail used to wrap, so with
+     twelve stops the dots took two lines and pushed the controls onto a
+     third — which is what a room reads as jumbled. The rail itself no longer
+     wraps: the dots wrap inside their own block and the controls stay beside
+     them, so the worst case is two rows with Pause and Narrate on the right
+     of them rather than orphaned underneath. */
+  #dots{display:flex;gap:clamp(5px,.5vh,8px) clamp(6px,.5vw,9px);flex-wrap:wrap;
+    align-items:center;flex:1 1 auto;min-width:0}
+  /* The controls sit at the LEFT end of the rail, not the right. On the right
+     they walked into the timer the moment the dots needed two rows on a
+     1366-wide screen; on the left they are as far from it as the bar allows
+     and the reserve on the right belongs to the timer alone. */
+  .ctl{display:flex;gap:8px;align-items:center;flex:none;order:-1;
+    margin-right:14px;padding-right:14px;border-right:1px solid var(--line)}
   .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
-    color:var(--dim);font:600 12px var(--font-b);padding:6px 13px;border-radius:999px;
+    color:var(--dim);font:600 clamp(9.5px,.58vw,11.5px) var(--font-b);
+    padding:clamp(4px,.7vh,6px) clamp(7px,.56vw,11px);border-radius:999px;
     cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
   .dot:hover{color:var(--ink)}
   .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
     border-color:#c9942c;font-weight:700}
   .dot.dead{opacity:.35;text-decoration:line-through}
-  .ctl .dot{font-size:13px;padding:6px 12px}
+  .ctl .dot{font-size:clamp(11px,.68vw,13px);padding:clamp(4px,.7vh,6px) clamp(9px,.62vw,12px)}
 
   @media (max-width:760px){
-    #rail{padding:22px 12px 58px 12px}
-    .ctl{margin-left:0;padding-left:0;border-left:0}
+    #rail{padding:22px 12px 58px 12px;flex-wrap:wrap}
+    .ctl{order:0;margin-right:0;padding-right:0;border-right:0}
     #hud{right:10px;bottom:10px;padding:7px 11px;font-size:12px;gap:9px}
     #hud .tab,#hud .tabsep{display:none}
     #hud .track{width:72px}
@@ -136,7 +163,23 @@
   @media (max-width:760px){
     #cake{top:auto;bottom:54px;left:10px;right:10px;transform:none;max-width:none;font-size:13px;padding:7px 12px}
   }
-  @media print{#rail,#bar,#boot,#hud,#cake{display:none}}
+  /* THE WALL MUST SAY WHEN IT IS RUNNING OLD CODE. On 15 and 16 September 2026
+     the birthday strip named two agents whose birthday it was not, both
+     mornings, and the branch manager's question the second time was "why is
+     this the 2nd time". The answer was that the fix had been written the day
+     before and never pasted into Apps Script — and nothing on the screen said
+     so. The data rebuilds nightly, so the wall showed "built today" and looked
+     perfectly healthy while serving three-week-old logic. A stale deployment
+     has to be visible on the screen somebody is already looking at. */
+  #stale{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+         background:#8f1d1d;color:#fff;font:600 14px/1.45 ui-sans-serif,system-ui,sans-serif;
+         display:flex;gap:10px;align-items:baseline;justify-content:center;flex-wrap:wrap;text-align:center}
+  #stale[hidden]{display:none}
+  #stale b{font-weight:800}
+  #stale span{font-weight:400;opacity:.9}
+  #stale code{font:inherit;font-weight:800;background:rgba(255,255,255,.16);padding:1px 6px;border-radius:5px}
+  @media (max-width:760px){ #stale{font-size:12.5px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))} }
+  @media print{#rail,#bar,#boot,#hud,#cake,#stale{display:none}}
 </style>
 </head>
 <body>
@@ -145,6 +188,12 @@
 <div id="bar"></div>
 
 <div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b><span>— happy birthday from all of us</span></div>
+
+<div id="stale" hidden>
+  <b>This wall is running old code.</b>
+  <span>The script deployed is <code id="staleGot"></code> and these screens were built for <code id="staleWant"></code>.
+  Figures and names on screen may be wrong. Paste Intelligence.gs, then Deploy → Manage deployments → pencil → New version.</span>
+</div>
 
 <div id="hud">
   <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
@@ -166,7 +215,7 @@
     <div class="mark"><img src="../../logo-mark.png" alt=""></div>
     <div>
       <h1>The Branch Intelligence Wall</h1>
-      <p>Five screens, one after another. Reading Salesforce…</p>
+      <p id="bootSub">Eleven screens, one after another. Reading Salesforce…</p>
     </div>
   </div>
 </div>
@@ -182,11 +231,36 @@ var SLIDES = [
      first because a room reads the top of the hour. */
   { file:'day.html',        tab:'The day so far',    secs:24 },
   { file:'blocks.html',     tab:'The day in blocks', secs:20 },
+  /* The pipeline, before the book: a case pending is one that has not become
+     a policy yet, and it is the only screen here that can still be changed
+     by somebody picking up a phone this afternoon. */
+  { file:'pending.html',    tab:'What is pending',   secs:22 },
+  /* The three that turn the pending list into a morning's work: what can be
+     collected, whose move each case is, and who is actually holding it up. */
+  { file:'ready.html',      tab:'Ready to settle',   secs:20 },
+  { file:'triage.html',     tab:'Whose move is it',  secs:22 },
+  { file:'culprits.html',   tab:'Who is holding it up', secs:22 },
   { file:'index.html',      tab:'Premium dues',      secs:26 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
   { file:'licence.html',    tab:'The licence year',  secs:22 },
-  { file:'book.html',       tab:'Birthdays today',   secs:18 }
+  { file:'book.html',       tab:'Birthdays today',   secs:18 },
+  /* And the birthday that is worth money. A term policy with a C in the
+     middle of its plan code may be exchanged for permanent cover with no
+     medical, and it is priced at the age the client is until the birthday
+     arrives. The only screen here that reads Salesforce, not the workbook. */
+  { file:'conversion.html', tab:'Conversions',       secs:24 },
+  /* And the other half of the book, which is the larger half: whole life,
+     the premium paying period, and the riders. No LIFE cover on it ends on a
+     date, so it could never share a screen with the conversions — but the
+     Liberators whose premium stops at 65 can be extended for an additional
+     premium, and that is the one thing on it an agent can act on this week. */
+  { file:'permanent.html',  tab:'The permanent book', secs:24 },
+  /* EVERY RIDER HAS AN EXPIRY — the branch's own correction, and the reason
+     this screen exists. The critical illness riding on a whole-life policy
+     stops on a date even though the policy it rides on never does, and on
+     most of the book nobody has that date in front of them. */
+  { file:'riders.html',     tab:'Riders on a clock', secs:24 }
 ];
 
 /* The query, read by hand: a television browser from 2016 has no URLSearchParams. */
@@ -232,6 +306,30 @@ var RESUME_MS = Math.max(5, Number(Q.get('resume') || 300)) * 1000;
    longest dwell — so reaching it means something nobody thought of, and the
    answer to that on a wall is always the same: turn. */
 var NEVER_STILL_MS = 10 * 60 * 1000;
+/* ONE AT A TIME ON A PHONE.
+   The seven stories are mounted together and never reloaded, and the comment
+   at the top of this file explains why: a wall runs all day, and swapping one
+   iframe's src every twenty seconds would read the branch's whole position
+   hundreds of times an hour. That reasoning is about a television. It is
+   wrong about a phone, and on 11 September the Branch Manager could not open
+   /intelwall on an iPhone at all.
+   Seven documents is two megabytes, of which one and three-quarters is the
+   narration folded in as base64 — each story holding a quarter-megabyte
+   string, its own timers and its own feed, all live at once. Mobile Safari
+   drops a tab that does that, and the person is left looking at nothing.
+   Nothing about the original reasoning applies here: a phone is one person
+   for a minute or two, not a screen running ten hours, and six of the seven
+   feeds read a stored build anyway. So below the wall breakpoint there is ONE
+   frame and its src changes. ?mount=all forces the television's behaviour on
+   a phone, ?mount=one forces the phone's on anything. */
+var LONE = (function () {
+  var want = Q.get('mount');
+  if (want === 'all') return false;
+  if (want === 'one') return true;
+  try { return !!(window.matchMedia && window.matchMedia('(max-width: 760px)').matches); }
+  catch (e) { return false; }
+})();
+
 var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
@@ -262,13 +360,27 @@ var spokeAt = 0, heldAt = 0, turnedAt = Date.now();
    is attached — so every frame would count as loaded before it held anything.
    The listener goes on only when the story is asked for, and only a load that
    is actually the story counts. */
+/* On a phone every story points at the same frame; on a wall each has its
+   own. Everything after this reads s.el and does not care which it is. */
+var lone = null;
+if (LONE) {
+  lone = document.createElement('iframe');
+  lone.className = 'slide on';            // the only one there is, so always shown
+  lone.setAttribute('scrolling', 'no');
+  stage.appendChild(lone);
+  lone.addEventListener('load', function () { loneLoaded(); });
+}
+
 SLIDES.forEach(function (s, i) {
-  var f = document.createElement('iframe');
-  f.className = 'slide';
-  f.title = s.tab;
-  f.setAttribute('scrolling', 'no');
+  var f = lone;
+  if (!f) {
+    f = document.createElement('iframe');
+    f.className = 'slide';
+    f.title = s.tab;
+    f.setAttribute('scrolling', 'no');
+    stage.appendChild(f);
+  }
   s.el = f;
-  stage.appendChild(f);
 
   var b = document.createElement('button');
   b.className = 'dot';
@@ -278,29 +390,50 @@ SLIDES.forEach(function (s, i) {
   s.dot = b;
   dots.appendChild(b);
 
-  f.addEventListener('load', function () {
-    var here = '';
-    try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
-    if (here.indexOf(s.file) < 0) return;        // the blank page, not the story
-    s.ready = true; s.dead = false; b.classList.remove('dead');
-    /* The story is ours (same origin), so what happens inside it reaches the
-       wall: a mouse or a finger wakes the rail, a key drives the turning. */
-    try {
-      var d = f.contentDocument;
-      d.addEventListener('mousemove', wake);
-      d.addEventListener('touchstart', wake);
-      d.addEventListener('keydown', keys);
-    } catch (e) {}
-  });
+  if (!LONE) {
+    f.addEventListener('load', function () {
+      var here = '';
+      try { here = f.contentWindow.location.pathname; } catch (e) { here = s.file; }
+      if (here.indexOf(s.file) < 0) return;      // the blank page, not the story
+      s.ready = true; s.dead = false; b.classList.remove('dead');
+      adopt(f);
+    });
+  }
   s.ask = function () {
     s.asked = Date.now();
-    f.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
+    s.el.src = s.file + (s.tries ? '?again=' + (++s.tries) : (s.tries = 1, ''));
     /* A story that never answers must not hold the wall. Past the grace an
        unloaded frame is skipped until it does come good. */
     setTimeout(function () { if (!s.ready) { s.dead = true; b.classList.add('dead'); } }, GRACE_MS);
   };
-  setTimeout(s.ask, 2500 * i);
+  /* Spread the boot so eleven heavy pages do not start together on branch
+     wifi — but not so far that the last one is a half-minute behind the
+     first. Eleven at 1.5s is fifteen seconds end to end. */
+  if (!LONE) setTimeout(s.ask, 1500 * i);
 });
+
+/* The story is ours (same origin), so what happens inside it reaches the
+   wall: a mouse or a finger wakes the rail, a key drives the turning. */
+function adopt(f) {
+  try {
+    var d = f.contentDocument;
+    d.addEventListener('mousemove', wake);
+    d.addEventListener('touchstart', wake);
+    d.addEventListener('keydown', keys);
+  } catch (e) {}
+}
+
+/* One frame, so the load belongs to whichever story was last asked for. */
+function loneLoaded() {
+  var s = SLIDES[at];
+  if (!s) return;
+  var here = '';
+  try { here = lone.contentWindow.location.pathname; } catch (e) { here = s.file; }
+  if (here.indexOf(s.file) < 0) return;
+  s.ready = true; s.dead = false; s.dot.classList.remove('dead');
+  lone.title = s.tab;
+  adopt(lone);
+}
 
 /* A story given up on is asked for again, every couple of minutes, until it
    comes good. `here` in the load handler still matches: the query is not part
@@ -315,6 +448,9 @@ function retryDead() {
    before one given up on — and if every one is silent, keep turning anyway. */
 function nextLive(from) {
   var j, k;
+  /* One frame means nothing is loaded ahead of time, so there is nothing to
+     prefer — the next story is simply the next one. */
+  if (LONE) return (from + 1) % SLIDES.length;
   for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (SLIDES[j].ready) return j; }
   for (k = 1; k <= SLIDES.length; k++) { j = (from + k) % SLIDES.length; if (!SLIDES[j].dead) return j; }
   return (from + 1) % SLIDES.length;
@@ -332,11 +468,14 @@ function show(i) {
     /* add/remove rather than toggle(name, force): old television WebKit and IE
        ignore the second argument and flip every slide. */
     var on = k === i;
-    s.el.classList[on ? 'add' : 'remove']('on');
+    if (!LONE) s.el.classList[on ? 'add' : 'remove']('on');
     s.dot.classList[on ? 'add' : 'remove']('on');
   });
   var firstTurn = at === -1;
   at = i;
+  /* On a phone the turn IS the load: ask for the story now, and let go of the
+     one before it. */
+  if (LONE) { SLIDES[i].ready = false; SLIDES[i].ask(); }
   holdFor = (FIXED || SLIDES[i].secs) * 1000;
   if (firstTurn) holdFor = Math.min(holdFor, FIRST_TURN_MS);
   started = turnedAt = Date.now();
@@ -416,7 +555,7 @@ function tick() {
   retryDead();
   /* The boot card lifts once the story on screen has painted — or after the
      grace, so a silent feed cannot leave the card up for good. */
-  if (!bootGone && ((at > -1 && SLIDES[at].ready) || Date.now() - BORN > GRACE_MS)) {
+  if (!bootGone && ((at > -1 && SLIDES[at].ready) || now - BORN > GRACE_MS)) {
     bootGone = true;
     boot.classList.add('gone');
     setTimeout(function () { boot.style.display = 'none'; }, 600);
@@ -425,6 +564,7 @@ function tick() {
      rather than let the floor read a working screen as a dead one. */
   left.textContent = paused ? 'paused · space or ▶ to go on'
     : narrating ? 'narrating · holds'
+    : (LONE && at > -1 && !SLIDES[at].ready) ? 'fetching…'
     : nextLive(at) === at ? 'only this story has loaded'
     : 'next in ' + secsLeft + 's';
 }
@@ -436,7 +576,12 @@ function keys(e) {
   else if (k === 'ArrowLeft')  { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); }
   else if (k === 'f' || k === 'F') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
   else if (k === 'n' || k === 'N') { narrate(); }
-  else if (k.length === 1 && k >= '1' && k <= String(SLIDES.length)) { show(Number(k) - 1); rest(); wake(); }
+  /* Number keys are compared as NUMBERS, not as text. Past nine stories
+     String(SLIDES.length) is "11", and "2" <= "11" is false in a string
+     comparison — so the moment the wall grew past nine screens every key
+     but 1 stopped working, silently. Nine is the most a single keypress can
+     reach; the rail has the rest. */
+  else if (k.length === 1 && k >= '1' && k <= '9' && Number(k) <= SLIDES.length) { show(Number(k) - 1); rest(); wake(); }
 }
 document.addEventListener('keydown', keys);
 
@@ -450,10 +595,21 @@ nar.onclick = narrate;
 /* The rail is for the person setting the screen up, not for the floor — so it
    fades, unless the wall is paused, when it stays until it goes on. */
 var hideAt;
+/* body.railup is what lifts the timer clear of the rail. It is a class on the
+   body rather than a :has() selector because the wall runs on a television
+   browser that predates :has(), and a selector it cannot parse would drop the
+   rule silently and put the timer back under the stops. */
+function railup(on) {
+  document.body.classList[on ? 'add' : 'remove']('railup');
+  if (on) document.documentElement.style.setProperty('--railh', rail.offsetHeight + 'px');
+}
 function wake() {
   rail.classList.remove('hide');
+  railup(true);
   clearTimeout(hideAt);
-  if (!paused) hideAt = setTimeout(function () { rail.classList.add('hide'); }, 4000);
+  if (!paused) hideAt = setTimeout(function () {
+    rail.classList.add('hide'); railup(false);
+  }, 4000);
 }
 ['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
 wake();
@@ -469,6 +625,47 @@ setInterval(function () {
   step();
   turnedAt = Date.now();                         // parked on the only story loaded: do not thrash
 }, 15000);
+
+/* Say which way it is running, on the card a person is already looking at. */
+if (LONE) {
+  try {
+    document.getElementById('bootSub').textContent =
+      'Eleven screens, one after another. One at a time on a phone.';
+  } catch (e) {}
+}
+
+/* ── is the script behind these screens? ──────────────────────────────────
+   WANT_SCRIPT is paired to INTEL_VERSION in apps-script/Intelligence.gs by
+   tests/test-version.js, exactly as redeploy/index.html is. intel.ping needs
+   no token and has reported its version since 2026-09-08, so this check works
+   against an old deployment — which is the only deployment it matters on.
+
+   It fails quiet: a wall that cannot reach the script already says "no feed"
+   on every screen, and a second red bar for the same fault is noise. */
+var WANT_SCRIPT = '2026-09-16a';
+var PING_URL = 'https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';
+
+function versionCheck() {
+  try {
+    fetch(PING_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+                      body: JSON.stringify({ action:'intel.ping' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var got = j && (j.version || (j.data && j.data.version));
+        if (!got) return;
+        var bad = String(got) !== WANT_SCRIPT;
+        var el = document.getElementById('stale');
+        if (bad) {
+          document.getElementById('staleGot').textContent = got;
+          document.getElementById('staleWant').textContent = WANT_SCRIPT;
+        }
+        el.hidden = !bad;
+      })
+      .catch(function () {});
+  } catch (e) {}
+}
+versionCheck();
+setInterval(versionCheck, 30 * 60 * 1000);
 
 show(0);
 tick();

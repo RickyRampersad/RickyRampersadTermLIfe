@@ -181,8 +181,23 @@ function iTz_() {
   return iSs_().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
 }
 
+/* EVERY MONEY FIGURE IN EVERY BRANCH INTELLIGENCE E-MAIL READ "TT$%,.2f".
+   It was Utilities.formatString('%,.2f', n). That method is sprintf-style and
+   sprintf has no thousands-grouping flag — the comma is Java's String.format,
+   a different API — so the pattern was never substituted and the literal went
+   out. On the morning of 15 September 2026 it went to an agent in a column
+   headed INSTALMENT, where a premium should have been.
+
+   The wall never showed it because the wall's pages format their own money in
+   the browser. Only the e-mails used this, in eighteen places.
+
+   No test caught it because the harness has no formatString stub, so nothing
+   in the suite had ever called this function. It does now. */
 function iMoney_(n) {
-  return 'TT$' + Utilities.formatString('%,.2f', iNum_(n)).replace(/^(-?)/, '$1');
+  var v = iNum_(n), neg = v < 0;
+  var s = Math.abs(v).toFixed(2).split('.');
+  s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (neg ? '-TT$' : 'TT$') + s.join('.');
 }
 
 /* An address the mail server will actually accept. The workbook's export put a
@@ -214,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-10a';
+var INTEL_VERSION = '2026-09-16a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -653,11 +668,15 @@ function iBuildPending_(today) {
     branch: ['branch'], reqt: ['reqt'], reqtDt: ['reqtdt'],
     agentId: ['agentid'], agent: ['agent name'], lapsed: ['reqtdayslapsed'],
     branchName: ['branchname'], susp: ['pol_misc_susp_amt'], clientId: ['clientid'],
+    /* Column O. Blank means no premium has been paid on the case at all —
+       which is a different problem from money sitting in suspense, and the
+       one that matters most on a case with nothing else outstanding. */
+    prem: ['pol_misc_prem'],
     where: ['being processed in'], pay: ['payment method']
   });
 
   var rows = [], byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {};
-  var suspense = 0, suspenseCases = 0, stale = 0;
+  var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0;
   var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
 
   for (var r = 0; r < d.rows; r++) {
@@ -683,8 +702,11 @@ function iBuildPending_(today) {
     var agent    = String(d.get('agent', r)).trim() || '(unassigned)';
     var unit     = String(d.get('branchName', r)).trim() || '(unassigned)';
     var susp     = iNum_(d.get('susp', r));
+    var premRaw  = d.get('prem', r);
+    var paid     = !(premRaw === '' || premRaw == null || iNum_(premRaw) === 0);
 
     if (susp > 0) { suspense += susp; suspenseCases++; }
+    if (!paid) unpaidCases++;
     byStatus[status]     = (byStatus[status] || 0) + 1;
     byDecision[decision] = (byDecision[decision] || 0) + 1;
     if (!byAgent[agent]) byAgent[agent] = { cases: 0, susp: 0, oldest: 0 };
@@ -703,6 +725,7 @@ function iBuildPending_(today) {
       policy: policy, client: String(d.get('client', r)).trim(),
       clientId: String(d.get('clientId', r)).trim(),
       status: status, decision: decision, agent: agent, unit: unit,
+      premium: paid ? iNum_(premRaw) : 0, paid: paid,
       requirement: String(d.get('reqt', r)).trim(),
       submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
       age: age, suspense: susp,
@@ -715,6 +738,7 @@ function iBuildPending_(today) {
 
   return {
     total: rows.length, suspense: suspense, suspenseCases: suspenseCases, stale: stale,
+    unpaidCases: unpaidCases,
     ageing: AGE, byStatus: byStatus, byDecision: byDecision,
     byAgent: Object.keys(byAgent).map(function (k) {
       return { agent: k, cases: byAgent[k].cases, susp: byAgent[k].susp, oldest: byAgent[k].oldest };
@@ -724,6 +748,1549 @@ function iBuildPending_(today) {
     }).sort(function (a, b) { return b.cases - a.cases; }),
     rows: rows
   };
+}
+
+/* ── The pending wall ───────────────────────────────────────────────────────
+   What is submitted and not yet issued, and what is holding each one.
+
+   TWO SOURCES, BECAUSE THE BRANCH KEEPS TWO.
+   iBuildPending_ above reads the Guardian extract — Policy, DecisionType,
+   ReqtdaysLapsed, and POL_MISC_SUSP_AMT, the client's own money sitting in
+   suspense until the case closes. The branch also keeps its own working
+   lists on the portfolio workbook, and those are a different shape
+   altogether: Unit, Agent, Number, Client, Days, App Received Date,
+   Comments. No decision code, no suspense, and the comment — "full med, OFT
+   and POA", "direct debit to be amended", "first premium" — is the only
+   place that says what the case is actually waiting on.
+
+   The extract knows the money. The branch's own list knows the reason, and
+   it is the one a unit manager updates on a Monday. So both are read, and
+   whichever exists answers. There is more than one of the branch's lists,
+   so every tab of that shape is collected rather than the biggest of them.
+
+   NO CLIENT REACHES THIS SCREEN. The wall actions carry no token — a screen
+   on a wall has nobody to sign it in — and in exchange they return
+   aggregates only. Every row here holds a client's name and a policy
+   number; they are counted and thrown away, and what leaves is money, ages,
+   units, reasons, and the names of our own agents. Keep it that way.  */
+
+var IPEND_HOLD_S = 180;      // the same three minutes the day screen is held for
+
+/** Every tab of the branch's own pending shape, not just the biggest — the
+ *  branch keeps more than one. INTEL_TABS_BRANCHPEND overrides with a
+ *  comma-separated list of tab names. */
+function iBranchPendTabs_() {
+  var named = iProp_('INTEL_TABS_BRANCHPEND');
+  var out = [];
+  if (named) {
+    named.split(',').forEach(function (n) {
+      var sh = iSs_().getSheetByName(String(n).trim());
+      if (sh) out.push(sh);
+    });
+    if (out.length) return out;
+  }
+  var must = ['agent', 'client', 'app received'];
+  iSs_().getSheets().forEach(function (sh) {
+    if (sh.getLastRow() < 2) return;
+    var head = iHeaders_(sh);
+    var ok = must.every(function (m) {
+      return head.some(function (h) { return h === m || h.indexOf(m) === 0; });
+    });
+    if (ok) out.push(sh);
+  });
+  return out;
+}
+
+/* WHAT IS HOLDING A CASE, READ OUT OF A SENTENCE SOMEBODY TYPED.
+   The comment column is free text — it is how the branch talks to itself,
+   not a field. These are the branch's own recurring words, matched as
+   keywords, and anything that matches none of them is counted as Other
+   rather than guessed at. Other growing large is the signal to add a
+   bucket, not to widen one. */
+var IPEND_REASONS = [
+  { key: 'medical',   label: 'Medical',            rx: /\b(med|medical|oft|ecg|blood|lab|urine|nurse|doctor|physician|x-?ray|apf)\b/i },
+  { key: 'bank',      label: 'Bank or direct debit', rx: /\b(dd|direct debit|bank|void ch|salary deduct|standing order|account)\b/i },
+  { key: 'signature', label: 'Signature or authority', rx: /\b(sign|signature|signed|poa|power of attorney|authoris|authoriz|consent)\b/i },
+  { key: 'premium',   label: 'First premium',      rx: /(1st premium|first premium|initial (deposit|premium)|payment (due|outstanding))/i },
+  { key: 'documents', label: 'Documents',          rx: /\b(doc|docs|document|id|identification|birth|school|certificate|copies|copy|proof|passport|permit)\b/i }
+];
+function iPendReason_(text) {
+  var t = String(text || '');
+  for (var i = 0; i < IPEND_REASONS.length; i++) {
+    if (IPEND_REASONS[i].rx.test(t)) return IPEND_REASONS[i].label;
+  }
+  return t.trim() ? 'Other' : 'No reason written';
+}
+
+function iPendBand_(age) {
+  if (age == null) return null;
+  return age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
+       : age <= 180 ? '91-180' : '180+';
+}
+
+/** The branch's own lists, folded into counts. */
+function iBranchPending_() {
+  var tabs = iBranchPendTabs_();
+  if (!tabs.length) return null;
+  var today = iToday_(), skip = iExcluded_();
+  var out = { total: 0, oldest: 0, tabs: tabs.length, excluded: 0,
+              ageing: { '0-30':0, '31-60':0, '61-90':0, '91-180':0, '180+':0 },
+              byAgent: {}, byUnit: {}, byReason: {}, stale: 0, noReason: 0 };
+
+  tabs.forEach(function (sh) {
+    var d = iReadCols_(sh, {
+      unit: ['unit'], agent: ['agent'], policy: ['number', 'policy'],
+      client: ['client'], days: ['days'], received: ['app received'],
+      comment: ['comment']
+    });
+    for (var r = 0; r < d.rows; r++) {
+      /* The client's name is read only to know the row is a case and not a
+         blank line. It is never carried any further than this loop. */
+      var isCase = String(d.get('client', r)).trim() || String(d.get('policy', r)).trim();
+      if (!isCase) continue;
+
+      var agent = String(d.get('agent', r)).trim() || '(unassigned)';
+      if (iExcludes_(skip, agent)) { out.excluded++; continue; }
+
+      /* Days is typed by hand and drifts; the received date is the fact.
+         The typed figure is the fallback when there is no date. */
+      var got = iDate_(d.get('received', r));
+      var age = got ? iDays_(got, today) : null;
+      if (age === null) {
+        var claimed = iNum_(d.get('days', r));
+        age = (claimed > 0 && claimed < 3650) ? claimed : null;
+      }
+      if (age !== null && (age < 0 || age > 3650)) age = null;
+
+      var unit = String(d.get('unit', r)).trim() || '(no unit)';
+      var comment = String(d.get('comment', r));
+      var reason = iPendReason_(comment);
+
+      out.total++;
+      if (reason === 'No reason written') out.noReason++;
+      var band = iPendBand_(age);
+      if (band) out.ageing[band]++;
+      if (age !== null) {
+        if (age > 90) out.stale++;
+        if (age > out.oldest) out.oldest = age;
+      }
+      if (!out.byAgent[agent]) out.byAgent[agent] = { cases: 0, oldest: 0 };
+      out.byAgent[agent].cases++;
+      if (age !== null && age > out.byAgent[agent].oldest) out.byAgent[agent].oldest = age;
+      out.byUnit[unit] = (out.byUnit[unit] || 0) + 1;
+      out.byReason[reason] = (out.byReason[reason] || 0) + 1;
+    }
+  });
+  return out;
+}
+
+/* ── Whose move is it ──────────────────────────────────────────────────────
+   THE RULE THE BRANCH ASKED FOR, IN ONE SENTENCE: never chase an agent about
+   something the agent cannot do anything about.
+
+   A pending list that says "sixty-one cases outstanding" invites exactly
+   that. Somebody reads the number, rings round every agent, and half those
+   calls are about a blood profile sitting at a lab — which teaches an agent
+   that being chased means nothing, and the next call, the one that mattered,
+   is ignored too. The cost of chasing badly is not the wasted call. It is
+   the chase that stops working.
+
+   So every case is put in exactly one bucket, and only two of them are
+   anybody's to work today:
+
+     READY    no requirement left, and no premium in. Nothing to underwrite.
+              Somebody has to collect money. This is the best case on the
+              whole screen and the easiest to miss, because a case with no
+              outstanding requirement looks finished on every other view.
+     AGENT    at least one requirement that is the agent's to get — a
+              signature, a proof of address, a declaration.
+     CLIENT   the client has to answer, and the agent has already asked.
+     ROUTINE  underwriting's own work, already in motion. LEAVE IT ALONE.
+     ISSUE    nothing outstanding and the premium is in. Ours is done; head
+              office has to settle it. Chase them, not the branch.
+
+   WHAT DECIDES THE BUCKET IS THE DATA, NOT A GUESS.
+   A requirement with an ordered date is in motion whatever its code says —
+   a medical that has been booked is not the agent's to hurry. Only an
+   un-ordered requirement is anybody's move, and then the code decides
+   whose. The map below is the branch's to change: INTEL_REQ_OWNERS takes
+   "MDMED=agent,PRADD=routine" and wins over every line of it.            */
+
+var IREQ_OWNER_DEFAULT = {
+  /* The client's paperwork and the client's money. An agent can get these
+     this afternoon. */
+  FUTPY: 'agent', DECLF: 'agent', PRADD: 'agent', AGEAD: 'agent',
+  REINC: 'agent', FACTF: 'agent', VERFY: 'agent',
+  /* The client has to answer this themselves. */
+  PCFEV: 'client',
+  /* Underwriting's own, whoever ordered it. */
+  MDMED: 'routine', MICRO: 'routine', OFT: 'routine', BP: 'routine',
+  EKG: 'routine', 'IMP HIST': 'routine', INFCR: 'routine', ATTPH: 'routine'
+};
+
+function iReqOwners_() {
+  var map = {};
+  Object.keys(IREQ_OWNER_DEFAULT).forEach(function (k) { map[k] = IREQ_OWNER_DEFAULT[k]; });
+  var raw = iProp_('INTEL_REQ_OWNERS');
+  if (raw) {
+    String(raw).split(',').forEach(function (bit) {
+      var kv = bit.split('=');
+      if (kv.length !== 2) return;
+      var code = String(kv[0]).trim().toUpperCase(), who = String(kv[1]).trim().toLowerCase();
+      if (code && /^(agent|client|routine)$/.test(who)) map[code] = who;
+    });
+  }
+  return map;
+}
+
+/** An ordered requirement is in motion and belongs to nobody on this floor. */
+function iReqOwner_(code, ordered, map) {
+  if (ordered) return 'routine';
+  return map[String(code || '').trim().toUpperCase()] || 'routine';
+}
+
+var IPEND_BUCKETS = [
+  { key: 'ready',   label: 'Ready to settle',  note: 'no requirement left, no premium in — collect' },
+  { key: 'agent',   label: 'The agent’s move', note: 'a requirement the agent can get' },
+  { key: 'client',  label: 'The client’s move', note: 'asked, and waiting on an answer' },
+  { key: 'routine', label: 'Already in motion', note: 'underwriting’s own — do not chase' },
+  { key: 'issue',   label: 'With head office', note: 'nothing outstanding, premium in' }
+];
+
+/** The join nobody had done: a pending case against its own open
+ *  requirements, and the premium column that says whether any money has
+ *  arrived. Counts only — every policy number and client name stays in
+ *  this function. */
+function iPendTriage_(extract, reqs) {
+  if (!extract || !extract.rows) return null;
+  var map = iReqOwners_(), skip = iExcluded_();
+
+  var openBy = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    (openBy[k] = openBy[k] || []).push(q);
+  });
+
+  var counts = {}, oldestIn = {}, byAgent = {};
+  IPEND_BUCKETS.forEach(function (b) { counts[b.key] = 0; oldestIn[b.key] = 0; });
+  var readyAgeing = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var readyOldest = 0, readyMoney = 0, matched = 0, unmatched = 0;
+
+  extract.rows.forEach(function (row) {
+    var agent = String(row.agent || '').trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) return;
+
+    var here = openBy[String(row.policy || '').trim()] || [];
+    if (here.length) matched++; else unmatched++;
+
+    var owners = {};
+    here.forEach(function (q) { owners[iReqOwner_(q.code, q.ordered, map)] = true; });
+
+    var bucket;
+    if (!here.length) bucket = row.paid ? 'issue' : 'ready';
+    else if (owners.agent) bucket = 'agent';
+    else if (owners.client) bucket = 'client';
+    else bucket = 'routine';
+
+    counts[bucket]++;
+    var age = row.age || 0;
+    if (age > oldestIn[bucket]) oldestIn[bucket] = age;
+
+    if (bucket === 'ready') {
+      var band = iPendBand_(row.age);
+      if (band) readyAgeing[band]++;
+      if (age > readyOldest) readyOldest = age;
+      readyMoney += iNum_(row.suspense);
+    }
+
+    if (!byAgent[agent]) {
+      byAgent[agent] = { agent: agent, ready: 0, actionable: 0, oldest: 0, quiet: 0, routine: 0 };
+    }
+    var a = byAgent[agent];
+    if (bucket === 'ready') { a.ready++; a.actionable++; }
+    else if (bucket === 'agent') a.actionable++;
+    else if (bucket === 'routine') a.routine++;
+    if ((bucket === 'ready' || bucket === 'agent') && age > a.oldest) a.oldest = age;
+    /* A chase that was closed with the case still pending is the worst
+       state there is: it reads as handled and nothing is happening. */
+    if (row.chase === 'closed') a.quiet++;
+  });
+
+  var workable = counts.ready + counts.agent;
+  /* Ranked by what is actually theirs to do, then by how long the worst of
+     it has waited. Not by case count — an agent with twenty cases all at
+     the lab is not the one to call. */
+  var culprits = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .filter(function (a) { return a.actionable > 0 || a.quiet > 0; })
+    .sort(function (x, y) { return (y.actionable - x.actionable) || (y.oldest - x.oldest) || (y.quiet - x.quiet); });
+
+  return {
+    buckets: IPEND_BUCKETS.map(function (b) {
+      return { key: b.key, label: b.label, note: b.note, n: counts[b.key], oldest: oldestIn[b.key] };
+    }),
+    workable: workable,
+    waiting: counts.client + counts.routine + counts.issue,
+    ready: { cases: counts.ready, oldest: readyOldest, held: readyMoney, ageing: readyAgeing,
+             agents: Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+               .filter(function (a) { return a.ready > 0; })
+               .sort(function (x, y) { return (y.ready - x.ready) || (y.oldest - x.oldest); })
+               .slice(0, 10) },
+    culprits: culprits.slice(0, 10),
+    /* How much of the pending list could be joined to a requirement at all.
+       A low number means the two extracts are out of step, and every bucket
+       below it should be read with that in mind. */
+    matched: matched, unmatched: unmatched
+  };
+}
+
+/** Three sources, as the wall may see them. Aggregates only.
+ *
+ *  THE THIRD IS THE AUTHORITY ON WHAT IS HOLDING A CASE.
+ *  iBuildReqs_ reads RR_UWPRO_INSURED_Requirement — one row per requirement,
+ *  deduplicated by insured_requirement_id because the extract repeats a
+ *  requirement once per history row, closed ones dropped, each carrying a
+ *  code that IREQ_CODES turns into words: a medical examination, proof of
+ *  address, an attending physician's statement. That is the real answer to
+ *  "what is this case waiting on", and it beats reading a sentence somebody
+ *  typed in a comment column. The comments are the fallback for a branch
+ *  that has the working lists and not the extract. */
+function iPendingWall_() {
+  var today = iToday_();
+  var branch = null, extract = null, reqs = null, notes = [];
+  try { branch = iBranchPending_(); } catch (e) { notes.push('The branch lists would not read: ' + (e && e.message || e)); }
+  try {
+    var p = iBuildPending_(today);
+    if (p && !p.error) extract = p; else if (p && p.error) notes.push(p.error);
+  } catch (e2) { notes.push('The pending extract would not read: ' + (e2 && e2.message || e2)); }
+  try {
+    var q = iBuildReqs_(today);
+    if (q && !q.error) reqs = q; else if (q && q.error) notes.push(q.error);
+  } catch (e3) { notes.push('The requirements extract would not read: ' + (e3 && e3.message || e3)); }
+
+  /* WHO IS ON IT. The Tasks tab is the branch's own record of chasing head
+     office, and every task keeps the policy it names — so this is a lookup,
+     not a search. Three states, because they want three different things
+     done: nobody has ever raised a task on this case; somebody has one open;
+     or the last one was closed and the case is still pending, which is the
+     worst of the three because it looks handled and is not. */
+  var chase = null, work = null;
+  if (extract && extract.rows) {
+    try {
+      var tasks = iBuildTasks_(today);
+      if (tasks && !tasks.error) {
+        var joined = { tasks: tasks, pending: extract };
+        iJoinChases_(joined);
+        chase = { never: extract.chaseNever || 0, live: extract.chaseLive || 0,
+                  quiet: extract.chaseClosed || 0 };
+        /* The chase log's own health, by the field the KPI list is aligned
+           to. Counts and ages only — a task subject carries client names
+           and policy numbers and never leaves iBuildTasks_. */
+        work = { open: tasks.openCount || 0, closed: tasks.closed || 0,
+                 noType: tasks.noType || 0, unassigned: tasks.unassigned || 0,
+                 oldest: tasks.oldestOpen || 0, median: tasks.medianOpen || 0,
+                 stale: tasks.staleOpen || 0,
+                 byType: (tasks.byType || []).slice(0, 8) };
+      } else if (tasks && tasks.error) { notes.push(tasks.error); }
+    } catch (e4) { notes.push('The chase log would not read: ' + (e4 && e4.message || e4)); }
+  }
+
+  /* After the chase join, never before it — the triage reads each row's
+     chase state, and a row that has not been joined yet says nothing. */
+  var triage = null;
+  try { triage = iPendTriage_(extract, reqs); }
+  catch (e5) { notes.push('The triage would not run: ' + (e5 && e5.message || e5)); }
+
+  if (!branch && !extract && !reqs) {
+    return { configured: false, generatedAt: today,
+             error: 'No pending list found. The branch’s own sheets need Agent, Client and App Received Date; ' +
+                    'the Guardian extract needs Policy, DecisionType and ReqtdaysLapsed; ' +
+                    'the requirements extract needs insured_requirement_id, requirement_code and policy_number.' };
+  }
+
+  var skip = iExcluded_();
+  var pair = function (o) {
+    return Object.keys(o || {}).map(function (k) { return { name: k, n: o[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  };
+
+  /* The branch's list is the one a person updates, so it is the count on
+     screen. The extract carries the money and the decision codes, which the
+     branch's list has no column for. */
+  var counted = branch || extract || { total: null, ageing: {}, stale: null };
+  var total = counted.total;
+  var ageing = counted.ageing || {};
+  var stale = counted.stale;
+  var oldest = branch ? branch.oldest : 0;
+  if (!branch && extract) {
+    (extract.rows || []).forEach(function (r) { if (r.age && r.age > oldest) oldest = r.age; });
+  }
+  if (!branch && !extract && reqs) {
+    /* Only the requirements extract is here. It counts requirements rather
+       than cases, and the screen must not pass one off as the other — the
+       case count is the number of policies they sit on. */
+    total = reqs.policies;
+    ageing = reqs.ageing || {};
+    stale = (ageing['91-180'] || 0) + (ageing['181-365'] || 0) + (ageing['365+'] || 0);
+    oldest = reqs.oldest || 0;
+  }
+
+  var agents = branch
+    ? Object.keys(branch.byAgent).map(function (k) {
+        return { agent: k, cases: branch.byAgent[k].cases, oldest: branch.byAgent[k].oldest, susp: 0 };
+      })
+    : ((extract && extract.byAgent) || []).filter(function (a) { return !iExcludes_(skip, a.agent); })
+        .map(function (a) { return { agent: a.agent, cases: a.cases, oldest: a.oldest, susp: a.susp }; });
+  agents.sort(function (a, b) { return b.cases - a.cases || b.oldest - a.oldest; });
+
+  return {
+    configured: true,
+    generatedAt: today,
+    at: Utilities.formatDate(new Date(), iTz_(), 'HH:mm'),
+    source: [branch ? 'branch lists' : '', extract ? 'pending extract' : '',
+             reqs ? 'requirements extract' : ''].filter(String).join(' + '),
+    lists: branch ? branch.tabs : 0,
+    total: total,
+    stale: stale,
+    oldest: oldest,
+    noReason: branch ? branch.noReason : null,
+    excluded: branch ? branch.excluded : 0,
+    ageing: ageing,
+    /* What is stopping them. The requirement codes first, because they are
+       the underwriter's own answer; the branch's comments next, read by
+       keyword; the pending extract's decision codes last. */
+    reasonsFrom: reqs ? 'requirement codes' : (branch ? 'what the branch wrote' : 'decision codes'),
+    reasons: reqs ? (reqs.byCode || []).map(function (c) { return { name: c.label, n: c.n }; })
+           : (branch ? pair(branch.byReason) : pair((extract && extract.byDecision) || {})),
+    /* Every open requirement, how long they have been open, and how many
+       cases they sit on. Counts only — no policy number and no insured. */
+    requirements: reqs ? {
+      open: reqs.openCount, policies: reqs.policies, median: reqs.medianAge,
+      oldest: reqs.oldest, overYear: reqs.overYear, closedThisYear: reqs.closedThisYear,
+      ageing: reqs.ageing
+    } : null,
+    units: branch ? pair(branch.byUnit)
+                  : (((extract && extract.byUnit) || []).map(function (u) { return { name: u.unit, n: u.cases }; })),
+    agents: agents.slice(0, 12),
+    /* TWO KINDS OF MONEY, AND THEY ARE OPPOSITES.
+       Held: the client has paid and we cannot apply it until the case
+       closes — POL_MISC_SUSP_AMT, the branch's own money problem.
+       Unpaid: the case is waiting on a first or future premium that has
+       never arrived — requirement code FUTPY, the client's. One is a file
+       to finish, the other is a call to make, and a screen that adds them
+       together tells nobody what to do this afternoon. */
+    money: {
+      held: extract ? extract.suspense : null,
+      heldCases: extract ? extract.suspenseCases : null,
+      /* Column O blank is the plainest statement on the sheet: not one
+         dollar has come in on this case. Counted, because on a case with
+         nothing else outstanding it is the only thing left to do. */
+      unpaidCases: extract ? extract.unpaidCases : null,
+      unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
+    },
+    /* Whose move is it, who can be worked today, and who is holding it up. */
+    triage: triage,
+    /* Who is on it, from the branch's own chase log. */
+    chase: chase,
+    /* And what the chasing itself consists of, by Task Type. */
+    work: work,
+    suspense: extract ? extract.suspense : null,
+    suspenseCases: extract ? extract.suspenseCases : null,
+    notes: notes
+  };
+}
+
+/** The wall's pending feed. Live, held for three minutes — the branch's own
+ *  lists are edited during the day, and a case cleared at ten should be off
+ *  the screen by lunch. */
+function iActPending_(b) {
+  var key = 'ipend_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPendingWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPEND_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVERSIONS — THE TERM BOOK THAT IS ALLOWED TO BECOME SOMETHING ELSE
+
+   A term policy is a promise with a date on it. Some of those promises carry
+   a conversion privilege: the client may exchange the term for permanent
+   cover with no medical, no questions asked and no chance of being declined.
+   The privilege is worth most to exactly the people least likely to pass a
+   medical, and it is worth nothing the day after it runs out.
+
+   Salesforce spells the product out in Life_Plan_01__c, and once you have
+   read enough of them the code stops being a code:
+
+       F   Flexi            E   Evolution
+       C   Convertible      N   Non-convertible
+       T   Term
+       65  the age the cover runs to (a small number is a term in years)
+
+   Checked against the branch's own book: every FNT85 on file expires between
+   the client's eighty-fourth and eighty-fifth birthday, and every FCT20
+   twenty years after its issue date. So the three letters are reliable, and
+   the three letters are all this needs — whether a policy may be converted
+   is a matter of which letter sits in the middle.
+
+   THE NUMBER IS NOT RELIABLE AND IS NOT USED. Two codes on file are mis-keyed
+   (FNT81 and FNT851, both of them plainly FNT85 1), and the real expiry date
+   is on the record anyway. Decode the letters, read the date.
+
+   ONE CAVEAT, AND IT MATTERS. On the Evolution plans the expiry date held in
+   Salesforce is the plan's own maturity rather than the term rider's end: an
+   ECT65 issued to a client born in 2002 carries an expiry in 2102, which is
+   age ninety-nine, not sixty-five. A countdown to expiry is therefore honest
+   on the Flexi book and meaningless on the Evolution book, and the deadline
+   list below counts down the Flexi only. Both books are in the birthday list,
+   because the birthday is a fact about the client, not about the plan.
+
+   WHY A MONTH. Conversion is priced at attained age. The cheapest day to
+   convert is the day before a birthday, the dearest is the day after, and the
+   branch already works a birthday-month rhythm for its service reviews. So
+   the month's birthdays are the worklist, and the ones whose birthday has not
+   arrived yet are the urgent half of it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ICONV_HOLD_S  = 15 * 60;  // a Salesforce read, held a quarter of an hour
+var ICONV_OBJECT  = 'CLIENT_PORTFOLIO__c';
+var ICONV_INFORCE = 'PREMIUM PAYING';   // stored upper, and SOQL '=' ignores case
+var ICONV_SOON_Y  = 10;       // how far ahead the deadline list looks
+var ICONV_TOP     = 14;       // agents on screen
+
+/* ── WHICH PLANS CONVERT, AND WHAT THE OTHERS ACTUALLY DO ────────────────
+   Settled twice over. The branch's dues book carries a status called
+   "Converted" and 49 policies hold it: 48 are FCT and the 49th is CLT65.
+   ZERO of 1,327 Liberator, ZERO of 450 Newlife 2000, ZERO of 78 FNT and ZERO
+   of 1,221 ECT have ever held it. The branch manager's rule is the same
+   sentence: only term converts.
+
+   What the others do was the part the workbook could not tell us, and the
+   branch told us on 12 September 2026:
+
+     ECONO LIFE (ECT, NLE) IS WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. The "65" is the end of the premium, not
+     the end of the cover — which is why its Life_Coverage_Expiry__c lands at
+     age ninety-nine and why 48 of the 49 conversions went FCT into ECT. It is
+     the destination, not a lead.
+
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and it is
+     the one the branch is watching. The ones paid to 65 can be EXTENDED — for
+     an additional premium, after underwriting on the increase only. That is
+     an opportunity rather than a problem, and the company's rules for it are
+     set out at IPERM_EXTEND_AGE.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   So three kinds, and the third one is not this screen's business:
+
+     convert     FCT. A right to exchange the term for permanent cover with no
+                 medical. The only pool a conversion list may use.
+     expire      FNT, and FNT alone. Term written non-convertible: the cover
+                 ends on a date and there is nothing to exchange it for.
+     permanent   Econo Life, Liberator, Rejuvenator. Whole life or a premium
+                 paying period, with cover that does not end on a date. They
+                 have a screen of their own — iPermanentWall_ — and they are
+                 counted in neither figure here, because a conversion list
+                 that includes them is a list of things that cannot convert. */
+var ICONV_FAMILIES = [
+  { like: 'FCT',   kind: 'convert',   label: 'Revised Flexi Term (convertible)' },
+  { like: 'FNT',   kind: 'expire',    label: 'Flexi Term, non-convertible' },
+  { like: 'ECT',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'ECU',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'NLE',   kind: 'permanent', label: 'Newlife 2000' },
+  { like: 'ECONO', kind: 'permanent', label: 'Econo Life' },
+  { like: 'LIB',   kind: 'permanent', label: 'Liberator' },
+  { like: 'LB',    kind: 'permanent', label: 'Liberator' },
+  { like: 'CRI',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR2',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR3',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR4',   kind: 'permanent', label: 'Rejuvenator' }
+];
+
+var ICONV_MONTHS = ['January','February','March','April','May','June','July',
+                    'August','September','October','November','December'];
+
+/* Read a plan code. Returns null for everything outside the table — whole
+   life, pensions, critical illness, motor — so a caller can filter on the
+   return value alone. Longest prefix first, or LB would answer for LIB. */
+function iConvPlan_(raw) {
+  var s = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, ' ').trim();
+  if (!s) return null;
+  var best = null;
+  for (var i = 0; i < ICONV_FAMILIES.length; i++) {
+    var f = ICONV_FAMILIES[i];
+    if (s.indexOf(f.like) === 0 && (!best || f.like.length > best.like.length)) best = f;
+  }
+  return best;
+}
+
+/* The SOQL half of the same table, so the filter and the reader cannot drift
+   apart: whichever families iConvPlan_ calls convertible are the families
+   this asks Salesforce for. */
+function iConvLike_(kind) {
+  var fams = ICONV_FAMILIES.filter(function (f) { return f.kind === kind; });
+  return '(' + fams.map(function (f) {
+    return "Life_Plan_01__c LIKE '" + f.like + "%'";
+  }).join(' OR ') + ')';
+}
+
+function iConvInforce_() {
+  return "Policy_Status_Description__c = '" + ICONV_INFORCE + "'" +
+         ' AND Life_Coverage__c > 0 AND Life_Coverage_Expiry__c >= TODAY';
+}
+
+/* ── IN FORCE, AND THE PREMIUM CURRENT ───────────────────────────────────
+   Two more rules from the branch, and neither of them can be answered out of
+   Salesforce. A lapsed policy cannot be converted, and a policy in arrears
+   cannot be converted until somebody collects — and Salesforce is stale on
+   both: it still carried a converted policy, a death and a lapse as "Premium
+   Paying" on a book checked against the dues tab on 12 September 2026, and its
+   paid-to-date was behind the tab's on 60 of 73 policies.
+
+   So status and arrears are read off the branch's own dues tab, which is the
+   same tab the 45-day wall reads, and every convertible policy lands in one
+   of three states:
+
+     ready    in force, nothing owed. Convert it.
+     collect  in force and overdue. Collect the premium first — it is a
+              conversion behind a phone call, not a dead lead.
+     gone     lapsed, surrendered, dead, matured, already converted. Off the
+              list entirely, and a wall that shows these is a wall that sends
+              agents after policies that no longer exist.
+
+   The split matters more than the total: 56% of the branch's premium-paying
+   Flexi convertible policies were flagged Overdue on the day this was
+   written. A single number would have sent every agent after all of them. */
+var ICONV_GONE = /surrender|matured|death|file clos|not proceed|not taken|expir|reject|declin|convert|lapse|paid up|vested/i;
+
+function iConvDues_() {
+  var sh = iTabDues_();
+  if (!sh) return null;
+  var d = iReadCols_(sh, {
+    number: ['number'], plan: ['plan code'], agent: ['agent'], premium: ['premium'],
+    sum: ['sum assured'], days: ['days'], status2: ['status(2)', 'status2'],
+    desc: ['status description']
+  });
+  var by = {}, pools = {};
+  var blank = function () {
+    return { ready: { n: 0, cover: 0, prem: 0 }, collect: { n: 0, cover: 0, prem: 0 },
+             gone: { n: 0, cover: 0, prem: 0 } };
+  };
+  ['convert', 'expire', 'permanent'].forEach(function (k) { pools[k] = blank(); });
+  for (var r = 0; r < d.rows; r++) {
+    var num = String(d.get('number', r)).trim();
+    if (!num || iBadNumber_(num)) continue;
+    var desc = String(d.get('desc', r)).trim();
+    var state = ICONV_GONE.test(desc) ? 'gone'
+              : /overdue/i.test(String(d.get('status2', r))) ? 'collect'
+              : 'ready';
+    /* First row wins. A policy number appearing twice in the extract is the
+       extract's problem, and picking the later row would let a stale duplicate
+       overwrite a live one. */
+    if (by[num] === undefined) by[num] = { state: state, desc: desc, days: iNum_(d.get('days', r)) };
+    /* Every kind is split, not only the convertible one: the permanent screen
+       has the same two rules against it — in force, and paid to date — and it
+       reads the answer out of the same pass over the same tab. */
+    var f = iConvPlan_(d.get('plan', r));
+    if (f && pools[f.kind]) {
+      var slot = pools[f.kind][state];
+      slot.n++; slot.cover += iNum_(d.get('sum', r)); slot.prem += iNum_(d.get('premium', r));
+    }
+  }
+  return { by: by, pool: pools.convert, pools: pools };
+}
+
+function iConvOne_(rows, keys) {
+  var r = (rows && rows[0]) || {}, out = {};
+  keys.forEach(function (k) { out[k] = iNum_(r[k]); });
+  return out;
+}
+
+/* ── The month's conversion worklist ──────────────────────────────────────
+   Six aggregate reads, none of which brings a client name or a policy number
+   back with it. Salesforce does the counting; this only shapes the answer.  */
+function iConversionWall_() {
+  var today = iToday_();
+  var month = today.getMonth() + 1, dayOf = today.getDate();
+  var notes = [];
+
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project. ' +
+                    'Paste KPI.gs alongside Intelligence.gs, or add SalesforceSync.gs.' };
+  }
+  var ask = iSfQuery_;
+
+  var conv = iConvLike_('convert'), gone = iConvLike_('expire'), perm = iConvLike_('permanent');
+  var live = iConvInforce_();
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var birthday = ' AND CALENDAR_MONTH(Date_Of_Birth__c) = ' + month;
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* THE MONTH'S LIST IS READ ROW BY ROW, not as an aggregate, and that is not
+     a style choice. A policy can only be converted if it is in force with the
+     premium current, and Salesforce does not know which — the dues tab does.
+     So every row has to be tested against it one at a time, and the totals
+     are added up here afterwards. It is a small list: a month's birthdays on
+     one plan family is tens of rows, not thousands.
+
+     The policy number is read and never leaves this function. It exists only
+     to find the row in the dues tab. */
+  /* NO ALIASES, AND NO DAY_IN_MONTH. Salesforce allows field aliasing only in
+     an aggregate query, and a row-level SELECT carrying "DAY_IN_MONTH(x) dom"
+     is rejected outright — "only aggregate expressions use field aliasing" —
+     which would have emptied this whole screen on the live org. The day of
+     the month is arithmetic on a date the query already returns, so it is
+     worked out below instead of asked for. */
+  var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
+                ' Life_Plan_01__c, Date_Of_Birth__c, Life_Coverage_Expiry__c' +
+                from + conv + ' AND ' + live + birthday +
+                ' ORDER BY Life_Coverage__c DESC LIMIT 900');
+
+  var poolConv = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + conv + ' AND ' + live);
+  var poolGone = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + gone + ' AND ' + live);
+  /* The permanent book, as one figure and a pointer. It is not this screen's
+     work — see iPermanentWall_ — but a room looking at $67m of expiring term
+     should be able to see that it sits beside two billion that does not. */
+  var poolPerm = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                   from + perm + ' AND ' + live);
+
+  /* THE DEADLINE, and it is now the right book. It used to count down the
+     convertible pool, which was the wrong story: a policy you may convert has
+     no deadline worth a wall until its privilege closes. A policy that simply
+     ends has a date, and after that date the client has nothing. */
+  var soonRows = q('SELECT CALENDAR_YEAR(Life_Coverage_Expiry__c) yr, COUNT(Id) n,' +
+                   ' SUM(Life_Coverage__c) cover' +
+                   from + gone + ' AND ' + live +
+                   ' AND Life_Coverage_Expiry__c <= NEXT_N_YEARS:' + ICONV_SOON_Y +
+                   ' GROUP BY CALENDAR_YEAR(Life_Coverage_Expiry__c)' +
+                   ' ORDER BY CALENDAR_YEAR(Life_Coverage_Expiry__c) LIMIT 40');
+
+  if (rowsM === null && poolConv === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  /* The dues tab decides in force and current. Without it this screen still
+     works, but it cannot tell a live policy from a lapsed one, and it says so
+     on the face of it rather than quietly overstating the list. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var skip = iExcluded_();
+  var state = { ready: { n: 0, cover: 0, prem: 0 },
+                collect: { n: 0, cover: 0, prem: 0 },
+                gone: { n: 0, cover: 0, prem: 0 } };
+  var byAg = {}, byFam = {}, unknown = 0, unnamed = 0;
+  var ahead = { n: 0, cover: 0 };
+  var cases = 0, cover = 0, prem = 0;
+  /* THE DAY STRIP, and it replaced a runway of expiry years that answered the
+     wrong question. A Flexi term to age eighty-five written at thirty-three
+     expires in 2078; that is not a deadline an agent can act on, it is noise
+     on a wall. The deadline that matters is THIS MONTH'S BIRTHDAY, because
+     the conversion is priced at the age the client has reached — so the list
+     is the days of the month, the day each birthday falls on, and whether it
+     has gone past yet.
+
+     A day still to come is a call worth making today. A day already past is
+     this year's rate gone. That is the whole objective, and everything else
+     was in the way of it. */
+  var days = {}, noDate = 0, expSoon = { n: 0, cover: 0 };
+  var yrs = function (a, b) { return (b - a) / (365.2425 * 24 * 3600 * 1000); };
+
+  (rowsM || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the dues tab has never heard of is treated as ready — it is
+       usually business too new to be in the extract, and dropping it would
+       hide this month's freshest cases. */
+    var st = hit ? hit.state : 'ready';
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c);
+    state[st].n++; state[st].cover += c; state[st].prem += pm;
+    if (st === 'gone') return;                       // off the list entirely
+
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (!ag) { unnamed++; }
+    else if (iExcludes_(skip, ag)) { return; }
+    else {
+      var slot = byAg[ag] || (byAg[ag] = { name: ag, n: 0, cover: 0, prem: 0, top: 0, collect: 0 });
+      slot.n++; slot.cover += c; slot.prem += pm;
+      if (c > slot.top) slot.top = c;
+      if (st === 'collect') slot.collect++;
+    }
+    cases++; cover += c; prem += pm;
+    var dobR = iDate_(r.Date_Of_Birth__c);
+    if (dobR && dobR.getDate() >= dayOf) { ahead.n++; ahead.cover += c; }
+
+    /* THE DAY, AND THE AGE THEY TURN ON IT. Both are what an agent says on the
+       phone: "you turn thirty-eight on the twenty-third, and the price is set
+       by the age you are when you sign." The age the policy was WRITTEN at
+       does not come into that conversation, which is why it is no longer on
+       the screen. */
+    var dob = dobR, exp = iDate_(r.Life_Coverage_Expiry__c);
+    var dom = dob ? dob.getDate() : 0, past = !!dom && dom < dayOf;
+    var turning = dob ? today.getFullYear() - dob.getFullYear() : null;
+    if (dom) {
+      var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: past });
+      slot.n++; slot.cover += c;
+    }
+    /* The contract's own expiry, kept only where it is close enough to be a
+       real deadline. Everything beyond that was the noise. */
+    if (exp) { if (yrs(today, exp) <= ICONV_SOON_Y) { expSoon.n++; expSoon.cover += c; } }
+    else { noDate++; }
+    if (ag && byAg[ag]) {
+      var a2 = byAg[ag];
+      /* The soonest birthday still to come is what orders the list. A day
+         already gone this year is not a call, so it sorts last. */
+      var rank = past ? dom + 100 : dom;
+      if (a2.rank === undefined || rank < a2.rank) {
+        a2.rank = rank; a2.day = dom; a2.past = past; a2.turning = turning;
+      }
+    }
+
+    /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
+       FCT65 are one product typed three ways and a wall that lists them
+       separately is a wall nobody trusts. */
+    var f = iConvPlan_(r.Life_Plan_01__c);
+    if (!f || f.kind !== 'convert') { unknown++; return; }
+    var fam = byFam[f.like] || (byFam[f.like] = { code: f.like, label: f.label, n: 0, cover: 0 });
+    fam.n++; fam.cover += c;
+  });
+
+  /* ORDERED BY WHO TO RING FIRST, not by who holds the most. The agent whose
+     client turns a year older on Tuesday goes above the agent holding more
+     cover in three weeks' time, because the wall is a worklist and not a
+     league table. Cover breaks the tie. */
+  var agents = Object.keys(byAg).map(function (k) {
+    var a = byAg[k];
+    if (a.rank === undefined) { a.rank = 999; a.day = null; a.past = null; a.turning = null; }
+    return a;
+  }).sort(function (a, b) {
+    return a.rank !== b.rank ? a.rank - b.rank : b.cover - a.cover;
+  });
+  var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
+    .sort(function (a, b) { return b.cover - a.cover; });
+  if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
+  if (state.gone.n) {
+    notes.push(state.gone.n + ' of this month’s birthdays are on policies the dues tab says have ' +
+               'lapsed, been surrendered or already converted. They are off the list — Salesforce ' +
+               'still shows them paying.');
+  }
+
+  var soon = (soonRows || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var soonTotal = soon.reduce(function (a, r) {
+    return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
+
+  /* Econo Life, Liberator and Rejuvenator are in neither figure on purpose:
+     their LIFE cover ends on no date, so a conversion list cannot use them —
+     their riders do end, and that is iRidersWall_, not this screen.
+     The count is here only so the room knows what this screen is NOT about. */
+  var perma = iConvOne_(poolPerm, ['n', 'cover']);
+
+  return {
+    configured: true,
+    generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()],
+    day: dayOf,
+    years: ICONV_SOON_Y,
+    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead,
+            passed: { n: cases - ahead.n, cover: cover - ahead.cover },
+            expSoon: expSoon, noDate: noDate },
+    /* Every day of the month that carries a birthday, in order, with the ones
+       already gone marked. The screen draws the whole month so a room can see
+       the shape of the week ahead, not only a total. */
+    days: Object.keys(days).map(function (k) { return days[k]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
+    state: state,
+    duesRead: !!dues,
+    agents: agents.slice(0, ICONV_TOP),
+    agentCount: agents.length,
+    mix: mix,
+    pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
+            nonconv: iConvOne_(poolGone, ['n', 'cover', 'prem']),
+            permanent: perma,
+            /* The same pool as conv, but split by what the branch's own
+               extract says about it. This is the honest denominator. */
+            live: dues ? dues.pool : null },
+    soon: soon,
+    soonTotal: soonTotal,
+    notes: notes
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE PERMANENT BOOK — WHOLE LIFE, THE PREMIUM PERIOD, AND THE RIDERS
+
+   The conversions screen is about cover that ENDS on a date. This one is
+   about everything that does not, and it is the larger half of the branch:
+   2,130 policies, two billion dollars of cover and $2.3m of annual premium on
+   the day it was built.
+
+   Three products, and the branch's own words for them:
+
+     ECONO LIFE (ECT, NLE) is WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. Nothing to convert — it is what a term
+     converts INTO, which is why 48 of the branch's 49 conversions went FCT
+     into ECT. The "65" in ECT65 is the end of the premium, not the end of the
+     cover, and mistaking one for the other is what put 1,221 policies in the
+     wrong column for a day.
+
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and the
+     branch is watching it. POLICIES ISSUED 2009 AND EARLIER CAN SIMPLY BE
+     EXTENDED. That is the one thing on this screen an agent can act on this
+     week, so it leads it.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   And the riders, which are on the policy rather than beside it: critical
+   illness, accidental death (ADDAP), waiver of premium, disability income.
+   The critical illness rider alone carries more cover than the entire term
+   book, on 3,102 policies, and almost nobody looks at it.
+
+   WHY THIS SCREEN CARRIES NO DEADLINE PANEL. No LIFE cover here expires —
+   but the riders on these same policies do, every one of them, and that is a
+   screen of its own: see iRidersWall_. The dates
+   that matter are the maturity date where one is held and the issue date,
+   which is how long the policy has been paying — and on the Liberator the
+   issue date IS the opportunity.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IPERM_HOLD_S   = 15 * 60;
+var IPERM_TOP      = 12;      // agents on screen
+
+/* ── THE EXTENSION, on the company's own terms ─────────────────────────────
+   Memorandum, Norris Lovelace, VP Insurance Operations – Individual Life,
+   6 March 2017: "AGE EXTENSIONS ON LIFE EVOLUTION LIBERATOR". It replaced
+   what this screen used to say, and what it used to say was wrong twice over.
+
+   The history is the first paragraph: extension was granted only to policies
+   issued before 2009, at maturity, because Guardian had no option for a
+   client to pay a premium beyond 65. Liberator Plus in 2009 brought 75, 85
+   and 100 — and that option was not given to the group already written. From
+   1 MARCH 2017 it is, BY WAY OF AN ADDITIONAL PREMIUM.
+
+   So the screen used to lead on "issued 2009 or earlier — just extend, no
+   application, no underwriting". Both halves of that are wrong:
+
+     WHICH POLICIES. The operative sentence carries no issue-year limit. What
+     decides it is whether the premium stops at 65, because that is the policy
+     that runs out of road. On the in-force book that is thirteen policies —
+     and only two of them were written before 2009, so the old filter found
+     seventeen policies of which fifteen had nothing to extend.
+
+     "NO UNDERWRITING" IS FALSE. Full underwriting takes place on the
+     increased portion, at the client's current age. Guardian bears the cost
+     of it. If health has changed, the rating applies to the increase only.
+     The premium goes up: the memo's own worked example is $200,000 to age 65
+     becoming $125,000 to age 75 on the same $175, so $75,000 has to be bought
+     back at an extra $100 — $275 for the cover they already had.
+
+   And the gates, verbatim from the guidelines:
+     · premium paying and up to date — NO MORE THAN THREE MONTHS IN ARREARS
+     · the extension is on the ORIGINAL sum assured; no decreases
+     · total sum assured cannot be below the company minimum of $100,000
+     · ONE alteration only with a premium change; after that it is client
+       accumulation as the contract sets out
+     · NOT available on Rejuvenator at all, and no extension of existing
+       Rejuvenator coverage to age 80
+   Questions go to Dena Renwick, Manager, Customer Support.
+   ─────────────────────────────────────────────────────────────────────────── */
+var IPERM_EXTEND_AGE = 65;       // the premium period that runs out of road
+var IPERM_MIN_SUM    = 100000;   // the company minimum, below which no extension
+var IPERM_ARREARS_D  = 92;       // "no more than three months in arrears"
+var IPERM_MEMO       = '6 March 2017 memorandum, VP Insurance Operations';
+
+/* The premium-paying period each family runs to, in the branch's words. Shown
+   on the screen so nobody reads "to 65" as "ends at 65" again. */
+var IPERM_FAMS = [
+  { fam: 'econo', label: 'Econo Life',  sub: 'whole life \u00b7 premium to 65 or 85 \u00b7 cover for life',
+    likes: ['ECT', 'ECU', 'NLE', 'ECONO'] },
+  { fam: 'lib',   label: 'Liberator',   sub: 'premium to 65, 75, 85 or 100',
+    likes: ['LIB', 'LB'] },
+  { fam: 'rejuv', label: 'Rejuvenator', sub: 'critical illness',
+    likes: ['CRI', 'CR2', 'CR3', 'CR4'] }
+];
+
+function iPermFam_(raw) {
+  var u = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, '').trim();
+  if (!u) return null;
+  var best = null;
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) {
+      if (u.indexOf(k) === 0 && (!best || k.length > best.k.length)) best = { f: f, k: k };
+    });
+  });
+  return best ? best.f : null;
+}
+
+/* Liberator with the premium paid to 65, across every way the branch types
+   it: LB65, LB65 1, LIB65, LIB 65. The number in the plan code IS the premium
+   period — it is not an expiry, and reading it as one is what put Econo Life
+   in the wrong column for a day. Maturity_Date__c cannot stand in for this:
+   it is empty on 244 of the 257 Liberators in force. */
+function iPermExtendLike_() {
+  var likes = ['LB' + IPERM_EXTEND_AGE, 'LIB' + IPERM_EXTEND_AGE, 'LIB ' + IPERM_EXTEND_AGE];
+  return '(' + likes.map(function (k) {
+    return "Life_Plan_01__c LIKE '" + k + "%'";
+  }).join(' OR ') + ')';
+}
+
+function iPermLike_() {
+  var out = [];
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) { out.push("Life_Plan_01__c LIKE '" + k + "%'"); });
+  });
+  return '(' + out.join(' OR ') + ')';
+}
+
+function iPermanentWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iConvInforce_().replace(' AND Life_Coverage_Expiry__c >= TODAY', '');
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* One read by plan code, folded into three families here. The codes are
+     typed a dozen ways — ECT65 1, ECT651, ECT 65 1 — and a screen that lists
+     them separately is a screen nobody trusts. */
+  var byCode = q('SELECT Life_Plan_01__c pc, COUNT(Id) n, SUM(Life_Coverage__c) cover,' +
+                 ' SUM(Life_Premium__c) prem, MIN(ISSUE_DATE__c) oldest' +
+                 from + iPermLike_() + ' AND ' + live +
+                 ' GROUP BY Life_Plan_01__c ORDER BY COUNT(Id) DESC LIMIT 200');
+
+  /* THE OPPORTUNITY, read row by row. Status alone is not enough — the branch
+     asked for in force AND paid to date, the memo asks for no more than three
+     months in arrears, and Salesforce is stale on both — so every one of
+     these has to be looked up in the dues tab one at a time. There are
+     thirteen of them, which is what makes that affordable. */
+  var extRows = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c, ISSUE_DATE__c' +
+                  from + iPermExtendLike_() + ' AND ' + live +
+                  ' ORDER BY Life_Coverage__c DESC LIMIT 400');
+
+  /* How long the whole permanent book has been paying, by the year it was
+     written. A policy of twenty years is a different conversation from one of
+     two, and the branch has both. */
+  var ages = q('SELECT CALENDAR_YEAR(ISSUE_DATE__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live + ' AND ISSUE_DATE__c != null' +
+               ' GROUP BY CALENDAR_YEAR(ISSUE_DATE__c)' +
+               ' ORDER BY CALENDAR_YEAR(ISSUE_DATE__c) LIMIT 60');
+
+  /* Maturities, where a maturity date is held at all — 704 of the in-force
+     book carries one, and a maturity is a payment and a conversation. */
+  var mats = q('SELECT CALENDAR_YEAR(Maturity_Date__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live +
+               ' AND Maturity_Date__c >= TODAY' +
+               ' GROUP BY CALENDAR_YEAR(Maturity_Date__c)' +
+               ' ORDER BY CALENDAR_YEAR(Maturity_Date__c) LIMIT 30');
+
+  /* The riders, across the whole in-force book and not only these families —
+     a rider rides whatever it is attached to. */
+  var rid = q('SELECT COUNT(Critical_Illness_Coverage__c) cin, SUM(Critical_Illness_Coverage__c) cicov,' +
+              ' SUM(Critical_Illness_Premium__c) ciprem,' +
+              ' COUNT(ADDAP_Coverage__c) adn, SUM(ADDAP_Coverage__c) adcov, SUM(ADDAP_Premium__c) adprem,' +
+              ' COUNT(WP_Coverage__c) wpn, SUM(WP_Premium__c) wpprem,' +
+              ' COUNT(DI_bENEFIT__c) din, SUM(DI_Premium__c) diprem' +
+              from + live);
+
+  if (byCode === null && extRows === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  /* In force and paid to date, off the branch's own tab. Without it this
+     screen says so on its face and calls every figure an upper bound. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var fams = {}, unknown = 0;
+  IPERM_FAMS.forEach(function (f) {
+    fams[f.fam] = { fam: f.fam, label: f.label, sub: f.sub, n: 0, cover: 0, prem: 0, oldest: null };
+  });
+  (byCode || []).forEach(function (r) {
+    var f = iPermFam_(r.pc);
+    if (!f) { unknown += iNum_(r.n); return; }
+    var slot = fams[f.fam];
+    slot.n += iNum_(r.n); slot.cover += iNum_(r.cover); slot.prem += iNum_(r.prem);
+    var o = iDate_(r.oldest);
+    if (o && (!slot.oldest || o < slot.oldest)) slot.oldest = o;
+  });
+  var families = IPERM_FAMS.map(function (f) {
+    var slot = fams[f.fam];
+    slot.since = slot.oldest ? slot.oldest.getFullYear() : null;
+    slot.years = slot.oldest ? Math.round((today - slot.oldest) / (365.2425 * 24 * 3600 * 1000)) : null;
+    delete slot.oldest;
+    return slot;
+  });
+
+  var skip = iExcluded_();
+  var extend = { n: 0, cover: 0, prem: 0, oldest: null };
+  /* Five states, not three. The memorandum draws two lines the wall used not
+     to draw: three months of arrears, and the company minimum sum assured. */
+  var extState = { ready: 0, collect: 0, behind: 0, gone: 0, small: 0 };
+  var small = { n: 0, cover: 0 };
+  var agIdx = {};
+  (extRows || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the tab has never heard of counts as ready — the same rule the
+       conversion screen uses, and for the same reason. */
+    var st = hit ? hit.state : 'ready';
+    /* THE THREE-MONTH LINE. The dues tab carries the days, so the memo's own
+       rule is applied rather than approximated: in arrears but inside three
+       months is still eligible, with the premium to collect first. Past that
+       it is not eligible until the policy is brought up to date. */
+    if (st === 'collect' && hit && iNum_(hit.days) > IPERM_ARREARS_D) st = 'behind';
+    /* THE COMPANY MINIMUM. Under $100,000 there is no extension to be had,
+       whatever the policy has paid, so it is counted and named rather than
+       listed as an opportunity that does not exist. */
+    var sum = iNum_(r.Life_Coverage__c);
+    if (st !== 'gone' && sum < IPERM_MIN_SUM) {
+      extState.small++; small.n++; small.cover += sum;
+      return;
+    }
+    extState[st]++;
+    if (st === 'gone') return;                       // not in force: off the list
+    if (st === 'behind') return;                     // more than three months behind
+    /* An excluded agent comes out of the HEADLINE as well as the list, the
+       same way it works on the conversions screen. intelExclude names people
+       who have left the branch; leaving their cover in the figure while
+       leaving their name off it would make the total unexplainable from the
+       rows underneath it. */
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (ag && iExcludes_(skip, ag)) return;
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c), o = iDate_(r.ISSUE_DATE__c);
+    extend.n++; extend.cover += c; extend.prem += pm;
+    if (o && (!extend.oldest || o < extend.oldest)) extend.oldest = o;
+    if (!ag) return;
+    var a = agIdx[ag] || (agIdx[ag] = { name: ag, n: 0, cover: 0, prem: 0, collect: 0, oldest: null });
+    a.n++; a.cover += c; a.prem += pm;
+    if (st === 'collect') a.collect++;
+    if (o && (!a.oldest || o < a.oldest)) a.oldest = o;
+  });
+  var yrsOf = function (d0) {
+    return d0 ? Math.round((today - d0) / (365.2425 * 24 * 3600 * 1000)) : null;
+  };
+  extend.since = extend.oldest ? extend.oldest.getFullYear() : null;
+  extend.years = yrsOf(extend.oldest);
+  delete extend.oldest;
+  var extAgents = Object.keys(agIdx).map(function (k) {
+    var a = agIdx[k];
+    a.since = a.oldest ? a.oldest.getFullYear() : null;
+    a.years = yrsOf(a.oldest);
+    delete a.oldest;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover; });
+  /* One of anything reads badly on a wall, and these counts are often one. */
+  var plural = function (k, one, many) { return k === 1 ? one : many; };
+  if (extState.gone) {
+    notes.push(extState.gone + plural(extState.gone, ' Liberator is', ' Liberators are') +
+               ' off the list \u2014 the dues tab says the policy has lapsed, been surrendered ' +
+               'or matured. Salesforce still shows it paying.');
+  }
+  if (extState.behind) {
+    notes.push(extState.behind + plural(extState.behind, ' cannot be extended', ' cannot be extended') +
+               ' until brought up to date \u2014 the memorandum allows no more than three months ' +
+               'in arrears.');
+  }
+  if (extState.small) {
+    notes.push(extState.small + plural(extState.small, ' carries', ' carry') +
+               ' less than the company minimum of $100,000, so there is no extension to be had.');
+  }
+
+  /* Years in force, in bands rather than by year — a room reads five bands
+     and not twenty-five. */
+  var BANDS = [{ lab: 'under 2 years', max: 2 }, { lab: '2 to 5', max: 5 },
+               { lab: '5 to 10', max: 10 }, { lab: '10 to 20', max: 20 },
+               { lab: 'over 20 years', max: 999 }];
+  var bands = BANDS.map(function (b) { return { lab: b.lab, n: 0, cover: 0 }; });
+  var yr = today.getFullYear();
+  (ages || []).forEach(function (r) {
+    var old = yr - iNum_(r.yr);
+    for (var i = 0; i < BANDS.length; i++) {
+      if (old <= BANDS[i].max) { bands[i].n += iNum_(r.n); bands[i].cover += iNum_(r.cover); break; }
+    }
+  });
+
+  var maturities = (mats || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var m0 = (rid && rid[0]) || {};
+  var riders = [
+    { lab: 'Critical illness',   n: iNum_(m0.cin), cover: iNum_(m0.cicov), prem: iNum_(m0.ciprem) },
+    { lab: 'Accidental death',   n: iNum_(m0.adn), cover: iNum_(m0.adcov), prem: iNum_(m0.adprem) },
+    { lab: 'Waiver of premium',  n: iNum_(m0.wpn), cover: null,            prem: iNum_(m0.wpprem) },
+    { lab: 'Disability income',  n: iNum_(m0.din), cover: null,            prem: iNum_(m0.diprem) }
+  ].filter(function (r) { return r.n; });
+
+  if (unknown) notes.push(unknown + ' policies carry a plan code this screen cannot place.');
+
+  var tot = families.reduce(function (a, f) {
+    return { n: a.n + f.n, cover: a.cover + f.cover, prem: a.prem + f.prem };
+  }, { n: 0, cover: 0, prem: 0 });
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    extendAge: IPERM_EXTEND_AGE,
+    minSum: IPERM_MIN_SUM,
+    arrearsDays: IPERM_ARREARS_D,
+    memo: IPERM_MEMO,
+    small: small,
+    total: tot,
+    families: families,
+    extend: extend,
+    state: extState,
+    duesRead: !!dues,
+    /* The whole permanent book split by what the branch's own extract says
+       about it — in force and current, behind a premium, or gone. */
+    live: dues ? dues.pools.permanent : null,
+    agents: extAgents.slice(0, IPERM_TOP),
+    agentCount: extAgents.length,
+    bands: bands.filter(function (b) { return b.n; }),
+    maturities: maturities,
+    riders: riders,
+    notes: notes
+  };
+}
+
+function iActPermanent_(b) {
+  var key = 'iperm_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPermanentWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPERM_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RIDERS ON A CLOCK — intelligence/wall/riders.html · action intel.riders
+   ══════════════════════════════════════════════════════════════════════════
+   The branch's own correction, and it was the right one: EVERY RIDER HAS AN
+   EXPIRY. The permanent screen says the life cover does not end on a date,
+   and that is true — but the critical illness, the accidental death, the
+   waiver of premium and the disability income riding on that same policy all
+   do. A client who has been told "this is for life" is holding one contract
+   where half of it is and half of it is not.
+
+   So this screen is the rider book against the calendar, and it was asked
+   for as "the riders expiring this month". The month leads it. But the month
+   is thin — in September 2026 exactly one rider expires on the whole book —
+   and a screen that is blank eleven months in twelve is a screen nobody
+   looks at. So the month sits beside the two piles that are never empty:
+
+     ALREADY GONE, STILL ON THE BOOKS. 74 riders whose expiry date has
+     passed on a policy Salesforce still calls premium paying. Either the
+     client is paying for cover that is not there, or the branch is
+     reporting cover that is not there. Both are worth a call.
+
+     NO EXPIRY DATE AT ALL. Of 5,924 riders in force, 3,280 carry no end
+     date. Nobody can ring a client about a date that is not recorded, so
+     this is the number that decides how complete every other figure here
+     can be, and it is said out loud rather than quietly left out.
+
+   THE HERO is the one that pays for the screen: the cover that rides on a
+   policy whose own life cover never ends. $601m of critical illness on 1,092
+   whole-life policies, $489k of premium — all of it on a clock the client
+   has probably never seen. That is not a data problem. That is the branch's
+   best conversation.
+
+   WHAT IS DELIBERATELY NOT HERE. No client, no policy number. The row-level
+   reads pull POLICY__c to test it against the branch's dues tab and it never
+   leaves this function — the same rule the conversion screen follows.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IRID_HOLD_S = 15 * 60;
+var IRID_TOP    = 12;      // agents on screen
+var IRID_SOON_M = 12;      // the window the screen calls "coming up"
+
+/* The four riders, each with the three fields that describe it and the words
+   the branch uses for what it does. WP carries no sum assured — it pays the
+   premium rather than a benefit — so its presence is tested on the premium. */
+var IRID_KINDS = [
+  { key: 'ci', lab: 'Critical illness', does: 'pays on diagnosis',
+    has: 'Critical_Illness_Coverage__c', cover: 'Critical_Illness_Coverage__c',
+    prem: 'Critical_Illness_Premium__c', exp: 'Critical_Illness_Expiry__c' },
+  { key: 'ad', lab: 'Accidental death', does: 'accident only',
+    has: 'ADDAP_Coverage__c', cover: 'ADDAP_Coverage__c',
+    prem: 'ADDAP_Premium__c', exp: 'ADDAP_Expiry_Date__c' },
+  { key: 'wp', lab: 'Waiver of premium', does: 'pays the premium if they cannot',
+    has: 'WP_Premium__c', cover: null,
+    prem: 'WP_Premium__c', exp: 'WP_Expiry__c' },
+  { key: 'di', lab: 'Disability income', does: 'a monthly benefit',
+    has: 'DI_bENEFIT__c', cover: 'DI_bENEFIT__c',
+    prem: 'DI_Premium__c', exp: 'DI_Exipry__c' }
+];
+
+function iRidKind_(key) {
+  for (var i = 0; i < IRID_KINDS.length; i++) if (IRID_KINDS[i].key === key) return IRID_KINDS[i];
+  return null;
+}
+
+/* In force, on the branch's own terms: premium paying. The rider clause is
+   added per kind, because a policy holding one rider and not another must
+   not be counted in the other's denominator. */
+function iRidLive_() {
+  return "Policy_Status_Description__c = 'PREMIUM PAYING'";
+}
+
+function iRidersWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iRidLive_();
+  /* Every row-level read below asks for plain field names and no aliases.
+     Salesforce allows aliasing only in an aggregate query, and it rejects a
+     row-level SELECT that carries one outright, so the fields are read back
+     by their own names and the day of the month is arithmetic on the date. */
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* THE BOOK, one read per rider. It was one read for all four — COUNT(field)
+     counts the rows where that field is set, which looked like a free way to
+     get four riders and their dated counts in a single query. It was not:
+     COUNT counts a field set to ZERO as set, and 144 policies carry a
+     critical illness coverage of nothing. That put 144 phantom riders in the
+     denominator and the same 144 into the blind spot. So each rider is asked
+     for on its own terms — the cover, or for the waiver the premium, has to
+     be greater than nought — which is also the population every other read on
+     this screen uses. Four queries, and they agree with each other. */
+  var B = {};
+  IRID_KINDS.forEach(function (k) {
+    var r = q('SELECT COUNT(Id) n, COUNT(' + k.exp + ') d, SUM(' + k.prem + ') p' +
+              (k.cover ? ', SUM(' + k.cover + ') c' : '') +
+              from + live + ' AND ' + k.has + ' > 0');
+    var row = (r && r[0]) || null;
+    B[k.key] = row ? { n: iNum_(row.n), d: iNum_(row.d), p: iNum_(row.p),
+                       c: k.cover ? iNum_(row.c) : null } : null;
+  });
+
+  var skip = iExcluded_();
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var zero = function () { return { n: 0, cover: 0, prem: 0 }; };
+  var gone = zero(), month = zero(), ahead = zero(), forever = zero(), blank = zero();
+  var byAg = {}, days = {}, months = {}, kinds = [];
+  var dayOf = today.getDate();
+  var lost = 0;   /* rows the dues tab says are not live after all */
+
+  IRID_KINDS.forEach(function (k) {
+    var b = B[k.key] || { n: 0, d: 0, p: 0, c: k.cover ? 0 : null };
+    var row = { key: k.key, lab: k.lab, does: k.does,
+                have: b.n, dated: b.d, cover: b.c, prem: b.p,
+                gone: zero(), month: zero(), ahead: zero(), forever: zero() };
+    row.blank = Math.max(0, row.have - row.dated);
+    blank.n += row.blank;
+
+    /* ALREADY GONE. Row level, because this is the list somebody has to work
+       and it has to name the agent holding it. Small by nature — it is the
+       tail of a book, not the book. */
+    var goneRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                     (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                     from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' < TODAY' +
+                     ' ORDER BY ' + k.exp + ' DESC LIMIT 400');
+    (goneRows || []).forEach(function (r) {
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { lost++; return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) return;
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var xp = iDate_(r[k.exp]);
+      row.gone.n++; row.gone.cover += c; row.gone.prem += pm;
+      gone.n++; gone.cover += c; gone.prem += pm;
+      var a = byAg[ag || '—'] || (byAg[ag || '—'] =
+        { name: ag || 'no agent on the record', n: 0, cover: 0, prem: 0, oldest: null, collect: 0 });
+      a.n++; a.cover += c; a.prem += pm;
+      if (st === 'collect') a.collect++;
+      if (xp && (!a.oldest || xp < a.oldest)) a.oldest = xp;
+    });
+
+    /* THE WINDOW AHEAD, and the month inside it. One read per rider covers
+       both — the month is the near end of the same list. */
+    var upRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                   (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' >= THIS_MONTH AND ' + k.exp + ' <= NEXT_N_MONTHS:' + IRID_SOON_M +
+                   ' ORDER BY ' + k.exp + ' LIMIT 400');
+    (upRows || []).forEach(function (r) {
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { lost++; return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) return;
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var xp = iDate_(r[k.exp]);
+      if (!xp) return;
+      row.ahead.n++; row.ahead.cover += c; row.ahead.prem += pm;
+      ahead.n++; ahead.cover += c; ahead.prem += pm;
+      var ym = xp.getFullYear() + '-' + ('0' + (xp.getMonth() + 1)).slice(-2);
+      var mo = months[ym] || (months[ym] = { ym: ym, lab: ICONV_MONTHS[xp.getMonth()] + ' ' + xp.getFullYear(),
+                                             n: 0, cover: 0 });
+      mo.n++; mo.cover += c;
+      /* THIS MONTH, day by day — the same strip the conversion screen uses,
+         because an agent reads a month the same way whatever is ending. */
+      if (xp.getFullYear() === today.getFullYear() && xp.getMonth() === today.getMonth()) {
+        var dom = xp.getDate();
+        row.month.n++; row.month.cover += c; row.month.prem += pm;
+        month.n++; month.cover += c; month.prem += pm;
+        if (dom) {
+          var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: dom < dayOf, kinds: {} });
+          slot.n++; slot.cover += c; slot.kinds[k.key] = (slot.kinds[k.key] || 0) + 1;
+        }
+      }
+    });
+
+    /* THE HERO, per rider: still to come, on a policy whose life cover has no
+       end date of its own. The client keeps the policy for life and loses
+       this. Aggregate — nobody works this list row by row, it is the size of
+       the thing that matters. */
+    if (k.cover) {
+      var fRow = q('SELECT COUNT(Id) n, SUM(' + k.cover + ') cov, SUM(' + k.prem + ') prm' +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' > TODAY AND Life_Coverage_Expiry__c = null');
+      var F = (fRow && fRow[0]) || null;
+      if (F) {
+        row.forever = { n: iNum_(F.n), cover: iNum_(F.cov), prem: iNum_(F.prm) };
+        forever.n += row.forever.n; forever.cover += row.forever.cover; forever.prem += row.forever.prem;
+      }
+    }
+    kinds.push(row);
+  });
+
+  var answered = IRID_KINDS.some(function (k) { return !!B[k.key]; });
+  if (!answered && !kinds.length) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  var book = kinds.reduce(function (a, k) {
+    return { n: a.n + k.have, dated: a.dated + k.dated, blank: a.blank + k.blank,
+             cover: a.cover + (k.cover || 0), prem: a.prem + k.prem };
+  }, { n: 0, dated: 0, blank: 0, cover: 0, prem: 0 });
+
+  /* Who holds the ones that have already gone. Ordered by cover, because
+     this pile is not a race against a date — it is worth what it is worth. */
+  var agents = Object.keys(byAg).map(function (key) {
+    var a = byAg[key];
+    a.oldest = a.oldest ? a.oldest.getFullYear() : null;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover || b.n - a.n; });
+
+  if (lost) {
+    notes.push(lost + ' riders are off these lists — the dues tab says the policy has lapsed, ' +
+               'been surrendered or matured. Salesforce still shows it paying.');
+  }
+  if (book.blank) {
+    notes.push(book.blank + ' of the ' + book.n + ' riders in force carry no expiry date at all, so ' +
+               'no screen can tell you when they end.');
+  }
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()], day: dayOf,
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
+    window: IRID_SOON_M,
+    head: forever,
+    book: book,
+    gone: gone,
+    thisMonth: month,
+    ahead: ahead,
+    days: Object.keys(days).map(function (d) { return days[d]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    months: Object.keys(months).sort().map(function (m) { return months[m]; }),
+    kinds: kinds,
+    agents: agents.slice(0, IRID_TOP),
+    agentCount: agents.length,
+    duesRead: !!dues,
+    notes: notes
+  };
+}
+
+/* The dues tab's verdict on one policy, in the three words the rest of the
+   wall already uses. A policy the tab has never heard of counts as ready —
+   usually business too new to be in the extract. */
+function iRidState_(dues, num) {
+  if (!dues || !num) return 'ready';
+  var hit = dues.by[String(num).trim()];
+  return hit ? hit.state : 'ready';
+}
+
+function iActRiders_(b) {
+  var key = 'irid_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iRidersWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IRID_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+function iActConversion_(b) {
+  var key = 'iconv_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iConversionWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), ICONV_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
 }
 
 /* ── The chase log ────────────────────────────────────────────────────────
@@ -747,8 +2314,8 @@ function iBuildTasks_(today) {
     type: ['task type'], created: ['created by'], contact: ['contact']
   });
 
-  var open = [], byAssignee = {}, byContact = {}, byPolicy = {};
-  var closed = 0;
+  var open = [], byAssignee = {}, byContact = {}, byPolicy = {}, byType = {};
+  var closed = 0, noType = 0, osAges = [];
 
   for (var r = 0; r < d.rows; r++) {
     var subject = String(d.get('subject', r)).trim();
@@ -782,6 +2349,22 @@ function iBuildTasks_(today) {
     var contact = String(d.get('contact', r)).trim() || '(none)';
     byContact[contact] = (byContact[contact] || 0) + 1;
 
+    /* WHAT THE BRANCH IS ACTUALLY CHASING, AND FOR HOW LONG.
+       Task Type is the field the whole KPI list is aligned to, and until now
+       this builder read the column and threw it away. An open chase is only
+       worth having if somebody can say what it is for and how long it has
+       been open — and a task with no type at all cannot be counted against
+       any KPI, which is why the untyped ones are counted on their own. */
+    var type = String(d.get('type', r)).trim();
+    if (!type) { noType++; type = '(no task type)'; }
+    var os = iNum_(d.get('os', r));
+    if (!os && quiet) os = quiet;
+    if (os > 0 && os < 3650) osAges.push(os);
+    if (!byType[type]) byType[type] = { n: 0, oldest: 0, stale: 0 };
+    byType[type].n++;
+    if (os > byType[type].oldest && os < 3650) byType[type].oldest = os;
+    if (os > 30) byType[type].stale++;
+
     open.push({
       subject: subject, status: status, assigned: assigned,
       agent: String(d.get('agent', r)).trim(),
@@ -792,8 +2375,18 @@ function iBuildTasks_(today) {
 
   open.sort(function (a, b) { return (b.quiet || 0) - (a.quiet || 0); });
 
+  osAges.sort(function (a, b) { return a - b; });
   return {
     openCount: open.length, closed: closed,
+    /* An open chase that nobody can name is not a chase. */
+    noType: noType,
+    unassigned: byAssignee['(unassigned)'] || 0,
+    oldestOpen: osAges.length ? osAges[osAges.length - 1] : 0,
+    medianOpen: osAges.length ? osAges[Math.floor(osAges.length / 2)] : 0,
+    staleOpen: osAges.filter(function (a) { return a > 30; }).length,
+    byType: Object.keys(byType).map(function (k) {
+      return { name: k, n: byType[k].n, oldest: byType[k].oldest, stale: byType[k].stale };
+    }).sort(function (a, b) { return b.n - a.n; }),
     byAssignee: Object.keys(byAssignee).map(function (k) { return { who: k, n: byAssignee[k] }; })
       .sort(function (a, b) { return b.n - a.n; }),
     byContact: Object.keys(byContact).map(function (k) { return { who: k, n: byContact[k] }; })
@@ -874,6 +2467,9 @@ function iBuildReqs_(today) {
 
     open.push({
       policy: policy, code: code, label: iReqLabel_(code), category: cat,
+      /* Ordered means it is already in motion — a medical booked, a blood
+         profile at the lab. Nobody should be chased about those. */
+      ordered: !!iDate_(d.get('ordered', r)),
       comment: String(d.get('comment', r)).trim(),
       orderedFor: [String(d.get('first', r)).trim(), String(d.get('last', r)).trim()]
         .filter(String).join(' '),
@@ -2617,6 +4213,45 @@ function iNameKey_(s) {
     .replace(/[^a-z]+/g, ' ').trim();
 }
 
+/* ── who else is on the access list ──────────────────────────────────────
+   The loose surname test below is what lets one person's rows be recognised
+   under three spellings. It must never reach across two different people, and
+   in this branch's own book it does: there are two pairs of agents — four
+   separate Contact records, one pair holding 171 and 17 premium-paying
+   policies and the other 91 and 89 — whose surname and first initial are the
+   same. Surname plus first initial cannot tell them apart, so until
+   15 September 2026 each of those four received the other's clients in the
+   daily list. Run intelAddressCheck() to see the pairs by name; they are not
+   written into this file, which is published.
+
+   The access list is the authority on who is a separate person, so a name or
+   a code that belongs to somebody else on it is never mine, however close it
+   reads.
+
+   Memoised for the execution, not cached across them: the agent digest scopes
+   forty people in one run and would otherwise read the tab forty times, but a
+   roster edit must take effect on the next run and not ten minutes later. */
+var IROSTER_MEMO = null;
+function iRosterClaims_() {
+  if (IROSTER_MEMO) return IROSTER_MEMO;
+  var names = {}, ids = {};
+  try {
+    var dir = iAgentDirectory_() || {};
+    Object.keys(dir).forEach(function (key) {
+      var p = dir[key] || {};
+      var nk = iNameKey_(p.agentName) || iNameKey_(p.name);
+      if (nk) names[nk] = p.name || p.agentName || nk;
+      var code = iCode_(p.agentId);
+      if (code) ids[code] = p.name || p.agentName || code;
+    });
+  } catch (e) {
+    /* No access list reachable — claim nothing rather than scope nobody. The
+       behaviour then is exactly what it was before this guard existed. */
+  }
+  IROSTER_MEMO = { names: names, ids: ids };
+  return IROSTER_MEMO;
+}
+
 function iSameAgent_(a, b) {
   var x = iNameKey_(a), y = iNameKey_(b);
   if (!x || !y) return false;
@@ -2665,17 +4300,32 @@ function iScope_(cache, session) {
     }
     if (g !== undefined) groups[g] = 1;
   });
+  /* Every name and code on the access list that is not one of this team's, so
+     the loose test at the end of isMine cannot fold another agent's book into
+     this one. See iRosterClaims_ for the two pairs of names in this branch
+     that surname-plus-initial cannot tell apart. */
+  var claims = iRosterClaims_(), otherNames = {}, otherIds = {};
+  Object.keys(claims.names).forEach(function (k) { if (!names[k]) otherNames[k] = 1; });
+  Object.keys(claims.ids).forEach(function (c) { if (!ids[c]) otherIds[c] = 1; });
   /* Name first, because that is all the dues, pending and requirement extracts
      carry. The in-force book also carries a Servicing Agent Id, and matching on
      it catches the rows where the branch wrote the agency's company name —
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
     var who = x[key || 'agent'];
-    if (x.agentId && ids[iCode_(x.agentId)]) return true;
+    var code = x.agentId ? iCode_(x.agentId) : '';
+    if (code && ids[code]) return true;
     var k = iNameKey_(who);
     if (k && names[k]) return true;
     var g = aliasIdx[k];
     if (g !== undefined && groups[g]) return true;
+    /* This row is spelled exactly as somebody else on the access list, or
+       carries their agent number, so it is theirs. Stopping here rather than
+       falling through is the whole point: the test below cannot tell two
+       agents who share a surname and a first initial apart, and it is the
+       only thing that was deciding these rows. */
+    if (code && otherIds[code]) return false;
+    if (k && otherNames[k]) return false;
     /* Last resort: the loose surname test, which is what catches the extracts
        spelling the same person three different ways. */
     for (var i = 0; i < team.length; i++) if (iSameAgent_(who, team[i].name)) return true;
@@ -3027,6 +4677,10 @@ function intelRoute_(b) {
   if (action === 'intel.licence')  return iActLicence_(b);
   if (action === 'intel.possession') return iActPossession_(b);
   if (action === 'intel.book')       return iActBook_(b);
+  if (action === 'intel.pending')    return iActPending_(b);
+  if (action === 'intel.conversion') return iActConversion_(b);
+  if (action === 'intel.permanent')  return iActPermanent_(b);
+  if (action === 'intel.riders')     return iActRiders_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -3983,6 +5637,55 @@ function iRecentActions_(session) {
    was really for. Clients and agents cannot receive test traffic.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── turning the mail off, in one click ───────────────────────────────────
+   On the morning of 16 September 2026 the daily list went to twenty-eight
+   agents for the third day running while its fix sat unpasted in a
+   repository, and the only ways to stop it were to delete six triggers one
+   at a time in the editor or to hand-type a script property. Neither is
+   something to be doing at ten past seven.
+
+   So: two functions, both safe to run from the menu, neither of which sends
+   anything. intelMailOff() takes effect immediately and needs no deployment,
+   which is the point — the paste is exactly what somebody has not had time
+   to do. */
+function intelMailOff() {
+  var to = iHoldTo_() || (function () {
+    try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
+  })();
+  if (!to) {
+    return 'Set INTEL_MANAGER_EMAIL first — there is nowhere to send the held mail, ' +
+           'and this must never quietly leave the mail switched on.';
+  }
+  iSetProp_('INTEL_TEST_TO', to);
+  var was = String(iProp_('INTEL_SURVEY_LIVE') || '').trim();
+  return 'MAIL IS OFF. Every message from this project now goes to ' + to +
+         ', tagged [TEST], naming who it was for. That is true of all six senders — ' +
+         'the daily agent list, the Monday manager digest, the monthly horizon notice, ' +
+         'the cross-sell list, the survey follow-ups and the client letters.\n\n' +
+         'It took effect the moment you ran this. There is nothing to deploy.\n\n' +
+         'The triggers still fire, so tomorrow you will receive the whole run as ' +
+         'previews and can read what would have gone out.\n\n' +
+         'To put it back: intelMailOn(), which only clears this switch — ' +
+         (was ? 'INTEL_SURVEY_LIVE is set to "' + was + '", so client letters resume when you do.'
+              : 'agents and clients each still need their own switch after that.');
+}
+
+/* Clearing test mode does NOT start mail to agents — INTEL_AGENT_LIVE still
+   has to be set for that, and this function will not set it. Two switches,
+   two deliberate acts; that is the whole design. */
+function intelMailOn() {
+  PropertiesService.getScriptProperties().deleteProperty('INTEL_TEST_TO');
+  return 'Test mode cleared.\n\n' +
+         'Mail to agents: ' + (iAgentLive_()
+           ? 'ON — INTEL_AGENT_LIVE is set, so agents will receive their own lists.'
+           : 'still HELD. Nothing reaches an agent until INTEL_AGENT_LIVE reads exactly "' +
+             IAGENT_LIVE_PHRASE + '". Held mail goes to ' + (iHoldTo_() || 'NOBODY')) + '\n' +
+         'Mail to clients: ' + (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase()
+             === ISURVEY.LIVE_PHRASE
+           ? 'ON — INTEL_SURVEY_LIVE is set.' : 'off — dry run only.') + '\n\n' +
+         'Run intelAddressCheck() before switching agents on.';
+}
+
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
                 'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
@@ -4028,6 +5731,37 @@ function intelInstallTriggers() {
          '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
 }
 
+/* NOTHING REACHES AN AGENT UNTIL SOMEBODY SWITCHES IT ON BY HAND.
+
+   Asked for on 15 September 2026 — the morning three agents each opened
+   another agent's clients — in these words: "moving forward you are to ask my
+   permission on any emails going out to agents and clients."
+
+   A promise made in a conversation cannot bind a trigger that fires at six the
+   next morning, so the permission is made structural instead. The client
+   letters have always worked this way: INTEL_SURVEY_LIVE has to be typed out
+   as "send to clients" before one is sent. This is the same switch for the
+   agent mail, and its default is off.
+
+   Off does not mean silent. With nothing set, every message goes to the branch
+   manager with the intended recipient named across the top — so a run that
+   would have written to twenty-eight agents arrives as twenty-eight previews
+   in one inbox, which is the thing that would have caught both of this
+   morning's defects before either left the building. */
+var IAGENT_LIVE_PHRASE = 'send to agents';
+function iAgentLive_() {
+  return String(iProp_('INTEL_AGENT_LIVE') || '').trim().toLowerCase() === IAGENT_LIVE_PHRASE;
+}
+
+/* Where a held message goes. The manager property first, then the account the
+   script runs as — which is the person who owns the project and therefore the
+   person whose permission this is. */
+function iHoldTo_() {
+  var mgr = String(iProp_('INTEL_MANAGER_EMAIL') || '').split(',')[0].trim();
+  if (mgr) return mgr;
+  try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
+}
+
 function iSend_(to, subject, html) {
   var test = iProp_('INTEL_TEST_TO');
   var real = to;
@@ -4037,6 +5771,21 @@ function iSend_(to, subject, html) {
            iEsc_(real) + '</div>' + html;
     to = test;
     subject = '[TEST] ' + subject;
+  } else if (!iAgentLive_()) {
+    /* Held. If there is nowhere to hold it, it does not go — an undeliverable
+       preview is a nuisance, a message to an agent who was never approved is
+       the thing this exists to prevent. */
+    var hold = iHoldTo_();
+    if (!hold) return false;
+    if (iEmail_(hold) !== iEmail_(real)) {
+      html = '<div style="background:#00254d;color:#fff;padding:10px 14px;font:700 13px sans-serif;' +
+             'border-radius:8px;margin-bottom:14px">HELD — this would have gone to ' +
+             iEsc_(real) + '. Nothing was sent to them.<div style="font-weight:400;opacity:.85;' +
+             'margin-top:5px">To send for real, set the Script Property ' +
+             '<b>INTEL_AGENT_LIVE</b> to <b>' + IAGENT_LIVE_PHRASE + '</b>.</div></div>' + html;
+      subject = '[HELD] ' + subject;
+    }
+    to = hold;
   }
   if (!to) return false;
   MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: 'Branch Intelligence' });
@@ -4622,8 +6371,164 @@ function intelSelfTest() {
    'intelCrossSellDigest'].forEach(function (f) {
     line('  trigger ' + f + ': ' + (triggers.indexOf(f) !== -1 ? 'installed' : 'MISSING — run intelInstallTriggers()'));
   });
-  if (iProp_('INTEL_TEST_TO')) line('');
-  if (iProp_('INTEL_TEST_TO')) line('TEST MODE IS ON — all mail goes to ' + iProp_('INTEL_TEST_TO'));
+  line('');
+  line('Can mail leave the building?');
+  line('  To agents:  ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+        : (iAgentLive_() ? 'YES — INTEL_AGENT_LIVE is set. Agents receive their own mail.'
+                         : 'no — held, previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all'))));
+  line('  To clients: ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode'
+        : (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase() === ISURVEY.LIVE_PHRASE
+           ? 'YES — INTEL_SURVEY_LIVE is set. Clients receive letters.' : 'no — dry run only')));
+  line('  Switch either on deliberately: INTEL_AGENT_LIVE = ' + IAGENT_LIVE_PHRASE +
+       ', INTEL_SURVEY_LIVE = ' + ISURVEY.LIVE_PHRASE + '.');
+
+  var text = out.join('\n');
+  Logger.log(text);
+  return text;
+}
+
+/* ── who gets whose list ─────────────────────────────────────────────────
+   The one question the daily agent list has to answer before it is allowed
+   to send: does each address receive its own book and nobody else's? Three
+   things can break that, and none of them is visible in a sent message —
+   a roster name the extracts never use (an empty list, and the agent
+   assumes there is nothing to work), a name the extracts use that no
+   roster row claims (a book nobody is sent), and two agents whose surname
+   and first initial are the same (each sent the other's clients, which is
+   the one that was live until the guard in isMine went in).
+
+   Prints, sends nothing, and names no client. Run it after any change to
+   the access list. */
+function intelAddressCheck() {
+  var out = [];
+  function line(s) { out.push(s); }
+  var dir = iAgentDirectory_() || {};
+  var keys = Object.keys(dir);
+
+  line('BRANCH INTELLIGENCE — who gets whose list');
+  line('Access list: ' + keys.length + ' people');
+  line(iProp_('INTEL_TEST_TO')
+       ? 'Mail to agents: NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+       : (iAgentLive_()
+          ? 'Mail to agents: YES — INTEL_AGENT_LIVE is set, so the addresses below receive their own mail.'
+          : 'Mail to agents: HELD — previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all') +
+            '. The addresses below are who WOULD receive it.'));
+  line('');
+
+  /* ── the two agents the loose test cannot separate ───────────────────── */
+  var people = keys.map(function (k) { return dir[k]; });
+  var clash = [];
+  for (var i = 0; i < people.length; i++) for (var j = i + 1; j < people.length; j++) {
+    var a = people[i], b = people[j];
+    var ka = iNameKey_(a.agentName) || iNameKey_(a.name);
+    var kb = iNameKey_(b.agentName) || iNameKey_(b.name);
+    if (!ka || !kb || ka === kb) continue;
+    if (iSameAgent_(ka, kb)) clash.push([a, b]);
+  }
+  if (clash.length) {
+    line('Same surname and first initial — kept apart by the access list:');
+    clash.forEach(function (p) {
+      line('  ' + p[0].name + '  <->  ' + p[1].name);
+      line('      ' + (p[0].agentId || 'NO AGENT NUMBER') + ' / ' +
+                      (p[1].agentId || 'NO AGENT NUMBER'));
+    });
+    line('  Both rows must stay on the access list for this to hold. Take one off');
+    line('  and the other starts receiving their clients again.');
+    line('');
+  } else {
+    line('No two people on the access list share a surname and a first initial.');
+    line('');
+  }
+
+  /* ── a row that was swallowed is an agent who is never written to ──── */
+  var seen = {}, twice = [], rows = 0;
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    /* Only the columns this needs. The access tab also holds every staff
+       member's code and none of that belongs in a printed report. */
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']),
+        cActive = iCol_(head, ['active']);
+    if (cName < 0) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    vals.forEach(function (row) {
+      var nm = String(row[cName]).trim();
+      if (!nm) return;
+      if (cActive >= 0 && /^(no|inactive|disabled|off)$/i.test(String(row[cActive]).trim())) return;
+      rows++;
+      var id = iIdentity_(nm, cAgent >= 0 ? row[cAgent] : '', cNum >= 0 ? row[cNum] : '');
+      var k = iNameKey_(id.agentName) || id.agentId;
+      if (!k) return;
+      if (seen[k]) { if (twice.indexOf(k) === -1) twice.push(k); seen[k].push(nm); }
+      else seen[k] = [nm];
+    });
+  });
+  if (twice.length) {
+    line('Two access rows that read as the same person — only the first is written to:');
+    twice.forEach(function (k) { line('  ' + seen[k].join('   |   ')); });
+    line('  Give them different Agent Name spellings, or take the stale row off.');
+    line('');
+  }
+  if (rows !== keys.length) {
+    line('Active access rows: ' + rows + ', addresses built: ' + keys.length +
+         '  — ' + Math.abs(rows - keys.length) + ' row(s) did not become a person.');
+    line('');
+  }
+
+  /* ── an address for everybody, and an agent number with it ───────────── */
+  var noMail = [], noNum = [];
+  people.forEach(function (p) {
+    if (iRoleOf_(p.role) !== 'agent') return;
+    if (!p.email) noMail.push(p.name);
+    if (!p.agentId) noNum.push(p.name);
+  });
+  line('Agents with no e-mail address: ' + (noMail.length ? noMail.join(', ') : 'none'));
+  if (noMail.length) line('  These are skipped silently by every digest.');
+  line('Agents with no agent number: ' + (noNum.length ? noNum.join(', ') : 'none'));
+  if (noNum.length) line('  Their rows are matched by name only, which is the weaker of the two.');
+  line('');
+
+  /* ── the books, against the roster ───────────────────────────────────── */
+  var cache = iLoadCache_();
+  if (!cache) { line('No cache — run intelRebuild() first to check the books.'); }
+  else if (!cache.dues || cache.dues.error) { line('Dues not built, so books cannot be checked.'); }
+  else {
+    var extract = (cache.dues.byAgent || []).map(function (r) { return r.agent; })
+      .filter(function (n) { return n && String(n).trim(); });
+    var claimed = {};
+    line('Overdue policies each address would receive:');
+    people.filter(function (p) { return iRoleOf_(p.role) === 'agent' && p.email; })
+      .sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); })
+      .forEach(function (p) {
+        var mine = iScope_(cache, { role: 'agent', agentName: p.agentName,
+                                    agentId: p.agentId, name: p.name });
+        var chase = (mine.dues && mine.dues.chase ? mine.dues.chase : []);
+        var names = {};
+        chase.forEach(function (x) { var k = iNameKey_(x.agent); if (k) names[k] = 1; });
+        Object.keys(names).forEach(function (k) { claimed[k] = 1; });
+        line('  ' + (p.name + '                              ').slice(0, 30) +
+             (('      ' + chase.length).slice(-6)) + '   ' + p.email +
+             (Object.keys(names).length > 1
+               ? '\n        filed under: ' + Object.keys(names).sort().join(' · ') : ''));
+      });
+    line('');
+    var orphan = [];
+    extract.forEach(function (n) {
+      var k = iNameKey_(n);
+      if (k && !claimed[k]) orphan.push(n);
+    });
+    line('Names in the dues extract that reach no address: ' +
+         (orphan.length ? orphan.length : 'none'));
+    orphan.sort().forEach(function (n) { line('  ' + n); });
+    if (orphan.length) {
+      line('  Each of these is a book the branch manager sees and the agent does not.');
+      line('  Either the spelling differs from the access list, or the person has left.');
+    }
+  }
 
   var text = out.join('\n');
   Logger.log(text);
@@ -4708,6 +6613,10 @@ function onOpen() {
     SpreadsheetApp.getUi().createMenu('Branch Intelligence')
       .addItem('Rebuild now', 'intelRebuild')
       .addItem('Self test', 'intelSelfTestDialog_')
+      .addItem('Who gets whose list', 'intelAddressCheckDialog_')
+      .addSeparator()
+      .addItem('MAIL OFF — hold everything to me', 'intelMailOffDialog_')
+      .addItem('Mail on — clear test mode', 'intelMailOnDialog_')
       .addSeparator()
       .addItem('Send agent digests now', 'intelAgentDigest')
       .addItem('Send manager digest now', 'intelManagerDigest')
@@ -4720,6 +6629,9 @@ function onOpen() {
 }
 
 function intelSelfTestDialog_() { iDialog_('Self test', intelSelfTest()); }
+function intelAddressCheckDialog_() { iDialog_('Who gets whose list', intelAddressCheck()); }
+function intelMailOffDialog_() { iDialog_('Mail off', intelMailOff()); }
+function intelMailOnDialog_() { iDialog_('Mail on', intelMailOn()); }
 function intelIssueCodesDialog_() { iDialog_('Access codes', intelIssueCodes()); }
 function iDialog_(title, text) {
   var html = HtmlService.createHtmlOutput(
@@ -6750,36 +8662,73 @@ function iBuildBook_() {
 
 /* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
    Everything else on the screen is a client to call; this is the person in the
-   room, and the branch asked for it to be big. Agents carry a Birthdate on
-   their Salesforce contact, so the active roster — the access list, by agent
-   code — is asked, in one small query. The people without a code, the support
-   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
-   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
-   shipped: the wall hangs in a room clients walk through. */
+   room, and the branch asked for it to be big.
+
+   AND IT WISHED THE WRONG PEOPLE, ON THE WRONG DAY, FOR WEEKS. On 15 September
+   2026 the wall said "Happy birthday, Gary and Kerwyn" to two agents whose
+   birthdays are 27 August and 21 March. The query was:
+
+     SELECT Name, Agent__c, Birthdate FROM Contact
+      WHERE Birthdate != null AND Agent__c IN (<the branch's agent codes>)
+
+   Agent__c on a Contact is WHOSE CLIENT THIS IS. So it found the CLIENTS of
+   those agents, kept the ones with a birthday today — and then printed the
+   AGENT'S name from personOfCode. Every client birthday on the book became a
+   staff birthday, attributed to whoever sold the policy.
+
+   Contact carries a RECORD TYPE and it has always had the answer: AGENT (90
+   records, 84 with a birthdate) and STAFF (36, 27) are us; CLIENT (12,608) and
+   ORPHAN (23,804) are not. So the record type is the filter, the date is
+   matched in Salesforce rather than in script, and the answer is narrowed to
+   the names on this branch's own roster — the org's ninety agents are not all
+   ours, and another branch's birthday has no business on this wall.
+
+   The people without an agent code, the support desk and the manager, are
+   named in the Script Property INTEL_TEAM_BIRTHDAYS as "MM-DD Name, MM-DD
+   Name", which stays out of the repository. No age is shipped: the wall hangs
+   in a room clients walk through. */
+var IBOOK_US = ['AGENT', 'STAFF'];   // the Contact record types that are us
+
 function iBookTeam_(today, personOfCode, unitOfCode) {
   var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
   function add(name, unit, agent) {
     var k = iNameKey_(name);
     if (!k || seen[k]) return;
     seen[k] = true;
-    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+    /* Units here are named after the person who runs them, so "Gary Sookdeo ·
+       Gary Sookdeo" is what the screen printed. A unit is worth saying only
+       when it is not the person's own name. */
+    var u = String(unit || '').trim();
+    out.push({ name: String(name).trim(),
+               unit: iNameKey_(u) === k ? '' : u,
+               agent: !!agent });
   }
-  var codes = Object.keys(personOfCode || {});
-  for (var i = 0; i < codes.length; i += 200) {
-    var inList = codes.slice(i, i + 200)
-      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
-    if (!inList) continue;
-    try {
-      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
-                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
-        .forEach(function (c) {
-          var d = iDate_(c.Birthdate);
-          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
-          var code = iCode_(c.Agent__c);
-          add(personOfCode[code] || c.Name, unitOfCode[code], true);
-        });
-    } catch (e) { /* the day's calls stand without it */ }
-  }
+
+  /* WHO IS OURS. The roster's own names, so that one of the org's ninety
+     agents who does not work here cannot appear on this branch's wall. */
+  var ours = {}, unitOfName = {};
+  Object.keys(personOfCode || {}).forEach(function (code) {
+    var k = iNameKey_(personOfCode[code]);
+    if (!k) return;
+    ours[k] = personOfCode[code];
+    if ((unitOfCode || {})[code]) unitOfName[k] = unitOfCode[code];
+  });
+
+  /* ONE query, and the record type does the work. Salesforce matches the day
+     as well, so a date this script misreads cannot put somebody on the wall. */
+  try {
+    var rows = iSfQuery_('SELECT Name, RecordType.Name, Birthdate FROM Contact' +
+                         " WHERE Birthdate != null AND RecordType.Name IN ('" +
+                         IBOOK_US.join("','") + "')" +
+                         ' AND CALENDAR_MONTH(Birthdate) = ' + mm +
+                         ' AND DAY_IN_MONTH(Birthdate) = ' + dd + ' LIMIT 200') || [];
+    rows.forEach(function (c) {
+      var k = iNameKey_(c.Name);
+      if (!k || !ours[k]) return;            // ours only, by name
+      add(ours[k], unitOfName[k], true);     // the roster's spelling wins
+    });
+  } catch (e) { /* the day's calls stand without it */ }
+
   String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
     var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
     if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
