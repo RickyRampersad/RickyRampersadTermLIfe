@@ -657,7 +657,23 @@ function iBuildDues_(today) {
 
    POL_MISC_SUSP_AMT is money the client has already paid that cannot be
    applied until the case closes. It is the most persuasive number on the
-   screen: it is the client's own money sitting still.                      */
+   screen: it is the client's own money sitting still.
+
+   ONE ROW PER REQUIREMENT, NOT ONE ROW PER POLICY. The tab this reads is
+   'URPPBIEX - Reqt' — YR, MTH, POLICY, DECISIONTYPE, ... REQT, REQTDT — and a
+   policy waiting on three documents is three rows of it. Until 16 September
+   2026 every row was counted as a case, so the wall said "340 pending" over a
+   list of 121 policies, and an agent with one client and four requirements
+   led the board. Everything here is now folded to the policy: the total is
+   distinct policy numbers, every by-agent, by-unit and by-status count moves
+   once per policy, and the requirement rows are kept only as the list of
+   codes on that policy. Both figures are published so the screen can say
+   "121 policies · 340 requirements" and nobody has to guess which it means.
+
+   THE EXCLUSION LIST APPLIES HERE TOO. Until the same day only the triage
+   path honoured INTEL_EXCLUDE_AGENTS, so the headline counted an excluded
+   agent's policies while the buckets under it did not, and the two never
+   added up. Whatever is taken out is reported — see iExcluded_.            */
 function iBuildPending_(today) {
   var sh = iTabPending_();
   if (!sh) return { error: 'No pending tab found (needs Policy, DecisionType, ReqtdaysLapsed).' };
@@ -672,16 +688,40 @@ function iBuildPending_(today) {
        which is a different problem from money sitting in suspense, and the
        one that matters most on a case with nothing else outstanding. */
     prem: ['pol_misc_prem'],
-    where: ['being processed in'], pay: ['payment method']
+    where: ['being processed in'], pay: ['payment method'],
+    /* THE POLICY-LEVEL COLUMNS, READ ON TRUST. The Branch Portfolio's
+       pending-policies tab carries these, but its header row has not been
+       seen from here — the manager runs intelHeaders() to print it — so
+       every name below is a guess at the spelling and every one is read
+       defensively. A column that is not there goes into `missing`, and the
+       screen greys the section out and says "not in the extract yet". It
+       never shows a zero, because a zero on a wall is read as a fact. */
+    statusDesc: ['status description', 'policy status description'],
+    appReceived: ['app received date', 'application received date', 'app receive date'],
+    sumInsured: ['sum insured', 'sum assured'],
+    premMonthly: ['monthly premium', 'premium'],
+    cwa: ['cash with app', 'cwa', 'cwa amount'],
+    uwId: ['underwriter id', 'underwriter', 'uw id'],
+    uwDate: ['last underwriting date', 'last uw date', 'underwriting date']
   });
+  var has = function (k) { return !!(d.has && d.has(k)); };
+  var POLICY_COLS = { statusDesc: 'status description', appReceived: 'app received date',
+                      sumInsured: 'sum insured', premMonthly: 'monthly premium',
+                      cwa: 'cash with app', uwId: 'underwriter id', uwDate: 'last underwriting date' };
+  var missing = Object.keys(POLICY_COLS).filter(function (k) { return !has(k); })
+    .map(function (k) { return POLICY_COLS[k]; });
 
-  var rows = [], byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {};
-  var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0;
-  var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var skip = iExcluded_();
+  var byPolicy = {}, order = [];
+  var excludedRows = 0, excludedPolicies = {}, requirementRows = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
     if (!policy) continue;
+
+    var agent = String(d.get('agent', r)).trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) { excludedRows++; excludedPolicies[policy] = 1; continue; }
+    requirementRows++;
 
     var submit = iDate_(d.get('submit', r));
     var reqtDt = iDate_(d.get('reqtDt', r));
@@ -697,55 +737,107 @@ function iBuildPending_(today) {
     }
     if (age !== null && (age < 0 || age > 3650)) age = null;
 
-    var status   = String(d.get('status', r)).trim() || '(none)';
-    var decision = String(d.get('decision', r)).trim() || '(none)';
-    var agent    = String(d.get('agent', r)).trim() || '(unassigned)';
-    var unit     = String(d.get('branchName', r)).trim() || '(unassigned)';
-    var susp     = iNum_(d.get('susp', r));
-    var premRaw  = d.get('prem', r);
-    var paid     = !(premRaw === '' || premRaw == null || iNum_(premRaw) === 0);
+    var susp    = iNum_(d.get('susp', r));
+    var premRaw = d.get('prem', r);
+    var paid    = !(premRaw === '' || premRaw == null || iNum_(premRaw) === 0);
+    var reqt    = String(d.get('reqt', r)).trim();
 
-    if (susp > 0) { suspense += susp; suspenseCases++; }
-    if (!paid) unpaidCases++;
-    byStatus[status]     = (byStatus[status] || 0) + 1;
-    byDecision[decision] = (byDecision[decision] || 0) + 1;
-    if (!byAgent[agent]) byAgent[agent] = { cases: 0, susp: 0, oldest: 0 };
-    byAgent[agent].cases++; byAgent[agent].susp += susp;
-    if (age !== null && age > byAgent[agent].oldest) byAgent[agent].oldest = age;
-    if (!byUnit[unit]) byUnit[unit] = { cases: 0, susp: 0 };
-    byUnit[unit].cases++; byUnit[unit].susp += susp;
-
-    if (age !== null) {
-      AGE[age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
-        : age <= 180 ? '91-180' : '180+']++;
-      if (age > 90) stale++;
+    var row = byPolicy[policy];
+    if (!row) {
+      /* The first row of a policy names it; the rest only add requirements.
+         Suspense and premium are policy figures repeated on every row, so
+         they are taken once and never summed across the requirements —
+         summing them is how a $250 suspense would read as $750. */
+      var premMonthly = has('premMonthly') ? iNum_(d.get('premMonthly', r)) : null;
+      var appReceived = has('appReceived') ? iDate_(d.get('appReceived', r)) : null;
+      var cwaRaw = has('cwa') ? d.get('cwa', r) : null;
+      row = byPolicy[policy] = {
+        policy: policy, client: String(d.get('client', r)).trim(),
+        clientId: String(d.get('clientId', r)).trim(),
+        status: String(d.get('status', r)).trim() || '(none)',
+        decision: String(d.get('decision', r)).trim() || '(none)',
+        agent: agent, unit: String(d.get('branchName', r)).trim() || '(unassigned)',
+        premium: paid ? iNum_(premRaw) : 0, paid: paid,
+        requirement: reqt, requirements: reqt ? [reqt] : [],
+        submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
+        age: age, suspense: susp,
+        where: String(d.get('where', r)).trim(),
+        payment: String(d.get('pay', r)).trim(),
+        /* Policy-level, null when the column is not in the extract. */
+        statusDesc: has('statusDesc') ? (String(d.get('statusDesc', r)).trim() || '(none)') : null,
+        appReceived: appReceived ? iIso_(appReceived) : '',
+        daysPending: appReceived ? iDays_(appReceived, today) : null,
+        sumInsured: has('sumInsured') ? iNum_(d.get('sumInsured', r)) : null,
+        premMonthly: premMonthly,
+        api: premMonthly === null ? null : Math.round(premMonthly * 12 * 100) / 100,
+        cwa: has('cwa') ? iNum_(cwaRaw) : null,
+        noCash: has('cwa') ? (cwaRaw === '' || cwaRaw == null || iNum_(cwaRaw) === 0) : null,
+        uwId: has('uwId') ? String(d.get('uwId', r)).trim() : null,
+        uwDate: has('uwDate') ? iIso_(iDate_(d.get('uwDate', r))) : null
+      };
+      order.push(policy);
+    } else {
+      if (reqt && row.requirements.indexOf(reqt) < 0) row.requirements.push(reqt);
+      /* The policy has waited as long as its oldest requirement. */
+      if (age !== null && (row.age === null || age > row.age)) { row.age = age; row.requestedOn = iIso_(reqtDt); }
+      if (!row.submitted && submit) row.submitted = iIso_(submit);
+      if (susp > row.suspense) row.suspense = susp;
+      if (paid && !row.paid) { row.paid = true; row.premium = iNum_(premRaw); }
     }
-
-    rows.push({
-      policy: policy, client: String(d.get('client', r)).trim(),
-      clientId: String(d.get('clientId', r)).trim(),
-      status: status, decision: decision, agent: agent, unit: unit,
-      premium: paid ? iNum_(premRaw) : 0, paid: paid,
-      requirement: String(d.get('reqt', r)).trim(),
-      submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
-      age: age, suspense: susp,
-      where: String(d.get('where', r)).trim(),
-      payment: String(d.get('pay', r)).trim()
-    });
   }
+
+  var rows = order.map(function (p) { return byPolicy[p]; });
+  var byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {}, byStatusDesc = {};
+  var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0, noCash = 0, api = 0;
+  var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+
+  rows.forEach(function (row) {
+    row.requirement = row.requirements.join(', ');
+    if (row.suspense > 0) { suspense += row.suspense; suspenseCases++; }
+    if (!row.paid) unpaidCases++;
+    if (row.noCash === true) noCash++;
+    if (row.api) api += row.api;
+    byStatus[row.status]     = (byStatus[row.status] || 0) + 1;
+    byDecision[row.decision] = (byDecision[row.decision] || 0) + 1;
+    if (row.statusDesc !== null) byStatusDesc[row.statusDesc] = (byStatusDesc[row.statusDesc] || 0) + 1;
+    if (!byAgent[row.agent]) byAgent[row.agent] = { policies: 0, susp: 0, oldest: 0 };
+    byAgent[row.agent].policies++; byAgent[row.agent].susp += row.suspense;
+    if (row.age !== null && row.age > byAgent[row.agent].oldest) byAgent[row.agent].oldest = row.age;
+    if (!byUnit[row.unit]) byUnit[row.unit] = { policies: 0, susp: 0 };
+    byUnit[row.unit].policies++; byUnit[row.unit].susp += row.suspense;
+    if (row.age !== null) {
+      AGE[row.age <= 30 ? '0-30' : row.age <= 60 ? '31-60' : row.age <= 90 ? '61-90'
+        : row.age <= 180 ? '91-180' : '180+']++;
+      if (row.age > 90) stale++;
+    }
+  });
 
   rows.sort(function (a, b) { return (b.suspense - a.suspense) || ((b.age || 0) - (a.age || 0)); });
 
   return {
-    total: rows.length, suspense: suspense, suspenseCases: suspenseCases, stale: stale,
+    /* total is distinct policies. `cases` stays on the per-agent and
+       per-unit rows as the same number, because older readers of this
+       object ask for it by that name. */
+    total: rows.length, policies: rows.length,
+    requirementRows: requirementRows, policiesFromRows: rows.length,
+    suspense: suspense, suspenseCases: suspenseCases, stale: stale,
     unpaidCases: unpaidCases,
     ageing: AGE, byStatus: byStatus, byDecision: byDecision,
     byAgent: Object.keys(byAgent).map(function (k) {
-      return { agent: k, cases: byAgent[k].cases, susp: byAgent[k].susp, oldest: byAgent[k].oldest };
-    }).sort(function (a, b) { return b.cases - a.cases; }),
+      return { agent: k, policies: byAgent[k].policies, cases: byAgent[k].policies,
+               susp: byAgent[k].susp, oldest: byAgent[k].oldest };
+    }).sort(function (a, b) { return b.policies - a.policies; }),
     byUnit: Object.keys(byUnit).map(function (k) {
-      return { unit: k, cases: byUnit[k].cases, susp: byUnit[k].susp };
-    }).sort(function (a, b) { return b.cases - a.cases; }),
+      return { unit: k, policies: byUnit[k].policies, cases: byUnit[k].policies, susp: byUnit[k].susp };
+    }).sort(function (a, b) { return b.policies - a.policies; }),
+    /* Never silent about what an exclusion took out — see iExcluded_. */
+    excluded: { names: Object.keys(skip).length, policies: Object.keys(excludedPolicies).length,
+                rows: excludedRows },
+    /* The policy-level fields, and which of them the extract does not carry. */
+    missing: missing,
+    byStatusDesc: has('statusDesc') ? byStatusDesc : null,
+    api: has('premMonthly') ? Math.round(api * 100) / 100 : null,
+    noCash: has('cwa') ? noCash : null,
     rows: rows
   };
 }
@@ -790,8 +882,18 @@ function iBranchPendTabs_() {
     if (out.length) return out;
   }
   var must = ['agent', 'client', 'app received'];
+  /* The Guardian extract is never a branch list, however its header reads.
+     The pending-policies tab carries AGENT NAME, CLIENT NAME and — once the
+     policy-level columns land — APP RECEIVED DATE, which is exactly this
+     shape, and on 16 September 2026 the extract was read twice: once as
+     the extract and once as a "branch list", with the list's row count
+     leading the screen over the extract's policy count. */
+  var extract = null;
+  try { extract = iTabPending_(); } catch (e) {}
+  var extractId = extract ? String(extract.getSheetId()) : '';
   iSs_().getSheets().forEach(function (sh) {
     if (sh.getLastRow() < 2) return;
+    if (extractId && String(sh.getSheetId()) === extractId) return;
     var head = iHeaders_(sh);
     var ok = must.every(function (m) {
       return head.some(function (h) { return h === m || h.indexOf(m) === 0; });
@@ -957,13 +1059,24 @@ var IPEND_BUCKETS = [
   { key: 'issue',   label: 'With head office', note: 'nothing outstanding, premium in' }
 ];
 
-/** The join nobody had done: a pending case against its own open
+/* WHAT A REQUIREMENT IS, FOR THE ACCOUNTABILITY ROW.
+   Three columns against each agent's name — cash, routine, medical — because
+   those are three different phone calls. Cash is the agent's to collect this
+   afternoon; a medical is booked and waited for; routine is the underwriter's
+   own paperwork moving on its own. The medical set is the routine half of
+   IREQ_OWNER_DEFAULT that names a test or a report on the client's body;
+   'IMP HIST' carries its space because that is how the extract spells it. */
+var IREQ_MEDICAL = { MDMED: 1, MICRO: 1, OFT: 1, BP: 1, EKG: 1, 'IMP HIST': 1, ATTPH: 1, INFCR: 1 };
+function iReqIsMedical_(code) { return !!IREQ_MEDICAL[String(code || '').trim().toUpperCase()]; }
+
+/** The join nobody had done: a pending policy against its own open
  *  requirements, and the premium column that says whether any money has
  *  arrived. Counts only — every policy number and client name stays in
- *  this function. */
+ *  this function. One row of `extract.rows` is one policy since 16 September
+ *  2026, so a policy waiting on three documents lands in one bucket once. */
 function iPendTriage_(extract, reqs) {
   if (!extract || !extract.rows) return null;
-  var map = iReqOwners_(), skip = iExcluded_();
+  var map = iReqOwners_(), skip = iExcluded_(), listOnly = iListOnly_();
 
   var openBy = {};
   ((reqs && reqs.rows) || []).forEach(function (q) {
@@ -984,8 +1097,24 @@ function iPendTriage_(extract, reqs) {
     var here = openBy[String(row.policy || '').trim()] || [];
     if (here.length) matched++; else unmatched++;
 
-    var owners = {};
-    here.forEach(function (q) { owners[iReqOwner_(q.code, q.ordered, map)] = true; });
+    var owners = {}, cash = false, medical = false, routine = false;
+    here.forEach(function (q) {
+      var who = iReqOwner_(q.code, q.ordered, map);
+      owners[who] = true;
+      var code = String(q.code || '').trim().toUpperCase();
+      if (code === 'FUTPY') cash = true;
+      if (iReqIsMedical_(code)) medical = true;
+      else if (who === 'routine') routine = true;
+    });
+    /* The pending extract's own REQT column names the requirement too, and
+       on a branch without the requirements extract it is the only word. */
+    (row.requirements || []).forEach(function (t) {
+      var code = String(t || '').trim().toUpperCase();
+      if (code === 'FUTPY') cash = true;
+      if (iReqIsMedical_(code)) medical = true;
+    });
+    /* Nothing paid and nothing else open: the only thing left is money. */
+    if (!here.length && !row.paid) cash = true;
 
     var bucket;
     if (!here.length) bucket = row.paid ? 'issue' : 'ready';
@@ -1005,25 +1134,44 @@ function iPendTriage_(extract, reqs) {
     }
 
     if (!byAgent[agent]) {
-      byAgent[agent] = { agent: agent, ready: 0, actionable: 0, oldest: 0, quiet: 0, routine: 0 };
+      byAgent[agent] = { agent: agent, policies: 0, ready: 0, actionable: 0, oldest: 0, quiet: 0,
+                         routine: 0, cash: 0, medical: 0, oldestDays: 0 };
     }
     var a = byAgent[agent];
+    a.policies++;
     if (bucket === 'ready') { a.ready++; a.actionable++; }
     else if (bucket === 'agent') a.actionable++;
-    else if (bucket === 'routine') a.routine++;
+    if (routine) a.routine++;
+    if (cash) a.cash++;
+    if (medical) a.medical++;
     if ((bucket === 'ready' || bucket === 'agent') && age > a.oldest) a.oldest = age;
+    /* oldest is the worst of what is theirs to work; oldestDays is the worst
+       of everything with their name on it, whoever's move it is. */
+    if (age > a.oldestDays) a.oldestDays = age;
     /* A chase that was closed with the case still pending is the worst
        state there is: it reads as handled and nothing is happening. */
     if (row.chase === 'closed') a.quiet++;
   });
 
   var workable = counts.ready + counts.agent;
-  /* Ranked by what is actually theirs to do, then by how long the worst of
-     it has waited. Not by case count — an agent with twenty cases all at
-     the lab is not the one to call. */
-  var culprits = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
-    .filter(function (a) { return a.actionable > 0 || a.quiet > 0; })
-    .sort(function (x, y) { return (y.actionable - x.actionable) || (y.oldest - x.oldest) || (y.quiet - x.quiet); });
+  /* THE ROSTER, NOT THE TOP TEN. Ranked by cash first — money the agent can
+     collect this afternoon — then medicals waited on, then routine. Not by
+     policy count: an agent with twenty cases all at the lab is not the one
+     to call. The cut at ten rows was lifted on 16 September 2026, because a
+     board that names ten of fourteen agents tells the other four they are
+     not being watched.
+
+     INTEL_LIST_ONLY_EXCLUDE takes a name off this row and every other
+     per-agent row, and leaves every count above it alone — see iListOnly_. */
+  var roster = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .filter(function (a) { return !iExcludes_(listOnly, a.agent); })
+    .sort(function (x, y) {
+      return (y.cash - x.cash) || (y.medical - x.medical) || (y.routine - x.routine) ||
+             (y.actionable - x.actionable) || (y.oldestDays - x.oldestDays);
+    });
+  var culprits = roster.filter(function (a) {
+    return a.actionable > 0 || a.quiet > 0 || a.cash > 0 || a.medical > 0 || a.routine > 0;
+  });
 
   return {
     buckets: IPEND_BUCKETS.map(function (b) {
@@ -1031,18 +1179,91 @@ function iPendTriage_(extract, reqs) {
     }),
     workable: workable,
     waiting: counts.client + counts.routine + counts.issue,
-    ready: { cases: counts.ready, oldest: readyOldest, held: readyMoney, ageing: readyAgeing,
-             agents: Object.keys(byAgent).map(function (k) { return byAgent[k]; })
-               .filter(function (a) { return a.ready > 0; })
-               .sort(function (x, y) { return (y.ready - x.ready) || (y.oldest - x.oldest); })
-               .slice(0, 10) },
-    culprits: culprits.slice(0, 10),
+    /* `cases` is kept beside `policies` because the ready screen reads it. */
+    ready: { cases: counts.ready, policies: counts.ready, oldest: readyOldest, held: readyMoney,
+             ageing: readyAgeing,
+             agents: roster.filter(function (a) { return a.ready > 0; })
+               .sort(function (x, y) { return (y.ready - x.ready) || (y.oldest - x.oldest); }) },
+    culprits: culprits,
+    roster: roster,
+    listOnly: Object.keys(listOnly).length,
     /* How much of the pending list could be joined to a requirement at all.
        A low number means the two extracts are out of step, and every bucket
        below it should be read with that in mind. */
     matched: matched, unmatched: unmatched
   };
 }
+
+/* ── Settled today, this week, this month ─────────────────────────────────
+   The other end of pending: what came off it. Salesforce is the authority,
+   because a policy is settled when CLIENT_PORTFOLIO__c says PREMIUM PAYING
+   against it and an issue date — not when anybody in the branch writes it
+   down. One aggregate query for the month, grouped by agent and by day,
+   bucketed here into today, the week (Monday to date) and the month. It
+   is one round trip against a fifteen-thousand-row object; a query per
+   window would be three for the same answer.
+
+   The aggregate aliases (nm, d, n) are the exception the Salesforce house
+   rule allows: only an aggregate query may alias a field.                  */
+function iSettledWindows_() {
+  var today = iToday_();
+  var out = { today: 0, week: 0, month: 0, byAgent: [],
+              excluded: { names: 0, policies: 0 }, listOnly: 0,
+              weekFrom: '', monthOf: iIso_(today).slice(0, 7) };
+  var rows;
+  try {
+    rows = iSfQuery_(
+      'SELECT AGENT__r.Name nm, ISSUE_DATE__c d, COUNT(Id) n FROM CLIENT_PORTFOLIO__c' +
+      " WHERE Policy_Status_Description__c = 'PREMIUM PAYING' AND ISSUE_DATE__c = THIS_MONTH" +
+      ' GROUP BY AGENT__r.Name, ISSUE_DATE__c') || [];
+  } catch (e) {
+    return { error: 'Salesforce said: ' + (e && e.message || e) };
+  }
+
+  /* Monday to date. getDay() is Sunday-first, so Monday is offset (day+6)%7. */
+  var monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  out.weekFrom = iIso_(monday);
+  var skip = iExcluded_(), listOnly = iListOnly_(), byAgent = {};
+  out.excluded.names = Object.keys(skip).length;
+  out.listOnly = Object.keys(listOnly).length;
+
+  rows.forEach(function (r) {
+    var n = iNum_(r.n), on = iDate_(r.d);
+    if (!n || !on) return;
+    var isToday = iDays_(on, today) === 0;
+    var inWeek = on.getTime() >= monday.getTime() && on.getTime() <= today.getTime();
+    /* The totals are the branch's, whoever wrote the business — an
+       exclusion takes a name off the list, never a policy out of the
+       month's count. What it took off the list is said. */
+    out.month += n;
+    if (inWeek) out.week += n;
+    if (isToday) out.today += n;
+
+    var agent = String(r.nm || '').trim() || '(no agent)';
+    if (iExcludes_(skip, agent)) { out.excluded.policies += n; return; }
+    if (iExcludes_(listOnly, agent)) return;
+    if (!byAgent[agent]) byAgent[agent] = { agent: agent, today: 0, week: 0, month: 0 };
+    byAgent[agent].month += n;
+    if (inWeek) byAgent[agent].week += n;
+    if (isToday) byAgent[agent].today += n;
+  });
+
+  out.byAgent = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .sort(function (a, b) { return (b.today - a.today) || (b.week - a.week) || (b.month - a.month) ||
+                                   a.agent.localeCompare(b.agent); });
+  return out;
+}
+
+/* THE PER-POLICY TABLE IS HELD UNLESS THE MANAGER SAYS OTHERWISE, IN WORDS.
+   intel.pending is served with no sign-in — a wall has nobody to sign it
+   in — and the audit of 15 September 2026 found intel.book serving
+   per-client rows to anybody who asked. So the table of policy numbers
+   leaves this builder only when Script Property INTEL_PENDING_ROWS_ON_WALL
+   reads exactly "show policy numbers". Not "yes", not "true", not the phrase
+   with a capital: a setting that can be switched on by accident is not a
+   gate. Everything else on the feed is a count or an agent's name. */
+var IPEND_ROWS_PHRASE = 'show policy numbers';
+function iPendRowsOnWall_() { return iProp_('INTEL_PENDING_ROWS_ON_WALL') === IPEND_ROWS_PHRASE; }
 
 /** Three sources, as the wall may see them. Aggregates only.
  *
@@ -1108,7 +1329,7 @@ function iPendingWall_() {
                     'the requirements extract needs insured_requirement_id, requirement_code and policy_number.' };
   }
 
-  var skip = iExcluded_();
+  var skip = iExcluded_(), listOnly = iListOnly_();
   var pair = function (o) {
     return Object.keys(o || {}).map(function (k) { return { name: k, n: o[k] }; })
       .sort(function (a, b) { return b.n - a.n; });
@@ -1116,7 +1337,7 @@ function iPendingWall_() {
 
   /* The branch's list is the one a person updates, so it is the count on
      screen. The extract carries the money and the decision codes, which the
-     branch's list has no column for. */
+     branch's list has no column for. Both count policies. */
   var counted = branch || extract || { total: null, ageing: {}, stale: null };
   var total = counted.total;
   var ageing = counted.ageing || {};
@@ -1127,21 +1348,54 @@ function iPendingWall_() {
   }
   if (!branch && !extract && reqs) {
     /* Only the requirements extract is here. It counts requirements rather
-       than cases, and the screen must not pass one off as the other — the
-       case count is the number of policies they sit on. */
+       than policies, and the screen must not pass one off as the other —
+       the policy count is the number of policies they sit on. */
     total = reqs.policies;
     ageing = reqs.ageing || {};
     stale = (ageing['91-180'] || 0) + (ageing['181-365'] || 0) + (ageing['365+'] || 0);
     oldest = reqs.oldest || 0;
   }
 
+  /* Per-agent rows honour both lists — the exclusion, and the list-only
+     one that keeps a manager's own book in the totals but off the board. */
   var agents = branch
     ? Object.keys(branch.byAgent).map(function (k) {
-        return { agent: k, cases: branch.byAgent[k].cases, oldest: branch.byAgent[k].oldest, susp: 0 };
+        return { agent: k, policies: branch.byAgent[k].cases, oldest: branch.byAgent[k].oldest, susp: 0 };
       })
     : ((extract && extract.byAgent) || []).filter(function (a) { return !iExcludes_(skip, a.agent); })
-        .map(function (a) { return { agent: a.agent, cases: a.cases, oldest: a.oldest, susp: a.susp }; });
-  agents.sort(function (a, b) { return b.cases - a.cases || b.oldest - a.oldest; });
+        .map(function (a) { return { agent: a.agent, policies: a.policies, oldest: a.oldest, susp: a.susp }; });
+  agents = agents.filter(function (a) { return !iExcludes_(listOnly, a.agent); });
+  agents.sort(function (a, b) { return b.policies - a.policies || b.oldest - a.oldest; });
+
+  /* The open requirement codes on each policy, for the gated table. */
+  var codesOn = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    var c = codesOn[k] = codesOn[k] || { codes: [], daysOrdered: null };
+    if (q.code && c.codes.indexOf(q.code) < 0) c.codes.push(q.code);
+    if (q.daysOrdered !== null && q.daysOrdered !== undefined &&
+        (c.daysOrdered === null || q.daysOrdered > c.daysOrdered)) c.daysOrdered = q.daysOrdered;
+  });
+  var showRows = iPendRowsOnWall_();
+  var table = { shown: false, policies: extract ? extract.total : null,
+                note: 'Policy numbers are held off the wall. Set Script Property ' +
+                      'INTEL_PENDING_ROWS_ON_WALL to "' + IPEND_ROWS_PHRASE + '" to show them.' };
+  if (showRows && extract) {
+    table = { shown: true, policies: extract.total,
+              rows: (extract.rows || []).filter(function (x) { return !iExcludes_(listOnly, x.agent); })
+                .map(function (x) {
+                  var c = codesOn[x.policy] || { codes: [], daysOrdered: null };
+                  return { policy: x.policy, agent: x.agent, statusDesc: x.statusDesc,
+                           daysPending: x.daysPending, age: x.age, api: x.api, noCash: x.noCash,
+                           codes: c.codes.length ? c.codes : x.requirements.slice(),
+                           daysOrdered: c.daysOrdered };
+                }) };
+  }
+
+  var settled;
+  try { settled = iSettledWindows_(); }
+  catch (e6) { settled = { error: 'Salesforce said: ' + (e6 && e6.message || e6) }; }
 
   return {
     configured: true,
@@ -1150,11 +1404,22 @@ function iPendingWall_() {
     source: [branch ? 'branch lists' : '', extract ? 'pending extract' : '',
              reqs ? 'requirements extract' : ''].filter(String).join(' + '),
     lists: branch ? branch.tabs : 0,
+    /* Policies, and the requirement rows they were folded from, so the
+       screen can say "121 policies · 340 requirements". */
     total: total,
+    policies: total,
+    requirementRows: extract ? extract.requirementRows : null,
     stale: stale,
     oldest: oldest,
     noReason: branch ? branch.noReason : null,
-    excluded: branch ? branch.excluded : 0,
+    /* Never silent about what an exclusion took out — see iExcluded_. The
+       branch lists and the extract are two sources, so their removals are
+       said apart rather than added, which would count one agent twice. */
+    excluded: { names: Object.keys(skip).length,
+                lists: branch ? branch.excluded : 0,
+                policies: extract ? extract.excluded.policies : 0,
+                requirements: extract ? extract.excluded.rows : 0 },
+    listOnly: Object.keys(listOnly).length,
     ageing: ageing,
     /* What is stopping them. The requirement codes first, because they are
        the underwriter's own answer; the branch's comments next, read by
@@ -1163,15 +1428,35 @@ function iPendingWall_() {
     reasons: reqs ? (reqs.byCode || []).map(function (c) { return { name: c.label, n: c.n }; })
            : (branch ? pair(branch.byReason) : pair((extract && extract.byDecision) || {})),
     /* Every open requirement, how long they have been open, and how many
-       cases they sit on. Counts only — no policy number and no insured. */
+       policies they sit on. Counts only — no policy number and no insured.
+       `missing` names the columns the extract does not carry, and the
+       screen says "column not in the extract" for each rather than a zero. */
     requirements: reqs ? {
       open: reqs.openCount, policies: reqs.policies, median: reqs.medianAge,
       oldest: reqs.oldest, overYear: reqs.overYear, closedThisYear: reqs.closedThisYear,
-      ageing: reqs.ageing
+      ageing: reqs.ageing, since: reqs.since, cutByYear: reqs.cutByYear,
+      routine: reqs.routine, byOrderedBy: reqs.byOrderedBy, byStatus: reqs.byStatus,
+      byCategory: (reqs.categories || []).slice(0, 8), daysOrdered: reqs.daysOrdered,
+      missing: reqs.missing || []
+    } : null,
+    /* The policy-level view of the pending extract: status description,
+       annual premium, days since the application was received, and the
+       ones with no cash. Each is null, and named in `missing`, when its
+       column is not in the extract. */
+    policy: extract ? {
+      byStatusDesc: extract.byStatusDesc ? pair(extract.byStatusDesc) : null,
+      api: extract.api, noCash: extract.noCash,
+      daysPending: (function () {
+        var ds = (extract.rows || []).map(function (x) { return x.daysPending; })
+          .filter(function (v) { return v !== null && v !== undefined && v >= 0; })
+          .sort(function (a, b) { return a - b; });
+        return ds.length ? { n: ds.length, median: ds[Math.floor(ds.length / 2)], oldest: ds[ds.length - 1] } : null;
+      })(),
+      missing: extract.missing || []
     } : null,
     units: branch ? pair(branch.byUnit)
-                  : (((extract && extract.byUnit) || []).map(function (u) { return { name: u.unit, n: u.cases }; })),
-    agents: agents.slice(0, 12),
+                  : (((extract && extract.byUnit) || []).map(function (u) { return { name: u.unit, n: u.policies }; })),
+    agents: agents.slice(0, 14),
     /* TWO KINDS OF MONEY, AND THEY ARE OPPOSITES.
        Held: the client has paid and we cannot apply it until the case
        closes — POL_MISC_SUSP_AMT, the branch's own money problem.
@@ -1182,10 +1467,12 @@ function iPendingWall_() {
     money: {
       held: extract ? extract.suspense : null,
       heldCases: extract ? extract.suspenseCases : null,
+      heldPolicies: extract ? extract.suspenseCases : null,
       /* Column O blank is the plainest statement on the sheet: not one
-         dollar has come in on this case. Counted, because on a case with
+         dollar has come in on this policy. Counted, because on one with
          nothing else outstanding it is the only thing left to do. */
       unpaidCases: extract ? extract.unpaidCases : null,
+      unpaidPolicies: extract ? extract.unpaidCases : null,
       unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
     },
     /* Whose move is it, who can be worked today, and who is holding it up. */
@@ -1194,6 +1481,10 @@ function iPendingWall_() {
     chase: chase,
     /* And what the chasing itself consists of, by Task Type. */
     work: work,
+    /* What came off the list — today, this week, this month, by agent. */
+    settled: settled,
+    /* The per-policy table, held unless the manager has said the phrase. */
+    table: table,
     suspense: extract ? extract.suspense : null,
     suspenseCases: extract ? extract.suspenseCases : null,
     notes: notes
@@ -2419,6 +2710,26 @@ function iReqLabel_(code) {
   return IREQ_CODES[c] || c || '(unnamed)';
 }
 
+/* THE YEAR CUT. The extract goes back to 2019 and carries requirements on
+   policies that were declined, withdrawn or issued years ago and never had
+   their requirement closed. Every one of those read as "open more than a
+   year" and the oldest of them led every list. From 16 September 2026 an
+   open requirement counts only if it was ordered this year — or, when it
+   was never ordered, added this year. Closed rows are not cut: they are
+   history, and a requirement cleared in January that was ordered in
+   December is still one cleared this year. */
+var IREQ_SINCE = '2026-01-01';
+
+/* Who ordered it, read off the name. Underwriting's systems order under a
+   short upper-case code — a two-to-six character user id — and a person
+   orders under their own name. The two are told apart by shape, because
+   nothing in the extract says which is which. */
+function iOrderedBySystem_(who) {
+  var s = String(who || '').trim();
+  if (!s) return null;
+  return /^[A-Z0-9]{2,6}$/.test(s);
+}
+
 function iBuildReqs_(today) {
   var sh = iTabReqs_();
   if (!sh) return { error: 'No requirements tab found (needs insured_requirement_id, requirement_code, policy_number).' };
@@ -2427,12 +2738,26 @@ function iBuildReqs_(today) {
     added: ['added_date'], closed: ['closed_date'], ordered: ['ordered_date'],
     policy: ['policy_number'], code: ['requirement_code'], cat: ['requirements'],
     comment: ['requirement_comment'], first: ['first_name'], last: ['last_name'],
-    reqId: ['insured_requirement_id']
+    reqId: ['insured_requirement_id'],
+    /* Four columns the extract may or may not carry, read defensively. A
+       missing one is named in `missing` so the screen can say "column not
+       in the extract" — never a zero standing in for a fact. */
+    orderedBy: ['ordered by', 'ordered_by'],
+    reqStatus: ['status', 'requirement_status'],
+    received: ['received', 'received_date', 'date received'],
+    routine: ['routine', 'routine requirement', 'routine_requirement']
   });
+  var has = function (k) { return !!(d.has && d.has(k)); };
+  var OPTIONAL = { orderedBy: 'ordered by', reqStatus: 'status', received: 'received', routine: 'routine' };
+  var missing = Object.keys(OPTIONAL).filter(function (k) { return !has(k); })
+    .map(function (k) { return OPTIONAL[k]; });
+  var owners = iReqOwners_();
+  var since = iDate_(IREQ_SINCE);
 
   var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '181-365': 0, '365+': 0 };
-  var open = [], byCode = {}, byCat = {}, byPolicy = {}, seen = {};
-  var closedThisYear = 0, ages = [];
+  var open = [], byCode = {}, byCat = {}, byPolicy = {}, seen = {}, byStatus = {};
+  var closedThisYear = 0, ages = [], orderedDays = [], cutByYear = 0;
+  var routineN = 0, nonRoutineN = 0, bySystem = 0, byManual = 0, byNobody = 0, receivedN = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
@@ -2451,13 +2776,24 @@ function iBuildReqs_(today) {
     if (seen[key]) continue;
     seen[key] = 1;
 
-    var added = iDate_(d.get('added', r)) || iDate_(d.get('ordered', r));
+    var orderedOn = iDate_(d.get('ordered', r));
+    var addedOn = iDate_(d.get('added', r));
+    /* The year cut — see IREQ_SINCE. */
+    var anchor = orderedOn || addedOn;
+    if (!anchor || anchor.getTime() < since.getTime()) { cutByYear++; continue; }
+
+    var added = addedOn || orderedOn;
     var age = added ? iDays_(added, today) : null;
     if (age !== null && age >= 0) {
       ages.push(age);
       AGE[age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
         : age <= 180 ? '91-180' : age <= 365 ? '181-365' : '365+']++;
     }
+    /* Days since ordered is its own figure, not a second meaning of age. A
+       requirement added in March and ordered last week has waited six
+       months and been in motion for seven days, and both are true. */
+    var daysOrdered = orderedOn ? iDays_(orderedOn, today) : null;
+    if (daysOrdered !== null && daysOrdered >= 0) orderedDays.push(daysOrdered);
 
     var code = String(d.get('code', r)).trim().toUpperCase();
     var cat  = String(d.get('cat', r)).trim() || '(uncategorised)';
@@ -2465,11 +2801,34 @@ function iBuildReqs_(today) {
     byCat[cat]   = (byCat[cat] || 0) + 1;
     byPolicy[policy] = (byPolicy[policy] || 0) + 1;
 
+    /* Routine: the sheet's own flag when it has one, else the owner map. */
+    var routine;
+    if (has('routine')) {
+      var rf = String(d.get('routine', r)).trim().toLowerCase();
+      routine = rf === '' ? (iReqOwner_(code, !!orderedOn, owners) === 'routine')
+                          : /^(y|yes|true|1|routine)$/.test(rf);
+    } else {
+      routine = iReqOwner_(code, !!orderedOn, owners) === 'routine';
+    }
+    if (routine) routineN++; else nonRoutineN++;
+
+    var orderedBy = has('orderedBy') ? String(d.get('orderedBy', r)).trim() : '';
+    var bySys = iOrderedBySystem_(orderedBy);
+    if (bySys === true) bySystem++; else if (bySys === false) byManual++; else byNobody++;
+
+    var reqStatus = has('reqStatus') ? (String(d.get('reqStatus', r)).trim() || '(none)') : '';
+    if (reqStatus) byStatus[reqStatus] = (byStatus[reqStatus] || 0) + 1;
+    var received = has('received') ? iDate_(d.get('received', r)) : null;
+    if (received) receivedN++;
+
     open.push({
       policy: policy, code: code, label: iReqLabel_(code), category: cat,
       /* Ordered means it is already in motion — a medical booked, a blood
          profile at the lab. Nobody should be chased about those. */
-      ordered: !!iDate_(d.get('ordered', r)),
+      ordered: !!orderedOn, daysOrdered: daysOrdered,
+      routine: routine,
+      orderedBy: orderedBy, orderedBySystem: bySys,
+      reqStatus: reqStatus, received: received ? iIso_(received) : '',
       comment: String(d.get('comment', r)).trim(),
       orderedFor: [String(d.get('first', r)).trim(), String(d.get('last', r)).trim()]
         .filter(String).join(' '),
@@ -2479,14 +2838,20 @@ function iBuildReqs_(today) {
 
   open.sort(function (a, b) { return (b.age || 0) - (a.age || 0); });
   ages.sort(function (a, b) { return a - b; });
+  orderedDays.sort(function (a, b) { return a - b; });
 
   var worst = Object.keys(byPolicy).map(function (p) { return { policy: p, open: byPolicy[p] }; })
     .sort(function (a, b) { return b.open - a.open; }).slice(0, 40);
+  var pair = function (o) {
+    return Object.keys(o).map(function (k) { return { name: k, n: o[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  };
 
   return {
     openCount: open.length,
     policies: Object.keys(byPolicy).length,
     closedThisYear: closedThisYear,
+    since: IREQ_SINCE, cutByYear: cutByYear,
     medianAge: ages.length ? ages[Math.floor(ages.length / 2)] : 0,
     oldest: ages.length ? ages[ages.length - 1] : 0,
     overYear: AGE['365+'],
@@ -2495,6 +2860,19 @@ function iBuildReqs_(today) {
       return { code: k, label: iReqLabel_(k), n: byCode[k] };
     }).sort(function (a, b) { return b.n - a.n; }).slice(0, 20),
     byCategory: byCat,
+    categories: pair(byCat),
+    /* Routine against not, and who ordered — null where the column that
+       would say is not in the extract, and `missing` names it. */
+    routine: { routine: routineN, nonRoutine: nonRoutineN, fromSheet: has('routine') },
+    byOrderedBy: has('orderedBy') ? { system: bySystem, manual: byManual, blank: byNobody } : null,
+    byStatus: has('reqStatus') ? pair(byStatus) : null,
+    received: has('received') ? receivedN : null,
+    daysOrdered: {
+      ordered: orderedDays.length, notOrdered: open.length - orderedDays.length,
+      median: orderedDays.length ? orderedDays[Math.floor(orderedDays.length / 2)] : null,
+      oldest: orderedDays.length ? orderedDays[orderedDays.length - 1] : null
+    },
+    missing: missing,
     worstPolicies: worst,
     rows: open.slice(0, 3000)
   };
@@ -5035,6 +5413,34 @@ var IWALL_BANDS = [45, 60, 90];
    that excludes says how much it removed, for exactly that reason. */
 function iExcluded_() {
   var raw = iProp_('INTEL_EXCLUDE_AGENTS');
+  var out = {};
+  String(raw || '').split(',').forEach(function (n) {
+    var k = iNameKey_(n);
+    if (k) out[k] = true;
+  });
+  return out;
+}
+
+/* ── Off the list, in the total ──────────────────────────────────────────
+   INTEL_LIST_ONLY_EXCLUDE is the second list, and it does the opposite of
+   the first at the point that matters. INTEL_EXCLUDE_AGENTS takes an agent
+   out of everything — headline, buckets, board. This one takes a name off
+   the per-agent rows only: the accountability row, the agents list, the
+   settled-by-agent strip, the per-policy table. Every total above those
+   rows still counts their book.
+
+   WHY TWO LISTS. The unit managers write business of their own, and the
+   branch manager asked on 16 September 2026 that it stay in the branch's
+   numbers — it is the branch's business — but not sit on a board that
+   ranks agents against each other, because a manager on that board is not
+   being managed by it. Excluding them outright understated the branch;
+   leaving them on read as a manager being chased in front of the room.
+
+   Honoured only where a row carries an agent's name. Never in a count.
+   A screen that applies it to a total is the first list under another
+   name, and the branch loses the number it asked to keep. */
+function iListOnly_() {
+  var raw = iProp_('INTEL_LIST_ONLY_EXCLUDE');
   var out = {};
   String(raw || '').split(',').forEach(function (n) {
     var k = iNameKey_(n);

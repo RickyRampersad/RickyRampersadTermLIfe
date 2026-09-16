@@ -55,7 +55,7 @@ ok('the feed is configured', D.configured === true, JSON.stringify(D).slice(0, 1
 ok('it says how many lists it read', D.lists === 2, String(D.lists));
 // Five rows on the first list, two on the second; one agent is excluded.
 ok('every case is counted across both', D.total === 6, String(D.total));
-ok('the excluded agent is dropped, and counted', D.excluded === 1, String(D.excluded));
+ok('the excluded agent is dropped, and counted', D.excluded && D.excluded.lists === 1 && D.excluded.names === 1, JSON.stringify(D.excluded));
 ok('and does not appear anywhere', JSON.stringify(D).indexOf('Gone Away') < 0);
 
 console.log('\nNo client and no policy number reaches the screen:\n');
@@ -98,9 +98,9 @@ ok('every case is in exactly one reason',
 
 console.log('\nWhose they are, and which unit:\n');
 const byAgent = {}; (D.agents || []).forEach(a => { byAgent[a.agent] = a; });
-ok('each agent carries their own count', byAgent['Anand Pretend'].cases === 3, JSON.stringify(D.agents));
+ok('each agent carries their own count', byAgent['Anand Pretend'].policies === 3, JSON.stringify(D.agents));
 ok('and the age of their oldest', byAgent['Beena Pretend'].oldest > 180, JSON.stringify(D.agents));
-ok('the busiest is first', (D.agents || [])[0].cases >= (D.agents || [])[1].cases);
+ok('the busiest is first', (D.agents || [])[0].policies >= (D.agents || [])[1].policies);
 const units = {}; (D.units || []).forEach(u => { units[u.name] = u.n; });
 ok('the units are counted', units['AK'] === 4 && units['RR'] === 2, JSON.stringify(units));
 
@@ -220,7 +220,7 @@ ok('no client or policy number in any of it',
 
 console.log('\nAnd the premium column says plainly when nothing has come in:\n');
 const M = env.iPendingWall_().money;
-ok('cases with a blank premium are counted', M.unpaidCases === 3, JSON.stringify(M));
+ok('policies with a blank premium are counted, the excluded agent\u2019s not among them', M.unpaidPolicies === 2 && M.unpaidCases === 2, JSON.stringify(M));
 ok('separately from money already held', M.held === 250, JSON.stringify(M));
 
 console.log('\nThe Salesforce chase log, by the field the KPI list is aligned to:\n');
@@ -253,6 +253,179 @@ ok('and how many have been open over a month', W.stale === 2, String(W.stale));
 ok('no client, no policy number and no subject line leaves the builder',
    JSON.stringify(W).indexOf('CLIENTNAME') < 0 && JSON.stringify(W).indexOf('1000894') < 0 &&
    JSON.stringify(W).indexOf('Follow up') < 0, JSON.stringify(W));
+
+console.log('\nPolicies, not rows — the tab is one row per requirement:\n');
+// 'URPPBIEX - Reqt' repeats a policy once per requirement. Until 16 September
+// 2026 the wall counted the rows and called them cases. Same fixture as above
+// plus one policy on three rows, and the extract's policy-level columns —
+// spelled as the aliases guess them, because the real header row has not been
+// seen from here (the manager runs intelHeaders() to print it). Invented.
+const PHEAD2 = PHEAD.concat(['STATUS DESCRIPTION', 'APP RECEIVED DATE', 'SUM INSURED',
+                             'MONTHLY PREMIUM', 'CASH WITH APP', 'UNDERWRITER ID', 'LAST UNDERWRITING DATE']);
+const prow2 = (policy, agent, reqtDt, susp, prem, reqt, desc, app, sum, mprem, cwa, uw, uwd) =>
+  [2026, 9, policy, 'OR', 'CLIENTNAME-' + policy, '3', '2026-08-01', 'CHAG', reqt, reqtDt,
+   'A1', agent, 0, 'AK', susp, 'CID-' + policy, 'Branch', 'DD', prem,
+   desc, app, sum, mprem, cwa, uw, uwd];
+const env2 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away' } });
+env2.Date = env.Date;
+env2.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, [
+  prow2('P-THREE', 'Anand Pretend', '2026-08-01', 250, '',  'MDMED', 'Pending UW',  '2026-07-01', 500000, 400, '',   'UW1', '2026-08-20'),
+  prow2('P-THREE', 'Anand Pretend', '2026-07-01', 250, '',  'PRADD', 'Pending UW',  '2026-07-01', 500000, 400, '',   'UW1', '2026-08-20'),
+  prow2('P-THREE', 'Anand Pretend', '2026-08-15', 250, '',  'FUTPY', 'Pending UW',  '2026-07-01', 500000, 400, '',   'UW1', '2026-08-20'),
+  prow2('P-ONE',   'Beena Pretend', '2026-08-20', 0,   800, 'MDMED', 'Pending Med', '2026-08-10', 250000, 100, 600,  'UW2', '2026-09-01'),
+  prow2('P-TWO',   'Beena Pretend', '2026-09-01', 0,   '',  '',      'Pending UW',  '2026-08-30', 100000, 50,  0,    '',    ''),
+  prow2('P-MGR',   'Carl Fictitious', '2026-09-01', 0, '',  'FUTPY', 'Pending UW',  '2026-08-30', 100000, 50,  '',   '',    ''),
+  prow2('P-SKIP',  'Gone Away',     '2026-06-01', 0,   '',  'MDMED', 'Pending UW',  '2026-05-01', 100000, 50,  '',   '',    ''),
+  prow2('P-SKIP',  'Gone Away',     '2026-06-01', 0,   '',  'PRADD', 'Pending UW',  '2026-05-01', 100000, 50,  '',   '',    ''),
+]);
+env2._intelTabMemo = {}; env2._intelHeadMemo = {};
+const P2 = env2.iBuildPending_(env2.iToday_());
+ok('three rows on one policy are one policy', P2.total === 4 && P2.policies === 4, JSON.stringify([P2.total, P2.policies]));
+ok('and the requirement rows are counted beside them, after the exclusion',
+   P2.requirementRows === 6, String(P2.requirementRows));
+ok('the excluded agent is out of the extract, and what came out is said',
+   P2.excluded.names === 1 && P2.excluded.policies === 1 && P2.excluded.rows === 2, JSON.stringify(P2.excluded));
+const a2 = {}; P2.byAgent.forEach(a => { a2[a.agent] = a; });
+ok('an agent with one client on three rows has one policy', a2['Anand Pretend'].policies === 1, JSON.stringify(a2['Anand Pretend']));
+ok('the same number is still there under the old name, for the readers that use it',
+   a2['Anand Pretend'].cases === 1);
+ok('suspense repeated on every row of a policy is taken once', P2.suspense === 250 && P2.suspenseCases === 1,
+   JSON.stringify([P2.suspense, P2.suspenseCases]));
+const three = P2.rows.filter(r => r.policy === 'P-THREE')[0];
+ok('the policy keeps every requirement code on it', three.requirements.join(',') === 'MDMED,PRADD,FUTPY', JSON.stringify(three.requirements));
+ok('and has waited as long as its oldest requirement',
+   three.age === env2.iDays_(new env2.Date('2026-07-01'), env2.iToday_()), String(three.age));
+
+console.log('\nThe policy-level columns, when the extract carries them:\n');
+ok('nothing is missing', P2.missing.length === 0, JSON.stringify(P2.missing));
+ok('status description is grouped by policy', P2.byStatusDesc['Pending UW'] === 3 && P2.byStatusDesc['Pending Med'] === 1,
+   JSON.stringify(P2.byStatusDesc));
+ok('annual premium is twelve months of the monthly one', three.api === 4800, String(three.api));
+ok('and summed across the policies', P2.api === 4800 + 1200 + 600 + 600, String(P2.api));
+ok('days pending runs from the day the application was received',
+   three.daysPending === env2.iDays_(new env2.Date('2026-07-01'), env2.iToday_()), String(three.daysPending));
+ok('a blank cash-with-app is no cash, and so is a zero', three.noCash === true && P2.noCash === 3, String(P2.noCash));
+ok('cash in the file is not no cash', P2.rows.filter(r => r.policy === 'P-ONE')[0].noCash === false);
+ok('the underwriter and the last underwriting date ride along',
+   three.uwId === 'UW1' && three.uwDate === '2026-08-20', JSON.stringify([three.uwId, three.uwDate]));
+
+console.log('\nAnd when it does not, the screen is told, not handed zeros:\n');
+// The first workbook's extract has the nineteen columns and none of these.
+const P1 = env.iBuildPending_(env.iToday_());
+ok('every absent column is named', P1.missing.length === 7 && P1.missing.indexOf('status description') > -1 &&
+   P1.missing.indexOf('cash with app') > -1, JSON.stringify(P1.missing));
+ok('and the figures that need them are null, never zero',
+   P1.byStatusDesc === null && P1.api === null && P1.noCash === null && P1.rows[0].daysPending === null,
+   JSON.stringify([P1.byStatusDesc, P1.api, P1.noCash]));
+const W1 = env.iPendingWall_();
+ok('the wall carries the missing list', W1.policy && W1.policy.missing.length === 7 && W1.policy.byStatusDesc === null,
+   JSON.stringify(W1.policy));
+ok('and says how many policies against how many requirement rows',
+   W1.policies === W1.total && W1.requirementRows === 5, JSON.stringify([W1.policies, W1.requirementRows]));
+
+console.log('\nThe requirements extract, with the four optional columns:\n');
+// ORDERED BY is a system's code or a person's name; ROUTINE is the sheet's own
+// flag; and a row ordered last year is history whatever its closed date says.
+env2.__mkSheet('RR_UWPRO_INSURED_Requirement', 3,
+  ['INSURED_REQUIREMENT_ID', 'POLICY_NUMBER', 'REQUIREMENT_CODE', 'REQUIREMENTS',
+   'REQUIREMENT_COMMENT', 'ADDED_DATE', 'CLOSED_DATE', 'ORDERED_DATE', 'FIRST_NAME', 'LAST_NAME',
+   'ORDERED BY', 'STATUS', 'RECEIVED', 'ROUTINE'],
+  [
+    ['RQ-1', 'P-THREE', 'MDMED', 'Medical',   '', '2026-08-01', '', '2026-08-21', 'INSUREDFIRST-A', 'INSUREDLAST-A', 'UWSYS',          'Ordered',  '',           'Y'],
+    ['RQ-2', 'P-THREE', 'PRADD', 'Documents', '', '2026-07-01', '', '',           'INSUREDFIRST-A', 'INSUREDLAST-A', 'Carl Fictitious', 'Pending',  '',           'N'],
+    ['RQ-3', 'P-THREE', 'FUTPY', 'Premium',   '', '2026-08-15', '', '',           'INSUREDFIRST-A', 'INSUREDLAST-A', '',                'Pending',  '',           ''],
+    ['RQ-4', 'P-ONE',   'MDMED', 'Medical',   '', '2026-08-10', '', '2026-09-01', 'INSUREDFIRST-B', 'INSUREDLAST-B', 'UWSYS',          'Ordered',  '2026-09-08', 'Y'],
+    ['RQ-5', 'P-OLD',   'MDMED', 'Medical',   '', '2025-11-01', '', '2025-11-02', 'INSUREDFIRST-C', 'INSUREDLAST-C', 'UWSYS',          'Ordered',  '',           'Y'],   // ordered last year: cut
+    ['RQ-6', 'P-OLD2',  'PRADD', 'Documents', '', '2025-12-15', '', '',           'INSUREDFIRST-D', 'INSUREDLAST-D', 'Carl Fictitious', 'Pending',  '',           'N'],   // never ordered, added last year: cut
+    ['RQ-7', 'P-NEW',   'PRADD', 'Documents', '', '2026-01-02', '', '',           'INSUREDFIRST-E', 'INSUREDLAST-E', 'Carl Fictitious', 'Pending',  '',           'N'],   // never ordered, added this year: kept
+    ['RQ-8', 'P-DONE',  'MDMED', 'Medical',   '', '2025-12-01', '2026-01-10', '2025-12-02', 'INSUREDFIRST-F', 'INSUREDLAST-F', 'UWSYS', 'Closed', '2026-01-09', 'Y'],  // closed this year, ordered last: still cleared
+  ]);
+env2._intelTabMemo = {}; env2._intelHeadMemo = {};
+const Q2 = env2.iBuildReqs_(env2.iToday_());
+ok('the four optional columns are found', Q2.missing.length === 0, JSON.stringify(Q2.missing));
+ok('a requirement ordered last year is cut, and so is one added last year and never ordered',
+   Q2.openCount === 5 && Q2.cutByYear === 2, JSON.stringify([Q2.openCount, Q2.cutByYear]));
+ok('one added this year and never ordered is kept', Q2.rows.some(r => r.policy === 'P-NEW'));
+ok('the cut is dated on the payload', Q2.since === '2026-01-01', Q2.since);
+ok('a row closed this year is still cleared this year, whenever it was ordered', Q2.closedThisYear === 1, String(Q2.closedThisYear));
+const rq1 = Q2.rows.filter(r => r.code === 'MDMED' && r.policy === 'P-THREE')[0];
+ok('days ordered is its own figure', rq1.daysOrdered === env2.iDays_(new env2.Date('2026-08-21'), env2.iToday_()), String(rq1.daysOrdered));
+ok('and does not overload age', rq1.age === env2.iDays_(new env2.Date('2026-08-01'), env2.iToday_()), String(rq1.age));
+ok('an un-ordered one has no days ordered, not zero', Q2.rows.filter(r => r.code === 'FUTPY')[0].daysOrdered === null);
+ok('the days-ordered summary counts the ordered ones apart from the rest',
+   Q2.daysOrdered.ordered === 2 && Q2.daysOrdered.notOrdered === 3 && Q2.daysOrdered.oldest === rq1.daysOrdered,
+   JSON.stringify(Q2.daysOrdered));
+ok('a short upper-case code ordered it by system; a name is a person; blank is nobody',
+   Q2.byOrderedBy.system === 2 && Q2.byOrderedBy.manual === 2 && Q2.byOrderedBy.blank === 1, JSON.stringify(Q2.byOrderedBy));
+ok('the sheet’s own routine flag wins when it is there',
+   Q2.routine.fromSheet === true && Q2.routine.routine === 2 && Q2.routine.nonRoutine === 3, JSON.stringify(Q2.routine));
+ok('a blank flag falls back to the owner map', Q2.rows.filter(r => r.code === 'FUTPY')[0].routine === false);
+const cats = {}; (Q2.categories || []).forEach(c => { cats[c.name] = c.n; });
+ok('by category is published as a list', cats['Medical'] === 2 && cats['Documents'] === 2 && cats['Premium'] === 1, JSON.stringify(Q2.categories));
+ok('and so is the requirement status', Q2.byStatus.some(s => s.name === 'Ordered' && s.n === 2), JSON.stringify(Q2.byStatus));
+ok('received is counted', Q2.received === 1, String(Q2.received));
+ok('the extract is the extract, not a second branch list', env2.iBranchPendTabs_().length === 0);
+
+console.log('\nWithout those columns the requirements say so:\n');
+const Q1 = env.iBuildReqs_(env.iToday_());
+ok('the four are named as missing', Q1.missing.length === 4 && Q1.missing.indexOf('ordered by') > -1, JSON.stringify(Q1.missing));
+ok('ordered-by is null rather than "all manual"', Q1.byOrderedBy === null && Q1.byStatus === null && Q1.received === null);
+ok('routine still answers from the owner map', Q1.routine.fromSheet === false && Q1.routine.routine + Q1.routine.nonRoutine === Q1.openCount,
+   JSON.stringify(Q1.routine));
+ok('and the wall carries the missing list', (W1.requirements || {}).missing.length === 4, JSON.stringify((W1.requirements || {}).missing));
+
+console.log('\nAccountability by agent — cash, routine, medical, and the roster:\n');
+const W2 = env2.iPendingWall_();
+ok('the headline is policies with the requirement rows beside it',
+   W2.policies === 4 && W2.requirementRows === 6, JSON.stringify([W2.policies, W2.requirementRows]));
+ok('and what the exclusion removed is on it', W2.excluded.policies === 1 && W2.excluded.requirements === 2, JSON.stringify(W2.excluded));
+ok('no insured name and no client reaches the wall', JSON.stringify(W2).indexOf('INSUREDFIRST') < 0 && JSON.stringify(W2).indexOf('CLIENTNAME') < 0);
+const T2 = W2.triage, acct = {}; (T2.culprits || []).forEach(a => { acct[a.agent] = a; });
+ok('an open first premium is cash to collect', acct['Anand Pretend'].cash === 1, JSON.stringify(acct['Anand Pretend']));
+ok('and so is nothing paid with nothing else open', acct['Beena Pretend'].cash === 1, JSON.stringify(acct['Beena Pretend']));
+ok('a medical is a medical', acct['Anand Pretend'].medical === 1 && acct['Beena Pretend'].medical === 1);
+ok('routine is the underwriter’s own work that is not a medical', acct['Anand Pretend'].routine === 0);
+ok('oldest days is the worst of everything with their name on it',
+   acct['Anand Pretend'].oldestDays === env2.iDays_(new env2.Date('2026-07-01'), env2.iToday_()), String(acct['Anand Pretend'].oldestDays));
+ok('the roster is not cut at ten', T2.roster.length === 3 && T2.culprits.length === 3, JSON.stringify(T2.roster.map(a => a.agent)));
+ok('ranked by cash first', T2.culprits[0].cash >= T2.culprits[1].cash && T2.culprits[1].cash >= T2.culprits[2].cash);
+
+console.log('\nA manager off the list and in the total:\n');
+const env3 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away', INTEL_LIST_ONLY_EXCLUDE: 'Carl Fictitious' } });
+env3.Date = env.Date;
+env3.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, env2.__sheets['URPPBIEX - Reqt']._grid.slice(1));
+env3.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env2.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0],
+               env2.__sheets['RR_UWPRO_INSURED_Requirement']._grid.slice(1));
+env3._intelTabMemo = {}; env3._intelHeadMemo = {};
+const W3 = env3.iPendingWall_();
+ok('the total still counts their book', W3.policies === 4 && W3.total === 4, String(W3.policies));
+ok('and the buckets too', (W3.triage.buckets || []).reduce((a, b) => a + b.n, 0) === 4, JSON.stringify(W3.triage.buckets));
+ok('but they are off the agents list', !(W3.agents || []).some(a => a.agent === 'Carl Fictitious'), JSON.stringify(W3.agents));
+ok('and off the accountability row', !(W3.triage.culprits || []).some(a => a.agent === 'Carl Fictitious') &&
+   !(W3.triage.roster || []).some(a => a.agent === 'Carl Fictitious'));
+ok('and the screen is told one name is held off the rows', W3.listOnly === 1 && W3.triage.listOnly === 1);
+ok('the other agents are untouched', (W3.agents || []).length === 2);
+
+console.log('\nThe per-policy table is held unless the manager says the phrase:\n');
+ok('held by default', W2.table.shown === false && !W2.table.rows && /INTEL_PENDING_ROWS_ON_WALL/.test(W2.table.note), JSON.stringify(W2.table));
+ok('and no policy number is anywhere in the feed', JSON.stringify(W2).indexOf('P-THREE') < 0 && JSON.stringify(W2).indexOf('CID-') < 0);
+const env4 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away', INTEL_LIST_ONLY_EXCLUDE: 'Carl Fictitious',
+                                INTEL_PENDING_ROWS_ON_WALL: 'show policy numbers' } });
+env4.Date = env.Date;
+env4.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, env2.__sheets['URPPBIEX - Reqt']._grid.slice(1));
+env4.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env2.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0],
+               env2.__sheets['RR_UWPRO_INSURED_Requirement']._grid.slice(1));
+env4._intelTabMemo = {}; env4._intelHeadMemo = {};
+const W4 = env4.iPendingWall_();
+ok('with the exact phrase the rows are there', W4.table.shown === true && W4.table.rows.length === 3, JSON.stringify(W4.table.rows));
+const tr = W4.table.rows.filter(r => r.policy === 'P-THREE')[0];
+ok('each row is the policy, its agent, and what it is waiting on — never the client',
+   tr.agent === 'Anand Pretend' && tr.statusDesc === 'Pending UW' && tr.api === 4800 && tr.noCash === true &&
+   tr.codes.slice().sort().join(',') === 'FUTPY,MDMED,PRADD' && tr.daysOrdered === rq1.daysOrdered && tr.daysPending === three.daysPending,
+   JSON.stringify(tr));
+ok('no client name in the table', JSON.stringify(W4.table).indexOf('CLIENTNAME') < 0 && JSON.stringify(W4.table).indexOf('CID-') < 0);
+ok('the list-only manager is off the table too', !W4.table.rows.some(r => r.agent === 'Carl Fictitious'));
+ok('and the excluded agent was never in it', !W4.table.rows.some(r => r.policy === 'P-SKIP'));
 
 console.log('\nA workbook with no pending list anywhere:\n');
 const bare = makeEnv();
