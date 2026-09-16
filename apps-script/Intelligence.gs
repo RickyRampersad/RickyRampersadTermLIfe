@@ -2499,7 +2499,31 @@ function iRidersWall_() {
   var gone = zero(), month = zero(), ahead = zero(), forever = zero(), blank = zero();
   var byAg = {}, days = {}, months = {}, kinds = [];
   var dayOf = today.getDate();
-  var lost = 0;   /* rows the dues tab says are not live after all */
+  /* Rows the dues tab says are not live after all, and rows held by an agent
+     who is left off every wall. Until 16 September 2026 the first was a bare
+     count that reached the branch only as a sentence in notes and the second
+     was not counted at all — both simply vanished from the lists. An
+     exclusion is a decision to hand that book to somebody, not a way to make
+     it disappear, so every screen that excludes has to say how much it
+     removed; and a rider the dues tab took off is still a rider Salesforce
+     is calling paid. Both are tallied with their cover and premium and
+     published as figures of their own, not folded into a note. */
+  var lost = { n: 0, cover: 0, prem: 0 }, excluded = { n: 0, cover: 0, prem: 0 };
+  var tally = function (t, c, pm) { t.n++; t.cover += c; t.prem += pm; };
+  /* Who holds what is ending — this month, and the twelve-month window. The
+     gone list has always named the desk, because somebody has to work it; the
+     month was asked for as "the riders expiring this month", which is a
+     question an agent answers about their own book, and until 16 September
+     2026 the screen knew the day it fell on and never the desk it sat on.
+     Kinds are counted per agent, all four keys present, because the waiver
+     carries no cover and an agent whose whole month is waivers would
+     otherwise show a $0 that looks like nothing is ending. */
+  var byAgM = {}, byAgY = {};
+  var desk = function (idx, ag) {
+    return idx[ag || '—'] || (idx[ag || '—'] =
+      { name: ag || 'no agent on the record', n: 0, cover: 0, prem: 0,
+        kinds: { ci: 0, ad: 0, wp: 0, di: 0 } });
+  };
 
   IRID_KINDS.forEach(function (k) {
     var b = B[k.key] || { n: 0, d: 0, p: 0, c: k.cover ? 0 : null };
@@ -2517,11 +2541,11 @@ function iRidersWall_() {
                      from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' < TODAY' +
                      ' ORDER BY ' + k.exp + ' DESC LIMIT 400');
     (goneRows || []).forEach(function (r) {
-      var st = iRidState_(dues, r.POLICY__c);
-      if (st === 'gone') { lost++; return; }
-      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
-      if (ag && iExcludes_(skip, ag)) return;
       var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { tally(lost, c, pm); return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) { tally(excluded, c, pm); return; }
       var xp = iDate_(r[k.exp]);
       row.gone.n++; row.gone.cover += c; row.gone.prem += pm;
       gone.n++; gone.cover += c; gone.prem += pm;
@@ -2540,15 +2564,17 @@ function iRidersWall_() {
                    ' AND ' + k.exp + ' >= THIS_MONTH AND ' + k.exp + ' <= NEXT_N_MONTHS:' + IRID_SOON_M +
                    ' ORDER BY ' + k.exp + ' LIMIT 400');
     (upRows || []).forEach(function (r) {
-      var st = iRidState_(dues, r.POLICY__c);
-      if (st === 'gone') { lost++; return; }
-      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
-      if (ag && iExcludes_(skip, ag)) return;
       var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { tally(lost, c, pm); return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) { tally(excluded, c, pm); return; }
       var xp = iDate_(r[k.exp]);
       if (!xp) return;
       row.ahead.n++; row.ahead.cover += c; row.ahead.prem += pm;
       ahead.n++; ahead.cover += c; ahead.prem += pm;
+      var y = desk(byAgY, ag);
+      tally(y, c, pm); y.kinds[k.key]++;
       var ym = xp.getFullYear() + '-' + ('0' + (xp.getMonth() + 1)).slice(-2);
       var mo = months[ym] || (months[ym] = { ym: ym, lab: ICONV_MONTHS[xp.getMonth()] + ' ' + xp.getFullYear(),
                                              n: 0, cover: 0 });
@@ -2559,6 +2585,8 @@ function iRidersWall_() {
         var dom = xp.getDate();
         row.month.n++; row.month.cover += c; row.month.prem += pm;
         month.n++; month.cover += c; month.prem += pm;
+        var m = desk(byAgM, ag);
+        tally(m, c, pm); m.kinds[k.key]++;
         if (dom) {
           var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: dom < dayOf, kinds: {} });
           slot.n++; slot.cover += c; slot.kinds[k.key] = (slot.kinds[k.key] || 0) + 1;
@@ -2602,9 +2630,25 @@ function iRidersWall_() {
     return a;
   }).sort(function (a, b) { return b.cover - a.cover || b.n - a.n; });
 
-  if (lost) {
-    notes.push(lost + ' riders are off these lists — the dues tab says the policy has lapsed, ' +
+  /* Most riders ending first, then the premium on them — the month is worked
+     as a list of calls, and the desk with the most calls is the one to start
+     with. Cover would put one big critical illness ahead of four waivers,
+     which is the wrong order for a list of phone calls. */
+  var desks = function (idx) {
+    return Object.keys(idx).map(function (key) { return idx[key]; })
+      .sort(function (a, b) { return b.n - a.n || b.prem - a.prem || (a.name < b.name ? -1 : 1); });
+  };
+
+  if (lost.n) {
+    notes.push(lost.n + ' riders are off these lists — the dues tab says the policy has lapsed, ' +
                'been surrendered or matured. Salesforce still shows it paying.');
+  }
+  /* The count only: money on a wall page is formatted in the browser, and
+     the page prints the cover beside this from the excluded figure itself. */
+  if (excluded.n) {
+    notes.push(excluded.n + (excluded.n === 1 ? ' rider' : ' riders') + ' held by an excluded agent ' +
+               (excluded.n === 1 ? 'is' : 'are') + ' left off every list here. ' +
+               'Excluding an agent does not end the rider — somebody still has to hold that book.');
   }
   if (book.blank) {
     notes.push(book.blank + ' of the ' + book.n + ' riders in force carry no expiry date at all, so ' +
@@ -2627,6 +2671,15 @@ function iRidersWall_() {
     kinds: kinds,
     agents: agents.slice(0, IRID_TOP),
     agentCount: agents.length,
+    /* The month and the year by desk: every agent with a rider ending, the
+       kinds by key, the cover (nought for a waiver — it has none) and the
+       premium. Not capped here; the page trims to the height it has and says
+       how many it dropped. */
+    monthByAgent: desks(byAgM),
+    yearByAgent: desks(byAgY),
+    lost: lost,
+    excluded: { n: excluded.n, cover: excluded.cover, prem: excluded.prem,
+                names: Object.keys(skip).length },
     duesRead: !!dues,
     notes: notes
   };

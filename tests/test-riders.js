@@ -279,5 +279,109 @@ console.log('\nThe wall action needs no sign-in:\n');
 const r = env.iIntelRoute_ ? env.iIntelRoute_({ action: 'intel.riders' }) : env.iActRiders_({ fresh: true });
 ok('intel.riders answers', !!r, JSON.stringify(r).slice(0, 120));
 
+/* ── 11. Lost and excluded are figures, not a silence ────────────────────
+   In the first fixture one critical illness rider sits on a lapsed policy and
+   one is held by the excluded agent. Both used to vanish: the lapsed one
+   reached the branch only as a sentence, the excluded one not at all. */
+console.log('\nAnd what came off the lists is said in numbers:\n');
+ok('the lapsed rider is counted as lost, with its cover',
+   d.lost && d.lost.n === 1 && d.lost.cover === 9000000 && d.lost.prem === 5000, JSON.stringify(d.lost));
+ok('the excluded agent’s rider is counted as excluded, with its cover',
+   d.excluded && d.excluded.n === 1 && d.excluded.cover === 8000000 && d.excluded.prem === 3000,
+   JSON.stringify(d.excluded));
+ok('and the branch is told, in words, that excluding did not end the rider',
+   (d.notes || []).some(x => /excluded agent/.test(x) && /somebody still has to hold/.test(x)),
+   JSON.stringify(d.notes));
+ok('this month by desk exists in the first fixture too',
+   Array.isArray(d.monthByAgent) && d.monthByAgent.length === 2 &&
+   d.monthByAgent.every(a => a.kinds && 'ci' in a.kinds && 'ad' in a.kinds && 'wp' in a.kinds && 'di' in a.kinds),
+   JSON.stringify(d.monthByAgent));
+
+/* ── 12. THIS MONTH, BY DESK — three pretend agents across the four riders
+   this month and next, one row the dues tab calls lapsed, and two held by
+   the excluded agent (one ahead, one already gone). The stub is on
+   iSfQuery_ itself, which is what iRidersWall_ actually calls. */
+console.log('\nThis month, desk by desk:\n');
+const env4 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away' } });
+env4.Date = new Proxy(realDate, { construct(t, a) { return a.length ? new realDate(...a) : new realDate(NOW.getTime()); },
+                                  get(t, k) { return k === 'now' ? () => NOW.getTime() : t[k]; } });
+env4.__mkSheet('Dues', 9, DUESH, [
+  due('RID-A9', '', 'Lapsed'),
+  due('RID-A1', '', 'Premium Paying')
+]);
+/* One row per rider, built from the kind's own field names so the fixture
+   cannot drift from the four riders the screen reads. */
+const rid = (key, pol, ag, xp, cov, prm) => {
+  const k = env4.iRidKind_(key), r = { POLICY__c: pol, AGENT__r: ag ? { Name: ag } : null };
+  r[k.exp] = xp; r[k.prem] = prm; if (k.cover) r[k.cover] = cov;
+  return r;
+};
+const desks = {
+  ci: [ rid('ci', 'RID-A1', 'Anand Pretend',   '2026-09-20', 300000, 250),
+        rid('ci', 'RID-B3', 'Beena Sample',     '2026-09-30', 500000, 400),
+        rid('ci', 'RID-X1', 'Gone Away',        '2026-09-10', 800000, 700),
+        rid('ci', 'RID-A3', 'Anand Pretend',   '2026-10-05', 200000, 150) ],
+  ad: [ rid('ad', 'RID-B1', 'Beena Sample',     '2026-09-24', 100000, 40),
+        rid('ad', 'RID-A9', 'Anand Pretend',   '2026-09-27', 50000,  20),   // lapsed on the dues tab
+        rid('ad', 'RID-C2', 'Carl Fictitious', '2026-10-12', 150000, 60) ],
+  wp: [ rid('wp', 'RID-A2', 'Anand Pretend',   '2026-09-08', null, 120),
+        rid('wp', 'RID-C1', 'Carl Fictitious', '2026-09-03', null, 90),
+        rid('wp', 'RID-B4', 'Beena Sample',     '2026-10-28', null, 80) ],
+  di: [ rid('di', 'RID-B2', 'Beena Sample',     '2026-09-15', 2000, 30),
+        rid('di', 'RID-C3', 'Carl Fictitious', '2026-10-20', 3000, 45) ]
+};
+const goneX = [ rid('ci', 'RID-X2', 'Gone Away', '2019-01-01', 100000, 50) ];
+env4.sfQuery_ = () => { throw new Error('the stub is on iSfQuery_, not here'); };
+env4.iSfQuery_ = function (soql) {
+  const key = ['ci', 'ad', 'wp', 'di'].filter(k => soql.indexOf(env4.iRidKind_(k).exp) > -1)[0];
+  if (/THIS_MONTH/.test(soql)) return key ? desks[key] : [];
+  if (/< TODAY/.test(soql))    return key === 'ci' ? goneX : [];
+  return [];
+};
+const d4 = env4.iRidersWall_();
+ok('it is configured', d4.configured === true, d4.error || '');
+const M = d4.monthByAgent || [], byName = nm => M.find(a => a.name === nm) || {};
+ok('three desks have a rider ending this month', M.length === 3, JSON.stringify(M.map(a => a.name)));
+ok('the desk with the most riders coming off leads',
+   M[0].name === 'Beena Sample' && M[1].name === 'Anand Pretend' && M[2].name === 'Carl Fictitious',
+   JSON.stringify(M.map(a => a.name + ':' + a.n)));
+ok('Beena: three riders, one each of critical illness, accidental death and disability income',
+   byName('Beena Sample').n === 3 && JSON.stringify(byName('Beena Sample').kinds) === JSON.stringify({ ci: 1, ad: 1, wp: 0, di: 1 }),
+   JSON.stringify(byName('Beena Sample')));
+ok('and her cover and premium are the sum of the three',
+   byName('Beena Sample').cover === 500000 + 100000 + 2000 && byName('Beena Sample').prem === 400 + 40 + 30,
+   JSON.stringify(byName('Beena Sample')));
+ok('Anand: a critical illness and a waiver, and the waiver adds premium but no cover',
+   byName('Anand Pretend').n === 2 && byName('Anand Pretend').cover === 300000 &&
+   byName('Anand Pretend').prem === 250 + 120 && byName('Anand Pretend').kinds.wp === 1,
+   JSON.stringify(byName('Anand Pretend')));
+ok('Carl: one waiver, so premium and no cover at all',
+   byName('Carl Fictitious').n === 1 && byName('Carl Fictitious').cover === 0 &&
+   byName('Carl Fictitious').prem === 90 && byName('Carl Fictitious').kinds.wp === 1,
+   JSON.stringify(byName('Carl Fictitious')));
+ok('the excluded agent is not a desk on the list', !M.some(a => a.name === 'Gone Away'));
+ok('and the lapsed one is not in Anand’s count', byName('Anand Pretend').kinds.ad === 0);
+ok('the month total agrees with the desks',
+   d4.thisMonth.n === 6 && d4.thisMonth.n === M.reduce((a, x) => a + x.n, 0), JSON.stringify(d4.thisMonth));
+
+const Y = d4.yearByAgent || [], byY = nm => Y.find(a => a.name === nm) || {};
+ok('the year by desk takes in next month as well',
+   byY('Anand Pretend').n === 3 && byY('Beena Sample').n === 4 && byY('Carl Fictitious').n === 3,
+   JSON.stringify(Y.map(a => a.name + ':' + a.n)));
+ok('with next month’s cover in it',
+   byY('Carl Fictitious').cover === 150000 + 3000 && byY('Carl Fictitious').prem === 90 + 60 + 45,
+   JSON.stringify(byY('Carl Fictitious')));
+ok('and a tie on riders is broken by premium, so Anand sits above Carl',
+   Y[0].name === 'Beena Sample' && Y[1].name === 'Anand Pretend' && Y[2].name === 'Carl Fictitious',
+   JSON.stringify(Y.map(a => a.name + ':' + a.n + '/' + a.prem)));
+
+ok('the lapsed rider is published as lost, with its cover',
+   d4.lost.n === 1 && d4.lost.cover === 50000 && d4.lost.prem === 20, JSON.stringify(d4.lost));
+ok('the excluded agent’s two riders are published as excluded — one ahead, one already gone',
+   d4.excluded.n === 2 && d4.excluded.cover === 800000 + 100000 && d4.excluded.prem === 750 &&
+   d4.excluded.names === 1, JSON.stringify(d4.excluded));
+ok('nothing client-level is in the answer',
+   ['RID-A1', 'RID-X2', 'POLICY__c'].every(t => JSON.stringify(d4).indexOf(t) === -1));
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nAll good.\n');
 process.exit(fails ? 1 : 0);
