@@ -1348,10 +1348,24 @@ actually name a licence are counted: 40 of 49. The wall says so.
 
 #### What is outstanding, and whether that is normal
 
-The wall lists every open licence task longest-first — the subject line as the
-branch typed it, whose licence it is, how many days it has been open, its
-status, and **who it is sitting with**. Today all three are with the same
-head-office desk.
+The wall lists every open licence task — this month's licences first, then
+longest open — with whose licence it is and when that licence comes up, how
+many days the task has been open, **when anybody last touched it** (a lit dot
+for today, the days since otherwise), how far past its own due date it is,
+and who it is sitting with. Above the list, the branch line: how many are
+outstanding, how many were touched today, how many nobody has touched in
+thirty days. **No subject line.** Until 16 September 2026 the row carried the
+subject as the branch typed it, which the audit of the 15th flagged — a wall
+read carries no subject — so the row now carries a one-word category
+(Renewal, CPD, Application, Registration) derived from it instead. The
+subject is still read server-side, because it is the only thing that says a
+task is about a licence and whose it is.
+
+**Days are the branch's days, not UTC's.** CreatedDate and LastModifiedDate
+come back from Salesforce in UTC; the first cut took the day by slicing the
+timestamp, so a task touched after 8pm in Port of Spain was "touched today"
+all through the following day. `iLicLocalDay_` takes the day in the
+spreadsheet's own time zone.
 
 A list of open tasks is only a to-do list. What makes it an insight is the
 benchmark beside it, computed from the branch's own history:

@@ -7121,6 +7121,46 @@ function iLicSubjectDate_(subject) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/* A SALESFORCE TIMESTAMP, ON THE BRANCH'S OWN DAY.
+   CreatedDate and LastModifiedDate come back as UTC — "2026-09-15T23:40:00.000
+   +0000". Until 16 September 2026 the day was taken by slicing the first ten
+   characters, which is the UTC day: an edit made at ten to eight in the evening
+   in Port of Spain is already tomorrow in UTC, so a task touched after 8pm read
+   as touched "today" all through the next day, and one touched after 8pm on a
+   Friday had "moved" on Saturday. Every touched-today dot and every days-since
+   figure on the licence wall rests on this, so the day is taken in the
+   spreadsheet's own zone. The result is a local-midnight Date, the same shape
+   iToday_ returns, so the two subtract cleanly.
+
+   The offset is written +0000 with no colon, which not every Date parser takes;
+   the colon is put in first. A string that still will not parse falls back to
+   the UTC day rather than to nothing — a wrong-by-one date is a smaller lie
+   than a task that vanishes from the age arithmetic. */
+function iLicLocalDay_(ts) {
+  if (!ts) return null;
+  var raw = String(ts).trim();
+  var d = new Date(raw.replace(/([+\-]\d{2})(\d{2})$/, '$1:$2'));
+  if (isNaN(d.getTime())) return iDate_(raw.slice(0, 10));
+  return iDate_(Utilities.formatDate(d, iTz_(), 'yyyy-MM-dd'));
+}
+
+/* WHAT KIND OF LICENCE MATTER, IN ONE WORD — because the subject itself does
+   not go to the wall. The audit of 15 September 2026 found the outstanding list
+   carrying each task's subject line as the branch typed it, on a screen with no
+   sign-in in a room clients walk through, when every other wall read is
+   aggregates and staff names only. The subject is still read here, because it
+   is the only thing that says a task is about a licence at all and which agent
+   it belongs to; what leaves this function is a category. Nothing in this map
+   is a name, a number or a date. */
+function iLicCategory_(subject) {
+  var s = String(subject || '').toLowerCase();
+  if (/cpd/.test(s))                                return 'CPD';
+  if (/renew/.test(s))                              return 'Renewal';
+  if (/registration|change from/.test(s))           return 'Registration';
+  if (/applic|new licen[cs]e|provisional/.test(s))  return 'Application';
+  return 'Licence';
+}
+
 /* Next occurrence of a month/day anniversary, on or after today. A day past
    the end of a short month lands on that month's last day rather than rolling
    into the next one — 31 in a 30-day month is a data entry, not a date. */
@@ -7143,7 +7183,7 @@ function iBuildLicence_() {
 
   /* THE ROSTER: the access list says who the branch is, the in-force book says
      who is still active. Both, joined on the agent code. */
-  var units = iBuildUnits_(), roster = {}, codes = [];
+  var units = iBuildUnits_(), roster = {}, codes = [], excluded = 0;
   Object.keys(units).forEach(function (u) {
     units[u].forEach(function (m) {
       var c = iCode_(m.id);
@@ -7154,7 +7194,10 @@ function iBuildLicence_() {
          times over. */
       if (iRoleOf_(m.role) === 'staff' || iRoleOf_(m.role) === 'staff-lead') return;
       if (!/^A\d/.test(c)) return;                      // agent codes only
-      if (iExcludes_(skip, m.name)) return;
+      /* Counted, because every screen that excludes says how much it removed:
+         an exclusion is a decision to hand that agent's licence to somebody,
+         not a way to stop it being anybody's. */
+      if (iExcludes_(skip, m.name)) { if (!roster[c]) excluded++; return; }
       if (roster[c]) return;
       roster[c] = { code: c, name: m.name, unit: u, role: m.role || '' };
       codes.push(c);
@@ -7210,7 +7253,7 @@ function iBuildLicence_() {
        how long a thing has been outstanding, and who it is sitting with. */
     tasks = iSfQuery_(
       'SELECT Id, Subject, Status, ActivityDate, CreatedDate, LastModifiedDate, ' +
-      'IsClosed, Who.Name FROM Task ' +
+      'IsClosed, Task_Type__c, Who.Name FROM Task ' +
       "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
       'AND CreatedDate >= LAST_N_MONTHS:24 ORDER BY CreatedDate DESC');
   } catch (err) {
@@ -7220,7 +7263,8 @@ function iBuildLicence_() {
   if (sfError || !contacts.length) {
     return { generatedAt: iIso_(today), configured: false,
              error: sfError || 'Salesforce returned no licence records.',
-             roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested } };
+             roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
+                       excluded: excluded } };
   }
 
   /* Licence tasks only, and which agent each one names. Matching is on the
@@ -7241,12 +7285,19 @@ function iBuildLicence_() {
       if (parts.length >= 2 &&
           sk.indexOf(parts[0]) >= 0 && sk.indexOf(parts[parts.length - 1]) >= 0) who = c;
     });
+    /* The subject stays inside this function. It decides that the task is a
+       licence task, which agent and which licence it is for, and what kind of
+       matter it is — and then it is not carried any further. See
+       iLicCategory_ for why. */
     licTasks.push({ code: who, subject: subj, status: String(t.Status || ''),
                     closed: !!t.IsClosed,
                     kind: iLicKind_(subj),
+                    type: String(t.Task_Type__c || ILIC.TASKTYPE),
+                    category: iLicCategory_(subj),
                     due: t.ActivityDate ? iIso_(iDate_(t.ActivityDate)) : '',
-                    opened: t.CreatedDate ? iDate_(String(t.CreatedDate).slice(0, 10)) : null,
-                    moved: t.LastModifiedDate ? iDate_(String(t.LastModifiedDate).slice(0, 10)) : null,
+                    /* Both on the branch's day, not UTC's — see iLicLocalDay_. */
+                    opened: iLicLocalDay_(t.CreatedDate),
+                    moved: iLicLocalDay_(t.LastModifiedDate),
                     /* Who the branch is waiting on. Salesforce nests it, and it is
                        almost never the agent — it is the head-office desk that has
                        to act next, which is the useful half. */
@@ -7351,7 +7402,12 @@ function iBuildLicence_() {
         justPassed: justPassed, sinceLast: justPassed ? sinceLast : null,
         covered: covered,
         openTasks: open.length,
-        openSubjects: open.slice(0, 2).map(function (t) { return t.subject.slice(0, 90); }),
+        /* The next due date, as iLicNextDue_ computes it, falls inside this
+           calendar month — so it is still ahead. The strip's own rule (the
+           anniversary MONTH) is wider: it also holds a date this month that
+           has already gone by, which this flag does not, and justPassed does. */
+        dueThisMonth: due.getFullYear() === today.getFullYear() &&
+                      due.getMonth() === today.getMonth(),
         clash: clash
       });
     });
@@ -7443,11 +7499,30 @@ function iBuildLicence_() {
     .map(function (t) {
       var age = t.opened ? Math.round((today - t.opened) / DAY) : null;
       var r = roster[t.code];
-      return { subject: t.subject.slice(0, 120),
+      /* NO SUBJECT ON THIS ROW. It was here until 16 September 2026; the
+         audit of the 15th flagged it, and the setup notes have always said a
+         wall read carries no subject. The category and the licence kind say
+         what the task is; the agent says whose. */
+      var sinceTouch = t.moved ? Math.round((today - t.moved) / DAY) : null;
+      var dueD = t.due ? iDate_(t.due) : null;
+      return { code: t.code,
                agent: r ? r.name : '', unit: r ? r.unit : '',
-               kind: t.kind, status: t.status, waiting: t.waiting,
+               kind: t.kind, type: t.type, category: t.category,
+               status: t.status, waiting: t.waiting,
                opened: t.opened ? iIso_(t.opened) : '',
                days: age,
+               /* When it last moved, on the branch's day, and whether that was
+                  today. "Touched today" is the one thing a manager can act on
+                  at four o'clock: a task nobody has opened since last week is
+                  not being worked, whatever its status says. */
+               moved: t.moved ? iIso_(t.moved) : '',
+               touchedToday: sinceTouch === 0,
+               daysSinceTouch: sinceTouch,
+               /* The task's own due date (ActivityDate), and how far past it
+                  today is. Negative means still ahead; null means the branch
+                  never gave it one, which is itself worth seeing. */
+               due: t.due,
+               daysSinceDue: dueD ? Math.round((today - dueD) / DAY) : null,
                /* Past what this branch normally takes — the only honest way to
                   call a number of days good or bad. */
                overdue: age !== null && medClose > 0 && age > medClose,
@@ -7465,8 +7540,39 @@ function iBuildLicence_() {
   function count(fn) { return agents.filter(fn).length; }
   /* Same rule as the strip. Reading it off the next-due date instead put
      Aidan Eugene and Joy Sammah — who both renewed on the 4th — outside their
-     own month. */
+     own month. Each row carries dueThisMonth for the narrower reading — the
+     date is still ahead — and justPassed for the other half. */
   var thisMonth = agents.filter(function (a) { return a.month - 1 === today.getMonth(); });
+
+  /* THIS MONTH'S TASKS, AND WHETHER ANYBODY IS TOUCHING THEM.
+     A licence that comes up this month with an open task nobody has moved in a
+     fortnight is the row the manager wants at four o'clock, and until now the
+     screen could not tell it from one being worked every morning. The open
+     tasks are joined to each licence on agent AND kind, the same rule that
+     decides openTasks above, and the counts underneath are of those tasks. */
+  function untouched(list, days) {
+    return list.filter(function (o) { return o.daysSinceTouch !== null && o.daysSinceTouch >= days; }).length;
+  }
+  var monthTasks = [];
+  var thisMonthRows = thisMonth.map(function (a) {
+    var mine = outstanding.filter(function (o) { return o.code === a.code && o.kind === a.kind; });
+    mine.forEach(function (o) { monthTasks.push(o); });
+    return { name: a.name, code: a.code, unit: a.unit, kind: a.kind,
+             due: a.due, days: a.days, lastDue: a.lastDue,
+             justPassed: a.justPassed, dueThisMonth: a.dueThisMonth, covered: a.covered,
+             tasks: mine };
+  });
+  var thisMonthOut = {
+    agents: thisMonthRows,
+    n: thisMonthRows.length,
+    tasks: monthTasks.length,
+    touchedToday: monthTasks.filter(function (o) { return o.touchedToday; }).length,
+    untouched7d: untouched(monthTasks, 7),
+    untouched30d: untouched(monthTasks, 30),
+    /* A licence up this month with no open task at all and no closed one
+       covering it — nobody has started. */
+    unstarted: thisMonthRows.filter(function (a) { return !a.tasks.length && !a.covered; }).length
+  };
 
   function tally(keyFn, pool) {
     var m = {};
@@ -7496,9 +7602,20 @@ function iBuildLicence_() {
       openTasks: agents.reduce(function (s, a) { return s + a.openTasks; }, 0),
       /* The alarm: a renewal date that has just gone by with no closed task to
          show for it. */
-      unconfirmed: count(function (a) { return a.justPassed && !a.covered; })
+      unconfirmed: count(function (a) { return a.justPassed && !a.covered; }),
+      /* The branch line on the outstanding card: every open licence task,
+         matched to an agent or not, and whether it is being worked. */
+      outstanding: outstanding.length,
+      touchedToday: outstanding.filter(function (o) { return o.touchedToday; }).length,
+      untouched7d: untouched(outstanding, 7),
+      untouched30d: untouched(outstanding, 30),
+      pastDue: outstanding.filter(function (o) { return o.daysSinceDue !== null && o.daysSinceDue > 0; }).length,
+      noDue: outstanding.filter(function (o) { return o.daysSinceDue === null; }).length
     },
-    thisMonth: thisMonth,
+    /* Was a bare list of the licence rows; since 16 September 2026 it is the
+       rows with their open tasks joined on, and the counts the wall's
+       this-month line reads. Nothing outside licence.html read the list. */
+    thisMonth: thisMonthOut,
     /* Just-passed first, then by date. A renewal date rolls to next year the
        instant it passes, so sorting on days alone buries last week's lapse at
        the bottom of the list — 360 days away, and the one row that actually
@@ -7570,7 +7687,7 @@ function iBuildLicence_() {
               return list;
             })() },
     roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
-              dropped: dropped.names }
+              excluded: excluded, dropped: dropped.names }
   };
 }
 
