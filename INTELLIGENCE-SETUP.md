@@ -620,6 +620,38 @@ The digests follow the same rule — staff and managers are skipped by the agent
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
 
+### The wall says when it is running old code
+
+A red bar across the foot of every wall screen, reading:
+
+> **This wall is running old code.** The script deployed is `2026-09-09a` and
+> these screens were built for `2026-09-16a`. Figures and names on screen may
+> be wrong. Paste Intelligence.gs, then Deploy → Manage deployments → pencil
+> → New version.
+
+`all.html` posts `intel.ping`, which needs no token, and compares the version
+it gets back with `WANT_SCRIPT` in the page. It hides itself the moment the
+paste is done, stays quiet when the script cannot be reached at all (every
+screen already says *no feed* — a second red bar for one fault is noise), and
+stays quiet if the ping answers without a version.
+
+**Why it exists.** On 15 and 16 September 2026 the birthday strip named agents
+whose birthday it was not, on two consecutive mornings, because the fix had
+been written the day before and never pasted. Nothing on the screen said so
+and nothing could have: the *data* rebuilds every night, so the wall read
+"built today" and looked perfectly healthy while running three-week-old logic.
+A stale deployment has to be visible on the screen somebody is already
+standing in front of.
+
+`WANT_SCRIPT` is pinned to `INTEL_VERSION` by `tests/test-version.js` — a
+staleness warning that is itself stale is worse than none — and
+`tests/e2e-wallstale.js` drives the real page to prove the bar appears, names
+both builds, disappears when they agree, and fits a phone.
+
+**This is a page change, not a script change**, so it reaches the wall by
+merging to `main` (GitHub Pages serves `main`), not by pasting. The two chains
+are separate: merging publishes the screens, pasting updates the script.
+
 ### Mail off, right now, with nothing to deploy
 
 **Branch Intelligence → MAIL OFF — hold everything to me** (`intelMailOff()`).

@@ -163,7 +163,23 @@
   @media (max-width:760px){
     #cake{top:auto;bottom:54px;left:10px;right:10px;transform:none;max-width:none;font-size:13px;padding:7px 12px}
   }
-  @media print{#rail,#bar,#boot,#hud,#cake{display:none}}
+  /* THE WALL MUST SAY WHEN IT IS RUNNING OLD CODE. On 15 and 16 September 2026
+     the birthday strip named two agents whose birthday it was not, both
+     mornings, and the branch manager's question the second time was "why is
+     this the 2nd time". The answer was that the fix had been written the day
+     before and never pasted into Apps Script — and nothing on the screen said
+     so. The data rebuilds nightly, so the wall showed "built today" and looked
+     perfectly healthy while serving three-week-old logic. A stale deployment
+     has to be visible on the screen somebody is already looking at. */
+  #stale{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
+         background:#8f1d1d;color:#fff;font:600 14px/1.45 ui-sans-serif,system-ui,sans-serif;
+         display:flex;gap:10px;align-items:baseline;justify-content:center;flex-wrap:wrap;text-align:center}
+  #stale[hidden]{display:none}
+  #stale b{font-weight:800}
+  #stale span{font-weight:400;opacity:.9}
+  #stale code{font:inherit;font-weight:800;background:rgba(255,255,255,.16);padding:1px 6px;border-radius:5px}
+  @media (max-width:760px){ #stale{font-size:12.5px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))} }
+  @media print{#rail,#bar,#boot,#hud,#cake,#stale{display:none}}
 </style>
 </head>
 <body>
@@ -172,6 +188,12 @@
 <div id="bar"></div>
 
 <div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b><span>— happy birthday from all of us</span></div>
+
+<div id="stale" hidden>
+  <b>This wall is running old code.</b>
+  <span>The script deployed is <code id="staleGot"></code> and these screens were built for <code id="staleWant"></code>.
+  Figures and names on screen may be wrong. Paste Intelligence.gs, then Deploy → Manage deployments → pencil → New version.</span>
+</div>
 
 <div id="hud">
   <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
@@ -611,6 +633,39 @@ if (LONE) {
       'Eleven screens, one after another. One at a time on a phone.';
   } catch (e) {}
 }
+
+/* ── is the script behind these screens? ──────────────────────────────────
+   WANT_SCRIPT is paired to INTEL_VERSION in apps-script/Intelligence.gs by
+   tests/test-version.js, exactly as redeploy/index.html is. intel.ping needs
+   no token and has reported its version since 2026-09-08, so this check works
+   against an old deployment — which is the only deployment it matters on.
+
+   It fails quiet: a wall that cannot reach the script already says "no feed"
+   on every screen, and a second red bar for the same fault is noise. */
+var WANT_SCRIPT = '2026-09-16a';
+var PING_URL = 'https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';
+
+function versionCheck() {
+  try {
+    fetch(PING_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'},
+                      body: JSON.stringify({ action:'intel.ping' }) })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var got = j && (j.version || (j.data && j.data.version));
+        if (!got) return;
+        var bad = String(got) !== WANT_SCRIPT;
+        var el = document.getElementById('stale');
+        if (bad) {
+          document.getElementById('staleGot').textContent = got;
+          document.getElementById('staleWant').textContent = WANT_SCRIPT;
+        }
+        el.hidden = !bad;
+      })
+      .catch(function () {});
+  } catch (e) {}
+}
+versionCheck();
+setInterval(versionCheck, 30 * 60 * 1000);
 
 show(0);
 tick();
