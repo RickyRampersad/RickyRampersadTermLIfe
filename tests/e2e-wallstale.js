@@ -92,8 +92,8 @@ const bar = page => page.evaluate(() => {
     const box = await p.evaluate(() => {
       const el = document.getElementById('stale');
       const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
-      const rail = document.getElementById('rail').getBoundingClientRect();
-      const hud = document.getElementById('hud').getBoundingClientRect();
+      const rail = document.getElementById('chrome').getBoundingClientRect();
+      const hud = document.getElementById('state').getBoundingClientRect();
       const bar = document.getElementById('bar');
       return { h: Math.round(r.height), w: Math.round(r.width), top: Math.round(r.top),
                z: cs.zIndex, pos: cs.position,
@@ -128,7 +128,7 @@ const bar = page => page.evaluate(() => {
     const clear = await p.evaluate(() => ({
       cls: document.body.classList.contains('stale'),
       h: getComputedStyle(document.documentElement).getPropertyValue('--staleh').trim(),
-      railTop: Math.round(document.getElementById('rail').getBoundingClientRect().top)
+      railTop: Math.round(document.getElementById('chrome').getBoundingClientRect().top)
     }));
     ok('  the body is not marked stale', clear.cls === false);
     ok('  the reserved height goes back to nothing', clear.h === '0px', clear.h);

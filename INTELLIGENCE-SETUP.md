@@ -924,8 +924,9 @@ the 45-day line. Same design system as `/board/` and the benefits wall.
 between them — premium dues, in our possession, with the agent, the licence
 year, birthdays — in the order the film introduces them. Each holds for about
 twenty seconds; `?secs=30` makes every one hold thirty. Arrow keys step, the
-number keys jump, space holds, `F` is full screen; the rail along the bottom
-shows only while the mouse moves. The five pages are not reloaded on each turn:
+number keys jump, space holds, `F` is full screen; the controls, the stops and
+the timer are on one line across the top, always showing (see § *The chrome
+is one line across the top*). The five pages are not reloaded on each turn:
 they load once and refresh themselves every thirty minutes, so streaming costs
 the sheet no more than one standing screen did. A screen that never loads is
 struck through on the rail and skipped, and the player restarts itself once
