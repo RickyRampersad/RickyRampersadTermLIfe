@@ -65,16 +65,25 @@
   #chip span{width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.16);
     display:grid;place-items:center;font-size:12px;line-height:1}
 
-  /* minmax ON ROW 2, NOT 1fr. With a plain 1fr the bottom row can grow until
-     the middle row has nothing left — adding a quotation to the due card took
-     the three bar panels to 124px and pushed the hero out of its own box. The
-     floor guarantees the panels their space and lets the tall card give way
-     instead. */
+  /* BOTH LOWER ROWS ARE FRACTIONS, AND EVERY LIST TRIMS ITSELF TO ITS BOX.
+     Row 3 was `auto` — sized to its content — on a grid whose height is the
+     screen. With eleven open tasks that row wanted 700px, the grid gave it
+     what was left, and on 16 September 2026 the page was measured at
+     1280x720 inside the player: the due list had collapsed to nothing and
+     nine of the eleven outstanding rows were below the fold, invisible, with
+     nothing on screen to say so. The earlier floor on row 2 (minmax 268px)
+     had been added for the opposite squeeze and made this one worse.
+
+     So the two lower rows now split the space in a fixed ratio, every card
+     clips, and each list hides the rows it cannot show and says "+n more" in
+     their place — see fit(). What does not fit is counted, never silently
+     cut. */
   main{display:grid;grid-template-columns:300px 1fr 1fr 1fr;
-    grid-template-rows:auto minmax(268px,1fr) auto;gap:13px;padding:0 26px 20px;
+    grid-template-rows:auto minmax(0,.8fr) minmax(0,1.2fr);gap:13px;padding:0 26px 20px;
     height:calc(100vh - 66px)}
   .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-    padding:16px 18px;min-height:0;display:flex;flex-direction:column}
+    padding:16px 18px;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+  .more{font-size:11px;color:var(--faint);padding:4px 0 0;flex:none}
   .card h3{margin:0 0 2px;font:700 12px var(--font-b);letter-spacing:.16em;
     text-transform:uppercase;color:var(--gold)}
   .card .cap{font-size:11.5px;color:var(--faint);margin:0 0 7px;line-height:1.4}
@@ -141,9 +150,11 @@
      is the whole point: a date coming is routine, a date gone by with nothing
      closed against it is the only emergency this wall can show. */
   .due{grid-column:1/3}
-  .dlist{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:0 1 auto}
+  /* flex:1 with min-height:0, not 0 1 auto: the list is the card's reason
+     for being and takes what the Act leaves, rather than the other way round. */
+  .dlist{display:flex;flex-direction:column;gap:0;overflow:hidden;flex:1 1 auto;min-height:0}
   .drow{display:grid;grid-template-columns:1fr auto 78px;align-items:center;gap:10px;
-    padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px}
+    padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:13.5px}
   .drow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .drow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
   .drow .when{font-family:var(--font-d);font-weight:700;text-align:right;
@@ -156,40 +167,82 @@
   .pill.flat{background:rgba(255,255,255,.06);color:var(--faint);border:1px solid var(--line)}
 
   .open{grid-column:3/5}
-  .sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:12px}
-  .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
+  #openBody{display:flex;flex-direction:column;flex:1;min-height:0}
+  .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:6px;flex:none}
+  .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:28px;letter-spacing:-1px;line-height:1}
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
   .sgrid .gold .v{color:var(--gold)} .sgrid .accent .v{color:var(--blue)}
   .sgrid .good .v{color:var(--good)} .sgrid .bad .v{color:var(--bad)}
-  /* THE OUTSTANDING LIST. Days on the left because that is what is being
-     judged, then whose it is, then the subject line as the branch typed it,
-     then who it is sitting with. A row is only useful if it survives being
+  /* THE OUTSTANDING LIST. Days open on the left because that is what is
+     being judged, then whose licence it is and when that licence comes up,
+     then when anybody last touched the task, then how far past its own date
+     it is. NO SUBJECT LINE: it was here until 16 September 2026, and a wall
+     with no sign-in in a room clients walk through does not show what the
+     branch typed into a task. A row is only useful if it survives being
      read from across the room, so the days are the biggest thing on it. */
-  .olist{display:flex;flex-direction:column;gap:0;margin:2px 0 4px}
-  .orow{display:grid;grid-template-columns:58px 1fr auto;gap:12px;align-items:baseline;
-    padding:7px 0;border-bottom:1px solid rgba(255,255,255,.07)}
+  .olist{display:flex;flex-direction:column;gap:0;margin:2px 0 0;flex:1 1 auto;min-height:0;overflow:hidden}
+  .orow{display:grid;grid-template-columns:52px 1fr 92px 108px;gap:12px;align-items:center;
+    padding:3px 0;border-bottom:1px solid rgba(255,255,255,.07)}
   .orow .age{font-family:var(--font-d);font-weight:800;font-size:19px;text-align:right;
-    font-variant-numeric:tabular-nums;color:var(--dim)}
+    font-variant-numeric:tabular-nums;color:var(--dim);line-height:1}
   .orow .age small{font:600 10px var(--font-b);color:var(--faint);margin-left:2px}
   .orow.hot .age{color:var(--gold)} .orow.bad .age{color:var(--bad)}
-  .orow .who{font-size:13px;overflow:hidden}
+  .orow .who{font-size:13px;overflow:hidden;line-height:1.25}
   .orow .who b{font-weight:600}
   .orow .who em{font-style:normal;display:block;font-size:11px;color:var(--faint);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .orow .with{font-size:11.5px;color:var(--faint);white-space:nowrap;text-align:right}
-  .orow .with b{display:block;color:var(--dim);font-weight:600;font-size:12px}
+  .orow .who em i{font-style:normal;color:var(--gold)}
+  .orow .who em i.bad{color:var(--bad)}
+  /* The touch column: a dot that is lit only when the task moved today,
+     and the days since it did. Read from across the room, the lit dots are
+     the tasks being worked and the dark ones are the tasks that are not. */
+  .orow .touch,.orow .dued{font-size:11.5px;color:var(--faint);white-space:nowrap;line-height:1.25}
+  .orow .touch b,.orow .dued b{display:block;color:var(--dim);font-weight:600;font-size:12.5px;
+    font-variant-numeric:tabular-nums}
+  .orow .touch i{display:inline-block;width:8px;height:8px;border-radius:50%;
+    background:rgba(255,255,255,.14);margin-right:6px;vertical-align:0}
+  .orow .touch.on i{background:var(--good);box-shadow:0 0 8px rgba(52,211,153,.7)}
+  .orow .touch.on b{color:var(--good)}
+  .orow .touch.cold b{color:var(--bad)}
+  .orow .dued.past b{color:var(--bad)} .orow .dued.none b{color:var(--faint);font-weight:500}
   .tag{font:700 9px var(--font-b);letter-spacing:.07em;text-transform:uppercase;
     padding:1px 5px;border-radius:4px;margin-left:6px;vertical-align:1px}
   .tag.gen{color:var(--blue);border:1px solid rgba(55,177,236,.45)}
+  .tag.cat{color:var(--faint);border:1px solid var(--line)}
   .tag.tight{color:var(--bad);border:1px solid rgba(248,113,113,.5)}
   .tag.past{color:var(--gold);border:1px solid rgba(239,194,75,.5)}
-  .note{font-size:11.5px;color:var(--faint);line-height:1.5;margin:9px 0 0}
+  .note{font-size:11.5px;color:var(--faint);line-height:1.45;margin:8px 0 0;flex:none}
   .note b{color:var(--dim)}
   .note.flag{border-left:2px solid var(--gold);padding-left:12px}
 
   footer{position:fixed;left:26px;bottom:5px;font-size:10.5px;color:var(--faint)}
   .hint{position:fixed;right:26px;bottom:5px;font-size:10.5px;color:var(--faint);opacity:.7}
 
+  /* 1280x720 and 1366x768 inside the player frame — 674 and 722 high once
+     the chrome is off the top. Measured on 16 September 2026: without this
+     the middle row's five tenure bars and the bottom row's lists could not
+     both have their space. The Act keeps its words and loses its gloss. */
+  @media (max-height:760px){
+    .card{padding:12px 16px}
+    .ygrid{max-height:80px}
+    .hero .big{font-size:80px}
+    .act .why{display:none}
+    .act{padding-top:8px}
+    .sgrid .v{font-size:24px}
+    .rows{gap:3px} .row{padding:1px 5px}
+    .row .lbl{font-size:12.5px} .row .val{font-size:15px}
+    /* The rows win over the prose. The runway finding keeps its numbers in
+       the fourth tile; the footnote is in the setup notes. Three open tasks
+       on screen beat two paragraphs about them. */
+    .note.runway,.note.foot{display:none}
+    .orow .who em .wt{display:none}
+  }
+  /* A full-height 1080 screen: the bar panels do not need a third of it.
+     Measured 16 September 2026 — at .8/1.2 the middle row held 150px of air
+     under two bars while the outstanding list hid six of eleven tasks. */
+  @media (min-height:900px){
+    main{grid-template-rows:auto minmax(0,.62fr) minmax(0,1.38fr)}
+  }
   @media (min-width:1700px){
     main{grid-template-columns:350px 1fr 1fr 1fr;gap:16px;padding:0 34px 24px}
     .hero .big{font-size:118px} .card{padding:20px 24px}
@@ -303,7 +356,7 @@
         goes by is business the branch cannot lawfully write.</p>
     </div></section>
 
-  <section class="card open"><h3>Outstanding, and how long</h3>
+  <section class="card open"><h3>Outstanding &mdash; this month first, then longest open</h3>
     <p class="cap" id="openCap"></p>
     <div id="openBody"></div></section>
 </main>
@@ -516,86 +569,163 @@ function paint(){
   }).join("");
 
   /* OPEN WORK AND DISAGREEMENTS. */
-  var open=A.filter(function(a){return a.openTasks}),
-      openN=open.reduce(function(s,a){return s+a.openTasks},0),
-      inPool={}, cl;
-  A.forEach(function(a){ inPool[a.code]=1; });
+  var inPool={}, byLic={}, cl;
+  A.forEach(function(a){ inPool[a.code]=1; byLic[a.code+"|"+a.kind]=a; });
   /* By code, not by reference. These come back from JSON as separate objects,
      so indexOf against the agent array matched nothing and the count read zero
      while the panel underneath listed three. */
   cl=D.clashes.filter(function(c){return inPool[c.code]});
-  var T=D.turnaround||{}, OU=(D.outstanding||[]).filter(function(o){
-    return !FILTER || !o.agent || inPool[o.code] || A.some(function(x){return x.name===o.agent});
+  var T=D.turnaround||{}, h2=D.headline||{}, TM=D.thisMonth||{};
+  /* The rows carry the agent CODE since 16 September 2026. Before that the
+     test below was always false — the row had no code — and the filter fell
+     through to matching on the name, which happened to work. A task that
+     names no agent stays on the unfiltered wall and leaves a cut: it cannot
+     belong to the unit or the licence kind that was clicked. */
+  var allOU=D.outstanding||[], hiddenUnm=0;
+  var OU=allOU.filter(function(o){
+    if(!FILTER) return true;
+    if(!o.code){ hiddenUnm++; return false; }
+    return !!inPool[o.code];
   });
-  $("#openCap").innerHTML='Open licence tasks, longest first — with what this branch '
-    + 'normally takes, so a number of days reads as early or late rather than just large.';
+  /* This month's licences first — a task for a date nine days off outranks
+     an older one for a date next March — then longest open. */
+  function rank(o){ var a=byLic[o.code+"|"+o.kind]; return a&&(a.dueThisMonth||a.justPassed)?0:1; }
+  OU=OU.slice().sort(function(x,y){ return rank(x)-rank(y) || (y.days||0)-(x.days||0); });
+
+  var touchedN=OU.filter(function(o){return o.touchedToday}).length,
+      coldN=OU.filter(function(o){return o.daysSinceTouch!==null&&o.daysSinceTouch>=30}).length;
+  /* One line: the this-month figures the feed publishes, and nothing else.
+     The ordering is in the heading. */
+  $("#openCap").innerHTML=(TM.n
+      ? 'This month: <b>'+TM.tasks+'</b> open task'+(TM.tasks===1?'':'s')+' on <b>'+TM.n+'</b> licence'
+        +(TM.n===1?'':'s')+', <b>'+TM.touchedToday+'</b> touched today, <b>'+TM.untouched30d+'</b> untouched 30d+'
+        +(TM.unstarted?', <b>'+TM.unstarted+'</b> not started':'')
+      : 'Nothing comes up this month')
+    + (FILTER&&hiddenUnm?' \u00b7 '+hiddenUnm+' unmatched task'+(hiddenUnm>1?'s':'')+' not in this cut':'')+'.';
   $("#openBody").innerHTML=
     '<div class="sgrid">'
     + '<div class="'+(OU.length?'gold':'good')+'"><div class="v">'+OU.length+'</div>'
-    +   '<div class="k">outstanding now, oldest '
-    +   (OU.length?OU[0].days+' days':'—')+'</div></div>'
-    + '<div><div class="v">'+T.median+'</div>'
-    +   '<div class="k">days, median, from opening a licence task to its last movement</div></div>'
-    + '<div class="'+(T.landedLate>T.landedTotal/3?'bad':'accent')+'"><div class="v">'
-    +   T.landedLate+'<span style="font-size:18px;color:var(--faint)">/'+T.landedTotal+'</span></div>'
-    +   '<div class="k">finished after the renewal date had already passed</div></div>'
+    +   '<div class="k">outstanding'+(FILTER?' in this cut':'')+' · oldest '
+    +   (OU.length?OU.reduce(function(m,o){return Math.max(m,o.days||0)},0)+'d':'—')+'</div></div>'
+    + '<div class="'+(touchedN?'good':'')+'"><div class="v">'+touchedN+'</div>'
+    +   '<div class="k">touched today</div></div>'
+    + '<div class="'+(coldN?'bad':'')+'"><div class="v">'+coldN+'</div>'
+    +   '<div class="k">untouched 30d or more</div></div>'
+    + '<div><div class="v">'+(T.median||'—')+'</div>'
+    +   '<div class="k">median days to close'
+    +   (T.landedTotal?' \u00b7 <b style="color:var(--dim)">'+T.landedLate+' of '+T.landedTotal+'</b> landed late':'')+'</div></div>'
     + '</div>'
 
-    /* THE OUTSTANDING LIST ITSELF. */
+    /* THE OUTSTANDING LIST ITSELF — one row per open licence task. */
     + (OU.length ? '<div class="olist">' + OU.map(function(o){
-        var cls = o.overdue ? ' bad' : (o.tight ? ' hot' : '');
+        var a=byLic[o.code+"|"+o.kind], cls = o.overdue ? ' bad' : (o.tight ? ' hot' : '');
+        var lic;
+        if(!a) lic = o.agent ? 'licence date not on record' : 'no agent named on the task';
+        else if(a.justPassed && !a.covered) lic='licence '+nice(a.lastDue)+' · <i class="bad">went by '+a.sinceLast+'d ago, unconfirmed</i>';
+        else if(a.justPassed) lic='licence '+nice(a.lastDue)+' · renewed';
+        else if(a.dueThisMonth) lic='licence <i>'+nice(a.due)+' · in '+a.days+'d</i>';
+        else lic='licence '+nice(a.due)+' · '+a.days+'d';
+        var st = o.daysSinceTouch;
+        /* The dot lives INSIDE the bold line. Outside it, an inline dot before
+           a block took a line of its own and every row grew a third line —
+           which is what cost the 720-high screen its third task. */
+        var touch = st===null ? '<span class="touch"><b><i></i>—</b>never moved</span>'
+          : o.touchedToday ? '<span class="touch on"><b><i></i>today</b>last touched</span>'
+          : '<span class="touch'+(st>=30?' cold':'')+'"><b><i></i>'+st+'d ago</b>last touched</span>';
+        var sd = o.daysSinceDue;
+        var dued = sd===null ? '<span class="dued none"><b>no due date</b>on the task</span>'
+          : sd>0 ? '<span class="dued past"><b>'+sd+'d past due</b>'+nice(o.due)+'</span>'
+          : sd===0 ? '<span class="dued past"><b>due today</b>'+nice(o.due)+'</span>'
+          : '<span class="dued"><b>due in '+(-sd)+'d</b>'+nice(o.due)+'</span>';
+        /* The age is coloured red past the branch's own median and gold when
+           the days left are fewer than it usually needs; the words for both
+           sit on the second line so a row never grows a third. A negative
+           "left" is a date already gone, which the licence words say better. */
+        var judge = o.overdue ? ' · <i class="bad">past the '+T.median+'d median</i>'
+                  : (o.tight && o.left>=0 ? ' · <i>'+o.left+'d to renewal</i>' : '');
         return '<div class="orow'+cls+'">'
           + '<div class="age">'+(o.days===null?'—':o.days)+'<small>d</small></div>'
           + '<div class="who"><b>'+esc(o.agent||'Not matched to an agent')+'</b>'
           + (o.kind==='General'?'<span class="tag gen">gen</span>':'')
-          + (o.overdue?'<span class="tag past">past '+T.median+'d</span>':'')
-          + (o.tight?'<span class="tag tight">'+o.left+'d to renewal</span>':'')
-          + '<em>'+esc(o.subject)+'</em></div>'
-          + '<div class="with">'+esc(o.status||'')
-          + (o.waiting?'<b>'+esc(o.waiting)+'</b>':'')+'</div></div>';
+          + (o.category&&o.category!=='Licence'?'<span class="tag cat">'+esc(o.category)+'</span>':'')
+          + '<em>'+lic+judge+(o.waiting?'<span class="wt"> · with '+esc(o.waiting)+'</span>':'')+'</em></div>'
+          + touch + dued + '</div>';
       }).join('') + '</div>'
-      : '<p class="note">Nothing open. Every licence task the branch raised has been closed.</p>')
+      : '<p class="note">Nothing open'+(FILTER?' in this cut':'')+'. Every licence task the branch raised has been closed.</p>')
 
     /* THE FINDING. The two medians are the same number, which is why half of
        them land late — and that is a scheduling fact, not anybody being slow. */
-    + (T.runwayMedian ? '<p class="note flag"><b>The runway is the problem, not the pace.</b> '
-        + 'The branch opens a licence task a median of <b>'+T.runwayMedian+' days</b> before the '
-        + 'renewal date, and a licence task takes a median of <b>'+T.median+' days</b> to reach its '
-        + 'last movement. Those are the same number — which is why <b>'+T.landedLate+' of '
-        + T.landedTotal+'</b> finished after the date had passed. Opening them a month earlier '
-        + 'removes the coin toss.</p>' : '')
-
-    /* EVERYTHING BELOW IS TRIMMED HARD ON PURPOSE. This card carries the open
-       work, one finding and one legal gap; the fuller reading of s114, s117,
-       s118 and s120 lives in INTELLIGENCE-SETUP.md, because a wall panel that
-       needs to be walked up to and read is not doing a wall's job. */
-    + ((T.waits||[]).length ? '<p class="note"><b>Where it sits.</b> '
-        + T.waits.slice(0,4).map(function(w){ return esc(w.k)+' <b>'+w.median+'d</b>'; }).join(' · ')
-        + ' median to close.</p>' : '')
+    + (T.runwayMedian ? '<p class="note flag runway"><b>The runway is the problem, not the pace.</b> '
+        + 'A licence task is opened a median of <b>'+T.runwayMedian+' days</b> before the date and takes '
+        + 'a median of <b>'+T.median+'</b> to its last movement — so <b>'+T.landedLate+' of '
+        + T.landedTotal+'</b> finished after the date had passed. Open them a month earlier.</p>' : '')
 
     + (cl.length ? '<p class="note flag"><b>Two dates, one licence.</b> '
         + cl.map(function(a){ return esc(a.name)+' — record <b>'+nice(a.due)
             + '</b>, task <b>'+nice(a.clash.said)+'</b>'; }).join('; ')
         + '. Working to the later one is how a licence lapses.</p>' : '')
 
-    /* THE ONE LEGAL GAP THIS WALL CANNOT CLOSE. Worth the space because every
-       date on the screen can be green and a renewal still refused. */
-    + '<p class="note flag"><b>s119(1): renewal is not automatic.</b> <i>“A certificate of '
-      + 'registration shall not be renewed if the sales representative, agent, broker or adjuster '
-      + '… has not complied with continuing professional development requirements.”</i> '
-      + '<b>This wall does not track CPD</b> — check it outside this screen.</p>'
-
-    + '<p class="note">Closed is the last time a task moved; Salesforce keeps no completion stamp. '
-      + D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in <b>'+esc(D.taskType)+'</b> name a '
-      + 'licence. <b>Do not read License_Expiry__c</b> — long unmaintained, and it would report '
-      + 'almost every agent as unlicensed.'
-      + ((D.gaps.placeholder||[]).length ? ' Randolph Gonzales’s general licence reads 1901-01-01 '
-          + '— a placeholder, kept off the calendar.' : '')
-      + '</p>';
+    /* EVERYTHING BELOW IS ONE LINE ON PURPOSE. The fuller reading of s114,
+       s117, s118, s119 and s120 lives in INTELLIGENCE-SETUP.md; a wall panel
+       that needs to be walked up to and read is not doing a wall's job. The
+       one legal gap stays because every date on the screen can be green and
+       a renewal still refused. */
+    + '<p class="note foot"><b>s119(1): renewal is not automatic</b> without CPD, and this wall does not track CPD. '
+      + 'Closed is the last time a task moved — Salesforce keeps no completion stamp. '
+      + D.gaps.licenceTasks+' of '+D.gaps.allTasks+' tasks in <b>'+esc(D.taskType)+'</b> name a licence'
+      + ((D.gaps.placeholder||[]).length ? '; '+D.gaps.placeholder.length+' general licence date'
+          + (D.gaps.placeholder.length>1?'s read':' reads')+' 1901 and is kept off the calendar' : '')
+      + '.</p>';
 
   bars($("#rUnit"), D.units, "unit", "gold");
   bars($("#rKind"), D.kinds, "kind", "accent");
   bars($("#rTen"),  D.tenure, "tenure", "accent");
+
+  refit();
+}
+function refit(){
+  fit($("#dList"), ".drow", "licence");
+  fit($("#openBody .olist"), ".orow", "open task");
+  fit($("#rUnit"), ".row", "unit"); fit($("#rKind"), ".row", "kind"); fit($("#rTen"), ".row", "band");
+}
+
+/* WHAT DOES NOT FIT IS COUNTED, NOT CUT. Every list on this wall sits in a
+   box the screen decides, and a television is not scrolled. Rows are hidden
+   from the end until the list fits its box, and one line says how many were
+   hidden — so eleven open tasks on a 720-high screen reads "5 more", not as
+   five tasks. Nothing on this page is ever off the bottom with no word said.
+   Runs after every paint, and again when the window changes size. */
+function fit(host, sel, word){
+  if(!host) return;
+  var old=host.querySelector(".more"); if(old) old.remove();
+  var rows=Array.prototype.slice.call(host.querySelectorAll(sel));
+  rows.forEach(function(r){ r.style.display=""; });
+  if(!rows.length || host.scrollHeight<=host.clientHeight+1) return;
+  /* The line is given its words BEFORE the rows are counted against it. An
+     empty div is four pixels of padding; the sentence is seventeen, and a
+     list trimmed against the empty one hung its last row and the sentence
+     six pixels under the card. */
+  var more=document.createElement("div"); more.className="more";
+  more.textContent="+ "+rows.length+" more "+word+"s not shown at this size";
+  host.appendChild(more);
+  var hid=0;
+  for(var i=rows.length-1; i>=0 && host.scrollHeight>host.clientHeight+1; i--){
+    rows[i].style.display="none"; hid++;
+  }
+  more.textContent = hid ? "+ "+hid+" more "+word+(hid>1?"s":"")+" not shown at this size" : "";
+  if(!hid) more.remove();
+}
+var fitTimer=null;
+window.addEventListener("resize", function(){
+  clearTimeout(fitTimer); fitTimer=setTimeout(function(){ if(LIC.configured) paint(); }, 150);
+});
+/* THE WEBFONT ARRIVES AFTER THE FIRST PAINT, and it is two pixels taller a
+   row than the system face it replaces. Measured at 1920x1080: six rows fitted
+   in the fallback, the swap made them 36px each, and the sixth plus the
+   "+ n more" line sat under the card's edge — the one thing fit() exists to
+   prevent. So the lists are trimmed again whenever a batch of fonts lands. */
+if(document.fonts&&document.fonts.addEventListener){
+  document.fonts.addEventListener("loadingdone", function(){ if(LIC.configured) refit(); });
 }
 
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
