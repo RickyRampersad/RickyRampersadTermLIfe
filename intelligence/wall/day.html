@@ -77,6 +77,19 @@
     background-clip:text;color:transparent}
   .cap2{font-size:13px;color:var(--dim);margin-top:8px;line-height:1.45}
   .cap2 b{color:var(--ink)}
+  /* Today against the week, the month and the year, so a slow morning reads
+     as slow and a good one as good — 14 closed by ten means nothing until the
+     strip says the branch averages 33 a day. Four cells in a 300px column, so
+     the figures are small and the labels are one word. */
+  .trend{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px;
+    padding-top:10px;border-top:1px solid var(--line)}
+  .trend div{min-width:0}
+  .trend .v{font-family:var(--font-d);font-weight:800;font-size:18px;letter-spacing:-.4px;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  .trend .v.zero{color:var(--faint);font-weight:500}
+  .trend .k{font:700 9px var(--font-b);letter-spacing:.11em;text-transform:uppercase;
+    color:var(--faint);margin-top:2px}
+  .trend .p{font-size:10px;color:var(--dim);margin-top:1px;white-space:nowrap}
   .split{display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
   .split div{flex:1}
   .split .v{font-family:var(--font-d);font-weight:800;font-size:24px;letter-spacing:-.6px}
@@ -89,9 +102,16 @@
   /* The desks spread down the card instead of stacking at the top, so six
      names use the height a television actually has. */
   #dList{display:flex;flex-direction:column;justify-content:space-evenly}
+  /* One heading per tier, the way the branch is actually built: management,
+     then the BMA, then the PA, then the desks that carry the work. The tier
+     comes off the feed, which takes it off the roster; this page has no idea
+     what a role string looks like and must not grow one. */
+  .tl{display:flex;align-items:center;gap:8px;padding:4px 0 1px;
+    font:800 9.5px var(--font-b);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
+  .tl:after{content:"";flex:1;height:1px;background:var(--line)}
   .drow{display:grid;grid-template-columns:1fr 62px 62px 62px 62px 116px;gap:10px;
-    align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-  .drow:last-child{border-bottom:none}
+    align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .drow:last-child,.drow:has(+ .tl){border-bottom:none}
   .drow .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .drow .nm em{font-style:normal;display:block;font-size:10.5px;color:var(--faint)}
   .drow .v{font-family:var(--font-d);font-weight:700;font-size:17px;text-align:right;
@@ -151,6 +171,7 @@
     <h3>Closed today</h3>
     <div class="big" id="hClosed">&mdash;</div>
     <div class="cap2" id="hCap">Reading the branch&rsquo;s day&hellip;</div>
+    <div class="trend" id="hTrend"></div>
     <div class="split">
       <div><div class="v" id="hOpen">&mdash;</div><div class="k">still open, all desks</div></div>
       <div><div class="v amber" id="hOver">&mdash;</div><div class="k">of those, overdue</div></div>
@@ -164,7 +185,7 @@
 
   <section class="card">
     <h3>Every desk, this morning</h3>
-    <p class="cap">What each desk has closed today, what is still on it, and which of the day&rsquo;s blocks have been filed. Counts only &mdash; no client and no task is named on this wall.</p>
+    <p class="cap">Closed today, still on the desk, and which of the day&rsquo;s blocks are filed. Counts only &mdash; no client and no task is named here.</p>
     <div class="dhead"><div>Desk</div><div>Closed</div><div>Open</div><div>Late</div><div>Quiet</div><div>Blocks filed</div></div>
     <div id="dList" style="overflow:hidden;flex:1"></div>
   </section>
@@ -221,8 +242,49 @@ function load(){
    second screen's question costs nothing. */
 load(); setInterval(load,10*60*1000);
 
+/* Weekdays from the start of the week, the month and the year to the feed's
+   own date, so the per-day figure divides by days the branch was actually
+   open. Counted here rather than sent, because a count of Mondays to Fridays
+   is not something two ends can disagree about. */
+function weekdaysBetween(from, to){
+  var n=0, d=new Date(from.getTime());
+  for(; d<=to; d.setUTCDate(d.getUTCDate()+1)){ var w=d.getUTCDay(); if(w>=1&&w<=5) n++; }
+  return n;
+}
+function windowsTo(iso){
+  var p=/^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso||""));
+  var t=new Date(); if(!p) p=[0,t.getFullYear(),t.getMonth()+1,t.getDate()];
+  var day=new Date(Date.UTC(+p[1],+p[2]-1,+p[3])), dow=day.getUTCDay();
+  var mon=new Date(day.getTime()); mon.setUTCDate(day.getUTCDate()-(dow===0?6:dow-1));
+  return { week: weekdaysBetween(mon, day),
+           month: weekdaysBetween(new Date(Date.UTC(+p[1],+p[2]-1,1)), day),
+           ytd: weekdaysBetween(new Date(Date.UTC(+p[1],0,1)), day) };
+}
+/* A period from the tracker is a number, or an object that carries one — the
+   tracker is changing alongside this page and the strip must read either. */
+function periodN(v){
+  if(v==null) return null;
+  if(typeof v==="number") return v;
+  if(typeof v==="object"){ var n = v.closed!=null?v.closed:(v.n!=null?v.n:v.count); return n==null?null:Number(n); }
+  return null;
+}
+function paintTrend(b){
+  var per=b.periods||null, win=windowsTo(D.generatedAt);
+  /* "closed" is the card's own heading; the cells name only the window. */
+  var cells=[["today", D.configured?b.closed:null, null],
+             ["week",  per?periodN(per.week):null,  win.week],
+             ["month", per?periodN(per.month):null, win.month],
+             ["year",  per?periodN(per.ytd):null,   win.ytd]];
+  $("#hTrend").innerHTML = cells.map(function(c){
+    var v=c[1], avg = (v!=null && c[2]) ? Math.round(v/c[2]) : null;
+    return '<div><div class="v'+(v?"":" zero")+'">'+n(v)+'</div><div class="k">'+c[0]+'</div>'
+      + '<div class="p">'+(avg!=null ? avg+' a day' : (c[2]===null ? 'so far' : '&nbsp;'))+'</div></div>';
+  }).join("");
+}
+
 function paint(){
   var b=D.branch||{}, blocks=D.blocks||[];
+  paintTrend(b);
   $("#hClosed").textContent = D.configured ? n(b.closed) : "\u2014";
   $("#hOpen").textContent  = D.configured ? n(b.open) : "\u2014";
   $("#hOver").textContent  = D.configured ? n(b.overdue) : "\u2014";
@@ -239,11 +301,24 @@ function paint(){
   if(!D.configured){ w.style.display="block"; w.innerHTML=esc(D.error||"The tracker is not answering."); }
   else w.style.display="none";
 
-  $("#dList").innerHTML = (D.desks||[]).map(function(d){
+  /* Grouped by the tier the feed sent, in the feed's own order; inside a
+     tier the rows stay as they arrived, busiest first. A feed from before
+     tiers existed lands in one unlabelled group and reads as it always did.
+     The managers are in every total above, whichever group they sit in. */
+  var groups=[], byKey={};
+  (D.desks||[]).forEach(function(d){
+    var o = d.tierOrder!=null ? Number(d.tierOrder) : 99, k = o+"|"+(d.tierLabel||"");
+    if(!byKey[k]){ byKey[k]={order:o,label:d.tierLabel||"",rows:[]}; groups.push(byKey[k]); }
+    byKey[k].rows.push(d);
+  });
+  groups.sort(function(a,b){ return a.order-b.order; });
+  var label = groups.length>1 || (groups[0]&&groups[0].label);
+  $("#dList").innerHTML = groups.map(function(g){
+    return (label && g.label ? '<div class="tl">'+esc(g.label)+'</div>' : '') + g.rows.map(function(d){
     var cls=function(v,hot){ return v==null?"zero":(v?(hot?"hot":"win"):"zero"); };
     return '<div class="drow">'
-      + '<div class="nm">'+esc(d.name)+'<em>'+esc(d.role||"")
-        + (d.absent ? " &middot; not in today" : (d["in"] ? " &middot; in "+esc(d["in"])+(d.out?" &rarr; "+esc(d.out):"") : " &middot; not signed in"))
+      + '<div class="nm">'+esc(d.name)+'<em>'
+        + (d.absent ? "not in today" : (d["in"] ? "in "+esc(d["in"])+(d.out?" &rarr; "+esc(d.out):"") : "not signed in"))
         + '</em></div>'
       + '<div class="v '+cls(d.closed,false)+'" data-k="closed">'+n(d.closed)+'</div>'
       + '<div class="v zero" data-k="open">'+n(d.open)+'</div>'
@@ -252,6 +327,7 @@ function paint(){
       + '<div class="blk">'+(d.blocks||[]).map(function(s){
           return '<i class="'+(s||"none")+'"></i>'; }).join("")+'</div>'
       + '</div>';
+    }).join("");
   }).join("");
 }
 </script>

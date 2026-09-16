@@ -4820,16 +4820,76 @@ function iDayBuild_(b) {
   try {
     att = attendanceToday_({ staffId: '', manager: true }) || {};
   } catch (e) {}
-  try {
-    latestEntries_().forEach(function (r) {
-      if (String(r.Date || '').slice(0, 10) === today) entry[String(r.StaffId)] = r;
-    });
-  } catch (e2) {}
+  /* Today's entry per desk used to come from latestEntries_() here, which
+     read the whole log; the blocks-over-time pass below reads it once for
+     the year and today is inside the year, so today's entry is taken from
+     that same pass and the log is read exactly once per build. */
 
   var hourNow = Number(Utilities.formatDate(new Date(), tz, 'H')) || 0;
   var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
   var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
   var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
+
+  /* THE LONGER VIEW OF THE BLOCKS, AND WHY IT IS ONE READ OF THE LOG.
+     "Filed today" on its own says nothing about whether today is normal — a
+     desk with two of four filed at eleven might be having its usual morning
+     or its worst one. So each desk also carries how many blocks it has filed
+     this week, this month and this year against how many it owed, and the
+     branch strip on the wall sums them.
+
+     Three windows, one pass. allEntries_ is the whole KPI Log and it is
+     unbounded; reading it once per desk, or once per window, would be thirty
+     reads of a sheet that is already the slowest thing the tracker touches,
+     on the one feed that is not stored. The pass keeps only the rows inside
+     the year and, like latestEntries_, lets the latest write for a person on
+     a day stand for that day — until dedupeLog() has been run the sheet still
+     holds the old duplicates, and a duplicate here would count one block
+     twice.
+
+     "Filed" is the same rule as the day itself: the block's own _Actioned box
+     has words in it. "Owed" is the desk's scheduled blocks for every weekday
+     in the window so far, today included, so a desk on Tuesday morning owes
+     two days' worth and not five. */
+  var winStart = { week: weekStart_(today), month: today.slice(0, 8) + '01', ytd: today.slice(0, 5) + '01-01' };
+  var winKeys = ['week', 'month', 'ytd'];
+  var winDays = {};
+  winKeys.forEach(function (k) { winDays[k] = workdays_(winStart[k], shiftDays_(today, 1)); });
+  var filedBy = {};
+  try {
+    var latest = {};
+    allEntries_().forEach(function (r) {
+      var day = String(r.Date || '').slice(0, 10);
+      if (!day || day > today || day < winStart.ytd) return;
+      var k = String(r.StaffId) + '|' + day, seen = latest[k];
+      if (!seen) { latest[k] = r; return; }
+      var a = new Date(r.UpdatedAt || r.Timestamp || 0).getTime() || r._row;
+      var b2 = new Date(seen.UpdatedAt || seen.Timestamp || 0).getTime() || seen._row;
+      if (a >= b2) latest[k] = r;
+    });
+    Object.keys(latest).forEach(function (k) {
+      var r = latest[k], sid = String(r.StaffId), day = k.slice(k.indexOf('|') + 1);
+      if (day === today) entry[sid] = r;
+      var filed = 0;
+      blockIds.forEach(function (id) { if (String(r[id + '_Actioned'] || '').trim()) filed++; });
+      if (!filed) return;
+      var f = filedBy[sid] || (filedBy[sid] = { week: 0, month: 0, ytd: 0 });
+      winKeys.forEach(function (w) { if (day >= winStart[w]) f[w] += filed; });
+    });
+  } catch (e2) { /* a log that will not read leaves the strip blank and today's blocks unfiled, as before */ }
+
+  /* The Salesforce task type a block is for, so the cell can carry the desk's
+     real open / touched / closed for it rather than a count of the words they
+     typed. blockTypeFor_ lives in the tracker; until that build is pasted the
+     scheduled KPI label is used when it IS a Task_Type__c value, which is how
+     the schedule was written for the desks that have one. A label that is not
+     a type — "Reporting", "Escalations" — is a block Salesforce cannot see. */
+  function typeFor(kpi) {
+    var lab = String(kpi || '').trim();
+    if (!lab) return '';
+    if (typeof blockTypeFor_ === 'function') { try { return String(blockTypeFor_(lab) || ''); } catch (e4) {} }
+    return (typeof SF_TYPES !== 'undefined' && SF_TYPES && Object.prototype.hasOwnProperty.call(SF_TYPES, lab)) ? lab : '';
+  }
+  var periods = m && m.ok && m.periods ? m.periods : null;
 
   publicRoster_().forEach(function (p) {
     var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
@@ -4869,6 +4929,7 @@ function iDayBuild_(b) {
         else if (due && hourNow >= due) state = 'late';
         else state = 'pending';
       }
+      var type = sb ? typeFor(sb.kpi) : '';
       bx.push({
         id: id, state: state,
         kpi: sb ? String(sb.kpi || '') : '',
@@ -4879,14 +4940,34 @@ function iDayBuild_(b) {
            is how many things they listed, not a figure from Salesforce — the
            trustworthy per-person numbers are closed/open/overdue below. */
         moved: iDayItems_(moved), closed: iDayItems_(closed),
-        stuck: !!stuck
+        stuck: !!stuck,
+        /* And the figure from Salesforce for the type this block is for, when
+           there is one: open, touched and closed today. Null is "Salesforce
+           has no such type", which the wall says once, not a zero. */
+        type: type,
+        sf: (type && s && s.byType && s.byType[type]) || null
       });
       return sb ? (has ? 'done' : 'due') : '';
     });
+    var owed = 0;
+    blockIds.forEach(function (id) { if (sched[id]) owed++; });
+    var filed = filedBy[String(p.staffId)] || { week: 0, month: 0, ytd: 0 };
+    var bp = {};
+    winKeys.forEach(function (w) { bp[w] = { filed: filed[w] || 0, of: owed * winDays[w] }; });
     var d = {
       name: p.name, role: p.role || '',
+      /* Where the desk sits in the branch, from the roster and nowhere else.
+         Two wall pages each carried their own regex over the Role column and
+         disagreed about who was management; the tracker's TIER table is the
+         one answer, and a page that groups by anything else is wrong twice. */
+      tier: p.tier || '', tierLabel: p.tierLabel || '',
+      tierOrder: p.tierOrder != null ? p.tierOrder : 99,
+      reportsTo: p.reportsTo || '', manager: !!p.manager,
       closed: s ? (s.closed || 0) : null, open: s ? (s.open || 0) : null,
       overdue: s ? (s.overdue || 0) : null, needs: s ? (s.needs || 0) : null,
+      byType: (s && s.byType) || null,
+      periods: (periods && periods.staff && periods.staff[p.staffId]) || null,
+      blocksPeriods: bp,
       blocks: mine, bx: bx,
       'in': a && a.status !== 'absent' ? (a.at || '') : '',
       out: a ? (a.out || '') : '', late: a ? (a.late || 0) : 0,
@@ -4898,9 +4979,15 @@ function iDayBuild_(b) {
     desks.push(d);
   });
 
-  /* The busiest desk first — a wall is read from the top, and the top should
-     be where the day is actually happening. */
-  desks.sort(function (x, y) { return (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0); });
+  /* The branch reads top to bottom as a structure — management, then the
+     BMA, then the desks that carry the work — and inside a tier the busiest
+     desk first, because a wall is read from the top and the top of each
+     band should be where the day is actually happening. The pages take this
+     order as given; they do not sort on a role string of their own. */
+  desks.sort(function (x, y) {
+    return (x.tierOrder - y.tierOrder) || (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0);
+  });
+  t.periods = (periods && periods.branch) || null;
 
   return { data: {
     generatedAt: today,

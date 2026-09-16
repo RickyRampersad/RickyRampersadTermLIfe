@@ -73,7 +73,7 @@
      The bands are 5–10am, 10–12, 1–3 and 3–4. The first one is wide on purpose:
      the day is called from seven but people arrive across a spread, and a band
      that starts at eight makes an early start look like no start at all. */
-  main{display:flex;flex-direction:column;gap:6px;padding:0 22px 10px;
+  main{display:flex;flex-direction:column;gap:5px;padding:0 22px 10px;
     height:calc(100vh - 74px);min-height:0}
 
   /* the shared clock across the top, and the only place times are named */
@@ -91,7 +91,7 @@
   .axis .ab.past{opacity:.72}
 
   /* one band of the org chart: a label, then its desks */
-  .grp{display:flex;flex-direction:column;gap:4px;min-height:0;flex:none}
+  .grp{display:flex;flex-direction:column;gap:3px;min-height:0;flex:none}
   .grp>.gl{display:flex;align-items:center;gap:9px;
     font:800 10.5px/1 var(--font-d);letter-spacing:.16em;text-transform:uppercase;
     color:var(--gold);padding:0 2px}
@@ -100,7 +100,7 @@
   /* one desk */
   .desk{display:grid;grid-template-columns:var(--nameCol) repeat(4,1fr) var(--numCol);
     gap:8px;align-items:stretch;background:var(--card);border:1px solid var(--line);
-    border-radius:10px;padding:5px 10px}
+    border-radius:10px;padding:4px 10px}
   .desk.out{opacity:.5}
   .who{display:flex;flex-direction:column;justify-content:center;min-width:0}
   .who b{font:700 13.5px/1.2 var(--font-d);color:var(--ink);white-space:nowrap;
@@ -124,14 +124,25 @@
     box-shadow:0 0 0 3px rgba(52,211,153,.18)}
   .dot.stuck{border-color:var(--gold);background:var(--gold);
     box-shadow:0 0 0 3px rgba(239,194,75,.2)}
-  .ct{min-width:0}
-  .ct b{display:block;font:700 11px/1.2 var(--font-b);color:var(--ink);
+  .ct{min-width:0;flex:1}
+  .ct b{display:flex;align-items:baseline;gap:6px;font:700 11px/1.2 var(--font-b);color:var(--ink);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ct b>span{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  /* What the desk typed, demoted to a caption beside the block's name once
+     Salesforce is giving the real figure underneath. It stays on the name's
+     line because a third line per cell is ten desks times eleven pixels,
+     which is the last desk off the bottom of a 720 screen. */
+  .ct b small{font:600 8.5px/1 var(--font-b);color:var(--faint);letter-spacing:.02em;flex:none}
+  .ct b small.late{color:#e06767}
   .ct span{display:block;font:600 9.5px/1.25 var(--font-b);color:var(--faint);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ct span em{font-style:normal;color:var(--good)}
   .ct span i{font-style:normal;color:var(--blue)}
   .ct span u{text-decoration:none;color:var(--gold)}
+  .ct span strong{font-weight:700;color:var(--ink)}
+  /* A block Salesforce has no task type for: the name is dimmed a shade and
+     the legend says why, once. Nothing is written in the cell itself. */
+  .cell.notype .ct b>span{color:var(--dim)}
 
   /* what Salesforce says the desk actually did today */
   .num{display:flex;align-items:center;justify-content:flex-end;gap:11px}
@@ -141,6 +152,15 @@
   .num b.bad{color:#f08a8a}
   .num span{display:block;font:600 9.5px/1.3 var(--font-b);letter-spacing:.07em;
     text-transform:uppercase;color:var(--faint);margin-top:2px}
+
+  /* the blocks over time — today, the week, the month, the year — one line,
+     branch-wide, so "20 of 40 by eleven" has something to stand against */
+  .trend{display:flex;align-items:center;gap:0 18px;flex-wrap:nowrap;overflow:hidden;
+    padding:3px 4px 2px;flex:none;font:600 10.5px/1.3 var(--font-b);color:var(--faint)}
+  .trend .tt{font:800 9.5px/1 var(--font-d);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);flex:none}
+  .trend strong{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+  .trend span.dim strong{color:var(--dim)}
 
   /* the legend, and the one line of branch total */
   .key{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;overflow:hidden;padding:4px 4px 0;
@@ -152,12 +172,18 @@
   .key i.closed{border-color:var(--good);background:var(--good)}
   .key i.stuck{border-color:var(--gold);background:var(--gold)}
   .key i.late{border-color:#e06767}
+  .key>span{white-space:nowrap}
   .key .sp{flex:1}
   .key strong{color:var(--ink);font-weight:800}
 
   .empty{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
     padding:22px;font:600 15px var(--font-b);color:var(--dim)}
 
+  /* At 1280 the cell has 172px for "12 open · 5 touched · 10 closed" and
+     needs about 180, so the name and figure columns give up a little each. */
+  @media (max-width:1400px){
+    :root{--nameCol:180px;--numCol:168px}
+  }
   @media (max-width:900px){
     .axis .ab small{display:none}
     .ct span{display:none}
@@ -228,23 +254,21 @@ var BANDS = [
    assistant, the unit managers, and the desks that carry the work. Read top
    to bottom and the screen says who is accountable for the row beneath.
 
-   Matched loosely on the Role column because that column is typed by hand —
-   "Branch Management Asst.", "BMA" and "Managers Assistant" are all the same
-   chair. Anything unrecognised falls to the foot under its own heading rather
-   than being dropped, because a desk nobody can classify is still a desk. */
-var TIERS = [
-  { key:"bm",   label:"Branch Manager",       test:/branch\s*manager$|^bm$/i },
-  { key:"bma",  label:"Assistant Branch Manager",
-                test:/assist|asst|^bma$|manager'?s?\s*assistant|branch\s*management/i },
-  { key:"unit", label:"Unit Managers",        test:/unit\s*manager|^um$/i },
-  { key:"bme",  label:"BME",                  test:/^bme$|marketing\s*exec|branch\s*marketing/i },
-  { key:"ss",   label:"Sales Support",        test:/sales\s*support|support/i },
-  { key:"other",label:"Also on the floor",    test:/.?/ }
-];
-function tierOf(role){
-  var r = String(role||"").trim();
-  for (var i=0;i<TIERS.length-1;i++) if (TIERS[i].test.test(r)) return TIERS[i].key;
-  return "other";
+   The tier is the feed's, off the tracker's roster — tierOrder says where
+   the band sits and tierLabel what to call it. This page carried its own
+   regex over the Role column until 16 September 2026, and it disagreed with
+   the day page beside it about who was management; two screens on one wall
+   reading one column two ways is worse than either reading alone. A feed
+   from before tiers existed puts every desk in one band with no heading. */
+function tiersOf(desks){
+  var groups=[], byKey={};
+  desks.forEach(function(d){
+    var o = d.tierOrder!=null ? Number(d.tierOrder) : 99, k = o+"|"+(d.tierLabel||"");
+    if (!byKey[k]){ byKey[k] = { order:o, label:d.tierLabel||"", rows:[] }; groups.push(byKey[k]); }
+    byKey[k].rows.push(d);
+  });
+  groups.sort(function(a,b){ return a.order-b.order; });
+  return groups;
 }
 
 /* Which band the clock is in, from the feed's own "at" so the marker agrees
@@ -273,18 +297,65 @@ function cellsOf(d){
   });
 }
 
+/* What the desk typed into the block: a count of the things it listed.
+   Free text, so it is how many they wrote down, not a figure from Salesforce. */
+function filedText(x){
+  var items = (x.moved||0) + (x.closed||0);
+  if (items) return 'filed: ' + items + (items === 1 ? ' item' : ' items');
+  return x.state === "late" ? "not filed" : (x.state === "pending" ? "to come" : (x.stuck ? "blocked" : "filed"));
+}
+var noType = false;      // set while painting: some block has no Salesforce type
 function cell(x, band, isNow){
   if (!x.state) return '<div class="cell blank"></div>';
+  var name = esc(x.kpi || x.focus || band.id), sf = x.sf && typeof x.sf === "object" ? x.sf : null;
+  if (sf){
+    /* THE REAL FIGURE. Open, touched and closed today for the task type this
+       block is for, from Salesforce — and what the desk typed drops to a
+       caption beside the name. Blocked keeps its word: the dot says so and
+       the caption says why the numbers have not moved. */
+    var cap = x.stuck ? 'blocked' : filedText(x);
+    return '<div class="cell">'
+      + '<span class="dot '+x.state+'"></span>'
+      + '<span class="ct"><b><span>'+name+'</span><small'+(x.state==="late"&&!((x.moved||0)+(x.closed||0))?' class="late"':'')+'>'+esc(cap)+'</small></b>'
+      + '<span><strong>'+n(sf.open||0)+'</strong> open &middot; <i>'+n(sf.touched||0)+' touched</i> &middot; <em>'+n(sf.closed||0)+' closed</em></span></span></div>';
+  }
+  /* No figure from Salesforce: either the type has no tasks on this desk
+     today, or the block is words only — reporting, escalations — and then
+     the desk's own words are all there is. */
+  if (!x.type) noType = true;
   var bits = [];
   if (x.closed) bits.push('<em>'+x.closed+' closed</em>');
   if (x.moved)  bits.push('<i>'+x.moved+' moved</i>');
   if (x.stuck)  bits.push('<u>blocked</u>');
   if (!bits.length) bits.push(x.state === "late" ? "not filed" :
                               (x.state === "pending" ? "to come" : "filed"));
-  return '<div class="cell">'
+  return '<div class="cell'+(x.type ? '' : ' notype')+'">'
     + '<span class="dot '+x.state+'"></span>'
-    + '<span class="ct"><b>'+esc(x.kpi || x.focus || band.id)+'</b>'
+    + '<span class="ct"><b><span>'+name+'</span></b>'
     + '<span>'+bits.join(" &middot; ")+'</span></span></div>';
+}
+
+/* The blocks over time, branch-wide: today off the branch line, the week,
+   the month and the year summed off every desk's own blocksPeriods. A feed
+   without them draws nothing rather than a row of dashes. */
+function trendLine(b, desks){
+  var sum = { week:{filed:0,of:0}, month:{filed:0,of:0}, ytd:{filed:0,of:0} }, any = false;
+  desks.forEach(function(d){
+    var bp = d.blocksPeriods; if (!bp || typeof bp !== "object") return;
+    ["week","month","ytd"].forEach(function(w){
+      if (!bp[w]) return; any = true;
+      sum[w].filed += Number(bp[w].filed||0); sum[w].of += Number(bp[w].of||0);
+    });
+  });
+  if (!any) return "";
+  var one = function(lab, filed, of){
+    return '<span'+(filed?'':' class="dim"')+'>'+lab+' <strong>'+n(filed)+'</strong> of '+n(of)+'</span>';
+  };
+  return '<div class="trend"><span class="tt">Blocks filed</span>'
+    + one('today', b.done||0, b.of||0)
+    + one('this week', sum.week.filed, sum.week.of)
+    + one('this month', sum.month.filed, sum.month.of)
+    + one('this year', sum.ytd.filed, sum.ytd.of) + '</div>';
 }
 
 function desk(d){
@@ -312,14 +383,15 @@ function paint(){
   }
   var desks = (D.desks||[]).slice();
   var nb = nowBand();
+  noType = false;
 
   /* Inside a tier, alphabetical. Sorting by output within a tier is the league
      table again, one level down. */
-  var byTier = {};
-  desks.forEach(function(d){ (byTier[tierOf(d.role)] = byTier[tierOf(d.role)] || []).push(d); });
-  Object.keys(byTier).forEach(function(k){
-    byTier[k].sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); });
+  var groups = tiersOf(desks);
+  groups.forEach(function(g){
+    g.rows.sort(function(a,b){ return String(a.name).localeCompare(String(b.name)); });
   });
+  var label = groups.length > 1 || (groups[0] && groups[0].label);
 
   var axis = '<div class="axis"><div class="ah">Desk</div>'
     + BANDS.map(function(b,i){
@@ -328,11 +400,10 @@ function paint(){
       }).join("")
     + '<div class="ah" style="text-align:right">Today</div></div>';
 
-  var body = TIERS.map(function(t){
-    var rows = byTier[t.key] || [];
-    if (!rows.length) return "";
-    return '<div class="grp"><div class="gl">'+esc(t.label)+'</div>'
-      + rows.map(desk).join("") + '</div>';
+  var body = groups.map(function(g){
+    if (!g.rows.length) return "";
+    return '<div class="grp">'+(label && g.label ? '<div class="gl">'+esc(g.label)+'</div>' : '')
+      + g.rows.map(desk).join("") + '</div>';
   }).join("");
 
   var b = D.branch || {};
@@ -341,13 +412,14 @@ function paint(){
     + '<span><i class="moved"></i>moved it on</span>'
     + '<span><i class="stuck"></i>waiting on somebody</span>'
     + '<span><i class="late"></i>past its hour, not filed</span>'
+    + (noType ? '<span>dimmed: no Salesforce type for this block</span>' : '')
     + '<span class="sp"></span>'
     + '<span><strong>'+n(b.done)+' of '+n(b.of)+'</strong> blocks filed &middot; '
     + '<strong>'+n(b["in"])+'</strong> signed in'
     + (b.absent ? ' &middot; <strong>'+n(b.absent)+'</strong> absent' : '')
     + (D.at ? ' &middot; as at '+esc(D.at) : '')+'</span></div>';
 
-  wrap.innerHTML = axis + body + key;
+  wrap.innerHTML = axis + trendLine(b, desks) + body + key;
   fitIn();
 }
 
