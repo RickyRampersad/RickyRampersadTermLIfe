@@ -81,20 +81,40 @@ const bar = page => page.evaluate(() => {
     ok('it names the build that is deployed', s && s.got === '2026-09-09a', s && s.got);
     ok('and the build the screens expect', s && s.want === WANT, (s && s.want) + ' vs ' + WANT);
     ok('it says the figures may be wrong', /may be wrong/i.test(s && s.text || ''));
-    ok('it says what to do about it', /Manage deployments/.test(s && s.text || ''));
+    ok('it says what to do about it',
+       /Paste Intelligence\.gs/.test(s && s.text || '') && /New version/.test(s && s.text || ''),
+       s && s.text);
     ok('no javascript errors', errs.length === 0, errs.join(' | '));
 
-    // It must be readable, not a one-pixel strip behind the story.
+    // It must be readable, and it must be at the TOP. The whole chrome moved
+    // there on 16 September because three stacked things over the foot were
+    // covering the last row of every slide.
     const box = await p.evaluate(() => {
-      const r = document.getElementById('stale').getBoundingClientRect();
-      const cs = getComputedStyle(document.getElementById('stale'));
-      return { h: Math.round(r.height), w: Math.round(r.width), bottom: Math.round(r.bottom),
-               z: cs.zIndex, pos: cs.position };
+      const el = document.getElementById('stale');
+      const r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+      const rail = document.getElementById('chrome').getBoundingClientRect();
+      const hud = document.getElementById('state').getBoundingClientRect();
+      const bar = document.getElementById('bar');
+      return { h: Math.round(r.height), w: Math.round(r.width), top: Math.round(r.top),
+               z: cs.zIndex, pos: cs.position,
+               staleClass: document.body.classList.contains('stale'),
+               staleh: getComputedStyle(document.documentElement).getPropertyValue('--staleh').trim(),
+               railTop: Math.round(rail.top), hudTop: Math.round(hud.top),
+               barBottom: Math.round(bar.getBoundingClientRect().bottom),
+               vh: window.innerHeight };
     });
     ok('it spans the screen', box.w >= 1300, JSON.stringify(box));
-    ok('  and is tall enough to read', box.h >= 28, JSON.stringify(box));
-    ok('  pinned to the foot', box.bottom <= 769 && box.pos === 'fixed', JSON.stringify(box));
-    ok('  above the stories', Number(box.z) >= 30, box.z);
+    ok('  and is tall enough to read', box.h >= 26, JSON.stringify(box));
+    ok('  pinned to the TOP, not the foot', box.top <= 1 && box.pos === 'fixed', JSON.stringify(box));
+    ok('  one line, not two', box.h <= 46, box.h + 'px');
+    ok('  above everything', Number(box.z) >= 40, box.z);
+    ok('it marks the body so the rest can make room', box.staleClass === true);
+    ok('  and publishes its real height', /^\d+px$/.test(box.staleh) && parseInt(box.staleh, 10) >= 26, box.staleh);
+    ok('the rail sits underneath it rather than behind it',
+       box.railTop >= parseInt(box.staleh, 10) - 1, 'rail top ' + box.railTop + ' vs ' + box.staleh);
+    ok('the timer is at the top too', box.hudTop < box.vh / 2, 'hud top ' + box.hudTop);
+    ok('and the only thing left at the foot is the 5px progress line',
+       box.barBottom >= box.vh - 1, 'bar bottom ' + box.barBottom + ' of ' + box.vh);
     await p.close();
   }
 
@@ -105,6 +125,14 @@ const bar = page => page.evaluate(() => {
     await p.waitForTimeout(2500);
     const s = await bar(p);
     ok('nothing is drawn', s && s.shown === false, JSON.stringify(s));
+    const clear = await p.evaluate(() => ({
+      cls: document.body.classList.contains('stale'),
+      h: getComputedStyle(document.documentElement).getPropertyValue('--staleh').trim(),
+      railTop: Math.round(document.getElementById('chrome').getBoundingClientRect().top)
+    }));
+    ok('  the body is not marked stale', clear.cls === false);
+    ok('  the reserved height goes back to nothing', clear.h === '0px', clear.h);
+    ok('  and the rail returns to the very top', clear.railTop <= 1, 'rail top ' + clear.railTop);
     await p.close();
   }
 
