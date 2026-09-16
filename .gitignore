@@ -10,3 +10,8 @@ data/*.json
 
 node_modules/
 __pycache__/
+
+# Worktrees the Claude Code harness creates for parallel build agents. Live
+# scaffolding, never source: committing one would bring a second copy of the
+# repository into the repository.
+.claude/worktrees/
