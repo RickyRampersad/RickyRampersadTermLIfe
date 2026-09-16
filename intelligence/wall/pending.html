@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>What Is Pending</title>
-<meta name="description" content="Every case submitted and not yet issued — how long it has waited, what is holding it, and whose it is.">
+<meta name="description" content="Every policy submitted and not yet issued — how long it has waited, what is holding it, whose move it is, and what settled.">
 <meta name="theme-color" content="#061c31">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -131,48 +131,105 @@
   }
 </style>
 <style>
-  /* The pending screen's own rows. Everything above is the wall's. */
-  main.pend{grid-template-columns:330px 1fr}
-  .stack{display:grid;grid-template-rows:auto 1fr;gap:18px;min-height:0}
-  .bars{display:flex;flex-direction:column;gap:9px;margin-top:4px}
-  .bar{display:grid;grid-template-columns:70px 1fr 54px;gap:11px;align-items:center}
-  .bar .lab{font-size:12px;color:var(--dim);font-variant-numeric:tabular-nums}
-  .bar .track{height:16px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}
-  .bar .track i{display:block;height:100%;border-radius:5px;background:var(--grad);min-width:2px}
+  /* The pending screen's own rows. Everything above is the wall's.
+
+     SIZED FOR THE PLAYER FRAME AT 720p. all.html keeps 46px of chrome above
+     the story, so at 1280×720 this page has 674px, and at 1366×768 it has
+     722. Everything is clamped to the viewport height and the two lists are
+     trimmed to the rows that fit — a wall is not scrolled, and a row past
+     the fold is not "below", it is gone. */
+  main.pend{grid-template-columns:clamp(250px,22vw,320px) minmax(0,1fr) minmax(0,1fr);gap:clamp(10px,1.4vh,18px);
+    padding:4px 22px clamp(12px,2vh,24px);height:calc(100vh - 70px)}
+  .card{padding:clamp(10px,1.6vh,16px) clamp(12px,1.4vw,18px)}
+  .card h3{font-size:clamp(10px,1.5vh,12px)}
+  .cap{font-size:clamp(10px,1.5vh,11.5px);margin-bottom:clamp(4px,1vh,10px)}
+  .big{font-size:clamp(40px,7.2vh,74px);letter-spacing:-2px}
+  .cap2{font-size:clamp(11px,1.7vh,13px);margin-top:clamp(3px,.8vh,8px);line-height:1.35;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+  .split{gap:14px;margin-top:clamp(6px,1.1vh,16px);padding-top:clamp(5px,1vh,14px)}
+  .split .v{font-size:clamp(17px,3vh,24px)}
+  .split .k{font-size:clamp(9.5px,1.35vh,10.5px);line-height:1.2}
+  .stack{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
+  .stack.open{grid-template-rows:auto auto minmax(0,1fr)}
+  .side{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
+
+  /* Chips: a count and a word. Used for status descriptions and categories. */
+  .why{display:flex;flex-wrap:wrap;gap:clamp(5px,.9vh,8px);margin-top:2px}
+  .why span{display:inline-flex;align-items:baseline;gap:6px;padding:clamp(4px,.8vh,7px) clamp(9px,1vw,13px);
+    border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);
+    font-size:clamp(11px,1.6vh,12.5px);color:var(--dim)}
+  .why span b{font-family:var(--font-d);font-size:clamp(13px,1.9vh,15px);color:var(--ink)}
+  .why span.none{border-style:dashed;color:var(--faint)}
+
+  /* A row of small tiles: number over a label. */
+  .tiles{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:10px;margin-top:2px}
+  .tiles>div{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:10px;
+    padding:clamp(5px,.8vh,9px) 10px;min-width:0}
+  .tiles .v{font-family:var(--font-d);font-weight:800;font-size:clamp(18px,3.2vh,26px);letter-spacing:-.6px;
+    line-height:1.05;font-variant-numeric:tabular-nums}
+  .tiles .k{font-size:clamp(9.5px,1.35vh,10.5px);color:var(--faint);margin-top:2px;line-height:1.25}
+  .tiles .v.gold{color:var(--gold)} .tiles .v.good{color:var(--good)} .tiles .v.red{color:#f0776a}
+  .tiles .v.dim{color:var(--faint);font-weight:600}
+
+  /* A section the extract cannot answer yet: greyed, and it says why. It
+     never shows a zero, because a zero on a wall is read as a fact. */
+  .card.held{opacity:.62}
+  .card.held h3{color:var(--faint)}
+  .note{font-size:clamp(10.5px,1.55vh,12px);color:var(--faint);line-height:1.45;margin-top:4px}
+  .note b{color:var(--dim)}
+  .warn{font-size:clamp(10px,1.5vh,12px);padding:clamp(6px,1vh,10px) 11px;margin-top:clamp(6px,1vh,10px);line-height:1.35}
+
+  /* The ageing bars, compact. */
+  .bars{display:flex;flex-direction:column;gap:clamp(3px,.55vh,7px);margin-top:3px}
+  .bar{display:grid;grid-template-columns:58px 1fr 40px;gap:9px;align-items:center}
+  .bar .lab{font-size:clamp(10px,1.45vh,11.5px);color:var(--dim);font-variant-numeric:tabular-nums}
+  .bar .track{height:clamp(7px,1.2vh,12px);border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
+  .bar .track i{display:block;height:100%;border-radius:4px;background:var(--grad);min-width:2px}
   .bar.hot .track i{background:var(--grad-gold)}
   .bar.red .track i{background:linear-gradient(120deg,#f0776a,#d03b3b)}
-  .bar .n{font-family:var(--font-d);font-weight:700;font-size:16px;text-align:right;
+  .bar .n{font-family:var(--font-d);font-weight:700;font-size:clamp(12px,1.8vh,14px);text-align:right;
     font-variant-numeric:tabular-nums}
-  .why{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-  .why span{display:inline-flex;align-items:baseline;gap:7px;padding:7px 13px;border-radius:999px;
-    background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12.5px;color:var(--dim)}
-  .why span b{font-family:var(--font-d);font-size:15px;color:var(--ink)}
-  .why span.none{border-style:dashed;color:var(--faint)}
-  .reqline{margin-top:10px;padding-top:9px;border-top:1px solid var(--line);
-    font-size:12px;color:var(--faint);line-height:1.5}
-  .reqline b{color:var(--dim);font-family:var(--font-d);font-weight:700}
-  .reqline:empty{display:none}
-  .ahead{display:grid;grid-template-columns:1fr 74px 88px;gap:10px;
-    font:700 9.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
-    color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
+
+  /* Accountability by agent: cash · routine · medical · oldest. */
+  .ahead{display:grid;grid-template-columns:minmax(0,1fr) 48px 58px 58px 56px;gap:6px;
+    font:700 clamp(8.5px,1.25vh,9.5px) var(--font-b);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:5px;border-bottom:1px solid var(--line)}
   .ahead div+div{text-align:right}
-  #aList{display:flex;flex-direction:column;justify-content:space-evenly;overflow:hidden;flex:1}
-  .arow{display:grid;grid-template-columns:1fr 74px 88px;gap:10px;align-items:center;
-    padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-  .arow:last-child{border-bottom:none}
-  .arow .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .arow .v{font-family:var(--font-d);font-weight:700;font-size:17px;text-align:right;
+  #aList{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
+  .arow{display:grid;grid-template-columns:minmax(0,1fr) 48px 58px 58px 56px;gap:6px;align-items:center;
+    padding:clamp(4px,.85vh,8px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .arow .nm{font-size:clamp(12px,1.85vh,14px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .arow .v{font-family:var(--font-d);font-weight:700;font-size:clamp(13px,2.1vh,16px);text-align:right;
     font-variant-numeric:tabular-nums}
-  .arow .v.hot{color:var(--gold)} .arow .v.red{color:#f0776a}
+  .arow .v.zero{color:var(--faint);font-weight:500}
+  .arow .v.gold{color:var(--gold)} .arow .v.red{color:#f0776a} .arow .v.hot{color:var(--gold)}
+  .more{font-size:clamp(10px,1.45vh,11.5px);color:var(--faint);padding-top:5px}
+  .more:empty{display:none}
+
+  /* Settled: three tiles and a line of names. */
+  .names{font-size:clamp(10.5px,1.55vh,12px);color:var(--dim);line-height:1.5;margin-top:clamp(4px,.9vh,8px)}
+  .names b{color:var(--ink);font-family:var(--font-d)}
+
+  /* The policy table, when the manager has opened it. */
+  .thead,.trow{display:grid;grid-template-columns:84px minmax(0,1.2fr) minmax(0,1fr) 40px 58px 34px minmax(0,1.3fr);gap:6px;align-items:center}
+  .thead{font:700 clamp(8.5px,1.25vh,9.5px) var(--font-b);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:4px;border-bottom:1px solid var(--line)}
+  #tList{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
+  .trow{padding:clamp(3px,.6vh,5px) 0;border-bottom:1px solid rgba(255,255,255,.06);
+    font-size:clamp(10.5px,1.55vh,12px);color:var(--dim);font-variant-numeric:tabular-nums}
+  .trow div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trow .pol{font-family:var(--font-d);font-weight:700;color:var(--ink)}
+  .trow .r{text-align:right} .thead .r{text-align:right}
+  .trow .gold{color:var(--gold)}
+
   @media (max-width:760px){
-    main.pend{grid-template-columns:1fr}
-    .stack{grid-template-rows:auto auto}
-    .bar{grid-template-columns:62px 1fr 44px}
-    .ahead{display:none}
-    .arow{grid-template-columns:1fr auto;row-gap:2px}
-    .arow .v{font-size:15px}
-    .arow .v::after{content:attr(data-k);display:inline-block;margin-left:6px;
-      font:600 10px var(--font-b);color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
+    main.pend{grid-template-columns:1fr;height:auto}
+    .stack,.side{grid-template-rows:auto}
+    .ahead,.thead{display:none}
+    .arow{grid-template-columns:1fr auto auto auto auto;row-gap:2px}
+    .arow .v::after{content:attr(data-k);display:inline-block;margin-left:5px;
+      font:600 9.5px var(--font-b);color:var(--faint);text-transform:uppercase;letter-spacing:.08em}
+    .trow{grid-template-columns:1fr 1fr;gap:4px 10px}
+    #aList,#tList{overflow:visible}
   }
 </style>
 </head>
@@ -182,7 +239,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>What Is Pending</h1>
-    <div class="sub">Submitted and not yet issued &middot; how long, and what is holding it &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub">Submitted and not yet issued &middot; policies, not requirement rows &middot; whose move, and what settled</div>
   </div>
   <div class="right">
     <button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button>
@@ -193,7 +250,7 @@
 
 <main class="pend">
   <section class="card">
-    <h3>Cases pending</h3>
+    <h3>Policies pending</h3>
     <div class="big" id="pTotal">&mdash;</div>
     <div class="cap2" id="pCap">Reading the pending lists&hellip;</div>
     <div class="split">
@@ -208,27 +265,67 @@
     </div>
     <div class="split">
       <div><div class="v red" id="pNever">&mdash;</div><div class="k">nobody has ever raised a task</div></div>
-      <div><div class="v amber" id="pQuiet">&mdash;</div><div class="k">the chase was closed, the case was not</div></div>
+      <div><div class="v amber" id="pQuiet">&mdash;</div><div class="k">the chase was closed, the policy was not</div></div>
     </div>
+    <h3 style="margin-top:clamp(6px,1.2vh,16px)">What can be worked today</h3>
+    <div class="tiles">
+      <div><div class="v good" id="tWork">&mdash;</div><div class="k">anybody&rsquo;s to work</div></div>
+      <div><div class="v gold" id="tReady">&mdash;</div><div class="k">ready &mdash; collect</div></div>
+      <div><div class="v" id="tAgent">&mdash;</div><div class="k">the agent&rsquo;s move</div></div>
+    </div>
+    <h3 style="margin-top:clamp(6px,1.2vh,16px)">How long they have waited</h3>
+    <div class="bars" id="pBars"></div>
     <div class="warn" id="pWarn" style="display:none"></div>
   </section>
 
-  <div class="stack">
-    <section class="card">
-      <h3>How long they have waited</h3>
-      <p class="cap">From the date the application was received, not the days column &mdash; that is typed by hand and drifts.</p>
-      <div class="bars" id="pBars"></div>
-      <h3 style="margin-top:16px">What is holding them</h3>
-      <p class="cap" id="pWhyCap">&nbsp;</p>
-      <div class="why" id="pWhy"></div>
-      <div class="reqline" id="pReq"></div>
+  <div class="stack" id="stack">
+    <section class="card" id="sCard">
+      <h3>By status description</h3>
+      <p class="cap" id="sCap">Every policy, by the status Guardian has it in.</p>
+      <div class="why" id="sWhy"></div>
     </section>
 
+    <section class="card" id="qCard">
+      <h3>Requirements</h3>
+      <p class="cap" id="qCap">&nbsp;</p>
+      <div class="tiles">
+        <div><div class="v" id="qRoutine">&mdash;</div><div class="k">routine &mdash; underwriting&rsquo;s own</div></div>
+        <div><div class="v gold" id="qNonRoutine">&mdash;</div><div class="k">not routine &mdash; somebody&rsquo;s move</div></div>
+        <div><div class="v" id="qSystem">&mdash;</div><div class="k">ordered by the system</div></div>
+        <div><div class="v" id="qManual">&mdash;</div><div class="k">ordered by a person</div></div>
+      </div>
+      <div class="note" id="qDays"></div>
+      <div class="why" id="qWhy"></div>
+    </section>
+
+    <section class="card held" id="tCard">
+      <h3>Policy numbers</h3>
+      <p class="cap" id="tCap">&nbsp;</p>
+      <div class="thead" id="tHead" style="display:none"><div>Policy</div><div>Agent</div><div>Status</div>
+        <div class="r">Days</div><div class="r">API</div><div class="r">Cash</div><div>Waiting on</div></div>
+      <div id="tList"></div>
+      <div class="more" id="tMore"></div>
+    </section>
+  </div>
+
+  <div class="side">
     <section class="card">
-      <h3>Whose they are</h3>
-      <p class="cap">Counts only &mdash; no client and no policy number reaches this screen.</p>
-      <div class="ahead"><div>Agent</div><div>Cases</div><div>Oldest</div></div>
+      <h3>Accountability by agent</h3>
+      <p class="cap" id="aCap">Cash to collect, routine in motion, medicals waited on, and the oldest with their name on it.</p>
+      <div class="ahead"><div>Agent</div><div>Cash</div><div>Routine</div><div>Medical</div><div>Oldest</div></div>
       <div id="aList"></div>
+      <div class="more" id="aMore"></div>
+    </section>
+
+    <section class="card" id="dCard">
+      <h3>Settled</h3>
+      <p class="cap" id="dCap">Premium paying with an issue date, from Salesforce. The week runs Monday to date.</p>
+      <div class="tiles">
+        <div><div class="v good" id="dToday">&mdash;</div><div class="k">today</div></div>
+        <div><div class="v" id="dWeek">&mdash;</div><div class="k">this week</div></div>
+        <div><div class="v" id="dMonth">&mdash;</div><div class="k">this month</div></div>
+      </div>
+      <div class="names" id="dNames"></div>
     </section>
   </div>
 </main>
@@ -238,8 +335,8 @@
 var PEND_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
 var D = { configured:false, error:"No feed yet." };
 function $(s){return document.querySelector(s)}
-function n(v){ return v==null ? "\u2014" : Number(v).toLocaleString("en-US"); }
-function money(v){ return v==null ? "\u2014" : "$" + Math.round(v).toLocaleString("en-US"); }
+function n(v){ return v==null ? "—" : Number(v).toLocaleString("en-US"); }
+function money(v){ return v==null ? "—" : "$" + Math.round(v).toLocaleString("en-US"); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) }
@@ -273,16 +370,42 @@ function load(){
    than from a nightly build — and the server holds each read for three
    minutes, so a second screen asking costs nothing. */
 load(); setInterval(load,10*60*1000);
+/* The lists are trimmed to the rows that fit, so a resized window has to
+   redraw them. Debounced, because a drag fires this continuously. */
+var reflow=null;
+addEventListener("resize",function(){ clearTimeout(reflow); reflow=setTimeout(paint,180); });
 
 var BANDS = [["0-30","to a month",""],["31-60","one to two months",""],
              ["61-90","two to three months","hot"],["91-180","three to six months","hot"],
              ["180+","over six months","red"]];
 
+/* Trim a list until ITS CARD fits, not merely until the list fits its own
+   box — everything beneath the list in these cards is fixed, so a list that
+   fits its own share can still push the fixed part off the bottom of the
+   screen. Measured against the card, which is the thing that has a height.
+   clientHeight is 0 before the first layout, in which case nothing is
+   trimmed and the next paint gets it right. */
+function fitIn(box, keep){
+  var gone = 0;
+  if (!box || !box.clientHeight) return 0;
+  var card = box.parentNode;
+  var over = function () {
+    return (card && card.scrollHeight > card.clientHeight + 1) ||
+           box.scrollHeight > box.clientHeight + 1;
+  };
+  while (box.children.length > keep && over()) {
+    box.removeChild(box.lastElementChild); gone++;
+  }
+  return gone;
+}
+function v(el, val, cls){ el.textContent = val; el.className = "v" + (cls ? " " + cls : ""); }
+function zero(x){ return x ? "" : "zero"; }
+
 function paint(){
   var ok = !!D.configured;
-  $("#pTotal").textContent  = ok ? n(D.total) : "\u2014";
-  $("#pStale").textContent  = ok ? n(D.stale) : "\u2014";
-  $("#pOldest").textContent = ok && D.oldest ? n(D.oldest) : "\u2014";
+  $("#pTotal").textContent  = ok ? n(D.policies != null ? D.policies : D.total) : "—";
+  $("#pStale").textContent  = ok ? n(D.stale) : "—";
+  $("#pOldest").textContent = ok && D.oldest ? n(D.oldest) : "—";
 
   /* Money already paid that cannot be applied is in the Guardian extract;
      money never paid is a requirement code. Either can be absent, and the
@@ -290,74 +413,204 @@ function paint(){
   var m = D.money || {};
   if (ok && m.held != null) {
     $("#pHeld").textContent = money(m.held);
+    var hp = m.heldPolicies != null ? m.heldPolicies : m.heldCases;
     $("#pHeldK").textContent = "paid, and we cannot apply it yet" +
-      (m.heldCases ? " \u00b7 " + m.heldCases + " cases" : "");
+      (hp ? " · " + hp + (hp === 1 ? " policy" : " policies") : "");
   } else {
-    $("#pHeld").textContent = "\u2014";
+    $("#pHeld").textContent = "—";
     $("#pHeldK").textContent = "suspense is in the Guardian extract, not in this workbook";
   }
-  $("#pUnpaid").textContent = ok && m.unpaid != null ? n(m.unpaid) : "\u2014";
+  $("#pUnpaid").textContent = ok && m.unpaid != null ? n(m.unpaid) : "—";
 
   /* Who is on it. "Never" is the one to act on; "quiet" is worse, because a
-     closed chase on an open case reads as handled. */
+     closed chase on an open policy reads as handled. */
   var c = D.chase;
-  $("#pNever").textContent = c ? n(c.never) : "\u2014";
-  $("#pQuiet").textContent = c ? n(c.quiet) : "\u2014";
+  $("#pNever").textContent = c ? n(c.never) : "—";
+  $("#pQuiet").textContent = c ? n(c.quiet) : "—";
 
+  /* THE HEADLINE IS POLICIES, AND THE REQUIREMENT ROWS SIT BESIDE IT. The
+     extract is one row per requirement, and until 16 September 2026 the
+     wall counted the rows — "340 pending" over 121 policies. Both numbers
+     are said so nobody has to guess which one they are looking at. */
   var cap = [];
+  if (ok && D.requirementRows != null) cap.push("<b>" + n(D.requirementRows) + "</b> requirement row" + (D.requirementRows === 1 ? "" : "s"));
   if (D.at) cap.push("as at <b>"+esc(D.at)+"</b>");
   if (D.lists) cap.push("<b>"+D.lists+"</b> branch list"+(D.lists===1?"":"s"));
-  if (D.units && D.units.length) cap.push(D.units.slice(0,3).map(function(u){
+  if (D.units && D.units.length) cap.push(D.units.slice(0,2).map(function(u){
     return "<b>"+u.n+"</b> "+esc(u.name); }).join(" &middot; "));
+  /* Every screen that excludes says how much it removed. */
+  var ex = D.excluded;
+  if (ex && typeof ex === "object" && ex.names) {
+    var took = [];
+    if (ex.policies) took.push(n(ex.policies) + (ex.policies === 1 ? " policy" : " policies"));
+    if (ex.lists) took.push(n(ex.lists) + " on the branch lists");
+    cap.push("<b>" + ex.names + "</b> excluded agent" + (ex.names === 1 ? "" : "s") +
+             (took.length ? ", " + took.join(" and ") + " off this screen" : ""));
+  }
   $("#pCap").innerHTML = ok ? (cap.join(" &middot; ") || "Nothing pending.") : "The pending lists are not answering.";
 
   var w=$("#pWarn");
   if(!ok){ w.style.display="block"; w.innerHTML=esc(D.error||"No pending list found."); }
-  else if (D.notes && D.notes.length){ w.style.display="block"; w.innerHTML=esc(D.notes.join(" ")); }
+  else if (D.notes && D.notes.length){ w.style.display="block"; w.innerHTML=esc(D.notes.slice(0,2).join(" ")); }
   else w.style.display="none";
+
+  /* What can be worked today: ready to settle and the agent's move. Nothing
+     else on the list is anybody's on this floor to chase. */
+  var t = D.triage || {}, bk = {};
+  (t.buckets || []).forEach(function(b){ bk[b.key] = b.n; });
+  $("#tWork").textContent  = ok && t.workable != null ? n(t.workable) : "—";
+  $("#tReady").textContent = ok && t.ready ? n(t.ready.policies != null ? t.ready.policies : t.ready.cases) : "—";
+  $("#tAgent").textContent = ok && t.buckets ? n(bk.agent || 0) : "—";
 
   var ageing = D.ageing || {}, most = 1;
   BANDS.forEach(function(b){ most = Math.max(most, ageing[b[0]]||0); });
   $("#pBars").innerHTML = BANDS.map(function(b){
-    var v = ageing[b[0]]||0;
+    var x = ageing[b[0]]||0;
     return '<div class="bar '+b[2]+'"><div class="lab">'+b[0]+' days</div>'
-      + '<div class="track"><i style="width:'+Math.round(v/most*100)+'%"></i></div>'
-      + '<div class="n">'+n(v)+'</div></div>';
+      + '<div class="track"><i style="width:'+Math.round(x/most*100)+'%"></i></div>'
+      + '<div class="n">'+n(x)+'</div></div>';
   }).join("");
 
-  /* Say where the answer came from. A requirement code is the underwriter's
-     own word for it; a comment is somebody's sentence read by keyword, and
-     the screen should not pass one off as the other. */
-  $("#pWhyCap").textContent = !ok ? "\u00a0"
-    : D.reasonsFrom === "requirement codes"
-      ? "From the requirement codes on each case — the underwriter\u2019s own answer, counted once per requirement."
-      : D.reasonsFrom === "what the branch wrote"
-        ? "Read out of what the branch wrote against each case. Anything matching none of the branch\u2019s own words is counted as Other rather than guessed at."
-        : "From the decision code on each case.";
+  /* BY STATUS DESCRIPTION — greyed until the column is in the extract. A
+     section that cannot answer says so; it never shows a zero as a fact. */
+  var pol = D.policy || {}, sCard = $("#sCard");
+  var missingP = pol.missing || [];
+  if (ok && pol.byStatusDesc) {
+    sCard.classList.remove("held");
+    $("#sCap").textContent = "Every policy, by the status Guardian has it in" +
+      (pol.api != null ? " · " + money(pol.api) + " annual premium waiting" : "") +
+      (pol.noCash != null ? " · " + n(pol.noCash) + " with no cash in the file" : "") +
+      (pol.daysPending ? " · " + n(pol.daysPending.median) + " days is the middle wait from application" : "") + ".";
+    $("#sWhy").innerHTML = pol.byStatusDesc.slice(0,8).map(function(s){
+      return '<span><b>'+n(s.n)+'</b> '+esc(s.name)+'</span>'; }).join("") ||
+      '<span class="none">Nothing pending</span>';
+  } else {
+    sCard.classList.add("held");
+    $("#sCap").textContent = !ok ? " "
+      : "Not in the extract yet" + (missingP.length ? " — the pending tab carries no " + missingP.slice(0,4).join(", ") +
+        (missingP.length > 4 ? " and " + (missingP.length - 4) + " more" : "") : "") +
+        ". Run intelHeaders() to see what it does carry.";
+    $("#sWhy").innerHTML = '<span class="none">status description &middot; not in the extract yet</span>';
+  }
 
-  var r = D.requirements;
-  $("#pReq").innerHTML = r
-    ? "<b>"+n(r.open)+"</b> open requirement"+(r.open===1?"":"s")+" across <b>"+n(r.policies)+"</b> cases"
+  /* REQUIREMENTS. Routine against not, who ordered them, how long since,
+     and the codes that are holding the most. Each figure that needs a
+     column the extract does not carry says "column not in the extract". */
+  var r = D.requirements, qCard = $("#qCard");
+  var missingQ = (r && r.missing) || [];
+  var notIn = function (col) { return missingQ.indexOf(col) > -1; };
+  if (ok && r) {
+    qCard.classList.remove("held");
+    $("#qCap").innerHTML = "<b>"+n(r.open)+"</b> open requirement"+(r.open===1?"":"s")+" across <b>"+n(r.policies)+"</b> polic"+(r.policies===1?"y":"ies")
       + (r.median ? " &middot; <b>"+n(r.median)+"</b> days is the middle one" : "")
-      + (r.overYear ? " &middot; <b>"+n(r.overYear)+"</b> open more than a year" : "")
-      + (r.closedThisYear ? " &middot; <b>"+n(r.closedThisYear)+"</b> cleared in the last twelve months" : "")
-      + (D.noReason ? " &middot; <b>"+n(D.noReason)+"</b> with nothing written against them" : "")
-    : (D.noReason ? "<b>"+n(D.noReason)+"</b> with nothing written against them" : "");
+      + (r.closedThisYear ? " &middot; <b>"+n(r.closedThisYear)+"</b> cleared in twelve months" : "")
+      + (r.since ? " &middot; ordered or added since <b>"+esc(r.since)+"</b>" + (r.cutByYear ? ", "+n(r.cutByYear)+" older left out" : "") : "");
+    var ro = r.routine || {};
+    v($("#qRoutine"), n(ro.routine), "");
+    v($("#qNonRoutine"), n(ro.nonRoutine), "gold");
+    var ob = r.byOrderedBy;
+    if (ob) { v($("#qSystem"), n(ob.system), ""); v($("#qManual"), n(ob.manual), ""); }
+    else { v($("#qSystem"), "—", "dim"); v($("#qManual"), "—", "dim"); }
+    var dq = r.daysOrdered || {};
+    $("#qDays").innerHTML =
+      (dq.ordered ? "<b>" + n(dq.ordered) + "</b> ordered · <b>" + n(dq.median) + "</b> days is the middle wait since ordering, <b>" + n(dq.oldest) + "</b> the longest"
+                  : "Nothing ordered yet")
+      + (dq.notOrdered ? " · <b>" + n(dq.notOrdered) + "</b> not yet ordered" : "")
+      + (notIn("ordered by") ? " · ordered-by: column not in the extract" : "")
+      + (ro.fromSheet === false && !notIn("routine") ? "" : (notIn("routine") ? " · routine is inferred from the code: column not in the extract" : ""));
+    var chips = (r.byCategory || []).slice(0,4).map(function(x){ return '<span><b>'+n(x.n)+'</b> '+esc(x.name)+'</span>'; });
+    /* When the policy table is open beneath, the chips give it the room: the
+       categories say what the codes say, one row shorter. */
+    if (!(D.table && D.table.shown)) (D.reasons || []).slice(0,4).forEach(function(x){ chips.push('<span><b>'+n(x.n)+'</b> '+esc(x.name)+'</span>'); });
+    $("#qWhy").innerHTML = chips.join("") || '<span class="none">Nothing open</span>';
+  } else {
+    qCard.classList.add("held");
+    $("#qCap").textContent = !ok ? " " : "The requirements extract is not in this workbook.";
+    ["#qRoutine","#qNonRoutine","#qSystem","#qManual"].forEach(function(s){ v($(s), "—", "dim"); });
+    $("#qDays").textContent = "";
+    $("#qWhy").innerHTML = (D.reasons || []).slice(0,6).map(function(x){
+      return '<span><b>'+n(x.n)+'</b> '+esc(x.name)+'</span>'; }).join("") || '<span class="none">Nothing written yet</span>';
+  }
 
-  var why = D.reasons || [];
-  $("#pWhy").innerHTML = why.length
-    ? why.slice(0,7).map(function(r){
-        return '<span'+(/^no reason/i.test(r.name)?' class="none"':'')+'><b>'+n(r.n)+'</b> '+esc(r.name)+'</span>'; }).join("")
-    : '<span class="none">Nothing written yet</span>';
+  /* SETTLED. Salesforce's answer or its error — never a zero for a day
+     Salesforce did not answer about. */
+  var s = D.settled, dCard = $("#dCard");
+  if (ok && s && !s.error) {
+    dCard.classList.remove("held");
+    $("#dToday").textContent = n(s.today); $("#dWeek").textContent = n(s.week); $("#dMonth").textContent = n(s.month);
+    $("#dCap").textContent = "Premium paying with an issue date, from Salesforce. The week runs Monday to date" +
+      (s.weekFrom ? " (" + esc(s.weekFrom) + ")" : "") + "." +
+      (s.excluded && s.excluded.policies ? " " + n(s.excluded.policies) + " of the month's are an excluded agent's — in the count, off the names." : "");
+    var named = (s.byAgent || []).filter(function(a){ return a.month > 0; }).slice(0, 6);
+    $("#dNames").innerHTML = named.length
+      ? named.map(function(a){ return "<b>" + esc(a.agent) + "</b> " + n(a.today) + " · " + n(a.week) + " · " + n(a.month); }).join(" &nbsp;&nbsp; ")
+        + '<span style="color:var(--faint)"> &nbsp;(today &middot; week &middot; month)</span>'
+      : "Nothing settled yet this month.";
+  } else {
+    dCard.classList.add("held");
+    ["#dToday","#dWeek","#dMonth"].forEach(function(x){ $(x).textContent = "—"; });
+    $("#dCap").textContent = !ok ? "Premium paying with an issue date, from Salesforce."
+      : (s && s.error ? "Salesforce did not answer: " + s.error : "Not wired to Salesforce yet.");
+    $("#dNames").textContent = "";
+  }
 
-  $("#aList").innerHTML = (D.agents||[]).map(function(a){
-    var hot = a.oldest > 90 ? "red" : a.oldest > 60 ? "hot" : "";
+  /* ACCOUNTABILITY BY AGENT — painted AFTER the settled card beneath it,
+     because the list is trimmed against the height its card has left, and
+     a card painted later would take that height back. The whole roster, ranked by cash to collect,
+     then medicals waited on, then routine — trimmed to the rows that fit,
+     and it says how many it could not draw. */
+  var roster = (t.culprits && t.culprits.length ? t.culprits : t.roster) || [];
+  var aList = $("#aList");
+  aList.innerHTML = roster.map(function(a){
+    var old = a.oldestDays != null ? a.oldestDays : a.oldest;
     return '<div class="arow">'
       + '<div class="nm">'+esc(a.agent)+'</div>'
-      + '<div class="v" data-k="cases">'+n(a.cases)+'</div>'
-      + '<div class="v '+hot+'" data-k="days oldest">'+(a.oldest?n(a.oldest):"\u2014")+'</div>'
+      + '<div class="v '+(a.cash?"gold":"zero")+'" data-k="cash">'+n(a.cash||0)+'</div>'
+      + '<div class="v '+zero(a.routine)+'" data-k="routine">'+n(a.routine||0)+'</div>'
+      + '<div class="v '+zero(a.medical)+'" data-k="medical">'+n(a.medical||0)+'</div>'
+      + '<div class="v '+(old > 90 ? "red" : old > 60 ? "hot" : zero(old))+'" data-k="days oldest">'+(old?n(old):"—")+'</div>'
       + '</div>';
-  }).join("") || '<div class="arow"><div class="nm">Nothing pending</div><div></div><div></div></div>';
+  }).join("") || '<div class="arow"><div class="nm">' + (ok ? "Nothing pending" : "Waiting on the feed") + '</div><div></div><div></div><div></div><div></div></div>';
+  $("#aCap").textContent = "Cash to collect, routine in motion, medicals waited on, and the oldest with their name on it." +
+    (D.listOnly ? " " + D.listOnly + " name" + (D.listOnly === 1 ? " is" : "s are") + " held off this row and counted above." : "");
+  /* The "and N more" line is reserved BEFORE the trim, or it appears after
+     the measurement and pushes the last row it just fitted off the bottom. */
+  $("#aMore").textContent = "measuring…";
+  var aGone = fitIn(aList, 3);
+  $("#aMore").textContent = aGone ? "and " + aGone + " more agent" + (aGone === 1 ? "" : "s") + " below the fold" : "";
+
+  /* THE POLICY TABLE — HELD UNLESS THE MANAGER HAS SAID THE PHRASE. This
+     screen is served with no sign-in, and a policy number on a wall in a
+     public room is a client in all but name. The feed withholds the rows;
+     this only says so. */
+  var tb = D.table, tCard = $("#tCard"), tList = $("#tList"), stack = $("#stack");
+  if (ok && tb && tb.shown && tb.rows) {
+    tCard.classList.remove("held"); stack.classList.add("open");
+    $("#tHead").style.display = "";
+    $("#tCap").textContent = n(tb.rows.length) + " polic" + (tb.rows.length === 1 ? "y" : "ies") + ", the oldest first. Opened by the branch manager. The number after a code is days since it was ordered.";
+    tList.innerHTML = tb.rows.map(function(x){
+      return '<div class="trow">'
+        + '<div class="pol">'+esc(x.policy)+'</div>'
+        + '<div>'+esc(x.agent)+'</div>'
+        + '<div>'+(x.statusDesc == null ? "—" : esc(x.statusDesc))+'</div>'
+        + '<div class="r">'+(x.daysPending != null ? n(x.daysPending) : (x.age != null ? n(x.age) : "—"))+'</div>'
+        + '<div class="r">'+(x.api != null ? money(x.api) : "—")+'</div>'
+        + '<div class="r '+(x.noCash ? "gold" : "")+'">'+(x.noCash == null ? "—" : (x.noCash ? "none" : "in"))+'</div>'
+        + '<div>'+esc((x.codes || []).join(", ") || "—")
+             + (x.daysOrdered != null ? ' <span style="color:var(--faint)">· ' + n(x.daysOrdered) + 'd</span>' : "")+'</div>'
+        + '</div>';
+    }).join("");
+    $("#tMore").textContent = "measuring…";
+    var tGone = fitIn(tList, 2);
+    $("#tMore").textContent = tGone ? "and " + tGone + " more below the fold" : "";
+  } else {
+    tCard.classList.add("held"); stack.classList.remove("open");
+    $("#tHead").style.display = "none";
+    tList.innerHTML = ""; $("#tMore").textContent = "";
+    $("#tCap").textContent = !ok ? " "
+      : "Held off the wall" + (tb && tb.policies != null ? " — " + n(tb.policies) + " polic" + (tb.policies === 1 ? "y" : "ies") : "") +
+        ". This screen has no sign-in, so policy numbers stay in the workbook until the branch manager opens them.";
+  }
 }
 </script>
 

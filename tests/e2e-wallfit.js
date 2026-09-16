@@ -38,16 +38,13 @@ const PAGES = [
   ['The day so far',    '/intelligence/wall/day.html'],
   ['The day in blocks', '/intelligence/wall/blocks.html'],
   ['What is pending',   '/intelligence/wall/pending.html'],
-  ['Ready to settle',   '/intelligence/wall/ready.html'],
-  ['Whose move is it',  '/intelligence/wall/triage.html'],
-  ['Who is holding it up', '/intelligence/wall/culprits.html'],
   ['Premium dues',      '/intelligence/wall/'],
+  ['Lapses',            '/intelligence/wall/lapses.html'],
   ['In our possession', '/intelligence/wall/possession.html'],
   ['With the agent',    '/intelligence/wall/delivery.html'],
   ['The licence year',  '/intelligence/wall/licence.html'],
   ['Birthdays today',   '/intelligence/wall/book.html'],
   ['Conversions',       '/intelligence/wall/conversion.html'],
-  ['The permanent book', '/intelligence/wall/permanent.html'],
   ['Riders on a clock', '/intelligence/wall/riders.html']
 ];
 
@@ -159,42 +156,27 @@ const RID = { ok: true, data: {
   notes: ['3,280 of the 5,924 riders in force carry no expiry date at all, so no screen can tell you when they end.']
 } };
 
-/* The permanent book with the memorandum's states on it: clear to extend, in
-   arrears inside three months, and over three months so not eligible yet. */
-const PERM = { ok: true, data: {
-  configured: true, generatedAt: '2026-09-13', extendAge: 65, minSum: 100000,
-  arrearsDays: 92, memo: '6 March 2017 memorandum, VP Insurance Operations',
-  total: { n: 2986, cover: 1982000000, prem: 14600000 },
-  extend: { n: 13, cover: 13850000, prem: 7638, since: 2002, years: 24 },
-  state: { ready: 9, collect: 2, behind: 1, gone: 1, small: 1 },
-  small: { n: 1, cover: 60000 },
-  duesRead: true,
-  live: { ready: { n: 1910, cover: 1268000000, prem: 9300000 },
-          collect: { n: 1076, cover: 714000000, prem: 5300000 },
-          gone: { n: 412, cover: 0, prem: 0 } },
-  families: [
-    { fam: 'econo', label: 'Econo Life', sub: 'whole life \u00b7 premium to 65 or 85 \u00b7 cover for life',
-      n: 1462, cover: 1094000000, prem: 7900000, since: 1988 },
-    { fam: 'lib', label: 'Liberator', sub: 'premium to 65, 75, 85 or 100',
-      n: 257, cover: 115000000, prem: 1300000, since: 2001 },
-    { fam: 'rejuv', label: 'Rejuvenator', sub: 'critical illness',
-      n: 320, cover: 146000000, prem: 1500000, since: 2001 }],
-  agents: 'Ada Bram Cleo Dev Esme Finn Gale Hana Iris Jude Kit Lena'.split(' ')
-    .map((nm, i) => ({ name: nm + ' Quill', n: 12 - i, collect: i % 4 ? 0 : 1,
-                       since: 2002 + i, cover: (12 - i) * 900000, prem: (12 - i) * 600 })),
-  agentCount: 14,
-  bands: [{ lab: 'under 2 years', n: 64, cover: 41000000 },
-          { lab: '2 to 5', n: 212, cover: 138000000 },
-          { lab: '5 to 10', n: 498, cover: 331000000 },
-          { lab: '10 to 20', n: 1106, cover: 742000000 },
-          { lab: 'over 20 years', n: 1106, cover: 730000000 }],
-  maturities: [{ yr: 2032, n: 1, cover: 216280 }, { yr: 2041, n: 1, cover: 6000000 }],
-  riders: [{ lab: 'Critical illness', n: 2958, cover: 1277983100, prem: 1247855 },
-           { lab: 'Accidental death', n: 988, cover: 262587454, prem: 19870 },
-           { lab: 'Waiver of premium', n: 1360, cover: null, prem: 177222 },
-           { lab: 'Disability income', n: 30, cover: 115429, prem: 1788 }],
-  notes: ['1 carries less than the company minimum of $100,000, so there is no extension to be had.']
+/* LAPSES, with July standing up. The month strip is the point of this screen
+   — one column three times the rest is the thing the room is meant to see —
+   and the agent list is the part allowed to give way on a short screen. Twelve
+   agents in the year, nineteen on the count, so the fold has something to
+   trim. */
+const LAP = { ok: true, data: {
+  configured: true, generatedAt: '2026-09-17', year: 2026, month: 'September', monthIndex: 8, quarter: 'Q3',
+  windows: {
+    month:   { lab:'September', policies:17, modal:5100, annualised:61200, medianYears:2.1, under1y:5, under2y:8, bands:[{key:'lt1',lab:'under a year',n:5},{key:'y1',lab:'1–2 years',n:3},{key:'y2',lab:'2–5 years',n:5},{key:'y5',lab:'5–10 years',n:1},{key:'y10',lab:'10 years and more',n:3}], agents:[{ agent:'Anand Pretend', policies:31, modal:9800, annualised:117600, medianYears:2.4, under1y:9, under2y:14, month:5, quarter:10 }, { agent:'Beena Sample', policies:27, modal:8100, annualised:97200, medianYears:1.1, under1y:12, under2y:18, month:4, quarter:9 }, { agent:'Carl Fictitious', policies:22, modal:6600, annualised:79200, medianYears:4.8, under1y:3, under2y:6, month:3, quarter:7 }, { agent:'Dev Desk', policies:19, modal:5700, annualised:68400, medianYears:0.9, under1y:11, under2y:15, month:3, quarter:6 }, { agent:'Eve Example', policies:16, modal:4800, annualised:57600, medianYears:3.2, under1y:4, under2y:7, month:2, quarter:5 }, { agent:'Fay Pretend', policies:14, modal:4200, annualised:50400, medianYears:6.5, under1y:2, under2y:3, month:2, quarter:4 }] },
+    quarter: { lab:'Q3', policies:171, modal:51300, annualised:615600, medianYears:1.9, under1y:54, under2y:80, bands:[{key:'lt1',lab:'under a year',n:51},{key:'y1',lab:'1–2 years',n:34},{key:'y2',lab:'2–5 years',n:51},{key:'y5',lab:'5–10 years',n:17},{key:'y10',lab:'10 years and more',n:18}], agents:[{ agent:'Anand Pretend', policies:31, modal:9800, annualised:117600, medianYears:2.4, under1y:9, under2y:14, month:5, quarter:10 }, { agent:'Beena Sample', policies:27, modal:8100, annualised:97200, medianYears:1.1, under1y:12, under2y:18, month:4, quarter:9 }, { agent:'Carl Fictitious', policies:22, modal:6600, annualised:79200, medianYears:4.8, under1y:3, under2y:6, month:3, quarter:7 }, { agent:'Dev Desk', policies:19, modal:5700, annualised:68400, medianYears:0.9, under1y:11, under2y:15, month:3, quarter:6 }, { agent:'Eve Example', policies:16, modal:4800, annualised:57600, medianYears:3.2, under1y:4, under2y:7, month:2, quarter:5 }, { agent:'Fay Pretend', policies:14, modal:4200, annualised:50400, medianYears:6.5, under1y:2, under2y:3, month:2, quarter:4 }] },
+    year:    { lab:'2026 to date', policies:321, modal:96300, annualised:1155600, medianYears:2.4, under1y:96, under2y:148, bands:[{key:'lt1',lab:'under a year',n:96},{key:'y1',lab:'1–2 years',n:64},{key:'y2',lab:'2–5 years',n:96},{key:'y5',lab:'5–10 years',n:32},{key:'y10',lab:'10 years and more',n:33}], agents:[{ agent:'Anand Pretend', policies:31, modal:9800, annualised:117600, medianYears:2.4, under1y:9, under2y:14, month:5, quarter:10 }, { agent:'Beena Sample', policies:27, modal:8100, annualised:97200, medianYears:1.1, under1y:12, under2y:18, month:4, quarter:9 }, { agent:'Carl Fictitious', policies:22, modal:6600, annualised:79200, medianYears:4.8, under1y:3, under2y:6, month:3, quarter:7 }, { agent:'Dev Desk', policies:19, modal:5700, annualised:68400, medianYears:0.9, under1y:11, under2y:15, month:3, quarter:6 }, { agent:'Eve Example', policies:16, modal:4800, annualised:57600, medianYears:3.2, under1y:4, under2y:7, month:2, quarter:5 }, { agent:'Fay Pretend', policies:14, modal:4200, annualised:50400, medianYears:6.5, under1y:2, under2y:3, month:2, quarter:4 }] }
+  },
+  byMonth: [{ ym:'2026-01', lab:'Jan', policies:27, modal:8100 }, { ym:'2026-02', lab:'Feb', policies:19, modal:5700 }, { ym:'2026-03', lab:'Mar', policies:22, modal:6600 }, { ym:'2026-04', lab:'Apr', policies:23, modal:6900 }, { ym:'2026-05', lab:'May', policies:19, modal:5700 }, { ym:'2026-06', lab:'Jun', policies:40, modal:12000 }, { ym:'2026-07', lab:'Jul', policies:118, modal:35400 }, { ym:'2026-08', lab:'Aug', policies:36, modal:10800 }, { ym:'2026-09', lab:'Sep', policies:17, modal:5100 }, { ym:'2026-10', lab:'Oct', policies:0, modal:0 }, { ym:'2026-11', lab:'Nov', policies:0, modal:0 }, { ym:'2026-12', lab:'Dec', policies:0, modal:0 }],
+  agents: [{ agent:'Anand Pretend', policies:31, modal:9800, annualised:117600, medianYears:2.4, under1y:9, under2y:14, month:5, quarter:10 }, { agent:'Beena Sample', policies:27, modal:8100, annualised:97200, medianYears:1.1, under1y:12, under2y:18, month:4, quarter:9 }, { agent:'Carl Fictitious', policies:22, modal:6600, annualised:79200, medianYears:4.8, under1y:3, under2y:6, month:3, quarter:7 }, { agent:'Dev Desk', policies:19, modal:5700, annualised:68400, medianYears:0.9, under1y:11, under2y:15, month:3, quarter:6 }, { agent:'Eve Example', policies:16, modal:4800, annualised:57600, medianYears:3.2, under1y:4, under2y:7, month:2, quarter:5 }, { agent:'Fay Pretend', policies:14, modal:4200, annualised:50400, medianYears:6.5, under1y:2, under2y:3, month:2, quarter:4 }, { agent:'Gale Quill', policies:12, modal:3600, annualised:43200, medianYears:1.7, under1y:5, under2y:8, month:2, quarter:4 }, { agent:'Hal Sample', policies:11, modal:3300, annualised:39600, medianYears:2.9, under1y:3, under2y:5, month:1, quarter:3 }, { agent:'Ira Fictitious', policies:9, modal:2700, annualised:32400, medianYears:8.1, under1y:1, under2y:2, month:1, quarter:3 }, { agent:'Jo Desk', policies:8, modal:2400, annualised:28800, medianYears:1.3, under1y:4, under2y:6, month:1, quarter:2 }, { agent:'Kit Example', policies:7, modal:2100, annualised:25200, medianYears:5.0, under1y:1, under2y:2, month:1, quarter:2 }, { agent:'Lee Pretend', policies:6, modal:1800, annualised:21600, medianYears:2.2, under1y:2, under2y:3, month:1, quarter:2 }],
+  agentCount: 19,
+  lapsed: { total: 321, earlier: 14 },
+  excluded: { policies: 6, modal: 1800, annualised: 21600, agents: 1 },
+  defects: { noLapseDate: 3, noIssueDate: 9, futureLapseDate: 0 },
+  notes: ['3 lapsed policies carry no usable lapse date, so nothing on this screen can place them.']
 } };
+
 
 async function fresh(b, w, h, feed) {
   const ctx = await b.newContext({ viewport: { width: w, height: h } });
@@ -284,6 +266,40 @@ async function fresh(b, w, h, feed) {
     await s.ctx.close();
   }
 
+  /* ── Lapses, at every size ──────────────────────────────────────────────
+     July is three times any other month and the strip has to say so on a
+     laptop as loudly as on the television. The three windows and the tenure
+     bands are fixed content; the agent list is what gives way. */
+  console.log('\nAnd the lapses screen holds at every size:\n');
+  for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
+                             [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
+    const s = await fresh(b, w, h, LAP);
+    await s.page.goto(`http://localhost:${PORT}/intelligence/wall/lapses.html`, { waitUntil: 'domcontentloaded' });
+    await s.page.waitForTimeout(1300);
+    const m = await s.page.evaluate(MEASURE);
+    ok(tag.padEnd(22) + ' nothing below the fold, nothing cut through it',
+       m.overflow <= 2 && m.sideways <= 2 && !m.below.length && !m.through.length,
+       'overflow ' + m.overflow + 'px, below ' + JSON.stringify(m.below.slice(0, 2)) +
+       ', through ' + JSON.stringify(m.through.slice(0, 2)));
+    const r = await s.page.evaluate(() => {
+      const cols = [...document.querySelectorAll('#lStrip [data-ym], #lStrip .col, #lStrip > div')];
+      const hs = cols.map(c => c.getBoundingClientRect().height);
+      const jul = cols.find(c => /jul/i.test(c.textContent || ''));
+      return { months: cols.length,
+               julTallest: jul ? jul.getBoundingClientRect().height >= Math.max(...hs) - 1 : null,
+               wins: document.querySelectorAll('#lWins > *').length,
+               bands: document.querySelectorAll('#lBands > *').length,
+               agents: document.querySelectorAll('#lList .crow, #lList tr, #lList > div').length,
+               note: (document.getElementById('lNote') || {}).textContent || '' };
+    });
+    ok(tag.padEnd(22) + ' twelve months on the strip', r.months === 12, String(r.months));
+    ok(tag.padEnd(22) + '   and July is the tallest column', r.julTallest !== false, String(r.julTallest));
+    ok(tag.padEnd(22) + ' the three windows are drawn', r.wins >= 3, String(r.wins));
+    ok(tag.padEnd(22) + ' some agents are drawn', r.agents >= 1, String(r.agents));
+    ok(tag.padEnd(22) + ' no javascript errors', s.errors.length === 0, s.errors.join(' | '));
+    await s.ctx.close();
+  }
+
   /* ── The riders screen, at every size ────────────────────────────────────
      The month is the thin part of this screen and the two piles are the thick
      part, so what has to survive a short screen is the strip and the four
@@ -326,73 +342,59 @@ async function fresh(b, w, h, feed) {
     await s.ctx.close();
   }
 
-  /* ── The permanent book, at every size ───────────────────────────────────
-     The extension card carries the memorandum's three states and the rules
-     card carries five lines now. Both are fixed content in a fixed column,
-     so if either outgrows a short screen it does so silently. */
-  console.log('\nAnd the permanent book holds at every size:\n');
-  for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
-                             [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
-    const s = await fresh(b, w, h, PERM);
-    await s.page.goto(`http://localhost:${PORT}/intelligence/wall/permanent.html`, { waitUntil: 'domcontentloaded' });
-    await s.page.waitForTimeout(1300);
-    const m = await s.page.evaluate(MEASURE);
-    ok(tag.padEnd(22) + ' nothing below the fold, nothing cut through it',
-       m.overflow <= 2 && m.sideways <= 2 && !m.below.length && !m.through.length,
-       'overflow ' + m.overflow + 'px, below ' + JSON.stringify(m.below.slice(0, 2)) +
-       ', through ' + JSON.stringify(m.through.slice(0, 2)));
-    /* The three products are the screen; the extension's own rules are the
-       reason it is not a one-line opportunity any more. */
-    const t = await s.page.evaluate(() => ({
-      fams: document.querySelectorAll('#pFams .crow').length,
-      rules: document.querySelectorAll('#pWhich .say li').length,
-      behind: (document.getElementById('pBehind') || {}).textContent,
-      rulesText: (document.querySelector('#pWhich .say') || {}).textContent || '',
-      cap: (document.getElementById('pCap') || {}).textContent || ''
-    }));
-    ok(tag.padEnd(22) + ' three products, and the extension rules with them',
-       t.fams === 3 && t.rules >= 3 && t.behind === '1', JSON.stringify(t));
-    /* Whatever gets trimmed, the correction survives: an agent reading three
-       of these must not be left holding the version that was wrong. */
-    ok(tag.padEnd(22) + ' the rule that it is not free survives the trim',
-       /Not free/.test(t.rulesText), t.rulesText.slice(0, 70));
-    /* THE CLAIM THAT WAS WRONG. It must never come back. */
-    ok(tag.padEnd(22) + ' it does not promise there is no underwriting',
-       !/no underwriting|no application/i.test(t.cap), t.cap.slice(0, 90));
-    await s.ctx.close();
-  }
 
   /* ── The rail ─────────────────────────────────────────────────────────────
      Two rows of stops at most, the controls beside them and not underneath,
      and the timer clear of both. */
-  console.log('\nThe rail, with fourteen stops on it:\n');
+  console.log('\nThe chrome line, with every stop on it:\n');
+  /* IT IS ONE LINE ACROSS THE TOP NOW, AND IT OWNS ITS OWN STRIP. It used to be
+     three things stacked over the foot of the slide — the rail, the timer pill
+     and the stale-code bar — and the note back was that it was blocking the
+     bottom. Moving it to the top was not enough by itself: laid over a slide it
+     covered the headline instead, so .stage starts underneath it. Fourteen
+     names never fit a line, so the stops are numbers and the name of the one
+     you are on is spelled out beside them. */
   for (const [w, h, tag] of [[3840,2160,'4K panel'],[1920,1080,'the branch television'],
                              [1600,900,'1600 x 900'],[1366,768,'a laptop'],[1280,720,'720p']]) {
     const s = await fresh(b, w, h);
     await s.page.goto(`http://localhost:${PORT}/intelligence/wall/all.html?secs=600`, { waitUntil: 'domcontentloaded' });
     await s.page.waitForTimeout(2500);
-    await s.page.mouse.move(w / 2, h - 40);
-    await s.page.waitForTimeout(700);
     const m = await s.page.evaluate(() => {
       const box = el => el.getBoundingClientRect();
       const hits = (a, t) => !(a.right < t.left || a.left > t.right || a.bottom < t.top || a.top > t.bottom);
-      const hud = box(document.getElementById('hud'));
+      const chrome = box(document.getElementById('chrome'));
+      const stage = box(document.getElementById('stage'));
+      const state = box(document.getElementById('state'));
       const dots = [...document.querySelectorAll('#dots .dot')];
+      const phone = window.innerWidth <= 760;
       return {
         stops: dots.length,
-        rows: new Set(dots.map(d => Math.round(box(d).top))).size,
-        onTimer: dots.filter(d => hits(box(d), hud)).map(d => d.textContent.trim()),
-        ctlOnTimer: hits(box(document.querySelector('.ctl')), hud),
-        ctlLeftOfDots: box(document.querySelector('.ctl')).left < box(dots[0]).left,
-        lifted: document.body.classList.contains('railup')
+        rows: dots.length ? new Set(dots.map(d => Math.round(box(d).top))).size : 1,
+        numbersOnly: dots.every(d => /^\d+$/.test(d.textContent.trim())),
+        named: dots.every(d => (d.getAttribute('title') || '').length > 2),
+        onState: dots.filter(d => hits(box(d), state)).map(d => d.textContent.trim()),
+        ctlOnState: hits(box(document.querySelector('.ctl')), state),
+        ctlLeftOfDots: dots.length ? box(document.querySelector('.ctl')).left < box(dots[0]).left : true,
+        chromeTop: Math.round(chrome.top), chromeH: Math.round(chrome.height),
+        stageTop: Math.round(stage.top),
+        overflowsLine: document.getElementById('chrome').scrollWidth
+                     - document.getElementById('chrome').clientWidth,
+        sideways: document.documentElement.scrollWidth - window.innerWidth,
+        phone: phone
       };
     });
-    ok(tag.padEnd(22) + ' fourteen stops on at most two rows', m.rows <= 2 && m.stops === 14,
-       m.stops + ' stops on ' + m.rows + ' rows');
-    ok(tag.padEnd(22) + ' no stop lands on the timer', !m.onTimer.length, JSON.stringify(m.onTimer));
-    ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnTimer);
-    ok(tag.padEnd(22) + ' the controls lead the rail rather than trail it', m.ctlLeftOfDots);
-    ok(tag.padEnd(22) + ' and the timer has stepped up out of the way', m.lifted);
+    ok(tag.padEnd(22) + ' every stop on ONE row', m.rows === 1 && m.stops === PAGES.length,
+       m.stops + ' stops on ' + m.rows + ' rows (running order has ' + PAGES.length + ')');
+    ok(tag.padEnd(22) + ' the stops are numbers, not names', m.numbersOnly);
+    ok(tag.padEnd(22) + '   with the name on the hover', m.named);
+    ok(tag.padEnd(22) + ' no stop lands on the position text', !m.onState.length, JSON.stringify(m.onState));
+    ok(tag.padEnd(22) + ' nor do Pause and Narrate', !m.ctlOnState);
+    ok(tag.padEnd(22) + ' the controls lead the line rather than trail it', m.ctlLeftOfDots);
+    ok(tag.padEnd(22) + ' the line is at the top', m.chromeTop === 0, 'top ' + m.chromeTop);
+    ok(tag.padEnd(22) + ' the slide starts below it, not under it',
+       m.stageTop >= m.chromeH, 'stage ' + m.stageTop + ' vs line ' + m.chromeH);
+    ok(tag.padEnd(22) + ' nothing on the line leaves the screen',
+       m.overflowsLine === 0 && m.sideways === 0, JSON.stringify(m));
     ok(tag.padEnd(22) + ' no javascript errors', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
   }

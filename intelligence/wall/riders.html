@@ -239,6 +239,43 @@
   .dlist b.was{text-decoration:line-through;color:var(--faint);font-weight:600}
   .dlist s{text-decoration:none;color:var(--faint);margin-left:auto;
     font-family:var(--font-d);font-weight:700;color:var(--gold)}
+  /* THE MONTH BY DESK sits beside the day list, not under it. The strip says
+     when, the day list says what, and this says WHO — which is the column an
+     agent reads first, because "the riders expiring this month" is a question
+     about their own book. Side by side rather than stacked because this card
+     has a fixed share of a short screen, and that share was measured at its
+     floor before the desks existed: the card underneath was already at its
+     minimum three agent rows on a 768-high screen, so nothing could be taken
+     from it. Stacked, the desks pushed the month chips clean off a 720-high
+     card. So the left column carries the day list with the month chips under
+     it, the right column carries the desks, and the two share one row whose
+     height is pinned to the box (minmax(0,1fr)) so each side can be measured
+     and trimmed on its own — without that the row sizes to its content and
+     the trim never fires. The day list is narrow content in a wide card; it
+     was using a fifth of its width. */
+  .mrow{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.35fr);
+    grid-template-rows:minmax(0,1fr);gap:clamp(10px,1.4vw,22px);
+    margin-top:clamp(6px,1vh,11px);min-height:0;overflow:hidden;flex:0 1 auto}
+  .mleft{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  .mleft .dlist{margin-top:0}
+  .mdesk{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+  #rMonthAg{min-height:0;overflow:hidden;flex:0 1 auto}
+  .mhead,.mrowr{display:grid;grid-template-columns:1fr 46px 92px 66px 64px;gap:7px;align-items:center}
+  .mhead{font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:5px;border-bottom:1px solid var(--line);flex:none}
+  .mhead div+div,.mrowr div+div{text-align:right}
+  .mrowr{padding:clamp(3px,.6vh,7px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
+  .mrowr:last-child{border-bottom:none}
+  .mrowr .nm{font-size:clamp(11.5px,1.45vh,14px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrowr .v{font-family:var(--font-d);font-weight:700;font-size:clamp(12px,1.55vh,16px);font-variant-numeric:tabular-nums}
+  .mrowr .v.gold{color:var(--gold)}
+  .mrowr .v.dim{color:var(--dim);font-weight:600;font-size:clamp(11px,1.4vh,13.5px)}
+  /* The kinds, as the four letters the rider table underneath spells out —
+     CI, AD, WP, DI — with a count only when there is more than one. */
+  .mrowr .kd{font:600 clamp(10px,1.25vh,12px) var(--font-b);color:var(--dim);
+    letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mrowr .kd i{font-style:normal;color:var(--faint);font-weight:500}
+  .mnone{font-size:clamp(10.5px,1.3vh,12.5px);color:var(--faint);padding-top:6px;line-height:1.4}
   .chead,.crow{display:grid;grid-template-columns:1fr 58px 56px 56px 100px 92px;
     gap:8px;align-items:center}
   .chead{font:600 10px var(--font-b);letter-spacing:.1em;text-transform:uppercase;
@@ -281,6 +318,9 @@
     .crow{grid-template-columns:1fr 26px 34px 70px 70px;gap:5px;row-gap:2px}
     .crow .nm{font-size:13.5px}
     .crow .v{font-size:13.5px}
+    /* One column on a phone — a page that scrolls has the height. */
+    .mrow{grid-template-columns:1fr;grid-template-rows:none}
+    .mrowr{grid-template-columns:1fr 30px 80px 66px 60px}
     .yr{grid-template-columns:42px 1fr 88px;gap:8px}
     .yr .amt{font-size:12px}
     .chip{font-size:11.5px}
@@ -293,7 +333,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>Riders On A Clock</h1>
-    <div class="sub">Every rider has an expiry &middot; what ends this month, what has already gone &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub">Every rider has an expiry &middot; what ends this month, what has already gone</div>
   </div>
   <div class="right">
     <button class="btn" id="sound" onclick="toggleSound()">&#9654; Narrate</button>
@@ -343,8 +383,20 @@
         <div class="runhead">The month, day by day <span id="rDayNote"></span></div>
         <div class="cal" id="rCalCells"></div>
       </div>
-      <div class="dlist" id="rDays"></div>
-      <div class="chips" id="rMonths"></div>
+      <!-- Under the strip, two columns: the day list on the left (what ends,
+           and when) and the desks on the right (whose book it is). The month
+           was asked for as "the riders expiring this month", and that is a
+           question an agent answers about their own clients. -->
+      <div class="mrow">
+        <div class="mleft">
+          <div class="dlist" id="rDays"></div>
+          <div class="chips" id="rMonths"></div>
+        </div>
+        <div class="mdesk">
+          <div class="mhead"><div>Agent</div><div>Coming<br>off</div><div>Kinds</div><div>Cover</div><div>Premium</div></div>
+          <div id="rMonthAg"></div>
+        </div>
+      </div>
     </section>
 
     <section class="card">
@@ -467,10 +519,20 @@ function paint(){
 
   /* The whole rider book, and how much of it has a date on it at all. This
      line is the qualifier on every other figure here. */
+  /* And what the lists do not hold. An exclusion takes an agent off every
+     wall; it does not take the riders off the book, and a screen that removes
+     something has to say how much it removed. Same for the rows the dues tab
+     called lapsed — Salesforce still shows those paying. */
+  var ex = D.excluded || {}, lo = D.lost || {}, off = [];
+  if (ok && ex.n) off.push("<b>" + n(ex.n) + "</b> held by " + (ex.names === 1 ? "an excluded agent" : "excluded agents") +
+                           (ex.cover ? " (<b>" + money(ex.cover) + "</b> of cover)" : "") + " left off");
+  if (ok && lo.n) off.push("<b>" + n(lo.n) + "</b> on policies the dues tab says have lapsed" +
+                           (lo.cover ? " (<b>" + money(lo.cover) + "</b>)" : ""));
   $("#rBookLine").innerHTML = ok
     ? "Every rider in force: <b>" + n(bk.n) + "</b> on the book \u00b7 <b>" + money(bk.cover) +
       "</b> of cover \u00b7 <b>" + money(bk.prem) + "</b> a year \u00b7 only <b>" + n(bk.dated) +
-      "</b> of them carry an expiry date, so the lists here can only be as complete as that."
+      "</b> of them carry an expiry date, so the lists here can only be as complete as that." +
+      (off.length ? " Off these lists: " + off.join(" \u00b7 ") + "." : "")
     : "";
 
   var w = $("#rWarn"), msgs = (D.notes || []).slice(0, 2);
@@ -521,8 +583,27 @@ function paint(){
            '<span>' + esc(names || "rider") + '</span>' +
            (x.cover ? '<s>' + money(x.cover) + '</s>' : '') + '</div>';
   }).join("");
-  var dHid = fit($("#rDays"), 1);
 
+  /* ── THIS MONTH, BY DESK ─────────────────────────────────────────────────
+     Most riders coming off first, then premium — the order of a list of
+     phone calls, not the order of the money. The kinds are the four letters
+     the rider table underneath spells out, and a waiver shows a dash for
+     cover because it has none, not a nought that reads as nothing ending. */
+  var CODE = { ci: "CI", ad: "AD", wp: "WP", di: "DI" };
+  var mAg = $("#rMonthAg"), mRows = (D.monthByAgent || []);
+  mAg.innerHTML = mRows.length ? mRows.map(function(a){
+    var kd = Object.keys(CODE).filter(function(k){ return a.kinds && a.kinds[k]; })
+      .map(function(k){ return CODE[k] + (a.kinds[k] > 1 ? "<i>\u00d7" + a.kinds[k] + "</i>" : ""); }).join(" ");
+    return '<div class="mrowr">' +
+      '<div class="nm">' + esc(a.name) + '</div>' +
+      '<div class="v">' + n(a.n) + '</div>' +
+      '<div class="kd">' + kd + '</div>' +
+      '<div class="v gold">' + (a.cover ? money(a.cover) : "\u2013") + '</div>' +
+      '<div class="v dim">' + money(a.prem) + '</div>' +
+    '</div>';
+  }).join("") : '<div class="mnone">' + (ok ? (tm.n ? "No agent on the record for this month\u2019s riders."
+                                                  : "No desk has a rider ending in " + D.month + ".")
+                                           : "Waiting on the feed.") + '</div>';
   /* The rest of the year, a month at a time. */
   var mons = (D.months || []).filter(function(m){ return m.n; });
   $("#rMonths").innerHTML = ok && mons.length
@@ -531,6 +612,17 @@ function paint(){
                ' <b>' + n(m.n) + '</b>' + (m.cover ? ' \u00b7 ' + money(m.cover) : '') + '</span>';
       }).join("")
     : "";
+  /* Three lists share the row under the strip and they give way in this
+     order: the month chips first (they sit under the day list and wrap, so
+     a chip that does not fit is the cheapest thing to lose), then the desks,
+     then the days — the day list is the part the screen was asked for. The
+     two columns are trimmed independently because the row's height is
+     pinned; a desk row removed on the right frees nothing on the left. The
+     strip itself is never trimmed — it is the screen. */
+  fit($("#rMonths"), 0);
+  var mHid = fit(mAg, 1);
+  var dHid = fit($("#rDays"), 1);
+
 
   /* ── WHO HOLDS THE ONES THAT HAVE ALREADY GONE ──────────────────────────
      The only table here that names people, and the only list on this screen
@@ -548,11 +640,10 @@ function paint(){
   }).join("") : '<div class="cap">' + (ok ? "No rider on the book has expired on a policy still paying."
                                           : "Waiting on the feed.") + '</div>';
   var hidden = fitIn(list, 3);
-  /* The months ahead are chips and they wrap, so they give way before
-     anything else. The strip itself is never trimmed — it is the screen. */
-  fit($("#rMonths"), 0);
   if (dHid) $("#rDayNote").textContent += " \u00b7 " + dHid +
     (dHid === 1 ? " day below the fold" : " days below the fold");
+  if (mHid) $("#rDayNote").textContent += " \u00b7 " + mHid +
+    (mHid === 1 ? " desk below the fold" : " desks below the fold");
 
   /* The four riders, and the expiry position of each. Never trimmed — four
      rows is the whole point of the screen. */

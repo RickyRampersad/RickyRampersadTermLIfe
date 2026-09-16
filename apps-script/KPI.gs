@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-10b';
+var SCRIPT_VERSION = '2026-09-17a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -614,6 +614,42 @@ var SCHEDULE = {
   }
 };
 
+// Which Salesforce Task_Type__c a scheduled block's work lands in, so a
+// screen can put "closed 4 pendings" beside the block that was for pendings.
+//
+// Six of the labels in SCHEDULE are Task_Type__c values letter for letter and
+// map to themselves. Every other label is work Salesforce does not type —
+// reporting, escalations, the mail run, joint field work — and maps to '', so
+// nothing tries to count it. The list is complete on purpose: checkSchedule()
+// refuses a block whose label is missing here, because a block added without
+// deciding its type would show as untyped work and nobody would know whether
+// that was a decision or an oversight. Add the label; put '' if it has no type.
+var BLOCK_TYPE = {
+  'Renewa/PDl/Bill':                                 'Renewa/PDl/Bill',
+  'Pendings':                                        'Pendings',
+  'Scripts/CB':                                      'Scripts/CB',
+  'Lic/Staffing/SA/HR':                              'Lic/Staffing/SA/HR',
+  'Opportunity':                                     'Opportunity',
+  'Training':                                        'Training',
+  'Orphan Adoption Listing':                         '',
+  'Reporting':                                       '',
+  'Surveys / Query Pal':                             '',
+  'Administrative Support':                          '',
+  'Escalations':                                     '',
+  'Reporting (Production / RDAR)':                   '',
+  'Mail Management / Contracts':                     '',
+  'Document delivery & collection':                  '',
+  'Branch Manager support':                          '',
+  'Scripts & transmittals':                          '',
+  'Client Portfolios / Macros':                      '',
+  'New Application Process':                         '',
+  'Reporting (Production / RDAR / Branch Meeting)':  '',
+  'Unit Manager Supervision':                        '',
+  'Joint Field Work':                                ''
+};
+
+function blockTypeFor_(label) { return BLOCK_TYPE[label] || ''; }
+
 var DEFAULT_SCHEDULE = {
   hours: '8am – 4pm', lunch: 'Flexible',
   blocks: {
@@ -660,6 +696,11 @@ function checkSchedule() {
     BLOCK_IDS.forEach(function (b) {
       var k = (SCHEDULE[sid].blocks[b] || {}).kpi;
       if (k && !list[k]) bad.push(sid + ' ' + b + ': "' + k + '" is not on their KPI list');
+      // Every label must have decided its Task_Type__c — an empty string is a
+      // decision, a missing entry is not. See BLOCK_TYPE.
+      if (k && !Object.prototype.hasOwnProperty.call(BLOCK_TYPE, k)) {
+        bad.push(sid + ' ' + b + ': "' + k + '" has no BLOCK_TYPE entry — add it, with \'\' if Salesforce does not type it');
+      }
     });
   });
   var notes = [];
@@ -847,7 +888,17 @@ function roster_() {
     var email = normEmail_(r[idx['email']]);
     var name = String(r[idx['name']] || '').trim();
     if (!email && !name) return;
-    var active = String(r[idx['active']] != null ? r[idx['active']] : 'Active').trim();
+    // Active is decided by what the cell SAYS, not by what it fails to say.
+    // Until 16 September 2026 a person stayed on the wall unless the cell was
+    // exactly no / inactive / false / 0 — and a departed member of staff was
+    // still up there because her cell said something that list did not
+    // recognise. So the rule is inverted: blank means active (the column was
+    // never filled in for most rows), an explicit yes means active, and any
+    // other word at all — "Left", "Resigned", "x" — means gone. A new way of
+    // saying no can never keep somebody on the screen again. The raw cell is
+    // kept beside the decision so a screen can show why a person is off it.
+    var activeRaw = idx['active'] != null && r[idx['active']] != null
+      ? String(r[idx['active']]).trim() : '';
     out.push({
       email: email,
       name: name,
@@ -857,7 +908,8 @@ function roster_() {
       role: String(r[idx['role']] || '').trim(),
       unit: String(r[idx['unit']] || '').trim(),
       grade: idx['grade'] != null ? String(r[idx['grade']] || '').trim() : '',
-      active: !/^(no|inactive|false|0)$/i.test(active)
+      activeRaw: activeRaw,
+      active: activeRaw === '' || /^(yes|y|active|true|1)$/i.test(activeRaw)
     });
   });
   _rosterMemo = out;
@@ -2975,7 +3027,15 @@ function metricsFor_(profile, date) {
   if (!m || !m.ok || profile.manager) return m;
   var only = {};
   if (m.staff && m.staff[profile.staffId]) only[profile.staffId] = m.staff[profile.staffId];
-  return { ok: true, date: m.date, staff: only, branch: m.branch };
+  // The same cut for the period figures: your own week, month and year, and
+  // the branch's, but not the person's at the next desk.
+  var periods = null;
+  if (m.periods) {
+    var mine = {};
+    if (m.periods.staff && m.periods.staff[profile.staffId]) mine[profile.staffId] = m.periods.staff[profile.staffId];
+    periods = { staff: mine, branch: m.periods.branch };
+  }
+  return { ok: true, date: m.date, staff: only, branch: m.branch, periods: periods };
 }
 
 /* How long an open task can sit untouched before it stops being work in
@@ -3019,7 +3079,7 @@ function sfkMetrics_(date) {
   Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
 
   function blank() {
-    return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, needs: 0, byType: {} };
+    return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, needs: 0, touched: 0, byType: {} };
   }
   var out = {};
   Object.keys(users).forEach(function (k) { out[k] = blank(); });
@@ -3033,18 +3093,44 @@ function sfkMetrics_(date) {
       if (typed) {
         var t = r.Task_Type__c || 'Untyped';
         out[sid].byType[t] = out[sid].byType[t] ||
-          { closed: 0, open: 0, overdue: 0, needs: 0 };
+          { closed: 0, open: 0, overdue: 0, needs: 0, touched: 0 };
         out[sid].byType[t][field] += n;
       }
     });
   }
 
-  // Closed on the day itself
+  // The branch day in Salesforce's clock. Port of Spain is UTC-4 all year —
+  // no daylight saving — so local midnight is 04:00Z, and a day that starts
+  // at T00:00:00Z starts at 8pm the evening before. Until 16 September 2026
+  // "closed today" used that UTC window, so anything closed after 8pm sat in
+  // tomorrow's column and anything closed before 8pm yesterday sat in
+  // today's. Every window below is a local day.
+  var dayFrom = day + 'T04:00:00Z', dayTo = shiftDays_(day, 1) + 'T04:00:00Z';
+
+  // Closed on the day itself.
+  //
+  // This is the time the task was COMPLETED, not the time it was last edited.
+  // The old query asked for completed tasks with a LastModifiedDate today,
+  // which counted a task closed in March and re-saved this morning as closed
+  // today, and missed nothing else in a way anybody could see — so it stood
+  // for months. CompletedDateTime is populated on every completed task in
+  // this org. The birthday automation is left out, as it is everywhere else
+  // a closure is counted; a machine wishing 550 clients a happy birthday is
+  // not a person's morning.
   add(sfkQuery_(
     'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
-    " AND Status = 'Completed' AND LastModifiedDate >= " + day + 'T00:00:00Z AND ' +
-    'LastModifiedDate < ' + shiftDays_(day, 1) + 'T00:00:00Z ' +
+    ' AND CompletedDateTime >= ' + dayFrom + ' AND CompletedDateTime < ' + dayTo +
+    " AND (NOT Subject LIKE '%Happy Birthday%') " +
     'GROUP BY OwnerId, Task_Type__c'), 'closed', true);
+
+  // Touched on the day, per type — every task this person saved today,
+  // closed or not. The wall's live feed had this and the per-person position
+  // did not, so the block screen could say "closed 0" of a morning spent
+  // moving forty pendings along. Same local-day window as the closures.
+  add(sfkQuery_(
+    'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+    ' AND LastModifiedDate >= ' + dayFrom + ' AND LastModifiedDate < ' + dayTo +
+    ' GROUP BY OwnerId, Task_Type__c'), 'touched', true);
 
   // Still open, whatever the due date
   add(sfkQuery_(
@@ -3160,11 +3246,12 @@ function sfkMetrics_(date) {
     Object.keys(out[sid].byType || {}).forEach(function (t) {
       var src = out[sid].byType[t];
       var b = branch.byType[t] ||
-        (branch.byType[t] = { open: 0, overdue: 0, closed: 0, needs: 0, who: [] });
+        (branch.byType[t] = { open: 0, overdue: 0, closed: 0, needs: 0, touched: 0, who: [] });
       b.open += src.open || 0;
       b.overdue += src.overdue || 0;
       b.closed += src.closed || 0;
       b.needs += src.needs || 0;
+      b.touched += src.touched || 0;
       if (src.open || src.overdue) {
         b.who.push({ n: name, open: src.open || 0, overdue: src.overdue || 0 });
       }
@@ -5384,11 +5471,76 @@ function sfkNeedsReasonSafe_(date) {
   try { return sfkNeedsReason_(date); } catch (e) { return {}; }
 }
 
-/** Safe wrapper — the tracker must keep working when Salesforce does not. */
+/** Closures per person over the week, the month and the year so far.
+ *
+ *  Three queries for the whole branch, not three per person. sfkClosedInPeriod_
+ *  asks one question per member of staff because a review page only ever needs
+ *  one of them; a screen that shows everybody would turn that into thirty round
+ *  trips, and Salesforce would answer the thirtieth after the wall had given
+ *  up. GROUP BY OwnerId gives the same figures in one.
+ *
+ *  Same rules as "closed today": CompletedDateTime, in the branch's own clock
+ *  (04:00Z is local midnight), the birthday automation left out, and only the
+ *  users sfkMetrics_ itself counts. The windows run from Monday, the first of
+ *  the month and the first of January up to the end of the day asked for —
+ *  which for today is "to now", and for a day in the past is what the screen
+ *  would have said on that day rather than a figure that keeps growing.
+ *
+ *  Returns { staff: { sid: { week, month, ytd } }, branch: { week, month, ytd } }. */
+function sfkClosedWindows_(date) {
+  var day = date || todayISO_();
+  var cache = CacheService.getScriptCache();
+  var key = 'sfk_cw_' + day;
+  var hit = cache.get(key);
+  if (hit) return JSON.parse(hit);
+
+  var users = sfkUsers_();
+  var ids = Object.keys(users).map(function (k) { return "'" + users[k].id + "'"; });
+  var staff = {}, branch = { week: 0, month: 0, ytd: 0 };
+  Object.keys(users).forEach(function (k) { staff[k] = { week: 0, month: 0, ytd: 0 }; });
+  if (!ids.length) return { staff: staff, branch: branch };
+  var IN = '(' + ids.join(',') + ')';
+  var byId = {};
+  Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
+
+  var to = shiftDays_(day, 1) + 'T04:00:00Z';
+  var from = {
+    week:  weekStart_(day) + 'T04:00:00Z',
+    month: day.slice(0, 7) + '-01T04:00:00Z',
+    ytd:   day.slice(0, 4) + '-01-01T04:00:00Z'
+  };
+  Object.keys(from).forEach(function (w) {
+    sfkQuery_(
+      'SELECT OwnerId, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+      ' AND CompletedDateTime >= ' + from[w] + ' AND CompletedDateTime < ' + to +
+      " AND (NOT Subject LIKE '%Happy Birthday%') GROUP BY OwnerId").forEach(function (r) {
+        var sid = byId[r.OwnerId];
+        if (!sid) return;
+        var n = Number(r.expr0 || 0);
+        staff[sid][w] += n;
+        branch[w] += n;
+      });
+  });
+
+  var res = { staff: staff, branch: branch };
+  try { cache.put(key, JSON.stringify(res), SFK.CACHE_MIN * 60); } catch (e) {}
+  return res;
+}
+
+/** Safe wrapper — the tracker must keep working when Salesforce does not.
+ *
+ *  The period figures ride along as m.periods, in their own try: a screen
+ *  that cannot get the week's total should still get this morning's. */
 function sfkMetricsSafe_(date) {
   if (!sfkConfigured_()) return { ok: false, reason: 'notConfigured' };
-  try { return sfkMetrics_(date); }
+  var m;
+  try { m = sfkMetrics_(date); }
   catch (e) { return { ok: false, reason: 'error', error: String(e && e.message || e) }; }
+  if (m && m.ok) {
+    try { m.periods = sfkClosedWindows_(m.date); }
+    catch (e) { m.periods = null; }
+  }
+  return m;
 }
 
 /** Run once from the editor to check the connection and see what it reads. */

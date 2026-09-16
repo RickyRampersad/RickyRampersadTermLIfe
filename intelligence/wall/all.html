@@ -60,7 +60,13 @@
   body{margin:0;background:#061c31;color:var(--ink);font-family:var(--font-b);overflow:hidden}
 
   /* The slides. All five live here for the life of the page. */
-  .stage{position:fixed;inset:0;background:#061c31}
+  /* THE CHROME OWNS ITS OWN STRIP. Moving the rail from the foot to the top
+     was not enough on its own — laid over the top of a slide it covered the
+     headline instead of the last row, which is the same fault facing the other
+     way. A slide is built to fill its frame, so the frame has to start below
+     the line. */
+  .stage{position:fixed;left:0;right:0;bottom:0;top:var(--chromeh,46px);background:#061c31}
+  body.stale .stage{top:calc(var(--chromeh,46px) + var(--staleh,0px))}
   .slide{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;
     background:#061c31;opacity:0;visibility:hidden;transition:opacity .55s ease}
   .slide.on{opacity:1;visibility:visible}
@@ -79,7 +85,15 @@
 
   /* The line across the top: time to the next story. Thick enough to be read
      from the far side of the floor. */
-  #bar{position:fixed;left:0;top:0;height:5px;width:0;z-index:31;
+  /* THE CHROME IS ALL ON ONE LINE ACROSS THE TOP NOW. It used to be three
+     things stacked over the foot of every slide — the rail of fourteen stops,
+     the timer pill, and (from this afternoon) the stale-code bar — and the
+     note back was that it was blocking the bottom of the slide. A slide is
+     designed to fill its frame; anything laid over it has to be somewhere the
+     content is not, and on these screens that is the top. So the rail and the
+     timer sit on one line up there, and the only thing left at the foot is the
+     progress line, which is five pixels and covers nothing. */
+  #bar{position:fixed;left:0;bottom:0;height:5px;width:0;z-index:31;
     background:linear-gradient(90deg,var(--gold2),var(--gold));
     box-shadow:0 0 14px rgba(239,194,75,.55)}
   #bar.paused{background:var(--faint);box-shadow:none}
@@ -91,95 +105,93 @@
      the gutter was right at 1920 and too narrow at 1366, where a stop landed
      on top of it. Moving the timer instead is exact at every width, and the
      rail is only up while somebody is standing at the screen. */
-  #hud{position:fixed;right:18px;bottom:14px;z-index:32;display:flex;align-items:center;gap:11px;
-    transition:bottom .3s ease;
-    padding:8px 13px;border-radius:999px;background:rgba(6,28,49,.8);border:1px solid var(--line);
-    box-shadow:0 4px 18px rgba(0,0,0,.35);font:600 13px var(--font-b);color:var(--dim);
-    white-space:nowrap;font-variant-numeric:tabular-nums}
-  body.railup #hud{bottom:calc(var(--railh,96px) + 12px)}
-  #hud b{color:var(--ink);font-weight:700}
-  #hud .sep{color:var(--faint)}
-  #hud .track{width:110px;height:5px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden;flex:none}
-  #hud .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold))}
-  #hud.paused .track i{background:var(--faint)}
-  #hud.nar .track i{background:var(--blue)}
-  #hud.nar #left{color:var(--blue)}
+  #chrome{position:fixed;left:0;right:0;top:0;z-index:34;height:var(--chromeh,46px);
+    display:flex;align-items:center;gap:14px;padding:0 14px;
+    background:rgba(4,20,36,.96);border-bottom:1px solid var(--line);
+    font:600 13px var(--font-b);color:var(--dim);white-space:nowrap;
+    /* nothing on this line may leave the screen: it is the one strip that is
+       the same width as the wall at every size */
+    overflow:hidden}
+  body.stale #chrome{top:var(--staleh,0px)}
 
-  /* The rail: the stops and the controls. For the person setting the screen up,
-     so it fades — unless the wall is paused, when it stays. It keeps clear of
-     the timer on the right. */
-  /* TWELVE STOPS HAVE TO FIT ON ONE LINE. At eleven the rail still did; the
-     twelfth wrapped it onto a second row, and a two-row rail over the foot of
-     a slide is the first thing a room notices. So the stops shrink with the
-     screen instead of wrapping, and the reserve on the right that keeps them
-     clear of the timer shrinks with them. It may still wrap below about
-     1200px — the phone layout is one column and one frame anyway. */
-  #rail{position:fixed;left:0;right:0;bottom:0;z-index:30;
-    padding:clamp(20px,3vh,34px) 26px clamp(10px,1.6vh,15px) 26px;
-    display:flex;flex-wrap:nowrap;align-items:center;gap:clamp(5px,.8vh,8px) clamp(6px,.6vw,10px);
-    background:linear-gradient(to top,rgba(6,28,49,.92),rgba(6,28,49,0));
-    transition:opacity .45s ease}
-  #rail.hide{opacity:0;pointer-events:none}
-  /* THE RAIL IS TWO ROWS AT MOST, NEVER THREE. #rail used to wrap, so with
-     twelve stops the dots took two lines and pushed the controls onto a
-     third — which is what a room reads as jumbled. The rail itself no longer
-     wraps: the dots wrap inside their own block and the controls stay beside
-     them, so the worst case is two rows with Pause and Narrate on the right
-     of them rather than orphaned underneath. */
-  #dots{display:flex;gap:clamp(5px,.5vh,8px) clamp(6px,.5vw,9px);flex-wrap:wrap;
-    align-items:center;flex:1 1 auto;min-width:0}
-  /* The controls sit at the LEFT end of the rail, not the right. On the right
-     they walked into the timer the moment the dots needed two rows on a
-     1366-wide screen; on the left they are as far from it as the bar allows
-     and the reserve on the right belongs to the timer alone. */
-  .ctl{display:flex;gap:8px;align-items:center;flex:none;order:-1;
-    margin-right:14px;padding-right:14px;border-right:1px solid var(--line)}
+  .ctl{display:flex;gap:6px;align-items:center;flex:none}
+  #state{flex:none;font-variant-numeric:tabular-nums}
+  #state b{color:var(--ink);font-weight:800}
+  #state .tab{color:var(--ink);font-weight:700}
+  #state .sep{color:var(--faint)}
+  .track{width:clamp(70px,9vw,140px);height:5px;border-radius:3px;flex:none;
+    background:rgba(255,255,255,.14);overflow:hidden}
+  .track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--gold2),var(--gold))}
+  #chrome.paused .track i{background:var(--faint)}
+  #chrome.nar .track i{background:var(--blue)}
+  #chrome.nar #left{color:var(--blue)}
+
+  /* FOURTEEN STOPS, NUMBERS ONLY. With their names on them they needed two
+     rows at 1366 and the line stopped being a line. The name of the stop you
+     are on is spelled out in #state beside them, which is the only one
+     anybody in the room needs. */
+  #dots{display:flex;gap:5px;align-items:center;flex:1 1 auto;min-width:0;
+    justify-content:flex-end;overflow:hidden}
   .dot{appearance:none;border:1px solid var(--line);background:rgba(255,255,255,.055);
-    color:var(--dim);font:600 clamp(9.5px,.58vw,11.5px) var(--font-b);
-    padding:clamp(4px,.7vh,6px) clamp(7px,.56vw,11px);border-radius:999px;
-    cursor:pointer;white-space:nowrap;transition:color .25s,border-color .25s,background .25s}
+    color:var(--dim);font:600 11px var(--font-b);
+    padding:3px 7px;border-radius:999px;cursor:pointer;white-space:nowrap;flex:none;
+    transition:color .25s,border-color .25s,background .25s}
   .dot:hover{color:var(--ink)}
   .dot.on{color:#07131f;background:linear-gradient(120deg,#efc24b,#c9942c);
     border-color:#c9942c;font-weight:700}
   .dot.dead{opacity:.35;text-decoration:line-through}
-  .ctl .dot{font-size:clamp(11px,.68vw,13px);padding:clamp(4px,.7vh,6px) clamp(9px,.62vw,12px)}
+  .ctl .dot{font-size:12px;padding:4px 9px}
 
   @media (max-width:760px){
-    #rail{padding:22px 12px 58px 12px;flex-wrap:wrap}
-    .ctl{order:0;margin-right:0;padding-right:0;border-right:0}
-    #hud{right:10px;bottom:10px;padding:7px 11px;font-size:12px;gap:9px}
-    #hud .tab,#hud .tabsep{display:none}
-    #hud .track{width:72px}
+    /* On a phone the stops are the one thing worth losing: the rail's job
+       there is the controls and which story you are on. */
+    #chrome{gap:8px;padding:0 9px;font-size:11.5px}
+    #dots{display:none}
+    #state .tab,#state .tabsep{display:none}
+    /* The 5px line across the foot is the same progress, full width. Two of
+       them on a 390px screen is what pushed the birthday chip off the edge. */
+    .track{display:none}
+    /* Icons only. "Pause" and "Narrate" spelled out pushed the birthday chip
+       off the right of a 390px screen. */
+    #pp .lbl,#nar .lbl{display:none}
+    .ctl .dot{padding:4px 7px}
+    #cake{padding:4px 8px}
+    #cake b{display:none}
   }
   /* Our own birthday, on every slide: the birthdays story says who, and the
      wish rides the whole wall for the day. Top centre, clear of the stories'
      titles and clocks; on a phone it sits above the timer. */
-  #cake{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:32;display:flex;align-items:center;gap:10px;
-    padding:8px 16px;border-radius:999px;background:linear-gradient(120deg,#efc24b,#c9942c);color:#07131f;
-    box-shadow:0 8px 26px rgba(239,194,75,.35);font:700 14px var(--font-b);white-space:nowrap;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
+  /* STEPHANIE'S BIRTHDAY, AND EVERYBODY ELSE'S, ON EVERY SLIDE — BUT OUT OF
+     THE WAY. It was a pill across the top centre, which is where the slides
+     put their own headline, and it dropped to the foot on a phone. Against the
+     right-hand edge it covered a table row instead. So it lives on the chrome
+     line with everything else: on every screen all day, never moving, and
+     over nothing, because the line is not laid on the slide. */
+  #cake{display:flex;align-items:center;gap:7px;flex:none;
+    padding:4px 11px 4px 9px;border-radius:999px;
+    border:1px solid rgba(239,194,75,.45);background:rgba(239,194,75,.15);
+    font:600 12px var(--font-b);color:var(--ink)}
   #cake[hidden]{display:none}
-  #cake .i{font-size:20px;line-height:1}
-  #cake span{font-weight:600;opacity:.8}
-  @media (max-width:760px){
-    #cake{top:auto;bottom:54px;left:10px;right:10px;transform:none;max-width:none;font-size:13px;padding:7px 12px}
-  }
-  /* THE WALL MUST SAY WHEN IT IS RUNNING OLD CODE. On 15 and 16 September 2026
-     the birthday strip named two agents whose birthday it was not, both
-     mornings, and the branch manager's question the second time was "why is
-     this the 2nd time". The answer was that the fix had been written the day
-     before and never pasted into Apps Script — and nothing on the screen said
-     so. The data rebuilds nightly, so the wall showed "built today" and looked
-     perfectly healthy while serving three-week-old logic. A stale deployment
-     has to be visible on the screen somebody is already looking at. */
-  #stale{position:fixed;left:0;right:0;bottom:0;z-index:40;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));
-         background:#8f1d1d;color:#fff;font:600 14px/1.45 ui-sans-serif,system-ui,sans-serif;
-         display:flex;gap:10px;align-items:baseline;justify-content:center;flex-wrap:wrap;text-align:center}
+  #cake .i{font-size:14px;line-height:1}
+  #cake b{font-weight:800}
+  @media (max-width:900px){ #cake .i{font-size:13px} }
+  /* Moved to the top with everything else, and cut to ONE line: at 82px over
+     the foot it was covering the last row of whichever slide was up, which is
+     exactly the complaint that moved the rest of the chrome. */
+  #stale{position:fixed;left:0;right:0;top:0;z-index:41;
+    padding:9px 16px calc(9px + env(safe-area-inset-top,0px));
+    background:#8f1d1d;color:#fff;font:600 13.5px/1.3 ui-sans-serif,system-ui,sans-serif;
+    display:flex;gap:9px;align-items:baseline;justify-content:center;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   #stale[hidden]{display:none}
   #stale b{font-weight:800}
   #stale span{font-weight:400;opacity:.9}
-  #stale code{font:inherit;font-weight:800;background:rgba(255,255,255,.16);padding:1px 6px;border-radius:5px}
-  @media (max-width:760px){ #stale{font-size:12.5px;padding:8px 10px calc(8px + env(safe-area-inset-bottom,0px))} }
-  @media print{#rail,#bar,#boot,#hud,#cake,#stale{display:none}}
+  #stale code{font:inherit;font-weight:800;background:rgba(255,255,255,.16);padding:1px 5px;border-radius:4px}
+  @media (max-width:900px){
+    #stale{font-size:12px;padding:7px 10px calc(7px + env(safe-area-inset-top,0px))}
+    #stale .hint{display:none}
+  }
+  @media print{#chrome,#bar,#boot,#cake,#stale{display:none}}
 </style>
 </head>
 <body>
@@ -187,27 +199,22 @@
 <div class="stage" id="stage"></div>
 <div id="bar"></div>
 
-<div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b><span>— happy birthday from all of us</span></div>
-
 <div id="stale" hidden>
-  <b>This wall is running old code.</b>
-  <span>The script deployed is <code id="staleGot"></code> and these screens were built for <code id="staleWant"></code>.
-  Figures and names on screen may be wrong. Paste Intelligence.gs, then Deploy → Manage deployments → pencil → New version.</span>
+  <b>Running old code.</b>
+  <span>Deployed <code id="staleGot"></code>, screens built for <code id="staleWant"></code> — figures may be wrong.<span class="hint"> Paste Intelligence.gs → Deploy → New version.</span></span>
 </div>
 
-<div id="hud">
-  <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
-  <span class="track"><i id="fill"></i></span>
-</div>
-
-<div id="rail" class="hide">
-  <div id="dots"></div>
+<div id="chrome">
   <div class="ctl">
     <button class="dot" type="button" id="prev" title="previous story (←)">‹</button>
-    <button class="dot" type="button" id="pp" title="pause or go on (space)">⏸ Pause</button>
+    <button class="dot" type="button" id="pp" title="pause or go on (space)">⏸<span class="lbl"> Pause</span></button>
     <button class="dot" type="button" id="next" title="next story (→)">›</button>
-    <button class="dot" type="button" id="nar" title="narrate this story (n)">▶ Narrate</button>
+    <button class="dot" type="button" id="nar" title="narrate this story (n)">▶<span class="lbl"> Narrate</span></button>
   </div>
+  <span id="state"><b id="pos"></b><span class="tabsep sep"> · </span><span class="tab" id="tab"></span><span class="sep"> · </span><span id="left"></span></span>
+  <span class="track"><i id="fill"></i></span>
+  <div id="dots"></div>
+  <div id="cake" hidden><span class="i">🎂</span><b id="cakeWho"></b></div>
 </div>
 
 <div id="boot">
@@ -235,12 +242,16 @@ var SLIDES = [
      a policy yet, and it is the only screen here that can still be changed
      by somebody picking up a phone this afternoon. */
   { file:'pending.html',    tab:'What is pending',   secs:22 },
-  /* The three that turn the pending list into a morning's work: what can be
-     collected, whose move each case is, and who is actually holding it up. */
-  { file:'ready.html',      tab:'Ready to settle',   secs:20 },
-  { file:'triage.html',     tab:'Whose move is it',  secs:22 },
-  { file:'culprits.html',   tab:'Who is holding it up', secs:22 },
+  /* Ready to settle, whose move is it and who is holding it up were three
+     slides here until 17 September 2026. All three read the pending feed, and
+     the rebuilt pending screen now carries what they said — what can be
+     worked today, and which agent is holding which requirement back. */
   { file:'index.html',      tab:'Premium dues',      secs:26 },
+  /* Lapses have their own screen since 17 September 2026: the dues line is
+     policies still alive on a paid-to clock, lapses are what was lost on a
+     lapse-date clock, and two clocks on one slide is the disagreement the
+     dues domain already carried. The link between them is one counter. */
+  { file:'lapses.html',     tab:'Lapses',            secs:24 },
   { file:'possession.html', tab:'In our possession', secs:22 },
   { file:'delivery.html',   tab:'With the agent',    secs:22 },
   { file:'licence.html',    tab:'The licence year',  secs:22 },
@@ -255,7 +266,6 @@ var SLIDES = [
      date, so it could never share a screen with the conversions — but the
      Liberators whose premium stops at 65 can be extended for an additional
      premium, and that is the one thing on it an agent can act on this week. */
-  { file:'permanent.html',  tab:'The permanent book', secs:24 },
   /* EVERY RIDER HAS AN EXPIRY — the branch's own correction, and the reason
      this screen exists. The critical illness riding on a whole-life policy
      stops on a date even though the policy it rides on never does, and on
@@ -334,10 +344,9 @@ var BORN = Date.now();
 
 var stage = document.getElementById('stage'),
     dots  = document.getElementById('dots'),
-    rail  = document.getElementById('rail'),
+    chrome = document.getElementById('chrome'),
     bar   = document.getElementById('bar'),
     fill  = document.getElementById('fill'),
-    hud   = document.getElementById('hud'),
     pos   = document.getElementById('pos'),
     tab   = document.getElementById('tab'),
     left  = document.getElementById('left'),
@@ -385,7 +394,8 @@ SLIDES.forEach(function (s, i) {
   var b = document.createElement('button');
   b.className = 'dot';
   b.type = 'button';
-  b.textContent = (i + 1) + '. ' + s.tab;
+  b.textContent = String(i + 1);
+  b.title = s.tab;
   b.onclick = function () { show(i); rest(); };
   s.dot = b;
   dots.appendChild(b);
@@ -490,14 +500,18 @@ function setPaused(v) {
   if (v && !paused) heldAt = Date.now();
   paused = !!v;
   bar.classList[paused ? 'add' : 'remove']('paused');
-  hud.classList[paused ? 'add' : 'remove']('paused');
-  pp.textContent = paused ? '▶ Play' : '⏸ Pause';
+  chrome.classList[paused ? 'add' : 'remove']('paused');
+  /* innerHTML, not textContent: the word is in its own span so the phone rule
+     can drop it and leave the glyph. textContent threw the span away and the
+     word came back on a 390px screen. */
+  pp.innerHTML = paused ? '▶<span class="lbl"> Play</span>'
+                        : '⏸<span class="lbl"> Pause</span>';
   rest(); wake();
 }
 function setNarrating(v) {
   if (v && !narrating) spokeAt = Date.now();
   narrating = !!v;
-  hud.classList[narrating ? 'add' : 'remove']('nar');
+  chrome.classList[narrating ? 'add' : 'remove']('nar');
   nar.textContent = narrating ? '■ Stop' : '▶ Narrate';
   nar.classList[narrating ? 'add' : 'remove']('on');
 }
@@ -592,25 +606,24 @@ document.getElementById('next').onclick = function () { step(); rest(); wake(); 
 document.getElementById('prev').onclick = function () { show((at - 1 + SLIDES.length) % SLIDES.length); rest(); wake(); };
 nar.onclick = narrate;
 
-/* The rail is for the person setting the screen up, not for the floor — so it
-   fades, unless the wall is paused, when it stays until it goes on. */
-var hideAt;
-/* body.railup is what lifts the timer clear of the rail. It is a class on the
-   body rather than a :has() selector because the wall runs on a television
-   browser that predates :has(), and a selector it cannot parse would drop the
-   rule silently and put the timer back under the stops. */
-function railup(on) {
-  document.body.classList[on ? 'add' : 'remove']('railup');
-  if (on) document.documentElement.style.setProperty('--railh', rail.offsetHeight + 'px');
+/* THE LINE DOES NOT FADE ANY MORE. It used to, because it was laid over the
+   foot of the slide and a strip of chrome on a wall all day is clutter. Now it
+   has a strip of its own that no slide draws into, so there is nothing to hide
+   from — and a wall whose controls appear only if you wave at it is a wall
+   nobody can find the controls on.
+
+   What is still measured is its height, because .stage starts underneath it
+   and the line is taller on a phone than on a television. Measured rather than
+   assumed: a hard-coded 46 was right at 1366 and clipped five pixels off every
+   slide at 390. */
+function chromeH() {
+  var h = Math.ceil(chrome.getBoundingClientRect().height) || 46;
+  document.documentElement.style.setProperty('--chromeh', h + 'px');
 }
-function wake() {
-  rail.classList.remove('hide');
-  railup(true);
-  clearTimeout(hideAt);
-  if (!paused) hideAt = setTimeout(function () {
-    rail.classList.add('hide'); railup(false);
-  }, 4000);
-}
+chromeH();
+window.addEventListener('resize', chromeH);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(chromeH);
+function wake() { }
 ['mousemove', 'keydown', 'touchstart'].forEach(function (ev) { document.addEventListener(ev, wake); });
 wake();
 
@@ -642,7 +655,7 @@ if (LONE) {
 
    It fails quiet: a wall that cannot reach the script already says "no feed"
    on every screen, and a second red bar for the same fault is noise. */
-var WANT_SCRIPT = '2026-09-16a';
+var WANT_SCRIPT = '2026-09-17a';
 var PING_URL = 'https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec';
 
 function versionCheck() {
@@ -660,6 +673,12 @@ function versionCheck() {
           document.getElementById('staleWant').textContent = WANT_SCRIPT;
         }
         el.hidden = !bad;
+        /* The rail and the timer sit under this bar, so they need its real
+           height rather than a guess: it is one line at 1366 and can be two
+           on a narrow phone. */
+        document.body.classList.toggle('stale', bad);
+        document.documentElement.style.setProperty('--staleh',
+          (bad ? Math.ceil(el.getBoundingClientRect().height) : 0) + 'px');
       })
       .catch(function () {});
   } catch (e) {}

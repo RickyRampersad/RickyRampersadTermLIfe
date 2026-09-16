@@ -27,6 +27,7 @@
     --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
     --grad-gold:linear-gradient(120deg,#efc24b,#c9942c);
     --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --nameCol:200px; --numCol:190px;
     --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
     --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
   }
@@ -62,43 +63,142 @@
     display:grid;place-items:center;font-size:12px;line-height:1}
 
 
-  /* Full height, four columns: on a television the four blocks of the day
-     should be four columns of the screen, not four cards along the top. */
-  main{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:18px;padding:6px 26px 26px;
-    height:calc(100vh - 74px)}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
-    padding:18px 18px 16px;display:flex;flex-direction:column;min-height:0}
-  .when{font-family:var(--font-d);font-weight:800;font-size:22px;letter-spacing:-.5px;color:var(--gold)}
-  .focus{font-size:12px;color:var(--dim);margin:3px 0 12px;line-height:1.4;min-height:34px}
-  .ring{display:flex;align-items:baseline;gap:8px;margin-bottom:4px}
-  .ring .v{font-family:var(--font-d);font-weight:800;font-size:52px;line-height:.9;letter-spacing:-2px}
-  .ring .of{font-size:14px;color:var(--faint)}
-  .bar{height:8px;border-radius:5px;background:rgba(255,255,255,.11);overflow:hidden;margin:10px 0 12px}
-  .bar i{display:block;height:100%;border-radius:5px;background:var(--grad-gold)}
-  .bar.full i{background:linear-gradient(120deg,#34d399,#0f9d76)}
-  .who{display:flex;flex-direction:column;gap:5px;overflow:hidden;flex:1;justify-content:center}
-  .who div{font-size:15px}
-  .who div{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--dim)}
-  .who i{width:8px;height:8px;border-radius:50%;flex:none;background:rgba(255,255,255,.2)}
-  .who i.done{background:var(--good)} .who i.due{background:var(--gold)}
-  .who .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .foot{font-size:11px;color:var(--faint);margin-top:10px;padding-top:9px;
-    border-top:1px solid var(--line);line-height:1.45}
 
-  /* Four columns become four stacked cards; the whole thing scrolls. */
+  /* ── THE DAY, AS ONE PICTURE ───────────────────────────────────────────────
+     This slide was four cards reading "3 of 6 filed", which is a progress bar
+     about paperwork. What the branch manager actually plans his morning from is
+     WHO IS DOING WHAT, RIGHT NOW — so the screen is now one row per desk,
+     ordered by who answers to whom, against one shared clock.
+
+     The bands are 5–10am, 10–12, 1–3 and 3–4. The first one is wide on purpose:
+     the day is called from seven but people arrive across a spread, and a band
+     that starts at eight makes an early start look like no start at all. */
+  main{display:flex;flex-direction:column;gap:5px;padding:0 22px 10px;
+    height:calc(100vh - 74px);min-height:0}
+
+  /* the shared clock across the top, and the only place times are named */
+  .axis{display:grid;grid-template-columns:var(--nameCol) repeat(4,1fr) var(--numCol);
+    gap:8px;align-items:end;padding:0 2px 3px;position:relative;flex:none}
+  .axis .ah{font:800 11.5px/1.15 var(--font-d);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--dim)}
+  .axis .ab{font:800 13px/1.2 var(--font-d);color:var(--ink);text-align:center;
+    padding-bottom:5px;border-bottom:2px solid var(--line);position:relative}
+  .axis .ab small{display:block;font:600 10.5px/1.3 var(--font-b);letter-spacing:.06em;
+    text-transform:uppercase;color:var(--faint);margin-top:2px}
+  .axis .ab.now{border-bottom-color:var(--gold)}
+  .axis .ab.now:after{content:"NOW";position:absolute;right:0;top:-2px;
+    font:800 9.5px/1 var(--font-d);letter-spacing:.14em;color:var(--gold)}
+  .axis .ab.past{opacity:.72}
+
+  /* one band of the org chart: a label, then its desks */
+  .grp{display:flex;flex-direction:column;gap:3px;min-height:0;flex:none}
+  .grp>.gl{display:flex;align-items:center;gap:9px;
+    font:800 10.5px/1 var(--font-d);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--gold);padding:0 2px}
+  .grp>.gl:after{content:"";flex:1;height:1px;background:var(--line)}
+
+  /* one desk */
+  .desk{display:grid;grid-template-columns:var(--nameCol) repeat(4,1fr) var(--numCol);
+    gap:8px;align-items:stretch;background:var(--card);border:1px solid var(--line);
+    border-radius:10px;padding:4px 10px}
+  .desk.out{opacity:.5}
+  .who{display:flex;flex-direction:column;justify-content:center;min-width:0}
+  .who b{font:700 13.5px/1.2 var(--font-d);color:var(--ink);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .who span{font:500 10.5px/1.25 var(--font-b);color:var(--faint);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .who span.late{color:var(--gold)}
+  .who span.abs{color:#f08a8a}
+
+  /* one block for one desk: the dot, the task type it is for, what moved */
+  .cell{display:flex;align-items:center;gap:7px;min-width:0;
+    border-left:1px solid var(--line);padding-left:8px}
+  .cell.blank{border-left-color:transparent}
+  .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto;
+    border:2px solid var(--grey);background:transparent}
+  .dot.pending{border-color:var(--grey);background:transparent}
+  .dot.late{border-color:#e06767;background:transparent;
+    box-shadow:0 0 0 3px rgba(224,103,103,.16)}
+  .dot.moved{border-color:var(--blue);background:var(--blue)}
+  .dot.closed{border-color:var(--good);background:var(--good);
+    box-shadow:0 0 0 3px rgba(52,211,153,.18)}
+  .dot.stuck{border-color:var(--gold);background:var(--gold);
+    box-shadow:0 0 0 3px rgba(239,194,75,.2)}
+  .ct{min-width:0;flex:1}
+  .ct b{display:flex;align-items:baseline;gap:6px;font:700 11px/1.2 var(--font-b);color:var(--ink);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ct b>span{overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0}
+  /* What the desk typed, demoted to a caption beside the block's name once
+     Salesforce is giving the real figure underneath. It stays on the name's
+     line because a third line per cell is ten desks times eleven pixels,
+     which is the last desk off the bottom of a 720 screen. */
+  .ct b small{font:600 8.5px/1 var(--font-b);color:var(--faint);letter-spacing:.02em;flex:none}
+  .ct b small.late{color:#e06767}
+  .ct span{display:block;font:600 9.5px/1.25 var(--font-b);color:var(--faint);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ct span em{font-style:normal;color:var(--good)}
+  .ct span i{font-style:normal;color:var(--blue)}
+  .ct span u{text-decoration:none;color:var(--gold)}
+  .ct span strong{font-weight:700;color:var(--ink)}
+  /* A block Salesforce has no task type for: the name is dimmed a shade and
+     the legend says why, once. Nothing is written in the cell itself. */
+  .cell.notype .ct b>span{color:var(--dim)}
+
+  /* what Salesforce says the desk actually did today */
+  .num{display:flex;align-items:center;justify-content:flex-end;gap:11px}
+  .num div{text-align:right}
+  .num b{display:block;font:800 15px/1 var(--font-d);color:var(--ink)}
+  .num b.z{color:var(--faint)}
+  .num b.bad{color:#f08a8a}
+  .num span{display:block;font:600 9.5px/1.3 var(--font-b);letter-spacing:.07em;
+    text-transform:uppercase;color:var(--faint);margin-top:2px}
+
+  /* the blocks over time — today, the week, the month, the year — one line,
+     branch-wide, so "20 of 40 by eleven" has something to stand against */
+  .trend{display:flex;align-items:center;gap:0 18px;flex-wrap:nowrap;overflow:hidden;
+    padding:3px 4px 2px;flex:none;font:600 10.5px/1.3 var(--font-b);color:var(--faint)}
+  .trend .tt{font:800 9.5px/1 var(--font-d);letter-spacing:.14em;text-transform:uppercase;
+    color:var(--gold);flex:none}
+  .trend strong{color:var(--ink);font-weight:800;font-variant-numeric:tabular-nums}
+  .trend span.dim strong{color:var(--dim)}
+
+  /* the legend, and the one line of branch total */
+  .key{display:flex;align-items:center;gap:14px;flex-wrap:nowrap;overflow:hidden;padding:4px 4px 0;
+    margin-top:auto;flex:none;
+    font:600 10.5px/1.3 var(--font-b);color:var(--faint)}
+  .key i{display:inline-block;width:9px;height:9px;border-radius:50%;
+    margin-right:5px;vertical-align:-1px;border:2px solid var(--grey)}
+  .key i.moved{border-color:var(--blue);background:var(--blue)}
+  .key i.closed{border-color:var(--good);background:var(--good)}
+  .key i.stuck{border-color:var(--gold);background:var(--gold)}
+  .key i.late{border-color:#e06767}
+  .key>span{white-space:nowrap}
+  .key .sp{flex:1}
+  .key strong{color:var(--ink);font-weight:800}
+
+  .empty{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:22px;font:600 15px var(--font-b);color:var(--dim)}
+
+  /* At 1280 the cell has 172px for "12 open · 5 touched · 10 closed" and
+     needs about 180, so the name and figure columns give up a little each. */
+  @media (max-width:1400px){
+    :root{--nameCol:180px;--numCol:168px}
+  }
+  @media (max-width:900px){
+    .axis .ab small{display:none}
+    .ct span{display:none}
+  }
   @media (max-width:760px){
     body{overflow:auto}
-    header{flex-wrap:wrap;padding:12px 12px 8px;gap:10px}
-    header h1{font-size:15px}
-    header .sub{font-size:10.5px}
-    header .right{margin-left:0;width:100%}
-    main{grid-template-columns:1fr;height:auto;padding:6px 12px 26px;gap:12px}
-    .card{padding:14px 15px}
-    .when{font-size:19px}
-    .focus{min-height:0;margin-bottom:9px}
-    .ring .v{font-size:40px}
-    .who{justify-content:flex-start}
-    .who div{font-size:13.5px}
+    main{height:auto;padding:2px 12px 22px;gap:9px}
+    .axis{display:none}
+    .desk{grid-template-columns:1fr 1fr;gap:6px 8px;padding:9px 11px}
+    .who{grid-column:1 / -1}
+    .cell{border-left:none;padding-left:0}
+    .ct span{display:block}
+    .num{grid-column:1 / -1;justify-content:flex-start;gap:16px;
+      border-top:1px solid var(--line);padding-top:7px;margin-top:2px}
+    .num div{text-align:left}
   }
 </style>
 </head>
@@ -108,7 +208,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>The Day In Blocks</h1>
-    <div class="sub">How the day was spent &middot; the four blocks &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub">Every desk, against one clock &middot; who moved what, and what is stuck</div>
   </div>
   <div class="right">
     <button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button>
@@ -124,21 +224,254 @@
 var DAY_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
 var D = { configured:false, error:"No feed yet." };
 function $(s){return document.querySelector(s)}
-function n(v){ return v==null ? "\u2014" : Number(v).toLocaleString("en-US"); }
+function n(v){ return v==null ? "—" : Number(v).toLocaleString("en-US"); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function first(x){ return String(x||"").split(" ")[0]; }
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",{hour:"2-digit",minute:"2-digit"}) }
 setInterval(tick,10000); tick();
-/* ONE MISSED READ USED TO COST HALF AN HOUR. Seven screens post to the same
-   Apps Script within seconds of each other when the wall boots and again on
-   every refresh, and Google drops one of those now and then — a reset, a
-   queue, a cold container. The page fetched once, fell into its catch, and sat
-   on "no feed" until the next thirty-minute tick, which is exactly what the
-   branch kept seeing on "some walls" while the others were fine.
 
-   Three tries, four seconds apart, before anything is called broken. A feed
-   that answers on the second attempt is a feed that answers. */
+/* ── THE FOUR BANDS ─────────────────────────────────────────────────────────
+   Named here and nowhere else, because a screen that disagrees with itself
+   about when the morning is is worse than a screen with no times on it.
+
+   The first band runs 5 to 10. The branch is called from seven, but people
+   arrive across a spread — one desk from seven, another from eight, another
+   from nine — and the block is not owed until ten. A band labelled "8 – 10am"
+   made an early start look like no start, so the band is the window the work
+   is allowed to happen in, not one person's shift. Each desk's own hours stay
+   in the tracker, where they belong.                                         */
+var BANDS = [
+  { id:"KPI1", label:"5 – 10am",  due:10 },
+  { id:"KPI2", label:"10 – 12pm", due:12 },
+  { id:"PM1",  label:"1 – 3pm",   due:15 },
+  { id:"PM2",  label:"3 – 4pm",   due:16 }
+];
+
+/* ── WHO ANSWERS TO WHOM ────────────────────────────────────────────────────
+   The wall used to sort desks by who had closed the most, which reads as a
+   league table. The branch is not a league table: it is a manager, his
+   assistant, the unit managers, and the desks that carry the work. Read top
+   to bottom and the screen says who is accountable for the row beneath.
+
+   The tier is the feed's, off the tracker's roster — tierOrder says where
+   the band sits and tierLabel what to call it. This page carried its own
+   regex over the Role column until 16 September 2026, and it disagreed with
+   the day page beside it about who was management; two screens on one wall
+   reading one column two ways is worse than either reading alone. A feed
+   from before tiers existed puts every desk in one band with no heading. */
+function tiersOf(desks){
+  var groups=[], byKey={};
+  desks.forEach(function(d){
+    var o = d.tierOrder!=null ? Number(d.tierOrder) : 99, k = o+"|"+(d.tierLabel||"");
+    if (!byKey[k]){ byKey[k] = { order:o, label:d.tierLabel||"", rows:[] }; groups.push(byKey[k]); }
+    byKey[k].rows.push(d);
+  });
+  groups.sort(function(a,b){ return a.order-b.order; });
+  return groups;
+}
+
+/* Which band the clock is in, from the feed's own "at" so the marker agrees
+   with the figures rather than with the browser's clock. */
+function nowBand(){
+  var at = String(D.at||"");
+  var h = /^(\d{1,2}):/.test(at) ? Number(at.split(":")[0]) : new Date().getHours();
+  for (var i=0;i<BANDS.length;i++) if (h < BANDS[i].due) return i;
+  return BANDS.length;          // the day's blocks are all behind us
+}
+
+/* A desk's four blocks, whichever shape the script sent.
+   bx is the richer one (task type, what moved, what is stuck) and arrives once
+   Intelligence.gs 2026-09-16b is deployed. Before that the feed carries four
+   strings, and the screen draws the same picture with less in it rather than
+   an error — the layout is not waiting on a paste. */
+function cellsOf(d){
+  var nb = nowBand();
+  return BANDS.map(function(b,i){
+    var x = (d.bx||[])[i];
+    if (x && typeof x === "object") return x;
+    var s = (d.blocks||[])[i];
+    if (!s) return { id:b.id, state:"", kpi:"", moved:0, closed:0, stuck:false };
+    return { id:b.id, kpi:"", moved:0, closed:0, stuck:false,
+             state: s === "done" ? "moved" : (i < nb ? "late" : "pending") };
+  });
+}
+
+/* What the desk typed into the block: a count of the things it listed.
+   Free text, so it is how many they wrote down, not a figure from Salesforce. */
+function filedText(x){
+  var items = (x.moved||0) + (x.closed||0);
+  if (items) return 'filed: ' + items + (items === 1 ? ' item' : ' items');
+  return x.state === "late" ? "not filed" : (x.state === "pending" ? "to come" : (x.stuck ? "blocked" : "filed"));
+}
+var noType = false;      // set while painting: some block has no Salesforce type
+function cell(x, band, isNow){
+  if (!x.state) return '<div class="cell blank"></div>';
+  var name = esc(x.kpi || x.focus || band.id), sf = x.sf && typeof x.sf === "object" ? x.sf : null;
+  if (sf){
+    /* THE REAL FIGURE. Open, touched and closed today for the task type this
+       block is for, from Salesforce — and what the desk typed drops to a
+       caption beside the name. Blocked keeps its word: the dot says so and
+       the caption says why the numbers have not moved. */
+    var cap = x.stuck ? 'blocked' : filedText(x);
+    return '<div class="cell">'
+      + '<span class="dot '+x.state+'"></span>'
+      + '<span class="ct"><b><span>'+name+'</span><small'+(x.state==="late"&&!((x.moved||0)+(x.closed||0))?' class="late"':'')+'>'+esc(cap)+'</small></b>'
+      + '<span><strong>'+n(sf.open||0)+'</strong> open &middot; <i>'+n(sf.touched||0)+' touched</i> &middot; <em>'+n(sf.closed||0)+' closed</em></span></span></div>';
+  }
+  /* No figure from Salesforce: either the type has no tasks on this desk
+     today, or the block is words only — reporting, escalations — and then
+     the desk's own words are all there is. */
+  if (!x.type) noType = true;
+  var bits = [];
+  if (x.closed) bits.push('<em>'+x.closed+' closed</em>');
+  if (x.moved)  bits.push('<i>'+x.moved+' moved</i>');
+  if (x.stuck)  bits.push('<u>blocked</u>');
+  if (!bits.length) bits.push(x.state === "late" ? "not filed" :
+                              (x.state === "pending" ? "to come" : "filed"));
+  return '<div class="cell'+(x.type ? '' : ' notype')+'">'
+    + '<span class="dot '+x.state+'"></span>'
+    + '<span class="ct"><b><span>'+name+'</span></b>'
+    + '<span>'+bits.join(" &middot; ")+'</span></span></div>';
+}
+
+/* The blocks over time, branch-wide: today off the branch line, the week,
+   the month and the year summed off every desk's own blocksPeriods. A feed
+   without them draws nothing rather than a row of dashes. */
+function trendLine(b, desks){
+  var sum = { week:{filed:0,of:0}, month:{filed:0,of:0}, ytd:{filed:0,of:0} }, any = false;
+  desks.forEach(function(d){
+    var bp = d.blocksPeriods; if (!bp || typeof bp !== "object") return;
+    ["week","month","ytd"].forEach(function(w){
+      if (!bp[w]) return; any = true;
+      sum[w].filed += Number(bp[w].filed||0); sum[w].of += Number(bp[w].of||0);
+    });
+  });
+  if (!any) return "";
+  var one = function(lab, filed, of){
+    return '<span'+(filed?'':' class="dim"')+'>'+lab+' <strong>'+n(filed)+'</strong> of '+n(of)+'</span>';
+  };
+  return '<div class="trend"><span class="tt">Blocks filed</span>'
+    + one('today', b.done||0, b.of||0)
+    + one('this week', sum.week.filed, sum.week.of)
+    + one('this month', sum.month.filed, sum.month.of)
+    + one('this year', sum.ytd.filed, sum.ytd.of) + '</div>';
+}
+
+function desk(d){
+  var cs = cellsOf(d), nb = nowBand();
+  var when = d.absent ? '<span class="abs">absent today</span>'
+    : d["in"] ? '<span'+(d.late>0?' class="late"':'')+'>in '+esc(d["in"])
+                + (d.late>0 ? " &middot; "+d.late+" min late" : "")
+                + (d.out ? " &middot; out "+esc(d.out) : "")+'</span>'
+    : '<span>not signed in</span>';
+  return '<div class="desk'+(d.absent?" out":"")+'">'
+    + '<div class="who"><b>'+esc(d.name)+'</b>'+when+'</div>'
+    + cs.map(function(x,i){ return cell(x, BANDS[i], i===nb); }).join("")
+    + '<div class="num">'
+    +   '<div><b class="'+(d.closed?"":"z")+'">'+n(d.closed)+'</b><span>closed</span></div>'
+    +   '<div><b class="'+(d.open?"":"z")+'">'+n(d.open)+'</b><span>open</span></div>'
+    +   '<div><b class="'+(d.overdue?"bad":"z")+'">'+n(d.overdue)+'</b><span>overdue</span></div>'
+    + '</div></div>';
+}
+
+function paint(){
+  var wrap = $("#bWrap");
+  if (!D.configured && !(D.desks||[]).length){
+    wrap.innerHTML = '<div class="empty">'+esc(D.error||"Waiting on the tracker.")+'</div>';
+    return;
+  }
+  var desks = (D.desks||[]).slice();
+  var nb = nowBand();
+  noType = false;
+
+  /* Inside a tier, alphabetical. Sorting by output within a tier is the league
+     table again, one level down. */
+  var groups = tiersOf(desks);
+  groups.forEach(function(g){
+    /* Feed order inside a tier: the branch manager first, then the busiest
+       desk. Alphabetical here on 17 September put a unit manager above him. */
+  });
+  var label = groups.length > 1 || (groups[0] && groups[0].label);
+
+  var axis = '<div class="axis"><div class="ah">Desk</div>'
+    + BANDS.map(function(b,i){
+        var cls = i===nb ? " now" : (i<nb ? " past" : "");
+        return '<div class="ab'+cls+'">'+b.label+'<small>'+b.id+'</small></div>';
+      }).join("")
+    + '<div class="ah" style="text-align:right">Today</div></div>';
+
+  var body = groups.map(function(g){
+    if (!g.rows.length) return "";
+    return '<div class="grp">'+(label && g.label ? '<div class="gl">'+esc(g.label)+'</div>' : '')
+      + g.rows.map(desk).join("") + '</div>';
+  }).join("");
+
+  var b = D.branch || {};
+  var key = '<div class="key">'
+    + '<span><i class="closed"></i>closed something</span>'
+    + '<span><i class="moved"></i>moved it on</span>'
+    + '<span><i class="stuck"></i>waiting on somebody</span>'
+    + '<span><i class="late"></i>past its hour, not filed</span>'
+    + (noType ? '<span>dimmed: no Salesforce type for this block</span>' : '')
+    + '<span class="sp"></span>'
+    + '<span><strong>'+n(b.done)+' of '+n(b.of)+'</strong> blocks filed &middot; '
+    + '<strong>'+n(b["in"])+'</strong> signed in'
+    + (b.absent ? ' &middot; <strong>'+n(b.absent)+'</strong> absent' : '')
+    + (D.at ? ' &middot; as at '+esc(D.at) : '')+'</span></div>';
+
+  wrap.innerHTML = axis + trendLine(b, desks) + body + key;
+  fitIn();
+}
+
+/* THE WALL HAS NO SCROLLBAR — body is overflow:hidden — so a row too many is
+   a row nobody can see and nobody knows is missing. And the frame is not the
+   screen: inside the player the slide is 46 pixels shorter than it is on its
+   own, which is one desk's worth, so this has to measure rather than assume.
+
+   MEASURED BY GEOMETRY, NOT BY scrollHeight. The first cut of this compared
+   wrap.scrollHeight against wrap.clientHeight, which does not grow on a flex
+   column whose overflow is visible — so it reported a perfect fit while the
+   last desk sat underneath the legend. Comparing the last desk's own bottom
+   edge against the top of the legend is true whatever the overflow is doing.
+
+   Desks come off whole, from the foot, and the legend says how many went. */
+function fitIn(){
+  var wrap = $("#bWrap");
+  if (window.innerWidth <= 760) return;
+  var key = wrap.querySelector(".key");
+  if (!key) return;
+  var dropped = 0, guard = 0;
+  function overflows(){
+    var ds = wrap.querySelectorAll(".desk");
+    if (!ds.length) return false;
+    return ds[ds.length-1].getBoundingClientRect().bottom > key.getBoundingClientRect().top - 2;
+  }
+  while (overflows() && guard++ < 40){
+    var grps = wrap.querySelectorAll(".grp");
+    var last = null;
+    for (var i=grps.length-1;i>=0;i--){ if (grps[i].querySelectorAll(".desk").length){ last = grps[i]; break; } }
+    if (!last) break;
+    var ds2 = last.querySelectorAll(".desk");
+    ds2[ds2.length-1].remove();
+    dropped++;
+    if (!last.querySelectorAll(".desk").length) last.remove();
+  }
+  if (dropped){
+    var note = wrap.querySelector("#trimNote");
+    var txt = dropped + " desk" + (dropped===1?"":"s") + " did not fit";
+    if (note) note.textContent = txt;
+    else {
+      var sp = wrap.querySelector(".key .sp");
+      if (sp) sp.insertAdjacentHTML("beforebegin",
+        '<span id="trimNote" style="color:var(--gold)">'+txt+'</span>');
+    }
+  }
+}
+window.addEventListener("resize", function(){ paint(); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(paint);
+
+/* Three tries, four seconds apart, before anything is called broken. */
 function feed(url, body, tries){
   tries = tries === undefined ? 3 : tries;
   return fetch(url,{method:"POST",headers:{"Content-Type":"text/plain;charset=utf-8"},
@@ -152,48 +485,19 @@ function feed(url, body, tries){
 }
 
 function load(){
+  if(!DAY_URL){ paint(); return; }
   feed(DAY_URL,{action:"intel.day"})
     .then(function(j){
       if(!j||!j.ok||!j.data) throw new Error("bad feed");
       D=j.data; paint();
       $("#live").classList.add("on"); $("#liveTxt").textContent="live";
     })
-    .catch(function(){ $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; paint(); });
+    .catch(function(){
+      D={configured:false,error:"The tracker did not answer."}; paint();
+      $("#live").classList.remove("on"); $("#liveTxt").textContent="no feed"; });
 }
-/* The day moves while the wall is up, so this one refreshes every five
-   minutes rather than every thirty like the book screens. It is cheap: the
-   tracker caches the Salesforce read for twelve. */
-/* Ten minutes, not five. This is the one screen on the wall that reads
-   Salesforce live, and two of them asking every five minutes is twenty-four
-   full branch reads an hour through the same script the branch signs in
-   through. The server holds each build for three minutes as well, so the
-   second screen's question costs nothing. */
-load(); setInterval(load,10*60*1000);
-
-function paint(){
-  var blocks=D.blocks||[], desks=D.desks||[];
-  if(!blocks.length){
-    $("#bWrap").innerHTML='<section class="card"><div class="when">Waiting on the tracker</div>'
-      + '<p class="focus">'+esc(D.error||"No feed yet.")+'</p></section>';
-    return;
-  }
-  $("#bWrap").innerHTML = blocks.map(function(b,i){
-    var pct = b.of ? Math.round(b.done/b.of*100) : 0;
-    var rows = desks.filter(function(d){ return (d.blocks||[])[i]; }).map(function(d){
-      var st=(d.blocks||[])[i];
-      return '<div><i class="'+st+'"></i><span class="nm">'+esc(first(d.name))+'</span></div>';
-    }).join("");
-    return '<section class="card">'
-      + '<div class="when">'+esc(b.time||b.id)+'</div>'
-      + '<p class="focus">'+esc(b.label||"")+'</p>'
-      + '<div class="ring"><span class="v">'+b.done+'</span><span class="of">of '+b.of+' filed</span></div>'
-      + '<div class="bar'+(b.of&&b.done>=b.of?" full":"")+'"><i style="width:'+pct+'%"></i></div>'
-      + '<div class="who">'+rows+'</div>'
-      + '<div class="foot">'+(b.of ? (b.done>=b.of ? "Every desk on this block has filed it."
-          : (b.of-b.done)+" still to file") : "Nobody is scheduled on this block.")+'</div>'
-      + '</section>';
-  }).join("");
-}
+load();
+setInterval(load,10*60*1000);
 </script>
 
 <script>
