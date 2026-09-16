@@ -436,5 +436,37 @@ ok('and says what a list needs to look like',
    /Agent, Client and App Received Date/.test(none.error || '') &&
    /insured_requirement_id/.test(none.error || ''), none.error);
 
+console.log('\nThe book tab is not a branch list, and it lends the pending screen its policy columns:\n');
+// 16 September, evening: the wall said 20,392 policies pending — the book tab
+// (AGENT, CLIENT, APP RECEIVED DATE and all) had been taken for a branch list.
+{
+  const env5 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away' } });
+  env5.Date = env.Date;
+  env5.__mkSheet('URPPBIEX - Reqt', 4, PHEAD, [
+    prow('P-READY', 'Anand Pretend', '2026-08-01', 0, ''),
+    prow('P-ONE',   'Beena Pretend', '2026-08-20', 0, 800),
+  ]);
+  env5.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0], []);
+  const BHEAD = ['Agent','Number','Client Number','Client','Premium','Issue Date','Status','Status(2)','Days','Insurance Type',
+                 'Paid To Date','App Received Date','Sum Assured','Plan Code','Billing type','Mode','APLamount','Status Description','Projected Lapse Date'];
+  const brow = (agent, number, prem, app, sum, mode, desc) =>
+    [agent, number, 'C-' + number, 'CLIENTNAME-' + number, prem, '2026-08-01', '0', '116', 2, 2, '', app, sum, 'IHLCP1', 'Salary Deduction', mode, 0, desc, ''];
+  const rows = [];
+  for (let i = 0; i < 40; i++) rows.push(brow('Carl Fictitious', '90000' + (100 + i), 100, '2026-01-01', 1000, 12, 'Premium Paying'));
+  rows.push(brow('Anand Pretend', 'P-READY', 250, '2026-07-15', 500000, 12, 'Pending UW'));
+  rows.push(brow('Beena Pretend', 'P-ONE',   300, '2026-08-10', 250000, 4,  'Pending Med'));
+  env5.__mkSheet('Dues', 6, BHEAD, rows);
+  env5._intelTabMemo = {}; env5._intelHeadMemo = {};
+  ok('the book tab is not taken for a branch list', env5.iBranchPendTabs_().length === 0, String(env5.iBranchPendTabs_().length));
+  const P5 = env5.iPendingWall_();
+  ok('so the pending count is the extract\'s two, not the book\'s forty-two', P5.policies === 2 && P5.total === 2, JSON.stringify([P5.policies, P5.total, P5.lists]));
+  const pv = P5.policy || {};
+  ok('status description is read from the book by policy number', JSON.stringify(pv.byStatusDesc || '').indexOf('Pending UW') !== -1 && JSON.stringify(pv.byStatusDesc || '').indexOf('Pending Med') !== -1, JSON.stringify(pv.byStatusDesc));
+  ok('and the screen is told which columns the book lent', Array.isArray(pv.fromBook) && pv.fromBook.length === 4, JSON.stringify(pv.fromBook));
+  ok('only cash with app and the underwriter are still missing', JSON.stringify(pv.missing) === JSON.stringify(['cash with app', 'underwriter id', 'last underwriting date']), JSON.stringify(pv.missing));
+  ok('days pending come from the book\'s app received date', pv.daysPending && pv.daysPending.n === 2 && pv.daysPending.oldest > pv.daysPending.median - 1, JSON.stringify(pv.daysPending));
+  ok('premium is annualised by the book\'s mode — 250 x 12 and 300 x 4', pv.api === 4200, String(pv.api));
+}
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

@@ -464,6 +464,16 @@ the wall by lunch. `intelRebuildPending` does the same from the editor, and
 `{action:'intel.pending', fresh:true}` builds live and replaces the copy. It is
 also in `intelRebuildWall`'s list, just before the 45-day line.
 
+**The book tab is never a branch list.** On the evening of 16 September the
+screen said 20,392 policies pending: the Branch Portfolio's book tab — AGENT,
+CLIENT, APP RECEIVED DATE and all — matched the shape of a hand-kept list and
+was counted as one. Every extract the script knows is now excluded by sheet
+id, and a tab carrying STATUS DESCRIPTION, PAID TO DATE or PLAN CODE is never
+a list. The same book tab **lends the pending screen its policy columns**:
+status description, app received date, sum assured, and premium annualised by
+MODE (12, 4, 2 or 1; anything else is not annualised), joined by policy number
+(`iPendBook_`). Cash with app and the underwriter are in neither extract yet.
+
 ### It narrates, like every other screen
 
 Twelve lines, `en-US-AndrewNeural` at `-12%`, rendered by
