@@ -154,8 +154,38 @@
   .arow .m{text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
   .arow.top .n{color:var(--blue)}
 
-  /* survey */
+  /* The three lines and the letters — one lane per stretch. The survey card
+     used to carry one set of totals for every letter ever sent; the letters
+     only mean something against the stretch the client is in, so they sit
+     inside the lane now and the totals are one line at the foot. */
   .survey{grid-column:3/5}
+  /* flex:none — when the row is short the lanes must not be squeezed, or their
+     notes print over the foot; anything that does not fit is then visibly
+     below, which the fit test catches, instead of invisibly on top. */
+  .lanes{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;flex:none}
+  .lane{border:1px solid var(--line);border-radius:12px;padding:9px 11px 8px;
+    display:flex;flex-direction:column;gap:6px;min-width:0}
+  .lane.me{border-color:rgba(55,177,236,.45);background:rgba(55,177,236,.06)}
+  .lane .lh{display:flex;align-items:baseline;gap:7px;font-size:10.5px;color:var(--faint);line-height:1.3}
+  .lane .lh b{font-family:var(--font-d);font-size:13px;color:var(--ink);letter-spacing:-.2px;white-space:nowrap}
+  .lane .lh .n{margin-left:auto;font-family:var(--font-d);font-weight:800;font-size:22px;
+    color:var(--blue);letter-spacing:-.7px;line-height:1}
+  .lgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .lgrid .v{font-family:var(--font-d);font-weight:800;font-size:19px;letter-spacing:-.5px;line-height:1}
+  .lgrid .k{font-size:9.5px;color:var(--faint);margin-top:2px;line-height:1.3}
+  .lgrid .gold .v{color:var(--gold)} .lgrid .accent .v{color:var(--blue)} .lgrid .dim .v{color:var(--faint)}
+  .lrows{display:flex;flex-direction:column;gap:3px}
+  .lrow{display:grid;grid-template-columns:1fr 30px;gap:8px;align-items:center;font-size:11px}
+  .lrow .lbl{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .lrow .lbl em{font-style:normal;color:var(--faint);font-size:10px}
+  .lrow .track{height:5px;background:rgba(255,255,255,.07);border-radius:3px;margin-top:2px;overflow:hidden}
+  .lrow .track i{display:block;height:100%;background:var(--grad);border-radius:3px}
+  .lrow .track i.gold{background:var(--grad-gold)}
+  .lrow .val{font-family:var(--font-d);font-weight:700;font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+  .lane .lnote{font-size:10.5px;color:var(--faint);line-height:1.4;margin:auto 0 0}
+  .lane .lnote b{color:var(--dim)}
+  .lfoot{font-size:11.5px;color:var(--faint);margin:10px 0 0;line-height:1.5}
+  .lfoot b{color:var(--ink)} .lfoot .g{color:var(--gold)}
   .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:12px}
   .sgrid .v{font-family:var(--font-d);font-weight:800;font-size:30px;letter-spacing:-1px;line-height:1}
   .sgrid .k{font-size:10.5px;color:var(--faint);margin-top:4px;line-height:1.35}
@@ -217,6 +247,7 @@
     main{grid-template-columns:minmax(0,1fr);grid-template-rows:none;
          height:auto;gap:11px;padding:0 16px 30px}
     .hero,.wave,.agents,.survey{grid-column:1;grid-row:auto}
+    .lanes{grid-template-columns:1fr}
     .card{padding:14px 15px}
     .hero .big{font-size:64px}
     .hero .split{gap:14px}
@@ -282,9 +313,10 @@
     <p class="cap" id="agentCap"></p>
     <div class="alist" id="aList"></div></section>
 
-  <section class="card survey"><h3>Client survey</h3>
+  <section class="card survey"><h3>The three lines, and the letters</h3>
     <p class="cap" id="surveyCap"></p>
-    <div id="surveyBody"></div></section>
+    <div class="lanes" id="surveyBody"></div>
+    <div id="surveyFoot"></div></section>
 </main>
 
 <footer id="src"></footer>
@@ -351,13 +383,58 @@ var WALL45 = {
     {k:"Karan Ramsundar",n:1,prem:454.85,med:9.0,unit:"Unassigned"},
     {k:"Stephanie Rajkumar",n:1,prem:300.00,med:5.0,unit:"Akaash Kalladeen"}],
   band:45,
-  bands:[{band:45,onLine:36,prem:33189.40,past:2013,pastPrem:6015787.00},
-         {band:60,onLine:15,prem:7869.41, past:1630,pastPrem:5680843.00},
-         {band:90,onLine:9, prem:9871.59, past:1019,pastPrem:5121693.00}],
+  /* Each band is a STRETCH — 45 is 45–59 days unpaid, 60 is 60–89, 90 is
+     ninety and over — with the letters folded in per stretch, per agent and
+     per ageing bucket. onLine (that day exactly) and past (that many days or
+     more) stay for the hero and the chrome. Counts only; the letters figures
+     are per client, never per policy. Illustrative until the feed answers. */
+  bands:[{band:45,from:45,to:59,label:"45–59 days",onLine:36,prem:33189.40,past:2013,pastPrem:6015787.00,
+          policies:383,premium:334979.00,clients:352,agentCount:19,
+          agents:[{k:"Kerwyn Ramroach",n:41,prem:31212.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Gary Sookdeo",n:37,prem:29901.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Meera Persad-Khan",n:33,prem:24404.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Akaash Kalladeen",n:29,prem:31788.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0}],
+          ageing:[{k:"45–49 days",n:171,prem:149020.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"50–54 days",n:118,prem:104211.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"55–59 days",n:94,prem:81748.00,sent:0,cameBack:0,silent:0,low:0,contacted:0}],
+          survey:{clients:352,sent:0,cameBack:0,silent:0,low:0,heardNo:0,optedOut:0,contacted:0,notContacted:0,
+                  asked:{review:0,issue:0,private:0,help:0,stop:0},askedAny:0,why:{rating:0,notHeard:0},
+                  followups:0,open:0,closed:0,outcomes:0},
+          excluded:{policies:71,prem:58110.00}},
+         {band:60,from:60,to:89,label:"60–89 days",onLine:15,prem:7869.41,past:1630,pastPrem:5680843.00,
+          policies:611,premium:559150.00,clients:548,agentCount:21,
+          agents:[{k:"Gary Sookdeo",n:64,prem:61034.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Kerwyn Ramroach",n:58,prem:47712.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Randolph Gonzales",n:49,prem:66203.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Dhalina Heeraman",n:44,prem:30117.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0}],
+          ageing:[{k:"60–69 days",n:236,prem:214902.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"70–79 days",n:203,prem:188315.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"80–89 days",n:172,prem:155933.00,sent:0,cameBack:0,silent:0,low:0,contacted:0}],
+          survey:{clients:548,sent:0,cameBack:0,silent:0,low:0,heardNo:0,optedOut:0,contacted:0,notContacted:0,
+                  asked:{review:0,issue:0,private:0,help:0,stop:0},askedAny:0,why:{rating:0,notHeard:0},
+                  followups:0,open:0,closed:0,outcomes:0},
+          excluded:{policies:97,prem:80412.00}},
+         {band:90,from:90,to:null,label:"90 days and over",onLine:9,prem:9871.59,past:1019,pastPrem:5121693.00,
+          policies:1019,premium:5121693.00,clients:871,agentCount:23,
+          agents:[{k:"Randolph Gonzales",n:118,prem:702114.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Gary Sookdeo",n:102,prem:481006.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Premchand Dookran",n:96,prem:533720.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0},
+                  {k:"Kerwyn Ramroach",n:88,prem:390155.00,sent:0,cameBack:0,silent:0,low:0,contacted:0,notContacted:0}],
+          ageing:[{k:"90–119 days",n:141,prem:132880.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"120–179 days",n:187,prem:180411.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"180–364 days",n:262,prem:702530.00,sent:0,cameBack:0,silent:0,low:0,contacted:0},
+                  {k:"365+ days",n:429,prem:4105872.00,sent:0,cameBack:0,silent:0,low:0,contacted:0}],
+          survey:{clients:871,sent:0,cameBack:0,silent:0,low:0,heardNo:0,optedOut:0,contacted:0,notContacted:0,
+                  asked:{review:0,issue:0,private:0,help:0,stop:0},askedAny:0,why:{rating:0,notHeard:0},
+                  followups:0,open:0,closed:0,outcomes:0},
+          excluded:{policies:252,prem:222260.01}}],
+  letters:{rows:0,live:0,ignored:0,clients:0},
+  lapsedThisMonth:{policies:57,prem:41930.00,month:"September"},
   context:{overdueTotal:4018,over45:2013,over45Prem:5830927.00,next7:656,next7Prem:731237.80},
   households:{clients:33,multi:3,multiPolicies:6,multiPrem:2180.22,
               oneMandate:2,oneMandatePolicies:4,oneMandatePrem:1360.87},
-  excluded:{names:2,policies:420,prem:360782.01,onLine:5},
+  excluded:{names:2,policies:420,prem:360782.01,onLine:5,lapsed:4,
+            bands:[{band:45,policies:71,prem:58110.00},{band:60,policies:97,prem:80412.00},{band:90,policies:252,prem:222260.01}]},
   cross:{unit:{},tenure:{},billing:{}},
   /* Nothing has gone out yet. The panel says so rather than showing a
      plausible-looking zero that reads as "nobody replied". */
@@ -513,29 +590,94 @@ function paint(){
   paintSurvey();
 }
 
+/* ── the three lines, and the letters against them ──────────────────────────
+   One lane per stretch, and each lane tells the part of the story that
+   belongs to that stretch:
+     45 — the letter goes out here: sent, replied, how many of the replies
+          were low, and how long each policy has been under the line.
+     60 — the letter went out and the question is silence: who has not
+          replied, and whether the branch has a follow-up on record.
+     90 — what happened: which of the four taps they used, why a follow-up
+          was opened, how many closed with an outcome — by agent, and by how
+          long they have been over ninety.
+   "Follow-up recorded" is OWNER or CLOSED on the survey tab. Nothing in the
+   system records that the AGENT rang the client, so the lane never claims it.
+   Everything here is a count the server folded; there is no row to click. */
+function lrows(list, key, tone, sub){
+  var max=0; list.forEach(function(x){ if(x.n>max) max=x.n; });
+  return '<div class="lrows">'+list.map(function(x){
+    return '<div class="lrow"><div><div class="lbl">'+esc(x.k)+(sub?' <em>'+sub(x)+'</em>':'')+'</div>'
+      + '<div class="track"><i class="'+(tone||'')+'" style="width:'+(max?x[key||'n']/max*100:0).toFixed(1)+'%"></i></div></div>'
+      + '<div class="val">'+x[key||'n']+'</div></div>';
+  }).join('')+'</div>';
+}
+function ltile(v,k,tone){ return '<div class="'+(tone||'')+'"><div class="v">'+v+'</div><div class="k">'+k+'</div></div>'; }
+function lane(b, me, anySent){
+  var S=b.survey||{}, none=!anySent;
+  var head='<div class="lh"><b>'+esc(b.label||(b.band+' days'))+'</b>'
+    + '<span>'+short(b.premium||0)+' · '+(b.agentCount||0)+' agents</span>'
+    + '<span class="n">'+(b.policies||0).toLocaleString("en-US")+'</span></div>';
+  /* Never silent about an exclusion — the count removed from THIS stretch. */
+  var removed = b.excluded&&b.excluded.policies
+    ? ' <b>'+b.excluded.policies+'</b> more sit with excluded agents.' : '';
+  /* Before anything has been sent the tiles would be three dashes: they are
+     left out, and the note says so instead. */
+  var tiles = function(html){ return none ? '' : '<div class="lgrid">'+html+'</div>'; };
+  var body='', note='';
+  if(b.band===45){
+    body=tiles(ltile(S.sent,'letters sent')
+      + ltile(S.cameBack,'replies','accent')
+      + ltile(S.low,'rated low, or not heard from',S.low?'gold':''))
+      + lrows(b.ageing||[],'n','accent');
+    var last=(b.ageing||[])[2]||{n:0};
+    note=(none?'How long under the line. No letter has gone out yet, so nothing here is a reply.'
+      :'How long under the line. <b>'+last.n+'</b> leave for the 60 stretch inside five days.')+removed;
+  } else if(b.band===60){
+    body=tiles(ltile(S.sent,'letter went out')
+      + ltile(S.silent,'no reply',S.silent?'gold':'')
+      + ltile(S.contacted,'branch follow-up recorded','accent'))
+      + lrows((b.agents||[]).slice(0,4),'n','',none?null:function(x){ return x.silent+' silent · '+x.contacted+' recorded'; });
+    note=(none?'By agent. A recorded follow-up is one on the survey tab — nothing here can see whether the agent rang.'
+      :'By agent. "Recorded" is a follow-up on the survey tab; nothing here can see whether the agent rang.')+removed;
+  } else {
+    var why=(S.why||{}), taps=S.asked||{};
+    body=tiles(ltile(S.askedAny,'tapped one of the four','accent')
+      + ltile(why.rating+why.notHeard,'follow-ups: '+why.rating+' rating · '+why.notHeard+' not heard',S.open?'gold':'')
+      + ltile(S.outcomes,'closed with an outcome',''))
+      + lrows(b.ageing||[],'n','gold')
+      + lrows((b.agents||[]).slice(0,3),'n','',none?null:function(x){ return x.sent+' sent · '+x.outcomes+' outcomes'; });
+    var yr=(b.ageing||[]).filter(function(x){return /365/.test(x.k)})[0]||{n:0};
+    note='By how long over ninety, then by agent. <b>'+yr.n.toLocaleString("en-US")+'</b> have been unpaid for over a year.'
+      + (taps.stop?' <b>'+taps.stop+'</b> asked us to stop.':'')+removed;
+  }
+  return '<div class="lane'+(b.band===me?' me':'')+'">'+head+body+'<p class="lnote">'+note+'</p></div>';
+}
+
 function paintSurvey(){
-  var s=WALL45.survey||{}, host=$("#surveyBody");
-  if(!s.sent){
+  var s=WALL45.survey||{}, host=$("#surveyBody"), foot=$("#surveyFoot");
+  var B=WALL45.bands||[], me=WALL45.band||45, anySent=!!s.sent;
+  var LM=WALL45.lapsedThisMonth||{}, LT=WALL45.letters||{}, X=WALL45.excluded||{};
+  host.innerHTML = B.map(function(b){ return lane(b, me, anySent); }).join('');
+
+  /* The link to the lapses slide: what this month's arrears already became. */
+  var lapsed = LM.policies!=null
+    ? '<b class="g">'+LM.policies.toLocaleString("en-US")+'</b> lapsed in '+esc(LM.month||'this month')
+      + (LM.prem?' — '+money(LM.prem):'')+' → the lapses slide'
+      + (X.lapsed?' <span style="opacity:.75">('+X.lapsed+' more under excluded agents)</span>':'')
+    : '';
+  var stretched = X.bands && X.bands.length
+    ? 'Excluded agents: '+X.bands.map(function(x){ return x.policies+' in '+x.band; }).join(', ')+' — still owed, not counted here'
+    : '';
+
+  if(!anySent){
     var P=WALL45.surveyPool||{ready:0,noEmail:0,letters:[]};
-    var LN={"first-year":"Under 1 year","settling":"1–2 years","established":"2–5 years",
-            "longstanding":"5–10 years","decade-plus":"10–20 years","lifetime":"20 years +"};
-    var mx=Math.max.apply(null,P.letters.map(function(x){return x.n}).concat([1]));
-    $("#surveyCap").textContent = "One letter per client, worded by how long they have held cover. "
-      + "Nothing has been sent.";
-    host.innerHTML =
-      '<div class="sgrid" style="grid-template-columns:repeat(3,1fr)">'
-      + '<div class="accent"><div class="v">'+P.ready+'</div><div class="k">clients ready for a letter</div></div>'
-      + '<div><div class="v">6</div><div class="k">versions, one per tenure band</div></div>'
-      + '<div class="gold"><div class="v">'+P.noEmail+'</div><div class="k">on the line with no usable address</div></div>'
-      + '</div>'
-      + '<div class="rows" style="flex:0;margin-top:2px">'
-      + P.letters.map(function(x){
-          return '<div class="row'+(x.n?'':' zero')+'" style="cursor:default">'
-            + '<div><div class="lbl">'+esc(LN[x.k]||x.k)+'</div>'
-            + '<div class="track"><i class="accent" style="width:'+(x.n/mx*100).toFixed(1)+'%"></i></div></div>'
-            + '<div class="val">'+x.n+'</div></div>';
-        }).join("")
-      + '</div>'
+    $("#surveyCap").textContent = "45–59 days is where the letter goes out, 60–89 is where silence is the question, "
+      + "and ninety and over is what happened. Nothing has been sent yet.";
+    foot.innerHTML =
+      '<p class="lfoot">'+lapsed+(lapsed?' · ':'')
+      + '<b>'+P.ready+'</b> clients ready for a letter, one of six versions by tenure, '
+      + '<b class="g">'+P.noEmail+'</b> with no usable address'
+      + (stretched?' · '+stretched:'')+'</p>'
       /* Trimmed to the rule and the gate. The full procedure — the two function
          names, what approval binds to — is in INTELLIGENCE-SETUP.md; a wall
          does not need to carry a runbook. */
@@ -549,37 +691,26 @@ function paintSurvey(){
       + 'lapse clock — a policy <i>"shall not be forfeited by reason only of non-payment"</i> '
       + 'while its surrender value covers what is owed, and otherwise needs a late-payment '
       + 'notice plus <b style="color:var(--dim)">twenty business days</b>. '
-      + 'We write at forty five because a call still works.</p>'
-      ;
+      + 'We write at forty five because a call still works.</p>';
     return;
   }
-  $("#surveyCap").textContent = "Sent to clients on the line, copying the agent, the desk and the unit manager."
+  $("#surveyCap").textContent = "Letters are counted per client against the stretch they are in today, "
+    + "copying the agent, the desk and the unit manager."
     + (s.latest?" Latest reply "+s.latest+".":"");
-  var mx=Math.max.apply(null,s.dist.concat([1]));
-  host.innerHTML =
-    '<div class="sgrid">'
-    + '<div><div class="v">'+s.sent+'</div><div class="k">letters sent</div></div>'
-    + '<div class="accent"><div class="v">'+s.responded+'</div><div class="k">clicked a rating</div></div>'
-    + '<div><div class="v">'+s.rate+'%</div><div class="k">response rate</div></div>'
-    + '<div class="'+(s.avg!=null&&s.avg<3.5?'gold':'accent')+'"><div class="v">'
-    +   (s.avg!=null?s.avg:'—')+'</div><div class="k">average rating out of 5</div></div>'
-    + '</div>'
-    + '<div class="stars">'+s.dist.map(function(n,i){
-        return '<div><i style="height:'+Math.max(2,n/mx*40).toFixed(0)+'px"></i><b>'+(i+1)+'</b></div>';
-      }).join("")+'</div>'
-    + (s.heardYes+s.heardNo ? '<p class="cap" style="margin:12px 0 0">Heard from their agent in the '
-        + 'last year: <b style="color:var(--ink)">'+s.heardYes+' yes</b>, '
-        + '<b style="color:var(--ink)">'+s.heardNo+' no</b>.</p>' : '')
-    /* An open follow-up is a call the branch told a client in writing it would
-       make. Past its due date it is a promise broken, so it gets the warning
-       colour and sits on the wall until somebody closes it. */
-    + (s.openFollowUps ? '<p class="cap" style="margin:8px 0 0">'
-        + '<b style="color:' + (s.overdueFollowUps ? 'var(--gold)' : 'var(--ink)') + '">'
-        + s.openFollowUps + ' follow-up' + (s.openFollowUps===1?'':'s') + ' open</b>'
-        + (s.overdueFollowUps ? ' — <b style="color:var(--gold)">' + s.overdueFollowUps
-            + ' past due</b>. Each was promised a call within two working days.'
-          : '. Each was promised a call within two working days.')
-        + '</p>' : '');
+  /* One line of totals across every letter, where a card of tiles used to be —
+     the lanes above carry the numbers that mean something. An open follow-up
+     is a call the branch told a client in writing it would make; past its due
+     date it is a promise broken, so it gets the warning colour. */
+  foot.innerHTML =
+    '<p class="lfoot">'+lapsed+(lapsed?' · ':'')
+    + '<b>'+s.sent+'</b> letters, <b>'+s.responded+'</b> ratings ('+s.rate+'%)'
+    + (s.avg!=null?', averaging <b'+(s.avg<3.5?' class="g"':'')+'>'+s.avg+'</b> out of 5':'')
+    + (s.heardYes+s.heardNo?' · heard from their agent this year: <b>'+s.heardYes+'</b> yes, <b>'+s.heardNo+'</b> no':'')
+    + (s.openFollowUps ? ' · <b'+(s.overdueFollowUps?' class="g"':'')+'>'+s.openFollowUps+' follow-up'
+        +(s.openFollowUps===1?'':'s')+' open</b>'
+        +(s.overdueFollowUps?', <b class="g">'+s.overdueFollowUps+' past due</b>':'') : '')
+    + (LT.ignored?' · '+LT.ignored+' dry-run or test rows set aside':'')
+    + (stretched?' · '+stretched:'')+'</p>';
 }
 
 /* ── narration, and the bed under it ─────────────────────────────────────────
