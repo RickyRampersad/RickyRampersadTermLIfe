@@ -95,7 +95,7 @@
   .split .v{font-family:var(--font-d);font-weight:800;font-size:24px;letter-spacing:-.6px}
   .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.3}
   .amber{color:var(--gold)} .good{color:var(--good)}
-  .dhead{display:grid;grid-template-columns:1fr 62px 62px 62px 62px 116px;gap:10px;
+  .dhead{display:grid;grid-template-columns:1fr 56px 56px 56px 56px 56px 60px 64px 112px;gap:9px;
     font:700 9.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
     color:var(--faint);padding-bottom:6px;border-bottom:1px solid var(--line)}
   .dhead div+div{text-align:right} .dhead div:last-child{text-align:left}
@@ -109,7 +109,7 @@
   .tl{display:flex;align-items:center;gap:8px;padding:4px 0 1px;
     font:800 9.5px var(--font-b);letter-spacing:.16em;text-transform:uppercase;color:var(--gold)}
   .tl:after{content:"";flex:1;height:1px;background:var(--line)}
-  .drow{display:grid;grid-template-columns:1fr 62px 62px 62px 62px 116px;gap:10px;
+  .drow{display:grid;grid-template-columns:1fr 56px 56px 56px 56px 56px 60px 64px 112px;gap:9px;
     align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.06)}
   .drow:last-child,.drow:has(+ .tl){border-bottom:none}
   .drow .nm{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -119,6 +119,17 @@
   .drow .v.zero{color:var(--faint);font-weight:500}
   .drow .v.hot{color:var(--gold)}
   .drow .v.win{color:var(--good)}
+  /* The week, the month and the year, per desk — the same clocks as the
+     strip on the left, so "177 this week" has names beside it. Quieter than
+     today's figure on purpose: today is the number the room is run on. */
+  .drow .v.per{font-size:14.5px;font-weight:600;color:var(--dim)}
+  .drow .v.per.zero{color:var(--faint);font-weight:500}
+  .trend .w{font-size:10px;color:var(--dim);margin-top:3px;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .trend .w b{color:var(--gold);font-weight:700}
+  .mix{margin-top:12px;padding-top:10px;border-top:1px solid var(--line)}
+  .mix .k{font:700 9.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;color:var(--faint);margin-bottom:4px}
+  .mix div.r{display:flex;justify-content:space-between;gap:8px;font-size:11.5px;color:var(--dim);line-height:1.5}
+  .mix div.r b{font-family:var(--font-d);font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
   .blk{display:flex;gap:4px}
   .blk i{width:22px;height:9px;border-radius:3px;background:rgba(255,255,255,.13);display:block}
   .blk i.done{background:var(--good)} .blk i.due{background:var(--gold);opacity:.55}
@@ -172,6 +183,7 @@
     <div class="big" id="hClosed">&mdash;</div>
     <div class="cap2" id="hCap">Reading the branch&rsquo;s day&hellip;</div>
     <div class="trend" id="hTrend"></div>
+    <div class="mix" id="hMix" hidden></div>
     <div class="split">
       <div><div class="v" id="hOpen">&mdash;</div><div class="k">still open, all desks</div></div>
       <div><div class="v amber" id="hOver">&mdash;</div><div class="k">of those, overdue</div></div>
@@ -186,7 +198,7 @@
   <section class="card">
     <h3>Every desk, this morning</h3>
     <p class="cap">Closed today, still on the desk, and which of the day&rsquo;s blocks are filed. Counts only &mdash; no client and no task is named here.</p>
-    <div class="dhead"><div>Desk</div><div>Closed</div><div>Open</div><div>Late</div><div>Quiet</div><div>Blocks filed</div></div>
+    <div class="dhead"><div>Desk</div><div>Closed</div><div>Open</div><div>Late</div><div>Quiet</div><div>Week</div><div>Month</div><div>Year</div><div>Blocks filed</div></div>
     <div id="dList" style="overflow:hidden;flex:1"></div>
   </section>
 </main>
@@ -275,16 +287,55 @@ function paintTrend(b){
              ["week",  per?periodN(per.week):null,  win.week],
              ["month", per?periodN(per.month):null, win.month],
              ["year",  per?periodN(per.ytd):null,   win.ytd]];
+  /* WHO. The strip used to be four branch totals; asked for on 16 September:
+     "closed today, week, month must show the staff who". Each window names
+     the desk that closed the most in it, and its share of the branch. */
+  var top = { today: topDesk(function(d){ return d.closed; }),
+              week:  topDesk(function(d){ return d.periods ? periodN(d.periods.week) : null; }),
+              month: topDesk(function(d){ return d.periods ? periodN(d.periods.month) : null; }),
+              year:  topDesk(function(d){ return d.periods ? periodN(d.periods.ytd) : null; }) };
   $("#hTrend").innerHTML = cells.map(function(c){
-    var v=c[1], avg = (v!=null && c[2]) ? Math.round(v/c[2]) : null;
+    var v=c[1], avg = (v!=null && c[2]) ? Math.round(v/c[2]) : null, t = top[c[0]];
+    var who = (t && t.n && v) ? '<b>'+esc(first(t.name))+'</b> '+n(t.n)+' &middot; '+Math.round(100*t.n/v)+'%' : '&nbsp;';
     return '<div><div class="v'+(v?"":" zero")+'">'+n(v)+'</div><div class="k">'+c[0]+'</div>'
-      + '<div class="p">'+(avg!=null ? avg+' a day' : (c[2]===null ? 'so far' : '&nbsp;'))+'</div></div>';
+      + '<div class="p">'+(avg!=null ? avg+' a day' : (c[2]===null ? 'so far' : '&nbsp;'))+'</div>'
+      + '<div class="w">'+who+'</div></div>';
+  }).join("");
+}
+/* The desk with the most of something, or null when nobody has any. */
+function topDesk(f){
+  var best=null;
+  (D.desks||[]).forEach(function(d){
+    var v=f(d); if(v==null) return;
+    if(!best || Number(v)>best.n) best={name:d.name, n:Number(v)};
+  });
+  return best;
+}
+/* DEEPER: what today's closing was made of, by task type, across every desk —
+   the feed carries a byType map per desk. The four biggest, plus touched. */
+function paintMix(){
+  var by={}, any=false;
+  (D.desks||[]).forEach(function(d){
+    var t=d.byType||{};
+    Object.keys(t).forEach(function(k){
+      var x=t[k]||{}; if(!by[k]) by[k]={closed:0,touched:0,open:0};
+      by[k].closed+=Number(x.closed||0); by[k].touched+=Number(x.touched||0); by[k].open+=Number(x.open||0); any=true;
+    });
+  });
+  var el=$("#hMix"); if(!any){ el.hidden=true; return; }
+  var rows=Object.keys(by).map(function(k){ return {k:k, c:by[k].closed, t:by[k].touched, o:by[k].open}; })
+    .filter(function(r){ return r.c||r.t; })
+    .sort(function(a,b){ return (b.c-a.c)||(b.t-a.t); }).slice(0,4);
+  if(!rows.length){ el.hidden=true; return; }
+  el.hidden=false;
+  el.innerHTML='<div class="k">Today, by task type</div>'+rows.map(function(r){
+    return '<div class="r"><span>'+esc(r.k)+'</span><span><b>'+n(r.c)+'</b> closed &middot; '+n(r.t)+' touched &middot; '+n(r.o)+' open</span></div>';
   }).join("");
 }
 
 function paint(){
   var b=D.branch||{}, blocks=D.blocks||[];
-  paintTrend(b);
+  paintTrend(b); paintMix();
   $("#hClosed").textContent = D.configured ? n(b.closed) : "\u2014";
   $("#hOpen").textContent  = D.configured ? n(b.open) : "\u2014";
   $("#hOver").textContent  = D.configured ? n(b.overdue) : "\u2014";
@@ -312,6 +363,8 @@ function paint(){
     byKey[k].rows.push(d);
   });
   groups.sort(function(a,b){ return a.order-b.order; });
+  var per=function(d,k,label){ var v=d.periods?periodN(d.periods[k]):null;
+    return '<div class="v per'+(v?'':' zero')+'" data-k="'+(label||k)+'">'+n(v)+'</div>'; };
   var label = groups.length>1 || (groups[0]&&groups[0].label);
   $("#dList").innerHTML = groups.map(function(g){
     return (label && g.label ? '<div class="tl">'+esc(g.label)+'</div>' : '') + g.rows.map(function(d){
@@ -324,6 +377,7 @@ function paint(){
       + '<div class="v zero" data-k="open">'+n(d.open)+'</div>'
       + '<div class="v '+cls(d.overdue,true)+'" data-k="late">'+n(d.overdue)+'</div>'
       + '<div class="v '+cls(d.needs,true)+'" data-k="quiet">'+n(d.needs)+'</div>'
+      + per(d,"week") + per(d,"month") + per(d,"ytd","year")
       + '<div class="blk">'+(d.blocks||[]).map(function(s){
           return '<i class="'+(s||"none")+'"></i>'; }).join("")+'</div>'
       + '</div>';

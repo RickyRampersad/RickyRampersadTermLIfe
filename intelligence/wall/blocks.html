@@ -114,6 +114,13 @@
   .cell{display:flex;align-items:center;gap:7px;min-width:0;
     border-left:1px solid var(--line);padding-left:8px}
   .cell.blank{border-left-color:transparent}
+  /* A block whose window has passed with nothing filed: the whole cell goes
+     red, not just a thirteen-pixel ring. Asked for on 16 September — "if a
+     time block is not logged it goes red" — because the ring and a small
+     grey caption read as quiet, and an unfiled block is not quiet. */
+  .cell.late{background:rgba(224,103,103,.13);border-left-color:#e06767;border-radius:6px}
+  .cell.late .ct b small{color:#e06767;font-weight:700}
+  .cell.late .ct>span{color:#f0a3a3}
   .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto;
     border:2px solid var(--grey);background:transparent}
   .dot.pending{border-color:var(--grey);background:transparent}
@@ -314,7 +321,7 @@ function cell(x, band, isNow){
        caption beside the name. Blocked keeps its word: the dot says so and
        the caption says why the numbers have not moved. */
     var cap = x.stuck ? 'blocked' : filedText(x);
-    return '<div class="cell">'
+    return '<div class="cell'+(x.state==="late" ? ' late' : '')+'">'
       + '<span class="dot '+x.state+'"></span>'
       + '<span class="ct"><b><span>'+name+'</span><small'+(x.state==="late"&&!((x.moved||0)+(x.closed||0))?' class="late"':'')+'>'+esc(cap)+'</small></b>'
       + '<span><strong>'+n(sf.open||0)+'</strong> open &middot; <i>'+n(sf.touched||0)+' touched</i> &middot; <em>'+n(sf.closed||0)+' closed</em></span></span></div>';
@@ -329,7 +336,7 @@ function cell(x, band, isNow){
   if (x.stuck)  bits.push('<u>blocked</u>');
   if (!bits.length) bits.push(x.state === "late" ? "not filed" :
                               (x.state === "pending" ? "to come" : "filed"));
-  return '<div class="cell'+(x.type ? '' : ' notype')+'">'
+  return '<div class="cell'+(x.type ? '' : ' notype')+(x.state==="late" ? ' late' : '')+'">'
     + '<span class="dot '+x.state+'"></span>'
     + '<span class="ct"><b><span>'+name+'</span></b>'
     + '<span>'+bits.join(" &middot; ")+'</span></span></div>';
