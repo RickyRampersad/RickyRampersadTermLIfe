@@ -104,12 +104,20 @@ to have been oversold.
 
 State these rather than waiting to be caught out:
 
-- **677 questions, median 5 per syllabus strand.** Every strand in every
-  default subject now carries at least four, so nothing is a dead end — but a
-  student drilling one topic hard still exhausts it in two or three sittings.
-  Enough for a nightly habit across a whole subject list; **not** a bank a Form
-  5 can revise a subject from. Say this rather than letting families find it.
-  Mathematics is deepest — 86 questions at primary, 46 at CSEC.
+- **781 questions.** Every strand in every default subject carries at least
+  four. Primary is the deeper half (median 8) because the SEA papers demanded
+  it; secondary sits at a median of 5 — enough for a nightly habit across a
+  whole subject list, **not** a bank a Form 5 can revise a subject from. Say
+  this rather than letting families find it.
+- **SEA papers: 4 complete Mathematics papers and 2 complete ELA papers.**
+  Twelve practice papers and two mocks are offered in each subject, all built to
+  the Ministry's published blueprint. Beyond the fourth Maths and second ELA
+  paper, questions start reappearing across papers — never twice inside one
+  paper — and the page says so on screen. All 14 **Writing** papers are
+  complete: 42 prompts, none repeated.
+- **The Writing paper is marked by you, not by the app.** Three prompts, a
+  50-minute clock, then the Ministry's four criteria and a link to its marked
+  exemplars. This is deliberate: no program can mark a child's story honestly.
 - **24 worked methods against 130 strands.** This is now the real gap, and the
   more important one: a question tells a child they were wrong, a guide tells
   them how to be right. Mathematics has twelve of the twenty-four. Spanish,

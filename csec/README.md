@@ -137,6 +137,24 @@ Quizlet were excluded because they returned 403 to verification.
 
 ---
 
+### Standing decision — commercial practice-test books
+
+Asked whether the Lester Subnaik SEA practice tests could be pulled in. They
+**cannot**, and this is settled: they are commercially published books sold in
+Trinidad bookshops at roughly TT$120–160 (Charran’s, CrayonBox, Mohammed’s).
+Copying them would be straightforward infringement, and no amount of
+reformatting changes that.
+
+What was done instead is better for a family anyway. The **Ministry gives away
+the thing those books imitate** — ten years of real SEA papers, free, readable
+without an account. Those are now linked on the Resources page, and the paper
+*structure* the books sell is reproduced from the Ministry’s own published
+blueprint, which is a specification and not anyone’s copyright.
+
+If a family wants a Subnaik book as well, they should buy it. The hub links to
+what is free and does not pretend to replace what is not.
+
+
 ## How the study model works
 
 **Strands, not subjects.** Progress is tracked against CSEC syllabus sections —
@@ -302,6 +320,62 @@ serious gap. CSEC awards Grades I–VI; I, II and III are passes.
 
 ---
 
+## SEA practice and mock papers
+
+`sea.html`, backed by `data/sea-papers.js`. Twelve practice papers and two mock
+examinations in each of the three papers a child actually sits.
+
+Every figure is taken from the Ministry’s **Assessment Framework for the SEA
+2025–2028** (Tables 1–8), which is linked on the Resources page. Nothing is
+copied from a commercial practice-test book — the blueprint is a published
+specification, and the items filling it are this hub’s own.
+
+| Paper | Time | Structure |
+|---|---|---|
+| ELA Writing | 50 min | 3 prompts set (all narrative **or** all expository), **one** answered |
+| Mathematics | 75 min | 40 items, 75 marks — Section I 20×1, II 16×2–3, III 4×4 |
+| English Language Arts | 75 min | 36 items, 64 marks — Section I 18, Section II 18 |
+
+Weighting is **Mathematics 100 : ELA 60 : ELA Writing 40**.
+
+Mathematics items are distributed Number 19, Geometry 6, Measurement 9,
+Statistics 6. ELA is spelling 6, punctuation 6, grammar 6, fiction/non-fiction 7,
+poetry 7, graphic text 4.
+
+**Two rules make these practice papers rather than another shuffle of the bank:**
+
+*Repeatable.* Paper 7 is the same paper every time it is opened, on any device,
+so a mark can be compared with last month’s. The deal is seeded by strand —
+never by the clock or the child.
+
+*Maximally distinct.* Items are **dealt** across papers, not sampled for each.
+Each strand’s pool is ordered once and paper *n* takes the next slice, so papers
+stay wholly separate until the pool runs out — rather than colliding on paper
+two, which random sampling does.
+
+**How many papers the bank currently fills without repeating:**
+
+| | Complete papers | Held down by |
+|---|---|---|
+| Mathematics | **4** | Number — 77 written, 19 needed per paper |
+| ELA | **2** | Spelling — 12 written, 6 needed per paper |
+| ELA Writing | **14** | nothing; 42 prompts are written out |
+
+The index says this on screen, in plain words, rather than letting a family
+discover it in paper three. Fourteen fully separate papers needs 560
+Mathematics items and 504 ELA items.
+
+**Writing is marked by a person, not by the program.** Three prompts, a
+50-minute clock, a word count, then the Ministry’s four criteria — Content,
+Language Use, Grammar and Mechanics, Organisation — with a link to the marked
+Standard 5 exemplars. No program can mark a child’s story honestly, and
+pretending otherwise would be the most damaging thing in the hub.
+
+SEA papers appear in the navigation only for a student on the primary ladder
+(levels 1–5), and for parents and teachers. A Form 3 has no use for them.
+
+---
+
 ## Timed tests
 
 `test.html` runs 10/20/30 questions at roughly the CSEC Paper 01 pace of 90
@@ -354,11 +428,9 @@ the final point, and a table view toggle.
 
 ## What the question bank actually is
 
-Be clear about this, because it is still the hub's weakest point:
-
 | | |
 |---|---|
-| Questions | **677**, all written for this hub |
+| Questions | **781**, all written for this hub |
 | Guided methods | **24** |
 | Strands in the default subjects | 130 |
 | Strands with **none** | **0** |
@@ -369,35 +441,41 @@ Split by stage:
 
 | | Questions | Strands | Thinnest | Median |
 |---|---|---|---|---|
-| Primary — 5 SEA subjects | 205 | 35 | 4 | 5 |
+| Primary — 5 SEA subjects | 309 | 35 | 4 | 8 |
 | Secondary — 14 CSEC subjects | 472 | 95 | 4 | 5 |
 
-Five. That is enough for a nightly habit across a whole subject list, and
-enough that no strand is a dead end any more — but a student who drills one
-strand hard still exhausts it in two or three sittings. It is **not** a
-revision bank a Form 5 can live in for a term. Say so to families rather than
-letting them discover it.
+Primary is now the deeper half, because that is where the examination
+structure demanded it — see **SEA practice and mock papers** above. It backs
+four complete Mathematics papers and two complete ELA papers with no item
+repeated.
 
-The weakest part is now the **guided methods, not the questions**: 24 worked
-methods against 130 strands. A question tells a child they were wrong; a guide
-is what tells them how to be right. That is where the next effort is worth most.
+Secondary at a median of 5 is enough for a nightly habit across a whole subject
+list, but a student who drills one strand hard still exhausts it in two or three
+sittings. It is **not** a revision bank a Form 5 can live in for a term. Say so
+to families rather than letting them discover it.
 
-Nothing has been ingested from any past-paper bank. Every item is original, for
-two reasons: CXC owns the CSEC papers and sells them, and a question copied
-without its mark scheme teaches the wrong thing anyway.
+The weakest part is now the **guided methods**: 24 worked methods against 130
+strands. A question tells a child they were wrong; a guide tells them how to be
+right. That is where the next effort is worth most.
+
+Nothing has been ingested from any past-paper bank or practice-test book — see
+the standing decision above. Every item is original, for two reasons: CXC owns
+the CSEC papers and sells them, and a question copied without its mark scheme
+teaches the wrong thing anyway.
 
 **The real material lives on the Resources page**, and for primary it is
-excellent — the Ministry publishes actual SEA past papers for 2024 and 2025
-free, with specimen papers and mark schemes on its learning platform. For CSEC,
-the free half from CXC is the syllabuses, specimen papers and mark schemes.
+excellent: 19 free Ministry sources, including ten years of SEA Mathematics and
+Language Arts papers, the marked writing exemplars, and the televised SEA Time
+lessons. For CSEC, the free half is the CXC syllabuses and specimen papers plus
+the Ministry’s own Form 5 Mathematics course with worked past-paper solutions.
 
 **Closing the gap, in order of value:**
 
 1. **Guided methods.** One per strand in the examined core — CSEC Maths,
-   English A, the three sciences, and all five SEA subjects. That is the gap a
-   child actually feels.
-2. **Depth in the examined subjects.** Ten per strand in SEA Maths, ELA and ELA
-   Writing, and in CSEC Maths and English, where the whole cohort sits.
+   English A, the three sciences, and all five SEA subjects.
+2. **SEA paper depth.** Number and Spelling are the two strands holding the
+   paper count down. Fourteen fully separate papers needs 560 Mathematics items
+   and 504 ELA items; Mathematics has 161 and ELA 75.
 3. Everything else, toward ten per strand.
 
 ---
