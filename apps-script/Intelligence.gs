@@ -1322,6 +1322,107 @@ function iReqIsMedical_(code) { return !!IREQ_MEDICAL[String(code || '').trim().
  *  arrived. Counts only — every policy number and client name stays in
  *  this function. One row of `extract.rows` is one policy since 16 September
  *  2026, so a policy waiting on three documents lands in one bucket once. */
+/* ── THE BOARD ─────────────────────────────────────────────────────────────
+   ONE ROW PER AGENT, AND EVERYTHING JOINED TO IT. Written on 17 September 2026
+   after the branch manager read the rebuilt wall and said, plainly, that it
+   told him nothing: "you are tallying up the days and putting the oldest nine
+   fifteen… but you want somebody to look at the wall and see how much
+   policies, how much requirements outstanding, how much are routine, how much
+   requires medicals, who are the agents, what are the requirements, who is
+   owing the cash, who is not submitting cash, the Salesforce tasks that are
+   open… broken down by which agent."
+
+   He was right. The wall carried columns of statistics; this is a worklist.
+   Every figure on a row belongs to that agent's own pending policies:
+
+     policies   their pending policies, issued and closed ones excluded
+     reqts      open requirement rows sitting on those policies
+     routine    of those, underwriting's own documents
+     medical    of those, a medical or a lab — a third party's clock
+     cash       policies waiting on a first or future premium: not submitted
+     held       money already paid that cannot be applied until the case closes
+     top        the requirements themselves, by name, biggest first
+     tasks      the Salesforce tasks ON THOSE POLICIES — open, late, quiet,
+                and what moved today — because a task is held by a member of
+                staff and is about an agent's policy, and the wall was only
+                ever showing the first half of that
+     never      policies no task has ever named: nobody is on it at all       */
+function iPendBoard_(extract, reqs, tasks) {
+  if (!extract || !extract.rows) return null;
+  var skip = iExcluded_(), listOnly = iListOnly_(), map = iReqOwners_();
+  var byPol = (tasks && tasks.byPolicy) || {};
+  var openBy = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    (openBy[k] = openBy[k] || []).push(q);
+  });
+
+  var rows = {}, tot = { policies: 0, reqts: 0, routine: 0, medical: 0, cash: 0,
+                         held: 0, open: 0, late: 0, quiet: 0, today: 0, never: 0 };
+  extract.rows.forEach(function (row) {
+    var agent = String(row.agent || '').trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) return;
+    if (row.pending === false) return;              // issued and closed are nobody's
+    var a = rows[agent] || (rows[agent] = { agent: agent, policies: 0, reqts: 0, routine: 0,
+      medical: 0, cash: 0, held: 0, oldest: 0, never: 0, labels: {},
+      tasks: { open: 0, late: 0, quiet: 0, today: 0, none: 0 } });
+    a.policies++; tot.policies++;
+    if (row.age > a.oldest) a.oldest = row.age;
+    a.held += iNum_(row.suspense); tot.held += iNum_(row.suspense);
+
+    /* The requirements themselves — named, counted, and split the way the
+       three phone calls split: a document, a medical, or the money. */
+    var here = openBy[String(row.policy || '').trim()] || [];
+    var wantsCash = false;
+    here.forEach(function (q) {
+      if (q.listOnly) return;                       // counted policy, uncounted requirement
+      var code = String(q.code || '').trim().toUpperCase();
+      a.reqts++; tot.reqts++;
+      if (code === 'FUTPY') { wantsCash = true; return; }
+      if (iReqIsMedical_(code)) { a.medical++; tot.medical++; }
+      else { a.routine++; tot.routine++; }
+      var lab = q.label || code;
+      a.labels[lab] = (a.labels[lab] || 0) + 1;
+    });
+    (row.requirements || []).forEach(function (t) {
+      if (String(t || '').trim().toUpperCase() === 'FUTPY') wantsCash = true;
+    });
+    if (!here.length && !row.paid) wantsCash = true;
+    if (wantsCash) { a.cash++; tot.cash++; }
+
+    /* THE TASKS ON THEIR POLICIES. Late is over the branch's own thirty days;
+       quiet is nothing in a week on a task still open. */
+    var hits = byPol[String(row.policy || '').trim()] || [];
+    var openHits = hits.filter(function (h) { return h.open; });
+    if (!hits.length) { a.never++; tot.never++; }
+    openHits.forEach(function (h) {
+      a.tasks.open++; tot.open++;
+      if (h.os != null && h.os > 30) { a.tasks.late++; tot.late++; }
+      if (h.quiet != null && h.quiet >= 7) { a.tasks.quiet++; tot.quiet++; }
+    });
+    hits.forEach(function (h) { if (h.today) { a.tasks.today++; tot.today++; } });
+  });
+
+  var out = Object.keys(rows).map(function (k) {
+    var a = rows[k];
+    a.top = Object.keys(a.labels).map(function (l) { return { label: l, n: a.labels[l] }; })
+      .sort(function (x, y) { return y.n - x.n || x.label.localeCompare(y.label); }).slice(0, 3);
+    delete a.labels;
+    a.held = Math.round(a.held * 100) / 100;
+    return a;
+  }).filter(function (a) { return !iExcludes_(listOnly, a.agent); });
+  /* Ordered the way the calls should be made: money first, then medicals
+     waited on, then the documents, then the oldest thing on the desk. */
+  out.sort(function (x, y) {
+    return (y.cash - x.cash) || (y.medical - x.medical) || (y.reqts - x.reqts) ||
+           (y.policies - x.policies) || (y.oldest - x.oldest);
+  });
+  tot.held = Math.round(tot.held * 100) / 100;
+  tot.agents = out.length;
+  return { agents: out, total: tot, listOnly: Object.keys(listOnly).length };
+}
+
 function iPendTriage_(extract, reqs) {
   if (!extract || !extract.rows) return null;
   var map = iReqOwners_(), skip = iExcluded_(), listOnly = iListOnly_();
@@ -1571,10 +1672,11 @@ function iPendingWall_() {
      done: nobody has ever raised a task on this case; somebody has one open;
      or the last one was closed and the case is still pending, which is the
      worst of the three because it looks handled and is not. */
-  var chase = null, work = null;
+  var chase = null, work = null, tasksRead = null;
   if (extract && extract.rows) {
     try {
       var tasks = iBuildTasks_(today);
+      tasksRead = tasks && !tasks.error ? tasks : null;
       if (tasks && !tasks.error) {
         var joined = { tasks: tasks, pending: extract };
         iJoinChases_(joined);
@@ -1597,6 +1699,10 @@ function iPendingWall_() {
 
   /* After the chase join, never before it — the triage reads each row's
      chase state, and a row that has not been joined yet says nothing. */
+  var board = null;
+  try { board = iPendBoard_(extract, reqs, tasksRead); }
+  catch (eB) { notes.push('The board would not build: ' + (eB && eB.message || eB)); }
+
   var triage = null;
   try { triage = iPendTriage_(extract, reqs); }
   catch (e5) { notes.push('The triage would not run: ' + (e5 && e5.message || e5)); }
@@ -1824,6 +1930,8 @@ function iPendingWall_() {
       unpaidPolicies: extract ? extract.unpaidCases : null,
       unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
     },
+    /* ONE ROW PER AGENT, WITH EVERYTHING JOINED TO IT — see iPendBoard_. */
+    board: board,
     /* Whose move is it, who can be worked today, and who is holding it up. */
     triage: triage,
     /* Who is on it, from the branch's own chase log. */
@@ -3430,10 +3538,19 @@ function iBuildTasks_(today) {
     /* Guardian policy numbers in this book are ten digits beginning 1 or 5.
        Subjects carry one or two of them, sometimes slash-separated. */
     var found = subject.match(/\b[15]\d{9}\b/g) || [];
+    /* Days outstanding is read here rather than after the open/closed gate,
+       because the per-policy index needs it: an agent's board says how many
+       of the tasks on THEIR policies are late, and a closed task's age is
+       evidence too. */
+    var osAny = iNum_(d.get('os', r));
+    if (!osAny && quiet) osAny = quiet;
+    var movedToday = !!(modified && iIso_(modified) === iIso_(today));
     found.forEach(function (pol) {
       if (!byPolicy[pol]) byPolicy[pol] = [];
       byPolicy[pol].push({ assigned: assigned, status: status, open: isOpen,
-                           on: iIso_(modified), quiet: quiet });
+                           on: iIso_(modified), quiet: quiet,
+                           os: osAny > 0 && osAny < 3650 ? osAny : null,
+                           today: movedToday });
     });
 
     /* Closed tasks are kept for the join — they are the evidence a case WAS
@@ -3452,8 +3569,7 @@ function iBuildTasks_(today) {
        any KPI, which is why the untyped ones are counted on their own. */
     var type = String(d.get('type', r)).trim();
     if (!type) { noType++; type = '(no task type)'; }
-    var os = iNum_(d.get('os', r));
-    if (!os && quiet) os = quiet;
+    var os = osAny;
     if (os > 0 && os < 3650) osAges.push(os);
     if (!byType[type]) byType[type] = { n: 0, oldest: 0, stale: 0 };
     byType[type].n++;
