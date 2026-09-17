@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-17a';
+var SCRIPT_VERSION = '2026-09-17e';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -3079,7 +3079,8 @@ function sfkMetrics_(date) {
   Object.keys(users).forEach(function (k) { byId[users[k].id] = k; });
 
   function blank() {
-    return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, needs: 0, touched: 0, byType: {} };
+    return { closed: 0, open: 0, overdue: 0, aged60: 0, noDate: 0, needs: 0, touched: 0, byType: {},
+             eveClosed: 0, eveTouched: 0 };
   }
   var out = {};
   Object.keys(users).forEach(function (k) { out[k] = blank(); });
@@ -3131,6 +3132,27 @@ function sfkMetrics_(date) {
     'SELECT OwnerId, Task_Type__c, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
     ' AND LastModifiedDate >= ' + dayFrom + ' AND LastModifiedDate < ' + dayTo +
     ' GROUP BY OwnerId, Task_Type__c'), 'touched', true);
+
+  // AFTER HOURS. "Extend the block beyond 4pm — I work round the clock, and it
+  // should reflect 24/7 so people can see what is being done" (17 September).
+  // The day's four blocks are filed; this one is measured: what Salesforce saw
+  // each desk close and touch from four in the afternoon to midnight, local.
+  // 16:00 in Port of Spain is 20:00Z, no DST. Anything after midnight is the
+  // next day's first block, which is where the day so far already starts.
+  // Guarded like the period windows: an evening read that fails leaves the
+  // after-hours block empty, not the day.
+  var eveFrom = day + 'T20:00:00Z';
+  try {
+    add(sfkQuery_(
+      'SELECT OwnerId, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+      ' AND CompletedDateTime >= ' + eveFrom + ' AND CompletedDateTime < ' + dayTo +
+      " AND (NOT Subject LIKE '%Happy Birthday%') " +
+      'GROUP BY OwnerId'), 'eveClosed', false);
+    add(sfkQuery_(
+      'SELECT OwnerId, COUNT(Id) FROM Task WHERE OwnerId IN ' + IN +
+      ' AND LastModifiedDate >= ' + eveFrom + ' AND LastModifiedDate < ' + dayTo +
+      ' GROUP BY OwnerId'), 'eveTouched', false);
+  } catch (eEve) {}
 
   // Still open, whatever the due date
   add(sfkQuery_(

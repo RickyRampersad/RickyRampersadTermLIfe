@@ -84,7 +84,7 @@ const RENEWALS = { open: 7, closed: 3, overdue: 1, needs: 2, touched: 9 };
 const PERIODS = { staff: { anand: { week: 5, month: 20, ytd: 100 }, gita: { week: 8, month: 30, ytd: 210 } },
                   branch: { week: 13, month: 50, ytd: 310 } };
 let metrics = () => ({ ok: true, date: '2026-09-16',
-  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS } },
+  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS }, eveClosed: 1, eveTouched: 2 },
            gita:  { closed: 6, open: 9, overdue: 2, needs: 1, byType: { 'Renewa/PDl/Bill': RENEWALS } },
            beena: { closed: 1, open: 2, overdue: 0, needs: 0, byType: {} } },
   periods: PERIODS });
@@ -149,7 +149,7 @@ ok('blockTypeFor_ in the tracker maps a label the fallback could not',
 ok('and a label it returns nothing for is no type', a2[3].type === '' && a2[3].sf === null);
 delete env.blockTypeFor_;
 metrics = () => ({ ok: true, date: '2026-09-16',
-  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS } },
+  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS }, eveClosed: 1, eveTouched: 2 },
            gita:  { closed: 6, open: 9, overdue: 2, needs: 1, byType: { 'Renewa/PDl/Bill': RENEWALS } } },
   periods: PERIODS });
 D = build();
@@ -202,7 +202,7 @@ ok('Salesforce down: the tiers and the blocks still come, the figures are blank'
    D4.desks.find(d => d.name === 'Anand Pretend').blocksPeriods.week.filed === 3 &&
    D4.desks.find(d => d.name === 'Anand Pretend').closed === null);
 metrics = () => ({ ok: true, date: '2026-09-16',
-  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS } },
+  staff: { anand: { closed: 3, open: 5, overdue: 1, needs: 0, byType: { Pendings: PENDINGS }, eveClosed: 1, eveTouched: 2 },
            gita:  { closed: 6, open: 9, overdue: 2, needs: 1, byType: { 'Renewa/PDl/Bill': RENEWALS } } },
   periods: PERIODS });
 D = build();
@@ -222,6 +222,12 @@ ok('data.blocks is still the four block totals',
    D.blocks[2].of === 1 && D.blocks[3].of === 1, JSON.stringify(D.blocks));
 ok('and the branch line: 3 of 6 filed, closed summed with the managers in',
    D.branch.done === 3 && D.branch.of === 6 && D.branch.closed === 9, JSON.stringify(D.branch));
+{
+  const eve = desk('anand').bx[4], eveG = desk('gita').bx[4];
+  ok('a fifth block, after hours, sits on every desk', !!eve && eve.id === 'EVE' && eve.after === true && eve.time === '4pm – 12am' && desk('gita').bx.length === 5, JSON.stringify(eve));
+  ok('it carries what the desk closed and touched after four', eve.sf && eve.sf.closed === 1 && eve.sf.touched === 2 && eve.state === 'closed', JSON.stringify(eve.sf));
+  ok('a desk with nothing after four is waiting or idle, never late', eveG && (eveG.state === 'pending' || eveG.state === 'idle') && eveG.sf.closed === 0, JSON.stringify(eveG));
+}
 ok('bx still carries id, state, kpi, moved, closed, stuck',
    ['id', 'state', 'kpi', 'focus', 'time', 'due', 'moved', 'closed', 'stuck', 'type', 'sf']
      .every(k => k in desk('anand').bx[0]), Object.keys(desk('anand').bx[0]).join());

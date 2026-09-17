@@ -94,6 +94,12 @@ env.sfkUsers_ = () => USERS;
 const asked = [];
 env.sfkQuery_ = soql => {
   asked.push(soql);
+  /* After four: what each desk closed and touched from 16:00 local (20:00Z). */
+  if (/T20:00:00Z/.test(soql)) {
+    if (/CompletedDateTime/.test(soql)) return [{ OwnerId: '005A', expr0: 2 }];
+    if (/LastModifiedDate/.test(soql))  return [{ OwnerId: '005A', expr0: 4 }, { OwnerId: '005B', expr0: 1 }];
+    return [];
+  }
   if (/CompletedDateTime/.test(soql) && /Task_Type__c/.test(soql)) {
     return [{ OwnerId: '005A', Task_Type__c: 'Pendings', expr0: 3 },
             { OwnerId: '005B', Task_Type__c: null, expr0: 1 },
@@ -149,9 +155,19 @@ ok('open is still open, whatever the date', !!openQ);
 ok('overdue still keys on ActivityDate', asked.some(q => /Status != 'Completed' AND ActivityDate < 2026-09-16 /.test(q)));
 ok('needs still keys on a week untouched', asked.some(q => /LastModifiedDate < LAST_N_DAYS:7/.test(q)));
 
+/* ── 4½. After four — the block that is measured, not filed ─────────────── */
+console.log('\nAfter four, what each desk did:\n');
+const eveClosedQ = asked.find(q => /CompletedDateTime >= 2026-09-16T20:00:00Z/.test(q));
+const eveTouchedQ = asked.find(q => /LastModifiedDate >= 2026-09-16T20:00:00Z/.test(q));
+ok('closed after four is asked from 16:00 local to the end of the day', !!eveClosedQ && /CompletedDateTime < 2026-09-17T04:00:00Z/.test(eveClosedQ) && /GROUP BY OwnerId$/.test(eveClosedQ), eveClosedQ);
+ok('  …without the birthday automation', /NOT Subject LIKE '%Happy Birthday%'/.test(eveClosedQ || ''));
+ok('touched after four the same way', !!eveTouchedQ && /LastModifiedDate < 2026-09-17T04:00:00Z/.test(eveTouchedQ));
+ok('and each desk carries both', m.staff.anand.eveClosed === 2 && m.staff.anand.eveTouched === 4 && m.staff.beena.eveClosed === 0 && m.staff.beena.eveTouched === 1,
+   JSON.stringify([m.staff.anand.eveClosed, m.staff.anand.eveTouched, m.staff.beena.eveClosed, m.staff.beena.eveTouched]));
+
 /* ── 5. Closed per period — one query per window, not one per person ─────── */
 console.log('\nThe week, the month and the year so far:\n');
-const periodQs = asked.filter(q => /CompletedDateTime/.test(q) && /GROUP BY OwnerId$/.test(q));
+const periodQs = asked.filter(q => /CompletedDateTime/.test(q) && /GROUP BY OwnerId$/.test(q) && !/T20:00:00Z/.test(q));
 ok('three window queries for the whole branch', periodQs.length === 3, String(periodQs.length));
 ok('  …week from Monday 04:00Z', periodQs.some(q => /CompletedDateTime >= 2026-09-14T04:00:00Z/.test(q)));
 ok('  …month from the 1st', periodQs.some(q => /CompletedDateTime >= 2026-09-01T04:00:00Z/.test(q)));

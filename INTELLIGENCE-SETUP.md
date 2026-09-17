@@ -523,6 +523,8 @@ a task is joined to a case — so nothing but counts and ages ever leaves
 
 ## 3a½. The day in blocks — one row per desk, one clock
 
+**17 September 2026 — after four.** "Extend the block beyond 4pm — I work round the clock, and it should reflect 24/7 so people can see what is being done." A fifth block, **4pm – 12am**, on every desk, that nobody files: the tracker's day metrics carry `eveClosed` and `eveTouched` per desk — what Salesforce saw closed and touched from 16:00 local (20:00Z) to midnight — and the feed puts it on `bx` as `EVE` with `after:true`. Green when something closed, blue when something moved, a gold ring once four has passed with nothing yet, grey before four; it never goes red, because the day ends before it could, and anything after midnight is the next day's first block. The four filed blocks and their counts ("10 of 32") are untouched.
+
 Slide 2 of 14. It was four cards reading "3 of 6 filed", which is a progress bar
 about paperwork. Asked for on 16 September 2026 to "make an impact", and the
 thing the branch manager actually plans his morning from is who is doing what
