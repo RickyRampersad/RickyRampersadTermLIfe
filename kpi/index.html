@@ -882,15 +882,21 @@ function JobDocView({ me, doc, vp, onBack }) {
 /** The Branch Manager's own landing: the register, the sweep, the quarter,
  *  the document — before the branch. What drives his own appraisal sits
  *  where he signs in, the same as everyone else's does. */
-function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, onPerf, onMoments, onJobDoc, onRegister }) {
+function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, onPerf, onMoments, onJobDoc, onRegister, wide }) {
   return h("div", { style: { marginBottom: 18 } },
     h(SectionLabel, null, "You"),
     h(AttendanceLine, { me: me, api: api, onRegister: onRegister,
       onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); } }),
-    h("div", { style: { marginTop: 10 } },
-      h(MailSweep, { when: "am", mail: mail, onSave: ranks => saveMail(me.staffId, "am", ranks) }),
-      new Date().getHours() >= 12 || (mail && mail.am) ? h(MailSweep, { when: "pm", mail: mail, onSave: ranks => saveMail(me.staffId, "pm", ranks) }) : null),
-    h(YourQuarter, { s: standing, onPerf: onPerf, onMoments: onMoments }),
+    /* TWO COLUMNS ON A LAPTOP, one on a phone. The sweep and the quarter were
+       stacked at every width, which on a 1366px screen meant a narrow ribbon
+       of content and 1,825px of scrolling to reach the blocks. alignItems
+       start so the shorter card does not stretch to match the taller one. */
+    h("div", { style: wide ? { ...autoGrid(430, 12), marginTop: 10, alignItems: "start" }
+                           : { marginTop: 10 } },
+      h("div", null,
+        h(MailSweep, { when: "am", mail: mail, onSave: ranks => saveMail(me.staffId, "am", ranks) }),
+        new Date().getHours() >= 12 || (mail && mail.am) ? h(MailSweep, { when: "pm", mail: mail, onSave: ranks => saveMail(me.staffId, "pm", ranks) }) : null),
+      h(YourQuarter, { s: standing, onPerf: onPerf, onMoments: onMoments })),
     h("button", { onClick: onJobDoc, style: { ...primaryWide, marginTop: 10 } }, "Your job document →"));
 }
 
@@ -2443,7 +2449,14 @@ function App() {
   const entries = rows.map(rowToEntry);
 
   // ---- home ---------------------------------------------------------------
-  if (view === "home") return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement("div", {
+  /* THE LAPTOP. Every other screen widens on a desktop and this one — the
+     screen everybody actually lands on — did not, so the whole app sat in
+     a 560px phone column down the middle of a 1366px laptop with two
+     thirds of the screen empty and 1,825px of scrolling. Reported by the
+     Branch Manager on 17 September 2026: "the interface is not scaled". */
+  if (view === "home") return /*#__PURE__*/React.createElement(Shell, {
+    wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560
+  }, /*#__PURE__*/React.createElement("div", {
     style: mast
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2509,7 +2522,8 @@ function App() {
     standing: standing[me.staffId],
     onPerf: () => { setPerfWho(me.staffId); setPerfTab("goals"); setView("perf"); },
     onMoments: () => { setPerfWho(me.staffId); setPerfTab("competencies"); setView("perf"); },
-    onJobDoc: () => setView("jobdoc"), onRegister: () => setView("register")
+    onJobDoc: () => setView("jobdoc"), onRegister: () => setView("register"),
+    wide: vp.desktop
   }), /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
@@ -4295,7 +4309,9 @@ function App() {
     const vaCount = data.filter(e => isRealVA(e.valueAdded)).length;
     const innovCount = data.filter(e => isRealVA(e.innovation)).length;
     const trainTotal = data.reduce((n, e) => n + trainingCount(e), 0);
-    return /*#__PURE__*/React.createElement(Shell, null, /*#__PURE__*/React.createElement(SubHeader, {
+    return /*#__PURE__*/React.createElement(Shell, {
+      wide: vp.desktop ? 1120 : vp.tablet ? 820 : 560
+    }, /*#__PURE__*/React.createElement(SubHeader, {
       title: person ? person.name : trendStaff,
       sub: prof.grade + " · history & trends",
       tenure: prof.tenure,
