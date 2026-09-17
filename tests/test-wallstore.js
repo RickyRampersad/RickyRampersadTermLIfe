@@ -31,6 +31,8 @@ stub('iBuildLicence_', 'licence', { configured: true, roster: { active: 32 } });
 stub('iBuildPossession_', 'possession', { configured: true, total: 730 });
 stub('iBuildBook_', 'book', { configured: true, today: { n: 9 } });
 stub('iPendingWall_', 'pending', { configured: true, total: 12 });
+stub('iRidersWall_', 'riders', { configured: true, head: { n: 3 } });
+stub('iConversionWall_', 'conversion', { configured: true, head: { cases: 4 } });
 const fresh = () => { env._intelSs = null; env._intelTabMemo = {}; env._intelHeadMemo = {}; };
 
 console.log('\nA screen asks, and the feed is built once and kept:\n');
@@ -47,8 +49,8 @@ fresh();
 r = post({ action: 'intel.wall', band: 60 });
 ok('another band is its own feed, built on its own', r.ok && built.wall45 === 2 && env.__sheets['_Intel Wall']._grid.length === 2);
 
-console.log('\nThe other five, the same way:\n');
-for (const [action, key] of [['intel.delivery','delivery'], ['intel.licence','licence'], ['intel.possession','possession'], ['intel.book','book'], ['intel.pending','pending']]) {
+console.log('\nThe other seven, the same way:\n');
+for (const [action, key] of [['intel.delivery','delivery'], ['intel.licence','licence'], ['intel.possession','possession'], ['intel.book','book'], ['intel.pending','pending'], ['intel.riders','riders'], ['intel.conversion','conversion']]) {
   fresh(); post({ action }); fresh(); const again = post({ action });
   ok(action + ' builds once and then reads the store', again.ok && again.data.from === key && built[key] === 1 && !!again.stored, 'built ' + built[key]);
 }
@@ -269,7 +271,34 @@ console.log('\nThe pending screen: stored like the others, live on request, refr
   ok('nor at seven, when the branch signs in', /not this hour/.test(env.intelPendingRefresh(null, 7)) && built.pending === n);
   ok('nor on an even hour', /not this hour/.test(env.intelPendingRefresh(null, 12)) && built.pending === n);
   ok('but at eleven it rebuilds the copy', /^pending built at/.test(env.intelPendingRefresh(null, 11)) && built.pending === n + 1);
-  ok('and at five, for the night copy', /^pending built at/.test(env.intelPendingRefresh(null, 5)));
+  const five = env.intelPendingRefresh(null, 5);
+  ok('and at five, for the night copy', /^pending built at/.test(five), five.split('\n')[0]);
+  ok('  which also rebuilds riders and conversions, inside the same trigger', /riders built at/.test(five) && /conversion built at/.test(five), five);
+  ok('  and at eleven it does not', !/riders built at/.test(env.intelPendingRefresh(null, 11)));
+}
+
+console.log('\nA copy built by another build is no copy at all:\n');
+// 16 September, evening: 17a went live and every book screen kept serving the
+// 16a copy the night had stored. Possession read "0 of 0 agents" until a hand
+// rebuild. The build travels with the copy; a different one is rebuilt.
+{
+  stub('iBuildPossession_', 'possession', { configured: true, total: 730 });   // an earlier section left a failing builder in
+  fresh(); post({ action: 'intel.possession' });          // one good copy in the store
+  const was = built.possession;
+  fresh(); let r = post({ action: 'intel.possession' });
+  ok('a copy from this build is served from the store', r.ok && !!r.stored && built.possession === was, 'built ' + built.possession + ' · ' + JSON.stringify(r).slice(0, 80));
+  ok('and the stamp on it is a plain time, the build kept apart', /^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}/.test(r.stored) && !/ v\S+$/.test(r.stored), r.stored);
+  const grid = env.__sheets['_Intel Wall']._grid;
+  const row = grid.find(g => g[0] === 'possession');
+  ok('the build is written beside the time in the store', /^\d{4}-\d{2}-\d{2}\S* v2026-\S+$/.test(String(row[1])), String(row[1]));
+  row[1] = String(row[1]).replace(/ v\S+$/, ' v2026-09-08a');       // the night's copy, from an older paste
+  fresh(); r = post({ action: 'intel.possession' });
+  ok('a copy stamped with another build is rebuilt on the next ask', r.ok && built.possession === was + 1 && !r.stored, 'built ' + built.possession);
+  fresh(); r = post({ action: 'intel.possession' });
+  ok('and the rebuilt copy is served from then on', r.ok && !!r.stored && built.possession === was + 1);
+  row[1] = String(row[1]).replace(/ v\S+$/, ' v2026-09-08a');
+  const out = env.intelRebuildWall();
+  ok("the night's run rebuilds it too, whatever the date says", /possession built at/.test(out) && built.possession === was + 2, out.split('\n')[1]);
 }
 
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');

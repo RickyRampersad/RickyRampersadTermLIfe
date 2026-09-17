@@ -133,6 +133,13 @@ env.__mkSheet('RR_UWPRO_INSURED_Requirement', 3,
   ]);
 env._intelTabMemo = {};
 const R = env.iPendingWall_();
+{
+  const rq = R.requirements || {};
+  ok('the requirements carry their dates, month by month since the cut',
+     Array.isArray(rq.byMonth) && rq.byMonth.length > 0 && rq.byMonth.every(m => /^2026-\d\d$/.test(m.ym) && m.n > 0 && m.lab.length === 3),
+     JSON.stringify(rq.byMonth));
+  ok('and name the oldest and newest', /^2026-\d\d-\d\d$/.test(rq.oldestOn) && /^2026-\d\d-\d\d$/.test(rq.newestOn) && rq.oldestOn <= rq.newestOn, rq.oldestOn + ' .. ' + rq.newestOn);
+}
 ok('it says it read the requirements extract too', /requirements extract/.test(R.source), R.source);
 ok('and the codes answer, not the comments', R.reasonsFrom === 'requirement codes', R.reasonsFrom);
 const codes = {}; (R.reasons || []).forEach(x => { codes[x.name] = x.n; });

@@ -190,6 +190,9 @@ ok('the urgent half is the birthdays still to come',
    d.head.ahead.n === 3 && d.head.ahead.cover === 14000000, JSON.stringify(d.head.ahead));
 ok('agents are ranked by cover', d.agents[0].name === 'Anand Pretend');
 ok('each agent carries their biggest single case', d.agents[0].top === 9000000, String(d.agents[0].top));
+ok('and every age that moves on the desk this month, without a name',
+   Array.isArray(d.agents[0].moves) && d.agents[0].moves.length >= 1 && d.agents[0].moves.every(m => m.to != null && m.day != null),
+   JSON.stringify(d.agents[0].moves));
 ok('and how many of theirs need collecting first',
    (d.agents.find(a => a.name === 'Beena Pretend') || {}).collect === 1,
    JSON.stringify(d.agents));
