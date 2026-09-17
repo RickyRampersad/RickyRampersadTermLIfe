@@ -179,12 +179,41 @@ Branch production — the "submitted" figure on the wall and the one head office
 reads — comes from **Salesforce**, not from the fact find sheet, and it is
 keyed on a date that is easy to get wrong.
 
+**It is two Salesforce objects, not one**, and their field names do not match.
+
+New business — life and pensions:
+
 | | |
 |---|---|
 | Object | `CLIENT_PORTFOLIO__c` |
-| Date | **`Production_Picked_up_Date__c`** |
-| Measure | `SUM(Total_API__c)` |
-| Scope | new business — life and pensions — **plus increases, each on their own pick-up date** |
+| Date | `Production_Picked_up_Date__c` |
+| API | `SUM(Total_API__c)` |
+| Apps | `SUM(App_Count__c)` |
+| Agent | `AGENT__r.Agent__c` |
+| Product mix | `RecordType.Name` |
+
+Increases — their own object, their own dates:
+
+| | |
+|---|---|
+| Object | **`Policy_Increases__c`** |
+| Date | `Increase_Production_Picked_Up_Date__c` |
+| API | `SUM(Increase_API__c)` |
+| Apps | `SUM(App_Count_Inc__c)` |
+| Agent | `Policy_Increases__r.AGENT__r.Agent__c` — through the relationship, not direct |
+
+**Mind the capital.** New business is `Picked_up`; the increase is
+`Picked_Up`. One letter, and Salesforce refuses the whole query. Copy these
+names, do not retype them.
+
+Branch production is the two added together. Query one and the number is wrong
+and looks right.
+
+**"Picked up" means the application pick-up date** — the day the application
+was collected, which is the day the branch is credited with the production. It
+is not the day the policy was issued, not the day cover started, and not the
+day the advisor submitted the fact find. The whole report hangs on that one
+date, on both objects.
 
 `wall.html` states the rule on the report itself: *"Total API = new business on
 its production picked-up date + increases on theirs."*
