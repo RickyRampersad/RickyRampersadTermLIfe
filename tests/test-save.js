@@ -64,7 +64,16 @@ const ok = (label, cond, extra='') => { console.log((cond?'  PASS  ':'  FAIL  ')
   // climbs again without a field to show for it, something has stopped
   // batching.
   ok('block writes batched under 8', writes < 8, 'writes=' + writes);
-  ok('log not re-read to count the day', reads <= 5, 'reads=' + reads);
+  /* SIX, NOT FIVE, SINCE 17 SEPTEMBER 2026 — and it is a trade, not a
+     regression. The save used to find its row by reading the whole log in
+     one call: one round trip, but every row and every column of it, which
+     on the branch's real log is seventeen thousand cells and grows every
+     day. It now reads the three key columns in one call and then the single
+     row it matched, so the round trips go five to six and the cells read
+     drop by more than nine tenths. Round trips are a fixed cost; payload is
+     not. tests/test-busy.js pins the volume and asserts that nothing reads
+     a rectangle of the log again. */
+  ok('log not re-read to count the day', reads <= 6, 'reads=' + reads);
 
   const g = env.__sheets['KPI Log']._grid[1];
   ok('PM2 text landed', g[LOGH.indexOf('PM2_Actioned')] === 'Actioned remaining tasks');

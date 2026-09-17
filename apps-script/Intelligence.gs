@@ -5477,6 +5477,22 @@ function intelRebuildGroups()     { return iWallRebuild_('groups',     function 
 function intelPendingRefresh(e, hour) {
   var h = hour === undefined ? Number(Utilities.formatDate(new Date(), iTz_(), 'H')) : Number(hour);
   if (h % 2 !== 1 || h < 5 || h > 19 || h === 7) return 'pending: not this hour (' + h + ')';
+  /* THE WALL WAITS FOR THE BRANCH, NEVER THE OTHER WAY ROUND.
+     This rebuild reads the whole requirements extract and takes about two
+     minutes, and the hourly trigger fires at whatever minute Apps Script
+     feels like — six times inside the working day. A submission that lands
+     on top of it waits on the same document and can time out: on
+     17 September 2026 a member of staff filed the eleven-to-one block, got
+     no answer after four tries over two minutes, and had to resubmit after
+     lunch. Of the two, this is the one that can afford to wait — it has the
+     night copy behind it and another go in two hours. So if anybody has
+     filed anything in the last four minutes, it stands down.
+     The nightly hours (five, and nineteen after the branch has gone) are
+     not gated: nobody is filing then, and the night copy must be built. */
+  if (h > 5 && h < 19 && typeof staffWroteWithin_ === 'function' && staffWroteWithin_(4 * 60 * 1000)) {
+    return 'pending: somebody is filing a block just now — standing down, next go at ' +
+           (h + 2) + ':00';
+  }
   var out = [intelRebuildPending()];
   /* Five in the morning is the night copy for the two Salesforce screens
      too — inside the same trigger, because the project is one trigger short
