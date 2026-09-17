@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SEA Papers | CSEC Study Hub</title>
+<meta name="robots" content="noindex"/>
+<link rel="icon" type="image/svg+xml" href="../favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/csec.css"/>
+<style>
+  .timer{font-family:'Montserrat',sans-serif;font-weight:800;font-size:1.4rem;color:var(--gold);
+         padding:6px 14px;border-radius:10px;background:rgba(0,0,0,.28);border:1px solid var(--line)}
+  .timer.warn{color:#f87171;border-color:rgba(248,113,113,.45);animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  .ptabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+  .ptabs button{font-family:'Montserrat',sans-serif;font-weight:700;font-size:.82rem;cursor:pointer;
+    padding:9px 16px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.22);color:var(--muted)}
+  .ptabs button.on{background:var(--gold);border-color:var(--gold);color:#07131f}
+  .papers{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+  .pp{text-align:left;cursor:pointer;padding:13px;border-radius:12px;border:1px solid var(--line);
+      background:rgba(0,0,0,.22);color:var(--ink);display:block;width:100%}
+  .pp:hover{border-color:var(--teal)}
+  .pp b{display:block;font-family:'Montserrat',sans-serif;font-size:.95rem;margin-bottom:3px}
+  .pp span{display:block;color:var(--muted);font-size:.76rem;line-height:1.45}
+  .pp.mock{border-color:rgba(239,194,75,.5);background:rgba(239,194,75,.09)}
+  .pp.mock b{color:var(--gold)}
+  .pp .done{color:var(--teal);font-size:.74rem;font-weight:600;margin-top:5px;display:block}
+  .seclab{font-family:'Montserrat',sans-serif;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+    font-size:.72rem;color:var(--gold);margin:26px 0 4px}
+  .secnote{color:var(--muted);font-size:.83rem;margin-bottom:14px;line-height:1.55}
+  .navgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:7px}
+  .nb{aspect-ratio:1;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.22);
+      color:var(--muted);font-family:'Montserrat',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer}
+  .nb.done{background:rgba(0,207,234,.2);border-color:rgba(0,207,234,.45);color:var(--teal)}
+  .nb.here{outline:2px solid var(--gold);outline-offset:1px}
+  .opt.picked{border-color:var(--teal);background:rgba(0,207,234,.13)}
+  .opt.picked .k{background:var(--teal);color:#07131f}
+  .rev{border-left:3px solid var(--line);padding-left:14px;margin-bottom:20px}
+  .rev.ok{border-color:var(--good)} .rev.no{border-color:var(--bad)}
+  .prompt{border:1px solid var(--line);border-radius:12px;padding:15px;margin-bottom:11px;cursor:pointer;
+    background:rgba(0,0,0,.2);line-height:1.6}
+  .prompt:hover{border-color:var(--teal)}
+  .prompt.picked{border-color:var(--gold);background:rgba(239,194,75,.1)}
+  .prompt .n{font-family:'Montserrat',sans-serif;font-weight:800;color:var(--gold);font-size:.75rem;
+    letter-spacing:.06em;display:block;margin-bottom:5px}
+  #w-text{width:100%;min-height:340px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.28);
+    color:var(--ink);padding:15px;font-family:'DM Sans',sans-serif;font-size:1rem;line-height:1.75;resize:vertical}
+  .crit{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px}
+  .crit b{font-family:'Montserrat',sans-serif;font-size:.9rem}
+  .crit p{color:var(--muted);font-size:.83rem;margin:4px 0 10px;line-height:1.55}
+  .crit .bands{display:flex;gap:7px;flex-wrap:wrap}
+  .crit .bands button{cursor:pointer;padding:7px 13px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(0,0,0,.24);color:var(--muted);font-size:.8rem;font-family:'Montserrat',sans-serif;font-weight:600}
+  .crit .bands button.on{background:var(--teal);border-color:var(--teal);color:#07131f}
+  .depth{border-left:3px solid var(--gold);padding:12px 15px;background:rgba(239,194,75,.07);
+    border-radius:0 10px 10px 0;margin-bottom:20px;font-size:.87rem;line-height:1.65;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topbar">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div class="brandtext"><b>CSEC Study Hub</b><span>SEA papers</span></div>
+    <nav class="topnav" id="nav">
+      <a href="student.html">My Desk</a>
+      <a href="journey.html">Journey</a>
+      <a href="practice.html">Practice</a>
+      <a href="test.html">Tests</a>
+      <a href="sea.html" class="on">SEA Papers</a>
+      <a href="guides.html">Guides</a>
+      <a href="kpi.html">KPIs</a>
+      <a href="planner.html">Syllabus</a>
+      <a href="papers.html">Resources</a>
+      <a href="settings.html">Settings</a>
+    </nav>
+  </div>
+</header>
+
+<main class="page">
+  <div class="wrap narrow">
+
+    <!-- ============ INDEX ============ -->
+    <section id="index">
+      <div class="pagehead">
+        <div class="eyebrow">Built to the Ministry blueprint</div>
+        <h1>SEA practice papers</h1>
+        <p>Twelve practice papers and two mock examinations in each of the three papers a child
+           actually sits. Every one is built to the item counts, mark allocation and working time
+           set out in the Ministry&rsquo;s <b>Assessment Framework 2025&ndash;2028</b>.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:20px">
+        <div class="grid g3" id="bp"></div>
+      </div>
+
+      <div class="ptabs" id="tabs"></div>
+      <div class="depth" id="depth"></div>
+      <div class="papers" id="papers"></div>
+
+      <p class="note" style="margin-top:22px">
+        A <b>practice paper</b> tells you after each question. A <b>mock</b> tells you nothing until
+        you submit &mdash; that is the whole point of it. Sit the mocks last, and sit them to time.
+      </p>
+    </section>
+
+    <!-- ============ PAPER (maths / ela) ============ -->
+    <section id="paper" class="hidden">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div>
+          <div class="eyebrow" id="p-kind"></div>
+          <h1 id="p-title" style="margin:0"></h1>
+        </div>
+        <div class="timer" id="p-clock">--:--</div>
+      </div>
+      <p class="note" id="p-sub" style="margin-bottom:20px"></p>
+
+      <div class="card">
+        <div class="seclab" id="q-sec"></div>
+        <div class="secnote" id="q-secnote"></div>
+        <div class="qmeta" id="q-meta"></div>
+        <div class="qstem" id="q-stem"></div>
+        <div class="opts" id="q-opts"></div>
+        <div class="row" style="justify-content:space-between;margin-top:20px">
+          <button class="btn ghost" id="q-prev">Back</button>
+          <button class="btn teal" id="q-next">Next</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="section-label">Question map</div>
+        <div class="navgrid" id="q-map"></div>
+        <button class="btn gold" id="q-submit" style="margin-top:18px;width:100%">Submit the paper</button>
+        <button class="btn ghost" id="q-quit" style="margin-top:9px;width:100%">Leave without submitting</button>
+      </div>
+    </section>
+
+    <!-- ============ WRITING PAPER ============ -->
+    <section id="writing" class="hidden">
+      <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
+        <div>
+          <div class="eyebrow" id="w-kind"></div>
+          <h1 id="w-title" style="margin:0"></h1>
+        </div>
+        <div class="timer" id="w-clock">--:--</div>
+      </div>
+      <p class="note" id="w-sub" style="margin-bottom:20px"></p>
+
+      <div class="card">
+        <div class="section-label">Choose ONE</div>
+        <div id="w-prompts"></div>
+      </div>
+
+      <div class="card" style="margin-top:18px">
+        <div class="section-label">Your answer</div>
+        <textarea id="w-text" placeholder="Plan for five minutes, write for forty, check for five."></textarea>
+        <p class="note" id="w-count" style="margin-top:8px"></p>
+        <button class="btn gold" id="w-done" style="margin-top:14px;width:100%">Finish and mark it</button>
+        <button class="btn ghost" id="w-quit" style="margin-top:9px;width:100%">Leave without finishing</button>
+      </div>
+    </section>
+
+    <!-- ============ RESULT ============ -->
+    <section id="result" class="hidden">
+      <div class="pagehead">
+        <div class="eyebrow" id="r-kind"></div>
+        <h1 id="r-title"></h1>
+        <p id="r-sub"></p>
+      </div>
+      <div class="card" id="r-card"></div>
+      <div id="r-review"></div>
+      <button class="btn gold" id="r-back" style="margin-top:22px;width:100%">Back to the papers</button>
+    </section>
+
+  </div>
+</main>
+
+<footer class="bar"><div class="wrap"><span>Ricky Rampersad Branch &mdash; CSEC Study Hub</span></div></footer>
+
+<script src="data/curriculum.js"></script>
+<script src="data/questions.js"></script>
+<script src="data/sea-papers.js"></script>
+<script src="assets/csec.js"></script>
+<script src="assets/csec-config.js"></script>
+<script src="assets/csec-sync.js"></script>
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id);};
+  var me=CSEC.requireRole(['student','parent','teacher']); if(!me) return;
+  var S=window.CSEC_SEA, B=CSEC.seaSpec();
+  var SUBJ=['p-mathematics','p-ela','p-ela-writing'];
+  var tab=SUBJ[0], paper=null, idx=0, answers={}, tick=null, left=0, started=0, pick=-1;
+
+  /* ---------------- blueprint summary ---------------- */
+  $('bp').innerHTML=B.order.map(function(k){
+    var b=B[k];
+    var line=b.marks?(b.items+' items &middot; '+b.marks+' marks')
+                   :(b.items+' prompts &middot; answer '+b.answer);
+    return '<div class="tile"><div class="big">'+b.minutes+'</div><div class="lab">'+CSEC.esc(b.name)+
+           '<br><span style="opacity:.75">minutes &middot; '+line+'</span></div></div>';
+  }).join('');
+
+  /* ---------------- index ---------------- */
+  function drawTabs(){
+    $('tabs').innerHTML=SUBJ.map(function(s){
+      return '<button data-s="'+s+'"'+(s===tab?' class="on"':'')+'>'+CSEC.esc(B[s].name)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('tabs').querySelectorAll('button'),function(b){
+      b.addEventListener('click',function(){ tab=b.getAttribute('data-s'); drawTabs(); drawPapers(); });
+    });
+  }
+  function sat(subj,n){
+    var p=CSEC.progress(me.id);
+    return (p.tests||[]).filter(function(t){ return t.sea && t.sea.subj===subj && t.sea.n===n; }).pop();
+  }
+  function drawPapers(){
+    var d=$('depth');
+    if(tab==='p-ela-writing'){
+      d.innerHTML='All fourteen writing papers are written out in full &mdash; forty-two prompts, none repeated. '+
+                  'The writing paper is marked by you or by a parent against the Ministry&rsquo;s four criteria, '+
+                  'because no program can mark a child&rsquo;s story honestly.';
+    } else {
+      var dep=CSEC.seaDepth(tab);
+      var need=B[tab].strands.map(function(s){return s.items;}).reduce(function(a,b){return a+b;},0);
+      d.innerHTML=dep.papers>=14
+        ? 'All fourteen papers are built from entirely separate questions.'
+        : '<b>Straight from us, so you are not surprised:</b> the bank currently supports <b>'+dep.papers+
+          ' completely separate '+(dep.papers===1?'paper':'papers')+'</b>. After that, questions begin to reappear '+
+          'across papers &mdash; never twice inside the same paper. The tightest topic is <b>'+CSEC.esc(dep.strand)+
+          '</b>: '+dep.have+' questions written, '+dep.need+' needed per paper. Fourteen separate papers needs '+
+          (need*14)+' questions in this subject.';
+    }
+    $('papers').innerHTML=CSEC.seaPapers(tab).map(function(p){
+      var done=sat(tab,p.n);
+      var sub=p.mock?'Examination conditions':(B[tab].items+(tab==='p-ela-writing'?' prompts':' items'));
+      return '<button class="pp'+(p.mock?' mock':'')+'" data-n="'+p.n+'"><b>'+p.label+'</b>'+
+             '<span>'+CSEC.esc(sub)+' &middot; '+B[tab].minutes+' min</span>'+
+             (done?'<span class="done">&#10003; sat '+CSEC.esc(done.date)+(done.pct!=null?' &middot; '+done.pct+'%':'')+'</span>':'')+
+             '</button>';
+    }).join('');
+    Array.prototype.forEach.call($('papers').querySelectorAll('.pp'),function(b){
+      b.addEventListener('click',function(){ open(tab, +b.getAttribute('data-n')); });
+    });
+  }
+
+  /* ---------------- open a paper ---------------- */
+  function show(id){ ['index','paper','writing','result'].forEach(function(s){ $(s).classList.toggle('hidden', s!==id); }); }
+
+  function open(subj,n){
+    paper=CSEC.seaPaper(subj,n); if(!paper) return;
+    answers={}; idx=0; pick=-1; started=Date.now(); left=paper.minutes*60;
+    var label=(paper.mock?'Mock ':'Practice ')+(paper.mock?(n-S.practiceCount):n);
+    if(paper.writing){
+      $('w-kind').textContent=label+' — '+(paper.kind==='narrative'?'Narrative':'Expository');
+      $('w-title').textContent=paper.name;
+      $('w-sub').innerHTML=CSEC.esc(paper.note)+' You have <b>'+paper.minutes+' minutes</b>.';
+      $('w-prompts').innerHTML=paper.prompts.map(function(t,i){
+        return '<div class="prompt" data-i="'+i+'"><span class="n">Question '+(i+1)+'</span>'+CSEC.esc(t)+'</div>';
+      }).join('');
+      Array.prototype.forEach.call($('w-prompts').querySelectorAll('.prompt'),function(el){
+        el.addEventListener('click',function(){
+          pick=+el.getAttribute('data-i');
+          Array.prototype.forEach.call($('w-prompts').querySelectorAll('.prompt'),function(x){
+            x.classList.toggle('picked', x===el); });
+        });
+      });
+      $('w-text').value=''; count();
+      show('writing'); startClock($('w-clock'), finishWriting);
+      return;
+    }
+    $('p-kind').textContent=label;
+    $('p-title').textContent=paper.name;
+    $('p-sub').innerHTML=paper.items+' items &middot; '+paper.marks+' marks &middot; <b>'+paper.minutes+' minutes</b>'+
+      (paper.mock?' &middot; no feedback until you submit':'')+
+      (paper.complete?'':' &middot; <span style="color:var(--gold)">short by '+(paper.items-paper.questions.length)+' items: '+CSEC.esc(paper.short.join(', '))+'</span>');
+    drawQ(); drawMap(); show('paper'); startClock($('p-clock'), submit);
+  }
+
+  function startClock(el,onEnd){
+    clearInterval(tick);
+    var paint=function(){
+      var m=Math.floor(left/60), s=left%60;
+      el.textContent=m+':'+(s<10?'0':'')+s;
+      el.classList.toggle('warn', left<=300);
+    };
+    paint();
+    tick=setInterval(function(){ left--; paint(); if(left<=0){ clearInterval(tick); tick=null; onEnd(true); } },1000);
+  }
+
+  /* ---------------- maths / ela paper ---------------- */
+  function sectionOf(i){
+    var c=0;
+    for(var s=0;s<paper.sections.length;s++){
+      if(i<c+paper.sections[s].questions.length) return paper.sections[s];
+      c+=paper.sections[s].questions.length;
+    }
+    return paper.sections[paper.sections.length-1];
+  }
+  function orderFor(q){
+    var o=q.opts.map(function(_,i){return i;});
+    var r=0,i; for(i=0;i<q.id.length;i++) r=(r*31+q.id.charCodeAt(i))>>>0;
+    for(i=o.length-1;i>0;i--){ r=(r*1103515245+12345)>>>0; var j=r%(i+1); var t=o[i]; o[i]=o[j]; o[j]=t; }
+    return o;
+  }
+  function drawQ(){
+    var q=paper.questions[idx], sec=sectionOf(idx);
+    $('q-sec').textContent='Section '+sec.n;
+    $('q-secnote').textContent=sec.note;
+    $('q-meta').textContent='Question '+(idx+1)+' of '+paper.questions.length;
+    $('q-stem').textContent=q.q;
+    var ord=orderFor(q), K='ABCD';
+    $('q-opts').innerHTML=ord.map(function(oi,vi){
+      var on=answers[q.id]===oi?' picked':'';
+      return '<button class="opt'+on+'" data-o="'+oi+'"><span class="k">'+K[vi]+'</span>'+CSEC.esc(q.opts[oi])+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('q-opts').querySelectorAll('.opt'),function(b){
+      b.addEventListener('click',function(){
+        answers[q.id]=+b.getAttribute('data-o');
+        drawQ(); drawMap();
+        if(!paper.mock) setTimeout(function(){ if(idx<paper.questions.length-1){ idx++; drawQ(); drawMap(); } },140);
+      });
+    });
+    $('q-prev').disabled=idx===0;
+    $('q-next').textContent=idx===paper.questions.length-1?'Last question':'Next';
+  }
+  function drawMap(){
+    $('q-map').innerHTML=paper.questions.map(function(q,i){
+      var c='nb'+(answers[q.id]!=null?' done':'')+(i===idx?' here':'');
+      return '<button class="'+c+'" data-i="'+i+'">'+(i+1)+'</button>';
+    }).join('');
+    Array.prototype.forEach.call($('q-map').querySelectorAll('.nb'),function(b){
+      b.addEventListener('click',function(){ idx=+b.getAttribute('data-i'); drawQ(); drawMap(); });
+    });
+  }
+  $('q-prev').addEventListener('click',function(){ if(idx>0){ idx--; drawQ(); drawMap(); } });
+  $('q-next').addEventListener('click',function(){ if(idx<paper.questions.length-1){ idx++; drawQ(); drawMap(); } });
+  $('q-quit').addEventListener('click',function(){ clearInterval(tick); tick=null; show('index'); drawPapers(); });
+
+  function submit(auto){
+    clearInterval(tick); tick=null;
+    var correct=0, marks=0, gained=0, strands={};
+    paper.questions.forEach(function(q,i){
+      var sec=sectionOf(i), per=sec.marks/sec.questions.length;
+      marks+=per;
+      var ok=answers[q.id]===0;
+      if(ok){ correct++; gained+=per; }
+      var st=strands[q.strand]||(strands[q.strand]={seen:0,correct:0});
+      st.seen++; if(ok) st.correct++;
+      CSEC.recordAnswer(me.id,q,ok);
+    });
+    var pct=Math.round(gained/marks*100), secs=Math.round((Date.now()-started)/1000);
+    CSEC.recordTest(me.id,{ subj:paper.subj, subjName:paper.name, n:paper.questions.length,
+      correct:correct, pct:pct, secs:secs, limit:paper.minutes*60, strands:strands,
+      sea:{ subj:paper.subj, n:paper.n, mock:!!paper.mock, marks:Math.round(gained), of:Math.round(marks) } });
+
+    $('r-kind').textContent=(paper.mock?'Mock ':'Practice ')+(paper.mock?(paper.n-S.practiceCount):paper.n)+' — '+paper.name;
+    $('r-title').textContent=Math.round(gained)+' out of '+Math.round(marks)+' marks';
+    $('r-sub').textContent=(auto?'Time ran out. ':'')+correct+' of '+paper.questions.length+
+      ' items right, in '+Math.floor(secs/60)+' minutes of the '+paper.minutes+' allowed.';
+    var rows=Object.keys(strands).map(function(k){
+      var st=strands[k], sub=CSEC.esc(k);
+      return '<tr><td>'+sub+'</td><td>'+st.correct+' / '+st.seen+'</td><td>'+Math.round(st.correct/st.seen*100)+'%</td></tr>';
+    }).join('');
+    $('r-card').innerHTML='<div class="section-label">By topic</div><div class="scrollx"><table class="rows">'+
+      '<tr><th>Topic</th><th>Right</th><th>&nbsp;</th></tr>'+rows+'</table></div>';
+    $('r-review').innerHTML='<div class="section-label" style="margin-top:26px">Every question</div>'+
+      paper.questions.map(function(q,i){
+        var ok=answers[q.id]===0, gave=answers[q.id];
+        return '<div class="rev '+(ok?'ok':'no')+'"><b>'+(i+1)+'. </b>'+CSEC.esc(q.q)+
+          '<p class="note" style="margin:7px 0 0">Correct: <b>'+CSEC.esc(q.opts[0])+'</b>'+
+          (gave==null?' &middot; you left this blank':(ok?'':' &middot; you chose '+CSEC.esc(q.opts[gave])))+
+          '<br>'+CSEC.esc(q.why)+(q.tech?'<br><i>'+CSEC.esc(q.tech)+'</i>':'')+'</p></div>';
+      }).join('');
+    show('result');
+  }
+  $('q-submit').addEventListener('click',function(){ submit(false); });
+
+  /* ---------------- writing paper ---------------- */
+  function count(){
+    var w=$('w-text').value.trim().split(/\s+/).filter(Boolean).length;
+    $('w-count').textContent=w+' word'+(w===1?'':'s')+'. A strong SEA piece is usually 250 to 350.';
+  }
+  $('w-text').addEventListener('input',count);
+  $('w-quit').addEventListener('click',function(){ clearInterval(tick); tick=null; show('index'); drawPapers(); });
+
+  function finishWriting(auto){
+    clearInterval(tick); tick=null;
+    var words=$('w-text').value.trim().split(/\s+/).filter(Boolean).length;
+    var chose=pick>=0?paper.prompts[pick]:null;
+    $('r-kind').textContent=(paper.mock?'Mock ':'Practice ')+(paper.mock?(paper.n-S.practiceCount):paper.n)+' — '+paper.name;
+    $('r-title').textContent='Now mark it';
+    $('r-sub').textContent=(auto?'Time ran out. ':'')+words+' words'+
+      (chose?' on: '+chose:'. No prompt was chosen.');
+    $('r-card').innerHTML='<div class="section-label">The four criteria the examiner uses</div>'+
+      '<p class="note">Two examiners score every piece on these. Score honestly &mdash; a parent or teacher '+
+      'marking it with the child is worth more than any mark a program could give.</p>'+
+      paper.criteria.map(function(c,i){
+        return '<div class="crit" data-c="'+i+'"><b>'+CSEC.esc(c.key)+'</b><p>'+CSEC.esc(c.what)+'</p>'+
+          '<div class="bands">'+['Not yet','Getting there','Good','Strong'].map(function(b,bi){
+            return '<button data-b="'+bi+'">'+b+'</button>';
+          }).join('')+'</div></div>';
+      }).join('')+
+      '<p class="note" style="margin-top:14px">Compare it against the Ministry&rsquo;s marked '+
+      '<a href="https://learn.moe.gov.tt/course/view.php?id=23872" target="_blank" rel="noopener">Standard 5 writing exemplars</a> '+
+      '&mdash; real children&rsquo;s work at each band, free and without an account.</p>';
+    var scores={};
+    Array.prototype.forEach.call($('r-card').querySelectorAll('.crit'),function(el){
+      Array.prototype.forEach.call(el.querySelectorAll('.bands button'),function(b){
+        b.addEventListener('click',function(){
+          scores[el.getAttribute('data-c')]=+b.getAttribute('data-b');
+          Array.prototype.forEach.call(el.querySelectorAll('.bands button'),function(x){ x.classList.toggle('on',x===b); });
+          if(Object.keys(scores).length===paper.criteria.length){
+            var tot=0; Object.keys(scores).forEach(function(k){ tot+=scores[k]; });
+            var pct=Math.round(tot/(paper.criteria.length*3)*100);
+            CSEC.recordTest(me.id,{ subj:paper.subj, subjName:paper.name, n:1, correct:0, pct:pct,
+              secs:Math.round((Date.now()-started)/1000), limit:paper.minutes*60, strands:{},
+              sea:{ subj:paper.subj, n:paper.n, mock:!!paper.mock, words:words, selfScore:pct } });
+            $('r-title').textContent='Self-marked: '+pct+'%';
+          }
+        });
+      });
+    });
+    $('r-review').innerHTML='<div class="section-label" style="margin-top:26px">What you wrote</div>'+
+      '<div class="card" style="white-space:pre-wrap;line-height:1.8">'+CSEC.esc($('w-text').value||'(nothing)')+'</div>';
+    show('result');
+  }
+  $('w-done').addEventListener('click',function(){ finishWriting(false); });
+
+  $('r-back').addEventListener('click',function(){ show('index'); drawPapers(); });
+
+  window.addEventListener('beforeunload',function(e){ if(tick){ e.preventDefault(); e.returnValue=''; } });
+
+  drawTabs(); drawPapers(); show('index');
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

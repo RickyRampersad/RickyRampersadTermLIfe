@@ -117,6 +117,8 @@
     ? '<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
       '<a href="journey.html">Journey</a>'+
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
+      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
       '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
       '<a href="planner.html" class="on">Syllabus</a><a href="papers.html">Resources</a><a href="settings.html">Settings</a>'
     : '<a href="start.html">Start here</a><a href="index.html">Sign in</a><a href="journey.html">Journey</a><a href="guides.html">Guides</a>'+

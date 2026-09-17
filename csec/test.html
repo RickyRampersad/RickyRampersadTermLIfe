@@ -36,6 +36,7 @@
       <a href="journey.html">Journey</a>
       <a href="practice.html">Practice</a>
       <a href="test.html" class="on">Tests</a>
+      <a href="sea.html">SEA Papers</a>
       <a href="guides.html">Guides</a>
       <a href="kpi.html">KPIs</a>
       <a href="planner.html">Syllabus</a>
@@ -350,6 +351,16 @@
     if(tick){ e.preventDefault(); e.returnValue=''; }
   });
 })();
+</script>
+
+<script>
+/* SEA papers belong to the primary ladder. A Form 1-5 student should not see
+   the link at all; parents and teachers keep it, since they may have a child
+   in Standard 1-5. */
+(function(){try{
+  var me=CSEC.current&&CSEC.current(), a=document.querySelector('.topnav a[href="sea.html"]');
+  if(a&&me&&me.role==='student'&&me.level>5) a.parentNode.removeChild(a);
+}catch(e){}})();
 </script>
 
 <!-- rrb-views -->

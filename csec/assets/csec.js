@@ -490,7 +490,10 @@
       subjName: result.subjName || 'Mixed', n: result.n || 0,
       correct: result.correct || 0, pct: result.pct || 0,
       secs: result.secs || 0, limit: result.limit || 0,
-      level: (profile(studentId) || {}).level, strands: result.strands || {}
+      level: (profile(studentId) || {}).level, strands: result.strands || {},
+      /* Which SEA paper this was, when it was one. The papers index reads it
+         to show "already sat"; without it every paper looks untouched. */
+      sea: result.sea || null
     });
     if (p.tests.length > 200) p.tests = p.tests.slice(-200);
     if (p.days.indexOf(today()) === -1) p.days.push(today());
@@ -839,6 +842,134 @@
     return html + '</div>';
   }
 
+  /* ------------------------- SEA practice papers ------------------------ *
+   * Twelve practice papers and two mocks per paper type, each assembled to the
+   * Ministry's published blueprint (data/sea-papers.js).
+   *
+   * Two rules make these usable as practice papers rather than as another
+   * shuffle of the bank:
+   *
+   *   Repeatable. Paper 7 is the same paper every time it is opened, on any
+   *   device, so a mark can be compared with last month's. The deal is seeded
+   *   by strand only, never by the clock or the child.
+   *
+   *   Maximally distinct. Items are DEALT across papers, not sampled for each.
+   *   Each strand's pool is ordered once, then paper n takes the next slice.
+   *   Papers stay completely distinct until the pool runs out, and only then
+   *   wrap - rather than colliding on paper two, which random sampling does.
+   * ---------------------------------------------------------------------- */
+
+  /* A small deterministic PRNG. Same seed, same order, everywhere. */
+  function seeded(seed) {
+    var x = seed >>> 0 || 1;
+    return function () {
+      x ^= x << 13; x >>>= 0; x ^= x >> 17; x ^= x << 5; x >>>= 0;
+      return x / 4294967296;
+    };
+  }
+  function hashStr(str) {
+    var h = 2166136261, i;
+    for (i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h * 16777619) >>> 0; }
+    return h >>> 0;
+  }
+  function orderedPool(strandIds) {
+    var pool = (global.CSEC_QUESTIONS || []).filter(function (q) {
+      return strandIds.indexOf(q.strand) > -1;
+    });
+    /* Ordered once, by a seed derived from the strand list - so the order is
+       stable across devices and releases, and does not shift when a question
+       is appended to the end of the bank. */
+    var rnd = seeded(hashStr(strandIds.join('|')));
+    return pool.map(function (q) { return { q: q, k: rnd() }; })
+               .sort(function (a, b) { return a.k - b.k; })
+               .map(function (x) { return x.q; });
+  }
+
+  function seaSpec() { return (global.CSEC_SEA || {}).blueprint || null; }
+
+  /* How many fully distinct papers the bank currently supports for a subject,
+     and the tightest strand holding that number down. Surfaced in the UI
+     rather than hidden - a family should know when papers start to repeat. */
+  function seaDepth(subjId) {
+    var B = seaSpec(); if (!B || !B[subjId] || !B[subjId].strands) return null;
+    var worst = null;
+    B[subjId].strands.forEach(function (st) {
+      var have = orderedPool(st.from).length;
+      var papers = st.items ? Math.floor(have / st.items) : 0;
+      if (!worst || papers < worst.papers) worst = { papers: papers, strand: st.key, have: have, need: st.items };
+    });
+    return worst;
+  }
+
+  /* Build one paper. n is 1-based across the whole set: 1..12 are practice,
+     13..14 are the mocks. */
+  function seaPaper(subjId, n) {
+    var B = seaSpec(); if (!B || !B[subjId]) return null;
+    var spec = B[subjId];
+    var S = global.CSEC_SEA;
+    var practice = S.practiceCount, total = practice + S.mockCount;
+    n = Math.max(1, Math.min(total, Number(n) || 1));
+    var isMock = n > practice;
+
+    if (subjId === 'p-ela-writing') {
+      var w = (S.writing || []).filter(function (x) { return x.paper === n; })[0] || null;
+      return { subj: subjId, name: spec.name, n: n, mock: isMock, minutes: spec.minutes,
+               writing: true, kind: w && w.kind, prompts: (w && w.prompts) || [],
+               criteria: spec.criteria, note: spec.note, items: spec.items, answer: spec.answer };
+    }
+
+    var picked = [], short = [];
+    spec.strands.forEach(function (st) {
+      var pool = orderedPool(st.from), want = st.items;
+      if (!pool.length) { short.push(st.key + ' (none)'); return; }
+      var start = ((n - 1) * want) % pool.length, i, taken = [];
+      for (i = 0; i < want; i++) taken.push(pool[(start + i) % pool.length]);
+      /* Within ONE paper a repeat is never acceptable, even when the pool is
+         smaller than the quota - fall back to what exists and report it. */
+      var seen = {}, uniq = [];
+      taken.forEach(function (q) { if (!seen[q.id]) { seen[q.id] = 1; uniq.push(q); } });
+      if (uniq.length < want) short.push(st.key + ' ' + uniq.length + '/' + want);
+      uniq.forEach(function (q) { picked.push({ q: q, strand: st.key, marks: st.marks / st.items }); });
+    });
+
+    /* Order the paper by section: the easy one-markers first, exactly as the
+       real paper is laid out, so the pacing practice is honest. */
+    var rnd = seeded(hashStr(subjId + '#' + n));
+    picked = picked.map(function (x) { return { x: x, k: rnd() }; })
+                   .sort(function (a, b) { return a.k - b.k; })
+                   .map(function (o) { return o.x; });
+    var order = { 1: 0, 2: 1, 3: 2 };
+    picked.sort(function (a, b) { return (order[a.q.diff] || 1) - (order[b.q.diff] || 1); });
+
+    var cursor = 0;
+    var sections = (spec.sections || []).map(function (sec) {
+      var take = picked.slice(cursor, cursor + sec.items);
+      cursor += sec.items;
+      return { n: sec.n, note: sec.note, perItem: sec.perItem, marks: sec.marks,
+               questions: take.map(function (t) { return t.q; }) };
+    });
+
+    return {
+      subj: subjId, name: spec.name, n: n, mock: isMock, minutes: spec.minutes,
+      items: spec.items, marks: spec.marks, sections: sections,
+      questions: picked.map(function (t) { return t.q; }),
+      strands: spec.strands, thinking: spec.thinking,
+      short: short, complete: !short.length, depth: seaDepth(subjId)
+    };
+  }
+
+  /* The index the SEA page lists. */
+  function seaPapers(subjId) {
+    var S = global.CSEC_SEA; if (!S) return [];
+    var out = [], i, total = S.practiceCount + S.mockCount;
+    for (i = 1; i <= total; i++) {
+      var mock = i > S.practiceCount;
+      out.push({ n: i, subj: subjId, mock: mock,
+                 label: mock ? ('Mock ' + (i - S.practiceCount)) : ('Practice ' + i) });
+    }
+    return out;
+  }
+
   global.CSEC = {
     curriculum: C, questions: Q,
     profiles: profiles, profile: profile, students: students,
@@ -859,6 +990,7 @@
     coverage: coverage, retention: retention, testStat: testStat, recordTest: recordTest,
     readiness: readiness, band: band, distinctionBoard: distinctionBoard,
     exportAll: exportAll, importAll: importAll,
+    seaPaper: seaPaper, seaPapers: seaPapers, seaDepth: seaDepth, seaSpec: seaSpec,
     esc: esc, ring: ring, streakGrid: streakGrid, today: today
   };
 })(window);
