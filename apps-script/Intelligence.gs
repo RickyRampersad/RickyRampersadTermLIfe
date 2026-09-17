@@ -1361,6 +1361,14 @@ function iPendBoard_(extract, reqs, tasks) {
   var rows = {}, tot = { policies: 0, reqts: 0, routine: 0, medical: 0, cash: 0,
                          held: 0, open: 0, late: 0, quiet: 0, today: 0, never: 0,
                          ready: 0, chase: 0, motion: 0 };
+  /* THE SAME JOIN READ THE OTHER WAY ROUND. The board answers "what is on
+     this agent's desk"; `codes` answers "who is holding this requirement",
+     which is the question a branch meeting actually argues about. Asked for
+     on 17 September: "on each of those codes, a further breakdown… look at
+     the name." Built in this pass rather than a second one, because the
+     agent of a requirement is the agent of the policy it sits on and that
+     join is already made here. */
+  var codes = {};
   extract.rows.forEach(function (row) {
     var agent = String(row.agent || '').trim() || '(unassigned)';
     if (iExcludes_(skip, agent)) return;
@@ -1389,9 +1397,20 @@ function iPendBoard_(extract, reqs, tasks) {
          reds." A name with no age beside it is a label; a name with an age
          is an argument. The oldest of that kind is the one that makes it. */
       var lab = q.label || code;
+      var age = Math.round(iNum_(q.age));
       var L = a.labels[lab] || (a.labels[lab] = { n: 0, oldest: 0 });
       L.n++;
-      if (iNum_(q.age) > L.oldest) L.oldest = Math.round(iNum_(q.age));
+      if (age > L.oldest) L.oldest = age;
+
+      var C = codes[code] || (codes[code] = { code: code, label: lab, n: 0, oldest: 0,
+        ordered: 0, medical: iReqIsMedical_(code), ages: [], by: {} });
+      C.n++;
+      if (age > C.oldest) C.oldest = age;
+      if (q.ordered) C.ordered++;
+      C.ages.push(age);
+      var W = C.by[agent] || (C.by[agent] = { who: agent, n: 0, oldest: 0 });
+      W.n++;
+      if (age > W.oldest) W.oldest = age;
     });
     (row.requirements || []).forEach(function (t) {
       if (String(t || '').trim().toUpperCase() === 'FUTPY') wantsCash = true;
@@ -1456,7 +1475,26 @@ function iPendBoard_(extract, reqs, tasks) {
   });
   tot.held = Math.round(tot.held * 100) / 100;
   tot.agents = out.length;
-  return { agents: out, total: tot, listOnly: Object.keys(listOnly).length };
+
+  /* Oldest first, because a code's worst case is what decides whether it gets
+     worked this afternoon. The median goes with it so one ancient outlier
+     cannot make a healthy code look rotten. */
+  var codeList = Object.keys(codes).map(function (k) {
+    var c = codes[k];
+    c.ages.sort(function (x, y) { return x - y; });
+    var m = c.ages.length ? (c.ages.length % 2
+      ? c.ages[(c.ages.length - 1) / 2]
+      : Math.round((c.ages[c.ages.length / 2 - 1] + c.ages[c.ages.length / 2]) / 2)) : 0;
+    c.median = m;
+    delete c.ages;
+    c.agents = Object.keys(c.by).map(function (w) { return c.by[w]; })
+      .sort(function (x, y) { return y.oldest - x.oldest || y.n - x.n; });
+    delete c.by;
+    return c;
+  }).sort(function (x, y) { return y.oldest - x.oldest || y.n - x.n; });
+
+  return { agents: out, total: tot, codes: codeList,
+           listOnly: Object.keys(listOnly).length };
 }
 
 function iPendTriage_(extract, reqs) {

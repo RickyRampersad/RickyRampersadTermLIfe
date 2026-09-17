@@ -30,6 +30,7 @@ const SCREENS = [
   ['Pending · policies',     '/intelligence/wall/pending.html'],
   ['Pending · requirements', '/intelligence/wall/reqs.html'],
   ['Pending · increases & group', '/intelligence/wall/increases.html'],
+  ['Pending · code by code', '/intelligence/wall/codes.html'],
   ['The day in blocks',  '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Lapses',             '/intelligence/wall/lapses.html'],

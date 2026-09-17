@@ -478,7 +478,25 @@ slide, let me know"*. So:
   - Rebuilt by `intelRebuildGroups()`, served at `intel.groups`, and in the
     nightly `IWALL_FEEDS` run near the front because five small SOQL queries
     are the cheapest feed on the wall.
-- All three carry the **gold nameplate** rather than the branch mark; the house
+- **Slide 6, `codes.html` — Branch Pending · Code by code.** Asked for as
+  *"should we not have one overall general dashboard, but however on each of
+  those codes a further breakdown? … if we do need to have two, three or four
+  dashboards related to the branch's pending, we should."* The left card is the
+  overall dashboard: the branch in **five states** — ready to settle, the
+  agent's move, the client's move, already in motion, with head office — each
+  with its count, its oldest and a bar of its share, the workable two in gold
+  and the rest in grey. Under it, how many pending policies could be joined to
+  a requirement at all, because a policy with no requirement row is placed on
+  its premium column alone and that is the error bar on everything above it.
+  The right card is the **breakdown under every code**: each requirement
+  outstanding, oldest first, with its count, median and oldest, a `MED` tag
+  where it is a medical, how many are already ordered — and **the agents
+  holding it named underneath, each with their own count and worst age**,
+  gold past sixty days and red past ninety. It reads the same `intel.pending`
+  feed as slides 3 and 4, from `board.codes`, which is the board's own join
+  read the other way round: the board answers what is on an agent's desk,
+  this answers who is holding a requirement.
+- All four carry the **gold nameplate** rather than the branch mark; the house
   note in `CLAUDE.md` records that exception and why.
 - **Two exclusion rules, and they are different.** `intelExclude` takes a name
   off every report entirely. `intelListOnly` takes the name off every per-agent

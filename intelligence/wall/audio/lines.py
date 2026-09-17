@@ -100,6 +100,15 @@ WALLS = {
         "Open, overdue, gone quiet for a week, touched today, closed today.",
         "A chase closed with the policy still open is the worst of the three. It reads as handled, and it is not.",
     ],
+    'codes': [                                   # Code by code
+        "This is the branch in five states.",
+        "Ready to settle wants nothing but the money.",
+        "The agent's move is a document somebody can go and get.",
+        "Already in motion is a medical booked, or a report at the lab. Nobody to telephone.",
+        "Then every requirement code, oldest first.",
+        "Under each one, the agents holding it, and how long each has held.",
+        "A code with a count is a statistic. A code with names under it is a meeting.",
+    ],
     'index': [                                   # The 45-Day Line
         "This is the forty five day line.",
         "Past the grace period. Still early enough that a phone call works.",

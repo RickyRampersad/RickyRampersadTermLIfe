@@ -21,7 +21,7 @@ the room notices.
 
 **One exception, decided 17 September 2026**: the Branch Pending Wall slides
 (`intelligence/wall/pending.html`, `intelligence/wall/reqs.html`,
-`intelligence/wall/increases.html`) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
+`intelligence/wall/increases.html`, `intelligence/wall/codes.html`) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
 — because that is the one wall the branch stands in front of and argues from,
 it runs over several slides, and the room has to know which wall it is watching.
 Asked for in those words: *"remove the shield in this wall so persons will know
