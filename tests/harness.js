@@ -169,4 +169,18 @@ function makeEnv(opts = {}) {
   new vm.Script(fs.readFileSync(process.env.GS_PATH || (__dirname + '/../apps-script/KPI.gs'), 'utf8'), { filename: 'KPI.gs' }).runInContext(g);
   return g;
 }
-module.exports = { makeEnv };
+/* THE LIVE ORG'S OWN REFUSAL, kept so a test cannot pass a query the org
+   would reject. Unit__c and AgentName__c on the portfolio objects are
+   formula fields, and Salesforce will not GROUP BY a formula. The groups
+   feed shipped on 17 September 2026 with three such queries, every test
+   green, and the slide came up empty. A fake sfQuery_ calls this first. */
+function refuseUngroupable(soql) {
+  const m = String(soql).match(/GROUP BY\s+(.+)$/i);
+  if (!m) return;
+  const fields = m[1].split(/\s+(?:ORDER|LIMIT|HAVING)\b/i)[0].split(',').map(f => f.trim());
+  const bad = fields.find(f => /^(Unit__c|AgentName__c)$/i.test(f));
+  if (bad) throw new Error('Salesforce query failed: [{"message":"\\nERROR at Row:1:Column:1\\nfield \'' +
+                           bad + '\' can not be grouped in a query call","errorCode":"MALFORMED_QUERY"}]');
+}
+
+module.exports = { makeEnv, refuseUngroupable };

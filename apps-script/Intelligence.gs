@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17k';
+var INTEL_VERSION = '2026-09-17l';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -3605,9 +3605,11 @@ var IGRP = {
   LABEL:  { 'HEALTH': 'Individual health', 'HEALTH (GROUP)': 'Group health',
             'LIFE(GROUP)': 'Group life' }
 };
-/* Every spelling either object uses for a policy that is still in the works.
-   Matched in SOQL so the whole book does not have to be pulled across, then
-   classified properly by iPendState_ once it is here. */
+/* Every spelling the increases object uses in its free-text status for a
+   policy still in the works. Matched in SOQL to narrow that one row-level
+   read, then classified properly by iPendState_ once it is here. The group
+   and health book is read whole — see iGroupsWall_ — so nothing there is
+   matched in SOQL at all. */
 var IGRP_LIKE = ['Pending', 'Underwriting', 'Reqt', 'Requirement', 'Error', 'Settlement'];
 
 function iGrpLike_(field) {
@@ -3685,67 +3687,66 @@ function iGroupsWall_() {
     return Math.max(0, Math.round((today - d) / DAY));
   };
 
-  /* ── the group and health book, and what its status field says about it ── */
+  /* ── the group and health book, and what its status field says about it ──
+     READ ROW BY ROW, NEVER AGGREGATED BY UNIT. Unit__c is a formula field on
+     this object, AgentName__c is another, and Salesforce will not group by a
+     formula — "field 'Unit__c' can not be grouped in a query call". The
+     first build of this feed did exactly that, every unit test was green,
+     and on the evening of 17 September 2026 the live slide came up with an
+     empty book and zero increases under a note at the foot that nobody read.
+     The whole group and health book is 2,412 rows across the org, five
+     fields each, and the book screen already pulls fifty thousand — so it
+     is pulled here and folded in script. The mix and the pending list come
+     out of the same pass, which also means the two can no longer disagree
+     about what is pending. */
   var types = {}, totals = { policies: 0, pending: 0, paying: 0, closed: 0, none: 0 };
   IGRP.TYPES.forEach(function (t) {
     types[t] = { key: t, label: IGRP.LABEL[t] || t, policies: 0, pending: 0,
                  paying: 0, closed: 0, none: 0, oldest: 0, states: {} };
   });
-  var mix = q('SELECT RecordType.Name, Unit__c, Policy_Status_Description__c, COUNT(Id) n' +
-              ' FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_() +
-              ' GROUP BY RecordType.Name, Unit__c, Policy_Status_Description__c');
-  (mix || []).forEach(function (x) {
+  var rows = [];
+  var book = q('SELECT RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c,' +
+               ' CreatedDate FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_());
+  (book || []).forEach(function (x) {
     if (!mine(x.Unit__c)) return;
     var t = types[iGrpType_(x)]; if (!t) return;
-    var n = iNum_(x.n), st = iPendState_(x.Policy_Status_Description__c);
-    t.policies += n; totals.policies += n;
-    if (st === 'issued') { t.paying += n; totals.paying += n; }
-    else if (st === 'closed') { t.closed += n; totals.closed += n; }
-    else if (st === 'none') { t.none += n; totals.none += n; }
-    else { t.pending += n; totals.pending += n; t.states[st] = (t.states[st] || 0) + n; }
-  });
-
-  /* ── and the pendings themselves, one row each ── */
-  var rows = [];
-  var open = q('SELECT RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c,' +
-               ' CreatedDate FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_() +
-               ' AND ' + iGrpLike_('Policy_Status_Description__c'));
-  (open || []).forEach(function (x) {
-    if (!mine(x.Unit__c)) return;
-    var t = iGrpType_(x); if (!types[t]) return;
     var st = iPendState_(x.Policy_Status_Description__c);
-    if (st === 'issued' || st === 'closed' || st === 'none') return;   // matched a word, is not pending
+    t.policies++; totals.policies++;
+    if (st === 'issued') { t.paying++; totals.paying++; return; }
+    if (st === 'closed') { t.closed++; totals.closed++; return; }
+    if (st === 'none')   { t.none++;   totals.none++;   return; }
+    t.pending++; totals.pending++; t.states[st] = (t.states[st] || 0) + 1;
+
+    /* ── and the pendings themselves, one row each ── */
     var who = iGrpAgent_(x.AgentName__c, nameOfCode);
     if (iExcludes_(skip, who.name)) return;
     var d = age(x.CreatedDate);
-    if (d > types[t].oldest) types[t].oldest = d;
-    rows.push({ type: t, label: IGRP.LABEL[t] || t, who: show(who.name),
+    if (d > t.oldest) t.oldest = d;
+    rows.push({ type: t.key, label: t.label, who: show(who.name),
                 status: String(x.Policy_Status_Description__c || '').trim(),
                 state: st, days: d });
   });
   rows.sort(function (a, b) { return b.days - a.days; });
 
-  /* ── increases: the whole book first, so the pendings have a denominator ── */
+  /* ── increases: the whole book first, so the pendings have a denominator ──
+     One row-level read for the book and for the year, for the reason above:
+     Unit__c cannot be grouped on this object either. Eleven hundred rows,
+     four fields. */
   var inc = { rows: 0, paying: 0, payingApi: 0, npw: 0, blank: 0 };
-  var ibook = q('SELECT Unit__c, Policy_Description_Status__c, COUNT(Id) n,' +
-                ' SUM(Increase_API__c) api FROM ' + IGRP.INC +
-                ' GROUP BY Unit__c, Policy_Description_Status__c');
+  var iyear = { n: 0, api: 0 };
+  var ibook = q('SELECT Unit__c, Policy_Description_Status__c, Increase_API__c, Submitted_Date__c' +
+                ' FROM ' + IGRP.INC);
   (ibook || []).forEach(function (x) {
     if (!mine(x.Unit__c)) return;
-    var n = iNum_(x.n), s = String(x.Policy_Description_Status__c || '').trim();
-    inc.rows += n;
-    if (/^premium paying$/i.test(s)) { inc.paying += n; inc.payingApi += iNum_(x.api); }
-    else if (/^npw$/i.test(s)) inc.npw += n;
-    else if (!s) inc.blank += n;
-  });
-  /* What the branch has written in increases this year — the number that says
-     why the pending ones are worth chasing. */
-  var iyear = { n: 0, api: 0 };
-  var yrows = q('SELECT Unit__c, COUNT(Id) n, SUM(Increase_API__c) api FROM ' + IGRP.INC +
-                ' WHERE Submitted_Date__c >= ' + yy + '-01-01 GROUP BY Unit__c');
-  (yrows || []).forEach(function (x) {
-    if (!mine(x.Unit__c)) return;
-    iyear.n += iNum_(x.n); iyear.api += iNum_(x.api);
+    var s = String(x.Policy_Description_Status__c || '').trim(), api = iNum_(x.Increase_API__c);
+    inc.rows++;
+    if (/^premium paying$/i.test(s)) { inc.paying++; inc.payingApi += api; }
+    else if (/^npw$/i.test(s)) inc.npw++;
+    else if (!s) inc.blank++;
+    /* What the branch has written in increases this year — the number that
+       says why the pending ones are worth chasing. */
+    var sub = iDate_(x.Submitted_Date__c);
+    if (sub && sub.getFullYear() >= yy) { iyear.n++; iyear.api += api; }
   });
 
   var ipend = { n: 0, api: 0, prem: 0, oldest: 0, noDocs: 0, reqts: 0 }, irows = [];
