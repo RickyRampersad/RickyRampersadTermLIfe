@@ -31,6 +31,7 @@ with a full history rewrite. Do not make it a third time.
 - `index.html` — homepage · `agent.html` / `staff.html` — code-locked portals
 - `renewal/`, `renewalpal/`, `renewal-gateway/` — renewal system
 - `claims/` — Claims TT intake · `market/` — Branch Trading League
+- `career-path.html` — Career Path Tracker (reached from the Agent Portal)
 - `managementmeetings/` — Branch Meeting Builder: agenda, materials, attendance
   (signing in is the register), action tracker and minutes
 - `apps-script/` — backend source (deployed to Google Apps Script, not run here)
