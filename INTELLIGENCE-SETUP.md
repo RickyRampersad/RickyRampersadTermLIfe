@@ -852,6 +852,8 @@ with the screen it points at.
 Nothing is hidden by role. Every screen stays one click away; only the order and
 the emphasis change.
 
+**A night that fails says so (17 September).** The ping's `built` had read 8 September for nine nights before anyone saw that the two o'clock `intelRebuild` was dying. It now records the failure — `INTEL_LAST_ERROR`, the time and the first line of why — and `intel.ping` carries it as `lastError`; a good night clears it.
+
 **Reading the switches (17 September).** `intelMailStatus()` in the editor prints the three switches in words and where held mail goes; `intel.ping` carries `mail: {test, agents, clients, holdSet}` — words only, never an address — so the state can be checked from outside without trusting memory.
 
 ## 3e. Production — the only screen about something going right

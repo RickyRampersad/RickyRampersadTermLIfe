@@ -409,7 +409,23 @@ function iWriteTab_(name, header, rows, note) {
    cache and the watchlists. Everything the web app serves comes from here.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* A NIGHT THAT FAILS SAYS SO WHERE IT CAN BE SEEN. On 17 September the ping
+   still read "built 2026-09-08 02:07": the two o'clock rebuild had been
+   dying for nine nights and nothing outside the Executions log knew. The
+   failure is now recorded — when, and the first line of why — and the ping
+   carries it; a good night clears it. */
 function intelRebuild() {
+  try {
+    var built = iRebuildCore_();
+    iSetProp_('INTEL_LAST_ERROR', '');
+    return built;
+  } catch (e) {
+    var when = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm');
+    try { iSetProp_('INTEL_LAST_ERROR', when + ' · ' + String(e && e.message || e).slice(0, 160)); } catch (e2) {}
+    throw e;
+  }
+}
+function iRebuildCore_() {
   var started = new Date();
   var today = iToday_();
   var out = {
@@ -8100,6 +8116,8 @@ function intelHealth_() {
   return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
            built: iProp_('INTEL_LAST_BUILD') || 'never',
            workbook: iWorkbook_().how,
+           /* The last night that failed, and why — empty when the last one was good. */
+           lastError: String(iProp_('INTEL_LAST_ERROR') || ''),
            /* THE MAIL SWITCHES, VISIBLE. Asked on 17 September — "please ensure
               no auto emails go out to agents in the morning" — and the honest
               answer to "are they off?" should be readable, not remembered.
