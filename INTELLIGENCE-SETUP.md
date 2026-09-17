@@ -395,6 +395,39 @@ misled into thinking they have the whole picture.
 
 ## 3¾. The pending wall — the eighth screen
 
+**17 September 2026 — the pending wall is two slides, and it names itself.**
+The branch manager's own words: *"this is a very important wall… remove what is
+pending and have on top branches pending wall… remove the shield in this wall
+so persons will know what wall they are watching"*, and *"if you need another
+slide, let me know"*. So:
+
+- **Slide 3, `pending.html` — Branch Pending · Policies.** The headline is the
+  register **cleaned**: on the day this was written, 53 genuinely pending out of
+  74 rows Guardian sent. Under the number, the four figures that reconcile it —
+  the register's own count, the ones already issued and paying, the ones closed
+  or never proceeded with, and the policies carrying a requirement with no
+  register row. The middle card is the **six real statuses** (see
+  `iPendState_`), the two workable ones edged in gold, with what Guardian
+  actually typed as chips beneath so the branch recognises its own report. The
+  aging bars count pending rows only. Accountability by agent carries the
+  pending count, cash, routine, medicals, how many are past ninety days, the
+  oldest, and a five-segment strip of that agent's own pile aging.
+- **Slide 4, `reqs.html` — Branch Pending · Requirements & tasks.** Every
+  requirement outstanding with **its own** median and oldest age, medicals
+  marked apart in teal, the six aging bands, the months the requirements were
+  ordered or added in since the first of January, and the branch's own side:
+  the Pendings task type per person — open, overdue, gone quiet a week, touched
+  today, closed today — from the tracker's own Salesforce read, so the two
+  screens can never disagree. The chase states sit under it.
+- Both carry the **gold nameplate** rather than the branch mark; the house note
+  in `CLAUDE.md` records that exception and why.
+- **Two exclusion rules, and they are different.** `intelExclude` takes a name
+  off every report entirely. `intelListOnly` takes the name off every per-agent
+  row, **counts the policies**, and (since this date) **does not count their
+  requirements** — asked for as *"leave Javid's name off the wall, and
+  Aleema's, but count their policies, not their requirements."* What was held
+  back is published and said on the screen.
+
 **17 September 2026 — the dates on the requirements.** Beside the days-since figures the requirements panel now says, month by month from the 1 January cut, how many were ordered or added in each month, and names the oldest and newest dates (`requirements.byMonth`, `oldestOn`, `newestOn`).
 
 The eighth screen on the wall: everything submitted and not yet issued, how
