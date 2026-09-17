@@ -389,7 +389,7 @@ function paint(){
       + '<b>on our shelf or with an agent</b>, this export cannot tell which.')
     + ' <b>'+h.dispatchPending+'</b> more are still with head office, undispatched.'
     + (D.history && D.history.dispatched
-        ? ' So of <b>'+n(D.history.dispatched)+'</b> dispatched this year, <b>'+n(D.history.delivered)+'</b> are in the client&rsquo;s hands and <b>'+h.inCabinet+'</b> are not yet.'
+        ? ' So of <b>'+Number(D.history.dispatched).toLocaleString("en-US")+'</b> dispatched this year, <b>'+Number(D.history.delivered).toLocaleString("en-US")+'</b> are in the client&rsquo;s hands and <b>'+h.inCabinet+'</b> are not yet.'
         : '');
   $("#heroOld").textContent=h.oldest;
   $("#heroMed").textContent=h.median;
