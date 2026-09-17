@@ -881,6 +881,9 @@ function iBuildPending_(today) {
 
   var rows = order.map(function (p) { return byPolicy[p]; });
   var byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {}, byStatusDesc = {};
+  var byState = {}, pendingN = 0, workableN = 0;
+  var pendAge = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var appAge  = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
   var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0, noCash = 0, api = 0;
   var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
 
@@ -893,6 +896,25 @@ function iBuildPending_(today) {
     byStatus[row.status]     = (byStatus[row.status] || 0) + 1;
     byDecision[row.decision] = (byDecision[row.decision] || 0) + 1;
     if (row.statusDesc !== null) byStatusDesc[row.statusDesc] = (byStatusDesc[row.statusDesc] || 0) + 1;
+    /* The six, from the thirty-two — see iPendState_. Every row carries its
+       own state, so the triage, the accountability rows and the gated table
+       all read the same classification rather than three guesses at it. */
+    row.state = iPendState_(row.statusDesc);
+    var st = iPendStateOf_(row.state);
+    row.pending = !!st.pending; row.workable = !!st.work;
+    byState[row.state] = (byState[row.state] || 0) + 1;
+    if (row.pending) {
+      pendingN++;
+      if (row.age !== null && row.age !== undefined) {
+        pendAge[row.age <= 30 ? '0-30' : row.age <= 60 ? '31-60' : row.age <= 90 ? '61-90'
+          : row.age <= 180 ? '91-180' : '180+']++;
+      }
+      if (row.daysPending !== null && row.daysPending !== undefined) {
+        appAge[row.daysPending <= 30 ? '0-30' : row.daysPending <= 60 ? '31-60'
+          : row.daysPending <= 90 ? '61-90' : row.daysPending <= 180 ? '91-180' : '180+']++;
+      }
+      if (row.workable) workableN++;
+    }
     if (!byAgent[row.agent]) byAgent[row.agent] = { policies: 0, susp: 0, oldest: 0 };
     byAgent[row.agent].policies++; byAgent[row.agent].susp += row.suspense;
     if (row.age !== null && row.age > byAgent[row.agent].oldest) byAgent[row.agent].oldest = row.age;
@@ -913,6 +935,20 @@ function iBuildPending_(today) {
        object ask for it by that name. */
     total: rows.length, policies: rows.length,
     requirementRows: requirementRows, policiesFromRows: rows.length,
+    /* THE REGISTER IS NOT THE PENDING LIST. Of the 74 rows Guardian's pending
+       register carried on 17 September 2026, twelve were Premium Paying —
+       already issued — five Not Proceeded With, three File Closed and one
+       Expired. The branch manager was right that the number on the wall was
+       wrong; it was wrong in both directions at once. `pending` is the count
+       the headline uses, and the rest are named rather than dropped. */
+    pending: pendingN, workable: workableN,
+    issued: byState.issued || 0, closed: byState.closed || 0, noStatus: byState.none || 0,
+    byState: IPEND_STATES.map(function (x) {
+      return { key: x.key, label: x.lab, abbr: x.abbr, note: x.note,
+               pending: !!x.pending, work: !!x.work, n: byState[x.key] || 0 };
+    }).filter(function (x) { return x.n; }),
+    spellings: Object.keys(byStatusDesc).length,
+    pendingAgeing: pendAge, appAgeing: appAge,
     suspense: suspense, suspenseCases: suspenseCases, stale: stale,
     unpaidCases: unpaidCases,
     ageing: AGE, byStatus: byStatus, byDecision: byDecision,
@@ -1157,6 +1193,112 @@ function iReqOwner_(code, ordered, map) {
   return map[String(code || '').trim().toUpperCase()] || 'routine';
 }
 
+/* ── THE STATUS FIELD IS FREE TEXT, AND A BRANCH CANNOT COUNT IT AS IT COMES ──
+   Read against Salesforce on 17 September 2026: THIRTY-TWO distinct spellings
+   across the pending and closed statuses. "Underwriting Incomplete" (91) and
+   "Underwriting incomplete" counted as two different things. "Pending, No
+   Errors, O/S Reqt, UW Incomplete" (24), "Pending, Errors, No O/S Reqt, UW
+   Incomplete" (19), "pending, errors, o/s request, UW incomplete" (1) — one
+   status typed four ways. A wall that prints those as separate bars is a wall
+   the room argues with instead of working from.
+
+   Every one of them means one of six things, and the order below is the order
+   they are tested in, because a case that says BOTH "missing reqts" and "error
+   on policy" is a case somebody can chase a document for today. `pending` is
+   what the headline counts; `work` is what can be moved this afternoon —
+   asked for in those words: "the codes is on the right incomplete, but missing
+   requirements, and the awaiting settlement, those things can be worked on
+   today". */
+var IPEND_STATES = [
+  { key: 'reqts',  lab: 'Missing requirements',  abbr: 'REQ', pending: true,  work: true,
+    note: 'a document is outstanding — chase it' },
+  { key: 'settle', lab: 'Awaiting settlement',   abbr: 'SET', pending: true,  work: true,
+    note: 'underwriting is done — collect and settle' },
+  { key: 'errors', lab: 'Error on the policy',   abbr: 'ERR', pending: true,  work: false,
+    note: 'head office has to correct it' },
+  { key: 'uw',     lab: 'Underwriting incomplete', abbr: 'UW', pending: true, work: false,
+    note: 'with the underwriter, nothing outstanding from us' },
+  { key: 'issued', lab: 'Issued and paying',     abbr: 'PP',  pending: false, work: false,
+    note: 'already on the book — it is not pending' },
+  { key: 'closed', lab: 'Closed or not proceeded with', abbr: 'CLD', pending: false, work: false,
+    note: 'off the list — nobody is waiting on it' },
+  { key: 'none',   lab: 'No status on the record', abbr: '?', pending: true,  work: false,
+    note: 'the extract carries no status for it' }
+];
+function iPendStateOf_(key) {
+  for (var i = 0; i < IPEND_STATES.length; i++) if (IPEND_STATES[i].key === key) return IPEND_STATES[i];
+  return IPEND_STATES[IPEND_STATES.length - 1];
+}
+/* The six, from any of the thirty-two. Punctuation and case are stripped
+   first, so "Missing Reqts", "missing reqts." and "MISSING REQTS" are one. */
+function iPendState_(desc) {
+  var t = String(desc == null ? '' : desc).toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')            // the slash in "O/S" goes too, or "o s reqt" never matches
+    .replace(/\bnoo\b/g, 'no o')            // "noo/s reqt" — typed once, and it still has to count
+    .replace(/\s+/g, ' ').trim();
+  if (!t || t === 'none') return 'none';
+  if (/premium paying|inforce|in force/.test(t)) return 'issued';
+  if (/not proceeded|file closed|rejected|declined|cancel|expired|lapsed|surrender/.test(t)) return 'closed';
+  if (/settlement/.test(t)) return 'settle';
+  /* "No O/S Reqt" IS THE OPPOSITE OF "O/S Reqt", and the field carries both —
+     19 rows read "Pending, Errors, No O/S Reqt, UW Incomplete" and 24 read
+     "Pending, No Errors, O/S Reqt, UW Incomplete". A screen that matches on
+     the words alone puts them in the same bar and sends somebody chasing a
+     document that was never outstanding. The negated clauses come out first. */
+  var p = t.replace(/no (o s (reqts?|requirements?|requests?)|outstanding (reqts?|requirements?)|os reqts?|errors?)/g, ' ');
+  if (/missing reqt|missing requirement|o s reqt|o s requirement|o s request|outstanding reqt|outstanding requirement|os reqt/.test(p)) return 'reqts';
+  if (/error/.test(p)) return 'errors';
+  if (/underwriting|uw incomplete|uw complete|pending/.test(p)) return 'uw';
+  return 'none';
+}
+
+/* Task types, shortened — asked for on 17 September: "look at the
+   accountability by task type and shorten with the abbreviation". */
+var IPEND_TYPE_ABBR = {
+  'Pendings': 'PEND', 'Servicing': 'SVC', 'Renewa/PDl/Bill': 'RNW', 'Scripts/CB': 'SCR',
+  'Lic/Staffing/SA/HR': 'LIC', 'Opportunity': 'OPP', 'Training': 'TRN', 'RR Operations': 'OPS',
+  'Claims/ Mat': 'CLM', 'Innovation&Creativity': 'INV', 'Untyped': '\u2014', '(no task type)': '\u2014'
+};
+function iPendAbbr_(t) {
+  var k = String(t == null ? '' : t).trim();
+  if (IPEND_TYPE_ABBR[k]) return IPEND_TYPE_ABBR[k];
+  return k.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() || '\u2014';
+}
+
+/* WHAT THE STAFF IS DOING ABOUT IT. The pending list is the agents' side; the
+   Pendings task type is the branch's own. Straight off the tracker's day
+   metrics — the same Salesforce read the day screen uses, so the two screens
+   can never disagree — per person: open, overdue, gone quiet a week, touched
+   today, closed today. */
+function iPendSupport_() {
+  if (typeof sfkMetricsSafe_ !== 'function') return null;
+  var m = null;
+  try { m = sfkMetricsSafe_(); } catch (e) { return null; }
+  if (!m || !m.ok || !m.staff) return null;
+  var names = {};
+  if (typeof publicRoster_ === 'function') {
+    try {
+      publicRoster_().forEach(function (pr) {
+        names[String(pr.staffId)] = { name: pr.name, role: pr.role || '', tier: pr.tierLabel || '' };
+      });
+    } catch (e2) {}
+  }
+  var rows = [], tot = { open: 0, overdue: 0, needs: 0, touched: 0, closed: 0 };
+  Object.keys(m.staff).forEach(function (sid) {
+    var t = ((m.staff[sid] || {}).byType || {})['Pendings'];
+    if (!t) return;
+    var who = names[sid] || { name: sid, role: '', tier: '' };
+    rows.push({ name: who.name, role: who.role, tier: who.tier,
+                open: t.open || 0, overdue: t.overdue || 0, needs: t.needs || 0,
+                touched: t.touched || 0, closed: t.closed || 0 });
+    ['open', 'overdue', 'needs', 'touched', 'closed'].forEach(function (k) { tot[k] += t[k] || 0; });
+  });
+  if (!rows.length) return null;
+  rows.sort(function (a, b) { return (b.open - a.open) || (b.overdue - a.overdue) || (b.closed - a.closed); });
+  return { type: 'Pendings', abbr: iPendAbbr_('Pendings'), date: m.date || '',
+           staff: rows, branch: tot };
+}
+
 var IPEND_BUCKETS = [
   { key: 'ready',   label: 'Ready to settle',  note: 'no requirement left, no premium in — collect' },
   { key: 'agent',   label: 'The agent’s move', note: 'a requirement the agent can get' },
@@ -1199,6 +1341,11 @@ function iPendTriage_(extract, reqs) {
   extract.rows.forEach(function (row) {
     var agent = String(row.agent || '').trim() || '(unassigned)';
     if (iExcludes_(skip, agent)) return;
+    /* ISSUED AND CLOSED POLICIES ARE NOBODY'S ACCOUNTABILITY. A policy that
+       is already paying, or was never proceeded with, sat on an agent's row
+       until 17 September 2026 and made twelve of the seventy-four somebody's
+       fault. Only what is genuinely pending reaches this board. */
+    if (row.pending === false) return;
 
     var here = openBy[String(row.policy || '').trim()] || [];
     if (here.length) matched++; else unmatched++;
@@ -1241,7 +1388,12 @@ function iPendTriage_(extract, reqs) {
 
     if (!byAgent[agent]) {
       byAgent[agent] = { agent: agent, policies: 0, ready: 0, actionable: 0, oldest: 0, quiet: 0,
-                         routine: 0, cash: 0, medical: 0, oldestDays: 0 };
+                         routine: 0, cash: 0, medical: 0, oldestDays: 0,
+                         /* How their own pile is aging, so a row reads "six of
+                            his nine are past ninety days" rather than one
+                            worst case standing for all of them. */
+                         bands: { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 },
+                         over90: 0, work: 0, states: {} };
     }
     var a = byAgent[agent];
     a.policies++;
@@ -1251,6 +1403,11 @@ function iPendTriage_(extract, reqs) {
     if (cash) a.cash++;
     if (medical) a.medical++;
     if ((bucket === 'ready' || bucket === 'agent') && age > a.oldest) a.oldest = age;
+    var bnd = iPendBand_(age);
+    if (bnd) a.bands[bnd]++;
+    if (age > 90) a.over90++;
+    if (row.workable) a.work++;
+    if (row.state) a.states[row.state] = (a.states[row.state] || 0) + 1;
     /* oldest is the worst of what is theirs to work; oldestDays is the worst
        of everything with their name on it, whoever's move it is. */
     if (age > a.oldestDays) a.oldestDays = age;
@@ -1417,7 +1574,10 @@ function iPendingWall_() {
                  noType: tasks.noType || 0, unassigned: tasks.unassigned || 0,
                  oldest: tasks.oldestOpen || 0, median: tasks.medianOpen || 0,
                  stale: tasks.staleOpen || 0,
-                 byType: (tasks.byType || []).slice(0, 8) };
+                 byType: (tasks.byType || []).slice(0, 8).map(function (t) {
+                   return { name: t.name, abbr: iPendAbbr_(t.name), n: t.n, oldest: t.oldest, stale: t.stale };
+                 }),
+                 byAssignee: (tasks.byAssignee || []).slice(0, 12) };
       } else if (tasks && tasks.error) { notes.push(tasks.error); }
     } catch (e4) { notes.push('The chase log would not read: ' + (e4 && e4.message || e4)); }
   }
@@ -1444,8 +1604,50 @@ function iPendingWall_() {
   /* The branch's list is the one a person updates, so it is the count on
      screen. The extract carries the money and the decision codes, which the
      branch's list has no column for. Both count policies. */
+  var support = null;
+  try { support = iPendSupport_(); } catch (eS) { notes.push('The support tasks would not read: ' + (eS && eS.message || eS)); }
+
   var counted = branch || extract || { total: null, ageing: {}, stale: null };
   var total = counted.total;
+  /* THE HEADLINE IS THE CLEANED REGISTER — the branch manager's decision of
+     17 September 2026, after the wall read 74 with twelve issued policies
+     inside it. Everything the register carries is still published: `register`
+     is what Guardian sent, `issued` and `closed` are what came out, and
+     `offRegister` is what the requirements extract knows and the register
+     does not. Nothing is dropped; the number is just honest. */
+  var register = null, offRegister = null;
+  if (extract) {
+    register = { rows: extract.total, pending: extract.pending, issued: extract.issued,
+                 closed: extract.closed, noStatus: extract.noStatus,
+                 spellings: extract.spellings, workable: extract.workable };
+    total = extract.pending;
+    if (reqs && reqs.rows) {
+      var onReg = {};
+      (extract.rows || []).forEach(function (r) { onReg[iPolicyKey_(r.policy)] = 1; });
+      var off = {}, offOldest = 0;
+      (reqs.rows || []).forEach(function (q) {
+        var k = iPolicyKey_(q.policy);
+        if (!k || onReg[k]) return;
+        off[k] = (off[k] || 0) + 1;
+        if (q.age && q.age > offOldest) offOldest = q.age;
+      });
+      var offN = Object.keys(off).length;
+      offRegister = { policies: offN, requirements: Object.keys(off).reduce(function (a, k) { return a + off[k]; }, 0),
+                      oldest: offOldest };
+      if (offN) {
+        notes.push(offN + (offN === 1 ? ' policy carries' : ' policies carry') + ' an open requirement and ' +
+                   (offN === 1 ? 'is' : 'are') + ' not on Guardian\u2019s pending register at all. ' +
+                   'Either the register is behind or the requirement was never closed off.');
+      }
+    }
+    if (extract.issued || extract.closed) {
+      notes.push('Guardian\u2019s register carried ' + extract.total + ' rows; ' +
+                 (extract.issued ? extract.issued + ' already issued and paying' : '') +
+                 (extract.issued && extract.closed ? ', ' : '') +
+                 (extract.closed ? extract.closed + ' closed or not proceeded with' : '') +
+                 ' are counted out of the pending total and named instead.');
+    }
+  }
   var ageing = counted.ageing || {};
   var stale = counted.stale;
   var oldest = branch ? branch.oldest : 0;
@@ -1509,6 +1711,17 @@ function iPendingWall_() {
     at: Utilities.formatDate(new Date(), iTz_(), 'HH:mm'),
     source: [branch ? 'branch lists' : '', extract ? 'pending extract' : '',
              reqs ? 'requirements extract' : ''].filter(String).join(' + '),
+    /* What Guardian sent, what came out of the total, and what the register
+       has never heard of — see the note above `register`. */
+    register: register, offRegister: offRegister,
+    /* The six real statuses, in the order they are worked. */
+    states: extract ? extract.byState : null,
+    workable: extract ? extract.workable : null,
+    pendingAgeing: extract ? extract.pendingAgeing : null,
+    appAgeing: extract ? extract.appAgeing : null,
+    /* The branch's own side: the Pendings task type, per person, from the
+       same Salesforce read the day screen uses. */
+    support: support,
     lists: branch ? branch.tabs : 0,
     /* Policies, and the requirement rows they were folded from, so the
        screen can say "121 policies · 340 requirements". */
@@ -1543,6 +1756,10 @@ function iPendingWall_() {
       ageing: reqs.ageing, since: reqs.since, cutByYear: reqs.cutByYear,
       routine: reqs.routine, byOrderedBy: reqs.byOrderedBy, byStatus: reqs.byStatus,
       byCategory: (reqs.categories || []).slice(0, 8), daysOrdered: reqs.daysOrdered,
+      /* Every code with its own median and oldest, and every category the
+         same — "what are the routine documents outstanding and how long it's
+         aging". Fourteen codes is what the slide holds. */
+      byCode: (reqs.byCode || []).slice(0, 14), byCatAge: reqs.byCatAge || [],
       /* The dates themselves, month by month from the 1 January cut. */
       byMonth: reqs.byMonth || [], oldestOn: reqs.oldestOn || '', newestOn: reqs.newestOn || '',
       missing: reqs.missing || []
@@ -3369,8 +3586,17 @@ function iBuildReqs_(today) {
 
     var code = String(d.get('code', r)).trim().toUpperCase();
     var cat  = String(d.get('cat', r)).trim() || '(uncategorised)';
-    byCode[code] = (byCode[code] || 0) + 1;
-    byCat[cat]   = (byCat[cat] || 0) + 1;
+    /* A COUNT IS NOT A STORY. "What are the routine documents outstanding and
+       how long it's aging" (17 September) — so every code carries its own
+       median and its own oldest, and so does every category. A proof of
+       address at eleven days and a proof of address at two hundred are not
+       the same conversation. */
+    var bc = byCode[code] || (byCode[code] = { n: 0, ages: [], ordered: 0, cat: cat });
+    bc.n++;
+    var bt = byCat[cat] || (byCat[cat] = { n: 0, ages: [] });
+    bt.n++;
+    if (orderedOn) bc.ordered++;
+    if (age !== null && age >= 0) { bc.ages.push(age); bt.ages.push(age); }
     byPolicy[policy] = (byPolicy[policy] || 0) + 1;
 
     /* Routine: the sheet's own flag when it has one, else the owner map. */
@@ -3419,6 +3645,12 @@ function iBuildReqs_(today) {
       .sort(function (a, b) { return b.n - a.n; });
   };
 
+  var mid = function (a) {
+    if (!a.length) return null;
+    var v = a.slice().sort(function (x, y) { return x - y; });
+    return v[Math.floor(v.length / 2)];
+  };
+  var top = function (a) { return a.length ? Math.max.apply(null, a) : null; };
   return {
     openCount: open.length,
     policies: Object.keys(byPolicy).length,
@@ -3432,10 +3664,19 @@ function iBuildReqs_(today) {
     overYear: AGE['365+'],
     ageing: AGE,
     byCode: Object.keys(byCode).map(function (k) {
-      return { code: k, label: iReqLabel_(k), n: byCode[k] };
+      var c = byCode[k];
+      return { code: k, label: iReqLabel_(k), n: c.n, ordered: c.ordered,
+               median: mid(c.ages), oldest: top(c.ages), category: c.cat,
+               medical: iReqIsMedical_(k), routine: iReqOwner_(k, true, owners) === 'routine' };
     }).sort(function (a, b) { return b.n - a.n; }).slice(0, 20),
-    byCategory: byCat,
-    categories: pair(byCat),
+    /* Every category with its own age, medicals apart from routine. */
+    byCatAge: Object.keys(byCat).map(function (k) {
+      return { name: k, n: byCat[k].n, median: mid(byCat[k].ages), oldest: top(byCat[k].ages) };
+    }).sort(function (a, b) { return b.n - a.n; }),
+    byCategory: Object.keys(byCat).map(function (k) { return { name: k, n: byCat[k].n }; })
+      .sort(function (a, b) { return b.n - a.n; }),
+    categories: Object.keys(byCat).map(function (k) { return { name: k, n: byCat[k].n }; })
+      .sort(function (a, b) { return b.n - a.n; }),
     /* Routine against not, and who ordered — null where the column that
        would say is not in the extract, and `missing` names it. */
     routine: { routine: routineN, nonRoutine: nonRoutineN, fromSheet: has('routine') },
