@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17h';
+var INTEL_VERSION = '2026-09-17i';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1359,13 +1359,15 @@ function iPendBoard_(extract, reqs, tasks) {
   });
 
   var rows = {}, tot = { policies: 0, reqts: 0, routine: 0, medical: 0, cash: 0,
-                         held: 0, open: 0, late: 0, quiet: 0, today: 0, never: 0 };
+                         held: 0, open: 0, late: 0, quiet: 0, today: 0, never: 0,
+                         ready: 0, chase: 0, motion: 0 };
   extract.rows.forEach(function (row) {
     var agent = String(row.agent || '').trim() || '(unassigned)';
     if (iExcludes_(skip, agent)) return;
     if (row.pending === false) return;              // issued and closed are nobody's
     var a = rows[agent] || (rows[agent] = { agent: agent, policies: 0, reqts: 0, routine: 0,
       medical: 0, cash: 0, held: 0, oldest: 0, never: 0, labels: {},
+      ready: 0, chase: 0, motion: 0,
       tasks: { open: 0, late: 0, quiet: 0, today: 0, none: 0 } });
     a.policies++; tot.policies++;
     if (row.age > a.oldest) a.oldest = row.age;
@@ -1382,14 +1384,42 @@ function iPendBoard_(extract, reqs, tasks) {
       if (code === 'FUTPY') { wantsCash = true; return; }
       if (iReqIsMedical_(code)) { a.medical++; tot.medical++; }
       else { a.routine++; tot.routine++; }
+      /* THE AGE TRAVELS WITH THE NAME. "A fact find too — how long with the
+         two fact finds, proof of address, how long, and highlight in the
+         reds." A name with no age beside it is a label; a name with an age
+         is an argument. The oldest of that kind is the one that makes it. */
       var lab = q.label || code;
-      a.labels[lab] = (a.labels[lab] || 0) + 1;
+      var L = a.labels[lab] || (a.labels[lab] = { n: 0, oldest: 0 });
+      L.n++;
+      if (iNum_(q.age) > L.oldest) L.oldest = Math.round(iNum_(q.age));
     });
     (row.requirements || []).forEach(function (t) {
       if (String(t || '').trim().toUpperCase() === 'FUTPY') wantsCash = true;
     });
     if (!here.length && !row.paid) wantsCash = true;
     if (wantsCash) { a.cash++; tot.cash++; }
+
+    /* CAN WE WORK IT TODAY, OR NOT. Asked for on 17 September: "cases being
+       worked on today, that's clear cases with cash, with everything. And
+       project what we can't work on because there are things outstanding on
+       it." Three states, and money is not one of them, because money is
+       something we go and collect rather than something we wait for:
+
+         ready    nothing outstanding but the premium — settle it today
+         chase    a document or a medical that nobody has ordered yet
+         motion   ordered and waiting: a medical booked, a report at the lab.
+                  Outstanding, and nobody to telephone about it.
+
+       A case with three requirements counts once, in the worst of the three,
+       so the three columns add up to the policy count and can be trusted as
+       a split of it. */
+    var waits = here.filter(function (q) {
+      if (q.listOnly) return false;
+      return String(q.code || '').trim().toUpperCase() !== 'FUTPY';
+    });
+    if (!waits.length) { a.ready++; tot.ready++; }
+    else if (waits.every(function (q) { return !!q.ordered; })) { a.motion++; tot.motion++; }
+    else { a.chase++; tot.chase++; }
 
     /* THE TASKS ON THEIR POLICIES. Late is over the branch's own thirty days;
        quiet is nothing in a week on a task still open. */
@@ -1406,8 +1436,14 @@ function iPendBoard_(extract, reqs, tasks) {
 
   var out = Object.keys(rows).map(function (k) {
     var a = rows[k];
-    a.top = Object.keys(a.labels).map(function (l) { return { label: l, n: a.labels[l] }; })
-      .sort(function (x, y) { return y.n - x.n || x.label.localeCompare(y.label); }).slice(0, 3);
+    /* Ordered by age, not by count: one proof of address waiting two hundred
+       days is the sentence the room needs, and sorting by how many there are
+       buries it under a pair of fact finds filed last week. */
+    a.top = Object.keys(a.labels).map(function (l) {
+      return { label: l, n: a.labels[l].n, oldest: a.labels[l].oldest };
+    }).sort(function (x, y) {
+      return y.oldest - x.oldest || y.n - x.n || x.label.localeCompare(y.label);
+    }).slice(0, 3);
     delete a.labels;
     a.held = Math.round(a.held * 100) / 100;
     return a;

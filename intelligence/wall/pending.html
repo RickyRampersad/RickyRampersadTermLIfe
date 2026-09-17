@@ -176,8 +176,8 @@
   main.pend{grid-template-columns:clamp(248px,21vw,320px) minmax(0,1fr)}
   .board{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
   .brow2{display:grid;grid-template-columns:1fr 1fr;gap:clamp(10px,1.4vh,18px);min-height:0}
-  .bhead,.brow{display:grid;
-    grid-template-columns:minmax(0,1fr) 38px 46px 54px 40px 44px 48px 42px 46px 46px 50px;
+  .bgrp,.bhead,.brow{display:grid;
+    grid-template-columns:minmax(0,1fr) 38px 46px 54px 40px 44px 50px 46px 48px 42px 46px 46px 50px;
     gap:5px;align-items:center}
   .bhead{font:700 9.5px var(--font-b);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
     padding-bottom:5px;border-bottom:1px solid var(--line)}
@@ -323,7 +323,7 @@
        screen then scrolls sideways, which a wall slide must never do. The name
        takes its own line and the ten numbers wrap beneath it, each carrying the
        column it came from, so no figure is dropped to make it fit. */
-    .bhead{display:none}
+    .bgrp,.bhead{display:none}
     .brow{grid-template-columns:repeat(5,auto);justify-content:space-between;
       row-gap:3px;column-gap:6px}
     .brow .nm{grid-column:1/-1}
@@ -334,6 +334,22 @@
     .brow2{grid-template-columns:1fr}
     #bList{overflow:visible}
   }
+  /* WHAT THE COLUMNS MEAN, SAID ON THE SCREEN. "Oldest, today, quiet, late,
+     tasks — persons may not know what that actually means." Three group
+     labels over the headings, and the legend under the board spells each one
+     out. A column nobody can read is a column nobody acts on. */
+  .bgrp{font:700 9.5px var(--font-b);letter-spacing:.08em;text-transform:uppercase;
+    color:var(--faint);padding-bottom:3px}
+  .bgrp b{font-weight:700;color:var(--gold);opacity:.75}
+  .bgrp .g{text-align:center;border-bottom:1px solid var(--line);padding-bottom:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bkey{margin-top:clamp(4px,.9vh,9px);padding-top:clamp(4px,.9vh,9px);
+    border-top:1px solid var(--line);font-size:clamp(9.5px,1.35vh,11px);
+    color:var(--faint);line-height:1.45}
+  .bkey b{color:var(--dim);font-weight:700}
+  .brow .nm em i{font-style:normal;font-variant-numeric:tabular-nums}
+  .brow .nm em i.hot{color:var(--gold)}
+  .brow .nm em i.red{color:#f0776a;font-weight:700}
 </style>
 </head>
 <body>
@@ -382,13 +398,21 @@
       <h3>The board &mdash; every agent, and what is on their desk</h3>
       <p class="cap" id="bCap">Their policies, the requirements on them by name, the cash not yet submitted, and the Salesforce tasks sitting on those same policies.</p>
       <div class="strip6" id="sStates"></div>
+      <div class="bgrp">
+        <div></div><div class="g" style="grid-column:span 5">their policies</div>
+        <div class="g" style="grid-column:span 2"><b>work it?</b></div>
+        <div class="g" style="grid-column:span 4">salesforce tasks</div>
+        <div></div>
+      </div>
       <div class="bhead">
         <div>Agent</div><div>Pol</div><div>Reqts</div><div>Routine</div><div>Med</div><div>Cash</div>
+        <div class="sep">Ready</div><div>Chase</div>
         <div class="sep">Tasks</div><div>Late</div><div>Quiet</div><div>Today</div><div>Oldest</div>
       </div>
       <div class="brow tot" id="bTotal"></div>
       <div id="bList"></div>
       <div class="more" id="bMore"></div>
+      <div class="bkey" id="bKey"></div>
     </section>
     <div class="brow2">
       <section class="card" id="dCard">
@@ -534,8 +558,12 @@ function paint(){
   else w.style.display = "none";
 
   /* THE SIX STATUSES, one line above the board — the gold ones are the ones
-     somebody can move this afternoon. */
-  var order = { reqts:1, settle:2, errors:3, uw:4, none:5, issued:6, closed:7 };
+     somebody can move this afternoon, and AWAITING SETTLEMENT LEADS THEM.
+     Asked for on 17 September: "you need to put the code awaiting settlement
+     on top". It is the right order on the merits too: a case awaiting
+     settlement has cleared underwriting and wants nothing but the money, so
+     it is the shortest one on the board. Missing requirements follows. */
+  var order = { settle:1, reqts:2, errors:3, uw:4, none:5, issued:6, closed:7 };
   $("#sStates").innerHTML = !ok ? "" : (D.states || []).slice().sort(function(a,b){
       return (order[a.key]||9)-(order[b.key]||9); }).map(function(x){
     return '<span class="s6' + (x.work ? " work" : "") + (x.pending ? "" : " off") + '" title="' + esc(x.note) + '">'
@@ -553,15 +581,27 @@ function paint(){
     var t = B.total || {};
     $("#bTotal").innerHTML = '<div class="nm">The branch</div>'
       + cell(t.policies, "", "pol") + cell(t.reqts, "", "reqts") + cell(t.routine, "rou", "routine") + cell(t.medical, "med", "med") + cell(t.cash, "gold", "cash")
+      + '<div class="v sep' + (t.ready ? " good" : " zero") + '" data-k="ready">' + n(t.ready || 0) + '</div>'
+      + cell(t.chase, "red", "chase")
       + '<div class="v sep' + (t.open ? "" : " zero") + '" data-k="tasks">' + n(t.open || 0) + '</div>'
       + cell(t.late, "red", "late") + cell(t.quiet, "gold", "quiet") + cell(t.today, "good", "today")
       + '<div class="v zero">&mdash;</div>';
     bl.innerHTML = B.agents.map(function(a){
       var tk = a.tasks || {};
-      var top = (a.top || []).map(function(x){ return esc(x.label) + " " + x.n; }).join(" \u00b7 ");
+      /* EACH REQUIREMENT WITH ITS OWN AGE, and the age is what carries the
+         colour: gold past sixty days, deep red past ninety. "For it to
+         really make a statement." */
+      var top = (a.top || []).map(function(x){
+        var cls = x.oldest > 90 ? "red" : x.oldest > 60 ? "hot" : "";
+        return esc(x.label) + (x.n > 1 ? " \u00d7" + x.n : "")
+          + ' <i class="' + cls + '">' + n(x.oldest) + 'd</i>';
+      }).join(" \u00b7 ");
       return '<div class="brow">'
-        + '<div class="nm">' + esc(a.agent) + (top ? '<em>' + top + '</em>' : '<em>nothing outstanding on the requirements extract</em>') + '</div>'
+        + '<div class="nm">' + esc(a.agent) + '<em>'
+        + (top || "nothing outstanding on the requirements extract") + '</em></div>'
         + cell(a.policies, "", "pol") + cell(a.reqts, "", "reqts") + cell(a.routine, "rou", "routine") + cell(a.medical, "med", "med") + cell(a.cash, "gold", "cash")
+        + '<div class="v sep' + (a.ready ? " good" : " zero") + '" data-k="ready">' + n(a.ready || 0) + '</div>'
+        + cell(a.chase, "red", "chase")
         + '<div class="v sep' + (tk.open ? "" : " zero") + '" data-k="tasks">' + n(tk.open || 0) + '</div>'
         + cell(tk.late, "red", "late") + cell(tk.quiet, "gold", "quiet") + cell(tk.today, "good", "today")
         + '<div class="v ' + (a.oldest > 90 ? "red" : a.oldest > 60 ? "gold" : "zero") + '" data-k="oldest">' + n(a.oldest || 0) + '</div>'
@@ -571,6 +611,14 @@ function paint(){
       + "Ordered by the call to make first: cash, then medicals, then documents."
       + (B.listOnly ? " <b>" + B.listOnly + "</b> name" + (B.listOnly === 1 ? " is" : "s are") + " held off these rows and counted in every total." : "")
       + (t.never ? " <b>" + n(t.never) + "</b> of these policies have never had a task raised on them." : "");
+    /* The legend is filled from the branch's own totals, so it reads as a
+       statement about today rather than a glossary. */
+    $("#bKey").innerHTML =
+        '<b>Ready</b> nothing outstanding but the premium \u2014 settle it today. '
+      + '<b>Chase</b> a document or a medical nobody has ordered yet'
+      + (t.motion ? ', and <b>' + n(t.motion) + '</b> more ordered and waiting, which is nobody to telephone. ' : '. ')
+      + '<b>Late</b> a task open past thirty days. <b>Quiet</b> open and untouched for a week. '
+      + '<b>Today</b> raised or closed today. <b>Oldest</b> days since the case was submitted.';
     $("#bMore").textContent = "measuring\u2026";
     var gone = fitIn(bl, 3);
     $("#bMore").textContent = gone ? "and " + gone + " more agent" + (gone === 1 ? "" : "s") + " below the fold" : "";

@@ -410,11 +410,31 @@ slide, let me know"*. So:
   `iPendState_`), the two workable ones edged in gold, with what Guardian
   actually typed as chips beneath so the branch recognises its own report. The
   aging bars count pending rows only. The rest of the slide is **the board**:
-  one row per agent, with **the requirements on their policies named** under
-  their name, then policies, requirements, routine, medicals, cash not
-  submitted, and the Salesforce tasks on those same policies — open, late,
-  quiet, raised today — with the oldest day count last and a gold branch row
-  above. Rebuilt in that shape on 17 September after the first cut drew
+  one row per agent, with **the requirements on their policies named and aged**
+  under their name — *"a fact find too, how long with the two fact finds, proof
+  of address, how long, and highlight in the reds"* — gold past sixty days and
+  deep red past ninety, oldest first rather than commonest first, because one
+  proof of address waiting two hundred days is the sentence the room needs.
+  Then, under three group headings so the columns can be read:
+  **their policies** (policies, requirements, routine, medicals, cash not
+  submitted), **work it?** and **Salesforce tasks** on those same policies.
+  - **Work it? is the split that says what today looks like.** Asked for as
+    *"cases being worked on today, that's clear cases with cash, with
+    everything — and project what we can't work on because there are things
+    outstanding on it."* **Ready** is nothing outstanding but the premium, so
+    it settles today; **chase** is a document or a medical nobody has ordered
+    yet, so it is the call list; and the rest are *ordered and waiting* — a
+    medical booked, a report at the lab — which is outstanding with nobody to
+    telephone, counted in the legend rather than given a column. A case with
+    three requirements counts once, in the worst of the three, so the split
+    adds up to the policy count.
+  - **The legend under the board defines every column from the branch's own
+    figures**, because *"oldest, today, quiet, late, tasks — persons may not
+    know what that actually means."*
+  - **Awaiting settlement leads the status strip**, asked for in those words,
+    and it is right on the merits: a case awaiting settlement has cleared
+    underwriting and wants nothing but the money.
+  A gold branch row sits above the agents. Rebuilt in that shape on 17 September after the first cut drew
   *"you are tallying up the days… this is not telling me anything at all"*:
   a wall has to say how many, whose, and what, and a day count says none of
   the three.
