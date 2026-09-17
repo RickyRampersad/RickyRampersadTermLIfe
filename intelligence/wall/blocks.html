@@ -118,13 +118,18 @@
      red, not just a thirteen-pixel ring. Asked for on 16 September — "if a
      time block is not logged it goes red" — because the ring and a small
      grey caption read as quiet, and an unfiled block is not quiet. */
-  .cell.late{background:rgba(224,103,103,.13);border-left-color:#e06767;border-radius:6px}
-  .cell.late .ct b small{color:#e06767;font-weight:700}
-  .cell.late .ct>span{color:#f0a3a3}
+  /* DEEP RED. "It's not red, it's supposed to be deep red — if the block is
+     not populated, it's not done" (17 September). A wash read as a tint;
+     this reads as a fault, which is what an unfiled block is. */
+  .cell.late{background:rgba(150,20,20,.62);border-left-color:#ff6b5e;border-radius:6px}
+  .cell.late .ct b>span{color:#fff}
+  .cell.late .ct b small{color:#ffd6d1;font-weight:800}
+  .cell.late .ct>span{color:#ffc9c3}
+  .cell.late .ct>span strong,.cell.late .ct>span i,.cell.late .ct>span em{color:#fff}
   .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto;
     border:2px solid var(--grey);background:transparent}
   .dot.pending{border-color:var(--grey);background:transparent}
-  .dot.late{border-color:#e06767;background:transparent;
+  .dot.late{border-color:#ff6b5e;background:#c62828;
     box-shadow:0 0 0 3px rgba(224,103,103,.16)}
   .dot.moved{border-color:var(--blue);background:var(--blue)}
   .dot.closed{border-color:var(--good);background:var(--good);

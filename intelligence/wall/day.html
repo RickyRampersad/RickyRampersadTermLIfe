@@ -134,6 +134,11 @@
   .blk i{width:22px;height:9px;border-radius:3px;background:rgba(255,255,255,.13);display:block}
   .blk i.done{background:var(--good)} .blk i.due{background:var(--gold);opacity:.55}
   .blk i.none{background:rgba(255,255,255,.05)}
+  /* From the block's own state when the feed carries it: a block past its
+     window with nothing filed is deep red — "if it's not populated, it's not
+     done" (17 September) — and one still to come is plain grey. */
+  .blk i.late{background:#c62828;opacity:1;box-shadow:0 0 0 1px #ff6b5e inset}
+  .blk i.pending{background:rgba(255,255,255,.13)}
   .att{font-size:11px;color:var(--faint);margin-top:2px}
   .att b{color:var(--dim);font-weight:600}
   .warn{background:rgba(239,194,75,.1);border:1px solid rgba(239,194,75,.34);
@@ -363,6 +368,16 @@ function paint(){
     byKey[k].rows.push(d);
   });
   groups.sort(function(a,b){ return a.order-b.order; });
+  /* The four pills: the block's state (closed, moved, late, pending) when the
+     feed sends bx, else the older done/due strings. Late is deep red. */
+  var pills=function(d){
+    var bx=d.bx;
+    if(bx&&bx.length&&typeof bx[0]==="object"){
+      return bx.map(function(x){ var s=x.state||""; var c=(s==="closed"||s==="moved")?"done":(s==="late"?"late":(s==="pending"?"pending":"none"));
+        return '<i class="'+c+'" title="'+esc(x.kpi||x.id||"")+(s?" · "+s:"")+'"></i>'; }).join("");
+    }
+    return (d.blocks||[]).map(function(s){ return '<i class="'+(s||"none")+'"></i>'; }).join("");
+  };
   var per=function(d,k,label){ var v=d.periods?periodN(d.periods[k]):null;
     return '<div class="v per'+(v?'':' zero')+'" data-k="'+(label||k)+'">'+n(v)+'</div>'; };
   var label = groups.length>1 || (groups[0]&&groups[0].label);
@@ -378,8 +393,7 @@ function paint(){
       + '<div class="v '+cls(d.overdue,true)+'" data-k="late">'+n(d.overdue)+'</div>'
       + '<div class="v '+cls(d.needs,true)+'" data-k="quiet">'+n(d.needs)+'</div>'
       + per(d,"week") + per(d,"month") + per(d,"ytd","year")
-      + '<div class="blk">'+(d.blocks||[]).map(function(s){
-          return '<i class="'+(s||"none")+'"></i>'; }).join("")+'</div>'
+      + '<div class="blk">'+pills(d)+'</div>'
       + '</div>';
     }).join("");
   }).join("");

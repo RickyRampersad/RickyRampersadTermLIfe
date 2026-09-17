@@ -303,6 +303,9 @@ async function fresh(b, w, h, feed) {
     ok(tag.padEnd(22) + ' each window names who closed the most',
        d.who.length === 4 && /Dina\s*14/.test(d.who[0]) && /Dina\s*41/.test(d.who[1]) && /Dina\s*150/.test(d.who[2]) && /Dina\s*1,?200/.test(d.who[3]), JSON.stringify(d.who));
     ok(tag.padEnd(22) + " and today's closing is shown by task type", !d.mixHidden && /Servicing/.test(d.mix) && /Pendings/.test(d.mix), d.mix.slice(0, 80));
+    const pills = await s.page.evaluate(() => ({ late: document.querySelectorAll('.blk i.late').length, done: document.querySelectorAll('.blk i.done').length,
+      red: getComputedStyle(document.querySelector('.blk i.late') || document.body).backgroundColor }));
+    ok(tag.padEnd(22) + ' the day pills read the block state — seven missed blocks deep red', pills.late === 7 && /rgba?\(198, 40, 40/.test(pills.red), JSON.stringify(pills));
     ok(tag.padEnd(22) + ' no javascript errors on the day', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
 
@@ -316,9 +319,9 @@ async function fresh(b, w, h, feed) {
     const bl = await s.page.evaluate(() => {
       const late = [...document.querySelectorAll('.cell.late')];
       const bg = late.length ? getComputedStyle(late[0]).backgroundColor : '';
-      return { late: late.length, red: /rgba?\(224, 103, 103/.test(bg), bg, caption: late.length ? late[0].textContent.trim().slice(0, 60) : '' };
+      return { late: late.length, red: /rgba?\(150, 20, 20/.test(bg), bg, caption: late.length ? late[0].textContent.trim().slice(0, 60) : '' };
     });
-    ok(tag.padEnd(22) + ' an unfiled block past its window is red across the cell', bl.late === 7 && bl.red, JSON.stringify(bl));
+    ok(tag.padEnd(22) + ' an unfiled block past its window is deep red across the cell', bl.late === 7 && bl.red, JSON.stringify(bl));
     ok(tag.padEnd(22) + '   and says so', /not filed/.test(bl.caption), bl.caption);
     ok(tag.padEnd(22) + ' no javascript errors on the blocks', s.errors.length === 0, s.errors.join(' | '));
     await s.ctx.close();
