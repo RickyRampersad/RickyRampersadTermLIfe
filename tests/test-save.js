@@ -1,16 +1,17 @@
 const { makeEnv } = require('./harness');
 
 const LOGH = ['Timestamp','Date','StaffId','Name','Grade','Status']
-  .concat(['KPI1','KPI2','PM1','PM2'].reduce((a,p)=>a.concat([p,p+'_Actioned',p+'_Resolved',p+'_Open',p+'_Blocker']),[]))
+  // Five blocks since 17 September 2026 — the wall's own bands, five to midnight.
+  .concat(['KPI1','KPI2','PM1','PM2','EVE'].reduce((a,p)=>a.concat([p,p+'_Actioned',p+'_Resolved',p+'_Open',p+'_Blocker']),[]))
   .concat(['Closed','Overdue','Aged60','ValueAdded','Innovation','SystemFlags','Notes','UpdatedAt','Revision'])
-  .concat(['KPI1_At','KPI2_At','PM1_At','PM2_At'])
-  .concat(['KPI1_Quality','KPI2_Quality','PM1_Quality','PM2_Quality'])
+  .concat(['KPI1_At','KPI2_At','PM1_At','PM2_At','EVE_At'])
+  .concat(['KPI1_Quality','KPI2_Quality','PM1_Quality','PM2_Quality','EVE_Quality'])
   // Where ensureLogColumns_ puts them on the branch's existing sheet: appended
   // at the end, grouped by field. This is the shape from the first save after
   // a deploy onwards, so it is the one worth measuring — the migration write
   // happens once and the bench covers it.
-  .concat(['KPI1_Plan','KPI2_Plan','PM1_Plan','PM2_Plan'])
-  .concat(['KPI1_Met','KPI2_Met','PM1_Met','PM2_Met'])
+  .concat(['KPI1_Plan','KPI2_Plan','PM1_Plan','PM2_Plan','EVE_Plan'])
+  .concat(['KPI1_Met','KPI2_Met','PM1_Met','PM2_Met','EVE_Met'])
   .concat(['MailAM','MailPM']);
 const TRH = ['TrainingDate','StaffId','Trainer','Block','Trainee','Topic','Objectives','Achieved','Test','Result','Followup','LoggedAt'];
 
@@ -57,13 +58,25 @@ const ok = (label, cond, extra='') => { console.log((cond?'  PASS  ':'  FAIL  ')
   console.log('\n  PM2 save — writes: ' + writes + '   grid reads: ' + reads + '   mails: ' + c.mail);
   ok('save succeeded', res.ok, JSON.stringify(res.ok ? {at:res.at, blocksDone:res.blocksDone} : res));
   ok('all four blocks counted in', res.blocksDone === 4, 'got ' + res.blocksDone);
-  // Seven, not five, since the block gained a planned-minutes and an
-  // objective-met column. Both land in their own field-grouped runs at the end
-  // of the branch's existing sheet, so each costs one write that cannot be
-  // merged with the block's contiguous run. Two fields, two writes — if this
-  // climbs again without a field to show for it, something has stopped
-  // batching.
-  ok('block writes batched under 8', writes < 8, 'writes=' + writes);
+  /* EIGHT, AND EVERY ONE IS A RUN THAT CANNOT BE MERGED. Traced on
+     17 September 2026 for a PM2 save:
+
+       Status                                    1 cell
+       PM2, _Actioned, _Resolved, _Open, _Blocker  5 — the block's own run
+       Closed, Overdue, Aged60, ValueAdded        4 — the day's run
+       UpdatedAt, Revision                        2
+       PM2_At / PM2_Quality / PM2_Plan / PM2_Met  1 each
+
+     The derived columns are grouped by FIELD across blocks — every _At
+     together, every _Quality together — so one block's four derived fields
+     are never adjacent to each other, whatever the block. Adding the fifth
+     block on 17 September separated a pair that happened to be neighbours
+     and took the count from seven to eight.
+
+     So the ceiling moves with a field to show for it, which is the rule this
+     line has always carried: if it climbs again without one, something has
+     stopped batching. */
+  ok('block writes batched under 9', writes < 9, 'writes=' + writes);
   /* SIX, NOT FIVE, SINCE 17 SEPTEMBER 2026 — and it is a trade, not a
      regression. The save used to find its row by reading the whole log in
      one call: one round trip, but every row and every column of it, which

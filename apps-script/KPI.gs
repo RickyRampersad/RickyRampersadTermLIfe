@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-17f';
+var SCRIPT_VERSION = '2026-09-17g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -510,7 +510,20 @@ function kpiChoicesFor_(role) {
   return out;
 }
 
-var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2'];
+/* FIVE BLOCKS, FIVE TO MIDNIGHT — the wall's own bands.
+   "The time blocks need to be adjusted consistent with the wall, because the
+   wall is streaming. The wall starts from five to ten and it goes until
+   twelve a.m. Five time blocks. So it needs to be consistent." (17 September
+   2026.) The wall's fifth band was read from Salesforce and filed by nobody;
+   it is a real block now, because the person who asked for it works into it:
+   "extend the block beyond 4pm as I work round the clock."
+
+   EVE IS FILEABLE BY EVERYONE AND OWED BY NOBODY BUT THOSE SCHEDULED FOR IT.
+   Support staff work eight to four. A fifth block counted against them every
+   night would make the whole branch look short every day, which is the
+   fastest way to have a tracker ignored. Whether a block is owed comes from
+   the person's own schedule below, never from this list. */
+var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
 
 // ---------------------------------------------------------------------------
 //  The branch day
@@ -581,12 +594,15 @@ var SCHEDULE = {
     }
   },
   ricky: {
-    hours: '8am – 5pm', lunch: 'Flexible',
+    /* The only day on this list that runs the wall's full envelope, because
+       it is the one that does. */
+    hours: '5am – 12am', lunch: 'Flexible',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
+      KPI1: { time: '5 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
       KPI2: { time: '10 – 12pm', focus: 'Production, pipeline and own book',      kpi: 'Opportunity' },
       PM1:  { time: '1 – 3pm',   focus: 'Agent development and field training',   kpi: 'Training' },
-      PM2:  { time: '3 – 5pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' }
+      PM2:  { time: '3 – 4pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
+      EVE:  { time: '4pm – 12am', focus: 'After four: what is still being moved', kpi: 'Opportunity' }
     }
   },
   kerwyn: {
@@ -731,7 +747,7 @@ function checkSchedule() {
 
 /** Blocks that should be behind a person by this hour of the branch day.
  *  The morning pair are due by noon; the third by 3, when the checkpoint runs. */
-var BLOCK_DUE_HOUR = { KPI1: 10, KPI2: 12, PM1: 15, PM2: 16 };
+var BLOCK_DUE_HOUR = { KPI1: 10, KPI2: 12, PM1: 15, PM2: 16, EVE: 24 };
 
 function blockLabel_(p) {
   return { KPI1: 'KPI 1', KPI2: 'KPI 2', PM1: 'Afternoon 1', PM2: 'Afternoon 2' }[p] || p;
@@ -769,7 +785,17 @@ var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee'
  */
 function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
+  /* A BLOCK'S OWN FIVE COLUMNS TOO, not only the derived ones. This list
+     used to start at _At, because the four original blocks were already in
+     the branch's sheet when the script first ran. The fifth block is not, so
+     adding one to BLOCK_IDS silently gave it a timestamp and a plan with
+     nowhere to write the work itself. */
   var want = ['UpdatedAt', 'Revision']
+    .concat(BLOCK_IDS)
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Actioned'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Resolved'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Open'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Blocker'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
@@ -1800,6 +1826,21 @@ function isRealValueAdd_(v) {
   return !!s && s !== 'none today' && s !== 'none' && s !== 'n/a' && s !== 'na' && s !== '-';
 }
 
+/** How many blocks this person is OWED — the ones their own schedule names.
+ *  Support staff work eight to four, and only the Branch Manager is scheduled
+ *  into the four-to-midnight block, so counting BLOCK_IDS would tell the whole
+ *  branch it was a block short every evening. Four is the floor for anybody
+ *  whose schedule is not on the list yet, which is what the day said before
+ *  there was a fifth block to be wrong about. */
+function blocksOwed_(staffId) {
+  var sc = SCHEDULE[String(staffId || '').trim()];
+  var b = sc && sc.blocks;
+  if (!b) return 4;
+  var n = 0;
+  BLOCK_IDS.forEach(function (p) { if (b[p] && b[p].time) n++; });
+  return n || 4;
+}
+
 function blocksDone_(e) {
   var n = 0;
   BLOCK_IDS.forEach(function (p) { if (hasText_(e[p]) || hasText_(e[p + '_Actioned'])) n++; });
@@ -2405,7 +2446,7 @@ function checkpointHtml_(r) {
     return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:12px 14px;margin-bottom:9px">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
         '<td style="font-size:14px;font-weight:700">' + esc_(l.name) +
-          '<span style="font-size:11px;color:' + MAIL.muted + ';font-weight:600"> · ' + l.blocksDone + '/4 blocks' +
+          '<span style="font-size:11px;color:' + MAIL.muted + ';font-weight:600"> · ' + l.blocksDone + '/' + blocksOwed_(l.staffId) + ' blocks' +
           (l.updatedAt ? ' · last saved ' + esc_(l.updatedAt) : '') + '</span></td>' +
         '<td align="right" style="font-size:11px;font-weight:700;color:' + tone + '">' + esc_(l.status) + '</td>' +
       '</tr></table>' +
@@ -4372,6 +4413,10 @@ function trainingStanding_(staffId, from, to) {
 function facts_(staffId, from, to, entries, closedByType, nowBlock, needs, billing) {
   var f = { blocks: 0, met: 0, partly: 0, no: 0, planned: 0, landed: null,
             valueAdded: [], innovation: [],
+            /* What a full day is FOR THIS PERSON. Counting BLOCK_IDS told
+               support staff they owed the four-to-midnight block, which only
+               the Branch Manager is scheduled for. */
+            owed: blocksOwed_(staffId),
             daysIn: 0, absent: 0, late: 0,
             closed: null, servicing: null, open: null, needs: null, lateTasks: null, noReason: null, billingFlags: null,
             trainingGiven: 0, trainingReceived: 0, devDone: 0, devTotal: 0 };
@@ -4439,7 +4484,10 @@ function competencySignals_(name, f) {
   if (/reliab|attend|punctual|depend/.test(n)) {
     sig('Days in', f.daysIn); sig('Not in', f.absent, f.absent ? 'amber' : 'green');
     sig('After your start', f.late, f.late ? 'amber' : 'green');
-    if (f.daysIn) sig('Blocks submitted', f.blocks + ' of ' + f.daysIn * BLOCK_IDS.length, f.blocks >= f.daysIn * BLOCK_IDS.length * 0.8 ? 'green' : 'amber');
+    if (f.daysIn) {
+      var want = f.daysIn * (f.owed || 4);
+      sig('Blocks submitted', f.blocks + ' of ' + want, f.blocks >= want * 0.8 ? 'green' : 'amber');
+    }
   }
   if (/respons|timel|follow.?up/.test(n)) {
     if (f.workDays) {
@@ -4681,7 +4729,8 @@ function signOutDay_(data, profile) {
 
   var done = blocksSubmittedOn_(sid, day);
   return { ok: true, date: day, staffId: sid, out: at,
-           blocksDone: done.length, blocksLeft: BLOCK_IDS.length - done.length };
+           blocksDone: done.length,
+           blocksLeft: Math.max(0, blocksOwed_(sid) - done.length) };
 }
 
 /** "Not in today", with the reason. Self, or the People Leader for a report. */

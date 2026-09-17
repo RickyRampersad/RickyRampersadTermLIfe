@@ -638,7 +638,12 @@ function CloseTheDay({ entry, blocks, mail, att, onClose, standing, onWritten })
   const [err, setErr] = useState("");
   const [co, setCo] = useState(null);
   const [ticking, setTicking] = useState("");
-  const left = (blocks || []).filter(b => !(entry && blockWorked(entry, b.id)));
+  /* ONLY WHAT THIS PERSON IS OWED. The four-to-midnight block is fileable by
+     anybody and scheduled for the Branch Manager alone, so counting it here
+     told every member of support staff they had left a block unreported every
+     evening of their lives. b.owed is undefined on any older caller, which
+     reads as owed — the behaviour before there was a fifth block. */
+  const left = (blocks || []).filter(b => b.owed !== false && !(entry && blockWorked(entry, b.id)));
   const outstanding = []
     .concat(left.length ? [left.length === 1 ? "1 block not reported" : left.length + " blocks not reported"] : [])
     .concat(!(mail && mail.pm) ? ["the afternoon mail sweep"] : []);
@@ -1471,6 +1476,14 @@ const BLOCK_ORDER = [{
   id: "pm2",
   col: "PM2",
   label: "Afternoon 2"
+}, {
+  /* THE FIFTH BLOCK, four to midnight. The wall has streamed this band since
+     17 September and nobody could file it: "extend the block beyond 4pm as I
+     work round the clock, and it should reflect 24/7 so persons can see what
+     is being done." */
+  id: "eve",
+  col: "EVE",
+  label: "After four"
 }];
 const BLOCKS = BLOCK_ORDER;
 let SCHEDULE = {};
@@ -1486,9 +1499,18 @@ const blocksFor = staffId => BLOCK_ORDER.map(b => {
     ...b,
     time: sc.time || "",
     focus: sc.focus || "",
-    kpi: sc.kpi || ""
+    kpi: sc.kpi || "",
+    // Owed if this person's own schedule names it — see owedCount.
+    owed: !!sc.time
   };
 });
+/* OWED IS NOT THE SAME AS FILEABLE. Support staff work eight to four; only
+   the Branch Manager is scheduled into the four-to-midnight block. Anybody
+   who worked late may file it, and nobody who did not is counted short for
+   leaving it empty — a day that reads "3 of 5" for everyone every evening is
+   a tracker the branch stops believing. Four is the floor for a person whose
+   schedule has not loaded yet, which is what the day used to say outright. */
+const owedCount = staffId => blocksFor(staffId).filter(b => b.owed).length || 4;
 // Blocks 1–3 are behind you at the 3pm cut; the last one is still running.
 const CHECKPOINT_BLOCKS = 3;
 
@@ -3345,7 +3367,7 @@ function App() {
         fontWeight: 700,
         color: dayState.tone === "bad" ? RED : dayState.tone === "ok" ? GREEN : MUTED
       }
-    }, dayState.text || done + " of 4 blocks in"), /*#__PURE__*/React.createElement("button", {
+    }, dayState.text || done + " of " + owedCount(active) + " blocks in"), /*#__PURE__*/React.createElement("button", {
       onClick: saveDay,
       disabled: dayState.tone === "saving",
       style: {

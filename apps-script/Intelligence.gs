@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17i';
+var INTEL_VERSION = '2026-09-17j';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -6568,7 +6568,18 @@ function iDayBuild_(b) {
 
   var hourNow = Number(Utilities.formatDate(new Date(), tz, 'H')) || 0;
   var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
-  var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
+  /* THE STRIP IS THE FOUR DAYTIME BANDS; AFTER FOUR IS ITS OWN. EVE joined
+     BLOCK_IDS on 17 September so it could be filed, and the wall already had
+     a band for it — built from what Salesforce saw the desk close and touch
+     after four, for everybody, whether they file or not. Left alone, the two
+     would both draw it and the strip would carry it twice.
+     So: the strip and each desk's block states are the four daytime bands,
+     the after-four band is pushed once below, and it now prefers the filed
+     record when there is one and falls back to Salesforce when there is not.
+     Owed and filed counts still run over all five, because a filed fifth
+     block is a filed block. */
+  var filedIds = blockIds.filter(function (id) { return id !== 'EVE'; });
+  var blocks = filedIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
   var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
 
   /* THE LONGER VIEW OF THE BLOCKS, AND WHY IT IS ONE READ OF THE LOG.
@@ -6644,7 +6655,7 @@ function iDayBuild_(b) {
        something, or is stuck. A page that has not been republished yet simply
        does not look at it. */
     var bx = [];
-    var mine = blockIds.map(function (id, i) {
+    var mine = filedIds.map(function (id, i) {
       var has = !!(e && String(e[id + '_Actioned'] || '').trim());
       var sb = sched[id];
       /* A block nobody is scheduled for is not a block anybody owes. Counting
@@ -6699,10 +6710,18 @@ function iDayBuild_(b) {
        ends before it could — and anything after midnight is the next day's
        first block. The four filed blocks and their counts are untouched. */
     var eveClosed = s ? Number(s.eveClosed || 0) : 0, eveTouched = s ? Number(s.eveTouched || 0) : 0;
+    /* FILED BEATS INFERRED. Somebody who writes down what they did after four
+       has said it better than Salesforce can, so their own record leads and
+       the Salesforce reading stays beside it. */
+    var eveFiled = !!(e && String(e.EVE_Actioned || '').trim());
+    var eveSched = sched.EVE;
     bx.push({
-      id: 'EVE', after: true,
-      state: eveClosed ? 'closed' : (eveTouched ? 'moved' : (hourNow >= 16 ? 'idle' : 'pending')),
-      kpi: 'After hours', focus: 'What was done after four', time: '4pm – 12am', due: 24,
+      id: 'EVE', after: true, filed: eveFiled,
+      state: eveFiled ? 'done'
+           : eveClosed ? 'closed' : (eveTouched ? 'moved' : (hourNow >= 16 ? 'idle' : 'pending')),
+      kpi: eveFiled ? String(e.EVE || 'After hours') : 'After hours',
+      focus: (eveSched && eveSched.focus) || 'What was done after four',
+      time: (eveSched && eveSched.time) || '4pm – 12am', due: 24,
       moved: 0, closed: 0, stuck: false, type: '',
       sf: s ? { closed: eveClosed, touched: eveTouched, open: Number(s.open || 0) } : null
     });
