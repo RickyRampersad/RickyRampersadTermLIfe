@@ -852,6 +852,8 @@ with the screen it points at.
 Nothing is hidden by role. Every screen stays one click away; only the order and
 the emphasis change.
 
+**Reading the switches (17 September).** `intelMailStatus()` in the editor prints the three switches in words and where held mail goes; `intel.ping` carries `mail: {test, agents, clients, holdSet}` — words only, never an address — so the state can be checked from outside without trusting memory.
+
 ## 3e. Production — the only screen about something going right
 
 Every other screen is arrears, lapses, stuck cases and requirements nobody

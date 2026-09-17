@@ -8099,7 +8099,30 @@ function intelDoGet_(e) {
 function intelHealth_() {
   return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
            built: iProp_('INTEL_LAST_BUILD') || 'never',
-           workbook: iWorkbook_().how };
+           workbook: iWorkbook_().how,
+           /* THE MAIL SWITCHES, VISIBLE. Asked on 17 September — "please ensure
+              no auto emails go out to agents in the morning" — and the honest
+              answer to "are they off?" should be readable, not remembered.
+              Words only: no address leaves on an unauthenticated ping. */
+           mail: iMailState_() };
+}
+function iMailState_() {
+  var test = !!String(iProp_('INTEL_TEST_TO') || '').trim();
+  var clients = String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase() ===
+                (typeof ISURVEY !== 'undefined' && ISURVEY && ISURVEY.LIVE_PHRASE ? ISURVEY.LIVE_PHRASE : 'send to clients');
+  return { test: test,
+           agents: test ? 'test' : (iAgentLive_() ? 'live' : 'held'),
+           clients: test ? 'test' : (clients ? 'live' : 'held'),
+           holdSet: !!iHoldTo_() };
+}
+/* From the editor: the three switches in words, and where held mail goes. */
+function intelMailStatus() {
+  var m = iMailState_(), hold = iHoldTo_() || '(nowhere — set INTEL_MANAGER_EMAIL)';
+  return (m.test ? 'MAIL IS OFF: every sender goes to ' + (iProp_('INTEL_TEST_TO') || '') + ', tagged [TEST].'
+                 : 'Test mode is off.') + '\n' +
+         'Agents: ' + (m.agents === 'live' ? 'LIVE — agent mail goes to agents.' : 'held — agent mail goes to ' + hold + ', tagged [HELD].') + '\n' +
+         'Clients: ' + (m.clients === 'live' ? 'LIVE — client letters go to clients.' : 'held — no client letter leaves.') + '\n' +
+         'Switch everything off: intelMailOff(). Back on: intelMailOn(); agents and clients then still need their own phrase.';
 }
 
 function intelDoPost_(e) {

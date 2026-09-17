@@ -300,11 +300,18 @@ async function intelPing(){
     const r=await fetch(EXEC,{method:"POST",headers:{"Content-Type":"text/plain"},
                               body:JSON.stringify({action:"intel.ping"})});
     const j=await r.json();
-    return {version:j&&j.version||null, workbook:j&&j.workbook||"", ok:!!(j&&j.ok), error:j&&j.error||""};
+    return {version:j&&j.version||null, workbook:j&&j.workbook||"", ok:!!(j&&j.ok), error:j&&j.error||"", mail:j&&j.mail||null};
   }catch(e){ return {version:null, workbook:"", ok:false, error:String(e)}; }
 }
 /* What the wall's data script says about itself, in words: current, behind,
    or not answering. Only asked once the tracker is known to be current. */
+/* The mail switches, in the words the ping uses — so "are the agent e-mails
+   off?" is answered here, not from memory. */
+function mailLine(m){
+  if(!m) return "";
+  if(m.test) return " <b>Mail is off</b>: every sender goes to the manager, tagged [TEST].";
+  return " Mail: agents <b>"+(m.agents==="live"?"LIVE":"held")+"</b>, clients <b>"+(m.clients==="live"?"LIVE":"held")+"</b>.";
+}
 function wallVerdict(w){
   if(!w.ok||!w.version){
     return {cur:false, line:'<div style="margin-top:5px">✗ <b>The wall\'s data script did not answer</b> — '+
@@ -315,7 +322,7 @@ function wallVerdict(w){
       "INTEL_WORKBOOK_ID has been set to <b>bound</b> by hand, and the screens will be empty until that is cleared":
       " and reading the branch workbook";
     return {cur:w.workbook!=="bound", line:'<div style="margin-top:5px">'+(w.workbook==="bound"?"✗ ":"✓ ")+
-      "<b>The wall\'s data script is current</b> ("+w.version+")"+wb+".</div>"};
+      "<b>The wall\'s data script is current</b> ("+w.version+")"+wb+"."+mailLine(w.mail)+"</div>"};
   }
   return {cur:false, stale:w.version, line:""};
 }
