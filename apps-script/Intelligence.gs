@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17g';
+var INTEL_VERSION = '2026-09-17h';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -3491,6 +3491,257 @@ function iActLapses_(b) {
   return iOk_({ data: data });
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   INCREASES, GROUP LIFE AND GROUP HEALTH — the pendings the other two
+   pending slides cannot see.
+
+   Asked for on 17 September 2026: "on the Pendings we must include in a
+   separate slide the increases, group life and group health — this is pulled
+   from salesforce on the object increases and policy status and client
+   portfolio record type group health and individual health status pendings."
+
+   WHY A SEPARATE SLIDE AND NOT A COLUMN ON SLIDE 3. Slides 3 and 4 are built
+   from the branch's requirements extract, and that extract is the life
+   new-business list. An increase on a policy the client already holds is not
+   on it; neither is a group scheme, nor a health plan. Adding them to that
+   board would mean adding rows the extract has never seen and cannot age.
+   So this screen asks Salesforce for itself, and it asks two things:
+
+     Policy_Increases__c    an increase on a policy already in force
+     CLIENT_PORTFOLIO__c    record types HEALTH, HEALTH (GROUP), LIFE(GROUP)
+
+   THE STATUS IS READ TWICE ON THE INCREASES OBJECT, because one field is not
+   enough. Policy_Description_Status__c is a clean picklist — Pending, Premium
+   Paying, NPW — and it is right when it is set, but it is blank on 38 of the
+   1,116 rows, and it reads "Premium Paying" on rows whose free-text
+   Policy_Status_Description_R__c says "Underwriting incomplete, Missing
+   Reqts, Error on Policy". Both go through iPendState_, the same normaliser
+   slides 3 and 4 use, and a row is pending if either field says it is.
+
+   NO POLICY NUMBERS AND NO CLIENT NAMES ON THIS SCREEN AT ALL, not even
+   behind INTEL_PENDING_ROWS_ON_WALL. Thirteen rows is few enough that a
+   policy number plus a plan name identifies the client to anyone walking
+   past, and a group scheme identifies the employer. The agent, the status,
+   the age and the money are what the room has to act on.
+   ══════════════════════════════════════════════════════════════════════════ */
+var IGRP = {
+  OBJECT: 'CLIENT_PORTFOLIO__c',
+  INC:    'Policy_Increases__c',
+  TYPES:  ['HEALTH', 'HEALTH (GROUP)', 'LIFE(GROUP)'],
+  LABEL:  { 'HEALTH': 'Individual health', 'HEALTH (GROUP)': 'Group health',
+            'LIFE(GROUP)': 'Group life' }
+};
+/* Every spelling either object uses for a policy that is still in the works.
+   Matched in SOQL so the whole book does not have to be pulled across, then
+   classified properly by iPendState_ once it is here. */
+var IGRP_LIKE = ['Pending', 'Underwriting', 'Reqt', 'Requirement', 'Error', 'Settlement'];
+
+function iGrpLike_(field) {
+  return '(' + IGRP_LIKE.map(function (w) {
+    return field + " LIKE '%" + w + "%'";
+  }).join(' OR ') + ')';
+}
+function iGrpTypeIn_() {
+  return "RecordType.Name IN ('" + IGRP.TYPES.join("','") + "')";
+}
+/* An aggregate query returns RecordType.Name flat as "Name"; a row query
+   returns it nested. Both arrive here. */
+function iGrpType_(x) {
+  if (!x) return '';
+  if (x.RecordType && x.RecordType.Name) return String(x.RecordType.Name);
+  return String(x.Name || '');
+}
+/* "A00427 - Ricky Rampersad" on the portfolio object. The code is the join
+   that matters and the name after it is only a label, so the roster's
+   spelling wins when the code is known. */
+function iGrpAgent_(raw, nameOfCode) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (!s) return { code: '', name: '' };
+  var m = s.match(/^([A-Za-z]?\d{3,})\s*[-–]\s*(.*)$/);
+  var code = m ? iCode_(m[1]) : '', name = m ? m[2].trim() : s;
+  if (code && nameOfCode[code]) name = nameOfCode[code];
+  return { code: code, name: name };
+}
+
+function iGroupsWall_() {
+  var today = iToday_(), DAY = 86400000, yy = today.getFullYear();
+  var notes = [];
+
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the ' +
+                    'project. Paste KPI.gs alongside Intelligence.gs, or add SalesforceSync.gs.' };
+  }
+  var q = function (soql) {
+    try { return iSfQuery_(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* The branch's own units and people, from the access list — the same join
+     every other Salesforce screen uses, so no branch name is written here. */
+  var units = iBuildUnits_(), unitKeys = {}, nameOfCode = {};
+  var roster = {}, firstSeen = {};
+  Object.keys(units).forEach(function (u) {
+    unitKeys[iPossUnitKey_(u)] = u;
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (c && m.name) nameOfCode[c] = m.name;
+      /* First name -> roster name, for the increases object, which stores
+         first names only. A first name two people share maps to neither. */
+      var fn = iNameKey_(String(m.name || '').split(' ')[0]);
+      if (!fn) return;
+      firstSeen[fn] = (firstSeen[fn] || 0) + 1;
+      roster[fn] = m.name;
+    });
+  });
+  Object.keys(firstSeen).forEach(function (fn) { if (firstSeen[fn] > 1) delete roster[fn]; });
+  var mine = function (u) { return !!unitKeys[iPossUnitKey_(u)]; };
+  var skip = iExcluded_(), listOnly = iListOnly_(), held = 0;
+  /* A name held back by intelListOnly is off the wall and its policy is still
+     counted — the rule set on 17 September. */
+  var show = function (name) {
+    if (!name) return '';
+    if (iExcludes_(listOnly, name)) { held++; return ''; }
+    return name;
+  };
+  var age = function (from) {
+    var d = iDate_(from); if (!d) return 0;
+    return Math.max(0, Math.round((today - d) / DAY));
+  };
+
+  /* ── the group and health book, and what its status field says about it ── */
+  var types = {}, totals = { policies: 0, pending: 0, paying: 0, closed: 0, none: 0 };
+  IGRP.TYPES.forEach(function (t) {
+    types[t] = { key: t, label: IGRP.LABEL[t] || t, policies: 0, pending: 0,
+                 paying: 0, closed: 0, none: 0, oldest: 0, states: {} };
+  });
+  var mix = q('SELECT RecordType.Name, Unit__c, Policy_Status_Description__c, COUNT(Id) n' +
+              ' FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_() +
+              ' GROUP BY RecordType.Name, Unit__c, Policy_Status_Description__c');
+  (mix || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var t = types[iGrpType_(x)]; if (!t) return;
+    var n = iNum_(x.n), st = iPendState_(x.Policy_Status_Description__c);
+    t.policies += n; totals.policies += n;
+    if (st === 'issued') { t.paying += n; totals.paying += n; }
+    else if (st === 'closed') { t.closed += n; totals.closed += n; }
+    else if (st === 'none') { t.none += n; totals.none += n; }
+    else { t.pending += n; totals.pending += n; t.states[st] = (t.states[st] || 0) + n; }
+  });
+
+  /* ── and the pendings themselves, one row each ── */
+  var rows = [];
+  var open = q('SELECT RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c,' +
+               ' CreatedDate FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_() +
+               ' AND ' + iGrpLike_('Policy_Status_Description__c'));
+  (open || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var t = iGrpType_(x); if (!types[t]) return;
+    var st = iPendState_(x.Policy_Status_Description__c);
+    if (st === 'issued' || st === 'closed' || st === 'none') return;   // matched a word, is not pending
+    var who = iGrpAgent_(x.AgentName__c, nameOfCode);
+    if (iExcludes_(skip, who.name)) return;
+    var d = age(x.CreatedDate);
+    if (d > types[t].oldest) types[t].oldest = d;
+    rows.push({ type: t, label: IGRP.LABEL[t] || t, who: show(who.name),
+                status: String(x.Policy_Status_Description__c || '').trim(),
+                state: st, days: d });
+  });
+  rows.sort(function (a, b) { return b.days - a.days; });
+
+  /* ── increases: the whole book first, so the pendings have a denominator ── */
+  var inc = { rows: 0, paying: 0, payingApi: 0, npw: 0, blank: 0 };
+  var ibook = q('SELECT Unit__c, Policy_Description_Status__c, COUNT(Id) n,' +
+                ' SUM(Increase_API__c) api FROM ' + IGRP.INC +
+                ' GROUP BY Unit__c, Policy_Description_Status__c');
+  (ibook || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var n = iNum_(x.n), s = String(x.Policy_Description_Status__c || '').trim();
+    inc.rows += n;
+    if (/^premium paying$/i.test(s)) { inc.paying += n; inc.payingApi += iNum_(x.api); }
+    else if (/^npw$/i.test(s)) inc.npw += n;
+    else if (!s) inc.blank += n;
+  });
+  /* What the branch has written in increases this year — the number that says
+     why the pending ones are worth chasing. */
+  var iyear = { n: 0, api: 0 };
+  var yrows = q('SELECT Unit__c, COUNT(Id) n, SUM(Increase_API__c) api FROM ' + IGRP.INC +
+                ' WHERE Submitted_Date__c >= ' + yy + '-01-01 GROUP BY Unit__c');
+  (yrows || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    iyear.n += iNum_(x.n); iyear.api += iNum_(x.api);
+  });
+
+  var ipend = { n: 0, api: 0, prem: 0, oldest: 0, noDocs: 0, reqts: 0 }, irows = [];
+  var idet = q('SELECT Agent__c, Unit__c, Support__c, Policy_Description_Status__c,' +
+               ' Policy_Status_Description_R__c, Submitted_Date__c, Days_O_S__c,' +
+               ' Increase_API__c, Increase_Premium__c, Policy_Requirements__c,' +
+               ' Client_Requirement__c, Di_you_collect_the_Documents__c, Years_In_Force__c' +
+               ' FROM ' + IGRP.INC + " WHERE Policy_Description_Status__c = 'Pending' OR " +
+               iGrpLike_('Policy_Status_Description_R__c'));
+  (idet || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    /* Either field may be the one telling the truth, so the worse of the two
+       decides. A picklist reading "Premium Paying" does not overrule free
+       text that reads "Missing Reqts". */
+    var a = iPendState_(x.Policy_Description_Status__c);
+    var b = iPendState_(x.Policy_Status_Description_R__c);
+    var pick = ['reqts', 'settle', 'errors', 'uw'];
+    var st = '';
+    for (var i = 0; i < pick.length && !st; i++) if (a === pick[i] || b === pick[i]) st = pick[i];
+    if (!st && /^pending$/i.test(String(x.Policy_Description_Status__c || '').trim())) st = 'uw';
+    if (!st) return;
+    var first = String(x.Agent__c || '').trim();
+    var who = roster[iNameKey_(first)] || first;
+    if (iExcludes_(skip, who) || iExcludes_(skip, first)) return;
+    /* Days_O_S__c is zero on rows that were never settled, so the submitted
+       date is the floor under it, never the other way round. */
+    var d = Math.max(iNum_(x.Days_O_S__c), age(x.Submitted_Date__c));
+    var reqt = String(x.Policy_Requirements__c || x.Client_Requirement__c || '').trim();
+    ipend.n++; ipend.api += iNum_(x.Increase_API__c); ipend.prem += iNum_(x.Increase_Premium__c);
+    if (d > ipend.oldest) ipend.oldest = d;
+    if (x.Di_you_collect_the_Documents__c !== true) ipend.noDocs++;
+    if (reqt) ipend.reqts++;
+    /* The free-text field is the better description when it is prose, and on
+       some rows it is the single character "1". A status with no letter in it
+       tells the room nothing, so the picklist is shown instead. */
+    var said = String(x.Policy_Status_Description_R__c || '').trim();
+    if (!/[a-z]/i.test(said)) said = String(x.Policy_Description_Status__c || '').trim();
+    irows.push({ who: show(who), support: String(x.Support__c || '').trim(), state: st,
+                 status: said,
+                 days: d, api: iNum_(x.Increase_API__c), prem: iNum_(x.Increase_Premium__c),
+                 reqt: reqt, docs: x.Di_you_collect_the_Documents__c === true,
+                 years: Math.max(0, Math.round(iNum_(x.Years_In_Force__c))) });
+  });
+  irows.sort(function (a, b) { return b.days - a.days; });
+
+  var typeList = IGRP.TYPES.map(function (t) { return types[t]; })
+    .filter(function (t) { return t.policies || t.pending; });
+
+  return {
+    generatedAt: iIso_(today),
+    asOf: Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm'),
+    helper: helper,
+    types: typeList,
+    totals: totals,
+    rows: rows,
+    increases: { book: inc, year: iyear, pending: ipend, rows: irows },
+    held: held,
+    notes: notes
+  };
+}
+
+function iActGroups_(b) {
+  if (b && b.fresh) {
+    var d2 = iGroupsWall_();
+    try { if (d2 && d2.configured !== false) iWallSave_('groups', d2); } catch (e2) {}
+    return iOk_({ data: d2 });
+  }
+  return iWallServe_('groups', function () { return iGroupsWall_(); });
+}
+
 function iActConversion_(b) {
   if (b && b.fresh) { var d2 = iConversionWall_(); try { if (d2 && d2.configured !== false) iWallSave_('conversion', d2); } catch (e2) {} return iOk_({ data: d2 }); }
   return iWallServe_('conversion', function () { return iConversionWall_(); });
@@ -5143,6 +5394,7 @@ function intelRebuildPossession() { return iWallRebuild_('possession', function 
 function intelRebuildPending()    { return iWallRebuild_('pending',    function () { return iPendingWall_(); }); }
 function intelRebuildRiders()     { return iWallRebuild_('riders',     function () { return iRidersWall_(); }); }
 function intelRebuildConversion() { return iWallRebuild_('conversion', function () { return iConversionWall_(); }); }
+function intelRebuildGroups()     { return iWallRebuild_('groups',     function () { return iGroupsWall_(); }); }
 /* Hourly on a trigger, acting on the odd hours from five to seven in the
    evening: five is the night copy, nine to nineteen keep the day's clearances
    on the wall, and seven is skipped because the branch signs in then. Eight
@@ -5181,6 +5433,7 @@ var IWALL_BUDGET_MS = 4.5 * 60 * 1000;      // the ceiling is 6 minutes; stop sh
    Ordered this way a single run gets four of the six. */
 var IWALL_FEEDS = [
   { key: 'possession', run: function () { return intelRebuildPossession(); } },
+  { key: 'groups',     run: function () { return intelRebuildGroups(); } },
   { key: 'licence',    run: function () { return intelRebuildLicence(); } },
   { key: 'delivery',   run: function () { return intelRebuildDelivery(); } },
   { key: 'book',       run: function () { return intelRebuildBook(); } },
@@ -6075,6 +6328,7 @@ function intelRoute_(b) {
   if (action === 'intel.book')       return iActBook_(b);
   if (action === 'intel.pending')    return iActPending_(b);
   if (action === 'intel.conversion') return iActConversion_(b);
+  if (action === 'intel.groups')     return iActGroups_(b);
   if (action === 'intel.permanent')  return iActPermanent_(b);
   if (action === 'intel.riders')     return iActRiders_(b);
   if (action === 'intel.lapses')     return iActLapses_(b);

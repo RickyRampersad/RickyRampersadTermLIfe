@@ -28,7 +28,8 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'index.html', 'lapses.html',
+const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
+               'index.html', 'lapses.html',
                'possession.html', 'delivery.html', 'licence.html', 'book.html',
                'conversion.html', 'riders.html'];
 const LAST_TAB = 'Riders on a clock';    // the rail label of ORDER's last stop

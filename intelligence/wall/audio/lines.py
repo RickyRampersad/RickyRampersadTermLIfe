@@ -80,6 +80,16 @@ WALLS = {
         "On the right, every agent with what is theirs. Cash to collect, routine in motion, medicals waited on.",
         "The strip under each name is their own pile, aging. No client is named here.",
     ],
+    'increases': [                               # Increases, group & health
+        "This slide is the pendings the other two cannot see.",
+        "An increase is new premium on a policy the client already holds.",
+        "No new sale. No new client. No new decision on the person.",
+        "Group life, group health and individual health sit here too.",
+        "None of them reach the life extract, so this screen asks Salesforce itself.",
+        "The bar under each book is that book's status mix.",
+        "The grey is the part carrying no status at all. A blank is not the same as nothing pending.",
+        "Every row is named, with whose it is and how long it has held.",
+    ],
     'reqs': [                                    # Branch Pending · Requirements & tasks
         "This is the second half of the pending wall.",
         "The number is every requirement outstanding, and beside it the policies they sit on.",

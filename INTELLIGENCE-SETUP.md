@@ -409,9 +409,15 @@ slide, let me know"*. So:
   register row. The middle card is the **six real statuses** (see
   `iPendState_`), the two workable ones edged in gold, with what Guardian
   actually typed as chips beneath so the branch recognises its own report. The
-  aging bars count pending rows only. Accountability by agent carries the
-  pending count, cash, routine, medicals, how many are past ninety days, the
-  oldest, and a five-segment strip of that agent's own pile aging.
+  aging bars count pending rows only. The rest of the slide is **the board**:
+  one row per agent, with **the requirements on their policies named** under
+  their name, then policies, requirements, routine, medicals, cash not
+  submitted, and the Salesforce tasks on those same policies — open, late,
+  quiet, raised today — with the oldest day count last and a gold branch row
+  above. Rebuilt in that shape on 17 September after the first cut drew
+  *"you are tallying up the days… this is not telling me anything at all"*:
+  a wall has to say how many, whose, and what, and a day count says none of
+  the three.
 - **Slide 4, `reqs.html` — Branch Pending · Requirements & tasks.** Every
   requirement outstanding with **its own** median and oldest age, medicals
   marked apart in teal, the six aging bands, the months the requirements were
@@ -419,8 +425,41 @@ slide, let me know"*. So:
   the Pendings task type per person — open, overdue, gone quiet a week, touched
   today, closed today — from the tracker's own Salesforce read, so the two
   screens can never disagree. The chase states sit under it.
-- Both carry the **gold nameplate** rather than the branch mark; the house note
-  in `CLAUDE.md` records that exception and why.
+- **Slide 5, `increases.html` — Branch Pending · Increases, group & health.**
+  Asked for on the same day: *"on the Pendings we must include in a separate
+  slide the increases, group life and group health."* It is a separate slide
+  because slides 3 and 4 are built from the requirements extract, and that
+  extract is the **life new-business list** — an increase on a policy the
+  client already holds is not on it, and neither is a group scheme or a health
+  plan. So this one reads Salesforce itself: `Policy_Increases__c` for the
+  increases, and `CLIENT_PORTFOLIO__c` record types **HEALTH**, **HEALTH
+  (GROUP)** and **LIFE(GROUP)** for the rest. The left card is the pending
+  increases with the API waiting on them, the oldest, how many have no
+  documents collected, and the whole increase book behind it for scale. The
+  right is the three record types with a **status-mix bar** each, then every
+  pending row named — kind of policy, whose it is, the status as the record
+  carries it, and its age — with a by-agent tally under each list.
+  - **The status is read twice on the increases object.**
+    `Policy_Description_Status__c` is a clean picklist and it is right when it
+    is set, but it is blank on some rows and reads "Premium Paying" on rows
+    whose free-text `Policy_Status_Description_R__c` says "Underwriting
+    incomplete, Missing Reqts, Error on Policy". Both go through
+    `iPendState_`, and **the worse of the two decides**. Where the free text
+    is not prose — some rows carry the single character `1` — the picklist is
+    shown instead, because a status with no letter in it tells the room
+    nothing.
+  - **No policy numbers and no client names on this slide at all**, not even
+    behind `INTEL_PENDING_ROWS_ON_WALL`. Thirteen rows is few enough that a
+    policy number identifies the client to anyone walking past, and a group
+    scheme identifies the employer.
+  - **More than half of the group and health book carries no status**, so the
+    slide says the share out loud: a blank is not the same as nothing pending,
+    and nothing can test those rows either way.
+  - Rebuilt by `intelRebuildGroups()`, served at `intel.groups`, and in the
+    nightly `IWALL_FEEDS` run near the front because five small SOQL queries
+    are the cheapest feed on the wall.
+- All three carry the **gold nameplate** rather than the branch mark; the house
+  note in `CLAUDE.md` records that exception and why.
 - **Two exclusion rules, and they are different.** `intelExclude` takes a name
   off every report entirely. `intelListOnly` takes the name off every per-agent
   row, **counts the policies**, and (since this date) **does not count their

@@ -19,11 +19,11 @@ the room notices.
 <div class="mark"><img src="<path>/logo-mark.png" alt=""></div>
 ```
 
-**One exception, decided 17 September 2026**: the two Branch Pending Wall
-slides (`intelligence/wall/pending.html`, `intelligence/wall/reqs.html`) carry
-a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
+**One exception, decided 17 September 2026**: the Branch Pending Wall slides
+(`intelligence/wall/pending.html`, `intelligence/wall/reqs.html`,
+`intelligence/wall/increases.html`) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
 — because that is the one wall the branch stands in front of and argues from,
-it runs over two slides, and the room has to know which wall it is watching.
+it runs over several slides, and the room has to know which wall it is watching.
 Asked for in those words: *"remove the shield in this wall so persons will know
 what wall they are watching."* A nameplate is a slide's name, not a substitute
 logo; the rule against inventing a mark stands everywhere, this one included.

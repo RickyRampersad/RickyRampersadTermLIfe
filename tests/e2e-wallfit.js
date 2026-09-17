@@ -39,6 +39,7 @@ const PAGES = [
   ['The day in blocks', '/intelligence/wall/blocks.html'],
   ['Pending · policies',     '/intelligence/wall/pending.html'],
   ['Pending · requirements', '/intelligence/wall/reqs.html'],
+  ['Pending · increases & group', '/intelligence/wall/increases.html'],
   ['Premium dues',      '/intelligence/wall/'],
   ['Lapses',            '/intelligence/wall/lapses.html'],
   ['In our possession', '/intelligence/wall/possession.html'],
