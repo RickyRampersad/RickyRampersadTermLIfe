@@ -298,6 +298,8 @@
   $('nav').innerHTML='<a href="'+HOME[me.role]+'">'+(me.role==='student'?'My Desk':me.role==='teacher'?'Class':'Progress')+'</a>'+
     '<a href="journey.html">Journey</a>'+
     (me.role==='student'?'<a href="practice.html">Practice</a><a href="test.html">Tests</a>':'')+
+      /* SEA papers are for the primary ladder only; a Form 3 has no use for them. */
+      ((me.role!=='student'||me.level<=5)?'<a href="sea.html">SEA Papers</a>':'')+
     '<a href="guides.html">Guides</a><a href="kpi.html">KPIs</a>'+
     '<a href="planner.html">Syllabus</a><a href="papers.html">Resources</a>'+
     '<a href="settings.html" class="on">Settings</a><a href="#" id="signout">Sign out</a>';

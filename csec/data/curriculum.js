@@ -632,6 +632,10 @@ window.CSEC_CURRICULUM = {
         cost:'Free', note:'Ministry resource index for secondary students.' },
       { name:'MOE T&T — Curriculum Resources', url:'https://www.moe.gov.tt/curriculum-resources/',
         cost:'Free', note:'National curriculum documents by subject and form — this is what the Form 1-3 school syllabus is built on.' },
+      { name:'MoE SLMS — Form 5 CSEC Mathematics (CPDD)', url:'https://learn.moe.gov.tt/course/view.php?id=23429',
+        cost:'Free', note:'The Ministry’s own Form 5 Mathematics course: worked solutions to CSEC past papers from 2005 onward, a study guide covering the syllabus, and activity sheets by topic. Opens as a guest, no account needed. The closest thing to free CSEC past-paper material that exists legitimately.' },
+      { name:'MoE SLMS — Form 5 CSEC Additional Mathematics (CPDD)', url:'https://learn.moe.gov.tt/course/view.php?id=23431',
+        cost:'Free', note:'The same for Additional Mathematics, including past-paper sections and a syllabus study guide.' },
       { name:'MOE T&T — Examinations Portal', url:'https://exams.moe.gov.tt/',
         cost:'Free', note:'Local examination administration, registration and results.' },
       { name:'MOE T&T — Resources Index', url:'https://www.moe.gov.tt/resources/',
@@ -656,7 +660,41 @@ window.CSEC_CURRICULUM = {
       { name:'MoE \u2014 SEA 2026 Information Booklet', url:'https://storage.moe.gov.tt/guides/SEA-2026-Information-Booklet.pdf',
         cost:'Free', note:'What happens on the day: the three papers, working time, and what a candidate may bring. Worth reading with your child a fortnight before.' },
       { name:'MoE \u2014 Primary School Resources', url:'https://www.moe.gov.tt/primary-school-resources/',
-        cost:'Free', note:'The Ministry\u2019s index of primary material, including the national curriculum guides for every primary subject.' }
+        cost:'Free', note:'The Ministry\u2019s index of primary material, including the national curriculum guides for every primary subject.' },
+
+      /* Ten years of actual SEA papers, free on the Ministry's platform and
+         readable without an account. This is the free equivalent of the practice-
+         test books sold in the bookshops, and it is the real examination rather
+         than an imitation of it. Every link below was checked as a guest. */
+      { name:'MoE SLMS \u2014 SEA Mathematics Papers 2010\u20132019', url:'https://learn.moe.gov.tt/course/view.php?id=22208',
+        cost:'Free', note:'Ten years of SEA Mathematics. 2011\u20132014 are PDFs you can print; 2010 and 2015\u20132019 are set as interactive quizzes that mark themselves. No login \u2014 it opens as a guest. With the 2024 and 2025 papers above, that is thirteen real papers.' },
+      { name:'MoE SLMS \u2014 SEA Language Arts & Creative Writing 2010\u20132019', url:'https://learn.moe.gov.tt/course/view.php?id=22201',
+        cost:'Free', note:'Language Arts papers for 2010\u20132016 and 2019, Creative Writing for 2010\u20132013, 2018 and 2019, plus the 2019 writing exemplars. 2017 is set as three marked quizzes. Opens as a guest.' },
+      { name:'MoE SLMS \u2014 ELA Specimen Items for the SEA', url:'https://learn.moe.gov.tt/course/view.php?id=23870',
+        cost:'Free', note:'The curriculum division\u2019s own specimen English items, written to the current framework. Use these when the older papers start to feel familiar.' },
+      { name:'MoE SLMS \u2014 Standard 5 Writing Exemplars', url:'https://learn.moe.gov.tt/course/view.php?id=23872',
+        cost:'Free', note:'Marked pieces of children\u2019s writing at each band. The single most useful thing for the Writing paper: it shows what a top-band answer actually looks like, which no checklist can.' },
+      { name:'MoE SLMS \u2014 Standard 5 SEA Mathematics Activity Sheets', url:'https://learn.moe.gov.tt/course/view.php?id=23868',
+        cost:'Free', note:'CPDD activity sheets for the Standard 5 year, strand by strand.' },
+      { name:'MoE SLMS \u2014 SEA Volume Problems', url:'https://learn.moe.gov.tt/course/view.php?id=22203',
+        cost:'Free', note:'A short focused set on volume \u2014 one of the topics that most reliably separates marks in the Mathematics paper.' },
+      { name:'MoE SLMS \u2014 TTT SEA Time: Mathematics (video)', url:'https://learn.moe.gov.tt/course/view.php?id=22178',
+        cost:'Free', note:'The Ministry\u2019s televised SEA lessons, kept as a video library. A teacher working through the topic on screen, free, for a child who needs it explained again after school.' },
+      { name:'MoE SLMS \u2014 TTT SEA Time: Language Arts (video)', url:'https://learn.moe.gov.tt/course/view.php?id=22179',
+        cost:'Free', note:'The same televised series for Language Arts.' },
+      { name:'MoE SLMS \u2014 TTT SEA Time: Writing (video)', url:'https://learn.moe.gov.tt/course/view.php?id=22180',
+        cost:'Free', note:'The same televised series for the Writing paper.' },
+
+      /* Standard 4 - the year before the examination year, where the ground is
+         actually made up. Guest access confirmed on each. */
+      { name:'MoE SLMS \u2014 Standard 4 Mathematics', url:'https://learn.moe.gov.tt/course/view.php?id=23895',
+        cost:'Free', note:'CPDD activity sheets for Standard 4. Start here rather than on SEA papers if your child is in Standard 4 \u2014 the papers will still be there next year.' },
+      { name:'MoE SLMS \u2014 Standard 4 English', url:'https://learn.moe.gov.tt/course/view.php?id=23885',
+        cost:'Free', note:'CPDD English material for Standard 4.' },
+      { name:'MoE SLMS \u2014 Standard 4 Science', url:'https://learn.moe.gov.tt/course/view.php?id=23891',
+        cost:'Free', note:'Science learning activities for Standard 4, from the curriculum division.' },
+      { name:'MoE SLMS \u2014 Standard 4 Social Studies', url:'https://learn.moe.gov.tt/course/view.php?id=23893',
+        cost:'Free', note:'CPDD Social Studies material for Standard 4.' }
     ],
 
     /* International, free, and genuinely useful for CSEC even though none of it
