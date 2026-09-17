@@ -47,6 +47,40 @@
   header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
   header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
   header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  /* The plate: the wall's name where the mark sits on every other screen. */
+  header .plate{flex:none;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    padding:5px 11px;border-radius:10px;background:linear-gradient(180deg,#efc24b,#c9942c);color:#07131f}
+  header .plate b{font:900 13px var(--font-b);letter-spacing:.12em;line-height:1.1}
+  header .plate span{font:700 8.5px var(--font-b);letter-spacing:.22em;text-transform:uppercase;opacity:.8}
+  /* WHAT THE REGISTER SAID, AND WHAT CAME OUT OF IT. The headline is the
+     register cleaned; these four say so on the face of the screen, because a
+     number nobody can reconcile is a number the room argues with. */
+  .recon{display:grid;grid-template-columns:1fr 1fr;gap:clamp(3px,.6vh,7px) 12px;
+    margin-top:clamp(8px,1.4vh,14px);padding-top:clamp(7px,1.2vh,12px);border-top:1px solid var(--line)}
+  .recon div{font-size:clamp(9px,1.35vh,10.5px);color:var(--faint);line-height:1.25}
+  .recon b{display:block;font-family:var(--font-d);font-weight:800;font-size:clamp(13px,2.1vh,17px);
+    letter-spacing:-.4px;color:var(--dim)}
+  .recon .off b{color:#f0776a} .recon .reg b{color:var(--ink)}
+  /* The six real statuses. Workable ones carry the gold edge and say so. */
+  .states{display:flex;flex-direction:column;gap:clamp(3px,.7vh,5px);overflow:hidden;flex:1;min-height:0;
+    max-height:clamp(150px,52vh,430px)}
+  .srow{display:grid;grid-template-columns:34px minmax(0,1fr) 46px;gap:8px;align-items:center;
+    padding:clamp(3px,.7vh,6px) 8px;border-radius:8px;background:rgba(255,255,255,.03);
+    border-left:2px solid transparent}
+  .srow.work{border-left-color:var(--gold);background:rgba(239,194,75,.09)}
+  .srow.off{opacity:.62}
+  .srow .abbr{font:800 10px var(--font-b);letter-spacing:.06em;text-align:center;padding:3px 0;
+    border-radius:5px;background:rgba(255,255,255,.1);color:var(--dim)}
+  .srow.work .abbr{background:rgba(239,194,75,.24);color:var(--gold)}
+  .srow .lb{font-size:11.5px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .srow .lb em{font-style:normal;display:block;font-size:9.5px;color:var(--faint)}
+  .srow .nn{font-family:var(--font-d);font-weight:800;font-size:17px;text-align:right;font-variant-numeric:tabular-nums}
+  .srow.work .nn{color:var(--gold)}
+  /* Each agent's own pile, aging, under their name — five segments, oldest red. */
+  .mini{display:flex;gap:1px;margin-top:3px;height:4px;border-radius:2px;overflow:hidden}
+  .mini i{display:block;height:4px}
+  .mini i.b1{background:var(--good)} .mini i.b2{background:var(--accent)}
+  .mini i.b3{background:var(--gold)} .mini i.b4{background:#e08a3c} .mini i.b5{background:#e0544a}
   .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--dim)}
   .live i{width:7px;height:7px;border-radius:50%;background:var(--gold)}
   .live.on i{background:var(--good);animation:pulse 2.2s infinite}
@@ -72,15 +106,20 @@
   .card h3{margin:0 0 2px;font:800 12px var(--font-b);letter-spacing:.14em;
     text-transform:uppercase;color:var(--gold)}
   .cap{font-size:11.5px;color:var(--faint);margin:0 0 10px;line-height:1.45}
-  .big{font-family:var(--font-d);font-weight:800;font-size:74px;line-height:.9;
+  /* On a 720p television the hero carries the number, eight tiles, the
+     reconciliation and five aging bands: the number gives way first. */
+  .big{font-family:var(--font-d);font-weight:800;font-size:clamp(46px,8.4vh,74px);line-height:.9;
     letter-spacing:-3px;background:var(--grad-gold);-webkit-background-clip:text;
     background-clip:text;color:transparent}
   .cap2{font-size:13px;color:var(--dim);margin-top:8px;line-height:1.45}
   .cap2 b{color:var(--ink)}
-  .split{display:flex;gap:18px;margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  /* Every rule in this card is on a clamp: at 720p the hero carried eight
+     tiles, the reconciliation and the aging bars, and the last line was cut. */
+  .split{display:flex;gap:18px;margin-top:clamp(7px,1.5vh,16px);padding-top:clamp(6px,1.3vh,14px);
+    border-top:1px solid var(--line)}
   .split div{flex:1}
   .split .v{font-family:var(--font-d);font-weight:800;font-size:24px;letter-spacing:-.6px}
-  .split .k{font-size:10.5px;color:var(--faint);margin-top:2px;line-height:1.3}
+  .split .k{font-size:clamp(9px,1.35vh,10.5px);color:var(--faint);margin-top:2px;line-height:1.25}
   .amber{color:var(--gold)} .good{color:var(--good)} .red{color:#f0776a}
   .dhead{display:grid;grid-template-columns:1fr 62px 62px 62px 62px 116px;gap:10px;
     font:700 9.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
@@ -148,8 +187,11 @@
   .split{gap:14px;margin-top:clamp(6px,1.1vh,16px);padding-top:clamp(5px,1vh,14px)}
   .split .v{font-size:clamp(17px,3vh,24px)}
   .split .k{font-size:clamp(9.5px,1.35vh,10.5px);line-height:1.2}
-  .stack{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
-  .stack.open{grid-template-rows:auto auto minmax(0,1fr)}
+  /* Two cards since the requirements moved to slide 4: the statuses take the
+     room and the held-table note keeps its own height. Opened, the table
+     takes the room instead. */
+  .stack{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
+  .stack.open{grid-template-rows:auto minmax(0,1fr)}
   .side{display:grid;grid-template-rows:minmax(0,1fr) auto;gap:clamp(10px,1.4vh,18px);min-height:0}
 
   /* Chips: a count and a word. Used for status descriptions and categories. */
@@ -179,7 +221,7 @@
   .warn{font-size:clamp(10px,1.5vh,12px);padding:clamp(6px,1vh,10px) 11px;margin-top:clamp(6px,1vh,10px);line-height:1.35}
 
   /* The ageing bars, compact. */
-  .bars{display:flex;flex-direction:column;gap:clamp(3px,.55vh,7px);margin-top:3px}
+  .bars{display:flex;flex-direction:column;gap:clamp(2px,.55vh,6px);margin-top:3px}
   .bar{display:grid;grid-template-columns:58px 1fr 40px;gap:9px;align-items:center}
   .bar .lab{font-size:clamp(10px,1.45vh,11.5px);color:var(--dim);font-variant-numeric:tabular-nums}
   .bar .track{height:clamp(7px,1.2vh,12px);border-radius:4px;background:rgba(255,255,255,.07);overflow:hidden}
@@ -195,13 +237,18 @@
     color:var(--faint);padding-bottom:5px;border-bottom:1px solid var(--line)}
   .ahead div+div{text-align:right}
   #aList{display:flex;flex-direction:column;overflow:hidden;flex:1;min-height:0}
-  .arow{display:grid;grid-template-columns:minmax(0,1fr) 48px 58px 58px 56px;gap:6px;align-items:center;
+  .arow{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 52px 46px 44px 52px;gap:5px;align-items:center;
     padding:clamp(4px,.85vh,8px) 0;border-bottom:1px solid rgba(255,255,255,.06)}
   .arow .nm{font-size:clamp(12px,1.85vh,14px);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .arow .v{font-family:var(--font-d);font-weight:700;font-size:clamp(13px,2.1vh,16px);text-align:right;
     font-variant-numeric:tabular-nums}
   .arow .v.zero{color:var(--faint);font-weight:500}
   .arow .v.gold{color:var(--gold)} .arow .v.red{color:#f0776a} .arow .v.hot{color:var(--gold)}
+  .arow .v.med{color:#7fd8e8} .arow .v.rou{color:#9ab4d8}
+  .ahead{display:grid;grid-template-columns:minmax(0,1fr) 44px 44px 52px 46px 44px 52px;gap:5px;
+    font:700 8.5px var(--font-b);letter-spacing:.1em;text-transform:uppercase;color:var(--faint);
+    padding-bottom:5px;border-bottom:1px solid var(--line)}
+  .ahead div+div{text-align:right}
   .more{font-size:clamp(10px,1.45vh,11.5px);color:var(--faint);padding-top:5px}
   .more:empty{display:none}
 
@@ -236,10 +283,16 @@
 <body>
 
 <header>
-  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <!-- THE WALL NAMES ITSELF. Asked for on 17 September 2026: "remove what is
+       pending and have on top branches pending wall… remove the shield in this
+       wall so persons will know what wall they are watching". The branch mark
+       is on every other screen; here the plate carries the wall's own name,
+       because this is the one screen the room stands in front of and argues
+       from, and it has two slides. -->
+  <div class="plate"><b>PENDING</b><span>wall</span></div>
   <div>
-    <h1>What Is Pending</h1>
-    <div class="sub">Submitted and not yet issued &middot; policies, not requirement rows &middot; whose move, and what settled</div>
+    <h1>The Branch Pending Wall</h1>
+    <div class="sub">Policies &middot; what is stuck, whose it is, and what can be worked today</div>
   </div>
   <div class="right">
     <button class="btn" id="sound" onclick="toggleSound()">▶ Narrate</button>
@@ -253,6 +306,7 @@
     <h3>Policies pending</h3>
     <div class="big" id="pTotal">&mdash;</div>
     <div class="cap2" id="pCap">Reading the pending lists&hellip;</div>
+    <div class="recon" id="pRecon"></div>
     <div class="split">
       <div><div class="v amber" id="pStale">&mdash;</div><div class="k">waiting more than ninety days</div></div>
       <div><div class="v" id="pOldest">&mdash;</div><div class="k">days, the longest of them</div></div>
@@ -282,22 +336,14 @@
     <section class="card" id="sCard">
       <h3>By status description</h3>
       <p class="cap" id="sCap">Every policy, by the status Guardian has it in.</p>
+      <div class="states" id="sStates"></div>
       <div class="why" id="sWhy"></div>
     </section>
 
-    <section class="card" id="qCard">
-      <h3>Requirements</h3>
-      <p class="cap" id="qCap">&nbsp;</p>
-      <div class="tiles">
-        <div><div class="v" id="qRoutine">&mdash;</div><div class="k">routine &mdash; underwriting&rsquo;s own</div></div>
-        <div><div class="v gold" id="qNonRoutine">&mdash;</div><div class="k">not routine &mdash; somebody&rsquo;s move</div></div>
-        <div><div class="v" id="qSystem">&mdash;</div><div class="k">ordered by the system</div></div>
-        <div><div class="v" id="qManual">&mdash;</div><div class="k">ordered by a person</div></div>
-      </div>
-      <div class="note" id="qDays"></div>
-      <div class="why" id="qWhy"></div>
-    </section>
-
+    <!-- The requirements deep-dive moved to slide 4, "Branch Pending ·
+         Requirements & tasks", on 17 September 2026: every routine document
+         with its own age, the medicals apart, and the Salesforce tasks. It
+         would not fit here and it was the half nobody could read. -->
     <section class="card held" id="tCard">
       <h3>Policy numbers</h3>
       <p class="cap" id="tCap">&nbsp;</p>
@@ -312,7 +358,7 @@
     <section class="card">
       <h3>Accountability by agent</h3>
       <p class="cap" id="aCap">Cash to collect, routine in motion, medicals waited on, and the oldest with their name on it.</p>
-      <div class="ahead"><div>Agent</div><div>Cash</div><div>Routine</div><div>Medical</div><div>Oldest</div></div>
+      <div class="ahead"><div>Agent</div><div>Pend</div><div>Cash</div><div>Routine</div><div>Med</div><div>90+</div><div>Oldest</div></div>
       <div id="aList"></div>
       <div class="more" id="aMore"></div>
     </section>
@@ -404,7 +450,8 @@ function zero(x){ return x ? "" : "zero"; }
 function paint(){
   var ok = !!D.configured;
   $("#pTotal").textContent  = ok ? n(D.policies != null ? D.policies : D.total) : "—";
-  $("#pStale").textContent  = ok ? n(D.stale) : "—";
+  var pa = D.pendingAgeing;
+  $("#pStale").textContent  = ok ? n(pa ? ((pa['91-180']||0) + (pa['180+']||0)) : D.stale) : "—";
   $("#pOldest").textContent = ok && D.oldest ? n(D.oldest) : "—";
 
   /* Money already paid that cannot be applied is in the Guardian extract;
@@ -433,6 +480,7 @@ function paint(){
      wall counted the rows — "340 pending" over 121 policies. Both numbers
      are said so nobody has to guess which one they are looking at. */
   var cap = [];
+  if (ok) cap.push("genuinely pending &mdash; <b>submitted, not issued, not closed</b>");
   if (ok && D.requirementRows != null) cap.push("<b>" + n(D.requirementRows) + "</b> requirement row" + (D.requirementRows === 1 ? "" : "s"));
   if (D.at) cap.push("as at <b>"+esc(D.at)+"</b>");
   if (D.lists) cap.push("<b>"+D.lists+"</b> branch list"+(D.lists===1?"":"s"));
@@ -458,11 +506,48 @@ function paint(){
      else on the list is anybody's on this floor to chase. */
   var t = D.triage || {}, bk = {};
   (t.buckets || []).forEach(function(b){ bk[b.key] = b.n; });
-  $("#tWork").textContent  = ok && t.workable != null ? n(t.workable) : "—";
+  /* Missing requirements and awaiting settlement — the branch manager's own
+     reading of it: "those things can be worked on today". */
+  $("#tWork").textContent  = ok && D.workable != null ? n(D.workable) : (ok && t.workable != null ? n(t.workable) : "—");
   $("#tReady").textContent = ok && t.ready ? n(t.ready.policies != null ? t.ready.policies : t.ready.cases) : "—";
   $("#tAgent").textContent = ok && t.buckets ? n(bk.agent || 0) : "—";
 
-  var ageing = D.ageing || {}, most = 1;
+  /* THE RECONCILIATION, ON THE FACE OF THE SCREEN. Guardian's register is not
+     the pending list: on 17 September it carried 74 rows, of which twelve were
+     already issued and paying and nine were closed or never proceeded with.
+     And 32 policies carry an open requirement without a register row at all.
+     Both directions are named, so nobody has to take the headline on trust. */
+  var rg = D.register || {}, offr = D.offRegister || {};
+  $("#pRecon").innerHTML = !ok ? "" : [
+    ['reg', rg.rows, "on Guardian&rsquo;s register"],
+    ['', rg.issued, "already issued and paying"],
+    ['', rg.closed, "closed or not proceeded with"],
+    ['off', offr.policies, "carry a requirement, no register row"]
+  ].filter(function(x){ return x[1] != null; }).map(function(x){
+    return '<div class="'+x[0]+'"><b>'+n(x[1])+'</b>'+x[2]+'</div>';
+  }).join("");
+
+  /* THE SIX, FROM THE THIRTY-TWO. Workable first — missing requirements and
+     awaiting settlement are the two somebody can move this afternoon — then
+     what is with head office, then what is not pending at all. */
+  var ST = D.states || [];
+  var stMax = 1; ST.forEach(function(x){ stMax = Math.max(stMax, x.n || 0); });
+  var order = { reqts:1, settle:2, errors:3, uw:4, none:5, issued:6, closed:7 };
+  $("#sStates").innerHTML = !ok || !ST.length ? "" : ST.slice().sort(function(a,b){
+      return (order[a.key]||9)-(order[b.key]||9); }).map(function(x){
+    return '<div class="srow'+(x.work?" work":"")+(x.pending?"":" off")+'">'
+      + '<span class="abbr">'+esc(x.abbr)+'</span>'
+      + '<span class="lb">'+esc(x.label)+'<em>'+esc(x.note)+'</em></span>'
+      + '<span class="nn">'+n(x.n)+'</span></div>';
+  }).join("");
+  /* Trimmed from the end, which is the order they were sorted into: the
+     workable statuses hold their place and "already issued" gives way. */
+  fitIn($("#sStates"), 4);
+
+  /* PENDING ROWS ONLY. D.ageing counts every row the register carried,
+     issued policies included; pendingAgeing is the same bands over what is
+     genuinely pending, which is what the headline above it counts. */
+  var ageing = D.pendingAgeing || D.ageing || {}, most = 1;
   BANDS.forEach(function(b){ most = Math.max(most, ageing[b[0]]||0); });
   $("#pBars").innerHTML = BANDS.map(function(b){
     var x = ageing[b[0]]||0;
@@ -477,13 +562,17 @@ function paint(){
   var missingP = pol.missing || [];
   if (ok && pol.byStatusDesc) {
     sCard.classList.remove("held");
-    $("#sCap").textContent = "Every policy, by the status Guardian has it in" +
-      (pol.api != null ? " · " + money(pol.api) + " annual premium waiting" : "") +
-      (pol.noCash != null ? " · " + n(pol.noCash) + " with no cash in the file" : "") +
-      (pol.daysPending ? " · " + n(pol.daysPending.median) + " days is the middle wait from application" : "") + ".";
-    $("#sWhy").innerHTML = pol.byStatusDesc.slice(0,8).map(function(s){
-      return '<span><b>'+n(s.n)+'</b> '+esc(s.name)+'</span>'; }).join("") ||
-      '<span class="none">Nothing pending</span>';
+    /* The six, and then what Guardian actually typed — the raw spellings sit
+       under them as chips, because the branch has to recognise its own
+       report in this screen. A zero annual premium is not a fact worth
+       printing; it means the column is not in the extract. */
+    $("#sCap").innerHTML = "Guardian types this status <b>" + n((D.register||{}).spellings||0)
+      + "</b> different ways. These are the six it means &mdash; the gold ones can be worked today"
+      + (pol.daysPending ? ", and <b>" + n(pol.daysPending.median) + "</b> days is the middle wait from application" : "")
+      + (pol.api ? " &middot; " + money(pol.api) + " annual premium waiting" : "") + ".";
+    $("#sWhy").innerHTML = '<span class="none">what Guardian typed</span>'
+      + pol.byStatusDesc.slice(0,6).map(function(s){
+          return '<span><b>'+n(s.n)+'</b> '+esc(s.name)+'</span>'; }).join("");
   } else {
     sCard.classList.add("held");
     $("#sCap").textContent = !ok ? " "
@@ -493,6 +582,7 @@ function paint(){
     $("#sWhy").innerHTML = '<span class="none">status description &middot; not in the extract yet</span>';
   }
 
+  if ($("#qCard")) {
   /* REQUIREMENTS. Routine against not, who ordered them, how long since,
      and the codes that are holding the most. Each figure that needs a
      column the extract does not carry says "column not in the extract". */
@@ -537,6 +627,7 @@ function paint(){
     $("#qWhy").innerHTML = (D.reasons || []).slice(0,6).map(function(x){
       return '<span><b>'+n(x.n)+'</b> '+esc(x.name)+'</span>'; }).join("") || '<span class="none">Nothing written yet</span>';
   }
+  }
 
   /* SETTLED. Salesforce's answer or its error — never a zero for a day
      Salesforce did not answer about. */
@@ -565,25 +656,37 @@ function paint(){
      a card painted later would take that height back. The whole roster, ranked by cash to collect,
      then medicals waited on, then routine — trimmed to the rows that fit,
      and it says how many it could not draw. */
+
   var roster = (t.culprits && t.culprits.length ? t.culprits : t.roster) || [];
   var aList = $("#aList");
+  var MB = ["0-30","31-60","61-90","91-180","180+"];
   aList.innerHTML = roster.map(function(a){
     var old = a.oldestDays != null ? a.oldestDays : a.oldest;
+    /* Their own pile, aging: five segments in the width each band holds. One
+       worst case standing for nine policies told nobody anything. */
+    var bands = a.bands || {}, tot = MB.reduce(function(s,k){ return s+(bands[k]||0); }, 0);
+    var mini = tot ? '<div class="mini">' + MB.map(function(k,i){
+        var x = bands[k]||0;
+        return x ? '<i class="b'+(i+1)+'" style="flex:'+x+'" title="'+x+' at '+k+' days"></i>' : '';
+      }).join("") + '</div>' : '';
     return '<div class="arow">'
-      + '<div class="nm">'+esc(a.agent)+'</div>'
+      + '<div class="nm">'+esc(a.agent)+mini+'</div>'
+      + '<div class="v '+zero(a.policies)+'" data-k="pending">'+n(a.policies||0)+'</div>'
       + '<div class="v '+(a.cash?"gold":"zero")+'" data-k="cash">'+n(a.cash||0)+'</div>'
-      + '<div class="v '+zero(a.routine)+'" data-k="routine">'+n(a.routine||0)+'</div>'
-      + '<div class="v '+zero(a.medical)+'" data-k="medical">'+n(a.medical||0)+'</div>'
+      + '<div class="v '+(a.routine?"rou":"zero")+'" data-k="routine">'+n(a.routine||0)+'</div>'
+      + '<div class="v '+(a.medical?"med":"zero")+'" data-k="medical">'+n(a.medical||0)+'</div>'
+      + '<div class="v '+(a.over90?"red":"zero")+'" data-k="over 90">'+n(a.over90||0)+'</div>'
       + '<div class="v '+(old > 90 ? "red" : old > 60 ? "hot" : zero(old))+'" data-k="days oldest">'+(old?n(old):"—")+'</div>'
       + '</div>';
-  }).join("") || '<div class="arow"><div class="nm">' + (ok ? "Nothing pending" : "Waiting on the feed") + '</div><div></div><div></div><div></div><div></div></div>';
-  $("#aCap").textContent = "Cash to collect, routine in motion, medicals waited on, and the oldest with their name on it." +
+  }).join("") || '<div class="arow"><div class="nm">' + (ok ? "Nothing pending" : "Waiting on the feed") + '</div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+  $("#aCap").textContent = "Cash to collect, routine in motion, medicals waited on, how many are past ninety days, and the oldest with their name on it. The strip under each name is their own pile, aging. Issued and closed policies are nobody's." +
     (D.listOnly ? " " + D.listOnly + " name" + (D.listOnly === 1 ? " is" : "s are") + " held off this row and counted above." : "");
   /* The "and N more" line is reserved BEFORE the trim, or it appears after
      the measurement and pushes the last row it just fitted off the bottom. */
   $("#aMore").textContent = "measuring…";
   var aGone = fitIn(aList, 3);
   $("#aMore").textContent = aGone ? "and " + aGone + " more agent" + (aGone === 1 ? "" : "s") + " below the fold" : "";
+
 
   /* THE POLICY TABLE — HELD UNLESS THE MANAGER HAS SAID THE PHRASE. This
      screen is served with no sign-in, and a policy number on a wall in a

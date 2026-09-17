@@ -6464,6 +6464,35 @@ function iExcludes_(skip, name) {
    is public. iExcludes_ matches on surname plus every given token, so
    "Anne Mohammed-Ali" catches the book's "A00001 - Anne Mohammed-Ali" too.
    intelExclude adds to whoever is already there; it never silently drops one. */
+/* THE SECOND LIST, FROM THE EDITOR. INTEL_LIST_ONLY_EXCLUDE takes a name off
+   every per-agent row and leaves every total alone — asked for on 17
+   September 2026 in these words: "Javid's name is not to be displayed… but
+   the policy count we can count it. It's just their names do not show up."
+   A name only the branch manager should see does not belong in a public
+   repository, so it lives in a Script Property and this is how it is set. */
+function intelListOnly(names) {
+  if (typeof names !== 'string' || !names.trim()) {
+    return 'Usage: intelListOnly("Given Surname, Given Surname") — takes them off every\n' +
+           'per-agent row on every screen and leaves the counts alone.\n' +
+           'Now off the rows: ' + (iProp_('INTEL_LIST_ONLY_EXCLUDE') || '(nobody)') + '\n' +
+           'Clear the list with intelListOnlyClear().';
+  }
+  var have = iListOnly_();
+  var list = String(iProp_('INTEL_LIST_ONLY_EXCLUDE') || '')
+    .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  names.split(',').forEach(function (nm) {
+    nm = nm.trim();
+    if (nm && !iExcludes_(have, nm)) { list.push(nm); have[iNameKey_(nm)] = true; }
+  });
+  iSetProp_('INTEL_LIST_ONLY_EXCLUDE', list.join(', '));
+  return 'Off every per-agent row, counted in every total: ' + list.join(', ') +
+         '\n\n' + iWallRunAll_(true);
+}
+function intelListOnlyClear() {
+  iSetProp_('INTEL_LIST_ONLY_EXCLUDE', '');
+  return 'Every name is back on the per-agent rows.\n\n' + iWallRunAll_(true);
+}
+
 function intelExclude(names) {
   if (typeof names !== 'string' || !names.trim()) {
     return 'Usage: intelExclude("Given Surname, Given Surname") — adds them and rebuilds.\n' +
