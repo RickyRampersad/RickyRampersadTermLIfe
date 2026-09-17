@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17d';
+var INTEL_VERSION = '2026-09-17e';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -5929,6 +5929,22 @@ function iDayBuild_(b) {
         sf: (type && s && s.byType && s.byType[type]) || null
       });
       return sb ? (has ? 'done' : 'due') : '';
+    });
+    /* AFTER HOURS. "Extend the block beyond 4pm — I work round the clock, and
+       it should reflect 24/7 so people can see what is being done"
+       (17 September). A fifth block, four to midnight, that nobody files: it
+       is what Salesforce saw the desk close and touch after four. Green when
+       something closed, blue when something moved, gold-ringed once four has
+       passed with nothing yet, grey before four. It never goes red — the day
+       ends before it could — and anything after midnight is the next day's
+       first block. The four filed blocks and their counts are untouched. */
+    var eveClosed = s ? Number(s.eveClosed || 0) : 0, eveTouched = s ? Number(s.eveTouched || 0) : 0;
+    bx.push({
+      id: 'EVE', after: true,
+      state: eveClosed ? 'closed' : (eveTouched ? 'moved' : (hourNow >= 16 ? 'idle' : 'pending')),
+      kpi: 'After hours', focus: 'What was done after four', time: '4pm – 12am', due: 24,
+      moved: 0, closed: 0, stuck: false, type: '',
+      sf: s ? { closed: eveClosed, touched: eveTouched, open: Number(s.open || 0) } : null
     });
     var owed = 0;
     blockIds.forEach(function (id) { if (sched[id]) owed++; });

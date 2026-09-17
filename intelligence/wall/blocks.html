@@ -77,7 +77,7 @@
     height:calc(100vh - 74px);min-height:0}
 
   /* the shared clock across the top, and the only place times are named */
-  .axis{display:grid;grid-template-columns:var(--nameCol) repeat(4,1fr) var(--numCol);
+  .axis{display:grid;grid-template-columns:var(--nameCol) repeat(5,1fr) var(--numCol);
     gap:8px;align-items:end;padding:0 2px 3px;position:relative;flex:none}
   .axis .ah{font:800 11.5px/1.15 var(--font-d);letter-spacing:.12em;text-transform:uppercase;
     color:var(--dim)}
@@ -98,7 +98,7 @@
   .grp>.gl:after{content:"";flex:1;height:1px;background:var(--line)}
 
   /* one desk */
-  .desk{display:grid;grid-template-columns:var(--nameCol) repeat(4,1fr) var(--numCol);
+  .desk{display:grid;grid-template-columns:var(--nameCol) repeat(5,1fr) var(--numCol);
     gap:8px;align-items:stretch;background:var(--card);border:1px solid var(--line);
     border-radius:10px;padding:4px 10px}
   .desk.out{opacity:.5}
@@ -129,6 +129,8 @@
   .dot{width:13px;height:13px;border-radius:50%;flex:0 0 auto;
     border:2px solid var(--grey);background:transparent}
   .dot.pending{border-color:var(--grey);background:transparent}
+  .dot.idle{border-color:var(--gold);background:transparent;opacity:.85}
+  .key i.idle{border-color:var(--gold)}
   .dot.late{border-color:#ff6b5e;background:#c62828;
     box-shadow:0 0 0 3px rgba(224,103,103,.16)}
   .dot.moved{border-color:var(--blue);background:var(--blue)}
@@ -257,7 +259,10 @@ var BANDS = [
   { id:"KPI1", label:"5 – 10am",  due:10 },
   { id:"KPI2", label:"10 – 12pm", due:12 },
   { id:"PM1",  label:"1 – 3pm",   due:15 },
-  { id:"PM2",  label:"3 – 4pm",   due:16 }
+  { id:"PM2",  label:"3 – 4pm",   due:16 },
+  /* Four to midnight, measured rather than filed — see the feed. "Extend the
+     block beyond 4pm — I work round the clock" (17 September). */
+  { id:"EVE",  label:"4pm – 12am", due:24, after:true }
 ];
 
 /* ── WHO ANSWERS TO WHOM ────────────────────────────────────────────────────
@@ -314,7 +319,7 @@ function cellsOf(d){
 function filedText(x){
   var items = (x.moved||0) + (x.closed||0);
   if (items) return 'filed: ' + items + (items === 1 ? ' item' : ' items');
-  return x.state === "late" ? "not filed" : (x.state === "pending" ? "to come" : (x.stuck ? "blocked" : "filed"));
+  return x.state === "late" ? "not filed" : (x.state === "pending" ? "to come" : (x.state === "idle" ? "nothing yet" : (x.stuck ? "blocked" : (x.after ? "after hours" : "filed"))));
 }
 var noType = false;      // set while painting: some block has no Salesforce type
 function cell(x, band, isNow){
@@ -340,7 +345,7 @@ function cell(x, band, isNow){
   if (x.moved)  bits.push('<i>'+x.moved+' moved</i>');
   if (x.stuck)  bits.push('<u>blocked</u>');
   if (!bits.length) bits.push(x.state === "late" ? "not filed" :
-                              (x.state === "pending" ? "to come" : "filed"));
+                              (x.state === "pending" ? "to come" : (x.state === "idle" ? "nothing yet" : "filed")));
   return '<div class="cell'+(x.type ? '' : ' notype')+(x.state==="late" ? ' late' : '')+'">'
     + '<span class="dot '+x.state+'"></span>'
     + '<span class="ct"><b><span>'+name+'</span></b>'
@@ -425,6 +430,7 @@ function paint(){
     + '<span><i class="moved"></i>moved it on</span>'
     + '<span><i class="stuck"></i>waiting on somebody</span>'
     + '<span><i class="late"></i>past its hour, not filed</span>'
+    + '<span><i class="idle"></i>after four, nothing yet</span>'
     + (noType ? '<span>dimmed: no Salesforce type for this block</span>' : '')
     + '<span class="sp"></span>'
     + '<span><strong>'+n(b.done)+' of '+n(b.of)+'</strong> blocks filed &middot; '
