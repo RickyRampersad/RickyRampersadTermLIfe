@@ -1547,8 +1547,21 @@ function iPendingWall_() {
     var p = iBuildPending_(today);
     if (p && !p.error) extract = p; else if (p && p.error) notes.push(p.error);
   } catch (e2) { notes.push('The pending extract would not read: ' + (e2 && e2.message || e2)); }
+  /* Whose requirements are not ours to count — the names kept off the board,
+     whose policies still count. The register knows which policies are theirs,
+     so this is built after it and before the requirements are read. */
+  var dropReqs = null;
+  if (extract && extract.rows) {
+    var lo = iListOnly_();
+    if (Object.keys(lo).length) {
+      dropReqs = {};
+      extract.rows.forEach(function (r) {
+        if (iExcludes_(lo, String(r.agent || '').trim())) dropReqs[iPolicyKey_(r.policy)] = 1;
+      });
+    }
+  }
   try {
-    var q = iBuildReqs_(today);
+    var q = iBuildReqs_(today, dropReqs);
     if (q && !q.error) reqs = q; else if (q && q.error) notes.push(q.error);
   } catch (e3) { notes.push('The requirements extract would not read: ' + (e3 && e3.message || e3)); }
 
@@ -1596,6 +1609,15 @@ function iPendingWall_() {
   }
 
   var skip = iExcluded_(), listOnly = iListOnly_();
+  /* Never silent about it: the policies are in the count, the requirements
+     are not, and the screen says so rather than leaving the two figures to
+     disagree in front of a room. */
+  if (reqs && reqs.listOnly && reqs.listOnly.requirements) {
+    notes.push(reqs.listOnly.requirements + ' requirement' + (reqs.listOnly.requirements === 1 ? '' : 's') +
+               ' on ' + reqs.listOnly.policies + ' polic' + (reqs.listOnly.policies === 1 ? 'y' : 'ies') +
+               ' are not counted in the requirement figures \u2014 held by agents kept off the board. ' +
+               'The policies themselves are counted.');
+  }
   var pair = function (o) {
     return Object.keys(o || {}).map(function (k) { return { name: k, n: o[k] }; })
       .sort(function (a, b) { return b.n - a.n; });
@@ -1760,6 +1782,7 @@ function iPendingWall_() {
          same — "what are the routine documents outstanding and how long it's
          aging". Fourteen codes is what the slide holds. */
       byCode: (reqs.byCode || []).slice(0, 14), byCatAge: reqs.byCatAge || [],
+      listOnly: reqs.listOnly || null,
       /* The dates themselves, month by month from the 1 January cut. */
       byMonth: reqs.byMonth || [], oldestOn: reqs.oldestOn || '', newestOn: reqs.newestOn || '',
       missing: reqs.missing || []
@@ -3511,7 +3534,14 @@ function iOrderedBySystem_(who) {
   return /^[A-Z0-9]{2,6}$/.test(s);
 }
 
-function iBuildReqs_(today) {
+/* dropPolicies: policies whose REQUIREMENTS are not counted here, though the
+   policies themselves are. Asked for on 17 September 2026 — "leave Javid's
+   name off the wall, and Aleema's, but count their policies, not their
+   requirements." The rows are still handed back, flagged, because the triage
+   has to read them to know whose move a policy is: drop them from the join as
+   well and a policy with three requirements outstanding would read as ready
+   to settle. They are only kept out of the figures. */
+function iBuildReqs_(today, dropPolicies) {
   var sh = iTabReqs_();
   if (!sh) return { error: 'No requirements tab found (needs insured_requirement_id, requirement_code, policy_number).' };
 
@@ -3539,6 +3569,7 @@ function iBuildReqs_(today) {
   var open = [], byCode = {}, byCat = {}, byPolicy = {}, seen = {}, byStatus = {};
   var closedThisYear = 0, ages = [], orderedDays = [], cutByYear = 0;
   var byMonthOn = {}, oldestOn = null, newestOn = null;
+  var dropped = { policies: {}, rows: 0 };
   var routineN = 0, nonRoutineN = 0, bySystem = 0, byManual = 0, byNobody = 0, receivedN = 0;
 
   for (var r = 0; r < d.rows; r++) {
@@ -3591,6 +3622,14 @@ function iBuildReqs_(today) {
        median and its own oldest, and so does every category. A proof of
        address at eleven days and a proof of address at two hundred are not
        the same conversation. */
+    /* Off the figures, still in the rows — see dropPolicies above. */
+    if (dropPolicies && dropPolicies[iPolicyKey_(policy)]) {
+      dropped.policies[policy] = 1; dropped.rows++;
+      open.push({ policy: policy, code: code, label: iReqLabel_(code), category: cat,
+                  ordered: !!orderedOn, daysOrdered: daysOrdered, listOnly: true,
+                  added: iIso_(added), age: age });
+      continue;
+    }
     var bc = byCode[code] || (byCode[code] = { n: 0, ages: [], ordered: 0, cat: cat });
     bc.n++;
     var bt = byCat[cat] || (byCat[cat] = { n: 0, ages: [] });
@@ -3652,10 +3691,14 @@ function iBuildReqs_(today) {
   };
   var top = function (a) { return a.length ? Math.max.apply(null, a) : null; };
   return {
-    openCount: open.length,
+    /* The dropped rows ride in `rows` so the triage can join them; they are
+       not in the count — see dropPolicies. */
+    openCount: open.length - dropped.rows,
     policies: Object.keys(byPolicy).length,
     closedThisYear: closedThisYear,
     since: IREQ_SINCE, cutByYear: cutByYear,
+    /* What was held off the figures, and never silently: the wall says it. */
+    listOnly: { policies: Object.keys(dropped.policies).length, requirements: dropped.rows },
     byMonth: Object.keys(byMonthOn).sort().map(function (ym) {
       return { ym: ym, lab: ICONV_MONTHS[+ym.slice(5, 7) - 1].slice(0, 3), n: byMonthOn[ym] }; }),
     oldestOn: oldestOn ? iIso_(oldestOn) : '', newestOn: newestOn ? iIso_(newestOn) : '',

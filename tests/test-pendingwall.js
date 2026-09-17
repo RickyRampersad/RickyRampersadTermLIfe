@@ -564,5 +564,43 @@ console.log('\nThirty-two spellings, six statuses, and a register that is not th
   ok('and every category does', (rq.byCatAge || []).length > 0 && rq.byCatAge.every(c => c.median !== undefined && c.oldest !== undefined), JSON.stringify(rq.byCatAge));
 }
 
+console.log('\nA name off the board: the policies count, the requirements do not:\n');
+/* 17 September 2026: "leave Javid's name off the wall, and Aleema's, but
+   count their policies, not their requirements." */
+{
+  const env7 = makeEnv({ props: { INTEL_LIST_ONLY_EXCLUDE: 'Beena Pretend' } });
+  env7.Date = env.Date;
+  const P = (policy, agent, reqtDt, desc) =>
+    [2026, 9, policy, 'OR', 'CLIENTNAME-' + policy, '3', '2026-06-01', 'CHAG', 'PRADD', reqtDt,
+     'A1', agent, 0, 'AK', 0, 'CID-' + policy, 'Branch', 'DD', '',
+     desc, '2026-06-01', 500000, 400, '', 'UW1', '2026-08-20'];
+  env7.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, [
+    P('P-MINE', 'Anand Pretend', '2026-07-01', 'Underwriting incomplete. Missing Reqts'),
+    P('P-OFFB', 'Beena Pretend', '2026-07-01', 'Underwriting incomplete. Missing Reqts')
+  ]);
+  env7.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0], []);
+  const rs7 = env7.__sheets['RR_UWPRO_INSURED_Requirement'];
+  [['RQ-A', 'P-MINE', 'PRADD', 'Documents', '', '2026-07-01', '', '2026-07-02'],
+   ['RQ-B', 'P-OFFB', 'PRADD', 'Documents', '', '2026-07-01', '', '2026-07-02'],
+   ['RQ-C', 'P-OFFB', 'MDMED', 'Medical',   '', '2026-06-01', '', '2026-06-02']
+  ].forEach(r => rs7.appendRow(r.concat(['INSUREDFIRST-X', 'INSUREDLAST-X'])));
+  env7._intelTabMemo = {}; env7._intelHeadMemo = {};
+  const W7 = env7.iPendingWall_();
+  ok('both policies are in the pending count', W7.policies === 2, String(W7.policies));
+  const r7 = W7.requirements || {};
+  ok('only the counted agent’s requirement is in the figures', r7.open === 1 && r7.policies === 1,
+     JSON.stringify([r7.open, r7.policies]));
+  ok('and what was held off the figures is published', r7.listOnly && r7.listOnly.requirements === 2 && r7.listOnly.policies === 1,
+     JSON.stringify(r7.listOnly));
+  ok('the branch is told in words', (W7.notes || []).some(n => /not counted in the requirement figures/.test(n)),
+     JSON.stringify(W7.notes));
+  ok('the name is off every per-agent row', !((W7.triage || {}).roster || []).some(a => a.agent === 'Beena Pretend'),
+     JSON.stringify(((W7.triage || {}).roster || []).map(a => a.agent)));
+  /* The rows are still joined, or their policy would read as ready to settle. */
+  const bk = {}; ((W7.triage || {}).buckets || []).forEach(b => { bk[b.key] = b.n; });
+  ok('their policy still classifies by its own requirements, not as ready to collect',
+     (bk.ready || 0) === 0, JSON.stringify(bk));
+}
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
