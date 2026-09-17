@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17j';
+var INTEL_VERSION = '2026-09-17k';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -1442,7 +1442,7 @@ function iPendBoard_(extract, reqs, tasks) {
 
     /* THE TASKS ON THEIR POLICIES. Late is over the branch's own thirty days;
        quiet is nothing in a week on a task still open. */
-    var hits = byPol[String(row.policy || '').trim()] || [];
+    var hits = byPol[iPolicyKey_(row.policy)] || [];
     var openHits = hits.filter(function (h) { return h.open; });
     if (!hits.length) { a.never++; tot.never++; }
     openHits.forEach(function (h) {
@@ -3860,9 +3860,20 @@ function iBuildTasks_(today) {
     var quiet = modified ? iDays_(modified, today) : null;
     if (quiet === null || quiet < 0) quiet = since || null;
 
-    /* Guardian policy numbers in this book are ten digits beginning 1 or 5.
-       Subjects carry one or two of them, sometimes slash-separated. */
-    var found = subject.match(/\b[15]\d{9}\b/g) || [];
+    /* POLICY NUMBERS IN A SUBJECT ARE TEN DIGITS, AND THE PREFIX IS NOT OURS
+       TO GUESS. This pattern was /\b[15]\d{9}\b/ — written off a sample that
+       happened to hold only 1s and 5s. The branch's own open tasks carry
+       "Decrease- 8004275516", "SERVICE QUESTIONNAIRE 8001144615", "Confirm
+       funds in DISB & SUSP- 8004129226", "Change of Beneficiary- 5004189234":
+       eights are policy numbers too, and on 17 September 2026 that pattern
+       matched NONE of the branch's Pendings tasks. The board showed nought
+       open, nought late, nought quiet against twenty-nine pending policies
+       while support carried fifty-five open tasks between them.
+
+       So: take every ten-digit number, and let the register decide which of
+       them are policies. A number nothing looks up costs one unused key; a
+       prefix guessed wrong costs the whole column. */
+    var found = subject.match(/\b\d{10}\b/g) || [];
     /* Days outstanding is read here rather than after the open/closed gate,
        because the per-policy index needs it: an agent's board says how many
        of the tasks on THEIR policies are late, and a closed task's age is
@@ -3870,7 +3881,11 @@ function iBuildTasks_(today) {
     var osAny = iNum_(d.get('os', r));
     if (!osAny && quiet) osAny = quiet;
     var movedToday = !!(modified && iIso_(modified) === iIso_(today));
-    found.forEach(function (pol) {
+    found.forEach(function (raw) {
+      /* Keyed through iPolicyKey_ and looked up through it too, so a stray
+         space or a dash in either extract cannot separate a task from its
+         policy. */
+      var pol = iPolicyKey_(raw);
       if (!byPolicy[pol]) byPolicy[pol] = [];
       byPolicy[pol].push({ assigned: assigned, status: status, open: isOpen,
                            on: iIso_(modified), quiet: quiet,

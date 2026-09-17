@@ -602,5 +602,55 @@ console.log('\nA name off the board: the policies count, the requirements do not
      (bk.ready || 0) === 0, JSON.stringify(bk));
 }
 
+/* ── A TASK FINDS ITS POLICY WHATEVER THE NUMBER STARTS WITH ────────────────
+   Every policy in the fixtures above is P-SOMETHING, and every task subject
+   carried a ten-digit number beginning 1 or 5 — so the join was never once
+   tested against a realistic pair, and the pattern that read the subject was
+   /\b[15]\d{9}\b/.
+
+   The branch's real open tasks carry "Decrease- 8004275516", "SERVICE
+   QUESTIONNAIRE 8001144615", "Confirm funds in DISB & SUSP- 8004129226". On
+   17 September 2026 that pattern matched none of them: the live board showed
+   nought open, nought late and nought quiet against twenty-nine pending
+   policies, while support carried fifty-five open tasks between them.
+
+   So the prefix is nobody's to guess. Any ten digits are a candidate and the
+   register decides which are policies. */
+{
+  const env8 = makeEnv({ props: { INTEL_PENDING_ROWS_ON_WALL: '' } });
+  env8.Date = env.Date;
+  env8.__mkSheet('URPPBIEX - Reqt', 4, PHEAD, [
+    prow('8004275516', 'Anand Pretend', '2026-08-01', 0, ''),   // an eight
+    prow('1000894223', 'Anand Pretend', '2026-08-01', 0, ''),   // a one
+    prow('5004189234', 'Beena Pretend', '2026-08-01', 0, ''),   // a five
+  ]);
+  env8.__mkSheet('RR_UWPRO_INSURED_Requirement', 3,
+    env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0],
+    [['RQ-80', '8004275516', 'PRADD', 'Documents', '', '2026-08-01', '', ''],
+     ['RQ-81', '1000894223', 'PRADD', 'Documents', '', '2026-08-01', '', ''],
+     ['RQ-82', '5004189234', 'PRADD', 'Documents', '', '2026-08-01', '', '']]);
+  env8.__mkSheet('SFTASK MGT', 5,
+    env.__sheets['SFTASK MGT']._grid[0],
+    [
+      ['Decrease- CLIENTNAME-T8 8004275516','Pendings','Open','Desk One',12,'2026-08-30',0,'Anand Pretend','CLIENTNAME-T8','x','2026-08-30'],
+      ['Follow up with UW- 1000894223 CLIENTNAME-T1','Pendings','Open','Desk One',12,'2026-08-30',0,'Anand Pretend','CLIENTNAME-T1','x','2026-08-30'],
+      ['Change of Beneficiary- 5004189234 CLIENTNAME-T9','Pendings','Open','Desk Two',5,'2026-09-06',0,'Beena Pretend','CLIENTNAME-T9','x','2026-09-06'],
+    ]);
+  env8._intelTabMemo = {}; env8._intelHeadMemo = {};
+  const W8 = env8.iPendingWall_();
+  const board = W8.board || {};
+  const byAgent = {};
+  (board.agents || []).forEach(a => { byAgent[a.agent] = a; });
+  const tot = board.total || {};
+  console.log('\nA task finds its policy whatever the number starts with:\n');
+  ok('all three policies are on the board', (tot.policies || 0) === 3, JSON.stringify(tot.policies));
+  ok('and all three tasks joined to one', (tot.open || 0) === 3,
+     'open=' + tot.open + ' — an eight-prefixed policy used to join to nothing');
+  ok('the eight-prefixed one reached its agent',
+     byAgent['Anand Pretend'] && byAgent['Anand Pretend'].tasks.open === 2,
+     JSON.stringify(byAgent['Anand Pretend'] && byAgent['Anand Pretend'].tasks));
+  ok('and no policy is left looking untouched', (tot.never || 0) === 0, String(tot.never));
+}
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);
