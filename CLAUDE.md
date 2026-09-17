@@ -172,3 +172,46 @@ Rules:
   (`settlement`, `ratings`, `submitted`, `clear_cache`). The only acceptable
   answer is a sign-in error. `?action=zzz` proves the build; it does not
   prove the gates.
+
+## Production is counted on the pick-up date, not the submission date
+
+Branch production — the "submitted" figure on the wall and the one head office
+reads — comes from **Salesforce**, not from the fact find sheet, and it is
+keyed on a date that is easy to get wrong.
+
+| | |
+|---|---|
+| Object | `CLIENT_PORTFOLIO__c` |
+| Date | **`Production_Picked_up_Date__c`** |
+| Measure | `SUM(Total_API__c)` |
+| Scope | new business — life and pensions — **plus increases, each on their own pick-up date** |
+
+`wall.html` states the rule on the report itself: *"Total API = new business on
+its production picked-up date + increases on theirs."*
+
+Two routes serve it, both on that same basis:
+
+- `?action=prodboard` → `sfBoard` → `pbSalesforce.gs`, querying Salesforce live
+- `?action=submitted` → `getSubmitted()` in `Code.gs`, reading `PENDING_SHEET_ID`,
+  whose pick-up tab is recognised by the headers `production picked up date`,
+  `total api`, `app count` (`_identifyTab`, Code.gs ~1647)
+
+**Why this bites.** Every other date on a policy is tempting and wrong.
+`EFFECTIVE_DT` is when cover starts, `submittedAt` is when the advisor sent the
+fact find, `App_Received_Date__c` is when it was keyed. Totalling on any of
+them produces a number that looks plausible, disagrees with the wall, and
+disagrees with what head office already has — and nothing says which is right.
+
+**And increases count.** An increase on an existing policy is production on the
+day it is picked up. Counting new business alone understates the branch.
+
+Note this is a different question from the fact find's cover rule: there, only
+life sums assured count toward the underwriting ceiling. That is about cover
+recommended to one client. This is about what the branch wrote and had picked
+up. The two rules do not conflict and must not be mixed.
+
+**There is no stored production report.** `RRB-production-YYYY-MM-DD.xlsx` is
+built in the browser by `wall.html` when the Spreadsheet button is pressed. Six
+tabs, of which only `Submitted` is live — the other five read the hardcoded
+`PROD` literal, frozen at its `asOf` date, because `PROD_ENDPOINT` is blank.
+Searching Drive for that workbook finds nothing; it has to be computed.
