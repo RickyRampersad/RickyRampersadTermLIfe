@@ -298,7 +298,17 @@ function rsfPolKey_(policy) {
     .replace(/О/g, 'O').replace(/А/g, 'A').replace(/С/g, 'C')
     .replace(/Е/g, 'E').replace(/Р/g, 'P').replace(/Т/g, 'T')
     .replace(/[^A-Za-z0-9]/g, '')
-    .toUpperCase();
+    .toUpperCase()
+    // Leading zeros in the serial are dropped by some systems and kept by
+    // others. Guardian's UN898 renewal listing prints Mary Chen as
+    // TT APU 0998535; Salesforce holds the same policy as TT APU 998535.
+    // Left unfolded these are two groups sharing one portal token, which is
+    // two emails and the same link. Pad the trailing digits to a fixed width
+    // so both spellings land on TTAPU0998535.
+    .replace(/^([A-Z]+)0*(\d+)$/, function (_, alpha, digits) {
+      while (digits.length < 7) digits = '0' + digits;
+      return alpha + digits;
+    });
 }
 
 /**
