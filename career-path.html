@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Career Path Tracker | Ricky Rampersad Branch</title>
+<meta name="description" content="The Guardian Life Sales Career Path, digitized. See every position, check what you qualify for, and track your progress.">
+<link rel="icon" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf;
+    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
+    --ok:#3ddc97; --warn:#ffb457; --bad:#ff7a6b;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.55;
+    background-image:radial-gradient(ellipse 80% 50% at 50% -20%,rgba(0,207,234,.09),transparent),
+      linear-gradient(180deg,var(--bg) 0%,var(--bg2) 50%,var(--bg) 100%);background-attachment:fixed}
+  button,input,select,textarea{font-family:inherit;font-size:1rem;color:inherit}
+  button{cursor:pointer}
+  a{color:var(--teal)}
+  :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+  .hidden{display:none !important}
+
+  /* ── mark (house rule: logo-mark.png, never a substitute) ── */
+  .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  .mark img{width:44px;height:44px;display:block}
+
+  /* ── top bar ── */
+  .top{position:sticky;top:0;z-index:50;background:rgba(7,19,31,.92);backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line)}
+  .top-in{max-width:1080px;margin:0 auto;padding:11px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .top h1{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;letter-spacing:-.2px}
+  .top .sub{font-size:11.5px;color:var(--muted)}
+  .top .spacer{flex:1}
+  .chip{display:flex;align-items:center;gap:9px;background:var(--card);border:1px solid var(--line);
+    border-radius:999px;padding:6px 14px;font-size:13px}
+  .chip button{background:none;border:none;color:var(--teal);font-size:12px;text-decoration:underline;padding:0}
+  .backlink{font-size:13px;color:var(--muted);text-decoration:none;border:1px solid var(--line);
+    border-radius:9px;padding:7px 13px}
+  .backlink:hover{color:var(--text);background:rgba(255,255,255,.05)}
+
+  main{padding:22px 0 60px}
+  .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.5px;
+    text-transform:uppercase;color:var(--gold);margin-bottom:14px;display:flex;align-items:center;gap:10px}
+  .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
+
+  /* ── sign in ── */
+  .signin{max-width:460px;margin:7vh auto 0;background:var(--card);border:1px solid var(--line);
+    border-radius:18px;padding:26px}
+  .signin .head{display:flex;align-items:center;gap:13px;margin-bottom:16px}
+  .signin h2{font-family:'Montserrat',sans-serif;font-size:19px;font-weight:800}
+  .signin .head .s{font-size:11.5px;color:var(--muted)}
+  .signin p{font-size:14px;color:var(--muted);margin-bottom:18px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid var(--line);
+    border-radius:10px;background:var(--bg2);color:var(--text)}
+  .btn{font-family:'Montserrat',sans-serif;font-weight:800;font-size:14px;border:none;border-radius:11px;
+    padding:12px 24px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f}
+  .btn:hover{filter:brightness(1.07)}
+  .btn-t{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#07131f}
+  .btn-g{background:none;border:1px solid var(--line);color:var(--text);font-weight:600}
+  .btn-g:hover{background:rgba(255,255,255,.05)}
+  .err{color:var(--bad);font-size:13px;font-weight:600;margin-top:10px;min-height:1em}
+  .returning{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+  .returning h3{font-size:12px;color:var(--muted);font-weight:600;margin-bottom:8px}
+  .arow{display:flex;align-items:center;gap:8px;padding:7px 2px;border-bottom:1px dashed var(--line)}
+  .arow:last-child{border-bottom:none}
+  .arow .open{flex:1;text-align:left;background:none;border:none;color:var(--text);font-weight:600;font-size:14px;padding:3px 0}
+  .arow .open:hover{color:var(--teal)}
+  .arow .del{background:none;border:none;color:var(--bad);font-size:11.5px}
+
+  /* ── status strip ── */
+  .status{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:18px}
+  .status-grid{display:flex;gap:14px;flex-wrap:wrap}
+  .status-grid .field{flex:1 1 190px;margin-bottom:0}
+  .status-line{margin-top:13px;font-size:14.5px;font-weight:600;font-family:'Montserrat',sans-serif}
+  .status-line .aim{color:var(--teal)}
+
+  /* ── hero stats ── */
+  .hero{position:relative;overflow:hidden;border-radius:18px;padding:22px 22px 20px;margin-bottom:18px;
+    background:linear-gradient(130deg,#0d2137,#163553 55%,#1b3d61);border:1px solid var(--line)}
+  .hero h2{font-family:'Montserrat',sans-serif;font-size:clamp(19px,3.4vw,25px);font-weight:900;letter-spacing:-.4px}
+  .hero p{font-size:14px;color:var(--muted);max-width:62ch;margin-top:5px}
+  .hstats{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+  .hstat{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:13px;padding:10px 15px;min-width:104px}
+  .hstat .v{font-family:'Montserrat',sans-serif;font-weight:900;font-size:24px;color:var(--teal);
+    font-variant-numeric:tabular-nums;line-height:1.15}
+  .hstat .k{font-size:10px;letter-spacing:1.3px;text-transform:uppercase;color:var(--muted);font-weight:600}
+
+  /* ── path cards ── */
+  .track{margin-bottom:22px}
+  .path{display:flex;gap:11px;flex-wrap:wrap}
+  .step{flex:1 1 172px;min-width:172px;text-align:left;background:var(--card);border:1px solid var(--line);
+    border-radius:15px;padding:15px 14px;position:relative;overflow:hidden;
+    transition:transform .18s cubic-bezier(.3,1,.4,1),border-color .18s,box-shadow .18s}
+  .step::before{content:'';position:absolute;inset:0 0 auto 0;height:3px;
+    background:linear-gradient(90deg,var(--teal),var(--gold));opacity:0;transition:opacity .18s}
+  .step:hover{transform:translateY(-4px);border-color:rgba(0,207,234,.45);
+    box-shadow:0 14px 34px -16px rgba(0,207,234,.5)}
+  .step:hover::before,.step.current::before{opacity:1}
+  .step.current{border-color:var(--gold)}
+  .cardtop{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+  .step .num{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.6px;
+    text-transform:uppercase;color:var(--gold)}
+  .step h4{font-family:'Montserrat',sans-serif;font-size:14.5px;font-weight:800;letter-spacing:-.2px;margin-top:1px}
+  .step .mini{font-size:12px;color:var(--muted);min-height:2.6em}
+  .pill{display:inline-block;margin-top:9px;font-size:11px;font-weight:700;border-radius:999px;padding:3px 10px}
+  .pill.here{background:rgba(239,194,75,.16);color:var(--gold)}
+  .pill.done{background:rgba(61,220,151,.14);color:var(--ok)}
+  .pill.part{background:rgba(0,207,234,.13);color:var(--teal)}
+  .pill.none{background:rgba(255,255,255,.06);color:var(--muted)}
+  .pill.goal{background:rgba(239,194,75,.16);color:var(--gold);margin-left:5px}
+
+  /* ── progress ring ── */
+  .ring{position:relative;width:54px;height:54px;flex:none}
+  .ring svg{transform:rotate(-90deg);display:block}
+  .ring .trk{stroke:rgba(255,255,255,.1)}
+  .ring .bar{stroke:var(--teal);stroke-linecap:round;transition:stroke-dashoffset .7s cubic-bezier(.3,1,.4,1)}
+  .ring.full .bar{stroke:var(--ok)}
+  .ring .rc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+  .ring .emo{font-size:17px}
+  .ring .pct{font-size:9px;font-weight:800;color:var(--muted);font-variant-numeric:tabular-nums;margin-top:2px}
+  .ring.full .pct{color:var(--ok)}
+
+  /* ── detail ── */
+  .backbar{margin-bottom:14px}
+  .backbar button{background:none;border:none;color:var(--muted);font-weight:600;font-size:13.5px}
+  .backbar button:hover{color:var(--teal)}
+  .pos-head{border-radius:18px;padding:22px;margin-bottom:14px;border:1px solid var(--line);
+    background:linear-gradient(130deg,#0d2137,#163553 60%,#1b3d61)}
+  .pos-head .crumb{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:800;letter-spacing:2px;
+    text-transform:uppercase;color:var(--gold)}
+  .pos-head h2{font-family:'Montserrat',sans-serif;font-size:clamp(20px,3.6vw,27px);font-weight:900;
+    letter-spacing:-.5px;margin:4px 0 7px}
+  .pos-head p{font-size:14px;color:var(--muted);max-width:74ch}
+  .goalbtn{margin-top:13px;background:none;border:1px solid var(--gold);color:var(--gold);border-radius:999px;
+    padding:7px 16px;font-size:12.5px;font-weight:700;font-family:'Montserrat',sans-serif}
+  .goalbtn.set{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;border-color:transparent}
+  .score{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:16px 18px;margin-bottom:16px;
+    display:flex;align-items:center;gap:15px;flex-wrap:wrap}
+  .score .ring{width:68px;height:68px}
+  .score .ring svg{width:68px;height:68px}
+  .score .ring .emo{font-size:21px}
+  .score .ring .pct{font-size:10.5px}
+  .verdict{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15.5px}
+  .verdict.ok{color:var(--ok)}
+  .verdict.no{color:var(--teal)}
+  .meter{flex:1;min-width:180px;height:11px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
+  .meter>div{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--teal2),var(--teal));
+    transition:width .7s cubic-bezier(.3,1,.4,1)}
+  .meter>div.full{background:linear-gradient(90deg,#28b77c,var(--ok))}
+  .score .cnt{font-size:13px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+  .eta{flex-basis:100%;font-size:13.5px;font-weight:600;color:var(--text)}
+  .eta .drivers{display:block;font-weight:400;color:var(--muted);font-size:12.5px;margin-top:3px}
+
+  .req{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:13px;
+    padding:15px 17px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap}
+  .req.met{border-left-color:var(--ok)}
+  .req.unmet{border-left-color:var(--bad)}
+  .req .ic{width:25px;height:25px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:800}
+  .req.met .ic{background:rgba(61,220,151,.15);color:var(--ok)}
+  .req.unmet .ic{background:rgba(255,122,107,.14);color:var(--bad)}
+  .req .body{flex:1;min-width:230px}
+  .req .body .t{font-size:14px;font-weight:600}
+  .req .body .note{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .gap{font-size:12.5px;color:var(--bad);font-weight:600;margin-top:4px}
+  .edu{font-size:12.5px;color:var(--teal);font-weight:600;margin-top:3px}
+  .hublink{background:none;border:none;color:var(--gold);font-size:12.5px;font-weight:700;
+    text-decoration:underline;padding:0;margin-top:5px}
+  .ctrls{display:flex;flex-direction:column;gap:9px;flex:0 1 260px;min-width:210px}
+  .ctrl label{font-size:11.5px;font-weight:600;color:var(--muted);display:block;margin-bottom:3px}
+  .ctrl input[type=number],.ctrl input[type=date]{width:100%;padding:8px 10px;border:1px solid var(--line);
+    border-radius:9px;background:var(--bg2);color:var(--text)}
+  .tog{display:flex;align-items:center;gap:9px}
+  .tog input{width:18px;height:18px;accent-color:var(--ok);flex:none}
+  .tog label{font-size:13px;color:var(--text);font-weight:400;margin:0}
+  .benefits{background:rgba(239,194,75,.07);border:1px solid rgba(239,194,75,.25);border-radius:15px;
+    padding:16px 18px;margin-top:16px}
+  .benefits h3{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:800;color:var(--gold);margin-bottom:8px}
+  .benefits ul{padding-left:18px;font-size:13.5px;color:var(--text)}
+  .benefits li{margin-bottom:4px}
+  .keep{font-size:12.5px;color:var(--muted);font-style:italic;margin-top:13px}
+  .subhead{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:800;margin:20px 0 11px;
+    display:flex;align-items:center;gap:10px;letter-spacing:-.1px}
+  .subhead::after{content:'';flex:1;height:1px;background:var(--line)}
+
+  /* ── learning hub ── */
+  .hubcard{display:flex;align-items:center;gap:15px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);
+    border-radius:15px;padding:16px 18px;margin-bottom:20px}
+  .hubcard .tx{flex:1;min-width:230px}
+  .hubcard h3{font-family:'Montserrat',sans-serif;font-size:14.5px;font-weight:800;margin-bottom:3px}
+  .hubcard p{font-size:13px;color:var(--muted)}
+  .prog{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:19px 20px;margin-bottom:13px}
+  .prog.focus{border-color:var(--gold)}
+  .prog h3{font-family:'Montserrat',sans-serif;font-size:15.5px;font-weight:800;letter-spacing:-.2px}
+  .prog .who{font-size:12px;color:var(--muted);margin-top:2px}
+  .prog .sum{font-size:13.5px;margin:9px 0}
+  .prog .reqfor{font-size:12px;color:var(--gold);font-weight:700;margin-bottom:9px}
+  .prog ul.facts{padding-left:17px;font-size:12.5px;color:var(--muted);margin-bottom:11px}
+  .prog ul.facts li{margin-bottom:4px}
+  .modp{font-size:12.5px;font-weight:700;margin-bottom:8px}
+  .modp .okw{color:var(--ok)}
+  .mods{display:flex;flex-direction:column;gap:5px;margin-bottom:11px}
+  .modrow{display:flex;align-items:center;gap:10px;padding:7px 11px;border:1px solid var(--line);
+    border-radius:9px;background:var(--bg2);cursor:pointer}
+  .modrow input{width:16px;height:16px;accent-color:var(--ok);flex:none}
+  .modrow .code{font-weight:800;font-size:11.5px;color:var(--gold);min-width:56px;font-variant-numeric:tabular-nums}
+  .modrow .mt{font-size:13px;flex:1}
+  .modrow.done .mt{color:var(--ok)}
+  .links{display:flex;gap:8px;flex-wrap:wrap}
+  .links a{font-size:12px;font-weight:700;color:var(--teal);border:1px solid rgba(0,207,234,.35);
+    border-radius:999px;padding:5px 12px;text-decoration:none}
+  .links a:hover{background:rgba(0,207,234,.1)}
+  .hubnote{font-size:11.5px;color:var(--muted);font-style:italic;margin-top:12px}
+
+  /* ── feed ── */
+  .feed{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:19px 20px;margin-top:22px}
+  .feed h3{font-family:'Montserrat',sans-serif;font-size:15px;font-weight:800;margin-bottom:3px}
+  .feed .hint{font-size:12.5px;color:var(--muted);margin-bottom:13px}
+  .due{background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.4);border-radius:11px;padding:11px 14px;
+    margin-bottom:12px;font-size:13px;color:var(--teal);font-weight:700}
+  .feed textarea{min-height:70px;resize:vertical;margin-bottom:10px}
+  .feed-acts{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+  .feed-acts .last{font-size:12px;color:var(--muted)}
+  .flist{display:flex;flex-direction:column;gap:9px;max-height:420px;overflow-y:auto}
+  .fe{border-left:3px solid var(--line);padding:4px 12px}
+  .fe .meta{display:flex;gap:8px;align-items:center;margin-bottom:2px}
+  .fe .fd{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  .fe .bdg{font-size:9.5px;font-weight:800;letter-spacing:.9px;text-transform:uppercase;border-radius:999px;padding:2px 8px}
+  .fe.checkin{border-left-color:var(--teal)}
+  .fe.checkin .bdg{background:rgba(0,207,234,.14);color:var(--teal)}
+  .fe.milestone{border-left-color:var(--ok)}
+  .fe.milestone .bdg{background:rgba(61,220,151,.14);color:var(--ok)}
+  .fe.goal{border-left-color:var(--gold)}
+  .fe.goal .bdg{background:rgba(239,194,75,.15);color:var(--gold)}
+  .fe .txt{font-size:13.5px}
+  .fe .snap{font-size:12px;color:var(--muted);margin-top:2px}
+  .fempty{font-size:13px;color:var(--muted);font-style:italic}
+
+  .note{border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:13px;padding:15px 17px;
+    margin-top:20px;font-size:12.5px;color:var(--muted);line-height:1.65}
+  .note b{color:var(--text)}
+  footer{border-top:1px solid var(--line);margin-top:34px;padding:20px 0 34px;text-align:center;
+    color:var(--muted);font-size:11.5px;line-height:1.7}
+
+  @media(max-width:640px){
+    .ctrls{flex:1 1 100%}
+    .step{min-width:0}
+    .status-grid .field{flex:1 1 100%}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition:none !important}}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="mark"><img src="logo-mark.png" alt=""></div>
+    <div>
+      <h1>Career Path Tracker</h1>
+      <div class="sub">Ricky Rampersad Branch · Sales Career Path (Amended April 2026)</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="chip hidden" id="chip"><span>Agent: <b id="chipName"></b></span><button onclick="logout()">Sign out</button></div>
+    <a class="backlink" href="agent.html">← Agent Portal</a>
+  </div>
+</div>
+
+<main class="wrap">
+
+<!-- ══ SIGN IN ══ -->
+<section id="vSignin">
+  <div class="signin">
+    <div class="head">
+      <div class="mark"><img src="logo-mark.png" alt=""></div>
+      <div>
+        <h2>Agent Sign In</h2>
+        <div class="s">Ricky Rampersad Branch</div>
+      </div>
+    </div>
+    <p>Select your name to open your tracker. Your answers are saved on this device, so you can come back and update them any time.</p>
+    <div class="field">
+      <label for="selName">Your name</label>
+      <select id="selName"></select>
+    </div>
+    <div class="field hidden" id="otherWrap">
+      <label for="txtName">Type your name</label>
+      <input type="text" id="txtName" autocomplete="name" placeholder="e.g. Ricky Rampersad">
+    </div>
+    <div class="field">
+      <label for="selPos">Your current position</label>
+      <select id="selPos">
+        <option value="none">New Candidate / Prospective Agent</option>
+        <option value="salesperson">Salesperson</option>
+        <option value="executive">Executive Agent</option>
+        <option value="ssc">Senior Sales Consultant</option>
+        <option value="trainee">Trainee Manager</option>
+        <option value="unit">Unit Manager</option>
+        <option value="abm">Assistant Branch Manager</option>
+        <option value="bm">Branch Manager</option>
+      </select>
+    </div>
+    <button class="btn" onclick="login()">Open my tracker</button>
+    <div class="err" id="loginErr"></div>
+    <div class="returning hidden" id="retWrap">
+      <h3>On this device</h3>
+      <div id="retList"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ DASHBOARD ══ -->
+<section id="vPath" class="hidden">
+  <div class="hero">
+    <h2 id="hello">Welcome</h2>
+    <p>Every position on the branch career path. Open any one to see exactly what it takes, enter your own numbers, and watch your progress fill in.</p>
+    <div class="hstats" id="hstats"></div>
+  </div>
+
+  <div class="status">
+    <div class="status-grid">
+      <div class="field">
+        <label for="curPos">My current position</label>
+        <select id="curPos">
+          <option value="none">New Candidate / Prospective Agent</option>
+          <option value="salesperson">Salesperson</option>
+          <option value="executive">Executive Agent</option>
+          <option value="ssc">Senior Sales Consultant</option>
+          <option value="trainee">Trainee Manager</option>
+          <option value="unit">Unit Manager</option>
+          <option value="abm">Assistant Branch Manager</option>
+          <option value="bm">Branch Manager</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="posSince">In this position since</label>
+        <input type="date" id="posSince">
+      </div>
+      <div class="field">
+        <label for="curYears">Years with Guardian Life</label>
+        <input type="number" id="curYears" min="0" step="0.5" placeholder="0">
+      </div>
+    </div>
+    <div class="status-line" id="statusLine"></div>
+  </div>
+
+  <div class="hubcard">
+    <div class="tx">
+      <h3>📚 Learning Hub</h3>
+      <p>FSCP™ modules with tick-off tracking, MDRT levels, CIAM and the management courses, plus the in-house programs — with where to enrol.</p>
+    </div>
+    <button class="btn btn-t" onclick="showHub()">Open the Learning Hub</button>
+  </div>
+
+  <div class="track">
+    <div class="section-label">Professional Sales Track</div>
+    <div class="path" id="trackSales"></div>
+  </div>
+  <div class="track">
+    <div class="section-label">Sales Management Track</div>
+    <div class="path" id="trackMgmt"></div>
+  </div>
+
+  <div class="feed">
+    <h3>📒 My Progress Feed</h3>
+    <div class="hint">Check in each month: where you are, what you closed, what's next. Your note is filed with a snapshot of your standing.</div>
+    <div id="dueWrap"></div>
+    <textarea id="checkinText" class="field" placeholder="e.g. Closed 12 new life clients this month, persistency now at 91%. Booked my POP7 assessment for the 15th."></textarea>
+    <div class="feed-acts">
+      <button class="btn btn-t" onclick="postCheckin()">Post my check-in</button>
+      <button class="btn btn-g" onclick="downloadReminder()">🗓️ Monthly reminder (.ics)</button>
+      <span class="last" id="lastCheckin"></span>
+    </div>
+    <div class="flist" id="flist"></div>
+  </div>
+
+  <div class="note">
+    <b>Promotion windows.</b> Appointments are announced twice a year — at Blastoff in <b>October</b> (submit by August 31) and at the Mid-Year Meeting in <b>April</b> (submit by February 28). Late submissions are deferred to the next period. All appointments are made by the President in consultation with the VP of Sales.
+  </div>
+  <div class="note">
+    <b>A note on this tracker.</b> It is a self-assessment guide built from the Company's Sales Career Path document. It changes nothing in the policy — every appointment remains at the discretion of the Company. Your entries are saved on your own device only; nobody else sees them.
+  </div>
+</section>
+
+<!-- ══ POSITION DETAIL ══ -->
+<section id="vPos" class="hidden">
+  <div class="backbar"><button onclick="showPath()">← Back to the career path</button></div>
+  <div class="pos-head">
+    <div class="crumb" id="posCrumb"></div>
+    <h2 id="posTitle"></h2>
+    <p id="posDesc"></p>
+    <button class="goalbtn" id="goalBtn" onclick="toggleGoal()">🎯 This is what I want to be</button>
+  </div>
+  <div class="score">
+    <div id="posRing"></div>
+    <div class="verdict" id="posVerdict"></div>
+    <div class="meter"><div id="posMeter" style="width:0%"></div></div>
+    <div class="cnt" id="posCount"></div>
+    <div class="eta" id="posEta"></div>
+  </div>
+  <div class="subhead">The requirements — do you have them?</div>
+  <div id="reqList"></div>
+  <div class="benefits" id="posBenefits"></div>
+  <p class="keep" id="posKeep"></p>
+</section>
+
+<!-- ══ LEARNING HUB ══ -->
+<section id="vHub" class="hidden">
+  <div class="backbar"><button onclick="showPath()">← Back to the career path</button></div>
+  <div class="pos-head">
+    <div class="crumb">Learning Hub</div>
+    <h2>Courses, Designations &amp; Programs</h2>
+    <p>Everything the career path asks you to study — what each involves, where to take it, and tick-off tracking that updates your qualification checklists automatically.</p>
+  </div>
+  <div id="hubList"></div>
+  <p class="hubnote">Programme details were researched from TTAIFA, CARAIFA, The American College, LIMRA and MDRT. Schedules and fees change — always confirm with the provider or your Branch Manager before registering.</p>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <b>Ricky Rampersad Branch</b> · Guardian Life of the Caribbean<br>
+    Self-assessment guide only — all appointments remain at the discretion of the Company.
+  </div>
+</footer>
+
+<script>
+"use strict";
+
+/* ══════════════════════════════════════════════════════════════
+   AGENT LIST  ← EDIT THIS
+   One name per line, in quotes, each ending with a comma.
+   Anyone not listed can still sign in via "My name isn't listed".
+   ══════════════════════════════════════════════════════════════ */
+const AGENTS=[
+  "Ricky Rampersad"
+  // "Agent Name",
+];
+const OTHER="__other__";
+
+/* ── field definitions ── */
+const FIELDS={
+  yearsContracted:{label:"Years contracted with Guardian Life",type:"n",step:.5},
+  ncdCompleted:{label:"Completed the NCD Program and accepted by VP – Sales",type:"b"},
+  probationDone:{label:"Completed 7-month probation (Induction + GLOC Bootcamp)",type:"b"},
+  insuranceAct:{label:"Registered under the Insurance Act",type:"b"},
+  stateLicensing:{label:"Passed the State Licensing Examination",type:"b"},
+  ttaifaMember:{label:"Member of TTAIFA",type:"b"},
+  fscpStarted:{label:"Commenced the FSCP™ (2015) Programme",type:"b"},
+  fscpOrDesignation:{label:"Attained FSCP™ (2015) or similar designation (CFP, CLU, ChFC)",type:"b"},
+  intermediateDev:{label:"Completed the Intermediate Development Course",type:"b"},
+  mentoringProgram:{label:"Attended the Company's Mentoring Program",type:"b"},
+  cpdCredits:{label:"Continuous development credits current (TTAIFA & CBTT)",type:"b"},
+  appointmentLetter:{label:"Signed appointment letter",type:"b"},
+  production24:{label:"Settled production, last 24 months (API $)",type:"n",step:10000},
+  persistency:{label:"Persistency (%)",type:"n",max:100},
+  clientTotal:{label:"Total active clients (life + Individual Health)",type:"n"},
+  clientActiveLife:{label:"Active life clients (of the total)",type:"n"},
+  mdrtLast3:{label:"Qualified & attended MDRT as a full member within the last 3 years",type:"b"},
+  mdrtLast2:{label:"Qualified & attended MDRT as a full member within the last 2 years",type:"b"},
+  eaYears:{label:"Consecutive years as Executive Agent",type:"n",step:.5},
+  industrySeniorYears:{label:"Consecutive years in a senior sales / management position in the industry",type:"n",step:.5},
+  presidentsClub2:{label:"President's Club production in each of the preceding 2 years",type:"b"},
+  bmRecommendation:{label:"Recommended by your Branch Manager",type:"b"},
+  pop7:{label:"Completed POP7 Management Assessment with a favourable score",type:"b"},
+  elpCompleted:{label:"Completed the Emerging Leaders Program (ELP)",type:"b"},
+  recruits:{label:"Agents recruited (with your Manager's assistance)",type:"n"},
+  recruitsProbation:{label:"Recruited agents who completed the Probation Contract",type:"n"},
+  businessPlanning:{label:"Completed Business Planning",type:"b"},
+  futureLeaders:{label:"Completed Developing Future Leaders",type:"b"},
+  unitApi12:{label:"Unit production, last 12 months (API $)",type:"n",step:10000},
+  leaderSharePct:{label:"Share of Unit production from your own production (%)",type:"n",max:100},
+  agentsUnderContract:{label:"Agents under contract in your Unit / Branch",type:"n"},
+  unitQuotaPct:{label:"Unit quota achieved in EACH of the preceding 2 years (%, enter the lower year)",type:"n",max:200},
+  umYears:{label:"Years in the position of Unit Manager",type:"n",step:.5},
+  abmYears:{label:"Years in the position of Assistant Branch Manager",type:"n",step:.5},
+  amtc:{label:"Completed AMTC",type:"b"},
+  pacesetter:{label:"Completed Pacesetter",type:"b"},
+  maps:{label:"Completed MAPS",type:"b"},
+  aes:{label:"Completed AES",type:"b"},
+  agentsQuotaPct:{label:"Your agents meeting their quota (%)",type:"n",max:100},
+  developedUM:{label:"Developed & appointed a Unit Manager in post at least 1 year",type:"b"},
+  ciam:{label:"Attained the CIAM designation",type:"b"}
+};
+
+/* ── helpers ── */
+function num(v){const n=parseFloat(v);return isNaN(n)?0:n}
+function money(n){return "$"+Number(n).toLocaleString("en-US")}
+function esc(s){const d=document.createElement("div");d.textContent=s==null?"":String(s);return d.innerHTML}
+function gapYears(v,t){return "You're at "+num(v)+" year(s) — "+(t-num(v)).toFixed(1)+" more to go."}
+function gapMoney(v,t,who){return (who?who+" is":"You're")+" at "+money(num(v))+" — "+money(t-num(v))+" more needed."}
+function gapPct(v,t){return "Currently "+num(v)+"% — needs to be at least "+t+"%."}
+function gapClients(p){const a=[];if(num(p.clientTotal)<325)a.push((325-num(p.clientTotal))+" more total client(s)");
+  if(num(p.clientActiveLife)<275)a.push((275-num(p.clientActiveLife))+" more active life client(s)");
+  return a.length?"Need "+a.join(" and ")+".":""}
+
+/* ── FSCP curriculum (TTAIFA / CARAIFA / The American College) ── */
+const FSCP=[
+  {c:"FA 200",t:"Techniques for Prospecting: Prospect or Perish"},
+  {c:"FA 201",t:"Techniques for Exploring Personal Markets"},
+  {c:"FA 202",t:"Techniques for Meeting Client Needs"},
+  {c:"FA 251",t:"Essentials of Business Insurance"},
+  {c:"FA 257",t:"Essentials of Life Insurance Products"},
+  {c:"FA 261",t:"Foundations of Retirement Planning"},
+  {c:"FA 271",t:"Foundations of Estate Planning"},
+  {c:"FA 290",t:"Ethics for the Financial Services Professional"},
+  {c:"FP 99",t:"FSCP Certification Course & Examination (final step)"}
+];
+function fscpCount(p){const m=p.fscpModules||{};return FSCP.filter(x=>m[x.c]).length}
+function fscpStartedOk(p){return !!p.fscpStarted||fscpCount(p)>0}
+function hasDesignation(p){return !!p.fscpOrDesignation||fscpCount(p)>=FSCP.length}
+
+/* ── positions ── */
+const ICONS={salesperson:"💼",executive:"⭐",ssc:"👑",elp:"🌱",trainee:"🧭",unit:"👥",abm:"🏛️",bm:"🏢"};
+const NAMES={none:"New Candidate",salesperson:"Salesperson",executive:"Executive Agent",ssc:"Senior Sales Consultant",
+  trainee:"Trainee Manager",unit:"Unit Manager",abm:"Assistant Branch Manager",bm:"Branch Manager"};
+
+const POSITIONS=[
+{id:"salesperson",track:"sales",num:"Step 1",short:"Salesperson",mini:"Entry to the professional sales career",
+ title:"Professional Career Sales Representative",
+ desc:"The entry position on the Sales Career Path. Complete the NCD Program, probation and licensing to hold a full-time Salesperson contract.",
+ benefits:["Commissions (based on schedule)","Bonuses","Supplemental benefits — non-mandatory health plan and non-contributory pension"],
+ keep:"Reviewed annually for performance metrics, and may be revoked for behaviour that brings the Branch or Company into disrepute.",
+ reqs:[
+  {t:"Complete the New Candidate Discovery (NCD) Program and be accepted by the VP – Sales",f:["ncdCompleted"],ck:p=>!!p.ncdCompleted},
+  {t:"Complete the 7-month probation, including the Induction Program and the GLOC Bootcamp",f:["probationDone"],ck:p=>!!p.probationDone},
+  {t:"Obtain registration under the Insurance Act before representing Guardian Life in the field",f:["insuranceAct"],ck:p=>!!p.insuranceAct},
+  {t:"Complete the State Licensing Examination during your first year",note:"Also recommended: review “An Introduction to Life Underwriting” on the GGLDC site.",f:["stateLicensing"],ck:p=>!!p.stateLicensing},
+  {t:"Become a member of TTAIFA",f:["ttaifaMember"],ck:p=>!!p.ttaifaMember},
+  {t:"Commence the FSCP™ (2015) within your 2nd year, with a view to completing by year 5",f:["fscpStarted"],ck:p=>fscpStartedOk(p)},
+  {t:"Attend the Intermediate Development Course when entering your 4th year",f:["intermediateDev"],ck:p=>!!p.intermediateDev},
+  {t:"Sign the appointment letter acknowledging terms and conditions",f:["appointmentLetter"],ck:p=>!!p.appointmentLetter},
+  {t:"Maintain continuous development credits (TTAIFA and CBTT)",f:["cpdCredits"],ck:p=>!!p.cpdCredits}]},
+
+{id:"executive",track:"sales",num:"Step 2",short:"Executive Agent",mini:"Proven producer with a strong client base",
+ title:"Executive Agent",
+ desc:"A senior sales designation for consistently high-producing agents. If these conditions are not maintained for two consecutive calendar years, the appointment may be revoked.",
+ benefits:["Additional Administrative/Sales Support, as determined by the Branch Manager on merit","Overriding commissions on your own production up to a maximum of 5%","Private office space, depending on availability and merit"],
+ keep:"To keep it: keep mentoring agents (confirmed quarterly by your Branch Manager), maintain CPD, and qualify & attend MDRT as a full member at least once every 3 years.",
+ reqs:[
+  {t:"Contracted as a Salesperson with Guardian Life for at least 4 years",f:["yearsContracted"],ck:p=>num(p.yearsContracted)>=4,
+   gap:p=>gapYears(p.yearsContracted,4),eta:p=>({m:Math.max(0,(4-num(p.yearsContracted))*12),why:"tenure: "+(4-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
+  {t:"Attained the FSCP™ (2015) or similar insurance designation (e.g. CFP, CLU, ChFC)",f:["fscpOrDesignation"],ck:p=>hasDesignation(p)},
+  {t:"Total production of at least $1,500,000 API over the previous two calendar years",f:["production24"],ck:p=>num(p.production24)>=1500000,gap:p=>gapMoney(p.production24,1500000)},
+  {t:"Persistency of at least 90%",f:["persistency"],ck:p=>num(p.persistency)>=90,gap:p=>gapPct(p.persistency,90)},
+  {t:"A client base of at least 325 active clients, of which at least 275 are active life clients",f:["clientTotal","clientActiveLife"],ck:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275,gap:gapClients},
+  {t:"Completed the Company's Intermediate Development Course",f:["intermediateDev"],ck:p=>!!p.intermediateDev},
+  {t:"Attended the Company's Mentoring Program",f:["mentoringProgram"],ck:p=>!!p.mentoringProgram},
+  {t:"Continuous professional development in line with the insurance industry",f:["cpdCredits"],ck:p=>!!p.cpdCredits},
+  {t:"Qualified and attended MDRT as a full member at least once within the 3 years prior to appointment",f:["mdrtLast3"],ck:p=>!!p.mdrtLast3}]},
+
+{id:"ssc",track:"sales",num:"Step 3",short:"Senior Sales Consultant",mini:"The highest position on the professional sales path",
+ title:"Senior Sales Consultant",
+ desc:"The highest position on the Professional Sales Career Path. Requests go through your Branch Manager to the VP – Sales, who makes the final decision. Reviewed bi-annually.",
+ benefits:["Overriding commissions on your own production up to a maximum of 10%","Shared Administrative/Sales Support, depending on availability","Reserved parking space, depending on availability and merit","Retired or reclassified Branch Managers may become Honorary Sales Consultants"],
+ keep:"To keep it: act as a mentor (confirmed quarterly by your Branch Manager), introduce potential recruits, maintain CPD, and attend MDRT as a full member at least once every 2 years.",
+ reqs:[
+  {t:"Held the position of Executive Agent for at least 5 consecutive years — OR — 10 consecutive years in a senior sales or management position in the Life Insurance industry",
+   f:["eaYears","industrySeniorYears"],ck:p=>num(p.eaYears)>=5||num(p.industrySeniorYears)>=10,
+   gap:p=>"Need "+(5-num(p.eaYears)).toFixed(1)+" more year(s) as Executive Agent, or "+(10-num(p.industrySeniorYears)).toFixed(1)+" more year(s) of senior industry experience.",
+   eta:p=>({m:Math.max(0,Math.min(5-num(p.eaYears),10-num(p.industrySeniorYears))*12),why:"tenure in a senior role"})},
+  {t:"Attained the FSCP™ (2015) or other insurance designation (e.g. CFP, CLU, ChFC)",f:["fscpOrDesignation"],ck:p=>hasDesignation(p)},
+  {t:"Settled at least $2,000,000 in New Gross Annualized Premium Income over the previous 24 months",f:["production24"],ck:p=>num(p.production24)>=2000000,gap:p=>gapMoney(p.production24,2000000)},
+  {t:"Average persistency over the last 24 months of at least 90%",f:["persistency"],ck:p=>num(p.persistency)>=90,gap:p=>gapPct(p.persistency,90)},
+  {t:"A client base of at least 325 active clients, of which at least 275 are active life clients",f:["clientTotal","clientActiveLife"],ck:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275,gap:gapClients},
+  {t:"Qualify as a full member and attend MDRT at least once every 2 years",f:["mdrtLast2"],ck:p=>!!p.mdrtLast2}]},
+
+{id:"elp",track:"mgmt",num:"Gateway",short:"ELP Candidate",mini:"In-house gateway program into sales management",
+ title:"Emerging Leaders Program (ELP) Candidate",
+ desc:"The in-house program that develops agents aspiring to sales management — the first step on the Management Track. Twelve monthly sessions covering leadership, recruiting, selection and practice management.",
+ benefits:["Entry to the Sales Management Track","Twelve monthly leadership development sessions","Prepares you for appointment as Trainee Manager"],
+ keep:"",
+ reqs:[
+  {t:"Contracted for at least 4 years",f:["yearsContracted"],ck:p=>num(p.yearsContracted)>=4,gap:p=>gapYears(p.yearsContracted,4),
+   eta:p=>({m:Math.max(0,(4-num(p.yearsContracted))*12),why:"tenure: "+(4-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
+  {t:"A client base of at least 325 active clients, of which at least 275 are active life clients",f:["clientTotal","clientActiveLife"],ck:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275,gap:gapClients},
+  {t:"Production in line with President's Club qualification in each of the preceding 2 years",f:["presidentsClub2"],ck:p=>!!p.presidentsClub2},
+  {t:"Attained the FSCP™ (2015) or similar designation",note:"Appendix 3 accepts a minimum of five (5) completed FSCP courses for ELP consideration.",f:["fscpOrDesignation"],ck:p=>hasDesignation(p)||fscpCount(p)>=5},
+  {t:"Interest in management and a recommendation from your Branch Manager",f:["bmRecommendation"],ck:p=>!!p.bmRecommendation},
+  {t:"Complete the POP7 Management Assessment with a favourable score",f:["pop7"],ck:p=>!!p.pop7},
+  {t:"Completed the Intermediate Development Course",f:["intermediateDev"],ck:p=>!!p.intermediateDev},
+  {t:"Completed the Mentoring Program",f:["mentoringProgram"],ck:p=>!!p.mentoringProgram}]},
+
+{id:"trainee",track:"mgmt",num:"Step 1",short:"Trainee Manager",mini:"First management appointment (max 2 years)",
+ title:"Trainee Manager",
+ desc:"Appointed after completing the ELP to the satisfaction of the VP – Sales. Under review for up to 18 months for promotion to Unit Manager; maximum of 2 years in this designation, barring extenuating circumstances.",
+ benefits:["Overriding commissions of 100% of the Development Allowance on the business of new agents introduced to the Branch, for the first two years"],
+ keep:"Expected to complete the Management Orientation Program and pre-management courses (Developing Future Leaders, Business Planning), keep producing at President's Club level, and maintain high moral and ethical standards.",
+ reqs:[
+  {t:"Completed the Emerging Leaders Program (ELP)",f:["elpCompleted"],ck:p=>!!p.elpCompleted},
+  {t:"Contracted for at least 5 years",f:["yearsContracted"],ck:p=>num(p.yearsContracted)>=5,gap:p=>gapYears(p.yearsContracted,5),
+   eta:p=>({m:Math.max(0,(5-num(p.yearsContracted))*12),why:"tenure: "+(5-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
+  {t:"A client base of at least 325 active clients, of which at least 275 are active life clients",f:["clientTotal","clientActiveLife"],ck:p=>num(p.clientTotal)>=325&&num(p.clientActiveLife)>=275,gap:gapClients},
+  {t:"Production in line with President's Club qualification in each of the preceding 2 years",f:["presidentsClub2"],ck:p=>!!p.presidentsClub2},
+  {t:"Attained the FSCP™ (2015) or other insurance designation",f:["fscpOrDesignation"],ck:p=>hasDesignation(p)},
+  {t:"Recruited at least 2 agents with the assistance of your Manager",f:["recruits"],ck:p=>num(p.recruits)>=2,
+   gap:p=>"Recruit "+(2-num(p.recruits))+" more agent(s).",eta:p=>({m:Math.max(0,(2-num(p.recruits))*4),why:"recruiting: "+(2-num(p.recruits))+" more agent(s)"})},
+  {t:"Maintain continuous development credits (TTAIFA and CBTT)",f:["cpdCredits"],ck:p=>!!p.cpdCredits},
+  {t:"Sign the appointment letter acknowledging terms and conditions",f:["appointmentLetter"],ck:p=>!!p.appointmentLetter}]},
+
+{id:"unit",track:"mgmt",num:"Step 2",short:"Unit Manager",mini:"Leads a producing unit of contracted agents",
+ title:"Unit Manager",
+ desc:"Promotion from Trainee Manager after demonstrated performance in Planning, Recruiting, Selection, Supervision and Training. Recruiting schedule by tenure: 1–3 yrs → 5 agents; >3–5 → 8; >5–8 → 10; >8–10 → 12; >10 yrs → 15.",
+ benefits:["Overriding commissions and variable allowances","Private office","Shared Administrative/Sales Support at the Manager's discretion","Reserved parking space"],
+ keep:"To keep it: 5 net recruited and retained agents with $2.5M API (excluding your own) by end of year 3; 8 net agents and $3M API by end of year 5; minimum 85% Unit persistency and at least 80% of Unit quota over two consecutive years. Complete AMTC by end of year 2 and pursue CIAM courses; ensure 60% of your agents achieve quota.",
+ reqs:[
+  {t:"Contracted for at least 6 years",f:["yearsContracted"],ck:p=>num(p.yearsContracted)>=6,gap:p=>gapYears(p.yearsContracted,6),
+   eta:p=>({m:Math.max(0,(6-num(p.yearsContracted))*12),why:"tenure: "+(6-num(p.yearsContracted)).toFixed(1)+" more year(s) contracted"})},
+  {t:"Recruited 4 agents who successfully completed the Company's Probation Contract",f:["recruitsProbation"],ck:p=>num(p.recruitsProbation)>=4,
+   gap:p=>"Need "+(4-num(p.recruitsProbation))+" more recruit(s) past probation.",
+   eta:p=>({m:Math.max(0,(4-num(p.recruitsProbation))*6),why:"recruiting: "+(4-num(p.recruitsProbation))+" recruit(s) through the 7-month probation"})},
+  {t:"Completed GLOC's pre-management courses — ELP, Business Planning, and Developing Future Leaders",f:["elpCompleted","businessPlanning","futureLeaders"],
+   ck:p=>!!p.elpCompleted&&!!p.businessPlanning&&!!p.futureLeaders},
+  {t:"Maintain continuous development credits (TTAIFA and CBTT)",f:["cpdCredits"],ck:p=>!!p.cpdCredits},
+  {t:"Unit producing at least $1.6M API in the 12 months preceding appointment",f:["unitApi12"],ck:p=>num(p.unitApi12)>=1600000,gap:p=>gapMoney(p.unitApi12,1600000,"The Unit")},
+  {t:"No more than 40% of the Unit's production coming from your own production",f:["leaderSharePct"],
+   ck:p=>p.leaderSharePct!==undefined&&p.leaderSharePct!==""&&num(p.leaderSharePct)<=40,
+   gap:p=>"Your share is "+num(p.leaderSharePct)+"% — it must be 40% or less."}]},
+
+{id:"abm",track:"mgmt",num:"Step 3",short:"Asst. Branch Manager",mini:"Senior manager developing a large unit",
+ title:"Assistant Branch Manager",
+ desc:"Considered from the position of Unit Manager, subject to satisfactory performance across Planning, Recruiting, Selection, Training, Supervision, Motivation and Administration. Recruiting schedule by tenure: 1–3 yrs → 12 agents; >3–5 → 15; >5 yrs → 20.",
+ benefits:["Additional administrative support for the Unit, as determined by the Branch Manager","Reserved parking space","Private office"],
+ keep:"To keep it: maintain the recruiting schedule, at least 85% persistency, and at least 80% of assigned quota (minimum $6M settled production), each over two consecutive years. Attain CIAM within two years of appointment.",
+ reqs:[
+  {t:"At least 12 agents under contract in your Unit",f:["agentsUnderContract"],ck:p=>num(p.agentsUnderContract)>=12,
+   gap:p=>"Need "+(12-num(p.agentsUnderContract))+" more agent(s) under contract.",
+   eta:p=>({m:Math.max(0,(12-num(p.agentsUnderContract))*2),why:"build the unit: "+(12-num(p.agentsUnderContract))+" more agent(s)"})},
+  {t:"Met at least 80% of your Unit's production quota for the preceding 2 years",f:["unitQuotaPct"],ck:p=>num(p.unitQuotaPct)>=80,gap:p=>gapPct(p.unitQuotaPct,80)},
+  {t:"In the position of Unit Manager for at least 3 years",f:["umYears"],ck:p=>num(p.umYears)>=3,gap:p=>gapYears(p.umYears,3),
+   eta:p=>({m:Math.max(0,(3-num(p.umYears))*12),why:"tenure: "+(3-num(p.umYears)).toFixed(1)+" more year(s) as Unit Manager"})},
+  {t:"Completed all recommended Management Training Programs — AMTC, Pacesetter, MAPS and AES",f:["amtc","pacesetter","maps","aes"],
+   ck:p=>!!p.amtc&&!!p.pacesetter&&!!p.maps&&!!p.aes},
+  {t:"60% of your agents meeting their quota in the year prior to appointment",f:["agentsQuotaPct"],ck:p=>num(p.agentsQuotaPct)>=60,gap:p=>gapPct(p.agentsQuotaPct,60)},
+  {t:"Unit production of at least $6,000,000 API in the preceding 12 months",f:["unitApi12"],ck:p=>num(p.unitApi12)>=6000000,gap:p=>gapMoney(p.unitApi12,6000000,"The Unit")},
+  {t:"No more than 25% of the Unit's production coming from your own production",f:["leaderSharePct"],
+   ck:p=>p.leaderSharePct!==undefined&&p.leaderSharePct!==""&&num(p.leaderSharePct)<=25,
+   gap:p=>"Your share is "+num(p.leaderSharePct)+"% — it must be 25% or less."},
+  {t:"Maintain continuous development credits (TTAIFA and CBTT)",f:["cpdCredits"],ck:p=>!!p.cpdCredits}]},
+
+{id:"bm",track:"mgmt",num:"Step 4",short:"Branch Manager",mini:"The top of the sales management track",
+ title:"Branch Manager",
+ desc:"Promotion from Assistant Branch Manager, subject to satisfactory performance across all managerial functions. Recruiting schedule by tenure: 1–3 yrs → 30 agents; >3–6 → 40; >6 yrs → 50. Core values: Trust, Integrity, Quality, and Serving People.",
+ benefits:["Leadership of a full Branch","Compensation per the Branch Manager contract","Recruiting and development authority for the Branch"],
+ keep:"To keep it: maintain at least 30 agents net for two consecutive years, at least 85% persistency for two consecutive years, and (after year 3) at least 80% of assigned quota — minimum $12M settled API — for two consecutive calendar years.",
+ reqs:[
+  {t:"At least 30 agents under contract in your Unit / Branch",f:["agentsUnderContract"],ck:p=>num(p.agentsUnderContract)>=30,
+   gap:p=>"Need "+(30-num(p.agentsUnderContract))+" more agent(s) under contract.",
+   eta:p=>({m:Math.max(0,(30-num(p.agentsUnderContract))*2),why:"build the branch: "+(30-num(p.agentsUnderContract))+" more agent(s)"})},
+  {t:"Met at least 80% of your Unit's production quota for the preceding 2 years",f:["unitQuotaPct"],ck:p=>num(p.unitQuotaPct)>=80,gap:p=>gapPct(p.unitQuotaPct,80)},
+  {t:"Production of at least $12,000,000 API in the 12 months prior to appointment",f:["unitApi12"],ck:p=>num(p.unitApi12)>=12000000,gap:p=>gapMoney(p.unitApi12,12000000,"The Unit")},
+  {t:"In the position of Assistant Branch Manager for at least 3 years",f:["abmYears"],ck:p=>num(p.abmYears)>=3,gap:p=>gapYears(p.abmYears,3),
+   eta:p=>({m:Math.max(0,(3-num(p.abmYears))*12),why:"tenure: "+(3-num(p.abmYears)).toFixed(1)+" more year(s) as ABM"})},
+  {t:"Developed and appointed one Unit Manager who has been in the position for at least 1 year",f:["developedUM"],ck:p=>!!p.developedUM},
+  {t:"Attained the CIAM designation",f:["ciam"],ck:p=>!!p.ciam},
+  {t:"Maintain continuous development credits (TTAIFA and CBTT)",f:["cpdCredits"],ck:p=>!!p.cpdCredits}]}
+];
+
+/* ── learning hub programmes ── */
+const PROGRAMS=[
+ {id:"fscp",icon:"🎓",title:"FSCP™ — Financial Services Certified Professional (2015)",
+  who:"TTAIFA (online, Trinidad) · CARAIFA · The American College",
+  sum:"The core designation on the career path. Seven courses taken in order, then the FA 290 Ethics module, then the FP 99 Certification Course & Examination. Tick off each module as you pass it — your checklists update automatically.",
+  facts:["The seven courses must be completed in order before attempting FP 99.",
+   "5-Year Rule: course credits count toward the designation for up to 5 years after your first course — matching the expectation to commence in year 2 and complete by year 5.",
+   "Delivered online through TTAIFA. Register: ttaifa.com · 129–131 Edward Street, Port of Spain · 624-2940 / 624-2608 · info@ttaifa.com",
+   "ELP note: Appendix 3 accepts a minimum of five (5) completed FSCP courses for ELP consideration."],
+  reqfor:"Salesperson · Executive Agent · Senior Sales Consultant · ELP · Trainee Manager",
+  modules:true,
+  links:[["TTAIFA — FSCP courses","https://ttaifa.com/courses-home/fscp-courses/"],["CARAIFA — Education","https://caraifa.com/education/"],["The American College — FSCP","https://www.theamericancollege.edu/learn/professional-designations-certifications/fscp"]]},
+ {id:"mdrt",icon:"🏆",title:"MDRT — Million Dollar Round Table",
+  who:"mdrt.org · qualify on your production year",
+  sum:"Full-member qualification and attendance is required: at least once every 3 years for Executive Agent, and once every 2 years for Senior Sales Consultant.",
+  facts:["2026 qualification (on 2025 production) — meet ONE method: Commission ≥ USD 87,000 · Income ≥ USD 151,000 (min USD 43,500 from new business) · Premium ≥ USD 522,000.",
+   "At least 50% of the base requirement must come from Risk-Protection products before Other Products credit counts.",
+   "Court of the Table ≈ 3× the base requirement; Top of the Table ≈ 6×.",
+   "Production is converted to USD using MDRT's published conversion factor for Trinidad & Tobago — check the current TTD factor and apply by the annual deadline."],
+  reqfor:"Executive Agent (once in 3 yrs) · Senior Sales Consultant (once in 2 yrs)",
+  links:[["MDRT — Join / requirements","https://www.mdrt.org/join"]]},
+ {id:"ciam",icon:"🎖️",title:"CIAM — Chartered Insurance Agency Manager",
+  who:"LIMRA · delivered regionally, online options available",
+  sum:"LIMRA's management designation — and the exact courses the career path requires: Pacesetter, AMTC, MAPS and AES. Complete all four (plus 5 years as a manager and a thesis) and you have earned CIAM, which Branch Manager requires.",
+  facts:["AMTC (Agency Management Training Course): covers 28 management skills across planning & goal-setting, recruiting & selection, training and activity management. Expected by end of your 2nd year as Unit Manager.",
+   "CIAM = Pacesetter + AMTC + AES + MAPS, plus a minimum of 5 years' manager experience (company letter), a thesis paper, and a US$100 processing fee.",
+   "Assistant Branch Managers must attain CIAM within two years of appointment.",
+   "Ask your Branch Manager or the VP – Sales about the next regional cohort for each course."],
+  reqfor:"Unit Manager (AMTC by yr 2) · Assistant Branch Manager (all four; CIAM within 2 yrs) · Branch Manager (CIAM attained)",
+  courseFields:["pacesetter","amtc","maps","aes","ciam"],
+  links:[["LIMRA — AMTC","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/agency-management-training-course-amtc/"],
+   ["LIMRA — Pacesetter","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/pacesetter/"],
+   ["LIMRA — Designations for managers","https://www.limra.com/en/solutions-and-services/global/learning-and-development/programs-for-managers/designation-programs-for-managers/"]]},
+ {id:"designations",icon:"📜",title:"Alternative designations — CLU · ChFC · CFP · MFA",
+  who:"The American College and others",
+  sum:"Wherever the career path asks for “FSCP™ (2015) or similar designation”, these count. Most agents take the FSCP locally through TTAIFA; these are the recognised alternatives.",
+  facts:["CLU (Chartered Life Underwriter): 8 courses + exams, 3 years' industry experience.",
+   "ChFC (Chartered Financial Consultant): 8 required courses, no electives, 3 years' related experience.",
+   "CFP and MFA are also accepted per the career path document.",
+   "If you already hold one of these, tick the designation box in your checklist — you do not need the FSCP as well."],
+  reqfor:"Accepted wherever FSCP™ is required",
+  links:[["The American College — CLU","https://www.theamericancollege.edu/learn/professional-designations-certifications/clu"]]},
+ {id:"ttaifa",icon:"🤝",title:"TTAIFA membership & CPD credits",
+  who:"TTAIFA · Port of Spain · online",
+  sum:"All Salespersons must join TTAIFA, and every level of the career path requires keeping continuous development credits current with TTAIFA and the Central Bank (CBTT).",
+  facts:["Membership is for anyone selling, directing or assisting in the sale of life insurance and financial services products.",
+   "Join or renew: 624-2940 / 624-2608 · info@ttaifa.com · 129–131 Edward Street, Port of Spain.",
+   "TTAIFA also runs the Professional Development Certificate — five interactive sessions covering the full sales process.",
+   "CBTT registration under the Insurance Act is required before you can represent Guardian Life in the field."],
+  reqfor:"Every position on the career path",
+  links:[["TTAIFA","https://ttaifa.com/"],["Central Bank of Trinidad & Tobago","https://www.central-bank.org.tt/"]]},
+ {id:"internal",icon:"🏢",title:"In-house programs",
+  who:"Guardian Life · register through your Branch Manager / GGLDC",
+  sum:"The company-run programs on the career path. These are scheduled internally — speak to your Branch Manager or check the GGLDC site for the next intake.",
+  facts:["Intermediate Development Course — 4-day program: ethics, emotional intelligence in sales, business communications, business insurance concepts (Key Man, Deferred Compensation, Buy/Sell, Sole Proprietor), personal brand & social selling, wills & trusts, financial statements. Required entering your 4th year.",
+   "Mentoring / Coaching Program — classroom sessions, 1.5 hours once per month; a 2-day agenda covering the mentoring relationship, communication and collaboration.",
+   "Emerging Leaders Program (ELP) — 12 monthly sessions. The gateway into management.",
+   "Developing Future Leaders — a minimum 6-month coaching program for selected agents on the management track.",
+   "POP7 Management Assessment — required with a favourable score for ELP consideration.",
+   "GLOC Bootcamp + Induction Program — part of your first 7-month probation."],
+  reqfor:"Salesperson · Executive Agent · ELP · Trainee Manager · Unit Manager",
+  links:[]}
+];
+const FIELD_PROGRAM={fscpStarted:"fscp",fscpOrDesignation:"fscp",mdrtLast3:"mdrt",mdrtLast2:"mdrt",
+ amtc:"ciam",pacesetter:"ciam",maps:"ciam",aes:"ciam",ciam:"ciam",
+ intermediateDev:"internal",mentoringProgram:"internal",elpCompleted:"internal",futureLeaders:"internal",
+ businessPlanning:"internal",pop7:"internal",ncdCompleted:"internal",probationDone:"internal",
+ ttaifaMember:"ttaifa",cpdCredits:"ttaifa",insuranceAct:"ttaifa"};
+
+/* ── storage (in-memory fallback where localStorage is blocked) ── */
+const KEY="rrbCareerPath";
+let mem=null;
+function load(){if(mem)return mem;try{return JSON.parse(localStorage.getItem(KEY))||{}}catch(e){mem={};return mem}}
+function save(s){try{localStorage.setItem(KEY,JSON.stringify(s))}catch(e){mem=s}}
+let who=null,P=null,curPosId=null;
+function saveP(){if(!who)return;const s=load();s[who]=P;save(s)}
+
+/* ── dates ── */
+function fmtDate(d){return d.toLocaleDateString("en-US",{year:"numeric",month:"short",day:"numeric"})}
+function iso(d){const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate())}
+function windows(n){const t=new Date();t.setHours(0,0,0,0);const w=[];
+  for(let y=t.getFullYear();y<=t.getFullYear()+(n||8);y++){
+    w.push({label:"April "+y+" (Mid-Year)",d:new Date(y,1,28),note:"submit by Feb 28, "+y});
+    w.push({label:"October "+y+" (Blastoff)",d:new Date(y,7,31),note:"submit by Aug 31, "+y});}
+  return w.filter(x=>x.d>=t)}
+function fmtMonths(m){if(m<1)return "under a month";if(m<12)return "about "+Math.ceil(m)+" month"+(Math.ceil(m)===1?"":"s");
+  const y=Math.round(m/6)/2;return "about "+(y===Math.floor(y)?y:y.toFixed(1))+" year"+(y>1?"s":"")}
+
+/* ── sign in ── */
+function renderNames(){
+  const s=document.getElementById("selName");
+  s.innerHTML='<option value="">— Select your name —</option>'
+    +AGENTS.map(n=>'<option value="'+esc(n)+'">'+esc(n)+'</option>').join("")
+    +'<option value="'+OTHER+'">My name isn\'t listed…</option>';
+  s.onchange=()=>{const o=s.value===OTHER;
+    document.getElementById("otherWrap").classList.toggle("hidden",!o);
+    if(o)document.getElementById("txtName").focus()};
+}
+function renderReturning(){
+  const st=load(),ks=Object.keys(st),box=document.getElementById("retWrap"),list=document.getElementById("retList");
+  if(!ks.length){box.classList.add("hidden");return}
+  box.classList.remove("hidden");list.innerHTML="";
+  ks.sort().forEach(k=>{
+    const row=document.createElement("div");row.className="arow";
+    const b=document.createElement("button");b.className="open";b.textContent=(st[k]||{}).name||k;b.onclick=()=>open_(k);
+    const d=document.createElement("button");d.className="del";d.textContent="remove";
+    d.onclick=()=>{const s=load();delete s[k];save(s);renderReturning()};
+    row.appendChild(b);row.appendChild(d);list.appendChild(row);
+  });
+}
+function login(){
+  const sel=document.getElementById("selName");
+  const name=sel.value===OTHER?document.getElementById("txtName").value.trim():sel.value;
+  const err=document.getElementById("loginErr");
+  if(!name){err.textContent=sel.value===OTHER?"Please type your name to continue.":"Please select your name to continue.";return}
+  err.textContent="";
+  const st=load();
+  if(!st[name]){st[name]={name:name,currentPosition:document.getElementById("selPos").value};save(st)}
+  open_(name);
+}
+function open_(k){
+  const st=load();who=k;P=st[k]||{};
+  document.getElementById("chipName").textContent=P.name||k;
+  document.getElementById("chip").classList.remove("hidden");
+  showPath();
+}
+function logout(){
+  who=null;P=null;curPosId=null;
+  document.getElementById("chip").classList.add("hidden");
+  document.getElementById("selName").value="";
+  document.getElementById("txtName").value="";
+  document.getElementById("otherWrap").classList.add("hidden");
+  view("vSignin");renderReturning();
+}
+
+/* ── status strip ── */
+let bound=false;
+function renderStatus(){
+  const c=document.getElementById("curPos"),s=document.getElementById("posSince"),y=document.getElementById("curYears");
+  if(!bound){bound=true;
+    c.onchange=()=>{P.currentPosition=c.value;saveP();renderPath();statusLine()};
+    s.onchange=()=>{P.positionSince=s.value;saveP();statusLine()};
+    y.oninput=()=>{P.yearsContracted=y.value;saveP();statusLine()};
+  }
+  c.value=P.currentPosition||"none";
+  s.value=P.positionSince||"";
+  y.value=P.yearsContracted!==undefined?P.yearsContracted:"";
+  statusLine();
+}
+function tenure(sv){
+  const a=new Date(sv+"T00:00:00"),n=new Date();
+  let m=(n.getFullYear()-a.getFullYear())*12+(n.getMonth()-a.getMonth());
+  if(n.getDate()<a.getDate())m--;
+  if(m<0)return "";
+  const y=Math.floor(m/12),r=m%12,p=[];
+  if(y)p.push(y+" yr"+(y>1?"s":""));
+  if(r||!y)p.push(r+" mo"+(r===1?"":"s"));
+  return p.join(" ");
+}
+function statusLine(){
+  const el=document.getElementById("statusLine");
+  const nm=NAMES[P.currentPosition||"none"]||"New Candidate";
+  let s=(ICONS[P.currentPosition]||"🧑‍💼")+" "+nm;
+  if(P.positionSince){const t=tenure(P.positionSince);if(t)s+=" · "+t+" in this position"}
+  if(num(P.yearsContracted)>0)s+=" · "+P.yearsContracted+" yr"+(num(P.yearsContracted)>1?"s":"")+" with Guardian Life";
+  if(P.targetPosition&&P.targetPosition!==P.currentPosition){
+    const t=POSITIONS.find(x=>x.id===P.targetPosition);
+    if(t)s+='  —  <span class="aim">🎯 aiming for '+esc(t.short)+'</span>';
+  }
+  el.innerHTML=s;
+}
+
+/* ── scoring + rings ── */
+function score(pos){let m=0;pos.reqs.forEach(r=>{if(r.ck(P))m++});return{met:m,total:pos.reqs.length}}
+function answered(pos){return pos.reqs.some(r=>r.f.some(f=>P[f]!==undefined&&P[f]!==""&&P[f]!==false))}
+function ring(met,total,emo){
+  const pct=total?met/total:0,r=23,c=2*Math.PI*r;
+  return '<div class="ring '+(met===total?"full":"")+'"><svg viewBox="0 0 54 54" width="54" height="54">'
+   +'<circle class="trk" cx="27" cy="27" r="'+r+'" fill="none" stroke-width="5"/>'
+   +'<circle class="bar" cx="27" cy="27" r="'+r+'" fill="none" stroke-width="5" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+(c*(1-pct)).toFixed(1)+'"/>'
+   +'</svg><div class="rc"><span class="emo">'+emo+'</span><span class="pct">'+Math.round(pct*100)+'%</span></div></div>';
+}
+function renderPath(){
+  document.getElementById("hello").textContent="Welcome, "+(P.name||"Agent");
+  const a=document.getElementById("trackSales"),b=document.getElementById("trackMgmt");
+  a.innerHTML="";b.innerHTML="";
+  POSITIONS.forEach(pos=>{
+    const s=score(pos),cur=P.currentPosition===pos.id,tgt=P.targetPosition===pos.id;
+    const card=document.createElement("button");
+    card.className="step"+(cur?" current":"");
+    let pill;
+    if(cur)pill='<span class="pill here">You are here</span>';
+    else if(s.met===s.total)pill='<span class="pill done">Qualified ✓</span>';
+    else if(answered(pos))pill='<span class="pill part">'+s.met+'/'+s.total+' met</span>';
+    else pill='<span class="pill none">Tap to check</span>';
+    if(tgt&&!cur)pill+='<span class="pill goal">🎯 My goal</span>';
+    card.innerHTML='<div class="cardtop">'+ring(s.met,s.total,ICONS[pos.id]||"")
+      +'<div><div class="num">'+esc(pos.num)+'</div><h4>'+esc(pos.short)+'</h4></div></div>'
+      +'<div class="mini">'+esc(pos.mini)+'</div>'+pill;
+    card.onclick=()=>showPos(pos.id);
+    (pos.track==="sales"?a:b).appendChild(card);
+  });
+  heroStats();
+}
+function heroStats(){
+  const box=document.getElementById("hstats");
+  const q=POSITIONS.filter(p=>{const s=score(p);return s.met===s.total}).length;
+  const tot=POSITIONS.reduce((x,p)=>x+p.reqs.length,0);
+  const met=POSITIONS.reduce((x,p)=>x+score(p).met,0);
+  const ci=(P.feed||[]).filter(e=>e.type==="checkin").length;
+  box.innerHTML=[["🏅",q+"/"+POSITIONS.length,"positions qualified"],["✅",met+"/"+tot,"requirements met"],
+    ["🎓",fscpCount(P)+"/"+FSCP.length,"FSCP modules"],["📒",ci,"check-ins posted"]]
+    .map(x=>'<div class="hstat"><div class="v">'+esc(x[1])+'</div><div class="k">'+x[0]+' '+esc(x[2])+'</div></div>').join("");
+}
+
+/* ── time estimator ── */
+const EDU={
+ fscpStarted:p=>fscpStartedOk(p)?null:{m:3,why:"enrol in your first FSCP course at TTAIFA"},
+ fscpOrDesignation:p=>{const r=FSCP.length-fscpCount(p);return hasDesignation(p)?null:{m:r*3,why:"FSCP: "+r+" module"+(r===1?"":"s")+" left (~1 per quarter, in order)"}},
+ mdrtLast3:()=>({m:12,why:"MDRT qualifies on a full production year"}),
+ mdrtLast2:()=>({m:12,why:"MDRT qualifies on a full production year"}),
+ presidentsClub2:()=>({m:24,why:"President's Club in each of 2 consecutive years"}),
+ unitQuotaPct:()=>({m:24,why:"80% of Unit quota over 2 consecutive years"}),
+ elpCompleted:()=>({m:12,why:"ELP runs as 12 monthly sessions"}),
+ futureLeaders:()=>({m:6,why:"Developing Future Leaders is a ~6-month program"}),
+ businessPlanning:()=>({m:3,why:"Business Planning — next intake"}),
+ intermediateDev:()=>({m:2,why:"Intermediate Development — next 4-day intake"}),
+ mentoringProgram:()=>({m:2,why:"Mentoring Program — next session"}),
+ pop7:()=>({m:1,why:"book your POP7 assessment"}),
+ amtc:()=>({m:6,why:"AMTC — next LIMRA cohort"}),
+ pacesetter:()=>({m:6,why:"Pacesetter — next LIMRA cohort"}),
+ maps:()=>({m:3,why:"MAPS seminar"}),
+ aes:()=>({m:3,why:"AES series"}),
+ ciam:()=>({m:12,why:"CIAM: four LIMRA courses + thesis"}),
+ ttaifaMember:()=>({m:1,why:"join TTAIFA (624-2940)"}),
+ cpdCredits:()=>({m:2,why:"bring CPD credits up to date"}),
+ ncdCompleted:()=>({m:2,why:"NCD Program"}),
+ probationDone:()=>({m:7,why:"7-month probation"}),
+ insuranceAct:()=>({m:1,why:"CBTT registration"}),
+ stateLicensing:()=>({m:3,why:"State Licensing Examination"}),
+ appointmentLetter:()=>({m:0,why:"sign your appointment letter"}),
+ developedUM:()=>({m:18,why:"develop & appoint a Unit Manager (1 yr in post)"}),
+ production24:()=>({m:12,why:"production builds over the year"}),
+ persistency:()=>({m:12,why:"persistency builds over the year"}),
+ clientTotal:()=>({m:12,why:"client base builds over the year"}),
+ clientActiveLife:()=>({m:12,why:"client base builds over the year"}),
+ unitApi12:()=>({m:12,why:"Unit production builds over the year"}),
+ leaderSharePct:()=>({m:6,why:"grow your agents' share of Unit production"}),
+ agentsQuotaPct:()=>({m:12,why:"coach agents to quota over the year"})
+};
+function reqMonths(r){
+  if(r.eta){const v=r.eta(P);if(v!=null)return v}
+  let best=null;
+  r.f.forEach(f=>{const fn=EDU[f];if(!fn)return;const v=fn(P);if(v&&(best===null||v.m>best.m))best=v});
+  return best;
+}
+function estimate(pos){
+  const g=[];
+  pos.reqs.forEach(r=>{if(r.ck(P))return;const v=reqMonths(r);if(v)g.push(v)});
+  if(!g.length)return null;
+  g.sort((a,b)=>b.m-a.m);
+  return{months:g[0].m,drivers:g.slice(0,2)};
+}
+function windowAfter(m){
+  const t=new Date();t.setDate(t.getDate()+Math.round(m*30.44));
+  return windows(9).find(w=>w.d>=t)||null;
+}
+
+/* ── position detail ── */
+function showPos(id){
+  curPosId=id;
+  const pos=POSITIONS.find(p=>p.id===id);
+  document.getElementById("posCrumb").textContent=(pos.track==="sales"?"Professional Sales Track":"Sales Management Track")+" · "+pos.num;
+  document.getElementById("posTitle").textContent=(ICONS[pos.id]||"")+" "+pos.title;
+  document.getElementById("posDesc").textContent=pos.desc;
+  document.getElementById("posBenefits").innerHTML="<h3>When completed — what becomes available</h3><ul>"
+    +pos.benefits.map(b=>"<li>"+esc(b)+"</li>").join("")+"</ul>";
+  document.getElementById("posKeep").textContent=pos.keep||"";
+  goalBtn();
+  renderReqs(pos);
+  view("vPos");
+}
+function goalBtn(){
+  const b=document.getElementById("goalBtn");
+  const on=P.targetPosition===curPosId;
+  b.textContent=on?"★ This is my goal":"🎯 This is what I want to be";
+  b.className="goalbtn"+(on?" set":"");
+}
+function toggleGoal(){
+  if(P.targetPosition===curPosId){P.targetPosition=""}
+  else{P.targetPosition=curPosId;const p=POSITIONS.find(x=>x.id===curPosId);feed("goal","🎯 New goal: "+(p?p.short:curPosId))}
+  saveP();goalBtn();
+}
+function renderReqs(pos){
+  const list=document.getElementById("reqList");
+  list.innerHTML="";
+  P.reqPlans=P.reqPlans||{};
+  pos.reqs.forEach((r,i)=>{
+    const key=pos.id+":"+i,plan=P.reqPlans[key]||{};
+    let ctr="";
+    r.f.forEach(f=>{
+      const d=FIELDS[f],v=P[f];
+      if(d.type==="b")ctr+='<div class="ctrl tog"><input type="checkbox" id="f_'+f+'_'+i+'" data-field="'+f+'"'+(v?" checked":"")+'><label for="f_'+f+'_'+i+'">'+esc(d.label)+'</label></div>';
+      else ctr+='<div class="ctrl"><label for="f_'+f+'_'+i+'">'+esc(d.label)+'</label><input type="number" id="f_'+f+'_'+i+'" data-field="'+f+'" value="'+(v!==undefined?esc(v):"")+'" min="0"'+(d.max!==undefined?' max="'+d.max+'"':"")+' step="'+(d.step||1)+'" placeholder="0"></div>';
+    });
+    ctr+='<div class="ctrl plan" data-plan-wrap="'+key+'"><label>My target date for this step</label><input type="date" data-plan="'+key+'" value="'+(plan.targetDate||"")+'"></div>';
+    const hubs=[...new Set(r.f.map(f=>FIELD_PROGRAM[f]).filter(Boolean))];
+    const card=document.createElement("div");
+    card.className="req";
+    card.innerHTML='<div class="ic"></div><div class="body"><div class="t">'+esc(r.t)+'</div>'
+      +(r.note?'<div class="note">'+esc(r.note)+'</div>':"")
+      +'<div class="gap" data-gap="'+key+'"></div><div class="edu" data-edu="'+key+'"></div>'
+      +hubs.map(h=>'<button class="hublink" onclick="showHub(\''+h+'\')">📚 Course &amp; program details</button>').join(" ")
+      +'</div><div class="ctrls">'+ctr+'</div>';
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input[data-field]").forEach(inp=>{
+    inp.addEventListener("input",()=>{
+      const f=inp.dataset.field;
+      P[f]=inp.type==="checkbox"?inp.checked:inp.value;
+      saveP();
+      list.querySelectorAll('input[data-field="'+f+'"]').forEach(o=>{
+        if(o!==inp){if(o.type==="checkbox")o.checked=!!P[f];else o.value=P[f]}});
+      refresh(pos);
+    });
+  });
+  list.querySelectorAll("input[data-plan]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      const k=inp.dataset.plan;
+      P.reqPlans[k]=P.reqPlans[k]||{};P.reqPlans[k].targetDate=inp.value;
+      saveP();refresh(pos);
+    });
+  });
+  refresh(pos);
+}
+function refresh(pos){
+  const list=document.getElementById("reqList"),cards=list.querySelectorAll(".req"),today=iso(new Date());
+  P.reqPlans=P.reqPlans||{};P.reqState=P.reqState||{};
+  let met=0;
+  pos.reqs.forEach((r,i)=>{
+    const ok=r.ck(P),key=pos.id+":"+i,plan=P.reqPlans[key]=P.reqPlans[key]||{},card=cards[i];
+    if(ok)met++;
+    if(ok&&!plan.doneDate){plan.doneDate=today;
+      if(P.reqState[key]===false)feed("milestone","✅ Completed a step towards "+pos.short+": "+r.t)}
+    if(!ok&&plan.doneDate)delete plan.doneDate;
+    P.reqState[key]=ok;
+    card.className="req "+(ok?"met":"unmet");
+    card.querySelector(".ic").innerHTML=ok?"&#10003;":"&#10007;";
+    const g=card.querySelector('[data-gap="'+key+'"]'),e=card.querySelector('[data-edu="'+key+'"]'),
+      pw=card.querySelector('[data-plan-wrap="'+key+'"]');
+    if(ok){
+      g.textContent="";g.className="gap";
+      g.textContent="✅ Done — "+fmtDate(new Date(plan.doneDate+"T00:00:00"));
+      g.style.color="var(--ok)";
+      e.textContent="";
+      if(pw)pw.style.display="none";
+    }else{
+      g.style.color="";
+      const gt=r.gap?r.gap(P):"";
+      if(gt){g.textContent=gt}
+      else if(plan.targetDate&&plan.targetDate<today){g.textContent="⏰ Planned for "+fmtDate(new Date(plan.targetDate+"T00:00:00"))+" — overdue"}
+      else if(plan.targetDate){g.textContent="🗓️ Planned: "+fmtDate(new Date(plan.targetDate+"T00:00:00"));g.style.color="var(--muted)"}
+      else g.textContent="";
+      const v=reqMonths(r);
+      e.textContent=v&&v.m>0?"⏱️ Typical timeframe: "+fmtMonths(v.m)+" — "+v.why:"";
+      if(pw)pw.style.display="";
+    }
+  });
+  saveP();
+  const total=pos.reqs.length,pct=Math.round(met/total*100);
+  document.getElementById("posRing").innerHTML=ring(met,total,ICONS[pos.id]||"");
+  P.qualLogged=P.qualLogged||{};
+  if(met===total&&!P.qualLogged[pos.id]){
+    P.qualLogged[pos.id]=true;saveP();
+    feed("milestone","🎉 All requirements met for "+pos.short+" — ready to submit through your Branch Manager!");
+    celebrate();
+  }
+  const v=document.getElementById("posVerdict");
+  if(met===total){v.textContent="🎉 You qualify for "+pos.short+"!";v.className="verdict ok"}
+  else{v.textContent="Not yet — "+(total-met)+" requirement(s) outstanding";v.className="verdict no"}
+  const m=document.getElementById("posMeter");
+  m.style.width=pct+"%";m.className=met===total?"full":"";
+  document.getElementById("posCount").textContent=met+" of "+total+" met ("+pct+"%)";
+  const eta=document.getElementById("posEta"),est=estimate(pos);
+  if(!est){
+    const w=windows(2)[0];
+    eta.innerHTML=w?"🚀 You meet every requirement now — next submission window: <b>"+esc(w.label)+"</b> ("+esc(w.note)+"). Speak to your Branch Manager.":"";
+  }else{
+    const w=windowAfter(est.months);
+    eta.innerHTML="⏱️ Realistic estimate: <b>"+esc(fmtMonths(est.months))+"</b>"
+      +(w?" → earliest window: <b>"+esc(w.label)+"</b> ("+esc(w.note)+")":"")
+      +'<span class="drivers">Biggest levers: '+est.drivers.map(d=>esc(d.why)).join(" · ")+"</span>";
+  }
+}
+
+/* ── learning hub ── */
+function showHub(focus){
+  const list=document.getElementById("hubList");
+  list.innerHTML="";
+  PROGRAMS.forEach(pr=>{
+    const card=document.createElement("div");
+    card.className="prog"+(pr.id===focus?" focus":"");
+    card.id="prog-"+pr.id;
+    let mods="";
+    if(pr.modules){
+      const done=fscpCount(P),tot=FSCP.length;
+      mods+='<div class="modp" id="fscpProg">'+(done===tot?'<span class="okw">🎓 Curriculum complete — apply for your designation!</span>'
+        :done+" of "+tot+" modules completed"+(done>=5?' · <span class="okw">meets the 5-course ELP minimum</span>':""))+'</div>';
+      mods+='<div class="mods">'+FSCP.map(m=>{
+        const c=(P.fscpModules||{})[m.c];
+        return '<label class="modrow'+(c?" done":"")+'"><input type="checkbox" data-fscp="'+esc(m.c)+'"'+(c?" checked":"")+'><span class="code">'+esc(m.c)+'</span><span class="mt">'+esc(m.t)+'</span></label>';
+      }).join("")+'</div>';
+    }
+    if(pr.courseFields){
+      mods+='<div class="mods">'+pr.courseFields.map(f=>{
+        const c=!!P[f];
+        return '<label class="modrow'+(c?" done":"")+'"><input type="checkbox" data-cf="'+f+'"'+(c?" checked":"")+'><span class="mt">'+esc(FIELDS[f].label)+'</span></label>';
+      }).join("")+'</div>';
+    }
+    card.innerHTML='<h3>'+pr.icon+' '+esc(pr.title)+'</h3><div class="who">'+esc(pr.who)+'</div>'
+      +'<div class="sum">'+esc(pr.sum)+'</div><div class="reqfor">Required for: '+esc(pr.reqfor)+'</div>'
+      +'<ul class="facts">'+pr.facts.map(f=>"<li>"+esc(f)+"</li>").join("")+'</ul>'+mods
+      +(pr.links.length?'<div class="links">'+pr.links.map(l=>'<a href="'+esc(l[1])+'" target="_blank" rel="noopener">'+esc(l[0])+' ↗</a>').join("")+'</div>':"");
+    list.appendChild(card);
+  });
+  list.querySelectorAll("input[data-fscp]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      P.fscpModules=P.fscpModules||{};
+      const c=inp.dataset.fscp;
+      P.fscpModules[c]=inp.checked;
+      if(inp.checked){
+        const m=FSCP.find(x=>x.c===c);
+        feed("milestone","📚 FSCP module passed: "+c+" — "+(m?m.t:""));
+        if(fscpCount(P)===FSCP.length)feed("milestone","🎓 FSCP curriculum COMPLETE — all 9 modules done!");
+      }
+      saveP();
+      inp.closest(".modrow").classList.toggle("done",inp.checked);
+      const done=fscpCount(P),tot=FSCP.length,el=document.getElementById("fscpProg");
+      if(el)el.innerHTML=done===tot?'<span class="okw">🎓 Curriculum complete — apply for your designation!</span>'
+        :done+" of "+tot+" modules completed"+(done>=5?' · <span class="okw">meets the 5-course ELP minimum</span>':"");
+    });
+  });
+  list.querySelectorAll("input[data-cf]").forEach(inp=>{
+    inp.addEventListener("change",()=>{
+      const f=inp.dataset.cf;P[f]=inp.checked;
+      if(inp.checked)feed("milestone","📚 Completed: "+FIELDS[f].label);
+      saveP();inp.closest(".modrow").classList.toggle("done",inp.checked);
+    });
+  });
+  view("vHub");
+  if(focus){const el=document.getElementById("prog-"+focus);if(el)setTimeout(()=>el.scrollIntoView({behavior:"smooth",block:"start"}),60)}
+}
+
+/* ── feed + check-ins ── */
+function feed(type,text,snap){
+  P.feed=P.feed||[];
+  P.feed.unshift({d:iso(new Date()),type:type,text:text,snap:snap||""});
+  if(P.feed.length>200)P.feed.length=200;
+  saveP();
+}
+function snapshot(){
+  const p=[];
+  if(P.currentPosition&&P.currentPosition!=="none"){
+    let c=NAMES[P.currentPosition]||P.currentPosition;
+    if(P.positionSince){const t=tenure(P.positionSince);if(t)c+=" ("+t+")"}
+    p.push("Current: "+c);
+  }
+  if(P.targetPosition){
+    const pos=POSITIONS.find(x=>x.id===P.targetPosition);
+    if(pos){const s=score(pos);p.push("Aiming for: "+pos.short+" — "+s.met+" of "+s.total+" met")}
+  }
+  const f=fscpCount(P);
+  if(f>0&&f<FSCP.length)p.push("FSCP: "+f+"/"+FSCP.length+" modules");
+  return p.join(" · ");
+}
+function dueThisMonth(){
+  const ym=iso(new Date()).slice(0,7);
+  return !(P.feed||[]).some(e=>e.type==="checkin"&&e.d.slice(0,7)===ym);
+}
+function postCheckin(){
+  const ta=document.getElementById("checkinText"),t=ta.value.trim();
+  if(!t){ta.focus();ta.placeholder="Write a line or two about your month first, then post…";return}
+  feed("checkin",t,snapshot());ta.value="";renderFeed();
+}
+function renderFeed(){
+  document.getElementById("dueWrap").innerHTML=dueThisMonth()
+    ?'<div class="due">📣 Monthly check-in due — where are you this month? Update your checklists, then post a quick note.</div>':"";
+  const f=P.feed||[],last=f.find(e=>e.type==="checkin");
+  document.getElementById("lastCheckin").textContent=last?"Last check-in: "+fmtDate(new Date(last.d+"T00:00:00")):"No check-ins yet";
+  const list=document.getElementById("flist");
+  if(!f.length){list.innerHTML='<div class="fempty">Your feed is empty. Post your first monthly check-in above — future you will thank you. 📈</div>';return}
+  const bd={checkin:"Check-in",milestone:"Milestone",goal:"Goal"};
+  list.innerHTML=f.map(e=>'<div class="fe '+esc(e.type)+'"><div class="meta"><span class="fd">'
+    +esc(fmtDate(new Date(e.d+"T00:00:00")))+'</span><span class="bdg">'+(bd[e.type]||"Note")+'</span></div>'
+    +'<div class="txt">'+esc(e.text)+'</div>'+(e.snap?'<div class="snap">'+esc(e.snap)+'</div>':"")+'</div>').join("");
+}
+function downloadReminder(){
+  const n=new Date(),f=new Date(n.getFullYear(),n.getMonth()+1,1);
+  const st=f.getFullYear()+String(f.getMonth()+1).padStart(2,"0")+"01";
+  const ics=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Ricky Rampersad Branch//Career Path//EN","BEGIN:VEVENT",
+    "UID:rrbcp-"+Date.now()+"@careerpath","DTSTAMP:"+st+"T090000Z","DTSTART;VALUE=DATE:"+st,
+    "RRULE:FREQ=MONTHLY;BYMONTHDAY=1","SUMMARY:Career Path monthly check-in",
+    "DESCRIPTION:Open your Career Path Tracker\\, update your checklists and post your progress.",
+    "BEGIN:VALARM","TRIGGER:PT9H","ACTION:DISPLAY","DESCRIPTION:Career Path monthly check-in","END:VALARM",
+    "END:VEVENT","END:VCALENDAR"].join("\r\n");
+  const a=document.createElement("a");
+  a.href="data:text/calendar;charset=utf-8,"+encodeURIComponent(ics);
+  a.download="career-path-monthly-checkin.ics";
+  document.body.appendChild(a);a.click();a.remove();
+}
+
+/* ── celebration ── */
+function celebrate(){
+  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const cv=document.createElement("canvas");
+  cv.style.cssText="position:fixed;inset:0;pointer-events:none;z-index:300";
+  cv.width=innerWidth;cv.height=innerHeight;
+  document.body.appendChild(cv);
+  const ctx=cv.getContext("2d"),cols=["#efc24b","#00CFEA","#3ddc97","#ffffff","#dca530"];
+  const bits=Array.from({length:90},()=>({x:cv.width/2+(Math.random()-.5)*260,y:cv.height*.34+(Math.random()-.5)*70,
+    vx:(Math.random()-.5)*11,vy:Math.random()*-13-4,s:5+Math.random()*7,r:Math.random()*Math.PI,
+    vr:(Math.random()-.5)*.32,c:cols[(Math.random()*cols.length)|0]}));
+  let n=0;
+  (function tick(){
+    n++;ctx.clearRect(0,0,cv.width,cv.height);
+    bits.forEach(b=>{b.vy+=.42;b.x+=b.vx;b.y+=b.vy;b.r+=b.vr;
+      ctx.save();ctx.translate(b.x,b.y);ctx.rotate(b.r);ctx.globalAlpha=Math.max(0,1-n/135);
+      ctx.fillStyle=b.c;ctx.fillRect(-b.s/2,-b.s/2,b.s,b.s*.62);ctx.restore()});
+    if(n<135)requestAnimationFrame(tick);else cv.remove();
+  })();
+}
+
+/* ── views ── */
+function view(id){
+  ["vSignin","vPath","vPos","vHub"].forEach(v=>document.getElementById(v).classList.toggle("hidden",v!==id));
+  window.scrollTo({top:0});
+}
+function showPath(){renderStatus();renderPath();renderFeed();view("vPath")}
+
+/* ── init ── */
+renderNames();
+renderReturning();
+document.getElementById("txtName").addEventListener("keydown",e=>{if(e.key==="Enter")login()});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
