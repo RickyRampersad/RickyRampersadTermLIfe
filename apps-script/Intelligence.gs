@@ -504,11 +504,19 @@ function iBuildDues_(today) {
   var counts = { total: 0, overdue: 0, lapsed: 0, pending: 0, clean: 0 };
   var defects = { sciNumber: 0, badPaidTo: 0, badLapseDate: 0, spacedEmail: 0, noPhone: 0, noEmail: 0, unreachable: 0 };
   var modalOverdue = 0, modalChase = 0;
+  /* THE EXCLUSION LIST REACHES EVERY REPORT. Until 17 September the wall
+     screens honoured INTEL_EXCLUDE_AGENTS and the night's own domains did
+     not, so an excluded name could still surface in the manager digest's
+     league and on the watchlists. Off here means off the dues domain and
+     everything built from it. */
+  var skipX = iExcluded_();
+  defects.excludedRows = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var status = String(d.get('status', r)).trim();
     var agent  = String(d.get('agent', r)).trim();
     if (!agent && !status) continue;
+    if (iExcludes_(skipX, agent)) { defects.excludedRows++; continue; }
     counts.total++;
 
     var rawNum = d.get('number', r);
@@ -3497,10 +3505,12 @@ function iBuildMaturity_(today) {
   var mat = [], exp = [], all = [], byClass = {}, byAgentTotals = {};
   var suspense = 0, suspenseCases = 0, fundHeld = 0, orphaned = 0, noFunds3 = 0;
   var horizonM = INTEL.MATURITY_MONTHS, horizonE = INTEL.EXPIRY_MONTHS;
+  var skipM = iExcluded_();                 // see iBuildDues_: off every report
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
     if (!policy) continue;
+    if (iExcludes_(skipM, String(d.get('agent', r)).trim())) continue;
 
     var plan = String(d.get('plan', r)).trim();
     var cls  = iClassifyPlan_(plan);
@@ -4295,6 +4305,10 @@ function iBuildProduction_(today) {
   var codeName = iCodeNames_();
   Object.keys(byAgent).forEach(function (c) { byAgent[c].agent = codeName[c] || c; });
   rows.forEach(function (x) { x.agent = codeName[x.agentId] || x.agentId; });
+  /* And off, by name, once the codes are names — see iBuildDues_. */
+  var skipP = iExcluded_();
+  Object.keys(byAgent).forEach(function (c) { if (iExcludes_(skipP, byAgent[c].agent)) delete byAgent[c]; });
+  rows = rows.filter(function (x) { return !iExcludes_(skipP, x.agent); });
 
   var months = Object.keys(byMonth).map(function (k) {
     var m = byMonth[k];
@@ -4397,12 +4411,13 @@ function iBuildUnderwriting_(today) {
     issue: ['issue date'], plan: ['plan code'], client: ['client'],
     sumAssured: ['sum assured'], premium: ['premium']
   });
-  var pol = {};
+  var pol = {}, exPol = {}, skipU = iExcluded_();   // see iBuildDues_: off every report
   for (var i = 0; i < dd.rows; i++) {
     var num = dd.get('number', i);
     if (iBadNumber_(num)) continue;
     var key = String(num).trim();
     if (!key || pol[key]) continue;
+    if (iExcludes_(skipU, String(dd.get('agent', i)).trim())) { exPol[key] = 1; continue; }
     pol[key] = {
       agent: String(dd.get('agent', i)).trim(),
       recv: iDate_(dd.get('recv', i)),
@@ -4428,6 +4443,7 @@ function iBuildUnderwriting_(today) {
     if (!p || !code) continue;
     var id = String(d.get('id', r)).trim() || (p + code);
     if (seen[id]) continue;
+    if (exPol[p]) continue;                  // the policy's agent is excluded
     seen[id] = 1;
     total++;
     mixAll[code] = (mixAll[code] || 0) + 1;
@@ -7203,11 +7219,13 @@ function intelAgentDigest() {
   if (day === 0 || day === 6) return 'Weekend — skipped.';
 
   var directory = iAgentDirectory_();
-  var sent = 0;
+  var sent = 0, skipD = iExcluded_();
 
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
+    /* An excluded agent is off every report, their own digest included. */
+    if (iExcludes_(skipD, person.agentName || person.name || '')) return;
 
     /* Staff and managers have no personal book; the branch digest is theirs,
        not an agent list that would always come back empty. */

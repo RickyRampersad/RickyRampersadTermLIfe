@@ -1020,6 +1020,13 @@ intelExcluded()                                 // who is off now
 intelExcludeClear()                             // empties the list, rebuilds
 ```
 
+**Since 17 September the list reaches every report**, not only the wall: the
+nightly dues, maturity, underwriting and production domains skip an excluded
+agent's rows at source (so the manager digest's league, the watchlists and the
+signed-in app never carry the name), and an excluded agent receives no agent
+digest. `intelExclude("Given Surname, Given Surname")` adds names and rebuilds
+the wall copies; the nightly `intelRebuild` picks the domains up.
+
 The names go into the Script Property `INTEL_EXCLUDE_AGENTS` and nowhere
 else — this repository is public. Matching is on the same normalised key used
 everywhere, surname plus every given token, so `Anne Mohammed-Ali` also
