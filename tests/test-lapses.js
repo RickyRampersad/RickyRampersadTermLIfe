@@ -112,6 +112,11 @@ ok('a row that is not lapsed counts for nothing, whatever its lapse date says',
 /* ── 2. The month strip ──────────────────────────────────────────────────── */
 console.log('\nThe year, month by month:\n');
 const BM = d.byMonth || [];
+ok('each month with a lapse names the agents behind its bar',
+   BM.filter(m => m.policies).every(m => Array.isArray(m.top) && m.top.length > 0 && m.top[0].n <= m.policies && m.top[0].pct > 0 && m.top[0].pct <= 100),
+   JSON.stringify(BM.filter(m => m.policies).map(m => [m.lab, m.top]).slice(0, 3)));
+ok('and the shares never add to more than the month',
+   BM.every(m => (m.top || []).reduce((s, t) => s + t.n, 0) <= m.policies));
 ok('January to September — nine months, not twelve', BM.length === 9 && BM[0].lab === 'Jan' && BM[8].lab === 'Sep',
    BM.map(m => m.lab).join(' '));
 const jul = BM.find(m => m.lab === 'Jul') || {};

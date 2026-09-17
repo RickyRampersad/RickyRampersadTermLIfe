@@ -159,6 +159,7 @@
     main.rid > .card:nth-of-type(2),
     main.rid > .stack{grid-column:1;grid-row:auto}
   }
+  .by{font-style:normal;font-size:9.5px;color:var(--gold);margin-left:5px;white-space:nowrap}
 </style>
 <style>
   /* This screen's own rows. Everything above is the wall's, shared with every
@@ -507,6 +508,11 @@ function paint(){
   var bits = [];
   if (ok) {
     if (h.n) bits.push(n(h.n) + " riders on policies with no end date of their own");
+    /* The undated waivers and accidental-death riders, placed from the
+       insured's age — the rule the dated ones show. Said as derived, always. */
+    var dv = D.derived || {};
+    if (dv.n) bits.push(n(dv.n) + " placed from the insured\u2019s age (" + (dv.rule || "WP at 60, ADD at 65") + "), not a recorded date");
+    if (dv.gone && dv.gone.n) bits.push(n(dv.gone.n) + " past that age and still charged \u2014 " + money(dv.gone.prem) + " a year");
     if (h.prem) bits.push(money(h.prem) + " a year");
     bits.push("each one ends on a date the client has probably never been told");
   }
@@ -580,7 +586,7 @@ function paint(){
       return (lab[k] || k) + (c > 1 ? " \u00d7 " + c : "");
     }).join(", ");
     return '<div><b class="' + (x.past ? "was" : "") + '">' + ord(x.day) + '</b>' +
-           '<span>' + esc(names || "rider") + '</span>' +
+           '<span>' + esc(names || "rider") + (x.derived ? ' <em class="by">' + (x.derived === x.n ? 'by age' : x.derived + ' by age') + '</em>' : '') + '</span>' +
            (x.cover ? '<s>' + money(x.cover) + '</s>' : '') + '</div>';
   }).join("");
 
@@ -595,7 +601,7 @@ function paint(){
     var kd = Object.keys(CODE).filter(function(k){ return a.kinds && a.kinds[k]; })
       .map(function(k){ return CODE[k] + (a.kinds[k] > 1 ? "<i>\u00d7" + a.kinds[k] + "</i>" : ""); }).join(" ");
     return '<div class="mrowr">' +
-      '<div class="nm">' + esc(a.name) + '</div>' +
+      '<div class="nm">' + esc(a.name) + (a.derived ? '<em class="by">' + a.derived + ' by age</em>' : '') + '</div>' +
       '<div class="v">' + n(a.n) + '</div>' +
       '<div class="kd">' + kd + '</div>' +
       '<div class="v gold">' + (a.cover ? money(a.cover) : "\u2013") + '</div>' +

@@ -129,6 +129,7 @@
       text-transform:uppercase;letter-spacing:.09em;margin-right:5px}
     .blk{flex:1 1 100%;margin-top:3px}
   }
+  .crow .nm small{display:block;font-size:10px;color:var(--faint);font-weight:500;line-height:1.2;margin-top:1px}
 </style>
 <style>
   /* This screen's own rows. Everything above is the wall's, shared with every
@@ -534,8 +535,14 @@ function paint(){
     /* Issued, issue age and age belong to the same case that sets the day,
        so the row is one conversation. A seasoned case — over a year paying —
        gets the gold edge; see the head for how many there are. */
+    /* Who is changing age, without a name: the ages moving on this desk this
+       month, soonest first — what the conversion premium is priced on. */
+    var mv = (a.moves || []).slice().sort(function(x,y){ return (x.past-y.past) || (x.day-y.day); });
+    var moves = mv.length ? '<small>' + mv.slice(0,3).map(function(m){
+        return (m.from == null ? "?" : m.from) + "\u2192" + m.to;
+      }).join(" \u00b7 ") + (mv.length > 3 ? " +" + (mv.length - 3) : "") + '</small>' : '';
     return '<div class="crow' + (a.seasoned ? ' seasoned' : '') + '">' +
-      '<div class="nm">' + esc(a.name) + '</div>' +
+      '<div class="nm">' + esc(a.name) + moves + '</div>' +
       '<div class="v' + (a.past ? ' dim was' : ' good') + '">' +
         (a.day ? ord(a.day) : "\u2013") + '</div>' +
       '<div class="v dim">' + (a.turning == null ? "\u2013" : a.turning) + '</div>' +

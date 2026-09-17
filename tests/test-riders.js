@@ -124,6 +124,22 @@ const forever = { ci: [{ n: 1092, cov: 601071002, prm: 488772 }],
 const asked = [];
 env.sfQuery_ = function (soql) {
   asked.push(soql);
+  /* THE UNDATED ONES. Two waivers with no expiry but a birthday and an issue
+     date: one whose anniversary at 59 falls this month (born May 1967,
+     issued a 20 September), one whose anniversary at 59 falls in November.
+     And the aggregate of those past that age and still charged. */
+  if (/= null AND ISSUE_DATE__c != null/.test(soql)) {
+    if (/WP_Expiry__c = null/.test(soql)) return [
+      { POLICY__c: 'RID-WP-SEPT', AGENT__r: { Name: 'Anand Pretend' }, Date_Of_Birth__c: '1967-05-10', ISSUE_DATE__c: '2010-09-20', WP_Premium__c: 55 },
+      { POLICY__c: 'RID-WP-NOV',  AGENT__r: { Name: 'Beena Pretend' }, Date_Of_Birth__c: '1967-01-20', ISSUE_DATE__c: '1999-11-15', WP_Premium__c: 40 }
+    ];
+    return [];
+  }
+  if (/= null AND Date_Of_Birth__c </.test(soql)) {
+    if (/WP_Expiry__c = null/.test(soql)) return [{ n: 12, p: 4400 }];
+    if (/ADDAP_Expiry_Date__c = null/.test(soql)) return [{ n: 3, p: 900, c: 300000 }];
+    return [];
+  }
   /* The book read: one per rider, told apart by the field it asks for. */
   if (/COUNT\(Id\) n, COUNT\(/.test(soql)) {
     const hit = Object.keys(book).filter(f => soql.indexOf(f + ' > 0') > -1)[0];
@@ -149,6 +165,21 @@ env.sfQuery_ = function (soql) {
 };
 
 const d = env.iRidersWall_();
+console.log('\nThe undated waivers and accidental-death riders, placed from the insured\u2019s age:\n');
+ok('the rule is on the feed, in words', /59/.test(d.derived.rule) && /65/.test(d.derived.rule), d.derived.rule);
+ok('two waivers were placed', d.derived.n === 2 && d.derived.prem === 95, JSON.stringify(d.derived));
+ok('one of them ends this month, on the 20th, and says it was placed from age',
+   (d.days || []).some(x => x.day === 20 && x.derived === 1 && x.kinds.wp === 1) && d.thisMonth.derived === 1, JSON.stringify(d.days));
+ok('the other lands in November, counted as derived there too',
+   (d.months || []).some(m => /November/.test(m.lab) && m.derived === 1), JSON.stringify(d.months));
+ok('the desk holding it is told it is by age', (d.monthByAgent || []).some(a => a.name === 'Anand Pretend' && a.derived === 1), JSON.stringify(d.monthByAgent));
+ok('and the ones past that age still charged are a size, not a note', d.derived.gone.n === 15 && d.derived.gone.prem === 5300, JSON.stringify(d.derived.gone));
+ok('the anniversary is the one at the attained age, never the next', (() => {
+  const x = env.iRidDerived_(new Date('1967-05-10T12:00:00'), new Date('2010-09-20T12:00:00'), 59);
+  return x && x.getFullYear() === 2026 && x.getMonth() === 8 && x.getDate() === 20; })());
+ok('and falls back to the birthday when there is no issue date', (() => {
+  const x = env.iRidDerived_(new Date('1961-03-03T12:00:00'), null, 65);
+  return x && x.getFullYear() === 2026 && x.getMonth() === 2 && x.getDate() === 3; })());
 console.log('\nWhat the wall is handed:\n');
 ok('it is configured', d.configured === true, d.error || '');
 ok('the dues tab was read', d.duesRead === true);
@@ -204,16 +235,18 @@ ok('agents are ordered by what they hold', d.agents[0].cover >= (d.agents[1] || 
 console.log('\nThis month, day by day:\n');
 ok('September is the month', d.month === 'September', d.month);
 ok('and it has thirty days', d.daysInMonth === 30, String(d.daysInMonth));
-ok('two riders end this month', d.thisMonth.n === 2, JSON.stringify(d.thisMonth));
-ok('on two days', d.days.length === 2, JSON.stringify(d.days));
+/* Two with a recorded date, and since 17 September the waiver placed from
+   the insured's age — three, on three days, one of them marked derived. */
+ok('three riders end this month — two dated, one placed from age', d.thisMonth.n === 3 && d.thisMonth.derived === 1, JSON.stringify(d.thisMonth));
+ok('on three days', d.days.length === 3, JSON.stringify(d.days));
 ok('the 5th has gone', (d.days.find(x => x.day === 5) || {}).past === true);
 ok('the 24th has not', (d.days.find(x => x.day === 24) || {}).past === false);
 ok('and each day says which rider it was',
    (d.days.find(x => x.day === 5) || { kinds: {} }).kinds.ci === 1 &&
    (d.days.find(x => x.day === 24) || { kinds: {} }).kinds.ad === 1,
    JSON.stringify(d.days.map(x => x.kinds)));
-ok('November is in the year ahead but not in the month',
-   d.ahead.n === 3 && d.thisMonth.n === 2, JSON.stringify(d.ahead));
+ok('November is in the year ahead but not in the month — five ahead, two of them placed from age',
+   d.ahead.n === 5 && d.ahead.derived === 2 && d.thisMonth.n === 3, JSON.stringify(d.ahead));
 ok('the months ahead are named and in order',
    d.months.length === 2 && d.months[0].lab === 'September 2026' &&
    d.months[1].lab === 'November 2026',

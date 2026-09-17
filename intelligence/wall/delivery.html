@@ -379,12 +379,18 @@ function paint(){
      right shelf and one that searches every shelf. */
   var sp=D.split||{};
   $("#heroKick").textContent = sp.configured ? "In the cabinet" : "Not with the client";
+  /* Plain words, asked for on 16 September ("40 — I can't understand it"):
+     what the number is, what it is not, and the two other numbers it is
+     always read against. */
   $("#heroCap").innerHTML = (sp.configured
     ? '<b>'+sp.inCabinet+'</b> on our shelf, <b>'+sp.withAgent+'</b> with an agent and '
       + 'not acknowledged.'
     : 'contracts dispatched in <b>'+D.fromYear+'</b> that the client does not have — '
       + '<b>on our shelf or with an agent</b>, this export cannot tell which.')
-    + ' <b>'+h.dispatchPending+'</b> more are still with head office, undispatched.';
+    + ' <b>'+h.dispatchPending+'</b> more are still with head office, undispatched.'
+    + (D.history && D.history.dispatched
+        ? ' So of <b>'+n(D.history.dispatched)+'</b> dispatched this year, <b>'+n(D.history.delivered)+'</b> are in the client&rsquo;s hands and <b>'+h.inCabinet+'</b> are not yet.'
+        : '');
   $("#heroOld").textContent=h.oldest;
   $("#heroMed").textContent=h.median;
 

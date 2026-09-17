@@ -318,7 +318,8 @@ The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
 
 A television reloading five of those every half hour would have spent the
 project's daily runtime by lunch, and the tracker's sign-in runs in the same
-project. So each feed is built **once a night, one execution each** —
+project. So each feed is built **once a night, one execution each** (riders and
+conversions since 17 September, rebuilt at five by the pending refresh) —
 `intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
 `intelRebuildPossession`, `intelRebuildBook`, in the small hours an hour apart,
 and `intelRebuildPending` (which also refreshes through the day — see §3) —
@@ -327,6 +328,13 @@ per feed. A request reads its row in about a second and answers with
 `stored: "<when it was built>"`; the screen's own "built …" line shows the
 date.
 
+- **A copy carries the build that made it.** On the evening of 16 September the
+  script went from 16a to 17a and every book screen kept serving the copy the
+  night's 16a run had stored — possession said "0 of 0 agents", delivery still
+  listed the excluded names — until somebody rebuilt them by hand. The built-at
+  cell now reads `2026-09-17 03:41 v2026-09-17d`; a copy stamped with another
+  build is treated as no copy at all, so the next ask builds live and stores,
+  and the night's run rebuilds it whatever the date says.
 - **With no stored copy yet**, a request builds the feed live and stores it,
   so the first morning works. After pasting, run **`intelRebuildWall`** from
   the editor to fill all six without waiting for the night.
@@ -386,6 +394,8 @@ the agent sees their own policies and a **count** of the others, so nobody is
 misled into thinking they have the whole picture.
 
 ## 3¾. The pending wall — the eighth screen
+
+**17 September 2026 — the dates on the requirements.** Beside the days-since figures the requirements panel now says, month by month from the 1 January cut, how many were ordered or added in each month, and names the oldest and newest dates (`requirements.byMonth`, `oldestOn`, `newestOn`).
 
 The eighth screen on the wall: everything submitted and not yet issued, how
 long it has waited, and what is holding it. `intelligence/wall/pending.html`,
@@ -567,6 +577,8 @@ desk sat underneath the legend. At the three television sizes all ten desks fit
 and nothing is dropped.
 
 ## 3a¾. Lapses — `lapses.html`, slide 5
+
+**17 September 2026 — who is behind each bar.** Every month on the strip carries the agents who make it up (`byMonth[].top`, the biggest three with their share), and the screen prints the top two surnames and shares under the bar — "on the yellow you should label the agents who make up the percentage".
 
 Its own screen since 17 September 2026, on the branch manager's "I'm guided by
 you". The reason is two clocks: the dues line is Status-2 rows on a paid-to
@@ -913,6 +925,8 @@ An agent below ten decisions in the year is not shown at all — below that a
 rate is noise.
 
 ## 3g. The 45-day wall
+
+**17 September 2026 — the three lines, as three.** The hero is no longer the 45 line alone: with nothing filtered it shows 45–59, 60–89 and 90-and-over as three equal tiles, each with policies, clients, premium, agents, crossed-today and either the letters sent and replies or (until a letter has gone) how many are already past that line. A filter puts the single-line hero back, because a filter is about one line.
 
 `/intelligence/wall/` — **one screen**, not a slideshow, about premiums crossing
 the 45-day line. Same design system as `/board/` and the benefits wall.
@@ -1427,6 +1441,8 @@ the edge-tts proxy fix.
 
 
 ### Birthdays today — `intelligence/wall/book.html`
+
+**17 September 2026 — active first, and never past the fold.** The roll of agents whose clients have a birthday today is grouped: active agents first (capped at fourteen, with a "+N more"), then *not active* — inactive or vested servicers, greyed, with the status the roster gives and how many clients between them need reassigning. The feed carries `live` and `status` per agent on the roll. The "44" on the hero is Guardian's automated birthday e-mails sent that morning in the branch's name; the caption beside it says how many of those clients hold cover and how many carry a gap.
 
 Action `intel.book`. Paste the `/exec` URL into `BOOK_URL`.
 
@@ -2001,6 +2017,8 @@ picked up as the start of the relationship.
 
 ### Conversions this month — `intelligence/wall/conversion.html`
 
+**17 September 2026 — who is changing age.** Each agent's row carries, under the name, every age moving on that desk this month (`agents[].moves`: `from → to`, soonest first, no client named) — the figure the conversion premium is priced on.
+
 Action `intel.conversion`. Paste the `/exec` URL into `CONV_URL`.
 
 **The only screen on the wall that reads Salesforce rather than the workbook.**
@@ -2321,6 +2339,10 @@ reason no second, row-level query is needed.
 | `ICONV_FAMILIES` | four rows | The plan families. **The SOQL filters are generated from this table**, so the reader and the query cannot drift apart — add a family here and both halves learn it at once |
 
 ## 3j. Riders on a clock — `intelligence/wall/riders.html`
+
+**17 September 2026 — where WP and ADD were.** Only 483 of 1,616 waiver riders and 517 of 1,320 accidental-death riders on premium-paying policies carry an expiry date, so two in three could never be placed on the calendar. The dated ones give the rule: 354 of 460 waivers end at the policy anniversary at attained age 59, 331 of 500 accidental-death riders at 65 (`IRID_KINDS[].age`). The undated rows with a birthday and an issue date are placed from that rule (`iRidDerived_`), counted as `derived` wherever they land — this month, the day strip, the twelve-month window, the desk — and the screen says *by age* beside each. `derived.gone` is the riders past that age still being charged, with the premium. The rule is on the feed in words. Client names never reach the wall; the Watchlist — Expiry tab in the workbook carries the client-level list.
+
+**Riders and conversions read a stored copy** since the same date, rebuilt by the five o'clock run of `intelPendingRefresh` and by `intelRebuildWall`; `intelRebuildRiders()` and `intelRebuildConversion()` do it from the editor, and `{fresh:true}` builds live and replaces the copy.
 
 Action `intel.riders`. Paste the `/exec` URL into `RID_URL`.
 

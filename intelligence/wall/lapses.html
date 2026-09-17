@@ -193,6 +193,9 @@
     .strip{height:120px}
     .mcol .amt{display:none}
   }
+  .mcol .who{font-size:9px;line-height:1.25;color:var(--faint);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcol .who b{color:var(--gold);font-weight:700}
+  .mcol.peak .who b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -398,6 +401,12 @@ function paint(){
       '<div class="box"><div class="bar" style="height:' + (ahead ? 2 : h) + '%"></div></div>' +
       '<div class="m">' + MON[i] + '</div>' +
       (hit && hit.modal ? '<div class="amt">' + money(hit.modal * 12) + '</div>' : '') +
+      /* Who is behind the bar — asked for on 16 September. Surnames, the
+         biggest share first; the number is that agent's share of the month. */
+      (hit && hit.top && hit.top.length ? '<div class="who">' + hit.top.slice(0, 2).map(function(t){
+          var parts = String(t.k || "").trim().split(" "), sur = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+          return '<b>' + esc(sur) + '</b> ' + t.pct + '%';
+        }).join('<br>') + '</div>' : '') +
     '</div>');
   }
   $("#lStrip").innerHTML = cols.join("");

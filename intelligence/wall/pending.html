@@ -517,7 +517,13 @@ function paint(){
                   : "Nothing ordered yet")
       + (dq.notOrdered ? " · <b>" + n(dq.notOrdered) + "</b> not yet ordered" : "")
       + (notIn("ordered by") ? " · ordered-by: column not in the extract" : "")
-      + (ro.fromSheet === false && !notIn("routine") ? "" : (notIn("routine") ? " · routine is inferred from the code: column not in the extract" : ""));
+      + (ro.fromSheet === false && !notIn("routine") ? "" : (notIn("routine") ? " · routine is inferred from the code: column not in the extract" : ""))
+      /* The dates themselves, from the 1 January cut — asked for on 16
+         September: "state the dates on the requirements". */
+      + (r.byMonth && r.byMonth.length
+          ? "<br>Ordered or added, month by month: " + r.byMonth.map(function(m){ return "<b>" + n(m.n) + "</b> " + esc(m.lab); }).join(" · ")
+            + (r.oldestOn ? " · oldest <b>" + esc(r.oldestOn) + "</b>" : "") + (r.newestOn ? ", newest <b>" + esc(r.newestOn) + "</b>" : "")
+          : "");
     var chips = (r.byCategory || []).slice(0,4).map(function(x){ return '<span><b>'+n(x.n)+'</b> '+esc(x.name)+'</span>'; });
     /* When the policy table is open beneath, the chips give it the room: the
        categories say what the codes say, one row shorter. */
