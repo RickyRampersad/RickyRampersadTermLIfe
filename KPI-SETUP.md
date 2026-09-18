@@ -106,13 +106,19 @@ first.
 ## 4. Turn on the emails
 
 Run **`installTriggers`** once from the editor and grant it permission when
-asked. That sets up five triggers:
+asked. That sets up eight triggers:
 
-- **3pm checkpoint**, weekdays — who has logged, who has not, who is behind, and
-  every blocker raised so far
-- **Staff nudges**, weekdays at noon and three
+- **3pm checkpoint** — who has logged, who has not, who is behind, and every
+  blocker raised so far
+- **Staff nudges**, at noon and three
+- **Two o'clock** — the branch's own message, written and ready to send
+- **Before you leave**, a quarter to four — the close-out list
 - **Weekly summary**, Friday 5pm — the week against the week before
-- **Warm-up**, every ten minutes in office hours
+- **Warm-up**, every ten minutes, round the clock
+- **The block closer**, every hour — see *The block that closes itself* below
+
+Eight here and Branch Intelligence's twelve is **twenty, which is the limit a
+script project holds**. The next trigger anybody wants has to replace one.
 
 The checkpoint and the nudges are one daily trigger each and skip the weekend
 themselves. They used to be five weekday copies each, fifteen triggers, and a
@@ -701,6 +707,64 @@ Status · Reason · At · Source`, one row per line per day, rewritten in place.
 ticked an automatic line the sheet disagrees with, the list reads *said done
 at 15:47* rather than the count that contradicts them — their word, marked as
 their word.
+
+## The block that closes itself
+
+Asked for on 17 September 2026: *"when the time block is up the system should
+automatically log — as it reads the Salesforce environment — and send the
+email at the end of the time block with the % achieved: what I selected to
+have completed and what was achieved. If not achieved, in the email I am to
+respond to each as to why, and the responses stored."*
+
+A block has three moments now, and only the first needs the person.
+
+**Plan.** On the plan screen, and again on the day, each block carries *What
+this block is for*: the open Salesforce tasks of the KPI types ticked for that
+block, as boxes to tick, and a line for anything Salesforce cannot see — a
+recruit interviewed, a coaching session, a report — offered as chips from the
+role's own KPI list or typed. *Save plan* keeps it on the **Block Plans** tab,
+one row per person, day and block. The plan can be changed as often as they
+like until the block closes.
+
+**Close.** `closeBlocks` runs every hour. For everybody whose day is open on
+the register it finds the blocks whose end time has passed — read off the
+person's own schedule (`'8 – 10am'`, `'3:30 – 5pm'`, `'4pm – 12am'`) — and
+closes each one once:
+
+- Salesforce is asked what that person touched inside the window, and where
+  each picked task stands now. A picked task counts as **done only if
+  Salesforce says it is completed**; touched but open reads *moved, not
+  closed*; a line of their own counts only if they ticked it.
+- A block the person filed themselves is left exactly as they wrote it. One
+  they did not file is **filed for them** from what Salesforce saw, marked
+  `auto` in its quality column so it is never read as their words.
+- The verdict — achieved, of, percentage, what Salesforce closed and moved,
+  who filed — goes on the plan row. A block with nothing planned, nothing
+  filed and nothing seen is closed with a note saying so.
+
+**Answer.** An e-mail goes out **only when something was missed** — a picked
+task still open, a line never ticked, or a block with nothing in it at all. A
+clean block passes in silence. Every missed line carries a link: *Done ✓* on
+the person's own lines, *Say why →* on anything. The links are signed for one
+person, one day and one block, work from the phone with nobody signed in, and
+the answer is written to the **Block Reasons** tab and against the line, where
+the tracker shows it under the block. The same answer can be given from the
+tracker itself.
+
+What the closer will **not** do: overwrite a block somebody filed; count a
+task done that Salesforce says is open; write to anybody whose day was never
+opened, or about a block that ended before they signed in (that one closes
+silently and says so in its note); or decide anything when Salesforce did not
+answer — it leaves the block open and asks again the next hour.
+
+The after-four block ends at midnight, so it closes in the small hours of the
+next day. Run **`closeBlocks`** from the editor to close whatever is due now.
+The links in the e-mail point at `KPI_EXEC_URL`, the same property the
+close-out uses; without it they point at the deployment's own address.
+
+Salesforce has to be wired (§ *Connecting Salesforce*) for any of the verdicts
+on picked tasks; without it the closer still runs, still files what it can,
+and marks the picked tasks *not checked* rather than guessing.
 
 ## What changed
 

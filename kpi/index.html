@@ -778,6 +778,10 @@ function Half({ label, mine, rating, note, extra, onSave, busy }) {
 /** Close a task where it is listed, with a line of what was done. The line
  *  goes onto the task in Salesforce, appended to its description, and the
  *  close is audited. No line, no close. */
+// Closed from here, gone from everywhere here: the open list hides it, and
+// the plan panel must not offer it either. The server's copy catches up on
+// the next read.
+const CLOSED_HERE = {};
 function CloseTask({ t, api, onClosed }) {
   const [open, setOpen] = useState(false);
   const [note, setNote] = useState("");
@@ -790,7 +794,7 @@ function CloseTask({ t, api, onClosed }) {
     setBusy(true); setErr("");
     api("updateTask", { taskId: t.id, field: "close", value: note.trim() }).then(r => {
       setBusy(false);
-      if (r && r.ok) { setOpen(false); onClosed(t.id); } else setErr((r && r.error) || "Not closed.");
+      if (r && r.ok) { CLOSED_HERE[t.id] = true; setOpen(false); onClosed(t.id); } else setErr((r && r.error) || "Not closed.");
     });
   };
   if (!open) return h("div", { style: { marginTop: 4 } }, link("Close ✓", () => setOpen(true)));
@@ -1927,12 +1931,10 @@ function rowToEntry(row) {
     grade: g("Grade"),
     blockAt: at,
     submitted: g("Status") === "Submitted",
-    blocks: {
-      kpi1: blk("KPI1"),
-      kpi2: blk("KPI2"),
-      pm1: blk("PM1"),
-      pm2: blk("PM2")
-    },
+    // Every block the order names — the after-four block included. Four
+    // spelled out here meant an evening block filed one day was blank the
+    // next time the day was opened.
+    blocks: BLOCK_ORDER.reduce((a, b) => { a[b.id] = blk(b.col); return a; }, {}),
     metrics: {
       closed: g("Closed"),
       overdue: g("Overdue"),
@@ -1972,12 +1974,7 @@ function withSchedule(entry, staffId) {
 // A day's training lives in its own register. Put it back on the form when the
 // day is re-opened — submitting again rewrites those rows from what is on
 // screen, so anything not loaded back would be erased.
-const BLOCK_COL = {
-  kpi1: "KPI1",
-  kpi2: "KPI2",
-  pm1: "PM1",
-  pm2: "PM2"
-};
+const BLOCK_COL = BLOCK_ORDER.reduce((a, b) => { a[b.id] = b.col; return a; }, {});
 function withTraining(entry, training) {
   if (!entry || !training || !training.length) return entry;
   const mine = training.filter(t => t.StaffId === entry.staffId && String(t.TrainingDate || "").slice(0, 10) === entry.date);
@@ -2064,6 +2061,169 @@ function ShieldLogo({
 // ===========================================================================
 //  App
 // ===========================================================================
+// ---------------------------------------------------------------------------
+//  The block that closes itself
+//
+//  A block is planned — tasks picked off the person's own Salesforce book,
+//  and anything Salesforce cannot see typed in — and once its end time has
+//  passed the sheet closes it: reads Salesforce, files the block if nobody
+//  did, works out what landed, and e-mails only if something did not. What
+//  the closer decided is shown here against the block, with a reason box on
+//  anything still owed, so the answer can be given from the phone the
+//  e-mail arrived on or from here.
+// ---------------------------------------------------------------------------
+const planKey = (sid, date) => sid + "|" + date;
+const itemLabel = it => it.k === "sf" ? (it.subject || "a Salesforce task") : (it.label || "");
+const STATE_WORD = { done: "done", moved: "moved, not closed", open: "still open",
+                     unconfirmed: "not ticked", unknown: "not checked", explained: "reason given" };
+const stateTone = st => st === "done" ? GREEN : (st === "explained" || st === "unknown") ? MUTED : AMBER;
+const sameItems = (a, b) => JSON.stringify(a || []) === JSON.stringify(b || []);
+const sameItem = (x, it) => x.k === it.k && (it.k === "sf" ? x.id === it.id
+  : String(x.label || "").toLowerCase() === String(it.label || "").toLowerCase());
+
+function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSaved, mine }) {
+  const closed = !!(plan && plan.closedAt);
+  const saved = plan ? plan.items : [];
+  const [items, setItems] = useState(saved);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [note, setNote] = useState({ tone: "idle", text: "" });
+  const [showAll, setShowAll] = useState(false);
+  useEffect(() => { setItems(plan ? plan.items : []); }, [plan ? JSON.stringify(plan.items) : ""]);
+  if (closed) return React.createElement(BlockOutcome, { plan, api, active, date, onSaved, mine });
+
+  const dirty = !sameItems(items, saved);
+  const has = it => items.some(x => sameItem(x, it));
+  const toggle = it => setItems(list => has(it) ? list.filter(x => !sameItem(x, it)) : list.concat([it]));
+  const addOwn = label => {
+    const l = txt(label).replace(/\s+/g, " ");
+    if (l && !has({ k: "own", label: l })) setItems(list => list.concat([{ k: "own", label: l, done: false }]));
+    setText("");
+  };
+  const tick = i => setItems(list => list.map((x, j) => j === i ? { ...x, done: !x.done } : x));
+
+  // The book, for the types this block is for — the type travels with the
+  // task, because the plan keeps it.
+  const cands = (picked || []).reduce((a, k) => a.concat(((book && book[k]) || []).filter(t => !CLOSED_HERE[t.id]).map(t => ({ ...t, type: k }))), []);
+  const own = (opts || []).filter(o => !o.salesforce);
+  const SHOW = 8;
+  const list = showAll ? cands : cands.slice(0, SHOW);
+  const save = async () => {
+    if (busy) return;
+    setBusy(true); setNote({ tone: "saving", text: "Saving…" });
+    const r = await api("savePlan", { staffId: active, date, block: b.col, items });
+    setBusy(false);
+    if (r && r.ok) {
+      setNote({ tone: "ok", text: "Saved" + (span ? " · closes itself at " + span.endText : "") });
+      if (onSaved) onSaved(r.plan);
+    } else setNote({ tone: "bad", text: (r && r.error) || "Could not save." });
+  };
+  const head = { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD };
+
+  return React.createElement("div", { "data-plan": b.col, style: { marginTop: 12, border: "1px solid " + LINE, borderRadius: 10, padding: "10px 12px", background: "#FBF9F3" } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" } },
+      React.createElement("div", { style: head }, "What this block is for"),
+      React.createElement("div", { style: { fontSize: 11.5, color: MUTED, fontWeight: 700 } },
+        items.length ? items.length + " on the plan" : "nothing picked yet",
+        span ? " · closes itself at " + span.endText : "")),
+    React.createElement("p", { style: { fontSize: 12, color: MUTED, margin: "4px 0 8px", lineHeight: 1.45 } },
+      "Pick what you will get done. At " + (span ? span.endText : "the end of the block") +
+      " the sheet reads Salesforce, files the block, and e-mails you only if something did not land."),
+    cands.length ? React.createElement("div", null,
+      list.map(t => {
+        const on = has({ k: "sf", id: t.id });
+        return React.createElement("label", { key: t.id, style: { display: "flex", gap: 9, alignItems: "flex-start", padding: "6px 0", borderTop: "1px solid " + LINE, cursor: "pointer" } },
+          React.createElement("input", { type: "checkbox", checked: on, disabled: !mine,
+            onChange: () => toggle({ k: "sf", id: t.id, subject: t.subject, type: t.type }), style: { marginTop: 3 } }),
+          React.createElement("span", { style: { fontSize: 13, color: INK, fontWeight: on ? 700 : 500, lineHeight: 1.35 } },
+            t.subject || "(no subject)",
+            React.createElement("span", { style: { color: t.late ? AMBER : MUTED, fontWeight: 600 } },
+              t.age > 0 ? " · " + t.age + " days" + (t.late ? " over" : "") : "")));
+      }),
+      cands.length > SHOW ? React.createElement("button", { type: "button", onClick: () => setShowAll(s => !s),
+        style: { background: "none", border: "none", padding: "6px 0 0", font: "inherit", fontSize: 12, fontWeight: 700, color: GOLD, cursor: "pointer" } },
+        showAll ? "Fewer" : "and " + (cands.length - SHOW) + " more") : null)
+      : React.createElement("div", { style: { fontSize: 12.5, color: MUTED, padding: "4px 0" } },
+          picked && picked.length ? "Nothing open in Salesforce for what you picked." : "Tick a KPI above and its open tasks appear here."),
+    // What Salesforce cannot see: the role's own list as chips, and a line.
+    React.createElement("div", { style: { ...head, margin: "10px 0 5px" } }, "Something Salesforce cannot see"),
+    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
+      own.map(o => {
+        const on = has({ k: "own", label: o.value });
+        return React.createElement("button", { key: o.value, type: "button", disabled: !mine,
+          onClick: () => toggle({ k: "own", label: o.value, done: false }),
+          style: { font: "inherit", fontSize: 12, fontWeight: on ? 700 : 500, cursor: "pointer", padding: "6px 11px", borderRadius: 999,
+                   border: "1px solid " + (on ? GOLD : LINE), background: on ? "#FBF3DF" : "#FFFFFF", color: on ? INK : MUTED } }, o.label);
+      })),
+    mine ? React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 8 } },
+      React.createElement("input", { value: text, onChange: e => setText(e.target.value),
+        onKeyDown: e => { if (e.key === "Enter") { e.preventDefault(); addOwn(text); } },
+        placeholder: "e.g. Interview two recruits", style: { ...inp, flex: 1 } }),
+      React.createElement("button", { type: "button", onClick: () => addOwn(text), style: { ...submitBtn, padding: "8px 14px" } }, "Add")) : null,
+    items.some(x => x.k === "own") ? React.createElement("div", { style: { marginTop: 6 } },
+      items.map((x, i) => x.k !== "own" ? null : React.createElement("div", { key: "own" + i, style: { display: "flex", gap: 8, alignItems: "center", padding: "5px 0", borderTop: "1px solid " + LINE } },
+        React.createElement("button", { type: "button", disabled: !mine, onClick: () => tick(i), title: x.done ? "Done" : "Tick when done",
+          style: { width: 24, height: 24, borderRadius: 6, border: "1px solid " + (x.done ? GREEN : LINE), background: x.done ? GREEN : "#fff", color: "#fff", fontWeight: 800, cursor: "pointer" } }, x.done ? "✓" : ""),
+        React.createElement("span", { style: { flex: 1, fontSize: 13, color: INK, fontWeight: 600, textDecoration: x.done ? "line-through" : "none" } }, x.label),
+        mine ? React.createElement("button", { type: "button", onClick: () => setItems(list => list.filter((_, j) => j !== i)), "aria-label": "Remove",
+          style: { background: "none", border: "none", color: MUTED, fontSize: 16, cursor: "pointer" } }, "×") : null))) : null,
+    mine ? React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 10 } },
+      React.createElement("div", { style: { flex: 1, fontSize: 12, fontWeight: 700, color: note.tone === "bad" ? RED : note.tone === "ok" ? GREEN : MUTED } },
+        note.text || (dirty ? "Not saved yet" : "")),
+      React.createElement("button", { type: "button", onClick: save, disabled: busy || !dirty,
+        style: { ...submitBtn, padding: "9px 16px", opacity: busy || !dirty ? .55 : 1 } },
+        busy ? "Saving…" : saved.length ? "Update plan" : "Save plan")) : null);
+}
+
+// What the closer decided, and the reason box on anything it found wanting.
+function BlockOutcome({ plan, api, active, date, onSaved, mine }) {
+  const [why, setWhy] = useState({});
+  const [busy, setBusy] = useState(null);
+  const [note, setNote] = useState("");
+  const answer = async (i, body) => {
+    if (busy != null) return;
+    setBusy(i);
+    const r = await api("blockReason", { staffId: active, date, block: plan.block, item: i, ...body });
+    setBusy(null);
+    if (r && r.ok) { setWhy(w => ({ ...w, [i]: "" })); setNote(""); if (onSaved) onSaved(r.plan); }
+    else setNote((r && r.error) || "Could not save.");
+  };
+  const of = plan.of || plan.items.length, done = plan.achieved || 0;
+  const owed = plan.items.filter(x => x.state !== "done" && x.state !== "explained" && x.state !== "unknown").length;
+  const nothing = !plan.items.length;
+  return React.createElement("div", { "data-outcome": plan.block, style: { marginTop: 12, border: "1px solid " + LINE, borderLeft: "4px solid " + (owed || (nothing && !plan.note) ? AMBER : GREEN), borderRadius: 10, padding: "10px 12px", background: "#FBF9F3" } },
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap", alignItems: "baseline" } },
+      React.createElement("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD } }, "Closed itself at " + plan.closedAt),
+      React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: owed ? AMBER : GREEN } },
+        of ? done + " of " + of + " done" + (plan.pct != null ? " · " + plan.pct + "%" : "") : "nothing recorded")),
+    React.createElement("div", { style: { fontSize: 12, color: MUTED, margin: "4px 0 6px", lineHeight: 1.45 } },
+      plan.filed === "auto" ? "Filed for you from Salesforce" : plan.filed === "person" ? "You filed it yourself" : "Nothing was filed",
+      plan.sfClosed != null ? " · Salesforce saw " + plan.sfClosed + " closed, " + plan.sfMoved + " moved" : "",
+      plan.note ? " · " + plan.note : ""),
+    plan.items.map((x, i) => {
+      const settled = x.state === "done" || x.state === "explained";
+      return React.createElement("div", { key: i, style: { borderTop: "1px solid " + LINE, padding: "7px 0" } },
+        React.createElement("div", { style: { fontSize: 13, color: INK, fontWeight: 600, lineHeight: 1.35 } },
+          React.createElement("span", { style: { color: stateTone(x.state), fontWeight: 800, marginRight: 6 } }, x.state === "done" ? "✓" : "•"),
+          itemLabel(x),
+          React.createElement("span", { style: { color: stateTone(x.state), fontWeight: 700 } }, " · " + (STATE_WORD[x.state] || x.state || ""))),
+        x.reason ? React.createElement("div", { style: { fontSize: 12, color: MUTED, marginTop: 2, paddingLeft: 18 } }, x.reason) : null,
+        mine && !settled ? React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6, paddingLeft: 18, flexWrap: "wrap" } },
+          x.k === "own" ? React.createElement("button", { type: "button", disabled: busy != null, onClick: () => answer(i, { done: true }),
+            style: { ...submitBtn, padding: "7px 12px", background: GREEN } }, "Done ✓") : null,
+          React.createElement("input", { value: why[i] || "", onChange: e => setWhy(w => ({ ...w, [i]: e.target.value })),
+            placeholder: x.k === "sf" ? "Why is it still open?" : "What stopped it?", style: { ...inp, flex: 1, minWidth: 160 } }),
+          React.createElement("button", { type: "button", disabled: busy != null || !txt(why[i]), onClick: () => answer(i, { reason: why[i] }),
+            style: { ...submitBtn, padding: "7px 12px", opacity: txt(why[i]) ? 1 : .55 } }, busy === i ? "…" : "Say why")) : null);
+    }),
+    nothing && mine && !plan.note ? React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
+      React.createElement("input", { value: why.block || "", onChange: e => setWhy(w => ({ ...w, block: e.target.value })),
+        placeholder: "What were you on?", style: { ...inp, flex: 1 } }),
+      React.createElement("button", { type: "button", disabled: busy != null || !txt(why.block), onClick: () => answer("block", { reason: why.block }),
+        style: { ...submitBtn, padding: "7px 12px" } }, "Say")) : null,
+    note ? React.createElement("div", { style: { fontSize: 12, color: RED, fontWeight: 700, marginTop: 6 } }, note) : null);
+}
+
 function App() {
   const vp = useViewport();
   const [booting, setBooting] = useState(true);
@@ -2079,6 +2239,21 @@ function App() {
   const [metrics, setMetrics] = useState(null);
   const [needsReason, setNeedsReason] = useState({});
   const [openBook, setOpenBook] = useState({});
+  // The block that closes itself: what each block is for, and what the
+  // closer decided. Read when a day is opened, kept per person and day.
+  const [plans, setPlans] = useState({});
+  const loadPlans = useCallback(async (sid, d) => {
+    if (!sid || !d) return;
+    const r = await api("plan", { staffId: sid, date: d });
+    if (r && r.ok && r.plans) setPlans(p => ({ ...p, [planKey(sid, d)]: { plans: r.plans, spans: r.spans || {}, now: r.now || "" } }));
+  }, []);
+  useEffect(() => {
+    if ((view === "plan" || view === "entry") && active && token) loadPlans(active, date);
+  }, [view, active, date, token, loadPlans]);
+  const planSaved = (sid, d) => pl => setPlans(prev => {
+    const k = planKey(sid, d), cur = prev[k] || { plans: {}, spans: {} };
+    return { ...prev, [k]: { ...cur, plans: { ...cur.plans, [pl.block]: pl } } };
+  });
   // Performance: the form, the evidence, the two halves.
   const [hr, setHr] = useState(null);
   const [perfWho, setPerfWho] = useState(null);
@@ -2767,6 +2942,7 @@ function App() {
     const branchType = metrics && metrics.branch ? metrics.branch.byType : null;
     const late = (needsReason && needsReason[active]) || [];
     const book = (openBook && openBook[active]) || null;
+    const P = plans[planKey(active, date)] || { plans: {}, spans: {} };
     const rateAll = (metrics && metrics.ok && metrics.staff && metrics.staff[active] &&
                      metrics.staff[active].rateAll) || null;
 
@@ -2867,7 +3043,12 @@ function App() {
             hint: byType && open ? "\u2014 " + open + " open in what you picked" : "",
             options: PLAN_MINS, value: bl.planMins,
             onPick: v => patchBlock(b.id, "planMins", v)
-          }) : null);
+          }) : null,
+          /*#__PURE__*/React.createElement(PlanPanel, {
+            b: b, plan: P.plans[b.col], span: P.spans[b.col], book: book, picked: picked,
+            opts: opts, api: api, active: active, date: date, mine: mine,
+            onSaved: planSaved(active, date)
+          }));
       }),
 
       // The exceptions, and only those. Nothing is asked about the work that
@@ -2905,6 +3086,8 @@ function App() {
     });
     const blocks = blocksFor(active);
     const done = entry ? blocksDone(entry) : 0;
+    const P = plans[planKey(active, date)] || { plans: {}, spans: {} };
+    const bookOf = (openBook && openBook[active]) || null;
     return /*#__PURE__*/React.createElement(Shell, {
       wide: vp.desktop ? 1160 : vp.tablet ? 760 : 560
     }, /*#__PURE__*/React.createElement(SubHeader, {
@@ -3056,7 +3239,11 @@ function App() {
           alignItems: "center",
           gap: 8
         }
-      }, at ? /*#__PURE__*/React.createElement("span", {
+      }, P.plans[b.col] ? /*#__PURE__*/React.createElement("span", {
+        style: pillOutline(P.plans[b.col].closedAt ? NAVY : GOLD)
+      }, P.plans[b.col].closedAt
+           ? "Closed " + P.plans[b.col].closedAt + (P.plans[b.col].pct != null ? " \u00b7 " + P.plans[b.col].pct + "%" : "")
+           : P.plans[b.col].items.length + " planned") : null, at ? /*#__PURE__*/React.createElement("span", {
         style: pillOutline(GREEN)
       }, "Sent ", at) : filled ? /*#__PURE__*/React.createElement("span", {
         style: pillOutline(AMBER)
@@ -3076,7 +3263,11 @@ function App() {
         style: {
           padding: "0 14px 14px"
         }
-      }, /*#__PURE__*/React.createElement(Field, {
+      }, /*#__PURE__*/React.createElement(PlanPanel, {
+        b: b, plan: P.plans[b.col], span: P.spans[b.col], book: bookOf, picked: kpiList(bl.kpi),
+        opts: opts, api: api, active: active, date: date, mine: mine,
+        onSaved: planSaved(active, date)
+      }), /*#__PURE__*/React.createElement(Field, {
         label: "KPI worked \u2014 pick every one this block touched"
       }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
