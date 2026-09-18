@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-18b';
+var SCRIPT_VERSION = '2026-09-18c';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2211,6 +2211,7 @@ function handle_(action, data, token) {
     case 'plan':        return plansFor_(profile, data);
     case 'savePlan':    return savePlan_(data, profile);
     case 'blockReason': return blockReason_(data, profile);
+    case 'createTask': return createTask_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -5608,6 +5609,161 @@ function savePlan_(data, profile) {
     return { ok: true, plan: planOut_(planRows_(staffId, date)[blockId], staffId, blockId) };
   } finally { lock.releaseLock(); }
 }
+
+// ---------------------------------------------------------------------------
+//  A line of the plan, made into a Salesforce task
+//
+//  "If it is asking for any task that they are doing that is not related to
+//  Salesforce, can't our system add it to Salesforce ... a subject line,
+//  assigned to the user, and asking the due date, so the task is created —
+//  because everything is driven by task." (18 September 2026.)
+//
+//  A line somebody types is a promise only they can confirm. The same line as
+//  a task is one the closer reads back out of Salesforce at the end of the
+//  block, and one that shows up in the open book, the checkpoint, the
+//  reports and the wall like every other piece of work. So the plan offers to
+//  create it, and then carries the task rather than the words.
+//
+//  The write is here rather than in KPI-Write.gs so the whole of this lands in
+//  one paste. It still goes through that file's audit trail when it is
+//  present: every write this tool makes to Salesforce is on the record.
+// ---------------------------------------------------------------------------
+
+/** POST one record. Returns its Id. Throws with Salesforce's own words. */
+function sfkInsert_(object, body) {
+  function send(tok) {
+    return UrlFetchApp.fetch(
+      tok.instance_url + '/services/data/' + SFK.API + '/sobjects/' + object,
+      { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+        headers: { Authorization: 'Bearer ' + tok.access_token },
+        payload: JSON.stringify(body) });
+  }
+  var tok = sfkToken_();
+  var res = send(tok);
+  if (res.getResponseCode() === 401) {          // the token aged out mid-write
+    sfkProps_().deleteProperty('SFK_TOKEN');
+    res = send(sfkToken_());
+  }
+  var code = res.getResponseCode(), text = res.getContentText();
+  if (code !== 201 && code !== 200) throw new Error(sfkSaid_(text));
+  var out = {};
+  try { out = JSON.parse(text); } catch (e) {}
+  if (!out.id) throw new Error(sfkSaid_(text));
+  return String(out.id);
+}
+
+/** The first sentence Salesforce actually said, rather than its JSON. */
+function sfkSaid_(text) {
+  var t = String(text || '').trim();
+  try {
+    var j = JSON.parse(t);
+    var one = Array.isArray(j) ? j[0] : j;
+    if (one && one.message) {
+      var f = one.fields && one.fields.length ? ' (' + one.fields.join(', ') + ')' : '';
+      return String(one.message) + f;
+    }
+  } catch (e) {}
+  return t.length > 300 ? t.slice(0, 300) : t;
+}
+
+/** Whatever the branch's own day depends on, forgotten, so a task created at
+ *  nine is in the nine-o'clock book and not the one cached at eight. */
+function sfkForgetDay_(day) {
+  try {
+    CacheService.getScriptCache().removeAll(
+      ['sfk_m_' + day, 'sfk_nr_' + day, 'sfk_ob_' + day, 'sfk_cw_' + day,
+       'sfk_bill_' + day, 'sfk_wall']);
+  } catch (e) {}
+}
+
+/** Create one task for the person planning the block, and put it on the plan
+ *  in place of the line it came from. */
+function createTask_(data, profile) {
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_())
+    return { ok: false, error: 'Salesforce is not connected, so a task cannot be created yet.' };
+
+  // Own plan only. A manager can read anybody's day, but a task in somebody
+  // else's name, created from a screen they are not looking at, is a task
+  // nobody owns.
+  var staffId = String(data.staffId || profile.staffId);
+  if (staffId !== profile.staffId)
+    return { ok: false, error: 'A task can only be created on your own plan.' };
+
+  var subject = String(data.subject || '').replace(/\s+/g, ' ').trim();
+  if (subject.length < 4) return { ok: false, error: 'Give the task a subject.' };
+  if (subject.length > 255) subject = subject.slice(0, 255);
+
+  var type = String(data.type || '').trim();
+  if (!SF_TYPES[type]) return { ok: false, error: 'Pick a type Salesforce knows.' };
+
+  var due = isoDay_(data.due) || '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(due)) return { ok: false, error: 'Give it a due date.' };
+
+  var users = sfkUsers_();
+  var u = users[staffId];
+  if (!u || !u.id)
+    return { ok: false, error: 'No Salesforce user is matched to you yet. Ask the Branch Manager to run sfKpiTest.' };
+
+  var id;
+  try {
+    id = sfkInsert_('Task', {
+      Subject: subject, OwnerId: u.id, ActivityDate: due,
+      // In Progress, not Not Started: it is on a block of today's plan, which
+      // is somebody saying they are working it now.
+      Status: 'In Progress', Task_Type__c: type
+    });
+  } catch (e) {
+    if (typeof audit_ === 'function') audit_(profile, '', 'create', '', subject, 'FAILED: ' + e.message);
+    return { ok: false, error: 'Salesforce refused it: ' + e.message };
+  }
+  if (typeof audit_ === 'function')
+    audit_(profile, id, 'create', '', subject + ' \u00b7 ' + type + ' \u00b7 due ' + due, 'OK');
+  sfkForgetDay_(todayISO_());
+  if (due !== todayISO_()) sfkForgetDay_(due);
+
+  var item = { k: 'sf', id: id, subject: subject, type: type };
+  var out = { ok: true, id: id, item: item, due: due, type: type, subject: subject, swapped: false };
+
+  // Put it on the plan. The line it replaces is found by the words that were
+  // typed, not by where it sat, so a screen that has since reordered cannot
+  // swap the wrong one.
+  var date = isoDay_(data.date) || todayISO_();
+  var blockId = String(data.block || '').toUpperCase();
+  if (BLOCK_IDS.indexOf(blockId) === -1) return out;
+  var label = String(data.label || '').replace(/\s+/g, ' ').trim();
+  var lock = takeLock_();
+  if (!lock) { out.note = 'The task is in Salesforce. The plan was busy — it will show on the next read.'; return out; }
+  try {
+    var row = planRows_(staffId, date)[blockId];
+    if (row && String(row.ClosedAt || '').trim()) {
+      out.note = 'The task is in Salesforce. That block has already closed, so the plan was left as it was.';
+      return out;
+    }
+    var items = row ? planItemsOf_(row.Items) : [];
+    var next = [], swapped = false;
+    items.forEach(function (x) {
+      if (!swapped && x.k === 'own' && label &&
+          String(x.label || '').toLowerCase() === label.toLowerCase()) {
+        next.push(item); swapped = true;
+      } else next.push(x);
+    });
+    if (!swapped) next.push(item);
+    var clean = cleanPlanItems_(next);
+    if (clean.error) { out.note = clean.error; return out; }
+    var person = rosterPerson_(staffId) || { staffId: staffId, name: profile.name };
+    markStaffWrite_();
+    planWrite_(person, date, blockId, { Items: clean.list });
+    out.swapped = swapped;
+    out.plan = planOut_(planRows_(staffId, date)[blockId], staffId, blockId);
+    return out;
+  } finally { lock.releaseLock(); }
+}
+
+/** The types a task can carry, for the screen that offers to create one. */
+function sfTaskTypes_() {
+  return sfTypeList_().map(function (t) { return { value: t, label: SF_TYPES[t] }; });
+}
+
 
 // ---- what Salesforce saw ----------------------------------------------------
 

@@ -54,7 +54,7 @@ const SPANS = { KPI1:span(480,600,'08:00','10:00'), KPI2:span(600,720,'10:00','1
 const PLANS = { KPI2: { block:'KPI2', closedAt:'12:05', achieved:1, of:2, pct:50, sfClosed:2, sfMoved:1, filed:'auto', emailed:true, note:'', span:SPANS.KPI2,
   items:[ { k:'sf', id:'00T000000000001AAA', subject:'T- PENSIONS GROUP - R&C ENTERPRISES LIMITED', type:'Renewa/PDl/Bill', state:'done' },
           { k:'own', label:'Interview two recruits', done:false, state:'unconfirmed' } ] } };
-const posted = { savePlan:[], blockReason:[] };
+const posted = { savePlan:[], blockReason:[], createTask:[] };
 
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
@@ -77,6 +77,13 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
       posted.savePlan.push(body);
       PLANS[body.block] = { block:body.block, items:body.items, closedAt:'', achieved:null, of:null, pct:null, sfClosed:null, sfMoved:null, filed:'', emailed:false, note:'', span:SPANS[body.block] };
       return j({ ok:true, plan:PLANS[body.block] });
+    }
+    if (body.action==='createTask') {
+      posted.createTask.push(body);
+      const pl = PLANS[body.block];
+      const it = { k:'sf', id:'00T900000000001AA', subject:body.subject, type:body.type };
+      pl.items = pl.items.map(x => (x.k === 'own' && x.label === body.label) ? it : x);
+      return j({ ok:true, id:it.id, item:it, due:body.due, type:body.type, subject:body.subject, swapped:true, plan:pl });
     }
     if (body.action==='blockReason') {
       posted.blockReason.push(body);
@@ -102,31 +109,67 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('the open tasks of the picked type are there to tick', /T- PENSIONS GROUP/.test(k1t) && /Confirm funds in DISB/.test(k1t));
   ok('with how long each has been open', /40 days/.test(k1t));
   ok('the licensing task is not — that type is not picked for this block', !/Licence renewal/.test(k1t));
-  ok('the role\'s own work is offered as chips', /Reporting/.test(k1t) && /Task Management/.test(k1t));
-  const ownPart = k1t.split(/something salesforce cannot see/i)[1] || '';
-  ok('the licensing KPI is not offered as one — Salesforce sees that', ownPart.length > 0 && !/Licensing/.test(ownPart), k1t.slice(-200));
+  // The panel no longer repeats the role's whole KPI list under the picker
+  // that already shows it. What it offers is the word-work this block is for,
+  // and a line for anything else.
+  const ownPart = k1t.split(/in your own words/i)[1] || '';
+  ok('it asks for anything in words', ownPart.length > 0, k1t.slice(-160));
+  ok('and does not repeat the whole KPI list under it',
+     !/Reporting/.test(ownPart) && !/Task Management/.test(ownPart) && !/Licensing/.test(ownPart), ownPart.slice(0, 160));
+  const pm2 = page.locator('[data-plan="PM2"]');
+  ok('a block whose KPI is word-work offers that as a chip',
+     await pm2.locator('button:has-text("Reporting")').count() === 1);
 
   console.log('\nPicking, and saving:\n');
   await k1.locator('input[type="checkbox"]').first().check();
-  await k1.locator('button:has-text("Reporting")').click();
   await k1.locator('input[placeholder*="Interview"]').fill('Call two recruits about Monday');
   await k1.locator('button:has-text("Add")').click();
   await page.waitForTimeout(150);
-  ok('three on the plan, and it says so', /3 on the plan/.test(await k1.innerText()));
+  ok('two on the plan, and it says so', /2 on the plan/.test(await k1.innerText()));
   ok('the typed line is listed with a tick box', await k1.locator('text=Call two recruits about Monday').count() > 0);
   await k1.locator('button:has-text("Save plan")').click();
   await page.waitForTimeout(500);
   const sp = posted.savePlan[0];
   ok('the save names the block', !!sp && sp.block === 'KPI1' && sp.staffId === 'demo', JSON.stringify(sp && [sp.block, sp.staffId]));
   ok('the Salesforce task travels with its id, subject and type', !!sp && sp.items[0].k === 'sf' && sp.items[0].id === '00T000000000001AAA' && /PENSIONS/.test(sp.items[0].subject) && sp.items[0].type === 'Renewa/PDl/Bill', JSON.stringify(sp && sp.items[0]));
-  ok('and the person\'s own lines as words', !!sp && sp.items.some(x => x.k === 'own' && x.label === 'Reporting') && sp.items.some(x => x.k === 'own' && x.label === 'Call two recruits about Monday'), JSON.stringify(sp && sp.items));
+  ok('and the person\'s own line as words', !!sp && sp.items.some(x => x.k === 'own' && x.label === 'Call two recruits about Monday'), JSON.stringify(sp && sp.items));
   ok('it says saved, and when it closes', /Saved · closes itself at 10:00/.test(await k1.innerText()));
+
+  console.log('\nA line of her own can be made into a real task:\n');
+  await k1.locator('button:has-text("Make it a task")').first().click();
+  await page.waitForTimeout(200);
+  const mkBox = k1.locator('[data-maketask]');
+  ok('the maker opens on that line', await mkBox.count() === 1);
+  const mkT = await mkBox.innerText();
+  ok('and says where it goes and who reads it', /goes into Salesforce as yours/.test(mkT) && /reads it back/.test(mkT), mkT.slice(0, 120));
+  ok('the subject is the line they typed',
+     await mkBox.locator('input[placeholder="Subject"]').inputValue() === 'Call two recruits about Monday');
+  ok('the due date starts on the day being planned',
+     await mkBox.locator('input[type="date"]').inputValue() === '2026-09-17');
+  const typeOpts = await mkBox.locator('select option').allTextContents();
+  ok('only types Salesforce holds are offered', typeOpts.length === 3 && typeOpts.every(t => /Pendings|Renewals|Licensing/.test(t)), typeOpts.join(' | '));
+  ok('and the block\'s own type is chosen for them',
+     await mkBox.locator('select').inputValue() === 'Renewa/PDl/Bill', await mkBox.locator('select').inputValue());
+  await mkBox.locator('input[type="date"]').fill('2026-09-18');
+  await mkBox.locator('button:has-text("Create in Salesforce")').click();
+  await page.waitForTimeout(600);
+  const ct = posted.createTask[0];
+  ok('the create names the line, the subject, the type and the date',
+     !!ct && ct.label === 'Call two recruits about Monday' && ct.subject === 'Call two recruits about Monday' &&
+     ct.type === 'Renewa/PDl/Bill' && ct.due === '2026-09-18' && ct.block === 'KPI1' && ct.staffId === 'demo',
+     JSON.stringify(ct));
+  const after = await k1.innerText();
+  ok('it says so, with the date', /In Salesforce, assigned to you, due 18 Sep/.test(after), (after.match(/In Salesforce[^\n]{0,60}/) || [''])[0]);
+  ok('and the maker closes', await mkBox.count() === 0);
+  ok('the line is now a task on the plan, with a tick box',
+     await k1.locator('input[type="checkbox"]').count() === 3, String(await k1.locator('input[type="checkbox"]').count()));
+  ok('nothing of her own is left unticked in words', !/Call two recruits about Monday\s*\n?\s*\u00d7/.test(after));
 
   console.log('\nOn the day, a closed block shows what the closer decided:\n');
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(800);
   const day = await page.locator('body').innerText();
-  ok('KPI 1 says three are planned', /3 planned/.test(day));
+  ok('KPI 1 says two are planned', /2 planned/.test(day));
   ok('KPI 2 says it closed, with the score', /Closed 12:05 · 50%/.test(day));
   await page.locator('button:has-text("KPI 2")').first().click();
   await page.waitForTimeout(400);

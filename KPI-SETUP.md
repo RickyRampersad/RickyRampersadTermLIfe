@@ -722,6 +722,73 @@ ticked an automatic line the sheet disagrees with, the list reads *said done
 at 15:47* rather than the count that contradicts them — their word, marked as
 their word.
 
+## What a block card asks, in order
+
+Reported on 18 September 2026, looking at the live screen: *"the layout can be
+much nicer, it's looking very crumbled ... the Salesforce task underneath has
+just the numbers but it can be more organised."*
+
+A block now asks three questions, once each, top to bottom.
+
+1. **The KPIs this block covers.** The picked ones as tiles with what is open
+   behind them, then the rest as chips. This is the only place a block's KPIs
+   are chosen.
+2. **What you will get done in it.** The open Salesforce tasks of those KPIs as
+   boxes to tick, and a line for anything Salesforce cannot see. The panel used
+   to offer the role's whole KPI list here as well, which on the Branch
+   Manager's screen is thirteen chips sitting under a picker showing the same
+   thirteen — the card asked one question twice and answered it in two places.
+   It now offers only the word-work the block is already for, plus the line.
+3. **What happened in it.** The writing guide, then Actioned, Resolved, Still
+   open, the blocker, and whether the objective was met.
+
+A block the closer already filed shows its verdict and nothing else, with the
+form behind *Write it in your own words*.
+
+**The Salesforce column** keeps the three totals, and under them *Where it
+sits*: the same book by type, worst first, with how many of each are late and
+how many nobody has touched. "Thirteen overdue" is a mood; "nine of them are
+servicing lines" is a morning.
+
+**Overdue with no reason** is grouped by type, five at a time, and each row is
+one line — the reason box opens when somebody clicks *Say why*. Thirteen open
+text boxes stacked down a column is a form nobody fills in.
+
+## A line of the plan, made into a Salesforce task
+
+Asked for on 18 September 2026: *"if it is asking for any task that they are
+doing that is not related to Salesforce, can't our system add it to Salesforce
+... a subject line, assigned to the user, and asking the due date, so the task
+is created — because everything is driven by task."*
+
+Next to every line somebody types on a block plan there is now **Make it a
+task**. It opens three fields: the **subject** (the line they typed, editable),
+the **type** from the ten Salesforce task types, and the **due date**,
+starting on the day being planned. *Create in Salesforce* writes a real Task,
+**assigned to that person**, status *In Progress*.
+
+The plan then carries the task instead of the words, and that is the point:
+the block closer reads it back out of Salesforce at the end of the hour like
+every other picked task, and it counts in the open book, the checkpoint, the
+reports and the wall.
+
+What it will not do:
+
+- **Somebody else's plan.** A task can only be created on your own. A manager
+  reads everybody's day; a task in another person's name, created from a screen
+  they are not looking at, is a task nobody owns.
+- **A type Salesforce does not hold.** The picker offers the ten real task
+  types only. The role's own KPI names (*Recruitment & Selection*, *Reporting*)
+  are not picklist values, so one of the ten has to carry it.
+- **A task with no due date**, or a subject under four characters.
+- **Touch a block that has already closed.** The task is still created; the
+  closed plan is left exactly as the closer filed it, and the screen says so.
+
+Every create is on the **KPI Salesforce Writes** tab with the subject, the type
+and the due date, the same as every reason and close the tool writes. If
+Salesforce refuses, the refusal is quoted back in its own words and nothing is
+put on the plan.
+
 ## The block that closes itself
 
 Asked for on 17 September 2026: *"when the time block is up the system should

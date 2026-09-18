@@ -245,6 +245,25 @@ const ok = (what, cond, extra) => {
   await page.waitForTimeout(900);
   ok('it opens the blocks', await page.locator('text=Each block closes itself at its end time').count() > 0);
 
+  console.log('\nThe Salesforce column says where the work sits, not just how much:\n');
+  let col = await page.locator('body').innerText();
+  ok('the three totals are still the headline', /Closed today/.test(col) && /Open now/.test(col) && /Overdue/.test(col));
+  ok('and the book is broken out by type', /where it sits/i.test(col));
+  ok('worst type first, with what nobody has touched',
+     /17 open \u00b7 1 late \u00b7 4 untouched/.test(col), (col.match(/17 open[^\n]{0,40}/) || [''])[0]);
+  ok('a quiet type says only what is open', /Servicing lines\s*3 open\b/.test(col), (col.match(/Servicing lines[^\n]{0,30}/) || [''])[0]);
+
+  console.log('\nThe overdue list is grouped, and asks before it opens a box:\n');
+  ok('the four are grouped under their types',
+     /Pendings \u00b7 pending, lapse and follow-ups/.test(col) && /No type/.test(col));
+  ok('nothing is typed into yet', await page.locator('input[placeholder*="What it is waiting on"]').count() === 0);
+  ok('every row offers the question', await page.locator('button:has-text("Say why")').count() === 4,
+     String(await page.locator('button:has-text("Say why")').count()));
+  await page.locator('button:has-text("Say why")').first().click();
+  await page.waitForTimeout(250);
+  ok('and one box opens, for that row alone', await page.locator('input[placeholder*="What it is waiting on"]').count() === 1);
+  ok('the row keeps its Close as well', await page.locator('button:has-text("Close \u2713")').count() >= 4);
+
   // Blocks are an accordion on the day screen, so open one before looking.
   await page.locator('text=KPI 1').first().click();
   await page.waitForTimeout(500);
