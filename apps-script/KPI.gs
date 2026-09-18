@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-17g';
+var SCRIPT_VERSION = '2026-09-18b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1009,7 +1009,11 @@ function isManager_(person) {
   // seniority: roleFor_ decides the KPI list, this decides the reach.
   var r = roleFor_(person);
   if (r === 'bm') return true;
-  return /administrator|\badmin\b/.test(normRole_((person.role || '') + ' ' + (person.unit || '')));
+  // "Administrator" in the Role column is the workbook's owner standing in.
+  // It used to be any "admin" in the Role OR the Unit — and Sales Admin is a
+  // support unit, so a Sales Support Assistant whose Unit cell said "Sales
+  // Admin" signed in and saw the whole branch. Role, and the whole word.
+  return /\badministrator\b/.test(normRole_(person.role || ''));
 }
 
 function issueToken_(person) {
@@ -1085,7 +1089,19 @@ function login_(who, password) {
   try { t.profile.attendance = recordAttendance_(t.profile); } catch (e) {}
   t.profile.leads = leads_(t.profile);
   return { ok: true, token: t.token, profile: t.profile,
-           roster: publicRoster_(), schedule: SCHEDULE };
+           roster: publicRoster_(), schedule: SCHEDULE,
+           offRoster: isManager_(person) ? offRoster_() : undefined };
+}
+
+/** Who is on the Access tab but off the roster, and what their Active cell
+ *  says. The Branch Manager alone gets this, so that a person who is missing
+ *  from every screen is explained on his: a cell reading "Left", "Maternity"
+ *  or "x" takes somebody off, and until now nothing said so anywhere. The
+ *  name and the cell, nothing else. */
+function offRoster_() {
+  return roster_().filter(function (p) { return !p.active; }).map(function (p) {
+    return { name: p.name, says: p.activeRaw };
+  });
 }
 
 /** The roster minus the passwords. This is the only shape that leaves here. */
@@ -1359,6 +1375,7 @@ function daySubstance_(row, idx) {
   BLOCK_IDS.forEach(function (p) {
     var q = idx && idx[p + '_Quality'] != null ? String(row[idx[p + '_Quality']] || '') : '';
     if (!q) return;
+    if (q === 'auto') return;            // filed by the closer, not written by the person
     if (q.indexOf('thin') === 0) thin.push({ block: p, reason: q.replace(/^thin:\s*/, '') });
     else full++;
   });
@@ -2110,6 +2127,8 @@ function doGet(e) {
   }
   // And so is a tick from the quarter-to-four close-out.
   try { var co = closeoutClick_(e); if (co) return co; } catch (err) {}
+  // And the links in the e-mail a block sends when it closes itself.
+  try { var bc = blockClick_(e); if (bc) return bc; } catch (err) {}
   try {
     return json_(handle_(p.action || 'rows', p, p.token));
   } catch (err) {
@@ -2119,6 +2138,11 @@ function doGet(e) {
 
 function doPost(e) {
   resetRequestMemo_();
+  // The reason form behind a block's e-mail posts form-encoded, not JSON.
+  if (e && e.parameter && e.parameter.bk && e.parameter.why != null) {
+    try { var bp = blockReasonPost_(e); if (bp) return bp; }
+    catch (err) { return closeoutPage_('That did not record.', String(err && err.message || err), null); }
+  }
   var body = {};
   try { body = JSON.parse(e.postData.contents); } catch (err) { body = {}; }
   if (typeof intelRoute_ === 'function') {
@@ -2161,7 +2185,8 @@ function handle_(action, data, token) {
       try { profile.attendance = recordAttendance_(profile); } catch (e) {}
       profile.leads = leads_(profile);
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
-               kpis: allKpiChoices_() };
+               kpis: allKpiChoices_(),
+               offRoster: profile.manager ? offRoster_() : undefined };
 
     case 'absent':
       return markAbsent_(data, profile);
@@ -2181,6 +2206,11 @@ function handle_(action, data, token) {
 
     case 'tickCloseout':
       return tickCloseout_(data, profile);
+
+    // The block that closes itself: what it is for, and what was missed.
+    case 'plan':        return plansFor_(profile, data);
+    case 'savePlan':    return savePlan_(data, profile);
+    case 'blockReason': return blockReason_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -2629,7 +2659,7 @@ function sendWeekly(dateOpt) {
 /** Everything this tool installs. Anything else in the project is somebody
  *  else's and is left alone. */
 var MY_TRIGGERS = ['sendCheckpoint', 'sendWeekly', 'remindMidday', 'remindCheckpoint',
-                   'sendCloseout', 'sendBranchPulse', 'keepWarm'];
+                   'sendCloseout', 'sendBranchPulse', 'keepWarm', 'closeBlocks'];
 
 /** Handlers from earlier versions of this tool. Replacing the code does not
  *  remove the triggers that call it — they are stored against the project, not
@@ -2757,13 +2787,19 @@ function installTriggers() {
   // And one that keeps the project awake, so nobody pays the cold start.
   ScriptApp.newTrigger('keepWarm').timeBased().everyMinutes(10).create();
 
-  var msg = 'Seven triggers installed. Warm-up every 10 minutes, round the clock. Staff nudges at 12:00 and ' +
+  // Every hour, the blocks that have ended close themselves — read from
+  // Salesforce, filed if nobody filed them, e-mailed only when something on
+  // the plan was missed. Apps Script fires an hourly trigger somewhere inside
+  // the hour, so a block that ends at ten is closed by eleven.
+  ScriptApp.newTrigger('closeBlocks').timeBased().everyHours(1).create();
+
+  var msg = 'Eight triggers installed. Warm-up every 10 minutes and the block closer every hour, round the clock. Staff nudges at 12:00 and ' +
             CONFIG.CHECKPOINT_HOUR + ':00, branch checkpoint ' + CONFIG.CHECKPOINT_HOUR +
             ':00, the branch message at ' + PULSE_HOUR + ':00, before-you-leave close-out ' +
             CLOSEOUT_HOUR + ':' + CLOSEOUT_MINUTE +
             ', weekly summary Friday 17:00 (' + CONFIG.TZ + '). The daily ones turn a day nobody ' +
-            'opened away themselves. Seven here and Branch Intelligence\'s eleven is eighteen, ' +
-            'under the project limit of twenty.';
+            'opened away themselves. Eight here and Branch Intelligence\'s twelve is twenty, ' +
+            'which is the project limit — the next trigger anybody adds has to replace one.';
   if (removed.length) {
     msg += '\n\nStopped ' + removed.length + ' retired trigger(s) from the previous ' +
            'version: ' + removed.join(', ') + '.';
@@ -5355,6 +5391,631 @@ function closeoutDay(dateOpt) {
   }).filter(Boolean).join('\n');
   Logger.log(lines);
   return lines;
+}
+
+// ---------------------------------------------------------------------------
+//  The block that closes itself
+//
+//  "At the end of the time block the system should automatically log, as it
+//  reads the Salesforce environment, and send the email at the end of the
+//  time block with the % achieved — what I selected to have completed and
+//  what was achieved. If not achieved, in the email I am to respond to each
+//  as to why, and the responses stored." (17 September 2026.)
+//
+//  So a block has three moments now, and only the first needs the person:
+//
+//    PLAN    before or during the block they say what it is for — tasks
+//            picked off their own Salesforce book, and anything Salesforce
+//            cannot see (a recruit interviewed, a coaching session) typed in.
+//    CLOSE   when the block's own end time has passed, the hourly closer
+//            reads Salesforce: which of the picked tasks are completed now,
+//            and what else was closed or moved inside the window. A block
+//            the person never filed is filed for them from that, and marked
+//            as filed that way. One they filed themselves is left alone.
+//    ANSWER  only when something was missed does an e-mail go out, and every
+//            missed item on it carries a link to say why. The answer is kept
+//            against the item and the day, and shows in the tracker. A clean
+//            block passes in silence — an e-mail that arrives when nothing is
+//            wrong teaches people to stop opening them.
+//
+//  What the closer will not do: overwrite a block the person filed; count a
+//  task as done that Salesforce says is open; write to anybody whose day was
+//  never opened, or about a block that ended before they signed in; or write
+//  at all when Salesforce did not answer — "not achieved" has to be a fact
+//  before it is put to somebody as one.
+// ---------------------------------------------------------------------------
+
+var BPLAN = { must: ['Date', 'StaffId', 'Block', 'Items'], name: 'Block Plans',
+              head: ['Date', 'StaffId', 'Name', 'Block', 'Items', 'PlannedAt', 'UpdatedAt',
+                     'ClosedAt', 'Achieved', 'Of', 'Pct', 'SFClosed', 'SFMoved', 'Emailed',
+                     'Filed', 'Note'] };
+var BREASON = { must: ['Date', 'StaffId', 'Block', 'Item'], name: 'Block Reasons',
+                head: ['Date', 'StaffId', 'Name', 'Block', 'Item', 'Label', 'Reason', 'At', 'Source'] };
+var PLAN_MAX_ITEMS = 30, PLAN_TEXT_MAX = 160, REASON_MAX = 600;
+
+/** '8 – 10am' -> { start: 480, end: 600 }, minutes from midnight.
+ *
+ *  The schedule writes the end with its am/pm and usually leaves it off the
+ *  start — '1 – 3pm', '11 – 1pm', '10 – 12pm'. A bare start hour could be
+ *  either, so the reading that makes the shorter block wins: '1 – 3pm' is
+ *  two hours, not fourteen. '12am' as an END is midnight, the close of the
+ *  day, which is where the Branch Manager's after-four block runs to. */
+function parseSpan_(time) {
+  var m = String(time || '').match(
+    /^\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*[–—-]\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)\s*$/i);
+  if (!m) return null;
+  var eh = Number(m[4]) % 12, em = Number(m[5] || 0), es = m[6].toLowerCase();
+  var end = (es === 'am' && Number(m[4]) === 12) ? 24 * 60
+          : (es === 'pm' ? eh + 12 : eh) * 60 + em;
+  var sh = Number(m[1]) % 12, sm = Number(m[2] || 0), ss = (m[3] || '').toLowerCase();
+  var cands = ss ? [(ss === 'pm' ? sh + 12 : sh) * 60 + sm] : [sh * 60 + sm, (sh + 12) * 60 + sm];
+  var start = null;
+  cands.forEach(function (c) { if (c < end && (start === null || end - c < end - start)) start = c; });
+  return start === null ? null : { start: start, end: end };
+}
+
+/** This person's block, as minutes. A block the schedule does not time is
+ *  not a block the closer can close, so there is no guess here. */
+function blockSpan_(staffId, blockId) {
+  var sc = scheduleFor_(staffId);
+  var b = sc && sc.blocks && sc.blocks[blockId];
+  return b && b.time ? parseSpan_(b.time) : null;
+}
+
+function mmText_(m) {
+  if (m == null) return '';
+  var h = Math.floor(m / 60) % 24, mi = m % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (mi < 10 ? '0' : '') + mi;
+}
+
+/* Port of Spain is UTC-4 all year, as sfkMetrics_ already assumes. The day
+   can roll: the after-four block ends at local midnight, which is 04:00Z the
+   next morning. */
+function sfkUtcAt_(day, minutes) {
+  var m = minutes + 240, d = day;
+  while (m >= 1440) { d = shiftDays_(d, 1); m -= 1440; }
+  var p = function (n) { return (n < 10 ? '0' : '') + n; };
+  return d + 'T' + p(Math.floor(m / 60)) + ':' + p(m % 60) + ':00Z';
+}
+
+// ---- the plan ---------------------------------------------------------------
+
+function planItemsOf_(v) {
+  try { var a = JSON.parse(String(v == null || v === '' ? '[]' : v)); return Array.isArray(a) ? a : []; }
+  catch (e) { return []; }
+}
+
+/** This person's plan rows for a day, keyed by block. The Items cell stays
+ *  as the sheet holds it; planItemsOf_ reads it. */
+function planRows_(staffId, date) {
+  var out = {};
+  (hrRows_(BPLAN, true) || []).forEach(function (r) {
+    if (isoDay_(r.Date) !== date || String(r.StaffId) !== String(staffId)) return;
+    out[String(r.Block || '').toUpperCase()] = r;
+  });
+  return out;
+}
+
+/** Upsert one block's row. The caller holds the lock. */
+function planWrite_(person, date, blockId, patch) {
+  var sh = hrTab_(BPLAN, true), rows = sheetObjects_(sh), now = new Date(), at = 0;
+  for (var i = 0; i < rows.length; i++) {
+    if (isoDay_(rows[i].Date) === date && String(rows[i].StaffId) === String(person.staffId) &&
+        String(rows[i].Block || '').toUpperCase() === blockId) { at = i + 2; break; }
+  }
+  var p = {};
+  Object.keys(patch).forEach(function (k) { p[k] = patch[k]; });
+  if (p.Items != null && typeof p.Items !== 'string') p.Items = JSON.stringify(p.Items);
+  p.UpdatedAt = now;
+  if (at) writeRow_(sh, at, colMap_(sh), p);
+  else {
+    var o = { Date: date, StaffId: person.staffId, Name: person.name || person.staffId,
+              Block: blockId, PlannedAt: now };
+    Object.keys(p).forEach(function (k) { o[k] = p[k]; });
+    sh.appendRow(BPLAN.head.map(function (h) { return o[h] != null ? o[h] : ''; }));
+  }
+  forgetHr_(BPLAN);
+}
+
+function spanOut_(sp) {
+  return sp ? { start: sp.start, end: sp.end, startText: mmText_(sp.start), endText: mmText_(sp.end) } : null;
+}
+
+/** One block's plan as the screen and the e-mail read it. */
+function planOut_(r, staffId, blockId) {
+  return {
+    block: blockId,
+    items: r ? planItemsOf_(r.Items) : [],
+    closedAt: r ? (timeStr_(r.ClosedAt) || '') : '',
+    achieved: r ? n_(r.Achieved) : null,
+    of: r ? n_(r.Of) : null,
+    pct: r ? n_(r.Pct) : null,
+    sfClosed: r ? n_(r.SFClosed) : null,
+    sfMoved: r ? n_(r.SFMoved) : null,
+    filed: r ? String(r.Filed || '') : '',
+    emailed: !!(r && String(r.Emailed || '').trim()),
+    note: r ? String(r.Note || '') : '',
+    span: spanOut_(blockSpan_(staffId, blockId))
+  };
+}
+
+/** What a plan may hold: a Salesforce task by its Id, or a line of the
+ *  person's own words. Anything else is dropped rather than refused, so a
+ *  stale screen cannot stop a save. */
+function cleanPlanItems_(raw) {
+  var list = Array.isArray(raw) ? raw : [];
+  if (list.length > PLAN_MAX_ITEMS) return { error: 'Thirty things is a week, not a block. Pick fewer.' };
+  var out = [], seen = {};
+  for (var i = 0; i < list.length; i++) {
+    var it = list[i] || {};
+    if (it.k === 'sf') {
+      var id = String(it.id || '').trim();
+      if (!/^[A-Za-z0-9]{15,18}$/.test(id) || seen['sf:' + id]) continue;
+      seen['sf:' + id] = 1;
+      out.push({ k: 'sf', id: id, subject: shorten_(it.subject, PLAN_TEXT_MAX),
+                 type: shorten_(it.type, 40) });
+    } else if (it.k === 'own') {
+      var label = String(it.label || '').replace(/\s+/g, ' ').trim();
+      if (!label || seen['own:' + label.toLowerCase()]) continue;
+      seen['own:' + label.toLowerCase()] = 1;
+      out.push({ k: 'own', label: shorten_(label, PLAN_TEXT_MAX), done: it.done === true });
+    }
+  }
+  return { list: out };
+}
+
+function planScope_(profile, data) {
+  var staffId = String((profile.manager || !data.staffId) ? (data.staffId || profile.staffId) : profile.staffId);
+  if (staffId !== profile.staffId && !profile.manager && !isLeadOf_(profile, staffId)) return null;
+  return staffId;
+}
+
+/** The day's plans and every block's window, for the screen. */
+function plansFor_(profile, data) {
+  var staffId = planScope_(profile, data || {});
+  if (!staffId) return { ok: false, error: 'Not yours to read.' };
+  var date = isoDay_((data || {}).date) || todayISO_();
+  var rows = planRows_(staffId, date), plans = {}, spans = {};
+  BLOCK_IDS.forEach(function (b) {
+    var sp = blockSpan_(staffId, b);
+    if (sp) spans[b] = spanOut_(sp);
+    if (rows[b]) plans[b] = planOut_(rows[b], staffId, b);
+  });
+  return { ok: true, staffId: staffId, date: date, plans: plans, spans: spans, now: hhmm_(new Date()) };
+}
+
+/** Say what a block is for. Until it closes it can be changed as often as
+ *  the person likes; after that the answer is a reason, not a new plan. */
+function savePlan_(data, profile) {
+  var staffId = planScope_(profile, data);
+  if (!staffId || (staffId !== profile.staffId && !profile.manager)) return { ok: false, error: 'Not yours to plan.' };
+  var date = isoDay_(data.date) || todayISO_();
+  var blockId = String(data.block || '').toUpperCase();
+  if (BLOCK_IDS.indexOf(blockId) === -1) return { ok: false, error: 'Unknown block: ' + blockId };
+  var items = cleanPlanItems_(data.items);
+  if (items.error) return { ok: false, error: items.error };
+  var person = rosterPerson_(staffId) || { staffId: staffId, name: profile.name };
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var have = planRows_(staffId, date)[blockId];
+    if (have && String(have.ClosedAt || '').trim()) {
+      return { ok: false, error: 'That block has closed. Answer what was missed rather than re-planning it.',
+               plan: planOut_(have, staffId, blockId) };
+    }
+    markStaffWrite_();
+    planWrite_(person, date, blockId, { Items: items.list });
+    return { ok: true, plan: planOut_(planRows_(staffId, date)[blockId], staffId, blockId) };
+  } finally { lock.releaseLock(); }
+}
+
+// ---- what Salesforce saw ----------------------------------------------------
+
+/** Every task this person touched inside the block, split by how it was
+ *  left. Null when Salesforce is not wired; throws when it does not answer,
+ *  and the closer treats the two differently. */
+function sfkBlockActivity_(staffId, day, span) {
+  if (!sfkConfigured_()) return null;
+  var u = sfkUsers_()[staffId];
+  if (!u) return null;
+  var from = sfkUtcAt_(day, span.start), to = sfkUtcAt_(day, span.end);
+  var recs = sfkQuery_(
+    'SELECT Id, Subject, Status, Task_Type__c, CompletedDateTime, LastModifiedDate FROM Task' +
+    " WHERE OwnerId = '" + u.id + "' AND LastModifiedDate >= " + from + ' AND LastModifiedDate < ' + to +
+    " AND (NOT Subject LIKE '%Happy Birthday%') ORDER BY LastModifiedDate LIMIT 200");
+  var closed = [], moved = [], touched = {};
+  recs.forEach(function (r) {
+    var it = { id: String(r.Id), subject: shorten_(r.Subject, 110), type: String(r.Task_Type__c || '') };
+    var done = String(r.Status) === 'Completed';
+    touched[it.id] = done ? 'done' : 'moved';
+    (done ? closed : moved).push(it);
+  });
+  return { closed: closed, moved: moved, touched: touched, from: from, to: to };
+}
+
+/** Where the picked tasks stand now, by Id. */
+function sfkTaskStates_(ids) {
+  var out = {};
+  if (!ids.length) return out;
+  sfkQuery_('SELECT Id, Status FROM Task WHERE Id IN (' +
+    ids.map(function (i) { return "'" + String(i).replace(/'/g, '') + "'"; }).join(',') + ')')
+    .forEach(function (r) { out[String(r.Id)] = String(r.Status || ''); });
+  return out;
+}
+
+// ---- the closer -------------------------------------------------------------
+
+/** Hourly. Closes every block whose end has passed for everybody whose day is
+ *  open, once. In the small hours it also looks at yesterday, because the
+ *  after-four block ends at midnight. Run it from the editor to close what
+ *  is due now. */
+function closeBlocks(e) {
+  var now = new Date(), day = todayISO_();
+  var nowMin = minutesOf_(hhmm_(now)) || 0;
+  var lines = [], days = [day];
+  if (nowMin < 3 * 60) days.unshift(shiftDays_(day, -1));
+  days.forEach(function (d) {
+    var att = {};
+    try {
+      attendanceFor_({ staffId: '', manager: true }, d, shiftDays_(d, 1))
+        .forEach(function (o) { att[o.staffId] = o; });
+    } catch (err) {}
+    publicRoster_().forEach(function (p) {
+      var a = att[p.staffId];
+      if (!a || a.status === 'absent' || !a.at) return;      // a day never opened has nothing to close
+      var inAt = minutesOf_(a.at) || 0;
+      var sc = scheduleFor_(p.staffId), plans = null;
+      BLOCK_IDS.forEach(function (b) {
+        var blk = sc.blocks && sc.blocks[b];
+        if (!blk || !blk.time) return;
+        var span = blockSpan_(p.staffId, b);
+        if (!span) return;
+        if (d === day && span.end > nowMin) return;           // still running
+        if (!plans) plans = planRows_(p.staffId, d);
+        if (plans[b] && String(plans[b].ClosedAt || '').trim()) return;   // closed already
+        var line = closeBlock_(p, d, b, span, plans[b] || null, now, inAt);
+        if (line) lines.push(line);
+      });
+    });
+  });
+  var msg = lines.length ? lines.join('\n') : 'Nothing to close at ' + hhmm_(now) + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+/** One block, closed: the verdict on the plan, the filing if there was none,
+ *  the record, and the e-mail only if something was missed. */
+function closeBlock_(p, day, b, span, planRow, now, inAt) {
+  var sid = p.staffId, at = hhmm_(now), tag = sid + ' ' + b + ' (' + mmText_(span.start) + '–' + mmText_(span.end) + ')';
+  var items = planRow ? planItemsOf_(planRow.Items) : [];
+  var sfIds = items.filter(function (i) { return i.k === 'sf'; }).map(function (i) { return i.id; });
+  var lateIn = inAt > span.end;
+
+  var act = null, states = null;
+  if (sfkConfigured_()) {
+    try {
+      act = sfkBlockActivity_(sid, day, span);
+      states = sfkTaskStates_(sfIds);
+    } catch (err) {
+      /* Not a verdict. Left open, so the next hour asks again. */
+      return tag + ': Salesforce did not answer (' + String(err && err.message || err).slice(0, 80) + '), next hour';
+    }
+  }
+
+  var done = 0, known = 0, missed = 0;
+  items.forEach(function (it) {
+    if (it.k === 'own') it.state = it.done ? 'done' : 'unconfirmed';
+    else if (!states) it.state = 'unknown';
+    else if (states[it.id] === 'Completed') it.state = 'done';
+    else if (act && act.touched[it.id]) it.state = 'moved';
+    else it.state = 'open';
+    if (it.state === 'unknown') return;
+    known++;
+    if (it.state === 'done') done++; else missed++;
+  });
+  var of = items.length, pct = known ? Math.round(done / known * 100) : null;
+  var saw = !!(act && (act.closed.length || act.moved.length));
+
+  var filedBy = '', note = '';
+  var lock = takeLock_();
+  if (!lock) return tag + ': the sheet is busy, next hour';
+  try {
+    var sh = logSheet_(), idx = colMap_(sh), head = headerOf_(sh);
+    var found = findDayRow_(sh, idx, sid, day), v = found.vals;
+    var filed = !!(v && (hasText_(v[idx[b + '_Actioned']]) || (idx[b + '_At'] != null && v[idx[b + '_At']])));
+    if (filed) filedBy = 'person';
+    else if (saw || items.length) {
+      var missedLabels = items.filter(function (it) { return it.state !== 'done'; })
+        .map(function (it) { return it.k === 'sf' ? it.subject : it.label; });
+      var patch = {};
+      patch[b] = String((scheduleFor_(sid).blocks[b] || {}).kpi || '');
+      patch[b + '_Actioned'] = 'Closed automatically at ' + at +
+        (act ? ' from Salesforce: ' + act.closed.length + ' closed, ' + act.moved.length + ' moved' : '') +
+        (of ? ' · planned ' + of + ', done ' + done : '') + '.';
+      patch[b + '_Resolved'] = act ? act.closed.map(function (t) { return t.subject; }).join('; ') : '';
+      patch[b + '_Open'] = missedLabels.join('; ');
+      patch[b + '_Quality'] = 'auto';
+      patch[b + '_At'] = now;
+      if (of && pct != null) patch[b + '_Met'] = pct >= 100 ? 'met' : pct > 0 ? 'partly' : 'no';
+      patch.UpdatedAt = now; patch.Revision = found.revision + 1; patch.Status = 'Submitted';
+      if (found.row) writeRow_(sh, found.row, idx, patch);
+      else {
+        patch.Timestamp = now; patch.Date = day; patch.StaffId = sid; patch.Name = p.name || sid;
+        sh.appendRow(head.map(function (h) { return (h in patch) ? patch[h] : ''; }));
+      }
+      filedBy = 'auto';
+    }
+    var nothing = !items.length && !filed && !saw;
+    if (nothing) note = 'nothing planned, filed, closed or moved';
+    if (!sfkConfigured_() && sfIds.length) note = (note ? note + '; ' : '') + 'Salesforce not wired, picked tasks unverified';
+    var ask = !lateIn && (missed > 0 || nothing);
+    if (lateIn) note = (note ? note + '; ' : '') + 'ended before sign-in at ' + mmText_(inAt);
+    planWrite_(p, day, b, { Items: items, ClosedAt: at, Achieved: done, Of: of,
+                            Pct: pct == null ? '' : pct,
+                            SFClosed: act ? act.closed.length : '', SFMoved: act ? act.moved.length : '',
+                            Emailed: ask ? at : '', Filed: filedBy, Note: note });
+  } finally { lock.releaseLock(); }
+
+  var mailed = '';
+  if (ask) {
+    try { mailed = emailBlockClose_(p, day, b, span, items, act, done, of, pct, at, nothing) ? ', e-mailed' : ', no address to e-mail'; }
+    catch (mailErr) { mailed = ', e-mail failed'; }
+  }
+  return tag + ': ' + (of ? done + '/' + of + ' done' : 'no plan') +
+    (act ? ', Salesforce closed ' + act.closed.length + ' moved ' + act.moved.length : ', Salesforce not read') +
+    (filedBy === 'auto' ? ', filed for them' : filedBy === 'person' ? ', they filed it' : ', nothing to file') +
+    (lateIn ? ', ended before sign-in' : mailed || ', clean');
+}
+
+// ---- the e-mail, and the links in it ----------------------------------------
+
+function execBase_() {
+  return PropertiesService.getScriptProperties().getProperty('KPI_EXEC_URL') ||
+         ScriptApp.getService().getUrl() || '';
+}
+
+function blockSig_(staffId, day, blockId) {
+  var raw = Utilities.computeHmacSha256Signature(
+    String(staffId) + '|' + String(day) + '|' + String(blockId) + '|block', closeoutSecret_());
+  return Utilities.base64EncodeWebSafe(raw).replace(/=+$/, '').slice(0, 22);
+}
+
+function blockUrl_(staffId, day, blockId, item, action) {
+  return execBase_() + '?bk=' + encodeURIComponent(staffId) + '&d=' + encodeURIComponent(day) +
+         '&b=' + encodeURIComponent(blockId) + '&i=' + encodeURIComponent(item) +
+         '&a=' + encodeURIComponent(action) + '&k=' + encodeURIComponent(blockSig_(staffId, day, blockId));
+}
+
+function itemLabel_(it) { return it.k === 'sf' ? (it.subject || 'a Salesforce task') : (it.label || ''); }
+function stateWord_(it) {
+  return { done: 'done', moved: 'moved, not closed', open: 'still open', unconfirmed: 'not ticked',
+           unknown: 'not checked', explained: 'reason given' }[it.state] || it.state || '';
+}
+
+function emailBlockClose_(p, day, b, span, items, act, done, of, pct, at, nothing) {
+  var to = emailFor_(p.staffId);
+  if (!to) return false;
+  var lab = blockLabel_(b), when = mmText_(span.start) + '–' + mmText_(span.end);
+  var left = of - done;
+  var lead = nothing
+    ? 'Nothing was recorded for this block — no plan, nothing filed, and Salesforce saw nothing ' +
+      'closed or moved between ' + when + '. Say what you were on and it goes on the record.'
+    : done + ' of ' + of + ' done — <b>' + pct + '%</b>. ' +
+      (left === 1 ? 'One thing' : left + ' things') + ' below did not land. Tap each one and say ' +
+      'why; the answer is kept with the day, and nothing else is needed.';
+
+  var btn = function (href, text, bg) {
+    return '<a href="' + esc_(href) + '" style="display:inline-block;margin:8px 8px 0 0;padding:8px 15px;' +
+      'border-radius:999px;background:' + bg + ';color:#fff;text-decoration:none;font-size:12.5px;font-weight:700">' +
+      esc_(text) + '</a>';
+  };
+  var rows = items.map(function (it, i) {
+    var ok = it.state === 'done';
+    var tone = ok ? MAIL.green : it.state === 'unknown' ? MAIL.muted : MAIL.amber;
+    var links = '';
+    if (!ok && it.state !== 'unknown') {
+      if (it.k === 'own') links += btn(blockUrl_(p.staffId, day, b, i, 'done'), 'Done ✓', MAIL.green);
+      links += btn(blockUrl_(p.staffId, day, b, i, 'why'), 'Say why →', MAIL.navy);
+    }
+    return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + tone +
+      ';border-radius:9px;padding:11px 14px;margin-bottom:8px">' +
+      '<div style="font-size:14px">' + (ok ? '<span style="color:' + MAIL.green + ';font-weight:700">&#10003;</span> ' : '') +
+      esc_(itemLabel_(it)) + '</div>' +
+      '<div style="font-size:12px;color:' + tone + ';margin-top:2px;font-weight:700">' + esc_(stateWord_(it)) +
+      (it.k === 'sf' && !ok ? '<span style="color:' + MAIL.muted + ';font-weight:500"> · close it in Salesforce and it counts</span>' : '') +
+      '</div>' + links + '</div>';
+  }).join('');
+  if (nothing) {
+    rows = '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-left:4px solid ' + MAIL.amber +
+      ';border-radius:9px;padding:11px 14px;margin-bottom:8px"><div style="font-size:14px">' + esc_(lab) +
+      ' · ' + esc_(when) + '</div>' + btn(blockUrl_(p.staffId, day, b, 'block', 'why'), 'Say what you were on →', MAIL.navy) + '</div>';
+  }
+
+  var saw = '';
+  if (act) {
+    var named = act.closed.slice(0, 6).map(function (t) { return esc_(t.subject); }).join('<br>');
+    saw = sectionLabel_('What Salesforce saw in the block') +
+      '<div style="font-size:13px;color:' + MAIL.muted + ';line-height:1.55">' +
+      act.closed.length + ' closed · ' + act.moved.length + ' moved' +
+      (named ? '<div style="color:' + MAIL.ink + ';margin-top:5px">' + named +
+        (act.closed.length > 6 ? '<br>and ' + (act.closed.length - 6) + ' more' : '') + '</div>' : '') + '</div>';
+  }
+
+  MailApp.sendEmail({
+    to: to,
+    subject: lab + ' closed · ' + shortDate_(day) + ' · ' +
+             (of ? done + ' of ' + of + ' done' : 'nothing recorded'),
+    htmlBody: shell_(lab + ' closed itself', nameFor_(p.staffId) + ' · ' + prettyDate_(day) + ' · ' + when,
+      '<div style="background:' + MAIL.paper + ';border:1px solid ' + MAIL.gold +
+        ';border-radius:10px;padding:13px 15px;font-size:14px;line-height:1.55;margin-bottom:16px">' + lead + '</div>' +
+      sectionLabel_(of ? 'What you planned' : 'The block') + rows + saw +
+      '<div style="font-size:12.5px;color:' + MAIL.muted + ';line-height:1.55;margin-top:14px">' +
+        'Closed automatically at ' + esc_(at) + ' from what Salesforce recorded. Nothing is needed for ' +
+        'anything ticked. The answers you give here show against the block in the tracker.</div>')
+  });
+  return true;
+}
+
+/** An answer on one item: "done" on a line of the person's own, or a reason
+ *  on anything. Kept on the plan row, and on its own tab so the day's
+ *  reasons read as a list. */
+function blockAnswer_(person, day, blockId, item, ans, source) {
+  var row = planRows_(person.staffId, day)[blockId];
+  if (!row) return { ok: false, error: 'Nothing was planned for that block.' };
+  var items = planItemsOf_(row.Items), now = new Date(), at = hhmm_(now);
+  var patch = { Items: items };
+  var label = '', reason = String(ans.reason || '').replace(/\s+/g, ' ').trim().slice(0, REASON_MAX);
+  if (String(item) === 'block') {
+    if (!reason) return { ok: false, error: 'Say what you were on — one line is enough.' };
+    label = blockLabel_(blockId);
+    patch.Note = reason;
+  } else {
+    var i = Number(item);
+    var it = items[i];
+    if (!it) return { ok: false, error: 'That line is not on the plan.' };
+    label = itemLabel_(it);
+    if (ans.done) {
+      if (it.k !== 'own') return { ok: false, error: 'A Salesforce task counts when it is closed in Salesforce.' };
+      it.done = true; it.state = 'done';
+    } else {
+      if (!reason) return { ok: false, error: 'Say why — one line is enough.' };
+      /* A reason on a line that landed is a note, not a downgrade. */
+      it.reason = reason;
+      if (it.state !== 'done') it.state = 'explained';
+    }
+    if (String(row.ClosedAt || '').trim()) {
+      var done = 0, known = 0;
+      items.forEach(function (x) { if (x.state === 'unknown') return; known++; if (x.state === 'done') done++; });
+      patch.Achieved = done;
+      patch.Pct = known ? Math.round(done / known * 100) : '';
+    }
+  }
+  planWrite_(person, day, blockId, patch);
+  if (reason) {
+    var sh = hrTab_(BREASON, true);
+    sh.appendRow(BREASON.head.map(function (h) {
+      return { Date: day, StaffId: person.staffId, Name: person.name || person.staffId, Block: blockId,
+               Item: String(item), Label: label, Reason: reason, At: at, Source: source || 'screen' }[h];
+    }));
+    forgetHr_(BREASON);
+  }
+  return { ok: true, plan: planOut_(planRows_(person.staffId, day)[blockId], person.staffId, blockId) };
+}
+
+/** From the tracker: done, or why. */
+function blockReason_(data, profile) {
+  var staffId = planScope_(profile, data);
+  if (!staffId || (staffId !== profile.staffId && !profile.manager)) return { ok: false, error: 'Not yours to answer.' };
+  var date = isoDay_(data.date) || todayISO_();
+  var blockId = String(data.block || '').toUpperCase();
+  if (BLOCK_IDS.indexOf(blockId) === -1) return { ok: false, error: 'Unknown block: ' + blockId };
+  var person = rosterPerson_(staffId) || { staffId: staffId, name: profile.name };
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    markStaffWrite_();
+    return blockAnswer_(person, date, blockId, data.item, { done: !!data.done, reason: data.reason }, 'screen');
+  } finally { lock.releaseLock(); }
+}
+
+/** The GET behind every link in the e-mail. Null when the request is not
+ *  one of ours. */
+function blockClick_(e) {
+  var p = (e && e.parameter) || {};
+  var sid = String(p.bk || '').trim();
+  if (!sid) return null;
+  var day = isoDay_(p.d) || todayISO_(), b = String(p.b || '').toUpperCase();
+  if (String(p.k || '') !== blockSig_(sid, day, b)) {
+    return closeoutPage_('That link has expired.', 'Answer it from the tracker instead.', null);
+  }
+  var person = rosterPerson_(sid);
+  if (!person) return closeoutPage_('That link has expired.', 'The desk is no longer on the register.', null);
+  var a = String(p.a || ''), i = String(p.i || '');
+  if (a === 'why') return blockWhyPage_(person, day, b, i, p);
+  if (a === 'done') {
+    var r = blockAnswer_(person, day, b, i, { done: true }, 'email');
+    return blockPage_(person, day, b, r.ok ? 'Recorded as done.' : 'That did not record.', r.ok ? '' : r.error);
+  }
+  return blockPage_(person, day, b, 'Here is the block.', '');
+}
+
+/** The form post from the page above. */
+function blockReasonPost_(e) {
+  var p = (e && e.parameter) || {};
+  var sid = String(p.bk || '').trim();
+  if (!sid || p.why == null) return null;
+  var day = isoDay_(p.d) || todayISO_(), b = String(p.b || '').toUpperCase();
+  if (String(p.k || '') !== blockSig_(sid, day, b)) {
+    return closeoutPage_('That link has expired.', 'Answer it from the tracker instead.', null);
+  }
+  var person = rosterPerson_(sid);
+  if (!person) return closeoutPage_('That link has expired.', 'The desk is no longer on the register.', null);
+  var r = blockAnswer_(person, day, b, String(p.i || ''), { reason: p.why }, 'email');
+  return blockPage_(person, day, b, r.ok ? 'Thank you — that is on the record.' : 'That did not record.',
+                    r.ok ? '' : r.error);
+}
+
+function blockWhyPage_(person, day, b, i, p) {
+  var row = planRows_(person.staffId, day)[b];
+  var items = row ? planItemsOf_(row.Items) : [];
+  var what = String(i) === 'block' ? blockLabel_(b) + ' · nothing recorded'
+           : (items[Number(i)] ? itemLabel_(items[Number(i)]) : 'that line');
+  var html = '<!doctype html><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1"><title>Say why</title>' +
+    '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
+      'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+      'Ricky Rampersad Branch</div>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(what) + '</h1>' +
+    '<p style="margin:0 0 14px;color:#6A7180">' + esc_(blockLabel_(b)) + ' · ' + esc_(prettyDate_(day)) +
+      '. One line is enough. It is kept with the day and shows in the tracker.</p>' +
+    '<form method="post" action="' + esc_(execBase_()) + '">' +
+    '<input type="hidden" name="bk" value="' + esc_(person.staffId) + '">' +
+    '<input type="hidden" name="d" value="' + esc_(day) + '">' +
+    '<input type="hidden" name="b" value="' + esc_(b) + '">' +
+    '<input type="hidden" name="i" value="' + esc_(String(i)) + '">' +
+    '<input type="hidden" name="k" value="' + esc_(String(p.k || '')) + '">' +
+    '<textarea name="why" rows="4" required maxlength="' + REASON_MAX + '" ' +
+      'placeholder="What stopped it, or what you were on instead" ' +
+      'style="width:100%;padding:12px;border:1.5px solid #dde4ec;border-radius:10px;font:15px/1.5 inherit;resize:vertical"></textarea>' +
+    '<button type="submit" style="margin-top:12px;width:100%;padding:14px;border:0;border-radius:10px;' +
+      'background:#16264F;color:#fff;font:700 15px inherit;cursor:pointer">Send</button></form></div>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+function blockPage_(person, day, b, head, body) {
+  var row = planRows_(person.staffId, day)[b];
+  var out = row ? planOut_(row, person.staffId, b) : null;
+  var lines = !out ? '' : out.items.map(function (it, i) {
+    var ok = it.state === 'done' || it.state === 'explained';
+    var link = ok ? '' :
+      '<div style="margin-top:5px;font-size:13px;font-weight:700">' +
+      (it.k === 'own' ? '<a href="' + esc_(blockUrl_(person.staffId, day, b, i, 'done')) + '" style="color:#2C7A57;margin-right:14px">Done &#10003;</a>' : '') +
+      '<a href="' + esc_(blockUrl_(person.staffId, day, b, i, 'why')) + '" style="color:#B0791C">Say why &rarr;</a></div>';
+    return '<div style="padding:11px 0;border-bottom:1px solid #e8eaf0">' +
+      '<span style="color:' + (ok ? '#2C7A57' : '#B0791C') + ';font-weight:800">' + (ok ? '&#10003;' : '&#8226;') + '</span> ' +
+      '<b style="color:#1F2433">' + esc_(itemLabel_(it)) + '</b>' +
+      '<span style="color:#6A7180"> &middot; ' + esc_(stateWord_(it)) + '</span>' +
+      (it.reason ? '<div style="color:#6A7180;font-size:13px;margin-top:3px">' + esc_(it.reason) + '</div>' : '') + link + '</div>';
+  }).join('');
+  var sum = !out ? '' : (out.closedAt ? 'Closed at ' + out.closedAt : 'Not closed yet') +
+    (out.of ? ' · ' + out.achieved + ' of ' + out.of + ' done' + (out.pct != null ? ' · ' + out.pct + '%' : '') : '') +
+    (out.note ? ' · ' + out.note : '');
+  var html = '<!doctype html><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc_(blockLabel_(b)) + '</title>' +
+    '<div style="font:15px/1.55 -apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;' +
+      'max-width:560px;margin:0 auto;padding:34px 20px;color:#1F2433">' +
+    '<div style="font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#C7A34A">' +
+      'Ricky Rampersad Branch</div>' +
+    '<h1 style="font-size:23px;margin:6px 0 8px;color:#16264F">' + esc_(head) + '</h1>' +
+    '<p style="margin:0 0 6px;color:#6A7180">' + esc_(body || (blockLabel_(b) + ' · ' + prettyDate_(day))) + '</p>' +
+    (sum ? '<p style="margin:0 0 18px;color:#6A7180;font-weight:700">' + esc_(sum) + '</p>' : '') +
+    (lines ? '<div style="border-top:1px solid #e8eaf0">' + lines + '</div>' : '') + '</div>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 // ---------------------------------------------------------------------------

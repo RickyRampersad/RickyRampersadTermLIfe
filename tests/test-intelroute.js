@@ -164,7 +164,9 @@ console.log('\nBoth installers fit under the twenty-trigger limit together:\n');
 env.installTriggers();
 env.intelInstallTriggers();
 const all = env.ScriptApp.getProjectTriggers();
-ok('nineteen triggers in all — the tracker\'s seven, the intelligence\'s six, the wall\'s five nightly builds, and the pending screen\'s refresh', all.length === 19, String(all.length));
+/* Twenty is the project's limit. The block closer took the last slot on 18
+   September 2026; the next trigger anybody wants has to replace one. */
+ok('twenty triggers in all — the tracker\'s eight, the intelligence\'s six, the wall\'s five nightly builds, and the pending screen\'s refresh', all.length === 20, String(all.length));
 ok('which leaves room, where seventeen plus six did not', all.length <= 20);
 ok('every intelligence trigger made it in, the fourth included', all.some(t => t.getHandlerFunction() === 'intelHorizonWatch') && all.some(t => t.getHandlerFunction() === 'intelSurveyFollowUp'));
 ok('and each wall feed has its own night-time build', ['intelRebuildWall45','intelRebuildDelivery','intelRebuildLicence','intelRebuildPossession','intelRebuildBook'].every(fn => all.some(t => t.getHandlerFunction() === fn)));
