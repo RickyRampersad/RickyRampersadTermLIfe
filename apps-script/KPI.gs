@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-18d';
+var SCRIPT_VERSION = '2026-09-19a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2212,6 +2212,8 @@ function handle_(action, data, token) {
     case 'savePlan':    return savePlan_(data, profile);
     case 'blockReason': return blockReason_(data, profile);
     case 'createTask': return createTask_(data, profile);
+    case 'assign': return assignDay_(data, profile);
+    case 'acceptDay': return acceptDay_(data, profile);
     case 'load': return loadReviewSafe_(profile);
     case 'reassign': return reassignTask_(data, profile);
 
@@ -5946,6 +5948,131 @@ function reassignTask_(data, profile) {
   sfkForgetDay_(todayISO_());
   return { ok: true, taskId: taskId, to: to, toName: u.name || to, posted: posted,
            note: posted ? '' : 'Moved. The Chatter note did not post \u2014 tell them yourself.' };
+}
+
+
+// ---------------------------------------------------------------------------
+//  THE DAY, ASSIGNED
+//
+//  "The system needs to be assertive. Staff are told what to do and from the
+//  history they are not doing it, so the system needs to assign and guide as
+//  to the reasons why." (18 September 2026.)
+//
+//  So the day arrives filled in. Each block is handed the work its own KPI
+//  types are carrying, worst first, as many as that person's own pace says
+//  fits in the hours — and every line says why it was chosen. The person
+//  accepts it, or unticks what is wrong and then accepts. Nobody is asked to
+//  invent a plan from a blank screen at eight in the morning, which is the
+//  thing the history shows does not happen.
+//
+//  It proposes. It does not write until somebody presses accept.
+// ---------------------------------------------------------------------------
+
+var ASSIGN = { MIN: 1, MAX: 6, FLOOR: 0.5 };
+
+/** Why this task, in one sentence a person can argue with. */
+function assignWhy_(t) {
+  if (t.late && !t.hasReason)
+    return 'Overdue' + (t.due ? ' since ' + shortDate_(t.due) : '') + ' with no reason on it \u2014 every report reads that as untouched.';
+  if (t.needs)
+    return 'Nothing has happened to it in ' + t.touched + ' days.';
+  if (t.late)
+    return 'Overdue' + (t.due ? ' since ' + shortDate_(t.due) : '') + ', and it has a reason on it already.';
+  if (t.age >= 30) return t.age + ' days open \u2014 the oldest left in this type.';
+  return t.age + ' days open.';
+}
+
+function assignScore_(t) {
+  return (t.late && !t.hasReason ? 4000 : 0) + (t.needs ? 2000 : 0) + (t.late ? 900 : 0) +
+         Math.min(Number(t.age) || 0, 400);
+}
+
+/** The day proposed, block by block. Writes nothing. */
+function assignDay_(data, profile) {
+  var staffId = planScope_(profile, data);
+  if (!staffId) return { ok: false, error: 'Not yours to plan.' };
+  var date = isoDay_(data.date) || todayISO_();
+  var sch = scheduleFor_(staffId);
+
+  var book = null;
+  try { book = sfkOpenBookSafe_(date); } catch (e) { book = null; }
+  var mine = (book && book[staffId]) || null;
+  if (!mine) return { ok: true, date: date, staffId: staffId, blocks: [], rate: null,
+                      note: 'Salesforce has not answered, so there is nothing to hand you yet.' };
+
+  var perHour = 0;
+  try {
+    var mets = metricsFor_(profile, date);
+    var r = mets && mets.ok && mets.staff && mets.staff[staffId] && mets.staff[staffId].rateAll;
+    if (r && r.enough) perHour = Number(r.perHour) || 0;
+  } catch (e) {}
+
+  // Anything already planned today stays planned, and is never handed out twice.
+  var taken = {};
+  var rows = planRows_(staffId, date);
+  Object.keys(rows).forEach(function (col) {
+    planItemsOf_(rows[col].Items).forEach(function (it) { if (it.k === 'sf') taken[it.id] = col; });
+  });
+
+  var out = [];
+  BLOCK_IDS.forEach(function (col) {
+    var b = sch.blocks[col];
+    if (!b || !b.time) return;
+    var span = parseSpan_(b.time);
+    var hours = span ? Math.max(0.5, (span.end - span.start) / 60) : 1;
+    var rate = perHour >= ASSIGN.FLOOR ? perHour : 1.5;
+    var room = Math.max(ASSIGN.MIN, Math.min(ASSIGN.MAX, Math.round(hours * rate)));
+    var type = blockTypeFor_(b.kpi);
+    var pool = [];
+    if (type && mine[type]) {
+      mine[type].forEach(function (t) { if (!taken[t.id]) pool.push(t); });
+    }
+    pool.sort(function (x, y) { return assignScore_(y) - assignScore_(x); });
+    var items = pool.slice(0, room).map(function (t) {
+      taken[t.id] = col;
+      return { k: 'sf', id: t.id, subject: t.subject, type: type,
+               why: assignWhy_(t), age: t.age, late: !!t.late, touched: t.touched };
+    });
+    var already = rows[col] ? planItemsOf_(rows[col].Items).length : 0;
+    out.push({ block: col, time: b.time, focus: b.focus || '', kpi: b.kpi || '',
+               room: room, planned: already,
+               closed: !!(rows[col] && String(rows[col].ClosedAt || '').trim()),
+               items: items,
+               note: !type ? 'Salesforce holds no tasks for ' + (b.kpi || 'this block') + ' \u2014 say in a line what you will get done.'
+                     : !items.length ? (already ? 'Already planned.' : 'Nothing open in ' + (SF_TYPES[type] || type) + ' right now.')
+                     : '' });
+  });
+  return { ok: true, date: date, staffId: staffId, rate: perHour || null, blocks: out };
+}
+
+/** Accept it — every block in one write, so a day is never half saved. */
+function acceptDay_(data, profile) {
+  var staffId = planScope_(profile, data);
+  if (!staffId || (staffId !== profile.staffId && !profile.manager)) return { ok: false, error: 'Not yours to plan.' };
+  var date = isoDay_(data.date) || todayISO_();
+  var want = data.blocks || {};
+  var cols = Object.keys(want).filter(function (c) { return BLOCK_IDS.indexOf(String(c).toUpperCase()) > -1; });
+  if (!cols.length) return { ok: false, error: 'Nothing to accept.' };
+  var person = rosterPerson_(staffId) || { staffId: staffId, name: profile.name };
+  var lock = takeLock_();
+  if (!lock) return BUSY_;
+  try {
+    var have = planRows_(staffId, date), wrote = 0, skipped = [];
+    cols.forEach(function (c) {
+      var col = String(c).toUpperCase();
+      if (have[col] && String(have[col].ClosedAt || '').trim()) { skipped.push(col); return; }
+      var keep = planItemsOf_(have[col] ? have[col].Items : '');
+      var add = Array.isArray(want[c]) ? want[c] : [];
+      var clean = cleanPlanItems_(keep.concat(add));
+      if (clean.error) { skipped.push(col); return; }
+      planWrite_(person, date, col, { Items: clean.list });
+      wrote++;
+    });
+    markStaffWrite_();
+    var now = planRows_(staffId, date), plans = {};
+    BLOCK_IDS.forEach(function (col) { if (now[col]) plans[col] = planOut_(now[col], staffId, col); });
+    return { ok: true, wrote: wrote, skipped: skipped, plans: plans };
+  } finally { lock.releaseLock(); }
 }
 
 /** The types a task can carry, for the screen that offers to create one. */

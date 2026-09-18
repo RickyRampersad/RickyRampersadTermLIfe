@@ -180,13 +180,17 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('filed for them, and what Salesforce saw', /Filed for you from Salesforce/.test(ot) && /Salesforce saw 2 closed, 1 moved/.test(ot));
   ok('the done task is ticked; the unticked line says so', /✓\s*T- PENSIONS GROUP[^\n]*done/.test(ot) && /Interview two recruits[^\n]*not ticked/.test(ot));
   ok('the person\'s own line offers Done; the task does not', await out.locator('button:has-text("Done")').count() === 1);
-  await out.locator('input[placeholder="What stopped it?"]').fill('Both were out; rebooked for Friday');
-  await out.locator('button:has-text("Say why")').click();
+  // Answering is a tap now: the eight reasons a thing does not land, and a
+  // line only when none of them is it.
+  ok('the reasons are offered as taps', await out.locator('[data-why] button').count() >= 8,
+     String(await out.locator('[data-why] button').count()));
+  await out.locator('[data-why] button:has-text("Waiting on the client")').first().click();
   await page.waitForTimeout(500);
-  const br = posted.blockReason[0];
-  ok('the reason goes to the sheet against the line', !!br && br.block === 'KPI2' && br.item === 1 && br.reason === 'Both were out; rebooked for Friday', JSON.stringify(br));
+  let br = posted.blockReason[0];
+  ok('one tap files it against the line', !!br && br.block === 'KPI2' && br.item === 1 &&
+     br.reason === 'Waiting on the client', JSON.stringify(br));
   const ot2 = await out.innerText();
-  ok('and the block now shows it', /reason given/.test(ot2) && /rebooked for Friday/.test(ot2));
+  ok('and the block now shows it', /reason given/.test(ot2) && /Waiting on the client/.test(ot2));
   ok('with nothing left to ask', await out.locator('button:has-text("Say why")').count() === 0);
   ok('no errors on the page', !errors.length, errors.join(' | '));
 

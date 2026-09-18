@@ -754,6 +754,54 @@ servicing lines" is a morning.
 one line — the reason box opens when somebody clicks *Say why*. Thirteen open
 text boxes stacked down a column is a form nobody fills in.
 
+## The day, assigned — the system being assertive
+
+Asked for on 18 September 2026: *"the system needs to be assertive. Staff are
+told what to do and from the history they are not doing it, so the system
+needs to assign and guide as to the reasons why."*
+
+The plan screen no longer opens on a blank day. **Your day, assigned** hands
+out work from that person's own book: each block gets the tasks its own KPI
+type is carrying, **worst first**, as many as their own pace says fit in the
+hours, and **every line says why it was chosen**.
+
+The order is not a guess. A task scores on: overdue with no reason at all
+(worst — every report reads that as untouched), then nothing has happened to
+it in a week, then merely overdue, then age. The reason printed under each
+line is that score in words.
+
+- **Sized on their own pace.** Two hours at one an hour is two tasks. Somebody
+  with no rate yet gets a plain default rather than an invented one.
+- **Never the same task twice**, across blocks or across days: anything
+  already on a plan is skipped.
+- **A block Salesforce holds no type for** is handed the sentence instead of
+  tasks: *say in a line what you will get done*.
+- **It proposes; it does not write.** Untick what is wrong, then *Accept the
+  day* writes every block in one go. A block the closer has already filed is
+  left exactly as it was, and the screen says so.
+- *I will set it myself* dismisses the whole thing.
+
+## Answers are taps, not sentences
+
+Also asked for: *"avoid as much asking to type, allow checks with answers ...
+make the process enjoyable and easy."*
+
+Every *why* in the tracker is now a row of the eight answers the branch
+actually gives — waiting on the client, on Head Office, on the agent, on
+underwriting, documents not in, portal down, ran out of time, picked up by
+somebody else — plus **Something else**, which opens a line to type. One tap
+files it. The same row appears on a block the closer marked short, on an
+overdue task in the Salesforce column, and on a block with nothing recorded
+(where the answers are the seven reasons a block goes elsewhere).
+
+## The day at a glance
+
+At the top of the day: a ring showing the part of the day that has actually
+closed, a bar for each of the five blocks (grey not planned, gold planned,
+green landed), and the three numbers from Salesforce — closed today, open now,
+overdue. Nothing in it is new information; it is the same figures arranged so
+a morning can be read in a second.
+
 ## The load review — who is carrying what, and what has stopped
 
 Asked for on 18 September 2026: *"intelligence should be able to review all

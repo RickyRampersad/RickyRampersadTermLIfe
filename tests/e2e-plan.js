@@ -284,7 +284,13 @@ const ok = (what, cond, extra) => {
      String(await page.locator('button:has-text("Say why")').count()));
   await page.locator('button:has-text("Say why")').first().click();
   await page.waitForTimeout(250);
-  ok('and one box opens, for that row alone', await page.locator('input[placeholder*="What it is waiting on"]').count() === 1);
+  // The answer is a tap, not a sentence. The box is behind "Something else".
+  ok('and that row offers the reasons as taps', await page.locator('[data-why] button').count() >= 8,
+     String(await page.locator('[data-why] button').count()));
+  ok('with no box until one is asked for', await page.locator('input[placeholder*="What it is waiting on"]').count() === 0);
+  await page.locator('[data-why] button:has-text("Something else")').first().click();
+  await page.waitForTimeout(200);
+  ok('and one opens when it is', await page.locator('input[placeholder*="What it is waiting on"]').count() === 1);
   ok('the row keeps its Close as well', await page.locator('button:has-text("Close \u2713")').count() >= 4);
 
   // Blocks are an accordion on the day screen, so open one before looking.
