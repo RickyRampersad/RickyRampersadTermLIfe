@@ -475,5 +475,182 @@ console.log('\nThe book tab is not a branch list, and it lends the pending scree
   ok('premium is annualised by the book\'s mode — 250 x 12 and 300 x 4', pv.api === 4200, String(pv.api));
 }
 
+console.log('\nThirty-two spellings, six statuses, and a register that is not the pending list:\n');
+/* Read against Salesforce on 17 September 2026. Every string below is a real
+   value out of Policy_Status_Description__c, and every one of them means one
+   of six things. The branch manager was right that 74 was wrong: it was wrong
+   in both directions at once. */
+{
+  const cases = [
+    ['Underwriting Incomplete', 'uw'], ['Underwriting incomplete', 'uw'],
+    ['Pending, No Errors, O/S Reqt, UW Incomplete', 'reqts'],
+    ['Pending, Errors, No O/S Reqt, UW Incomplete', 'errors'],
+    ['pending, errors, o/s request, UW incomplete', 'reqts'],
+    ['Underwriting incomplete. Missing Reqts', 'reqts'],
+    ['Underwriting incomplete. Missing Reqts. Error on Policy', 'reqts'],
+    ['Underwriting incomplete. Error on Policy', 'errors'],
+    ['Awaiting Settlement', 'settle'], ['Underwriting complete. Missing Settlement Reqts', 'settle'],
+    ['Underwriting complete, Missing Settlement Reqts', 'settle'],
+    ['Premium Paying', 'issued'], ['Inforce but not proceeded with', 'issued'],
+    ['Not Proceeded With', 'closed'], ['Not Proceeded With\\', 'closed'],
+    ['File Closed', 'closed'], ['Rejected - File Closed', 'closed'], ['Expired', 'closed'],
+    ['(none)', 'none'], ['', 'none']
+  ];
+  const wrong = cases.filter(([t, want]) => env.iPendState_(t) !== want);
+  ok('every spelling lands on one of the six', wrong.length === 0, JSON.stringify(wrong.map(([t, w]) => [t, w, env.iPendState_(t)])));
+  ok('capital and lower "Underwriting incomplete" are one status', env.iPendState_('Underwriting Incomplete') === env.iPendState_('underwriting incomplete'));
+  ok('a case with a missing requirement AND an error is workable — the document can be chased',
+     env.iPendStateOf_(env.iPendState_('Underwriting incomplete. Missing Reqts. Error on Policy')).work === true);
+  ok('awaiting settlement is workable too', env.iPendStateOf_('settle') && env.iPendStateOf_(env.iPendState_('Awaiting Settlement')).work === true);
+  ok('issued and closed are not pending', !env.iPendStateOf_('issued').pending && !env.iPendStateOf_('closed').pending);
+  ok('and the task types carry their abbreviation', env.iPendAbbr_('Pendings') === 'PEND' && env.iPendAbbr_('Renewa/PDl/Bill') === 'RNW');
+}
+{
+  /* A register shaped like the branch's: four genuinely pending, one already
+     paying, one not proceeded with — and a policy that carries an open
+     requirement and never reached the register at all. */
+  const env6 = makeEnv({ props: { INTEL_EXCLUDE_AGENTS: 'Gone Away', INTEL_LIST_ONLY_EXCLUDE: 'Beena Pretend' } });
+  env6.Date = env.Date;
+  const P = (policy, agent, reqtDt, desc, reqt) =>
+    [2026, 9, policy, 'OR', 'CLIENTNAME-' + policy, '3', '2026-06-01', 'CHAG', reqt || 'PRADD', reqtDt,
+     'A1', agent, 0, 'AK', 0, 'CID-' + policy, 'Branch', 'DD', '',
+     desc, '2026-06-01', 500000, 400, '', 'UW1', '2026-08-20'];
+  env6.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, [
+    P('P-REQ',    'Anand Pretend', '2026-07-01', 'Underwriting incomplete. Missing Reqts'),
+    P('P-SET',    'Anand Pretend', '2026-08-01', 'Awaiting Settlement'),
+    P('P-UW',     'Beena Pretend', '2026-05-01', 'Underwriting Incomplete'),
+    P('P-ERR',    'Carl Pretend',  '2026-04-01', 'Pending, Errors, No O/S Reqt, UW Incomplete'),
+    P('P-PAYING', 'Anand Pretend', '2026-03-01', 'Premium Paying'),
+    P('P-GONE',   'Carl Pretend',  '2026-02-01', 'Not Proceeded With')
+  ]);
+  env6.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0], []);
+  const rs = env6.__sheets['RR_UWPRO_INSURED_Requirement'];
+  [['RQ-1', 'P-REQ',     'PRADD', 'Documents', '', '2026-07-01', '', '2026-07-02'],
+   ['RQ-2', 'P-UW',      'MDMED', 'Medical',   '', '2026-05-01', '', '2026-05-02'],
+   ['RQ-3', 'P-OFFREG',  'PRADD', 'Documents', '', '2026-03-01', '', '2026-03-02'],
+   ['RQ-4', 'P-OFFREG2', 'PROFA', 'Documents', '', '2026-04-01', '', '2026-04-02']
+  ].forEach(r => rs.appendRow(r.concat(['INSUREDFIRST-X', 'INSUREDLAST-X'])));
+  env6._intelTabMemo = {}; env6._intelHeadMemo = {};
+  const W = env6.iPendingWall_();
+  ok('the headline counts the four genuinely pending, not the six on the register',
+     W.policies === 4 && W.total === 4, JSON.stringify([W.policies, W.total]));
+  ok('and the register is published whole, with what came out of it',
+     W.register && W.register.rows === 6 && W.register.pending === 4 && W.register.issued === 1 && W.register.closed === 1,
+     JSON.stringify(W.register));
+  ok('the register’s own spellings are counted, so the mess is visible', W.register.spellings === 6, String(W.register.spellings));
+  ok('missing requirements and awaiting settlement are the two that can be worked today',
+     W.workable === 2, String(W.workable));
+  const st = {}; (W.states || []).forEach(x => { st[x.key] = x.n; });
+  ok('the six statuses come back in working order with their abbreviations',
+     st.reqts === 1 && st.settle === 1 && st.uw === 1 && st.errors === 1 && st.issued === 1 && st.closed === 1 &&
+     (W.states || []).every(x => !!x.abbr), JSON.stringify(W.states));
+  ok('the two policies with an open requirement and no register row are named',
+     W.offRegister && W.offRegister.policies === 2 && W.offRegister.requirements === 2, JSON.stringify(W.offRegister));
+  ok('  …and the branch is told about it in words',
+     (W.notes || []).some(n => /not on Guardian/.test(n)) && (W.notes || []).some(n => /already issued and paying/.test(n)),
+     JSON.stringify(W.notes));
+  const roster = (W.triage || {}).roster || [];
+  const anand = roster.find(a => a.agent === 'Anand Pretend') || {};
+  ok('an issued policy is nobody’s accountability — Anand carries two, not three',
+     anand.policies === 2, JSON.stringify(roster.map(a => [a.agent, a.policies])));
+  ok('a closed policy is off the board too', !roster.some(a => (a.states || {}).closed));
+  ok('every agent row carries how its own pile is aging', roster.every(a => a.bands && typeof a.over90 === 'number'), JSON.stringify(roster[0] && roster[0].bands));
+  ok('the list-only name is off the board and still in the total',
+     !roster.some(a => a.agent === 'Beena Pretend') && W.policies === 4, JSON.stringify(roster.map(a => a.agent)));
+  const rq = W.requirements || {};
+  ok('every requirement code carries its own median and oldest',
+     (rq.byCode || []).length > 0 && (rq.byCode || []).every(c => c.median !== undefined && c.oldest !== undefined && typeof c.medical === 'boolean'),
+     JSON.stringify(rq.byCode));
+  ok('and every category does', (rq.byCatAge || []).length > 0 && rq.byCatAge.every(c => c.median !== undefined && c.oldest !== undefined), JSON.stringify(rq.byCatAge));
+}
+
+console.log('\nA name off the board: the policies count, the requirements do not:\n');
+/* 17 September 2026: "leave Javid's name off the wall, and Aleema's, but
+   count their policies, not their requirements." */
+{
+  const env7 = makeEnv({ props: { INTEL_LIST_ONLY_EXCLUDE: 'Beena Pretend' } });
+  env7.Date = env.Date;
+  const P = (policy, agent, reqtDt, desc) =>
+    [2026, 9, policy, 'OR', 'CLIENTNAME-' + policy, '3', '2026-06-01', 'CHAG', 'PRADD', reqtDt,
+     'A1', agent, 0, 'AK', 0, 'CID-' + policy, 'Branch', 'DD', '',
+     desc, '2026-06-01', 500000, 400, '', 'UW1', '2026-08-20'];
+  env7.__mkSheet('URPPBIEX - Reqt', 4, PHEAD2, [
+    P('P-MINE', 'Anand Pretend', '2026-07-01', 'Underwriting incomplete. Missing Reqts'),
+    P('P-OFFB', 'Beena Pretend', '2026-07-01', 'Underwriting incomplete. Missing Reqts')
+  ]);
+  env7.__mkSheet('RR_UWPRO_INSURED_Requirement', 3, env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0], []);
+  const rs7 = env7.__sheets['RR_UWPRO_INSURED_Requirement'];
+  [['RQ-A', 'P-MINE', 'PRADD', 'Documents', '', '2026-07-01', '', '2026-07-02'],
+   ['RQ-B', 'P-OFFB', 'PRADD', 'Documents', '', '2026-07-01', '', '2026-07-02'],
+   ['RQ-C', 'P-OFFB', 'MDMED', 'Medical',   '', '2026-06-01', '', '2026-06-02']
+  ].forEach(r => rs7.appendRow(r.concat(['INSUREDFIRST-X', 'INSUREDLAST-X'])));
+  env7._intelTabMemo = {}; env7._intelHeadMemo = {};
+  const W7 = env7.iPendingWall_();
+  ok('both policies are in the pending count', W7.policies === 2, String(W7.policies));
+  const r7 = W7.requirements || {};
+  ok('only the counted agent’s requirement is in the figures', r7.open === 1 && r7.policies === 1,
+     JSON.stringify([r7.open, r7.policies]));
+  ok('and what was held off the figures is published', r7.listOnly && r7.listOnly.requirements === 2 && r7.listOnly.policies === 1,
+     JSON.stringify(r7.listOnly));
+  ok('the branch is told in words', (W7.notes || []).some(n => /not counted in the requirement figures/.test(n)),
+     JSON.stringify(W7.notes));
+  ok('the name is off every per-agent row', !((W7.triage || {}).roster || []).some(a => a.agent === 'Beena Pretend'),
+     JSON.stringify(((W7.triage || {}).roster || []).map(a => a.agent)));
+  /* The rows are still joined, or their policy would read as ready to settle. */
+  const bk = {}; ((W7.triage || {}).buckets || []).forEach(b => { bk[b.key] = b.n; });
+  ok('their policy still classifies by its own requirements, not as ready to collect',
+     (bk.ready || 0) === 0, JSON.stringify(bk));
+}
+
+/* ── A TASK FINDS ITS POLICY WHATEVER THE NUMBER STARTS WITH ────────────────
+   Every policy in the fixtures above is P-SOMETHING, and every task subject
+   carried a ten-digit number beginning 1 or 5 — so the join was never once
+   tested against a realistic pair, and the pattern that read the subject was
+   /\b[15]\d{9}\b/.
+
+   The branch's real open tasks carry "Decrease- 8004275516", "SERVICE
+   QUESTIONNAIRE 8001144615", "Confirm funds in DISB & SUSP- 8004129226". On
+   17 September 2026 that pattern matched none of them: the live board showed
+   nought open, nought late and nought quiet against twenty-nine pending
+   policies, while support carried fifty-five open tasks between them.
+
+   So the prefix is nobody's to guess. Any ten digits are a candidate and the
+   register decides which are policies. */
+{
+  const env8 = makeEnv({ props: { INTEL_PENDING_ROWS_ON_WALL: '' } });
+  env8.Date = env.Date;
+  env8.__mkSheet('URPPBIEX - Reqt', 4, PHEAD, [
+    prow('8004275516', 'Anand Pretend', '2026-08-01', 0, ''),   // an eight
+    prow('1000894223', 'Anand Pretend', '2026-08-01', 0, ''),   // a one
+    prow('5004189234', 'Beena Pretend', '2026-08-01', 0, ''),   // a five
+  ]);
+  env8.__mkSheet('RR_UWPRO_INSURED_Requirement', 3,
+    env.__sheets['RR_UWPRO_INSURED_Requirement']._grid[0],
+    [['RQ-80', '8004275516', 'PRADD', 'Documents', '', '2026-08-01', '', ''],
+     ['RQ-81', '1000894223', 'PRADD', 'Documents', '', '2026-08-01', '', ''],
+     ['RQ-82', '5004189234', 'PRADD', 'Documents', '', '2026-08-01', '', '']]);
+  env8.__mkSheet('SFTASK MGT', 5,
+    env.__sheets['SFTASK MGT']._grid[0],
+    [
+      ['Decrease- CLIENTNAME-T8 8004275516','Pendings','Open','Desk One',12,'2026-08-30',0,'Anand Pretend','CLIENTNAME-T8','x','2026-08-30'],
+      ['Follow up with UW- 1000894223 CLIENTNAME-T1','Pendings','Open','Desk One',12,'2026-08-30',0,'Anand Pretend','CLIENTNAME-T1','x','2026-08-30'],
+      ['Change of Beneficiary- 5004189234 CLIENTNAME-T9','Pendings','Open','Desk Two',5,'2026-09-06',0,'Beena Pretend','CLIENTNAME-T9','x','2026-09-06'],
+    ]);
+  env8._intelTabMemo = {}; env8._intelHeadMemo = {};
+  const W8 = env8.iPendingWall_();
+  const board = W8.board || {};
+  const byAgent = {};
+  (board.agents || []).forEach(a => { byAgent[a.agent] = a; });
+  const tot = board.total || {};
+  console.log('\nA task finds its policy whatever the number starts with:\n');
+  ok('all three policies are on the board', (tot.policies || 0) === 3, JSON.stringify(tot.policies));
+  ok('and all three tasks joined to one', (tot.open || 0) === 3,
+     'open=' + tot.open + ' — an eight-prefixed policy used to join to nothing');
+  ok('the eight-prefixed one reached its agent',
+     byAgent['Anand Pretend'] && byAgent['Anand Pretend'].tasks.open === 2,
+     JSON.stringify(byAgent['Anand Pretend'] && byAgent['Anand Pretend'].tasks));
+  ok('and no policy is left looking untouched', (tot.never || 0) === 0, String(tot.never));
+}
+
 console.log(fails ? '\n' + fails + ' FAILED\n' : '\nall green\n');
 process.exit(fails ? 1 : 0);

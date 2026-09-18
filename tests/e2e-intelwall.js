@@ -28,7 +28,9 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'pending.html', 'index.html', 'lapses.html',
+const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
+               'codes.html',
+               'index.html', 'lapses.html',
                'possession.html', 'delivery.html', 'licence.html', 'book.html',
                'conversion.html', 'riders.html'];
 const LAST_TAB = 'Riders on a clock';    // the rail label of ORDER's last stop
@@ -83,7 +85,9 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
      stops.every((d, i) => d.n === String(i + 1)), JSON.stringify(stops.map(d => d.n)));
   ok('  the branch\'s own day first', stops[0] && stops[0].name === 'The day so far',
      stops[0] && stops[0].name);
-  ok('  Premium dues fourth', stops[3] && stops[3].name === 'Premium dues',
+  /* The pending wall is two stops since 17 September 2026, so the fourth is
+     its own second half rather than the dues line. */
+  ok('  the pending wall\'s requirements fourth', stops[3] && /requirements/i.test(stops[3].name),
      stops[3] && stops[3].name);
   ok('  and ' + LAST_TAB + ' last',
      stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,

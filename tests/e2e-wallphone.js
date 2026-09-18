@@ -27,7 +27,10 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
 
 const SCREENS = [
   ['The day so far',     '/intelligence/wall/day.html'],
-  ['What is pending',    '/intelligence/wall/pending.html'],
+  ['Pending · policies',     '/intelligence/wall/pending.html'],
+  ['Pending · requirements', '/intelligence/wall/reqs.html'],
+  ['Pending · increases & group', '/intelligence/wall/increases.html'],
+  ['Pending · code by code', '/intelligence/wall/codes.html'],
   ['The day in blocks',  '/intelligence/wall/blocks.html'],
   ['The 45-day line',    '/intelligence/wall/'],
   ['Lapses',             '/intelligence/wall/lapses.html'],
@@ -108,7 +111,17 @@ const OVERLAPS = `(() => {
     ok('nothing is smaller than nine pixels', readable.length === 0, readable.slice(0, 3).join(' | '));
 
     const t = await page.locator('body').innerText();
-    ok('the branch mark is on it', await page.locator('header .mark img').count() === 1);
+    /* THE MARK, OR THE WALL'S OWN NAME. Every screen carries the gold shield —
+       the house rule, written after two screens shipped with an invented "RR"
+       tile. The two pending slides are the exception, decided by the branch
+       manager on 17 September 2026: "remove the shield in this wall so persons
+       will know what wall they are watching". They carry a gold nameplate in
+       its place, which is a slide name and not a substitute logo. Either is
+       accepted here; nothing else is. */
+    const mark = await page.locator('header .mark img').count();
+    const plate = await page.locator('header .plate b').count();
+    ok('the branch mark is on it, or the wall\'s own nameplate',
+       mark === 1 || plate === 1, 'mark ' + mark + ', plate ' + plate);
     ok('and it says whether the figures are live', /live|snapshot|no feed/i.test(t), t.slice(0, 80));
     ok('no javascript errors', errors.length === 0, errors.join(' | '));
 

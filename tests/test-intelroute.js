@@ -97,7 +97,29 @@ ok('and they answer', typeof env.intelDoGet_ === 'function' && JSON.parse(env.in
 ok('the file says what a project with no router adds', /function doGet\(e\)\s*\{ return intelDoGet_\(e\); \}/.test(intel));
 const iping = post({ action: 'intel.ping' });
 ok('and intel.ping says which build is in the project, with no token', iping.ok && iping.version === env.INTEL_VERSION && iping.service === 'Branch Intelligence', JSON.stringify(iping));
-ok('and nothing else', Object.keys(iping).sort().join() === 'built,ok,service,version,workbook', JSON.stringify(iping));
+ok('and says the mail switches are held, in words, with no address', iping.mail && iping.mail.agents === 'held' && iping.mail.clients === 'held' && iping.mail.test === false && !/@/.test(JSON.stringify(iping.mail)), JSON.stringify(iping.mail));
+{
+  env.iSetProp_('INTEL_AGENT_LIVE', 'send to agents');
+  ok('  …live for agents once the phrase is typed', post({ action: 'intel.ping' }).mail.agents === 'live');
+  env.iSetProp_('INTEL_TEST_TO', 'manager@example.test');
+  const t = post({ action: 'intel.ping' }).mail;
+  ok('  …and test mode overrides both, still with no address on the ping', t.test === true && t.agents === 'test' && t.clients === 'test' && !/@/.test(JSON.stringify(t)), JSON.stringify(t));
+  ok('  …while intelMailStatus() in the editor says it plainly', /MAIL IS OFF/.test(env.intelMailStatus()) && /manager@example.test/.test(env.intelMailStatus()));
+  env.iSetProp_('INTEL_TEST_TO', ''); env.iSetProp_('INTEL_AGENT_LIVE', '');
+}
+{
+  /* A night that fails says so on the ping; a good one clears it. */
+  const core = env.iRebuildCore_;
+  env.iRebuildCore_ = () => { throw new Error('The dues tab would not read: header row missing'); };
+  let threw = false; try { env.intelRebuild(); } catch (e) { threw = true; }
+  const bad = post({ action: 'intel.ping' });
+  ok('a rebuild that dies still throws, and the ping says when and why', threw && /header row missing/.test(bad.lastError) && /^\d{4}-\d{2}-\d{2}/.test(bad.lastError), bad.lastError);
+  env.iRebuildCore_ = () => ({ builtAt: 'now' });
+  env.intelRebuild();
+  ok('  …and a good night clears it', post({ action: 'intel.ping' }).lastError === '');
+  env.iRebuildCore_ = core;
+}
+ok('and nothing else', Object.keys(iping).sort().join() === 'built,lastError,mail,ok,service,version,workbook', JSON.stringify(iping));
 
 console.log('\nIt reads the branch workbook from inside the tracker\'s project, with nothing set:\n');
 // Every web request is a fresh execution, so the memo starts empty each time;

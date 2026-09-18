@@ -395,6 +395,116 @@ misled into thinking they have the whole picture.
 
 ## 3¾. The pending wall — the eighth screen
 
+**17 September 2026 — the pending wall is two slides, and it names itself.**
+The branch manager's own words: *"this is a very important wall… remove what is
+pending and have on top branches pending wall… remove the shield in this wall
+so persons will know what wall they are watching"*, and *"if you need another
+slide, let me know"*. So:
+
+- **Slide 3, `pending.html` — Branch Pending · Policies.** The headline is the
+  register **cleaned**: on the day this was written, 53 genuinely pending out of
+  74 rows Guardian sent. Under the number, the four figures that reconcile it —
+  the register's own count, the ones already issued and paying, the ones closed
+  or never proceeded with, and the policies carrying a requirement with no
+  register row. The middle card is the **six real statuses** (see
+  `iPendState_`), the two workable ones edged in gold, with what Guardian
+  actually typed as chips beneath so the branch recognises its own report. The
+  aging bars count pending rows only. The rest of the slide is **the board**:
+  one row per agent, with **the requirements on their policies named and aged**
+  under their name — *"a fact find too, how long with the two fact finds, proof
+  of address, how long, and highlight in the reds"* — gold past sixty days and
+  deep red past ninety, oldest first rather than commonest first, because one
+  proof of address waiting two hundred days is the sentence the room needs.
+  Then, under three group headings so the columns can be read:
+  **their policies** (policies, requirements, routine, medicals, cash not
+  submitted), **work it?** and **Salesforce tasks** on those same policies.
+  - **Work it? is the split that says what today looks like.** Asked for as
+    *"cases being worked on today, that's clear cases with cash, with
+    everything — and project what we can't work on because there are things
+    outstanding on it."* **Ready** is nothing outstanding but the premium, so
+    it settles today; **chase** is a document or a medical nobody has ordered
+    yet, so it is the call list; and the rest are *ordered and waiting* — a
+    medical booked, a report at the lab — which is outstanding with nobody to
+    telephone, counted in the legend rather than given a column. A case with
+    three requirements counts once, in the worst of the three, so the split
+    adds up to the policy count.
+  - **The legend under the board defines every column from the branch's own
+    figures**, because *"oldest, today, quiet, late, tasks — persons may not
+    know what that actually means."*
+  - **Awaiting settlement leads the status strip**, asked for in those words,
+    and it is right on the merits: a case awaiting settlement has cleared
+    underwriting and wants nothing but the money.
+  A gold branch row sits above the agents. Rebuilt in that shape on 17 September after the first cut drew
+  *"you are tallying up the days… this is not telling me anything at all"*:
+  a wall has to say how many, whose, and what, and a day count says none of
+  the three.
+- **Slide 4, `reqs.html` — Branch Pending · Requirements & tasks.** Every
+  requirement outstanding with **its own** median and oldest age, medicals
+  marked apart in teal, the six aging bands, the months the requirements were
+  ordered or added in since the first of January, and the branch's own side:
+  the Pendings task type per person — open, overdue, gone quiet a week, touched
+  today, closed today — from the tracker's own Salesforce read, so the two
+  screens can never disagree. The chase states sit under it.
+- **Slide 5, `increases.html` — Branch Pending · Increases, group & health.**
+  Asked for on the same day: *"on the Pendings we must include in a separate
+  slide the increases, group life and group health."* It is a separate slide
+  because slides 3 and 4 are built from the requirements extract, and that
+  extract is the **life new-business list** — an increase on a policy the
+  client already holds is not on it, and neither is a group scheme or a health
+  plan. So this one reads Salesforce itself: `Policy_Increases__c` for the
+  increases, and `CLIENT_PORTFOLIO__c` record types **HEALTH**, **HEALTH
+  (GROUP)** and **LIFE(GROUP)** for the rest. The left card is the pending
+  increases with the API waiting on them, the oldest, how many have no
+  documents collected, and the whole increase book behind it for scale. The
+  right is the three record types with a **status-mix bar** each, then every
+  pending row named — kind of policy, whose it is, the status as the record
+  carries it, and its age — with a by-agent tally under each list.
+  - **The status is read twice on the increases object.**
+    `Policy_Description_Status__c` is a clean picklist and it is right when it
+    is set, but it is blank on some rows and reads "Premium Paying" on rows
+    whose free-text `Policy_Status_Description_R__c` says "Underwriting
+    incomplete, Missing Reqts, Error on Policy". Both go through
+    `iPendState_`, and **the worse of the two decides**. Where the free text
+    is not prose — some rows carry the single character `1` — the picklist is
+    shown instead, because a status with no letter in it tells the room
+    nothing.
+  - **No policy numbers and no client names on this slide at all**, not even
+    behind `INTEL_PENDING_ROWS_ON_WALL`. Thirteen rows is few enough that a
+    policy number identifies the client to anyone walking past, and a group
+    scheme identifies the employer.
+  - **More than half of the group and health book carries no status**, so the
+    slide says the share out loud: a blank is not the same as nothing pending,
+    and nothing can test those rows either way.
+  - Rebuilt by `intelRebuildGroups()`, served at `intel.groups`, and in the
+    nightly `IWALL_FEEDS` run near the front because five small SOQL queries
+    are the cheapest feed on the wall.
+- **Slide 6, `codes.html` — Branch Pending · Code by code.** Asked for as
+  *"should we not have one overall general dashboard, but however on each of
+  those codes a further breakdown? … if we do need to have two, three or four
+  dashboards related to the branch's pending, we should."* The left card is the
+  overall dashboard: the branch in **five states** — ready to settle, the
+  agent's move, the client's move, already in motion, with head office — each
+  with its count, its oldest and a bar of its share, the workable two in gold
+  and the rest in grey. Under it, how many pending policies could be joined to
+  a requirement at all, because a policy with no requirement row is placed on
+  its premium column alone and that is the error bar on everything above it.
+  The right card is the **breakdown under every code**: each requirement
+  outstanding, oldest first, with its count, median and oldest, a `MED` tag
+  where it is a medical, how many are already ordered — and **the agents
+  holding it named underneath, each with their own count and worst age**,
+  gold past sixty days and red past ninety. It reads the same `intel.pending`
+  feed as slides 3 and 4, from `board.codes`, which is the board's own join
+  read the other way round: the board answers what is on an agent's desk,
+  this answers who is holding a requirement.
+- All four carry the **gold nameplate** rather than the branch mark; the house
+  note in `CLAUDE.md` records that exception and why.
+- **Two exclusion rules, and they are different.** `intelExclude` takes a name
+  off every report entirely. `intelListOnly` takes the name off every per-agent
+  row, **counts the policies**, and (since this date) **does not count their
+  requirements** — asked for as *"leave Javid's name off the wall, and
+  Aleema's, but count their policies, not their requirements."* What was held
+  back is published and said on the screen.
+
 **17 September 2026 — the dates on the requirements.** Beside the days-since figures the requirements panel now says, month by month from the 1 January cut, how many were ordered or added in each month, and names the oldest and newest dates (`requirements.byMonth`, `oldestOn`, `newestOn`).
 
 The eighth screen on the wall: everything submitted and not yet issued, how
@@ -851,6 +961,10 @@ with the screen it points at.
 
 Nothing is hidden by role. Every screen stays one click away; only the order and
 the emphasis change.
+
+**A night that fails says so (17 September).** The ping's `built` had read 8 September for nine nights before anyone saw that the two o'clock `intelRebuild` was dying. It now records the failure — `INTEL_LAST_ERROR`, the time and the first line of why — and `intel.ping` carries it as `lastError`; a good night clears it.
+
+**Reading the switches (17 September).** `intelMailStatus()` in the editor prints the three switches in words and where held mail goes; `intel.ping` carries `mail: {test, agents, clients, holdSet}` — words only, never an address — so the state can be checked from outside without trusting memory.
 
 ## 3e. Production — the only screen about something going right
 

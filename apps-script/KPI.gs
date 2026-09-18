@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-17e';
+var SCRIPT_VERSION = '2026-09-17g';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -331,6 +331,10 @@ function saveAppraisal_(data, profile) {
     return { ok: false, error: 'You can only write your own half of an appraisal.' };
   }
 
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -506,7 +510,20 @@ function kpiChoicesFor_(role) {
   return out;
 }
 
-var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2'];
+/* FIVE BLOCKS, FIVE TO MIDNIGHT — the wall's own bands.
+   "The time blocks need to be adjusted consistent with the wall, because the
+   wall is streaming. The wall starts from five to ten and it goes until
+   twelve a.m. Five time blocks. So it needs to be consistent." (17 September
+   2026.) The wall's fifth band was read from Salesforce and filed by nobody;
+   it is a real block now, because the person who asked for it works into it:
+   "extend the block beyond 4pm as I work round the clock."
+
+   EVE IS FILEABLE BY EVERYONE AND OWED BY NOBODY BUT THOSE SCHEDULED FOR IT.
+   Support staff work eight to four. A fifth block counted against them every
+   night would make the whole branch look short every day, which is the
+   fastest way to have a tracker ignored. Whether a block is owed comes from
+   the person's own schedule below, never from this list. */
+var BLOCK_IDS = ['KPI1', 'KPI2', 'PM1', 'PM2', 'EVE'];
 
 // ---------------------------------------------------------------------------
 //  The branch day
@@ -577,12 +594,15 @@ var SCHEDULE = {
     }
   },
   ricky: {
-    hours: '8am – 5pm', lunch: 'Flexible',
+    /* The only day on this list that runs the wall's full envelope, because
+       it is the one that does. */
+    hours: '5am – 12am', lunch: 'Flexible',
     blocks: {
-      KPI1: { time: '8 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
+      KPI1: { time: '5 – 10am',  focus: 'Recruitment, licensing and staffing',    kpi: 'Lic/Staffing/SA/HR' },
       KPI2: { time: '10 – 12pm', focus: 'Production, pipeline and own book',      kpi: 'Opportunity' },
       PM1:  { time: '1 – 3pm',   focus: 'Agent development and field training',   kpi: 'Training' },
-      PM2:  { time: '3 – 5pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' }
+      PM2:  { time: '3 – 4pm',   focus: 'Escalations, reporting and branch team', kpi: 'Reporting (Production / RDAR / Branch Meeting)' },
+      EVE:  { time: '4pm – 12am', focus: 'After four: what is still being moved', kpi: 'Opportunity' }
     }
   },
   kerwyn: {
@@ -727,7 +747,7 @@ function checkSchedule() {
 
 /** Blocks that should be behind a person by this hour of the branch day.
  *  The morning pair are due by noon; the third by 3, when the checkpoint runs. */
-var BLOCK_DUE_HOUR = { KPI1: 10, KPI2: 12, PM1: 15, PM2: 16 };
+var BLOCK_DUE_HOUR = { KPI1: 10, KPI2: 12, PM1: 15, PM2: 16, EVE: 24 };
 
 function blockLabel_(p) {
   return { KPI1: 'KPI 1', KPI2: 'KPI 2', PM1: 'Afternoon 1', PM2: 'Afternoon 2' }[p] || p;
@@ -765,7 +785,17 @@ var TRAINING_HEADERS = ['TrainingDate', 'StaffId', 'Trainer', 'Block', 'Trainee'
  */
 function ensureLogColumns_(sh) {
   var head = headerOf_(sh);
+  /* A BLOCK'S OWN FIVE COLUMNS TOO, not only the derived ones. This list
+     used to start at _At, because the four original blocks were already in
+     the branch's sheet when the script first ran. The fifth block is not, so
+     adding one to BLOCK_IDS silently gave it a timestamp and a plan with
+     nowhere to write the work itself. */
   var want = ['UpdatedAt', 'Revision']
+    .concat(BLOCK_IDS)
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Actioned'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Resolved'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Open'; }))
+    .concat(BLOCK_IDS.map(function (p) { return p + '_Blocker'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_At'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Quality'; }))
     .concat(BLOCK_IDS.map(function (p) { return p + '_Plan'; }))
@@ -1146,6 +1176,10 @@ function saveEntry_(payload, profile) {
   var date = isoDay_(payload.date);
   if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
 
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -1155,20 +1189,9 @@ function saveEntry_(payload, profile) {
     var now = new Date();
 
     // Find this person's row for this day.
-    var targetRow = 0, revision = 0, firstStamp = now;
-    if (sh.getLastRow() > 1) {
-      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
-      for (var i = 0; i < vals.length; i++) {
-        var sid = String(vals[i][idx['StaffId']] || '').trim() ||
-                  staffIdFor_(vals[i][idx['Name']]);
-        if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
-          targetRow = i + 2;
-          revision = Number(vals[i][idx['Revision']]) || 0;
-          firstStamp = vals[i][idx['Timestamp']] || now;
-          break;                                   // first match is the keeper
-        }
-      }
-    }
+    var found = findDayRow_(sh, idx, staffId, date);
+    var targetRow = found.row, revision = found.revision;
+    var firstStamp = found.stamp || now;
 
     var b = payload.blocks || {};
     var vals2 = {
@@ -1372,6 +1395,94 @@ function writeRow_(sh, row, idx, patch) {
   }
 }
 
+/** ══════════════════════════════════════════════════════════════════════════
+ *  FINDING ONE ROW WITHOUT READING THE WHOLE LOG.
+ *
+ *  Every write path used to pull the entire KPI Log — every row and every
+ *  column — inside the script lock, to find the one row it was about to
+ *  patch. The columns that identify a row are three; the rest is the payload
+ *  of forty-odd fields per block that nobody needs in order to find it.
+ *
+ *  Reported from the branch on 17 September 2026: a member of staff filed the
+ *  eleven-to-one block, the sheet did not answer after four tries over about
+ *  two minutes, and she had to resubmit after lunch. Nothing was lost — the
+ *  typed words are kept on the phone — but that is four minutes of somebody's
+ *  day and a message to the group asking whether the tracker is broken.
+ *
+ *  These read three columns and then the single row they matched, and they
+ *  keep FIRST-MATCH semantics deliberately: the log can carry a duplicate day
+ *  row (that is what dedupeLog is for), and the first one is the keeper, so a
+ *  faster search must not quietly start writing to the other one.
+ *  ══════════════════════════════════════════════════════════════════════════ */
+/** The columns that identify a row, in ONE read: the span between the
+ *  leftmost and the rightmost of them. In both logs those columns sit beside
+ *  each other — Date, StaffId, Name; TrainingDate, StaffId, Trainer, Block —
+ *  so this is three or four columns instead of fifty, and it is one round
+ *  trip rather than one per column. Round trips were measured long before
+ *  cells were, and neither is worth trading for the other. */
+function keySpan_(sh, idx, names, rows) {
+  var cols = names.map(function (n) { return idx[n]; })
+    .filter(function (c) { return c !== undefined && c !== null; });
+  if (!cols.length) return null;
+  var lo = Math.min.apply(null, cols), hi = Math.max.apply(null, cols);
+  var vals = sh.getRange(2, lo + 1, rows, hi - lo + 1).getValues();
+  return {
+    get: function (i, name) {
+      var c = idx[name];
+      if (c === undefined || c === null) return '';
+      var v = (vals[i] || [])[c - lo];
+      return v === undefined ? '' : v;
+    }
+  };
+}
+
+/** The row for one person on one day: { row, revision, vals, stamp }.
+ *  `row` is 0 when there is none. `vals` is that row in full, read only once
+ *  it is found, because the callers need the day's other blocks out of it. */
+function findDayRow_(sh, idx, staffId, date, dateCol) {
+  var out = { row: 0, revision: 0, vals: null, stamp: null };
+  var rows = sh.getLastRow() - 1;
+  if (rows < 1) return out;
+  var dc = dateCol || 'Date';
+  if (idx[dc] === undefined || idx[dc] === null) return out;
+  var key = keySpan_(sh, idx, ['StaffId', 'Name', dc], rows);
+  if (!key) return out;
+  for (var i = 0; i < rows; i++) {
+    var raw = key.get(i, 'StaffId');
+    var s = String(raw == null ? '' : raw).trim() || staffIdFor_(key.get(i, 'Name'));
+    if (s !== staffId || isoDay_(key.get(i, dc)) !== date) continue;
+    out.row = i + 2;
+    out.vals = sh.getRange(out.row, 1, 1, sh.getLastColumn()).getValues()[0];
+    out.revision = Number(out.vals[idx['Revision']]) || 0;
+    out.stamp = out.vals[idx['Timestamp']] || null;
+    return out;
+  }
+  return out;
+}
+
+/** SOMEBODY IS FILING RIGHT NOW — stamped before the lock is taken, so it is
+ *  true even while a submission is queued behind another one.
+ *
+ *  The wall's hourly pending rebuild lives in the same script project and
+ *  reads fifty-thousand-row extracts for about two minutes at a time, six
+ *  times inside the working day, at whatever minute Apps Script decides. A
+ *  submission that lands on top of one waits on the same document and can
+ *  time out. The rebuild is the half of that pair which can afford to wait:
+ *  it has a night copy behind it and another go in two hours. So it asks
+ *  this, and stands down. A member of staff never waits on the wall. */
+function markStaffWrite_() {
+  try {
+    PropertiesService.getScriptProperties()
+      .setProperty('KPI_LAST_WRITE', String(Date.now()));
+  } catch (e) {}
+}
+function staffWroteWithin_(ms) {
+  try {
+    var at = Number(PropertiesService.getScriptProperties().getProperty('KPI_LAST_WRITE') || 0);
+    return at > 0 && (Date.now() - at) < ms;
+  } catch (e) { return false; }
+}
+
 /** Take the script lock, or say plainly that the branch is busy.
  *
  *  One lock covers every submission in the branch, so at four o'clock — when
@@ -1407,6 +1518,10 @@ function saveBlock_(payload, profile) {
   var done = [];
   var quality = null, standards = [];
 
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -1414,19 +1529,8 @@ function saveBlock_(payload, profile) {
     var head = headerOf_(sh);
     var idx = colMap_(sh);
 
-    var targetRow = 0, revision = 0, rowVals = null;
-    if (sh.getLastRow() > 1) {
-      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
-      for (var i = 0; i < vals.length; i++) {
-        var sid = String(vals[i][idx['StaffId']] || '').trim() || staffIdFor_(vals[i][idx['Name']]);
-        if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
-          targetRow = i + 2;
-          revision = Number(vals[i][idx['Revision']]) || 0;
-          rowVals = vals[i];
-          break;
-        }
-      }
-    }
+    var found = findDayRow_(sh, idx, staffId, date);
+    var targetRow = found.row, revision = found.revision, rowVals = found.vals;
 
     // The block's own cells, plus anything the day carries that came with it.
     var patch = {};
@@ -1539,6 +1643,10 @@ function saveDay_(payload, profile) {
   var date = isoDay_(payload.date);
   if (!staffId || !date) return { ok: false, error: 'Missing staff or date.' };
 
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -1547,18 +1655,8 @@ function saveDay_(payload, profile) {
     var idx = colMap_(sh);
     var now = new Date();
 
-    var targetRow = 0, revision = 0;
-    if (sh.getLastRow() > 1) {
-      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
-      for (var i = 0; i < vals.length; i++) {
-        var sid = String(vals[i][idx['StaffId']] || '').trim() || staffIdFor_(vals[i][idx['Name']]);
-        if (sid === staffId && isoDay_(vals[i][idx['Date']]) === date) {
-          targetRow = i + 2;
-          revision = Number(vals[i][idx['Revision']]) || 0;
-          break;
-        }
-      }
-    }
+    var found = findDayRow_(sh, idx, staffId, date);
+    var targetRow = found.row, revision = found.revision;
 
     var m = payload.metrics || {};
     var patch = {
@@ -1602,12 +1700,13 @@ function saveBlockTraining_(staffId, date, trainer, blockId, d, now) {
   var head = headerOf_(sh);
   var idx = colMap_(sh);
 
-  if (sh.getLastRow() > 1) {
-    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
-    for (var i = vals.length - 1; i >= 0; i--) {
-      if (String(vals[i][idx['StaffId']] || '').trim() === staffId &&
-          isoDay_(vals[i][idx['TrainingDate']]) === date &&
-          String(vals[i][idx['Block']] || '').trim() === blockId) {
+  var rows = sh.getLastRow() - 1;
+  if (rows > 0) {
+    var key = keySpan_(sh, idx, ['StaffId', 'TrainingDate', 'Block'], rows);
+    for (var i = rows - 1; key && i >= 0; i--) {
+      if (String(key.get(i, 'StaffId')).trim() === staffId &&
+          isoDay_(key.get(i, 'TrainingDate')) === date &&
+          String(key.get(i, 'Block')).trim() === blockId) {
         sh.deleteRow(i + 2);
       }
     }
@@ -1649,11 +1748,12 @@ function saveTraining_(staffId, date, trainer, blocks, now) {
   var head = headerOf_(sh);
   var idx = colMap_(sh);
 
-  if (sh.getLastRow() > 1) {
-    var vals = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
-    for (var i = vals.length - 1; i >= 0; i--) {
-      if (String(vals[i][idx['StaffId']] || '').trim() === staffId &&
-          isoDay_(vals[i][idx['TrainingDate']]) === date) {
+  var trows = sh.getLastRow() - 1;
+  if (trows > 0) {
+    var tkey = keySpan_(sh, idx, ['StaffId', 'TrainingDate'], trows);
+    for (var i = trows - 1; tkey && i >= 0; i--) {
+      if (String(tkey.get(i, 'StaffId')).trim() === staffId &&
+          isoDay_(tkey.get(i, 'TrainingDate')) === date) {
         sh.deleteRow(i + 2);
       }
     }
@@ -1724,6 +1824,21 @@ function hasText_(v) { return !!String(v == null ? '' : v).trim(); }
 function isRealValueAdd_(v) {
   var s = String(v || '').trim().toLowerCase();
   return !!s && s !== 'none today' && s !== 'none' && s !== 'n/a' && s !== 'na' && s !== '-';
+}
+
+/** How many blocks this person is OWED — the ones their own schedule names.
+ *  Support staff work eight to four, and only the Branch Manager is scheduled
+ *  into the four-to-midnight block, so counting BLOCK_IDS would tell the whole
+ *  branch it was a block short every evening. Four is the floor for anybody
+ *  whose schedule is not on the list yet, which is what the day said before
+ *  there was a fifth block to be wrong about. */
+function blocksOwed_(staffId) {
+  var sc = SCHEDULE[String(staffId || '').trim()];
+  var b = sc && sc.blocks;
+  if (!b) return 4;
+  var n = 0;
+  BLOCK_IDS.forEach(function (p) { if (b[p] && b[p].time) n++; });
+  return n || 4;
 }
 
 function blocksDone_(e) {
@@ -2331,7 +2446,7 @@ function checkpointHtml_(r) {
     return '<div style="background:#fff;border:1px solid ' + MAIL.line + ';border-radius:10px;padding:12px 14px;margin-bottom:9px">' +
       '<table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>' +
         '<td style="font-size:14px;font-weight:700">' + esc_(l.name) +
-          '<span style="font-size:11px;color:' + MAIL.muted + ';font-weight:600"> · ' + l.blocksDone + '/4 blocks' +
+          '<span style="font-size:11px;color:' + MAIL.muted + ';font-weight:600"> · ' + l.blocksDone + '/' + blocksOwed_(l.staffId) + ' blocks' +
           (l.updatedAt ? ' · last saved ' + esc_(l.updatedAt) : '') + '</span></td>' +
         '<td align="right" style="font-size:11px;font-weight:700;color:' + tone + '">' + esc_(l.status) + '</td>' +
       '</tr></table>' +
@@ -3700,6 +3815,10 @@ function openReview_(data, profile) {
   if (!from || !to || to <= from) return { ok: false, error: 'The period needs a start and an end, in that order.' };
   var id = staffId + '-' + from + '-' + type.toLowerCase().replace(/[^a-z]+/g, '-');
   if (findReview_(id)) return { ok: true, id: id, existed: true };
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -3792,6 +3911,10 @@ function trainingFor_(staffId) {
 
 /** Upsert one row of a review tab, writing only the columns the side owns. */
 function writeHalf_(spec, keyCols, keyVals, patch) {
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -4031,6 +4154,10 @@ function saveMail_(payload, profile) {
   var col = when === 'am' ? 'MailAM' : 'MailPM';
   var cell = at + '|' + MAIL_KEYS.map(function (k) { return k + ':' + ranks[k]; }).join(',');
 
+  /* Stamped before the lock, so it is true even while this submission is
+     queued behind another one. The wall's rebuild reads it and stands
+     down; nothing a member of staff does waits on the wall. */
+  markStaffWrite_();
   var lock = takeLock_();
   if (!lock) return BUSY_;
   try {
@@ -4286,6 +4413,10 @@ function trainingStanding_(staffId, from, to) {
 function facts_(staffId, from, to, entries, closedByType, nowBlock, needs, billing) {
   var f = { blocks: 0, met: 0, partly: 0, no: 0, planned: 0, landed: null,
             valueAdded: [], innovation: [],
+            /* What a full day is FOR THIS PERSON. Counting BLOCK_IDS told
+               support staff they owed the four-to-midnight block, which only
+               the Branch Manager is scheduled for. */
+            owed: blocksOwed_(staffId),
             daysIn: 0, absent: 0, late: 0,
             closed: null, servicing: null, open: null, needs: null, lateTasks: null, noReason: null, billingFlags: null,
             trainingGiven: 0, trainingReceived: 0, devDone: 0, devTotal: 0 };
@@ -4353,7 +4484,10 @@ function competencySignals_(name, f) {
   if (/reliab|attend|punctual|depend/.test(n)) {
     sig('Days in', f.daysIn); sig('Not in', f.absent, f.absent ? 'amber' : 'green');
     sig('After your start', f.late, f.late ? 'amber' : 'green');
-    if (f.daysIn) sig('Blocks submitted', f.blocks + ' of ' + f.daysIn * BLOCK_IDS.length, f.blocks >= f.daysIn * BLOCK_IDS.length * 0.8 ? 'green' : 'amber');
+    if (f.daysIn) {
+      var want = f.daysIn * (f.owed || 4);
+      sig('Blocks submitted', f.blocks + ' of ' + want, f.blocks >= want * 0.8 ? 'green' : 'amber');
+    }
   }
   if (/respons|timel|follow.?up/.test(n)) {
     if (f.workDays) {
@@ -4595,7 +4729,8 @@ function signOutDay_(data, profile) {
 
   var done = blocksSubmittedOn_(sid, day);
   return { ok: true, date: day, staffId: sid, out: at,
-           blocksDone: done.length, blocksLeft: BLOCK_IDS.length - done.length };
+           blocksDone: done.length,
+           blocksLeft: Math.max(0, blocksOwed_(sid) - done.length) };
 }
 
 /** "Not in today", with the reason. Self, or the People Leader for a report. */
