@@ -2090,6 +2090,7 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState({ tone: "idle", text: "" });
   const [showAll, setShowAll] = useState(false);
+  const [mk, setMk] = useState(null);     // the line being made into a task
   useEffect(() => { setItems(plan ? plan.items : []); }, [plan ? JSON.stringify(plan.items) : ""]);
   if (closed) return React.createElement(BlockOutcome, { plan, api, active, date, onSaved, mine });
 
@@ -2126,6 +2127,37 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
   };
   const head = { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD };
 
+  // A line of somebody's own words can become a real Salesforce task: subject,
+  // assigned to them, due date. Then the closer reads it back out of
+  // Salesforce at the end of the block like every other piece of work, and it
+  // counts everywhere else the branch looks. Asked for on 18 September 2026 —
+  // "everything is driven by task".
+  const sfTypes = (opts || []).filter(o => o.salesforce);
+  const openMk = (i, label) => setMk({
+    i, label, subject: label,
+    type: (((picked || []).filter(k => sfTypes.some(o => o.value === k)))[0]) || (sfTypes[0] || {}).value || "",
+    due: date
+  });
+  const makeTask = async () => {
+    if (busy || !mk) return;
+    setBusy(true); setNote({ tone: "saving", text: "Creating it in Salesforce\u2026" });
+    // Save first, so nothing else on the plan is lost when the server hands
+    // back the swapped list.
+    if (dirty) {
+      const w = await api("savePlan", { staffId: active, date, block: b.col, items });
+      if (!w || !w.ok) { setBusy(false); setNote({ tone: "bad", text: (w && w.error) || "Could not save the plan." }); return; }
+    }
+    const r = await api("createTask", { staffId: active, date, block: b.col,
+      label: mk.label, subject: mk.subject, type: mk.type, due: mk.due });
+    setBusy(false);
+    if (r && r.ok) {
+      setMk(null);
+      setNote({ tone: "ok", text: "In Salesforce, assigned to you, due " + shortDate(r.due) + (r.note ? " \u00b7 " + r.note : "") });
+      if (r.plan && onSaved) onSaved(r.plan);
+      else setItems(list => list.map(x => (x.k === "own" && x.label === mk.label) ? r.item : x));
+    } else setNote({ tone: "bad", text: (r && r.error) || "Could not create it." });
+  };
+
   return React.createElement("div", { "data-plan": b.col, style: { marginTop: 12, border: "1px solid " + LINE, borderRadius: 10, padding: "10px 12px", background: "#FBF9F3" } },
     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" } },
       React.createElement("div", { style: head }, "What you will get done in it"),
@@ -2146,6 +2178,17 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
             React.createElement("span", { style: { color: t.late ? AMBER : MUTED, fontWeight: 600 } },
               t.age > 0 ? " · " + t.age + " days" + (t.late ? " over" : "") : "")));
       }),
+      // A task on the plan that the open book has not caught up with — one
+      // just created from a line, or one the book no longer lists. It is on
+       // the plan, so it shows on the plan.
+      items.filter(x => x.k === "sf" && !cands.some(c => c.id === x.id)).map(x =>
+        React.createElement("label", { key: "x" + x.id, style: { display: "flex", gap: 9, alignItems: "flex-start", padding: "6px 0", borderTop: "1px solid " + LINE, cursor: "pointer" } },
+          React.createElement("input", { type: "checkbox", checked: true, disabled: !mine,
+            onChange: () => toggle({ k: "sf", id: x.id, subject: x.subject, type: x.type }), style: { marginTop: 3 } }),
+          React.createElement("span", { style: { fontSize: 13, color: INK, fontWeight: 700, lineHeight: 1.35 } },
+            x.subject || "(no subject)",
+            React.createElement("span", { style: { color: MUTED, fontWeight: 600 } },
+              x.type ? " \u00b7 " + x.type : "")))),
       cands.length > SHOW ? React.createElement("button", { type: "button", onClick: () => setShowAll(s => !s),
         style: { background: "none", border: "none", padding: "6px 0 0", font: "inherit", fontSize: 12, fontWeight: 700, color: GOLD, cursor: "pointer" } },
         showAll ? "Fewer" : "and " + (cands.length - SHOW) + " more") : null)
@@ -2167,12 +2210,31 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
         placeholder: "e.g. Interview two recruits", style: { ...inp, flex: 1 } }),
       React.createElement("button", { type: "button", onClick: () => addOwn(text), style: { ...submitBtn, padding: "8px 14px" } }, "Add")) : null,
     items.some(x => x.k === "own") ? React.createElement("div", { style: { marginTop: 6 } },
-      items.map((x, i) => x.k !== "own" ? null : React.createElement("div", { key: "own" + i, style: { display: "flex", gap: 8, alignItems: "center", padding: "5px 0", borderTop: "1px solid " + LINE } },
-        React.createElement("button", { type: "button", disabled: !mine, onClick: () => tick(i), title: x.done ? "Done" : "Tick when done",
-          style: { width: 24, height: 24, borderRadius: 6, border: "1px solid " + (x.done ? GREEN : LINE), background: x.done ? GREEN : "#fff", color: "#fff", fontWeight: 800, cursor: "pointer" } }, x.done ? "✓" : ""),
-        React.createElement("span", { style: { flex: 1, fontSize: 13, color: INK, fontWeight: 600, textDecoration: x.done ? "line-through" : "none" } }, x.label),
-        mine ? React.createElement("button", { type: "button", onClick: () => setItems(list => list.filter((_, j) => j !== i)), "aria-label": "Remove",
-          style: { background: "none", border: "none", color: MUTED, fontSize: 16, cursor: "pointer" } }, "×") : null))) : null,
+      items.map((x, i) => x.k !== "own" ? null : React.createElement(React.Fragment, { key: "own" + i },
+        React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "center", padding: "5px 0", borderTop: "1px solid " + LINE } },
+          React.createElement("button", { type: "button", disabled: !mine, onClick: () => tick(i), title: x.done ? "Done" : "Tick when done",
+            style: { width: 24, height: 24, borderRadius: 6, border: "1px solid " + (x.done ? GREEN : LINE), background: x.done ? GREEN : "#fff", color: "#fff", fontWeight: 800, cursor: "pointer" } }, x.done ? "\u2713" : ""),
+          React.createElement("span", { style: { flex: 1, fontSize: 13, color: INK, fontWeight: 600, textDecoration: x.done ? "line-through" : "none" } }, x.label),
+          mine && sfTypes.length ? React.createElement("button", { type: "button", onClick: () => (mk && mk.i === i ? setMk(null) : openMk(i, x.label)),
+            style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit", fontSize: 11.5, fontWeight: 700, color: GOLD } },
+            mk && mk.i === i ? "Never mind" : "Make it a task \u2192") : null,
+          mine ? React.createElement("button", { type: "button", onClick: () => setItems(list => list.filter((_, j) => j !== i)), "aria-label": "Remove",
+            style: { background: "none", border: "none", color: MUTED, fontSize: 16, cursor: "pointer" } }, "\u00d7") : null),
+        mk && mk.i === i ? React.createElement("div", { "data-maketask": "1",
+          style: { border: "1px solid " + GOLD, background: "#FFFDF6", borderRadius: 9, padding: "9px 10px", margin: "2px 0 8px" } },
+          React.createElement("div", { style: { fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginBottom: 7 } },
+            "It goes into Salesforce as yours, and the block reads it back from there when it closes."),
+          React.createElement("input", { value: mk.subject, onChange: e => setMk(m => ({ ...m, subject: e.target.value })),
+            placeholder: "Subject", style: { ...inp, fontSize: 13, padding: "7px 9px" } }),
+          React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6, flexWrap: "wrap" } },
+            React.createElement("select", { value: mk.type, onChange: e => setMk(m => ({ ...m, type: e.target.value })),
+              style: { ...selectBox, fontSize: 12.5, padding: "7px 9px", flex: "1 1 170px", width: "auto" } },
+              sfTypes.map(o => React.createElement("option", { key: o.value, value: o.value }, o.label))),
+            React.createElement("input", { type: "date", value: mk.due, onChange: e => setMk(m => ({ ...m, due: e.target.value })),
+              style: { ...inp, fontSize: 12.5, padding: "6px 8px", width: "auto", flex: "0 1 auto" } }),
+            React.createElement("button", { type: "button", onClick: makeTask, disabled: busy || !mk.type || !mk.due || txt(mk.subject).length < 4,
+              style: { ...submitBtn, padding: "8px 14px", opacity: busy || !mk.type || !mk.due || txt(mk.subject).length < 4 ? .55 : 1 } },
+              busy ? "Creating\u2026" : "Create in Salesforce"))) : null))) : null,
     mine ? React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 10 } },
       React.createElement("div", { style: { flex: 1, fontSize: 12, fontWeight: 700, color: note.tone === "bad" ? RED : note.tone === "ok" ? GREEN : MUTED } },
         note.text || (dirty ? "Not saved yet" : "")),
