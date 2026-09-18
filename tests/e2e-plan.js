@@ -243,7 +243,7 @@ const ok = (what, cond, extra) => {
   console.log('\nAnd the day starts from here:\n');
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(900);
-  ok('it opens the blocks', await page.locator('text=Submit each block as it ends').count() > 0);
+  ok('it opens the blocks', await page.locator('text=Each block closes itself at its end time').count() > 0);
 
   // Blocks are an accordion on the day screen, so open one before looking.
   await page.locator('text=KPI 1').first().click();

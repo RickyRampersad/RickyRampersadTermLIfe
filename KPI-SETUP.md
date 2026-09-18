@@ -156,6 +156,20 @@ The Branch Manager alone can read other people's records. Seniority does not
 come into it — the ABM and the Unit Managers see their own work, same as
 everyone else.
 
+Two words in the tab need care. **Administrator** in the Role column counts as
+the Branch Manager (it is the workbook's owner standing in); **Admin** on its
+own, or in the Unit column, does not — *Sales Admin* is a support unit, and a
+person in it sees their own day, nobody else's.
+
+**The Active column decides who is on the roster.** Blank or `Yes` means on.
+Any other word at all — `Left`, `Maternity`, `New`, `x` — means off: off the
+sign-in, off the Branch Manager's team list, off the wall and off every e-mail.
+That is deliberate (a departed person once stayed on the wall because her
+cell said something the old list did not recognise), but it means a note
+written in that cell for any other reason hides a person. The Branch Manager's
+home says who is off and what their cell says, so a missing name is a
+one-cell fix, not a hunt.
+
 Change somebody's job in the sheet and the tool follows. Nothing in the script
 needs editing, and there are no hard-coded exceptions.
 

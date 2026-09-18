@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-18a';
+var SCRIPT_VERSION = '2026-09-18b';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -1009,7 +1009,11 @@ function isManager_(person) {
   // seniority: roleFor_ decides the KPI list, this decides the reach.
   var r = roleFor_(person);
   if (r === 'bm') return true;
-  return /administrator|\badmin\b/.test(normRole_((person.role || '') + ' ' + (person.unit || '')));
+  // "Administrator" in the Role column is the workbook's owner standing in.
+  // It used to be any "admin" in the Role OR the Unit — and Sales Admin is a
+  // support unit, so a Sales Support Assistant whose Unit cell said "Sales
+  // Admin" signed in and saw the whole branch. Role, and the whole word.
+  return /\badministrator\b/.test(normRole_(person.role || ''));
 }
 
 function issueToken_(person) {
@@ -1085,7 +1089,19 @@ function login_(who, password) {
   try { t.profile.attendance = recordAttendance_(t.profile); } catch (e) {}
   t.profile.leads = leads_(t.profile);
   return { ok: true, token: t.token, profile: t.profile,
-           roster: publicRoster_(), schedule: SCHEDULE };
+           roster: publicRoster_(), schedule: SCHEDULE,
+           offRoster: isManager_(person) ? offRoster_() : undefined };
+}
+
+/** Who is on the Access tab but off the roster, and what their Active cell
+ *  says. The Branch Manager alone gets this, so that a person who is missing
+ *  from every screen is explained on his: a cell reading "Left", "Maternity"
+ *  or "x" takes somebody off, and until now nothing said so anywhere. The
+ *  name and the cell, nothing else. */
+function offRoster_() {
+  return roster_().filter(function (p) { return !p.active; }).map(function (p) {
+    return { name: p.name, says: p.activeRaw };
+  });
 }
 
 /** The roster minus the passwords. This is the only shape that leaves here. */
@@ -2169,7 +2185,8 @@ function handle_(action, data, token) {
       try { profile.attendance = recordAttendance_(profile); } catch (e) {}
       profile.leads = leads_(profile);
       return { ok: true, profile: profile, roster: publicRoster_(), schedule: SCHEDULE,
-               kpis: allKpiChoices_() };
+               kpis: allKpiChoices_(),
+               offRoster: profile.manager ? offRoster_() : undefined };
 
     case 'absent':
       return markAbsent_(data, profile);

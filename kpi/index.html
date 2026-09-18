@@ -11,6 +11,8 @@
   textarea,input,select,button{font-family:inherit}
   textarea{resize:vertical}
   a{color:inherit}
+  [data-fold="1"]>*:not([data-plan]):not([data-outcome]):not([data-unfold]){display:none!important}
+  [data-shut="1"]>*:not([data-head]){display:none!important}
   @media print{
     .noprint{display:none!important}
     body{background:#fff}
@@ -891,11 +893,14 @@ function JobDocView({ me, doc, vp, onBack }) {
 /** The Branch Manager's own landing: the register, the sweep, the quarter,
  *  the document — before the branch. What drives his own appraisal sits
  *  where he signs in, the same as everyone else's does. */
-function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, onPerf, onMoments, onJobDoc, onRegister, wide }) {
+function YouSection({ me, api, attToday, setAttToday, mail, saveMail, standing, onPerf, onMoments, onJobDoc, onRegister, wide, ownRow }) {
   return h("div", { style: { marginBottom: 18 } },
     h(SectionLabel, null, "You"),
     h(AttendanceLine, { me: me, api: api, onRegister: onRegister,
       onChange: a => { me.attendance = a; setAttToday(Object.assign({}, attToday || {}, { [me.staffId]: a })); } }),
+    // Your own day, first — the Branch Manager logs one too, and it used to
+    // sit somewhere in the middle of the team's cards.
+    ownRow ? h("div", { style: { marginTop: 10 } }, ownRow) : null,
     /* TWO COLUMNS ON A LAPTOP, one on a phone. The sweep and the quarter were
        stacked at every width, which on a 1366px screen meant a narrow ribbon
        of content and 1,825px of scrolling to reach the blocks. alignItems
@@ -2028,34 +2033,19 @@ const blockersOf = e => BLOCKS.map(b => ({
   text: [txt(x.d.blocker), txt(x.d.blockerOwner)].filter(Boolean).join(" · ")
 }));
 const trainingCount = e => BLOCKS.reduce((n, b) => n + (kpiList(e.blocks?.[b.id]?.kpi).includes("Training delivered") ? 1 : 0), 0);
+// The branch's mark is logo-mark.png at the site root — the gold shield with
+// the white check — and every screen shows that file. This used to draw its
+// own shield in SVG, which is the substitute the house rule forbids.
 function ShieldLogo({
   size = 34
 }) {
-  return /*#__PURE__*/React.createElement("svg", {
+  return /*#__PURE__*/React.createElement("img", {
+    src: "../logo-mark.png",
+    alt: "",
     width: size,
     height: size,
-    viewBox: "0 0 48 52",
-    fill: "none"
-  }, /*#__PURE__*/React.createElement("path", {
-    d: "M24 2 L44 9 V25 C44 38 35 46 24 50 C13 46 4 38 4 25 V9 Z",
-    fill: NAVY,
-    stroke: GOLD,
-    strokeWidth: "2.5",
-    strokeLinejoin: "round"
-  }), /*#__PURE__*/React.createElement("path", {
-    d: "M24 7 L39 12 V25 C39 35 32 41 24 44.5 C16 41 9 35 9 25 V12 Z",
-    fill: "none",
-    stroke: GOLD,
-    strokeWidth: "1",
-    opacity: "0.55"
-  }), /*#__PURE__*/React.createElement("path", {
-    d: "M15 25 L21.5 32 L34 18",
-    fill: "none",
-    stroke: GOLD,
-    strokeWidth: "4.5",
-    strokeLinecap: "round",
-    strokeLinejoin: "round"
-  }));
+    style: { display: "block", width: size, height: size, borderRadius: Math.round(size * 0.24), flexShrink: 0 }
+  });
 }
 
 // ===========================================================================
@@ -2250,6 +2240,36 @@ function App() {
   useEffect(() => {
     if ((view === "plan" || view === "entry") && active && token) loadPlans(active, date);
   }, [view, active, date, token, loadPlans]);
+  // The block in play opens itself. Arriving on today's day view, the block
+  // whose hours hold the clock is the one to look at — or, before the day
+  // starts, the next to close. Once per arrival: closing it stays closed.
+  const blockNow = P => {
+    if (!P || !P.spans) return null;
+    const now = new Date(), m = now.getHours() * 60 + now.getMinutes();
+    return BLOCK_ORDER.find(b => P.spans[b.col] && P.spans[b.col].start <= m && m < P.spans[b.col].end)
+        || BLOCK_ORDER.find(b => P.spans[b.col] && P.spans[b.col].end > m) || null;
+  };
+  useEffect(() => {
+    if (view !== "entry" || openBlock || date !== todayISO()) return;
+    const key = active + "|" + date;
+    if (autoOpened.current === key) return;
+    const cur = blockNow(plans[planKey(active, date)]);
+    if (!cur) return;
+    autoOpened.current = key;
+    setOpenBlock(cur.id);
+  }, [view, plans, active, date]);
+  // The plan opens on the same block — one open at a time, the rest a line
+  // each — and stays where the person put it.
+  useEffect(() => {
+    if (view !== "plan") return;
+    const key = active + "|" + date;
+    if (planTouched.current === key) return;
+    const P = plans[planKey(active, date)];
+    const cur = date === todayISO() ? blockNow(P) : null;
+    setPlanOpen((cur || BLOCK_ORDER[0]).id);
+    if (P && P.spans) planTouched.current = key;
+  }, [view, plans, active, date]);
+
   const planSaved = (sid, d) => pl => setPlans(prev => {
     const k = planKey(sid, d), cur = prev[k] || { plans: {}, spans: {} };
     return { ...prev, [k]: { ...cur, plans: { ...cur.plans, [pl.block]: pl } } };
@@ -2291,6 +2311,11 @@ function App() {
     text: ""
   });
   const [openBlock, setOpenBlock] = useState(null);
+  const [unfold, setUnfold] = useState({});          // closed blocks whose form the person asked for
+  const [offRoster, setOffRoster] = useState([]);    // Branch Manager only: who the Access tab hides
+  const [planOpen, setPlanOpen] = useState(null);    // the one block open on the plan
+  const autoOpened = React.useRef("");
+  const planTouched = React.useRef("");
   const [reviewDate, setReviewDate] = useState(todayISO());
   const [weekOf, setWeekOf] = useState(weekStartOf(todayISO()));
   const [attToday, setAttToday] = useState(null);   // null: the server has not said
@@ -2379,6 +2404,7 @@ function App() {
       if (r.ok) {
         setMe(r.profile);
         setRoster(r.roster || []);
+        setOffRoster(r.offRoster || []);
         rememberRoles(r.roster);
         if (r.schedule) SCHEDULE = r.schedule;
         if (r.kpis) KPI_CHOICES = r.kpis;
@@ -2626,7 +2652,7 @@ function App() {
     note: ended ? "Your session ended. Sessions last twelve hours; sign in again to carry on."
         : closedAt ? "Day closed at " + closedAt + ". That is on the register. Sign in again if you are back."
         : bootNote ? bootNote + " Your session is still here: reload the page to carry on, or sign in again." : "",
-    onIn: (tok, profile, ros) => {
+    onIn: (tok, profile, ros, off) => {
       setEnded(false);
       setClosedAt("");
       setBootNote("");
@@ -2634,6 +2660,7 @@ function App() {
       setToken(tok);
       setMe(profile);
       setRoster(ros || []);
+      setOffRoster(off || []);
     }
   });
 
@@ -2644,6 +2671,57 @@ function App() {
   const staffList = roster;
   const visible = me.manager ? staffList : staffList.filter(p => p.staffId === me.staffId);
   const entries = rows.map(rowToEntry);
+
+  // One row per person, the same row whether it sits under You or under the
+  // team.
+  const rowFor = p => {
+    const today = entries.find(e => e.staffId === p.staffId && e.date === todayISO());
+    return /*#__PURE__*/React.createElement(PersonRow, {
+      key: p.staffId, p: p, today: today,
+      att: attToday ? attToday[p.staffId] || null : undefined,
+      onOpen: () => {
+        setActive(p.staffId); setDate(todayISO()); setBlockState({});
+        setDayState({ tone: "idle", text: "" }); setOpenBlock(null); autoOpened.current = "";
+        setView("entry");
+      },
+      onTrend: () => { setTrendStaff(p.staffId); setView("trend"); },
+      onPerf: () => { setPerfWho(p.staffId); setRv(null); setPerfTab("goals"); setView("perf"); }
+    });
+  };
+  const meRow = visible.find(p => p.staffId === me.staffId);
+  // The team is everybody else, and it opens on who needs a look — not signed
+  // in, nothing logged, or behind at the checkpoint — before the people who
+  // are on track. Ten cards of equal weight was a wall to read, not a list to
+  // act on. Reported 18 September 2026: "should not show all staff".
+  const teamState = p => {
+    const att = attToday ? attToday[p.staffId] || null : undefined;
+    if (att && att.status === "absent") return "out";
+    const today = entries.find(e => e.staffId === p.staffId && e.date === todayISO());
+    return today && blocksDone(today) >= CHECKPOINT_BLOCKS ? "ok" : "look";
+  };
+  const byRank = (a, b) => ((a.tierOrder || 9) - (b.tierOrder || 9)) || String(a.name).localeCompare(String(b.name));
+  const team = visible.filter(p => p.staffId !== me.staffId).sort(byRank);
+  const TEAM_GROUPS = [["look", "Needs a look", AMBER], ["ok", "On track", GREEN], ["out", "Not in today", MUTED]];
+  const teamBlock = /*#__PURE__*/React.createElement(React.Fragment, null,
+    TEAM_GROUPS.map(([k, label, color]) => {
+      const list = team.filter(p => teamState(p) === k);
+      if (!list.length) return null;
+      return /*#__PURE__*/React.createElement("div", { key: k, style: { marginBottom: 10 } },
+        /*#__PURE__*/React.createElement("div", {
+          style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: color, margin: "8px 0 6px" }
+        }, label + " · " + list.length),
+        /*#__PURE__*/React.createElement("div", { style: vp.wide ? autoGrid(vp.desktop ? 440 : 300, 10) : null }, list.map(rowFor)));
+    }),
+    // Who the Access tab is hiding, and why. A name that is simply missing from
+    // every screen is a hunt; a name with the word in its Active cell beside it
+    // is a one-cell fix.
+    me.manager && offRoster.length ? /*#__PURE__*/React.createElement("p", {
+      style: { fontSize: 12, color: MUTED, lineHeight: 1.55, margin: "6px 0 0" }
+    }, "Off the register: ",
+      offRoster.map((o, i) => /*#__PURE__*/React.createElement("span", { key: i }, i ? " · " : "",
+        /*#__PURE__*/React.createElement("b", { style: { color: INK } }, o.name),
+        o.says ? " (Active says “" + o.says + "”)" : "")),
+      ". Blank that cell on the Access tab, or write Yes, and the person is back.") : null);
 
   // ---- home ---------------------------------------------------------------
   /* THE LAPTOP. Every other screen widens on a desktop and this one — the
@@ -2720,7 +2798,7 @@ function App() {
     onPerf: () => { setPerfWho(me.staffId); setPerfTab("goals"); setView("perf"); },
     onMoments: () => { setPerfWho(me.staffId); setPerfTab("competencies"); setView("perf"); },
     onJobDoc: () => setView("jobdoc"), onRegister: () => setView("register"),
-    wide: vp.desktop
+    wide: vp.desktop, ownRow: meRow ? rowFor(meRow) : null
   }), /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
@@ -2813,40 +2891,9 @@ function App() {
       ...primaryWide,
       marginTop: 14
     }
-  }, "What you are chasing \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "Your day")), visible.length === 0 && /*#__PURE__*/React.createElement(Empty, {
+  }, "What you are chasing \u2192")), visible.length === 0 && /*#__PURE__*/React.createElement(Empty, {
     text: "Nobody on the roster yet \u2014 add staff to the Access tab of the workbook."
-  }), /*#__PURE__*/React.createElement("div", {
-    style: vp.wide ? autoGrid(300, 10) : null
-  }, visible.map(p => {
-    const today = entries.find(e => e.staffId === p.staffId && e.date === todayISO());
-    return /*#__PURE__*/React.createElement(PersonRow, {
-      key: p.staffId,
-      p: p,
-      today: today,
-      att: attToday ? attToday[p.staffId] || null : undefined,
-      onOpen: () => {
-        setActive(p.staffId);
-        setDate(todayISO());
-        setBlockState({});
-        setDayState({
-          tone: "idle",
-          text: ""
-        });
-        setOpenBlock(null);
-        setView("entry");
-      },
-      onTrend: () => {
-        setTrendStaff(p.staffId);
-        setView("trend");
-      },
-      onPerf: () => {
-        setPerfWho(p.staffId);
-        setRv(null);
-        setPerfTab("goals");
-        setView("perf");
-      }
-    });
-  })), /*#__PURE__*/React.createElement("button", {
+  }), teamBlock, /*#__PURE__*/React.createElement("button", {
     onClick: () => {
       setPerfWho(me.staffId);
       setRv(null);
@@ -3008,15 +3055,23 @@ function App() {
         const picked = kpiList(bl.kpi);
         const open = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].open) || 0), 0);
         const od = picked.reduce((n, k) => n + ((byType && byType[k] && byType[k].overdue) || 0), 0);
-        return /*#__PURE__*/React.createElement("div", { key: b.id, style: card },
-          /*#__PURE__*/React.createElement("div", { style: cardHead },
+        const shut = planOpen !== b.id;
+        const planned = P.plans[b.col] ? P.plans[b.col].items.length : 0;
+        return /*#__PURE__*/React.createElement("div", { key: b.id, style: card, "data-shut": shut ? "1" : null, "data-block": b.col },
+          /*#__PURE__*/React.createElement("div", {
+            style: { ...cardHead, cursor: "pointer" }, "data-head": "1",
+            onClick: () => { planTouched.current = active + "|" + date; setPlanOpen(shut ? b.id : null); }
+          },
             /*#__PURE__*/React.createElement("span", { style: cardTitle },
-              b.label, sc.time ? " \u00b7 " + sc.time : ""),
-            byType && picked.length ? /*#__PURE__*/React.createElement("span", {
-              style: { fontSize: 11.5, fontWeight: 700, color: od ? AMBER : MUTED }
-            }, open + " open" + (od ? " \u00b7 " + od + " late" : "")) : null),
+              b.label, sc.time ? " · " + sc.time : ""),
+            /*#__PURE__*/React.createElement("span", { style: { display: "flex", alignItems: "center", gap: 8 } },
+              byType && picked.length ? /*#__PURE__*/React.createElement("span", {
+                style: { fontSize: 11.5, fontWeight: 700, color: od ? AMBER : MUTED }
+              }, open + " open" + (od ? " · " + od + " late" : "")) : null,
+              planned ? /*#__PURE__*/React.createElement("span", { style: pillOutline(GOLD) }, planned + " on the plan") : null,
+              /*#__PURE__*/React.createElement("span", { style: { color: GOLD, fontSize: 16, fontWeight: 700 } }, shut ? "›" : "⌄"))),
           sc.focus ? /*#__PURE__*/React.createElement("p", {
-            style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
+            "data-head": "1", style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
           }, sc.focus) : null,
           /*#__PURE__*/React.createElement(KpiPicker, {
             value: bl.kpi, opts: opts, mine: byType, branch: branchType,
@@ -3174,7 +3229,7 @@ function App() {
         margin: "14px 0 2px",
         lineHeight: 1.5
       }
-    }, "Submit each block as it ends \u2014 not at four o'clock from memory. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement("div", {
+    }, "Each block closes itself at its end time, from Salesforce — tick what you are on before then, or say why after. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         display: "grid",
         gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)",
@@ -3260,6 +3315,7 @@ function App() {
           fontWeight: 700
         }
       }, open ? "⌄" : "›"))), open && /*#__PURE__*/React.createElement("div", {
+        "data-fold": P.plans[b.col] && P.plans[b.col].closedAt && !unfold[b.id] ? "1" : null,
         style: {
           padding: "0 14px 14px"
         }
@@ -3267,7 +3323,12 @@ function App() {
         b: b, plan: P.plans[b.col], span: P.spans[b.col], book: bookOf, picked: kpiList(bl.kpi),
         opts: opts, api: api, active: active, date: date, mine: mine,
         onSaved: planSaved(active, date)
-      }), /*#__PURE__*/React.createElement(Field, {
+      }), P.plans[b.col] && P.plans[b.col].closedAt && !unfold[b.id] ? /*#__PURE__*/React.createElement("button", {
+        "data-unfold": "1", type: "button",
+        onClick: () => setUnfold(u => ({ ...u, [b.id]: true })),
+        style: { background: "none", border: "1px solid " + LINE, borderRadius: 9, padding: "8px 12px", marginTop: 10,
+                 font: "inherit", fontSize: 12.5, fontWeight: 700, color: NAVY, cursor: "pointer" }
+      }, "Write it in your own words →") : null, /*#__PURE__*/React.createElement(Field, {
         label: "KPI worked \u2014 pick every one this block touched"
       }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
@@ -4664,7 +4725,7 @@ function Login({
       if (r.schedule) SCHEDULE = r.schedule;
       if (r.kpis) KPI_CHOICES = r.kpis;
       rememberRoles(r.roster);
-      onIn(r.token, r.profile, r.roster);
+      onIn(r.token, r.profile, r.roster, r.offRoster);
     } else setErr(r.error || "Could not sign you in.");
   }
   return /*#__PURE__*/React.createElement("div", {
@@ -4704,13 +4765,13 @@ function Login({
       fontWeight: 800,
       marginTop: 3
     }
-  }, "Ricky Rampersad's Branch"), /*#__PURE__*/React.createElement("div", {
+  }, "Daily KPI & Innovation Tracker"), /*#__PURE__*/React.createElement("div", {
     style: {
       color: GOLD_SOFT,
       fontSize: 13,
       marginTop: 6
     }
-  }, "Daily KPI & Innovation Tracker")), /*#__PURE__*/React.createElement("div", {
+  }, "Your day, block by block")), /*#__PURE__*/React.createElement("div", {
     style: {
       background: CARD,
       borderRadius: 14,

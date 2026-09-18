@@ -91,7 +91,7 @@ async function session(b, withStanding, noted) {
   console.log('\nThe day view carries the quarter:\n');
   let s = await session(b, true, noted);
   let t = await s.page.locator('body').innerText();
-  ok('it opens on the day', /Submit each block as it ends/.test(t), t.slice(0, 80));
+  ok('it opens on the day', /Each block closes itself at its end time/.test(t), t.slice(0, 80));
   ok('with the quarter under the blocks', /Your quarter · 2026 Q3/i.test(t) && /49 days in · 17 left/.test(t));
   ok('every goal with what the record says', /27 blocks · 401 closed · 4 open, 1 untouched/.test(t), (t.match(/27 blocks[^\n]*/) || [''])[0]);
   ok('and how it stands against the target', /landed 78% · target 90%/.test(t) && /landed 100% · target 90%/.test(t));
@@ -175,7 +175,7 @@ async function session(b, withStanding, noted) {
   s = await session(b, false, noted);
   t = await s.page.locator('body').innerText();
   // The strip still names "Your quarter" as a door; what must be absent is the card itself.
-  ok('the day opens with no quarter card and no error', /Submit each block as it ends/.test(t) && !/Your quarter · /.test(t) && !/days in · /.test(t));
+  ok('the day opens with no quarter card and no error', /Each block closes itself at its end time/.test(t) && !/Your quarter · /.test(t) && !/days in · /.test(t));
   await s.page.click('button:has-text("← Branch")');
   await s.page.waitForTimeout(400);
   await s.page.click('button:has-text("My performance")');
