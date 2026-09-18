@@ -102,31 +102,37 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   ok('the open tasks of the picked type are there to tick', /T- PENSIONS GROUP/.test(k1t) && /Confirm funds in DISB/.test(k1t));
   ok('with how long each has been open', /40 days/.test(k1t));
   ok('the licensing task is not — that type is not picked for this block', !/Licence renewal/.test(k1t));
-  ok('the role\'s own work is offered as chips', /Reporting/.test(k1t) && /Task Management/.test(k1t));
-  const ownPart = k1t.split(/something salesforce cannot see/i)[1] || '';
-  ok('the licensing KPI is not offered as one — Salesforce sees that', ownPart.length > 0 && !/Licensing/.test(ownPart), k1t.slice(-200));
+  // The panel no longer repeats the role's whole KPI list under the picker
+  // that already shows it. What it offers is the word-work this block is for,
+  // and a line for anything else.
+  const ownPart = k1t.split(/in your own words/i)[1] || '';
+  ok('it asks for anything in words', ownPart.length > 0, k1t.slice(-160));
+  ok('and does not repeat the whole KPI list under it',
+     !/Reporting/.test(ownPart) && !/Task Management/.test(ownPart) && !/Licensing/.test(ownPart), ownPart.slice(0, 160));
+  const pm2 = page.locator('[data-plan="PM2"]');
+  ok('a block whose KPI is word-work offers that as a chip',
+     await pm2.locator('button:has-text("Reporting")').count() === 1);
 
   console.log('\nPicking, and saving:\n');
   await k1.locator('input[type="checkbox"]').first().check();
-  await k1.locator('button:has-text("Reporting")').click();
   await k1.locator('input[placeholder*="Interview"]').fill('Call two recruits about Monday');
   await k1.locator('button:has-text("Add")').click();
   await page.waitForTimeout(150);
-  ok('three on the plan, and it says so', /3 on the plan/.test(await k1.innerText()));
+  ok('two on the plan, and it says so', /2 on the plan/.test(await k1.innerText()));
   ok('the typed line is listed with a tick box', await k1.locator('text=Call two recruits about Monday').count() > 0);
   await k1.locator('button:has-text("Save plan")').click();
   await page.waitForTimeout(500);
   const sp = posted.savePlan[0];
   ok('the save names the block', !!sp && sp.block === 'KPI1' && sp.staffId === 'demo', JSON.stringify(sp && [sp.block, sp.staffId]));
   ok('the Salesforce task travels with its id, subject and type', !!sp && sp.items[0].k === 'sf' && sp.items[0].id === '00T000000000001AAA' && /PENSIONS/.test(sp.items[0].subject) && sp.items[0].type === 'Renewa/PDl/Bill', JSON.stringify(sp && sp.items[0]));
-  ok('and the person\'s own lines as words', !!sp && sp.items.some(x => x.k === 'own' && x.label === 'Reporting') && sp.items.some(x => x.k === 'own' && x.label === 'Call two recruits about Monday'), JSON.stringify(sp && sp.items));
+  ok('and the person\'s own line as words', !!sp && sp.items.some(x => x.k === 'own' && x.label === 'Call two recruits about Monday'), JSON.stringify(sp && sp.items));
   ok('it says saved, and when it closes', /Saved · closes itself at 10:00/.test(await k1.innerText()));
 
   console.log('\nOn the day, a closed block shows what the closer decided:\n');
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(800);
   const day = await page.locator('body').innerText();
-  ok('KPI 1 says three are planned', /3 planned/.test(day));
+  ok('KPI 1 says two are planned', /2 planned/.test(day));
   ok('KPI 2 says it closed, with the score', /Closed 12:05 · 50%/.test(day));
   await page.locator('button:has-text("KPI 2")').first().click();
   await page.waitForTimeout(400);

@@ -178,6 +178,17 @@ let KPI_CHOICES = {
   um: []
 };
 const fnFor = role => KPI_CHOICES[role] || KPI_CHOICES.ssa || [];
+// Salesforce stores the Task Type as a code; the branch reads the label. The
+// labels are the same in every role's list, so the first match wins.
+const typeLabel = v => {
+  const k = String(v == null ? "" : v);
+  let out = k;
+  Object.keys(KPI_CHOICES).some(r => (KPI_CHOICES[r] || []).some(o => {
+    if (o.value === k) { out = o.label || k; return true; }
+    return false;
+  }));
+  return out;
+};
 const STANDARDS = ["Completed applications to Head Office within 2 days of receipt.", "Policy documents processed with 100% accuracy.", "Documents to the relevant party within 1 day of receipt.", "A rolled due date is not an actioned task — log the genuine blocker + owner.", "\"Waiting on someone\" needs a named person and the date last chased.", "Value Added is logged every day — even if the honest entry is \"None today\"."];
 
 
@@ -2095,7 +2106,12 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
   // The book, for the types this block is for — the type travels with the
   // task, because the plan keeps it.
   const cands = (picked || []).reduce((a, k) => a.concat(((book && book[k]) || []).filter(t => !CLOSED_HERE[t.id]).map(t => ({ ...t, type: k }))), []);
-  const own = (opts || []).filter(o => !o.salesforce);
+  // Only the word-work this block is already for. It used to offer the whole
+  // role list, which on the Branch Manager's screen is thirteen chips under a
+  // picker showing the same thirteen — the card asked one question twice and
+  // answered it in two places. The picker above is where a block's KPIs are
+  // chosen; this is where the work inside them is planned.
+  const own = (opts || []).filter(o => !o.salesforce && (picked || []).indexOf(o.value) > -1);
   const SHOW = 8;
   const list = showAll ? cands : cands.slice(0, SHOW);
   const save = async () => {
@@ -2112,9 +2128,9 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
 
   return React.createElement("div", { "data-plan": b.col, style: { marginTop: 12, border: "1px solid " + LINE, borderRadius: 10, padding: "10px 12px", background: "#FBF9F3" } },
     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" } },
-      React.createElement("div", { style: head }, "What this block is for"),
+      React.createElement("div", { style: head }, "What you will get done in it"),
       React.createElement("div", { style: { fontSize: 11.5, color: MUTED, fontWeight: 700 } },
-        items.length ? items.length + " on the plan" : "nothing picked yet",
+        items.length ? items.length + " on the plan" : "nothing on the plan yet",
         span ? " · closes itself at " + span.endText : "")),
     React.createElement("p", { style: { fontSize: 12, color: MUTED, margin: "4px 0 8px", lineHeight: 1.45 } },
       "Pick what you will get done. At " + (span ? span.endText : "the end of the block") +
@@ -2136,15 +2152,15 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
       : React.createElement("div", { style: { fontSize: 12.5, color: MUTED, padding: "4px 0" } },
           picked && picked.length ? "Nothing open in Salesforce for what you picked." : "Tick a KPI above and its open tasks appear here."),
     // What Salesforce cannot see: the role's own list as chips, and a line.
-    React.createElement("div", { style: { ...head, margin: "10px 0 5px" } }, "Something Salesforce cannot see"),
-    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
+    React.createElement("div", { style: { ...head, margin: "10px 0 5px" } }, "In your own words"),
+    own.length ? React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6 } },
       own.map(o => {
         const on = has({ k: "own", label: o.value });
         return React.createElement("button", { key: o.value, type: "button", disabled: !mine,
           onClick: () => toggle({ k: "own", label: o.value, done: false }),
           style: { font: "inherit", fontSize: 12, fontWeight: on ? 700 : 500, cursor: "pointer", padding: "6px 11px", borderRadius: 999,
                    border: "1px solid " + (on ? GOLD : LINE), background: on ? "#FBF3DF" : "#FFFFFF", color: on ? INK : MUTED } }, o.label);
-      })),
+      })) : null,
     mine ? React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 8 } },
       React.createElement("input", { value: text, onChange: e => setText(e.target.value),
         onKeyDown: e => { if (e.key === "Enter") { e.preventDefault(); addOwn(text); } },
@@ -3319,7 +3335,19 @@ function App() {
         style: {
           padding: "0 14px 14px"
         }
-      }, /*#__PURE__*/React.createElement(PlanPanel, {
+      },
+      // One order, three questions: what the block is for, what you will get
+      // done in it, what happened. The plan used to sit above the picker it
+      // reads from, and the writing guide above the boxes it is a guide to.
+      /*#__PURE__*/React.createElement(Field, {
+        label: "The KPIs this block covers"
+      }, /*#__PURE__*/React.createElement(KpiPicker, {
+        value: bl.kpi,
+        opts: opts,
+        mine: byTypeFor(metrics, active),
+        branch: metrics && metrics.branch ? metrics.branch.byType : null,
+        onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
+      })), /*#__PURE__*/React.createElement(PlanPanel, {
         b: b, plan: P.plans[b.col], span: P.spans[b.col], book: bookOf, picked: kpiList(bl.kpi),
         opts: opts, api: api, active: active, date: date, mine: mine,
         onSaved: planSaved(active, date)
@@ -3328,18 +3356,14 @@ function App() {
         onClick: () => setUnfold(u => ({ ...u, [b.id]: true })),
         style: { background: "none", border: "1px solid " + LINE, borderRadius: 9, padding: "8px 12px", marginTop: 10,
                  font: "inherit", fontSize: 12.5, fontWeight: 700, color: NAVY, cursor: "pointer" }
-      }, "Write it in your own words →") : null, /*#__PURE__*/React.createElement(Field, {
-        label: "KPI worked \u2014 pick every one this block touched"
-      }, /*#__PURE__*/React.createElement(KpiPicker, {
-        value: bl.kpi,
-        opts: opts,
-        mine: byTypeFor(metrics, active),
-        branch: metrics && metrics.branch ? metrics.branch.byType : null,
-        onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
-      })), bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
+      }, "Write it in your own words →") : null, bl.kpi ? /*#__PURE__*/React.createElement(KpiHint, {
         kpi: bl.kpi,
         live: byTypeFor(metrics, active) ? byTypeFor(metrics, active)[bl.kpi] : null
-      }) : null, /*#__PURE__*/React.createElement(Field, {
+      }) : null, /*#__PURE__*/React.createElement("div", {
+        style: { marginTop: 14, borderTop: "1px solid " + LINE, paddingTop: 12 }
+      }, /*#__PURE__*/React.createElement("div", {
+        style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }
+      }, "What happened in it")), /*#__PURE__*/React.createElement(Field, {
         label: "Actioned"
       }, /*#__PURE__*/React.createElement("textarea", {
         rows: 2,
@@ -5176,71 +5200,46 @@ function ReviewCard({
 // The task position, read from Salesforce rather than typed. Where Salesforce
 // cannot be reached the boxes come back, because a tracker that stops working
 // when a connection drops is worse than one that asks.
-function TaskPosition({
-  live,
-  staffId,
-  entry,
-  patchMetric
-}) {
+function TaskPosition({ live, staffId, entry, patchMetric }) {
   const m = live && live.ok && live.staff ? live.staff[staffId] : null;
   if (m) {
-    return /*#__PURE__*/React.createElement("div", {
-      style: card
-    }, /*#__PURE__*/React.createElement("div", {
-      style: cardHead
-    }, /*#__PURE__*/React.createElement("span", {
-      style: cardTitle
-    }, "Task position"), /*#__PURE__*/React.createElement("span", {
-      style: {
-        fontSize: 10.5,
-        color: GREEN,
-        fontWeight: 700
-      }
-    }, "live from Salesforce")), /*#__PURE__*/React.createElement("div", {
-      style: grid3row
-    }, /*#__PURE__*/React.createElement(MiniStat, {
-      label: "Closed today",
-      value: m.closed,
-      tone: GREEN
-    }), /*#__PURE__*/React.createElement(MiniStat, {
-      label: "Open now",
-      value: m.open
-    }), /*#__PURE__*/React.createElement(MiniStat, {
-      label: "Overdue",
-      value: m.overdue,
-      tone: m.overdue > 0 ? AMBER : INK,
-      last: true
-    })), /*#__PURE__*/React.createElement("div", {
-      style: {
-        display: "flex",
-        gap: 14,
-        padding: "9px 2px 0",
-        fontSize: 11.5,
-        color: MUTED
-      }
-    }, /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
-      style: {
-        color: m.aged60 > 0 ? RED : INK
-      }
-    }, m.aged60), " at 60+ days"), m.noDate > 0 && /*#__PURE__*/React.createElement("span", null, /*#__PURE__*/React.createElement("b", {
-      style: {
-        color: AMBER
-      }
-    }, m.noDate), " with no due date")), m.noDate > 0 && /*#__PURE__*/React.createElement("p", {
-      style: {
-        fontSize: 11.5,
-        color: AMBER,
-        margin: "8px 0 0",
-        lineHeight: 1.45
-      }
-    }, "A task with no due date can never be overdue, so it never shows up in any report. Give those a date, or close them."), /*#__PURE__*/React.createElement("p", {
-      style: {
-        fontSize: 11,
-        color: MUTED,
-        margin: "8px 0 0",
-        lineHeight: 1.4
-      }
-    }, "Nothing to type \u2014 these come straight from your Salesforce tasks."));
+    // Three totals and then the book they came from. "Thirteen overdue" is a
+    // mood; "nine of them are servicing lines" is a morning — so the same
+    // figure is broken out by type, worst first, and the row says which of it
+    // nobody has touched.
+    const types = Object.keys(m.byType || {})
+      .map(k => Object.assign({ k: k }, m.byType[k] || {}))
+      .filter(t => (t.open || 0) + (t.overdue || 0) > 0)
+      .sort((a, b) => (b.needs || 0) - (a.needs || 0) || (b.overdue || 0) - (a.overdue || 0) || (b.open || 0) - (a.open || 0));
+    const SHOW = 7;
+    return React.createElement("div", { style: card },
+      React.createElement("div", { style: cardHead },
+        React.createElement("span", { style: cardTitle }, "Task position"),
+        React.createElement("span", { style: { fontSize: 10.5, color: GREEN, fontWeight: 700 } }, "live from Salesforce")),
+      React.createElement("div", { style: grid3row },
+        React.createElement(MiniStat, { label: "Closed today", value: m.closed, tone: GREEN }),
+        React.createElement(MiniStat, { label: "Open now", value: m.open }),
+        React.createElement(MiniStat, { label: "Overdue", value: m.overdue, tone: m.overdue > 0 ? AMBER : INK, last: true })),
+      React.createElement("div", { style: { display: "flex", gap: 14, padding: "9px 2px 0", fontSize: 11.5, color: MUTED } },
+        React.createElement("span", null, React.createElement("b", { style: { color: m.aged60 > 0 ? RED : INK } }, m.aged60), " at 60+ days"),
+        m.noDate > 0 ? React.createElement("span", null, React.createElement("b", { style: { color: AMBER } }, m.noDate), " with no due date") : null),
+      m.noDate > 0 ? React.createElement("p", { style: { fontSize: 11.5, color: AMBER, margin: "8px 0 0", lineHeight: 1.45 } },
+        "A task with no due date can never be overdue, so it never shows up in any report. Give those a date, or close them.") : null,
+      types.length ? React.createElement("div", { style: { marginTop: 11, borderTop: "1px solid " + LINE, paddingTop: 9 } },
+        React.createElement("div", { style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, marginBottom: 5 } },
+          "Where it sits"),
+        types.slice(0, SHOW).map(t => React.createElement("div", { key: t.k,
+          style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10, padding: "4px 0", fontSize: 12.5 } },
+          React.createElement("span", { style: { color: INK, fontWeight: 600, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
+            typeLabel(t.k)),
+          React.createElement("span", { style: { flexShrink: 0, fontWeight: 700, color: MUTED } },
+            (t.open || 0) + " open",
+            t.overdue ? React.createElement("span", { style: { color: AMBER } }, " \u00b7 " + t.overdue + " late") : null,
+            t.needs ? React.createElement("span", { style: { color: RED } }, " \u00b7 " + t.needs + " untouched") : null))),
+        types.length > SHOW ? React.createElement("div", { style: { fontSize: 11, color: MUTED, marginTop: 4 } },
+          "and " + (types.length - SHOW) + " more") : null) : null,
+      React.createElement("p", { style: { fontSize: 11, color: MUTED, margin: "9px 0 0", lineHeight: 1.4 } },
+        "Nothing to type \u2014 these come straight from your Salesforce tasks."));
   }
   const why = live && live.reason === "notConfigured" ? "Salesforce is not connected yet, so these are typed for now." : "Salesforce could not be reached, so type them for now.";
   return /*#__PURE__*/React.createElement("div", {
@@ -5294,209 +5293,105 @@ function TaskPosition({
 // A task you can fix from here. The reason and the due date are the two things
 // that make an overdue task legible, and both were a trip to Salesforce. Now
 // they are a line and a button, and the row confirms what it did.
-function TaskRow({
-  t,
-  onSaved,
-  api,
-  token,
-  showDate
-}) {
+function TaskRow({ t, onSaved, api, token, showDate, extra }) {
   const [reason, setReason] = useState("");
   const [due, setDue] = useState("");
-  const [st, setSt] = useState({
-    tone: "idle",
-    text: ""
-  });
+  const [open, setOpen] = useState(false);
+  const [st, setSt] = useState({ tone: "idle", text: "" });
   const [done, setDone] = useState(null);
   async function save(field, value) {
     if (st.tone === "saving") return;
-    setSt({
-      tone: "saving",
-      text: "Saving…"
-    });
-    const r = await api("updateTask", {
-      token,
-      taskId: t.id,
-      field,
-      value
-    });
+    setSt({ tone: "saving", text: "Saving\u2026" });
+    const r = await api("updateTask", { token, taskId: t.id, field, value });
     if (r.ok) {
-      setSt({
-        tone: "ok",
-        text: r.label + " saved to Salesforce ✓"
-      });
-      setDone(d => ({
-        ...(d || {}),
-        [field]: value
-      }));
+      setSt({ tone: "ok", text: r.label + " saved to Salesforce \u2713" });
+      setDone(d => Object.assign({}, d || {}, { [field]: value }));
       if (onSaved) onSaved();
-    } else setSt({
-      tone: "bad",
-      text: r.error || "Did not save."
-    });
+    } else setSt({ tone: "bad", text: r.error || "Did not save." });
   }
   const age = t.age || 0;
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      padding: "10px 0",
-      borderTop: "1px solid " + LINE
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 8,
-      alignItems: "baseline"
-    }
-  }, t.repeat && /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 9.5,
-      fontWeight: 800,
-      color: RED,
-      border: "1px solid " + RED,
-      borderRadius: 3,
-      padding: "0 4px",
-      flexShrink: 0
-    }
-  }, "REPEAT"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 12.5,
-      color: INK,
-      lineHeight: 1.4
-    }
-  }, t.subject)), /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11,
-      color: MUTED,
-      marginTop: 2
-    }
-  }, t.type || t.status, " \xB7 due ", shortDate(done?.due || t.due), " \xB7", " ", /*#__PURE__*/React.createElement("b", {
-    style: {
-      color: age > 60 ? RED : age > 30 ? AMBER : MUTED
-    }
-  }, age, " days old")), done?.reason ? /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 12,
-      color: GREEN,
-      marginTop: 6,
-      lineHeight: 1.45
-    }
-  }, /*#__PURE__*/React.createElement("b", null, "Reason:"), " ", done.reason) : /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginTop: 7
-    }
-  }, /*#__PURE__*/React.createElement("input", {
-    value: reason,
-    onChange: e => setReason(e.target.value),
-    placeholder: "What it is waiting on, and who owns the next step",
-    style: {
-      ...inp,
-      fontSize: 12.5,
-      padding: "7px 9px"
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: () => save("reason", reason),
-    disabled: st.tone === "saving" || reason.trim().length < 4,
-    style: {
-      ...goldBtn,
-      padding: "7px 12px",
-      fontSize: 12,
-      opacity: st.tone === "saving" || reason.trim().length < 4 ? 0.5 : 1
-    }
-  }, "Save")), showDate && !done?.due && /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      gap: 6,
-      marginTop: 6,
-      alignItems: "center"
-    }
-  }, /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 11,
-      color: MUTED,
-      fontWeight: 600
-    }
-  }, "New due date"), /*#__PURE__*/React.createElement("input", {
-    type: "date",
-    value: due,
-    onChange: e => setDue(e.target.value),
-    style: {
-      ...inp,
-      fontSize: 12.5,
-      padding: "6px 8px",
-      width: "auto",
-      flex: "0 1 auto"
-    }
-  }), /*#__PURE__*/React.createElement("button", {
-    onClick: () => save("due", due),
-    disabled: st.tone === "saving" || !due,
-    style: {
-      ...goldBtn,
-      padding: "7px 12px",
-      fontSize: 12,
-      opacity: st.tone === "saving" || !due ? 0.5 : 1
-    }
-  }, "Set")), st.text && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11.5,
-      fontWeight: 700,
-      marginTop: 6,
-      color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : MUTED
-    }
-  }, st.text));
+  const said = done && done.reason;
+  // Thirteen overdue tasks used to mean thirteen open text boxes stacked down
+  // the column. The row is now a line; the box arrives when somebody decides
+  // to answer it.
+  const link = (label, onClick, color) => React.createElement("button", { type: "button", onClick,
+    style: { background: "none", border: "none", padding: 0, cursor: "pointer", font: "inherit",
+             fontSize: 11.5, fontWeight: 700, color: color || GOLD } }, label);
+  return React.createElement("div", { style: { padding: "9px 0", borderTop: "1px solid " + LINE } },
+    React.createElement("div", { style: { display: "flex", gap: 8, alignItems: "baseline" } },
+      t.repeat ? React.createElement("span", { style: { fontSize: 9.5, fontWeight: 800, color: RED, border: "1px solid " + RED,
+        borderRadius: 3, padding: "0 4px", flexShrink: 0 } }, "REPEAT") : null,
+      React.createElement("span", { style: { flex: 1, fontSize: 12.5, color: INK, lineHeight: 1.4 } }, t.subject),
+      React.createElement("span", { style: { flexShrink: 0, fontSize: 11, fontWeight: 800,
+        color: age > 60 ? RED : age > 30 ? AMBER : MUTED } }, age + "d")),
+    React.createElement("div", { style: { fontSize: 11, color: MUTED, marginTop: 2 } },
+      typeLabel(t.type || t.status) + " \u00b7 due " + shortDate((done && done.due) || t.due)),
+    said ? React.createElement("div", { style: { fontSize: 12, color: GREEN, marginTop: 5, lineHeight: 1.45 } },
+      React.createElement("b", null, "Reason:"), " " + done.reason) : null,
+    React.createElement("div", { style: { display: "flex", gap: 14, alignItems: "center", marginTop: 5 } },
+      !said && !open ? link("Say why \u2192", () => setOpen(true)) : null,
+      extra || null),
+    !said && open ? React.createElement("div", null,
+      React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6 } },
+        React.createElement("input", { value: reason, onChange: e => setReason(e.target.value), autoFocus: true,
+          placeholder: "What it is waiting on, and who owns the next step",
+          style: Object.assign({}, inp, { fontSize: 12.5, padding: "7px 9px" }) }),
+        React.createElement("button", { onClick: () => save("reason", reason),
+          disabled: st.tone === "saving" || reason.trim().length < 4,
+          style: Object.assign({}, goldBtn, { padding: "7px 12px", fontSize: 12,
+            opacity: st.tone === "saving" || reason.trim().length < 4 ? 0.5 : 1 }) }, "Save")),
+      showDate && !(done && done.due) ? React.createElement("div", { style: { display: "flex", gap: 6, marginTop: 6, alignItems: "center" } },
+        React.createElement("span", { style: { fontSize: 11, color: MUTED, fontWeight: 600 } }, "New due date"),
+        React.createElement("input", { type: "date", value: due, onChange: e => setDue(e.target.value),
+          style: Object.assign({}, inp, { fontSize: 12.5, padding: "6px 8px", width: "auto", flex: "0 1 auto" }) }),
+        React.createElement("button", { onClick: () => save("due", due), disabled: st.tone === "saving" || !due,
+          style: Object.assign({}, goldBtn, { padding: "7px 12px", fontSize: 12, opacity: st.tone === "saving" || !due ? 0.5 : 1 }) },
+          "Set")) : null) : null,
+    st.text ? React.createElement("div", { style: { fontSize: 11.5, fontWeight: 700, marginTop: 6,
+      color: st.tone === "bad" ? RED : st.tone === "ok" ? GREEN : MUTED } }, st.text) : null);
 }
 
 // Overdue tasks carrying nothing in the reason field. The branch built that
 // field for this; it is filled on about one overdue task in twenty. An overdue
 // task with a reason is work in progress. One without is a task nobody has
 // looked at — so those are the ones named here.
-function NeedsReason({
-  items,
-  api,
-  token,
-  onSaved
-}) {
+function NeedsReason({ items, api, token, onSaved }) {
+  const [all, setAll] = useState(false);
   if (!items || !items.length) return null;
   // The order of service: who it is for first, then how long it has waited.
-  const show = items.slice().sort((a, b) => (a.rank == null ? 4 : a.rank) - (b.rank == null ? 4 : b.rank) || (b.age || 0) - (a.age || 0)).slice(0, 6);
-  return /*#__PURE__*/React.createElement("div", {
-    style: {
-      ...card,
-      borderLeft: "4px solid " + RED
-    }
-  }, /*#__PURE__*/React.createElement("div", {
-    style: cardHead
-  }, /*#__PURE__*/React.createElement("span", {
-    style: cardTitle
-  }, "Overdue with no reason given"), /*#__PURE__*/React.createElement("span", {
-    style: {
-      fontSize: 10.5,
-      color: RED,
-      fontWeight: 700
-    }
-  }, items.length)), /*#__PURE__*/React.createElement("p", {
-    style: {
-      fontSize: 11.5,
-      color: MUTED,
-      margin: "0 0 10px",
-      lineHeight: 1.45
-    }
-  }, "The due date has passed and the Task Update Reason is empty. Put a line in Salesforce saying what it is waiting on and who owns the next step \u2014 a rolled date is not an actioned task."), show.map(t => /*#__PURE__*/React.createElement(React.Fragment, { key: t.id },
-    /*#__PURE__*/React.createElement(TaskRow, {
-      t: t,
-      api: api,
-      token: token,
-      showDate: !t.due,
-      onSaved: onSaved
-    }),
-    /*#__PURE__*/React.createElement(CloseTask, { t: t, api: api, onClosed: () => { if (onSaved) onSaved(); } }))), items.length > show.length && /*#__PURE__*/React.createElement("div", {
-    style: {
-      fontSize: 11.5,
-      color: MUTED,
-      marginTop: 8
-    }
-  }, "and ", items.length - show.length, " more."));
+  const sorted = items.slice().sort((a, b) =>
+    (a.rank == null ? 4 : a.rank) - (b.rank == null ? 4 : b.rank) || (b.age || 0) - (a.age || 0));
+  const SHOW = 5;
+  const show = all ? sorted : sorted.slice(0, SHOW);
+  // Grouped by type, because one undivided column of thirteen is a list
+  // nobody reads, and "four of these are servicing lines" is a decision.
+  const keyOf = t => t.type || "No type";
+  const groups = [];
+  show.forEach(t => {
+    const k = keyOf(t);
+    let g = groups.filter(x => x.k === k)[0];
+    if (!g) { g = { k: k, list: [] }; groups.push(g); }
+    g.list.push(t);
+  });
+  const total = k => items.filter(t => keyOf(t) === k).length;
+  return React.createElement("div", { style: Object.assign({}, card, { borderLeft: "4px solid " + RED }) },
+    React.createElement("div", { style: cardHead },
+      React.createElement("span", { style: cardTitle }, "Overdue with no reason given"),
+      React.createElement("span", { style: { fontSize: 10.5, color: RED, fontWeight: 700 } }, items.length)),
+    React.createElement("p", { style: { fontSize: 11.5, color: MUTED, margin: "0 0 4px", lineHeight: 1.45 } },
+      "The due date has passed and the Task Update Reason is empty. Put a line in Salesforce saying what it is waiting on and who owns the next step \u2014 a rolled date is not an actioned task."),
+    groups.map(g => React.createElement("div", { key: g.k, style: { marginTop: 10 } },
+      React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline",
+        fontSize: 10.5, fontWeight: 800, letterSpacing: ".08em", textTransform: "uppercase", color: NAVY } },
+        React.createElement("span", null, typeLabel(g.k)),
+        React.createElement("span", { style: { color: MUTED, fontWeight: 700 } }, total(g.k))),
+      g.list.map(t => React.createElement(TaskRow, { key: t.id, t: t, api: api, token: token,
+        showDate: !t.due, onSaved: onSaved,
+        extra: React.createElement(CloseTask, { t: t, api: api, onClosed: () => { if (onSaved) onSaved(); } }) })))),
+    items.length > SHOW ? React.createElement("button", { type: "button", onClick: () => setAll(a => !a),
+      style: { background: "none", border: "none", padding: "10px 0 0", font: "inherit", fontSize: 12,
+               fontWeight: 700, color: GOLD, cursor: "pointer" } },
+      all ? "Fewer" : "Show all " + items.length + " \u2192") : null);
 }
 
 // Billing is the branch's most repetitive work, and its easiest to send twice.

@@ -722,6 +722,38 @@ ticked an automatic line the sheet disagrees with, the list reads *said done
 at 15:47* rather than the count that contradicts them — their word, marked as
 their word.
 
+## What a block card asks, in order
+
+Reported on 18 September 2026, looking at the live screen: *"the layout can be
+much nicer, it's looking very crumbled ... the Salesforce task underneath has
+just the numbers but it can be more organised."*
+
+A block now asks three questions, once each, top to bottom.
+
+1. **The KPIs this block covers.** The picked ones as tiles with what is open
+   behind them, then the rest as chips. This is the only place a block's KPIs
+   are chosen.
+2. **What you will get done in it.** The open Salesforce tasks of those KPIs as
+   boxes to tick, and a line for anything Salesforce cannot see. The panel used
+   to offer the role's whole KPI list here as well, which on the Branch
+   Manager's screen is thirteen chips sitting under a picker showing the same
+   thirteen — the card asked one question twice and answered it in two places.
+   It now offers only the word-work the block is already for, plus the line.
+3. **What happened in it.** The writing guide, then Actioned, Resolved, Still
+   open, the blocker, and whether the objective was met.
+
+A block the closer already filed shows its verdict and nothing else, with the
+form behind *Write it in your own words*.
+
+**The Salesforce column** keeps the three totals, and under them *Where it
+sits*: the same book by type, worst first, with how many of each are late and
+how many nobody has touched. "Thirteen overdue" is a mood; "nine of them are
+servicing lines" is a morning.
+
+**Overdue with no reason** is grouped by type, five at a time, and each row is
+one line — the reason box opens when somebody clicks *Say why*. Thirteen open
+text boxes stacked down a column is a form nobody fills in.
+
 ## The block that closes itself
 
 Asked for on 17 September 2026: *"when the time block is up the system should
