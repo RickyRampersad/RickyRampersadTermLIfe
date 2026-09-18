@@ -754,6 +754,49 @@ servicing lines" is a morning.
 one line — the reason box opens when somebody clicks *Say why*. Thirteen open
 text boxes stacked down a column is a form nobody fills in.
 
+## What to do next — the tracker advising, not only reporting
+
+Asked for on 18 September 2026: *"they need to be told what to do ...
+intelligence needs to advise what must be done given the insights and the
+importance."*
+
+Both the plan screen and the day screen now open with **What to do next**: at
+most three things, in the order they should be done, each with the number
+behind it and what it costs to leave it. Every line is derived from that
+person's own live figures — nothing is generic and nothing is invented.
+
+What it watches, heaviest first:
+
+| It says | When |
+|---|---|
+| The block running now has nothing on its plan | its window holds the clock |
+| Nothing is logged and the checkpoint has passed | after 3pm with no block filed |
+| N things in a block closed without a reason | the closer marked them short |
+| Put a line on N overdue tasks nobody has explained | the reason field is empty |
+| Escalate or close N tasks past sixty days | `aged60` |
+| N tasks have not moved in a week | `needs` |
+| Date or close N tasks with no due date | `noDate` |
+| The morning or afternoon mail is not marked as swept | after 9am / after 2:30pm |
+
+Each one carries a link that opens the block, or scrolls to the card it is
+about. When there is nothing to say it says so, with what was closed today —
+an empty list is a result, not a blank panel.
+
+## The block card asks three questions, once each
+
+The KPI picker used to lay the whole role list out as chips in three clouds, in
+every block: twenty-two chips per block on the Branch Manager's screen, five
+blocks to a page. *"It's scattered and messy."*
+
+A block card now reads top to bottom as **1 · What this block is for**, **2 ·
+What you will get done in it**, **3 · What happened in it**. Step one shows
+only what the block *is* for, one line each with the figures ranged right —
+`3 need you of 7 open · 3 late`, then the branch's number in grey. Everything
+it is not for sits behind one control, *Change what this block covers*, which
+opens the same rows grouped into *With Salesforce tasks* and *In words only*,
+two columns on a laptop. The schedule has usually set it right, and when it
+has, the step is one line instead of twenty-two chips.
+
 ## A line of the plan, made into a Salesforce task
 
 Asked for on 18 September 2026: *"if it is asking for any task that they are

@@ -1367,74 +1367,82 @@ function Signoff({ rv, side, onSave, busy }) {
           h("button", { type: "button", disabled: busy, onClick: () => onSave(c, true), style: primaryWide }, "Sign my half"))));
 }
 
+// WHAT A BLOCK IS FOR, IN ONE LINE EACH.
+//
+// This used to lay the whole role list out as chips, in three clouds, in every
+// block: the Branch Manager's screen carried twenty-two of them per block and
+// five blocks on a page. "It's scattered and messy" (18 September 2026), and it
+// was — a chip cloud wraps into a ragged shape with no column to read down.
+//
+// So: what the block IS for, as a line each with its figures ranged right,
+// which is the language the Salesforce column already speaks. Everything it is
+// NOT for sits behind one control, because the schedule has usually set it
+// right and the list is then noise. Open it and the same rows appear, in two
+// columns on a laptop, grouped by whether Salesforce holds tasks for them.
 function KpiPicker({ value, opts, onToggle, mine, branch }) {
   const on = kpiList(value);
-  const counts = k => {
-    const m = mine && mine[k.value], b = branch && branch[k.value];
-    const need = m ? (m.needs || 0) : 0;
-    return { m, b, need };
-  };
+  const vp = useViewport();
+  const picked = opts.filter(k => on.indexOf(k.value) > -1);
+  const [mode, setMode] = useState(null);      // null: follow what is picked
+  const open = mode === null ? !picked.length : mode;
 
-  // What the chip says is the number a person can act on, not the number
-  // that frightens them. Kamla holds seventy open tasks and nine that have
-  // not been touched in a week; "70 open" is true and useless, "9 need you"
-  // is true and is her morning.
-  const tail = (k, live) => {
-    const { m, b, need } = counts(k), out = [];
+  // The number a person can act on, not the number that frightens them.
+  // Kamla holds seventy open tasks and nine nobody has touched in a week;
+  // "70 open" is true and useless, "9 need you" is true and is her morning.
+  const figures = (k, big) => {
+    const m = mine && mine[k.value], b = branch && branch[k.value];
+    const need = m ? (m.needs || 0) : 0, out = [];
     if (m && (m.open || m.overdue)) {
-      const head = need ? need + " need you of " + (m.open || 0)
-                        : (m.open || 0) + " open, all in hand";
-      out.push(React.createElement("span", { key: "m", style: { fontWeight: 700, color: need ? AMBER : (live ? INK : MUTED) } },
-        " · " + head + (m.overdue ? ", " + m.overdue + " late" : "")));
+      if (need) {
+        out.push(React.createElement("b", { key: "n", style: { color: AMBER } }, need + " need you"));
+        out.push(React.createElement("span", { key: "o", style: { color: MUTED, fontWeight: 600 } }, " of " + (m.open || 0) + " open"));
+      } else {
+        out.push(React.createElement("b", { key: "o", style: { color: INK } }, (m.open || 0) + " open"));
+        out.push(React.createElement("span", { key: "h", style: { color: MUTED, fontWeight: 600 } }, ", all in hand"));
+      }
+      if (m.overdue) out.push(React.createElement("span", { key: "l", style: { color: AMBER } }, " \u00b7 " + m.overdue + " late"));
+    } else if (k.salesforce) {
+      out.push(React.createElement("span", { key: "z", style: { color: MUTED, fontWeight: 600 } }, "nothing open"));
+    } else {
+      out.push(React.createElement("span", { key: "w", style: { color: MUTED, fontWeight: 600 } }, "in words"));
     }
-    if (b && b.open) out.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  " + b.open + " in the branch"));
+    if (b && b.open) out.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } },
+      "  " + b.open + " in the branch"));
     return out;
   };
 
-  // Picked: a tile, not a chip. The label on one line and the numbers on the
-  // next, big enough to be the thing the eye lands on — this is what the block
-  // is for, and the first cut had it the same size as the seventeen it is not.
-  const tile = k => {
-    const { m, b, need } = counts(k);
-    const numbers = [];
-    if (m && (m.open || m.overdue)) {
-      numbers.push(need
-        ? React.createElement("span", { key: "n" }, React.createElement("b", { style: { color: AMBER } }, need + " need you"), " of " + (m.open || 0) + " open")
-        : React.createElement("span", { key: "n" }, React.createElement("b", null, (m.open || 0) + " open"), ", all in hand"));
-      if (m.overdue) numbers.push(React.createElement("span", { key: "l", style: { color: AMBER } }, ", " + m.overdue + " late"));
-    }
-    if (b && b.open) numbers.push(React.createElement("span", { key: "b", style: { color: MUTED, fontWeight: 500 } }, "  ·  " + b.open + " in the branch"));
-    return React.createElement("button", {
-      key: k.value, type: "button", onClick: () => onToggle(k.value),
-      style: { font: "inherit", cursor: "pointer", textAlign: "left", flex: "1 1 260px",
-               padding: "10px 13px", borderRadius: 12, border: "1.5px solid " + GOLD, background: "#FBF3DF", color: INK }
-    },
-      React.createElement("div", { style: { fontSize: 14, fontWeight: 800, lineHeight: 1.3 } }, "✓ " + k.label),
-      numbers.length ? React.createElement("div", { style: { fontSize: 13.5, marginTop: 3, lineHeight: 1.35, fontWeight: 600 } }, numbers) : null);
-  };
-  const chip = k => React.createElement("button", {
+  const row = (k, chosen) => React.createElement("button", {
     key: k.value, type: "button", onClick: () => onToggle(k.value),
-    style: { font: "inherit", fontSize: 12, fontWeight: 500, cursor: "pointer", padding: "5px 9px", borderRadius: 999,
-             textAlign: "left", border: "1px solid " + LINE, background: "#FFFFFF", color: MUTED }
-  }, k.label, tail(k, false));
+    style: { font: "inherit", cursor: "pointer", textAlign: "left", width: "100%",
+             display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 12,
+             padding: chosen ? "10px 13px" : "8px 11px", marginBottom: 6, borderRadius: 10,
+             border: (chosen ? "1.5px solid " + GOLD : "1px solid " + LINE),
+             background: chosen ? "#FBF3DF" : "#FFFFFF", color: chosen ? INK : MUTED }
+  },
+    React.createElement("span", { style: { fontSize: chosen ? 14 : 12.5, fontWeight: chosen ? 800 : 600,
+      minWidth: 0, lineHeight: 1.3 } }, (chosen ? "\u2713 " : "") + k.label),
+    React.createElement("span", { style: { flexShrink: 0, fontSize: chosen ? 13 : 11.5, fontWeight: 700,
+      textAlign: "right", lineHeight: 1.3 } }, figures(k, chosen)));
 
-  const group = (label, list, big) => !list.length ? null : React.createElement("div", { key: label },
-    React.createElement("div", {
-      style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: big ? GOLD : MUTED, margin: "2px 0 6px" }
-    }, label),
-    React.createElement("div", { style: { display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 10 } }, list.map(big ? tile : chip)));
+  const group = (label, list) => !list.length ? null : React.createElement("div", { key: label, style: { marginBottom: 4 } },
+    React.createElement("div", { style: { fontSize: 10, fontWeight: 800, letterSpacing: ".1em",
+      textTransform: "uppercase", color: MUTED, margin: "2px 0 6px" } }, label),
+    React.createElement("div", { style: vp.wide ? autoGrid(300, 6) : null }, list.map(k => row(k, false))));
 
-  // The two groups are not "types" and "other" — they are work Salesforce
-  // holds tasks for, and work it does not. Say that, and only promise numbers
-  // when there are numbers to show.
-  const picked = opts.filter(k => on.indexOf(k.value) > -1);
-  const numbered = opts.filter(k => k.salesforce && on.indexOf(k.value) < 0);
-  const words = opts.filter(k => !k.salesforce && on.indexOf(k.value) < 0);
-  const anyCount = numbered.some(k => (mine && mine[k.value]) || (branch && branch[k.value]));
-  return React.createElement("div", null,
-    group("This block is for", picked, true),
-    group(picked.length ? "Add another" : (anyCount ? "Your Salesforce tasks — open, and how many are late" : "Work Salesforce holds tasks for"), numbered),
-    group(picked.length ? "Or work with no Salesforce task — written in words" : "Work with no Salesforce task — write these in words", words));
+  const rest = opts.filter(k => on.indexOf(k.value) < 0);
+  return React.createElement("div", { "data-picker": "1" },
+    picked.length ? React.createElement("div", null, picked.map(k => row(k, true)))
+      : React.createElement("p", { style: { fontSize: 12.5, color: MUTED, margin: "0 0 8px", lineHeight: 1.45 } },
+          "Nothing picked yet. Choose what this block is for and its open work appears below."),
+    rest.length ? React.createElement("button", { type: "button", onClick: () => setMode(!open),
+      style: { background: "none", border: "none", padding: "2px 0 6px", font: "inherit", fontSize: 12,
+               fontWeight: 700, color: GOLD, cursor: "pointer" } },
+      open ? "Done choosing \u2303" : (picked.length ? "Change what this block covers \u2304" : "Choose what this block is for \u2304")) : null,
+    open ? React.createElement("div", {
+      style: { border: "1px solid " + LINE, borderRadius: 10, padding: "9px 11px 5px", background: "#FBF9F3", marginBottom: 4 }
+    },
+      group("With Salesforce tasks", rest.filter(k => k.salesforce)),
+      group("In words only \u2014 Salesforce holds nothing for these", rest.filter(k => !k.salesforce))) : null);
 }
 
 function KpiHint({ kpi, live }) {
@@ -2082,7 +2090,7 @@ const sameItems = (a, b) => JSON.stringify(a || []) === JSON.stringify(b || []);
 const sameItem = (x, it) => x.k === it.k && (it.k === "sf" ? x.id === it.id
   : String(x.label || "").toLowerCase() === String(it.label || "").toLowerCase());
 
-function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSaved, mine }) {
+function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSaved, mine, step }) {
   const closed = !!(plan && plan.closedAt);
   const saved = plan ? plan.items : [];
   const [items, setItems] = useState(saved);
@@ -2160,7 +2168,7 @@ function PlanPanel({ b, plan, span, book, picked, opts, api, active, date, onSav
 
   return React.createElement("div", { "data-plan": b.col, style: { marginTop: 12, border: "1px solid " + LINE, borderRadius: 10, padding: "10px 12px", background: "#FBF9F3" } },
     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 8, flexWrap: "wrap" } },
-      React.createElement("div", { style: head }, "What you will get done in it"),
+      React.createElement("div", { style: head }, (step ? step + " \u00b7 " : "") + "What you will get done in it"),
       React.createElement("div", { style: { fontSize: 11.5, color: MUTED, fontWeight: 700 } },
         items.length ? items.length + " on the plan" : "nothing on the plan yet",
         span ? " · closes itself at " + span.endText : "")),
@@ -2347,6 +2355,29 @@ function App() {
     setPlanOpen((cur || BLOCK_ORDER[0]).id);
     if (P && P.spans) planTouched.current = key;
   }, [view, plans, active, date]);
+
+  // Advice has to land somewhere, on whichever screen asked for it. A block
+  // opens and scrolls to itself; the Salesforce cards and the mail sweep
+  // scroll into view.
+  const lateOf = sid => (needsReason && needsReason[sid]) || [];
+  const goTo = sel => {
+    const el = typeof document !== "undefined" ? document.querySelector(sel) : null;
+    if (el && el.scrollIntoView) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+  const onAdvice = go => {
+    const g = String(go || "");
+    if (g.indexOf("block:") === 0) {
+      const id = g.slice(6);
+      const b = BLOCK_ORDER.filter(x => x.id === id)[0];
+      if (view === "plan") { planTouched.current = active + "|" + date; setPlanOpen(id); }
+      else { setOpenBlock(id); autoOpened.current = active + "|" + date; }
+      if (b) setTimeout(() => goTo('[data-block="' + b.col + '"]'), 60);
+      return;
+    }
+    if (g === "overdue") return goTo("#overdue");
+    if (g === "position") return goTo("#position");
+    if (g === "mail") return goTo("#mail");
+  };
 
   const planSaved = (sid, d) => pl => setPlans(prev => {
     const k = planKey(sid, d), cur = prev[k] || { plans: {}, spans: {} };
@@ -3071,6 +3102,7 @@ function App() {
     const rateAll = (metrics && metrics.ok && metrics.staff && metrics.staff[active] &&
                      metrics.staff[active].rateAll) || null;
 
+
     // What the person has picked across the whole day, so the same task type
     // in two blocks is counted once.
     const chosen = {};
@@ -3105,6 +3137,12 @@ function App() {
       }, "Set the day before it starts. Tick what each block is for and the",
          " tracker shows how much of it there actually is \u2014 so two hours",
          " does not go into three tasks."),
+
+      /*#__PURE__*/React.createElement(WhatNow, {
+        m: metrics && metrics.ok && metrics.staff ? metrics.staff[active] : null,
+        late: lateOf(active), P: P, entry: entry, blocks: BLOCKS, mail: mailToday[active],
+        date: date, wide: vp.desktop, onGo: onAdvice
+      }),
 
       // What the picked types add up to. Absent when Salesforce is silent,
       // rather than a zero that reads like an empty book.
@@ -3151,6 +3189,9 @@ function App() {
           sc.focus ? /*#__PURE__*/React.createElement("p", {
             "data-head": "1", style: { fontSize: 12, color: MUTED, margin: "0 0 9px" }
           }, sc.focus) : null,
+          /*#__PURE__*/React.createElement("div", {
+            style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD, margin: "2px 0 6px" }
+          }, "1 \u00b7 What this block is for"),
           /*#__PURE__*/React.createElement(KpiPicker, {
             value: bl.kpi, opts: opts, mine: byType, branch: branchType,
             onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
@@ -3179,7 +3220,7 @@ function App() {
           }) : null,
           /*#__PURE__*/React.createElement(PlanPanel, {
             b: b, plan: P.plans[b.col], span: P.spans[b.col], book: book, picked: picked,
-            opts: opts, api: api, active: active, date: date, mine: mine,
+            opts: opts, api: api, active: active, date: date, mine: mine, step: "2",
             onSaved: planSaved(active, date)
           }));
       }),
@@ -3307,16 +3348,21 @@ function App() {
         margin: "14px 0 2px",
         lineHeight: 1.5
       }
-    }, "Each block closes itself at its end time, from Salesforce — tick what you are on before then, or say why after. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement("div", {
+    }, "Each block closes itself at its end time, from Salesforce — tick what you are on before then, or say why after. Your KPI is already set from the schedule; change it if the block went elsewhere."), /*#__PURE__*/React.createElement(WhatNow, {
+      m: metrics && metrics.ok && metrics.staff ? metrics.staff[active] : null,
+      late: lateOf(active), P: P, entry: entry, blocks: blocks, mail: mailToday[active],
+      date: date, wide: vp.desktop, onGo: onAdvice
+    }), /*#__PURE__*/React.createElement("div", {
       style: vp.desktop ? {
         display: "grid",
         gridTemplateColumns: "minmax(0,1.35fr) minmax(0,1fr)",
         gap: 20,
         alignItems: "start"
       } : null
-    }, /*#__PURE__*/React.createElement("div", null, active === me.staffId ? /*#__PURE__*/React.createElement(MailSweep, {
-      when: "am", mail: mailToday[active], onSave: ranks => saveMail(active, "am", ranks)
-    }) : null, active === me.staffId && (new Date().getHours() >= 12 || (mailToday[active] && mailToday[active].am)) ? /*#__PURE__*/React.createElement(MailSweep, {
+    }, /*#__PURE__*/React.createElement("div", null, active === me.staffId ? /*#__PURE__*/React.createElement("div", { id: "mail" },
+      /*#__PURE__*/React.createElement(MailSweep, {
+        when: "am", mail: mailToday[active], onSave: ranks => saveMail(active, "am", ranks)
+      })) : null, active === me.staffId && (new Date().getHours() >= 12 || (mailToday[active] && mailToday[active].am)) ? /*#__PURE__*/React.createElement(MailSweep, {
       when: "pm", mail: mailToday[active], onSave: ranks => saveMail(active, "pm", ranks)
     }) : null, blocks.map(b => {
       const bl = entry.blocks[b.id] || blankBlock();
@@ -3328,7 +3374,7 @@ function App() {
       };
       const open = openBlock === b.id;
       return /*#__PURE__*/React.createElement("div", {
-        key: b.id,
+        key: b.id, "data-block": b.col,
         style: {
           ...card,
           padding: 0,
@@ -3402,7 +3448,7 @@ function App() {
       // done in it, what happened. The plan used to sit above the picker it
       // reads from, and the writing guide above the boxes it is a guide to.
       /*#__PURE__*/React.createElement(Field, {
-        label: "The KPIs this block covers"
+        label: "1 \u00b7 What this block is for"
       }, /*#__PURE__*/React.createElement(KpiPicker, {
         value: bl.kpi,
         opts: opts,
@@ -3411,7 +3457,7 @@ function App() {
         onToggle: k => patchBlock(b.id, "kpi", kpiToggle(bl.kpi, k))
       })), /*#__PURE__*/React.createElement(PlanPanel, {
         b: b, plan: P.plans[b.col], span: P.spans[b.col], book: bookOf, picked: kpiList(bl.kpi),
-        opts: opts, api: api, active: active, date: date, mine: mine,
+        opts: opts, api: api, active: active, date: date, mine: mine, step: "2",
         onSaved: planSaved(active, date)
       }), P.plans[b.col] && P.plans[b.col].closedAt && !unfold[b.id] ? /*#__PURE__*/React.createElement("button", {
         "data-unfold": "1", type: "button",
@@ -3425,7 +3471,7 @@ function App() {
         style: { marginTop: 14, borderTop: "1px solid " + LINE, paddingTop: 12 }
       }, /*#__PURE__*/React.createElement("div", {
         style: { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: MUTED, marginBottom: 8 }
-      }, "What happened in it")), /*#__PURE__*/React.createElement(Field, {
+      }, "3 \u00b7 What happened in it")), /*#__PURE__*/React.createElement(Field, {
         label: "Actioned"
       }, /*#__PURE__*/React.createElement("textarea", {
         rows: 2,
@@ -5262,6 +5308,111 @@ function ReviewCard({
 // The task position, read from Salesforce rather than typed. Where Salesforce
 // cannot be reached the boxes come back, because a tracker that stops working
 // when a connection drops is worse than one that asks.
+// WHAT TO DO NEXT — the tracker advising, not only reporting.
+//
+// "They need to be told what to do ... intelligence needs to advise what must
+// be done given the insights and the importance." (18 September 2026.) Every
+// figure on these screens was already true and already on the page; what was
+// missing was the sentence that turns a number into a decision, and the order
+// to take them in.
+//
+// Every line below is derived from this person's own live figures. Nothing is
+// invented, nothing is generic advice, and each one says where its number came
+// from and what it costs to leave it. Three at a time: a list of eleven things
+// to do is the same as no list.
+function WhatNow({ m, late, P, entry, blocks, mail, date, onGo, wide }) {
+  const now = new Date();
+  const mins = now.getHours() * 60 + now.getMinutes();
+  const today = date === todayISO();
+  const list = [];
+  const add = (w, tone, act, why, go, goLabel) => list.push({ w, tone, act, why, go, goLabel });
+  const nLate = (late || []).length;
+  const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
+
+  if (today && P && P.spans) {
+    // The block on the clock. It closes itself, so an empty plan now is a
+    // close-out written by nobody in twenty minutes' time.
+    const cur = (blocks || []).filter(b => P.spans[b.col] &&
+      P.spans[b.col].start <= mins && mins < P.spans[b.col].end)[0];
+    if (cur && !(P.plans[cur.col] && P.plans[cur.col].items.length)) {
+      add(96, AMBER, cur.label + " is running now with nothing on its plan.",
+        "It closes itself at " + P.spans[cur.col].endText + " and reads Salesforce for what moved. Tick what you are on and the close-out writes itself.",
+        "block:" + cur.id, "Plan it");
+    }
+    // A block the closer marked short. Until somebody says why, the record
+    // says it did not land.
+    (blocks || []).forEach(b => {
+      const pl = P.plans[b.col];
+      if (!pl || !pl.closedAt) return;
+      const owed = (pl.items || []).filter(x => x.state && x.state !== "done" && !x.reason).length;
+      if (owed) add(92, RED, plural(owed, "thing", "things") + " in " + b.label + " closed without a reason.",
+        "The block is on the record at " + (pl.pct == null ? "part done" : pl.pct + "%") + " until each one has a line against it. One sentence is enough.",
+        "block:" + b.id, "Answer it");
+    });
+  }
+  if (nLate) {
+    const oldest = (late || []).reduce((a, t) => Math.max(a, t.age || 0), 0);
+    add(88, RED, "Put a line on " + plural(nLate, "overdue task", "overdue tasks") + " nobody has explained.",
+      "The due date has passed and the Task Update Reason is empty, so every report reads them as tasks nobody has looked at" +
+      (oldest ? "; the oldest is " + oldest + " days old" : "") + ".",
+      "overdue", "Show me");
+  }
+  if (m && m.aged60) {
+    add(84, RED, "Escalate or close " + plural(m.aged60, "task", "tasks") + " past sixty days.",
+      "Nothing that has waited two months is going to close itself. Name who owns the next step, or close it.",
+      "overdue", "Show me");
+  }
+  if (m && m.needs) {
+    add(76, AMBER, plural(m.needs, "task has", "tasks have") + " not moved in a week.",
+      "Not late yet, and that is the point: a week of silence is how a task becomes a complaint.",
+      "position", "Where they sit");
+  }
+  if (m && m.noDate) {
+    add(68, AMBER, "Date or close " + plural(m.noDate, "task", "tasks") + " carrying no due date.",
+      "A task with no due date can never be overdue, so no report will ever name it. It is invisible work.",
+      "position", "Where they sit");
+  }
+  if (today && mins >= 540 && !(mail && mail.am)) {
+    add(80, AMBER, "The morning mail is not marked as swept.",
+      "The order of service is the Branch Manager first, then the Assistant, the Unit Managers, the Executive Agents, the Agents. Mark each rank as you clear it.",
+      "mail", "Mark it");
+  }
+  if (today && mins >= 870 && (mail && mail.am) && !(mail && mail.pm)) {
+    add(70, AMBER, "The afternoon mail is not marked as swept.",
+      "Same order as the morning. It takes a moment and it is what the checkpoint reads.",
+      "mail", "Mark it");
+  }
+  if (today && mins >= 900 && entry && blocks && !blocks.some(b => blockWorked(entry, b.id))) {
+    add(94, RED, "Nothing is logged today and the checkpoint has passed.",
+      "Three o'clock is the checkpoint: whatever is not filed by then is what the Branch Manager sees missing.",
+      "block:" + (blocks[0] && blocks[0].id), "Start one");
+  }
+
+  const show = list.sort((a, b) => b.w - a.w).slice(0, 3);
+  const eyebrow = { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD };
+  return React.createElement("div", { id: "whatnow", "data-whatnow": String(show.length),
+    style: { ...card, borderLeft: "4px solid " + GOLD, background: "#FFFDF6", marginBottom: 14 } },
+    React.createElement("div", { style: { ...cardHead, marginBottom: 8 } },
+      React.createElement("span", { style: eyebrow }, "What to do next"),
+      React.createElement("span", { style: { fontSize: 10.5, color: MUTED, fontWeight: 700 } },
+        show.length ? "in this order" : "from your own figures")),
+    !show.length ? React.createElement("p", { style: { fontSize: 13, color: GREEN, fontWeight: 700, margin: 0, lineHeight: 1.5 } },
+      "Nothing is waiting on you." + (m && m.closed ? " " + m.closed + " closed today." : "") +
+      " Plan the next block and the day files itself.")
+    : React.createElement("div", { style: wide ? autoGrid(300, 10) : null },
+      show.map((it, i) => React.createElement("div", { key: i,
+        style: { display: "flex", gap: 10, alignItems: "flex-start", padding: "7px 0",
+                 borderTop: i && !wide ? "1px solid " + LINE : "none" } },
+        React.createElement("span", { style: { flexShrink: 0, width: 20, height: 20, borderRadius: 10,
+          background: it.tone, color: "#fff", fontSize: 11.5, fontWeight: 800, textAlign: "center", lineHeight: "20px" } }, i + 1),
+        React.createElement("div", { style: { minWidth: 0 } },
+          React.createElement("div", { style: { fontSize: 13, fontWeight: 800, color: INK, lineHeight: 1.35 } }, it.act),
+          React.createElement("div", { style: { fontSize: 11.5, color: MUTED, lineHeight: 1.45, marginTop: 2 } }, it.why),
+          onGo ? React.createElement("button", { type: "button", onClick: () => onGo(it.go),
+            style: { background: "none", border: "none", padding: "5px 0 0", font: "inherit", fontSize: 11.5,
+                     fontWeight: 800, color: GOLD, cursor: "pointer" } }, it.goLabel + " \u2192") : null)))));
+}
+
 function TaskPosition({ live, staffId, entry, patchMetric }) {
   const m = live && live.ok && live.staff ? live.staff[staffId] : null;
   if (m) {
@@ -5274,7 +5425,7 @@ function TaskPosition({ live, staffId, entry, patchMetric }) {
       .filter(t => (t.open || 0) + (t.overdue || 0) > 0)
       .sort((a, b) => (b.needs || 0) - (a.needs || 0) || (b.overdue || 0) - (a.overdue || 0) || (b.open || 0) - (a.open || 0));
     const SHOW = 7;
-    return React.createElement("div", { style: card },
+    return React.createElement("div", { id: "position", style: card },
       React.createElement("div", { style: cardHead },
         React.createElement("span", { style: cardTitle }, "Task position"),
         React.createElement("span", { style: { fontSize: 10.5, color: GREEN, fontWeight: 700 } }, "live from Salesforce")),
@@ -5436,7 +5587,7 @@ function NeedsReason({ items, api, token, onSaved }) {
     g.list.push(t);
   });
   const total = k => items.filter(t => keyOf(t) === k).length;
-  return React.createElement("div", { style: Object.assign({}, card, { borderLeft: "4px solid " + RED }) },
+  return React.createElement("div", { id: "overdue", style: Object.assign({}, card, { borderLeft: "4px solid " + RED }) },
     React.createElement("div", { style: cardHead },
       React.createElement("span", { style: cardTitle }, "Overdue with no reason given"),
       React.createElement("span", { style: { fontSize: 10.5, color: RED, fontWeight: 700 } }, items.length)),

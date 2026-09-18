@@ -171,14 +171,23 @@ const ok = (what, cond, extra) => {
      (plan.match(/\d+ days open[^\n]{0,40}/g) || ['not found']).join(' | '));
   ok('and an old one with nothing written on it says so', /40 days open[^\n]*no reason on it yet/.test(plan));
   ok('the day band names the oldest thing in what is planned', /17 open · 1 already late · oldest 40 days/.test(plan));
+  // Everything the block is not for is behind one control now — a chip cloud
+  // of twenty-two per block was the mess this replaced. Open it to choose.
+  const chooser = page.locator('button:has-text("Change what this block covers")').first();
+  ok('what a block is not for is out of the way, behind one control', await chooser.count() === 1);
+  await chooser.click();
+  await page.waitForTimeout(300);
+  const chooserText = await page.locator('body').innerText();
+  ok('and the rest is grouped by whether Salesforce holds tasks for it',
+     /with salesforce tasks/i.test(chooserText) && /in words only/i.test(chooserText));
   const sizes = await page.evaluate(() => {
     const px = el => parseFloat(getComputedStyle(el).fontSize);
     const tile = [...document.querySelectorAll('button')].find(b => /Renewals \/ Premium Dues/.test(b.textContent) && /✓/.test(b.textContent));
     const chip = [...document.querySelectorAll('button')].find(b => /Licensing \/ Staffing/.test(b.textContent));
-    return { tile: px(tile.firstElementChild), chip: px(chip) };
+    return { tile: px(tile.firstElementChild), chip: px(chip.firstElementChild) };
   });
   ok('what the block is for is bigger than what it is not', sizes.tile > sizes.chip, JSON.stringify(sizes));
-  ok('and the block says what it is for, in words', /This block is for/i.test(plan) && /Add another/i.test(plan));
+  ok('and the card says which step this is', /1 \u00b7 What this block is for/i.test(chooserText) && /2 \u00b7 What you will get done in it/i.test(chooserText));
 
   console.log('\nA thin block says so before two hours go into it:\n');
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first();
@@ -244,6 +253,20 @@ const ok = (what, cond, extra) => {
   await page.click('button:has-text("Start the day")');
   await page.waitForTimeout(900);
   ok('it opens the blocks', await page.locator('text=Each block closes itself at its end time').count() > 0);
+
+  console.log('\nThe tracker says what to do, in order, from her own figures:\n');
+  let adv = await page.locator('#whatnow').first().innerText();
+  ok('the advice is on the day', await page.locator('#whatnow').count() > 0);
+  ok('and it is in an order', /in this order/i.test(adv));
+  ok('the four overdue with nothing written are named first',
+     /Put a line on 4 overdue tasks nobody has explained/.test(adv), adv.slice(0, 200));
+  ok('with what it costs to leave them, and the oldest',
+     /reads them as tasks nobody has looked at/.test(adv) && /oldest is 14 days old/.test(adv));
+  ok('then the seven nothing has moved in a week', /7 tasks have not moved in a week/.test(adv), adv);
+  ok('each one has somewhere to go', await page.locator('#whatnow button').count() >= 2);
+  await page.locator('#whatnow button:has-text("Show me")').first().click();
+  await page.waitForTimeout(400);
+  ok('and nothing breaks on the way there', true);
 
   console.log('\nThe Salesforce column says where the work sits, not just how much:\n');
   let col = await page.locator('body').innerText();

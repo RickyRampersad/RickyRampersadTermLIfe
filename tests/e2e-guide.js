@@ -92,7 +92,16 @@ const ok = (what, cond, extra) => {
   ok('no example is shown yet', await page.locator('text=A good entry reads like').count() === 0);
 
   console.log('\nRenewals / Premium Dues / Billing:\n');
-  const pick = t => page.locator('button:has-text("' + t + '")').first().click();
+  // What a block is not for sits behind one control, so reading or picking one
+  // means opening it first. Already open, the selector finds nothing to click.
+  const openChooser = async () => {
+    const c = page.locator('button:has-text("Choose what this block is for"), button:has-text("Change what this block covers")').first();
+    if (await c.count()) { await c.click(); await page.waitForTimeout(250); }
+  };
+  const pick = async t => {
+    await openChooser();
+    await page.locator('button:has-text("' + t + '")').first().click();
+  };
   await pick('Renewals / Premium Dues / Billing');
   await page.waitForTimeout(400);
   ok('the worked example appears', await page.locator('text=A good entry reads like').count() > 0);
@@ -119,6 +128,7 @@ const ok = (what, cond, extra) => {
 
   // The whole point: a block set aside for licensing with a handful of tasks
   // in it should say so before two hours go into it.
+  await openChooser();
   const lic = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
   ok('a thin type reads thin before the block starts', /17 in the branch/.test(lic), lic);
   ok('and shows nothing of their own when they hold none',
