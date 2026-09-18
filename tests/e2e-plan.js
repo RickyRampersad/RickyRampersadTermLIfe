@@ -294,7 +294,7 @@ const ok = (what, cond, extra) => {
   ok('the row keeps its Close as well', await page.locator('button:has-text("Close \u2713")').count() >= 4);
 
   // Blocks are an accordion on the day screen, so open one before looking.
-  await page.locator('text=KPI 1').first().click();
+  await page.locator('[data-block="KPI1"] button').first().click();
   await page.waitForTimeout(500);
   const carried = await page.locator('button:has-text("Licensing / Staffing")').first().textContent();
   ok('the morning plan is carried into the block', /\u2713/.test(carried), carried);

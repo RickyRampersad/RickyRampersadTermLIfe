@@ -76,7 +76,7 @@ const ok=(l,c,x='')=>{console.log((c?'  PASS  ':'  FAIL  ')+l+(x?'  '+x:''));if(
 
   console.log('\nA real entry is never questioned at all:\n');
   sent = 0;
-  await page.locator('text=KPI 1').first().click();
+  await page.locator('[data-block="KPI1"] button').first().click();
   await page.waitForTimeout(400);
   t = await page.locator('textarea:visible').all();
   await t[0].fill('Premium dues, 14 processed and 2 returned to the advisor');

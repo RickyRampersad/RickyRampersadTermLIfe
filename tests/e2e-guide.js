@@ -85,7 +85,7 @@ const ok = (what, cond, extra) => {
   await page.click('button:has-text("Sign in")');
   await page.waitForTimeout(2200);
 
-  await page.locator('text=KPI 1').first().click();
+  await page.locator('[data-block="KPI1"] button').first().click();
   await page.waitForTimeout(500);
 
   console.log('\nBefore a KPI is picked:\n');

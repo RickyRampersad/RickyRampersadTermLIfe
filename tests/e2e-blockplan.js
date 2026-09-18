@@ -171,7 +171,7 @@ const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') +
   const day = await page.locator('body').innerText();
   ok('KPI 1 says two are planned', /2 planned/.test(day));
   ok('KPI 2 says it closed, with the score', /Closed 12:05 · 50%/.test(day));
-  await page.locator('button:has-text("KPI 2")').first().click();
+  await page.locator('[data-block="KPI2"] button').first().click();
   await page.waitForTimeout(400);
   const out = page.locator('[data-outcome="KPI2"]');
   ok('the outcome is on the block', await out.count() === 1);
