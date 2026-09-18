@@ -169,13 +169,13 @@
       <p>Then the same for the second file: click <b>Intelligence.gs</b> in the
          list, select all, delete, paste the wall's data script, save.</p>
       <p class="seen">You should see: the last line number about
-         <b>6,729</b> in Code.gs and about <b>12,696</b> in Intelligence.gs.
+         <b>6,918</b> in Code.gs and about <b>12,696</b> in Intelligence.gs.
          If either is roughly double that, the old code is still in there &mdash;
          select all, delete, paste again.</p>
       <!-- THESE TWO NUMBERS GO STALE EVERY TIME EITHER FILE GROWS, and a
            wrong one here reads as "your paste failed" to somebody who pasted
            perfectly. Re-read them with wc -l when you change this page.
-           17 September 2026: 4,873 / 7,864 -> 6,729 / 12,696. -->
+           17 September 2026: 4,873 / 7,864 -> 6,918 / 12,696. -->
     </div></div>
 
     <div class="step"><div class="num">4</div><div>
@@ -261,7 +261,7 @@ const EXEC="https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAW
 
 // Bumped in the same commit as apps-script/KPI.gs. The check is simply:
 // does the workbook say it is running this, or something older?
-const WANT="2026-09-18c";
+const WANT="2026-09-18d";
 // The wall's data script has its own build, answered by intel.ping. The tracker
 // can be current while this one is a night behind — which is exactly how the
 // wall stayed empty on 8 September with every other light green.

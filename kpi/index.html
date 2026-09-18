@@ -2422,6 +2422,7 @@ function App() {
   const [openBlock, setOpenBlock] = useState(null);
   const [unfold, setUnfold] = useState({});          // closed blocks whose form the person asked for
   const [offRoster, setOffRoster] = useState([]);    // Branch Manager only: who the Access tab hides
+  const [load, setLoad] = useState(null);            // the load review, when he asks for it
   const [planOpen, setPlanOpen] = useState(null);    // the one block open on the plan
   const autoOpened = React.useRef("");
   const planTouched = React.useRef("");
@@ -2976,7 +2977,10 @@ function App() {
   }, "Full day review \u2192"), /*#__PURE__*/React.createElement("button", {
     onClick: () => setView("register"),
     style: primaryWide
-  }, "Attendance register \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
+  }, "Attendance register \u2192"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => { setLoad(null); setView("load"); api("load", {}).then(r => setLoad(r || { ok: false, error: "No answer." })); },
+    style: primaryWide
+  }, "Load review \u2014 who is carrying what \u2192"), /*#__PURE__*/React.createElement(SectionLabel, null, "The team")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
     style: {
       color: MUTED,
       fontSize: 13.5,
@@ -3068,6 +3072,13 @@ function App() {
   }
 
   // ---- the attendance register ----------------------------------------------
+  if (view === "load") {
+    if (!me.manager) return /*#__PURE__*/React.createElement(Denied, { onBack: () => setView("home") });
+    return /*#__PURE__*/React.createElement(LoadReview, {
+      data: load, api: api, roster: roster, vp: vp, onBack: () => setView("home")
+    });
+  }
+
   if (view === "register") {
     return /*#__PURE__*/React.createElement(RegisterView, {
       me: me, roster: roster, reg: register, weekOf: weekOf, setWeekOf: setWeekOf, vp: vp,
@@ -5411,6 +5422,114 @@ function WhatNow({ m, late, P, entry, blocks, mail, date, onGo, wide }) {
           onGo ? React.createElement("button", { type: "button", onClick: () => onGo(it.go),
             style: { background: "none", border: "none", padding: "5px 0 0", font: "inherit", fontSize: 11.5,
                      fontWeight: 800, color: GOLD, cursor: "pointer" } }, it.goLabel + " \u2192") : null)))));
+}
+
+// THE LOAD REVIEW — who is carrying what, and what has stopped moving.
+//
+// "Intelligence should review all tasks and assign based on workload, review
+// the load and reassign if it is not moving, and paste chatter." (18 September
+// 2026.) The load is measured in each person's own currency: open tasks
+// divided by what they actually close. A proposal names the task, the two
+// desks and the numbers behind the suggestion; nothing moves until the Branch
+// Manager presses the button, and the new owner is told on the task itself.
+function LoadReview({ data, api, roster, onBack, vp }) {
+  const [gone, setGone] = useState({});
+  const [note, setNote] = useState({});
+  const [busy, setBusy] = useState("");
+  const [said, setSaid] = useState({});
+  const people = (data && data.people) || [];
+  const moves = ((data && data.moves) || []).filter(m => !gone[m.id]);
+  const stalled = ((data && data.stalled) || []).filter(t => !gone[t.id]);
+  const worst = people.reduce((a, p) => Math.max(a, p.days == null ? 0 : p.days), 0) || 1;
+  const nameOf = sid => (roster.filter(r => r.staffId === sid)[0] || {}).name || sid;
+
+  const move = async m => {
+    const text = (note[m.id] != null ? note[m.id] : m.why);
+    setBusy(m.id);
+    const r = await api("reassign", { taskId: m.id, to: m.to, note: text });
+    setBusy("");
+    if (r && r.ok) {
+      setGone(g => ({ ...g, [m.id]: true }));
+      setSaid(x => ({ ...x, [m.id]: "Moved to " + (r.toName || m.toName) + (r.posted ? ", and told on the task." : ". " + (r.note || "")) }));
+    } else setSaid(x => ({ ...x, [m.id]: (r && r.error) || "Did not move." }));
+  };
+
+  const eyebrow = { fontSize: 11, fontWeight: 800, letterSpacing: ".1em", textTransform: "uppercase", color: GOLD };
+  return React.createElement(Shell, { wide: vp.desktop ? 1160 : vp.tablet ? 820 : 560 },
+    React.createElement(SubHeader, { title: "Load review", sub: data && data.asOf ? "As Salesforce stands, " + prettyDate(data.asOf) : "", onBack }),
+    React.createElement("div", { style: { padding: "0 18px 40px" } },
+      !data ? React.createElement(Empty, { text: "Reading every open task in the branch\u2026" })
+      : !data.ok ? React.createElement(Empty, { text: data.error || "Salesforce did not answer." })
+      : React.createElement(React.Fragment, null,
+
+        React.createElement("p", { style: { fontSize: 13, color: MUTED, lineHeight: 1.55, margin: "14px 0 14px" } },
+          "Days in hand is what each desk is holding, in its own currency: open tasks divided by what that person actually closes. ",
+          React.createElement("b", { style: { color: INK } }, "Somebody who has closed nothing in " + (data.window || 60) + " days gets no estimate"),
+          " rather than a made-up one."),
+
+        React.createElement("div", { style: { ...card } },
+          React.createElement("div", { style: cardHead },
+            React.createElement("span", { style: cardTitle }, "What each desk is holding"),
+            React.createElement("span", { style: { fontSize: 10.5, color: GREEN, fontWeight: 700 } }, "live from Salesforce")),
+          people.map(p => React.createElement("div", { key: p.staffId, "data-desk": p.staffId,
+            style: { padding: "8px 0", borderTop: "1px solid " + LINE } },
+            React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "baseline", gap: 10 } },
+              React.createElement("span", { style: { fontSize: 13.5, fontWeight: 800, color: INK } }, p.name),
+              React.createElement("span", { style: { fontSize: 12.5, fontWeight: 700, color: MUTED, textAlign: "right" } },
+                React.createElement("b", { style: { color: INK } }, p.open + " open"),
+                p.overdue ? React.createElement("span", { style: { color: AMBER } }, " \u00b7 " + p.overdue + " late") : null,
+                p.quiet ? React.createElement("span", { style: { color: RED } }, " \u00b7 " + p.quiet + " not moving") : null)),
+            React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 9, marginTop: 4 } },
+              React.createElement("div", { style: { flex: 1, height: 7, borderRadius: 4, background: "#EFEADC", overflow: "hidden" } },
+                React.createElement("div", { style: { width: Math.round(100 * (p.days == null ? 0 : p.days) / worst) + "%",
+                  height: "100%", background: p.days != null && p.days >= worst * 0.8 ? RED : p.days != null && p.days >= worst * 0.5 ? AMBER : GREEN } })),
+              React.createElement("span", { style: { flexShrink: 0, fontSize: 11.5, fontWeight: 700, color: MUTED } },
+                p.days == null ? "no rate yet" : p.days + " days in hand \u00b7 " + p.perDay + " a day")))) ),
+
+        React.createElement("div", { style: { ...card, borderLeft: "4px solid " + GOLD, background: "#FFFDF6" } },
+          React.createElement("div", { style: cardHead },
+            React.createElement("span", { style: eyebrow }, "Suggested moves"),
+            React.createElement("span", { style: { fontSize: 10.5, color: MUTED, fontWeight: 700 } }, moves.length || "none")),
+          !moves.length ? React.createElement("p", { style: { fontSize: 12.5, color: MUTED, margin: 0, lineHeight: 1.5 } },
+            Object.keys(said).length
+              ? "That is every move it had to suggest."
+              : "Nothing to move. Either no desk is carrying much more than the rest, or what has stopped moving belongs to somebody who is not overloaded \u2014 in which case it is a conversation, not a reassignment.")
+          : moves.map(m => React.createElement("div", { key: m.id, "data-move": m.id,
+              style: { padding: "10px 0", borderTop: "1px solid " + LINE } },
+              React.createElement("div", { style: { fontSize: 13, fontWeight: 700, color: INK, lineHeight: 1.4 } }, m.subject),
+              React.createElement("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 2 } },
+                (m.type ? typeLabel(m.type) + " \u00b7 " : "") + "quiet " + m.quiet + " days \u00b7 ",
+                React.createElement("b", { style: { color: INK } }, m.fromName), " \u2192 ",
+                React.createElement("b", { style: { color: GREEN } }, m.toName)),
+              React.createElement("div", { style: { fontSize: 12, color: INK, lineHeight: 1.45, marginTop: 5 } }, m.why),
+              React.createElement("textarea", { rows: 2, value: note[m.id] != null ? note[m.id] : m.why,
+                onChange: e => setNote(x => ({ ...x, [m.id]: e.target.value })),
+                style: { ...ta, fontSize: 12.5, marginTop: 6 } }),
+              React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, marginTop: 6 } },
+                React.createElement("div", { style: { flex: 1, fontSize: 11.5, fontWeight: 700, color: MUTED } },
+                  said[m.id] || "The new owner is told on the task, with this line."),
+                React.createElement("button", { type: "button", onClick: () => move(m), disabled: busy === m.id,
+                  style: { ...submitBtn, padding: "9px 15px", opacity: busy === m.id ? .6 : 1 } },
+                  busy === m.id ? "Moving\u2026" : "Move it to " + m.toName)))),
+          Object.keys(said).filter(k => gone[k]).map(k => React.createElement("div", { key: "d" + k,
+            style: { fontSize: 12, fontWeight: 700, color: GREEN, paddingTop: 8 } }, said[k]))),
+
+        React.createElement("div", { style: { ...card, borderLeft: "4px solid " + RED } },
+          React.createElement("div", { style: cardHead },
+            React.createElement("span", { style: cardTitle }, "Not moving"),
+            React.createElement("span", { style: { fontSize: 10.5, color: RED, fontWeight: 700 } }, stalled.length)),
+          React.createElement("p", { style: { fontSize: 11.5, color: MUTED, margin: "0 0 8px", lineHeight: 1.45 } },
+            "Open, and nothing has happened to them in " + (data.quietAfter || 14) + " days or more. Oldest silence first."),
+          stalled.slice(0, 15).map(t => React.createElement("div", { key: t.id,
+            style: { display: "flex", justifyContent: "space-between", gap: 10, padding: "7px 0", borderTop: "1px solid " + LINE } },
+            React.createElement("div", { style: { minWidth: 0 } },
+              React.createElement("div", { style: { fontSize: 12.5, color: INK, lineHeight: 1.4 } }, t.subject),
+              React.createElement("div", { style: { fontSize: 11, color: MUTED, marginTop: 1 } },
+                t.ownerName + (t.type ? " \u00b7 " + typeLabel(t.type) : "") + (t.due ? " \u00b7 due " + shortDate(t.due) : " \u00b7 no due date"))),
+            React.createElement("span", { style: { flexShrink: 0, fontSize: 11.5, fontWeight: 800,
+              color: t.quiet >= 60 ? RED : AMBER } }, t.quiet + "d quiet"))),
+          stalled.length > 15 ? React.createElement("div", { style: { fontSize: 11.5, color: MUTED, marginTop: 8 } },
+            "and " + (stalled.length - 15) + " more.") : null))));
 }
 
 function TaskPosition({ live, staffId, entry, patchMetric }) {

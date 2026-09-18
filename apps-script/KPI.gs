@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-18c';
+var SCRIPT_VERSION = '2026-09-18d';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2212,6 +2212,8 @@ function handle_(action, data, token) {
     case 'savePlan':    return savePlan_(data, profile);
     case 'blockReason': return blockReason_(data, profile);
     case 'createTask': return createTask_(data, profile);
+    case 'load': return loadReviewSafe_(profile);
+    case 'reassign': return reassignTask_(data, profile);
 
     case 'standing':
       return standing_(profile, data.staffId);
@@ -5757,6 +5759,193 @@ function createTask_(data, profile) {
     out.plan = planOut_(planRows_(staffId, date)[blockId], staffId, blockId);
     return out;
   } finally { lock.releaseLock(); }
+}
+
+
+// ---------------------------------------------------------------------------
+//  THE LOAD REVIEW — who is carrying what, and what is not moving
+//
+//  "Intelligence should be able to review all tasks and assign based on
+//  workload, review the load and reassign if it is not moving, and paste
+//  chatter — as time is being given back with a lot of automations."
+//  (18 September 2026.)
+//
+//  Three questions, answered from the org rather than from an opinion:
+//  how much is in each pair of hands, measured in days of that person's own
+//  throughput; which tasks have stopped moving; and who could take one —
+//  which means somebody who is light AND who actually closes that type of
+//  work. A proposal is a proposal: nothing moves until the Branch Manager
+//  presses the button, and when he does, the new owner is told on the task
+//  itself.
+// ---------------------------------------------------------------------------
+
+var LOAD = {
+  QUIET: 14,        // days untouched before a task counts as not moving
+  MIN_TYPE: 3,      // closures of a type in the window before we call it theirs
+  WINDOW: 60,       // days of history the throughput is read from
+  MAX_MOVES: 10,    // proposals per run
+  MAX_ONTO: 3       // proposals onto any one person, so nobody is dumped on
+};
+
+function loadReview_(profile) {
+  if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_())
+    return { ok: false, error: 'Salesforce is not connected.' };
+
+  var users = sfkUsers_(), ids = [], byId = {}, name = {};
+  Object.keys(users).forEach(function (k) {
+    if (!users[k] || !users[k].id) return;
+    ids.push("'" + users[k].id + "'");
+    byId[users[k].id] = k;
+    name[k] = users[k].name || (k.charAt(0).toUpperCase() + k.slice(1));
+  });
+  if (!ids.length) return { ok: false, error: 'No Salesforce users are matched yet. Run sfKpiTest.' };
+  var IN = '(' + ids.join(',') + ')';
+  var NOT_BIRTHDAY = " AND (NOT Subject LIKE '%Happy Birthday%')";
+
+  var per = {};
+  Object.keys(byId).forEach(function (id) {
+    per[byId[id]] = { staffId: byId[id], name: name[byId[id]], open: 0, overdue: 0,
+                      quiet: 0, aged60: 0, closed: 0, types: {}, perDay: 0, days: null };
+  });
+  var count = function (clause, field) {
+    sfkQuery_('SELECT OwnerId, COUNT(Id) n FROM Task WHERE OwnerId IN ' + IN +
+              NOT_BIRTHDAY + ' AND ' + clause + ' GROUP BY OwnerId')
+      .forEach(function (r) {
+        var sid = byId[r.OwnerId];
+        if (sid) per[sid][field] = Number(r.n || r.expr0 || 0);
+      });
+  };
+  count("Status != 'Completed'", 'open');
+  count("Status != 'Completed' AND ActivityDate < TODAY", 'overdue');
+  count("Status != 'Completed' AND LastModifiedDate < LAST_N_DAYS:" + LOAD.QUIET, 'quiet');
+  count("Status != 'Completed' AND ActivityDate < LAST_N_DAYS:60", 'aged60');
+
+  // What each person actually closes, and of what. This is both the rate the
+  // load is measured in and the test of whether work can go to them.
+  sfkQuery_('SELECT OwnerId, Task_Type__c, COUNT(Id) n FROM Task WHERE OwnerId IN ' + IN +
+            NOT_BIRTHDAY + " AND Status = 'Completed' AND CompletedDateTime = LAST_N_DAYS:" +
+            LOAD.WINDOW + ' GROUP BY OwnerId, Task_Type__c')
+    .forEach(function (r) {
+      var sid = byId[r.OwnerId]; if (!sid) return;
+      var n = Number(r.n || r.expr0 || 0);
+      per[sid].closed += n;
+      per[sid].types[r.Task_Type__c || 'Untyped'] = n;
+    });
+  Object.keys(per).forEach(function (sid) {
+    var p = per[sid];
+    p.perDay = Math.round((p.closed / LOAD.WINDOW) * 10) / 10;
+    // Days of work in hand, in that person's own currency. Somebody who has
+    // closed nothing in two months gets no rate, and so no estimate — an
+    // invented denominator is how a light desk reads heavy.
+    p.days = p.perDay >= 0.5 ? Math.round(p.open / p.perDay) : null;
+  });
+
+  // What has stopped moving, oldest silence first.
+  var stalled = [];
+  sfkQuery_('SELECT Id, Subject, OwnerId, Task_Type__c, Status, ActivityDate, LastModifiedDate ' +
+            'FROM Task WHERE OwnerId IN ' + IN + NOT_BIRTHDAY +
+            " AND Status != 'Completed' AND LastModifiedDate < LAST_N_DAYS:" + LOAD.QUIET +
+            ' ORDER BY LastModifiedDate ASC LIMIT 80')
+    .forEach(function (t) {
+      var sid = byId[t.OwnerId]; if (!sid) return;
+      stalled.push({ id: t.Id, subject: String(t.Subject || '').slice(0, 140),
+                     type: t.Task_Type__c || '', status: String(t.Status || ''),
+                     owner: sid, ownerName: name[sid],
+                     due: t.ActivityDate ? isoDay_(t.ActivityDate) : '',
+                     quiet: t.LastModifiedDate ? daysSince_(t.LastModifiedDate) : null });
+    });
+
+  // Who is heavy and who is light, by days in hand. Nobody is called heavy
+  // against nothing: with fewer than two rated desks there is no comparison
+  // to make and no proposal to offer.
+  var rated = Object.keys(per).filter(function (k) { return per[k].days != null; })
+                    .sort(function (a, b) { return per[b].days - per[a].days; });
+  var moves = [], onto = {};
+  if (rated.length > 1) {
+    var mid = per[rated[Math.floor(rated.length / 2)]].days;
+    var heavy = function (sid) { return per[sid].days != null && per[sid].days > Math.max(mid * 1.5, mid + 2); };
+    stalled.forEach(function (t) {
+      if (moves.length >= LOAD.MAX_MOVES) return;
+      if (!heavy(t.owner)) return;
+      var best = null;
+      rated.slice().reverse().forEach(function (sid) {
+        if (best || sid === t.owner) return;
+        if ((onto[sid] || 0) >= LOAD.MAX_ONTO) return;
+        if (per[sid].days >= per[t.owner].days) return;
+        if (!t.type || (per[sid].types[t.type] || 0) < LOAD.MIN_TYPE) return;
+        best = sid;
+      });
+      if (!best) return;
+      onto[best] = (onto[best] || 0) + 1;
+      moves.push({ id: t.id, subject: t.subject, type: t.type, quiet: t.quiet,
+                   from: t.owner, fromName: name[t.owner], to: best, toName: name[best],
+                   why: 'Nothing has happened to it in ' + t.quiet + ' days. ' +
+                        name[t.owner] + ' is holding ' + per[t.owner].days + ' days of work; ' +
+                        name[best] + ' is holding ' + per[best].days + ' and has closed ' +
+                        (per[best].types[t.type] || 0) + ' of this type in the last ' +
+                        LOAD.WINDOW + ' days.' });
+    });
+  }
+
+  return { ok: true, asOf: todayISO_(), window: LOAD.WINDOW, quietAfter: LOAD.QUIET,
+           people: Object.keys(per).map(function (k) { return per[k]; })
+                    .sort(function (a, b) { return (b.days == null ? -1 : b.days) - (a.days == null ? -1 : a.days); }),
+           stalled: stalled.slice(0, 40), moves: moves };
+}
+
+function loadReviewSafe_(profile) {
+  try { return loadReview_(profile); }
+  catch (e) { return { ok: false, error: 'Salesforce did not answer: ' + e.message }; }
+}
+
+/** Hand one task to somebody else, and tell them on the task itself. */
+function reassignTask_(data, profile) {
+  if (!profile.manager) return { ok: false, error: 'Branch Manager only.' };
+  if (typeof sfkConfigured_ !== 'function' || !sfkConfigured_())
+    return { ok: false, error: 'Salesforce is not connected.' };
+  var taskId = String(data.taskId || '').trim();
+  if (!/^[A-Za-z0-9]{15,18}$/.test(taskId)) return { ok: false, error: 'Which task?' };
+  var to = String(data.to || '').trim();
+  var users = sfkUsers_(), u = users[to];
+  if (!u || !u.id) return { ok: false, error: 'That person has no Salesforce user.' };
+  var note = String(data.note || '').replace(/\s+/g, ' ').trim().slice(0, 900);
+  if (note.split(/\s+/).filter(String).length < 4)
+    return { ok: false, error: 'Say why it is moving — four words at least. The new owner reads this.' };
+
+  if (typeof sfkPatch_ !== 'function')
+    return { ok: false, error: 'The write file is not in this project yet.' };
+  try { sfkPatch_(taskId, { OwnerId: u.id }); }
+  catch (e) {
+    if (typeof audit_ === 'function') audit_(profile, taskId, 'owner', '', to, 'FAILED: ' + e.message);
+    return { ok: false, error: 'Salesforce refused the move: ' + (typeof sfkSaid_ === 'function' ? sfkSaid_(e.message) : e.message) };
+  }
+  if (typeof audit_ === 'function') audit_(profile, taskId, 'owner', '', to + ' \u00b7 ' + note, 'OK');
+
+  // The new owner is told where it came from and why, on the record, so the
+  // reason travels with the task rather than living in somebody's inbox.
+  var posted = false;
+  try {
+    var tok = sfkToken_();
+    var body = (u.name || to) + ' \u2014 ' + (profile.name || 'the Branch Manager') +
+      ' has moved this task to you.\n\n' + note +
+      '\n\nIt is yours from now: put the next step and a date on it today, or close it.';
+    var res = UrlFetchApp.fetch(tok.instance_url + '/services/data/' + SFK.API + '/chatter/feed-elements', {
+      method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok.access_token },
+      payload: JSON.stringify({ feedElementType: 'FeedItem', subjectId: taskId,
+        body: { messageSegments: [ { type: 'mentionSegment', id: u.id },
+                                   { type: 'text', text: ' ' + body.replace((u.name || to) + ' \u2014 ', '') } ] } })
+    });
+    var c = res.getResponseCode();
+    posted = (c === 200 || c === 201);
+    if (typeof audit_ === 'function' && !posted)
+      audit_(profile, taskId, 'chatter', '', to, 'FAILED: ' + res.getResponseCode());
+  } catch (e) { posted = false; }
+
+  sfkForgetDay_(todayISO_());
+  return { ok: true, taskId: taskId, to: to, toName: u.name || to, posted: posted,
+           note: posted ? '' : 'Moved. The Chatter note did not post \u2014 tell them yourself.' };
 }
 
 /** The types a task can carry, for the screen that offers to create one. */

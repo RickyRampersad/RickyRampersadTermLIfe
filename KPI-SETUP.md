@@ -754,6 +754,44 @@ servicing lines" is a morning.
 one line — the reason box opens when somebody clicks *Say why*. Thirteen open
 text boxes stacked down a column is a form nobody fills in.
 
+## The load review — who is carrying what, and what has stopped
+
+Asked for on 18 September 2026: *"intelligence should be able to review all
+tasks and assign based on workload, review the load and reassign if it is not
+moving, and paste chatter — as time is being given back with a lot of
+automations."*
+
+**Load review** on the Branch Manager's home answers three questions from the
+org rather than from an opinion.
+
+**How much is in each pair of hands.** Measured in **days in hand**: that
+desk's open tasks divided by what that person actually closes, read from the
+last sixty days. Somebody who has closed nothing in that window gets **no
+estimate** rather than a made-up one, because an invented denominator is how a
+light desk reads heavy. A bar per person, worst first, with what is late and
+what has stopped moving.
+
+**What has stopped.** Every open task nothing has happened to in fourteen days
+or more, oldest silence first, with the owner, the type and the due date.
+
+**Who could take one.** A move is only suggested when the task is quiet, its
+owner is carrying half again more than the middle of the branch, and the
+proposed owner is **lighter and has closed at least three of that same type**
+in the window. That last test is the important one: it is the difference
+between balancing a load and dumping it. At most ten suggestions a run, and
+never more than three onto one person.
+
+Each suggestion names the task, both desks and the three numbers behind it, and
+offers the reason as words the Branch Manager can rewrite. **Nothing moves
+until he presses the button.** When he does, the owner is changed in Salesforce
+and the new owner is told **on the task itself, in Chatter**, mentioned by name,
+with the reason and a line saying it is theirs from now. Both the move and the
+note go on the **KPI Salesforce Writes** tab; a note that fails to post says so
+on screen rather than being assumed.
+
+Only the Branch Manager sees this screen or can move anything, and a move with
+fewer than four words of reason is refused: the new owner reads that line.
+
 ## What to do next — the tracker advising, not only reporting
 
 Asked for on 18 September 2026: *"they need to be told what to do ...
