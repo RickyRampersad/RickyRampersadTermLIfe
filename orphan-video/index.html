@@ -16,8 +16,9 @@
 <style>
   :root{
     --navy:#07131f; --navy2:#0b1b2b; --ink:#12202e;
-    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
-    --paper:#eef1f5; --card:#fff; --line:#dde4ec;
+    --gold:#efc24b; --gold2:#c9942c;
+    --teal:#00CFEA; --teal2:#0aa8bf; --teal-ink:#052a33;
+    --paper:#eef4f7; --card:#fff; --line:#d7e3ea;
     --body:#33465a; --dim:#64798e;
     --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
   }
@@ -29,7 +30,9 @@
   a{color:#0c4f78}
 
   /* ── masthead ── */
-  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid var(--gold)}
+  header{background:var(--navy);color:#eaf4ff;
+    border-bottom:3px solid transparent;
+    border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
   header .wrap{display:flex;align-items:center;gap:12px;padding:16px 0}
   .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;
     display:grid;place-items:center;flex:none}
@@ -39,9 +42,11 @@
 
   /* ── hero ── */
   .hero{background:
-    radial-gradient(1100px 600px at 12% -20%,rgba(239,194,75,.16),transparent 62%),
-    linear-gradient(168deg,var(--navy2) 0%,var(--navy) 60%,#040d16 100%);
+    radial-gradient(900px 520px at 88% -24%,rgba(0,207,234,.22),transparent 60%),
+    radial-gradient(1100px 600px at 8% -18%,rgba(239,194,75,.15),transparent 62%),
+    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);
     color:#eaf4ff;padding:38px 0 46px}
+  .hero .eyebrow{color:var(--teal)}
   .hero .eyebrow{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;
     text-transform:uppercase;color:var(--gold)}
   .hero h1{font-family:var(--f);font-weight:800;font-size:clamp(26px,5vw,42px);line-height:1.16;
@@ -59,9 +64,9 @@
     display:grid;place-items:center;cursor:pointer;z-index:4}
   .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.34),rgba(4,13,22,.62))}
   .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:13px;
-    background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;
+    background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;
     border-radius:13px;padding:15px 25px;font-family:var(--f);font-weight:800;font-size:18px;
-    box-shadow:0 20px 48px rgba(239,194,75,.3)}
+    box-shadow:0 20px 48px rgba(0,207,234,.34)}
   .vcover .pl svg{width:19px;height:19px}
   .vnote{color:#8fa8c0;font-size:13.5px;margin:11px 0 0;text-align:center}
 
@@ -79,29 +84,51 @@
   .cd{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
   .cd h3{font-family:var(--f);font-size:16.5px;color:var(--ink);margin:0 0 6px}
   .cd p{margin:0;font-size:15px;color:var(--body)}
+  .cd{border-top:3px solid var(--teal)}
   .cd .tk{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;
-    background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;
+    background:linear-gradient(180deg,var(--teal),var(--teal2));color:#fff;
     font-family:var(--f);font-weight:800;font-size:14px;margin-bottom:9px}
-  .cd.off .tk{background:#e2e8f0;color:#8496a8}
+  .cd.off{border-top-color:#cfdae2} .cd.off .tk{background:#e2e8f0;color:#8496a8}
 
   /* ── the four clicks ── */
   .choose{background:
-    radial-gradient(900px 480px at 50% -30%,rgba(239,194,75,.15),transparent 64%),
-    linear-gradient(168deg,var(--navy2),var(--navy));color:#eaf4ff;padding:46px 0 50px}
+    radial-gradient(900px 520px at 50% -30%,rgba(0,207,234,.24),transparent 64%),
+    linear-gradient(168deg,#0a2330,var(--navy));color:#eaf4ff;padding:46px 0 50px}
   .choose h2{color:#fff}
   .choose .sub{color:#9dbdd8}
   .opts{display:grid;gap:10px;max-width:640px}
-  .opt{display:block;background:rgba(255,255,255,.05);border:1px solid rgba(239,194,75,.24);
+  .opt{display:block;background:rgba(255,255,255,.05);border:1px solid rgba(0,207,234,.28);
     border-radius:12px;padding:15px 19px;color:#eaf4ff;text-decoration:none;transition:.16s}
-  .opt:hover{background:rgba(255,255,255,.09);border-color:rgba(239,194,75,.55);transform:translateY(-1px)}
+  .opt:hover{background:rgba(255,255,255,.10);border-color:rgba(0,207,234,.65);transform:translateY(-1px)}
   .opt b{display:block;font-family:var(--f);font-size:17px;color:#fff;letter-spacing:-.15px}
   .opt span{display:block;color:#9dbdd8;font-size:14px;margin-top:3px}
-  .opt.main{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:transparent}
-  .opt.main b{color:#07131f} .opt.main span{color:rgba(7,19,31,.72)}
-  #thanks{display:none;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.35);
+  .opt.main{background:linear-gradient(135deg,var(--teal),var(--teal2));border-color:transparent;
+    box-shadow:0 16px 40px rgba(0,207,234,.26)}
+  .opt.main b{color:#fff} .opt.main span{color:rgba(255,255,255,.86)}
+  #thanks{display:none;background:rgba(239,194,75,.12);border:1px solid rgba(239,194,75,.4);
     border-radius:12px;padding:17px 20px;max-width:640px;margin-top:14px}
   #thanks b{color:#fff;font-family:var(--f);display:block;margin-bottom:4px}
   #thanks span{color:#9dbdd8;font-size:14.5px}
+
+  /* ── the two doors into the review ── */
+  .doors{display:grid;gap:14px;margin:0 0 26px}
+  @media(min-width:800px){.doors{grid-template-columns:1fr 1fr}}
+  .door{display:flex;flex-direction:column;background:rgba(255,255,255,.05);
+    border:1px solid rgba(0,207,234,.28);border-radius:15px;padding:22px 23px 20px;
+    color:#eaf4ff;text-decoration:none;transition:.18s}
+  .door:hover{background:rgba(255,255,255,.10);border-color:rgba(0,207,234,.7);transform:translateY(-2px)}
+  .door.go{background:linear-gradient(150deg,rgba(0,207,234,.22),rgba(255,255,255,.05));
+    border-color:rgba(0,207,234,.55)}
+  .door .n{font-family:var(--f);font-weight:800;font-size:10.5px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--teal)}
+  .door b{font-family:var(--f);font-weight:800;font-size:21px;color:#fff;margin:9px 0 8px;
+    letter-spacing:-.3px;line-height:1.2}
+  .door span{color:#9dbdd8;font-size:14.5px;line-height:1.55}
+  .door span em{font-style:normal;color:#eaf4ff;font-weight:600}
+  .door .cta{margin-top:auto;padding-top:15px;font-family:var(--f);font-weight:800;
+    font-size:15px;color:var(--teal)}
+  .door.go .cta{color:#fff}
+  .or{color:#8fa8c0;font-size:14px;margin:0 0 11px;font-weight:600}
 
   footer{background:var(--navy);color:#7e97ae;padding:26px 0;font-size:13px}
   footer b{color:#eaf4ff}
@@ -128,7 +155,7 @@
     </video>
     <div class="vcover" style="background-image:url(poster.jpg)">
       <div class="pl">
-        <svg viewBox="0 0 24 24" fill="#07131f" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
+        <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
         Watch &mdash; 90 seconds
       </div>
     </div>
@@ -211,22 +238,40 @@
 </div></section>
 
 <section class="choose" id="choose"><div class="wrap">
-  <h2>Shall we introduce you to yours?</h2>
-  <p class="sub">One click. Nothing to sign, and you can change your mind whenever you like.</p>
+  <h2>Two ways to start. Both take one click.</h2>
+  <p class="sub">The review is the same either way &mdash; the only question is whether you would
+    rather fill it in yourself or have somebody sit with you.</p>
+
+  <div class="doors">
+    <a class="door go" href="https://donthaveanagent.com/start" target="_blank" rel="noopener"
+       data-r="selfserve">
+      <div class="n">Do it now, yourself</div>
+      <b>Start my review</b>
+      <span>About fifteen minutes, on your phone. It asks what you hold, what has changed, and what
+        you are worried about &mdash; and your agent reads it <em>before</em> you ever meet, so the
+        first conversation starts where it should.</span>
+      <div class="cta">Open the review &rarr;</div>
+    </a>
+    <a class="door" href="#" data-r="assign">
+      <div class="n">Or do it together</div>
+      <b>Have an agent go through it with me</b>
+      <span>Exactly the same review, the same questions, only somebody walks you through it. We match
+        you to a qualified agent first and they bring it to you &mdash; in person, or on the phone,
+        whichever you prefer.</span>
+      <div class="cta">Match me to an agent &rarr;</div>
+    </a>
+  </div>
+
+  <p class="or">Not ready for either yet?</p>
   <div class="opts">
-    <a class="opt main" href="#" data-r="assign">
-      <b>Yes &mdash; match me to an agent</b>
-      <span>Qualified, registered, and introduced to you within two working days</span></a>
-    <a class="opt" href="#" data-r="review">
-      <b>First, show me what my policy is worth</b>
-      <span>A plain summary &mdash; value, benefits, what it pays and when</span></a>
     <a class="opt" href="#" data-r="question">
-      <b>I have a question before I decide</b>
-      <span>Ask us anything &mdash; we will come back to you</span></a>
+      <b>I have a question first</b>
+      <span>Ask us anything &mdash; we will come back to you, and nothing happens until you say so</span></a>
     <a class="opt" href="#" data-r="informed">
       <b>Not just yet, thank you</b>
       <span>Your policy is unaffected, and we will ask again rather than assume</span></a>
   </div>
+
   <div id="thanks" role="status" aria-live="polite">
     <b>Thank you &mdash; that is logged.</b>
     <span id="thankstxt">Someone from the branch will follow this up.</span>
@@ -265,14 +310,16 @@
 var SVC = 'RRB_SERVICE_URL';
 var TOKEN = new URLSearchParams(location.search).get('t') || '';
 var SAID = {
+  selfserve: 'Opening your review now — take your time, and it saves as you go.',
   assign:   'We will match you to a qualified agent and introduce you within two working days.',
   review:   'We will put your summary together and send it across, and an agent will walk you through it.',
   question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
   informed: 'Noted, with thanks. Nothing about your policy changes, and we will ask again rather than assume.'
 };
-document.querySelectorAll('.opt').forEach(function (a) {
+document.querySelectorAll('.opt, .door').forEach(function (a) {
   a.addEventListener('click', function (e) {
-    e.preventDefault();
+    /* the self-serve door is a real link: log the click, then let it open */
+    if (a.dataset.r !== 'selfserve') e.preventDefault();
     var r = a.dataset.r;
     if (SVC.indexOf('http') === 0) {
       try {
@@ -280,11 +327,12 @@ document.querySelectorAll('.opt').forEach(function (a) {
           '&t=' + encodeURIComponent(TOKEN) + '&z=' + Date.now();
       } catch (err) {}
     }
+    if (r === 'selfserve') return;
     document.getElementById('thankstxt').textContent = SAID[r] || '';
     var box = document.getElementById('thanks');
     box.style.display = 'block';
     box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.querySelectorAll('.opt').forEach(function (o) {
+    document.querySelectorAll('.opt, .door').forEach(function (o) {
       if (o !== a) { o.style.opacity = '.45'; o.style.pointerEvents = 'none'; }
     });
   });
