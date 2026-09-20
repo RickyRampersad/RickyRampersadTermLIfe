@@ -10,3 +10,16 @@ data/*.json
 
 node_modules/
 __pycache__/
+
+# Film build artefacts. The narration, the beds, the capture and the mix are
+# all reproducible from tools/film/*-lines.json and *-timing.json, and they
+# run to tens of megabytes each. The repository keeps the recipe, not the
+# intermediate products — the MP4 and its poster are committed because the
+# site serves them.
+tools/film/vo*/
+tools/film/cap*/
+tools/film/_track.wav
+tools/film/bed-*.wav
+tools/film/sfx-*.wav
+tools/film/*-mix.wav
+tools/film/captions-*.ass

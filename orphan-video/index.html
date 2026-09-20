@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>If you choose not to have an agent | Ricky Rampersad Branch</title>
+<meta name="description" content="Ninety seconds on what carries on either way, and what you give up — from the Ricky Rampersad Branch, Guardian Life of the Caribbean.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="If you choose not to have an agent">
+<meta property="og:description" content="What keeps running either way, and what you give up. Ninety seconds.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/orphan-video/poster.jpg">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#07131f; --navy2:#0b1b2b; --ink:#12202e;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+    --paper:#eef1f5; --card:#fff; --line:#dde4ec;
+    --body:#33465a; --dim:#64798e;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--body);
+    font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+  .wrap{width:min(980px,100% - 34px);margin:0 auto}
+  a{color:#0c4f78}
+
+  /* ── masthead ── */
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid var(--gold)}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:16px 0}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;
+    display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#9dbdd8;letter-spacing:.03em}
+
+  /* ── hero ── */
+  .hero{background:
+    radial-gradient(1100px 600px at 12% -20%,rgba(239,194,75,.16),transparent 62%),
+    linear-gradient(168deg,var(--navy2) 0%,var(--navy) 60%,#040d16 100%);
+    color:#eaf4ff;padding:38px 0 46px}
+  .hero .eyebrow{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--gold)}
+  .hero h1{font-family:var(--f);font-weight:800;font-size:clamp(26px,5vw,42px);line-height:1.16;
+    letter-spacing:-.6px;margin:11px 0 12px;color:#fff}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .hero p{color:#9dbdd8;max-width:56ch;margin:0;font-size:17px}
+
+  /* ── the film ── */
+  /* player.js takes its accent from here; unset, it stays the coral it ships with */
+  .vwrap{--dp-accent:var(--gold);
+    position:relative;margin:26px 0 0;border-radius:15px;overflow:hidden;background:#000;
+    box-shadow:0 26px 70px rgba(4,13,22,.5);aspect-ratio:16/9}
+  .vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+  .vcover{position:absolute;inset:0;background-size:cover;background-position:center;
+    display:grid;place-items:center;cursor:pointer;z-index:4}
+  .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.34),rgba(4,13,22,.62))}
+  .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:13px;
+    background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;
+    border-radius:13px;padding:15px 25px;font-family:var(--f);font-weight:800;font-size:18px;
+    box-shadow:0 20px 48px rgba(239,194,75,.3)}
+  .vcover .pl svg{width:19px;height:19px}
+  .vnote{color:#8fa8c0;font-size:13.5px;margin:11px 0 0;text-align:center}
+
+  /* ── body sections ── */
+  section.band{padding:44px 0}
+  section.band.alt{background:var(--card);border-block:1px solid var(--line)}
+  h2{font-family:var(--f);font-weight:800;font-size:clamp(20px,3vw,27px);color:var(--ink);
+    letter-spacing:-.4px;margin:0 0 6px}
+  .sub{color:var(--dim);margin:0 0 22px;font-size:16.5px}
+  p{margin:11px 0}
+  b{color:var(--ink)}
+
+  .cols{display:grid;gap:14px}
+  @media(min-width:760px){.cols.two{grid-template-columns:1fr 1fr}.cols.three{grid-template-columns:repeat(3,1fr)}}
+  .cd{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px}
+  .cd h3{font-family:var(--f);font-size:16.5px;color:var(--ink);margin:0 0 6px}
+  .cd p{margin:0;font-size:15px;color:var(--body)}
+  .cd .tk{display:inline-grid;place-items:center;width:27px;height:27px;border-radius:50%;
+    background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;
+    font-family:var(--f);font-weight:800;font-size:14px;margin-bottom:9px}
+  .cd.off .tk{background:#e2e8f0;color:#8496a8}
+
+  /* ── the four clicks ── */
+  .choose{background:
+    radial-gradient(900px 480px at 50% -30%,rgba(239,194,75,.15),transparent 64%),
+    linear-gradient(168deg,var(--navy2),var(--navy));color:#eaf4ff;padding:46px 0 50px}
+  .choose h2{color:#fff}
+  .choose .sub{color:#9dbdd8}
+  .opts{display:grid;gap:10px;max-width:640px}
+  .opt{display:block;background:rgba(255,255,255,.05);border:1px solid rgba(239,194,75,.24);
+    border-radius:12px;padding:15px 19px;color:#eaf4ff;text-decoration:none;transition:.16s}
+  .opt:hover{background:rgba(255,255,255,.09);border-color:rgba(239,194,75,.55);transform:translateY(-1px)}
+  .opt b{display:block;font-family:var(--f);font-size:17px;color:#fff;letter-spacing:-.15px}
+  .opt span{display:block;color:#9dbdd8;font-size:14px;margin-top:3px}
+  .opt.main{background:linear-gradient(180deg,var(--gold),var(--gold2));border-color:transparent}
+  .opt.main b{color:#07131f} .opt.main span{color:rgba(7,19,31,.72)}
+  #thanks{display:none;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.35);
+    border-radius:12px;padding:17px 20px;max-width:640px;margin-top:14px}
+  #thanks b{color:#fff;font-family:var(--f);display:block;margin-bottom:4px}
+  #thanks span{color:#9dbdd8;font-size:14.5px}
+
+  footer{background:var(--navy);color:#7e97ae;padding:26px 0;font-size:13px}
+  footer b{color:#eaf4ff}
+  .fine{color:var(--dim);font-size:13.5px}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Ninety seconds, worth your time</div>
+  <h1>If you choose not to have <em>an agent</em></h1>
+  <p>Your representative has moved on. Your policy has not. Here is exactly what carries on
+     either way &mdash; and the part nobody usually explains.</p>
+
+  <div class="vwrap">
+    <video id="film" playsinline preload="metadata" poster="poster.jpg" data-scenes="6.2,6.8,4.1,6.6,7.1,7.3,3.6,5.7,6.1,6.4,4.6,5.4,7.9,4.7,6" data-chapters="A Ricky Rampersad Branch film|The question nobody answers|Start with the honest part|This carries on regardless|And the branch keeps writing|Worth being clear about|So what do you actually give up?|Without someone of your own|And nobody tells you what is inside|And nobody notices a stopped payment|One more thing, and it is the big one|Which is why it matters|The choice is yours|Either way, we would rather hear it from you|Thank you for watching">
+      <source src="rrb-orphan-video.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(poster.jpg)">
+      <div class="pl">
+        <svg viewBox="0 0 24 24" fill="#07131f" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
+        Watch &mdash; 90 seconds
+      </div>
+    </div>
+  </div>
+  <p class="vnote">Sound on. Tap the picture to pause; the rail below shows every chapter.</p>
+</div></div>
+
+<section class="band"><div class="wrap">
+  <h2>What carries on, whether or not you have an agent</h2>
+  <p class="sub">None of this has ever depended on a person.</p>
+  <div class="cols three">
+    <div class="cd"><span class="tk">&#10003;</span>
+      <h3>Your premiums are collected</h3>
+      <p>Exactly as they are today. Same amount, same method, same date.</p></div>
+    <div class="cd"><span class="tk">&#10003;</span>
+      <h3>Your cover stays in force</h3>
+      <p>Same sum assured, same beneficiaries. Nothing needs signing to keep it.</p></div>
+    <div class="cd"><span class="tk">&#10003;</span>
+      <h3>A claim is still paid</h3>
+      <p>By Guardian Life of the Caribbean. A claim has never been paid by an agent.</p></div>
+  </div>
+  <div class="cols three" style="margin-top:14px">
+    <div class="cd"><span class="tk">&#9993;</span>
+      <h3>Your birthday note</h3>
+      <p>Every year, from the branch, agent or no agent.</p></div>
+    <div class="cd"><span class="tk">&#9200;</span>
+      <h3>Your premium reminder</h3>
+      <p>Before a payment falls due, so nothing lapses by accident.</p></div>
+    <div class="cd"><span class="tk">&#9742;</span>
+      <h3>The support desk</h3>
+      <p>A person answers. You do not need a representative to call us.</p></div>
+  </div>
+</div></section>
+
+<section class="band alt"><div class="wrap">
+  <h2>And the part nobody usually explains</h2>
+  <p class="sub">What you give up by having nobody of your own.</p>
+  <div class="cols three">
+    <div class="cd off"><span class="tk">&mdash;</span>
+      <h3>Nobody reviews the fit</h3>
+      <p>Whether the cover you bought years ago still matches the life you have now.</p></div>
+    <div class="cd off"><span class="tk">&mdash;</span>
+      <h3>Nobody tells you what is in there</h3>
+      <p>Benefits already inside your policy that have never been claimed.</p></div>
+    <div class="cd off"><span class="tk">&mdash;</span>
+      <h3>Nobody notices a stopped payment</h3>
+      <p>Until a letter arrives, and by then it has usually been months.</p></div>
+  </div>
+
+  <div style="margin-top:26px;background:#fbf6ea;border:1px solid #efd9a4;border-radius:13px;padding:19px 22px">
+    <h3 style="font-family:var(--f);color:var(--ink);margin:0 0 7px;font-size:17px">
+      One thing worth protecting</h3>
+    <p style="margin:0">Your premium is priced on <b>the age you were when you started</b> &mdash; not your
+      age now. A policy taken out years ago is still charging years-ago prices, and no company can sell that
+      price back to you. It is the part of a life policy people give away without realising they owned it.</p>
+  </div>
+</div></section>
+
+<section class="choose" id="choose"><div class="wrap">
+  <h2>So, what would you like?</h2>
+  <p class="sub">One click. Nothing to sign, and you can change your mind whenever you like.</p>
+  <div class="opts">
+    <a class="opt main" href="#" data-r="review">
+      <b>Show me what my policy is worth today</b>
+      <span>A plain summary &mdash; value, benefits, what it pays and when</span></a>
+    <a class="opt" href="#" data-r="assign">
+      <b>I'd like someone looking after me again</b>
+      <span>We will match you to a representative and introduce you properly</span></a>
+    <a class="opt" href="#" data-r="question">
+      <b>I have a question about my policy</b>
+      <span>Ask us anything &mdash; we will come back to you</span></a>
+    <a class="opt" href="#" data-r="informed">
+      <b>Nothing right now, thank you</b>
+      <span>Your birthday note and premium reminders carry on regardless</span></a>
+  </div>
+  <div id="thanks" role="status" aria-live="polite">
+    <b>Thank you &mdash; that is logged.</b>
+    <span id="thankstxt">Someone from the branch will follow this up.</span>
+  </div>
+</div></section>
+
+<section class="band"><div class="wrap">
+  <h2>What happens after you click</h2>
+  <p class="sub">So you know what you are setting in motion.</p>
+  <div class="cols two">
+    <div class="cd"><h3>1 &middot; It reaches the branch, not an inbox</h3>
+      <p>Your answer is logged against your policy the moment you click. Nothing is sent to a third party
+         and nothing is shared outside Guardian Life.</p></div>
+    <div class="cd"><h3>2 &middot; We look at what you actually hold</h3>
+      <p>Before anyone contacts you, we read your file &mdash; what you own, how long you have held it, and
+         whether anything needs attention.</p></div>
+    <div class="cd"><h3>3 &middot; You get a name, within two working days</h3>
+      <p>Not &ldquo;someone will be in touch&rdquo;. A named person, and how to reach them directly.</p></div>
+    <div class="cd"><h3>4 &middot; The review is yours to keep</h3>
+      <p>If you asked for one, it is written down and signed &mdash; the same record the branch keeps.</p></div>
+  </div>
+  <p class="fine" style="margin-top:20px">Prefer to speak to somebody first? Reply to the e-mail this link
+    came from and it reaches a person at the branch the same day.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean, Trinidad &amp; Tobago<br>
+  Every figure shown in the film is illustrative. Nothing here changes your policy.
+</div></footer>
+
+<script src="player.js"></script>
+<script>
+/* The four clicks. The Service Questionnaire backend logs the answer against
+   the token the e-mail carried; without a token the page still works and the
+   answer is recorded against the page instead. */
+var SVC = 'RRB_SERVICE_URL';
+var TOKEN = new URLSearchParams(location.search).get('t') || '';
+var SAID = {
+  review:   'We will put your summary together and send it across.',
+  assign:   'We will match you to a representative and introduce you within two working days.',
+  question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
+  informed: 'Noted, with thanks. Your birthday note and premium reminders carry on.'
+};
+document.querySelectorAll('.opt').forEach(function (a) {
+  a.addEventListener('click', function (e) {
+    e.preventDefault();
+    var r = a.dataset.r;
+    if (SVC.indexOf('http') === 0) {
+      try {
+        (new Image()).src = SVC + '?a=resp&r=' + encodeURIComponent(r) +
+          '&t=' + encodeURIComponent(TOKEN) + '&z=' + Date.now();
+      } catch (err) {}
+    }
+    document.getElementById('thankstxt').textContent = SAID[r] || '';
+    var box = document.getElementById('thanks');
+    box.style.display = 'block';
+    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.querySelectorAll('.opt').forEach(function (o) {
+      if (o !== a) { o.style.opacity = '.45'; o.style.pointerEvents = 'none'; }
+    });
+  });
+});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

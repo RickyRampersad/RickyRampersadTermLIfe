@@ -3,7 +3,10 @@
    bed from it: looped or trimmed to length, mid-range carved so the voice sits
    clear, held at -18 LUFS under narration, with the impacts layered on top.
 
-   usage:  python3 usetrack.py "/path/to/RR Branch theme - 60s.mp3"
+   usage:  python3 usetrack.py "/path/to/RR Branch theme - 60s.mp3" [film ...]
+   Naming films restricts the rebuild to those keys; the sfx layer of every
+   other film has to exist on disk for a full run, and they are build
+   artefacts, not repository files.
 """
 import wave, json, subprocess, sys, os
 import numpy as np, imageio_ffmpeg
@@ -11,6 +14,11 @@ FF = imageio_ffmpeg.get_ffmpeg_exe()
 SR = 44100
 src = sys.argv[1]
 cfg = json.load(open('films.json'))
+only = set(sys.argv[2:])
+if only:
+    missing = only - set(cfg)
+    if missing: raise SystemExit(f'no such film: {", ".join(sorted(missing))}')
+    cfg = {k: v for k, v in cfg.items() if k in only}
 
 subprocess.run([FF,'-y','-i',src,'-ar',str(SR),'-ac','2','_track.wav'],capture_output=True)
 with wave.open('_track.wav') as w:
