@@ -1,67 +1,57 @@
 {
  "voice": "en-US-AndrewNeural",
  "rate": "-12%",
- "note": "Branch film for rickyrampersadbranch.com/orphan-video. No client names, no client counts.",
+ "note": "Branch film for rickyrampersadbranch.com/orphan-video. Agent-driven. No client names, no client counts, no figures.",
  "scenes": [
-  {
-   "eyebrow": "A Ricky Rampersad Branch film",
-   "line": "You hold a policy with Guardian Life. Your representative has moved on."
-  },
-  {
-   "eyebrow": "The question",
-   "line": "So here is the question nobody answers. What happens if you choose not to have an agent at all?"
-  },
-  {
-   "eyebrow": "Start with the honest part",
-   "line": "Your policy does not need an agent to work."
-  },
-  {
-   "eyebrow": "What keeps running",
-   "line": "Your premiums are collected. Your cover stays in force. A claim is still paid."
-  },
-  {
-   "eyebrow": "What keeps running",
-   "line": "The branch still writes to you. A note on your birthday. A reminder before a premium is due."
-  },
-  {
-   "eyebrow": "What keeps running",
-   "line": "Call the support desk and somebody answers. None of that has ever depended on having an agent."
-  },
-  {
-   "eyebrow": "Now the part that matters",
-   "line": "So what do you actually give up?"
-  },
-  {
-   "eyebrow": "Nobody reviews it",
-   "line": "Nobody checks whether the cover you bought still fits the life you have now."
-  },
-  {
-   "eyebrow": "Nobody tells you",
-   "line": "Nobody tells you about the benefits already sitting inside your policy."
-  },
-  {
-   "eyebrow": "Nobody notices",
-   "line": "And if a payment quietly stops, nobody notices until a letter arrives."
-  },
-  {
-   "eyebrow": "The part worth protecting",
-   "line": "Your premium is priced on the age you were when you started."
-  },
-  {
-   "eyebrow": "The part worth protecting",
-   "line": "Nobody can sell you that price again. Not us. Not anyone."
-  },
-  {
-   "eyebrow": "What we would rather you did",
-   "line": "So have an agent of your own. Qualified, registered, and answerable for the advice they give."
-  },
-  {
-   "eyebrow": "We will make the introduction",
-   "line": "We will match you to one. One click, and we do the rest."
-  },
-  {
-   "eyebrow": "",
-   "line": "Ricky Rampersad Branch. Guardian Life of the Caribbean."
-  }
+  {"eyebrow": "A Ricky Rampersad Branch film",
+   "line": "You hold a policy with Guardian Life. Your representative has moved on."},
+
+  {"eyebrow": "The question nobody answers",
+   "line": "So here is the question. What happens if you choose not to have an agent at all?"},
+
+  {"eyebrow": "Start with the honest part",
+   "line": "Your policy does not need an agent to work."},
+
+  {"eyebrow": "This carries on regardless",
+   "line": "Your premiums are collected. Your cover stays in force. A claim is still paid."},
+
+  {"eyebrow": "And the branch keeps writing",
+   "line": "A note on your birthday. A reminder before a premium is due. A desk that answers the phone."},
+
+  {"eyebrow": "Now the part that matters",
+   "line": "So what do you actually give up?"},
+
+  {"eyebrow": "Nobody reviews the fit",
+   "line": "Nobody checks whether the cover you bought still fits the life you have now."},
+
+  {"eyebrow": "And nobody opens the policy",
+   "line": "And nobody tells you what is already sitting inside it."},
+
+  {"eyebrow": "Things people find out too late",
+   "line": "A benefit that pays your premiums if illness stops you working. A policy that has quietly matured. Money in one you thought had lapsed."},
+
+  {"eyebrow": "Nobody notices a stopped payment",
+   "line": "And if a payment stops, nobody notices until a letter arrives."},
+
+  {"eyebrow": "The part worth protecting",
+   "line": "Your premium is priced on the age you were when you started."},
+
+  {"eyebrow": "Which is why it matters",
+   "line": "Nobody can sell you that price again. Not us. Not anyone."},
+
+  {"eyebrow": "If anyone asks you to change it",
+   "line": "So if someone asks you to replace this policy, the law is already on your side."},
+
+  {"eyebrow": "The Insurance Act of Trinidad and Tobago",
+   "line": "No agent may have you replace a long term policy without first discussing the advantages and the disadvantages with you. Ask for that in writing."},
+
+  {"eyebrow": "What a qualified agent is",
+   "line": "That is what your own agent is for. Trained. Registered. Answerable for the advice they give."},
+
+  {"eyebrow": "We will make the introduction",
+   "line": "So let us introduce you to yours. One click, and we do the rest."},
+
+  {"eyebrow": "Thank you for watching",
+   "line": "Ricky Rampersad Branch. Guardian Life of the Caribbean."}
  ]
 }
