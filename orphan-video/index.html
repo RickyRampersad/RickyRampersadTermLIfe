@@ -119,10 +119,11 @@
   <div class="eyebrow">Ninety seconds, worth your time</div>
   <h1>If you choose not to have <em>an agent</em></h1>
   <p>Your representative has moved on. Your policy has not. Here is exactly what carries on
-     either way &mdash; and the part nobody usually explains.</p>
+     either way, the part nobody usually explains &mdash; and why we would rather you had a
+     qualified agent of your own.</p>
 
   <div class="vwrap">
-    <video id="film" playsinline preload="metadata" poster="poster.jpg" data-scenes="6.2,6.8,4.1,6.6,7.1,7.3,3.6,5.7,6.1,6.4,4.6,5.4,7.9,4.7,6" data-chapters="A Ricky Rampersad Branch film|The question nobody answers|Start with the honest part|This carries on regardless|And the branch keeps writing|Worth being clear about|So what do you actually give up?|Without someone of your own|And nobody tells you what is inside|And nobody notices a stopped payment|One more thing, and it is the big one|Which is why it matters|The choice is yours|Either way, we would rather hear it from you|Thank you for watching">
+    <video id="film" playsinline preload="metadata" poster="poster.jpg" data-scenes="6.2,6.8,4.1,6.6,7.1,7.3,3.6,5.7,6.1,6.4,4.6,5.4,7.5,5.1,6" data-chapters="A Ricky Rampersad Branch film|The question nobody answers|Start with the honest part|This carries on regardless|And the branch keeps writing|Worth being clear about|So what do you actually give up?|Without someone of your own|And nobody tells you what is inside|And nobody notices a stopped payment|One more thing, and it is the big one|Which is why it matters|What we would rather you did|We will make the introduction|Thank you for watching">
       <source src="rrb-orphan-video.mp4" type="video/mp4">
     </video>
     <div class="vcover" style="background-image:url(poster.jpg)">
@@ -186,22 +187,45 @@
   </div>
 </div></section>
 
+<section class="band"><div class="wrap">
+  <h2>Which is why we would rather you had an agent of your own</h2>
+  <p class="sub">Not a name on a file. A qualified one.</p>
+  <div class="cols three">
+    <div class="cd"><span class="tk">&#9733;</span>
+      <h3>Qualified</h3>
+      <p>Trained and examined before they are allowed to advise anybody. Not a friend of the family
+         with a form.</p></div>
+    <div class="cd"><span class="tk">&#9733;</span>
+      <h3>Registered</h3>
+      <p>Under the Insurance Act, no individual may carry on business as an agent or sales representative
+         in Trinidad and Tobago unless they are registered. You are entitled to ask anyone who approaches
+         you whether they are.</p></div>
+    <div class="cd"><span class="tk">&#9733;</span>
+      <h3>Answerable</h3>
+      <p>Their advice is written down and kept on your file, and the branch stands behind it. If something
+         goes wrong there is somebody to answer for it.</p></div>
+  </div>
+  <p class="fine" style="margin-top:18px">The branch does not replace your agent &mdash; it trains, supports
+    and supervises them. That is what a branch is for, and it is why we would rather match you to one than
+    hold your file ourselves.</p>
+</div></section>
+
 <section class="choose" id="choose"><div class="wrap">
-  <h2>So, what would you like?</h2>
+  <h2>Shall we introduce you to yours?</h2>
   <p class="sub">One click. Nothing to sign, and you can change your mind whenever you like.</p>
   <div class="opts">
-    <a class="opt main" href="#" data-r="review">
-      <b>Show me what my policy is worth today</b>
+    <a class="opt main" href="#" data-r="assign">
+      <b>Yes &mdash; match me to an agent</b>
+      <span>Qualified, registered, and introduced to you within two working days</span></a>
+    <a class="opt" href="#" data-r="review">
+      <b>First, show me what my policy is worth</b>
       <span>A plain summary &mdash; value, benefits, what it pays and when</span></a>
-    <a class="opt" href="#" data-r="assign">
-      <b>I'd like someone looking after me again</b>
-      <span>We will match you to a representative and introduce you properly</span></a>
     <a class="opt" href="#" data-r="question">
-      <b>I have a question about my policy</b>
+      <b>I have a question before I decide</b>
       <span>Ask us anything &mdash; we will come back to you</span></a>
     <a class="opt" href="#" data-r="informed">
-      <b>Nothing right now, thank you</b>
-      <span>Your birthday note and premium reminders carry on regardless</span></a>
+      <b>Not just yet, thank you</b>
+      <span>Your policy is unaffected, and we will ask again rather than assume</span></a>
   </div>
   <div id="thanks" role="status" aria-live="polite">
     <b>Thank you &mdash; that is logged.</b>
@@ -241,10 +265,10 @@
 var SVC = 'RRB_SERVICE_URL';
 var TOKEN = new URLSearchParams(location.search).get('t') || '';
 var SAID = {
-  review:   'We will put your summary together and send it across.',
-  assign:   'We will match you to a representative and introduce you within two working days.',
+  assign:   'We will match you to a qualified agent and introduce you within two working days.',
+  review:   'We will put your summary together and send it across, and an agent will walk you through it.',
   question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
-  informed: 'Noted, with thanks. Your birthday note and premium reminders carry on.'
+  informed: 'Noted, with thanks. Nothing about your policy changes, and we will ask again rather than assume.'
 };
 document.querySelectorAll('.opt').forEach(function (a) {
   a.addEventListener('click', function (e) {

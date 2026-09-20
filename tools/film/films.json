@@ -279,15 +279,16 @@
    6.4,
    4.6,
    5.4,
-   7.9,
-   4.7,
+   7.5,
+   5.1,
    6.0
   ],
   "out": "rrb-orphan-video.mp4",
-  "musicgain": 0.7,
+  "musicgain": 0.46,
   "duck": 0.3,
   "dark": [],
   "sfx": "sfx-orphan.wav",
-  "start": 30
+  "start": 0,
+  "bedsource": "Western Avenue (supplied 20 Sep 2026, 28s) - held outside the repository; re-supply it to rebuild bed-orphan.wav"
  }
 }

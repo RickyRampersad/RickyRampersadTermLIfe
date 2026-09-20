@@ -92,15 +92,16 @@ CSS = r"""
 .lock .yrs i:nth-child(n){animation-delay:calc(.35s + var(--n,0) * .055s)}
 
 /* ── the two doors ── */
-.doors{display:grid;grid-template-columns:1fr 1fr;gap:14px;max-width:660px;margin:22px auto 0}
+.doors{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;max-width:860px;margin:18px auto 0}
 .door{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:15px;
   padding:20px 20px 22px;text-align:left;opacity:0;transform:translateY(12px)}
 .scene.on .door{animation:slidein .5s cubic-bezier(.2,.9,.3,1) forwards}
 .scene.on .door:nth-child(1){animation-delay:.35s}
-.scene.on .door:nth-child(2){animation-delay:.75s}
+.scene.on .door:nth-child(2){animation-delay:.70s}
+.scene.on .door:nth-child(3){animation-delay:1.05s}
 .door .n{font:900 11px var(--head);letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
-.door b{display:block;font:800 21px/1.18 var(--head);color:#fff;margin:9px 0 7px;letter-spacing:-.02em}
-.door span{font:400 14px/1.45 var(--body);color:var(--dim)}
+.door b{display:block;font:800 17px/1.2 var(--head);color:#fff;margin:8px 0 6px;letter-spacing:-.02em}
+.door span{font:400 13px/1.45 var(--body);color:var(--dim)}
 .door.hl{background:linear-gradient(180deg,rgba(239,194,75,.14),rgba(255,255,255,.03));
   border-color:rgba(239,194,75,.45)}
 
@@ -268,17 +269,21 @@ SCENES = f"""
   </div>
 </section>
 
-<!-- 13 · the two doors -->
+<!-- 13 · what a qualified agent is -->
 <section class="scene of" data-d="{ms[12]}">
   <div class="inner">
-    <div class="eyebrow st">The choice is yours</div>
+    <div class="eyebrow st">What we would rather you did</div>
+    <h1 class="st d2" style="margin-bottom:6px">Have an agent <em>of your own.</em></h1>
     <div class="doors">
-      <div class="door"><div class="n">Option one</div>
-        <b>The branch looks after you</b>
-        <span>Birthdays, premium reminders and the support desk carry on. No agent assigned.</span></div>
-      <div class="door hl"><div class="n">Option two</div>
-        <b>A representative of your own</b>
-        <span>Someone matched to you, who reviews what you hold and stays with it.</span></div>
+      <div class="door hl"><div class="n">Qualified</div>
+        <b>Trained and examined</b>
+        <span>Not a friend of the family with a form. Someone who has had to earn the right to advise you.</span></div>
+      <div class="door hl"><div class="n">Registered</div>
+        <b>On the record, by law</b>
+        <span>No individual may act as an agent in Trinidad and Tobago unless they are registered.</span></div>
+      <div class="door hl"><div class="n">Answerable</div>
+        <b>To you, and to us</b>
+        <span>Their advice is on file, and the branch stands behind it.</span></div>
     </div>
   </div>
 </section>
@@ -286,13 +291,13 @@ SCENES = f"""
 <!-- 14 · the ask -->
 <section class="scene of warm" data-d="{ms[13]}">
   <div class="inner">
-    <div class="eyebrow st">Either way, we would rather hear it from you</div>
-    <h1 class="st d2">Tell us which.</h1>
+    <div class="eyebrow st">We will make the introduction</div>
+    <h1 class="st d2">We'll match you<br>to <em>yours.</em></h1>
     <div class="click st d3">
       <svg class="cur" viewBox="0 0 24 24" fill="none" stroke="#07131f" stroke-width="2.4"
            stroke-linecap="round" stroke-linejoin="round">
         <path d="M5 3l14 9-6 1.5L10 20z"/></svg>
-      One click. Nothing to sign.
+      One click, and we do the rest.
     </div>
   </div>
 </section>
