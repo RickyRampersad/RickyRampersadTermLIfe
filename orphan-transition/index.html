@@ -100,7 +100,7 @@
 </div></div>
 
 <nav class="toc"><div class="wrap">
-  <a href="#objective">Objective</a><a href="#assets">The three assets</a><a href="#segments">Segments</a>
+  <a href="#objective">Objective</a><a href="#runsheet">Run sheet</a><a href="#assets">The three assets</a><a href="#segments">Segments</a>
   <a href="#letters">Letters</a><a href="#team">Team review</a><a href="#loop">Feedback loop</a><a href="#brief">The agent's brief</a>
   <a href="#calls">The call list</a><a href="#scoreboard">Scoreboard</a><a href="#rules">Rules</a>
 </div></nav>
@@ -119,7 +119,84 @@
   </div>
 </div></section>
 
-<section class="band alt" id="assets"><div class="wrap">
+<section class="band alt" id="runsheet"><div class="wrap">
+  <h2>The run sheet</h2>
+  <p class="sub">In the order things have to happen. Each step names who does it. Nothing in a later phase
+    starts before the phase above it is done.</p>
+
+  <h3>Phase 0 &middot; Before anything &mdash; the branch manager, about thirty minutes</h3>
+  <ol>
+    <li><b>Merge the branch to <code>main</code>.</b> Then check that <code>/vid</code>, <code>/templates</code>,
+      <code>/your-policy</code>, <code>/your-policy/protected</code> and
+      <code>/orphan-transition/team-review</code> each answer. Nothing below happens on a 404.</li>
+    <li><b>Redeploy the Apps Script.</b> From the Service Questionnaires sheet: Extensions &rarr; Apps Script,
+      replace <code>Service.gs</code> with the repository's, then Deploy &rarr; Manage deployments &rarr; pencil
+      &rarr; New version. Copy the <code>/exec</code> URL. <i>New deployment</i> would change the address every
+      front end holds.</li>
+    <li><b>Wire the pages.</b> Paste that URL over <code>RRB_SERVICE_URL</code> in
+      <code>orphan-video/index.html</code>, <code>orphan-video/protected.html</code> and
+      <code>orphan-transition/team-review.html</code>; commit and merge again. Open the team review page: the
+      amber notice is gone. Log one test verdict; the <b>Team Feedback</b> tab appears with the row.</li>
+    <li><b>Clear the test rows</b> on the questionnaire sheet, so the first real review is not beside them.</li>
+  </ol>
+
+  <h3>Phase 1 &middot; The team &mdash; before any client, this afternoon</h3>
+  <ol start="5">
+    <li><b>Send the WhatsApp.</b> The letters at <code>/templates</code>, the film at <code>/vid</code>, the ask:
+      a verdict on each, and your town if you are taking assignments.</li>
+    <li><b>Read the verdicts</b> on the Team Feedback tab as they land. Answer every &ldquo;change&rdquo; and
+      &ldquo;hold&rdquo; by name. A change that is right goes into <code>build-letters.py</code>, is
+      regenerated, committed and merged &mdash; never typed into a letter.</li>
+    <li><b>Build the roster</b> from the ticks: who takes assignments, in which towns. The largest towns need
+      more than one agent; every household goes to one.</li>
+    <li><b>Ask Guardian Life</b> what it records as the servicing intermediary on an in-force policy, and tell
+      the team the answer. Until then an agent promises only &ldquo;the branch does it with you&rdquo;.</li>
+  </ol>
+
+  <h3>Phase 2 &middot; The send &mdash; once the verdicts are answered</h3>
+  <ol start="9">
+    <li><b>Build the send list outside the repository</b> from the Branch Portfolio sheet: the waterfall
+      (suppress &rarr; A &rarr; B &rarr; C &rarr; D &rarr; E &rarr; F &rarr; G &rarr; H), a token per client, the
+      merge fields. A Death flag suppresses the row whatever else it holds.</li>
+    <li><b>Send in order, over days.</b> A and B first (small, and the domain warms), C second, then D, E and
+      F. G a week later; H last. Reply-to is a person at the branch.</li>
+    <li><b>Call the direct-bill clients with a premium due inside thirty days</b> this week, to tell them how
+      to pay Guardian Life directly, with Guardian's receipt. That is the one exposure a returned receipt
+      book creates.</li>
+  </ol>
+
+  <h3>Phase 3 &middot; The clicks &mdash; daily, from the first send</h3>
+  <ol start="12">
+    <li><b>Client Responses tab.</b> Every <code>assign</code>, <code>review</code> and <code>question</code>
+      row is a task. Name the agent within two working days &mdash; town, then household, then what they hold
+      &mdash; and fill Assigned to and Assigned on.</li>
+    <li><b>Send the agent the brief</b>, filled in from the sheet and the portfolio. Never to the client.</li>
+    <li><b>The agent makes contact</b> by the tone guide, logs <code>approached</code> if the client says someone
+      has been in touch, and closes the row with a review filed on form 2000-03-147.</li>
+  </ol>
+
+  <h3>Phase 4 &middot; The calls &mdash; the third of the book with no e-mail</h3>
+  <ol start="15">
+    <li><b>Call list order:</b> A, E, C, F, D, then G. Not H. The <a href="call-script.html">call script</a>
+      is the shape; two lines on the sheet after every call.</li>
+  </ol>
+
+  <h3>Phase 5 &middot; The scoreboard &mdash; every day</h3>
+  <ol start="16">
+    <li>Sent and opened. Film views. The door split, <i>selfserve</i> against <i>assign</i>, which is the
+      staffing signal. Response rate by segment. Days from click to a named agent. And the one number that
+      counts: <b>reviews filed</b>.</li>
+  </ol>
+
+  <h3>Phase 6 &middot; The second wave &mdash; next week</h3>
+  <ol start="17">
+    <li>G goes out. H goes out. Anything the verdicts asked for is re-cut. Compliance supplies section numbers
+      if they are ever wanted. The film's music bed is cleared for use beyond the branch site before it goes
+      anywhere else.</li>
+  </ol>
+</div></section>
+
+<section class="band" id="assets"><div class="wrap">
   <h2>The three assets, and where they live</h2>
   <table class="t">
     <tr><th>Asset</th><th>Address</th><th>What it does</th></tr>
