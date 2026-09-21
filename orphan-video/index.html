@@ -293,7 +293,8 @@
          whether they still are.</p></div>
   </div>
   <p class="fine" style="margin-top:16px">We are not asking you to distrust anybody. We are telling you
-    what the law already gives you, so that whatever you decide, you decide it with the full picture.</p>
+    what the law already gives you, so that whatever you decide, you decide it with the full picture.
+    <a id="protlink" href="protected.html">Sixteen of those protections, quoted and in plain words &rarr;</a></p>
 </div></section>
 
 <section class="choose" id="choose"><div class="wrap">
@@ -370,6 +371,9 @@ var SVC = 'RRB_SERVICE_URL';
 var Q = new URLSearchParams(location.search);
 var TOKEN = Q.get('t') || '';     /* opaque, from the letter — never a policy number */
 var SEG = Q.get('s') || '';       /* the segment letter the letter was sent under */
+/* the protections page carries the same token on, so a click from there reads the same */
+if (TOKEN) document.getElementById('protlink').href = 'protected.html?t=' + encodeURIComponent(TOKEN) +
+  (SEG ? '&s=' + encodeURIComponent(SEG) : '');
 var SAID = {
   selfserve: 'Opening your review now — take your time, and it saves as you go.',
   assign:   'We will match you to a qualified agent and introduce you within two working days.',

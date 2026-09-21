@@ -154,6 +154,11 @@ var SVC = {
      Two of the four answers open a task for the branch; two only log.       */
   RESP_SHEET:  'Client Responses',
 
+  /* The branch's own feedback on the transition letters and the film, from
+     the team review page, before anything goes to a client. Name, what they
+     looked at, a verdict and a comment. No client details travel this road. */
+  TEAM_SHEET:  'Team Feedback',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -234,6 +239,10 @@ function doGet(e) {
      must never block the page that sent it */
   if (p.action === 'resp') {
     return json_(clientResponse_(p));
+  }
+  /* an agent's verdict on a letter or the film, from the team review page */
+  if (p.action === 'feedback') {
+    return json_(teamFeedback_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -1581,6 +1590,43 @@ function clientResponse_(p) {
       spec.status, '', '', '']);
   } catch (e) { return { ok: false }; }
   return { ok: true, needs: spec.needs };
+}
+
+/** Where the team's feedback on the letters and the film lands. Created on
+ *  demand, like Client Responses. One row per verdict; the branch reads it
+ *  down before the send and answers every "change" and "hold" by name. */
+function teamSheet_() {
+  var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.TEAM_SHEET);
+    sh.appendRow(['Received', 'Name', 'Town', 'Item', 'Verdict', 'Comment', 'Taking assignments',
+                  'Answered by', 'Answered on']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** What the team can look at, and the three things they can say about it. */
+var FEEDBACK_ITEMS = { A: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1,
+                       film: 1, page: 1, protected: 1, script: 1, whole: 1 };
+var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
+
+/** One verdict from one agent. Fire-and-forget, same as a client click: the
+ *  page must never wait on the sheet. Nothing here is a client detail. */
+function teamFeedback_(p) {
+  var item = String(p.i || '').trim();
+  var verdict = String(p.v || '').trim().toLowerCase();
+  if (!FEEDBACK_ITEMS[item] || !FEEDBACK_VERDICTS[verdict]) return { ok: false };
+  var name = String(p.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
+  if (!name) return { ok: false, error: 'name' };
+  var town = String(p.town || '').replace(/[<>]/g, '').trim().slice(0, 40);
+  var comment = String(p.c || '').replace(/[<>]/g, '').trim().slice(0, 600);
+  var taking = String(p.a || '') === '1' ? 'yes' : '';
+  try {
+    teamSheet_().appendRow([new Date(), name, town, item, FEEDBACK_VERDICTS[verdict], comment, taking, '', '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true };
 }
 
 /** The agent taps "I sent this" in their portal — the one event we cannot

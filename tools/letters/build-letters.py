@@ -25,6 +25,7 @@ LOGO = 'https://rickyrampersadbranch.com/logo-mark.png'
 FILM = 'https://rickyrampersadbranch.com/orphan-video?t={{token}}&s={{segment}}'
 REVIEW = 'https://donthaveanagent.com/start?t={{token}}'
 ASSIGN = 'https://rickyrampersadbranch.com/orphan-video?t={{token}}&s={{segment}}#choose'
+PROTECT = 'https://rickyrampersadbranch.com/orphan-video/protected?t={{token}}&s={{segment}}'
 
 # ── the eight openings ────────────────────────────────────────────────
 SEGMENTS = {
@@ -135,13 +136,15 @@ def shell(seg, cfg):
     <div style="display:inline-block;margin-top:13px;background:#00CFEA;color:#ffffff;border-radius:9px;padding:10px 17px;font:800 14.5px/1 'Plus Jakarta Sans',Arial,sans-serif">&#9654;&nbsp; Watch it</div>
   </td></tr></table>
 </a>'''
-    law_block = '''
+    law_block = f'''
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
 <tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:12px 15px;font:400 13.5px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <b style="display:block;color:#12202e;margin-bottom:4px;font-size:13px">One thing worth knowing</b>
-  A life policy cannot be transferred to another company. If anyone suggests you move, what is being proposed is
-  that you end this one and buy a new one. Under the Insurance Act they must discuss the advantages <i>and</i> the
-  disadvantages with you first &mdash; so ask for it in writing.
+  A life policy cannot be transferred. No agent, no broker and no other company can move it for you &mdash; if
+  anyone suggests you move, what is being proposed is that you end this one and buy a new one, priced at your
+  age now. Under the Insurance Act, whoever suggests it must discuss the advantages <i>and</i> the disadvantages
+  with you first &mdash; so ask for it in writing.
+  <a href="{PROTECT}" style="display:block;margin-top:7px;color:#07606f;font-weight:700;text-decoration:none">How the law protects you, in plain words &rarr;</a>
 </td></tr></table>'''
     doors_block = f'''
 <p style="margin:0 0 12px">Then, whenever suits you, there is a short review of what you hold. <b>It is the same
@@ -186,8 +189,9 @@ def shell(seg, cfg):
   {film_block}
   {law_block}
   {doors_block}
-  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Your birthday note and your premium
-    reminders carry on either way, and we will ask again rather than assume.</p>
+  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Nothing about how the branch looks
+    after you changes: the birthday note, the premium reminder before a due date, and a person who answers when
+    you call, all carry on exactly as they have. We will ask again rather than assume.</p>
   <p style="margin:18px 0 0;font:400 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>

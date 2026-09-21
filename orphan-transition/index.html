@@ -101,7 +101,7 @@
 
 <nav class="toc"><div class="wrap">
   <a href="#objective">Objective</a><a href="#assets">The three assets</a><a href="#segments">Segments</a>
-  <a href="#letters">Letters</a><a href="#loop">Feedback loop</a><a href="#brief">The agent's brief</a>
+  <a href="#letters">Letters</a><a href="#team">Team review</a><a href="#loop">Feedback loop</a><a href="#brief">The agent's brief</a>
   <a href="#calls">The call list</a><a href="#scoreboard">Scoreboard</a><a href="#rules">Rules</a>
 </div></nav>
 
@@ -126,6 +126,10 @@
     <tr><td><b>The film</b></td><td><code>rickyrampersadbranch.com/orphan-video</code></td>
         <td>106 seconds. What carries on without an agent, what you give up, what is inside the policy,
         what the Act entitles you to, and why a qualified agent is worth having</td></tr>
+    <tr><td><b>How the law protects you</b></td><td><code>rickyrampersadbranch.com/orphan-video/protected</code></td>
+        <td>Sixteen protections from the Insurance Act, quoted as the Act states them and explained in plain
+        words: what anyone owes a client before a replacement, what a running policy has already earned,
+        premiums paid to a representative, and who to turn to. Linked from every letter's Act note</td></tr>
     <tr><td><b>Door one &mdash; the review, self-serve</b></td><td><code>donthaveanagent.com/start</code></td>
         <td>The client fills it in; the assigned agent reads it before they meet</td></tr>
     <tr><td><b>Door two &mdash; the review, together</b></td><td>the <code>assign</code> click, then
@@ -199,6 +203,28 @@
     <tr><td><code>{{token}}</code></td><td>Generated per send</td><td>Opaque. Resolved against the send list, which stays outside the repository. <b>Never a policy number</b></td></tr>
     <tr><td><code>{{segment}}</code></td><td>The waterfall</td><td>One letter, A&ndash;H. Travels with every click so responses can be read by segment</td></tr>
   </table>
+</div></section>
+
+<section class="band" id="team"><div class="wrap">
+  <h2>Before the send: the team sees it first</h2>
+  <p class="sub">The agents who receive these clients read every letter and the film before a client does,
+    and say so on the record.</p>
+  <p><a href="team-review.html">Open the team review page &rarr;</a></p>
+  <div class="cols three">
+    <div class="cd"><h3>What they see</h3><p>The eight letters, the film, the client page, the protections
+      page and the call script &mdash; plus what the branch has actually done this year, from the activity
+      log, so the record is in front of them before a client asks.</p></div>
+    <div class="cd"><h3>What they say</h3><p>One verdict per item: send as it is, send with a change, or
+      hold. A comment, their town, and whether they are taking assignments. It lands on the
+      <b>Team Feedback</b> tab of the Service Questionnaires spreadsheet.</p></div>
+    <div class="cd"><h3>What the branch owes back</h3><p>An answer to every &ldquo;change&rdquo; and
+      &ldquo;hold&rdquo;, by name, before the send. Then the roster of receiving agents by town, built from
+      the ticks.</p></div>
+  </div>
+  <div class="box note"><h3>Companion pages for the assigned agent</h3>
+    <p style="margin:0"><a href="if-they-say.html">If a client says&hellip;</a> &mdash; what a client may
+    repeat and what is simply true in each case. The tone guide on the team review page &mdash; how the
+    first thirty seconds go. Neither names or characterises anyone.</p></div>
 </div></section>
 
 <section class="band" id="loop"><div class="wrap">
@@ -287,6 +313,8 @@
       <code>RRB_SERVICE_URL</code> placeholder replaced, or every response vanishes.</li>
     <li><b>Nothing goes out before the receivers are named.</b> Decide who takes assignments before the
       send, by town.</li>
+    <li><b>Nothing goes out before the team has read it.</b> The team review page first, the verdicts
+      answered, then the send. A letter the agents have not seen is a letter they cannot stand behind.</li>
     <li><b>Warm the domain.</b> Smallest segments first, across several days.</li>
     <li><b>Reply-to is a person.</b> A no-reply address on a letter signed by the branch manager undoes
       the letter.</li>
