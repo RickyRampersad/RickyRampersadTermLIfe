@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agent Brief | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--teal:#00CFEA;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--notebg:#eafaFD;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:15.5px/1.6 Inter,system-ui,sans-serif}
+  .wrap{width:min(760px,100% - 34px);margin:0 auto;padding:26px 0 60px}
+  .sheet{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .head{background:var(--navy);color:#eaf4ff;padding:16px 22px;display:flex;align-items:center;gap:12px;
+    border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  .head img{width:36px;height:36px;border-radius:9px}
+  .head b{font-family:var(--f);font-size:14px;display:block} .head i{font-style:normal;font-size:11px;color:#8fd8e6}
+  .head .tag{margin-left:auto;font-family:var(--f);font-weight:800;font-size:10px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--gold)}
+  .body{padding:22px}
+  h1{font-family:var(--f);font-size:20px;color:var(--ink);margin:0 0 4px;letter-spacing:-.3px}
+  .sub{color:var(--dim);margin:0 0 18px;font-size:14px}
+  h2{font-family:var(--f);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark);
+    margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  .row{display:grid;grid-template-columns:170px 1fr;gap:8px 14px;font-size:14.5px;padding:5px 0}
+  .row span:first-child{color:var(--dim)}
+  .f{display:inline-block;min-width:120px;border-bottom:1px dashed #b9c8d3;color:#8a6420;
+    font-family:ui-monospace,Menlo,monospace;font-size:12.5px;padding:0 4px}
+  .open{background:var(--notebg);border:1px solid #a8dfeb;border-left:4px solid var(--teal);border-radius:9px;
+    padding:13px 16px;margin:8px 0 0}
+  .open b{display:block;color:var(--tdark);font-family:var(--f);font-size:12.5px;margin-bottom:4px}
+  .no{background:var(--stopbg);border:1px solid #edc9bf;border-left:4px solid var(--stop);border-radius:9px;
+    padding:13px 16px;margin:14px 0 0;font-size:14px}
+  .no b{color:var(--stop);display:block;font-family:var(--f);font-size:12.5px;margin-bottom:4px}
+  ul{margin:6px 0 0;padding-left:18px} li{margin:4px 0}
+  .fine{color:var(--dim);font-size:12.5px;margin-top:18px}
+  @media print{body{background:#fff}.wrap{padding:0}.sheet{border:0}}
+</style>
+</head>
+<body><div class="wrap"><div class="sheet">
+  <div class="head">
+    <img src="../logo-mark.png" alt="">
+    <div><b>Ricky Rampersad Branch</b><i>Agent brief &middot; transition assignment</i></div>
+    <div class="tag">Internal</div>
+  </div>
+  <div class="body">
+    <h1>Your new client</h1>
+    <p class="sub">Filled in by the branch from the sheet and the portfolio. Not for the client. Read it all
+      before you make contact &mdash; the point of it is that you walk in knowing.</p>
+
+    <h2>Who</h2>
+    <div class="row"><span>Client</span><span class="f">{{client_name}}</span></div>
+    <div class="row"><span>Town</span><span class="f">{{town}}</span></div>
+    <div class="row"><span>Reach them on</span><span class="f">{{best_route}}</span>
+      <span></span><span style="font-size:12.5px;color:var(--dim)">the route that actually works &mdash; not every number on file does</span></div>
+    <div class="row"><span>Also at this address</span><span class="f">{{household_members}}</span>
+      <span></span><span style="font-size:12.5px;color:var(--dim)">one agent for the whole household. Their policies are yours too.</span></div>
+
+    <h2>Why you are being introduced</h2>
+    <div class="row"><span>They clicked</span><span class="f">{{response}}</span></div>
+    <div class="row"><span>On</span><span class="f">{{received}}</span>
+      <span></span><span style="font-size:12.5px;color:var(--dim)">the promise was a named agent within two working days of this date</span></div>
+    <div class="row"><span>Segment</span><span class="f">{{segment}} &middot; {{segment_name}}</span></div>
+    <div class="open"><b>So open on this</b>
+      <span class="f" style="min-width:90%">{{opening_line}}</span>
+      <ul style="font-size:13.5px;color:var(--dim)">
+        <li><b>A</b> &mdash; a policy of theirs has matured; there is money waiting</li>
+        <li><b>B</b> &mdash; a policy is paid up; they may not know what it is worth</li>
+        <li><b>C</b> &mdash; they carry a waiver of premium and almost certainly do not know</li>
+        <li><b>D</b> &mdash; premiums come off a payroll; we are checking the deduction, they owe nothing</li>
+        <li><b>E</b> &mdash; held {{years}} years; the premium is priced at the age they started</li>
+        <li><b>F</b> &mdash; a straightforward review of what they hold</li>
+        <li><b>G</b> &mdash; a lapsed policy that may still hold value</li>
+      </ul>
+    </div>
+
+    <h2>What they hold</h2>
+    <div class="row"><span>Policies in force</span><span class="f">{{inforce_count}}</span></div>
+    <div class="row"><span>Held since</span><span class="f">{{first_year}} &middot; {{years}} years</span></div>
+    <div class="row"><span>Paid up to</span><span class="f">{{paid_to}}</span>
+      <span></span><span style="font-size:12.5px;color:var(--dim)">from the sheet, not the CRM &mdash; the CRM's status field is stale</span></div>
+    <div class="row"><span>Collected by</span><span class="f">{{billing_type}}</span></div>
+    <div class="row"><span>Riders on file</span><span class="f">{{riders}}</span></div>
+
+    <h2>What they already told us</h2>
+    <div class="row"><span>Review filed?</span><span class="f">{{review_ref}}</span></div>
+    <div class="row"><span>They said they want</span><span class="f">{{review_wants}}</span></div>
+    <div class="row"><span>They are worried about</span><span class="f">{{review_concerns}}</span></div>
+    <div class="row"><span>Preferred contact</span><span class="f">{{review_contact_pref}}</span></div>
+    <p style="font-size:13.5px;color:var(--dim);margin:8px 0 0">If a review is on file, read it before you
+      call. If the client chose to do it with you, you bring it &mdash; send your own
+      <code>donthaveanagent.com/r/&lt;your ref&gt;</code> link and walk them through it.</p>
+
+    <h2>Last contact from the branch</h2>
+    <div class="row"><span>Most recent</span><span class="f">{{last_contact}}</span></div>
+    <div class="row"><span>Logged contacts since 2025</span><span class="f">{{contact_count}}</span></div>
+
+    <div class="no"><b>Not in this brief, on purpose</b>
+      Nothing about the agent who left &mdash; if the client raises it, &ldquo;they have moved on from
+      Guardian Life&rdquo; is the whole answer. No arrears figure: if Paid up to is behind, it is the
+      branch's to reconcile against cash and the deduction file before anyone tells a client they owe
+      anything. No promise the branch has not already made in writing.
+    </div>
+
+    <h2>Done means</h2>
+    <p style="margin:0;font-size:14.5px">A review filed on form 2000-03-147, signed, reference on the
+      Client Responses row, your name on the client's file. Nothing else counts.</p>
+
+    <p class="fine">Template. The filled brief is built outside the repository and carries client data;
+      it must never be committed, posted, or forwarded outside the branch.</p>
+  </div>
+</div></div>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body></html>

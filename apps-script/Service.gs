@@ -147,6 +147,13 @@ var SVC = {
      were on. Answering these fast is the whole point of them.            */
   CALL_SHEET:  'Callback Requests',
 
+  /* A client's one-click answer to the transition letter. The letter carries
+     an opaque token and a segment letter; the click carries them back with
+     which door was chosen. No name and no policy number travels in the URL —
+     the token is resolved against the send list held outside this sheet.
+     Two of the four answers open a task for the branch; two only log.       */
+  RESP_SHEET:  'Client Responses',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -222,6 +229,11 @@ function doGet(e) {
   }
   if (p.action === 'callback') {
     return json_(callbackRequest_(p));
+  }
+  /* a client answering the transition letter — one click, fire-and-forget,
+     must never block the page that sent it */
+  if (p.action === 'resp') {
+    return json_(clientResponse_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -1526,6 +1538,49 @@ function logHit_(agent, ev, ref) {
     linkSheet_().appendRow([new Date(), agent, ev, String(ref || '').slice(0, 60), '']);
   } catch (e) { return { ok: false }; }
   return { ok: true };
+}
+
+/** Where a client's answer to the transition letter lands. Created on demand
+ *  so the existing spreadsheet picks it up without re-running setup. The
+ *  Status, Assigned to and Assigned on columns are the branch's to fill:
+ *  the row is the task, and it is not done until an agent is named on it. */
+function responseSheet_() {
+  var sh = ss_().getSheetByName(SVC.RESP_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.RESP_SHEET);
+    sh.appendRow(['Received', 'Token', 'Segment', 'Response', 'Needs', 'Page', 'Referrer',
+                  'Status', 'Assigned to', 'Assigned on', 'Note']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** The four doors on the transition page, and what each one asks of us.
+ *  Anything else in the query string is not recorded. */
+var RESPONSES = {
+  selfserve: { needs: 'nothing yet — watch for the review',  status: 'Logged' },
+  assign:    { needs: 'a named agent within two working days', status: 'Open' },
+  review:    { needs: 'a policy summary, then an agent',      status: 'Open' },
+  question:  { needs: 'a reply the same day',                 status: 'Open' },
+  informed:  { needs: 'nothing — ask again in six months',    status: 'Logged' },
+};
+
+/** One click from a client. Fire-and-forget: it answers ok whatever happens,
+ *  because the page that sent it must never be blocked by the sheet. */
+function clientResponse_(p) {
+  var r = String(p.r || '').trim().toLowerCase();
+  var spec = RESPONSES[r];
+  if (!spec) return { ok: false };
+  var token = String(p.t || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  var seg = String(p.s || '').replace(/[^A-Z0-9]/g, '').slice(0, 2);
+  try {
+    responseSheet_().appendRow([
+      new Date(), token, seg, r, spec.needs,
+      String(p.p || '').slice(0, 80), String(p.ref || '').slice(0, 120),
+      spec.status, '', '', '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true, needs: spec.needs };
 }
 
 /** The agent taps "I sent this" in their portal — the one event we cannot
