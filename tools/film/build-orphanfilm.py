@@ -28,7 +28,7 @@ OUT = OUTDIR / 'film.html'
 TIMING = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else HERE / 'orphan-timing.json'
 D = json.load(open(TIMING))['durs']
 ms = [int(round(d * 1000)) for d in D]
-assert len(ms) == 17, f'expected 17 scenes, timing has {len(ms)}'
+# the scene count is whatever the script says; the check against it is below
 
 s = SRC.read_text()
 

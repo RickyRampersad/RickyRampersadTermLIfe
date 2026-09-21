@@ -497,6 +497,21 @@ word for these clients and must not appear in an address a client holds.
 `orphan-transition/` too, matching the film by file name, so a re-timing
 reaches every page that embeds it.
 
+**The branch film is built from one file.** `tools/film/orphan-lines.json`
+carries, per scene, the spoken line, the words on screen and the visual
+(`title`, `statement`, `keeps`, `keeps-off`, `keeps-find`, `pivot`, `lock`,
+`act`, `creds`, `click`, `close`); `build-orphanfilm.py` renders the page from
+it, and `voice-lines.py orphan-lines.json <vox> --changed-only --timing
+orphan-timing.json --films films.json --key orphan` voices only the lines
+whose words changed, keeps every other recording, and times the scenes from
+the audio (line plus 1.15 s of air, plus `extra` where a scene asks for it).
+Then `build-orphanfilm.py`, `sfx.py`, `usetrack.py <track> orphan`,
+`record.js` (alone on the machine, with the poster path so the poster is
+re-shot), `mixany.py`, `chapters.py`. The mixer reads the vox directory named
+in `films.json` **beside itself** (`tools/film/voorph`, git-ignored) — copy
+the new WAV and VTT files there before mixing, or it re-encodes the old
+voice under the new timing and the caption gives it away.
+
 - **Nothing names or characterises anyone who left.** "Your representative
   has moved on from Guardian Life" is the whole reference — in every letter,
   page, film line and script. No reason, no tone, and no warning that someone
