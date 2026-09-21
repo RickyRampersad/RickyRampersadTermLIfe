@@ -157,195 +157,89 @@ SHIELD = ('<svg class="shield{cls}" viewBox="0 0 48 48" aria-hidden="true">'
 
 YEARS = ''.join(f'<i style="--n:{i}"></i>' for i in range(12))
 
-SCENES = f"""
-<!-- 1 · title -->
-<section class="scene of warm" data-d="{ms[0]}">
-  <div class="inner">
-    {SHIELD.format(cls='', gid='sh1')}
-    <div class="eyebrow st d2">A Ricky Rampersad Branch film</div>
-    <h1 class="st d3">Your representative<br>has <em>moved on.</em></h1>
-    <div class="big-sub st d4">Your policy has not.</div>
-  </div>
-</section>
+# ── the scenes, rendered from orphan-lines.json ───────────────────────
+# Every scene names its visual; the words on screen live beside the words
+# that are spoken, so a re-cut is a change to one file. The visuals are the
+# shapes the CSS above already draws.
+LINES = json.load(open(HERE / 'orphan-lines.json'))['scenes']
+assert len(LINES) == len(ms), f'{len(LINES)} scenes in the script, {len(ms)} in the timing'
 
-<!-- 2 · the question -->
-<section class="scene of" data-d="{ms[1]}">
-  <div class="inner">
-    <div class="eyebrow st">The question nobody answers</div>
-    <h1 class="st d2">What happens if you<br>choose <em>not</em> to have<br>an agent at all?</h1>
-  </div>
-</section>
+TONE = {'title': 'warm', 'pivot': 'warm', 'lock': 'warm', 'click': 'warm', 'close': 'warm', 'act': 'law'}
+TICK = {'keeps': '&#10003;', 'keeps-off': '&#8212;', 'keeps-find': '&#9873;'}
+CUR = ('<svg class="cur" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" '
+       'stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-6 1.5L10 20z"/></svg>')
 
-<!-- 3 · the honest part -->
-<section class="scene of" data-d="{ms[2]}">
-  <div class="inner">
-    <div class="eyebrow st">Start with the honest part</div>
-    <h1 class="st d2">Your policy does not<br>need an agent <em>to work.</em></h1>
-  </div>
-</section>
 
-<!-- 4 · what keeps running -->
-<section class="scene of" data-d="{ms[3]}">
-  <div class="inner">
-    <div class="eyebrow st">This carries on regardless</div>
-    <div class="keeps">
-      <div class="keep"><span class="tk">&#10003;</span><div><b>Your premiums are collected</b>
-        <i>Exactly as they are today</i></div></div>
-      <div class="keep"><span class="tk">&#10003;</span><div><b>Your cover stays in force</b>
-        <i>Same sum assured, same beneficiaries</i></div></div>
-      <div class="keep"><span class="tk">&#10003;</span><div><b>A claim is still paid</b>
-        <i>By Guardian Life, not by a person</i></div></div>
-    </div>
-  </div>
-</section>
+def br(t):
+    """' / ' in a headline is a line break; <em> marks the gold word."""
+    return (t or '').replace(' / ', '<br>')
 
-<!-- 5 · and the branch keeps writing -->
-<section class="scene of" data-d="{ms[4]}">
-  <div class="inner">
-    <div class="eyebrow st">And the branch keeps writing</div>
-    <div class="keeps">
-      <div class="keep"><span class="tk">&#9993;</span><div><b>A note on your birthday</b>
-        <i>Every year, agent or no agent</i></div></div>
-      <div class="keep"><span class="tk">&#9200;</span><div><b>A reminder before a premium is due</b>
-        <i>So nothing lapses by accident</i></div></div>
-      <div class="keep"><span class="tk">&#9742;</span><div><b>A desk that answers</b>
-        <i>A person, not a menu</i></div></div>
-    </div>
-  </div>
-</section>
 
-<!-- 6 · the pivot -->
-<section class="scene of warm" data-d="{ms[5]}">
-  <div class="inner">
-    <div class="pivot st">So what do you<br><em>actually give up?</em></div>
-  </div>
-</section>
+def render(i, sc):
+    v = sc['visual']
+    tone = sc.get('tone', TONE.get(v, ''))
+    cls = 'scene of' + (f' {tone}' if tone else '')
+    eb = sc.get('eyebrow', '')
+    out = [f'<!-- {i + 1} · {v} -->', f'<section class="{cls}" data-d="{ms[i]}">']
+    inner = '<div class="inner" id="finale">' if v == 'close' else '<div class="inner">'
+    out.append('  ' + inner)
+    if v == 'title':
+        out += [f'    {SHIELD.format(cls="", gid=f"sh{i}")}',
+                f'    <div class="eyebrow st d2">{eb}</div>',
+                f'    <h1 class="st d3">{br(sc["headline"])}</h1>']
+        if sc.get('sub'):
+            out.append(f'    <div class="big-sub st d4">{sc["sub"]}</div>')
+    elif v == 'statement':
+        out += [f'    <div class="eyebrow st">{eb}</div>',
+                f'    <h1 class="st d2">{br(sc["headline"])}</h1>']
+    elif v in ('keeps', 'keeps-off', 'keeps-find'):
+        kind = {'keeps': 'keep', 'keeps-off': 'keep off', 'keeps-find': 'keep find'}[v]
+        out.append(f'    <div class="eyebrow st">{eb}</div>')
+        out.append('    <div class="keeps">')
+        for r in sc.get('rows', []):
+            tk = r.get('tk', TICK[v])
+            out.append(f'      <div class="{kind}"><span class="tk">{tk}</span><div><b>{r["b"]}</b>'
+                       f'<i>{r.get("i", "")}</i></div></div>')
+        out.append('    </div>')
+    elif v == 'pivot':
+        out.append(f'    <div class="pivot st">{br(sc["headline"])}</div>')
+    elif v == 'lock':
+        out += [f'    <div class="eyebrow st">{eb}</div>',
+                '    <div class="lock st d2">',
+                f'      <div class="age">{sc.get("age", br(sc.get("headline", "")))}</div>',
+                f'      <div class="cap">{sc.get("cap", "")}</div>',
+                f'      <div class="yrs">{YEARS}</div>',
+                '    </div>']
+    elif v == 'act':
+        out += ['    <div class="act st d2">',
+                f'      <div class="src">{eb or "The Insurance Act &middot; Trinidad and Tobago"}</div>',
+                f'      <q>{sc["quote"]}</q>']
+        if sc.get('ask'):
+            out.append(f'      <span class="ask">{sc["ask"]}</span>')
+        out.append('    </div>')
+    elif v == 'creds':
+        out.append(f'    <div class="eyebrow st">{eb}</div>')
+        out.append('    <div class="creds">')
+        for r in sc.get('rows', []):
+            out.append(f'      <div class="cred"><div class="n">{r.get("n", "")}</div><b>{r["b"]}</b>'
+                       f'<span>{r.get("i", "")}</span></div>')
+        out.append('    </div>')
+    elif v == 'click':
+        out += [f'    <div class="eyebrow st">{eb}</div>',
+                f'    <h1 class="st d2">{br(sc["headline"])}</h1>',
+                f'    <div class="click st d3">{CUR}{sc.get("ask", "One click, and we do the rest.")}</div>']
+    elif v == 'close':
+        out += [f'    <div class="eyebrow st" style="margin-bottom:14px">{eb}</div>',
+                f'    {SHIELD.format(cls="", gid=f"sh{i}")}',
+                f'    <div class="signoff st d2">{sc["headline"]}<i>{sc.get("sub", "")}</i></div>',
+                f'    <div class="url st d3">{sc.get("url", "rickyrampersadbranch.com / your-policy")}</div>']
+    else:
+        raise SystemExit(f'scene {i + 1}: unknown visual {v!r}')
+    out += ['  </div>', '</section>', '']
+    return '\n'.join(out)
 
-<!-- 7 · nobody reviews the fit -->
-<section class="scene of" data-d="{ms[6]}">
-  <div class="inner">
-    <div class="eyebrow st">Without someone of your own</div>
-    <div class="keeps">
-      <div class="keep off"><span class="tk">&#8212;</span><div><b>Nobody reviews the fit</b>
-        <i>Whether the cover you bought still matches the life you have</i></div></div>
-    </div>
-  </div>
-</section>
 
-<!-- 8 · nobody opens the policy -->
-<section class="scene of" data-d="{ms[7]}">
-  <div class="inner">
-    <div class="eyebrow st">And nobody opens the policy</div>
-    <h1 class="st d2">Nobody tells you what<br>is <em>already inside it.</em></h1>
-  </div>
-</section>
-
-<!-- 9 · the segments, named as things a client might hold -->
-<section class="scene of" data-d="{ms[8]}">
-  <div class="inner">
-    <div class="eyebrow st">Things people find out too late</div>
-    <div class="keeps">
-      <div class="keep find"><span class="tk">&#9873;</span><div><b>A waiver of premium</b>
-        <i>If illness or injury stops you working, it pays your premiums for you</i></div></div>
-      <div class="keep find"><span class="tk">&#9873;</span><div><b>A policy that has matured</b>
-        <i>It reached the end of its term. The money is yours and it is waiting</i></div></div>
-      <div class="keep find"><span class="tk">&#9873;</span><div><b>Value in one that lapsed</b>
-        <i>A policy that stopped does not always stop being worth something</i></div></div>
-    </div>
-  </div>
-</section>
-
-<!-- 10 · nobody notices -->
-<section class="scene of" data-d="{ms[9]}">
-  <div class="inner">
-    <div class="eyebrow st">Nobody notices a stopped payment</div>
-    <h1 class="st d2">Until a letter arrives,<br>and by then it has been<br><em>months.</em></h1>
-  </div>
-</section>
-
-<!-- 11 · the price lock -->
-<section class="scene of warm" data-d="{ms[10]}">
-  <div class="inner">
-    <div class="eyebrow st">The part worth protecting</div>
-    <div class="lock st d2">
-      <div class="age">Your age<br>when you started</div>
-      <div class="cap">is the price you still pay</div>
-      <div class="yrs">{YEARS}</div>
-    </div>
-  </div>
-</section>
-
-<!-- 12 · nobody can sell it back -->
-<section class="scene of" data-d="{ms[11]}">
-  <div class="inner">
-    <div class="eyebrow st">Which is why it matters</div>
-    <h1 class="st d2">Nobody can sell you<br>that price again.<br><em>Not us. Not anyone.</em></h1>
-  </div>
-</section>
-
-<!-- 13 · if anyone asks you to change it -->
-<section class="scene of law" data-d="{ms[12]}">
-  <div class="inner">
-    <div class="eyebrow st">If anyone asks you to change it</div>
-    <h1 class="st d2">The law is already<br><em>on your side.</em></h1>
-  </div>
-</section>
-
-<!-- 14 · the Act -->
-<section class="scene of law" data-d="{ms[13]}">
-  <div class="inner">
-    <div class="act st d2">
-      <div class="src">The Insurance Act &middot; Trinidad and Tobago</div>
-      <q>An agent, agency, broker, brokerage or a sales representative shall not &hellip; cause a
-        policyholder to replace a long-term insurance policy without first discussing the advantages
-        and disadvantages of the discontinuance of the policy.</q>
-      <span class="ask">So ask for it in writing. Anyone acting properly will give it to you.</span>
-    </div>
-  </div>
-</section>
-
-<!-- 15 · what a qualified agent is -->
-<section class="scene of" data-d="{ms[14]}">
-  <div class="inner">
-    <div class="eyebrow st">That is what your own agent is for</div>
-    <div class="creds">
-      <div class="cred"><div class="n">Trained</div>
-        <b>Examined before they advise</b>
-        <span>Not a friend of the family with a form. Someone who has had to earn the right.</span></div>
-      <div class="cred"><div class="n">Registered</div>
-        <b>On the record, by law</b>
-        <span>No individual may act as an agent in Trinidad and Tobago unless they are registered.</span></div>
-      <div class="cred"><div class="n">Answerable</div>
-        <b>To you, and to the branch</b>
-        <span>Their advice is on your file, and the branch stands behind it.</span></div>
-    </div>
-  </div>
-</section>
-
-<!-- 16 · the introduction -->
-<section class="scene of warm" data-d="{ms[15]}">
-  <div class="inner">
-    <div class="eyebrow st">We will make the introduction</div>
-    <h1 class="st d2">Let us introduce you<br>to <em>yours.</em></h1>
-    <div class="click st d3">
-      <svg class="cur" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"
-           stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 3l14 9-6 1.5L10 20z"/></svg>
-      One click, and we do the rest.
-    </div>
-  </div>
-</section>
-
-<!-- 17 · close -->
-<section class="scene of warm" data-d="{ms[16]}">
-  <div class="inner" id="finale">
-    <div class="eyebrow st" style="margin-bottom:14px">Thank you for watching</div>
-    {SHIELD.format(cls='', gid='sh2')}
-    <div class="signoff st d2">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
-    <div class="url st d3">rickyrampersadbranch.com / orphan-video</div>
-  </div>
-</section>
-"""
+SCENES = '\n' + '\n'.join(render(i, sc) for i, sc in enumerate(LINES))
 
 # ── splice ────────────────────────────────────────────────────────────
 chrome_end = s.index('</div>', s.index('<div id="chrome">')) + len('</div>')
@@ -407,7 +301,7 @@ out = re.sub(r'🔊 \d+ seconds, with music — tap to begin\.',
 MSG = ('const MSG = "What happens if you choose not to have an agent?\\n\\n" +\n'
        '  "From the Ricky Rampersad Branch — what carries on either way, what is already inside '
        'your policy, and what the Insurance Act entitles you to ask for.\\n\\n" +\n'
-       '  "▶ https://rickyrampersadbranch.com/orphan-video";')
+       '  "▶ https://rickyrampersadbranch.com/vid";')
 out = re.sub(r'const MSG = ".*?";', lambda m: MSG, out, count=1, flags=re.S)
 out = out.replace('document.getElementById("waBtn").href =',
                   'if (document.getElementById("waBtn")) document.getElementById("waBtn").href =')

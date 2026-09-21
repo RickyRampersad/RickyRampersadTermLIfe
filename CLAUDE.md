@@ -493,6 +493,9 @@ manual is `orphan-transition/index.html`; the client-facing pieces are
 letters link to `/your-policy/` and `/your-policy/protected`**, two stubs that
 forward to those pages with the query string intact — "orphan" is the trade's
 word for these clients and must not appear in an address a client holds.
+`/vid/` is the film alone, for WhatsApp; `tools/film/chapters.py` walks it and
+`orphan-transition/` too, matching the film by file name, so a re-timing
+reaches every page that embeds it.
 
 - **Nothing names or characterises anyone who left.** "Your representative
   has moved on from Guardian Life" is the whole reference — in every letter,
