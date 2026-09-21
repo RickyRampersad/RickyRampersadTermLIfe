@@ -691,6 +691,9 @@
     #cake b{font-size:21px}
     #cake span{font-size:12px}
   }
+  .ag.off{opacity:.55} .ag.off em{font-style:normal;font-size:9px;margin-left:4px;opacity:.9}
+  .ag.more{background:transparent;border-style:dashed}
+  .grp{display:inline-block;font:700 9.5px var(--font-b);letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin:0 6px 0 10px}
 </style>
 </head>
 <body>
@@ -699,7 +702,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>Birthdays Today</h1>
-    <div class="sub" id="hSub">The day's list &middot; every book, assigned or not &middot; Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub" id="hSub">The day's list &middot; every book, assigned or not</div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>&#10005;</span></div>
@@ -802,7 +805,7 @@
 
    NO BAKED-IN SNAPSHOT, for the same reason as the possession and licence
    walls: this repository is public. */
-var BOOK_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+var BOOK_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
 var BOOK = { configured:false, error:"No feed. Paste the Apps Script /exec URL into BOOK_URL above." };
 
 function $(s){return document.querySelector(s)}
@@ -992,10 +995,24 @@ function paint(){
      own name on it. The town line that used to sit here was never asked for and
      was the least actionable thing on the wall; the towns are still in the feed
      for the app. Ranked by count, so the biggest books read first. */
+  /* ACTIVE FIRST, AND THE REST SAID PLAINLY. Asked for on 16 September:
+     "differentiating the active agents and the non-active agents". An
+     inactive or vested servicer's clients still have a birthday, and somebody
+     has to ring them — so they stay, in their own group, greyed, with the
+     status the roster gives. And a cap: on a 1366 laptop the roll ran past
+     the fold with nothing on the wall to say so. */
+  var ACT = TB.filter(function(a){ return a.live !== false; });
+  var OFF = TB.filter(function(a){ return a.live === false; });
+  var chip = function(a, off){
+    return '<span class="ag'+(a.gap?' g':'')+(off?' off':'')+'">'+esc(a.k)
+      + (off ? '<em>'+esc((a.status||'inactive').toLowerCase())+'</em>' : '')+'<u>'+n(a.n)+'</u></span>';
+  };
+  var CAP_A = 14, CAP_O = 6;
+  var more = function(list, cap){ return list.length > cap ? '<span class="ag more">+'+(list.length-cap)+' more</span>' : ''; };
   $("#heroWhere").innerHTML = TB.length
-    ? '<b>Calling today.</b> '+TB.map(function(a){
-        return '<span class="ag'+(a.gap?' g':'')+'">'+esc(a.k)+'<u>'+n(a.n)+'</u></span>';
-      }).join('')
+    ? '<b>Calling today.</b> '+ACT.slice(0,CAP_A).map(function(a){ return chip(a,false); }).join('')+more(ACT,CAP_A)
+      + (OFF.length ? '<span class="grp">not active &middot; '+OFF.reduce(function(s,a){ return s+a.n; },0)+' clients to reassign</span>'
+          + OFF.slice(0,CAP_O).map(function(a){ return chip(a,true); }).join('')+more(OFF,CAP_O) : '')
     : '';
 
   /* The seven-year claim, with the measurement that qualifies it beside it. */

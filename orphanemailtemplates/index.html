@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orphan Outreach — E-mail Templates | Ricky Rampersad Branch</title>
+<meta name="description" content="The three letters we send to orphan policyholders, and who each one goes to.">
+<meta name="theme-color" content="#07131f">
+<!-- Internal page, reachable by anyone holding the link. The letters
+     themselves are client-facing and safe here. The segment counts and the
+     findings behind them are NOT — they stay in the working document. -->
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#07131f; --ink:#12202e; --body:#33465a; --dim:#64798e;
+    --gold:#efc24b; --gold2:#c9942c;
+    --paper:#eef1f5; --card:#ffffff; --line:#dde4ec;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.64 var(--font-b)}
+
+  header{background:var(--navy);color:#eaf4ff;padding:18px 0;border-bottom:3px solid var(--gold)}
+  header .in{width:min(800px,100% - 36px);margin:0 auto;display:flex;align-items:center;gap:14px}
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:12px;color:#9dbdd8;margin-top:2px}
+  header .tag{margin-left:auto;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--navy);background:var(--gold);border-radius:4px;padding:5px 11px;white-space:nowrap}
+
+  .page{width:min(800px,100% - 36px);margin:0 auto;padding-block:30px 72px}
+  h2{font-family:var(--font-d);font-size:clamp(18px,2.3vw,23px);color:var(--ink);
+    margin:44px 0 4px;letter-spacing:-.3px;padding-bottom:7px;border-bottom:2px solid var(--ink)}
+  h3{font-family:var(--font-d);font-size:15.5px;color:var(--ink);margin:22px 0 6px}
+  p{margin:10px 0}
+  .lede{font-size:17px;color:var(--ink)}
+  b,strong{color:var(--ink)}
+  a{color:#0b6ea8}
+
+  .seg{display:inline-block;background:var(--navy);color:var(--gold);border-radius:4px;padding:4px 11px;
+    font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;font-weight:700;margin:6px 0 2px}
+  .note{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold2);
+    border-radius:9px;padding:14px 18px;margin:16px 0 0;font-size:14.5px}
+
+  .frame{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin:14px 0 0}
+  .frame .hdr{background:#f5f7fa;border-bottom:1px solid var(--line);padding:11px 18px;font-size:13px;color:var(--body)}
+  .frame .hdr span{display:inline-block;min-width:54px;color:var(--dim);font-size:10.5px;
+    letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  .frame .stage{background:#fafbfc;padding:20px}
+
+  tt{background:#fff3d6;border:1px solid #e3cb8a;border-radius:4px;padding:1px 5px;
+    font-family:inherit;font-size:.95em;color:var(--ink)}
+  .tw{overflow-x:auto;margin:14px 0 0;border:1px solid var(--line);border-radius:9px;background:var(--card)}
+  table.ref{border-collapse:collapse;width:100%;font-size:14.5px;min-width:440px}
+  table.ref th,table.ref td{text-align:left;padding:9px 13px;border-bottom:1px solid var(--paper);vertical-align:top}
+  table.ref th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;background:#f5f7fa}
+  table.ref tr:last-child td{border-bottom:0}
+  ul{margin:8px 0 0;padding-left:20px} li{margin:6px 0}
+  .fine{color:var(--dim);font-size:13.5px}
+  footer{border-top:1px solid var(--line);margin-top:44px;padding-top:15px;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="in">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div>
+      <h1>Orphan Outreach &mdash; E-mail Templates</h1>
+      <div class="sub">Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div>
+    </div>
+    <span class="tag">Internal &middot; draft</span>
+  </div>
+</header>
+
+<div class="page">
+
+  <p class="lede">Three letters, because one does not fit an orphan book. Which one a client gets depends on
+  whether they actually hold their policy document &mdash; Stage 3 of
+  <a href="../orphan-servicing/">the process</a>.</p>
+
+  <div class="note">
+    <b>These are complete, sendable e-mails.</b> 600px table layout, inline styles, and the masthead points
+    at the hosted PNG on this site &mdash; Gmail strips an SVG logo and blocks a <tt>data:</tt> URI, so any
+    other route arrives with an empty header.
+  </div>
+
+  <h3>Merge fields</h3>
+  <div class="tw"><table class="ref">
+    <tr><th>Field</th><th>Where it comes from</th><th>Used in</th></tr>
+    <tr><td><tt>{{FirstName}}</tt></td><td>Contact first name</td><td>All three</td></tr>
+    <tr><td><tt>{{AgentName}}</tt></td><td>The departing agent &mdash; see the note under letter 1</td><td>1 and 2</td></tr>
+    <tr><td><tt>{{PaidToDate}}</tt></td><td>Paid-to date on the policy</td><td>All three</td></tr>
+    <tr><td><tt>{{ReviewLink}}</tt></td><td>Generated per client; carries a reference and a segment code, nothing else</td><td>All three</td></tr>
+    <tr><td><tt>{{ReleasedDate}}</tt></td><td>Date the contract was released from the branch</td><td>2 only</td></tr>
+  </table></div>
+
+  <h2>1 &middot; They have their document</h2>
+  <span class="seg">Contract delivered and receipted</span>
+  <p class="fine">The standard letter. Nothing is wrong with their file &mdash; we are changing who looks
+  after them and want their view before we choose.</p>
+
+  <div class="frame">
+    <div class="hdr">
+      <div><span>From</span> Ricky Rampersad Branch</div>
+      <div><span>Subject</span> A change in who looks after your policy</div>
+    </div>
+    <div class="stage">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;font-family:Helvetica,Arial,sans-serif">
+  <tr><td style="background:#07131f;padding:20px 28px;border-bottom:3px solid #efc24b">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="40" style="width:40px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="40" height="40" alt="" style="display:block;border-radius:11px"></td>
+      <td style="padding-left:12px">
+        <div style="color:#ffffff;font-size:15px;font-weight:bold;line-height:1.3">Ricky Rampersad Branch</div>
+        <div style="color:#9dbdd8;font-size:11.5px;line-height:1.3">Guardian Life of the Caribbean</div>
+      </td></tr></table>
+  </td></tr>
+  <tr><td style="padding:28px 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">Dear <tt>{{FirstName}}</tt>,</p>
+    <p style="margin:0 0 14px">I am writing to let you know that <b><tt>{{AgentName}}</tt> is no longer with the company</b>.</p>
+    <p style="margin:0 0 14px"><b>Your policy is unaffected.</b> Your contract is with Guardian Life of the Caribbean, not with any individual, so your cover, your premiums and your claim rights all continue exactly as before.</p>
+    <p style="margin:0 0 14px">Before we assign anyone new to look after you, we would like to hear from you. We would rather match you to the right person than simply pass your file along.</p>
+    <p style="margin:0 0 6px">It takes about four minutes, and there is nothing to prepare.</p>
+  </td></tr>
+  <tr><td align="center" style="padding:14px 28px 20px">
+    <a href="{{ReviewLink}}" style="display:inline-block;background:#c9942c;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15.5px;border-radius:8px;padding:14px 30px;font-family:Helvetica,Arial,sans-serif">Tell us how you've been looked after &rarr;</a>
+  </td></tr>
+  <tr><td style="padding:0 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">For your reference, our records show your premiums paid to <b><tt>{{PaidToDate}}</tt></b>. If that does not match your own records, the form is the right place to tell us &mdash; please do rather than assume we already know.</p>
+    <p style="margin:0 0 14px">If you would prefer to speak to someone instead, reply to this e-mail or call the branch and we will arrange it.</p>
+  </td></tr>
+  <tr><td style="padding:14px 28px 26px;border-top:1px solid #e3e9ef;color:#64798e;font-size:13px;line-height:1.55">
+    Ricky Rampersad<br>
+    <span style="color:#12202e">Branch Manager</span>, Ricky Rampersad Branch<br>
+    Guardian Life of the Caribbean Limited
+  </td></tr>
+</table>
+
+    </div>
+  </div>
+
+  <div class="note">
+    <b>One decision sits inside <tt>{{AgentName}}</tt>.</b> The recommendation is to name the agent: a client
+    told only that &ldquo;your agent has left&rdquo; will work out who they last dealt with and assume worse
+    than the truth. If we are advised otherwise, replace the token with <i>&ldquo;the agent who looked after
+    your policy&rdquo;</i> and the sentence still reads.
+  </div>
+
+  <h2>2 &middot; Document unaccounted for</h2>
+  <span class="seg">Released to the agent &middot; no receipt on file</span>
+  <p class="fine">Send only after someone has physically searched for these documents. This version is for
+  the ones <b>not</b> recovered &mdash; if a document is found, that client gets letter 3 instead.</p>
+
+  <div class="frame">
+    <div class="hdr">
+      <div><span>From</span> Ricky Rampersad Branch</div>
+      <div><span>Subject</span> Your policy document &mdash; and a change in who looks after you</div>
+    </div>
+    <div class="stage">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;font-family:Helvetica,Arial,sans-serif">
+  <tr><td style="background:#07131f;padding:20px 28px;border-bottom:3px solid #efc24b">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="40" style="width:40px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="40" height="40" alt="" style="display:block;border-radius:11px"></td>
+      <td style="padding-left:12px">
+        <div style="color:#ffffff;font-size:15px;font-weight:bold;line-height:1.3">Ricky Rampersad Branch</div>
+        <div style="color:#9dbdd8;font-size:11.5px;line-height:1.3">Guardian Life of the Caribbean</div>
+      </td></tr></table>
+  </td></tr>
+  <tr><td style="padding:28px 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">Dear <tt>{{FirstName}}</tt>,</p>
+    <p style="margin:0 0 14px">Two things, and the second is why I am writing personally.</p>
+    <p style="margin:0 0 14px">First, <b><tt>{{AgentName}}</tt> is no longer with the company</b>. Your policy is unaffected &mdash; your contract is with Guardian Life of the Caribbean, not with an individual.</p>
+    <p style="margin:0 0 14px">Second: <b>our records do not show that your policy document was ever handed to you.</b> It was released from this branch on <tt>{{ReleasedDate}}</tt> and we hold no signed receipt for it. That is our record-keeping, not yours, and I would rather ask you than assume.</p>
+    <p style="margin:0 0 6px"><b>Do you have your policy document?</b> If you do, tell us and we will close the gap in our file. If you do not, we will put it right.</p>
+  </td></tr>
+  <tr><td align="center" style="padding:14px 28px 20px">
+    <a href="{{ReviewLink}}" style="display:inline-block;background:#c9942c;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15.5px;border-radius:8px;padding:14px 30px;font-family:Helvetica,Arial,sans-serif">Tell us, and choose how to receive it &rarr;</a>
+  </td></tr>
+  <tr><td style="padding:0 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">You can collect it at the branch, have it couriered, have a new agent bring it in person, or receive it by e-mail. The form asks which you would prefer and when suits you.</p>
+    <p style="margin:0 0 14px">Your premiums are paid to <b><tt>{{PaidToDate}}</tt></b>. Nothing about the document affects your cover &mdash; <b>you have been insured throughout</b>.</p>
+    <p style="margin:0 0 14px">I am sorry this was not done properly the first time.</p>
+  </td></tr>
+  <tr><td style="padding:14px 28px 26px;border-top:1px solid #e3e9ef;color:#64798e;font-size:13px;line-height:1.55">
+    Ricky Rampersad<br>
+    <span style="color:#12202e">Branch Manager</span>, Ricky Rampersad Branch<br>
+    Guardian Life of the Caribbean Limited
+  </td></tr>
+</table>
+
+    </div>
+  </div>
+
+  <div class="note">
+    <b>It asks; it does not accuse.</b> A missing receipt means no proof of delivery on file &mdash; not proof
+    that nothing was delivered. Some of these clients will have their document and the paperwork was simply
+    never returned. The wording holds either way.
+  </div>
+
+  <h2>3 &middot; We are holding the document</h2>
+  <span class="seg">Never released from the branch</span>
+  <p class="fine">These never left the building, so we can say so plainly. They also tend to be long unpaid,
+  which the letter has to acknowledge without turning into a demand.</p>
+
+  <div class="frame">
+    <div class="hdr">
+      <div><span>From</span> Ricky Rampersad Branch</div>
+      <div><span>Subject</span> We are holding your policy document</div>
+    </div>
+    <div class="stage">
+
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="width:600px;max-width:100%;margin:0 auto;background:#ffffff;border-radius:10px;overflow:hidden;font-family:Helvetica,Arial,sans-serif">
+  <tr><td style="background:#07131f;padding:20px 28px;border-bottom:3px solid #efc24b">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+      <td width="40" style="width:40px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="40" height="40" alt="" style="display:block;border-radius:11px"></td>
+      <td style="padding-left:12px">
+        <div style="color:#ffffff;font-size:15px;font-weight:bold;line-height:1.3">Ricky Rampersad Branch</div>
+        <div style="color:#9dbdd8;font-size:11.5px;line-height:1.3">Guardian Life of the Caribbean</div>
+      </td></tr></table>
+  </td></tr>
+  <tr><td style="padding:28px 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">Dear <tt>{{FirstName}}</tt>,</p>
+    <p style="margin:0 0 14px"><b>Your policy document is here at the branch.</b> It was never sent out to you, and that is our error, not yours.</p>
+    <p style="margin:0 0 14px">I should also tell you that <b><tt>{{AgentName}}</tt> is no longer with the company</b>. Your contract is with Guardian Life of the Caribbean and is unaffected by that.</p>
+    <p style="margin:0 0 6px"><b>How would you like to receive it?</b> Collect it at the branch, have it couriered, have someone bring it to you, or receive it by e-mail &mdash; whichever suits you.</p>
+  </td></tr>
+  <tr><td align="center" style="padding:14px 28px 20px">
+    <a href="{{ReviewLink}}" style="display:inline-block;background:#c9942c;color:#ffffff;text-decoration:none;font-weight:bold;font-size:15.5px;border-radius:8px;padding:14px 30px;font-family:Helvetica,Arial,sans-serif">Choose how to receive your document &rarr;</a>
+  </td></tr>
+  <tr><td style="padding:0 28px 8px;color:#12202e;font-size:15.5px;line-height:1.62">
+    <p style="margin:0 0 14px">Our records show premiums paid to <b><tt>{{PaidToDate}}</tt></b>, and nothing received since. <b>I am not writing to chase that</b>, and I would like to understand what happened before anyone does.</p>
+    <p style="margin:0 0 14px">If the policy stopped because you never received anything, say so on the form and we will take it from there. In many cases a policy in this position can be reinstated.</p>
+  </td></tr>
+  <tr><td style="padding:14px 28px 26px;border-top:1px solid #e3e9ef;color:#64798e;font-size:13px;line-height:1.55">
+    Ricky Rampersad<br>
+    <span style="color:#12202e">Branch Manager</span>, Ricky Rampersad Branch<br>
+    Guardian Life of the Caribbean Limited
+  </td></tr>
+</table>
+
+    </div>
+  </div>
+
+  <h2>Before any of these send</h2>
+  <ul>
+    <li><b>The arrears must be reconciled against cash.</b> All three state a paid-to date in writing. If
+      premium was paid and not applied, we are putting a wrong figure on branch letterhead &mdash; and letter
+      3 leads with it.</li>
+    <li><b>The unreceipted documents must be physically searched for</b>, and that group split into recovered
+      (&rarr; letter 3) and not recovered (&rarr; letter 2).</li>
+    <li><b>Offer only what the branch can honour every time.</b> If courier is not certain, take it out of
+      letters 2 and 3. A second broken promise costs more than a narrower first one.</li>
+    <li><b>One send per mailbox.</b> Where two clients share an inbox, name both rather than sending twice.</li>
+    <li><b>Some clients have no e-mail.</b> They get a call, not a link &mdash; and one needs tracing before
+      anything can reach them.</li>
+    <li><b>Test-send all three to yourself on a phone</b> before any batch. The gold button on navy is the
+      element most likely to render oddly in an older Outlook.</li>
+  </ul>
+
+  <div class="note">
+    <b>The page asks; the e-mail tells.</b> A client's paid-to date appears in the letter, which goes to their
+    own address of record. It never appears on the review page, which is public and unauthenticated &mdash; a
+    forwarded link must never expose somebody's policy position.
+  </div>
+
+  <footer>
+    Internal working drafts, Ricky Rampersad Branch. Not for client circulation in this form.<br>
+    Segment sizes and the findings behind these letters are held separately and are not published on this
+    site. &middot; <a href="../orphan-servicing/">The orphan servicing process</a>
+  </footer>
+
+</div>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -11,6 +11,11 @@ data/*.json
 node_modules/
 __pycache__/
 
+# Worktrees the Claude Code harness creates for parallel build agents. Live
+# scaffolding, never source: committing one would bring a second copy of the
+# repository into the repository.
+.claude/worktrees/
+
 # Film build artefacts. The narration, the beds, the capture and the mix are
 # all reproducible from tools/film/*-lines.json and *-timing.json, and they
 # run to tens of megabytes each. The repository keeps the recipe, not the

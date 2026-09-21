@@ -181,8 +181,23 @@ function iTz_() {
   return iSs_().getSpreadsheetTimeZone() || 'America/Port_of_Spain';
 }
 
+/* EVERY MONEY FIGURE IN EVERY BRANCH INTELLIGENCE E-MAIL READ "TT$%,.2f".
+   It was Utilities.formatString('%,.2f', n). That method is sprintf-style and
+   sprintf has no thousands-grouping flag — the comma is Java's String.format,
+   a different API — so the pattern was never substituted and the literal went
+   out. On the morning of 15 September 2026 it went to an agent in a column
+   headed INSTALMENT, where a premium should have been.
+
+   The wall never showed it because the wall's pages format their own money in
+   the browser. Only the e-mails used this, in eighteen places.
+
+   No test caught it because the harness has no formatString stub, so nothing
+   in the suite had ever called this function. It does now. */
 function iMoney_(n) {
-  return 'TT$' + Utilities.formatString('%,.2f', iNum_(n)).replace(/^(-?)/, '$1');
+  var v = iNum_(n), neg = v < 0;
+  var s = Math.abs(v).toFixed(2).split('.');
+  s[0] = s[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  return (neg ? '-TT$' : 'TT$') + s.join('.');
 }
 
 /* An address the mail server will actually accept. The workbook's export put a
@@ -214,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-10a';
+var INTEL_VERSION = '2026-09-17l';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -394,7 +409,23 @@ function iWriteTab_(name, header, rows, note) {
    cache and the watchlists. Everything the web app serves comes from here.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* A NIGHT THAT FAILS SAYS SO WHERE IT CAN BE SEEN. On 17 September the ping
+   still read "built 2026-09-08 02:07": the two o'clock rebuild had been
+   dying for nine nights and nothing outside the Executions log knew. The
+   failure is now recorded — when, and the first line of why — and the ping
+   carries it; a good night clears it. */
 function intelRebuild() {
+  try {
+    var built = iRebuildCore_();
+    iSetProp_('INTEL_LAST_ERROR', '');
+    return built;
+  } catch (e) {
+    var when = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm');
+    try { iSetProp_('INTEL_LAST_ERROR', when + ' · ' + String(e && e.message || e).slice(0, 160)); } catch (e2) {}
+    throw e;
+  }
+}
+function iRebuildCore_() {
   var started = new Date();
   var today = iToday_();
   var out = {
@@ -489,11 +520,19 @@ function iBuildDues_(today) {
   var counts = { total: 0, overdue: 0, lapsed: 0, pending: 0, clean: 0 };
   var defects = { sciNumber: 0, badPaidTo: 0, badLapseDate: 0, spacedEmail: 0, noPhone: 0, noEmail: 0, unreachable: 0 };
   var modalOverdue = 0, modalChase = 0;
+  /* THE EXCLUSION LIST REACHES EVERY REPORT. Until 17 September the wall
+     screens honoured INTEL_EXCLUDE_AGENTS and the night's own domains did
+     not, so an excluded name could still surface in the manager digest's
+     league and on the watchlists. Off here means off the dues domain and
+     everything built from it. */
+  var skipX = iExcluded_();
+  defects.excludedRows = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var status = String(d.get('status', r)).trim();
     var agent  = String(d.get('agent', r)).trim();
     if (!agent && !status) continue;
+    if (iExcludes_(skipX, agent)) { defects.excludedRows++; continue; }
     counts.total++;
 
     var rawNum = d.get('number', r);
@@ -642,7 +681,76 @@ function iBuildDues_(today) {
 
    POL_MISC_SUSP_AMT is money the client has already paid that cannot be
    applied until the case closes. It is the most persuasive number on the
-   screen: it is the client's own money sitting still.                      */
+   screen: it is the client's own money sitting still.
+
+   ONE ROW PER REQUIREMENT, NOT ONE ROW PER POLICY. The tab this reads is
+   'URPPBIEX - Reqt' — YR, MTH, POLICY, DECISIONTYPE, ... REQT, REQTDT — and a
+   policy waiting on three documents is three rows of it. Until 16 September
+   2026 every row was counted as a case, so the wall said "340 pending" over a
+   list of 121 policies, and an agent with one client and four requirements
+   led the board. Everything here is now folded to the policy: the total is
+   distinct policy numbers, every by-agent, by-unit and by-status count moves
+   once per policy, and the requirement rows are kept only as the list of
+   codes on that policy. Both figures are published so the screen can say
+   "121 policies · 340 requirements" and nobody has to guess which it means.
+
+   THE EXCLUSION LIST APPLIES HERE TOO. Until the same day only the triage
+   path honoured INTEL_EXCLUDE_AGENTS, so the headline counted an excluded
+   agent's policies while the buckets under it did not, and the two never
+   added up. Whatever is taken out is reported — see iExcluded_.            */
+/* THE BOOK TAB, READ BY POLICY NUMBER FOR THE PENDING SCREEN. Seen on the
+   evening of 16 September: the pending extract carries none of the
+   policy-level columns, but the Branch Portfolio's book tab — the one the
+   dues screen reads — holds STATUS DESCRIPTION, APP RECEIVED DATE, SUM
+   ASSURED, PREMIUM and MODE for every policy by NUMBER. So a column the
+   pending extract lacks is read from the book instead of reported missing.
+   Only the columns asked for are read; null when the book is not there or
+   carries none of them. Numbers are compared on their digits, so one export's
+   5002958818 and another's "5002958818 " are one policy. The book's PREMIUM is
+   modal, and MODE says how many a year — 12, 4, 2 or 1; anything else is not
+   annualised, because a guess at a premium on a wall reads as a fact. */
+function iPendBook_(wanted) {
+  if (!wanted || !wanted.length) return null;
+  var sh = null;
+  try { sh = iTabDues_(); } catch (e) {}
+  if (!sh) return null;
+  var d = iReadCols_(sh, {
+    number: ['number'],
+    statusDesc: ['status description', 'policy status description'],
+    appReceived: ['app received date', 'application received date'],
+    sumInsured: ['sum assured', 'sum insured'],
+    premMonthly: ['premium'],
+    mode: ['mode']
+  });
+  if (!d.has || !d.has('number')) return null;
+  var have = wanted.filter(function (k) { return d.has(k); });
+  if (!have.length) return null;
+  var idx = {};
+  for (var r = 0; r < d.rows; r++) {
+    var key = iPolicyKey_(d.get('number', r));
+    if (key && !idx.hasOwnProperty(key)) idx[key] = r;
+  }
+  return {
+    cols: have,
+    has: function (k) { return have.indexOf(k) !== -1; },
+    get: function (k, policy) {
+      var r = idx[iPolicyKey_(policy)];
+      return r === undefined ? '' : d.get(k, r);
+    },
+    mode: function (policy) {
+      if (!d.has('mode')) return null;
+      var r = idx[iPolicyKey_(policy)];
+      var m = r === undefined ? 0 : iNum_(d.get('mode', r));
+      return (m === 1 || m === 2 || m === 4 || m === 12) ? m : null;
+    }
+  };
+}
+function iPolicyKey_(v) {
+  var s = String(v == null ? '' : v).trim();
+  var digits = s.replace(/\D/g, '');
+  return digits.length >= 6 ? digits : s.toUpperCase();
+}
+
 function iBuildPending_(today) {
   var sh = iTabPending_();
   if (!sh) return { error: 'No pending tab found (needs Policy, DecisionType, ReqtdaysLapsed).' };
@@ -653,16 +761,52 @@ function iBuildPending_(today) {
     branch: ['branch'], reqt: ['reqt'], reqtDt: ['reqtdt'],
     agentId: ['agentid'], agent: ['agent name'], lapsed: ['reqtdayslapsed'],
     branchName: ['branchname'], susp: ['pol_misc_susp_amt'], clientId: ['clientid'],
-    where: ['being processed in'], pay: ['payment method']
+    /* Column O. Blank means no premium has been paid on the case at all —
+       which is a different problem from money sitting in suspense, and the
+       one that matters most on a case with nothing else outstanding. */
+    prem: ['pol_misc_prem'],
+    where: ['being processed in'], pay: ['payment method'],
+    /* THE POLICY-LEVEL COLUMNS, READ ON TRUST. The Branch Portfolio's
+       pending-policies tab carries these, but its header row has not been
+       seen from here — the manager runs intelHeaders() to print it — so
+       every name below is a guess at the spelling and every one is read
+       defensively. A column that is not there goes into `missing`, and the
+       screen greys the section out and says "not in the extract yet". It
+       never shows a zero, because a zero on a wall is read as a fact. */
+    statusDesc: ['status description', 'policy status description'],
+    appReceived: ['app received date', 'application received date', 'app receive date'],
+    sumInsured: ['sum insured', 'sum assured'],
+    premMonthly: ['monthly premium', 'premium'],
+    cwa: ['cash with app', 'cwa', 'cwa amount'],
+    uwId: ['underwriter id', 'underwriter', 'uw id'],
+    uwDate: ['last underwriting date', 'last uw date', 'underwriting date']
   });
+  var has = function (k) { return !!(d.has && d.has(k)); };
+  /* What the pending tab does not carry, the book does — see iPendBook_. */
+  var book = iPendBook_(['statusDesc', 'appReceived', 'sumInsured', 'premMonthly']
+    .filter(function (k) { return !has(k); }));
+  var hasP = function (k) { return has(k) || !!(book && book.has(k)); };
+  var getP = function (k, r, policy) {
+    if (has(k)) return d.get(k, r);
+    return (book && book.has(k)) ? book.get(k, policy) : '';
+  };
+  var POLICY_COLS = { statusDesc: 'status description', appReceived: 'app received date',
+                      sumInsured: 'sum insured', premMonthly: 'monthly premium',
+                      cwa: 'cash with app', uwId: 'underwriter id', uwDate: 'last underwriting date' };
+  var missing = Object.keys(POLICY_COLS).filter(function (k) { return !hasP(k); })
+    .map(function (k) { return POLICY_COLS[k]; });
 
-  var rows = [], byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {};
-  var suspense = 0, suspenseCases = 0, stale = 0;
-  var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var skip = iExcluded_();
+  var byPolicy = {}, order = [];
+  var excludedRows = 0, excludedPolicies = {}, requirementRows = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
     if (!policy) continue;
+
+    var agent = String(d.get('agent', r)).trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) { excludedRows++; excludedPolicies[policy] = 1; continue; }
+    requirementRows++;
 
     var submit = iDate_(d.get('submit', r));
     var reqtDt = iDate_(d.get('reqtDt', r));
@@ -678,52 +822,3004 @@ function iBuildPending_(today) {
     }
     if (age !== null && (age < 0 || age > 3650)) age = null;
 
-    var status   = String(d.get('status', r)).trim() || '(none)';
-    var decision = String(d.get('decision', r)).trim() || '(none)';
-    var agent    = String(d.get('agent', r)).trim() || '(unassigned)';
-    var unit     = String(d.get('branchName', r)).trim() || '(unassigned)';
-    var susp     = iNum_(d.get('susp', r));
+    var susp    = iNum_(d.get('susp', r));
+    var premRaw = d.get('prem', r);
+    var paid    = !(premRaw === '' || premRaw == null || iNum_(premRaw) === 0);
+    var reqt    = String(d.get('reqt', r)).trim();
 
-    if (susp > 0) { suspense += susp; suspenseCases++; }
-    byStatus[status]     = (byStatus[status] || 0) + 1;
-    byDecision[decision] = (byDecision[decision] || 0) + 1;
-    if (!byAgent[agent]) byAgent[agent] = { cases: 0, susp: 0, oldest: 0 };
-    byAgent[agent].cases++; byAgent[agent].susp += susp;
-    if (age !== null && age > byAgent[agent].oldest) byAgent[agent].oldest = age;
-    if (!byUnit[unit]) byUnit[unit] = { cases: 0, susp: 0 };
-    byUnit[unit].cases++; byUnit[unit].susp += susp;
-
-    if (age !== null) {
-      AGE[age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
-        : age <= 180 ? '91-180' : '180+']++;
-      if (age > 90) stale++;
+    var row = byPolicy[policy];
+    if (!row) {
+      /* The first row of a policy names it; the rest only add requirements.
+         Suspense and premium are policy figures repeated on every row, so
+         they are taken once and never summed across the requirements —
+         summing them is how a $250 suspense would read as $750. */
+      var premMonthly = null, api = null;
+      if (has('premMonthly')) {
+        premMonthly = iNum_(d.get('premMonthly', r));
+        api = Math.round(premMonthly * 12 * 100) / 100;
+      } else if (book && book.has('premMonthly')) {
+        var modal = iNum_(book.get('premMonthly', policy)), mode = book.mode(policy);
+        if (mode === 12) premMonthly = modal;
+        if (mode) api = Math.round(modal * mode * 100) / 100;
+      }
+      var appReceived = hasP('appReceived') ? iDate_(getP('appReceived', r, policy)) : null;
+      var cwaRaw = has('cwa') ? d.get('cwa', r) : null;
+      row = byPolicy[policy] = {
+        policy: policy, client: String(d.get('client', r)).trim(),
+        clientId: String(d.get('clientId', r)).trim(),
+        status: String(d.get('status', r)).trim() || '(none)',
+        decision: String(d.get('decision', r)).trim() || '(none)',
+        agent: agent, unit: String(d.get('branchName', r)).trim() || '(unassigned)',
+        premium: paid ? iNum_(premRaw) : 0, paid: paid,
+        requirement: reqt, requirements: reqt ? [reqt] : [],
+        submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
+        age: age, suspense: susp,
+        where: String(d.get('where', r)).trim(),
+        payment: String(d.get('pay', r)).trim(),
+        /* Policy-level, null when the column is not in the extract. */
+        statusDesc: hasP('statusDesc') ? (String(getP('statusDesc', r, policy)).trim() || '(none)') : null,
+        appReceived: appReceived ? iIso_(appReceived) : '',
+        daysPending: appReceived ? iDays_(appReceived, today) : null,
+        sumInsured: hasP('sumInsured') ? iNum_(getP('sumInsured', r, policy)) : null,
+        premMonthly: premMonthly,
+        api: api,
+        cwa: has('cwa') ? iNum_(cwaRaw) : null,
+        noCash: has('cwa') ? (cwaRaw === '' || cwaRaw == null || iNum_(cwaRaw) === 0) : null,
+        uwId: has('uwId') ? String(d.get('uwId', r)).trim() : null,
+        uwDate: has('uwDate') ? iIso_(iDate_(d.get('uwDate', r))) : null
+      };
+      order.push(policy);
+    } else {
+      if (reqt && row.requirements.indexOf(reqt) < 0) row.requirements.push(reqt);
+      /* The policy has waited as long as its oldest requirement. */
+      if (age !== null && (row.age === null || age > row.age)) { row.age = age; row.requestedOn = iIso_(reqtDt); }
+      if (!row.submitted && submit) row.submitted = iIso_(submit);
+      if (susp > row.suspense) row.suspense = susp;
+      if (paid && !row.paid) { row.paid = true; row.premium = iNum_(premRaw); }
     }
-
-    rows.push({
-      policy: policy, client: String(d.get('client', r)).trim(),
-      clientId: String(d.get('clientId', r)).trim(),
-      status: status, decision: decision, agent: agent, unit: unit,
-      requirement: String(d.get('reqt', r)).trim(),
-      submitted: iIso_(submit), requestedOn: iIso_(reqtDt),
-      age: age, suspense: susp,
-      where: String(d.get('where', r)).trim(),
-      payment: String(d.get('pay', r)).trim()
-    });
   }
+
+  var rows = order.map(function (p) { return byPolicy[p]; });
+  var byStatus = {}, byDecision = {}, byAgent = {}, byUnit = {}, byStatusDesc = {};
+  var byState = {}, pendingN = 0, workableN = 0;
+  var pendAge = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var appAge  = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var suspense = 0, suspenseCases = 0, stale = 0, unpaidCases = 0, noCash = 0, api = 0;
+  var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+
+  rows.forEach(function (row) {
+    row.requirement = row.requirements.join(', ');
+    if (row.suspense > 0) { suspense += row.suspense; suspenseCases++; }
+    if (!row.paid) unpaidCases++;
+    if (row.noCash === true) noCash++;
+    if (row.api) api += row.api;
+    byStatus[row.status]     = (byStatus[row.status] || 0) + 1;
+    byDecision[row.decision] = (byDecision[row.decision] || 0) + 1;
+    if (row.statusDesc !== null) byStatusDesc[row.statusDesc] = (byStatusDesc[row.statusDesc] || 0) + 1;
+    /* The six, from the thirty-two — see iPendState_. Every row carries its
+       own state, so the triage, the accountability rows and the gated table
+       all read the same classification rather than three guesses at it. */
+    row.state = iPendState_(row.statusDesc);
+    var st = iPendStateOf_(row.state);
+    row.pending = !!st.pending; row.workable = !!st.work;
+    byState[row.state] = (byState[row.state] || 0) + 1;
+    if (row.pending) {
+      pendingN++;
+      if (row.age !== null && row.age !== undefined) {
+        pendAge[row.age <= 30 ? '0-30' : row.age <= 60 ? '31-60' : row.age <= 90 ? '61-90'
+          : row.age <= 180 ? '91-180' : '180+']++;
+      }
+      if (row.daysPending !== null && row.daysPending !== undefined) {
+        appAge[row.daysPending <= 30 ? '0-30' : row.daysPending <= 60 ? '31-60'
+          : row.daysPending <= 90 ? '61-90' : row.daysPending <= 180 ? '91-180' : '180+']++;
+      }
+      if (row.workable) workableN++;
+    }
+    if (!byAgent[row.agent]) byAgent[row.agent] = { policies: 0, susp: 0, oldest: 0 };
+    byAgent[row.agent].policies++; byAgent[row.agent].susp += row.suspense;
+    if (row.age !== null && row.age > byAgent[row.agent].oldest) byAgent[row.agent].oldest = row.age;
+    if (!byUnit[row.unit]) byUnit[row.unit] = { policies: 0, susp: 0 };
+    byUnit[row.unit].policies++; byUnit[row.unit].susp += row.suspense;
+    if (row.age !== null) {
+      AGE[row.age <= 30 ? '0-30' : row.age <= 60 ? '31-60' : row.age <= 90 ? '61-90'
+        : row.age <= 180 ? '91-180' : '180+']++;
+      if (row.age > 90) stale++;
+    }
+  });
 
   rows.sort(function (a, b) { return (b.suspense - a.suspense) || ((b.age || 0) - (a.age || 0)); });
 
   return {
-    total: rows.length, suspense: suspense, suspenseCases: suspenseCases, stale: stale,
+    /* total is distinct policies. `cases` stays on the per-agent and
+       per-unit rows as the same number, because older readers of this
+       object ask for it by that name. */
+    total: rows.length, policies: rows.length,
+    requirementRows: requirementRows, policiesFromRows: rows.length,
+    /* THE REGISTER IS NOT THE PENDING LIST. Of the 74 rows Guardian's pending
+       register carried on 17 September 2026, twelve were Premium Paying —
+       already issued — five Not Proceeded With, three File Closed and one
+       Expired. The branch manager was right that the number on the wall was
+       wrong; it was wrong in both directions at once. `pending` is the count
+       the headline uses, and the rest are named rather than dropped. */
+    pending: pendingN, workable: workableN,
+    issued: byState.issued || 0, closed: byState.closed || 0, noStatus: byState.none || 0,
+    byState: IPEND_STATES.map(function (x) {
+      return { key: x.key, label: x.lab, abbr: x.abbr, note: x.note,
+               pending: !!x.pending, work: !!x.work, n: byState[x.key] || 0 };
+    }).filter(function (x) { return x.n; }),
+    spellings: Object.keys(byStatusDesc).length,
+    pendingAgeing: pendAge, appAgeing: appAge,
+    suspense: suspense, suspenseCases: suspenseCases, stale: stale,
+    unpaidCases: unpaidCases,
     ageing: AGE, byStatus: byStatus, byDecision: byDecision,
     byAgent: Object.keys(byAgent).map(function (k) {
-      return { agent: k, cases: byAgent[k].cases, susp: byAgent[k].susp, oldest: byAgent[k].oldest };
-    }).sort(function (a, b) { return b.cases - a.cases; }),
+      return { agent: k, policies: byAgent[k].policies, cases: byAgent[k].policies,
+               susp: byAgent[k].susp, oldest: byAgent[k].oldest };
+    }).sort(function (a, b) { return b.policies - a.policies; }),
     byUnit: Object.keys(byUnit).map(function (k) {
-      return { unit: k, cases: byUnit[k].cases, susp: byUnit[k].susp };
-    }).sort(function (a, b) { return b.cases - a.cases; }),
+      return { unit: k, policies: byUnit[k].policies, cases: byUnit[k].policies, susp: byUnit[k].susp };
+    }).sort(function (a, b) { return b.policies - a.policies; }),
+    /* Never silent about what an exclusion took out — see iExcluded_. */
+    excluded: { names: Object.keys(skip).length, policies: Object.keys(excludedPolicies).length,
+                rows: excludedRows },
+    /* The policy-level fields, and which of them the extract does not carry. */
+    missing: missing,
+    byStatusDesc: hasP('statusDesc') ? byStatusDesc : null,
+    fromBook: book ? book.cols.map(function (k) { return POLICY_COLS[k]; }) : [],
+    api: hasP('premMonthly') ? Math.round(api * 100) / 100 : null,
+    noCash: has('cwa') ? noCash : null,
     rows: rows
   };
+}
+
+/* ── The pending wall ───────────────────────────────────────────────────────
+   What is submitted and not yet issued, and what is holding each one.
+
+   TWO SOURCES, BECAUSE THE BRANCH KEEPS TWO.
+   iBuildPending_ above reads the Guardian extract — Policy, DecisionType,
+   ReqtdaysLapsed, and POL_MISC_SUSP_AMT, the client's own money sitting in
+   suspense until the case closes. The branch also keeps its own working
+   lists on the portfolio workbook, and those are a different shape
+   altogether: Unit, Agent, Number, Client, Days, App Received Date,
+   Comments. No decision code, no suspense, and the comment — "full med, OFT
+   and POA", "direct debit to be amended", "first premium" — is the only
+   place that says what the case is actually waiting on.
+
+   The extract knows the money. The branch's own list knows the reason, and
+   it is the one a unit manager updates on a Monday. So both are read, and
+   whichever exists answers. There is more than one of the branch's lists,
+   so every tab of that shape is collected rather than the biggest of them.
+
+   NO CLIENT REACHES THIS SCREEN. The wall actions carry no token — a screen
+   on a wall has nobody to sign it in — and in exchange they return
+   aggregates only. Every row here holds a client's name and a policy
+   number; they are counted and thrown away, and what leaves is money, ages,
+   units, reasons, and the names of our own agents. Keep it that way.  */
+
+var IPEND_HOLD_S = 180;      // the same three minutes the day screen is held for
+
+/** Every tab of the branch's own pending shape, not just the biggest — the
+ *  branch keeps more than one. INTEL_TABS_BRANCHPEND overrides with a
+ *  comma-separated list of tab names. */
+function iBranchPendTabs_() {
+  var named = iProp_('INTEL_TABS_BRANCHPEND');
+  var out = [];
+  if (named) {
+    named.split(',').forEach(function (n) {
+      var sh = iSs_().getSheetByName(String(n).trim());
+      if (sh) out.push(sh);
+    });
+    if (out.length) return out;
+  }
+  var must = ['agent', 'client', 'app received'];
+  /* The Guardian extract is never a branch list, however its header reads.
+     The pending-policies tab carries AGENT NAME, CLIENT NAME and — once the
+     policy-level columns land — APP RECEIVED DATE, which is exactly this
+     shape, and on 16 September 2026 the extract was read twice: once as
+     the extract and once as a "branch list", with the list's row count
+     leading the screen over the extract's policy count. */
+  /* And on the evening of 16 September, with the pending extract excluded,
+     the screen said 20,392 policies pending: the DUES tab — the whole book,
+     AGENT, CLIENT, APP RECEIVED DATE and all — had been taken for a branch
+     list. So every Guardian extract this script knows is excluded by sheet
+     id, and a tab carrying an extract's own columns (STATUS DESCRIPTION,
+     PAID TO DATE, PLAN CODE) is not a list whatever else its header says. */
+  var extractIds = {};
+  [iTabPending_, iTabDues_, iTabInforce_, iTabReqs_, iTabTasks_, iTabSettled_, iTabMagnum_, iTabAccess_]
+    .forEach(function (find) {
+      var sh = null;
+      try { sh = find(); } catch (e) {}
+      if (sh) extractIds[String(sh.getSheetId())] = 1;
+    });
+  var never = ['status description', 'paid to date', 'plan code'];
+  iSs_().getSheets().forEach(function (sh) {
+    if (sh.getLastRow() < 2) return;
+    if (extractIds[String(sh.getSheetId())]) return;
+    var head = iHeaders_(sh);
+    if (never.some(function (n) { return head.indexOf(n) !== -1; })) return;
+    var ok = must.every(function (m) {
+      return head.some(function (h) { return h === m || h.indexOf(m) === 0; });
+    });
+    if (ok) out.push(sh);
+  });
+  return out;
+}
+
+/* WHAT IS HOLDING A CASE, READ OUT OF A SENTENCE SOMEBODY TYPED.
+   The comment column is free text — it is how the branch talks to itself,
+   not a field. These are the branch's own recurring words, matched as
+   keywords, and anything that matches none of them is counted as Other
+   rather than guessed at. Other growing large is the signal to add a
+   bucket, not to widen one. */
+var IPEND_REASONS = [
+  { key: 'medical',   label: 'Medical',            rx: /\b(med|medical|oft|ecg|blood|lab|urine|nurse|doctor|physician|x-?ray|apf)\b/i },
+  { key: 'bank',      label: 'Bank or direct debit', rx: /\b(dd|direct debit|bank|void ch|salary deduct|standing order|account)\b/i },
+  { key: 'signature', label: 'Signature or authority', rx: /\b(sign|signature|signed|poa|power of attorney|authoris|authoriz|consent)\b/i },
+  { key: 'premium',   label: 'First premium',      rx: /(1st premium|first premium|initial (deposit|premium)|payment (due|outstanding))/i },
+  { key: 'documents', label: 'Documents',          rx: /\b(doc|docs|document|id|identification|birth|school|certificate|copies|copy|proof|passport|permit)\b/i }
+];
+function iPendReason_(text) {
+  var t = String(text || '');
+  for (var i = 0; i < IPEND_REASONS.length; i++) {
+    if (IPEND_REASONS[i].rx.test(t)) return IPEND_REASONS[i].label;
+  }
+  return t.trim() ? 'Other' : 'No reason written';
+}
+
+function iPendBand_(age) {
+  if (age == null) return null;
+  return age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
+       : age <= 180 ? '91-180' : '180+';
+}
+
+/** The branch's own lists, folded into counts. */
+function iBranchPending_() {
+  var tabs = iBranchPendTabs_();
+  if (!tabs.length) return null;
+  var today = iToday_(), skip = iExcluded_();
+  var out = { total: 0, oldest: 0, tabs: tabs.length, excluded: 0,
+              ageing: { '0-30':0, '31-60':0, '61-90':0, '91-180':0, '180+':0 },
+              byAgent: {}, byUnit: {}, byReason: {}, stale: 0, noReason: 0 };
+
+  tabs.forEach(function (sh) {
+    var d = iReadCols_(sh, {
+      unit: ['unit'], agent: ['agent'], policy: ['number', 'policy'],
+      client: ['client'], days: ['days'], received: ['app received'],
+      comment: ['comment']
+    });
+    for (var r = 0; r < d.rows; r++) {
+      /* The client's name is read only to know the row is a case and not a
+         blank line. It is never carried any further than this loop. */
+      var isCase = String(d.get('client', r)).trim() || String(d.get('policy', r)).trim();
+      if (!isCase) continue;
+
+      var agent = String(d.get('agent', r)).trim() || '(unassigned)';
+      if (iExcludes_(skip, agent)) { out.excluded++; continue; }
+
+      /* Days is typed by hand and drifts; the received date is the fact.
+         The typed figure is the fallback when there is no date. */
+      var got = iDate_(d.get('received', r));
+      var age = got ? iDays_(got, today) : null;
+      if (age === null) {
+        var claimed = iNum_(d.get('days', r));
+        age = (claimed > 0 && claimed < 3650) ? claimed : null;
+      }
+      if (age !== null && (age < 0 || age > 3650)) age = null;
+
+      var unit = String(d.get('unit', r)).trim() || '(no unit)';
+      var comment = String(d.get('comment', r));
+      var reason = iPendReason_(comment);
+
+      out.total++;
+      if (reason === 'No reason written') out.noReason++;
+      var band = iPendBand_(age);
+      if (band) out.ageing[band]++;
+      if (age !== null) {
+        if (age > 90) out.stale++;
+        if (age > out.oldest) out.oldest = age;
+      }
+      if (!out.byAgent[agent]) out.byAgent[agent] = { cases: 0, oldest: 0 };
+      out.byAgent[agent].cases++;
+      if (age !== null && age > out.byAgent[agent].oldest) out.byAgent[agent].oldest = age;
+      out.byUnit[unit] = (out.byUnit[unit] || 0) + 1;
+      out.byReason[reason] = (out.byReason[reason] || 0) + 1;
+    }
+  });
+  return out;
+}
+
+/* ── Whose move is it ──────────────────────────────────────────────────────
+   THE RULE THE BRANCH ASKED FOR, IN ONE SENTENCE: never chase an agent about
+   something the agent cannot do anything about.
+
+   A pending list that says "sixty-one cases outstanding" invites exactly
+   that. Somebody reads the number, rings round every agent, and half those
+   calls are about a blood profile sitting at a lab — which teaches an agent
+   that being chased means nothing, and the next call, the one that mattered,
+   is ignored too. The cost of chasing badly is not the wasted call. It is
+   the chase that stops working.
+
+   So every case is put in exactly one bucket, and only two of them are
+   anybody's to work today:
+
+     READY    no requirement left, and no premium in. Nothing to underwrite.
+              Somebody has to collect money. This is the best case on the
+              whole screen and the easiest to miss, because a case with no
+              outstanding requirement looks finished on every other view.
+     AGENT    at least one requirement that is the agent's to get — a
+              signature, a proof of address, a declaration.
+     CLIENT   the client has to answer, and the agent has already asked.
+     ROUTINE  underwriting's own work, already in motion. LEAVE IT ALONE.
+     ISSUE    nothing outstanding and the premium is in. Ours is done; head
+              office has to settle it. Chase them, not the branch.
+
+   WHAT DECIDES THE BUCKET IS THE DATA, NOT A GUESS.
+   A requirement with an ordered date is in motion whatever its code says —
+   a medical that has been booked is not the agent's to hurry. Only an
+   un-ordered requirement is anybody's move, and then the code decides
+   whose. The map below is the branch's to change: INTEL_REQ_OWNERS takes
+   "MDMED=agent,PRADD=routine" and wins over every line of it.            */
+
+var IREQ_OWNER_DEFAULT = {
+  /* The client's paperwork and the client's money. An agent can get these
+     this afternoon. */
+  FUTPY: 'agent', DECLF: 'agent', PRADD: 'agent', AGEAD: 'agent',
+  REINC: 'agent', FACTF: 'agent', VERFY: 'agent',
+  /* The client has to answer this themselves. */
+  PCFEV: 'client',
+  /* Underwriting's own, whoever ordered it. */
+  MDMED: 'routine', MICRO: 'routine', OFT: 'routine', BP: 'routine',
+  EKG: 'routine', 'IMP HIST': 'routine', INFCR: 'routine', ATTPH: 'routine'
+};
+
+function iReqOwners_() {
+  var map = {};
+  Object.keys(IREQ_OWNER_DEFAULT).forEach(function (k) { map[k] = IREQ_OWNER_DEFAULT[k]; });
+  var raw = iProp_('INTEL_REQ_OWNERS');
+  if (raw) {
+    String(raw).split(',').forEach(function (bit) {
+      var kv = bit.split('=');
+      if (kv.length !== 2) return;
+      var code = String(kv[0]).trim().toUpperCase(), who = String(kv[1]).trim().toLowerCase();
+      if (code && /^(agent|client|routine)$/.test(who)) map[code] = who;
+    });
+  }
+  return map;
+}
+
+/** An ordered requirement is in motion and belongs to nobody on this floor. */
+function iReqOwner_(code, ordered, map) {
+  if (ordered) return 'routine';
+  return map[String(code || '').trim().toUpperCase()] || 'routine';
+}
+
+/* ── THE STATUS FIELD IS FREE TEXT, AND A BRANCH CANNOT COUNT IT AS IT COMES ──
+   Read against Salesforce on 17 September 2026: THIRTY-TWO distinct spellings
+   across the pending and closed statuses. "Underwriting Incomplete" (91) and
+   "Underwriting incomplete" counted as two different things. "Pending, No
+   Errors, O/S Reqt, UW Incomplete" (24), "Pending, Errors, No O/S Reqt, UW
+   Incomplete" (19), "pending, errors, o/s request, UW incomplete" (1) — one
+   status typed four ways. A wall that prints those as separate bars is a wall
+   the room argues with instead of working from.
+
+   Every one of them means one of six things, and the order below is the order
+   they are tested in, because a case that says BOTH "missing reqts" and "error
+   on policy" is a case somebody can chase a document for today. `pending` is
+   what the headline counts; `work` is what can be moved this afternoon —
+   asked for in those words: "the codes is on the right incomplete, but missing
+   requirements, and the awaiting settlement, those things can be worked on
+   today". */
+var IPEND_STATES = [
+  { key: 'reqts',  lab: 'Missing requirements',  abbr: 'REQ', pending: true,  work: true,
+    note: 'a document is outstanding — chase it' },
+  { key: 'settle', lab: 'Awaiting settlement',   abbr: 'SET', pending: true,  work: true,
+    note: 'underwriting is done — collect and settle' },
+  { key: 'errors', lab: 'Error on the policy',   abbr: 'ERR', pending: true,  work: false,
+    note: 'head office has to correct it' },
+  { key: 'uw',     lab: 'Underwriting incomplete', abbr: 'UW', pending: true, work: false,
+    note: 'with the underwriter, nothing outstanding from us' },
+  { key: 'issued', lab: 'Issued and paying',     abbr: 'PP',  pending: false, work: false,
+    note: 'already on the book — it is not pending' },
+  { key: 'closed', lab: 'Closed or not proceeded with', abbr: 'CLD', pending: false, work: false,
+    note: 'off the list — nobody is waiting on it' },
+  { key: 'none',   lab: 'No status on the record', abbr: '?', pending: true,  work: false,
+    note: 'the extract carries no status for it' }
+];
+function iPendStateOf_(key) {
+  for (var i = 0; i < IPEND_STATES.length; i++) if (IPEND_STATES[i].key === key) return IPEND_STATES[i];
+  return IPEND_STATES[IPEND_STATES.length - 1];
+}
+/* The six, from any of the thirty-two. Punctuation and case are stripped
+   first, so "Missing Reqts", "missing reqts." and "MISSING REQTS" are one. */
+function iPendState_(desc) {
+  var t = String(desc == null ? '' : desc).toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')            // the slash in "O/S" goes too, or "o s reqt" never matches
+    .replace(/\bnoo\b/g, 'no o')            // "noo/s reqt" — typed once, and it still has to count
+    .replace(/\s+/g, ' ').trim();
+  if (!t || t === 'none') return 'none';
+  if (/premium paying|inforce|in force/.test(t)) return 'issued';
+  if (/not proceeded|file closed|rejected|declined|cancel|expired|lapsed|surrender/.test(t)) return 'closed';
+  if (/settlement/.test(t)) return 'settle';
+  /* "No O/S Reqt" IS THE OPPOSITE OF "O/S Reqt", and the field carries both —
+     19 rows read "Pending, Errors, No O/S Reqt, UW Incomplete" and 24 read
+     "Pending, No Errors, O/S Reqt, UW Incomplete". A screen that matches on
+     the words alone puts them in the same bar and sends somebody chasing a
+     document that was never outstanding. The negated clauses come out first. */
+  var p = t.replace(/no (o s (reqts?|requirements?|requests?)|outstanding (reqts?|requirements?)|os reqts?|errors?)/g, ' ');
+  if (/missing reqt|missing requirement|o s reqt|o s requirement|o s request|outstanding reqt|outstanding requirement|os reqt/.test(p)) return 'reqts';
+  if (/error/.test(p)) return 'errors';
+  if (/underwriting|uw incomplete|uw complete|pending/.test(p)) return 'uw';
+  return 'none';
+}
+
+/* Task types, shortened — asked for on 17 September: "look at the
+   accountability by task type and shorten with the abbreviation". */
+var IPEND_TYPE_ABBR = {
+  'Pendings': 'PEND', 'Servicing': 'SVC', 'Renewa/PDl/Bill': 'RNW', 'Scripts/CB': 'SCR',
+  'Lic/Staffing/SA/HR': 'LIC', 'Opportunity': 'OPP', 'Training': 'TRN', 'RR Operations': 'OPS',
+  'Claims/ Mat': 'CLM', 'Innovation&Creativity': 'INV', 'Untyped': '\u2014', '(no task type)': '\u2014'
+};
+function iPendAbbr_(t) {
+  var k = String(t == null ? '' : t).trim();
+  if (IPEND_TYPE_ABBR[k]) return IPEND_TYPE_ABBR[k];
+  return k.replace(/[^A-Za-z]/g, '').slice(0, 4).toUpperCase() || '\u2014';
+}
+
+/* WHAT THE STAFF IS DOING ABOUT IT. The pending list is the agents' side; the
+   Pendings task type is the branch's own. Straight off the tracker's day
+   metrics — the same Salesforce read the day screen uses, so the two screens
+   can never disagree — per person: open, overdue, gone quiet a week, touched
+   today, closed today. */
+function iPendSupport_() {
+  if (typeof sfkMetricsSafe_ !== 'function') return null;
+  var m = null;
+  try { m = sfkMetricsSafe_(); } catch (e) { return null; }
+  if (!m || !m.ok || !m.staff) return null;
+  var names = {};
+  if (typeof publicRoster_ === 'function') {
+    try {
+      publicRoster_().forEach(function (pr) {
+        names[String(pr.staffId)] = { name: pr.name, role: pr.role || '', tier: pr.tierLabel || '' };
+      });
+    } catch (e2) {}
+  }
+  var rows = [], tot = { open: 0, overdue: 0, needs: 0, touched: 0, closed: 0 };
+  Object.keys(m.staff).forEach(function (sid) {
+    var t = ((m.staff[sid] || {}).byType || {})['Pendings'];
+    if (!t) return;
+    var who = names[sid] || { name: sid, role: '', tier: '' };
+    rows.push({ name: who.name, role: who.role, tier: who.tier,
+                open: t.open || 0, overdue: t.overdue || 0, needs: t.needs || 0,
+                touched: t.touched || 0, closed: t.closed || 0 });
+    ['open', 'overdue', 'needs', 'touched', 'closed'].forEach(function (k) { tot[k] += t[k] || 0; });
+  });
+  if (!rows.length) return null;
+  rows.sort(function (a, b) { return (b.open - a.open) || (b.overdue - a.overdue) || (b.closed - a.closed); });
+  return { type: 'Pendings', abbr: iPendAbbr_('Pendings'), date: m.date || '',
+           staff: rows, branch: tot };
+}
+
+var IPEND_BUCKETS = [
+  { key: 'ready',   label: 'Ready to settle',  note: 'no requirement left, no premium in — collect' },
+  { key: 'agent',   label: 'The agent’s move', note: 'a requirement the agent can get' },
+  { key: 'client',  label: 'The client’s move', note: 'asked, and waiting on an answer' },
+  { key: 'routine', label: 'Already in motion', note: 'underwriting’s own — do not chase' },
+  { key: 'issue',   label: 'With head office', note: 'nothing outstanding, premium in' }
+];
+
+/* WHAT A REQUIREMENT IS, FOR THE ACCOUNTABILITY ROW.
+   Three columns against each agent's name — cash, routine, medical — because
+   those are three different phone calls. Cash is the agent's to collect this
+   afternoon; a medical is booked and waited for; routine is the underwriter's
+   own paperwork moving on its own. The medical set is the routine half of
+   IREQ_OWNER_DEFAULT that names a test or a report on the client's body;
+   'IMP HIST' carries its space because that is how the extract spells it. */
+var IREQ_MEDICAL = { MDMED: 1, MICRO: 1, OFT: 1, BP: 1, EKG: 1, 'IMP HIST': 1, ATTPH: 1, INFCR: 1 };
+function iReqIsMedical_(code) { return !!IREQ_MEDICAL[String(code || '').trim().toUpperCase()]; }
+
+/** The join nobody had done: a pending policy against its own open
+ *  requirements, and the premium column that says whether any money has
+ *  arrived. Counts only — every policy number and client name stays in
+ *  this function. One row of `extract.rows` is one policy since 16 September
+ *  2026, so a policy waiting on three documents lands in one bucket once. */
+/* ── THE BOARD ─────────────────────────────────────────────────────────────
+   ONE ROW PER AGENT, AND EVERYTHING JOINED TO IT. Written on 17 September 2026
+   after the branch manager read the rebuilt wall and said, plainly, that it
+   told him nothing: "you are tallying up the days and putting the oldest nine
+   fifteen… but you want somebody to look at the wall and see how much
+   policies, how much requirements outstanding, how much are routine, how much
+   requires medicals, who are the agents, what are the requirements, who is
+   owing the cash, who is not submitting cash, the Salesforce tasks that are
+   open… broken down by which agent."
+
+   He was right. The wall carried columns of statistics; this is a worklist.
+   Every figure on a row belongs to that agent's own pending policies:
+
+     policies   their pending policies, issued and closed ones excluded
+     reqts      open requirement rows sitting on those policies
+     routine    of those, underwriting's own documents
+     medical    of those, a medical or a lab — a third party's clock
+     cash       policies waiting on a first or future premium: not submitted
+     held       money already paid that cannot be applied until the case closes
+     top        the requirements themselves, by name, biggest first
+     tasks      the Salesforce tasks ON THOSE POLICIES — open, late, quiet,
+                and what moved today — because a task is held by a member of
+                staff and is about an agent's policy, and the wall was only
+                ever showing the first half of that
+     never      policies no task has ever named: nobody is on it at all       */
+function iPendBoard_(extract, reqs, tasks) {
+  if (!extract || !extract.rows) return null;
+  var skip = iExcluded_(), listOnly = iListOnly_(), map = iReqOwners_();
+  var byPol = (tasks && tasks.byPolicy) || {};
+  var openBy = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    (openBy[k] = openBy[k] || []).push(q);
+  });
+
+  var rows = {}, tot = { policies: 0, reqts: 0, routine: 0, medical: 0, cash: 0,
+                         held: 0, open: 0, late: 0, quiet: 0, today: 0, never: 0,
+                         ready: 0, chase: 0, motion: 0 };
+  /* THE SAME JOIN READ THE OTHER WAY ROUND. The board answers "what is on
+     this agent's desk"; `codes` answers "who is holding this requirement",
+     which is the question a branch meeting actually argues about. Asked for
+     on 17 September: "on each of those codes, a further breakdown… look at
+     the name." Built in this pass rather than a second one, because the
+     agent of a requirement is the agent of the policy it sits on and that
+     join is already made here. */
+  var codes = {};
+  extract.rows.forEach(function (row) {
+    var agent = String(row.agent || '').trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) return;
+    if (row.pending === false) return;              // issued and closed are nobody's
+    var a = rows[agent] || (rows[agent] = { agent: agent, policies: 0, reqts: 0, routine: 0,
+      medical: 0, cash: 0, held: 0, oldest: 0, never: 0, labels: {},
+      ready: 0, chase: 0, motion: 0,
+      tasks: { open: 0, late: 0, quiet: 0, today: 0, none: 0 } });
+    a.policies++; tot.policies++;
+    if (row.age > a.oldest) a.oldest = row.age;
+    a.held += iNum_(row.suspense); tot.held += iNum_(row.suspense);
+
+    /* The requirements themselves — named, counted, and split the way the
+       three phone calls split: a document, a medical, or the money. */
+    var here = openBy[String(row.policy || '').trim()] || [];
+    var wantsCash = false;
+    here.forEach(function (q) {
+      if (q.listOnly) return;                       // counted policy, uncounted requirement
+      var code = String(q.code || '').trim().toUpperCase();
+      a.reqts++; tot.reqts++;
+      if (code === 'FUTPY') { wantsCash = true; return; }
+      if (iReqIsMedical_(code)) { a.medical++; tot.medical++; }
+      else { a.routine++; tot.routine++; }
+      /* THE AGE TRAVELS WITH THE NAME. "A fact find too — how long with the
+         two fact finds, proof of address, how long, and highlight in the
+         reds." A name with no age beside it is a label; a name with an age
+         is an argument. The oldest of that kind is the one that makes it. */
+      var lab = q.label || code;
+      var age = Math.round(iNum_(q.age));
+      var L = a.labels[lab] || (a.labels[lab] = { n: 0, oldest: 0 });
+      L.n++;
+      if (age > L.oldest) L.oldest = age;
+
+      var C = codes[code] || (codes[code] = { code: code, label: lab, n: 0, oldest: 0,
+        ordered: 0, medical: iReqIsMedical_(code), ages: [], by: {} });
+      C.n++;
+      if (age > C.oldest) C.oldest = age;
+      if (q.ordered) C.ordered++;
+      C.ages.push(age);
+      var W = C.by[agent] || (C.by[agent] = { who: agent, n: 0, oldest: 0 });
+      W.n++;
+      if (age > W.oldest) W.oldest = age;
+    });
+    (row.requirements || []).forEach(function (t) {
+      if (String(t || '').trim().toUpperCase() === 'FUTPY') wantsCash = true;
+    });
+    if (!here.length && !row.paid) wantsCash = true;
+    if (wantsCash) { a.cash++; tot.cash++; }
+
+    /* CAN WE WORK IT TODAY, OR NOT. Asked for on 17 September: "cases being
+       worked on today, that's clear cases with cash, with everything. And
+       project what we can't work on because there are things outstanding on
+       it." Three states, and money is not one of them, because money is
+       something we go and collect rather than something we wait for:
+
+         ready    nothing outstanding but the premium — settle it today
+         chase    a document or a medical that nobody has ordered yet
+         motion   ordered and waiting: a medical booked, a report at the lab.
+                  Outstanding, and nobody to telephone about it.
+
+       A case with three requirements counts once, in the worst of the three,
+       so the three columns add up to the policy count and can be trusted as
+       a split of it. */
+    var waits = here.filter(function (q) {
+      if (q.listOnly) return false;
+      return String(q.code || '').trim().toUpperCase() !== 'FUTPY';
+    });
+    if (!waits.length) { a.ready++; tot.ready++; }
+    else if (waits.every(function (q) { return !!q.ordered; })) { a.motion++; tot.motion++; }
+    else { a.chase++; tot.chase++; }
+
+    /* THE TASKS ON THEIR POLICIES. Late is over the branch's own thirty days;
+       quiet is nothing in a week on a task still open. */
+    var hits = byPol[iPolicyKey_(row.policy)] || [];
+    var openHits = hits.filter(function (h) { return h.open; });
+    if (!hits.length) { a.never++; tot.never++; }
+    openHits.forEach(function (h) {
+      a.tasks.open++; tot.open++;
+      if (h.os != null && h.os > 30) { a.tasks.late++; tot.late++; }
+      if (h.quiet != null && h.quiet >= 7) { a.tasks.quiet++; tot.quiet++; }
+    });
+    hits.forEach(function (h) { if (h.today) { a.tasks.today++; tot.today++; } });
+  });
+
+  var out = Object.keys(rows).map(function (k) {
+    var a = rows[k];
+    /* Ordered by age, not by count: one proof of address waiting two hundred
+       days is the sentence the room needs, and sorting by how many there are
+       buries it under a pair of fact finds filed last week. */
+    a.top = Object.keys(a.labels).map(function (l) {
+      return { label: l, n: a.labels[l].n, oldest: a.labels[l].oldest };
+    }).sort(function (x, y) {
+      return y.oldest - x.oldest || y.n - x.n || x.label.localeCompare(y.label);
+    }).slice(0, 3);
+    delete a.labels;
+    a.held = Math.round(a.held * 100) / 100;
+    return a;
+  }).filter(function (a) { return !iExcludes_(listOnly, a.agent); });
+  /* Ordered the way the calls should be made: money first, then medicals
+     waited on, then the documents, then the oldest thing on the desk. */
+  out.sort(function (x, y) {
+    return (y.cash - x.cash) || (y.medical - x.medical) || (y.reqts - x.reqts) ||
+           (y.policies - x.policies) || (y.oldest - x.oldest);
+  });
+  tot.held = Math.round(tot.held * 100) / 100;
+  tot.agents = out.length;
+
+  /* Oldest first, because a code's worst case is what decides whether it gets
+     worked this afternoon. The median goes with it so one ancient outlier
+     cannot make a healthy code look rotten. */
+  var codeList = Object.keys(codes).map(function (k) {
+    var c = codes[k];
+    c.ages.sort(function (x, y) { return x - y; });
+    var m = c.ages.length ? (c.ages.length % 2
+      ? c.ages[(c.ages.length - 1) / 2]
+      : Math.round((c.ages[c.ages.length / 2 - 1] + c.ages[c.ages.length / 2]) / 2)) : 0;
+    c.median = m;
+    delete c.ages;
+    c.agents = Object.keys(c.by).map(function (w) { return c.by[w]; })
+      .sort(function (x, y) { return y.oldest - x.oldest || y.n - x.n; });
+    delete c.by;
+    return c;
+  }).sort(function (x, y) { return y.oldest - x.oldest || y.n - x.n; });
+
+  return { agents: out, total: tot, codes: codeList,
+           listOnly: Object.keys(listOnly).length };
+}
+
+function iPendTriage_(extract, reqs) {
+  if (!extract || !extract.rows) return null;
+  var map = iReqOwners_(), skip = iExcluded_(), listOnly = iListOnly_();
+
+  var openBy = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    (openBy[k] = openBy[k] || []).push(q);
+  });
+
+  var counts = {}, oldestIn = {}, byAgent = {};
+  IPEND_BUCKETS.forEach(function (b) { counts[b.key] = 0; oldestIn[b.key] = 0; });
+  var readyAgeing = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 };
+  var readyOldest = 0, readyMoney = 0, matched = 0, unmatched = 0;
+
+  extract.rows.forEach(function (row) {
+    var agent = String(row.agent || '').trim() || '(unassigned)';
+    if (iExcludes_(skip, agent)) return;
+    /* ISSUED AND CLOSED POLICIES ARE NOBODY'S ACCOUNTABILITY. A policy that
+       is already paying, or was never proceeded with, sat on an agent's row
+       until 17 September 2026 and made twelve of the seventy-four somebody's
+       fault. Only what is genuinely pending reaches this board. */
+    if (row.pending === false) return;
+
+    var here = openBy[String(row.policy || '').trim()] || [];
+    if (here.length) matched++; else unmatched++;
+
+    var owners = {}, cash = false, medical = false, routine = false;
+    here.forEach(function (q) {
+      var who = iReqOwner_(q.code, q.ordered, map);
+      owners[who] = true;
+      var code = String(q.code || '').trim().toUpperCase();
+      if (code === 'FUTPY') cash = true;
+      if (iReqIsMedical_(code)) medical = true;
+      else if (who === 'routine') routine = true;
+    });
+    /* The pending extract's own REQT column names the requirement too, and
+       on a branch without the requirements extract it is the only word. */
+    (row.requirements || []).forEach(function (t) {
+      var code = String(t || '').trim().toUpperCase();
+      if (code === 'FUTPY') cash = true;
+      if (iReqIsMedical_(code)) medical = true;
+    });
+    /* Nothing paid and nothing else open: the only thing left is money. */
+    if (!here.length && !row.paid) cash = true;
+
+    var bucket;
+    if (!here.length) bucket = row.paid ? 'issue' : 'ready';
+    else if (owners.agent) bucket = 'agent';
+    else if (owners.client) bucket = 'client';
+    else bucket = 'routine';
+
+    counts[bucket]++;
+    var age = row.age || 0;
+    if (age > oldestIn[bucket]) oldestIn[bucket] = age;
+
+    if (bucket === 'ready') {
+      var band = iPendBand_(row.age);
+      if (band) readyAgeing[band]++;
+      if (age > readyOldest) readyOldest = age;
+      readyMoney += iNum_(row.suspense);
+    }
+
+    if (!byAgent[agent]) {
+      byAgent[agent] = { agent: agent, policies: 0, ready: 0, actionable: 0, oldest: 0, quiet: 0,
+                         routine: 0, cash: 0, medical: 0, oldestDays: 0,
+                         /* How their own pile is aging, so a row reads "six of
+                            his nine are past ninety days" rather than one
+                            worst case standing for all of them. */
+                         bands: { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '180+': 0 },
+                         over90: 0, work: 0, states: {} };
+    }
+    var a = byAgent[agent];
+    a.policies++;
+    if (bucket === 'ready') { a.ready++; a.actionable++; }
+    else if (bucket === 'agent') a.actionable++;
+    if (routine) a.routine++;
+    if (cash) a.cash++;
+    if (medical) a.medical++;
+    if ((bucket === 'ready' || bucket === 'agent') && age > a.oldest) a.oldest = age;
+    var bnd = iPendBand_(age);
+    if (bnd) a.bands[bnd]++;
+    if (age > 90) a.over90++;
+    if (row.workable) a.work++;
+    if (row.state) a.states[row.state] = (a.states[row.state] || 0) + 1;
+    /* oldest is the worst of what is theirs to work; oldestDays is the worst
+       of everything with their name on it, whoever's move it is. */
+    if (age > a.oldestDays) a.oldestDays = age;
+    /* A chase that was closed with the case still pending is the worst
+       state there is: it reads as handled and nothing is happening. */
+    if (row.chase === 'closed') a.quiet++;
+  });
+
+  var workable = counts.ready + counts.agent;
+  /* THE ROSTER, NOT THE TOP TEN. Ranked by cash first — money the agent can
+     collect this afternoon — then medicals waited on, then routine. Not by
+     policy count: an agent with twenty cases all at the lab is not the one
+     to call. The cut at ten rows was lifted on 16 September 2026, because a
+     board that names ten of fourteen agents tells the other four they are
+     not being watched.
+
+     INTEL_LIST_ONLY_EXCLUDE takes a name off this row and every other
+     per-agent row, and leaves every count above it alone — see iListOnly_. */
+  var roster = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .filter(function (a) { return !iExcludes_(listOnly, a.agent); })
+    .sort(function (x, y) {
+      return (y.cash - x.cash) || (y.medical - x.medical) || (y.routine - x.routine) ||
+             (y.actionable - x.actionable) || (y.oldestDays - x.oldestDays);
+    });
+  var culprits = roster.filter(function (a) {
+    return a.actionable > 0 || a.quiet > 0 || a.cash > 0 || a.medical > 0 || a.routine > 0;
+  });
+
+  return {
+    buckets: IPEND_BUCKETS.map(function (b) {
+      return { key: b.key, label: b.label, note: b.note, n: counts[b.key], oldest: oldestIn[b.key] };
+    }),
+    workable: workable,
+    waiting: counts.client + counts.routine + counts.issue,
+    /* `cases` is kept beside `policies` because the ready screen reads it. */
+    ready: { cases: counts.ready, policies: counts.ready, oldest: readyOldest, held: readyMoney,
+             ageing: readyAgeing,
+             agents: roster.filter(function (a) { return a.ready > 0; })
+               .sort(function (x, y) { return (y.ready - x.ready) || (y.oldest - x.oldest); }) },
+    culprits: culprits,
+    roster: roster,
+    listOnly: Object.keys(listOnly).length,
+    /* How much of the pending list could be joined to a requirement at all.
+       A low number means the two extracts are out of step, and every bucket
+       below it should be read with that in mind. */
+    matched: matched, unmatched: unmatched
+  };
+}
+
+/* ── Settled today, this week, this month ─────────────────────────────────
+   The other end of pending: what came off it. Salesforce is the authority,
+   because a policy is settled when CLIENT_PORTFOLIO__c says PREMIUM PAYING
+   against it and an issue date — not when anybody in the branch writes it
+   down. One aggregate query for the month, grouped by agent and by day,
+   bucketed here into today, the week (Monday to date) and the month. It
+   is one round trip against a fifteen-thousand-row object; a query per
+   window would be three for the same answer.
+
+   The aggregate aliases (nm, d, n) are the exception the Salesforce house
+   rule allows: only an aggregate query may alias a field.                  */
+function iSettledWindows_() {
+  var today = iToday_();
+  var out = { today: 0, week: 0, month: 0, byAgent: [],
+              excluded: { names: 0, policies: 0 }, listOnly: 0,
+              weekFrom: '', monthOf: iIso_(today).slice(0, 7) };
+  var rows;
+  try {
+    rows = iSfQuery_(
+      'SELECT AGENT__r.Name nm, ISSUE_DATE__c d, COUNT(Id) n FROM CLIENT_PORTFOLIO__c' +
+      " WHERE Policy_Status_Description__c = 'PREMIUM PAYING' AND ISSUE_DATE__c = THIS_MONTH" +
+      ' GROUP BY AGENT__r.Name, ISSUE_DATE__c') || [];
+  } catch (e) {
+    return { error: 'Salesforce said: ' + (e && e.message || e) };
+  }
+
+  /* Monday to date. getDay() is Sunday-first, so Monday is offset (day+6)%7. */
+  var monday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - ((today.getDay() + 6) % 7));
+  out.weekFrom = iIso_(monday);
+  var skip = iExcluded_(), listOnly = iListOnly_(), byAgent = {};
+  out.excluded.names = Object.keys(skip).length;
+  out.listOnly = Object.keys(listOnly).length;
+
+  rows.forEach(function (r) {
+    var n = iNum_(r.n), on = iDate_(r.d);
+    if (!n || !on) return;
+    var isToday = iDays_(on, today) === 0;
+    var inWeek = on.getTime() >= monday.getTime() && on.getTime() <= today.getTime();
+    /* The totals are the branch's, whoever wrote the business — an
+       exclusion takes a name off the list, never a policy out of the
+       month's count. What it took off the list is said. */
+    out.month += n;
+    if (inWeek) out.week += n;
+    if (isToday) out.today += n;
+
+    var agent = String(r.nm || '').trim() || '(no agent)';
+    if (iExcludes_(skip, agent)) { out.excluded.policies += n; return; }
+    if (iExcludes_(listOnly, agent)) return;
+    if (!byAgent[agent]) byAgent[agent] = { agent: agent, today: 0, week: 0, month: 0 };
+    byAgent[agent].month += n;
+    if (inWeek) byAgent[agent].week += n;
+    if (isToday) byAgent[agent].today += n;
+  });
+
+  out.byAgent = Object.keys(byAgent).map(function (k) { return byAgent[k]; })
+    .sort(function (a, b) { return (b.today - a.today) || (b.week - a.week) || (b.month - a.month) ||
+                                   a.agent.localeCompare(b.agent); });
+  return out;
+}
+
+/* THE PER-POLICY TABLE IS HELD UNLESS THE MANAGER SAYS OTHERWISE, IN WORDS.
+   intel.pending is served with no sign-in — a wall has nobody to sign it
+   in — and the audit of 15 September 2026 found intel.book serving
+   per-client rows to anybody who asked. So the table of policy numbers
+   leaves this builder only when Script Property INTEL_PENDING_ROWS_ON_WALL
+   reads exactly "show policy numbers". Not "yes", not "true", not the phrase
+   with a capital: a setting that can be switched on by accident is not a
+   gate. Everything else on the feed is a count or an agent's name. */
+var IPEND_ROWS_PHRASE = 'show policy numbers';
+function iPendRowsOnWall_() { return iProp_('INTEL_PENDING_ROWS_ON_WALL') === IPEND_ROWS_PHRASE; }
+
+/** Three sources, as the wall may see them. Aggregates only.
+ *
+ *  THE THIRD IS THE AUTHORITY ON WHAT IS HOLDING A CASE.
+ *  iBuildReqs_ reads RR_UWPRO_INSURED_Requirement — one row per requirement,
+ *  deduplicated by insured_requirement_id because the extract repeats a
+ *  requirement once per history row, closed ones dropped, each carrying a
+ *  code that IREQ_CODES turns into words: a medical examination, proof of
+ *  address, an attending physician's statement. That is the real answer to
+ *  "what is this case waiting on", and it beats reading a sentence somebody
+ *  typed in a comment column. The comments are the fallback for a branch
+ *  that has the working lists and not the extract. */
+function iPendingWall_() {
+  var today = iToday_();
+  var branch = null, extract = null, reqs = null, notes = [];
+  try { branch = iBranchPending_(); } catch (e) { notes.push('The branch lists would not read: ' + (e && e.message || e)); }
+  try {
+    var p = iBuildPending_(today);
+    if (p && !p.error) extract = p; else if (p && p.error) notes.push(p.error);
+  } catch (e2) { notes.push('The pending extract would not read: ' + (e2 && e2.message || e2)); }
+  /* Whose requirements are not ours to count — the names kept off the board,
+     whose policies still count. The register knows which policies are theirs,
+     so this is built after it and before the requirements are read. */
+  var dropReqs = null;
+  if (extract && extract.rows) {
+    var lo = iListOnly_();
+    if (Object.keys(lo).length) {
+      dropReqs = {};
+      extract.rows.forEach(function (r) {
+        if (iExcludes_(lo, String(r.agent || '').trim())) dropReqs[iPolicyKey_(r.policy)] = 1;
+      });
+    }
+  }
+  try {
+    var q = iBuildReqs_(today, dropReqs);
+    if (q && !q.error) reqs = q; else if (q && q.error) notes.push(q.error);
+  } catch (e3) { notes.push('The requirements extract would not read: ' + (e3 && e3.message || e3)); }
+
+  /* WHO IS ON IT. The Tasks tab is the branch's own record of chasing head
+     office, and every task keeps the policy it names — so this is a lookup,
+     not a search. Three states, because they want three different things
+     done: nobody has ever raised a task on this case; somebody has one open;
+     or the last one was closed and the case is still pending, which is the
+     worst of the three because it looks handled and is not. */
+  var chase = null, work = null, tasksRead = null;
+  if (extract && extract.rows) {
+    try {
+      var tasks = iBuildTasks_(today);
+      tasksRead = tasks && !tasks.error ? tasks : null;
+      if (tasks && !tasks.error) {
+        var joined = { tasks: tasks, pending: extract };
+        iJoinChases_(joined);
+        chase = { never: extract.chaseNever || 0, live: extract.chaseLive || 0,
+                  quiet: extract.chaseClosed || 0 };
+        /* The chase log's own health, by the field the KPI list is aligned
+           to. Counts and ages only — a task subject carries client names
+           and policy numbers and never leaves iBuildTasks_. */
+        work = { open: tasks.openCount || 0, closed: tasks.closed || 0,
+                 noType: tasks.noType || 0, unassigned: tasks.unassigned || 0,
+                 oldest: tasks.oldestOpen || 0, median: tasks.medianOpen || 0,
+                 stale: tasks.staleOpen || 0,
+                 byType: (tasks.byType || []).slice(0, 8).map(function (t) {
+                   return { name: t.name, abbr: iPendAbbr_(t.name), n: t.n, oldest: t.oldest, stale: t.stale };
+                 }),
+                 byAssignee: (tasks.byAssignee || []).slice(0, 12) };
+      } else if (tasks && tasks.error) { notes.push(tasks.error); }
+    } catch (e4) { notes.push('The chase log would not read: ' + (e4 && e4.message || e4)); }
+  }
+
+  /* After the chase join, never before it — the triage reads each row's
+     chase state, and a row that has not been joined yet says nothing. */
+  var board = null;
+  try { board = iPendBoard_(extract, reqs, tasksRead); }
+  catch (eB) { notes.push('The board would not build: ' + (eB && eB.message || eB)); }
+
+  var triage = null;
+  try { triage = iPendTriage_(extract, reqs); }
+  catch (e5) { notes.push('The triage would not run: ' + (e5 && e5.message || e5)); }
+
+  if (!branch && !extract && !reqs) {
+    return { configured: false, generatedAt: today,
+             error: 'No pending list found. The branch’s own sheets need Agent, Client and App Received Date; ' +
+                    'the Guardian extract needs Policy, DecisionType and ReqtdaysLapsed; ' +
+                    'the requirements extract needs insured_requirement_id, requirement_code and policy_number.' };
+  }
+
+  var skip = iExcluded_(), listOnly = iListOnly_();
+  /* Never silent about it: the policies are in the count, the requirements
+     are not, and the screen says so rather than leaving the two figures to
+     disagree in front of a room. */
+  if (reqs && reqs.listOnly && reqs.listOnly.requirements) {
+    notes.push(reqs.listOnly.requirements + ' requirement' + (reqs.listOnly.requirements === 1 ? '' : 's') +
+               ' on ' + reqs.listOnly.policies + ' polic' + (reqs.listOnly.policies === 1 ? 'y' : 'ies') +
+               ' are not counted in the requirement figures \u2014 held by agents kept off the board. ' +
+               'The policies themselves are counted.');
+  }
+  var pair = function (o) {
+    return Object.keys(o || {}).map(function (k) { return { name: k, n: o[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  };
+
+  /* The branch's list is the one a person updates, so it is the count on
+     screen. The extract carries the money and the decision codes, which the
+     branch's list has no column for. Both count policies. */
+  var support = null;
+  try { support = iPendSupport_(); } catch (eS) { notes.push('The support tasks would not read: ' + (eS && eS.message || eS)); }
+
+  var counted = branch || extract || { total: null, ageing: {}, stale: null };
+  var total = counted.total;
+  /* THE HEADLINE IS THE CLEANED REGISTER — the branch manager's decision of
+     17 September 2026, after the wall read 74 with twelve issued policies
+     inside it. Everything the register carries is still published: `register`
+     is what Guardian sent, `issued` and `closed` are what came out, and
+     `offRegister` is what the requirements extract knows and the register
+     does not. Nothing is dropped; the number is just honest. */
+  var register = null, offRegister = null;
+  if (extract) {
+    register = { rows: extract.total, pending: extract.pending, issued: extract.issued,
+                 closed: extract.closed, noStatus: extract.noStatus,
+                 spellings: extract.spellings, workable: extract.workable };
+    total = extract.pending;
+    if (reqs && reqs.rows) {
+      var onReg = {};
+      (extract.rows || []).forEach(function (r) { onReg[iPolicyKey_(r.policy)] = 1; });
+      var off = {}, offOldest = 0;
+      (reqs.rows || []).forEach(function (q) {
+        var k = iPolicyKey_(q.policy);
+        if (!k || onReg[k]) return;
+        off[k] = (off[k] || 0) + 1;
+        if (q.age && q.age > offOldest) offOldest = q.age;
+      });
+      var offN = Object.keys(off).length;
+      offRegister = { policies: offN, requirements: Object.keys(off).reduce(function (a, k) { return a + off[k]; }, 0),
+                      oldest: offOldest };
+      if (offN) {
+        notes.push(offN + (offN === 1 ? ' policy carries' : ' policies carry') + ' an open requirement and ' +
+                   (offN === 1 ? 'is' : 'are') + ' not on Guardian\u2019s pending register at all. ' +
+                   'Either the register is behind or the requirement was never closed off.');
+      }
+    }
+    if (extract.issued || extract.closed) {
+      notes.push('Guardian\u2019s register carried ' + extract.total + ' rows; ' +
+                 (extract.issued ? extract.issued + ' already issued and paying' : '') +
+                 (extract.issued && extract.closed ? ', ' : '') +
+                 (extract.closed ? extract.closed + ' closed or not proceeded with' : '') +
+                 ' are counted out of the pending total and named instead.');
+    }
+  }
+  var ageing = counted.ageing || {};
+  var stale = counted.stale;
+  var oldest = branch ? branch.oldest : 0;
+  if (!branch && extract) {
+    (extract.rows || []).forEach(function (r) { if (r.age && r.age > oldest) oldest = r.age; });
+  }
+  if (!branch && !extract && reqs) {
+    /* Only the requirements extract is here. It counts requirements rather
+       than policies, and the screen must not pass one off as the other —
+       the policy count is the number of policies they sit on. */
+    total = reqs.policies;
+    ageing = reqs.ageing || {};
+    stale = (ageing['91-180'] || 0) + (ageing['181-365'] || 0) + (ageing['365+'] || 0);
+    oldest = reqs.oldest || 0;
+  }
+
+  /* Per-agent rows honour both lists — the exclusion, and the list-only
+     one that keeps a manager's own book in the totals but off the board. */
+  var agents = branch
+    ? Object.keys(branch.byAgent).map(function (k) {
+        return { agent: k, policies: branch.byAgent[k].cases, oldest: branch.byAgent[k].oldest, susp: 0 };
+      })
+    : ((extract && extract.byAgent) || []).filter(function (a) { return !iExcludes_(skip, a.agent); })
+        .map(function (a) { return { agent: a.agent, policies: a.policies, oldest: a.oldest, susp: a.susp }; });
+  agents = agents.filter(function (a) { return !iExcludes_(listOnly, a.agent); });
+  agents.sort(function (a, b) { return b.policies - a.policies || b.oldest - a.oldest; });
+
+  /* The open requirement codes on each policy, for the gated table. */
+  var codesOn = {};
+  ((reqs && reqs.rows) || []).forEach(function (q) {
+    var k = String(q.policy || '').trim();
+    if (!k) return;
+    var c = codesOn[k] = codesOn[k] || { codes: [], daysOrdered: null };
+    if (q.code && c.codes.indexOf(q.code) < 0) c.codes.push(q.code);
+    if (q.daysOrdered !== null && q.daysOrdered !== undefined &&
+        (c.daysOrdered === null || q.daysOrdered > c.daysOrdered)) c.daysOrdered = q.daysOrdered;
+  });
+  var showRows = iPendRowsOnWall_();
+  var table = { shown: false, policies: extract ? extract.total : null,
+                note: 'Policy numbers are held off the wall. Set Script Property ' +
+                      'INTEL_PENDING_ROWS_ON_WALL to "' + IPEND_ROWS_PHRASE + '" to show them.' };
+  if (showRows && extract) {
+    table = { shown: true, policies: extract.total,
+              rows: (extract.rows || []).filter(function (x) { return !iExcludes_(listOnly, x.agent); })
+                .map(function (x) {
+                  var c = codesOn[x.policy] || { codes: [], daysOrdered: null };
+                  return { policy: x.policy, agent: x.agent, statusDesc: x.statusDesc,
+                           daysPending: x.daysPending, age: x.age, api: x.api, noCash: x.noCash,
+                           codes: c.codes.length ? c.codes : x.requirements.slice(),
+                           daysOrdered: c.daysOrdered };
+                }) };
+  }
+
+  var settled;
+  try { settled = iSettledWindows_(); }
+  catch (e6) { settled = { error: 'Salesforce said: ' + (e6 && e6.message || e6) }; }
+
+  return {
+    configured: true,
+    generatedAt: today,
+    at: Utilities.formatDate(new Date(), iTz_(), 'HH:mm'),
+    source: [branch ? 'branch lists' : '', extract ? 'pending extract' : '',
+             reqs ? 'requirements extract' : ''].filter(String).join(' + '),
+    /* What Guardian sent, what came out of the total, and what the register
+       has never heard of — see the note above `register`. */
+    register: register, offRegister: offRegister,
+    /* The six real statuses, in the order they are worked. */
+    states: extract ? extract.byState : null,
+    workable: extract ? extract.workable : null,
+    pendingAgeing: extract ? extract.pendingAgeing : null,
+    appAgeing: extract ? extract.appAgeing : null,
+    /* The branch's own side: the Pendings task type, per person, from the
+       same Salesforce read the day screen uses. */
+    support: support,
+    lists: branch ? branch.tabs : 0,
+    /* Policies, and the requirement rows they were folded from, so the
+       screen can say "121 policies · 340 requirements". */
+    total: total,
+    policies: total,
+    requirementRows: extract ? extract.requirementRows : null,
+    stale: stale,
+    oldest: oldest,
+    noReason: branch ? branch.noReason : null,
+    /* Never silent about what an exclusion took out — see iExcluded_. The
+       branch lists and the extract are two sources, so their removals are
+       said apart rather than added, which would count one agent twice. */
+    excluded: { names: Object.keys(skip).length,
+                lists: branch ? branch.excluded : 0,
+                policies: extract ? extract.excluded.policies : 0,
+                requirements: extract ? extract.excluded.rows : 0 },
+    listOnly: Object.keys(listOnly).length,
+    ageing: ageing,
+    /* What is stopping them. The requirement codes first, because they are
+       the underwriter's own answer; the branch's comments next, read by
+       keyword; the pending extract's decision codes last. */
+    reasonsFrom: reqs ? 'requirement codes' : (branch ? 'what the branch wrote' : 'decision codes'),
+    reasons: reqs ? (reqs.byCode || []).map(function (c) { return { name: c.label, n: c.n }; })
+           : (branch ? pair(branch.byReason) : pair((extract && extract.byDecision) || {})),
+    /* Every open requirement, how long they have been open, and how many
+       policies they sit on. Counts only — no policy number and no insured.
+       `missing` names the columns the extract does not carry, and the
+       screen says "column not in the extract" for each rather than a zero. */
+    requirements: reqs ? {
+      open: reqs.openCount, policies: reqs.policies, median: reqs.medianAge,
+      oldest: reqs.oldest, overYear: reqs.overYear, closedThisYear: reqs.closedThisYear,
+      ageing: reqs.ageing, since: reqs.since, cutByYear: reqs.cutByYear,
+      routine: reqs.routine, byOrderedBy: reqs.byOrderedBy, byStatus: reqs.byStatus,
+      byCategory: (reqs.categories || []).slice(0, 8), daysOrdered: reqs.daysOrdered,
+      /* Every code with its own median and oldest, and every category the
+         same — "what are the routine documents outstanding and how long it's
+         aging". Fourteen codes is what the slide holds. */
+      byCode: (reqs.byCode || []).slice(0, 14), byCatAge: reqs.byCatAge || [],
+      listOnly: reqs.listOnly || null,
+      /* The dates themselves, month by month from the 1 January cut. */
+      byMonth: reqs.byMonth || [], oldestOn: reqs.oldestOn || '', newestOn: reqs.newestOn || '',
+      missing: reqs.missing || []
+    } : null,
+    /* The policy-level view of the pending extract: status description,
+       annual premium, days since the application was received, and the
+       ones with no cash. Each is null, and named in `missing`, when its
+       column is not in the extract. */
+    policy: extract ? {
+      byStatusDesc: extract.byStatusDesc ? pair(extract.byStatusDesc) : null,
+      fromBook: extract.fromBook || [],
+      api: extract.api, noCash: extract.noCash,
+      daysPending: (function () {
+        var ds = (extract.rows || []).map(function (x) { return x.daysPending; })
+          .filter(function (v) { return v !== null && v !== undefined && v >= 0; })
+          .sort(function (a, b) { return a - b; });
+        return ds.length ? { n: ds.length, median: ds[Math.floor(ds.length / 2)], oldest: ds[ds.length - 1] } : null;
+      })(),
+      missing: extract.missing || []
+    } : null,
+    units: branch ? pair(branch.byUnit)
+                  : (((extract && extract.byUnit) || []).map(function (u) { return { name: u.unit, n: u.policies }; })),
+    agents: agents.slice(0, 14),
+    /* TWO KINDS OF MONEY, AND THEY ARE OPPOSITES.
+       Held: the client has paid and we cannot apply it until the case
+       closes — POL_MISC_SUSP_AMT, the branch's own money problem.
+       Unpaid: the case is waiting on a first or future premium that has
+       never arrived — requirement code FUTPY, the client's. One is a file
+       to finish, the other is a call to make, and a screen that adds them
+       together tells nobody what to do this afternoon. */
+    money: {
+      held: extract ? extract.suspense : null,
+      heldCases: extract ? extract.suspenseCases : null,
+      heldPolicies: extract ? extract.suspenseCases : null,
+      /* Column O blank is the plainest statement on the sheet: not one
+         dollar has come in on this policy. Counted, because on one with
+         nothing else outstanding it is the only thing left to do. */
+      unpaidCases: extract ? extract.unpaidCases : null,
+      unpaidPolicies: extract ? extract.unpaidCases : null,
+      unpaid: reqs ? ((reqs.byCode || []).filter(function (c) { return c.code === 'FUTPY'; })[0] || {}).n || 0 : null
+    },
+    /* ONE ROW PER AGENT, WITH EVERYTHING JOINED TO IT — see iPendBoard_. */
+    board: board,
+    /* Whose move is it, who can be worked today, and who is holding it up. */
+    triage: triage,
+    /* Who is on it, from the branch's own chase log. */
+    chase: chase,
+    /* And what the chasing itself consists of, by Task Type. */
+    work: work,
+    /* What came off the list — today, this week, this month, by agent. */
+    settled: settled,
+    /* The per-policy table, held unless the manager has said the phrase. */
+    table: table,
+    suspense: extract ? extract.suspense : null,
+    suspenseCases: extract ? extract.suspenseCases : null,
+    notes: notes
+  };
+}
+
+/** The wall's pending feed. Live, held for three minutes — the branch's own
+ *  lists are edited during the day, and a case cleared at ten should be off
+ *  the screen by lunch. */
+/* THE PENDING SCREEN READS A STORED COPY, LIKE THE BOOK SCREENS. On the
+   evening of 16 September the first ask after the deploy took 131 seconds —
+   the Branch Portfolio's pending and requirements tabs, then Salesforce for
+   what settled — and the copy was held for three minutes, so a wall that
+   re-asks every ten was blank far more often than not. Now the copy in
+   _Intel Wall answers in about a second. intelPendingRefresh rebuilds it on
+   a trigger through the day, so a case cleared at ten is off the wall by
+   lunch; the three-minute cache still covers two screens asking at once; and
+   {fresh:true} asks for a live build, which also replaces the stored copy. */
+function iActPending_(b) {
+  var live = !!(b && b.fresh);
+  if (!live) {
+    var had = null;
+    try { had = iWallLoad_('pending'); } catch (e0) {}
+    if (had) return iOk_({ data: had.payload, stored: had.builtAt });
+  }
+  var key = 'ipend_' + iIso_(iToday_()), cache = null;
+  if (!live) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPendingWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPEND_HOLD_S); } catch (e2) {}
+  if (data && data.configured !== false && !data.error) {
+    try { iWallSave_('pending', data); } catch (e3) {}
+  }
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   CONVERSIONS — THE TERM BOOK THAT IS ALLOWED TO BECOME SOMETHING ELSE
+
+   A term policy is a promise with a date on it. Some of those promises carry
+   a conversion privilege: the client may exchange the term for permanent
+   cover with no medical, no questions asked and no chance of being declined.
+   The privilege is worth most to exactly the people least likely to pass a
+   medical, and it is worth nothing the day after it runs out.
+
+   Salesforce spells the product out in Life_Plan_01__c, and once you have
+   read enough of them the code stops being a code:
+
+       F   Flexi            E   Evolution
+       C   Convertible      N   Non-convertible
+       T   Term
+       65  the age the cover runs to (a small number is a term in years)
+
+   Checked against the branch's own book: every FNT85 on file expires between
+   the client's eighty-fourth and eighty-fifth birthday, and every FCT20
+   twenty years after its issue date. So the three letters are reliable, and
+   the three letters are all this needs — whether a policy may be converted
+   is a matter of which letter sits in the middle.
+
+   THE NUMBER IS NOT RELIABLE AND IS NOT USED. Two codes on file are mis-keyed
+   (FNT81 and FNT851, both of them plainly FNT85 1), and the real expiry date
+   is on the record anyway. Decode the letters, read the date.
+
+   ONE CAVEAT, AND IT MATTERS. On the Evolution plans the expiry date held in
+   Salesforce is the plan's own maturity rather than the term rider's end: an
+   ECT65 issued to a client born in 2002 carries an expiry in 2102, which is
+   age ninety-nine, not sixty-five. A countdown to expiry is therefore honest
+   on the Flexi book and meaningless on the Evolution book, and the deadline
+   list below counts down the Flexi only. Both books are in the birthday list,
+   because the birthday is a fact about the client, not about the plan.
+
+   WHY A MONTH. Conversion is priced at attained age. The cheapest day to
+   convert is the day before a birthday, the dearest is the day after, and the
+   branch already works a birthday-month rhythm for its service reviews. So
+   the month's birthdays are the worklist, and the ones whose birthday has not
+   arrived yet are the urgent half of it.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ICONV_HOLD_S  = 15 * 60;  // a Salesforce read, held a quarter of an hour
+var ICONV_OBJECT  = 'CLIENT_PORTFOLIO__c';
+var ICONV_INFORCE = 'PREMIUM PAYING';   // stored upper, and SOQL '=' ignores case
+var ICONV_SOON_Y  = 10;       // how far ahead the deadline list looks
+var ICONV_TOP     = 14;       // agents on screen
+
+/* ── WHICH PLANS CONVERT, AND WHAT THE OTHERS ACTUALLY DO ────────────────
+   Settled twice over. The branch's dues book carries a status called
+   "Converted" and 49 policies hold it: 48 are FCT and the 49th is CLT65.
+   ZERO of 1,327 Liberator, ZERO of 450 Newlife 2000, ZERO of 78 FNT and ZERO
+   of 1,221 ECT have ever held it. The branch manager's rule is the same
+   sentence: only term converts.
+
+   What the others do was the part the workbook could not tell us, and the
+   branch told us on 12 September 2026:
+
+     ECONO LIFE (ECT, NLE) IS WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. The "65" is the end of the premium, not
+     the end of the cover — which is why its Life_Coverage_Expiry__c lands at
+     age ninety-nine and why 48 of the 49 conversions went FCT into ECT. It is
+     the destination, not a lead.
+
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and it is
+     the one the branch is watching. The ones paid to 65 can be EXTENDED — for
+     an additional premium, after underwriting on the increase only. That is
+     an opportunity rather than a problem, and the company's rules for it are
+     set out at IPERM_EXTEND_AGE.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   So three kinds, and the third one is not this screen's business:
+
+     convert     FCT. A right to exchange the term for permanent cover with no
+                 medical. The only pool a conversion list may use.
+     expire      FNT, and FNT alone. Term written non-convertible: the cover
+                 ends on a date and there is nothing to exchange it for.
+     permanent   Econo Life, Liberator, Rejuvenator. Whole life or a premium
+                 paying period, with cover that does not end on a date. They
+                 have a screen of their own — iPermanentWall_ — and they are
+                 counted in neither figure here, because a conversion list
+                 that includes them is a list of things that cannot convert. */
+var ICONV_FAMILIES = [
+  { like: 'FCT',   kind: 'convert',   label: 'Revised Flexi Term (convertible)' },
+  { like: 'FNT',   kind: 'expire',    label: 'Flexi Term, non-convertible' },
+  { like: 'ECT',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'ECU',   kind: 'permanent', label: 'Econo Life' },
+  { like: 'NLE',   kind: 'permanent', label: 'Newlife 2000' },
+  { like: 'ECONO', kind: 'permanent', label: 'Econo Life' },
+  { like: 'LIB',   kind: 'permanent', label: 'Liberator' },
+  { like: 'LB',    kind: 'permanent', label: 'Liberator' },
+  { like: 'CRI',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR2',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR3',   kind: 'permanent', label: 'Rejuvenator' },
+  { like: 'CR4',   kind: 'permanent', label: 'Rejuvenator' }
+];
+
+var ICONV_MONTHS = ['January','February','March','April','May','June','July',
+                    'August','September','October','November','December'];
+
+/* Read a plan code. Returns null for everything outside the table — whole
+   life, pensions, critical illness, motor — so a caller can filter on the
+   return value alone. Longest prefix first, or LB would answer for LIB. */
+function iConvPlan_(raw) {
+  var s = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, ' ').trim();
+  if (!s) return null;
+  var best = null;
+  for (var i = 0; i < ICONV_FAMILIES.length; i++) {
+    var f = ICONV_FAMILIES[i];
+    if (s.indexOf(f.like) === 0 && (!best || f.like.length > best.like.length)) best = f;
+  }
+  return best;
+}
+
+/* The SOQL half of the same table, so the filter and the reader cannot drift
+   apart: whichever families iConvPlan_ calls convertible are the families
+   this asks Salesforce for. */
+function iConvLike_(kind) {
+  var fams = ICONV_FAMILIES.filter(function (f) { return f.kind === kind; });
+  return '(' + fams.map(function (f) {
+    return "Life_Plan_01__c LIKE '" + f.like + "%'";
+  }).join(' OR ') + ')';
+}
+
+function iConvInforce_() {
+  return "Policy_Status_Description__c = '" + ICONV_INFORCE + "'" +
+         ' AND Life_Coverage__c > 0 AND Life_Coverage_Expiry__c >= TODAY';
+}
+
+/* ── IN FORCE, AND THE PREMIUM CURRENT ───────────────────────────────────
+   Two more rules from the branch, and neither of them can be answered out of
+   Salesforce. A lapsed policy cannot be converted, and a policy in arrears
+   cannot be converted until somebody collects — and Salesforce is stale on
+   both: it still carried a converted policy, a death and a lapse as "Premium
+   Paying" on a book checked against the dues tab on 12 September 2026, and its
+   paid-to-date was behind the tab's on 60 of 73 policies.
+
+   So status and arrears are read off the branch's own dues tab, which is the
+   same tab the 45-day wall reads, and every convertible policy lands in one
+   of three states:
+
+     ready    in force, nothing owed. Convert it.
+     collect  in force and overdue. Collect the premium first — it is a
+              conversion behind a phone call, not a dead lead.
+     gone     lapsed, surrendered, dead, matured, already converted. Off the
+              list entirely, and a wall that shows these is a wall that sends
+              agents after policies that no longer exist.
+
+   The split matters more than the total: 56% of the branch's premium-paying
+   Flexi convertible policies were flagged Overdue on the day this was
+   written. A single number would have sent every agent after all of them. */
+var ICONV_GONE = /surrender|matured|death|file clos|not proceed|not taken|expir|reject|declin|convert|lapse|paid up|vested/i;
+
+function iConvDues_() {
+  var sh = iTabDues_();
+  if (!sh) return null;
+  var d = iReadCols_(sh, {
+    number: ['number'], plan: ['plan code'], agent: ['agent'], premium: ['premium'],
+    sum: ['sum assured'], days: ['days'], status2: ['status(2)', 'status2'],
+    desc: ['status description']
+  });
+  var by = {}, pools = {};
+  var blank = function () {
+    return { ready: { n: 0, cover: 0, prem: 0 }, collect: { n: 0, cover: 0, prem: 0 },
+             gone: { n: 0, cover: 0, prem: 0 } };
+  };
+  ['convert', 'expire', 'permanent'].forEach(function (k) { pools[k] = blank(); });
+  for (var r = 0; r < d.rows; r++) {
+    var num = String(d.get('number', r)).trim();
+    if (!num || iBadNumber_(num)) continue;
+    var desc = String(d.get('desc', r)).trim();
+    var state = ICONV_GONE.test(desc) ? 'gone'
+              : /overdue/i.test(String(d.get('status2', r))) ? 'collect'
+              : 'ready';
+    /* First row wins. A policy number appearing twice in the extract is the
+       extract's problem, and picking the later row would let a stale duplicate
+       overwrite a live one. */
+    if (by[num] === undefined) by[num] = { state: state, desc: desc, days: iNum_(d.get('days', r)) };
+    /* Every kind is split, not only the convertible one: the permanent screen
+       has the same two rules against it — in force, and paid to date — and it
+       reads the answer out of the same pass over the same tab. */
+    var f = iConvPlan_(d.get('plan', r));
+    if (f && pools[f.kind]) {
+      var slot = pools[f.kind][state];
+      slot.n++; slot.cover += iNum_(d.get('sum', r)); slot.prem += iNum_(d.get('premium', r));
+    }
+  }
+  return { by: by, pool: pools.convert, pools: pools };
+}
+
+function iConvOne_(rows, keys) {
+  var r = (rows && rows[0]) || {}, out = {};
+  keys.forEach(function (k) { out[k] = iNum_(r[k]); });
+  return out;
+}
+
+/* ── The month's conversion worklist ──────────────────────────────────────
+   Six aggregate reads, none of which brings a client name or a policy number
+   back with it. Salesforce does the counting; this only shapes the answer.  */
+function iConversionWall_() {
+  var today = iToday_();
+  var month = today.getMonth() + 1, dayOf = today.getDate();
+  var notes = [];
+
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project. ' +
+                    'Paste KPI.gs alongside Intelligence.gs, or add SalesforceSync.gs.' };
+  }
+  var ask = iSfQuery_;
+
+  var conv = iConvLike_('convert'), gone = iConvLike_('expire'), perm = iConvLike_('permanent');
+  var live = iConvInforce_();
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var birthday = ' AND CALENDAR_MONTH(Date_Of_Birth__c) = ' + month;
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* THE MONTH'S LIST IS READ ROW BY ROW, not as an aggregate, and that is not
+     a style choice. A policy can only be converted if it is in force with the
+     premium current, and Salesforce does not know which — the dues tab does.
+     So every row has to be tested against it one at a time, and the totals
+     are added up here afterwards. It is a small list: a month's birthdays on
+     one plan family is tens of rows, not thousands.
+
+     The policy number is read and never leaves this function. It exists only
+     to find the row in the dues tab. */
+  /* NO ALIASES, AND NO DAY_IN_MONTH. Salesforce allows field aliasing only in
+     an aggregate query, and a row-level SELECT carrying "DAY_IN_MONTH(x) dom"
+     is rejected outright — "only aggregate expressions use field aliasing" —
+     which would have emptied this whole screen on the live org. The day of
+     the month is arithmetic on a date the query already returns, so it is
+     worked out below instead of asked for. */
+  /* ISSUE_DATE__c, Issue_Age__c and Current_Age__c were added on 16 September
+     2026, checked against the live object the same day: the issue date is on
+     95% of rows, the issue age on 87%, the current age on all of them. Plain
+     field names, for the reason in the paragraph above. */
+  var rowsM = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c,' +
+                ' Life_Plan_01__c, Date_Of_Birth__c, Life_Coverage_Expiry__c,' +
+                ' ISSUE_DATE__c, Issue_Age__c, Current_Age__c' +
+                from + conv + ' AND ' + live + birthday +
+                ' ORDER BY Life_Coverage__c DESC LIMIT 900');
+
+  var poolConv = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + conv + ' AND ' + live);
+  var poolGone = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover, SUM(Life_Premium__c) prem' +
+                   from + gone + ' AND ' + live);
+  /* The permanent book, as one figure and a pointer. It is not this screen's
+     work — see iPermanentWall_ — but a room looking at $67m of expiring term
+     should be able to see that it sits beside two billion that does not. */
+  var poolPerm = q('SELECT COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+                   from + perm + ' AND ' + live);
+
+  /* THE DEADLINE, and it is now the right book. It used to count down the
+     convertible pool, which was the wrong story: a policy you may convert has
+     no deadline worth a wall until its privilege closes. A policy that simply
+     ends has a date, and after that date the client has nothing. */
+  var soonRows = q('SELECT CALENDAR_YEAR(Life_Coverage_Expiry__c) yr, COUNT(Id) n,' +
+                   ' SUM(Life_Coverage__c) cover' +
+                   from + gone + ' AND ' + live +
+                   ' AND Life_Coverage_Expiry__c <= NEXT_N_YEARS:' + ICONV_SOON_Y +
+                   ' GROUP BY CALENDAR_YEAR(Life_Coverage_Expiry__c)' +
+                   ' ORDER BY CALENDAR_YEAR(Life_Coverage_Expiry__c) LIMIT 40');
+
+  if (rowsM === null && poolConv === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  /* The dues tab decides in force and current. Without it this screen still
+     works, but it cannot tell a live policy from a lapsed one, and it says so
+     on the face of it rather than quietly overstating the list. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var skip = iExcluded_();
+  /* A MEMBER OF STAFF IS NEVER A DESK ON THIS WALL. The branch manager saw a
+     staff member's name in the agent table on 16 September 2026, and it must
+     not happen again. It happens because Salesforce's agent of record is
+     whoever the case was parked under, and a book that has lost its agent is
+     sometimes parked under sales support — so their name arrives in
+     AGENT__r.Name looking exactly like an agent's. The access tab is the
+     authority on who is staff: any ACTIVE row whose role reads as support
+     (iRoleOf_ says 'staff' or 'staff-lead' — managers and unit managers do
+     write business and stay) is a name this table refuses. Matched with the
+     same loose rule the exclusion list uses, because the two books spell one
+     person two ways. The cases themselves are NOT removed: the birthday is
+     real and somebody still has to ring, so they stay in the totals and the
+     day strip, and the note below says how many are on nobody's desk. */
+  var staff = {};
+  try {
+    var dir = iAgentDirectory_();
+    Object.keys(dir).forEach(function (k) {
+      var role = iRoleOf_(dir[k].role);
+      if (role !== 'staff' && role !== 'staff-lead') return;
+      [dir[k].name, dir[k].agentName].forEach(function (nm) {
+        var key = iNameKey_(nm);
+        if (key) staff[key] = true;
+      });
+    });
+  } catch (eA) { notes.push('The access tab would not read, so staff names are not screened: ' + (eA && eA.message || eA)); }
+  var dropped = { excluded: { n: 0, cover: 0 }, staff: { n: 0, cover: 0 } };
+  var state = { ready: { n: 0, cover: 0, prem: 0 },
+                collect: { n: 0, cover: 0, prem: 0 },
+                gone: { n: 0, cover: 0, prem: 0 } };
+  var byAg = {}, byFam = {}, unknown = 0, unnamed = 0;
+  var ahead = { n: 0, cover: 0 };
+  var cases = 0, cover = 0, prem = 0;
+  /* THE DAY STRIP, and it replaced a runway of expiry years that answered the
+     wrong question. A Flexi term to age eighty-five written at thirty-three
+     expires in 2078; that is not a deadline an agent can act on, it is noise
+     on a wall. The deadline that matters is THIS MONTH'S BIRTHDAY, because
+     the conversion is priced at the age the client has reached — so the list
+     is the days of the month, the day each birthday falls on, and whether it
+     has gone past yet.
+
+     A day still to come is a call worth making today. A day already past is
+     this year's rate gone. That is the whole objective, and everything else
+     was in the way of it. */
+  var days = {}, noDate = 0, expSoon = { n: 0, cover: 0 };
+  var yrs = function (a, b) { return (b - a) / (365.2425 * 24 * 3600 * 1000); };
+  /* HOW LONG IT HAS BEEN PAYING, back on the screen. It was taken off on
+     12 September 2026 as answering nothing, and the branch asked for it back
+     on the 16th with a reason the first cut did not have: a term that has
+     been in force over a year is SEASONED — past the contestability window,
+     with a payment history the underwriter will read — and that is the case
+     to lead with on the call. So every row is split at one year, a row with
+     no issue date is counted as such rather than dropped, and the issue age
+     comes from Salesforce where it holds one and from the two years where it
+     does not, flagged so the wall can say which. */
+  var inForce = { seasoned: { n: 0, cover: 0 }, fresh: { n: 0, cover: 0 } };
+  var defects = { noIssueDate: 0, estAge: 0 };
+
+  (rowsM || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the dues tab has never heard of is treated as ready — it is
+       usually business too new to be in the extract, and dropping it would
+       hide this month's freshest cases. */
+    var st = hit ? hit.state : 'ready';
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c);
+    state[st].n++; state[st].cover += c; state[st].prem += pm;
+    if (st === 'gone') return;                       // off the list entirely
+
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (!ag) { unnamed++; }
+    else if (iExcludes_(skip, ag)) { dropped.excluded.n++; dropped.excluded.cover += c; return; }
+    /* Staff: off the desk table, still in every total below this line. */
+    else if (iExcludes_(staff, ag)) { dropped.staff.n++; dropped.staff.cover += c; ag = ''; }
+    else {
+      var slot = byAg[ag] || (byAg[ag] = { name: ag, n: 0, cover: 0, prem: 0, top: 0, collect: 0 });
+      slot.n++; slot.cover += c; slot.prem += pm;
+      if (c > slot.top) slot.top = c;
+      if (st === 'collect') slot.collect++;
+    }
+    cases++; cover += c; prem += pm;
+    var dobR = iDate_(r.Date_Of_Birth__c);
+    if (dobR && dobR.getDate() >= dayOf) { ahead.n++; ahead.cover += c; }
+
+    /* THE DAY, AND THE AGE THEY TURN ON IT. Both are what an agent says on the
+       phone: "you turn thirty-eight on the twenty-third, and the price is set
+       by the age you are when you sign." The age the policy was WRITTEN at
+       was taken off the screen on 12 September 2026 as not part of that
+       conversation, and put back on the 16th when the branch made the case
+       for it: written at thirty and paying ten years is a client the
+       underwriter already trusts, and the agent should say so. */
+    var dob = dobR, exp = iDate_(r.Life_Coverage_Expiry__c);
+    var dom = dob ? dob.getDate() : 0, past = !!dom && dom < dayOf;
+    var turning = dob ? today.getFullYear() - dob.getFullYear() : null;
+    var issued = iDate_(r.ISSUE_DATE__c);
+    var inForceY = issued ? Math.round(yrs(issued, today) * 10) / 10 : null;
+    var seasoned = issued ? inForceY > 1 : null;
+    if (!issued) defects.noIssueDate++;
+    else if (seasoned) { inForce.seasoned.n++; inForce.seasoned.cover += c; }
+    else { inForce.fresh.n++; inForce.fresh.cover += c; }
+    /* Issue_Age__c is blank on one row in eight. Issue year less birth year is
+       within a year of the truth and is flagged as an estimate, because a
+       wall that prints a guess as a fact is a wall the underwriter corrects. */
+    var issueAge = null, estAge = false;
+    if (r.Issue_Age__c !== null && r.Issue_Age__c !== undefined && r.Issue_Age__c !== '') {
+      issueAge = iNum_(r.Issue_Age__c);
+    } else if (issued && dob) {
+      issueAge = issued.getFullYear() - dob.getFullYear(); estAge = true; defects.estAge++;
+    }
+    var age = (r.Current_Age__c !== null && r.Current_Age__c !== undefined && r.Current_Age__c !== '')
+      ? iNum_(r.Current_Age__c) : null;
+    if (dom) {
+      var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: past });
+      slot.n++; slot.cover += c;
+    }
+    /* The contract's own expiry, kept only where it is close enough to be a
+       real deadline. Everything beyond that was the noise. */
+    if (exp) { if (yrs(today, exp) <= ICONV_SOON_Y) { expSoon.n++; expSoon.cover += c; } }
+    else { noDate++; }
+    if (ag && byAg[ag]) {
+      var a2 = byAg[ag];
+      /* The soonest birthday still to come is what orders the list. A day
+         already gone this year is not a call, so it sorts last. */
+      var rank = past ? dom + 100 : dom;
+      if (a2.rank === undefined || rank < a2.rank) {
+        a2.rank = rank; a2.day = dom; a2.past = past; a2.turning = turning;
+        /* The same case that sets the day sets these, so the row reads as
+           one conversation: this birthday, this age, this history. */
+        a2.issued = issued ? iIso_(issued) : null;
+        a2.issueAge = issueAge; a2.estAge = estAge; a2.age = age;
+        a2.yearsInForce = inForceY; a2.seasoned = seasoned;
+      }
+      if (seasoned) a2.seasonedN = (a2.seasonedN || 0) + 1;
+      /* Every birthday on the desk, not only the soonest: the age each client
+         moves to, because that is what the conversion premium is priced on.
+         Asked for on 16 September: "who's changing age". No name. */
+      if (turning !== null) (a2.moves || (a2.moves = [])).push({ day: dom, past: past, from: age, to: turning });
+    }
+
+    /* Plan codes collapse onto their family, because FCT65 1, FCT651 and
+       FCT65 are one product typed three ways and a wall that lists them
+       separately is a wall nobody trusts. */
+    var f = iConvPlan_(r.Life_Plan_01__c);
+    if (!f || f.kind !== 'convert') { unknown++; return; }
+    var fam = byFam[f.like] || (byFam[f.like] = { code: f.like, label: f.label, n: 0, cover: 0 });
+    fam.n++; fam.cover += c;
+  });
+
+  /* ORDERED BY WHO TO RING FIRST, not by who holds the most. The agent whose
+     client turns a year older on Tuesday goes above the agent holding more
+     cover in three weeks' time, because the wall is a worklist and not a
+     league table. Cover breaks the tie. */
+  var agents = Object.keys(byAg).map(function (k) {
+    var a = byAg[k];
+    if (a.rank === undefined) { a.rank = 999; a.day = null; a.past = null; a.turning = null; }
+    return a;
+  }).sort(function (a, b) {
+    return a.rank !== b.rank ? a.rank - b.rank : b.cover - a.cover;
+  });
+  var mix = Object.keys(byFam).map(function (k) { return byFam[k]; })
+    .sort(function (a, b) { return b.cover - a.cover; });
+  if (unknown) notes.push(unknown + ' of this month’s policies carry a plan code this screen cannot read.');
+  if (dropped.staff.n) {
+    notes.push(dropped.staff.n + ' of this month’s cases (' + iMoney_(dropped.staff.cover) +
+               ') are written under a staff member’s name, not an agent’s. They are in the totals ' +
+               'and on nobody’s desk.');
+  }
+  if (dropped.excluded.n) {
+    notes.push(dropped.excluded.n + ' cases (' + iMoney_(dropped.excluded.cover) +
+               ') under an excluded agent are left off this screen entirely.');
+  }
+  if (state.gone.n) {
+    notes.push(state.gone.n + ' of this month’s birthdays are on policies the dues tab says have ' +
+               'lapsed, been surrendered or already converted. They are off the list — Salesforce ' +
+               'still shows them paying.');
+  }
+
+  var soon = (soonRows || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var soonTotal = soon.reduce(function (a, r) {
+    return { n: a.n + r.n, cover: a.cover + r.cover }; }, { n: 0, cover: 0 });
+
+  /* Econo Life, Liberator and Rejuvenator are in neither figure on purpose:
+     their LIFE cover ends on no date, so a conversion list cannot use them —
+     their riders do end, and that is iRidersWall_, not this screen.
+     The count is here only so the room knows what this screen is NOT about. */
+  var perma = iConvOne_(poolPerm, ['n', 'cover']);
+
+  return {
+    configured: true,
+    generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()],
+    day: dayOf,
+    years: ICONV_SOON_Y,
+    head: { cases: cases, cover: cover, prem: prem, unnamed: unnamed, ahead: ahead,
+            passed: { n: cases - ahead.n, cover: cover - ahead.cover },
+            expSoon: expSoon, noDate: noDate,
+            /* Seasoned against under a year, over the same cases as the rest
+               of head. A row with no issue date is in neither; see defects. */
+            inForce: inForce },
+    defects: defects,
+    /* What this screen took off, and how much. Excluded agents are gone from
+       every figure; staff are gone from the desks only. */
+    dropped: dropped,
+    /* Every day of the month that carries a birthday, in order, with the ones
+       already gone marked. The screen draws the whole month so a room can see
+       the shape of the week ahead, not only a total. */
+    days: Object.keys(days).map(function (k) { return days[k]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
+    state: state,
+    duesRead: !!dues,
+    agents: agents.slice(0, ICONV_TOP),
+    agentCount: agents.length,
+    mix: mix,
+    pool: { conv: iConvOne_(poolConv, ['n', 'cover', 'prem']),
+            nonconv: iConvOne_(poolGone, ['n', 'cover', 'prem']),
+            permanent: perma,
+            /* The same pool as conv, but split by what the branch's own
+               extract says about it. This is the honest denominator. */
+            live: dues ? dues.pool : null },
+    soon: soon,
+    soonTotal: soonTotal,
+    notes: notes
+  };
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE PERMANENT BOOK — WHOLE LIFE, THE PREMIUM PERIOD, AND THE RIDERS
+
+   The conversions screen is about cover that ENDS on a date. This one is
+   about everything that does not, and it is the larger half of the branch:
+   2,130 policies, two billion dollars of cover and $2.3m of annual premium on
+   the day it was built.
+
+   Three products, and the branch's own words for them:
+
+     ECONO LIFE (ECT, NLE) is WHOLE LIFE. The premium is paid to 65 or to 85
+     and the life cover runs for life. Nothing to convert — it is what a term
+     converts INTO, which is why 48 of the branch's 49 conversions went FCT
+     into ECT. The "65" in ECT65 is the end of the premium, not the end of the
+     cover, and mistaking one for the other is what put 1,221 policies in the
+     wrong column for a day.
+
+     LIBERATOR (LB, LIB) has its premium paid to 65, 75, 85 or 100, and the
+     branch is watching it. POLICIES ISSUED 2009 AND EARLIER CAN SIMPLY BE
+     EXTENDED. That is the one thing on this screen an agent can act on this
+     week, so it leads it.
+
+     REJUVENATOR (CRIEV, CR2EV, CR3EV, CR4RP) is the critical illness cover.
+
+   And the riders, which are on the policy rather than beside it: critical
+   illness, accidental death (ADDAP), waiver of premium, disability income.
+   The critical illness rider alone carries more cover than the entire term
+   book, on 3,102 policies, and almost nobody looks at it.
+
+   WHY THIS SCREEN CARRIES NO DEADLINE PANEL. No LIFE cover here expires —
+   but the riders on these same policies do, every one of them, and that is a
+   screen of its own: see iRidersWall_. The dates
+   that matter are the maturity date where one is held and the issue date,
+   which is how long the policy has been paying — and on the Liberator the
+   issue date IS the opportunity.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IPERM_HOLD_S   = 15 * 60;
+var IPERM_TOP      = 12;      // agents on screen
+
+/* ── THE EXTENSION, on the company's own terms ─────────────────────────────
+   Memorandum, Norris Lovelace, VP Insurance Operations – Individual Life,
+   6 March 2017: "AGE EXTENSIONS ON LIFE EVOLUTION LIBERATOR". It replaced
+   what this screen used to say, and what it used to say was wrong twice over.
+
+   The history is the first paragraph: extension was granted only to policies
+   issued before 2009, at maturity, because Guardian had no option for a
+   client to pay a premium beyond 65. Liberator Plus in 2009 brought 75, 85
+   and 100 — and that option was not given to the group already written. From
+   1 MARCH 2017 it is, BY WAY OF AN ADDITIONAL PREMIUM.
+
+   So the screen used to lead on "issued 2009 or earlier — just extend, no
+   application, no underwriting". Both halves of that are wrong:
+
+     WHICH POLICIES. The operative sentence carries no issue-year limit. What
+     decides it is whether the premium stops at 65, because that is the policy
+     that runs out of road. On the in-force book that is thirteen policies —
+     and only two of them were written before 2009, so the old filter found
+     seventeen policies of which fifteen had nothing to extend.
+
+     "NO UNDERWRITING" IS FALSE. Full underwriting takes place on the
+     increased portion, at the client's current age. Guardian bears the cost
+     of it. If health has changed, the rating applies to the increase only.
+     The premium goes up: the memo's own worked example is $200,000 to age 65
+     becoming $125,000 to age 75 on the same $175, so $75,000 has to be bought
+     back at an extra $100 — $275 for the cover they already had.
+
+   And the gates, verbatim from the guidelines:
+     · premium paying and up to date — NO MORE THAN THREE MONTHS IN ARREARS
+     · the extension is on the ORIGINAL sum assured; no decreases
+     · total sum assured cannot be below the company minimum of $100,000
+     · ONE alteration only with a premium change; after that it is client
+       accumulation as the contract sets out
+     · NOT available on Rejuvenator at all, and no extension of existing
+       Rejuvenator coverage to age 80
+   Questions go to Dena Renwick, Manager, Customer Support.
+   ─────────────────────────────────────────────────────────────────────────── */
+var IPERM_EXTEND_AGE = 65;       // the premium period that runs out of road
+var IPERM_MIN_SUM    = 100000;   // the company minimum, below which no extension
+var IPERM_ARREARS_D  = 92;       // "no more than three months in arrears"
+var IPERM_MEMO       = '6 March 2017 memorandum, VP Insurance Operations';
+
+/* The premium-paying period each family runs to, in the branch's words. Shown
+   on the screen so nobody reads "to 65" as "ends at 65" again. */
+var IPERM_FAMS = [
+  { fam: 'econo', label: 'Econo Life',  sub: 'whole life \u00b7 premium to 65 or 85 \u00b7 cover for life',
+    likes: ['ECT', 'ECU', 'NLE', 'ECONO'] },
+  { fam: 'lib',   label: 'Liberator',   sub: 'premium to 65, 75, 85 or 100',
+    likes: ['LIB', 'LB'] },
+  { fam: 'rejuv', label: 'Rejuvenator', sub: 'critical illness',
+    likes: ['CRI', 'CR2', 'CR3', 'CR4'] }
+];
+
+function iPermFam_(raw) {
+  var u = String(raw == null ? '' : raw).toUpperCase().replace(/\s+/g, '').trim();
+  if (!u) return null;
+  var best = null;
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) {
+      if (u.indexOf(k) === 0 && (!best || k.length > best.k.length)) best = { f: f, k: k };
+    });
+  });
+  return best ? best.f : null;
+}
+
+/* Liberator with the premium paid to 65, across every way the branch types
+   it: LB65, LB65 1, LIB65, LIB 65. The number in the plan code IS the premium
+   period — it is not an expiry, and reading it as one is what put Econo Life
+   in the wrong column for a day. Maturity_Date__c cannot stand in for this:
+   it is empty on 244 of the 257 Liberators in force. */
+function iPermExtendLike_() {
+  var likes = ['LB' + IPERM_EXTEND_AGE, 'LIB' + IPERM_EXTEND_AGE, 'LIB ' + IPERM_EXTEND_AGE];
+  return '(' + likes.map(function (k) {
+    return "Life_Plan_01__c LIKE '" + k + "%'";
+  }).join(' OR ') + ')';
+}
+
+function iPermLike_() {
+  var out = [];
+  IPERM_FAMS.forEach(function (f) {
+    f.likes.forEach(function (k) { out.push("Life_Plan_01__c LIKE '" + k + "%'"); });
+  });
+  return '(' + out.join(' OR ') + ')';
+}
+
+function iPermanentWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iConvInforce_().replace(' AND Life_Coverage_Expiry__c >= TODAY', '');
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* One read by plan code, folded into three families here. The codes are
+     typed a dozen ways — ECT65 1, ECT651, ECT 65 1 — and a screen that lists
+     them separately is a screen nobody trusts. */
+  var byCode = q('SELECT Life_Plan_01__c pc, COUNT(Id) n, SUM(Life_Coverage__c) cover,' +
+                 ' SUM(Life_Premium__c) prem, MIN(ISSUE_DATE__c) oldest' +
+                 from + iPermLike_() + ' AND ' + live +
+                 ' GROUP BY Life_Plan_01__c ORDER BY COUNT(Id) DESC LIMIT 200');
+
+  /* THE OPPORTUNITY, read row by row. Status alone is not enough — the branch
+     asked for in force AND paid to date, the memo asks for no more than three
+     months in arrears, and Salesforce is stale on both — so every one of
+     these has to be looked up in the dues tab one at a time. There are
+     thirteen of them, which is what makes that affordable. */
+  var extRows = q('SELECT POLICY__c, AGENT__r.Name, Life_Coverage__c, Life_Premium__c, ISSUE_DATE__c' +
+                  from + iPermExtendLike_() + ' AND ' + live +
+                  ' ORDER BY Life_Coverage__c DESC LIMIT 400');
+
+  /* How long the whole permanent book has been paying, by the year it was
+     written. A policy of twenty years is a different conversation from one of
+     two, and the branch has both. */
+  var ages = q('SELECT CALENDAR_YEAR(ISSUE_DATE__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live + ' AND ISSUE_DATE__c != null' +
+               ' GROUP BY CALENDAR_YEAR(ISSUE_DATE__c)' +
+               ' ORDER BY CALENDAR_YEAR(ISSUE_DATE__c) LIMIT 60');
+
+  /* Maturities, where a maturity date is held at all — 704 of the in-force
+     book carries one, and a maturity is a payment and a conversation. */
+  var mats = q('SELECT CALENDAR_YEAR(Maturity_Date__c) yr, COUNT(Id) n, SUM(Life_Coverage__c) cover' +
+               from + iPermLike_() + ' AND ' + live +
+               ' AND Maturity_Date__c >= TODAY' +
+               ' GROUP BY CALENDAR_YEAR(Maturity_Date__c)' +
+               ' ORDER BY CALENDAR_YEAR(Maturity_Date__c) LIMIT 30');
+
+  /* The riders, across the whole in-force book and not only these families —
+     a rider rides whatever it is attached to. */
+  var rid = q('SELECT COUNT(Critical_Illness_Coverage__c) cin, SUM(Critical_Illness_Coverage__c) cicov,' +
+              ' SUM(Critical_Illness_Premium__c) ciprem,' +
+              ' COUNT(ADDAP_Coverage__c) adn, SUM(ADDAP_Coverage__c) adcov, SUM(ADDAP_Premium__c) adprem,' +
+              ' COUNT(WP_Coverage__c) wpn, SUM(WP_Premium__c) wpprem,' +
+              ' COUNT(DI_bENEFIT__c) din, SUM(DI_Premium__c) diprem' +
+              from + live);
+
+  if (byCode === null && extRows === null) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  /* In force and paid to date, off the branch's own tab. Without it this
+     screen says so on its face and calls every figure an upper bound. */
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var fams = {}, unknown = 0;
+  IPERM_FAMS.forEach(function (f) {
+    fams[f.fam] = { fam: f.fam, label: f.label, sub: f.sub, n: 0, cover: 0, prem: 0, oldest: null };
+  });
+  (byCode || []).forEach(function (r) {
+    var f = iPermFam_(r.pc);
+    if (!f) { unknown += iNum_(r.n); return; }
+    var slot = fams[f.fam];
+    slot.n += iNum_(r.n); slot.cover += iNum_(r.cover); slot.prem += iNum_(r.prem);
+    var o = iDate_(r.oldest);
+    if (o && (!slot.oldest || o < slot.oldest)) slot.oldest = o;
+  });
+  var families = IPERM_FAMS.map(function (f) {
+    var slot = fams[f.fam];
+    slot.since = slot.oldest ? slot.oldest.getFullYear() : null;
+    slot.years = slot.oldest ? Math.round((today - slot.oldest) / (365.2425 * 24 * 3600 * 1000)) : null;
+    delete slot.oldest;
+    return slot;
+  });
+
+  var skip = iExcluded_();
+  var extend = { n: 0, cover: 0, prem: 0, oldest: null };
+  /* Five states, not three. The memorandum draws two lines the wall used not
+     to draw: three months of arrears, and the company minimum sum assured. */
+  var extState = { ready: 0, collect: 0, behind: 0, gone: 0, small: 0 };
+  var small = { n: 0, cover: 0 };
+  var agIdx = {};
+  (extRows || []).forEach(function (r) {
+    var pol = String(r.POLICY__c == null ? '' : r.POLICY__c).trim();
+    var hit = dues && dues.by[pol];
+    /* A policy the tab has never heard of counts as ready — the same rule the
+       conversion screen uses, and for the same reason. */
+    var st = hit ? hit.state : 'ready';
+    /* THE THREE-MONTH LINE. The dues tab carries the days, so the memo's own
+       rule is applied rather than approximated: in arrears but inside three
+       months is still eligible, with the premium to collect first. Past that
+       it is not eligible until the policy is brought up to date. */
+    if (st === 'collect' && hit && iNum_(hit.days) > IPERM_ARREARS_D) st = 'behind';
+    /* THE COMPANY MINIMUM. Under $100,000 there is no extension to be had,
+       whatever the policy has paid, so it is counted and named rather than
+       listed as an opportunity that does not exist. */
+    var sum = iNum_(r.Life_Coverage__c);
+    if (st !== 'gone' && sum < IPERM_MIN_SUM) {
+      extState.small++; small.n++; small.cover += sum;
+      return;
+    }
+    extState[st]++;
+    if (st === 'gone') return;                       // not in force: off the list
+    if (st === 'behind') return;                     // more than three months behind
+    /* An excluded agent comes out of the HEADLINE as well as the list, the
+       same way it works on the conversions screen. intelExclude names people
+       who have left the branch; leaving their cover in the figure while
+       leaving their name off it would make the total unexplainable from the
+       rows underneath it. */
+    var ag = r.AGENT__r && r.AGENT__r.Name ? String(r.AGENT__r.Name) : '';
+    if (ag && iExcludes_(skip, ag)) return;
+    var c = iNum_(r.Life_Coverage__c), pm = iNum_(r.Life_Premium__c), o = iDate_(r.ISSUE_DATE__c);
+    extend.n++; extend.cover += c; extend.prem += pm;
+    if (o && (!extend.oldest || o < extend.oldest)) extend.oldest = o;
+    if (!ag) return;
+    var a = agIdx[ag] || (agIdx[ag] = { name: ag, n: 0, cover: 0, prem: 0, collect: 0, oldest: null });
+    a.n++; a.cover += c; a.prem += pm;
+    if (st === 'collect') a.collect++;
+    if (o && (!a.oldest || o < a.oldest)) a.oldest = o;
+  });
+  var yrsOf = function (d0) {
+    return d0 ? Math.round((today - d0) / (365.2425 * 24 * 3600 * 1000)) : null;
+  };
+  extend.since = extend.oldest ? extend.oldest.getFullYear() : null;
+  extend.years = yrsOf(extend.oldest);
+  delete extend.oldest;
+  var extAgents = Object.keys(agIdx).map(function (k) {
+    var a = agIdx[k];
+    a.since = a.oldest ? a.oldest.getFullYear() : null;
+    a.years = yrsOf(a.oldest);
+    delete a.oldest;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover; });
+  /* One of anything reads badly on a wall, and these counts are often one. */
+  var plural = function (k, one, many) { return k === 1 ? one : many; };
+  if (extState.gone) {
+    notes.push(extState.gone + plural(extState.gone, ' Liberator is', ' Liberators are') +
+               ' off the list \u2014 the dues tab says the policy has lapsed, been surrendered ' +
+               'or matured. Salesforce still shows it paying.');
+  }
+  if (extState.behind) {
+    notes.push(extState.behind + plural(extState.behind, ' cannot be extended', ' cannot be extended') +
+               ' until brought up to date \u2014 the memorandum allows no more than three months ' +
+               'in arrears.');
+  }
+  if (extState.small) {
+    notes.push(extState.small + plural(extState.small, ' carries', ' carry') +
+               ' less than the company minimum of $100,000, so there is no extension to be had.');
+  }
+
+  /* Years in force, in bands rather than by year — a room reads five bands
+     and not twenty-five. */
+  var BANDS = [{ lab: 'under 2 years', max: 2 }, { lab: '2 to 5', max: 5 },
+               { lab: '5 to 10', max: 10 }, { lab: '10 to 20', max: 20 },
+               { lab: 'over 20 years', max: 999 }];
+  var bands = BANDS.map(function (b) { return { lab: b.lab, n: 0, cover: 0 }; });
+  var yr = today.getFullYear();
+  (ages || []).forEach(function (r) {
+    var old = yr - iNum_(r.yr);
+    for (var i = 0; i < BANDS.length; i++) {
+      if (old <= BANDS[i].max) { bands[i].n += iNum_(r.n); bands[i].cover += iNum_(r.cover); break; }
+    }
+  });
+
+  var maturities = (mats || []).map(function (r) {
+    return { yr: iNum_(r.yr), n: iNum_(r.n), cover: iNum_(r.cover) };
+  });
+  var m0 = (rid && rid[0]) || {};
+  var riders = [
+    { lab: 'Critical illness',   n: iNum_(m0.cin), cover: iNum_(m0.cicov), prem: iNum_(m0.ciprem) },
+    { lab: 'Accidental death',   n: iNum_(m0.adn), cover: iNum_(m0.adcov), prem: iNum_(m0.adprem) },
+    { lab: 'Waiver of premium',  n: iNum_(m0.wpn), cover: null,            prem: iNum_(m0.wpprem) },
+    { lab: 'Disability income',  n: iNum_(m0.din), cover: null,            prem: iNum_(m0.diprem) }
+  ].filter(function (r) { return r.n; });
+
+  if (unknown) notes.push(unknown + ' policies carry a plan code this screen cannot place.');
+
+  var tot = families.reduce(function (a, f) {
+    return { n: a.n + f.n, cover: a.cover + f.cover, prem: a.prem + f.prem };
+  }, { n: 0, cover: 0, prem: 0 });
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    extendAge: IPERM_EXTEND_AGE,
+    minSum: IPERM_MIN_SUM,
+    arrearsDays: IPERM_ARREARS_D,
+    memo: IPERM_MEMO,
+    small: small,
+    total: tot,
+    families: families,
+    extend: extend,
+    state: extState,
+    duesRead: !!dues,
+    /* The whole permanent book split by what the branch's own extract says
+       about it — in force and current, behind a premium, or gone. */
+    live: dues ? dues.pools.permanent : null,
+    agents: extAgents.slice(0, IPERM_TOP),
+    agentCount: extAgents.length,
+    bands: bands.filter(function (b) { return b.n; }),
+    maturities: maturities,
+    riders: riders,
+    notes: notes
+  };
+}
+
+function iActPermanent_(b) {
+  var key = 'iperm_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iPermanentWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), IPERM_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   RIDERS ON A CLOCK — intelligence/wall/riders.html · action intel.riders
+   ══════════════════════════════════════════════════════════════════════════
+   The branch's own correction, and it was the right one: EVERY RIDER HAS AN
+   EXPIRY. The permanent screen says the life cover does not end on a date,
+   and that is true — but the critical illness, the accidental death, the
+   waiver of premium and the disability income riding on that same policy all
+   do. A client who has been told "this is for life" is holding one contract
+   where half of it is and half of it is not.
+
+   So this screen is the rider book against the calendar, and it was asked
+   for as "the riders expiring this month". The month leads it. But the month
+   is thin — in September 2026 exactly one rider expires on the whole book —
+   and a screen that is blank eleven months in twelve is a screen nobody
+   looks at. So the month sits beside the two piles that are never empty:
+
+     ALREADY GONE, STILL ON THE BOOKS. 74 riders whose expiry date has
+     passed on a policy Salesforce still calls premium paying. Either the
+     client is paying for cover that is not there, or the branch is
+     reporting cover that is not there. Both are worth a call.
+
+     NO EXPIRY DATE AT ALL. Of 5,924 riders in force, 3,280 carry no end
+     date. Nobody can ring a client about a date that is not recorded, so
+     this is the number that decides how complete every other figure here
+     can be, and it is said out loud rather than quietly left out.
+
+   THE HERO is the one that pays for the screen: the cover that rides on a
+   policy whose own life cover never ends. $601m of critical illness on 1,092
+   whole-life policies, $489k of premium — all of it on a clock the client
+   has probably never seen. That is not a data problem. That is the branch's
+   best conversation.
+
+   WHAT IS DELIBERATELY NOT HERE. No client, no policy number. The row-level
+   reads pull POLICY__c to test it against the branch's dues tab and it never
+   leaves this function — the same rule the conversion screen follows.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var IRID_HOLD_S = 15 * 60;
+var IRID_TOP    = 12;      // agents on screen
+var IRID_SOON_M = 12;      // the window the screen calls "coming up"
+
+/* The four riders, each with the three fields that describe it and the words
+   the branch uses for what it does. WP carries no sum assured — it pays the
+   premium rather than a benefit — so its presence is tested on the premium. */
+var IRID_KINDS = [
+  { key: 'ci', lab: 'Critical illness', does: 'pays on diagnosis',
+    has: 'Critical_Illness_Coverage__c', cover: 'Critical_Illness_Coverage__c',
+    prem: 'Critical_Illness_Premium__c', exp: 'Critical_Illness_Expiry__c' },
+  { key: 'ad', lab: 'Accidental death', does: 'accident only',
+    has: 'ADDAP_Coverage__c', cover: 'ADDAP_Coverage__c',
+    prem: 'ADDAP_Premium__c', exp: 'ADDAP_Expiry_Date__c', age: 65 },
+  /* age: the attained age at which the rider ends when the export carries
+     no date — read off the dated ones on 17 September 2026: 354 of 460
+     waivers end at 59 (the anniversary before the sixtieth birthday), 331 of
+     500 accidental-death riders at 65. Two in three of both kinds carry no
+     date at all, which is why "where is WP and ADD" was the question. */
+  { key: 'wp', lab: 'Waiver of premium', does: 'pays the premium if they cannot',
+    has: 'WP_Premium__c', cover: null,
+    prem: 'WP_Premium__c', exp: 'WP_Expiry__c', age: 59 },
+  { key: 'di', lab: 'Disability income', does: 'a monthly benefit',
+    has: 'DI_bENEFIT__c', cover: 'DI_bENEFIT__c',
+    prem: 'DI_Premium__c', exp: 'DI_Exipry__c' }
+];
+
+/* The anniversary at which the insured has attained `age`: the policy's
+   issue month and day, in whichever of two years gives that age. Falls back
+   to the birthday itself when the issue date is missing. */
+function iRidDerived_(dob, issued, age) {
+  if (!dob || !age) return null;
+  var m = issued ? issued.getMonth() : dob.getMonth(), d = issued ? issued.getDate() : dob.getDate();
+  for (var y = dob.getFullYear() + age; y <= dob.getFullYear() + age + 1; y++) {
+    var cand = new Date(y, m, d);
+    var att = cand.getFullYear() - dob.getFullYear() -
+              ((cand.getMonth() < dob.getMonth() || (cand.getMonth() === dob.getMonth() && cand.getDate() < dob.getDate())) ? 1 : 0);
+    if (att === age) return cand;
+  }
+  return null;
+}
+function iRidKind_(key) {
+  for (var i = 0; i < IRID_KINDS.length; i++) if (IRID_KINDS[i].key === key) return IRID_KINDS[i];
+  return null;
+}
+
+/* In force, on the branch's own terms: premium paying. The rider clause is
+   added per kind, because a policy holding one rider and not another must
+   not be counted in the other's denominator. */
+function iRidLive_() {
+  return "Policy_Status_Description__c = 'PREMIUM PAYING'";
+}
+
+function iRidersWall_() {
+  var today = iToday_(), notes = [];
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the project.' };
+  }
+  var ask = iSfQuery_;
+  var from = ' FROM ' + ICONV_OBJECT + ' WHERE ';
+  var live = iRidLive_();
+  /* Every row-level read below asks for plain field names and no aliases.
+     Salesforce allows aliasing only in an aggregate query, and it rejects a
+     row-level SELECT that carries one outright, so the fields are read back
+     by their own names and the day of the month is arithmetic on the date. */
+  var q = function (soql) {
+    try { return ask(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* THE BOOK, one read per rider. It was one read for all four — COUNT(field)
+     counts the rows where that field is set, which looked like a free way to
+     get four riders and their dated counts in a single query. It was not:
+     COUNT counts a field set to ZERO as set, and 144 policies carry a
+     critical illness coverage of nothing. That put 144 phantom riders in the
+     denominator and the same 144 into the blind spot. So each rider is asked
+     for on its own terms — the cover, or for the waiver the premium, has to
+     be greater than nought — which is also the population every other read on
+     this screen uses. Four queries, and they agree with each other. */
+  var B = {};
+  IRID_KINDS.forEach(function (k) {
+    var r = q('SELECT COUNT(Id) n, COUNT(' + k.exp + ') d, SUM(' + k.prem + ') p' +
+              (k.cover ? ', SUM(' + k.cover + ') c' : '') +
+              from + live + ' AND ' + k.has + ' > 0');
+    var row = (r && r[0]) || null;
+    B[k.key] = row ? { n: iNum_(row.n), d: iNum_(row.d), p: iNum_(row.p),
+                       c: k.cover ? iNum_(row.c) : null } : null;
+  });
+
+  var skip = iExcluded_();
+  var dues = null;
+  try { dues = iConvDues_(); } catch (eD) { notes.push('The dues tab would not read: ' + (eD && eD.message || eD)); }
+  if (!dues) {
+    notes.push('No dues tab found, so nothing here is tested for arrears or for lapses. ' +
+               'Every figure is an upper bound.');
+  }
+
+  var zero = function () { return { n: 0, cover: 0, prem: 0 }; };
+  var gone = zero(), month = zero(), ahead = zero(), forever = zero(), blank = zero();
+  var derived = { n: 0, cover: 0, prem: 0, gone: zero(), rule: 'WP at the anniversary at 59, ADD at 65' };
+  var byAg = {}, days = {}, months = {}, kinds = [];
+  var dayOf = today.getDate();
+  /* Rows the dues tab says are not live after all, and rows held by an agent
+     who is left off every wall. Until 16 September 2026 the first was a bare
+     count that reached the branch only as a sentence in notes and the second
+     was not counted at all — both simply vanished from the lists. An
+     exclusion is a decision to hand that book to somebody, not a way to make
+     it disappear, so every screen that excludes has to say how much it
+     removed; and a rider the dues tab took off is still a rider Salesforce
+     is calling paid. Both are tallied with their cover and premium and
+     published as figures of their own, not folded into a note. */
+  var lost = { n: 0, cover: 0, prem: 0 }, excluded = { n: 0, cover: 0, prem: 0 };
+  var tally = function (t, c, pm) { t.n++; t.cover += c; t.prem += pm; };
+  /* Who holds what is ending — this month, and the twelve-month window. The
+     gone list has always named the desk, because somebody has to work it; the
+     month was asked for as "the riders expiring this month", which is a
+     question an agent answers about their own book, and until 16 September
+     2026 the screen knew the day it fell on and never the desk it sat on.
+     Kinds are counted per agent, all four keys present, because the waiver
+     carries no cover and an agent whose whole month is waivers would
+     otherwise show a $0 that looks like nothing is ending. */
+  var byAgM = {}, byAgY = {};
+  var desk = function (idx, ag) {
+    return idx[ag || '—'] || (idx[ag || '—'] =
+      { name: ag || 'no agent on the record', n: 0, cover: 0, prem: 0,
+        kinds: { ci: 0, ad: 0, wp: 0, di: 0 } });
+  };
+
+  IRID_KINDS.forEach(function (k) {
+    var b = B[k.key] || { n: 0, d: 0, p: 0, c: k.cover ? 0 : null };
+    var row = { key: k.key, lab: k.lab, does: k.does,
+                have: b.n, dated: b.d, cover: b.c, prem: b.p,
+                gone: zero(), month: zero(), ahead: zero(), forever: zero() };
+    row.blank = Math.max(0, row.have - row.dated);
+    blank.n += row.blank;
+
+    /* ALREADY GONE. Row level, because this is the list somebody has to work
+       and it has to name the agent holding it. Small by nature — it is the
+       tail of a book, not the book. */
+    var goneRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                     (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                     from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' < TODAY' +
+                     ' ORDER BY ' + k.exp + ' DESC LIMIT 400');
+    (goneRows || []).forEach(function (r) {
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { tally(lost, c, pm); return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) { tally(excluded, c, pm); return; }
+      var xp = iDate_(r[k.exp]);
+      row.gone.n++; row.gone.cover += c; row.gone.prem += pm;
+      gone.n++; gone.cover += c; gone.prem += pm;
+      var a = byAg[ag || '—'] || (byAg[ag || '—'] =
+        { name: ag || 'no agent on the record', n: 0, cover: 0, prem: 0, oldest: null, collect: 0 });
+      a.n++; a.cover += c; a.prem += pm;
+      if (st === 'collect') a.collect++;
+      if (xp && (!a.oldest || xp < a.oldest)) a.oldest = xp;
+    });
+
+    /* THE WINDOW AHEAD, and the month inside it. One read per rider covers
+       both — the month is the near end of the same list. */
+    var upRows = q('SELECT POLICY__c, AGENT__r.Name, ' + k.exp +
+                   (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' >= THIS_MONTH AND ' + k.exp + ' <= NEXT_N_MONTHS:' + IRID_SOON_M +
+                   ' ORDER BY ' + k.exp + ' LIMIT 400');
+    var take = function (r, xp, derived) {
+      var c = k.cover ? iNum_(r[k.cover]) : 0, pm = iNum_(r[k.prem]);
+      var st = iRidState_(dues, r.POLICY__c);
+      if (st === 'gone') { tally(lost, c, pm); return; }
+      var ag = r['AGENT__r'] && r['AGENT__r'].Name ? String(r['AGENT__r'].Name).trim() : '';
+      if (ag && iExcludes_(skip, ag)) { tally(excluded, c, pm); return; }
+      if (!xp) return;
+      row.ahead.n++; row.ahead.cover += c; row.ahead.prem += pm;
+      ahead.n++; ahead.cover += c; ahead.prem += pm;
+      if (derived) { row.ahead.derived = (row.ahead.derived || 0) + 1; ahead.derived = (ahead.derived || 0) + 1; }
+      var y = desk(byAgY, ag);
+      tally(y, c, pm); y.kinds[k.key]++;
+      if (derived) y.derived = (y.derived || 0) + 1;
+      var ym = xp.getFullYear() + '-' + ('0' + (xp.getMonth() + 1)).slice(-2);
+      var mo = months[ym] || (months[ym] = { ym: ym, lab: ICONV_MONTHS[xp.getMonth()] + ' ' + xp.getFullYear(),
+                                             n: 0, cover: 0, derived: 0 });
+      mo.n++; mo.cover += c;
+      if (derived) mo.derived++;
+      /* THIS MONTH, day by day — the same strip the conversion screen uses,
+         because an agent reads a month the same way whatever is ending. */
+      if (xp.getFullYear() === today.getFullYear() && xp.getMonth() === today.getMonth()) {
+        var dom = xp.getDate();
+        row.month.n++; row.month.cover += c; row.month.prem += pm;
+        month.n++; month.cover += c; month.prem += pm;
+        if (derived) { row.month.derived = (row.month.derived || 0) + 1; month.derived = (month.derived || 0) + 1; }
+        var m = desk(byAgM, ag);
+        tally(m, c, pm); m.kinds[k.key]++;
+        if (derived) m.derived = (m.derived || 0) + 1;
+        if (dom) {
+          var slot = days[dom] || (days[dom] = { day: dom, n: 0, cover: 0, past: dom < dayOf, kinds: {}, derived: 0 });
+          slot.n++; slot.cover += c; slot.kinds[k.key] = (slot.kinds[k.key] || 0) + 1;
+          if (derived) slot.derived++;
+        }
+      }
+    };
+    (upRows || []).forEach(function (r) { take(r, iDate_(r[k.exp]), false); });
+
+    /* THE UNDATED ONES, PLACED FROM AGE. Two in three waivers and
+       accidental-death riders carry no expiry, and the dated ones say why
+       there is still an answer: the waiver ends at the anniversary at 59,
+       the accidental death at 65. So the rows with no date but a birthday
+       and an issue date are asked for in the birth-date range that puts
+       that anniversary inside the window, placed, and counted as derived
+       everywhere they land — the screen says "by age" beside each one. */
+    if (k.age) {
+      var mStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      var mEnd = new Date(today.getFullYear(), today.getMonth() + IRID_SOON_M + 1, 0);
+      var lo = iIso_(new Date(mStart.getFullYear() - k.age - 1, mStart.getMonth(), mStart.getDate()));
+      var hi = iIso_(new Date(mEnd.getFullYear() - k.age, mEnd.getMonth(), mEnd.getDate()));
+      var dRows = q('SELECT POLICY__c, AGENT__r.Name, Date_Of_Birth__c, ISSUE_DATE__c' +
+                    (k.cover ? ', ' + k.cover : '') + ', ' + k.prem +
+                    from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' = null' +
+                    ' AND ISSUE_DATE__c != null AND Date_Of_Birth__c >= ' + lo + ' AND Date_Of_Birth__c <= ' + hi +
+                    ' ORDER BY Date_Of_Birth__c LIMIT 1500');
+      (dRows || []).forEach(function (r) {
+        var xp = iRidDerived_(iDate_(r.Date_Of_Birth__c), iDate_(r.ISSUE_DATE__c), k.age);
+        if (!xp || xp < mStart || xp > mEnd) return;
+        derived.n++; derived.prem += iNum_(r[k.prem]); derived.cover += k.cover ? iNum_(r[k.cover]) : 0;
+        take(r, xp, true);
+      });
+      /* And the ones past that age with the rider still charged: a client
+         paying for cover the contract says has ended, or a date nobody
+         recorded. Either way a list to work, and here it is a size. */
+      var cut = iIso_(new Date(mStart.getFullYear() - k.age - 1, mStart.getMonth(), mStart.getDate()));
+      var dg = q('SELECT COUNT(Id) n, SUM(' + k.prem + ') p' + (k.cover ? ', SUM(' + k.cover + ') c' : '') +
+                 from + live + ' AND ' + k.has + ' > 0 AND ' + k.exp + ' = null AND Date_Of_Birth__c < ' + cut);
+      var G = (dg && dg[0]) || null;
+      if (G) {
+        row.derivedGone = { n: iNum_(G.n), prem: iNum_(G.p), cover: k.cover ? iNum_(G.c) : 0 };
+        derived.gone.n += row.derivedGone.n; derived.gone.prem += row.derivedGone.prem; derived.gone.cover += row.derivedGone.cover;
+      }
+    }
+
+    /* THE HERO, per rider: still to come, on a policy whose life cover has no
+       end date of its own. The client keeps the policy for life and loses
+       this. Aggregate — nobody works this list row by row, it is the size of
+       the thing that matters. */
+    if (k.cover) {
+      var fRow = q('SELECT COUNT(Id) n, SUM(' + k.cover + ') cov, SUM(' + k.prem + ') prm' +
+                   from + live + ' AND ' + k.has + ' > 0' +
+                   ' AND ' + k.exp + ' > TODAY AND Life_Coverage_Expiry__c = null');
+      var F = (fRow && fRow[0]) || null;
+      if (F) {
+        row.forever = { n: iNum_(F.n), cover: iNum_(F.cov), prem: iNum_(F.prm) };
+        forever.n += row.forever.n; forever.cover += row.forever.cover; forever.prem += row.forever.prem;
+      }
+    }
+    kinds.push(row);
+  });
+
+  var answered = IRID_KINDS.some(function (k) { return !!B[k.key]; });
+  if (!answered && !kinds.length) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: notes[0] || 'Salesforce did not answer.' };
+  }
+
+  var book = kinds.reduce(function (a, k) {
+    return { n: a.n + k.have, dated: a.dated + k.dated, blank: a.blank + k.blank,
+             cover: a.cover + (k.cover || 0), prem: a.prem + k.prem };
+  }, { n: 0, dated: 0, blank: 0, cover: 0, prem: 0 });
+
+  /* Who holds the ones that have already gone. Ordered by cover, because
+     this pile is not a race against a date — it is worth what it is worth. */
+  var agents = Object.keys(byAg).map(function (key) {
+    var a = byAg[key];
+    a.oldest = a.oldest ? a.oldest.getFullYear() : null;
+    return a;
+  }).sort(function (a, b) { return b.cover - a.cover || b.n - a.n; });
+
+  /* Most riders ending first, then the premium on them — the month is worked
+     as a list of calls, and the desk with the most calls is the one to start
+     with. Cover would put one big critical illness ahead of four waivers,
+     which is the wrong order for a list of phone calls. */
+  var desks = function (idx) {
+    return Object.keys(idx).map(function (key) { return idx[key]; })
+      .sort(function (a, b) { return b.n - a.n || b.prem - a.prem || (a.name < b.name ? -1 : 1); });
+  };
+
+  if (lost.n) {
+    notes.push(lost.n + ' riders are off these lists — the dues tab says the policy has lapsed, ' +
+               'been surrendered or matured. Salesforce still shows it paying.');
+  }
+  /* The count only: money on a wall page is formatted in the browser, and
+     the page prints the cover beside this from the excluded figure itself. */
+  if (excluded.n) {
+    notes.push(excluded.n + (excluded.n === 1 ? ' rider' : ' riders') + ' held by an excluded agent ' +
+               (excluded.n === 1 ? 'is' : 'are') + ' left off every list here. ' +
+               'Excluding an agent does not end the rider — somebody still has to hold that book.');
+  }
+  if (book.blank) {
+    notes.push(book.blank + ' of the ' + book.n + ' riders in force carry no expiry date at all, so ' +
+               'no screen can tell you when they end.');
+  }
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    month: ICONV_MONTHS[today.getMonth()], day: dayOf,
+    daysInMonth: new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate(),
+    window: IRID_SOON_M,
+    head: forever,
+    book: book,
+    gone: gone,
+    thisMonth: month,
+    ahead: ahead,
+    days: Object.keys(days).map(function (d) { return days[d]; })
+      .sort(function (a, b) { return a.day - b.day; }),
+    months: Object.keys(months).sort().map(function (m) { return months[m]; }),
+    kinds: kinds,
+    agents: agents.slice(0, IRID_TOP),
+    agentCount: agents.length,
+    /* The month and the year by desk: every agent with a rider ending, the
+       kinds by key, the cover (nought for a waiver — it has none) and the
+       premium. Not capped here; the page trims to the height it has and says
+       how many it dropped. */
+    monthByAgent: desks(byAgM),
+    yearByAgent: desks(byAgY),
+    derived: derived,
+    lost: lost,
+    excluded: { n: excluded.n, cover: excluded.cover, prem: excluded.prem,
+                names: Object.keys(skip).length },
+    duesRead: !!dues,
+    notes: notes
+  };
+}
+
+/* The dues tab's verdict on one policy, in the three words the rest of the
+   wall already uses. A policy the tab has never heard of counts as ready —
+   usually business too new to be in the extract. */
+function iRidState_(dues, num) {
+  if (!dues || !num) return 'ready';
+  var hit = dues.by[String(num).trim()];
+  return hit ? hit.state : 'ready';
+}
+
+/* RIDERS AND CONVERSIONS READ A STORED COPY, LIKE THE BOOK SCREENS. Both
+   are Salesforce builds — a dozen queries each — and on the evening of 16
+   September the riders screen sat on "no feed" while the day's asks queued
+   behind the pending build. They change once a day (a birthday, a date), so
+   the night's copy is the right copy; {fresh:true} still builds live and
+   replaces it. */
+function iActRiders_(b) {
+  if (b && b.fresh) { var d = iRidersWall_(); try { if (d && d.configured !== false) iWallSave_('riders', d); } catch (e) {} return iOk_({ data: d }); }
+  return iWallServe_('riders', function () { return iRidersWall_(); });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   LAPSES ON A CALENDAR — intelligence/wall/lapses.html · action intel.lapses
+   ══════════════════════════════════════════════════════════════════════════
+   The dues tab carries every lapse the branch has ever had, and the nightly
+   rebuild reads them — but only to list the ones inside the last 365 days,
+   client by client, for the sign-in screens. Nothing on the wall said how
+   many policies the branch LOST this year, or which month took the most of
+   them, or how old they were when they went. Those three are the questions
+   a branch manager asks first, and they are answered here.
+
+   THREE WINDOWS, ALL CALENDAR. This month, this quarter and the year to date
+   — from 1 January, never a rolling 365 days. A rolling year moves every
+   morning and nobody can say what it was last Tuesday; the calendar year is
+   what the branch's own targets are written against, so the wall speaks the
+   same language.
+
+   THE MONTH STRIP is the reason the screen exists. Twelve columns, one per
+   month of this year, and the tallest one is the month the branch should be
+   asking about. On the real book that was July, by a distance.
+
+   TENURE AT LAPSE. The issue date has been read off the dues tab since the
+   first build and was never used for anything. Lapse date minus issue date
+   is how long the policy lived, and a policy that lapses inside its first
+   year is a sale that did not hold — a different conversation from a
+   ten-year policy whose client changed their mind. So each window carries
+   its years-in-force in five bands and a median, and every agent's row
+   carries their own median and their own count under a year.
+
+   WHAT IS DELIBERATELY NOT HERE. No client, no policy number, no contact
+   detail: the screen is unauthenticated, like every other wall action, so
+   it is aggregates and the names of our own agents and nothing else. The
+   test walks the payload for any key that smells of a client.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+var ILAP_HOLD_S = 15 * 60;
+var ILAP_TOP    = 12;      // agents on screen
+
+/* Years in force at the moment of lapse, in the five bands the screen draws.
+   The first band is the one that matters most, so it is the narrowest. */
+var ILAP_BANDS = [
+  { key: 'u1',  lab: 'under a year',   lo: 0,  hi: 1 },
+  { key: 'y1',  lab: '1 to 2 years',   lo: 1,  hi: 2 },
+  { key: 'y2',  lab: '2 to 5 years',   lo: 2,  hi: 5 },
+  { key: 'y5',  lab: '5 to 10 years',  lo: 5,  hi: 10 },
+  { key: 'y10', lab: '10 years and over', lo: 10, hi: Infinity }
+];
+
+function iLapBand_(years) {
+  for (var i = 0; i < ILAP_BANDS.length; i++) {
+    if (years >= ILAP_BANDS[i].lo && years < ILAP_BANDS[i].hi) return ILAP_BANDS[i].key;
+  }
+  return null;
+}
+
+/* The middle value, to one decimal. Null when there is nothing to take the
+   middle of — a dash on screen, never a zero that reads as "brand new". */
+function iLapMedian_(xs) {
+  if (!xs || !xs.length) return null;
+  var s = xs.slice().sort(function (a, b) { return a - b; });
+  var mid = Math.floor(s.length / 2);
+  var m = s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+  return Math.round(m * 10) / 10;
+}
+
+function iLapWindow_(lab) {
+  var bands = {};
+  ILAP_BANDS.forEach(function (b) { bands[b.key] = 0; });
+  return { lab: lab, policies: 0, modal: 0, annualised: 0, years: [], under1y: 0, under2y: 0,
+           noIssue: 0, bands: bands, agents: {} };
+}
+
+function iLapsesWall_() {
+  var today = iToday_(), notes = [];
+  var sh = iTabDues_();
+  if (!sh) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'No dues tab found (needs Agent, Client Number, Premium, Status Description).' };
+  }
+  /* Read straight off the tab, the same columns the nightly build reads. This
+     does not go through the cache on purpose: the cache holds a year of
+     lapses row by row for the sign-in screens, and a wall action that read
+     it would be holding client rows it has no business holding. */
+  var d = iReadCols_(sh, {
+    agent: ['agent'], premium: ['premium'], issue: ['issue date'],
+    status: ['status'], lapseDate: ['projected lapse date']
+  });
+  if (!d.has('lapseDate')) {
+    notes.push('The dues tab has no "projected lapse date" column, so no lapse can be placed in a month.');
+  }
+  if (!d.has('issue')) {
+    notes.push('The dues tab has no "issue date" column, so nothing here can say how long a policy lived.');
+  }
+
+  var skip = iExcluded_();
+  var y0 = today.getFullYear(), m0 = today.getMonth(), q0 = m0 - (m0 % 3);
+  var yearStart = new Date(y0, 0, 1), qStart = new Date(y0, q0, 1), mStart = new Date(y0, m0, 1);
+
+  var W = { month: iLapWindow_('this month'), quarter: iLapWindow_('this quarter'),
+            year: iLapWindow_('year to date') };
+  var byMonth = [];
+  for (var mm = 0; mm <= m0; mm++) {
+    byMonth.push({ ym: y0 + '-' + ('0' + (mm + 1)).slice(-2), lab: ICONV_MONTHS[mm].slice(0, 3), agents: {},
+                   policies: 0, modal: 0 });
+  }
+  var defects = { noLapseDate: 0, noIssueDate: 0, futureLapseDate: 0 };
+  var lapsed = 0, earlier = 0;
+  var excluded = { policies: 0, modal: 0, names: {} };
+
+  for (var r = 0; r < d.rows; r++) {
+    if (String(d.get('status', r)).trim() !== '1') continue;
+    var agent = String(d.get('agent', r)).trim();
+    if (!agent && !String(d.get('premium', r)).trim()) continue;
+    lapsed++;
+
+    var lapsedOn = iDate_(d.get('lapseDate', r));
+    if (!lapsedOn) { defects.noLapseDate++; continue; }
+    var ago = iDays_(lapsedOn, today);
+    /* The nightly build skips a lapse dated after today for the same reason:
+       a "projected" date ahead of us is a policy in its grace period, not one
+       that has gone. It is counted so the number is not silently lost. */
+    if (ago < 0) { defects.futureLapseDate++; continue; }
+    if (lapsedOn < yearStart) { earlier++; continue; }
+
+    var modal = iNum_(d.get('premium', r));
+    /* An excluded agent's lapses come off every window — and are counted, so
+       the screen can say what it took away. The book still lost them. */
+    if (agent && iExcludes_(skip, agent)) {
+      excluded.policies++; excluded.modal += modal; excluded.names[agent] = true;
+      continue;
+    }
+
+    var issued = iDate_(d.get('issue', r));
+    var years = null;
+    if (!issued) defects.noIssueDate++;
+    else {
+      years = (lapsedOn.getTime() - issued.getTime()) / (365.25 * 86400000);
+      /* Issued after it lapsed is a date typed wrong, and it would land in
+         "under a year" as if it were a sale that did not hold. */
+      if (years < 0) { years = null; defects.noIssueDate++; }
+    }
+
+    var slot = byMonth[lapsedOn.getMonth()];
+    slot.policies++; slot.modal += modal;
+    /* Who is behind the bar — asked for on 16 September: "on the yellow you
+       should label the agents who make up the percentage". */
+    var sa = slot.agents[agent || '—'] || (slot.agents[agent || '—'] = { k: agent || 'no agent on the record', n: 0, modal: 0 });
+    sa.n++; sa.modal += modal;
+
+    var wins = [W.year];
+    if (lapsedOn >= qStart) wins.push(W.quarter);
+    if (lapsedOn >= mStart) wins.push(W.month);
+    wins.forEach(function (w) {
+      w.policies++; w.modal += modal;
+      var a = w.agents[agent || '—'] || (w.agents[agent || '—'] =
+        { agent: agent || 'no agent on the record', policies: 0, modal: 0, years: [], under1y: 0, under2y: 0 });
+      a.policies++; a.modal += modal;
+      if (years === null) { w.noIssue++; return; }
+      w.years.push(years); a.years.push(years);
+      var band = iLapBand_(years);
+      if (band) w.bands[band]++;
+      if (years < 1) { w.under1y++; a.under1y++; }
+      /* Under two INCLUDES under one — it is "did not reach the second
+         anniversary", not a band of its own. The bands carry the split. */
+      if (years < 2) { w.under2y++; a.under2y++; }
+    });
+  }
+
+  /* Every agent on the year, ordered by what they lost — and each agent's
+     line carries the three windows, so the table reads across. */
+  var agentsOut = Object.keys(W.year.agents).map(function (k) {
+    var y = W.year.agents[k], q = W.quarter.agents[k], m = W.month.agents[k];
+    return { agent: y.agent,
+             month: m ? m.policies : 0, quarter: q ? q.policies : 0,
+             policies: y.policies, modal: y.modal, annualised: y.modal * 12,
+             medianYears: iLapMedian_(y.years), under1y: y.under1y, under2y: y.under2y };
+  }).sort(function (a, b) { return b.policies - a.policies || b.modal - a.modal; });
+
+  var windows = {};
+  Object.keys(W).forEach(function (k) {
+    var w = W[k];
+    var bands = ILAP_BANDS.map(function (b) { return { key: b.key, lab: b.lab, n: w.bands[b.key] }; });
+    var byAgent = Object.keys(w.agents).map(function (n) {
+      var a = w.agents[n];
+      return { agent: a.agent, policies: a.policies, modal: a.modal,
+               medianYears: iLapMedian_(a.years), under1y: a.under1y, under2y: a.under2y };
+    }).sort(function (a, b) { return b.policies - a.policies || b.modal - a.modal; });
+    windows[k] = { lab: w.lab, policies: w.policies, modal: w.modal, annualised: w.modal * 12,
+                   medianYears: iLapMedian_(w.years), under1y: w.under1y, under2y: w.under2y,
+                   noIssue: w.noIssue, bands: bands, byAgent: byAgent };
+  });
+
+  var exNames = Object.keys(excluded.names).length;
+  if (excluded.policies) {
+    notes.push(excluded.policies + (excluded.policies === 1 ? ' lapse' : ' lapses') + ' this year, ' +
+               iMoney_(excluded.modal * 12) + ' a year, ' +
+               (exNames === 1 ? 'belong to an agent' : 'belong to ' + exNames + ' agents') +
+               ' left off every wall, and are not counted here.');
+  }
+  if (defects.noLapseDate) {
+    notes.push(defects.noLapseDate + ' lapsed ' + (defects.noLapseDate === 1 ? 'policy carries' : 'policies carry') +
+               ' no lapse date, so nothing can say which month took ' +
+               (defects.noLapseDate === 1 ? 'it' : 'them') + '.');
+  }
+  if (defects.noIssueDate) {
+    notes.push(defects.noIssueDate + ' of this year’s lapses carry no usable issue date, so the tenure ' +
+               'bands and medians are read off the rest.');
+  }
+
+  return {
+    configured: true, generatedAt: iIso_(today),
+    year: y0, month: ICONV_MONTHS[m0], monthIndex: m0,
+    quarter: 'Q' + (Math.floor(m0 / 3) + 1),
+    windows: windows,
+    byMonth: byMonth.map(function (m) {
+      var top = Object.keys(m.agents).map(function (k) { return m.agents[k]; })
+        .sort(function (a, b) { return b.n - a.n || a.k.localeCompare(b.k); });
+      return { ym: m.ym, lab: m.lab, policies: m.policies, modal: m.modal,
+               agents: top.length, top: top.slice(0, 3).map(function (a) {
+                 return { k: a.k, n: a.n, pct: m.policies ? Math.round(100 * a.n / m.policies) : 0 }; }) };
+    }),
+    agents: agentsOut.slice(0, ILAP_TOP),
+    agentCount: agentsOut.length,
+    lapsed: { total: lapsed, earlier: earlier },
+    excluded: { policies: excluded.policies, modal: excluded.modal,
+                annualised: excluded.modal * 12, agents: exNames },
+    defects: defects,
+    notes: notes
+  };
+}
+
+function iActLapses_(b) {
+  var key = 'ilap_' + iIso_(iToday_()), cache = null;
+  if (!(b && b.fresh)) {
+    try {
+      cache = CacheService.getScriptCache();
+      var hit = cache.get(key);
+      if (hit) return iOk_({ data: JSON.parse(hit) });
+    } catch (e) {}
+  }
+  var data = iLapsesWall_();
+  try { (cache || CacheService.getScriptCache()).put(key, JSON.stringify(data), ILAP_HOLD_S); } catch (e2) {}
+  return iOk_({ data: data });
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   INCREASES, GROUP LIFE AND GROUP HEALTH — the pendings the other two
+   pending slides cannot see.
+
+   Asked for on 17 September 2026: "on the Pendings we must include in a
+   separate slide the increases, group life and group health — this is pulled
+   from salesforce on the object increases and policy status and client
+   portfolio record type group health and individual health status pendings."
+
+   WHY A SEPARATE SLIDE AND NOT A COLUMN ON SLIDE 3. Slides 3 and 4 are built
+   from the branch's requirements extract, and that extract is the life
+   new-business list. An increase on a policy the client already holds is not
+   on it; neither is a group scheme, nor a health plan. Adding them to that
+   board would mean adding rows the extract has never seen and cannot age.
+   So this screen asks Salesforce for itself, and it asks two things:
+
+     Policy_Increases__c    an increase on a policy already in force
+     CLIENT_PORTFOLIO__c    record types HEALTH, HEALTH (GROUP), LIFE(GROUP)
+
+   THE STATUS IS READ TWICE ON THE INCREASES OBJECT, because one field is not
+   enough. Policy_Description_Status__c is a clean picklist — Pending, Premium
+   Paying, NPW — and it is right when it is set, but it is blank on 38 of the
+   1,116 rows, and it reads "Premium Paying" on rows whose free-text
+   Policy_Status_Description_R__c says "Underwriting incomplete, Missing
+   Reqts, Error on Policy". Both go through iPendState_, the same normaliser
+   slides 3 and 4 use, and a row is pending if either field says it is.
+
+   NO POLICY NUMBERS AND NO CLIENT NAMES ON THIS SCREEN AT ALL, not even
+   behind INTEL_PENDING_ROWS_ON_WALL. Thirteen rows is few enough that a
+   policy number plus a plan name identifies the client to anyone walking
+   past, and a group scheme identifies the employer. The agent, the status,
+   the age and the money are what the room has to act on.
+   ══════════════════════════════════════════════════════════════════════════ */
+var IGRP = {
+  OBJECT: 'CLIENT_PORTFOLIO__c',
+  INC:    'Policy_Increases__c',
+  TYPES:  ['HEALTH', 'HEALTH (GROUP)', 'LIFE(GROUP)'],
+  LABEL:  { 'HEALTH': 'Individual health', 'HEALTH (GROUP)': 'Group health',
+            'LIFE(GROUP)': 'Group life' }
+};
+/* Every spelling the increases object uses in its free-text status for a
+   policy still in the works. Matched in SOQL to narrow that one row-level
+   read, then classified properly by iPendState_ once it is here. The group
+   and health book is read whole — see iGroupsWall_ — so nothing there is
+   matched in SOQL at all. */
+var IGRP_LIKE = ['Pending', 'Underwriting', 'Reqt', 'Requirement', 'Error', 'Settlement'];
+
+function iGrpLike_(field) {
+  return '(' + IGRP_LIKE.map(function (w) {
+    return field + " LIKE '%" + w + "%'";
+  }).join(' OR ') + ')';
+}
+function iGrpTypeIn_() {
+  return "RecordType.Name IN ('" + IGRP.TYPES.join("','") + "')";
+}
+/* An aggregate query returns RecordType.Name flat as "Name"; a row query
+   returns it nested. Both arrive here. */
+function iGrpType_(x) {
+  if (!x) return '';
+  if (x.RecordType && x.RecordType.Name) return String(x.RecordType.Name);
+  return String(x.Name || '');
+}
+/* "A00427 - Ricky Rampersad" on the portfolio object. The code is the join
+   that matters and the name after it is only a label, so the roster's
+   spelling wins when the code is known. */
+function iGrpAgent_(raw, nameOfCode) {
+  var s = String(raw == null ? '' : raw).trim();
+  if (!s) return { code: '', name: '' };
+  var m = s.match(/^([A-Za-z]?\d{3,})\s*[-–]\s*(.*)$/);
+  var code = m ? iCode_(m[1]) : '', name = m ? m[2].trim() : s;
+  if (code && nameOfCode[code]) name = nameOfCode[code];
+  return { code: code, name: name };
+}
+
+function iGroupsWall_() {
+  var today = iToday_(), DAY = 86400000, yy = today.getFullYear();
+  var notes = [];
+
+  var helper = '';
+  try { helper = iSfHelper_(); } catch (e0) { helper = ''; }
+  if (!helper) {
+    return { configured: false, generatedAt: iIso_(today),
+             error: 'This screen reads Salesforce, and neither sfQuery_ nor sfkQuery_ is in the ' +
+                    'project. Paste KPI.gs alongside Intelligence.gs, or add SalesforceSync.gs.' };
+  }
+  var q = function (soql) {
+    try { return iSfQuery_(soql) || []; }
+    catch (e) { notes.push('Salesforce said: ' + (e && e.message || e)); return null; }
+  };
+
+  /* The branch's own units and people, from the access list — the same join
+     every other Salesforce screen uses, so no branch name is written here. */
+  var units = iBuildUnits_(), unitKeys = {}, nameOfCode = {};
+  var roster = {}, firstSeen = {};
+  Object.keys(units).forEach(function (u) {
+    unitKeys[iPossUnitKey_(u)] = u;
+    units[u].forEach(function (m) {
+      var c = iCode_(m.id);
+      if (c && m.name) nameOfCode[c] = m.name;
+      /* First name -> roster name, for the increases object, which stores
+         first names only. A first name two people share maps to neither. */
+      var fn = iNameKey_(String(m.name || '').split(' ')[0]);
+      if (!fn) return;
+      firstSeen[fn] = (firstSeen[fn] || 0) + 1;
+      roster[fn] = m.name;
+    });
+  });
+  Object.keys(firstSeen).forEach(function (fn) { if (firstSeen[fn] > 1) delete roster[fn]; });
+  var mine = function (u) { return !!unitKeys[iPossUnitKey_(u)]; };
+  var skip = iExcluded_(), listOnly = iListOnly_(), held = 0;
+  /* A name held back by intelListOnly is off the wall and its policy is still
+     counted — the rule set on 17 September. */
+  var show = function (name) {
+    if (!name) return '';
+    if (iExcludes_(listOnly, name)) { held++; return ''; }
+    return name;
+  };
+  var age = function (from) {
+    var d = iDate_(from); if (!d) return 0;
+    return Math.max(0, Math.round((today - d) / DAY));
+  };
+
+  /* ── the group and health book, and what its status field says about it ──
+     READ ROW BY ROW, NEVER AGGREGATED BY UNIT. Unit__c is a formula field on
+     this object, AgentName__c is another, and Salesforce will not group by a
+     formula — "field 'Unit__c' can not be grouped in a query call". The
+     first build of this feed did exactly that, every unit test was green,
+     and on the evening of 17 September 2026 the live slide came up with an
+     empty book and zero increases under a note at the foot that nobody read.
+     The whole group and health book is 2,412 rows across the org, five
+     fields each, and the book screen already pulls fifty thousand — so it
+     is pulled here and folded in script. The mix and the pending list come
+     out of the same pass, which also means the two can no longer disagree
+     about what is pending. */
+  var types = {}, totals = { policies: 0, pending: 0, paying: 0, closed: 0, none: 0 };
+  IGRP.TYPES.forEach(function (t) {
+    types[t] = { key: t, label: IGRP.LABEL[t] || t, policies: 0, pending: 0,
+                 paying: 0, closed: 0, none: 0, oldest: 0, states: {} };
+  });
+  var rows = [];
+  var book = q('SELECT RecordType.Name, Unit__c, AgentName__c, Policy_Status_Description__c,' +
+               ' CreatedDate FROM ' + IGRP.OBJECT + ' WHERE ' + iGrpTypeIn_());
+  (book || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var t = types[iGrpType_(x)]; if (!t) return;
+    var st = iPendState_(x.Policy_Status_Description__c);
+    t.policies++; totals.policies++;
+    if (st === 'issued') { t.paying++; totals.paying++; return; }
+    if (st === 'closed') { t.closed++; totals.closed++; return; }
+    if (st === 'none')   { t.none++;   totals.none++;   return; }
+    t.pending++; totals.pending++; t.states[st] = (t.states[st] || 0) + 1;
+
+    /* ── and the pendings themselves, one row each ── */
+    var who = iGrpAgent_(x.AgentName__c, nameOfCode);
+    if (iExcludes_(skip, who.name)) return;
+    var d = age(x.CreatedDate);
+    if (d > t.oldest) t.oldest = d;
+    rows.push({ type: t.key, label: t.label, who: show(who.name),
+                status: String(x.Policy_Status_Description__c || '').trim(),
+                state: st, days: d });
+  });
+  rows.sort(function (a, b) { return b.days - a.days; });
+
+  /* ── increases: the whole book first, so the pendings have a denominator ──
+     One row-level read for the book and for the year, for the reason above:
+     Unit__c cannot be grouped on this object either. Eleven hundred rows,
+     four fields. */
+  var inc = { rows: 0, paying: 0, payingApi: 0, npw: 0, blank: 0 };
+  var iyear = { n: 0, api: 0 };
+  var ibook = q('SELECT Unit__c, Policy_Description_Status__c, Increase_API__c, Submitted_Date__c' +
+                ' FROM ' + IGRP.INC);
+  (ibook || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    var s = String(x.Policy_Description_Status__c || '').trim(), api = iNum_(x.Increase_API__c);
+    inc.rows++;
+    if (/^premium paying$/i.test(s)) { inc.paying++; inc.payingApi += api; }
+    else if (/^npw$/i.test(s)) inc.npw++;
+    else if (!s) inc.blank++;
+    /* What the branch has written in increases this year — the number that
+       says why the pending ones are worth chasing. */
+    var sub = iDate_(x.Submitted_Date__c);
+    if (sub && sub.getFullYear() >= yy) { iyear.n++; iyear.api += api; }
+  });
+
+  var ipend = { n: 0, api: 0, prem: 0, oldest: 0, noDocs: 0, reqts: 0 }, irows = [];
+  var idet = q('SELECT Agent__c, Unit__c, Support__c, Policy_Description_Status__c,' +
+               ' Policy_Status_Description_R__c, Submitted_Date__c, Days_O_S__c,' +
+               ' Increase_API__c, Increase_Premium__c, Policy_Requirements__c,' +
+               ' Client_Requirement__c, Di_you_collect_the_Documents__c, Years_In_Force__c' +
+               ' FROM ' + IGRP.INC + " WHERE Policy_Description_Status__c = 'Pending' OR " +
+               iGrpLike_('Policy_Status_Description_R__c'));
+  (idet || []).forEach(function (x) {
+    if (!mine(x.Unit__c)) return;
+    /* Either field may be the one telling the truth, so the worse of the two
+       decides. A picklist reading "Premium Paying" does not overrule free
+       text that reads "Missing Reqts". */
+    var a = iPendState_(x.Policy_Description_Status__c);
+    var b = iPendState_(x.Policy_Status_Description_R__c);
+    var pick = ['reqts', 'settle', 'errors', 'uw'];
+    var st = '';
+    for (var i = 0; i < pick.length && !st; i++) if (a === pick[i] || b === pick[i]) st = pick[i];
+    if (!st && /^pending$/i.test(String(x.Policy_Description_Status__c || '').trim())) st = 'uw';
+    if (!st) return;
+    var first = String(x.Agent__c || '').trim();
+    var who = roster[iNameKey_(first)] || first;
+    if (iExcludes_(skip, who) || iExcludes_(skip, first)) return;
+    /* Days_O_S__c is zero on rows that were never settled, so the submitted
+       date is the floor under it, never the other way round. */
+    var d = Math.max(iNum_(x.Days_O_S__c), age(x.Submitted_Date__c));
+    var reqt = String(x.Policy_Requirements__c || x.Client_Requirement__c || '').trim();
+    ipend.n++; ipend.api += iNum_(x.Increase_API__c); ipend.prem += iNum_(x.Increase_Premium__c);
+    if (d > ipend.oldest) ipend.oldest = d;
+    if (x.Di_you_collect_the_Documents__c !== true) ipend.noDocs++;
+    if (reqt) ipend.reqts++;
+    /* The free-text field is the better description when it is prose, and on
+       some rows it is the single character "1". A status with no letter in it
+       tells the room nothing, so the picklist is shown instead. */
+    var said = String(x.Policy_Status_Description_R__c || '').trim();
+    if (!/[a-z]/i.test(said)) said = String(x.Policy_Description_Status__c || '').trim();
+    irows.push({ who: show(who), support: String(x.Support__c || '').trim(), state: st,
+                 status: said,
+                 days: d, api: iNum_(x.Increase_API__c), prem: iNum_(x.Increase_Premium__c),
+                 reqt: reqt, docs: x.Di_you_collect_the_Documents__c === true,
+                 years: Math.max(0, Math.round(iNum_(x.Years_In_Force__c))) });
+  });
+  irows.sort(function (a, b) { return b.days - a.days; });
+
+  var typeList = IGRP.TYPES.map(function (t) { return types[t]; })
+    .filter(function (t) { return t.policies || t.pending; });
+
+  return {
+    generatedAt: iIso_(today),
+    asOf: Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm'),
+    helper: helper,
+    types: typeList,
+    totals: totals,
+    rows: rows,
+    increases: { book: inc, year: iyear, pending: ipend, rows: irows },
+    held: held,
+    notes: notes
+  };
+}
+
+function iActGroups_(b) {
+  if (b && b.fresh) {
+    var d2 = iGroupsWall_();
+    try { if (d2 && d2.configured !== false) iWallSave_('groups', d2); } catch (e2) {}
+    return iOk_({ data: d2 });
+  }
+  return iWallServe_('groups', function () { return iGroupsWall_(); });
+}
+
+function iActConversion_(b) {
+  if (b && b.fresh) { var d2 = iConversionWall_(); try { if (d2 && d2.configured !== false) iWallSave_('conversion', d2); } catch (e2) {} return iOk_({ data: d2 }); }
+  return iWallServe_('conversion', function () { return iConversionWall_(); });
 }
 
 /* ── The chase log ────────────────────────────────────────────────────────
@@ -747,8 +3843,8 @@ function iBuildTasks_(today) {
     type: ['task type'], created: ['created by'], contact: ['contact']
   });
 
-  var open = [], byAssignee = {}, byContact = {}, byPolicy = {};
-  var closed = 0;
+  var open = [], byAssignee = {}, byContact = {}, byPolicy = {}, byType = {};
+  var closed = 0, noType = 0, osAges = [];
 
   for (var r = 0; r < d.rows; r++) {
     var subject = String(d.get('subject', r)).trim();
@@ -765,13 +3861,37 @@ function iBuildTasks_(today) {
     var quiet = modified ? iDays_(modified, today) : null;
     if (quiet === null || quiet < 0) quiet = since || null;
 
-    /* Guardian policy numbers in this book are ten digits beginning 1 or 5.
-       Subjects carry one or two of them, sometimes slash-separated. */
-    var found = subject.match(/\b[15]\d{9}\b/g) || [];
-    found.forEach(function (pol) {
+    /* POLICY NUMBERS IN A SUBJECT ARE TEN DIGITS, AND THE PREFIX IS NOT OURS
+       TO GUESS. This pattern was /\b[15]\d{9}\b/ — written off a sample that
+       happened to hold only 1s and 5s. The branch's own open tasks carry
+       "Decrease- 8004275516", "SERVICE QUESTIONNAIRE 8001144615", "Confirm
+       funds in DISB & SUSP- 8004129226", "Change of Beneficiary- 5004189234":
+       eights are policy numbers too, and on 17 September 2026 that pattern
+       matched NONE of the branch's Pendings tasks. The board showed nought
+       open, nought late, nought quiet against twenty-nine pending policies
+       while support carried fifty-five open tasks between them.
+
+       So: take every ten-digit number, and let the register decide which of
+       them are policies. A number nothing looks up costs one unused key; a
+       prefix guessed wrong costs the whole column. */
+    var found = subject.match(/\b\d{10}\b/g) || [];
+    /* Days outstanding is read here rather than after the open/closed gate,
+       because the per-policy index needs it: an agent's board says how many
+       of the tasks on THEIR policies are late, and a closed task's age is
+       evidence too. */
+    var osAny = iNum_(d.get('os', r));
+    if (!osAny && quiet) osAny = quiet;
+    var movedToday = !!(modified && iIso_(modified) === iIso_(today));
+    found.forEach(function (raw) {
+      /* Keyed through iPolicyKey_ and looked up through it too, so a stray
+         space or a dash in either extract cannot separate a task from its
+         policy. */
+      var pol = iPolicyKey_(raw);
       if (!byPolicy[pol]) byPolicy[pol] = [];
       byPolicy[pol].push({ assigned: assigned, status: status, open: isOpen,
-                           on: iIso_(modified), quiet: quiet });
+                           on: iIso_(modified), quiet: quiet,
+                           os: osAny > 0 && osAny < 3650 ? osAny : null,
+                           today: movedToday });
     });
 
     /* Closed tasks are kept for the join — they are the evidence a case WAS
@@ -781,6 +3901,21 @@ function iBuildTasks_(today) {
     byAssignee[assigned] = (byAssignee[assigned] || 0) + 1;
     var contact = String(d.get('contact', r)).trim() || '(none)';
     byContact[contact] = (byContact[contact] || 0) + 1;
+
+    /* WHAT THE BRANCH IS ACTUALLY CHASING, AND FOR HOW LONG.
+       Task Type is the field the whole KPI list is aligned to, and until now
+       this builder read the column and threw it away. An open chase is only
+       worth having if somebody can say what it is for and how long it has
+       been open — and a task with no type at all cannot be counted against
+       any KPI, which is why the untyped ones are counted on their own. */
+    var type = String(d.get('type', r)).trim();
+    if (!type) { noType++; type = '(no task type)'; }
+    var os = osAny;
+    if (os > 0 && os < 3650) osAges.push(os);
+    if (!byType[type]) byType[type] = { n: 0, oldest: 0, stale: 0 };
+    byType[type].n++;
+    if (os > byType[type].oldest && os < 3650) byType[type].oldest = os;
+    if (os > 30) byType[type].stale++;
 
     open.push({
       subject: subject, status: status, assigned: assigned,
@@ -792,8 +3927,18 @@ function iBuildTasks_(today) {
 
   open.sort(function (a, b) { return (b.quiet || 0) - (a.quiet || 0); });
 
+  osAges.sort(function (a, b) { return a - b; });
   return {
     openCount: open.length, closed: closed,
+    /* An open chase that nobody can name is not a chase. */
+    noType: noType,
+    unassigned: byAssignee['(unassigned)'] || 0,
+    oldestOpen: osAges.length ? osAges[osAges.length - 1] : 0,
+    medianOpen: osAges.length ? osAges[Math.floor(osAges.length / 2)] : 0,
+    staleOpen: osAges.filter(function (a) { return a > 30; }).length,
+    byType: Object.keys(byType).map(function (k) {
+      return { name: k, n: byType[k].n, oldest: byType[k].oldest, stale: byType[k].stale };
+    }).sort(function (a, b) { return b.n - a.n; }),
     byAssignee: Object.keys(byAssignee).map(function (k) { return { who: k, n: byAssignee[k] }; })
       .sort(function (a, b) { return b.n - a.n; }),
     byContact: Object.keys(byContact).map(function (k) { return { who: k, n: byContact[k] }; })
@@ -826,7 +3971,34 @@ function iReqLabel_(code) {
   return IREQ_CODES[c] || c || '(unnamed)';
 }
 
-function iBuildReqs_(today) {
+/* THE YEAR CUT. The extract goes back to 2019 and carries requirements on
+   policies that were declined, withdrawn or issued years ago and never had
+   their requirement closed. Every one of those read as "open more than a
+   year" and the oldest of them led every list. From 16 September 2026 an
+   open requirement counts only if it was ordered this year — or, when it
+   was never ordered, added this year. Closed rows are not cut: they are
+   history, and a requirement cleared in January that was ordered in
+   December is still one cleared this year. */
+var IREQ_SINCE = '2026-01-01';
+
+/* Who ordered it, read off the name. Underwriting's systems order under a
+   short upper-case code — a two-to-six character user id — and a person
+   orders under their own name. The two are told apart by shape, because
+   nothing in the extract says which is which. */
+function iOrderedBySystem_(who) {
+  var s = String(who || '').trim();
+  if (!s) return null;
+  return /^[A-Z0-9]{2,6}$/.test(s);
+}
+
+/* dropPolicies: policies whose REQUIREMENTS are not counted here, though the
+   policies themselves are. Asked for on 17 September 2026 — "leave Javid's
+   name off the wall, and Aleema's, but count their policies, not their
+   requirements." The rows are still handed back, flagged, because the triage
+   has to read them to know whose move a policy is: drop them from the join as
+   well and a policy with three requirements outstanding would read as ready
+   to settle. They are only kept out of the figures. */
+function iBuildReqs_(today, dropPolicies) {
   var sh = iTabReqs_();
   if (!sh) return { error: 'No requirements tab found (needs insured_requirement_id, requirement_code, policy_number).' };
 
@@ -834,12 +4006,28 @@ function iBuildReqs_(today) {
     added: ['added_date'], closed: ['closed_date'], ordered: ['ordered_date'],
     policy: ['policy_number'], code: ['requirement_code'], cat: ['requirements'],
     comment: ['requirement_comment'], first: ['first_name'], last: ['last_name'],
-    reqId: ['insured_requirement_id']
+    reqId: ['insured_requirement_id'],
+    /* Four columns the extract may or may not carry, read defensively. A
+       missing one is named in `missing` so the screen can say "column not
+       in the extract" — never a zero standing in for a fact. */
+    orderedBy: ['ordered by', 'ordered_by'],
+    reqStatus: ['status', 'requirement_status'],
+    received: ['received', 'received_date', 'date received'],
+    routine: ['routine', 'routine requirement', 'routine_requirement']
   });
+  var has = function (k) { return !!(d.has && d.has(k)); };
+  var OPTIONAL = { orderedBy: 'ordered by', reqStatus: 'status', received: 'received', routine: 'routine' };
+  var missing = Object.keys(OPTIONAL).filter(function (k) { return !has(k); })
+    .map(function (k) { return OPTIONAL[k]; });
+  var owners = iReqOwners_();
+  var since = iDate_(IREQ_SINCE);
 
   var AGE = { '0-30': 0, '31-60': 0, '61-90': 0, '91-180': 0, '181-365': 0, '365+': 0 };
-  var open = [], byCode = {}, byCat = {}, byPolicy = {}, seen = {};
-  var closedThisYear = 0, ages = [];
+  var open = [], byCode = {}, byCat = {}, byPolicy = {}, seen = {}, byStatus = {};
+  var closedThisYear = 0, ages = [], orderedDays = [], cutByYear = 0;
+  var byMonthOn = {}, oldestOn = null, newestOn = null;
+  var dropped = { policies: {}, rows: 0 };
+  var routineN = 0, nonRoutineN = 0, bySystem = 0, byManual = 0, byNobody = 0, receivedN = 0;
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
@@ -858,22 +4046,83 @@ function iBuildReqs_(today) {
     if (seen[key]) continue;
     seen[key] = 1;
 
-    var added = iDate_(d.get('added', r)) || iDate_(d.get('ordered', r));
+    var orderedOn = iDate_(d.get('ordered', r));
+    var addedOn = iDate_(d.get('added', r));
+    /* The year cut — see IREQ_SINCE. */
+    var anchor = orderedOn || addedOn;
+    if (!anchor || anchor.getTime() < since.getTime()) { cutByYear++; continue; }
+    /* The dates themselves, month by month from the cut — asked for on 16
+       September: "state the dates on the requirements from the 1st of
+       January 2026". Days-since is a different figure and stays. */
+    var aym = anchor.getFullYear() + '-' + ('0' + (anchor.getMonth() + 1)).slice(-2);
+    byMonthOn[aym] = (byMonthOn[aym] || 0) + 1;
+    if (!oldestOn || anchor < oldestOn) oldestOn = anchor;
+    if (!newestOn || anchor > newestOn) newestOn = anchor;
+
+    var added = addedOn || orderedOn;
     var age = added ? iDays_(added, today) : null;
     if (age !== null && age >= 0) {
       ages.push(age);
       AGE[age <= 30 ? '0-30' : age <= 60 ? '31-60' : age <= 90 ? '61-90'
         : age <= 180 ? '91-180' : age <= 365 ? '181-365' : '365+']++;
     }
+    /* Days since ordered is its own figure, not a second meaning of age. A
+       requirement added in March and ordered last week has waited six
+       months and been in motion for seven days, and both are true. */
+    var daysOrdered = orderedOn ? iDays_(orderedOn, today) : null;
+    if (daysOrdered !== null && daysOrdered >= 0) orderedDays.push(daysOrdered);
 
     var code = String(d.get('code', r)).trim().toUpperCase();
     var cat  = String(d.get('cat', r)).trim() || '(uncategorised)';
-    byCode[code] = (byCode[code] || 0) + 1;
-    byCat[cat]   = (byCat[cat] || 0) + 1;
+    /* A COUNT IS NOT A STORY. "What are the routine documents outstanding and
+       how long it's aging" (17 September) — so every code carries its own
+       median and its own oldest, and so does every category. A proof of
+       address at eleven days and a proof of address at two hundred are not
+       the same conversation. */
+    /* Off the figures, still in the rows — see dropPolicies above. */
+    if (dropPolicies && dropPolicies[iPolicyKey_(policy)]) {
+      dropped.policies[policy] = 1; dropped.rows++;
+      open.push({ policy: policy, code: code, label: iReqLabel_(code), category: cat,
+                  ordered: !!orderedOn, daysOrdered: daysOrdered, listOnly: true,
+                  added: iIso_(added), age: age });
+      continue;
+    }
+    var bc = byCode[code] || (byCode[code] = { n: 0, ages: [], ordered: 0, cat: cat });
+    bc.n++;
+    var bt = byCat[cat] || (byCat[cat] = { n: 0, ages: [] });
+    bt.n++;
+    if (orderedOn) bc.ordered++;
+    if (age !== null && age >= 0) { bc.ages.push(age); bt.ages.push(age); }
     byPolicy[policy] = (byPolicy[policy] || 0) + 1;
+
+    /* Routine: the sheet's own flag when it has one, else the owner map. */
+    var routine;
+    if (has('routine')) {
+      var rf = String(d.get('routine', r)).trim().toLowerCase();
+      routine = rf === '' ? (iReqOwner_(code, !!orderedOn, owners) === 'routine')
+                          : /^(y|yes|true|1|routine)$/.test(rf);
+    } else {
+      routine = iReqOwner_(code, !!orderedOn, owners) === 'routine';
+    }
+    if (routine) routineN++; else nonRoutineN++;
+
+    var orderedBy = has('orderedBy') ? String(d.get('orderedBy', r)).trim() : '';
+    var bySys = iOrderedBySystem_(orderedBy);
+    if (bySys === true) bySystem++; else if (bySys === false) byManual++; else byNobody++;
+
+    var reqStatus = has('reqStatus') ? (String(d.get('reqStatus', r)).trim() || '(none)') : '';
+    if (reqStatus) byStatus[reqStatus] = (byStatus[reqStatus] || 0) + 1;
+    var received = has('received') ? iDate_(d.get('received', r)) : null;
+    if (received) receivedN++;
 
     open.push({
       policy: policy, code: code, label: iReqLabel_(code), category: cat,
+      /* Ordered means it is already in motion — a medical booked, a blood
+         profile at the lab. Nobody should be chased about those. */
+      ordered: !!orderedOn, daysOrdered: daysOrdered,
+      routine: routine,
+      orderedBy: orderedBy, orderedBySystem: bySys,
+      reqStatus: reqStatus, received: received ? iIso_(received) : '',
       comment: String(d.get('comment', r)).trim(),
       orderedFor: [String(d.get('first', r)).trim(), String(d.get('last', r)).trim()]
         .filter(String).join(' '),
@@ -883,22 +4132,63 @@ function iBuildReqs_(today) {
 
   open.sort(function (a, b) { return (b.age || 0) - (a.age || 0); });
   ages.sort(function (a, b) { return a - b; });
+  orderedDays.sort(function (a, b) { return a - b; });
 
   var worst = Object.keys(byPolicy).map(function (p) { return { policy: p, open: byPolicy[p] }; })
     .sort(function (a, b) { return b.open - a.open; }).slice(0, 40);
+  var pair = function (o) {
+    return Object.keys(o).map(function (k) { return { name: k, n: o[k] }; })
+      .sort(function (a, b) { return b.n - a.n; });
+  };
 
+  var mid = function (a) {
+    if (!a.length) return null;
+    var v = a.slice().sort(function (x, y) { return x - y; });
+    return v[Math.floor(v.length / 2)];
+  };
+  var top = function (a) { return a.length ? Math.max.apply(null, a) : null; };
   return {
-    openCount: open.length,
+    /* The dropped rows ride in `rows` so the triage can join them; they are
+       not in the count — see dropPolicies. */
+    openCount: open.length - dropped.rows,
     policies: Object.keys(byPolicy).length,
     closedThisYear: closedThisYear,
+    since: IREQ_SINCE, cutByYear: cutByYear,
+    /* What was held off the figures, and never silently: the wall says it. */
+    listOnly: { policies: Object.keys(dropped.policies).length, requirements: dropped.rows },
+    byMonth: Object.keys(byMonthOn).sort().map(function (ym) {
+      return { ym: ym, lab: ICONV_MONTHS[+ym.slice(5, 7) - 1].slice(0, 3), n: byMonthOn[ym] }; }),
+    oldestOn: oldestOn ? iIso_(oldestOn) : '', newestOn: newestOn ? iIso_(newestOn) : '',
     medianAge: ages.length ? ages[Math.floor(ages.length / 2)] : 0,
     oldest: ages.length ? ages[ages.length - 1] : 0,
     overYear: AGE['365+'],
     ageing: AGE,
     byCode: Object.keys(byCode).map(function (k) {
-      return { code: k, label: iReqLabel_(k), n: byCode[k] };
+      var c = byCode[k];
+      return { code: k, label: iReqLabel_(k), n: c.n, ordered: c.ordered,
+               median: mid(c.ages), oldest: top(c.ages), category: c.cat,
+               medical: iReqIsMedical_(k), routine: iReqOwner_(k, true, owners) === 'routine' };
     }).sort(function (a, b) { return b.n - a.n; }).slice(0, 20),
-    byCategory: byCat,
+    /* Every category with its own age, medicals apart from routine. */
+    byCatAge: Object.keys(byCat).map(function (k) {
+      return { name: k, n: byCat[k].n, median: mid(byCat[k].ages), oldest: top(byCat[k].ages) };
+    }).sort(function (a, b) { return b.n - a.n; }),
+    byCategory: Object.keys(byCat).map(function (k) { return { name: k, n: byCat[k].n }; })
+      .sort(function (a, b) { return b.n - a.n; }),
+    categories: Object.keys(byCat).map(function (k) { return { name: k, n: byCat[k].n }; })
+      .sort(function (a, b) { return b.n - a.n; }),
+    /* Routine against not, and who ordered — null where the column that
+       would say is not in the extract, and `missing` names it. */
+    routine: { routine: routineN, nonRoutine: nonRoutineN, fromSheet: has('routine') },
+    byOrderedBy: has('orderedBy') ? { system: bySystem, manual: byManual, blank: byNobody } : null,
+    byStatus: has('reqStatus') ? pair(byStatus) : null,
+    received: has('received') ? receivedN : null,
+    daysOrdered: {
+      ordered: orderedDays.length, notOrdered: open.length - orderedDays.length,
+      median: orderedDays.length ? orderedDays[Math.floor(orderedDays.length / 2)] : null,
+      oldest: orderedDays.length ? orderedDays[orderedDays.length - 1] : null
+    },
+    missing: missing,
     worstPolicies: worst,
     rows: open.slice(0, 3000)
   };
@@ -972,10 +4262,12 @@ function iBuildMaturity_(today) {
   var mat = [], exp = [], all = [], byClass = {}, byAgentTotals = {};
   var suspense = 0, suspenseCases = 0, fundHeld = 0, orphaned = 0, noFunds3 = 0;
   var horizonM = INTEL.MATURITY_MONTHS, horizonE = INTEL.EXPIRY_MONTHS;
+  var skipM = iExcluded_();                 // see iBuildDues_: off every report
 
   for (var r = 0; r < d.rows; r++) {
     var policy = String(d.get('policy', r)).trim();
     if (!policy) continue;
+    if (iExcludes_(skipM, String(d.get('agent', r)).trim())) continue;
 
     var plan = String(d.get('plan', r)).trim();
     var cls  = iClassifyPlan_(plan);
@@ -1770,6 +5062,10 @@ function iBuildProduction_(today) {
   var codeName = iCodeNames_();
   Object.keys(byAgent).forEach(function (c) { byAgent[c].agent = codeName[c] || c; });
   rows.forEach(function (x) { x.agent = codeName[x.agentId] || x.agentId; });
+  /* And off, by name, once the codes are names — see iBuildDues_. */
+  var skipP = iExcluded_();
+  Object.keys(byAgent).forEach(function (c) { if (iExcludes_(skipP, byAgent[c].agent)) delete byAgent[c]; });
+  rows = rows.filter(function (x) { return !iExcludes_(skipP, x.agent); });
 
   var months = Object.keys(byMonth).map(function (k) {
     var m = byMonth[k];
@@ -1872,12 +5168,13 @@ function iBuildUnderwriting_(today) {
     issue: ['issue date'], plan: ['plan code'], client: ['client'],
     sumAssured: ['sum assured'], premium: ['premium']
   });
-  var pol = {};
+  var pol = {}, exPol = {}, skipU = iExcluded_();   // see iBuildDues_: off every report
   for (var i = 0; i < dd.rows; i++) {
     var num = dd.get('number', i);
     if (iBadNumber_(num)) continue;
     var key = String(num).trim();
     if (!key || pol[key]) continue;
+    if (iExcludes_(skipU, String(dd.get('agent', i)).trim())) { exPol[key] = 1; continue; }
     pol[key] = {
       agent: String(dd.get('agent', i)).trim(),
       recv: iDate_(dd.get('recv', i)),
@@ -1903,6 +5200,7 @@ function iBuildUnderwriting_(today) {
     if (!p || !code) continue;
     var id = String(d.get('id', r)).trim() || (p + code);
     if (seen[id]) continue;
+    if (exPol[p]) continue;                  // the policy's agent is excluded
     seen[id] = 1;
     total++;
     mixAll[code] = (mixAll[code] || 0) + 1;
@@ -2120,14 +5418,23 @@ function iWallSave_(key, payload) {
   var sh = iWallSheet_();
   var json = JSON.stringify(payload), chunks = [];
   for (var i = 0; i < json.length; i += INTEL.CACHE_CHUNK) chunks.push(json.substr(i, INTEL.CACHE_CHUNK));
-  var builtAt = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm');
+  /* THE BUILD THAT MADE THE COPY TRAVELS WITH IT. On the evening of 16
+     September the script went from 16a to 17a and every book screen kept
+     serving the copy the night's 16a run had stored — possession said "0 of 0
+     agents", delivery still listed the excluded names, the dues line was the
+     old shape — until somebody rebuilt them by hand. A copy stamped with
+     another build is now treated as no copy at all: the next ask builds live
+     and stores, and the night's run rebuilds it whatever the date says. The
+     stamp rides in the built-at cell as text (a bare date, Sheets turns into
+     a Date), and comes off again on the way out. */
+  var builtAt = Utilities.formatDate(new Date(), iTz_(), 'yyyy-MM-dd HH:mm') + ' v' + INTEL_VERSION;
   var row = iWallRow_(sh, key) || sh.getLastRow() + 1;
   var cells = [key, builtAt, json.length].concat(chunks);
   var wide = Math.max(sh.getLastColumn(), cells.length);
   while (cells.length < wide) cells.push('');            // the tail of a longer, older copy
   sh.getRange(row, 1, 1, cells.length).setValues([cells]);
   try { sh.hideSheet(); } catch (e) {}
-  return builtAt;
+  return builtAt.replace(/ v\S+$/, '');
 }
 function iWallLoad_(key) {
   var sh = iSs_().getSheetByName(INTEL.WALL_TAB);
@@ -2138,7 +5445,9 @@ function iWallLoad_(key) {
   var len = Number(cells[2]) || 0, json = '';
   for (var i = 3; i < cells.length && cells[i] !== '' && cells[i] != null; i++) json += String(cells[i]);
   if (!len || json.length !== len) return null;          // half-written: as good as none
-  try { return { builtAt: String(cells[1]), payload: JSON.parse(json) }; } catch (e) { return null; }
+  var stamp = String(cells[1] == null ? '' : cells[1]), m = stamp.match(/^(.*?)\s+v(\S+)$/);
+  if (!m || m[2] !== INTEL_VERSION) return null;          // built by another build: as good as none
+  try { return { builtAt: m[1], version: m[2], payload: JSON.parse(json) }; } catch (e) { return null; }
 }
 /* A payload the screen should not keep: an error, or "not configured". */
 function iWallBad_(d, check) {
@@ -2172,6 +5481,44 @@ function intelRebuildWall45()     { return iWallRebuild_('wall45',     function 
 function intelRebuildDelivery()   { return iWallRebuild_('delivery',   function () { return iBuildDelivery_(); }); }
 function intelRebuildLicence()    { return iWallRebuild_('licence',    function () { return iBuildLicence_(); }, iLicenceBad_); }
 function intelRebuildPossession() { return iWallRebuild_('possession', function () { return iBuildPossession_(); }); }
+function intelRebuildPending()    { return iWallRebuild_('pending',    function () { return iPendingWall_(); }); }
+function intelRebuildRiders()     { return iWallRebuild_('riders',     function () { return iRidersWall_(); }); }
+function intelRebuildConversion() { return iWallRebuild_('conversion', function () { return iConversionWall_(); }); }
+function intelRebuildGroups()     { return iWallRebuild_('groups',     function () { return iGroupsWall_(); }); }
+/* Hourly on a trigger, acting on the odd hours from five to seven in the
+   evening: five is the night copy, nine to nineteen keep the day's clearances
+   on the wall, and seven is skipped because the branch signs in then. Eight
+   builds of about two minutes is a quarter of an hour of the project's day.
+   The hour can be handed in, so the gate is testable without a clock. */
+function intelPendingRefresh(e, hour) {
+  var h = hour === undefined ? Number(Utilities.formatDate(new Date(), iTz_(), 'H')) : Number(hour);
+  if (h % 2 !== 1 || h < 5 || h > 19 || h === 7) return 'pending: not this hour (' + h + ')';
+  /* THE WALL WAITS FOR THE BRANCH, NEVER THE OTHER WAY ROUND.
+     This rebuild reads the whole requirements extract and takes about two
+     minutes, and the hourly trigger fires at whatever minute Apps Script
+     feels like — six times inside the working day. A submission that lands
+     on top of it waits on the same document and can time out: on
+     17 September 2026 a member of staff filed the eleven-to-one block, got
+     no answer after four tries over two minutes, and had to resubmit after
+     lunch. Of the two, this is the one that can afford to wait — it has the
+     night copy behind it and another go in two hours. So if anybody has
+     filed anything in the last four minutes, it stands down.
+     The nightly hours (five, and nineteen after the branch has gone) are
+     not gated: nobody is filing then, and the night copy must be built. */
+  if (h > 5 && h < 19 && typeof staffWroteWithin_ === 'function' && staffWroteWithin_(4 * 60 * 1000)) {
+    return 'pending: somebody is filing a block just now — standing down, next go at ' +
+           (h + 2) + ':00';
+  }
+  var out = [intelRebuildPending()];
+  /* Five in the morning is the night copy for the two Salesforce screens
+     too — inside the same trigger, because the project is one trigger short
+     of its twenty. */
+  if (h === 5) {
+    try { out.push(intelRebuildRiders()); } catch (e1) { out.push('riders: ' + (e1 && e1.message || e1)); }
+    try { out.push(intelRebuildConversion()); } catch (e2) { out.push('conversion: ' + (e2 && e2.message || e2)); }
+  }
+  return out.join('\n');
+}
 function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
 /* All five from the editor — and it must not simply try all five, because they
    do not fit. Run on the morning of 8 September it reached the six-minute
@@ -2188,13 +5535,17 @@ var IWALL_BUDGET_MS = 4.5 * 60 * 1000;      // the ceiling is 6 minutes; stop sh
 
 /* Fastest first, measured against the live branch on 8 September: possession
    16s, licence 25s, delivery 28s, birthdays about a minute and a half since
-   the contact join came out, the 45-day line 155s. Ordered this way a single
-   run gets four of the five. */
+   the contact join came out, pending about 130s, the 45-day line 155s.
+   Ordered this way a single run gets four of the six. */
 var IWALL_FEEDS = [
   { key: 'possession', run: function () { return intelRebuildPossession(); } },
+  { key: 'groups',     run: function () { return intelRebuildGroups(); } },
   { key: 'licence',    run: function () { return intelRebuildLicence(); } },
   { key: 'delivery',   run: function () { return intelRebuildDelivery(); } },
   { key: 'book',       run: function () { return intelRebuildBook(); } },
+  { key: 'riders',     run: function () { return intelRebuildRiders(); } },
+  { key: 'conversion', run: function () { return intelRebuildConversion(); } },
+  { key: 'pending',    run: function () { return intelRebuildPending(); } },
   { key: 'wall45',     run: function () { return intelRebuildWall45(); } }
 ];
 
@@ -2617,6 +5968,45 @@ function iNameKey_(s) {
     .replace(/[^a-z]+/g, ' ').trim();
 }
 
+/* ── who else is on the access list ──────────────────────────────────────
+   The loose surname test below is what lets one person's rows be recognised
+   under three spellings. It must never reach across two different people, and
+   in this branch's own book it does: there are two pairs of agents — four
+   separate Contact records, one pair holding 171 and 17 premium-paying
+   policies and the other 91 and 89 — whose surname and first initial are the
+   same. Surname plus first initial cannot tell them apart, so until
+   15 September 2026 each of those four received the other's clients in the
+   daily list. Run intelAddressCheck() to see the pairs by name; they are not
+   written into this file, which is published.
+
+   The access list is the authority on who is a separate person, so a name or
+   a code that belongs to somebody else on it is never mine, however close it
+   reads.
+
+   Memoised for the execution, not cached across them: the agent digest scopes
+   forty people in one run and would otherwise read the tab forty times, but a
+   roster edit must take effect on the next run and not ten minutes later. */
+var IROSTER_MEMO = null;
+function iRosterClaims_() {
+  if (IROSTER_MEMO) return IROSTER_MEMO;
+  var names = {}, ids = {};
+  try {
+    var dir = iAgentDirectory_() || {};
+    Object.keys(dir).forEach(function (key) {
+      var p = dir[key] || {};
+      var nk = iNameKey_(p.agentName) || iNameKey_(p.name);
+      if (nk) names[nk] = p.name || p.agentName || nk;
+      var code = iCode_(p.agentId);
+      if (code) ids[code] = p.name || p.agentName || code;
+    });
+  } catch (e) {
+    /* No access list reachable — claim nothing rather than scope nobody. The
+       behaviour then is exactly what it was before this guard existed. */
+  }
+  IROSTER_MEMO = { names: names, ids: ids };
+  return IROSTER_MEMO;
+}
+
 function iSameAgent_(a, b) {
   var x = iNameKey_(a), y = iNameKey_(b);
   if (!x || !y) return false;
@@ -2665,17 +6055,32 @@ function iScope_(cache, session) {
     }
     if (g !== undefined) groups[g] = 1;
   });
+  /* Every name and code on the access list that is not one of this team's, so
+     the loose test at the end of isMine cannot fold another agent's book into
+     this one. See iRosterClaims_ for the two pairs of names in this branch
+     that surname-plus-initial cannot tell apart. */
+  var claims = iRosterClaims_(), otherNames = {}, otherIds = {};
+  Object.keys(claims.names).forEach(function (k) { if (!names[k]) otherNames[k] = 1; });
+  Object.keys(claims.ids).forEach(function (c) { if (!ids[c]) otherIds[c] = 1; });
   /* Name first, because that is all the dues, pending and requirement extracts
      carry. The in-force book also carries a Servicing Agent Id, and matching on
      it catches the rows where the branch wrote the agency's company name —
      "GARY SOOKDEO INSURANCE SOLUTIONS LTD" — where the person's name belongs. */
   function isMine(x, key) {
     var who = x[key || 'agent'];
-    if (x.agentId && ids[iCode_(x.agentId)]) return true;
+    var code = x.agentId ? iCode_(x.agentId) : '';
+    if (code && ids[code]) return true;
     var k = iNameKey_(who);
     if (k && names[k]) return true;
     var g = aliasIdx[k];
     if (g !== undefined && groups[g]) return true;
+    /* This row is spelled exactly as somebody else on the access list, or
+       carries their agent number, so it is theirs. Stopping here rather than
+       falling through is the whole point: the test below cannot tell two
+       agents who share a surname and a first initial apart, and it is the
+       only thing that was deciding these rows. */
+    if (code && otherIds[code]) return false;
+    if (k && otherNames[k]) return false;
     /* Last resort: the loose surname test, which is what catches the extracts
        spelling the same person three different ways. */
     for (var i = 0; i < team.length; i++) if (iSameAgent_(who, team[i].name)) return true;
@@ -3027,6 +6432,12 @@ function intelRoute_(b) {
   if (action === 'intel.licence')  return iActLicence_(b);
   if (action === 'intel.possession') return iActPossession_(b);
   if (action === 'intel.book')       return iActBook_(b);
+  if (action === 'intel.pending')    return iActPending_(b);
+  if (action === 'intel.conversion') return iActConversion_(b);
+  if (action === 'intel.groups')     return iActGroups_(b);
+  if (action === 'intel.permanent')  return iActPermanent_(b);
+  if (action === 'intel.riders')     return iActRiders_(b);
+  if (action === 'intel.lapses')     return iActLapses_(b);
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
@@ -3145,6 +6556,18 @@ function iActDay_(b) {
 
 /** Everything above is about how often; this is the day itself. Returns
  *  { data: … } so the wrapper can store the payload rather than the envelope. */
+/* How many things a desk listed in one of the tracker's free-text boxes. They
+   write a line each, or separate with a semicolon, or with a comma, and any of
+   the three has to count as more than one. A box with words in it is always at
+   least one thing, which is why an empty count and an empty box differ. */
+function iDayItems_(s) {
+  var v = String(s || '').trim();
+  if (!v) return 0;
+  var parts = v.split(/[\n;]+|,(?=\s)/).map(function (x) { return x.trim(); })
+    .filter(function (x) { return /[a-z0-9]/i.test(x); });
+  return Math.max(1, parts.length);
+}
+
 function iDayBuild_(b) {
   if (typeof sfkMetricsSafe_ !== 'function' || typeof publicRoster_ !== 'function') {
     return iErr_('The day screen reads the tracker, and the tracker is not in this project.');
@@ -3154,21 +6577,101 @@ function iDayBuild_(b) {
   try {
     att = attendanceToday_({ staffId: '', manager: true }) || {};
   } catch (e) {}
-  try {
-    latestEntries_().forEach(function (r) {
-      if (String(r.Date || '').slice(0, 10) === today) entry[String(r.StaffId)] = r;
-    });
-  } catch (e2) {}
+  /* Today's entry per desk used to come from latestEntries_() here, which
+     read the whole log; the blocks-over-time pass below reads it once for
+     the year and today is inside the year, so today's entry is taken from
+     that same pass and the log is read exactly once per build. */
 
+  var hourNow = Number(Utilities.formatDate(new Date(), tz, 'H')) || 0;
   var blockIds = (typeof BLOCK_IDS !== 'undefined' && BLOCK_IDS) || ['KPI1', 'KPI2', 'PM1', 'PM2'];
-  var blocks = blockIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
+  /* THE STRIP IS THE FOUR DAYTIME BANDS; AFTER FOUR IS ITS OWN. EVE joined
+     BLOCK_IDS on 17 September so it could be filed, and the wall already had
+     a band for it — built from what Salesforce saw the desk close and touch
+     after four, for everybody, whether they file or not. Left alone, the two
+     would both draw it and the strip would carry it twice.
+     So: the strip and each desk's block states are the four daytime bands,
+     the after-four band is pushed once below, and it now prefers the filed
+     record when there is one and falls back to Salesforce when there is not.
+     Owed and filed counts still run over all five, because a filed fifth
+     block is a filed block. */
+  var filedIds = blockIds.filter(function (id) { return id !== 'EVE'; });
+  var blocks = filedIds.map(function (id) { return { id: id, label: '', time: '', done: 0, of: 0 }; });
   var desks = [], t = { closed: 0, open: 0, overdue: 0, needs: 0, done: 0, of: 0, in: 0, out: 0, absent: 0 };
+
+  /* THE LONGER VIEW OF THE BLOCKS, AND WHY IT IS ONE READ OF THE LOG.
+     "Filed today" on its own says nothing about whether today is normal — a
+     desk with two of four filed at eleven might be having its usual morning
+     or its worst one. So each desk also carries how many blocks it has filed
+     this week, this month and this year against how many it owed, and the
+     branch strip on the wall sums them.
+
+     Three windows, one pass. allEntries_ is the whole KPI Log and it is
+     unbounded; reading it once per desk, or once per window, would be thirty
+     reads of a sheet that is already the slowest thing the tracker touches,
+     on the one feed that is not stored. The pass keeps only the rows inside
+     the year and, like latestEntries_, lets the latest write for a person on
+     a day stand for that day — until dedupeLog() has been run the sheet still
+     holds the old duplicates, and a duplicate here would count one block
+     twice.
+
+     "Filed" is the same rule as the day itself: the block's own _Actioned box
+     has words in it. "Owed" is the desk's scheduled blocks for every weekday
+     in the window so far, today included, so a desk on Tuesday morning owes
+     two days' worth and not five. */
+  var winStart = { week: weekStart_(today), month: today.slice(0, 8) + '01', ytd: today.slice(0, 5) + '01-01' };
+  var winKeys = ['week', 'month', 'ytd'];
+  var winDays = {};
+  winKeys.forEach(function (k) { winDays[k] = workdays_(winStart[k], shiftDays_(today, 1)); });
+  var filedBy = {};
+  try {
+    var latest = {};
+    allEntries_().forEach(function (r) {
+      var day = String(r.Date || '').slice(0, 10);
+      if (!day || day > today || day < winStart.ytd) return;
+      var k = String(r.StaffId) + '|' + day, seen = latest[k];
+      if (!seen) { latest[k] = r; return; }
+      var a = new Date(r.UpdatedAt || r.Timestamp || 0).getTime() || r._row;
+      var b2 = new Date(seen.UpdatedAt || seen.Timestamp || 0).getTime() || seen._row;
+      if (a >= b2) latest[k] = r;
+    });
+    Object.keys(latest).forEach(function (k) {
+      var r = latest[k], sid = String(r.StaffId), day = k.slice(k.indexOf('|') + 1);
+      if (day === today) entry[sid] = r;
+      var filed = 0;
+      blockIds.forEach(function (id) { if (String(r[id + '_Actioned'] || '').trim()) filed++; });
+      if (!filed) return;
+      var f = filedBy[sid] || (filedBy[sid] = { week: 0, month: 0, ytd: 0 });
+      winKeys.forEach(function (w) { if (day >= winStart[w]) f[w] += filed; });
+    });
+  } catch (e2) { /* a log that will not read leaves the strip blank and today's blocks unfiled, as before */ }
+
+  /* The Salesforce task type a block is for, so the cell can carry the desk's
+     real open / touched / closed for it rather than a count of the words they
+     typed. blockTypeFor_ lives in the tracker; until that build is pasted the
+     scheduled KPI label is used when it IS a Task_Type__c value, which is how
+     the schedule was written for the desks that have one. A label that is not
+     a type — "Reporting", "Escalations" — is a block Salesforce cannot see. */
+  function typeFor(kpi) {
+    var lab = String(kpi || '').trim();
+    if (!lab) return '';
+    if (typeof blockTypeFor_ === 'function') { try { return String(blockTypeFor_(lab) || ''); } catch (e4) {} }
+    return (typeof SF_TYPES !== 'undefined' && SF_TYPES && Object.prototype.hasOwnProperty.call(SF_TYPES, lab)) ? lab : '';
+  }
+  var periods = m && m.ok && m.periods ? m.periods : null;
 
   publicRoster_().forEach(function (p) {
     var s = (m && m.ok && m.staff && m.staff[p.staffId]) || null;
     var a = att[p.staffId] || null, e = entry[p.staffId] || null;
     var sched = (typeof SCHEDULE !== 'undefined' && SCHEDULE[p.staffId] && SCHEDULE[p.staffId].blocks) || {};
-    var mine = blockIds.map(function (id, i) {
+    /* ADDED ALONGSIDE, NOT INSTEAD OF. day.html reads desks[].blocks as four
+       strings and has done since the screen was built; changing that shape to
+       carry more would have rewritten a working slide to no purpose. bx is the
+       same four blocks with what the wall could not previously say: the task
+       type this block is for, and whether the desk moved something, closed
+       something, or is stuck. A page that has not been republished yet simply
+       does not look at it. */
+    var bx = [];
+    var mine = filedIds.map(function (id, i) {
       var has = !!(e && String(e[id + '_Actioned'] || '').trim());
       var sb = sched[id];
       /* A block nobody is scheduled for is not a block anybody owes. Counting
@@ -3178,13 +6681,86 @@ function iDayBuild_(b) {
         if (has) { blocks[i].done++; t.done++; }
         if (!blocks[i].label) { blocks[i].label = String(sb.focus || ''); blocks[i].time = String(sb.time || ''); }
       }
+
+      /* The five states a block can be in, and the order matters: a block with
+         a blocker on it is not "done" however much was actioned, and a block
+         nobody has reached yet is not late. Anything not scheduled is blank —
+         an empty cell, not a failure. */
+      var txt = function (f) { return e ? String(e[id + '_' + f] || '').trim() : ''; };
+      var moved = txt('Actioned'), closed = txt('Resolved'), stuck = txt('Blocker');
+      var due = (typeof BLOCK_DUE_HOUR !== 'undefined' && BLOCK_DUE_HOUR[id]) || 0;
+      var state = '';
+      if (sb) {
+        if (stuck) state = 'stuck';
+        else if (closed) state = 'closed';
+        else if (moved) state = 'moved';
+        else if (due && hourNow >= due) state = 'late';
+        else state = 'pending';
+      }
+      var type = sb ? typeFor(sb.kpi) : '';
+      bx.push({
+        id: id, state: state,
+        kpi: sb ? String(sb.kpi || '') : '',
+        focus: sb ? String(sb.focus || '') : '',
+        time: sb ? String(sb.time || '') : '',
+        due: due,
+        /* Counted off the desk's own words. These are free-text boxes, so this
+           is how many things they listed, not a figure from Salesforce — the
+           trustworthy per-person numbers are closed/open/overdue below. */
+        moved: iDayItems_(moved), closed: iDayItems_(closed),
+        stuck: !!stuck,
+        /* And the figure from Salesforce for the type this block is for, when
+           there is one: open, touched and closed today. Null is "Salesforce
+           has no such type", which the wall says once, not a zero. */
+        type: type,
+        sf: (type && s && s.byType && s.byType[type]) || null
+      });
       return sb ? (has ? 'done' : 'due') : '';
     });
+    /* AFTER HOURS. "Extend the block beyond 4pm — I work round the clock, and
+       it should reflect 24/7 so people can see what is being done"
+       (17 September). A fifth block, four to midnight, that nobody files: it
+       is what Salesforce saw the desk close and touch after four. Green when
+       something closed, blue when something moved, gold-ringed once four has
+       passed with nothing yet, grey before four. It never goes red — the day
+       ends before it could — and anything after midnight is the next day's
+       first block. The four filed blocks and their counts are untouched. */
+    var eveClosed = s ? Number(s.eveClosed || 0) : 0, eveTouched = s ? Number(s.eveTouched || 0) : 0;
+    /* FILED BEATS INFERRED. Somebody who writes down what they did after four
+       has said it better than Salesforce can, so their own record leads and
+       the Salesforce reading stays beside it. */
+    var eveFiled = !!(e && String(e.EVE_Actioned || '').trim());
+    var eveSched = sched.EVE;
+    bx.push({
+      id: 'EVE', after: true, filed: eveFiled,
+      state: eveFiled ? 'done'
+           : eveClosed ? 'closed' : (eveTouched ? 'moved' : (hourNow >= 16 ? 'idle' : 'pending')),
+      kpi: eveFiled ? String(e.EVE || 'After hours') : 'After hours',
+      focus: (eveSched && eveSched.focus) || 'What was done after four',
+      time: (eveSched && eveSched.time) || '4pm – 12am', due: 24,
+      moved: 0, closed: 0, stuck: false, type: '',
+      sf: s ? { closed: eveClosed, touched: eveTouched, open: Number(s.open || 0) } : null
+    });
+    var owed = 0;
+    blockIds.forEach(function (id) { if (sched[id]) owed++; });
+    var filed = filedBy[String(p.staffId)] || { week: 0, month: 0, ytd: 0 };
+    var bp = {};
+    winKeys.forEach(function (w) { bp[w] = { filed: filed[w] || 0, of: owed * winDays[w] }; });
     var d = {
       name: p.name, role: p.role || '',
+      /* Where the desk sits in the branch, from the roster and nowhere else.
+         Two wall pages each carried their own regex over the Role column and
+         disagreed about who was management; the tracker's TIER table is the
+         one answer, and a page that groups by anything else is wrong twice. */
+      tier: p.tier || '', tierLabel: p.tierLabel || '',
+      tierOrder: p.tierOrder != null ? p.tierOrder : 99,
+      reportsTo: p.reportsTo || '', manager: !!p.manager,
       closed: s ? (s.closed || 0) : null, open: s ? (s.open || 0) : null,
       overdue: s ? (s.overdue || 0) : null, needs: s ? (s.needs || 0) : null,
-      blocks: mine,
+      byType: (s && s.byType) || null,
+      periods: (periods && periods.staff && periods.staff[p.staffId]) || null,
+      blocksPeriods: bp,
+      blocks: mine, bx: bx,
       'in': a && a.status !== 'absent' ? (a.at || '') : '',
       out: a ? (a.out || '') : '', late: a ? (a.late || 0) : 0,
       absent: !!(a && a.status === 'absent')
@@ -3195,9 +6771,22 @@ function iDayBuild_(b) {
     desks.push(d);
   });
 
-  /* The busiest desk first — a wall is read from the top, and the top should
-     be where the day is actually happening. */
-  desks.sort(function (x, y) { return (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0); });
+  /* The branch reads top to bottom as a structure — management, then the
+     BMA, then the desks that carry the work — and inside a tier the busiest
+     desk first, because a wall is read from the top and the top of each
+     band should be where the day is actually happening. The pages take this
+     order as given; they do not sort on a role string of their own. */
+  /* The branch manager heads his own band. The tracker's TIER table folds
+     the branch manager and the unit managers into one "Management" band, and
+     on 17 September 2026 that put him fourth in it, under a unit manager who
+     had closed more. The room reads the top of the screen as who the branch
+     answers to, so the role code decides before the day's output does. */
+  function bmFirst(d) { return String(d.role || '').toLowerCase() === 'bm' ? 0 : 1; }
+  desks.sort(function (x, y) {
+    return (x.tierOrder - y.tierOrder) || (bmFirst(x) - bmFirst(y))
+        || (y.closed || 0) - (x.closed || 0) || (y.open || 0) - (x.open || 0);
+  });
+  t.periods = (periods && periods.branch) || null;
 
   return { data: {
     generatedAt: today,
@@ -3228,6 +6817,101 @@ function iActWall45_(b) {
 
 var IWALL_BANDS = [45, 60, 90];
 
+/* ── The three lines are ranges, not days ─────────────────────────────────
+   Until 16 September 2026 a band was one day: `days === 60` was "the 60-day
+   line", so the 60 screen showed the fifteen policies that happened to be
+   exactly sixty days unpaid that morning and nothing about the four hundred
+   sitting between sixty and ninety. A wall that names a line and then shows
+   one day of it is a wall that changes completely between Monday and Tuesday
+   for no reason anybody on the floor did anything about.
+
+   So each band is the stretch it owns: 45 is 45–59 days unpaid, 60 is 60–89,
+   90 is everything from ninety on, and a policy is in exactly one of them.
+   `onLine` (that day exactly) and `past` (that many days or more) are still
+   published — the day-line is what the hero counts and the narration reads,
+   and the running total is what the chrome names. */
+function iWallBandOf_(days) {
+  for (var i = IWALL_BANDS.length - 1; i >= 0; i--) if (days >= IWALL_BANDS[i]) return IWALL_BANDS[i];
+  return null;
+}
+function iWallBandRange_(b) {
+  var i = IWALL_BANDS.indexOf(b);
+  var to = i >= 0 && i < IWALL_BANDS.length - 1 ? IWALL_BANDS[i + 1] - 1 : null;
+  return { from: b, to: to, label: to === null ? b + ' days and over' : b + '–' + to + ' days' };
+}
+/* How long a policy has been INSIDE its band — the ageing the 90 screen is
+   read by. Ninety days and a year are both "over 90", and they are not the
+   same conversation. The 45 and 60 stretches are cut in thirds so the screen
+   can say whether the band is mostly new arrivals or mostly about to leave. */
+var IWALL_AGEING = {
+  45: [[45, 49], [50, 54], [55, 59]],
+  60: [[60, 69], [70, 79], [80, 89]],
+  90: [[90, 119], [120, 179], [180, 364], [365, 100000]]
+};
+function iWallAgeingLabel_(r) { return r[1] >= 100000 ? r[0] + '+ days' : r[0] + '–' + r[1] + ' days'; }
+function iWallAgeingOf_(b, days) {
+  var t = IWALL_AGEING[b] || [];
+  for (var i = 0; i < t.length; i++) if (days >= t[i][0] && days <= t[i][1]) return iWallAgeingLabel_(t[i]);
+  return null;
+}
+
+/* ── The letters, read once and joined by client number ───────────────────
+   One row per client per letter on the survey tab. This reads the tab ONCE
+   per build and keeps the latest LIVE row for each client. A dry run and a
+   test send write rows of exactly the same shape, and neither is a letter
+   anybody received, so they are ignored; MODE is written as
+   "live · cleared <hash> by <who>", which is why this is a prefix test and
+   not an equality.
+
+   THE JOIN KEY IS THE CLIENT NUMBER, never the policy. The letter went to a
+   person, and a person with three policies on the line got one letter. A
+   join on POLICY (column 6) finds it for one of the three and calls the
+   other two silent.
+
+   Nothing here leaves the server as a row. iBuildWall45_ folds these into
+   counts per band, per agent and per ageing bucket, because the wall that
+   reads them is unauthenticated. */
+function iWallSurveyMap_() {
+  var out = { byClient: {}, rows: 0, live: 0, ignored: 0 };
+  var sh = iSurveyTab_(), last = sh.getLastRow();
+  if (last < 2) return out;
+  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  vals.forEach(function (r) {
+    out.rows++;
+    if (!/^live/i.test(String(r[ISCOL.MODE - 1] || '').trim())) { out.ignored++; return; }
+    var who = String(r[ISCOL.CLIENTNO - 1] || '').trim();
+    var sent = iDate_(r[ISCOL.SENT - 1]);
+    if (!who || !sent) { out.ignored++; return; }
+    out.live++;
+    var have = out.byClient[who];
+    if (have && have.sentAt >= sent.getTime()) return;
+    var rating = Number(r[ISCOL.RATING - 1]);
+    var rated = rating >= 1 && rating <= 5;
+    var heard = String(r[ISCOL.HEARD - 1] || '').trim();
+    var asked = String(r[ISCOL.ASKED - 1] || '').split(',')
+      .map(function (k) { return k.trim(); }).filter(Boolean);
+    var outcome = String(r[ISCOL.OUTCOME - 1] || '').trim();
+    out.byClient[who] = {
+      sentAt: sent.getTime(), sent: iIso_(sent),
+      respondedAt: iIso_(iDate_(r[ISCOL.RATEDAT - 1]) || iDate_(r[ISCOL.ASKEDAT - 1])),
+      rating: rated ? rating : null,
+      /* A reply is a rating, a yes or no on hearing from the agent, or one
+         of the four taps. Anything else is silence, however long ago. */
+      cameBack: rated || heard === 'Yes' || heard === 'No' || asked.length > 0,
+      low: !!iSurveyFollowUp_isLow_(rating, heard),
+      heard: heard, asked: asked,
+      followup: String(r[ISCOL.FOLLOWUP - 1] || '').trim(),
+      owner: !!String(r[ISCOL.OWNER - 1] || '').trim(),
+      closed: !!String(r[ISCOL.CLOSED - 1] || '').trim(),
+      /* intelSurveyClose writes "(none recorded)" when nobody typed one. */
+      outcome: !!outcome && outcome !== '(none recorded)',
+      optedOut: !!String(r[ISCOL.OPTOUT - 1] || '').trim()
+    };
+  });
+  return out;
+}
+
 /* ── Agents whose book should not count in the branch view ─────────────────
    Set INTEL_EXCLUDE_AGENTS to a comma-separated list of names as the DUES BOOK
    writes them. Matching is on the same normalised key as everywhere else, so
@@ -3245,6 +6929,34 @@ var IWALL_BANDS = [45, 60, 90];
    that excludes says how much it removed, for exactly that reason. */
 function iExcluded_() {
   var raw = iProp_('INTEL_EXCLUDE_AGENTS');
+  var out = {};
+  String(raw || '').split(',').forEach(function (n) {
+    var k = iNameKey_(n);
+    if (k) out[k] = true;
+  });
+  return out;
+}
+
+/* ── Off the list, in the total ──────────────────────────────────────────
+   INTEL_LIST_ONLY_EXCLUDE is the second list, and it does the opposite of
+   the first at the point that matters. INTEL_EXCLUDE_AGENTS takes an agent
+   out of everything — headline, buckets, board. This one takes a name off
+   the per-agent rows only: the accountability row, the agents list, the
+   settled-by-agent strip, the per-policy table. Every total above those
+   rows still counts their book.
+
+   WHY TWO LISTS. The unit managers write business of their own, and the
+   branch manager asked on 16 September 2026 that it stay in the branch's
+   numbers — it is the branch's business — but not sit on a board that
+   ranks agents against each other, because a manager on that board is not
+   being managed by it. Excluding them outright understated the branch;
+   leaving them on read as a manager being chased in front of the room.
+
+   Honoured only where a row carries an agent's name. Never in a count.
+   A screen that applies it to a total is the first list under another
+   name, and the branch loses the number it asked to keep. */
+function iListOnly_() {
+  var raw = iProp_('INTEL_LIST_ONLY_EXCLUDE');
   var out = {};
   String(raw || '').split(',').forEach(function (n) {
     var k = iNameKey_(n);
@@ -3290,6 +7002,35 @@ function iExcludes_(skip, name) {
    is public. iExcludes_ matches on surname plus every given token, so
    "Anne Mohammed-Ali" catches the book's "A00001 - Anne Mohammed-Ali" too.
    intelExclude adds to whoever is already there; it never silently drops one. */
+/* THE SECOND LIST, FROM THE EDITOR. INTEL_LIST_ONLY_EXCLUDE takes a name off
+   every per-agent row and leaves every total alone — asked for on 17
+   September 2026 in these words: "Javid's name is not to be displayed… but
+   the policy count we can count it. It's just their names do not show up."
+   A name only the branch manager should see does not belong in a public
+   repository, so it lives in a Script Property and this is how it is set. */
+function intelListOnly(names) {
+  if (typeof names !== 'string' || !names.trim()) {
+    return 'Usage: intelListOnly("Given Surname, Given Surname") — takes them off every\n' +
+           'per-agent row on every screen and leaves the counts alone.\n' +
+           'Now off the rows: ' + (iProp_('INTEL_LIST_ONLY_EXCLUDE') || '(nobody)') + '\n' +
+           'Clear the list with intelListOnlyClear().';
+  }
+  var have = iListOnly_();
+  var list = String(iProp_('INTEL_LIST_ONLY_EXCLUDE') || '')
+    .split(',').map(function (x) { return x.trim(); }).filter(Boolean);
+  names.split(',').forEach(function (nm) {
+    nm = nm.trim();
+    if (nm && !iExcludes_(have, nm)) { list.push(nm); have[iNameKey_(nm)] = true; }
+  });
+  iSetProp_('INTEL_LIST_ONLY_EXCLUDE', list.join(', '));
+  return 'Off every per-agent row, counted in every total: ' + list.join(', ') +
+         '\n\n' + iWallRunAll_(true);
+}
+function intelListOnlyClear() {
+  iSetProp_('INTEL_LIST_ONLY_EXCLUDE', '');
+  return 'Every name is back on the per-agent rows.\n\n' + iWallRunAll_(true);
+}
+
 function intelExclude(names) {
   if (typeof names !== 'string' || !names.trim()) {
     return 'Usage: intelExclude("Given Surname, Given Surname") — adds them and rebuilds.\n' +
@@ -3327,7 +7068,7 @@ function iBuildWall45_(target) {
   var d = iReadCols_(sh, {
     agent: ['agent'], clientNo: ['client number'], premium: ['premium'],
     issue: ['issue date'], status: ['status'], paidTo: ['paid to date'],
-    billing: ['billing type'], days: ['days']
+    billing: ['billing type'], days: ['days'], lapseDate: ['projected lapse date']
   });
 
   var today = iToday_(), DAY = 86400000;
@@ -3373,17 +7114,49 @@ function iBuildWall45_(target) {
      value they agree on. */
   var cutVotes = {};
 
-  var skip = iExcluded_(), removed = { policies: 0, prem: 0, onLine: 0 };
+  var skip = iExcluded_(), removed = { policies: 0, prem: 0, onLine: 0, lapsed: 0, bands: {} };
+
+  /* The three lines as stretches, and the letters against them — see
+     iWallBandOf_ and iWallSurveyMap_. Money is counted per policy. Anything
+     about a letter is counted per CLIENT, because a client with two policies
+     in the band got one letter and gave one answer, and counting the answer
+     twice is how a reply rate ends up over a hundred. */
+  var lanes = {};
+  IWALL_BANDS.forEach(function (b) {
+    removed.bands[b] = { policies: 0, prem: 0 };
+    lanes[b] = { policies: 0, prem: 0, clients: {}, agents: {}, ageing: {} };
+    IWALL_AGEING[b].forEach(function (rg) {
+      var k = iWallAgeingLabel_(rg);
+      lanes[b].ageing[k] = { k: k, n: 0, prem: 0, clients: {} };
+    });
+  });
+  var letters = iWallSurveyMap_();
+  /* The one number that ties this screen to the lapses slide: policies the
+     extract says lapsed in the current month. Same definition as lapsedRecent
+     on the dues screen — status 1, the projected lapse date already passed —
+     narrowed to this month. */
+  var lapsedMonth = { policies: 0, prem: 0 };
 
   for (var r = 0; r < d.rows; r++) {
-    if (String(d.get('status', r)).trim() !== '2') continue;
+    var status = String(d.get('status', r)).trim();
+    if (status === '1') {
+      var gone = iDate_(d.get('lapseDate', r)), ago = iDays_(gone, today);
+      if (gone && ago >= 0 && gone.getFullYear() === today.getFullYear() && gone.getMonth() === today.getMonth()) {
+        if (iExcludes_(skip, d.get('agent', r))) removed.lapsed++;
+        else { lapsedMonth.policies++; lapsedMonth.prem += iNum_(d.get('premium', r)); }
+      }
+      continue;
+    }
+    if (status !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
     if (!paid) continue;
     var days = Math.round((today - paid) / DAY);
     if (days <= 0 || days > 4000) continue;
+    var inBand = iWallBandOf_(days);
     if (iExcludes_(skip, d.get('agent', r))) {
       removed.policies++; removed.prem += iNum_(d.get('premium', r));
       if (days === TARGET) removed.onLine++;
+      if (inBand) { removed.bands[inBand].policies++; removed.bands[inBand].prem += iNum_(d.get('premium', r)); }
       continue;
     }
     overdue++;
@@ -3399,6 +7172,17 @@ function iBuildWall45_(target) {
       if (days === b) { bandTally[b].onLine++; bandTally[b].prem += prem; }
       if (days >= b)  { bandTally[b].past++;   bandTally[b].pastPrem += prem; }
     });
+    if (inBand) {
+      var L = lanes[inBand], who = String(d.get('clientNo', r)).trim(),
+          an = String(d.get('agent', r)).trim() || '(no agent)';
+      L.policies++; L.prem += prem;
+      if (who) L.clients[who] = 1;
+      var A = L.agents[an] || (L.agents[an] = { k: an, n: 0, prem: 0, clients: {} });
+      A.n++; A.prem += prem;
+      if (who) A.clients[who] = 1;
+      var ak = iWallAgeingOf_(inBand, days);
+      if (ak) { L.ageing[ak].n++; L.ageing[ak].prem += prem; if (who) L.ageing[ak].clients[who] = 1; }
+    }
 
     /* offset: how many days from today this policy crosses 45 */
     var off = TARGET - days;
@@ -3537,16 +7321,42 @@ function iBuildWall45_(target) {
     billing: billing, autoFail: autoN, units: unitRows, agents: agentRows,
     band: TARGET,
     bands: IWALL_BANDS.map(function (b) {
-      var x = bandTally[b];
-      return { band: b, onLine: x.onLine, prem: Math.round(x.prem * 100) / 100,
-               past: x.past, pastPrem: Math.round(x.pastPrem * 100) / 100 };
+      var x = bandTally[b], L = lanes[b], R = iWallBandRange_(b);
+      return { band: b, from: R.from, to: R.to, label: R.label,
+               onLine: x.onLine, prem: Math.round(x.prem * 100) / 100,
+               past: x.past, pastPrem: Math.round(x.pastPrem * 100) / 100,
+               /* the stretch itself */
+               policies: L.policies, premium: Math.round(L.prem * 100) / 100,
+               clients: Object.keys(L.clients).length,
+               agentCount: Object.keys(L.agents).length,
+               agents: Object.keys(L.agents).map(function (k) { return iWallLaneRow_(L.agents[k], letters); })
+                 .sort(function (p, q) { return q.n - p.n || q.prem - p.prem; }).slice(0, 12),
+               /* in the table's own order, oldest last, so the bars read as a timeline */
+               ageing: IWALL_AGEING[b].map(function (rg) { return iWallLaneRow_(L.ageing[iWallAgeingLabel_(rg)], letters); }),
+               survey: iWallLaneSurvey_(L.clients, letters),
+               excluded: { policies: removed.bands[b].policies,
+                           prem: Math.round(removed.bands[b].prem * 100) / 100 } };
     }),
+    /* What the survey tab looked like when this was built, so the screen can
+       say how many rows it set aside rather than quietly reading a dry run
+       as a campaign. */
+    letters: { rows: letters.rows, live: letters.live, ignored: letters.ignored,
+               clients: Object.keys(letters.byClient).length },
+    lapsedThisMonth: { policies: lapsedMonth.policies,
+                       prem: Math.round(lapsedMonth.prem * 100) / 100,
+                       month: ['January', 'February', 'March', 'April', 'May', 'June', 'July',
+                               'August', 'September', 'October', 'November', 'December'][today.getMonth()] },
     households: households,
     /* Never silent about what an exclusion took out — see iExcluded_. */
     excluded: { names: Object.keys(iExcluded_()).length,
                 policies: removed.policies,
                 prem: Math.round(removed.prem * 100) / 100,
-                onLine: removed.onLine },
+                onLine: removed.onLine,
+                lapsed: removed.lapsed,
+                bands: IWALL_BANDS.map(function (b) {
+                  return { band: b, policies: removed.bands[b].policies,
+                           prem: Math.round(removed.bands[b].prem * 100) / 100 };
+                }) },
     /* Cross-tabs, so the wall can be clicked into without ever holding a row.
        Ship the 41 rows and a screen in a public room could be filtered down to
        one line — agent, tenure, premium — which for a cohort this small is a
@@ -3602,6 +7412,55 @@ function iWall45Cross_(sel, unitFor, BANDS, AUTO) {
   group('tenure', bandOf);
   group('billing', function (x) { return x.billing; });
   return out;
+}
+
+/* The letters folded over one set of clients — a band, one agent's share of
+   it, or one ageing bucket. Counts only.
+
+   `contacted` is OWNER or CLOSED set on the client's latest live letter. That
+   is a BRANCH follow-up recorded on the survey tab — the desk or a manager
+   picking a low answer up — and it is the only contact the system can see.
+   No field anywhere records that the AGENT rang the client, so the screen
+   must say "branch follow-up recorded" and never "contacted by the agent";
+   the difference is the whole point of the 60 lane.
+
+   `why` is worked out from the rating and the heard field, not read back
+   from the FOLLOWUP text, and OUTCOME is counted as present or absent
+   rather than published: an outcome is typed by staff and can carry a
+   client's name, and this goes to a screen with no sign-in. */
+function iWallLaneSurvey_(clientMap, letters) {
+  var s = { clients: 0, sent: 0, cameBack: 0, silent: 0, low: 0, heardNo: 0, optedOut: 0,
+            contacted: 0, notContacted: 0,
+            asked: { review: 0, issue: 0, private: 0, help: 0, stop: 0 }, askedAny: 0,
+            why: { rating: 0, notHeard: 0 }, followups: 0, open: 0, closed: 0, outcomes: 0 };
+  Object.keys(clientMap).forEach(function (who) {
+    s.clients++;
+    var L = letters.byClient[who];
+    if (!L) return;
+    s.sent++;
+    if (L.cameBack) s.cameBack++; else s.silent++;
+    if (L.low) s.low++;
+    if (L.heard === 'No') s.heardNo++;
+    if (L.optedOut) s.optedOut++;
+    if (L.asked.length) s.askedAny++;
+    L.asked.forEach(function (k) { if (s.asked.hasOwnProperty(k)) s.asked[k]++; });
+    if (L.followup) {
+      s.followups++;
+      if (L.rating !== null && L.rating <= 3) s.why.rating++;
+      else if (L.heard === 'No') s.why.notHeard++;
+      if (L.closed) s.closed++; else s.open++;
+    }
+    if (L.owner || L.closed) s.contacted++; else s.notContacted++;
+    if (L.outcome) s.outcomes++;
+  });
+  return s;
+}
+function iWallLaneRow_(o, letters) {
+  var s = iWallLaneSurvey_(o.clients, letters);
+  return { k: o.k, n: o.n, prem: Math.round(o.prem * 100) / 100, clients: s.clients,
+           sent: s.sent, cameBack: s.cameBack, silent: s.silent, low: s.low,
+           contacted: s.contacted, notContacted: s.notContacted,
+           askedAny: s.askedAny, outcomes: s.outcomes, open: s.open };
 }
 
 function iActData_(b, session) {
@@ -3983,11 +7842,60 @@ function iRecentActions_(session) {
    was really for. Clients and agents cannot receive test traffic.
    ══════════════════════════════════════════════════════════════════════════ */
 
+/* ── turning the mail off, in one click ───────────────────────────────────
+   On the morning of 16 September 2026 the daily list went to twenty-eight
+   agents for the third day running while its fix sat unpasted in a
+   repository, and the only ways to stop it were to delete six triggers one
+   at a time in the editor or to hand-type a script property. Neither is
+   something to be doing at ten past seven.
+
+   So: two functions, both safe to run from the menu, neither of which sends
+   anything. intelMailOff() takes effect immediately and needs no deployment,
+   which is the point — the paste is exactly what somebody has not had time
+   to do. */
+function intelMailOff() {
+  var to = iHoldTo_() || (function () {
+    try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
+  })();
+  if (!to) {
+    return 'Set INTEL_MANAGER_EMAIL first — there is nowhere to send the held mail, ' +
+           'and this must never quietly leave the mail switched on.';
+  }
+  iSetProp_('INTEL_TEST_TO', to);
+  var was = String(iProp_('INTEL_SURVEY_LIVE') || '').trim();
+  return 'MAIL IS OFF. Every message from this project now goes to ' + to +
+         ', tagged [TEST], naming who it was for. That is true of all six senders — ' +
+         'the daily agent list, the Monday manager digest, the monthly horizon notice, ' +
+         'the cross-sell list, the survey follow-ups and the client letters.\n\n' +
+         'It took effect the moment you ran this. There is nothing to deploy.\n\n' +
+         'The triggers still fire, so tomorrow you will receive the whole run as ' +
+         'previews and can read what would have gone out.\n\n' +
+         'To put it back: intelMailOn(), which only clears this switch — ' +
+         (was ? 'INTEL_SURVEY_LIVE is set to "' + was + '", so client letters resume when you do.'
+              : 'agents and clients each still need their own switch after that.');
+}
+
+/* Clearing test mode does NOT start mail to agents — INTEL_AGENT_LIVE still
+   has to be set for that, and this function will not set it. Two switches,
+   two deliberate acts; that is the whole design. */
+function intelMailOn() {
+  PropertiesService.getScriptProperties().deleteProperty('INTEL_TEST_TO');
+  return 'Test mode cleared.\n\n' +
+         'Mail to agents: ' + (iAgentLive_()
+           ? 'ON — INTEL_AGENT_LIVE is set, so agents will receive their own lists.'
+           : 'still HELD. Nothing reaches an agent until INTEL_AGENT_LIVE reads exactly "' +
+             IAGENT_LIVE_PHRASE + '". Held mail goes to ' + (iHoldTo_() || 'NOBODY')) + '\n' +
+         'Mail to clients: ' + (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase()
+             === ISURVEY.LIVE_PHRASE
+           ? 'ON — INTEL_SURVEY_LIVE is set.' : 'off — dry run only.') + '\n\n' +
+         'Run intelAddressCheck() before switching agents on.';
+}
+
 function intelInstallTriggers() {
   var wanted = ['intelRebuild', 'intelAgentDigest', 'intelManagerDigest',
                 'intelHorizonWatch', 'intelCrossSellDigest', 'intelSurveyFollowUp',
                 'intelRebuildWall45', 'intelRebuildDelivery', 'intelRebuildLicence',
-                'intelRebuildPossession', 'intelRebuildBook'];
+                'intelRebuildPossession', 'intelRebuildBook', 'intelPendingRefresh'];
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (wanted.indexOf(t.getHandlerFunction()) !== -1) ScriptApp.deleteTrigger(t);
   });
@@ -4017,15 +7925,53 @@ function intelInstallTriggers() {
      Monday's copy. Spreading them fixed that and created a worse fault — the
      last one landed at seven, on top of the branch signing in. They are all
      in the small hours now, slowest first, and the last of them is done by
-     five. Eleven here and the tracker's six is seventeen, under the project
+     five. Twelve here and the tracker's seven is nineteen, under the project
      limit of twenty. */
   [['intelRebuildWall45', 0], ['intelRebuildBook', 1], ['intelRebuildPossession', 3],
    ['intelRebuildLicence', 4], ['intelRebuildDelivery', 5]].forEach(function (t) {
     ScriptApp.newTrigger(t[0]).timeBased().atHour(t[1]).everyDays(1).create();
   });
-  return 'Installed — eleven, all of them finished before six, because the branch ' +
-         'signs in from seven. Check Project Settings → Time zone reads ' +
+  /* The pending screen's copy is the one that has to move during the day —
+     the branch clears cases between nine and five and a cleared case should
+     be off the wall by lunch. One hourly trigger; the function itself acts
+     only on the odd hours from five to seven in the evening, and never at
+     seven in the morning. */
+  ScriptApp.newTrigger('intelPendingRefresh').timeBased().everyHours(1).create();
+  return 'Installed — twelve: eleven finished before six, because the branch ' +
+         'signs in from seven, and the pending refresh on the odd hours of the day. ' +
+         'Check Project Settings → Time zone reads ' +
          '(GMT-04:00) Atlantic Time, or every one of these fires an hour out.';
+}
+
+/* NOTHING REACHES AN AGENT UNTIL SOMEBODY SWITCHES IT ON BY HAND.
+
+   Asked for on 15 September 2026 — the morning three agents each opened
+   another agent's clients — in these words: "moving forward you are to ask my
+   permission on any emails going out to agents and clients."
+
+   A promise made in a conversation cannot bind a trigger that fires at six the
+   next morning, so the permission is made structural instead. The client
+   letters have always worked this way: INTEL_SURVEY_LIVE has to be typed out
+   as "send to clients" before one is sent. This is the same switch for the
+   agent mail, and its default is off.
+
+   Off does not mean silent. With nothing set, every message goes to the branch
+   manager with the intended recipient named across the top — so a run that
+   would have written to twenty-eight agents arrives as twenty-eight previews
+   in one inbox, which is the thing that would have caught both of this
+   morning's defects before either left the building. */
+var IAGENT_LIVE_PHRASE = 'send to agents';
+function iAgentLive_() {
+  return String(iProp_('INTEL_AGENT_LIVE') || '').trim().toLowerCase() === IAGENT_LIVE_PHRASE;
+}
+
+/* Where a held message goes. The manager property first, then the account the
+   script runs as — which is the person who owns the project and therefore the
+   person whose permission this is. */
+function iHoldTo_() {
+  var mgr = String(iProp_('INTEL_MANAGER_EMAIL') || '').split(',')[0].trim();
+  if (mgr) return mgr;
+  try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; }
 }
 
 function iSend_(to, subject, html) {
@@ -4037,6 +7983,21 @@ function iSend_(to, subject, html) {
            iEsc_(real) + '</div>' + html;
     to = test;
     subject = '[TEST] ' + subject;
+  } else if (!iAgentLive_()) {
+    /* Held. If there is nowhere to hold it, it does not go — an undeliverable
+       preview is a nuisance, a message to an agent who was never approved is
+       the thing this exists to prevent. */
+    var hold = iHoldTo_();
+    if (!hold) return false;
+    if (iEmail_(hold) !== iEmail_(real)) {
+      html = '<div style="background:#00254d;color:#fff;padding:10px 14px;font:700 13px sans-serif;' +
+             'border-radius:8px;margin-bottom:14px">HELD — this would have gone to ' +
+             iEsc_(real) + '. Nothing was sent to them.<div style="font-weight:400;opacity:.85;' +
+             'margin-top:5px">To send for real, set the Script Property ' +
+             '<b>INTEL_AGENT_LIVE</b> to <b>' + IAGENT_LIVE_PHRASE + '</b>.</div></div>' + html;
+      subject = '[HELD] ' + subject;
+    }
+    to = hold;
   }
   if (!to) return false;
   MailApp.sendEmail({ to: to, subject: subject, htmlBody: html, name: 'Branch Intelligence' });
@@ -4098,11 +8059,13 @@ function intelAgentDigest() {
   if (day === 0 || day === 6) return 'Weekend — skipped.';
 
   var directory = iAgentDirectory_();
-  var sent = 0;
+  var sent = 0, skipD = iExcluded_();
 
   Object.keys(directory).forEach(function (key) {
     var person = directory[key];
     if (!person.email) return;
+    /* An excluded agent is off every report, their own digest included. */
+    if (iExcludes_(skipD, person.agentName || person.name || '')) return;
 
     /* Staff and managers have no personal book; the branch digest is theirs,
        not an agent list that would always come back empty. */
@@ -4622,8 +8585,209 @@ function intelSelfTest() {
    'intelCrossSellDigest'].forEach(function (f) {
     line('  trigger ' + f + ': ' + (triggers.indexOf(f) !== -1 ? 'installed' : 'MISSING — run intelInstallTriggers()'));
   });
-  if (iProp_('INTEL_TEST_TO')) line('');
-  if (iProp_('INTEL_TEST_TO')) line('TEST MODE IS ON — all mail goes to ' + iProp_('INTEL_TEST_TO'));
+  line('');
+  line('Can mail leave the building?');
+  line('  To agents:  ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+        : (iAgentLive_() ? 'YES — INTEL_AGENT_LIVE is set. Agents receive their own mail.'
+                         : 'no — held, previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all'))));
+  line('  To clients: ' + (iProp_('INTEL_TEST_TO')
+        ? 'NO — test mode'
+        : (String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase() === ISURVEY.LIVE_PHRASE
+           ? 'YES — INTEL_SURVEY_LIVE is set. Clients receive letters.' : 'no — dry run only')));
+  line('  Switch either on deliberately: INTEL_AGENT_LIVE = ' + IAGENT_LIVE_PHRASE +
+       ', INTEL_SURVEY_LIVE = ' + ISURVEY.LIVE_PHRASE + '.');
+
+  var text = out.join('\n');
+  Logger.log(text);
+  return text;
+}
+
+/* ── who gets whose list ─────────────────────────────────────────────────
+   The one question the daily agent list has to answer before it is allowed
+   to send: does each address receive its own book and nobody else's? Three
+   things can break that, and none of them is visible in a sent message —
+   a roster name the extracts never use (an empty list, and the agent
+   assumes there is nothing to work), a name the extracts use that no
+   roster row claims (a book nobody is sent), and two agents whose surname
+   and first initial are the same (each sent the other's clients, which is
+   the one that was live until the guard in isMine went in).
+
+   Prints, sends nothing, and names no client. Run it after any change to
+   the access list. */
+/* ── the header row of every tab, and nothing else ──────────────────
+   Every reader in this file finds its tab by column names and reads columns by
+   alias, so the one thing anybody building a screen needs from the workbook is
+   the exact spelling of its headers — and the one thing that must never leave
+   the workbook is a row of it. On 16 September 2026 a slide was specified by
+   column letter ("L is the app received date, H is cash with app") because
+   there was no way to see the header row without opening a sheet that holds
+   client data and, on one tab, every staff password.
+
+   So: headers only. Row 1 of each sheet, the row count, and which reader
+   claims the tab. No cell below row 1 is read. The Access tab is named and
+   counted but its headers are not printed either — they are the credential
+   columns, and a printout of them is a map. */
+function intelHeaders() {
+  var out = [], claims = {};
+  function line(s) { out.push(s); }
+  [['Dues', iTabDues_], ['In-force book', iTabInforce_], ['Pending', iTabPending_],
+   ['Requirements', iTabReqs_], ['Tasks', iTabTasks_], ['Settlement', iTabSettled_],
+   ['Underwriting', iTabMagnum_]].forEach(function (p) {
+    try { var sh = p[1](); if (sh) claims[sh.getName()] = p[0]; } catch (e) {}
+  });
+  var access = {};
+  try { iAccessTabs_().forEach(function (sh) { access[sh.getName()] = true; }); } catch (e) {}
+  line('BRANCH INTELLIGENCE — header rows');
+  line('Workbook: ' + iSs_().getName());
+  line('');
+  iSs_().getSheets().forEach(function (sh) {
+    var name = sh.getName(), rows = Math.max(0, sh.getLastRow() - 1), cols = sh.getLastColumn();
+    var who = claims[name] ? '  ← read as ' + claims[name] : '';
+    if (access[name]) { line(name + '  (' + rows + ' rows)  ← ACCESS LIST, headers withheld'); line(''); return; }
+    line(name + '  (' + rows + ' rows, ' + cols + ' columns)' + who);
+    if (!cols || sh.getLastRow() < 1) { line('  (empty)'); line(''); return; }
+    var head = sh.getRange(1, 1, 1, cols).getValues()[0];
+    head.forEach(function (h, i) {
+      var col = '', n = i + 1;
+      while (n > 0) { var r = (n - 1) % 26; col = String.fromCharCode(65 + r) + col; n = Math.floor((n - 1) / 26); }
+      line('  ' + ('   ' + col).slice(-3) + '  ' + String(h == null ? '' : h).trim());
+    });
+    line('');
+  });
+  var text = out.join('\n');
+  Logger.log(text);
+  return text;
+}
+
+function intelAddressCheck() {
+  var out = [];
+  function line(s) { out.push(s); }
+  var dir = iAgentDirectory_() || {};
+  var keys = Object.keys(dir);
+
+  line('BRANCH INTELLIGENCE — who gets whose list');
+  line('Access list: ' + keys.length + ' people');
+  line(iProp_('INTEL_TEST_TO')
+       ? 'Mail to agents: NO — test mode, everything goes to ' + iProp_('INTEL_TEST_TO')
+       : (iAgentLive_()
+          ? 'Mail to agents: YES — INTEL_AGENT_LIVE is set, so the addresses below receive their own mail.'
+          : 'Mail to agents: HELD — previews go to ' + (iHoldTo_() || 'NOBODY, so nothing sends at all') +
+            '. The addresses below are who WOULD receive it.'));
+  line('');
+
+  /* ── the two agents the loose test cannot separate ───────────────────── */
+  var people = keys.map(function (k) { return dir[k]; });
+  var clash = [];
+  for (var i = 0; i < people.length; i++) for (var j = i + 1; j < people.length; j++) {
+    var a = people[i], b = people[j];
+    var ka = iNameKey_(a.agentName) || iNameKey_(a.name);
+    var kb = iNameKey_(b.agentName) || iNameKey_(b.name);
+    if (!ka || !kb || ka === kb) continue;
+    if (iSameAgent_(ka, kb)) clash.push([a, b]);
+  }
+  if (clash.length) {
+    line('Same surname and first initial — kept apart by the access list:');
+    clash.forEach(function (p) {
+      line('  ' + p[0].name + '  <->  ' + p[1].name);
+      line('      ' + (p[0].agentId || 'NO AGENT NUMBER') + ' / ' +
+                      (p[1].agentId || 'NO AGENT NUMBER'));
+    });
+    line('  Both rows must stay on the access list for this to hold. Take one off');
+    line('  and the other starts receiving their clients again.');
+    line('');
+  } else {
+    line('No two people on the access list share a surname and a first initial.');
+    line('');
+  }
+
+  /* ── a row that was swallowed is an agent who is never written to ──── */
+  var seen = {}, twice = [], rows = 0;
+  iAccessTabs_().forEach(function (sh) {
+    var head = iHeaders_(sh), last = sh.getLastRow();
+    if (last < 2) return;
+    /* Only the columns this needs. The access tab also holds every staff
+       member's code and none of that belongs in a printed report. */
+    var cName = iCol_(head, ['name']),
+        cAgent = iCol_(head, ['agent name (exactly as in data)', 'agent name']),
+        cNum = iCol_(head, ['agent number', 'agent id', 'agentid']),
+        cActive = iCol_(head, ['active']);
+    if (cName < 0) return;
+    var vals = sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues();
+    vals.forEach(function (row) {
+      var nm = String(row[cName]).trim();
+      if (!nm) return;
+      if (cActive >= 0 && /^(no|inactive|disabled|off)$/i.test(String(row[cActive]).trim())) return;
+      rows++;
+      var id = iIdentity_(nm, cAgent >= 0 ? row[cAgent] : '', cNum >= 0 ? row[cNum] : '');
+      var k = iNameKey_(id.agentName) || id.agentId;
+      if (!k) return;
+      if (seen[k]) { if (twice.indexOf(k) === -1) twice.push(k); seen[k].push(nm); }
+      else seen[k] = [nm];
+    });
+  });
+  if (twice.length) {
+    line('Two access rows that read as the same person — only the first is written to:');
+    twice.forEach(function (k) { line('  ' + seen[k].join('   |   ')); });
+    line('  Give them different Agent Name spellings, or take the stale row off.');
+    line('');
+  }
+  if (rows !== keys.length) {
+    line('Active access rows: ' + rows + ', addresses built: ' + keys.length +
+         '  — ' + Math.abs(rows - keys.length) + ' row(s) did not become a person.');
+    line('');
+  }
+
+  /* ── an address for everybody, and an agent number with it ───────────── */
+  var noMail = [], noNum = [];
+  people.forEach(function (p) {
+    if (iRoleOf_(p.role) !== 'agent') return;
+    if (!p.email) noMail.push(p.name);
+    if (!p.agentId) noNum.push(p.name);
+  });
+  line('Agents with no e-mail address: ' + (noMail.length ? noMail.join(', ') : 'none'));
+  if (noMail.length) line('  These are skipped silently by every digest.');
+  line('Agents with no agent number: ' + (noNum.length ? noNum.join(', ') : 'none'));
+  if (noNum.length) line('  Their rows are matched by name only, which is the weaker of the two.');
+  line('');
+
+  /* ── the books, against the roster ───────────────────────────────────── */
+  var cache = iLoadCache_();
+  if (!cache) { line('No cache — run intelRebuild() first to check the books.'); }
+  else if (!cache.dues || cache.dues.error) { line('Dues not built, so books cannot be checked.'); }
+  else {
+    var extract = (cache.dues.byAgent || []).map(function (r) { return r.agent; })
+      .filter(function (n) { return n && String(n).trim(); });
+    var claimed = {};
+    line('Overdue policies each address would receive:');
+    people.filter(function (p) { return iRoleOf_(p.role) === 'agent' && p.email; })
+      .sort(function (x, y) { return String(x.name).localeCompare(String(y.name)); })
+      .forEach(function (p) {
+        var mine = iScope_(cache, { role: 'agent', agentName: p.agentName,
+                                    agentId: p.agentId, name: p.name });
+        var chase = (mine.dues && mine.dues.chase ? mine.dues.chase : []);
+        var names = {};
+        chase.forEach(function (x) { var k = iNameKey_(x.agent); if (k) names[k] = 1; });
+        Object.keys(names).forEach(function (k) { claimed[k] = 1; });
+        line('  ' + (p.name + '                              ').slice(0, 30) +
+             (('      ' + chase.length).slice(-6)) + '   ' + p.email +
+             (Object.keys(names).length > 1
+               ? '\n        filed under: ' + Object.keys(names).sort().join(' · ') : ''));
+      });
+    line('');
+    var orphan = [];
+    extract.forEach(function (n) {
+      var k = iNameKey_(n);
+      if (k && !claimed[k]) orphan.push(n);
+    });
+    line('Names in the dues extract that reach no address: ' +
+         (orphan.length ? orphan.length : 'none'));
+    orphan.sort().forEach(function (n) { line('  ' + n); });
+    if (orphan.length) {
+      line('  Each of these is a book the branch manager sees and the agent does not.');
+      line('  Either the spelling differs from the access list, or the person has left.');
+    }
+  }
 
   var text = out.join('\n');
   Logger.log(text);
@@ -4708,6 +8872,11 @@ function onOpen() {
     SpreadsheetApp.getUi().createMenu('Branch Intelligence')
       .addItem('Rebuild now', 'intelRebuild')
       .addItem('Self test', 'intelSelfTestDialog_')
+      .addItem('Who gets whose list', 'intelAddressCheckDialog_')
+      .addItem('Header rows of every tab', 'intelHeadersDialog_')
+      .addSeparator()
+      .addItem('MAIL OFF — hold everything to me', 'intelMailOffDialog_')
+      .addItem('Mail on — clear test mode', 'intelMailOnDialog_')
       .addSeparator()
       .addItem('Send agent digests now', 'intelAgentDigest')
       .addItem('Send manager digest now', 'intelManagerDigest')
@@ -4720,6 +8889,10 @@ function onOpen() {
 }
 
 function intelSelfTestDialog_() { iDialog_('Self test', intelSelfTest()); }
+function intelAddressCheckDialog_() { iDialog_('Who gets whose list', intelAddressCheck()); }
+function intelHeadersDialog_() { iDialog_('Header rows', intelHeaders()); }
+function intelMailOffDialog_() { iDialog_('Mail off', intelMailOff()); }
+function intelMailOnDialog_() { iDialog_('Mail on', intelMailOn()); }
 function intelIssueCodesDialog_() { iDialog_('Access codes', intelIssueCodes()); }
 function iDialog_(title, text) {
   var html = HtmlService.createHtmlOutput(
@@ -4750,7 +8923,32 @@ function intelDoGet_(e) {
 function intelHealth_() {
   return { ok: true, service: 'Branch Intelligence', version: INTEL_VERSION,
            built: iProp_('INTEL_LAST_BUILD') || 'never',
-           workbook: iWorkbook_().how };
+           workbook: iWorkbook_().how,
+           /* The last night that failed, and why — empty when the last one was good. */
+           lastError: String(iProp_('INTEL_LAST_ERROR') || ''),
+           /* THE MAIL SWITCHES, VISIBLE. Asked on 17 September — "please ensure
+              no auto emails go out to agents in the morning" — and the honest
+              answer to "are they off?" should be readable, not remembered.
+              Words only: no address leaves on an unauthenticated ping. */
+           mail: iMailState_() };
+}
+function iMailState_() {
+  var test = !!String(iProp_('INTEL_TEST_TO') || '').trim();
+  var clients = String(iProp_('INTEL_SURVEY_LIVE') || '').trim().toLowerCase() ===
+                (typeof ISURVEY !== 'undefined' && ISURVEY && ISURVEY.LIVE_PHRASE ? ISURVEY.LIVE_PHRASE : 'send to clients');
+  return { test: test,
+           agents: test ? 'test' : (iAgentLive_() ? 'live' : 'held'),
+           clients: test ? 'test' : (clients ? 'live' : 'held'),
+           holdSet: !!iHoldTo_() };
+}
+/* From the editor: the three switches in words, and where held mail goes. */
+function intelMailStatus() {
+  var m = iMailState_(), hold = iHoldTo_() || '(nowhere — set INTEL_MANAGER_EMAIL)';
+  return (m.test ? 'MAIL IS OFF: every sender goes to ' + (iProp_('INTEL_TEST_TO') || '') + ', tagged [TEST].'
+                 : 'Test mode is off.') + '\n' +
+         'Agents: ' + (m.agents === 'live' ? 'LIVE — agent mail goes to agents.' : 'held — agent mail goes to ' + hold + ', tagged [HELD].') + '\n' +
+         'Clients: ' + (m.clients === 'live' ? 'LIVE — client letters go to clients.' : 'held — no client letter leaves.') + '\n' +
+         'Switch everything off: intelMailOff(). Back on: intelMailOn(); agents and clients then still need their own phrase.';
 }
 
 function intelDoPost_(e) {
@@ -4852,6 +9050,11 @@ function iBuildDelivery_() {
   for (var sr = 0; sr < d.rows; sr++) {
     var sc = iCode_(String(d.get('agentId', sr)).trim());
     if (!sc || statusOf[sc]) continue;
+    /* The same exclusion the row loop applies, applied here too. Until
+       16 September 2026 this map was built before the exclusion ran, so an
+       agent the branch had asked to leave off every wall was still counted
+       in the "N active agents" roster line — off the list, in the total. */
+    if (iExcludes_(skip, String(d.get('agent', sr)).trim())) continue;
     statusOf[sc] = { status: String(d.get('aStatus', sr)).trim() || 'Unknown',
                      ended: String(d.get('aEnd', sr)).trim() };
   }
@@ -4863,12 +9066,16 @@ function iBuildDelivery_() {
   var live = [], before = 0, beforeOldest = 0, byCat = {}, dispatchPending = 0;
   var delivered = 0, deliveredWithin = 0, deliveredBefore = 0;
   var gone = [];                         // outstanding, agent no longer active
+  var skipped = 0, skippedNames = {};    // what INTEL_EXCLUDE_AGENTS removed
 
   for (var r = 0; r < d.rows; r++) {
     var cat = String(d.get('cat', r)).trim();
     if (!cat) continue;
     var rawAgent = String(d.get('agent', r)).trim();
-    if (iExcludes_(skip, rawAgent)) continue;
+    /* Counted, not silently dropped. Every screen that excludes has to say
+       how much it removed — see iExcluded_ — and this one did not, so a book
+       handed to nobody looked like a book with nothing outstanding. */
+    if (iExcludes_(skip, rawAgent)) { skipped++; skippedNames[iNameKey_(rawAgent)] = 1; continue; }
     var code = String(d.get('agentId', r)).trim();
 
     /* No dispatch date and no year. Head office has not sent it, so it is not
@@ -4999,7 +9206,10 @@ function iBuildDelivery_() {
                 oldest: ages.length ? ages[ages.length - 1] : 0,
                 median: ages.length ? ages[Math.floor(ages.length / 2)] : 0 },
     ageing: ageing,
-    agents: agentRows.slice(0, 24),
+    /* The whole roster, not the top 24. The wall showed 18 of the 24 it was
+       handed and said so; it now measures how many rows fit on the screen it
+       is on, which only works if it is given every one. */
+    agents: agentRows,
     units: tally(function (x) { return x.unit; }),
     plans: tally(function (x) { return x.plan || '(none)'; }).slice(0, 5),
     /* Delivered, and how quickly — the only service-standard measure this
@@ -5029,6 +9239,10 @@ function iBuildDelivery_() {
                 rows: gone.map(function (x) {
                   return { agent: x.agent, status: x.status, ended: x.ended,
                            age: x.age, unit: x.unit }; }) },
+    /* Rows and distinct names INTEL_EXCLUDE_AGENTS took off this wall. The
+       names themselves are not carried — the property has them, and the wall
+       has no business printing a name it was told to leave off. */
+    excluded: { rows: skipped, agents: Object.keys(skippedNames).length },
     roster: { active: Object.keys(statusOf).filter(function (c) { return isActive(c); }).length,
               inactive: Object.keys(statusOf).filter(function (c) {
                 return /^inactive$/i.test((statusOf[c] || {}).status); }).length,
@@ -5113,6 +9327,46 @@ function iLicSubjectDate_(subject) {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/* A SALESFORCE TIMESTAMP, ON THE BRANCH'S OWN DAY.
+   CreatedDate and LastModifiedDate come back as UTC — "2026-09-15T23:40:00.000
+   +0000". Until 16 September 2026 the day was taken by slicing the first ten
+   characters, which is the UTC day: an edit made at ten to eight in the evening
+   in Port of Spain is already tomorrow in UTC, so a task touched after 8pm read
+   as touched "today" all through the next day, and one touched after 8pm on a
+   Friday had "moved" on Saturday. Every touched-today dot and every days-since
+   figure on the licence wall rests on this, so the day is taken in the
+   spreadsheet's own zone. The result is a local-midnight Date, the same shape
+   iToday_ returns, so the two subtract cleanly.
+
+   The offset is written +0000 with no colon, which not every Date parser takes;
+   the colon is put in first. A string that still will not parse falls back to
+   the UTC day rather than to nothing — a wrong-by-one date is a smaller lie
+   than a task that vanishes from the age arithmetic. */
+function iLicLocalDay_(ts) {
+  if (!ts) return null;
+  var raw = String(ts).trim();
+  var d = new Date(raw.replace(/([+\-]\d{2})(\d{2})$/, '$1:$2'));
+  if (isNaN(d.getTime())) return iDate_(raw.slice(0, 10));
+  return iDate_(Utilities.formatDate(d, iTz_(), 'yyyy-MM-dd'));
+}
+
+/* WHAT KIND OF LICENCE MATTER, IN ONE WORD — because the subject itself does
+   not go to the wall. The audit of 15 September 2026 found the outstanding list
+   carrying each task's subject line as the branch typed it, on a screen with no
+   sign-in in a room clients walk through, when every other wall read is
+   aggregates and staff names only. The subject is still read here, because it
+   is the only thing that says a task is about a licence at all and which agent
+   it belongs to; what leaves this function is a category. Nothing in this map
+   is a name, a number or a date. */
+function iLicCategory_(subject) {
+  var s = String(subject || '').toLowerCase();
+  if (/cpd/.test(s))                                return 'CPD';
+  if (/renew/.test(s))                              return 'Renewal';
+  if (/registration|change from/.test(s))           return 'Registration';
+  if (/applic|new licen[cs]e|provisional/.test(s))  return 'Application';
+  return 'Licence';
+}
+
 /* Next occurrence of a month/day anniversary, on or after today. A day past
    the end of a short month lands on that month's last day rather than rolling
    into the next one — 31 in a 30-day month is a data entry, not a date. */
@@ -5135,7 +9389,7 @@ function iBuildLicence_() {
 
   /* THE ROSTER: the access list says who the branch is, the in-force book says
      who is still active. Both, joined on the agent code. */
-  var units = iBuildUnits_(), roster = {}, codes = [];
+  var units = iBuildUnits_(), roster = {}, codes = [], excluded = 0;
   Object.keys(units).forEach(function (u) {
     units[u].forEach(function (m) {
       var c = iCode_(m.id);
@@ -5146,7 +9400,10 @@ function iBuildLicence_() {
          times over. */
       if (iRoleOf_(m.role) === 'staff' || iRoleOf_(m.role) === 'staff-lead') return;
       if (!/^A\d/.test(c)) return;                      // agent codes only
-      if (iExcludes_(skip, m.name)) return;
+      /* Counted, because every screen that excludes says how much it removed:
+         an exclusion is a decision to hand that agent's licence to somebody,
+         not a way to stop it being anybody's. */
+      if (iExcludes_(skip, m.name)) { if (!roster[c]) excluded++; return; }
       if (roster[c]) return;
       roster[c] = { code: c, name: m.name, unit: u, role: m.role || '' };
       codes.push(c);
@@ -5202,7 +9459,7 @@ function iBuildLicence_() {
        how long a thing has been outstanding, and who it is sitting with. */
     tasks = iSfQuery_(
       'SELECT Id, Subject, Status, ActivityDate, CreatedDate, LastModifiedDate, ' +
-      'IsClosed, Who.Name FROM Task ' +
+      'IsClosed, Task_Type__c, Who.Name FROM Task ' +
       "WHERE Task_Type__c = '" + ILIC.TASKTYPE + "' " +
       'AND CreatedDate >= LAST_N_MONTHS:24 ORDER BY CreatedDate DESC');
   } catch (err) {
@@ -5212,7 +9469,8 @@ function iBuildLicence_() {
   if (sfError || !contacts.length) {
     return { generatedAt: iIso_(today), configured: false,
              error: sfError || 'Salesforce returned no licence records.',
-             roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested } };
+             roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
+                       excluded: excluded } };
   }
 
   /* Licence tasks only, and which agent each one names. Matching is on the
@@ -5233,12 +9491,19 @@ function iBuildLicence_() {
       if (parts.length >= 2 &&
           sk.indexOf(parts[0]) >= 0 && sk.indexOf(parts[parts.length - 1]) >= 0) who = c;
     });
+    /* The subject stays inside this function. It decides that the task is a
+       licence task, which agent and which licence it is for, and what kind of
+       matter it is — and then it is not carried any further. See
+       iLicCategory_ for why. */
     licTasks.push({ code: who, subject: subj, status: String(t.Status || ''),
                     closed: !!t.IsClosed,
                     kind: iLicKind_(subj),
+                    type: String(t.Task_Type__c || ILIC.TASKTYPE),
+                    category: iLicCategory_(subj),
                     due: t.ActivityDate ? iIso_(iDate_(t.ActivityDate)) : '',
-                    opened: t.CreatedDate ? iDate_(String(t.CreatedDate).slice(0, 10)) : null,
-                    moved: t.LastModifiedDate ? iDate_(String(t.LastModifiedDate).slice(0, 10)) : null,
+                    /* Both on the branch's day, not UTC's — see iLicLocalDay_. */
+                    opened: iLicLocalDay_(t.CreatedDate),
+                    moved: iLicLocalDay_(t.LastModifiedDate),
                     /* Who the branch is waiting on. Salesforce nests it, and it is
                        almost never the agent — it is the head-office desk that has
                        to act next, which is the useful half. */
@@ -5343,7 +9608,12 @@ function iBuildLicence_() {
         justPassed: justPassed, sinceLast: justPassed ? sinceLast : null,
         covered: covered,
         openTasks: open.length,
-        openSubjects: open.slice(0, 2).map(function (t) { return t.subject.slice(0, 90); }),
+        /* The next due date, as iLicNextDue_ computes it, falls inside this
+           calendar month — so it is still ahead. The strip's own rule (the
+           anniversary MONTH) is wider: it also holds a date this month that
+           has already gone by, which this flag does not, and justPassed does. */
+        dueThisMonth: due.getFullYear() === today.getFullYear() &&
+                      due.getMonth() === today.getMonth(),
         clash: clash
       });
     });
@@ -5435,11 +9705,30 @@ function iBuildLicence_() {
     .map(function (t) {
       var age = t.opened ? Math.round((today - t.opened) / DAY) : null;
       var r = roster[t.code];
-      return { subject: t.subject.slice(0, 120),
+      /* NO SUBJECT ON THIS ROW. It was here until 16 September 2026; the
+         audit of the 15th flagged it, and the setup notes have always said a
+         wall read carries no subject. The category and the licence kind say
+         what the task is; the agent says whose. */
+      var sinceTouch = t.moved ? Math.round((today - t.moved) / DAY) : null;
+      var dueD = t.due ? iDate_(t.due) : null;
+      return { code: t.code,
                agent: r ? r.name : '', unit: r ? r.unit : '',
-               kind: t.kind, status: t.status, waiting: t.waiting,
+               kind: t.kind, type: t.type, category: t.category,
+               status: t.status, waiting: t.waiting,
                opened: t.opened ? iIso_(t.opened) : '',
                days: age,
+               /* When it last moved, on the branch's day, and whether that was
+                  today. "Touched today" is the one thing a manager can act on
+                  at four o'clock: a task nobody has opened since last week is
+                  not being worked, whatever its status says. */
+               moved: t.moved ? iIso_(t.moved) : '',
+               touchedToday: sinceTouch === 0,
+               daysSinceTouch: sinceTouch,
+               /* The task's own due date (ActivityDate), and how far past it
+                  today is. Negative means still ahead; null means the branch
+                  never gave it one, which is itself worth seeing. */
+               due: t.due,
+               daysSinceDue: dueD ? Math.round((today - dueD) / DAY) : null,
                /* Past what this branch normally takes — the only honest way to
                   call a number of days good or bad. */
                overdue: age !== null && medClose > 0 && age > medClose,
@@ -5457,8 +9746,39 @@ function iBuildLicence_() {
   function count(fn) { return agents.filter(fn).length; }
   /* Same rule as the strip. Reading it off the next-due date instead put
      Aidan Eugene and Joy Sammah — who both renewed on the 4th — outside their
-     own month. */
+     own month. Each row carries dueThisMonth for the narrower reading — the
+     date is still ahead — and justPassed for the other half. */
   var thisMonth = agents.filter(function (a) { return a.month - 1 === today.getMonth(); });
+
+  /* THIS MONTH'S TASKS, AND WHETHER ANYBODY IS TOUCHING THEM.
+     A licence that comes up this month with an open task nobody has moved in a
+     fortnight is the row the manager wants at four o'clock, and until now the
+     screen could not tell it from one being worked every morning. The open
+     tasks are joined to each licence on agent AND kind, the same rule that
+     decides openTasks above, and the counts underneath are of those tasks. */
+  function untouched(list, days) {
+    return list.filter(function (o) { return o.daysSinceTouch !== null && o.daysSinceTouch >= days; }).length;
+  }
+  var monthTasks = [];
+  var thisMonthRows = thisMonth.map(function (a) {
+    var mine = outstanding.filter(function (o) { return o.code === a.code && o.kind === a.kind; });
+    mine.forEach(function (o) { monthTasks.push(o); });
+    return { name: a.name, code: a.code, unit: a.unit, kind: a.kind,
+             due: a.due, days: a.days, lastDue: a.lastDue,
+             justPassed: a.justPassed, dueThisMonth: a.dueThisMonth, covered: a.covered,
+             tasks: mine };
+  });
+  var thisMonthOut = {
+    agents: thisMonthRows,
+    n: thisMonthRows.length,
+    tasks: monthTasks.length,
+    touchedToday: monthTasks.filter(function (o) { return o.touchedToday; }).length,
+    untouched7d: untouched(monthTasks, 7),
+    untouched30d: untouched(monthTasks, 30),
+    /* A licence up this month with no open task at all and no closed one
+       covering it — nobody has started. */
+    unstarted: thisMonthRows.filter(function (a) { return !a.tasks.length && !a.covered; }).length
+  };
 
   function tally(keyFn, pool) {
     var m = {};
@@ -5488,9 +9808,20 @@ function iBuildLicence_() {
       openTasks: agents.reduce(function (s, a) { return s + a.openTasks; }, 0),
       /* The alarm: a renewal date that has just gone by with no closed task to
          show for it. */
-      unconfirmed: count(function (a) { return a.justPassed && !a.covered; })
+      unconfirmed: count(function (a) { return a.justPassed && !a.covered; }),
+      /* The branch line on the outstanding card: every open licence task,
+         matched to an agent or not, and whether it is being worked. */
+      outstanding: outstanding.length,
+      touchedToday: outstanding.filter(function (o) { return o.touchedToday; }).length,
+      untouched7d: untouched(outstanding, 7),
+      untouched30d: untouched(outstanding, 30),
+      pastDue: outstanding.filter(function (o) { return o.daysSinceDue !== null && o.daysSinceDue > 0; }).length,
+      noDue: outstanding.filter(function (o) { return o.daysSinceDue === null; }).length
     },
-    thisMonth: thisMonth,
+    /* Was a bare list of the licence rows; since 16 September 2026 it is the
+       rows with their open tasks joined on, and the counts the wall's
+       this-month line reads. Nothing outside licence.html read the list. */
+    thisMonth: thisMonthOut,
     /* Just-passed first, then by date. A renewal date rolls to next year the
        instant it passes, so sorting on days alone buries last week's lapse at
        the bottom of the list — 360 days away, and the one row that actually
@@ -5562,7 +9893,7 @@ function iBuildLicence_() {
               return list;
             })() },
     roster: { active: codes.length, inactive: dropped.inactive, vested: dropped.vested,
-              dropped: dropped.names }
+              excluded: excluded, dropped: dropped.names }
   };
 }
 
@@ -5675,6 +10006,23 @@ function iBuildPossession_() {
   if (sfError || !rows.length) return { configured: false, error: sfError || 'No portfolio rows.' };
 
   var cabinet = [], withAgent = [], acked = 0, offBranch = 0, notActive = 0;
+  var skipped = 0, skippedNames = {};
+
+  /* EVERY STATE, PER PERSON. Until 16 September 2026 an acknowledged row
+     returned before it reached any per-agent key, so the wall could name who
+     was holding a contract unsigned but not who had got theirs signed — an
+     agent with six out and forty acknowledged read the same as one with six
+     out and none. This tally sees every row that survives the scope tests,
+     keyed on the resolved person, and the wall reads all four columns off it.
+     The three lists above still drive the ageing bands and are left as they
+     were, so the branch totals here must equal theirs — the test holds that. */
+  var full = {};
+  function person(name, code, unit) {
+    if (!full[name]) full[name] = { k: name, code: code, unit: unit, total: 0, cabinet: 0,
+                                    given: 0, acknowledged: 0, outstanding: 0,
+                                    oldest: 0, over90: 0 };
+    return full[name];
+  }
 
   rows.forEach(function (x) {
     var raw = String(x.AgentName__c || '').trim();
@@ -5683,13 +10031,30 @@ function iBuildPossession_() {
     var unit = unitOfCode[code] || unitKeys[iPossUnitKey_(x.Unit__c)] || '';
 
     if (!unit) { offBranch++; return; }          // another branch's book
-    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) return;
+    /* Counted, not dropped on the floor: the wall has to say how much an
+       exclusion removed, or a book nobody is chasing looks like a clean one. */
+    if (iExcludes_(skip, name) || iExcludes_(skip, id.agentName)) {
+      skipped++; skippedNames[iNameKey_(name)] = 1; return;
+    }
     if (!active(code)) { notActive++; return; }
-
-    if (x.Date_Ack_Letter_Received_from_Agent__c) { acked++; return; }
 
     var got = iDate_(x.Date_Policy_Contract_Recieved__c);
     var gave = iDate_(x.Date_Contract_Given_to_Agent__c);
+    var ack = !!x.Date_Ack_Letter_Received_from_Agent__c;
+    var p = person(name, code, unit);
+    p.total++;
+    if (ack) p.acknowledged++;
+    if (gave) p.given++;
+    if (!gave && !ack) p.cabinet++;
+    if (gave && !ack) {
+      p.outstanding++;
+      var outAge = Math.round((today - gave) / DAY);
+      if (outAge > p.oldest) p.oldest = outAge;
+      if (outAge > IPOSS.OLD) p.over90++;
+    }
+
+    if (ack) { acked++; return; }
+
     if (gave) {
       withAgent.push({ agent: name, code: code, unit: unit,
                        age: Math.round((today - gave) / DAY),
@@ -5737,6 +10102,21 @@ function iBuildPossession_() {
                         .sort(function (a, b) { return a - b; });
 
   var total = cabinet.length + withAgent.length + acked;
+
+  /* Outstanding first, then the oldest of them, then who has the most still
+     on our shelf — the order a manager walks the room in. `n` is kept as an
+     alias of outstanding so the same row shape reads on every wall. */
+  var byAgentFull = Object.keys(full).map(function (k) {
+    var p = full[k]; p.n = p.outstanding; return p;
+  }).sort(function (a, b) {
+    return b.outstanding - a.outstanding || b.oldest - a.oldest ||
+           b.cabinet - a.cabinet || b.acknowledged - a.acknowledged || (a.k < b.k ? -1 : 1);
+  });
+  var states = byAgentFull.reduce(function (m, p) {
+    m.total += p.total; m.cabinet += p.cabinet; m.given += p.given;
+    m.outstanding += p.outstanding; m.acknowledged += p.acknowledged; return m;
+  }, { total: 0, cabinet: 0, given: 0, outstanding: 0, acknowledged: 0 });
+
   return {
     generatedAt: iIso_(today),
     configured: true,
@@ -5750,14 +10130,26 @@ function iBuildPossession_() {
     withAgent: stat(withAgent),
     cabinetAgeing: ageing(cabinet),
     agentAgeing: ageing(withAgent),
-    byAgent: tally(withAgent, function (x) { return x.agent; }).slice(0, 24),
+    /* No slices. The wall used to be handed the top 24 and the top 8 and
+       showed 18 and 8 of them; it now measures what fits on the screen it is
+       on and says how many it left off, which only works if it is given the
+       whole list. */
+    byAgent: tally(withAgent, function (x) { return x.agent; }),
     byUnit: tally(withAgent, function (x) { return x.unit; }),
-    cabinetBy: tally(cabinet, function (x) { return x.agent; }).slice(0, 8),
+    cabinetBy: tally(cabinet, function (x) { return x.agent; }),
+    /* Every agent with a contract received this year, in every state — the
+       per-person picture the three lists above cannot give. */
+    byAgentFull: byAgentFull,
+    states: states,
     handover: { n: handed.length,
                 median: handed.length ? handed[Math.floor(handed.length / 2)] : 0,
                 sameDay: handed.filter(function (v) { return v === 0; }).length,
                 overPromise: handed.filter(function (v) { return v > promise; }).length },
-    excluded: { offBranch: offBranch, notActive: notActive }
+    /* `rows` and `agents` are what INTEL_EXCLUDE_AGENTS removed — the same two
+       keys the delivery wall publishes, so both screens can say it the same
+       way. Nobody's name is carried; the property already has them. */
+    excluded: { offBranch: offBranch, notActive: notActive,
+                rows: skipped, agents: Object.keys(skippedNames).length }
   };
 }
 
@@ -6485,7 +10877,10 @@ function iBuildBook_() {
       /* by agent, and whether that client is one of the ones carrying the gap —
          which is the difference between a greeting and a reason to call */
       var ba = bdayAgents[c.agent];
-      if (!ba) ba = bdayAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0, quiet: 0 };
+      /* Active or not travels with the name — asked for on 16 September:
+         "differentiating the active agents and the non-active agents". */
+      if (!ba) ba = bdayAgents[c.agent] = { k: c.agent, unit: c.unit, n: 0, gap: 0, quiet: 0,
+                                            live: c.live !== false, status: c.status || '' };
       ba.n++;
       if (c.life && !c.ci) ba.gap++;
       if (c.last && (today - c.last) / DAY / YEAR >= quietYears) ba.quiet++;
@@ -6750,36 +11145,73 @@ function iBuildBook_() {
 
 /* ── OUR OWN BIRTHDAYS — the one thing on this wall that is about us ─────────
    Everything else on the screen is a client to call; this is the person in the
-   room, and the branch asked for it to be big. Agents carry a Birthdate on
-   their Salesforce contact, so the active roster — the access list, by agent
-   code — is asked, in one small query. The people without a code, the support
-   desk and the manager, are named in the Script Property INTEL_TEAM_BIRTHDAYS
-   as "MM-DD Name, MM-DD Name", which stays out of the repository. No age is
-   shipped: the wall hangs in a room clients walk through. */
+   room, and the branch asked for it to be big.
+
+   AND IT WISHED THE WRONG PEOPLE, ON THE WRONG DAY, FOR WEEKS. On 15 September
+   2026 the wall said "Happy birthday, Gary and Kerwyn" to two agents whose
+   birthdays are 27 August and 21 March. The query was:
+
+     SELECT Name, Agent__c, Birthdate FROM Contact
+      WHERE Birthdate != null AND Agent__c IN (<the branch's agent codes>)
+
+   Agent__c on a Contact is WHOSE CLIENT THIS IS. So it found the CLIENTS of
+   those agents, kept the ones with a birthday today — and then printed the
+   AGENT'S name from personOfCode. Every client birthday on the book became a
+   staff birthday, attributed to whoever sold the policy.
+
+   Contact carries a RECORD TYPE and it has always had the answer: AGENT (90
+   records, 84 with a birthdate) and STAFF (36, 27) are us; CLIENT (12,608) and
+   ORPHAN (23,804) are not. So the record type is the filter, the date is
+   matched in Salesforce rather than in script, and the answer is narrowed to
+   the names on this branch's own roster — the org's ninety agents are not all
+   ours, and another branch's birthday has no business on this wall.
+
+   The people without an agent code, the support desk and the manager, are
+   named in the Script Property INTEL_TEAM_BIRTHDAYS as "MM-DD Name, MM-DD
+   Name", which stays out of the repository. No age is shipped: the wall hangs
+   in a room clients walk through. */
+var IBOOK_US = ['AGENT', 'STAFF'];   // the Contact record types that are us
+
 function iBookTeam_(today, personOfCode, unitOfCode) {
   var mm = today.getMonth() + 1, dd = today.getDate(), out = [], seen = {};
   function add(name, unit, agent) {
     var k = iNameKey_(name);
     if (!k || seen[k]) return;
     seen[k] = true;
-    out.push({ name: String(name).trim(), unit: unit || '', agent: !!agent });
+    /* Units here are named after the person who runs them, so "Gary Sookdeo ·
+       Gary Sookdeo" is what the screen printed. A unit is worth saying only
+       when it is not the person's own name. */
+    var u = String(unit || '').trim();
+    out.push({ name: String(name).trim(),
+               unit: iNameKey_(u) === k ? '' : u,
+               agent: !!agent });
   }
-  var codes = Object.keys(personOfCode || {});
-  for (var i = 0; i < codes.length; i += 200) {
-    var inList = codes.slice(i, i + 200)
-      .map(function (c) { return "'" + String(c).replace(/'/g, '') + "'"; }).join(',');
-    if (!inList) continue;
-    try {
-      iSfQuery_('SELECT Name, Agent__c, Birthdate FROM Contact ' +
-                'WHERE Birthdate != null AND Agent__c IN (' + inList + ')')
-        .forEach(function (c) {
-          var d = iDate_(c.Birthdate);
-          if (!d || d.getMonth() + 1 !== mm || d.getDate() !== dd) return;
-          var code = iCode_(c.Agent__c);
-          add(personOfCode[code] || c.Name, unitOfCode[code], true);
-        });
-    } catch (e) { /* the day's calls stand without it */ }
-  }
+
+  /* WHO IS OURS. The roster's own names, so that one of the org's ninety
+     agents who does not work here cannot appear on this branch's wall. */
+  var ours = {}, unitOfName = {};
+  Object.keys(personOfCode || {}).forEach(function (code) {
+    var k = iNameKey_(personOfCode[code]);
+    if (!k) return;
+    ours[k] = personOfCode[code];
+    if ((unitOfCode || {})[code]) unitOfName[k] = unitOfCode[code];
+  });
+
+  /* ONE query, and the record type does the work. Salesforce matches the day
+     as well, so a date this script misreads cannot put somebody on the wall. */
+  try {
+    var rows = iSfQuery_('SELECT Name, RecordType.Name, Birthdate FROM Contact' +
+                         " WHERE Birthdate != null AND RecordType.Name IN ('" +
+                         IBOOK_US.join("','") + "')" +
+                         ' AND CALENDAR_MONTH(Birthdate) = ' + mm +
+                         ' AND DAY_IN_MONTH(Birthdate) = ' + dd + ' LIMIT 200') || [];
+    rows.forEach(function (c) {
+      var k = iNameKey_(c.Name);
+      if (!k || !ours[k]) return;            // ours only, by name
+      add(ours[k], unitOfName[k], true);     // the roster's spelling wins
+    });
+  } catch (e) { /* the day's calls stand without it */ }
+
   String(iProp_('INTEL_TEAM_BIRTHDAYS') || '').split(',').forEach(function (entry) {
     var m = entry.trim().match(/^(\d{1,2})[-\/.](\d{1,2})\s+(.+)$/);
     if (m && +m[1] === mm && +m[2] === dd) add(m[3], '', false);
@@ -8210,7 +12642,11 @@ function iBuildSurveyStats_() {
   var vals = sh.getRange(2, 1, last - 1, Math.max(sh.getLastColumn(), ISCOL.STAGE)).getValues();
   var band = {}, unit = {}, sum = 0, latest = null;
   vals.forEach(function (r) {
-    if (String(r[17]) === 'live') out.live++;
+    /* MODE is written as "live · cleared <hash> by <who>", never the bare word,
+       so an exact match counted zero live letters forever. Prefix, like the
+       dues reader at iSurveyByClient_. Found 17 September 2026 while joining
+       the letters to the dues lines. */
+    if (/^live/i.test(String(r[17] || '').trim())) out.live++;
     out.sent++;
     var b = String(r[9] || '—'), u = String(r[7] || 'Unassigned');
     if (!band[b]) band[b] = { k: b, sent: 0, resp: 0, sum: 0 };

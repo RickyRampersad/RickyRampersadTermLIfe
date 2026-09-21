@@ -230,7 +230,18 @@ Two places take it:
   — the address the digest e-mails link back to.
 
 Then run **`intelSetup`** once. It creates the working tabs, does the first
-rebuild, installs the eleven triggers (six for the intelligence, five nightly wall builds) and prints the self test.
+rebuild, installs the twelve triggers (six for the intelligence, five nightly wall builds, and the pending screen's daytime refresh) and prints the self test.
+
+> **Six of those twelve triggers send mail**, the agent list every weekday at
+> 6am. **Since `2026-09-15c` none of it reaches an agent or a client until
+> somebody switches it on by hand** — `INTEL_AGENT_LIVE` for agents,
+> `INTEL_SURVEY_LIVE` for clients, both in the table below, both requiring a
+> phrase typed out in full. Until then every message goes to
+> `INTEL_MANAGER_EMAIL` tagged `[HELD]`, naming who it was for.
+>
+> So a fresh install is safe to run, and the first morning's digest arrives as
+> one preview per agent in your own inbox. Read them, run **Who gets whose
+> list**, and only then set `INTEL_AGENT_LIVE`.
 
 **"This script has too many triggers"** on that step means the host project
 is spending its twenty on something else. The tracker before `2026-09-08a`
@@ -248,7 +259,9 @@ Saving the file is not deploying it.
 |---|---|
 | `INTEL_MANAGER_EMAIL` | who the Monday digest goes to. Commas for several. Unset, it goes to everyone with a manager-ish role on an access list. |
 | `INTEL_APP_URL` | the address the e-mails link to. |
-| `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. |
+| `INTEL_AGENT_LIVE` | **permission to write to an agent.** Must read exactly `send to agents`. Unset — the shipped default — every agent message goes to `INTEL_MANAGER_EMAIL` instead, subject-tagged `[HELD]` and banner-marked with who it was for. `yes`, `true`, `1` and `on` are **not** permission. |
+| `INTEL_SURVEY_LIVE` | the same switch for client letters. Must read exactly `send to clients`. |
+| `INTEL_TEST_TO` | **test mode.** Every message goes here instead, subject-tagged `[TEST]` and banner-marked with who it was really for. Agents and clients cannot receive test traffic while this is set. Outranks both switches above. |
 | `INTEL_TAB_DUES` etc. | point a domain at a named tab if the column search ever picks the wrong one. Keys: `DUES`, `INFORCE`, `PENDING`, `REQS`, `TASKS`, `ACCESS`. |
 
 ---
@@ -305,25 +318,35 @@ The five wall feeds (`intel.wall`, `intel.delivery`, `intel.licence`,
 
 A television reloading five of those every half hour would have spent the
 project's daily runtime by lunch, and the tracker's sign-in runs in the same
-project. So each feed is built **once a night, one execution each** —
+project. So each feed is built **once a night, one execution each** (riders and
+conversions since 17 September, rebuilt at five by the pending refresh) —
 `intelRebuildWall45`, `intelRebuildDelivery`, `intelRebuildLicence`,
-`intelRebuildPossession`, `intelRebuildBook`, at three in the morning, an hour
-after `intelRebuild` — and kept in the hidden tab **`_Intel Wall`**, one row
+`intelRebuildPossession`, `intelRebuildBook`, in the small hours an hour apart,
+and `intelRebuildPending` (which also refreshes through the day — see §3) —
+and kept in the hidden tab **`_Intel Wall`**, one row
 per feed. A request reads its row in about a second and answers with
 `stored: "<when it was built>"`; the screen's own "built …" line shows the
 date.
 
+- **A copy carries the build that made it.** On the evening of 16 September the
+  script went from 16a to 17a and every book screen kept serving the copy the
+  night's 16a run had stored — possession said "0 of 0 agents", delivery still
+  listed the excluded names — until somebody rebuilt them by hand. The built-at
+  cell now reads `2026-09-17 03:41 v2026-09-17d`; a copy stamped with another
+  build is treated as no copy at all, so the next ask builds live and stores,
+  and the night's run rebuilds it whatever the date says.
 - **With no stored copy yet**, a request builds the feed live and stores it,
   so the first morning works. After pasting, run **`intelRebuildWall`** from
-  the editor to fill all five without waiting for the night.
+  the editor to fill all six without waiting for the night.
 
-  **It will not do all five in one go, and it does not try.** Run as a single
+  **It will not do all six in one go, and it does not try.** Run as a single
   execution on the morning of 8 September, the five together reached the
   six-minute ceiling and Apps Script killed the run with no report of what it
   had managed. So it now goes fastest first (possession 16s, licence 25s,
-  delivery 28s, birthdays about 90s, the 45-day line 155s), leaves alone any
+  delivery 28s, birthdays about 90s, pending about 130s, the 45-day line
+  155s), leaves alone any
   copy already built today, and stops itself at four and a half minutes saying
-  what is left. **Run it again and it carries on** — two runs build all five
+  what is left. **Run it again and it carries on** — two runs build all six
   from cold, a third is a no-op. `intelRebuildWallForce` rebuilds even today's
   copies, for when the answer changed rather than the day.
 - **A bad night never pins a bad screen.** A build that errors, or comes back
@@ -369,6 +392,327 @@ on another book does not appear at all — being told a client exists but is
 withheld is itself the disclosure. Where a client is shared across two agents,
 the agent sees their own policies and a **count** of the others, so nobody is
 misled into thinking they have the whole picture.
+
+## 3¾. The pending wall — the eighth screen
+
+**17 September 2026 — the pending wall is two slides, and it names itself.**
+The branch manager's own words: *"this is a very important wall… remove what is
+pending and have on top branches pending wall… remove the shield in this wall
+so persons will know what wall they are watching"*, and *"if you need another
+slide, let me know"*. So:
+
+- **Slide 3, `pending.html` — Branch Pending · Policies.** The headline is the
+  register **cleaned**: on the day this was written, 53 genuinely pending out of
+  74 rows Guardian sent. Under the number, the four figures that reconcile it —
+  the register's own count, the ones already issued and paying, the ones closed
+  or never proceeded with, and the policies carrying a requirement with no
+  register row. The middle card is the **six real statuses** (see
+  `iPendState_`), the two workable ones edged in gold, with what Guardian
+  actually typed as chips beneath so the branch recognises its own report. The
+  aging bars count pending rows only. The rest of the slide is **the board**:
+  one row per agent, with **the requirements on their policies named and aged**
+  under their name — *"a fact find too, how long with the two fact finds, proof
+  of address, how long, and highlight in the reds"* — gold past sixty days and
+  deep red past ninety, oldest first rather than commonest first, because one
+  proof of address waiting two hundred days is the sentence the room needs.
+  Then, under three group headings so the columns can be read:
+  **their policies** (policies, requirements, routine, medicals, cash not
+  submitted), **work it?** and **Salesforce tasks** on those same policies.
+  - **Work it? is the split that says what today looks like.** Asked for as
+    *"cases being worked on today, that's clear cases with cash, with
+    everything — and project what we can't work on because there are things
+    outstanding on it."* **Ready** is nothing outstanding but the premium, so
+    it settles today; **chase** is a document or a medical nobody has ordered
+    yet, so it is the call list; and the rest are *ordered and waiting* — a
+    medical booked, a report at the lab — which is outstanding with nobody to
+    telephone, counted in the legend rather than given a column. A case with
+    three requirements counts once, in the worst of the three, so the split
+    adds up to the policy count.
+  - **The legend under the board defines every column from the branch's own
+    figures**, because *"oldest, today, quiet, late, tasks — persons may not
+    know what that actually means."*
+  - **Awaiting settlement leads the status strip**, asked for in those words,
+    and it is right on the merits: a case awaiting settlement has cleared
+    underwriting and wants nothing but the money.
+  A gold branch row sits above the agents. Rebuilt in that shape on 17 September after the first cut drew
+  *"you are tallying up the days… this is not telling me anything at all"*:
+  a wall has to say how many, whose, and what, and a day count says none of
+  the three.
+- **Slide 4, `reqs.html` — Branch Pending · Requirements & tasks.** Every
+  requirement outstanding with **its own** median and oldest age, medicals
+  marked apart in teal, the six aging bands, the months the requirements were
+  ordered or added in since the first of January, and the branch's own side:
+  the Pendings task type per person — open, overdue, gone quiet a week, touched
+  today, closed today — from the tracker's own Salesforce read, so the two
+  screens can never disagree. The chase states sit under it.
+- **Slide 5, `increases.html` — Branch Pending · Increases, group & health.**
+  Asked for on the same day: *"on the Pendings we must include in a separate
+  slide the increases, group life and group health."* It is a separate slide
+  because slides 3 and 4 are built from the requirements extract, and that
+  extract is the **life new-business list** — an increase on a policy the
+  client already holds is not on it, and neither is a group scheme or a health
+  plan. So this one reads Salesforce itself: `Policy_Increases__c` for the
+  increases, and `CLIENT_PORTFOLIO__c` record types **HEALTH**, **HEALTH
+  (GROUP)** and **LIFE(GROUP)** for the rest. The left card is the pending
+  increases with the API waiting on them, the oldest, how many have no
+  documents collected, and the whole increase book behind it for scale. The
+  right is the three record types with a **status-mix bar** each, then every
+  pending row named — kind of policy, whose it is, the status as the record
+  carries it, and its age — with a by-agent tally under each list.
+  - **The status is read twice on the increases object.**
+    `Policy_Description_Status__c` is a clean picklist and it is right when it
+    is set, but it is blank on some rows and reads "Premium Paying" on rows
+    whose free-text `Policy_Status_Description_R__c` says "Underwriting
+    incomplete, Missing Reqts, Error on Policy". Both go through
+    `iPendState_`, and **the worse of the two decides**. Where the free text
+    is not prose — some rows carry the single character `1` — the picklist is
+    shown instead, because a status with no letter in it tells the room
+    nothing.
+  - **No policy numbers and no client names on this slide at all**, not even
+    behind `INTEL_PENDING_ROWS_ON_WALL`. Thirteen rows is few enough that a
+    policy number identifies the client to anyone walking past, and a group
+    scheme identifies the employer.
+  - **More than half of the group and health book carries no status**, so the
+    slide says the share out loud: a blank is not the same as nothing pending,
+    and nothing can test those rows either way.
+  - Rebuilt by `intelRebuildGroups()`, served at `intel.groups`, and in the
+    nightly `IWALL_FEEDS` run near the front because five small SOQL queries
+    are the cheapest feed on the wall.
+- **Slide 6, `codes.html` — Branch Pending · Code by code.** Asked for as
+  *"should we not have one overall general dashboard, but however on each of
+  those codes a further breakdown? … if we do need to have two, three or four
+  dashboards related to the branch's pending, we should."* The left card is the
+  overall dashboard: the branch in **five states** — ready to settle, the
+  agent's move, the client's move, already in motion, with head office — each
+  with its count, its oldest and a bar of its share, the workable two in gold
+  and the rest in grey. Under it, how many pending policies could be joined to
+  a requirement at all, because a policy with no requirement row is placed on
+  its premium column alone and that is the error bar on everything above it.
+  The right card is the **breakdown under every code**: each requirement
+  outstanding, oldest first, with its count, median and oldest, a `MED` tag
+  where it is a medical, how many are already ordered — and **the agents
+  holding it named underneath, each with their own count and worst age**,
+  gold past sixty days and red past ninety. It reads the same `intel.pending`
+  feed as slides 3 and 4, from `board.codes`, which is the board's own join
+  read the other way round: the board answers what is on an agent's desk,
+  this answers who is holding a requirement.
+- All four carry the **gold nameplate** rather than the branch mark; the house
+  note in `CLAUDE.md` records that exception and why.
+- **Two exclusion rules, and they are different.** `intelExclude` takes a name
+  off every report entirely. `intelListOnly` takes the name off every per-agent
+  row, **counts the policies**, and (since this date) **does not count their
+  requirements** — asked for as *"leave Javid's name off the wall, and
+  Aleema's, but count their policies, not their requirements."* What was held
+  back is published and said on the screen.
+
+**17 September 2026 — the dates on the requirements.** Beside the days-since figures the requirements panel now says, month by month from the 1 January cut, how many were ordered or added in each month, and names the oldest and newest dates (`requirements.byMonth`, `oldestOn`, `newestOn`).
+
+The eighth screen on the wall: everything submitted and not yet issued, how
+long it has waited, and what is holding it. `intelligence/wall/pending.html`,
+third in the rotation — after the two day screens and before the client book,
+because a pending case is the only thing on that wall somebody can still
+change this afternoon.
+
+**It reads three sources, and takes the best answer each can give.**
+
+| Source | Tab it looks for | What only it knows |
+|---|---|---|
+| The branch's own lists | any tab with `Agent`, `Client`, `App Received Date` | the unit, the agent, and a comment saying what the case is waiting on |
+| The Guardian pending extract | `Policy`, `DecisionType`, `ReqtdaysLapsed` | `POL_MISC_SUSP_AMT` — the client's own money, already paid, that cannot be applied until the case closes |
+| The requirements extract | `insured_requirement_id`, `requirement_code`, `policy_number` | the requirement codes, which are the underwriter's own answer to what is outstanding |
+
+The branch keeps **more than one** of its own lists, so every tab of that shape
+is read rather than the biggest one. `INTEL_TABS_BRANCHPEND` overrides with a
+comma-separated list of tab names if the detection ever picks up something it
+should not.
+
+**What is holding them** comes from the requirement codes where the extract is
+present — `MDMED` reads as *Medical examination*, `ATTPH` as *Attending
+physician's statement*, and the screen says so. Without it, the branch's own
+comments are read by keyword against the words the branch actually uses —
+medical, direct debit, signature or authority, first premium, documents — and
+**anything matching none of them is counted as Other rather than guessed at**.
+Other growing large is the signal to add a bucket, not to widen one. The screen
+always says which of the three answered.
+
+**Age comes from the date, never the days column.** `Days` and
+`ReqtdaysLapsed` are typed and drift — one of them reaches 8,128, which is not
+a case that waited twenty-two years. Anything over ten years is dropped rather
+than shown.
+
+**No client reaches this screen.** The wall actions carry no token, because a
+screen on a wall has nobody to sign it in, and in exchange they return
+aggregates only. Every row of every one of these sources is a named client with
+a policy number against them; they are counted and thrown away. What leaves is
+money, ages, units, reasons, and the names of our own agents.
+`tests/test-pendingwall.js` asserts that directly — the fixture's client names
+and policy numbers must not appear anywhere in the payload.
+
+### Two kinds of money, and they are opposites
+
+The screen carries both and never adds them together, because they want
+different things done this afternoon.
+
+- **Paid, and we cannot apply it yet** — `POL_MISC_SUSP_AMT` from the pending
+  extract. The client has handed the money over and it sits in suspense until
+  the case closes. That is a file to finish, and it is ours.
+- **Waiting on the client's first premium** — requirement code `FUTPY`. The
+  money has never arrived. That is a call to make, and it is theirs.
+
+A screen that showed one total would tell nobody which of those it was.
+
+### Who is on it
+
+From the Tasks tab — the branch's own record of chasing head office. Every
+task keeps the policy it names, so this is a lookup rather than a search, and
+it comes back in three states because they need three different actions:
+
+| | |
+|---|---|
+| **Nobody has ever raised a task** | No task of any kind has named this case. Raise one. |
+| **Somebody has one open** | It is in hand. Leave it. |
+| **The chase was closed, the case was not** | The worst of the three, because it reads as handled. Find out why the last one was closed with the file still open. |
+
+It is served from a stored copy in `_Intel Wall`, like the book screens. The
+first ask after the 17 September deploy took 131 seconds live — the Branch
+Portfolio's pending and requirements tabs, then Salesforce for what settled —
+and a copy held for three minutes left the slide blank more often than not.
+`intelPendingRefresh` (one hourly trigger, acting at five in the morning and
+then on the odd hours from nine to seven in the evening, never at seven in the
+morning when the branch signs in) rebuilds it, so a case cleared at ten is off
+the wall by lunch. `intelRebuildPending` does the same from the editor, and
+`{action:'intel.pending', fresh:true}` builds live and replaces the copy. It is
+also in `intelRebuildWall`'s list, just before the 45-day line.
+
+**The book tab is never a branch list.** On the evening of 16 September the
+screen said 20,392 policies pending: the Branch Portfolio's book tab — AGENT,
+CLIENT, APP RECEIVED DATE and all — matched the shape of a hand-kept list and
+was counted as one. Every extract the script knows is now excluded by sheet
+id, and a tab carrying STATUS DESCRIPTION, PAID TO DATE or PLAN CODE is never
+a list. The same book tab **lends the pending screen its policy columns**:
+status description, app received date, sum assured, and premium annualised by
+MODE (12, 4, 2 or 1; anything else is not annualised), joined by policy number
+(`iPendBook_`). Cash with app and the underwriter are in neither extract yet.
+
+### It narrates, like every other screen
+
+Twelve lines, `en-US-AndrewNeural` at `-12%`, rendered by
+`audio/build-voice.py pending` and folded in by `audio/embed-audio.py pending`.
+No figure is spoken — every number on this screen moves and the audio does
+not, so the screen carries the arithmetic and the voice carries the meaning.
+
+## 3⅞. Three slides that folded into the pending wall
+
+Until 17 September 2026 the pending feed drove three more slides — *Ready To
+Settle* (`ready.html`), *Whose Move Is It* (`triage.html`) and *Who Is Holding
+It Up* (`culprits.html`). The branch manager's note was that they duplicated
+the pending screen, and he was right: all three read `intel.pending` and cut
+it three ways. They are gone, and the rebuilt pending screen (§ 3¾) carries
+what they said — what can be worked today, by status; which agent is holding
+which requirement back, split cash · routine · medical; and what settled today,
+this week and this month. The builders behind them (`iPendTriage_`, `triage.*`
+on the payload) stay, because the pending screen is what reads them now.
+
+### And the chase log itself, by Task Type
+
+`SFTASK MGT` carries the field the whole KPI list is aligned to, and the
+builder read the column and threw it away. It is now counted, on the
+culprits screen, because the state of the chasing is part of who is holding
+things up:
+
+- **open chases by Task Type**, each with the oldest of its kind
+- **the middle age of an open chase** — a chase open six weeks is not a chase
+- **how many are open over a month**
+- **how many carry no Task Type at all** — those cannot be counted against
+  any KPI, so they are named rather than folded into the others
+- **how many are assigned to nobody**
+
+A task subject carries the client's name and the policy number — that is how
+a task is joined to a case — so nothing but counts and ages ever leaves
+`iBuildTasks_`. The test asserts that directly.
+
+## 3a½. The day in blocks — one row per desk, one clock
+
+**17 September 2026 — after four.** "Extend the block beyond 4pm — I work round the clock, and it should reflect 24/7 so people can see what is being done." A fifth block, **4pm – 12am**, on every desk, that nobody files: the tracker's day metrics carry `eveClosed` and `eveTouched` per desk — what Salesforce saw closed and touched from 16:00 local (20:00Z) to midnight — and the feed puts it on `bx` as `EVE` with `after:true`. Green when something closed, blue when something moved, a gold ring once four has passed with nothing yet, grey before four; it never goes red, because the day ends before it could, and anything after midnight is the next day's first block. The four filed blocks and their counts ("10 of 32") are untouched.
+
+Slide 2 of 14. It was four cards reading "3 of 6 filed", which is a progress bar
+about paperwork. Asked for on 16 September 2026 to "make an impact", and the
+thing the branch manager actually plans his morning from is who is doing what
+right now — so it is one row per desk against one shared clock.
+
+**Ordered by who answers to whom**, not by output: Branch Manager, Assistant
+Branch Manager, Unit Managers, BME, Sales Support, and anyone whose Role column
+matches none of those under "Also on the floor" rather than dropped. Within a
+tier it is alphabetical — sorting by who closed most inside a tier is the league
+table again, one level down. The tiers are matched loosely on the Role column
+because that column is typed by hand.
+
+**Four bands: 5–10am, 10–12pm, 1–3pm, 3–4pm**, the live one marked NOW. The
+first band is wide deliberately: the branch is called from seven but people
+arrive across a spread and the block is not owed until ten, so a band labelled
+"8 – 10am" made an early start look like no start. The band is the window the
+work is allowed to happen in, not one person's shift — each desk's own hours
+stay in the tracker's `SCHEDULE`, which is unchanged.
+
+**A dot per block per desk**, and the dot carries the meaning:
+
+| | |
+|---|---|
+| green, filled | closed something |
+| blue, filled | moved it on |
+| gold, filled | waiting on somebody — a blocker is named |
+| red outline | past its hour and not filed |
+| blank | not scheduled for that desk — an empty cell, not a failure |
+
+Beside each dot is **the task type** — `Premium Dues`, `Lic/Staffing/SA/HR`,
+`Reinstatements`, `Query Pal`. That was already in `SCHEDULE[staff].blocks[id].kpi`
+and the wall had never shown it. Under it, what actually moved, counted off the
+desk's own words in the tracker's free-text boxes: *"3 closed · 4 moved"*. Those
+are how many things they listed, not figures from Salesforce — the trustworthy
+per-person numbers are the closed / open / overdue on the right.
+
+**It needs the paste.** `iDayBuild_` gained a `bx` field carrying the state, the
+task type and the counts. It was **added beside** the existing `blocks` array of
+four strings rather than replacing it, because `day.html` has read that shape
+since it was built and rewriting a working slide to no purpose is how screens
+break. A page that has not been republished simply does not look at `bx`, and the
+slide draws the same picture with less in it — the layout is not waiting on a
+deployment.
+
+**Nothing is clipped silently.** The wall has no scrollbar, and inside the player
+the frame is 46 pixels shorter than the screen — about one desk's worth. `fitIn()`
+drops whole desks off the foot and the legend says how many did not fit. It
+measures the last desk's bottom edge against the top of the legend, because the
+first cut compared `scrollHeight` against `clientHeight`, which does not grow on a
+flex column whose overflow is visible: it reported a perfect fit while the last
+desk sat underneath the legend. At the three television sizes all ten desks fit
+and nothing is dropped.
+
+## 3a¾. Lapses — `lapses.html`, slide 5
+
+**17 September 2026 — who is behind each bar.** Every month on the strip carries the agents who make it up (`byMonth[].top`, the biggest three with their share), and the screen prints the top two surnames and shares under the bar — "on the yellow you should label the agents who make up the percentage".
+
+Its own screen since 17 September 2026, on the branch manager's "I'm guided by
+you". The reason is two clocks: the dues line is Status-2 rows on a paid-to
+clock — policies still alive that can be saved — and lapses are Status-1 rows
+on a lapse-date clock — what was lost. On one slide they dilute each other, and
+July's 1,187 (three and a half times any other month this year, unexplained)
+needs a screen where the month-by-month shape is visible. The link between the
+two slides is one counter on the dues line: *lapsed this month*.
+
+Read straight off the dues tab by `iLapsesWall_` (`intel.lapses`, no sign-in,
+aggregates only — the payload is walked in `tests/test-lapses.js` for any
+client or policy key). This month · this quarter · year to date, each with
+policies, modal, annualised (×12), median years in force, and how many went
+inside a year and inside two; a twelve-column month strip; by agent with the
+same figures; tenure bands. `defects` says how many lapsed rows carry no usable
+lapse date or issue date, because a lapse with no date cannot be placed and a
+tenure with no issue date cannot be measured — and both are said on the screen
+rather than dropped.
+
+Excluded agents come out by name and are counted. Narration is not yet built
+for this page (`audio/lines.py` has no `lapses` key); the Narrate button is
+inert until it is.
 
 ## 3b. How old is each source
 
@@ -453,6 +797,159 @@ The digests follow the same rule — staff and managers are skipped by the agent
 cross-sell and horizon mails rather than sent an empty list. That alone stopped
 ten pointless e-mails a day.
 
+### The chrome is one line across the top
+
+Everything that is not the slide sits on one line at the top: the controls, which
+story of eleven and how long it has left, the progress track, the eleven
+stops, and whose birthday it is. **The slides start underneath it** — `.stage`
+is offset by the line's measured height — so nothing is laid over a slide at
+either end. The only thing left at the foot is the five-pixel progress line.
+
+It used to be three things stacked over the foot of every slide: the rail, the
+timer pill and (briefly) the stale-code bar. The note back on 16 September 2026
+was that it was blocking the bottom of the slide. Moving it to the top on its
+own was not the fix — laid over a slide it covered the headline instead, which
+is the same fault facing the other way. The line has to own a strip the slides
+do not draw into.
+
+**The stops are numbers.** Fourteen names needed two rows at 1366px, and a rail
+on two rows is not a line; the name of the stop you are on is spelled out beside
+them and the rest are on the hover. On a phone the stops go entirely — eleven
+of them plus the controls do not cross 390 pixels, and the arrows are how a
+phone turns the wall.
+
+**The birthday greeting is on the line**, to the right. It was across the top
+centre, where the slides put their own headline, and against the right-hand edge
+it covered a table row. On the line it is on every screen all day, never moves,
+and covers nothing.
+
+`tests/e2e-wallfit.js` proves the line at five screen sizes: one row of stops,
+nothing overlapping the position text, the line at the top, the slide starting
+below it, and nothing leaving the screen.
+
+### The wall says when it is running old code
+
+A red bar across the foot of every wall screen, reading:
+
+> **This wall is running old code.** The script deployed is `2026-09-09a` and
+> these screens were built for `2026-09-16a`. Figures and names on screen may
+> be wrong. Paste Intelligence.gs, then Deploy → Manage deployments → pencil
+> → New version.
+
+`all.html` posts `intel.ping`, which needs no token, and compares the version
+it gets back with `WANT_SCRIPT` in the page. It hides itself the moment the
+paste is done, stays quiet when the script cannot be reached at all (every
+screen already says *no feed* — a second red bar for one fault is noise), and
+stays quiet if the ping answers without a version.
+
+**Why it exists.** On 15 and 16 September 2026 the birthday strip named agents
+whose birthday it was not, on two consecutive mornings, because the fix had
+been written the day before and never pasted. Nothing on the screen said so
+and nothing could have: the *data* rebuilds every night, so the wall read
+"built today" and looked perfectly healthy while running three-week-old logic.
+A stale deployment has to be visible on the screen somebody is already
+standing in front of.
+
+`WANT_SCRIPT` is pinned to `INTEL_VERSION` by `tests/test-version.js` — a
+staleness warning that is itself stale is worse than none — and
+`tests/e2e-wallstale.js` drives the real page to prove the bar appears, names
+both builds, disappears when they agree, and fits a phone.
+
+**This is a page change, not a script change**, so it reaches the wall by
+merging to `main` (GitHub Pages serves `main`), not by pasting. The two chains
+are separate: merging publishes the screens, pasting updates the script.
+
+### Mail off, right now, with nothing to deploy
+
+**Branch Intelligence → MAIL OFF — hold everything to me** (`intelMailOff()`).
+
+It sets `INTEL_TEST_TO` to your own address and reports what it did. That takes
+effect the moment it runs — no paste, no new version — and it holds **all six
+senders**, not just the daily list: the agent list, the Monday manager digest,
+the monthly horizon notice, the cross-sell list, the survey follow-ups and the
+client letters. The triggers still fire, so the next morning's run arrives in
+your inbox as previews of what would have gone out.
+
+This exists because of the morning of 16 September 2026: the daily list reached
+twenty-eight agents for the third day running while its fix sat unpasted, and
+the only ways to stop it were deleting six triggers one at a time in the editor
+or hand-typing a script property. Neither is a thing to be doing at ten past
+seven. **Deleting the `intelAgentDigest` trigger is the wrong move** — it stops
+that one and leaves the other five armed.
+
+**Mail on — clear test mode** (`intelMailOn()`) reverses it, and deliberately
+does nothing else: agents stay held until `INTEL_AGENT_LIVE` is set, and it
+says so on screen rather than leaving you to find out. Two switches, two
+deliberate acts.
+
+### Nothing reaches an agent until you say so
+
+Asked for on 15 September 2026, in these words: *"moving forward you are to ask
+my permission on any emails going out to agents and clients."*
+
+A promise made in conversation cannot bind a trigger that fires at six the next
+morning, so the permission is in the code. `iSend_` — the one path every agent
+message takes — holds the message unless `INTEL_AGENT_LIVE` reads exactly
+**`send to agents`**. Client letters already worked this way, on
+`INTEL_SURVEY_LIVE` and **`send to clients`**.
+
+**Off is not silence.** A held run goes to `INTEL_MANAGER_EMAIL`, one message
+per intended recipient, `[HELD]` in the subject and a navy banner across the
+top naming the agent it was for and how to switch it on. Twenty-eight agents
+means twenty-eight previews in one inbox — which is what would have caught
+both of the 15 September defects before either left the building.
+
+**The phrase is the point.** `yes`, `true`, `1`, `on`, `send`, `SEND TO AGENT`
+and `send to clients` are all refused. A switch that a single word can flip is
+one that gets flipped by somebody tidying a properties page.
+
+Two things it deliberately does **not** hold:
+
+- **The client's private line.** A confidential message written on a survey
+  goes straight to the manager and is never redirected, not even by test mode.
+- **Staff mail from the tracker.** `KPI.gs` sends staff their own submission
+  receipts and their midday and 3pm reminders. Those are the tracker working,
+  addressed to the person who triggered them, and they are outside this switch.
+
+`intelSelfTest()` and **Who gets whose list** both open by saying, in one line
+each, whether mail can currently reach an agent or a client.
+`tests/test-sendgate.js` holds it.
+
+### Whose list goes to whose address
+
+Ask this of the digests before you switch them on, and again after any change
+to the access list, because nothing in a sent message shows it went to the
+wrong person.
+
+Run **Branch Intelligence → Who gets whose list** (`intelAddressCheck()`). It
+prints, and sends nothing:
+
+- every agent on the access list, their address, and **how many overdue
+  policies that address would receive**
+- any two people on the list whose **surname and first initial are the same**
+- agents with **no e-mail address** (silently skipped by every digest) and
+  agents with **no agent number** (matched by name only, the weaker of the two)
+- names in the dues extract that **reach no address at all** — a book the
+  branch manager sees and the agent does not
+
+**Why the check exists.** An agent's rows are found by name, because a name is
+all the dues, pending and requirement extracts carry. The extracts spell one
+person three ways, so the last test is a loose one: same surname, same first
+initial, same person. In this branch's book that also matches **two pairs of different
+people** — four separate Contact records, one pair holding **171 and 17**
+premium-paying policies and the other **91 and 89**. The names are not written
+down here, because this repository is published; the check prints them.
+
+Until 15 September 2026 each of those four was sent the other's clients every
+morning. The access list is now the authority on who is a separate person: a
+name or an agent number belonging to somebody else on it stops the loose test
+dead, while one person's three spellings still come to them.
+
+**This depends on both names being on the access list.** Take one of a pair off
+and the other starts receiving their clients again — which is exactly what the
+check reports, so it cannot happen quietly. `tests/test-address.js` holds the
+proof, with pretend names in the same shape.
+
 ### Today
 
 `Today` is the landing screen and the answer to "ten screens is too many". It is
@@ -464,6 +961,10 @@ with the screen it points at.
 
 Nothing is hidden by role. Every screen stays one click away; only the order and
 the emphasis change.
+
+**A night that fails says so (17 September).** The ping's `built` had read 8 September for nine nights before anyone saw that the two o'clock `intelRebuild` was dying. It now records the failure — `INTEL_LAST_ERROR`, the time and the first line of why — and `intel.ping` carries it as `lastError`; a good night clears it.
+
+**Reading the switches (17 September).** `intelMailStatus()` in the editor prints the three switches in words and where held mail goes; `intel.ping` carries `mail: {test, agents, clients, holdSet}` — words only, never an address — so the state can be checked from outside without trusting memory.
 
 ## 3e. Production — the only screen about something going right
 
@@ -541,6 +1042,8 @@ rate is noise.
 
 ## 3g. The 45-day wall
 
+**17 September 2026 — the three lines, as three.** The hero is no longer the 45 line alone: with nothing filtered it shows 45–59, 60–89 and 90-and-over as three equal tiles, each with policies, clients, premium, agents, crossed-today and either the letters sent and replies or (until a letter has gone) how many are already past that line. A filter puts the single-line hero back, because a filter is about one line.
+
 `/intelligence/wall/` — **one screen**, not a slideshow, about premiums crossing
 the 45-day line. Same design system as `/board/` and the benefits wall.
 
@@ -549,8 +1052,9 @@ the 45-day line. Same design system as `/board/` and the benefits wall.
 between them — premium dues, in our possession, with the agent, the licence
 year, birthdays — in the order the film introduces them. Each holds for about
 twenty seconds; `?secs=30` makes every one hold thirty. Arrow keys step, the
-number keys jump, space holds, `F` is full screen; the rail along the bottom
-shows only while the mouse moves. The five pages are not reloaded on each turn:
+number keys jump, space holds, `F` is full screen; the controls, the stops and
+the timer are on one line across the top, always showing (see § *The chrome
+is one line across the top*). The five pages are not reloaded on each turn:
 they load once and refresh themselves every thirty minutes, so streaming costs
 the sheet no more than one standing screen did. A screen that never loads is
 struck through on the rail and skipped, and the player restarts itself once
@@ -631,6 +1135,13 @@ intelExclude("Given Surname, Given Surname")   // adds them, rebuilds the five f
 intelExcluded()                                 // who is off now
 intelExcludeClear()                             // empties the list, rebuilds
 ```
+
+**Since 17 September the list reaches every report**, not only the wall: the
+nightly dues, maturity, underwriting and production domains skip an excluded
+agent's rows at source (so the manager digest's league, the watchlists and the
+signed-in app never carry the name), and an excluded agent receives no agent
+digest. `intelExclude("Given Surname, Given Surname")` adds names and rebuilds
+the wall copies; the nightly `intelRebuild` picks the domains up.
 
 The names go into the Script Property `INTEL_EXCLUDE_AGENTS` and nowhere
 else — this repository is public. Matching is on the same normalised key used
@@ -972,10 +1483,24 @@ actually name a licence are counted: 40 of 49. The wall says so.
 
 #### What is outstanding, and whether that is normal
 
-The wall lists every open licence task longest-first — the subject line as the
-branch typed it, whose licence it is, how many days it has been open, its
-status, and **who it is sitting with**. Today all three are with the same
-head-office desk.
+The wall lists every open licence task — this month's licences first, then
+longest open — with whose licence it is and when that licence comes up, how
+many days the task has been open, **when anybody last touched it** (a lit dot
+for today, the days since otherwise), how far past its own due date it is,
+and who it is sitting with. Above the list, the branch line: how many are
+outstanding, how many were touched today, how many nobody has touched in
+thirty days. **No subject line.** Until 16 September 2026 the row carried the
+subject as the branch typed it, which the audit of the 15th flagged — a wall
+read carries no subject — so the row now carries a one-word category
+(Renewal, CPD, Application, Registration) derived from it instead. The
+subject is still read server-side, because it is the only thing that says a
+task is about a licence and whose it is.
+
+**Days are the branch's days, not UTC's.** CreatedDate and LastModifiedDate
+come back from Salesforce in UTC; the first cut took the day by slicing the
+timestamp, so a task touched after 8pm in Port of Spain was "touched today"
+all through the following day. `iLicLocalDay_` takes the day in the
+spreadsheet's own time zone.
 
 A list of open tasks is only a to-do list. What makes it an insight is the
 benchmark beside it, computed from the branch's own history:
@@ -1039,6 +1564,8 @@ the edge-tts proxy fix.
 
 
 ### Birthdays today — `intelligence/wall/book.html`
+
+**17 September 2026 — active first, and never past the fold.** The roll of agents whose clients have a birthday today is grouped: active agents first (capped at fourteen, with a "+N more"), then *not active* — inactive or vested servicers, greyed, with the status the roster gives and how many clients between them need reassigning. The feed carries `live` and `status` per agent on the roll. The "44" on the hero is Guardian's automated birthday e-mails sent that morning in the branch's name; the caption beside it says how many of those clients hold cover and how many carry a gap.
 
 Action `intel.book`. Paste the `/exec` URL into `BOOK_URL`.
 
@@ -1610,6 +2137,418 @@ picked up as the start of the relationship.
 |---|---|---|
 | `INTEL_BOOK_QUIET_YEARS` | `5` | Years since a client's last policy before they count as quiet |
 | `INTEL_BOOK_INITIALS` | `on` | `off` replaces every client's initials with a dash |
+
+### Conversions this month — `intelligence/wall/conversion.html`
+
+**17 September 2026 — who is changing age.** Each agent's row carries, under the name, every age moving on that desk this month (`agents[].moves`: `from → to`, soonest first, no client named) — the figure the conversion premium is priced on.
+
+Action `intel.conversion`. Paste the `/exec` URL into `CONV_URL`.
+
+**The only screen on the wall that reads Salesforce rather than the workbook.**
+Everything else here comes out of the Branch Portfolio tabs; the term book and
+its dates do not exist there in a usable shape, and they do exist in
+`CLIENT_PORTFOLIO__c` on 5,406 records. So this one asks Salesforce six
+aggregate questions and holds the answer for fifteen minutes.
+
+#### Only term converts, and the book proves it twice
+
+The branch manager's rule, given on 12 September 2026: **only term can be
+converted; Econolife and Liberator to 65 expire only.** The Branch Portfolio
+dues book says the same thing from the other direction — it carries a status
+called **`Converted`**, and:
+
+| Plan family | Ever written | Ever converted |
+|---|---|---|
+| **FCT** — Revised Flexi Term | 1,438 | **48** |
+| CLT65 | 15 | 1 |
+| FNT — Flexi Term, non-convertible | 78 | **0** |
+| LB / LIB — Liberator | 1,327 | **0** |
+| NLE — Newlife 2000 | 450 | **0** |
+| ECT | 1,221 | **0** |
+| LIFEV — Life Evolution Liberator | 5,859 | **0** |
+
+So `ICONV_FAMILIES` has **three** kinds, not two:
+
+| Kind | Families | What the screen does with it |
+|---|---|---|
+| `convert` | `FCT` | The hero, the day strip, the agent table, the plan chips. The only pool a conversion list may use. |
+| `expire` | `FNT` **and FNT alone** | The amber tile and the deadline panel. Term written non-convertible: the cover ends and there is nothing to exchange it for. |
+| `permanent` | `ECT`, `ECU`, `NLE`, `ECONO`, `LB`, `LIB`, `CRI`, `CR2`, `CR3`, `CR4` | Counted once, for scale, and otherwise **not this screen's business**. Nothing about them ends on a date, so they have a screen of their own — see §3i. |
+
+**Longest prefix wins** in `iConvPlan_`, or `LB` would answer for every
+Liberator code spelled `LIB`.
+
+#### The plan code is still a spelling
+
+| | |
+|---|---|
+| **F** | Flexi |
+| **C** | **Convertible** — may be exchanged for permanent cover, no medical, no chance of being declined |
+| **N** | **Non-convertible** — `FNT85 1` carries the plan name "Flexi Term To Age 85 (Non-Convertible)" verbatim |
+| **T** | Term |
+| `65` | the age the cover runs to (a small number is a term in years) |
+
+Salesforce's own `PLAN_NAME__c` confirms the rest: `FCT65 1` → "Revised Flexi
+Term to age", `FCT10 1` → "Revised Flexi Term 10 Yr", `LB75 1` → "Life
+Evolution Liberator", `NLE 1` → "Newlife 2000", `CRIEV1` → "Life Evolution
+Rejuventor".
+
+Checked against the book before any of it was believed: **every FNT85 on file
+expires between the client's 84th and 85th birthday**, and every FCT20 twenty
+years after its issue date. Two codes are mis-keyed — `FNT81` and `FNT851`,
+both plainly `FNT85 1` — so the decoder reads the leading letters and the
+screen reads the real expiry date off the record.
+
+#### Econo Life is whole life — the answer to the ECT question
+
+For a day ECT sat in neither column, because the workbook contradicted itself:
+its one readable plan name says **"Econo Life to Age 65"**, which would make it
+expire at 65, but its expiry dates land at **ninety-nine**, and 48 of the 49
+conversions went **FCT → ECT**, which is how a destination behaves.
+
+The branch settled it on 12 September 2026, and the answer explains all three
+facts at once:
+
+> **Econo Life is whole life. The premium is paid to 65 or to 85 and the life
+> cover runs for life.**
+
+So the `65` in `ECT65` is the end of the **premium**, not the end of the
+**cover**. The expiry date at ninety-nine is the contract's own maturity. And
+it is the destination of a conversion because a term converting into it is a
+term becoming permanent cover — which is the whole point.
+
+The same distinction applies to the Liberator: its premium runs to 65, 75, 85
+or 100, and none of those is an expiry either.
+
+**Mistaking a premium period for an expiry date is the single most expensive
+misreading available on this book** — it put 1,221 policies and $1.2bn of
+cover in the wrong column, and it would have sent agents to clients to warn
+them about cover that was never going to stop.
+
+#### What a conversion is actually worth
+
+Measured on this branch, not quoted from a brochure. Forty-five of the
+forty-nine `Converted` policies matched to the policy that replaced them (same
+client number, issued within a year of the term going off the books):
+
+| | |
+|---|---|
+| Annual premium given up on the term | **$130,206** |
+| Annual premium written on the replacement | **$337,847** |
+| Uplift | **+$207,640 — 2.6×** |
+| Average per conversion | **+$4,614** |
+
+Nine conversions in 2024, ten in 2025, four so far in 2026 — 23 of the 48 in
+three years. Sixteen of the 48 are the branch manager's own.
+
+#### In force, and the premium current — the two rules Salesforce cannot answer
+
+A lapsed policy **cannot be converted at all**. A policy in arrears cannot be
+converted **until somebody collects**. Neither fact is reliable in Salesforce:
+on a book checked against the dues tab on 12 September 2026 it still carried a
+converted policy, a death and a lapse as "Premium Paying", and its
+paid-to-date was behind the tab's on **60 of 73** policies.
+
+So status and arrears are read off the branch's own **dues tab** — the same
+tab the 45-day wall reads — and `iConvDues_()` puts every convertible policy
+in one of three states:
+
+| State | What the tab says | What the screen does |
+|---|---|---|
+| **ready** | in force, nothing owed | convert it |
+| **collect** | in force, `Status(2)` = Overdue | collect the premium first — a conversion behind a phone call, not a dead lead |
+| **gone** | lapsed, surrendered, dead, matured, already converted | off the list entirely |
+
+**The split matters more than the total.** On the day this was written, **335
+of the 598 premium-paying Flexi convertible policies — 56% — were flagged
+Overdue.** A single number would have sent every agent after all of them. Most
+are shallow: 198 inside a month, 95 at one to two months, 40 at two to three.
+
+Two deliberate behaviours:
+
+- **A policy the dues tab has never heard of counts as ready.** It is usually
+  business too new to be in the extract, and dropping it would hide the
+  month's freshest cases.
+- **The month's list is read row by row, not as an aggregate.** Each policy has
+  to be looked up in the tab one at a time, so the SOQL returns
+  `POLICY__c` and `DAY_IN_MONTH(Date_Of_Birth__c)` and the totals are added up
+  in Apps Script. The policy number never leaves the function — it exists only
+  to find the row. A month's birthdays on one plan family is tens of rows.
+- **With no dues tab the screen still works**, says so on its face, and calls
+  every figure an upper bound.
+
+#### The day, and the age they turn on it — and the runway that was wrong
+
+This screen carried a **runway** for a day: the month's cases bucketed by how
+long was left before the contract's own expiry. The branch's answer to it was
+the right one, and it is worth writing down because it is the sort of mistake
+that looks like rigour:
+
+> *"The term conversion wall has all the future years… you have policies in
+> force and paid 1.6 years. What is the objective? September should have the
+> clients whose birthday is this month and day so the agents can talk to them
+> about converting before."*
+
+A Flexi term to age 85 written at 33 expires in **2078**. That is not a
+deadline anybody can act on — it is arithmetic on a wall. And "in force 1.6
+years" answers no question an agent has. Both were removed.
+
+**The deadline is this month's birthday**, because the conversion is priced at
+the age the client has reached. So the screen owes an agent three things and
+nothing else:
+
+| On the screen | What it is for |
+|---|---|
+| **The day strip** | one cell per day of the month. Gold = a birthday still to come. Grey = one already gone, and this year's rate went with it. Today is ringed. |
+| **Birthday** | the day, as "the 23rd" — how somebody says it on the phone. Struck through once it has passed |
+| **Turning** | the age they reach on that day, which is the whole pitch: *"you turn 38 on the 23rd, and the price is set by the age you are when you sign"* |
+
+**And the order is the worklist, not a league table.** Agents sort by
+**soonest birthday first**, cover only breaking the tie — so the agent whose
+client turns a year older on Tuesday sits above the agent holding more cover
+in three weeks. A date already gone ranks behind every future one, *including
+within one agent's own list*: if an agent holds the 3rd and the 20th, the row
+shows the 20th.
+
+The contract's own expiry survives only as one figure in the caption, and only
+where it is inside `ICONV_SOON_Y`. Everything beyond that was the noise.
+
+`test-conversion.js` asserts the day strip, the ordering rule, and that
+`inForce` and `runway` are **gone** — so a future version cannot drift back to
+arithmetic nobody can use.
+
+## 3i. The permanent book — off the wall since 17 September 2026
+
+> **This slide is no longer in the running order.** The branch manager took it
+> off on 17 September 2026. `iPermanentWall_` and the `intel.permanent` route
+> stay — the extension rules below are the company's, and the signed-in app
+> still reads them — but `permanent.html` is deleted and the wall does not
+> show it. What follows is kept as the record of the domain.
+
+Action `intel.permanent`. Paste the `/exec` URL into `PERM_URL`.
+
+**The other half of the branch, and the larger half:** 2,130 policies,
+**$2.0bn** of cover, **$2.3m** of annual premium. Nothing on it ends on a
+date, which is exactly why it could never share a screen with the
+conversions.
+
+| Product | Codes | What it is | In force |
+|---|---|---|---|
+| **Econo Life** | `ECT`, `ECU`, `NLE`, `Econo…` | **Whole life.** Premium to 65 or 85, cover for life | 1,088 · $1.37bn · $1.5m |
+| **Liberator** | `LB`, `LIB` | Premium to 65, 75, 85 or 100 | 253 · $117m · $131k |
+| **Rejuvenator** | `CRI`, `CR2`, `CR3`, `CR4` | Critical illness | 789 · $520m · $650k |
+
+**The hero is the opportunity, not the total** — and what that opportunity is
+was corrected on 13 September 2026 by the company's own memorandum, which the
+next section sets out in full. In short: it is the Liberators whose **premium
+stops at 65** (13 policies, **$13.85m**), not the ones issued before 2010
+(17 policies, of which 15 already pay to 75, 85 or 100 and have nothing to
+extend), and the extension is bought with **an additional premium after full
+underwriting on the increase** — not "no application, no underwriting", which
+is what this screen said for a day.
+
+**And the riders, which almost nobody opens** — counted here on the presence
+of the field, which is why these numbers are a little higher than §3j's: that
+screen counts only riders with cover **greater than nought**, and 144 critical
+illness rows and 332 accidental death rows carry a coverage of zero.
+
+| Rider | Policies | Cover | Premium |
+|---|---|---|---|
+| Critical illness | 3,102 | **$1.28bn** | $1.37m |
+| Accidental death (ADDAP) | 1,320 | $263m | $36k |
+| Waiver of premium | 1,452 | — | $177k |
+| Disability income | 30 | — | $1.8k |
+
+**Every one of them ends on a date** — see §3j. This screen's own cover does
+not, which is why the two are separate screens.
+
+The critical illness rider alone carries **more cover than the entire term
+book**.
+
+### The extension, on the company's own terms
+
+**Source: memorandum of 6 March 2017, Norris Lovelace, VP Insurance Operations
+– Individual Life, "Age Extensions on Life Evolution Liberator."** Questions
+go to Dena Renwick, Manager, Customer Support. The screen cites the date so a
+room can check it.
+
+This screen used to lead on *"Liberator issued 2009 or earlier — just extend,
+no application, no underwriting."* **Both halves of that were wrong**, and the
+memorandum is what settled it.
+
+**Which policies.** The memorandum's history explains the confusion: extension
+used to be granted only to policies issued before 2009, at maturity, because
+Guardian had no option for a client to pay a premium beyond 65. Liberator Plus
+arrived in 2009 with 75, 85 and 100 — and that option was not given to the
+book already written. From **1 March 2017** it is. The operative sentence
+carries no issue-year limit, so what decides it is **whether the premium stops
+at 65**, because that is the policy that runs out of road.
+
+| Gate | Where it comes from |
+|---|---|
+| Premium paid to **65** (`LB65`, `LB65 1`, `LIB65`, `LIB 65`) | the plan code — `Maturity_Date__c` is empty on 244 of the 257 Liberators in force, so it cannot stand in |
+| Premium paying, **no more than three months in arrears** | the guidelines, applied against the dues tab's own `days` column (`IPERM_ARREARS_D = 92`) |
+| Sum assured **at least $100,000** | the company minimum; below it there is no extension to be had (`IPERM_MIN_SUM`) |
+| The **original** sum assured, no decreases | the guidelines |
+| **One** alteration with a premium change | after that it is client accumulation as the contract sets out. Salesforce carries no field for "already altered", so the screen cannot test this one — it says the rule instead |
+| **Never Rejuvenator** | extensions by premium are not facilitated on Rejuvenator at all, no extension of existing Rejuvenator cover to 80, and no Rejuvenator Plus to 70 by client accumulation |
+
+**And it is not free.** Full underwriting takes place on the **increased
+portion only**, at the client's current age, and **Guardian bears the cost of
+the underwriting**. If health has changed, the rating applies to the increase
+alone; if the policy was already rated, that rating carries over. The
+memorandum's own worked example: $200,000 to age 65 buys only $125,000 to age
+75 on the same $175 premium, so $75,000 has to be bought back for an extra
+$100 — **$275 for the cover the client already had.**
+
+**What the old filter cost.** Gating on the issue year found **17** in-force
+Liberators written before 2010, of which **11 already pay to 85, 3 to 75 and
+1 to 100** — fifteen policies with nothing to extend, presented as the one
+thing an agent could act on this week. The premium-period gate finds **13**,
+worth **$13.85m** of cover and **$7,638** of premium, across 9 agents. Two of
+those 13 were written before 2009; the other eleven were written between 2013
+and 2025, which is a question for the plan codes and not for this screen.
+
+#### Two rules, on this screen as much as the other
+
+The branch said it twice: **in force, and paid to date.** A lapsed Liberator
+cannot be extended, and one in arrears has a premium to collect before anybody
+talks about extending it. So `iConvDues_()` now splits **every** kind —
+`convert`, `expire` and `permanent` — in one pass over the dues tab, and the
+extension list is read **row by row** so each of the seventeen can be looked
+up in it. `state` returns `ready` / `collect` / `gone`, and the ones that are
+gone are named in a note rather than quietly dropped.
+
+#### Why there is no deadline panel here
+
+Nothing expires. The dates that matter are the **maturity date** where one is
+held (704 of the in-force book carries one) and the **issue date**, which is
+how long the policy has been paying — and on the Liberator the issue date *is*
+the opportunity. `Life_Coverage_Expiry__c >= TODAY` is deliberately **not** in
+this screen's filter; adding it would drop whole life off its own screen, and
+`test-permanent.js` asserts that it is absent.
+
+#### Why a month, and why the gold half
+
+Conversion is priced at **attained age**. The cheapest day to convert is the day
+before a birthday and the dearest is the day after, and the branch already works
+a birthday-month rhythm for service reviews. So the worklist is the month's
+birthdays, and the gold figure is the half whose birthday **has not happened
+yet** — counted with `DAY_IN_MONTH(Date_Of_Birth__c) >= today`. That is the only
+urgency on the wall that expires on a date everybody in the room can name.
+
+#### What is on it
+
+| Panel | What it answers |
+|---|---|
+| The hero | Cover that can be converted this month, and how much of it still has the birthday ahead |
+| Which agent, and how much cover | Every agent, their case count, their cover, and their **single biggest case** — the figure an agent recognises without being told a name |
+| The chips | The plan families, with `FCT65 1`, `FCT651` and `FCT65` collapsed onto one chip, because three typings of one product on a wall is a wall nobody trusts |
+| The deadline | Flexi cover that simply ends, by year, for the next ten |
+| The amber tile | The non-convertible book — not a worse lead, a different one |
+
+**Nothing client-level leaves.** The biggest case is a sum assured with no
+policy number and no name against it; agent names are our own people, as on
+every other wall. `MAX(Life_Coverage__c)` in the same aggregate is the whole
+reason no second, row-level query is needed.
+
+#### Four constants
+
+| In `Intelligence.gs` | Default | What it does |
+|---|---|---|
+| `ICONV_HOLD_S` | `900` | How long a Salesforce read is held — a birthday does not move |
+| `ICONV_SOON_Y` | `10` | How far ahead the Flexi deadline panel looks |
+| `ICONV_TOP` | `14` | Agents on screen |
+| `ICONV_FAMILIES` | four rows | The plan families. **The SOQL filters are generated from this table**, so the reader and the query cannot drift apart — add a family here and both halves learn it at once |
+
+## 3j. Riders on a clock — `intelligence/wall/riders.html`
+
+**17 September 2026 — where WP and ADD were.** Only 483 of 1,616 waiver riders and 517 of 1,320 accidental-death riders on premium-paying policies carry an expiry date, so two in three could never be placed on the calendar. The dated ones give the rule: 354 of 460 waivers end at the policy anniversary at attained age 59, 331 of 500 accidental-death riders at 65 (`IRID_KINDS[].age`). The undated rows with a birthday and an issue date are placed from that rule (`iRidDerived_`), counted as `derived` wherever they land — this month, the day strip, the twelve-month window, the desk — and the screen says *by age* beside each. `derived.gone` is the riders past that age still being charged, with the premium. The rule is on the feed in words. Client names never reach the wall; the Watchlist — Expiry tab in the workbook carries the client-level list.
+
+**Riders and conversions read a stored copy** since the same date, rebuilt by the five o'clock run of `intelPendingRefresh` and by `intelRebuildWall`; `intelRebuildRiders()` and `intelRebuildConversion()` do it from the editor, and `{fresh:true}` builds live and replaces the copy.
+
+Action `intel.riders`. Paste the `/exec` URL into `RID_URL`.
+
+The branch's own correction, on 12 September 2026, and it overturned a line
+that had been on two screens and in the documentation:
+
+> *"All riders have expiry, and another wall should show the expiry riders
+> this month with deep insights."*
+
+The permanent screen says its cover does not end on a date. That is true of
+the **life** cover and false of everything riding on it. Salesforce carries a
+separate expiry for each rider, and they are real dates:
+
+| Rider | Expiry field | Presence tested on |
+|---|---|---|
+| Critical illness | `Critical_Illness_Expiry__c` | `Critical_Illness_Coverage__c` |
+| Accidental death | `ADDAP_Expiry_Date__c` | `ADDAP_Coverage__c` |
+| Waiver of premium | `WP_Expiry__c` | `WP_Premium__c` |
+| Disability income | **`DI_Exipry__c`** | `DI_bENEFIT__c` |
+
+**Two of those field names are misspelled in Salesforce and both are correct
+as written.** `DI_Exipry__c` is the disability income expiry — "Exipry" — and
+`DI_bENEFIT__c` is its benefit. A tidy-up that "corrects" either one returns
+nothing and empties that column silently, so `test-riders.js` asserts them
+letter by letter.
+
+**Waiver of premium carries no sum assured**, because it pays the premium
+rather than a benefit. Its `cover` is `null` and not `0`, so it never lands in
+a cover total as a zero.
+
+### The month leads it, and the month is thin
+
+It was asked for as "the riders expiring this month", so the month leads: the
+same **day strip** the conversions screen draws — a cell per day, gold for a
+date still to come, grey and struck through for one gone, today ringed — with
+a line under it naming *which* rider ends on each day, because "something
+expires on the 24th" is not a call anybody can make.
+
+But in September 2026 exactly **one** rider expires on the whole book, and
+across the next twelve months about seven. A screen that is blank eleven
+months in twelve is a screen nobody looks at, so the month sits beside the two
+piles that are never blank:
+
+| On the screen | September 2026 | Why it is there |
+|---|---|---|
+| **Hero** — rider cover on policies that never end | **$642m** on 1,306 policies, $498k a year | The client was told the policy is for life. It is. The rider on it is not, and nobody has had that date in front of them. |
+| **Already gone, policy still paying** | **74** riders, $26.1m, $24k a year | Either the client is paying for cover that is not there, or the branch is reporting cover that is not there. Both are a phone call. |
+| **No end date recorded at all** | **3,280** of 5,924 riders in force | Nobody can ring a client about a date that was never written down. This number is the honest limit on every other figure here. |
+
+The blind spot is stated on the face of the screen rather than left out:
+**5,924 riders in force and only 2,644 carry an expiry date.** Per rider it is
+worse than it sounds — critical illness is 1,343 short of a date, the waiver
+1,133, accidental death 803.
+
+### What an agent works from it
+
+The one table that names people is **who holds the riders that have already
+expired** — 18 agents, ordered by cover, each row carrying how many, how many
+have a premium to collect first, and the year the oldest of them expired. Every
+row is tested against the branch's dues tab exactly as the conversions screen
+is: a lapsed policy comes off the list *and* out of the totals, and the branch
+is told how many came off.
+
+Beneath it, the four riders with their expiry position side by side — in force,
+with a date, already gone, cover, premium — which is the table that makes the
+argument in one look.
+
+### What is deliberately not here
+
+No client and no policy number. The row-level reads pull `POLICY__c` because
+the dues tab is keyed on it, and it never leaves the function — the same rule
+the conversion screen follows, asserted the same way.
+
+### Thirteen queries, cached a quarter of an hour
+
+One aggregate read gives every rider's in-force count, dated count, cover and
+premium at once, because `COUNT(field)` counts the rows where that field is
+set — so the gap between two counts in one query *is* the blind spot. Then per
+rider: one row-level read for what has already gone (it has to name agents),
+one for the twelve months ahead (the month is the near end of the same list),
+and one aggregate for what rides on a policy with no life expiry of its own.
+`IRID_HOLD_S` holds the answer for fifteen minutes.
+
 
 ## 3c. What the Act actually says, per wall
 
