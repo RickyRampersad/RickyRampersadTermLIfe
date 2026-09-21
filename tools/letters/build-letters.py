@@ -253,44 +253,60 @@ for seg, cfg in SEGMENTS.items():
 (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1), encoding='utf-8')
 print(f'wrote {len(manifest)} letters + manifest.json to {OUT}')
 
-# ── /templates: every letter as the client sees it, on one page ───────
-# The team's viewing page, the way /vid is for the film. Generated with the
-# letters so it can never drift from them. Who gets which letter is said in
-# words; no counts, because the page is public once merged.
+# ── /templates: the one page for the team ────────────────────────────
+# The letters are one shell with eight openings, so an agent needs to read
+# one letter in full and the eight openings — not eight letters. This page
+# is that, with the film above it and one verdict form beneath it. The
+# full set is folded away at the foot for anyone who wants it. Generated
+# with the letters so it can never drift from them; who gets which letter
+# is said in words, never as a count, because the page is public once
+# merged. Run tools/film/chapters.py afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
+CORE = 'F'
 WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose policy is paid up',
        'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
        'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
        'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed'}
-nav = ''.join(f'<a href="#{seg}"><b>{seg}</b> {html.escape(cfg["name"])}</a>' for seg, cfg in SEGMENTS.items())
-cards = ''.join(f"""
-<section class="tpl" id="{seg}">
-  <div class="head">
-    <div class="s">Letter {seg} &middot; {html.escape(cfg['name'])}</div>
-    <b>{html.escape(cfg['subject'])}</b>
-    <span>{html.escape(cfg['preheader'])}</span>
-    <i>Goes to {WHO[seg]}.</i>
-  </div>
-  <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
-</section>""" for seg, cfg in SEGMENTS.items())
+GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and may not know what it is worth',
+        'C': 'a benefit inside the policy they were probably never told about',
+        'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
+        'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
+        'H': 'nothing to do and nothing to pay'}
+openings = ''.join(f"""
+  <div class="op" id="{seg}">
+    <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
+    <div class="subj">{html.escape(cfg['subject'])}</div>
+    <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
+    <div class="ps">{''.join(f'<p>{para}</p>' for para in cfg['open'])}</div>
+  </div>""" for seg, cfg in SEGMENTS.items())
+full = ''.join(f"""
+  <details class="tpl" id="full-{seg}">
+    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(cfg['subject'])}</i></summary>
+    <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
+  </details>""" for seg, cfg in SEGMENTS.items())
+opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
 page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>The letters going out | Ricky Rampersad Branch</title>
-<meta name="description" content="Every letter the branch sends to the clients of representatives who have moved on, exactly as the client receives it.">
+<title>What goes out | Ricky Rampersad Branch</title>
+<meta name="description" content="The film, the letter, the eight openings, and one question — for the branch, before any client sees it.">
 <meta name="robots" content="noindex">
+<meta property="og:title" content="What goes out — read it before any client does">
+<meta property="og:description" content="One letter, eight openings, one film. Say send, change, or hold.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/orphan-video/poster.jpg">
 <link rel="icon" href="../logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--teal2:#0aa8bf;--tdark:#07606f;
-    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}}
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--notebg:#eafaFD;--okbg:#eef7f2;--ok:#1f6f4a;--warnbg:#fff6df;--f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}}
   *{{box-sizing:border-box}}
+  html{{scroll-behavior:smooth}}
   body{{margin:0;background:var(--paper);color:var(--body);font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}}
-  .wrap{{width:min(980px,100% - 34px);margin:0 auto}}
+  .wrap{{width:min(900px,100% - 34px);margin:0 auto}}
   header{{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}}
   header .wrap{{display:flex;align-items:center;gap:12px;padding:16px 0}}
   .mark{{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}}
@@ -299,28 +315,66 @@ page = f"""<!DOCTYPE html>
   .brand i{{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#9dbdd8;letter-spacing:.03em}}
   .hero{{background:radial-gradient(900px 520px at 88% -24%,rgba(0,207,234,.22),transparent 60%),
     radial-gradient(1100px 600px at 8% -18%,rgba(239,194,75,.15),transparent 62%),
-    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);color:#eaf4ff;padding:34px 0 36px}}
+    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);color:#eaf4ff;padding:32px 0 40px}}
   .eyebrow{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}}
   h1{{font-family:var(--f);font-weight:800;font-size:clamp(25px,4.6vw,38px);line-height:1.16;letter-spacing:-.6px;margin:10px 0 10px;color:#fff}}
   h1 em{{font-style:normal;color:var(--gold)}}
-  .lead{{color:#9dbdd8;max-width:62ch;margin:0;font-size:16.5px}}
-  .verdict{{display:inline-block;margin-top:18px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border-radius:11px;
-    padding:12px 20px;font-family:var(--f);font-weight:800;font-size:15px;text-decoration:none;box-shadow:0 16px 40px rgba(0,207,234,.28)}}
-  nav.toc{{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}}
-  nav.toc .wrap{{display:flex;flex-wrap:wrap;gap:4px 16px;padding:11px 0;font-size:13.5px}}
-  nav.toc a{{color:var(--tdark);text-decoration:none;font-weight:600}} nav.toc a b{{color:var(--ink);margin-right:3px}}
-  main{{padding:26px 0 50px}}
-  .tpl{{background:var(--card);border:1px solid var(--line);border-radius:15px;overflow:hidden;margin:0 0 22px;scroll-margin-top:60px}}
-  .tpl .head{{padding:16px 20px 14px;border-bottom:1px solid var(--line)}}
-  .tpl .s{{font-family:var(--f);font-weight:800;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark)}}
-  .tpl .head b{{display:block;font-family:var(--f);font-size:17px;color:var(--ink);margin:5px 0 3px;letter-spacing:-.2px}}
-  .tpl .head span{{display:block;color:var(--dim);font-size:14px}}
-  .tpl .head i{{display:block;font-style:normal;color:var(--body);font-size:14px;margin-top:6px}}
-  .mail{{background:var(--paper);padding:22px 12px}}
+  .lead{{color:#9dbdd8;max-width:60ch;margin:0;font-size:16.5px}}
+  .steps{{display:grid;gap:8px;margin:18px 0 0;max-width:640px}}
+  @media(min-width:640px){{.steps{{grid-template-columns:repeat(3,1fr)}}}}
+  .steps a{{display:block;background:rgba(255,255,255,.06);border:1px solid rgba(0,207,234,.3);border-radius:11px;padding:11px 13px;color:#eaf4ff;text-decoration:none;font-size:14px}}
+  .steps a b{{display:block;font-family:var(--f);color:var(--teal);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:3px}}
+  h2{{font-family:var(--f);font-weight:800;font-size:clamp(20px,3vw,26px);color:var(--ink);letter-spacing:-.4px;margin:0 0 6px}}
+  .sub{{color:var(--dim);margin:0 0 16px;font-size:15.5px}}
+  section.band{{padding:34px 0}}
+  section.band.alt{{background:var(--card);border-block:1px solid var(--line)}}
+  .vwrap{{--dp-accent:var(--gold);position:relative;margin:0;border-radius:15px;overflow:hidden;background:#000;box-shadow:0 26px 70px rgba(4,13,22,.35);aspect-ratio:16/9}}
+  .vwrap video{{width:100%;height:100%;display:block;object-fit:contain;background:#000}}
+  .vcover{{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}}
+  .vcover::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.34),rgba(4,13,22,.62))}}
+  .vcover .pl{{position:relative;z-index:2;display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,var(--teal),var(--teal2));
+    color:#fff;border-radius:13px;padding:15px 25px;font-family:var(--f);font-weight:800;font-size:18px;box-shadow:0 20px 48px rgba(0,207,234,.34)}}
+  .vcover .pl svg{{width:19px;height:19px}}
+  .vnote{{color:var(--dim);font-size:13.5px;margin:10px 0 0;text-align:center}}
+  .mail{{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 12px}}
   .mail .in{{max-width:600px;margin:0 auto}}
-  .note{{background:#fff7e3;border:1px solid #efd9a0;border-left:4px solid var(--gold2);border-radius:10px;padding:13px 16px;margin:0 0 22px;font-size:14.5px}}
-  .note b{{color:#8a6420}}
-  footer{{background:var(--navy);color:#7e97ae;padding:24px 0;font-size:13px}} footer b{{color:#eaf4ff}}
+  .fields{{background:#fff7e3;border:1px solid #efd9a0;border-left:4px solid var(--gold2);border-radius:10px;padding:11px 15px;margin:0 0 14px;font-size:14px}}
+  .fields b{{color:#8a6420}}
+  .ops{{display:grid;gap:12px}}
+  @media(min-width:720px){{.ops{{grid-template-columns:1fr 1fr}}}}
+  .op{{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:13px;padding:15px 17px;scroll-margin-top:16px}}
+  .op .k{{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}}
+  .op .k b{{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;font-family:var(--f);font-weight:900;font-size:14px}}
+  .op .k span{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark)}}
+  .op .k em{{font-style:normal;color:var(--dim);font-size:13px;flex-basis:100%}}
+  .op .subj{{font-family:var(--f);font-weight:800;font-size:15.5px;color:var(--ink);margin:8px 0 4px;letter-spacing:-.2px}}
+  .op .glad{{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}}
+  .op .ps p{{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}}
+  .op .ps p:last-child{{margin-bottom:0}}
+  form{{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 22px}}
+  label{{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:12px 0 5px}}
+  input[type=text],select,textarea{{width:100%;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}}
+  textarea{{min-height:80px;resize:vertical}}
+  input:focus,select:focus,textarea:focus{{outline:2px solid var(--teal);border-color:var(--teal)}}
+  .row2{{display:grid;gap:0 14px}} @media(min-width:640px){{.row2{{grid-template-columns:1fr 1fr}}}}
+  .verdicts{{display:grid;gap:8px}} @media(min-width:640px){{.verdicts{{grid-template-columns:repeat(3,1fr)}}}}
+  .verdicts label{{margin:0;display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14.5px;color:var(--ink)}}
+  .verdicts label:has(input:checked){{border-color:var(--teal);background:var(--notebg)}}
+  .verdicts input{{width:auto;margin:0}}
+  .check{{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:15px;color:var(--ink);text-transform:none;letter-spacing:0;font-family:Inter,system-ui,sans-serif;font-weight:500}}
+  .check input{{width:18px;height:18px;margin:0}}
+  button{{margin-top:16px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:0;border-radius:11px;padding:13px 22px;font-family:var(--f);font-weight:800;font-size:15.5px;cursor:pointer;box-shadow:0 14px 34px rgba(0,207,234,.26)}}
+  .box{{border-radius:10px;padding:13px 16px;margin:14px 0 0;border:1px solid}}
+  .box.ok{{background:var(--okbg);border-color:#c8e3d6;border-left:4px solid var(--ok)}} .box.ok b{{color:var(--ok)}}
+  .box.warn{{background:var(--warnbg);border-color:#efd9a0;border-left:4px solid var(--gold2);margin:0 0 14px}} .box.warn b{{color:#8a6420}}
+  #logged,#unwired{{display:none}}
+  details.tpl{{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 10px;overflow:hidden}}
+  details.tpl summary{{padding:13px 17px;cursor:pointer;font-size:15px;color:var(--ink)}} details.tpl summary i{{color:var(--dim);font-style:normal}}
+  details.tpl .mail{{border:0;border-top:1px solid var(--line);border-radius:0}}
+  .links{{display:grid;gap:10px;margin-top:6px}} @media(min-width:640px){{.links{{grid-template-columns:1fr 1fr}}}}
+  .links a{{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--body);font-size:14px}}
+  .links a b{{display:block;font-family:var(--f);color:var(--ink);font-size:15px;margin-bottom:3px}}
+  footer{{background:var(--navy);color:#7e97ae;padding:22px 0;font-size:13px}} footer b{{color:#eaf4ff}}
 </style>
 </head>
 <body>
@@ -331,27 +385,124 @@ page = f"""<!DOCTYPE html>
 </div></header>
 
 <div class="hero"><div class="wrap">
-  <div class="eyebrow">The letters going out &middot; as the client receives them</div>
-  <h1>One shell, eight openings. <em>Read the one for a client you know.</em></h1>
-  <p class="lead">Every client of a representative who has moved on receives one of these, chosen by what they
-    hold. Each opens with something the client is glad to hear, carries the film, says what the Insurance Act
-    gives them, and offers two doors into a review. Not one word in any of them is about who left.</p>
-  <a class="verdict" href="../orphan-transition/team-review.html#verdict">Say send, change, or hold &rarr;</a>
+  <div class="eyebrow">What goes out &middot; read it before any client does</div>
+  <h1>One letter. Eight openings. <em>One film.</em></h1>
+  <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
+    changes, with what they hold. Not one word in any of it is about who left. Watch the film, read the
+    letter, skim the eight openings, and answer one question at the foot.</p>
+  <div class="steps">
+    <a href="#film"><b>1 &middot; two minutes</b>The film</a>
+    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the eight openings</a>
+    <a href="#verdict"><b>3 &middot; one minute</b>Send, change, or hold</a>
+  </div>
 </div></div>
 
-<nav class="toc"><div class="wrap">{nav}</div></nav>
+<section class="band" id="film"><div class="wrap">
+  <h2>The film</h2>
+  <p class="sub">Under two minutes. It settles the client first, then what they already own, then the law as
+    their right, then the agent. Every figure on screen is illustrative.</p>
+  <div class="vwrap">
+    <video id="filmv" playsinline preload="metadata" poster="../orphan-video/poster.jpg">
+      <source src="../orphan-video/rrb-orphan-video.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(../orphan-video/poster.jpg)">
+      <div class="pl"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the film</div>
+    </div>
+  </div>
+  <p class="vnote">Sound on. Tap the picture to pause. The client sees it beneath the two doors at
+    <a href="../your-policy/">rickyrampersadbranch.com/your-policy</a>.</p>
+</div></section>
 
-<main><div class="wrap">
-  <div class="note"><b>The curly fields</b> &mdash; <code>{{{{first_name}}}}</code>, <code>{{{{years}}}}</code>,
-    <code>{{{{agent_first_name}}}}</code> &mdash; are filled per client at send time. Everything else is exactly
-    what lands in the inbox. The logo loads from the site, so it shows once the page is live.</div>
-  {cards}
-</div></main>
+<section class="band alt" id="letter"><div class="wrap">
+  <h2>The letter, in full</h2>
+  <p class="sub">This is letter {CORE}, the one most clients receive. Every letter carries the same film block,
+    the same note on the Act, the same two doors and the same closing. Only the opening paragraphs differ.</p>
+  <div class="fields"><b>The curly fields</b> &mdash; <code>{{{{first_name}}}}</code>, <code>{{{{years}}}}</code>,
+    <code>{{{{agent_first_name}}}}</code> &mdash; are filled per client at send time. The logo loads from the
+    site once the page is live.</div>
+  <div class="mail"><div class="in">{letter_table(CORE, SEGMENTS[CORE])}</div></div>
+</div></section>
+
+<section class="band" id="openings"><div class="wrap">
+  <h2>The eight openings</h2>
+  <p class="sub">What changes, and who gets which. Each one leads with the thing the client is glad to hear.</p>
+  <div class="ops">{openings}
+  </div>
+</div></section>
+
+<section class="band alt" id="verdict"><div class="wrap">
+  <h2>Your verdict</h2>
+  <p class="sub">One question. It lands on the branch sheet under your name, and every &ldquo;change&rdquo; and
+    &ldquo;hold&rdquo; gets an answer before the send.</p>
+  <div class="box warn" id="unwired"><b>Not recording yet.</b> The sheet is not wired to this page, so send your
+    verdict to the branch manager on WhatsApp instead until this notice disappears.</div>
+  <form id="fb" autocomplete="on">
+    <div class="row2">
+      <div><label for="n">Your name</label><input type="text" id="n" name="n" maxlength="60" required placeholder="As it appears on your licence"></div>
+      <div><label for="town">Your town, or the towns you cover</label><input type="text" id="town" name="town" maxlength="40" placeholder="Sangre Grande, Chaguanas, Penal &hellip;"></div>
+    </div>
+    <label>Verdict on the set</label>
+    <div class="verdicts">
+      <label><input type="radio" name="v" value="send" required> Send it as it is</label>
+      <label><input type="radio" name="v" value="change"> Send it, with a change</label>
+      <label><input type="radio" name="v" value="hold"> Hold it</label>
+    </div>
+    <label for="i">If one piece in particular</label>
+    <select id="i" name="i"><option value="whole">The whole set</option><option value="film">The film</option>{opts}</select>
+    <label for="c">What you would change, or why it should wait</label>
+    <textarea id="c" name="c" maxlength="600" placeholder="Quote the line if you can."></textarea>
+    <label class="check"><input type="checkbox" id="a" name="a" value="1"> I am taking assignments &mdash; match clients in my town to me</label>
+    <button type="submit">Log my verdict</button>
+    <div class="box ok" id="logged"><b>Logged, thank you.</b> <span id="loggedtxt"></span></div>
+  </form>
+</div></section>
+
+<section class="band" id="more"><div class="wrap">
+  <h2>If you want the rest</h2>
+  <p class="sub">Nothing here is required before you answer. It is where the detail lives.</p>
+  <div class="links">
+    <a href="../orphan-transition/team-review.html"><b>The team page</b>What the branch has done this year, four things to check, and how we come across on the first call.</a>
+    <a href="../orphan-transition/if-they-say.html"><b>If a client says&hellip;</b>What a client may repeat, what is simply true, and the one warm sentence that answers it.</a>
+    <a href="../your-policy/protected"><b>How the law protects you</b>The Insurance Act's protections, quoted, as the client reads them.</a>
+    <a href="../orphan-transition/"><b>The manual</b>The segments, the feedback loop, the call list and the run sheet.</a>
+  </div>
+  <h2 style="margin-top:30px">All eight letters, in full</h2>
+  <p class="sub">Folded away. Open any one to read it as the client will.</p>
+  {full}
+</div></section>
 
 <footer><div class="wrap">
-  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean &middot; the film is at
-  <a href="../vid/" style="color:#8fd8e6">rickyrampersadbranch.com/vid</a>
+  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean &middot; internal, not for clients.
 </div></footer>
+
+<script src="../orphan-video/player.js"></script>
+<script>
+/* Verdicts go to the Service Questionnaire backend, action=feedback, and land
+   on the Team Feedback tab. Until the placeholder is replaced with the
+   deployed /exec URL the page says so, instead of losing them quietly. */
+var SVC = 'RRB_SERVICE_URL';
+var wired = SVC.indexOf('http') === 0;
+if (!wired) document.getElementById('unwired').style.display = 'block';
+var form = document.getElementById('fb');
+form.addEventListener('submit', function (e) {{
+  e.preventDefault();
+  var f = new FormData(form);
+  var v = f.get('v'), i = f.get('i') || 'whole', n = (f.get('n') || '').trim();
+  if (!n || !v) return;
+  var url = SVC + '?action=feedback&n=' + encodeURIComponent(n) +
+    '&town=' + encodeURIComponent((f.get('town') || '').trim()) +
+    '&i=' + encodeURIComponent(i) + '&v=' + encodeURIComponent(v) +
+    '&c=' + encodeURIComponent((f.get('c') || '').trim()) +
+    '&a=' + (f.get('a') ? '1' : '0') + '&z=' + Date.now();
+  if (wired) {{ try {{ (new Image()).src = url; }} catch (err) {{}} }}
+  document.getElementById('loggedtxt').textContent = wired
+    ? 'Change the piece and log again if you have more to say.'
+    : 'Recorded on this screen only — send the same words to the branch manager on WhatsApp.';
+  var box = document.getElementById('logged'); box.style.display = 'block';
+  box.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+  document.getElementById('c').value = '';
+}});
+</script>
 
 <!-- rrb-views -->
 <script>
@@ -364,4 +515,4 @@ page = f"""<!DOCTYPE html>
 """
 TPL.parent.mkdir(parents=True, exist_ok=True)
 TPL.write_text(page, encoding='utf-8')
-print(f'wrote {TPL} ({len(page)} bytes) — every letter on one page')
+print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the eight openings, one verdict')

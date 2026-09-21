@@ -19,7 +19,8 @@ DHAA = ROOT / 'donthaveanagent'          # donthaveanagent.com
 BRANCH = ROOT / 'orphan-video'           # rickyrampersadbranch.com/orphan-video
 VID = ROOT / 'vid'                       # rickyrampersadbranch.com/vid — the film alone
 TEAM = ROOT / 'orphan-transition'        # the branch's own pages that embed it
-SITES = [DHAA, BRANCH, VID, TEAM]
+TPL = ROOT / 'templates'                 # the team's one page: film, letter, openings, verdict
+SITES = [DHAA, BRANCH, VID, TEAM, TPL]
 films = json.load(open(HERE / 'films.json'))
 
 # which page each MP4 was rendered from, and which site it belongs to
