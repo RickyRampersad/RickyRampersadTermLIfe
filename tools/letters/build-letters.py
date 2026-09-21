@@ -22,10 +22,13 @@ OUT = ROOT / 'orphan-transition' / 'letters'
 OUT.mkdir(parents=True, exist_ok=True)
 
 LOGO = 'https://rickyrampersadbranch.com/logo-mark.png'
-FILM = 'https://rickyrampersadbranch.com/orphan-video?t={{token}}&s={{segment}}'
+# The addresses a client sees. /your-policy/ forwards to /orphan-video/ with
+# the token and segment intact — nothing in a client's hand carries the word
+# "orphan", which is the trade's word for them and not one to hand a rival.
+FILM = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}'
 REVIEW = 'https://donthaveanagent.com/start?t={{token}}'
-ASSIGN = 'https://rickyrampersadbranch.com/orphan-video?t={{token}}&s={{segment}}#choose'
-PROTECT = 'https://rickyrampersadbranch.com/orphan-video/protected?t={{token}}&s={{segment}}'
+ASSIGN = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}#choose'
+PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}'
 
 # ── the eight openings ────────────────────────────────────────────────
 SEGMENTS = {
@@ -71,7 +74,9 @@ SEGMENTS = {
   open=['Your premium comes off your salary. Those arrangements sometimes stop quietly &mdash; a change of '
         'employer, a payroll system, a posting &mdash; and the first anybody notices is a gap. We are '
         'checking your deduction against our own records this week, so that if something has slipped we '
-        'find it rather than you. You do not need to do anything.',
+        'find it rather than you. You do not need to do anything. And if you would ever like to know exactly '
+        'what Guardian Life has recorded as paid on your policy, ask the branch for your paid-to date &mdash; '
+        'it is on your file and takes one call.',
         'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy is '
         'completely unaffected.'],
   send='The word "arrears" does not appear. Until the deduction file is reconciled, a gap is ours to '
@@ -84,7 +89,10 @@ SEGMENTS = {
   open=['Your premium is fixed on the age you were when you took this policy out &mdash; not your age now. '
         'A policy written for you {{years}} years ago is still charging {{years}}-years-ago prices, and no '
         'company can sell that price back to you. It is the part of a life policy people give away without '
-        'realising they owned it.',
+        'realising they owned it. The value inside it is not sitting idle either: after three years of '
+        'premiums, the Insurance Act entitles you to a smaller policy fully paid for life instead of cashing '
+        'it in, and the branch will put that figure in writing beside what a surrender would pay before you '
+        'decide anything.',
         'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy, and that '
         'price, are completely unaffected.'],
   send='Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the '
@@ -109,7 +117,8 @@ SEGMENTS = {
         'with nobody claiming them.',
         'We are not asking you for anything. We would just like to tell you what you have.'],
   send='A week behind the others, and it does not mention the departure at all &mdash; these clients '
-       'stopped paying years ago and it is irrelevant to them.'),
+       'stopped paying years ago and it is irrelevant to them.',
+  inforce=False),
  'H': dict(
   name='Nothing held',
   subject='Is this still the right address for you?',
@@ -119,13 +128,31 @@ SEGMENTS = {
         'everyone we have looked after, to make sure we can still reach you, and to leave you with something '
         'worth two minutes of your time.',
         'There is nothing to do and nothing to pay. If the address is wrong, a reply puts it right.'],
-  send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.'),
+  send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.',
+  inforce=False),
 }
 
 # ── the shell ─────────────────────────────────────────────────────────
 # Inline styles throughout: e-mail clients strip <style> blocks unpredictably.
 def shell(seg, cfg):
     open_ps = ''.join(f'<p style="margin:0 0 14px">{p}</p>' for p in cfg['open'])
+    # The closing says what the client keeps whatever they do. A lapsed or empty
+    # file (G, H) gets the short form: there is no in-force contract to describe.
+    if cfg.get('inforce', True):
+        closing = '''
+  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Your policy is a contract between you
+    and Guardian Life of the Caribbean: its cover, its premium and the beneficiary you named are written into it,
+    and none of them depends on any person. Anything you ever want done on it &mdash; a change of beneficiary, a
+    claim, a question about a premium &mdash; is done through Guardian Life, and the branch does it with you.</p>
+  <p style="margin:0 0 14px">Until you choose, your policy is looked after by this branch under my name; from the
+    moment you ask, you have an agent of your own, by name and with a direct number, within two working days. The
+    birthday note, the premium reminder before a due date, and a person who answers when you call all carry on
+    exactly as they have. We will ask again rather than assume.</p>'''
+    else:
+        closing = '''
+  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Nothing about how the branch looks
+    after you changes: the birthday note, the premium reminder before a due date, and a person who answers when
+    you call, all carry on exactly as they have. We will ask again rather than assume.</p>'''
     film_block = f'''
 <a href="{FILM}" style="display:block;text-decoration:none;border-radius:10px;overflow:hidden;
    background:#0a2330;border:1px solid #17384a;margin:0 0 16px">
@@ -142,9 +169,15 @@ def shell(seg, cfg):
   <b style="display:block;color:#12202e;margin-bottom:4px;font-size:13px">One thing worth knowing</b>
   A life policy cannot be transferred. No agent, no broker and no other company can move it for you &mdash; if
   anyone suggests you move, what is being proposed is that you end this one and buy a new one, priced at your
-  age now. Under the Insurance Act, whoever suggests it must discuss the advantages <i>and</i> the disadvantages
-  with you first &mdash; so ask for it in writing.
-  <a href="{PROTECT}" style="display:block;margin-top:7px;color:#07606f;font-weight:700;text-decoration:none">How the law protects you, in plain words &rarr;</a>
+  age now and underwritten on your health today. Anything a doctor has told you since this one began is priced,
+  excluded or declined afresh; the policy you hold is already issued, and nothing about your health now can
+  touch it.
+  <span style="display:block;margin-top:8px">Under the Insurance Act, whoever suggests it &mdash; agent, broker or company &mdash; must discuss the
+  advantages <i>and</i> the disadvantages with you first. So ask for it in writing, with both policies side by
+  side: same sum assured, same term, same benefits, priced at the age you are now. And whatever you ever
+  decide, keep this policy in force until any new one has actually been issued and is in your hands &mdash; a
+  new application can take weeks, and it costs nothing to wait.</span>
+  <a href="{PROTECT}" style="display:block;margin-top:8px;color:#07606f;font-weight:700;text-decoration:none">How the law protects you, in plain words &rarr;</a>
 </td></tr></table>'''
     doors_block = f'''
 <p style="margin:0 0 12px">Then, whenever suits you, there is a short review of what you hold. <b>It is the same
@@ -161,7 +194,7 @@ def shell(seg, cfg):
   <a href="{ASSIGN}" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:13px 16px">
     <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Or do it together</div>
     <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:5px 0 3px">Have an agent go through it with me &rarr;</div>
-    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">Same review, same questions, only somebody walks you through it &mdash; in person or on the phone, whichever you prefer.</div>
+    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">Same review, same questions, only somebody walks you through it &mdash; in person or on the phone, whichever you prefer. If there is a particular agent at this branch you would like, tell us the name in a reply to this letter, and that is who you will have.</div>
   </a>
 </td></tr></table>'''
     return f'''<!DOCTYPE html>
@@ -189,9 +222,7 @@ def shell(seg, cfg):
   {film_block}
   {law_block}
   {doors_block}
-  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Nothing about how the branch looks
-    after you changes: the birthday note, the premium reminder before a due date, and a person who answers when
-    you call, all carry on exactly as they have. We will ask again rather than assume.</p>
+  {closing}
   <p style="margin:18px 0 0;font:400 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>

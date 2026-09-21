@@ -435,7 +435,10 @@ Service — until it is set, everything routes to the branch alone and says so),
 
 **Sheet tabs used as the datastore:** Service Questionnaires, Group Service
 Questionnaires, Agent Skill Bank, Link Activity, Callback Requests, Service
-Activity.
+Activity — plus two that create themselves on first write: **Client Responses**
+(a client's one-click answer to a transition letter, `action=resp`) and
+**Team Feedback** (an agent's verdict on a letter or the film from the team
+review page, `action=feedback`).
 
 ### The campaign is the wall's first two slides
 
@@ -480,6 +483,46 @@ about 1302. Anything added to page 1 has to be measured. Extra questions go on
 the addendum page, inside the same document.
 
 ---
+
+## The transition campaign — when agents leave
+
+Built in September 2026 for nine books whose agents resigned together. The
+manual is `orphan-transition/index.html`; the client-facing pieces are
+`orphan-video/` (the film and the two doors) and `orphan-video/protected.html`
+(the Insurance Act's policyholder protections, quoted and explained). **The
+letters link to `/your-policy/` and `/your-policy/protected`**, two stubs that
+forward to those pages with the query string intact — "orphan" is the trade's
+word for these clients and must not appear in an address a client holds.
+
+- **Nothing names or characterises anyone who left.** "Your representative
+  has moved on from Guardian Life" is the whole reference — in every letter,
+  page, film line and script. No reason, no tone, and no warning that someone
+  may approach the client: ask whether someone has, never say who might.
+- **Segment counts, client names and per-book figures stay outside the
+  repository.** The segment file, merge file, send list, deep-dive report and
+  household list are built in the session scratchpad from the Branch
+  Portfolio sheet. Branch-wide activity counts (birthday notes, reminders) are
+  fine on an internal page; per-book client counts are not.
+- **Every Act quotation on `protected.html` was checked against the source
+  text** (`act2018.dec.txt`, decoded from the published PDF — lowercase, no
+  spaces, digits garbled). **No section numbers anywhere**: the PDF's font does
+  not yield them reliably, and an invented one is worse than none. Compliance
+  supplies them if they are ever wanted.
+- The Act binds "an agent, agency, broker, brokerage or a sales
+  representative" in one sentence. Wherever the material says what an agent
+  may not do, say broker too — that is where departing agents go.
+- **The letters are generated** by `tools/letters/build-letters.py`. Edit the
+  generator, never a letter: one shell, eight openings, and `{{token}}` and
+  `{{segment}}` travel with every click so responses read by segment.
+- **The pages hold the placeholder `RRB_SERVICE_URL`** until the Apps Script
+  is redeployed (Manage deployments → New version) and the `/exec` URL is
+  pasted in. The team review page shows an amber notice while it is
+  unresolved, because verdicts vanishing silently is the failure mode.
+- **The team sees it first.** `orphan-transition/team-review.html` before any
+  letter reaches a client; then the roster of receiving agents by town, from
+  the ticks on the Team Feedback tab.
+- Never send the branch a link to any of this before the branch is merged to
+  `main`. A 404 in the WhatsApp group has happened once already.
 
 ## Standing rules
 
