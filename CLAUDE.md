@@ -616,6 +616,21 @@ voice under the new timing and the caption gives it away.
   Both stop the moment Status reads anything other than `Open`; the level
   already sent is recorded in that row's own Note cell, appended rather
   than overwritten, so a human note there survives.
+- **The chase only ever acts on a token this campaign's own Transition Send
+  tab recognises.** Client Responses has recorded taps from the site's
+  original doors since before this campaign — months of rows that still
+  read `Open` because nothing before 22 September ever looked at that
+  column again. The first version of `tChase_` did not know the
+  difference, tried to chase all of it in one run — up to three per-row
+  full re-reads of the Transition Send tab, times however many rows had
+  piled up — and timed out at Apps Script's six-minute ceiling with an
+  unknown number of internal nudges and client "still on it" notes already
+  sent to people who had nothing to do with this campaign. Fixed the same
+  day: the token map is read once per run (`tTokenMap_`), any row whose
+  token is not on it is passed over in silence, and `CHASE_MAX_PER_RUN`
+  bounds how much a single run will act on regardless, logging what was
+  deferred. Never widen the chase back to "every `Open` row" — that is the
+  exact bug.
 - **What comes back is watched on `orphan-transition/responses.html`**
   (opens with the branch code, like the wall; `action=transition`) and in
   the digest from `transitionDigest`, which fires as many times a day as
