@@ -1573,10 +1573,15 @@ var RESPONSES = {
   review:    { needs: 'a policy summary, then an agent',      status: 'Open' },
   question:  { needs: 'a reply the same day',                 status: 'Open' },
   informed:  { needs: 'nothing — ask again in six months',    status: 'Logged' },
-  /* the three taps on a premium letter */
+  /* the taps at the foot of every letter */
   paid:      { needs: 'a receipt check against the file, then a confirmation', status: 'Open' },
   pay:       { needs: 'a call to set up direct payment to Guardian Life',      status: 'Open' },
   callme:    { needs: 'a call today or tomorrow, at the time they choose',      status: 'Open' },
+  urgent:    { needs: 'the review read, then a named agent within one working day', status: 'Open' },
+  claim:     { needs: 'the maturity claim form brought and walked through',    status: 'Open' },
+  deliver:   { needs: 'the contract delivered by hand, acknowledgement signed', status: 'Open' },
+  finish:    { needs: 'the outstanding requirement brought to them',           status: 'Open' },
+  stop:      { needs: 'the file closed properly, nothing owed confirmed',      status: 'Open' },
 };
 
 /** One click from a client. Fire-and-forget: it answers ok whatever happens,
@@ -1612,7 +1617,7 @@ function teamSheet_() {
 }
 
 /** What the team can look at, and the three things they can say about it. */
-var FEEDBACK_ITEMS = { A: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1, I1: 1, I2: 1, I3: 1, J: 1, K: 1,
+var FEEDBACK_ITEMS = { A: 1, A2: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1, I1: 1, I2: 1, I3: 1, J: 1, K: 1,
                        film: 1, page: 1, protected: 1, script: 1, whole: 1 };
 var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
 

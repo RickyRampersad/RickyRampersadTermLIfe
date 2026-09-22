@@ -206,8 +206,8 @@
         <td>117 seconds. What carries on without an agent, what you give up, what is inside the policy,
         what the Act entitles you to, and why a qualified agent is worth having</td></tr>
     <tr><td><b>The one page for the team</b></td><td><code>rickyrampersadbranch.com/templates</code></td>
-        <td>The film, letter F in full, the eight openings with who gets which in words, and one verdict form
-        &mdash; a six-minute read. All eight letters are folded away at the foot. Generated with the letters by
+        <td>The film, letter F in full, every opening with who gets which in words, and one verdict form
+        &mdash; a six-minute read. All the letters are folded away at the foot. Generated with the letters by
         <code>build-letters.py</code>, so it cannot drift from them. This is the one address in the WhatsApp</td></tr>
     <tr><td><b>The film alone</b></td><td><code>rickyrampersadbranch.com/vid</code></td>
         <td>The film with nothing else on the page but two links beneath it &mdash; the address to put in a
@@ -226,7 +226,9 @@
   </table>
   <p class="fine">Rebuilding the film: <code>tools/film/orphan-lines.json</code> is the script,
     <code>orphan-timing.json</code> the timings, <code>build-orphanfilm.py</code> assembles it. Rebuilding
-    the letters: <code>tools/letters/build-letters.py</code>.</p>
+    the letters: the words are in <code>tools/letters/openings.json</code>, the shell in
+    <code>build-letters.py</code>, and one run writes the letters, the templates page, and the letter cards
+    and merge-field table on this page and the team page.</p>
 </div></section>
 
 <section class="band" id="segments"><div class="wrap">
@@ -237,6 +239,9 @@
     <tr><td><b>0</b></td><td><span class="pill bad">suppress</span> a Death claim is on file</td>
         <td>Claims first. No campaign mail of any kind</td><td>Never, until claims confirm</td></tr>
     <tr><td><b>A</b></td><td>A policy has matured</td><td>Money is waiting to be claimed</td><td>First</td></tr>
+    <tr class="hl"><td><b>A2</b></td><td>A maturity within six months</td>
+        <td>The money should reach them on time, and what comes next is planned before the date
+        <span class="pill">from policy admin</span></td><td>Six months ahead of the date</td></tr>
     <tr><td><b>B</b></td><td>Paid up</td><td>They finished paying and may not know what they own</td><td>First</td></tr>
     <tr class="hl"><td><b>C</b></td><td>Carrying waiver of premium</td>
         <td>A benefit inside the policy that pays the premiums if they cannot work</td><td>Second</td></tr>
@@ -247,17 +252,17 @@
     <tr><td><b>G</b></td><td>Lapsed</td><td>Reactivation &mdash; a policy that stopped may still hold value</td>
         <td>A week later. No mention of the departure</td></tr>
     <tr><td><b>H</b></td><td>Nothing held</td><td>Lightest touch: is this still your address?</td><td>Last</td></tr>
-    <tr class="hl"><td><b>I1</b></td><td>One premium due, 61 to 90 days</td>
-        <td>Nothing is lost; a payment to a representative counts as paid; three one-tap answers
-        <span class="pill bad">never a figure</span></td>
+    <tr class="hl"><td><b>I1</b></td><td>One premium due: 61 to 90 on the <b>Days</b> column</td>
+        <td>Nothing is lost; a payment to a representative counts as paid; the paid-to date and the days
+        outstanding printed in the letter <span class="pill bad">never a figure</span></td>
         <td>After the paid-to check; direct bill first</td></tr>
-    <tr class="hl"><td><b>I2</b></td><td>More than one premium due, 91 to 180 days</td>
-        <td>Still in force; the value it has built may be carrying it (the Act's non-forfeiture rule); decide
-        now while every option is open</td>
+    <tr class="hl"><td><b>I2</b></td><td>More than one premium due: 91 to 180 on the <b>Days</b> column</td>
+        <td>Still in force; the value it has built may be carrying it (the Act's non-forfeiture rule); the
+        projected lapse date printed; decide now while every option is open</td>
         <td>After the paid-to check</td></tr>
-    <tr class="hl"><td><b>I3</b></td><td>Unpaid over 180 days</td>
+    <tr class="hl"><td><b>I3</b></td><td>Unpaid: over 180 on the <b>Days</b> column</td>
         <td>Nothing can be forfeited without written notice and twenty business days; a paid-up policy after
-        three years; the receiving agent calls within two days</td>
+        three years; the projected lapse date printed; the receiving agent calls within two days</td>
         <td>After the paid-to check; the agent calls within two days</td></tr>
     <tr class="hl"><td><b>J</b></td><td>Contract ready, not delivered</td>
         <td>The policy is in force; the branch brings the contract and goes through it</td>
@@ -269,33 +274,47 @@
   <div class="box note">
     <h3>The rule for the waterfall</h3>
     <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet
-    delivered (J), a premium due (I1, I2 or I3 by how long, from the paid-to date). Then the waterfall: Death flag &rarr; matured &rarr;
-    paid up &rarr; waiver of premium &rarr; payroll &rarr; ten years &rarr; in force &rarr; lapsed &rarr; nothing.
-    A client gets one letter. The segment file is built outside the repository from the Branch Portfolio sheet
-    (paid-to dates and statuses), the contracts-given-to-agent list and the pending list, with the
-    waiver-of-premium flag joined in from Salesforce on the policy number. Counts and names never come into
-    this repository.</p>
+    delivered (J), a premium due (I1, I2 or I3 by the <b>Days</b> column). Then the waterfall: Death flag &rarr;
+    matured &rarr; maturing within six months &rarr; paid up &rarr; waiver of premium &rarr; payroll &rarr; ten
+    years &rarr; in force &rarr; lapsed &rarr; nothing. A client gets one letter. The segment file is built
+    outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse
+    Date, Issue Date, App Received Date, Billing type), the contracts-given-to-agent list and the pending
+    list, with the waiver-of-premium flag joined in from Salesforce on the policy number and the maturity
+    date from policy admin. Counts and names never come into this repository.</p>
   </div>
 </div></section>
 
 <section class="band alt" id="letters"><div class="wrap">
-  <h2>The eight letters</h2>
-  <p class="sub">One shell, eight openings. Every letter carries the film, the Act note, both doors and the
-    same sign-off. Click any one to see it as the client will.</p>
+  <h2>The letters</h2>
+  <p class="sub">One shell, one opening per situation. Every letter is a headline, one paragraph, the facts
+    read off the sheet for that client, the taps they answer with one thumb, the film in one line, how the
+    branch has looked after them, and the sign-off. Click any one to see it as the client will.</p>
   <div class="letters">
-    <a class="letter" href="letters/A.html"><div class="s">Segment A &middot; A policy has matured</div><b>A policy of yours has matured — there is money to claim</b><span>Only a handful of this group have an e-mail. The rest is a phone call, and it is the one call nobody resents.</span></a>
-    <a class="letter" href="letters/B.html"><div class="s">Segment B &middot; Paid up</div><b>You have finished paying for this one</b><span>Nearly all of this group have e-mail.</span></a>
-    <a class="letter" href="letters/C.html"><div class="s">Segment C &middot; Carrying waiver of premium</div><b>There is a benefit inside your policy you may not know about</b><span>The strongest letter in the set. Send it second, after A and B have warmed the domain.</span></a>
-    <a class="letter" href="letters/D.html"><div class="s">Segment D &middot; Collected off a payroll</div><b>Your policy, and a check we are running on your salary deduction</b><span>The word &quot;arrears&quot; does not appear. Until the deduction file is reconciled, a gap is ours to chase, not theirs to explain.</span></a>
-    <a class="letter" href="letters/E.html"><div class="s">Segment E &middot; Held ten years or more</div><b>You have held this cover for {{years}} years</b><span>Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the argument is strongest here.</span></a>
-    <a class="letter" href="letters/F.html"><div class="s">Segment F &middot; In force</div><b>A quick summary of your Guardian Life cover — and two ways to pick this up</b><span>The core letter. The largest group and the best reach.</span></a>
-    <a class="letter" href="letters/G.html"><div class="s">Segment G &middot; Lapsed</div><b>A policy you may have written off — let us tell you what it is worth</b><span>A week behind the others, and it does not mention the departure at all &amp;mdash; these clients stopped paying years ago and it is irrelevant to them.</span></a>
-    <a class="letter" href="letters/H.html"><div class="s">Segment H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.</span></a>
-    <a class="letter" href="letters/I1.html"><div class="s">Segment I1 &middot; One premium due, 61 to 90 days</div><b>One premium on your policy is showing as due &mdash; one tap tells us which of three things is true</b><span>Nothing is lost. A payment to a representative counts as paid. Three one-tap answers. Never a figure.</span></a>
-    <a class="letter" href="letters/I2.html"><div class="s">Segment I2 &middot; More than one premium due, 91 to 180 days</div><b>Your policy is still in force &mdash; and more than one premium is showing as due</b><span>The Act's non-forfeiture rule, in its own words: the value the policy has built may be carrying it. Decide now.</span></a>
-    <a class="letter" href="letters/I3.html"><div class="s">Segment I3 &middot; Unpaid over 180 days</div><b>Your policy needs a decision from you &mdash; and the law gives you time and three ways to make it</b><span>Written notice and twenty business days before anything is forfeited; a paid-up policy after three years.</span></a>
-    <a class="letter" href="letters/J.html"><div class="s">Segment J &middot; Contract ready, not delivered</div><b>Your policy is in force &mdash; and your contract is ready to be delivered</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent, with the acknowledgement.</span></a>
-    <a class="letter" href="letters/K.html"><div class="s">Segment K &middot; Application still in progress</div><b>Your application with Guardian Life &mdash; where it stands, and who is finishing it</b><span>From the pending list. Every file is read before the call; the agent brings the outstanding requirement.</span></a>
+  <!-- letters:start -->
+    <a class="letter" href="letters/A.html"><div class="s">A &middot; A policy has matured</div><b>A policy of yours has matured. The money is waiting.</b><span>Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents.</span></a>
+    <a class="letter" href="letters/A2.html"><div class="s">A2 &middot; A maturity coming up</div><b>A policy of yours matures on {{maturity_date}}</b><span>Six months ahead of the date. The maturity date is not on the portfolio sheet; it comes from the intelligence sheet or policy admin.</span></a>
+    <a class="letter" href="letters/B.html"><div class="s">B &middot; Paid up</div><b>You have finished paying for this one</b><span>Nearly all of this group have e-mail.</span></a>
+    <a class="letter" href="letters/C.html"><div class="s">C &middot; Carrying waiver of premium</div><b>A benefit inside your policy you may not know about</b><span>The strongest letter in the set. Send it second, after A and B have warmed the domain.</span></a>
+    <a class="letter" href="letters/D.html"><div class="s">D &middot; Collected off a payroll</div><b>We are checking your salary deduction, so you need not</b><span>The word &quot;arrears&quot; does not appear. Until the deduction file is reconciled, a gap is ours to chase.</span></a>
+    <a class="letter" href="letters/E.html"><div class="s">E &middot; Held ten years or more</div><b>{{years}} years at a price nobody can sell you again</b><span>Only a third of this group have e-mail. The rest is a phone call; the argument is strongest here.</span></a>
+    <a class="letter" href="letters/F.html"><div class="s">F &middot; In force</div><b>Your policy is unchanged. One tap tells us what you would like next.</b><span>The core letter. The largest group and the best reach.</span></a>
+    <a class="letter" href="letters/G.html"><div class="s">G &middot; Lapsed</div><b>A policy you may have written off could still be worth something</b><span>A week behind the others. It does not mention the departure at all.</span></a>
+    <a class="letter" href="letters/H.html"><div class="s">H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. Last to go.</span></a>
+    <a class="letter" href="letters/I1.html"><div class="s">I1 &middot; One premium showing as due</div><b>One premium is showing as due. One tap puts it right.</b><span>Sixty-one to ninety days on the Days column, after the paid-to date is checked against cash and the deduction file.</span></a>
+    <a class="letter" href="letters/I2.html"><div class="s">I2 &middot; More than one premium showing as due</div><b>Your policy is still in force. Let us keep it that way.</b><span>Ninety-one to one hundred and eighty days on the Days column. The paid-to date checked first.</span></a>
+    <a class="letter" href="letters/I3.html"><div class="s">I3 &middot; A decision the policy needs</div><b>Your policy needs a decision, and the law gives you time</b><span>Over one hundred and eighty days on the Days column. Checked against cash first. The receiving agent calls within two days.</span></a>
+    <a class="letter" href="letters/J.html"><div class="s">J &middot; Contract ready, not yet delivered</div><b>Your contract is ready. We will bring it to you.</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent.</span></a>
+    <a class="letter" href="letters/K.html"><div class="s">K &middot; An application still in progress</div><b>Your application: where it stands, and who is finishing it</b><span>From the pending list. Every file is read before the call.</span></a>
+  <!-- letters:end -->
+  </div>
+  <div class="box note">
+    <h3>The taps</h3>
+    <p style="margin:0">Every letter ends in taps, and every letter carries the door into the questionnaire:
+    <b>&ldquo;I want an agent now. Let me tell you my concerns first&rdquo;</b>. That tap is logged and then
+    carried straight into the review, so the client states what has gone wrong before anyone is named and the
+    branch reads it before it assigns. Assigning is the easy part; understanding the client is the point.
+    The other taps are chosen per situation: help me claim it, bring me my contract, finish my application, I
+    have already paid, set me up to pay Guardian Life directly, tell me what I hold in writing, call me.</p>
   </div>
   <div class="box stop">
     <h3>Four things no letter does</h3>
@@ -308,14 +327,27 @@
       <li><b>Mentions money owed.</b> No arrears figure until cash and the deduction file are reconciled.</li>
     </ul>
   </div>
-  <h3>Merge fields</h3>
+  <h3>Merge fields &mdash; what a letter reads off the sheet</h3>
+  <p class="fine">Filled per client at send time from the Branch Portfolio sheet, by column. Days and dates
+    only; never a money figure. A blank field drops its fact from the letter's strip rather than printing
+    an empty cell. The merge file is built outside the repository.</p>
   <table class="t">
-    <tr><th>Field</th><th>Source</th><th>Note</th></tr>
-    <tr><td><code>{{first_name}}</code></td><td>Branch Portfolio sheet</td><td>First word of the client name</td></tr>
-    <tr><td><code>{{agent_first_name}}</code></td><td>Branch Portfolio sheet</td><td>The agent who left. First name only</td></tr>
-    <tr><td><code>{{years}}</code></td><td>Oldest in-force issue date</td><td>Whole years</td></tr>
-    <tr><td><code>{{token}}</code></td><td>Generated per send</td><td>Opaque. Resolved against the send list, which stays outside the repository. <b>Never a policy number</b></td></tr>
-    <tr><td><code>{{segment}}</code></td><td>The waterfall</td><td>One letter, A&ndash;H. Travels with every click so responses can be read by segment</td></tr>
+    <tr><th>Field</th><th>Read from</th></tr>
+  <!-- fields:start -->
+    <tr><td><code>{{first_name}}</code></td><td>Client — first name only</td></tr>
+    <tr><td><code>{{agent_first_name}}</code></td><td>Agent — first name only</td></tr>
+    <tr><td><code>{{first_year}}</code></td><td>Issue Date — the year</td></tr>
+    <tr><td><code>{{years}}</code></td><td>Issue Date — whole years held</td></tr>
+    <tr><td><code>{{issue_date}}</code></td><td>Issue Date</td></tr>
+    <tr><td><code>{{paid_to}}</code></td><td>Paid To Date</td></tr>
+    <tr><td><code>{{days}}</code></td><td>Days — days outstanding</td></tr>
+    <tr><td><code>{{projected_lapse}}</code></td><td>Projected Lapse Date</td></tr>
+    <tr><td><code>{{app_received}}</code></td><td>App Received Date</td></tr>
+    <tr><td><code>{{matured_on}}</code></td><td>policy admin — not on the portfolio sheet</td></tr>
+    <tr><td><code>{{maturity_date}}</code></td><td>the intelligence sheet or policy admin — not on the portfolio sheet</td></tr>
+    <tr><td><code>{{token}}</code></td><td>the send list — opaque, never a policy number</td></tr>
+    <tr><td><code>{{segment}}</code></td><td>the send list — the letter&#x27;s own key</td></tr>
+  <!-- fields:end -->
   </table>
 </div></section>
 
@@ -325,7 +357,7 @@
     and say so on the record.</p>
   <p><a href="team-review.html">Open the team review page &rarr;</a></p>
   <div class="cols three">
-    <div class="cd"><h3>What they see</h3><p>The eight letters, the film, the client page, the protections
+    <div class="cd"><h3>What they see</h3><p>Every letter, the film, the client page, the protections
       page and the call script &mdash; plus what the branch has actually done this year, from the activity
       log, so the record is in front of them before a client asks.</p></div>
     <div class="cd"><h3>What they say</h3><p>One verdict per item: send as it is, send with a change, or
@@ -347,11 +379,16 @@
     knows we asked and did nothing.</p>
   <div class="flow">
     <div class="step"><div class="n">Step 1</div><b>The client clicks</b>
-      <p>One of five: <code>selfserve</code>, <code>assign</code>, <code>review</code>,
-      <code>question</code>, <code>informed</code>. The token and segment travel with it.</p><span class="who">Client</span></div>
+      <p>One tap at the foot of the letter &mdash; <code>urgent</code>, <code>review</code>,
+      <code>callme</code>, <code>claim</code>, <code>deliver</code>, <code>finish</code>, <code>paid</code>,
+      <code>pay</code>, <code>stop</code>, <code>informed</code>, <code>question</code> &mdash; or one of the
+      page's own doors, <code>selfserve</code> and <code>assign</code>. The token and segment travel with
+      it.</p><span class="who">Client</span></div>
     <div class="step"><div class="n">Step 2</div><b>It lands on the sheet</b>
-      <p>The <b>Client Responses</b> tab of the Service Questionnaires spreadsheet. Two of the five open a
-      task; three only log.</p><span class="who">Apps Script</span></div>
+      <p>The <b>Client Responses</b> tab of the Service Questionnaires spreadsheet. Every tap opens a task
+      except <code>selfserve</code> and <code>informed</code>, which only log. An <code>urgent</code> tap is
+      logged and then carried into the questionnaire, so the review arrives on its own tab
+      too.</p><span class="who">Apps Script</span></div>
     <div class="step"><div class="n">Step 3</div><b>The branch assigns</b>
       <p>Town first, then what they hold. Everyone at one address goes to one agent. Name and date go in
       the row.</p><span class="who">Branch</span></div>
@@ -362,12 +399,17 @@
   </div>
   <table class="t">
     <tr><th>Click</th><th>Opens a task?</th><th>What the branch owes</th></tr>
+    <tr><td><code>urgent</code></td><td><span class="pill bad">yes</span></td><td>The review read first, then a named agent by the next working day. The client asked for it urgently and said why; the brief carries what they said</td></tr>
     <tr><td><code>assign</code></td><td><span class="pill bad">yes</span></td><td>A named agent within two working days</td></tr>
-    <tr><td><code>review</code></td><td><span class="pill bad">yes</span></td><td>A policy summary, then an agent</td></tr>
+    <tr><td><code>review</code></td><td><span class="pill bad">yes</span></td><td>A one-page summary of what they hold, in writing, then a person if they want one</td></tr>
+    <tr><td><code>callme</code></td><td><span class="pill bad">yes</span></td><td>A call today or tomorrow, at the time they choose</td></tr>
+    <tr><td><code>claim</code></td><td><span class="pill bad">yes</span></td><td>The maturity claim form brought to them and walked through</td></tr>
+    <tr><td><code>deliver</code></td><td><span class="pill bad">yes</span></td><td>The contract delivered by hand, the acknowledgement signed</td></tr>
+    <tr><td><code>finish</code></td><td><span class="pill bad">yes</span></td><td>The outstanding requirement brought to them, never a list of them</td></tr>
+    <tr><td><code>paid</code></td><td><span class="pill bad">yes</span></td><td>A receipt check against the file, then a confirmation within two working days</td></tr>
+    <tr><td><code>pay</code></td><td><span class="pill bad">yes</span></td><td>A call to set up direct payment to Guardian Life</td></tr>
+    <tr><td><code>stop</code></td><td><span class="pill bad">yes</span></td><td>The file closed properly, and a confirmation that nothing is owed</td></tr>
     <tr><td><code>question</code></td><td><span class="pill bad">yes</span></td><td>A reply the same day</td></tr>
-    <tr><td><code>paid</code></td><td><span class="pill bad">yes</span></td><td>A receipt check against the file, then a confirmation &mdash; from a premium letter</td></tr>
-    <tr><td><code>pay</code></td><td><span class="pill bad">yes</span></td><td>A call to set up direct payment to Guardian Life &mdash; from a premium letter</td></tr>
-    <tr><td><code>callme</code></td><td><span class="pill bad">yes</span></td><td>A call today or tomorrow, at the time they choose &mdash; from a premium letter</td></tr>
     <tr><td><code>selfserve</code></td><td>no</td><td>Nothing yet &mdash; the review arrives on its own tab when they finish it</td></tr>
     <tr><td><code>informed</code></td><td>no</td><td>Nothing. Ask again in six months</td></tr>
   </table>
