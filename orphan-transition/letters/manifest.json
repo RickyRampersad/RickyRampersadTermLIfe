@@ -62,5 +62,29 @@
   "preheader": "A short note from the branch that looked after you.",
   "file": "H.html",
   "send_note": "Lightest touch. No claim about anything they hold, because they hold nothing. Last to go."
+ },
+ {
+  "segment": "I",
+  "name": "A premium due for more than sixty days",
+  "subject": "A premium on your policy is showing as due \u2014 and the simplest way to pay Guardian Life directly",
+  "preheader": "If you have already paid, tell us and we will put the record right. If not, nothing has been lost yet.",
+  "file": "I.html",
+  "send_note": "Goes only after the paid-to date is checked against cash and the deduction file. It never states a figure. Direct-bill clients first."
+ },
+ {
+  "segment": "J",
+  "name": "Contract ready, not yet delivered",
+  "subject": "Your policy is in force \u2014 and your contract is ready to be delivered",
+  "preheader": "The document itself has not reached you yet. We will bring it.",
+  "file": "J.html",
+  "send_note": "Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving agent, with the acknowledgement letter."
+ },
+ {
+  "segment": "K",
+  "name": "An application still in progress",
+  "subject": "Your application with Guardian Life \u2014 where it stands, and who is finishing it",
+  "preheader": "It has not been forgotten. Here is what is outstanding and who is completing it.",
+  "file": "K.html",
+  "send_note": "Built from the pending list. Every file is read before the call; the agent brings the outstanding requirement, never a list of them."
  }
 ]

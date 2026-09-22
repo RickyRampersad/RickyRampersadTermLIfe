@@ -130,6 +130,51 @@ SEGMENTS = {
         'There is nothing to do and nothing to pay. If the address is wrong, a reply puts it right.'],
   send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.',
   inforce=False),
+ # ── the three action letters: they come before the waterfall ─────────
+ 'I': dict(
+  name='A premium due for more than sixty days',
+  subject='A premium on your policy is showing as due — and the simplest way to pay Guardian Life directly',
+  preheader='If you have already paid, tell us and we will put the record right. If not, nothing has been lost yet.',
+  headline='A premium is showing as <em>due.</em>',
+  open=['Our records show a premium on your policy that has been due for more than sixty days. If you have paid it '
+        '&mdash; to the branch, to a representative, or by any other route &mdash; please tell us, because a premium '
+        'paid to a representative counts in law as paid to Guardian Life, and we will put the record right against '
+        'your receipt. If it has not been paid, nothing has been lost yet: the Insurance Act requires written notice '
+        'before a policy can be forfeited, and this letter is the branch making sure you hear from us first.',
+        'The simplest thing from here is to pay Guardian Life directly, so that every payment carries Guardian '
+        'Life\'s own receipt. Reply to this letter or call the branch and we will set that up with you in one call. '
+        'Your representative, {{agent_first_name}}, has moved on from Guardian Life; your policy, your cover and '
+        'your beneficiary are unchanged.'],
+  send='Goes only after the paid-to date is checked against cash and the deduction file. It never states a figure. '
+       'Direct-bill clients first.'),
+ 'J': dict(
+  name='Contract ready, not yet delivered',
+  subject='Your policy is in force — and your contract is ready to be delivered',
+  preheader='The document itself has not reached you yet. We will bring it.',
+  headline='Your policy is in force. Your <em>contract</em> is ready.',
+  open=['Your policy has been issued and is in force. The contract document &mdash; the policy itself, with your '
+        'schedule and the beneficiary you named &mdash; has not yet been delivered to you. We are putting that '
+        'right: the branch will bring it to you, and we will go through it with you when we do, so that you know '
+        'exactly what you hold.',
+        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Nothing about your policy '
+        'changes. When the contract reaches you, the only signature it needs is the acknowledgement that you '
+        'received it; you are not being asked to sign anything else.'],
+  send='Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving '
+       'agent, with the acknowledgement letter.'),
+ 'K': dict(
+  name='An application still in progress',
+  subject='Your application with Guardian Life — where it stands, and who is finishing it',
+  preheader='It has not been forgotten. Here is what is outstanding and who is completing it.',
+  headline='Your application is <em>still in progress.</em>',
+  open=['You applied for a policy with Guardian Life and the application has not yet been completed. That is ours '
+        'to finish, not yours to chase. We are going through every open file this week, and if anything is still '
+        'needed from you &mdash; a signature, a medical, a document &mdash; the person who calls will know exactly '
+        'what it is, and will bring it to you rather than ask you to find it.',
+        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your application stays with '
+        'Guardian Life and with this branch, and it will be completed by a registered agent of your own. If you '
+        'would rather not proceed, say so and we will close it properly; you owe nothing either way.'],
+  send='Built from the pending list. Every file is read before the call; the agent brings the outstanding '
+       'requirement, never a list of them.'),
 }
 
 # ── the shell ─────────────────────────────────────────────────────────
@@ -266,12 +311,18 @@ CORE = 'F'
 WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose policy is paid up',
        'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
        'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
-       'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed'}
+       'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed',
+       'I': 'a client whose premium has been due for more than sixty days',
+       'J': 'a client whose policy is in force but whose contract has not reached them',
+       'K': 'a client whose application is still in progress'}
 GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and may not know what it is worth',
         'C': 'a benefit inside the policy they were probably never told about',
         'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
         'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
-        'H': 'nothing to do and nothing to pay'}
+        'H': 'nothing to do and nothing to pay',
+        'I': 'a payment to a representative counts as paid, and the law requires notice before anything is forfeited',
+        'J': 'the policy is in force, and the branch is bringing the contract',
+        'K': 'the file is being finished for them, not chased'}
 openings = ''.join(f"""
   <div class="op" id="{seg}">
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>

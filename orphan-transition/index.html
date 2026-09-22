@@ -247,13 +247,26 @@
     <tr><td><b>G</b></td><td>Lapsed</td><td>Reactivation &mdash; a policy that stopped may still hold value</td>
         <td>A week later. No mention of the departure</td></tr>
     <tr><td><b>H</b></td><td>Nothing held</td><td>Lightest touch: is this still your address?</td><td>Last</td></tr>
+    <tr class="hl"><td><b>I</b></td><td>Premium due more than sixty days</td>
+        <td>A payment to a representative counts as paid; the Act requires notice before forfeiture; pay Guardian
+        directly from here <span class="pill bad">never a figure</span></td>
+        <td>After the paid-to check; direct bill first</td></tr>
+    <tr class="hl"><td><b>J</b></td><td>Contract ready, not delivered</td>
+        <td>The policy is in force; the branch brings the contract and goes through it</td>
+        <td>This week, by hand, with the acknowledgement</td></tr>
+    <tr class="hl"><td><b>K</b></td><td>Application still in progress</td>
+        <td>Ours to finish, not theirs to chase; the agent brings the outstanding requirement</td>
+        <td>This week, after every file is read</td></tr>
   </table>
   <div class="box note">
     <h3>The rule for the waterfall</h3>
-    <p style="margin:0">Death flag &rarr; matured &rarr; paid up &rarr; waiver of premium &rarr; payroll &rarr;
-    ten years &rarr; in force &rarr; lapsed &rarr; nothing. The segment file is built outside the repository
-    from the Branch Portfolio sheet, with the waiver-of-premium flag joined in from Salesforce on the policy
-    number. Counts and names never come into this repository.</p>
+    <p style="margin:0">The three action letters come first: an application in progress (K), a contract not yet
+    delivered (J), a premium due more than sixty days (I). Then the waterfall: Death flag &rarr; matured &rarr;
+    paid up &rarr; waiver of premium &rarr; payroll &rarr; ten years &rarr; in force &rarr; lapsed &rarr; nothing.
+    A client gets one letter. The segment file is built outside the repository from the Branch Portfolio sheet
+    (paid-to dates and statuses), the contracts-given-to-agent list and the pending list, with the
+    waiver-of-premium flag joined in from Salesforce on the policy number. Counts and names never come into
+    this repository.</p>
   </div>
 </div></section>
 
@@ -270,6 +283,9 @@
     <a class="letter" href="letters/F.html"><div class="s">Segment F &middot; In force</div><b>A quick summary of your Guardian Life cover — and two ways to pick this up</b><span>The core letter. The largest group and the best reach.</span></a>
     <a class="letter" href="letters/G.html"><div class="s">Segment G &middot; Lapsed</div><b>A policy you may have written off — let us tell you what it is worth</b><span>A week behind the others, and it does not mention the departure at all &amp;mdash; these clients stopped paying years ago and it is irrelevant to them.</span></a>
     <a class="letter" href="letters/H.html"><div class="s">Segment H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.</span></a>
+    <a class="letter" href="letters/I.html"><div class="s">Segment I &middot; Premium due more than sixty days</div><b>A premium on your policy is showing as due &mdash; and the simplest way to pay Guardian Life directly</b><span>Only after the paid-to date is checked against cash and the deduction file. Never a figure. Direct-bill clients first.</span></a>
+    <a class="letter" href="letters/J.html"><div class="s">Segment J &middot; Contract ready, not delivered</div><b>Your policy is in force &mdash; and your contract is ready to be delivered</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent, with the acknowledgement.</span></a>
+    <a class="letter" href="letters/K.html"><div class="s">Segment K &middot; Application still in progress</div><b>Your application with Guardian Life &mdash; where it stands, and who is finishing it</b><span>From the pending list. Every file is read before the call; the agent brings the outstanding requirement.</span></a>
   </div>
   <div class="box stop">
     <h3>Four things no letter does</h3>
