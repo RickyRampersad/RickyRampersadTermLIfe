@@ -238,49 +238,33 @@
     <tr><th>Seg.</th><th>Who</th><th>The reason we are writing</th><th>Send</th></tr>
     <tr><td><b>0</b></td><td><span class="pill bad">suppress</span> a Death claim is on file</td>
         <td>Claims first. No campaign mail of any kind</td><td>Never, until claims confirm</td></tr>
-    <tr><td><b>A</b></td><td>A policy has matured</td><td>Money is waiting to be claimed</td><td>First</td></tr>
-    <tr class="hl"><td><b>A2</b></td><td>A maturity within six months</td>
-        <td>The money should reach them on time, and what comes next is planned before the date
-        <span class="pill">from policy admin</span></td><td>Six months ahead of the date</td></tr>
-    <tr><td><b>B</b></td><td>Paid up</td><td>They finished paying and may not know what they own</td><td>First</td></tr>
-    <tr class="hl"><td><b>C</b></td><td>Carrying waiver of premium</td>
-        <td>A benefit inside the policy that pays the premiums if they cannot work</td><td>Second</td></tr>
-    <tr><td><b>D</b></td><td>Collected off a payroll</td>
-        <td>We are checking the deduction file <span class="pill bad">never says arrears</span></td><td>Third</td></tr>
-    <tr><td><b>E</b></td><td>Held ten years or more</td><td>The price is locked at the age they started</td><td>Third</td></tr>
-    <tr><td><b>F</b></td><td>In force</td><td>The core letter</td><td>Third</td></tr>
-    <tr><td><b>G</b></td><td>Lapsed</td><td>Reactivation &mdash; a policy that stopped may still hold value</td>
-        <td>A week later. No mention of the departure</td></tr>
-    <tr><td><b>H</b></td><td>Nothing held</td><td>Lightest touch: is this still your address?</td><td>Last</td></tr>
-    <tr class="hl"><td><b>I1</b></td><td>One premium due: 61 to 90 on the <b>Days</b> column</td>
-        <td>Nothing is lost; a payment to a representative counts as paid; the paid-to date and the days
-        outstanding printed in the letter <span class="pill bad">never a figure</span></td>
-        <td>After the paid-to check; direct bill first</td></tr>
-    <tr class="hl"><td><b>I2</b></td><td>More than one premium due: 91 to 180 on the <b>Days</b> column</td>
-        <td>Still in force; the value it has built may be carrying it (the Act's non-forfeiture rule); the
-        projected lapse date printed; decide now while every option is open</td>
-        <td>After the paid-to check</td></tr>
-    <tr class="hl"><td><b>I3</b></td><td>Unpaid: over 180 on the <b>Days</b> column</td>
-        <td>Nothing can be forfeited without written notice and twenty business days; a paid-up policy after
-        three years; the projected lapse date printed; the receiving agent calls within two days</td>
-        <td>After the paid-to check; the agent calls within two days</td></tr>
-    <tr class="hl"><td><b>J</b></td><td>Contract ready, not delivered</td>
-        <td>The policy is in force; the branch brings the contract and goes through it</td>
-        <td>This week, by hand, with the acknowledgement</td></tr>
     <tr class="hl"><td><b>K</b></td><td>Application still in progress</td>
         <td>Ours to finish, not theirs to chase; the agent brings the outstanding requirement</td>
         <td>This week, after every file is read</td></tr>
+    <tr class="hl"><td><b>J</b></td><td>Contract ready, not delivered</td>
+        <td>The policy is in force; the branch brings the contract and goes through it</td>
+        <td>This week, by hand, with the acknowledgement</td></tr>
+    <tr class="hl"><td><b>I</b></td><td>A premium due: more than 60 on the <b>Days</b> column</td>
+        <td>Paid to, days outstanding and projected lapse printed from the sheet, so one letter serves every
+        band; a payment to a representative counts as paid; nothing forfeited without written notice and
+        twenty business days <span class="pill bad">never a figure</span></td>
+        <td>After the paid-to check against cash and the deduction file; direct bill first; over 180 days,
+        the agent calls within two days</td></tr>
+    <tr><td><b>A</b></td><td>A policy has matured, or matures within six months</td>
+        <td>The money is theirs; it should reach them on time, with what comes next planned
+        <span class="pill">maturity date from policy admin</span></td><td>First</td></tr>
+    <tr><td><b>F</b></td><td>In force &mdash; including paid up, carrying a waiver of premium, collected off a
+        payroll, and held ten years or more</td>
+        <td>The core letter: same cover, same premium, same beneficiaries, everything the policy has built
+        still theirs; the facts off the sheet do the personalising <span class="pill bad">never says arrears</span></td>
+        <td>Second</td></tr>
+    <tr><td><b>G</b></td><td>Lapsed</td><td>A policy that stopped may still hold value</td><td>A week later</td></tr>
+    <tr><td><b>&mdash;</b></td><td>Nothing in force, nothing lapsed</td>
+        <td>Not written to in this send; the call list, if anything</td><td>Not sent</td></tr>
   </table>
   <div class="box note">
     <h3>The rule for the waterfall</h3>
-    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet
-    delivered (J), a premium due (I1, I2 or I3 by the <b>Days</b> column). Then the waterfall: Death flag &rarr;
-    matured &rarr; maturing within six months &rarr; paid up &rarr; waiver of premium &rarr; payroll &rarr; ten
-    years &rarr; in force &rarr; lapsed &rarr; nothing. A client gets one letter. The segment file is built
-    outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse
-    Date, Issue Date, App Received Date, Billing type), the contracts-given-to-agent list and the pending
-    list, with the waiver-of-premium flag joined in from Salesforce on the policy number and the maturity
-    date from policy admin. Counts and names never come into this repository.</p>
+    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet delivered (J), a premium due (I: more than sixty on the <b>Days</b> column). Then: Death flag &rarr; matured or maturing within six months (A) &rarr; in force (F) &rarr; lapsed (G) &rarr; nothing (no letter). A client gets one letter. <b>Six letters</b>, condensed on 22 September so the team reads one page: paid up, waiver of premium, payroll and ten years all take letter F, and the facts printed from the sheet do the personalising. The segment file is built outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse Date, Issue Date, App Received Date), the contracts-given-to-agent list and the pending list, with the maturity date from policy admin. Counts and names never come into this repository.</p>
   </div>
 </div></section>
 
@@ -291,18 +275,10 @@
     branch has looked after them, and the sign-off. Click any one to see it as the client will.</p>
   <div class="letters">
   <!-- letters:start -->
-    <a class="letter" href="letters/A.html"><div class="s">A &middot; A policy has matured</div><b>A policy of yours has matured. The money is waiting.</b><span>Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents.</span></a>
-    <a class="letter" href="letters/A2.html"><div class="s">A2 &middot; A maturity coming up</div><b>A policy of yours matures on {{maturity_date}}</b><span>Six months ahead of the date. The maturity date is not on the portfolio sheet; it comes from the intelligence sheet or policy admin.</span></a>
-    <a class="letter" href="letters/B.html"><div class="s">B &middot; Paid up</div><b>You have finished paying for this one</b><span>Nearly all of this group have e-mail.</span></a>
-    <a class="letter" href="letters/C.html"><div class="s">C &middot; Carrying waiver of premium</div><b>A benefit inside your policy you may not know about</b><span>The strongest letter in the set. Send it second, after A and B have warmed the domain.</span></a>
-    <a class="letter" href="letters/D.html"><div class="s">D &middot; Collected off a payroll</div><b>We are checking your salary deduction, so you need not</b><span>The word &quot;arrears&quot; does not appear. Until the deduction file is reconciled, a gap is ours to chase.</span></a>
-    <a class="letter" href="letters/E.html"><div class="s">E &middot; Held ten years or more</div><b>{{years}} years at a price nobody can sell you again</b><span>Only a third of this group have e-mail. The rest is a phone call; the argument is strongest here.</span></a>
-    <a class="letter" href="letters/F.html"><div class="s">F &middot; In force</div><b>Your policy is unchanged. One tap tells us what you would like next.</b><span>The core letter. The largest group and the best reach.</span></a>
-    <a class="letter" href="letters/G.html"><div class="s">G &middot; Lapsed</div><b>A policy you may have written off could still be worth something</b><span>A week behind the others. It does not mention the departure at all.</span></a>
-    <a class="letter" href="letters/H.html"><div class="s">H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. Last to go.</span></a>
-    <a class="letter" href="letters/I1.html"><div class="s">I1 &middot; One premium showing as due</div><b>One premium is showing as due. One tap puts it right.</b><span>Sixty-one to ninety days on the Days column, after the paid-to date is checked against cash and the deduction file.</span></a>
-    <a class="letter" href="letters/I2.html"><div class="s">I2 &middot; More than one premium showing as due</div><b>Your policy is still in force. Let us keep it that way.</b><span>Ninety-one to one hundred and eighty days on the Days column. The paid-to date checked first.</span></a>
-    <a class="letter" href="letters/I3.html"><div class="s">I3 &middot; A decision the policy needs</div><b>Your policy needs a decision, and the law gives you time</b><span>Over one hundred and eighty days on the Days column. Checked against cash first. The receiving agent calls within two days.</span></a>
+    <a class="letter" href="letters/A.html"><div class="s">A &middot; A policy has matured, or is about to</div><b>A policy of yours has matured, or is about to</b><span>Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents.</span></a>
+    <a class="letter" href="letters/F.html"><div class="s">F &middot; In force</div><b>Your policy is unchanged. Tell us what you would like next.</b><span>The core letter. Paid up, waiver of premium, payroll and ten years or more all take it; the facts off the sheet personalise it. The largest group and the best reach.</span></a>
+    <a class="letter" href="letters/G.html"><div class="s">G &middot; Lapsed</div><b>A policy you wrote off may still be worth something</b><span>A week behind the others.</span></a>
+    <a class="letter" href="letters/I.html"><div class="s">I &middot; A premium showing as due</div><b>A premium is showing as due. One tap puts it right.</b><span>More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.</span></a>
     <a class="letter" href="letters/J.html"><div class="s">J &middot; Contract ready, not yet delivered</div><b>Your contract is ready. We will bring it to you.</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent.</span></a>
     <a class="letter" href="letters/K.html"><div class="s">K &middot; An application still in progress</div><b>Your application: where it stands, and who is finishing it</b><span>From the pending list. Every file is read before the call.</span></a>
   <!-- letters:end -->

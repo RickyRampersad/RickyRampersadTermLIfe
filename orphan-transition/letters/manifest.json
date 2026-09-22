@@ -30,12 +30,13 @@
  "letters": [
   {
    "segment": "A",
-   "name": "A policy has matured",
-   "subject": "A policy of yours has matured. The money is waiting.",
-   "preheader": "It reached the end of its term. The money is yours, and it is waiting to be claimed.",
+   "name": "A policy has matured, or is about to",
+   "subject": "A policy of yours has matured, or is about to",
+   "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
    "file": "A.html",
    "facts": [
     "matured_on",
+    "maturity_date",
     "first_year"
    ],
    "taps": [
@@ -43,95 +44,12 @@
     "urgent",
     "callme"
    ],
-   "send_note": "Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents."
-  },
-  {
-   "segment": "A2",
-   "name": "A maturity coming up",
-   "subject": "A policy of yours matures on {{maturity_date}}",
-   "preheader": "We would like the money to reach you on time, and to talk through what comes next before it does.",
-   "file": "A2.html",
-   "facts": [
-    "maturity_date",
-    "first_year"
-   ],
-   "taps": [
-    "review",
-    "urgent",
-    "callme"
-   ],
-   "send_note": "Six months ahead of the date. The maturity date is not on the portfolio sheet; it comes from the intelligence sheet or policy admin."
-  },
-  {
-   "segment": "B",
-   "name": "Paid up",
-   "subject": "You have finished paying for this one",
-   "preheader": "Nothing more to pay. Here is what you own outright.",
-   "file": "B.html",
-   "facts": [
-    "first_year"
-   ],
-   "taps": [
-    "review",
-    "urgent",
-    "callme"
-   ],
-   "send_note": "Nearly all of this group have e-mail."
-  },
-  {
-   "segment": "C",
-   "name": "Carrying waiver of premium",
-   "subject": "A benefit inside your policy you may not know about",
-   "preheader": "If illness stopped you working, Guardian Life would pay your premiums for you.",
-   "file": "C.html",
-   "facts": [
-    "first_year",
-    "paid_to"
-   ],
-   "taps": [
-    "review",
-    "urgent",
-    "callme"
-   ],
-   "send_note": "The strongest letter in the set. Send it second, after A and B have warmed the domain."
-  },
-  {
-   "segment": "D",
-   "name": "Collected off a payroll",
-   "subject": "We are checking your salary deduction, so you need not",
-   "preheader": "Deductions sometimes stop quietly. We are checking yours this week.",
-   "file": "D.html",
-   "facts": [
-    "paid_to"
-   ],
-   "taps": [
-    "review",
-    "urgent",
-    "callme"
-   ],
-   "send_note": "The word \"arrears\" does not appear. Until the deduction file is reconciled, a gap is ours to chase."
-  },
-  {
-   "segment": "E",
-   "name": "Held ten years or more",
-   "subject": "{{years}} years at a price nobody can sell you again",
-   "preheader": "Your premium is fixed on the age you were when you started. That price cannot be bought twice.",
-   "file": "E.html",
-   "facts": [
-    "first_year",
-    "paid_to"
-   ],
-   "taps": [
-    "review",
-    "urgent",
-    "callme"
-   ],
-   "send_note": "Only a third of this group have e-mail. The rest is a phone call; the argument is strongest here."
+   "send_note": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
   },
   {
    "segment": "F",
    "name": "In force",
-   "subject": "Your policy is unchanged. One tap tells us what you would like next.",
+   "subject": "Your policy is unchanged. Tell us what you would like next.",
    "preheader": "Same cover, same premium, same beneficiaries. Then whichever answer suits you.",
    "file": "F.html",
    "facts": [
@@ -143,12 +61,12 @@
     "review",
     "callme"
    ],
-   "send_note": "The core letter. The largest group and the best reach."
+   "send_note": "The core letter. Paid up, waiver of premium, payroll and ten years or more all take it; the facts off the sheet personalise it. The largest group and the best reach."
   },
   {
    "segment": "G",
    "name": "Lapsed",
-   "subject": "A policy you may have written off could still be worth something",
+   "subject": "A policy you wrote off may still be worth something",
    "preheader": "A policy that stopped does not always stop being worth something.",
    "file": "G.html",
    "facts": [
@@ -160,44 +78,14 @@
     "urgent",
     "callme"
    ],
-   "send_note": "A week behind the others. It does not mention the departure at all."
+   "send_note": "A week behind the others."
   },
   {
-   "segment": "H",
-   "name": "Nothing held",
-   "subject": "Is this still the right address for you?",
-   "preheader": "A short note from the branch that looked after you.",
-   "file": "H.html",
-   "facts": [],
-   "taps": [
-    "informed",
-    "question"
-   ],
-   "send_note": "Lightest touch. Last to go."
-  },
-  {
-   "segment": "I1",
-   "name": "One premium showing as due",
-   "subject": "One premium is showing as due. One tap puts it right.",
+   "segment": "I",
+   "name": "A premium showing as due",
+   "subject": "A premium is showing as due. One tap puts it right.",
    "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
-   "file": "I1.html",
-   "facts": [
-    "paid_to",
-    "days"
-   ],
-   "taps": [
-    "paid",
-    "pay",
-    "callme"
-   ],
-   "send_note": "Sixty-one to ninety days on the Days column, after the paid-to date is checked against cash and the deduction file."
-  },
-  {
-   "segment": "I2",
-   "name": "More than one premium showing as due",
-   "subject": "Your policy is still in force. Let us keep it that way.",
-   "preheader": "The value it has built may be carrying it for now. Here is what the law says, and three ways to answer.",
-   "file": "I2.html",
+   "file": "I.html",
    "facts": [
     "paid_to",
     "days",
@@ -208,25 +96,7 @@
     "pay",
     "callme"
    ],
-   "send_note": "Ninety-one to one hundred and eighty days on the Days column. The paid-to date checked first."
-  },
-  {
-   "segment": "I3",
-   "name": "A decision the policy needs",
-   "subject": "Your policy needs a decision, and the law gives you time",
-   "preheader": "Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.",
-   "file": "I3.html",
-   "facts": [
-    "paid_to",
-    "days",
-    "projected_lapse"
-   ],
-   "taps": [
-    "paid",
-    "pay",
-    "callme"
-   ],
-   "send_note": "Over one hundred and eighty days on the Days column. Checked against cash first. The receiving agent calls within two days."
+   "send_note": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days."
   },
   {
    "segment": "J",
