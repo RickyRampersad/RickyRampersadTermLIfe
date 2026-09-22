@@ -29,6 +29,8 @@ FILM = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}'
 REVIEW = 'https://donthaveanagent.com/start?t={{token}}'
 ASSIGN = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}#choose'
 PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}'
+# One tap from a premium letter: the answer travels as r= and the page logs it on arrival.
+RESPOND = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
 
 # ── the eight openings ────────────────────────────────────────────────
 SEGMENTS = {
@@ -131,22 +133,76 @@ SEGMENTS = {
   send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.',
   inforce=False),
  # ── the three action letters: they come before the waterfall ─────────
- 'I': dict(
-  name='A premium due for more than sixty days',
-  subject='A premium on your policy is showing as due — and the simplest way to pay Guardian Life directly',
-  preheader='If you have already paid, tell us and we will put the record right. If not, nothing has been lost yet.',
-  headline='A premium is showing as <em>due.</em>',
-  open=['Our records show a premium on your policy that has been due for more than sixty days. If you have paid it '
-        '&mdash; to the branch, to a representative, or by any other route &mdash; please tell us, because a premium '
-        'paid to a representative counts in law as paid to Guardian Life, and we will put the record right against '
-        'your receipt. If it has not been paid, nothing has been lost yet: the Insurance Act requires written notice '
-        'before a policy can be forfeited, and this letter is the branch making sure you hear from us first.',
-        'The simplest thing from here is to pay Guardian Life directly, so that every payment carries Guardian '
-        'Life\'s own receipt. Reply to this letter or call the branch and we will set that up with you in one call. '
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life; your policy, your cover and '
-        'your beneficiary are unchanged.'],
-  send='Goes only after the paid-to date is checked against cash and the deduction file. It never states a figure. '
-       'Direct-bill clients first.'),
+ # The premium letters, in bands, so that a client two months behind and a
+ # client eight months behind are not told the same thing. Each carries the
+ # Act's own words for its stage and three one-tap answers. Never a figure.
+ 'I1': dict(
+  name='One premium showing as due',
+  subject='One premium on your policy is showing as due — one tap tells us which of three things is true',
+  preheader='Already paid it? Tell us and we put the record right. Not yet? Nothing is lost, and here is the easiest way.',
+  headline='One premium is showing as <em>due.</em>',
+  open=['Our records show one premium on your policy that has been due for more than sixty days. That is early '
+        'enough that nothing is lost, and it is usually one of three things: you have paid it and the record has '
+        'not caught up; the way you pay has changed since your representative moved on; or it simply slipped. '
+        'Whichever it is, one tap below tells us, and we do the rest.',
+        'If you paid it to a representative, keep your receipt: the Insurance Act says that payment counts as '
+        'received by Guardian Life. Your policy, your cover and your beneficiary are unchanged.'],
+  mode='premium',
+  act='Premiums or other payments due that are received by an agency, brokerage or a sales representative on '
+      'behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or '
+      'stipulations to the contrary.',
+  plain='A premium you handed to a registered representative counts as paid to Guardian Life, and the receipt '
+        'you were given is Guardian Life\'s receipt. Keep it.',
+  send='Sixty-one to ninety days. After the paid-to date is checked against cash and the deduction file. '
+       'Never a figure.'),
+ 'I2': dict(
+  name='More than one premium showing as due',
+  subject='Your policy is still in force — and more than one premium is showing as due',
+  preheader='The value your policy has built may be carrying it. Here is what the law says, and three ways to answer.',
+  headline='Your policy is <em>still in force.</em> Let us keep it that way.',
+  open=['Our records show more than one premium on your policy due, going back over ninety days. Your policy is '
+        'still in force. Where a policy has built a cash value, the Insurance Act does not allow it to be '
+        'forfeited while that value covers what is overdue &mdash; so the policy may be carrying itself for now, '
+        'out of what you have already paid in. That is not a reason to leave it. It is a reason to decide now, '
+        'while every option is still open.',
+        'The options are simple. Tell us it is already paid, and we check the record against your receipt. Let '
+        'us set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time. Or ask us to '
+        'call, and we put the figures in writing before you decide anything. Your representative, '
+        '{{agent_first_name}}, has moved on from Guardian Life; your policy is unchanged.'],
+  mode='premium',
+  act='An ordinary policy shall not be forfeited by reason only of non-payment of any premiums where the '
+      'surrender value of the policy &hellip; exceeds the sum of the amount of the debts owing to the insurer '
+      'under or secured by the policy and the amount of the overdue premium.',
+  plain='If your policy has built a value, it cannot be forfeited for a missed premium while that value covers '
+        'what is overdue. On a participating policy, bonuses you have earned may be used to keep it in force too.',
+  send='Ninety-one to one hundred and eighty days. The paid-to date checked first. Never a figure.'),
+ 'I3': dict(
+  name='A decision the policy needs',
+  subject='Your policy needs a decision from you — and the law gives you time and three ways to make it',
+  preheader='Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.',
+  headline='Your policy needs a <em>decision.</em>',
+  open=['Our records show premiums on your policy unpaid for more than six months. We are writing before '
+        'anything else happens, because the Insurance Act says a policy cannot be forfeited for non-payment '
+        'without a written late-payment notice and twenty business days after it &mdash; and we would rather you '
+        'used that time with the facts in front of you than found out afterwards.',
+        'There are three honest answers, and every one of them is a tap below. If it is already paid, we check '
+        'the record against your receipt. If you want to keep the policy, we set up payment to Guardian Life '
+        'directly and put the figure to bring it up to date in writing. And if you cannot keep paying, there may '
+        'still be something to keep: after three years of premiums the Act entitles you to a smaller policy, '
+        'fully paid, instead of losing the cover &mdash; we will tell you exactly what that would be. Your '
+        'representative, {{agent_first_name}}, has moved on from Guardian Life; the decision, and the time to '
+        'make it, are yours.'],
+  mode='premium',
+  act='&hellip; the insurer liable under the policy serves a late-payment notice on the policyholder stating '
+      '&hellip; the date of the notice, the due date of the premium and the amount due or payable to the insurer; '
+      'and &hellip; that the policy will be forfeited at the expiration of twenty business days after the date '
+      'of the notice if the premium or a sum sufficient to keep the policy in force is not paid to the insurer '
+      'within that period.',
+  plain='Before any policy can be forfeited, you must receive a written notice carrying the amount, and twenty '
+        'business days from it. And after three years of premiums, the Act entitles you to a paid-up policy '
+        'instead of losing the cover.',
+  send='Over one hundred and eighty days. Checked against cash first &mdash; some of these have paid. Never a '
+       'figure. The receiving agent calls within two days of the send.'),
  'J': dict(
   name='Contract ready, not yet delivered',
   subject='Your policy is in force — and your contract is ready to be delivered',
@@ -243,6 +299,32 @@ def letter_table(seg, cfg):
     <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">Same review, same questions, only somebody walks you through it &mdash; in person or on the phone, whichever you prefer. If there is a particular agent at this branch you would like, tell us the name in a reply to this letter, and that is who you will have.</div>
   </a>
 </td></tr></table>'''
+    if cfg.get('mode') == 'premium':
+        # the Act's own words for this stage, in place of the replacement note
+        law_block = f'''
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:13px 16px;font:400 13.5px/1.55 Inter,Arial,sans-serif;color:#33465a">
+  <b style="display:block;font:800 10px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:7px">The Insurance Act &middot; Trinidad and Tobago</b>
+  <span style="display:block;font:600 14.5px/1.5 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">&ldquo;{cfg['act']}&rdquo;</span>
+  <span style="display:block;margin-top:8px">{cfg['plain']}</span>
+  <a href="{PROTECT}" style="display:block;margin-top:8px;color:#07606f;font-weight:700;text-decoration:none">Everything else the law gives you, in plain words &rarr;</a>
+</td></tr></table>'''
+        # three one-tap answers, in place of the two doors; the film follows
+        taps = [('paid', 'I have already paid', 'We check the record against your receipt and confirm within two working days.'),
+                ('pay', 'Set me up to pay Guardian Life directly', 'One call, and every payment from then on carries Guardian Life\'s own receipt.'),
+                ('callme', 'Call me about it', 'A person from the branch, today or tomorrow, at a time you choose.')]
+        rows = ''.join(f'''
+<tr><td style="padding:0 0 9px">
+  <a href="{RESPOND}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:13px 16px">
+    <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">{label} &rarr;</div>
+    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:3px">{note}</div>
+  </a>
+</td></tr>''' for i, (r, label, note) in enumerate(taps))
+        doors_block = f'''
+<p style="margin:0 0 12px"><b>One tap is all it takes.</b> Whichever is true, tap it, and the branch does the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">{rows}</table>
+{film_block}'''
+        film_block = ''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
 <tr><td style="background:#07131f;padding:15px 24px;border-bottom:3px solid #efc24b">
@@ -314,7 +396,9 @@ WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose poli
        'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
        'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
        'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed',
-       'I': 'a client whose premium has been due for more than sixty days',
+       'I1': 'a client with one premium due, sixty-one to ninety days',
+       'I2': 'a client with more than one premium due, up to six months',
+       'I3': 'a client with premiums unpaid for more than six months',
        'J': 'a client whose policy is in force but whose contract has not reached them',
        'K': 'a client whose application is still in progress'}
 GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and may not know what it is worth',
@@ -322,7 +406,9 @@ GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and ma
         'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
         'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
         'H': 'nothing to do and nothing to pay',
-        'I': 'a payment to a representative counts as paid, and the law requires notice before anything is forfeited',
+        'I1': 'nothing is lost, and a payment to a representative counts as paid',
+        'I2': 'the policy is still in force, and the value it has built may be carrying it',
+        'I3': 'nothing can be forfeited without written notice and twenty business days, and a paid-up policy may be kept',
         'J': 'the policy is in force, and the branch is bringing the contract',
         'K': 'the file is being finished for them, not chased'}
 openings = ''.join(f"""
