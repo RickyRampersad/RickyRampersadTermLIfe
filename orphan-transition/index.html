@@ -184,12 +184,20 @@
 
   <h3>Phase 3 &middot; The clicks &mdash; daily, from the first send</h3>
   <ol start="12">
+    <li><b>Every tap gets a receipt, and the branch gets a copy.</b> The moment a client taps, they get a short
+      thank-you e-mail naming what happens next, CC'd to the branch (<code>TRANSITION.COPY_TO</code>, blank =
+      the branch manager) so a response is seen the moment it lands, not only on the page or in a digest. A
+      tap still <code>Open</code> past its wait gets one internal nudge to the branch; still open at twice
+      that, the client gets a warm &ldquo;still on it&rdquo; note and the branch a second, plainer one. Both
+      stop the moment Status reads anything other than <code>Open</code> &mdash; that is how the branch marks
+      a concern resolved.</li>
     <li><b>Watch it on one page.</b> <a href="responses.html">responses.html</a> opens with the branch code and
       shows, live from the sheet: sent and waiting by letter, every tap by type, the questionnaires that came
       from the campaign, the team's verdicts, and first of all the taps waiting more than two working days
       with nobody assigned (one working day for an <code>urgent</code> tap). It carries a red banner while
-      the hourly send is off, and the last runs &mdash; every batch, test and stop, with the reason &mdash;
-      at the foot. The 8:00 digest e-mails the same to the branch manager. On the Client Responses
+      the hourly send is off, and the last runs &mdash; every batch, test, chase and stop, with the reason
+      &mdash; at the foot. The digest e-mails the same to the branch manager, at 8:00 and at noon by default
+      (<code>TRANSITION.DIGEST_HOURS</code>). On the Client Responses
       tab every tap except <code>informed</code> is a task: name the agent within two working days &mdash;
       town, then household, then what they hold &mdash; and fill Assigned to and Assigned on.</li>
     <li><b>Send the agent the brief</b>, filled in from the sheet and the portfolio. Never to the client.</li>
