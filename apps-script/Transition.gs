@@ -12,9 +12,11 @@
  * One source of truth: rebuild the letters, and the next batch carries the
  * change. No letter text lives here.
  *
- *   transitionSetup()        once — the tab, the hourly send, the 8:00 digest
+ *   transitionSetup()        once — the tab and the 8:00 digest; the hourly send stays off
  *   transitionPreviewToMe()  one of each letter to your own inbox
  *   transitionSendTest()     the rows marked Test = Y, now, whatever the hour
+ *   transitionGoLive()       the hourly send, on — once the test rows have been checked
+ *   transitionPause()        the hourly send, off; the test rows still go by hand
  *   transitionSendBatch()    what the hourly trigger runs; safe to run by hand
  *   transitionDigest()       the morning e-mail; safe to run by hand
  *
@@ -24,6 +26,13 @@
  * looked at — the exclusions: the departed agents' own policies and their
  * households, staff addresses, death claims. A row with anything in Exclude
  * never sends.
+ *
+ * Nothing goes to a client on its own until transitionGoLive has been run:
+ * the list can sit in the tab, the preview and the two Test rows can be read
+ * and checked, and the hourly run sends nothing. A row with no Send on date
+ * is held, not sent now; a row the sender cannot use (no e-mail, no first
+ * name, no letter for its segment) is moved to Exclude with the reason, so
+ * it leaves the queue for someone to fix rather than being tried every hour.
  */
 var TRANSITION = {
   SHEET: 'Transition Send',
@@ -39,7 +48,12 @@ var TRANSITION = {
   ORDER: ['I', 'K', 'J', 'A', 'F', 'G'],   // the action letters first
   DIGEST_TO: '',             // blank = the script owner
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
+  WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
 };
+
+/* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
+   clears it; until it is set the trigger runs and sends nothing. */
+var T_LIVE = 'transition_live';
 
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
@@ -50,6 +64,11 @@ var T_FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'project
   'app_received', 'matured_on', 'maturity_date'];
 var T_FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse',
   'app_received', 'matured_on', 'maturity_date'];
+/* the columns a send depends on: read, checked or written on every row. Headers
+   are matched on their exact text, so a tab imported with 'Excluded' or 'exclude'
+   would make every held-back row due — tRead_ refuses to run without them. */
+var T_REQUIRED = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Exclude', 'Test',
+  'Send on', 'Sent at', 'Status'];
 
 /* ── the tab ──────────────────────────────────────────────────────── */
 function tSheet_() {
@@ -63,13 +82,18 @@ function tSheet_() {
   return sh;
 }
 
-/** Every row as an object keyed by the header text, plus _row (1-based). */
+/** Every row as an object keyed by the header text, plus _row (1-based).
+ *  Throws, before anything is sent, if the header row is missing or any of
+ *  T_REQUIRED is not on it. */
 function tRead_() {
   var sh = tSheet_();
   var last = sh.getLastRow(), lastCol = sh.getLastColumn();
+  if (!lastCol) throw new Error('"' + TRANSITION.SHEET + '" has no header row. Nothing was sent.');
   var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
   var col = {};
   head.forEach(function (h, i) { if (h) col[h] = i + 1; });
+  var missing = T_REQUIRED.filter(function (h) { return !col[h]; });
+  if (missing.length) throw new Error('"' + TRANSITION.SHEET + '" is missing: ' + missing.join(', ') + '. Nothing was sent.');
   var rows = [];
   if (last >= 2) {
     sh.getRange(2, 1, last - 1, lastCol).getValues().forEach(function (v, i) {
@@ -81,19 +105,35 @@ function tRead_() {
   return { sh: sh, col: col, rows: rows };
 }
 
-function tTz_() { return Session.getScriptTimeZone() || 'America/Port_of_Spain'; }
+/* The sheet's own zone: its dates are midnight there, and the branch reads the
+   clock there. The script project's zone is whatever it was created with. */
+function tTz_() {
+  try { var z = ss_().getSpreadsheetTimeZone(); if (z) return z; } catch (e) {}
+  return Session.getScriptTimeZone() || 'America/Port_of_Spain';
+}
 
 /** A cell as the letter should print it: dates long, numbers whole, else trimmed text. */
 function tText_(x) {
   if (x === null || x === undefined) return '';
   if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tTz_(), 'd MMMM yyyy');
   if (typeof x === 'number') return String(Math.round(x));
-  return String(x).trim();
+  var s = String(x).trim();
+  return /^#(N\/A|REF!|VALUE!|DIV\/0!|NAME\?|NUM!|ERROR!)$/.test(s) ? '' : s;   // a lookup that missed is a blank, not a fact
 }
-function tDay_(x) {            // yyyy-MM-dd, for comparing "Send on" with today
-  if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd');
-  var s = String(x || '').trim();
-  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : '';
+/* The two hand-edited flags. A tick in a checkbox column reads true, a typed
+   Y or yes reads as text; a cleared checkbox reads false and must not hold. */
+function tYes_(x) { return x === true || /^(y|yes|true|1|x)$/i.test(tText_(x)); }
+function tHeld_(x) { if (x === false) return false; var s = tText_(x); return !!s && !/^(false|no|n|0)$/i.test(s); }
+/** "Send on" as yyyy-MM-dd for comparing with today. '' for an empty cell;
+ *  null for anything that cannot be read (29/9, 'Monday', 'hold') — the one
+ *  column the branch edits by hand to delay a letter must fail towards holding
+ *  it, never towards sending it this hour. */
+function tDay_(x) {
+  if (x === null || x === undefined || x === '') return '';
+  if (x instanceof Date) return isNaN(x.getTime()) ? null : Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd');
+  var s = String(x).trim();
+  if (!s) return '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }
 
 /* ── setup ────────────────────────────────────────────────────────── */
@@ -101,11 +141,53 @@ function transitionSetup() {
   tSheet_();
   var have = {};
   ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
+  if (!have.transitionDigest) ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(8).everyDays(1).create();
+  var msg = '"' + TRANSITION.SHEET + '" is ready and the 8:00 digest is installed. The hourly send stays off ' +
+    'until Transition: go live. Import the send list into the tab, run transitionPreviewToMe, then ' +
+    'transitionSendTest, read what arrived and check the Exclude column, then go live.';
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
+  return msg;
+}
+
+/** The hourly send, on. Only after the preview and the Test rows have been
+ *  read and the Exclude column checked: from the next weekday hour inside
+ *  HOURS the trigger sends up to BATCH real letters a run. */
+function transitionGoLive() {
+  PropertiesService.getScriptProperties().setProperty(T_LIVE, 'yes');
+  var have = {};
+  ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
   if (!have.transitionSendBatch) ScriptApp.newTrigger('transitionSendBatch').timeBased().everyHours(1).create();
-  if (!have.transitionDigest) ScriptApp.newTrigger('transitionDigest').timeBased().atHour(8).everyDays(1).create();
-  var msg = '"' + TRANSITION.SHEET + '" is ready. The hourly send (' + TRANSITION.HOURS[0] + ':00 to ' +
-    TRANSITION.HOURS[1] + ':00, Monday to Friday) and the 8:00 digest are installed. Import the send list ' +
-    'into the tab, then run transitionPreviewToMe, then transitionSendTest.';
+  var msg = 'Live. The hourly send is on, ' + TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] +
+    ':00, Monday to Friday. Transition: pause turns it off.';
+  log_('transition', 'live', msg);
+  return tSay_(msg);
+}
+
+/** The hourly send, off: the switch cleared and the trigger removed. The Test
+ *  rows still send by hand. */
+function transitionPause() {
+  PropertiesService.getScriptProperties().deleteProperty(T_LIVE);
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'transitionSendBatch') ScriptApp.deleteTrigger(t);
+  });
+  var msg = 'Paused. Test rows still send by hand; the hourly run sends nothing.';
+  log_('transition', 'paused', msg);
+  return tSay_(msg);
+}
+
+/** Whether the hourly send is on — the switch set and the trigger installed —
+ *  reported the way automationOn_() is, so the page and the digest can say so
+ *  instead of the branch learning it from silence. */
+function tArmed_() {
+  try {
+    if (PropertiesService.getScriptProperties().getProperty(T_LIVE) !== 'yes') return false;
+    return ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'transitionSendBatch'; });
+  } catch (e) { return false; }
+}
+
+/** Say it on screen when there is a screen (the menu); the return value carries
+ *  it when there is not (a trigger). */
+function tSay_(msg) {
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
 }
@@ -123,12 +205,26 @@ function tFetch_(path) {
   return txt;
 }
 
-function tLetterFor_(seg) {
+/** Every letter in the manifest, keyed by segment, fetched once before a run.
+ *  Throws when the site does not answer, or when a letter on it carries
+ *  {{fields}} but no fact markers — the previous cut, which prints 'Paid to'
+ *  over a blank — so the caller stops before it touches a row. */
+function tLetters_() {
   var man = JSON.parse(tFetch_('manifest.json'));
-  var L = null;
-  (man.letters || []).forEach(function (l) { if (String(l.segment).toUpperCase() === seg) L = l; });
-  if (!L) throw new Error('No letter for segment ' + seg);
-  return { subject: L.subject, html: tFetch_(L.file) };
+  var out = {};
+  (man.letters || []).forEach(function (L) {
+    var seg = String(L.segment).toUpperCase();
+    var html = tFetch_(L.file);
+    if (new RegExp('\\{\\{(' + T_FACTS.join('|') + ')\\}\\}').test(html) && !/<!--fact:/.test(html)) {
+      throw new Error('Letter ' + seg + ' on the site carries no fact markers: merge and rebuild before sending');
+    }
+    if (/\{\{agent_first_name\}\}/.test(html) && !/<!--agent-->/.test(html)) {
+      throw new Error('Letter ' + seg + ' on the site carries no agent markers: merge and rebuild before sending');
+    }
+    out[seg] = { segment: seg, subject: L.subject, html: html };
+  });
+  if (!Object.keys(out).length) throw new Error('The manifest on the site lists no letters');
+  return out;
 }
 
 function tEsc_(s) {
@@ -149,7 +245,7 @@ function tFill_(text, row) {
   /* no agent first name on the row: "Your representative has moved on" still reads */
   if (!v('Agent first name')) out = out.replace(/<!--agent-->[\s\S]*?<!--\/agent-->/g, '');
   var map = {
-    first_name: v('First name') || 'Client',
+    first_name: v('First name'),          // blank never reaches here: tHold_ keeps the row back
     agent_first_name: v('Agent first name'),
     token: v('Token'),
     segment: v('Segment').toUpperCase(),
@@ -160,18 +256,32 @@ function tFill_(text, row) {
   });
 }
 
-/** Send one row. Returns 'sent', or the reason it did not. Throws on a mail failure. */
-function tSendRow_(row) {
+/** Why a row cannot go, or '' when it can. The same test keeps a row out of
+ *  the batch's queue and out of the send itself, so a held row never takes a
+ *  slot from one that can send. 'Dear Client' is not a letter this branch
+ *  sends, and a blank first name is the usual sign of shifted columns. */
+function tHold_(row, letters) {
+  var seg = tText_(row.Segment).toUpperCase();
+  if (!seg) return 'no letter';
+  if (!letters[seg]) return 'no letter for segment ' + seg;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tText_(row.Email))) return 'no e-mail';
+  if (!tText_(row['First name'])) return 'no first name';
+  return '';
+}
+
+/** Send one row with the letters tLetters_ fetched. Returns 'sent', or the
+ *  reason it did not. Throws on a mail failure. */
+function tSendRow_(row, letters) {
+  var why = tHold_(row, letters);
+  if (why) return why;
   var seg = tText_(row.Segment).toUpperCase();
   var to = tText_(row.Email);
-  if (!seg) return 'no letter';
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return 'no e-mail';
-  var L = tLetterFor_(seg);
+  var L = letters[seg];
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
   var html = tFill_(L.html, row);
   var link = TRANSITION.FILM + '?t=' + encodeURIComponent(tText_(row.Token)) + '&s=' + encodeURIComponent(seg);
   var agent = tText_(row['Agent first name']);
-  var plain = 'Dear ' + (tText_(row['First name']) || 'Client') + ',\n\n' +
+  var plain = 'Dear ' + tText_(row['First name']) + ',\n\n' +
     'Your representative' + (agent ? ', ' + agent + ',' : '') + ' has moved on from Guardian Life. Your policy has not.\n\n' +
     'This letter is best read in a mail app that shows pictures. Everything in it, and the two-minute film, is here:\n' +
     link + '\n\nRicky Rampersad\nBranch Manager, Ricky Rampersad Branch\nGuardian Life of the Caribbean';
@@ -189,24 +299,44 @@ function tEnsureToken_(t, row) {
   row.Token = tok;
 }
 
+/* The columns are checked by tRead_ before any of this runs, so a write that
+   fails here throws and stops the run — it never skips quietly and lets the
+   same rows send again next hour. */
 function tMark_(t, row, status, sent) {
-  if (sent && t.col['Sent at']) t.sh.getRange(row._row, t.col['Sent at']).setValue(new Date());
-  if (t.col.Status) t.sh.getRange(row._row, t.col.Status).setValue(status);
+  if (sent) t.sh.getRange(row._row, t.col['Sent at']).setValue(new Date());
+  t.sh.getRange(row._row, t.col.Status).setValue(status);
 }
 
-function tSendRows_(t, rows) {
+/** A row the sender cannot use leaves the queue: the reason goes into Exclude,
+ *  where tSummary_ counts it under 'held back', and into Status. Clearing the
+ *  Exclude cell after the fix puts the row back. */
+function tHoldRow_(t, row, why) {
+  tMark_(t, row, why, false);
+  t.sh.getRange(row._row, t.col.Exclude).setValue(why);
+  row.Exclude = why;
+}
+
+/** Send these rows with these letters. The letters were fetched before this
+ *  was called, outside any per-row try, so a site that does not answer stops
+ *  the run instead of marking sixty rows 'error' and pushing them all to
+ *  tomorrow. Only a mail failure is retried tomorrow. */
+function tSendRows_(t, rows, letters) {
   var sent = 0, skipped = 0, failed = 0;
   rows.forEach(function (row) {
     try {
       tEnsureToken_(t, row);
-      var res = tSendRow_(row);
+      var res = tSendRow_(row, letters);
       if (res === 'sent') { sent++; tMark_(t, row, 'sent', true); }
-      else { skipped++; tMark_(t, row, res, false); }
+      else { skipped++; tHoldRow_(t, row, res); }
     } catch (err) {
-      failed++;
-      tMark_(t, row, 'error: ' + String(err && err.message ? err.message : err).slice(0, 120), false);
-      /* try again tomorrow, not every hour */
-      if (t.col['Send on']) {
+      var why = String(err && err.message ? err.message : err);
+      if (/invalid email/i.test(why)) {
+        /* the address passed the shape test and MailApp still refused it: for the manager, not for tomorrow */
+        skipped++; tHoldRow_(t, row, 'no e-mail: ' + why.slice(0, 100));
+      } else {
+        failed++;
+        tMark_(t, row, 'error: ' + why.slice(0, 120), false);
+        /* try again tomorrow, not every hour */
         var tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
         t.sh.getRange(row._row, t.col['Send on']).setValue(Utilities.formatDate(tmr, tTz_(), 'yyyy-MM-dd'));
       }
@@ -223,6 +353,12 @@ function tOrder_(row) {
 
 /* ── the hourly send ──────────────────────────────────────────────── */
 function transitionSendBatch(force) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return 'another send is running';
+  try { return tSendBatch_(force); } finally { lock.releaseLock(); }
+}
+
+function tSendBatch_(force) {
   var tz = tTz_(), now = new Date();
   if (force !== true) {
     var h = Number(Utilities.formatDate(now, tz, 'H'));
@@ -230,59 +366,111 @@ function transitionSendBatch(force) {
     if (TRANSITION.WEEKDAYS.indexOf(wd) < 0 || h < TRANSITION.HOURS[0] || h >= TRANSITION.HOURS[1]) {
       return 'outside sending hours';
     }
+    /* the switch: the list can sit in the tab, the Test rows can go by hand, and
+       nothing else leaves until transitionGoLive has been run */
+    if (PropertiesService.getScriptProperties().getProperty(T_LIVE) !== 'yes') {
+      return tSay_('not live — Transition: go live when the test rows have been checked');
+    }
   }
-  var quota = MailApp.getRemainingDailyQuota() - TRANSITION.RESERVE;
+  var per = TRANSITION.BCC ? 2 : 1;                            // the quota counts recipients
+  var quota = Math.floor((MailApp.getRemainingDailyQuota() - TRANSITION.RESERVE) / per);
   var cap = Math.min(TRANSITION.BATCH, quota);
   if (cap <= 0) { log_('transition', 'no-quota', 'remaining ' + MailApp.getRemainingDailyQuota()); return 'no quota left today'; }
 
-  var t = tRead_();
+  /* the tab and the letters before any row is touched: a header that does not
+     match or a site that does not answer stops the run here, and the reason
+     goes to the log, the page and the digest — not to a failure e-mail */
+  var t, letters;
+  try { t = tRead_(); } catch (err) { return tStop_('stopped', err); }
+  try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
+
   var today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  /* one address, one letter: a household sharing an e-mail gets the first row
+     this run and the rest held for a person to decide, not three letters at once */
+  var seen = {};
+  t.rows.forEach(function (r) { if (tText_(r['Sent at']) && tText_(r.Email)) seen[tText_(r.Email).toLowerCase()] = r._row; });
   var due = t.rows.filter(function (r) {
-    if (tText_(r.Exclude)) return false;
+    if (tHeld_(r.Exclude)) return false;
     if (tText_(r['Sent at'])) return false;
-    if (tText_(r.Test).toUpperCase() === 'Y') return false;    // the test rows go by hand
+    if (tYes_(r.Test)) return false;                            // the test rows go by hand
     if (!tText_(r.Segment)) return false;
     var so = tDay_(r['Send on']);
-    return !so || so <= today;
+    if (so === null) { tMark_(t, r, 'check: Send on is not a date', false); return false; }
+    if (!so || so > today) return false;                        // no date is a hold, never 'now'
+    var why = tHold_(r, letters);                               // no e-mail, no first name, no letter: out of the queue
+    if (why) { tHoldRow_(t, r, why); return false; }
+    var mail = tText_(r.Email).toLowerCase();
+    if (seen[mail]) { tHoldRow_(t, r, 'check: same e-mail as row ' + seen[mail]); return false; }
+    seen[mail] = r._row;
+    return true;
   });
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
-  var res = tSendRows_(t, due.slice(0, cap));
+  var res = tSendRows_(t, due.slice(0, cap), letters);
   var waiting = Math.max(0, due.length - cap);
   var msg = res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed, ' + waiting + ' waiting for the next run';
   log_('transition', 'batch', msg);
   return msg;
 }
 
-/** The rows marked Test = Y, now. Ignores the hours. Each sends once. */
+/** The menu item. Asks first, then sends the next batch whatever the hour
+ *  and the switch, and says what happened. The trigger uses transitionSendBatch. */
+function transitionSendBatchNow() {
+  var ui = null;
+  try { ui = SpreadsheetApp.getUi(); } catch (e) {}
+  if (ui && ui.alert('Send the next batch now?', 'Up to ' + TRANSITION.BATCH + ' real letters go to clients the moment you press YES.',
+      ui.ButtonSet.YES_NO) !== ui.Button.YES) return 'not sent';
+  return tSay_(transitionSendBatch(true));
+}
+
+/** A run that stopped before it touched a row: logged under its own event so
+ *  the last-runs list on the page and in the digest carries the reason. */
+function tStop_(event, err) {
+  var msg = String(err && err.message ? err.message : err);
+  log_('transition', event, msg);
+  return tSay_(event + ': ' + msg);
+}
+
+/** The rows marked Test = Y, now. Ignores the hours and the live switch. Each sends once. */
 function transitionSendTest() {
-  var t = tRead_();
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('another send is running');
+  try { return tSendTest_(); } finally { lock.releaseLock(); }
+}
+
+function tSendTest_() {
+  var t, letters;
+  try { t = tRead_(); } catch (err) { return tStop_('stopped', err); }
+  try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
   var rows = t.rows.filter(function (r) {
-    return tText_(r.Test).toUpperCase() === 'Y' && !tText_(r.Exclude) && !tText_(r['Sent at']) && tText_(r.Segment);
+    return tYes_(r.Test) && !tHeld_(r.Exclude) && !tText_(r['Sent at']) && tText_(r.Segment);
   });
-  if (!rows.length) return 'No unsent rows marked Test = Y.';
-  var res = tSendRows_(t, rows);
+  if (!rows.length) return tSay_('No unsent rows marked Test = Y.');
+  var res = tSendRows_(t, rows, letters);
   var msg = 'Test: ' + res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed.';
   log_('transition', 'test', msg);
-  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
-  return msg;
+  return tSay_(msg);
 }
 
 /** One of each letter to your own inbox, with sample values in every field. */
 function transitionPreviewToMe() {
   var me = (Session.getEffectiveUser().getEmail() || Session.getActiveUser().getEmail());
   if (!me) throw new Error('Could not read your address; run this from the sheet.');
-  var man = JSON.parse(tFetch_('manifest.json'));
+  /* the same fetch and the same marker check as the send, so a site still
+     serving the previous cut is found here, before the Test rows */
+  var letters;
+  try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
   var n = 0;
-  (man.letters || []).forEach(function (L) {
+  Object.keys(letters).sort().forEach(function (seg) {
+    var L = letters[seg];
     var row = {
-      Token: 'PREVIEW', Segment: L.segment, 'First name': 'Sample', Email: me,
-      'Agent first name': '[first name]', first_year: '2014', years: '12', issue_date: '14 March 2014',
-      paid_to: '1 August 2026', days: '52', projected_lapse: '30 November 2026',
-      app_received: '3 September 2026', matured_on: '1 September 2026', maturity_date: '1 March 2027',
+      Token: 'PREVIEW', Segment: seg, 'First name': 'Sample', Email: me,
+      'Agent first name': '[first name]', first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
+      paid_to: new Date(2026, 7, 1), days: 52, projected_lapse: new Date(2026, 10, 30),
+      app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1),
     };
-    var html = tFill_(L.html ? L.html : tFetch_(L.file), row);
-    var subject = '[preview ' + L.segment + '] ' + tFill_(L.subject, row);
-    MailApp.sendEmail(me, subject, 'Preview of letter ' + L.segment + '.', { htmlBody: html, name: TRANSITION.FROM_NAME });
+    var html = tFill_(L.html, row);
+    var subject = '[preview ' + seg + '] ' + tFill_(L.subject, row);
+    MailApp.sendEmail(me, subject, 'Preview of letter ' + seg + '.', { htmlBody: html, name: TRANSITION.FROM_NAME });
     n++;
     Utilities.sleep(120);
   });
@@ -292,25 +480,53 @@ function transitionPreviewToMe() {
 }
 
 /* ── what comes back ──────────────────────────────────────────────── */
+/** Whether a code opens the page, and whether any code could — the branch
+ *  code in Service.gs or a Portal code on the Agent Skill Bank. */
 function tCodeOk_(code) {
   code = String(code || '').trim().toUpperCase();
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
-  var ok = !!(branch && code === branch);
-  try {
-    skillBank_().forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) ok = true; });
-  } catch (e) {}
-  return ok;
+  var ok = !!(branch && code === branch), bank = [];
+  try { bank = skillBank_(); } catch (e) {}
+  bank.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) ok = true; });
+  return { ok: ok, configured: !!(branch || bank.length) };
 }
 
+/** Working days that have fully passed since `from`, as at `to`. The day the
+ *  tap arrived never counts, and a day counts only once it is over — so a
+ *  Monday tap has waited two working days at Thursday 00:00, a Friday tap at
+ *  Wednesday 00:00, and nothing is 'late' the morning after it arrived. */
 function tWorkingDays_(from, to) {
   var n = 0, d = new Date(from.getTime());
   d.setHours(0, 0, 0, 0);
-  while (d < to) {
-    d.setDate(d.getDate() + 1);
+  d.setDate(d.getDate() + 1);                        // the first day that can count
+  while (d.getTime() + 86400000 <= to.getTime()) {   // and only once it has passed
     var wd = d.getDay();
     if (wd !== 0 && wd !== 6) n++;
+    d.setDate(d.getDate() + 1);
   }
   return n;
+}
+
+/** The last few things the send did, off the Service Activity log — batches,
+ *  tests, a stop and why, live, paused. The page and the digest show them
+ *  under 'last runs', so a run that stopped is seen the same morning. */
+function tRuns_(n) {
+  var out = [];
+  try {
+    var sh = ss_().getSheetByName(SVC.LOG_SHEET);
+    var last = sh ? sh.getLastRow() : 0;
+    if (last < 2) return out;
+    var from = Math.max(2, last - 400);
+    var vals = sh.getRange(from, 1, last - from + 1, 4).getValues();
+    for (var i = vals.length - 1; i >= 0 && out.length < n; i--) {
+      if (String(vals[i][1]) !== 'transition') continue;
+      out.push({
+        when: vals[i][0] instanceof Date ? Utilities.formatDate(vals[i][0], tTz_(), 'd MMM HH:mm') : String(vals[i][0] || ''),
+        event: String(vals[i][2] || ''), detail: String(vals[i][3] || ''),
+      });
+    }
+  } catch (e) {}
+  return out;
 }
 
 function tSheetRows_(name) {
@@ -332,7 +548,7 @@ function tSummary_() {
     var s = tText_(r.Segment).toUpperCase() || '—';
     var g = seg[s] = seg[s] || { clients: 0, sent: 0, excluded: 0, waiting: 0, taps: 0 };
     g.clients++; totals.clients++;
-    var ex = tText_(r.Exclude);
+    var ex = tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '';
     if (ex) { g.excluded++; totals.excluded++; if (/no e-mail/i.test(ex)) totals.noEmail++; }
     else if (tText_(r['Sent at'])) { g.sent++; totals.sent++; }
     else if (s !== '—') { g.waiting++; totals.waiting++; }
@@ -344,9 +560,10 @@ function tSummary_() {
   /* the taps: Client Responses — Received, Token, Segment, Response, Needs, Page, Referrer, Status, Assigned to, Assigned on, Note */
   var resp = tSheetRows_(SVC.RESP_SHEET);
   var taps = [], byType = {}, late = [], today = 0;
-  resp.rows.forEach(function (v) {
+  resp.rows.forEach(function (v, i) {
     var received = v[0] instanceof Date ? v[0] : null;
     var tok = String(v[1] || '').trim(), r = byTok[tok];
+    if (/^preview$/i.test(tok)) return;                         // the manager tapping the preview letters
     var type = String(v[3] || '').trim();
     if (!type) return;
     var s = String(v[2] || '').trim().toUpperCase();
@@ -357,11 +574,12 @@ function tSummary_() {
       segment: s, response: type, needs: String(v[4] || ''), status: String(v[7] || ''),
       assigned: String(v[8] || ''), assignedOn: v[9] instanceof Date ? Utilities.formatDate(v[9], tz, 'd MMM') : String(v[9] || ''),
       client: r ? tText_(r.Client) : (tok ? 'token ' + tok : ''), agent: r ? tText_(r.Agent) : '',
-      email: r ? tText_(r.Email) : '', row: v._row,
+      row: i + 2,
     };
     if (received && Utilities.formatDate(received, tz, 'yyyy-MM-dd') === Utilities.formatDate(now, tz, 'yyyy-MM-dd')) today++;
     var opens = String(v[7] || '').toLowerCase() === 'open';
-    if (opens && !item.assigned && received && tWorkingDays_(received, now) >= TRANSITION.WAIT_DAYS) late.push(item);
+    var wait = type === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;   // urgent promises the next working day
+    if (opens && !item.assigned && received && tWorkingDays_(received, now) >= wait) late.push(item);
     taps.push(item);
   });
   taps.reverse();
@@ -373,7 +591,12 @@ function tSummary_() {
   var reviews = [], urgent = 0;
   q.rows.forEach(function (v) {
     var mail = String(qi.Email !== undefined ? v[qi.Email] || '' : '').trim().toLowerCase();
-    if (!mail || !byMail[mail]) return;
+    /* the urgent tap carries the letter's token into Link ref; the e-mail is the fallback */
+    var ref = String(qi['Link ref'] !== undefined ? v[qi['Link ref']] || '' : '').trim();
+    var m = /^transition:(\S+)$/.exec(ref);
+    var hit = (m && byTok[m[1]]) || (mail && byMail[mail]);
+    if (!hit) return;
+    byMail[mail] = hit;
     var pr = String(qi.Priority !== undefined ? v[qi.Priority] || '' : '');
     if (/urgent/i.test(pr)) urgent++;
     var when = qi.Timestamp !== undefined && v[qi.Timestamp] instanceof Date ? v[qi.Timestamp] : null;
@@ -389,7 +612,7 @@ function tSummary_() {
   reviews.reverse();
 
   /* the team's verdicts: Team Feedback — Received, Name, Town, Item, Verdict, Comment, Taking assignments, … */
-  var fb = tSheetRows_(SVC.TEAM_SHEET);
+  var fb = tSheetRows_(SVC.FEEDBACK_SHEET);
   var verdicts = { send: 0, change: 0, hold: 0 }, taking = {}, names = {};
   fb.rows.forEach(function (v) {
     var verdict = String(v[4] || '').toLowerCase();
@@ -398,7 +621,7 @@ function tSummary_() {
     else if (/hold/.test(verdict)) verdicts.hold++;
     var name = String(v[1] || '').trim();
     if (name) names[name] = 1;
-    if (name && /yes|y|1|true/i.test(String(v[6] || ''))) taking[name] = String(v[2] || '').trim();
+    if (name && /^(yes|y|1|true)$/i.test(String(v[6] || '').trim())) taking[name] = String(v[2] || '').trim();
   });
 
   return {
@@ -406,23 +629,35 @@ function tSummary_() {
     taps: { total: taps.length, today: today, byType: byType, late: late, latest: taps.slice(0, 40) },
     reviews: { total: reviews.length, urgent: urgent, latest: reviews.slice(0, 20) },
     feedback: { people: Object.keys(names).length, verdicts: verdicts, taking: taking },
-    waitDays: TRANSITION.WAIT_DAYS,
+    waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT,
+    armed: tArmed_(), runs: tRuns_(6),
   };
 }
 
 function transitionData_(code) {
-  if (!tCodeOk_(code)) {
-    return { ok: false, error: String(SVC.TEAM_CODE || '').trim()
+  var c = tCodeOk_(code);
+  if (!c.ok) {
+    return { ok: false, error: c.configured
       ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
       : 'Not open yet — set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.' };
   }
-  return tSummary_();
+  try { return tSummary_(); }
+  catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
 }
 
 /* ── the morning e-mail ───────────────────────────────────────────── */
 function transitionDigest() {
   var to = TRANSITION.DIGEST_TO || Session.getEffectiveUser().getEmail();
-  var s = tSummary_();
+  var s;
+  try { s = tSummary_(); }
+  catch (err) {
+    /* a tab the send cannot read is the morning's whole news: say it plainly */
+    var why = String(err && err.message ? err.message : err);
+    log_('transition', 'stopped', why);
+    MailApp.sendEmail(to, 'Transition: stopped — ' + why.slice(0, 80), 'The send and this digest could not read the sheet.\n\n' +
+      why + '\n\nFix the "' + TRANSITION.SHEET + '" tab, then run Transition: send the Test rows now to check.', { name: TRANSITION.FROM_NAME });
+    return 'digest sent to ' + to + ' (stopped: ' + why + ')';
+  }
   var tile = function (n, label) {
     return '<td style="padding:10px 14px;background:#f4f8fa;border-radius:8px"><div style="font:800 24px/1 Arial,sans-serif;color:#12202e">' +
       n + '</div><div style="font:600 11px/1.3 Arial,sans-serif;color:#64798e;text-transform:uppercase;letter-spacing:.08em;margin-top:4px">' + label + '</div></td><td style="width:8px"></td>';
@@ -436,13 +671,15 @@ function transitionDigest() {
   };
   var segs = Object.keys(s.segments).sort().map(function (k) {
     var g = s.segments[k];
-    return '<tr><td style="padding:4px 10px 4px 0"><b>' + k + '</b></td><td style="padding:4px 10px">' + g.sent + ' sent</td><td style="padding:4px 10px">' +
+    return '<tr><td style="padding:4px 10px 4px 0"><b>' + tEsc_(k) + '</b></td><td style="padding:4px 10px">' + g.sent + ' sent</td><td style="padding:4px 10px">' +
       g.waiting + ' waiting</td><td style="padding:4px 10px">' + g.taps + ' taps</td><td style="padding:4px 10px">' + g.excluded + ' held back</td></tr>';
   }).join('');
   var types = Object.keys(s.taps.byType).map(function (k) { return k + ' ' + s.taps.byType[k]; }).join(' · ') || 'none yet';
   var html = '<div style="font:15px/1.5 Arial,sans-serif;color:#33465a;max-width:640px">' +
     '<h2 style="font:800 20px Arial,sans-serif;color:#12202e;margin:0 0 4px">Transition — ' + s.at + '</h2>' +
     '<p style="margin:0 0 14px;color:#64798e">Sends, taps, reviews and verdicts. The live page has the detail.</p>' +
+    (s.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324">' +
+      '<b>The hourly send is off.</b> The Test rows still go by hand; nothing else sends until Service Questionnaire &rarr; Transition: go live.</p>') +
     '<table cellpadding="0" cellspacing="0"><tr>' + tile(s.totals.sent, 'letters sent') + tile(s.totals.waiting, 'waiting') +
     tile(s.taps.total, 'taps') + tile(s.reviews.total, 'reviews') + tile(s.taps.late.length, 'late') + '</tr></table>' +
     '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">By letter</h3><table cellpadding="0" cellspacing="0" style="font:13px Arial,sans-serif">' + segs + '</table>' +
@@ -453,7 +690,9 @@ function transitionDigest() {
     rows(s.reviews.latest.slice(0, 10), ['when', 'client', 'segment', 'priority', 'status']) +
     '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">The team</h3>' +
     '<p style="margin:0">' + s.feedback.people + ' answered · ' + s.feedback.verdicts.send + ' send · ' + s.feedback.verdicts.change +
-    ' change · ' + s.feedback.verdicts.hold + ' hold · taking assignments: ' + (tEsc_(Object.keys(s.feedback.taking).join(', ')) || 'nobody yet') + '</p></div>';
+    ' change · ' + s.feedback.verdicts.hold + ' hold · taking assignments: ' + (tEsc_(Object.keys(s.feedback.taking).join(', ')) || 'nobody yet') + '</p>' +
+    '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">Last runs</h3>' +
+    rows(s.runs, ['when', 'event', 'detail']) + '</div>';
   MailApp.sendEmail(to, 'Transition: ' + s.totals.sent + ' sent, ' + s.taps.total + ' taps, ' + s.reviews.total +
     ' reviews' + (s.taps.late.length ? ', ' + s.taps.late.length + ' late' : ''), 'Open in a mail app that shows HTML.',
     { htmlBody: html, name: TRANSITION.FROM_NAME });

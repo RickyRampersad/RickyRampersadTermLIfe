@@ -78,6 +78,7 @@
   <div id="main">
     <h1>Transition <em>responses</em></h1>
     <p class="sub">Live from the sheet. Refreshes every two minutes. A tap waiting more than <span id="wait">2</span> working days with nobody assigned is late, and it is the first thing on this page.</p>
+    <div class="box stop" id="armed" style="display:none;margin:0 0 16px"><b>The hourly send is off.</b> The Test rows still go by hand; nothing else sends until Service Questionnaire &rarr; Transition: go live (hourly send on).</div>
     <div class="tiles">
       <div class="tile"><b id="tSent">–</b><span>letters sent</span></div>
       <div class="tile"><b id="tWait">–</b><span>waiting to send</span></div>
@@ -87,7 +88,7 @@
       <div class="tile"><b id="tTeam">–</b><span>verdicts in</span></div>
     </div>
 
-    <h2>Late <small>a tap with nobody assigned after two working days</small></h2>
+    <h2>Late <small>a tap with nobody assigned after <span id="wait2">2</span> working days &mdash; <span id="waitU">1</span> for an urgent tap</small></h2>
     <div id="late"></div>
 
     <h2>By letter</h2>
@@ -104,6 +105,9 @@
 
     <h2>The team</h2>
     <div id="team"></div>
+
+    <h2>Last runs <small>every batch, test and stop, with the reason</small></h2>
+    <div id="runs"></div>
   </div>
 
   <footer>The manual: <a href="./">orphan-transition</a> &middot; the letters and the film: <a href="../templates/">/templates</a>. Nothing on this page leaves the sheet.</footer>
@@ -125,6 +129,10 @@ function statusPill(s) { s = String(s || ''); return s ? '<span class="pill ' + 
 function render(d) {
   document.getElementById('stamp').textContent = 'as of ' + d.at;
   document.getElementById('wait').textContent = d.waitDays;
+  document.getElementById('wait2').textContent = d.waitDays;
+  document.getElementById('waitU').textContent = d.waitUrgent == null ? 1 : d.waitUrgent;
+  /* the switch: off until Transition: go live has been run, and said so here rather than learned from silence */
+  document.getElementById('armed').style.display = d.armed === false ? 'block' : 'none';
   document.getElementById('tSent').textContent = d.totals.sent;
   document.getElementById('tWait').textContent = d.totals.waiting;
   document.getElementById('tTaps').textContent = d.taps.total;
@@ -153,20 +161,29 @@ function render(d) {
     '<span class="chip"><b>' + f.verdicts.change + '</b> with a change</span><span class="chip"><b>' + f.verdicts.hold + '</b> hold</span></div>' +
     (taking.length ? '<p style="margin:10px 0 0">Taking assignments: ' + taking.map(function (n) { return '<b>' + esc(n) + '</b>' + (f.taking[n] ? ' (' + esc(f.taking[n]) + ')' : ''); }).join(', ') + '.</p>'
       : '<p class="empty">Nobody has ticked "taking assignments" yet.</p>');
+  document.getElementById('runs').innerHTML = table(d.runs || [], [['When', 'when'], ['What', 'event'], ['Detail', 'detail']], 'Nothing has run yet.');
 }
 function load() {
   fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.'); return; }
+      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.', true); return; }
       gate.style.display = 'none'; main.style.display = 'block';
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
       render(d);
       clearTimeout(timer); timer = setTimeout(load, 120000);
     })
-    .catch(function () { fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.'); });
+    .catch(function () { fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.', false); });
 }
-function fail(msg) {
+/* A screen left open must survive a network blip: once the page is showing,
+   a transient failure keeps it up, notes it in the stamp, and tries again.
+   Only a refused code sends the viewer back to the gate. */
+function fail(msg, refused) {
+  if (main.style.display === 'block' && !refused) {
+    document.getElementById('stamp').textContent += ' · could not refresh, trying again';
+    clearTimeout(timer); timer = setTimeout(load, 60000);
+    return;
+  }
   var e = document.getElementById('gateErr'); e.textContent = msg; e.style.display = 'block';
   gate.style.display = 'block'; main.style.display = 'none';
 }

@@ -156,8 +156,11 @@ var SVC = {
 
   /* The branch's own feedback on the transition letters and the film, from
      the team review page, before anything goes to a client. Name, what they
-     looked at, a verdict and a comment. No client details travel this road. */
-  TEAM_SHEET:  'Team Feedback',
+     looked at, a verdict and a comment. No client details travel this road.
+     Its own key: TEAM_SHEET above is the roster, and a second TEAM_SHEET here
+     silently won, so the skill bank, the wall and the agent portal were all
+     reading this tab and finding no agents. */
+  FEEDBACK_SHEET: 'Team Feedback',
 
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
@@ -1613,9 +1616,9 @@ function clientResponse_(p) {
  *  demand, like Client Responses. One row per verdict; the branch reads it
  *  down before the send and answers every "change" and "hold" by name. */
 function teamSheet_() {
-  var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
+  var sh = ss_().getSheetByName(SVC.FEEDBACK_SHEET);
   if (!sh) {
-    sh = ss_().insertSheet(SVC.TEAM_SHEET);
+    sh = ss_().insertSheet(SVC.FEEDBACK_SHEET);
     sh.appendRow(['Received', 'Name', 'Town', 'Item', 'Verdict', 'Comment', 'Taking assignments',
                   'Answered by', 'Answered on']);
     sh.setFrozenRows(1);
@@ -3578,10 +3581,12 @@ function onOpen() {
     .addItem('Install daily follow-up watchdog', 'installServiceTriggers')
     .addItem('Run follow-up check now', 'dailyServiceFollowUp')
     .addSeparator()
-    .addItem('Transition: set up (tab, hourly send, 8:00 digest)', 'transitionSetup')
+    .addItem('Transition: set up (tab, 8:00 digest)', 'transitionSetup')
     .addItem('Transition: preview the letters to me', 'transitionPreviewToMe')
     .addItem('Transition: send the Test rows now', 'transitionSendTest')
-    .addItem('Transition: send a batch now', 'transitionSendBatch')
+    .addItem('Transition: go live (hourly send on)', 'transitionGoLive')
+    .addItem('Transition: pause the hourly send', 'transitionPause')
+    .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addToUi();
 }
