@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transition responses | Ricky Rampersad Branch</title>
+<meta name="description" content="What has gone out, what has come back, and who is waiting — the transition campaign, live from the sheet.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--teal2:#0aa8bf;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--warnbg:#fff6df;--f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+  .wrap{width:min(1060px,100% - 34px);margin:0 auto}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:14px 0}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .stamp{margin-left:auto;font-size:12.5px;color:#8fa8c0}
+  h1{font-family:var(--f);font-weight:800;font-size:clamp(22px,3.6vw,30px);color:var(--ink);letter-spacing:-.5px;margin:26px 0 4px}
+  h1 em{font-style:normal;color:var(--gold2)}
+  .sub{color:var(--dim);margin:0 0 18px}
+  h2{font-family:var(--f);font-weight:800;font-size:17px;color:var(--ink);margin:26px 0 8px}
+  h2 small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:13px;color:var(--dim);margin-left:8px}
+  .tiles{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+  @media(min-width:700px){.tiles{grid-template-columns:repeat(6,1fr)}}
+  .tile{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:12px;padding:14px 15px}
+  .tile b{display:block;font-family:var(--f);font-size:28px;color:var(--ink);letter-spacing:-.8px;line-height:1.05}
+  .tile span{display:block;font-size:12px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .tile.late{border-top-color:var(--stop)} .tile.late b{color:var(--stop)}
+  .tile.gold{border-top-color:var(--gold)}
+  table.t{border-collapse:collapse;width:100%;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table.t th,table.t td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--paper);vertical-align:top}
+  table.t th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;background:#f2f7fa}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+  .pill.open{background:#f6dfd8;color:var(--stop)} .pill.done{background:#dcefe4;color:var(--ok)} .pill.seg{background:#d5f4fa;color:var(--tdark)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px}
+  .chip b{color:var(--ink);font-family:var(--f)}
+  .box{border-radius:10px;padding:14px 18px;margin:16px 0 0;border:1px solid}
+  .box.warn{background:var(--warnbg);border-color:#efd9a0;border-left:4px solid var(--gold2)}
+  .box.stop{background:var(--stopbg);border-color:#edc9bf;border-left:4px solid var(--stop)}
+  .empty{color:var(--dim);font-size:13.5px;padding:10px 0}
+  form.gate{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;max-width:460px;margin:30px auto}
+  form.gate label{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:0 0 6px}
+  form.gate input{width:100%;font:16px Inter,system-ui,sans-serif;padding:10px 12px;border:1px solid #bfd0da;border-radius:9px}
+  form.gate button{margin-top:12px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:var(--f);font-weight:800;font-size:15px;cursor:pointer}
+  .gate p{margin:0 0 12px;color:var(--dim);font-size:14px}
+  #main{display:none}
+  footer{color:var(--dim);font-size:12.5px;padding:30px 0}
+  footer a{color:var(--tdark)}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+  <div class="stamp" id="stamp"></div>
+</div></header>
+
+<div class="wrap">
+  <form class="gate" id="gate">
+    <p>What has gone out, what has come back, and who is waiting. Names come from the sheet, so this page opens with the branch code.</p>
+    <label for="code">Branch code</label>
+    <input type="text" id="code" autocomplete="off" placeholder="The branch code, or your portal code">
+    <button type="submit">Open</button>
+    <div class="box stop" id="gateErr" style="display:none"></div>
+  </form>
+
+  <div id="main">
+    <h1>Transition <em>responses</em></h1>
+    <p class="sub">Live from the sheet. Refreshes every two minutes. A tap waiting more than <span id="wait">2</span> working days with nobody assigned is late, and it is the first thing on this page.</p>
+    <div class="tiles">
+      <div class="tile"><b id="tSent">–</b><span>letters sent</span></div>
+      <div class="tile"><b id="tWait">–</b><span>waiting to send</span></div>
+      <div class="tile gold"><b id="tTaps">–</b><span>taps</span></div>
+      <div class="tile gold"><b id="tRev">–</b><span>reviews</span></div>
+      <div class="tile late"><b id="tLate">–</b><span>late</span></div>
+      <div class="tile"><b id="tTeam">–</b><span>verdicts in</span></div>
+    </div>
+
+    <h2>Late <small>a tap with nobody assigned after two working days</small></h2>
+    <div id="late"></div>
+
+    <h2>By letter</h2>
+    <table class="t" id="seg"><thead><tr><th>Letter</th><th class="n">Clients</th><th class="n">Sent</th><th class="n">Waiting</th><th class="n">Held back</th><th class="n">Taps</th><th class="n">Tap rate</th></tr></thead><tbody></tbody></table>
+
+    <h2>What they tapped <small id="tapsToday"></small></h2>
+    <div class="chips" id="types"></div>
+
+    <h2>Latest taps</h2>
+    <div id="taps"></div>
+
+    <h2>Reviews from the campaign <small id="urgent"></small></h2>
+    <div id="reviews"></div>
+
+    <h2>The team</h2>
+    <div id="team"></div>
+  </div>
+
+  <footer>The manual: <a href="./">orphan-transition</a> &middot; the letters and the film: <a href="../templates/">/templates</a>. Nothing on this page leaves the sheet.</footer>
+</div>
+
+<script>
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var CODE = '';
+try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
+var gate = document.getElementById('gate'), main = document.getElementById('main'), timer = null;
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function table(items, cols, empty) {
+  if (!items || !items.length) return '<div class="empty">' + esc(empty) + '</div>';
+  return '<table class="t"><thead><tr>' + cols.map(function (c) { return '<th>' + esc(c[0]) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    items.map(function (it) { return '<tr>' + cols.map(function (c) { return '<td>' + (c[2] ? c[2](it) : esc(it[c[1]])) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+}
+function segPill(s) { return s ? '<span class="pill seg">' + esc(s) + '</span>' : ''; }
+function statusPill(s) { s = String(s || ''); return s ? '<span class="pill ' + (/open/i.test(s) ? 'open' : 'done') + '">' + esc(s) + '</span>' : ''; }
+function render(d) {
+  document.getElementById('stamp').textContent = 'as of ' + d.at;
+  document.getElementById('wait').textContent = d.waitDays;
+  document.getElementById('tSent').textContent = d.totals.sent;
+  document.getElementById('tWait').textContent = d.totals.waiting;
+  document.getElementById('tTaps').textContent = d.taps.total;
+  document.getElementById('tRev').textContent = d.reviews.total;
+  document.getElementById('tLate').textContent = d.taps.late.length;
+  document.getElementById('tTeam').textContent = d.feedback.people;
+  var tapCols = [['Received', 'received'], ['Client', 'client'], ['Letter', 'segment', function (i) { return segPill(i.segment); }], ['Tapped', 'response'],
+    ['What it needs', 'needs'], ['Was with', 'agent'], ['Status', 'status', function (i) { return statusPill(i.status); }], ['Assigned to', 'assigned']];
+  document.getElementById('late').innerHTML = table(d.taps.late, tapCols, 'Nobody is waiting. Keep it that way.');
+  var tb = document.querySelector('#seg tbody'); tb.innerHTML = '';
+  Object.keys(d.segments).sort().forEach(function (k) {
+    var g = d.segments[k];
+    var rate = g.sent ? Math.round(100 * g.taps / g.sent) + '%' : '–';
+    tb.insertAdjacentHTML('beforeend', '<tr><td><b>' + esc(k) + '</b></td><td class="n">' + g.clients + '</td><td class="n">' + g.sent + '</td><td class="n">' + g.waiting +
+      '</td><td class="n">' + g.excluded + '</td><td class="n">' + g.taps + '</td><td class="n">' + rate + '</td></tr>');
+  });
+  var types = Object.keys(d.taps.byType).sort(function (a, b) { return d.taps.byType[b] - d.taps.byType[a]; });
+  document.getElementById('types').innerHTML = types.length ? types.map(function (k) { return '<span class="chip"><b>' + d.taps.byType[k] + '</b> ' + esc(k) + '</span>'; }).join('') : '<div class="empty">No taps yet.</div>';
+  document.getElementById('tapsToday').textContent = d.taps.today ? d.taps.today + ' today' : '';
+  document.getElementById('taps').innerHTML = table(d.taps.latest, tapCols, 'No taps yet. They land here the moment a client answers a letter.');
+  document.getElementById('urgent').textContent = d.reviews.urgent ? d.reviews.urgent + ' urgent' : '';
+  document.getElementById('reviews').innerHTML = table(d.reviews.latest, [['When', 'when'], ['Ref', 'ref'], ['Client', 'client'], ['Letter', 'segment', function (i) { return segPill(i.segment); }],
+    ['Was with', 'agent'], ['Priority', 'priority'], ['Status', 'status', function (i) { return statusPill(i.status); }], ['Handled by', 'handled']], 'No questionnaires from the campaign yet.');
+  var f = d.feedback, taking = Object.keys(f.taking);
+  document.getElementById('team').innerHTML = '<div class="chips"><span class="chip"><b>' + f.people + '</b> answered</span><span class="chip"><b>' + f.verdicts.send + '</b> send it</span>' +
+    '<span class="chip"><b>' + f.verdicts.change + '</b> with a change</span><span class="chip"><b>' + f.verdicts.hold + '</b> hold</span></div>' +
+    (taking.length ? '<p style="margin:10px 0 0">Taking assignments: ' + taking.map(function (n) { return '<b>' + esc(n) + '</b>' + (f.taking[n] ? ' (' + esc(f.taking[n]) + ')' : ''); }).join(', ') + '.</p>'
+      : '<p class="empty">Nobody has ticked "taking assignments" yet.</p>');
+}
+function load() {
+  fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.'); return; }
+      gate.style.display = 'none'; main.style.display = 'block';
+      try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
+      render(d);
+      clearTimeout(timer); timer = setTimeout(load, 120000);
+    })
+    .catch(function () { fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.'); });
+}
+function fail(msg) {
+  var e = document.getElementById('gateErr'); e.textContent = msg; e.style.display = 'block';
+  gate.style.display = 'block'; main.style.display = 'none';
+}
+gate.addEventListener('submit', function (e) { e.preventDefault(); CODE = document.getElementById('code').value.trim(); if (CODE) load(); });
+if (CODE) { document.getElementById('code').value = CODE; load(); }
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

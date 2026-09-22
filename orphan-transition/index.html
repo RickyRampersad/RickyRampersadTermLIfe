@@ -129,14 +129,15 @@
     <li><b>Merge the branch to <code>main</code>.</b> Then check that <code>/vid</code>, <code>/templates</code>,
       <code>/your-policy</code>, <code>/your-policy/protected</code> and
       <code>/orphan-transition/team-review</code> each answer. Nothing below happens on a 404.</li>
-    <li><b>Redeploy the Apps Script.</b> From the Service Questionnaires sheet: Extensions &rarr; Apps Script,
-      replace <code>Service.gs</code> with the repository's, then Deploy &rarr; Manage deployments &rarr; pencil
-      &rarr; New version. Copy the <code>/exec</code> URL. <i>New deployment</i> would change the address every
-      front end holds.</li>
-    <li><b>Publish the backend.</b> In the Service Questionnaire Apps Script: Deploy &rarr; Manage
-        deployments &rarr; pencil &rarr; New version. The pages are already wired to that deployment and ask it
-        for its version on load; the amber &ldquo;not recording yet&rdquo; notice clears itself the moment the
-        new version answers. Nothing to paste.</li>
+    <li><b>Update the Apps Script.</b> From the Service Questionnaires sheet: Extensions &rarr; Apps Script,
+      replace <code>Service.gs</code> with the repository's and add <code>Transition.gs</code> as a new file in
+      the same project. Then Deploy &rarr; Manage deployments &rarr; pencil &rarr; New version. <i>New
+      deployment</i> would change the address every front end holds. The pages are already wired to that
+      deployment and ask it for its version on load; the amber &ldquo;not recording yet&rdquo; notice clears
+      itself the moment the new version answers. Nothing to paste.</li>
+    <li><b>Set up the send.</b> Back in the sheet: Service Questionnaire &rarr; Transition: set up. That creates
+      the <b>Transition Send</b> tab and installs the hourly send (9:00 to 17:00, Monday to Friday) and the 8:00
+      digest. Nothing sends until the tab has rows.</li>
     <li><b>Clear the test rows</b> on the questionnaire sheet, so the first real review is not beside them.</li>
   </ol>
 
@@ -155,11 +156,20 @@
 
   <h3>Phase 2 &middot; The send &mdash; once the verdicts are answered</h3>
   <ol start="9">
-    <li><b>Build the send list outside the repository</b> from the Branch Portfolio sheet: the waterfall
-      (suppress &rarr; A &rarr; B &rarr; C &rarr; D &rarr; E &rarr; F &rarr; G &rarr; H), a token per client, the
-      merge fields. A Death flag suppresses the row whatever else it holds.</li>
-    <li><b>Send in order, over days.</b> A and B first (small, and the domain warms), C second, then D, E and
-      F. G a week later; H last. Reply-to is a person at the branch.</li>
+    <li><b>Build the send list outside the repository</b> with <code>tools/letters/sendlist.py</code> on a copy of
+      the Branch Portfolio sheet (the departed agents' names go in a git-ignored file beside it, never in the
+      script). One row per client: a token, the letter by the six-letter waterfall, the merge fields, and the
+      exclusions filled in <i>first</i>: the departed agents' own policies (matched on full name), their
+      households (same surname and the same address, phone or e-mail as the agent's own rows), staff e-mail
+      addresses, and death claims. A client with the agent's surname in the agent's own book, a matured
+      policy, or a postponed application is marked <code>check</code> and never sends until the check is
+      cleared by hand. Import the CSV into the Transition Send tab.</li>
+    <li><b>Preview, test, then let the trigger run.</b> Transition: preview the letters to me sends one of each
+      to your own inbox. Mark two rows <code>Test = Y</code> and run Transition: send the Test rows now. Then
+      the hourly send takes over: the action letters first (I, K, J), then A and F, and G a week later by its
+      Send on date; up to sixty an hour and never past the day's mail quota. A row with anything in Exclude
+      never sends, a sent row never sends twice, and a failure is retried the next day, not the next hour.
+      Reply-to is a person at the branch.</li>
     <li><b>Call the direct-bill clients with a premium due inside thirty days</b> this week, to tell them how
       to pay Guardian Life directly, with Guardian's receipt. That is the one exposure a returned receipt
       book creates.</li>
@@ -167,9 +177,12 @@
 
   <h3>Phase 3 &middot; The clicks &mdash; daily, from the first send</h3>
   <ol start="12">
-    <li><b>Client Responses tab.</b> Every <code>assign</code>, <code>review</code> and <code>question</code>
-      row is a task. Name the agent within two working days &mdash; town, then household, then what they hold
-      &mdash; and fill Assigned to and Assigned on.</li>
+    <li><b>Watch it on one page.</b> <a href="responses.html">responses.html</a> opens with the branch code and
+      shows, live from the sheet: sent and waiting by letter, every tap by type, the questionnaires that came
+      from the campaign, the team's verdicts, and first of all the taps waiting more than two working days
+      with nobody assigned. The 8:00 digest e-mails the same to the branch manager. On the Client Responses
+      tab every tap except <code>informed</code> is a task: name the agent within two working days &mdash;
+      town, then household, then what they hold &mdash; and fill Assigned to and Assigned on.</li>
     <li><b>Send the agent the brief</b>, filled in from the sheet and the portfolio. Never to the client.</li>
     <li><b>The agent makes contact</b> by the tone guide, logs <code>approached</code> if the client says someone
       has been in touch, and closes the row with a review filed on form 2000-03-147.</li>
@@ -183,9 +196,9 @@
 
   <h3>Phase 5 &middot; The scoreboard &mdash; every day</h3>
   <ol start="16">
-    <li>Sent and opened. Film views. The door split, <i>selfserve</i> against <i>assign</i>, which is the
-      staffing signal. Response rate by segment. Days from click to a named agent. And the one number that
-      counts: <b>reviews filed</b>.</li>
+    <li>The responses page, every morning: sent, taps by letter and by type, questionnaires, days from a tap to a
+      named agent, and the one number that counts: <b>reviews filed</b>. The film's views and the door split,
+      <i>selfserve</i> against <i>assign</i>, are the staffing signal.</li>
   </ol>
 
   <h3>Phase 6 &middot; The second wave &mdash; next week</h3>
@@ -209,6 +222,9 @@
         <td>The film, letter F in full, every opening with who gets which in words, and one verdict form
         &mdash; a six-minute read. All the letters are folded away at the foot. Generated with the letters by
         <code>build-letters.py</code>, so it cannot drift from them. This is the one address in the WhatsApp</td></tr>
+    <tr><td><b>The responses page</b></td><td><code>rickyrampersadbranch.com/orphan-transition/responses.html</code></td>
+        <td>Opens with the branch code. What has gone out, what has come back, who is waiting. Names come from
+        the sheet at run time and never sit in the page</td></tr>
     <tr><td><b>The film alone</b></td><td><code>rickyrampersadbranch.com/vid</code></td>
         <td>The film with nothing else on the page but two links beneath it &mdash; the address to put in a
         WhatsApp message, because the preview card shows the poster and the title</td></tr>
@@ -440,6 +456,9 @@
 <section class="band" id="rules"><div class="wrap">
   <h2>Standing rules</h2>
   <ul>
+    <li><b>The departed agents' own policies and their households never receive a letter.</b> The send
+      list marks them before anything else is looked at, and a row with anything in Exclude never sends. A
+      shared surname alone is a check, not an exclusion: Joseph and Samuel are half the parish.</li>
     <li><b>Client data never enters the repository.</b> The segment file, the merge file and the send list
       live outside it. This manual carries the method and nothing else.</li>
     <li><b>Nothing goes out with a broken link.</b> The film page must be on <code>main</code> before any

@@ -576,6 +576,30 @@ voice under the new timing and the caption gives it away.
   themselves. Nothing to paste. Client taps fire regardless; against an old
   version they fall through to the form redirect and are lost, which is why
   no letter goes out before the notice has cleared.
+- **The send runs from `apps-script/Transition.gs`**, a second file in the
+  same container-bound project as `Service.gs`. It fetches the six generated
+  letters from the site, fills the `{{fields}}` from the **Transition Send**
+  tab, cuts a blank fact out between the `<!--fact:key-->` markers the
+  generator writes, and sends with MailApp from an hourly trigger, working
+  hours only, inside the day's quota, the action letters first. No letter
+  text lives in the script: rebuild the letters and the next batch carries
+  the change. `transitionSetup` makes the tab and the triggers,
+  `transitionPreviewToMe` sends one of each to the owner,
+  `transitionSendTest` sends the rows marked `Test = Y`. A row with anything
+  in Exclude never sends; a sent row never sends twice.
+- **The send list is built by `tools/letters/sendlist.py` outside the
+  repository**, on a copy of the Branch Portfolio sheet, with the departed
+  agents' names in the git-ignored `departed.txt` beside it. It fills the
+  exclusions before it picks a letter: the agents' own policies (full-name
+  match), their households (same surname and the same address, phone or
+  e-mail as the agent's own rows), staff addresses, death claims. A shared
+  surname alone in the agent's own book, a matured policy and a postponed
+  application are `check`, never auto-sent. Asked for on 22 September:
+  "exclude the agents' policies who left … and his family, etc."
+- **What comes back is watched on `orphan-transition/responses.html`**
+  (opens with the branch code, like the wall; `action=transition`) and in the
+  8:00 digest from `transitionDigest`. First on both: taps waiting more than
+  two working days with nobody assigned.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

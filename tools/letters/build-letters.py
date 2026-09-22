@@ -81,16 +81,19 @@ BODY = "Inter,Arial,sans-serif"
 
 
 def facts_block(cfg):
+    """The strip of facts. The comment markers are for the sender (Transition.gs):
+    a cell whose field is blank for that client is cut out between its
+    <!--fact:key--> marks, and the strip goes with the last cell."""
     if not cfg.get('facts'):
         return ''
-    cells = ''.join(f'''<td style="padding:0 20px 0 0;vertical-align:top">
+    cells = ''.join(f'''<!--fact:{val.strip('{}')}--><td style="padding:0 20px 0 0;vertical-align:top">
       <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#07606f">{label}</div>
-      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{val}</div></td>''' for label, val in cfg['facts'])
+      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{val}</div></td><!--/fact-->''' for label, val in cfg['facts'])
     return f'''
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<!--facts--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="background:#f4f8fa;border-radius:10px;padding:12px 16px">
   <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
-</td></tr></table>'''
+</td></tr></table><!--/facts-->'''
 
 
 def taps_block(cfg):
