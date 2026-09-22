@@ -383,7 +383,12 @@ var SAID = {
   /* the three taps on a premium letter — they arrive as ?r= and are logged on arrival */
   paid:     'Thank you. We will check the record against your receipt and confirm within two working days.',
   pay:      'We will call to set up payment to Guardian Life directly — with Guardian Life\'s own receipt every time.',
-  callme:   'Someone from the branch will call you, today or tomorrow, at a time you choose.'
+  callme:   'Someone from the branch will call you, today or tomorrow, at a time you choose.',
+  claim:    'We will bring the maturity form and walk it through with you.',
+  deliver:  'We will bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
+  finish:   'We will bring whatever is still needed to finish your application. You do not have to find anything.',
+  stop:     'Understood. We will close the file properly and confirm that nothing is owed.',
+  urgent:   'Opening the review now. We read it before we name anyone, and you have an agent by the next working day.'
 };
 function logResp(r) {
   if (SVC.indexOf('http') !== 0) return;
@@ -414,9 +419,18 @@ document.querySelectorAll('.opt, .door').forEach(function (a) {
     thank(r, a);
   });
 });
-/* a tap made in the e-mail itself: the answer is in the address */
+/* a tap made in the e-mail itself: the answer is in the address. The urgent
+   tap is logged and carried straight into the questionnaire, so the client
+   states their concerns before anyone is named. */
 var R = Q.get('r');
-if (R && SAID[R] && R !== 'selfserve') { logResp(R); thank(R, null); }
+if (R === 'urgent') {
+  logResp(R);
+  thank(R, null);
+  /* the beacon needs a moment to leave before the page is replaced */
+  setTimeout(function () {
+    location.replace('https://donthaveanagent.com/start' + (TOKEN ? '?t=' + encodeURIComponent(TOKEN) : ''));
+  }, 900);
+} else if (R && SAID[R] && R !== 'selfserve') { logResp(R); thank(R, null); }
 </script>
 
 <!-- rrb-views -->

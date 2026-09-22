@@ -1,0 +1,156 @@
+{
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot. Days and dates only, never a money figure. The departure is named once, in the shell's closing, never in an opening.",
+ "A": {
+  "name": "A policy has matured",
+  "subject": "A policy of yours has matured. The money is waiting.",
+  "preheader": "It reached the end of its term. The money is yours, and it is waiting to be claimed.",
+  "headline": "One of your policies has <em>matured.</em>",
+  "open": "It reached the end of its term. The money is yours, and it is waiting to be claimed. We would rather you had it than not.",
+  "facts": [["Matured on", "{{matured_on}}"], ["Held since", "{{first_year}}"]],
+  "taps": ["claim", "urgent", "callme"],
+  "notice_tail": "The money in your policy has not.",
+  "send": "Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents."
+ },
+ "A2": {
+  "name": "A maturity coming up",
+  "subject": "A policy of yours matures on {{maturity_date}}",
+  "preheader": "We would like the money to reach you on time, and to talk through what comes next before it does.",
+  "headline": "A policy of yours <em>matures soon.</em>",
+  "open": "It reaches the end of its term on the date below. We want the money to reach you on time, and to talk through what comes next before it does.",
+  "facts": [["Matures on", "{{maturity_date}}"], ["Held since", "{{first_year}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "send": "Six months ahead of the date. The maturity date is not on the portfolio sheet; it comes from the intelligence sheet or policy admin."
+ },
+ "B": {
+  "name": "Paid up",
+  "subject": "You have finished paying for this one",
+  "preheader": "Nothing more to pay. Here is what you own outright.",
+  "headline": "Your policy is <em>paid up.</em>",
+  "open": "Nothing more to pay, and the cover stands for life. Most people in that position were never told what it is now worth, or what it can still do for them.",
+  "facts": [["Held since", "{{first_year}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "send": "Nearly all of this group have e-mail."
+ },
+ "C": {
+  "name": "Carrying waiver of premium",
+  "subject": "A benefit inside your policy you may not know about",
+  "preheader": "If illness stopped you working, Guardian Life would pay your premiums for you.",
+  "headline": "Your policy carries a <em>waiver of premium.</em>",
+  "open": "If illness or injury ever stopped you working, Guardian Life would keep paying your premiums for you. You have been paying for that all along. Most people who hold it were never told.",
+  "facts": [["Held since", "{{first_year}}"], ["Paid to", "{{paid_to}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "send": "The strongest letter in the set. Send it second, after A and B have warmed the domain."
+ },
+ "D": {
+  "name": "Collected off a payroll",
+  "subject": "We are checking your salary deduction, so you need not",
+  "preheader": "Deductions sometimes stop quietly. We are checking yours this week.",
+  "headline": "We are checking your <em>deduction.</em>",
+  "open": "Your premium comes off your salary, and those arrangements sometimes stop quietly. We are checking yours this week, so that if anything has slipped we find it, not you.",
+  "facts": [["Paid to", "{{paid_to}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "send": "The word \"arrears\" does not appear. Until the deduction file is reconciled, a gap is ours to chase."
+ },
+ "E": {
+  "name": "Held ten years or more",
+  "subject": "{{years}} years at a price nobody can sell you again",
+  "preheader": "Your premium is fixed on the age you were when you started. That price cannot be bought twice.",
+  "headline": "{{years}} years, at a price nobody can <em>sell you again.</em>",
+  "open": "Your premium is fixed on the age you were when you started, and no company can sell that price back to you. After three years of premiums, the Act also entitles you to a paid-up policy instead of ever cashing it in.",
+  "facts": [["Held since", "{{first_year}}"], ["Paid to", "{{paid_to}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "send": "Only a third of this group have e-mail. The rest is a phone call; the argument is strongest here."
+ },
+ "F": {
+  "name": "In force",
+  "subject": "Your policy is unchanged. One tap tells us what you would like next.",
+  "preheader": "Same cover, same premium, same beneficiaries. Then whichever answer suits you.",
+  "headline": "Your policy is <em>unchanged.</em>",
+  "open": "Same cover, same premium, same beneficiaries. We wanted you to hear that from us rather than wonder, and to give you the easiest possible way to tell us what you would like next.",
+  "facts": [["Held since", "{{first_year}}"], ["Paid to", "{{paid_to}}"]],
+  "taps": ["urgent", "review", "callme"],
+  "send": "The core letter. The largest group and the best reach."
+ },
+ "G": {
+  "name": "Lapsed",
+  "subject": "A policy you may have written off could still be worth something",
+  "preheader": "A policy that stopped does not always stop being worth something.",
+  "headline": "A policy you may have <em>written off.</em>",
+  "open": "It stopped being paid, but a policy that stops does not always stop being worth something. Some keep a value that is yours. Some can be restarted.",
+  "facts": [["Held since", "{{first_year}}"], ["Last paid to", "{{paid_to}}"]],
+  "taps": ["review", "urgent", "callme"],
+  "inforce": false,
+  "send": "A week behind the others. It does not mention the departure at all."
+ },
+ "H": {
+  "name": "Nothing held",
+  "subject": "Is this still the right address for you?",
+  "preheader": "A short note from the branch that looked after you.",
+  "headline": "A short note from the <em>branch.</em>",
+  "open": "You were a client of this branch and our records still carry your details. We are writing to make sure we can still reach you. Nothing to do, nothing to pay.",
+  "facts": [],
+  "taps": ["informed", "question"],
+  "inforce": false,
+  "send": "Lightest touch. Last to go."
+ },
+ "I1": {
+  "name": "One premium showing as due",
+  "subject": "One premium is showing as due. One tap puts it right.",
+  "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
+  "headline": "One premium is showing as <em>due.</em>",
+  "open": "It is usually one of three things: you have paid and the record has not caught up; the way you pay has changed; or it simply slipped. One tap below tells us which, and we do the rest.",
+  "facts": [["Paid to", "{{paid_to}}"], ["Days outstanding", "{{days}}"]],
+  "taps": ["paid", "pay", "callme"],
+  "mode": "premium",
+  "act": "Premiums or other payments due that are received by an agency, brokerage or a sales representative on behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or stipulations to the contrary.",
+  "plain": "A premium you handed to a registered representative counts as paid to Guardian Life. Keep the receipt.",
+  "send": "Sixty-one to ninety days on the Days column, after the paid-to date is checked against cash and the deduction file."
+ },
+ "I2": {
+  "name": "More than one premium showing as due",
+  "subject": "Your policy is still in force. Let us keep it that way.",
+  "preheader": "The value it has built may be carrying it for now. Here is what the law says, and three ways to answer.",
+  "headline": "Your policy is <em>still in force.</em> Let us keep it that way.",
+  "open": "Where a policy has built a value, the Act does not let it be forfeited while that value covers what is due. Yours may be carrying itself for now, out of what you already paid in. Decide now, while every option is still open.",
+  "facts": [["Paid to", "{{paid_to}}"], ["Days outstanding", "{{days}}"], ["Projected lapse", "{{projected_lapse}}"]],
+  "taps": ["paid", "pay", "callme"],
+  "mode": "premium",
+  "act": "An ordinary policy shall not be forfeited by reason only of non-payment of any premiums where the surrender value of the policy &hellip; exceeds the sum of the amount of the debts owing to the insurer under or secured by the policy and the amount of the overdue premium.",
+  "plain": "If your policy has built a value, it cannot be forfeited for a missed premium while that value covers what is due.",
+  "send": "Ninety-one to one hundred and eighty days on the Days column. The paid-to date checked first."
+ },
+ "I3": {
+  "name": "A decision the policy needs",
+  "subject": "Your policy needs a decision, and the law gives you time",
+  "preheader": "Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.",
+  "headline": "Your policy needs a <em>decision.</em>",
+  "open": "Nothing can happen without a written late-payment notice and twenty business days after it. We are writing before that. If you cannot keep paying, three years of premiums entitle you to a smaller policy, fully paid, instead of losing the cover.",
+  "facts": [["Paid to", "{{paid_to}}"], ["Days outstanding", "{{days}}"], ["Projected lapse", "{{projected_lapse}}"]],
+  "taps": ["paid", "pay", "callme"],
+  "mode": "premium",
+  "act": "&hellip; the insurer liable under the policy serves a late-payment notice on the policyholder stating &hellip; the date of the notice, the due date of the premium and the amount due or payable to the insurer; and &hellip; that the policy will be forfeited at the expiration of twenty business days after the date of the notice if the premium or a sum sufficient to keep the policy in force is not paid to the insurer within that period.",
+  "plain": "Before any policy can be forfeited, you must receive a written notice carrying the amount, and twenty business days from it.",
+  "send": "Over one hundred and eighty days on the Days column. Checked against cash first. The receiving agent calls within two days."
+ },
+ "J": {
+  "name": "Contract ready, not yet delivered",
+  "subject": "Your contract is ready. We will bring it to you.",
+  "preheader": "Your policy is in force. The document itself has not reached you yet.",
+  "headline": "Your policy is in force. Your <em>contract</em> is ready.",
+  "open": "The document itself has not reached you yet. We are putting that right: the branch will bring it and go through it with you. The only signature it needs is the acknowledgement that you received it.",
+  "facts": [["Issued on", "{{issue_date}}"]],
+  "taps": ["deliver", "urgent", "callme"],
+  "send": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
+ },
+ "K": {
+  "name": "An application still in progress",
+  "subject": "Your application: where it stands, and who is finishing it",
+  "preheader": "It has not been forgotten. Whatever is still needed, we bring to you.",
+  "headline": "Your application is <em>still in progress.</em>",
+  "open": "That is ours to finish, not yours to chase. If anything is still needed, a signature, a medical, a document, the person who calls will bring it to you rather than ask you to find it.",
+  "facts": [["Application received", "{{app_received}}"]],
+  "taps": ["finish", "callme", "stop"],
+  "notice_tail": "Your application has not.",
+  "send": "From the pending list. Every file is read before the call."
+ }
+}

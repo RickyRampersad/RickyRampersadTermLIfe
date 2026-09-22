@@ -1,106 +1,264 @@
-[
- {
-  "segment": "A",
-  "name": "A policy has matured",
-  "subject": "A policy of yours has matured \u2014 there is money to claim",
-  "preheader": "It reached the end of its term. The money is yours, and it is waiting.",
-  "file": "A.html",
-  "send_note": "Only a handful of this group have an e-mail. The rest is a phone call, and it is the one call nobody resents."
+{
+ "fields": {
+  "first_name": "Client \u2014 first name only",
+  "agent_first_name": "Agent \u2014 first name only",
+  "first_year": "Issue Date \u2014 the year",
+  "years": "Issue Date \u2014 whole years held",
+  "issue_date": "Issue Date",
+  "paid_to": "Paid To Date",
+  "days": "Days \u2014 days outstanding",
+  "projected_lapse": "Projected Lapse Date",
+  "app_received": "App Received Date",
+  "matured_on": "policy admin \u2014 not on the portfolio sheet",
+  "maturity_date": "the intelligence sheet or policy admin \u2014 not on the portfolio sheet",
+  "token": "the send list \u2014 opaque, never a policy number",
+  "segment": "the send list \u2014 the letter's own key"
  },
- {
-  "segment": "B",
-  "name": "Paid up",
-  "subject": "You have finished paying for this one",
-  "preheader": "Nothing more to pay. Here is what you own outright.",
-  "file": "B.html",
-  "send_note": "Nearly all of this group have e-mail."
+ "taps": {
+  "urgent": "I want an agent now. Let me tell you my concerns first",
+  "review": "Tell me what I hold, in writing",
+  "callme": "Call me",
+  "claim": "Help me claim it",
+  "deliver": "Bring me my contract",
+  "finish": "Finish my application",
+  "paid": "I have already paid",
+  "pay": "Set me up to pay Guardian Life directly",
+  "stop": "I would rather not proceed",
+  "informed": "All good, keep my details",
+  "question": "My details have changed"
  },
- {
-  "segment": "C",
-  "name": "Carrying waiver of premium",
-  "subject": "There is a benefit inside your policy you may not know about",
-  "preheader": "If illness stopped you working, Guardian Life would pay your premiums for you.",
-  "file": "C.html",
-  "send_note": "The strongest letter in the set. Send it second, after A and B have warmed the domain."
- },
- {
-  "segment": "D",
-  "name": "Collected off a payroll",
-  "subject": "Your policy, and a check we are running on your salary deduction",
-  "preheader": "Deductions sometimes stop quietly. We are checking yours so that you do not have to.",
-  "file": "D.html",
-  "send_note": "The word \"arrears\" does not appear. Until the deduction file is reconciled, a gap is ours to chase, not theirs to explain."
- },
- {
-  "segment": "E",
-  "name": "Held ten years or more",
-  "subject": "You have held this cover for {{years}} years",
-  "preheader": "Your premium is fixed on the age you were when you started. Nobody can sell you that again.",
-  "file": "E.html",
-  "send_note": "Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the argument is strongest here."
- },
- {
-  "segment": "F",
-  "name": "In force",
-  "subject": "A quick summary of your Guardian Life cover \u2014 and two ways to pick this up",
-  "preheader": "A short film, then whichever door suits you.",
-  "file": "F.html",
-  "send_note": "The core letter. The largest group and the best reach."
- },
- {
-  "segment": "G",
-  "name": "Lapsed",
-  "subject": "A policy you may have written off \u2014 let us tell you what it is worth",
-  "preheader": "A policy that stopped does not always stop being worth something.",
-  "file": "G.html",
-  "send_note": "A week behind the others, and it does not mention the departure at all &mdash; these clients stopped paying years ago and it is irrelevant to them."
- },
- {
-  "segment": "H",
-  "name": "Nothing held",
-  "subject": "Is this still the right address for you?",
-  "preheader": "A short note from the branch that looked after you.",
-  "file": "H.html",
-  "send_note": "Lightest touch. No claim about anything they hold, because they hold nothing. Last to go."
- },
- {
-  "segment": "I1",
-  "name": "One premium showing as due",
-  "subject": "One premium on your policy is showing as due \u2014 one tap tells us which of three things is true",
-  "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost, and here is the easiest way.",
-  "file": "I1.html",
-  "send_note": "Sixty-one to ninety days. After the paid-to date is checked against cash and the deduction file. Never a figure."
- },
- {
-  "segment": "I2",
-  "name": "More than one premium showing as due",
-  "subject": "Your policy is still in force \u2014 and more than one premium is showing as due",
-  "preheader": "The value your policy has built may be carrying it. Here is what the law says, and three ways to answer.",
-  "file": "I2.html",
-  "send_note": "Ninety-one to one hundred and eighty days. The paid-to date checked first. Never a figure."
- },
- {
-  "segment": "I3",
-  "name": "A decision the policy needs",
-  "subject": "Your policy needs a decision from you \u2014 and the law gives you time and three ways to make it",
-  "preheader": "Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.",
-  "file": "I3.html",
-  "send_note": "Over one hundred and eighty days. Checked against cash first &mdash; some of these have paid. Never a figure. The receiving agent calls within two days of the send."
- },
- {
-  "segment": "J",
-  "name": "Contract ready, not yet delivered",
-  "subject": "Your policy is in force \u2014 and your contract is ready to be delivered",
-  "preheader": "The document itself has not reached you yet. We will bring it.",
-  "file": "J.html",
-  "send_note": "Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving agent, with the acknowledgement letter."
- },
- {
-  "segment": "K",
-  "name": "An application still in progress",
-  "subject": "Your application with Guardian Life \u2014 where it stands, and who is finishing it",
-  "preheader": "It has not been forgotten. Here is what is outstanding and who is completing it.",
-  "file": "K.html",
-  "send_note": "Built from the pending list. Every file is read before the call; the agent brings the outstanding requirement, never a list of them."
- }
-]
+ "letters": [
+  {
+   "segment": "A",
+   "name": "A policy has matured",
+   "subject": "A policy of yours has matured. The money is waiting.",
+   "preheader": "It reached the end of its term. The money is yours, and it is waiting to be claimed.",
+   "file": "A.html",
+   "facts": [
+    "matured_on",
+    "first_year"
+   ],
+   "taps": [
+    "claim",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents."
+  },
+  {
+   "segment": "A2",
+   "name": "A maturity coming up",
+   "subject": "A policy of yours matures on {{maturity_date}}",
+   "preheader": "We would like the money to reach you on time, and to talk through what comes next before it does.",
+   "file": "A2.html",
+   "facts": [
+    "maturity_date",
+    "first_year"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "Six months ahead of the date. The maturity date is not on the portfolio sheet; it comes from the intelligence sheet or policy admin."
+  },
+  {
+   "segment": "B",
+   "name": "Paid up",
+   "subject": "You have finished paying for this one",
+   "preheader": "Nothing more to pay. Here is what you own outright.",
+   "file": "B.html",
+   "facts": [
+    "first_year"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "Nearly all of this group have e-mail."
+  },
+  {
+   "segment": "C",
+   "name": "Carrying waiver of premium",
+   "subject": "A benefit inside your policy you may not know about",
+   "preheader": "If illness stopped you working, Guardian Life would pay your premiums for you.",
+   "file": "C.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "The strongest letter in the set. Send it second, after A and B have warmed the domain."
+  },
+  {
+   "segment": "D",
+   "name": "Collected off a payroll",
+   "subject": "We are checking your salary deduction, so you need not",
+   "preheader": "Deductions sometimes stop quietly. We are checking yours this week.",
+   "file": "D.html",
+   "facts": [
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "The word \"arrears\" does not appear. Until the deduction file is reconciled, a gap is ours to chase."
+  },
+  {
+   "segment": "E",
+   "name": "Held ten years or more",
+   "subject": "{{years}} years at a price nobody can sell you again",
+   "preheader": "Your premium is fixed on the age you were when you started. That price cannot be bought twice.",
+   "file": "E.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "Only a third of this group have e-mail. The rest is a phone call; the argument is strongest here."
+  },
+  {
+   "segment": "F",
+   "name": "In force",
+   "subject": "Your policy is unchanged. One tap tells us what you would like next.",
+   "preheader": "Same cover, same premium, same beneficiaries. Then whichever answer suits you.",
+   "file": "F.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "urgent",
+    "review",
+    "callme"
+   ],
+   "send_note": "The core letter. The largest group and the best reach."
+  },
+  {
+   "segment": "G",
+   "name": "Lapsed",
+   "subject": "A policy you may have written off could still be worth something",
+   "preheader": "A policy that stopped does not always stop being worth something.",
+   "file": "G.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "A week behind the others. It does not mention the departure at all."
+  },
+  {
+   "segment": "H",
+   "name": "Nothing held",
+   "subject": "Is this still the right address for you?",
+   "preheader": "A short note from the branch that looked after you.",
+   "file": "H.html",
+   "facts": [],
+   "taps": [
+    "informed",
+    "question"
+   ],
+   "send_note": "Lightest touch. Last to go."
+  },
+  {
+   "segment": "I1",
+   "name": "One premium showing as due",
+   "subject": "One premium is showing as due. One tap puts it right.",
+   "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
+   "file": "I1.html",
+   "facts": [
+    "paid_to",
+    "days"
+   ],
+   "taps": [
+    "paid",
+    "pay",
+    "callme"
+   ],
+   "send_note": "Sixty-one to ninety days on the Days column, after the paid-to date is checked against cash and the deduction file."
+  },
+  {
+   "segment": "I2",
+   "name": "More than one premium showing as due",
+   "subject": "Your policy is still in force. Let us keep it that way.",
+   "preheader": "The value it has built may be carrying it for now. Here is what the law says, and three ways to answer.",
+   "file": "I2.html",
+   "facts": [
+    "paid_to",
+    "days",
+    "projected_lapse"
+   ],
+   "taps": [
+    "paid",
+    "pay",
+    "callme"
+   ],
+   "send_note": "Ninety-one to one hundred and eighty days on the Days column. The paid-to date checked first."
+  },
+  {
+   "segment": "I3",
+   "name": "A decision the policy needs",
+   "subject": "Your policy needs a decision, and the law gives you time",
+   "preheader": "Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.",
+   "file": "I3.html",
+   "facts": [
+    "paid_to",
+    "days",
+    "projected_lapse"
+   ],
+   "taps": [
+    "paid",
+    "pay",
+    "callme"
+   ],
+   "send_note": "Over one hundred and eighty days on the Days column. Checked against cash first. The receiving agent calls within two days."
+  },
+  {
+   "segment": "J",
+   "name": "Contract ready, not yet delivered",
+   "subject": "Your contract is ready. We will bring it to you.",
+   "preheader": "Your policy is in force. The document itself has not reached you yet.",
+   "file": "J.html",
+   "facts": [
+    "issue_date"
+   ],
+   "taps": [
+    "deliver",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
+  },
+  {
+   "segment": "K",
+   "name": "An application still in progress",
+   "subject": "Your application: where it stands, and who is finishing it",
+   "preheader": "It has not been forgotten. Whatever is still needed, we bring to you.",
+   "file": "K.html",
+   "facts": [
+    "app_received"
+   ],
+   "taps": [
+    "finish",
+    "callme",
+    "stop"
+   ],
+   "send_note": "From the pending list. Every file is read before the call."
+  }
+ ]
+}

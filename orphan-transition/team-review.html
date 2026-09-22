@@ -122,15 +122,15 @@
   <div class="eyebrow">Branch review &middot; before a single client sees it</div>
   <h1>Read it as if it were <em>your client's</em> inbox.</h1>
   <p>Nine of our colleagues have moved on. Their clients have not. This afternoon the branch writes to every
-     one of those clients &mdash; a different letter depending on what they hold &mdash; with a short film and
-     two doors into a review. You see all of it first. Say what you would change, and say whether you are
-     taking assignments.</p>
+     one of those clients &mdash; a different letter depending on what they hold, with their own facts read
+     off the sheet &mdash; with a short film and answers they can give with one tap. You see all of it first.
+     Say what you would change, and say whether you are taking assignments.</p>
   <a class="ask" href="#verdict">Give your verdict &darr;</a>
 </div></div>
 
 <nav class="toc"><div class="wrap">
   <a href="#why">Why this, why today</a><a href="#record">What the branch has done</a><a href="#film">The film</a>
-  <a href="#letters">The eight letters</a><a href="#check">What to check</a><a href="#verdict">Your verdict</a>
+  <a href="#letters">The letters</a><a href="#check">What to check</a><a href="#verdict">Your verdict</a>
   <a href="#assign">How assignments work</a><a href="#tone">How we come across</a>
 </div></nav>
 
@@ -139,12 +139,15 @@
   <p class="sub">The clients are the point. Everything here is built so that not one of them is left
     wondering who looks after them.</p>
   <div class="cols three">
-    <div class="cd"><h3>What goes out</h3><p>One of eight letters, chosen by what the client holds &mdash; a
-      matured policy, a paid-up one, a waiver of premium, a payroll deduction, ten years of cover, an in-force
-      policy, a lapsed one, or nothing at all. Each opens with something the client is glad to hear.</p></div>
-    <div class="cd"><h3>What every letter carries</h3><p>The film. A plain note on what the Insurance Act
-      already gives them. Two doors: fill in the review yourself now, or have one of you go through it with
-      them. And the branch manager's name at the foot.</p></div>
+    <div class="cd"><h3>What goes out</h3><p>One letter, chosen by what the client holds &mdash; a matured
+      policy, a maturity coming up, a paid-up one, a waiver of premium, a payroll deduction, ten years of
+      cover, an in-force policy, a premium showing as due, a contract not yet delivered, an application in
+      progress, a lapsed one, or nothing at all. Each opens with something the client is glad to hear.</p></div>
+    <div class="cd"><h3>What every letter carries</h3><p>The facts for that client, read off the sheet: held
+      since, paid to, days outstanding. Taps they answer with one thumb, always including the door into the
+      questionnaire for anyone who wants an agent now and wants to say why first. The film, in one line. A
+      plain note on what the Insurance Act already gives them. How the branch has looked after them. And the
+      branch manager's name at the foot.</p></div>
     <div class="cd"><h3>What comes back</h3><p>Every click lands on the branch sheet with the segment
       attached. We match each client to one of you by town and by household, you get a brief, and the file
       is done when a review is signed on form 2000-03-147.</p></div>
@@ -201,25 +204,31 @@
 </div></section>
 
 <section class="band alt" id="letters"><div class="wrap">
-  <h2>The eight letters</h2>
-  <p class="sub">One shell, eight openings. Open any one and read it as the client will, or see
-    <a href="../templates/">all eight on one page</a>. The curly <code>{{fields}}</code> are filled per
-    client at send time &mdash; the first name, the years held, and the first name of the representative who
-    moved on.</p>
+  <h2>The letters</h2>
+  <p class="sub">One shell, one opening per situation. Every letter is a headline, one paragraph, the facts
+    read off the sheet for that client, the taps they answer with one thumb, the film in one line, how the
+    branch has looked after them, and the sign-off. Open any one and read it as the client will, or see
+    <a href="../templates/">the whole set on one page</a>. The curly <code>{{fields}}</code> are filled per
+    client at send time from the Branch Portfolio sheet &mdash; the first name, the year the policy started,
+    the paid-to date, the days outstanding, and the first name of the representative who moved on. Days and
+    dates only; never a figure.</p>
   <div class="letters">
-    <a class="letter" href="letters/A.html" target="_blank"><div class="s">A &middot; A policy has matured</div><b>A policy of yours has matured &mdash; there is money to claim</b><span>Money is waiting. The one letter nobody resents.</span></a>
-    <a class="letter" href="letters/B.html" target="_blank"><div class="s">B &middot; Paid up</div><b>You have finished paying for this one</b><span>They own it outright and may not know what it is worth.</span></a>
-    <a class="letter" href="letters/C.html" target="_blank"><div class="s">C &middot; Waiver of premium</div><b>There is a benefit inside your policy you may not know about</b><span>If illness stopped them working, Guardian pays the premiums. Most were never told.</span></a>
-    <a class="letter" href="letters/D.html" target="_blank"><div class="s">D &middot; Payroll deduction</div><b>Your policy, and a check we are running on your salary deduction</b><span>We check the deduction so they do not have to. The word &ldquo;arrears&rdquo; never appears.</span></a>
-    <a class="letter" href="letters/E.html" target="_blank"><div class="s">E &middot; Ten years or more</div><b>You have held this cover for {{years}} years</b><span>The premium is priced at the age they started. Nobody can sell that back.</span></a>
-    <a class="letter" href="letters/F.html" target="_blank"><div class="s">F &middot; In force</div><b>A quick summary of your Guardian Life cover &mdash; and two ways to pick this up</b><span>The core letter, to the largest group.</span></a>
-    <a class="letter" href="letters/G.html" target="_blank"><div class="s">G &middot; Lapsed</div><b>A policy you may have written off &mdash; let us tell you what it is worth</b><span>Goes a week later and does not mention the change at all.</span></a>
-    <a class="letter" href="letters/H.html" target="_blank"><div class="s">H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. Last to go.</span></a>
-    <a class="letter" href="letters/I1.html" target="_blank"><div class="s">I1 &middot; One premium due, 61 to 90 days</div><b>One premium on your policy is showing as due &mdash; one tap tells us which of three things is true</b><span>Nothing is lost; a payment to a representative counts as paid; three one-tap answers. Never a figure.</span></a>
-    <a class="letter" href="letters/I2.html" target="_blank"><div class="s">I2 &middot; More than one premium due, 91 to 180 days</div><b>Your policy is still in force &mdash; and more than one premium is showing as due</b><span>The non-forfeiture rule in the Act's words; decide now while every option is open.</span></a>
-    <a class="letter" href="letters/I3.html" target="_blank"><div class="s">I3 &middot; Unpaid over 180 days</div><b>Your policy needs a decision from you &mdash; and the law gives you time and three ways to make it</b><span>Written notice and twenty business days before anything is forfeited; a paid-up policy after three years.</span></a>
-    <a class="letter" href="letters/J.html" target="_blank"><div class="s">J &middot; Contract not yet delivered</div><b>Your policy is in force &mdash; and your contract is ready to be delivered</b><span>The branch brings the contract and goes through it. Only the acknowledgement is signed.</span></a>
-    <a class="letter" href="letters/K.html" target="_blank"><div class="s">K &middot; Application in progress</div><b>Your application with Guardian Life &mdash; where it stands, and who is finishing it</b><span>Ours to finish, not theirs to chase. The agent brings the outstanding requirement.</span></a>
+  <!-- letters:start -->
+    <a class="letter" href="letters/A.html" target="_blank"><div class="s">A &middot; A policy has matured</div><b>A policy of yours has matured. The money is waiting.</b><span>What they are glad to hear: money is waiting to be claimed.</span></a>
+    <a class="letter" href="letters/A2.html" target="_blank"><div class="s">A2 &middot; A maturity coming up</div><b>A policy of yours matures on {{maturity_date}}</b><span>What they are glad to hear: the money will reach them on time, and someone will plan what comes next.</span></a>
+    <a class="letter" href="letters/B.html" target="_blank"><div class="s">B &middot; Paid up</div><b>You have finished paying for this one</b><span>What they are glad to hear: they own it outright and may not know what it is worth.</span></a>
+    <a class="letter" href="letters/C.html" target="_blank"><div class="s">C &middot; Carrying waiver of premium</div><b>A benefit inside your policy you may not know about</b><span>What they are glad to hear: a benefit inside the policy they were probably never told about.</span></a>
+    <a class="letter" href="letters/D.html" target="_blank"><div class="s">D &middot; Collected off a payroll</div><b>We are checking your salary deduction, so you need not</b><span>What they are glad to hear: we are checking the deduction so they do not have to.</span></a>
+    <a class="letter" href="letters/E.html" target="_blank"><div class="s">E &middot; Held ten years or more</div><b>{{years}} years at a price nobody can sell you again</b><span>What they are glad to hear: a price nobody can sell them again.</span></a>
+    <a class="letter" href="letters/F.html" target="_blank"><div class="s">F &middot; In force</div><b>Your policy is unchanged. One tap tells us what you would like next.</b><span>What they are glad to hear: the same cover, the same premium, the same beneficiaries.</span></a>
+    <a class="letter" href="letters/G.html" target="_blank"><div class="s">G &middot; Lapsed</div><b>A policy you may have written off could still be worth something</b><span>What they are glad to hear: a policy they wrote off may still hold value.</span></a>
+    <a class="letter" href="letters/H.html" target="_blank"><div class="s">H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>What they are glad to hear: nothing to do and nothing to pay.</span></a>
+    <a class="letter" href="letters/I1.html" target="_blank"><div class="s">I1 &middot; One premium showing as due</div><b>One premium is showing as due. One tap puts it right.</b><span>What they are glad to hear: nothing is lost, and a payment to a representative counts as paid.</span></a>
+    <a class="letter" href="letters/I2.html" target="_blank"><div class="s">I2 &middot; More than one premium showing as due</div><b>Your policy is still in force. Let us keep it that way.</b><span>What they are glad to hear: the policy is still in force, and the value it has built may be carrying it.</span></a>
+    <a class="letter" href="letters/I3.html" target="_blank"><div class="s">I3 &middot; A decision the policy needs</div><b>Your policy needs a decision, and the law gives you time</b><span>What they are glad to hear: nothing can be forfeited without written notice and twenty business days, and a paid-up policy may be kept.</span></a>
+    <a class="letter" href="letters/J.html" target="_blank"><div class="s">J &middot; Contract ready, not yet delivered</div><b>Your contract is ready. We will bring it to you.</b><span>What they are glad to hear: the policy is in force, and the branch is bringing the contract.</span></a>
+    <a class="letter" href="letters/K.html" target="_blank"><div class="s">K &middot; An application still in progress</div><b>Your application: where it stands, and who is finishing it</b><span>What they are glad to hear: the file is being finished for them, not chased.</span></a>
+  <!-- letters:end -->
   </div>
   <p class="fine" style="margin-top:14px">Also in the set: the client page with the film and the two doors
     (<a href="../orphan-video/" target="_blank">orphan-video</a>), the plain-language page on how the Act protects
@@ -242,7 +251,7 @@
       <p>The letters make claims about the policy &mdash; a waiver, a paid-up value, a price fixed at the
       starting age. If you know a case where that is not how the product works, we need it before the send.</p></div>
     <div class="cd"><h3>4 &middot; Is the ask clear?</h3>
-      <p>Two doors, one click. If you had to read the letter twice to find what it wants you to do, the
+      <p>Three taps, one thumb. If you had to read the letter twice to find what it wants you to do, the
       client will not read it twice.</p></div>
   </div>
 </div></section>
@@ -267,6 +276,7 @@
       <option value="page">The client page with the two doors</option>
       <option value="protected">The &ldquo;how the law protects you&rdquo; page</option>
       <option value="A">Letter A &middot; a policy has matured</option>
+      <option value="A2">Letter A2 &middot; a maturity within six months</option>
       <option value="B">Letter B &middot; paid up</option>
       <option value="C">Letter C &middot; waiver of premium</option>
       <option value="D">Letter D &middot; payroll deduction</option>

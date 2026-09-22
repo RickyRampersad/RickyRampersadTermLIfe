@@ -1,18 +1,22 @@
 #!/usr/bin/env python3
-"""Generate the eight transition letters as sendable e-mail HTML.
+"""Generate the transition letters as sendable e-mail HTML, and the team's page.
 
-One shell, eight openings. Every letter carries the film, the Act note, the
-two doors into the review and the same sign-off; only the subject and the
-first paragraphs change by segment. Generated, not hand-typed, so a change to
-the shell reaches all eight in one run.
+One compact shell, one opening per situation. The words live in
+openings.json beside this script; the shell lives here. Every letter is: a
+headline, one short paragraph, the facts read off the Branch Portfolio sheet
+for that client, the answers they can give with one tap, the film in one
+line, how the branch has looked after them, and the sign-off. Generated, not
+hand-typed, so a change to the shell reaches every letter in one run.
 
 E-mail rules: 600px table, every style inline, the logo a hosted PNG — Gmail
 strips SVG and blocks data: URIs, so anything else arrives as an empty box.
 
-Merge fields are {{double_braces}}. No client data lives here; the merge file
-that fills them is built outside the repository.
+Merge fields are {{double_braces}}, filled per client at send time from the
+sheet; FIELDS below says which column each one reads. No client data lives
+here; the merge file is built outside the repository. No money figure ever
+appears: days and dates only.
 
-  python3 build-letters.py          → orphan-transition/letters/*.html
+  python3 build-letters.py     → orphan-transition/letters/*.html, templates/index.html
 """
 import html, json, pathlib
 
@@ -26,331 +30,164 @@ LOGO = 'https://rickyrampersadbranch.com/logo-mark.png'
 # the token and segment intact — nothing in a client's hand carries the word
 # "orphan", which is the trade's word for them and not one to hand a rival.
 FILM = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}'
-REVIEW = 'https://donthaveanagent.com/start?t={{token}}'
-ASSIGN = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}#choose'
 PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}'
-# One tap from a premium letter: the answer travels as r= and the page logs it on arrival.
-RESPOND = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
+# One tap: the answer travels as r= and the page logs it on arrival. The
+# 'urgent' tap is logged and then carried straight into the questionnaire,
+# so the client states their concerns before anyone is named.
+TAP = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
 
-# ── the eight openings ────────────────────────────────────────────────
-SEGMENTS = {
- 'A': dict(
-  name='A policy has matured',
-  subject='A policy of yours has matured — there is money to claim',
-  preheader='It reached the end of its term. The money is yours, and it is waiting.',
-  headline='One of your policies has <em>matured.</em>',
-  open=['One of your policies reached the end of its term and has matured. That money is yours, and it '
-        'is sitting there waiting to be claimed. Nothing about this is a sales call &mdash; we would simply '
-        'rather you had it than not.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life, which is why this is '
-        'coming from the branch. Your other policies are completely unaffected.'],
-  send='Only a handful of this group have an e-mail. The rest is a phone call, and it is the one call '
-       'nobody resents.'),
- 'B': dict(
-  name='Paid up',
-  subject='You have finished paying for this one',
-  preheader='Nothing more to pay. Here is what you own outright.',
-  headline='Your policy is <em>paid up.</em>',
-  open=['Your policy is paid up. There is nothing more to pay, and the cover stands for the rest of your '
-        'life. Most people in that position have never been told what it is now worth, or what it can '
-        'still do for them.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy is '
-        'completely unaffected &mdash; it is yours, outright.'],
-  send='Nearly all of this group have e-mail.'),
- 'C': dict(
-  name='Carrying waiver of premium',
-  subject='There is a benefit inside your policy you may not know about',
-  preheader='If illness stopped you working, Guardian Life would pay your premiums for you.',
-  headline='Your policy carries a <em>waiver of premium.</em>',
-  open=['In plain terms: if illness or injury stopped you working, Guardian Life would keep paying your '
-        'premiums for you, and your cover would stay in force while you recovered. You have been paying for '
-        'that protection all along. Most people who hold it have never been told.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy, and that '
-        'benefit inside it, are completely unaffected.'],
-  send='The strongest letter in the set. Send it second, after A and B have warmed the domain.'),
- 'D': dict(
-  name='Collected off a payroll',
-  subject='Your policy, and a check we are running on your salary deduction',
-  preheader='Deductions sometimes stop quietly. We are checking yours so that you do not have to.',
-  headline='Your policy is unchanged. We are also checking your <em>deduction.</em>',
-  open=['Your premium comes off your salary. Those arrangements sometimes stop quietly &mdash; a change of '
-        'employer, a payroll system, a posting &mdash; and the first anybody notices is a gap. We are '
-        'checking your deduction against our own records this week, so that if something has slipped we '
-        'find it rather than you. You do not need to do anything. And if you would ever like to know exactly '
-        'what Guardian Life has recorded as paid on your policy, ask the branch for your paid-to date &mdash; '
-        'it is on your file and takes one call.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy is '
-        'completely unaffected.'],
-  send='The word "arrears" does not appear. Until the deduction file is reconciled, a gap is ours to '
-       'chase, not theirs to explain.'),
- 'E': dict(
-  name='Held ten years or more',
-  subject='You have held this cover for {{years}} years',
-  preheader='Your premium is fixed on the age you were when you started. Nobody can sell you that again.',
-  headline='A policy held for {{years}} years cannot be bought again <em>at the price you pay.</em>',
-  open=['Your premium is fixed on the age you were when you took this policy out &mdash; not your age now. '
-        'A policy written for you {{years}} years ago is still charging {{years}}-years-ago prices, and no '
-        'company can sell that price back to you. It is the part of a life policy people give away without '
-        'realising they owned it. The value inside it is not sitting idle either: after three years of '
-        'premiums, the Insurance Act entitles you to a smaller policy fully paid for life instead of cashing '
-        'it in, and the branch will put that figure in writing beside what a surrender would pay before you '
-        'decide anything.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy, and that '
-        'price, are completely unaffected.'],
-  send='Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the '
-       'argument is strongest here.'),
- 'F': dict(
-  name='In force',
-  subject='A quick summary of your Guardian Life cover — and two ways to pick this up',
-  preheader='A short film, then whichever door suits you.',
-  headline='You have been with us {{years}} years. Here is where <em>things stand.</em>',
-  open=['Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your policy is '
-        'completely unaffected &mdash; same cover, same premium, same beneficiaries. I wanted you to hear '
-        'that from us rather than wonder.',
-        'Before anything else, a short film that answers the question most people actually have.'],
-  send='The core letter. The largest group and the best reach.'),
- 'G': dict(
-  name='Lapsed',
-  subject='A policy you may have written off — let us tell you what it is worth',
-  preheader='A policy that stopped does not always stop being worth something.',
-  headline='You may still have <em>money</em> in a policy you think is gone.',
-  open=['You held a policy with us that stopped being paid. People assume that is the end of it. Often it '
-        'is not &mdash; some build a value that stays yours, some can be restarted, and a few quietly mature '
-        'with nobody claiming them.',
-        'We are not asking you for anything. We would just like to tell you what you have.'],
-  send='A week behind the others, and it does not mention the departure at all &mdash; these clients '
-       'stopped paying years ago and it is irrelevant to them.',
-  inforce=False),
- 'H': dict(
-  name='Nothing held',
-  subject='Is this still the right address for you?',
-  preheader='A short note from the branch that looked after you.',
-  headline='A short note from the <em>branch.</em>',
-  open=['You were a client of this branch, and our records still carry your details. We are writing to '
-        'everyone we have looked after, to make sure we can still reach you, and to leave you with something '
-        'worth two minutes of your time.',
-        'There is nothing to do and nothing to pay. If the address is wrong, a reply puts it right.'],
-  send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.',
-  inforce=False),
- # ── the three action letters: they come before the waterfall ─────────
- # The premium letters, in bands, so that a client two months behind and a
- # client eight months behind are not told the same thing. Each carries the
- # Act's own words for its stage and three one-tap answers. Never a figure.
- 'I1': dict(
-  name='One premium showing as due',
-  subject='One premium on your policy is showing as due — one tap tells us which of three things is true',
-  preheader='Already paid it? Tell us and we put the record right. Not yet? Nothing is lost, and here is the easiest way.',
-  headline='One premium is showing as <em>due.</em>',
-  open=['Our records show one premium on your policy that has been due for more than sixty days. That is early '
-        'enough that nothing is lost, and it is usually one of three things: you have paid it and the record has '
-        'not caught up; the way you pay has changed since your representative moved on; or it simply slipped. '
-        'Whichever it is, one tap below tells us, and we do the rest.',
-        'If you paid it to a representative, keep your receipt: the Insurance Act says that payment counts as '
-        'received by Guardian Life. Your policy, your cover and your beneficiary are unchanged.'],
-  mode='premium',
-  act='Premiums or other payments due that are received by an agency, brokerage or a sales representative on '
-      'behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or '
-      'stipulations to the contrary.',
-  plain='A premium you handed to a registered representative counts as paid to Guardian Life, and the receipt '
-        'you were given is Guardian Life\'s receipt. Keep it.',
-  send='Sixty-one to ninety days. After the paid-to date is checked against cash and the deduction file. '
-       'Never a figure.'),
- 'I2': dict(
-  name='More than one premium showing as due',
-  subject='Your policy is still in force — and more than one premium is showing as due',
-  preheader='The value your policy has built may be carrying it. Here is what the law says, and three ways to answer.',
-  headline='Your policy is <em>still in force.</em> Let us keep it that way.',
-  open=['Our records show more than one premium on your policy due, going back over ninety days. Your policy is '
-        'still in force. Where a policy has built a cash value, the Insurance Act does not allow it to be '
-        'forfeited while that value covers what is overdue &mdash; so the policy may be carrying itself for now, '
-        'out of what you have already paid in. That is not a reason to leave it. It is a reason to decide now, '
-        'while every option is still open.',
-        'The options are simple. Tell us it is already paid, and we check the record against your receipt. Let '
-        'us set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time. Or ask us to '
-        'call, and we put the figures in writing before you decide anything. Your representative, '
-        '{{agent_first_name}}, has moved on from Guardian Life; your policy is unchanged.'],
-  mode='premium',
-  act='An ordinary policy shall not be forfeited by reason only of non-payment of any premiums where the '
-      'surrender value of the policy &hellip; exceeds the sum of the amount of the debts owing to the insurer '
-      'under or secured by the policy and the amount of the overdue premium.',
-  plain='If your policy has built a value, it cannot be forfeited for a missed premium while that value covers '
-        'what is overdue. On a participating policy, bonuses you have earned may be used to keep it in force too.',
-  send='Ninety-one to one hundred and eighty days. The paid-to date checked first. Never a figure.'),
- 'I3': dict(
-  name='A decision the policy needs',
-  subject='Your policy needs a decision from you — and the law gives you time and three ways to make it',
-  preheader='Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.',
-  headline='Your policy needs a <em>decision.</em>',
-  open=['Our records show premiums on your policy unpaid for more than six months. We are writing before '
-        'anything else happens, because the Insurance Act says a policy cannot be forfeited for non-payment '
-        'without a written late-payment notice and twenty business days after it &mdash; and we would rather you '
-        'used that time with the facts in front of you than found out afterwards.',
-        'There are three honest answers, and every one of them is a tap below. If it is already paid, we check '
-        'the record against your receipt. If you want to keep the policy, we set up payment to Guardian Life '
-        'directly and put the figure to bring it up to date in writing. And if you cannot keep paying, there may '
-        'still be something to keep: after three years of premiums the Act entitles you to a smaller policy, '
-        'fully paid, instead of losing the cover &mdash; we will tell you exactly what that would be. Your '
-        'representative, {{agent_first_name}}, has moved on from Guardian Life; the decision, and the time to '
-        'make it, are yours.'],
-  mode='premium',
-  act='&hellip; the insurer liable under the policy serves a late-payment notice on the policyholder stating '
-      '&hellip; the date of the notice, the due date of the premium and the amount due or payable to the insurer; '
-      'and &hellip; that the policy will be forfeited at the expiration of twenty business days after the date '
-      'of the notice if the premium or a sum sufficient to keep the policy in force is not paid to the insurer '
-      'within that period.',
-  plain='Before any policy can be forfeited, you must receive a written notice carrying the amount, and twenty '
-        'business days from it. And after three years of premiums, the Act entitles you to a paid-up policy '
-        'instead of losing the cover.',
-  send='Over one hundred and eighty days. Checked against cash first &mdash; some of these have paid. Never a '
-       'figure. The receiving agent calls within two days of the send.'),
- 'J': dict(
-  name='Contract ready, not yet delivered',
-  subject='Your policy is in force — and your contract is ready to be delivered',
-  preheader='The document itself has not reached you yet. We will bring it.',
-  headline='Your policy is in force. Your <em>contract</em> is ready.',
-  open=['Your policy has been issued and is in force. The contract document &mdash; the policy itself, with your '
-        'schedule and the beneficiary you named &mdash; has not yet been delivered to you. We are putting that '
-        'right: the branch will bring it to you, and we will go through it with you when we do, so that you know '
-        'exactly what you hold.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Nothing about your policy '
-        'changes. When the contract reaches you, the only signature it needs is the acknowledgement that you '
-        'received it; you are not being asked to sign anything else.'],
-  send='Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving '
-       'agent, with the acknowledgement letter.'),
- 'K': dict(
-  name='An application still in progress',
-  subject='Your application with Guardian Life — where it stands, and who is finishing it',
-  preheader='It has not been forgotten. Here is what is outstanding and who is completing it.',
-  headline='Your application is <em>still in progress.</em>',
-  open=['You applied for a policy with Guardian Life and the application has not yet been completed. That is ours '
-        'to finish, not yours to chase. We are going through every open file this week, and if anything is still '
-        'needed from you &mdash; a signature, a medical, a document &mdash; the person who calls will know exactly '
-        'what it is, and will bring it to you rather than ask you to find it.',
-        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your application stays with '
-        'Guardian Life and with this branch, and it will be completed by a registered agent of your own. If you '
-        'would rather not proceed, say so and we will close it properly; you owe nothing either way.'],
-  send='Built from the pending list. Every file is read before the call; the agent brings the outstanding '
-       'requirement, never a list of them.'),
+# ── what a letter can read off the sheet ─────────────────────────────
+# merge field → where the send-list builder takes it from. A blank field
+# drops that fact from the strip; it never prints as an empty cell.
+FIELDS = {
+ 'first_name':       'Client — first name only',
+ 'agent_first_name': 'Agent — first name only',
+ 'first_year':       'Issue Date — the year',
+ 'years':            'Issue Date — whole years held',
+ 'issue_date':       'Issue Date',
+ 'paid_to':          'Paid To Date',
+ 'days':             'Days — days outstanding',
+ 'projected_lapse':  'Projected Lapse Date',
+ 'app_received':     'App Received Date',
+ 'matured_on':       'policy admin — not on the portfolio sheet',
+ 'maturity_date':    'the intelligence sheet or policy admin — not on the portfolio sheet',
+ 'token':            'the send list — opaque, never a policy number',
+ 'segment':          'the send list — the letter\'s own key',
 }
+
+# ── the taps a letter can offer ───────────────────────────────────────
+TAPS = {
+ 'urgent':   ('I want an agent now. Let me tell you my concerns first',
+              'Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.'),
+ 'review':   ('Tell me what I hold, in writing',
+              'A one-page summary of your policy, then a person to go through it if you want one.'),
+ 'callme':   ('Call me', 'Today or tomorrow, at a time you choose.'),
+ 'claim':    ('Help me claim it', 'We bring the form and walk it through with you.'),
+ 'deliver':  ('Bring me my contract', 'By hand, and we go through it with you.'),
+ 'finish':   ('Finish my application', 'We bring whatever is still needed to you.'),
+ 'paid':     ('I have already paid', 'We check the record against your receipt and confirm within two working days.'),
+ 'pay':      ('Set me up to pay Guardian Life directly', 'One call, and every payment from then on carries Guardian Life\'s own receipt.'),
+ 'stop':     ('I would rather not proceed', 'We close the file properly and confirm that nothing is owed.'),
+ 'informed': ('All good, keep my details', 'We will ask again rather than assume.'),
+ 'question': ('My details have changed', 'Reply to this letter with the change and we put it right.'),
+}
+
+SEGMENTS = {k: v for k, v in json.loads((HERE / 'openings.json').read_text(encoding='utf-8')).items() if not k.startswith('_')}
 
 # ── the shell ─────────────────────────────────────────────────────────
 # Inline styles throughout: e-mail clients strip <style> blocks unpredictably.
+HEAD = "'Plus Jakarta Sans',Arial,sans-serif"
+BODY = "Inter,Arial,sans-serif"
+
+
+def facts_block(cfg):
+    if not cfg.get('facts'):
+        return ''
+    cells = ''.join(f'''<td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#07606f">{label}</div>
+      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{val}</div></td>''' for label, val in cfg['facts'])
+    return f'''
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#f4f8fa;border-radius:10px;padding:12px 16px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
+</td></tr></table>'''
+
+
+def taps_block(cfg):
+    rows = ''.join(f'''
+<tr><td style="padding:0 0 8px">
+  <a href="{TAP}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 {HEAD};color:#12202e">{TAPS[r][0]}&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 {BODY};color:#5d7186;margin-top:2px">{TAPS[r][1]}</div>
+  </a>
+</td></tr>''' for i, r in enumerate(cfg['taps']))
+    # every letter carries the door into the questionnaire, as a card where it
+    # is one of the taps and as a single line where it is not
+    urgent_line = '' if 'urgent' in cfg['taps'] else f'''
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#5d7186">Would you rather have an agent of your own, now?
+  <a href="{TAP}urgent" style="color:#07606f;font-weight:700;text-decoration:none">Tell us your concerns first, and you have one the next working day&nbsp;&rarr;</a></p>'''
+    return f'''
+<p style="margin:0 0 10px;font:600 14.5px/1.5 {BODY};color:#12202e">One tap tells us what you would like. We do the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 {'14' if urgent_line else '14'}px">{rows}</table>{urgent_line}'''
+
+
+def act_block(cfg):
+    """The Act's own words, on the premium letters, right above the taps."""
+    if cfg.get('mode') != 'premium':
+        return ''
+    return f'''
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:12px 15px;font:400 13px/1.5 {BODY};color:#33465a">
+  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:6px">The Insurance Act &middot; Trinidad and Tobago</b>
+  <span style="display:block;font:600 13.5px/1.5 {HEAD};color:#12202e">&ldquo;{cfg['act']}&rdquo;</span>
+  <span style="display:block;margin-top:6px">{cfg['plain']} <a href="{PROTECT}" style="color:#07606f;font-weight:700;text-decoration:none">Everything else the law gives you&nbsp;&rarr;</a></span>
+</td></tr></table>'''
+
+
+def law_line(cfg):
+    """One line on the law, on every other letter, after the care strip."""
+    if cfg.get('mode') == 'premium':
+        return ''
+    return f'''
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
+  set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
+  <a href="{PROTECT}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>'''
+
+
+JOURNEY = f'''
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 {BODY};color:#33465a">
+  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
+  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
+</td></tr></table>'''
+
+FILM_LINE = f'''
+<p style="margin:0 0 14px;font:600 13.5px/1.5 {BODY}"><a href="{FILM}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'''
+
+
 def letter_table(seg, cfg):
     """The 600px table: the e-mail's body, and what /templates shows."""
-    open_ps = ''.join(f'<p style="margin:0 0 14px">{p}</p>' for p in cfg['open'])
-    # The closing says what the client keeps whatever they do. A lapsed or empty
-    # file (G, H) gets the short form: there is no in-force contract to describe.
+    # The notice is the official word that the representative has moved on. It
+    # is the second thing the client reads, once, in the same words everywhere,
+    # and the film's own line answers it: the policy has not. A lapsed or empty
+    # file (G, H) carries no notice, by the decision on the manual.
     if cfg.get('inforce', True):
-        closing = '''
-  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Your policy is a contract between you
-    and Guardian Life of the Caribbean: its cover, its premium and the beneficiary you named are written into it,
-    and none of them depends on any person. Anything you ever want done on it &mdash; a change of beneficiary, a
-    claim, a question about a premium &mdash; is done through Guardian Life, and the branch does it with you.</p>
-  <p style="margin:0 0 14px">Until you choose, your policy is looked after by this branch under my name; from the
-    moment you ask, you have an agent of your own, by name and with a direct number, within two working days. The
-    birthday note, the premium reminder before a due date, and a person who answers when you call all carry on
-    exactly as they have. We will ask again rather than assume.</p>'''
+        notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
+    {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
+        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>'''
     else:
-        closing = '''
-  <p style="margin:0 0 14px">If neither appeals today, that is genuinely fine. Nothing about how the branch looks
-    after you changes: the birthday note, the premium reminder before a due date, and a person who answers when
-    you call, all carry on exactly as they have. We will ask again rather than assume.</p>'''
-    film_block = f'''
-<a href="{FILM}" style="display:block;text-decoration:none;border-radius:10px;overflow:hidden;
-   background:#0a2330;border:1px solid #17384a;margin:0 0 16px">
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr><td style="padding:20px 22px">
-    <div style="font:800 10px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#00CFEA">Under two minutes</div>
-    <div style="font:800 17px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#ffffff;margin:8px 0 4px">If you choose not to have an agent</div>
-    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#9dbdd8">What carries on either way, what is already sitting inside your policy, and what the law entitles you to ask for.</div>
-    <div style="display:inline-block;margin-top:13px;background:#00CFEA;color:#ffffff;border-radius:9px;padding:10px 17px;font:800 14.5px/1 'Plus Jakarta Sans',Arial,sans-serif">&#9654;&nbsp; Watch it</div>
-  </td></tr></table>
-</a>'''
-    law_block = f'''
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
-<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:12px 15px;font:400 13.5px/1.55 Inter,Arial,sans-serif;color:#33465a">
-  <b style="display:block;color:#12202e;margin-bottom:4px;font-size:13px">One thing worth knowing</b>
-  A life policy cannot be transferred. No agent, no broker and no other company can move it for you &mdash; if
-  anyone suggests you move, what is being proposed is that you end this one and buy a new one, priced at your
-  age now and underwritten on your health today. Anything a doctor has told you since this one began is priced,
-  excluded or declined afresh; the policy you hold is already issued, and nothing about your health now can
-  touch it.
-  <span style="display:block;margin-top:8px">Under the Insurance Act, whoever suggests it &mdash; agent, broker or company &mdash; must discuss the
-  advantages <i>and</i> the disadvantages with you first. So ask for it in writing, with both policies side by
-  side: same sum assured, same term, same benefits, priced at the age you are now. And whatever you ever
-  decide, keep this policy in force until any new one has actually been issued and is in your hands &mdash; a
-  new application can take weeks, and it costs nothing to wait.</span>
-  <a href="{PROTECT}" style="display:block;margin-top:8px;color:#07606f;font-weight:700;text-decoration:none">How the law protects you, in plain words &rarr;</a>
-</td></tr></table>'''
-    doors_block = f'''
-<p style="margin:0 0 12px">Then, whenever suits you, there is a short review of what you hold. <b>It is the same
-  review either way</b> &mdash; the only question is who fills it in.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
-<tr><td style="padding:0 0 9px">
-  <a href="{REVIEW}" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:13px 16px">
-    <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Do it now, yourself</div>
-    <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:5px 0 3px">Start my review &rarr;</div>
-    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">About fifteen minutes on your phone. Whoever we match you to reads it <b>before</b> you meet, so the first conversation starts where it should.</div>
-  </a>
-</td></tr>
-<tr><td>
-  <a href="{ASSIGN}" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:13px 16px">
-    <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Or do it together</div>
-    <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:5px 0 3px">Have an agent go through it with me &rarr;</div>
-    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">Same review, same questions, only somebody walks you through it &mdash; in person or on the phone, whichever you prefer. If there is a particular agent at this branch you would like, tell us the name in a reply to this letter, and that is who you will have.</div>
-  </a>
-</td></tr></table>'''
-    if cfg.get('mode') == 'premium':
-        # the Act's own words for this stage, in place of the replacement note
-        law_block = f'''
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
-<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:13px 16px;font:400 13.5px/1.55 Inter,Arial,sans-serif;color:#33465a">
-  <b style="display:block;font:800 10px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:7px">The Insurance Act &middot; Trinidad and Tobago</b>
-  <span style="display:block;font:600 14.5px/1.5 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">&ldquo;{cfg['act']}&rdquo;</span>
-  <span style="display:block;margin-top:8px">{cfg['plain']}</span>
-  <a href="{PROTECT}" style="display:block;margin-top:8px;color:#07606f;font-weight:700;text-decoration:none">Everything else the law gives you, in plain words &rarr;</a>
-</td></tr></table>'''
-        # three one-tap answers, in place of the two doors; the film follows
-        taps = [('paid', 'I have already paid', 'We check the record against your receipt and confirm within two working days.'),
-                ('pay', 'Set me up to pay Guardian Life directly', 'One call, and every payment from then on carries Guardian Life\'s own receipt.'),
-                ('callme', 'Call me about it', 'A person from the branch, today or tomorrow, at a time you choose.')]
-        rows = ''.join(f'''
-<tr><td style="padding:0 0 9px">
-  <a href="{RESPOND}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:13px 16px">
-    <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">{label} &rarr;</div>
-    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:3px">{note}</div>
-  </a>
-</td></tr>''' for i, (r, label, note) in enumerate(taps))
-        doors_block = f'''
-<p style="margin:0 0 12px"><b>One tap is all it takes.</b> Whichever is true, tap it, and the branch does the rest.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">{rows}</table>
-{film_block}'''
-        film_block = ''
+        notice = ''
+        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Nothing is asked of you. We will ask again rather than assume.</p>'''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
-<tr><td style="background:#07131f;padding:15px 24px;border-bottom:3px solid #efc24b">
+<tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
   <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-    <td style="width:32px;padding-right:11px"><img src="{LOGO}" width="32" height="32" alt="" style="display:block;border-radius:8px"></td>
-    <td style="font:800 13px/1.25 'Plus Jakarta Sans',Arial,sans-serif;color:#eaf4ff">Ricky Rampersad Branch<br>
-      <span style="font:500 10.5px/1.3 Inter,Arial,sans-serif;color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+    <td style="width:30px;padding-right:10px"><img src="{LOGO}" width="30" height="30" alt="" style="display:block;border-radius:7px"></td>
+    <td style="font:800 13px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br>
+      <span style="font:500 10.5px/1.3 {BODY};color:#8fd8e6">Guardian Life of the Caribbean</span></td>
   </tr></table>
 </td></tr>
 
-<tr><td style="padding:24px 24px 8px;font:400 15.5px/1.6 Inter,Arial,sans-serif;color:#33465a">
-  <h1 style="font:800 19px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 14px;letter-spacing:-.2px">{cfg['headline'].replace('<em>','<span style="color:#c9942c">').replace('</em>','</span>')}</h1>
-  <p style="margin:0 0 13px">Dear {{{{first_name}}}},</p>
-  {open_ps}
-  {film_block}
-  {law_block}
-  {doors_block}
+<tr><td style="padding:22px 22px 6px;font:400 15px/1.55 {BODY};color:#33465a">
+  <h1 style="font:800 21px/1.28 {HEAD};color:#12202e;margin:0 0 12px;letter-spacing:-.2px">{cfg['headline'].replace('<em>','<span style="color:#c9942c">').replace('</em>','</span>')}</h1>
+  <p style="margin:0 0 10px">Dear {{{{first_name}}}},</p>
+  {notice}
+  <p style="margin:0 0 14px">{cfg['open']}</p>
+  {facts_block(cfg)}
+  {act_block(cfg)}
+  {taps_block(cfg)}
+  {FILM_LINE}
+  {JOURNEY}
+  {law_line(cfg)}
   {closing}
-  <p style="margin:18px 0 0;font:400 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">
+  <p style="margin:14px 0 0;font:400 14px/1.5 {BODY};color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
 
-<tr><td style="background:#f4f8fa;padding:13px 24px;border-top:1px solid #e0eaef;font:400 11.5px/1.5 Inter,Arial,sans-serif;color:#64798e">
+<tr><td style="background:#f4f8fa;padding:11px 22px;border-top:1px solid #e0eaef;font:400 11px/1.5 {BODY};color:#64798e">
   Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
-  deliberately kept out of this e-mail. Prefer post or a phone call? Just reply &mdash; it reaches a person
-  the same day.
+  deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
 </td></tr>
 </table>'''
 
@@ -360,7 +197,7 @@ def shell(seg, cfg):
     return f'''<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{html.escape(cfg['subject'])}</title>
-<!-- segment {seg} · {html.escape(cfg['name'])} · generated by tools/letters/build-letters.py -->
+<!-- segment {seg} · {html.escape(cfg['name'])} · generated by tools/letters/build-letters.py from openings.json -->
 </head>
 <body style="margin:0;padding:0;background:#eef4f7">
 <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef4f7">{html.escape(cfg['preheader'])}</div>
@@ -370,38 +207,40 @@ def shell(seg, cfg):
 </body></html>
 '''
 
-manifest = []
+
+manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'letters': []}
 for seg, cfg in SEGMENTS.items():
     path = OUT / f'{seg}.html'
     path.write_text(shell(seg, cfg), encoding='utf-8')
-    manifest.append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'],
-                     'preheader': cfg['preheader'], 'file': path.name, 'send_note': cfg['send']})
-    print(f'  {seg}  {cfg["name"]:<30} → {path.name}')
+    manifest['letters'].append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'], 'preheader': cfg['preheader'],
+                                'file': path.name, 'facts': [v.strip('{}') for _, v in cfg.get('facts', [])],
+                                'taps': cfg['taps'], 'send_note': cfg['send']})
+    print(f'  {seg:<3} {cfg["name"]:<38} → {path.name}')
 (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1), encoding='utf-8')
-print(f'wrote {len(manifest)} letters + manifest.json to {OUT}')
+print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
 
 # ── /templates: the one page for the team ────────────────────────────
-# The letters are one shell with eight openings, so an agent needs to read
-# one letter in full and the eight openings — not eight letters. This page
-# is that, with the film above it and one verdict form beneath it. The
-# full set is folded away at the foot for anyone who wants it. Generated
-# with the letters so it can never drift from them; who gets which letter
-# is said in words, never as a count, because the page is public once
-# merged. Run tools/film/chapters.py afterwards to mark the film's chapters.
+# One letter in full, every opening, the film above, one verdict form
+# beneath, the full set folded away. Generated with the letters so it can
+# never drift from them; who gets which letter is said in words, never as a
+# count, because the page is public once merged. Run tools/film/chapters.py
+# afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F'
-WORDS = {8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen'}
+WORDS = {8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', 15: 'fifteen', 16: 'sixteen'}
 NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
-WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose policy is paid up',
-       'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
-       'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
-       'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed',
+WHO = {'A': 'a client with a policy that has matured', 'A2': 'a client with a policy maturing within six months',
+       'B': 'a client whose policy is paid up', 'C': 'a client carrying a waiver of premium',
+       'D': 'a client whose premium comes off a payroll', 'E': 'a client who has held cover for ten years or more',
+       'F': 'a client with a policy in force', 'G': 'a client whose policy lapsed',
+       'H': 'a client with nothing in force and nothing lapsed',
        'I1': 'a client with one premium due, sixty-one to ninety days',
        'I2': 'a client with more than one premium due, up to six months',
        'I3': 'a client with premiums unpaid for more than six months',
        'J': 'a client whose policy is in force but whose contract has not reached them',
        'K': 'a client whose application is still in progress'}
-GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and may not know what it is worth',
+GLAD = {'A': 'money is waiting to be claimed', 'A2': 'the money will reach them on time, and someone will plan what comes next',
+        'B': 'they own it outright and may not know what it is worth',
         'C': 'a benefit inside the policy they were probably never told about',
         'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
         'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
@@ -416,7 +255,10 @@ openings = ''.join(f"""
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
     <div class="subj">{html.escape(cfg['subject'])}</div>
     <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
-    <div class="ps">{''.join(f'<p>{para}</p>' for para in cfg['open'])}</div>
+    <div class="ps"><p>{cfg['open']}</p></div>
+    <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
+    <div class="taps">Taps: {' &middot; '.join(TAPS[r][0] for r in cfg['taps'])}</div>
+    <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
   </div>""" for seg, cfg in SEGMENTS.items())
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
@@ -424,16 +266,17 @@ full = ''.join(f"""
     <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
   </details>""" for seg, cfg in SEGMENTS.items())
 opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
+fieldlist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in ('first_name', 'first_year', 'paid_to', 'days', 'projected_lapse', 'agent_first_name'))
 page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>What goes out | Ricky Rampersad Branch</title>
-<meta name="description" content="The film, the letter, the eight openings, and one question — for the branch, before any client sees it.">
+<meta name="description" content="The film, the letter, the openings, and one question — for the branch, before any client sees it.">
 <meta name="robots" content="noindex">
 <meta property="og:title" content="What goes out — read it before any client does">
-<meta property="og:description" content="One letter, eight openings, one film. Say send, change, or hold.">
+<meta property="og:description" content="One letter, {NOPEN} openings, one film. Say send, change, or hold.">
 <meta property="og:image" content="https://rickyrampersadbranch.com/orphan-video/poster.jpg">
 <link rel="icon" href="../logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -483,13 +326,15 @@ page = f"""<!DOCTYPE html>
   @media(min-width:720px){{.ops{{grid-template-columns:1fr 1fr}}}}
   .op{{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:13px;padding:15px 17px;scroll-margin-top:16px}}
   .op .k{{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}}
-  .op .k b{{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;font-family:var(--f);font-weight:900;font-size:14px}}
+  .op .k b{{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;font-family:var(--f);font-weight:900;font-size:13px}}
   .op .k span{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark)}}
   .op .k em{{font-style:normal;color:var(--dim);font-size:13px;flex-basis:100%}}
   .op .subj{{font-family:var(--f);font-weight:800;font-size:15.5px;color:var(--ink);margin:8px 0 4px;letter-spacing:-.2px}}
   .op .glad{{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}}
   .op .ps p{{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}}
-  .op .ps p:last-child{{margin-bottom:0}}
+  .op .facts,.op .taps{{font-size:12.5px;color:var(--dim);margin-top:5px}}
+  .op .more{{display:inline-block;margin-top:9px;font-family:var(--f);font-weight:800;font-size:13px;color:var(--tdark);text-decoration:none}}
+  details.tpl{{scroll-margin-top:14px}}
   form{{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 22px}}
   label{{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:12px 0 5px}}
   input[type=text],select,textarea{{width:100%;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}}
@@ -527,8 +372,8 @@ page = f"""<!DOCTYPE html>
   <div class="eyebrow">What goes out &middot; read it before any client does</div>
   <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
   <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
-    changes, with what they hold. Not one word in any of it is about who left. Watch the film, read the
-    letter, skim the {NOPEN} openings, and answer one question at the foot.</p>
+    changes, with what they hold, and the facts in it are read off the sheet for that client. Every letter
+    ends in taps they can answer with one thumb. Not one word in any of it is about who left.</p>
   <div class="steps">
     <a href="#film"><b>1 &middot; two minutes</b>The film</a>
     <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
@@ -554,17 +399,20 @@ page = f"""<!DOCTYPE html>
 
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
-  <p class="sub">This is letter {CORE}, the one most clients receive. Every letter carries the same film block,
-    the same note on the Act, the same two doors and the same closing. Only the opening paragraphs differ.</p>
-  <div class="fields"><b>The curly fields</b> &mdash; <code>{{{{first_name}}}}</code>, <code>{{{{years}}}}</code>,
-    <code>{{{{agent_first_name}}}}</code> &mdash; are filled per client at send time. The logo loads from the
-    site once the page is live.</div>
+  <p class="sub">This is letter {CORE}, the one most clients receive. Every letter has the same shape: a
+    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
+    taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
+    facts and the taps differ.</p>
+  <div class="fields"><b>The curly fields</b> &mdash; {fieldlist} &mdash; are filled per client at send time
+    from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
+    strip. The logo loads from the site once the page is live.</div>
   <div class="mail"><div class="in">{letter_table(CORE, SEGMENTS[CORE])}</div></div>
 </div></section>
 
 <section class="band" id="openings"><div class="wrap">
   <h2>The {NOPEN} openings</h2>
-  <p class="sub">What changes, and who gets which. Each one leads with the thing the client is glad to hear.</p>
+  <p class="sub">What changes, who gets which, what each reads off the sheet, and the taps it offers. Each leads
+    with the thing the client is glad to hear.</p>
   <div class="ops">{openings}
   </div>
 </div></section>
@@ -616,6 +464,14 @@ page = f"""<!DOCTYPE html>
 
 <script src="../orphan-video/player.js"></script>
 <script>
+/* "Read letter X in full" unfolds that letter before scrolling to it */
+function unfold() {{
+  var h = location.hash || '';
+  if (h.indexOf('#full-') !== 0) return;
+  var d = document.getElementById(h.slice(1));
+  if (d && d.tagName === 'DETAILS') {{ d.open = true; d.scrollIntoView({{ behavior: 'smooth', block: 'start' }}); }}
+}}
+window.addEventListener('hashchange', unfold); unfold();
 /* Verdicts go to the Service Questionnaire backend, action=feedback, and land
    on the Team Feedback tab. Until the placeholder is replaced with the
    deployed /exec URL the page says so, instead of losing them quietly. */
@@ -655,3 +511,33 @@ form.addEventListener('submit', function (e) {{
 TPL.parent.mkdir(parents=True, exist_ok=True)
 TPL.write_text(page, encoding='utf-8')
 print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the {NOPEN} openings, one verdict')
+
+
+# ── the letter cards on the manual and the team page ─────────────────
+# Both pages list the letters by subject. Hand-typed, they drift the first
+# time a subject changes; so the generator rewrites the block between the
+# markers, and the merge-field table on the manual with it.
+def splice(rel, tag, body):
+    p = ROOT / rel
+    src = p.read_text(encoding='utf-8')
+    a, b = f'<!-- {tag}:start -->', f'<!-- {tag}:end -->'
+    i, j = src.find(a), src.find(b)
+    if i < 0 or j < 0 or j < i:
+        print(f'  ! {rel}: no {tag} markers, left alone'); return
+    out = src[:i + len(a)] + '\n' + body + '  ' + src[j:]
+    if out != src:
+        p.write_text(out, encoding='utf-8'); print(f'  {rel}: {tag} block rewritten')
+
+
+def card(seg, cfg, note, blank):
+    tgt = ' target="_blank"' if blank else ''
+    return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])}</div>'
+            f'<b>{html.escape(cfg["subject"])}</b><span>{html.escape(note)}</span></a>\n')
+
+
+splice('orphan-transition/index.html', 'letters',
+       ''.join(card(seg, cfg, cfg['send'], False) for seg, cfg in SEGMENTS.items()))
+splice('orphan-transition/index.html', 'fields',
+       ''.join(f'    <tr><td><code>{{{{{k}}}}}</code></td><td>{html.escape(v)}</td></tr>\n' for k, v in FIELDS.items()))
+splice('orphan-transition/team-review.html', 'letters',
+       ''.join(card(seg, cfg, f'What they are glad to hear: {GLAD[seg]}.', True) for seg, cfg in SEGMENTS.items()))
