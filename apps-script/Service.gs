@@ -1609,6 +1609,10 @@ function clientResponse_(p) {
       String(p.p || '').slice(0, 80), String(p.ref || '').slice(0, 120),
       spec.status, '', '', '']);
   } catch (e) { return { ok: false }; }
+  /* A receipt in their inbox, not only the on-screen thank-you — only for a
+     token the transition campaign recognises (Transition.gs, same project).
+     Never blocks the click that triggered it. */
+  try { if (typeof tAckClient_ === 'function') tAckClient_(token, r, spec.needs); } catch (e) {}
   return { ok: true, needs: spec.needs };
 }
 

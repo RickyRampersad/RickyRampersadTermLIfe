@@ -603,10 +603,28 @@ voice under the new timing and the caption gives it away.
   surname alone in the agent's own book, a matured policy and a postponed
   application are `check`, never auto-sent. Asked for on 22 September:
   "exclude the agents' policies who left … and his family, etc."
+- **Every response gets a receipt, and the branch gets a copy.** The moment
+  a client taps, `tAckClient_` (Transition.gs) e-mails them a short
+  thank-you naming what happens next, CC'd to `TRANSITION.COPY_TO` (blank =
+  `SVC.AGENT_EMAIL`) — asked for on 22 September ("are responses coming in
+  and I am to be copied"). `tChase_`, run once a day from `transitionDigest`
+  (never from `tSummary_`, which the responses page polls every two
+  minutes, so a chase can never double-fire), nudges the branch internally
+  once a tap has been `Open` past its wait (`WAIT_DAYS`, or `WAIT_URGENT`
+  for the urgent tap), and — still open at `WAIT × CHASE_MULT` — sends the
+  client a warm "still on it" note and the branch a second, plainer nudge.
+  Both stop the moment Status reads anything other than `Open`; the level
+  already sent is recorded in that row's own Note cell, appended rather
+  than overwritten, so a human note there survives.
 - **What comes back is watched on `orphan-transition/responses.html`**
-  (opens with the branch code, like the wall; `action=transition`) and in the
-  8:00 digest from `transitionDigest`. First on both: taps waiting more than
-  two working days with nobody assigned.
+  (opens with the branch code, like the wall; `action=transition`) and in
+  the digest from `transitionDigest`, which fires as many times a day as
+  `TRANSITION.DIGEST_HOURS` lists (`[8, 12]` by default — the noon run was
+  asked for on 22 September, for a lunchtime VP meeting).
+  `transitionSetup` tears down and rebuilds the digest triggers from that
+  list every time it runs, so changing the hours is just running it again.
+  First on both page and digest: taps waiting more than two working days
+  with nobody assigned.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
