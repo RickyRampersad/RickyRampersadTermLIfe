@@ -47,8 +47,11 @@ var TRANSITION = {
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
   ORDER: ['I', 'K', 'J', 'A', 'F', 'G'],   // the action letters first
   DIGEST_TO: '',             // blank = the script owner
+  DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
+  COPY_TO: '',               // blank = SVC.AGENT_EMAIL. CC'd on every client thank-you, so a response is seen the moment it lands, not only in the digest.
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
   WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
+  CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
 };
 
 /* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
@@ -137,14 +140,21 @@ function tDay_(x) {
 }
 
 /* ── setup ────────────────────────────────────────────────────────── */
+/** Safe to run again: the digest triggers are always torn down and rebuilt
+ *  from TRANSITION.DIGEST_HOURS, so changing the hours (or adding one) just
+ *  means running this once more — nothing accumulates. */
 function transitionSetup() {
   tSheet_();
-  var have = {};
-  ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
-  if (!have.transitionDigest) ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(8).everyDays(1).create();
-  var msg = '"' + TRANSITION.SHEET + '" is ready and the 8:00 digest is installed. The hourly send stays off ' +
-    'until Transition: go live. Import the send list into the tab, run transitionPreviewToMe, then ' +
-    'transitionSendTest, read what arrived and check the Exclude column, then go live.';
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'transitionDigest') ScriptApp.deleteTrigger(t);
+  });
+  TRANSITION.DIGEST_HOURS.forEach(function (h) {
+    ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
+  });
+  var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
+    TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
+    '. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
+    'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
 }
@@ -349,6 +359,144 @@ function tSendRows_(t, rows, letters) {
 function tOrder_(row) {
   var i = TRANSITION.ORDER.indexOf(tText_(row.Segment).toUpperCase());
   return i < 0 ? 99 : i;
+}
+
+/* ── the client responds: a receipt, a copy, and a chase until it is closed ── */
+
+/** The Transition Send row for a token, or null. Does not require the
+ *  columns a send needs — only Token — so a malformed tab never stops a
+ *  client's tap from being answered. Never throws. */
+function tRowByToken_(token) {
+  token = String(token || '').trim();
+  if (!token) return null;
+  try {
+    var sh = ss_().getSheetByName(TRANSITION.SHEET);
+    var last = sh ? sh.getLastRow() : 0, lastCol = sh ? sh.getLastColumn() : 0;
+    if (last < 2 || !lastCol) return null;
+    var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+    var tokCol = head.indexOf('Token');
+    if (tokCol < 0) return null;
+    var vals = sh.getRange(2, 1, last - 1, lastCol).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      if (String(vals[i][tokCol] || '').trim() === token) {
+        var o = { _row: i + 2 };
+        head.forEach(function (h, j) { if (h) o[h] = vals[i][j]; });
+        return o;
+      }
+    }
+  } catch (e) {}
+  return null;
+}
+
+/** The navy strip every client e-mail carries, so a short receipt still
+ *  reads as the same branch that sent the letter. */
+function tHead_() {
+  return '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#07131f;' +
+    'padding:12px 18px;border-bottom:3px solid #efc24b"><tr><td style="width:26px;padding-right:9px">' +
+    '<img src="https://rickyrampersadbranch.com/logo-mark.png" width="26" height="26" alt="" style="display:block;border-radius:6px"></td>' +
+    '<td style="font:800 13px \'Plus Jakarta Sans\',Arial,sans-serif;color:#eaf4ff">Ricky Rampersad Branch</td></tr></table>';
+}
+
+/** A receipt e-mailed the moment a client answers a letter, separate from
+ *  the on-screen thank-you — so it is also in their inbox, and CC'd to the
+ *  branch so a response is seen the moment it lands, not only in the
+ *  digest. "Are responses coming in, and I am to be copied" — 22 September.
+ *  Only for a token this campaign recognises (a Transition Send row with an
+ *  e-mail); any other flow's token is untouched. Never blocks the click. */
+function tAckClient_(token, r, needs) {
+  try {
+    var row = tRowByToken_(token);
+    if (!row) return;
+    var to = tText_(row.Email);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
+    var first = tText_(row['First name']) || 'there';
+    var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
+      '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
+      '<p style="margin:0 0 12px">Thank you for answering. Here is what happens next: <b>' + tEsc_(needs) + '</b>.</p>' +
+      '<p style="margin:0 0 12px">If anything changes in the meantime, just reply to this e-mail — it reaches a person the same day.</p>' +
+      '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
+    var opts = { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL,
+      cc: TRANSITION.COPY_TO || SVC.AGENT_EMAIL };
+    MailApp.sendEmail(to, 'Thank you — we have this', 'Thank you. Here is what happens next: ' + needs, opts);
+    log_('transition', 'ack', tText_(row.Client || row['First name']) + ' · ' + r);
+  } catch (e) { log_('transition', 'ack-failed', String(e && e.message ? e.message : e)); }
+}
+
+/** An internal nudge, to the branch (never to the client): what is late, who
+ *  it was with, and what it needs. `level` 2 is the second, plainer chase. */
+function tChaseInternal_(token, r, needs, days, level) {
+  var row = tRowByToken_(token) || {};
+  var who = tText_(row.Client) || (token ? 'token ' + token : 'a client');
+  var to = TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
+  var subj = (level >= 2 ? 'Still late: ' : 'Late: ') + who + ' — ' + r + ', ' + days + ' working days';
+  var body = who + ' tapped "' + r + '" ' + days + ' working days ago and is still marked Open.\n\n' +
+    'Needs: ' + needs + '\n' + (row.Agent ? 'Was with: ' + tText_(row.Agent) + '\n' : '') +
+    (row.Segment ? 'Letter: ' + tText_(row.Segment) + '\n' : '') +
+    '\nAssign it on the Client Responses tab, or type anything other than "Open" into Status once it is resolved.\n' +
+    'https://rickyrampersadbranch.com/orphan-transition/responses.html';
+  try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
+}
+
+/** The client's own "still on it" note — only the second time, and only
+ *  once, so it reassures rather than nags. Warm, not defensive. */
+function tChaseClient_(token, needs) {
+  var row = tRowByToken_(token);
+  if (!row) return;
+  var to = tText_(row.Email);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
+  var first = tText_(row['First name']) || 'there';
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
+    '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
+    '<p style="margin:0 0 12px">You have not been forgotten. We are still on: <b>' + tEsc_(needs) + '</b>. We will ask again rather than assume, and you are welcome to reply here at any time.</p>' +
+    '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
+  try {
+    MailApp.sendEmail(to, 'Still on it', 'You have not been forgotten. We are still on: ' + needs,
+      { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL, cc: TRANSITION.COPY_TO || SVC.AGENT_EMAIL });
+  } catch (e) {}
+}
+
+/** Chases what a client is still waiting on. Run once a day, from the
+ *  digest — not from tSummary_, which the responses page polls every two
+ *  minutes, so a chase is never fired twice by a page left open. A tap open
+ *  past WAIT gets one internal nudge; still open past WAIT × CHASE_MULT it
+ *  gets a client reassurance and a second, plainer nudge. Stops the moment
+ *  Status reads anything other than "Open" — how the branch marks a
+ *  concern resolved. Each row is chased once per level: the level is
+ *  recorded in its own Note cell, appended, never overwritten, so a human
+ *  note already there survives. */
+function tChase_() {
+  var out = { chase1: 0, chase2: 0 };
+  var sh, last;
+  try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
+  if (!sh || last < 2) return out;
+  var vals;
+  try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
+  var now = new Date();
+  for (var i = 0; i < vals.length; i++) {
+    var v = vals[i], rowNum = i + 2;
+    var received = v[0] instanceof Date ? v[0] : null;
+    if (!received || String(v[7] || '').trim().toLowerCase() !== 'open') continue;
+    var token = String(v[1] || '').trim(), r = String(v[3] || '').trim(), needs = String(v[4] || '');
+    var note = String(v[10] || '');
+    var wait = r === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;
+    var days = tWorkingDays_(received, now);
+    var did1 = note.indexOf('[chase1]') >= 0, did2 = note.indexOf('[chase2]') >= 0;
+    var newNote = note;
+    try {
+      if (!did1 && days >= wait) {
+        tChaseInternal_(token, r, needs, days, 1);
+        newNote += (newNote ? ' ' : '') + '[chase1]'; did1 = true; out.chase1++;
+      }
+      if (!did2 && did1 && days >= wait * TRANSITION.CHASE_MULT) {
+        tChaseClient_(token, needs);
+        tChaseInternal_(token, r, needs, days, 2);
+        newNote += ' [chase2]'; out.chase2++;
+      }
+      if (newNote !== note) sh.getRange(rowNum, 11).setValue(newNote);
+    } catch (e) { log_('transition', 'chase-row-failed', String(e && e.message ? e.message : e)); }
+  }
+  if (out.chase1 || out.chase2) log_('transition', 'chase', out.chase1 + ' internal, ' + out.chase2 + ' client reassured');
+  return out;
 }
 
 /* ── the hourly send ──────────────────────────────────────────────── */
@@ -648,6 +796,7 @@ function transitionData_(code) {
 /* ── the morning e-mail ───────────────────────────────────────────── */
 function transitionDigest() {
   var to = TRANSITION.DIGEST_TO || Session.getEffectiveUser().getEmail();
+  try { tChase_(); } catch (e) { log_('transition', 'chase-failed', String(e && e.message ? e.message : e)); }
   var s;
   try { s = tSummary_(); }
   catch (err) {
