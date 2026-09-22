@@ -136,8 +136,9 @@
       deployment and ask it for its version on load; the amber &ldquo;not recording yet&rdquo; notice clears
       itself the moment the new version answers. Nothing to paste.</li>
     <li><b>Set up the send.</b> Back in the sheet: Service Questionnaire &rarr; Transition: set up. That creates
-      the <b>Transition Send</b> tab and installs the hourly send (9:00 to 17:00, Monday to Friday) and the 8:00
-      digest. Nothing sends until the tab has rows.</li>
+      the <b>Transition Send</b> tab and installs the 8:00 digest. The hourly send is <i>not</i> switched on
+      here: nothing goes to a client on its own until &ldquo;go live&rdquo; in step 10, however long the list
+      sits in the tab.</li>
     <li><b>Clear the test rows</b> on the questionnaire sheet, so the first real review is not beside them.</li>
   </ol>
 
@@ -164,12 +165,18 @@
       addresses, and death claims. A client with the agent's surname in the agent's own book, a matured
       policy, or a postponed application is marked <code>check</code> and never sends until the check is
       cleared by hand. Import the CSV into the Transition Send tab.</li>
-    <li><b>Preview, test, then let the trigger run.</b> Transition: preview the letters to me sends one of each
-      to your own inbox. Mark two rows <code>Test = Y</code> and run Transition: send the Test rows now. Then
-      the hourly send takes over: the action letters first (I, K, J), then A and F, and G a week later by its
-      Send on date; up to sixty an hour and never past the day's mail quota. A row with anything in Exclude
-      never sends, a sent row never sends twice, and a failure is retried the next day, not the next hour.
-      Reply-to is a person at the branch.</li>
+    <li><b>Preview, test, check, then go live.</b> Transition: preview the letters to me sends one of each
+      to your own inbox; it refuses, and says why, if the site is still serving the previous cut of a letter.
+      Mark two rows <code>Test = Y</code> and run Transition: send the Test rows now &mdash; the Test rows go
+      whatever the hour, live or not. Read both, then read the Exclude column down once more: the departed
+      agents' own policies and their households must each carry a reason. Only then Service Questionnaire
+      &rarr; Transition: go live (hourly send on). From the next weekday hour, 9:00 to 17:00, the trigger sends
+      the action letters first (I, K, J), then A and F, and G a week later by its Send on date; up to sixty an
+      hour and never past the day's mail quota. A row with anything in Exclude never sends, a row with no Send
+      on date is held, a sent row never sends twice, and a row the sender cannot use (no e-mail, no first name,
+      no letter for its segment) is moved to Exclude with the reason instead of being tried every hour. A mail
+      failure is retried the next day, not the next hour. Transition: pause the hourly send stops it at any
+      point; the Test rows still go by hand. Reply-to is a person at the branch.</li>
     <li><b>Call the direct-bill clients with a premium due inside thirty days</b> this week, to tell them how
       to pay Guardian Life directly, with Guardian's receipt. That is the one exposure a returned receipt
       book creates.</li>
@@ -180,7 +187,9 @@
     <li><b>Watch it on one page.</b> <a href="responses.html">responses.html</a> opens with the branch code and
       shows, live from the sheet: sent and waiting by letter, every tap by type, the questionnaires that came
       from the campaign, the team's verdicts, and first of all the taps waiting more than two working days
-      with nobody assigned. The 8:00 digest e-mails the same to the branch manager. On the Client Responses
+      with nobody assigned (one working day for an <code>urgent</code> tap). It carries a red banner while
+      the hourly send is off, and the last runs &mdash; every batch, test and stop, with the reason &mdash;
+      at the foot. The 8:00 digest e-mails the same to the branch manager. On the Client Responses
       tab every tap except <code>informed</code> is a task: name the agent within two working days &mdash;
       town, then household, then what they hold &mdash; and fill Assigned to and Assigned on.</li>
     <li><b>Send the agent the brief</b>, filled in from the sheet and the portfolio. Never to the client.</li>

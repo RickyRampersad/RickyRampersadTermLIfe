@@ -867,7 +867,7 @@ const P = new URLSearchParams(location.search);
 const state = {
   kind: "", origin: "", answers: {}, step: 0, startedAt: null, submitting: false,
   agentMode: P.get("agent") === "1",
-  ref: P.get("k") || "",
+  ref: P.get("k") || (P.get("t") ? "transition:" + P.get("t") : ""),   /* a letter's token lands in Link ref, so the review is read against the send */
   sentBy: { name: P.get("agentname") || "", email: P.get("agentemail") || "" },
 };
 let SCHEMA = [], STEPS = [];

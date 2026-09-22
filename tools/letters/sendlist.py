@@ -24,6 +24,12 @@ TODAY = datetime.date(*map(int, sys.argv[2].split('-'))) if len(sys.argv) > 2 el
 NINE = [l.strip() for l in (HERE / 'departed.txt').read_text(encoding='utf-8').splitlines() if l.strip()]
 if not NINE:
     sys.exit('departed.txt is empty: one departed agent per line, as the Agent column spells them')
+# Anyone the branch names by hand — a departed agent's spouse, parent or
+# child under another surname, or anyone else who must not be written to —
+# goes in exclude.txt beside this script (git-ignored): one Client Number or
+# one exact client name per line. Applied before anything else is looked at.
+_ex = HERE / 'exclude.txt'
+LISTED = {l.strip().lower() for l in _ex.read_text(encoding='utf-8').splitlines() if l.strip()} if _ex.exists() else set()
 HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
            'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
            'app_received', 'matured_on', 'maturity_date', 'Exclude', 'Reason', 'Test', 'Send on',
@@ -121,7 +127,11 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
     # ── exclusions first ──
     ct = set(toks(c['name']))
     reason = ''
+    if cid.lower() in LISTED or c['name'].lower() in LISTED:
+        reason = 'listed: named by the branch in exclude.txt'
     for a, at in agent_toks.items():
+        if reason:
+            break
         if all(t in ct for t in at):
             reason = 'agent: their own policy'
             break
@@ -136,6 +146,8 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
                     reason = 'agent household: same surname and same address, phone or e-mail as the agent'
                 elif c['agent'] == a:
                     reason = 'check: same surname as the agent, in their own book'
+                else:
+                    reason = 'check: shares a departed agent\'s surname'
                 break
     if not reason and c['email'].endswith('@myguardiangroup.com'):
         reason = 'staff e-mail'

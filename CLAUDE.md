@@ -583,10 +583,17 @@ voice under the new timing and the caption gives it away.
   generator writes, and sends with MailApp from an hourly trigger, working
   hours only, inside the day's quota, the action letters first. No letter
   text lives in the script: rebuild the letters and the next batch carries
-  the change. `transitionSetup` makes the tab and the triggers,
-  `transitionPreviewToMe` sends one of each to the owner,
-  `transitionSendTest` sends the rows marked `Test = Y`. A row with anything
-  in Exclude never sends; a sent row never sends twice.
+  the change. `transitionSetup` makes the tab and the 8:00 digest only;
+  `transitionPreviewToMe` sends one of each to the owner;
+  `transitionSendTest` sends the rows marked `Test = Y`, live or not;
+  `transitionGoLive` (menu: "Transition: go live") sets the `transition_live`
+  script property and installs the hourly trigger, and `transitionPause`
+  clears both — until go live, the hourly run sends nothing, however long the
+  list sits in the tab. A row with anything in Exclude never sends; a row with
+  no Send on date is held; a sent row never sends twice; a row the sender
+  cannot use (no e-mail, no first name, no letter for its segment) is moved
+  to Exclude with the reason. The page and the digest show a red banner while
+  the send is off, and the last runs with their reasons.
 - **The send list is built by `tools/letters/sendlist.py` outside the
   repository**, on a copy of the Branch Portfolio sheet, with the departed
   agents' names in the git-ignored `departed.txt` beside it. It fills the
