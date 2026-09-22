@@ -64,6 +64,8 @@
   .op .glad{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}
   .op .ps p{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}
   .op .facts,.op .taps{font-size:12.5px;color:var(--dim);margin-top:5px}
+  .op .more{display:inline-block;margin-top:9px;font-family:var(--f);font-weight:800;font-size:13px;color:var(--tdark);text-decoration:none}
+  details.tpl{scroll-margin-top:14px}
   form{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 22px}
   label{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:12px 0 5px}
   input[type=text],select,textarea{width:100%;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}
@@ -129,8 +131,9 @@
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
   <p class="sub">This is letter F, the one most clients receive. Every letter has the same shape: a
-    headline, one paragraph, the facts off the sheet, the taps, the film in one line, how the branch has looked
-    after them, and the sign-off. Only the opening, the facts and the taps differ.</p>
+    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
+    taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
+    facts and the taps differ.</p>
   <div class="fields"><b>The curly fields</b> &mdash; <code>{{first_name}}</code>, <code>{{first_year}}</code>, <code>{{paid_to}}</code>, <code>{{days}}</code>, <code>{{projected_lapse}}</code>, <code>{{agent_first_name}}</code> &mdash; are filled per client at send time
     from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
     strip. The logo loads from the site once the page is live.</div>
@@ -147,6 +150,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy is <span style="color:#c9942c">unchanged.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Same cover, same premium, same beneficiaries. We wanted you to hear that from us rather than wonder, and to give you the easiest possible way to tell us what you would like next.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -191,9 +196,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -217,6 +221,7 @@
     <div class="ps"><p>It reached the end of its term. The money is yours, and it is waiting to be claimed. We would rather you had it than not.</p></div>
     <div class="facts">Reads off the sheet: matured on, held since.</div>
     <div class="taps">Taps: Help me claim it &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-A">Read letter A in full &rarr;</a>
   </div>
   <div class="op" id="A2">
     <div class="k"><b>A2</b><span>A maturity coming up</span><em>goes to a client with a policy maturing within six months</em></div>
@@ -225,6 +230,7 @@
     <div class="ps"><p>It reaches the end of its term on the date below. We want the money to reach you on time, and to talk through what comes next before it does.</p></div>
     <div class="facts">Reads off the sheet: matures on, held since.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-A2">Read letter A2 in full &rarr;</a>
   </div>
   <div class="op" id="B">
     <div class="k"><b>B</b><span>Paid up</span><em>goes to a client whose policy is paid up</em></div>
@@ -233,6 +239,7 @@
     <div class="ps"><p>Nothing more to pay, and the cover stands for life. Most people in that position were never told what it is now worth, or what it can still do for them.</p></div>
     <div class="facts">Reads off the sheet: held since.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-B">Read letter B in full &rarr;</a>
   </div>
   <div class="op" id="C">
     <div class="k"><b>C</b><span>Carrying waiver of premium</span><em>goes to a client carrying a waiver of premium</em></div>
@@ -241,6 +248,7 @@
     <div class="ps"><p>If illness or injury ever stopped you working, Guardian Life would keep paying your premiums for you. You have been paying for that all along. Most people who hold it were never told.</p></div>
     <div class="facts">Reads off the sheet: held since, paid to.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-C">Read letter C in full &rarr;</a>
   </div>
   <div class="op" id="D">
     <div class="k"><b>D</b><span>Collected off a payroll</span><em>goes to a client whose premium comes off a payroll</em></div>
@@ -249,6 +257,7 @@
     <div class="ps"><p>Your premium comes off your salary, and those arrangements sometimes stop quietly. We are checking yours this week, so that if anything has slipped we find it, not you.</p></div>
     <div class="facts">Reads off the sheet: paid to.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-D">Read letter D in full &rarr;</a>
   </div>
   <div class="op" id="E">
     <div class="k"><b>E</b><span>Held ten years or more</span><em>goes to a client who has held cover for ten years or more</em></div>
@@ -257,6 +266,7 @@
     <div class="ps"><p>Your premium is fixed on the age you were when you started, and no company can sell that price back to you. After three years of premiums, the Act also entitles you to a paid-up policy instead of ever cashing it in.</p></div>
     <div class="facts">Reads off the sheet: held since, paid to.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-E">Read letter E in full &rarr;</a>
   </div>
   <div class="op" id="F">
     <div class="k"><b>F</b><span>In force</span><em>goes to a client with a policy in force</em></div>
@@ -265,6 +275,7 @@
     <div class="ps"><p>Same cover, same premium, same beneficiaries. We wanted you to hear that from us rather than wonder, and to give you the easiest possible way to tell us what you would like next.</p></div>
     <div class="facts">Reads off the sheet: held since, paid to.</div>
     <div class="taps">Taps: I want an agent now. Let me tell you my concerns first &middot; Tell me what I hold, in writing &middot; Call me</div>
+    <a class="more" href="#full-F">Read letter F in full &rarr;</a>
   </div>
   <div class="op" id="G">
     <div class="k"><b>G</b><span>Lapsed</span><em>goes to a client whose policy lapsed</em></div>
@@ -273,6 +284,7 @@
     <div class="ps"><p>It stopped being paid, but a policy that stops does not always stop being worth something. Some keep a value that is yours. Some can be restarted.</p></div>
     <div class="facts">Reads off the sheet: held since, last paid to.</div>
     <div class="taps">Taps: Tell me what I hold, in writing &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-G">Read letter G in full &rarr;</a>
   </div>
   <div class="op" id="H">
     <div class="k"><b>H</b><span>Nothing held</span><em>goes to a client with nothing in force and nothing lapsed</em></div>
@@ -281,6 +293,7 @@
     <div class="ps"><p>You were a client of this branch and our records still carry your details. We are writing to make sure we can still reach you. Nothing to do, nothing to pay.</p></div>
     <div class="facts">Reads nothing off the sheet.</div>
     <div class="taps">Taps: All good, keep my details &middot; My details have changed</div>
+    <a class="more" href="#full-H">Read letter H in full &rarr;</a>
   </div>
   <div class="op" id="I1">
     <div class="k"><b>I1</b><span>One premium showing as due</span><em>goes to a client with one premium due, sixty-one to ninety days</em></div>
@@ -289,6 +302,7 @@
     <div class="ps"><p>It is usually one of three things: you have paid and the record has not caught up; the way you pay has changed; or it simply slipped. One tap below tells us which, and we do the rest.</p></div>
     <div class="facts">Reads off the sheet: paid to, days outstanding.</div>
     <div class="taps">Taps: I have already paid &middot; Set me up to pay Guardian Life directly &middot; Call me</div>
+    <a class="more" href="#full-I1">Read letter I1 in full &rarr;</a>
   </div>
   <div class="op" id="I2">
     <div class="k"><b>I2</b><span>More than one premium showing as due</span><em>goes to a client with more than one premium due, up to six months</em></div>
@@ -297,6 +311,7 @@
     <div class="ps"><p>Where a policy has built a value, the Act does not let it be forfeited while that value covers what is due. Yours may be carrying itself for now, out of what you already paid in. Decide now, while every option is still open.</p></div>
     <div class="facts">Reads off the sheet: paid to, days outstanding, projected lapse.</div>
     <div class="taps">Taps: I have already paid &middot; Set me up to pay Guardian Life directly &middot; Call me</div>
+    <a class="more" href="#full-I2">Read letter I2 in full &rarr;</a>
   </div>
   <div class="op" id="I3">
     <div class="k"><b>I3</b><span>A decision the policy needs</span><em>goes to a client with premiums unpaid for more than six months</em></div>
@@ -305,6 +320,7 @@
     <div class="ps"><p>Nothing can happen without a written late-payment notice and twenty business days after it. We are writing before that. If you cannot keep paying, three years of premiums entitle you to a smaller policy, fully paid, instead of losing the cover.</p></div>
     <div class="facts">Reads off the sheet: paid to, days outstanding, projected lapse.</div>
     <div class="taps">Taps: I have already paid &middot; Set me up to pay Guardian Life directly &middot; Call me</div>
+    <a class="more" href="#full-I3">Read letter I3 in full &rarr;</a>
   </div>
   <div class="op" id="J">
     <div class="k"><b>J</b><span>Contract ready, not yet delivered</span><em>goes to a client whose policy is in force but whose contract has not reached them</em></div>
@@ -313,6 +329,7 @@
     <div class="ps"><p>The document itself has not reached you yet. We are putting that right: the branch will bring it and go through it with you. The only signature it needs is the acknowledgement that you received it.</p></div>
     <div class="facts">Reads off the sheet: issued on.</div>
     <div class="taps">Taps: Bring me my contract &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
+    <a class="more" href="#full-J">Read letter J in full &rarr;</a>
   </div>
   <div class="op" id="K">
     <div class="k"><b>K</b><span>An application still in progress</span><em>goes to a client whose application is still in progress</em></div>
@@ -321,6 +338,7 @@
     <div class="ps"><p>That is ours to finish, not yours to chase. If anything is still needed, a signature, a medical, a document, the person who calls will bring it to you rather than ask you to find it.</p></div>
     <div class="facts">Reads off the sheet: application received.</div>
     <div class="taps">Taps: Finish my application &middot; Call me &middot; I would rather not proceed</div>
+    <a class="more" href="#full-K">Read letter K in full &rarr;</a>
   </div>
   </div>
 </div></section>
@@ -379,6 +397,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">One of your policies has <span style="color:#c9942c">matured.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    The money in your policy has not.</p>
   <p style="margin:0 0 14px">It reached the end of its term. The money is yours, and it is waiting to be claimed. We would rather you had it than not.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -423,9 +443,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -451,6 +470,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">A policy of yours <span style="color:#c9942c">matures soon.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">It reaches the end of its term on the date below. We want the money to reach you on time, and to talk through what comes next before it does.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -495,9 +516,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -523,6 +543,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy is <span style="color:#c9942c">paid up.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Nothing more to pay, and the cover stands for life. Most people in that position were never told what it is now worth, or what it can still do for them.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -565,9 +587,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -593,6 +614,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy carries a <span style="color:#c9942c">waiver of premium.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">If illness or injury ever stopped you working, Guardian Life would keep paying your premiums for you. You have been paying for that all along. Most people who hold it were never told.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -637,9 +660,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -665,6 +687,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">We are checking your <span style="color:#c9942c">deduction.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Your premium comes off your salary, and those arrangements sometimes stop quietly. We are checking yours this week, so that if anything has slipped we find it, not you.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -707,9 +731,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -735,6 +758,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">{{years}} years, at a price nobody can <span style="color:#c9942c">sell you again.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Your premium is fixed on the age you were when you started, and no company can sell that price back to you. After three years of premiums, the Act also entitles you to a paid-up policy instead of ever cashing it in.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -779,9 +804,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -807,6 +831,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy is <span style="color:#c9942c">unchanged.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Same cover, same premium, same beneficiaries. We wanted you to hear that from us rather than wonder, and to give you the easiest possible way to tell us what you would like next.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -851,9 +877,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -879,6 +904,7 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">A policy you may have <span style="color:#c9942c">written off.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  
   <p style="margin:0 0 14px">It stopped being paid, but a policy that stops does not always stop being worth something. Some keep a value that is yours. Some can be restarted.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -949,6 +975,7 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">A short note from the <span style="color:#c9942c">branch.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  
   <p style="margin:0 0 14px">You were a client of this branch and our records still carry your details. We are writing to make sure we can still reach you. Nothing to do, nothing to pay.</p>
   
   
@@ -1007,6 +1034,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">One premium is showing as <span style="color:#c9942c">due.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">It is usually one of three things: you have paid and the record has not caught up; the way you pay has changed; or it simply slipped. One tap below tells us which, and we do the rest.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1056,9 +1085,8 @@
   birthday, and a person who answers when you call. That is how this branch works, and it does not change.
 </td></tr></table>
   
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -1084,6 +1112,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy is <span style="color:#c9942c">still in force.</span> Let us keep it that way.</h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Where a policy has built a value, the Act does not let it be forfeited while that value covers what is due. Yours may be carrying itself for now, out of what you already paid in. Decide now, while every option is still open.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1135,9 +1165,8 @@
   birthday, and a person who answers when you call. That is how this branch works, and it does not change.
 </td></tr></table>
   
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -1163,6 +1192,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy needs a <span style="color:#c9942c">decision.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">Nothing can happen without a written late-payment notice and twenty business days after it. We are writing before that. If you cannot keep paying, three years of premiums entitle you to a smaller policy, fully paid, instead of losing the cover.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1214,9 +1245,8 @@
   birthday, and a person who answers when you call. That is how this branch works, and it does not change.
 </td></tr></table>
   
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -1242,6 +1272,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your policy is in force. Your <span style="color:#c9942c">contract</span> is ready.</h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your policy has not.</p>
   <p style="margin:0 0 14px">The document itself has not reached you yet. We are putting that right: the branch will bring it and go through it with you. The only signature it needs is the acknowledgement that you received it.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1284,9 +1316,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -1312,6 +1343,8 @@
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
   <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Your application is <span style="color:#c9942c">still in progress.</span></h1>
   <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{agent_first_name}}, has moved on from Guardian Life.</b>
+    Your application has not.</p>
   <p style="margin:0 0 14px">That is ours to finish, not yours to chase. If anything is still needed, a signature, a medical, a document, the person who calls will bring it to you rather than ask you to find it.</p>
   
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1356,9 +1389,8 @@
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
   <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
-  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your representative, {{agent_first_name}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>
   <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
     <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
 </td></tr>
@@ -1377,6 +1409,14 @@
 
 <script src="../orphan-video/player.js"></script>
 <script>
+/* "Read letter X in full" unfolds that letter before scrolling to it */
+function unfold() {
+  var h = location.hash || '';
+  if (h.indexOf('#full-') !== 0) return;
+  var d = document.getElementById(h.slice(1));
+  if (d && d.tagName === 'DETAILS') { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+window.addEventListener('hashchange', unfold); unfold();
 /* Verdicts go to the Service Questionnaire backend, action=feedback, and land
    on the Team Feedback tab. Until the placeholder is replaced with the
    deployed /exec URL the page says so, instead of losing them quietly. */

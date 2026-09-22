@@ -147,11 +147,17 @@ FILM_LINE = f'''
 
 def letter_table(seg, cfg):
     """The 600px table: the e-mail's body, and what /templates shows."""
+    # The notice is the official word that the representative has moved on. It
+    # is the second thing the client reads, once, in the same words everywhere,
+    # and the film's own line answers it: the policy has not. A lapsed or empty
+    # file (G, H) carries no notice, by the decision on the manual.
     if cfg.get('inforce', True):
-        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Your representative, {{{{agent_first_name}}}}, has moved on from
-    Guardian Life. Until you choose, your policy is looked after by this branch under my name. From the moment you
-    ask, you have an agent of your own within two working days.</p>'''
+        notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
+    {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
+        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Until you choose, your policy is looked after by this branch under
+    my name. From the moment you ask, you have an agent of your own within two working days.</p>'''
     else:
+        notice = ''
         closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Nothing is asked of you. We will ask again rather than assume.</p>'''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
@@ -166,6 +172,7 @@ def letter_table(seg, cfg):
 <tr><td style="padding:22px 22px 6px;font:400 15px/1.55 {BODY};color:#33465a">
   <h1 style="font:800 21px/1.28 {HEAD};color:#12202e;margin:0 0 12px;letter-spacing:-.2px">{cfg['headline'].replace('<em>','<span style="color:#c9942c">').replace('</em>','</span>')}</h1>
   <p style="margin:0 0 10px">Dear {{{{first_name}}}},</p>
+  {notice}
   <p style="margin:0 0 14px">{cfg['open']}</p>
   {facts_block(cfg)}
   {act_block(cfg)}
@@ -251,6 +258,7 @@ openings = ''.join(f"""
     <div class="ps"><p>{cfg['open']}</p></div>
     <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
     <div class="taps">Taps: {' &middot; '.join(TAPS[r][0] for r in cfg['taps'])}</div>
+    <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
   </div>""" for seg, cfg in SEGMENTS.items())
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
@@ -325,6 +333,8 @@ page = f"""<!DOCTYPE html>
   .op .glad{{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}}
   .op .ps p{{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}}
   .op .facts,.op .taps{{font-size:12.5px;color:var(--dim);margin-top:5px}}
+  .op .more{{display:inline-block;margin-top:9px;font-family:var(--f);font-weight:800;font-size:13px;color:var(--tdark);text-decoration:none}}
+  details.tpl{{scroll-margin-top:14px}}
   form{{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 22px}}
   label{{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:12px 0 5px}}
   input[type=text],select,textarea{{width:100%;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}}
@@ -390,8 +400,9 @@ page = f"""<!DOCTYPE html>
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
   <p class="sub">This is letter {CORE}, the one most clients receive. Every letter has the same shape: a
-    headline, one paragraph, the facts off the sheet, the taps, the film in one line, how the branch has looked
-    after them, and the sign-off. Only the opening, the facts and the taps differ.</p>
+    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
+    taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
+    facts and the taps differ.</p>
   <div class="fields"><b>The curly fields</b> &mdash; {fieldlist} &mdash; are filled per client at send time
     from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
     strip. The logo loads from the site once the page is live.</div>
@@ -453,6 +464,14 @@ page = f"""<!DOCTYPE html>
 
 <script src="../orphan-video/player.js"></script>
 <script>
+/* "Read letter X in full" unfolds that letter before scrolling to it */
+function unfold() {{
+  var h = location.hash || '';
+  if (h.indexOf('#full-') !== 0) return;
+  var d = document.getElementById(h.slice(1));
+  if (d && d.tagName === 'DETAILS') {{ d.open = true; d.scrollIntoView({{ behavior: 'smooth', block: 'start' }}); }}
+}}
+window.addEventListener('hashchange', unfold); unfold();
 /* Verdicts go to the Service Questionnaire backend, action=feedback, and land
    on the Team Feedback tab. Until the placeholder is replaced with the
    deployed /exec URL the page says so, instead of losing them quietly. */

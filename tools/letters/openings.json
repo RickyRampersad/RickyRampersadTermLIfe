@@ -8,6 +8,7 @@
   "open": "It reached the end of its term. The money is yours, and it is waiting to be claimed. We would rather you had it than not.",
   "facts": [["Matured on", "{{matured_on}}"], ["Held since", "{{first_year}}"]],
   "taps": ["claim", "urgent", "callme"],
+  "notice_tail": "The money in your policy has not.",
   "send": "Only a handful of this group have e-mail. The rest is a phone call, and it is the one call nobody resents."
  },
  "A2": {
@@ -149,6 +150,7 @@
   "open": "That is ours to finish, not yours to chase. If anything is still needed, a signature, a medical, a document, the person who calls will bring it to you rather than ask you to find it.",
   "facts": [["Application received", "{{app_received}}"]],
   "taps": ["finish", "callme", "stop"],
+  "notice_tail": "Your application has not.",
   "send": "From the pending list. Every file is read before the call."
  }
 }

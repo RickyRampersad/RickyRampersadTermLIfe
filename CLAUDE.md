@@ -545,9 +545,14 @@ voice under the new timing and the caption gives it away.
   `{{first_year}}`, `{{issue_date}}`, `{{app_received}}` — days and dates,
   never a money figure), the one-tap answers, the film in one line, the care
   strip (welcome letter, premium reminder, birthday note, a person who
-  answers), and the closing that names the departure once. An opening never
-  mentions the departure; the shell does. `{{token}}` and `{{segment}}`
-  travel with every tap so responses read by segment.
+  answers), and the closing. **The notice is the second thing the client
+  reads**, straight after "Dear": "Your representative, X, has moved on from
+  Guardian Life. Your policy has not." — asked for in those terms on 22
+  September ("now officially letting them know that the agents have moved
+  on, that important letter"). It is in the shell, once, in the same words
+  on every in-force letter; an opening never repeats it, and G and H carry
+  none. `{{token}}` and `{{segment}}` travel with every tap so responses
+  read by segment.
 - **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
   me tell you my concerns first" is on every letter (a card where it is one
   of the taps, a line beneath them where it is not). The client page logs it
