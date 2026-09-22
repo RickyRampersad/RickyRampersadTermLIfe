@@ -379,32 +379,44 @@ var SAID = {
   assign:   'We will match you to a qualified agent and introduce you within two working days.',
   review:   'We will put your summary together and send it across, and an agent will walk you through it.',
   question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
-  informed: 'Noted, with thanks. Nothing about your policy changes, and we will ask again rather than assume.'
+  informed: 'Noted, with thanks. Nothing about your policy changes, and we will ask again rather than assume.',
+  /* the three taps on a premium letter — they arrive as ?r= and are logged on arrival */
+  paid:     'Thank you. We will check the record against your receipt and confirm within two working days.',
+  pay:      'We will call to set up payment to Guardian Life directly — with Guardian Life\'s own receipt every time.',
+  callme:   'Someone from the branch will call you, today or tomorrow, at a time you choose.'
 };
+function logResp(r) {
+  if (SVC.indexOf('http') !== 0) return;
+  try {
+    (new Image()).src = SVC + '?action=resp&r=' + encodeURIComponent(r) +
+      '&t=' + encodeURIComponent(TOKEN) + '&s=' + encodeURIComponent(SEG) +
+      '&p=' + encodeURIComponent(location.pathname) +
+      '&ref=' + encodeURIComponent((document.referrer || '').slice(0, 120)) +
+      '&z=' + Date.now();
+  } catch (err) {}
+}
+function thank(r, keep) {
+  document.getElementById('thankstxt').textContent = SAID[r] || '';
+  var box = document.getElementById('thanks');
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.querySelectorAll('.opt, .door').forEach(function (o) {
+    if (o !== keep) { o.style.opacity = '.45'; o.style.pointerEvents = 'none'; }
+  });
+}
 document.querySelectorAll('.opt, .door').forEach(function (a) {
   a.addEventListener('click', function (e) {
     /* the self-serve door is a real link: log the click, then let it open */
     if (a.dataset.r !== 'selfserve') e.preventDefault();
     var r = a.dataset.r;
-    if (SVC.indexOf('http') === 0) {
-      try {
-        (new Image()).src = SVC + '?action=resp&r=' + encodeURIComponent(r) +
-          '&t=' + encodeURIComponent(TOKEN) + '&s=' + encodeURIComponent(SEG) +
-          '&p=' + encodeURIComponent(location.pathname) +
-          '&ref=' + encodeURIComponent((document.referrer || '').slice(0, 120)) +
-          '&z=' + Date.now();
-      } catch (err) {}
-    }
+    logResp(r);
     if (r === 'selfserve') return;
-    document.getElementById('thankstxt').textContent = SAID[r] || '';
-    var box = document.getElementById('thanks');
-    box.style.display = 'block';
-    box.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    document.querySelectorAll('.opt, .door').forEach(function (o) {
-      if (o !== a) { o.style.opacity = '.45'; o.style.pointerEvents = 'none'; }
-    });
+    thank(r, a);
   });
 });
+/* a tap made in the e-mail itself: the answer is in the address */
+var R = Q.get('r');
+if (R && SAID[R] && R !== 'selfserve') { logResp(R); thank(R, null); }
 </script>
 
 <!-- rrb-views -->

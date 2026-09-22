@@ -29,6 +29,8 @@ FILM = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}'
 REVIEW = 'https://donthaveanagent.com/start?t={{token}}'
 ASSIGN = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}#choose'
 PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}'
+# One tap from a premium letter: the answer travels as r= and the page logs it on arrival.
+RESPOND = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
 
 # ── the eight openings ────────────────────────────────────────────────
 SEGMENTS = {
@@ -130,6 +132,105 @@ SEGMENTS = {
         'There is nothing to do and nothing to pay. If the address is wrong, a reply puts it right.'],
   send='Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.',
   inforce=False),
+ # ── the three action letters: they come before the waterfall ─────────
+ # The premium letters, in bands, so that a client two months behind and a
+ # client eight months behind are not told the same thing. Each carries the
+ # Act's own words for its stage and three one-tap answers. Never a figure.
+ 'I1': dict(
+  name='One premium showing as due',
+  subject='One premium on your policy is showing as due — one tap tells us which of three things is true',
+  preheader='Already paid it? Tell us and we put the record right. Not yet? Nothing is lost, and here is the easiest way.',
+  headline='One premium is showing as <em>due.</em>',
+  open=['Our records show one premium on your policy that has been due for more than sixty days. That is early '
+        'enough that nothing is lost, and it is usually one of three things: you have paid it and the record has '
+        'not caught up; the way you pay has changed since your representative moved on; or it simply slipped. '
+        'Whichever it is, one tap below tells us, and we do the rest.',
+        'If you paid it to a representative, keep your receipt: the Insurance Act says that payment counts as '
+        'received by Guardian Life. Your policy, your cover and your beneficiary are unchanged.'],
+  mode='premium',
+  act='Premiums or other payments due that are received by an agency, brokerage or a sales representative on '
+      'behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or '
+      'stipulations to the contrary.',
+  plain='A premium you handed to a registered representative counts as paid to Guardian Life, and the receipt '
+        'you were given is Guardian Life\'s receipt. Keep it.',
+  send='Sixty-one to ninety days. After the paid-to date is checked against cash and the deduction file. '
+       'Never a figure.'),
+ 'I2': dict(
+  name='More than one premium showing as due',
+  subject='Your policy is still in force — and more than one premium is showing as due',
+  preheader='The value your policy has built may be carrying it. Here is what the law says, and three ways to answer.',
+  headline='Your policy is <em>still in force.</em> Let us keep it that way.',
+  open=['Our records show more than one premium on your policy due, going back over ninety days. Your policy is '
+        'still in force. Where a policy has built a cash value, the Insurance Act does not allow it to be '
+        'forfeited while that value covers what is overdue &mdash; so the policy may be carrying itself for now, '
+        'out of what you have already paid in. That is not a reason to leave it. It is a reason to decide now, '
+        'while every option is still open.',
+        'The options are simple. Tell us it is already paid, and we check the record against your receipt. Let '
+        'us set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time. Or ask us to '
+        'call, and we put the figures in writing before you decide anything. Your representative, '
+        '{{agent_first_name}}, has moved on from Guardian Life; your policy is unchanged.'],
+  mode='premium',
+  act='An ordinary policy shall not be forfeited by reason only of non-payment of any premiums where the '
+      'surrender value of the policy &hellip; exceeds the sum of the amount of the debts owing to the insurer '
+      'under or secured by the policy and the amount of the overdue premium.',
+  plain='If your policy has built a value, it cannot be forfeited for a missed premium while that value covers '
+        'what is overdue. On a participating policy, bonuses you have earned may be used to keep it in force too.',
+  send='Ninety-one to one hundred and eighty days. The paid-to date checked first. Never a figure.'),
+ 'I3': dict(
+  name='A decision the policy needs',
+  subject='Your policy needs a decision from you — and the law gives you time and three ways to make it',
+  preheader='Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.',
+  headline='Your policy needs a <em>decision.</em>',
+  open=['Our records show premiums on your policy unpaid for more than six months. We are writing before '
+        'anything else happens, because the Insurance Act says a policy cannot be forfeited for non-payment '
+        'without a written late-payment notice and twenty business days after it &mdash; and we would rather you '
+        'used that time with the facts in front of you than found out afterwards.',
+        'There are three honest answers, and every one of them is a tap below. If it is already paid, we check '
+        'the record against your receipt. If you want to keep the policy, we set up payment to Guardian Life '
+        'directly and put the figure to bring it up to date in writing. And if you cannot keep paying, there may '
+        'still be something to keep: after three years of premiums the Act entitles you to a smaller policy, '
+        'fully paid, instead of losing the cover &mdash; we will tell you exactly what that would be. Your '
+        'representative, {{agent_first_name}}, has moved on from Guardian Life; the decision, and the time to '
+        'make it, are yours.'],
+  mode='premium',
+  act='&hellip; the insurer liable under the policy serves a late-payment notice on the policyholder stating '
+      '&hellip; the date of the notice, the due date of the premium and the amount due or payable to the insurer; '
+      'and &hellip; that the policy will be forfeited at the expiration of twenty business days after the date '
+      'of the notice if the premium or a sum sufficient to keep the policy in force is not paid to the insurer '
+      'within that period.',
+  plain='Before any policy can be forfeited, you must receive a written notice carrying the amount, and twenty '
+        'business days from it. And after three years of premiums, the Act entitles you to a paid-up policy '
+        'instead of losing the cover.',
+  send='Over one hundred and eighty days. Checked against cash first &mdash; some of these have paid. Never a '
+       'figure. The receiving agent calls within two days of the send.'),
+ 'J': dict(
+  name='Contract ready, not yet delivered',
+  subject='Your policy is in force — and your contract is ready to be delivered',
+  preheader='The document itself has not reached you yet. We will bring it.',
+  headline='Your policy is in force. Your <em>contract</em> is ready.',
+  open=['Your policy has been issued and is in force. The contract document &mdash; the policy itself, with your '
+        'schedule and the beneficiary you named &mdash; has not yet been delivered to you. We are putting that '
+        'right: the branch will bring it to you, and we will go through it with you when we do, so that you know '
+        'exactly what you hold.',
+        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Nothing about your policy '
+        'changes. When the contract reaches you, the only signature it needs is the acknowledgement that you '
+        'received it; you are not being asked to sign anything else.'],
+  send='Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving '
+       'agent, with the acknowledgement letter.'),
+ 'K': dict(
+  name='An application still in progress',
+  subject='Your application with Guardian Life — where it stands, and who is finishing it',
+  preheader='It has not been forgotten. Here is what is outstanding and who is completing it.',
+  headline='Your application is <em>still in progress.</em>',
+  open=['You applied for a policy with Guardian Life and the application has not yet been completed. That is ours '
+        'to finish, not yours to chase. We are going through every open file this week, and if anything is still '
+        'needed from you &mdash; a signature, a medical, a document &mdash; the person who calls will know exactly '
+        'what it is, and will bring it to you rather than ask you to find it.',
+        'Your representative, {{agent_first_name}}, has moved on from Guardian Life. Your application stays with '
+        'Guardian Life and with this branch, and it will be completed by a registered agent of your own. If you '
+        'would rather not proceed, say so and we will close it properly; you owe nothing either way.'],
+  send='Built from the pending list. Every file is read before the call; the agent brings the outstanding '
+       'requirement, never a list of them.'),
 }
 
 # ── the shell ─────────────────────────────────────────────────────────
@@ -198,6 +299,32 @@ def letter_table(seg, cfg):
     <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186">Same review, same questions, only somebody walks you through it &mdash; in person or on the phone, whichever you prefer. If there is a particular agent at this branch you would like, tell us the name in a reply to this letter, and that is who you will have.</div>
   </a>
 </td></tr></table>'''
+    if cfg.get('mode') == 'premium':
+        # the Act's own words for this stage, in place of the replacement note
+        law_block = f'''
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:13px 16px;font:400 13.5px/1.55 Inter,Arial,sans-serif;color:#33465a">
+  <b style="display:block;font:800 10px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:7px">The Insurance Act &middot; Trinidad and Tobago</b>
+  <span style="display:block;font:600 14.5px/1.5 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">&ldquo;{cfg['act']}&rdquo;</span>
+  <span style="display:block;margin-top:8px">{cfg['plain']}</span>
+  <a href="{PROTECT}" style="display:block;margin-top:8px;color:#07606f;font-weight:700;text-decoration:none">Everything else the law gives you, in plain words &rarr;</a>
+</td></tr></table>'''
+        # three one-tap answers, in place of the two doors; the film follows
+        taps = [('paid', 'I have already paid', 'We check the record against your receipt and confirm within two working days.'),
+                ('pay', 'Set me up to pay Guardian Life directly', 'One call, and every payment from then on carries Guardian Life\'s own receipt.'),
+                ('callme', 'Call me about it', 'A person from the branch, today or tomorrow, at a time you choose.')]
+        rows = ''.join(f'''
+<tr><td style="padding:0 0 9px">
+  <a href="{RESPOND}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:13px 16px">
+    <div style="font:800 16px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">{label} &rarr;</div>
+    <div style="font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:3px">{note}</div>
+  </a>
+</td></tr>''' for i, (r, label, note) in enumerate(taps))
+        doors_block = f'''
+<p style="margin:0 0 12px"><b>One tap is all it takes.</b> Whichever is true, tap it, and the branch does the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">{rows}</table>
+{film_block}'''
+        film_block = ''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
 <tr><td style="background:#07131f;padding:15px 24px;border-bottom:3px solid #efc24b">
@@ -263,15 +390,27 @@ print(f'wrote {len(manifest)} letters + manifest.json to {OUT}')
 # merged. Run tools/film/chapters.py afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F'
+WORDS = {8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen'}
+NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
 WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose policy is paid up',
        'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
        'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
-       'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed'}
+       'G': 'a client whose policy lapsed', 'H': 'a client with nothing in force and nothing lapsed',
+       'I1': 'a client with one premium due, sixty-one to ninety days',
+       'I2': 'a client with more than one premium due, up to six months',
+       'I3': 'a client with premiums unpaid for more than six months',
+       'J': 'a client whose policy is in force but whose contract has not reached them',
+       'K': 'a client whose application is still in progress'}
 GLAD = {'A': 'money is waiting to be claimed', 'B': 'they own it outright and may not know what it is worth',
         'C': 'a benefit inside the policy they were probably never told about',
         'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
         'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
-        'H': 'nothing to do and nothing to pay'}
+        'H': 'nothing to do and nothing to pay',
+        'I1': 'nothing is lost, and a payment to a representative counts as paid',
+        'I2': 'the policy is still in force, and the value it has built may be carrying it',
+        'I3': 'nothing can be forfeited without written notice and twenty business days, and a paid-up policy may be kept',
+        'J': 'the policy is in force, and the branch is bringing the contract',
+        'K': 'the file is being finished for them, not chased'}
 openings = ''.join(f"""
   <div class="op" id="{seg}">
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
@@ -386,13 +525,13 @@ page = f"""<!DOCTYPE html>
 
 <div class="hero"><div class="wrap">
   <div class="eyebrow">What goes out &middot; read it before any client does</div>
-  <h1>One letter. Eight openings. <em>One film.</em></h1>
+  <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
   <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
     changes, with what they hold. Not one word in any of it is about who left. Watch the film, read the
-    letter, skim the eight openings, and answer one question at the foot.</p>
+    letter, skim the {NOPEN} openings, and answer one question at the foot.</p>
   <div class="steps">
     <a href="#film"><b>1 &middot; two minutes</b>The film</a>
-    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the eight openings</a>
+    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
     <a href="#verdict"><b>3 &middot; one minute</b>Send, change, or hold</a>
   </div>
 </div></div>
@@ -424,7 +563,7 @@ page = f"""<!DOCTYPE html>
 </div></section>
 
 <section class="band" id="openings"><div class="wrap">
-  <h2>The eight openings</h2>
+  <h2>The {NOPEN} openings</h2>
   <p class="sub">What changes, and who gets which. Each one leads with the thing the client is glad to hear.</p>
   <div class="ops">{openings}
   </div>
@@ -466,7 +605,7 @@ page = f"""<!DOCTYPE html>
     <a href="../your-policy/protected"><b>How the law protects you</b>The Insurance Act's protections, quoted, as the client reads them.</a>
     <a href="../orphan-transition/"><b>The manual</b>The segments, the feedback loop, the call list and the run sheet.</a>
   </div>
-  <h2 style="margin-top:30px">All eight letters, in full</h2>
+  <h2 style="margin-top:30px">All {NOPEN} letters, in full</h2>
   <p class="sub">Folded away. Open any one to read it as the client will.</p>
   {full}
 </div></section>
@@ -515,4 +654,4 @@ form.addEventListener('submit', function (e) {{
 """
 TPL.parent.mkdir(parents=True, exist_ok=True)
 TPL.write_text(page, encoding='utf-8')
-print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the eight openings, one verdict')
+print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the {NOPEN} openings, one verdict')

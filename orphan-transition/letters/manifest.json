@@ -62,5 +62,45 @@
   "preheader": "A short note from the branch that looked after you.",
   "file": "H.html",
   "send_note": "Lightest touch. No claim about anything they hold, because they hold nothing. Last to go."
+ },
+ {
+  "segment": "I1",
+  "name": "One premium showing as due",
+  "subject": "One premium on your policy is showing as due \u2014 one tap tells us which of three things is true",
+  "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost, and here is the easiest way.",
+  "file": "I1.html",
+  "send_note": "Sixty-one to ninety days. After the paid-to date is checked against cash and the deduction file. Never a figure."
+ },
+ {
+  "segment": "I2",
+  "name": "More than one premium showing as due",
+  "subject": "Your policy is still in force \u2014 and more than one premium is showing as due",
+  "preheader": "The value your policy has built may be carrying it. Here is what the law says, and three ways to answer.",
+  "file": "I2.html",
+  "send_note": "Ninety-one to one hundred and eighty days. The paid-to date checked first. Never a figure."
+ },
+ {
+  "segment": "I3",
+  "name": "A decision the policy needs",
+  "subject": "Your policy needs a decision from you \u2014 and the law gives you time and three ways to make it",
+  "preheader": "Nothing can be forfeited without written notice and twenty business days. Here is what to do with them.",
+  "file": "I3.html",
+  "send_note": "Over one hundred and eighty days. Checked against cash first &mdash; some of these have paid. Never a figure. The receiving agent calls within two days of the send."
+ },
+ {
+  "segment": "J",
+  "name": "Contract ready, not yet delivered",
+  "subject": "Your policy is in force \u2014 and your contract is ready to be delivered",
+  "preheader": "The document itself has not reached you yet. We will bring it.",
+  "file": "J.html",
+  "send_note": "Built from the contracts-given-to-agent list, not the sheet. Delivered within the week by the receiving agent, with the acknowledgement letter."
+ },
+ {
+  "segment": "K",
+  "name": "An application still in progress",
+  "subject": "Your application with Guardian Life \u2014 where it stands, and who is finishing it",
+  "preheader": "It has not been forgotten. Here is what is outstanding and who is completing it.",
+  "file": "K.html",
+  "send_note": "Built from the pending list. Every file is read before the call; the agent brings the outstanding requirement, never a list of them."
  }
 ]
