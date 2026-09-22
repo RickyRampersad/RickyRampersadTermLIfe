@@ -408,9 +408,16 @@
    on the Team Feedback tab. Fire-and-forget, like the client clicks. Until the
    placeholder is replaced with the deployed /exec URL, the page says so out
    loud instead of losing the verdicts quietly. */
-var SVC = 'RRB_SERVICE_URL';
-var wired = SVC.indexOf('http') === 0;
-if (!wired) document.getElementById('unwired').style.display = 'block';
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+/* wired = the deployed backend knows the campaign actions. Only the
+   version carrying resp/feedback answers the ping with campaign:2, so
+   the notice stays up until a New version is published, then clears. */
+var wired = false;
+var unwiredBox = document.getElementById('unwired');
+unwiredBox.style.display = 'block';
+fetch(SVC + '?action=ping&z=' + Date.now()).then(function (r) { return r.json(); })
+  .then(function (j) { if (j && j.campaign) { wired = true; unwiredBox.style.display = 'none'; } })
+  .catch(function () {});
 var form = document.getElementById('fb');
 form.addEventListener('submit', function (e) {
   e.preventDefault();

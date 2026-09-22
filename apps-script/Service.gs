@@ -211,8 +211,12 @@ function bad_(msg) {
 function doGet(e) {
   var p = (e && e.parameter) || {};
   if (p.action === 'ping') {
+    /* campaign: the transition pages ask for this before they trust the
+       backend with a verdict or a client's tap. It is absent from any
+       deployment older than the resp/feedback actions, so the pages show
+       their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_() });
+                   automation: automationOn_(), campaign: 2 });
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));

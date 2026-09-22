@@ -153,8 +153,10 @@ def letter_table(seg, cfg):
     # it: the policy has not.
     notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
     {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
-    closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Until you choose, your policy is looked after by this branch under
-    my name. From the moment you ask, you have an agent of your own within two working days.</p>'''
+    # The branch, not the manager's name: the objective is to reassign every
+    # client urgently, so the closing says the match is already under way.
+    closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Your policy is looked after by the branch, and we are matching you to
+    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>'''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
 <tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
@@ -462,9 +464,16 @@ window.addEventListener('hashchange', unfold); unfold();
 /* Verdicts go to the Service Questionnaire backend, action=feedback, and land
    on the Team Feedback tab. Until the placeholder is replaced with the
    deployed /exec URL the page says so, instead of losing them quietly. */
-var SVC = 'RRB_SERVICE_URL';
-var wired = SVC.indexOf('http') === 0;
-if (!wired) document.getElementById('unwired').style.display = 'block';
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+/* wired = the deployed backend knows the campaign actions. Only the
+   version carrying resp/feedback answers the ping with campaign:2, so
+   the notice stays up until a New version is published, then clears. */
+var wired = false;
+var unwiredBox = document.getElementById('unwired');
+unwiredBox.style.display = 'block';
+fetch(SVC + '?action=ping&z=' + Date.now()).then(function (r) {{ return r.json(); }})
+  .then(function (j) {{ if (j && j.campaign) {{ wired = true; unwiredBox.style.display = 'none'; }} }})
+  .catch(function () {{}});
 var form = document.getElementById('fb');
 form.addEventListener('submit', function (e) {{
   e.preventDefault();

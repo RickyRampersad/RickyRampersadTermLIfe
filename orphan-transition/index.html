@@ -133,10 +133,10 @@
       replace <code>Service.gs</code> with the repository's, then Deploy &rarr; Manage deployments &rarr; pencil
       &rarr; New version. Copy the <code>/exec</code> URL. <i>New deployment</i> would change the address every
       front end holds.</li>
-    <li><b>Wire the pages.</b> Paste that URL over <code>RRB_SERVICE_URL</code> in
-      <code>orphan-video/index.html</code>, <code>orphan-video/protected.html</code> and
-      <code>orphan-transition/team-review.html</code>; commit and merge again. Open the team review page: the
-      amber notice is gone. Log one test verdict; the <b>Team Feedback</b> tab appears with the row.</li>
+    <li><b>Publish the backend.</b> In the Service Questionnaire Apps Script: Deploy &rarr; Manage
+        deployments &rarr; pencil &rarr; New version. The pages are already wired to that deployment and ask it
+        for its version on load; the amber &ldquo;not recording yet&rdquo; notice clears itself the moment the
+        new version answers. Nothing to paste.</li>
     <li><b>Clear the test rows</b> on the questionnaire sheet, so the first real review is not beside them.</li>
   </ol>
 
@@ -444,8 +444,9 @@
       live outside it. This manual carries the method and nothing else.</li>
     <li><b>Nothing goes out with a broken link.</b> The film page must be on <code>main</code> before any
       letter references it. Check <code>curl -sI</code> first.</li>
-    <li><b>Nothing goes out before the clicks land.</b> The Apps Script must be redeployed and the
-      <code>RRB_SERVICE_URL</code> placeholder replaced, or every response vanishes.</li>
+    <li><b>Nothing goes out before the backend is published.</b> The pages are wired to the Service
+      Questionnaire deployment and show an amber notice until it answers with the campaign flag. A New version
+      must be published first, or every tap and every verdict vanishes.</li>
     <li><b>Nothing goes out before the receivers are named.</b> Decide who takes assignments before the
       send, by town.</li>
     <li><b>Nothing goes out before the team has read it.</b> The team review page first, the verdicts

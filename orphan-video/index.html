@@ -367,7 +367,7 @@
 /* The four clicks. The Service Questionnaire backend logs the answer against
    the token the e-mail carried; without a token the page still works and the
    answer is recorded against the page instead. */
-var SVC = 'RRB_SERVICE_URL';
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 var Q = new URLSearchParams(location.search);
 var TOKEN = Q.get('t') || '';     /* opaque, from the letter — never a policy number */
 var SEG = Q.get('s') || '';       /* the segment letter the letter was sent under */
