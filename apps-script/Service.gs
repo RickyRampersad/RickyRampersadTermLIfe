@@ -248,6 +248,10 @@ function doGet(e) {
   if (p.action === 'feedback') {
     return json_(teamFeedback_(p));
   }
+  /* the transition campaign's own wall: sends, taps, reviews, verdicts — see Transition.gs */
+  if (p.action === 'transition') {
+    return json_(transitionData_(p.code));
+  }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
     '<meta http-equiv="refresh" content="0;url=' + SVC.FORM_URL + '">' +
@@ -3573,5 +3577,11 @@ function onOpen() {
     .addSeparator()
     .addItem('Install daily follow-up watchdog', 'installServiceTriggers')
     .addItem('Run follow-up check now', 'dailyServiceFollowUp')
+    .addSeparator()
+    .addItem('Transition: set up (tab, hourly send, 8:00 digest)', 'transitionSetup')
+    .addItem('Transition: preview the letters to me', 'transitionPreviewToMe')
+    .addItem('Transition: send the Test rows now', 'transitionSendTest')
+    .addItem('Transition: send a batch now', 'transitionSendBatch')
+    .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addToUi();
 }

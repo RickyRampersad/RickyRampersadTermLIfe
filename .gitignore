@@ -28,3 +28,7 @@ tools/film/bed-*.wav
 tools/film/sfx-*.wav
 tools/film/*-mix.wav
 tools/film/captions-*.ass
+
+# the transition send: the departed agents' names and every client file stay out
+tools/letters/departed.txt
+tools/letters/*.csv
