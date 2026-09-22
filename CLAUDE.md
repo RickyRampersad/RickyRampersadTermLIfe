@@ -568,10 +568,14 @@ voice under the new timing and the caption gives it away.
   went wrong before anyone is named and the branch reads it before it
   assigns. It promises an agent by the next working day, faster than the
   standing two; the manager set that pace and can slow it in `TAPS`.
-- **The pages hold the placeholder `RRB_SERVICE_URL`** until the Apps Script
-  is redeployed (Manage deployments → New version) and the `/exec` URL is
-  pasted in. The team review page shows an amber notice while it is
-  unresolved, because verdicts vanishing silently is the failure mode.
+- **The pages are wired to the Service Questionnaire deployment** (the same
+  `/exec` URL the six front ends hold) and ask it `action=ping` on load. Only
+  a version carrying the `resp`/`feedback` actions answers with
+  `campaign: 2`, so the team pages keep their amber "not recording yet"
+  notice until Manage deployments → New version is published, then clear it
+  themselves. Nothing to paste. Client taps fire regardless; against an old
+  version they fall through to the form redirect and are lost, which is why
+  no letter goes out before the notice has cleared.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
