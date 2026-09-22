@@ -154,7 +154,9 @@ def letter_table(seg, cfg):
     # the reason the letter exists. It is the second thing the client reads,
     # once, in the same words on every letter, and the film's own line answers
     # it: the policy has not.
-    notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
+    # The name sits between <!--agent--> marks so the sender can drop it when the
+    # row carries none: "Your representative has moved on" still reads.
+    notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>
     {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.

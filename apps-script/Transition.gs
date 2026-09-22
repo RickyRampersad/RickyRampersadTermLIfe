@@ -146,9 +146,11 @@ function tFill_(text, row) {
   out = out.replace(/<!--facts-->([\s\S]*?)<!--\/facts-->/g, function (m, inner) {
     return /<!--fact:/.test(inner) ? m : '';
   });
+  /* no agent first name on the row: "Your representative has moved on" still reads */
+  if (!v('Agent first name')) out = out.replace(/<!--agent-->[\s\S]*?<!--\/agent-->/g, '');
   var map = {
     first_name: v('First name') || 'Client',
-    agent_first_name: v('Agent first name') || 'your representative',
+    agent_first_name: v('Agent first name'),
     token: v('Token'),
     segment: v('Segment').toUpperCase(),
   };
@@ -168,9 +170,9 @@ function tSendRow_(row) {
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
   var html = tFill_(L.html, row);
   var link = TRANSITION.FILM + '?t=' + encodeURIComponent(tText_(row.Token)) + '&s=' + encodeURIComponent(seg);
+  var agent = tText_(row['Agent first name']);
   var plain = 'Dear ' + (tText_(row['First name']) || 'Client') + ',\n\n' +
-    'Your representative, ' + (tText_(row['Agent first name']) || 'your representative') +
-    ', has moved on from Guardian Life. Your policy has not.\n\n' +
+    'Your representative' + (agent ? ', ' + agent + ',' : '') + ' has moved on from Guardian Life. Your policy has not.\n\n' +
     'This letter is best read in a mail app that shows pictures. Everything in it, and the two-minute film, is here:\n' +
     link + '\n\nRicky Rampersad\nBranch Manager, Ricky Rampersad Branch\nGuardian Life of the Caribbean';
   var opts = { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL };
