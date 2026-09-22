@@ -52,6 +52,7 @@ var TRANSITION = {
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
   WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
+  CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
 };
 
 /* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
@@ -422,11 +423,37 @@ function tAckClient_(token, r, needs) {
   } catch (e) { log_('transition', 'ack-failed', String(e && e.message ? e.message : e)); }
 }
 
+/** Every Transition Send row, read once and keyed by token — so a loop over
+ *  Client Responses never re-reads the whole tab per row. Used only by
+ *  tChase_; tAckClient_ still calls tRowByToken_ directly, since that fires
+ *  once per click, not once per row of a scan. */
+function tTokenMap_() {
+  var map = {};
+  try {
+    var sh = ss_().getSheetByName(TRANSITION.SHEET);
+    var last = sh ? sh.getLastRow() : 0, lastCol = sh ? sh.getLastColumn() : 0;
+    if (last < 2 || !lastCol) return map;
+    var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+    var tokCol = head.indexOf('Token');
+    if (tokCol < 0) return map;
+    var vals = sh.getRange(2, 1, last - 1, lastCol).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      var tok = String(vals[i][tokCol] || '').trim();
+      if (!tok) continue;
+      var o = { _row: i + 2 };
+      head.forEach(function (h, j) { if (h) o[h] = vals[i][j]; });
+      map[tok] = o;
+    }
+  } catch (e) {}
+  return map;
+}
+
 /** An internal nudge, to the branch (never to the client): what is late, who
- *  it was with, and what it needs. `level` 2 is the second, plainer chase. */
-function tChaseInternal_(token, r, needs, days, level) {
-  var row = tRowByToken_(token) || {};
-  var who = tText_(row.Client) || (token ? 'token ' + token : 'a client');
+ *  it was with, and what it needs. `level` 2 is the second, plainer chase.
+ *  Takes the row already looked up — never looks it up itself. */
+function tChaseInternal_(row, r, needs, days, level) {
+  row = row || {};
+  var who = tText_(row.Client) || tText_(row['First name']) || 'a client';
   var to = TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
   var subj = (level >= 2 ? 'Still late: ' : 'Late: ') + who + ' — ' + r + ', ' + days + ' working days';
   var body = who + ' tapped "' + r + '" ' + days + ' working days ago and is still marked Open.\n\n' +
@@ -438,9 +465,10 @@ function tChaseInternal_(token, r, needs, days, level) {
 }
 
 /** The client's own "still on it" note — only the second time, and only
- *  once, so it reassures rather than nags. Warm, not defensive. */
-function tChaseClient_(token, needs) {
-  var row = tRowByToken_(token);
+ *  once, so it reassures rather than nags. Warm, not defensive. Takes the
+ *  row already looked up; a null row (should not happen, tChase_ filters
+ *  it out first) is simply skipped. */
+function tChaseClient_(row, needs) {
   if (!row) return;
   var to = tText_(row.Email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
@@ -457,45 +485,74 @@ function tChaseClient_(token, needs) {
 
 /** Chases what a client is still waiting on. Run once a day, from the
  *  digest — not from tSummary_, which the responses page polls every two
- *  minutes, so a chase is never fired twice by a page left open. A tap open
- *  past WAIT gets one internal nudge; still open past WAIT × CHASE_MULT it
- *  gets a client reassurance and a second, plainer nudge. Stops the moment
- *  Status reads anything other than "Open" — how the branch marks a
- *  concern resolved. Each row is chased once per level: the level is
- *  recorded in its own Note cell, appended, never overwritten, so a human
- *  note already there survives. */
+ *  minutes, so a chase is never fired twice by a page left open.
+ *
+ *  Client Responses has been recording taps since before this campaign —
+ *  the site's original assign/review/question doors, going back months —
+ *  and every one of those old rows still reads "Open" because nothing
+ *  before today ever looked at that column again. A chase that does not
+ *  know the difference is a bug, not a feature: it would nudge the branch,
+ *  and eventually reassure a client, about a conversation from months ago
+ *  that a person already finished by hand. So the very first check on every
+ *  row is whether its token is one this campaign's own Transition Send tab
+ *  recognises; the token map is read once, not once per row. Anything else
+ *  is passed over in silence — it was never this campaign's to chase.
+ *
+ *  A tap open past WAIT gets one internal nudge; still open past
+ *  WAIT × CHASE_MULT it gets a client reassurance and a second, plainer
+ *  nudge. Stops the moment Status reads anything other than "Open" — how
+ *  the branch marks a concern resolved. Each row is chased once per level:
+ *  the level is recorded in its own Note cell, appended, never overwritten,
+ *  so a human note already there survives.
+ *
+ *  CHASE_MAX_PER_RUN bounds the work whatever the backlog, so a large
+ *  one-off pile of late taps is worked through over several runs rather
+ *  than risking the six-minute execution ceiling — the exact failure a
+ *  same-day incident (22 September) turned out to be caused by the very
+ *  problem this function guards against above. */
 function tChase_() {
-  var out = { chase1: 0, chase2: 0 };
+  var out = { chase1: 0, chase2: 0, skipped: 0, deferred: 0 };
   var sh, last;
   try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
   if (!sh || last < 2) return out;
   var vals;
   try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
+  var tokens = tTokenMap_();
   var now = new Date();
+  var budget = TRANSITION.CHASE_MAX_PER_RUN;
   for (var i = 0; i < vals.length; i++) {
     var v = vals[i], rowNum = i + 2;
     var received = v[0] instanceof Date ? v[0] : null;
     if (!received || String(v[7] || '').trim().toLowerCase() !== 'open') continue;
-    var token = String(v[1] || '').trim(), r = String(v[3] || '').trim(), needs = String(v[4] || '');
+    var token = String(v[1] || '').trim();
+    var row = tokens[token];
+    if (!row) { out.skipped++; continue; }               // not this campaign's token: never chased
+    if (budget <= 0) { out.deferred++; continue; }        // over the cap: left for the next run
+    var r = String(v[3] || '').trim(), needs = String(v[4] || '');
     var note = String(v[10] || '');
     var wait = r === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;
     var days = tWorkingDays_(received, now);
     var did1 = note.indexOf('[chase1]') >= 0, did2 = note.indexOf('[chase2]') >= 0;
+    if (did1 && did2) continue;
+    if (days < wait) continue;
     var newNote = note;
     try {
-      if (!did1 && days >= wait) {
-        tChaseInternal_(token, r, needs, days, 1);
-        newNote += (newNote ? ' ' : '') + '[chase1]'; did1 = true; out.chase1++;
+      if (!did1) {
+        tChaseInternal_(row, r, needs, days, 1);
+        newNote += (newNote ? ' ' : '') + '[chase1]'; did1 = true; out.chase1++; budget--;
       }
-      if (!did2 && did1 && days >= wait * TRANSITION.CHASE_MULT) {
-        tChaseClient_(token, needs);
-        tChaseInternal_(token, r, needs, days, 2);
-        newNote += ' [chase2]'; out.chase2++;
+      if (!did2 && budget > 0 && days >= wait * TRANSITION.CHASE_MULT) {
+        tChaseClient_(row, needs);
+        tChaseInternal_(row, r, needs, days, 2);
+        newNote += ' [chase2]'; out.chase2++; budget--;
       }
       if (newNote !== note) sh.getRange(rowNum, 11).setValue(newNote);
     } catch (e) { log_('transition', 'chase-row-failed', String(e && e.message ? e.message : e)); }
   }
-  if (out.chase1 || out.chase2) log_('transition', 'chase', out.chase1 + ' internal, ' + out.chase2 + ' client reassured');
+  if (out.chase1 || out.chase2 || out.skipped || out.deferred) {
+    log_('transition', 'chase', out.chase1 + ' internal, ' + out.chase2 + ' client reassured, ' +
+      out.skipped + ' not this campaign, ' + out.deferred + ' left for the next run');
+  }
   return out;
 }
 
