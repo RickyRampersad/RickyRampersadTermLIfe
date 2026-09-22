@@ -1,0 +1,181 @@
+{
+ "voice": "en-US-AndrewNeural",
+ "rate": "-12%",
+ "note": "Branch film for rickyrampersadbranch.com/vid and /your-policy. Settles the client first, then what they already own, then the law as their right, then the agent. Agent-driven. No client names, no counts, no figures. Each scene names its visual; build-orphanfilm.py renders from this file; voice-lines.py voices and times it. Cut of 21 September 2026 after a judged rewrite.",
+ "scenes": [
+  {
+   "visual": "title",
+   "eyebrow": "A Ricky Rampersad Branch film",
+   "headline": "Your representative<br>has <em>moved on.</em>",
+   "sub": "Your policy has not.",
+   "line": "You hold a policy with Guardian Life. Your representative has moved on."
+  },
+  {
+   "visual": "statement",
+   "eyebrow": "What your policy is",
+   "headline": "Issued to you, by <em>Guardian Life.</em>",
+   "line": "Guardian Life issued your policy to you, and Guardian Life holds it."
+  },
+  {
+   "visual": "keeps",
+   "eyebrow": "Three things in your schedule",
+   "line": "Your cover stays in force. Your premium is the one written in your policy. Your beneficiary is who you named.",
+   "rows": [
+    {
+     "b": "Your cover stays in force",
+     "i": "The same sum assured, from the day it was issued"
+    },
+    {
+     "b": "Your premium is the one written in the policy",
+     "i": "The figure in your schedule is the figure you pay"
+    },
+    {
+     "b": "Your beneficiary is who you named",
+     "i": "Where you are the life insured, it is paid to them, outside your estate"
+    }
+   ]
+  },
+  {
+   "visual": "keeps",
+   "eyebrow": "From the branch, every year",
+   "line": "A note on your birthday. A reminder before a premium is due. A desk that answers the phone.",
+   "rows": [
+    {
+     "tk": "&#9993;",
+     "b": "A note on your birthday",
+     "i": "Every year, from the branch"
+    },
+    {
+     "tk": "&#9200;",
+     "b": "A reminder before a premium is due",
+     "i": "So nothing lapses by accident"
+    },
+    {
+     "tk": "&#9742;",
+     "b": "A desk that answers",
+     "i": "A person. Every contact dated on your file"
+    }
+   ]
+  },
+  {
+   "visual": "lock",
+   "eyebrow": "Now, what you already own",
+   "age": "Your age<br>when you started",
+   "cap": "is the price you still pay",
+   "line": "Your premium is priced on the age you were when you started."
+  },
+  {
+   "visual": "statement",
+   "eyebrow": "An honest mistake on the form",
+   "headline": "Three years in force,<br>and it is <em>settled.</em>",
+   "line": "After three years, an honest mistake on the form cannot void it."
+  },
+  {
+   "visual": "keeps-find",
+   "eyebrow": "What may already be inside it",
+   "line": "A benefit that pays your premiums if illness stops you working. A policy that has quietly matured. Money in one you thought had lapsed.",
+   "rows": [
+    {
+     "b": "A waiver of premium",
+     "i": "If illness or injury stops you working, it pays your premiums for you"
+    },
+    {
+     "b": "A policy that has matured",
+     "i": "It reached the end of its term. The money is yours to claim"
+    },
+    {
+     "b": "Value in one that lapsed",
+     "i": "A policy that stopped does not always stop being worth something"
+    }
+   ]
+  },
+  {
+   "visual": "pivot",
+   "headline": "A policy cannot<br>be <em>moved.</em>",
+   "extra": 0.6,
+   "line": "A policy cannot be moved. It can only be ended, and another one started."
+  },
+  {
+   "visual": "statement",
+   "eyebrow": "If a new one were bought",
+   "headline": "A new policy. Your age today.<br><em>Your health today.</em>",
+   "line": "A new policy is priced at your age and your health today."
+  },
+  {
+   "visual": "pivot",
+   "headline": "Already <em>issued.</em>",
+   "extra": 0.6,
+   "line": "The one you hold is already issued. Nothing about your health now can touch it."
+  },
+  {
+   "visual": "act",
+   "eyebrow": "The Insurance Act &middot; Trinidad and Tobago",
+   "quote": "An agent, agency, broker, brokerage or a sales representative shall not &hellip; cause a policyholder to replace a long-term insurance policy without first discussing the advantages and disadvantages of the discontinuance of the policy.",
+   "ask": "That is your right. Ask for both.",
+   "line": "Before an agent or a broker may have your long term policy replaced, the advantages and the disadvantages of ending it must first be discussed with you."
+  },
+  {
+   "visual": "keeps",
+   "eyebrow": "Three things you may ask for",
+   "line": "The advantages and the disadvantages. Enough information to decide. And a certificate of registration, from anyone advising you.",
+   "rows": [
+    {
+     "b": "The advantages and the disadvantages",
+     "i": "Before any long-term policy is replaced"
+    },
+    {
+     "b": "Enough information to decide",
+     "i": "Any comparison fair, balanced, and leaving out nothing material"
+    },
+    {
+     "b": "A certificate of registration",
+     "i": "Anyone registered must produce it, or a copy, when you ask"
+    }
+   ]
+  },
+  {
+   "visual": "statement",
+   "eyebrow": "Your rights, and then your policy",
+   "headline": "The policy still has<br>to be <em>read.</em>",
+   "line": "Those are your rights. The policy itself still has to be read."
+  },
+  {
+   "visual": "creds",
+   "eyebrow": "An agent of your own",
+   "line": "An agent reads it with you. Trained. Registered. Answerable for the advice they give.",
+   "rows": [
+    {
+     "n": "Trained",
+     "b": "Examined before they advise",
+     "i": "Someone who has had to earn the right"
+    },
+    {
+     "n": "Registered",
+     "b": "Under the Act, on the record",
+     "i": "No individual may act as an agent in Trinidad and Tobago unless registered"
+    },
+    {
+     "n": "Answerable",
+     "b": "For the advice they give",
+     "i": "Written on your file, and the branch stands behind it"
+    }
+   ]
+  },
+  {
+   "visual": "click",
+   "eyebrow": "Within two working days",
+   "headline": "Name the one you want,<br><em>or we match you.</em>",
+   "ask": "One click, and we do the rest.",
+   "line": "An introduction is one click away. Name the one you want, or be matched, within two working days."
+  },
+  {
+   "visual": "close",
+   "eyebrow": "Thank you for watching",
+   "headline": "Ricky Rampersad Branch",
+   "sub": "Guardian Life of the Caribbean",
+   "url": "rickyrampersadbranch.com / your-policy",
+   "extra": 0.6,
+   "line": "Ricky Rampersad Branch. Guardian Life of the Caribbean."
+  }
+ ]
+}

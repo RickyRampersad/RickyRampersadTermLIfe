@@ -528,6 +528,20 @@ const INDIVIDUAL = [
     showIf: { id: "otherGuardian", not: "No" }, flag: "records",
     placeholder: "A type, a number, roughly when — anything you remember." },
 
+  /* The household pair. The question above asks what else is yours; this one
+     asks who else is in the house — a different thing, and the one nobody has
+     ever been asked. The records hold no household at all, so the client is
+     the only source there is. Flagged "household", not "records": it is not a
+     correction to process, it decides who looks after this family. */
+  { id: "householdOther", label: "Does anyone else in your home hold a policy with this same company?",
+    type: "yesnona", flag: "household",
+    help: "A husband or wife, a parent, a grown child at the same address — a policy of their own, not yours.",
+    note: { kind: "tip", text: "<b>Why we ask.</b> Households get split across three different agents, and then nobody sees the whole picture — three calls to one address, and three people who each know a third of it. If yours is looked after together, one person knows what the family holds." } },
+  { id: "householdWho", label: "Who, and how are they related to you?", type: "textarea",
+    showIf: { id: "householdOther", not: "No" }, flag: "household",
+    placeholder: "A first name and the relationship is plenty — \"my wife Anne\", \"my son\". No policy numbers needed.",
+    help: "Enough for us to keep the household together when we decide who looks after you." },
+
   { id: "otherPolicies", label: "Do you think there are other policies you've lost track of?", type: "yesnona",
     help: "Old work policies, something a parent took out for you, a policy from a company that has since been bought.",
     note: { kind: "tip", text: "<b>Worth asking.</b> Under section 197 of the Insurance Act 2018, money payable but unclaimed for seven years after maturity is reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens." } },

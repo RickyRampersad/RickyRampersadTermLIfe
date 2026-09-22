@@ -1,0 +1,66 @@
+[
+ {
+  "segment": "A",
+  "name": "A policy has matured",
+  "subject": "A policy of yours has matured \u2014 there is money to claim",
+  "preheader": "It reached the end of its term. The money is yours, and it is waiting.",
+  "file": "A.html",
+  "send_note": "Only a handful of this group have an e-mail. The rest is a phone call, and it is the one call nobody resents."
+ },
+ {
+  "segment": "B",
+  "name": "Paid up",
+  "subject": "You have finished paying for this one",
+  "preheader": "Nothing more to pay. Here is what you own outright.",
+  "file": "B.html",
+  "send_note": "Nearly all of this group have e-mail."
+ },
+ {
+  "segment": "C",
+  "name": "Carrying waiver of premium",
+  "subject": "There is a benefit inside your policy you may not know about",
+  "preheader": "If illness stopped you working, Guardian Life would pay your premiums for you.",
+  "file": "C.html",
+  "send_note": "The strongest letter in the set. Send it second, after A and B have warmed the domain."
+ },
+ {
+  "segment": "D",
+  "name": "Collected off a payroll",
+  "subject": "Your policy, and a check we are running on your salary deduction",
+  "preheader": "Deductions sometimes stop quietly. We are checking yours so that you do not have to.",
+  "file": "D.html",
+  "send_note": "The word \"arrears\" does not appear. Until the deduction file is reconciled, a gap is ours to chase, not theirs to explain."
+ },
+ {
+  "segment": "E",
+  "name": "Held ten years or more",
+  "subject": "You have held this cover for {{years}} years",
+  "preheader": "Your premium is fixed on the age you were when you started. Nobody can sell you that again.",
+  "file": "E.html",
+  "send_note": "Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the argument is strongest here."
+ },
+ {
+  "segment": "F",
+  "name": "In force",
+  "subject": "A quick summary of your Guardian Life cover \u2014 and two ways to pick this up",
+  "preheader": "A short film, then whichever door suits you.",
+  "file": "F.html",
+  "send_note": "The core letter. The largest group and the best reach."
+ },
+ {
+  "segment": "G",
+  "name": "Lapsed",
+  "subject": "A policy you may have written off \u2014 let us tell you what it is worth",
+  "preheader": "A policy that stopped does not always stop being worth something.",
+  "file": "G.html",
+  "send_note": "A week behind the others, and it does not mention the departure at all &mdash; these clients stopped paying years ago and it is irrelevant to them."
+ },
+ {
+  "segment": "H",
+  "name": "Nothing held",
+  "subject": "Is this still the right address for you?",
+  "preheader": "A short note from the branch that looked after you.",
+  "file": "H.html",
+  "send_note": "Lightest touch. No claim about anything they hold, because they hold nothing. Last to go."
+ }
+]

@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Team Review | Ricky Rampersad Branch</title>
+<meta name="description" content="The letters and the film that go to the clients of agents who have moved on — read by the branch first, with a verdict on every one.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#07131f; --ink:#12202e; --body:#33465a; --dim:#64798e;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA; --teal2:#0aa8bf; --tdark:#07606f;
+    --paper:#eef4f7; --card:#fff; --line:#d7e3ea;
+    --stop:#8a3324; --stopbg:#fdeeea; --ok:#1f6f4a; --okbg:#eef7f2; --notebg:#eafaFD; --warnbg:#fff6df;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--body);
+    font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+  .wrap{width:min(980px,100% - 34px);margin:0 auto}
+  a{color:#0c4f78}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;
+    border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:16px 0}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .hero{background:radial-gradient(900px 520px at 88% -24%,rgba(0,207,234,.22),transparent 60%),
+    radial-gradient(1100px 600px at 8% -18%,rgba(239,194,75,.15),transparent 62%),
+    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);color:#eaf4ff;padding:36px 0 44px}
+  .hero .eyebrow{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+  .hero h1{font-family:var(--f);font-weight:800;font-size:clamp(26px,5vw,40px);line-height:1.16;letter-spacing:-.6px;margin:11px 0 12px;color:#fff}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .hero p{color:#9dbdd8;max-width:62ch;margin:0;font-size:17px}
+  .hero .ask{display:inline-block;margin-top:18px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;
+    border-radius:11px;padding:12px 20px;font-family:var(--f);font-weight:800;font-size:15px;text-decoration:none;
+    box-shadow:0 16px 40px rgba(0,207,234,.28)}
+  nav.toc{background:var(--card);border-bottom:1px solid var(--line)}
+  nav.toc .wrap{display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;font-size:13.5px}
+  nav.toc a{color:var(--tdark);text-decoration:none;font-weight:600}
+  section.band{padding:40px 0}
+  section.band.alt{background:var(--card);border-block:1px solid var(--line)}
+  h2{font-family:var(--f);font-weight:800;font-size:clamp(20px,3vw,26px);color:var(--ink);letter-spacing:-.4px;margin:0 0 6px}
+  h3{font-family:var(--f);font-size:16.5px;color:var(--ink);margin:22px 0 6px}
+  .sub{color:var(--dim);margin:0 0 20px;font-size:16px}
+  p{margin:11px 0} b{color:var(--ink)}
+  .fine{color:var(--dim);font-size:13.5px}
+  code{background:#e2edf2;padding:1px 5px;border-radius:3px;font-size:12.5px}
+  .cols{display:grid;gap:14px}
+  @media(min-width:760px){.cols.two{grid-template-columns:1fr 1fr}.cols.three{grid-template-columns:repeat(3,1fr)}.cols.four{grid-template-columns:repeat(4,1fr)}}
+  .cd{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:13px;padding:18px 20px}
+  .cd h3{margin:0 0 6px}
+  .cd p{margin:0;font-size:15px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:18px 20px;border-top:3px solid var(--gold)}
+  .stat b{display:block;font-family:var(--f);font-size:30px;color:var(--ink);letter-spacing:-.8px;line-height:1.05}
+  .stat span{display:block;font-size:14px;color:var(--dim);margin-top:6px}
+  .box{border-radius:10px;padding:15px 19px;margin:16px 0 0;border:1px solid}
+  .box h3{margin-top:0}
+  .box.stop{background:var(--stopbg);border-color:#edc9bf;border-left:4px solid var(--stop)} .box.stop h3{color:var(--stop)}
+  .box.note{background:var(--notebg);border-color:#a8dfeb;border-left:4px solid var(--teal)} .box.note h3{color:var(--tdark)}
+  .box.ok{background:var(--okbg);border-color:#c8e3d6;border-left:4px solid var(--ok)} .box.ok h3{color:var(--ok)}
+  .box.warn{background:var(--warnbg);border-color:#efd9a0;border-left:4px solid var(--gold2)} .box.warn h3{color:#8a6420}
+  ul,ol{margin:8px 0 0;padding-left:20px} li{margin:6px 0}
+
+  /* the film — player.js takes its accent from --dp-accent */
+  .vwrap{--dp-accent:var(--gold);position:relative;margin:18px 0 0;border-radius:15px;overflow:hidden;background:#000;
+    box-shadow:0 26px 70px rgba(4,13,22,.35);aspect-ratio:16/9}
+  .vwrap video{width:100%;height:100%;display:block;object-fit:contain;background:#000}
+  .vcover{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}
+  .vcover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.34),rgba(4,13,22,.62))}
+  .vcover .pl{position:relative;z-index:2;display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,var(--teal),var(--teal2));
+    color:#fff;border-radius:13px;padding:15px 25px;font-family:var(--f);font-weight:800;font-size:18px;box-shadow:0 20px 48px rgba(0,207,234,.34)}
+  .vcover .pl svg{width:19px;height:19px}
+  .vnote{color:var(--dim);font-size:13.5px;margin:11px 0 0;text-align:center}
+
+  /* the letters */
+  .letters{display:grid;gap:10px;margin-top:14px}
+  @media(min-width:760px){.letters{grid-template-columns:1fr 1fr}}
+  .letter{display:block;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;text-decoration:none;color:var(--body)}
+  .letter:hover{border-color:var(--teal)}
+  .letter .s{font-family:var(--f);font-weight:800;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark)}
+  .letter b{display:block;font-family:var(--f);font-size:15px;color:var(--ink);margin:5px 0 3px}
+  .letter span{font-size:13.5px;color:var(--dim)}
+
+  /* the form */
+  form{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:22px 24px;margin-top:16px}
+  label{display:block;font-family:var(--f);font-weight:700;font-size:12.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:14px 0 6px}
+  input[type=text],select,textarea{width:100%;font:15.5px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;
+    border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}
+  textarea{min-height:96px;resize:vertical}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);border-color:var(--teal)}
+  .verdicts{display:grid;gap:8px}
+  @media(min-width:640px){.verdicts{grid-template-columns:repeat(3,1fr)}}
+  .verdicts label{margin:0;display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:10px;
+    padding:11px 13px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14.5px;color:var(--ink)}
+  .verdicts label:has(input:checked){border-color:var(--teal);background:var(--notebg)}
+  .verdicts input{width:auto;margin:0}
+  .check{display:flex;align-items:center;gap:9px;margin-top:16px;font-size:15px;color:var(--ink)}
+  .check input{width:18px;height:18px;margin:0}
+  button{margin-top:18px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:0;border-radius:11px;padding:13px 22px;
+    font-family:var(--f);font-weight:800;font-size:15.5px;cursor:pointer;box-shadow:0 14px 34px rgba(0,207,234,.26)}
+  button:disabled{opacity:.5;cursor:default;box-shadow:none}
+  #logged{display:none;margin-top:14px}
+  #unwired{display:none}
+  footer{background:var(--navy);color:#7e97ae;padding:26px 0;font-size:13px} footer b{color:#eaf4ff}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Branch review &middot; before a single client sees it</div>
+  <h1>Read it as if it were <em>your client's</em> inbox.</h1>
+  <p>Nine of our colleagues have moved on. Their clients have not. This afternoon the branch writes to every
+     one of those clients &mdash; a different letter depending on what they hold &mdash; with a short film and
+     two doors into a review. You see all of it first. Say what you would change, and say whether you are
+     taking assignments.</p>
+  <a class="ask" href="#verdict">Give your verdict &darr;</a>
+</div></div>
+
+<nav class="toc"><div class="wrap">
+  <a href="#why">Why this, why today</a><a href="#record">What the branch has done</a><a href="#film">The film</a>
+  <a href="#letters">The eight letters</a><a href="#check">What to check</a><a href="#verdict">Your verdict</a>
+  <a href="#assign">How assignments work</a><a href="#tone">How we come across</a>
+</div></nav>
+
+<section class="band" id="why"><div class="wrap">
+  <h2>Why this, and why today</h2>
+  <p class="sub">The clients are the point. Everything here is built so that not one of them is left
+    wondering who looks after them.</p>
+  <div class="cols three">
+    <div class="cd"><h3>What goes out</h3><p>One of eight letters, chosen by what the client holds &mdash; a
+      matured policy, a paid-up one, a waiver of premium, a payroll deduction, ten years of cover, an in-force
+      policy, a lapsed one, or nothing at all. Each opens with something the client is glad to hear.</p></div>
+    <div class="cd"><h3>What every letter carries</h3><p>The film. A plain note on what the Insurance Act
+      already gives them. Two doors: fill in the review yourself now, or have one of you go through it with
+      them. And the branch manager's name at the foot.</p></div>
+    <div class="cd"><h3>What comes back</h3><p>Every click lands on the branch sheet with the segment
+      attached. We match each client to one of you by town and by household, you get a brief, and the file
+      is done when a review is signed on form 2000-03-147.</p></div>
+  </div>
+  <div class="box note"><h3>The one rule the whole set is built on</h3>
+    <p style="margin:0">Nothing in any letter, the film, the page or the script is about anyone who has left.
+    &ldquo;Your representative has moved on from Guardian Life&rdquo; is the entire reference. We do not
+    explain, describe, or warn. We tell the client what is true about their own policy, what the law gives
+    them, and who is here. A client who is treated that way does not need to be argued with.</p></div>
+</div></section>
+
+<section class="band alt" id="record"><div class="wrap">
+  <h2>What the branch has actually done this year</h2>
+  <p class="sub">Straight from the branch's own activity log, 1 January to today. Every entry is dated and
+    sits on the client's file. If a client ever asks what the branch has done for them, this is the answer,
+    and it is not an opinion.</p>
+  <div class="cols four">
+    <div class="stat"><b>4,000+</b><span>birthday notes, each one to a named client</span></div>
+    <div class="stat"><b>4,600+</b><span>premium reminders sent ahead of a due date</span></div>
+    <div class="stat"><b>14,600+</b><span>logged contacts with clients this year</span></div>
+    <div class="stat"><b>4,800+</b><span>different clients the branch has been in touch with</span></div>
+  </div>
+  <p style="margin-top:16px">Behind those four numbers are the things a branch does that nobody advertises:
+    maturity notifications, conversion-option letters before a term runs out, arrears calls, reinstatements,
+    claims lodged and chased, beneficiary changes, service reviews on the printed form. All of it in the log,
+    all of it dated. The letters lean on that record without boasting about it &mdash; they simply say the
+    birthday note and the premium reminder carry on, because they do.</p>
+  <div class="box ok"><h3>How to use this with a client</h3>
+    <p style="margin:0">Never as a defence. If a client says nobody from the branch ever contacted them, the
+    right answer is warm and specific: &ldquo;Let me check your file &mdash; I can tell you exactly what went
+    out and when.&rdquo; Then check it. The dated record does the talking, and you did not have to. And where
+    the record is thin &mdash; some files are &mdash; agree with the true part and make today the first entry:
+    &ldquo;You're right, you haven't heard from us enough. That changes today.&rdquo;</p></div>
+</div></section>
+
+<section class="band" id="film"><div class="wrap">
+  <h2>The film</h2>
+  <p class="sub">117 seconds. What carries on without an agent, what a client gives up, what is already
+    inside the policy, what the Act entitles them to ask for, and why a qualified agent of their own is worth
+    having. Every figure on screen is illustrative.</p>
+  <div class="vwrap">
+    <video id="film" playsinline preload="metadata" poster="../orphan-video/poster.jpg" data-scenes="6.2,5.8,8.7,7.3,4.6,5.7,10.2,7.2,5,6.8,11.3,10.5,5.6,7.2,8.4,6" data-chapters="A Ricky Rampersad Branch film|What your policy is|Three things in your schedule|From the branch, every year|Now, what you already own|An honest mistake on the form|What may already be inside it|A policy cannot be moved|If a new one were bought|Already issued|The Insurance Act · Trinidad and Tobago|Three things you may ask for|Your rights, and then your policy|An agent of your own|Within two working days|Thank you for watching">
+      <source src="../orphan-video/rrb-orphan-video.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(../orphan-video/poster.jpg)">
+      <div class="pl">
+        <svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>
+        Watch the film
+      </div>
+    </div>
+  </div>
+  <p class="vnote">Sound on. Tap the picture to pause; the rail shows every chapter. The client sees it at
+    <a href="../orphan-video/">rickyrampersadbranch.com/orphan-video</a>, with the two doors beneath it.</p>
+</div></section>
+
+<section class="band alt" id="letters"><div class="wrap">
+  <h2>The eight letters</h2>
+  <p class="sub">One shell, eight openings. Open any one and read it as the client will, or see
+    <a href="../templates/">all eight on one page</a>. The curly <code>{{fields}}</code> are filled per
+    client at send time &mdash; the first name, the years held, and the first name of the representative who
+    moved on.</p>
+  <div class="letters">
+    <a class="letter" href="letters/A.html" target="_blank"><div class="s">A &middot; A policy has matured</div><b>A policy of yours has matured &mdash; there is money to claim</b><span>Money is waiting. The one letter nobody resents.</span></a>
+    <a class="letter" href="letters/B.html" target="_blank"><div class="s">B &middot; Paid up</div><b>You have finished paying for this one</b><span>They own it outright and may not know what it is worth.</span></a>
+    <a class="letter" href="letters/C.html" target="_blank"><div class="s">C &middot; Waiver of premium</div><b>There is a benefit inside your policy you may not know about</b><span>If illness stopped them working, Guardian pays the premiums. Most were never told.</span></a>
+    <a class="letter" href="letters/D.html" target="_blank"><div class="s">D &middot; Payroll deduction</div><b>Your policy, and a check we are running on your salary deduction</b><span>We check the deduction so they do not have to. The word &ldquo;arrears&rdquo; never appears.</span></a>
+    <a class="letter" href="letters/E.html" target="_blank"><div class="s">E &middot; Ten years or more</div><b>You have held this cover for {{years}} years</b><span>The premium is priced at the age they started. Nobody can sell that back.</span></a>
+    <a class="letter" href="letters/F.html" target="_blank"><div class="s">F &middot; In force</div><b>A quick summary of your Guardian Life cover &mdash; and two ways to pick this up</b><span>The core letter, to the largest group.</span></a>
+    <a class="letter" href="letters/G.html" target="_blank"><div class="s">G &middot; Lapsed</div><b>A policy you may have written off &mdash; let us tell you what it is worth</b><span>Goes a week later and does not mention the change at all.</span></a>
+    <a class="letter" href="letters/H.html" target="_blank"><div class="s">H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. Last to go.</span></a>
+  </div>
+  <p class="fine" style="margin-top:14px">Also in the set: the client page with the film and the two doors
+    (<a href="../orphan-video/" target="_blank">orphan-video</a>), the plain-language page on how the Act protects
+    a policyholder (<a href="../orphan-video/protected.html" target="_blank">protected</a>), the
+    <a href="call-script.html" target="_blank">call script</a> for the third of the book with no e-mail, and the
+    <a href="agent-brief.html" target="_blank">brief</a> you receive with every assignment.</p>
+</div></section>
+
+<section class="band" id="check"><div class="wrap">
+  <h2>What to check, in four questions</h2>
+  <p class="sub">You know these clients better than a spreadsheet does. That is what we need from you.</p>
+  <div class="cols two">
+    <div class="cd"><h3>1 &middot; Would your own client be glad to get this?</h3>
+      <p>Not tolerate it. Glad. If the opening line would not make one of your clients pick up the phone
+      to thank you, say which line would.</p></div>
+    <div class="cd"><h3>2 &middot; Is there one word that sounds defensive?</h3>
+      <p>Or one word about anyone who left, beyond &ldquo;has moved on&rdquo;. If you find one, quote it.
+      That is the word that undoes the letter.</p></div>
+    <div class="cd"><h3>3 &middot; Is anything untrue for a client you know?</h3>
+      <p>The letters make claims about the policy &mdash; a waiver, a paid-up value, a price fixed at the
+      starting age. If you know a case where that is not how the product works, we need it before the send.</p></div>
+    <div class="cd"><h3>4 &middot; Is the ask clear?</h3>
+      <p>Two doors, one click. If you had to read the letter twice to find what it wants you to do, the
+      client will not read it twice.</p></div>
+  </div>
+</div></section>
+
+<section class="band alt" id="verdict"><div class="wrap">
+  <h2>Your verdict</h2>
+  <p class="sub">One item at a time, as many times as you like. It lands on the branch sheet under your name,
+    and every &ldquo;change&rdquo; and &ldquo;hold&rdquo; gets an answer from the branch before the send.</p>
+  <div class="box warn" id="unwired"><h3>Not recording yet</h3>
+    <p style="margin:0">The sheet is not wired to this page yet, so a verdict typed here goes nowhere. Send it on
+    WhatsApp to the branch manager instead until this notice disappears.</p></div>
+  <form id="fb" autocomplete="on">
+    <label for="n">Your name</label>
+    <input type="text" id="n" name="n" maxlength="60" required placeholder="As it appears on your licence">
+    <label for="town">Your town, or the towns you cover</label>
+    <input type="text" id="town" name="town" maxlength="40" placeholder="Sangre Grande, Chaguanas, Penal &hellip;">
+    <label for="i">What you looked at</label>
+    <select id="i" name="i" required>
+      <option value="">Choose one</option>
+      <option value="whole">The whole set</option>
+      <option value="film">The film</option>
+      <option value="page">The client page with the two doors</option>
+      <option value="protected">The &ldquo;how the law protects you&rdquo; page</option>
+      <option value="A">Letter A &middot; a policy has matured</option>
+      <option value="B">Letter B &middot; paid up</option>
+      <option value="C">Letter C &middot; waiver of premium</option>
+      <option value="D">Letter D &middot; payroll deduction</option>
+      <option value="E">Letter E &middot; ten years or more</option>
+      <option value="F">Letter F &middot; in force</option>
+      <option value="G">Letter G &middot; lapsed</option>
+      <option value="H">Letter H &middot; nothing held</option>
+      <option value="script">The call script</option>
+    </select>
+    <label>Verdict</label>
+    <div class="verdicts">
+      <label><input type="radio" name="v" value="send" required> Send it as it is</label>
+      <label><input type="radio" name="v" value="change"> Send it, with a change</label>
+      <label><input type="radio" name="v" value="hold"> Hold it</label>
+    </div>
+    <label for="c">What you would change, or why it should wait</label>
+    <textarea id="c" name="c" maxlength="600" placeholder="Quote the line if you can. Six hundred characters is plenty."></textarea>
+    <label class="check" style="text-transform:none;letter-spacing:0;font-family:Inter,system-ui,sans-serif;font-weight:500">
+      <input type="checkbox" id="a" name="a" value="1"> I am taking assignments &mdash; match clients in my town to me</label>
+    <button type="submit" id="go">Log my verdict</button>
+    <div class="box ok" id="logged"><h3>Logged, thank you</h3>
+      <p style="margin:0" id="loggedtxt">Pick another item if you have more to say.</p></div>
+  </form>
+</div></section>
+
+<section class="band" id="assign"><div class="wrap">
+  <h2>How the assignments will be made</h2>
+  <p class="sub">By town first, then by household, then by what the client holds. You get a brief, not a name
+    and a number.</p>
+  <div class="cols three">
+    <div class="cd"><h3>Town first</h3><p>A client in Sangre Grande is matched to an agent who is in Sangre
+      Grande. The largest towns on these books need more than one of you; the smallest need one who will
+      actually drive there.</p></div>
+    <div class="cd"><h3>One household, one agent</h3><p>Everyone at the same address goes to the same agent
+      &mdash; the parents, the children, the sister next door. A family that hears two names from one branch
+      hears a branch that does not know them.</p></div>
+    <div class="cd"><h3>Then what they hold</h3><p>A waiver of premium, a policy priced fifteen years ago, a
+      matured one waiting to be claimed. The brief tells you which, so the first thing you say is the thing
+      they are glad to hear.</p></div>
+  </div>
+  <div class="box note"><h3>The promise on the page, which is now your promise</h3>
+    <p style="margin:0">&ldquo;You get a name, within two working days. Not &lsquo;someone will be in
+    touch&rsquo;. A named person, and how to reach them directly.&rdquo; The clock starts when the client
+    clicks. Tick the box above so we know who is on the roster, and put your town beside your name.</p></div>
+</div></section>
+
+<section class="band alt" id="tone"><div class="wrap">
+  <h2>How we come across on the first contact</h2>
+  <p class="sub">The client decides in the first thirty seconds whether they are being looked after or fought
+    over. These are the rules for those thirty seconds.</p>
+  <div class="cols two">
+    <div class="cd"><h3>1 &middot; Open with their policy, not with the change</h3>
+      <p><b>Do:</b> &ldquo;I'm calling about something on your file you should know about.&rdquo; Then the
+      thing they are glad to hear &mdash; the waiver, the price they are locked in at, the money waiting.<br>
+      <b>Don't:</b> open with &ldquo;your agent has left&rdquo;. It is the second thing you say, in one
+      sentence, and only once.</p></div>
+    <div class="cd"><h3>2 &middot; One sentence about the change, and nothing you cannot say truthfully</h3>
+      <p><b>Do:</b> &ldquo;Your representative has moved on from Guardian Life. Your policy is completely
+      unaffected.&rdquo; If asked what happened: &ldquo;How anyone left isn't mine to discuss. Your policy is
+      &mdash; here's your file.&rdquo;<br>
+      <b>Don't:</b> explain, agree, disagree, or claim distance you do not have. &ldquo;I wasn't part of
+      that&rdquo; is a sentence anyone who was in the branch cannot say truthfully, and a client who later
+      learns it has caught you in the one thing this whole approach depends on: accuracy.</p></div>
+    <div class="cd"><h3>3 &middot; Read the file before you describe it</h3>
+      <p><b>Do:</b> &ldquo;Let me go through what's on your file with you &mdash; every note has a date.&rdquo;
+      Then go through what is actually there. If it is thin: &ldquo;You're right that you haven't heard from us
+      enough. That changes today &mdash; here is my number and here is when I'll call.&rdquo;<br>
+      <b>Don't:</b> &ldquo;That's not true&rdquo; or &ldquo;the service never stopped.&rdquo; On a thin file
+      that sentence is contradicted by the file you are about to show, and the client stops believing the
+      rest.</p></div>
+    <div class="cd"><h3>4 &middot; Ask, don't warn</h3>
+      <p><b>Do:</b> &ldquo;Has anyone been in touch with you about moving your policy?&rdquo; Whatever the
+      answer, thank them and do not react.<br>
+      <b>Don't:</b> &ldquo;Be careful, someone may call you.&rdquo; A warning tells the client we are worried
+      about ourselves.</p></div>
+    <div class="cd"><h3>5 &middot; Give the law as a right, never as a threat &mdash; and say &ldquo;today&rdquo;, not &ldquo;still&rdquo;</h3>
+      <p><b>Do:</b> &ldquo;Under the Insurance Act, anyone who suggests you replace this has to set out the
+      advantages and the disadvantages for you first. Ask for it in writing.&rdquo; And: &ldquo;Ask anyone who
+      advises you which company their certificate names today &mdash; and ask me the same.&rdquo;<br>
+      <b>Don't:</b> quote fines or prison terms, say that anyone is breaking the law, or ask whether someone is
+      &ldquo;still&rdquo; registered. &ldquo;Still&rdquo; points at someone; &ldquo;today&rdquo; is a question
+      about everyone, including you.</p></div>
+    <div class="cd"><h3>6 &middot; Concede the true part first</h3>
+      <p><b>Do:</b> &ldquo;That's true, and I'll say it myself: I can only offer Guardian Life. Which is why I'm
+      not asking you to buy anything &mdash; keeping what you have costs nothing and changes nothing.&rdquo;<br>
+      <b>Don't:</b> deflect or deny a point that is simply true &mdash; the branch is tied to one insurer; a
+      broker is a fair thing to consider; &ldquo;orphan policy&rdquo; is real trade usage. Agreeing with the
+      true part of a pitch is what makes the untrue part visible.</p></div>
+    <div class="cd"><h3>7 &middot; Never count</h3>
+      <p><b>Do:</b> silence on how many left, when, or why. If pressed: &ldquo;I won't speak to that. I can
+      speak to your policy.&rdquo;<br>
+      <b>Don't:</b> &ldquo;only a few&rdquo;, &ldquo;not that many&rdquo;, &ldquo;most of us stayed&rdquo;. Any
+      number, even a smaller one, concedes that the number is the question.</p></div>
+    <div class="cd"><h3>8 &middot; Offer nothing to stay</h3>
+      <p><b>Do:</b> &ldquo;Your policy is unaffected. There are two ways to pick this up &mdash; which would you
+      rather?&rdquo; If a client has been offered a gift or a free month elsewhere: &ldquo;The only premium that
+      exists is the one written on the policy &mdash; for any company, including us.&rdquo;<br>
+      <b>Don't:</b> a discount, a visit as a favour, a promise the branch has not made in writing. It would be
+      matched, it teaches the client to shop, and under the Act a rebate is unlawful for everyone.</p></div>
+    <div class="cd"><h3>9 &middot; Health is a form, never a compliment</h3>
+      <p><b>Do:</b> &ldquo;The good news is you've already been through underwriting &mdash; this policy is
+      issued, and nothing about your health today can touch it.&rdquo;<br>
+      <b>Don't:</b> guess whether the client would pass underwriting again, or say what another company would
+      or would not offer them. You do not know, and the client will remember the guess.</p></div>
+    <div class="cd"><h3>10 &middot; Numbers in writing, never from memory</h3>
+      <p><b>Do:</b> fetch the paid-to date, the surrender value, the paid-up value and the premium at today's
+      age, and put them in front of the client in writing. &ldquo;Let me get you three numbers, then you'll know
+      exactly what you're comparing.&rdquo;<br>
+      <b>Don't:</b> quote a figure on the call, or say &ldquo;cover always costs more when you're older&rdquo;.
+      Rate tables change; the only safe claim is the one the written comparison shows.</p></div>
+    <div class="cd"><h3>11 &middot; Promise only what Guardian Life has confirmed</h3>
+      <p><b>Do:</b> &ldquo;Anything on this policy is done through Guardian Life, and I can do it with you.&rdquo;
+      If the client asks to change who looks after the policy: &ldquo;Ask the branch &mdash; it never needs the
+      policy ended.&rdquo;<br>
+      <b>Don't:</b> &ldquo;It's just a note on your file, I'll switch it now&rdquo; until the branch has confirmed
+      with Guardian Life what it records as the servicing intermediary on an in-force policy. A promise the
+      branch cannot keep is worse than the pitch.</p></div>
+    <div class="cd"><h3>12 &middot; Be the person who answers, from this minute</h3>
+      <p><b>Do:</b> your own number and the branch number, a day and a time you will call back, and then the
+      call at that time. On an outbound call: &ldquo;You have a name now &mdash; mine &mdash; and you didn't have
+      to click anything to get it.&rdquo; Lead every later contact with something new: the paid-up value they
+      were never told, the beneficiary that needs confirming, the conversion option before a term runs out.<br>
+      <b>Don't:</b> &ldquo;someone will be in touch&rdquo;, &ldquo;the promise has been kept&rdquo; to a client who
+      never asked, or &ldquo;just checking in&rdquo;. The first is what an orphan policy sounds like; the last is
+      the call that gets declined next time.</p></div>
+    <div class="cd"><h3>13 &middot; Leave them in control</h3>
+      <p><b>Do:</b> &ldquo;Whatever you decide, we'll ask again rather than assume.&rdquo;<br>
+      <b>Don't:</b> press for a decision on the call. The review filed next week beats the promise extracted
+      today.</p></div>
+  </div>
+  <p class="fine" style="margin-top:14px">A companion page, <a href="if-they-say.html">if a client says&hellip;</a>,
+    sets out the things a client may repeat to you and what is simply true in each case, so that you never have
+    to improvise an answer or raise your voice.</p>
+</div></section>
+
+<footer><div class="wrap">
+  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean &middot; internal, not for clients.
+</div></footer>
+
+<script src="../orphan-video/player.js"></script>
+<script>
+/* Verdicts go to the Service Questionnaire backend, action=feedback, and land
+   on the Team Feedback tab. Fire-and-forget, like the client clicks. Until the
+   placeholder is replaced with the deployed /exec URL, the page says so out
+   loud instead of losing the verdicts quietly. */
+var SVC = 'RRB_SERVICE_URL';
+var wired = SVC.indexOf('http') === 0;
+if (!wired) document.getElementById('unwired').style.display = 'block';
+var form = document.getElementById('fb');
+form.addEventListener('submit', function (e) {
+  e.preventDefault();
+  var f = new FormData(form);
+  var v = f.get('v'), i = f.get('i'), n = (f.get('n') || '').trim();
+  if (!n || !i || !v) return;
+  var url = SVC + '?action=feedback' +
+    '&n=' + encodeURIComponent(n) +
+    '&town=' + encodeURIComponent((f.get('town') || '').trim()) +
+    '&i=' + encodeURIComponent(i) + '&v=' + encodeURIComponent(v) +
+    '&c=' + encodeURIComponent((f.get('c') || '').trim()) +
+    '&a=' + (f.get('a') ? '1' : '0') + '&z=' + Date.now();
+  if (wired) { try { (new Image()).src = url; } catch (err) {} }
+  var box = document.getElementById('logged');
+  document.getElementById('loggedtxt').textContent = wired
+    ? 'Pick another item if you have more to say — your name and town stay filled in.'
+    : 'Recorded on this screen only — the sheet is not wired yet. Send the same words to the branch manager on WhatsApp.';
+  box.style.display = 'block';
+  box.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  document.getElementById('i').value = '';
+  document.getElementById('c').value = '';
+  form.querySelectorAll('input[name=v]').forEach(function (r) { r.checked = false; });
+});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

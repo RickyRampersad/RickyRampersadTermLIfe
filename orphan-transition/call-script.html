@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Call Script | Ricky Rampersad Branch</title>
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--teal:#00CFEA;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--notebg:#eafaFD;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:15.5px/1.62 Inter,system-ui,sans-serif}
+  .wrap{width:min(800px,100% - 34px);margin:0 auto;padding:26px 0 60px}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .in{width:min(800px,100% - 34px);margin:0 auto;display:flex;align-items:center;gap:12px;padding:15px 0}
+  header img{width:36px;height:36px;border-radius:9px}
+  header b{font-family:var(--f);font-size:14px;display:block} header i{font-style:normal;font-size:11px;color:#8fd8e6}
+  h1{font-family:var(--f);font-size:24px;color:var(--ink);margin:0 0 6px;letter-spacing:-.4px}
+  .sub{color:var(--dim);margin:0 0 20px}
+  h2{font-family:var(--f);font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark);margin:26px 0 8px}
+  .say{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--teal);border-radius:10px;
+    padding:14px 18px;margin:8px 0;font-size:16px;color:var(--ink)}
+  .say i{display:block;font-style:normal;font-size:12.5px;color:var(--dim);margin-top:6px;font-weight:600}
+  .then{background:var(--notebg);border:1px solid #a8dfeb;border-radius:9px;padding:11px 15px;margin:8px 0;font-size:14px}
+  .seg{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 17px;margin:10px 0}
+  .seg .k{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark)}
+  .seg .say{margin:8px 0 0}
+  .no{background:var(--stopbg);border:1px solid #edc9bf;border-left:4px solid var(--stop);border-radius:9px;padding:13px 16px;margin:14px 0 0}
+  .no b{color:var(--stop);display:block;font-family:var(--f);font-size:12.5px;margin-bottom:4px}
+  .ok{background:var(--okbg);border:1px solid #c8e3d6;border-left:4px solid var(--ok);border-radius:9px;padding:13px 16px;margin:14px 0 0}
+  .ok b{color:var(--ok);display:block;font-family:var(--f);font-size:12.5px;margin-bottom:4px}
+  ul{margin:6px 0 0;padding-left:18px} li{margin:5px 0}
+  .f{color:#8a6420;font-family:ui-monospace,Menlo,monospace;font-size:13px}
+</style>
+</head>
+<body>
+<header><div class="in"><img src="../logo-mark.png" alt="">
+  <div><b>Ricky Rampersad Branch</b><i>Call script &middot; clients with no e-mail</i></div></div></header>
+<div class="wrap">
+  <h1>The call, for the third of the book we cannot e-mail</h1>
+  <p class="sub">Same shape as the letter: something they are glad to hear first, the change in one neutral
+    sentence, the two doors, and out. Under four minutes unless they want longer. Never a script read aloud
+    &mdash; the words below are the shape, not the lines.</p>
+
+  <h2>1 &middot; Who is calling, and why it is not a sales call</h2>
+  <div class="say">&ldquo;Good morning, is that <span class="f">{{first_name}}</span>? It's
+    <span class="f">{{caller}}</span> from the Ricky Rampersad Branch of Guardian Life &mdash; the branch that
+    looks after your policy. This isn't a sales call; I'm ringing about something on your file you should
+    know about.&rdquo;
+    <i>Then stop. Let them answer. If it is a bad time, take a time and end the call.</i></div>
+
+  <h2>2 &middot; The reason for the call &mdash; by segment</h2>
+  <div class="seg"><div class="k">A &middot; a policy has matured</div>
+    <div class="say">&ldquo;One of your policies reached the end of its term and has matured. That money is
+      yours and it's sitting there waiting to be claimed. I'd rather you had it than not.&rdquo;
+      <i>The only call nobody resents. Lead with this and nothing else.</i></div></div>
+  <div class="seg"><div class="k">E &middot; held ten years or more</div>
+    <div class="say">&ldquo;You've held your policy with us for <span class="f">{{years}}</span> years.
+      Something people don't usually get told: your premium was fixed on the age you were when you started.
+      You're still paying <span class="f">{{years}}</span>-years-ago prices, and nobody can sell you that
+      again &mdash; not us, not anyone.&rdquo;</div></div>
+  <div class="seg"><div class="k">C &middot; carrying waiver of premium</div>
+    <div class="say">&ldquo;Your policy carries something called a waiver of premium. In plain terms, if
+      illness or injury stopped you working, Guardian would keep paying your premiums for you. You've been
+      paying for that all along, and most people who have it were never told.&rdquo;</div></div>
+  <div class="seg"><div class="k">F &middot; in force</div>
+    <div class="say">&ldquo;I'm calling everyone the branch looks after to make sure we can still reach you,
+      and to tell you what your policy is actually worth today &mdash; most people have never been shown.&rdquo;</div></div>
+  <div class="seg"><div class="k">D &middot; collected off a payroll</div>
+    <div class="say">&ldquo;Your premium comes off your salary. Those arrangements sometimes stop quietly
+      when an employer or a payroll system changes, so we're checking yours this week. You don't need to do
+      anything &mdash; if something's slipped, we'll find it and come back to you with the options.&rdquo;
+      <i>The word &ldquo;arrears&rdquo; is not said. If they ask whether they owe money: &ldquo;that's exactly what we're checking, and until we have, you don't.&rdquo;</i></div></div>
+  <div class="seg"><div class="k">G &middot; lapsed</div>
+    <div class="say">&ldquo;You held a policy with us that stopped being paid a while back. People assume
+      that's the end of it &mdash; often it isn't. Some keep a value that's still yours, some can be restarted.
+      I'd like to tell you what yours is worth.&rdquo;</div></div>
+
+  <h2>3 &middot; The change, in one sentence</h2>
+  <div class="say">&ldquo;You may already know your representative, <span class="f">{{agent_first_name}}</span>,
+    has moved on from Guardian Life. Your policy is completely unaffected &mdash; same cover, same premium,
+    same beneficiaries. I wanted you to hear that from us.&rdquo;
+    <i>No reason given. No tone. If they ask what happened: &ldquo;they've moved on &mdash; I honestly don't have more than that.&rdquo; And then back to their policy.</i></div>
+
+  <h2>4 &middot; The one question that matters</h2>
+  <div class="say">&ldquo;Has anyone been in touch with you about moving your policy?&rdquo;
+    <i>Not who. Just whether. Whatever they say, thank them and do not react.</i></div>
+  <div class="then"><b>If yes:</b> &ldquo;That's fine, and it's your decision. One thing worth knowing:
+    a policy can't be transferred &mdash; what's being suggested is ending this one and buying a new one at
+    your age now. Under the Insurance Act, whoever suggests it has to set out the advantages and the
+    disadvantages for you first. Ask them to put it in writing. Anyone acting properly will. If it helps, I can
+    send you a page that sets out your protections under the Act in plain words.&rdquo;
+    Then log <span class="f">approached</span> on the row, and text the link:
+    <i>rickyrampersadbranch.com/your-policy/protected</i>. Whether it was an agent, a broker or another company
+    that approached them changes nothing in this answer &mdash; the same duty binds all three.</div>
+  <div class="then"><b>If no:</b> move on. Do not warn them that someone might.</div>
+
+  <h2>5 &middot; The two doors</h2>
+  <div class="say">&ldquo;There's a short review of what you hold &mdash; about fifteen minutes. You can
+    fill it in yourself on your phone, and whoever we match you to reads it before you ever meet. Or one
+    of our agents can go through it with you, in person or on the phone. Which would you rather?&rdquo;</div>
+  <div class="then"><b>Themselves:</b> read them the address slowly &mdash; <i>&ldquo;don't have an agent
+    dot com, slash start&rdquo;</i> &mdash; or offer to text it. Log <span class="f">selfserve</span>.</div>
+  <div class="then"><b>With an agent:</b> &ldquo;Then I'll have someone call you within two working days
+    &mdash; a named person, not a department. Is this the best number?&rdquo; Log
+    <span class="f">assign</span>.</div>
+  <div class="then"><b>Neither:</b> &ldquo;That's genuinely fine. Your birthday note and premium reminders
+    carry on regardless, and we'll ask again rather than assume.&rdquo; Log <span class="f">informed</span>.</div>
+
+  <h2>6 &middot; Out</h2>
+  <div class="say">&ldquo;Thank you for the time. If anything comes up, the branch answers on
+    <span class="f">{{branch_phone}}</span> &mdash; a person, not a menu.&rdquo;</div>
+
+  <div class="no"><b>Never, on any call</b>
+    <ul style="margin:0">
+      <li>Name, describe or explain the agent who left.</li>
+      <li>Tell a client they are in arrears. The figure is not reconciled.</li>
+      <li>Warn a client that someone may approach them. Ask whether someone has; nothing more.</li>
+      <li>Offer anything &mdash; a discount, a visit, a favour &mdash; to stay.</li>
+      <li>Read the segment line to a client whose row is in segment 0. Those rows are not on the call list.</li>
+    </ul></div>
+  <div class="ok"><b>After every call, on the sheet</b>
+    The response (<span class="f">selfserve</span> / <span class="f">assign</span> /
+    <span class="f">informed</span> / <span class="f">no answer</span>), the best number, and whether they
+    said anyone had approached them. Two lines. It is the only record the branch will have of this call.</div>
+</div>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body></html>

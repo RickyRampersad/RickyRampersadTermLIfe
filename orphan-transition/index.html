@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transition Manual | Ricky Rampersad Branch</title>
+<meta name="description" content="How the branch looks after the clients of agents who have left: the film, the letters, the two doors, the feedback loop, and the one number that counts.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#07131f; --ink:#12202e; --body:#33465a; --dim:#64798e;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA; --teal2:#0aa8bf; --tdark:#07606f;
+    --paper:#eef4f7; --card:#fff; --line:#d7e3ea;
+    --stop:#8a3324; --stopbg:#fdeeea; --ok:#1f6f4a; --okbg:#eef7f2; --notebg:#eafaFD;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--paper);color:var(--body);
+    font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+  .wrap{width:min(1040px,100% - 34px);margin:0 auto}
+  a{color:#0c4f78}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;
+    border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:16px 0}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;
+    display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .hero{background:radial-gradient(900px 520px at 88% -24%,rgba(0,207,234,.22),transparent 60%),
+    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);color:#eaf4ff;padding:36px 0 40px}
+  .hero .eyebrow{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+  .hero h1{font-family:var(--f);font-weight:800;font-size:clamp(26px,5vw,40px);line-height:1.16;letter-spacing:-.6px;margin:11px 0 12px;color:#fff}
+  .hero h1 em{font-style:normal;color:var(--gold)}
+  .hero p{color:#9dbdd8;max-width:60ch;margin:0;font-size:17px}
+  nav.toc{background:var(--card);border-bottom:1px solid var(--line)}
+  nav.toc .wrap{display:flex;flex-wrap:wrap;gap:4px 18px;padding:12px 0;font-size:13.5px}
+  nav.toc a{color:var(--tdark);text-decoration:none;font-weight:600}
+  section.band{padding:40px 0}
+  section.band.alt{background:var(--card);border-block:1px solid var(--line)}
+  h2{font-family:var(--f);font-weight:800;font-size:clamp(20px,3vw,26px);color:var(--ink);letter-spacing:-.4px;margin:0 0 6px}
+  h3{font-family:var(--f);font-size:16.5px;color:var(--ink);margin:22px 0 6px}
+  .sub{color:var(--dim);margin:0 0 20px;font-size:16px}
+  p{margin:11px 0} b{color:var(--ink)}
+  .fine{color:var(--dim);font-size:13.5px}
+  code{background:#e2edf2;padding:1px 5px;border-radius:3px;font-size:12.5px}
+  .cols{display:grid;gap:14px}
+  @media(min-width:760px){.cols.two{grid-template-columns:1fr 1fr}.cols.three{grid-template-columns:repeat(3,1fr)}}
+  .cd{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:13px;padding:18px 20px}
+  .cd h3{margin:0 0 6px}
+  .cd p{margin:0;font-size:15px}
+  .box{border-radius:10px;padding:15px 19px;margin:16px 0 0;border:1px solid}
+  .box h3{margin-top:0}
+  .box.stop{background:var(--stopbg);border-color:#edc9bf;border-left:4px solid var(--stop)} .box.stop h3{color:var(--stop)}
+  .box.note{background:var(--notebg);border-color:#a8dfeb;border-left:4px solid var(--teal)} .box.note h3{color:var(--tdark)}
+  .box.ok{background:var(--okbg);border-color:#c8e3d6;border-left:4px solid var(--ok)} .box.ok h3{color:var(--ok)}
+  table.t{border-collapse:collapse;width:100%;font-size:14px;margin-top:14px;border:1px solid var(--line);border-radius:10px;background:var(--card);overflow:hidden}
+  table.t th,table.t td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--paper);vertical-align:top}
+  table.t th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;background:#f2f7fa}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.t tr.hl td{background:var(--notebg)}
+  .pill{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:3px;white-space:nowrap}
+  .pill.bad{background:#f6dfd8;color:var(--stop)} .pill.good{background:#dcefe4;color:var(--ok)} .pill.tl{background:#d5f4fa;color:var(--tdark)}
+  .flow{display:grid;gap:10px;margin:16px 0 0}
+  @media(min-width:860px){.flow{grid-template-columns:repeat(5,1fr)}}
+  .step{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:11px;padding:14px 15px}
+  .step .n{font-family:var(--f);font-weight:800;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--tdark)}
+  .step b{display:block;font-family:var(--f);font-size:15px;color:var(--ink);margin:6px 0 5px}
+  .step p{margin:0;font-size:13.5px}
+  .step .who{display:inline-block;margin-top:9px;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--navy);border-radius:4px;padding:2px 7px}
+  .letters{display:grid;gap:10px;margin-top:14px}
+  @media(min-width:760px){.letters{grid-template-columns:1fr 1fr}}
+  .letter{display:block;background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 16px;text-decoration:none;color:var(--body)}
+  .letter:hover{border-color:var(--teal)}
+  .letter .s{font-family:var(--f);font-weight:800;font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark)}
+  .letter b{display:block;font-family:var(--f);font-size:15px;color:var(--ink);margin:5px 0 3px}
+  .letter span{font-size:13.5px;color:var(--dim)}
+  footer{background:var(--navy);color:#7e97ae;padding:26px 0;font-size:13px} footer b{color:#eaf4ff}
+  ul,ol{margin:8px 0 0;padding-left:20px} li{margin:6px 0}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">Branch manual &middot; internal</div>
+  <h1>When an agent leaves, <em>the client stays.</em></h1>
+  <p>How the branch looks after the clients of agents who have moved on: the film, the letters, the two
+     doors into the review, the feedback loop, and the one number that tells us whether it worked.</p>
+</div></div>
+
+<nav class="toc"><div class="wrap">
+  <a href="#objective">Objective</a><a href="#runsheet">Run sheet</a><a href="#assets">The three assets</a><a href="#segments">Segments</a>
+  <a href="#letters">Letters</a><a href="#team">Team review</a><a href="#loop">Feedback loop</a><a href="#brief">The agent's brief</a>
+  <a href="#calls">The call list</a><a href="#scoreboard">Scoreboard</a><a href="#rules">Rules</a>
+</div></nav>
+
+<section class="band" id="objective"><div class="wrap">
+  <h2>The objective, in one line</h2>
+  <p class="sub">Nobody leaves. Every client of a departed agent ends up with a qualified agent of their own
+    and a filed review &mdash; and the client chooses the route.</p>
+  <div class="cols three">
+    <div class="cd"><h3>What we assume</h3><p>The agents who left will approach these clients. Some clients
+      still like them. Nothing we send may read as hostile, defensive, or after the business.</p></div>
+    <div class="cd"><h3>What we do instead</h3><p>Lead with something the client is glad to hear. Tell them
+      what the law already gives them. Offer two doors and let them pick.</p></div>
+    <div class="cd"><h3>What counts as done</h3><p>A review filed on form 2000-03-147, signed, with a named
+      agent on the file. A conversation nobody files did not happen.</p></div>
+  </div>
+</div></section>
+
+<section class="band alt" id="runsheet"><div class="wrap">
+  <h2>The run sheet</h2>
+  <p class="sub">In the order things have to happen. Each step names who does it. Nothing in a later phase
+    starts before the phase above it is done.</p>
+
+  <h3>Phase 0 &middot; Before anything &mdash; the branch manager, about thirty minutes</h3>
+  <ol>
+    <li><b>Merge the branch to <code>main</code>.</b> Then check that <code>/vid</code>, <code>/templates</code>,
+      <code>/your-policy</code>, <code>/your-policy/protected</code> and
+      <code>/orphan-transition/team-review</code> each answer. Nothing below happens on a 404.</li>
+    <li><b>Redeploy the Apps Script.</b> From the Service Questionnaires sheet: Extensions &rarr; Apps Script,
+      replace <code>Service.gs</code> with the repository's, then Deploy &rarr; Manage deployments &rarr; pencil
+      &rarr; New version. Copy the <code>/exec</code> URL. <i>New deployment</i> would change the address every
+      front end holds.</li>
+    <li><b>Wire the pages.</b> Paste that URL over <code>RRB_SERVICE_URL</code> in
+      <code>orphan-video/index.html</code>, <code>orphan-video/protected.html</code> and
+      <code>orphan-transition/team-review.html</code>; commit and merge again. Open the team review page: the
+      amber notice is gone. Log one test verdict; the <b>Team Feedback</b> tab appears with the row.</li>
+    <li><b>Clear the test rows</b> on the questionnaire sheet, so the first real review is not beside them.</li>
+  </ol>
+
+  <h3>Phase 1 &middot; The team &mdash; before any client, this afternoon</h3>
+  <ol start="5">
+    <li><b>Send the WhatsApp.</b> The letters at <code>/templates</code>, the film at <code>/vid</code>, the ask:
+      a verdict on each, and your town if you are taking assignments.</li>
+    <li><b>Read the verdicts</b> on the Team Feedback tab as they land. Answer every &ldquo;change&rdquo; and
+      &ldquo;hold&rdquo; by name. A change that is right goes into <code>build-letters.py</code>, is
+      regenerated, committed and merged &mdash; never typed into a letter.</li>
+    <li><b>Build the roster</b> from the ticks: who takes assignments, in which towns. The largest towns need
+      more than one agent; every household goes to one.</li>
+    <li><b>Ask Guardian Life</b> what it records as the servicing intermediary on an in-force policy, and tell
+      the team the answer. Until then an agent promises only &ldquo;the branch does it with you&rdquo;.</li>
+  </ol>
+
+  <h3>Phase 2 &middot; The send &mdash; once the verdicts are answered</h3>
+  <ol start="9">
+    <li><b>Build the send list outside the repository</b> from the Branch Portfolio sheet: the waterfall
+      (suppress &rarr; A &rarr; B &rarr; C &rarr; D &rarr; E &rarr; F &rarr; G &rarr; H), a token per client, the
+      merge fields. A Death flag suppresses the row whatever else it holds.</li>
+    <li><b>Send in order, over days.</b> A and B first (small, and the domain warms), C second, then D, E and
+      F. G a week later; H last. Reply-to is a person at the branch.</li>
+    <li><b>Call the direct-bill clients with a premium due inside thirty days</b> this week, to tell them how
+      to pay Guardian Life directly, with Guardian's receipt. That is the one exposure a returned receipt
+      book creates.</li>
+  </ol>
+
+  <h3>Phase 3 &middot; The clicks &mdash; daily, from the first send</h3>
+  <ol start="12">
+    <li><b>Client Responses tab.</b> Every <code>assign</code>, <code>review</code> and <code>question</code>
+      row is a task. Name the agent within two working days &mdash; town, then household, then what they hold
+      &mdash; and fill Assigned to and Assigned on.</li>
+    <li><b>Send the agent the brief</b>, filled in from the sheet and the portfolio. Never to the client.</li>
+    <li><b>The agent makes contact</b> by the tone guide, logs <code>approached</code> if the client says someone
+      has been in touch, and closes the row with a review filed on form 2000-03-147.</li>
+  </ol>
+
+  <h3>Phase 4 &middot; The calls &mdash; the third of the book with no e-mail</h3>
+  <ol start="15">
+    <li><b>Call list order:</b> A, E, C, F, D, then G. Not H. The <a href="call-script.html">call script</a>
+      is the shape; two lines on the sheet after every call.</li>
+  </ol>
+
+  <h3>Phase 5 &middot; The scoreboard &mdash; every day</h3>
+  <ol start="16">
+    <li>Sent and opened. Film views. The door split, <i>selfserve</i> against <i>assign</i>, which is the
+      staffing signal. Response rate by segment. Days from click to a named agent. And the one number that
+      counts: <b>reviews filed</b>.</li>
+  </ol>
+
+  <h3>Phase 6 &middot; The second wave &mdash; next week</h3>
+  <ol start="17">
+    <li>G goes out. H goes out. Anything the verdicts asked for is re-cut. Compliance supplies section numbers
+      if they are ever wanted. The film's music bed is cleared for use beyond the branch site before it goes
+      anywhere else.</li>
+  </ol>
+</div></section>
+
+<section class="band" id="assets"><div class="wrap">
+  <h2>The three assets, and where they live</h2>
+  <table class="t">
+    <tr><th>Asset</th><th>Address</th><th>What it does</th></tr>
+    <tr><td><b>The film</b></td><td><code>rickyrampersadbranch.com/your-policy</code> on the letters
+        (forwards to <code>/orphan-video/</code> with the token intact &mdash; nothing a client holds carries
+        the word &ldquo;orphan&rdquo;)</td>
+        <td>117 seconds. What carries on without an agent, what you give up, what is inside the policy,
+        what the Act entitles you to, and why a qualified agent is worth having</td></tr>
+    <tr><td><b>The one page for the team</b></td><td><code>rickyrampersadbranch.com/templates</code></td>
+        <td>The film, letter F in full, the eight openings with who gets which in words, and one verdict form
+        &mdash; a six-minute read. All eight letters are folded away at the foot. Generated with the letters by
+        <code>build-letters.py</code>, so it cannot drift from them. This is the one address in the WhatsApp</td></tr>
+    <tr><td><b>The film alone</b></td><td><code>rickyrampersadbranch.com/vid</code></td>
+        <td>The film with nothing else on the page but two links beneath it &mdash; the address to put in a
+        WhatsApp message, because the preview card shows the poster and the title</td></tr>
+    <tr><td><b>How the law protects you</b></td><td><code>rickyrampersadbranch.com/your-policy/protected</code>
+        (forwards to <code>orphan-video/protected.html</code>)</td>
+        <td>The Insurance Act's policyholder protections, quoted as the Act states them and explained in plain
+        words: what anyone owes a client before a cancellation or replacement, what a running policy has
+        already earned, premiums paid to a representative, and who to turn to. Linked from every letter's Act
+        note. Every quotation was checked against the source text; no section numbers</td></tr>
+    <tr><td><b>Door one &mdash; the review, self-serve</b></td><td><code>donthaveanagent.com/start</code></td>
+        <td>The client fills it in; the assigned agent reads it before they meet</td></tr>
+    <tr><td><b>Door two &mdash; the review, together</b></td><td>the <code>assign</code> click, then
+        <code>donthaveanagent.com/r/&lt;ref&gt;</code></td>
+        <td>The branch names an agent; the agent sends their own link and walks the client through it</td></tr>
+  </table>
+  <p class="fine">Rebuilding the film: <code>tools/film/orphan-lines.json</code> is the script,
+    <code>orphan-timing.json</code> the timings, <code>build-orphanfilm.py</code> assembles it. Rebuilding
+    the letters: <code>tools/letters/build-letters.py</code>.</p>
+</div></section>
+
+<section class="band" id="segments"><div class="wrap">
+  <h2>The segments</h2>
+  <p class="sub">The most specific reason to write wins. A client appears in one segment only.</p>
+  <table class="t">
+    <tr><th>Seg.</th><th>Who</th><th>The reason we are writing</th><th>Send</th></tr>
+    <tr><td><b>0</b></td><td><span class="pill bad">suppress</span> a Death claim is on file</td>
+        <td>Claims first. No campaign mail of any kind</td><td>Never, until claims confirm</td></tr>
+    <tr><td><b>A</b></td><td>A policy has matured</td><td>Money is waiting to be claimed</td><td>First</td></tr>
+    <tr><td><b>B</b></td><td>Paid up</td><td>They finished paying and may not know what they own</td><td>First</td></tr>
+    <tr class="hl"><td><b>C</b></td><td>Carrying waiver of premium</td>
+        <td>A benefit inside the policy that pays the premiums if they cannot work</td><td>Second</td></tr>
+    <tr><td><b>D</b></td><td>Collected off a payroll</td>
+        <td>We are checking the deduction file <span class="pill bad">never says arrears</span></td><td>Third</td></tr>
+    <tr><td><b>E</b></td><td>Held ten years or more</td><td>The price is locked at the age they started</td><td>Third</td></tr>
+    <tr><td><b>F</b></td><td>In force</td><td>The core letter</td><td>Third</td></tr>
+    <tr><td><b>G</b></td><td>Lapsed</td><td>Reactivation &mdash; a policy that stopped may still hold value</td>
+        <td>A week later. No mention of the departure</td></tr>
+    <tr><td><b>H</b></td><td>Nothing held</td><td>Lightest touch: is this still your address?</td><td>Last</td></tr>
+  </table>
+  <div class="box note">
+    <h3>The rule for the waterfall</h3>
+    <p style="margin:0">Death flag &rarr; matured &rarr; paid up &rarr; waiver of premium &rarr; payroll &rarr;
+    ten years &rarr; in force &rarr; lapsed &rarr; nothing. The segment file is built outside the repository
+    from the Branch Portfolio sheet, with the waiver-of-premium flag joined in from Salesforce on the policy
+    number. Counts and names never come into this repository.</p>
+  </div>
+</div></section>
+
+<section class="band alt" id="letters"><div class="wrap">
+  <h2>The eight letters</h2>
+  <p class="sub">One shell, eight openings. Every letter carries the film, the Act note, both doors and the
+    same sign-off. Click any one to see it as the client will.</p>
+  <div class="letters">
+    <a class="letter" href="letters/A.html"><div class="s">Segment A &middot; A policy has matured</div><b>A policy of yours has matured — there is money to claim</b><span>Only a handful of this group have an e-mail. The rest is a phone call, and it is the one call nobody resents.</span></a>
+    <a class="letter" href="letters/B.html"><div class="s">Segment B &middot; Paid up</div><b>You have finished paying for this one</b><span>Nearly all of this group have e-mail.</span></a>
+    <a class="letter" href="letters/C.html"><div class="s">Segment C &middot; Carrying waiver of premium</div><b>There is a benefit inside your policy you may not know about</b><span>The strongest letter in the set. Send it second, after A and B have warmed the domain.</span></a>
+    <a class="letter" href="letters/D.html"><div class="s">Segment D &middot; Collected off a payroll</div><b>Your policy, and a check we are running on your salary deduction</b><span>The word &quot;arrears&quot; does not appear. Until the deduction file is reconciled, a gap is ours to chase, not theirs to explain.</span></a>
+    <a class="letter" href="letters/E.html"><div class="s">Segment E &middot; Held ten years or more</div><b>You have held this cover for {{years}} years</b><span>Only a third of this group have e-mail. The other two-thirds are worth a phone call, because the argument is strongest here.</span></a>
+    <a class="letter" href="letters/F.html"><div class="s">Segment F &middot; In force</div><b>A quick summary of your Guardian Life cover — and two ways to pick this up</b><span>The core letter. The largest group and the best reach.</span></a>
+    <a class="letter" href="letters/G.html"><div class="s">Segment G &middot; Lapsed</div><b>A policy you may have written off — let us tell you what it is worth</b><span>A week behind the others, and it does not mention the departure at all &amp;mdash; these clients stopped paying years ago and it is irrelevant to them.</span></a>
+    <a class="letter" href="letters/H.html"><div class="s">Segment H &middot; Nothing held</div><b>Is this still the right address for you?</b><span>Lightest touch. No claim about anything they hold, because they hold nothing. Last to go.</span></a>
+  </div>
+  <div class="box stop">
+    <h3>Four things no letter does</h3>
+    <ul style="margin:0">
+      <li><b>Names or characterises anyone who has left.</b> &ldquo;Has moved on from Guardian Life&rdquo;
+        and nothing more.</li>
+      <li><b>Tells the client they are being targeted.</b> The Act note says what they are entitled to ask
+        for; it does not say who might ask them.</li>
+      <li><b>Offers anything to stay.</b> It would be matched, and it teaches the client to shop.</li>
+      <li><b>Mentions money owed.</b> No arrears figure until cash and the deduction file are reconciled.</li>
+    </ul>
+  </div>
+  <h3>Merge fields</h3>
+  <table class="t">
+    <tr><th>Field</th><th>Source</th><th>Note</th></tr>
+    <tr><td><code>{{first_name}}</code></td><td>Branch Portfolio sheet</td><td>First word of the client name</td></tr>
+    <tr><td><code>{{agent_first_name}}</code></td><td>Branch Portfolio sheet</td><td>The agent who left. First name only</td></tr>
+    <tr><td><code>{{years}}</code></td><td>Oldest in-force issue date</td><td>Whole years</td></tr>
+    <tr><td><code>{{token}}</code></td><td>Generated per send</td><td>Opaque. Resolved against the send list, which stays outside the repository. <b>Never a policy number</b></td></tr>
+    <tr><td><code>{{segment}}</code></td><td>The waterfall</td><td>One letter, A&ndash;H. Travels with every click so responses can be read by segment</td></tr>
+  </table>
+</div></section>
+
+<section class="band" id="team"><div class="wrap">
+  <h2>Before the send: the team sees it first</h2>
+  <p class="sub">The agents who receive these clients read every letter and the film before a client does,
+    and say so on the record.</p>
+  <p><a href="team-review.html">Open the team review page &rarr;</a></p>
+  <div class="cols three">
+    <div class="cd"><h3>What they see</h3><p>The eight letters, the film, the client page, the protections
+      page and the call script &mdash; plus what the branch has actually done this year, from the activity
+      log, so the record is in front of them before a client asks.</p></div>
+    <div class="cd"><h3>What they say</h3><p>One verdict per item: send as it is, send with a change, or
+      hold. A comment, their town, and whether they are taking assignments. It lands on the
+      <b>Team Feedback</b> tab of the Service Questionnaires spreadsheet.</p></div>
+    <div class="cd"><h3>What the branch owes back</h3><p>An answer to every &ldquo;change&rdquo; and
+      &ldquo;hold&rdquo;, by name, before the send. Then the roster of receiving agents by town, built from
+      the ticks.</p></div>
+  </div>
+  <div class="box note"><h3>Companion pages for the assigned agent</h3>
+    <p style="margin:0"><a href="if-they-say.html">If a client says&hellip;</a> &mdash; what a client may
+    repeat and what is simply true in each case. The tone guide on the team review page &mdash; how the
+    first thirty seconds go. Neither names or characterises anyone.</p></div>
+</div></section>
+
+<section class="band" id="loop"><div class="wrap">
+  <h2>The feedback loop</h2>
+  <p class="sub">A response nobody acts on within two working days is worse than no response. The client now
+    knows we asked and did nothing.</p>
+  <div class="flow">
+    <div class="step"><div class="n">Step 1</div><b>The client clicks</b>
+      <p>One of five: <code>selfserve</code>, <code>assign</code>, <code>review</code>,
+      <code>question</code>, <code>informed</code>. The token and segment travel with it.</p><span class="who">Client</span></div>
+    <div class="step"><div class="n">Step 2</div><b>It lands on the sheet</b>
+      <p>The <b>Client Responses</b> tab of the Service Questionnaires spreadsheet. Two of the five open a
+      task; three only log.</p><span class="who">Apps Script</span></div>
+    <div class="step"><div class="n">Step 3</div><b>The branch assigns</b>
+      <p>Town first, then what they hold. Everyone at one address goes to one agent. Name and date go in
+      the row.</p><span class="who">Branch</span></div>
+    <div class="step"><div class="n">Step 4</div><b>The agent gets the brief</b>
+      <p>Not a name and a number. The brief below, filled in.</p><span class="who">Branch &rarr; Agent</span></div>
+    <div class="step"><div class="n">Step 5</div><b>The agent files the review</b>
+      <p>Form 2000-03-147, signed. The row is done when the reference is on it.</p><span class="who">Agent</span></div>
+  </div>
+  <table class="t">
+    <tr><th>Click</th><th>Opens a task?</th><th>What the branch owes</th></tr>
+    <tr><td><code>assign</code></td><td><span class="pill bad">yes</span></td><td>A named agent within two working days</td></tr>
+    <tr><td><code>review</code></td><td><span class="pill bad">yes</span></td><td>A policy summary, then an agent</td></tr>
+    <tr><td><code>question</code></td><td><span class="pill bad">yes</span></td><td>A reply the same day</td></tr>
+    <tr><td><code>selfserve</code></td><td>no</td><td>Nothing yet &mdash; the review arrives on its own tab when they finish it</td></tr>
+    <tr><td><code>informed</code></td><td>no</td><td>Nothing. Ask again in six months</td></tr>
+  </table>
+</div></section>
+
+<section class="band alt" id="brief"><div class="wrap">
+  <h2>The agent's brief</h2>
+  <p class="sub">What an agent receives with an assignment. Filled in by the branch, from the sheet and the
+    portfolio; never sent to the client.</p>
+  <p><a href="agent-brief.html">Open the brief template &rarr;</a></p>
+  <div class="cols two">
+    <div class="cd"><h3>It must carry</h3><p>The segment, so the agent opens on the right thing. What the
+      client already said in the review, if there is one. Everyone else at the same address. The contact
+      route that actually works. The years held.</p></div>
+    <div class="cd"><h3>It must not carry</h3><p>Anything about the agent who left. Any arrears figure not
+      reconciled against cash and the deduction file. Any promise the branch has not already made.</p></div>
+  </div>
+</div></section>
+
+<section class="band" id="calls"><div class="wrap">
+  <h2>The call list</h2>
+  <p class="sub">A third of the book has no e-mail. Judged on e-mail alone they look like indifference when
+    they are only unreachable.</p>
+  <p><a href="call-script.html">Open the call script &rarr;</a></p>
+  <ol>
+    <li><b>A first</b> &mdash; money waiting. Nobody resents this call.</li>
+    <li><b>E second</b> &mdash; the price-lock argument is strongest here and most of this group has no
+      e-mail.</li>
+    <li><b>C third</b> &mdash; the waiver of premium, told in one sentence.</li>
+    <li><b>F, D, then G.</b> H is not worth the call.</li>
+  </ol>
+</div></section>
+
+<section class="band alt" id="scoreboard"><div class="wrap">
+  <h2>The scoreboard</h2>
+  <p class="sub">Watched daily from the first send. Read the segments against each other, not against a target.</p>
+  <table class="t">
+    <tr><th>Measure</th><th>Where it comes from</th><th>What it is telling you</th></tr>
+    <tr><td>Sent &middot; opened</td><td>The send tool</td><td>Deliverability. 25&ndash;35% on a cold book</td></tr>
+    <tr><td>Watched the film</td><td><code>rrb-views</code> on /orphan-video</td><td>Whether the subject line earned two minutes</td></tr>
+    <tr><td>Door split &mdash; <i>selfserve</i> vs <i>assign</i></td><td>Client Responses</td>
+        <td><b>Staffing.</b> Heavy on <i>assign</i> means agents are needed now, not letters</td></tr>
+    <tr><td>Response rate by segment</td><td>Client Responses, column Segment</td>
+        <td>Which message works. If C beats F, the waiver-of-premium line is what the phone team uses</td></tr>
+    <tr class="hl"><td><b>Reviews filed</b></td><td>Service Questionnaires</td>
+        <td><b>The only number that counts</b></td></tr>
+    <tr><td>Days from click to a named agent</td><td>Client Responses: Received vs Assigned on</td>
+        <td>The promise is two working days</td></tr>
+  </table>
+</div></section>
+
+<section class="band" id="rules"><div class="wrap">
+  <h2>Standing rules</h2>
+  <ul>
+    <li><b>Client data never enters the repository.</b> The segment file, the merge file and the send list
+      live outside it. This manual carries the method and nothing else.</li>
+    <li><b>Nothing goes out with a broken link.</b> The film page must be on <code>main</code> before any
+      letter references it. Check <code>curl -sI</code> first.</li>
+    <li><b>Nothing goes out before the clicks land.</b> The Apps Script must be redeployed and the
+      <code>RRB_SERVICE_URL</code> placeholder replaced, or every response vanishes.</li>
+    <li><b>Nothing goes out before the receivers are named.</b> Decide who takes assignments before the
+      send, by town.</li>
+    <li><b>Nothing goes out before the team has read it.</b> The team review page first, the verdicts
+      answered, then the send. A letter the agents have not seen is a letter they cannot stand behind.</li>
+    <li><b>Warm the domain.</b> Smallest segments first, across several days.</li>
+    <li><b>Reply-to is a person.</b> A no-reply address on a letter signed by the branch manager undoes
+      the letter.</li>
+  </ul>
+</div></section>
+
+<footer><div class="wrap">
+  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean &middot; internal manual, not for clients.
+</div></footer>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

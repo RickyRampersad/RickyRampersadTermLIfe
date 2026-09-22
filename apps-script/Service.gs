@@ -147,6 +147,18 @@ var SVC = {
      were on. Answering these fast is the whole point of them.            */
   CALL_SHEET:  'Callback Requests',
 
+  /* A client's one-click answer to the transition letter. The letter carries
+     an opaque token and a segment letter; the click carries them back with
+     which door was chosen. No name and no policy number travels in the URL —
+     the token is resolved against the send list held outside this sheet.
+     Two of the four answers open a task for the branch; two only log.       */
+  RESP_SHEET:  'Client Responses',
+
+  /* The branch's own feedback on the transition letters and the film, from
+     the team review page, before anything goes to a client. Name, what they
+     looked at, a verdict and a comment. No client details travel this road. */
+  TEAM_SHEET:  'Team Feedback',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -222,6 +234,15 @@ function doGet(e) {
   }
   if (p.action === 'callback') {
     return json_(callbackRequest_(p));
+  }
+  /* a client answering the transition letter — one click, fire-and-forget,
+     must never block the page that sent it */
+  if (p.action === 'resp') {
+    return json_(clientResponse_(p));
+  }
+  /* an agent's verdict on a letter or the film, from the team review page */
+  if (p.action === 'feedback') {
+    return json_(teamFeedback_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -673,6 +694,20 @@ function handleSubmission_(body) {
   var accessCode = accessCode_();
   var now = new Date();
 
+  /* 0 — trace the policy against CLIENT_PORTFOLIO__c while we have the client's
+     own name, date of birth and email in hand. See ServiceSalesforce.gs: what
+     this finds goes to the worklist, the agent brief and Customer Service, and
+     never back to the browser. The returned payload below carries a reference
+     and an access code, and nothing else — that is deliberate.
+     A Salesforce outage returns { ok:false } and the review files regardless. */
+  var raw0 = rawById_(body);
+  var nm = svcSplitName_(core.clientName || raw0.lifeAssured || '');
+  body.trace = svcTraceReview_({
+    dob: core.dob || raw0.dob || '',
+    email: core.email || raw0.email || '',
+    firstName: nm.firstName, lastName: nm.lastName,
+  });
+
   /* 1 — file it */
   saveRow_(isGroup, ref, priority, now, body, accessCode);
 
@@ -814,6 +849,17 @@ function sheetFor_(isGroup) {
     sh.appendRow(['Reference', 'Timestamp', 'Priority', 'Status', 'Handled by', 'Handled on',
                   'Client', 'Company', 'Email', 'Phone', 'Insurer', 'Policy #', 'Score', 'Minutes taken',
                   'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing',
+                  // Traced from CLIENT_PORTFOLIO__c on arrival, so an agent picks
+                  // up the phone already knowing what the client holds. Never
+                  // shown to the client — see ServiceSalesforce.gs.
+                  'Traced', 'Policy #s (traced)', 'Cover traced', 'Premium owing',
+                  'Agent on record',
+                  // Who else is in the house. Three columns, three sources, on
+                  // purpose: what the client said, what the branch has already
+                  // built on the Account, and the address they share. Sort a
+                  // book by these before splitting it between agents. All read
+                  // and capture only — nothing is written back to Salesforce.
+                  'Household', 'Household (on file)', 'Address key',
                   // Compliance record. These four are the auditable trail for a
                   // registered agent: what the client declared, what they agreed
                   // we could do with it, whether they opted into marketing, and
@@ -858,6 +904,28 @@ function teamBankSheet_() {
 }
 
 /**
+ * Who else lives in this house, in one sortable cell.
+ *
+ * Assignment is the entire reason it exists. A household split across three
+ * agents is three calls to one address and nobody holding the whole picture,
+ * and the records cannot prevent that: Relationship_Groups__c has been empty
+ * since 2017, and surnames alone guess wrong in both directions. The client
+ * is the only reliable source, so we ask them and we write down what they say.
+ *
+ * Capture only — this is never written back to Salesforce, and it is never
+ * shown to the client. Asking who is in a household is fine; telling somebody
+ * who holds an unauthenticated link what we know about their relatives is not.
+ */
+function householdSummary_(body) {
+  var a = answersById_(body);
+  var said = String(a.householdOther || '').trim();
+  if (!said) return '';
+  if (/^no\b/i.test(said)) return 'No';
+  var who = String(a.householdWho || '').replace(/\s+/g, ' ').trim();
+  return (/not sure/i.test(said) ? 'Not sure' : 'Yes') + (who ? ' — ' + who.slice(0, 200) : '');
+}
+
+/**
  * One row per submission, one column per question — and if the form grows a
  * new question tomorrow, the column appears on its own. That is the whole
  * reason the front end sends labels along with answers: nobody has to keep
@@ -867,6 +935,7 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
   var sh = sheetFor_(isGroup);
   var c = body.core || {};
   var av0 = answersById_(body);
+  var t = body.trace || {};                 // the Salesforce trace, or {} if it never ran
 
   var vals = {
     'Reference': ref,
@@ -896,6 +965,28 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     'Sent by': (body.sentBy && body.sentBy.name) || '',
     'Link ref': body.linkRef || '',
     'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
+
+    /* What the Salesforce trace found, if it is set up. Blank means it is not
+       configured or nothing matched, and support traces by hand exactly as
+       before — the review is never held up for it. */
+    'Traced': !t.configured ? '' : (t.found ? t.found + ' found · ' + t.how : 'no match'),
+    'Policy #s (traced)': t.policyNumbers || '',
+    'Cover traced': t.coverTraced || '',
+    'Premium owing': t.premiumOwing || '',
+    'Agent on record': t.agentOnRecord || '',
+
+    /* Three views of the same question, kept apart so they can disagree.
+       "Household" is what the client just told us. "Household (on file)" is
+       the Account the branch already built — 14,041 of them exist, named
+       "SURNAME, FIRSTNAME HH", though only about 4% carry more than one
+       member. "Address key" is the normalised street, which in one book found
+       14 shared addresses where exact matching found 3. Where the three
+       disagree, that is the row worth a person's attention. */
+    'Household': householdSummary_(body),
+    'Household (on file)': t.householdName
+      ? t.householdName + (t.householdMembers > 1 ? ' · ' + t.householdMembers + ' members' : ' · 1 member')
+      : '',
+    'Address key': t.addressKey || '',
 
     /* Who the client chose to be looked after by — the in-house team direct,
        or an agent matched to the brief they wrote. Drives the assignment. */
@@ -1318,6 +1409,11 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     if (f.flag === 'agent')   actions.push(badge_('AGENT', '#1B2A44') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    /* Not an action to process — a fact about who this client is. It rides
+       here because the brief is what an agent actually reads before calling,
+       and calling one half of a household without knowing about the other
+       half is the mistake this question exists to stop. */
+    if (f.flag === 'household') actions.push(badge_('HOUSEHOLD', '#6B7C96') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
@@ -1449,6 +1545,86 @@ function logHit_(agent, ev, ref) {
   if (!known) return { ok: false };
   try {
     linkSheet_().appendRow([new Date(), agent, ev, String(ref || '').slice(0, 60), '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true };
+}
+
+/** Where a client's answer to the transition letter lands. Created on demand
+ *  so the existing spreadsheet picks it up without re-running setup. The
+ *  Status, Assigned to and Assigned on columns are the branch's to fill:
+ *  the row is the task, and it is not done until an agent is named on it. */
+function responseSheet_() {
+  var sh = ss_().getSheetByName(SVC.RESP_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.RESP_SHEET);
+    sh.appendRow(['Received', 'Token', 'Segment', 'Response', 'Needs', 'Page', 'Referrer',
+                  'Status', 'Assigned to', 'Assigned on', 'Note']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** The four doors on the transition page, and what each one asks of us.
+ *  Anything else in the query string is not recorded. */
+var RESPONSES = {
+  selfserve: { needs: 'nothing yet — watch for the review',  status: 'Logged' },
+  assign:    { needs: 'a named agent within two working days', status: 'Open' },
+  review:    { needs: 'a policy summary, then an agent',      status: 'Open' },
+  question:  { needs: 'a reply the same day',                 status: 'Open' },
+  informed:  { needs: 'nothing — ask again in six months',    status: 'Logged' },
+};
+
+/** One click from a client. Fire-and-forget: it answers ok whatever happens,
+ *  because the page that sent it must never be blocked by the sheet. */
+function clientResponse_(p) {
+  var r = String(p.r || '').trim().toLowerCase();
+  var spec = RESPONSES[r];
+  if (!spec) return { ok: false };
+  var token = String(p.t || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  var seg = String(p.s || '').replace(/[^A-Z0-9]/g, '').slice(0, 2);
+  try {
+    responseSheet_().appendRow([
+      new Date(), token, seg, r, spec.needs,
+      String(p.p || '').slice(0, 80), String(p.ref || '').slice(0, 120),
+      spec.status, '', '', '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true, needs: spec.needs };
+}
+
+/** Where the team's feedback on the letters and the film lands. Created on
+ *  demand, like Client Responses. One row per verdict; the branch reads it
+ *  down before the send and answers every "change" and "hold" by name. */
+function teamSheet_() {
+  var sh = ss_().getSheetByName(SVC.TEAM_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.TEAM_SHEET);
+    sh.appendRow(['Received', 'Name', 'Town', 'Item', 'Verdict', 'Comment', 'Taking assignments',
+                  'Answered by', 'Answered on']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** What the team can look at, and the three things they can say about it. */
+var FEEDBACK_ITEMS = { A: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1,
+                       film: 1, page: 1, protected: 1, script: 1, whole: 1 };
+var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
+
+/** One verdict from one agent. Fire-and-forget, same as a client click: the
+ *  page must never wait on the sheet. Nothing here is a client detail. */
+function teamFeedback_(p) {
+  var item = String(p.i || '').trim();
+  var verdict = String(p.v || '').trim().toLowerCase();
+  if (!FEEDBACK_ITEMS[item] || !FEEDBACK_VERDICTS[verdict]) return { ok: false };
+  var name = String(p.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
+  if (!name) return { ok: false, error: 'name' };
+  var town = String(p.town || '').replace(/[<>]/g, '').trim().slice(0, 40);
+  var comment = String(p.c || '').replace(/[<>]/g, '').trim().slice(0, 600);
+  var taking = String(p.a || '') === '1' ? 'yes' : '';
+  try {
+    teamSheet_().appendRow([new Date(), name, town, item, FEEDBACK_VERDICTS[verdict], comment, taking, '', '']);
   } catch (e) { return { ok: false }; }
   return { ok: true };
 }

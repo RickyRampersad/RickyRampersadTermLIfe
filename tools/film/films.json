@@ -258,5 +258,38 @@
   "duck": 0.3,
   "dark": [],
   "sfx": "sfx-work.wav"
+ },
+ "orphan": {
+  "cap": "cap-orphan",
+  "vox": "voorph",
+  "music": "bed-orphan.wav",
+  "mix": "orphan-mix.wav",
+  "ass": "captions-orphan.ass",
+  "dur": 116.5,
+  "durs": [
+   6.2,
+   5.8,
+   8.7,
+   7.3,
+   4.6,
+   5.7,
+   10.2,
+   7.2,
+   5.0,
+   6.8,
+   11.3,
+   10.5,
+   5.6,
+   7.2,
+   8.4,
+   6.0
+  ],
+  "out": "rrb-orphan-video.mp4",
+  "musicgain": 0.46,
+  "duck": 0.3,
+  "dark": [],
+  "sfx": "sfx-orphan.wav",
+  "start": 0,
+  "bedsource": "Western Avenue (supplied 20 Sep 2026, 28s) - held outside the repository; re-supply it to rebuild bed-orphan.wav"
  }
 }
