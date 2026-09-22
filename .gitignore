@@ -31,4 +31,5 @@ tools/film/captions-*.ass
 
 # the transition send: the departed agents' names and every client file stay out
 tools/letters/departed.txt
+tools/letters/exclude.txt
 tools/letters/*.csv
