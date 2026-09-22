@@ -308,6 +308,8 @@ print(f'wrote {len(manifest)} letters + manifest.json to {OUT}')
 # merged. Run tools/film/chapters.py afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F'
+WORDS = {8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen'}
+NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
 WHO = {'A': 'a client with a policy that has matured', 'B': 'a client whose policy is paid up',
        'C': 'a client carrying a waiver of premium', 'D': 'a client whose premium comes off a payroll',
        'E': 'a client who has held cover for ten years or more', 'F': 'a client with a policy in force',
@@ -437,13 +439,13 @@ page = f"""<!DOCTYPE html>
 
 <div class="hero"><div class="wrap">
   <div class="eyebrow">What goes out &middot; read it before any client does</div>
-  <h1>One letter. Eight openings. <em>One film.</em></h1>
+  <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
   <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
     changes, with what they hold. Not one word in any of it is about who left. Watch the film, read the
-    letter, skim the eight openings, and answer one question at the foot.</p>
+    letter, skim the {NOPEN} openings, and answer one question at the foot.</p>
   <div class="steps">
     <a href="#film"><b>1 &middot; two minutes</b>The film</a>
-    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the eight openings</a>
+    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
     <a href="#verdict"><b>3 &middot; one minute</b>Send, change, or hold</a>
   </div>
 </div></div>
@@ -475,7 +477,7 @@ page = f"""<!DOCTYPE html>
 </div></section>
 
 <section class="band" id="openings"><div class="wrap">
-  <h2>The eight openings</h2>
+  <h2>The {NOPEN} openings</h2>
   <p class="sub">What changes, and who gets which. Each one leads with the thing the client is glad to hear.</p>
   <div class="ops">{openings}
   </div>
@@ -517,7 +519,7 @@ page = f"""<!DOCTYPE html>
     <a href="../your-policy/protected"><b>How the law protects you</b>The Insurance Act's protections, quoted, as the client reads them.</a>
     <a href="../orphan-transition/"><b>The manual</b>The segments, the feedback loop, the call list and the run sheet.</a>
   </div>
-  <h2 style="margin-top:30px">All eight letters, in full</h2>
+  <h2 style="margin-top:30px">All {NOPEN} letters, in full</h2>
   <p class="sub">Folded away. Open any one to read it as the client will.</p>
   {full}
 </div></section>
@@ -566,4 +568,4 @@ form.addEventListener('submit', function (e) {{
 """
 TPL.parent.mkdir(parents=True, exist_ok=True)
 TPL.write_text(page, encoding='utf-8')
-print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the eight openings, one verdict')
+print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the {NOPEN} openings, one verdict')
