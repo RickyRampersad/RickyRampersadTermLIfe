@@ -59,8 +59,8 @@ FIELDS = {
 TAPS = {
  'urgent':   ('I want an agent now. Let me tell you my concerns first',
               'Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.'),
- 'review':   ('Tell me what I hold, in writing',
-              'A one-page summary of your policy, then a person to go through it if you want one.'),
+ 'review':   ('Tell us more about yourself',
+              'A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.'),
  'callme':   ('Call me', 'Today or tomorrow, at a time you choose.'),
  'claim':    ('Help me claim it', 'We bring the form and walk it through with you.'),
  'deliver':  ('Bring me my contract', 'By hand, and we go through it with you.'),
