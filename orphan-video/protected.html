@@ -458,7 +458,7 @@
   <p class="sub">The review is the same either way &mdash; the only question is whether you would rather fill
     it in yourself or have somebody sit with you.</p>
   <div class="doors">
-    <a class="door go" id="selfserve" href="https://donthaveanagent.com/start" target="_blank" rel="noopener">
+    <a class="door go" id="selfserve" href="https://rickyrampersadbranch.com/your-policy/review.html?from=client" target="_blank" rel="noopener">
       <div class="n">Do it now, yourself</div>
       <b>Start my review</b>
       <span>About fifteen minutes, on your phone. Your agent reads it before you ever meet, so the first
@@ -489,7 +489,7 @@ var TOKEN = Q.get('t') || '', SEG = Q.get('s') || '';
 var qs = (TOKEN ? '?t=' + encodeURIComponent(TOKEN) + (SEG ? '&s=' + encodeURIComponent(SEG) : '') : '');
 document.getElementById('assign').href = './' + qs + '#choose';
 var self = document.getElementById('selfserve');
-self.href = 'https://donthaveanagent.com/start' + (TOKEN ? '?t=' + encodeURIComponent(TOKEN) : '');
+self.href = 'https://rickyrampersadbranch.com/your-policy/review.html?from=client' + (TOKEN ? '&t=' + encodeURIComponent(TOKEN) : '');
 self.addEventListener('click', function () {
   if (SVC.indexOf('http') !== 0) return;
   try {
