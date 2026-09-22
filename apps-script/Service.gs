@@ -1617,7 +1617,7 @@ function teamSheet_() {
 }
 
 /** What the team can look at, and the three things they can say about it. */
-var FEEDBACK_ITEMS = { A: 1, A2: 1, B: 1, C: 1, D: 1, E: 1, F: 1, G: 1, H: 1, I1: 1, I2: 1, I3: 1, J: 1, K: 1,
+var FEEDBACK_ITEMS = { A: 1, F: 1, G: 1, I: 1, J: 1, K: 1,
                        film: 1, page: 1, protected: 1, script: 1, whole: 1 };
 var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
 

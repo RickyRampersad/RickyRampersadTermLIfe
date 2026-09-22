@@ -550,9 +550,17 @@ voice under the new timing and the caption gives it away.
   Guardian Life. Your policy has not." — asked for in those terms on 22
   September ("now officially letting them know that the agents have moved
   on, that important letter"). It is in the shell, once, in the same words
-  on every in-force letter; an opening never repeats it, and G and H carry
-  none. `{{token}}` and `{{segment}}` travel with every tap so responses
-  read by segment.
+  on every letter; an opening never repeats it. `{{token}}` and
+  `{{segment}}` travel with every tap so responses read by segment.
+- **Six letters, not fourteen.** Condensed the same day ("condense the
+  amount of letters so we will be focused"): A (matured, or maturing within
+  six months), F (in force — paid up, waiver of premium, payroll and ten
+  years all take it, the facts off the sheet personalise it), G (lapsed),
+  I (a premium due, more than sixty on the Days column, one band — the days
+  outstanding and the projected lapse date are printed, so the letter need
+  not say how far behind), J (contract not delivered), K (application in
+  progress). Nothing-held clients are not written to. Do not grow the set
+  back: the team reads one page, and the taps carry the difference.
 - **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
   me tell you my concerns first" is on every letter (a card where it is one
   of the taps, a line beneath them where it is not). The client page logs it

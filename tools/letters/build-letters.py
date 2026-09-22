@@ -147,18 +147,14 @@ FILM_LINE = f'''
 
 def letter_table(seg, cfg):
     """The 600px table: the e-mail's body, and what /templates shows."""
-    # The notice is the official word that the representative has moved on. It
-    # is the second thing the client reads, once, in the same words everywhere,
-    # and the film's own line answers it: the policy has not. A lapsed or empty
-    # file (G, H) carries no notice, by the decision on the manual.
-    if cfg.get('inforce', True):
-        notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
+    # The notice is the official word that the representative has moved on, and
+    # the reason the letter exists. It is the second thing the client reads,
+    # once, in the same words on every letter, and the film's own line answers
+    # it: the policy has not.
+    notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative, {{{{agent_first_name}}}}, has moved on from Guardian Life.</b>
     {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
-        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Until you choose, your policy is looked after by this branch under
+    closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Until you choose, your policy is looked after by this branch under
     my name. From the moment you ask, you have an agent of your own within two working days.</p>'''
-    else:
-        notice = ''
-        closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Nothing is asked of you. We will ask again rather than assume.</p>'''
     return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
 <tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
@@ -227,27 +223,18 @@ print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
 # afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F'
-WORDS = {8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen', 15: 'fifteen', 16: 'sixteen'}
+WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve'}
 NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
-WHO = {'A': 'a client with a policy that has matured', 'A2': 'a client with a policy maturing within six months',
-       'B': 'a client whose policy is paid up', 'C': 'a client carrying a waiver of premium',
-       'D': 'a client whose premium comes off a payroll', 'E': 'a client who has held cover for ten years or more',
-       'F': 'a client with a policy in force', 'G': 'a client whose policy lapsed',
-       'H': 'a client with nothing in force and nothing lapsed',
-       'I1': 'a client with one premium due, sixty-one to ninety days',
-       'I2': 'a client with more than one premium due, up to six months',
-       'I3': 'a client with premiums unpaid for more than six months',
+WHO = {'A': 'a client with a policy that has matured, or matures within six months',
+       'F': 'a client with a policy in force: paid up, carrying a waiver, on a payroll, ten years or more, all of them',
+       'G': 'a client whose policy lapsed',
+       'I': 'a client with a premium due more than sixty days, by the Days column',
        'J': 'a client whose policy is in force but whose contract has not reached them',
        'K': 'a client whose application is still in progress'}
-GLAD = {'A': 'money is waiting to be claimed', 'A2': 'the money will reach them on time, and someone will plan what comes next',
-        'B': 'they own it outright and may not know what it is worth',
-        'C': 'a benefit inside the policy they were probably never told about',
-        'D': 'we are checking the deduction so they do not have to', 'E': 'a price nobody can sell them again',
-        'F': 'the same cover, the same premium, the same beneficiaries', 'G': 'a policy they wrote off may still hold value',
-        'H': 'nothing to do and nothing to pay',
-        'I1': 'nothing is lost, and a payment to a representative counts as paid',
-        'I2': 'the policy is still in force, and the value it has built may be carrying it',
-        'I3': 'nothing can be forfeited without written notice and twenty business days, and a paid-up policy may be kept',
+GLAD = {'A': 'the money is theirs, and it will reach them on time',
+        'F': 'the same cover, the same premium, the same beneficiaries, and everything the policy has built',
+        'G': 'a policy they wrote off may still hold value',
+        'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
         'J': 'the policy is in force, and the branch is bringing the contract',
         'K': 'the file is being finished for them, not chased'}
 openings = ''.join(f"""
