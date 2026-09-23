@@ -33,22 +33,30 @@
  * is held, not sent now; a row the sender cannot use (no e-mail, no first
  * name, no letter for its segment) is moved to Exclude with the reason, so
  * it leaves the queue for someone to fix rather than being tried every hour.
+ *
+ * Every e-mail a client receives from here — the letter, the receipt when they
+ * tap, the "still on it" note — goes out through Microsoft 365 as MS_FROM,
+ * with CC on each. The sign-in is three Script properties (MS_TENANT,
+ * MS_CLIENT, MS_SECRET), never this file, which is public on the website.
+ * Until they are set nothing client-facing sends at all: there is no fallback
+ * to the Google account that owns the script.
  */
 var TRANSITION = {
   SHEET: 'Transition Send',
   LETTERS: 'https://rickyrampersadbranch.com/orphan-transition/letters/',
   FILM: 'https://rickyrampersadbranch.com/your-policy/',
   FROM_NAME: 'Ricky Rampersad Branch',
-  REPLY_TO: '',              // blank = SVC.AGENT_EMAIL. "Just reply" lands here.
-  BCC: '',                   // a copy of every send, if wanted
+  MS_FROM: 'support@rickyrampersadbranch.com',   // every client e-mail is sent as this mailbox
+  CC: ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com'],   // visible on every client e-mail
+  REPLY_TO: '',              // blank = MS_FROM. "Just reply" lands here.
+  BCC: [],                   // a hidden copy of every client e-mail, if wanted
   BATCH: 60,                 // the most one hourly run will send
-  RESERVE: 25,               // daily quota kept back for the questionnaire's own e-mails
   HOURS: [9, 17],            // sends only between these hours, script time zone
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
   ORDER: ['I', 'K', 'J', 'A', 'F', 'G'],   // the action letters first
   DIGEST_TO: '',             // blank = the script owner
   DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
-  COPY_TO: '',               // blank = SVC.AGENT_EMAIL. CC'd on every client thank-you, so a response is seen the moment it lands, not only in the digest.
+  COPY_TO: '',               // blank = SVC.AGENT_EMAIL. Where the internal "late" nudges go.
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
   WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
@@ -280,25 +288,90 @@ function tHold_(row, letters) {
   return '';
 }
 
+/* ── the sender: Microsoft 365, as MS_FROM ────────────────────────── */
+/* Why not MailApp: it can only send from the Google account that owns the
+   script — a personal gmail.com address on a letter from the branch — and it
+   allows that account about a hundred recipients a day, every CC counted, so
+   a letter with two copies would go out at some twenty-five a day. Microsoft
+   365 sends as the branch's own mailbox, keeps each letter in its Sent Items,
+   and allows thousands a day at up to thirty a minute. Decided 23 September. */
+var T_MS_MISSING = 'Microsoft 365 sending is not set up: add MS_TENANT, MS_CLIENT and MS_SECRET ' +
+  'under Project Settings → Script properties. Nothing was sent.';
+
+function tMsCreds_() {
+  var p = PropertiesService.getScriptProperties();
+  var c = { tenant: p.getProperty('MS_TENANT'), client: p.getProperty('MS_CLIENT'), secret: p.getProperty('MS_SECRET') };
+  return (c.tenant && c.client && c.secret) ? c : null;
+}
+
+/** An app-only token for Microsoft Graph, cached for most of its hour.
+ *  Throws with Microsoft's own reason when the sign-in is refused. */
+function tMsToken_() {
+  var cache = CacheService.getScriptCache();
+  var hit = cache.get('transition:ms-token');
+  if (hit) return hit;
+  var c = tMsCreds_();
+  if (!c) throw new Error(T_MS_MISSING);
+  var res = UrlFetchApp.fetch('https://login.microsoftonline.com/' + encodeURIComponent(c.tenant) + '/oauth2/v2.0/token', {
+    method: 'post', muteHttpExceptions: true,
+    payload: { client_id: c.client, client_secret: c.secret, grant_type: 'client_credentials',
+               scope: 'https://graph.microsoft.com/.default' },
+  });
+  var body = {};
+  try { body = JSON.parse(res.getContentText()); } catch (e) {}
+  if (res.getResponseCode() !== 200 || !body.access_token) {
+    var why = String(body.error_description || body.error || ('HTTP ' + res.getResponseCode())).split('\n')[0];
+    throw new Error('Microsoft 365 refused the sign-in: ' + why.slice(0, 200));
+  }
+  try { cache.put('transition:ms-token', body.access_token, Math.max(60, Math.min(3000, (body.expires_in || 3600) - 300))); } catch (e) {}
+  return body.access_token;
+}
+
+function tAddr_(list) {
+  return (list || []).filter(function (a) { return String(a || '').trim(); })
+    .map(function (a) { return { emailAddress: { address: String(a).trim() } }; });
+}
+
+/** What every client e-mail carries besides its own body. */
+function tClientOpts_() {
+  return { cc: TRANSITION.CC, bcc: TRANSITION.BCC, replyTo: TRANSITION.REPLY_TO || TRANSITION.MS_FROM };
+}
+
+/** One e-mail, sent as MS_FROM and kept in its Sent Items. Throws with
+ *  Microsoft's reason on anything but "accepted". */
+function tMsSend_(to, subject, html, o) {
+  o = o || {};
+  var msg = {
+    subject: subject,
+    body: { contentType: 'HTML', content: html },
+    from: { emailAddress: { name: TRANSITION.FROM_NAME, address: TRANSITION.MS_FROM } },
+    toRecipients: tAddr_([to]),
+  };
+  if (o.cc && o.cc.length) msg.ccRecipients = tAddr_(o.cc);
+  if (o.bcc && o.bcc.length) msg.bccRecipients = tAddr_(o.bcc);
+  if (o.replyTo) msg.replyTo = tAddr_([o.replyTo]);
+  var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/sendMail', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { Authorization: 'Bearer ' + tMsToken_() },
+    payload: JSON.stringify({ message: msg, saveToSentItems: true }),
+  });
+  var code = res.getResponseCode();
+  if (code === 202) return;
+  if (code === 401) { try { CacheService.getScriptCache().remove('transition:ms-token'); } catch (e) {} }
+  var why = 'HTTP ' + code;
+  try { var err = JSON.parse(res.getContentText()).error; if (err) why = (err.code ? err.code + ': ' : '') + (err.message || ''); } catch (e) {}
+  throw new Error('Microsoft 365 did not send: ' + why.slice(0, 200));
+}
+
 /** Send one row with the letters tLetters_ fetched. Returns 'sent', or the
  *  reason it did not. Throws on a mail failure. */
 function tSendRow_(row, letters) {
   var why = tHold_(row, letters);
   if (why) return why;
   var seg = tText_(row.Segment).toUpperCase();
-  var to = tText_(row.Email);
   var L = letters[seg];
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
-  var html = tFill_(L.html, row);
-  var link = TRANSITION.FILM + '?t=' + encodeURIComponent(tText_(row.Token)) + '&s=' + encodeURIComponent(seg);
-  var agent = tText_(row['Agent first name']);
-  var plain = 'Dear ' + tText_(row['First name']) + ',\n\n' +
-    'Your representative' + (agent ? ', ' + agent + ',' : '') + ' has moved on from Guardian Life. Your policy has not.\n\n' +
-    'This letter is best read in a mail app that shows pictures. Everything in it, and the two-minute film, is here:\n' +
-    link + '\n\nRicky Rampersad\nBranch Manager, Ricky Rampersad Branch\nGuardian Life of the Caribbean';
-  var opts = { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL };
-  if (TRANSITION.BCC) opts.bcc = TRANSITION.BCC;
-  MailApp.sendEmail(to, subject, plain, opts);
+  tMsSend_(tText_(row.Email), subject, tFill_(L.html, row), tClientOpts_());
   return 'sent';
 }
 
@@ -341,8 +414,8 @@ function tSendRows_(t, rows, letters) {
       else { skipped++; tHoldRow_(t, row, res); }
     } catch (err) {
       var why = String(err && err.message ? err.message : err);
-      if (/invalid email/i.test(why)) {
-        /* the address passed the shape test and MailApp still refused it: for the manager, not for tomorrow */
+      if (/invalid email|InvalidRecipients/i.test(why)) {
+        /* the address passed the shape test and the mail server still refused it: for the manager, not for tomorrow */
         skipped++; tHoldRow_(t, row, 'no e-mail: ' + why.slice(0, 100));
       } else {
         failed++;
@@ -352,7 +425,7 @@ function tSendRows_(t, rows, letters) {
         t.sh.getRange(row._row, t.col['Send on']).setValue(Utilities.formatDate(tmr, tTz_(), 'yyyy-MM-dd'));
       }
     }
-    Utilities.sleep(120);
+    Utilities.sleep(2100);   // Microsoft 365 takes thirty a minute from one mailbox
   });
   return { sent: sent, skipped: skipped, failed: failed };
 }
@@ -416,9 +489,8 @@ function tAckClient_(token, r, needs) {
       '<p style="margin:0 0 12px">Thank you for answering. Here is what happens next: <b>' + tEsc_(needs) + '</b>.</p>' +
       '<p style="margin:0 0 12px">If anything changes in the meantime, just reply to this e-mail — it reaches a person the same day.</p>' +
       '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
-    var opts = { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL,
-      cc: TRANSITION.COPY_TO || SVC.AGENT_EMAIL };
-    MailApp.sendEmail(to, 'Thank you — we have this', 'Thank you. Here is what happens next: ' + needs, opts);
+    if (!tMsCreds_()) { log_('transition', 'ack-held', 'no receipt for a "' + r + '" tap: ' + T_MS_MISSING); return; }
+    tMsSend_(to, 'Thank you — we have this', html, tClientOpts_());
     log_('transition', 'ack', tText_(row.Client || row['First name']) + ' · ' + r);
   } catch (e) { log_('transition', 'ack-failed', String(e && e.message ? e.message : e)); }
 }
@@ -477,10 +549,9 @@ function tChaseClient_(row, needs) {
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
     '<p style="margin:0 0 12px">You have not been forgotten. We are still on: <b>' + tEsc_(needs) + '</b>. We will ask again rather than assume, and you are welcome to reply here at any time.</p>' +
     '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
-  try {
-    MailApp.sendEmail(to, 'Still on it', 'You have not been forgotten. We are still on: ' + needs,
-      { htmlBody: html, name: TRANSITION.FROM_NAME, replyTo: TRANSITION.REPLY_TO || SVC.AGENT_EMAIL, cc: TRANSITION.COPY_TO || SVC.AGENT_EMAIL });
-  } catch (e) {}
+  if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return; }
+  try { tMsSend_(to, 'Still on it', html, tClientOpts_()); }
+  catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); }
 }
 
 /** Chases what a client is still waiting on. Run once a day, from the
@@ -577,10 +648,10 @@ function tSendBatch_(force) {
       return tSay_('not live — Transition: go live when the test rows have been checked');
     }
   }
-  var per = TRANSITION.BCC ? 2 : 1;                            // the quota counts recipients
-  var quota = Math.floor((MailApp.getRemainingDailyQuota() - TRANSITION.RESERVE) / per);
-  var cap = Math.min(TRANSITION.BATCH, quota);
-  if (cap <= 0) { log_('transition', 'no-quota', 'remaining ' + MailApp.getRemainingDailyQuota()); return 'no quota left today'; }
+  /* the sender before the tab: Microsoft 365 set up and answering, or no row
+     is touched — a refused sign-in never marks sixty rows 'error' */
+  try { tMsToken_(); } catch (err) { return tStop_('sender-not-ready', err); }
+  var cap = TRANSITION.BATCH;
 
   /* the tab and the letters before any row is touched: a header that does not
      match or a site that does not answer stops the run here, and the reason
@@ -643,6 +714,7 @@ function transitionSendTest() {
 }
 
 function tSendTest_() {
+  try { tMsToken_(); } catch (err) { return tStop_('sender-not-ready', err); }
   var t, letters;
   try { t = tRead_(); } catch (err) { return tStop_('stopped', err); }
   try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
@@ -664,6 +736,9 @@ function transitionPreviewToMe() {
      serving the previous cut is found here, before the Test rows */
   var letters;
   try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
+  /* set up but refused: say why here, before the Test rows find out */
+  var ms = !!tMsCreds_();
+  if (ms) { try { tMsToken_(); } catch (err) { return tStop_('sender-not-ready', err); } }
   var n = 0;
   Object.keys(letters).sort().forEach(function (seg) {
     var L = letters[seg];
@@ -675,11 +750,15 @@ function transitionPreviewToMe() {
     };
     var html = tFill_(L.html, row);
     var subject = '[preview ' + seg + '] ' + tFill_(L.subject, row);
-    MailApp.sendEmail(me, subject, 'Preview of letter ' + seg + '.', { htmlBody: html, name: TRANSITION.FROM_NAME });
+    /* through Microsoft 365 once it is set up, so the preview arrives exactly
+       as a client's letter will; to your own inbox only, never copied */
+    if (ms) tMsSend_(me, subject, html, {});
+    else MailApp.sendEmail(me, subject, 'Preview of letter ' + seg + '.', { htmlBody: html, name: TRANSITION.FROM_NAME });
     n++;
-    Utilities.sleep(120);
+    Utilities.sleep(ms ? 2100 : 120);
   });
-  var msg = n + ' preview letters sent to ' + me + '.';
+  var msg = n + ' preview letters sent to ' + me + (ms ? ' from ' + TRANSITION.MS_FROM + '.' :
+    ', from this Google account: Microsoft 365 is not set up yet, so no client letter can send.');
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
 }
