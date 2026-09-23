@@ -565,16 +565,23 @@ voice under the new timing and the caption gives it away.
   on, that important letter"). It is in the shell, once, in the same words
   on every letter; an opening never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
-- **Six letters, not fourteen.** Condensed the same day ("condense the
-  amount of letters so we will be focused"): A (matured, or maturing within
-  six months), F (in force — paid up, waiver of premium, payroll and ten
-  years all take it, the facts off the sheet personalise it), G (lapsed),
+- **Ten letters: five situations, and the in-force letter in five tenure
+  versions.** Condensed to six on 22 September ("condense the amount of
+  letters so we will be focused"); on 23 September the in-force letter was
+  split by how long the client has held their longest in-force policy —
+  "we have banded 5 so each is different, wanting feedback with a catchy
+  line" — F1 under two years, F2 two to three, F3 three to five, F4 five to
+  ten, F5 ten or more, the same bands as the reassignment workbook. Each
+  version has its own headline and opening and puts the feedback tap
+  (`review`) first; the fixed notice and the shell are the same on all.
+  The situations: A (matured, or maturing within six months), G (lapsed),
   I (a premium due: a row the sheet flags `Overdue` in Status(2) with more
-  than sixty on its Days column, one band — the days outstanding and the
-  projected lapse date are printed, so the letter need not say how far
-  behind), J (contract not delivered), K (application in
-  progress). Nothing-held clients are not written to. Do not grow the set
-  back: the team reads one page, and the taps carry the difference.
+  than sixty on its Days column — the days outstanding and the projected
+  lapse date are printed, so the letter need not say how far behind),
+  J (contract not delivered), K (application in progress). Paid up, waiver
+  and payroll clients take their tenure version. Nothing-held clients are
+  not written to. Do not grow the set beyond this without being asked: the
+  team reads one page, and the taps carry the difference.
 - **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
   me tell you my concerns first" is on every letter (a card where it is one
   of the taps, a line beneath them where it is not). The client page logs it
@@ -647,6 +654,13 @@ voice under the new timing and the caption gives it away.
   outstanding"; caught on 23 September before any client letter went out.
   Test with the flag, never with Days alone. And the tool never marks a
   row `Test`: the Test rows are team members standing in as clients.
+  **Two more exclusions, added 23 September ("not sending to the agents or
+  their direct families"):** a client whose e-mail on file is one of the
+  departed agents' own addresses (two rows would otherwise have mailed an
+  agent directly), and anyone sharing a home address, phone or e-mail with a
+  departed agent's own policy whatever their surname — a spouse or child
+  under another name. An address, phone or e-mail shared by more than six
+  clients is an office line, not a family, and does not count.
 - **Every response gets a receipt, and the branch gets a copy.** The moment
   a client taps, `tAckClient_` (Transition.gs) e-mails them a short
   thank-you naming what happens next, CC'd to `TRANSITION.CC` — asked for

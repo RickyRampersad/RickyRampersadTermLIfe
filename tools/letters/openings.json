@@ -1,5 +1,5 @@
 {
- "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Six letters, condensed on 22 September 2026 so the team reads one page: paid up, waiver of premium, payroll and ten years all take letter F, and the facts printed from the sheet do the personalising. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Ten letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress) and, since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
  "A": {
   "name": "A policy has matured, or is about to",
   "subject": "A policy of yours has matured, or is about to",
@@ -7,19 +7,141 @@
   "headline": "Your policy has <em>matured,</em> or is about to.",
   "open": "It has reached the end of its term, or is about to, and the money is yours. We want it to reach you without delay, and we would like to sit with you and talk through what comes next.",
   "notice_tail": "The money in your policy has not.",
-  "facts": [["Matured on", "{{matured_on}}"], ["Matures on", "{{maturity_date}}"], ["Held since", "{{first_year}}"]],
-  "taps": ["claim", "urgent", "callme"],
+  "facts": [
+   [
+    "Matured on",
+    "{{matured_on}}"
+   ],
+   [
+    "Matures on",
+    "{{maturity_date}}"
+   ],
+   [
+    "Held since",
+    "{{first_year}}"
+   ]
+  ],
+  "taps": [
+   "claim",
+   "urgent",
+   "callme"
+  ],
   "send": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
  },
- "F": {
-  "name": "In force",
-  "subject": "Your policy is unchanged. Tell us what you would like next.",
-  "preheader": "Same cover, same premium, same beneficiaries. Then whichever answer suits you.",
-  "headline": "Your policy is <em>unchanged.</em>",
-  "open": "Nothing about your cover has changed. Same policy, same premium, same beneficiaries, and everything it has built over the years is still yours. We would simply like to hear from you, in your own words.",
-  "facts": [["Held since", "{{first_year}}"], ["Paid to", "{{paid_to}}"]],
-  "taps": ["urgent", "review", "callme"],
-  "send": "The core letter. Paid up, waiver of premium, payroll and ten years or more all take it; the facts off the sheet personalise it. The largest group and the best reach."
+ "F1": {
+  "name": "In force — under two years",
+  "subject": "Your policy is new, and so is our promise to you",
+  "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
+  "headline": "You chose us <em>recently.</em> We are choosing you back.",
+  "open": "Your policy is still new, and nothing about it has changed: same cover, same premium, same beneficiaries. We would love to hear how the start has been for you, in your own words, and what would make it better.",
+  "send": "In force, and the client's longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been.",
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ]
+ },
+ "F2": {
+  "name": "In force — two to three years",
+  "subject": "Two years in, and your cover is unchanged. How are we doing?",
+  "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
+  "headline": "A couple of years in, and <em>just getting started.</em>",
+  "open": "Nothing about your cover has changed. Same policy, same premium, same beneficiaries. This is a good moment to check it still fits your life, so tell us what has changed for you and how we could look after you better.",
+  "send": "In force, longest-held policy two to three years old. Early enough that life has usually moved on since the policy was bought: the letter asks what has changed.",
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ]
+ },
+ "F3": {
+  "name": "In force — three to five years",
+  "subject": "Your policy is unchanged. Tell us how the last few years have been.",
+  "preheader": "Everything your policy has built is still yours. We would like your view.",
+  "headline": "A few years of cover, <em>still yours.</em>",
+  "open": "Everything your policy has built over the last few years is still yours, and nothing about it has changed. We would like to hear how those years have gone for you, and what you want from us next.",
+  "send": "In force, longest-held policy three to five years old. Value is building: the letter says it is still theirs and asks what they want next.",
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ]
+ },
+ "F4": {
+  "name": "In force — five to ten years",
+  "subject": "Years of cover, unchanged. We would value your view.",
+  "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
+  "headline": "Years of cover, and <em>nothing lost.</em>",
+  "open": "You have trusted us with your cover for years, and every one of them still counts. Nothing about your policy has changed. Tell us how we have done over that time, and what would make the years ahead better.",
+  "send": "In force, longest-held policy five to ten years old. Starting again elsewhere would cost these clients most of what they have built: the letter says every year still counts.",
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ]
+ },
+ "F5": {
+  "name": "In force — ten years or more",
+  "subject": "More than ten years together. Thank you, and one question.",
+  "preheader": "Every year of your cover is still yours. Your view matters most to us.",
+  "headline": "More than ten years <em>together.</em> Thank you.",
+  "open": "More than a decade of cover, and every year of it is still yours. Nothing about your policy has changed. You have been with us longer than most, so your view matters most: tell us how we have done.",
+  "send": "In force, longest-held policy ten years or more. Most of the fund value sits here: the letter thanks them first and asks for their view.",
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ]
  },
  "G": {
   "name": "Lapsed",
@@ -28,8 +150,21 @@
   "headline": "A policy you may have <em>written off.</em>",
   "open": "A policy that stopped being paid does not always stop mattering. Some still hold a value that belongs to you. Some can simply be started again. We would like to sit with you and find out which is true of yours.",
   "notice_tail": "Whatever your policy still holds is yours.",
-  "facts": [["Held since", "{{first_year}}"], ["Last paid to", "{{paid_to}}"]],
-  "taps": ["review", "urgent", "callme"],
+  "facts": [
+   [
+    "Held since",
+    "{{first_year}}"
+   ],
+   [
+    "Last paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "review",
+   "urgent",
+   "callme"
+  ],
   "send": "A week behind the others."
  },
  "I": {
@@ -38,8 +173,25 @@
   "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
   "headline": "A premium is showing as <em>due.</em>",
   "open": "Nothing to worry about yet. It is usually one of three simple things: paid and not yet recorded, a change in how you pay, or it simply slipped past. Tap below and tell us which, and we take it from there.",
-  "facts": [["Paid to", "{{paid_to}}"], ["Days outstanding", "{{days}}"], ["Projected lapse", "{{projected_lapse}}"]],
-  "taps": ["paid", "pay", "callme"],
+  "facts": [
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ],
+   [
+    "Days outstanding",
+    "{{days}}"
+   ],
+   [
+    "Projected lapse",
+    "{{projected_lapse}}"
+   ]
+  ],
+  "taps": [
+   "paid",
+   "pay",
+   "callme"
+  ],
   "mode": "premium",
   "act": "Premiums or other payments due that are received by an agency, brokerage or a sales representative on behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or stipulations to the contrary.",
   "plain": "A premium you handed to a registered representative counts as paid to Guardian Life. Keep the receipt. And before anything can be forfeited, you must receive a written notice and twenty business days from it.",
@@ -51,8 +203,17 @@
   "preheader": "Your policy is in force. The document itself has not reached you yet.",
   "headline": "Your policy is in force. Your <em>contract</em> is ready.",
   "open": "Your contract itself simply has not reached you yet, and we would like to put that right in person. We will bring it to you and go through every page together. All we need back is your acknowledgement that you received it.",
-  "facts": [["Issued on", "{{issue_date}}"]],
-  "taps": ["deliver", "urgent", "callme"],
+  "facts": [
+   [
+    "Issued on",
+    "{{issue_date}}"
+   ]
+  ],
+  "taps": [
+   "deliver",
+   "urgent",
+   "callme"
+  ],
   "send": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
  },
  "K": {
@@ -62,8 +223,17 @@
   "headline": "Your application is <em>still in progress.</em>",
   "open": "This one is ours to finish, not yours to chase, and it has not been forgotten. If anything is still needed, a signature, a medical, a document, we will bring it to you ourselves rather than ask you to go looking.",
   "notice_tail": "Your application has not.",
-  "facts": [["Application received", "{{app_received}}"]],
-  "taps": ["finish", "callme", "stop"],
+  "facts": [
+   [
+    "Application received",
+    "{{app_received}}"
+   ]
+  ],
+  "taps": [
+   "finish",
+   "callme",
+   "stop"
+  ],
   "send": "From the pending list. Every file is read before the call."
  }
 }

@@ -237,7 +237,7 @@
         <td>117 seconds. What carries on without an agent, what you give up, what is inside the policy,
         what the Act entitles you to, and why a qualified agent is worth having</td></tr>
     <tr><td><b>The one page for the team</b></td><td><code>rickyrampersadbranch.com/templates</code></td>
-        <td>The film, letter F in full, every opening with who gets which in words, and one verdict form
+        <td>The film, letter F1 in full, every opening with who gets which in words, and one verdict form
         &mdash; a six-minute read. All the letters are folded away at the foot. Generated with the letters by
         <code>build-letters.py</code>, so it cannot drift from them. This is the one address in the WhatsApp</td></tr>
     <tr><td><b>The responses page</b></td><td><code>rickyrampersadbranch.com/orphan-transition/responses.html</code></td>
@@ -287,10 +287,11 @@
     <tr><td><b>A</b></td><td>A policy has matured, or matures within six months</td>
         <td>The money is theirs; it should reach them on time, with what comes next planned
         <span class="pill">maturity date from policy admin</span></td><td>First</td></tr>
-    <tr><td><b>F</b></td><td>In force &mdash; including paid up, carrying a waiver of premium, collected off a
-        payroll, and held ten years or more</td>
-        <td>The core letter: same cover, same premium, same beneficiaries, everything the policy has built
-        still theirs; the facts off the sheet do the personalising <span class="pill bad">never says arrears</span></td>
+    <tr><td><b>F1&ndash;F5</b></td><td>In force &mdash; including paid up, carrying a waiver of premium and
+        collected off a payroll &mdash; in five versions by how long the client has held their longest policy:
+        F1 under two years, F2 two to three, F3 three to five, F4 five to ten, F5 ten or more</td>
+        <td>Same cover, same premium, same beneficiaries; each version has its own line and asks for the
+        client's view first <span class="pill bad">never says arrears</span></td>
         <td>Second</td></tr>
     <tr><td><b>G</b></td><td>Lapsed</td><td>A policy that stopped may still hold value</td><td>A week later</td></tr>
     <tr><td><b>&mdash;</b></td><td>Nothing in force, nothing lapsed</td>
@@ -298,7 +299,7 @@
   </table>
   <div class="box note">
     <h3>The rule for the waterfall</h3>
-    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet delivered (J), a premium due (I: more than sixty on the <b>Days</b> column). Then: Death flag &rarr; matured or maturing within six months (A) &rarr; in force (F) &rarr; lapsed (G) &rarr; nothing (no letter). A client gets one letter. <b>Six letters</b>, condensed on 22 September so the team reads one page: paid up, waiver of premium, payroll and ten years all take letter F, and the facts printed from the sheet do the personalising. The segment file is built outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse Date, Issue Date, App Received Date), the contracts-given-to-agent list and the pending list, with the maturity date from policy admin. Counts and names never come into this repository.</p>
+    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet delivered (J), a premium due (I: a policy the sheet flags <b>Overdue</b>, more than sixty on its <b>Days</b> column). Then: Death flag &rarr; matured or maturing within six months (A) &rarr; in force (F1&ndash;F5, by how long the client has held their longest policy) &rarr; lapsed (G) &rarr; nothing (no letter). A client gets one letter. <b>Ten letters</b>: condensed to six on 22 September so the team reads one page, then the in-force letter split into five tenure versions on 23 September, each asking for the client's view. The segment file is built outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse Date, Issue Date, App Received Date), the contracts-given-to-agent list and the pending list, with the maturity date from policy admin. Counts and names never come into this repository.</p>
   </div>
 </div></section>
 
@@ -310,7 +311,11 @@
   <div class="letters">
   <!-- letters:start -->
     <a class="letter" href="letters/A.html"><div class="s">A &middot; A policy has matured, or is about to</div><b>A policy of yours has matured, or is about to</b><span>Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents.</span></a>
-    <a class="letter" href="letters/F.html"><div class="s">F &middot; In force</div><b>Your policy is unchanged. Tell us what you would like next.</b><span>The core letter. Paid up, waiver of premium, payroll and ten years or more all take it; the facts off the sheet personalise it. The largest group and the best reach.</span></a>
+    <a class="letter" href="letters/F1.html"><div class="s">F1 &middot; In force — under two years</div><b>Your policy is new, and so is our promise to you</b><span>In force, and the client&#x27;s longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been.</span></a>
+    <a class="letter" href="letters/F2.html"><div class="s">F2 &middot; In force — two to three years</div><b>Two years in, and your cover is unchanged. How are we doing?</b><span>In force, longest-held policy two to three years old. Early enough that life has usually moved on since the policy was bought: the letter asks what has changed.</span></a>
+    <a class="letter" href="letters/F3.html"><div class="s">F3 &middot; In force — three to five years</div><b>Your policy is unchanged. Tell us how the last few years have been.</b><span>In force, longest-held policy three to five years old. Value is building: the letter says it is still theirs and asks what they want next.</span></a>
+    <a class="letter" href="letters/F4.html"><div class="s">F4 &middot; In force — five to ten years</div><b>Years of cover, unchanged. We would value your view.</b><span>In force, longest-held policy five to ten years old. Starting again elsewhere would cost these clients most of what they have built: the letter says every year still counts.</span></a>
+    <a class="letter" href="letters/F5.html"><div class="s">F5 &middot; In force — ten years or more</div><b>More than ten years together. Thank you, and one question.</b><span>In force, longest-held policy ten years or more. Most of the fund value sits here: the letter thanks them first and asks for their view.</span></a>
     <a class="letter" href="letters/G.html"><div class="s">G &middot; Lapsed</div><b>A policy you wrote off may still be worth something</b><span>A week behind the others.</span></a>
     <a class="letter" href="letters/I.html"><div class="s">I &middot; A premium showing as due</div><b>A premium is showing as due. One tap puts it right.</b><span>More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.</span></a>
     <a class="letter" href="letters/J.html"><div class="s">J &middot; Contract ready, not yet delivered</div><b>Your contract is ready. We will bring it to you.</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent.</span></a>

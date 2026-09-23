@@ -89,6 +89,21 @@ for a in NINE:
     contact[a] = {'addr': {norm_addr(r['Address']) for r in own[a] if norm_addr(r['Address'])},
                   'phone': {re.sub(r'\D', '', r['Phone'] or '') for r in own[a] if re.sub(r'\D', '', r['Phone'] or '')},
                   'email': {ne(r['email']) for r in own[a] if ne(r['email'])}}
+AGENT_EMAILS = set().union(*(contact[a]['email'] for a in NINE))
+# how many clients share each address, phone and e-mail: one shared by more
+# than six is an office line or an employer, not a family
+_seen = defaultdict(set)
+for r in rows:
+    cid = (r.get('Client Number') or '').strip()
+    if len(norm_addr(r['Address'])) >= 12: _seen['a:' + norm_addr(r['Address'])].add(cid)
+    if len(re.sub(r'\D', '', r['Phone'] or '')) >= 7: _seen['p:' + re.sub(r'\D', '', r['Phone'] or '')].add(cid)
+    if ne(r['email']): _seen['e:' + ne(r['email'])].add(cid)
+FAMILY_KEYS = set()
+for a in NINE:
+    FAMILY_KEYS |= {'a:' + x for x in contact[a]['addr'] if len(x) >= 12 and len(_seen['a:' + x]) <= 6}
+    FAMILY_KEYS |= {'p:' + x for x in contact[a]['phone'] if len(x) >= 7 and len(_seen['p:' + x]) <= 6}
+    FAMILY_KEYS |= {'e:' + x for x in contact[a]['email'] if len(_seen['e:' + x]) <= 6}
+BANDS = [(2, 'F1'), (3, 'F2'), (5, 'F3'), (10, 'F4')]   # under 2, 2–3, 3–5, 5–10; ten or more is F5
 
 # ── one record per client ──────────────────────────────────────────────
 C = defaultdict(lambda: dict(rows=[], name='', email='', agent='', number=''))
@@ -149,6 +164,18 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
                 else:
                     reason = 'check: shares a departed agent\'s surname'
                 break
+    # a departed agent's own address on a client's record: the letter would reach the agent
+    if not reason and c['email'] and c['email'] in AGENT_EMAILS:
+        reason = 'agent e-mail: the address on file belongs to a departed agent'
+    # family under any surname: the same home, phone or e-mail as a departed agent's own policy
+    if not reason:
+        keys = set()
+        for r in rs:
+            if len(norm_addr(r['Address'])) >= 12: keys.add('a:' + norm_addr(r['Address']))
+            if len(re.sub(r'\D', '', r['Phone'] or '')) >= 7: keys.add('p:' + re.sub(r'\D', '', r['Phone'] or ''))
+            if ne(r['email']): keys.add('e:' + ne(r['email']))
+        if keys & FAMILY_KEYS:
+            reason = 'agent household: lives with a departed agent (same address, phone or e-mail)'
     if not reason and c['email'].endswith('@myguardiangroup.com'):
         reason = 'staff e-mail'
     if not reason and any('death' in status(r) for r in rs):
@@ -189,7 +216,10 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
         if not reason:
             reason = 'check: matured — confirm it is unclaimed before sending'
     elif inforce:
-        seg = 'F'
+        # five versions by how long the client has held their longest policy (23 September)
+        first = min((d(r['Issue Date']) for r in inforce if d(r['Issue Date'])), default=None)
+        held = ((TODAY.year - first.year) - ((TODAY.month, TODAY.day) < (first.month, first.day))) if first else 0
+        seg = next((s for limit, s in BANDS if held < limit), 'F5')
         pt = [d(r['Paid To Date']) for r in paying if d(r['Paid To Date'])]
         rec['paid_to'] = long(max(pt)) if pt else ''
     elif lapsed:
