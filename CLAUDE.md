@@ -580,8 +580,9 @@ voice under the new timing and the caption gives it away.
   same container-bound project as `Service.gs`. It fetches the six generated
   letters from the site, fills the `{{fields}}` from the **Transition Send**
   tab, cuts a blank fact out between the `<!--fact:key-->` markers the
-  generator writes, and sends with MailApp from an hourly trigger, working
-  hours only, inside the day's quota, the action letters first. No letter
+  generator writes, and sends it through Microsoft 365 as
+  support@rickyrampersadbranch.com from an hourly trigger, working hours
+  only, up to sixty an hour, the action letters first. No letter
   text lives in the script: rebuild the letters and the next batch carries
   the change. `transitionSetup` makes the tab and the 8:00 digest only;
   `transitionPreviewToMe` sends one of each to the owner;
@@ -594,6 +595,26 @@ voice under the new timing and the caption gives it away.
   cannot use (no e-mail, no first name, no letter for its segment) is moved
   to Exclude with the reason. The page and the digest show a red banner while
   the send is off, and the last runs with their reasons.
+- **Every client e-mail goes out as support@rickyrampersadbranch.com,
+  never from Gmail.** Decided 23 September: "we need to have
+  support@rickyrampersadbranch.com and copy" the sales-support and branch
+  manager's Guardian addresses. The letters, the receipts and the "still on
+  it" notes go through Microsoft Graph (`tMsSend_`), carry both Guardian
+  addresses in **visible** CC (`TRANSITION.CC`, the manager's choice), take
+  replies at support@, and land in its Sent Items. The sign-in is an Entra
+  app registration with the Graph **Mail.Send** application permission, held
+  in three Script properties — `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — and
+  never in the code, because the `.gs` files are public on the website.
+  Until they are set nothing client-facing sends: no fallback to MailApp,
+  which sends from the personal Google account that owns the script and
+  allows about a hundred recipients a day, every CC counted — two copies on
+  every letter would have held the send to some twenty-five letters a day.
+  The mailbox's display name read "querymypolicy.com" and must read "Ricky
+  Rampersad Branch" before a client letter goes. Internal mail (the digest,
+  the late nudges) still goes through MailApp. The older service e-mails in
+  `Service.gs` (the daily follow-up's "still on it" notes, the six-month and
+  birthday reviews) still send from Gmail, so the `dailyServiceFollowUp`
+  trigger stays off until they are moved over too.
 - **The send list is built by `tools/letters/sendlist.py` outside the
   repository**, on a copy of the Branch Portfolio sheet, with the departed
   agents' names in the git-ignored `departed.txt` beside it. It fills the
@@ -605,8 +626,8 @@ voice under the new timing and the caption gives it away.
   "exclude the agents' policies who left … and his family, etc."
 - **Every response gets a receipt, and the branch gets a copy.** The moment
   a client taps, `tAckClient_` (Transition.gs) e-mails them a short
-  thank-you naming what happens next, CC'd to `TRANSITION.COPY_TO` (blank =
-  `SVC.AGENT_EMAIL`) — asked for on 22 September ("are responses coming in
+  thank-you naming what happens next, CC'd to `TRANSITION.CC` — asked for
+  on 22 September ("are responses coming in
   and I am to be copied"). `tChase_`, run once a day from `transitionDigest`
   (never from `tSummary_`, which the responses page polls every two
   minutes, so a chase can never double-fire), nudges the branch internally
