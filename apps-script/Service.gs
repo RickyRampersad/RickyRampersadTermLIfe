@@ -712,12 +712,19 @@ function handleSubmission_(body) {
      and an access code, and nothing else — that is deliberate.
      A Salesforce outage returns { ok:false } and the review files regardless. */
   var raw0 = rawById_(body);
-  var nm = svcSplitName_(core.clientName || raw0.lifeAssured || '');
-  body.trace = svcTraceReview_({
-    dob: core.dob || raw0.dob || '',
-    email: core.email || raw0.email || '',
-    firstName: nm.firstName, lastName: nm.lastName,
-  });
+  /* The trace lives in ServiceSalesforce.gs. A project without that file must
+     still file the review: on 23 September it was missing from the live
+     project and every submission from the website failed on this line. */
+  if (typeof svcSplitName_ === 'function' && typeof svcTraceReview_ === 'function') {
+    var nm = svcSplitName_(core.clientName || raw0.lifeAssured || '');
+    body.trace = svcTraceReview_({
+      dob: core.dob || raw0.dob || '',
+      email: core.email || raw0.email || '',
+      firstName: nm.firstName, lastName: nm.lastName,
+    });
+  } else {
+    body.trace = { ok: false, configured: false, why: 'ServiceSalesforce.gs is not in this project' };
+  }
 
   /* 1 — file it */
   saveRow_(isGroup, ref, priority, now, body, accessCode);
