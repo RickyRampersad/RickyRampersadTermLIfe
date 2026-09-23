@@ -414,6 +414,19 @@ libass**, Playwright with Chromium, numpy.
 `getUi()`, so it must be created from the Sheet (Extensions → Apps Script). A
 standalone project returns null and throws.
 
+**The project is three files, not one:** `Service.gs`, `Transition.gs` and
+`ServiceSalesforce.gs` (the Salesforce trace a review runs before it files).
+On 23 September the live project had only the first two, and every review
+and questionnaire from the website failed on the backend with
+"svcSplitName_ is not defined" — the client saw a done screen and nothing
+was filed. `Service.gs` now guards those calls, but the file belongs in the
+project. After any paste, submit one test review and read the reply: a
+reference from the server, not the page's local fallback.
+
+**A full paste of `Service.gs` blanks `TEAM_CODE`** (the repository copy
+ships it empty because the file is public). Re-enter it after every paste,
+or the wall and the responses page lock everyone out.
+
 **Re-deploying:** Deploy → Manage deployments → pencil → New version. Using
 *New deployment* instead issues a fresh `/exec` URL and every front end has to
 be re-wired.
