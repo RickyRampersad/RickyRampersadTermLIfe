@@ -374,6 +374,10 @@ var SEG = Q.get('s') || '';       /* the segment letter the letter was sent unde
 /* the protections page carries the same token on, so a click from there reads the same */
 if (TOKEN) document.getElementById('protlink').href = 'protected.html?t=' + encodeURIComponent(TOKEN) +
   (SEG ? '&s=' + encodeURIComponent(SEG) : '');
+/* and the review door carries it too: the review is read against the letter, and a letter's client gets the fuller review */
+if (TOKEN) document.querySelectorAll('a.door[href*="review.html"]').forEach(function (a) {
+  a.href = a.href + (a.href.indexOf('?') > -1 ? '&' : '?') + 't=' + encodeURIComponent(TOKEN);
+});
 var SAID = {
   selfserve: 'Opening your review now — take your time, and it saves as you go.',
   assign:   'We will match you to a qualified agent and introduce you within two working days.',
