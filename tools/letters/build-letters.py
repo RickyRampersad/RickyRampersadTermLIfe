@@ -229,17 +229,25 @@ print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
 # count, because the page is public once merged. Run tools/film/chapters.py
 # afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
-CORE = 'F'
+CORE = 'F1'   # the in-force version most clients on the nine books receive
 WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve'}
 NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
 WHO = {'A': 'a client with a policy that has matured, or matures within six months',
-       'F': 'a client with a policy in force: paid up, carrying a waiver, on a payroll, ten years or more, all of them',
+       'F1': 'a client in force whose longest-held policy is under two years old',
+       'F2': 'a client in force whose longest-held policy is two to three years old',
+       'F3': 'a client in force whose longest-held policy is three to five years old',
+       'F4': 'a client in force whose longest-held policy is five to ten years old',
+       'F5': 'a client in force whose longest-held policy is ten years old or more',
        'G': 'a client whose policy lapsed',
        'I': 'a client with a premium due more than sixty days, by the Days column',
        'J': 'a client whose policy is in force but whose contract has not reached them',
        'K': 'a client whose application is still in progress'}
 GLAD = {'A': 'the money is theirs, and it will reach them on time',
-        'F': 'the same cover, the same premium, the same beneficiaries, and everything the policy has built',
+        'F1': 'their new policy is unchanged, and someone is looking after it from the start',
+        'F2': 'nothing has changed, and it is a good moment to check the cover still fits their life',
+        'F3': 'everything the policy has built over those years is still theirs',
+        'F4': 'every year of cover still counts, and nothing is lost',
+        'F5': 'more than a decade of cover is still theirs, and their view is the one that matters most',
         'G': 'a policy they wrote off may still hold value',
         'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
         'J': 'the policy is in force, and the branch is bringing the contract',

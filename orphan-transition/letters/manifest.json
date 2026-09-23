@@ -47,21 +47,89 @@
    "send_note": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
   },
   {
-   "segment": "F",
-   "name": "In force",
-   "subject": "Your policy is unchanged. Tell us what you would like next.",
-   "preheader": "Same cover, same premium, same beneficiaries. Then whichever answer suits you.",
-   "file": "F.html",
+   "segment": "F1",
+   "name": "In force \u2014 under two years",
+   "subject": "Your policy is new, and so is our promise to you",
+   "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
+   "file": "F1.html",
    "facts": [
     "first_year",
     "paid_to"
    ],
    "taps": [
-    "urgent",
     "review",
+    "urgent",
     "callme"
    ],
-   "send_note": "The core letter. Paid up, waiver of premium, payroll and ten years or more all take it; the facts off the sheet personalise it. The largest group and the best reach."
+   "send_note": "In force, and the client's longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been."
+  },
+  {
+   "segment": "F2",
+   "name": "In force \u2014 two to three years",
+   "subject": "Two years in, and your cover is unchanged. How are we doing?",
+   "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
+   "file": "F2.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "In force, longest-held policy two to three years old. Early enough that life has usually moved on since the policy was bought: the letter asks what has changed."
+  },
+  {
+   "segment": "F3",
+   "name": "In force \u2014 three to five years",
+   "subject": "Your policy is unchanged. Tell us how the last few years have been.",
+   "preheader": "Everything your policy has built is still yours. We would like your view.",
+   "file": "F3.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "In force, longest-held policy three to five years old. Value is building: the letter says it is still theirs and asks what they want next."
+  },
+  {
+   "segment": "F4",
+   "name": "In force \u2014 five to ten years",
+   "subject": "Years of cover, unchanged. We would value your view.",
+   "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
+   "file": "F4.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "In force, longest-held policy five to ten years old. Starting again elsewhere would cost these clients most of what they have built: the letter says every year still counts."
+  },
+  {
+   "segment": "F5",
+   "name": "In force \u2014 ten years or more",
+   "subject": "More than ten years together. Thank you, and one question.",
+   "preheader": "Every year of your cover is still yours. Your view matters most to us.",
+   "file": "F5.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "taps": [
+    "review",
+    "urgent",
+    "callme"
+   ],
+   "send_note": "In force, longest-held policy ten years or more. Most of the fund value sits here: the letter thanks them first and asks for their view."
   },
   {
    "segment": "G",
