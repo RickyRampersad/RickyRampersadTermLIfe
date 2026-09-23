@@ -556,9 +556,10 @@ voice under the new timing and the caption gives it away.
   amount of letters so we will be focused"): A (matured, or maturing within
   six months), F (in force — paid up, waiver of premium, payroll and ten
   years all take it, the facts off the sheet personalise it), G (lapsed),
-  I (a premium due, more than sixty on the Days column, one band — the days
-  outstanding and the projected lapse date are printed, so the letter need
-  not say how far behind), J (contract not delivered), K (application in
+  I (a premium due: a row the sheet flags `Overdue` in Status(2) with more
+  than sixty on its Days column, one band — the days outstanding and the
+  projected lapse date are printed, so the letter need not say how far
+  behind), J (contract not delivered), K (application in
   progress). Nothing-held clients are not written to. Do not grow the set
   back: the team reads one page, and the taps carry the difference.
 - **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
@@ -586,7 +587,9 @@ voice under the new timing and the caption gives it away.
   text lives in the script: rebuild the letters and the next batch carries
   the change. `transitionSetup` makes the tab and the 8:00 digest only;
   `transitionPreviewToMe` sends one of each to the owner;
-  `transitionSendTest` sends the rows marked `Test = Y`, live or not;
+  `transitionSendTest` sends the rows marked `Test = Y`, live or not — and a
+  Test row is always a team member standing in as a client, never a client's
+  own row, because that button sends whatever carries the mark;
   `transitionGoLive` (menu: "Transition: go live") sets the `transition_live`
   script property and installs the hourly trigger, and `transitionPause`
   clears both — until go live, the hourly run sends nothing, however long the
@@ -624,6 +627,13 @@ voice under the new timing and the caption gives it away.
   surname alone in the agent's own book, a matured policy and a postponed
   application are `check`, never auto-sent. Asked for on 22 September:
   "exclude the agents' policies who left … and his family, etc."
+  **The Days column is days past the paid-to date only on a row the sheet
+  flags `Overdue` (Status(2)).** On every other row it means something else,
+  often days since issue. The first list read it bare and put 665 clients
+  who owed nothing on the premium letter, printing a false "days
+  outstanding"; caught on 23 September before any client letter went out.
+  Test with the flag, never with Days alone. And the tool never marks a
+  row `Test`: the Test rows are team members standing in as clients.
 - **Every response gets a receipt, and the branch gets a copy.** The moment
   a client taps, `tAckClient_` (Transition.gs) e-mails them a short
   thank-you naming what happens next, CC'd to `TRANSITION.CC` — asked for
