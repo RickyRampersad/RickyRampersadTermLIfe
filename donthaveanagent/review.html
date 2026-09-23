@@ -461,6 +461,16 @@ const INDIVIDUAL = [
               "I never had an agent — I bought it directly", "I genuinely don't know"], required: true,
     note: { kind: "tip", text: "<b>Whatever the answer, your policy is unaffected.</b> Your contract is with the insurance company, not with an individual. Premiums, servicing and claims all continue exactly as before." } },
 
+  /* Asked whether, never who might: the question, not a warning. The Act's
+     protection is shown only to someone who says yes. */
+  { id: "approached", label: "Has anyone been in touch with you about moving or replacing this policy?", type: "choice",
+    options: ["No", "Yes", "I'd rather not say"], required: true },
+  { id: "approachedBy", label: "Who was it?", type: "choice", showIf: { id: "approached", is: "Yes" },
+    options: ["An agent or a broker", "Another insurance company", "I'd rather not say"] },
+  { id: "approachedTalk", label: "Would you like us to go through it with you before you decide anything?", type: "yesno",
+    showIf: { id: "approached", is: "Yes" }, flag: "retention",
+    note: { kind: "tip", text: "<b>Moving a policy means ending this one and starting again at your age now.</b> Whoever suggests it, whether an agent, a broker or another company, must set out the advantages and the disadvantages for you first. <a href=\"/your-policy/protected\" target=\"_blank\" rel=\"noopener\">Your protections under the Insurance Act</a>" } },
+
   { id: "lastContact", label: "When did somebody last review this policy with you?", type: "choice",
     options: ["Within the last year", "1–3 years ago", "3–5 years ago", "More than 5 years ago", "Never — not once"],
     required: true },
@@ -567,7 +577,7 @@ const INDIVIDUAL = [
 
 /* ── coverage: AGENT-SENT ONLY ─────────────────────────────────────── */
 { step: "The bigger picture", title: "While we're here", showIf: AGENT_ONLY,
-  blurb: "Your agent asked for a full review, so these are the questions that find the gaps. Answer what you like — \"not sure\" is a perfectly good answer, and skipping is fine." },
+  blurb: "These are the questions that find the gaps. Answer what you like — \"not sure\" is a perfectly good answer, and skipping is fine." },
 
   { id: "lifeChanges", label: "Has any of this happened since you took the policy out?", type: "multi", showIf: AGENT_ONLY,
     options: ["Married or moved in together", "New baby or adopted a child", "Bought a home", "Moved house",
@@ -954,6 +964,9 @@ function sellMode(origin) {
   const p = P.get("sell");
   if (p === "1" || p === "yes") return "yes";
   if (p === "0" || p === "no") return "no";
+  /* A client who came from one of the branch's letters was written to by the
+     branch, and the branch asked for the fuller picture (23 September). */
+  if (P.get("t")) return "yes";
   return origin === "agent" ? "yes" : "no";
 }
 
