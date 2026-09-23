@@ -160,7 +160,10 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
     pending = [r for r in rs if status(r).startswith(PENDING)]
     matured = [r for r in rs if status(r).startswith('matur')]
     lapsed = [r for r in rs if status(r).startswith('lapse')]
-    overdue = [r for r in paying if days(r) > 60]
+    # Days is days past the paid-to date only on a row the sheet flags Overdue;
+    # on every other row it means something else (often days since issue), and
+    # reading it bare put 665 clients who owed nothing on the premium letter.
+    overdue = [r for r in paying if (r.get('Status(2)') or '').strip().lower() == 'overdue' and days(r) > 60]
     issue = [d(r['Issue Date']) for r in inforce + lapsed if d(r['Issue Date'])]
     if issue:
         rec['first_year'] = str(min(issue).year)
@@ -206,14 +209,9 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
     rec['Send on'] = (TODAY + datetime.timedelta(days=7 if seg == 'G' else 0)).isoformat() if seg else ''
     out.append(rec)
 
-# ── two test clients: in force, e-mail, nothing to check, two different books ──
-tests, books = [], set()
-for rec in out:
-    if rec['Segment'] == 'F' and rec['Email'] and not rec['Exclude'] and rec['Agent'] not in books \
-       and re.match(r'^[A-Z][a-z]+$', rec['First name']) and rec['paid_to']:
-        rec['Test'] = 'Y'; tests.append(rec); books.add(rec['Agent'])
-    if len(tests) == 2:
-        break
+# No row on this list is ever marked Test: "send the Test rows now" sends
+# whatever carries Test = Y, and on this list that would be a real client. The
+# tests go to staff, from their own rows, never to a client (23 September).
 
 with open(PORTFOLIO.parent / 'transition-send-list.csv', 'w', newline='', encoding='utf-8') as f:
     w = csv.DictWriter(f, fieldnames=HEADERS); w.writeheader(); w.writerows(out)
@@ -232,6 +230,3 @@ print('\nheld back, by reason:')
 for k, n in excl.most_common():
     print(f'  {n:>5}  {k}')
 print('\nagents found as clients themselves:', {a: len(v) for a, v in own.items() if v})
-print('\ntest rows (Test = Y):')
-for t in tests:
-    print(f'  {t["Client"]} · {t["Agent"]} · letter {t["Segment"]} · held since {t["first_year"]} · paid to {t["paid_to"]} · {t["Email"]}')
