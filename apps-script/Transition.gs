@@ -61,6 +61,9 @@ var TRANSITION = {
   WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
+  /* the person who signs the receipts, used only when the site cannot be fetched:
+     receipt.json beside the letters is the word, written by build-letters.py */
+  CARE: { name: 'Jiang Seeram', first: 'Jiang', line: 'Ricky Rampersad Branch · Guardian Life of the Caribbean' },
 };
 
 /* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
@@ -279,6 +282,8 @@ function tFill_(text, row) {
     segment: v('Segment').toUpperCase(),
   };
   T_FIELDS.forEach(function (k) { map[k] = v(k); });
+  /* the receipt's own fields, when the caller put them on the row */
+  ['next', 'time', 'care_name', 'care_first', 'care_line'].forEach(function (k) { if (row[k] !== undefined) map[k] = String(row[k]); });
   return out.replace(/\{\{(\w+)\}\}/g, function (m, k) {
     return map.hasOwnProperty(k) ? tEsc_(map[k]) : m;
   });
@@ -488,13 +493,36 @@ function tHead_() {
     '<td style="font:800 13px \'Plus Jakarta Sans\',Arial,sans-serif;color:#eaf4ff">Ricky Rampersad Branch</td></tr></table>';
 }
 
+/** The receipt and its words, fetched from the site like the letters and
+ *  cached with them; null when the site does not answer, and the caller
+ *  falls back to a plain receipt so a tap is still acknowledged. */
+function tReceipt_() {
+  try {
+    var j = JSON.parse(tFetch_('receipt.json'));
+    return { json: j, html: tFetch_(j.file || 'receipt.html') };
+  } catch (e) { return null; }
+}
+
+/** The person who answers: from the site's receipt.json, else the fallback. */
+function tCare_(rc) {
+  var c = (rc && rc.json && rc.json.care) || TRANSITION.CARE || {};
+  return { care_name: c.name || 'Ricky Rampersad Branch', care_first: c.first || 'us',
+           care_line: (c.line || 'Ricky Rampersad Branch · Guardian Life of the Caribbean').replace(/&middot;/g, '·') };
+}
+
 /** A receipt e-mailed the moment a client answers a letter, separate from
  *  the on-screen thank-you — so it is also in their inbox, and CC'd to the
  *  branch so a response is seen the moment it lands, not only in the
  *  digest. "Are responses coming in, and I am to be copied" — 22 September.
+ *  Since 24 September it names the person who has the file, says when the
+ *  answer reached us, and states the one thing that happens next in the
+ *  client's own words ("the thank-you should return a name … can be more
+ *  impactful"). The words come from receipt.json and receipt.html on the
+ *  site; `page` is the path the tap was logged with, which carries the
+ *  quick-check answer as ?q=, so the next step can be the answer's own.
  *  Only for a token this campaign recognises (a Transition Send row with an
  *  e-mail); any other flow's token is untouched. Never blocks the click. */
-function tAckClient_(token, r, needs) {
+function tAckClient_(token, r, needs, page) {
   try {
     /* A noted answer ("Very well", "No, nothing has changed") asks nothing of
        us, so it gets no receipt; and a client answering four quick checks in a
@@ -507,15 +535,33 @@ function tAckClient_(token, r, needs) {
     if (!row) return;
     var to = tText_(row.Email);
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
-    var first = tText_(row['First name']) || 'there';
-    var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
-      '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
-      '<p style="margin:0 0 12px">Thank you for answering. Here is what happens next: <b>' + tEsc_(needs) + '</b>.</p>' +
-      '<p style="margin:0 0 12px">If anything changes in the meantime, just reply to this e-mail — it reaches a person the same day.</p>' +
-      '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
+    var q = (String(page || '').match(/[?&]q=([a-z_]+)/) || [])[1] || '';
+    var rc = tReceipt_();
+    var next = (rc && ((q && rc.json.next_q && rc.json.next_q[q]) || (rc.json.next && rc.json.next[r]))) || needs;
+    var vals = {};
+    Object.keys(row).forEach(function (k) { vals[k] = row[k]; });
+    vals['First name'] = tText_(row['First name']) || 'there';
+    vals.next = next;
+    vals.time = Utilities.formatDate(new Date(), tTz_(), 'h:mm a').toLowerCase();
+    var care = tCare_(rc);
+    Object.keys(care).forEach(function (k) { vals[k] = care[k]; });
+    var subject, html;
+    if (rc) {
+      subject = tFill_(rc.json.subject, vals).replace(/<[^>]+>/g, '');
+      html = tFill_(rc.html, vals);
+    } else {
+      subject = 'Thank you, ' + vals['First name'] + '. ' + care.care_name + ' has this.';
+      html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
+        '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(vals['First name']) + ',</p>' +
+        '<p style="margin:0 0 12px">Your answer reached us at ' + vals.time + ', and it is with a person, not a queue.</p>' +
+        '<p style="margin:0 0 12px"><b>What happens next:</b> ' + tEsc_(next) + '</p>' +
+        '<p style="margin:0 0 12px">If anything changes in the meantime, reply to this e-mail. It reaches ' + tEsc_(care.care_first) + ' directly.</p>' +
+        '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p></div></div>';
+    }
+    if (/\{\{\w+\}\}/.test(subject + html)) { log_('transition', 'ack-held', 'the receipt on the site carries a field this script cannot fill'); return; }
     if (!tMsCreds_()) { log_('transition', 'ack-held', 'no receipt for a "' + r + '" tap: ' + T_MS_MISSING); return; }
-    tMsSend_(to, 'Thank you — we have this', html, tClientOpts_());
-    log_('transition', 'ack', tText_(row.Client || row['First name']) + ' · ' + r);
+    tMsSend_(to, subject, html, tClientOpts_());
+    log_('transition', 'ack', tText_(row.Client || row['First name']) + ' · ' + r + (q ? ' · ' + q : ''));
   } catch (e) { log_('transition', 'ack-failed', String(e && e.message ? e.message : e)); }
 }
 
@@ -561,20 +607,24 @@ function tChaseInternal_(row, r, needs, days, level) {
 }
 
 /** The client's own "still on it" note — only the second time, and only
- *  once, so it reassures rather than nags. Warm, not defensive. Takes the
- *  row already looked up; a null row (should not happen, tChase_ filters
- *  it out first) is simply skipped. */
+ *  once, so it reassures rather than nags. Warm, not defensive, and signed
+ *  by the person who answers. Takes the row already looked up; a null row
+ *  (should not happen, tChase_ filters it out first) is simply skipped. */
 function tChaseClient_(row, needs) {
   if (!row) return;
   var to = tText_(row.Email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
   var first = tText_(row['First name']) || 'there';
+  var rc = tReceipt_(), care = tCare_(rc);
+  var still = (rc && rc.json.still) || { subject: 'Still on it, {{first_name}}.',
+    line: 'You have not been forgotten. {{care_first}} is still on it: {{next}} We will ask again rather than assume, and you are welcome to reply here at any time.' };
+  var vals = { 'First name': first, next: needs, care_name: care.care_name, care_first: care.care_first, care_line: care.care_line };
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
-    '<p style="margin:0 0 12px">You have not been forgotten. We are still on: <b>' + tEsc_(needs) + '</b>. We will ask again rather than assume, and you are welcome to reply here at any time.</p>' +
-    '<p style="margin:16px 0 0"><b style="display:block">Ricky Rampersad</b>Branch Manager, Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p></div></div>';
+    '<p style="margin:0 0 12px">' + tFill_(still.line, vals) + '</p>' +
+    '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p></div></div>';
   if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return; }
-  try { tMsSend_(to, 'Still on it', html, tClientOpts_()); }
+  try { tMsSend_(to, tFill_(still.subject, vals).replace(/<[^>]+>/g, ''), html, tClientOpts_()); }
   catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); }
 }
 

@@ -135,6 +135,34 @@ TAP_SAID = {
  'stop':     'Understood. We will close the file properly and confirm that nothing is owed.',
  'question': 'Reply to the e-mail this link came from and tell us the question. It reaches us the same day.',
 }
+# ── the person who answers ──────────────────────────────────────────
+# Named on 24 September 2026 ("the thank-you should return a name"): the
+# receipt a tap earns, the "still on it" note and the page a tap opens all
+# carry it, so the client knows a person has their file, not a queue. The
+# spelling is as the manager gave it; confirm it before a client receipt goes.
+CARE = {'name': 'Jiang Seeram', 'first': 'Jiang', 'line': 'Ricky Rampersad Branch &middot; Guardian Life of the Caribbean'}
+# what the receipt promises, in the client's own second person, by tap and by
+# quick-check answer; a noted answer (informed) earns no receipt
+NEXT = {
+ 'callme':   'Someone from the branch calls you today or tomorrow, at a time you choose.',
+ 'urgent':   'We read every word you wrote before we name anyone, and you have an agent by the next working day.',
+ 'review':   'A person reads your review, then you have an agent of your own within two working days.',
+ 'paid':     'We check the record against your receipt and confirm within two working days.',
+ 'pay':      'We call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'claim':    'We bring the maturity form and walk it through with you.',
+ 'deliver':  'We bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
+ 'finish':   'We bring whatever is still needed to finish your application. You do not have to find anything.',
+ 'stop':     'We close the file properly and confirm that nothing is owed.',
+ 'question': 'A person answers your question the same day.',
+ 'assign':   'You have a named agent within two working days.',
+ 'selfserve': 'Take your time with the review. It saves as you go, and a person reads it the day you send it.',
+}
+NEXT_Q = {
+ 'rate_better':    'Someone from the branch calls you today or tomorrow to hear what we should do better.',
+ 'life_changed':   'Someone from the branch calls you today or tomorrow to check your cover still fits your life.',
+ 'whopays_unsure': 'We check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
+ 'approached_yes': 'An agent calls you by the next working day, before you decide anything.',
+}
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
 
 
@@ -823,7 +851,7 @@ def landing_checks():
     data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
                           'reach': [REACH[0], [list(a) for a in REACH[1]]]},
             'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['approached']},
-            'said': SAID_Q, 'tap_said': TAP_SAID}
+            'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE}
     missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH] for a in ans if a[2] not in SAID_Q]
     assert not missing, f'no thank-you line for {missing}'
     return json.dumps(data, ensure_ascii=False)
@@ -840,3 +868,78 @@ else:
     _out = _src[:_line_end + 1] + f'var CHECKS = {landing_checks()};\n' + _src[_j:]
     if _out != _src:
         LANDING.write_text(_out, encoding='utf-8'); print('  your-policy/index.html: checks rewritten')
+
+
+# ── the receipt: what a tap earns in the inbox ───────────────────────
+# Sent by Transition.gs (tAckClient_) the moment a client answers, from
+# support@ with the branch copied. It fetches receipt.html and the words in
+# receipt.json from the site, like the letters, so no wording lives in the
+# script: rebuild and the next receipt carries the change. Fields:
+# {{first_name}}, {{time}} (when the tap reached us, sheet time), {{next}}
+# (from NEXT / NEXT_Q by tap and answer), {{care_name}}, {{care_first}},
+# {{care_line}}. The plain one is for a receipt sent by hand through the
+# connector. "Thank you — we have this" was the whole receipt until 24
+# September ("can be more impactful"): now a named person, a time, and the
+# one thing that happens next.
+RECEIPT_SUBJECT = 'Thank you, {{first_name}}. {{care_name}} has this.'
+STILL = {'subject': 'Still on it, {{first_name}}.',
+         'line': 'You have not been forgotten. {{care_first}} is still on it: {{next}} We will ask again rather than assume, '
+                 'and you are welcome to reply here at any time.'}
+
+
+def receipt_table():
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
+<tr><td bgcolor="{NAVY}" style="background:{NAVY};padding:16px 26px;border-bottom:3px solid {GOLD}">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td style="width:34px;padding-right:10px"><img src="{LOGO}" width="34" height="34" alt="" style="display:block;border-radius:8px"></td>
+    <td style="font:800 14px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br><span style="font:500 11px/1.3 {BODY};color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+    <td align="right" style="font:800 9.5px/1.5 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{GOLD};white-space:nowrap">Received<br><span style="font:700 13px/1.3 {HEAD};letter-spacing:0;text-transform:none;color:#eaf4ff">{{{{time}}}}</span></td>
+  </tr></table>
+</td></tr>
+<tr><td style="padding:24px 26px 20px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
+  <h1 style="font:800 25px/1.2 {HEAD};color:{INK};margin:0 0 10px;letter-spacing:-.4px">Thank you, {{{{first_name}}}}.</h1>
+  <p style="margin:0 0 16px">Your answer reached us at {{{{time}}}}, and it is with a person, not a queue.</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
+    <td bgcolor="#fff8e6" style="background:#fff8e6;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:13px 16px;font:400 15px/1.55 {BODY};color:{INK}">
+    <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#8a6420;margin-bottom:7px">What happens next</b>{{{{next}}}}</td></tr></table>
+  <p style="margin:0 0 6px">If anything changes in the meantime, reply to this e-mail. It reaches {{{{care_first}}}} directly.</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr>
+    <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
+      <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">{{{{care_name}}}}</b>{{{{care_line}}}}</td></tr></table>
+</td></tr>
+<tr><td bgcolor="#f4f8fa" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
+  Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.
+</td></tr>
+</table>"""
+
+
+def receipt_doc():
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>{html.escape(RECEIPT_SUBJECT)}</title>
+<!-- the receipt a tap earns · generated by tools/letters/build-letters.py -->
+<link href="{FONTS}" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#eef4f7">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#eef4f7"><tr><td align="center" style="padding:24px 12px">
+{receipt_table()}
+</td></tr></table>
+</body></html>
+"""
+
+
+PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
+                 '<h2>Thank you, {{first_name}}.</h2>'
+                 '<p>Your answer reached us at {{time}}, and it is with a person, not a queue.</p>'
+                 '<h3>What happens next</h3><p>{{next}}</p>'
+                 '<p>If anything changes in the meantime, reply to this e-mail. It reaches {{care_first}} directly.</p>'
+                 '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
+                 '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>\n')
+
+(OUT / 'receipt.html').write_text(receipt_doc(), encoding='utf-8')
+(PLAIN / 'receipt.html').write_text(PLAIN_RECEIPT, encoding='utf-8')
+(OUT / 'receipt.json').write_text(json.dumps({'subject': RECEIPT_SUBJECT, 'file': 'receipt.html', 'plain': 'plain/receipt.html',
+                                              'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL}, indent=1, ensure_ascii=False),
+                                  encoding='utf-8')
+print(f'wrote the receipt: {OUT / "receipt.html"}, {PLAIN / "receipt.html"}, {OUT / "receipt.json"}')

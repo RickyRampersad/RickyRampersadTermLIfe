@@ -52,8 +52,11 @@ const SEGS = JSON.parse(fs.readFileSync(ROOT + '/orphan-transition/letters/manif
       } else {
         slowest = Math.max(slowest, ms);
         const head = await page.textContent('#head'), msg = await page.textContent('#msg');
-        const want = (q && CHECKS.said[q]) || CHECKS.tap_said[r];
-        check(here.startsWith('http://localhost:8765/your-policy/') && /recorded/.test(head) && msg === want, `${seg} ${r} ${q}: says "${msg.slice(0, 50)}"`);
+        const want0 = (q && CHECKS.said[q]) || CHECKS.tap_said[r];
+        const owned = r !== 'informed' && CHECKS.care && CHECKS.care.name;    // a named person owns anything that asks something of us
+        const want = owned ? want0.replace(/^Thank you[^.]*\.\s*/, '') : want0;
+        const headOk = owned ? head === 'Thank you. ' + CHECKS.care.name + ' has this.' : /recorded/.test(head);
+        check(here.startsWith('http://localhost:8765/your-policy/') && headOk && msg === want, `${seg} ${r} ${q}: "${head}" · "${msg.slice(0, 40)}"`);
         check(got.length === 1 && got[0].includes('r=' + r + '&') && got[0].includes('t=TESTTOKEN') && got[0].includes('s=' + seg) && (!q || got[0].includes('?q=' + q)),
               `${seg} ${r} ${q}: one beacon (${got.length})`);
         const asked = await page.$$eval('#qs .q b', bs => bs.map(b => b.textContent));

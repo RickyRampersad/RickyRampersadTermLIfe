@@ -1619,7 +1619,7 @@ function clientResponse_(p) {
   /* A receipt in their inbox, not only the on-screen thank-you — only for a
      token the transition campaign recognises (Transition.gs, same project).
      Never blocks the click that triggered it. */
-  try { if (typeof tAckClient_ === 'function') tAckClient_(token, r, spec.needs); } catch (e) {}
+  try { if (typeof tAckClient_ === 'function') tAckClient_(token, r, spec.needs, String(p.p || '')); } catch (e) {}
   return { ok: true, needs: spec.needs };
 }
 
