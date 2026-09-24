@@ -2,6 +2,7 @@
  "fields": {
   "first_name": "Client \u2014 first name only",
   "agent_first_name": "Agent \u2014 first name only",
+  "agent_or_rep": "Agent \u2014 first name only, or \"Your representative\" when the sheet has none (the subject line)",
   "first_year": "Issue Date \u2014 the year",
   "years": "Issue Date \u2014 whole years held",
   "issue_date": "Issue Date",
@@ -31,7 +32,7 @@
   {
    "segment": "A",
    "name": "A policy has matured, or is about to",
-   "subject": "A policy of yours has matured, or is about to",
+   "subject": "{{agent_or_rep}} has moved on. The money in your policy has not.",
    "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
    "file": "A.html",
    "facts": [
@@ -54,7 +55,7 @@
   {
    "segment": "F1",
    "name": "In force \u2014 under two years",
-   "subject": "Your policy is new, and so is our promise to you",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
    "file": "F1.html",
    "facts": [
@@ -76,7 +77,7 @@
   {
    "segment": "F2",
    "name": "In force \u2014 two to three years",
-   "subject": "Two years in, and your cover is unchanged. How are we doing?",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
    "file": "F2.html",
    "facts": [
@@ -98,7 +99,7 @@
   {
    "segment": "F3",
    "name": "In force \u2014 three to five years",
-   "subject": "Your policy is unchanged. Tell us how the last few years have been.",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "Everything your policy has built is still yours. We would like your view.",
    "file": "F3.html",
    "facts": [
@@ -120,7 +121,7 @@
   {
    "segment": "F4",
    "name": "In force \u2014 five to ten years",
-   "subject": "Years of cover, unchanged. We would value your view.",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
    "file": "F4.html",
    "facts": [
@@ -142,7 +143,7 @@
   {
    "segment": "F5",
    "name": "In force \u2014 ten years or more",
-   "subject": "More than ten years together. Thank you, and one question.",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "Every year of your cover is still yours. Your view matters most to us.",
    "file": "F5.html",
    "facts": [
@@ -164,7 +165,7 @@
   {
    "segment": "R1",
    "name": "In force \u2014 cover started again in the last three years",
-   "subject": "Your cover started again recently. Let us check it with you.",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
    "file": "R1.html",
    "facts": [
@@ -187,7 +188,7 @@
   {
    "segment": "R2",
    "name": "In force \u2014 cover started again, more than three years ago",
-   "subject": "Years with us. Let us make sure every one of them still counts.",
+   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
    "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
    "file": "R2.html",
    "facts": [
@@ -210,7 +211,7 @@
   {
    "segment": "G",
    "name": "Lapsed",
-   "subject": "A policy you wrote off may still be worth something",
+   "subject": "{{agent_or_rep}} has moved on. Your policy may still hold value.",
    "preheader": "A policy that stopped does not always stop being worth something.",
    "file": "G.html",
    "facts": [
@@ -232,7 +233,7 @@
   {
    "segment": "I",
    "name": "A premium showing as due",
-   "subject": "A premium is showing as due. One tap puts it right.",
+   "subject": "{{agent_or_rep}} has moved on. A premium is showing as due.",
    "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
    "file": "I.html",
    "facts": [
@@ -255,7 +256,7 @@
   {
    "segment": "J",
    "name": "Contract ready, not yet delivered",
-   "subject": "Your contract is ready. We will bring it to you.",
+   "subject": "{{agent_or_rep}} has moved on. Your contract is ready.",
    "preheader": "Your policy is in force. The document itself has not reached you yet.",
    "file": "J.html",
    "facts": [
@@ -276,7 +277,7 @@
   {
    "segment": "K",
    "name": "An application still in progress",
-   "subject": "Your application: where it stands, and who is finishing it",
+   "subject": "{{agent_or_rep}} has moved on. Your application has not.",
    "preheader": "It has not been forgotten. Whatever is still needed, we bring to you.",
    "file": "K.html",
    "facts": [

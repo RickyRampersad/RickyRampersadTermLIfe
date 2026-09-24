@@ -42,6 +42,7 @@ TAP = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r
 FIELDS = {
  'first_name':       'Client — first name only',
  'agent_first_name': 'Agent — first name only',
+ 'agent_or_rep':     'Agent — first name only, or "Your representative" when the sheet has none (the subject line)',
  'first_year':       'Issue Date — the year',
  'years':            'Issue Date — whole years held',
  'issue_date':       'Issue Date',
@@ -73,6 +74,20 @@ TAPS = {
 }
 
 SEGMENTS = {k: v for k, v in json.loads((HERE / 'openings.json').read_text(encoding='utf-8')).items() if not k.startswith('_')}
+
+# ── two questions, one tap each ───────────────────────────────────────
+# Asked for on 24 September: "questions that ... show their agent did not even
+# tell them". A letter may never say or suggest that; it may ask what the client
+# knows, and an honest "not sure" makes the point on its own. Each answer rides
+# an existing tap (so no backend change) with the answer itself in q=, which the
+# client page puts in the Page column of Client Responses; a letter lists the
+# questions it asks under "questions" in openings.json.
+QUESTIONS = {
+ 'whopays':    ('Do you know who your policy pays today?',
+                [('Yes', 'informed', 'whopays_yes'), ('Not sure, check it for me', 'callme', 'whopays_unsure')]),
+ 'approached': ('Has anyone suggested you cancel, cash in or replace a policy?',
+                [('No', 'informed', 'approached_no'), ('Yes, talk to me first', 'urgent', 'approached_yes')]),
+}
 
 
 def tap(cfg, r):
@@ -123,6 +138,19 @@ def taps_block(cfg):
     return f'''
 <p style="margin:0 0 10px;font:600 14.5px/1.5 {BODY};color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 {'14' if urgent_line else '14'}px">{rows}</table>{urgent_line}'''
+
+
+def questions_block(cfg):
+    qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
+    if not qs:
+        return ''
+    link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;'
+                                       f'border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">{label}</a>')
+    rows = ''.join(f'''
+<tr><td style="padding:0 0 10px;font:400 14px/1.45 {BODY};color:#12202e"><b>{q}</b><br>{''.join(link(*a) for a in answers)}</td></tr>''' for q, answers in qs)
+    return f'''
+<p style="margin:4px 0 8px;font:600 14.5px/1.5 {BODY};color:#12202e">{'Two quick questions' if len(qs) > 1 else 'One quick question'}, one tap each.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>'''
 
 
 def act_block(cfg):
@@ -191,6 +219,7 @@ def letter_table(seg, cfg):
   {facts_block(cfg)}
   {act_block(cfg)}
   {taps_block(cfg)}
+  {questions_block(cfg)}
   {FILM_LINE}
   {JOURNEY}
   {law_line(cfg)}
@@ -247,6 +276,15 @@ PLAIN = OUT / 'plain'
 PLAIN.mkdir(exist_ok=True)
 
 
+def plain_questions(cfg):
+    qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
+    if not qs:
+        return ''
+    items = ''.join(f'<li><b>{q}</b><br>' + ' &middot; '.join(f'<a href="{TAP}{t}&q={a}">{label}</a>' for label, t, a in answers) + '</li>'
+                    for q, answers in qs)
+    return f'<p><b>{"Two quick questions" if len(qs) > 1 else "One quick question"}, one tap each.</b></p><ul>{items}</ul>'
+
+
 def plain_letter(seg, cfg):
     facts = ''
     if cfg.get('facts'):
@@ -266,7 +304,7 @@ def plain_letter(seg, cfg):
             f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
             f'{cfg.get("notice_tail", "Your policy has not.")}</p>'
             f'<p>{cfg["open"]}</p>{facts}{act}'
-            f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}'
+            f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}{plain_questions(cfg)}'
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'<p><b>Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every birthday, and a person '
             f'who answers when you call. That is how this branch works, and it does not change.</p>{law}'
@@ -318,16 +356,16 @@ GLAD = {'A': 'the money is theirs, and it will reach them on time',
 openings = ''.join(f"""
   <div class="op" id="{seg}">
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
-    <div class="subj">{html.escape(cfg['subject'])}</div>
+    <div class="subj">{html.escape(cfg['subject'].replace('{{agent_or_rep}}', '[Agent’s first name]'))}</div>
     <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
     <div class="ps"><p>{cfg['open']}</p></div>
     <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
-    <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}</div>
+    <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}{(' &middot; Asks: ' + ' / '.join(QUESTIONS[q][0] for q in cfg.get('questions', []))) if cfg.get('questions') else ''}</div>
     <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
   </div>""" for seg, cfg in SEGMENTS.items())
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
-    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(cfg['subject'])}</i></summary>
+    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(cfg['subject'].replace('{{agent_or_rep}}', '[Agent’s first name]'))}</i></summary>
     <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
   </details>""" for seg, cfg in SEGMENTS.items())
 opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
@@ -604,7 +642,7 @@ def splice(rel, tag, body):
 def card(seg, cfg, note, blank):
     tgt = ' target="_blank"' if blank else ''
     return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])}</div>'
-            f'<b>{html.escape(cfg["subject"])}</b><span>{html.escape(note)}</span></a>\n')
+            f'<b>{html.escape(cfg["subject"].replace("{{agent_or_rep}}", "[Agent’s first name]"))}</b><span>{html.escape(note)}</span></a>\n')
 
 
 splice('orphan-transition/index.html', 'letters',

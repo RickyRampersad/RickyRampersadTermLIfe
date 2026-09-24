@@ -594,6 +594,25 @@ voice under the new timing and the caption gives it away.
   difference. A letter can reword a tap for itself (`tap_text` in
   openings.json — R1 and R2 call `callme` "Check my file with me") without
   changing what the tap records, so no backend change is needed for it.
+- **Every subject line is the notice.** Decided 24 September ("on the
+  subject line shall we put the names … more catchy"): `{{agent_or_rep}} has
+  moved on.` and a short tail — "Your policy has not." on the in-force and
+  check letters, the urgent point on the action letters. `{{agent_or_rep}}`
+  is the agent's first name, or "Your representative" when the sheet has
+  none, filled by `fill-plain.py` and by `tFill_` in Transition.gs alike.
+  "Moved on", never "left": the notice's own words, nothing more.
+- **Two questions, one tap each, under the taps.** Asked for the same day —
+  questions that would show a client what nobody had told them. A letter
+  may not say or suggest that; it asks what the client knows, and an honest
+  "not sure" makes the point by itself: *Do you know who your policy pays
+  today?* (in-force letters) and *Has anyone suggested you cancel, cash in
+  or replace a policy?* (every letter). Each answer rides an existing tap —
+  `informed` for Yes/No, `callme` for "Not sure, check it for me", `urgent`
+  for "Yes, talk to me first" — with the answer itself in `q=`, which the
+  client page puts in the Page column of Client Responses (`…?q=whopays_unsure`),
+  so the backend needed nothing new. "Yes, talk to me first" opens the
+  review with *Has anyone been in touch* already answered Yes; a letter's
+  client skips the individual-or-group choice (`type=individual`).
 - **The `review` tap opens the form.** "Tell us more about yourself"
   promises a short form, so the client page logs it and carries the client
   into the review, like `urgent`. Until 24 September it showed a thank-you

@@ -41,6 +41,7 @@ def fill(text, row):
     if not v('Agent first name'):
         out = re.sub(r'<!--agent-->[\s\S]*?<!--/agent-->', '', out)
     vals = {'first_name': v('First name'), 'agent_first_name': v('Agent first name'), 'token': v('Token'),
+            'agent_or_rep': v('Agent first name') or 'Your representative',
             'segment': v('Segment').upper(), **{k: v(k) for k in FIELDS}}
     out = re.sub(r'\{\{(\w+)\}\}', lambda m: html.escape(vals[m.group(1)]) if m.group(1) in vals else m.group(0), out)
     out = re.sub(r'<!--[\s\S]*?-->', '', out)            # the markers have done their job; the connector refuses comments

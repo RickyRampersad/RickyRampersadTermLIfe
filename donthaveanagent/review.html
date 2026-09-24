@@ -1002,6 +1002,8 @@ function prefill() {
   Object.keys(map).forEach((k) => { if (P.get(k) && !state.answers[map[k]]) state.answers[map[k]] = P.get(k); });
   if (P.get("policy")) state.answers.knowsPolicy = "Yes, I have it";
   if (P.get("insurer")) state.answers.insurer = P.get("insurer");
+  /* the letter's question, already answered with one tap */
+  if (P.get("q") === "approached_yes" && !state.answers.approached) state.answers.approached = "Yes";
   SCHEMA.forEach((q) => { if (q.prefill && !state.answers[q.id]) state.answers[q.id] = q.prefill; });
 }
 function showForm() {
