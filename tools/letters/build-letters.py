@@ -135,12 +135,15 @@ TAP_SAID = {
  'stop':     'Understood. We will close the file properly and confirm that nothing is owed.',
  'question': 'Reply to the e-mail this link came from and tell us the question. It reaches us the same day.',
 }
-# ── the person who answers ──────────────────────────────────────────
-# Named on 24 September 2026 ("the thank-you should return a name"): the
-# receipt a tap earns, the "still on it" note and the page a tap opens all
-# carry it, so the client knows a person has their file, not a queue. The
-# spelling is as the manager gave it; confirm it before a client receipt goes.
-CARE = {'name': 'Jiang Seeram', 'first': 'Jiang', 'line': 'Ricky Rampersad Branch &middot; Guardian Life of the Caribbean'}
+# ── who answers ──────────────────────────────────────────────────────
+# The receipt a tap earns, the "still on it" note and the page a tap opens
+# all say who has the client's answer, so it reads as people, not a queue.
+# Decided 24 September 2026: "this should be the Ricky Rampersad Branch
+# Client Support team" — the team signs, never an individual (a first draft
+# carried a person's name that turned out not to exist). `us` is the phrase
+# mid-sentence, `Us` at the start of one, `name` the signature.
+CARE = {'name': 'Client Support Team', 'us': 'our Client Support team', 'Us': 'Our Client Support team',
+        'line': 'Ricky Rampersad Branch &middot; Guardian Life of the Caribbean'}
 # what the receipt promises, in the client's own second person, by tap and by
 # quick-check answer; a noted answer (informed) earns no receipt
 NEXT = {
@@ -876,14 +879,14 @@ else:
 # receipt.json from the site, like the letters, so no wording lives in the
 # script: rebuild and the next receipt carries the change. Fields:
 # {{first_name}}, {{time}} (when the tap reached us, sheet time), {{next}}
-# (from NEXT / NEXT_Q by tap and answer), {{care_name}}, {{care_first}},
-# {{care_line}}. The plain one is for a receipt sent by hand through the
+# (from NEXT / NEXT_Q by tap and answer), {{care_name}}, {{care_us}},
+# {{care_Us}}, {{care_line}}. The plain one is for a receipt sent by hand through the
 # connector. "Thank you — we have this" was the whole receipt until 24
-# September ("can be more impactful"): now a named person, a time, and the
-# one thing that happens next.
-RECEIPT_SUBJECT = 'Thank you, {{first_name}}. {{care_name}} has this.'
+# September ("can be more impactful"): now the team by name, a time, and
+# the one thing that happens next.
+RECEIPT_SUBJECT = 'Thank you, {{first_name}}. {{care_Us}} has this.'
 STILL = {'subject': 'Still on it, {{first_name}}.',
-         'line': 'You have not been forgotten. {{care_first}} is still on it: {{next}} We will ask again rather than assume, '
+         'line': 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, '
                  'and you are welcome to reply here at any time.'}
 
 
@@ -902,7 +905,7 @@ def receipt_table():
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
     <td bgcolor="#fff8e6" style="background:#fff8e6;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:13px 16px;font:400 15px/1.55 {BODY};color:{INK}">
     <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#8a6420;margin-bottom:7px">What happens next</b>{{{{next}}}}</td></tr></table>
-  <p style="margin:0 0 6px">If anything changes in the meantime, reply to this e-mail. It reaches {{{{care_first}}}} directly.</p>
+  <p style="margin:0 0 6px">If anything changes in the meantime, reply to this e-mail. It reaches {{{{care_us}}}} directly.</p>
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr>
     <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
       <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">{{{{care_name}}}}</b>{{{{care_line}}}}</td></tr></table>
@@ -933,7 +936,7 @@ PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Carib
                  '<h2>Thank you, {{first_name}}.</h2>'
                  '<p>Your answer reached us at {{time}}, and it is with a person, not a queue.</p>'
                  '<h3>What happens next</h3><p>{{next}}</p>'
-                 '<p>If anything changes in the meantime, reply to this e-mail. It reaches {{care_first}} directly.</p>'
+                 '<p>If anything changes in the meantime, reply to this e-mail. It reaches {{care_us}} directly.</p>'
                  '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
                  '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>\n')
 
