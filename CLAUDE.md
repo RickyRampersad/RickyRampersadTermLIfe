@@ -609,7 +609,11 @@ voice under the new timing and the caption gives it away.
   why, never the grounds, never anyone else's name. `{{agent_name}}` and
   `{{terminated_on}}` are filled from the sheet (the Agent column and a
   `terminated_on` column, letter T only), so neither the name nor the date
-  is in the repository; a T row without either is held. The letter asks
+  is in the repository; a T row without either is held. The name in the
+  notice sits between the `<!--agent-->` marks like the standard notice's,
+  because `tLetters_` refuses any letter that carries `{{agent_first_name}}`
+  without them (the first cut of T did not, and the Test run stopped with
+  "carries no agent markers" before it sent a row). The letter asks
   whether the agent has been in touch since that date (`contact`: the agent
   is named on the letter through `LETTER_Q`, and the page and the receipt
   ask it in neutral words, because a merge field inside the recap would
