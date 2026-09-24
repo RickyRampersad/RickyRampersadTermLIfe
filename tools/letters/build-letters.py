@@ -325,17 +325,20 @@ def plain_questions(cfg):
     return f'<p><b>{"Two quick questions" if len(qs) > 1 else "One quick question"}, one tap each.</b></p><ul>{items}</ul>'
 
 
+# Lists, not tables: the connector allows no cellpadding or style, so a table's
+# cells run together ("Held since Paid to") in every mail app. A list reads
+# cleanly on a phone and cuts cleanly, one item per fact.
 def plain_service(cfg):
-    cells = ''.join(f'<!--fact:{k}--><td><b>{SVC_CELLS[k]}</b><br>{{{{{k}}}}}</td><!--/fact-->' for k in svc_keys(cfg))
-    return (f'<!--facts--><!--svcpanel--><p><b>{SVC_HEAD}</b></p><table><tr>{cells}</tr></table><p><i>{SVC_PACE}</i></p><!--/facts-->'
+    items = ''.join(f'<!--fact:{k}--><li>{SVC_CELLS[k]}: <b>{{{{{k}}}}}</b></li><!--/fact-->' for k in svc_keys(cfg))
+    return (f'<!--facts--><!--svcpanel--><p><b>{SVC_HEAD}</b></p><ul>{items}</ul><p><i>{SVC_PACE}</i></p><!--/facts-->'
             f'<!--nosvc--><p>{SVC_NONE}</p><!--/nosvc-->')
 
 
 def plain_letter(seg, cfg):
     facts = ''
     if cfg.get('facts'):
-        cells = ''.join(f'<!--fact:{v.strip("{}")}--><td><b>{label}</b><br>{v}</td><!--/fact-->' for label, v in cfg['facts'])
-        facts = f'<!--facts--><table><tr>{cells}</tr></table><!--/facts-->'
+        items = ''.join(f'<!--fact:{v.strip("{}")}--><li>{label}: <b>{v}</b></li><!--/fact-->' for label, v in cfg['facts'])
+        facts = f'<!--facts--><ul>{items}</ul><!--/facts-->'
     facts += plain_service(cfg)
     act = (f'<p><b>The Insurance Act &middot; Trinidad and Tobago</b><br><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
            f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
