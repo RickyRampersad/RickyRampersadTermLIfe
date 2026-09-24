@@ -594,6 +594,26 @@ voice under the new timing and the caption gives it away.
   difference. A letter can reword a tap for itself (`tap_text` in
   openings.json — R1 and R2 call `callme` "Check my file with me") without
   changing what the tap records, so no backend change is needed for it.
+- **The branded letter is the design; the plain letter is what the connector
+  can carry.** Design pass of 24 September ("polish up the fonts and make it
+  more appealing and graphical, a wow template"): a navy hero with the
+  brand, the headline and the preheader as its subline; the notice in a
+  gold-edged card; the facts strip; the service record as stat tiles; the
+  checks as pills; the first tap a navy card with a gold title, the rest
+  white; the film as a picture with a play badge (`orphan-video/film-card.jpg`,
+  rendered by `tools/letters/film-card.js` from `film-card.html`, committed
+  because the letters link to the hosted copy) over a navy caption bar; the
+  signature on a gold rule. Fonts: the branch face where a mail app loads the
+  `<link>` (Apple Mail, iOS Mail), the phone's own face elsewhere (San
+  Francisco, Segoe UI, Roboto); Arial last. All tables, inline styles and
+  two hosted images, so any mail app can show it. **None of it reaches a
+  client through the Microsoft 365 connector**: that route accepts tags
+  only (p, br, a[href], b, i, lists, h1–h6, table, hr, div) and rejects any
+  attribute, image or style outright (checked with a draft on 24 September).
+  The plain letters carry the same words with headings for structure and
+  nothing else. The branded letter goes out only from Transition.gs through
+  Microsoft Graph, which needs the Entra app; until then the "wow" is on the
+  site and the team page, and the client gets the plain one.
 - **Every subject line is the notice.** Decided 24 September ("on the
   subject line shall we put the names … more catchy"): `{{agent_or_rep}} has
   moved on.` and a short tail — "Your policy has not." on the in-force and
