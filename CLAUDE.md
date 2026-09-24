@@ -656,7 +656,23 @@ voice under the new timing and the caption gives it away.
   The mailbox's display name read "querymypolicy.com" until 24 September
   2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
   Users → Active users → Edit user → Display name); the address did not
-  change and must not — the letters send from it. Internal mail (the digest,
+  change and must not — the letters send from it.
+  **Until the Entra app exists, the letters go through the Claude Microsoft
+  365 connector instead** (24 September 2026: "I don't know how to do the
+  Entra, it's complicated, can you just work with what we have"). The
+  connector is signed in as support@; it could only read mail until the
+  admin granted it consent through the admin-consent link for its app, which
+  added Mail.Send and Mail.ReadWrite. It sends from support@, saves to Sent
+  Items and keeps the visible CC, but it accepts only p, br, a, b/strong,
+  i/em, lists, headings, tables, hr and div — no logo, no colours — so it
+  sends the plain letters `build-letters.py` writes to
+  `orphan-transition/letters/plain/`, filled per row by
+  `tools/letters/fill-plain.py` (run in a scratch directory; it holds the
+  same rows the sender would hold and checks every body against that
+  allowlist). A Claude session sends them one by one; nothing is automatic
+  on this route, and client receipts go only when a session sends them. The
+  eight staff tests went this way on 24 September; no client letter goes
+  without the manager's word. Internal mail (the digest,
   the late nudges) still goes through MailApp. The older service e-mails in
   `Service.gs` (the daily follow-up's "still on it" notes, the six-month and
   birthday reviews) still send from Gmail, so the `dailyServiceFollowUp`
