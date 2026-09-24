@@ -7,7 +7,7 @@
 <meta name="description" content="The film, the letter, the openings, and one question — for the branch, before any client sees it.">
 <meta name="robots" content="noindex">
 <meta property="og:title" content="What goes out — read it before any client does">
-<meta property="og:description" content="One letter, ten openings, one film. Say send, change, or hold.">
+<meta property="og:description" content="One letter, twelve openings, one film. Say send, change, or hold.">
 <meta property="og:image" content="https://rickyrampersadbranch.com/orphan-video/poster.jpg">
 <link rel="icon" href="../logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -101,13 +101,13 @@
 
 <div class="hero"><div class="wrap">
   <div class="eyebrow">What goes out &middot; read it before any client does</div>
-  <h1>One letter. Ten openings. <em>One film.</em></h1>
+  <h1>One letter. Twelve openings. <em>One film.</em></h1>
   <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
     changes, with what they hold, and the facts in it are read off the sheet for that client. Every letter
     ends in taps they can answer with one thumb. Not one word in any of it is about who left.</p>
   <div class="steps">
     <a href="#film"><b>1 &middot; two minutes</b>The film</a>
-    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the ten openings</a>
+    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the twelve openings</a>
     <a href="#verdict"><b>3 &middot; one minute</b>Send, change, or hold</a>
   </div>
 </div></div>
@@ -134,7 +134,7 @@
     headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
     taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
     facts and the taps differ.</p>
-  <div class="fields"><b>The curly fields</b> &mdash; <code>{{first_name}}</code>, <code>{{first_year}}</code>, <code>{{paid_to}}</code>, <code>{{days}}</code>, <code>{{projected_lapse}}</code>, <code>{{agent_first_name}}</code> &mdash; are filled per client at send time
+  <div class="fields"><b>The curly fields</b> &mdash; <code>{{first_name}}</code>, <code>{{first_year}}</code>, <code>{{issue_date}}</code>, <code>{{paid_to}}</code>, <code>{{days}}</code>, <code>{{projected_lapse}}</code>, <code>{{agent_first_name}}</code> &mdash; are filled per client at send time
     from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
     strip. The logo loads from the site once the page is live.</div>
   <div class="mail"><div class="in"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
@@ -210,7 +210,7 @@
 </div></section>
 
 <section class="band" id="openings"><div class="wrap">
-  <h2>The ten openings</h2>
+  <h2>The twelve openings</h2>
   <p class="sub">What changes, who gets which, what each reads off the sheet, and the taps it offers. Each leads
     with the thing the client is glad to hear.</p>
   <div class="ops">
@@ -267,6 +267,24 @@
     <div class="facts">Reads off the sheet: held since, paid to.</div>
     <div class="taps">Taps: Tell us more about yourself &middot; I want an agent now. Let me tell you my concerns first &middot; Call me</div>
     <a class="more" href="#full-F5">Read letter F5 in full &rarr;</a>
+  </div>
+  <div class="op" id="R1">
+    <div class="k"><b>R1</b><span>In force — cover started again in the last three years</span><em>goes to a client in force with a policy that lapsed or was surrendered close to the start of another, the newest such start in the last three years</em></div>
+    <div class="subj">Your cover started again recently. Let us check it with you.</div>
+    <div class="glad">What they are glad to hear: someone will check, free, that the fresh start cost them nothing it did not have to, and who the policy pays.</div>
+    <div class="ps"><p>Our records show cover of yours that ended and started again in the last three years. A new policy starts some of its protections from day one, so we would like to check your file with you, free, and confirm who your policy pays.</p></div>
+    <div class="facts">Reads off the sheet: with us since, newest policy began, paid to.</div>
+    <div class="taps">Taps: Check my file with me &middot; Tell us more about yourself &middot; I want an agent now. Let me tell you my concerns first</div>
+    <a class="more" href="#full-R1">Read letter R1 in full &rarr;</a>
+  </div>
+  <div class="op" id="R2">
+    <div class="k"><b>R2</b><span>In force — cover started again, more than three years ago</span><em>goes to a client in force with a policy that lapsed or was surrendered close to the start of another, more than three years ago</em></div>
+    <div class="subj">Years with us. Let us make sure every one of them still counts.</div>
+    <div class="glad">What they are glad to hear: their years with Guardian Life are recognised, and someone will check what carried over and who the policy pays.</div>
+    <div class="ps"><p>You have been with Guardian Life for years, and our records show cover of yours that ended and started again along the way. We would like to go through your file together, free: what carried over, what started again, and who your policy pays.</p></div>
+    <div class="facts">Reads off the sheet: with us since, newest policy began, paid to.</div>
+    <div class="taps">Taps: Check my file with me &middot; Tell us more about yourself &middot; I want an agent now. Let me tell you my concerns first</div>
+    <a class="more" href="#full-R2">Read letter R2 in full &rarr;</a>
   </div>
   <div class="op" id="G">
     <div class="k"><b>G</b><span>Lapsed</span><em>goes to a client whose policy lapsed</em></div>
@@ -325,7 +343,7 @@
       <label><input type="radio" name="v" value="hold"> Hold it</label>
     </div>
     <label for="i">If one piece in particular</label>
-    <select id="i" name="i"><option value="whole">The whole set</option><option value="film">The film</option><option value="A">Letter A &middot; A policy has matured, or is about to</option><option value="F1">Letter F1 &middot; In force — under two years</option><option value="F2">Letter F2 &middot; In force — two to three years</option><option value="F3">Letter F3 &middot; In force — three to five years</option><option value="F4">Letter F4 &middot; In force — five to ten years</option><option value="F5">Letter F5 &middot; In force — ten years or more</option><option value="G">Letter G &middot; Lapsed</option><option value="I">Letter I &middot; A premium showing as due</option><option value="J">Letter J &middot; Contract ready, not yet delivered</option><option value="K">Letter K &middot; An application still in progress</option></select>
+    <select id="i" name="i"><option value="whole">The whole set</option><option value="film">The film</option><option value="A">Letter A &middot; A policy has matured, or is about to</option><option value="F1">Letter F1 &middot; In force — under two years</option><option value="F2">Letter F2 &middot; In force — two to three years</option><option value="F3">Letter F3 &middot; In force — three to five years</option><option value="F4">Letter F4 &middot; In force — five to ten years</option><option value="F5">Letter F5 &middot; In force — ten years or more</option><option value="R1">Letter R1 &middot; In force — cover started again in the last three years</option><option value="R2">Letter R2 &middot; In force — cover started again, more than three years ago</option><option value="G">Letter G &middot; Lapsed</option><option value="I">Letter I &middot; A premium showing as due</option><option value="J">Letter J &middot; Contract ready, not yet delivered</option><option value="K">Letter K &middot; An application still in progress</option></select>
     <label for="c">What you would change, or why it should wait</label>
     <textarea id="c" name="c" maxlength="600" placeholder="Quote the line if you can."></textarea>
     <label class="check"><input type="checkbox" id="a" name="a" value="1"> I am taking assignments &mdash; match clients in my town to me</label>
@@ -343,7 +361,7 @@
     <a href="../your-policy/protected"><b>How the law protects you</b>The Insurance Act's protections, quoted, as the client reads them.</a>
     <a href="../orphan-transition/"><b>The manual</b>The segments, the feedback loop, the call list and the run sheet.</a>
   </div>
-  <h2 style="margin-top:30px">All ten letters, in full</h2>
+  <h2 style="margin-top:30px">All twelve letters, in full</h2>
   <p class="sub">Folded away. Open any one to read it as the client will.</p>
   
   <details class="tpl" id="full-A">
@@ -760,6 +778,156 @@
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=callme" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Call me&nbsp;&rarr;</div>
     <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">Today or tomorrow, at a time you choose.</div>
+  </a>
+</td></tr></table>
+  
+<p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
+  
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
+  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
+  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
+</td></tr></table>
+  
+<p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
+  set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
+  <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your policy is looked after by the branch, and we are matching you to
+    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>
+  <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
+    <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
+</td></tr>
+
+<tr><td style="background:#f4f8fa;padding:11px 22px;border-top:1px solid #e0eaef;font:400 11px/1.5 Inter,Arial,sans-serif;color:#64798e">
+  Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
+  deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
+</td></tr>
+</table></div></div>
+  </details>
+  <details class="tpl" id="full-R1">
+    <summary><b>Letter R1</b> &middot; In force — cover started again in the last three years &mdash; <i>Your cover started again recently. Let us check it with you.</i></summary>
+    <div class="mail"><div class="in"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
+
+<tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+    <td style="width:30px;padding-right:10px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="30" height="30" alt="" style="display:block;border-radius:7px"></td>
+    <td style="font:800 13px/1.25 'Plus Jakarta Sans',Arial,sans-serif;color:#eaf4ff">Ricky Rampersad Branch<br>
+      <span style="font:500 10.5px/1.3 Inter,Arial,sans-serif;color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+  </tr></table>
+</td></tr>
+
+<tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
+  <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">A fresh start deserves <span style="color:#c9942c">a careful check.</span></h1>
+  <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative<!--agent-->, {{agent_first_name}},<!--/agent--> has moved on from Guardian Life.</b>
+    Your policy has not.</p>
+  <p style="margin:0 0 14px">Our records show cover of yours that ended and started again in the last three years. A new policy starts some of its protections from day one, so we would like to check your file with you, free, and confirm who your policy pays.</p>
+  
+<!--facts--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#f4f8fa;border-radius:10px;padding:12px 16px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:first_year--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">With us since</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{first_year}}</div></td><!--/fact--><!--fact:issue_date--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Newest policy began</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{issue_date}}</div></td><!--/fact--><!--fact:paid_to--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Paid to</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
+</td></tr></table><!--/facts-->
+  
+  
+<p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=callme" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Check my file with me&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A person sets out what you hold, what carried over and who it pays, then calls at a time you choose.</div>
+  </a>
+</td></tr>
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+  </a>
+</td></tr>
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">I want an agent now. Let me tell you my concerns first&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.</div>
+  </a>
+</td></tr></table>
+  
+<p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
+  
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
+  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
+  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
+</td></tr></table>
+  
+<p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
+  set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
+  <a href="https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>
+  <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your policy is looked after by the branch, and we are matching you to
+    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>
+  <p style="margin:14px 0 0;font:400 14px/1.5 Inter,Arial,sans-serif;color:#12202e">
+    <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
+</td></tr>
+
+<tr><td style="background:#f4f8fa;padding:11px 22px;border-top:1px solid #e0eaef;font:400 11px/1.5 Inter,Arial,sans-serif;color:#64798e">
+  Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
+  deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
+</td></tr>
+</table></div></div>
+  </details>
+  <details class="tpl" id="full-R2">
+    <summary><b>Letter R2</b> &middot; In force — cover started again, more than three years ago &mdash; <i>Years with us. Let us make sure every one of them still counts.</i></summary>
+    <div class="mail"><div class="in"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
+
+<tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+    <td style="width:30px;padding-right:10px"><img src="https://rickyrampersadbranch.com/logo-mark.png" width="30" height="30" alt="" style="display:block;border-radius:7px"></td>
+    <td style="font:800 13px/1.25 'Plus Jakarta Sans',Arial,sans-serif;color:#eaf4ff">Ricky Rampersad Branch<br>
+      <span style="font:500 10.5px/1.3 Inter,Arial,sans-serif;color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+  </tr></table>
+</td></tr>
+
+<tr><td style="padding:22px 22px 6px;font:400 15px/1.55 Inter,Arial,sans-serif;color:#33465a">
+  <h1 style="font:800 21px/1.28 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 12px;letter-spacing:-.2px">Years with us, and <span style="color:#c9942c">every one should count.</span></h1>
+  <p style="margin:0 0 10px">Dear {{first_name}},</p>
+  <p style="margin:0 0 12px"><b style="color:#12202e">Your representative<!--agent-->, {{agent_first_name}},<!--/agent--> has moved on from Guardian Life.</b>
+    Your policy has not.</p>
+  <p style="margin:0 0 14px">You have been with Guardian Life for years, and our records show cover of yours that ended and started again along the way. We would like to go through your file together, free: what carried over, what started again, and who your policy pays.</p>
+  
+<!--facts--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#f4f8fa;border-radius:10px;padding:12px 16px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:first_year--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">With us since</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{first_year}}</div></td><!--/fact--><!--fact:issue_date--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Newest policy began</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{issue_date}}</div></td><!--/fact--><!--fact:paid_to--><td style="padding:0 20px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f">Paid to</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
+</td></tr></table><!--/facts-->
+  
+  
+<p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=callme" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Check my file with me&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A person sets out what you hold, what carried over and who it pays, then calls at a time you choose.</div>
+  </a>
+</td></tr>
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+  </a>
+</td></tr>
+<tr><td style="padding:0 0 8px">
+  <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
+    <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">I want an agent now. Let me tell you my concerns first&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.</div>
   </a>
 </td></tr></table>
   

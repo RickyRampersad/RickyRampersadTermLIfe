@@ -1588,7 +1588,7 @@ function responseSheet_() {
 var RESPONSES = {
   selfserve: { needs: 'nothing yet — watch for the review',  status: 'Logged' },
   assign:    { needs: 'a named agent within two working days', status: 'Open' },
-  review:    { needs: 'a policy summary, then an agent',      status: 'Open' },
+  review:    { needs: 'their review read, then an agent',     status: 'Open' },
   question:  { needs: 'a reply the same day',                 status: 'Open' },
   informed:  { needs: 'nothing — ask again in six months',    status: 'Logged' },
   /* the taps at the foot of every letter */
@@ -1638,9 +1638,12 @@ function teamSheet_() {
   return sh;
 }
 
-/** What the team can look at, and the three things they can say about it. */
-var FEEDBACK_ITEMS = { A: 1, F: 1, G: 1, I: 1, J: 1, K: 1,
-                       film: 1, page: 1, protected: 1, script: 1, whole: 1 };
+/** What the team can look at, and the three things they can say about it.
+ *  Any letter counts: one capital, and a digit where the letter has versions
+ *  (F1 to F5, R1, R2) — a fixed list silently dropped every verdict on a
+ *  letter added after it was written. */
+var FEEDBACK_ITEMS = { film: 1, page: 1, protected: 1, script: 1, whole: 1 };
+function feedbackItem_(item) { return !!FEEDBACK_ITEMS[item] || /^[A-Z][1-9]?$/.test(item); }
 var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
 
 /** One verdict from one agent. Fire-and-forget, same as a client click: the
@@ -1648,7 +1651,7 @@ var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a cha
 function teamFeedback_(p) {
   var item = String(p.i || '').trim();
   var verdict = String(p.v || '').trim().toLowerCase();
-  if (!FEEDBACK_ITEMS[item] || !FEEDBACK_VERDICTS[verdict]) return { ok: false };
+  if (!feedbackItem_(item) || !FEEDBACK_VERDICTS[verdict]) return { ok: false };
   var name = String(p.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
   if (!name) return { ok: false, error: 'name' };
   var town = String(p.town || '').replace(/[<>]/g, '').trim().slice(0, 40);

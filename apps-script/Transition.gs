@@ -53,7 +53,7 @@ var TRANSITION = {
   BATCH: 60,                 // the most one hourly run will send
   HOURS: [9, 17],            // sends only between these hours, script time zone
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
-  ORDER: ['I', 'K', 'J', 'A', 'F', 'G'],   // the action letters first
+  ORDER: ['I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the action letters first; F1…F5 sort as F, R1 and R2 as R
   DIGEST_TO: '',             // blank = the script owner
   DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
   COPY_TO: '',               // blank = SVC.AGENT_EMAIL. Where the internal "late" nudges go.
@@ -431,7 +431,9 @@ function tSendRows_(t, rows, letters) {
 }
 
 function tOrder_(row) {
-  var i = TRANSITION.ORDER.indexOf(tText_(row.Segment).toUpperCase());
+  var seg = tText_(row.Segment).toUpperCase();
+  var i = TRANSITION.ORDER.indexOf(seg);
+  if (i < 0) i = TRANSITION.ORDER.indexOf(seg.charAt(0));   // a letter with versions sorts with its family
   return i < 0 ? 99 : i;
 }
 

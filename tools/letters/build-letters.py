@@ -74,6 +74,17 @@ TAPS = {
 
 SEGMENTS = {k: v for k, v in json.loads((HERE / 'openings.json').read_text(encoding='utf-8')).items() if not k.startswith('_')}
 
+
+def tap(cfg, r):
+    """A tap's words on this letter: its own tap_text when it has one, else the
+    shared wording. Only the words change; the tap records the same answer."""
+    return tuple(cfg.get('tap_text', {}).get(r) or TAPS[r])
+
+
+for _seg, _cfg in SEGMENTS.items():
+    if len(_cfg['open'].split()) >= 45:
+        print(f'  ! {_seg}: the opening runs to {len(_cfg["open"].split())} words; the shell is built for under 45')
+
 # ── the shell ─────────────────────────────────────────────────────────
 # Inline styles throughout: e-mail clients strip <style> blocks unpredictably.
 HEAD = "'Plus Jakarta Sans',Arial,sans-serif"
@@ -100,8 +111,8 @@ def taps_block(cfg):
     rows = ''.join(f'''
 <tr><td style="padding:0 0 8px">
   <a href="{TAP}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:12px 15px">
-    <div style="font:800 15.5px/1.3 {HEAD};color:#12202e">{TAPS[r][0]}&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 {BODY};color:#5d7186;margin-top:2px">{TAPS[r][1]}</div>
+    <div style="font:800 15.5px/1.3 {HEAD};color:#12202e">{tap(cfg, r)[0]}&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.45 {BODY};color:#5d7186;margin-top:2px">{tap(cfg, r)[1]}</div>
   </a>
 </td></tr>''' for i, r in enumerate(cfg['taps']))
     # every letter carries the door into the questionnaire, as a card where it
@@ -217,7 +228,8 @@ for seg, cfg in SEGMENTS.items():
     path.write_text(shell(seg, cfg), encoding='utf-8')
     manifest['letters'].append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'], 'preheader': cfg['preheader'],
                                 'file': path.name, 'facts': [v.strip('{}') for _, v in cfg.get('facts', [])],
-                                'taps': cfg['taps'], 'send_note': cfg['send']})
+                                'taps': cfg['taps'], 'tap_labels': {r: tap(cfg, r)[0] for r in cfg['taps']},
+                                'send_note': cfg['send']})
     print(f'  {seg:<3} {cfg["name"]:<38} → {path.name}')
 (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1), encoding='utf-8')
 print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
@@ -238,6 +250,8 @@ WHO = {'A': 'a client with a policy that has matured, or matures within six mont
        'F3': 'a client in force whose longest-held policy is three to five years old',
        'F4': 'a client in force whose longest-held policy is five to ten years old',
        'F5': 'a client in force whose longest-held policy is ten years old or more',
+       'R1': 'a client in force with a policy that lapsed or was surrendered close to the start of another, the newest such start in the last three years',
+       'R2': 'a client in force with a policy that lapsed or was surrendered close to the start of another, more than three years ago',
        'G': 'a client whose policy lapsed',
        'I': 'a client with a premium due more than sixty days, by the Days column',
        'J': 'a client whose policy is in force but whose contract has not reached them',
@@ -248,6 +262,8 @@ GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'F3': 'everything the policy has built over those years is still theirs',
         'F4': 'every year of cover still counts, and nothing is lost',
         'F5': 'more than a decade of cover is still theirs, and their view is the one that matters most',
+        'R1': 'someone will check, free, that the fresh start cost them nothing it did not have to, and who the policy pays',
+        'R2': 'their years with Guardian Life are recognised, and someone will check what carried over and who the policy pays',
         'G': 'a policy they wrote off may still hold value',
         'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
         'J': 'the policy is in force, and the branch is bringing the contract',
@@ -259,7 +275,7 @@ openings = ''.join(f"""
     <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
     <div class="ps"><p>{cfg['open']}</p></div>
     <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
-    <div class="taps">Taps: {' &middot; '.join(TAPS[r][0] for r in cfg['taps'])}</div>
+    <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}</div>
     <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
   </div>""" for seg, cfg in SEGMENTS.items())
 full = ''.join(f"""
@@ -268,7 +284,7 @@ full = ''.join(f"""
     <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
   </details>""" for seg, cfg in SEGMENTS.items())
 opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
-fieldlist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in ('first_name', 'first_year', 'paid_to', 'days', 'projected_lapse', 'agent_first_name'))
+fieldlist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in ('first_name', 'first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'agent_first_name'))
 page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
