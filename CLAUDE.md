@@ -653,8 +653,10 @@ voice under the new timing and the caption gives it away.
   which sends from the personal Google account that owns the script and
   allows about a hundred recipients a day, every CC counted — two copies on
   every letter would have held the send to some twenty-five letters a day.
-  The mailbox's display name read "querymypolicy.com" and must read "Ricky
-  Rampersad Branch" before a client letter goes. Internal mail (the digest,
+  The mailbox's display name read "querymypolicy.com" until 24 September
+  2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
+  Users → Active users → Edit user → Display name); the address did not
+  change and must not — the letters send from it. Internal mail (the digest,
   the late nudges) still goes through MailApp. The older service e-mails in
   `Service.gs` (the daily follow-up's "still on it" notes, the six-month and
   birthday reviews) still send from Gmail, so the `dailyServiceFollowUp`
