@@ -3601,6 +3601,7 @@ function onOpen() {
     .addItem('Transition: go live (hourly send on)', 'transitionGoLive')
     .addItem('Transition: pause the hourly send', 'transitionPause')
     .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
+    .addItem('Transition: send the receipts now', 'transitionReceipts')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addToUi();
 }

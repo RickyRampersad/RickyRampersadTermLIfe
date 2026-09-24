@@ -657,32 +657,39 @@ voice under the new timing and the caption gives it away.
   never answer for the client. `tools/letters/tap-test.js` follows every
   link in every letter on a local copy of the site, with the beacons
   intercepted; run it after any change to the letters or the page.
-- **Receipts: none for a noted answer, one per client per six hours.**
-  `tAckClient_` sends nothing for an `informed` tap ("Very well" asks
-  nothing of us) and at most one receipt per token every six hours, so a
-  client ticking four checks gets one e-mail, not four, each copied to the
-  branch.
-- **The receipt is signed by the Client Support team, never a person.**
-  24 September: "thank you, we have this" was too thin ("can be more
-  impactful"), and a first draft signed it with an individual's name that
-  turned out not to exist ("this should be the Ricky Rampersad Branch
-  Client Support team"). `CARE` in build-letters.py holds the words —
-  `name` for the signature (Client Support Team), `us` mid-sentence, `Us`
-  at the start of one — and writes them into three places: the page a tap
-  opens ("Thank you. Our Client Support team has this."), the receipt, and
-  the "still on it" note. The receipt is
-  `orphan-transition/letters/receipt.html` (and `plain/receipt.html` for a
-  receipt sent by hand through the connector), with the words in
-  `receipt.json`: subject "Thank you, {{first_name}}. Our Client Support
-  team has this.", the time the answer reached us, and the one thing that
-  happens next in the client's own second person (`NEXT` by tap, `NEXT_Q`
-  by quick-check answer; the answer travels to the backend in the page path
-  as `?q=`, which Service.gs passes to `tAckClient_`). Transition.gs fetches
-  both from the site like the letters and holds no wording of its own;
-  `TRANSITION.CARE` is only the fallback for when the site cannot be
-  fetched. The `needs` strings in `RESPONSES` (Service.gs) are written for
-  the branch, in the third person ("the time they choose"), and are no
-  longer pasted into a client's receipt.
+- **The receipt: one e-mail, a few minutes after the client's last tap,
+  that recaps everything they told us.** Asked for on 24 September ("recap
+  the concerns and a bit more … Thank you, client name, we have received
+  your response … a wow experience, and follow through"). `tAckClient_` no
+  longer sends anything; `transitionReceipts` runs every five minutes
+  (installed by `transitionSetup`, made sure of by `transitionGoLive`,
+  also on the menu) and, for every token this campaign recognises with
+  taps not yet marked `[receipt]` in their Note cell, waits until the
+  newest is `RECEIPT_WAIT_MIN` old (three minutes, so a client ticking
+  four checks gets one e-mail) — and, when a tap opened the form, until the
+  review is filed or `RECEIPT_FORM_WAIT_MIN` (thirty) has passed — then
+  sends one receipt and marks the rows. The e-mail: "Thank you,
+  {{first_name}}. We have received your response."; when it reached us;
+  **What you told us** (each quick-check answer with its question, a bare
+  tap in the words the client tapped on that letter); **Your concerns, in
+  your words** (the review filed under `Link ref` `transition:<token>`,
+  the questions in `REVIEW_RECAP` that were answered, quoted); **What
+  happens next** (one line per thing asked of us, the most pressing first,
+  never the same line twice, the review's reference first when there is
+  one); **How we follow through** (`FOLLOW`); the reply line; signed by
+  the Client Support Team. Every word is in build-letters.py and travels
+  in `receipt.json` (`recap`, `review`, `tpl`); the blocks arrive in
+  `receipt.html` as `[[recap]]`, `[[concerns]]`, `[[next]]`, `[[follow]]`,
+  unescaped, and `<!--recap-->` / `<!--concerns-->` are cut when empty.
+  The review's own confirmation ("your service questionnaire is in", with
+  the reference and access code) still goes from Service.gs as before, so
+  a client who fills the review gets both. A noted answer ("Very well") is
+  thanked too, with "nothing about your policy changes". The page a tap
+  opens says a copy is on its way (`receipts: True` in the page's CHECKS,
+  written by build-letters.py): **set it False if the letters go by hand
+  through the connector**, where nothing sends a receipt on its own.
+  `tools/letters/…/svc/receipt-harness.js` in the session scratchpad runs
+  `tReceiptMail_` in Node on sample taps and a sample review.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel

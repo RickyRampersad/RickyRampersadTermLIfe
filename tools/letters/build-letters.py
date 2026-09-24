@@ -159,6 +159,7 @@ NEXT = {
  'question': 'A person answers your question the same day.',
  'assign':   'We match you to the agent who fits your file, and introduce you.',
  'selfserve': 'Take your time with the review. It saves as you go, and a person reads it the day you send it.',
+ 'informed': 'Nothing about your policy changes, and we will ask again rather than assume.',
 }
 NEXT_Q = {
  'rate_better':    'Someone from the branch calls you today or tomorrow to hear what we should do better.',
@@ -854,7 +855,9 @@ def landing_checks():
     data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
                           'reach': [REACH[0], [list(a) for a in REACH[1]]]},
             'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['approached']},
-            'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE}
+            'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE,
+            # the receipt is automatic only on the Apps Script route; set False if the letters go by hand
+            'receipts': True, 'receipt_line': 'A copy of everything you have told us is on its way to your inbox.'}
     missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH] for a in ans if a[2] not in SAID_Q]
     assert not missing, f'no thank-you line for {missing}'
     return json.dumps(data, ensure_ascii=False)
@@ -873,24 +876,86 @@ else:
         LANDING.write_text(_out, encoding='utf-8'); print('  your-policy/index.html: checks rewritten')
 
 
-# ── the receipt: what a tap earns in the inbox ───────────────────────
-# Sent by Transition.gs (tAckClient_) the moment a client answers, from
-# support@ with the branch copied. It fetches receipt.html and the words in
-# receipt.json from the site, like the letters, so no wording lives in the
-# script: rebuild and the next receipt carries the change. Fields:
-# {{first_name}}, {{time}} (when the tap reached us, sheet time), {{next}}
-# (from NEXT / NEXT_Q by tap and answer), {{care_name}}, {{care_us}},
-# {{care_Us}}, {{care_line}}. The plain one is for a receipt sent by hand through the
-# connector. "Thank you — we have this" was the whole receipt until 24
-# September ("can be more impactful"): now the team by name, a time, and
-# the one thing that happens next.
-RECEIPT_SUBJECT = 'Thank you, {{first_name}}. {{care_Us}} has this.'
+# ── the receipt: what a response earns in the inbox ───────────────────
+# Sent by Transition.gs (transitionReceipts, every five minutes) a few
+# minutes after a client's last tap, from support@ with the branch copied:
+# one e-mail that recaps everything they told us — every quick check, the
+# tap they chose and, if they filled the review, their concerns in their
+# own words — then what happens next and how we follow through. Asked for
+# on 24 September 2026 ("recap the concerns and a bit more … Thank you,
+# client name, we have received your response … a wow experience, and
+# follow through"). The words are here; receipt.json carries them to the
+# script, which holds none of its own. Fields: {{first_name}}, {{time}}
+# (the last tap, sheet time), {{care_*}}; the built blocks arrive as
+# [[recap]], [[concerns]], [[next]] and [[follow]], unescaped, and the
+# <!--recap--> and <!--concerns--> blocks are cut when empty. The plain
+# one is for a receipt sent by hand through the connector.
+RECEIPT_SUBJECT = 'Thank you, {{first_name}}. We have received your response.'
+RECEIPT_OPEN = 'We have received your response. It reached us at {{time}}, and it is with {{care_us}} now: a person, not a queue.'
+RECEIPT_REPLY = 'Reply to this e-mail at any time. It reaches {{care_us}} directly.'
+RECEIPT_HEADS = {'recap': 'What you told us', 'concerns': 'Your concerns, in your words',
+                 'next': 'What happens next', 'follow': 'How we follow through'}
+FOLLOW = [
+ 'A person reads this, not a system. Your file is read before anyone is matched to you.',
+ 'If you asked for a call, it comes today or tomorrow, at the time you chose.',
+ 'Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.',
+ 'If we are slower than we should be, we tell you so rather than leave you wondering.',
+]
 STILL = {'subject': 'Still on it, {{first_name}}.',
          'line': 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, '
                  'and you are welcome to reply here at any time.'}
+# the recap: a quick-check answer is echoed with its question; a bare tap with the words the client tapped
+RECAP = {'tapped': 'You tapped',
+         'q': {ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH] for label, _, ans in answers},
+         'taps': {**{r: v[0] for r, v in TAPS.items()}, 'review': 'The full review, in your own words',
+                  'selfserve': 'The full review, in your own words', 'assign': 'Match me to an agent'},
+         'tap_text': {seg: {r: v[0] for r, v in cfg.get('tap_text', {}).items()} for seg, cfg in SEGMENTS.items() if cfg.get('tap_text')}}
+# the review's own questions the receipt echoes, as the sheet heads its columns (the label, cut at 120)
+REVIEW_RECAP = [
+ 'What happened to the agent who sold you this?',
+ 'Has anyone been in touch with you about moving or replacing this policy?',
+ 'Who was it?',
+ 'Would you like us to go through it with you before you decide anything?',
+ 'When did somebody last review this policy with you?',
+ 'How well do you feel you understand what you own?',
+ 'Do you know what your policy would pay, and to whom?',
+ 'When you have asked about this policy, were you happy with the answer you got?',
+ 'What were you not given a straight answer on?',
+ 'Are you still paying premiums on it?',
+ 'What happened with the premiums?',
+ 'Is there anything outstanding that was never sorted out?',
+ 'Tell us what happened',
+ 'How urgent is it?',
+ "Anything you'd like to say about how you've been treated?",
+ 'What would you like help with?',
+ 'Is there something specific you want to ask?',
+ 'How often would you like your agent to check in with you?',
+ 'How would you like to be looked after?',
+ 'What matters most to you in an agent?',
+ 'Anything else your ideal agent should know about you?',
+]
+RECEIPT_TPL = {
+ 'items': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:4px">{items}</table>',
+ 'item': f'<tr><td style="padding:8px 0 7px;border-top:1px solid #e0eaef;font:400 13px/1.45 {BODY};color:{DIM}">{{q}}'
+         f'<div style="font:700 15px/1.4 {HEAD};color:{INK};margin-top:2px">{{a}}</div></td></tr>',
+ 'quote': f'<p style="margin:0 0 11px;font:400 14.5px/1.55 {BODY};color:{INK}"><span style="display:block;font:400 12.5px/1.4 {BODY};color:{DIM};margin-bottom:2px">{{q}}</span>&ldquo;{{a}}&rdquo;</p>',
+ 'bullets': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'bullet': f'<tr><td style="padding:3px 0;font:400 14.5px/1.55 {BODY};color:{INK}"><span style="color:{GOLD2};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
+ 'bullets_dark': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'bullet_dark': f'<tr><td style="padding:4px 0;font:400 14px/1.55 {BODY};color:#dbe7f1"><span style="color:{GOLD};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
+}
+RECEIPT_TPL_PLAIN = {'items': '<ul>{items}</ul>', 'item': '<li>{q}<br><b>{a}</b></li>', 'quote': '<p>{q}<br><i>&ldquo;{a}&rdquo;</i></p>',
+                     'bullets': '<ul>{items}</ul>', 'bullet': '<li>{a}</li>', 'bullets_dark': '<ul>{items}</ul>', 'bullet_dark': '<li>{a}</li>'}
+
+
+def receipt_card(bg, border, eyebrow_colour, head, body, dark=False):
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
+    <td bgcolor="{bg}" style="background:{bg};border-left:4px solid {border};border-radius:0 12px 12px 0;padding:13px 16px 11px">
+    <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{eyebrow_colour};margin-bottom:6px">{head}</b>{body}</td></tr></table>"""
 
 
 def receipt_table():
+    H = RECEIPT_HEADS
     return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
 <tr><td bgcolor="{NAVY}" style="background:{NAVY};padding:16px 26px;border-bottom:3px solid {GOLD}">
   <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
@@ -901,11 +966,12 @@ def receipt_table():
 </td></tr>
 <tr><td style="padding:24px 26px 20px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
   <h1 style="font:800 25px/1.2 {HEAD};color:{INK};margin:0 0 10px;letter-spacing:-.4px">Thank you, {{{{first_name}}}}.</h1>
-  <p style="margin:0 0 16px">Your answer reached us at {{{{time}}}}, and it is with a person, not a queue.</p>
-  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
-    <td bgcolor="#fff8e6" style="background:#fff8e6;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:13px 16px;font:400 15px/1.55 {BODY};color:{INK}">
-    <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#8a6420;margin-bottom:7px">What happens next</b>{{{{next}}}}</td></tr></table>
-  <p style="margin:0 0 6px">If anything changes in the meantime, reply to this e-mail. It reaches {{{{care_us}}}} directly.</p>
+  <p style="margin:0 0 16px">{RECEIPT_OPEN}</p>
+  <!--recap-->{receipt_card('#f4f8fa', GOLD, '#8a6420', H['recap'], '[[recap]]')}<!--/recap-->
+  <!--concerns-->{receipt_card('#ffffff', TEAL, TDARK, H['concerns'], '[[concerns]]')}<!--/concerns-->
+  {receipt_card('#fff8e6', GOLD, '#8a6420', H['next'], '[[next]]')}
+  {receipt_card(NAVY, GOLD, GOLD, H['follow'], '[[follow]]', dark=True)}
+  <p style="margin:0 0 6px">{RECEIPT_REPLY}</p>
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr>
     <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
       <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">{{{{care_name}}}}</b>{{{{care_line}}}}</td></tr></table>
@@ -921,7 +987,7 @@ def receipt_doc():
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <title>{html.escape(RECEIPT_SUBJECT)}</title>
-<!-- the receipt a tap earns · generated by tools/letters/build-letters.py -->
+<!-- the receipt a response earns · generated by tools/letters/build-letters.py -->
 <link href="{FONTS}" rel="stylesheet">
 </head>
 <body style="margin:0;padding:0;background:#eef4f7">
@@ -934,15 +1000,20 @@ def receipt_doc():
 
 PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
                  '<h2>Thank you, {{first_name}}.</h2>'
-                 '<p>Your answer reached us at {{time}}, and it is with a person, not a queue.</p>'
-                 '<h3>What happens next</h3><p>{{next}}</p>'
-                 '<p>If anything changes in the meantime, reply to this e-mail. It reaches {{care_us}} directly.</p>'
+                 f'<p>{RECEIPT_OPEN}</p>'
+                 f'<!--recap--><h3>{RECEIPT_HEADS["recap"]}</h3>[[recap]]<!--/recap-->'
+                 f'<!--concerns--><h3>{RECEIPT_HEADS["concerns"]}</h3>[[concerns]]<!--/concerns-->'
+                 f'<h3>{RECEIPT_HEADS["next"]}</h3>[[next]]'
+                 f'<h3>{RECEIPT_HEADS["follow"]}</h3>[[follow]]'
+                 f'<p>{RECEIPT_REPLY}</p>'
                  '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
                  '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>\n')
 
 (OUT / 'receipt.html').write_text(receipt_doc(), encoding='utf-8')
 (PLAIN / 'receipt.html').write_text(PLAIN_RECEIPT, encoding='utf-8')
 (OUT / 'receipt.json').write_text(json.dumps({'subject': RECEIPT_SUBJECT, 'file': 'receipt.html', 'plain': 'plain/receipt.html',
-                                              'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL}, indent=1, ensure_ascii=False),
+                                              'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL, 'heads': RECEIPT_HEADS,
+                                              'follow': FOLLOW, 'recap': RECAP, 'review': REVIEW_RECAP,
+                                              'tpl': RECEIPT_TPL, 'tpl_plain': RECEIPT_TPL_PLAIN}, indent=1, ensure_ascii=False),
                                   encoding='utf-8')
 print(f'wrote the receipt: {OUT / "receipt.html"}, {PLAIN / "receipt.html"}, {OUT / "receipt.json"}')

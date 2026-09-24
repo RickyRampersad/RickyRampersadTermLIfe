@@ -1,5 +1,5 @@
 {
- "subject": "Thank you, {{first_name}}. {{care_Us}} has this.",
+ "subject": "Thank you, {{first_name}}. We have received your response.",
  "file": "receipt.html",
  "plain": "plain/receipt.html",
  "care": {
@@ -20,7 +20,8 @@
   "stop": "We close the file properly and confirm that nothing is owed.",
   "question": "A person answers your question the same day.",
   "assign": "We match you to the agent who fits your file, and introduce you.",
-  "selfserve": "Take your time with the review. It saves as you go, and a person reads it the day you send it."
+  "selfserve": "Take your time with the review. It saves as you go, and a person reads it the day you send it.",
+  "informed": "Nothing about your policy changes, and we will ask again rather than assume."
  },
  "next_q": {
   "rate_better": "Someone from the branch calls you today or tomorrow to hear what we should do better.",
@@ -31,5 +32,134 @@
  "still": {
   "subject": "Still on it, {{first_name}}.",
   "line": "You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, and you are welcome to reply here at any time."
+ },
+ "heads": {
+  "recap": "What you told us",
+  "concerns": "Your concerns, in your words",
+  "next": "What happens next",
+  "follow": "How we follow through"
+ },
+ "follow": [
+  "A person reads this, not a system. Your file is read before anyone is matched to you.",
+  "If you asked for a call, it comes today or tomorrow, at the time you chose.",
+  "Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.",
+  "If we are slower than we should be, we tell you so rather than leave you wondering."
+ ],
+ "recap": {
+  "tapped": "You tapped",
+  "q": {
+   "rate_verywell": [
+    "How have we looked after you so far?",
+    "Very well"
+   ],
+   "rate_well": [
+    "How have we looked after you so far?",
+    "Well"
+   ],
+   "rate_better": [
+    "How have we looked after you so far?",
+    "Could be better"
+   ],
+   "life_changed": [
+    "Has anything changed for you since you took out your policy?",
+    "Yes: family, home or work"
+   ],
+   "life_same": [
+    "Has anything changed for you since you took out your policy?",
+    "No, nothing has changed"
+   ],
+   "whopays_yes": [
+    "Do you know who your policy pays today?",
+    "Yes"
+   ],
+   "whopays_unsure": [
+    "Do you know who your policy pays today?",
+    "Not sure, check it for me"
+   ],
+   "approached_no": [
+    "Has anyone suggested you cancel, cash in or replace a policy?",
+    "No"
+   ],
+   "approached_yes": [
+    "Has anyone suggested you cancel, cash in or replace a policy?",
+    "Yes, talk to me first"
+   ],
+   "reach_phone": [
+    "What is the best way to reach you?",
+    "Phone call"
+   ],
+   "reach_whatsapp": [
+    "What is the best way to reach you?",
+    "WhatsApp"
+   ],
+   "reach_email": [
+    "What is the best way to reach you?",
+    "E-mail"
+   ]
+  },
+  "taps": {
+   "urgent": "I want an agent now. Let me tell you my concerns first",
+   "review": "The full review, in your own words",
+   "callme": "Call me",
+   "claim": "Help me claim it",
+   "deliver": "Bring me my contract",
+   "finish": "Finish my application",
+   "paid": "I have already paid",
+   "pay": "Set me up to pay Guardian Life directly",
+   "stop": "I would rather not proceed",
+   "informed": "All good, keep my details",
+   "question": "My details have changed",
+   "selfserve": "The full review, in your own words",
+   "assign": "Match me to an agent"
+  },
+  "tap_text": {
+   "R1": {
+    "callme": "Check my file with me"
+   },
+   "R2": {
+    "callme": "Check my file with me"
+   }
+  }
+ },
+ "review": [
+  "What happened to the agent who sold you this?",
+  "Has anyone been in touch with you about moving or replacing this policy?",
+  "Who was it?",
+  "Would you like us to go through it with you before you decide anything?",
+  "When did somebody last review this policy with you?",
+  "How well do you feel you understand what you own?",
+  "Do you know what your policy would pay, and to whom?",
+  "When you have asked about this policy, were you happy with the answer you got?",
+  "What were you not given a straight answer on?",
+  "Are you still paying premiums on it?",
+  "What happened with the premiums?",
+  "Is there anything outstanding that was never sorted out?",
+  "Tell us what happened",
+  "How urgent is it?",
+  "Anything you'd like to say about how you've been treated?",
+  "What would you like help with?",
+  "Is there something specific you want to ask?",
+  "How often would you like your agent to check in with you?",
+  "How would you like to be looked after?",
+  "What matters most to you in an agent?",
+  "Anything else your ideal agent should know about you?"
+ ],
+ "tpl": {
+  "items": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin-top:4px\">{items}</table>",
+  "item": "<tr><td style=\"padding:8px 0 7px;border-top:1px solid #e0eaef;font:400 13px/1.45 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5d7186\">{q}<div style=\"font:700 15px/1.4 'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e;margin-top:2px\">{a}</div></td></tr>",
+  "quote": "<p style=\"margin:0 0 11px;font:400 14.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\"><span style=\"display:block;font:400 12.5px/1.4 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5d7186;margin-bottom:2px\">{q}</span>&ldquo;{a}&rdquo;</p>",
+  "bullets": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "bullet": "<tr><td style=\"padding:3px 0;font:400 14.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\"><span style=\"color:#c9942c;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>",
+  "bullets_dark": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "bullet_dark": "<tr><td style=\"padding:4px 0;font:400 14px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#dbe7f1\"><span style=\"color:#efc24b;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>"
+ },
+ "tpl_plain": {
+  "items": "<ul>{items}</ul>",
+  "item": "<li>{q}<br><b>{a}</b></li>",
+  "quote": "<p>{q}<br><i>&ldquo;{a}&rdquo;</i></p>",
+  "bullets": "<ul>{items}</ul>",
+  "bullet": "<li>{a}</li>",
+  "bullets_dark": "<ul>{items}</ul>",
+  "bullet_dark": "<li>{a}</li>"
  }
 }
