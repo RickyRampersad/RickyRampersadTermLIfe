@@ -141,6 +141,9 @@ function tText_(x) {
   if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tTz_(), 'd MMMM yyyy');
   if (typeof x === 'number') return String(Math.round(x));
   var s = String(x).trim();
+  /* a date the import left as text (the conversion box unticked) still prints as a date */
+  var ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (ymd) { var d = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3])); return isNaN(d.getTime()) ? '' : Utilities.formatDate(d, tTz_(), 'd MMMM yyyy'); }
   return /^#(N\/A|REF!|VALUE!|DIV\/0!|NAME\?|NUM!|ERROR!)$/.test(s) ? '' : s;   // a lookup that missed is a blank, not a fact
 }
 /* The two hand-edited flags. A tick in a checkbox column reads true, a typed
@@ -268,7 +271,11 @@ function tEsc_(s) {
  *  is cut out between its markers; the strip goes when its last fact does. */
 function tFill_(text, row) {
   var v = function (k) {
-    var s = tText_(row[k]);
+    var x = row[k];
+    /* the month of the last birthday note: a sheet import reads 'August 2026' as
+       a date, and the letter must print the month, never a first of the month */
+    if (k === 'svc_birthday' && x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tTz_(), 'MMMM yyyy');
+    var s = tText_(x);
     return (T_SVC.indexOf(k) >= 0 && /^0+$/.test(s)) ? '' : s;   // no record is not a record of nothing
   };
   var out = text;

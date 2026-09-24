@@ -743,7 +743,10 @@ voice under the new timing and the caption gives it away.
   carrying a `{{field}}` the pasted script does not know would reach the
   client as `{{svc_docs}}`, so the send throws before the first one. The
   copy in the project predates the service record: paste the current
-  `Transition.gs` before any send from Apps Script.
+  `Transition.gs` before any send from Apps Script. Import the send list
+  with "Convert text to numbers, dates and formulas" ticked: the dates then
+  print long, and the birthday month, which the import also reads as a date,
+  is printed back as a month ("August 2026", never "1 August 2026").
 - **The `review` tap opens the form.** It is the full review line now, not a
   card; the page a tap opens logs it and carries the client into the
   review, like `urgent`. Until 24 September it showed a thank-you and dimmed
