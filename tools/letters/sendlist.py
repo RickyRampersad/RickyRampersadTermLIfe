@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the Transition Send list for the six letters, from the Branch Portfolio
+"""Build the Transition Send list for the letters, from the Branch Portfolio
 sheet. Client data never enters the repository: run this in a scratch
 directory, on a copy of the sheet, and import the CSV it writes. The CSV is imported into the
 "Transition Send" tab of the Service Questionnaire spreadsheet, where
@@ -130,6 +130,30 @@ def days(r):
         return 0
 
 
+ENDED = ('lapse', 'surrender')
+NEVER = ('not proceeded', 'not taken', 'declined', 'rejected', 'postponed', 'file closed', 'underwriting',
+         'awaiting settlement')
+
+
+def restarts(rs):
+    """The dates a policy of this client's began close to the end of another: a
+    policy that lapsed or was surrendered, and one that began between six months
+    before and a year after the last premium the ended one was paid to. Those
+    clients get the check letter (24 September)."""
+    out = []
+    for e in rs:
+        ei, ep = d(e['Issue Date']), d(e['Paid To Date'])
+        if not status(e).startswith(ENDED) or not ei or not ep:
+            continue
+        for n in rs:
+            ni = d(n['Issue Date'])
+            if n is e or not ni or ni <= ei or status(n).startswith(NEVER):
+                continue
+            if -180 <= (ni - ep).days <= 365:
+                out.append(ni)
+    return out
+
+
 out, excl = [], Counter()
 for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
     rs = c['rows']
@@ -215,6 +239,19 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
         seg = 'A'
         if not reason:
             reason = 'check: matured — confirm it is unclaimed before sending'
+    elif inforce and restarts(rs):
+        # cover that ended and started again: the check letter, R1 while the
+        # newest start is inside three years, R2 after (24 September). "With us
+        # since" counts every policy that was ever issued, the ended ones too,
+        # because the in-force date alone would call a long relationship new.
+        newest = max(restarts(rs))
+        seg = 'R1' if (TODAY - newest).days <= 1095 else 'R2'
+        issued = [d(r['Issue Date']) for r in rs if d(r['Issue Date']) and not status(r).startswith(NEVER)]
+        rec['first_year'] = str(min(issued).year)
+        rec['years'] = str((TODAY - min(issued)).days // 365)
+        rec['issue_date'] = long(newest)
+        pt = [d(r['Paid To Date']) for r in paying if d(r['Paid To Date'])]
+        rec['paid_to'] = long(max(pt)) if pt else ''
     elif inforce:
         # five versions by how long the client has held their longest policy (23 September)
         first = min((d(r['Issue Date']) for r in inforce if d(r['Issue Date'])), default=None)

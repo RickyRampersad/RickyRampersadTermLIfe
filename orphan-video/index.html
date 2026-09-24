@@ -381,7 +381,8 @@ if (TOKEN) document.querySelectorAll('a.door[href*="review.html"]').forEach(func
 var SAID = {
   selfserve: 'Opening your review now — take your time, and it saves as you go.',
   assign:   'We will match you to a qualified agent and introduce you within two working days.',
-  review:   'We will put your summary together and send it across, and an agent will walk you through it.',
+  /* the letters' "Tell us more about yourself" tap: it promises a short form, so it opens one */
+  review:   'Opening the form now. It saves as you go, and a person goes through it with you if you would like one to.',
   question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
   informed: 'Noted, with thanks. Nothing about your policy changes, and we will ask again rather than assume.',
   /* the three taps on a premium letter — they arrive as ?r= and are logged on arrival */
@@ -425,9 +426,10 @@ document.querySelectorAll('.opt, .door').forEach(function (a) {
 });
 /* a tap made in the e-mail itself: the answer is in the address. The urgent
    tap is logged and carried straight into the questionnaire, so the client
-   states their concerns before anyone is named. */
+   states their concerns before anyone is named; the review tap too, because
+   the letter promised a short form and a thank-you screen is not one. */
 var R = Q.get('r');
-if (R === 'urgent') {
+if (R === 'urgent' || R === 'review') {
   logResp(R);
   thank(R, null);
   /* the beacon needs a moment to leave before the page is replaced */

@@ -565,8 +565,8 @@ voice under the new timing and the caption gives it away.
   on, that important letter"). It is in the shell, once, in the same words
   on every letter; an opening never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
-- **Ten letters: five situations, and the in-force letter in five tenure
-  versions.** Condensed to six on 22 September ("condense the amount of
+- **Twelve letters: five situations, the in-force letter in five tenure
+  versions, and two check letters.** Condensed to six on 22 September ("condense the amount of
   letters so we will be focused"); on 23 September the in-force letter was
   split by how long the client has held their longest in-force policy —
   "we have banded 5 so each is different, wanting feedback with a catchy
@@ -580,8 +580,29 @@ voice under the new timing and the caption gives it away.
   lapse date are printed, so the letter need not say how far behind),
   J (contract not delivered), K (application in progress). Paid up, waiver
   and payroll clients take their tenure version. Nothing-held clients are
-  not written to. Do not grow the set beyond this without being asked: the
-  team reads one page, and the taps carry the difference.
+  not written to. On 24 September, asked for because clients on these books
+  had cover ended and restarted ("the only person that suffered was the
+  client"), an in-force client with a policy that lapsed or was surrendered
+  between six months before and a year after another began gets **R1**
+  (newest such start inside three years) or **R2** (before that) instead of
+  a tenure version: a free check of the file and of who the policy pays.
+  Its "with us since" counts every policy ever issued, ended ones too.
+  The letter states only what the client's own record shows — cover that
+  ended and started again — never how, never by whom; the rule about
+  anyone who left holds here more than anywhere. Do not grow the set beyond
+  this without being asked: the team reads one page, and the taps carry the
+  difference. A letter can reword a tap for itself (`tap_text` in
+  openings.json — R1 and R2 call `callme` "Check my file with me") without
+  changing what the tap records, so no backend change is needed for it.
+- **The `review` tap opens the form.** "Tell us more about yourself"
+  promises a short form, so the client page logs it and carries the client
+  into the review, like `urgent`. Until 24 September it showed a thank-you
+  and dimmed the review door, so the first tap on every in-force letter led
+  nowhere.
+- **Team verdicts on any letter are accepted.** `FEEDBACK_ITEMS` in
+  Service.gs used to list the six original letters, and the backend
+  dropped every verdict on F1–F5 in silence (the page still said logged).
+  It now takes any letter key, one capital and an optional digit.
 - **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
   me tell you my concerns first" is on every letter (a card where it is one
   of the taps, a line beneath them where it is not). The client page logs it

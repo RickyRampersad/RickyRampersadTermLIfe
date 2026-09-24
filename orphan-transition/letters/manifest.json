@@ -44,6 +44,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "claim": "Help me claim it",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
   },
   {
@@ -61,6 +66,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "In force, and the client's longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been."
   },
   {
@@ -78,6 +88,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "In force, longest-held policy two to three years old. Early enough that life has usually moved on since the policy was bought: the letter asks what has changed."
   },
   {
@@ -95,6 +110,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "In force, longest-held policy three to five years old. Value is building: the letter says it is still theirs and asks what they want next."
   },
   {
@@ -112,6 +132,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "In force, longest-held policy five to ten years old. Starting again elsewhere would cost these clients most of what they have built: the letter says every year still counts."
   },
   {
@@ -129,7 +154,58 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "In force, longest-held policy ten years or more. Most of the fund value sits here: the letter thanks them first and asks for their view."
+  },
+  {
+   "segment": "R1",
+   "name": "In force \u2014 cover started again in the last three years",
+   "subject": "Your cover started again recently. Let us check it with you.",
+   "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
+   "file": "R1.html",
+   "facts": [
+    "first_year",
+    "issue_date",
+    "paid_to"
+   ],
+   "taps": [
+    "callme",
+    "review",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Check my file with me",
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "In force, and a policy of theirs lapsed or was surrendered within six months before, or a year after, another began, the newest such start inside the last three years. The new cover is still inside its first three years: the letter offers a free check of the file and of who the policy pays, and asks nothing about how it happened."
+  },
+  {
+   "segment": "R2",
+   "name": "In force \u2014 cover started again, more than three years ago",
+   "subject": "Years with us. Let us make sure every one of them still counts.",
+   "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
+   "file": "R2.html",
+   "facts": [
+    "first_year",
+    "issue_date",
+    "paid_to"
+   ],
+   "taps": [
+    "callme",
+    "review",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Check my file with me",
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "In force, with a policy that lapsed or was surrendered close to the start of another, more than three years ago. A long relationship with a break in it: the letter recognises the years, and offers the same free check of the file and of who the policy pays."
   },
   {
    "segment": "G",
@@ -146,6 +222,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "review": "Tell us more about yourself",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "A week behind the others."
   },
   {
@@ -164,6 +245,11 @@
     "pay",
     "callme"
    ],
+   "tap_labels": {
+    "paid": "I have already paid",
+    "pay": "Set me up to pay Guardian Life directly",
+    "callme": "Call me"
+   },
    "send_note": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days."
   },
   {
@@ -180,6 +266,11 @@
     "urgent",
     "callme"
    ],
+   "tap_labels": {
+    "deliver": "Bring me my contract",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
    "send_note": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
   },
   {
@@ -196,6 +287,11 @@
     "callme",
     "stop"
    ],
+   "tap_labels": {
+    "finish": "Finish my application",
+    "callme": "Call me",
+    "stop": "I would rather not proceed"
+   },
    "send_note": "From the pending list. Every file is read before the call."
   }
  ]

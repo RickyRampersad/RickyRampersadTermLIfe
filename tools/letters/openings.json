@@ -1,5 +1,5 @@
 {
- "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Ten letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress) and, since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Twelve letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; and since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot, and tap_text relabels a tap for one letter without changing what it records. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
  "A": {
   "name": "A policy has matured, or is about to",
   "subject": "A policy of yours has matured, or is about to",
@@ -142,6 +142,72 @@
    "urgent",
    "callme"
   ]
+ },
+ "R1": {
+  "name": "In force — cover started again in the last three years",
+  "subject": "Your cover started again recently. Let us check it with you.",
+  "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
+  "headline": "A fresh start deserves <em>a careful check.</em>",
+  "open": "Our records show cover of yours that ended and started again in the last three years. A new policy starts some of its protections from day one, so we would like to check your file with you, free, and confirm who your policy pays.",
+  "send": "In force, and a policy of theirs lapsed or was surrendered within six months before, or a year after, another began, the newest such start inside the last three years. The new cover is still inside its first three years: the letter offers a free check of the file and of who the policy pays, and asks nothing about how it happened.",
+  "facts": [
+   [
+    "With us since",
+    "{{first_year}}"
+   ],
+   [
+    "Newest policy began",
+    "{{issue_date}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "callme",
+   "review",
+   "urgent"
+  ],
+  "tap_text": {
+   "callme": [
+    "Check my file with me",
+    "A person sets out what you hold, what carried over and who it pays, then calls at a time you choose."
+   ]
+  }
+ },
+ "R2": {
+  "name": "In force — cover started again, more than three years ago",
+  "subject": "Years with us. Let us make sure every one of them still counts.",
+  "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
+  "headline": "Years with us, and <em>every one should count.</em>",
+  "open": "You have been with Guardian Life for years, and our records show cover of yours that ended and started again along the way. We would like to go through your file together, free: what carried over, what started again, and who your policy pays.",
+  "send": "In force, with a policy that lapsed or was surrendered close to the start of another, more than three years ago. A long relationship with a break in it: the letter recognises the years, and offers the same free check of the file and of who the policy pays.",
+  "facts": [
+   [
+    "With us since",
+    "{{first_year}}"
+   ],
+   [
+    "Newest policy began",
+    "{{issue_date}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ]
+  ],
+  "taps": [
+   "callme",
+   "review",
+   "urgent"
+  ],
+  "tap_text": {
+   "callme": [
+    "Check my file with me",
+    "A person sets out what you hold, what carried over and who it pays, then calls at a time you choose."
+   ]
+  }
  },
  "G": {
   "name": "Lapsed",
