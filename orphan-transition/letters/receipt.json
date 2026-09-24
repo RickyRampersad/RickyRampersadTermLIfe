@@ -10,8 +10,8 @@
  },
  "next": {
   "callme": "Someone from the branch calls you today or tomorrow, at a time you choose.",
-  "urgent": "We read every word you wrote before we name anyone, and you have an agent by the next working day.",
-  "review": "A person reads your review, then you have an agent of your own within two working days.",
+  "urgent": "We read every word you wrote before we name anyone, then match you to the agent who fits your file.",
+  "review": "A person reads your review, then we match you to the agent who fits your file.",
   "paid": "We check the record against your receipt and confirm within two working days.",
   "pay": "We call to set up payment to Guardian Life directly, with Guardian Life's own receipt every time.",
   "claim": "We bring the maturity form and walk it through with you.",
@@ -19,14 +19,14 @@
   "finish": "We bring whatever is still needed to finish your application. You do not have to find anything.",
   "stop": "We close the file properly and confirm that nothing is owed.",
   "question": "A person answers your question the same day.",
-  "assign": "You have a named agent within two working days.",
+  "assign": "We match you to the agent who fits your file, and introduce you.",
   "selfserve": "Take your time with the review. It saves as you go, and a person reads it the day you send it."
  },
  "next_q": {
   "rate_better": "Someone from the branch calls you today or tomorrow to hear what we should do better.",
   "life_changed": "Someone from the branch calls you today or tomorrow to check your cover still fits your life.",
   "whopays_unsure": "We check who your policy pays and go through it with you by phone, once we have confirmed it is you.",
-  "approached_yes": "An agent calls you by the next working day, before you decide anything."
+  "approached_yes": "A person reads what was suggested and calls you before you decide anything."
  },
  "still": {
   "subject": "Still on it, {{first_name}}.",

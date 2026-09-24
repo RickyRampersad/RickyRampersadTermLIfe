@@ -348,8 +348,8 @@
     <div class="cd"><h3>2 &middot; We look at what you actually hold</h3>
       <p>Before anyone contacts you, we read your file &mdash; what you own, how long you have held it, and
          whether anything needs attention.</p></div>
-    <div class="cd"><h3>3 &middot; You get a name, within two working days</h3>
-      <p>Not &ldquo;someone will be in touch&rdquo;. A named person, and how to reach them directly.</p></div>
+    <div class="cd"><h3>3 &middot; You get a name</h3>
+      <p>Not &ldquo;someone will be in touch&rdquo;. Once your file has been read, a named person who fits it, and how to reach them directly.</p></div>
     <div class="cd"><h3>4 &middot; The review is yours to keep</h3>
       <p>If you asked for one, it is written down and signed &mdash; the same record the branch keeps.</p></div>
   </div>
@@ -378,7 +378,7 @@ var SAIDQ = {
   whopays_yes:    'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
   whopays_unsure: 'Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
   approached_no:  'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
-  approached_yes: 'Thank you for telling us. Opening a short form now: tell us what was suggested, and an agent calls you by the next working day, before you decide anything.'
+  approached_yes: 'Thank you for telling us. Opening a short form now: tell us what was suggested. A person reads it and calls you before you decide anything.'
 };
 /* the protections page carries the same token on, so a click from there reads the same */
 if (TOKEN) document.getElementById('protlink').href = 'protected.html?t=' + encodeURIComponent(TOKEN) +
@@ -389,7 +389,7 @@ if (TOKEN) document.querySelectorAll('a.door[href*="review.html"]').forEach(func
 });
 var SAID = {
   selfserve: 'Opening your review now — take your time, and it saves as you go.',
-  assign:   'We will match you to a qualified agent and introduce you within two working days.',
+  assign:   'We read your file first, then match you to the agent who fits it and introduce you.',
   /* the letters' "Tell us more about yourself" tap: it promises a short form, so it opens one */
   review:   'Opening the form now. It saves as you go, and a person goes through it with you if you would like one to.',
   question: 'Reply to the e-mail this link came from and tell us the question — it reaches us the same day.',
@@ -402,7 +402,7 @@ var SAID = {
   deliver:  'We will bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
   finish:   'We will bring whatever is still needed to finish your application. You do not have to find anything.',
   stop:     'Understood. We will close the file properly and confirm that nothing is owed.',
-  urgent:   'Opening the review now. We read it before we name anyone, and you have an agent by the next working day.'
+  urgent:   'Opening the review now. We read it before we name anyone, then match you to the agent who fits your file.'
 };
 function logResp(r) {
   if (SVC.indexOf('http') !== 0) return;

@@ -727,8 +727,20 @@ voice under the new timing and the caption gives it away.
   of the taps, a line beneath them where it is not). The client page logs it
   with the token and then forwards to the review, so the client states what
   went wrong before anyone is named and the branch reads it before it
-  assigns. It promises an agent by the next working day, faster than the
-  standing two; the manager set that pace and can slow it in `TAPS`.
+  assigns. **No timeline is promised for the agent**, decided 24 September
+  ("don't commit to assign an agent … their concerns will be reviewed and
+  we will assign the appropriate agent, don't give a timeline"): every
+  letter, tap, page line and receipt says the concerns are read by a
+  person first and then the client is matched to the agent who fits, and
+  nothing says when. "Next working day" and "within two working days" are
+  gone from the campaign's client-facing words; `WAIT_URGENT` and
+  `WAIT_DAYS` in Transition.gs are the branch's own targets for the chase
+  and are never shown to a client. What is still promised is what Client
+  Support controls itself: a call today or tomorrow, a receipt checked
+  within two working days, a document on to Guardian Life mostly within a
+  working day. The film's own line ("be matched, within two working days")
+  and the donthaveanagent.com pages still carry the standing two-day
+  promise; changing the film means re-voicing one line.
 - **The pages are wired to the Service Questionnaire deployment** (the same
   `/exec` URL the six front ends hold) and ask it `action=ping` on load. Only
   a version carrying the `resp`/`feedback` actions answers with
