@@ -61,6 +61,9 @@ var TRANSITION = {
   WAIT_URGENT: 1,            // the branch's own target for an urgent tap; the client is promised no timeline (24 September)
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
+  RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
+  RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
+  RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
@@ -163,14 +166,16 @@ function tDay_(x) {
 function transitionSetup() {
   tSheet_();
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'transitionDigest') ScriptApp.deleteTrigger(t);
+    if (t.getHandlerFunction() === 'transitionDigest' || t.getHandlerFunction() === 'transitionReceipts') ScriptApp.deleteTrigger(t);
   });
   TRANSITION.DIGEST_HOURS.forEach(function (h) {
     ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
   });
+  /* the receipts: every five minutes, whether or not the hourly send is on, because letters already out earn them */
+  ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
     TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
-    '. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
+    ', and the receipts run every five minutes. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
     'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
@@ -184,6 +189,7 @@ function transitionGoLive() {
   var have = {};
   ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
   if (!have.transitionSendBatch) ScriptApp.newTrigger('transitionSendBatch').timeBased().everyHours(1).create();
+  if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   var msg = 'Live. The hourly send is on, ' + TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] +
     ':00, Monday to Friday. Transition: pause turns it off.';
   log_('transition', 'live', msg);
@@ -512,59 +518,159 @@ function tCare_(rc) {
            care_line: (c.line || 'Ricky Rampersad Branch · Guardian Life of the Caribbean').replace(/&middot;/g, '·') };
 }
 
-/** A receipt e-mailed the moment a client answers a letter, separate from
- *  the on-screen thank-you — so it is also in their inbox, and CC'd to the
- *  branch so a response is seen the moment it lands, not only in the
- *  digest. "Are responses coming in, and I am to be copied" — 22 September.
- *  Since 24 September it names the team that has the file, says when the
- *  answer reached us, and states the one thing that happens next in the
- *  client's own words ("thank you, we have this … can be more impactful";
- *  "this should be the Ricky Rampersad Branch Client Support team"). The words come from receipt.json and receipt.html on the
- *  site; `page` is the path the tap was logged with, which carries the
- *  quick-check answer as ?q=, so the next step can be the answer's own.
- *  Only for a token this campaign recognises (a Transition Send row with an
- *  e-mail); any other flow's token is untouched. Never blocks the click. */
-function tAckClient_(token, r, needs, page) {
+/** Service.gs still calls this on every tap. Nothing happens here any more:
+ *  the receipt goes from transitionReceipts a few minutes later, once the
+ *  client has finished tapping, so one e-mail can recap everything they
+ *  told us — asked for on 24 September ("recap the concerns and a bit
+ *  more … a wow experience"). */
+function tAckClient_() {}
+
+/** Every five minutes, installed by transitionSetup. */
+function transitionReceipts() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return 'another run is busy';
+  try { return tReceipts_(); } finally { lock.releaseLock(); }
+}
+
+function tQOf_(page) { return (String(page || '').match(/[?&]q=([a-z_]+)/) || [])[1] || ''; }
+
+/** One receipt per client per sitting: every unreceipted tap of a token this
+ *  campaign recognises, once the newest is RECEIPT_WAIT_MIN old (a client
+ *  ticking four checks gets one e-mail, not four), and once the review is
+ *  filed when a tap opened the form, or RECEIPT_FORM_WAIT_MIN has passed.
+ *  Each row it thanks is marked [receipt] in its Note cell, appended, so a
+ *  human note there survives and the same tap is never thanked twice. */
+function tReceipts_() {
+  var out = { sent: 0, waiting: 0, held: 0 };
+  var sh, last;
+  try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
+  if (!sh || last < 2) return out;
+  var vals;
+  try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
+  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [];
+  for (var i = 0; i < vals.length; i++) {
+    var v = vals[i], received = v[0] instanceof Date ? v[0] : null;
+    if (!received) continue;
+    var token = String(v[1] || '').trim();
+    if (!tokens[token]) continue;                                    // not this campaign's token: never touched
+    var note = String(v[10] || '');
+    if (note.indexOf('[receipt]') >= 0) continue;                    // thanked already
+    if (now - received > 14 * 86400000) continue;                    // long before the receipts ran: left alone
+    if (!groups[token]) { groups[token] = { rows: [], newest: received }; order.push(token); }
+    groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
+                              q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note });
+    if (received > groups[token].newest) groups[token].newest = received;
+  }
+  if (!order.length) return out;
+  var rc = tReceipt_();
+  if (!rc || !rc.json.recap) { log_('transition', 'receipts-held', order.length + ' waiting: receipt.json on the site is missing or old, rebuild the letters'); return out; }
+  if (!tMsCreds_()) { log_('transition', 'receipts-held', order.length + ' waiting: ' + T_MS_MISSING); return out; }
+  var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN;
+  for (var k = 0; k < order.length; k++) {
+    var tok = order[k], g = groups[tok];
+    var formTap = g.rows.some(function (x) { return x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve'; });
+    var review = null;
+    if (formTap) { if (reviews === null) reviews = tReviewMap_(); review = reviews['transition:' + tok] || null; }
+    var ageMin = (now - g.newest) / 60000;
+    if (ageMin < TRANSITION.RECEIPT_WAIT_MIN || (formTap && !review && ageMin < TRANSITION.RECEIPT_FORM_WAIT_MIN)) { out.waiting++; continue; }
+    if (budget <= 0) { out.held++; continue; }
+    var row = tokens[tok], to = tText_(row.Email);
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { out.held++; continue; }
+    try {
+      var m = tReceiptMail_(rc, row, g, review);
+      tMsSend_(to, m.subject, m.html, tClientOpts_());
+      g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt]'); });
+      log_('transition', 'receipt', tText_(row.Client || row['First name']) + ' · ' +
+        g.rows.map(function (x) { return x.q || x.r; }).join(', ') + (review ? ' · review ' + tText_(review.Reference) : ''));
+      out.sent++; budget--;
+    } catch (e) { log_('transition', 'receipt-failed', String(e && e.message ? e.message : e)); }
+  }
+  if (out.sent || out.held) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held');
+  return out;
+}
+
+/** The reviews filed from a letter, keyed by their Link ref ("transition:<token>"),
+ *  read once a run; the newest for a token wins. */
+function tReviewMap_() {
+  var map = {};
   try {
-    /* A noted answer ("Very well", "No, nothing has changed") asks nothing of
-       us, so it gets no receipt; and a client answering four quick checks in a
-       minute gets one receipt, not four, each copied to the branch. */
-    if (r === 'informed') return;
-    var cache = CacheService.getScriptCache(), key = 'transition:ack:' + token;
-    if (cache.get(key)) return;
-    cache.put(key, '1', 21600);
-    var row = tRowByToken_(token);
-    if (!row) return;
-    var to = tText_(row.Email);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
-    var q = (String(page || '').match(/[?&]q=([a-z_]+)/) || [])[1] || '';
-    var rc = tReceipt_();
-    var next = (rc && ((q && rc.json.next_q && rc.json.next_q[q]) || (rc.json.next && rc.json.next[r]))) || needs;
-    var vals = {};
-    Object.keys(row).forEach(function (k) { vals[k] = row[k]; });
-    vals['First name'] = tText_(row['First name']) || 'there';
-    vals.next = next;
-    vals.time = Utilities.formatDate(new Date(), tTz_(), 'h:mm a').toLowerCase();
-    var care = tCare_(rc);
-    Object.keys(care).forEach(function (k) { vals[k] = care[k]; });
-    var subject, html;
-    if (rc) {
-      subject = tFill_(rc.json.subject, vals).replace(/<[^>]+>/g, '');
-      html = tFill_(rc.html, vals);
-    } else {
-      subject = 'Thank you, ' + vals['First name'] + '. ' + care.care_Us + ' has this.';
-      html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
-        '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(vals['First name']) + ',</p>' +
-        '<p style="margin:0 0 12px">Your answer reached us at ' + vals.time + ', and it is with a person, not a queue.</p>' +
-        '<p style="margin:0 0 12px"><b>What happens next:</b> ' + tEsc_(next) + '</p>' +
-        '<p style="margin:0 0 12px">If anything changes in the meantime, reply to this e-mail. It reaches ' + tEsc_(care.care_us) + ' directly.</p>' +
-        '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p></div></div>';
+    var sh = ss_().getSheetByName(SVC.IND_SHEET);
+    var last = sh ? sh.getLastRow() : 0, lastCol = sh ? sh.getLastColumn() : 0;
+    if (last < 2 || !lastCol) return map;
+    var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+    var iRef = head.indexOf('Link ref');
+    if (iRef < 0) return map;
+    var vals = sh.getRange(2, 1, last - 1, lastCol).getValues();
+    for (var i = 0; i < vals.length; i++) {
+      var ref = String(vals[i][iRef] || '').trim();
+      if (ref.indexOf('transition:') !== 0) continue;
+      var o = {};
+      head.forEach(function (h, j) { if (h) o[h] = vals[i][j]; });
+      map[ref] = o;
     }
-    if (/\{\{\w+\}\}/.test(subject + html)) { log_('transition', 'ack-held', 'the receipt on the site carries a field this script cannot fill'); return; }
-    if (!tMsCreds_()) { log_('transition', 'ack-held', 'no receipt for a "' + r + '" tap: ' + T_MS_MISSING); return; }
-    tMsSend_(to, subject, html, tClientOpts_());
-    log_('transition', 'ack', tText_(row.Client || row['First name']) + ' · ' + r + (q ? ' · ' + q : ''));
-  } catch (e) { log_('transition', 'ack-failed', String(e && e.message ? e.message : e)); }
+  } catch (e) {}
+  return map;
+}
+
+/** Cut a <!--name-->…<!--/name--> block, or keep its inside. */
+function tBlock_(html, name, keep) {
+  return html.replace(new RegExp('<!--' + name + '-->([\\s\\S]*?)<!--/' + name + '-->', 'g'), function (m, inner) { return keep ? inner : ''; });
+}
+
+/** The receipt: the words from receipt.json, the client's own answers built
+ *  in. `g.rows` are the taps to thank for, `review` the questionnaire row
+ *  filed from the letter, or null. Pure apart from the sheet's time zone. */
+function tReceiptMail_(rc, row, g, review) {
+  var j = rc.json, tpl = j.tpl, care = tCare_(rc), esc = tEsc_;
+  var fill = function (t, o) { return t.replace(/\{(\w+)\}/g, function (m, k) { return o.hasOwnProperty(k) ? o[k] : m; }); };
+  var rows = g.rows.slice().sort(function (a, b) { return a.received - b.received; });
+  /* what they told us: a quick-check answer with its question, else the words they tapped on that letter */
+  var recap = [], seen = {};
+  rows.forEach(function (x) {
+    var item = null;
+    if (x.q && j.recap.q[x.q]) item = { q: j.recap.q[x.q][0], a: j.recap.q[x.q][1] };
+    else if (j.recap.taps[x.r]) item = { q: j.recap.tapped, a: (j.recap.tap_text[x.seg] && j.recap.tap_text[x.seg][x.r]) || j.recap.taps[x.r] };
+    if (!item || seen[item.q + '|' + item.a]) return;
+    seen[item.q + '|' + item.a] = 1; recap.push(item);
+  });
+  /* their concerns, in their words: the review's own questions, those they answered */
+  var concerns = [];
+  if (review) (j.review || []).forEach(function (label) {
+    var v = review[label];
+    if (v === undefined || v === null) return;
+    var a = String(v).replace(/\s+$/, '').trim();
+    if (!a || a === 'undefined') return;
+    concerns.push({ q: label, a: a.slice(0, 400) });
+  });
+  /* what happens next: one line per thing asked of us, the most pressing first, never the same line twice */
+  var pri = { urgent: 0, callme: 1, paid: 2, pay: 2, claim: 2, deliver: 2, finish: 2, stop: 2, review: 3, selfserve: 3, assign: 3, question: 3, informed: 9 };
+  var nexts = [], seenN = {};
+  rows.slice().sort(function (a, b) { return (pri[a.r] === undefined ? 5 : pri[a.r]) - (pri[b.r] === undefined ? 5 : pri[b.r]); }).forEach(function (x) {
+    if (x.r === 'informed') return;                                   // a noted answer asks nothing; the line for it comes only when nothing else does
+    var n = (x.q && j.next_q && j.next_q[x.q]) || (j.next && j.next[x.r]);
+    if (n && !seenN[n]) { seenN[n] = 1; nexts.push(n); }
+  });
+  if (review) nexts.unshift('Your review is filed' + (tText_(review.Reference) ? ' under reference ' + tText_(review.Reference) : '') + '. A person reads it before anyone is matched to you.');
+  if (!nexts.length) nexts.push(j.next.informed);
+  var block = function (items, wrap, item, f) { return items.length ? fill(tpl[wrap], { items: items.map(function (it) { return fill(tpl[item], f(it)); }).join('') }) : ''; };
+  var text = function (s) { return esc(s).replace(/\n/g, '<br>'); };
+  var recapHtml = block(recap, 'items', 'item', function (it) { return { q: esc(it.q), a: text(it.a) }; });
+  var concHtml = concerns.map(function (it) { return fill(tpl.quote, { q: esc(it.q), a: text(it.a) }); }).join('');
+  var nextHtml = block(nexts, 'bullets', 'bullet', function (a) { return { a: esc(a) }; });
+  var followHtml = block(j.follow || [], 'bullets_dark', 'bullet_dark', function (a) { return { a: esc(a) }; });
+  var vals = {};
+  Object.keys(row).forEach(function (k) { vals[k] = row[k]; });
+  vals['First name'] = tText_(row['First name']) || 'there';
+  vals.time = Utilities.formatDate(g.newest, tTz_(), 'h:mm a').toLowerCase();
+  Object.keys(care).forEach(function (k) { vals[k] = care[k]; });
+  var html = tFill_(rc.html, vals);
+  html = tBlock_(html, 'recap', !!recapHtml);
+  html = tBlock_(html, 'concerns', !!concHtml);
+  html = html.replace(/\[\[recap\]\]/g, recapHtml).replace(/\[\[concerns\]\]/g, concHtml)
+             .replace(/\[\[next\]\]/g, nextHtml).replace(/\[\[follow\]\]/g, followHtml);
+  var subject = tFill_(j.subject, vals).replace(/<[^>]+>/g, '');
+  if (/\{\{\w+\}\}|\[\[\w+\]\]/.test(subject + html)) throw new Error('the receipt on the site carries a field this script cannot fill');
+  return { subject: subject, html: html, recap: recap, concerns: concerns, next: nexts };
 }
 
 /** Every Transition Send row, read once and keyed by token — so a loop over
