@@ -601,18 +601,47 @@ voice under the new timing and the caption gives it away.
   is the agent's first name, or "Your representative" when the sheet has
   none, filled by `fill-plain.py` and by `tFill_` in Transition.gs alike.
   "Moved on", never "left": the notice's own words, nothing more.
-- **Two questions, one tap each, under the taps.** Asked for the same day —
-  questions that would show a client what nobody had told them. A letter
-  may not say or suggest that; it asks what the client knows, and an honest
-  "not sure" makes the point by itself: *Do you know who your policy pays
-  today?* (in-force letters) and *Has anyone suggested you cancel, cash in
-  or replace a policy?* (every letter). Each answer rides an existing tap —
-  `informed` for Yes/No, `callme` for "Not sure, check it for me", `urgent`
-  for "Yes, talk to me first" — with the answer itself in `q=`, which the
-  client page puts in the Page column of Client Responses (`…?q=whopays_unsure`),
-  so the backend needed nothing new. "Yes, talk to me first" opens the
-  review with *Has anyone been in touch* already answered Yes; a letter's
-  client skips the individual-or-group choice (`type=individual`).
+- **Quick checks, answered in the e-mail itself.** First two questions on
+  24 September — questions that would show a client what nobody had told
+  them. A letter may not say or suggest that; it asks what the client
+  knows, and an honest "not sure" makes the point by itself: *Do you know
+  who your policy pays today?* and *Has anyone suggested you cancel, cash in
+  or replace a policy?* Then, the same evening, after the staff test ("when
+  click on this it taking too long to open and would like this as a check in
+  the email! It must be easy for a client!"), the long review behind "Tell
+  us more about yourself" became checks too: *How have we looked after you
+  so far?* and *Has anything changed for you since you took out your
+  policy?* The in-force letters ask all four, and ask them before the taps,
+  because the rating is the letter's feedback; R1 and R2 ask the rating and
+  the two originals; G asks the life change and the approach; the action
+  letters keep the originals under their taps. Every answer shows as a box
+  to tick (☐) and rides an existing tap — `informed` for a noted answer,
+  `callme` for "Could be better", "Yes: family, home or work" and "Not
+  sure", `urgent` for "Yes, talk to me first" — with the answer itself in
+  `q=`, which lands in the Page column of Client Responses
+  (`/your-policy/?q=rate_better`), so the backend needs nothing new. The
+  full review is one line under the taps ("Would you rather tell us in your
+  own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
+  the letters, and the page a tap opens, are both written from it.
+- **A tap opens one small page, at once.** `/your-policy/` with `r=` in the
+  address is the whole journey: it records the answer, says what happens
+  next, and offers the letter's other checks and *What is the best way to
+  reach you?* one tap each on the page, without loading the film page or the
+  form. Only `urgent` (and "talk to me first") and the full review go on to
+  the form, a quarter of a second later. Before this a tap loaded the stub,
+  the film page with its fonts and poster, waited 900 ms, then loaded the
+  108 KB form — behind the mail scanner's own check. Without `r=` (the film
+  line) it forwards to `/orphan-video/` as it always did. **A scripted
+  browser records nothing** (`navigator.webdriver`): mail security, Avanan
+  at Guardian among them, opens links in a headless browser, and it must
+  never answer for the client. `tools/letters/tap-test.js` follows every
+  link in every letter on a local copy of the site, with the beacons
+  intercepted; run it after any change to the letters or the page.
+- **Receipts: none for a noted answer, one per client per six hours.**
+  `tAckClient_` sends nothing for an `informed` tap ("Very well" asks
+  nothing of us) and at most one receipt per token every six hours, so a
+  client ticking four checks gets one e-mail, not four, each copied to the
+  branch.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
@@ -644,11 +673,10 @@ voice under the new timing and the caption gives it away.
   client as `{{svc_docs}}`, so the send throws before the first one. The
   copy in the project predates the service record: paste the current
   `Transition.gs` before any send from Apps Script.
-- **The `review` tap opens the form.** "Tell us more about yourself"
-  promises a short form, so the client page logs it and carries the client
-  into the review, like `urgent`. Until 24 September it showed a thank-you
-  and dimmed the review door, so the first tap on every in-force letter led
-  nowhere.
+- **The `review` tap opens the form.** It is the full review line now, not a
+  card; the page a tap opens logs it and carries the client into the
+  review, like `urgent`. Until 24 September it showed a thank-you and dimmed
+  the review door, so the first tap on every in-force letter led nowhere.
 - **Team verdicts on any letter are accepted.** `FEEDBACK_ITEMS` in
   Service.gs used to list the six original letters, and the backend
   dropped every verdict on F1–F5 in silence (the page still said logged).

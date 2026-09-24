@@ -79,12 +79,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
@@ -107,12 +105,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
@@ -135,12 +131,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
@@ -163,12 +157,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
@@ -191,12 +183,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
@@ -221,12 +211,10 @@
    ],
    "taps": [
     "callme",
-    "review",
     "urgent"
    ],
    "tap_labels": {
     "callme": "Check my file with me",
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first"
    },
    "send_note": "In force, and a policy of theirs lapsed or was surrendered within six months before, or a year after, another began, the newest such start inside the last three years. The new cover is still inside its first three years: the letter offers a free check of the file and of who the policy pays, and asks nothing about how it happened."
@@ -250,12 +238,10 @@
    ],
    "taps": [
     "callme",
-    "review",
     "urgent"
    ],
    "tap_labels": {
     "callme": "Check my file with me",
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first"
    },
    "send_note": "In force, with a policy that lapsed or was surrendered close to the start of another, more than three years ago. A long relationship with a break in it: the letter recognises the years, and offers the same free check of the file and of who the policy pays."
@@ -276,12 +262,10 @@
     "svc_birthday"
    ],
    "taps": [
-    "review",
     "urgent",
     "callme"
    ],
    "tap_labels": {
-    "review": "Tell us more about yourself",
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },

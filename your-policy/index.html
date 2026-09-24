@@ -2,14 +2,150 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 <title>Your policy | Ricky Rampersad Branch</title>
-<!-- The address on the letters. It carries the token and segment straight
-     through to the film page, so nothing a client holds says "orphan". -->
-<script>location.replace('/orphan-video/' + location.search + location.hash);</script>
-<noscript><meta http-equiv="refresh" content="0;url=/orphan-video/"></noscript>
+<!-- The address on the letters. With no answer in it (the film line), it carries the token and
+     segment straight through to the film page, so nothing a client holds says "orphan". With an
+     answer in it (r=, and q= for a quick check), this page is the whole journey: it records the
+     tap and says what happens next at once, and offers the other checks one tap each, without
+     loading the film page or the form. Asked for on 24 September 2026 after the staff test:
+     "when click on this it taking too long to open … It must be easy for a client!" Only the
+     "agent now" tap and the full review go on to the form. -->
+<script>
+if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + location.search + location.hash);
+</script>
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#5d7186;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;--line:#d7e3ea;--paper:#eef4f7;--card:#fff;--okbg:#eef7f2;--ok:#1f6f4a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:var(--navy);border-bottom:3px solid var(--gold);padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{color:#eaf4ff;font-weight:800;font-size:14.5px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  main{width:min(560px,100% - 32px);margin:18px auto 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
+  .done{border-top:4px solid var(--gold)}
+  .tick{width:46px;height:46px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:800;margin:0 0 8px}
+  h1{margin:0 0 6px;color:var(--ink);font-size:21px;line-height:1.3}
+  #msg{margin:0;font-size:15.5px}
+  h2{margin:0 0 4px;color:var(--ink);font-size:16px}
+  .q{padding:12px 0 2px;border-top:1px solid var(--line)}
+  .q:first-of-type{border-top:0}
+  .q b{display:block;color:var(--ink);font-size:15px;margin:0 0 6px}
+  .opts{display:flex;flex-wrap:wrap;gap:8px}
+  .opts button{font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:9px 13px;cursor:pointer;min-height:44px}
+  .opts button.on{background:var(--okbg);border-color:#9fd0b6;color:var(--ok)}
+  .opts button:disabled:not(.on){opacity:.45;cursor:default}
+  .said{margin:6px 0 4px;font-size:13.5px;color:var(--ok);min-height:0}
+  .links{margin:4px 2px 0;font-size:15px;line-height:2}
+  .links a{color:var(--tdark);font-weight:700;text-decoration:none}
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
+</style>
 </head>
-<body style="font:15px sans-serif;padding:24px">
-<p>Taking you to your policy page&hellip; <a href="/orphan-video/">continue</a>.</p>
+<body>
+<header>
+  <div class="mark"><img src="/logo-mark.png" width="34" height="34" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</header>
+<main>
+  <div class="card done">
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1 id="head">Thank you. That is recorded.</h1>
+    <p id="msg"></p>
+  </div>
+  <div class="card" id="more" hidden>
+    <h2>While you are here, one tap each</h2>
+    <div id="qs"></div>
+  </div>
+  <p class="links">
+    <a id="full" href="/your-policy/review.html">Tell us in your own words: the full review &rarr;</a><br>
+    <a id="film" href="/orphan-video/">&#9654;&nbsp; The two-minute film &rarr;</a>
+  </p>
+</main>
+<footer>Ricky Rampersad Branch &middot; Guardian Life of the Caribbean. Nothing here changes your policy.</footer>
+<noscript><p style="text-align:center">Thank you. Reply to our e-mail and a person at the branch will answer.</p></noscript>
+
+<script>
+/* checks:start — written by tools/letters/build-letters.py from the letters' own questions; never edit by hand */
+var CHECKS = {"questions": {"rating": ["How have we looked after you so far?", [["Very well", "informed", "rate_verywell"], ["Well", "informed", "rate_well"], ["Could be better", "callme", "rate_better"]]], "life": ["Has anything changed for you since you took out your policy?", [["Yes: family, home or work", "callme", "life_changed"], ["No, nothing has changed", "informed", "life_same"]]], "whopays": ["Do you know who your policy pays today?", [["Yes", "informed", "whopays_yes"], ["Not sure, check it for me", "callme", "whopays_unsure"]]], "approached": ["Has anyone suggested you cancel, cash in or replace a policy?", [["No", "informed", "approached_no"], ["Yes, talk to me first", "urgent", "approached_yes"]]], "reach": ["What is the best way to reach you?", [["Phone call", "informed", "reach_phone"], ["WhatsApp", "informed", "reach_whatsapp"], ["E-mail", "informed", "reach_email"]]]}, "segments": {"A": ["approached"], "F1": ["rating", "life", "whopays", "approached"], "F2": ["rating", "life", "whopays", "approached"], "F3": ["rating", "life", "whopays", "approached"], "F4": ["rating", "life", "whopays", "approached"], "F5": ["rating", "life", "whopays", "approached"], "R1": ["rating", "whopays", "approached"], "R2": ["rating", "whopays", "approached"], "G": ["life", "approached"], "I": ["whopays", "approached"], "J": ["whopays", "approached"], "K": ["approached"], "_": ["approached"]}, "said": {"rate_verywell": "Thank you. That is good to hear, and the same team keeps looking after you.", "rate_well": "Thank you. If there is one thing we could do better, the full review below is the place to say it.", "rate_better": "Thank you for telling us. Someone from the branch will call you today or tomorrow to hear what we should do better.", "life_changed": "Thank you. Someone from the branch will call you today or tomorrow to check your cover still fits.", "life_same": "Thank you. Nothing about your policy changes.", "whopays_yes": "Thank you. If who it pays ever needs to change, tell us and we put it right the same week.", "whopays_unsure": "Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.", "approached_no": "Thank you. Nothing about your policy changes, and we will ask again rather than assume.", "approached_yes": "Thank you for telling us. Tell us what was suggested, and an agent calls you by the next working day, before you decide anything.", "reach_phone": "Noted: we will call you.", "reach_whatsapp": "Noted: we will reach you on WhatsApp.", "reach_email": "Noted: we will write to you by e-mail."}, "tap_said": {"informed": "Noted, with thanks. Nothing about your policy changes.", "callme": "Someone from the branch will call you, today or tomorrow, at a time you choose.", "urgent": "We read it before we name anyone, and you have an agent by the next working day.", "review": "It saves as you go, and a person goes through it with you if you would like one to.", "paid": "We will check the record against your receipt and confirm within two working days.", "pay": "We will call to set up payment to Guardian Life directly, with Guardian Life's own receipt every time.", "claim": "We will bring the maturity form and walk it through with you.", "deliver": "We will bring your contract and go through it with you. The only signature it needs is the acknowledgement.", "finish": "We will bring whatever is still needed to finish your application. You do not have to find anything.", "stop": "Understood. We will close the file properly and confirm that nothing is owed.", "question": "Reply to the e-mail this link came from and tell us the question. It reaches us the same day."}};
+/* checks:end */
+
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var P = new URLSearchParams(location.search);
+var T = (P.get('t') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);    /* opaque, from the letter — never a policy number */
+var S = (P.get('s') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+var R = (P.get('r') || '').toLowerCase().replace(/[^a-z]/g, '').slice(0, 12);
+var QQ = (P.get('q') || '').replace(/[^a-z_]/g, '').slice(0, 30);
+/* Mail security (Avanan at Guardian, and others) opens links in a headless browser to check them.
+   It must never answer for the client, so a scripted browser records nothing. */
+var HUMAN = !navigator.webdriver;
+
+function log(r, q) {
+  if (!HUMAN || !r) return;
+  var u = SVC + '?action=resp&r=' + encodeURIComponent(r) + '&t=' + encodeURIComponent(T) + '&s=' + encodeURIComponent(S) +
+    '&p=' + encodeURIComponent('/your-policy/' + (q ? '?q=' + q : '')) +
+    '&ref=' + encodeURIComponent((document.referrer || '').slice(0, 120)) + '&z=' + Date.now();
+  /* keepalive lets the answer leave even when the page is about to open the form */
+  try { fetch(u, { mode: 'no-cors', keepalive: true, credentials: 'omit' }); }
+  catch (e) { try { (new Image()).src = u; } catch (e2) {} }
+}
+function formUrl(q) {
+  return '/your-policy/review.html?from=client' + (T ? '&t=' + encodeURIComponent(T) : '') + '&type=individual' + (q ? '&q=' + q : '');
+}
+document.getElementById('full').href = formUrl('');
+document.getElementById('full').addEventListener('click', function () { log('review', ''); });
+document.getElementById('film').href = '/orphan-video/?' + (T ? 't=' + encodeURIComponent(T) + '&' : '') + (S ? 's=' + encodeURIComponent(S) : '');
+
+var said = (QQ && CHECKS.said[QQ]) || CHECKS.tap_said[R] || '';
+if (R === 'urgent' || R === 'review') {
+  /* the two taps that are the form: say so, and open it at once */
+  log(R, QQ);
+  document.getElementById('head').textContent = 'Opening the form now.';
+  document.getElementById('msg').textContent = said;
+  setTimeout(function () { location.replace(formUrl(QQ)); }, 250);
+} else if (CHECKS.tap_said[R]) {
+  log(R, QQ);
+  /* the answer's own line says thank you when it has one; the heading does not say it twice */
+  if (/^Thank you/.test(said)) document.getElementById('head').textContent = 'That is recorded.';
+  document.getElementById('msg').textContent = said;
+  /* the letter's other checks, and how to reach them, one tap each on this page */
+  var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']);
+  var box = document.getElementById('qs'), shown = 0;
+  keys.forEach(function (k) {
+    var q = CHECKS.questions[k];
+    if (!q || q[1].some(function (a) { return a[2] === QQ; })) return;   /* the one they just answered */
+    var div = document.createElement('div'); div.className = 'q';
+    var b = document.createElement('b'); b.textContent = q[0]; div.appendChild(b);
+    var row = document.createElement('div'); row.className = 'opts'; div.appendChild(row);
+    var note = document.createElement('p'); note.className = 'said'; div.appendChild(note);
+    q[1].forEach(function (a) {
+      var btn = document.createElement('button'); btn.type = 'button';
+      btn.textContent = '☐ ' + a[0];
+      btn.addEventListener('click', function () {
+        log(a[1], a[2]);
+        if (a[1] === 'urgent') { location.href = formUrl(a[2]); return; }
+        row.querySelectorAll('button').forEach(function (o) { o.disabled = true; });
+        btn.classList.add('on'); btn.textContent = '☑ ' + a[0];
+        note.textContent = CHECKS.said[a[2]] || '';
+      });
+      row.appendChild(btn);
+    });
+    box.appendChild(div); shown++;
+  });
+  if (shown) document.getElementById('more').hidden = false;
+} else {
+  document.getElementById('head').textContent = 'Thank you.';
+  document.getElementById('msg').textContent = 'Reply to our e-mail and a person at the branch will answer.';
+}
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>

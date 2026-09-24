@@ -88,11 +88,61 @@ SEGMENTS = {k: v for k, v in json.loads((HERE / 'openings.json').read_text(encod
 # client page puts in the Page column of Client Responses; a letter lists the
 # questions it asks under "questions" in openings.json.
 QUESTIONS = {
+ # 24 September, after the first staff test: "when click on this it taking too long to open and would
+ # like this as a check in the email! It must be easy for a client!" The review form behind "Tell us
+ # more about yourself" became these checks, answered in the e-mail itself; the form stays one line
+ # away (the letter's "more" line) for a client who wants to write. Each answer is an ordinary tap,
+ # so a "could be better" or a change in their life reaches a person as a callme.
+ 'rating':     ('How have we looked after you so far?',
+                [('Very well', 'informed', 'rate_verywell'), ('Well', 'informed', 'rate_well'),
+                 ('Could be better', 'callme', 'rate_better')]),
+ 'life':       ('Has anything changed for you since you took out your policy?',
+                [('Yes: family, home or work', 'callme', 'life_changed'), ('No, nothing has changed', 'informed', 'life_same')]),
  'whopays':    ('Do you know who your policy pays today?',
                 [('Yes', 'informed', 'whopays_yes'), ('Not sure, check it for me', 'callme', 'whopays_unsure')]),
  'approached': ('Has anyone suggested you cancel, cash in or replace a policy?',
                 [('No', 'informed', 'approached_no'), ('Yes, talk to me first', 'urgent', 'approached_yes')]),
 }
+# asked only on the page a tap opens, where the answer helps the agent who calls
+REACH = ('What is the best way to reach you?',
+         [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
+# what the page says the moment a check is answered: what happens next, nothing more
+SAID_Q = {
+ 'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
+ 'rate_well':      'Thank you. If there is one thing we could do better, the full review below is the place to say it.',
+ 'rate_better':    'Thank you for telling us. Someone from the branch will call you today or tomorrow to hear what we should do better.',
+ 'life_changed':   'Thank you. Someone from the branch will call you today or tomorrow to check your cover still fits.',
+ 'life_same':      'Thank you. Nothing about your policy changes.',
+ 'whopays_yes':    'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
+ 'whopays_unsure': 'Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
+ 'approached_no':  'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
+ 'approached_yes': 'Thank you for telling us. Tell us what was suggested, and an agent calls you by the next working day, before you decide anything.',
+ 'reach_phone':    'Noted: we will call you.',
+ 'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
+ 'reach_email':    'Noted: we will write to you by e-mail.',
+}
+# and for a tap on its own
+TAP_SAID = {
+ 'informed': 'Noted, with thanks. Nothing about your policy changes.',
+ 'callme':   'Someone from the branch will call you, today or tomorrow, at a time you choose.',
+ 'urgent':   'We read it before we name anyone, and you have an agent by the next working day.',
+ 'review':   'It saves as you go, and a person goes through it with you if you would like one to.',
+ 'paid':     'We will check the record against your receipt and confirm within two working days.',
+ 'pay':      'We will call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'claim':    'We will bring the maturity form and walk it through with you.',
+ 'deliver':  'We will bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
+ 'finish':   'We will bring whatever is still needed to finish your application. You do not have to find anything.',
+ 'stop':     'Understood. We will close the file properly and confirm that nothing is owed.',
+ 'question': 'Reply to the e-mail this link came from and tell us the question. It reaches us the same day.',
+}
+BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
+
+
+def checks_head(qs):
+    return 'Quick checks, one tap each.' if len(qs) > 1 else 'One quick check, one tap.'
+
+
+MORE_ASK, MORE_LINK = 'Would you rather tell us in your own words?', 'The full review, about five minutes'
 
 
 def tap(cfg, r):
@@ -150,12 +200,21 @@ def questions_block(cfg):
     if not qs:
         return ''
     link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;'
-                                       f'border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">{label}</a>')
+                                       f'border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">{BOX}&nbsp;{label}</a>')
     rows = ''.join(f'''
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 {BODY};color:#12202e"><b>{q}</b><br>{''.join(link(*a) for a in answers)}</td></tr>''' for q, answers in qs)
     return f'''
-<p style="margin:4px 0 8px;font:600 14.5px/1.5 {BODY};color:#12202e">{'Two quick questions' if len(qs) > 1 else 'One quick question'}, one tap each.</p>
+<p style="margin:4px 0 8px;font:600 14.5px/1.5 {BODY};color:#12202e">{checks_head(qs)}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>'''
+
+
+def more_line(cfg):
+    """The full review, one line away, for a client who would rather write."""
+    if not cfg.get('more'):
+        return ''
+    return f'''
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#5d7186">{MORE_ASK}
+  <a href="{TAP}review" style="color:#07606f;font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>'''
 
 
 def act_block(cfg):
@@ -258,8 +317,8 @@ def letter_table(seg, cfg, preview=False):
   {facts_block(cfg)}
   {service_block(cfg, preview)}
   {act_block(cfg)}
-  {taps_block(cfg)}
-  {questions_block(cfg)}
+  {(questions_block(cfg) + taps_block(cfg)) if 'rating' in cfg.get('questions', []) else (taps_block(cfg) + questions_block(cfg))}
+  {more_line(cfg)}
   {FILM_LINE}
   {law_line(cfg)}
   {closing}
@@ -320,9 +379,9 @@ def plain_questions(cfg):
     qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
     if not qs:
         return ''
-    items = ''.join(f'<li><b>{q}</b><br>' + ' &middot; '.join(f'<a href="{TAP}{t}&q={a}">{label}</a>' for label, t, a in answers) + '</li>'
+    items = ''.join(f'<li><b>{q}</b><br>' + ' &nbsp; '.join(f'<a href="{TAP}{t}&q={a}">{BOX}&nbsp;{label}</a>' for label, t, a in answers) + '</li>'
                     for q, answers in qs)
-    return f'<p><b>{"Two quick questions" if len(qs) > 1 else "One quick question"}, one tap each.</b></p><ul>{items}</ul>'
+    return f'<p><b>{checks_head(qs)}</b></p><ul>{items}</ul>'
 
 
 # Lists, not tables: the connector allows no cellpadding or style, so a table's
@@ -345,6 +404,7 @@ def plain_letter(seg, cfg):
     taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
     urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own, now? <a href="{TAP}urgent"><b>Tell us your '
                                                  f'concerns first, and you have one the next working day&nbsp;&rarr;</b></a></p>')
+    tapsblock = f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}'
     law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
                                                    f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
                                                    f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
@@ -354,7 +414,8 @@ def plain_letter(seg, cfg):
             f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
             f'{cfg.get("notice_tail", "Your policy has not.")}</p>'
             f'<p>{cfg["open"]}</p>{facts}{act}'
-            f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}{plain_questions(cfg)}'
+            + (plain_questions(cfg) + tapsblock if 'rating' in cfg.get('questions', []) else tapsblock + plain_questions(cfg))
+            + (f'<p>{MORE_ASK} <a href="{TAP}review">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'{law}'
             f'<p>Your policy is looked after by the branch, and we are matching you to an agent of your own now. Tell us what you '
@@ -703,3 +764,31 @@ splice('orphan-transition/index.html', 'fields',
        ''.join(f'    <tr><td><code>{{{{{k}}}}}</code></td><td>{html.escape(v)}</td></tr>\n' for k, v in FIELDS.items()))
 splice('orphan-transition/team-review.html', 'letters',
        ''.join(card(seg, cfg, f'What they are glad to hear: {GLAD[seg]}.', True) for seg, cfg in SEGMENTS.items()))
+
+
+# ── the page a tap opens: /your-policy/ ──────────────────────────────
+# Records the answer at once and offers the letter's other checks, one tap
+# each. Its questions, and what it says after each answer, are written here
+# from the same QUESTIONS the letters use, so the page and the e-mails cannot
+# disagree about what was asked.
+def landing_checks():
+    data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
+                          'reach': [REACH[0], [list(a) for a in REACH[1]]]},
+            'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['approached']},
+            'said': SAID_Q, 'tap_said': TAP_SAID}
+    missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH] for a in ans if a[2] not in SAID_Q]
+    assert not missing, f'no thank-you line for {missing}'
+    return json.dumps(data, ensure_ascii=False)
+
+
+LANDING = ROOT / 'your-policy' / 'index.html'
+_src = LANDING.read_text(encoding='utf-8')
+_a, _b = '/* checks:start', '/* checks:end */'
+_i, _j = _src.find(_a), _src.find(_b)
+if _i < 0 or _j < _i:
+    print('  ! your-policy/index.html: no checks markers, left alone')
+else:
+    _line_end = _src.index('\n', _i)
+    _out = _src[:_line_end + 1] + f'var CHECKS = {landing_checks()};\n' + _src[_j:]
+    if _out != _src:
+        LANDING.write_text(_out, encoding='utf-8'); print('  your-policy/index.html: checks rewritten')

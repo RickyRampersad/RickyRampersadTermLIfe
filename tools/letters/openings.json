@@ -1,5 +1,5 @@
 {
- "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Twelve letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; and since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays. Every subject line is the notice itself, \"{{agent_or_rep}} has moved on.\" and a short tail (24 September 2026: \"on the subject line shall we put the names … more catchy\"): the agent's first name where the sheet has it, \"Your representative\" where it does not. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot, and tap_text relabels a tap for one letter without changing what it records. Beneath the facts, every letter carries the client's own record with the branch team (24 September 2026: \"they are to see us as from onboarding and a team service\"): documents handled, requests handled, premium reminders and the last birthday note, filled per client by service-record.py, a blank or zero cell cut like a blank fact; \"service\" lists the cells a letter shows, all four unless it says otherwise, and the premium and lapsed letters leave the reminders out. Days, dates and counts only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Twelve letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; and since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays. Every subject line is the notice itself, \"{{agent_or_rep}} has moved on.\" and a short tail (24 September 2026: \"on the subject line shall we put the names … more catchy\"): the agent's first name where the sheet has it, \"Your representative\" where it does not. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers, and tap_text relabels a tap for one letter without changing what it records; \"questions\" are the quick checks (one tap each, answered in the e-mail itself since 24 September 2026: \"would like this as a check in the email! It must be easy for a client\"), and \"more\" adds the one line to the full review for a client who wants to write. Beneath the facts, every letter carries the client's own record with the branch team (24 September 2026: \"they are to see us as from onboarding and a team service\"): documents handled, requests handled, premium reminders and the last birthday note, filled per client by service-record.py, a blank or zero cell cut like a blank fact; \"service\" lists the cells a letter shows, all four unless it says otherwise, and the premium and lapsed letters leave the reminders out. Days, dates and counts only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
  "A": {
   "name": "A policy has matured, or is about to",
   "subject": "{{agent_or_rep}} has moved on. The money in your policy has not.",
@@ -36,7 +36,7 @@
   "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
   "headline": "You chose us <em>recently.</em> We are choosing you back.",
-  "open": "Your policy is still new, and nothing about it has changed: same cover, same premium, same beneficiaries. We would love to hear how the start has been for you, in your own words, and what would make it better.",
+  "open": "Your policy is still new, and nothing about it has changed: same cover, same premium, same beneficiaries. We would love to hear how the start has been for you, and what would make it better.",
   "send": "In force, and the client's longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been.",
   "facts": [
    [
@@ -49,14 +49,16 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "questions": [
+   "rating",
+   "life",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "F2": {
   "name": "In force — two to three years",
@@ -76,14 +78,16 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "questions": [
+   "rating",
+   "life",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "F3": {
   "name": "In force — three to five years",
@@ -103,14 +107,16 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "questions": [
+   "rating",
+   "life",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "F4": {
   "name": "In force — five to ten years",
@@ -130,14 +136,16 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "questions": [
+   "rating",
+   "life",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "F5": {
   "name": "In force — ten years or more",
@@ -157,14 +165,16 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "questions": [
+   "rating",
+   "life",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "R1": {
   "name": "In force — cover started again in the last three years",
@@ -189,7 +199,6 @@
   ],
   "taps": [
    "callme",
-   "review",
    "urgent"
   ],
   "tap_text": {
@@ -199,9 +208,11 @@
    ]
   },
   "questions": [
+   "rating",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "R2": {
   "name": "In force — cover started again, more than three years ago",
@@ -226,7 +237,6 @@
   ],
   "taps": [
    "callme",
-   "review",
    "urgent"
   ],
   "tap_text": {
@@ -236,9 +246,11 @@
    ]
   },
   "questions": [
+   "rating",
    "whopays",
    "approached"
-  ]
+  ],
+  "more": true
  },
  "G": {
   "name": "Lapsed",
@@ -258,19 +270,20 @@
    ]
   ],
   "taps": [
-   "review",
    "urgent",
    "callme"
   ],
   "send": "A week behind the others.",
   "questions": [
+   "life",
    "approached"
   ],
   "service": [
    "svc_docs",
    "svc_requests",
    "svc_birthday"
-  ]
+  ],
+  "more": true
  },
  "I": {
   "name": "A premium showing as due",
