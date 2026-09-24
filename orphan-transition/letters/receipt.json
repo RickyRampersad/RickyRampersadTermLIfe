@@ -95,6 +95,18 @@
    "reach_email": [
     "What is the best way to reach you?",
     "E-mail"
+   ],
+   "when_morning": [
+    "When suits you best for a call?",
+    "Morning"
+   ],
+   "when_afternoon": [
+    "When suits you best for a call?",
+    "Afternoon"
+   ],
+   "when_evening": [
+    "When suits you best for a call?",
+    "Evening"
    ]
   },
   "taps": {

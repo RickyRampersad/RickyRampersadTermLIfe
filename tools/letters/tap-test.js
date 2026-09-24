@@ -60,7 +60,7 @@ const SEGS = JSON.parse(fs.readFileSync(ROOT + '/orphan-transition/letters/manif
         check(got.length === 1 && got[0].includes('r=' + r + '&') && got[0].includes('t=TESTTOKEN') && got[0].includes('s=' + seg) && (!q || got[0].includes('?q=' + q)),
               `${seg} ${r} ${q}: one beacon (${got.length})`);
         const asked = await page.$$eval('#qs .q b', bs => bs.map(b => b.textContent));
-        const expect = (CHECKS.segments[seg] || []).concat(['reach']).map(k => CHECKS.questions[k]).filter(Q => !Q[1].some(a => a[2] === q)).map(Q => Q[0]);
+        const expect = (CHECKS.segments[seg] || []).concat(['reach']).concat(r === 'callme' ? ['when'] : []).map(k => CHECKS.questions[k]).filter(Q => !Q[1].some(a => a[2] === q)).map(Q => Q[0]);
         check(JSON.stringify(asked) === JSON.stringify(expect), `${seg} ${r} ${q}: offers the other checks (${asked.length})`);
       }
       await page.close();

@@ -690,6 +690,29 @@ voice under the new timing and the caption gives it away.
   through the connector**, where nothing sends a receipt on its own.
   `tools/letters/…/svc/receipt-harness.js` in the session scratchpad runs
   `tReceiptMail_` in Node on sample taps and a sample review.
+- **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
+  ("When suits you best for a call?": morning, afternoon, evening) is asked
+  on the page a tap opens whenever the tap was `callme`, and appears the
+  moment an on-page answer brings a call, so the receipt's "at the time you
+  chose" is true. The answer rides `informed` with `q=when_*` and is
+  recapped like any other.
+- **The review's own e-mails go from support@ too, once Microsoft 365 is set
+  up.** `clientMail_` in Service.gs sends the questionnaire confirmation
+  ("your service questionnaire is in", with the reference and access code)
+  and the "Meet your agent" introduction through `tMsSend_` — which now
+  takes Blob attachments for the PDFs — when the three Script properties
+  exist, and from the script owner's account as before when they do not,
+  because the reference and access code must always reach the client. The
+  introduction is copied to `TRANSITION.CC`: it is the follow-through the
+  receipt promises in writing.
+- **The recommended send is in waves**, one letter family a day, so Client
+  Support reads the first day's responses before the next day's go out and
+  the calls arrive at a pace a team can keep: day 1 the premium-due,
+  application and ten-year letters (I, K, F5), day 2 F4 and F3, day 3 F2
+  with the check letters R1 and R2, day 4 F1, and the lapsed letters (G) a
+  week after day 1. The `Send on` column in the list carries the dates;
+  moving a wave is editing that column. The hourly send still paces each
+  day at sixty an hour.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel

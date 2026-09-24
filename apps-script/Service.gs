@@ -1367,14 +1367,27 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode, 
   if (letterPdf) atts.push(letterPdf);
   if (locatorPdf) atts.push(locatorPdf);
 
-  MailApp.sendEmail({
-    to: c.email,
-    name: SVC.FROM_NAME,
-    replyTo: SVC.AGENT_EMAIL,
-    subject: id.subject + ' (' + ref + ')',
-    htmlBody: html,
-    attachments: atts,
-  });
+  clientMail_({ to: c.email, subject: id.subject + ' (' + ref + ')', htmlBody: html, attachments: atts });
+}
+
+/** A client-facing e-mail: as support@rickyrampersadbranch.com through Microsoft
+ *  365 once Transition.gs is set up for it (every client e-mail goes out as the
+ *  branch mailbox, never from Gmail — 23 September 2026), else from the script
+ *  owner's account as before, so the reference and access code always reach
+ *  the client. `o`: to, subject, htmlBody, attachments (Blobs), cc. */
+function clientMail_(o) {
+  try {
+    if (typeof tMsSend_ === 'function' && typeof tMsCreds_ === 'function' && tMsCreds_()) {
+      tMsSend_(o.to, o.subject, o.htmlBody, {
+        cc: o.cc || [], attachments: o.attachments || [],
+        replyTo: (typeof TRANSITION !== 'undefined' && TRANSITION.MS_FROM) || SVC.AGENT_EMAIL,
+      });
+      return 'support@';
+    }
+  } catch (e) { log_('mail', 'ms-failed', String(e && e.message ? e.message : e)); }
+  MailApp.sendEmail({ to: o.to, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL, subject: o.subject,
+                      htmlBody: o.htmlBody, attachments: o.attachments || [] });
+  return 'gmail';
 }
 
 
@@ -1895,14 +1908,9 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
     sig_(),
     'Your agent is appointed', id);
 
-  MailApp.sendEmail({
-    to: email,
-    name: SVC.FROM_NAME,
-    replyTo: SVC.AGENT_EMAIL,
-    subject: 'Meet your agent: ' + agentName + ' (' + ref + ')',
-    htmlBody: html,
-    attachments: letter ? [letter] : [],
-  });
+  /* the introduction the receipt promised, in writing, from support@ with the branch copied */
+  clientMail_({ to: email, subject: 'Meet your agent: ' + agentName + ' (' + ref + ')', htmlBody: html,
+                attachments: letter ? [letter] : [], cc: (typeof TRANSITION !== 'undefined' && TRANSITION.CC) || [] });
 
   /* the sheet reflects the assignment, and the right chase arms itself */
   var set = function (h, val) {
