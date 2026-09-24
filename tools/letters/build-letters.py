@@ -203,8 +203,11 @@ def checks_first(cfg):
 # contract for cause and the client has to know who may no longer act for it. The words are the company's
 # own notice — terminated, with immediate effect, on a date, as a result of an investigation, not authorised —
 # and nothing about why. The name and the date come off the sheet at send time; neither lives here.
-NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agent, {{agent_name}}, with immediate effect on '
-            '{{terminated_on}}, as a result of an investigation.',
+# The name sits between the <!--agent--> marks like the standard notice's, because tLetters_ in
+# Transition.gs refuses any letter that carries {{agent_first_name}} without them; a T row with no
+# agent name is held by tHold_ before the cut could ever apply.
+NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
+            'with immediate effect on {{terminated_on}}, as a result of an investigation.',
             '{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your policy is '
             'not affected: it remains with Guardian Life, looked after by our branch team.')
 
