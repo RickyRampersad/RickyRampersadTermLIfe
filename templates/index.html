@@ -117,7 +117,7 @@
   <p class="sub">Under two minutes. It settles the client first, then what they already own, then the law as
     their right, then the agent. Every figure on screen is illustrative.</p>
   <div class="vwrap">
-    <video id="filmv" playsinline preload="metadata" poster="../orphan-video/poster.jpg" data-scenes="6.2,5.8,8.7,7.3,4.6,5.7,10.2,7.2,5,6.8,11.3,10.5,5.6,7.2,8.4,6" data-chapters="A Ricky Rampersad Branch film|What your policy is|Three things in your schedule|From the branch, every year|Now, what you already own|An honest mistake on the form|What may already be inside it|A policy cannot be moved|If a new one were bought|Already issued|The Insurance Act · Trinidad and Tobago|Three things you may ask for|Your rights, and then your policy|An agent of your own|Within two working days|Thank you for watching">
+    <video id="filmv" playsinline preload="metadata" poster="../orphan-video/poster.jpg">
       <source src="../orphan-video/rrb-orphan-video.mp4" type="video/mp4">
     </video>
     <div class="vcover" style="background-image:url(../orphan-video/poster.jpg)">
@@ -131,12 +131,14 @@
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
   <p class="sub">This is letter F1, the one most clients receive. Every letter has the same shape: a
-    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
-    taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
+    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, what
+    the branch team has done for them, the taps, the film in one line, and the sign-off. Only the opening, the
     facts and the taps differ.</p>
   <div class="fields"><b>The curly fields</b> &mdash; <code>{{first_name}}</code>, <code>{{first_year}}</code>, <code>{{issue_date}}</code>, <code>{{paid_to}}</code>, <code>{{days}}</code>, <code>{{projected_lapse}}</code>, <code>{{agent_first_name}}</code> &mdash; are filled per client at send time
     from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
-    strip. The logo loads from the site once the page is live.</div>
+    strip. <b>The gold panel</b> &mdash; <code>{{svc_docs}}</code>, <code>{{svc_requests}}</code>, <code>{{svc_reminders}}</code>, <code>{{svc_birthday}}</code> &mdash; is the client's own record with the branch team, from
+    the Log Book and Salesforce: a blank or zero drops its cell, and a client with nothing on record reads one
+    line about the team instead. The logo loads from the site once the page is live.</div>
   <div class="mail"><div class="in"><table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
 
 <tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
@@ -163,13 +165,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -191,12 +208,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -399,6 +410,21 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{first_year}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -426,12 +452,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -476,13 +496,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -504,12 +539,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -554,13 +583,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -582,12 +626,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -632,13 +670,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -660,12 +713,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -710,13 +757,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -738,12 +800,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -788,13 +844,28 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -816,12 +887,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -868,6 +933,21 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -880,7 +960,7 @@
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -896,12 +976,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -948,6 +1022,21 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -960,7 +1049,7 @@
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#ffffff;border:1px solid #cfe3ea;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -976,12 +1065,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -1026,13 +1109,26 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{paid_to}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="padding:0 0 8px">
   <a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=review" style="display:block;text-decoration:none;background:#eafafd;border:1px solid #8fd8e6;border-radius:10px;padding:12px 15px">
     <div style="font:800 15.5px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e">Tell us more about yourself&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.</div>
+    <div style="font:400 13px/1.45 Inter,Arial,sans-serif;color:#5d7186;margin-top:2px">A short form on what you hold and what matters to you. A person can go through it with you.</div>
   </a>
 </td></tr>
 <tr><td style="padding:0 0 8px">
@@ -1053,12 +1149,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -1105,6 +1195,19 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{projected_lapse}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
 <tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:12px 15px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#33465a">
   <b style="display:block;font:800 9.5px/1 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:6px">The Insurance Act &middot; Trinidad and Tobago</b>
@@ -1141,12 +1244,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
   <p style="margin:0 0 12px;font:400 14px/1.55 Inter,Arial,sans-serif;color:#33465a">Your policy is looked after by the branch, and we are matching you to
     an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>
@@ -1186,6 +1283,21 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{issue_date}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1214,12 +1326,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
@@ -1262,6 +1368,21 @@
       <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{app_received}}</div></td><!--/fact--></tr></table>
 </td></tr></table><!--/facts-->
   
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin:0 0 9px">Handled for you by our branch team</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr><!--fact:svc_docs--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Documents handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_docs}}</div></td><!--/fact--><!--fact:svc_requests--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Requests handled</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_requests}}</div></td><!--/fact--><!--fact:svc_reminders--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Premium reminders</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_reminders}}</div></td><!--/fact--><!--fact:svc_birthday--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 'Plus Jakarta Sans',Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:#8a6420">Last birthday note</div>
+      <div style="font:800 15px/1.3 'Plus Jakarta Sans',Arial,sans-serif;color:#12202e;margin-top:4px">{{svc_birthday}}</div></td><!--/fact--></tr></table>
+  <div style="font:400 12.5px/1.5 Inter,Arial,sans-serif;color:#5d7186;margin-top:9px">Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. The same team keeps your file today.</div>
+</td></tr></table><!--/facts-->
+  
   
 <p style="margin:0 0 10px;font:600 14.5px/1.5 Inter,Arial,sans-serif;color:#12202e">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
@@ -1291,12 +1412,6 @@
 <tr><td style="padding:0 0 10px;font:400 14px/1.45 Inter,Arial,sans-serif;color:#12202e"><b>Has anyone suggested you cancel, cash in or replace a policy?</b><br><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=informed&q=approached_no" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">No</a><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r=urgent&q=approached_yes" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">Yes, talk to me first</a></td></tr></table>
   
 <p style="margin:0 0 14px;font:600 13.5px/1.5 Inter,Arial,sans-serif"><a href="https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>
-  
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 Inter,Arial,sans-serif;color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>
   
 <p style="margin:0 0 14px;font:400 13px/1.5 Inter,Arial,sans-serif;color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.

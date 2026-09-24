@@ -556,9 +556,9 @@ voice under the new timing and the caption gives it away.
   paragraph of under 45 words, a strip of facts read off the Branch Portfolio
   sheet for that client (`{{paid_to}}`, `{{days}}`, `{{projected_lapse}}`,
   `{{first_year}}`, `{{issue_date}}`, `{{app_received}}` — days and dates,
-  never a money figure), the one-tap answers, the film in one line, the care
-  strip (welcome letter, premium reminder, birthday note, a person who
-  answers), and the closing. **The notice is the second thing the client
+  never a money figure), the client's own record with the branch team (see
+  below), the one-tap answers, the film in one line, and the closing.
+  **The notice is the second thing the client
   reads**, straight after "Dear": "Your representative, X, has moved on from
   Guardian Life. Your policy has not." — asked for in those terms on 22
   September ("now officially letting them know that the agents have moved
@@ -613,6 +613,37 @@ voice under the new timing and the caption gives it away.
   so the backend needed nothing new. "Yes, talk to me first" opens the
   review with *Has anyone been in touch* already answered Yes; a letter's
   client skips the individual-or-group choice (`type=individual`).
+- **Every letter shows the client their own record with the branch team.**
+  Asked for on 24 September ("they are to see us as from onboarding and a
+  team service, as we have all the data on service levels"). A gold panel
+  under the facts, "Handled for you by our branch team", one cell per count:
+  documents handled (the Log Book, by policy number), requests handled
+  (completed Salesforce service tasks), premium reminders, and the month of
+  the last birthday note. `tools/letters/service-record.py` writes them onto
+  the send list as `svc_docs`, `svc_requests`, `svc_reminders` and
+  `svc_birthday`; run it after `sendlist.py`, on the same copies, outside the
+  repository. A zero or a blank cuts its cell like a blank fact, and a client
+  with nothing on record reads one line about the team instead (between
+  `<!--nosvc-->` marks). The premium and lapsed letters leave the reminders
+  out: a count of reminders beside a premium still unpaid reads as a
+  reproach. **Only precise links count**, because the client reads the
+  numbers: their own portfolio record, their policy numbers, a contact whose
+  name is theirs, never an Account, which would lend one client a
+  household's or an employer's history. Every service task in the branch's
+  Salesforce was created by the branch team (sales support, the manager's
+  assistant, the personal assistants, the manager), none by an agent, which
+  is what lets the panel say "our branch team". Tasks begin in 2025 and the
+  Log Book in 2023, so a count understates a long relationship and never
+  overstates one. The pace line ("most within a working day") is the Log
+  Book's own: three documents in four went on to Guardian Life within one
+  working day in the twelve months to September 2026. Measure it again
+  before changing those words. The panel says what the team did, never what
+  anyone else would not do.
+- **Transition.gs stops a run on an unfilled field.** A letter on the site
+  carrying a `{{field}}` the pasted script does not know would reach the
+  client as `{{svc_docs}}`, so the send throws before the first one. The
+  copy in the project predates the service record: paste the current
+  `Transition.gs` before any send from Apps Script.
 - **The `review` tap opens the form.** "Tell us more about yourself"
   promises a short form, so the client page logs it and carries the client
   into the review, like `urgent`. Until 24 September it showed a thank-you

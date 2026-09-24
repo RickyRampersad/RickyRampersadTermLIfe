@@ -6,7 +6,9 @@ what this writes, until the Entra app lets Transition.gs send the branded letter
 The connector refuses anything outside p, br, a[href], b/strong, i/em, lists, headings, tables, hr and div,
 so these are the plain letters build-letters.py writes to orphan-transition/letters/plain/, filled the way
 Transition.gs fills the branded ones: a blank fact is cut out, the strip goes with its last fact, a row with
-no agent's first name still reads "Your representative has moved on".
+no agent's first name still reads "Your representative has moved on". The service record (the svc_ columns
+service-record.py adds) is cut the same way, a zero counting as blank, and where none of it is left the plain
+line about the branch team stands in.
 
 Client data never enters the repository: run this in a scratch directory and keep what it writes there.
 
@@ -25,19 +27,24 @@ PLAIN = HERE.parent.parent / 'orphan-transition' / 'letters' / 'plain'
 OPENINGS = json.loads((HERE / 'openings.json').read_text(encoding='utf-8'))
 # the visible copies on every client e-mail: TRANSITION.CC in Transition.gs, the manager's choice
 CC = ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com']
-FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date']
-FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date']
+SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday']   # the service record, from service-record.py
+FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date'] + SVC
+FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date'] + SVC
 ALLOWED = {'p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr', 'div', 'strike'}
 
 
 def fill(text, row):
-    v = lambda k: (row.get(k) or '').strip()
+    # a service count of nought is no record, not a record of nothing: its cell goes like a blank fact
+    v = lambda k: '' if k in SVC and re.fullmatch(r'0+', (row.get(k) or '').strip()) else (row.get(k) or '').strip()
     out = text
     for k in FACTS:
         if not v(k):
             out = re.sub(r'<!--fact:' + k + r'-->[\s\S]*?<!--/fact-->', '', out)
     out = re.sub(r'<!--facts-->([\s\S]*?)<!--/facts-->', lambda m: m.group(0) if '<!--fact:' in m.group(1) else '', out)
+    # the plain line about the team stands in only where the client's own record has gone
+    if '<!--svcpanel-->' in out:
+        out = re.sub(r'<!--nosvc-->[\s\S]*?<!--/nosvc-->', '', out)
     if not v('Agent first name'):
         out = re.sub(r'<!--agent-->[\s\S]*?<!--/agent-->', '', out)
     vals = {'first_name': v('First name'), 'agent_first_name': v('Agent first name'), 'token': v('Token'),
