@@ -4,9 +4,10 @@
 One compact shell, one opening per situation. The words live in
 openings.json beside this script; the shell lives here. Every letter is: a
 headline, one short paragraph, the facts read off the Branch Portfolio sheet
-for that client, the answers they can give with one tap, the film in one
-line, how the branch has looked after them, and the sign-off. Generated, not
-hand-typed, so a change to the shell reaches every letter in one run.
+for that client, what the branch team has done for them (their own record,
+from service-record.py), the answers they can give with one tap, the film in
+one line, and the sign-off. Generated, not hand-typed, so a change to the
+shell reaches every letter in one run.
 
 E-mail rules: 600px table, every style inline, the logo a hosted PNG — Gmail
 strips SVG and blocks data: URIs, so anything else arrives as an empty box.
@@ -54,6 +55,10 @@ FIELDS = {
  'maturity_date':    'the intelligence sheet or policy admin — not on the portfolio sheet',
  'token':            'the send list — opaque, never a policy number',
  'segment':          'the send list — the letter\'s own key',
+ 'svc_docs':         'service-record.py — documents on their policies in the Log Book, checked and sent on by the document team',
+ 'svc_requests':     'service-record.py — Salesforce service tasks the branch team completed for them',
+ 'svc_reminders':    'service-record.py — premium reminders sent to them',
+ 'svc_birthday':     'service-record.py — the month of their last birthday note',
 }
 
 # ── the taps a letter can offer ───────────────────────────────────────
@@ -61,7 +66,7 @@ TAPS = {
  'urgent':   ('I want an agent now. Let me tell you my concerns first',
               'Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.'),
  'review':   ('Tell us more about yourself',
-              'A short form on what you hold, and anything else that matters to you. A person goes through it with you, if you would like one to.'),
+              'A short form on what you hold and what matters to you. A person can go through it with you.'),
  'callme':   ('Call me', 'Today or tomorrow, at a time you choose.'),
  'claim':    ('Help me claim it', 'We bring the form and walk it through with you.'),
  'deliver':  ('Bring me my contract', 'By hand, and we go through it with you.'),
@@ -167,7 +172,7 @@ def act_block(cfg):
 
 
 def law_line(cfg):
-    """One line on the law, on every other letter, after the care strip."""
+    """One line on the law, on every other letter, after the film."""
     if cfg.get('mode') == 'premium':
         return ''
     return f'''
@@ -176,18 +181,52 @@ def law_line(cfg):
   <a href="{PROTECT}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>'''
 
 
-JOURNEY = f'''
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="border-top:1px solid #e0eaef;border-bottom:1px solid #e0eaef;padding:11px 0;font:400 13.5px/1.5 {BODY};color:#33465a">
-  <b style="color:#12202e">Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every
-  birthday, and a person who answers when you call. That is how this branch works, and it does not change.
-</td></tr></table>'''
+# ── the service record: what the branch team has done for this client ─
+# Asked for on 24 September 2026: the client should see a team that has been
+# there since the application, and the proof is in the branch's own records.
+# tools/letters/service-record.py fills one count per cell from the Log Book
+# and Salesforce, precise links only; a blank or zero cell is cut like a blank
+# fact, and the panel goes with its last cell. The panel says what the team did
+# and how fast it works, never what anyone else would or would not do. When a
+# client has nothing on record, the plain line between the <!--nosvc--> marks
+# stands in, and it claims nothing about that client in particular.
+# The pace is the Log Book's: in the twelve months to September 2026 three
+# documents in four went on to Guardian Life within one working day of reaching
+# the branch. Measure it again before changing the words.
+SVC_CELLS = {'svc_docs': 'Documents handled', 'svc_requests': 'Requests handled',
+             'svc_reminders': 'Premium reminders', 'svc_birthday': 'Last birthday note'}
+SVC_HEAD = 'Handled for you by our branch team'
+SVC_PACE = ('Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. '
+            'The same team keeps your file today.')
+SVC_NONE = ('Your file is kept by our branch team. Every form you send is checked by our document team before it goes to '
+            'Guardian Life, most within a working day, and a person answers when you call.')
+
+
+def svc_keys(cfg):
+    """The cells a letter shows. The premium and lapsed letters leave the reminders out: a count of
+    reminders beside a premium still unpaid reads as a reproach, whatever it means."""
+    return cfg.get('service', list(SVC_CELLS))
+
+
+def service_block(cfg, preview=False):
+    """preview: the team's page shows the panel alone, not the line that stands in for it."""
+    cells = ''.join(f'''<!--fact:{k}--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 9.5px/1.25 {HEAD};letter-spacing:.14em;text-transform:uppercase;color:#8a6420">{SVC_CELLS[k]}</div>
+      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{{{{{k}}}}}</div></td><!--/fact-->''' for k in svc_keys(cfg))
+    return f'''
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
+  <div style="font:800 13px/1.3 {HEAD};color:#12202e;margin:0 0 9px">{SVC_HEAD}</div>
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
+  <div style="font:400 12.5px/1.5 {BODY};color:#5d7186;margin-top:9px">{SVC_PACE}</div>
+</td></tr></table><!--/facts-->''' + ('' if preview else f'''<!--nosvc-->
+<p style="margin:0 0 14px;font:400 13.5px/1.5 {BODY};color:#33465a">{SVC_NONE}</p><!--/nosvc-->''')
 
 FILM_LINE = f'''
 <p style="margin:0 0 14px;font:600 13.5px/1.5 {BODY}"><a href="{FILM}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'''
 
 
-def letter_table(seg, cfg):
+def letter_table(seg, cfg, preview=False):
     """The 600px table: the e-mail's body, and what /templates shows."""
     # The notice is the official word that the representative has moved on, and
     # the reason the letter exists. It is the second thing the client reads,
@@ -217,11 +256,11 @@ def letter_table(seg, cfg):
   {notice}
   <p style="margin:0 0 14px">{cfg['open']}</p>
   {facts_block(cfg)}
+  {service_block(cfg, preview)}
   {act_block(cfg)}
   {taps_block(cfg)}
   {questions_block(cfg)}
   {FILM_LINE}
-  {JOURNEY}
   {law_line(cfg)}
   {closing}
   <p style="margin:14px 0 0;font:400 14px/1.5 {BODY};color:#12202e">
@@ -257,6 +296,7 @@ for seg, cfg in SEGMENTS.items():
     path.write_text(shell(seg, cfg), encoding='utf-8')
     manifest['letters'].append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'], 'preheader': cfg['preheader'],
                                 'file': path.name, 'facts': [v.strip('{}') for _, v in cfg.get('facts', [])],
+                                'service': svc_keys(cfg),
                                 'taps': cfg['taps'], 'tap_labels': {r: tap(cfg, r)[0] for r in cfg['taps']},
                                 'send_note': cfg['send']})
     print(f'  {seg:<3} {cfg["name"]:<38} → {path.name}')
@@ -285,11 +325,18 @@ def plain_questions(cfg):
     return f'<p><b>{"Two quick questions" if len(qs) > 1 else "One quick question"}, one tap each.</b></p><ul>{items}</ul>'
 
 
+def plain_service(cfg):
+    cells = ''.join(f'<!--fact:{k}--><td><b>{SVC_CELLS[k]}</b><br>{{{{{k}}}}}</td><!--/fact-->' for k in svc_keys(cfg))
+    return (f'<!--facts--><!--svcpanel--><p><b>{SVC_HEAD}</b></p><table><tr>{cells}</tr></table><p><i>{SVC_PACE}</i></p><!--/facts-->'
+            f'<!--nosvc--><p>{SVC_NONE}</p><!--/nosvc-->')
+
+
 def plain_letter(seg, cfg):
     facts = ''
     if cfg.get('facts'):
         cells = ''.join(f'<!--fact:{v.strip("{}")}--><td><b>{label}</b><br>{v}</td><!--/fact-->' for label, v in cfg['facts'])
         facts = f'<!--facts--><table><tr>{cells}</tr></table><!--/facts-->'
+    facts += plain_service(cfg)
     act = (f'<p><b>The Insurance Act &middot; Trinidad and Tobago</b><br><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
            f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
     taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
@@ -306,8 +353,7 @@ def plain_letter(seg, cfg):
             f'<p>{cfg["open"]}</p>{facts}{act}'
             f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}{plain_questions(cfg)}'
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
-            f'<p><b>Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every birthday, and a person '
-            f'who answers when you call. That is how this branch works, and it does not change.</p>{law}'
+            f'{law}'
             f'<p>Your policy is looked after by the branch, and we are matching you to an agent of your own now. Tell us what you '
             f'would like, and you have that agent within two working days.</p>'
             f'<p><b>Ricky Rampersad</b><br>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p><hr>'
@@ -366,10 +412,11 @@ openings = ''.join(f"""
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
     <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(cfg['subject'].replace('{{agent_or_rep}}', '[Agent’s first name]'))}</i></summary>
-    <div class="mail"><div class="in">{letter_table(seg, cfg)}</div></div>
+    <div class="mail"><div class="in">{letter_table(seg, cfg, True)}</div></div>
   </details>""" for seg, cfg in SEGMENTS.items())
 opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
 fieldlist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in ('first_name', 'first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'agent_first_name'))
+svclist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in SVC_CELLS)
 page = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -503,13 +550,15 @@ page = f"""<!DOCTYPE html>
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
   <p class="sub">This is letter {CORE}, the one most clients receive. Every letter has the same shape: a
-    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, the
-    taps, the film in one line, how the branch has looked after them, and the sign-off. Only the opening, the
+    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, what
+    the branch team has done for them, the taps, the film in one line, and the sign-off. Only the opening, the
     facts and the taps differ.</p>
   <div class="fields"><b>The curly fields</b> &mdash; {fieldlist} &mdash; are filled per client at send time
     from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
-    strip. The logo loads from the site once the page is live.</div>
-  <div class="mail"><div class="in">{letter_table(CORE, SEGMENTS[CORE])}</div></div>
+    strip. <b>The gold panel</b> &mdash; {svclist} &mdash; is the client's own record with the branch team, from
+    the Log Book and Salesforce: a blank or zero drops its cell, and a client with nothing on record reads one
+    line about the team instead. The logo loads from the site once the page is live.</div>
+  <div class="mail"><div class="in">{letter_table(CORE, SEGMENTS[CORE], True)}</div></div>
 </div></section>
 
 <section class="band" id="openings"><div class="wrap">

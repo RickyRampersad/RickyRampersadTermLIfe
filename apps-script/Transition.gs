@@ -69,13 +69,17 @@ var T_LIVE = 'transition_live';
 
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'Exclude', 'Reason', 'Test', 'Send on',
-  'Sent at', 'Status'];
-/* the merge fields a letter may carry, and the ones that sit in the facts strip */
+  'app_received', 'matured_on', 'maturity_date', 'svc_docs', 'svc_requests', 'svc_reminders',
+  'svc_birthday', 'Exclude', 'Reason', 'Test', 'Send on', 'Sent at', 'Status'];
+/* The client's own record with the branch team (tools/letters/service-record.py
+   fills these columns): cut cell by cell like a blank fact, a zero counting as
+   blank, and where none is left the plain line about the team stands in. */
+var T_SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday'];
+/* the merge fields a letter may carry, and the ones that sit in a strip */
 var T_FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date'];
+  'app_received', 'matured_on', 'maturity_date'].concat(T_SVC);
 var T_FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date'];
+  'app_received', 'matured_on', 'maturity_date'].concat(T_SVC);
 /* the columns a send depends on: read, checked or written on every row. Headers
    are matched on their exact text, so a tab imported with 'Excluded' or 'exclude'
    would make every held-back row due — tRead_ refuses to run without them. */
@@ -253,7 +257,10 @@ function tEsc_(s) {
 /** Fill one letter (or its subject) for one row. A fact whose field is blank
  *  is cut out between its markers; the strip goes when its last fact does. */
 function tFill_(text, row) {
-  var v = function (k) { return tText_(row[k]); };
+  var v = function (k) {
+    var s = tText_(row[k]);
+    return (T_SVC.indexOf(k) >= 0 && /^0+$/.test(s)) ? '' : s;   // no record is not a record of nothing
+  };
   var out = text;
   T_FACTS.forEach(function (k) {
     if (!v(k)) out = out.replace(new RegExp('<!--fact:' + k + '-->[\\s\\S]*?<!--/fact-->', 'g'), '');
@@ -261,6 +268,7 @@ function tFill_(text, row) {
   out = out.replace(/<!--facts-->([\s\S]*?)<!--\/facts-->/g, function (m, inner) {
     return /<!--fact:/.test(inner) ? m : '';
   });
+  if (/<!--svcpanel-->/.test(out)) out = out.replace(/<!--nosvc-->[\s\S]*?<!--\/nosvc-->/g, '');
   /* no agent first name on the row: "Your representative has moved on" still reads */
   if (!v('Agent first name')) out = out.replace(/<!--agent-->[\s\S]*?<!--\/agent-->/g, '');
   var map = {
@@ -372,7 +380,13 @@ function tSendRow_(row, letters) {
   var seg = tText_(row.Segment).toUpperCase();
   var L = letters[seg];
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
-  tMsSend_(tText_(row.Email), subject, tFill_(L.html, row), tClientOpts_());
+  var html = tFill_(L.html, row);
+  /* A field this script does not know goes out as {{name}} in the client's own
+     letter. That means the letters on the site are newer than this file: stop
+     the run rather than send one, and paste the current Transition.gs. */
+  var left = (subject + html).match(/\{\{\w+\}\}/);
+  if (left) throw new Error('Letter ' + seg + ' carries ' + left[0] + ', which this script cannot fill: paste the current Transition.gs. Nothing was sent.');
+  tMsSend_(tText_(row.Email), subject, html, tClientOpts_());
   return 'sent';
 }
 
@@ -750,6 +764,7 @@ function transitionPreviewToMe() {
       'Agent first name': '[first name]', first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
       paid_to: new Date(2026, 7, 1), days: 52, projected_lapse: new Date(2026, 10, 30),
       app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1),
+      svc_docs: 6, svc_requests: 3, svc_reminders: 8, svc_birthday: 'March 2026',
     };
     var html = tFill_(L.html, row);
     var subject = '[preview ' + seg + '] ' + tFill_(L.subject, row);
