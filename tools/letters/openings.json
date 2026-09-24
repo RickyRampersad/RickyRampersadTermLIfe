@@ -1,8 +1,8 @@
 {
- "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Twelve letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; and since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot, and tap_text relabels a tap for one letter without changing what it records. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Twelve letters: five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; and since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays. Every subject line is the notice itself, \"{{agent_or_rep}} has moved on.\" and a short tail (24 September 2026: \"on the subject line shall we put the names … more catchy\"): the agent's first name where the sheet has it, \"Your representative\" where it does not. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers at the foot, and tap_text relabels a tap for one letter without changing what it records. Days and dates only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
  "A": {
   "name": "A policy has matured, or is about to",
-  "subject": "A policy of yours has matured, or is about to",
+  "subject": "{{agent_or_rep}} has moved on. The money in your policy has not.",
   "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
   "headline": "Your policy has <em>matured,</em> or is about to.",
   "open": "It has reached the end of its term, or is about to, and the money is yours. We want it to reach you without delay, and we would like to sit with you and talk through what comes next.",
@@ -26,11 +26,14 @@
    "urgent",
    "callme"
   ],
-  "send": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
+  "send": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents.",
+  "questions": [
+   "approached"
+  ]
  },
  "F1": {
   "name": "In force — under two years",
-  "subject": "Your policy is new, and so is our promise to you",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
   "headline": "You chose us <em>recently.</em> We are choosing you back.",
   "open": "Your policy is still new, and nothing about it has changed: same cover, same premium, same beneficiaries. We would love to hear how the start has been for you, in your own words, and what would make it better.",
@@ -49,11 +52,15 @@
    "review",
    "urgent",
    "callme"
+  ],
+  "questions": [
+   "whopays",
+   "approached"
   ]
  },
  "F2": {
   "name": "In force — two to three years",
-  "subject": "Two years in, and your cover is unchanged. How are we doing?",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
   "headline": "A couple of years in, and <em>just getting started.</em>",
   "open": "Nothing about your cover has changed. Same policy, same premium, same beneficiaries. This is a good moment to check it still fits your life, so tell us what has changed for you and how we could look after you better.",
@@ -72,11 +79,15 @@
    "review",
    "urgent",
    "callme"
+  ],
+  "questions": [
+   "whopays",
+   "approached"
   ]
  },
  "F3": {
   "name": "In force — three to five years",
-  "subject": "Your policy is unchanged. Tell us how the last few years have been.",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Everything your policy has built is still yours. We would like your view.",
   "headline": "A few years of cover, <em>still yours.</em>",
   "open": "Everything your policy has built over the last few years is still yours, and nothing about it has changed. We would like to hear how those years have gone for you, and what you want from us next.",
@@ -95,11 +106,15 @@
    "review",
    "urgent",
    "callme"
+  ],
+  "questions": [
+   "whopays",
+   "approached"
   ]
  },
  "F4": {
   "name": "In force — five to ten years",
-  "subject": "Years of cover, unchanged. We would value your view.",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
   "headline": "Years of cover, and <em>nothing lost.</em>",
   "open": "You have trusted us with your cover for years, and every one of them still counts. Nothing about your policy has changed. Tell us how we have done over that time, and what would make the years ahead better.",
@@ -118,11 +133,15 @@
    "review",
    "urgent",
    "callme"
+  ],
+  "questions": [
+   "whopays",
+   "approached"
   ]
  },
  "F5": {
   "name": "In force — ten years or more",
-  "subject": "More than ten years together. Thank you, and one question.",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "Every year of your cover is still yours. Your view matters most to us.",
   "headline": "More than ten years <em>together.</em> Thank you.",
   "open": "More than a decade of cover, and every year of it is still yours. Nothing about your policy has changed. You have been with us longer than most, so your view matters most: tell us how we have done.",
@@ -141,11 +160,15 @@
    "review",
    "urgent",
    "callme"
+  ],
+  "questions": [
+   "whopays",
+   "approached"
   ]
  },
  "R1": {
   "name": "In force — cover started again in the last three years",
-  "subject": "Your cover started again recently. Let us check it with you.",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
   "headline": "A fresh start deserves <em>a careful check.</em>",
   "open": "Our records show cover of yours that ended and started again in the last three years. A new policy starts some of its protections from day one, so we would like to check your file with you, free, and confirm who your policy pays.",
@@ -174,11 +197,15 @@
     "Check my file with me",
     "A person sets out what you hold, what carried over and who it pays, then calls at a time you choose."
    ]
-  }
+  },
+  "questions": [
+   "whopays",
+   "approached"
+  ]
  },
  "R2": {
   "name": "In force — cover started again, more than three years ago",
-  "subject": "Years with us. Let us make sure every one of them still counts.",
+  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
   "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
   "headline": "Years with us, and <em>every one should count.</em>",
   "open": "You have been with Guardian Life for years, and our records show cover of yours that ended and started again along the way. We would like to go through your file together, free: what carried over, what started again, and who your policy pays.",
@@ -207,11 +234,15 @@
     "Check my file with me",
     "A person sets out what you hold, what carried over and who it pays, then calls at a time you choose."
    ]
-  }
+  },
+  "questions": [
+   "whopays",
+   "approached"
+  ]
  },
  "G": {
   "name": "Lapsed",
-  "subject": "A policy you wrote off may still be worth something",
+  "subject": "{{agent_or_rep}} has moved on. Your policy may still hold value.",
   "preheader": "A policy that stopped does not always stop being worth something.",
   "headline": "A policy you may have <em>written off.</em>",
   "open": "A policy that stopped being paid does not always stop mattering. Some still hold a value that belongs to you. Some can simply be started again. We would like to sit with you and find out which is true of yours.",
@@ -231,11 +262,14 @@
    "urgent",
    "callme"
   ],
-  "send": "A week behind the others."
+  "send": "A week behind the others.",
+  "questions": [
+   "approached"
+  ]
  },
  "I": {
   "name": "A premium showing as due",
-  "subject": "A premium is showing as due. One tap puts it right.",
+  "subject": "{{agent_or_rep}} has moved on. A premium is showing as due.",
   "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
   "headline": "A premium is showing as <em>due.</em>",
   "open": "Nothing to worry about yet. It is usually one of three simple things: paid and not yet recorded, a change in how you pay, or it simply slipped past. Tap below and tell us which, and we take it from there.",
@@ -261,11 +295,15 @@
   "mode": "premium",
   "act": "Premiums or other payments due that are received by an agency, brokerage or a sales representative on behalf of an insurer shall be deemed to be received by the insurer notwithstanding any conditions or stipulations to the contrary.",
   "plain": "A premium you handed to a registered representative counts as paid to Guardian Life. Keep the receipt. And before anything can be forfeited, you must receive a written notice and twenty business days from it.",
-  "send": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days."
+  "send": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.",
+  "questions": [
+   "whopays",
+   "approached"
+  ]
  },
  "J": {
   "name": "Contract ready, not yet delivered",
-  "subject": "Your contract is ready. We will bring it to you.",
+  "subject": "{{agent_or_rep}} has moved on. Your contract is ready.",
   "preheader": "Your policy is in force. The document itself has not reached you yet.",
   "headline": "Your policy is in force. Your <em>contract</em> is ready.",
   "open": "Your contract itself simply has not reached you yet, and we would like to put that right in person. We will bring it to you and go through every page together. All we need back is your acknowledgement that you received it.",
@@ -280,11 +318,15 @@
    "urgent",
    "callme"
   ],
-  "send": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
+  "send": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent.",
+  "questions": [
+   "whopays",
+   "approached"
+  ]
  },
  "K": {
   "name": "An application still in progress",
-  "subject": "Your application: where it stands, and who is finishing it",
+  "subject": "{{agent_or_rep}} has moved on. Your application has not.",
   "preheader": "It has not been forgotten. Whatever is still needed, we bring to you.",
   "headline": "Your application is <em>still in progress.</em>",
   "open": "This one is ours to finish, not yours to chase, and it has not been forgotten. If anything is still needed, a signature, a medical, a document, we will bring it to you ourselves rather than ask you to go looking.",
@@ -300,6 +342,9 @@
    "callme",
    "stop"
   ],
-  "send": "From the pending list. Every file is read before the call."
+  "send": "From the pending list. Every file is read before the call.",
+  "questions": [
+   "approached"
+  ]
  }
 }

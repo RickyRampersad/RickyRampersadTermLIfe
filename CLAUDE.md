@@ -594,6 +594,25 @@ voice under the new timing and the caption gives it away.
   difference. A letter can reword a tap for itself (`tap_text` in
   openings.json — R1 and R2 call `callme` "Check my file with me") without
   changing what the tap records, so no backend change is needed for it.
+- **Every subject line is the notice.** Decided 24 September ("on the
+  subject line shall we put the names … more catchy"): `{{agent_or_rep}} has
+  moved on.` and a short tail — "Your policy has not." on the in-force and
+  check letters, the urgent point on the action letters. `{{agent_or_rep}}`
+  is the agent's first name, or "Your representative" when the sheet has
+  none, filled by `fill-plain.py` and by `tFill_` in Transition.gs alike.
+  "Moved on", never "left": the notice's own words, nothing more.
+- **Two questions, one tap each, under the taps.** Asked for the same day —
+  questions that would show a client what nobody had told them. A letter
+  may not say or suggest that; it asks what the client knows, and an honest
+  "not sure" makes the point by itself: *Do you know who your policy pays
+  today?* (in-force letters) and *Has anyone suggested you cancel, cash in
+  or replace a policy?* (every letter). Each answer rides an existing tap —
+  `informed` for Yes/No, `callme` for "Not sure, check it for me", `urgent`
+  for "Yes, talk to me first" — with the answer itself in `q=`, which the
+  client page puts in the Page column of Client Responses (`…?q=whopays_unsure`),
+  so the backend needed nothing new. "Yes, talk to me first" opens the
+  review with *Has anyone been in touch* already answered Yes; a letter's
+  client skips the individual-or-group choice (`type=individual`).
 - **The `review` tap opens the form.** "Tell us more about yourself"
   promises a short form, so the client page logs it and carries the client
   into the review, like `urgent`. Until 24 September it showed a thank-you
@@ -653,8 +672,26 @@ voice under the new timing and the caption gives it away.
   which sends from the personal Google account that owns the script and
   allows about a hundred recipients a day, every CC counted — two copies on
   every letter would have held the send to some twenty-five letters a day.
-  The mailbox's display name read "querymypolicy.com" and must read "Ricky
-  Rampersad Branch" before a client letter goes. Internal mail (the digest,
+  The mailbox's display name read "querymypolicy.com" until 24 September
+  2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
+  Users → Active users → Edit user → Display name); the address did not
+  change and must not — the letters send from it.
+  **Until the Entra app exists, the letters go through the Claude Microsoft
+  365 connector instead** (24 September 2026: "I don't know how to do the
+  Entra, it's complicated, can you just work with what we have"). The
+  connector is signed in as support@; it could only read mail until the
+  admin granted it consent through the admin-consent link for its app, which
+  added Mail.Send and Mail.ReadWrite. It sends from support@, saves to Sent
+  Items and keeps the visible CC, but it accepts only p, br, a, b/strong,
+  i/em, lists, headings, tables, hr and div — no logo, no colours — so it
+  sends the plain letters `build-letters.py` writes to
+  `orphan-transition/letters/plain/`, filled per row by
+  `tools/letters/fill-plain.py` (run in a scratch directory; it holds the
+  same rows the sender would hold and checks every body against that
+  allowlist). A Claude session sends them one by one; nothing is automatic
+  on this route, and client receipts go only when a session sends them. The
+  eight staff tests went this way on 24 September; no client letter goes
+  without the manager's word. Internal mail (the digest,
   the late nudges) still goes through MailApp. The older service e-mails in
   `Service.gs` (the daily follow-up's "still on it" notes, the six-month and
   birthday reviews) still send from Gmail, so the `dailyServiceFollowUp`

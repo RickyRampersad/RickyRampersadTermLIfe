@@ -266,6 +266,7 @@ function tFill_(text, row) {
   var map = {
     first_name: v('First name'),          // blank never reaches here: tHold_ keeps the row back
     agent_first_name: v('Agent first name'),
+    agent_or_rep: v('Agent first name') || 'Your representative',   // the subject line: the name, or the notice's own words
     token: v('Token'),
     segment: v('Segment').toUpperCase(),
   };
