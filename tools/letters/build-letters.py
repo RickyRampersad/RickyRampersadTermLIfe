@@ -234,6 +234,53 @@ for seg, cfg in SEGMENTS.items():
 (OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1), encoding='utf-8')
 print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
 
+
+# ── the plain letters: the same words, for the Microsoft 365 connector ─
+# The connector that sends as support@ accepts p, br, a[href], b/strong, i/em,
+# lists, headings, tables, hr and div, and nothing else: no images, no style=,
+# no span. So the logo and the colours cannot travel that way, and these carry
+# the letter's words, facts, taps and links in those tags only (24 September
+# 2026, when the Entra app for the branded send was not yet set up). Same
+# fact and agent markers as the branded letters, so tools/letters/fill-plain.py
+# fills them exactly as Transition.gs fills the others.
+PLAIN = OUT / 'plain'
+PLAIN.mkdir(exist_ok=True)
+
+
+def plain_letter(seg, cfg):
+    facts = ''
+    if cfg.get('facts'):
+        cells = ''.join(f'<!--fact:{v.strip("{}")}--><td><b>{label}</b><br>{v}</td><!--/fact-->' for label, v in cfg['facts'])
+        facts = f'<!--facts--><table><tr>{cells}</tr></table><!--/facts-->'
+    act = (f'<p><b>The Insurance Act &middot; Trinidad and Tobago</b><br><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
+           f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
+    taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
+    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own, now? <a href="{TAP}urgent"><b>Tell us your '
+                                                 f'concerns first, and you have one the next working day&nbsp;&rarr;</b></a></p>')
+    law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
+                                                   f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
+                                                   f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
+    return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
+            f'<h2>{cfg["headline"]}</h2>'
+            f'<p>Dear {{{{first_name}}}},</p>'
+            f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
+            f'{cfg.get("notice_tail", "Your policy has not.")}</p>'
+            f'<p>{cfg["open"]}</p>{facts}{act}'
+            f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}'
+            f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
+            f'<p><b>Since you joined us:</b> a welcome letter, a reminder before every premium, a note on every birthday, and a person '
+            f'who answers when you call. That is how this branch works, and it does not change.</p>{law}'
+            f'<p>Your policy is looked after by the branch, and we are matching you to an agent of your own now. Tell us what you '
+            f'would like, and you have that agent within two working days.</p>'
+            f'<p><b>Ricky Rampersad</b><br>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p><hr>'
+            f'<p><i>Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are '
+            f'deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.</i></p>\n')
+
+
+for seg, cfg in SEGMENTS.items():
+    (PLAIN / f'{seg}.html').write_text(plain_letter(seg, cfg), encoding='utf-8')
+print(f'wrote {len(SEGMENTS)} plain letters to {PLAIN}')
+
 # ── /templates: the one page for the team ────────────────────────────
 # One letter in full, every opening, the film above, one verdict form
 # beneath, the full set folded away. Generated with the letters so it can
