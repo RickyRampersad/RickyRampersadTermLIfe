@@ -29,7 +29,8 @@ OPENINGS = json.loads((HERE / 'openings.json').read_text(encoding='utf-8'))
 CC = ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com']
 SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday']   # the service record, from service-record.py
 FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date'] + SVC
-FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date'] + SVC
+FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date',
+          'terminated_on'] + SVC   # terminated_on: letter T only, the date from Guardian Life's own notice
 ALLOWED = {'p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr', 'div', 'strike'}
 
@@ -49,6 +50,7 @@ def fill(text, row):
         out = re.sub(r'<!--agent-->[\s\S]*?<!--/agent-->', '', out)
     vals = {'first_name': v('First name'), 'agent_first_name': v('Agent first name'), 'token': v('Token'),
             'agent_or_rep': v('Agent first name') or 'Your representative',
+            'agent_name': v('Agent') or v('Agent first name') or 'Your representative',   # letter T: the full name, as the sheet spells it
             'segment': v('Segment').upper(), **{k: v(k) for k in FIELDS}}
     out = re.sub(r'\{\{(\w+)\}\}', lambda m: html.escape(vals[m.group(1)]) if m.group(1) in vals else m.group(0), out)
     out = re.sub(r'<!--[\s\S]*?-->', '', out)            # the markers have done their job; the connector refuses comments

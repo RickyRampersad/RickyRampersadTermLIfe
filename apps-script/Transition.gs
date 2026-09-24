@@ -53,7 +53,7 @@ var TRANSITION = {
   BATCH: 60,                 // the most one hourly run will send
   HOURS: [9, 17],            // sends only between these hours, script time zone
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
-  ORDER: ['I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the action letters first; F1…F5 sort as F, R1 and R2 as R
+  ORDER: ['T', 'I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the terminated-contract notice, then the action letters; F1…F5 sort as F, R1 and R2 as R
   DIGEST_TO: '',             // blank = the script owner
   DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
   COPY_TO: '',               // blank = SVC.AGENT_EMAIL. Where the internal "late" nudges go.
@@ -77,14 +77,16 @@ var T_LIVE = 'transition_live';
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
   'app_received', 'matured_on', 'maturity_date', 'svc_docs', 'svc_requests', 'svc_reminders',
-  'svc_birthday', 'Exclude', 'Reason', 'Test', 'Send on', 'Sent at', 'Status'];
+  'svc_birthday', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on', 'Sent at', 'Status'];
 /* The client's own record with the branch team (tools/letters/service-record.py
    fills these columns): cut cell by cell like a blank fact, a zero counting as
    blank, and where none is left the plain line about the team stands in. */
 var T_SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday'];
-/* the merge fields a letter may carry, and the ones that sit in a strip */
+/* the merge fields a letter may carry, and the ones that sit in a strip.
+   terminated_on is letter T's alone: the date Guardian Life terminated the
+   agent's contract, from its own notice, filled from the sheet like the name. */
 var T_FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date'].concat(T_SVC);
+  'app_received', 'matured_on', 'maturity_date', 'terminated_on'].concat(T_SVC);
 var T_FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse',
   'app_received', 'matured_on', 'maturity_date'].concat(T_SVC);
 /* the columns a send depends on: read, checked or written on every row. Headers
@@ -292,6 +294,7 @@ function tFill_(text, row) {
     first_name: v('First name'),          // blank never reaches here: tHold_ keeps the row back
     agent_first_name: v('Agent first name'),
     agent_or_rep: v('Agent first name') || 'Your representative',   // the subject line: the name, or the notice's own words
+    agent_name: v('Agent') || v('Agent first name') || 'Your representative',   // letter T: the full name, as the sheet spells it
     token: v('Token'),
     segment: v('Segment').toUpperCase(),
   };
@@ -313,6 +316,10 @@ function tHold_(row, letters) {
   if (!letters[seg]) return 'no letter for segment ' + seg;
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tText_(row.Email))) return 'no e-mail';
   if (!tText_(row['First name'])) return 'no first name';
+  /* letter T names the agent and the date the contract was terminated in its
+     first line: without both it would read as a blank, so the row is held */
+  if (seg === 'T' && !tText_(row['Agent first name'])) return 'no agent name';
+  if (seg === 'T' && !tText_(row.terminated_on)) return 'no termination date';
   return '';
 }
 
@@ -940,7 +947,8 @@ function transitionPreviewToMe() {
     var L = letters[seg];
     var row = {
       Token: 'PREVIEW', Segment: seg, 'First name': 'Sample', Email: me,
-      'Agent first name': '[first name]', first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
+      'Agent first name': '[first name]', Agent: '[full name]', terminated_on: new Date(2026, 8, 9),
+      first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
       paid_to: new Date(2026, 7, 1), days: 52, projected_lapse: new Date(2026, 10, 30),
       app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1),
       svc_docs: 6, svc_requests: 3, svc_reminders: 8, svc_birthday: 'March 2026',

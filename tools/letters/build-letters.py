@@ -59,6 +59,8 @@ FIELDS = {
  'svc_requests':     'service-record.py — Salesforce service tasks the branch team completed for them',
  'svc_reminders':    'service-record.py — premium reminders sent to them',
  'svc_birthday':     'service-record.py — the month of their last birthday note',
+ 'agent_name':       'Agent — the full name as the sheet spells it; letter T only, in the subject and the notice',
+ 'terminated_on':    'the send list — the date Guardian Life terminated the contract, from its own notice; letter T only',
 }
 
 # ── the taps a letter can offer ───────────────────────────────────────
@@ -102,7 +104,16 @@ QUESTIONS = {
                 [('Yes', 'informed', 'whopays_yes'), ('Not sure, check it for me', 'callme', 'whopays_unsure')]),
  'approached': ('Has anyone suggested you cancel, cash in or replace a policy?',
                 [('No', 'informed', 'approached_no'), ('Yes, talk to me first', 'urgent', 'approached_yes')]),
+ # letter T only (24 September 2026): whether the agent whose contract was terminated has been in touch
+ # since. The page a tap opens and the receipt ask it in these words; the letter names the agent and the
+ # date (LETTER_Q). "Yes" brings a call, and the call comes before anything else.
+ 'contact':    ('Has your former agent been in touch with you since their contract ended?',
+                [('No', 'informed', 'contact_no'), ('Yes, call me', 'callme', 'contact_yes')]),
 }
+# A question's words on the letter alone, where a merge field may appear. The page a tap opens cannot fill
+# one, and a field inside the receipt's recap would stop the receipt (Transition.gs refuses to send one with a
+# field left), so everything that reaches the page or the receipt stays in QUESTIONS' own words.
+LETTER_Q = {'contact': 'Has {{agent_first_name}} been in touch with you since {{terminated_on}}?'}
 # asked only on the page a tap opens, where the answer helps the agent who calls
 REACH = ('What is the best way to reach you?',
          [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
@@ -120,6 +131,8 @@ SAID_Q = {
  'whopays_unsure': 'Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
  'approached_no':  'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
  'approached_yes': 'Thank you for telling us. Tell us what was suggested. A person reads it and calls you before you decide anything.',
+ 'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
+ 'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'reach_phone':    'Noted: we will call you.',
  'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
  'reach_email':    'Noted: we will write to you by e-mail.',
@@ -172,12 +185,28 @@ NEXT_Q = {
  'life_changed':   'Someone from the branch calls you today or tomorrow to check your cover still fits your life.',
  'whopays_unsure': 'We check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
  'approached_yes': 'A person reads what was suggested and calls you before you decide anything.',
+ 'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
 }
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
 
 
 def checks_head(qs):
     return 'Quick checks, one tap each.' if len(qs) > 1 else 'One quick check, one tap.'
+
+
+def checks_first(cfg):
+    """The checks above the taps where the letter's point is a question: the feedback letters (rating) and letter T."""
+    return 'rating' in cfg.get('questions', []) or bool(cfg.get('checks_first'))
+
+
+# Letter T (24 September 2026): the one letter that names an agent, because Guardian Life terminated the
+# contract for cause and the client has to know who may no longer act for it. The words are the company's
+# own notice — terminated, with immediate effect, on a date, as a result of an investigation, not authorised —
+# and nothing about why. The name and the date come off the sheet at send time; neither lives here.
+NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agent, {{agent_name}}, with immediate effect on '
+            '{{terminated_on}}, as a result of an investigation.',
+            '{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your policy is '
+            'not affected: it remains with Guardian Life, looked after by our branch team.')
 
 
 MORE_ASK, MORE_LINK = 'Would you rather tell us in your own words?', 'The full review, about five minutes'
@@ -257,7 +286,7 @@ def taps_block(cfg):
 
 def questions_block(cfg):
     """The quick checks: each answer a pill with a box to tick."""
-    qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
+    qs = [(LETTER_Q.get(q, QUESTIONS[q][0]), QUESTIONS[q][1]) for q in cfg.get('questions', [])]
     if not qs:
         return ''
     link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
@@ -366,10 +395,12 @@ def letter_table(seg, cfg, preview=False):
     # not missed; the film's own line answers it: the policy has not.
     # The name sits between <!--agent--> marks so the sender can drop it when the
     # row carries none: "Your representative has moved on" still reads.
+    words = (f'<b style="color:{INK}">{NOTICE_T[0]}</b> {NOTICE_T[1]}' if cfg.get('notice') == 'terminated' else
+             f'<b style="color:{INK}">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>\n'
+             f"    {cfg.get('notice_tail', 'Your policy has not.')}")
     notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
     <td bgcolor="#f4f8fa" style="background:#f4f8fa;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:12px 16px;font:400 15px/1.55 {BODY};color:{BODYC}">
-    <b style="color:{INK}">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>
-    {cfg.get('notice_tail', 'Your policy has not.')}</td></tr></table>"""
+    {words}</td></tr></table>"""
     headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.
@@ -394,7 +425,7 @@ def letter_table(seg, cfg, preview=False):
   {facts_block(cfg)}
   {service_block(cfg, preview)}
   {act_block(cfg)}
-  {(questions_block(cfg) + taps_block(cfg)) if 'rating' in cfg.get('questions', []) else (taps_block(cfg) + questions_block(cfg))}
+  {(questions_block(cfg) + taps_block(cfg)) if checks_first(cfg) else (taps_block(cfg) + questions_block(cfg))}
   {more_line(cfg)}
   {FILM_LINE}
   {law_line(cfg)}
@@ -462,7 +493,7 @@ PLAIN.mkdir(exist_ok=True)
 
 
 def plain_questions(cfg):
-    qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
+    qs = [(LETTER_Q.get(q, QUESTIONS[q][0]), QUESTIONS[q][1]) for q in cfg.get('questions', [])]
     if not qs:
         return ''
     items = ''.join(f'<li><b>{q}</b><br>' + ' &nbsp; '.join(f'<a href="{TAP}{t}&q={a}">{BOX}&nbsp;{label}</a>' for label, t, a in answers) + '</li>'
@@ -477,6 +508,13 @@ def plain_service(cfg):
     items = ''.join(f'<!--fact:{k}--><li>{SVC_CELLS[k]}: <b>{{{{{k}}}}}</b></li><!--/fact-->' for k in svc_keys(cfg))
     return (f'<!--facts--><!--svcpanel--><h3>{SVC_HEAD}</h3><ul>{items}</ul><p><i>{SVC_PACE}</i></p><!--/facts-->'
             f'<!--nosvc--><p>{SVC_NONE}</p><!--/nosvc-->')
+
+
+def plain_notice(cfg):
+    if cfg.get('notice') == 'terminated':
+        return f'<p><b>{NOTICE_T[0]}</b> {NOTICE_T[1]}</p>'
+    return (f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
+            f'{cfg.get("notice_tail", "Your policy has not.")}</p>')
 
 
 def plain_letter(seg, cfg):
@@ -497,10 +535,9 @@ def plain_letter(seg, cfg):
     return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
             f'<h2>{cfg["headline"]}</h2>'
             f'<p>Dear {{{{first_name}}}},</p>'
-            f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
-            f'{cfg.get("notice_tail", "Your policy has not.")}</p>'
+            f'{plain_notice(cfg)}'
             f'<p>{cfg["open"]}</p>{facts}{act}'
-            + (plain_questions(cfg) + tapsblock if 'rating' in cfg.get('questions', []) else tapsblock + plain_questions(cfg))
+            + (plain_questions(cfg) + tapsblock if checks_first(cfg) else tapsblock + plain_questions(cfg))
             + (f'<p>{MORE_ASK} <a href="{TAP}review">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'{law}'
@@ -523,8 +560,14 @@ print(f'wrote {len(SEGMENTS)} plain letters to {PLAIN}')
 # afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F1'   # the in-force version most clients on the nine books receive
-WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve'}
+WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen'}
 NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
+
+
+def show(s):
+    """A subject or an opening as the team's page prints it: the merge fields in brackets."""
+    return (s.replace('{{agent_or_rep}}', '[Agent’s first name]').replace('{{agent_first_name}}', '[Agent’s first name]')
+             .replace('{{agent_name}}', '[Agent’s name]').replace('{{terminated_on}}', '[date]'))
 WHO = {'A': 'a client with a policy that has matured, or matures within six months',
        'F1': 'a client in force whose longest-held policy is under two years old',
        'F2': 'a client in force whose longest-held policy is two to three years old',
@@ -536,7 +579,8 @@ WHO = {'A': 'a client with a policy that has matured, or matures within six mont
        'G': 'a client whose policy lapsed',
        'I': 'a client with a premium due more than sixty days, by the Days column',
        'J': 'a client whose policy is in force but whose contract has not reached them',
-       'K': 'a client whose application is still in progress'}
+       'K': 'a client whose application is still in progress',
+       'T': 'every client on the book of an agent whose contract Guardian Life terminated, whatever they hold'}
 GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'F1': 'their new policy is unchanged, and someone is looking after it from the start',
         'F2': 'nothing has changed, and it is a good moment to check the cover still fits their life',
@@ -548,20 +592,21 @@ GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'G': 'a policy they wrote off may still hold value',
         'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
         'J': 'the policy is in force, and the branch is bringing the contract',
-        'K': 'the file is being finished for them, not chased'}
+        'K': 'the file is being finished for them, not chased',
+        'T': 'their policy is unaffected, the branch team handles everything directly, and a person calls first if they have been contacted'}
 openings = ''.join(f"""
   <div class="op" id="{seg}">
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
-    <div class="subj">{html.escape(cfg['subject'].replace('{{agent_or_rep}}', '[Agent’s first name]'))}</div>
+    <div class="subj">{html.escape(show(cfg['subject']))}</div>
     <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
-    <div class="ps"><p>{cfg['open']}</p></div>
+    <div class="ps"><p>{show(cfg['open'])}</p></div>
     <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
     <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}{(' &middot; Asks: ' + ' / '.join(QUESTIONS[q][0] for q in cfg.get('questions', []))) if cfg.get('questions') else ''}</div>
     <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
   </div>""" for seg, cfg in SEGMENTS.items())
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
-    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(cfg['subject'].replace('{{agent_or_rep}}', '[Agent’s first name]'))}</i></summary>
+    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(show(cfg['subject']))}</i></summary>
     <div class="mail"><div class="in">{letter_table(seg, cfg, True)}</div></div>
   </details>""" for seg, cfg in SEGMENTS.items())
 opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
@@ -673,7 +718,8 @@ page = f"""<!DOCTYPE html>
   <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
   <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
     changes, with what they hold, and the facts in it are read off the sheet for that client. Every letter
-    ends in taps they can answer with one thumb. Not one word in any of it is about who left.</p>
+    ends in taps they can answer with one thumb. Not one word in any of it is about who left, with one exception:
+    letter T carries Guardian Life's own notice that an agent's contract was terminated, in the notice's words and no others.</p>
   <div class="steps">
     <a href="#film"><b>1 &middot; two minutes</b>The film</a>
     <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
@@ -841,7 +887,7 @@ def splice(rel, tag, body):
 def card(seg, cfg, note, blank):
     tgt = ' target="_blank"' if blank else ''
     return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])}</div>'
-            f'<b>{html.escape(cfg["subject"].replace("{{agent_or_rep}}", "[Agent’s first name]"))}</b><span>{html.escape(note)}</span></a>\n')
+            f'<b>{html.escape(show(cfg["subject"]))}</b><span>{html.escape(note)}</span></a>\n')
 
 
 splice('orphan-transition/index.html', 'letters',

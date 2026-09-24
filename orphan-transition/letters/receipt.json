@@ -27,7 +27,8 @@
   "rate_better": "Someone from the branch calls you today or tomorrow to hear what we should do better.",
   "life_changed": "Someone from the branch calls you today or tomorrow to check your cover still fits your life.",
   "whopays_unsure": "We check who your policy pays and go through it with you by phone, once we have confirmed it is you.",
-  "approached_yes": "A person reads what was suggested and calls you before you decide anything."
+  "approached_yes": "A person reads what was suggested and calls you before you decide anything.",
+  "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us."
  },
  "still": {
   "subject": "Still on it, {{first_name}}.",
@@ -84,6 +85,14 @@
     "Has anyone suggested you cancel, cash in or replace a policy?",
     "Yes, talk to me first"
    ],
+   "contact_no": [
+    "Has your former agent been in touch with you since their contract ended?",
+    "No"
+   ],
+   "contact_yes": [
+    "Has your former agent been in touch with you since their contract ended?",
+    "Yes, call me"
+   ],
    "reach_phone": [
     "What is the best way to reach you?",
     "Phone call"
@@ -130,6 +139,10 @@
    },
    "R2": {
     "callme": "Check my file with me"
+   },
+   "T": {
+    "callme": "Call me about my policy",
+    "paid": "I have paid a premium that is not showing"
    }
   }
  },

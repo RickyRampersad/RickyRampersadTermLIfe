@@ -533,7 +533,9 @@ voice under the new timing and the caption gives it away.
 - **Nothing names or characterises anyone who left.** "Your representative
   has moved on from Guardian Life" is the whole reference — in every letter,
   page, film line and script. No reason, no tone, and no warning that someone
-  may approach the client: ask whether someone has, never say who might.
+  may approach the client: ask whether someone has, never say who might. The
+  one exception is letter T, for a contract Guardian Life terminated in
+  writing: see its own bullet below.
 - **Segment counts, client names and per-book figures stay outside the
   repository.** The segment file, merge file, send list, deep-dive report and
   household list are built in the session scratchpad from the Branch
@@ -565,8 +567,9 @@ voice under the new timing and the caption gives it away.
   on, that important letter"). It is in the shell, once, in the same words
   on every letter; an opening never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
-- **Twelve letters: five situations, the in-force letter in five tenure
-  versions, and two check letters.** Condensed to six on 22 September ("condense the amount of
+- **Thirteen letters: five situations, the in-force letter in five tenure
+  versions, two check letters, and T for a terminated contract (its own
+  bullet below).** Condensed to six on 22 September ("condense the amount of
   letters so we will be focused"); on 23 September the in-force letter was
   split by how long the client has held their longest in-force policy —
   "we have banded 5 so each is different, wanting feedback with a catchy
@@ -594,6 +597,30 @@ voice under the new timing and the caption gives it away.
   difference. A letter can reword a tap for itself (`tap_text` in
   openings.json — R1 and R2 call `callme` "Check my file with me") without
   changing what the tap records, so no backend change is needed for it.
+- **Letter T names the agent, and it is the one letter that does.** Decided
+  24 September 2026 on Guardian Life's own written notice that it had
+  terminated an agent's contract with immediate effect following an
+  investigation: every client on that book must know who may no longer act
+  for Guardian Life ("his clients get a notification he was terminated with
+  immediate effect … and is not authorised to conduct any business on behalf
+  of Guardian Life"). The notice card and the subject carry the company's
+  notice and nothing else: the contract was terminated, on a date, as a
+  result of an investigation, and the agent is not authorised to act. Never
+  why, never the grounds, never anyone else's name. `{{agent_name}}` and
+  `{{terminated_on}}` are filled from the sheet (the Agent column and a
+  `terminated_on` column, letter T only), so neither the name nor the date
+  is in the repository; a T row without either is held. The letter asks
+  whether the agent has been in touch since that date (`contact`: the agent
+  is named on the letter through `LETTER_Q`, and the page and the receipt
+  ask it in neutral words, because a merge field inside the recap would
+  stop the receipt); "Yes" brings a call before anything else. It carries a
+  `paid` tap for a premium handed over that is not showing, its checks sit
+  above the taps (`checks_first`), and its rows sort first (`ORDER`). The
+  subject says "no longer with Guardian Life", not "no longer with us",
+  which reads as a death. Compliance sees the words before that batch goes.
+  The rule that nothing characterises anyone who left holds everywhere
+  else, and this letter goes only to a book whose agent Guardian Life
+  itself terminated in writing.
 - **The branded letter is the design; the plain letter is what the connector
   can carry.** Design pass of 24 September ("polish up the fonts and make it
   more appealing and graphical, a wow template"): a navy hero with the

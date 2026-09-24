@@ -17,7 +17,9 @@
   "svc_docs": "service-record.py \u2014 documents on their policies in the Log Book, checked and sent on by the document team",
   "svc_requests": "service-record.py \u2014 Salesforce service tasks the branch team completed for them",
   "svc_reminders": "service-record.py \u2014 premium reminders sent to them",
-  "svc_birthday": "service-record.py \u2014 the month of their last birthday note"
+  "svc_birthday": "service-record.py \u2014 the month of their last birthday note",
+  "agent_name": "Agent \u2014 the full name as the sheet spells it; letter T only, in the subject and the notice",
+  "terminated_on": "the send list \u2014 the date Guardian Life terminated the contract, from its own notice; letter T only"
  },
  "taps": {
   "urgent": "I want an agent now. Let me tell you my concerns first",
@@ -352,6 +354,36 @@
     "stop": "I would rather not proceed"
    },
    "send_note": "From the pending list. Every file is read before the call."
+  },
+  {
+   "segment": "T",
+   "name": "The agent's contract was terminated",
+   "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life.",
+   "preheader": "Your policy is unaffected. Please read what has changed, and tell us if you have been contacted.",
+   "file": "T.html",
+   "facts": [
+    "first_year",
+    "paid_to",
+    "days",
+    "projected_lapse",
+    "app_received"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "taps": [
+    "callme",
+    "paid",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Call me about my policy",
+    "paid": "I have paid a premium that is not showing",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "Every client on the book of an agent whose contract Guardian Life terminated, whatever they hold; the name and the date are read off the sheet (Agent, terminated_on). Goes before every other letter. The notice is in Guardian Life's own words and says nothing about why; Compliance reads it before the batch."
   }
  ]
 }

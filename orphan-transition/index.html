@@ -306,7 +306,7 @@
   </table>
   <div class="box note">
     <h3>The rule for the waterfall</h3>
-    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet delivered (J), a premium due (I: a policy the sheet flags <b>Overdue</b>, more than sixty on its <b>Days</b> column). Then: Death flag &rarr; matured or maturing within six months (A) &rarr; in force with cover that ended and started again (R1, R2) &rarr; in force (F1&ndash;F5, by how long the client has held their longest policy) &rarr; lapsed (G) &rarr; nothing (no letter). A client gets one letter. <b>Twelve letters</b>: condensed to six on 22 September so the team reads one page, then the in-force letter split into five tenure versions on 23 September, each asking for the client's view, and on 24 September two check letters for clients whose cover ended and started again. The segment file is built outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse Date, Issue Date, App Received Date), the contracts-given-to-agent list and the pending list, with the maturity date from policy admin. Counts and names never come into this repository.</p>
+    <p style="margin:0">The action letters come first: an application in progress (K), a contract not yet delivered (J), a premium due (I: a policy the sheet flags <b>Overdue</b>, more than sixty on its <b>Days</b> column). Then: Death flag &rarr; matured or maturing within six months (A) &rarr; in force with cover that ended and started again (R1, R2) &rarr; in force (F1&ndash;F5, by how long the client has held their longest policy) &rarr; lapsed (G) &rarr; nothing (no letter). A client gets one letter. <b>Thirteen letters</b>: condensed to six on 22 September so the team reads one page, then the in-force letter split into five tenure versions on 23 September, each asking for the client's view, on 24 September two check letters for clients whose cover ended and started again, and the same day letter T for every client on the book of an agent whose contract Guardian Life terminated in writing: it carries the company's own notice, with the name and the date read off the sheet, and goes before every other letter. The segment file is built outside the repository from the Branch Portfolio sheet (Status, Paid To Date, Days, Projected Lapse Date, Issue Date, App Received Date), the contracts-given-to-agent list and the pending list, with the maturity date from policy admin. Counts and names never come into this repository.</p>
   </div>
 </div></section>
 
@@ -329,6 +329,7 @@
     <a class="letter" href="letters/I.html"><div class="s">I &middot; A premium showing as due</div><b>[Agent’s first name] has moved on. A premium is showing as due.</b><span>More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.</span></a>
     <a class="letter" href="letters/J.html"><div class="s">J &middot; Contract ready, not yet delivered</div><b>[Agent’s first name] has moved on. Your contract is ready.</b><span>From the contracts-given-to-agent list. Delivered within the week by the receiving agent.</span></a>
     <a class="letter" href="letters/K.html"><div class="s">K &middot; An application still in progress</div><b>[Agent’s first name] has moved on. Your application has not.</b><span>From the pending list. Every file is read before the call.</span></a>
+    <a class="letter" href="letters/T.html"><div class="s">T &middot; The agent&#x27;s contract was terminated</div><b>Your Guardian Life agent [Agent’s name] is no longer with Guardian Life.</b><span>Every client on the book of an agent whose contract Guardian Life terminated, whatever they hold; the name and the date are read off the sheet (Agent, terminated_on). Goes before every other letter. The notice is in Guardian Life&#x27;s own words and says nothing about why; Compliance reads it before the batch.</span></a>
   <!-- letters:end -->
   </div>
   <div class="box note">
@@ -376,6 +377,8 @@
     <tr><td><code>{{svc_requests}}</code></td><td>service-record.py — Salesforce service tasks the branch team completed for them</td></tr>
     <tr><td><code>{{svc_reminders}}</code></td><td>service-record.py — premium reminders sent to them</td></tr>
     <tr><td><code>{{svc_birthday}}</code></td><td>service-record.py — the month of their last birthday note</td></tr>
+    <tr><td><code>{{agent_name}}</code></td><td>Agent — the full name as the sheet spells it; letter T only, in the subject and the notice</td></tr>
+    <tr><td><code>{{terminated_on}}</code></td><td>the send list — the date Guardian Life terminated the contract, from its own notice; letter T only</td></tr>
   <!-- fields:end -->
   </table>
 </div></section>
