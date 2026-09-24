@@ -157,8 +157,25 @@ for _seg, _cfg in SEGMENTS.items():
 
 # ── the shell ─────────────────────────────────────────────────────────
 # Inline styles throughout: e-mail clients strip <style> blocks unpredictably.
-HEAD = "'Plus Jakarta Sans',Arial,sans-serif"
-BODY = "Inter,Arial,sans-serif"
+# The design pass of 24 September 2026 ("polish up the fonts and make it more
+# appealing and graphical, a wow template"): a navy hero carrying the headline
+# and the brand, the notice in a gold-edged card, the service record as stat
+# tiles, the checks as pills, the taps as one navy and one white card, and the
+# film as a picture with a play badge. All of it tables, inline styles and
+# hosted images, which is what an e-mail can carry; nothing here needs a
+# script or a stylesheet to read.
+#
+# The fonts: the branch face (Plus Jakarta Sans, Inter) where a mail app will
+# load it — Apple Mail and iOS Mail honour the <link> in the head — and the
+# phone's own face everywhere else: San Francisco, Segoe UI, Roboto. Arial is
+# the last resort, not the first, as it was before.
+HEAD = "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+BODY = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+FONTS = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;600;700&display=swap'
+NAVY, GOLD, GOLD2, TEAL, TDARK = '#07131f', '#efc24b', '#c9942c', '#00CFEA', '#07606f'
+INK, BODYC, DIM, LINE = '#12202e', '#33465a', '#5d7186', '#cfe3ea'
+# the film card: one picture, rendered by tools/letters/film-card.js from film-card.html
+FILM_CARD = 'https://rickyrampersadbranch.com/orphan-video/film-card.jpg'
 
 
 def facts_block(cfg):
@@ -167,77 +184,84 @@ def facts_block(cfg):
     <!--fact:key--> marks, and the strip goes with the last cell."""
     if not cfg.get('facts'):
         return ''
-    cells = ''.join(f'''<!--fact:{val.strip('{}')}--><td style="padding:0 20px 0 0;vertical-align:top">
-      <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#07606f">{label}</div>
-      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{val}</div></td><!--/fact-->''' for label, val in cfg['facts'])
-    return f'''
+    cells = ''.join(f"""<!--fact:{val.strip('{}')}--><td style="padding:0 22px 0 0;vertical-align:top">
+      <div style="font:700 9.5px/1.2 {HEAD};letter-spacing:.16em;text-transform:uppercase;color:{TDARK}">{label}</div>
+      <div style="font:800 16px/1.3 {HEAD};color:{INK};margin-top:4px">{val}</div></td><!--/fact-->""" for label, val in cfg['facts'])
+    return f"""
 <!--facts--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="background:#f4f8fa;border-radius:10px;padding:12px 16px">
+<tr><td bgcolor="#f4f8fa" style="background:#f4f8fa;border-radius:12px;padding:13px 18px">
   <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
-</td></tr></table><!--/facts-->'''
+</td></tr></table><!--/facts-->"""
 
 
 def taps_block(cfg):
-    rows = ''.join(f'''
-<tr><td style="padding:0 0 8px">
-  <a href="{TAP}{r}" style="display:block;text-decoration:none;background:{'#eafafd' if i == 0 else '#ffffff'};border:1px solid {'#8fd8e6' if i == 0 else '#cfe3ea'};border-radius:10px;padding:12px 15px">
-    <div style="font:800 15.5px/1.3 {HEAD};color:#12202e">{tap(cfg, r)[0]}&nbsp;&rarr;</div>
-    <div style="font:400 13px/1.45 {BODY};color:#5d7186;margin-top:2px">{tap(cfg, r)[1]}</div>
+    """The one-thumb answers: the first as a navy card with a gold title, the
+    rest white, so the eye lands on the one that matters most on that letter."""
+    rows = ''
+    for i, r in enumerate(cfg['taps']):
+        bg, border, title, text = (NAVY, NAVY, GOLD, '#c6d6e4') if i == 0 else ('#ffffff', LINE, INK, DIM)
+        rows += f"""
+<tr><td style="padding:0 0 9px">
+  <a href="{TAP}{r}" style="display:block;text-decoration:none;background:{bg};border:1.5px solid {border};border-radius:13px;padding:14px 17px">
+    <div style="font:800 16px/1.3 {HEAD};color:{title}">{tap(cfg, r)[0]}&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.5 {BODY};color:{text};margin-top:3px">{tap(cfg, r)[1]}</div>
   </a>
-</td></tr>''' for i, r in enumerate(cfg['taps']))
+</td></tr>"""
     # every letter carries the door into the questionnaire, as a card where it
     # is one of the taps and as a single line where it is not
-    urgent_line = '' if 'urgent' in cfg['taps'] else f'''
-<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#5d7186">Would you rather have an agent of your own, now?
-  <a href="{TAP}urgent" style="color:#07606f;font-weight:700;text-decoration:none">Tell us your concerns first, and you have one the next working day&nbsp;&rarr;</a></p>'''
-    return f'''
-<p style="margin:0 0 10px;font:600 14.5px/1.5 {BODY};color:#12202e">One tap tells us what you would like. We do the rest.</p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 {'14' if urgent_line else '14'}px">{rows}</table>{urgent_line}'''
+    urgent_line = '' if 'urgent' in cfg['taps'] else f"""
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:{DIM}">Would you rather have an agent of your own, now?
+  <a href="{TAP}urgent" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and you have one the next working day&nbsp;&rarr;</a></p>"""
+    return f"""
+<p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">One tap tells us what you would like. We do the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
 
 
 def questions_block(cfg):
+    """The quick checks: each answer a pill with a box to tick."""
     qs = [QUESTIONS[q] for q in cfg.get('questions', [])]
     if not qs:
         return ''
-    link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:6px 8px 0 0;padding:7px 12px;'
-                                       f'border:1px solid #cfe3ea;border-radius:8px;color:#07606f;font-weight:700;text-decoration:none">{BOX}&nbsp;{label}</a>')
-    rows = ''.join(f'''
-<tr><td style="padding:0 0 10px;font:400 14px/1.45 {BODY};color:#12202e"><b>{q}</b><br>{''.join(link(*a) for a in answers)}</td></tr>''' for q, answers in qs)
-    return f'''
-<p style="margin:4px 0 8px;font:600 14.5px/1.5 {BODY};color:#12202e">{checks_head(qs)}</p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>'''
+    link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
+                                       f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
+                                       f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
+    rows = ''.join(f"""
+<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{q}<div style="margin-top:7px">{''.join(link(*a) for a in answers)}</div></td></tr>""" for q, answers in qs)
+    return f"""
+<p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">{checks_head(qs)}</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 10px">{rows}</table>"""
 
 
 def more_line(cfg):
     """The full review, one line away, for a client who would rather write."""
     if not cfg.get('more'):
         return ''
-    return f'''
-<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#5d7186">{MORE_ASK}
-  <a href="{TAP}review" style="color:#07606f;font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>'''
+    return f"""
+<p style="margin:0 0 16px;font:400 13px/1.5 {BODY};color:{DIM}">{MORE_ASK}
+  <a href="{TAP}review" style="color:{TDARK};font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>"""
 
 
 def act_block(cfg):
     """The Act's own words, on the premium letters, right above the taps."""
     if cfg.get('mode') != 'premium':
         return ''
-    return f'''
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="background:#f5fbfd;border-left:3px solid #00CFEA;padding:12px 15px;font:400 13px/1.5 {BODY};color:#33465a">
-  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#07606f;margin-bottom:6px">The Insurance Act &middot; Trinidad and Tobago</b>
-  <span style="display:block;font:600 13.5px/1.5 {HEAD};color:#12202e">&ldquo;{cfg['act']}&rdquo;</span>
-  <span style="display:block;margin-top:6px">{cfg['plain']} <a href="{PROTECT}" style="color:#07606f;font-weight:700;text-decoration:none">Everything else the law gives you&nbsp;&rarr;</a></span>
-</td></tr></table>'''
+    return f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td bgcolor="#f3fbfd" style="background:#f3fbfd;border-left:4px solid {TEAL};border-radius:0 12px 12px 0;padding:13px 16px;font:400 13px/1.55 {BODY};color:{BODYC}">
+  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:7px">The Insurance Act &middot; Trinidad and Tobago</b>
+  <span style="display:block;font:700 13.5px/1.5 {HEAD};color:{INK}">&ldquo;{cfg['act']}&rdquo;</span>
+  <span style="display:block;margin-top:7px">{cfg['plain']} <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">Everything else the law gives you&nbsp;&rarr;</a></span>
+</td></tr></table>"""
 
 
 def law_line(cfg):
     """One line on the law, on every other letter, after the film."""
     if cfg.get('mode') == 'premium':
         return ''
-    return f'''
-<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
+    return f"""
+<p style="margin:0 0 14px;font:400 13px/1.55 {BODY};color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
   set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
-  <a href="{PROTECT}" style="color:#07606f;font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>'''
+  <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>"""
 
 
 # ── the service record: what the branch team has done for this client ─
@@ -268,52 +292,67 @@ def svc_keys(cfg):
 
 
 def service_block(cfg, preview=False):
-    """preview: the team's page shows the panel alone, not the line that stands in for it."""
-    cells = ''.join(f'''<!--fact:{k}--><td style="padding:0 18px 0 0;vertical-align:top">
-      <div style="font:800 9.5px/1.25 {HEAD};letter-spacing:.14em;text-transform:uppercase;color:#8a6420">{SVC_CELLS[k]}</div>
-      <div style="font:800 15px/1.3 {HEAD};color:#12202e;margin-top:4px">{{{{{k}}}}}</div></td><!--/fact-->''' for k in svc_keys(cfg))
-    return f'''
-<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
-<tr><td style="background:#fff9ea;border:1px solid #efd9a0;border-radius:10px;padding:12px 16px">
-  <div style="font:800 13px/1.3 {HEAD};color:#12202e;margin:0 0 9px">{SVC_HEAD}</div>
-  <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
-  <div style="font:400 12.5px/1.5 {BODY};color:#5d7186;margin-top:9px">{SVC_PACE}</div>
-</td></tr></table><!--/facts-->''' + ('' if preview else f'''<!--nosvc-->
-<p style="margin:0 0 14px;font:400 13.5px/1.5 {BODY};color:#33465a">{SVC_NONE}</p><!--/nosvc-->''')
+    """The stat tiles. preview: the team's page shows the panel alone, not the line that stands in for it."""
+    cells = ''.join(f"""<!--fact:{k}--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 21px/1.1 {HEAD};color:{INK};letter-spacing:-.3px">{{{{{k}}}}}</div>
+      <div style="font:700 9.5px/1.3 {HEAD};letter-spacing:.12em;text-transform:uppercase;color:#8a6420;margin-top:5px">{SVC_CELLS[k]}</div></td><!--/fact-->""" for k in svc_keys(cfg))
+    return f"""
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:14px;padding:14px 18px 13px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+    <td style="width:22px;padding-right:8px"><img src="{LOGO}" width="22" height="22" alt="" style="display:block;border-radius:5px"></td>
+    <td style="font:800 13.5px/1.3 {HEAD};color:{INK}">{SVC_HEAD}</td></tr></table>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:11px"><tr>{cells}</tr></table>
+  <div style="font:400 12.5px/1.5 {BODY};color:{DIM};margin-top:11px;padding-top:9px;border-top:1px solid #f0dca6">{SVC_PACE}</div>
+</td></tr></table><!--/facts-->""" + ('' if preview else f"""<!--nosvc-->
+<p style="margin:0 0 16px;font:400 13.5px/1.55 {BODY};color:{BODYC}">{SVC_NONE}</p><!--/nosvc-->""")
 
-FILM_LINE = f'''
-<p style="margin:0 0 14px;font:600 13.5px/1.5 {BODY}"><a href="{FILM}" style="color:#07606f;text-decoration:none">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'''
+
+# The film, as a picture with a play badge and a navy caption bar. The picture
+# is the one hosted image besides the logo; when a mail app holds images back,
+# the caption still carries the link and the alt text says what it is.
+FILM_LINE = f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td style="line-height:0;border-radius:14px 14px 0 0;overflow:hidden"><a href="{FILM}" style="display:block;line-height:0">
+  <img src="{FILM_CARD}" width="556" alt="The film: two minutes on what carries on either way, and what is already inside your policy" style="display:block;width:100%;max-width:556px;height:auto;border:0;border-radius:14px 14px 0 0"></a></td></tr>
+<tr><td bgcolor="{NAVY}" style="background:{NAVY};padding:11px 16px;border-radius:0 0 14px 14px"><a href="{FILM}" style="text-decoration:none;font:700 13.5px/1.45 {BODY};color:#eaf4ff">
+  <span style="color:{GOLD}">&#9654;</span>&nbsp; Watch: two minutes on what carries on either way, and what is already inside your policy&nbsp;<span style="color:{GOLD}">&rarr;</span></a></td></tr>
+</table>"""
 
 
 def letter_table(seg, cfg, preview=False):
     """The 600px table: the e-mail's body, and what /templates shows."""
     # The notice is the official word that the representative has moved on, and
     # the reason the letter exists. It is the second thing the client reads,
-    # once, in the same words on every letter, and the film's own line answers
-    # it: the policy has not.
+    # once, in the same words on every letter, in a gold-edged card so it is
+    # not missed; the film's own line answers it: the policy has not.
     # The name sits between <!--agent--> marks so the sender can drop it when the
     # row carries none: "Your representative has moved on" still reads.
-    notice = f'''<p style="margin:0 0 12px"><b style="color:#12202e">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>
-    {cfg.get('notice_tail', 'Your policy has not.')}</p>'''
+    notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
+    <td bgcolor="#f4f8fa" style="background:#f4f8fa;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:12px 16px;font:400 15px/1.55 {BODY};color:{BODYC}">
+    <b style="color:{INK}">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>
+    {cfg.get('notice_tail', 'Your policy has not.')}</td></tr></table>"""
+    headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.
-    closing = f'''<p style="margin:0 0 12px;font:400 14px/1.55 {BODY};color:#33465a">Your policy is looked after by the branch, and we are matching you to
-    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>'''
-    return f'''<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:10px;overflow:hidden">
+    closing = f"""<p style="margin:0 0 6px;font:400 14.5px/1.6 {BODY};color:{BODYC}">Your policy is looked after by the branch, and we are matching you to
+    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>"""
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
 
-<tr><td style="background:#07131f;padding:14px 22px;border-bottom:3px solid #efc24b">
-  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
-    <td style="width:30px;padding-right:10px"><img src="{LOGO}" width="30" height="30" alt="" style="display:block;border-radius:7px"></td>
-    <td style="font:800 13px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br>
-      <span style="font:500 10.5px/1.3 {BODY};color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+<tr><td bgcolor="{NAVY}" class="hero" style="background:{NAVY};background-image:linear-gradient(150deg,#0c2434 0%,{NAVY} 55%,#040d16 100%);padding:20px 26px 22px;border-bottom:3px solid {GOLD}">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td style="width:38px;padding-right:11px"><img src="{LOGO}" width="38" height="38" alt="" style="display:block;border-radius:9px"></td>
+    <td style="font:800 14.5px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br>
+      <span style="font:500 11px/1.3 {BODY};color:#8fd8e6;letter-spacing:.02em">Guardian Life of the Caribbean</span></td>
   </tr></table>
+  <h1 class="h1" style="font:800 27px/1.2 {HEAD};color:#ffffff;margin:22px 0 8px;letter-spacing:-.5px">{headline}</h1>
+  <p style="margin:0;font:400 14px/1.5 {BODY};color:#9dbdd8">{cfg['preheader']}</p>
 </td></tr>
 
-<tr><td style="padding:22px 22px 6px;font:400 15px/1.55 {BODY};color:#33465a">
-  <h1 style="font:800 21px/1.28 {HEAD};color:#12202e;margin:0 0 12px;letter-spacing:-.2px">{cfg['headline'].replace('<em>','<span style="color:#c9942c">').replace('</em>','</span>')}</h1>
-  <p style="margin:0 0 10px">Dear {{{{first_name}}}},</p>
+<tr><td class="pad" style="padding:24px 26px 8px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
+  <p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
   {notice}
-  <p style="margin:0 0 14px">{cfg['open']}</p>
+  <p style="margin:0 0 16px">{cfg['open']}</p>
   {facts_block(cfg)}
   {service_block(cfg, preview)}
   {act_block(cfg)}
@@ -322,23 +361,32 @@ def letter_table(seg, cfg, preview=False):
   {FILM_LINE}
   {law_line(cfg)}
   {closing}
-  <p style="margin:14px 0 0;font:400 14px/1.5 {BODY};color:#12202e">
-    <b style="display:block">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 4px"><tr>
+    <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
+      <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</td></tr></table>
 </td></tr>
 
-<tr><td style="background:#f4f8fa;padding:11px 22px;border-top:1px solid #e0eaef;font:400 11px/1.5 {BODY};color:#64798e">
+<tr><td bgcolor="#f4f8fa" class="pad" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
   Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
   deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
 </td></tr>
-</table>'''
+</table>"""
 
 
 def shell(seg, cfg):
     """The e-mail document: preheader, grey ground, the letter table centred."""
     return f'''<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
 <title>{html.escape(cfg['subject'])}</title>
 <!-- segment {seg} · {html.escape(cfg['name'])} · generated by tools/letters/build-letters.py from openings.json -->
+<link href="{FONTS}" rel="stylesheet">
+<style>
+  @media only screen and (max-width:480px) {{
+    .h1 {{ font-size:23px !important; }}
+    .hero, .pad {{ padding-left:18px !important; padding-right:18px !important; }}
+  }}
+</style>
 </head>
 <body style="margin:0;padding:0;background:#eef4f7">
 <div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef4f7">{html.escape(cfg['preheader'])}</div>
@@ -381,7 +429,7 @@ def plain_questions(cfg):
         return ''
     items = ''.join(f'<li><b>{q}</b><br>' + ' &nbsp; '.join(f'<a href="{TAP}{t}&q={a}">{BOX}&nbsp;{label}</a>' for label, t, a in answers) + '</li>'
                     for q, answers in qs)
-    return f'<p><b>{checks_head(qs)}</b></p><ul>{items}</ul>'
+    return f'<h3>{checks_head(qs)}</h3><ul>{items}</ul>'
 
 
 # Lists, not tables: the connector allows no cellpadding or style, so a table's
@@ -389,7 +437,7 @@ def plain_questions(cfg):
 # cleanly on a phone and cuts cleanly, one item per fact.
 def plain_service(cfg):
     items = ''.join(f'<!--fact:{k}--><li>{SVC_CELLS[k]}: <b>{{{{{k}}}}}</b></li><!--/fact-->' for k in svc_keys(cfg))
-    return (f'<!--facts--><!--svcpanel--><p><b>{SVC_HEAD}</b></p><ul>{items}</ul><p><i>{SVC_PACE}</i></p><!--/facts-->'
+    return (f'<!--facts--><!--svcpanel--><h3>{SVC_HEAD}</h3><ul>{items}</ul><p><i>{SVC_PACE}</i></p><!--/facts-->'
             f'<!--nosvc--><p>{SVC_NONE}</p><!--/nosvc-->')
 
 
@@ -399,12 +447,12 @@ def plain_letter(seg, cfg):
         items = ''.join(f'<!--fact:{v.strip("{}")}--><li>{label}: <b>{v}</b></li><!--/fact-->' for label, v in cfg['facts'])
         facts = f'<!--facts--><ul>{items}</ul><!--/facts-->'
     facts += plain_service(cfg)
-    act = (f'<p><b>The Insurance Act &middot; Trinidad and Tobago</b><br><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
+    act = (f'<h3>The Insurance Act &middot; Trinidad and Tobago</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
            f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
     taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
     urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own, now? <a href="{TAP}urgent"><b>Tell us your '
                                                  f'concerns first, and you have one the next working day&nbsp;&rarr;</b></a></p>')
-    tapsblock = f'<p><b>One tap tells us what you would like. We do the rest.</b></p><ul>{taps}</ul>{urgent}'
+    tapsblock = f'<h3>One tap tells us what you would like. We do the rest.</h3><ul>{taps}</ul>{urgent}'
     law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
                                                    f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
                                                    f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
