@@ -254,15 +254,24 @@ function tLetters_() {
     var seg = String(L.segment).toUpperCase();
     var html = tFetch_(L.file);
     if (new RegExp('\\{\\{(' + T_FACTS.join('|') + ')\\}\\}').test(html) && !/<!--fact:/.test(html)) {
+      tForget_(L.file);
       throw new Error('Letter ' + seg + ' on the site carries no fact markers: merge and rebuild before sending');
     }
     if (/\{\{agent_first_name\}\}/.test(html) && !/<!--agent-->/.test(html)) {
+      tForget_(L.file);
       throw new Error('Letter ' + seg + ' on the site carries no agent markers: merge and rebuild before sending');
     }
     out[seg] = { segment: seg, subject: L.subject, html: html };
   });
-  if (!Object.keys(out).length) throw new Error('The manifest on the site lists no letters');
+  if (!Object.keys(out).length) { tForget_('manifest.json'); throw new Error('The manifest on the site lists no letters'); }
   return out;
+}
+
+/** Drop a fetched copy from the ten-minute cache, so a letter that failed a
+ *  check is fetched afresh on the next run rather than failing again from the
+ *  cache after the site has been fixed (24 September: letter T, twice). */
+function tForget_(path) {
+  try { CacheService.getScriptCache().remove('transition:' + path); } catch (e) {}
 }
 
 function tEsc_(s) {
