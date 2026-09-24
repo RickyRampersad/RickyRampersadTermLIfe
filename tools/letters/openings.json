@@ -369,5 +369,63 @@
   "questions": [
    "approached"
   ]
+ },
+ "T": {
+  "name": "The agent's contract was terminated",
+  "notice": "terminated",
+  "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life.",
+  "preheader": "Your policy is unaffected. Please read what has changed, and tell us if you have been contacted.",
+  "headline": "An important notice about <em>your agent.</em>",
+  "open": "From that date, nothing about your policy goes through {{agent_first_name}}: no premium, no form, no request. It all comes to our branch team, and we handle it for you directly. If {{agent_first_name}} has been in touch with you since {{terminated_on}}, please tell us below.",
+  "send": "Every client on the book of an agent whose contract Guardian Life terminated, whatever they hold; the name and the date are read off the sheet (Agent, terminated_on). Goes before every other letter. The notice is in Guardian Life's own words and says nothing about why; Compliance reads it before the batch.",
+  "facts": [
+   [
+    "With us since",
+    "{{first_year}}"
+   ],
+   [
+    "Paid to",
+    "{{paid_to}}"
+   ],
+   [
+    "Days outstanding",
+    "{{days}}"
+   ],
+   [
+    "Projected lapse",
+    "{{projected_lapse}}"
+   ],
+   [
+    "Application received",
+    "{{app_received}}"
+   ]
+  ],
+  "taps": [
+   "callme",
+   "paid",
+   "urgent"
+  ],
+  "tap_text": {
+   "callme": [
+    "Call me about my policy",
+    "Today or tomorrow, at a time you choose. We go through what you hold and who looks after it now."
+   ],
+   "paid": [
+    "I have paid a premium that is not showing",
+    "Tell us when and how you paid, and keep the receipt. We check the record and confirm within two working days."
+   ]
+  },
+  "questions": [
+   "contact",
+   "approached",
+   "whopays"
+  ],
+  "checks_first": true,
+  "service": [
+   "svc_docs",
+   "svc_requests",
+   "svc_birthday"
+  ],
+  "more": true
  }
 }
