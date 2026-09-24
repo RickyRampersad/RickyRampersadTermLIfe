@@ -61,9 +61,10 @@ var TRANSITION = {
   WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
-  /* the person who signs the receipts, used only when the site cannot be fetched:
-     receipt.json beside the letters is the word, written by build-letters.py */
-  CARE: { name: 'Jiang Seeram', first: 'Jiang', line: 'Ricky Rampersad Branch · Guardian Life of the Caribbean' },
+  /* who signs the receipts — the team, never an individual — used only when the
+     site cannot be fetched: receipt.json beside the letters is the word */
+  CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
+          line: 'Ricky Rampersad Branch · Guardian Life of the Caribbean' },
 };
 
 /* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
@@ -283,7 +284,7 @@ function tFill_(text, row) {
   };
   T_FIELDS.forEach(function (k) { map[k] = v(k); });
   /* the receipt's own fields, when the caller put them on the row */
-  ['next', 'time', 'care_name', 'care_first', 'care_line'].forEach(function (k) { if (row[k] !== undefined) map[k] = String(row[k]); });
+  ['next', 'time', 'care_name', 'care_first', 'care_us', 'care_Us', 'care_line'].forEach(function (k) { if (row[k] !== undefined) map[k] = String(row[k]); });
   return out.replace(/\{\{(\w+)\}\}/g, function (m, k) {
     return map.hasOwnProperty(k) ? tEsc_(map[k]) : m;
   });
@@ -503,10 +504,11 @@ function tReceipt_() {
   } catch (e) { return null; }
 }
 
-/** The person who answers: from the site's receipt.json, else the fallback. */
+/** Who answers — the team — from the site's receipt.json, else the fallback. */
 function tCare_(rc) {
   var c = (rc && rc.json && rc.json.care) || TRANSITION.CARE || {};
-  return { care_name: c.name || 'Ricky Rampersad Branch', care_first: c.first || 'us',
+  var us = c.us || c.first || 'our Client Support team';
+  return { care_name: c.name || 'Client Support Team', care_first: us, care_us: us, care_Us: c.Us || 'Our Client Support team',
            care_line: (c.line || 'Ricky Rampersad Branch · Guardian Life of the Caribbean').replace(/&middot;/g, '·') };
 }
 
@@ -514,10 +516,10 @@ function tCare_(rc) {
  *  the on-screen thank-you — so it is also in their inbox, and CC'd to the
  *  branch so a response is seen the moment it lands, not only in the
  *  digest. "Are responses coming in, and I am to be copied" — 22 September.
- *  Since 24 September it names the person who has the file, says when the
+ *  Since 24 September it names the team that has the file, says when the
  *  answer reached us, and states the one thing that happens next in the
- *  client's own words ("the thank-you should return a name … can be more
- *  impactful"). The words come from receipt.json and receipt.html on the
+ *  client's own words ("thank you, we have this … can be more impactful";
+ *  "this should be the Ricky Rampersad Branch Client Support team"). The words come from receipt.json and receipt.html on the
  *  site; `page` is the path the tap was logged with, which carries the
  *  quick-check answer as ?q=, so the next step can be the answer's own.
  *  Only for a token this campaign recognises (a Transition Send row with an
@@ -550,12 +552,12 @@ function tAckClient_(token, r, needs, page) {
       subject = tFill_(rc.json.subject, vals).replace(/<[^>]+>/g, '');
       html = tFill_(rc.html, vals);
     } else {
-      subject = 'Thank you, ' + vals['First name'] + '. ' + care.care_name + ' has this.';
+      subject = 'Thank you, ' + vals['First name'] + '. ' + care.care_Us + ' has this.';
       html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
         '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(vals['First name']) + ',</p>' +
         '<p style="margin:0 0 12px">Your answer reached us at ' + vals.time + ', and it is with a person, not a queue.</p>' +
         '<p style="margin:0 0 12px"><b>What happens next:</b> ' + tEsc_(next) + '</p>' +
-        '<p style="margin:0 0 12px">If anything changes in the meantime, reply to this e-mail. It reaches ' + tEsc_(care.care_first) + ' directly.</p>' +
+        '<p style="margin:0 0 12px">If anything changes in the meantime, reply to this e-mail. It reaches ' + tEsc_(care.care_us) + ' directly.</p>' +
         '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p></div></div>';
     }
     if (/\{\{\w+\}\}/.test(subject + html)) { log_('transition', 'ack-held', 'the receipt on the site carries a field this script cannot fill'); return; }
@@ -608,7 +610,7 @@ function tChaseInternal_(row, r, needs, days, level) {
 
 /** The client's own "still on it" note — only the second time, and only
  *  once, so it reassures rather than nags. Warm, not defensive, and signed
- *  by the person who answers. Takes the row already looked up; a null row
+ *  by the team that answers. Takes the row already looked up; a null row
  *  (should not happen, tChase_ filters it out first) is simply skipped. */
 function tChaseClient_(row, needs) {
   if (!row) return;
@@ -617,8 +619,8 @@ function tChaseClient_(row, needs) {
   var first = tText_(row['First name']) || 'there';
   var rc = tReceipt_(), care = tCare_(rc);
   var still = (rc && rc.json.still) || { subject: 'Still on it, {{first_name}}.',
-    line: 'You have not been forgotten. {{care_first}} is still on it: {{next}} We will ask again rather than assume, and you are welcome to reply here at any time.' };
-  var vals = { 'First name': first, next: needs, care_name: care.care_name, care_first: care.care_first, care_line: care.care_line };
+    line: 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, and you are welcome to reply here at any time.' };
+  var vals = { 'First name': first, next: needs, care_name: care.care_name, care_first: care.care_first, care_us: care.care_us, care_Us: care.care_Us, care_line: care.care_line };
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
     '<p style="margin:0 0 12px">' + tFill_(still.line, vals) + '</p>' +

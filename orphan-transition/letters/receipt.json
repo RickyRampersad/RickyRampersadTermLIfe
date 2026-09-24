@@ -1,10 +1,11 @@
 {
- "subject": "Thank you, {{first_name}}. {{care_name}} has this.",
+ "subject": "Thank you, {{first_name}}. {{care_Us}} has this.",
  "file": "receipt.html",
  "plain": "plain/receipt.html",
  "care": {
-  "name": "Jiang Seeram",
-  "first": "Jiang",
+  "name": "Client Support Team",
+  "us": "our Client Support team",
+  "Us": "Our Client Support team",
   "line": "Ricky Rampersad Branch &middot; Guardian Life of the Caribbean"
  },
  "next": {
@@ -29,6 +30,6 @@
  },
  "still": {
   "subject": "Still on it, {{first_name}}.",
-  "line": "You have not been forgotten. {{care_first}} is still on it: {{next}} We will ask again rather than assume, and you are welcome to reply here at any time."
+  "line": "You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, and you are welcome to reply here at any time."
  }
 }
