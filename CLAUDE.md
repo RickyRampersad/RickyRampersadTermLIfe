@@ -662,6 +662,24 @@ voice under the new timing and the caption gives it away.
   nothing of us) and at most one receipt per token every six hours, so a
   client ticking four checks gets one e-mail, not four, each copied to the
   branch.
+- **The receipt names the person who answers.** 24 September: "the
+  thank-you should return a name, Jiang Seeram, and 'thank you, we have
+  this' can be more impactful." `CARE` in build-letters.py holds the name
+  (spelling as the manager gave it; **confirm it before a client receipt
+  goes**), and it is written into three places: the page a tap opens
+  ("Thank you. Jiang Seeram has this."), the receipt, and the "still on
+  it" note. The receipt is `orphan-transition/letters/receipt.html` (and
+  `plain/receipt.html` for a receipt sent by hand through the connector),
+  with the words in `receipt.json`: subject "Thank you, {{first_name}}.
+  {{care_name}} has this.", the time the answer reached us, and the one
+  thing that happens next in the client's own second person (`NEXT` by
+  tap, `NEXT_Q` by quick-check answer; the answer travels to the backend in
+  the page path as `?q=`, which Service.gs now passes to `tAckClient_`).
+  Transition.gs fetches both from the site like the letters and holds no
+  wording of its own; `TRANSITION.CARE` is only the fallback for when the
+  site cannot be fetched. The `needs` strings in `RESPONSES` (Service.gs)
+  are written for the branch, in the third person ("the time they choose"),
+  and are no longer pasted into a client's receipt.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
