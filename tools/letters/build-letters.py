@@ -106,6 +106,9 @@ QUESTIONS = {
 # asked only on the page a tap opens, where the answer helps the agent who calls
 REACH = ('What is the best way to reach you?',
          [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
+# asked on the page once a call is coming, so "at the time you chose" is true
+WHEN = ('When suits you best for a call?',
+        [('Morning', 'informed', 'when_morning'), ('Afternoon', 'informed', 'when_afternoon'), ('Evening', 'informed', 'when_evening')])
 # what the page says the moment a check is answered: what happens next, nothing more
 SAID_Q = {
  'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
@@ -120,6 +123,9 @@ SAID_Q = {
  'reach_phone':    'Noted: we will call you.',
  'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
  'reach_email':    'Noted: we will write to you by e-mail.',
+ 'when_morning':   'Noted: we call in the morning.',
+ 'when_afternoon': 'Noted: we call in the afternoon.',
+ 'when_evening':   'Noted: we call in the evening.',
 }
 # and for a tap on its own
 TAP_SAID = {
@@ -853,12 +859,12 @@ splice('orphan-transition/team-review.html', 'letters',
 # disagree about what was asked.
 def landing_checks():
     data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
-                          'reach': [REACH[0], [list(a) for a in REACH[1]]]},
+                          'reach': [REACH[0], [list(a) for a in REACH[1]]], 'when': [WHEN[0], [list(a) for a in WHEN[1]]]},
             'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['approached']},
             'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE,
             # the receipt is automatic only on the Apps Script route; set False if the letters go by hand
             'receipts': True, 'receipt_line': 'A copy of everything you have told us is on its way to your inbox.'}
-    missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH] for a in ans if a[2] not in SAID_Q]
+    missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH, WHEN] for a in ans if a[2] not in SAID_Q]
     assert not missing, f'no thank-you line for {missing}'
     return json.dumps(data, ensure_ascii=False)
 
@@ -906,7 +912,7 @@ STILL = {'subject': 'Still on it, {{first_name}}.',
                  'and you are welcome to reply here at any time.'}
 # the recap: a quick-check answer is echoed with its question; a bare tap with the words the client tapped
 RECAP = {'tapped': 'You tapped',
-         'q': {ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH] for label, _, ans in answers},
+         'q': {ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH, WHEN] for label, _, ans in answers},
          'taps': {**{r: v[0] for r, v in TAPS.items()}, 'review': 'The full review, in your own words',
                   'selfserve': 'The full review, in your own words', 'assign': 'Match me to an agent'},
          'tap_text': {seg: {r: v[0] for r, v in cfg.get('tap_text', {}).items()} for seg, cfg in SEGMENTS.items() if cfg.get('tap_text')}}

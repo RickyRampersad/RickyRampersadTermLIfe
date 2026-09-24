@@ -371,6 +371,11 @@ function tMsSend_(to, subject, html, o) {
   if (o.cc && o.cc.length) msg.ccRecipients = tAddr_(o.cc);
   if (o.bcc && o.bcc.length) msg.bccRecipients = tAddr_(o.bcc);
   if (o.replyTo) msg.replyTo = tAddr_([o.replyTo]);
+  /* Blobs (a PDF of the review, the appointment papers): under 3 MB each, which Graph's sendMail takes inline */
+  if (o.attachments && o.attachments.length) msg.attachments = o.attachments.map(function (b) {
+    return { '@odata.type': '#microsoft.graph.fileAttachment', name: b.getName(), contentType: b.getContentType(),
+             contentBytes: Utilities.base64Encode(b.getBytes()) };
+  });
   var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/sendMail', {
     method: 'post', contentType: 'application/json', muteHttpExceptions: true,
     headers: { Authorization: 'Bearer ' + tMsToken_() },
