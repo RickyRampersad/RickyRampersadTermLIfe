@@ -58,7 +58,7 @@ var TRANSITION = {
   DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
   COPY_TO: '',               // blank = SVC.AGENT_EMAIL. Where the internal "late" nudges go.
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
-  WAIT_URGENT: 1,            // the urgent tap promises an agent by the next working day
+  WAIT_URGENT: 1,            // the branch's own target for an urgent tap; the client is promised no timeline (24 September)
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
   /* who signs the receipts — the team, never an individual — used only when the
@@ -612,7 +612,7 @@ function tChaseInternal_(row, r, needs, days, level) {
  *  once, so it reassures rather than nags. Warm, not defensive, and signed
  *  by the team that answers. Takes the row already looked up; a null row
  *  (should not happen, tChase_ filters it out first) is simply skipped. */
-function tChaseClient_(row, needs) {
+function tChaseClient_(row, r, needs) {
   if (!row) return;
   var to = tText_(row.Email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
@@ -620,7 +620,9 @@ function tChaseClient_(row, needs) {
   var rc = tReceipt_(), care = tCare_(rc);
   var still = (rc && rc.json.still) || { subject: 'Still on it, {{first_name}}.',
     line: 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, and you are welcome to reply here at any time.' };
-  var vals = { 'First name': first, next: needs, care_name: care.care_name, care_first: care.care_first, care_us: care.care_us, care_Us: care.care_Us, care_line: care.care_line };
+  /* the client's own next step from receipt.json, never the branch's third-person note */
+  var next = (rc && rc.json && rc.json.next && rc.json.next[r]) || needs;
+  var vals = { 'First name': first, next: next, care_name: care.care_name, care_first: care.care_first, care_us: care.care_us, care_Us: care.care_Us, care_line: care.care_line };
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
     '<p style="margin:0 0 12px">' + tFill_(still.line, vals) + '</p>' +
@@ -689,7 +691,7 @@ function tChase_() {
         newNote += (newNote ? ' ' : '') + '[chase1]'; did1 = true; out.chase1++; budget--;
       }
       if (!did2 && budget > 0 && days >= wait * TRANSITION.CHASE_MULT) {
-        tChaseClient_(row, needs);
+        tChaseClient_(row, r, needs);
         tChaseInternal_(row, r, needs, days, 2);
         newNote += ' [chase2]'; out.chase2++; budget--;
       }
@@ -939,7 +941,7 @@ function tSummary_() {
     };
     if (received && Utilities.formatDate(received, tz, 'yyyy-MM-dd') === Utilities.formatDate(now, tz, 'yyyy-MM-dd')) today++;
     var opens = String(v[7] || '').toLowerCase() === 'open';
-    var wait = type === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;   // urgent promises the next working day
+    var wait = type === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;   // the branch's own targets, never shown to the client
     if (opens && !item.assigned && received && tWorkingDays_(received, now) >= wait) late.push(item);
     taps.push(item);
   });

@@ -64,7 +64,7 @@ FIELDS = {
 # ── the taps a letter can offer ───────────────────────────────────────
 TAPS = {
  'urgent':   ('I want an agent now. Let me tell you my concerns first',
-              'Fifteen minutes on your phone. We read every word before we name anyone, and you have an agent the next working day.'),
+              'Fifteen minutes on your phone. We read every word before we name anyone, then match you to the agent who fits your file.'),
  'review':   ('Tell us more about yourself',
               'A short form on what you hold and what matters to you. A person can go through it with you.'),
  'callme':   ('Call me', 'Today or tomorrow, at a time you choose.'),
@@ -116,7 +116,7 @@ SAID_Q = {
  'whopays_yes':    'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
  'whopays_unsure': 'Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
  'approached_no':  'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
- 'approached_yes': 'Thank you for telling us. Tell us what was suggested, and an agent calls you by the next working day, before you decide anything.',
+ 'approached_yes': 'Thank you for telling us. Tell us what was suggested. A person reads it and calls you before you decide anything.',
  'reach_phone':    'Noted: we will call you.',
  'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
  'reach_email':    'Noted: we will write to you by e-mail.',
@@ -125,7 +125,7 @@ SAID_Q = {
 TAP_SAID = {
  'informed': 'Noted, with thanks. Nothing about your policy changes.',
  'callme':   'Someone from the branch will call you, today or tomorrow, at a time you choose.',
- 'urgent':   'We read it before we name anyone, and you have an agent by the next working day.',
+ 'urgent':   'We read it before we name anyone, then match you to the agent who fits your file.',
  'review':   'It saves as you go, and a person goes through it with you if you would like one to.',
  'paid':     'We will check the record against your receipt and confirm within two working days.',
  'pay':      'We will call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
@@ -148,8 +148,8 @@ CARE = {'name': 'Client Support Team', 'us': 'our Client Support team', 'Us': 'O
 # quick-check answer; a noted answer (informed) earns no receipt
 NEXT = {
  'callme':   'Someone from the branch calls you today or tomorrow, at a time you choose.',
- 'urgent':   'We read every word you wrote before we name anyone, and you have an agent by the next working day.',
- 'review':   'A person reads your review, then you have an agent of your own within two working days.',
+ 'urgent':   'We read every word you wrote before we name anyone, then match you to the agent who fits your file.',
+ 'review':   'A person reads your review, then we match you to the agent who fits your file.',
  'paid':     'We check the record against your receipt and confirm within two working days.',
  'pay':      'We call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
  'claim':    'We bring the maturity form and walk it through with you.',
@@ -157,14 +157,14 @@ NEXT = {
  'finish':   'We bring whatever is still needed to finish your application. You do not have to find anything.',
  'stop':     'We close the file properly and confirm that nothing is owed.',
  'question': 'A person answers your question the same day.',
- 'assign':   'You have a named agent within two working days.',
+ 'assign':   'We match you to the agent who fits your file, and introduce you.',
  'selfserve': 'Take your time with the review. It saves as you go, and a person reads it the day you send it.',
 }
 NEXT_Q = {
  'rate_better':    'Someone from the branch calls you today or tomorrow to hear what we should do better.',
  'life_changed':   'Someone from the branch calls you today or tomorrow to check your cover still fits your life.',
  'whopays_unsure': 'We check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
- 'approached_yes': 'An agent calls you by the next working day, before you decide anything.',
+ 'approached_yes': 'A person reads what was suggested and calls you before you decide anything.',
 }
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
 
@@ -241,8 +241,8 @@ def taps_block(cfg):
     # every letter carries the door into the questionnaire, as a card where it
     # is one of the taps and as a single line where it is not
     urgent_line = '' if 'urgent' in cfg['taps'] else f"""
-<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:{DIM}">Would you rather have an agent of your own, now?
-  <a href="{TAP}urgent" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and you have one the next working day&nbsp;&rarr;</a></p>"""
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:{DIM}">Would you rather have an agent of your own?
+  <a href="{TAP}urgent" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and we match you to the one who fits&nbsp;&rarr;</a></p>"""
     return f"""
 <p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
@@ -366,8 +366,8 @@ def letter_table(seg, cfg, preview=False):
     headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.
-    closing = f"""<p style="margin:0 0 6px;font:400 14.5px/1.6 {BODY};color:{BODYC}">Your policy is looked after by the branch, and we are matching you to
-    an agent of your own now. Tell us what you would like, and you have that agent within two working days.</p>"""
+    closing = f"""<p style="margin:0 0 6px;font:400 14.5px/1.6 {BODY};color:{BODYC}">Your policy is looked after by the branch. Whatever you tell us is
+    read by a person first, and then we match you to the agent who fits your file.</p>"""
     return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
 
 <tr><td bgcolor="{NAVY}" class="hero" style="background:{NAVY};background-image:linear-gradient(150deg,#0c2434 0%,{NAVY} 55%,#040d16 100%);padding:20px 26px 22px;border-bottom:3px solid {GOLD}">
@@ -481,8 +481,8 @@ def plain_letter(seg, cfg):
     act = (f'<h3>The Insurance Act &middot; Trinidad and Tobago</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
            f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
     taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
-    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own, now? <a href="{TAP}urgent"><b>Tell us your '
-                                                 f'concerns first, and you have one the next working day&nbsp;&rarr;</b></a></p>')
+    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own? <a href="{TAP}urgent"><b>Tell us your '
+                                                 f'concerns first, and we match you to the one who fits&nbsp;&rarr;</b></a></p>')
     tapsblock = f'<h3>One tap tells us what you would like. We do the rest.</h3><ul>{taps}</ul>{urgent}'
     law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
                                                    f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
@@ -497,8 +497,8 @@ def plain_letter(seg, cfg):
             + (f'<p>{MORE_ASK} <a href="{TAP}review">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'{law}'
-            f'<p>Your policy is looked after by the branch, and we are matching you to an agent of your own now. Tell us what you '
-            f'would like, and you have that agent within two working days.</p>'
+            f'<p>Your policy is looked after by the branch. Whatever you tell us is read by a person first, and then we match you '
+            f'to the agent who fits your file.</p>'
             f'<p><b>Ricky Rampersad</b><br>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p><hr>'
             f'<p><i>Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are '
             f'deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.</i></p>\n')
