@@ -496,6 +496,13 @@ function tHead_() {
  *  e-mail); any other flow's token is untouched. Never blocks the click. */
 function tAckClient_(token, r, needs) {
   try {
+    /* A noted answer ("Very well", "No, nothing has changed") asks nothing of
+       us, so it gets no receipt; and a client answering four quick checks in a
+       minute gets one receipt, not four, each copied to the branch. */
+    if (r === 'informed') return;
+    var cache = CacheService.getScriptCache(), key = 'transition:ack:' + token;
+    if (cache.get(key)) return;
+    cache.put(key, '1', 21600);
     var row = tRowByToken_(token);
     if (!row) return;
     var to = tText_(row.Email);
