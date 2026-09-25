@@ -10,6 +10,7 @@
   "days": "Days \u2014 days outstanding",
   "projected_lapse": "Projected Lapse Date",
   "app_received": "App Received Date",
+  "collected_on": "Salesforce \u2014 the day the contract was collected for delivery (the delivery-update task); letter J only",
   "matured_on": "policy admin \u2014 not on the portfolio sheet",
   "maturity_date": "the intelligence sheet or policy admin \u2014 not on the portfolio sheet",
   "token": "the send list \u2014 opaque, never a policy number",
@@ -304,12 +305,13 @@
   },
   {
    "segment": "J",
-   "name": "Contract ready, not yet delivered",
-   "subject": "{{agent_or_rep}} has moved on. Your contract is ready.",
-   "preheader": "Your policy is in force. The document itself has not reached you yet.",
+   "name": "Contract collected for delivery, never acknowledged",
+   "subject": "{{agent_or_rep}} has moved on. Has your policy contract reached you?",
+   "preheader": "Your policy is in force. We need to be sure the contract itself reached you.",
    "file": "J.html",
    "facts": [
-    "issue_date"
+    "issue_date",
+    "collected_on"
    ],
    "service": [
     "svc_docs",
@@ -327,13 +329,13 @@
     "urgent": "I want an agent now. Let me tell you my concerns first",
     "callme": "Call me"
    },
-   "send_note": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent."
+   "send_note": "From Salesforce: the contract was received at the branch for delivery (the delivery-update e-mail, whose date is collected_on) and no acknowledgement followed; the undelivered-script chase confirms most of them. Goes in the first wave, and the receiving agent delivers within the week."
   },
   {
    "segment": "K",
    "name": "An application still in progress",
    "subject": "{{agent_or_rep}} has moved on. Your application has not.",
-   "preheader": "It has not been forgotten. Whatever is still needed, we bring to you.",
+   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
    "file": "K.html",
    "facts": [
     "app_received"
@@ -354,7 +356,7 @@
     "callme": "Call me",
     "stop": "I would rather not proceed"
    },
-   "send_note": "From the pending list. Every file is read before the call."
+   "send_note": "From the pending list: underwriting incomplete, missing requirements, awaiting settlement. Cover is not in place until the policy is issued, so these go in the first wave and an agent is assigned at once; every file is read before the call."
   },
   {
    "segment": "T",

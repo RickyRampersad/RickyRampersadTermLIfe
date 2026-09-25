@@ -702,7 +702,43 @@ voice under the new timing and the caption gives it away.
   us is a `callme`; nothing on a check opens the form any more. The
   service record panel above the questions is the evidence the questions
   lean on; the questions never quote a count themselves, because a blank
-  cell would break the sentence. The research behind the shape, checked
+  cell would break the sentence. **Modelled by band** (25 September: "did
+  you model it by age bands … our biggest is the under 5 years"): F1
+  swaps the life question for `walk` (a plain-words walk-through of what
+  the policy does, since under two years it may never have been
+  explained) and asks the rating "since you joined us"; F3 swaps `pays`
+  for `built` (what the policy has built so far); F5 swaps the life
+  question for `more` (what more the cover could do now: family,
+  retirement, health) and asks the rating "after all these years"; a
+  letter's own wording of a question is `question_text` in openings.json.
+  **The two letters with a hard question first** (`checks_first`): J,
+  "Has your policy contract reached you?" (`received`: "No, it never
+  reached me" is the `deliver` tap itself; "Not sure what I should have"
+  a call), because the record says the contract was collected for
+  delivery and never acknowledged, and the letter says exactly that; and
+  K, "Is anything you were asked for still outstanding: a medical, a
+  document, a signature?" (`outstanding`: "Yes, help me finish it" is the
+  `finish` tap, "I no longer wish to proceed" the `stop` tap), with the
+  opening now saying plainly that the cover applied for is not in place
+  until the policy is issued, because that is the truth that makes a
+  client finish. T carries `received` too, since a third of that book's
+  contracts were never acknowledged.
+- **Who gets letter J: the contracts Salesforce shows as received for
+  delivery and never acknowledged.** The "Guardian Life Policy Delivery
+  Update and Next Steps: Policy Contract Received for <client> Policy
+  Number <n>" e-mail task is dated the day the contract was received at
+  the branch for the agent to deliver (that date is `collected_on`, a
+  column on the send list and a fact on J and T); the "Undelivered Script
+  <client> <policy>" tasks are sales admin's chase of the ones still not
+  delivered; an acknowledgement shows in the Log Book as a
+  contract/acknowledgement document, though only a fifth of older
+  contracts have one there, so absence from the Log Book is not proof of
+  non-delivery, which is why the letter asks rather than asserts. Built
+  in the session scratchpad on 25 September from Task.json and the
+  Log Book (`tbook/j-candidates.json`): in force, received for delivery,
+  no acknowledgement since. A client already on I, K, A, G or T keeps
+  that letter and gains the contract date; the rest move to J, first
+  wave. Counts stay outside the repository. The research behind the shape, checked
   on 25 September 2026: a positive frame rates better on identical facts
   (Levin, Schneider and Gaeth 1998); asking a customer how they were
   looked after cuts defection for a year afterwards (Dholakia and Morwitz

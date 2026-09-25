@@ -32,8 +32,8 @@ _ex = HERE / 'exclude.txt'
 LISTED = {l.strip().lower() for l in _ex.read_text(encoding='utf-8').splitlines() if l.strip()} if _ex.exists() else set()
 HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
            'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-           'app_received', 'matured_on', 'maturity_date', 'Exclude', 'Reason', 'Test', 'Send on',
-           'Sent at', 'Status']
+           'app_received', 'matured_on', 'maturity_date', 'collected_on', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on',
+           'Sent at', 'Status']   # collected_on (letter J) and terminated_on (letter T) are filled by hand or by contracts.py, outside the repository
 PENDING = ('underwriting', 'awaiting settlement')   # 'postponed' is a decision, not a file in progress: check, never auto-send
 INFORCE = ('premium paying', 'waiver of prem', 'paid up')
 ALNUM = string.ascii_letters + string.digits

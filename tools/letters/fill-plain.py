@@ -28,9 +28,9 @@ OPENINGS = json.loads((HERE / 'openings.json').read_text(encoding='utf-8'))
 # the visible copies on every client e-mail: TRANSITION.CC in Transition.gs, the manager's choice
 CC = ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com']
 SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday']   # the service record, from service-record.py
-FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date'] + SVC
+FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date', 'collected_on'] + SVC
 FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date',
-          'terminated_on'] + SVC   # terminated_on: letter T only, the date from Guardian Life's own notice
+          'collected_on', 'terminated_on'] + SVC   # collected_on: letter J; terminated_on: letter T, the date from Guardian Life's own notice
 ALLOWED = {'p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr', 'div', 'strike'}
 

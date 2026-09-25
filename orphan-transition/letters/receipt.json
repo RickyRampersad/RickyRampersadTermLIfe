@@ -30,6 +30,11 @@
   "approached_yes": "A person calls you before you decide anything, so you have the full picture first.",
   "stay_talk": "Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.",
   "value_yes": "We find out what your policy still holds, and whether it can simply start again, and call you with the answer.",
+  "walk_yes": "Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.",
+  "built_yes": "Someone from the branch calls you today or tomorrow with what your policy has built for you so far.",
+  "more_yes": "Someone from the branch calls you today or tomorrow to talk through what more your cover could do for you now.",
+  "contract_unsure": "Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.",
+  "k_unsure": "Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.",
   "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
   "wrote": "A person reads your e-mail and replies the same working day."
  },
@@ -108,6 +113,54 @@
    "value_later": [
     "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
     "Not now, thank you"
+   ],
+   "walk_yes": [
+    "Would you like a plain-words walk-through of what your policy does for you?",
+    "Yes, walk me through it"
+   ],
+   "walk_clear": [
+    "Would you like a plain-words walk-through of what your policy does for you?",
+    "I am clear on it, thank you"
+   ],
+   "built_yes": [
+    "Would you like to know what your policy has built for you so far?",
+    "Yes, show me"
+   ],
+   "built_later": [
+    "Would you like to know what your policy has built for you so far?",
+    "Not now, thank you"
+   ],
+   "more_yes": [
+    "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+    "Yes, let us talk"
+   ],
+   "more_later": [
+    "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+    "Not now, thank you"
+   ],
+   "contract_have": [
+    "Has your policy contract reached you?",
+    "Yes, I have it"
+   ],
+   "contract_missing": [
+    "Has your policy contract reached you?",
+    "No, it never reached me"
+   ],
+   "contract_unsure": [
+    "Has your policy contract reached you?",
+    "Not sure what I should have"
+   ],
+   "k_outstanding": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "Yes, help me finish it"
+   ],
+   "k_unsure": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "I am not sure what is needed"
+   ],
+   "k_stop": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "I no longer wish to proceed"
    ],
    "contact_no": [
     "Has your former agent been in touch with you since their contract ended?",
@@ -227,22 +280,30 @@
    "Evening",
    "Finish my application.",
    "Has your former agent been in touch with you since their contract ended?",
+   "Has your policy contract reached you?",
    "Help me claim it.",
    "How have we looked after you so far?",
+   "I am clear on it, thank you",
+   "I am not sure what is needed",
    "I have already paid.",
    "I have paid a premium that is not showing.",
    "I know it, thank you",
+   "I no longer wish to proceed",
    "I want an agent now. Let me tell you my concerns first.",
    "I will decide myself",
    "I would rather not proceed.",
    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
    "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
+   "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+   "Is there anything more you would like your cover to do for you now: family, retirement, health?",
    "Let's talk it through first",
    "Morning",
    "My details have changed.",
    "No",
    "No, all the same",
+   "No, it never reached me",
    "Not now, thank you",
+   "Not sure what I should have",
    "Phone call",
    "Set me up to pay Guardian Life directly.",
    "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
@@ -253,16 +314,23 @@
    "What is the best way to reach you?",
    "WhatsApp",
    "When suits you best for a call?",
+   "Would you like a plain-words walk-through of what your policy does for you?",
    "Would you like our branch team to keep looking after your policy?",
+   "Would you like to know what your policy has built for you so far?",
    "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
    "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
    "Write your concerns here, in your own words. A person reads every word before anyone is named:",
+   "Yes, I have it",
    "Yes, always check with me first",
    "Yes, call me",
    "Yes, find out for me",
+   "Yes, help me finish it",
    "Yes, keep looking after it",
+   "Yes, let us talk",
    "Yes, please confirm it",
+   "Yes, show me",
    "Yes, update my cover",
+   "Yes, walk me through it",
    "You can add anything you would like us to know here."
   ]
  },
@@ -367,6 +435,91 @@
     ]
    ]
   ],
+  "walk": [
+   "Would you like a plain-words walk-through of what your policy does for you?",
+   [
+    [
+     "Yes, walk me through it",
+     "callme",
+     "walk_yes"
+    ],
+    [
+     "I am clear on it, thank you",
+     "informed",
+     "walk_clear"
+    ]
+   ]
+  ],
+  "built": [
+   "Would you like to know what your policy has built for you so far?",
+   [
+    [
+     "Yes, show me",
+     "callme",
+     "built_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "built_later"
+    ]
+   ]
+  ],
+  "more": [
+   "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+   [
+    [
+     "Yes, let us talk",
+     "callme",
+     "more_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "more_later"
+    ]
+   ]
+  ],
+  "received": [
+   "Has your policy contract reached you?",
+   [
+    [
+     "Yes, I have it",
+     "informed",
+     "contract_have"
+    ],
+    [
+     "No, it never reached me",
+     "deliver",
+     "contract_missing"
+    ],
+    [
+     "Not sure what I should have",
+     "callme",
+     "contract_unsure"
+    ]
+   ]
+  ],
+  "outstanding": [
+   "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+   [
+    [
+     "Yes, help me finish it",
+     "finish",
+     "k_outstanding"
+    ],
+    [
+     "I am not sure what is needed",
+     "callme",
+     "k_unsure"
+    ],
+    [
+     "I no longer wish to proceed",
+     "stop",
+     "k_stop"
+    ]
+   ]
+  ],
   "contact": [
    "Has your former agent been in touch with you since their contract ended?",
    [
@@ -429,7 +582,7 @@
   ],
   "F1": [
    "rating",
-   "life",
+   "walk",
    "pays",
    "checkfirst",
    "stay"
@@ -444,7 +597,7 @@
   "F3": [
    "rating",
    "life",
-   "pays",
+   "built",
    "checkfirst",
    "stay"
   ],
@@ -457,7 +610,7 @@
   ],
   "F5": [
    "rating",
-   "life",
+   "more",
    "pays",
    "checkfirst",
    "stay"
@@ -485,15 +638,18 @@
    "stay"
   ],
   "J": [
+   "received",
    "pays",
    "checkfirst",
    "stay"
   ],
   "K": [
+   "outstanding",
    "checkfirst"
   ],
   "T": [
    "contact",
+   "received",
    "checkfirst",
    "pays",
    "stay"
