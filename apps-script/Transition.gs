@@ -792,7 +792,13 @@ function tReceipts_() {
     if (ageMin < TRANSITION.RECEIPT_WAIT_MIN || (formTap && !review && ageMin < TRANSITION.RECEIPT_FORM_WAIT_MIN)) { out.waiting++; continue; }
     if (budget <= 0) { out.held++; continue; }
     var row = tokens[tok], to = tText_(row.Email);
-    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { out.held++; continue; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
+      /* a client with no e-mail on file: their answers were ticked on their own link by the caller, who repeated
+         them back on the line (the call script), so nothing can or need go by e-mail; marked, never retried */
+      out.held++;
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] no e-mail: by phone'); }); } catch (e) {}
+      continue;
+    }
     try {
       var m = tReceiptMail_(rc, row, g, review);
       tMsSend_(to, m.subject, m.html, tClientOpts_());
@@ -1501,6 +1507,10 @@ function tInsights_(windowDays) {
     return o[key] = o[key] || { key: key, sent: 0, answered: 0, answeredWindow: 0, approached: 0, risk: 0, stayYes: 0, stayTalk: 0 };
   };
   var nextByDay = {}, remindersDue = 0, remindDays = Number(TRANSITION.REMIND_DAYS) || 0;
+  /* the call list: a client with no e-mail on file is held from the send and called instead; the caller ticks the
+     answers on the client's own link, so they arrive on Client Responses like a tap. Counted on their own, never
+     among the letters sent, so the response rate stays the letters' rate. */
+  var calls = { listed: 0, reached: 0, approached: 0, bySegment: {} };
   t.rows.forEach(function (r) {
     var seg = tText_(r.Segment).toUpperCase();
     if (!seg || tYes_(r.Test)) return;                                     // staff standing in as clients: never in the numbers
@@ -1508,6 +1518,15 @@ function tInsights_(windowDays) {
       reach.held++;
       var why = (tText_(r.Exclude) || 'held').split(':')[0].toLowerCase();
       reach.heldReasons[why] = (reach.heldReasons[why] || 0) + 1;
+      if (/^no e-?mail/.test(why)) {
+        calls.listed++;
+        var cs = calls.bySegment[seg] = calls.bySegment[seg] || { key: seg, listed: 0, reached: 0 };
+        cs.listed++;
+        var ctok = tText_(r.Token);
+        if (ctok) byTok[ctok] = { seg: seg, family: famOf(seg), agent: tText_(r.Agent) || '(no agent on the sheet)', channel: 'call',
+          client: tText_(r.Client) || tText_(r['First name']) || 'a client', sentAt: null, remindedOn: null,
+          answered: false, first: null, afterReminder: false, codes: [], taps: [], risk: [], open: false, assigned: '', lastSaid: '', lastAt: null };
+      }
       return;
     }
     var sentAt = r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime()) ? r['Sent at'] : null;
@@ -1613,6 +1632,18 @@ function tInsights_(windowDays) {
   var risk = [];
   Object.keys(byTok).forEach(function (tok) {
     var o = byTok[tok];
+    if (o.channel === 'call') {                                            // reached by phone: its own count, and the risk list
+      if (!o.answered) return;
+      calls.reached++; calls.bySegment[o.seg].reached++;
+      var capp = o.risk.indexOf('approached_yes') >= 0 || o.risk.indexOf('contact_yes') >= 0 || o.risk.indexOf('review_approached') >= 0;
+      if (capp) calls.approached++;
+      if (o.risk.length) {
+        risk.push({ client: o.client, agent: o.agent, seg: o.seg + ' (by phone)', open: o.open, assigned: o.assigned,
+                    said: o.risk.map(function (c) { return T_RISK[c] || c; }).join('; '),
+                    when: o.lastAt || o.first, days: o.lastAt ? tWorkingDays_(o.lastAt, now) : 0 });
+      }
+      return;
+    }
     if (o.dueReminder && !o.answered) remindersDue++;
     if (!o.answered) return;
     response.answered++;
@@ -1626,7 +1657,7 @@ function tInsights_(windowDays) {
       g.answered++; if (win) g.answeredWindow++; if (appr) g.approached++; if (o.risk.length) g.risk++;
       if (o.stayYes) g.stayYes++; if (o.stayTalk) g.stayTalk++;
     });
-    if (o.first) {
+    if (o.first && o.sentAt) {
       var d = Math.floor((o.first.getTime() - o.sentAt.getTime()) / 86400000);
       curve[d <= 0 ? 'the same day' : d === 1 ? 'the next day' : d === 2 ? 'day 2' : d <= 6 ? 'days 3 to 6' : d <= 13 ? 'days 7 to 13' : 'day 14 or later']++;
     }
@@ -1684,6 +1715,8 @@ function tInsights_(windowDays) {
       (follow.medianDays !== null ? '; a name goes on ' + (follow.medianDays === 0 ? 'the same working day' : 'within ' + tN_(follow.medianDays, 'working day', 'working days')) + ' (median)' : '') + '.');
     if (reach.reminded) lines.push(tN_(reach.reminded, 'reminder has', 'reminders have') + ' gone; ' + response.afterReminder + ' of those clients answered after it.');
   }
+  if (calls.listed) lines.push('The call list: ' + tN_(calls.listed, 'client', 'clients') + ' with no e-mail on file, ' + calls.reached + ' reached and recorded by phone so far' +
+    (calls.approached ? ', ' + calls.approached + ' of them approached' : '') + '.');
   if (reach.failed) lines.push(tN_(reach.failed, 'letter failed to send and is', 'letters failed to send and are') + ' retried the next day; the reason is in ' + (reach.failed === 1 ? 'its' : 'their') + ' Status cell.');
 
   return {
@@ -1693,6 +1726,8 @@ function tInsights_(windowDays) {
     byFamily: list('family', function (a, b) { return b.sent - a.sent; }),
     bySegment: list('segment', function (a, b) { return a.key < b.key ? -1 : 1; }),
     byAgent: list('agent', function (a, b) { return (b.approached - a.approached) || (b.risk - a.risk) || (b.sent - a.sent); }),
+    calls: { listed: calls.listed, reached: calls.reached, approached: calls.approached,
+             bySegment: Object.keys(calls.bySegment).sort().map(function (k) { return calls.bySegment[k]; }) },
     next: { days: days, remindersDue: remindersDue }, lines: lines, armed: tArmed_(),
   };
 }
@@ -1735,6 +1770,11 @@ function tInsightHtml_(a, weekly) {
     return [esc(g.key), g.sent, g.answered, g.rate + '%', g.approached, g.risk]; }));
   var ck = Object.keys(a.curve);
   out += h3('When the first answer comes, from the day the letter went') + table(['After', 'Clients'], ck.map(function (k) { return [k, a.curve[k]]; }));
+  if (a.calls && a.calls.listed) {
+    out += h3('By phone: the clients with no e-mail on file') + '<p style="margin:0 0 6px">' + a.calls.listed + ' on the call list &middot; ' + a.calls.reached +
+      ' reached and recorded on their own link' + (a.calls.approached ? ' &middot; ' + a.calls.approached + ' approached' : '') + '</p>' +
+      table(['Letter', 'On the list', 'Reached'], a.calls.bySegment.map(function (g) { return ['<b>' + esc(g.key) + '</b>', g.listed, g.reached]; }));
+  }
   out += h3('Taps, by type') + '<p style="margin:0">' + (Object.keys(a.byType).map(function (k) { return esc(k) + ' ' + a.byType[k]; }).join(' &middot; ') || 'none yet') +
     (a.follow.replies ? ' &middot; ' + a.follow.replies + ' filed from replies' : '') + '</p>';
   out += h3('Follow-through') + '<p style="margin:0">' + a.follow.open + ' open &middot; ' + a.follow.late + ' past ' + TRANSITION.WAIT_DAYS + ' working days with nobody named &middot; ' +

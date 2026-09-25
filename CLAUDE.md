@@ -1000,6 +1000,24 @@ voice under the new timing and the caption gives it away.
   Compliance sees the wording. The digest, the Monday report and the
   internal chase carry `INTERNAL` ("do not forward outside the branch")
   because they carry client names.
+- **The clients with no e-mail are a call list, and a phone answer is
+  recorded on the client's own link.** Asked for on 25 September 2026
+  ("persons who don't have email: the call list to get in touch with, how
+  to handle"). The send list holds them with `no e-mail` in Exclude; the
+  call list is built beside it in the session scratchpad from those rows,
+  with the letter they would have had, the facts off the sheet, the phone
+  and address off the portfolio, one line on why we are calling, and the
+  client's own `/your-policy/?t=…&s=…` link. `orphan-transition/call-script.html`
+  is the call: the letter spoken, in the same order, with the same
+  questions, and the caller ticks the answers on that link with the client
+  on the line, so they land on Client Responses and in the reports like a
+  tap. `tInsights_` counts them on their own (`calls`: listed, reached,
+  approached, by letter; the risk list marks them "by phone"), never among
+  the letters sent, so the response rate stays the letters' rate;
+  `tReceipts_` marks a no-e-mail token `[receipt] no e-mail: by phone`
+  rather than holding it every five minutes, because on that call the
+  caller is the receipt. Never call a row the list holds for a person to
+  check first.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
