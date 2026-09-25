@@ -119,14 +119,14 @@
   /* ── the feed cards ───────────────────────────────────────────────── */
   .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:clamp(10px,1.2vw,20px);flex:1;min-height:0}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(12px,1.8vh,24px) clamp(12px,1.4vw,24px);min-width:0;
-    display:flex;flex-direction:column;gap:clamp(4px,.8vh,10px)}
+    display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,.8vh,10px)}
   .card.urgent{border-color:rgba(239,194,75,.75);box-shadow:inset 0 0 0 1px rgba(239,194,75,.45);
     background:linear-gradient(180deg,rgba(239,194,75,.13),transparent 70%),var(--card)}
   .card .who{font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .card .said{font-size:calc(var(--body) * 1.12);font-weight:600;line-height:1.3}
   .card.urgent .said{color:var(--gold)}
   .card .ltr{font-size:var(--small);color:var(--dim);line-height:1.3}
-  .card .tm{font-size:var(--small);color:var(--faint);font-variant-numeric:tabular-nums;margin-top:auto}
+  .card .tm{font-size:var(--small);color:var(--faint);font-variant-numeric:tabular-nums;margin-top:clamp(4px,1vh,14px)}
 
   /* ── waiting for a name ───────────────────────────────────────────── */
   .qrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(10px,1.2vw,22px);align-items:center;
