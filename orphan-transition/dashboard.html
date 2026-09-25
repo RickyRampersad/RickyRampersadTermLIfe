@@ -343,6 +343,10 @@ function load() {
   loading = true;
   $('refresh') && ($('refresh').disabled = true);
   if (main.style.display === 'block') main.classList.add('loading');
+  else if (CODE) {
+    /* the sheet takes ten to twenty seconds to answer: say so at the gate, or a silent wait reads as "nothing opens" */
+    var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block';
+  }
   fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (d) {
@@ -376,7 +380,7 @@ function fail(msg, refused) {
     return;
   }
   clearTimeout(pollTimer); clearInterval(tickTimer);
-  var e = $('gateErr'); e.textContent = msg; e.style.display = 'block';
+  var e = $('gateErr'); e.className = 'box stop'; e.textContent = msg; e.style.display = 'block';
   gate.style.display = 'block'; main.style.display = 'none';
   if (!refused && CODE) pollTimer = setTimeout(load, GATE_RETRY_MS);   /* a busy sheet at the gate: try again by itself */
 }
