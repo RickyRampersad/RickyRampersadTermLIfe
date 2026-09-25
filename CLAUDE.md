@@ -674,6 +674,55 @@ voice under the new timing and the caption gives it away.
   full review is one line under the taps ("Would you rather tell us in your
   own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
   the letters, and the page a tap opens, are both written from it.
+- **The questions are offers, not check-ups.** Rewritten the evening of 24
+  September 2026 after the manager read them as a client would: "asking if
+  they advise to cash in is not a nice question, as the objective is to
+  have them stay and not go with the agent, and want a review … deep dive
+  and research very appealing questions that will give great responses as
+  well as show our service levels". The principles applied (customer
+  research on question wording: positive framing, help inside the
+  question, the caring answer as the easy first option, "your policy"
+  throughout, an easy question first and the commitment last): `rating`
+  (unchanged, the feedback, first); `life` ("has life moved on: a new
+  home, a new job, someone new in the family?" → "Yes, update my cover"
+  brings a call); `pays` ("would you like us to confirm, in plain words,
+  exactly what your policy pays and to whom?"); `checkfirst` ("if anyone
+  ever suggests you change or replace your policy, would you like us to
+  check it with you first, free?" → "Yes, always check with me first",
+  "Someone already has. Call me", which is how a rival approach is heard
+  without a question that sounds like suspicion, or "I will decide
+  myself", the polite way out, because a question with no soft exit
+  lowers response; the old `approached` question is gone); `stay`, last
+  on every in-force letter ("Would you
+  like our branch team to keep looking after your policy?", the letter's
+  own version naming the year since which the team has looked after it,
+  `LETTER_Q`, the year between fact markers so an application reads
+  without it); `value` on the lapsed letter (the free look at what the
+  policy still holds, as a question). Every "yes" that asks something of
+  us is a `callme`; nothing on a check opens the form any more. The
+  service record panel above the questions is the evidence the questions
+  lean on; the questions never quote a count themselves, because a blank
+  cell would break the sentence. The research behind the shape, checked
+  on 25 September 2026: a positive frame rates better on identical facts
+  (Levin, Schneider and Gaeth 1998); asking a customer how they were
+  looked after cuts defection for a year afterwards (Dholakia and Morwitz
+  2002); "your policy" is worth more to its owner than to anyone else
+  (Kahneman, Knetsch and Thaler 1990); two or three options beat a list
+  (Iyengar, Huberman and Jiang 2004); easy questions first and the
+  commitment last (Dillman); a gift given before the ask lifts response
+  far more than one promised after it (Church 1993), which is what the
+  free checks inside the questions are; and the FCA's redress letters
+  trial (Adams and Hunt 2013) found short bullets, "takes five minutes"
+  and a reminder at three to six weeks lifted response, while a
+  big-name signature lowered it. Words to keep out of a client's letter:
+  orphan, reassigned, lapse, book, and "verify" or "confirm your
+  details", which read as phishing. There is no controlled study of
+  orphaned policyholders; the industry figures (Capgemini and LIMRA's
+  World Life Insurance Report 2027: nearly forty per cent rarely or never
+  hear from insurer or agent after buying; J.D. Power 2025: any contact
+  in the past year lifts satisfaction) argue for the six-month and
+  birthday reviews the branch promises, and for a second letter to
+  anyone who has not answered in three to six weeks.
 - **Every answer opens the page; the reply mode is built, tested and
   switched off.** Three decisions in an hour on the evening of 24
   September 2026, after the first Test letters were read on a phone. "When

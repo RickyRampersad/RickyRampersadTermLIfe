@@ -28,7 +28,7 @@
   ],
   "send": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents.",
   "questions": [
-   "approached"
+   "checkfirst"
   ]
  },
  "F1": {
@@ -55,8 +55,9 @@
   "questions": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -84,8 +85,9 @@
   "questions": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -113,8 +115,9 @@
   "questions": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -142,8 +145,9 @@
   "questions": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -171,8 +175,9 @@
   "questions": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -209,8 +214,9 @@
   },
   "questions": [
    "rating",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -247,8 +253,9 @@
   },
   "questions": [
    "rating",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "more": true
  },
@@ -276,7 +283,8 @@
   "send": "A week behind the others.",
   "questions": [
    "life",
-   "approached"
+   "value",
+   "checkfirst"
   ],
   "service": [
    "svc_docs",
@@ -315,8 +323,9 @@
   "plain": "A premium you handed to a registered representative counts as paid to Guardian Life. Keep the receipt. And before anything can be forfeited, you must receive a written notice and twenty business days from it.",
   "send": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.",
   "questions": [
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "service": [
    "svc_docs",
@@ -343,8 +352,9 @@
   ],
   "send": "From the contracts-given-to-agent list. Delivered within the week by the receiving agent.",
   "questions": [
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ]
  },
  "K": {
@@ -367,7 +377,7 @@
   ],
   "send": "From the pending list. Every file is read before the call.",
   "questions": [
-   "approached"
+   "checkfirst"
   ]
  },
  "T": {
@@ -417,8 +427,9 @@
   },
   "questions": [
    "contact",
-   "approached",
-   "whopays"
+   "checkfirst",
+   "pays",
+   "stay"
   ],
   "checks_first": true,
   "service": [
