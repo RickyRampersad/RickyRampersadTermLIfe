@@ -331,8 +331,8 @@ function tHold_(row, letters) {
   if (!tText_(row['First name'])) return 'no first name';
   /* letter T names the agent and the date the contract was terminated in its
      first line: without both it would read as a blank, so the row is held */
-  if (seg === 'T' && !tText_(row['Agent first name'])) return 'no agent name';
-  if (seg === 'T' && !tText_(row.terminated_on)) return 'no termination date';
+  if (seg.charAt(0) === 'T' && !tText_(row['Agent first name'])) return 'no agent name';       // T and T1
+  if (seg.charAt(0) === 'T' && !tText_(row.terminated_on)) return 'no termination date';
   return '';
 }
 
