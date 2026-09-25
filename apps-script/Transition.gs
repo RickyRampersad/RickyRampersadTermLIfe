@@ -57,6 +57,9 @@ var TRANSITION = {
                              // 25 September 2026, the manager's numbers: "the run should be every 30 mins", and
                              // "all to go out in batches today" — 120 every half hour is a day's list in a day
   PACE_MS: 2150,             // the least time from one letter to the next: Microsoft 365 takes thirty a minute from one mailbox
+  RUN_BUDGET_MS: 300000,     // a run stops sending after five minutes and leaves the rest to the next run: Apps Script kills a run at
+                             // six, and a killed run writes no log line and shows no alert (the first batch of 25 September 2026 died
+                             // that way at 106 letters, after holding 95 same-address rows first — every sent row was stamped, nothing was lost)
   HOURS: [9, 17],            // sends only between these hours, script time zone
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
   ORDER: ['T', 'I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the terminated-contract notice, then the action letters; F1…F5 sort as F, R1 and R2 as R
@@ -545,9 +548,12 @@ function tHoldRow_(t, row, why) {
  *  was called, outside any per-row try, so a site that does not answer stops
  *  the run instead of marking sixty rows 'error' and pushing them all to
  *  tomorrow. Only a mail failure is retried tomorrow. */
-function tSendRows_(t, rows, letters) {
-  var sent = 0, skipped = 0, failed = 0;
-  rows.forEach(function (row) {
+function tSendRows_(t, rows, letters, deadline) {
+  var sent = 0, skipped = 0, failed = 0, left = 0;
+  for (var i = 0; i < rows.length; i++) {
+    /* the time budget: what is not reached is simply not touched, and the next run takes it */
+    if (deadline && Date.now() > deadline) { left = rows.length - i; break; }
+    var row = rows[i];
     var t0 = Date.now(), tried = true;
     try {
       tEnsureToken_(t, row);
@@ -568,8 +574,8 @@ function tSendRows_(t, rows, letters) {
       }
     }
     if (tried) tPace_(t0);
-  });
-  return { sent: sent, skipped: skipped, failed: failed };
+  }
+  return { sent: sent, skipped: skipped, failed: failed, left: left };
 }
 
 /** The gap between two letters: Microsoft 365 takes thirty a minute from one
@@ -1123,7 +1129,7 @@ function transitionSendBatch(force) {
 }
 
 function tSendBatch_(force) {
-  var tz = tTz_(), now = new Date();
+  var tz = tTz_(), now = new Date(), deadline = Date.now() + (Number(TRANSITION.RUN_BUDGET_MS) || 300000);
   if (force !== true) {
     var h = Number(Utilities.formatDate(now, tz, 'H'));
     var wd = Number(Utilities.formatDate(now, tz, 'u'));      // 1 = Monday … 7 = Sunday
@@ -1169,13 +1175,14 @@ function tSendBatch_(force) {
     return true;
   });
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
-  var res = tSendRows_(t, due.slice(0, cap), letters);
-  var waiting = Math.max(0, due.length - cap);
-  var msg = res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed, ' + waiting + ' waiting for the next run';
-  /* the reminders, with what is left of the hour's cap: never before the day's
+  var res = tSendRows_(t, due.slice(0, cap), letters, deadline);
+  var waiting = Math.max(0, due.length - cap) + res.left;
+  var msg = res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed, ' + waiting + ' waiting for the next run' +
+    (res.left ? ' (' + res.left + ' of this batch left at the five-minute budget)' : '');
+  /* the reminders, with what is left of the run's cap and time: never before the day's
      new letters, and never able to stop them — a failure here is logged alone */
   var rem = { sent: 0, skipped: 0, failed: 0, waiting: 0 };
-  try { rem = tRemind_(t, letters, cap - Math.min(cap, due.length)); }
+  try { rem = res.left ? rem : tRemind_(t, letters, cap - Math.min(cap, due.length), deadline); }
   catch (err) { log_('transition', 'remind-failed', String(err && err.message ? err.message : err)); }
   if (rem.sent || rem.skipped || rem.failed || rem.waiting) {
     msg += '; reminders: ' + rem.sent + ' sent, ' + rem.skipped + ' held, ' + rem.failed + ' failed, ' + rem.waiting + ' waiting';
@@ -1194,10 +1201,11 @@ function tSendBatch_(force) {
  *  and the reason the batch never picks the row up again. Bounded by
  *  REMIND_MAX_PER_RUN. (25 September 2026: a reminder at three to six weeks is
  *  what the FCA's letter trial found lifted response most; see CLAUDE.md.) */
-function tRemind_(t, letters, cap) {
+function tRemind_(t, letters, cap, deadline) {
   var days = Number(TRANSITION.REMIND_DAYS) || 0;
   cap = Math.min(Number(cap) || 0, TRANSITION.REMIND_MAX_PER_RUN);
   if (cap <= 0 || days <= 0) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
+  if (deadline && Date.now() > deadline) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
   var tz = tTz_(), now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
   var answered = tAnswered_();
@@ -1211,8 +1219,9 @@ function tRemind_(t, letters, cap) {
     return !tHold_(r, letters);
   });
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
-  var sent = 0, skipped = 0, failed = 0;
+  var sent = 0, skipped = 0, failed = 0, left = 0;
   due.slice(0, cap).forEach(function (r) {
+    if (left || (deadline && Date.now() > deadline)) { left++; return; }   // the time budget: the rest waits for the next run
     var t0 = Date.now();
     var row = {};
     for (var k in r) row[k] = r[k];
@@ -1227,7 +1236,7 @@ function tRemind_(t, letters, cap) {
     }
     tPace_(t0);
   });
-  return { sent: sent, skipped: skipped, failed: failed, waiting: Math.max(0, due.length - cap) };
+  return { sent: sent, skipped: skipped, failed: failed, waiting: Math.max(0, due.length - cap) + left };
 }
 
 /** Every token that has answered: a row on Client Responses, or a review whose
