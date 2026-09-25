@@ -687,11 +687,11 @@ setInterval(function () {
 }, 100);
 
 /* ── the clock and the stamp ───────────────────────────────────────── */
-var updatedAt = null, nextAt = 0, retrying = false;
+var updatedAt = null, nextAt = 0, retrying = false, stale = false;   /* stale: the last saved picture is up while the fresh one loads */
 function clock() {
   set('clk', hhmm(new Date()));
   var text = '', left = Math.max(0, Math.ceil((nextAt - Date.now()) / 1000));
-  if (updatedAt) text = 'updated ' + hhmm(updatedAt) + ' · ' + (document.hidden ? 'paused while hidden' : (retrying ? 'could not refresh, retrying in ' + left + ' s' : 'next in ' + left + ' s'));
+  if (updatedAt) text = 'updated ' + hhmm(updatedAt) + ' · ' + (stale ? 'updating from the sheet…' : document.hidden ? 'paused while hidden' : (retrying ? 'could not refresh, retrying in ' + left + ' s' : 'next in ' + left + ' s'));
   $('#stamp').textContent = text; $('#stamp2').textContent = text;
   $('#stamp').className = 'stamp' + (retrying ? ' retry' : '');
   $('#stamp2').className = 'sub2 stamp' + (retrying ? ' retry' : '');
@@ -732,8 +732,10 @@ function load() {
         if (first) { fail('The sheet answered with something this wall could not read. Trying again shortly.', false); return; }
         retrying = true; schedule(POLL); clock(); return;
       }
-      D = d; updatedAt = new Date(); retrying = false;
+      D = d; updatedAt = new Date(); retrying = false; stale = false;
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
+      /* the picture this screen opens with next time, before the sheet has answered */
+      try { localStorage.setItem('rrb-wall-snapshot', JSON.stringify({ at: Date.now(), d: d })); } catch (e) {}
       if (first) { go(0); setPaused(false); }       /* otherwise every number is in place and the cycle carries on */
       schedule(POLL);
       clock();
@@ -746,8 +748,9 @@ function load() {
    the gate; a wall that falls to the gate on a fault, with a code remembered,
    tries again by itself rather than waiting for a hand. */
 function fail(msg, refused) {
-  if (shown && !refused) { retrying = true; schedule(POLL); clock(); return; }
-  clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false;
+  if (shown && !refused) { retrying = true; schedule(stale ? GATE_RETRY : POLL); clock(); return; }
+  clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false; stale = false;
+  if (refused) { try { localStorage.removeItem('rrb-wall-snapshot'); } catch (e) {} }   /* a code that no longer opens takes its picture with it */
   var e = $('#gateErr'); e.className = 'err'; e.textContent = msg; e.style.display = 'block';
   $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
   if (!refused && CODE) schedule(GATE_RETRY);   /* a busy sheet at the gate: again in seconds, not in a minute */
@@ -761,7 +764,20 @@ document.addEventListener('visibilitychange', function () {
 var reflow = null;
 addEventListener('resize', function () { clearTimeout(reflow); reflow = setTimeout(function () { if (D) paint(D); }, 180); });
 $('#gate').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('#code').value.trim(); if (CODE) { $('#gateErr').style.display = 'none'; load(); } });
-if (CODE) { $('#code').value = CODE; load(); }
+if (CODE) {
+  $('#code').value = CODE;
+  /* the last good picture this screen saw opens at once, and the fresh one replaces it when
+     the sheet answers: a wall switched on again, or a phone that opened it before, no longer
+     waits ten seconds on the gate. Twelve hours old at most; a refused code clears it. */
+  var snap = null;
+  try { snap = JSON.parse(localStorage.getItem('rrb-wall-snapshot') || 'null'); } catch (e) { snap = null; }
+  if (snap && snap.d && snap.at && Date.now() - snap.at < 12 * 3600000) {
+    showDeck();
+    if (paint(snap.d)) { D = snap.d; updatedAt = new Date(snap.at); stale = true; go(0); setPaused(false); clock(); }
+    else { shown = false; $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true; }
+  }
+  load();
+}
 window.RRB_WALL = { load: load };                 /* the one handle the page offers, for a test to poll on demand */
 })();
 </script>

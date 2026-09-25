@@ -1244,8 +1244,16 @@ voice under the new timing and the caption gives it away.
   timeout while several screens polled at once, which read on the screens
   as "no walls are opening". A gate that could not reach the sheet tries
   again by itself after fifteen seconds; only a refused code (the backend
-  says `refused: true`) sends a viewer back to the gate for good. The
-  branch code is `TEAM_CODE` in Service.gs, never in the repository.
+  says `refused: true`) sends a viewer back to the gate for good. **The wall
+  and the dashboard open on their last good answer** (25 September, "have
+  the wall a little faster"): each keeps it in `localStorage`
+  (`rrb-wall-snapshot`, `rrb-dash-snapshot`, twelve hours at most), paints
+  it the moment the page loads with "updating from the sheet…" on the
+  stamp, and swaps in the fresh answer when it arrives, so a wall switched
+  on again or a phone opening the page a second time never waits on the
+  gate; the first open on a new device still waits for the sheet, and a
+  refused code clears the saved picture. The branch code is `TEAM_CODE` in
+  Service.gs, never in the repository.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
