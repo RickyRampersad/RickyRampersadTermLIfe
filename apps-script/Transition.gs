@@ -64,6 +64,7 @@ var TRANSITION = {
   RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
+  INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
@@ -171,16 +172,18 @@ function tDay_(x) {
 function transitionSetup() {
   tSheet_();
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    if (t.getHandlerFunction() === 'transitionDigest' || t.getHandlerFunction() === 'transitionReceipts') ScriptApp.deleteTrigger(t);
+    var f = t.getHandlerFunction();
+    if (f === 'transitionDigest' || f === 'transitionReceipts' || f === 'transitionInbox') ScriptApp.deleteTrigger(t);
   });
   TRANSITION.DIGEST_HOURS.forEach(function (h) {
     ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
   });
-  /* the receipts: every five minutes, whether or not the hourly send is on, because letters already out earn them */
+  /* the replies and the receipts: every five minutes, whether or not the hourly send is on, because letters already out earn them */
+  ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
     TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
-    ', and the receipts run every five minutes. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
+    ', and the replies are read and the receipts sent every five minutes. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
     'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
@@ -194,6 +197,7 @@ function transitionGoLive() {
   var have = {};
   ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
   if (!have.transitionSendBatch) ScriptApp.newTrigger('transitionSendBatch').timeBased().everyHours(1).create();
+  if (!have.transitionInbox) ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   var msg = 'Live. The hourly send is on, ' + TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] +
     ':00, Monday to Friday. Transition: pause turns it off.';
@@ -553,6 +557,122 @@ function tCare_(rc) {
  *  more … a wow experience"). */
 function tAckClient_() {}
 
+/* ── the replies: a tap in the letter opens a reply, and this files it ── */
+/* Decided 24 September 2026, evening: "its supposed to be inside the email
+   for easy use". Every check and every tap on the letters is a pre-written
+   reply to MS_FROM (build-letters.py), so the client never leaves their mail
+   app; this reads the support@ inbox every five minutes and files each reply
+   on Client Responses exactly as the page filed a tap, so the receipts, the
+   digest, the responses page and the chase see no difference. The last line
+   of a reply is "Ref: <token> <tap> <answer>"; a reply without one is matched
+   to the client by the address it came from and filed as a question, with
+   their words in the Note cell. Nothing in the mailbox is changed — a reply
+   stays unread for the team — so the Graph permission needed is Mail.Read
+   (application), granted like Mail.Send; a message is never filed twice
+   because its id is kept in the Referrer cell. Only this campaign's tokens
+   are ever filed: any other e-mail is the team's to read, not the script's. */
+/** Every five minutes, installed by transitionSetup and transitionGoLive. */
+function transitionInbox() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return 'another run is busy';
+  try { return tInbox_(); } finally { lock.releaseLock(); }
+}
+
+var T_REF = /Ref:\s*([A-Za-z0-9_-]{6,64})\s+([a-z]+)(?:\s+([a-z_]+))?/;
+
+function tInbox_() {
+  var out = { filed: 0, seen: 0, skipped: 0 };
+  if (!tMsCreds_()) return out;
+  var since = new Date(Date.now() - TRANSITION.INBOX_DAYS * 86400000).toISOString().replace(/\.\d+Z$/, 'Z');
+  var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages' +
+    '?$select=id,internetMessageId,subject,from,receivedDateTime,body&$orderby=receivedDateTime%20desc&$top=50' +
+    '&$filter=' + encodeURIComponent('receivedDateTime ge ' + since);
+  var token;
+  try { token = tMsToken_(); } catch (err) { log_('transition', 'inbox-not-ready', String(err && err.message ? err.message : err)); return out; }
+  var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token, Prefer: 'outlook.body-content-type="text"' } });
+  var code = res.getResponseCode();
+  if (code !== 200) {
+    var why = 'HTTP ' + code;
+    try { var e = JSON.parse(res.getContentText()).error; if (e) why = (e.code ? e.code + ': ' : '') + (e.message || ''); } catch (x) {}
+    if (code === 401) { try { CacheService.getScriptCache().remove('transition:ms-token'); } catch (x) {} }
+    log_('transition', 'inbox-not-ready', (code === 403 ? 'the Entra app needs the Graph application permission Mail.Read, with admin consent. ' : '') + why.slice(0, 200));
+    return out;
+  }
+  var msgs = [];
+  try { msgs = JSON.parse(res.getContentText()).value || []; } catch (x) {}
+  if (!msgs.length) return out;
+  var tokens = tTokenMap_(), byMail = {};
+  Object.keys(tokens).forEach(function (t) {
+    var m = tText_(tokens[t].Email).toLowerCase();
+    if (m) byMail[m] = byMail[m] ? 'many' : t;                         // one client per address, or nobody
+  });
+  var filed = tFiledIds_(), rc = tReceipt_(), lines = {};
+  ((rc && rc.json.reply && rc.json.reply.lines) || []).forEach(function (l) { lines[l.trim().toLowerCase()] = 1; });
+  var ours = {};
+  [TRANSITION.MS_FROM].concat(TRANSITION.CC, TRANSITION.BCC).forEach(function (a) { if (a) ours[String(a).trim().toLowerCase()] = 1; });
+  var sheet = null;
+  msgs.forEach(function (m) {
+    var id = tMsgId_(m);
+    if (!id || filed[id]) { out.seen++; return; }
+    var from = String(((m.from || {}).emailAddress || {}).address || '').trim().toLowerCase();
+    var subject = String(m.subject || '');
+    if (!from || ours[from] || /^(postmaster|mailer-daemon|no-?reply|noreply)/.test(from) ||
+        /^(automatic reply|auto:|out of office|undeliverable|delivery status)/i.test(subject)) { out.skipped++; return; }
+    var text = String((m.body || {}).content || '').replace(/\r/g, '');
+    var ref = T_REF.exec(text) || T_REF.exec(subject);
+    var tok = ref ? ref[1] : ((byMail[from] && byMail[from] !== 'many') ? byMail[from] : '');
+    if (!tok || !tokens[tok]) { out.skipped++; return; }             // not this campaign's client: the team reads it in the inbox
+    var r = ref ? ref[2] : 'question', q = ref ? (ref[3] || '') : 'wrote';
+    var specs = (typeof RESPONSES !== 'undefined') ? RESPONSES : {};
+    var spec = specs[r];
+    if (!spec) { r = 'question'; q = 'wrote'; spec = specs.question || { needs: 'a reply the same day', status: 'Open' }; }
+    var words = tWords_(text, lines);
+    try {
+      sheet = sheet || responseSheet_();
+      sheet.appendRow([new Date(), tok, tText_(tokens[tok].Segment).toUpperCase(), r, spec.needs,
+        '/reply' + (q ? '?q=' + q : ''), ('reply ' + id).slice(0, 120), spec.status, '', '',
+        words ? '"' + words.slice(0, 300) + '"' : '']);
+      filed[id] = 1; out.filed++;
+    } catch (err) { log_('transition', 'inbox-row-failed', String(err && err.message ? err.message : err)); }
+  });
+  if (out.filed) log_('transition', 'inbox', out.filed + ' filed, ' + out.seen + ' already filed, ' + out.skipped + ' not this campaign');
+  return out;
+}
+
+/** The message ids already filed: 'reply <id>' in the Referrer cell of recent Client Responses rows. */
+function tFiledIds_() {
+  var ids = {};
+  try {
+    var sh = ss_().getSheetByName(SVC.RESP_SHEET), last = sh ? sh.getLastRow() : 0;
+    if (!sh || last < 2) return ids;
+    var vals = sh.getRange(2, 1, last - 1, 7).getValues(), cut = Date.now() - (TRANSITION.INBOX_DAYS + 2) * 86400000;
+    for (var i = 0; i < vals.length; i++) {
+      var d = vals[i][0] instanceof Date ? vals[i][0].getTime() : 0, ref = String(vals[i][6] || '');
+      if (d >= cut && ref.indexOf('reply ') === 0) ids[ref.slice(6)] = 1;
+    }
+  } catch (e) {}
+  return ids;
+}
+
+function tMsgId_(m) {
+  return String(m.internetMessageId || m.id || '').replace(/^<|>$/g, '').trim().slice(0, 110);
+}
+
+/** The client's own words in a reply: what is left once the reference, the pre-written lines and any quoted
+ *  earlier message are gone. '' when they only tapped. */
+function tWords_(text, lines) {
+  var body = text.split(/\n\s*Ref:\s*[A-Za-z0-9_-]{6,64}\s+[a-z]+/)[0];
+  var out = [];
+  var stop = /^(On .+ wrote:|From: |Sent: |-----Original Message-----|________________________________)/;
+  body.split('\n').some(function (l) {
+    var t = l.trim();
+    if (stop.test(t)) return true;                                        // the quoted letter beneath: not theirs
+    if (!t || t.charAt(0) === '>' || lines[t.toLowerCase()]) return false;
+    out.push(t); return false;
+  });
+  return out.join(' ').replace(/\s+/g, ' ').trim();
+}
+
 /** Every five minutes, installed by transitionSetup. */
 function transitionReceipts() {
   var lock = LockService.getScriptLock();
@@ -586,7 +706,8 @@ function tReceipts_() {
     if (now - received > 14 * 86400000) continue;                    // long before the receipts ran: left alone
     if (!groups[token]) { groups[token] = { rows: [], newest: received }; order.push(token); }
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
-                              q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note });
+                              q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note,
+                              via: String(v[6] || '').indexOf('reply ') === 0 });   // filed from a reply: its words are in the Note, no form follows
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
@@ -596,7 +717,7 @@ function tReceipts_() {
   var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN;
   for (var k = 0; k < order.length; k++) {
     var tok = order[k], g = groups[tok];
-    var formTap = g.rows.some(function (x) { return x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve'; });
+    var formTap = g.rows.some(function (x) { return (x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve') && !x.via; });
     var review = null;
     if (formTap) { if (reviews === null) reviews = tReviewMap_(); review = reviews['transition:' + tok] || null; }
     var ageMin = (now - g.newest) / 60000;
@@ -680,11 +801,37 @@ function tReceiptMail_(rc, row, g, review) {
   });
   if (review) nexts.unshift('Your review is filed' + (tText_(review.Reference) ? ' under reference ' + tText_(review.Reference) : '') + '. A person reads it before anyone is matched to you.');
   if (!nexts.length) nexts.push(j.next.informed);
+  /* a reply in their own words, filed by transitionInbox with the words in the Note cell: quoted back */
+  rows.forEach(function (x) {
+    var w = /^"([\s\S]*?)"(?:\s|$)/.exec(x.note || '');
+    if (w && w[1].trim()) concerns.push({ q: 'You wrote', a: w[1].trim() });
+  });
+  /* what they can still tell us, one tap each: the letter's other checks, how to reach them and, once a
+     call is coming, when — as replies, like the letter's own taps (the two form answers open the page) */
+  var more = [];
+  if (j.questions && j.reply) {
+    var answered = {};
+    rows.forEach(function (x) { if (x.q) answered[x.q] = 1; });
+    var seg = tText_(row.Segment).toUpperCase(), tokv = tText_(row.Token);
+    var keys = ((j.segments || {})[seg] || []).concat(['reach']).concat(rows.some(function (x) { return x.r === 'callme'; }) ? ['when'] : []);
+    keys.forEach(function (k) {
+      var Q = j.questions[k];
+      if (!Q || Q[1].some(function (a) { return answered[a[2]]; })) return;
+      var links = Q[1].map(function (a) {
+        var href = (j.reply.form_taps || []).indexOf(a[1]) >= 0
+          ? j.reply.page + '?t=' + encodeURIComponent(tokv) + '&s=' + encodeURIComponent(seg) + '&r=' + a[1] + '&q=' + a[2]
+          : tReplyLink_(j.reply, Q[0], a[0], a[1], a[2], tokv);
+        return fill(tpl.more_a, { href: esc(href), a: esc(a[0]) });
+      });
+      more.push(fill(tpl.more_q, { q: esc(Q[0]), links: links.join('') }));
+    });
+  }
   var block = function (items, wrap, item, f) { return items.length ? fill(tpl[wrap], { items: items.map(function (it) { return fill(tpl[item], f(it)); }).join('') }) : ''; };
   var text = function (s) { return esc(s).replace(/\n/g, '<br>'); };
   var recapHtml = block(recap, 'items', 'item', function (it) { return { q: esc(it.q), a: text(it.a) }; });
   var concHtml = concerns.map(function (it) { return fill(tpl.quote, { q: esc(it.q), a: text(it.a) }); }).join('');
   var nextHtml = block(nexts, 'bullets', 'bullet', function (a) { return { a: esc(a) }; });
+  var moreHtml = more.length && tpl.more ? fill(tpl.more, { items: more.join('') }) : '';
   var followHtml = block(j.follow || [], 'bullets_dark', 'bullet_dark', function (a) { return { a: esc(a) }; });
   var vals = {};
   Object.keys(row).forEach(function (k) { vals[k] = row[k]; });
@@ -694,11 +841,19 @@ function tReceiptMail_(rc, row, g, review) {
   var html = tFill_(rc.html, vals);
   html = tBlock_(html, 'recap', !!recapHtml);
   html = tBlock_(html, 'concerns', !!concHtml);
+  html = tBlock_(html, 'more', !!moreHtml);
   html = html.replace(/\[\[recap\]\]/g, recapHtml).replace(/\[\[concerns\]\]/g, concHtml)
-             .replace(/\[\[next\]\]/g, nextHtml).replace(/\[\[follow\]\]/g, followHtml);
+             .replace(/\[\[next\]\]/g, nextHtml).replace(/\[\[more\]\]/g, moreHtml).replace(/\[\[follow\]\]/g, followHtml);
   var subject = tFill_(j.subject, vals).replace(/<[^>]+>/g, '');
   if (/\{\{\w+\}\}|\[\[\w+\]\]/.test(subject + html)) throw new Error('the receipt on the site carries a field this script cannot fill');
-  return { subject: subject, html: html, recap: recap, concerns: concerns, next: nexts };
+  return { subject: subject, html: html, recap: recap, concerns: concerns, next: nexts, more: more.length };
+}
+
+/** A reply link the way build-letters.py writes them on the letters: the answer as the subject, the
+ *  question and the answer in the body, a line for anything more, and the reference on the last line. */
+function tReplyLink_(reply, question, label, r, q, token) {
+  var body = question + '\n' + label + '\n\n' + reply.more + '\n\nRef: ' + token + ' ' + r + (q ? ' ' + q : '');
+  return 'mailto:' + reply.to + '?subject=' + encodeURIComponent(label) + '&body=' + encodeURIComponent(body);
 }
 
 /** Every Transition Send row, read once and keyed by token — so a loop over

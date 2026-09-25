@@ -28,7 +28,8 @@
   "life_changed": "Someone from the branch calls you today or tomorrow to check your cover still fits your life.",
   "whopays_unsure": "We check who your policy pays and go through it with you by phone, once we have confirmed it is you.",
   "approached_yes": "A person reads what was suggested and calls you before you decide anything.",
-  "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us."
+  "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
+  "wrote": "A person reads your e-mail and replies the same working day."
  },
  "still": {
   "subject": "Still on it, {{first_name}}.",
@@ -38,6 +39,7 @@
   "recap": "What you told us",
   "concerns": "Your concerns, in your words",
   "next": "What happens next",
+  "more": "Anything else? One tap each, by reply",
   "follow": "How we follow through"
  },
  "follow": [
@@ -116,6 +118,10 @@
    "when_evening": [
     "When suits you best for a call?",
     "Evening"
+   ],
+   "wrote": [
+    "You wrote to us",
+    "Your e-mail, quoted below"
    ]
   },
   "taps": {
@@ -169,6 +175,244 @@
   "What matters most to you in an agent?",
   "Anything else your ideal agent should know about you?"
  ],
+ "reply": {
+  "to": "support@rickyrampersadbranch.com",
+  "more": "You can add anything you would like us to know here.",
+  "page": "https://rickyrampersadbranch.com/your-policy/",
+  "form_taps": [],
+  "lines": [
+   "Afternoon",
+   "All good, keep my details.",
+   "Bring me my contract.",
+   "Call me about my policy.",
+   "Call me.",
+   "Check my file with me.",
+   "Could be better",
+   "Do you know who your policy pays today?",
+   "E-mail",
+   "Evening",
+   "Finish my application.",
+   "Has anyone suggested you cancel, cash in or replace a policy?",
+   "Has anything changed for you since you took out your policy?",
+   "Has your former agent been in touch with you since their contract ended?",
+   "Help me claim it.",
+   "How have we looked after you so far?",
+   "I have already paid.",
+   "I have paid a premium that is not showing.",
+   "I want an agent now. Let me tell you my concerns first.",
+   "I would rather not proceed.",
+   "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
+   "Morning",
+   "My details have changed.",
+   "No",
+   "No, nothing has changed",
+   "Not sure, check it for me",
+   "Phone call",
+   "Set me up to pay Guardian Life directly.",
+   "Tell us more about yourself.",
+   "Very well",
+   "Well",
+   "What is the best way to reach you?",
+   "WhatsApp",
+   "When suits you best for a call?",
+   "Write your concerns here, in your own words. A person reads every word before anyone is named:",
+   "Yes",
+   "Yes, call me",
+   "Yes, talk to me first",
+   "Yes: family, home or work",
+   "You can add anything you would like us to know here."
+  ]
+ },
+ "questions": {
+  "rating": [
+   "How have we looked after you so far?",
+   [
+    [
+     "Very well",
+     "informed",
+     "rate_verywell"
+    ],
+    [
+     "Well",
+     "informed",
+     "rate_well"
+    ],
+    [
+     "Could be better",
+     "callme",
+     "rate_better"
+    ]
+   ]
+  ],
+  "life": [
+   "Has anything changed for you since you took out your policy?",
+   [
+    [
+     "Yes: family, home or work",
+     "callme",
+     "life_changed"
+    ],
+    [
+     "No, nothing has changed",
+     "informed",
+     "life_same"
+    ]
+   ]
+  ],
+  "whopays": [
+   "Do you know who your policy pays today?",
+   [
+    [
+     "Yes",
+     "informed",
+     "whopays_yes"
+    ],
+    [
+     "Not sure, check it for me",
+     "callme",
+     "whopays_unsure"
+    ]
+   ]
+  ],
+  "approached": [
+   "Has anyone suggested you cancel, cash in or replace a policy?",
+   [
+    [
+     "No",
+     "informed",
+     "approached_no"
+    ],
+    [
+     "Yes, talk to me first",
+     "urgent",
+     "approached_yes"
+    ]
+   ]
+  ],
+  "contact": [
+   "Has your former agent been in touch with you since their contract ended?",
+   [
+    [
+     "No",
+     "informed",
+     "contact_no"
+    ],
+    [
+     "Yes, call me",
+     "callme",
+     "contact_yes"
+    ]
+   ]
+  ],
+  "reach": [
+   "What is the best way to reach you?",
+   [
+    [
+     "Phone call",
+     "informed",
+     "reach_phone"
+    ],
+    [
+     "WhatsApp",
+     "informed",
+     "reach_whatsapp"
+    ],
+    [
+     "E-mail",
+     "informed",
+     "reach_email"
+    ]
+   ]
+  ],
+  "when": [
+   "When suits you best for a call?",
+   [
+    [
+     "Morning",
+     "informed",
+     "when_morning"
+    ],
+    [
+     "Afternoon",
+     "informed",
+     "when_afternoon"
+    ],
+    [
+     "Evening",
+     "informed",
+     "when_evening"
+    ]
+   ]
+  ]
+ },
+ "segments": {
+  "A": [
+   "approached"
+  ],
+  "F1": [
+   "rating",
+   "life",
+   "whopays",
+   "approached"
+  ],
+  "F2": [
+   "rating",
+   "life",
+   "whopays",
+   "approached"
+  ],
+  "F3": [
+   "rating",
+   "life",
+   "whopays",
+   "approached"
+  ],
+  "F4": [
+   "rating",
+   "life",
+   "whopays",
+   "approached"
+  ],
+  "F5": [
+   "rating",
+   "life",
+   "whopays",
+   "approached"
+  ],
+  "R1": [
+   "rating",
+   "whopays",
+   "approached"
+  ],
+  "R2": [
+   "rating",
+   "whopays",
+   "approached"
+  ],
+  "G": [
+   "life",
+   "approached"
+  ],
+  "I": [
+   "whopays",
+   "approached"
+  ],
+  "J": [
+   "whopays",
+   "approached"
+  ],
+  "K": [
+   "approached"
+  ],
+  "T": [
+   "contact",
+   "approached",
+   "whopays"
+  ],
+  "_": [
+   "approached"
+  ]
+ },
  "tpl": {
   "items": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin-top:4px\">{items}</table>",
   "item": "<tr><td style=\"padding:8px 0 7px;border-top:1px solid #e0eaef;font:400 13px/1.45 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5d7186\">{q}<div style=\"font:700 15px/1.4 'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e;margin-top:2px\">{a}</div></td></tr>",
@@ -176,7 +420,10 @@
   "bullets": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
   "bullet": "<tr><td style=\"padding:3px 0;font:400 14.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\"><span style=\"color:#c9942c;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>",
   "bullets_dark": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
-  "bullet_dark": "<tr><td style=\"padding:4px 0;font:400 14px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#dbe7f1\"><span style=\"color:#efc24b;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>"
+  "bullet_dark": "<tr><td style=\"padding:4px 0;font:400 14px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#dbe7f1\"><span style=\"color:#efc24b;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>",
+  "more": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "more_q": "<tr><td style=\"padding:6px 0 4px;font:600 13.5px/1.45 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\">{q}<div style=\"margin-top:6px\">{links}</div></td></tr>",
+  "more_a": "<a href=\"{href}\" style=\"display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:#07606f;font:700 13px/1.2 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;white-space:nowrap\">&#9744;&nbsp;{a}</a>"
  },
  "tpl_plain": {
   "items": "<ul>{items}</ul>",
@@ -185,6 +432,9 @@
   "bullets": "<ul>{items}</ul>",
   "bullet": "<li>{a}</li>",
   "bullets_dark": "<ul>{items}</ul>",
-  "bullet_dark": "<li>{a}</li>"
+  "bullet_dark": "<li>{a}</li>",
+  "more": "<ul>{items}</ul>",
+  "more_q": "<li><b>{q}</b><br>{links}</li>",
+  "more_a": "<a href=\"{href}\">&#9744;&nbsp;{a}</a> &nbsp; "
  }
 }

@@ -674,7 +674,38 @@ voice under the new timing and the caption gives it away.
   full review is one line under the taps ("Would you rather tell us in your
   own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
   the letters, and the page a tap opens, are both written from it.
-- **A tap opens one small page, at once.** `/your-policy/` with `r=` in the
+- **Every answer is a reply, not a page.** Decided the evening of 24
+  September 2026, after the first Test letters were read on a phone: "when
+  you are clicking on the question its opening the browser and this is not
+  supposed to be happening, its supposed to be inside the email for easy
+  use", then "for all it should not open any browsers". An e-mail cannot
+  record a tap by itself, so every check and every tap is a `mailto:` to
+  support@ (`reply_link` in build-letters.py): the answer as the subject,
+  the question and the answer as the first lines of the body, a spare line
+  for anything more, and on the last line `Ref: <token> <tap> <answer>`. The
+  two doors that were the questionnaire ("I want an agent now", the full
+  review) are replies too, whose body asks the client to write their
+  concerns (`REPLY_LINES`); the words they write are quoted back in the
+  receipt. Only the film and the law page open anything, because a video
+  cannot play inside an e-mail. `transitionInbox` (Transition.gs, every
+  five minutes, installed by setup and go live) reads the support@ inbox
+  through Graph, needs the application permission **Mail.Read** with admin
+  consent on the same Entra app, changes nothing in the mailbox (a reply
+  stays unread for the team), files each reply on Client Responses exactly
+  as the page filed a tap (`Page` = `/reply?q=…`, `Referrer` = `reply
+  <message id>`, which is how a message is never filed twice), matches a
+  reply with no reference to the client by its sender address and files it
+  as a `question` with `q=wrote`, and puts the client's own words in the
+  Note cell (`tWords_` strips the pre-written lines listed in
+  `receipt.json` `reply.lines` and anything quoted beneath). The receipt
+  then offers the letter's other checks, how to reach them and, once a call
+  is coming, when, as replies of its own (`[[more]]`). A merge field can
+  never appear inside a reply body, since it is URL-encoded: the reply
+  carries QUESTIONS' own words. `tap-test.js` decodes every reply on every
+  letter and reads it as the script would; `svc/inbox-harness.js` in the
+  session scratchpad runs the reader's parsing on sample replies.
+- **The page a link opens (the film line now; every tap until 24
+  September).** `/your-policy/` with `r=` in the
   address is the whole journey: it records the answer, says what happens
   next, and offers the letter's other checks and *What is the best way to
   reach you?* one tap each on the page, without loading the film page or the

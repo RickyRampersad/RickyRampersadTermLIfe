@@ -20,6 +20,7 @@ appears: days and dates only.
   python3 build-letters.py     → orphan-transition/letters/*.html, templates/index.html
 """
 import html, json, pathlib
+from urllib.parse import quote
 
 HERE = pathlib.Path(__file__).resolve().parent
 ROOT = HERE.parent.parent
@@ -36,6 +37,58 @@ PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s=
 # 'urgent' tap is logged and then carried straight into the questionnaire,
 # so the client states their concerns before anyone is named.
 TAP = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
+
+# ── every answer is a reply, not a page ──────────────────────────────
+# 24 September 2026, evening: "when you are clicking on the question its
+# opening the browser and this is not supposed to be happening, its supposed
+# to be inside the email for easy use". An e-mail cannot record a tap by
+# itself, so the nearest thing to answering inside it is a reply: each check
+# and each tap opens a pre-written reply to support@ in the client's own mail
+# app, and Transition.gs (transitionInbox, every five minutes) files it from
+# the inbox exactly as a tap on the page was filed. Every answer, the two
+# questionnaire doors included ("for all it should not open any browsers"):
+# "I want an agent now" and the full review are replies whose body asks the
+# client to write, and the words they write are quoted back in the receipt.
+# Only the film and the law page still open anything, because a video cannot
+# play inside an e-mail. The last line of the reply carries the reference the
+# script reads, "Ref: <token> <tap> <answer>"; a reply with no reference is
+# matched to the client by the address it came from and filed as a question.
+REPLY_TO = 'support@rickyrampersadbranch.com'
+REPLY_MORE = 'You can add anything you would like us to know here.'
+FORM_TAPS = ()   # none: every tap is a reply. Kept so the receipt and the test know the rule.
+# the two doors that used to open the questionnaire: the reply asks for the words instead
+REPLY_LINES = {
+ 'urgent': ['Write your concerns here, in your own words. A person reads every word before anyone is named:'],
+ 'review': ['In your own words: what you hold with us, who your policy pays, what has changed in your life, and what '
+            'matters most to you in an agent. A person reads it, and goes through it with you if you would like.'],
+}
+_TOK = 'XRRBTOKENX'   # stands in for {{token}} while the body is URL-encoded, so the braces survive for the sender
+
+
+def reply_link(subject, lines, r, q='', more=True):
+    """A mailto: the subject is the answer, the body its question and answer, a line for anything more, and the reference."""
+    body = '\n'.join(lines) + ('\n\n' + REPLY_MORE if more else '\n\n\n') + '\n\nRef: ' + _TOK + ' ' + r + (' ' + q if q else '')
+    return f'mailto:{REPLY_TO}?subject={quote(subject, safe="")}&body={quote(body, safe="").replace(_TOK, "{{token}}")}'
+
+
+def tap_href(cfg, r):
+    """Where a tap goes: a reply. The two doors that ask for words carry their own prompt instead of the spare line."""
+    if r in FORM_TAPS:
+        return TAP + r
+    label = tap(cfg, r)[0]
+    if r in REPLY_LINES:
+        return reply_link(label, [label + '.', ''] + REPLY_LINES[r], r, more=False)
+    return reply_link(label, [label + '.'], r)
+
+
+def answer_href(q, label, tapkey, ans):
+    """Where a check's answer goes: a reply carrying QUESTIONS' own words, never a merge field, since a URL-encoded
+    body cannot carry one. An answer that asks for the client's words ('talk to me first') carries that door's prompt."""
+    if tapkey in FORM_TAPS:
+        return TAP + tapkey + '&q=' + ans
+    if tapkey in REPLY_LINES:
+        return reply_link(label, [QUESTIONS[q][0], label, ''] + REPLY_LINES[tapkey], tapkey, ans, more=False)
+    return reply_link(label, [QUESTIONS[q][0], label], tapkey, ans)
 
 # ── what a letter can read off the sheet ─────────────────────────────
 # merge field → where the send-list builder takes it from. A blank field
@@ -186,6 +239,7 @@ NEXT_Q = {
  'whopays_unsure': 'We check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
  'approached_yes': 'A person reads what was suggested and calls you before you decide anything.',
  'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
+ 'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
 }
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
 
@@ -272,7 +326,7 @@ def taps_block(cfg):
         bg, border, title, text = (NAVY, NAVY, GOLD, '#c6d6e4') if i == 0 else ('#ffffff', LINE, INK, DIM)
         rows += f"""
 <tr><td style="padding:0 0 9px">
-  <a href="{TAP}{r}" style="display:block;text-decoration:none;background:{bg};border:1.5px solid {border};border-radius:13px;padding:14px 17px">
+  <a href="{tap_href(cfg, r)}" style="display:block;text-decoration:none;background:{bg};border:1.5px solid {border};border-radius:13px;padding:14px 17px">
     <div style="font:800 16px/1.3 {HEAD};color:{title}">{tap(cfg, r)[0]}&nbsp;&rarr;</div>
     <div style="font:400 13px/1.5 {BODY};color:{text};margin-top:3px">{tap(cfg, r)[1]}</div>
   </a>
@@ -281,22 +335,22 @@ def taps_block(cfg):
     # is one of the taps and as a single line where it is not
     urgent_line = '' if 'urgent' in cfg['taps'] else f"""
 <p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:{DIM}">Would you rather have an agent of your own?
-  <a href="{TAP}urgent" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and we match you to the one who fits&nbsp;&rarr;</a></p>"""
+  <a href="{tap_href(cfg, 'urgent')}" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and we match you to the one who fits&nbsp;&rarr;</a></p>"""
     return f"""
 <p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">One tap tells us what you would like. We do the rest.</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
 
 
 def questions_block(cfg):
-    """The quick checks: each answer a pill with a box to tick."""
-    qs = [(LETTER_Q.get(q, QUESTIONS[q][0]), QUESTIONS[q][1]) for q in cfg.get('questions', [])]
+    """The quick checks: each answer a pill with a box to tick, and a reply behind it."""
+    qs = cfg.get('questions', [])
     if not qs:
         return ''
-    link = lambda label, tapkey, ans: (f'<a href="{TAP}{tapkey}&q={ans}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
-                                       f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
-                                       f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
+    link = lambda q, label, tapkey, ans: (f'<a href="{answer_href(q, label, tapkey, ans)}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
+                                          f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
+                                          f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
     rows = ''.join(f"""
-<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{q}<div style="margin-top:7px">{''.join(link(*a) for a in answers)}</div></td></tr>""" for q, answers in qs)
+<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{LETTER_Q.get(q, QUESTIONS[q][0])}<div style="margin-top:7px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
     return f"""
 <p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">{checks_head(qs)}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 10px">{rows}</table>"""
@@ -308,7 +362,7 @@ def more_line(cfg):
         return ''
     return f"""
 <p style="margin:0 0 16px;font:400 13px/1.5 {BODY};color:{DIM}">{MORE_ASK}
-  <a href="{TAP}review" style="color:{TDARK};font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>"""
+  <a href="{tap_href(cfg, 'review')}" style="color:{TDARK};font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>"""
 
 
 def act_block(cfg):
@@ -469,7 +523,7 @@ def shell(seg, cfg):
 '''
 
 
-manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'letters': []}
+manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'reply_to': REPLY_TO, 'letters': []}
 for seg, cfg in SEGMENTS.items():
     path = OUT / f'{seg}.html'
     path.write_text(shell(seg, cfg), encoding='utf-8')
@@ -496,11 +550,12 @@ PLAIN.mkdir(exist_ok=True)
 
 
 def plain_questions(cfg):
-    qs = [(LETTER_Q.get(q, QUESTIONS[q][0]), QUESTIONS[q][1]) for q in cfg.get('questions', [])]
+    qs = cfg.get('questions', [])
     if not qs:
         return ''
-    items = ''.join(f'<li><b>{q}</b><br>' + ' &nbsp; '.join(f'<a href="{TAP}{t}&q={a}">{BOX}&nbsp;{label}</a>' for label, t, a in answers) + '</li>'
-                    for q, answers in qs)
+    items = ''.join(f'<li><b>{LETTER_Q.get(q, QUESTIONS[q][0])}</b><br>' +
+                    ' &nbsp; '.join(f'<a href="{answer_href(q, label, t, a)}">{BOX}&nbsp;{label}</a>' for label, t, a in QUESTIONS[q][1]) + '</li>'
+                    for q in qs)
     return f'<h3>{checks_head(qs)}</h3><ul>{items}</ul>'
 
 
@@ -528,8 +583,8 @@ def plain_letter(seg, cfg):
     facts += plain_service(cfg)
     act = (f'<h3>The Insurance Act &middot; Trinidad and Tobago</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
            f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
-    taps = ''.join(f'<li><a href="{TAP}{r}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
-    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own? <a href="{TAP}urgent"><b>Tell us your '
+    taps = ''.join(f'<li><a href="{tap_href(cfg, r)}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
+    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own? <a href="{tap_href(cfg, "urgent")}"><b>Tell us your '
                                                  f'concerns first, and we match you to the one who fits&nbsp;&rarr;</b></a></p>')
     tapsblock = f'<h3>One tap tells us what you would like. We do the rest.</h3><ul>{taps}</ul>{urgent}'
     law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
@@ -541,7 +596,7 @@ def plain_letter(seg, cfg):
             f'{plain_notice(cfg)}'
             f'<p>{cfg["open"]}</p>{facts}{act}'
             + (plain_questions(cfg) + tapsblock if checks_first(cfg) else tapsblock + plain_questions(cfg))
-            + (f'<p>{MORE_ASK} <a href="{TAP}review">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
+            + (f'<p>{MORE_ASK} <a href="{tap_href(cfg, "review")}">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'{law}'
             f'<p>Your policy is looked after by the branch. Whatever you tell us is read by a person first, and then we match you '
@@ -949,7 +1004,7 @@ RECEIPT_SUBJECT = 'Thank you, {{first_name}}. We have received your response.'
 RECEIPT_OPEN = 'We have received your response. It reached us at {{time}}, and it is with {{care_us}} now: a person, not a queue.'
 RECEIPT_REPLY = 'Reply to this e-mail at any time. It reaches {{care_us}} directly.'
 RECEIPT_HEADS = {'recap': 'What you told us', 'concerns': 'Your concerns, in your words',
-                 'next': 'What happens next', 'follow': 'How we follow through'}
+                 'next': 'What happens next', 'more': 'Anything else? One tap each, by reply', 'follow': 'How we follow through'}
 FOLLOW = [
  'A person reads this, not a system. Your file is read before anyone is matched to you.',
  'If you asked for a call, it comes today or tomorrow, at the time you chose.',
@@ -961,7 +1016,8 @@ STILL = {'subject': 'Still on it, {{first_name}}.',
                  'and you are welcome to reply here at any time.'}
 # the recap: a quick-check answer is echoed with its question; a bare tap with the words the client tapped
 RECAP = {'tapped': 'You tapped',
-         'q': {ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH, WHEN] for label, _, ans in answers},
+         'q': {**{ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH, WHEN] for label, _, ans in answers},
+               'wrote': ['You wrote to us', 'Your e-mail, quoted below']},   # a reply in their own words, filed by transitionInbox
          'taps': {**{r: v[0] for r, v in TAPS.items()}, 'review': 'The full review, in your own words',
                   'selfserve': 'The full review, in your own words', 'assign': 'Match me to an agent'},
          'tap_text': {seg: {r: v[0] for r, v in cfg.get('tap_text', {}).items()} for seg, cfg in SEGMENTS.items() if cfg.get('tap_text')}}
@@ -998,9 +1054,15 @@ RECEIPT_TPL = {
  'bullet': f'<tr><td style="padding:3px 0;font:400 14.5px/1.55 {BODY};color:{INK}"><span style="color:{GOLD2};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
  'bullets_dark': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
  'bullet_dark': f'<tr><td style="padding:4px 0;font:400 14px/1.55 {BODY};color:#dbe7f1"><span style="color:{GOLD};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
+ # the letter's other checks, offered again in the receipt as replies, like the letter's own
+ 'more': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'more_q': f'<tr><td style="padding:6px 0 4px;font:600 13.5px/1.45 {BODY};color:{INK}">{{q}}<div style="margin-top:6px">{{links}}</div></td></tr>',
+ 'more_a': (f'<a href="{{href}}" style="display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border:1.5px solid #b9d6df;border-radius:999px;'
+            f'background:#f7fbfc;color:{TDARK};font:700 13px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{{a}}</a>'),
 }
 RECEIPT_TPL_PLAIN = {'items': '<ul>{items}</ul>', 'item': '<li>{q}<br><b>{a}</b></li>', 'quote': '<p>{q}<br><i>&ldquo;{a}&rdquo;</i></p>',
-                     'bullets': '<ul>{items}</ul>', 'bullet': '<li>{a}</li>', 'bullets_dark': '<ul>{items}</ul>', 'bullet_dark': '<li>{a}</li>'}
+                     'bullets': '<ul>{items}</ul>', 'bullet': '<li>{a}</li>', 'bullets_dark': '<ul>{items}</ul>', 'bullet_dark': '<li>{a}</li>',
+                     'more': '<ul>{items}</ul>', 'more_q': '<li><b>{q}</b><br>{links}</li>', 'more_a': f'<a href="{{href}}">{BOX}&nbsp;{{a}}</a> &nbsp; '}
 
 
 def receipt_card(bg, border, eyebrow_colour, head, body, dark=False):
@@ -1025,6 +1087,7 @@ def receipt_table():
   <!--recap-->{receipt_card('#f4f8fa', GOLD, '#8a6420', H['recap'], '[[recap]]')}<!--/recap-->
   <!--concerns-->{receipt_card('#ffffff', TEAL, TDARK, H['concerns'], '[[concerns]]')}<!--/concerns-->
   {receipt_card('#fff8e6', GOLD, '#8a6420', H['next'], '[[next]]')}
+  <!--more-->{receipt_card('#f3fbfd', TEAL, TDARK, H['more'], '[[more]]')}<!--/more-->
   {receipt_card(NAVY, GOLD, GOLD, H['follow'], '[[follow]]', dark=True)}
   <p style="margin:0 0 6px">{RECEIPT_REPLY}</p>
   <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr>
@@ -1059,6 +1122,7 @@ PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Carib
                  f'<!--recap--><h3>{RECEIPT_HEADS["recap"]}</h3>[[recap]]<!--/recap-->'
                  f'<!--concerns--><h3>{RECEIPT_HEADS["concerns"]}</h3>[[concerns]]<!--/concerns-->'
                  f'<h3>{RECEIPT_HEADS["next"]}</h3>[[next]]'
+                 f'<!--more--><h3>{RECEIPT_HEADS["more"]}</h3>[[more]]<!--/more-->'
                  f'<h3>{RECEIPT_HEADS["follow"]}</h3>[[follow]]'
                  f'<p>{RECEIPT_REPLY}</p>'
                  '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
@@ -1066,9 +1130,18 @@ PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Carib
 
 (OUT / 'receipt.html').write_text(receipt_doc(), encoding='utf-8')
 (PLAIN / 'receipt.html').write_text(PLAIN_RECEIPT, encoding='utf-8')
+# the replies: what the inbox reader strips from a reply to find the client's own words (every pre-written
+# line a reply can carry), and what the receipt needs to offer the other checks as replies of its own
+_ALL_Q = list(QUESTIONS.values()) + [REACH, WHEN]
+REPLY = {'to': REPLY_TO, 'more': REPLY_MORE, 'page': 'https://rickyrampersadbranch.com/your-policy/', 'form_taps': list(FORM_TAPS),
+         'lines': sorted({REPLY_MORE} | {q for q, _ in _ALL_Q} | {label for _, answers in _ALL_Q for label, _, _ in answers}
+                         | {v[0] + '.' for v in TAPS.values()} | {t[0] + '.' for cfg in SEGMENTS.values() for t in cfg.get('tap_text', {}).values()}
+                         | {l for ls in REPLY_LINES.values() for l in ls})}
+_checks = json.loads(landing_checks())
 (OUT / 'receipt.json').write_text(json.dumps({'subject': RECEIPT_SUBJECT, 'file': 'receipt.html', 'plain': 'plain/receipt.html',
                                               'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL, 'heads': RECEIPT_HEADS,
                                               'follow': FOLLOW, 'recap': RECAP, 'review': REVIEW_RECAP,
+                                              'reply': REPLY, 'questions': _checks['questions'], 'segments': _checks['segments'],
                                               'tpl': RECEIPT_TPL, 'tpl_plain': RECEIPT_TPL_PLAIN}, indent=1, ensure_ascii=False),
                                   encoding='utf-8')
 print(f'wrote the receipt: {OUT / "receipt.html"}, {PLAIN / "receipt.html"}, {OUT / "receipt.json"}')
