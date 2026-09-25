@@ -255,8 +255,9 @@
 var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 var STAFF_TESTS = 9;          // staff rows marked Test on the send list; they count as sent but are not letters out
 var PER_RUN = 120, EVERY_MIN = 30, HOURS = [9, 17];   // BATCH, SEND_EVERY_MIN and HOURS in Transition.gs — the finish estimate uses them
-var POLL_MS = 60000;          // refresh while the tab is visible
-var RETRY_MS = 60000;         // after a failed refresh
+var POLL_MS = 90000;          // refresh while the tab is visible (every screen shares one cached answer at the backend)
+var RETRY_MS = 30000;         // after a failed refresh, with the page still showing
+var GATE_RETRY_MS = 15000;    // a busy sheet at the gate: try again by itself, soon
 
 /* The letters, in the order the chart shows them: by family, as the send goes. */
 var FAMILIES = {
@@ -346,7 +347,12 @@ function load() {
     .then(function (r) { return r.json(); })
     .then(function (d) {
       loading = false;
-      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.', true); return; }
+      if (!d || !d.ok) {
+        /* a refused code is the backend's own words for one; anything else in ok:false is a fault in the sheet and a blip */
+        var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
+        fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
+        return;
+      }
       gate.style.display = 'none'; main.style.display = 'block';
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
       DATA = d; lastLoad = Date.now();
@@ -356,7 +362,7 @@ function load() {
     })
     .catch(function () {
       loading = false;
-      fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.', false);
+      fail('The sheet is busy. Trying again in a moment.', false);
     });
 }
 /* A screen left open must survive a network blip: once the page is showing, a
@@ -372,6 +378,7 @@ function fail(msg, refused) {
   clearTimeout(pollTimer); clearInterval(tickTimer);
   var e = $('gateErr'); e.textContent = msg; e.style.display = 'block';
   gate.style.display = 'block'; main.style.display = 'none';
+  if (!refused && CODE) pollTimer = setTimeout(load, GATE_RETRY_MS);   /* a busy sheet at the gate: try again by itself */
 }
 function schedule(ms) {
   clearTimeout(pollTimer); clearInterval(tickTimer);

@@ -1500,11 +1500,22 @@ function tSummary_() {
 function transitionData_(code) {
   var c = tCodeOk_(code);
   if (!c.ok) {
-    return { ok: false, error: c.configured
+    return { ok: false, refused: true, error: c.configured
       ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
       : 'Not open yet — set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.' };
   }
-  try { return tSummary_(); }
+  /* one answer serves every screen for thirty seconds: the wall, the dashboard and
+     the responses page each ask every minute or two, and the summary reads three
+     tabs (25 September 2026, the go-live afternoon: seven seconds an answer, and
+     one request in eight lost to the web app's own timeout while several screens
+     polled at once) */
+  var cache = null, key = 'transition:summary';
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  try {
+    var out = tSummary_();
+    try { if (cache && out && out.ok) cache.put(key, JSON.stringify(out), 30); } catch (e) {}
+    return out;
+  }
   catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
 }
 

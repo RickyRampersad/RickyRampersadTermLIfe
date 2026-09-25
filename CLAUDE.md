@@ -1236,7 +1236,16 @@ voice under the new timing and the caption gives it away.
   `transitionSetup` tears down and rebuilds the digest triggers from that
   list every time it runs, so changing the hours is just running it again.
   First on both page and digest: taps waiting more than two working days
-  with nobody assigned.
+  with nobody assigned. The manager's `dashboard.html` and the branch's
+  `wall.html` (six big slides, first names only) read the same answer.
+  **All three share one answer**: `transitionData_` caches `tSummary_` for
+  thirty seconds, because on the go-live afternoon the summary took seven
+  seconds a request and one request in eight was lost to the web app's own
+  timeout while several screens polled at once, which read on the screens
+  as "no walls are opening". A gate that could not reach the sheet tries
+  again by itself after fifteen seconds; only a refused code (the backend
+  says `refused: true`) sends a viewer back to the gate for good. The
+  branch code is `TEAM_CODE` in Service.gs, never in the repository.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
