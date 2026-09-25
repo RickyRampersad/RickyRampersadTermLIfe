@@ -112,27 +112,28 @@ for (const [k, [q, ans]] of Object.entries(CHECKS.questions)) for (const [label,
   // answering on the page: tick as many as apply, nothing leaves until Send, then every tick leaves at once
   {
     const { page, beacons } = await open(`http://localhost:8765/your-policy/?t=TESTTOKEN&s=F2&r=informed&q=rate_well`);
-    await page.click('#q-reach button:has-text("Phone call")'); await page.click('#q-whopays button:has-text("Not sure")');
-    await page.click('#q-life button:has-text("No, nothing")'); await page.waitForTimeout(300);
+    await page.click('#q-reach button:has-text("Phone call")'); await page.click('#q-pays button:has-text("Yes, please")');
+    await page.click('#q-life button:has-text("No, all")'); await page.waitForTimeout(300);
     check(resp(beacons).length === 1, `on the page: ticking sends nothing yet (${resp(beacons).length})`);
-    check((await page.textContent('#qs')).includes('☑ Phone call') && (await page.textContent('#qs')).includes('☑ Not sure'), 'on the page: the ticks show');
+    check((await page.textContent('#qs')).includes('☑ Phone call') && (await page.textContent('#qs')).includes('☑ Yes, please'), 'on the page: the ticks show');
     check(await page.$('#q-when'), 'on the page: an answer that brings a call asks when');
-    await page.click('#q-life button:has-text("Yes: family")');   // a second tap on the same question changes the answer
+    await page.click('#q-life button:has-text("Yes, update")');   // a second tap on the same question changes the answer
+    await page.click('#q-stay button:has-text("Yes, keep")');
     await page.click('#send'); await page.waitForTimeout(400);
     const b = resp(beacons);
-    check(b.length === 4 && b.some(x => x.includes('?q=reach_phone')) && b.some(x => x.includes('r=callme&') && x.includes('?q=whopays_unsure')) &&
-          b.some(x => x.includes('?q=life_changed')) && !b.some(x => x.includes('?q=life_same')),
+    check(b.length === 5 && b.some(x => x.includes('?q=reach_phone')) && b.some(x => x.includes('r=callme&') && x.includes('?q=pays_confirm')) &&
+          b.some(x => x.includes('?q=life_changed')) && !b.some(x => x.includes('?q=life_same')) && b.some(x => x.includes('r=informed&') && x.includes('?q=stay_yes')),
           `on the page: Send records every tick once, the changed answer as changed (${b.length})`);
     check((await page.textContent('#sent')).startsWith('Sent') && (await page.textContent('#qs')).includes('Noted: we will call you.'), 'on the page: sent, and acknowledged');
     check(await page.$eval('#send', b => b.disabled), 'on the page: Send is done once');
     await page.close();
   }
-  // "talk to me first" ticked and sent: the answers leave, then the form opens
+  // "someone already has" is a call, recorded on Send, not a form
   {
     const { page, beacons } = await open(`http://localhost:8765/your-policy/?t=TESTTOKEN&s=F2&r=informed&q=rate_well`);
-    await page.click('#q-approached button:has-text("talk to me first")'); await page.click('#send'); await page.waitForTimeout(900);
-    check(resp(beacons).length === 2 && resp(beacons)[1].includes('r=urgent&') && resp(beacons)[1].includes('?q=approached_yes'), `on the page: "talk to me first" is recorded on Send (${resp(beacons).length})`);
-    check(page.url().includes('/your-policy/review.html?from=client&t=TESTTOKEN&type=individual&q=approached_yes'), `on the page: then the form opens → ${page.url()}`);
+    await page.click('#q-checkfirst button:has-text("Someone already has")'); await page.click('#send'); await page.waitForTimeout(500);
+    check(resp(beacons).length === 2 && resp(beacons)[1].includes('r=callme&') && resp(beacons)[1].includes('?q=approached_yes'), `on the page: "someone already has" brings a call (${resp(beacons).length})`);
+    check(page.url().startsWith('http://localhost:8765/your-policy/?'), `on the page: and stays on the page → ${page.url()}`);
     await page.close();
   }
   // Send with nothing ticked sends nothing and says so

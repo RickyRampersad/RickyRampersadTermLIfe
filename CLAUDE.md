@@ -674,6 +674,33 @@ voice under the new timing and the caption gives it away.
   full review is one line under the taps ("Would you rather tell us in your
   own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
   the letters, and the page a tap opens, are both written from it.
+- **The questions are offers, not check-ups.** Rewritten the evening of 24
+  September 2026 after the manager read them as a client would: "asking if
+  they advise to cash in is not a nice question, as the objective is to
+  have them stay and not go with the agent, and want a review … deep dive
+  and research very appealing questions that will give great responses as
+  well as show our service levels". The principles applied (customer
+  research on question wording: positive framing, help inside the
+  question, the caring answer as the easy first option, "your policy"
+  throughout, an easy question first and the commitment last): `rating`
+  (unchanged, the feedback, first); `life` ("has life moved on: a new
+  home, a new job, someone new in the family?" → "Yes, update my cover"
+  brings a call); `pays` ("would you like us to confirm, in plain words,
+  exactly what your policy pays and to whom?"); `checkfirst` ("if anyone
+  ever suggests you change or replace your policy, would you like us to
+  check it with you first, free?" → "Yes, always check with me first", or
+  "Someone already has. Call me", which is how a rival approach is heard
+  without a question that sounds like suspicion; the old `approached`
+  question is gone); `stay`, last on every in-force letter ("Would you
+  like our branch team to keep looking after your policy?", the letter's
+  own version naming the year since which the team has looked after it,
+  `LETTER_Q`, the year between fact markers so an application reads
+  without it); `value` on the lapsed letter (the free look at what the
+  policy still holds, as a question). Every "yes" that asks something of
+  us is a `callme`; nothing on a check opens the form any more. The
+  service record panel above the questions is the evidence the questions
+  lean on; the questions never quote a count themselves, because a blank
+  cell would break the sentence.
 - **Every answer opens the page; the reply mode is built, tested and
   switched off.** Three decisions in an hour on the evening of 24
   September 2026, after the first Test letters were read on a phone. "When

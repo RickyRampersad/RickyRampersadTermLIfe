@@ -25,9 +25,11 @@
  },
  "next_q": {
   "rate_better": "Someone from the branch calls you today or tomorrow to hear what we should do better.",
-  "life_changed": "Someone from the branch calls you today or tomorrow to check your cover still fits your life.",
-  "whopays_unsure": "We check who your policy pays and go through it with you by phone, once we have confirmed it is you.",
-  "approached_yes": "A person reads what was suggested and calls you before you decide anything.",
+  "life_changed": "Someone from the branch calls you today or tomorrow to bring your cover up to date with your life.",
+  "pays_confirm": "We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.",
+  "approached_yes": "A person calls you before you decide anything, so you have the full picture first.",
+  "stay_talk": "Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.",
+  "value_yes": "We find out what your policy still holds, and whether it can simply start again, and call you with the answer.",
   "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
   "wrote": "A person reads your e-mail and replies the same working day."
  },
@@ -64,28 +66,44 @@
     "Could be better"
    ],
    "life_changed": [
-    "Has anything changed for you since you took out your policy?",
-    "Yes: family, home or work"
+    "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+    "Yes, update my cover"
    ],
    "life_same": [
-    "Has anything changed for you since you took out your policy?",
-    "No, nothing has changed"
+    "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+    "No, all the same"
    ],
-   "whopays_yes": [
-    "Do you know who your policy pays today?",
-    "Yes"
+   "pays_confirm": [
+    "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+    "Yes, please confirm it"
    ],
-   "whopays_unsure": [
-    "Do you know who your policy pays today?",
-    "Not sure, check it for me"
+   "pays_known": [
+    "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+    "I know it, thank you"
    ],
-   "approached_no": [
-    "Has anyone suggested you cancel, cash in or replace a policy?",
-    "No"
+   "checkfirst_yes": [
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "Yes, always check with me first"
    ],
    "approached_yes": [
-    "Has anyone suggested you cancel, cash in or replace a policy?",
-    "Yes, talk to me first"
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "Someone already has. Call me"
+   ],
+   "stay_yes": [
+    "Would you like our branch team to keep looking after your policy?",
+    "Yes, keep looking after it"
+   ],
+   "stay_talk": [
+    "Would you like our branch team to keep looking after your policy?",
+    "Let's talk it through first"
+   ],
+   "value_yes": [
+    "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+    "Yes, find out for me"
+   ],
+   "value_later": [
+    "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+    "Not now, thank you"
    ],
    "contact_no": [
     "Has your former agent been in touch with you since their contract ended?",
@@ -201,38 +219,45 @@
    "Call me.",
    "Check my file with me.",
    "Could be better",
-   "Do you know who your policy pays today?",
    "E-mail",
    "Evening",
    "Finish my application.",
-   "Has anyone suggested you cancel, cash in or replace a policy?",
-   "Has anything changed for you since you took out your policy?",
    "Has your former agent been in touch with you since their contract ended?",
    "Help me claim it.",
    "How have we looked after you so far?",
    "I have already paid.",
    "I have paid a premium that is not showing.",
+   "I know it, thank you",
    "I want an agent now. Let me tell you my concerns first.",
    "I would rather not proceed.",
+   "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
    "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
+   "Let's talk it through first",
    "Morning",
    "My details have changed.",
    "No",
-   "No, nothing has changed",
-   "Not sure, check it for me",
+   "No, all the same",
+   "Not now, thank you",
    "Phone call",
    "Set me up to pay Guardian Life directly.",
+   "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+   "Someone already has. Call me",
    "Tell us more about yourself.",
    "Very well",
    "Well",
    "What is the best way to reach you?",
    "WhatsApp",
    "When suits you best for a call?",
+   "Would you like our branch team to keep looking after your policy?",
+   "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+   "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
    "Write your concerns here, in your own words. A person reads every word before anyone is named:",
-   "Yes",
+   "Yes, always check with me first",
    "Yes, call me",
-   "Yes, talk to me first",
-   "Yes: family, home or work",
+   "Yes, find out for me",
+   "Yes, keep looking after it",
+   "Yes, please confirm it",
+   "Yes, update my cover",
    "You can add anything you would like us to know here."
   ]
  },
@@ -258,47 +283,77 @@
    ]
   ],
   "life": [
-   "Has anything changed for you since you took out your policy?",
+   "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
    [
     [
-     "Yes: family, home or work",
+     "Yes, update my cover",
      "callme",
      "life_changed"
     ],
     [
-     "No, nothing has changed",
+     "No, all the same",
      "informed",
      "life_same"
     ]
    ]
   ],
-  "whopays": [
-   "Do you know who your policy pays today?",
+  "pays": [
+   "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
    [
     [
-     "Yes",
-     "informed",
-     "whopays_yes"
+     "Yes, please confirm it",
+     "callme",
+     "pays_confirm"
     ],
     [
-     "Not sure, check it for me",
-     "callme",
-     "whopays_unsure"
+     "I know it, thank you",
+     "informed",
+     "pays_known"
     ]
    ]
   ],
-  "approached": [
-   "Has anyone suggested you cancel, cash in or replace a policy?",
+  "checkfirst": [
+   "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
    [
     [
-     "No",
+     "Yes, always check with me first",
      "informed",
-     "approached_no"
+     "checkfirst_yes"
     ],
     [
-     "Yes, talk to me first",
-     "urgent",
+     "Someone already has. Call me",
+     "callme",
      "approached_yes"
+    ]
+   ]
+  ],
+  "stay": [
+   "Would you like our branch team to keep looking after your policy?",
+   [
+    [
+     "Yes, keep looking after it",
+     "informed",
+     "stay_yes"
+    ],
+    [
+     "Let's talk it through first",
+     "callme",
+     "stay_talk"
+    ]
+   ]
+  ],
+  "value": [
+   "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+   [
+    [
+     "Yes, find out for me",
+     "callme",
+     "value_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "value_later"
     ]
    ]
   ],
@@ -360,70 +415,81 @@
  },
  "segments": {
   "A": [
-   "approached"
+   "checkfirst"
   ],
   "F1": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "F2": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "F3": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "F4": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "F5": [
    "rating",
    "life",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "R1": [
    "rating",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "R2": [
    "rating",
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "G": [
    "life",
-   "approached"
+   "value",
+   "checkfirst"
   ],
   "I": [
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "J": [
-   "whopays",
-   "approached"
+   "pays",
+   "checkfirst",
+   "stay"
   ],
   "K": [
-   "approached"
+   "checkfirst"
   ],
   "T": [
    "contact",
-   "approached",
-   "whopays"
+   "checkfirst",
+   "pays",
+   "stay"
   ],
   "_": [
-   "approached"
+   "checkfirst"
   ]
  },
  "tpl": {

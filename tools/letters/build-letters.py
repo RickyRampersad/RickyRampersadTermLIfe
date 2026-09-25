@@ -151,15 +151,28 @@ QUESTIONS = {
  # more about yourself" became these checks, answered in the e-mail itself; the form stays one line
  # away (the letter's "more" line) for a client who wants to write. Each answer is an ordinary tap,
  # so a "could be better" or a change in their life reaches a person as a callme.
+ # Rewritten the evening of 24 September 2026, after the manager read them as a client would: "asking if
+ # they advise to cash in is not a nice question … the objective is to have them stay … and want a review".
+ # So every question is an offer, not a check-up: it puts help inside the question, makes the caring
+ # answer the easy first option, and leads to a call or a review. The client's policy is "your policy"
+ # throughout; nothing asks about anyone who left; the one question that covers a rival approach asks
+ # whether the client would like a change checked with us first, free, and lets "someone already has"
+ # be said without accusing anyone. Order on a letter: the feedback first (easy, positive), the offers
+ # in the middle, the commitment to stay last.
  'rating':     ('How have we looked after you so far?',
                 [('Very well', 'informed', 'rate_verywell'), ('Well', 'informed', 'rate_well'),
                  ('Could be better', 'callme', 'rate_better')]),
- 'life':       ('Has anything changed for you since you took out your policy?',
-                [('Yes: family, home or work', 'callme', 'life_changed'), ('No, nothing has changed', 'informed', 'life_same')]),
- 'whopays':    ('Do you know who your policy pays today?',
-                [('Yes', 'informed', 'whopays_yes'), ('Not sure, check it for me', 'callme', 'whopays_unsure')]),
- 'approached': ('Has anyone suggested you cancel, cash in or replace a policy?',
-                [('No', 'informed', 'approached_no'), ('Yes, talk to me first', 'urgent', 'approached_yes')]),
+ 'life':       ('Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?',
+                [('Yes, update my cover', 'callme', 'life_changed'), ('No, all the same', 'informed', 'life_same')]),
+ 'pays':       ('Would you like us to confirm, in plain words, exactly what your policy pays and to whom?',
+                [('Yes, please confirm it', 'callme', 'pays_confirm'), ('I know it, thank you', 'informed', 'pays_known')]),
+ 'checkfirst': ('If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?',
+                [('Yes, always check with me first', 'informed', 'checkfirst_yes'), ('Someone already has. Call me', 'callme', 'approached_yes')]),
+ 'stay':       ('Would you like our branch team to keep looking after your policy?',
+                [('Yes, keep looking after it', 'informed', 'stay_yes'), ('Let\'s talk it through first', 'callme', 'stay_talk')]),
+ # the lapsed letter: the free look at what the policy still holds, offered as a question
+ 'value':      ('Would you like us to find out, free, what your policy still holds and whether it can simply start again?',
+                [('Yes, find out for me', 'callme', 'value_yes'), ('Not now, thank you', 'informed', 'value_later')]),
  # letter T only (24 September 2026): whether the agent whose contract was terminated has been in touch
  # since. The page a tap opens and the receipt ask it in these words; the letter names the agent and the
  # date (LETTER_Q). "Yes" brings a call, and the call comes before anything else.
@@ -168,8 +181,11 @@ QUESTIONS = {
 }
 # A question's words on the letter alone, where a merge field may appear. The page a tap opens cannot fill
 # one, and a field inside the receipt's recap would stop the receipt (Transition.gs refuses to send one with a
-# field left), so everything that reaches the page or the receipt stays in QUESTIONS' own words.
-LETTER_Q = {'contact': 'Has {{agent_first_name}} been in touch with you since {{terminated_on}}?'}
+# field left), so everything that reaches the page or the receipt stays in QUESTIONS' own words. The year in
+# the stay question sits between fact markers, so a row with no first year (an application) reads without it.
+LETTER_Q = {'contact': 'Has {{agent_first_name}} been in touch with you since {{terminated_on}}?',
+            'stay': 'Our branch team has looked after your policy<!--fact:first_year--> since {{first_year}}<!--/fact-->. '
+                    'Would you like the same team to keep looking after it?'}
 # asked only on the page a tap opens, where the answer helps the agent who calls
 REACH = ('What is the best way to reach you?',
          [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
@@ -181,12 +197,16 @@ SAID_Q = {
  'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
  'rate_well':      'Thank you. If there is one thing we could do better, the full review below is the place to say it.',
  'rate_better':    'Thank you for telling us. Someone from the branch will call you today or tomorrow to hear what we should do better.',
- 'life_changed':   'Thank you. Someone from the branch will call you today or tomorrow to check your cover still fits.',
+ 'life_changed':   'Thank you. Someone from the branch will call you today or tomorrow to bring your cover up to date with your life.',
  'life_same':      'Thank you. Nothing about your policy changes.',
- 'whopays_yes':    'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
- 'whopays_unsure': 'Thank you. We will check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
- 'approached_no':  'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
- 'approached_yes': 'Thank you for telling us. Tell us what was suggested. A person reads it and calls you before you decide anything.',
+ 'pays_confirm':   'Thank you. We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
+ 'pays_known':     'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
+ 'checkfirst_yes': 'Thank you. Whenever a change is put to you, one tap or one call and we check it with you, free, before you decide.',
+ 'approached_yes': 'Thank you for telling us. A person calls you before you decide anything, so you have the full picture first.',
+ 'stay_yes':       'Thank you. Your file stays with our branch team, and the same people keep looking after it.',
+ 'stay_talk':      'Of course. Someone from the branch calls you today or tomorrow to talk it through, no pressure.',
+ 'value_yes':      'Thank you. We find out what your policy still holds and call you with the answer.',
+ 'value_later':    'Understood. Nothing changes, and the door stays open whenever you want to look.',
  'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
  'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'reach_phone':    'Noted: we will call you.',
@@ -238,9 +258,11 @@ NEXT = {
 }
 NEXT_Q = {
  'rate_better':    'Someone from the branch calls you today or tomorrow to hear what we should do better.',
- 'life_changed':   'Someone from the branch calls you today or tomorrow to check your cover still fits your life.',
- 'whopays_unsure': 'We check who your policy pays and go through it with you by phone, once we have confirmed it is you.',
- 'approached_yes': 'A person reads what was suggested and calls you before you decide anything.',
+ 'life_changed':   'Someone from the branch calls you today or tomorrow to bring your cover up to date with your life.',
+ 'pays_confirm':   'We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
+ 'approached_yes': 'A person calls you before you decide anything, so you have the full picture first.',
+ 'stay_talk':      'Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.',
+ 'value_yes':      'We find out what your policy still holds, and whether it can simply start again, and call you with the answer.',
  'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
 }
@@ -248,7 +270,7 @@ BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the 
 
 
 def checks_head(qs):
-    return 'Quick checks, one tap each.' if len(qs) > 1 else 'One quick check, one tap.'
+    return 'A few quick questions, one tap each.' if len(qs) > 1 else 'One quick question, one tap.'
 
 
 def checks_first(cfg):
@@ -967,7 +989,7 @@ splice('orphan-transition/team-review.html', 'letters',
 def landing_checks():
     data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
                           'reach': [REACH[0], [list(a) for a in REACH[1]]], 'when': [WHEN[0], [list(a) for a in WHEN[1]]]},
-            'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['approached']},
+            'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['checkfirst']},
             'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE,
             # the receipt is automatic only on the Apps Script route; set False if the letters go by hand
             'receipts': True, 'receipt_line': 'A copy of everything you have told us is on its way to your inbox.'}
