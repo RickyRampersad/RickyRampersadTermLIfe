@@ -171,15 +171,23 @@
       a client's row &mdash; and run Transition: send the Test rows now &mdash; the Test rows go
       whatever the hour, live or not. Read both, then read the Exclude column down once more: the departed
       agents' own policies and their households must each carry a reason. Only then Service Questionnaire
-      &rarr; Transition: go live (hourly send on). From the next weekday hour, 9:00 to 17:00, the trigger sends
-      by the Send on dates, one family a day: the notice and the action letters (T, T1, J, K, I) first, the
-      in-force letters over the next three days by tenure, the longest first, then G and A a week on; up to
-      sixty an hour. From day 22 the same run sends a client's own letter once more to anyone who has not
-      answered, with a line above the greeting saying when the first went &mdash; once, never twice, and
-      never ahead of the day's new letters. A row with anything in Exclude never sends, a row with no Send
-      on date is held, a sent row never sends twice, and a row the sender cannot use (no e-mail, no first name,
-      no letter for its segment) is moved to Exclude with the reason instead of being tried every hour. A mail
-      failure is retried the next day, not the next hour. Transition: pause the hourly send stops it at any
+      &rarr; Transition: go live (hourly send on). From the next weekday run, 9:00 to 17:00, the trigger sends
+      by the Send on dates &mdash; up to 120 a run, every thirty minutes (<code>BATCH</code> and
+      <code>SEND_EVERY_MIN</code> in Transition.gs; go live sets the trigger to the cadence each time it is
+      pressed), the notice and the action letters
+      (T, T1, J, K, I) ahead of the rest among the rows due. The Send on column is the wave: the list is built
+      one family a day &mdash; the notice and the action letters, the in-force letters over the next three days
+      by tenure, the longest first, then G and A a week on &mdash; and on 25 September 2026 every date was set
+      to the one day, so the whole list went in batches through that day. A letter never follows the last
+      inside about two seconds, because Microsoft 365 takes thirty a minute from one mailbox; the batch button
+      on the menu sends the next batch at once whenever it is pressed. From day 22 the same run sends a client's own
+      letter once more to anyone who has not answered, with a line above the greeting saying when the first
+      went &mdash; once, never twice, and never ahead of the day's new letters. A row with anything in Exclude
+      never sends, a row with no Send on date is held, a sent row never sends twice, a household sharing one
+      address gets one letter and its other rows held for a person, and a row the sender cannot use (no e-mail,
+      no first name, no letter for its segment) is moved to Exclude with the reason instead of being tried
+      every run. A projected lapse date already gone by is cut from the letter rather than printed. A mail
+      failure is retried the next day, not the next run. Transition: pause the hourly send stops it at any
       point; the Test rows still go by hand. Reply-to is a person at the branch.</li>
     <li><b>Call the direct-bill clients with a premium due inside thirty days</b> this week, to tell them how
       to pay Guardian Life directly, with Guardian's receipt. That is the one exposure a returned receipt

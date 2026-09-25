@@ -1046,7 +1046,7 @@ page = f"""<!DOCTYPE html>
   </div>
   <div class="path">
     <div><h3>What a client sees after one tap</h3><ol>{flow_steps}</ol></div>
-    <div><h3>The waves, at sixty an hour</h3><ul>{waves}</ul></div>
+    <div><h3>The waves, in batches through the day</h3><ul>{waves}</ul></div>
   </div>
 </div></section>
 
