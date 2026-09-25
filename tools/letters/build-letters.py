@@ -358,6 +358,45 @@ NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agen
 
 MORE_ASK, MORE_LINK = 'Would you rather tell us in your own words?', 'The full review, about five minutes'
 
+# ── the confidentiality footer, on every client e-mail ────────────────
+# Asked for on 25 September 2026: "on every email the proper disclaimer …
+# in the event of confidentiality you can take action and you are
+# protected; review the laws in Trinidad under data protection". The law it
+# rests on, checked that day: the Data Protection Act 2011 (Chap. 22:04) is
+# only partly in force — Part I, which carries the General Privacy
+# Principles (an organisation is responsible for the personal information
+# under its control; the purpose is identified at collection; knowledge and
+# consent for use and disclosure; the individual may challenge compliance),
+# and the sections that establish the Office of the Information
+# Commissioner, came into operation on 6 January 2012; the private-sector
+# obligations and penalties have not been proclaimed. So the footer commits
+# the branch to the Principles by name, never to a section, and names the
+# Commissioner's office as the authority the Act establishes, not as a
+# court. The confidentiality duty is the Insurance Act 2018's own, quoted on
+# protected.html: no registrant, officer, employee or agent who receives
+# information about a policyholder's affairs may disclose it unless the
+# policyholder expressly consents or the law compels it. The same words go
+# on the letters, the receipt, the "still on it" note (through receipt.json)
+# and the questionnaire e-mails in Service.gs. Compliance sees the wording.
+LEGAL_HEAD = 'Confidential'
+LEGAL = ('This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in '
+         'error, please tell us by reply and delete it; do not forward it. Your personal information is handled under the General '
+         'Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act '
+         '2018 places on everyone who works for an insurer: it is used only to look after your policy, is never sold, and is never '
+         'disclosed without your express consent unless the law requires it. You may ask at any time what we hold about you and have '
+         'it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian Life of '
+         'the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never '
+         'changes how your policy is looked after.')
+# internal mail: the digest, the Monday report and the chase carry names, so they say so
+INTERNAL = 'Internal to the Ricky Rampersad Branch. This e-mail carries client information: do not forward it outside the branch.'
+
+
+def legal_html(size='11.5px'):
+    return (f'<p style="margin:8px 0 0;font:400 {size}/1.5 {BODY};color:#64798e"><b style="color:#4a5f74">{LEGAL_HEAD}.</b> {LEGAL}</p>')
+
+
+LEGAL_PLAIN = f'<p><i><b>{LEGAL_HEAD}.</b> {LEGAL}</i></p>'
+
 
 def tap(cfg, r):
     """A tap's words on this letter: its own tap_text when it has one, else the
@@ -646,6 +685,7 @@ def letter_table(seg, cfg, preview=False):
 <tr><td bgcolor="#f4f8fa" class="pad" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
   Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
   deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
+  {legal_html()}
 </td></tr>
 </table>"""
 
@@ -785,7 +825,8 @@ def plain_letter(seg, cfg):
             f'to the agent who fits your file.</p>'
             f'<p><b>Ricky Rampersad</b><br>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p><hr>'
             f'<p><i>Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are '
-            f'deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.</i></p>\n')
+            f'deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.</i></p>'
+            f'{LEGAL_PLAIN}\n')
 
 
 for seg, cfg in SEGMENTS.items():
@@ -1329,6 +1370,7 @@ def receipt_table():
 </td></tr>
 <tr><td bgcolor="#f4f8fa" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
   Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.
+  {legal_html()}
 </td></tr>
 </table>"""
 
@@ -1359,7 +1401,8 @@ PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Carib
                  f'<h3>{RECEIPT_HEADS["follow"]}</h3>[[follow]]'
                  f'<p>{RECEIPT_REPLY}</p>'
                  '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
-                 '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>\n')
+                 '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>'
+                 f'{LEGAL_PLAIN}\n')
 
 (OUT / 'receipt.html').write_text(receipt_doc(), encoding='utf-8')
 (PLAIN / 'receipt.html').write_text(PLAIN_RECEIPT, encoding='utf-8')
@@ -1378,6 +1421,7 @@ _checks = json.loads(landing_checks())
                                               'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL, 'heads': RECEIPT_HEADS,
                                               'follow': FOLLOW, 'recap': RECAP, 'review': REVIEW_RECAP,
                                               'reply': REPLY, 'questions': _checks['questions'], 'segments': _checks['segments'],
+                                              'legal': {'head': LEGAL_HEAD, 'text': LEGAL, 'html': legal_html('12px'), 'plain': LEGAL_PLAIN, 'internal': INTERNAL},
                                               'tpl': RECEIPT_TPL, 'tpl_plain': RECEIPT_TPL_PLAIN}, indent=1, ensure_ascii=False),
                                   encoding='utf-8')
 print(f'wrote the receipt: {OUT / "receipt.html"}, {PLAIN / "receipt.html"}, {OUT / "receipt.json"}')

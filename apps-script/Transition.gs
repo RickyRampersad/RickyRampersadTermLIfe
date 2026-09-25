@@ -19,7 +19,8 @@
  *   transitionPause()        the hourly send, off; the test rows still go by hand
  *   transitionSendBatch()    what the hourly trigger runs; safe to run by hand — the day's new letters,
  *                            then (tRemind_) the same letter once more to anyone unanswered after REMIND_DAYS
- *   transitionDigest()       the morning e-mail; safe to run by hand
+ *   transitionDigest()       the morning e-mail (DIGEST_HOURS); safe to run by hand
+ *   transitionWeekly()       the Monday insight report (WEEKLY_HOUR): what the answers mean; safe to run by hand
  *
  * The Transition Send tab is built outside the repository from the Branch
  * Portfolio sheet (tools/letters has no client data). One row per client:
@@ -57,6 +58,8 @@ var TRANSITION = {
   ORDER: ['T', 'I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the terminated-contract notice, then the action letters; F1…F5 sort as F, R1 and R2 as R
   DIGEST_TO: '',             // blank = the script owner
   DIGEST_HOURS: [8, 12],     // the digest fires this many times a day, sheet time zone
+  WEEKLY_TO: '',             // the Monday insight report; blank = DIGEST_TO. Several addresses: 'a@x.com, b@y.com'
+  WEEKLY_HOUR: 7,            // Monday, within this hour, sheet time zone — before the 8:00 digest
   COPY_TO: '',               // blank = SVC.AGENT_EMAIL. Where the internal "late" nudges go.
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
   WAIT_URGENT: 1,            // the branch's own target for an urgent tap; the client is promised no timeline (24 September)
@@ -184,7 +187,7 @@ function transitionSetup() {
   tSheet_();
   ScriptApp.getProjectTriggers().forEach(function (t) {
     var f = t.getHandlerFunction();
-    if (f === 'transitionDigest' || f === 'transitionReceipts' || f === 'transitionInbox') ScriptApp.deleteTrigger(t);
+    if (f === 'transitionDigest' || f === 'transitionReceipts' || f === 'transitionInbox' || f === 'transitionWeekly') ScriptApp.deleteTrigger(t);
   });
   TRANSITION.DIGEST_HOURS.forEach(function (h) {
     ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
@@ -192,9 +195,11 @@ function transitionSetup() {
   /* the replies and the receipts: every five minutes, whether or not the hourly send is on, because letters already out earn them */
   ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
+  tWeeklyTrigger_();
   var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
     TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
-    ', and the replies are read and the receipts sent every five minutes. The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
+    ', the weekly insight report for Monday ' + TRANSITION.WEEKLY_HOUR + ':00, and the replies are read and the receipts sent every five minutes. ' +
+    'The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
     'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
@@ -210,6 +215,7 @@ function transitionGoLive() {
   if (!have.transitionSendBatch) ScriptApp.newTrigger('transitionSendBatch').timeBased().everyHours(1).create();
   if (!have.transitionInbox) ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
+  if (!have.transitionWeekly) tWeeklyTrigger_();
   var msg = 'Live. The hourly send is on, ' + TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] +
     ':00, Monday to Friday. Transition: pause turns it off.';
   log_('transition', 'live', msg);
@@ -584,6 +590,26 @@ function tReceipt_() {
   } catch (e) { return null; }
 }
 
+/** The confidentiality footer every client e-mail ends in, from receipt.json
+ *  on the site (build-letters.py holds the words; see LEGAL there), else the
+ *  same words kept here so no client e-mail ever goes without it. */
+var T_LEGAL_FALLBACK = '<p style="margin:8px 0 0;font:400 12px/1.5 Inter,Arial,sans-serif;color:#64798e"><b style="color:#4a5f74">Confidential.</b> ' +
+  'This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in error, please tell us by ' +
+  'reply and delete it; do not forward it. Your personal information is handled under the General Privacy Principles of the Data Protection Act ' +
+  '2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act 2018 places on everyone who works for an insurer: it is used only to ' +
+  'look after your policy, is never sold, and is never disclosed without your express consent unless the law requires it. You may ask at any time ' +
+  'what we hold about you and have it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian ' +
+  'Life of the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never changes how ' +
+  'your policy is looked after.</p>';
+var T_INTERNAL = 'Internal to the Ricky Rampersad Branch. This e-mail carries client information: do not forward it outside the branch.';
+function tLegal_(rc) {
+  rc = rc === undefined ? tReceipt_() : rc;
+  return (rc && rc.json && rc.json.legal && rc.json.legal.html) || T_LEGAL_FALLBACK;
+}
+function tInternal_(rc) {
+  return (rc && rc.json && rc.json.legal && rc.json.legal.internal) || T_INTERNAL;
+}
+
 /** Who answers — the team — from the site's receipt.json, else the fallback. */
 function tCare_(rc) {
   var c = (rc && rc.json && rc.json.care) || TRANSITION.CARE || {};
@@ -935,7 +961,7 @@ function tChaseInternal_(row, r, needs, days, level) {
     'Needs: ' + needs + '\n' + (row.Agent ? 'Was with: ' + tText_(row.Agent) + '\n' : '') +
     (row.Segment ? 'Letter: ' + tText_(row.Segment) + '\n' : '') +
     '\nAssign it on the Client Responses tab, or type anything other than "Open" into Status once it is resolved.\n' +
-    'https://rickyrampersadbranch.com/orphan-transition/responses.html';
+    'https://rickyrampersadbranch.com/orphan-transition/responses.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
 }
 
@@ -957,7 +983,8 @@ function tChaseClient_(row, r, needs) {
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
     '<p style="margin:0 0 12px">' + tFill_(still.line, vals) + '</p>' +
-    '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p></div></div>';
+    '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p>' +
+    tLegal_(rc) + '</div></div>';
   if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return; }
   try { tMsSend_(to, tFill_(still.subject, vals).replace(/<[^>]+>/g, ''), html, tClientOpts_()); }
   catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); }
@@ -1419,6 +1446,331 @@ function transitionData_(code) {
   catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
 }
 
+/* ── the insights: what the answers say, for the digest and the Monday report ── */
+/* Asked for on 25 September 2026 ("I need to have some serious insights"). The
+   digest counted sends and taps; this reads what the clients said. Everything
+   below is computed from the three tabs on the fly, never stored: the send
+   list (who was written to, when, by which letter, from whose book), Client
+   Responses (every tick and tap, with the answer in the Page column) and the
+   Service Questionnaires (the reviews). Staff Test rows are never counted.
+   The question words come from receipt.json on the site, so the report and
+   the letters cannot disagree about what was asked. */
+var T_RISK = {
+  approached_yes: 'someone has already approached them',
+  contact_yes: 'the terminated agent has been in touch',
+  review_approached: 'said in the review that someone has been in touch about moving or replacing the policy',
+  rate_better: 'rated us "could be better"',
+  stay_talk: 'wants to talk it through before staying',
+  contract_missing: 'the contract never reached them',
+  k_stop: 'no longer wishes to proceed',
+  pay_person: 'pays a representative in person',
+  urgent: 'wants an agent now',
+};
+var T_QORDER = ['rating', 'stay', 'checkfirst', 'pays', 'contact', 'paying', 'received', 'outstanding', 'life', 'walk', 'built', 'more', 'value', 'reach', 'when'];
+var T_FAMILY_FALLBACK = { T: 'notice', I: 'action', J: 'action', K: 'action', F: 'keep', R: 'keep', G: 'return', A: 'return' };
+
+/** The Monday trigger for the insight report, within WEEKLY_HOUR, sheet time zone. */
+function tWeeklyTrigger_() {
+  ScriptApp.newTrigger('transitionWeekly').timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .atHour(TRANSITION.WEEKLY_HOUR).inTimezone(tTz_()).create();
+}
+
+function tPct_(n, d) { return d ? Math.round(100 * n / d) : 0; }
+/** A count with its verb or noun agreeing: tN_(1, 'wants', 'want') → '1 wants'. */
+function tN_(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+
+/** Everything the reports say, cumulative and for the last `windowDays`. */
+function tInsights_(windowDays) {
+  var tz = tTz_(), now = new Date(), since = new Date(now.getTime() - (windowDays || 7) * 86400000);
+  var t = tRead_();
+  var fam = {};
+  try { var man = JSON.parse(tFetch_('manifest.json')); (man.letters || []).forEach(function (L) { fam[String(L.segment).toUpperCase()] = L.family || ''; }); } catch (e) {}
+  var famOf = function (seg) { return fam[seg] || T_FAMILY_FALLBACK[seg.charAt(0)] || 'other'; };
+  var rc = tReceipt_();
+  var qdef = (rc && rc.json && rc.json.questions) || {};
+  var codeQ = {};
+  Object.keys(qdef).forEach(function (k) {
+    (qdef[k][1] || []).forEach(function (a) { codeQ[a[2]] = { key: k, question: qdef[k][0], label: a[0], tap: a[1] }; });
+  });
+
+  /* the send list: who was written to */
+  var byTok = {}, reach = { sent: 0, sentWindow: 0, reminded: 0, failed: 0, waiting: 0, held: 0, heldReasons: {} };
+  var groups = { family: {}, segment: {}, agent: {} };
+  var grp = function (kind, key) {
+    var o = groups[kind];
+    return o[key] = o[key] || { key: key, sent: 0, answered: 0, answeredWindow: 0, approached: 0, risk: 0, stayYes: 0, stayTalk: 0 };
+  };
+  var nextByDay = {}, remindersDue = 0, remindDays = Number(TRANSITION.REMIND_DAYS) || 0;
+  t.rows.forEach(function (r) {
+    var seg = tText_(r.Segment).toUpperCase();
+    if (!seg || tYes_(r.Test)) return;                                     // staff standing in as clients: never in the numbers
+    if (tHeld_(r.Exclude)) {
+      reach.held++;
+      var why = (tText_(r.Exclude) || 'held').split(':')[0].toLowerCase();
+      reach.heldReasons[why] = (reach.heldReasons[why] || 0) + 1;
+      return;
+    }
+    var sentAt = r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime()) ? r['Sent at'] : null;
+    if (!sentAt) {
+      if (/^error/i.test(tText_(r.Status))) reach.failed++; else reach.waiting++;
+      var so = tDay_(r['Send on']);
+      if (so && so <= Utilities.formatDate(new Date(now.getTime() + 7 * 86400000), tz, 'yyyy-MM-dd')) nextByDay[so] = (nextByDay[so] || 0) + 1;
+      return;
+    }
+    reach.sent++;
+    if (sentAt.getTime() >= since.getTime()) reach.sentWindow++;
+    var rm = /^reminded (\d{4})-(\d{2})-(\d{2})/.exec(tText_(r.Status));
+    if (rm) reach.reminded++;
+    var o = {
+      seg: seg, family: famOf(seg), agent: tText_(r.Agent) || '(no agent on the sheet)',
+      client: tText_(r.Client) || tText_(r['First name']) || 'a client', sentAt: sentAt,
+      remindedOn: rm ? new Date(Number(rm[1]), Number(rm[2]) - 1, Number(rm[3])) : null,
+      answered: false, first: null, afterReminder: false, codes: [], taps: [], risk: [], open: false, assigned: '', lastSaid: '', lastAt: null,
+    };
+    var tok = tText_(r.Token);
+    if (tok) byTok[tok] = o;
+    grp('family', o.family).sent++; grp('segment', seg).sent++; grp('agent', o.agent).sent++;
+    var age = (now.getTime() - sentAt.getTime()) / 86400000;
+    if (remindDays && !rm && age >= remindDays - 7 && age < remindDays) o.dueReminder = true;
+  });
+
+  /* Client Responses: every tick and tap */
+  var resp = tSheetRows_(SVC.RESP_SHEET);
+  var told = {}, byType = {}, follow = { open: 0, late: 0, assignedWindow: 0, resolved: 0, replies: 0, daysToAssign: [] };
+  resp.rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), o = byTok[tok];
+    if (!o) return;                                                       // only this campaign's clients
+    var type = String(v[3] || '').trim();
+    if (!type) return;
+    var received = v[0] instanceof Date ? v[0] : null;
+    var m = /[?&]q=([a-z_]+)/.exec(String(v[5] || ''));
+    var code = m ? m[1] : '';
+    byType[type] = (byType[type] || 0) + 1;
+    if (/^reply /.test(String(v[6] || ''))) follow.replies++;
+    if (!o.answered || (received && o.first && received.getTime() < o.first.getTime())) { o.answered = true; o.first = received || o.first; }
+    if (received && (!o.lastAt || received.getTime() > o.lastAt.getTime())) { o.lastAt = received; }
+    if (o.remindedOn && received && received.getTime() > o.remindedOn.getTime()) o.afterReminder = true;
+    if (code && codeQ[code]) {
+      var q = codeQ[code];
+      var tq = told[q.key] = told[q.key] || { key: q.key, question: q.question, n: 0, answers: {} };
+      tq.n++; tq.answers[code] = (tq.answers[code] || 0) + 1;
+      o.codes.push(code);
+      if (code === 'stay_yes') o.stayYes = true;
+      if (code === 'stay_talk') o.stayTalk = true;
+      if (T_RISK[code] && o.risk.indexOf(code) < 0) o.risk.push(code);
+      o.lastSaid = q.label;
+    } else {
+      o.taps.push(type);
+      if (type === 'urgent' && o.risk.indexOf('urgent') < 0) o.risk.push('urgent');
+      if (type === 'wrote' || code === 'wrote') o.lastSaid = 'wrote to us';
+    }
+    var isOpen = String(v[7] || '').trim().toLowerCase() === 'open';
+    var assigned = String(v[8] || '').trim();
+    if (type !== 'informed') {
+      if (isOpen) {
+        follow.open++; o.open = true;
+        var wait = type === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;
+        if (!assigned && received && tWorkingDays_(received, now) >= wait) follow.late++;
+      } else follow.resolved++;
+      if (assigned) {
+        o.assigned = assigned;
+        var on = v[9] instanceof Date ? v[9] : null;
+        if (on && on.getTime() >= since.getTime()) follow.assignedWindow++;
+        if (on && received) follow.daysToAssign.push(tWorkingDays_(received, on));
+      }
+    }
+  });
+
+  /* the reviews from the campaign */
+  var q = tSheetRows_(SVC.IND_SHEET), qi = {};
+  q.head.forEach(function (h, i) { qi[h] = i; });
+  var iRef = qi['Link ref'], iTs = qi['Timestamp'], iPri = qi['Priority'], iTouch = -1, iWho = -1;
+  q.head.forEach(function (h, i) {
+    if (/been in touch/i.test(h) && /moving|replacing/i.test(h)) iTouch = i;
+    if (/^who was it/i.test(h)) iWho = i;
+  });
+  var reviews = { total: 0, window: 0, urgent: 0, approached: 0, who: {} };
+  q.rows.forEach(function (v) {
+    var mm = iRef !== undefined ? /^transition:(\S+)$/.exec(String(v[iRef] || '').trim()) : null;
+    var o = mm && byTok[mm[1]];
+    if (!o) return;
+    reviews.total++;
+    var ts = iTs !== undefined && v[iTs] instanceof Date ? v[iTs] : null;
+    if (ts && ts.getTime() >= since.getTime()) reviews.window++;
+    if (iPri !== undefined && /urgent/i.test(String(v[iPri] || ''))) reviews.urgent++;
+    if (!o.answered) { o.answered = true; o.first = ts; }
+    if (iTouch >= 0 && /^yes/i.test(String(v[iTouch] || ''))) {
+      reviews.approached++;
+      if (o.risk.indexOf('review_approached') < 0) o.risk.push('review_approached');
+      var who = String(iWho >= 0 ? v[iWho] || '' : '').trim() || 'not said';
+      reviews.who[who] = (reviews.who[who] || 0) + 1;
+    }
+  });
+
+  /* per client → the groups, the curve, the risk list */
+  var response = { answered: 0, answeredWindow: 0, approached: 0, afterReminder: 0 };
+  var curve = { 'the same day': 0, 'the next day': 0, 'day 2': 0, 'days 3 to 6': 0, 'days 7 to 13': 0, 'day 14 or later': 0 };
+  var risk = [];
+  Object.keys(byTok).forEach(function (tok) {
+    var o = byTok[tok];
+    if (o.dueReminder && !o.answered) remindersDue++;
+    if (!o.answered) return;
+    response.answered++;
+    var win = o.first && o.first.getTime() >= since.getTime();
+    if (win) response.answeredWindow++;
+    if (o.afterReminder) response.afterReminder++;
+    var appr = o.risk.indexOf('approached_yes') >= 0 || o.risk.indexOf('contact_yes') >= 0 || o.risk.indexOf('review_approached') >= 0;
+    if (appr) response.approached++;
+    [['family', o.family], ['segment', o.seg], ['agent', o.agent]].forEach(function (k) {
+      var g = grp(k[0], k[1]);
+      g.answered++; if (win) g.answeredWindow++; if (appr) g.approached++; if (o.risk.length) g.risk++;
+      if (o.stayYes) g.stayYes++; if (o.stayTalk) g.stayTalk++;
+    });
+    if (o.first) {
+      var d = Math.floor((o.first.getTime() - o.sentAt.getTime()) / 86400000);
+      curve[d <= 0 ? 'the same day' : d === 1 ? 'the next day' : d === 2 ? 'day 2' : d <= 6 ? 'days 3 to 6' : d <= 13 ? 'days 7 to 13' : 'day 14 or later']++;
+    }
+    if (o.risk.length) {
+      risk.push({ client: o.client, agent: o.agent, seg: o.seg, open: o.open, assigned: o.assigned,
+                  said: o.risk.map(function (c) { return T_RISK[c] || c; }).join('; '),
+                  when: o.lastAt || o.first, days: o.lastAt ? tWorkingDays_(o.lastAt, now) : 0 });
+    }
+  });
+  risk.sort(function (a, b) { return (b.open - a.open) || ((b.when ? b.when.getTime() : 0) - (a.when ? a.when.getTime() : 0)); });
+  var riskOpen = risk.filter(function (x) { return x.open; }).length;
+  var list = function (kind, sortBy) {
+    return Object.keys(groups[kind]).map(function (k) { var g = groups[kind][k]; g.rate = tPct_(g.answered, g.sent); return g; })
+      .filter(function (g) { return g.sent; }).sort(sortBy);
+  };
+  var toldList = T_QORDER.concat(Object.keys(told).filter(function (k) { return T_QORDER.indexOf(k) < 0; }))
+    .filter(function (k) { return told[k]; })
+    .map(function (k) {
+      var tq = told[k];
+      var answers = (qdef[k] ? qdef[k][1] : []).map(function (a) { return { label: a[0], code: a[2], tap: a[1], n: tq.answers[a[2]] || 0, pct: tPct_(tq.answers[a[2]] || 0, tq.n) }; });
+      return { key: k, question: tq.question, n: tq.n, answers: answers };
+    });
+  var med = follow.daysToAssign.slice().sort(function (a, b) { return a - b; });
+  follow.medianDays = med.length ? med[Math.floor(med.length / 2)] : null;
+  var days = Object.keys(nextByDay).sort().map(function (d) { return { day: d, n: nextByDay[d] }; });
+
+  /* what it means, in sentences, only where there is something to say */
+  var lines = [];
+  var told1 = function (key, code) { return told[key] && told[key].answers[code] || 0; };
+  if (!reach.sent) lines.push('No letter has gone to a client yet.');
+  else if (!response.answered) lines.push(reach.sent + ' letters have gone and no client has answered yet. The first answers usually come the same day; the reminder goes by itself after ' + remindDays + ' days.');
+  else {
+    var early = curve['the same day'] + curve['the next day'];
+    lines.push(response.answered + ' of the ' + reach.sent + ' clients written to have answered (' + tPct_(response.answered, reach.sent) + '%)' +
+      (response.answeredWindow ? ', ' + response.answeredWindow + ' of them in the last ' + (windowDays || 7) + ' days' : '') +
+      (early ? '; ' + tPct_(early, response.answered) + '% of first answers came within a day of the letter.' : '.'));
+    if (response.approached) {
+      var top = list('agent', function (a, b) { return b.approached - a.approached; })[0];
+      lines.push(response.approached + ' client' + (response.approached === 1 ? '' : 's') + ' say' + (response.approached === 1 ? 's' : '') +
+        ' someone has already approached them' + (told1('contact', 'contact_yes') ? ', or that the terminated agent has been in touch' : '') +
+        (top && top.approached ? ' — the most from ' + top.key + '\'s former book (' + top.approached + ')' : '') + '. Each is a call before anything else.');
+    }
+    if (told.rating) {
+      var good = told1('rating', 'rate_verywell') + told1('rating', 'rate_well');
+      lines.push('Of ' + told.rating.n + ' who rated us, ' + tPct_(good, told.rating.n) + '% said very well or well; ' + told1('rating', 'rate_better') + ' said could be better.');
+    }
+    if (told.pays) lines.push(tN_(told1('pays', 'pays_confirm'), 'wants', 'want') + ' us to confirm who their policy pays (' + tPct_(told1('pays', 'pays_confirm'), told.pays.n) + '% of those asked); ' + tN_(told1('pays', 'pays_known'), 'already knows.', 'already know.'));
+    if (told.stay) lines.push(tN_(told1('stay', 'stay_yes'), 'wants', 'want') + ' the branch team to keep looking after their policy; ' + tN_(told1('stay', 'stay_talk'), 'wants', 'want') + ' to talk it through first.');
+    if (told.checkfirst) lines.push(tN_(told1('checkfirst', 'checkfirst_yes'), 'wants', 'want') + ' any change checked with us first, free; ' + told1('checkfirst', 'checkfirst_no') + ' will decide ' + (told1('checkfirst', 'checkfirst_no') === 1 ? 'alone.' : 'themselves.'));
+    if (told.received && told1('received', 'contract_missing')) lines.push(tN_(told1('received', 'contract_missing'), 'says', 'say') + ' their policy contract never reached them: a delivery each, within the week.');
+    if (told.outstanding) lines.push(tN_(told1('outstanding', 'k_outstanding'), 'wants', 'want') + ' help to finish their application; ' + tN_(told1('outstanding', 'k_stop'), 'no longer wishes', 'no longer wish') + ' to proceed.');
+    if (told.paying && told1('paying', 'pay_person')) lines.push(tN_(told1('paying', 'pay_person'), 'still pays', 'still pay') + ' a representative in person: each one is set up to pay Guardian Life directly.');
+    if (reviews.total) lines.push(reviews.total + ' full review' + (reviews.total === 1 ? '' : 's') + ' filed' + (reviews.urgent ? ', ' + reviews.urgent + ' urgent' : '') + (reviews.approached ? '; ' + reviews.approached + ' name an approach about moving or replacing the policy' : '') + '.');
+    if (follow.open) lines.push(tN_(follow.open, 'answer is', 'answers are') + ' still open' + (follow.late ? ', ' + follow.late + ' of them past ' + TRANSITION.WAIT_DAYS + ' working days with nobody named' : '') +
+      (follow.medianDays !== null ? '; a name goes on ' + (follow.medianDays === 0 ? 'the same working day' : 'within ' + tN_(follow.medianDays, 'working day', 'working days')) + ' (median)' : '') + '.');
+    if (reach.reminded) lines.push(tN_(reach.reminded, 'reminder has', 'reminders have') + ' gone; ' + response.afterReminder + ' of those clients answered after it.');
+  }
+  if (reach.failed) lines.push(tN_(reach.failed, 'letter failed to send and is', 'letters failed to send and are') + ' retried the next day; the reason is in ' + (reach.failed === 1 ? 'its' : 'their') + ' Status cell.');
+
+  return {
+    at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), day: Utilities.formatDate(now, tz, 'd MMMM yyyy'), windowDays: windowDays || 7, tz: tz,
+    reach: reach, response: response, rate: tPct_(response.answered, reach.sent), curve: curve, told: toldList, byType: byType,
+    reviews: reviews, follow: follow, risk: risk.slice(0, 40), riskTotal: risk.length, riskOpen: riskOpen,
+    byFamily: list('family', function (a, b) { return b.sent - a.sent; }),
+    bySegment: list('segment', function (a, b) { return a.key < b.key ? -1 : 1; }),
+    byAgent: list('agent', function (a, b) { return (b.approached - a.approached) || (b.risk - a.risk) || (b.sent - a.sent); }),
+    next: { days: days, remindersDue: remindersDue }, lines: lines, armed: tArmed_(),
+  };
+}
+
+/** The report as an e-mail: tiles, what it means, then the tables. Inline
+ *  styles only, so Gmail and Outlook show it. `weekly` adds every table;
+ *  the digest shows the tiles and the sentences. */
+function tInsightHtml_(a, weekly) {
+  var F = 'Arial,sans-serif', esc = tEsc_;
+  var h3 = function (s, c) { return '<h3 style="font:800 15px ' + F + ';color:' + (c || '#12202e') + ';margin:20px 0 6px">' + s + '</h3>'; };
+  var tile = function (n, label) {
+    return '<td style="padding:10px 14px;background:#f4f8fa;border-radius:8px;vertical-align:top"><div style="font:800 24px/1 ' + F + ';color:#12202e">' + n +
+      '</div><div style="font:600 11px/1.3 ' + F + ';color:#64798e;text-transform:uppercase;letter-spacing:.08em;margin-top:4px">' + label + '</div></td><td style="width:8px"></td>';
+  };
+  var table = function (head, rows) {
+    if (!rows.length) return '<p style="margin:0;color:#64798e">Nothing yet.</p>';
+    return '<table cellpadding="5" cellspacing="0" style="border-collapse:collapse;font:13px ' + F + ';color:#33465a;width:100%">' +
+      '<tr>' + head.map(function (h) { return '<th style="text-align:left;border-bottom:2px solid #d7e3ea;color:#12202e;font-size:12px">' + h + '</th>'; }).join('') + '</tr>' +
+      rows.map(function (r) { return '<tr>' + r.map(function (c) { return '<td style="border-bottom:1px solid #e0eaef;vertical-align:top">' + c + '</td>'; }).join('') + '</tr>'; }).join('') + '</table>';
+  };
+  var bar = function (pct) { return '<div style="background:#e6eef3;border-radius:4px;height:8px;width:120px"><div style="background:#0aa8bf;border-radius:4px;height:8px;width:' + Math.max(2, Math.round(1.2 * pct)) + 'px"></div></div>'; };
+  var out = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:680px">' +
+    '<h2 style="font:800 20px ' + F + ';color:#12202e;margin:0 0 4px">' + (weekly ? 'Transition: the week to ' + esc(a.day) : 'Transition: ' + esc(a.at)) + '</h2>' +
+    '<p style="margin:0 0 14px;color:#64798e">' + (weekly ? 'What went, what came back, what the clients told us, and where to act. Every number is from the sheet at ' + esc(a.at) + '.' : 'Sends, answers and what they mean. The live page has the detail.') + '</p>' +
+    (a.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324"><b>The hourly send is off.</b> Nothing sends until Service Questionnaire &rarr; Transition: go live.</p>') +
+    '<table cellpadding="0" cellspacing="0"><tr>' + tile(a.reach.sent, 'letters sent') + tile(a.response.answered, 'clients answered') + tile(a.rate + '%', 'response') +
+    tile(a.riskOpen, 'to act on') + tile(a.reviews.total, 'reviews') + '</tr></table>' +
+    h3('What it means') + '<ul style="margin:0;padding-left:20px">' + a.lines.map(function (l) { return '<li style="margin:4px 0">' + esc(l) + '</li>'; }).join('') + '</ul>';
+  if (!weekly) return out + '</div>';
+  out += h3('By family') + table(['Family', 'Sent', 'Answered', 'Response', 'Approached', 'Stay: yes / talk'], a.byFamily.map(function (g) {
+    return [esc(g.key), g.sent, g.answered, g.rate + '%', g.approached, g.stayYes + ' / ' + g.stayTalk]; }));
+  out += h3('By letter') + table(['Letter', 'Sent', 'Answered', 'Response', 'Approached', 'At risk'], a.bySegment.map(function (g) {
+    return ['<b>' + esc(g.key) + '</b>', g.sent, g.answered, g.rate + '%', g.approached, g.risk]; }));
+  out += h3('What the clients told us') + (a.told.length ? a.told.map(function (q) {
+    return '<p style="margin:12px 0 4px;font-weight:700;color:#12202e">' + esc(q.question) + ' <span style="font-weight:400;color:#64798e">(' + q.n + ' answered)</span></p>' +
+      '<table cellpadding="3" cellspacing="0" style="font:13px ' + F + ';color:#33465a">' + q.answers.map(function (x) {
+        return '<tr><td style="padding-right:10px">' + esc(x.label) + '</td><td style="padding-right:10px"><b>' + x.n + '</b></td><td style="padding-right:10px">' + x.pct + '%</td><td>' + bar(x.pct) + '</td></tr>'; }).join('') + '</table>';
+  }).join('') : '<p style="margin:0;color:#64798e">No answers yet.</p>');
+  out += h3('By former book: where the approaches are') + table(['Former agent', 'Sent', 'Answered', 'Response', 'Approached', 'At risk'], a.byAgent.map(function (g) {
+    return [esc(g.key), g.sent, g.answered, g.rate + '%', g.approached, g.risk]; }));
+  var ck = Object.keys(a.curve);
+  out += h3('When the first answer comes, from the day the letter went') + table(['After', 'Clients'], ck.map(function (k) { return [k, a.curve[k]]; }));
+  out += h3('Taps, by type') + '<p style="margin:0">' + (Object.keys(a.byType).map(function (k) { return esc(k) + ' ' + a.byType[k]; }).join(' &middot; ') || 'none yet') +
+    (a.follow.replies ? ' &middot; ' + a.follow.replies + ' filed from replies' : '') + '</p>';
+  out += h3('Follow-through') + '<p style="margin:0">' + a.follow.open + ' open &middot; ' + a.follow.late + ' past ' + TRANSITION.WAIT_DAYS + ' working days with nobody named &middot; ' +
+    a.follow.assignedWindow + ' assigned in the last ' + a.windowDays + ' days &middot; ' + a.follow.resolved + ' resolved' +
+    (a.follow.medianDays !== null ? ' &middot; median ' + a.follow.medianDays + ' working day' + (a.follow.medianDays === 1 ? '' : 's') + ' to a name' : '') +
+    ' &middot; reviews: ' + a.reviews.total + (a.reviews.urgent ? ' (' + a.reviews.urgent + ' urgent)' : '') +
+    (a.reviews.approached ? ' &middot; ' + a.reviews.approached + ' review' + (a.reviews.approached === 1 ? '' : 's') + ' name an approach: ' +
+      esc(Object.keys(a.reviews.who).map(function (w) { return w + ' ' + a.reviews.who[w]; }).join(', ')) : '') + '</p>';
+  out += h3('To act on: clients who said something that needs a person' + (a.riskTotal > a.risk.length ? ' (first ' + a.risk.length + ' of ' + a.riskTotal + ')' : ''), '#b3261e') +
+    table(['Client', 'Former agent', 'Letter', 'What they said', 'Waiting', 'Assigned to'], a.risk.map(function (x) {
+      return [esc(x.client), esc(x.agent), esc(x.seg), esc(x.said), x.open ? x.days + ' working day' + (x.days === 1 ? '' : 's') : 'resolved', esc(x.assigned) || '<span style="color:#b3261e">nobody</span>']; }));
+  out += h3('Next 7 days') + '<p style="margin:0">' + (a.next.days.length ? a.next.days.map(function (d) { return esc(d.day) + ': ' + d.n + ' letters'; }).join(' &middot; ') : 'no letters waiting with a date') +
+    ' &middot; ' + a.next.remindersDue + ' reminders due' + ' &middot; ' + a.reach.waiting + ' waiting in all' + (a.reach.failed ? ' &middot; ' + a.reach.failed + ' failed, retried tomorrow' : '') +
+    ' &middot; ' + a.reach.held + ' held back (' + esc(Object.keys(a.reach.heldReasons).map(function (k) { return k + ' ' + a.reach.heldReasons[k]; }).join(', ')) + ')</p>';
+  return out + '</div>';
+}
+
+/** The Monday report: a week of answers, read for what they mean. Safe to run by hand. */
+function transitionWeekly() {
+  var to = TRANSITION.WEEKLY_TO || TRANSITION.DIGEST_TO || Session.getEffectiveUser().getEmail();
+  var a;
+  try { a = tInsights_(7); }
+  catch (err) {
+    var why = String(err && err.message ? err.message : err);
+    log_('transition', 'weekly-failed', why);
+    MailApp.sendEmail(to, 'Transition weekly: could not read the sheet', why, { name: TRANSITION.FROM_NAME });
+    return tSay_('weekly report not sent: ' + why);
+  }
+  var subject = 'Transition, week to ' + a.day + ': ' + a.reach.sent + ' sent, ' + a.response.answered + ' answered (' + a.rate + '%), ' +
+    a.riskOpen + ' to act on';
+  MailApp.sendEmail(to, subject, 'Open in a mail app that shows HTML.',
+    { htmlBody: tInsightHtml_(a, true) + '<p style="font:12px Arial,sans-serif;color:#64798e;margin-top:18px">' + tEsc_(tInternal_(tReceipt_())) + '</p>', name: TRANSITION.FROM_NAME });
+  log_('transition', 'weekly', subject);
+  return tSay_('Weekly report sent to ' + to);
+}
+
 /* ── the morning e-mail ───────────────────────────────────────────── */
 function transitionDigest() {
   var to = TRANSITION.DIGEST_TO || Session.getEffectiveUser().getEmail();
@@ -1450,13 +1802,18 @@ function transitionDigest() {
       g.waiting + ' waiting</td><td style="padding:4px 10px">' + g.taps + ' taps</td><td style="padding:4px 10px">' + g.excluded + ' held back</td></tr>';
   }).join('');
   var types = Object.keys(s.taps.byType).map(function (k) { return k + ' ' + s.taps.byType[k]; }).join(' · ') || 'none yet';
+  /* what the answers mean, over the last day: the same sentences the Monday report opens on */
+  var insight = '';
+  try { var a = tInsights_(1); insight = tInsightHtml_(a, false).replace(/^<div[^>]*>[\s\S]*?<\/table>/, '').replace(/<\/div>$/, ''); }
+  catch (e) { insight = '<p style="color:#8a3324">The insight block could not be built: ' + tEsc_(String(e && e.message ? e.message : e)) + '</p>'; }
   var html = '<div style="font:15px/1.5 Arial,sans-serif;color:#33465a;max-width:640px">' +
     '<h2 style="font:800 20px Arial,sans-serif;color:#12202e;margin:0 0 4px">Transition — ' + s.at + '</h2>' +
-    '<p style="margin:0 0 14px;color:#64798e">Sends, taps, reviews and verdicts. The live page has the detail.</p>' +
+    '<p style="margin:0 0 14px;color:#64798e">Sends, taps, reviews and verdicts. The live page has the detail; the Monday report reads the answers.</p>' +
     (s.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324">' +
       '<b>The hourly send is off.</b> The Test rows still go by hand; nothing else sends until Service Questionnaire &rarr; Transition: go live.</p>') +
     '<table cellpadding="0" cellspacing="0"><tr>' + tile(s.totals.sent, 'letters sent') + tile(s.totals.waiting, 'waiting') +
     tile(s.taps.total, 'taps') + tile(s.reviews.total, 'reviews') + tile(s.taps.late.length, 'late') + '</tr></table>' +
+    insight +
     '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">By letter</h3><table cellpadding="0" cellspacing="0" style="font:13px Arial,sans-serif">' + segs + '</table>' +
     '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">Taps</h3><p style="margin:0">' + tEsc_(types) + ' &middot; ' + s.taps.today + ' today</p>' +
     '<h3 style="font:800 15px Arial,sans-serif;color:#b3261e;margin:18px 0 6px">Waiting more than ' + s.waitDays + ' working days, nobody assigned</h3>' +
@@ -1467,7 +1824,8 @@ function transitionDigest() {
     '<p style="margin:0">' + s.feedback.people + ' answered · ' + s.feedback.verdicts.send + ' send · ' + s.feedback.verdicts.change +
     ' change · ' + s.feedback.verdicts.hold + ' hold · taking assignments: ' + (tEsc_(Object.keys(s.feedback.taking).join(', ')) || 'nobody yet') + '</p>' +
     '<h3 style="font:800 15px Arial,sans-serif;color:#12202e;margin:18px 0 6px">Last runs</h3>' +
-    rows(s.runs, ['when', 'event', 'detail']) + '</div>';
+    rows(s.runs, ['when', 'event', 'detail']) +
+    '<p style="font:12px Arial,sans-serif;color:#64798e;margin-top:18px">' + tEsc_(tInternal_(tReceipt_())) + '</p></div>';
   MailApp.sendEmail(to, 'Transition: ' + s.totals.sent + ' sent, ' + s.taps.total + ' taps, ' + s.reviews.total +
     ' reviews' + (s.taps.late.length ? ', ' + s.taps.late.length + ' late' : ''), 'Open in a mail app that shows HTML.',
     { htmlBody: html, name: TRANSITION.FROM_NAME });

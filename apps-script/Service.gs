@@ -1376,6 +1376,8 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode, 
  *  owner's account as before, so the reference and access code always reach
  *  the client. `o`: to, subject, htmlBody, attachments (Blobs), cc. */
 function clientMail_(o) {
+  /* the confidentiality footer every client e-mail ends in (Transition.gs, from receipt.json on the site) */
+  try { if (typeof tLegal_ === 'function' && o.htmlBody && o.htmlBody.indexOf('Data Protection Act') < 0) o.htmlBody += tLegal_(); } catch (e) {}
   try {
     if (typeof tMsSend_ === 'function' && typeof tMsCreds_ === 'function' && tMsCreds_()) {
       tMsSend_(o.to, o.subject, o.htmlBody, {
@@ -3611,5 +3613,6 @@ function onOpen() {
     .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
     .addItem('Transition: send the receipts now', 'transitionReceipts')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
+    .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
     .addToUi();
 }
