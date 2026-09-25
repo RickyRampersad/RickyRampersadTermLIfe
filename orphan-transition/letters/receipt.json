@@ -36,6 +36,8 @@
   "contract_unsure": "Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.",
   "k_unsure": "Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.",
   "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
+  "pay_person": "Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life's own receipt every time.",
+  "pay_unsure": "Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.",
   "wrote": "A person reads your e-mail and replies the same working day."
  },
  "still": {
@@ -170,6 +172,18 @@
     "Has your former agent been in touch with you since their contract ended?",
     "Yes, call me"
    ],
+   "pay_direct": [
+    "How do you pay your premium today?",
+    "Directly to Guardian Life"
+   ],
+   "pay_person": [
+    "How do you pay your premium today?",
+    "In person, to a representative"
+   ],
+   "pay_unsure": [
+    "How do you pay your premium today?",
+    "Not sure"
+   ],
    "reach_phone": [
     "What is the best way to reach you?",
     "Phone call"
@@ -220,6 +234,9 @@
    },
    "R2": {
     "callme": "Check my file with me"
+   },
+   "J": {
+    "paid": "I paid a premium that is not showing"
    },
    "T": {
     "callme": "Call me about my policy",
@@ -276,12 +293,14 @@
    "Call me.",
    "Check my file with me.",
    "Could be better",
+   "Directly to Guardian Life",
    "E-mail",
    "Evening",
    "Finish my application.",
    "Has your former agent been in touch with you since their contract ended?",
    "Has your policy contract reached you?",
    "Help me claim it.",
+   "How do you pay your premium today?",
    "How have we looked after you so far?",
    "I am clear on it, thank you",
    "I am not sure what is needed",
@@ -289,10 +308,12 @@
    "I have paid a premium that is not showing.",
    "I know it, thank you",
    "I no longer wish to proceed",
+   "I paid a premium that is not showing.",
    "I want an agent now. Let me tell you my concerns first.",
    "I will decide myself",
    "I would rather not proceed.",
    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+   "In person, to a representative",
    "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
    "Is there anything more you would like your cover to do for you now: family, retirement, health?",
@@ -303,6 +324,7 @@
    "No, all the same",
    "No, it never reached me",
    "Not now, thank you",
+   "Not sure",
    "Not sure what I should have",
    "Phone call",
    "Set me up to pay Guardian Life directly.",
@@ -535,6 +557,26 @@
     ]
    ]
   ],
+  "paying": [
+   "How do you pay your premium today?",
+   [
+    [
+     "Directly to Guardian Life",
+     "informed",
+     "pay_direct"
+    ],
+    [
+     "In person, to a representative",
+     "pay",
+     "pay_person"
+    ],
+    [
+     "Not sure",
+     "callme",
+     "pay_unsure"
+    ]
+   ]
+  ],
   "reach": [
    "What is the best way to reach you?",
    [
@@ -649,6 +691,7 @@
   ],
   "T": [
    "contact",
+   "paying",
    "received",
    "checkfirst",
    "pays",

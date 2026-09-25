@@ -32,8 +32,25 @@ _ex = HERE / 'exclude.txt'
 LISTED = {l.strip().lower() for l in _ex.read_text(encoding='utf-8').splitlines() if l.strip()} if _ex.exists() else set()
 HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
            'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-           'app_received', 'matured_on', 'maturity_date', 'collected_on', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on',
-           'Sent at', 'Status']   # collected_on (letter J) and terminated_on (letter T) are filled by hand or by contracts.py, outside the repository
+           'app_received', 'matured_on', 'maturity_date', 'collected_on', 'promised_on', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on',
+           'Sent at', 'Status']   # collected_on and promised_on (letter J) and terminated_on (letter T) are filled by hand or by contracts.py, outside the repository
+# The waves (25 September 2026: "combine and regroup … with a flow"): the family is the day the letter goes,
+# in working days from TODAY, which is the go-live day. The notice and the action letters first; the in-force
+# letters over three days by tenure, the longest first; the lapsed and matured letters a week on. The reminder
+# needs no date: Transition.gs sends the same letter again to anyone unanswered after REMIND_DAYS.
+WAVE = {'T': 0, 'T1': 0, 'J': 0, 'K': 0, 'I': 0, 'F5': 1, 'F4': 1, 'F3': 1, 'F2': 2, 'R1': 2, 'R2': 2, 'F1': 3, 'G': 5, 'A': 5}
+
+
+def working_days_on(start, n):
+    """The date n working days after start (Monday to Friday), start itself counting as day 0."""
+    d = start
+    while d.weekday() >= 5:
+        d += datetime.timedelta(days=1)
+    for _ in range(n):
+        d += datetime.timedelta(days=1)
+        while d.weekday() >= 5:
+            d += datetime.timedelta(days=1)
+    return d
 PENDING = ('underwriting', 'awaiting settlement')   # 'postponed' is a decision, not a file in progress: check, never auto-send
 INFORCE = ('premium paying', 'waiver of prem', 'paid up')
 ALNUM = string.ascii_letters + string.digits
@@ -273,7 +290,7 @@ for cid, c in sorted(C.items(), key=lambda kv: kv[1]['name']):
         rec['Exclude'] = reason.split(':')[0]
         rec['Reason'] = reason
         excl[reason.split(':')[0]] += 1
-    rec['Send on'] = (TODAY + datetime.timedelta(days=7 if seg == 'G' else 0)).isoformat() if seg else ''
+    rec['Send on'] = working_days_on(TODAY, WAVE.get(seg, 0)).isoformat() if seg else ''
     out.append(rec)
 
 # No row on this list is ever marked Test: "send the Test rows now" sends

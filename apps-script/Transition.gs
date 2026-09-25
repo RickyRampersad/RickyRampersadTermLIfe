@@ -17,7 +17,8 @@
  *   transitionSendTest()     the rows marked Test = Y, now, whatever the hour
  *   transitionGoLive()       the hourly send, on — once the test rows have been checked
  *   transitionPause()        the hourly send, off; the test rows still go by hand
- *   transitionSendBatch()    what the hourly trigger runs; safe to run by hand
+ *   transitionSendBatch()    what the hourly trigger runs; safe to run by hand — the day's new letters,
+ *                            then (tRemind_) the same letter once more to anyone unanswered after REMIND_DAYS
  *   transitionDigest()       the morning e-mail; safe to run by hand
  *
  * The Transition Send tab is built outside the repository from the Branch
@@ -65,6 +66,8 @@ var TRANSITION = {
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
   INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
+  REMIND_DAYS: 21,           // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off
+  REMIND_MAX_PER_RUN: 30,    // the most reminders one hourly run adds, after the day's new letters and inside the same BATCH
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
@@ -77,19 +80,27 @@ var T_LIVE = 'transition_live';
 
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'svc_docs', 'svc_requests', 'svc_reminders',
+  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'promised_on', 'svc_docs', 'svc_requests', 'svc_reminders',
   'svc_birthday', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on', 'Sent at', 'Status'];
 /* The client's own record with the branch team (tools/letters/service-record.py
    fills these columns): cut cell by cell like a blank fact, a zero counting as
    blank, and where none is left the plain line about the team stands in. */
 var T_SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday'];
+/* The fields no column holds: worked out on the day the letter goes (tDerive_),
+   so the days a letter prints are true that day — days_held from collected_on
+   (letter J), days_open from app_received (K and T1) — and sent_on, set by the
+   reminder alone, which is what puts the "we wrote to you on" line above the
+   greeting; blank on a first send, so the fact cut removes the line whole. */
+var T_DERIVED = ['days_held', 'days_open', 'sent_on'];
 /* the merge fields a letter may carry, and the ones that sit in a strip.
    terminated_on is letter T's alone: the date Guardian Life terminated the
-   agent's contract, from its own notice, filled from the sheet like the name. */
+   agent's contract, from its own notice, filled from the sheet like the name.
+   promised_on is letter J's: the day the branch's own delivery-update e-mail
+   went to that client, blank where none did, and its sentence goes with it. */
 var T_FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'terminated_on'].concat(T_SVC);
+  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'promised_on', 'terminated_on'].concat(T_SVC, T_DERIVED);
 var T_FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'collected_on'].concat(T_SVC);
+  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'promised_on'].concat(T_SVC, T_DERIVED);
 /* the columns a send depends on: read, checked or written on every row. Headers
    are matched on their exact text, so a tab imported with 'Excluded' or 'exclude'
    would make every held-back row due — tRead_ refuses to run without them. */
@@ -282,9 +293,39 @@ function tEsc_(s) {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+/** Whole days from a date (a Date, or text the import left as text) to today,
+ *  as text; '' when it cannot be read or lies ahead. */
+function tDays_(x) {
+  var d = null;
+  if (x instanceof Date) d = x;
+  else {
+    var s = String(x === null || x === undefined ? '' : x).trim();
+    var ymd = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (ymd) d = new Date(Number(ymd[1]), Number(ymd[2]) - 1, Number(ymd[3]));
+    else if (s) { var p = new Date(s); if (!isNaN(p.getTime())) d = p; }
+  }
+  if (!d || isNaN(d.getTime())) return '';
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var from = new Date(d.getTime()); from.setHours(0, 0, 0, 0);
+  var n = Math.round((today.getTime() - from.getTime()) / 86400000);
+  return n >= 0 ? String(n) : '';
+}
+
+/** The row with T_DERIVED filled: the days worked out from the row's own dates
+ *  on the day the letter goes. A blank date leaves the field blank and the
+ *  fact cut removes it; a value already on the row is kept. Never writes back. */
+function tDerive_(row) {
+  var out = {};
+  for (var k in row) out[k] = row[k];
+  if (!tText_(out.days_held)) out.days_held = tDays_(out.collected_on);
+  if (!tText_(out.days_open)) out.days_open = tDays_(out.app_received);
+  return out;
+}
+
 /** Fill one letter (or its subject) for one row. A fact whose field is blank
  *  is cut out between its markers; the strip goes when its last fact does. */
 function tFill_(text, row) {
+  row = tDerive_(row);
   var v = function (k) {
     var x = row[k];
     /* the month of the last birthday note: a sheet import reads 'August 2026' as
@@ -424,6 +465,7 @@ function tSendRow_(row, letters) {
   var seg = tText_(row.Segment).toUpperCase();
   var L = letters[seg];
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
+  if (tText_(row.sent_on)) subject = 'Reminder: ' + subject;   // the same letter once more (tRemind_)
   var html = tFill_(L.html, row);
   /* A field this script does not know goes out as {{name}} in the client's own
      letter. That means the letters on the site are newer than this file: stop
@@ -1051,8 +1093,80 @@ function tSendBatch_(force) {
   var res = tSendRows_(t, due.slice(0, cap), letters);
   var waiting = Math.max(0, due.length - cap);
   var msg = res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed, ' + waiting + ' waiting for the next run';
+  /* the reminders, with what is left of the hour's cap: never before the day's
+     new letters, and never able to stop them — a failure here is logged alone */
+  var rem = { sent: 0, skipped: 0, failed: 0, waiting: 0 };
+  try { rem = tRemind_(t, letters, cap - Math.min(cap, due.length)); }
+  catch (err) { log_('transition', 'remind-failed', String(err && err.message ? err.message : err)); }
+  if (rem.sent || rem.skipped || rem.failed || rem.waiting) {
+    msg += '; reminders: ' + rem.sent + ' sent, ' + rem.skipped + ' held, ' + rem.failed + ' failed, ' + rem.waiting + ' waiting';
+  }
   log_('transition', 'batch', msg);
   return msg;
+}
+
+/* ── the reminder: the same letter once more, to anyone who has not answered ── */
+/** Runs at the end of every hourly batch, after the day's new letters and inside
+ *  the same cap. A row sent REMIND_DAYS or more ago, still marked 'sent', whose
+ *  token has no row on Client Responses and no review, gets its own letter again
+ *  with sent_on set — the line above the greeting says when the first went, the
+ *  subject says "Reminder:" — and its Status becomes 'reminded <date>', so it is
+ *  never reminded twice. Sent at is left as it was: it is the first send's date,
+ *  and the reason the batch never picks the row up again. Bounded by
+ *  REMIND_MAX_PER_RUN. (25 September 2026: a reminder at three to six weeks is
+ *  what the FCA's letter trial found lifted response most; see CLAUDE.md.) */
+function tRemind_(t, letters, cap) {
+  var days = Number(TRANSITION.REMIND_DAYS) || 0;
+  cap = Math.min(Number(cap) || 0, TRANSITION.REMIND_MAX_PER_RUN);
+  if (cap <= 0 || days <= 0) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
+  var tz = tTz_(), now = new Date();
+  var cutoff = new Date(now.getTime() - days * 86400000);
+  var answered = tAnswered_();
+  var due = t.rows.filter(function (r) {
+    if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
+    if (tText_(r.Status).toLowerCase() !== 'sent') return false;             // reminded, error, check: not again
+    var at = r['Sent at'];
+    if (!(at instanceof Date) || isNaN(at.getTime()) || at.getTime() > cutoff.getTime()) return false;
+    var tok = tText_(r.Token);
+    if (!tok || answered[tok]) return false;
+    return !tHold_(r, letters);
+  });
+  due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
+  var sent = 0, skipped = 0, failed = 0;
+  due.slice(0, cap).forEach(function (r) {
+    var row = {};
+    for (var k in r) row[k] = r[k];
+    row.sent_on = Utilities.formatDate(r['Sent at'], tz, 'd MMMM yyyy');
+    try {
+      var res = tSendRow_(row, letters);
+      if (res === 'sent') { sent++; tMark_(t, r, 'reminded ' + Utilities.formatDate(now, tz, 'yyyy-MM-dd'), false); }
+      else { skipped++; tMark_(t, r, 'reminder held: ' + res, false); }
+    } catch (err) {
+      failed++;
+      tMark_(t, r, 'reminder error: ' + String(err && err.message ? err.message : err).slice(0, 100), false);
+    }
+    Utilities.sleep(2100);
+  });
+  return { sent: sent, skipped: skipped, failed: failed, waiting: Math.max(0, due.length - cap) };
+}
+
+/** Every token that has answered: a row on Client Responses, or a review whose
+ *  Link ref carries it. Read once per run. Never throws: a tab that cannot be
+ *  read counts nobody as answered, which reminds rather than forgets. */
+function tAnswered_() {
+  var map = {};
+  try {
+    tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) { var tok = String(v[1] || '').trim(); if (tok) map[tok] = 1; });
+  } catch (e) {}
+  try {
+    var q = tSheetRows_(SVC.IND_SHEET), qi = {};
+    q.head.forEach(function (h, i) { qi[h] = i; });
+    if (qi['Link ref'] !== undefined) q.rows.forEach(function (v) {
+      var m = /^transition:(\S+)$/.exec(String(v[qi['Link ref']] || '').trim());
+      if (m) map[m[1]] = 1;
+    });
+  } catch (e) {}
+  return map;
 }
 
 /** The menu item. Asks first, then sends the next batch whatever the hour
@@ -1118,6 +1232,7 @@ function transitionPreviewToMe() {
       first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
       paid_to: new Date(2026, 7, 1), days: 52, projected_lapse: new Date(2026, 10, 30),
       app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1), collected_on: new Date(2026, 6, 20),
+      promised_on: new Date(2026, 6, 20),
       svc_docs: 6, svc_requests: 3, svc_reminders: 8, svc_birthday: 'March 2026',
     };
     var html = tFill_(L.html, row);
@@ -1199,14 +1314,17 @@ function tSheetRows_(name) {
 function tSummary_() {
   var tz = tTz_(), now = new Date();
   var t = tRead_();
-  var byTok = {}, byMail = {}, seg = {}, totals = { clients: 0, ready: 0, sent: 0, excluded: 0, noEmail: 0, waiting: 0 };
+  var byTok = {}, byMail = {}, seg = {}, totals = { clients: 0, ready: 0, sent: 0, excluded: 0, noEmail: 0, waiting: 0, reminded: 0 };
   t.rows.forEach(function (r) {
     var s = tText_(r.Segment).toUpperCase() || '—';
-    var g = seg[s] = seg[s] || { clients: 0, sent: 0, excluded: 0, waiting: 0, taps: 0 };
+    var g = seg[s] = seg[s] || { clients: 0, sent: 0, excluded: 0, waiting: 0, taps: 0, reminded: 0 };
     g.clients++; totals.clients++;
     var ex = tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '';
     if (ex) { g.excluded++; totals.excluded++; if (/no e-mail/i.test(ex)) totals.noEmail++; }
-    else if (tText_(r['Sent at'])) { g.sent++; totals.sent++; }
+    else if (tText_(r['Sent at'])) {
+      g.sent++; totals.sent++;
+      if (/^reminded/i.test(tText_(r.Status))) { g.reminded++; totals.reminded++; }   // the same letter went once more (tRemind_)
+    }
     else if (s !== '—') { g.waiting++; totals.waiting++; }
     if (tText_(r.Token)) byTok[tText_(r.Token)] = r;
     if (tText_(r.Email)) byMail[tText_(r.Email).toLowerCase()] = r;

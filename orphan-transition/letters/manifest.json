@@ -20,7 +20,11 @@
   "svc_reminders": "service-record.py \u2014 premium reminders sent to them",
   "svc_birthday": "service-record.py \u2014 the month of their last birthday note",
   "agent_name": "Agent \u2014 the full name as the sheet spells it; letter T only, in the subject and the notice",
-  "terminated_on": "the send list \u2014 the date Guardian Life terminated the contract, from its own notice; letter T only"
+  "terminated_on": "the send list \u2014 the date Guardian Life terminated the contract, from its own notice; letter T only",
+  "promised_on": "Salesforce \u2014 the day the branch wrote to the client that the contract would be delivered within 28 days (the delivery-update e-mail); letter J only, blank where no such e-mail went",
+  "days_held": "worked out at send time \u2014 days from collected_on to the day the letter goes; letter J only",
+  "days_open": "worked out at send time \u2014 days from app_received to the day the letter goes; letters K and T1",
+  "sent_on": "set by the sender on a reminder only \u2014 the day the first letter went; blank on a first send, which cuts the banner above the greeting"
  },
  "taps": {
   "urgent": "I want an agent now. Let me tell you my concerns first",
@@ -36,6 +40,87 @@
   "question": "My details have changed"
  },
  "reply_to": "support@rickyrampersadbranch.com",
+ "families": {
+  "notice": {
+   "name": "Notice",
+   "who": "the terminated book",
+   "letters": [
+    "T",
+    "T1"
+   ]
+  },
+  "action": {
+   "name": "Action",
+   "who": "something to finish",
+   "letters": [
+    "I",
+    "J",
+    "K"
+   ]
+  },
+  "keep": {
+   "name": "Keep",
+   "who": "in force",
+   "letters": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "R1",
+    "R2"
+   ]
+  },
+  "return": {
+   "name": "Return",
+   "who": "lapsed or matured",
+   "letters": [
+    "A",
+    "G"
+   ]
+  }
+ },
+ "waves": [
+  {
+   "day": "Day 1",
+   "letters": [
+    "T",
+    "T1",
+    "J",
+    "K",
+    "I"
+   ]
+  },
+  {
+   "day": "Day 2",
+   "letters": [
+    "F5",
+    "F4",
+    "F3"
+   ]
+  },
+  {
+   "day": "Day 3",
+   "letters": [
+    "F2",
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "day": "Day 4",
+   "letters": [
+    "F1"
+   ]
+  },
+  {
+   "day": "Day 8",
+   "letters": [
+    "G",
+    "A"
+   ]
+  }
+ ],
  "letters": [
   {
    "segment": "A",
@@ -54,6 +139,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "return",
+   "wave": "Day 8",
+   "act": true,
    "taps": [
     "claim",
     "urgent",
@@ -82,6 +170,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 4",
+   "act": false,
    "taps": [
     "urgent",
     "callme"
@@ -108,6 +199,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
    "taps": [
     "urgent",
     "callme"
@@ -134,6 +228,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
    "taps": [
     "urgent",
     "callme"
@@ -160,6 +257,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
    "taps": [
     "urgent",
     "callme"
@@ -186,6 +286,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
    "taps": [
     "urgent",
     "callme"
@@ -213,6 +316,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
    "taps": [
     "callme",
     "urgent"
@@ -240,6 +346,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
    "taps": [
     "callme",
     "urgent"
@@ -265,6 +374,9 @@
     "svc_requests",
     "svc_birthday"
    ],
+   "family": "return",
+   "wave": "Day 8",
+   "act": true,
    "taps": [
     "urgent",
     "callme"
@@ -291,6 +403,9 @@
     "svc_requests",
     "svc_birthday"
    ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
    "taps": [
     "paid",
     "pay",
@@ -311,7 +426,8 @@
    "file": "J.html",
    "facts": [
     "issue_date",
-    "collected_on"
+    "collected_on",
+    "days_held"
    ],
    "service": [
     "svc_docs",
@@ -319,17 +435,20 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
    "taps": [
     "deliver",
-    "urgent",
+    "paid",
     "callme"
    ],
    "tap_labels": {
     "deliver": "Bring me my contract",
-    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "paid": "I paid a premium that is not showing",
     "callme": "Call me"
    },
-   "send_note": "From Salesforce: the contract was received at the branch for delivery (the delivery-update e-mail, whose date is collected_on) and no acknowledgement followed; the undelivered-script chase confirms most of them. Goes in the first wave, and the receiving agent delivers within the week."
+   "send_note": "From the Power BI acknowledgement of record and the undelivered-script chase: the contract was dispatched or handed over for delivery (collected_on) and no acknowledgement followed. promised_on is the date of the branch's own delivery-update e-mail to that client (personal delivery within 28 days) where one went, blank where none did, and the sentence goes with it; the days since the hand-over are worked out on the day the letter goes. First wave, and the receiving agent delivers within the week."
   },
   {
    "segment": "K",
@@ -338,7 +457,8 @@
    "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
    "file": "K.html",
    "facts": [
-    "app_received"
+    "app_received",
+    "days_open"
    ],
    "service": [
     "svc_docs",
@@ -346,6 +466,9 @@
     "svc_reminders",
     "svc_birthday"
    ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
    "taps": [
     "finish",
     "callme",
@@ -356,7 +479,7 @@
     "callme": "Call me",
     "stop": "I would rather not proceed"
    },
-   "send_note": "From the pending list: underwriting incomplete, missing requirements, awaiting settlement. Cover is not in place until the policy is issued, so these go in the first wave and an agent is assigned at once; every file is read before the call."
+   "send_note": "From the pending list: underwriting incomplete, missing requirements, awaiting settlement. Cover is not in place until the policy is issued, so these go in the first wave and an agent is assigned at once; every file is read before the call. The days in progress are worked out on the day the letter goes."
   },
   {
    "segment": "T",
@@ -376,6 +499,9 @@
     "svc_requests",
     "svc_birthday"
    ],
+   "family": "notice",
+   "wave": "Day 1",
+   "act": true,
    "taps": [
     "callme",
     "paid",
@@ -395,13 +521,17 @@
    "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
    "file": "T1.html",
    "facts": [
-    "app_received"
+    "app_received",
+    "days_open"
    ],
    "service": [
     "svc_docs",
     "svc_requests",
     "svc_birthday"
    ],
+   "family": "notice",
+   "wave": "Day 1",
+   "act": true,
    "taps": [
     "finish",
     "callme",

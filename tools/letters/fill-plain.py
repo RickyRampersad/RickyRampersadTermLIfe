@@ -28,14 +28,45 @@ OPENINGS = json.loads((HERE / 'openings.json').read_text(encoding='utf-8'))
 # the visible copies on every client e-mail: TRANSITION.CC in Transition.gs, the manager's choice
 CC = ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com']
 SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday']   # the service record, from service-record.py
-FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date', 'collected_on'] + SVC
+# worked out on the day the letter goes, as Transition.gs works them out (tDerive_): days_held from collected_on
+# (letter J), days_open from app_received (K and T1); sent_on only on a reminder, which this tool never sends
+DERIVED = ['days_held', 'days_open', 'sent_on']
+FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date', 'collected_on',
+         'promised_on'] + SVC + DERIVED
 FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'app_received', 'matured_on', 'maturity_date',
-          'collected_on', 'terminated_on'] + SVC   # collected_on: letter J; terminated_on: letter T, the date from Guardian Life's own notice
+          'collected_on', 'promised_on', 'terminated_on'] + SVC + DERIVED   # collected_on, promised_on: letter J; terminated_on: letter T
 ALLOWED = {'p', 'br', 'a', 'b', 'strong', 'i', 'em', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
            'table', 'thead', 'tbody', 'tr', 'th', 'td', 'code', 'pre', 'hr', 'div', 'strike'}
+TODAY = datetime.date.today()
+
+
+def parse_date(s):
+    s = (s or '').strip()
+    for f in ('%Y-%m-%d', '%d %B %Y', '%d %b %Y'):
+        try:
+            return datetime.datetime.strptime(s[:20], f).date()
+        except ValueError:
+            pass
+    return None
+
+
+def days_since(s):
+    d = parse_date(s)
+    return str((TODAY - d).days) if d and d <= TODAY else ''
+
+
+def derive(row):
+    """The row with the days filled in, the way tDerive_ in Transition.gs fills them."""
+    row = dict(row)
+    if not (row.get('days_held') or '').strip():
+        row['days_held'] = days_since(row.get('collected_on'))
+    if not (row.get('days_open') or '').strip():
+        row['days_open'] = days_since(row.get('app_received'))
+    return row
 
 
 def fill(text, row):
+    row = derive(row)
     # a service count of nought is no record, not a record of nothing: its cell goes like a blank fact
     v = lambda k: '' if k in SVC and re.fullmatch(r'0+', (row.get(k) or '').strip()) else (row.get(k) or '').strip()
     out = text
@@ -75,6 +106,8 @@ def main():
     ap.add_argument('--test', action='store_true'); ap.add_argument('--segments'); ap.add_argument('--limit', type=int)
     ap.add_argument('--today', default=datetime.date.today().isoformat())
     a = ap.parse_args()
+    global TODAY
+    TODAY = datetime.date.fromisoformat(a.today)
     segs = {s.strip().upper() for s in a.segments.split(',')} if a.segments else None
     held, n = Counter(), 0
     with open(a.csv, newline='', encoding='utf-8-sig') as src, open(a.out, 'w', encoding='utf-8') as out:
