@@ -107,6 +107,7 @@ FIELDS = {
  'days':             'Days — days outstanding',
  'projected_lapse':  'Projected Lapse Date',
  'app_received':     'App Received Date',
+ 'collected_on':     'Salesforce — the day the contract was collected for delivery (the delivery-update task); letter J only',
  'matured_on':       'policy admin — not on the portfolio sheet',
  'maturity_date':    'the intelligence sheet or policy admin — not on the portfolio sheet',
  'token':            'the send list — opaque, never a policy number',
@@ -176,6 +177,27 @@ QUESTIONS = {
  # the lapsed letter: the free look at what the policy still holds, offered as a question
  'value':      ('Would you like us to find out, free, what your policy still holds and whether it can simply start again?',
                 [('Yes, find out for me', 'callme', 'value_yes'), ('Not now, thank you', 'informed', 'value_later')]),
+ # by tenure band (25 September: "did you model it by age bands … our biggest is the under 5 years"). Under
+ # two years the relationship is new and the policy may never have been explained: the walk-through. Three
+ # to five years, value is building: what it has built so far. Ten years or more: what more the cover could
+ # do now. The bands between keep the life question, and every band keeps the feedback, the pays, the
+ # check-first and the stay.
+ 'walk':       ('Would you like a plain-words walk-through of what your policy does for you?',
+                [('Yes, walk me through it', 'callme', 'walk_yes'), ('I am clear on it, thank you', 'informed', 'walk_clear')]),
+ 'built':      ('Would you like to know what your policy has built for you so far?',
+                [('Yes, show me', 'callme', 'built_yes'), ('Not now, thank you', 'informed', 'built_later')]),
+ 'more':       ('Is there anything more you would like your cover to do for you now: family, retirement, health?',
+                [('Yes, let us talk', 'callme', 'more_yes'), ('Not now, thank you', 'informed', 'more_later')]),
+ # the contract letter (J): the record says the contract was collected for delivery and never acknowledged,
+ # so the one question that matters is whether it reached the client; "no" is the deliver tap itself
+ 'received':   ('Has your policy contract reached you?',
+                [('Yes, I have it', 'informed', 'contract_have'), ('No, it never reached me', 'deliver', 'contract_missing'),
+                 ('Not sure what I should have', 'callme', 'contract_unsure')]),
+ # the application letter (K): cover is not in place until the policy is issued, so what is outstanding is
+ # the question; "yes" is the finish tap, "no longer" the stop tap, so the file is closed properly either way
+ 'outstanding': ('Is anything you were asked for still outstanding: a medical, a document, a signature?',
+                 [('Yes, help me finish it', 'finish', 'k_outstanding'), ('I am not sure what is needed', 'callme', 'k_unsure'),
+                  ('I no longer wish to proceed', 'stop', 'k_stop')]),
  # letter T only (24 September 2026): whether the agent whose contract was terminated has been in touch
  # since. The page a tap opens and the receipt ask it in these words; the letter names the agent and the
  # date (LETTER_Q). "Yes" brings a call, and the call comes before anything else.
@@ -211,6 +233,18 @@ SAID_Q = {
  'stay_talk':      'Of course. Someone from the branch calls you today or tomorrow to talk it through, no pressure.',
  'value_yes':      'Thank you. We find out what your policy still holds and call you with the answer.',
  'value_later':    'Understood. Nothing changes, and the door stays open whenever you want to look.',
+ 'walk_yes':       'Thank you. Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.',
+ 'walk_clear':     'Thank you. If a question ever comes up, one tap or one call and we go through it with you.',
+ 'built_yes':      'Thank you. Someone from the branch calls you today or tomorrow with what your policy has built so far.',
+ 'built_later':    'Understood. It is yours to see whenever you want to.',
+ 'more_yes':       'Thank you. Someone from the branch calls you today or tomorrow to talk through what more your cover could do.',
+ 'more_later':     'Understood. Nothing about your policy changes, and the door stays open.',
+ 'contract_have':  'Thank you. That is what we needed to know, and nothing more is required of you.',
+ 'contract_missing': 'Thank you for telling us. We bring your contract to you by hand and go through it with you.',
+ 'contract_unsure': 'Thank you. Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.',
+ 'k_outstanding':  'Thank you. We bring whatever is still needed to you, so your cover can start.',
+ 'k_unsure':       'Thank you. Someone from the branch calls you today or tomorrow with exactly what is needed, and brings it to you.',
+ 'k_stop':         'Understood. We close the file properly and confirm that nothing is owed.',
  'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
  'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'reach_phone':    'Noted: we will call you.',
@@ -267,6 +301,11 @@ NEXT_Q = {
  'approached_yes': 'A person calls you before you decide anything, so you have the full picture first.',
  'stay_talk':      'Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.',
  'value_yes':      'We find out what your policy still holds, and whether it can simply start again, and call you with the answer.',
+ 'walk_yes':       'Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.',
+ 'built_yes':      'Someone from the branch calls you today or tomorrow with what your policy has built for you so far.',
+ 'more_yes':       'Someone from the branch calls you today or tomorrow to talk through what more your cover could do for you now.',
+ 'contract_unsure': 'Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.',
+ 'k_unsure':       'Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.',
  'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
 }
@@ -370,6 +409,12 @@ def taps_block(cfg):
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
 
 
+def qtext(cfg, q):
+    """A question's words on this letter: the letter's own wording (question_text in openings.json, by band),
+    else the letter-only wording with merge fields (LETTER_Q), else the words the page and the receipt use."""
+    return cfg.get('question_text', {}).get(q) or LETTER_Q.get(q, QUESTIONS[q][0])
+
+
 def questions_block(cfg):
     """The quick checks: each answer a pill with a box to tick, and a reply behind it."""
     qs = cfg.get('questions', [])
@@ -379,7 +424,7 @@ def questions_block(cfg):
                                           f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
                                           f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
     rows = ''.join(f"""
-<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{LETTER_Q.get(q, QUESTIONS[q][0])}<div style="margin-top:7px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
+<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{qtext(cfg, q)}<div style="margin-top:7px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
     return f"""
 <p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">{checks_head(qs)}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 10px">{rows}</table>"""
@@ -582,7 +627,7 @@ def plain_questions(cfg):
     qs = cfg.get('questions', [])
     if not qs:
         return ''
-    items = ''.join(f'<li><b>{LETTER_Q.get(q, QUESTIONS[q][0])}</b><br>' +
+    items = ''.join(f'<li><b>{qtext(cfg, q)}</b><br>' +
                     ' &nbsp; '.join(f'<a href="{answer_href(q, label, t, a)}">{BOX}&nbsp;{label}</a>' for label, t, a in QUESTIONS[q][1]) + '</li>'
                     for q in qs)
     return f'<h3>{checks_head(qs)}</h3><ul>{items}</ul>'

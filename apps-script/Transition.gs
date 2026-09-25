@@ -77,7 +77,7 @@ var T_LIVE = 'transition_live';
 
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'svc_docs', 'svc_requests', 'svc_reminders',
+  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'svc_docs', 'svc_requests', 'svc_reminders',
   'svc_birthday', 'terminated_on', 'Exclude', 'Reason', 'Test', 'Send on', 'Sent at', 'Status'];
 /* The client's own record with the branch team (tools/letters/service-record.py
    fills these columns): cut cell by cell like a blank fact, a zero counting as
@@ -87,9 +87,9 @@ var T_SVC = ['svc_docs', 'svc_requests', 'svc_reminders', 'svc_birthday'];
    terminated_on is letter T's alone: the date Guardian Life terminated the
    agent's contract, from its own notice, filled from the sheet like the name. */
 var T_FIELDS = ['first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date', 'terminated_on'].concat(T_SVC);
+  'app_received', 'matured_on', 'maturity_date', 'collected_on', 'terminated_on'].concat(T_SVC);
 var T_FACTS = ['first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse',
-  'app_received', 'matured_on', 'maturity_date'].concat(T_SVC);
+  'app_received', 'matured_on', 'maturity_date', 'collected_on'].concat(T_SVC);
 /* the columns a send depends on: read, checked or written on every row. Headers
    are matched on their exact text, so a tab imported with 'Excluded' or 'exclude'
    would make every held-back row due — tRead_ refuses to run without them. */
@@ -1117,7 +1117,7 @@ function transitionPreviewToMe() {
       'Agent first name': '[first name]', Agent: '[full name]', terminated_on: new Date(2026, 8, 9),
       first_year: 2014, years: 12, issue_date: new Date(2014, 2, 14),
       paid_to: new Date(2026, 7, 1), days: 52, projected_lapse: new Date(2026, 10, 30),
-      app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1),
+      app_received: new Date(2026, 8, 3), matured_on: new Date(2026, 8, 1), maturity_date: new Date(2027, 2, 1), collected_on: new Date(2026, 6, 20),
       svc_docs: 6, svc_requests: 3, svc_reminders: 8, svc_birthday: 'March 2026',
     };
     var html = tFill_(L.html, row);
