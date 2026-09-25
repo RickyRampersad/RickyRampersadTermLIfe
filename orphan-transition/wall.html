@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transition wall | Ricky Rampersad Branch</title>
+<meta name="description" content="The transition letters going out and the answers coming in, live on the branch wall.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07131f">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- The font must not block the picture: a wall screen on branch wifi is exactly
+     where a slow stylesheet leaves a blank screen. Loaded as print media and
+     promoted on load, the system fallback shows at once and the webfont swaps in. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap"></noscript>
+<style>
+  :root{
+    --navy:#07131f; --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA; --teal2:#0aa8bf;
+    --good:#34d399; --stop:#f0776a; --stopbg:#5a1a14;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    /* type, sized for a television read from across a room, and folded down for a phone:
+       body 28px and the smallest label 19px at 1920 wide */
+    --eyebrow:clamp(12px,1.2vw,23px);
+    --h2:clamp(26px,3.3vw,62px);
+    --hero:clamp(92px,20vw,340px);
+    --big:clamp(30px,3.6vw,68px);
+    --body:clamp(16px,1.5vw,30px);
+    --small:clamp(13px,1.2vw,23px);
+    --label:clamp(11px,1vw,19px);
+    --gut:clamp(16px,3vw,60px);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{margin:0;background:var(--navy);color:var(--ink);font-family:var(--b);font-size:var(--body);line-height:1.4;
+    overflow:hidden;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(1200px 700px at 8% -10%,rgba(239,194,75,.14),transparent 60%),
+               radial-gradient(900px 600px at 96% 4%,rgba(0,207,234,.13),transparent 62%),
+               linear-gradient(165deg,#07131f 0%,#0a1e33 55%,#07131f 100%)}
+
+  /* ── the hold tick, along the top ─────────────────────────────── */
+  .tick{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));z-index:30;
+    box-shadow:0 0 14px rgba(239,194,75,.45)}
+
+  /* ── chrome ─────────────────────────────────────────────────────── */
+  header{display:flex;align-items:center;gap:clamp(10px,1vw,18px);padding:clamp(10px,1.4vh,18px) var(--gut);flex:none}
+  .mark{width:clamp(36px,3vw,58px);height:clamp(36px,3vw,58px);flex:none;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+  .ttl{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.3vw,25px);letter-spacing:-.3px;line-height:1.15;white-space:nowrap;min-width:0}
+  .ttl span{display:block;font-family:var(--b);font-weight:500;font-size:clamp(11px,.85vw,16px);color:var(--dim)}
+  .ttl .sub2{display:none}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:clamp(10px,1.2vw,22px);min-width:0}
+  .stamp{font-size:clamp(11px,.9vw,17px);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .stamp.retry{color:var(--gold)}
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--f);font-weight:800;font-size:var(--label);
+    letter-spacing:.18em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(0,207,234,.4);border-radius:999px;
+    padding:4px 10px;background:rgba(0,207,234,.08);white-space:nowrap}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2.4s infinite}
+  .live.off{color:var(--gold);border-color:rgba(239,194,75,.45);background:rgba(239,194,75,.08)}
+  .live.off i{background:var(--gold);animation:none}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(0,207,234,.4)}70%{box-shadow:0 0 0 10px rgba(0,207,234,0)}100%{box-shadow:0 0 0 0 rgba(0,207,234,0)}}
+  .clk{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.5vw,28px);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+
+  /* ── the deck ────────────────────────────────────────────────────── */
+  #deck{flex:1;position:relative;min-height:0}
+  .slide{position:absolute;inset:0;padding:clamp(6px,1.2vh,18px) var(--gut) clamp(10px,2vh,26px);display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease),visibility 0s .55s;
+    overflow-x:hidden;overflow-y:auto}
+  .slide.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+  .eyebrow{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.26em;text-transform:uppercase;color:var(--gold);
+    margin:0 0 clamp(4px,.8vh,10px)}
+  .eyebrow span{color:var(--dim);letter-spacing:.1em;text-transform:none;font-weight:600;margin-left:8px}
+  h2{font-family:var(--f);font-weight:800;font-size:var(--h2);letter-spacing:-.03em;line-height:1.02;margin:0 0 clamp(8px,1.6vh,22px)}
+  .fill{flex:1;min-height:0;display:flex;flex-direction:column}
+  /* the headline numbers: a solid colour first, the gradient only where the browser can clip it to the glyphs */
+  .hero{font-family:var(--f);font-weight:800;font-size:var(--hero);line-height:.88;letter-spacing:-.05em;color:var(--gold)}
+  .hero.teal{color:var(--teal)}
+  .hero.good{color:var(--good)}
+  @supports (-webkit-background-clip:text) or (background-clip:text){
+    .hero{background:linear-gradient(120deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero.teal{background:linear-gradient(120deg,#7ee9f7,var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero.good{background:linear-gradient(120deg,#8af0c4,var(--good));-webkit-background-clip:text;background-clip:text;color:transparent}
+  }
+  .say{font-size:var(--body);color:var(--dim);max-width:36ch;margin:clamp(6px,1vh,14px) 0 0}
+  .say b{color:var(--ink);font-family:var(--f)}
+  .two{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:clamp(16px,3vw,70px);align-items:start;flex:1;min-height:0}
+  .empty{color:var(--dim);font-size:var(--body);padding:clamp(10px,2vh,30px) 0}
+  .empty.good{color:var(--good);font-family:var(--f);font-weight:800;font-size:var(--big)}
+  .note{font-size:var(--small);color:var(--dim);margin-top:clamp(6px,1.2vh,16px)}
+
+  /* the meter: the unfilled track is a lighter step of the same gold */
+  .meter{height:clamp(12px,2.2vh,28px);border-radius:999px;background:rgba(239,194,75,.16);overflow:hidden;margin:clamp(6px,1vh,12px) 0}
+  .meter i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,var(--gold2),var(--gold));
+    transition:width 1.1s var(--ease)}
+  .ofline{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-family:var(--f);font-weight:700;font-size:var(--big);letter-spacing:-.02em}
+  .ofline span{font-size:var(--body);color:var(--dim);font-weight:600;font-family:var(--b)}
+  .facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(10px,1.4vw,24px);margin-top:clamp(10px,2vh,26px)}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,1.6vh,22px) clamp(12px,1.4vw,24px);min-width:0}
+  .fact b{display:block;font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .fact span{display:block;font-size:var(--small);color:var(--dim);margin-top:6px;line-height:1.3}
+  .fact.good b{color:var(--good)}
+  .line{font-size:var(--body);color:var(--dim);margin-top:clamp(8px,1.4vh,18px);line-height:1.4}
+  .line b{color:var(--ink);font-family:var(--f)}
+  .line.amber{color:var(--gold)}
+  .banner{background:var(--stopbg);border:1px solid rgba(240,119,106,.5);border-left:6px solid var(--stop);border-radius:12px;
+    padding:clamp(10px,1.4vh,18px) clamp(14px,1.6vw,26px);margin:0 0 clamp(8px,1.4vh,18px);font-size:var(--body);color:#ffe9e5}
+  .banner b{font-family:var(--f);color:#fff;font-size:calc(var(--body) * 1.15)}
+
+  /* ── bar charts (inline SVG, drawn by the script) ─────────────────── */
+  .chart{width:100%;min-width:0}
+  .chart svg{display:block;max-width:100%}
+  .chart text{font-family:var(--b);fill:var(--ink)}
+  .chart text.v{font-family:var(--f);font-weight:800;font-variant-numeric:tabular-nums}
+  .chart .track{fill:rgba(255,255,255,.06)}
+  .chart .bar{fill:var(--teal)}
+  h3{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 clamp(6px,1vh,12px)}
+
+  /* ── the feed cards ───────────────────────────────────────────────── */
+  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:clamp(10px,1.2vw,20px);flex:1;min-height:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(12px,1.8vh,24px) clamp(12px,1.4vw,24px);min-width:0;
+    display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,.8vh,10px);overflow:hidden}
+  .card.urgent{border-color:rgba(239,194,75,.75);box-shadow:inset 0 0 0 1px rgba(239,194,75,.45);
+    background:linear-gradient(180deg,rgba(239,194,75,.13),transparent 70%),var(--card)}
+  .card .who{font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* every free-text line wraps inside its card, whatever the sheet sends */
+  .card .said,.card .ltr,.card .tm{overflow-wrap:anywhere;min-width:0}
+  .card .said{font-size:calc(var(--body) * 1.12);font-weight:600;line-height:1.3}
+  .card.urgent .said{color:var(--gold)}
+  .card .ltr{font-size:var(--small);color:var(--dim);line-height:1.3}
+  .card .tm{font-size:var(--small);color:var(--dim);font-variant-numeric:tabular-nums;margin-top:clamp(4px,1vh,14px)}
+
+  /* ── waiting for a name ───────────────────────────────────────────── */
+  .qrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(10px,1.2vw,22px);align-items:center;
+    padding:clamp(8px,1.4vh,18px) 0;border-bottom:1px solid var(--line)}
+  .qrow:last-child{border-bottom:0}
+  .pill{font-family:var(--f);font-weight:800;font-size:var(--label);letter-spacing:.14em;text-transform:uppercase;
+    padding:5px 10px;border-radius:8px;border:1px solid var(--line);color:var(--dim);min-width:clamp(56px,5vw,92px);text-align:center;white-space:nowrap}
+  .pill.urgent{background:var(--gold);border-color:var(--gold);color:#07131f}
+  .qw{min-width:0}
+  .qw b{display:block;font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .qw span{display:block;font-size:var(--small);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
+  .age{font-family:var(--f);font-weight:800;font-size:var(--body);color:var(--stop);font-variant-numeric:tabular-nums;white-space:nowrap;
+    max-width:14ch;overflow:hidden;text-overflow:ellipsis}
+
+  /* ── the promise ──────────────────────────────────────────────────── */
+  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,22px);margin:clamp(8px,1.6vh,24px) 0;flex:1;min-height:0}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2.2vh,30px) clamp(12px,1.4vw,26px);min-width:0;
+    display:flex;flex-direction:column;justify-content:center}
+  .step i{display:grid;place-items:center;width:clamp(30px,2.6vw,50px);height:clamp(30px,2.6vw,50px);border-radius:12px;
+    background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;font:800 clamp(14px,1.2vw,22px) var(--f);font-style:normal;margin-bottom:clamp(8px,1.4vh,18px)}
+  .step b{display:block;font-family:var(--f);font-weight:800;font-size:calc(var(--body) * 1.15);letter-spacing:-.02em;line-height:1.2}
+  .forever{margin-top:auto;padding:clamp(14px,2.4vh,30px) clamp(14px,1.8vw,30px);border-radius:18px;
+    background:linear-gradient(120deg,rgba(0,207,234,.14),rgba(0,207,234,.04));border:1px solid rgba(0,207,234,.35)}
+  .forever b{display:block;font-family:var(--f);font-weight:800;font-size:var(--h2);letter-spacing:-.03em;line-height:1.05}
+  .forever span{display:block;color:var(--dim);font-size:var(--body);margin-top:6px}
+
+  /* ── footer: the dots ─────────────────────────────────────────────── */
+  footer{flex:none;display:flex;align-items:center;gap:clamp(10px,1.4vw,22px);padding:clamp(8px,1.2vh,16px) var(--gut);min-height:44px}
+  .dots{display:flex;gap:8px;align-items:center}
+  .dots i{display:block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.3s}
+  .dots i.on{background:var(--gold);width:32px;border-radius:5px}
+  .foot-note{margin-left:auto;font-size:var(--small);color:var(--dim);white-space:nowrap}
+  .foot-note.paused{color:var(--gold);font-weight:600}
+
+  /* ── the gate ─────────────────────────────────────────────────────── */
+  form.gate{max-width:460px;margin:8vh auto;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:30px 28px;width:calc(100% - 32px)}
+  .gate h1{font-family:var(--f);font-weight:800;font-size:28px;letter-spacing:-.03em;margin:0 0 8px}
+  .gate p{color:var(--dim);font-size:15px;margin:0 0 18px;line-height:1.5}
+  .gate label{display:block;font-family:var(--f);font-weight:700;font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin:0 0 8px}
+  .gate input{width:100%;background:#07131f;border:1px solid var(--line);border-radius:11px;color:var(--ink);font:16px var(--b);padding:13px 14px}
+  .gate input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.18)}
+  .gate button{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#07131f;border:0;border-radius:11px;
+    font:800 16px var(--f);padding:14px;cursor:pointer}
+  .gate .err{display:none;margin-top:12px;background:var(--stopbg);border:1px solid rgba(240,119,106,.5);border-left:4px solid var(--stop);
+    border-radius:10px;padding:10px 14px;font-size:14px;color:#ffe9e5}
+
+  /* ── phone ────────────────────────────────────────────────────────── */
+  @media(max-width:700px){
+    :root{--gut:16px;--hero:clamp(72px,22vw,96px);--big:22px;--body:15px;--small:12px;--label:10px;--h2:24px;--eyebrow:11px}
+    .hero.long{font-size:clamp(48px,17vw,72px)}   /* seven digits and their commas, inside the column */
+    /* the stamp moves under the title, where the branch name sits on a television */
+    .ttl .sub,.live,header .right .stamp{display:none}
+    .ttl .sub2{display:block;font-size:11px}
+    .two{grid-template-columns:1fr;gap:14px}
+    .facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .fact.good{grid-column:1/-1}
+    .fact{padding:10px;border-radius:12px} .fact b{font-size:18px}
+    .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .card{padding:10px 12px;border-radius:12px;gap:3px} .card .who{font-size:20px}
+    .steps{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .step{padding:12px;border-radius:12px} .step b{font-size:15px}
+    .forever{padding:14px}
+    .qrow{gap:10px;padding:8px 0} .qw b{font-size:20px} .pill{min-width:0;padding:4px 7px}
+    .say{max-width:none}
+  }
+  @media(prefers-reduced-motion:reduce){
+    .slide{transition:none} .meter i{transition:none} .live i{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="tick" id="tick"></div>
+
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="ttl">Transition &middot; live<span class="sub">Ricky Rampersad Branch</span><span class="sub2 stamp" id="stamp2"></span></div>
+  <div class="right">
+    <span class="stamp" id="stamp"></span>
+    <span class="live" id="live" hidden><i></i>live</span>
+    <span class="clk" id="clk">&mdash;</span>
+  </div>
+</header>
+
+<form class="gate" id="gate">
+  <h1>The transition wall</h1>
+  <p>The letters going out and the answers coming in, live from the sheet. It opens with the branch code, like the responses page.</p>
+  <label for="code">Branch code</label>
+  <input type="password" id="code" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="The branch code, or your portal code">
+  <button type="submit">Open the wall</button>
+  <div class="err" id="gateErr"></div>
+</form>
+
+<main id="deck" hidden>
+  <!-- 1 · letters out -->
+  <section class="slide" id="s1">
+    <div class="eyebrow">Letters out today</div>
+    <div class="banner" id="offBanner" hidden><b>The send is off.</b> Nothing sends until Service Questionnaire &rarr; Transition: go live.</div>
+    <div class="fill">
+      <div class="hero" id="lettersOut">&mdash;</div>
+      <div class="ofline"><b id="ofN">of &mdash;</b><span id="pct">&mdash;</span></div>
+      <div class="meter"><i id="meterFill"></i></div>
+      <div class="facts">
+        <div class="fact good"><b id="finish">&mdash;</b><span id="finishNote">finish</span></div>
+        <div class="fact"><b id="waiting">&mdash;</b><span>still to go</span></div>
+        <div class="fact"><b id="held">&mdash;</b><span>held back</span></div>
+      </div>
+      <div class="line" id="lastBatch"></div>
+      <div class="line" id="toGo"></div>
+      <div class="line amber" id="runNote" hidden></div>
+    </div>
+  </section>
+
+  <!-- 2 · answers today -->
+  <section class="slide" id="s2">
+    <div class="eyebrow">Answers today</div>
+    <div class="two">
+      <div>
+        <div class="hero teal" id="ansToday">&mdash;</div>
+        <p class="say" id="ansRate"></p>
+        <p class="say" id="ansAll"></p>
+        <div class="note" id="ansNote"></div>
+      </div>
+      <div class="fill">
+        <h3>What they tapped</h3>
+        <div class="chart" id="typeChart"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3 · what clients are saying -->
+  <section class="slide" id="s3">
+    <div class="eyebrow">What clients are saying <span id="feedNote"></span></div>
+    <div class="cards" id="feed"></div>
+  </section>
+
+  <!-- 4 · by book -->
+  <section class="slide" id="s4">
+    <div class="eyebrow" id="bookEyebrow">By book</div>
+    <h2>Answers by former agent&rsquo;s book</h2>
+    <div class="fill">
+      <div class="chart" id="bookChart"></div>
+      <div class="note">Letters sent per book are not in the data.</div>
+    </div>
+  </section>
+
+  <!-- 5 · waiting for a name -->
+  <section class="slide" id="s5">
+    <div class="eyebrow">Waiting for a name <span id="lateWait"></span></div>
+    <div class="two">
+      <div>
+        <div class="hero" id="lateN">&mdash;</div>
+        <p class="say" id="lateSay"></p>
+      </div>
+      <div class="fill" id="lateList"></div>
+    </div>
+  </section>
+
+  <!-- 6 · the promise -->
+  <section class="slide" id="s6">
+    <div class="eyebrow">The promise</div>
+    <h2>What happens after you tap.</h2>
+    <div class="steps">
+      <div class="step"><i>1</i><b>Tick what applies, and send</b></div>
+      <div class="step"><i>2</i><b>A receipt in your inbox</b></div>
+      <div class="step"><i>3</i><b>A call at the time you chose</b></div>
+      <div class="step"><i>4</i><b>Matched to the agent who fits</b></div>
+    </div>
+    <div class="forever"><b>A review every six months and every birthday month, for life.</b><span>On every letter, in every film, and on this wall.</span></div>
+  </section>
+</main>
+
+<footer id="foot" hidden>
+  <div class="dots" id="dots"></div>
+  <span class="foot-note" id="footNote"></span>
+</footer>
+
+<script>
+(function () {
+'use strict';
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var CODE = '';
+try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
+
+/* The send's cadence and window. The feed carries them as batch, everyMin,
+   hours and weekdays once the endpoint returns them; until then these mirror
+   TRANSITION.BATCH, SEND_EVERY_MIN, HOURS and WEEKDAYS in apps-script/Transition.gs
+   (weekdays as the sheet counts them, Monday = 1 … Sunday = 7). */
+var SEND = { batch: 120, everyMin: 30, hours: [9, 17], weekdays: [1, 2, 3, 4, 5] };
+var SLIDES = 6, HOLD = 12000, POLL = 60000;
+
+/* The letters, by family. The wall never prints what a letter is about — a
+   premium due, a lapse, a contract terminated — because the room can read it:
+   on this screen a letter is its key and its family, nothing more. */
+var FAMILY = { notice: ['T', 'T1'], action: ['J', 'K', 'I'], keep: ['F1', 'F2', 'F3', 'F4', 'F5', 'R1', 'R2'], 'return': ['G', 'A'] };
+var FAMILY_NAME = { notice: 'notice letters', action: 'action letters', keep: 'in-force letters', 'return': 'matured and lapsed' };
+var WORDS = { callme: 'Call me', paid: "I paid, it isn't showing", urgent: 'I want an agent now', review: 'Tell us more', informed: 'Noted',
+  question: 'A question', deliver: 'Contract never reached me', stop: 'Do not proceed', finish: 'Help me finish', pay: 'I pay a representative in person',
+  selfserve: 'Doing it myself', assign: 'Assign me an agent', claim: 'Maturity claim' };
+var MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+var $ = function (s) { return document.querySelector(s); };
+var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
+var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
+var num = function (v) { v = Number(v); return isFinite(v) ? v : 0; };
+var n = function (v) { return num(v).toLocaleString('en-US'); };
+var pad = function (v) { return String(v).padStart(2, '0'); };
+var hhmm = function (d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+var cap = function (s) { return s.replace(/^./, function (c) { return c.toUpperCase(); }); };
+var isObj = function (x) { return !!x && typeof x === 'object'; };
+var list = function (x) { return (Array.isArray(x) ? x : []).filter(isObj); };
+
+/* ── words ─────────────────────────────────────────────────────────── */
+function words(r) {
+  r = String(r || '').trim();
+  var w = WORDS[r.toLowerCase()];
+  if (w) return w;
+  if (!r || r.length > 40) return 'An answer';     /* a stray sheet cell never reaches the wall verbatim */
+  return r.charAt(0).toUpperCase() + r.slice(1);
+}
+function familyOf(s) { var f; for (f in FAMILY) if (FAMILY[f].indexOf(s) >= 0) return f; return ''; }
+function letterName(s) {
+  s = String(s || '').trim().toUpperCase();
+  if (!s || s === '—' || s === '-') return 'No letter';
+  var f = familyOf(s);
+  return 'Letter ' + (s.length > 3 ? s.slice(0, 3) + '…' : s) + (f ? ' · ' + f : '');
+}
+/* Staff tests. The endpoint marks a tap or a review `test: true` when its
+   send-list row is a Test row (a backend follow-up); until it does, the
+   convention is that a Test row's Agent cell reads "test: <who>", which
+   dashboard.html reads the same way. The page filters the rows it can see
+   (the feed, the late list) with this. Totals it corrects only from the
+   endpoint's own counts — totals.test, taps.tests, reviews.test — because the
+   feed carries the newest 40 taps, so a test the page cannot see it must not
+   pretend to subtract. */
+function isTest(it) {
+  if (!isObj(it)) return false;
+  if (it.test === true || /^(y|yes|true|1)$/i.test(String(it.test == null ? '' : it.test).trim())) return true;
+  return /^test:/i.test(String(it.agent || '').trim());
+}
+/* A tap whose token is not on the send list (the site's own doors, before the
+   campaign) reaches the feed as "token …" with no agent: not this campaign's. */
+function offList(it) {
+  var c = String(it.client || '').trim(), a = String(it.agent || '').trim();
+  return /^token\b/i.test(c) || (!c && !a);
+}
+/* The wall stands in the branch office, where anyone in the room can read it:
+   first names only, and "A client" where the sheet has no name, a company, an
+   estate, or only a title and a surname. */
+var TITLE = /^(mr|mrs|ms|miss|dr|mx|sir|rev|prof)\.?$/i, SUFFIX = /^(jr|sr|ii|iii|iv|esq)\.?$/i;
+var COMPANY = /^(ltd|limited|inc|co|company|estate|trust|holdings|group|plc|llc)\.?$/i;
+function firstName(c) {
+  c = String(c || '').replace(/’/g, "'").trim();
+  if (!c || /^token\b/i.test(c)) return 'A client';
+  if (c.split(/[\s,]+/).some(function (w) { return COMPANY.test(w); })) return 'A client';
+  if (c.indexOf(',') > 0) {
+    var after = c.split(',').slice(1).join(' ').trim(), ap = after.split(/\s+/).filter(Boolean);
+    c = after && !(ap.length === 1 && SUFFIX.test(ap[0])) ? after : c.split(',')[0];   /* "Surname, First", or "John Smith, Jr." */
+  }
+  var all = c.split(/\s+/).filter(Boolean);
+  var parts = all.filter(function (p) { return !TITLE.test(p) && !SUFFIX.test(p); });
+  if (parts.length < all.length && parts.length < 2) return 'A client';   /* "Mrs Doe": only the surname is left */
+  if (/^(?:[A-Za-z]\.){1,3}$/.test(parts[0] || '')) return parts[0].toUpperCase();   /* "J.R." stays initials */
+  var w = (parts[0] || '').replace(/[^A-Za-z'À-ſ-]/g, '');
+  if (!w) return 'A client';
+  if (w.length > 1 && w === w.toUpperCase()) w = w.toLowerCase().replace(/(^|[-'])([a-zà-ſ])/g, function (m, p, ch) { return p + ch.toUpperCase(); });
+  return w;
+}
+/* A book is shown by its agent's first name; two books with one first name
+   get the surname's initial so the bars stay apart. */
+function bookLabels(keys) {
+  var labels = {}, count = {};
+  keys.forEach(function (k) { var f = k === 'Not on the sheet' ? k : firstName(k); labels[k] = f; count[f] = (count[f] || 0) + 1; });
+  keys.forEach(function (k) {
+    if (count[labels[k]] < 2 || k === 'Not on the sheet') return;
+    var parts = k.replace(/’/g, "'").split(/[\s,]+/).filter(Boolean);
+    var last = parts.length > 1 ? (k.indexOf(',') > 0 ? parts[0] : parts[parts.length - 1]) : '';
+    if (last) labels[k] += ' ' + last.charAt(0).toUpperCase() + '.';
+  });
+  return labels;
+}
+function rowKey(it) { return it.row != null && it.row !== '' ? 'r' + it.row : [it.received, it.response, it.client].join('|'); }
+function monthIndex(s) { return MONTHS.indexOf(String(s || '').slice(0, 3).toLowerCase()); }
+function parseAt(s) {                     /* "25 Sep 2026 08:46" */
+  var m = /^(\d{1,2}) ([A-Za-z]{3,4})\.? (\d{4}) (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
+  var mo = m ? monthIndex(m[2]) : -1;
+  return m && mo >= 0 ? new Date(+m[3], mo, +m[1], +m[4], +m[5]) : null;
+}
+function parseWhen(s, atDate) {           /* "25 Sep 08:47", the year from `at` */
+  var m = /^(\d{1,2}) ([A-Za-z]{3,4})\.? (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
+  var mo = m ? monthIndex(m[2]) : -1;
+  if (!m || mo < 0) return null;
+  var base = atDate || new Date(), d = new Date(base.getFullYear(), mo, +m[1], +m[3], +m[4]);
+  if (d.getTime() > base.getTime() + 86400000) d = new Date(base.getFullYear() - 1, mo, +m[1], +m[3], +m[4]);   /* a December tap, read in January */
+  return d;
+}
+function dayKey(s) { var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim()); return m ? m[1] + ' ' + m[2].toLowerCase() : ''; }
+function dayText(d) { return d.getDate() + ' ' + cap(MONTHS[d.getMonth()]); }
+
+/* ── the send window ───────────────────────────────────────────────── */
+function sendConfig(d) {
+  var s = { batch: num(d.batch) || SEND.batch, everyMin: num(d.everyMin) || SEND.everyMin, hours: SEND.hours, weekdays: SEND.weekdays };
+  if (Array.isArray(d.hours) && d.hours.length === 2 && num(d.hours[0]) < num(d.hours[1])) s.hours = [num(d.hours[0]), num(d.hours[1])];
+  if (Array.isArray(d.weekdays)) { var wd = d.weekdays.map(num).filter(function (x) { return x >= 1 && x <= 7; }); if (wd.length) s.weekdays = wd; }
+  return s;
+}
+function inWindow(d, send) { var h = d.getHours(); return send.weekdays.indexOf(d.getDay() || 7) >= 0 && h >= send.hours[0] && h < send.hours[1]; }
+function nextOpen(d, send) {
+  d = new Date(d.getTime());
+  for (var guard = 0; guard < 14 && !inWindow(d, send); guard++) {
+    if (d.getHours() < send.hours[0] && send.weekdays.indexOf(d.getDay() || 7) >= 0) d.setHours(send.hours[0], 0, 0, 0);
+    else { d.setDate(d.getDate() + 1); d.setHours(send.hours[0], 0, 0, 0); }
+  }
+  return d;
+}
+/* The runs are stepped, not multiplied: a run that would fall after closing,
+   before opening or on a weekend moves to the next weekday morning first. */
+function finishEstimate(at, due, send) {
+  var runs = Math.max(1, Math.ceil(due / send.batch)), cur = new Date(at.getTime());
+  for (var i = 0; i < runs; i++) cur = new Date(nextOpen(cur, send).getTime() + send.everyMin * 60000);
+  return { when: cur, runs: runs };
+}
+function cadence(send) { return send.everyMin === 30 ? 'every half hour' : send.everyMin === 60 ? 'every hour' : 'every ' + send.everyMin + ' min'; }
+
+/* ── a bar chart, drawn as SVG to the width it has, and the height it has
+   down to the foot of the slide, so six rows use a television and ten fit a phone ── */
+function barChart(el, rows, empty, reserve) {
+  if (!rows.length) { el.innerHTML = '<div class="empty">' + esc(empty) + '</div>'; return; }
+  var W = Math.max(200, el.clientWidth || 600), phone = W < 560;
+  var fs = phone ? 13 : Math.max(15, Math.min(25, W * 0.024));
+  var deckEl = document.getElementById('deck'), avail = 0;
+  try { avail = deckEl.clientHeight - (el.getBoundingClientRect().top - deckEl.getBoundingClientRect().top) - (reserve || 0) - (phone ? 20 : 50); } catch (e) {}
+  var bh = phone ? 14 : 22, rh = Math.round(Math.min(fs * 3.4, Math.max(fs * 2.3, avail / rows.length)));
+  var max = Math.max(1, Math.max.apply(null, rows.map(function (r) { return r.value; })));
+  var longest = Math.max.apply(null, rows.map(function (r) { return r.label.length; }));
+  var labW = Math.min(Math.round(W * 0.42), Math.round(longest * fs * 0.56) + 6);
+  var fit = Math.max(6, Math.floor(labW / (fs * 0.56)));
+  var valW = Math.round(n(max).length * fs * 0.66) + 14;
+  var x0 = labW + Math.round(fs * .8), x1 = W - valW, scale = (x1 - x0) / max;
+  var H = rows.length * rh, out = '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Answers by ' + esc(rows[0].kind || 'type') + '">';
+  rows.forEach(function (r, i) {
+    var y = i * rh, yb = y + Math.round((rh - bh) / 2), w = Math.round(r.value * scale);
+    var label = r.label.length > fit ? r.label.slice(0, fit - 1) + '…' : r.label;
+    out += '<g><title>' + esc(r.label + ': ' + n(r.value)) + '</title>';
+    out += '<text x="' + labW + '" y="' + (y + rh / 2) + '" text-anchor="end" dominant-baseline="central" font-size="' + fs + '">' + esc(label) + '</text>';
+    out += '<rect class="track" x="' + x0 + '" y="' + yb + '" width="' + (x1 - x0) + '" height="' + bh + '" rx="4"/>';
+    if (w >= 4) out += '<path class="bar" d="M' + x0 + ' ' + yb + 'H' + (x0 + w - 4) + 'a4 4 0 0 1 4 4V' + (yb + bh - 4) + 'a4 4 0 0 1 -4 4H' + x0 + 'Z"/>';
+    else if (r.value > 0) out += '<rect class="bar" x="' + x0 + '" y="' + yb + '" width="3" height="' + bh + '"/>';
+    out += '<text class="v" x="' + (x0 + Math.max(w, 0) + 10) + '" y="' + (y + rh / 2) + '" dominant-baseline="central" font-size="' + fs + '">' + n(r.value) + '</text></g>';
+  });
+  el.innerHTML = out + '</svg>';
+}
+
+/* ── painting: one function a slide, sharing what they all read ───────── */
+function context(d) {
+  var t = isObj(d.totals) ? d.totals : {}, taps = isObj(d.taps) ? d.taps : {}, atDate = parseAt(d.at);
+  var out = Math.max(0, num(t.sent) - num(t.test)), waiting = num(t.waiting);
+  var seen = {}, latest = [], late = [];
+  list(taps.latest).forEach(function (it) { var k = rowKey(it); if (!seen[k]) { seen[k] = 1; latest.push(it); } });
+  list(taps.late).forEach(function (it) { var k = rowKey(it); if (!seen[k]) { seen[k] = 1; late.push(it); } });
+  var ours = function (it) { return !isTest(it) && !offList(it); };
+  return { t: t, taps: taps, atDate: atDate, today: dayKey(d.at), send: sendConfig(d), runs: list(d.runs), seg: isObj(d.segments) ? d.segments : {},
+    out: out, waiting: waiting, of: out + waiting, latest: latest, late: late, feed: latest.filter(ours), open: late.filter(ours) };
+}
+
+function paintLetters(d, c) {
+  var t = c.t, send = c.send, pct = c.of ? Math.round(100 * c.out / c.of) : 0;
+  set('lettersOut', n(c.out));
+  $('#lettersOut').classList.toggle('long', n(c.out).length > 7);
+  set('ofN', 'of ' + n(c.of));
+  set('pct', c.of ? pct + '% of the letters ready to go' : 'no letters on the list yet');
+  $('#meterFill').style.width = pct + '%';
+  set('waiting', n(c.waiting));
+  set('held', n(t.excluded));
+  var plan = 'at ' + send.batch + ' ' + cadence(send);
+  if (!c.of) { set('finish', '—'); set('finishNote', 'nothing on the list yet'); }
+  else if (!c.waiting) { set('finish', 'Done'); set('finishNote', 'every letter on the list has gone'); }
+  else if (c.atDate) {
+    /* the rows the batch itself would send (due today, not Test) when the endpoint counts them; otherwise every row waiting */
+    var due = t.due != null ? num(t.due) : c.waiting, est = finishEstimate(c.atDate, due, send), fin = est.when;
+    var sameDay = fin.toDateString() === c.atDate.toDateString(), days = (fin.getTime() - c.atDate.getTime()) / 86400000;
+    set('finish', 'about ' + hhmm(fin));
+    set('finishNote', 'finish' + (sameDay ? '' : ' on ' + (days < 6 ? DAYS[fin.getDay()] : dayText(fin))) + ', ' + plan + ': ' +
+      est.runs + (est.runs === 1 ? ' more run' : ' more runs') + (d.armed === false ? ', once the send is on' : ''));
+  } else { set('finish', '—'); set('finishNote', 'finish, ' + plan); }
+
+  /* the send's own events, newest first: a batch, a test, or a run that stopped */
+  var SEND_EV = /^(batch|test|stopped|sender-not-ready|letters-unavailable)$/, STOP_EV = /^(stopped|sender-not-ready|letters-unavailable)$/;
+  var lastSend = null, batch = null, ref = null;
+  c.runs.forEach(function (r) {
+    var ev = String(r.event || '');
+    if (!lastSend && SEND_EV.test(ev)) lastSend = r;
+    if (!batch && ev === 'batch') batch = r;
+    if (!ref && (ev === 'batch' || ev === 'live')) ref = r;
+  });
+  var parts = [];
+  if (batch && batch.when) parts.push('<b>' + esc(batch.when) + '</b>');
+  if (batch && batch.detail) parts.push(esc(batch.detail));
+  $('#lastBatch').innerHTML = batch ? 'Last batch ' + (parts.join(' &middot; ') || 'ran') : 'No batch has run yet.';
+  var famLine = [];
+  Object.keys(FAMILY).forEach(function (f) {
+    var w = FAMILY[f].reduce(function (a, k) { return a + (isObj(c.seg[k]) ? num(c.seg[k].waiting) : 0); }, 0);
+    if (w) famLine.push('<b>' + n(w) + '</b> ' + FAMILY_NAME[f]);
+  });
+  $('#toGo').innerHTML = famLine.length ? 'Still to go: ' + famLine.join(' &middot; ') : (c.of ? 'Nothing left on the list.' : '');
+  var note = '';
+  if (lastSend && STOP_EV.test(String(lastSend.event))) {
+    note = 'Last run <b>' + esc(lastSend.when || '') + '</b>: ' + esc(lastSend.event) + (lastSend.detail ? ' &mdash; ' + esc(lastSend.detail) : '');
+  } else if (d.armed !== false && c.waiting > 0 && c.atDate && inWindow(c.atDate, send) && ref) {
+    /* armed, inside sending hours, letters waiting, and no batch for two runs: the wall says so */
+    var refAt = parseWhen(ref.when, c.atDate);
+    if (refAt && c.atDate.getTime() - refAt.getTime() > 2 * send.everyMin * 60000) {
+      note = 'No batch since <b>' + esc(ref.when) + '</b>' + (batch ? '' : ' (go live)') + '. The send should run ' + cadence(send) +
+        ', ' + send.hours[0] + ':00 to ' + send.hours[1] + ':00.';
+    }
+  }
+  $('#runNote').hidden = !note;
+  $('#runNote').innerHTML = note;
+  $('#offBanner').hidden = d.armed !== false;
+}
+
+function paintAnswers(d, c) {
+  var taps = c.taps, tests = isObj(taps.tests) ? taps.tests : null;
+  var total = num(taps.total), today = num(taps.today);
+  if (tests) { total = Math.max(0, total - num(tests.total)); today = Math.max(0, today - num(tests.today)); }
+  var clients = taps.clients != null ? num(taps.clients) : null, clientsToday = taps.clientsToday != null ? num(taps.clientsToday) : null;
+  set('ansToday', n(clientsToday != null ? clientsToday : today));
+  var unit = clients != null ? clients : total, rate = c.out ? 100 * unit / c.out : null;
+  var rateText = rate == null ? '' : '<b>' + (rate >= 10 ? Math.round(rate) : rate.toFixed(1)) + '</b> ';
+  $('#ansRate').innerHTML = rate == null ? 'No letters out yet, so no rate to read.'
+    : clients != null ? '<b>' + n(clients) + '</b> clients have answered &middot; ' + rateText + 'per hundred letters out'
+    : rateText + 'taps per hundred letters out';
+  var rv = isObj(d.reviews) ? d.reviews : {}, rvTotal = Math.max(0, num(rv.total) - num(rv.test)), rvUrgent = num(rv.urgent);
+  $('#ansAll').innerHTML = '<b>' + n(total) + '</b> taps all told' +
+    (rvTotal ? ' &middot; <b>' + n(rvTotal) + '</b> full ' + (rvTotal === 1 ? 'review' : 'reviews') + (rvUrgent ? ', ' + n(rvUrgent) + ' urgent' : '') : '');
+  var nt = tests ? num(tests.total) : 0;
+  set('ansNote', tests ? (nt ? nt + ' staff ' + (nt === 1 ? 'test' : 'tests') + ' taken out' : '') : (total ? 'staff tests included' : ''));
+  var byType = {}, src = isObj(taps.byType) ? taps.byType : {}, tb = tests && isObj(tests.byType) ? tests.byType : {};
+  Object.keys(src).forEach(function (k) { byType[k] = Math.max(0, num(src[k]) - num(tb[k])); });
+  var typeRows = Object.keys(byType).filter(function (k) { return byType[k] > 0; }).sort(function (a, b) { return byType[b] - byType[a]; })
+    .map(function (k) { return { label: words(k), value: byType[k], kind: 'type' }; });
+  barChart($('#typeChart'), typeRows, 'No answers yet. They land here the moment a client answers a letter.');
+}
+
+/* one card a client: the checks a client ticks on one letter land as one row
+   each, in the same minute, and read as one answer here */
+function paintFeed(d, c) {
+  var cards = [], byKey = {};
+  c.feed.forEach(function (it) {
+    var k = [String(it.client || '').trim().toLowerCase(), String(it.agent || '').trim().toLowerCase(), String(it.received || '').trim()].join('|');
+    var card = byKey[k];
+    if (!card) { card = byKey[k] = { it: it, said: [], urgent: false }; cards.push(card); }
+    var r = String(it.response || '').trim(), w = words(r);
+    if (card.said.indexOf(w) < 0) card.said.push(w);
+    if (/^urgent$/i.test(r)) card.urgent = true;
+  });
+  cards = cards.slice(0, 8);
+  $('#feedNote').textContent = cards.length ? 'the newest ' + cards.length : '';
+  $('#feed').innerHTML = cards.length ? cards.map(function (card) {
+    return '<div class="card' + (card.urgent ? ' urgent' : '') + '"><div class="who">' + esc(firstName(card.it.client)) + '</div>' +
+      '<div class="said">' + esc(card.said.join(' · ')) + '</div><div class="ltr">' + esc(letterName(card.it.segment)) + '</div>' +
+      '<div class="tm">' + esc(card.it.received || '') + '</div></div>';
+  }).join('') : '<div class="empty">No answers yet. The first client to tap a letter appears here.</div>';
+}
+
+function paintBooks(d, c) {
+  var byBook = isObj(c.taps.byBook) ? c.taps.byBook : null, books = {};
+  if (byBook) Object.keys(byBook).forEach(function (k) {
+    var v = num(byBook[k]); if (v > 0 && !/^test:/i.test(String(k).trim())) books[String(k).trim() || 'Not on the sheet'] = v;
+  });
+  else c.feed.forEach(function (it) { var a = String(it.agent || '').trim() || 'Not on the sheet'; books[a] = (books[a] || 0) + 1; });
+  set('bookEyebrow', byBook ? 'By book' : 'By book · the newest ' + n(c.latest.length) + ' answers');
+  var keys = Object.keys(books).sort(function (a, b) { return books[b] - books[a] || a.localeCompare(b); }), labels = bookLabels(keys);
+  var rows = keys.map(function (k) { return { label: labels[k], value: books[k], kind: 'book' }; });
+  if (rows.length > 9) { var rest = rows.slice(8).reduce(function (a, r) { return a + r.value; }, 0); rows = rows.slice(0, 8).concat([{ label: 'Other books', value: rest, kind: 'book' }]); }
+  barChart($('#bookChart'), rows, 'No answers yet, so nothing to count by book.', 60);
+}
+
+function paintLate(d, c) {
+  var late = c.open.map(function (it) {
+    return { it: it, when: parseWhen(it.received, c.atDate), urgent: /^urgent$/i.test(String(it.response || '').trim()) };
+  }).sort(function (a, b) {
+    if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+    return (a.when ? a.when.getTime() : 0) - (b.when ? b.when.getTime() : 0);
+  });
+  var oldest = late.reduce(function (o, x) { return x.when && (!o || x.when < o) ? x.when : o; }, null);
+  $('#lateWait').textContent = 'open past ' + (d.waitDays == null ? 2 : num(d.waitDays)) + ' working days, ' + (d.waitUrgent == null ? 1 : num(d.waitUrgent)) + ' for urgent';
+  var lateN = $('#lateN');
+  lateN.textContent = n(late.length);
+  lateN.className = 'hero' + (late.length ? '' : ' good');
+  $('#lateSay').innerHTML = late.length
+    ? (late.length === 1 ? 'client has' : 'clients have') + ' answered and nobody has been named. The oldest has waited since <b>' + esc(oldest ? dayText(oldest) + ' ' + hhmm(oldest) : '—') + '</b>.'
+    : 'Every answer has a name against it inside the time we set ourselves.';
+  $('#lateList').innerHTML = late.length ? late.slice(0, 6).map(function (x) {
+    return '<div class="qrow"><span class="pill' + (x.urgent ? ' urgent' : '') + '">' + (x.urgent ? 'Urgent' : 'Open') + '</span>' +
+      '<div class="qw"><b>' + esc(firstName(x.it.client)) + '</b><span>' + esc(words(x.it.response)) + (x.it.needs ? ' · needs ' + esc(x.it.needs) : '') + '</span></div>' +
+      '<span class="age">' + esc(x.it.received || '') + '</span></div>';
+  }).join('') + (late.length > 6 ? '<div class="note">and ' + n(late.length - 6) + ' more</div>' : '')
+    : '<div class="empty good">Nobody is waiting</div>';
+}
+
+var D = null;
+function render(d) {
+  var c = context(d);
+  paintLetters(d, c); paintAnswers(d, c); paintFeed(d, c); paintBooks(d, c); paintLate(d, c);
+}
+/* A payload the page cannot paint is logged and left: the last good picture
+   is put back, and the stamp says the refresh did not take. */
+function paint(d) {
+  try { render(d); return true; }
+  catch (e) {
+    try { console.warn('wall: could not paint the feed', e); } catch (e2) {}
+    if (D && D !== d) { try { render(D); } catch (e3) {} }
+    return false;
+  }
+}
+
+/* ── the deck ──────────────────────────────────────────────────────── */
+var deck = $('#deck'), dots = $('#dots'), at = 0, paused = false, holdStart = 0, shown = false;
+for (let i = 0; i < SLIDES; i++) {
+  var dot = document.createElement('i');
+  dot.addEventListener('click', function (e) { e.stopPropagation(); go(i); });
+  dots.appendChild(dot);
+}
+function go(k) {
+  at = (k + SLIDES) % SLIDES;
+  for (let i = 0; i < SLIDES; i++) document.getElementById('s' + (i + 1)).classList.toggle('on', i === at);
+  Array.prototype.forEach.call(dots.children, function (dd, i) { dd.classList.toggle('on', i === at); });
+  holdStart = Date.now();
+}
+function setPaused(p) {
+  paused = p; holdStart = Date.now();
+  var fn = $('#footNote'); fn.textContent = p ? 'Paused · tap to resume' : ''; fn.className = 'foot-note' + (p ? ' paused' : '');
+}
+deck.addEventListener('click', function () { setPaused(!paused); });
+addEventListener('keydown', function (e) {
+  if (!shown) return;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { go(at + 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { go(at - 1); e.preventDefault(); }
+  else if (e.key === ' ') { setPaused(!paused); e.preventDefault(); }
+});
+setInterval(function () {
+  if (!shown) return;
+  var tick = $('#tick');
+  if (paused) { tick.style.width = '0'; return; }
+  var p = (Date.now() - holdStart) / HOLD;
+  tick.style.width = Math.min(100, p * 100) + '%';
+  if (p >= 1) go(at + 1);
+}, 100);
+
+/* ── the clock and the stamp ───────────────────────────────────────── */
+var updatedAt = null, nextAt = 0, retrying = false;
+function clock() {
+  set('clk', hhmm(new Date()));
+  var text = '', left = Math.max(0, Math.ceil((nextAt - Date.now()) / 1000));
+  if (updatedAt) text = 'updated ' + hhmm(updatedAt) + ' · ' + (document.hidden ? 'paused while hidden' : (retrying ? 'could not refresh, retrying in ' + left + ' s' : 'next in ' + left + ' s'));
+  $('#stamp').textContent = text; $('#stamp2').textContent = text;
+  $('#stamp').className = 'stamp' + (retrying ? ' retry' : '');
+  $('#stamp2').className = 'sub2 stamp' + (retrying ? ' retry' : '');
+  $('#live').className = 'live' + (retrying ? ' off' : '');
+}
+setInterval(clock, 1000); clock();
+
+/* ── data ──────────────────────────────────────────────────────────── */
+var timer = null, inflight = false;
+function schedule(ms) { clearTimeout(timer); nextAt = Date.now() + ms; timer = setTimeout(load, ms); }
+function showDeck() {
+  shown = true;
+  $('#gate').style.display = 'none'; deck.hidden = false; $('#foot').hidden = false; $('#live').hidden = false;
+}
+function load() {
+  clearTimeout(timer); timer = null;
+  if (inflight || !CODE) return;
+  if (document.hidden && shown) return;          /* picked up again on visibilitychange */
+  inflight = true;
+  fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      inflight = false;
+      if (!isObj(d) || !d.ok) {
+        /* a refused code is the endpoint's `refused`, or its own words for one; anything
+           else in ok:false is a fault in the sheet (a timeout, an exception) and is a blip */
+        var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
+        fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
+        return;
+      }
+      var first = !shown;
+      if (first) showDeck();                        /* the charts measure the width they have */
+      if (!paint(d)) {
+        if (first) { fail('The sheet answered with something this wall could not read. Trying again shortly.', false); return; }
+        retrying = true; schedule(POLL); clock(); return;
+      }
+      D = d; updatedAt = new Date(); retrying = false;
+      try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
+      if (first) { go(0); setPaused(false); }       /* otherwise every number is in place and the cycle carries on */
+      schedule(POLL);
+      clock();
+    })
+    .catch(function () { inflight = false; fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this wall cannot open.', false); });
+}
+/* A screen left on must survive a network blip and a sheet that times out:
+   once the wall is up, a failed poll keeps the last picture, says so quietly
+   in the stamp, and tries again. Only a refused code sends the viewer back to
+   the gate; a wall that falls to the gate on a fault, with a code remembered,
+   tries again by itself rather than waiting for a hand. */
+function fail(msg, refused) {
+  if (shown && !refused) { retrying = true; schedule(POLL); clock(); return; }
+  clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false;
+  var e = $('#gateErr'); e.textContent = msg; e.style.display = 'block';
+  $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
+  if (!refused && CODE) schedule(POLL);
+  clock();
+}
+document.addEventListener('visibilitychange', function () {
+  if (document.hidden) { clearTimeout(timer); timer = null; }
+  else if (shown && !inflight) load();
+  clock();
+});
+var reflow = null;
+addEventListener('resize', function () { clearTimeout(reflow); reflow = setTimeout(function () { if (D) paint(D); }, 180); });
+$('#gate').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('#code').value.trim(); if (CODE) { $('#gateErr').style.display = 'none'; load(); } });
+if (CODE) { $('#code').value = CODE; load(); }
+window.RRB_WALL = { load: load };                 /* the one handle the page offers, for a test to poll on demand */
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
