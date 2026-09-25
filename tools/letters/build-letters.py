@@ -118,6 +118,10 @@ FIELDS = {
  'svc_birthday':     'service-record.py — the month of their last birthday note',
  'agent_name':       'Agent — the full name as the sheet spells it; letter T only, in the subject and the notice',
  'terminated_on':    'the send list — the date Guardian Life terminated the contract, from its own notice; letter T only',
+ 'promised_on':      'Salesforce — the day the branch wrote to the client that the contract would be delivered within 28 days (the delivery-update e-mail); letter J only, blank where no such e-mail went',
+ 'days_held':        'worked out at send time — days from collected_on to the day the letter goes; letter J only',
+ 'days_open':        'worked out at send time — days from app_received to the day the letter goes; letters K and T1',
+ 'sent_on':          'set by the sender on a reminder only — the day the first letter went; blank on a first send, which cuts the banner above the greeting',
 }
 
 # ── the taps a letter can offer ───────────────────────────────────────
@@ -203,6 +207,12 @@ QUESTIONS = {
  # date (LETTER_Q). "Yes" brings a call, and the call comes before anything else.
  'contact':    ('Has your former agent been in touch with you since their contract ended?',
                 [('No', 'informed', 'contact_no'), ('Yes, call me', 'callme', 'contact_yes')]),
+ # letter T (25 September 2026): after a termination the one exposure is a premium still handed over in
+ # person, so the letter asks how the client pays today; "in person" is the pay tap itself, and the call
+ # sets up payment to Guardian Life directly, with Guardian Life's own receipt
+ 'paying':     ('How do you pay your premium today?',
+                [('Directly to Guardian Life', 'informed', 'pay_direct'), ('In person, to a representative', 'pay', 'pay_person'),
+                 ('Not sure', 'callme', 'pay_unsure')]),
 }
 # A question's words on the letter alone, where a merge field may appear. The page a tap opens cannot fill
 # one, and a field inside the receipt's recap would stop the receipt (Transition.gs refuses to send one with a
@@ -211,6 +221,13 @@ QUESTIONS = {
 LETTER_Q = {'contact': 'Has {{agent_first_name}} been in touch with you since {{terminated_on}}?',
             'stay': 'Our branch team has looked after your policy<!--fact:first_year--> since {{first_year}}<!--/fact-->. '
                     'Would you like the same team to keep looking after it?'}
+# One line under a question, on the letter alone (25 September 2026: "include the insurance act … come
+# across relevant"): the Act's own rule behind the check-first offer, so the question reads as a right the
+# client already has, not a favour asked of us. The words follow the Act (an agent or broker "shall not …
+# cause a policyholder to discontinue an insurance policy without first discussing the advantages and
+# disadvantages", and the same for replacing a long-term policy), checked against the source text.
+Q_NOTE = {'checkfirst': 'The Insurance Act says no agent or broker may cause you to discontinue or replace a policy without '
+                        'first discussing the advantages and the disadvantages with you.'}
 # asked only on the page a tap opens, where the answer helps the agent who calls
 REACH = ('What is the best way to reach you?',
          [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
@@ -247,6 +264,9 @@ SAID_Q = {
  'k_stop':         'Understood. We close the file properly and confirm that nothing is owed.',
  'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
  'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
+ 'pay_direct':     'Thank you. Every payment you make carries Guardian Life\'s own receipt, and nothing about your policy changes.',
+ 'pay_person':     'Thank you for telling us. Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Thank you. Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
  'reach_phone':    'Noted: we will call you.',
  'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
  'reach_email':    'Noted: we will write to you by e-mail.',
@@ -307,6 +327,8 @@ NEXT_Q = {
  'contract_unsure': 'Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.',
  'k_unsure':       'Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.',
  'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
+ 'pay_person':     'Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
  'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
 }
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
@@ -423,8 +445,9 @@ def questions_block(cfg):
     link = lambda q, label, tapkey, ans: (f'<a href="{answer_href(q, label, tapkey, ans)}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
                                           f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
                                           f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
+    note = lambda q: (f'<div style="margin:2px 0 7px;font:400 12.5px/1.5 {BODY};color:{DIM}">{Q_NOTE[q]}</div>' if q in Q_NOTE else '')
     rows = ''.join(f"""
-<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{qtext(cfg, q)}<div style="margin-top:7px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
+<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{qtext(cfg, q)}{note(q)}<div style="margin-top:{'2' if q in Q_NOTE else '7'}px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
     return f"""
 <p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">{checks_head(qs)}</p>
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 10px">{rows}</table>"""
@@ -439,22 +462,33 @@ def more_line(cfg):
   <a href="{tap_href(cfg, 'review')}" style="color:{TDARK};font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>"""
 
 
+ACT_HEAD = 'The Insurance Act &middot; Trinidad and Tobago'
+ACT_MORE = 'Everything else the law gives you'
+
+
 def act_block(cfg):
-    """The Act's own words, on the premium letters, right above the taps."""
-    if cfg.get('mode') != 'premium':
+    """The Act's own words, right above the answers, on every letter whose situation the Act speaks to.
+    Until 25 September 2026 only the premium letter carried one; asked for then ("include the insurance
+    act … come across relevant"): the contract letter (a premium handed over counts as paid), the
+    application letters (issued within twenty business days of acceptance), the terminated notice (the
+    registration is revoked on the notice), the matured letter (a cheque reaches you within five business
+    days) and the lapsed letter (a policy with a value is not forfeited). `act` is the quotation, checked
+    against the source text and carrying no section number; `plain` is what it means for this client, in
+    our words, and may carry merge fields."""
+    if not cfg.get('act'):
         return ''
     return f"""
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
 <tr><td bgcolor="#f3fbfd" style="background:#f3fbfd;border-left:4px solid {TEAL};border-radius:0 12px 12px 0;padding:13px 16px;font:400 13px/1.55 {BODY};color:{BODYC}">
-  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:7px">The Insurance Act &middot; Trinidad and Tobago</b>
+  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:7px">{ACT_HEAD}</b>
   <span style="display:block;font:700 13.5px/1.5 {HEAD};color:{INK}">&ldquo;{cfg['act']}&rdquo;</span>
-  <span style="display:block;margin-top:7px">{cfg['plain']} <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">Everything else the law gives you&nbsp;&rarr;</a></span>
+  <span style="display:block;margin-top:7px">{cfg['plain']} <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">{ACT_MORE}&nbsp;&rarr;</a></span>
 </td></tr></table>"""
 
 
 def law_line(cfg):
-    """One line on the law, on every other letter, after the film."""
-    if cfg.get('mode') == 'premium':
+    """One line on the law, on every letter without an Act card of its own, after the film."""
+    if cfg.get('act'):
         return ''
     return f"""
 <p style="margin:0 0 14px;font:400 13px/1.55 {BODY};color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
@@ -518,6 +552,48 @@ FILM_LINE = f"""
 </table>"""
 
 
+# ── what happens after a tap: the same four steps on every letter ─────
+# 25 September 2026 ("combine and regroup … with a flow"): the client sees the
+# whole path before they answer, in four lines, and the receipt's own
+# "how we follow through" and the team page keep to the same four, so nothing
+# is promised in one place that another does not keep. No timeline for the
+# agent (24 September); the receipt within minutes is true on the Apps Script
+# route, which is the one the letters go by.
+FLOW = [
+ ('Tick what applies, and send', 'One page, about a minute. Nothing to write unless you want to.'),
+ ('A receipt in your inbox', 'Within minutes: everything you told us, and what happens next.'),
+ ('A call at the time you chose', 'Today or tomorrow, from our Client Support team, whenever you asked for one.'),
+ ('Matched to the agent who fits', 'A person reads your file first. Then we introduce your agent in writing, with a name and a number.'),
+]
+FLOW_HEAD = 'What happens after you tap'
+# The reminder: not a letter of its own. A client who has not answered in
+# REMIND_DAYS (Transition.gs) gets their own letter once more, with this
+# banner above the greeting; sent_on is set by the sender on that send alone,
+# so on a first send the fact cut removes the banner whole.
+REMIND = ('We wrote to you on {{sent_on}}.',
+          'In case it was missed, here it is again: a minute, one tap each. If you have answered already, thank you, and there is nothing more to do.')
+
+
+def flow_block():
+    steps = ''.join(f"""
+<tr><td style="width:26px;padding:0 10px 9px 0;vertical-align:top"><div style="width:24px;height:24px;border-radius:12px;background:{GOLD};color:{NAVY};font:800 12.5px/24px {HEAD};text-align:center">{i}</div></td>
+    <td style="padding:0 0 9px;vertical-align:top"><div style="font:800 14px/1.35 {HEAD};color:{INK}">{title}</div>
+    <div style="font:400 12.5px/1.5 {BODY};color:{DIM};margin-top:1px">{text}</div></td></tr>""" for i, (title, text) in enumerate(FLOW, 1))
+    return f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="border:1px solid {LINE};border-radius:14px;padding:14px 16px 6px">
+  <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:11px">{FLOW_HEAD}</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">{steps}</table>
+</td></tr></table>"""
+
+
+def remind_block():
+    return f"""<!--fact:sent_on--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
+    <td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:12px;padding:11px 15px;font:400 13.5px/1.5 {BODY};color:{BODYC}">
+    <b style="color:{INK}">{REMIND[0]}</b> {REMIND[1]}</td></tr></table><!--/fact-->
+  """
+
+
 def letter_table(seg, cfg, preview=False):
     """The 600px table: the e-mail's body, and what /templates shows."""
     # The notice is the official word that the representative has moved on, and
@@ -550,7 +626,7 @@ def letter_table(seg, cfg, preview=False):
 </td></tr>
 
 <tr><td class="pad" style="padding:24px 26px 8px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
-  <p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
+  {remind_block()}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
   {notice}
   <p style="margin:0 0 16px">{cfg['open']}</p>
   {facts_block(cfg)}
@@ -558,6 +634,7 @@ def letter_table(seg, cfg, preview=False):
   {act_block(cfg)}
   {(questions_block(cfg) + taps_block(cfg)) if checks_first(cfg) else (taps_block(cfg) + questions_block(cfg))}
   {more_line(cfg)}
+  {flow_block()}
   {FILM_LINE}
   {law_line(cfg)}
   {closing}
@@ -597,13 +674,42 @@ def shell(seg, cfg):
 '''
 
 
-manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'reply_to': REPLY_TO, 'letters': []}
+# ── the families, and the order they go in ────────────────────────────
+# 25 September 2026: "combine and regroup to ensure we scale proper and with a
+# flow". Fourteen letters, four families, one path. The family is the wave:
+# the notice and the action letters on the first day, the in-force letters
+# over the next three by tenure (the longest first, the newest last), the
+# return letters a week on. The reminder is not a letter of its own: a client
+# who has not answered in REMIND_DAYS (Transition.gs) gets their own letter
+# again, with the banner above the greeting saying when the first went.
+FAMILIES = {
+ 'notice': ('Notice', 'the terminated book',
+            "Guardian Life's own notice, before any other letter, to every client of an agent whose contract it terminated."),
+ 'action': ('Action', 'something to finish',
+            'A contract that never reached them, an application not yet issued, a premium showing as due: what the Act says, the days, and the fix.'),
+ 'keep':   ('Keep', 'in force',
+            'The feedback letter, by how long the client has held their longest policy, and the free check for cover that ended and started again.'),
+ 'return': ('Return', 'lapsed or matured',
+            'What is still theirs: the value a stopped policy may hold, the money a matured one owes them.'),
+}
+WAVES = [('Day 1', ['T', 'T1', 'J', 'K', 'I']), ('Day 2', ['F5', 'F4', 'F3']), ('Day 3', ['F2', 'R1', 'R2']),
+         ('Day 4', ['F1']), ('Day 8', ['G', 'A'])]
+REMIND_NOTE = 'From day 22: the same letter once more, to anyone who has not answered, with a line above the greeting saying when the first went.'
+for _seg, _cfg in SEGMENTS.items():
+    assert _cfg.get('family') in FAMILIES, f'{_seg}: no family'
+    assert any(_seg in w for _, w in WAVES), f'{_seg}: in no wave'
+WAVE_OF = {seg: day for day, segs in WAVES for seg in segs}
+FAMILY_SEGS = {f: [seg for seg, cfg in SEGMENTS.items() if cfg.get('family') == f] for f in FAMILIES}
+
+manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'reply_to': REPLY_TO,
+            'families': {f: {'name': v[0], 'who': v[1], 'letters': FAMILY_SEGS[f]} for f, v in FAMILIES.items()},
+            'waves': [{'day': d, 'letters': s} for d, s in WAVES], 'letters': []}
 for seg, cfg in SEGMENTS.items():
     path = OUT / f'{seg}.html'
     path.write_text(shell(seg, cfg), encoding='utf-8')
     manifest['letters'].append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'], 'preheader': cfg['preheader'],
                                 'file': path.name, 'facts': [v.strip('{}') for _, v in cfg.get('facts', [])],
-                                'service': svc_keys(cfg),
+                                'service': svc_keys(cfg), 'family': cfg['family'], 'wave': WAVE_OF[seg], 'act': bool(cfg.get('act')),
                                 'taps': cfg['taps'], 'tap_labels': {r: tap(cfg, r)[0] for r in cfg['taps']},
                                 'send_note': cfg['send']})
     print(f'  {seg:<3} {cfg["name"]:<38} → {path.name}')
@@ -627,7 +733,7 @@ def plain_questions(cfg):
     qs = cfg.get('questions', [])
     if not qs:
         return ''
-    items = ''.join(f'<li><b>{qtext(cfg, q)}</b><br>' +
+    items = ''.join(f'<li><b>{qtext(cfg, q)}</b><br>' + (f'<i>{Q_NOTE[q]}</i><br>' if q in Q_NOTE else '') +
                     ' &nbsp; '.join(f'<a href="{answer_href(q, label, t, a)}">{BOX}&nbsp;{label}</a>' for label, t, a in QUESTIONS[q][1]) + '</li>'
                     for q in qs)
     return f'<h3>{checks_head(qs)}</h3><ul>{items}</ul>'
@@ -655,22 +761,24 @@ def plain_letter(seg, cfg):
         items = ''.join(f'<!--fact:{v.strip("{}")}--><li>{label}: <b>{v}</b></li><!--/fact-->' for label, v in cfg['facts'])
         facts = f'<!--facts--><ul>{items}</ul><!--/facts-->'
     facts += plain_service(cfg)
-    act = (f'<h3>The Insurance Act &middot; Trinidad and Tobago</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
-           f'<a href="{PROTECT}">Everything else the law gives you&nbsp;&rarr;</a></p>') if cfg.get('mode') == 'premium' else ''
+    act = (f'<h3>{ACT_HEAD}</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
+           f'<a href="{PROTECT}">{ACT_MORE}&nbsp;&rarr;</a></p>') if cfg.get('act') else ''
     taps = ''.join(f'<li><a href="{tap_href(cfg, r)}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
     urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own? <a href="{tap_href(cfg, "urgent")}"><b>Tell us your '
                                                  f'concerns first, and we match you to the one who fits&nbsp;&rarr;</b></a></p>')
     tapsblock = f'<h3>One tap tells us what you would like. We do the rest.</h3><ul>{taps}</ul>{urgent}'
-    law = '' if cfg.get('mode') == 'premium' else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
-                                                   f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
-                                                   f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
+    law = '' if cfg.get('act') else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
+                                     f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
+                                     f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
+    flow = f'<h3>{FLOW_HEAD}</h3><ol>' + ''.join(f'<li><b>{t}</b><br>{x}</li>' for t, x in FLOW) + '</ol>'
+    remind = f'<!--fact:sent_on--><p><b>{REMIND[0]}</b> {REMIND[1]}</p><!--/fact-->'
     return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
-            f'<h2>{cfg["headline"]}</h2>'
+            f'<h2>{cfg["headline"]}</h2>{remind}'
             f'<p>Dear {{{{first_name}}}},</p>'
             f'{plain_notice(cfg)}'
             f'<p>{cfg["open"]}</p>{facts}{act}'
             + (plain_questions(cfg) + tapsblock if checks_first(cfg) else tapsblock + plain_questions(cfg))
-            + (f'<p>{MORE_ASK} <a href="{tap_href(cfg, "review")}">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') +
+            + (f'<p>{MORE_ASK} <a href="{tap_href(cfg, "review")}">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') + flow +
             f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
             f'{law}'
             f'<p>Your policy is looked after by the branch. Whatever you tell us is read by a person first, and then we match you '
@@ -728,16 +836,28 @@ GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'K': 'the file is being finished for them, not chased',
         'T': 'their policy is unaffected, the branch team handles everything directly, and a person calls first if they have been contacted',
         'T1': 'the branch finishes the application for them and brings whatever is still needed, so the cover they applied for can start'}
-openings = ''.join(f"""
+def opening_card(seg, cfg):
+    return f"""
   <div class="op" id="{seg}">
-    <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>
+    <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><i>{WAVE_OF[seg]}</i><em>goes to {WHO[seg]}</em></div>
     <div class="subj">{html.escape(show(cfg['subject']))}</div>
     <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
     <div class="ps"><p>{show(cfg['open'])}</p></div>
-    <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}</div>
+    <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}{' The Act, quoted.' if cfg.get('act') else ''}</div>
     <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}{(' &middot; Asks: ' + ' / '.join(QUESTIONS[q][0] for q in cfg.get('questions', []))) if cfg.get('questions') else ''}</div>
     <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
-  </div>""" for seg, cfg in SEGMENTS.items())
+  </div>"""
+
+
+# the openings, grouped by family, in the order the families go
+openings = ''.join(f"""
+  <div class="famhead" id="fam-{f}"><b>{FAMILIES[f][0]}</b> &middot; {FAMILIES[f][1]} <span>{', '.join(FAMILY_SEGS[f])}</span></div>""" +
+                   ''.join(opening_card(seg, SEGMENTS[seg]) for seg in FAMILY_SEGS[f]) for f in FAMILIES)
+fams = ''.join(f"""
+    <a class="fam {f}" href="#fam-{f}"><b>{FAMILIES[f][0]}</b><i>{FAMILIES[f][1]}</i><span>{FAMILIES[f][2]}</span>
+      <em>{' &middot; '.join(f'<code>{seg}</code>' for seg in FAMILY_SEGS[f])}</em></a>""" for f in FAMILIES)
+waves = ''.join(f'<li><b>{d}</b> {", ".join(s)}</li>' for d, s in WAVES) + f'<li><b>Day 22 on</b> {REMIND_NOTE}</li>'
+flow_steps = ''.join(f'<li><b>{t}</b>{x}</li>' for t, x in FLOW)
 full = ''.join(f"""
   <details class="tpl" id="full-{seg}">
     <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(show(cfg['subject']))}</i></summary>
@@ -808,6 +928,21 @@ page = f"""<!DOCTYPE html>
   .op .k b{{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;font-family:var(--f);font-weight:900;font-size:13px}}
   .op .k span{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark)}}
   .op .k em{{font-style:normal;color:var(--dim);font-size:13px;flex-basis:100%}}
+  .op .k i{{font-style:normal;margin-left:auto;font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8a6420;background:#fff7e3;border:1px solid #efd9a0;border-radius:999px;padding:3px 9px}}
+  .famhead{{grid-column:1/-1;margin:10px 0 -2px;padding:0 0 6px;border-bottom:2px solid var(--gold);font-family:var(--f);font-size:14px;color:var(--ink)}}
+  .famhead:first-child{{margin-top:0}} .famhead b{{font-size:17px;letter-spacing:-.2px}} .famhead span{{float:right;color:var(--dim);font-weight:600;font-size:13px}}
+  .fams{{display:grid;gap:10px;margin:16px 0 22px}} @media(min-width:720px){{.fams{{grid-template-columns:repeat(4,1fr)}}}}
+  .fam{{display:block;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:13px;padding:14px 15px;text-decoration:none;color:var(--body);font-size:13.5px}}
+  .fam.notice{{border-top-color:#b4232f}} .fam.action{{border-top-color:var(--gold2)}} .fam.keep{{border-top-color:var(--teal)}} .fam.return{{border-top-color:#1f6f4a}}
+  .fam b{{display:block;font-family:var(--f);font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.3px}}
+  .fam i{{display:block;font-style:normal;font-family:var(--f);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark);margin:2px 0 8px}}
+  .fam span{{display:block;color:var(--dim);font-size:13px;line-height:1.5}} .fam em{{display:block;font-style:normal;margin-top:9px}}
+  .fam code{{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--ink)}}
+  .path{{display:grid;gap:10px}} @media(min-width:720px){{.path{{grid-template-columns:1fr 1fr}}}}
+  .path ol,.path ul{{margin:0;padding-left:0;list-style:none}} .path li{{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 14px;margin:0 0 8px;font-size:14px;color:var(--body)}}
+  .path ol{{counter-reset:s}} .path ol li{{counter-increment:s;padding-left:44px;position:relative}}
+  .path ol li::before{{content:counter(s);position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:11px;background:var(--gold);color:var(--navy);font-family:var(--f);font-weight:800;font-size:12px;text-align:center;line-height:22px}}
+  .path li b{{display:block;font-family:var(--f);color:var(--ink);font-size:14.5px}} .path h3{{font-family:var(--f);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:0 0 8px}}
   .op .subj{{font-family:var(--f);font-weight:800;font-size:15.5px;color:var(--ink);margin:8px 0 4px;letter-spacing:-.2px}}
   .op .glad{{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}}
   .op .ps p{{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}}
@@ -855,11 +990,24 @@ page = f"""<!DOCTYPE html>
     ends in taps they can answer with one thumb. Not one word in any of it is about who left, with one exception:
     letter T carries Guardian Life's own notice that an agent's contract was terminated, in the notice's words and no others.</p>
   <div class="steps">
-    <a href="#film"><b>1 &middot; two minutes</b>The film</a>
-    <a href="#letter"><b>2 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
-    <a href="#verdict"><b>3 &middot; one minute</b>Send, change, or hold</a>
+    <a href="#flow"><b>1 &middot; one minute</b>Four families, one flow</a>
+    <a href="#film"><b>2 &middot; two minutes</b>The film</a>
+    <a href="#letter"><b>3 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
+    <a href="#verdict"><b>4 &middot; one minute</b>Send, change, or hold</a>
   </div>
 </div></div>
+
+<section class="band alt" id="flow"><div class="wrap">
+  <h2>Four families, one flow</h2>
+  <p class="sub">Every client gets one letter, picked by their situation. The family is the order the letters go
+    in, and every answer, from any letter, follows the same path.</p>
+  <div class="fams">{fams}
+  </div>
+  <div class="path">
+    <div><h3>What a client sees after one tap</h3><ol>{flow_steps}</ol></div>
+    <div><h3>The waves, at sixty an hour</h3><ul>{waves}</ul></div>
+  </div>
+</div></section>
 
 <section class="band" id="film"><div class="wrap">
   <h2>The film</h2>
@@ -1020,16 +1168,25 @@ def splice(rel, tag, body):
 
 def card(seg, cfg, note, blank):
     tgt = ' target="_blank"' if blank else ''
-    return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])}</div>'
+    return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])} &middot; {WAVE_OF[seg].lower()}</div>'
             f'<b>{html.escape(show(cfg["subject"]))}</b><span>{html.escape(note)}</span></a>\n')
 
 
-splice('orphan-transition/index.html', 'letters',
-       ''.join(card(seg, cfg, cfg['send'], False) for seg, cfg in SEGMENTS.items()))
+def cards(note):
+    """The letter cards, grouped by family; the family line spans the grid on both pages."""
+    return ''.join(f'    <div style="grid-column:1/-1;margin:8px 0 -2px;padding-bottom:5px;border-bottom:2px solid #efc24b;font-family:\'Plus Jakarta Sans\',Inter,system-ui,sans-serif;color:#12202e">'
+                   f'<b style="font-size:16px">{FAMILIES[f][0]}</b> &middot; {FAMILIES[f][1]} <span style="float:right;color:#64798e;font-size:13px">{", ".join(FAMILY_SEGS[f])}</span></div>\n'
+                   + ''.join(card(seg, SEGMENTS[seg], note(seg, SEGMENTS[seg]), note is not manual_note) for seg in FAMILY_SEGS[f]) for f in FAMILIES)
+
+
+def manual_note(seg, cfg):
+    return cfg['send']
+
+
+splice('orphan-transition/index.html', 'letters', cards(manual_note))
 splice('orphan-transition/index.html', 'fields',
        ''.join(f'    <tr><td><code>{{{{{k}}}}}</code></td><td>{html.escape(v)}</td></tr>\n' for k, v in FIELDS.items()))
-splice('orphan-transition/team-review.html', 'letters',
-       ''.join(card(seg, cfg, f'What they are glad to hear: {GLAD[seg]}.', True) for seg, cfg in SEGMENTS.items()))
+splice('orphan-transition/team-review.html', 'letters', cards(lambda seg, cfg: f'What they are glad to hear: {GLAD[seg]}.'))
 
 
 # ── the page a tap opens: /your-policy/ ──────────────────────────────

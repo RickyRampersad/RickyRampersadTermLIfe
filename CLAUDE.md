@@ -875,14 +875,76 @@ voice under the new timing and the caption gives it away.
   because the reference and access code must always reach the client. The
   introduction is copied to `TRANSITION.CC`: it is the follow-through the
   receipt promises in writing.
-- **The recommended send is in waves**, one letter family a day, so Client
-  Support reads the first day's responses before the next day's go out and
-  the calls arrive at a pace a team can keep: day 1 the premium-due,
-  application and ten-year letters (I, K, F5), day 2 F4 and F3, day 3 F2
-  with the check letters R1 and R2, day 4 F1, and the lapsed letters (G) a
-  week after day 1. The `Send on` column in the list carries the dates;
-  moving a wave is editing that column. The hourly send still paces each
-  day at sixty an hour.
+- **The send goes in four families, one wave a day, and the reminder runs
+  by itself from day 22.** Decided 25 September 2026 ("combine and regroup
+  to ensure we scale proper and with a flow"). Every letter carries
+  `family` in `openings.json` — *notice* (T, T1), *action* (J, K, I),
+  *keep* (F1–F5, R1, R2), *return* (G, A) — and the family is the wave, so
+  Client Support reads one day's responses before the next day's letters
+  go: day 1 the notice and the action letters, day 2 F5, F4 and F3, day 3
+  F2 with R1 and R2, day 4 F1, day 8 G and A, in working days from the
+  go-live day (`WAVE` in `sendlist.py`, `WAVES` and `FAMILIES` in
+  `build-letters.py`). The `Send on` column carries the dates; moving a
+  wave is editing that column; the hourly send still paces each day at
+  sixty an hour. The team page opens on the four families and the path a
+  tap follows, and the letter cards on the manual and the team page are
+  grouped the same way. Every letter ends in the same four-step "What
+  happens after you tap" strip (`FLOW`), which the receipt's
+  follow-through and the team page repeat, so nothing is promised in one
+  place that another does not keep. **The reminder is not a letter of its
+  own**: `tRemind_`, at the end of every hourly batch and inside the same
+  cap, sends the client's own letter once more to any row sent
+  `REMIND_DAYS` (21) or more ago, still `sent`, whose token has no row on
+  Client Responses and no review (`tAnswered_`), with `sent_on` set so the
+  banner above the greeting says when the first went and the subject reads
+  "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
+  untouched (it is the first send's date and what keeps the row out of the
+  batch), at most `REMIND_MAX_PER_RUN` (30) a run, in its own try/catch so
+  it can never stop the day's letters; `REMIND_DAYS` 0 turns it off. The
+  FCA's redress-letter trial (Adams and Hunt 2013) is the reason: a
+  reminder at three to six weeks lifted response more than any change of
+  words. `svc/remind-harness.js` in the session scratchpad runs the pass in
+  Node on a mocked tab.
+- **The Act's own words are on every letter whose situation it speaks to,
+  and the days are worked out on the day the letter goes.** 25 September
+  2026: "include the insurance act and days to deliver and come across
+  relevant … the agents who left hate you and your team". `act` and `plain`
+  in `openings.json` put a teal card above the answers: the quotation, and
+  what it means for this client in our words. J quotes the premium rule (a
+  premium handed to a representative is deemed received by the insurer, so
+  anything paid when the contract was brought counts and the receipt is
+  Guardian Life's) and states the branch's own standard, personal delivery
+  within 28 days — the words of the branch's delivery-update e-mail, sent
+  to a client whenever a contract is ready since September 2025; K and T1
+  quote the issue rule (an individual life policy is issued within twenty
+  business days of acceptance of the risk); T quotes the revocation of a
+  registration on notice of a termination, and says the Act requires the
+  insurer to notify the Central Bank within five business days and that a
+  premium handed to the agent while registered counts as paid; A the cheque
+  rule (five business days); G the non-forfeiture rule (a policy whose
+  surrender value covers the overdue premium is not forfeited); I as
+  before. Under the check-first question on every letter, one line
+  (`Q_NOTE`): no agent or broker may cause a policyholder to discontinue or
+  replace a policy without first discussing the advantages and the
+  disadvantages. **Every quotation was checked against `act2018.dec.txt`**
+  with the capitals dropped and a hyphen read as `b`, which is how the
+  decoded PDF garbles them (the check lives in the session scratchpad);
+  still no section numbers anywhere. The days: `days_held` (J, from
+  `collected_on`) and `days_open` (K and T1, from `app_received`) are
+  derived at send time by `tDerive_` in Transition.gs and `derive()` in
+  `fill-plain.py`, never stored on the sheet (`T_DERIVED`). `promised_on`
+  (J) is the date of the branch's delivery-update e-mail to that client,
+  taken from the Salesforce task by policy number, and the sentence "On
+  {{promised_on}} we wrote to you that your policy contract would be
+  delivered to you personally within 28 days" sits between fact markers
+  inside the opening, so a client who got no such e-mail reads the letter
+  without it. T also asks how the client pays today (`paying`: "in person,
+  to a representative" is the `pay` tap, the one exposure after a
+  termination). The send list is now 30 columns (`promised_on` after
+  `collected_on`), and **Transition.gs must be pasted before any send, the
+  Test rows included**: every letter now carries `{{sent_on}}` for the
+  reminder banner, and the previous script stops each row with "carries
+  {{sent_on}}, which this script cannot fill" rather than send it.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
