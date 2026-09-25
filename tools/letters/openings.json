@@ -453,5 +453,36 @@
    "svc_birthday"
   ],
   "more": true
+ },
+ "T1": {
+  "name": "The agent's contract was terminated: application still in progress",
+  "notice": "terminated",
+  "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life. Let us finish your application.",
+  "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
+  "headline": "Let us finish your application, so your <em>cover can start.</em>",
+  "open": "Until your policy is issued, the cover you applied for is not yet in place. From {{terminated_on}}, nothing about your application goes through {{agent_first_name}}: whatever is still needed, a medical, a document, a signature, we bring to you ourselves.",
+  "send": "The terminated book's clients whose application is still in progress: the notice that the contract was terminated, then the application letter's own words and question, because cover is not in place until the policy is issued. Goes first of all, with T.",
+  "facts": [
+   [
+    "Application received",
+    "{{app_received}}"
+   ]
+  ],
+  "taps": [
+   "finish",
+   "callme",
+   "stop"
+  ],
+  "questions": [
+   "contact",
+   "outstanding",
+   "checkfirst"
+  ],
+  "checks_first": true,
+  "service": [
+   "svc_docs",
+   "svc_requests",
+   "svc_birthday"
+  ]
  }
 }

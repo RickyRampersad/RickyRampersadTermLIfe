@@ -654,6 +654,11 @@
    "pays",
    "stay"
   ],
+  "T1": [
+   "contact",
+   "outstanding",
+   "checkfirst"
+  ],
   "_": [
    "checkfirst"
   ]

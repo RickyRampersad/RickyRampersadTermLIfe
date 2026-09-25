@@ -567,9 +567,13 @@ voice under the new timing and the caption gives it away.
   on, that important letter"). It is in the shell, once, in the same words
   on every letter; an opening never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
-- **Thirteen letters: five situations, the in-force letter in five tenure
-  versions, two check letters, and T for a terminated contract (its own
-  bullet below).** Condensed to six on 22 September ("condense the amount of
+- **Fourteen letters: five situations, the in-force letter in five tenure
+  versions, two check letters, T for a terminated contract (its own
+  bullet below) and T1 for a client of that book whose application is
+  still in progress (the terminated notice, then the application letter's
+  own words and question, because cover is not in place until the policy
+  is issued; T1 sorts with T, and `tHold_` holds it like T without an
+  agent name or a date).** Condensed to six on 22 September ("condense the amount of
   letters so we will be focused"); on 23 September the in-force letter was
   split by how long the client has held their longest in-force policy —
   "we have banded 5 so each is different, wanting feedback with a catchy
@@ -723,22 +727,33 @@ voice under the new timing and the caption gives it away.
   until the policy is issued, because that is the truth that makes a
   client finish. T carries `received` too, since a third of that book's
   contracts were never acknowledged.
-- **Who gets letter J: the contracts Salesforce shows as received for
-  delivery and never acknowledged.** The "Guardian Life Policy Delivery
-  Update and Next Steps: Policy Contract Received for <client> Policy
-  Number <n>" e-mail task is dated the day the contract was received at
-  the branch for the agent to deliver (that date is `collected_on`, a
-  column on the send list and a fact on J and T); the "Undelivered Script
-  <client> <policy>" tasks are sales admin's chase of the ones still not
-  delivered; an acknowledgement shows in the Log Book as a
-  contract/acknowledgement document, though only a fifth of older
-  contracts have one there, so absence from the Log Book is not proof of
-  non-delivery, which is why the letter asks rather than asserts. Built
-  in the session scratchpad on 25 September from Task.json and the
-  Log Book (`tbook/j-candidates.json`): in force, received for delivery,
-  no acknowledgement since. A client already on I, K, A, G or T keeps
-  that letter and gains the contract date; the rest move to J, first
-  wave. Counts stay outside the repository. The research behind the shape, checked
+- **Who gets letter J: the contracts the Power BI export shows dispatched
+  and never acknowledged, dispatched in the last two years.** The
+  conservation export from Power BI (`pbi-conservation.xlsx` in the
+  session scratchpad) carries, per policy, `Dispatch Date`,
+  `Acknowledgement Date` and `Delivery Category` ("Undelivered" when the
+  acknowledgement is blank); it is the acknowledgement of record. A first
+  cut on 25 September read "no acknowledgement" off Salesforce and the
+  Log Book instead and put four hundred-odd clients on J; the export
+  showed all but a handful of them acknowledged, so never infer
+  non-delivery from the Log Book, which records a fifth of
+  acknowledgements at best. Salesforce adds two things: the "Guardian
+  Life Policy Delivery Update and Next Steps: Policy Contract Received
+  for <client> Policy Number <n>" e-mail task, dated the day the contract
+  was given to the agent to deliver (that date is `collected_on`, a
+  column on the send list and a fact on J and T, with the PBI dispatch
+  date as the fallback), and the "Undelivered Script <client> <policy>"
+  tasks, sales admin's chase, which stand in for a policy the export
+  does not carry. Older undelivered contracts (dispatched before the
+  two-year cut, some as far back as 2003) are not written to about a
+  contract the client has plainly lived with: they go to the team as a
+  call list. A client already on I, K, A, G or T keeps that letter and
+  gains the contract date; the rest move to J, first wave. The pending
+  applications are the rows the sheet flags `Pending` in Status(2)
+  (every one of them reads "Underwriting incomplete", "Missing Reqts" or
+  "Awaiting Settlement" in Status Description, which is the rule
+  sendlist.py applies), and the team gets them as a list too, with the
+  status description, for assignment. Counts stay outside the repository. The research behind the shape, checked
   on 25 September 2026: a positive frame rates better on identical facts
   (Levin, Schneider and Gaeth 1998); asking a customer how they were
   looked after cuts defection for a year afterwards (Dholakia and Morwitz

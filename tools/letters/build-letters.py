@@ -692,7 +692,7 @@ print(f'wrote {len(SEGMENTS)} plain letters to {PLAIN}')
 # afterwards to mark the film's chapters.
 TPL = ROOT / 'templates' / 'index.html'
 CORE = 'F1'   # the in-force version most clients on the nine books receive
-WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen'}
+WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen'}
 NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
 
 
@@ -712,7 +712,8 @@ WHO = {'A': 'a client with a policy that has matured, or matures within six mont
        'I': 'a client with a premium due more than sixty days, by the Days column',
        'J': 'a client whose policy is in force but whose contract has not reached them',
        'K': 'a client whose application is still in progress',
-       'T': 'every client on the book of an agent whose contract Guardian Life terminated, whatever they hold'}
+       'T': 'every client on the book of an agent whose contract Guardian Life terminated, whatever they hold',
+       'T1': 'a client on that book whose application is still in progress, so cover is not yet in place'}
 GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'F1': 'their new policy is unchanged, and someone is looking after it from the start',
         'F2': 'nothing has changed, and it is a good moment to check the cover still fits their life',
@@ -725,7 +726,8 @@ GLAD = {'A': 'the money is theirs, and it will reach them on time',
         'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
         'J': 'the policy is in force, and the branch is bringing the contract',
         'K': 'the file is being finished for them, not chased',
-        'T': 'their policy is unaffected, the branch team handles everything directly, and a person calls first if they have been contacted'}
+        'T': 'their policy is unaffected, the branch team handles everything directly, and a person calls first if they have been contacted',
+        'T1': 'the branch finishes the application for them and brings whatever is still needed, so the cover they applied for can start'}
 openings = ''.join(f"""
   <div class="op" id="{seg}">
     <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><em>goes to {WHO[seg]}</em></div>

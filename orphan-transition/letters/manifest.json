@@ -387,6 +387,32 @@
     "urgent": "I want an agent now. Let me tell you my concerns first"
    },
    "send_note": "Every client on the book of an agent whose contract Guardian Life terminated, whatever they hold; the name and the date are read off the sheet (Agent, terminated_on). Goes before every other letter. The notice is in Guardian Life's own words and says nothing about why; Compliance reads it before the batch."
+  },
+  {
+   "segment": "T1",
+   "name": "The agent's contract was terminated: application still in progress",
+   "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life. Let us finish your application.",
+   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
+   "file": "T1.html",
+   "facts": [
+    "app_received"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "taps": [
+    "finish",
+    "callme",
+    "stop"
+   ],
+   "tap_labels": {
+    "finish": "Finish my application",
+    "callme": "Call me",
+    "stop": "I would rather not proceed"
+   },
+   "send_note": "The terminated book's clients whose application is still in progress: the notice that the contract was terminated, then the application letter's own words and question, because cover is not in place until the policy is issued. Goes first of all, with T."
   }
  ]
 }
