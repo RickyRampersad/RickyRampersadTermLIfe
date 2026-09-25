@@ -323,7 +323,7 @@ try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
    TRANSITION.BATCH, SEND_EVERY_MIN, HOURS and WEEKDAYS in apps-script/Transition.gs
    (weekdays as the sheet counts them, Monday = 1 … Sunday = 7). */
 var SEND = { batch: 120, everyMin: 30, hours: [9, 17], weekdays: [1, 2, 3, 4, 5] };
-var SLIDES = 6, HOLD = 12000, POLL = 60000;
+var SLIDES = 6, HOLD = 12000, POLL = 90000, GATE_RETRY = 15000;   /* a gate that could not reach the sheet tries again by itself, soon */
 
 /* The letters, by family. The wall never prints what a letter is about — a
    premium due, a lapse, a contract terminated — because the room can read it:
@@ -733,7 +733,7 @@ function load() {
       schedule(POLL);
       clock();
     })
-    .catch(function () { inflight = false; fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this wall cannot open.', false); });
+    .catch(function () { inflight = false; fail('The sheet is busy. Trying again in a moment.', false); });
 }
 /* A screen left on must survive a network blip and a sheet that times out:
    once the wall is up, a failed poll keeps the last picture, says so quietly
@@ -745,7 +745,7 @@ function fail(msg, refused) {
   clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false;
   var e = $('#gateErr'); e.textContent = msg; e.style.display = 'block';
   $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
-  if (!refused && CODE) schedule(POLL);
+  if (!refused && CODE) schedule(GATE_RETRY);   /* a busy sheet at the gate: again in seconds, not in a minute */
   clock();
 }
 document.addEventListener('visibilitychange', function () {

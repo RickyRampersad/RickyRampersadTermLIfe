@@ -167,13 +167,18 @@ function load() {
   fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (d) {
-      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.', true); return; }
+      if (!d || !d.ok) {
+        /* a refused code is the backend's own words for one; anything else in ok:false is a fault in the sheet and a blip */
+        var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
+        fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
+        return;
+      }
       gate.style.display = 'none'; main.style.display = 'block';
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
       render(d);
       clearTimeout(timer); timer = setTimeout(load, 120000);
     })
-    .catch(function () { fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.', false); });
+    .catch(function () { fail('The sheet is busy. Trying again in a moment.', false); });
 }
 /* A screen left open must survive a network blip: once the page is showing,
    a transient failure keeps it up, notes it in the stamp, and tries again.
@@ -186,6 +191,7 @@ function fail(msg, refused) {
   }
   var e = document.getElementById('gateErr'); e.textContent = msg; e.style.display = 'block';
   gate.style.display = 'block'; main.style.display = 'none';
+  if (!refused && CODE) { clearTimeout(timer); timer = setTimeout(load, 15000); }   /* a busy sheet at the gate: try again by itself */
 }
 gate.addEventListener('submit', function (e) { e.preventDefault(); CODE = document.getElementById('code').value.trim(); if (CODE) load(); });
 if (CODE) { document.getElementById('code').value = CODE; load(); }
