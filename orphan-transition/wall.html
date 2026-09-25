@@ -23,13 +23,15 @@
     --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
     --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
     --b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
-    /* type, sized for a television read from across a room, and folded down for a phone */
-    --eyebrow:clamp(12px,1.05vw,20px);
+    /* type, sized for a television read from across a room, and folded down for a phone:
+       body 28px and the smallest label 19px at 1920 wide */
+    --eyebrow:clamp(12px,1.2vw,23px);
     --h2:clamp(26px,3.3vw,62px);
     --hero:clamp(92px,20vw,340px);
     --big:clamp(30px,3.6vw,68px);
-    --body:clamp(14px,1.35vw,26px);
-    --small:clamp(12px,1vw,19px);
+    --body:clamp(16px,1.5vw,30px);
+    --small:clamp(13px,1.2vw,23px);
+    --label:clamp(11px,1vw,19px);
     --gut:clamp(16px,3vw,60px);
     --ease:cubic-bezier(.16,1,.3,1);
   }
@@ -57,7 +59,7 @@
   header .right{margin-left:auto;display:flex;align-items:center;gap:clamp(10px,1.2vw,22px);min-width:0}
   .stamp{font-size:clamp(11px,.9vw,17px);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stamp.retry{color:var(--gold)}
-  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--f);font-weight:800;font-size:clamp(9px,.75vw,13px);
+  .live{display:inline-flex;align-items:center;gap:7px;font-family:var(--f);font-weight:800;font-size:var(--label);
     letter-spacing:.18em;text-transform:uppercase;color:var(--teal);border:1px solid rgba(0,207,234,.4);border-radius:999px;
     padding:4px 10px;background:rgba(0,207,234,.08);white-space:nowrap}
   .live i{width:7px;height:7px;border-radius:50%;background:var(--teal);animation:pulse 2.4s infinite}
@@ -74,19 +76,24 @@
   .slide.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
   .eyebrow{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.26em;text-transform:uppercase;color:var(--gold);
     margin:0 0 clamp(4px,.8vh,10px)}
-  .eyebrow span{color:var(--faint);letter-spacing:.1em;text-transform:none;font-weight:600;margin-left:8px}
+  .eyebrow span{color:var(--dim);letter-spacing:.1em;text-transform:none;font-weight:600;margin-left:8px}
   h2{font-family:var(--f);font-weight:800;font-size:var(--h2);letter-spacing:-.03em;line-height:1.02;margin:0 0 clamp(8px,1.6vh,22px)}
   .fill{flex:1;min-height:0;display:flex;flex-direction:column}
-  .hero{font-family:var(--f);font-weight:800;font-size:var(--hero);line-height:.88;letter-spacing:-.05em;
-    background:linear-gradient(120deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
-  .hero.teal{background:linear-gradient(120deg,#7ee9f7,var(--teal));-webkit-background-clip:text;background-clip:text}
-  .hero.good{background:linear-gradient(120deg,#8af0c4,var(--good));-webkit-background-clip:text;background-clip:text}
+  /* the headline numbers: a solid colour first, the gradient only where the browser can clip it to the glyphs */
+  .hero{font-family:var(--f);font-weight:800;font-size:var(--hero);line-height:.88;letter-spacing:-.05em;color:var(--gold)}
+  .hero.teal{color:var(--teal)}
+  .hero.good{color:var(--good)}
+  @supports (-webkit-background-clip:text) or (background-clip:text){
+    .hero{background:linear-gradient(120deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero.teal{background:linear-gradient(120deg,#7ee9f7,var(--teal));-webkit-background-clip:text;background-clip:text;color:transparent}
+    .hero.good{background:linear-gradient(120deg,#8af0c4,var(--good));-webkit-background-clip:text;background-clip:text;color:transparent}
+  }
   .say{font-size:var(--body);color:var(--dim);max-width:36ch;margin:clamp(6px,1vh,14px) 0 0}
   .say b{color:var(--ink);font-family:var(--f)}
   .two{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:clamp(16px,3vw,70px);align-items:start;flex:1;min-height:0}
   .empty{color:var(--dim);font-size:var(--body);padding:clamp(10px,2vh,30px) 0}
   .empty.good{color:var(--good);font-family:var(--f);font-weight:800;font-size:var(--big)}
-  .note{font-size:var(--small);color:var(--faint);margin-top:clamp(6px,1.2vh,16px)}
+  .note{font-size:var(--small);color:var(--dim);margin-top:clamp(6px,1.2vh,16px)}
 
   /* the meter: the unfilled track is a lighter step of the same gold */
   .meter{height:clamp(12px,2.2vh,28px);border-radius:999px;background:rgba(239,194,75,.16);overflow:hidden;margin:clamp(6px,1vh,12px) 0}
@@ -98,7 +105,7 @@
   .fact{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,1.6vh,22px) clamp(12px,1.4vw,24px);min-width:0}
   .fact b{display:block;font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .fact span{display:block;font-size:var(--small);color:var(--dim);margin-top:6px;line-height:1.3}
-  .fact.good b{color:var(--good)} .fact.warn b{color:var(--gold)}
+  .fact.good b{color:var(--good)}
   .line{font-size:var(--body);color:var(--dim);margin-top:clamp(8px,1.4vh,18px);line-height:1.4}
   .line b{color:var(--ink);font-family:var(--f)}
   .line.amber{color:var(--gold)}
@@ -111,7 +118,6 @@
   .chart svg{display:block;max-width:100%}
   .chart text{font-family:var(--b);fill:var(--ink)}
   .chart text.v{font-family:var(--f);font-weight:800;font-variant-numeric:tabular-nums}
-  .chart text.sub{fill:var(--faint)}
   .chart .track{fill:rgba(255,255,255,.06)}
   .chart .bar{fill:var(--teal)}
   h3{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 clamp(6px,1vh,12px)}
@@ -119,26 +125,29 @@
   /* ── the feed cards ───────────────────────────────────────────────── */
   .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:clamp(10px,1.2vw,20px);flex:1;min-height:0}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(12px,1.8vh,24px) clamp(12px,1.4vw,24px);min-width:0;
-    display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,.8vh,10px)}
+    display:flex;flex-direction:column;justify-content:center;gap:clamp(4px,.8vh,10px);overflow:hidden}
   .card.urgent{border-color:rgba(239,194,75,.75);box-shadow:inset 0 0 0 1px rgba(239,194,75,.45);
     background:linear-gradient(180deg,rgba(239,194,75,.13),transparent 70%),var(--card)}
   .card .who{font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* every free-text line wraps inside its card, whatever the sheet sends */
+  .card .said,.card .ltr,.card .tm{overflow-wrap:anywhere;min-width:0}
   .card .said{font-size:calc(var(--body) * 1.12);font-weight:600;line-height:1.3}
   .card.urgent .said{color:var(--gold)}
   .card .ltr{font-size:var(--small);color:var(--dim);line-height:1.3}
-  .card .tm{font-size:var(--small);color:var(--faint);font-variant-numeric:tabular-nums;margin-top:clamp(4px,1vh,14px)}
+  .card .tm{font-size:var(--small);color:var(--dim);font-variant-numeric:tabular-nums;margin-top:clamp(4px,1vh,14px)}
 
   /* ── waiting for a name ───────────────────────────────────────────── */
   .qrow{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:clamp(10px,1.2vw,22px);align-items:center;
     padding:clamp(8px,1.4vh,18px) 0;border-bottom:1px solid var(--line)}
   .qrow:last-child{border-bottom:0}
-  .pill{font-family:var(--f);font-weight:800;font-size:clamp(9px,.75vw,13px);letter-spacing:.14em;text-transform:uppercase;
+  .pill{font-family:var(--f);font-weight:800;font-size:var(--label);letter-spacing:.14em;text-transform:uppercase;
     padding:5px 10px;border-radius:8px;border:1px solid var(--line);color:var(--dim);min-width:clamp(56px,5vw,92px);text-align:center;white-space:nowrap}
   .pill.urgent{background:var(--gold);border-color:var(--gold);color:#07131f}
   .qw{min-width:0}
   .qw b{display:block;font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .qw span{display:block;font-size:var(--small);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:3px}
-  .age{font-family:var(--f);font-weight:800;font-size:var(--body);color:var(--stop);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .age{font-family:var(--f);font-weight:800;font-size:var(--body);color:var(--stop);font-variant-numeric:tabular-nums;white-space:nowrap;
+    max-width:14ch;overflow:hidden;text-overflow:ellipsis}
 
   /* ── the promise ──────────────────────────────────────────────────── */
   .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,22px);margin:clamp(8px,1.6vh,24px) 0;flex:1;min-height:0}
@@ -157,7 +166,7 @@
   .dots{display:flex;gap:8px;align-items:center}
   .dots i{display:block;width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,.18);cursor:pointer;transition:.3s}
   .dots i.on{background:var(--gold);width:32px;border-radius:5px}
-  .foot-note{margin-left:auto;font-size:var(--small);color:var(--faint);white-space:nowrap}
+  .foot-note{margin-left:auto;font-size:var(--small);color:var(--dim);white-space:nowrap}
   .foot-note.paused{color:var(--gold);font-weight:600}
 
   /* ── the gate ─────────────────────────────────────────────────────── */
@@ -174,7 +183,8 @@
 
   /* ── phone ────────────────────────────────────────────────────────── */
   @media(max-width:700px){
-    :root{--gut:16px;--hero:clamp(72px,22vw,96px);--big:22px;--body:15px;--small:12px;--h2:24px;--eyebrow:11px}
+    :root{--gut:16px;--hero:clamp(72px,22vw,96px);--big:22px;--body:15px;--small:12px;--label:10px;--h2:24px;--eyebrow:11px}
+    .hero.long{font-size:clamp(48px,17vw,72px)}   /* seven digits and their commas, inside the column */
     /* the stamp moves under the title, where the branch name sits on a television */
     .ttl .sub,.live,header .right .stamp{display:none}
     .ttl .sub2{display:block;font-size:11px}
@@ -227,7 +237,7 @@
       <div class="ofline"><b id="ofN">of &mdash;</b><span id="pct">&mdash;</span></div>
       <div class="meter"><i id="meterFill"></i></div>
       <div class="facts">
-        <div class="fact good"><b id="finish">&mdash;</b><span id="finishNote">finish, at 120 every half hour</span></div>
+        <div class="fact good"><b id="finish">&mdash;</b><span id="finishNote">finish</span></div>
         <div class="fact"><b id="waiting">&mdash;</b><span>still to go</span></div>
         <div class="fact"><b id="held">&mdash;</b><span>held back</span></div>
       </div>
@@ -262,7 +272,7 @@
 
   <!-- 4 · by book -->
   <section class="slide" id="s4">
-    <div class="eyebrow">By book</div>
+    <div class="eyebrow" id="bookEyebrow">By book</div>
     <h2>Answers by former agent&rsquo;s book</h2>
     <div class="fill">
       <div class="chart" id="bookChart"></div>
@@ -302,55 +312,152 @@
 </footer>
 
 <script>
+(function () {
+'use strict';
 var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 var CODE = '';
 try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
 
-var TEST_ROWS = 9;                 /* the staff test rows on the send list, counted in totals.sent */
-var PER_RUN = 120, RUN_MIN = 30;   /* the batch: 120 letters every thirty minutes */
+/* The send's cadence and window. The feed carries them as batch, everyMin,
+   hours and weekdays once the endpoint returns them; until then these mirror
+   TRANSITION.BATCH, SEND_EVERY_MIN, HOURS and WEEKDAYS in apps-script/Transition.gs
+   (weekdays as the sheet counts them, Monday = 1 … Sunday = 7). */
+var SEND = { batch: 120, everyMin: 30, hours: [9, 17], weekdays: [1, 2, 3, 4, 5] };
 var SLIDES = 6, HOLD = 12000, POLL = 60000;
-var LETTER = { T: "Notice: agent's contract terminated", T1: 'Notice + application in progress', I: 'A premium is due', J: 'Contract not delivered',
-  K: 'Application in progress', A: 'Policy matured', G: 'Policy lapsed', F1: 'In force, under 2 years', F2: 'In force, 2–3 years',
-  F3: 'In force, 3–5 years', F4: 'In force, 5–10 years', F5: 'In force, 10+ years', R1: 'Cover ended and restarted (recent)', R2: 'Cover ended and restarted (earlier)' };
+
+/* The letters, by family. The wall never prints what a letter is about — a
+   premium due, a lapse, a contract terminated — because the room can read it:
+   on this screen a letter is its key and its family, nothing more. */
 var FAMILY = { notice: ['T', 'T1'], action: ['J', 'K', 'I'], keep: ['F1', 'F2', 'F3', 'F4', 'F5', 'R1', 'R2'], 'return': ['G', 'A'] };
+var FAMILY_NAME = { notice: 'notice letters', action: 'action letters', keep: 'in-force letters', 'return': 'matured and lapsed' };
 var WORDS = { callme: 'Call me', paid: "I paid, it isn't showing", urgent: 'I want an agent now', review: 'Tell us more', informed: 'Noted',
-  question: 'A question', deliver: 'Contract never reached me', stop: 'Do not proceed', finish: 'Help me finish', pay: 'I pay a representative in person' };
+  question: 'A question', deliver: 'Contract never reached me', stop: 'Do not proceed', finish: 'Help me finish', pay: 'I pay a representative in person',
+  selfserve: 'Doing it myself', assign: 'Assign me an agent', claim: 'Maturity claim' };
 var MONTHS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 var $ = function (s) { return document.querySelector(s); };
 var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); };
 var set = function (id, v) { var el = document.getElementById(id); if (el) el.textContent = v; };
-var n = function (v) { return Number(v || 0).toLocaleString('en-US'); };
+var num = function (v) { v = Number(v); return isFinite(v) ? v : 0; };
+var n = function (v) { return num(v).toLocaleString('en-US'); };
 var pad = function (v) { return String(v).padStart(2, '0'); };
 var hhmm = function (d) { return pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+var cap = function (s) { return s.replace(/^./, function (c) { return c.toUpperCase(); }); };
+var isObj = function (x) { return !!x && typeof x === 'object'; };
+var list = function (x) { return (Array.isArray(x) ? x : []).filter(isObj); };
 
 /* ── words ─────────────────────────────────────────────────────────── */
-function words(r) { r = String(r || '').trim(); return WORDS[r] || (r ? r.charAt(0).toUpperCase() + r.slice(1) : 'An answer'); }
-function letterName(s) { s = String(s || '').trim().toUpperCase(); return LETTER[s] || (s && s !== '—' ? 'Letter ' + s : 'No letter'); }
-function isTest(it) { return /^test:/i.test(String(it && it.agent || '').trim()); }
+function words(r) {
+  r = String(r || '').trim();
+  var w = WORDS[r.toLowerCase()];
+  if (w) return w;
+  if (!r || r.length > 40) return 'An answer';     /* a stray sheet cell never reaches the wall verbatim */
+  return r.charAt(0).toUpperCase() + r.slice(1);
+}
+function familyOf(s) { var f; for (f in FAMILY) if (FAMILY[f].indexOf(s) >= 0) return f; return ''; }
+function letterName(s) {
+  s = String(s || '').trim().toUpperCase();
+  if (!s || s === '—' || s === '-') return 'No letter';
+  var f = familyOf(s);
+  return 'Letter ' + (s.length > 3 ? s.slice(0, 3) + '…' : s) + (f ? ' · ' + f : '');
+}
+/* Staff tests. The endpoint marks a tap or a review `test: true` when its
+   send-list row is a Test row (a backend follow-up); until it does, the
+   convention is that a Test row's Agent cell reads "test: <who>", which
+   dashboard.html reads the same way. The page filters the rows it can see
+   (the feed, the late list) with this. Totals it corrects only from the
+   endpoint's own counts — totals.test, taps.tests, reviews.test — because the
+   feed carries the newest 40 taps, so a test the page cannot see it must not
+   pretend to subtract. */
+function isTest(it) {
+  if (!isObj(it)) return false;
+  if (it.test === true || /^(y|yes|true|1)$/i.test(String(it.test == null ? '' : it.test).trim())) return true;
+  return /^test:/i.test(String(it.agent || '').trim());
+}
+/* A tap whose token is not on the send list (the site's own doors, before the
+   campaign) reaches the feed as "token …" with no agent: not this campaign's. */
+function offList(it) {
+  var c = String(it.client || '').trim(), a = String(it.agent || '').trim();
+  return /^token\b/i.test(c) || (!c && !a);
+}
 /* The wall stands in the branch office, where anyone in the room can read it:
-   first names only, and "A client" where the sheet has no name. */
+   first names only, and "A client" where the sheet has no name, a company, an
+   estate, or only a title and a surname. */
+var TITLE = /^(mr|mrs|ms|miss|dr|mx|sir|rev|prof)\.?$/i, SUFFIX = /^(jr|sr|ii|iii|iv|esq)\.?$/i;
+var COMPANY = /^(ltd|limited|inc|co|company|estate|trust|holdings|group|plc|llc)\.?$/i;
 function firstName(c) {
-  c = String(c || '').trim();
+  c = String(c || '').replace(/’/g, "'").trim();
   if (!c || /^token\b/i.test(c)) return 'A client';
-  if (c.indexOf(',') > 0) c = c.split(',').slice(1).join(' ').trim() || c.split(',')[0];
-  var parts = c.split(/\s+/).filter(function (p) { return !/^(mr|mrs|ms|miss|dr|mx)\.?$/i.test(p); });
-  var w = (parts[0] || c.split(/\s+/)[0]).replace(/[^A-Za-z'À-ſ-]/g, '') || 'A client';
-  if (w.length > 1 && w === w.toUpperCase()) w = w.charAt(0) + w.slice(1).toLowerCase();
+  if (c.split(/[\s,]+/).some(function (w) { return COMPANY.test(w); })) return 'A client';
+  if (c.indexOf(',') > 0) {
+    var after = c.split(',').slice(1).join(' ').trim(), ap = after.split(/\s+/).filter(Boolean);
+    c = after && !(ap.length === 1 && SUFFIX.test(ap[0])) ? after : c.split(',')[0];   /* "Surname, First", or "John Smith, Jr." */
+  }
+  var all = c.split(/\s+/).filter(Boolean);
+  var parts = all.filter(function (p) { return !TITLE.test(p) && !SUFFIX.test(p); });
+  if (parts.length < all.length && parts.length < 2) return 'A client';   /* "Mrs Doe": only the surname is left */
+  if (/^(?:[A-Za-z]\.){1,3}$/.test(parts[0] || '')) return parts[0].toUpperCase();   /* "J.R." stays initials */
+  var w = (parts[0] || '').replace(/[^A-Za-z'À-ſ-]/g, '');
+  if (!w) return 'A client';
+  if (w.length > 1 && w === w.toUpperCase()) w = w.toLowerCase().replace(/(^|[-'])([a-zà-ſ])/g, function (m, p, ch) { return p + ch.toUpperCase(); });
   return w;
 }
+/* A book is shown by its agent's first name; two books with one first name
+   get the surname's initial so the bars stay apart. */
+function bookLabels(keys) {
+  var labels = {}, count = {};
+  keys.forEach(function (k) { var f = k === 'Not on the sheet' ? k : firstName(k); labels[k] = f; count[f] = (count[f] || 0) + 1; });
+  keys.forEach(function (k) {
+    if (count[labels[k]] < 2 || k === 'Not on the sheet') return;
+    var parts = k.replace(/’/g, "'").split(/[\s,]+/).filter(Boolean);
+    var last = parts.length > 1 ? (k.indexOf(',') > 0 ? parts[0] : parts[parts.length - 1]) : '';
+    if (last) labels[k] += ' ' + last.charAt(0).toUpperCase() + '.';
+  });
+  return labels;
+}
 function rowKey(it) { return it.row != null && it.row !== '' ? 'r' + it.row : [it.received, it.response, it.client].join('|'); }
+function monthIndex(s) { return MONTHS.indexOf(String(s || '').slice(0, 3).toLowerCase()); }
 function parseAt(s) {                     /* "25 Sep 2026 08:46" */
-  var m = /^(\d{1,2}) (\w{3}) (\d{4}) (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
-  var mo = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
+  var m = /^(\d{1,2}) ([A-Za-z]{3,4})\.? (\d{4}) (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
+  var mo = m ? monthIndex(m[2]) : -1;
   return m && mo >= 0 ? new Date(+m[3], mo, +m[1], +m[4], +m[5]) : null;
 }
-function parseWhen(s, year) {             /* "25 Sep 08:47", the year from `at` */
-  var m = /^(\d{1,2}) (\w{3}) (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
-  var mo = m ? MONTHS.indexOf(m[2].toLowerCase()) : -1;
-  return m && mo >= 0 ? new Date(year, mo, +m[1], +m[3], +m[4]) : null;
+function parseWhen(s, atDate) {           /* "25 Sep 08:47", the year from `at` */
+  var m = /^(\d{1,2}) ([A-Za-z]{3,4})\.? (\d{1,2}):(\d{2})$/.exec(String(s || '').trim());
+  var mo = m ? monthIndex(m[2]) : -1;
+  if (!m || mo < 0) return null;
+  var base = atDate || new Date(), d = new Date(base.getFullYear(), mo, +m[1], +m[3], +m[4]);
+  if (d.getTime() > base.getTime() + 86400000) d = new Date(base.getFullYear() - 1, mo, +m[1], +m[3], +m[4]);   /* a December tap, read in January */
+  return d;
 }
-function dayKey(s) { var m = /^(\d{1,2} \w{3})\b/.exec(String(s || '').trim()); return m ? m[1].toLowerCase() : ''; }
+function dayKey(s) { var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim()); return m ? m[1] + ' ' + m[2].toLowerCase() : ''; }
+function dayText(d) { return d.getDate() + ' ' + cap(MONTHS[d.getMonth()]); }
+
+/* ── the send window ───────────────────────────────────────────────── */
+function sendConfig(d) {
+  var s = { batch: num(d.batch) || SEND.batch, everyMin: num(d.everyMin) || SEND.everyMin, hours: SEND.hours, weekdays: SEND.weekdays };
+  if (Array.isArray(d.hours) && d.hours.length === 2 && num(d.hours[0]) < num(d.hours[1])) s.hours = [num(d.hours[0]), num(d.hours[1])];
+  if (Array.isArray(d.weekdays)) { var wd = d.weekdays.map(num).filter(function (x) { return x >= 1 && x <= 7; }); if (wd.length) s.weekdays = wd; }
+  return s;
+}
+function inWindow(d, send) { var h = d.getHours(); return send.weekdays.indexOf(d.getDay() || 7) >= 0 && h >= send.hours[0] && h < send.hours[1]; }
+function nextOpen(d, send) {
+  d = new Date(d.getTime());
+  for (var guard = 0; guard < 14 && !inWindow(d, send); guard++) {
+    if (d.getHours() < send.hours[0] && send.weekdays.indexOf(d.getDay() || 7) >= 0) d.setHours(send.hours[0], 0, 0, 0);
+    else { d.setDate(d.getDate() + 1); d.setHours(send.hours[0], 0, 0, 0); }
+  }
+  return d;
+}
+/* The runs are stepped, not multiplied: a run that would fall after closing,
+   before opening or on a weekend moves to the next weekday morning first. */
+function finishEstimate(at, due, send) {
+  var runs = Math.max(1, Math.ceil(due / send.batch)), cur = new Date(at.getTime());
+  for (var i = 0; i < runs; i++) cur = new Date(nextOpen(cur, send).getTime() + send.everyMin * 60000);
+  return { when: cur, runs: runs };
+}
+function cadence(send) { return send.everyMin === 30 ? 'every half hour' : send.everyMin === 60 ? 'every hour' : 'every ' + send.everyMin + ' min'; }
 
 /* ── a bar chart, drawn as SVG to the width it has, and the height it has
    down to the foot of the slide, so six rows use a television and ten fit a phone ── */
@@ -381,95 +488,145 @@ function barChart(el, rows, empty, reserve) {
   el.innerHTML = out + '</svg>';
 }
 
-/* ── painting ──────────────────────────────────────────────────────── */
-var D = null;
-function render(d) {
-  var t = d.totals || {}, taps = d.taps || {}, atDate = parseAt(d.at), today = dayKey(d.at), year = atDate ? atDate.getFullYear() : new Date().getFullYear();
+/* ── painting: one function a slide, sharing what they all read ───────── */
+function context(d) {
+  var t = isObj(d.totals) ? d.totals : {}, taps = isObj(d.taps) ? d.taps : {}, atDate = parseAt(d.at);
+  var out = Math.max(0, num(t.sent) - num(t.test)), waiting = num(t.waiting);
+  var seen = {}, latest = [], late = [];
+  list(taps.latest).forEach(function (it) { var k = rowKey(it); if (!seen[k]) { seen[k] = 1; latest.push(it); } });
+  list(taps.late).forEach(function (it) { var k = rowKey(it); if (!seen[k]) { seen[k] = 1; late.push(it); } });
+  var ours = function (it) { return !isTest(it) && !offList(it); };
+  return { t: t, taps: taps, atDate: atDate, today: dayKey(d.at), send: sendConfig(d), runs: list(d.runs), seg: isObj(d.segments) ? d.segments : {},
+    out: out, waiting: waiting, of: out + waiting, latest: latest, late: late, feed: latest.filter(ours), open: late.filter(ours) };
+}
 
-  /* the staff tests: every row whose agent reads "test: …", counted once by sheet row */
-  var seen = {}, testRows = [], all = [];
-  [].concat(taps.latest || [], taps.late || []).forEach(function (it) {
-    var k = rowKey(it); if (seen[k]) return; seen[k] = 1;
-    (isTest(it) ? testRows : all).push(it);
-  });
-  var testToday = testRows.filter(function (it) { return dayKey(it.received) === today; }).length;
-
-  /* 1 · letters out */
-  var out = Math.max(0, (t.sent || 0) - TEST_ROWS), waiting = t.waiting || 0, of = out + waiting, pct = of ? Math.round(100 * out / of) : 0;
-  set('lettersOut', n(out));
-  set('ofN', 'of ' + n(of));
-  set('pct', of ? pct + '% of the letters ready to go' : 'no letters on the list yet');
+function paintLetters(d, c) {
+  var t = c.t, send = c.send, pct = c.of ? Math.round(100 * c.out / c.of) : 0;
+  set('lettersOut', n(c.out));
+  $('#lettersOut').classList.toggle('long', n(c.out).length > 7);
+  set('ofN', 'of ' + n(c.of));
+  set('pct', c.of ? pct + '% of the letters ready to go' : 'no letters on the list yet');
   $('#meterFill').style.width = pct + '%';
-  set('waiting', n(waiting));
-  set('held', n(t.excluded || 0));
-  if (!waiting) { set('finish', 'Done'); set('finishNote', 'every letter on the list has gone'); }
-  else if (atDate) {
-    var runs = Math.ceil(waiting / PER_RUN), fin = new Date(atDate.getTime() + runs * RUN_MIN * 60000);
-    var sameDay = fin.toDateString() === atDate.toDateString();
-    set('finish', 'about ' + hhmm(fin) + (sameDay ? '' : ' ' + fin.getDate() + ' ' + MONTHS[fin.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); })));
-    set('finishNote', 'finish, at ' + PER_RUN + ' every half hour: ' + runs + (runs === 1 ? ' more run' : ' more runs') + (d.armed === false ? ', once the send is on' : ''));
-  } else { set('finish', '—'); set('finishNote', 'finish, at ' + PER_RUN + ' every half hour'); }
-  var runs0 = d.runs || [], batch = null;
-  for (var i = 0; i < runs0.length; i++) if (String(runs0[i].event) === 'batch') { batch = runs0[i]; break; }
-  $('#lastBatch').innerHTML = batch ? 'Last batch <b>' + esc(batch.when) + '</b> &middot; ' + esc(batch.detail || '') : 'No batch has run yet.';
-  var seg = d.segments || {}, famLine = [];
-  Object.keys(FAMILY).forEach(function (f) {
-    var w = FAMILY[f].reduce(function (a, k) { return a + (seg[k] ? seg[k].waiting || 0 : 0); }, 0);
-    if (w) famLine.push('<b>' + n(w) + '</b> ' + f);
-  });
-  $('#toGo').innerHTML = famLine.length ? 'Still to go: ' + famLine.join(' &middot; ') : (of ? 'Nothing left on the list.' : '');
-  var r0 = runs0[0], bad = r0 && /^(stopped|sender-not-ready|letters-unavailable)$/.test(String(r0.event));
-  $('#runNote').hidden = !bad;
-  if (bad) $('#runNote').innerHTML = 'Last run <b>' + esc(r0.when) + '</b>: ' + esc(r0.event) + (r0.detail ? ' &mdash; ' + esc(r0.detail) : '');
-  $('#offBanner').hidden = d.armed !== false;
+  set('waiting', n(c.waiting));
+  set('held', n(t.excluded));
+  var plan = 'at ' + send.batch + ' ' + cadence(send);
+  if (!c.of) { set('finish', '—'); set('finishNote', 'nothing on the list yet'); }
+  else if (!c.waiting) { set('finish', 'Done'); set('finishNote', 'every letter on the list has gone'); }
+  else if (c.atDate) {
+    /* the rows the batch itself would send (due today, not Test) when the endpoint counts them; otherwise every row waiting */
+    var due = t.due != null ? num(t.due) : c.waiting, est = finishEstimate(c.atDate, due, send), fin = est.when;
+    var sameDay = fin.toDateString() === c.atDate.toDateString(), days = (fin.getTime() - c.atDate.getTime()) / 86400000;
+    set('finish', 'about ' + hhmm(fin));
+    set('finishNote', 'finish' + (sameDay ? '' : ' on ' + (days < 6 ? DAYS[fin.getDay()] : dayText(fin))) + ', ' + plan + ': ' +
+      est.runs + (est.runs === 1 ? ' more run' : ' more runs') + (d.armed === false ? ', once the send is on' : ''));
+  } else { set('finish', '—'); set('finishNote', 'finish, ' + plan); }
 
-  /* 2 · answers today */
-  var ansToday = Math.max(0, (taps.today || 0) - testToday), ansAll = Math.max(0, (taps.total || 0) - testRows.length);
-  set('ansToday', n(ansToday));
-  var rate = out ? 100 * ansAll / out : null;
+  /* the send's own events, newest first: a batch, a test, or a run that stopped */
+  var SEND_EV = /^(batch|test|stopped|sender-not-ready|letters-unavailable)$/, STOP_EV = /^(stopped|sender-not-ready|letters-unavailable)$/;
+  var lastSend = null, batch = null, ref = null;
+  c.runs.forEach(function (r) {
+    var ev = String(r.event || '');
+    if (!lastSend && SEND_EV.test(ev)) lastSend = r;
+    if (!batch && ev === 'batch') batch = r;
+    if (!ref && (ev === 'batch' || ev === 'live')) ref = r;
+  });
+  var parts = [];
+  if (batch && batch.when) parts.push('<b>' + esc(batch.when) + '</b>');
+  if (batch && batch.detail) parts.push(esc(batch.detail));
+  $('#lastBatch').innerHTML = batch ? 'Last batch ' + (parts.join(' &middot; ') || 'ran') : 'No batch has run yet.';
+  var famLine = [];
+  Object.keys(FAMILY).forEach(function (f) {
+    var w = FAMILY[f].reduce(function (a, k) { return a + (isObj(c.seg[k]) ? num(c.seg[k].waiting) : 0); }, 0);
+    if (w) famLine.push('<b>' + n(w) + '</b> ' + FAMILY_NAME[f]);
+  });
+  $('#toGo').innerHTML = famLine.length ? 'Still to go: ' + famLine.join(' &middot; ') : (c.of ? 'Nothing left on the list.' : '');
+  var note = '';
+  if (lastSend && STOP_EV.test(String(lastSend.event))) {
+    note = 'Last run <b>' + esc(lastSend.when || '') + '</b>: ' + esc(lastSend.event) + (lastSend.detail ? ' &mdash; ' + esc(lastSend.detail) : '');
+  } else if (d.armed !== false && c.waiting > 0 && c.atDate && inWindow(c.atDate, send) && ref) {
+    /* armed, inside sending hours, letters waiting, and no batch for two runs: the wall says so */
+    var refAt = parseWhen(ref.when, c.atDate);
+    if (refAt && c.atDate.getTime() - refAt.getTime() > 2 * send.everyMin * 60000) {
+      note = 'No batch since <b>' + esc(ref.when) + '</b>' + (batch ? '' : ' (go live)') + '. The send should run ' + cadence(send) +
+        ', ' + send.hours[0] + ':00 to ' + send.hours[1] + ':00.';
+    }
+  }
+  $('#runNote').hidden = !note;
+  $('#runNote').innerHTML = note;
+  $('#offBanner').hidden = d.armed !== false;
+}
+
+function paintAnswers(d, c) {
+  var taps = c.taps, tests = isObj(taps.tests) ? taps.tests : null;
+  var total = num(taps.total), today = num(taps.today);
+  if (tests) { total = Math.max(0, total - num(tests.total)); today = Math.max(0, today - num(tests.today)); }
+  var clients = taps.clients != null ? num(taps.clients) : null, clientsToday = taps.clientsToday != null ? num(taps.clientsToday) : null;
+  set('ansToday', n(clientsToday != null ? clientsToday : today));
+  var unit = clients != null ? clients : total, rate = c.out ? 100 * unit / c.out : null;
+  var rateText = rate == null ? '' : '<b>' + (rate >= 10 ? Math.round(rate) : rate.toFixed(1)) + '</b> ';
   $('#ansRate').innerHTML = rate == null ? 'No letters out yet, so no rate to read.'
-    : '<b>' + (rate >= 10 ? Math.round(rate) : rate.toFixed(1)) + '</b> answers per hundred letters out';
-  var rv = d.reviews || {};
-  $('#ansAll').innerHTML = '<b>' + n(ansAll) + '</b> answers all told' + (rv.total ? ' &middot; <b>' + n(rv.total) + '</b> full ' + (rv.total === 1 ? 'review' : 'reviews') + (rv.urgent ? ', ' + n(rv.urgent) + ' urgent' : '') : '');
-  set('ansNote', testRows.length ? testRows.length + ' staff ' + (testRows.length === 1 ? 'test' : 'tests') + ' taken out' : '');
-  var byType = {}; Object.keys(taps.byType || {}).forEach(function (k) { byType[k] = taps.byType[k]; });
-  testRows.forEach(function (it) { var k = String(it.response || '').trim(); if (byType[k]) byType[k] = Math.max(0, byType[k] - 1); });
+    : clients != null ? '<b>' + n(clients) + '</b> clients have answered &middot; ' + rateText + 'per hundred letters out'
+    : rateText + 'taps per hundred letters out';
+  var rv = isObj(d.reviews) ? d.reviews : {}, rvTotal = Math.max(0, num(rv.total) - num(rv.test)), rvUrgent = num(rv.urgent);
+  $('#ansAll').innerHTML = '<b>' + n(total) + '</b> taps all told' +
+    (rvTotal ? ' &middot; <b>' + n(rvTotal) + '</b> full ' + (rvTotal === 1 ? 'review' : 'reviews') + (rvUrgent ? ', ' + n(rvUrgent) + ' urgent' : '') : '');
+  var nt = tests ? num(tests.total) : 0;
+  set('ansNote', tests ? (nt ? nt + ' staff ' + (nt === 1 ? 'test' : 'tests') + ' taken out' : '') : (total ? 'staff tests included' : ''));
+  var byType = {}, src = isObj(taps.byType) ? taps.byType : {}, tb = tests && isObj(tests.byType) ? tests.byType : {};
+  Object.keys(src).forEach(function (k) { byType[k] = Math.max(0, num(src[k]) - num(tb[k])); });
   var typeRows = Object.keys(byType).filter(function (k) { return byType[k] > 0; }).sort(function (a, b) { return byType[b] - byType[a]; })
     .map(function (k) { return { label: words(k), value: byType[k], kind: 'type' }; });
   barChart($('#typeChart'), typeRows, 'No answers yet. They land here the moment a client answers a letter.');
+}
 
-  /* 3 · what clients are saying */
-  var feed = (taps.latest || []).filter(function (it) { return !isTest(it); }).slice(0, 8);
-  $('#feedNote').textContent = feed.length ? 'the newest ' + feed.length : '';
-  $('#feed').innerHTML = feed.length ? feed.map(function (it) {
-    var urgent = /^urgent$/i.test(String(it.response || '').trim());
-    return '<div class="card' + (urgent ? ' urgent' : '') + '"><div class="who">' + esc(firstName(it.client)) + '</div>' +
-      '<div class="said">' + esc(words(it.response)) + '</div><div class="ltr">' + esc(letterName(it.segment)) + '</div>' +
-      '<div class="tm">' + esc(it.received || '') + '</div></div>';
+/* one card a client: the checks a client ticks on one letter land as one row
+   each, in the same minute, and read as one answer here */
+function paintFeed(d, c) {
+  var cards = [], byKey = {};
+  c.feed.forEach(function (it) {
+    var k = [String(it.client || '').trim().toLowerCase(), String(it.agent || '').trim().toLowerCase(), String(it.received || '').trim()].join('|');
+    var card = byKey[k];
+    if (!card) { card = byKey[k] = { it: it, said: [], urgent: false }; cards.push(card); }
+    var r = String(it.response || '').trim(), w = words(r);
+    if (card.said.indexOf(w) < 0) card.said.push(w);
+    if (/^urgent$/i.test(r)) card.urgent = true;
+  });
+  cards = cards.slice(0, 8);
+  $('#feedNote').textContent = cards.length ? 'the newest ' + cards.length : '';
+  $('#feed').innerHTML = cards.length ? cards.map(function (card) {
+    return '<div class="card' + (card.urgent ? ' urgent' : '') + '"><div class="who">' + esc(firstName(card.it.client)) + '</div>' +
+      '<div class="said">' + esc(card.said.join(' · ')) + '</div><div class="ltr">' + esc(letterName(card.it.segment)) + '</div>' +
+      '<div class="tm">' + esc(card.it.received || '') + '</div></div>';
   }).join('') : '<div class="empty">No answers yet. The first client to tap a letter appears here.</div>';
+}
 
-  /* 4 · by book */
-  var books = {};
-  all.forEach(function (it) { var a = String(it.agent || '').trim() || 'Not on the sheet'; books[a] = (books[a] || 0) + 1; });
-  var bookRows = Object.keys(books).sort(function (a, b) { return books[b] - books[a] || a.localeCompare(b); })
-    .map(function (k) { return { label: k, value: books[k], kind: 'book' }; });
-  if (bookRows.length > 9) { var rest = bookRows.slice(8).reduce(function (a, r) { return a + r.value; }, 0); bookRows = bookRows.slice(0, 8).concat([{ label: 'Other books', value: rest, kind: 'book' }]); }
-  barChart($('#bookChart'), bookRows, 'No answers yet, so nothing to count by book.', 60);
+function paintBooks(d, c) {
+  var byBook = isObj(c.taps.byBook) ? c.taps.byBook : null, books = {};
+  if (byBook) Object.keys(byBook).forEach(function (k) {
+    var v = num(byBook[k]); if (v > 0 && !/^test:/i.test(String(k).trim())) books[String(k).trim() || 'Not on the sheet'] = v;
+  });
+  else c.feed.forEach(function (it) { var a = String(it.agent || '').trim() || 'Not on the sheet'; books[a] = (books[a] || 0) + 1; });
+  set('bookEyebrow', byBook ? 'By book' : 'By book · the newest ' + n(c.latest.length) + ' answers');
+  var keys = Object.keys(books).sort(function (a, b) { return books[b] - books[a] || a.localeCompare(b); }), labels = bookLabels(keys);
+  var rows = keys.map(function (k) { return { label: labels[k], value: books[k], kind: 'book' }; });
+  if (rows.length > 9) { var rest = rows.slice(8).reduce(function (a, r) { return a + r.value; }, 0); rows = rows.slice(0, 8).concat([{ label: 'Other books', value: rest, kind: 'book' }]); }
+  barChart($('#bookChart'), rows, 'No answers yet, so nothing to count by book.', 60);
+}
 
-  /* 5 · waiting for a name */
-  var late = (taps.late || []).filter(function (it) { return !isTest(it); }).map(function (it) {
-    return { it: it, when: parseWhen(it.received, year), urgent: /^urgent$/i.test(String(it.response || '').trim()) };
+function paintLate(d, c) {
+  var late = c.open.map(function (it) {
+    return { it: it, when: parseWhen(it.received, c.atDate), urgent: /^urgent$/i.test(String(it.response || '').trim()) };
   }).sort(function (a, b) {
     if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
     return (a.when ? a.when.getTime() : 0) - (b.when ? b.when.getTime() : 0);
   });
   var oldest = late.reduce(function (o, x) { return x.when && (!o || x.when < o) ? x.when : o; }, null);
-  $('#lateWait').textContent = 'open past ' + (d.waitDays == null ? 2 : d.waitDays) + ' working days, ' + (d.waitUrgent == null ? 1 : d.waitUrgent) + ' for urgent';
+  $('#lateWait').textContent = 'open past ' + (d.waitDays == null ? 2 : num(d.waitDays)) + ' working days, ' + (d.waitUrgent == null ? 1 : num(d.waitUrgent)) + ' for urgent';
   var lateN = $('#lateN');
   lateN.textContent = n(late.length);
   lateN.className = 'hero' + (late.length ? '' : ' good');
   $('#lateSay').innerHTML = late.length
-    ? (late.length === 1 ? 'client has' : 'clients have') + ' answered and nobody has been named. The oldest has waited since <b>' + esc(oldest ? oldest.getDate() + ' ' + MONTHS[oldest.getMonth()].replace(/^./, function (c) { return c.toUpperCase(); }) + ' ' + hhmm(oldest) : '—') + '</b>.'
+    ? (late.length === 1 ? 'client has' : 'clients have') + ' answered and nobody has been named. The oldest has waited since <b>' + esc(oldest ? dayText(oldest) + ' ' + hhmm(oldest) : '—') + '</b>.'
     : 'Every answer has a name against it inside the time we set ourselves.';
   $('#lateList').innerHTML = late.length ? late.slice(0, 6).map(function (x) {
     return '<div class="qrow"><span class="pill' + (x.urgent ? ' urgent' : '') + '">' + (x.urgent ? 'Urgent' : 'Open') + '</span>' +
@@ -479,16 +636,32 @@ function render(d) {
     : '<div class="empty good">Nobody is waiting</div>';
 }
 
+var D = null;
+function render(d) {
+  var c = context(d);
+  paintLetters(d, c); paintAnswers(d, c); paintFeed(d, c); paintBooks(d, c); paintLate(d, c);
+}
+/* A payload the page cannot paint is logged and left: the last good picture
+   is put back, and the stamp says the refresh did not take. */
+function paint(d) {
+  try { render(d); return true; }
+  catch (e) {
+    try { console.warn('wall: could not paint the feed', e); } catch (e2) {}
+    if (D && D !== d) { try { render(D); } catch (e3) {} }
+    return false;
+  }
+}
+
 /* ── the deck ──────────────────────────────────────────────────────── */
-var deck = $('#deck'), dots = $('#dots'), at = 0, paused = false, holdStart = 0, open = false;
-for (var i = 0; i < SLIDES; i++) {
+var deck = $('#deck'), dots = $('#dots'), at = 0, paused = false, holdStart = 0, shown = false;
+for (let i = 0; i < SLIDES; i++) {
   var dot = document.createElement('i');
-  dot.addEventListener('click', (function (k) { return function (e) { e.stopPropagation(); go(k); }; })(i));
+  dot.addEventListener('click', function (e) { e.stopPropagation(); go(i); });
   dots.appendChild(dot);
 }
 function go(k) {
   at = (k + SLIDES) % SLIDES;
-  for (var i = 0; i < SLIDES; i++) document.getElementById('s' + (i + 1)).classList.toggle('on', i === at);
+  for (let i = 0; i < SLIDES; i++) document.getElementById('s' + (i + 1)).classList.toggle('on', i === at);
   Array.prototype.forEach.call(dots.children, function (dd, i) { dd.classList.toggle('on', i === at); });
   holdStart = Date.now();
 }
@@ -498,13 +671,13 @@ function setPaused(p) {
 }
 deck.addEventListener('click', function () { setPaused(!paused); });
 addEventListener('keydown', function (e) {
-  if (!open) return;
+  if (!shown) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { go(at + 1); e.preventDefault(); }
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { go(at - 1); e.preventDefault(); }
   else if (e.key === ' ') { setPaused(!paused); e.preventDefault(); }
 });
 setInterval(function () {
-  if (!open) return;
+  if (!shown) return;
   var tick = $('#tick');
   if (paused) { tick.style.width = '0'; return; }
   var p = (Date.now() - holdStart) / HOLD;
@@ -528,47 +701,64 @@ setInterval(clock, 1000); clock();
 /* ── data ──────────────────────────────────────────────────────────── */
 var timer = null, inflight = false;
 function schedule(ms) { clearTimeout(timer); nextAt = Date.now() + ms; timer = setTimeout(load, ms); }
+function showDeck() {
+  shown = true;
+  $('#gate').style.display = 'none'; deck.hidden = false; $('#foot').hidden = false; $('#live').hidden = false;
+}
 function load() {
   clearTimeout(timer); timer = null;
   if (inflight || !CODE) return;
-  if (document.hidden && open) return;          /* picked up again on visibilitychange */
+  if (document.hidden && shown) return;          /* picked up again on visibilitychange */
   inflight = true;
   fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (d) {
       inflight = false;
-      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.', true); return; }
+      if (!isObj(d) || !d.ok) {
+        /* a refused code is the endpoint's `refused`, or its own words for one; anything
+           else in ok:false is a fault in the sheet (a timeout, an exception) and is a blip */
+        var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
+        fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
+        return;
+      }
+      var first = !shown;
+      if (first) showDeck();                        /* the charts measure the width they have */
+      if (!paint(d)) {
+        if (first) { fail('The sheet answered with something this wall could not read. Trying again shortly.', false); return; }
+        retrying = true; schedule(POLL); clock(); return;
+      }
       D = d; updatedAt = new Date(); retrying = false;
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
-      if (!open) {
-        open = true;
-        $('#gate').style.display = 'none'; deck.hidden = false; $('#foot').hidden = false; $('#live').hidden = false;
-        render(d); go(0); setPaused(false);
-      } else render(d);           /* every number in place; the cycle carries on */
-      clock();
+      if (first) { go(0); setPaused(false); }       /* otherwise every number is in place and the cycle carries on */
       schedule(POLL);
+      clock();
     })
     .catch(function () { inflight = false; fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this wall cannot open.', false); });
 }
-/* A screen left on must survive a network blip: once the wall is up, a failed
-   poll keeps the last picture, says so quietly in the stamp, and tries again.
-   Only a refused code sends the viewer back to the gate. */
+/* A screen left on must survive a network blip and a sheet that times out:
+   once the wall is up, a failed poll keeps the last picture, says so quietly
+   in the stamp, and tries again. Only a refused code sends the viewer back to
+   the gate; a wall that falls to the gate on a fault, with a code remembered,
+   tries again by itself rather than waiting for a hand. */
 function fail(msg, refused) {
-  if (open && !refused) { retrying = true; clock(); schedule(POLL); return; }
-  clearTimeout(timer); timer = null; open = false; D = null; updatedAt = null; retrying = false;
+  if (shown && !refused) { retrying = true; schedule(POLL); clock(); return; }
+  clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false;
   var e = $('#gateErr'); e.textContent = msg; e.style.display = 'block';
   $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
+  if (!refused && CODE) schedule(POLL);
   clock();
 }
 document.addEventListener('visibilitychange', function () {
   if (document.hidden) { clearTimeout(timer); timer = null; }
-  else if (open && !inflight) load();
+  else if (shown && !inflight) load();
   clock();
 });
 var reflow = null;
-addEventListener('resize', function () { clearTimeout(reflow); reflow = setTimeout(function () { if (D) render(D); }, 180); });
+addEventListener('resize', function () { clearTimeout(reflow); reflow = setTimeout(function () { if (D) paint(D); }, 180); });
 $('#gate').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('#code').value.trim(); if (CODE) { $('#gateErr').style.display = 'none'; load(); } });
 if (CODE) { $('#code').value = CODE; load(); }
+window.RRB_WALL = { load: load };                 /* the one handle the page offers, for a test to poll on demand */
+})();
 </script>
 
 <!-- rrb-views -->
