@@ -854,7 +854,9 @@ voice under the new timing and the caption gives it away.
   text lives in the script: rebuild the letters and the next batch carries
   the change. `transitionSetup` makes the tab and the 8:00 digest only;
   `transitionPreviewToMe` sends one of each to the owner;
-  `transitionSendTest` sends the rows marked `Test = Y`, live or not — and a
+  `transitionSendTest` sends the rows marked `Test = Y`, live or not, and
+  sends them all again on every press, sent before or not (24 September,
+  evening: the branch could not find the Sent at cells to clear) — and a
   Test row is always a team member standing in as a client, never a client's
   own row, because that button sends whatever carries the mark;
   `transitionGoLive` (menu: "Transition: go live") sets the `transition_live`
