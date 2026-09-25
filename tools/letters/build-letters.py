@@ -526,7 +526,7 @@ def letter_table(seg, cfg, preview=False):
     # not missed; the film's own line answers it: the policy has not.
     # The name sits between <!--agent--> marks so the sender can drop it when the
     # row carries none: "Your representative has moved on" still reads.
-    words = (f'<b style="color:{INK}">{NOTICE_T[0]}</b> {NOTICE_T[1]}' if cfg.get('notice') == 'terminated' else
+    words = (f'<b style="color:{INK}">{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}' if cfg.get('notice') == 'terminated' else
              f'<b style="color:{INK}">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>\n'
              f"    {cfg.get('notice_tail', 'Your policy has not.')}")
     notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
@@ -644,7 +644,7 @@ def plain_service(cfg):
 
 def plain_notice(cfg):
     if cfg.get('notice') == 'terminated':
-        return f'<p><b>{NOTICE_T[0]}</b> {NOTICE_T[1]}</p>'
+        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>'
     return (f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
             f'{cfg.get("notice_tail", "Your policy has not.")}</p>')
 

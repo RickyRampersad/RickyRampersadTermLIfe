@@ -457,6 +457,7 @@
  "T1": {
   "name": "The agent's contract was terminated: application still in progress",
   "notice": "terminated",
+  "notice_tail": "{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your application is not affected: it stays with Guardian Life, and our branch team finishes it with you.",
   "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life. Let us finish your application.",
   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
   "headline": "Let us finish your application, so your <em>cover can start.</em>",
