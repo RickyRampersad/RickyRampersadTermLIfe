@@ -896,7 +896,13 @@ voice under the new timing and the caption gives it away.
   one mailbox, so a letter never follows the last inside `PACE_MS` (2.15 s,
   counted from when the last began, `tPace_`), which makes 120 a run four
   and a half minutes of the six a run is allowed, and a row is marked the
-  moment it is sent, so a run cut short never sends a row twice; and the
+  moment it is sent, so a run cut short never sends a row twice — but a
+  run Apps Script kills at six minutes writes no log line and shows no
+  alert, which is what the first batch of the go-live morning did at 106
+  letters (holding 95 same-address rows first cost it a minute and a
+  half), so `RUN_BUDGET_MS` (five minutes) now stops the sending inside
+  the run, says how many of the batch were left, and the next run takes
+  them; and the
   script owner is a consumer Google account, whose triggers may run about
   ninety minutes a day in all — fourteen hundred letters take some fifty
   of them, the five-minute reads and receipts the rest — so on a heavy day
