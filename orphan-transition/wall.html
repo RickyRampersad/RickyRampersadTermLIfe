@@ -178,6 +178,7 @@
   .gate input:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.18)}
   .gate button{width:100%;margin-top:14px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#07131f;border:0;border-radius:11px;
     font:800 16px var(--f);padding:14px;cursor:pointer}
+  .gate .err.info{background:rgba(0,207,234,.08);border-color:rgba(0,207,234,.45);border-left-color:#00CFEA;color:#dff7fb}
   .gate .err{display:none;margin-top:12px;background:var(--stopbg);border:1px solid rgba(240,119,106,.5);border-left:4px solid var(--stop);
     border-radius:10px;padding:10px 14px;font-size:14px;color:#ffe9e5}
 
@@ -710,6 +711,10 @@ function load() {
   if (inflight || !CODE) return;
   if (document.hidden && shown) return;          /* picked up again on visibilitychange */
   inflight = true;
+  if (!shown) {
+    /* the sheet takes ten to twenty seconds to answer: say so at the gate, or a silent wait reads as "nothing opens" */
+    var g = $('#gateErr'); g.className = 'err info'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block';
+  }
   fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
     .then(function (r) { return r.json(); })
     .then(function (d) {
@@ -743,7 +748,7 @@ function load() {
 function fail(msg, refused) {
   if (shown && !refused) { retrying = true; schedule(POLL); clock(); return; }
   clearTimeout(timer); timer = null; shown = false; D = null; updatedAt = null; retrying = false;
-  var e = $('#gateErr'); e.textContent = msg; e.style.display = 'block';
+  var e = $('#gateErr'); e.className = 'err'; e.textContent = msg; e.style.display = 'block';
   $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
   if (!refused && CODE) schedule(GATE_RETRY);   /* a busy sheet at the gate: again in seconds, not in a minute */
   clock();
