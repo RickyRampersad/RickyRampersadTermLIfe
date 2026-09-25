@@ -885,8 +885,23 @@ voice under the new timing and the caption gives it away.
   F2 with R1 and R2, day 4 F1, day 8 G and A, in working days from the
   go-live day (`WAVE` in `sendlist.py`, `WAVES` and `FAMILIES` in
   `build-letters.py`). The `Send on` column carries the dates; moving a
-  wave is editing that column; the hourly send still paces each day at
-  sixty an hour. The team page opens on the four families and the path a
+  wave is editing that column. **On the go-live morning, 25 September
+  2026, every date was set to that day** ("so i need all to go out in
+  batches today"; then "the run should be every 30 mins"): the whole list
+  in one day, in batches of up to 120 every thirty minutes (`BATCH` and
+  `SEND_EVERY_MIN` in Transition.gs; `transitionGoLive` replaces the send
+  trigger with the configured cadence every time it is pressed, so a
+  change is a paste and a press, never a second trigger beside the first).
+  Three ceilings sit under that: Microsoft 365 takes thirty a minute from
+  one mailbox, so a letter never follows the last inside `PACE_MS` (2.15 s,
+  counted from when the last began, `tPace_`), which makes 120 a run four
+  and a half minutes of the six a run is allowed, and a row is marked the
+  moment it is sent, so a run cut short never sends a row twice; and the
+  script owner is a consumer Google account, whose triggers may run about
+  ninety minutes a day in all — fourteen hundred letters take some fifty
+  of them, the five-minute reads and receipts the rest — so on a heavy day
+  the menu's "send a batch now" is the relief valve: a run started by hand
+  is not counted. The team page opens on the four families and the path a
   tap follows, and the letter cards on the manual and the team page are
   grouped the same way. Every letter ends in the same four-step "What
   happens after you tap" strip (`FLOW`), which the receipt's
@@ -1092,8 +1107,16 @@ voice under the new timing and the caption gives it away.
   letters from the site, fills the `{{fields}}` from the **Transition Send**
   tab, cuts a blank fact out between the `<!--fact:key-->` markers the
   generator writes, and sends it through Microsoft 365 as
-  support@rickyrampersadbranch.com from an hourly trigger, working hours
-  only, up to sixty an hour, the action letters first. No letter
+  support@rickyrampersadbranch.com from a trigger every `SEND_EVERY_MIN`
+  minutes (thirty), working hours only, up to `BATCH` (120) a run, the
+  notice and the action letters first. A projected lapse date already gone by is cut at
+  send time (`tDerive_`, and `derive()` in `fill-plain.py`): the sheet still
+  flags the policy `Overdue`, so the projection did not happen, and
+  "Projected lapse 18 August 2012" is not a fact a client can use — 88 of
+  the first day's rows carried one; Paid to and Days outstanding still
+  print. Forty of the I rows were more than a year past their paid-to date
+  (the sheet's `Overdue`, most likely an automatic premium loan); the count
+  was put to the manager before the first batch. No letter
   text lives in the script: rebuild the letters and the next batch carries
   the change. `transitionSetup` makes the tab and the 8:00 digest only;
   `transitionPreviewToMe` sends one of each to the owner;

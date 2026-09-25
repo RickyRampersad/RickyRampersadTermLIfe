@@ -62,6 +62,11 @@ def derive(row):
         row['days_held'] = days_since(row.get('collected_on'))
     if not (row.get('days_open') or '').strip():
         row['days_open'] = days_since(row.get('app_received'))
+    # a projected lapse date already gone by, on a policy the sheet still carries as in force, is a
+    # projection that did not happen: cut, as tDerive_ cuts it, so Paid to and Days outstanding print alone
+    lapse = parse_date(row.get('projected_lapse'))
+    if lapse and lapse < TODAY:
+        row['projected_lapse'] = ''
     return row
 
 

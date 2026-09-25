@@ -12,12 +12,12 @@
  * One source of truth: rebuild the letters, and the next batch carries the
  * change. No letter text lives here.
  *
- *   transitionSetup()        once — the tab and the 8:00 digest; the hourly send stays off
+ *   transitionSetup()        once — the tab and the 8:00 digest; the send stays off
  *   transitionPreviewToMe()  one of each letter to your own inbox
  *   transitionSendTest()     the rows marked Test = Y, now, whatever the hour
- *   transitionGoLive()       the hourly send, on — once the test rows have been checked
- *   transitionPause()        the hourly send, off; the test rows still go by hand
- *   transitionSendBatch()    what the hourly trigger runs; safe to run by hand — the day's new letters,
+ *   transitionGoLive()       the send, on — once the test rows have been checked
+ *   transitionPause()        the send, off; the test rows still go by hand
+ *   transitionSendBatch()    what the send trigger runs; safe to run by hand — the day's new letters,
  *                            then (tRemind_) the same letter once more to anyone unanswered after REMIND_DAYS
  *   transitionDigest()       the morning e-mail (DIGEST_HOURS); safe to run by hand
  *   transitionWeekly()       the Monday insight report (WEEKLY_HOUR): what the answers mean; safe to run by hand
@@ -31,10 +31,10 @@
  *
  * Nothing goes to a client on its own until transitionGoLive has been run:
  * the list can sit in the tab, the preview and the two Test rows can be read
- * and checked, and the hourly run sends nothing. A row with no Send on date
+ * and checked, and the run sends nothing. A row with no Send on date
  * is held, not sent now; a row the sender cannot use (no e-mail, no first
  * name, no letter for its segment) is moved to Exclude with the reason, so
- * it leaves the queue for someone to fix rather than being tried every hour.
+ * it leaves the queue for someone to fix rather than being tried every run.
  *
  * Every e-mail a client receives from here — the letter, the receipt when they
  * tap, the "still on it" note — goes out through Microsoft 365 as MS_FROM,
@@ -52,7 +52,11 @@ var TRANSITION = {
   CC: ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com'],   // visible on every client e-mail
   REPLY_TO: '',              // blank = MS_FROM. "Just reply" lands here.
   BCC: [],                   // a hidden copy of every client e-mail, if wanted
-  BATCH: 60,                 // the most one hourly run will send
+  BATCH: 120,                // the most one run will send: 120 × PACE_MS is four and a half minutes, inside the six a run is allowed
+  SEND_EVERY_MIN: 30,        // how often the send runs inside HOURS: 1, 5, 10, 15, 30, or 60 for once an hour.
+                             // 25 September 2026, the manager's numbers: "the run should be every 30 mins", and
+                             // "all to go out in batches today" — 120 every half hour is a day's list in a day
+  PACE_MS: 2150,             // the least time from one letter to the next: Microsoft 365 takes thirty a minute from one mailbox
   HOURS: [9, 17],            // sends only between these hours, script time zone
   WEEKDAYS: [1, 2, 3, 4, 5], // Monday = 1
   ORDER: ['T', 'I', 'K', 'J', 'A', 'R', 'F', 'G'],   // the terminated-contract notice, then the action letters; F1…F5 sort as F, R1 and R2 as R
@@ -70,14 +74,14 @@ var TRANSITION = {
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
   INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
   REMIND_DAYS: 21,           // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off
-  REMIND_MAX_PER_RUN: 30,    // the most reminders one hourly run adds, after the day's new letters and inside the same BATCH
+  REMIND_MAX_PER_RUN: 30,    // the most reminders one run adds, after the day's new letters and inside the same BATCH
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
           line: 'Ricky Rampersad Branch · Guardian Life of the Caribbean' },
 };
 
-/* The switch the hourly send is behind. transitionGoLive sets it, transitionPause
+/* The switch the send is behind. transitionGoLive sets it, transitionPause
    clears it; until it is set the trigger runs and sends nothing. */
 var T_LIVE = 'transition_live';
 
@@ -192,49 +196,73 @@ function transitionSetup() {
   TRANSITION.DIGEST_HOURS.forEach(function (h) {
     ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
   });
-  /* the replies and the receipts: every five minutes, whether or not the hourly send is on, because letters already out earn them */
+  /* the replies and the receipts: every five minutes, whether or not the send is on, because letters already out earn them */
   ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   tWeeklyTrigger_();
   var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
     TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
     ', the weekly insight report for Monday ' + TRANSITION.WEEKLY_HOUR + ':00, and the replies are read and the receipts sent every five minutes. ' +
-    'The hourly send stays off until Transition: go live. Import the send list into the tab, run ' +
+    'The send stays off until Transition: go live. Import the send list into the tab, run ' +
     'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
 }
 
-/** The hourly send, on. Only after the preview and the Test rows have been
- *  read and the Exclude column checked: from the next weekday hour inside
- *  HOURS the trigger sends up to BATCH real letters a run. */
+/** The send, on. Only after the preview and the Test rows have been
+ *  read and the Exclude column checked: from the next weekday run inside
+ *  HOURS the trigger sends up to BATCH real letters a run, every
+ *  SEND_EVERY_MIN minutes. Safe to press again: the send trigger is always
+ *  set to the configured cadence, so a change to SEND_EVERY_MIN is a paste
+ *  and this press, never a second trigger running beside the first. */
 function transitionGoLive() {
   PropertiesService.getScriptProperties().setProperty(T_LIVE, 'yes');
+  tSendTrigger_();
   var have = {};
   ScriptApp.getProjectTriggers().forEach(function (t) { have[t.getHandlerFunction()] = true; });
-  if (!have.transitionSendBatch) ScriptApp.newTrigger('transitionSendBatch').timeBased().everyHours(1).create();
   if (!have.transitionInbox) ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   if (!have.transitionWeekly) tWeeklyTrigger_();
-  var msg = 'Live. The hourly send is on, ' + TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] +
-    ':00, Monday to Friday. Transition: pause turns it off.';
+  var msg = 'Live. The send is on: up to ' + TRANSITION.BATCH + ' letters ' + tCadence_() + ', ' +
+    TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] + ':00, Monday to Friday. Transition: pause turns it off.';
   log_('transition', 'live', msg);
   return tSay_(msg);
 }
 
-/** The hourly send, off: the switch cleared and the trigger removed. The Test
+/** The send trigger at the configured cadence, and only that one: every
+ *  transitionSendBatch trigger goes first. everyMinutes takes 1, 5, 10, 15 or
+ *  30; anything else on SEND_EVERY_MIN falls back to ten, and 60 or more is
+ *  hours. */
+function tSendTrigger_() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'transitionSendBatch') ScriptApp.deleteTrigger(t);
+  });
+  var m = Number(TRANSITION.SEND_EVERY_MIN) || 60;
+  var b = ScriptApp.newTrigger('transitionSendBatch').timeBased();
+  if (m >= 60) b.everyHours(Math.max(1, Math.round(m / 60))).create();
+  else b.everyMinutes([1, 5, 10, 15, 30].indexOf(m) >= 0 ? m : 10).create();
+}
+
+/** The cadence in words, for the go-live alert and the page. */
+function tCadence_() {
+  var m = Number(TRANSITION.SEND_EVERY_MIN) || 60;
+  if (m >= 60) { var h = Math.max(1, Math.round(m / 60)); return h === 1 ? 'every hour' : 'every ' + h + ' hours'; }
+  return 'every ' + ([1, 5, 10, 15, 30].indexOf(m) >= 0 ? m : 10) + ' minutes';
+}
+
+/** The send, off: the switch cleared and the trigger removed. The Test
  *  rows still send by hand. */
 function transitionPause() {
   PropertiesService.getScriptProperties().deleteProperty(T_LIVE);
   ScriptApp.getProjectTriggers().forEach(function (t) {
     if (t.getHandlerFunction() === 'transitionSendBatch') ScriptApp.deleteTrigger(t);
   });
-  var msg = 'Paused. Test rows still send by hand; the hourly run sends nothing.';
+  var msg = 'Paused. Test rows still send by hand; the run sends nothing.';
   log_('transition', 'paused', msg);
   return tSay_(msg);
 }
 
-/** Whether the hourly send is on — the switch set and the trigger installed —
+/** Whether the send is on — the switch set and the trigger installed —
  *  reported the way automationOn_() is, so the page and the digest can say so
  *  instead of the branch learning it from silence. */
 function tArmed_() {
@@ -325,6 +353,12 @@ function tDerive_(row) {
   for (var k in row) out[k] = row[k];
   if (!tText_(out.days_held)) out.days_held = tDays_(out.collected_on);
   if (!tText_(out.days_open)) out.days_open = tDays_(out.app_received);
+  /* a projected lapse date already gone by, on a policy the sheet still carries
+     as in force, is a projection that did not happen: cut, so the fact goes and
+     Paid to and Days outstanding still print (25 September 2026: 88 rows on the
+     first day's list carried one, the oldest from 2012 — "Projected lapse
+     18 August 2012" is not a fact a client can use) */
+  if (Number(tDays_(out.projected_lapse)) > 0) out.projected_lapse = '';
   return out;
 }
 
@@ -514,11 +548,12 @@ function tHoldRow_(t, row, why) {
 function tSendRows_(t, rows, letters) {
   var sent = 0, skipped = 0, failed = 0;
   rows.forEach(function (row) {
+    var t0 = Date.now(), tried = true;
     try {
       tEnsureToken_(t, row);
       var res = tSendRow_(row, letters);
       if (res === 'sent') { sent++; tMark_(t, row, 'sent', true); }
-      else { skipped++; tHoldRow_(t, row, res); }
+      else { skipped++; tried = false; tHoldRow_(t, row, res); }   // held before the mailbox saw it: no wait for it
     } catch (err) {
       var why = String(err && err.message ? err.message : err);
       if (/invalid email|InvalidRecipients/i.test(why)) {
@@ -532,9 +567,20 @@ function tSendRows_(t, rows, letters) {
         t.sh.getRange(row._row, t.col['Send on']).setValue(Utilities.formatDate(tmr, tTz_(), 'yyyy-MM-dd'));
       }
     }
-    Utilities.sleep(2100);   // Microsoft 365 takes thirty a minute from one mailbox
+    if (tried) tPace_(t0);
   });
   return { sent: sent, skipped: skipped, failed: failed };
+}
+
+/** The gap between two letters: Microsoft 365 takes thirty a minute from one
+ *  mailbox, so a letter never follows the last inside PACE_MS — counted from
+ *  when the last began, so the send's own time is part of the gap rather than
+ *  added after it. (25 September 2026: that is a quarter of an hour over a
+ *  day's list, out of the ninety minutes a day a consumer Google account
+ *  allows its triggers in all; a run started from the menu is not counted.) */
+function tPace_(t0) {
+  var rest = (Number(TRANSITION.PACE_MS) || 2100) - (Date.now() - t0);
+  if (rest > 0) Utilities.sleep(rest);
 }
 
 function tOrder_(row) {
@@ -1069,7 +1115,7 @@ function tChase_() {
   return out;
 }
 
-/* ── the hourly send ──────────────────────────────────────────────── */
+/* ── the send ──────────────────────────────────────────────── */
 function transitionSendBatch(force) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return 'another send is running';
@@ -1139,7 +1185,7 @@ function tSendBatch_(force) {
 }
 
 /* ── the reminder: the same letter once more, to anyone who has not answered ── */
-/** Runs at the end of every hourly batch, after the day's new letters and inside
+/** Runs at the end of every batch, after the day's new letters and inside
  *  the same cap. A row sent REMIND_DAYS or more ago, still marked 'sent', whose
  *  token has no row on Client Responses and no review, gets its own letter again
  *  with sent_on set — the line above the greeting says when the first went, the
@@ -1167,6 +1213,7 @@ function tRemind_(t, letters, cap) {
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
   var sent = 0, skipped = 0, failed = 0;
   due.slice(0, cap).forEach(function (r) {
+    var t0 = Date.now();
     var row = {};
     for (var k in r) row[k] = r[k];
     row.sent_on = Utilities.formatDate(r['Sent at'], tz, 'd MMMM yyyy');
@@ -1178,7 +1225,7 @@ function tRemind_(t, letters, cap) {
       failed++;
       tMark_(t, r, 'reminder error: ' + String(err && err.message ? err.message : err).slice(0, 100), false);
     }
-    Utilities.sleep(2100);
+    tPace_(t0);
   });
   return { sent: sent, skipped: skipped, failed: failed, waiting: Math.max(0, due.length - cap) };
 }
@@ -1752,7 +1799,7 @@ function tInsightHtml_(a, weekly) {
   var out = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:680px">' +
     '<h2 style="font:800 20px ' + F + ';color:#12202e;margin:0 0 4px">' + (weekly ? 'Transition: the week to ' + esc(a.day) : 'Transition: ' + esc(a.at)) + '</h2>' +
     '<p style="margin:0 0 14px;color:#64798e">' + (weekly ? 'What went, what came back, what the clients told us, and where to act. Every number is from the sheet at ' + esc(a.at) + '.' : 'Sends, answers and what they mean. The live page has the detail.') + '</p>' +
-    (a.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324"><b>The hourly send is off.</b> Nothing sends until Service Questionnaire &rarr; Transition: go live.</p>') +
+    (a.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324"><b>The send is off.</b> Nothing sends until Service Questionnaire &rarr; Transition: go live.</p>') +
     '<table cellpadding="0" cellspacing="0"><tr>' + tile(a.reach.sent, 'letters sent') + tile(a.response.answered, 'clients answered') + tile(a.rate + '%', 'response') +
     tile(a.riskOpen, 'to act on') + tile(a.reviews.total, 'reviews') + '</tr></table>' +
     h3('What it means') + '<ul style="margin:0;padding-left:20px">' + a.lines.map(function (l) { return '<li style="margin:4px 0">' + esc(l) + '</li>'; }).join('') + '</ul>';
@@ -1850,7 +1897,7 @@ function transitionDigest() {
     '<h2 style="font:800 20px Arial,sans-serif;color:#12202e;margin:0 0 4px">Transition — ' + s.at + '</h2>' +
     '<p style="margin:0 0 14px;color:#64798e">Sends, taps, reviews and verdicts. The live page has the detail; the Monday report reads the answers.</p>' +
     (s.armed ? '' : '<p style="margin:0 0 14px;padding:10px 14px;background:#fdeeea;border-left:4px solid #b3261e;color:#8a3324">' +
-      '<b>The hourly send is off.</b> The Test rows still go by hand; nothing else sends until Service Questionnaire &rarr; Transition: go live.</p>') +
+      '<b>The send is off.</b> The Test rows still go by hand; nothing else sends until Service Questionnaire &rarr; Transition: go live.</p>') +
     '<table cellpadding="0" cellspacing="0"><tr>' + tile(s.totals.sent, 'letters sent') + tile(s.totals.waiting, 'waiting') +
     tile(s.taps.total, 'taps') + tile(s.reviews.total, 'reviews') + tile(s.taps.late.length, 'late') + '</tr></table>' +
     insight +
