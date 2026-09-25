@@ -1073,7 +1073,10 @@ function tStop_(event, err) {
   return tSay_(event + ': ' + msg);
 }
 
-/** The rows marked Test = Y, now. Ignores the hours and the live switch. Each sends once. */
+/** The rows marked Test = Y, now. Ignores the hours and the live switch. Every press sends them all
+ *  again: the Test rows are staff standing in as clients, and a test is run as often as the letters
+ *  change (24 September, evening: the cells to clear could not be found, and the menu said "no unsent
+ *  rows"), so Sent at and Status are simply overwritten. */
 function transitionSendTest() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return tSay_('another send is running');
@@ -1086,9 +1089,9 @@ function tSendTest_() {
   try { t = tRead_(); } catch (err) { return tStop_('stopped', err); }
   try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
   var rows = t.rows.filter(function (r) {
-    return tYes_(r.Test) && !tHeld_(r.Exclude) && !tText_(r['Sent at']) && tText_(r.Segment);
+    return tYes_(r.Test) && !tHeld_(r.Exclude) && tText_(r.Segment);
   });
-  if (!rows.length) return tSay_('No unsent rows marked Test = Y.');
+  if (!rows.length) return tSay_('No rows marked Test = Y.');
   var res = tSendRows_(t, rows, letters);
   var msg = 'Test: ' + res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed.';
   log_('transition', 'test', msg);
