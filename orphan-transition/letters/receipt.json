@@ -89,6 +89,10 @@
     "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
     "Someone already has. Call me"
    ],
+   "checkfirst_no": [
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "I will decide myself"
+   ],
    "stay_yes": [
     "Would you like our branch team to keep looking after your policy?",
     "Yes, keep looking after it"
@@ -229,6 +233,7 @@
    "I have paid a premium that is not showing.",
    "I know it, thank you",
    "I want an agent now. Let me tell you my concerns first.",
+   "I will decide myself",
    "I would rather not proceed.",
    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
    "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
@@ -324,6 +329,11 @@
      "Someone already has. Call me",
      "callme",
      "approached_yes"
+    ],
+    [
+     "I will decide myself",
+     "informed",
+     "checkfirst_no"
     ]
    ]
   ],

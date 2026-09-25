@@ -166,8 +166,11 @@ QUESTIONS = {
                 [('Yes, update my cover', 'callme', 'life_changed'), ('No, all the same', 'informed', 'life_same')]),
  'pays':       ('Would you like us to confirm, in plain words, exactly what your policy pays and to whom?',
                 [('Yes, please confirm it', 'callme', 'pays_confirm'), ('I know it, thank you', 'informed', 'pays_known')]),
+ # the third answer is the polite way out: a question with no soft exit lowers response (Dillman's Tailored
+ # Design; Tourangeau & Yan 2007 on intrusive questions), and a client who keeps the choice keeps reading
  'checkfirst': ('If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?',
-                [('Yes, always check with me first', 'informed', 'checkfirst_yes'), ('Someone already has. Call me', 'callme', 'approached_yes')]),
+                [('Yes, always check with me first', 'informed', 'checkfirst_yes'), ('Someone already has. Call me', 'callme', 'approached_yes'),
+                 ('I will decide myself', 'informed', 'checkfirst_no')]),
  'stay':       ('Would you like our branch team to keep looking after your policy?',
                 [('Yes, keep looking after it', 'informed', 'stay_yes'), ('Let\'s talk it through first', 'callme', 'stay_talk')]),
  # the lapsed letter: the free look at what the policy still holds, offered as a question
@@ -203,6 +206,7 @@ SAID_Q = {
  'pays_known':     'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
  'checkfirst_yes': 'Thank you. Whenever a change is put to you, one tap or one call and we check it with you, free, before you decide.',
  'approached_yes': 'Thank you for telling us. A person calls you before you decide anything, so you have the full picture first.',
+ 'checkfirst_no':  'Understood. The offer stands whenever you want it, free, and nothing about your policy changes.',
  'stay_yes':       'Thank you. Your file stays with our branch team, and the same people keep looking after it.',
  'stay_talk':      'Of course. Someone from the branch calls you today or tomorrow to talk it through, no pressure.',
  'value_yes':      'Thank you. We find out what your policy still holds and call you with the answer.',
