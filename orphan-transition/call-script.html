@@ -28,107 +28,145 @@
   .seg{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:14px 17px;margin:10px 0}
   .seg .k{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--tdark)}
   .seg .say{margin:8px 0 0}
+  .fam{font-family:var(--f);font-weight:800;font-size:15px;color:var(--ink);margin:16px 0 2px;padding-bottom:4px;border-bottom:2px solid var(--gold)}
+  .fam span{font-weight:500;color:var(--dim);font-size:13px}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:11px 15px;margin:8px 0;font-size:14.5px}
+  .q b{color:var(--ink)} .q em{font-style:normal;color:var(--dim);font-size:13px;display:block;margin-top:3px}
   .no{background:var(--stopbg);border:1px solid #edc9bf;border-left:4px solid var(--stop);border-radius:9px;padding:13px 16px;margin:14px 0 0}
   .no b{color:var(--stop);display:block;font-family:var(--f);font-size:12.5px;margin-bottom:4px}
   .ok{background:var(--okbg);border:1px solid #c8e3d6;border-left:4px solid var(--ok);border-radius:9px;padding:13px 16px;margin:14px 0 0}
   .ok b{color:var(--ok);display:block;font-family:var(--f);font-size:12.5px;margin-bottom:4px}
   ul{margin:6px 0 0;padding-left:18px} li{margin:5px 0}
+  ol.steps{margin:6px 0 0;padding-left:20px} ol.steps li{margin:6px 0}
   .f{color:#8a6420;font-family:ui-monospace,Menlo,monospace;font-size:13px}
 </style>
 </head>
 <body>
 <header><div class="in"><img src="../logo-mark.png" alt="">
-  <div><b>Ricky Rampersad Branch</b><i>Call script &middot; clients with no e-mail</i></div></div></header>
+  <div><b>Ricky Rampersad Branch</b><i>Call script &middot; clients with no e-mail on file</i></div></div></header>
 <div class="wrap">
-  <h1>The call, for the third of the book we cannot e-mail</h1>
-  <p class="sub">Same shape as the letter: something they are glad to hear first, the change in one neutral
-    sentence, the two doors, and out. Under four minutes unless they want longer. Never a script read aloud
-    &mdash; the words below are the shape, not the lines.</p>
+  <h1>The call, for the clients we cannot e-mail</h1>
+  <p class="sub">The call is the letter, spoken: who is calling, the notice in one sentence, the reason for the call
+    by letter, the same questions, what happens next, and out. The call list gives you the letter the client would
+    have had, the facts off the sheet, one line on why we are calling, and the client's own answer link. Under five
+    minutes unless they want longer. The words below are the shape, not lines to read aloud.</p>
 
   <h2>1 &middot; Who is calling, and why it is not a sales call</h2>
   <div class="say">&ldquo;Good morning, is that <span class="f">{{first_name}}</span>? It's
-    <span class="f">{{caller}}</span> from the Ricky Rampersad Branch of Guardian Life &mdash; the branch that
-    looks after your policy. This isn't a sales call; I'm ringing about something on your file you should
-    know about.&rdquo;
+    <span class="f">{{caller}}</span> from the Ricky Rampersad Branch of Guardian Life, the branch that looks after
+    your policy. This isn't a sales call; I'm ringing about something on your file you should know about.&rdquo;
     <i>Then stop. Let them answer. If it is a bad time, take a time and end the call.</i></div>
 
-  <h2>2 &middot; The reason for the call &mdash; by segment</h2>
-  <div class="seg"><div class="k">A &middot; a policy has matured</div>
-    <div class="say">&ldquo;One of your policies reached the end of its term and has matured. That money is
-      yours and it's sitting there waiting to be claimed. I'd rather you had it than not.&rdquo;
-      <i>The only call nobody resents. Lead with this and nothing else.</i></div></div>
-  <div class="seg"><div class="k">E &middot; held ten years or more</div>
-    <div class="say">&ldquo;You've held your policy with us for <span class="f">{{years}}</span> years.
-      Something people don't usually get told: your premium was fixed on the age you were when you started.
-      You're still paying <span class="f">{{years}}</span>-years-ago prices, and nobody can sell you that
-      again &mdash; not us, not anyone.&rdquo;</div></div>
-  <div class="seg"><div class="k">C &middot; carrying waiver of premium</div>
-    <div class="say">&ldquo;Your policy carries something called a waiver of premium. In plain terms, if
-      illness or injury stopped you working, Guardian would keep paying your premiums for you. You've been
-      paying for that all along, and most people who have it were never told.&rdquo;</div></div>
-  <div class="seg"><div class="k">F &middot; in force</div>
-    <div class="say">&ldquo;I'm calling everyone the branch looks after to make sure we can still reach you,
-      and to tell you what your policy is actually worth today &mdash; most people have never been shown.&rdquo;</div></div>
-  <div class="seg"><div class="k">D &middot; collected off a payroll</div>
-    <div class="say">&ldquo;Your premium comes off your salary. Those arrangements sometimes stop quietly
-      when an employer or a payroll system changes, so we're checking yours this week. You don't need to do
-      anything &mdash; if something's slipped, we'll find it and come back to you with the options.&rdquo;
-      <i>The word &ldquo;arrears&rdquo; is not said. If they ask whether they owe money: &ldquo;that's exactly what we're checking, and until we have, you don't.&rdquo;</i></div></div>
+  <h2>2 &middot; The notice, in one sentence</h2>
+  <div class="say">&ldquo;Your representative, <span class="f">{{agent_first_name}}</span>, has moved on from
+    Guardian Life. Your policy has not: same cover, same premium, same beneficiaries. I wanted you to hear that
+    from us.&rdquo;
+    <i>No reason, no tone. If they ask what happened: &ldquo;they've moved on, and I honestly don't have more than that.&rdquo; Then back to their policy.</i></div>
+  <div class="seg"><div class="k">Letters T and T1 only &middot; the book of the agent whose contract was terminated</div>
+    <div class="say">&ldquo;Guardian Life of the Caribbean terminated the contract of your agent,
+      <span class="f">{{agent_name}}</span>, with immediate effect on <span class="f">{{terminated_on}}</span>, as
+      a result of an investigation. He is no longer authorised to conduct any business on behalf of Guardian Life.
+      Your policy is not affected: it remains with Guardian Life, looked after by our branch team.&rdquo;
+      <i>The company's own notice, and nothing else. Never why, never the grounds. Then: &ldquo;Has he been in touch with you since that date?&rdquo; A yes means a person calls them back before anything else, and nothing is signed or paid until then.</i></div></div>
+
+  <h2>3 &middot; The reason for the call &mdash; by letter</h2>
+  <p style="margin:0 0 4px;font-size:14px;color:var(--dim)">The list says which letter. The facts beside it (with us since, paid to, days, the dates) are the ones the letter would have printed: use them, and never a money figure.</p>
+
+  <div class="fam">Notice <span>&middot; T, T1 &middot; the notice above is the reason; then the questions</span></div>
+
+  <div class="fam">Action <span>&middot; something to finish</span></div>
+  <div class="seg"><div class="k">J &middot; contract handed over for delivery, never acknowledged</div>
+    <div class="say">&ldquo;Your policy is in force. Our record shows your contract was handed over for delivery on
+      <span class="f">{{collected_on}}</span> and was never acknowledged as received. Our own standard is delivery
+      within 28 days. Did it reach you?&rdquo;
+      <i>If not: that is ours to put right; we bring it by hand and go through every page. If they paid anything when it was brought: it counts as paid to Guardian Life, the receipt is Guardian Life's, keep it.</i></div></div>
+  <div class="seg"><div class="k">K &middot; application still in progress</div>
+    <div class="say">&ldquo;Your application is still in progress, and until the policy is issued the cover you applied
+      for isn't in place yet. Once the last requirement is in, the Act gives Guardian Life twenty business days to
+      issue it. Whatever is still needed, a medical, a document, a signature, we bring to you. Is anything you
+      were asked for still outstanding?&rdquo;</div></div>
+  <div class="seg"><div class="k">I &middot; a premium showing as due</div>
+    <div class="say">&ldquo;A premium is showing as due on your policy, paid to <span class="f">{{paid_to}}</span>.
+      It's usually one of three simple things: paid and not yet recorded, a change in how you pay, or it slipped
+      past. Which is it for you?&rdquo;
+      <i>&ldquo;Arrears&rdquo; is never said. A premium handed to a representative counts as paid: ask for the receipt, and nothing can be forfeited without a written notice and twenty business days.</i></div></div>
+
+  <div class="fam">Keep <span>&middot; in force &middot; the feedback letter, by how long they have been with us</span></div>
+  <div class="seg"><div class="k">F1 &middot; under two years</div>
+    <div class="say">&ldquo;Your policy is still new, and nothing about it has changed. How has the start been for
+      you? And would a plain-words walk-through of what it does help?&rdquo;</div></div>
+  <div class="seg"><div class="k">F2 &middot; two to three years</div>
+    <div class="say">&ldquo;A couple of years in, nothing has changed. Has life moved on since you took it out: a new
+      home, a new job, someone new in the family?&rdquo;</div></div>
+  <div class="seg"><div class="k">F3 &middot; three to five years</div>
+    <div class="say">&ldquo;Everything your policy has built over these years is still yours. Would you like to know
+      what it has built so far?&rdquo;</div></div>
+  <div class="seg"><div class="k">F4 &middot; five to ten years</div>
+    <div class="say">&ldquo;You've trusted us with your cover for years, and every one of them still counts. How have
+      we done over that time?&rdquo;</div></div>
+  <div class="seg"><div class="k">F5 &middot; ten years or more</div>
+    <div class="say">&ldquo;More than ten years with us, and every year of it is still yours. Thank you. Your view
+      matters most: how have we looked after you? And is there anything more you'd want your cover to do now:
+      family, retirement, health?&rdquo;</div></div>
+  <div class="seg"><div class="k">R1, R2 &middot; cover that ended and started again</div>
+    <div class="say">&ldquo;Our records show cover of yours that ended and started again along the way. We'd like to
+      go through your file with you, free: what carried over, what started again, and who your policy pays.&rdquo;
+      <i>Never how it happened, never by whom.</i></div></div>
+
+  <div class="fam">Return <span>&middot; lapsed or matured</span></div>
   <div class="seg"><div class="k">G &middot; lapsed</div>
-    <div class="say">&ldquo;You held a policy with us that stopped being paid a while back. People assume
-      that's the end of it &mdash; often it isn't. Some keep a value that's still yours, some can be restarted.
-      I'd like to tell you what yours is worth.&rdquo;</div></div>
+    <div class="say">&ldquo;You held a policy with us that stopped being paid a while back. People assume that's the
+      end of it, and often it isn't: some keep a value that's still yours, some can simply start again. May we find
+      out which is true of yours, free?&rdquo;</div></div>
+  <div class="seg"><div class="k">A &middot; matured</div>
+    <div class="say">&ldquo;One of your policies has reached the end of its term. That money is yours, and we bring
+      the form and walk it through with you.&rdquo;
+      <i>The only call nobody resents. A cheque in their name must reach them within five business days of anyone receiving it for them.</i></div></div>
 
-  <h2>3 &middot; The change, in one sentence</h2>
-  <div class="say">&ldquo;You may already know your representative, <span class="f">{{agent_first_name}}</span>,
-    has moved on from Guardian Life. Your policy is completely unaffected &mdash; same cover, same premium,
-    same beneficiaries. I wanted you to hear that from us.&rdquo;
-    <i>No reason given. No tone. If they ask what happened: &ldquo;they've moved on &mdash; I honestly don't have more than that.&rdquo; And then back to their policy.</i></div>
+  <h2>4 &middot; The questions, asked aloud</h2>
+  <p style="margin:0 0 4px;font-size:14px;color:var(--dim)">The same ones the letter asks, in the letter's order. Ask, then wait. &ldquo;Not sure&rdquo; is an answer, and a good one to hear.</p>
+  <div class="q"><b>How have we looked after you so far?</b> <em>very well &middot; well &middot; could be better. Every in-force letter opens on this.</em></div>
+  <div class="q"><b>Would you like us to confirm, in plain words, exactly what your policy pays and to whom?</b> <em>yes, please confirm it &middot; I know it. A &ldquo;yes&rdquo; is a call-back with the answer once identity is confirmed.</em></div>
+  <div class="q"><b>If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?</b>
+    <em>yes, always &middot; someone already has, call me &middot; I will decide myself. The Act says no agent or broker may cause you to discontinue or replace a policy without first discussing the advantages and the disadvantages with you. Whatever they answer, thank them and do not react; never warn that someone might.</em></div>
+  <div class="q"><b>Would you like our branch team to keep looking after your policy?</b> <em>yes, keep looking after it &middot; let's talk it through first. Always last.</em></div>
+  <div class="q"><b>By letter:</b> F2 and F4, <em>has life moved on?</em> &middot; F1, <em>a plain-words walk-through?</em> &middot; F3, <em>what it has built?</em> &middot; F5, <em>anything more the cover should do?</em> &middot; G, <em>find out, free, what it still holds?</em> &middot; J and T, <em>has your contract reached you?</em> &middot; K and T1, <em>is anything still outstanding?</em> &middot; T, <em>has he been in touch since that date, and how do you pay your premium today?</em></div>
+  <div class="q"><b>Then:</b> <em>what is the best way to reach you, and, if a call is coming, morning, afternoon or evening?</em></div>
 
-  <h2>4 &middot; The one question that matters</h2>
-  <div class="say">&ldquo;Has anyone been in touch with you about moving your policy?&rdquo;
-    <i>Not who. Just whether. Whatever they say, thank them and do not react.</i></div>
-  <div class="then"><b>If yes:</b> &ldquo;That's fine, and it's your decision. One thing worth knowing:
-    a policy can't be transferred &mdash; what's being suggested is ending this one and buying a new one at
-    your age now. Under the Insurance Act, whoever suggests it has to set out the advantages and the
-    disadvantages for you first. Ask them to put it in writing. Anyone acting properly will. If it helps, I can
-    send you a page that sets out your protections under the Act in plain words.&rdquo;
-    Then log <span class="f">approached</span> on the row, and text the link:
-    <i>rickyrampersadbranch.com/your-policy/protected</i>. Whether it was an agent, a broker or another company
-    that approached them changes nothing in this answer &mdash; the same duty binds all three.</div>
-  <div class="then"><b>If no:</b> move on. Do not warn them that someone might.</div>
+  <h2>5 &middot; Record it while they are on the line</h2>
+  <div class="then">Open the client's own link from the list (<span class="f">Record the answers here</span>) on your phone
+    or screen. Every question the letter would have asked is on that page. Tick what they told you, exactly as they
+    said it, add how to reach them and when, and press <b>Send my answers</b> once. It lands on the Client Responses
+    tab under that client, and in the reports, the same as a tap on a letter. Then repeat back what you ticked: no
+    receipt can go by e-mail to a client who has none, so on this call <b>you are the receipt</b>.</div>
+  <div class="then"><b>If they would rather have an agent now:</b> tick nothing for that; say the branch reads their
+    concerns first and then matches them to the agent who fits, with no date promised for the match, and note it in
+    Outcome on the list. <b>If they say someone has already approached them:</b> tick &ldquo;Someone already has.
+    Call me&rdquo;, say a person calls them back before they decide anything, and offer the page that sets out their
+    protections in plain words: <i>ricky rampersad branch dot com, slash your policy, slash protected</i>.</div>
 
-  <h2>5 &middot; The two doors</h2>
-  <div class="say">&ldquo;There's a short review of what you hold &mdash; about fifteen minutes. You can
-    fill it in yourself on your phone, and whoever we match you to reads it before you ever meet. Or one
-    of our agents can go through it with you, in person or on the phone. Which would you rather?&rdquo;</div>
-  <div class="then"><b>Themselves:</b> offer to text it &mdash;
-    <i>rickyrampersadbranch.com/your-policy/review?from=client</i> opens the review straight away. If they
-    would rather write it down, read it slowly: <i>&ldquo;ricky rampersad branch dot com, slash your
-    policy&rdquo;</i> &mdash; that page has the short film and the same review. Log
-    <span class="f">selfserve</span>.</div>
-  <div class="then"><b>With an agent:</b> &ldquo;Then I'll have someone call you within two working days
-    &mdash; a named person, not a department. Is this the best number?&rdquo; Log
-    <span class="f">assign</span>.</div>
-  <div class="then"><b>Neither:</b> &ldquo;That's genuinely fine. Your birthday note and premium reminders
-    carry on regardless, and we'll ask again rather than assume.&rdquo; Log <span class="f">informed</span>.</div>
+  <h2>6 &middot; What happens next, in their words</h2>
+  <div class="say">&ldquo;Here's what happens now. A person at the branch reads what you've told me today. If you asked
+    for a call, it comes today or tomorrow, at the time you chose. Once your file has been read, we introduce the
+    agent who fits it, in writing, with a name and a number.&rdquo;
+    <i>The same four steps every letter carries. Nothing else is promised, and no date for the agent.</i></div>
 
-  <h2>6 &middot; Out</h2>
+  <h2>7 &middot; Out</h2>
   <div class="say">&ldquo;Thank you for the time. If anything comes up, the branch answers on
-    <span class="f">{{branch_phone}}</span> &mdash; a person, not a menu.&rdquo;</div>
+    <span class="f">{{branch_phone}}</span>: a person, not a menu.&rdquo;</div>
 
   <div class="no"><b>Never, on any call</b>
     <ul style="margin:0">
-      <li>Name, describe or explain the agent who left.</li>
-      <li>Tell a client they are in arrears. The figure is not reconciled.</li>
+      <li>Name, describe or explain anyone who left. Letters T and T1 carry the company's notice, and nothing beyond it.</li>
+      <li>Tell a client they are in arrears, or quote a money figure. Days and dates only.</li>
       <li>Warn a client that someone may approach them. Ask whether someone has; nothing more.</li>
-      <li>Offer anything &mdash; a discount, a visit, a favour &mdash; to stay.</li>
-      <li>Read the segment line to a client whose row is in segment 0. Those rows are not on the call list.</li>
+      <li>Offer anything, a discount, a visit, a favour, to stay.</li>
+      <li>Read a T line to a client who is not on that book, or call a row the list holds for a person to check first.</li>
     </ul></div>
-  <div class="ok"><b>After every call, on the sheet</b>
-    The response (<span class="f">selfserve</span> / <span class="f">assign</span> /
-    <span class="f">informed</span> / <span class="f">no answer</span>), the best number, and whether they
-    said anyone had approached them. Two lines. It is the only record the branch will have of this call.</div>
+  <div class="ok"><b>After every call, on the list</b>
+    Caller, called on, reached (yes, no answer, wrong number), and the outcome in a few words. The answers themselves
+    live on the client's link, ticked while they were on the line; the list is the record that the call was made.
+    Three tries on three different days before a row is marked not reached.</div>
 </div>
 <!-- rrb-views -->
 <script>
