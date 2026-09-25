@@ -26,7 +26,7 @@
     /* type, sized for a television read from across a room, and folded down for a phone */
     --eyebrow:clamp(12px,1.05vw,20px);
     --h2:clamp(26px,3.3vw,62px);
-    --hero:clamp(92px,19vw,300px);
+    --hero:clamp(92px,20vw,340px);
     --big:clamp(30px,3.6vw,68px);
     --body:clamp(14px,1.35vw,26px);
     --small:clamp(12px,1vw,19px);
@@ -51,8 +51,9 @@
   header{display:flex;align-items:center;gap:clamp(10px,1vw,18px);padding:clamp(10px,1.4vh,18px) var(--gut);flex:none}
   .mark{width:clamp(36px,3vw,58px);height:clamp(36px,3vw,58px);flex:none;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
   .mark img{width:100%;height:100%;display:block}
-  .ttl{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.3vw,25px);letter-spacing:-.3px;line-height:1.15}
+  .ttl{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.3vw,25px);letter-spacing:-.3px;line-height:1.15;white-space:nowrap;min-width:0}
   .ttl span{display:block;font-family:var(--b);font-weight:500;font-size:clamp(11px,.85vw,16px);color:var(--dim)}
+  .ttl .sub2{display:none}
   header .right{margin-left:auto;display:flex;align-items:center;gap:clamp(10px,1.2vw,22px);min-width:0}
   .stamp{font-size:clamp(11px,.9vw,17px);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .stamp.retry{color:var(--gold)}
@@ -116,13 +117,13 @@
   h3{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0 0 clamp(6px,1vh,12px)}
 
   /* ── the feed cards ───────────────────────────────────────────────── */
-  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,20px);flex:1;min-height:0;align-content:start}
+  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-rows:minmax(0,1fr);gap:clamp(10px,1.2vw,20px);flex:1;min-height:0}
   .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(12px,1.8vh,24px) clamp(12px,1.4vw,24px);min-width:0;
     display:flex;flex-direction:column;gap:clamp(4px,.8vh,10px)}
   .card.urgent{border-color:rgba(239,194,75,.75);box-shadow:inset 0 0 0 1px rgba(239,194,75,.45);
     background:linear-gradient(180deg,rgba(239,194,75,.13),transparent 70%),var(--card)}
   .card .who{font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .card .said{font-size:var(--body);font-weight:600;line-height:1.3}
+  .card .said{font-size:calc(var(--body) * 1.12);font-weight:600;line-height:1.3}
   .card.urgent .said{color:var(--gold)}
   .card .ltr{font-size:var(--small);color:var(--dim);line-height:1.3}
   .card .tm{font-size:var(--small);color:var(--faint);font-variant-numeric:tabular-nums;margin-top:auto}
@@ -140,8 +141,9 @@
   .age{font-family:var(--f);font-weight:800;font-size:var(--body);color:var(--stop);font-variant-numeric:tabular-nums;white-space:nowrap}
 
   /* ── the promise ──────────────────────────────────────────────────── */
-  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,22px);margin:clamp(8px,1.6vh,24px) 0}
-  .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2.2vh,30px) clamp(12px,1.4vw,26px);min-width:0}
+  .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,22px);margin:clamp(8px,1.6vh,24px) 0;flex:1;min-height:0}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2.2vh,30px) clamp(12px,1.4vw,26px);min-width:0;
+    display:flex;flex-direction:column;justify-content:center}
   .step i{display:grid;place-items:center;width:clamp(30px,2.6vw,50px);height:clamp(30px,2.6vw,50px);border-radius:12px;
     background:linear-gradient(135deg,var(--gold),var(--gold2));color:#07131f;font:800 clamp(14px,1.2vw,22px) var(--f);font-style:normal;margin-bottom:clamp(8px,1.4vh,18px)}
   .step b{display:block;font-family:var(--f);font-weight:800;font-size:calc(var(--body) * 1.15);letter-spacing:-.02em;line-height:1.2}
@@ -173,10 +175,12 @@
   /* ── phone ────────────────────────────────────────────────────────── */
   @media(max-width:700px){
     :root{--gut:16px;--hero:clamp(72px,22vw,96px);--big:22px;--body:15px;--small:12px;--h2:24px;--eyebrow:11px}
-    .ttl span,.live{display:none}
-    .stamp{font-size:11px;max-width:150px}
+    /* the stamp moves under the title, where the branch name sits on a television */
+    .ttl .sub,.live,header .right .stamp{display:none}
+    .ttl .sub2{display:block;font-size:11px}
     .two{grid-template-columns:1fr;gap:14px}
-    .facts{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+    .facts{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .fact.good{grid-column:1/-1}
     .fact{padding:10px;border-radius:12px} .fact b{font-size:18px}
     .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
     .card{padding:10px 12px;border-radius:12px;gap:3px} .card .who{font-size:20px}
@@ -196,7 +200,7 @@
 
 <header>
   <div class="mark"><img src="../logo-mark.png" alt=""></div>
-  <div class="ttl">Transition &middot; live<span>Ricky Rampersad Branch</span></div>
+  <div class="ttl">Transition &middot; live<span class="sub">Ricky Rampersad Branch</span><span class="sub2 stamp" id="stamp2"></span></div>
   <div class="right">
     <span class="stamp" id="stamp"></span>
     <span class="live" id="live" hidden><i></i>live</span>
@@ -348,12 +352,15 @@ function parseWhen(s, year) {             /* "25 Sep 08:47", the year from `at` 
 }
 function dayKey(s) { var m = /^(\d{1,2} \w{3})\b/.exec(String(s || '').trim()); return m ? m[1].toLowerCase() : ''; }
 
-/* ── a bar chart, drawn as SVG to the width it has ─────────────────── */
-function barChart(el, rows, empty) {
+/* ── a bar chart, drawn as SVG to the width it has, and the height it has
+   down to the foot of the slide, so six rows use a television and ten fit a phone ── */
+function barChart(el, rows, empty, reserve) {
   if (!rows.length) { el.innerHTML = '<div class="empty">' + esc(empty) + '</div>'; return; }
   var W = Math.max(200, el.clientWidth || 600), phone = W < 560;
   var fs = phone ? 13 : Math.max(15, Math.min(25, W * 0.024));
-  var bh = phone ? 14 : 22, rh = Math.round(fs * 2.3);
+  var deckEl = document.getElementById('deck'), avail = 0;
+  try { avail = deckEl.clientHeight - (el.getBoundingClientRect().top - deckEl.getBoundingClientRect().top) - (reserve || 0) - (phone ? 20 : 50); } catch (e) {}
+  var bh = phone ? 14 : 22, rh = Math.round(Math.min(fs * 3.4, Math.max(fs * 2.3, avail / rows.length)));
   var max = Math.max(1, Math.max.apply(null, rows.map(function (r) { return r.value; })));
   var longest = Math.max.apply(null, rows.map(function (r) { return r.label.length; }));
   var labW = Math.min(Math.round(W * 0.42), Math.round(longest * fs * 0.56) + 6);
@@ -447,7 +454,7 @@ function render(d) {
   var bookRows = Object.keys(books).sort(function (a, b) { return books[b] - books[a] || a.localeCompare(b); })
     .map(function (k) { return { label: k, value: books[k], kind: 'book' }; });
   if (bookRows.length > 9) { var rest = bookRows.slice(8).reduce(function (a, r) { return a + r.value; }, 0); bookRows = bookRows.slice(0, 8).concat([{ label: 'Other books', value: rest, kind: 'book' }]); }
-  barChart($('#bookChart'), bookRows, 'No answers yet, so nothing to count by book.');
+  barChart($('#bookChart'), bookRows, 'No answers yet, so nothing to count by book.', 60);
 
   /* 5 · waiting for a name */
   var late = (taps.late || []).filter(function (it) { return !isTest(it); }).map(function (it) {
@@ -509,11 +516,11 @@ setInterval(function () {
 var updatedAt = null, nextAt = 0, retrying = false;
 function clock() {
   set('clk', hhmm(new Date()));
-  var s = $('#stamp');
-  if (!updatedAt) { s.textContent = ''; return; }
-  var left = Math.max(0, Math.ceil((nextAt - Date.now()) / 1000));
-  s.textContent = 'updated ' + hhmm(updatedAt) + ' · ' + (document.hidden ? 'paused while hidden' : (retrying ? 'could not refresh, retrying in ' + left + ' s' : 'next in ' + left + ' s'));
-  s.className = 'stamp' + (retrying ? ' retry' : '');
+  var text = '', left = Math.max(0, Math.ceil((nextAt - Date.now()) / 1000));
+  if (updatedAt) text = 'updated ' + hhmm(updatedAt) + ' · ' + (document.hidden ? 'paused while hidden' : (retrying ? 'could not refresh, retrying in ' + left + ' s' : 'next in ' + left + ' s'));
+  $('#stamp').textContent = text; $('#stamp2').textContent = text;
+  $('#stamp').className = 'stamp' + (retrying ? ' retry' : '');
+  $('#stamp2').className = 'sub2 stamp' + (retrying ? ' retry' : '');
   $('#live').className = 'live' + (retrying ? ' off' : '');
 }
 setInterval(clock, 1000); clock();
@@ -548,10 +555,10 @@ function load() {
    Only a refused code sends the viewer back to the gate. */
 function fail(msg, refused) {
   if (open && !refused) { retrying = true; clock(); schedule(POLL); return; }
-  clearTimeout(timer); timer = null; open = false; D = null; updatedAt = null;
+  clearTimeout(timer); timer = null; open = false; D = null; updatedAt = null; retrying = false;
   var e = $('#gateErr'); e.textContent = msg; e.style.display = 'block';
   $('#gate').style.display = 'block'; deck.hidden = true; $('#foot').hidden = true; $('#live').hidden = true;
-  $('#stamp').textContent = '';
+  clock();
 }
 document.addEventListener('visibilitychange', function () {
   if (document.hidden) { clearTimeout(timer); timer = null; }
