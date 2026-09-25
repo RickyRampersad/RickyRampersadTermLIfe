@@ -285,6 +285,34 @@ If the post fails, **the page says so to the employer**. A comment they
 watched appear on their own screen while it silently failed to reach the
 person who has to act on it is the worst of the three outcomes.
 
+## Policy status is written thirteen ways, so it is matched by pattern
+
+Counted 25 September 2026 across the branch's whole group book — life, health
+and pension, the records the employer screens read. `bClassify_` matched
+statuses by exact string, and an exact string does not survive this field.
+
+The costly one was **`Premium paying (Inforce)`, 168 records** — 167 of them
+group pension. Live cover, premiums being paid, and the engine called it
+`unknown`: not counted as covered, not shown as ended, simply absent from the
+employer's own screen. Beside it, **`Lapsed with Value` (158)** and a seventh
+spelling of lapse, four phrasings of "underwriting incomplete", four
+`Rejected - …` variants, one `Terminated`, and one record reading
+**`premiu paying`** — a dropped m, typed once, which left that person off
+their employer's covered list.
+
+So lapse, rejection, termination and premium-paying are matched by pattern
+now, **in this order**, because the obvious substring rule is a trap:
+`Inforce but not taken` (7) and `Inforce but not proceeded with` (6) both
+contain "inforce" and both mean the cover never started. Test "inforce but
+not" first, or thirteen policies nobody holds get counted as covered — the
+one direction this must never fail in.
+
+After: 2,249 in force · 62 pending · 1,268 ended · **445 unknown**, down from
+just over 1,000. What is left is bare codes — `1` (240), `E` (96), `ELV`
+(29), `F` (25), `4` (24), `NPW`, `A`, `D`, `X`, `RNT`, `PCRC` — plus
+`Vested annuity` (15). **Ask Guardian what those mean; never guess one.** A
+guess here is a guess about whether somebody is covered.
+
 ## The benches carry invented people, always
 
 `benefits/test/` is tracked, and the repository root publishes to

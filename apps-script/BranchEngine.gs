@@ -1346,9 +1346,48 @@ function bClassify_(status) {
   if (hit(BEN_INFORCE)) return 'inforce';
   if (hit(BEN_PENDING)) return 'pending';
   if (hit(BEN_ENDED))   return 'ended';
+
+  /* ── the spellings, after the exact lists ──
+     Counted across the whole book on 25 September 2026, and an exact match
+     misses most of a large group each time:
+
+       Lapsed with Value                1,064   ended
+       LAPSE NO VALUE                     606   ended
+       Premium paying (Inforce)           412   IN FORCE, and invisible
+       Declined + Rejected - (×4)         193   ended
+       Underwriting Incomplete + Pending, 168   pending
+       INFORCE                              6   in force
+
+     Seven spellings of lapse and two of premium paying. Enumerating them
+     invites an eighth, so these are patterns — but ORDERED, because the
+     obvious substring rule is a trap: "Inforce but not taken" (49) and
+     "Inforce but not proceeded with" (22) both contain "inforce" and both
+     mean the cover never started. Matching "inforce" first would count 71
+     policies nobody holds as covered, which is the one direction this must
+     never fail in. */
+  var u = s.toUpperCase();
+  if (/^INFORCE\s+BUT\s+NOT/.test(u))              return 'ended';
+  if (/^LAPS/.test(u))                             return 'ended';
+  if (/^(REJECTED|DECLINED|TERMINAT)/.test(u))     return 'ended';
+  /* PREMIU\w* rather than PREMIUM, because one group life record reads
+     "premiu paying" — a dropped m, typed once, and an exact match leaves
+     that person off their own employer's covered list. */
+  if (/PREMIU\w*\s+PAYING/.test(u))                return 'inforce';
+  if (u === 'INFORCE')                             return 'inforce';
+  /* Premiums waived or finished, cover intact either way. */
+  if (/^WAIVER\s+OF\s+PREM/.test(u))               return 'inforce';
+  if (/PAID.?UP/.test(u))                          return 'inforce';
+  /* Underwriting unfinished is not on cover yet, whatever else the note
+     says — pending is both correct and the safe way to be wrong. */
+  if (/UNDERWRITING\s+(IN)?COMPLETE/.test(u))      return 'pending';
+  if (/^PENDING\b/.test(u))                        return 'pending';
+
   /* A status nobody has classified is not quietly an in-force policy. Say
-     unknown and let a person look — 26 different values sit in this field on
-     one account alone, several of them bare codes like "1", "E" and "X". */
+     unknown and let a person look. What is left here is the bare codes —
+     "1" (696), "E" (174), "B" (112), "ELV" (112), "RPP" (117), "NPW"/1/2/3,
+     "PERU", "4", "X", "F", "H", "A", "D" — plus "Vested annuity" (19) and
+     "Settled" (7). Those need Guardian to say what they mean; a guess here
+     would be a guess about whether somebody is covered. */
   return 'unknown';
 }
 
