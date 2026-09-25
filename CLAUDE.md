@@ -674,38 +674,46 @@ voice under the new timing and the caption gives it away.
   full review is one line under the taps ("Would you rather tell us in your
   own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
   the letters, and the page a tap opens, are both written from it.
-- **Every answer is a reply, not a page.** Decided the evening of 24
-  September 2026, after the first Test letters were read on a phone: "when
+- **Every answer opens the page; the reply mode is built, tested and
+  switched off.** Three decisions in an hour on the evening of 24
+  September 2026, after the first Test letters were read on a phone. "When
   you are clicking on the question its opening the browser and this is not
   supposed to be happening, its supposed to be inside the email for easy
-  use", then "for all it should not open any browsers". An e-mail cannot
-  record a tap by itself, so every check and every tap is a `mailto:` to
-  support@ (`reply_link` in build-letters.py): the answer as the subject,
-  the question and the answer as the first lines of the body, a spare line
-  for anything more, and on the last line `Ref: <token> <tap> <answer>`. The
-  two doors that were the questionnaire ("I want an agent now", the full
-  review) are replies too, whose body asks the client to write their
-  concerns (`REPLY_LINES`); the words they write are quoted back in the
-  receipt. Only the film and the law page open anything, because a video
-  cannot play inside an e-mail. `transitionInbox` (Transition.gs, every
-  five minutes, installed by setup and go live) reads the support@ inbox
-  through Graph, needs the application permission **Mail.Read** with admin
-  consent on the same Entra app, changes nothing in the mailbox (a reply
-  stays unread for the team), files each reply on Client Responses exactly
-  as the page filed a tap (`Page` = `/reply?q=…`, `Referrer` = `reply
-  <message id>`, which is how a message is never filed twice), matches a
-  reply with no reference to the client by its sender address and files it
-  as a `question` with `q=wrote`, and puts the client's own words in the
-  Note cell (`tWords_` strips the pre-written lines listed in
-  `receipt.json` `reply.lines` and anything quoted beneath). The receipt
-  then offers the letter's other checks, how to reach them and, once a call
-  is coming, when, as replies of its own (`[[more]]`). A merge field can
-  never appear inside a reply body, since it is URL-encoded: the reply
-  carries QUESTIONS' own words. `tap-test.js` decodes every reply on every
-  letter and reads it as the script would; `svc/inbox-harness.js` in the
-  session scratchpad runs the reader's parsing on sample replies.
-- **The page a link opens (the film line now; every tap until 24
-  September).** `/your-policy/` with `r=` in the
+  use", then "for all it should not open any browsers": so every check and
+  tap became a `mailto:` to support@ (`reply_link` in build-letters.py: the
+  answer as the subject, the question and the answer as the first lines of
+  the body, a spare line for anything more, `Ref: <token> <tap> <answer>`
+  on the last line; the two questionnaire doors as replies whose body asks
+  for the client's words, `REPLY_LINES`). Then the first reply was tried:
+  "when i check the question and answer it moved to the email reply!!! its
+  supposed to allow me to answer all the questions and capture the
+  responses", which only the page does. Offered the three ways there are
+  (the page; one reply per answer; one reply listing every question with
+  an X to type), the manager chose the page. `ANSWER_MODE` in
+  build-letters.py is `'page'`; `'reply'` rebuilds the letters the other
+  way, and `receipt.json` `reply.mode` and `reply.form_taps` (every tap in
+  page mode) tell the receipt and the test which way the letters were
+  built, so Transition.gs needs no paste for a switch. `transitionInbox`
+  (Transition.gs, every five minutes, installed by setup and go live)
+  stays on in either mode: it reads the support@ inbox through Graph
+  (application permission **Mail.Read**, admin consent, on the same Entra
+  app), changes nothing in the mailbox (a reply stays unread for the
+  team), files a reply carrying a reference on Client Responses exactly as
+  the page files a tap (`Page` = `/reply?q=…`, `Referrer` = `reply <message
+  id>`, which is how a message is never filed twice), matches a reply with
+  no reference to the client by its sender address and files it as a
+  `question` with `q=wrote`, and puts the client's own words in the Note
+  cell (`tWords_` strips the pre-written lines in `receipt.json`
+  `reply.lines` and anything quoted beneath); the receipt quotes those
+  words back. So a client who simply replies to a letter is captured with
+  what they wrote. The receipt offers the letter's other checks, how to
+  reach them and, once a call is coming, when (`[[more]]`), as page links
+  or replies to match. A merge field can never appear inside a reply body,
+  since it is URL-encoded: a reply carries QUESTIONS' own words.
+  `tap-test.js` checks whichever mode the letters were built in;
+  `svc/inbox-harness.js` in the session scratchpad runs the reader's
+  parsing on sample replies.
+- **A tap opens one small page, at once.** `/your-policy/` with `r=` in the
   address is the whole journey: it records the answer, says what happens
   next, and offers the letter's other checks and *What is the best way to
   reach you?* one tap each on the page, without loading the film page or the

@@ -38,21 +38,23 @@ PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s=
 # so the client states their concerns before anyone is named.
 TAP = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
 
-# ── every answer is a reply, not a page ──────────────────────────────
-# 24 September 2026, evening: "when you are clicking on the question its
-# opening the browser and this is not supposed to be happening, its supposed
-# to be inside the email for easy use". An e-mail cannot record a tap by
-# itself, so the nearest thing to answering inside it is a reply: each check
-# and each tap opens a pre-written reply to support@ in the client's own mail
-# app, and Transition.gs (transitionInbox, every five minutes) files it from
-# the inbox exactly as a tap on the page was filed. Every answer, the two
-# questionnaire doors included ("for all it should not open any browsers"):
-# "I want an agent now" and the full review are replies whose body asks the
-# client to write, and the words they write are quoted back in the receipt.
-# Only the film and the law page still open anything, because a video cannot
-# play inside an e-mail. The last line of the reply carries the reference the
-# script reads, "Ref: <token> <tap> <answer>"; a reply with no reference is
-# matched to the client by the address it came from and filed as a question.
+# ── how an answer travels: the page, or a reply ──────────────────────
+# 24 September 2026, evening, three decisions in an hour. First: "when you are
+# clicking on the question its opening the browser and this is not supposed
+# to be happening, its supposed to be inside the email for easy use", then
+# "for all it should not open any browsers". An e-mail cannot record a tap by
+# itself, so every check and tap became a pre-written reply to support@
+# (reply_link below), filed from the inbox by Transition.gs (transitionInbox).
+# Then the first reply was tried on a phone: "when i check the question and
+# answer it moved to the email reply!!! its supposed to allow me to answer all
+# the questions and capture the responses" — which only the page can do: every
+# box ticks in place, all the questions on one screen, recorded at once,
+# nothing to send. Offered the three ways there are (the page; one reply per
+# answer; one reply with every question and an X to type), the manager chose
+# the page. So ANSWER_MODE is 'page', the reply mode is kept complete and
+# switchable, and the inbox reader stays on regardless: a client who simply
+# replies to the letter is filed too, with their words.
+ANSWER_MODE = 'page'   # 'page': every box and tap opens /your-policy/ (recorded on arrival) · 'reply': a mailto to support@
 REPLY_TO = 'support@rickyrampersadbranch.com'
 REPLY_MORE = 'You can add anything you would like us to know here.'
 FORM_TAPS = ()   # none: every tap is a reply. Kept so the receipt and the test know the rule.
@@ -72,8 +74,9 @@ def reply_link(subject, lines, r, q='', more=True):
 
 
 def tap_href(cfg, r):
-    """Where a tap goes: a reply. The two doors that ask for words carry their own prompt instead of the spare line."""
-    if r in FORM_TAPS:
+    """Where a tap goes: the page (ANSWER_MODE 'page'), or a reply. In reply mode the two doors that ask for
+    words carry their own prompt instead of the spare line."""
+    if ANSWER_MODE == 'page' or r in FORM_TAPS:
         return TAP + r
     label = tap(cfg, r)[0]
     if r in REPLY_LINES:
@@ -82,9 +85,9 @@ def tap_href(cfg, r):
 
 
 def answer_href(q, label, tapkey, ans):
-    """Where a check's answer goes: a reply carrying QUESTIONS' own words, never a merge field, since a URL-encoded
-    body cannot carry one. An answer that asks for the client's words ('talk to me first') carries that door's prompt."""
-    if tapkey in FORM_TAPS:
+    """Where a check's answer goes: the page, which records it on arrival and offers the rest, or in reply mode a
+    reply carrying QUESTIONS' own words, never a merge field, since a URL-encoded body cannot carry one."""
+    if ANSWER_MODE == 'page' or tapkey in FORM_TAPS:
         return TAP + tapkey + '&q=' + ans
     if tapkey in REPLY_LINES:
         return reply_link(label, [QUESTIONS[q][0], label, ''] + REPLY_LINES[tapkey], tapkey, ans, more=False)
@@ -1133,7 +1136,10 @@ PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Carib
 # the replies: what the inbox reader strips from a reply to find the client's own words (every pre-written
 # line a reply can carry), and what the receipt needs to offer the other checks as replies of its own
 _ALL_Q = list(QUESTIONS.values()) + [REACH, WHEN]
-REPLY = {'to': REPLY_TO, 'more': REPLY_MORE, 'page': 'https://rickyrampersadbranch.com/your-policy/', 'form_taps': list(FORM_TAPS),
+# form_taps: the taps whose answers the receipt's own "anything else" block sends to the page rather than to a
+# reply — every tap in page mode, so the block matches the letters without the script needing to know the mode
+REPLY = {'to': REPLY_TO, 'more': REPLY_MORE, 'mode': ANSWER_MODE, 'page': 'https://rickyrampersadbranch.com/your-policy/',
+         'form_taps': list(TAPS) if ANSWER_MODE == 'page' else list(FORM_TAPS),
          'lines': sorted({REPLY_MORE} | {q for q, _ in _ALL_Q} | {label for _, answers in _ALL_Q for label, _, _ in answers}
                          | {v[0] + '.' for v in TAPS.values()} | {t[0] + '.' for cfg in SEGMENTS.values() for t in cfg.get('tap_text', {}).values()}
                          | {l for ls in REPLY_LINES.values() for l in ls})}

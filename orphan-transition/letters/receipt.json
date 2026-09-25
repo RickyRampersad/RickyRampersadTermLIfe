@@ -178,8 +178,21 @@
  "reply": {
   "to": "support@rickyrampersadbranch.com",
   "more": "You can add anything you would like us to know here.",
+  "mode": "page",
   "page": "https://rickyrampersadbranch.com/your-policy/",
-  "form_taps": [],
+  "form_taps": [
+   "urgent",
+   "review",
+   "callme",
+   "claim",
+   "deliver",
+   "finish",
+   "paid",
+   "pay",
+   "stop",
+   "informed",
+   "question"
+  ],
   "lines": [
    "Afternoon",
    "All good, keep my details.",
