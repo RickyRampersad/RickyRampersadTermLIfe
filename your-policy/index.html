@@ -38,6 +38,9 @@ if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + locatio
   .opts button{font:inherit;font-size:15px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:9px 13px;cursor:pointer;min-height:44px}
   .opts button.on{background:var(--okbg);border-color:#9fd0b6;color:var(--ok)}
   .opts button:disabled:not(.on){opacity:.45;cursor:default}
+  .send{display:block;width:100%;margin:16px 0 4px;font:inherit;font-size:16px;font-weight:800;color:var(--gold);background:var(--navy);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:50px}
+  .send:disabled{background:var(--okbg);color:var(--ok);cursor:default}
+  #sent{margin:8px 0 0;font-size:14.5px;color:var(--ok);font-weight:700}
   .said{margin:6px 0 4px;font-size:13.5px;color:var(--ok);min-height:0}
   .mail{margin:8px 0 0;font-size:13.5px;color:var(--dim)}
   .links{margin:4px 2px 0;font-size:15px;line-height:2}
@@ -58,8 +61,11 @@ if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + locatio
     <p id="mail" class="mail" hidden></p>
   </div>
   <div class="card" id="more" hidden>
-    <h2>While you are here, one tap each</h2>
+    <h2>Every check, on this page. Tick as many as apply, then send.</h2>
+    <p class="mail" style="margin:0 0 4px">The one you tapped in the letter is already recorded and ticked.</p>
     <div id="qs"></div>
+    <button id="send" class="send" type="button">Send my answers &rarr;</button>
+    <p id="sent"></p>
   </div>
   <p class="links">
     <a id="full" href="/your-policy/review.html">Tell us in your own words: the full review &rarr;</a><br>
@@ -118,33 +124,60 @@ if (R === 'urgent' || R === 'review') {
   } else if (/^Thank you/.test(said)) document.getElementById('head').textContent = 'That is recorded.';
   document.getElementById('msg').textContent = said;
   if (CHECKS.receipts && CHECKS.receipt_line) { var ml = document.getElementById('mail'); ml.textContent = CHECKS.receipt_line; ml.hidden = false; }
-  /* the letter's other checks, how to reach them and, once a call is coming, when — one tap each on this page */
+  /* every check of the letter, how to reach them and, once a call is coming, when — on this one page,
+     the answer given in the letter already recorded and ticked, the rest ticked as many as apply and
+     sent together with one button, so the page is one form (24 September, evening: "so client has to
+     select all then click send"). Nothing else is recorded until Send. */
   var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' ? ['when'] : []);
-  var box = document.getElementById('qs'), shown = 0;
+  var box = document.getElementById('qs'), shown = 0, picked = {}, sent = false;
   function addQ(k) {
     var q = CHECKS.questions[k];
-    if (!q || document.getElementById('q-' + k) || q[1].some(function (a) { return a[2] === QQ; })) return;   /* shown, or the one they just answered */
+    if (!q || document.getElementById('q-' + k)) return;   /* shown already */
     var div = document.createElement('div'); div.className = 'q'; div.id = 'q-' + k;
     var b = document.createElement('b'); b.textContent = q[0]; div.appendChild(b);
     var row = document.createElement('div'); row.className = 'opts'; div.appendChild(row);
     var note = document.createElement('p'); note.className = 'said'; div.appendChild(note);
+    var given = q[1].some(function (a) { return a[2] === QQ; });   /* the one answered in the letter: fixed */
     q[1].forEach(function (a) {
       var btn = document.createElement('button'); btn.type = 'button';
       btn.textContent = '☐ ' + a[0];
+      if (given) {
+        btn.disabled = true;
+        if (a[2] === QQ) { btn.classList.add('on'); btn.textContent = '☑ ' + a[0]; note.textContent = CHECKS.said[a[2]] || ''; }
+      }
       btn.addEventListener('click', function () {
-        log(a[1], a[2]);
-        if (a[1] === 'urgent') { location.href = formUrl(a[2]); return; }
-        row.querySelectorAll('button').forEach(function (o) { o.disabled = true; });
+        if (sent) return;
+        /* one answer per question: a second tap on the same question changes it */
+        row.querySelectorAll('button').forEach(function (o) { o.classList.remove('on'); o.textContent = '☐ ' + o.getAttribute('data-label'); });
         btn.classList.add('on'); btn.textContent = '☑ ' + a[0];
-        note.textContent = CHECKS.said[a[2]] || '';
+        picked[k] = a;
         if (a[1] === 'callme') addQ('when');   /* an answer that brings a call asks when */
       });
+      btn.setAttribute('data-label', a[0]);
       row.appendChild(btn);
     });
     box.appendChild(div); shown++;
   }
   keys.forEach(addQ);
   if (shown) document.getElementById('more').hidden = false;
+  document.getElementById('send').addEventListener('click', function () {
+    if (sent) return;
+    var ks = Object.keys(picked), out = document.getElementById('sent');
+    if (!ks.length) { out.textContent = 'Nothing ticked yet. Tick what applies, then send.'; return; }
+    sent = true;
+    var toForm = '';
+    ks.forEach(function (k) {
+      var a = picked[k];
+      log(a[1], a[2]);
+      if (a[1] === 'urgent') toForm = a[2];
+      document.getElementById('q-' + k).querySelector('.said').textContent = CHECKS.said[a[2]] || '';
+    });
+    box.querySelectorAll('button').forEach(function (o) { o.disabled = true; });
+    var btn = document.getElementById('send'); btn.disabled = true; btn.textContent = '✓ Sent';
+    out.textContent = 'Sent. Thank you.';
+    /* "talk to me first" is the questionnaire: the answers leave first, then the form opens */
+    if (toForm) setTimeout(function () { location.href = formUrl(toForm); }, 400);
+  });
 } else {
   document.getElementById('head').textContent = 'Thank you.';
   document.getElementById('msg').textContent = 'Reply to our e-mail and a person at the branch will answer.';

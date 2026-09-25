@@ -99,22 +99,47 @@ for (const [k, [q, ans]] of Object.entries(CHECKS.questions)) for (const [label,
         check(here.startsWith('http://localhost:8765/your-policy/') && headOk && msg === want, `${seg} ${r} ${q}: "${head}" · "${msg.slice(0, 40)}"`);
         check(got.length === 1 && got[0].includes('r=' + r + '&') && got[0].includes('t=TESTTOKEN') && got[0].includes('s=' + seg) && (!q || got[0].includes('?q=' + q)),
               `${seg} ${r} ${q}: one beacon (${got.length})`);
+        // every check of the letter is on the page, the one answered in the letter already ticked
         const asked = await page.$$eval('#qs .q b', bs => bs.map(b => b.textContent));
-        const expect = (CHECKS.segments[seg] || []).concat(['reach']).concat(r === 'callme' ? ['when'] : []).map(k => CHECKS.questions[k]).filter(Q => !Q[1].some(a => a[2] === q)).map(Q => Q[0]);
-        check(JSON.stringify(asked) === JSON.stringify(expect), `${seg} ${r} ${q}: offers the other checks (${asked.length})`);
+        const expect = (CHECKS.segments[seg] || []).concat(['reach']).concat(r === 'callme' ? ['when'] : []).map(k => CHECKS.questions[k][0]);
+        check(JSON.stringify(asked) === JSON.stringify(expect), `${seg} ${r} ${q}: shows every check (${asked.length})`);
+        const on = await page.$$eval('#qs button.on', bs => bs.map(b => b.textContent));
+        check(q ? on.length === 1 && on[0] === '☑ ' + ANSWERS[q][1] : on.length === 0, `${seg} ${r} ${q}: the answer given is ticked (${on.join(', ')})`);
       }
       await page.close();
     }
   }
-  // answering on the page: a noted answer stays and ticks; "talk to me first" opens the form
+  // answering on the page: tick as many as apply, nothing leaves until Send, then every tick leaves at once
   {
     const { page, beacons } = await open(`http://localhost:8765/your-policy/?t=TESTTOKEN&s=F2&r=informed&q=rate_well`);
-    await page.click('text=☐ Phone call'); await page.waitForTimeout(300);
+    await page.click('#q-reach button:has-text("Phone call")'); await page.click('#q-whopays button:has-text("Not sure")');
+    await page.click('#q-life button:has-text("No, nothing")'); await page.waitForTimeout(300);
+    check(resp(beacons).length === 1, `on the page: ticking sends nothing yet (${resp(beacons).length})`);
+    check((await page.textContent('#qs')).includes('☑ Phone call') && (await page.textContent('#qs')).includes('☑ Not sure'), 'on the page: the ticks show');
+    check(await page.$('#q-when'), 'on the page: an answer that brings a call asks when');
+    await page.click('#q-life button:has-text("Yes: family")');   // a second tap on the same question changes the answer
+    await page.click('#send'); await page.waitForTimeout(400);
     const b = resp(beacons);
-    check(b.length === 2 && b[1].includes('r=informed&') && b[1].includes('?q=reach_phone'), `on the page: "Phone call" sends one more beacon (${b.length})`);
-    check((await page.textContent('#qs')).includes('☑ Phone call') && (await page.textContent('#qs')).includes('Noted: we will call you.'), 'on the page: the answer is ticked and acknowledged');
-    await page.click('text=☐ Yes, talk to me first'); await page.waitForTimeout(500);
-    check(page.url().includes('/your-policy/review.html?from=client&t=TESTTOKEN&type=individual&q=approached_yes'), `on the page: "talk to me first" opens the form → ${page.url()}`);
+    check(b.length === 4 && b.some(x => x.includes('?q=reach_phone')) && b.some(x => x.includes('r=callme&') && x.includes('?q=whopays_unsure')) &&
+          b.some(x => x.includes('?q=life_changed')) && !b.some(x => x.includes('?q=life_same')),
+          `on the page: Send records every tick once, the changed answer as changed (${b.length})`);
+    check((await page.textContent('#sent')).startsWith('Sent') && (await page.textContent('#qs')).includes('Noted: we will call you.'), 'on the page: sent, and acknowledged');
+    check(await page.$eval('#send', b => b.disabled), 'on the page: Send is done once');
+    await page.close();
+  }
+  // "talk to me first" ticked and sent: the answers leave, then the form opens
+  {
+    const { page, beacons } = await open(`http://localhost:8765/your-policy/?t=TESTTOKEN&s=F2&r=informed&q=rate_well`);
+    await page.click('#q-approached button:has-text("talk to me first")'); await page.click('#send'); await page.waitForTimeout(900);
+    check(resp(beacons).length === 2 && resp(beacons)[1].includes('r=urgent&') && resp(beacons)[1].includes('?q=approached_yes'), `on the page: "talk to me first" is recorded on Send (${resp(beacons).length})`);
+    check(page.url().includes('/your-policy/review.html?from=client&t=TESTTOKEN&type=individual&q=approached_yes'), `on the page: then the form opens → ${page.url()}`);
+    await page.close();
+  }
+  // Send with nothing ticked sends nothing and says so
+  {
+    const { page, beacons } = await open(`http://localhost:8765/your-policy/?t=TESTTOKEN&s=K&r=finish`);
+    await page.click('#send'); await page.waitForTimeout(200);
+    check(resp(beacons).length === 1 && /Nothing ticked/.test(await page.textContent('#sent')), 'on the page: Send with nothing ticked sends nothing');
     await page.close();
   }
   // a mail scanner's headless browser opens the link: it must record nothing
