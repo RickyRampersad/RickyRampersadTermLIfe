@@ -1493,7 +1493,7 @@ function tSummary_() {
     reviews: { total: reviews.length, urgent: urgent, latest: reviews.slice(0, 20) },
     feedback: { people: Object.keys(names).length, verdicts: verdicts, taking: taking },
     waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT,
-    armed: tArmed_(), runs: tRuns_(6),
+    armed: tArmed_(), runs: tRuns_(40),   // a day of half-hour batches and their receipts, for the dashboard's timeline (was 6)
   };
 }
 

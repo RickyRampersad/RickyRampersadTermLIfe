@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transition dashboard | Ricky Rampersad Branch</title>
+<meta name="description" content="The transition send, live: what went out, who responded, who is waiting, and every batch of the day — charts from the sheet, refreshed every minute.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* The house palette, the same tokens as responses.html and the manual. */
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--teal2:#0aa8bf;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--warnbg:#fff6df;--notebg:#eafaFD;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    /* Chart colours. The four letter families were validated together against the white card
+       (dataviz validator: every hard check passes; gold and teal sit under 3:1 so every chart
+       carries visible numbers and a table twin). One slate hue for every single-series chart. */
+    --fam-notice:#b5452e;--fam-action:#c9942c;--fam-keep:#0aa8bf;--fam-return:#1c5cab;--fam-none:#9aa9b7;
+    --series:#2b4a68;--held:#c5cfd8;--grid:#e6edf2;--axis:#c9d6df}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;overflow-x:hidden}
+  .wrap{width:min(1200px,100% - 32px);margin:0 auto}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .stamp{margin-left:auto;font-size:12.5px;color:#8fa8c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .stamp b{color:#eaf4ff;font-weight:600}
+  .stamp button{background:transparent;color:#eaf4ff;border:1px solid #3a5670;border-radius:8px;padding:6px 11px;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+  .stamp button:hover{border-color:var(--teal)} .stamp button[disabled]{opacity:.5;cursor:default}
+  h1{font-family:var(--f);font-weight:800;font-size:clamp(22px,3.6vw,30px);color:var(--ink);letter-spacing:-.5px;margin:24px 0 2px}
+  h1 em{font-style:normal;color:var(--gold2)}
+  .internal{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stop);margin:0 0 4px}
+  .sub{color:var(--dim);margin:0 0 18px;font-size:14px}
+  .sub a{color:var(--tdark)}
+  h2{font-family:var(--f);font-weight:800;font-size:18px;color:var(--ink);margin:30px 0 8px;letter-spacing:-.3px}
+  h2 small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:13px;color:var(--dim);margin-left:8px}
+  h3{font-family:var(--f);font-weight:800;font-size:14px;color:var(--ink);margin:0 0 8px}
+  .note{color:var(--dim);font-size:13px;margin:6px 0 0}
+  /* hero */
+  .state{border-radius:12px;padding:14px 18px;margin:0 0 12px;border:1px solid;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+  .state.on{background:var(--okbg);border-color:#c8e3d6;border-left:5px solid var(--ok)} .state.on b{color:var(--ok)}
+  .state.off{background:var(--stopbg);border-color:#edc9bf;border-left:5px solid var(--stop)} .state.off b{color:var(--stop)}
+  .state b{font-family:var(--f);font-size:16px}
+  .state span{color:var(--body);font-size:13.5px}
+  .state .at{margin-left:auto;color:var(--dim);font-size:12.5px;white-space:nowrap}
+  .tiles{display:grid;gap:10px;grid-template-columns:repeat(2,1fr)}
+  @media(min-width:560px){.tiles{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:900px){.tiles{grid-template-columns:repeat(6,1fr)}}
+  .tile{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:12px;padding:14px 15px;min-width:0}
+  .tile b{display:block;font-family:var(--f);font-size:30px;color:var(--ink);letter-spacing:-.8px;line-height:1.05;font-weight:800}
+  .tile span{display:block;font-size:11.5px;color:var(--dim);margin-top:5px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .tile i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:4px}
+  .tile.hero{border-top-color:var(--gold)} .tile.hero b{font-size:40px}
+  .tile.late{border-top-color:var(--stop)} .tile.late b{color:var(--stop)}
+  .tile.gold{border-top-color:var(--gold)}
+  .progress{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px}
+  .progress .row{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;flex-wrap:wrap}
+  .progress .row b{color:var(--ink);font-family:var(--f)}
+  .meter{height:12px;border-radius:6px;background:#dbe6ee;overflow:hidden;margin:10px 0 8px}
+  .meter i{display:block;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:6px;transition:width .6s ease}
+  /* cards and charts */
+  .grid2{display:grid;gap:14px}
+  @media(min-width:900px){.grid2{grid-template-columns:3fr 2fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px 18px;min-width:0}
+  .card h3 small{font-weight:500;color:var(--dim);font-family:Inter,system-ui,sans-serif;font-size:12.5px;margin-left:6px}
+  .chart{width:100%;min-width:0}
+  .chart svg{display:block;width:100%;height:auto;font-family:Inter,system-ui,sans-serif}
+  .chart text{fill:var(--body);font-size:12px}
+  .chart text.lab{fill:var(--ink);font-weight:600}
+  .chart text.dim{fill:var(--dim);font-size:11px}
+  .chart text.val{fill:var(--ink);font-weight:600;font-variant-numeric:tabular-nums}
+  .chart text.fam{fill:var(--dim);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700}
+  .chart .hit{fill:transparent;cursor:pointer}
+  .chart g > *:not(.hit){pointer-events:none}   /* the hit rect takes every tap; the marks and labels above it never intercept */
+  .chart .hit:focus{outline:none}
+  .chart .hit:focus + .rowbg,.chart .hit:hover + .rowbg{fill:var(--notebg)}
+  .chart .rowbg{fill:transparent;pointer-events:none}
+  .chart .rowbg.sel{fill:var(--notebg)}
+  .chart .dimmed{opacity:.35}
+  .chart line.grid{stroke:var(--grid);stroke-width:1} .chart line.axis{stroke:var(--axis);stroke-width:1}
+  .legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--dim);margin:8px 0 2px}
+  .legend i{display:inline-block;width:11px;height:11px;border-radius:3px;vertical-align:-1px;margin-right:5px}
+  .legend i.dot{border-radius:50%}
+  .empty{color:var(--dim);font-size:13.5px;padding:10px 0}
+  details.twin{margin-top:8px;font-size:13px} details.twin summary{cursor:pointer;color:var(--tdark);font-weight:600}
+  /* filter row: one row above everything it scopes */
+  .filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 16px}
+  @media(min-width:900px){.filters{position:sticky;top:0;z-index:5}}   /* stays in reach on a wide screen; on a phone it would cover the feed */
+  .filters label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700;min-width:0}
+  .filters select,.filters input[type=search]{font:14px Inter,system-ui,sans-serif;padding:7px 9px;border:1px solid #bfd0da;border-radius:8px;background:#fff;color:var(--ink);max-width:100%}
+  .filters select{min-width:140px} .filters input[type=search]{min-width:170px}
+  .filters label.chk{flex-direction:row;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--body);padding-bottom:8px}
+  .filters button{background:transparent;border:1px solid #bfd0da;border-radius:8px;padding:7px 12px;font:600 13px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer;align-self:flex-end}
+  .filters button:hover{border-color:var(--teal)}
+  @media(max-width:559px){.filters label,.filters select,.filters input[type=search]{width:100%}.filters label{flex:1 1 100%}.filters button{width:100%}}
+  .showing{font-size:13px;color:var(--dim);margin:8px 0 0;min-height:1.4em}
+  .showing b{color:var(--ink)}
+  /* tables, with a card layout on phones so the page never scrolls sideways */
+  table.t{border-collapse:collapse;width:100%;font-size:13.5px;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  table.t th,table.t td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--paper);vertical-align:top}
+  table.t th{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;background:#f2f7fa}
+  table.t tr:last-child td{border-bottom:0}
+  table.t td.n,table.t th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.t tr.test td{color:var(--dim)}
+  table.t tr.urgent td:first-child{box-shadow:inset 4px 0 0 var(--stop)}
+  @media(max-width:699px){
+    table.t.cards,table.t.cards tbody,table.t.cards tr,table.t.cards td{display:block}
+    table.t.cards thead{display:none}
+    table.t.cards tr{padding:8px 12px;border-bottom:1px solid var(--line)} table.t.cards tr:last-child{border-bottom:0}
+    table.t.cards td{display:grid;grid-template-columns:92px 1fr;gap:8px;padding:3px 0;border:0;text-align:left}
+    table.t.cards td.n{text-align:left;white-space:normal}
+    table.t.cards td::before{content:attr(data-l);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;padding-top:2px}
+    table.t.cards tr.urgent td:first-child{box-shadow:none} table.t.cards tr.urgent{box-shadow:inset 4px 0 0 var(--stop)}
+  }
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap}
+  .pill.open{background:#f6dfd8;color:var(--stop)} .pill.done{background:#dcefe4;color:var(--ok)} .pill.other{background:#e5ecf1;color:var(--body)}
+  .pill.seg{background:#d5f4fa;color:var(--tdark)} .pill.test{background:#eef1f4;color:var(--dim)} .pill.urg{background:var(--stop);color:#fff}
+  .pill.ev{background:#e5ecf1;color:var(--body)} .pill.ev.batch{background:#d5f4fa;color:var(--tdark)} .pill.ev.live{background:#dcefe4;color:var(--ok)}
+  .pill.ev.test{background:#eef1f4;color:var(--dim)} .pill.ev.stop{background:#f6dfd8;color:var(--stop)} .pill.ev.gold{background:#fbeec8;color:#7a5a12}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px}
+  .chip b{color:var(--ink);font-family:var(--f)}
+  .runs{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:10px}
+  .runs li{display:grid;grid-template-columns:92px 110px 1fr;gap:10px;padding:9px 12px;border-bottom:1px solid var(--paper);font-size:13.5px;align-items:start}
+  .runs li:last-child{border-bottom:0}
+  .runs li .w{color:var(--dim);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .runs li.stop{background:var(--stopbg)}
+  @media(max-width:559px){.runs li{grid-template-columns:82px 1fr}.runs li .d{grid-column:1 / -1}}
+  .box{border-radius:10px;padding:14px 18px;margin:16px 0 0;border:1px solid}
+  .box.stop{background:var(--stopbg);border-color:#edc9bf;border-left:4px solid var(--stop)}
+  form.gate{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:22px 24px;max-width:460px;margin:30px auto}
+  form.gate label{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:0 0 6px}
+  form.gate input{width:100%;font:16px Inter,system-ui,sans-serif;padding:10px 12px;border:1px solid #bfd0da;border-radius:9px}
+  form.gate button{margin-top:12px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:0;border-radius:10px;padding:11px 18px;font-family:var(--f);font-weight:800;font-size:15px;cursor:pointer}
+  .gate p{margin:0 0 12px;color:var(--dim);font-size:14px}
+  #main{display:none;transition:opacity .25s} #main.loading{opacity:.6}
+  #tip{position:fixed;z-index:20;pointer-events:none;background:var(--navy);color:#eaf4ff;font-size:12.5px;line-height:1.4;padding:8px 11px;border-radius:8px;max-width:280px;box-shadow:0 6px 18px rgba(7,19,31,.25);display:none}
+  #tip b{color:#fff;font-size:14px;display:block}
+  footer{color:var(--dim);font-size:12.5px;padding:30px 0}
+  footer a{color:var(--tdark)}
+  @media(prefers-reduced-motion:reduce){.meter i,#main{transition:none}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+  <div class="stamp" id="stamp"></div>
+</div></header>
+
+<div class="wrap">
+  <form class="gate" id="gate">
+    <p>The transition send, live from the sheet: what went out, who responded, who is waiting. Names come from the sheet, so this page opens with the branch code.</p>
+    <label for="code">Branch code</label>
+    <input type="text" id="code" autocomplete="off" placeholder="The branch code, or your portal code">
+    <button type="submit">Open</button>
+    <div class="box stop" id="gateErr" style="display:none"></div>
+  </form>
+
+  <div id="main">
+    <h1>Transition <em>dashboard</em></h1>
+    <p class="internal">Internal &mdash; do not forward outside the branch</p>
+    <p class="sub">What went out, who responded, and what the branch must do next &mdash; refreshed every minute while this tab is open. The row-by-row view is on <a href="responses.html">responses</a>.</p>
+
+    <!-- 1. The hero strip: the state of the send, the headline numbers, the progress -->
+    <div id="state"></div>
+    <div class="tiles" id="tiles"></div>
+    <div class="progress" id="progress"></div>
+
+    <!-- 2. What went out: one bar per letter, and the day's batches -->
+    <h2>What went out <small>tap a letter to follow it through the page</small></h2>
+    <div class="card">
+      <h3>By letter <small>sent, waiting and held, per letter</small></h3>
+      <div class="legend" id="lettersLegend"></div>
+      <div class="chart" id="letters"></div>
+      <details class="twin"><summary>The same numbers as a table</summary><div id="lettersTable"></div></details>
+    </div>
+    <div class="card" style="margin-top:14px">
+      <h3>Today's batches <small>letters sent per run, at the time it ran</small></h3>
+      <div class="chart" id="batches"></div>
+      <p class="note" id="batchesNote"></p>
+    </div>
+
+    <!-- The filter row. Everything below it shows the same slice. -->
+    <h2>Who responded <small>filters apply to the feed, the late list, the reviews and the by-book chart</small></h2>
+    <div class="filters" id="filters">
+      <label>Letter <select id="fLetter"><option value="">All letters</option></select></label>
+      <label>Response <select id="fType"><option value="">All responses</option></select></label>
+      <label>Status <select id="fStatus"><option value="">Any status</option><option value="open">Open</option><option value="logged">Logged</option><option value="other">Other</option></select></label>
+      <label>Book <select id="fBook"><option value="">All books</option></select></label>
+      <label>Name <input type="search" id="fQ" placeholder="Client name or token" autocomplete="off"></label>
+      <label class="chk"><input type="checkbox" id="fTests" checked> Hide staff tests</label>
+      <button type="button" id="fClear">Clear filters</button>
+    </div>
+    <div class="showing" id="showing"></div>
+
+    <!-- 3. Who responded: by type, the rate, the feed -->
+    <div class="grid2" style="margin-top:14px">
+      <div class="card">
+        <h3>What they said <small>every response so far, by type &mdash; tap one to filter</small></h3>
+        <div class="chart" id="types"></div>
+        <p class="note" id="typesNote"></p>
+      </div>
+      <div class="card" id="rateCard"></div>
+    </div>
+    <h3 style="margin-top:18px">The feed <small id="feedCount"></small></h3>
+    <div id="feed"></div>
+
+    <!-- 4. Late -->
+    <h2>Late <small>open past the wait with nobody assigned &mdash; <span id="waitD">2</span> working days, <span id="waitU">1</span> for an urgent tap</small></h2>
+    <div id="late"></div>
+
+    <!-- 5. Reviews filed -->
+    <h2>Reviews filed <small id="revNote"></small></h2>
+    <div id="reviews"></div>
+
+    <!-- 6. By book -->
+    <h2>By book <small>responses by the former agent's book &mdash; tap one to filter</small></h2>
+    <div class="card">
+      <div class="chart" id="books"></div>
+      <p class="note">Letters sent per book are not in the data this page reads &mdash; only the responses are, and only the newest forty plus every late one. A book with no bar has no response on this page, not no letters.</p>
+    </div>
+
+    <!-- 7. Last runs, 8. The team -->
+    <div class="grid2" style="margin-top:30px">
+      <div>
+        <h2 style="margin-top:0">Last runs <small>every batch, test and stop, with the reason</small></h2>
+        <div id="runs"></div>
+      </div>
+      <div>
+        <h2 style="margin-top:0">The team <small>verdicts on the letters</small></h2>
+        <div id="team"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>The manual: <a href="./">orphan-transition</a> &middot; the row-by-row page: <a href="responses.html">responses</a> &middot; the letters and the film: <a href="../templates/">/templates</a>. Nothing on this page leaves the sheet.</footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+/* ============================================================================
+   The transition dashboard. One request every minute — GET ?action=transition
+   — the same JSON the responses page reads, drawn as charts. No client data is
+   in this file: everything on screen arrives from the sheet at run time.
+   ========================================================================== */
+
+/* ---- constants --------------------------------------------------------- */
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var STAFF_TESTS = 9;          // staff rows marked Test on the send list; they count as sent but are not letters out
+var PER_RUN = 120, EVERY_MIN = 30, HOURS = [9, 17];   // BATCH, SEND_EVERY_MIN and HOURS in Transition.gs — the finish estimate uses them
+var POLL_MS = 60000;          // refresh while the tab is visible
+var RETRY_MS = 60000;         // after a failed refresh
+
+/* The letters, in the order the chart shows them: by family, as the send goes. */
+var FAMILIES = {
+  notice: { name: 'Notice', color: 'var(--fam-notice)' },
+  action: { name: 'Action', color: 'var(--fam-action)' },
+  keep:   { name: 'Keep',   color: 'var(--fam-keep)' },
+  'return': { name: 'Return', color: 'var(--fam-return)' },
+  none:   { name: 'No letter', color: 'var(--fam-none)' }
+};
+var LETTERS = {
+  T:  { name: "Notice: agent's contract terminated", fam: 'notice' },
+  T1: { name: 'Notice + application in progress', fam: 'notice' },
+  J:  { name: 'Contract not delivered', fam: 'action' },
+  K:  { name: 'Application in progress', fam: 'action' },
+  I:  { name: 'A premium is due', fam: 'action' },
+  F5: { name: 'In force, 10+ years', fam: 'keep' },
+  F4: { name: 'In force, 5–10 years', fam: 'keep' },
+  F3: { name: 'In force, 3–5 years', fam: 'keep' },
+  F2: { name: 'In force, 2–3 years', fam: 'keep' },
+  F1: { name: 'In force, under 2 years', fam: 'keep' },
+  R1: { name: 'Cover ended and restarted (recent)', fam: 'keep' },
+  R2: { name: 'Cover ended and restarted (earlier)', fam: 'keep' },
+  G:  { name: 'Policy lapsed', fam: 'return' },
+  A:  { name: 'Policy matured', fam: 'return' },
+  '—': { name: 'No letter yet', fam: 'none' }
+};
+var ORDER = ['T', 'T1', 'J', 'K', 'I', 'F5', 'F4', 'F3', 'F2', 'F1', 'R1', 'R2', 'G', 'A', '—'];
+
+/* What a response code means, in the words the client tapped. */
+var WORDS = {
+  callme: 'Call me', paid: "I paid, it isn't showing", urgent: 'I want an agent now', review: 'Tell us more (review)',
+  informed: 'Noted', question: 'A question', deliver: 'Contract never reached me', stop: 'Do not proceed',
+  finish: 'Help me finish', pay: 'I pay a representative in person'
+};
+var MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+
+/* ---- state ------------------------------------------------------------- */
+var CODE = '';
+try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
+var DATA = null;              // the last good answer from the sheet
+var MODEL = null;             // what derive() made of it
+var F = { letter: '', type: '', status: '', book: '', q: '', hideTests: true };   // the filters, held here so a refresh never loses them
+var pollTimer = null, tickTimer = null, nextAt = 0, lastLoad = 0, loading = false;
+var gate = document.getElementById('gate'), main = document.getElementById('main');
+
+/* ---- small helpers ----------------------------------------------------- */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function fmt(n) { n = Number(n) || 0; return String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+function hhmm(d) { return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+function plural(n, one, many) { return fmt(n) + ' ' + (n === 1 ? one : many); }
+function isTest(item) { return /^test:/i.test(String(item && item.agent || '').trim()); }
+function words(type) { return WORDS[type] || String(type || ''); }
+function letterName(k) { return LETTERS[k] ? LETTERS[k].name : ('Letter ' + k); }
+function famOf(k) { return LETTERS[k] ? LETTERS[k].fam : 'none'; }
+function famColor(k) { return FAMILIES[famOf(k)].color; }
+function statusKind(s) { s = String(s || '').trim().toLowerCase(); return s === 'open' ? 'open' : s === 'logged' ? 'logged' : 'other'; }
+
+/* The sheet writes times as "25 Sep 08:39" and the stamp as "25 Sep 2026 08:46".
+   They are read for ordering and for differences only; the strings themselves are
+   what the page shows, so no time zone is ever reinterpreted. */
+function parseWhen(s, yearHint) {
+  var m = /^\s*(\d{1,2})\s+([A-Za-z]{3})\w*\.?\s+(?:(\d{4})\s+)?(\d{1,2}):(\d{2})\s*$/.exec(String(s || ''));
+  if (!m || MONTHS[m[2].toLowerCase()] == null) return null;
+  var y = m[3] ? Number(m[3]) : (yearHint || new Date().getFullYear());
+  return new Date(y, MONTHS[m[2].toLowerCase()], Number(m[1]), Number(m[4]), Number(m[5]), 0, 0);
+}
+function dayOf(s) { var m = /^\s*(\d{1,2}\s+[A-Za-z]{3})/.exec(String(s || '')); return m ? m[1].toLowerCase() : ''; }
+function timeOf(s) { var m = /(\d{1,2}):(\d{2})\s*$/.exec(String(s || '')); return m ? m[1] + ':' + m[2] : ''; }
+function age(fromStr, toStr, year) {
+  var a = parseWhen(fromStr, year), b = parseWhen(toStr, year);
+  if (!a || !b) return '';
+  var mins = Math.max(0, Math.round((b - a) / 60000));
+  var d = Math.floor(mins / 1440), h = Math.floor((mins % 1440) / 60), mm = mins % 60;
+  return d ? d + 'd ' + h + 'h' : h ? h + 'h ' + mm + 'm' : mm + 'm';
+}
+function sortKey(item, year) { var t = parseWhen(item.received, year); return t ? t.getTime() : 0; }
+
+/* ---- the gate and the polling ------------------------------------------ */
+function load() {
+  if (loading) return;
+  loading = true;
+  $('refresh') && ($('refresh').disabled = true);
+  if (main.style.display === 'block') main.classList.add('loading');
+  fetch(SVC + '?action=transition&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      loading = false;
+      if (!d || !d.ok) { fail(d && d.error ? d.error : 'The sheet did not answer.', true); return; }
+      gate.style.display = 'none'; main.style.display = 'block';
+      try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
+      DATA = d; lastLoad = Date.now();
+      render(d);
+      main.classList.remove('loading');
+      schedule(POLL_MS);
+    })
+    .catch(function () {
+      loading = false;
+      fail('Could not reach the sheet. If the backend has not been published with the campaign actions yet, this page cannot open.', false);
+    });
+}
+/* A screen left open must survive a network blip: once the page is showing, a
+   transient failure keeps it up, notes it in the stamp, and tries again. Only a
+   refused code sends the viewer back to the gate. */
+function fail(msg, refused) {
+  main.classList.remove('loading');
+  if (main.style.display === 'block' && !refused) {
+    stamp('could not refresh, trying again');
+    schedule(RETRY_MS);
+    return;
+  }
+  clearTimeout(pollTimer); clearInterval(tickTimer);
+  var e = $('gateErr'); e.textContent = msg; e.style.display = 'block';
+  gate.style.display = 'block'; main.style.display = 'none';
+}
+function schedule(ms) {
+  clearTimeout(pollTimer); clearInterval(tickTimer);
+  if (document.hidden) { nextAt = 0; stamp('paused while hidden'); return; }
+  nextAt = Date.now() + ms;
+  pollTimer = setTimeout(load, ms);
+  tickTimer = setInterval(function () { stamp(); }, 1000);
+  stamp();
+}
+function stamp(note) {
+  var s = $('stamp');
+  var t = lastLoad ? new Date(lastLoad) : null;
+  var html = (t ? 'updated <b>' + hhmm(t) + ':' + pad2(t.getSeconds()) + '</b>' : '');
+  if (note) html += (html ? ' &middot; ' : '') + esc(note);
+  else if (nextAt) html += ' &middot; next in ' + Math.max(0, Math.ceil((nextAt - Date.now()) / 1000)) + 's';
+  s.innerHTML = html + ' <button type="button" id="refresh"' + (loading ? ' disabled' : '') + '>Refresh</button>';
+  $('refresh').addEventListener('click', function () { load(); });
+}
+document.addEventListener('visibilitychange', function () {
+  if (main.style.display !== 'block') return;
+  if (document.hidden) { schedule(0); return; }
+  var due = POLL_MS - (Date.now() - lastLoad);
+  if (due <= 0) load(); else schedule(due);
+});
+gate.addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); if (CODE) load(); });
+
+/* ---- derive: what the page needs that the JSON does not say outright ---- */
+function derive(d) {
+  var year = (function () { var m = /\b(\d{4})\b/.exec(d.at || ''); return m ? Number(m[1]) : new Date().getFullYear(); })();
+  var today = dayOf(d.at);
+  /* every response the JSON carries, once — late and latest overlap; the row number is the key */
+  var seen = {}, all = [];
+  [].concat(d.taps.latest || [], d.taps.late || []).forEach(function (it) {
+    var k = it.row != null ? 'r' + it.row : 'x' + all.length;
+    if (seen[k]) return;
+    seen[k] = 1; all.push(it);
+  });
+  /* staff tests: shown, marked, and taken out of the headline where the feed shows them */
+  var tests = all.filter(isTest), testByType = {}, testsToday = 0;
+  tests.forEach(function (it) { testByType[it.response] = (testByType[it.response] || 0) + 1; if (dayOf(it.received) === today) testsToday++; });
+  var byType = {};
+  Object.keys(d.taps.byType || {}).forEach(function (k) { byType[k] = Math.max(0, (d.taps.byType[k] || 0) - (testByType[k] || 0)); });
+  var lettersOut = Math.max(0, (d.totals.sent || 0) - STAFF_TESTS);
+  var responses = Math.max(0, (d.taps.total || 0) - tests.length);
+  /* by book: from the responses on this page only */
+  var books = {};
+  all.forEach(function (it) { if (isTest(it)) return; var b = String(it.agent || '').trim() || 'Book not on the send list'; books[b] = (books[b] || 0) + 1; });
+  /* the letters present: the known order first, then anything new the sheet invented */
+  var keys = ORDER.filter(function (k) { return d.segments[k]; }).concat(Object.keys(d.segments).filter(function (k) { return ORDER.indexOf(k) < 0; }).sort());
+  return {
+    year: year, today: today, all: all, tests: tests, byType: byType, lettersOut: lettersOut, responses: responses,
+    responsesToday: Math.max(0, (d.taps.today || 0) - testsToday), books: books, letterKeys: keys,
+    lateReal: (d.taps.late || []).filter(function (it) { return !isTest(it); }).length
+  };
+}
+
+/* ---- render: everything, in place, keeping the filters ------------------- */
+function render(d) {
+  MODEL = derive(d);
+  renderHero(d);
+  renderLetters(d);
+  renderBatches(d);
+  renderFilterOptions(d);
+  renderTypes(d);
+  renderRate(d);
+  renderFeed(d);
+  renderLate(d);
+  renderReviews(d);
+  renderBooks(d);
+  renderRuns(d);
+  renderTeam(d);
+}
+
+/* 1. the hero strip */
+function renderHero(d) {
+  var t = d.totals, m = MODEL;
+  $('state').innerHTML = d.armed
+    ? '<div class="state on"><b>Sending</b><span>up to ' + PER_RUN + ' letters every ' + EVERY_MIN + ' minutes, ' + HOURS[0] + ':00 to ' + HOURS[1] + ':00, working days.</span><span class="at">sheet time ' + esc(d.at) + '</span></div>'
+    : '<div class="state off"><b>The send is off.</b><span>Nothing goes to a client until Service Questionnaire &rarr; Transition: go live. Test rows still go by hand.</span><span class="at">sheet time ' + esc(d.at) + '</span></div>';
+  $('tiles').innerHTML =
+    '<div class="tile hero"><b id="tOut">' + fmt(m.lettersOut) + '</b><span>letters out</span><i>' + fmt(t.sent) + ' sent, less ' + STAFF_TESTS + ' staff tests</i></div>' +
+    '<div class="tile"><b id="tWait">' + fmt(t.waiting) + '</b><span>waiting</span><i>not yet sent, not held</i></div>' +
+    '<div class="tile"><b id="tHeld">' + fmt(t.excluded) + '</b><span>held</span><i>' + fmt(t.noEmail) + ' with no e-mail</i></div>' +
+    '<div class="tile gold"><b id="tResp">' + fmt(m.responses) + '</b><span>responses</span><i>' + fmt(m.responsesToday) + ' today</i></div>' +
+    '<div class="tile late"><b id="tLate">' + fmt(m.lateReal) + '</b><span>late</span><i>open past the wait</i></div>' +
+    '<div class="tile gold"><b id="tRev">' + fmt(d.reviews.total) + '</b><span>reviews filed</span><i>' + fmt(d.reviews.urgent) + ' urgent</i></div>';
+  var done = m.lettersOut, todo = t.waiting || 0, whole = done + todo;
+  var pct = whole ? Math.round(100 * done / whole) : 0;
+  $('progress').innerHTML =
+    '<div class="row"><span><b>' + pct + '%</b> of the list is out &mdash; ' + fmt(done) + ' of ' + fmt(whole) + '</span><span id="finish">' + esc(finishEstimate(d.at, todo, d.armed)) + '</span></div>' +
+    '<div class="meter" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100"><i style="width:' + pct + '%"></i></div>' +
+    '<div class="row" style="font-size:12.5px;color:var(--dim)"><span>' + fmt(t.clients) + ' on the send list &middot; ' + fmt(t.excluded) + ' held back</span><span>' + fmt(todo) + ' still to go</span></div>';
+}
+/* When the list will be done at PER_RUN every EVERY_MIN minutes, counted from the sheet's own clock. */
+function finishEstimate(at, waiting, armed) {
+  var now = parseWhen(at);
+  if (!waiting) return 'Everything on the list is out.';
+  if (!now) return '';
+  var runs = Math.ceil(waiting / PER_RUN);
+  var end = new Date(now.getTime() + runs * EVERY_MIN * 60000);
+  var s = plural(runs, 'more run', 'more runs') + ' of ' + PER_RUN + ' — about ' + hhmm(end);
+  if (!armed) return s + ', once the send is switched on.';
+  if (end.getDate() !== now.getDate() || end.getHours() >= HOURS[1]) return s + ', past ' + HOURS[1] + ':00 — the rest carries into the next sending day.';
+  return s + ' today.';
+}
+
+/* 2a. the letters chart: a stacked bar per letter, in the family's colour;
+   sent solid, waiting a light step of the same hue, held grey. Tap a row to
+   filter the page to that letter. */
+function renderLetters(d) {
+  var el = $('letters'), keys = MODEL.letterKeys;
+  var fams = [];
+  keys.forEach(function (k) { var f = famOf(k); if (fams.indexOf(f) < 0) fams.push(f); });
+  $('lettersLegend').innerHTML =
+    fams.map(function (f) { return '<span><i class="dot" style="background:' + FAMILIES[f].color + '"></i>' + esc(FAMILIES[f].name) + '</span>'; }).join('') +
+    '<span style="margin-left:auto"><i style="background:var(--series)"></i>sent</span><span><i style="background:var(--series);opacity:.3"></i>waiting</span><span><i style="background:var(--held)"></i>held</span>';
+  if (!keys.length) { el.innerHTML = '<div class="empty">The send list is empty. Nothing to draw yet.</div>'; $('lettersTable').innerHTML = ''; return; }
+  var W = Math.max(280, el.clientWidth || 600), narrow = W < 620;
+  var labelW = narrow ? 0 : Math.min(320, Math.round(W * 0.3)), valW = narrow ? 0 : 92, rowH = narrow ? 46 : 30, famH = 24, barH = 16, gap = 2;
+  var x0 = labelW + (narrow ? 0 : 10), plotW = W - x0 - valW - (narrow ? 0 : 4);
+  var max = 1;
+  keys.forEach(function (k) { max = Math.max(max, d.segments[k].clients || 0); });
+  var scale = plotW / max, y = 4, out = [], rows = [];
+  var anySel = !!F.letter;
+  keys.forEach(function (k, i) {
+    var g = d.segments[k], f = famOf(k);
+    if (i === 0 || famOf(keys[i - 1]) !== f) {   /* a family heading */
+      out.push('<text class="fam" x="0" y="' + (y + 15) + '">' + esc(FAMILIES[f].name.toUpperCase()) + '</text>');
+      y += famH;
+    }
+    var sel = F.letter === k, dim = anySel && !sel;
+    var by = narrow ? y + 24 : y + (rowH - barH) / 2;
+    var segs = [[g.sent || 0, famColor(k), 1], [g.waiting || 0, famColor(k), .3], [g.excluded || 0, 'var(--held)', 1]];
+    var lastIdx = -1; segs.forEach(function (s, j) { if (s[0] > 0) lastIdx = j; });
+    var x = x0, marks = '';
+    segs.forEach(function (s, j) {
+      if (!s[0]) return;
+      var w = s[0] * scale, sx = x, sw = w;
+      if (x > x0) { sx += gap; sw -= gap; }   /* the 2px surface gap between fills */
+      if (sw < 1) sw = 1;
+      marks += '<path d="' + barPath(sx, by, sw, barH, j === lastIdx) + '" fill="' + s[1] + '" opacity="' + s[2] + '"></path>';
+      x += w;
+    });
+    var tip = k + ' — ' + letterName(k) + '|' + fmt(g.sent) + ' sent · ' + fmt(g.waiting) + ' waiting · ' + fmt(g.excluded) + ' held · ' + fmt(g.clients) + ' on the list · ' + fmt(g.taps) + ' responses';
+    out.push('<g class="' + (dim ? 'dimmed' : '') + '">' +
+      '<rect class="hit" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" tabindex="0" role="button" aria-label="' + esc(tip.replace('|', '. ')) + (sel ? ' (selected)' : '') + '" data-letter="' + esc(k) + '" data-tip="' + esc(tip) + '"></rect>' +
+      '<rect class="rowbg' + (sel ? ' sel' : '') + '" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" rx="4"></rect>' +
+      (narrow
+        ? '<text class="lab" x="0" y="' + (y + 15) + '">' + esc(k) + '<tspan class="dim" dx="6">' + esc(letterName(k)) + '</tspan></text>' +
+          '<text class="val" x="' + W + '" y="' + (y + 15) + '" text-anchor="end">' + fmt(g.sent) + '<tspan class="dim"> of ' + fmt(g.clients) + '</tspan></text>'
+        : '<text class="lab" x="0" y="' + (y + 19) + '">' + esc(k) + '<tspan class="dim" dx="6">' + esc(clip(letterName(k), labelW > 280 ? 40 : 30)) + '</tspan></text>' +
+          '<text class="val" x="' + (x0 + plotW + 8) + '" y="' + (y + 19) + '">' + fmt(g.sent) + '<tspan class="dim"> of ' + fmt(g.clients) + '</tspan></text>') +
+      marks + '</g>');
+    rows.push('<tr' + (sel ? ' style="background:var(--notebg)"' : '') + '><td><b>' + esc(k) + '</b> ' + esc(letterName(k)) + '</td><td class="n">' + fmt(g.clients) + '</td><td class="n">' + fmt(g.sent) + '</td><td class="n">' + fmt(g.waiting) + '</td><td class="n">' + fmt(g.excluded) + '</td><td class="n">' + fmt(g.taps) + '</td><td class="n">' + (g.sent ? Math.round(100 * g.taps / g.sent) + '%' : '–') + '</td></tr>');
+    y += rowH;
+  });
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + (y + 4) + '" width="' + W + '" height="' + (y + 4) + '" role="img" aria-label="Sent, waiting and held per letter">' + out.join('') + '</svg>';
+  $('lettersTable').innerHTML = '<table class="t"><thead><tr><th>Letter</th><th class="n">On list</th><th class="n">Sent</th><th class="n">Waiting</th><th class="n">Held</th><th class="n">Responses</th><th class="n">Rate</th></tr></thead><tbody>' + rows.join('') + '</tbody></table>';
+  wireChart(el, 'letter');
+}
+/* A bar with a 4px rounded data-end and a square baseline end. */
+function barPath(x, y, w, h, roundRight) {
+  var r = Math.min(4, w / 2, h / 2);
+  if (!roundRight || w < 4) return 'M' + x + ',' + y + 'h' + w + 'v' + h + 'h' + (-w) + 'z';
+  return 'M' + x + ',' + y + 'h' + (w - r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r + 'v' + (h - 2 * r) + 'a' + r + ',' + r + ' 0 0 1 ' + (-r) + ',' + r + 'h' + (-(w - r)) + 'z';
+}
+/* A column with a 4px rounded cap and a square baseline. */
+function colPath(x, y, w, h) {
+  var r = Math.min(4, w / 2, h / 2);
+  if (h < 1) return '';
+  return 'M' + x + ',' + (y + h) + 'v' + (-(h - r)) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + (-r) + 'h' + (w - 2 * r) + 'a' + r + ',' + r + ' 0 0 1 ' + r + ',' + r + 'v' + (h - r) + 'z';
+}
+function clip(s, n) { s = String(s); return s.length > n ? s.slice(0, n - 1) + '…' : s; }
+
+/* 2b. today's batches: a column per run, at the time it ran */
+function renderBatches(d) {
+  var el = $('batches'), note = $('batchesNote');
+  var runs = (d.runs || []).filter(function (r) { return (r.event === 'batch' || r.event === 'test') && dayOf(r.when) === MODEL.today; });
+  if (!runs.length) {
+    var anyBatch = (d.runs || []).some(function (r) { return r.event === 'batch'; });
+    el.innerHTML = '<div class="empty">' + (anyBatch ? 'No batch has run yet today. The last runs are at the foot of the page.' : 'No batch has run yet. The first goes at ' + HOURS[0] + ':00 once the send is on.') + '</div>';
+    note.textContent = '';
+    return;
+  }
+  var pts = runs.map(function (r) {
+    var m = /(\d[\d,]*)\s+sent/.exec(r.detail || ''), fm = /(\d+)\s+failed/.exec(r.detail || '');
+    var t = timeOf(r.when).split(':');
+    return { t: Number(t[0]) * 60 + Number(t[1]), sent: m ? Number(m[1].replace(/,/g, '')) : 0, failed: fm ? Number(fm[1]) : 0, test: r.event === 'test', when: r.when, detail: r.detail };
+  }).sort(function (a, b) { return a.t - b.t; });
+  var W = Math.max(280, el.clientWidth || 400), narrow = W < 420;
+  var padL = 34, padR = 22, top = 22, plotH = 150, axisH = 26, H = top + plotH + axisH;   /* padR: room for the last hour label, centred on the tick */
+  var h0 = Math.min(HOURS[0], Math.floor(pts[0].t / 60)), h1 = Math.max(HOURS[1], Math.ceil((pts[pts.length - 1].t + 1) / 60));
+  var plotW = W - padL - padR, px = plotW / ((h1 - h0) * 60);
+  var maxSent = Math.max(PER_RUN, Math.max.apply(null, pts.map(function (p) { return p.sent; })));
+  var yMax = Math.ceil(maxSent / 40) * 40, step = yMax / 4;
+  var ys = function (v) { return top + plotH - (v / yMax) * plotH; };
+  var xs = function (t) { return padL + (t - h0 * 60) * px; };
+  var out = [];
+  for (var v = 0; v <= yMax; v += step) {
+    out.push('<line class="' + (v ? 'grid' : 'axis') + '" x1="' + padL + '" x2="' + (W - padR) + '" y1="' + ys(v) + '" y2="' + ys(v) + '"></line>');
+    out.push('<text class="dim" x="' + (padL - 6) + '" y="' + (ys(v) + 4) + '" text-anchor="end">' + fmt(v) + '</text>');
+  }
+  var every = narrow ? 2 : 1;
+  for (var h = h0; h <= h1; h += every) out.push('<text class="dim" x="' + xs(h * 60) + '" y="' + (top + plotH + 17) + '" text-anchor="middle">' + h + ':00</text>');
+  var colW = Math.max(8, Math.min(22, px * EVERY_MIN * 0.6));
+  /* Label every column only when they sit far enough apart to read; on a
+     phone the last column and the biggest are labelled and the tooltip
+     carries the rest. */
+  var spacing = Infinity;
+  pts.forEach(function (p, i) { if (i) spacing = Math.min(spacing, xs(p.t) - xs(pts[i - 1].t)); });
+  var labelAll = spacing >= 34, biggest = null, lastReal = null;
+  pts.forEach(function (p) { if (!p.test && (!biggest || p.sent > biggest.sent)) biggest = p; if (!p.test) lastReal = p; });
+  var total = 0;
+  pts.forEach(function (p) {
+    var x = xs(p.t) - colW / 2, hpx = (p.sent / yMax) * plotH;
+    if (!p.test) total += p.sent;
+    /* the last real column always; the biggest too, unless its label would touch the last one's */
+    var labelled = labelAll || p === lastReal || (p === biggest && lastReal && xs(lastReal.t) - xs(p.t) >= 34);
+    var tip = timeOf(p.when) + ' · ' + (p.test ? 'test run' : 'batch') + '|' + esc(p.detail || (fmt(p.sent) + ' sent'));
+    out.push('<g>' +
+      '<rect class="hit" x="' + (xs(p.t) - Math.max(12, colW / 2 + 2)) + '" y="' + top + '" width="' + Math.max(24, colW + 4) + '" height="' + (plotH) + '" tabindex="0" role="img" aria-label="' + esc(tip.replace('|', '. ')) + '" data-tip="' + esc(tip) + '"></rect>' +
+      '<rect class="rowbg" x="0" y="0" width="0" height="0"></rect>' +
+      (hpx >= 1 ? '<path d="' + colPath(x, ys(p.sent), colW, hpx) + '" fill="var(--series)" opacity="' + (p.test ? .3 : 1) + '"></path>'
+                : '<rect x="' + x + '" y="' + (ys(0) - 3) + '" width="' + colW + '" height="3" fill="var(--series)" opacity="' + (p.test ? .3 : 1) + '"></rect>') +
+      (labelled ? '<text class="val' + (p.test ? ' dim' : '') + '" x="' + xs(p.t) + '" y="' + (ys(p.sent) - 5) + '" text-anchor="middle">' + (p.test ? 'test' : fmt(p.sent)) + '</text>' : '') +
+      '</g>');
+  });
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="' + W + '" height="' + H + '" role="img" aria-label="Letters sent per run today">' + out.join('') + '</svg>';
+  var real = pts.filter(function (p) { return !p.test; }).length, failed = 0;
+  pts.forEach(function (p) { failed += p.failed; });
+  note.textContent = real ? plural(real, 'batch', 'batches') + ' so far today, ' + fmt(total) + ' letters' + (failed ? ', ' + plural(failed, 'failed send', 'failed sends') : '') + '. Lighter columns are test runs' + (labelAll ? '' : '; tap a column for its numbers') + '. The sheet keeps the last six runs, so a long day shows its most recent ones.' : 'Only test runs so far today.';
+  wireChart(el, null);
+}
+
+/* the filter row: options rebuilt only when the set changes, so a refresh never loses a choice */
+function renderFilterOptions(d) {
+  var letters = MODEL.letterKeys.slice();
+  MODEL.all.forEach(function (it) { if (it.segment && letters.indexOf(it.segment) < 0) letters.push(it.segment); });
+  (d.reviews.latest || []).forEach(function (r) { if (r.segment && letters.indexOf(r.segment) < 0) letters.push(r.segment); });
+  setOptions('fLetter', letters, function (k) { return k + ' — ' + letterName(k); }, 'All letters');
+  var types = Object.keys(d.taps.byType || {}).sort(function (a, b) { return (d.taps.byType[b] || 0) - (d.taps.byType[a] || 0); });
+  setOptions('fType', types, words, 'All responses');
+  var books = Object.keys(MODEL.books).sort(function (a, b) { return MODEL.books[b] - MODEL.books[a]; });
+  if (!F.hideTests) MODEL.tests.forEach(function (it) { var b = String(it.agent || '').trim(); if (b && books.indexOf(b) < 0) books.push(b); });
+  setOptions('fBook', books, function (b) { return b; }, 'All books');
+  $('waitD').textContent = d.waitDays == null ? 2 : d.waitDays;
+  $('waitU').textContent = d.waitUrgent == null ? 1 : d.waitUrgent;
+  showing();
+}
+function setOptions(id, values, label, all) {
+  var sel = $(id), key = values.join('\u0001');
+  if (sel.getAttribute('data-key') === key) { sel.value = F[fkey(id)]; return; }
+  sel.setAttribute('data-key', key);
+  sel.innerHTML = '<option value="">' + esc(all) + '</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(label(v)) + '</option>'; }).join('');
+  var want = F[fkey(id)];
+  if (want && values.indexOf(want) < 0) { F[fkey(id)] = ''; }
+  sel.value = F[fkey(id)];
+}
+function fkey(id) { return { fLetter: 'letter', fType: 'type', fStatus: 'status', fBook: 'book' }[id]; }
+function showing() {
+  var parts = [];
+  if (F.letter) parts.push('letter <b>' + esc(F.letter) + '</b> (' + esc(letterName(F.letter)) + ')');
+  if (F.type) parts.push('response <b>' + esc(words(F.type)) + '</b>');
+  if (F.status) parts.push('status <b>' + esc(F.status) + '</b>');
+  if (F.book) parts.push('book <b>' + esc(F.book) + '</b>');
+  if (F.q) parts.push('name contains <b>' + esc(F.q) + '</b>');
+  $('showing').innerHTML = parts.length ? 'Showing ' + parts.join(', ') + (F.hideTests ? ' &middot; staff tests hidden' : '') : (F.hideTests ? 'Showing everything. Staff tests hidden.' : 'Showing everything, staff tests included.');
+}
+/* the filter as applied to a response row (feed and late list) */
+function passes(it) {
+  if (F.hideTests && isTest(it)) return false;
+  if (F.letter && String(it.segment || '') !== F.letter) return false;
+  if (F.type && String(it.response || '') !== F.type) return false;
+  if (F.status && statusKind(it.status) !== F.status) return false;
+  if (F.book && String(it.agent || '').trim() !== F.book) return false;
+  if (F.q && String(it.client || '').toLowerCase().indexOf(F.q.toLowerCase()) < 0) return false;
+  return true;
+}
+function setFilter(k, v) {
+  F[k] = F[k] === v ? '' : v;   /* tapping the same thing again clears it */
+  var id = { letter: 'fLetter', type: 'fType', status: 'fStatus', book: 'fBook' }[k];
+  if (id) $(id).value = F[k];
+  refilter();
+}
+/* re-draw only what the filters touch — the data has not changed */
+function refilter() {
+  if (!DATA) return;
+  showing();
+  renderLetters(DATA); renderTypes(DATA); renderFeed(DATA); renderLate(DATA); renderReviews(DATA); renderBooks(DATA);
+}
+['fLetter', 'fType', 'fStatus', 'fBook'].forEach(function (id) {
+  $(id).addEventListener('change', function () { F[fkey(id)] = this.value; refilter(); });
+});
+$('fQ').addEventListener('input', function () { F.q = this.value.trim(); refilter(); });
+$('fTests').addEventListener('change', function () { F.hideTests = this.checked; if (DATA) renderFilterOptions(DATA); refilter(); });
+$('fClear').addEventListener('click', function () {
+  F = { letter: '', type: '', status: '', book: '', q: '', hideTests: F.hideTests };
+  ['fLetter', 'fType', 'fStatus', 'fBook'].forEach(function (id) { $(id).value = ''; });
+  $('fQ').value = '';
+  refilter();
+});
+
+/* 3a. what they said: a horizontal bar per response type, one hue, count at the tip */
+function renderTypes(d) {
+  var el = $('types'), bt = MODEL.byType;
+  var keys = Object.keys(bt).filter(function (k) { return bt[k] > 0; }).sort(function (a, b) { return bt[b] - bt[a]; });
+  var hidden = Object.keys(d.taps.byType || {}).length - keys.length;
+  $('typesNote').textContent = MODEL.tests.length ? 'Staff tests the feed shows are taken out of these counts.' : '';
+  if (!keys.length) { el.innerHTML = '<div class="empty">No responses yet. They land here the moment a client answers a letter.</div>'; return; }
+  hbars(el, keys.map(function (k) { return { key: k, label: words(k), value: bt[k], sel: F.type === k, tip: words(k) + '|' + plural(bt[k], 'response', 'responses') + ' · code ' + k }; }), 'type', !!F.type, 'Responses by type');
+  if (hidden > 0) $('typesNote').textContent += (MODEL.tests.length ? ' ' : '') + plural(hidden, 'type is', 'types are') + ' only staff tests so far.';
+}
+/* 3b. the rate tile */
+function renderRate(d) {
+  var m = MODEL, rate = m.lettersOut ? (100 * m.responses / m.lettersOut) : null;
+  $('rateCard').innerHTML = '<h3>Response rate</h3>' +
+    '<div class="tiles" style="grid-template-columns:1fr 1fr">' +
+    '<div class="tile gold"><b id="tRate">' + (rate == null ? '–' : (rate < 10 ? rate.toFixed(1) : Math.round(rate)) + '%') + '</b><span>responses per letter out</span><i>' + fmt(m.responses) + ' responses &divide; ' + fmt(m.lettersOut) + ' letters out</i></div>' +
+    '<div class="tile"><b>' + fmt(m.responsesToday) + '</b><span>today</span><i>' + (d.taps.total ? fmt(d.taps.total) + ' responses in all, staff tests included' : 'nothing yet') + '</i></div>' +
+    '</div>' +
+    '<p class="note">A response is one tap or reply filed on Client Responses. One client can answer more than once, so this is responses, not clients.</p>';
+}
+/* 3c. the feed */
+function renderFeed(d) {
+  var items = MODEL.all.filter(passes).sort(function (a, b) { return sortKey(b, MODEL.year) - sortKey(a, MODEL.year) || (b.row || 0) - (a.row || 0); });
+  var total = MODEL.all.filter(function (it) { return !F.hideTests || !isTest(it); }).length;
+  $('feedCount').textContent = items.length === total ? 'the newest ' + fmt(total) : fmt(items.length) + ' of the newest ' + fmt(total);
+  $('feed').innerHTML = items.length ? tapTable(items, false) : '<div class="empty">' + emptyWords('response') + '</div>';
+}
+/* 4. the late list: urgent first, then the oldest */
+function renderLate(d) {
+  var items = (d.taps.late || []).filter(passes).sort(function (a, b) {
+    var ua = a.response === 'urgent' ? 0 : 1, ub = b.response === 'urgent' ? 0 : 1;
+    return ua - ub || sortKey(a, MODEL.year) - sortKey(b, MODEL.year);
+  });
+  $('late').innerHTML = items.length ? tapTable(items, true) : '<div class="empty">' + ((d.taps.late || []).length ? emptyWords('late response') : 'Nobody is waiting. Keep it that way.') + '</div>';
+}
+function emptyWords(what) {
+  if (F.letter) return 'No ' + what + ' yet on letter ' + F.letter + (F.type || F.book || F.q || F.status ? ' with these filters' : '') + '.';
+  if (F.type) return 'No ' + what + ' of that kind' + (F.book || F.q || F.status ? ' with these filters' : '') + '.';
+  if (F.q) return 'No ' + what + ' with a name containing “' + F.q + '”.';
+  if (F.book) return 'No ' + what + ' from that book.';
+  if (F.status) return 'No ' + what + ' with that status.';
+  return 'No ' + what + 's yet.';
+}
+function tapTable(items, withAge) {
+  var year = MODEL.year, at = DATA ? DATA.at : '';
+  return '<table class="t cards"><thead><tr><th>Received</th>' + (withAge ? '<th>Waiting</th>' : '') + '<th>Client</th><th>Letter</th><th>Said</th><th>What it needs</th><th>Book</th><th>Status</th><th>Assigned</th></tr></thead><tbody>' +
+    items.map(function (it) {
+      var test = isTest(it);
+      return '<tr class="' + (test ? 'test' : '') + (it.response === 'urgent' ? ' urgent' : '') + '">' +
+        td('Received', esc(it.received)) +
+        (withAge ? td('Waiting', '<b>' + esc(age(it.received, at, year) || '–') + '</b>') : '') +
+        td('Client', esc(it.client || '–') + (test ? ' <span class="pill test">staff test</span>' : '')) +
+        td('Letter', segPill(it.segment)) +
+        td('Said', (it.response === 'urgent' ? '<span class="pill urg">urgent</span> ' : '') + esc(words(it.response))) +
+        td('Needs', esc(it.needs || '–')) +
+        td('Book', esc(test ? String(it.agent).replace(/^test:\s*/i, '') : (it.agent || '–'))) +
+        td('Status', statusPill(it.status)) +
+        td('Assigned', it.assigned ? esc(it.assigned) + (it.assignedOn ? ' <span style="color:var(--dim)">' + esc(it.assignedOn) + '</span>' : '') : '<span style="color:var(--dim)">nobody yet</span>') +
+        '</tr>';
+    }).join('') + '</tbody></table>';
+}
+/* One cell. The content is wrapped in a span so that on a phone, where the row is a
+   card and the cell a label/value grid, a pill beside a word stays one value. */
+function td(label, html) { return '<td data-l="' + esc(label) + '"><span>' + html + '</span></td>'; }
+function segPill(s) { return s ? '<span class="pill seg" title="' + esc(letterName(s)) + '">' + esc(s) + '</span>' : '–'; }
+function statusPill(s) { s = String(s || ''); var k = statusKind(s); return s ? '<span class="pill ' + (k === 'open' ? 'open' : k === 'logged' ? 'done' : 'other') + '">' + esc(s) + '</span>' : '–'; }
+
+/* 5. the reviews filed: the letter, book and name filters apply */
+function renderReviews(d) {
+  var all = d.reviews.latest || [];
+  var items = all.filter(function (r) {
+    if (F.letter && String(r.segment || '') !== F.letter) return false;
+    if (F.book && String(r.agent || '').trim() !== F.book) return false;
+    if (F.q && String(r.client || '').toLowerCase().indexOf(F.q.toLowerCase()) < 0) return false;
+    return true;
+  });
+  $('revNote').textContent = fmt(d.reviews.total) + ' in all' + (d.reviews.urgent ? ', ' + fmt(d.reviews.urgent) + ' urgent' : '') + (all.length < d.reviews.total ? ' — the newest ' + all.length + ' here' : '');
+  $('reviews').innerHTML = items.length
+    ? '<table class="t cards"><thead><tr><th>When</th><th>Ref</th><th>Client</th><th>Letter</th><th>Book</th><th>Priority</th><th>Status</th><th>Handled by</th></tr></thead><tbody>' +
+      items.map(function (r) {
+        var urg = /urgent/i.test(r.priority || '');
+        return '<tr' + (urg ? ' class="urgent"' : '') + '>' + td('When', esc(r.when)) + td('Ref', esc(r.ref)) + td('Client', esc(r.client || '–')) + td('Letter', segPill(r.segment)) + td('Book', esc(r.agent || '–')) +
+          td('Priority', urg ? '<span class="pill urg">' + esc(r.priority) + '</span>' : esc(r.priority || '–')) + td('Status', statusPill(r.status)) + td('Handled', esc(r.handled || '–')) + '</tr>';
+      }).join('') + '</tbody></table>'
+    : '<div class="empty">' + (all.length ? emptyWords('review') : 'No questionnaires from the campaign yet. The urgent tap and the review line both lead here.') + '</div>';
+}
+/* 6. by book */
+function renderBooks(d) {
+  var el = $('books');
+  var counts = {};
+  MODEL.all.forEach(function (it) {
+    if (F.hideTests && isTest(it)) return;
+    if (F.letter && String(it.segment || '') !== F.letter) return;
+    if (F.type && String(it.response || '') !== F.type) return;
+    if (F.status && statusKind(it.status) !== F.status) return;
+    if (F.q && String(it.client || '').toLowerCase().indexOf(F.q.toLowerCase()) < 0) return;
+    var b = String(it.agent || '').trim() || 'Book not on the send list';
+    counts[b] = (counts[b] || 0) + 1;
+  });
+  var keys = Object.keys(counts).sort(function (a, b) { return counts[b] - counts[a] || a.localeCompare(b); });
+  if (!keys.length) { el.innerHTML = '<div class="empty">' + (MODEL.all.length ? emptyWords('response') : 'No responses yet, so no book has a bar.') + '</div>'; return; }
+  hbars(el, keys.map(function (k) { return { key: k, label: k, value: counts[k], sel: F.book === k, tip: k + '|' + plural(counts[k], 'response', 'responses') + ' on this page' }; }), 'book', !!F.book, 'Responses by former agent’s book');
+}
+/* A horizontal single-series bar chart: label, bar, value at the tip. Tap a row to filter. */
+function hbars(el, rows, filterKey, anySel, aria) {
+  var W = Math.max(280, el.clientWidth || 500), narrow = W < 480;
+  var labelW = narrow ? 0 : Math.min(220, Math.round(W * 0.36)), rowH = narrow ? 40 : 28, barH = 14, valW = 44;
+  var x0 = labelW + (narrow ? 0 : 10), plotW = W - x0 - valW;
+  var max = 1; rows.forEach(function (r) { max = Math.max(max, r.value); });
+  var scale = plotW / max, y = 2, out = [];
+  rows.forEach(function (r) {
+    var dim = anySel && !r.sel, by = narrow ? y + 22 : y + (rowH - barH) / 2, w = Math.max(1, r.value * scale);
+    out.push('<g class="' + (dim ? 'dimmed' : '') + '">' +
+      '<rect class="hit" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" tabindex="0" role="button" aria-label="' + esc(r.label + ': ' + fmt(r.value)) + (r.sel ? ' (selected)' : '') + '" data-' + filterKey + '="' + esc(r.key) + '" data-tip="' + esc(r.tip) + '"></rect>' +
+      '<rect class="rowbg' + (r.sel ? ' sel' : '') + '" x="0" y="' + y + '" width="' + W + '" height="' + rowH + '" rx="4"></rect>' +
+      '<text class="lab" x="0" y="' + (narrow ? y + 14 : y + 18) + '">' + esc(narrow ? r.label : clip(r.label, 28)) + '</text>' +
+      '<path d="' + barPath(x0, by, w, barH, true) + '" fill="var(--series)"></path>' +
+      '<text class="val" x="' + (x0 + w + 7) + '" y="' + (by + barH - 3) + '">' + fmt(r.value) + '</text>' +
+      '</g>');
+    y += rowH;
+  });
+  el.innerHTML = '<svg viewBox="0 0 ' + W + ' ' + (y + 2) + '" width="' + W + '" height="' + (y + 2) + '" role="img" aria-label="' + esc(aria) + '">' + out.join('') + '</svg>';
+  wireChart(el, filterKey);
+}
+/* Hover and focus tooltips on every mark, and the tap that sets a filter. */
+function wireChart(el, filterKey) {
+  var tip = $('tip');
+  function show(target, x, y) {
+    var t = (target.getAttribute('data-tip') || '').split('|');
+    tip.textContent = '';
+    var b = document.createElement('b'); b.textContent = t[0]; tip.appendChild(b);
+    if (t[1]) tip.appendChild(document.createTextNode(t[1]));
+    tip.style.display = 'block';
+    var w = tip.offsetWidth, h = tip.offsetHeight;
+    var left = Math.min(window.innerWidth - w - 8, Math.max(8, x + 12)), top = y + 14;
+    if (top + h > window.innerHeight - 8) top = y - h - 10;
+    tip.style.left = left + 'px'; tip.style.top = top + 'px';
+  }
+  function hide() { tip.style.display = 'none'; }
+  el.querySelectorAll('.hit').forEach(function (h) {
+    h.addEventListener('pointermove', function (e) { show(h, e.clientX, e.clientY); });
+    h.addEventListener('pointerleave', hide);
+    h.addEventListener('focus', function () { var r = h.getBoundingClientRect(); show(h, r.left + Math.min(120, r.width / 2), r.top + r.height / 2); });
+    h.addEventListener('blur', hide);
+    if (filterKey) {
+      h.addEventListener('click', function () { hide(); setFilter(filterKey, h.getAttribute('data-' + filterKey)); });
+      h.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); hide(); setFilter(filterKey, h.getAttribute('data-' + filterKey)); } });
+    }
+  });
+}
+
+/* 7. last runs, newest first, with a badge per event */
+function renderRuns(d) {
+  var runs = d.runs || [];
+  if (!runs.length) { $('runs').innerHTML = '<div class="empty">Nothing has run yet.</div>'; return; }
+  $('runs').innerHTML = '<ul class="runs">' + runs.map(function (r) {
+    var ev = String(r.event || ''), cls = /^(stopped|sender-not-ready|letters-unavailable|remind-failed|paused)$/.test(ev) ? 'stop' : ev === 'batch' ? 'batch' : ev === 'live' ? 'live' : ev === 'test' ? 'test' : /^(receipt|receipts|chase|digest)$/.test(ev) ? 'gold' : '';
+    return '<li class="' + (cls === 'stop' && ev !== 'paused' ? 'stop' : '') + '"><span class="w">' + esc(r.when) + '</span><span><span class="pill ev ' + cls + '">' + esc(ev || 'event') + '</span></span><span class="d">' + esc(r.detail || '') + '</span></li>';
+  }).join('') + '</ul>';
+}
+/* 8. the team */
+function renderTeam(d) {
+  var f = d.feedback || { people: 0, verdicts: {} }, v = f.verdicts || {}, taking = f.taking ? Object.keys(f.taking) : [];
+  $('team').innerHTML = '<div class="chips"><span class="chip"><b id="tTeam">' + fmt(f.people) + '</b> answered</span><span class="chip"><b>' + fmt(v.send) + '</b> send it</span>' +
+    '<span class="chip"><b>' + fmt(v.change) + '</b> with a change</span><span class="chip"><b>' + fmt(v.hold) + '</b> hold</span></div>' +
+    (taking.length ? '<p class="note">Taking assignments: ' + taking.map(function (n) { return '<b>' + esc(n) + '</b>' + (f.taking[n] ? ' (' + esc(f.taking[n]) + ')' : ''); }).join(', ') + '.</p>'
+      : '<p class="note">' + (f.people ? 'Nobody has ticked “taking assignments” yet.' : 'No verdicts yet. The team page is where they are given.') + '</p>');
+}
+
+/* The charts are laid out in pixels, so a resize re-draws them from the last answer. */
+var resizeTimer = null;
+window.addEventListener('resize', function () {
+  if (!DATA) return;
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function () { renderLetters(DATA); renderBatches(DATA); renderTypes(DATA); renderBooks(DATA); }, 150);
+});
+
+/* Off we go: a remembered code opens the page at once. */
+stamp();
+if (CODE) { $('code').value = CODE; load(); }
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
