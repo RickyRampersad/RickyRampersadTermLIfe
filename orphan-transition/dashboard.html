@@ -360,6 +360,8 @@ function load() {
       gate.style.display = 'none'; main.style.display = 'block';
       try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
       DATA = d; lastLoad = Date.now();
+      /* the picture this screen opens with next time, before the sheet has answered */
+      try { localStorage.setItem('rrb-dash-snapshot', JSON.stringify({ at: lastLoad, d: d })); } catch (e) {}
       render(d);
       main.classList.remove('loading');
       schedule(POLL_MS);
@@ -382,6 +384,7 @@ function fail(msg, refused) {
   clearTimeout(pollTimer); clearInterval(tickTimer);
   var e = $('gateErr'); e.className = 'box stop'; e.textContent = msg; e.style.display = 'block';
   gate.style.display = 'block'; main.style.display = 'none';
+  if (refused) { DATA = null; lastLoad = 0; try { localStorage.removeItem('rrb-dash-snapshot'); } catch (x) {} }   /* a code that no longer opens takes its picture with it */
   if (!refused && CODE) pollTimer = setTimeout(load, GATE_RETRY_MS);   /* a busy sheet at the gate: try again by itself */
 }
 function schedule(ms) {
@@ -864,7 +867,19 @@ window.addEventListener('resize', function () {
 
 /* Off we go: a remembered code opens the page at once. */
 stamp();
-if (CODE) { $('code').value = CODE; load(); }
+if (CODE) {
+  $('code').value = CODE;
+  /* the last good picture this screen saw opens at once, and the fresh one replaces it when the
+     sheet answers: a phone that opened the page before no longer waits ten seconds on the gate.
+     Twelve hours old at most; a refused code clears it. */
+  var snap = null;
+  try { snap = JSON.parse(localStorage.getItem('rrb-dash-snapshot') || 'null'); } catch (e) { snap = null; }
+  if (snap && snap.d && snap.at && Date.now() - snap.at < 12 * 3600000) {
+    try { gate.style.display = 'none'; main.style.display = 'block'; DATA = snap.d; lastLoad = snap.at; render(snap.d); stamp('showing the last numbers, updating from the sheet…'); }
+    catch (e) { gate.style.display = 'block'; main.style.display = 'none'; DATA = null; lastLoad = 0; }
+  }
+  load();
+}
 </script>
 
 <!-- rrb-views -->
