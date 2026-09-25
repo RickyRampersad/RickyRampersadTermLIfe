@@ -945,6 +945,61 @@ voice under the new timing and the caption gives it away.
   Test rows included**: every letter now carries `{{sent_on}}` for the
   reminder banner, and the previous script stops each row with "carries
   {{sent_on}}, which this script cannot fill" rather than send it.
+- **Two reports: the digest twice a day, and the Monday insight report.**
+  Asked for on 25 September 2026 ("I need to have some serious insights").
+  `transitionDigest` goes at the hours in `DIGEST_HOURS` (8 and 12, sheet
+  time; Apps Script fires within the hour) to `DIGEST_TO` (blank = the
+  script owner): tiles (sent, waiting, taps, reviews, late), then the
+  insight block for the last day, by letter, taps, the late list, reviews,
+  verdicts, last runs. `transitionWeekly` goes every Monday within
+  `WEEKLY_HOUR` (7) to `WEEKLY_TO` (blank = `DIGEST_TO`; several addresses
+  comma-separated): the week to that day, read for what it means.
+  `tInsights_(days)` computes everything on the fly from the three tabs,
+  staff Test rows never counted, and `tInsightHtml_` lays it out — tiles;
+  "What it means" in sentences written only where there is data (response
+  and how fast it comes, approaches by former book, the rating, who wants
+  the pays check, stay or talk, contracts missing, applications, in-person
+  payers, reviews, open and late answers with the median working days to a
+  name, reminders and the answers after them, failed sends); by family; by
+  letter; every question with each answer's count, share and bar (the words
+  from receipt.json, so report and letters agree); by former agent's book
+  sorted by approaches (the poaching map); when the first answer comes,
+  from the day the letter went; taps by type; follow-through; the "to act
+  on" list (clients whose answer is in `T_RISK`, open first, with who is
+  named); the next seven days and the reminders due. Installed by
+  `transitionSetup` and by `transitionGoLive` (`tWeeklyTrigger_`); the
+  menu item "Transition: e-mail the weekly insight report now" needs a
+  Service.gs paste, and until then the editor's Run button on
+  `transitionWeekly` does the same. `svc/insights-harness.js` in the
+  session scratchpad runs both on a mocked campaign.
+- **Every client e-mail ends in the confidentiality footer, and every
+  internal one says it is internal.** Asked for on 25 September 2026 ("the
+  proper disclaimer … in the event of confidentiality you can take action
+  and you are protected; review the laws in Trinidad under data
+  protection"). `LEGAL` in build-letters.py is the one text: on the branded
+  and plain letters, the receipt, and in receipt.json (`legal`), from which
+  `tLegal_` in Transition.gs puts it on the "still on it" note and
+  `clientMail_` in Service.gs on the questionnaire confirmation and the
+  introduction, with the same words as a fallback in the script. The law
+  it rests on, checked that day: the Data Protection Act 2011 (Chap.
+  22:04) is only partly in force — Part I with the General Privacy
+  Principles and the sections establishing the Office of the Information
+  Commissioner came into operation on 6 January 2012; the private-sector
+  obligations and penalties have not been proclaimed — so the footer
+  commits the branch to the Principles by name, never to a section, and
+  names the Commissioner's office as the authority the Act establishes,
+  not as a court; the confidentiality duty is the Insurance Act 2018's own
+  (no registrant, officer, employee or agent may disclose a policyholder's
+  affairs without express consent unless the law compels it), quoted on
+  protected.html. What it promises the client: the e-mail is for them
+  alone; tell us and delete it if it came in error; their information is
+  used only to look after the policy, never sold, never disclosed without
+  express consent; they may ask what we hold and have it corrected; a
+  concern can go to the branch, to Guardian Life or to the Commissioner's
+  office, and raising it never changes how the policy is looked after.
+  Compliance sees the wording. The digest, the Monday report and the
+  internal chase carry `INTERNAL` ("do not forward outside the branch")
+  because they carry client names.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
