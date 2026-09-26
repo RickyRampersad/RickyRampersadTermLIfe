@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Assignments | Ricky Rampersad Branch</title>
+<meta name="description" content="Who answered the transition letters, what they told us, and which agent is named to meet them. The branch code opens the board; an agent's own code opens their list.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /* The house palette: the same tokens as the dashboard and the responses page. */
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--stop:#8a3324;--stopbg:#fdeeea;--ok:#1f6f4a;--okbg:#eef7f2;--warnbg:#fff6df;--notebg:#eafaFD;
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:15px/1.55 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;overflow-x:hidden;padding-bottom:90px}
+  .wrap{width:min(1100px,100% - 32px);margin:0 auto}
+  header{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}
+  header .wrap{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
+  .mark{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  .stamp{margin-left:auto;font-size:12.5px;color:#8fa8c0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .stamp b{color:#eaf4ff;font-weight:600}
+  .stamp button{background:transparent;color:#eaf4ff;border:1px solid #3a5670;border-radius:8px;padding:6px 11px;font:600 12.5px Inter,system-ui,sans-serif;cursor:pointer}
+  .stamp button:hover{border-color:var(--teal)}
+  h1{font-family:var(--f);font-weight:800;font-size:clamp(22px,3.6vw,30px);color:var(--ink);letter-spacing:-.5px;margin:24px 0 2px}
+  h1 em{font-style:normal;color:var(--gold2)}
+  .internal{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--stop);margin:0 0 4px}
+  .sub{color:var(--dim);margin:0 0 16px;font-size:14px}
+  .sub a{color:var(--tdark)}
+  h2{font-family:var(--f);font-weight:800;font-size:17px;color:var(--ink);margin:26px 0 8px;letter-spacing:-.3px}
+  h2 small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:13px;color:var(--dim);margin-left:8px}
+  /* the gate */
+  .gatecard{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;max-width:520px;margin:20px 0}
+  .gatecard label{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:10px 0 4px}
+  .gatecard input{width:100%;font:16px Inter,system-ui,sans-serif;padding:10px 12px;border:1px solid #bfd0da;border-radius:9px;color:var(--ink)}
+  .gatecard button{margin-top:14px;background:var(--navy);color:var(--gold);border:0;border-radius:9px;padding:11px 18px;font:700 14px var(--f);cursor:pointer}
+  .gatecard .hint{font-size:12.5px;color:var(--dim);margin:6px 0 0}
+  .box{display:none;margin-top:12px;padding:10px 13px;border-radius:9px;font-size:13.5px;background:var(--notebg);border:1px solid #a8dfeb;color:var(--body)}
+  .box.stop{background:var(--stopbg);border-color:#edc9bf;color:var(--stop)}
+  /* tiles and roster */
+  .tiles{display:grid;gap:10px;grid-template-columns:repeat(3,1fr)}
+  @media(min-width:700px){.tiles{grid-template-columns:repeat(6,1fr)}}
+  .tile{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:12px;padding:12px 14px;min-width:0;cursor:pointer}
+  .tile b{display:block;font-family:var(--f);font-size:28px;color:var(--ink);letter-spacing:-.8px;line-height:1.05;font-weight:800}
+  .tile span{display:block;font-size:11px;color:var(--dim);margin-top:4px;text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+  .tile.late{border-top-color:var(--stop)} .tile.late b{color:var(--stop)}
+  .tile.gold{border-top-color:var(--gold)} .tile.ok{border-top-color:var(--ok)}
+  .tile.on{outline:2px solid var(--tdark)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+  .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
+  .chip b{color:var(--ink);font-family:var(--f)} .chip i{font-style:normal;color:var(--dim)}
+  .chip.on{border-color:var(--tdark);background:var(--notebg)}
+  .empty{color:var(--dim);font-size:13.5px;padding:10px 0}
+  /* filters */
+  .filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 16px;margin-top:14px}
+  .filters label{display:flex;flex-direction:column;gap:3px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);font-weight:700;min-width:0}
+  .filters select,.filters input[type=search]{font:14px Inter,system-ui,sans-serif;padding:7px 9px;border:1px solid #bfd0da;border-radius:8px;background:#fff;color:var(--ink);max-width:100%}
+  .filters select{min-width:130px} .filters input[type=search]{min-width:170px}
+  .filters label.chk{flex-direction:row;align-items:center;gap:6px;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--body);padding-bottom:8px}
+  .filters button{background:transparent;border:1px solid #bfd0da;border-radius:8px;padding:7px 12px;font:600 13px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer;align-self:flex-end}
+  @media(max-width:559px){.filters label,.filters select,.filters input[type=search]{width:100%}.filters label{flex:1 1 100%}.filters button{width:100%}}
+  .showing{font-size:13px;color:var(--dim);margin:8px 0 0;min-height:1.4em} .showing b{color:var(--ink)}
+  /* the cards */
+  .c{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin:8px 0;display:grid;grid-template-columns:auto 1fr;gap:10px 12px}
+  .c.late{box-shadow:inset 4px 0 0 var(--stop)}
+  .c .tick{padding-top:3px} .c .tick input{width:18px;height:18px}
+  .c.one{grid-template-columns:1fr}
+  .n{font-family:var(--f);font-weight:800;font-size:16px;color:var(--ink);display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+  .n .no{font-family:Inter,system-ui,sans-serif;font-weight:500;color:var(--dim);font-size:13px}
+  .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:Inter,system-ui,sans-serif}
+  .pill.seg{background:#d5f4fa;color:var(--tdark)} .pill.open{background:#f6dfd8;color:var(--stop)} .pill.assigned{background:#fbeec8;color:#7a5a12}
+  .pill.done{background:#dcefe4;color:var(--ok)} .pill.noted{background:#e5ecf1;color:var(--body)} .pill.silent{background:#eef1f4;color:var(--dim)} .pill.late{background:var(--stop);color:#fff}
+  .meta{font-size:12.5px;color:var(--dim);margin-top:2px}
+  .needs{color:var(--stop);font-size:13.5px;margin-top:6px} .needs b{font-weight:700}
+  .ans{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:3px 14px;grid-template-columns:1fr}
+  @media(min-width:760px){.ans{grid-template-columns:1fr 1fr}}
+  .ans li{font-size:13px;color:var(--body)} .ans li span{color:var(--dim);display:block;font-size:11.5px;line-height:1.3} .ans li b{color:var(--ink)}
+  .ans li.hot b{color:var(--stop)}
+  .taps{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px} .taps i{font-style:normal;background:var(--warnbg);border:1px solid #f1dfae;border-radius:999px;padding:2px 9px;font-size:12px;color:#7a5a12}
+  .q{font-style:italic;color:var(--ink);margin:6px 0 0;font-size:13.5px}
+  .rev{margin-top:6px;font-size:13px;background:var(--notebg);border:1px solid #a8dfeb;border-radius:8px;padding:6px 10px} .rev span{color:var(--dim)}
+  .reach{margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px} .reach a{color:var(--tdark);font-weight:600;text-decoration:none}
+  .who{margin-top:8px;font-size:13.5px} .who b{color:var(--ink)}
+  .acts{margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .acts select{font:13px Inter,system-ui,sans-serif;padding:6px 8px;border:1px solid #bfd0da;border-radius:8px;background:#fff;color:var(--ink);max-width:100%}
+  .acts button{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:6px 11px;font:600 12.5px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .acts button:hover{border-color:var(--teal)} .acts button.ok{color:var(--ok)} .acts button.stopb{color:var(--stop)}
+  .acts button[disabled]{opacity:.5;cursor:default}
+  .acts .wa{background:#e8f9ef;color:#1f6f4a;border-color:#bfe6cf;text-decoration:none;padding:6px 11px;border-radius:999px;font:600 12.5px Inter,system-ui,sans-serif;border:1px solid}
+  .acts .tel{background:var(--navy);color:var(--gold);text-decoration:none;padding:6px 11px;border-radius:999px;font:600 12.5px Inter,system-ui,sans-serif}
+  .acts .own{text-decoration:none;color:var(--tdark);font:600 12.5px Inter,system-ui,sans-serif;padding:6px 4px}
+  .srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px}
+  .srow b{color:var(--ink);font-family:var(--f)} .srow .no{color:var(--dim);font-size:12.5px}
+  /* the assign bar */
+  .bar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#eaf4ff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;z-index:20;box-shadow:0 -4px 20px rgba(7,19,31,.25)}
+  .bar[hidden]{display:none}
+  .bar b{font-family:var(--f)} .bar select{font:14px Inter,system-ui,sans-serif;padding:7px 9px;border-radius:8px;border:1px solid #3a5670;background:#fff;color:var(--ink);max-width:220px}
+  .bar label{font-size:13px;display:flex;align-items:center;gap:5px}
+  .bar button{background:var(--gold);color:var(--navy);border:0;border-radius:9px;padding:9px 16px;font:700 14px var(--f);cursor:pointer}
+  .bar button.ghost{background:transparent;color:#eaf4ff;border:1px solid #3a5670;font-weight:600}
+  .bar button[disabled]{opacity:.5;cursor:default}
+  .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:76px;background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;font-size:13.5px;z-index:30;max-width:min(560px,92vw);display:none;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+  .toast.on{display:block} .toast.bad{background:var(--stop)}
+  footer{color:var(--dim);font-size:12.5px;margin:36px 0 20px}
+  footer a{color:var(--tdark)}
+  .rules{background:var(--warnbg);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13.5px;margin:12px 0 0}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Transition &middot; assignments</i></div>
+  <div class="stamp"><span id="stamp"></span><button type="button" id="refresh" style="display:none">Refresh</button><button type="button" id="signout" style="display:none">Sign out</button></div>
+</div></header>
+
+<div class="wrap">
+  <section id="gate">
+    <p class="internal">Internal &middot; client information</p>
+    <h1>Who is looking after <em>whom</em></h1>
+    <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. The branch code opens the whole board. An agent&rsquo;s own code from the Agent Skill Bank opens their list; so does the branch code with the agent&rsquo;s name.</p>
+    <form class="gatecard" id="gateForm" autocomplete="off">
+      <label for="code">Code</label>
+      <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="the branch code, or your own">
+      <label for="who">Your name <span style="font-weight:500;text-transform:none;letter-spacing:0">(agents using the branch code)</span></label>
+      <input id="who" type="text" autocomplete="off" placeholder="as it is on the Agent Skill Bank">
+      <button type="submit">Open</button>
+      <p class="hint">Nothing on this page leaves the sheet. A name written here goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read.</p>
+      <div class="box" id="gateErr"></div>
+    </form>
+  </section>
+
+  <section id="main" style="display:none">
+    <p class="internal">Internal &middot; client information</p>
+    <h1 id="title">Assignments</h1>
+    <p class="sub" id="lead"></p>
+    <div class="tiles" id="tiles"></div>
+    <div id="rosterWrap"><h2>The roster <small id="rosterNote"></small></h2><div class="chips" id="roster"></div></div>
+    <div class="filters" id="filters">
+      <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
+      <label>Letter<select id="fSeg"><option value="">all</option></select></label>
+      <label>Was with<select id="fBook"><option value="">all</option></select></label>
+      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option></select></label>
+      <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
+      <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
+      <button type="button" id="fClear">Clear</button>
+    </div>
+    <p class="showing" id="showing"></p>
+    <div id="list"></div>
+    <div class="rules" id="rules"><b>Three rules on every call.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. Nothing needs to be signed or paid until they have spoken to the branch.</div>
+  </section>
+  <footer>The row-by-row view is on <a href="responses.html">responses</a>; the charts on the <a href="dashboard.html">dashboard</a>; the manual is <a href="./">orphan-transition</a>. Nothing on this page leaves the sheet.</footer>
+</div>
+
+<div class="bar" id="bar" hidden>
+  <b><span id="selN">0</span> selected</b>
+  <span>Assign to</span><select id="barAgent"></select>
+  <label><input type="checkbox" id="barBrief" checked> e-mail the agent a brief</label>
+  <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail</label>
+  <button type="button" id="barGo">Assign</button>
+  <button type="button" class="ghost" id="barClear">Clear</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var POLL_MS = 120000, RETRY_MS = 30000, GATE_RETRY_MS = 15000;
+var CODE = '', WHO = '';
+try { CODE = localStorage.getItem('rrb-transition-code') || ''; WHO = localStorage.getItem('rrb-assign-who') || ''; } catch (e) {}
+var D = null, SEL = {}, timer = null, inflight = false, shown = false;
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+function digits(p) { return String(p || '').replace(/\D/g, ''); }
+function waLink(p) { var n = digits(p); if (n.length === 7) n = '1868' + n; if (n.length === 10 && n.indexOf('868') === 0) n = '1' + n; return n.length === 11 && n.indexOf('1868') === 0 ? 'https://wa.me/' + n : ''; }
+function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(function () { t.className = 'toast'; }, bad ? 9000 : 5000); }
+
+/* ---- the gate ---- */
+function api(params) {
+  var q = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
+  return fetch(SVC + '?' + q + '&z=' + Date.now()).then(function (r) { return r.text(); }).then(function (txt) {
+    try { return JSON.parse(txt); }
+    catch (e) { return { ok: false, notUpdated: /<\s*(html|meta|p)\b/i.test(txt), error: 'The backend answered with a page instead of data.' }; }
+  });
+}
+function load() {
+  clearTimeout(timer); timer = null;
+  if (inflight || !CODE) return;
+  inflight = true;
+  if (!shown) { var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block'; }
+  var p = { action: 'board', code: CODE };
+  if (WHO) p.who = WHO;
+  if ($('fAll').checked) p.all = '1';
+  api(p).then(function (d) {
+    inflight = false;
+    if (!d || !d.ok) {
+      if (d && d.notUpdated) { fail('This page needs the new backend. Paste Service.gs and Transition.gs into the Apps Script project, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → pencil → New version.', true); return; }
+      var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
+      fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
+      return;
+    }
+    shown = true;
+    $('gate').style.display = 'none'; $('main').style.display = 'block'; $('refresh').style.display = ''; $('signout').style.display = '';
+    try { localStorage.setItem('rrb-transition-code', CODE); if (WHO) localStorage.setItem('rrb-assign-who', WHO); else localStorage.removeItem('rrb-assign-who'); } catch (e) {}
+    D = d; render();
+    schedule(POLL_MS);
+  }).catch(function () { inflight = false; fail('The sheet is busy. Trying again in a moment.', false); });
+}
+function schedule(ms) { clearTimeout(timer); timer = setTimeout(load, ms); }
+function fail(msg, refused) {
+  if (shown && !refused) { $('stamp').textContent += ' · could not refresh, trying again'; schedule(RETRY_MS); return; }
+  var e = $('gateErr'); e.className = 'box stop'; e.textContent = msg; e.style.display = 'block';
+  $('gate').style.display = 'block'; $('main').style.display = 'none'; shown = false; D = null;
+  if (!refused && CODE) schedule(GATE_RETRY_MS);
+}
+$('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); if (CODE) load(); });
+$('refresh').addEventListener('click', function () { load(); });
+$('signout').addEventListener('click', function () {
+  try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {}
+  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; clearTimeout(timer);
+  $('main').style.display = 'none'; $('gate').style.display = 'block'; $('gateErr').style.display = 'none'; $('code').value = ''; $('who').value = ''; $('refresh').style.display = 'none'; $('signout').style.display = 'none'; bar();
+});
+document.addEventListener('visibilitychange', function () { if (!document.hidden && shown && !timer) load(); });
+
+/* ---- what a client needs, for the filter and the pills ---- */
+var HOT = { contact_yes: 'contact', approached_yes: 'approach', pay_person: 'pay', pay_unsure: 'pay', contract_missing: 'contract', contract_unsure: 'contract',
+  k_outstanding: 'application', k_unsure: 'application', k_stop: 'application', stay_talk: 'call', rate_better: 'call', pays_confirm: 'call', life_changed: 'call',
+  walk_yes: 'call', built_yes: 'call', more_yes: 'call', value_yes: 'call' };
+var HOTTAP = { urgent: 'review', review: 'review', paid: 'pay', pay: 'pay', deliver: 'contract', finish: 'application', stop: 'application', callme: 'call', question: 'wrote', wrote: 'wrote', claim: 'call' };
+function needsOf(c) {
+  var s = {};
+  (c.answers || []).forEach(function (a) { if (HOT[a.code]) s[HOT[a.code]] = 1; });
+  (c.taps || []).forEach(function (t) { if (HOTTAP[t.tap]) s[HOTTAP[t.tap]] = 1; });
+  if (c.review) { s.review = 1; if ((c.review.words || []).some(function (w) { return /been in touch/i.test(w.q) && /^yes/i.test(w.a); })) s.approach = 1; }
+  if ((c.notes || []).length) s.wrote = 1;
+  return s;
+}
+function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
+var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', silent: 'not answered yet' };
+
+/* ---- render ---- */
+function render() {
+  var d = D, manager = d.role === 'branch';
+  $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (manager ? '' : ' · ' + esc(d.me.name));
+  $('title').innerHTML = manager ? 'Assignments' : 'Your clients, <em>' + esc(d.me.name.split(/\s+/)[0]) + '</em>';
+  var k = d.counts;
+  $('lead').innerHTML = manager
+    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. Sorted most pressing first.'
+    : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.';
+  var tiles = manager
+    ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok'], ['silent', k.silent, 'not answered yet', '']]
+    : [['', d.clients.length, 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
+  $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
+  /* the roster */
+  $('rosterWrap').style.display = manager ? '' : 'none';
+  $('allWrap').style.display = manager ? '' : 'none';
+  if (manager) {
+    $('rosterNote').textContent = d.agents.length ? 'tap a name to see their list' : '';
+    $('roster').innerHTML = d.agents.length ? d.agents.map(function (a) {
+      return '<span class="chip' + (FILTER.agent === a.name ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' + (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
+    }).join('') : '<div class="empty">No agents on the Agent Skill Bank yet. Add each agent there (name, e-mail, areas covered, Active = Yes, and a Portal code of their own) and they appear here.</div>';
+    Array.prototype.forEach.call(document.querySelectorAll('#roster .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = FILTER.agent === n ? '' : n; render(); }); });
+    var opts = '<option value="">choose an agent</option>' + d.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + (a.areas ? ' · ' + esc(a.areas) : '') + '</option>'; }).join('');
+    if ($('barAgent').innerHTML !== opts) $('barAgent').innerHTML = opts;
+  }
+  /* the filters keep their choices; the options follow the data */
+  fill($('fSeg'), unique(d.clients.concat(d.silent || []).map(function (c) { return c.seg; })));
+  fill($('fBook'), unique(d.clients.concat(d.silent || []).map(function (c) { return c.book; })));
+  list();
+  bar();
+}
+var FILTER = { agent: '' };
+function unique(a) { var s = {}; a.forEach(function (x) { if (x) s[x] = 1; }); return Object.keys(s).sort(); }
+function fill(sel, values) {
+  var cur = sel.value, html = '<option value="">all</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
+  if (sel.innerHTML !== html) { sel.innerHTML = html; sel.value = values.indexOf(cur) >= 0 ? cur : ''; }
+}
+function matches(c) {
+  var s = $('fSearch').value.trim().toLowerCase(), seg = $('fSeg').value, book = $('fBook').value, st = $('fState').value, need = $('fNeed').value;
+  if (s && (c.client + ' ' + (c.no || '')).toLowerCase().indexOf(s) < 0) return false;
+  if (seg && c.seg !== seg) return false;
+  if (book && c.book !== book) return false;
+  if (FILTER.agent && (c.assigned || '').toLowerCase() !== FILTER.agent.toLowerCase()) return false;
+  if (st) { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
+  if (need && !needsOf(c)[need]) return false;
+  return true;
+}
+function list() {
+  var d = D, manager = d.role === 'branch';
+  var all = d.clients.concat(d.silent || []), rows = all.filter(matches);
+  var n = rows.length;
+  $('showing').innerHTML = n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's');
+  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' ? silentRow(c, manager) : card(c, manager); }).join('')
+    : '<div class="empty">' + (all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
+  Array.prototype.forEach.call(document.querySelectorAll('#list input.sel'), function (el) { el.addEventListener('change', function () { if (el.checked) SEL[el.value] = 1; else delete SEL[el.value]; bar(); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list button[data-status]'), function (el) { el.addEventListener('click', function () { mark(el.getAttribute('data-token'), el.getAttribute('data-status'), el); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
+}
+function pills(c) {
+  var so = stateOf(c);
+  return '<span class="pill seg">' + esc(c.seg || '—') + '</span><span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '');
+}
+function card(c, manager) {
+  var need = needsOf(c);
+  var ans = (c.answers || []).map(function (a) { return '<li' + (HOT[a.code] ? ' class="hot"' : '') + '><span>' + esc(a.q) + '</span><b>' + esc(a.a) + '</b></li>'; }).join('');
+  var taps = (c.taps || []).map(function (t) { return '<i title="' + esc(t.needs) + '">' + esc(t.label) + (t.at ? ' · ' + esc(t.at) : '') + '</i>'; }).join('');
+  var notes = (c.notes || []).map(function (q) { return '<p class="q">“' + esc(q) + '”</p>'; }).join('');
+  var rev = c.review ? '<div class="rev"><span>Review</span> <b>' + esc(c.review.ref || '') + '</b>' + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + (c.review.status ? ' · ' + esc(c.review.status) : '') +
+    (c.review.words || []).map(function (w) { return '<div><span>' + esc(w.q) + '</span> ' + esc(w.a) + '</div>'; }).join('') + '</div>' : '';
+  var reach = [];
+  if (c.phone) reach.push('<a href="tel:' + esc(digits(c.phone)) + '">☎ ' + esc(c.phone) + '</a>');
+  if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
+  if (c.reach) reach.push('prefers <b>' + esc(c.reach.toLowerCase()) + '</b>');
+  if (c.when) reach.push('best in the <b>' + esc(c.when.toLowerCase()) + '</b>');
+  var facts = [];
+  if (c.facts && c.facts.since) facts.push('with us since ' + esc(c.facts.since));
+  if (c.facts && c.facts.paidTo) facts.push('paid to ' + esc(c.facts.paidTo));
+  if (c.facts && c.facts.appReceived) facts.push('application received ' + esc(c.facts.appReceived));
+  var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') + '</div>'
+    : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
+  var own = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '');
+  var acts = '';
+  if (manager) {
+    acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">Assign to…</option>' + D.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
+  } else {
+    var wa = waLink(c.phone);
+    if (c.phone) acts += '<a class="tel" href="tel:' + esc(digits(c.phone)) + '">Call</a>';
+    if (wa) acts += '<a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>';
+    acts += '<a class="own" href="' + esc(own) + '" target="_blank" rel="noopener">Their answer page →</a>';
+  }
+  ['Called', 'Met', 'No answer', 'Declined', 'Closed'].forEach(function (s) {
+    acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="' + s + '" class="' + (s === 'Met' || s === 'Called' ? 'ok' : s === 'Declined' ? 'stopb' : '') + '">' + s + '</button>';
+  });
+  if (c.mark && c.mark !== 'Open') acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="Open">Reopen</button>';
+  return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
+    (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
+    '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + '</div>' +
+    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? 'answered ' + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
+    (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') +
+    (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev +
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who +
+    '<div class="acts">' + acts + '</div></div></div>';
+}
+function silentRow(c, manager) {
+  return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
+    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">not answered yet</span>' +
+    (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
+    (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') + '</div>';
+}
+
+/* ---- the assign bar and the actions ---- */
+function bar() {
+  var n = Object.keys(SEL).length, b = $('bar');
+  if (!D || D.role !== 'branch' || !n) { b.hidden = true; return; }
+  b.hidden = false; $('selN').textContent = n;
+}
+$('barClear').addEventListener('click', function () { SEL = {}; list(); bar(); });
+$('barGo').addEventListener('click', function () { var a = $('barAgent').value; if (!a) { toast('Choose an agent first.', true); return; } assign(Object.keys(SEL), a, $('barGo')); });
+function assign(tokens, agent, el) {
+  if (!tokens.length || !agent) return;
+  if (el) el.disabled = true;
+  var p = { action: 'assign', code: CODE, tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' };
+  toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + '…');
+  api(p).then(function (r) {
+    if (el) el.disabled = false;
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
+    var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+      (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '');
+    toast(msg, !!(r.warnings && r.warnings.length));
+    tokens.forEach(function (t) { delete SEL[t]; });
+    load();
+  }).catch(function () { if (el) el.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
+}
+function mark(token, status, el) {
+  var note = window.prompt(status + ': a note for the file? (optional)', '');
+  if (note === null) return;
+  if (el) el.disabled = true;
+  var p = { action: 'update', code: CODE, token: token, status: status, note: note };
+  if (WHO) p.who = WHO;
+  api(p).then(function (r) {
+    if (el) el.disabled = false;
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
+    toast('Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.');
+    load();
+  }).catch(function () { if (el) el.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
+}
+['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
+$('fAll').addEventListener('change', function () { if (D) load(); });
+$('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });
+
+if (CODE) { $('code').value = CODE; $('who').value = WHO; load(); }
+window.RRB_ASSIGN = { load: load, render: render };
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

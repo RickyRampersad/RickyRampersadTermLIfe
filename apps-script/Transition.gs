@@ -1938,3 +1938,394 @@ function transitionDigest() {
     { htmlBody: html, name: TRANSITION.FROM_NAME });
   return 'digest sent to ' + to;
 }
+
+/* ── the assignment board ───────────────────────────────────────────── */
+/* Asked for on 26 September 2026 ("a link for who you are going to assign
+   which agent to meet with the client, an agent's login view and a manager's
+   login view, on these codes"): orphan-transition/assign.html, beside the
+   dashboard. The branch code opens the whole board; an agent's own portal
+   code from the Agent Skill Bank opens their list; the branch code with a
+   name (`who`) opens that agent's list, the way the agent portal works
+   (agentAuth_ in Service.gs). Nothing here is a new column: a name goes into
+   Assigned to and Assigned on on the client's rows of Client Responses, which
+   is what the responses page, the digest, the chase and the reports already
+   read, and an outcome goes into Status, which is what stops the chase. */
+var T_STATUSES = ['Open', 'Called', 'Met', 'Declined', 'Closed'];   // what a person may mark; "No answer" is a note only, the row stays Open
+/* how pressing a client is, from the most pressing thing they said: the order the board lists them in */
+var T_PRIORITY = { urgent: 100, contact_yes: 95, approached_yes: 90, review_approached: 90, paid: 85, pay_person: 80, pay: 80, pay_unsure: 70,
+  contract_missing: 70, deliver: 70, review: 65, contract_unsure: 60, k_outstanding: 60, finish: 60, k_stop: 55, stop: 55, k_unsure: 55, claim: 55,
+  callme: 50, stay_talk: 50, rate_better: 50, life_changed: 45, question: 45, wrote: 45, assign: 45,
+  pays_confirm: 40, walk_yes: 40, built_yes: 40, more_yes: 40, value_yes: 40 };
+
+/** The roster off the Agent Skill Bank, with the columns the board needs.
+ *  skillBank_ (Service.gs) reads the fixed columns; this also takes a Phone
+ *  (or Mobile, WhatsApp, Cell) column and Areas covered if they are there,
+ *  so an introduction can carry a number. Rows with Active = No stay off. */
+function tRoster_() {
+  var out = [];
+  try {
+    var t = tSheetRows_(SVC.TEAM_SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[h.toLowerCase()] = i; });
+    var col = function (r, names) {
+      for (var k = 0; k < names.length; k++) { var i = ix[names[k]]; if (i !== undefined && String(r[i] || '').trim()) return String(r[i]).trim(); }
+      return '';
+    };
+    t.rows.forEach(function (r) {
+      var name = col(r, ['agent']);
+      if (!name || /^no$/i.test(col(r, ['active']))) return;
+      out.push({ name: name, no: col(r, ['agent no.']), email: col(r, ['email', 'e-mail']), phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']),
+                 areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']), portal: col(r, ['portal code']) });
+    });
+  } catch (e) {}
+  return out;
+}
+
+/** Who is asking. The branch code: the whole board, or one agent's list when
+ *  a name comes with it. An agent's own portal code: their list. Never the
+ *  roster's codes back out. */
+function tWho_(code, who) {
+  code = String(code || '').trim().toUpperCase();
+  who = String(who || '').trim();
+  var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
+  var roster = tRoster_(), configured = !!(branch || roster.length);
+  var refuse = function (msg) { return { ok: false, refused: true, configured: configured, error: msg }; };
+  if (!code) return refuse('Enter the branch code, or your own code from the Agent Skill Bank.');
+  var pick = function (a) { return { name: a.name, email: a.email, phone: a.phone, areas: a.areas }; };
+  if (branch && code === branch) {
+    if (!who) return { ok: true, role: 'branch', me: null, configured: true };
+    var named = null;
+    roster.forEach(function (a) { if (a.name.toLowerCase() === who.toLowerCase()) named = a; });
+    if (!named) return refuse('We do not have an agent by that name on the roster. Check the spelling against the Agent Skill Bank.');
+    return { ok: true, role: 'agent', me: pick(named), viaBranch: true, configured: true };
+  }
+  var mine = null;
+  roster.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) mine = a; });
+  if (mine) return { ok: true, role: 'agent', me: pick(mine), configured: true };
+  return refuse(configured
+    ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
+    : 'Not open yet: set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.');
+}
+
+/** GET action=board&code=…[&who=…][&all=1]. */
+function transitionBoard_(p) {
+  p = p || {};
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
+  try { return tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || ''))); }
+  catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+}
+
+/** Every client who answered (a tap, a tick, a reply or a review), what they
+ *  told us, who is named on it and where it stands; with `all`, every other
+ *  client written to as a compact row, so a caller can be named on someone
+ *  who has not answered yet. An agent gets the clients named to them and
+ *  nothing else. Staff Test rows are never on the board. */
+function tBoard_(w, all) {
+  var tz = tTz_(), now = new Date();
+  var t = tRead_();
+  var rc = tReceipt_();
+  var qdef = (rc && rc.json && rc.json.questions) || {}, codeQ = {};
+  Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { codeQ[a[2]] = { q: qdef[k][0], a: a[0], tap: a[1] }; }); });
+  var tapWords = (rc && rc.json && rc.json.recap && rc.json.recap.taps) || {};
+  var fmt = function (d, f) { return d instanceof Date && !isNaN(d.getTime()) ? Utilities.formatDate(d, tz, f || 'd MMM HH:mm') : ''; };
+  var byTok = {}, order = [], sentNoAnswer = 0;
+  t.rows.forEach(function (r) {
+    var tok = tText_(r.Token);
+    if (!tok) return;
+    if (tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client))) return;   // staff standing in as clients
+    var c = { token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', firstName: tText_(r['First name']),
+      no: tText_(r['Client number']), seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), email: tText_(r.Email),
+      phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
+      held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
+      facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
+      answers: [], taps: [], notes: [], markers: [], needs: [], reach: '', when: '', rows: [], open: 0, actionable: 0, done: 0, noted: 0,
+      late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
+    byTok[tok] = c; order.push(tok);
+  });
+
+  /* Client Responses: Received, Token, Segment, Response, Needs, Page, Referrer, Status, Assigned to, Assigned on, Note */
+  var resp = tSheetRows_(SVC.RESP_SHEET);
+  resp.rows.forEach(function (v, i) {
+    var tok = String(v[1] || '').trim(), c = byTok[tok];
+    if (!c) return;
+    var type = String(v[3] || '').trim();
+    if (!type) return;
+    var rec = v[0] instanceof Date ? v[0] : null;
+    var m = /[?&]q=([a-z_]+)/.exec(String(v[5] || '')), code = m ? m[1] : '';
+    var status = String(v[7] || '').trim(), assigned = String(v[8] || '').trim(), on = v[9] instanceof Date ? v[9] : null, note = String(v[10] || '');
+    var at = fmt(rec);
+    c.rows.push({ n: i + 2, type: type });
+    if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
+    if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
+    if (code && codeQ[code]) {
+      var q = codeQ[code];
+      if (/^reach_/.test(code)) c.reach = q.a;
+      else if (/^when_/.test(code)) c.when = q.a;
+      else if (!c.answers.some(function (x) { return x.code === code; })) c.answers.push({ q: q.q, a: q.a, code: code, at: at });
+      if (T_PRIORITY[code]) c.score = Math.max(c.score, T_PRIORITY[code]);
+    } else if (type !== 'informed' || code === 'wrote') {
+      if (!c.taps.some(function (x) { return x.tap === type; })) c.taps.push({ tap: type, label: tapWords[type] || type, needs: String(v[4] || ''), at: at });
+      if (T_PRIORITY[type]) c.score = Math.max(c.score, T_PRIORITY[type]);
+    }
+    (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
+    var clean = note.replace(/\[[^\]]*\]/g, '').trim().replace(/^["“]|["”]$/g, '').trim();
+    if (clean && c.notes.indexOf(clean) < 0) c.notes.push(clean.slice(0, 500));
+    var isOpen = status.toLowerCase() === 'open';
+    if (type !== 'informed') {
+      c.actionable++;
+      var needs = String(v[4] || '').trim();
+      if (needs && c.needs.indexOf(needs) < 0) c.needs.push(needs);
+      if (isOpen) {
+        c.open++;
+        var wait = type === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;
+        if (!assigned && rec && tWorkingDays_(rec, now) >= wait) c.late = true;
+      } else {
+        c.done++;
+        if (status && !/^logged$/i.test(status)) c.mark = status;
+      }
+    } else c.noted++;
+    if (assigned && (!c.assignedAt || (on && on > c.assignedAt))) { c.assigned = assigned; c.assignedAt = on || c.assignedAt || rec; c.assignedOn = fmt(on, 'd MMM'); }
+  });
+
+  /* the reviews: Service Questionnaires rows the campaign's link ref names, or whose e-mail is on the send list */
+  var q = tSheetRows_(SVC.IND_SHEET), qi = {};
+  q.head.forEach(function (h, i) { qi[h] = i; });
+  var byMail = {};
+  order.forEach(function (tok) { var c = byTok[tok]; if (c.email) byMail[c.email.toLowerCase()] = c; });
+  var wordCols = [];
+  q.head.forEach(function (h, i) {
+    if (/tell us what happened|how you.?ve been treated|what would you like help with|something specific you want to ask|been in touch with you about moving|^who was it/i.test(h)) wordCols.push([h, i]);
+  });
+  q.rows.forEach(function (v) {
+    var mm = qi['Link ref'] !== undefined ? /^transition:(\S+)$/.exec(String(v[qi['Link ref']] || '').trim()) : null;
+    var c = (mm && byTok[mm[1]]) || (qi.Email !== undefined ? byMail[String(v[qi.Email] || '').trim().toLowerCase()] : null);
+    if (!c) return;
+    var ts = qi.Timestamp !== undefined && v[qi.Timestamp] instanceof Date ? v[qi.Timestamp] : null;
+    var col = function (h) { return qi[h] !== undefined ? String(v[qi[h]] || '').trim() : ''; };
+    c.review = { ref: col('Reference'), when: fmt(ts), priority: col('Priority'), status: col('Status'), handled: col('Handled by'), words: [] };
+    wordCols.forEach(function (wc) { var val = String(v[wc[1]] || '').trim(); if (val) c.review.words.push({ q: wc[0], a: val.slice(0, 400) }); });
+    if (/urgent/i.test(c.review.priority)) c.score = Math.max(c.score, 100);
+    if (/^yes/i.test(col('Has anyone been in touch with you about moving or replacing this policy?'))) c.score = Math.max(c.score, T_PRIORITY.review_approached);
+    if (ts && (!c.firstAt || ts < c.firstAt)) c.firstAt = ts;
+    if (ts && (!c.lastAt || ts > c.lastAt)) c.lastAt = ts;
+  });
+
+  var clients = [], silent = [];
+  order.forEach(function (tok) {
+    var c = byTok[tok];
+    if (!c.rows.length && !c.review) {
+      if (c.sent && !c.held) {
+        sentNoAnswer++;
+        if (all) silent.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email, phone: c.phone, sent: c.sent, state: 'silent', rows: [] });
+      }
+      return;
+    }
+    c.state = c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
+    c.first = fmt(c.firstAt); c.last = fmt(c.lastAt);
+    delete c.firstAt; delete c.lastAt; delete c.assignedAt;
+    clients.push(c);
+  });
+  var rank = { open: 0, assigned: 1, done: 2, noted: 3 };
+  clients.sort(function (a, b) {
+    return (rank[a.state] - rank[b.state]) || ((b.late ? 1 : 0) - (a.late ? 1 : 0)) || (b.score - a.score) || String(a.first).localeCompare(String(b.first));
+  });
+  var counts = { answered: clients.length, open: 0, assigned: 0, done: 0, noted: 0, late: 0, silent: sentNoAnswer };
+  clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; });
+  var agents = tRoster_().map(function (a) {
+    var mine = clients.filter(function (c) { return c.assigned.toLowerCase() === a.name.toLowerCase(); });
+    return { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone,
+             open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
+  }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+  if (w.role === 'agent') {
+    var me = w.me.name.toLowerCase();
+    clients = clients.filter(function (c) { return c.assigned.toLowerCase() === me; });
+    silent = [];
+  }
+  return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
+           waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
+           mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' } };
+}
+
+/** GET action=assign&code=<branch>&tokens=a,b,c&agent=<name>[&brief=0][&intro=1][&note=…].
+ *  Writes the agent onto every actionable row the client has (or every row,
+ *  or a new "assign" row for a client who has not answered), e-mails the
+ *  agent one brief for the batch, and, when asked, the client an
+ *  introduction: the "name and a number" the receipt promised. */
+function transitionAssign_(p) {
+  p = p || {};
+  var w = tWho_(p.code, '');
+  if (!w.ok || w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can name an agent on a client.' };
+  var agentName = String(p.agent || '').trim().slice(0, 80);
+  var tokens = String(p.tokens || p.token || '').split(',').map(function (s) { return s.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64); }).filter(Boolean);
+  if (!agentName || !tokens.length) return { ok: false, error: 'Choose an agent and at least one client.' };
+  var agent = null;
+  tRoster_().forEach(function (a) { if (a.name.toLowerCase() === agentName.toLowerCase()) agent = a; });
+  if (!agent) return { ok: false, error: 'No agent by that name on the Agent Skill Bank (active rows only).' };
+  var wantBrief = !/^(0|no|false)$/i.test(String(p.brief === undefined ? '1' : p.brief));
+  var wantIntro = /^(1|yes|true)$/i.test(String(p.intro || ''));
+  var extra = String(p.note || '').replace(/[\[\]<>]/g, '').trim().slice(0, 200);
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  try {
+    var b = tBoard_({ ok: true, role: 'branch', me: null }, true), map = {};
+    b.clients.forEach(function (c) { map[c.token] = c; });
+    b.silent.forEach(function (c) { map[c.token] = c; });
+    var sh = ss_().getSheetByName(SVC.RESP_SHEET);
+    if (!sh && typeof responseSheet_ === 'function') sh = responseSheet_();
+    if (!sh) return { ok: false, error: 'The Client Responses tab is missing.' };
+    var now = new Date(), stamp = Utilities.formatDate(now, tTz_(), 'd MMM');
+    var marker = '[assigned ' + stamp + ' · ' + agent.name + ']' + (extra ? ' ' + extra : '');
+    var done = [], missing = [], written = 0;
+    tokens.forEach(function (tok) {
+      var c = map[tok];
+      if (!c) { missing.push(tok); return; }
+      var targets = (c.rows || []).filter(function (r) { return r.type !== 'informed'; });
+      if (!targets.length) targets = c.rows || [];
+      if (targets.length) {
+        targets.forEach(function (r) {
+          sh.getRange(r.n, 9, 1, 2).setValues([[agent.name, now]]);
+          var cell = sh.getRange(r.n, 11), note = String(cell.getValue() || '');
+          cell.setValue((note ? note + ' ' : '') + marker);
+          written++;
+        });
+      } else {
+        sh.appendRow([now, tok, c.seg || '', 'assign', 'a named agent, from the board', '/assign', 'branch', 'Open', agent.name, now, marker]);
+        c.rows = [{ n: sh.getLastRow(), type: 'assign' }];
+        written++;
+      }
+      c.assigned = agent.name; c.assignedOn = stamp;
+      done.push(c);
+    });
+    var briefed = false, introduced = 0, warnings = [];
+    if (done.length && wantBrief) {
+      try { tBriefMail_(agent, done); briefed = true; }
+      catch (e) { warnings.push('The brief to ' + agent.name + ' did not send: ' + String(e && e.message ? e.message : e)); }
+    }
+    if (done.length && wantIntro) {
+      done.forEach(function (c) {
+        try { if (tIntroMail_(sh, c, agent, stamp)) introduced++; }
+        catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
+      });
+    }
+    log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') +
+         (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (missing.length ? ' · ' + missing.length + ' unknown' : ''));
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, missing: missing, warnings: warnings };
+  } finally { lock.releaseLock(); }
+}
+
+/** GET action=update&code=…[&who=…]&token=…&status=Called|Met|Declined|Closed|Open|No answer[&note=…].
+ *  An outcome on every actionable row the client has (Status, and a stamped
+ *  note); "No answer" stamps the note and leaves the row Open, so the chase
+ *  still watches it. An agent may mark only a client named to them. */
+function transitionUpdate_(p) {
+  p = p || {};
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return { ok: false, refused: true, error: w.error };
+  var tok = String(p.token || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  var status = String(p.status || '').trim(), noAnswer = /^no answer$/i.test(status), known = '';
+  T_STATUSES.forEach(function (s) { if (s.toLowerCase() === status.toLowerCase()) known = s; });
+  if (!tok || (!known && !noAnswer)) return { ok: false, error: 'Choose a client and an outcome.' };
+  var extra = String(p.note || '').replace(/[\[\]<>]/g, '').trim().slice(0, 300);
+  var who = w.role === 'branch' ? 'branch' : w.me.name;
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  try {
+    var sh = ss_().getSheetByName(SVC.RESP_SHEET), last = sh ? sh.getLastRow() : 0;
+    if (!sh || last < 2) return { ok: false, error: 'No responses yet.' };
+    var vals = sh.getRange(2, 1, last - 1, 11).getValues(), any = [], targets = [], assignedTo = '';
+    vals.forEach(function (v, i) {
+      if (String(v[1] || '').trim() !== tok) return;
+      any.push(i + 2);
+      if (String(v[3] || '').trim() !== 'informed') targets.push(i + 2);
+      if (String(v[8] || '').trim()) assignedTo = String(v[8]).trim();
+    });
+    if (!any.length) return { ok: false, error: 'No rows for that client.' };
+    if (w.role === 'agent' && assignedTo.toLowerCase() !== w.me.name.toLowerCase()) return { ok: false, refused: true, error: 'That client is not on your list.' };
+    if (!targets.length) targets = any;
+    var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM');
+    var marker = '[' + (noAnswer ? 'no answer' : known.toLowerCase()) + ' ' + stamp + ' · ' + who + ']' + (extra ? ' ' + extra : '');
+    targets.forEach(function (rn) {
+      if (!noAnswer) sh.getRange(rn, 8).setValue(known);
+      var cell = sh.getRange(rn, 11), note = String(cell.getValue() || '');
+      cell.setValue((note ? note + ' ' : '') + marker);
+    });
+    log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's'));
+    return { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
+  } finally { lock.releaseLock(); }
+}
+
+/** One internal e-mail to the agent for the batch: every client named to
+ *  them in this press, with everything the branch knows, so the first call
+ *  is personal and not cold. From the script owner's account, never to a
+ *  client, and it says it is internal. */
+function tBriefMail_(agent, clients) {
+  var F = 'Inter,Arial,sans-serif', esc = tEsc_;
+  var to = agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
+  var names = clients.map(function (c) { return c.client; });
+  var subject = (agent.email ? '' : '(no e-mail on the roster for ' + agent.name + ') ') + 'Your client' + (clients.length === 1 ? '' : 's') + ': ' +
+    names.slice(0, 3).join(', ') + (names.length > 3 ? ' and ' + (names.length - 3) + ' more' : '');
+  var block = function (c) {
+    var lines = '';
+    if (c.answers && c.answers.length) lines += '<p style="margin:8px 0 2px"><b>What they told us</b></p><ul style="margin:0;padding-left:18px">' +
+      c.answers.map(function (a) { return '<li><span style="color:#64798e">' + esc(a.q) + '</span><br><b>' + esc(a.a) + '</b></li>'; }).join('') + '</ul>';
+    if (c.taps && c.taps.length) lines += '<p style="margin:8px 0 2px"><b>They tapped</b> ' + c.taps.map(function (t) { return esc(t.label) + (t.needs ? ' <span style="color:#64798e">(' + esc(t.needs) + ')</span>' : ''); }).join(' · ') + '</p>';
+    if (c.notes && c.notes.length) lines += '<p style="margin:8px 0 2px"><b>In their words</b></p>' + c.notes.map(function (n) { return '<p style="margin:2px 0;font-style:italic">“' + esc(n) + '”</p>'; }).join('');
+    if (c.review) lines += '<p style="margin:8px 0 2px"><b>Their review</b> ' + esc(c.review.ref) + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + '</p>' +
+      (c.review.words || []).map(function (x) { return '<p style="margin:2px 0"><span style="color:#64798e">' + esc(x.q) + '</span><br>' + esc(x.a) + '</p>'; }).join('');
+    var reach = [];
+    if (c.phone) reach.push('<a href="tel:' + esc(String(c.phone).replace(/[^\d+]/g, '')) + '">' + esc(c.phone) + '</a>');
+    if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
+    if (c.reach) reach.push('prefers ' + esc(c.reach.toLowerCase()));
+    if (c.when) reach.push('best in the ' + esc(c.when.toLowerCase()));
+    var link = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '');
+    return '<div style="border:1px solid #d7e3ea;border-radius:10px;padding:12px 14px;margin:10px 0">' +
+      '<p style="margin:0"><b style="font-size:16px;color:#12202e">' + esc(c.client) + '</b> <span style="color:#64798e">' + esc(c.no || '') + ' · letter ' + esc(c.seg || '') +
+      (c.book ? ' · was with ' + esc(c.book) : '') + (c.sent ? ' · written to ' + esc(c.sent) : '') + (c.first ? ' · answered ' + esc(c.first) : '') + '</span></p>' +
+      (c.needs && c.needs.length ? '<p style="margin:6px 0 0;color:#8a3324"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</p>' : '') + lines +
+      '<p style="margin:8px 0 0"><b>Reach them:</b> ' + (reach.length ? reach.join(' · ') : 'no phone or e-mail on the sheet: look the client up by number') + '</p>' +
+      '<p style="margin:6px 0 0;font-size:13px"><a href="' + link + '">Their own answer page</a>: tick anything more they tell you with them on the line, and it lands on the sheet.</p></div>';
+  };
+  var html = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:640px">' +
+    '<h2 style="font:800 20px ' + F + ';color:#12202e;margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + clients.length + ' client' + (clients.length === 1 ? '' : 's') + '.</h2>' +
+    '<p style="margin:0 0 12px;color:#64798e">From the transition letters. Each is a call before anything else, at the time the client chose. Mark the outcome on your list: ' +
+    '<a href="https://rickyrampersadbranch.com/orphan-transition/assign.html">rickyrampersadbranch.com/orphan-transition/assign.html</a> (your own code, or the branch code and your name).</p>' +
+    clients.map(block).join('') +
+    '<div style="background:#fff6df;border-left:4px solid #efc24b;padding:10px 14px;margin:14px 0;font-size:13.5px">' +
+    '<b>Three rules.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. ' +
+    'Nothing needs to be signed or paid until they have spoken to the branch.</div>' +
+    '<p style="font:12px ' + F + ';color:#64798e;margin-top:18px">' + esc(tInternal_(tReceipt_())) + '</p></div>';
+  MailApp.sendEmail(to, subject, 'Open in a mail app that shows HTML.', { htmlBody: html, name: TRANSITION.FROM_NAME });
+}
+
+/** The introduction the receipt promised: "once your file has been read, we
+ *  introduce the agent who fits it, in writing, with a name and a number".
+ *  From support@ through clientMail_ (Service.gs) with the branch copied;
+ *  once per client per agent, marked on the client's first row. Returns
+ *  true when it went. */
+function tIntroMail_(sh, c, agent, stamp) {
+  var to = String(c.email || '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return false;
+  var mark = '[intro ' + agent.name + ']';
+  if ((c.markers || []).some(function (m) { return m.indexOf('[intro') === 0 && m.indexOf(agent.name) > 0; })) return false;
+  if (typeof clientMail_ !== 'function') throw new Error('clientMail_ is not in this project');
+  var rc = tReceipt_(), care = tCare_(rc), esc = tEsc_;
+  var first = c.firstName || 'there', aFirst = agent.name.split(/\s+/)[0];
+  var call = c.open ? '<p style="margin:0 0 12px">' + esc(aFirst) + ' will call you ' + (c.when ? 'in the ' + esc(c.when.toLowerCase()) : 'in the next few days') +
+    (c.reach && /whatsapp/i.test(c.reach) ? ', and can reach you on WhatsApp as you asked' : '') + '.</p>' : '';
+  var direct = [];
+  if (agent.phone) direct.push(esc(agent.phone));
+  if (agent.email) direct.push('<a href="mailto:' + esc(agent.email) + '" style="color:#07606f">' + esc(agent.email) + '</a>');
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
+    '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + esc(first) + ',</p>' +
+    '<p style="margin:0 0 12px">Thank you for answering our letter. A person has read what you told us, and <b>' + esc(agent.name) + '</b> of our branch team ' +
+    'now looks after your policy.</p>' + call +
+    '<p style="margin:0 0 12px">You can reach ' + esc(aFirst) + ' directly' + (direct.length ? ': ' + direct.join(' · ') : ' by replying to this e-mail') +
+    '. Nothing about your policy changes: it stays with Guardian Life, and the same branch team keeps your file.</p>' +
+    '<p style="margin:16px 0 0"><b style="display:block">' + esc(care.care_name) + '</b>' + esc(care.care_line) + '</p></div></div>';
+  clientMail_({ to: to, subject: 'Meet your agent: ' + agent.name, htmlBody: html, cc: TRANSITION.CC || [] });
+  try {
+    var rn = c.rows && c.rows.length ? c.rows[0].n : 0;
+    if (rn) { var cell = sh.getRange(rn, 11), note = String(cell.getValue() || ''); cell.setValue((note ? note + ' ' : '') + mark + ' ' + stamp); }
+  } catch (e) {}
+  return true;
+}

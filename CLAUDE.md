@@ -1254,6 +1254,43 @@ voice under the new timing and the caption gives it away.
   gate; the first open on a new device still waits for the sheet, and a
   refused code clears the saved picture. The branch code is `TEAM_CODE` in
   Service.gs, never in the repository.
+- **Who is looking after whom is decided on the assignment board, not in
+  FactFind360.** Asked for on 26 September 2026 ("a link for who you are
+  going to assign which agent to meet with the client, an agent's login view
+  and a manager's login view, on these codes; shall I put FactFind360?").
+  No: factfind360.com is the fact-find analyzer on Netlify from another
+  repository, with no sheet, no codes and none of these clients, and the two
+  hosting chains never touch. `orphan-transition/assign.html` sits beside the
+  dashboard and reads the same sheet through three actions in Service.gs's
+  `doGet` (`board`, `assign`, `update`, all in Transition.gs; `ping` answers
+  `campaign: 3` once they are deployed). The branch code opens the whole
+  board: every client who answered, most pressing first (`T_PRIORITY`), with
+  their answers, taps, words and review, who is named and where it stands;
+  `all=1` adds the clients who have not answered, so a caller can be named on
+  them too. An agent's own portal code from the Agent Skill Bank opens their
+  list alone, and so does the branch code with the agent's name, the way the
+  agent portal works. Nothing is a new column: `assign` writes the agent into
+  Assigned to and Assigned on on the client's actionable rows of Client
+  Responses (a new `assign` row for a client with none), which the responses
+  page, the digest, the chase and the reports already read; `update` writes
+  the outcome into Status (Called, Met, Declined, Closed, Open; "No answer"
+  is a stamped note only), which is what stops the chase. Every write is
+  stamped in the Note cell (`[assigned 28 Sep · Name]`, `[met 28 Sep ·
+  Name]`), appended, never overwritten. Assigning sends the agent one
+  internal brief for the batch (MailApp, to the roster's e-mail, with the
+  internal footer) and, when the box is left ticked, the client the
+  introduction the receipt promised ("Meet your agent: Name", through
+  `clientMail_`, so from support@ when the Entra properties exist), once per
+  client per agent, marked `[intro Name]`. The roster is the Agent Skill
+  Bank: name, e-mail, Areas covered, Active, Portal code, and a Phone column
+  if one is added, which the introduction then carries; the sheet has no
+  client phone numbers unless a Phone column is added to Transition Send
+  (built from the portfolio copy in the scratchpad), and the board and the
+  brief read it when it is there. Codes never come back out of the backend.
+  `svc/assign-harness.js` (Node, mocked tabs) and `svc/assign-test.js`
+  (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
+  of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
+  version, or every screen locks out.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
