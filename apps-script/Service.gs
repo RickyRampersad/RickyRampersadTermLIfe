@@ -219,7 +219,7 @@ function doGet(e) {
        deployment older than the resp/feedback actions, so the pages show
        their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_(), campaign: 2 });
+                   automation: automationOn_(), campaign: 3 });   // 3: the assignment board (board, assign, update) is on this deployment
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -254,6 +254,17 @@ function doGet(e) {
   /* the transition campaign's own wall: sends, taps, reviews, verdicts — see Transition.gs */
   if (p.action === 'transition') {
     return json_(transitionData_(p.code));
+  }
+  /* the assignment board (orphan-transition/assign.html): who answered and who is named on it, an agent's
+     own list, a name written onto the client's rows, an outcome marked — see Transition.gs */
+  if (p.action === 'board') {
+    return json_(transitionBoard_(p));
+  }
+  if (p.action === 'assign') {
+    return json_(transitionAssign_(p));
+  }
+  if (p.action === 'update') {
+    return json_(transitionUpdate_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
