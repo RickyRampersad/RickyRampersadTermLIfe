@@ -198,7 +198,7 @@ function load() {
   api(p).then(function (d) {
     inflight = false;
     if (!d || !d.ok) {
-      if (d && d.notUpdated) { fail('This page needs the new backend. Paste Service.gs and Transition.gs into the Apps Script project, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → pencil → New version.', true); return; }
+      if (d && d.notUpdated) { notUpdated(); return; }
       var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
       fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
       return;
@@ -208,7 +208,17 @@ function load() {
     try { localStorage.setItem('rrb-transition-code', CODE); if (WHO) localStorage.setItem('rrb-assign-who', WHO); else localStorage.removeItem('rrb-assign-who'); } catch (e) {}
     D = d; render();
     schedule(POLL_MS);
-  }).catch(function () { inflight = false; fail('The sheet is busy. Trying again in a moment.', false); });
+  }).catch(function () {
+    inflight = false;
+    /* a deployment without the board action answers with the form page, which the browser will not hand over:
+       ask the ping, which every version answers, before calling it a busy sheet */
+    api({ action: 'ping' }).then(function (d) {
+      if (d && d.ok && Number(d.campaign || 0) < 3) notUpdated(); else fail('The sheet is busy. Trying again in a moment.', false);
+    }).catch(function () { fail('The sheet is busy. Trying again in a moment.', false); });
+  });
+}
+function notUpdated() {
+  fail('This page needs the new backend. Paste Service.gs and Transition.gs into the Apps Script project, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → pencil → New version.', true);
 }
 function schedule(ms) { clearTimeout(timer); timer = setTimeout(load, ms); }
 function fail(msg, refused) {
