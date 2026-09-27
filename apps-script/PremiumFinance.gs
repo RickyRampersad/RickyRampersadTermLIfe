@@ -1,8 +1,9 @@
 /**
- * Premium Financing — the backend for rickyrampersadbranch.com/premium-finance/
+ * Premium Bridge — the backend for the premium financing app at
+ * rickyrampersadbranch.com/premium-finance/ (Premium Bridge's own brand).
  *
  * Files each application as a row on the "Premium Finance Applications" tab,
- * e-mails the branch the whole application, and sends the client a copy of
+ * e-mails Premium Bridge the whole application, and sends the client a copy of
  * the quote they applied on. No figure is trusted from the page: the
  * instalment, cost and total are worked out again here from the premium,
  * deposit and term, and a row whose numbers disagree is flagged for the
@@ -13,7 +14,7 @@
  *
  * Setup
  *   1. In the Sheet that should hold the applications: Extensions → Apps Script,
- *      add this file, set PF.BRANCH_TO below.
+ *      add this file, set PF.TEAM_TO below.
  *   2. Run pfSetup() once (creates the tab, asks for permissions).
  *   3. Deploy → New deployment → Web app, execute as Me, access Anyone.
  *   4. Put the /exec URL in CONFIG.API_URL in premium-finance/index.html.
@@ -25,8 +26,10 @@
 
 var PF = {
   TAB: 'Premium Finance Applications',
-  BRANCH_TO: '',                 // who receives each application; blank = the script owner
-  BRANCH_CC: '',                 // optional, comma-separated
+  TEAM_TO: '',                   // who receives each application; blank = the script owner
+  TEAM_CC: '',                   // optional, comma-separated
+  NAME: 'Premium Bridge',
+  LOGO: 'https://rickyrampersadbranch.com/premium-finance/logo.png',   // hosted PNG: Gmail strips SVG
   RATE_MONTHLY: 0.02,            // must match CONFIG.RATE_MONTHLY on the page
   TERMS: [6, 8, 10],
   MIN_PREMIUM: 1000,
@@ -74,7 +77,7 @@ function doPost(e) {
       p.payMethod, check.join('; '), '', '']);
     lock.releaseLock();
 
-    pfMailBranch_(ref, p, calc, check);
+    pfMailTeam_(ref, p, calc, check);
     if (PF.SEND_CLIENT_COPY) pfMailClient_(ref, p, calc);
     return pfJson_({ ok: true, ref: ref });
   } catch (err) {
@@ -120,7 +123,7 @@ function pfSheet_() {
     sh = ss.insertSheet(PF.TAB);
     sh.appendRow(PF_COLS);
     sh.setFrozenRows(1);
-    sh.getRange(1, 1, 1, PF_COLS.length).setFontWeight('bold').setBackground('#07131f').setFontColor('#efc24b');
+    sh.getRange(1, 1, 1, PF_COLS.length).setFontWeight('bold').setBackground('#0E1B2C').setFontColor('#8BE8D2');
   }
   return sh;
 }
@@ -152,8 +155,8 @@ function pfEsc_(s) {
   });
 }
 
-function pfMailBranch_(ref, p, c, check) {
-  var to = PF.BRANCH_TO || Session.getEffectiveUser().getEmail();
+function pfMailTeam_(ref, p, c, check) {
+  var to = PF.TEAM_TO || Session.getEffectiveUser().getEmail();
   var rows = [
     ['Name', p.name], ['Mobile', p.phone], ['E-mail', p.email], ['ID', p.idType + ' ' + p.idNumber],
     ['Address', p.address], ['Insurer', p.insurer], ['Policy', (p.policy || '-') + ' · ' + p.policyType],
@@ -168,27 +171,28 @@ function pfMailBranch_(ref, p, c, check) {
     (check.length ? '<p style="color:#b23b3b"><b>Check:</b> ' + pfEsc_(check.join('; ')) + '</p>' : '') +
     '<table cellpadding="5" style="border-collapse:collapse">' +
     rows.map(function (r) { return '<tr><td style="color:#6d7682">' + pfEsc_(r[0]) + '</td><td><b>' + pfEsc_(r[1]) + '</b></td></tr>'; }).join('') +
-    '</table><p style="color:#6d7682;font-size:12px">Internal: contains client details. Do not forward outside the branch.</p></div>';
-  MailApp.sendEmail({ to: to, cc: PF.BRANCH_CC || undefined, replyTo: p.email,
-    subject: 'Premium financing application ' + ref + ' · ' + p.name + ' · ' + pfMoney_(c.premium),
+    '</table><p style="color:#6d7682;font-size:12px">Internal: contains client details. Do not forward.</p></div>';
+  MailApp.sendEmail({ to: to, cc: PF.TEAM_CC || undefined, replyTo: p.email,
+    subject: 'Premium Bridge application ' + ref + ' · ' + p.name + ' · ' + pfMoney_(c.premium),
     htmlBody: html });
 }
 
 function pfMailClient_(ref, p, c) {
   var first = String(p.name).trim().split(/\s+/)[0];
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1d2530;max-width:560px">' +
-    '<img src="https://rickyrampersadbranch.com/logo-mark.png" width="48" height="48" alt="" style="border-radius:12px;background:#07131f">' +
+    '<table cellpadding="0" cellspacing="0"><tr><td><img src="' + PF.LOGO + '" width="44" height="44" alt="" style="display:block;border-radius:11px"></td>' +
+    '<td style="padding-left:10px;font-size:20px;font-weight:800;color:#0E1B2C">Premium<span style="color:#0A7564">Bridge</span></td></tr></table>' +
     '<p>Thank you, ' + pfEsc_(first) + '. We have your premium financing application.</p>' +
     '<p style="font-size:18px"><b>Ref ' + pfEsc_(ref) + '</b></p>' +
     '<p>' + pfEsc_(p.plan) + ': ' + c.term + ' monthly instalments of <b>' + pfMoney_(c.instalment) + '</b> on a premium of ' +
     pfMoney_(c.premium) + (c.deposit ? ' (deposit ' + pfMoney_(c.deposit) + ')' : '') +
     '. Cost of financing ' + pfMoney_(c.cost) + ', total repayable ' + pfMoney_(c.total) + '.</p>' +
-    '<p><b>What happens next</b><br>An officer checks the policy with ' + pfEsc_(p.insurer) +
-    ' and may call you for your ID and the insurer\'s invoice or renewal notice. You then receive the agreement to sign, with the bank details for your instalments.</p>' +
-    '<p style="color:#6d7682">Bank details only ever come with your signed agreement. If anyone sends you different account details, do not pay: call the branch first.</p>' +
+    '<p><b>What happens next</b><br>We check the policy with ' + pfEsc_(p.insurer) +
+    ' and may call you for your ID and the insurer\'s invoice or renewal notice. You then receive your agreement to sign, with our bank details for your instalments.</p>' +
+    '<p style="color:#6d7682">Bank details only ever come with your signed agreement. If anyone sends you different account details, do not pay: call us first.</p>' +
     '<p style="color:#6d7682;font-size:12px">These figures are indicative and subject to approval and verification of the policy. This e-mail is for the addressee only; if it reached you in error, please tell us and delete it.</p></div>';
-  MailApp.sendEmail({ to: p.email, subject: 'Your premium financing application ' + ref, htmlBody: html,
-    name: 'Ricky Rampersad Branch' });
+  MailApp.sendEmail({ to: p.email, subject: 'Your Premium Bridge application ' + ref, htmlBody: html,
+    name: PF.NAME });
 }
 
 function pfJson_(o) {

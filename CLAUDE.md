@@ -1376,6 +1376,20 @@ voice under the new timing and the caption gives it away.
   house rule above. donthaveanagent.com carries **The Knot** in Ink & Coral,
   because it is presented as a Ricky Rampersad project that stands on its own.
   Do not "correct" one into the other.
+- **Premium Bridge is a third mark, on purpose.** `premium-finance/` is the
+  premium financing company's own site, not a branch screen: its own mark
+  (`premium-finance/logo.svg`, a five-piece arch bridge in teal over a deck,
+  an amber dot crossing; `logo.png` is the hosted copy for e-mail), its own
+  palette (ink `#0E1B2C`, teal `#10A58E` / `#0A7564`, mint `#8BE8D2`, amber
+  `#F5A524`, paper `#F6F2E9`) and Plus Jakarta Sans. Asked for on 27
+  September 2026: "a new logo and design — it's a premium finance company,
+  financing insurance premiums". The gold-shield rule does not apply inside
+  that folder, and the shield must not be put back there; the folder is
+  self-contained so it can move to its own domain whole. Its backend is
+  `apps-script/PremiumFinance.gs`, its own Apps Script project (it has its
+  own doGet/doPost). The page's `CONFIG` holds the rate, terms, lender name
+  and contact address; the contact is support@rickyrampersadbranch.com
+  until the company has its own mailbox.
 - **This is a Ricky Rampersad project**, not a Guardian Life one. The brand is
   Ink & Coral — `#0F1A2B` ink, `#1B2A44` surface, `#FF5C4D` coral, `#FFE9E5`
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian
