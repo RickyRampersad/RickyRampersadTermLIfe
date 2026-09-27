@@ -89,11 +89,16 @@ var QQ = (P.get('q') || '').replace(/[^a-z_]/g, '').slice(0, 30);
 /* Mail security (Avanan at Guardian, and others) opens links in a headless browser to check them.
    It must never answer for the client, so a scripted browser records nothing. */
 var HUMAN = !navigator.webdriver;
+/* r=phone is the caller's copy of the page, opened from the call list, the agent's brief or the
+   board with the client on the line: every check of the letter, nothing recorded until Send, and
+   each answer filed under /your-policy/phone so a phone answer is never mistaken for a tap. Before
+   27 September those links carried no r= and opened the film instead of the questions. */
+var PHONE = R === 'phone';
 
 function log(r, q) {
   if (!HUMAN || !r) return;
   var u = SVC + '?action=resp&r=' + encodeURIComponent(r) + '&t=' + encodeURIComponent(T) + '&s=' + encodeURIComponent(S) +
-    '&p=' + encodeURIComponent('/your-policy/' + (q ? '?q=' + q : '')) +
+    '&p=' + encodeURIComponent('/your-policy/' + (PHONE ? 'phone' : '') + (q ? '?q=' + q : '')) +
     '&ref=' + encodeURIComponent((document.referrer || '').slice(0, 120)) + '&z=' + Date.now();
   /* keepalive lets the answer leave even when the page is about to open the form */
   try { fetch(u, { mode: 'no-cors', keepalive: true, credentials: 'omit' }); }
@@ -113,22 +118,25 @@ if (R === 'urgent' || R === 'review') {
   document.getElementById('head').textContent = 'Opening the form now.';
   document.getElementById('msg').textContent = said;
   setTimeout(function () { location.replace(formUrl(QQ)); }, 250);
-} else if (CHECKS.tap_said[R]) {
-  log(R, QQ);
+} else if (CHECKS.tap_said[R] || PHONE) {
+  if (!PHONE) log(R, QQ);
   /* an answer that asks something of us is owned by a named person; a noted answer is recorded.
      The answer's own line says thank you when it has one, and the heading does not say it twice. */
   var care = CHECKS.care && CHECKS.care.Us;
-  if (R !== 'informed' && care) {
+  if (PHONE) {
+    document.getElementById('head').textContent = 'On the phone with the client';
+    said = 'Ask each question in your own words, tick what they tell you, then press Send. Nothing is recorded until you do.';
+  } else if (R !== 'informed' && care) {
     document.getElementById('head').textContent = 'Thank you. ' + care + ' has this.';
     said = said.replace(/^Thank you[^.]*\.\s*/, '');
   } else if (/^Thank you/.test(said)) document.getElementById('head').textContent = 'That is recorded.';
   document.getElementById('msg').textContent = said;
-  if (CHECKS.receipts && CHECKS.receipt_line) { var ml = document.getElementById('mail'); ml.textContent = CHECKS.receipt_line; ml.hidden = false; }
+  if (!PHONE && CHECKS.receipts && CHECKS.receipt_line) { var ml = document.getElementById('mail'); ml.textContent = CHECKS.receipt_line; ml.hidden = false; }
   /* every check of the letter, how to reach them and, once a call is coming, when — on this one page,
      the answer given in the letter already recorded and ticked, the rest ticked as many as apply and
      sent together with one button, so the page is one form (24 September, evening: "so client has to
      select all then click send"). Nothing else is recorded until Send. */
-  var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' ? ['when'] : []);
+  var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' || PHONE ? ['when'] : []);
   var box = document.getElementById('qs'), shown = 0, picked = {}, sent = false;
   function addQ(k) {
     var q = CHECKS.questions[k];

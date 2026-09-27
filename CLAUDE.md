@@ -1028,11 +1028,17 @@ voice under the new timing and the caption gives it away.
   call list is built beside it in the session scratchpad from those rows,
   with the letter they would have had, the facts off the sheet, the phone
   and address off the portfolio, one line on why we are calling, and the
-  client's own `/your-policy/?t=…&s=…` link. `orphan-transition/call-script.html`
+  client's own `/your-policy/?t=…&s=…&r=phone` link. `orphan-transition/call-script.html`
   is the call: the letter spoken, in the same order, with the same
   questions, and the caller ticks the answers on that link with the client
   on the line, so they land on Client Responses and in the reports like a
-  tap. `tInsights_` counts them on their own (`calls`: listed, reached,
+  tap. **The link must end in `r=phone`.** Without an `r=` the address is
+  the film line and opens `/orphan-video/`, which is what the first call
+  list (25 September), the agent's brief and the board all did until 27
+  September. `r=phone` is the caller's copy of the page: every check of the
+  letter plus how and when to reach them, nothing ticked, nothing recorded
+  until Send, and each answer filed with `Page` = `/your-policy/phone?q=…`
+  so a phone answer is never read as a tap. `tInsights_` counts them on their own (`calls`: listed, reached,
   approached, by letter; the risk list marks them "by phone"), never among
   the letters sent, so the response rate stays the letters' rate;
   `tReceipts_` marks a no-e-mail token `[receipt] no e-mail: by phone`
