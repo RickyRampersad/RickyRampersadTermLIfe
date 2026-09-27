@@ -45,6 +45,10 @@ if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + locatio
   .mail{margin:8px 0 0;font-size:13.5px;color:var(--dim)}
   .links{margin:4px 2px 0;font-size:15px;line-height:2}
   .links a{color:var(--tdark);font-weight:700;text-decoration:none}
+  .fld{display:block;width:100%;font:inherit;font-size:16px;color:var(--ink);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:10px 12px;min-height:46px}
+  .chk{display:flex;gap:9px;align-items:flex-start;margin:9px 0 0;font-size:14.5px;cursor:pointer}
+  .chk input{width:20px;height:20px;margin:2px 0 0;flex:none}
+  .warn{color:#8a3324;font-weight:600}
   footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
 </style>
 </head>
@@ -61,9 +65,28 @@ if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + locatio
     <p id="mail" class="mail" hidden></p>
   </div>
   <div class="card" id="more" hidden>
-    <h2>Every check, on this page. Tick as many as apply, then send.</h2>
-    <p class="mail" style="margin:0 0 4px">The one you tapped in the letter is already recorded and ticked.</p>
+    <h2 id="morehead">Every check, on this page. Tick as many as apply, then send.</h2>
+    <p id="moresub" class="mail" style="margin:0 0 4px">The one you tapped in the letter is already recorded and ticked.</p>
     <div id="qs"></div>
+    <div id="callbox" hidden>
+      <div class="q" id="q-email">
+        <b>Their e-mail, spelled back to them</b>
+        <input id="em" class="fld" type="email" inputmode="email" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="name@example.com">
+        <p class="said warn" id="emwarn"></p>
+        <label class="chk"><input id="emok" type="checkbox"> I read it back letter by letter, and the client said it is right</label>
+        <label class="chk"><input id="emnone" type="checkbox"> The client has no e-mail, or would rather not give one</label>
+      </div>
+      <div class="q" id="q-details" hidden>
+        <b>A new number or address, only if theirs has changed</b>
+        <input id="ph" class="fld" type="tel" inputmode="tel" autocomplete="off" maxlength="20" placeholder="New number">
+        <input id="ad" class="fld" type="text" autocomplete="off" maxlength="85" placeholder="New address" style="margin-top:8px">
+        <p class="said warn" id="phwarn"></p>
+      </div>
+      <div class="q">
+        <b>Your name, the caller</b>
+        <input id="by" class="fld" type="text" autocomplete="off" maxlength="20" placeholder="First name">
+      </div>
+    </div>
     <button id="send" class="send" type="button">Send my answers &rarr;</button>
     <p id="sent"></p>
   </div>
@@ -89,18 +112,74 @@ var QQ = (P.get('q') || '').replace(/[^a-z_]/g, '').slice(0, 30);
 /* Mail security (Avanan at Guardian, and others) opens links in a headless browser to check them.
    It must never answer for the client, so a scripted browser records nothing. */
 var HUMAN = !navigator.webdriver;
+/* r=phone is the caller's copy of the page, opened from the call list, the agent's brief or the
+   board with the client on the line: every check of the letter, nothing recorded until Send, and
+   each answer filed under /your-policy/phone so a phone answer is never mistaken for a tap. Before
+   27 September those links carried no r= and opened the film instead of the questions. */
+/* r=update is Client Support's copy (27 September): the staff are not licensed agents, so it asks nothing about the
+   policy. It takes the details our records hold (the e-mail, spelled back; a new number or address; how best to
+   reach them) and, for the terminated book only, the two factual questions. Filed under /your-policy/phone like
+   any call. r=phone stays the licensed agent's copy, with every check of the letter. */
+var UPDATE = R === 'update';
+var PHONE = R === 'phone' || UPDATE;
+/* On the caller's copy the Referrer column carries who took the answer, and on the e-mail line the address
+   they spelled back: "call by Liz: name@example.com". Client Support calls every client our letter did not
+   reach before any agent is named (27 September), and the e-mail lands against the client's own token. */
+var CALLER = '';
 
-function log(r, q) {
+function log(r, q, note) {
   if (!HUMAN || !r) return;
+  var ref = PHONE ? 'call by ' + (CALLER || '?') + (note ? ': ' + note : '') : (document.referrer || '');
   var u = SVC + '?action=resp&r=' + encodeURIComponent(r) + '&t=' + encodeURIComponent(T) + '&s=' + encodeURIComponent(S) +
-    '&p=' + encodeURIComponent('/your-policy/' + (q ? '?q=' + q : '')) +
-    '&ref=' + encodeURIComponent((document.referrer || '').slice(0, 120)) + '&z=' + Date.now();
+    '&p=' + encodeURIComponent('/your-policy/' + (PHONE ? 'phone' : '') + (q ? '?q=' + q : '')) +
+    '&ref=' + encodeURIComponent(ref.slice(0, 120)) + '&z=' + Date.now();
   /* keepalive lets the answer leave even when the page is about to open the form */
   try { fetch(u, { mode: 'no-cors', keepalive: true, credentials: 'omit' }); }
   catch (e) { try { (new Image()).src = u; } catch (e2) {} }
 }
 function formUrl(q) {
   return '/your-policy/review.html?from=client' + (T ? '&t=' + encodeURIComponent(T) : '') + '&type=individual' + (q ? '&q=' + q : '');
+}
+/* The same checks the send list's addresses were put through on 27 September: one address, a full ending,
+   and the common slips of a hurried line (gmail.co, hotmial) caught while the client is still on it. */
+var PROV = ['gmail', 'yahoo', 'hotmail', 'outlook', 'live', 'icloud', 'aol', 'msn', 'ymail', 'rocketmail'];
+var TYPO = { gnail: 'gmail', gmial: 'gmail', gmai: 'gmail', gamil: 'gmail', gmaill: 'gmail', hotmial: 'hotmail',
+             hotmal: 'hotmail', hotmai: 'hotmail', yaho: 'yahoo', yahooo: 'yahoo', outlok: 'outlook', iclod: 'icloud' };
+function emailProblem(e) {
+  if (/[\s,;\/]/.test(e) || (e.match(/@/g) || []).length !== 1) return 'One address only, with no spaces or commas.';
+  var local = e.split('@')[0], dom = e.split('@')[1] || '';
+  if (!local || dom.indexOf('.') < 0 || /\.$/.test(dom) || dom.split('.').pop().length < 2) return 'It looks cut off: it needs its full ending, like .com';
+  var first = dom.split('.')[0];
+  if (PROV.indexOf(first) >= 0 && /^(c|co|cm|om|con|comm)$/.test(dom.slice(first.length + 1))) return 'Check the ending: ' + first + '.com, not ' + dom + '.';
+  if (TYPO[first]) return 'Check the spelling: ' + TYPO[first] + ', not ' + first + '.';
+  return '';
+}
+/* a new number: seven digits, or ten with 868, written the way Salesforce shows them */
+function phoneNumber(p) {
+  var d = String(p || '').replace(/\D/g, '');
+  if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+  if (d.length === 7) d = '868' + d;
+  return d.length === 10 ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : '';
+}
+function phoneCheck() {
+  CALLER = (document.getElementById('by').value || '').replace(/[^A-Za-z .'-]/g, '').trim().slice(0, 20);
+  if (!CALLER) return { ok: false, msg: 'Put your name in first, so the answers carry who took them.' };
+  var out = { ok: true };
+  if (UPDATE) {
+    var ph = document.getElementById('ph').value.trim(), ad = document.getElementById('ad').value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
+    if (ph && !phoneNumber(ph)) return { ok: false, msg: 'Check the new number: seven digits, or ten with 868.' };
+    if (ph) out.phone = phoneNumber(ph);
+    if (ad) out.address = ad.slice(0, 85);
+  }
+  var e = document.getElementById('em').value.trim().toLowerCase();
+  if (e) {
+    var p = emailProblem(e);
+    if (p) return { ok: false, msg: p };
+    if (!document.getElementById('emok').checked) return { ok: false, msg: 'Read the e-mail back letter by letter, then tick that it is right.' };
+    out.email = e; return out;
+  }
+  if (document.getElementById('emnone').checked) { out.none = true; return out; }
+  return { ok: false, msg: 'Take their e-mail, spelled back, or tick that they have none.' };
 }
 document.getElementById('full').href = formUrl('');
 document.getElementById('full').addEventListener('click', function () { log('review', ''); });
@@ -113,22 +192,33 @@ if (R === 'urgent' || R === 'review') {
   document.getElementById('head').textContent = 'Opening the form now.';
   document.getElementById('msg').textContent = said;
   setTimeout(function () { location.replace(formUrl(QQ)); }, 250);
-} else if (CHECKS.tap_said[R]) {
-  log(R, QQ);
+} else if (CHECKS.tap_said[R] || PHONE) {
+  if (!PHONE) log(R, QQ);
   /* an answer that asks something of us is owned by a named person; a noted answer is recorded.
      The answer's own line says thank you when it has one, and the heading does not say it twice. */
   var care = CHECKS.care && CHECKS.care.Us;
-  if (R !== 'informed' && care) {
+  if (UPDATE) {
+    document.getElementById('head').textContent = 'Updating the client’s details';
+    said = 'Take their e-mail and read it back letter by letter, note a new number or address only if it has changed, then press Send. Nothing is recorded until you do, and nothing goes to the client from this page.';
+    document.getElementById('morehead').textContent = 'Their details';
+    document.getElementById('moresub').textContent = 'No advice on this call: anything about the policy is a call-back from a licensed agent.';
+  } else if (PHONE) {
+    document.getElementById('head').textContent = 'On the phone with the client';
+    said = 'Ask each question in your own words, tick what they tell you, take their e-mail, then press Send. Nothing is recorded until you do.';
+    document.getElementById('morehead').textContent = 'The letter’s questions, then their e-mail';
+    document.getElementById('moresub').textContent = 'Tick what they tell you. Nothing is recorded until Send.';
+  } else if (R !== 'informed' && care) {
     document.getElementById('head').textContent = 'Thank you. ' + care + ' has this.';
     said = said.replace(/^Thank you[^.]*\.\s*/, '');
   } else if (/^Thank you/.test(said)) document.getElementById('head').textContent = 'That is recorded.';
   document.getElementById('msg').textContent = said;
-  if (CHECKS.receipts && CHECKS.receipt_line) { var ml = document.getElementById('mail'); ml.textContent = CHECKS.receipt_line; ml.hidden = false; }
+  if (!PHONE && CHECKS.receipts && CHECKS.receipt_line) { var ml = document.getElementById('mail'); ml.textContent = CHECKS.receipt_line; ml.hidden = false; }
   /* every check of the letter, how to reach them and, once a call is coming, when — on this one page,
      the answer given in the letter already recorded and ticked, the rest ticked as many as apply and
      sent together with one button, so the page is one form (24 September, evening: "so client has to
      select all then click send"). Nothing else is recorded until Send. */
-  var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' ? ['when'] : []);
+  var keys = UPDATE ? (S.charAt(0) === 'T' ? ['contact', 'paying'] : []).concat(['reach'])
+    : (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' || PHONE ? ['when'] : []);
   var box = document.getElementById('qs'), shown = 0, picked = {}, sent = false;
   function addQ(k) {
     var q = CHECKS.questions[k];
@@ -159,11 +249,38 @@ if (R === 'urgent' || R === 'review') {
     box.appendChild(div); shown++;
   }
   keys.forEach(addQ);
-  if (shown) document.getElementById('more').hidden = false;
+  if (shown || PHONE) document.getElementById('more').hidden = false;
+  /* the caller's copy takes the e-mail, spelled back, and the caller's own name (kept on this device) */
+  var emEl = document.getElementById('em'), emOk = document.getElementById('emok'), emNone = document.getElementById('emnone'),
+      emWarn = document.getElementById('emwarn'), byEl = document.getElementById('by');
+  if (PHONE) {
+    document.getElementById('callbox').hidden = false;
+    try { byEl.value = localStorage.getItem('rrb-caller') || ''; } catch (e) {}
+    byEl.addEventListener('input', function () { try { localStorage.setItem('rrb-caller', byEl.value.trim()); } catch (e) {} });
+    emEl.addEventListener('input', function () {
+      emOk.checked = false;                                   /* the tick is for the spelling it was given for */
+      if (emEl.value.trim()) emNone.checked = false;
+      emWarn.textContent = emEl.value.trim() ? emailProblem(emEl.value.trim().toLowerCase()) : '';
+    });
+    emNone.addEventListener('change', function () { if (emNone.checked) { emEl.value = ''; emOk.checked = false; emWarn.textContent = ''; } });
+  }
+  if (UPDATE) {
+    document.getElementById('q-details').hidden = false;
+    document.querySelector('.links').hidden = true;             /* the review and the film are the client's, not the caller's */
+    var phEl = document.getElementById('ph');
+    phEl.addEventListener('input', function () {
+      document.getElementById('phwarn').textContent = phEl.value.trim() && !phoneNumber(phEl.value) ? 'Seven digits, or ten with 868.' : '';
+    });
+  }
   document.getElementById('send').addEventListener('click', function () {
     if (sent) return;
-    var ks = Object.keys(picked), out = document.getElementById('sent');
-    if (!ks.length) { out.textContent = 'Nothing ticked yet. Tick what applies, then send.'; return; }
+    var ks = Object.keys(picked), out = document.getElementById('sent'), mail = null;
+    out.className = '';
+    if (PHONE) {
+      mail = phoneCheck();
+      if (!mail.ok) { out.textContent = mail.msg; out.className = 'warn'; return; }
+    }
+    if (!ks.length && !mail) { out.textContent = 'Nothing ticked yet. Tick what applies, then send.'; return; }
     sent = true;
     var toForm = '';
     ks.forEach(function (k) {
@@ -172,9 +289,16 @@ if (R === 'urgent' || R === 'review') {
       if (a[1] === 'urgent') toForm = a[2];
       document.getElementById('q-' + k).querySelector('.said').textContent = CHECKS.said[a[2]] || '';
     });
+    if (mail) {
+      if (mail.email) log('informed', 'email_given', mail.email); else log('informed', 'email_none');
+      if (mail.phone) log('informed', 'phone_given', mail.phone);
+      if (mail.address) log('informed', 'address_given', mail.address);
+      [emEl, emOk, emNone, byEl, document.getElementById('ph'), document.getElementById('ad')].forEach(function (o) { o.disabled = true; });
+    }
     box.querySelectorAll('button').forEach(function (o) { o.disabled = true; });
     var btn = document.getElementById('send'); btn.disabled = true; btn.textContent = '✓ Sent';
-    out.textContent = 'Sent. Thank you.';
+    out.textContent = UPDATE ? 'Sent: the details are on Client Responses under this client' + (mail && mail.email ? ', and the e-mail waits on their row for the branch’s go' : '') + '. Nothing goes to the client from here.'
+      : PHONE ? 'Sent: the answers' + (mail && mail.email ? ' and the e-mail' : '') + ' are on Client Responses under this client. Nothing goes to the client.' : 'Sent. Thank you.';
     /* "talk to me first" is the questionnaire: the answers leave first, then the form opens */
     if (toForm) setTimeout(function () { location.href = formUrl(toForm); }, 400);
   });

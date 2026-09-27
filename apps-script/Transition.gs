@@ -793,11 +793,100 @@ function tWords_(text, lines) {
   return out.join(' ').replace(/\s+/g, ' ').trim();
 }
 
-/** Every five minutes, installed by transitionSetup. */
+/** Every five minutes, installed by transitionSetup. The e-mails taken on calls go onto their rows, held, first. */
 function transitionReceipts() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return 'another run is busy';
-  try { return tReceipts_(); } finally { lock.releaseLock(); }
+  try {
+    try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
+    return tReceipts_();
+  } finally { lock.releaseLock(); }
+}
+
+/* ── e-mails taken on a call ─────────────────────────────────────── */
+/** Client Support calls every client the letter did not reach, before any agent is named, to put right what our
+ *  records hold (27 September: "the objective is to get the data cleaned, the correct email, then send off the
+ *  email … to have it on record"). The caller's copy of the answer page files the address the client spelled back
+ *  as its own Client Responses row, q=email_given, the Referrer cell reading "call by <name>: <address>". This
+ *  writes it onto the client's Transition Send row and holds it there for the branch's go: the address in Email,
+ *  T_PHONE_HOLD in Exclude, who took it and when in Reason. Neither a letter nor a receipt goes to a held row. A row
+ *  whose letter went to another address (it bounced, or the client reads a different one) has Sent at and Status
+ *  cleared, so the letter goes again, to the address the client gave, once released; the same address with the
+ *  letter already sent is left alone. A row held for anything else (an agent, a household, staff, a claim, a check,
+ *  nothing held) is never touched. Every row read is marked [filed…] in its Note cell, appended, never re-read. */
+var T_PHONE_HOLD = 'hold: e-mail by phone';
+function tFilePhoneEmails_() {
+  var out = { filed: 0, same: 0, left: 0 };
+  var rs, last;
+  try { rs = ss_().getSheetByName(SVC.RESP_SHEET); last = rs ? rs.getLastRow() : 0; } catch (e) { return out; }
+  if (!rs || last < 2) return out;
+  var vals = rs.getRange(2, 1, last - 1, 11).getValues(), todo = [];
+  for (var i = 0; i < vals.length; i++) {
+    var v = vals[i], page = String(v[5] || ''), note = String(v[10] || '');
+    if (page.indexOf('/your-policy/phone') !== 0 || tQOf_(page) !== 'email_given' || note.indexOf('[filed') >= 0) continue;
+    var m = String(v[6] || '').match(/^call by ([^:]*):\s*(\S+)\s*$/);
+    todo.push({ rowNum: i + 2, token: String(v[1] || '').trim(), by: m ? m[1].trim() : '', email: m ? m[2].trim().toLowerCase() : '',
+                when: v[0], note: note });
+  }
+  if (!todo.length) return out;
+  var t;
+  try { t = tRead_(); } catch (e) { log_('transition', 'phone-emails-held', String(e && e.message ? e.message : e)); return out; }
+  var byTok = {}, tz = tTz_();
+  t.rows.forEach(function (r) { var k = tText_(r.Token); if (k) byTok[k] = r; });
+  function mark(x, what) {
+    try { rs.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[filed' + (what ? ': ' + what : '') + ']'); } catch (e) {}
+  }
+  todo.forEach(function (x) {
+    var r = byTok[x.token], bad = tEmailProblem_(x.email);
+    if (!r) { mark(x, 'no row for this token'); out.left++; return; }
+    if (bad) { mark(x, 'address looks wrong (' + bad + '), not filed'); out.left++; return; }
+    var ex = tText_(r.Exclude), old = tText_(r.Email).toLowerCase(), sentAt = r['Sent at'];
+    var sent = sentAt instanceof Date ? !isNaN(sentAt.getTime()) : !!tText_(sentAt);
+    if (ex && !/^no e-mail/i.test(ex) && !/^bounced/i.test(ex) && ex !== T_PHONE_HOLD) {
+      mark(x, 'row held for "' + ex.slice(0, 40) + '", not changed'); out.left++; return;
+    }
+    if (old === x.email && sent && !ex) { mark(x, 'same address, the letter went there already'); out.same++; return; }
+    var took = x.when instanceof Date ? ' on ' + Utilities.formatDate(x.when, tz, 'd MMM') : '';
+    var was = sent ? '; the letter of ' + (sentAt instanceof Date ? Utilities.formatDate(sentAt, tz, 'd MMM') : tText_(sentAt)) +
+      ' went to ' + (old || 'no address') + ' and goes again on release' : '';
+    t.sh.getRange(r._row, t.col.Email).setValue(x.email);
+    t.sh.getRange(r._row, t.col.Exclude).setValue(T_PHONE_HOLD);
+    if (t.col.Reason) t.sh.getRange(r._row, t.col.Reason).setValue('e-mail taken by ' + (x.by || 'Client Support') + took + was);
+    if (sent) { t.sh.getRange(r._row, t.col['Sent at']).setValue(''); t.sh.getRange(r._row, t.col.Status).setValue(''); r['Sent at'] = ''; }
+    r.Email = x.email; r.Exclude = T_PHONE_HOLD;
+    mark(x, ''); out.filed++;
+  });
+  if (out.filed || out.same || out.left) {
+    log_('transition', 'phone-emails', out.filed + ' filed and held for the go, ' + out.same + ' already sent there, ' + out.left + ' not filed');
+  }
+  return out;
+}
+
+/** The same checks the caller's page makes, again here, since the page is the only thing standing between a
+ *  hurried line and a letter to a stranger: one address, a full ending, no common slip of a provider's name. */
+function tEmailProblem_(e) {
+  e = String(e || '').trim().toLowerCase();
+  if (!e || /[\s,;\/]/.test(e) || (e.match(/@/g) || []).length !== 1) return 'not one address';
+  var local = e.split('@')[0], dom = e.split('@')[1] || '';
+  if (!local || dom.indexOf('.') < 0 || /\.$/.test(dom) || dom.split('.').pop().length < 2) return 'cut off';
+  var first = dom.split('.')[0];
+  if (['gmail', 'yahoo', 'hotmail', 'outlook', 'live', 'icloud', 'aol', 'msn', 'ymail', 'rocketmail'].indexOf(first) >= 0 &&
+      /^(c|co|cm|om|con|comm)$/.test(dom.slice(first.length + 1))) return 'cut-off ending';
+  if (/^(gnail|gmial|gmai|gamil|gmaill|hotmial|hotmal|hotmai|yaho|yahooo|outlok|iclod)$/.test(first)) return 'misspelt';
+  return '';
+}
+
+/** The branch's go for the e-mails taken on calls: clears T_PHONE_HOLD from Exclude on every row that carries it,
+ *  so the next batch in sending hours sends those letters. From the editor's Run button, or clear the cells by
+ *  hand (filter Exclude for "hold: e-mail by phone"); the send itself is the ordinary batch, so the go-live switch,
+ *  the sending hours, the one-address rule and the pace all still apply. */
+function transitionReleasePhoneEmails() {
+  var t = tRead_(), n = 0;
+  t.rows.forEach(function (r) {
+    if (tText_(r.Exclude) === T_PHONE_HOLD) { t.sh.getRange(r._row, t.col.Exclude).setValue(''); n++; }
+  });
+  log_('transition', 'phone-emails-released', n + ' released');
+  return tSay_(n + ' e-mail' + (n === 1 ? '' : 's') + ' taken by phone released: the next batch in sending hours sends those letters.');
 }
 
 function tQOf_(page) { return (String(page || '').match(/[?&]q=([a-z_]+)/) || [])[1] || ''; }
@@ -827,7 +916,8 @@ function tReceipts_() {
     if (!groups[token]) { groups[token] = { rows: [], newest: received }; order.push(token); }
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
                               q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note,
-                              via: String(v[6] || '').indexOf('reply ') === 0 });   // filed from a reply: its words are in the Note, no form follows
+                              via: String(v[6] || '').indexOf('reply ') === 0,       // filed from a reply: its words are in the Note, no form follows
+                              phone: String(v[5] || '').indexOf('/your-policy/phone') === 0 });   // ticked by a caller on the line
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
@@ -837,6 +927,16 @@ function tReceipts_() {
   var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN;
   for (var k = 0; k < order.length; k++) {
     var tok = order[k], g = groups[tok];
+    /* answers a caller ticked with the client on the line were read back on the call (the call script), so
+       nothing is e-mailed for them, whatever address the sheet holds: Client Support's round of calls, from
+       28 September, sends nothing to anyone until the branch says so. Marked at once, never retried. */
+    var byPhone = g.rows.filter(function (x) { return x.phone; });
+    if (byPhone.length) {
+      try { byPhone.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] by phone: read back on the call'); }); } catch (e) {}
+      g.rows = g.rows.filter(function (x) { return !x.phone; });
+      if (!g.rows.length) { out.held++; continue; }
+      g.newest = g.rows.reduce(function (m, x) { return x.received > m ? x.received : m; }, g.rows[0].received);
+    }
     var formTap = g.rows.some(function (x) { return (x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve') && !x.via; });
     var review = null;
     if (formTap) { if (reviews === null) reviews = tReviewMap_(); review = reviews['transition:' + tok] || null; }
@@ -851,6 +951,21 @@ function tReceipts_() {
       try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] no e-mail: by phone'); }); } catch (e) {}
       continue;
     }
+    if (tText_(row.Exclude)) {
+      /* a row the branch holds (bounced, a recovered address awaiting the go, a check, a claim) is never written
+         to by a receipt either: the address in it is dead, or not yet cleared to use */
+      out.held++;
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: row excluded (' + tText_(row.Exclude).slice(0, 40) + ')'); }); } catch (e) {}
+      continue;
+    }
+    if (tLooksAutomated_(rc, g.rows)) {
+      /* mail security that opens every link in a letter answers every question every way; a receipt
+         would thank the client for answers they never gave (a client wrote in to say so, 26 September) */
+      out.held++;
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: answers look automated'); }); } catch (e) {}
+      log_('transition', 'receipt-held', tText_(row.Client || row['First name']) + ' · answers look automated (' + g.rows.length + ' taps)');
+      continue;
+    }
     try {
       var m = tReceiptMail_(rc, row, g, review);
       tMsSend_(to, m.subject, m.html, tClientOpts_());
@@ -862,6 +977,28 @@ function tReceipts_() {
   }
   if (out.sent || out.held) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held');
   return out;
+}
+
+/** True when a client's taps answer two or more questions both ways, or tick every option of one.
+ *  A person who changes one answer (it happens: "keep looking after it", then "talk it through")
+ *  is not caught; a link checker that opens every link in the letter is. Replies and answers a
+ *  caller ticked on the phone never count. Only the receipt is held; every row stays recorded. */
+function tLooksAutomated_(rc, rows) {
+  var qs = (rc && rc.json && rc.json.questions) || {}, qOf = {}, size = {};
+  Object.keys(qs).forEach(function (k) { var ans = (qs[k] && qs[k][1]) || []; size[k] = ans.length; ans.forEach(function (a) { qOf[a[2]] = k; }); });
+  var seen = {};
+  rows.forEach(function (x) {
+    if (x.via || x.phone || !x.q || !qOf[x.q]) return;
+    var k = qOf[x.q];
+    (seen[k] = seen[k] || {})[x.q] = true;
+  });
+  var both = 0, all = false;
+  Object.keys(seen).forEach(function (k) {
+    var n = Object.keys(seen[k]).length;
+    if (n > 1 && k !== 'reach' && k !== 'when') both++;   // how and when to call may change between visits
+    if (n > 2 && n === size[k]) all = true;
+  });
+  return both >= 2 || all;
 }
 
 /** The reviews filed from a letter, keyed by their Link ref ("transition:<token>"),
@@ -2277,7 +2414,8 @@ function tBriefMail_(agent, clients) {
     if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
     if (c.reach) reach.push('prefers ' + esc(c.reach.toLowerCase()));
     if (c.when) reach.push('best in the ' + esc(c.when.toLowerCase()));
-    var link = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '');
+    /* r=phone: the caller's copy of the answer page. Without an r= the address opens the film. */
+    var link = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone';
     return '<div style="border:1px solid #d7e3ea;border-radius:10px;padding:12px 14px;margin:10px 0">' +
       '<p style="margin:0"><b style="font-size:16px;color:#12202e">' + esc(c.client) + '</b> <span style="color:#64798e">' + esc(c.no || '') + ' · letter ' + esc(c.seg || '') +
       (c.book ? ' · was with ' + esc(c.book) : '') + (c.sent ? ' · written to ' + esc(c.sent) : '') + (c.first ? ' · answered ' + esc(c.first) : '') + '</span></p>' +

@@ -3623,6 +3623,7 @@ function onOpen() {
     .addItem('Transition: pause the hourly send', 'transitionPause')
     .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
     .addItem('Transition: send the receipts now', 'transitionReceipts')
+    .addItem('Transition: release the e-mails taken by phone (the go)', 'transitionReleasePhoneEmails')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
     .addToUi();

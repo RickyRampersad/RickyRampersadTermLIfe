@@ -860,6 +860,26 @@ voice under the new timing and the caption gives it away.
   through the connector**, where nothing sends a receipt on its own.
   `tools/letters/…/svc/receipt-harness.js` in the session scratchpad runs
   `tReceiptMail_` in Node on sample taps and a sample review.
+  **A receipt is held when the answers look automated** (`tLooksAutomated_`):
+  two or more letter questions answered both ways, or every option of one
+  ticked. Mail security that is not a scripted browser opens every link
+  in a letter, and on 26 September a client wrote in to say she had sent
+  none of the answers her receipt thanked her for. The rows stay recorded
+  and are marked `[receipt] held: answers look automated`; a person who
+  changes one answer, or how and when to call, still gets a receipt.
+  Checked against all 120 clients who had answered by 27 September: it
+  holds exactly the two the branch had identified by hand.
+  **No receipt ever goes from an answer taken on a call, or to a held
+  row.** Answers ticked on an `r=phone` link are marked `[receipt] by
+  phone: read back on the call` the moment the receipts run sees them, and
+  a row with anything in Exclude (bounced, a recovered address awaiting the
+  go, a check, a claim) is marked `[receipt] held: row excluded (…)`. Until
+  27 September a receipt went to whatever address the send row held, so a
+  phone answer from a bounced client would have gone to the dead address,
+  and a recovered address pasted in under a hold would have been written to
+  before the branch's go. A client who tapped the letter and was also
+  called gets a receipt for the taps alone. `health/receipt-guard-harness.js`
+  in the session scratchpad runs `tReceipts_` in Node on those cases.
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
@@ -1028,17 +1048,62 @@ voice under the new timing and the caption gives it away.
   call list is built beside it in the session scratchpad from those rows,
   with the letter they would have had, the facts off the sheet, the phone
   and address off the portfolio, one line on why we are calling, and the
-  client's own `/your-policy/?t=…&s=…` link. `orphan-transition/call-script.html`
+  client's own `/your-policy/?t=…&s=…&r=phone` link. `orphan-transition/call-script.html`
   is the call: the letter spoken, in the same order, with the same
   questions, and the caller ticks the answers on that link with the client
   on the line, so they land on Client Responses and in the reports like a
-  tap. `tInsights_` counts them on their own (`calls`: listed, reached,
+  tap. **The link must end in `r=phone`.** Without an `r=` the address is
+  the film line and opens `/orphan-video/`, which is what the first call
+  list (25 September), the agent's brief and the board all did until 27
+  September. `r=phone` is the caller's copy of the page: every check of the
+  letter plus how and when to reach them, nothing ticked, nothing recorded
+  until Send, and each answer filed with `Page` = `/your-policy/phone?q=…`
+  so a phone answer is never read as a tap. `tInsights_` counts them on their own (`calls`: listed, reached,
   approached, by letter; the risk list marks them "by phone"), never among
   the letters sent, so the response rate stays the letters' rate;
-  `tReceipts_` marks a no-e-mail token `[receipt] no e-mail: by phone`
-  rather than holding it every five minutes, because on that call the
-  caller is the receipt. Never call a row the list holds for a person to
-  check first.
+  `tReceipts_` marks every answer taken by phone `[receipt] by phone`
+  rather than e-mailing it, because on that call the caller is the
+  receipt. Never call a row the list holds for a person to check first.
+  **Client Support calls before any agent is named, and they update
+  records; they never advise** (27 September: "remember they are not
+  licensed agents, so they should not be giving any sort of advice, but
+  asking questions. The objective is to get the data cleaned, the correct
+  email, then send off the email … to have it on record"). Sasha, Liz and
+  Azariah split the call list, whole households together, most urgent
+  first: everyone the letter could not reach (no e-mail, or bounced) and
+  the terminated book and action letters that went unanswered.
+  `orphan-transition/client-support.html` is their day from 7:00, the six
+  steps of the call in words, what to say when a client asks something
+  (anything about the policy is a call-back from a licensed agent), and
+  what they never do. Their links end in **`r=update`**, the staff copy of
+  the page: no policy questions at all (letters T and T1 keep the two
+  factual ones, whether the agent has been in touch and how the premium is
+  paid), only how best to reach them, the e-mail, spelled back and ticked
+  as read back (it refuses one that looks cut off, like `gmail.co`, or
+  misspelt, like `hotmial`), or "no e-mail", a new number or address only
+  if changed, and the caller's own name, kept on the device. `r=phone`
+  stays the licensed agent's copy, with every check of the letter. Each
+  detail is filed as its own row under `/your-policy/phone` —
+  `q=email_given` (or `email_none`), `phone_given`, `address_given` — with
+  the Referrer cell reading `call by <name>: <value>`, and every other
+  answer from that call reads `call by <name>`, so nothing is retyped.
+  **The e-mail files itself onto the send row, held for the go.**
+  `tFilePhoneEmails_`, first thing in the five-minute receipts run, writes
+  each `email_given` address onto the client's Transition Send row with
+  `hold: e-mail by phone` in Exclude and who took it, and when, in Reason;
+  a row whose letter went to another address (bounced, or the client reads
+  a different one) has Sent at and Status cleared so the letter goes again
+  to the new one; the same address already sent to is left alone; a row
+  held for anything else (an agent, a household, staff, a claim, a check)
+  is never touched; each Client Responses row read is marked `[filed…]`.
+  The branch's go is `transitionReleasePhoneEmails` (menu: "Transition:
+  release the e-mails taken by phone (the go)", which needs a Service.gs
+  paste; until then the editor's Run button, or clear those Exclude cells
+  by hand), and the ordinary batch sends the letters. A new number or
+  address stays on Client Responses for Salesforce. The staff lists are
+  built in the session scratchpad (`calls/build-staff2.py`) and never
+  enter the repository; `health/file-emails-harness.js` there runs the
+  filing and the release in Node.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel

@@ -333,7 +333,7 @@ function card(c, manager) {
   if (c.facts && c.facts.appReceived) facts.push('application received ' + esc(c.facts.appReceived));
   var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') + '</div>'
     : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
-  var own = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '');
+  var own = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone';
   var acts = '';
   if (manager) {
     acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">Assign to…</option>' + D.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
