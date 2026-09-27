@@ -869,6 +869,17 @@ voice under the new timing and the caption gives it away.
   changes one answer, or how and when to call, still gets a receipt.
   Checked against all 120 clients who had answered by 27 September: it
   holds exactly the two the branch had identified by hand.
+  **No receipt ever goes from an answer taken on a call, or to a held
+  row.** Answers ticked on an `r=phone` link are marked `[receipt] by
+  phone: read back on the call` the moment the receipts run sees them, and
+  a row with anything in Exclude (bounced, a recovered address awaiting the
+  go, a check, a claim) is marked `[receipt] held: row excluded (…)`. Until
+  27 September a receipt went to whatever address the send row held, so a
+  phone answer from a bounced client would have gone to the dead address,
+  and a recovered address pasted in under a hold would have been written to
+  before the branch's go. A client who tapped the letter and was also
+  called gets a receipt for the taps alone. `health/receipt-guard-harness.js`
+  in the session scratchpad runs `tReceipts_` in Node on those cases.
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
@@ -1050,10 +1061,27 @@ voice under the new timing and the caption gives it away.
   so a phone answer is never read as a tap. `tInsights_` counts them on their own (`calls`: listed, reached,
   approached, by letter; the risk list marks them "by phone"), never among
   the letters sent, so the response rate stays the letters' rate;
-  `tReceipts_` marks a no-e-mail token `[receipt] no e-mail: by phone`
-  rather than holding it every five minutes, because on that call the
-  caller is the receipt. Never call a row the list holds for a person to
-  check first.
+  `tReceipts_` marks every answer taken by phone `[receipt] by phone`
+  rather than e-mailing it, because on that call the caller is the
+  receipt. Never call a row the list holds for a person to check first.
+  **Client Support calls before any agent is named** (27 September: "the
+  staff will be assigned to call … before assigning to an agent … so we
+  can hear from the client and ensure all emails go out"). Sasha, Liz and
+  Azariah split the call list, whole households together, most urgent
+  first: everyone the letter could not reach (no e-mail, or bounced) and
+  the terminated book and action letters that went unanswered. The caller's
+  copy of the page takes the client's e-mail, spelled back and ticked as
+  read back (it refuses one that looks cut off, like `gmail.co`, or
+  misspelt, like `hotmial`), or "no e-mail", and the caller's own name,
+  kept on the device. The e-mail is filed as its own row, `q=email_given`
+  (or `email_none`), with the Referrer cell reading `call by <name>:
+  <address>`, and every other answer from that call reads `call by
+  <name>`: the e-mail lands against the client's own token, so nothing is
+  retyped. Nothing is sent from the page. The e-mails are collected from
+  Client Responses, checked, written to Salesforce and pasted into the send
+  sheet only when the branch says go. The staff lists are built in the
+  session scratchpad (`calls/build-staff.py`) and never enter the
+  repository.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel

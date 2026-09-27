@@ -43,19 +43,23 @@
 </head>
 <body>
 <header><div class="in"><img src="../logo-mark.png" alt="">
-  <div><b>Ricky Rampersad Branch</b><i>Call script &middot; clients with no e-mail on file</i></div></div></header>
+  <div><b>Ricky Rampersad Branch</b><i>Call script &middot; Client Support &middot; hear from the client, get the e-mail right</i></div></div></header>
 <div class="wrap">
-  <h1>The call, for the clients we cannot e-mail</h1>
-  <p class="sub">The call is the letter, spoken: who is calling, the notice in one sentence, the reason for the call
-    by letter, the same questions, what happens next, and out. The call list gives you the letter the client would
-    have had, the facts off the sheet, one line on why we are calling, and the client's own answer link. Under five
-    minutes unless they want longer. The words below are the shape, not lines to read aloud.</p>
+  <h1>The call: hear from the client, and get their e-mail right</h1>
+  <p class="sub">Client Support calls every client our letter did not reach, and every client it reached who has not
+    answered, before any agent is named. The call is the letter, spoken: who is calling, the notice in one sentence,
+    the reason for the call by letter, the same questions, their e-mail spelled back, what happens next, and out. The
+    call list gives you the letter the client would have had, the facts off the sheet, the e-mail we hold and what
+    happened to it, and the client's own answer link. Under five minutes unless they want longer. The words below
+    are the shape, not lines to read aloud.</p>
 
   <h2>1 &middot; Who is calling, and why it is not a sales call</h2>
   <div class="say">&ldquo;Good morning, is that <span class="f">{{first_name}}</span>? It's
     <span class="f">{{caller}}</span> from the Ricky Rampersad Branch of Guardian Life, the branch that looks after
     your policy. This isn't a sales call; I'm ringing about something on your file you should know about.&rdquo;
-    <i>Then stop. Let them answer. If it is a bad time, take a time and end the call.</i></div>
+    <i>Then stop. Let them answer. If it is a bad time, take a time and end the call. If someone else answers, ask
+      when the client is in and say nothing about the policy. If they are wary that it is really us, give them the
+      branch number and let them ring back: a careful client is a good sign.</i></div>
 
   <h2>2 &middot; The notice, in one sentence</h2>
   <div class="say">&ldquo;Your representative, <span class="f">{{agent_first_name}}</span>, has moved on from
@@ -133,26 +137,56 @@
   <div class="q"><b>By letter:</b> F2 and F4, <em>has life moved on?</em> &middot; F1, <em>a plain-words walk-through?</em> &middot; F3, <em>what it has built?</em> &middot; F5, <em>anything more the cover should do?</em> &middot; G, <em>find out, free, what it still holds?</em> &middot; J and T, <em>has your contract reached you?</em> &middot; K and T1, <em>is anything still outstanding?</em> &middot; T, <em>has he been in touch since that date, and how do you pay your premium today?</em></div>
   <div class="q"><b>Then:</b> <em>what is the best way to reach you, and, if a call is coming, morning, afternoon or evening?</em></div>
 
-  <h2>5 &middot; Record it while they are on the line</h2>
+  <h2>5 &middot; Their e-mail, spelled back</h2>
+  <p style="margin:0 0 4px;font-size:14px;color:var(--dim)">The list says what we hold for them, in the column
+    <span class="f">E-mail on file</span>, and what happened to it. Only ever to the client themselves.</p>
+  <div class="seg"><div class="k">None on file</div>
+    <div class="say">&ldquo;So that our letters reach you and you have everything in writing, what is the best e-mail
+      address for you?&rdquo;</div></div>
+  <div class="seg"><div class="k">On file, never used &middot; or two on file</div>
+    <div class="say">&ldquo;We have an e-mail for you, <span class="f">{{email}}</span>. Is that still the right
+      one?&rdquo; <i>Two on file: read both and ask which one they use. Cut off on file (it ends &ldquo;gmail.co&rdquo;
+      or stops short): ask for it in full.</i></div></div>
+  <div class="seg"><div class="k">Bounced</div>
+    <div class="say">&ldquo;We wrote to you on 25 September at <span class="f">{{email}}</span>, and it came back to
+      us. What address do you use now?&rdquo; <i>&ldquo;Mailbox full&rdquo; on the list: it came back because the
+      mailbox was full; ask whether that is still the one to use, or another.</i></div></div>
+  <div class="seg"><div class="k">Sent 25 September, no answer yet</div>
+    <div class="say">&ldquo;We wrote to you on 25 September at <span class="f">{{email}}</span>. Did it reach you? It
+      comes from support@rickyrampersadbranch.com, so it may be sitting in your junk folder.&rdquo;
+      <i>Then the questions, if they have not answered them, and confirm the address.</i></div></div>
+  <div class="then"><b>Every time:</b> spell it back letter by letter, and say the ending out loud: &ldquo;gmail dot
+    com&rdquo;. The slips to listen for are an ending cut short (gmail.co) and a letter swapped (hotmial). One address
+    only, and theirs: a family address is fine if that is the one they read; never an agent's or an office one.
+    Then: <i>&ldquo;We use it only for your policy: our letter, your receipts and your reviews, never for anything
+    else, and it is never shared. Our letter comes from support@rickyrampersadbranch.com; if you do not see it, look
+    in junk and add that address to your contacts.&rdquo;</i> No date for the letter: it goes when the branch
+    releases it. <b>No e-mail, or would rather not give one:</b> that is fine; tick it, and ask whether WhatsApp suits
+    them.</div>
+
+  <h2>6 &middot; Record it while they are on the line</h2>
   <div class="then">Open the client's own link from the list (<span class="f">Record the answers here</span>) on your phone
     or screen. It ends in <b>r=phone</b>: that is the caller's copy of the page, and nothing is recorded until you press
     Send. Every question the letter would have asked is on that page. Tick what they told you, exactly as they
-    said it, add how to reach them and when, and press <b>Send my answers</b> once. It lands on the Client Responses
-    tab under that client, and in the reports, the same as a tap on a letter. Then repeat back what you ticked: no
-    receipt can go by e-mail to a client who has none, so on this call <b>you are the receipt</b>.</div>
+    said it, add how to reach them and when, type the e-mail into the box at the foot and tick that you read it back
+    (or tick that they have none), put your name in the caller box once (your phone keeps it), and press
+    <b>Send my answers</b> once. The page will not send an address that looks cut off or misspelt, or one you have not
+    read back. It all lands on the Client Responses tab under that client, the e-mail with your name beside it, and in
+    the reports, the same as a tap on a letter. Nothing goes to the client from this page, not a receipt and not a
+    letter, so repeat back what you ticked: on this call <b>you are the receipt</b>.</div>
   <div class="then"><b>If they would rather have an agent now:</b> tick nothing for that; say the branch reads their
     concerns first and then matches them to the agent who fits, with no date promised for the match, and note it in
     Outcome on the list. <b>If they say someone has already approached them:</b> tick &ldquo;Someone already has.
     Call me&rdquo;, say a person calls them back before they decide anything, and offer the page that sets out their
     protections in plain words: <i>ricky rampersad branch dot com, slash your policy, slash protected</i>.</div>
 
-  <h2>6 &middot; What happens next, in their words</h2>
+  <h2>7 &middot; What happens next, in their words</h2>
   <div class="say">&ldquo;Here's what happens now. A person at the branch reads what you've told me today. If you asked
     for a call, it comes today or tomorrow, at the time you chose. Once your file has been read, we introduce the
     agent who fits it, in writing, with a name and a number.&rdquo;
     <i>The same four steps every letter carries. Nothing else is promised, and no date for the agent.</i></div>
 
-  <h2>7 &middot; Out</h2>
+  <h2>8 &middot; Out</h2>
   <div class="say">&ldquo;Thank you for the time. If anything comes up, the branch answers on
     <span class="f">{{branch_phone}}</span>: a person, not a menu.&rdquo;</div>
 
@@ -163,11 +197,14 @@
       <li>Warn a client that someone may approach them. Ask whether someone has; nothing more.</li>
       <li>Offer anything, a discount, a visit, a favour, to stay.</li>
       <li>Read a T line to a client who is not on that book, or call a row the list holds for a person to check first.</li>
+      <li>Read out an e-mail, a number or any detail of the policy to anyone but the client.</li>
+      <li>Ask for a date of birth, an ID number, a bank detail or a password. This call never needs them.</li>
     </ul></div>
   <div class="ok"><b>After every call, on the list</b>
-    Caller, called on, reached (yes, no answer, wrong number), and the outcome in a few words. The answers themselves
-    live on the client's link, ticked while they were on the line; the list is the record that the call was made.
-    Three tries on three different days before a row is marked not reached.</div>
+    The try (first, second, third, with the date), reached (yes, no answer, wrong number), and the outcome in a few
+    words. The answers and the e-mail live on the client's link, sent while they were on the line; the list is the
+    record that the call was made. Three tries on three different days, at different times of day, before a row is
+    marked not reached.</div>
 </div>
 <!-- rrb-views -->
 <script>

@@ -838,6 +838,16 @@ function tReceipts_() {
   var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN;
   for (var k = 0; k < order.length; k++) {
     var tok = order[k], g = groups[tok];
+    /* answers a caller ticked with the client on the line were read back on the call (the call script), so
+       nothing is e-mailed for them, whatever address the sheet holds: Client Support's round of calls, from
+       28 September, sends nothing to anyone until the branch says so. Marked at once, never retried. */
+    var byPhone = g.rows.filter(function (x) { return x.phone; });
+    if (byPhone.length) {
+      try { byPhone.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] by phone: read back on the call'); }); } catch (e) {}
+      g.rows = g.rows.filter(function (x) { return !x.phone; });
+      if (!g.rows.length) { out.held++; continue; }
+      g.newest = g.rows.reduce(function (m, x) { return x.received > m ? x.received : m; }, g.rows[0].received);
+    }
     var formTap = g.rows.some(function (x) { return (x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve') && !x.via; });
     var review = null;
     if (formTap) { if (reviews === null) reviews = tReviewMap_(); review = reviews['transition:' + tok] || null; }
@@ -850,6 +860,13 @@ function tReceipts_() {
          them back on the line (the call script), so nothing can or need go by e-mail; marked, never retried */
       out.held++;
       try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] no e-mail: by phone'); }); } catch (e) {}
+      continue;
+    }
+    if (tText_(row.Exclude)) {
+      /* a row the branch holds (bounced, a recovered address awaiting the go, a check, a claim) is never written
+         to by a receipt either: the address in it is dead, or not yet cleared to use */
+      out.held++;
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: row excluded (' + tText_(row.Exclude).slice(0, 40) + ')'); }); } catch (e) {}
       continue;
     }
     if (tLooksAutomated_(rc, g.rows)) {
