@@ -193,6 +193,30 @@ It pings the Apps Script in `gs/views-counter.gs`, which appends
 - Redirect stubs (`about-us/`, `health-1/`, `xpress-life-application/`) and
   `apps-script/` templates deliberately carry no beacon.
 
+## The AI team — who does what
+
+Nine specialist agents live in `.claude/agents/`. Each carries the house rules
+for its own work, so a session routes a task to the one that owns it instead
+of re-learning the rules. `.nojekyll` means these files are served on the
+site like everything else: nothing secret goes in them.
+
+| Agent | Owns | Call it when |
+|---|---|---|
+| `house-guardian` | The standing rules: client data, secrets, anyone who left, banned words, the Act, the mark, the beacon | Before every commit or push, and on every client-facing word. Read-only; says *clear to ship* or *hold* |
+| `letters-desk` | `tools/letters/`, the fourteen letters, receipts, `/your-policy/` | Any change to what a client reads |
+| `apps-script-engineer` | `apps-script/*.gs` and their harnesses | Actions, triggers, sends, receipts, reports; ends with exact paste steps |
+| `screens-builder` | Walls, dashboards, portals, the board, site pages | Building or changing an HTML page |
+| `film-studio` | `tools/film/`, narration, music, MP4s, chapters | A film's words, timing, sound or cut |
+| `campaign-operator` | Send, call and staff lists in the scratchpad | Anything touching real client rows; never commits |
+| `product-rules-analyst` | Product types, `PRODUCT_RULES`, life-cover totals | Before adding a product, a total or a rule |
+| `branch-voice` | WhatsApp messages and branch posts | Anything posted to the branch |
+| `release-manager` | Git, pre-push checks, what the domains really serve | Before a push, before a link is announced, when "the site is wrong" |
+
+A typical change runs builder → `house-guardian` → `release-manager`; a
+campaign change runs `letters-desk` and `apps-script-engineer` together, then
+the same two checks. Update an agent's file when a new house rule is decided,
+in the same commit as the rule.
+
 ---
 ---
 
