@@ -76,6 +76,12 @@ if (!/[?&]r=/.test(location.search)) location.replace('/orphan-video/' + locatio
         <label class="chk"><input id="emok" type="checkbox"> I read it back letter by letter, and the client said it is right</label>
         <label class="chk"><input id="emnone" type="checkbox"> The client has no e-mail, or would rather not give one</label>
       </div>
+      <div class="q" id="q-details" hidden>
+        <b>A new number or address, only if theirs has changed</b>
+        <input id="ph" class="fld" type="tel" inputmode="tel" autocomplete="off" maxlength="20" placeholder="New number">
+        <input id="ad" class="fld" type="text" autocomplete="off" maxlength="85" placeholder="New address" style="margin-top:8px">
+        <p class="said warn" id="phwarn"></p>
+      </div>
       <div class="q">
         <b>Your name, the caller</b>
         <input id="by" class="fld" type="text" autocomplete="off" maxlength="20" placeholder="First name">
@@ -110,7 +116,12 @@ var HUMAN = !navigator.webdriver;
    board with the client on the line: every check of the letter, nothing recorded until Send, and
    each answer filed under /your-policy/phone so a phone answer is never mistaken for a tap. Before
    27 September those links carried no r= and opened the film instead of the questions. */
-var PHONE = R === 'phone';
+/* r=update is Client Support's copy (27 September): the staff are not licensed agents, so it asks nothing about the
+   policy. It takes the details our records hold (the e-mail, spelled back; a new number or address; how best to
+   reach them) and, for the terminated book only, the two factual questions. Filed under /your-policy/phone like
+   any call. r=phone stays the licensed agent's copy, with every check of the letter. */
+var UPDATE = R === 'update';
+var PHONE = R === 'phone' || UPDATE;
 /* On the caller's copy the Referrer column carries who took the answer, and on the e-mail line the address
    they spelled back: "call by Liz: name@example.com". Client Support calls every client our letter did not
    reach before any agent is named (27 September), and the e-mail lands against the client's own token. */
@@ -143,17 +154,31 @@ function emailProblem(e) {
   if (TYPO[first]) return 'Check the spelling: ' + TYPO[first] + ', not ' + first + '.';
   return '';
 }
+/* a new number: seven digits, or ten with 868, written the way Salesforce shows them */
+function phoneNumber(p) {
+  var d = String(p || '').replace(/\D/g, '');
+  if (d.length === 11 && d.charAt(0) === '1') d = d.slice(1);
+  if (d.length === 7) d = '868' + d;
+  return d.length === 10 ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : '';
+}
 function phoneCheck() {
   CALLER = (document.getElementById('by').value || '').replace(/[^A-Za-z .'-]/g, '').trim().slice(0, 20);
   if (!CALLER) return { ok: false, msg: 'Put your name in first, so the answers carry who took them.' };
+  var out = { ok: true };
+  if (UPDATE) {
+    var ph = document.getElementById('ph').value.trim(), ad = document.getElementById('ad').value.replace(/[<>]/g, '').replace(/\s+/g, ' ').trim();
+    if (ph && !phoneNumber(ph)) return { ok: false, msg: 'Check the new number: seven digits, or ten with 868.' };
+    if (ph) out.phone = phoneNumber(ph);
+    if (ad) out.address = ad.slice(0, 85);
+  }
   var e = document.getElementById('em').value.trim().toLowerCase();
   if (e) {
     var p = emailProblem(e);
     if (p) return { ok: false, msg: p };
     if (!document.getElementById('emok').checked) return { ok: false, msg: 'Read the e-mail back letter by letter, then tick that it is right.' };
-    return { ok: true, email: e };
+    out.email = e; return out;
   }
-  if (document.getElementById('emnone').checked) return { ok: true, none: true };
+  if (document.getElementById('emnone').checked) { out.none = true; return out; }
   return { ok: false, msg: 'Take their e-mail, spelled back, or tick that they have none.' };
 }
 document.getElementById('full').href = formUrl('');
@@ -172,7 +197,12 @@ if (R === 'urgent' || R === 'review') {
   /* an answer that asks something of us is owned by a named person; a noted answer is recorded.
      The answer's own line says thank you when it has one, and the heading does not say it twice. */
   var care = CHECKS.care && CHECKS.care.Us;
-  if (PHONE) {
+  if (UPDATE) {
+    document.getElementById('head').textContent = 'Updating the client’s details';
+    said = 'Take their e-mail and read it back letter by letter, note a new number or address only if it has changed, then press Send. Nothing is recorded until you do, and nothing goes to the client from this page.';
+    document.getElementById('morehead').textContent = 'Their details';
+    document.getElementById('moresub').textContent = 'No advice on this call: anything about the policy is a call-back from a licensed agent.';
+  } else if (PHONE) {
     document.getElementById('head').textContent = 'On the phone with the client';
     said = 'Ask each question in your own words, tick what they tell you, take their e-mail, then press Send. Nothing is recorded until you do.';
     document.getElementById('morehead').textContent = 'The letter’s questions, then their e-mail';
@@ -187,7 +217,8 @@ if (R === 'urgent' || R === 'review') {
      the answer given in the letter already recorded and ticked, the rest ticked as many as apply and
      sent together with one button, so the page is one form (24 September, evening: "so client has to
      select all then click send"). Nothing else is recorded until Send. */
-  var keys = (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' || PHONE ? ['when'] : []);
+  var keys = UPDATE ? (S.charAt(0) === 'T' ? ['contact', 'paying'] : []).concat(['reach'])
+    : (CHECKS.segments[S] || CHECKS.segments._ || []).concat(['reach']).concat(R === 'callme' || PHONE ? ['when'] : []);
   var box = document.getElementById('qs'), shown = 0, picked = {}, sent = false;
   function addQ(k) {
     var q = CHECKS.questions[k];
@@ -233,6 +264,14 @@ if (R === 'urgent' || R === 'review') {
     });
     emNone.addEventListener('change', function () { if (emNone.checked) { emEl.value = ''; emOk.checked = false; emWarn.textContent = ''; } });
   }
+  if (UPDATE) {
+    document.getElementById('q-details').hidden = false;
+    document.querySelector('.links').hidden = true;             /* the review and the film are the client's, not the caller's */
+    var phEl = document.getElementById('ph');
+    phEl.addEventListener('input', function () {
+      document.getElementById('phwarn').textContent = phEl.value.trim() && !phoneNumber(phEl.value) ? 'Seven digits, or ten with 868.' : '';
+    });
+  }
   document.getElementById('send').addEventListener('click', function () {
     if (sent) return;
     var ks = Object.keys(picked), out = document.getElementById('sent'), mail = null;
@@ -252,11 +291,14 @@ if (R === 'urgent' || R === 'review') {
     });
     if (mail) {
       if (mail.email) log('informed', 'email_given', mail.email); else log('informed', 'email_none');
-      [emEl, emOk, emNone, byEl].forEach(function (o) { o.disabled = true; });
+      if (mail.phone) log('informed', 'phone_given', mail.phone);
+      if (mail.address) log('informed', 'address_given', mail.address);
+      [emEl, emOk, emNone, byEl, document.getElementById('ph'), document.getElementById('ad')].forEach(function (o) { o.disabled = true; });
     }
     box.querySelectorAll('button').forEach(function (o) { o.disabled = true; });
     var btn = document.getElementById('send'); btn.disabled = true; btn.textContent = '✓ Sent';
-    out.textContent = PHONE ? 'Sent: the answers' + (mail && mail.email ? ' and the e-mail' : '') + ' are on Client Responses under this client. Nothing goes to the client.' : 'Sent. Thank you.';
+    out.textContent = UPDATE ? 'Sent: the details are on Client Responses under this client' + (mail && mail.email ? ', and the e-mail waits on their row for the branch’s go' : '') + '. Nothing goes to the client from here.'
+      : PHONE ? 'Sent: the answers' + (mail && mail.email ? ' and the e-mail' : '') + ' are on Client Responses under this client. Nothing goes to the client.' : 'Sent. Thank you.';
     /* "talk to me first" is the questionnaire: the answers leave first, then the form opens */
     if (toForm) setTimeout(function () { location.href = formUrl(toForm); }, 400);
   });

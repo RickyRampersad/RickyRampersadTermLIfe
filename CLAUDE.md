@@ -1064,24 +1064,46 @@ voice under the new timing and the caption gives it away.
   `tReceipts_` marks every answer taken by phone `[receipt] by phone`
   rather than e-mailing it, because on that call the caller is the
   receipt. Never call a row the list holds for a person to check first.
-  **Client Support calls before any agent is named** (27 September: "the
-  staff will be assigned to call … before assigning to an agent … so we
-  can hear from the client and ensure all emails go out"). Sasha, Liz and
+  **Client Support calls before any agent is named, and they update
+  records; they never advise** (27 September: "remember they are not
+  licensed agents, so they should not be giving any sort of advice, but
+  asking questions. The objective is to get the data cleaned, the correct
+  email, then send off the email … to have it on record"). Sasha, Liz and
   Azariah split the call list, whole households together, most urgent
   first: everyone the letter could not reach (no e-mail, or bounced) and
-  the terminated book and action letters that went unanswered. The caller's
-  copy of the page takes the client's e-mail, spelled back and ticked as
-  read back (it refuses one that looks cut off, like `gmail.co`, or
-  misspelt, like `hotmial`), or "no e-mail", and the caller's own name,
-  kept on the device. The e-mail is filed as its own row, `q=email_given`
-  (or `email_none`), with the Referrer cell reading `call by <name>:
-  <address>`, and every other answer from that call reads `call by
-  <name>`: the e-mail lands against the client's own token, so nothing is
-  retyped. Nothing is sent from the page. The e-mails are collected from
-  Client Responses, checked, written to Salesforce and pasted into the send
-  sheet only when the branch says go. The staff lists are built in the
-  session scratchpad (`calls/build-staff.py`) and never enter the
-  repository.
+  the terminated book and action letters that went unanswered.
+  `orphan-transition/client-support.html` is their day from 7:00, the six
+  steps of the call in words, what to say when a client asks something
+  (anything about the policy is a call-back from a licensed agent), and
+  what they never do. Their links end in **`r=update`**, the staff copy of
+  the page: no policy questions at all (letters T and T1 keep the two
+  factual ones, whether the agent has been in touch and how the premium is
+  paid), only how best to reach them, the e-mail, spelled back and ticked
+  as read back (it refuses one that looks cut off, like `gmail.co`, or
+  misspelt, like `hotmial`), or "no e-mail", a new number or address only
+  if changed, and the caller's own name, kept on the device. `r=phone`
+  stays the licensed agent's copy, with every check of the letter. Each
+  detail is filed as its own row under `/your-policy/phone` —
+  `q=email_given` (or `email_none`), `phone_given`, `address_given` — with
+  the Referrer cell reading `call by <name>: <value>`, and every other
+  answer from that call reads `call by <name>`, so nothing is retyped.
+  **The e-mail files itself onto the send row, held for the go.**
+  `tFilePhoneEmails_`, first thing in the five-minute receipts run, writes
+  each `email_given` address onto the client's Transition Send row with
+  `hold: e-mail by phone` in Exclude and who took it, and when, in Reason;
+  a row whose letter went to another address (bounced, or the client reads
+  a different one) has Sent at and Status cleared so the letter goes again
+  to the new one; the same address already sent to is left alone; a row
+  held for anything else (an agent, a household, staff, a claim, a check)
+  is never touched; each Client Responses row read is marked `[filed…]`.
+  The branch's go is `transitionReleasePhoneEmails` (menu: "Transition:
+  release the e-mails taken by phone (the go)", which needs a Service.gs
+  paste; until then the editor's Run button, or clear those Exclude cells
+  by hand), and the ordinary batch sends the letters. A new number or
+  address stays on Client Responses for Salesforce. The staff lists are
+  built in the session scratchpad (`calls/build-staff2.py`) and never
+  enter the repository; `health/file-emails-harness.js` there runs the
+  filing and the release in Node.
 - **Every letter shows the client their own record with the branch team.**
   Asked for on 24 September ("they are to see us as from onboarding and a
   team service, as we have all the data on service levels"). A gold panel
