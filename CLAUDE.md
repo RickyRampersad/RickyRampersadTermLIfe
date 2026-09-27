@@ -1387,7 +1387,13 @@ voice under the new timing and the caption gives it away.
   that folder, and the shield must not be put back there; the folder is
   self-contained so it can move to its own domain whole. Its backend is
   `apps-script/PremiumFinance.gs`, its own Apps Script project (it has its
-  own doGet/doPost). The page's `CONFIG` holds the rate, terms, lender name
+  own doGet/doPost). Seven colour themes are built into the page (harbour,
+  midnight, trust, emerald, forest, coral, indigo), previewed side by side on
+  `premium-finance/themes.html`; `THEME` in the page's first script is the
+  live one and `?theme=` previews another. When one is chosen, redraw
+  `logo.svg`, `favicon.svg` and `logo.png` in its colours, since those files
+  (the favicon and the e-mail logo) do not follow the theme. The page's
+  `CONFIG` holds the rate, terms, lender name
   and contact address; the contact is support@rickyrampersadbranch.com
   until the company has its own mailbox.
 - **This is a Ricky Rampersad project**, not a Guardian Life one. The brand is
