@@ -860,6 +860,15 @@ voice under the new timing and the caption gives it away.
   through the connector**, where nothing sends a receipt on its own.
   `tools/letters/…/svc/receipt-harness.js` in the session scratchpad runs
   `tReceiptMail_` in Node on sample taps and a sample review.
+  **A receipt is held when the answers look automated** (`tLooksAutomated_`):
+  two or more letter questions answered both ways, or every option of one
+  ticked. Mail security that is not a scripted browser opens every link
+  in a letter, and on 26 September a client wrote in to say she had sent
+  none of the answers her receipt thanked her for. The rows stay recorded
+  and are marked `[receipt] held: answers look automated`; a person who
+  changes one answer, or how and when to call, still gets a receipt.
+  Checked against all 120 clients who had answered by 27 September: it
+  holds exactly the two the branch had identified by hand.
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the

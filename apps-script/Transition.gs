@@ -827,7 +827,8 @@ function tReceipts_() {
     if (!groups[token]) { groups[token] = { rows: [], newest: received }; order.push(token); }
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
                               q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note,
-                              via: String(v[6] || '').indexOf('reply ') === 0 });   // filed from a reply: its words are in the Note, no form follows
+                              via: String(v[6] || '').indexOf('reply ') === 0,       // filed from a reply: its words are in the Note, no form follows
+                              phone: String(v[5] || '').indexOf('/your-policy/phone') === 0 });   // ticked by a caller on the line
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
@@ -851,6 +852,14 @@ function tReceipts_() {
       try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] no e-mail: by phone'); }); } catch (e) {}
       continue;
     }
+    if (tLooksAutomated_(rc, g.rows)) {
+      /* mail security that opens every link in a letter answers every question every way; a receipt
+         would thank the client for answers they never gave (a client wrote in to say so, 26 September) */
+      out.held++;
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: answers look automated'); }); } catch (e) {}
+      log_('transition', 'receipt-held', tText_(row.Client || row['First name']) + ' · answers look automated (' + g.rows.length + ' taps)');
+      continue;
+    }
     try {
       var m = tReceiptMail_(rc, row, g, review);
       tMsSend_(to, m.subject, m.html, tClientOpts_());
@@ -862,6 +871,28 @@ function tReceipts_() {
   }
   if (out.sent || out.held) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held');
   return out;
+}
+
+/** True when a client's taps answer two or more questions both ways, or tick every option of one.
+ *  A person who changes one answer (it happens: "keep looking after it", then "talk it through")
+ *  is not caught; a link checker that opens every link in the letter is. Replies and answers a
+ *  caller ticked on the phone never count. Only the receipt is held; every row stays recorded. */
+function tLooksAutomated_(rc, rows) {
+  var qs = (rc && rc.json && rc.json.questions) || {}, qOf = {}, size = {};
+  Object.keys(qs).forEach(function (k) { var ans = (qs[k] && qs[k][1]) || []; size[k] = ans.length; ans.forEach(function (a) { qOf[a[2]] = k; }); });
+  var seen = {};
+  rows.forEach(function (x) {
+    if (x.via || x.phone || !x.q || !qOf[x.q]) return;
+    var k = qOf[x.q];
+    (seen[k] = seen[k] || {})[x.q] = true;
+  });
+  var both = 0, all = false;
+  Object.keys(seen).forEach(function (k) {
+    var n = Object.keys(seen[k]).length;
+    if (n > 1 && k !== 'reach' && k !== 'when') both++;   // how and when to call may change between visits
+    if (n > 2 && n === size[k]) all = true;
+  });
+  return both >= 2 || all;
 }
 
 /** The reviews filed from a letter, keyed by their Link ref ("transition:<token>"),
