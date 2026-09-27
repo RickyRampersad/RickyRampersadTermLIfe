@@ -1378,14 +1378,22 @@ voice under the new timing and the caption gives it away.
   Do not "correct" one into the other.
 - **Premium Bridge is a third mark, on purpose.** `premium-finance/` is the
   premium financing company's own site, not a branch screen: its own mark
-  (`premium-finance/logo.svg`, a five-piece arch bridge over a deck, a dot
-  part-way across; `logo.png` is the hosted copy for e-mail), its own
+  (`premium-finance/logo.svg`, a suspension bridge inside an open shield,
+  an amber dot on the deck for the client part-way across; `logo.png` is
+  the hosted copy for e-mail), its own
   palette and Plus Jakarta Sans. Asked for on 27 September 2026: "a new
   logo and design — it's a premium finance company, financing insurance
   premiums". **The live theme is Trust Blue**, chosen the same day from the
   seven on `themes.html` ("Trust blue"): ink `#0B1A26` / `#08131C`, blue
-  `#0E7490` for buttons and the wordmark, sky `#38BDF8` / `#7DD3FC` for the
-  mark and highlights, amber `#F59E0B`, paper `#F4F8FB`. The mark files are
+  `#0E7490` for buttons and the wordmark, sky `#0EA5E9` → `#7DD3FC` for the
+  shield on an ink `#0E2535` tile, amber `#F59E0B`, paper `#F4F8FB`. The
+  first mark (a five-piece arch) was rejected the same day ("more creative,
+  logo looks horrible"); the shield-bridge won a round of seven concepts
+  drawn from the brand drafts (coin splitting into instalments, the B whose
+  bowls are cables, a beam closing a gap, an umbrella-arch, stepping stones,
+  a bridge cut out of a coin), judged at every size down to a 16px favicon.
+  It is a blue open shield carrying a bridge, not the branch's filled gold
+  shield with a check; keep the two apart. The mark files are
   drawn by `tools/premium-bridge/build-mark.py <theme>` then
   `node tools/premium-bridge/render-mark.js` (the PNG); run both after any
   change of THEME, since only the inline mark on the page follows the
@@ -1398,12 +1406,17 @@ voice under the new timing and the caption gives it away.
   `premium-finance/themes.html`; `THEME` in the page's first script is the
   live one and `?theme=` previews another; the `:root` token block must be
   the live theme's, so the page is right before the script runs and in
-  print. Changing the theme means: THEME, the `:root` block, `theme-color`,
-  the mark files (above), and the header and wordmark colours in
-  `PremiumFinance.gs`. The page's
-  `CONFIG` holds the rate, terms, lender name
-  and contact address; the contact is support@rickyrampersadbranch.com
-  until the company has its own mailbox.
+  print, and it must be the **first** token block: `:root` ties every
+  `[data-theme=…]` rule on specificity, so a theme block written above it
+  loses to it (Midnight previewed as Trust Blue for an afternoon because of
+  exactly that). Changing the theme means: THEME, the `:root` block (moved
+  to the top), `theme-color`, the mark files (above), the Live badge and
+  intro line on `themes.html`, and the wordmark colours in
+  `PremiumFinance.gs` (its sheet header only colours a new tab). The page's
+  `CONFIG` holds the rate, terms, lender name and contact address; the
+  contact is support@rickyrampersadbranch.com until the company has its
+  own mailbox, and `PF.CONTACT` in the .gs (the client e-mail's reply-to)
+  must be changed with it.
 - **This is a Ricky Rampersad project**, not a Guardian Life one. The brand is
   Ink & Coral — `#0F1A2B` ink, `#1B2A44` surface, `#FF5C4D` coral, `#FFE9E5`
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian

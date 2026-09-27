@@ -12,6 +12,9 @@
  * Its own Apps Script project, never beside Service.gs: both define doGet and
  * doPost, and two in one project means only one of them answers.
  *
+ * The tab's header colours are set when the tab is first made; an existing tab
+ * keeps whatever it was given, so recolour it by hand after a theme change.
+ *
  * Setup
  *   1. In the Sheet that should hold the applications: Extensions → Apps Script,
  *      add this file, set PF.TEAM_TO below.
@@ -29,6 +32,7 @@ var PF = {
   TEAM_TO: '',                   // who receives each application; blank = the script owner
   TEAM_CC: '',                   // optional, comma-separated
   NAME: 'Premium Bridge',
+  CONTACT: 'support@rickyrampersadbranch.com',   // replies from clients; same as CONFIG.CONTACT_EMAIL on the page, until Premium Bridge has its own mailbox
   LOGO: 'https://rickyrampersadbranch.com/premium-finance/logo.png',   // hosted PNG: Gmail strips SVG
   RATE_MONTHLY: 0.02,            // must match CONFIG.RATE_MONTHLY on the page
   TERMS: [6, 8, 10],
@@ -77,9 +81,11 @@ function doPost(e) {
       p.payMethod, check.join('; '), '', '']);
     lock.releaseLock();
 
-    pfMailTeam_(ref, p, calc, check);
-    if (PF.SEND_CLIENT_COPY) pfMailClient_(ref, p, calc);
-    return pfJson_({ ok: true, ref: ref });
+    // The row is filed; from here a failed e-mail must not read as a failed application.
+    try { pfMailTeam_(ref, p, calc, check); } catch (e) { console.error('team mail', e); }
+    var copy = false;
+    if (PF.SEND_CLIENT_COPY) { try { pfMailClient_(ref, p, calc); copy = true; } catch (e) { console.error('client mail', e); } }
+    return pfJson_({ ok: true, ref: ref, copy: copy });
   } catch (err) {
     try { lock.releaseLock(); } catch (x) {}
     console.error(err);
@@ -189,10 +195,11 @@ function pfMailClient_(ref, p, c) {
     '. Cost of financing ' + pfMoney_(c.cost) + ', total repayable ' + pfMoney_(c.total) + '.</p>' +
     '<p><b>What happens next</b><br>We check the policy with ' + pfEsc_(p.insurer) +
     ' and may call you for your ID and the insurer\'s invoice or renewal notice. You then receive your agreement to sign, with our bank details for your instalments.</p>' +
-    '<p style="color:#6d7682">Bank details only ever come with your signed agreement. If anyone sends you different account details, do not pay: call us first.</p>' +
+    '<p style="color:#6d7682">Bank details only ever come with your signed agreement. If anyone sends you different account details, do not pay: check with us first.</p>' +
+    '<p>Questions, or anything that does not look right: reply to this e-mail or write to <a href="mailto:' + PF.CONTACT + '">' + PF.CONTACT + '</a>.</p>' +
     '<p style="color:#6d7682;font-size:12px">These figures are indicative and subject to approval and verification of the policy. This e-mail is for the addressee only; if it reached you in error, please tell us and delete it.</p></div>';
   MailApp.sendEmail({ to: p.email, subject: 'Your Premium Bridge application ' + ref, htmlBody: html,
-    name: PF.NAME });
+    name: PF.NAME, replyTo: PF.CONTACT });
 }
 
 function pfJson_(o) {

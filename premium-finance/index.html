@@ -25,16 +25,19 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* The live theme's block carries :root and must come first: :root ties every
+     [data-theme=…] rule on specificity, so the preview blocks below win only on order. */
+  :root,[data-theme=trust]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F8FB;--surface:#FFFFFF;--soft:#EEF4F8;--text:#0B1A26;--text2:#1B3040;--muted:#587084;--line:#DCE6EE;--line2:#C8D6E2;--btn:#0E7490;--btnh:#0B5E75;--onbtn:#FFFFFF;--btn2:#0B1A26;--onbtn2:#FFFFFF;--brand:#0E7490;--primary:#0E7490;--onprimary:#FFFFFF;--primaryhi:#38BDF8;--primarysoft:#E0F2FE;--accent:#F59E0B;--accentsoft:#FEF3C7;--accentink:#92400E;--hero:#08131C;--herotext:#FFFFFF;--heromuted:#93A9BC;--herohi:#7DD3FC;--tilea:#7DD3FC;--tileb:#38BDF8;--ontile:#0B1A26;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#0E2535;--marka:#0EA5E9;--markb:#7DD3FC;--markdeck:#F4F8FB;--markdot:#F59E0B}
   [data-theme=midnight]{--font-head:'Fraunces';color-scheme:dark;--bg:#0A1228;--surface:#111D3E;--soft:#0F1B3D;--text:#F4F1E8;--text2:#E8EDF7;--muted:#9AA6C4;--line:#22315A;--line2:#2E3F6B;--btn:#E0B942;--btnh:#F0D066;--onbtn:#0A1228;--btn2:#F4F1E8;--onbtn2:#0A1228;--brand:#F0D066;--primary:#D4AF37;--onprimary:#0A1228;--primaryhi:#F0D066;--primarysoft:#1C2748;--accent:#E9C46A;--accentsoft:#2A2615;--accentink:#F0D066;--hero:#060C1C;--herotext:#F4F1E8;--heromuted:#9AA6C4;--herohi:#F0D066;--tilea:#F0D066;--tileb:#B8941F;--ontile:#0A1228;--good:#4ADE80;--goodsoft:#12301F;--bad:#F87171;--badsoft:#3A1A1F;--marktile:#060C1C;--marka:#B8941F;--markb:#F0D066;--markdeck:#F4F1E8;--markdot:#7DD3FC}
-  :root,[data-theme=trust]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F8FB;--surface:#FFFFFF;--soft:#EEF4F8;--text:#0B1A26;--text2:#1B3040;--muted:#587084;--line:#DCE6EE;--line2:#C8D6E2;--btn:#0E7490;--btnh:#0B5E75;--onbtn:#FFFFFF;--btn2:#0B1A26;--onbtn2:#FFFFFF;--brand:#0E7490;--primary:#0E7490;--onprimary:#FFFFFF;--primaryhi:#38BDF8;--primarysoft:#E0F2FE;--accent:#F59E0B;--accentsoft:#FEF3C7;--accentink:#92400E;--hero:#08131C;--herotext:#FFFFFF;--heromuted:#93A9BC;--herohi:#7DD3FC;--tilea:#38BDF8;--tileb:#0E7490;--ontile:#FFFFFF;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#0E2535;--marka:#0EA5E9;--markb:#7DD3FC;--markdeck:#F4F8FB;--markdot:#F59E0B}
-  [data-theme=harbour]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F6F2E9;--surface:#FFFFFF;--soft:#F4EFE4;--text:#0E1B2C;--text2:#1D2B3F;--muted:#5E6B7A;--line:#E4DDCF;--line2:#D6CDBB;--btn:#0A7564;--btnh:#085E51;--onbtn:#FFFFFF;--btn2:#0E1B2C;--onbtn2:#FFFFFF;--brand:#0A7564;--primary:#0A7564;--onprimary:#FFFFFF;--primaryhi:#10A58E;--primarysoft:#E3F6F1;--accent:#F5A524;--accentsoft:#FFF3DC;--accentink:#7A4F00;--hero:#0E1B2C;--herotext:#FFFFFF;--heromuted:#A7B6C6;--herohi:#8BE8D2;--tilea:#10A58E;--tileb:#0A7564;--ontile:#FFFFFF;--good:#0A7564;--goodsoft:#E3F6F1;--bad:#B83A33;--badsoft:#FBE9E7;--marktile:#0E1B2C;--marka:#10A58E;--markb:#8BE8D2;--markdeck:#F6F2E9;--markdot:#F5A524}
-  [data-theme=emerald]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F6F4;--surface:#FFFFFF;--soft:#EEF2EE;--text:#0E1B14;--text2:#1C2E24;--muted:#5B6B61;--line:#DDE4DE;--line2:#C9D3CB;--btn:#0C7A4F;--btnh:#0A6441;--onbtn:#FFFFFF;--btn2:#0E1B14;--onbtn2:#FFFFFF;--brand:#0C7A4F;--primary:#0C7A4F;--onprimary:#FFFFFF;--primaryhi:#15A06A;--primarysoft:#DDF3E8;--accent:#E9C46A;--accentsoft:#FBF3DC;--accentink:#7A5A12;--hero:#0A160F;--herotext:#FFFFFF;--heromuted:#9DB3A6;--herohi:#34D399;--tilea:#15A06A;--tileb:#0C7A4F;--ontile:#FFFFFF;--good:#0C7A4F;--goodsoft:#DDF3E8;--bad:#B42318;--badsoft:#FEE4E2;--marktile:#0A160F;--marka:#15A06A;--markb:#34D399;--markdeck:#F4F6F4;--markdot:#E9C46A}
+  [data-theme=harbour]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F6F2E9;--surface:#FFFFFF;--soft:#F4EFE4;--text:#0E1B2C;--text2:#1D2B3F;--muted:#5E6B7A;--line:#E4DDCF;--line2:#D6CDBB;--btn:#0A7564;--btnh:#085E51;--onbtn:#FFFFFF;--btn2:#0E1B2C;--onbtn2:#FFFFFF;--brand:#0A7564;--primary:#0A7564;--onprimary:#FFFFFF;--primaryhi:#10A58E;--primarysoft:#E3F6F1;--accent:#F5A524;--accentsoft:#FFF3DC;--accentink:#7A4F00;--hero:#0E1B2C;--herotext:#FFFFFF;--heromuted:#A7B6C6;--herohi:#8BE8D2;--tilea:#0A7F6D;--tileb:#0A7564;--ontile:#FFFFFF;--good:#0A7564;--goodsoft:#E3F6F1;--bad:#B83A33;--badsoft:#FBE9E7;--marktile:#0E1B2C;--marka:#10A58E;--markb:#8BE8D2;--markdeck:#F6F2E9;--markdot:#F5A524}
+  [data-theme=emerald]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F6F4;--surface:#FFFFFF;--soft:#EEF2EE;--text:#0E1B14;--text2:#1C2E24;--muted:#5B6B61;--line:#DDE4DE;--line2:#C9D3CB;--btn:#0C7A4F;--btnh:#0A6441;--onbtn:#FFFFFF;--btn2:#0E1B14;--onbtn2:#FFFFFF;--brand:#0C7A4F;--primary:#0C7A4F;--onprimary:#FFFFFF;--primaryhi:#15A06A;--primarysoft:#DDF3E8;--accent:#E9C46A;--accentsoft:#FBF3DC;--accentink:#7A5A12;--hero:#0A160F;--herotext:#FFFFFF;--heromuted:#9DB3A6;--herohi:#34D399;--tilea:#0F8456;--tileb:#0C7A4F;--ontile:#FFFFFF;--good:#0C7A4F;--goodsoft:#DDF3E8;--bad:#B42318;--badsoft:#FEE4E2;--marktile:#0A160F;--marka:#15A06A;--markb:#34D399;--markdeck:#F4F6F4;--markdot:#E9C46A}
   [data-theme=forest]{--font-head:'Fraunces';color-scheme:light;--bg:#F7F3EA;--surface:#FFFDF8;--soft:#F1EBDD;--text:#13261C;--text2:#22382B;--muted:#5F6B62;--line:#E3DACA;--line2:#D2C6AF;--btn:#1F5E3F;--btnh:#184B32;--onbtn:#FFFFFF;--btn2:#13261C;--onbtn2:#FFFFFF;--brand:#1F5E3F;--primary:#1F5E3F;--onprimary:#FFFFFF;--primaryhi:#2A7D4F;--primarysoft:#E3EFE6;--accent:#C99A2E;--accentsoft:#F7ECD2;--accentink:#6E4F0E;--hero:#0F1C16;--herotext:#FFFFFF;--heromuted:#A8B5AC;--herohi:#E9C46A;--tilea:#2A7D4F;--tileb:#1F5E3F;--ontile:#FFFFFF;--good:#1F5E3F;--goodsoft:#E3EFE6;--bad:#A4332B;--badsoft:#F8E4E1;--marktile:#0F1C16;--marka:#C08A2D;--markb:#E9C46A;--markdeck:#F7F3EA;--markdot:#4CAF7D}
-  [data-theme=coral]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F7F7F9;--surface:#FFFFFF;--soft:#F1F2F5;--text:#10141A;--text2:#1E293B;--muted:#5B6474;--line:#E3E6EC;--line2:#CFD4DD;--btn:#C8313F;--btnh:#AE2735;--onbtn:#FFFFFF;--btn2:#1E293B;--onbtn2:#FFFFFF;--brand:#B82A38;--primary:#C8313F;--onprimary:#FFFFFF;--primaryhi:#FB7185;--primarysoft:#FFE4E6;--accent:#FB7185;--accentsoft:#FFE4E6;--accentink:#9F1239;--hero:#161B22;--herotext:#FFFFFF;--heromuted:#A0A9B8;--herohi:#FB7185;--tilea:#FB7185;--tileb:#E11D48;--ontile:#FFFFFF;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#161B22;--marka:#E11D48;--markb:#FB7185;--markdeck:#F7F7F9;--markdot:#FDBA74}
+  [data-theme=coral]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F7F7F9;--surface:#FFFFFF;--soft:#F1F2F5;--text:#10141A;--text2:#1E293B;--muted:#5B6474;--line:#E3E6EC;--line2:#CFD4DD;--btn:#C8313F;--btnh:#AE2735;--onbtn:#FFFFFF;--btn2:#1E293B;--onbtn2:#FFFFFF;--brand:#B82A38;--primary:#C8313F;--onprimary:#FFFFFF;--primaryhi:#FB7185;--primarysoft:#FFE4E6;--accent:#FB7185;--accentsoft:#FFE4E6;--accentink:#9F1239;--hero:#161B22;--herotext:#FFFFFF;--heromuted:#A0A9B8;--herohi:#FB7185;--tilea:#E11D48;--tileb:#BE123C;--ontile:#FFFFFF;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#161B22;--marka:#E11D48;--markb:#FB7185;--markdeck:#F7F7F9;--markdot:#FDBA74}
   [data-theme=indigo]{--font-head:'Space Grotesk';color-scheme:light;--bg:#F6F6FB;--surface:#FFFFFF;--soft:#EFEFF8;--text:#0D0C1C;--text2:#1E1B4B;--muted:#5D5B78;--line:#E2E1F0;--line2:#CECDE3;--btn:#4F46E5;--btnh:#4338CA;--onbtn:#FFFFFF;--btn2:#0D0C1C;--onbtn2:#FFFFFF;--brand:#4338CA;--primary:#4F46E5;--onprimary:#FFFFFF;--primaryhi:#818CF8;--primarysoft:#E0E7FF;--accent:#A3E635;--accentsoft:#ECFCCB;--accentink:#3F6212;--hero:#14132B;--herotext:#FFFFFF;--heromuted:#A5A3C7;--herohi:#A3E635;--tilea:#A3E635;--tileb:#65A30D;--ontile:#0D0C1C;--good:#3F6212;--goodsoft:#ECFCCB;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#14132B;--marka:#65A30D;--markb:#A3E635;--markdeck:#F6F6FB;--markdot:#818CF8}
   :root{--shadow:0 1px 2px rgba(0,0,0,.05),0 12px 32px rgba(10,20,40,.08)}
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
+  @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+  .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
   body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
   .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
   .num{font-variant-numeric:tabular-nums}
@@ -84,7 +87,7 @@
   .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
   .tile{background:linear-gradient(160deg,var(--tilea),var(--tileb));color:var(--ontile);border-radius:10px;padding:9px 6px;text-align:center;opacity:0;transform:translateY(8px);animation:up .5s forwards}
   .tile b{display:block;font-size:.84rem;font-weight:800}
-  .tile small{display:block;font-size:.6rem;color:var(--ontile);opacity:.78;letter-spacing:.04em;text-transform:uppercase}
+  .tile small{display:block;font-size:.6rem;color:var(--ontile);opacity:.9;letter-spacing:.04em;text-transform:uppercase}
   @keyframes up{to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){.tile{animation:none;opacity:1;transform:none}}
   .viz .foot{display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--herotext) 12%,transparent);font-size:.82rem;color:var(--heromuted)}
@@ -110,7 +113,7 @@
   .grp-h{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-weight:800;margin:22px 0 12px}
   .field{margin-bottom:14px}
   .field label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:6px;font-weight:600}
-  .field label .req{color:var(--brand)}
+  .field label .req,.req-key{color:var(--brand)}
   .field input,.field select{width:100%;background:var(--surface);border:1.5px solid var(--line2);color:var(--text);padding:13px 14px;border-radius:12px;font:inherit;font-size:1rem;outline:none;transition:border-color .15s,box-shadow .15s}
   .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primarysoft)}
   .field input.err{border-color:var(--bad);background:var(--badsoft)}
@@ -271,13 +274,7 @@
 <nav>
   <div class="wrap">
     <a class="brand" href="./" aria-label="Premium Bridge home">
-      <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true">
-<defs><linearGradient id="pbn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs>
-<rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><g transform="translate(0,-5)"><g fill="none" stroke="url(#pbn)" stroke-width="6" stroke-linecap="butt"><path d="M9.00 44.35 A23.17 23.17 0 0 1 13.21 33.62"/><path d="M14.59 31.88 A23.17 23.17 0 0 1 24.11 25.38"/><path d="M26.24 24.73 A23.17 23.17 0 0 1 37.76 24.73"/><path d="M39.89 25.38 A23.17 23.17 0 0 1 49.41 31.88"/><path d="M50.79 33.62 A23.17 23.17 0 0 1 55.00 44.35"/></g>
-<line x1="7" y1="41" x2="57" y2="41" style="stroke:var(--markdeck)" stroke-width="3.4" stroke-linecap="round"/>
-<circle cx="45" cy="41" r="3.6" style="fill:var(--markdot)"/>
-</g>
-</svg>
+      <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true"><defs><linearGradient id="pbn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs><rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><rect x="13" y="39" width="38" height="5" style="fill:var(--markdeck)"/><rect x="21.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><rect x="37.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><path d="M11 33Q16 29 24 16Q32 44 40 16Q48 29 53 33" fill="none" style="stroke:var(--markdeck)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="28.75" y="35.5" width="6.5" height="3.5" rx="1.75" style="fill:var(--markdot)"/><path d="M15 8H49C51.2 8 53 9.8 53 12V31C53 44 44.5 52.5 32 56.5C19.5 52.5 11 44 11 31V12C11 9.8 12.8 8 15 8Z" fill="none" stroke="url(#pbn)" stroke-width="4.5" stroke-linejoin="round"/></svg>
       <span class="wm">Premium<span>Bridge</span></span>
     </a>
     <div class="nav-links">
@@ -315,7 +312,7 @@
 
   <section id="how">
     <div class="wrap">
-      <div class="sec-h">Three steps across</div>
+      <h2 class="sec-h">Three steps across</h2>
       <div class="sec-sub">See your plan first. You only give your details once you like the numbers.</div>
       <div class="steps3">
         <div class="stp"><div class="no">1</div><h3>Get your quote</h3><p>Enter your premium and compare three plans: the monthly payment, the full cost and every due date. No details needed.</p></div>
@@ -327,11 +324,12 @@
 
   <section id="quote" style="padding-top:20px">
     <div class="wrap">
-      <div class="sec-h" id="flowHead">Get your quote</div>
+      <h2 class="sec-h" id="flowHead">Get your quote</h2>
       <div class="sec-sub" id="flowSub">Enter your premium and choose a plan. No details needed yet.</div>
 
       <div class="app" id="app">
-        <div class="prog hide" id="prog">
+        <p class="sr" id="progSr" aria-live="polite"></p>
+          <div class="prog hide" id="prog" aria-hidden="true">
           <div class="pg-steps"><div class="pg" id="pg1"></div><div class="pg" id="pg2"></div><div class="pg" id="pg3"></div><div class="pg" id="pg4"></div></div>
           <div class="pglabels"><div class="pgl" id="pl1">Details</div><div class="pgl" id="pl2">Agreement</div><div class="pgl" id="pl3">Payment</div><div class="pgl" id="pl4">Done</div></div>
         </div>
@@ -381,7 +379,7 @@
               <p>If the policy is cancelled, your insurer refunds the unused part of the premium. That refund clears what you still owe first, and anything left over comes back to you. This table checks, month by month, that the refund is enough.</p>
               <div class="row2">
                 <div class="field"><label for="period">Policy period (months)</label><input id="period" type="number" min="3" max="24" value="12" inputmode="numeric"></div>
-                <div class="toggle-row" style="align-self:end;margin-bottom:14px"><div class="lbl">Short-rate refund<small>If your insurer keeps a penalty on early cancellation</small></div><label class="switch"><input type="checkbox" id="shortRate"><span class="sl"></span></label></div>
+                <div class="toggle-row" style="align-self:end;margin-bottom:14px"><div class="lbl">Short-rate refund<small>If your insurer keeps a penalty on early cancellation</small></div><label class="switch"><input type="checkbox" id="shortRate" aria-label="Short-rate refund: my insurer keeps a penalty on early cancellation"><span class="sl"></span></label></div>
               </div>
               <div class="tbl-wrap"><table class="t" id="riskTbl"></table></div>
               <div id="covBadge"></div>
@@ -399,7 +397,7 @@
         <!-- ============ DETAILS ============ -->
         <div id="sDetails" class="hide">
           <h2>Your details</h2>
-          <p class="hint">So we can check the policy and prepare your agreement. <span style="color:var(--teal-ink)">*</span> required.</p>
+          <p class="hint">So we can check the policy and prepare your agreement. <span class="req-key">*</span> required.</p>
           <div class="grp-h">You</div>
           <div class="field"><label for="fName">Full name <span class="req">*</span></label><input id="fName" type="text" autocomplete="name" placeholder="As on your ID"><div class="msg">Please enter your full name.</div></div>
           <div class="row2">
@@ -452,8 +450,8 @@
         <div id="sPay" class="hide">
           <h2>How would you like to pay?</h2>
           <p class="hint">Monthly instalment: <b class="num">$<span class="aPay">—</span></b>. You can change this later.</p>
-          <button class="pay-opt active" type="button" data-pay="standing" onclick="pickPay('standing')"><div class="ico">🏦</div><div><div class="t">Standing order</div><div class="d">Your bank pays each instalment on the due date. Nothing to remember.</div></div></button>
-          <button class="pay-opt" type="button" data-pay="transfer" onclick="pickPay('transfer')"><div class="ico">📲</div><div><div class="t">Online transfer each month</div><div class="d">Pay through your bank's app, with your reference.</div></div></button>
+          <button class="pay-opt active" type="button" aria-pressed="true" data-pay="standing" onclick="pickPay('standing')"><div class="ico">🏦</div><div><div class="t">Standing order</div><div class="d">Your bank pays each instalment on the due date. Nothing to remember.</div></div></button>
+          <button class="pay-opt" type="button" aria-pressed="false" data-pay="transfer" onclick="pickPay('transfer')"><div class="ico">📲</div><div><div class="t">Online transfer each month</div><div class="d">Pay through your bank's app, with your reference.</div></div></button>
           <button class="pay-opt" type="button" data-pay="card" disabled><div class="ico">💳</div><div><div class="t">Card</div><div class="d">Visa, Mastercard, Linx</div></div><div class="soon">Coming soon</div></button>
 
           <div class="shield-note"><div style="font-size:1.2rem">🔒</div><div><b>Our bank details come with your signed agreement, never by WhatsApp or text.</b> If anyone sends you different account details, don't pay. Call us first.</div></div>
@@ -505,7 +503,7 @@
 
   <section id="faq">
     <div class="wrap faq">
-      <div class="sec-h">Questions people ask</div>
+      <h2 class="sec-h">Questions people ask</h2>
       <div class="sec-sub">Straight answers, before you apply.</div>
       <details><summary>What is premium financing?</summary><div class="det-body"><p>A short loan that pays your insurance premium. We pay your insurer the full premium, and you repay us in equal monthly instalments. The policy is yours, in force from its start date, exactly as if you had paid it yourself.</p></div></details>
       <details><summary>Why is a shorter plan cheaper?</summary><div class="det-body"><p>Interest is charged each month only on what you still owe. A shorter plan pays the balance down faster, so there's less owing each month and less interest overall.</p></div></details>
@@ -521,13 +519,7 @@
 <footer>
   <div class="wrap">
     <div class="row">
-      <a class="brand" href="./"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true">
-<defs><linearGradient id="pbf" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs>
-<rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><g transform="translate(0,-5)"><g fill="none" stroke="url(#pbf)" stroke-width="6" stroke-linecap="butt"><path d="M9.00 44.35 A23.17 23.17 0 0 1 13.21 33.62"/><path d="M14.59 31.88 A23.17 23.17 0 0 1 24.11 25.38"/><path d="M26.24 24.73 A23.17 23.17 0 0 1 37.76 24.73"/><path d="M39.89 25.38 A23.17 23.17 0 0 1 49.41 31.88"/><path d="M50.79 33.62 A23.17 23.17 0 0 1 55.00 44.35"/></g>
-<line x1="7" y1="41" x2="57" y2="41" style="stroke:var(--markdeck)" stroke-width="3.4" stroke-linecap="round"/>
-<circle cx="45" cy="41" r="3.6" style="fill:var(--markdot)"/>
-</g>
-</svg><span class="wm" style="font-size:1rem">Premium<span>Bridge</span></span></a>
+      <a class="brand" href="./"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><defs><linearGradient id="pbf" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs><rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><rect x="13" y="39" width="38" height="5" style="fill:var(--markdeck)"/><rect x="21.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><rect x="37.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><path d="M11 33Q16 29 24 16Q32 44 40 16Q48 29 53 33" fill="none" style="stroke:var(--markdeck)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="28.75" y="35.5" width="6.5" height="3.5" rx="1.75" style="fill:var(--markdot)"/><path d="M15 8H49C51.2 8 53 9.8 53 12V31C53 44 44.5 52.5 32 56.5C19.5 52.5 11 44 11 31V12C11 9.8 12.8 8 15 8Z" fill="none" stroke="url(#pbf)" stroke-width="4.5" stroke-linejoin="round"/></svg><span class="wm" style="font-size:1rem">Premium<span>Bridge</span></span></a>
       <div>Insurance premiums, financed · Trinidad &amp; Tobago · <a id="footMail" href="#"></a></div>
     </div>
     <div class="disc">Indicative figures based on the information you enter. This is not a binding offer or financial advice; final terms are subject to approval, verification of the policy with your insurer and a signed agreement. The comparison with a flat-rate plan is an illustration on the stated assumptions, not a quote from any other lender. Cancellation protection assumes your insurer refunds unearned premium; the refund basis is set by your insurer.</div>
@@ -555,6 +547,7 @@ const CONFIG = {
 
 /* ---------- Maths ---------- */
 const $ = id => document.getElementById(id);
+const MOTION = matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
 const fmt = n => Number(n).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const r2 = n => Math.round(n*100)/100;
 let S = {premium:3206.50, depPct:0, term:CONFIG.DEFAULT_TERM, period:12, shortRate:false, pay:'standing', ref:''};
@@ -601,7 +594,7 @@ function planName(n){ return (CONFIG.TERMS.find(t=>t.n===n)||{}).name || n+' mon
 
 function renderPlans(){
   $('plans').innerHTML = CONFIG.TERMS.map(t => `
-    <button class="plan${t.n===S.term?' active':''}" type="button" role="radio" aria-checked="${t.n===S.term}" data-n="${t.n}">
+    <button class="plan${t.n===S.term?' active':''}" type="button" role="radio" aria-checked="${t.n===S.term}" tabindex="${t.n===S.term?0:-1}" data-n="${t.n}">
       <div class="plan-badge${t.badge?'':' none'}">${t.badge||'.'}</div>
       <div class="plan-name">${t.name}</div>
       <div class="plan-sub">${t.n} months</div>
@@ -618,10 +611,13 @@ $('plans').addEventListener('click', e => { const b=e.target.closest('.plan'); i
 $('plans').addEventListener('keydown', e => {
   if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)) return;
   const ns = CONFIG.TERMS.map(t=>t.n), i = ns.indexOf(S.term), d = (e.key==='ArrowLeft'||e.key==='ArrowUp') ? -1 : 1;
-  pickPlan(ns[(i+d+ns.length)%ns.length]); e.preventDefault();
-  document.querySelector(`.plan[data-n="${S.term}"]`).focus();
+  pickPlan(ns[(i+d+ns.length)%ns.length], true); e.preventDefault();
 });
-function pickPlan(n){ S.term=n; renderPlans(); calc(); }
+function pickPlan(n, focus){
+  focus = focus || $('plans').contains(document.activeElement);
+  S.term=n; renderPlans(); calc();
+  if (focus) document.querySelector(`.plan[data-n="${S.term}"]`).focus();
+}
 
 function calc(){
   S.premium = parseFloat($('premium').value) || 0;
@@ -632,6 +628,7 @@ function calc(){
 
   $('depPct').textContent = S.depPct ? S.depPct+'%' : 'None';
   $('depAmt').textContent = S.depPct ? '$'+fmt(dep)+' up front' : 'finance the full premium';
+  $('deposit').setAttribute('aria-valuetext', S.depPct ? `${S.depPct}%, $${fmt(dep)} up front` : 'No deposit');
 
   const w = $('premWarn'); let msg = '';
   if (P && P < CONFIG.MIN_PREMIUM) msg = `Premium financing starts at $${fmt(CONFIG.MIN_PREMIUM)}. Below that, your insurer's own instalment options are usually the better choice.`;
@@ -671,7 +668,7 @@ function calc(){
   const pr = protection(P, F, S.term);
   let rt = `<tr><th>Month</th><th>You owe</th><th>Refund due</th><th>Cushion</th></tr>`;
   rt += pr.rows.map(x => { const ok = x.gap <= 0.005;
-    return `<tr><td>${x.m===0?'Start':x.m}</td><td>$${fmt(x.bal)}</td><td>$${fmt(x.ref)}</td><td style="color:${ok?'var(--green)':'var(--red)'}">${ok?'+':'−'}$${fmt(Math.abs(x.gap))}</td></tr>`; }).join('');
+    return `<tr><td>${x.m===0?'Start':x.m}</td><td>$${fmt(x.bal)}</td><td>$${fmt(x.ref)}</td><td style="color:${ok?'var(--good)':'var(--bad)'}">${ok?'+':'−'}$${fmt(Math.abs(x.gap))}</td></tr>`; }).join('');
   $('riskTbl').innerHTML = rt;
   $('covBadge').innerHTML = S.term >= S.period
     ? `<div class="cov bad">The plan must end before the policy does. Choose a shorter plan, or an officer will review.</div>`
@@ -697,21 +694,24 @@ function showPanel(id, step){
   PANELS.forEach(p => $(p).classList.toggle('hide', p!==id));
   $('prog').classList.toggle('hide', !step);
   [1,2,3,4].forEach(i => { $('pg'+i).classList.toggle('on', i<=step); $('pl'+i).classList.toggle('on', i===step); });
-  $('app').scrollIntoView({behavior:'smooth', block:'start'});
+  $('progSr').textContent = step ? `Step ${step} of 4: ${$('pl'+step).textContent}` : '';
+  $('app').scrollIntoView({behavior:MOTION, block:'start'});
+  const h = $(id).querySelector('h2') || $('flowHead');
+  h.setAttribute('tabindex','-1'); h.focus({preventScroll:true});
 }
 function heads(apply){
   $('flowHead').textContent = apply ? 'Apply for financing' : 'Get your quote';
   $('flowSub').textContent = apply ? `${planName(S.term)} · ${S.term} months · $${fmt(schedule(financed(),S.term).pay)} a month` : 'Enter your premium and choose a plan. No details needed yet.';
 }
-function goQuote(){ $('quote').scrollIntoView({behavior:'smooth'}); }
+function goQuote(){ $('quote').scrollIntoView({behavior:MOTION}); }
 function startApply(){ if ($('startBtn').disabled) return; heads(true); showPanel('sDetails',1); }
 function backToQuote(){ heads(false); showPanel('sQuote',0); }
 function toDetails(){ showPanel('sDetails',1); }
 function toAgreement(){ if (!validate()) return; buildContract(); showPanel('sAgree',2); }
 function toAgreementBack(){ showPanel('sAgree',2); }
 function toPayment(){
-  if (!$('ack').checked){ $('ackBox').classList.add('err'); $('ackBox').scrollIntoView({behavior:'smooth',block:'center'}); return; }
-  $('ackBox').classList.remove('err'); buildReview(); showPanel('sPay',3);
+  if (!$('ack').checked){ $('ackBox').classList.add('err'); $('ack').setAttribute('aria-invalid','true'); $('ack').focus({preventScroll:true}); $('ackBox').scrollIntoView({behavior:MOTION,block:'center'}); return; }
+  $('ackBox').classList.remove('err'); $('ack').removeAttribute('aria-invalid'); buildReview(); showPanel('sPay',3);
 }
 $('ack').addEventListener('change', () => $('ackBox').classList.remove('err'));
 $('consent').addEventListener('change', () => $('consentBox').classList.remove('err'));
@@ -725,12 +725,17 @@ function validate(){
     fInsurer: v => v.trim().length >= 2
   };
   let first = null;
-  Object.entries(checks).forEach(([id,fn]) => { const el=$(id), ok=fn(el.value); el.classList.toggle('err',!ok); if(!ok && !first) first=el; });
-  if (!$('consent').checked){ $('consentBox').classList.add('err'); if(!first) first=$('consentBox'); }
-  if (first){ first.scrollIntoView({behavior:'smooth',block:'center'}); if (first.focus) first.focus({preventScroll:true}); return false; }
+  Object.entries(checks).forEach(([id,fn]) => { const el=$(id), ok=fn(el.value); el.classList.toggle('err',!ok); el.setAttribute('aria-invalid', !ok); if(!ok && !first) first=el; });
+  $('consent').setAttribute('aria-invalid', !$('consent').checked);
+  if (!$('consent').checked){ $('consentBox').classList.add('err'); if(!first) first=$('consent'); }
+  if (first){ first.scrollIntoView({behavior:MOTION,block:'center'}); if (first.focus) first.focus({preventScroll:true}); return false; }
   return true;
 }
-Object.keys({fName:1,fPhone:1,fEmail:1,fIdNum:1,fInsurer:1}).forEach(id => $(id).addEventListener('input', () => $(id).classList.remove('err')));
+Object.keys({fName:1,fPhone:1,fEmail:1,fIdNum:1,fInsurer:1}).forEach(id => {
+  const el = $(id), msg = el.parentNode.querySelector('.msg');
+  if (msg){ msg.id = id+'Msg'; msg.setAttribute('role','alert'); el.setAttribute('aria-describedby', msg.id); }
+  el.addEventListener('input', () => { el.classList.remove('err'); el.removeAttribute('aria-invalid'); });
+});
 
 function syncAgreementFigures(){
   const sc = schedule(financed(), S.term), rate = (CONFIG.RATE_MONTHLY*100).toFixed(CONFIG.RATE_MONTHLY*100%1?1:0)+'%';
@@ -770,7 +775,7 @@ function buildContract(){
     <p style="margin-top:13px;font-size:.7rem;color:var(--muted)">Dates assume the premium is paid today; they move to the actual payment date. This preview is not the agreement: the final agreement is sent for signature after the policy is verified.</p>`;
 }
 
-function pickPay(t){ S.pay=t; document.querySelectorAll('.pay-opt').forEach(o => o.classList.toggle('active', o.dataset.pay===t)); }
+function pickPay(t){ S.pay=t; document.querySelectorAll('.pay-opt[data-pay]:not([disabled])').forEach(o => { o.classList.toggle('active', o.dataset.pay===t); o.setAttribute('aria-pressed', o.dataset.pay===t); }); }
 const PAY_NAMES = {standing:'Standing order', transfer:'Online transfer each month', card:'Card'};
 
 function payload(){
@@ -802,12 +807,12 @@ function mailBody(p){
 
 async function submitApp(){
   const btn = $('submitBtn'); btn.disabled = true; btn.textContent = 'Sending…';
-  const p = payload(); let sent = false, ref = p.ref;
+  const p = payload(); let sent = false, copy = false, ref = p.ref;
   if (CONFIG.API_URL){
     try {
       const res = await fetch(CONFIG.API_URL, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(p)});
       const j = await res.json();
-      if (j && j.ok){ sent = true; if (j.ref) ref = j.ref; }
+      if (j && j.ok){ sent = true; copy = !!j.copy; if (j.ref) ref = j.ref; }
     } catch(e){ sent = false; }
   }
   btn.disabled = false; btn.textContent = 'Submit application';
@@ -817,8 +822,8 @@ async function submitApp(){
   $('dIc').textContent = sent ? '✓' : '→'; $('dIc').classList.toggle('wait', !sent);
   $('dHead').textContent = sent ? 'Application received' : 'One more tap to send it';
   $('dLead').innerHTML = sent
-    ? `Thank you, <b style="color:var(--ink)">${first}</b>. We have your application, and a copy of your quote is on its way to <b style="color:var(--ink)">${esc(p.email)}</b>.`
-    : `Thank you, <b style="color:var(--ink)">${first}</b>. Your application is ready but has not reached us yet. Tap below to send it from your own e-mail, with everything filled in.`;
+    ? `Thank you, <b style="color:var(--text)">${first}</b>. We have your application${copy ? `, and a copy of your quote is on its way to <b style="color:var(--text)">${esc(p.email)}</b>` : ''}.`
+    : `Thank you, <b style="color:var(--text)">${first}</b>. Your application is ready but has not reached us yet. Tap below to send it from your own e-mail, with everything filled in.`;
   $('dSend').classList.toggle('hide', sent);
   $('dMail').href = `mailto:${CONFIG.CONTACT_EMAIL}?subject=${encodeURIComponent('Premium financing application '+ref)}&body=${encodeURIComponent(mailBody(p))}`;
   showPanel('sDone',4);

@@ -1,10 +1,17 @@
 // Rasterise premium-finance/logo.svg to logo.png (256×256, transparent
 // corners), the copy the Premium Bridge e-mails link to — Gmail strips SVG.
-// Needs Playwright with Chromium (the film pipeline's install is enough):
+// Needs Playwright with Chromium (a global install is found by itself):
 //   node tools/premium-bridge/render-mark.js
 const path = require('path');
 const fs = require('fs');
-const { chromium } = require('playwright');
+// Playwright from the project if it has one, else the global install
+// (on the cloud container it lives under `npm root -g`).
+let pw;
+try { pw = require('playwright'); } catch (e) {
+  const root = require('child_process').execSync('npm root -g').toString().trim();
+  pw = require(require('path').join(root, 'playwright'));
+}
+const { chromium } = pw;
 
 (async () => {
   const dir = path.resolve(__dirname, '..', '..', 'premium-finance');
