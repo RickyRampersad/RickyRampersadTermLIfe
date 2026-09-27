@@ -1,7 +1,7 @@
-// Rasterise premium-finance/logo.svg to logo.png (256×256, transparent
-// corners), the copy the Premium Bridge e-mails link to — Gmail strips SVG.
-// Needs Playwright with Chromium (a global install is found by itself):
-//   node tools/premium-bridge/render-mark.js
+// Rasterise the Premium Bridge files that must be PNG:
+//   logo.png          the app tile, 256×256 (apple-touch icon, social image)
+//   lockup-light.png  mark + wordmark on white, 2× (the e-mail masthead; Gmail strips SVG)
+// Run after build-mark.py:   node tools/premium-bridge/render-mark.js
 const path = require('path');
 const fs = require('fs');
 // Playwright from the project if it has one, else the global install
@@ -9,20 +9,27 @@ const fs = require('fs');
 let pw;
 try { pw = require('playwright'); } catch (e) {
   const root = require('child_process').execSync('npm root -g').toString().trim();
-  pw = require(require('path').join(root, 'playwright'));
+  pw = require(path.join(root, 'playwright'));
 }
 const { chromium } = pw;
 
+const dir = path.resolve(__dirname, '..', '..', 'premium-finance');
+const JOBS = [
+  { src: 'logo.svg', out: 'logo.png', w: 256, h: 256, bg: 'transparent' },
+  { src: 'lockup-light.svg', out: 'lockup-light.png', w: 500, h: 196, bg: '#FFFFFF' },
+];
+
 (async () => {
-  const dir = path.resolve(__dirname, '..', '..', 'premium-finance');
-  const svg = fs.readFileSync(path.join(dir, 'logo.svg'), 'utf8')
-    .replace('<svg ', '<svg width="256" height="256" ');
   const local = '/opt/pw-browsers/chromium';   // the pre-installed Chromium on the cloud container
   const browser = await chromium.launch(fs.existsSync(local) ? { executablePath: local } : {});
-  const page = await browser.newPage({ viewport: { width: 256, height: 256 } });
-  await page.setContent(`<body style="margin:0;background:transparent">${svg}</body>`);
-  const out = path.join(dir, 'logo.png');
-  await page.screenshot({ path: out, omitBackground: true });
+  for (const j of JOBS) {
+    const svg = fs.readFileSync(path.join(dir, j.src), 'utf8')
+      .replace('<svg ', `<svg width="${j.w}" height="${j.h}" `);
+    const page = await browser.newPage({ viewport: { width: j.w, height: j.h } });
+    await page.setContent(`<body style="margin:0;background:${j.bg}">${svg}</body>`);
+    await page.screenshot({ path: path.join(dir, j.out), omitBackground: j.bg === 'transparent' });
+    await page.close();
+    console.log('wrote', path.join(dir, j.out));
+  }
   await browser.close();
-  console.log('wrote', out);
 })();

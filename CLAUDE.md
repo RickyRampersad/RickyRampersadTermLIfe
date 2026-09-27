@@ -1377,46 +1377,45 @@ voice under the new timing and the caption gives it away.
   because it is presented as a Ricky Rampersad project that stands on its own.
   Do not "correct" one into the other.
 - **Premium Bridge is a third mark, on purpose.** `premium-finance/` is the
-  premium financing company's own site, not a branch screen: its own mark
-  (`premium-finance/logo.svg`, a suspension bridge inside an open shield,
-  an amber dot on the deck for the client part-way across; `logo.png` is
-  the hosted copy for e-mail), its own
-  palette and Plus Jakarta Sans. Asked for on 27 September 2026: "a new
-  logo and design — it's a premium finance company, financing insurance
-  premiums". **The live theme is Trust Blue**, chosen the same day from the
-  seven on `themes.html` ("Trust blue"): ink `#0B1A26` / `#08131C`, blue
-  `#0E7490` for buttons and the wordmark, sky `#0EA5E9` → `#7DD3FC` for the
-  shield on an ink `#0E2535` tile, amber `#F59E0B`, paper `#F4F8FB`. The
-  first mark (a five-piece arch) was rejected the same day ("more creative,
-  logo looks horrible"); the shield-bridge won a round of seven concepts
-  drawn from the brand drafts (coin splitting into instalments, the B whose
-  bowls are cables, a beam closing a gap, an umbrella-arch, stepping stones,
-  a bridge cut out of a coin), judged at every size down to a 16px favicon.
-  It is a blue open shield carrying a bridge, not the branch's filled gold
-  shield with a check; keep the two apart. The mark files are
-  drawn by `tools/premium-bridge/build-mark.py <theme>` then
-  `node tools/premium-bridge/render-mark.js` (the PNG); run both after any
-  change of THEME, since only the inline mark on the page follows the
-  theme by itself. The gold-shield rule does not apply inside
-  that folder, and the shield must not be put back there; the folder is
-  self-contained so it can move to its own domain whole. Its backend is
-  `apps-script/PremiumFinance.gs`, its own Apps Script project (it has its
-  own doGet/doPost). Seven colour themes are built into the page (harbour,
-  midnight, trust, emerald, forest, coral, indigo), previewed side by side on
-  `premium-finance/themes.html`; `THEME` in the page's first script is the
-  live one and `?theme=` previews another; the `:root` token block must be
-  the live theme's, so the page is right before the script runs and in
-  print, and it must be the **first** token block: `:root` ties every
-  `[data-theme=…]` rule on specificity, so a theme block written above it
-  loses to it (Midnight previewed as Trust Blue for an afternoon because of
-  exactly that). Changing the theme means: THEME, the `:root` block (moved
-  to the top), `theme-color`, the mark files (above), the Live badge and
-  intro line on `themes.html`, and the wordmark colours in
-  `PremiumFinance.gs` (its sheet header only colours a new tab). The page's
-  `CONFIG` holds the rate, terms, lender name and contact address; the
-  contact is support@rickyrampersadbranch.com until the company has its
-  own mailbox, and `PF.CONTACT` in the .gs (the client e-mail's reply-to)
-  must be changed with it.
+  premium financing company's own site, not a branch screen, and it carries
+  the company's own identity exactly as the manager drew it in the brand
+  drafts: **the coin mark** (a large coin carrying a $, breaking into three
+  smaller coins: one big premium turned into easy payments), the stacked
+  wordmark "Premium / Bridge" in Sora, and **Trust Blue** (ink `#08131C` /
+  `#0B1A26` / `#0E2535`, sky `#7DD3FC` → deep cyan `#0E7490`, `#38BDF8`
+  for buttons and highlights, paper `#F4F8FB` for the agreement), Inter for
+  text and JetBrains Mono for every figure. The page is dark, like the
+  manager's own draft, and laid out as a lender's site: a header with the
+  lockup, a two-column hero with a live quote card, an assurance strip,
+  the three steps, the calculator and application, a pricing comparison
+  table, the questions, a closing band and a full footer. No emoji and no
+  decorative tiles; icons are the line icons in the page's SVG sprite.
+  **Do not redesign the mark.** On 27 September 2026 two marks were drawn
+  in its place (an arch of segments, then a shield with a bridge) and a
+  seven-theme colour picker was built; all of it was rejected the same day
+  ("all design horrible, not professionally laid out … it's looking
+  childish! The first logo I uploaded when you started was much better"),
+  and the theme machinery and `themes.html` were removed. The $ and the
+  wordmark are outlines of Fraunces 700 and Sora 700 kept in
+  `tools/premium-bridge/glyphs.json`, so the logo is the same whether or
+  not a font loads. `python3 tools/premium-bridge/build-mark.py` writes
+  every file (`mark.svg`, `mark-light.svg`, `logo.svg` the app tile,
+  `favicon.svg` the 48-unit one-satellite version, `lockup.svg`,
+  `lockup-light.svg`) and `node tools/premium-bridge/render-mark.js`
+  rasterises `logo.png` and `lockup-light.png`, the e-mail masthead (Gmail
+  strips SVG). The page's header and footer carry the mark inline, painted
+  from the `pbm` gradient in its sprite. The gold-shield rule does not
+  apply inside that folder, and the branch shield must not be put there;
+  the folder is self-contained so it can move to its own domain whole.
+  Its backend is `apps-script/PremiumFinance.gs`, its own Apps Script
+  project (it has its own doGet/doPost); its sheet header colours only a
+  new tab. The page's `CONFIG` holds the rate, terms, lender name and
+  contact address; the contact is support@rickyrampersadbranch.com until
+  the company has its own mailbox, and `PF.CONTACT` in the .gs (the client
+  e-mail's reply-to) must be changed with it. To preview the page with its
+  real fonts from the cloud container, give Playwright
+  `ignoreHTTPSErrors: true`: the proxy's certificate is not in Chromium's
+  store, so Google Fonts silently fall back otherwise.
 - **This is a Ricky Rampersad project**, not a Guardian Life one. The brand is
   Ink & Coral — `#0F1A2B` ink, `#1B2A44` surface, `#FF5C4D` coral, `#FFE9E5`
   tint, `#FFF6F4` paper, `#6B7C96` muted — with The Knot as the mark. Guardian

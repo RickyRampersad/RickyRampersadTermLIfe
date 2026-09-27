@@ -33,7 +33,7 @@ var PF = {
   TEAM_CC: '',                   // optional, comma-separated
   NAME: 'Premium Bridge',
   CONTACT: 'support@rickyrampersadbranch.com',   // replies from clients; same as CONFIG.CONTACT_EMAIL on the page, until Premium Bridge has its own mailbox
-  LOGO: 'https://rickyrampersadbranch.com/premium-finance/logo.png',   // hosted PNG: Gmail strips SVG
+  LOGO: 'https://rickyrampersadbranch.com/premium-finance/lockup-light.png',   // mark + wordmark on white; hosted PNG because Gmail strips SVG
   RATE_MONTHLY: 0.02,            // must match CONFIG.RATE_MONTHLY on the page
   TERMS: [6, 8, 10],
   MIN_PREMIUM: 1000,
@@ -186,8 +186,7 @@ function pfMailTeam_(ref, p, c, check) {
 function pfMailClient_(ref, p, c) {
   var first = String(p.name).trim().split(/\s+/)[0];
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1d2530;max-width:560px">' +
-    '<table cellpadding="0" cellspacing="0"><tr><td><img src="' + PF.LOGO + '" width="44" height="44" alt="" style="display:block;border-radius:11px"></td>' +
-    '<td style="padding-left:10px;font-size:20px;font-weight:800;color:#0B1A26">Premium<span style="color:#0E7490">Bridge</span></td></tr></table>' +
+    '<img src="' + PF.LOGO + '" width="180" height="71" alt="Premium Bridge" style="display:block;border:0">' +
     '<p>Thank you, ' + pfEsc_(first) + '. We have your premium financing application.</p>' +
     '<p style="font-size:18px"><b>Ref ' + pfEsc_(ref) + '</b></p>' +
     '<p>' + pfEsc_(p.plan) + ': ' + c.term + ' monthly instalments of <b>' + pfMoney_(c.instalment) + '</b> on a premium of ' +

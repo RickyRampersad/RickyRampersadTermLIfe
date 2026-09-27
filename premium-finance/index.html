@@ -3,402 +3,546 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premium Bridge — Insurance premiums, financed</title>
-<meta name="description" content="Premium Bridge pays your insurance premium in full and you repay it in 6, 8 or 10 equal monthly instalments. Interest only on what you still owe. See every figure before you apply.">
+<title>Premium Bridge — Insurance payments, financed</title>
+<meta name="description" content="Premium Bridge pays your insurance premium in full and you repay it in 6, 8 or 10 equal monthly instalments, with interest only on what you still owe. See every figure before you apply.">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="logo.png">
-<meta name="theme-color" content="#F4F8FB">
+<meta name="theme-color" content="#08131C">
 <meta property="og:title" content="Premium Bridge — Big premium, small payments">
-<meta property="og:description" content="Your insurance premium, paid in full today and repaid in easy monthly instalments. Every figure shown before you apply.">
+<meta property="og:description" content="Your insurance premium paid in full today, repaid in equal monthly instalments. Every figure shown before you apply.">
 <meta property="og:image" content="https://rickyrampersadbranch.com/premium-finance/logo.png">
-<script>
-/* Theme: ?theme=name previews one; THEME below is the live choice. */
-(function(){
-  var THEME = 'trust';
-  var ok = ['harbour','midnight','trust','emerald','forest','coral','indigo'];
-  try { var q = new URLSearchParams(location.search).get('theme'); if (ok.indexOf(q) >= 0) THEME = q; } catch(e){}
-  document.documentElement.setAttribute('data-theme', THEME);
-  var extra = {midnight:'Fraunces:opsz,wght@9..144,600;9..144,700', forest:'Fraunces:opsz,wght@9..144,600;9..144,700', indigo:'Space+Grotesk:wght@500;600;700'}[THEME];
-  if (extra) document.write('<link href="https://fonts.googleapis.com/css2?family='+extra+'&display=swap" rel="stylesheet">');
-})();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
-  /* The live theme's block carries :root and must come first: :root ties every
-     [data-theme=…] rule on specificity, so the preview blocks below win only on order. */
-  :root,[data-theme=trust]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F8FB;--surface:#FFFFFF;--soft:#EEF4F8;--text:#0B1A26;--text2:#1B3040;--muted:#587084;--line:#DCE6EE;--line2:#C8D6E2;--btn:#0E7490;--btnh:#0B5E75;--onbtn:#FFFFFF;--btn2:#0B1A26;--onbtn2:#FFFFFF;--brand:#0E7490;--primary:#0E7490;--onprimary:#FFFFFF;--primaryhi:#38BDF8;--primarysoft:#E0F2FE;--accent:#F59E0B;--accentsoft:#FEF3C7;--accentink:#92400E;--hero:#08131C;--herotext:#FFFFFF;--heromuted:#93A9BC;--herohi:#7DD3FC;--tilea:#7DD3FC;--tileb:#38BDF8;--ontile:#0B1A26;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#0E2535;--marka:#0EA5E9;--markb:#7DD3FC;--markdeck:#F4F8FB;--markdot:#F59E0B}
-  [data-theme=midnight]{--font-head:'Fraunces';color-scheme:dark;--bg:#0A1228;--surface:#111D3E;--soft:#0F1B3D;--text:#F4F1E8;--text2:#E8EDF7;--muted:#9AA6C4;--line:#22315A;--line2:#2E3F6B;--btn:#E0B942;--btnh:#F0D066;--onbtn:#0A1228;--btn2:#F4F1E8;--onbtn2:#0A1228;--brand:#F0D066;--primary:#D4AF37;--onprimary:#0A1228;--primaryhi:#F0D066;--primarysoft:#1C2748;--accent:#E9C46A;--accentsoft:#2A2615;--accentink:#F0D066;--hero:#060C1C;--herotext:#F4F1E8;--heromuted:#9AA6C4;--herohi:#F0D066;--tilea:#F0D066;--tileb:#B8941F;--ontile:#0A1228;--good:#4ADE80;--goodsoft:#12301F;--bad:#F87171;--badsoft:#3A1A1F;--marktile:#060C1C;--marka:#B8941F;--markb:#F0D066;--markdeck:#F4F1E8;--markdot:#7DD3FC}
-  [data-theme=harbour]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F6F2E9;--surface:#FFFFFF;--soft:#F4EFE4;--text:#0E1B2C;--text2:#1D2B3F;--muted:#5E6B7A;--line:#E4DDCF;--line2:#D6CDBB;--btn:#0A7564;--btnh:#085E51;--onbtn:#FFFFFF;--btn2:#0E1B2C;--onbtn2:#FFFFFF;--brand:#0A7564;--primary:#0A7564;--onprimary:#FFFFFF;--primaryhi:#10A58E;--primarysoft:#E3F6F1;--accent:#F5A524;--accentsoft:#FFF3DC;--accentink:#7A4F00;--hero:#0E1B2C;--herotext:#FFFFFF;--heromuted:#A7B6C6;--herohi:#8BE8D2;--tilea:#0A7F6D;--tileb:#0A7564;--ontile:#FFFFFF;--good:#0A7564;--goodsoft:#E3F6F1;--bad:#B83A33;--badsoft:#FBE9E7;--marktile:#0E1B2C;--marka:#10A58E;--markb:#8BE8D2;--markdeck:#F6F2E9;--markdot:#F5A524}
-  [data-theme=emerald]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F4F6F4;--surface:#FFFFFF;--soft:#EEF2EE;--text:#0E1B14;--text2:#1C2E24;--muted:#5B6B61;--line:#DDE4DE;--line2:#C9D3CB;--btn:#0C7A4F;--btnh:#0A6441;--onbtn:#FFFFFF;--btn2:#0E1B14;--onbtn2:#FFFFFF;--brand:#0C7A4F;--primary:#0C7A4F;--onprimary:#FFFFFF;--primaryhi:#15A06A;--primarysoft:#DDF3E8;--accent:#E9C46A;--accentsoft:#FBF3DC;--accentink:#7A5A12;--hero:#0A160F;--herotext:#FFFFFF;--heromuted:#9DB3A6;--herohi:#34D399;--tilea:#0F8456;--tileb:#0C7A4F;--ontile:#FFFFFF;--good:#0C7A4F;--goodsoft:#DDF3E8;--bad:#B42318;--badsoft:#FEE4E2;--marktile:#0A160F;--marka:#15A06A;--markb:#34D399;--markdeck:#F4F6F4;--markdot:#E9C46A}
-  [data-theme=forest]{--font-head:'Fraunces';color-scheme:light;--bg:#F7F3EA;--surface:#FFFDF8;--soft:#F1EBDD;--text:#13261C;--text2:#22382B;--muted:#5F6B62;--line:#E3DACA;--line2:#D2C6AF;--btn:#1F5E3F;--btnh:#184B32;--onbtn:#FFFFFF;--btn2:#13261C;--onbtn2:#FFFFFF;--brand:#1F5E3F;--primary:#1F5E3F;--onprimary:#FFFFFF;--primaryhi:#2A7D4F;--primarysoft:#E3EFE6;--accent:#C99A2E;--accentsoft:#F7ECD2;--accentink:#6E4F0E;--hero:#0F1C16;--herotext:#FFFFFF;--heromuted:#A8B5AC;--herohi:#E9C46A;--tilea:#2A7D4F;--tileb:#1F5E3F;--ontile:#FFFFFF;--good:#1F5E3F;--goodsoft:#E3EFE6;--bad:#A4332B;--badsoft:#F8E4E1;--marktile:#0F1C16;--marka:#C08A2D;--markb:#E9C46A;--markdeck:#F7F3EA;--markdot:#4CAF7D}
-  [data-theme=coral]{--font-head:'Plus Jakarta Sans';color-scheme:light;--bg:#F7F7F9;--surface:#FFFFFF;--soft:#F1F2F5;--text:#10141A;--text2:#1E293B;--muted:#5B6474;--line:#E3E6EC;--line2:#CFD4DD;--btn:#C8313F;--btnh:#AE2735;--onbtn:#FFFFFF;--btn2:#1E293B;--onbtn2:#FFFFFF;--brand:#B82A38;--primary:#C8313F;--onprimary:#FFFFFF;--primaryhi:#FB7185;--primarysoft:#FFE4E6;--accent:#FB7185;--accentsoft:#FFE4E6;--accentink:#9F1239;--hero:#161B22;--herotext:#FFFFFF;--heromuted:#A0A9B8;--herohi:#FB7185;--tilea:#E11D48;--tileb:#BE123C;--ontile:#FFFFFF;--good:#047857;--goodsoft:#D1FAE5;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#161B22;--marka:#E11D48;--markb:#FB7185;--markdeck:#F7F7F9;--markdot:#FDBA74}
-  [data-theme=indigo]{--font-head:'Space Grotesk';color-scheme:light;--bg:#F6F6FB;--surface:#FFFFFF;--soft:#EFEFF8;--text:#0D0C1C;--text2:#1E1B4B;--muted:#5D5B78;--line:#E2E1F0;--line2:#CECDE3;--btn:#4F46E5;--btnh:#4338CA;--onbtn:#FFFFFF;--btn2:#0D0C1C;--onbtn2:#FFFFFF;--brand:#4338CA;--primary:#4F46E5;--onprimary:#FFFFFF;--primaryhi:#818CF8;--primarysoft:#E0E7FF;--accent:#A3E635;--accentsoft:#ECFCCB;--accentink:#3F6212;--hero:#14132B;--herotext:#FFFFFF;--heromuted:#A5A3C7;--herohi:#A3E635;--tilea:#A3E635;--tileb:#65A30D;--ontile:#0D0C1C;--good:#3F6212;--goodsoft:#ECFCCB;--bad:#B91C1C;--badsoft:#FEE2E2;--marktile:#14132B;--marka:#65A30D;--markb:#A3E635;--markdeck:#F6F6FB;--markdot:#818CF8}
-  :root{--shadow:0 1px 2px rgba(0,0,0,.05),0 12px 32px rgba(10,20,40,.08)}
+  /* Premium Bridge identity, Trust Blue: ink, sky, deep cyan, paper. Sora for headings,
+     Inter for text, JetBrains Mono for every figure. */
+  :root{
+    --ink-950:#050D14;--ink-900:#08131C;--ink-850:#0A1822;--ink-800:#0B1A26;--ink-700:#0E2535;--ink-600:#14334A;
+    --sky:#38BDF8;--sky-2:#7DD3FC;--cyan:#0E7490;--sky-soft:rgba(56,189,248,.10);--sky-line:rgba(56,189,248,.35);
+    --text:#EAF3FA;--text-2:#C5D3DF;--mute:#8FA3B5;
+    --line:rgba(148,190,220,.14);--line-2:rgba(148,190,220,.26);
+    --good:#34D399;--good-soft:rgba(52,211,153,.10);--bad:#FB7185;--bad-soft:rgba(251,113,133,.10);
+    --paper:#F4F8FB;
+    --head:'Sora',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --body:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    color-scheme:dark;
+  }
   *{box-sizing:border-box;margin:0;padding:0}
   @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+  body{font-family:var(--body);font-size:16px;line-height:1.6;color:var(--text);background:var(--ink-900);-webkit-font-smoothing:antialiased}
+  a{color:var(--sky-2)}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+  .num,.mono{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
   .sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
-  body{font-family:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;color:var(--text);background:var(--bg);line-height:1.55;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1040px;margin:0 auto;padding:0 16px}
-  .num{font-variant-numeric:tabular-nums}
-  h1,h2,h3,.sec-h,.wm,.plan-name,.plan-price{font-family:var(--font-head),'Plus Jakarta Sans',sans-serif}
-  h1,h2,h3{letter-spacing:-.02em}
+  .hide{display:none!important}
+  h1,h2,h3,h4{font-family:var(--head);font-weight:700;letter-spacing:-.02em;line-height:1.15}
+  .kicker{display:flex;align-items:center;gap:12px;font-size:.74rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--sky)}
+  .kicker::before{content:'';width:28px;height:1px;background:var(--sky)}
+  .grad{background:linear-gradient(135deg,var(--sky-2),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
 
-  /* nav */
-  nav{position:sticky;top:0;z-index:50;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
-  nav .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;height:64px}
-  .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--text)}
-  .brand svg{display:block;flex:0 0 auto}
-  .wm{font-weight:800;font-size:1.12rem;letter-spacing:-.03em}.wm span{color:var(--brand)}
-  .nav-links{display:flex;align-items:center;gap:22px}
-  .nav-links a{color:var(--muted);text-decoration:none;font-size:.9rem;font-weight:600}
-  .nav-links a:hover{color:var(--text)}
-  .nav-cta{background:var(--btn2);color:var(--onbtn2)!important;padding:10px 16px;border-radius:999px;border:none;font:inherit;font-weight:700;font-size:.88rem;cursor:pointer}
+  /* buttons */
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:13px 22px;border-radius:10px;font:600 .95rem/1.2 var(--body);cursor:pointer;border:1px solid transparent;text-decoration:none;transition:background .15s,border-color .15s,box-shadow .15s,transform .15s;white-space:nowrap}
+  .btn-pri{background:linear-gradient(135deg,var(--sky-2),var(--sky));color:var(--ink-900)}
+  .btn-pri:hover{box-shadow:0 8px 24px rgba(56,189,248,.28);transform:translateY(-1px)}
+  .btn-sec{background:transparent;border-color:var(--line-2);color:var(--text)}
+  .btn-sec:hover{border-color:var(--sky-line);background:var(--sky-soft)}
+  .btn-link{background:none;border:none;color:var(--text-2);padding:10px 4px;font-weight:500}
+  .btn-link:hover{color:var(--sky-2)}
+  .btn-link svg{width:17px;height:17px}
+  .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+  :focus-visible{outline:2px solid var(--sky);outline-offset:3px}
+  h2[tabindex="-1"]:focus{outline:none}
+
+  /* header */
+  header.top{position:sticky;top:0;z-index:40;background:rgba(8,19,28,.86);backdrop-filter:saturate(140%) blur(12px);border-bottom:1px solid var(--line)}
+  header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:72px;gap:20px}
+  .brand{display:flex;align-items:center;gap:10px;color:var(--text);text-decoration:none}
+  .brand svg{height:34px;width:auto;flex:0 0 auto}
+  .brand .wm{font-family:var(--head);font-weight:700;font-size:1.12rem;letter-spacing:-.02em;line-height:1}
+  .brand .wm span{color:var(--sky)}
+  .brand .tg{display:block;font-family:var(--body);font-weight:400;font-size:.68rem;letter-spacing:.02em;color:var(--mute);margin-top:4px}
+  nav.links{display:flex;align-items:center;gap:30px}
+  nav.links a{color:var(--text-2);text-decoration:none;font-size:.9rem;font-weight:500}
+  nav.links a:hover{color:var(--text)}
+  nav.links .btn{padding:10px 18px;font-size:.88rem}
+  nav.links a.btn-pri,nav.links a.btn-pri:hover{color:var(--ink-900)}
 
   /* hero */
-  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center;padding:64px 0 40px}
-  .eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.76rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);background:var(--primarysoft);padding:6px 12px;border-radius:999px;margin-bottom:18px}
-  .eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--primary)}
-  .hero h1{font-size:3.4rem;line-height:1.02;font-weight:800;letter-spacing:-.04em}
-  .hero h1 em{font-style:normal;color:var(--brand);position:relative;white-space:nowrap}
-  .hero h1 em::after{content:'';position:absolute;left:0;right:0;bottom:.04em;height:.14em;background:var(--accent);border-radius:4px;z-index:-1;opacity:.85}
-  .hero p.lead{color:var(--muted);font-size:1.1rem;max-width:520px;margin-top:18px}
-  .hero-btns{display:flex;gap:12px;margin-top:26px;flex-wrap:wrap}
-  .btn{padding:14px 22px;border-radius:12px;font:inherit;font-size:1rem;font-weight:700;cursor:pointer;border:1.5px solid transparent;transition:transform .15s,box-shadow .15s,background .15s;text-decoration:none;display:inline-block;text-align:center}
-  .btn-pri{background:var(--btn2);color:var(--onbtn2)}
-  .btn-pri:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(10,20,40,.2)}
-  .btn-teal{background:var(--btn);color:var(--onbtn)}
-  .btn-teal:hover{background:var(--btnh)}
-  .btn-ghost{background:transparent;border-color:var(--line2);color:var(--text)}
-  .btn-ghost:hover{border-color:var(--text)}
-  .btn[disabled]{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
-  .ticks{display:flex;gap:18px;flex-wrap:wrap;margin-top:24px;font-size:.86rem;color:var(--muted);font-weight:500}
-  .ticks span::before{content:'✓';color:var(--brand);font-weight:800;margin-right:6px}
+  .hero{position:relative;padding:84px 0 72px;overflow:hidden}
+  .hero::before{content:'';position:absolute;inset:-20% -10% auto auto;width:760px;height:560px;background:radial-gradient(closest-side,rgba(56,189,248,.10),transparent);pointer-events:none}
+  .hero .wrap{display:grid;grid-template-columns:1.05fr .95fr;gap:64px;align-items:center;position:relative}
+  .hero h1{font-size:3.5rem;line-height:1.04;letter-spacing:-.035em;margin:22px 0 20px}
+  .hero .lead{font-size:1.1rem;color:var(--text-2);max-width:520px}
+  .hero .ctas{display:flex;gap:12px;margin-top:32px;flex-wrap:wrap}
+  .keyfacts{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:0;margin-top:44px;border-top:1px solid var(--line);padding-top:24px}
+  .keyfacts div{padding-right:28px;margin-right:28px;border-right:1px solid var(--line)}
+  .keyfacts div:last-child{border-right:none;margin-right:0;padding-right:0}
+  .keyfacts b{display:block;font-family:var(--head);font-weight:600;font-size:1.3rem;letter-spacing:-.02em}
+  .keyfacts div>span{font-size:.82rem;color:var(--mute)}
 
-  /* hero visual: one lump becomes pieces */
-  .viz{background:var(--hero);color:var(--herotext);border-radius:24px;padding:24px;box-shadow:0 30px 60px rgba(10,20,40,.25);position:relative;overflow:hidden}
-  .viz::before{content:'';position:absolute;right:-60px;top:-60px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--primaryhi) 35%,transparent),transparent 70%)}
-  .viz .lbl{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--heromuted);font-weight:700}
-  .lump{border:1.5px dashed color-mix(in srgb,var(--herotext) 25%,transparent);border-radius:14px;padding:14px 16px;margin-top:8px;display:flex;justify-content:space-between;align-items:baseline}
-  .lump b{font-size:1.7rem;font-weight:800;text-decoration:line-through;text-decoration-color:var(--accent);text-decoration-thickness:3px;color:var(--heromuted)}
-  .lump small{color:var(--heromuted);font-size:.8rem}
-  .arrow{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--herohi);font-size:.82rem;font-weight:600}
-  .arrow::before,.arrow::after{content:'';flex:1;height:1px;background:color-mix(in srgb,var(--herohi) 35%,transparent)}
-  .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-  .tile{background:linear-gradient(160deg,var(--tilea),var(--tileb));color:var(--ontile);border-radius:10px;padding:9px 6px;text-align:center;opacity:0;transform:translateY(8px);animation:up .5s forwards}
-  .tile b{display:block;font-size:.84rem;font-weight:800}
-  .tile small{display:block;font-size:.6rem;color:var(--ontile);opacity:.9;letter-spacing:.04em;text-transform:uppercase}
-  @keyframes up{to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){.tile{animation:none;opacity:1;transform:none}}
-  .viz .foot{display:flex;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid color-mix(in srgb,var(--herotext) 12%,transparent);font-size:.82rem;color:var(--heromuted)}
-  .viz .foot b{color:var(--herotext)}
+  .qcard{background:linear-gradient(180deg,var(--ink-800),var(--ink-850));border:1px solid var(--line);border-radius:20px;box-shadow:0 30px 80px rgba(0,0,0,.45);overflow:hidden}
+  .qcard .qc-head{display:flex;justify-content:space-between;align-items:center;padding:18px 24px;border-bottom:1px solid var(--line)}
+  .qc-head .lbl{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mute);font-weight:600}
+  .qc-head .qc-plan{font-size:.82rem;color:var(--sky-2);font-weight:500}
+  .qc-main{padding:24px 24px 18px}
+  .qc-main .big{font-family:var(--mono);font-size:2.6rem;font-weight:600;letter-spacing:-.03em;line-height:1}
+  .qc-main .big small{font-family:var(--body);font-size:.95rem;color:var(--mute);font-weight:400;letter-spacing:0;margin-left:6px}
+  .qc-main .on{color:var(--mute);font-size:.88rem;margin-top:8px}
+  .qc-main .on b{color:var(--text-2);font-weight:500}
+  table.mini{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.82rem;font-variant-numeric:tabular-nums}
+  table.mini th{font-family:var(--body);font-weight:500;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);text-align:right;padding:10px 24px 8px;border-top:1px solid var(--line)}
+  table.mini th:first-child,table.mini td:first-child{text-align:left}
+  table.mini td{padding:7px 24px;text-align:right;color:var(--text-2);border-top:1px solid rgba(148,190,220,.07)}
+  table.mini tr.more td{color:var(--mute);text-align:center!important;letter-spacing:.3em}
+  .qc-foot{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--line)}
+  .qc-foot div{padding:14px 24px}
+  .qc-foot div+div{border-left:1px solid var(--line)}
+  .qc-foot .k{display:block;font-size:.72rem;color:var(--mute);letter-spacing:.04em}
+  .qc-foot b{font-family:var(--mono);font-weight:600;font-size:1.02rem}
 
-  section{padding:56px 0}
-  .sec-h{font-weight:800;font-size:2rem;text-align:center;letter-spacing:-.03em}
-  .sec-sub{color:var(--muted);text-align:center;font-size:1rem;max-width:560px;margin:8px auto 30px}
-  .steps3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-  .stp{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
-  .stp .no{width:36px;height:36px;border-radius:10px;background:var(--accentsoft);color:var(--accentink);font-weight:800;display:grid;place-items:center;margin-bottom:14px}
-  .stp h3{font-size:1.08rem;margin-bottom:6px}.stp p{color:var(--muted);font-size:.92rem}
+  /* assurance strip */
+  .assure{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--ink-850)}
+  .assure .wrap{display:grid;grid-template-columns:repeat(4,1fr)}
+  .assure div{display:flex;gap:12px;align-items:center;padding:22px 20px;font-size:.88rem;color:var(--text-2)}
+  .assure div+div{border-left:1px solid var(--line)}
+  .assure svg{width:22px;height:22px;flex:0 0 22px;color:var(--sky)}
 
-  /* app */
-  .app{background:var(--surface);border:1px solid var(--line);border-radius:26px;padding:28px;box-shadow:var(--shadow);scroll-margin-top:80px;max-width:900px;margin:0 auto}
-  .prog{margin-bottom:22px}
-  .pg-steps{display:flex;gap:6px}
-  .pg{flex:1;height:6px;border-radius:3px;background:var(--line)}.pg.on{background:var(--primary)}
-  .pglabels{display:flex;gap:6px;margin-top:7px}
-  .pgl{flex:1;text-align:center;font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}.pgl.on{color:var(--brand)}
-  .app h2{font-weight:800;font-size:1.4rem;margin-bottom:4px}
-  .hint{color:var(--muted);font-size:.92rem;margin-bottom:16px}
-  .grp-h{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--brand);font-weight:800;margin:22px 0 12px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:.8rem;color:var(--text2);margin-bottom:6px;font-weight:600}
-  .field label .req,.req-key{color:var(--brand)}
-  .field input,.field select{width:100%;background:var(--surface);border:1.5px solid var(--line2);color:var(--text);padding:13px 14px;border-radius:12px;font:inherit;font-size:1rem;outline:none;transition:border-color .15s,box-shadow .15s}
-  .field input:focus,.field select:focus{border-color:var(--primary);box-shadow:0 0 0 4px var(--primarysoft)}
-  .field input.err{border-color:var(--bad);background:var(--badsoft)}
-  .field .msg{font-size:.78rem;color:var(--bad);margin-top:4px;display:none}
+  /* sections */
+  section{padding:96px 0}
+  .sec-head{max-width:640px;margin-bottom:48px}
+  .sec-head h2,.sec-h{font-size:2.3rem;letter-spacing:-.03em;margin:16px 0 14px}
+  .sec-head p{color:var(--text-2);font-size:1.02rem}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:40px}
+  .step{border-top:1px solid var(--line-2);padding-top:24px}
+  .step .n{font-family:var(--mono);color:var(--sky);font-size:.85rem;font-weight:600}
+  .step h3{font-size:1.2rem;margin:10px 0 8px}
+  .step p{color:var(--mute);font-size:.95rem}
+
+  /* the application */
+  #quote{background:linear-gradient(180deg,var(--ink-900),var(--ink-850) 40%,var(--ink-900))}
+  .app-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+  .app-head h2{font-size:2.3rem;letter-spacing:-.03em;margin-top:16px}
+  .app-head p{color:var(--text-2);max-width:460px}
+  .app{background:var(--ink-800);border:1px solid var(--line);border-radius:20px;padding:36px;box-shadow:0 24px 60px rgba(0,0,0,.35);scroll-margin-top:96px}
+  .app h2.panel-h{font-size:1.45rem;margin-bottom:6px}
+  .hint{color:var(--mute);font-size:.92rem;margin-bottom:22px}
+
+  .stepper{display:flex;align-items:center;margin-bottom:34px;gap:0}
+  .stepper .s{display:flex;align-items:center;gap:10px;color:var(--mute);font-size:.84rem;font-weight:500;white-space:nowrap}
+  .stepper .s i{font-style:normal;width:28px;height:28px;border-radius:50%;border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--mono);font-size:.78rem}
+  .stepper .s.on{color:var(--text)}
+  .stepper .s.on i{background:var(--sky);border-color:var(--sky);color:var(--ink-900);font-weight:600}
+  .stepper .s.past i{border-color:var(--sky-line);color:var(--sky)}
+  .stepper .bar{flex:1;height:1px;background:var(--line-2);margin:0 14px;min-width:16px}
+  .stepper .bar.past{background:var(--sky-line)}
+
+  .grp-h{font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--sky);font-weight:600;margin:28px 0 14px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+  .field{margin-bottom:16px}
+  .field label{display:block;font-size:.84rem;color:var(--text-2);margin-bottom:7px;font-weight:500}
+  .field label .req,.req-key{color:var(--sky)}
+  .field input,.field select{width:100%;background:var(--ink-900);border:1px solid var(--line-2);color:var(--text);padding:12px 14px;border-radius:10px;font:1rem var(--body);outline:none;transition:border-color .15s,box-shadow .15s}
+  .field input::placeholder{color:#5F7384}
+  .field input:focus,.field select:focus{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-soft)}
+  .field input.err{border-color:var(--bad);background:rgba(251,113,133,.05)}
+  .field .msg{font-size:.8rem;color:var(--bad);margin-top:6px;display:none}
   .field input.err~.msg{display:block}
-  .big{position:relative}
-  .big input{font-size:2rem;font-weight:800;padding:14px 16px 14px 44px;letter-spacing:-.02em}
-  .big::before{content:'TT$';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted);font-weight:700;font-size:.8rem;z-index:1}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .warn{background:var(--badsoft);color:var(--bad);border-radius:10px;padding:10px 12px;font-size:.86rem;margin:-4px 0 12px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
-  .dep{display:flex;align-items:center;gap:14px;background:var(--soft);border-radius:14px;padding:12px 16px;margin-bottom:18px}
-  .dep .t{font-size:.86rem;font-weight:700}.dep .t small{display:block;font-weight:500;color:var(--muted);font-size:.74rem}
-  .dep input[type=range]{flex:1;accent-color:var(--primary)}
-  .dep .v{min-width:124px;text-align:right;font-weight:800;font-size:.95rem}
-  .dep .v small{display:block;color:var(--muted);font-weight:500;font-size:.74rem}
+  .prem{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:end;margin-bottom:26px}
+  .big-in{position:relative}
+  .big-in input{font:600 1.9rem var(--mono);letter-spacing:-.02em;padding:14px 16px 14px 62px}
+  .big-in::before{content:'TT$';position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--mute);font:500 .9rem var(--mono);z-index:1}
+  .dep{border:1px solid var(--line-2);border-radius:10px;padding:12px 16px;display:grid;grid-template-columns:auto 1fr auto;gap:16px;align-items:center;min-height:66px}
+  .dep .t{font-size:.84rem;font-weight:500;color:var(--text-2)}.dep .t small{display:block;color:var(--mute);font-weight:400;font-size:.76rem}
+  .dep input[type=range]{width:100%;accent-color:var(--sky)}
+  .dep .v{text-align:right;font:600 .95rem var(--mono)}
+  .dep .v small{display:block;font:400 .74rem var(--body);color:var(--mute)}
+  .warn{background:var(--bad-soft);border:1px solid rgba(251,113,133,.3);color:#FDA4AF;border-radius:10px;padding:10px 14px;font-size:.88rem;margin:-10px 0 20px}
 
-  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-  .plan{position:relative;background:var(--surface);border:1.5px solid var(--line);border-radius:18px;padding:18px 16px 16px;cursor:pointer;transition:transform .2s,border-color .2s,box-shadow .2s;display:flex;flex-direction:column;text-align:left;color:var(--text);font:inherit}
-  .plan:hover{border-color:var(--line2);transform:translateY(-2px)}
-  .plan:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
-  .plan.active{border-color:var(--primary);box-shadow:0 0 0 4px var(--primarysoft),0 14px 30px rgba(10,20,40,.08)}
-  .plan-badge{align-self:flex-start;font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;font-weight:800;color:var(--accentink);background:var(--accentsoft);padding:4px 9px;border-radius:999px;margin-bottom:10px;min-height:19px}
-  .plan-badge.none{visibility:hidden}
-  .plan-name{font-weight:800;font-size:1.15rem}
-  .plan-sub{font-size:.76rem;color:var(--muted);font-weight:600;margin-bottom:10px}
-  .plan-price{font-weight:800;font-size:1.9rem;line-height:1;letter-spacing:-.03em}
-  .plan-price small{font-size:.8rem;color:var(--muted);font-weight:600;letter-spacing:0}
-  .plan-feat{list-style:none;margin:12px 0;flex:1}
-  .plan-feat li{font-size:.82rem;color:var(--muted);padding:3px 0;line-height:1.4}
-  .plan-feat li b{color:var(--text)}
-  .plan-feat li.ok b{color:var(--good)}.plan-feat li.no b{color:var(--bad)}
-  .plan-pick{text-align:center;font-size:.84rem;font-weight:700;color:var(--text);border:1.5px solid var(--line2);border-radius:10px;padding:9px}
-  .plan.active .plan-pick{background:var(--primary);color:var(--onprimary);border-color:transparent}
+  .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .plan{position:relative;display:flex;flex-direction:column;text-align:left;background:var(--ink-900);border:1px solid var(--line-2);border-radius:14px;padding:22px 20px 20px;color:var(--text);font:inherit;cursor:pointer;transition:border-color .15s,box-shadow .15s,background .15s}
+  .plan:hover{border-color:var(--sky-line)}
+  .plan.active{border-color:var(--sky);background:linear-gradient(180deg,rgba(56,189,248,.07),var(--ink-900) 60%);box-shadow:0 0 0 3px var(--sky-soft)}
+  .plan .ph{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .plan-name{font-family:var(--head);font-weight:600;font-size:1.12rem}
+  .plan-sub{font-size:.82rem;color:var(--mute)}
+  .plan-badge{font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--sky-2);border:1px solid var(--sky-line);border-radius:6px;padding:3px 7px;font-weight:600;white-space:nowrap}
+  .plan-badge.none{display:none}
+  .plan-price{font-family:var(--mono);font-weight:600;font-size:1.9rem;letter-spacing:-.03em;margin:18px 0 2px}
+  .plan-price small{font:400 .82rem var(--body);color:var(--mute);letter-spacing:0;margin-left:4px}
+  .plan-feat{list-style:none;margin:14px 0 18px;padding-top:14px;border-top:1px solid var(--line);flex:1}
+  .plan-feat li{display:flex;gap:9px;font-size:.86rem;color:var(--text-2);padding:4px 0;line-height:1.45}
+  .plan-feat li svg{width:16px;height:16px;flex:0 0 16px;margin-top:2px;color:var(--sky)}
+  .plan-feat li b{font-family:var(--mono);font-weight:600;color:var(--text)}
+  .plan-feat li.no svg{color:var(--bad)}
+  .plan-feat li.no{color:#FDA4AF}
+  .plan-pick{text-align:center;font-size:.86rem;font-weight:600;color:var(--text-2);border:1px solid var(--line-2);border-radius:8px;padding:9px}
+  .plan.active .plan-pick{background:var(--sky);border-color:var(--sky);color:var(--ink-900)}
 
-  .facts{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:16px}
-  .fact{background:var(--soft);border-radius:14px;padding:12px 14px}
-  .fact .l{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
-  .fact .v{font-weight:800;font-size:1.1rem;margin-top:2px}
-  .fact .v small{display:block;font-weight:500;font-size:.72rem;color:var(--muted)}
-  .cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
-  .cc{border-radius:14px;padding:13px 16px;border:1.5px solid var(--line)}
-  .cc .who{font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-weight:800}
-  .cc.you{background:var(--goodsoft);border-color:color-mix(in srgb,var(--good) 30%,transparent)}.cc.you .who{color:var(--good)}
-  .cc.them{background:var(--surface)}.cc.them .who{color:var(--muted)}
-  .cc .li{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;padding:3px 0;color:var(--muted)}
-  .cc .li b{color:var(--text)}
-  .cmp-note{font-size:.78rem;color:var(--muted);margin-top:8px}
+  .facts{display:grid;grid-template-columns:repeat(4,1fr);margin-top:22px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .fact{padding:14px 18px}
+  .fact+.fact{border-left:1px solid var(--line)}
+  .fact .l{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);font-weight:500}
+  .fact .v{font-family:var(--mono);font-weight:600;font-size:1.08rem;margin-top:3px}
+  .fact .v small{display:block;font:400 .74rem var(--body);color:var(--mute)}
 
-  details{margin-top:12px;border:1.5px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
-  summary{padding:14px 16px;cursor:pointer;font-size:.94rem;font-weight:700;list-style:none;display:flex;justify-content:space-between;gap:8px}
-  summary::-webkit-details-marker{display:none}summary::after{content:'+';color:var(--brand);font-size:1.2rem;line-height:1}details[open] summary::after{content:'–'}
-  .det-body{padding:0 16px 16px}
-  .det-body p{color:var(--muted);font-size:.9rem;margin:0 0 10px}
-  .tbl-wrap{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
-  table.t{width:100%;border-collapse:collapse;font-size:.84rem;min-width:420px;font-variant-numeric:tabular-nums}
-  table.t th{background:var(--soft);color:var(--muted);text-align:right;padding:9px 12px;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase}
+  .acc{margin-top:18px;border-top:1px solid var(--line)}
+  .acc details{border-bottom:1px solid var(--line)}
+  .acc summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:16px 2px;font-weight:500;font-size:.95rem;color:var(--text)}
+  .acc summary::-webkit-details-marker{display:none}
+  .acc summary::after{content:'';width:9px;height:9px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:rotate(45deg);margin:-4px 6px 0 0;transition:transform .2s}
+  .acc details[open] summary::after{transform:rotate(-135deg);margin-top:4px}
+  .acc .det-body{padding:0 2px 20px}
+  .acc .det-body p{color:var(--mute);font-size:.92rem;margin-bottom:14px}
+  .tbl-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+  table.t{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:.84rem;min-width:440px;font-variant-numeric:tabular-nums}
+  table.t th{background:var(--ink-850);font-family:var(--body);color:var(--mute);font-weight:500;text-align:right;padding:10px 14px;font-size:.72rem;letter-spacing:.06em;text-transform:uppercase}
   table.t th:first-child,table.t td:first-child{text-align:left}
-  table.t td{padding:8px 12px;text-align:right;border-top:1px solid var(--line)}
-  table.t tr.tot td{font-weight:800;border-top:2px solid var(--line2)}
-  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--soft);border-radius:12px;padding:11px 14px}
-  .toggle-row .lbl{font-size:.86rem;font-weight:600}.toggle-row .lbl small{display:block;color:var(--muted);font-size:.76rem;font-weight:500}
-  .switch{position:relative;width:46px;height:26px;flex:0 0 46px}.switch input{opacity:0;width:0;height:0}
-  .sl{position:absolute;inset:0;background:var(--line2);border-radius:20px;cursor:pointer;transition:.2s}
-  .sl::before{content:'';position:absolute;width:20px;height:20px;left:3px;top:3px;background:var(--surface);border-radius:50%;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
-  .switch input:checked+.sl{background:var(--primary)}
-  .switch input:checked+.sl::before{transform:translateX(20px)}
-  .cov{padding:11px 14px;border-radius:12px;font-size:.88rem;margin-top:12px;font-weight:600}
-  .cov.ok{background:var(--goodsoft);color:var(--good)}
-  .cov.bad{background:var(--badsoft);color:var(--bad)}
-  .quick{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
-  .quick .btn{flex:1;min-width:160px;padding:11px 14px;font-size:.9rem}
-  .btn-row{display:grid;grid-template-columns:1fr 2fr;gap:10px;margin-top:20px}.btn-full{width:100%}
-  .fine{text-align:center;color:var(--muted);font-size:.8rem;margin-top:10px}
+  table.t td{padding:9px 14px;text-align:right;border-top:1px solid var(--line);color:var(--text-2)}
+  table.t tr.tot td{font-weight:600;color:var(--text);border-top:1px solid var(--line-2)}
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line-2);border-radius:10px;padding:10px 14px;min-height:48px}
+  .toggle-row .lbl{font-size:.86rem;font-weight:500;color:var(--text-2)}.toggle-row .lbl small{display:block;color:var(--mute);font-size:.76rem;font-weight:400}
+  .switch{position:relative;width:42px;height:24px;flex:0 0 42px}.switch input{opacity:0;width:0;height:0}
+  .sl{position:absolute;inset:0;background:var(--ink-600);border-radius:20px;cursor:pointer;transition:.2s}
+  .sl::before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:var(--text-2);border-radius:50%;transition:.2s}
+  .switch input:checked+.sl{background:var(--cyan)}
+  .switch input:checked+.sl::before{transform:translateX(18px);background:#fff}
+  .switch input:focus-visible+.sl{outline:2px solid var(--sky);outline-offset:2px}
+  .cov{padding:12px 14px;border-radius:10px;font-size:.88rem;margin-top:14px}
+  .cov.ok{background:var(--good-soft);color:var(--good);border:1px solid rgba(52,211,153,.25)}
+  .cov.bad{background:var(--bad-soft);color:#FDA4AF;border:1px solid rgba(251,113,133,.3)}
 
-  .explain{background:var(--soft);border-radius:18px;padding:20px;margin-bottom:16px}
-  .ex-head{font-weight:800;font-size:1rem;margin-bottom:12px}
-  .ex-step{display:flex;gap:12px;align-items:flex-start;font-size:.92rem;color:var(--muted);margin-bottom:11px}
-  .ex-step b{color:var(--text)}
-  .exn{flex:0 0 26px;height:26px;border-radius:8px;background:var(--btn2);color:var(--onbtn2);font-weight:800;font-size:.8rem;display:grid;place-items:center}
-  .contract{background:var(--surface);color:var(--text);border-radius:14px;padding:26px;font-size:.86rem;line-height:1.6;max-height:440px;overflow-y:auto;border:1.5px solid var(--line)}
-  .contract h3{font-size:1.1rem;text-align:center}
-  .contract .csub{text-align:center;font-size:.7rem;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px}
-  .contract h4{font-size:.88rem;margin:14px 0 4px}
-  .contract .clause{display:flex;gap:8px;margin-bottom:5px}.contract .clause b{flex:0 0 28px;color:var(--brand);font-size:.78rem}
-  .ctable{width:100%;border-collapse:collapse;font-size:.78rem;margin-top:8px;font-variant-numeric:tabular-nums}
-  .ctable th{background:var(--soft);text-align:right;padding:6px 8px;font-size:.66rem}
+  .actions{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:26px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+  .actions .aux{display:flex;gap:18px;flex-wrap:wrap}
+  .fine{color:var(--mute);font-size:.8rem;margin-top:12px;text-align:right}
+  .btn-row{display:flex;justify-content:space-between;gap:12px;margin-top:28px;padding-top:24px;border-top:1px solid var(--line)}
+  .btn-row .btn-pri{min-width:260px}
+
+  .ack{display:flex;gap:12px;align-items:flex-start;border:1px solid var(--line-2);border-radius:10px;padding:14px 16px;margin-top:16px;cursor:pointer;color:var(--text-2);font-size:.9rem}
+  .ack input{margin-top:3px;width:18px;height:18px;flex:0 0 18px;accent-color:var(--sky)}
+  .ack.err{border-color:var(--bad);background:rgba(251,113,133,.05)}
+
+  .explain{border:1px solid var(--line);border-radius:12px;padding:22px 24px;margin-bottom:18px;background:var(--ink-850)}
+  .ex-head{font-family:var(--head);font-weight:600;font-size:1rem;margin-bottom:14px}
+  .ex-step{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:.92rem;color:var(--mute);margin-bottom:12px}
+  .ex-step b{color:var(--text);font-weight:600}
+  .exn{width:24px;height:24px;border-radius:50%;border:1px solid var(--sky-line);color:var(--sky);font:600 .74rem var(--mono);display:grid;place-items:center}
+  .contract{background:var(--paper);color:#1B2733;border-radius:12px;padding:32px 36px;font-size:.88rem;line-height:1.65;max-height:460px;overflow-y:auto;border:1px solid #D9E3EA}
+  .contract h3{font-size:1.15rem;text-align:center;color:#0B1A26}
+  .contract .csub{text-align:center;font-size:.7rem;color:#5E7283;letter-spacing:.12em;text-transform:uppercase;margin:4px 0 18px}
+  .contract h4{font-size:.88rem;margin:16px 0 6px;color:#0B1A26}
+  .contract .clause{display:flex;gap:10px;margin-bottom:6px}.contract .clause b{flex:0 0 30px;color:var(--cyan);font:600 .78rem var(--mono)}
+  .ctable{width:100%;border-collapse:collapse;font:.8rem var(--mono);margin-top:8px;font-variant-numeric:tabular-nums}
+  .ctable th{background:#E6EEF4;color:#0B1A26;text-align:right;padding:7px 10px;font:600 .68rem var(--body);letter-spacing:.04em}
   .ctable th:first-child,.ctable td:first-child{text-align:left}
-  .ctable td{padding:5px 8px;text-align:right;border-top:1px solid var(--line)}
-  .ctable tr.tot td{font-weight:800;border-top:2px solid var(--line2)}
-  .cparties{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:16px}
-  .cparty{border-top:1.5px solid var(--line2);padding-top:6px;font-size:.76rem}.cparty .role{color:var(--muted);text-transform:uppercase;letter-spacing:.06em;font-size:.64rem}.cparty .nm{font-weight:800;margin-top:2px}
-  .ack{display:flex;gap:12px;align-items:flex-start;background:var(--soft);border:1.5px solid transparent;border-radius:12px;padding:14px;margin-top:14px;cursor:pointer}
-  .ack input{margin-top:3px;width:18px;height:18px;flex:0 0 18px;accent-color:var(--primary)}.ack span{font-size:.9rem}
-  .ack.err{border-color:var(--bad);background:var(--badsoft)}
+  .ctable td{padding:6px 10px;text-align:right;border-top:1px solid #DDE6EC;color:#33404D}
+  .ctable tr.tot td{font-weight:700;border-top:2px solid #C3D2DC;color:#0B1A26}
+  .cparties{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:20px}
+  .cparty{border-top:1px solid #C3D2DC;padding-top:8px;font-size:.76rem}.cparty .role{color:#5E7283;text-transform:uppercase;letter-spacing:.08em;font-size:.64rem}.cparty .nm{font-weight:600;color:#0B1A26;margin-top:2px}
 
-  .pay-opt{display:flex;gap:14px;align-items:center;width:100%;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:14px;margin-bottom:10px;cursor:pointer;color:var(--text);font:inherit;text-align:left}
-  .pay-opt:hover{border-color:var(--line2)}.pay-opt.active{border-color:var(--primary);box-shadow:0 0 0 4px var(--primarysoft)}
-  .pay-opt .ico{width:44px;height:44px;border-radius:12px;background:var(--soft);display:grid;place-items:center;font-size:1.3rem;flex:0 0 44px}
-  .pay-opt .t{font-weight:700;font-size:.96rem}.pay-opt .d{font-size:.8rem;color:var(--muted)}
-  .pay-opt .soon{margin-left:auto;font-size:.62rem;background:var(--soft);color:var(--muted);padding:4px 9px;border-radius:999px;text-transform:uppercase;font-weight:700;white-space:nowrap}
+  .pay-opt{display:flex;gap:16px;align-items:center;width:100%;background:var(--ink-900);border:1px solid var(--line-2);border-radius:12px;padding:16px 18px;margin-bottom:10px;cursor:pointer;color:var(--text);font:inherit;text-align:left;transition:border-color .15s,box-shadow .15s}
+  .pay-opt:hover{border-color:var(--sky-line)}
+  .pay-opt.active{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-soft)}
+  .pay-opt .ico{width:40px;height:40px;border-radius:10px;border:1px solid var(--line-2);display:grid;place-items:center;flex:0 0 40px;color:var(--sky)}
+  .pay-opt .ico svg{width:20px;height:20px}
+  .pay-opt .t{font-weight:600;font-size:.95rem}.pay-opt .d{font-size:.82rem;color:var(--mute)}
+  .pay-opt .soon{margin-left:auto;font-size:.66rem;letter-spacing:.1em;border:1px solid var(--line-2);color:var(--mute);padding:3px 8px;border-radius:6px;text-transform:uppercase;white-space:nowrap}
   .pay-opt[disabled]{opacity:.55;cursor:not-allowed}
-  .shield-note{display:flex;gap:12px;align-items:flex-start;background:var(--accentsoft);border-radius:14px;padding:14px 16px;font-size:.88rem;color:var(--accentink);margin-top:6px}
-  .shield-note b{color:var(--accentink)}
-  .review .li{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);font-size:.92rem}
-  .review .li:last-child{border-bottom:none}.review .li span{color:var(--muted)}.review .li b{text-align:right}
+  .notice{display:flex;gap:14px;align-items:flex-start;border:1px solid var(--sky-line);background:var(--sky-soft);border-radius:12px;padding:16px 18px;font-size:.88rem;color:var(--text-2);margin-top:8px}
+  .notice svg{width:20px;height:20px;flex:0 0 20px;color:var(--sky);margin-top:1px}
+  .notice b{color:var(--text)}
+  .review .li{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-bottom:1px solid var(--line);font-size:.92rem}
+  .review .li:last-child{border-bottom:none}.review .li span{color:var(--mute)}.review .li b{text-align:right;font-weight:500}
 
-  .done{text-align:center;padding:8px 0}
-  .done .ic{width:68px;height:68px;margin:0 auto 14px;border-radius:50%;background:var(--goodsoft);display:grid;place-items:center;font-size:1.9rem;color:var(--good);font-weight:800}
-  .done .ic.wait{background:var(--accentsoft);color:var(--accentink)}
-  .ref{font-weight:800;background:var(--soft);border:1.5px dashed var(--line2);border-radius:12px;padding:12px;margin:14px auto;font-size:1.1rem;letter-spacing:.06em;max-width:340px}
-  .next{text-align:left;max-width:470px;margin:16px auto 0;list-style:none}
-  .next li{display:flex;gap:12px;font-size:.92rem;color:var(--muted);padding:7px 0}
-  .next li b{color:var(--text)}
-  .next .n{flex:0 0 24px;height:24px;border-radius:7px;background:var(--primary);color:var(--onprimary);font-weight:800;font-size:.74rem;display:grid;place-items:center}
+  .done{text-align:center;padding:12px 0 4px}
+  .done .ic{width:64px;height:64px;margin:0 auto 18px;border-radius:50%;border:1.5px solid var(--good);display:grid;place-items:center;color:var(--good)}
+  .done .ic svg{width:28px;height:28px}
+  .done .ic.wait{border-color:var(--sky);color:var(--sky)}
+  .done .hint{max-width:520px;margin:8px auto 0}
+  .ref{display:inline-block;font:600 1.05rem var(--mono);letter-spacing:.06em;border:1px dashed var(--sky-line);border-radius:10px;padding:12px 22px;margin:20px auto 6px;color:var(--sky-2)}
+  .next{text-align:left;max-width:520px;margin:26px auto 0;list-style:none;border-top:1px solid var(--line)}
+  .next li{display:grid;grid-template-columns:28px 1fr;gap:12px;font-size:.92rem;color:var(--mute);padding:14px 0;border-bottom:1px solid var(--line)}
+  .next li b{color:var(--text);font-weight:600}
+  .next .n{width:24px;height:24px;border-radius:50%;border:1px solid var(--sky-line);color:var(--sky);font:600 .74rem var(--mono);display:grid;place-items:center}
 
-  /* why band */
-  .band{background:var(--hero);color:var(--herotext);border-radius:28px;padding:44px 36px;display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
-  .band h2{font-size:1.9rem;font-weight:800;line-height:1.1}
-  .band h2 span{color:var(--herohi)}
-  .band p{color:var(--heromuted);margin-top:12px}
-  .bars{display:flex;align-items:flex-end;gap:6px;height:150px;padding-bottom:4px;border-bottom:1px solid color-mix(in srgb,var(--herotext) 18%,transparent)}
-  .bars div{flex:1;border-radius:6px 6px 0 0;background:linear-gradient(180deg,var(--herohi),var(--primaryhi))}
-  .bars-cap{display:flex;justify-content:space-between;font-size:.74rem;color:var(--heromuted);margin-top:8px}
-  .faq{max-width:760px;margin:0 auto}
+  /* pricing */
+  .pricing{display:grid;grid-template-columns:.9fr 1.1fr;gap:64px;align-items:start}
+  .points{list-style:none;margin-top:28px}
+  .points li{display:grid;grid-template-columns:24px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line);color:var(--mute);font-size:.94rem}
+  .points li:last-child{border-bottom:1px solid var(--line)}
+  .points li b{color:var(--text);font-weight:600;display:block}
+  .points svg{width:20px;height:20px;color:var(--sky);margin-top:2px}
+  .cmp-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--ink-800)}
+  table.cmp{width:100%;border-collapse:collapse;font-size:.9rem}
+  table.cmp th,table.cmp td{padding:14px 20px;text-align:right;border-top:1px solid var(--line)}
+  table.cmp thead th{border-top:none;font-family:var(--head);font-weight:600;font-size:.9rem;vertical-align:bottom;padding-top:20px;white-space:nowrap}
+  table.cmp thead th.us{color:var(--sky-2)}
+  table.cmp thead th small{display:block;font-family:var(--body);font-weight:400;font-size:.74rem;color:var(--mute)}
+  table.cmp th:first-child,table.cmp td:first-child{text-align:left;color:var(--mute);font-weight:400;font-family:var(--body);width:34%}
+  table.cmp td{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--text-2)}
+  table.cmp td.us{color:var(--text);font-weight:600;background:rgba(56,189,248,.05)}
+  table.cmp thead th.us{background:rgba(56,189,248,.05)}
+  table.cmp tr.key td:not(:first-child){font-size:1rem}
+  table.cmp td:not(:first-child){white-space:nowrap}
+  table.cmp td.txt{font-family:var(--body)}
+  .cmp-note{padding:14px 20px;font-size:.8rem;color:var(--mute);border-top:1px solid var(--line);background:var(--ink-850)}
 
-  .hide{display:none!important}
-  footer{border-top:1px solid var(--line);margin-top:20px;padding:34px 0 44px;color:var(--muted);font-size:.84rem}
-  footer .row{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
-  footer a{color:var(--brand);text-decoration:none;font-weight:600}
-  .disc{font-size:.74rem;color:var(--muted);max-width:760px;margin-top:16px}
+  /* faq */
+  .faq{display:grid;grid-template-columns:.8fr 1.2fr;gap:64px;align-items:start}
+  .faq .acc{margin-top:0}
+  .faq .acc summary{font-size:1rem;padding:20px 2px}
+  .faq .contact{margin-top:24px;color:var(--mute);font-size:.94rem}
 
-  @media(max-width:860px){
-    .hero{grid-template-columns:1fr;padding:40px 0 20px;gap:28px}
-    .hero h1{font-size:2.5rem}
-    .band{grid-template-columns:1fr;padding:30px 22px}
-    .nav-links a:not(.nav-cta){display:none}
+  /* closing band + footer */
+  .close{border:1px solid var(--line);border-radius:20px;background:radial-gradient(600px 300px at 90% 0%,rgba(56,189,248,.12),transparent),var(--ink-800);padding:48px;display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap}
+  .close h2{font-size:1.9rem;letter-spacing:-.03em}
+  .close p{color:var(--text-2);margin-top:8px}
+  footer{background:var(--ink-950);border-top:1px solid var(--line);padding:56px 0 40px;margin-top:96px;color:var(--mute);font-size:.88rem}
+  .fgrid{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:48px}
+  .fgrid h4{font-family:var(--body);font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;color:var(--text-2);font-weight:600;margin-bottom:14px}
+  .fgrid ul{list-style:none}
+  .fgrid li{padding:4px 0}
+  .fgrid a{color:var(--mute);text-decoration:none}
+  .fgrid a:hover{color:var(--sky-2)}
+  .fgrid p{max-width:340px;margin-top:14px}
+  .legal{border-top:1px solid var(--line);margin-top:40px;padding-top:24px;font-size:.76rem;color:#6B7F90;display:grid;gap:10px}
+
+  @media(max-width:980px){
+    .hero .wrap,.pricing,.faq{grid-template-columns:1fr;gap:48px}
+    .hero h1{font-size:2.9rem}
+    nav.links a:not(.btn){display:none}
+    .assure .wrap{grid-template-columns:1fr 1fr}
+    .assure div:nth-child(3){border-left:none}
+    .assure div:nth-child(n+3){border-top:1px solid var(--line)}
   }
-  @media(max-width:640px){
-    .hero h1{font-size:2.2rem}.hero p.lead{font-size:1rem}
-    .app{padding:18px;border-radius:20px}
-    .steps3,.plans,.row2,.cmp,.cparties{grid-template-columns:1fr}
+  @media(max-width:680px){
+    .wrap{padding:0 16px}
+    header.top .wrap{height:64px}
+    .brand .tg{display:none}
+    .hero{padding:48px 0 48px}
+    .hero h1{font-size:2.3rem}
+    .hero .lead{font-size:1rem}
+    .keyfacts{grid-template-columns:1fr 1fr 1fr}
+    .keyfacts div{padding-right:12px;margin-right:12px}
+    .keyfacts b{font-size:1.05rem}
+    .keyfacts div>span{font-size:.74rem}
+    .qc-main .big{font-size:2.1rem}
+    table.mini th,table.mini td,.qc-head,.qc-main,.qc-foot div{padding-left:16px;padding-right:16px}
+    .assure .wrap{grid-template-columns:1fr}
+    .assure div+div{border-left:none;border-top:1px solid var(--line)}
+    .assure div{padding:14px 0}
+    section{padding:64px 0}
+    .sec-head h2,.sec-h,.app-head h2{font-size:1.8rem}
+    .steps{grid-template-columns:1fr;gap:28px}
+    .app{padding:20px 16px;border-radius:16px}
+    .stepper .s span{display:none}
+    .stepper .s.on span{display:inline}
+    .prem,.row2,.plans,.cparties{grid-template-columns:1fr}
+    .big-in input{font-size:1.6rem}
+    .dep{grid-template-columns:1fr auto;row-gap:10px}
+    .dep input[type=range]{grid-column:1/-1;grid-row:2}
     .facts{grid-template-columns:1fr 1fr}
-    .btn-row{grid-template-columns:1fr}.btn-row .btn-ghost{order:2}
-    .sec-h{font-size:1.6rem}
-    .big input{font-size:1.6rem}
-    .tiles{grid-template-columns:repeat(4,1fr)}
-    .dep{flex-wrap:wrap}.dep input[type=range]{order:3;flex-basis:100%}
+    .fact:nth-child(3){border-left:none}
+    .fact:nth-child(n+3){border-top:1px solid var(--line)}
+    .actions{flex-direction:column-reverse;align-items:stretch}
+    .actions .btn-pri{width:100%}
+    .fine{text-align:center}
+    .btn-row{flex-direction:column-reverse}
+    .btn-row .btn{width:100%;min-width:0}
+    #dSend .btn{width:100%;white-space:normal}
+    .contract{padding:22px 18px}
+    .cmp-card{overflow-x:auto}
+    table.cmp{font-size:.82rem}
+    table.cmp th,table.cmp td{padding:11px 10px}
+    table.cmp thead th{white-space:normal}
+    table.cmp td:not(:first-child){white-space:normal}
+    table.cmp th:first-child,table.cmp td:first-child{width:auto}
+    .close{padding:28px 22px}
+    .fgrid{grid-template-columns:1fr;gap:28px}
   }
   @media print{
-    nav,.hero,#how,#why,#faq,footer .disc,.btn,.btn-row,.quick,.prog{display:none!important}
-    body{background:#fff}.app{box-shadow:none;border:1px solid #ccc}
+    header.top,.hero,.assure,#how,#pricing,#faq,.close-wrap,footer,.btn,.btn-row,.actions,.stepper{display:none!important}
+    body{background:#fff;color:#000}
+    .app{box-shadow:none;border:1px solid #bbb;background:#fff;color:#000}
+    .plan,.fact,.facts{background:#fff!important;color:#000;border-color:#bbb}
+    .acc details .det-body{display:block}
   }
 </style>
 </head>
 <body>
 
-<nav>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="pbm" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#7DD3FC"/><stop offset="1" stop-color="#0E7490"/></linearGradient>
+    <symbol id="i-check" viewBox="0 0 20 20"><path d="M4.5 10.5l3.5 3.5 7.5-8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 20 20"><circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10 6v5M10 13.6v.4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 9.5L12 4l9 5.5M4.5 10v8M9 10v8M15 10v8M19.5 10v8M3 20h18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M10.5 18.5h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M2.5 9.5h19M6 15h4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V7.5a4 4 0 018 0v3" fill="none" stroke="currentColor" stroke-width="1.6"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M8.8 12l2.3 2.3 4.2-4.6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M4 7l6 6 3.5-3.5L20 16M20 11v5h-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6.5 3h8l4 4v14h-12z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M14.5 3v4h4M9.5 12h6M9.5 16h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3 2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></symbol>
+    <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V4M7.5 8.5L12 4l4.5 4.5M5 13v6h14v-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-print" viewBox="0 0 24 24"><path d="M7 9V3.5h10V9M7 17H4.5V9h15v8H17M7 14h10v6.5H7z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 7l8.5 6 8.5-6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  </defs>
+</svg>
+
+<header class="top">
   <div class="wrap">
-    <a class="brand" href="./" aria-label="Premium Bridge home">
-      <svg viewBox="0 0 64 64" width="36" height="36" aria-hidden="true"><defs><linearGradient id="pbn" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs><rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><rect x="13" y="39" width="38" height="5" style="fill:var(--markdeck)"/><rect x="21.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><rect x="37.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><path d="M11 33Q16 29 24 16Q32 44 40 16Q48 29 53 33" fill="none" style="stroke:var(--markdeck)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="28.75" y="35.5" width="6.5" height="3.5" rx="1.75" style="fill:var(--markdot)"/><path d="M15 8H49C51.2 8 53 9.8 53 12V31C53 44 44.5 52.5 32 56.5C19.5 52.5 11 44 11 31V12C11 9.8 12.8 8 15 8Z" fill="none" stroke="url(#pbn)" stroke-width="4.5" stroke-linejoin="round"/></svg>
-      <span class="wm">Premium<span>Bridge</span></span>
+    <a class="brand" href="./" aria-label="Premium Bridge, home">
+      <svg viewBox="4 20 80 58" aria-hidden="true"><g transform="translate(6,8)" fill="none" stroke="url(#pbm)"><circle cx="26" cy="40" r="24" stroke-width="3.6"/><circle cx="62" cy="25" r="9.5" stroke-width="2.8"/><circle cx="69" cy="51" r="7" stroke-width="2.3"/><circle cx="55" cy="63" r="5" stroke-width="2"/><path d="M26.38 31.59Q28.36 31.59 29.74 32.11Q31.12 32.62 31.85 33.54Q32.58 34.45 32.58 35.65Q32.58 36.49 32.09 37.08Q31.61 37.67 30.81 37.67Q29.9 37.67 29.3 37.16Q28.7 36.64 28.7 35.8V34.73Q28.7 33.65 28.04 32.99Q27.39 32.33 26.22 32.33Q25.42 32.33 24.8 32.64Q24.17 32.95 23.82 33.54Q23.46 34.14 23.46 34.98Q23.46 35.75 23.82 36.38Q24.19 37.01 25.02 37.54Q25.86 38.06 27.29 38.54Q29.39 39.24 30.58 40.06Q31.77 40.88 32.27 41.82Q32.77 42.76 32.77 43.88Q32.77 45.41 31.96 46.55Q31.14 47.69 29.59 48.31Q28.05 48.94 25.89 48.94Q23.77 48.94 22.31 48.4Q20.85 47.86 20.09 46.96Q19.32 46.05 19.32 44.96Q19.32 44.09 19.84 43.52Q20.36 42.96 21.25 42.96Q22.05 42.96 22.61 43.51Q23.17 44.05 23.17 44.95V45.94Q23.17 46.91 23.92 47.54Q24.66 48.16 25.92 48.16Q27.24 48.16 28.03 47.5Q28.82 46.84 28.82 45.73Q28.82 44.56 27.99 43.72Q27.15 42.88 24.9 42.12Q22.94 41.45 21.77 40.66Q20.6 39.88 20.08 38.9Q19.56 37.92 19.56 36.71Q19.56 35.27 20.39 34.11Q21.22 32.95 22.76 32.27Q24.29 31.59 26.38 31.59ZM26.66 39.6H25.86Q25.88 37.67 25.8 36.2Q25.72 34.73 25.64 33.59Q25.55 32.46 25.47 31.59Q25.4 30.72 25.4 30.02Q25.4 29.57 25.64 29.33Q25.89 29.09 26.27 29.09Q26.62 29.09 26.88 29.33Q27.14 29.57 27.14 30.05Q27.14 30.69 27.06 31.54Q26.99 32.39 26.89 33.53Q26.8 34.66 26.73 36.16Q26.66 37.65 26.66 39.6ZM25.57 40.64H26.36Q26.36 42.55 26.43 44.04Q26.5 45.52 26.59 46.66Q26.69 47.79 26.76 48.64Q26.84 49.49 26.84 50.14Q26.84 50.6 26.59 50.84Q26.35 51.08 25.96 51.08Q25.6 51.08 25.35 50.84Q25.1 50.6 25.1 50.12Q25.1 49.42 25.17 48.56Q25.24 47.7 25.33 46.58Q25.42 45.46 25.5 44Q25.57 42.54 25.57 40.64Z" fill="url(#pbm)" stroke="none"/></g></svg>
+      <span><span class="wm">Premium<span>Bridge</span></span><span class="tg">Insurance payments, financed.</span></span>
     </a>
-    <div class="nav-links">
+    <nav class="links" aria-label="Main">
       <a href="#how">How it works</a>
-      <a href="#why">Why it costs less</a>
+      <a href="#pricing">Pricing</a>
       <a href="#faq">Questions</a>
-      <button class="nav-cta" type="button" onclick="goQuote()">Get my quote</button>
-    </div>
+      <a class="btn btn-pri" href="#quote" onclick="goQuote();return false;">Get a quote</a>
+    </nav>
   </div>
-</nav>
+</header>
 
 <main>
-  <div class="wrap">
-    <div class="hero">
+  <div class="hero">
+    <div class="wrap">
       <div>
-        <div class="eyebrow"><i></i>Insurance premium financing · Trinidad &amp; Tobago</div>
-        <h1>Big premium.<br><em>Small payments.</em></h1>
-        <p class="lead">We pay your insurer in full today, so you're covered from day one. You repay us in a few equal monthly instalments, with interest only on what you still owe.</p>
-        <div class="hero-btns">
-          <button class="btn btn-pri" type="button" onclick="goQuote()">See my monthly payment →</button>
-          <a class="btn btn-ghost" href="#how">How it works</a>
+        <div class="kicker">Premium financing · Trinidad &amp; Tobago</div>
+        <h1>Big premium,<br><span class="grad">small payments.</span></h1>
+        <p class="lead">Premium Bridge pays your insurer in full today, so your policy is in force from day one. You repay us in equal monthly instalments, with interest charged only on what you still owe.</p>
+        <div class="ctas">
+          <a class="btn btn-pri" href="#quote" onclick="goQuote();return false;">Get my quote</a>
+          <a class="btn btn-sec" href="#how">How it works</a>
         </div>
-        <div class="ticks"><span>6, 8 or 10 months</span><span>No admin fees</span><span>Pay off early, any time</span></div>
+        <div class="keyfacts">
+          <div><b>6 · 8 · 10</b><span>month plans</span></div>
+          <div><b><span class="rateTxt">2%</span> a month</b><span>on the reducing balance</span></div>
+          <div><b>No fees</b><span>on top of the interest</span></div>
+        </div>
       </div>
-      <div class="viz" aria-hidden="true">
-        <div class="lbl">Your premium, due today</div>
-        <div class="lump"><b class="num">$<span id="hvPrem">3,206.50</span></b><small>one lump sum</small></div>
-        <div class="arrow">Premium Bridge pays it</div>
-        <div class="lbl" style="margin-bottom:8px">What you pay instead</div>
-        <div class="tiles" id="hvTiles"></div>
-        <div class="foot"><span><b id="hvN">8</b> monthly instalments</span><span>Covered from <b>day one</b></span></div>
-      </div>
+      <aside class="qcard" aria-label="Your quote at a glance">
+        <div class="qc-head"><span class="lbl">Your quote</span><span class="qc-plan" id="hcPlan">Balanced · 8 months</span></div>
+        <div class="qc-main">
+          <div class="big">$<span id="hcPay">437.72</span><small>per month</small></div>
+          <div class="on">on a premium of <b class="num">TT$<span id="hcPrem">3,206.50</span></b></div>
+        </div>
+        <table class="mini">
+          <thead><tr><th>Month</th><th>Due</th><th>Payment</th><th>Balance</th></tr></thead>
+          <tbody id="hcRows"></tbody>
+        </table>
+        <div class="qc-foot">
+          <div><span class="k">Cost of financing</span><b>$<span id="hcCost">295.25</span></b></div>
+          <div><span class="k">Total repaid</span><b>$<span id="hcTotal">3,501.75</span></b></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div class="assure">
+    <div class="wrap">
+      <div><svg aria-hidden="true"><use href="#i-shield"/></svg><span>Your insurer is paid in full, upfront</span></div>
+      <div><svg aria-hidden="true"><use href="#i-down"/></svg><span>Interest only on the balance you owe</span></div>
+      <div><svg aria-hidden="true"><use href="#i-doc"/></svg><span>Every figure shown before you sign</span></div>
+      <div><svg aria-hidden="true"><use href="#i-clock"/></svg><span>Settle early at any time</span></div>
     </div>
   </div>
 
   <section id="how">
     <div class="wrap">
-      <h2 class="sec-h">Three steps across</h2>
-      <div class="sec-sub">See your plan first. You only give your details once you like the numbers.</div>
-      <div class="steps3">
-        <div class="stp"><div class="no">1</div><h3>Get your quote</h3><p>Enter your premium and compare three plans: the monthly payment, the full cost and every due date. No details needed.</p></div>
-        <div class="stp"><div class="no">2</div><h3>Apply in minutes</h3><p>Tell us who you are and which policy it's for, and read the agreement in plain words before you confirm.</p></div>
-        <div class="stp"><div class="no">3</div><h3>Sign, and you're covered</h3><p>We check the policy with your insurer, send your agreement to sign, and pay the premium in full.</p></div>
+      <div class="sec-head">
+        <div class="kicker">How it works</div>
+        <h2>Three steps. No lump sum.</h2>
+        <p>See your plan first. You only give your details once you are happy with the numbers.</p>
+      </div>
+      <div class="steps">
+        <div class="step"><div class="n">01</div><h3>Get your quote</h3><p>Enter your premium and compare three plans side by side: the monthly payment, the full cost and every due date.</p></div>
+        <div class="step"><div class="n">02</div><h3>Apply in minutes</h3><p>Tell us who you are and which policy it is for. Read the agreement, in plain words, before you confirm.</p></div>
+        <div class="step"><div class="n">03</div><h3>Sign, and you are covered</h3><p>We confirm the policy with your insurer, send your agreement to sign and pay the premium in full.</p></div>
       </div>
     </div>
   </section>
 
-  <section id="quote" style="padding-top:20px">
+  <section id="quote">
     <div class="wrap">
-      <h2 class="sec-h" id="flowHead">Get your quote</h2>
-      <div class="sec-sub" id="flowSub">Enter your premium and choose a plan. No details needed yet.</div>
+      <div class="app-head">
+        <div>
+          <div class="kicker">Quote and apply</div>
+          <h2 id="flowHead">Get your quote</h2>
+        </div>
+        <p id="flowSub">Enter your premium and choose a plan. No details needed yet.</p>
+      </div>
 
       <div class="app" id="app">
         <p class="sr" id="progSr" aria-live="polite"></p>
-          <div class="prog hide" id="prog" aria-hidden="true">
-          <div class="pg-steps"><div class="pg" id="pg1"></div><div class="pg" id="pg2"></div><div class="pg" id="pg3"></div><div class="pg" id="pg4"></div></div>
-          <div class="pglabels"><div class="pgl" id="pl1">Details</div><div class="pgl" id="pl2">Agreement</div><div class="pgl" id="pl3">Payment</div><div class="pgl" id="pl4">Done</div></div>
+        <div class="stepper hide" id="prog" aria-hidden="true">
+          <div class="s" id="pl1"><i>1</i><span>Details</span></div><div class="bar" id="pg2"></div>
+          <div class="s" id="pl2"><i>2</i><span>Agreement</span></div><div class="bar" id="pg3"></div>
+          <div class="s" id="pl3"><i>3</i><span>Payment</span></div><div class="bar" id="pg4"></div>
+          <div class="s" id="pl4"><i>4</i><span>Done</span></div>
         </div>
 
         <!-- ============ QUOTE ============ -->
         <div id="sQuote">
-          <div class="field">
-            <label for="premium">Your insurance premium</label>
-            <div class="big"><input id="premium" class="num" type="number" inputmode="decimal" min="0" step="0.01" value="3206.50"></div>
+          <div class="prem">
+            <div class="field" style="margin:0">
+              <label for="premium">Your insurance premium</label>
+              <div class="big-in"><input id="premium" type="number" inputmode="decimal" min="0" step="0.01" value="3206.50"></div>
+            </div>
+            <div class="dep">
+              <div class="t">Deposit<small>Optional</small></div>
+              <input type="range" id="deposit" min="0" max="30" step="5" value="0" aria-label="Deposit as a percentage of the premium">
+              <div class="v"><span id="depPct">None</span><small id="depAmt">finance the full premium</small></div>
+            </div>
           </div>
           <div class="warn hide" id="premWarn"></div>
-
-          <div class="dep">
-            <div class="t">Deposit<small>optional</small></div>
-            <input type="range" id="deposit" min="0" max="30" step="5" value="0" aria-label="Deposit as a percentage of the premium">
-            <div class="v num"><span id="depPct">None</span><small id="depAmt">finance the full premium</small></div>
-          </div>
 
           <div class="plans" id="plans" role="radiogroup" aria-label="Choose a plan"></div>
 
           <div class="facts">
-            <div class="fact"><div class="l">Amount financed</div><div class="v num">$<span id="fFin">—</span></div></div>
-            <div class="fact"><div class="l">Cost of financing</div><div class="v num">$<span id="fCost">—</span></div></div>
-            <div class="fact"><div class="l">Total you repay</div><div class="v num">$<span id="fTotal">—</span></div></div>
-            <div class="fact"><div class="l">Rate</div><div class="v num"><span id="fRate">2%</span> / month<small id="fApr">on the reducing balance</small></div></div>
+            <div class="fact"><div class="l">Amount financed</div><div class="v">$<span id="fFin">—</span></div></div>
+            <div class="fact"><div class="l">Cost of financing</div><div class="v">$<span id="fCost">—</span></div></div>
+            <div class="fact"><div class="l">Total you repay</div><div class="v">$<span id="fTotal">—</span></div></div>
+            <div class="fact"><div class="l">Rate</div><div class="v"><span id="fRate">2%</span> / month<small id="fApr">on the reducing balance</small></div></div>
           </div>
 
-          <div class="cmp">
-            <div class="cc you"><div class="who">Premium Bridge</div>
-              <div class="li"><span>Monthly</span><b class="num">$<span id="cYouPay">—</span></b></div>
-              <div class="li"><span>Cost of financing</span><b class="num">$<span id="cYouCost">—</span></b></div>
-            </div>
-            <div class="cc them"><div class="who">A typical flat-rate plan</div>
-              <div class="li"><span>Monthly (<span id="cThemN">11</span> months)</span><b class="num">$<span id="cThemPay">—</span></b></div>
-              <div class="li"><span>Cost of financing</span><b class="num">$<span id="cThemCost">—</span></b></div>
-            </div>
-          </div>
-          <div class="cmp-note" id="cmpNote"></div>
-
-          <details>
-            <summary>Full payment schedule</summary>
-            <div class="det-body"><div class="tbl-wrap"><table class="t" id="schedTbl"></table></div></div>
-          </details>
-          <details>
-            <summary>What if my policy is cancelled?</summary>
-            <div class="det-body">
-              <p>If the policy is cancelled, your insurer refunds the unused part of the premium. That refund clears what you still owe first, and anything left over comes back to you. This table checks, month by month, that the refund is enough.</p>
-              <div class="row2">
-                <div class="field"><label for="period">Policy period (months)</label><input id="period" type="number" min="3" max="24" value="12" inputmode="numeric"></div>
-                <div class="toggle-row" style="align-self:end;margin-bottom:14px"><div class="lbl">Short-rate refund<small>If your insurer keeps a penalty on early cancellation</small></div><label class="switch"><input type="checkbox" id="shortRate" aria-label="Short-rate refund: my insurer keeps a penalty on early cancellation"><span class="sl"></span></label></div>
+          <div class="acc">
+            <details>
+              <summary>Full payment schedule</summary>
+              <div class="det-body"><div class="tbl-wrap"><table class="t" id="schedTbl"></table></div></div>
+            </details>
+            <details>
+              <summary>What if my policy is cancelled?</summary>
+              <div class="det-body">
+                <p>If the policy is cancelled, your insurer refunds the unused part of the premium. That refund clears what you still owe first, and anything left over comes back to you. This table checks, month by month, that the refund is enough.</p>
+                <div class="row2" style="align-items:end;margin-bottom:14px">
+                  <div class="field" style="margin:0"><label for="period">Policy period (months)</label><input id="period" type="number" min="3" max="24" value="12" inputmode="numeric"></div>
+                  <div class="toggle-row"><div class="lbl">Short-rate refund<small>If your insurer keeps a penalty on early cancellation</small></div><label class="switch"><input type="checkbox" id="shortRate" aria-label="Short-rate refund: my insurer keeps a penalty on early cancellation"><span class="sl"></span></label></div>
+                </div>
+                <div class="tbl-wrap"><table class="t" id="riskTbl"></table></div>
+                <div id="covBadge"></div>
               </div>
-              <div class="tbl-wrap"><table class="t" id="riskTbl"></table></div>
-              <div id="covBadge"></div>
-            </div>
-          </details>
-
-          <div class="quick">
-            <button class="btn btn-ghost" type="button" onclick="shareQuote()">Send this quote on WhatsApp</button>
-            <button class="btn btn-ghost" type="button" onclick="window.print()">Print or save as PDF</button>
+            </details>
           </div>
-          <button class="btn btn-teal btn-full" id="startBtn" style="margin-top:14px" type="button" onclick="startApply()">Continue with <span id="selName">Balanced</span> →</button>
+
+          <div class="actions">
+            <div class="aux">
+              <button class="btn btn-link" type="button" onclick="shareQuote()"><svg aria-hidden="true"><use href="#i-share"/></svg>Send on WhatsApp</button>
+              <button class="btn btn-link" type="button" onclick="window.print()"><svg aria-hidden="true"><use href="#i-print"/></svg>Print or save as PDF</button>
+            </div>
+            <button class="btn btn-pri" id="startBtn" type="button" onclick="startApply()">Continue with <span id="selName">Balanced</span></button>
+          </div>
           <p class="fine">No obligation. You review everything before you commit.</p>
         </div>
 
         <!-- ============ DETAILS ============ -->
         <div id="sDetails" class="hide">
-          <h2>Your details</h2>
-          <p class="hint">So we can check the policy and prepare your agreement. <span class="req-key">*</span> required.</p>
-          <div class="grp-h">You</div>
+          <h2 class="panel-h">Your details</h2>
+          <p class="hint">So we can confirm the policy and prepare your agreement. Fields marked <span class="req-key">*</span> are required.</p>
+          <div class="grp-h">About you</div>
           <div class="field"><label for="fName">Full name <span class="req">*</span></label><input id="fName" type="text" autocomplete="name" placeholder="As on your ID"><div class="msg">Please enter your full name.</div></div>
           <div class="row2">
             <div class="field"><label for="fPhone">Mobile <span class="req">*</span></label><input id="fPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="868 000 0000"><div class="msg">A mobile number with at least 7 digits.</div></div>
@@ -423,106 +567,145 @@
 
           <label class="ack" id="consentBox"><input type="checkbox" id="consent"><span>I agree that Premium Bridge may use these details to assess this application and confirm the policy with my insurer or broker. My information is used for this application only and is never sold.</span></label>
 
-          <div class="btn-row"><button class="btn btn-ghost" type="button" onclick="backToQuote()">← Back to quote</button><button class="btn btn-teal" type="button" onclick="toAgreement()">Review the agreement →</button></div>
+          <div class="btn-row"><button class="btn btn-sec" type="button" onclick="backToQuote()">Back to quote</button><button class="btn btn-pri" type="button" onclick="toAgreement()">Review the agreement</button></div>
         </div>
 
         <!-- ============ AGREEMENT ============ -->
         <div id="sAgree" class="hide">
-          <h2>Your agreement, in plain words</h2>
-          <p class="hint">How it works, what it costs, and how you're protected. The agreement to sign comes by e-mail once we've checked the policy.</p>
+          <h2 class="panel-h">Your agreement, in plain words</h2>
+          <p class="hint">How it works, what it costs and how you are protected. The agreement to sign comes by e-mail once we have confirmed the policy.</p>
 
           <div class="explain">
             <div class="ex-head">How it works</div>
-            <div class="ex-step"><div class="exn">1</div><div><b>We pay your insurer in full.</b> The policy is issued and you're covered from day one.</div></div>
-            <div class="ex-step"><div class="exn">2</div><div><b>You repay in <span class="aN">8</span> equal monthly instalments</b> of $<span class="aPay num">—</span>, starting a month after we pay.</div></div>
-            <div class="ex-step"><div class="exn">3</div><div><b>Interest only on what you still owe.</b> <span class="aRate">2%</span> a month on the reducing balance, so it falls every month. No admin fee on top.</div></div>
+            <div class="ex-step"><div class="exn">1</div><div><b>We pay your insurer in full.</b> The policy is issued and you are covered from day one.</div></div>
+            <div class="ex-step"><div class="exn">2</div><div><b>You repay in <span class="aN">8</span> equal monthly instalments</b> of <span class="num">$<span class="aPay">—</span></span>, starting a month after we pay.</div></div>
+            <div class="ex-step"><div class="exn">3</div><div><b>Interest only on what you still owe.</b> <span class="aRate">2%</span> a month on the reducing balance, so it falls every month. No fee on top.</div></div>
             <div class="ex-step"><div class="exn">4</div><div><b>If the policy is cancelled,</b> the insurer's refund of unused premium clears your balance first, and anything left over is yours.</div></div>
-            <div class="ex-step"><div class="exn">5</div><div><b>If an instalment is missed,</b> we call you first. If it stays unpaid, the policy can be cancelled and the refund used to settle the balance, which would leave you without cover.</div></div>
+            <div class="ex-step" style="margin-bottom:0"><div class="exn">5</div><div><b>If an instalment is missed,</b> we call you first. If it stays unpaid, the policy can be cancelled and the refund used to settle the balance, which would leave you without cover.</div></div>
           </div>
 
           <div class="contract" id="contract" tabindex="0" aria-label="Agreement preview"></div>
           <label class="ack" id="ackBox"><input type="checkbox" id="ack"><span>I have read the terms above, including the schedule, the <span class="aRate">2%</span> a month reducing-balance interest and what happens on cancellation or a missed instalment. I understand this is a loan, and that the agreement is final only once I sign it.</span></label>
 
-          <div class="btn-row"><button class="btn btn-ghost" type="button" onclick="toDetails()">← Back</button><button class="btn btn-teal" type="button" onclick="toPayment()">Agree and continue →</button></div>
+          <div class="btn-row"><button class="btn btn-sec" type="button" onclick="toDetails()">Back</button><button class="btn btn-pri" type="button" onclick="toPayment()">Agree and continue</button></div>
         </div>
 
         <!-- ============ PAYMENT ============ -->
         <div id="sPay" class="hide">
-          <h2>How would you like to pay?</h2>
-          <p class="hint">Monthly instalment: <b class="num">$<span class="aPay">—</span></b>. You can change this later.</p>
-          <button class="pay-opt active" type="button" aria-pressed="true" data-pay="standing" onclick="pickPay('standing')"><div class="ico">🏦</div><div><div class="t">Standing order</div><div class="d">Your bank pays each instalment on the due date. Nothing to remember.</div></div></button>
-          <button class="pay-opt" type="button" aria-pressed="false" data-pay="transfer" onclick="pickPay('transfer')"><div class="ico">📲</div><div><div class="t">Online transfer each month</div><div class="d">Pay through your bank's app, with your reference.</div></div></button>
-          <button class="pay-opt" type="button" data-pay="card" disabled><div class="ico">💳</div><div><div class="t">Card</div><div class="d">Visa, Mastercard, Linx</div></div><div class="soon">Coming soon</div></button>
+          <h2 class="panel-h">How would you like to pay?</h2>
+          <p class="hint">Monthly instalment <b class="num" style="color:var(--text)">$<span class="aPay">—</span></b>. You can change this later.</p>
+          <button class="pay-opt active" type="button" aria-pressed="true" data-pay="standing" onclick="pickPay('standing')"><div class="ico"><svg aria-hidden="true"><use href="#i-bank"/></svg></div><div><div class="t">Standing order</div><div class="d">Your bank pays each instalment on the due date.</div></div></button>
+          <button class="pay-opt" type="button" aria-pressed="false" data-pay="transfer" onclick="pickPay('transfer')"><div class="ico"><svg aria-hidden="true"><use href="#i-phone"/></svg></div><div><div class="t">Online transfer each month</div><div class="d">Pay through your bank's app, quoting your reference.</div></div></button>
+          <button class="pay-opt" type="button" data-pay="card" disabled><div class="ico"><svg aria-hidden="true"><use href="#i-card"/></svg></div><div><div class="t">Card</div><div class="d">Visa, Mastercard, Linx</div></div><div class="soon">Coming soon</div></button>
 
-          <div class="shield-note"><div style="font-size:1.2rem">🔒</div><div><b>Our bank details come with your signed agreement, never by WhatsApp or text.</b> If anyone sends you different account details, don't pay. Call us first.</div></div>
+          <div class="notice"><svg aria-hidden="true"><use href="#i-lock"/></svg><div><b>Our bank details come with your signed agreement, never by WhatsApp or text.</b> If anyone sends you different account details, do not pay. Check with us first.</div></div>
 
           <div class="grp-h">Your application</div>
           <div class="review" id="review"></div>
 
-          <div class="btn-row"><button class="btn btn-ghost" type="button" onclick="toAgreementBack()">← Back</button><button class="btn btn-teal" type="button" id="submitBtn" onclick="submitApp()">Submit application</button></div>
+          <div class="btn-row"><button class="btn btn-sec" type="button" onclick="toAgreementBack()">Back</button><button class="btn btn-pri" type="button" id="submitBtn" onclick="submitApp()">Submit application</button></div>
         </div>
 
         <!-- ============ DONE ============ -->
         <div id="sDone" class="hide">
           <div class="done">
-            <div class="ic" id="dIc">✓</div>
-            <h2 id="dHead">Application received</h2>
-            <p class="hint" style="margin-top:6px" id="dLead"></p>
-            <div class="ref">Ref: <span id="dRef"></span></div>
-            <p class="hint num" id="dPlan"></p>
-            <div id="dSend" class="hide" style="margin:6px 0 10px">
-              <a class="btn btn-teal" id="dMail" href="#">E-mail my application to Premium Bridge</a>
+            <div class="ic" id="dIc"><svg aria-hidden="true"><use href="#i-check"/></svg></div>
+            <h2 class="panel-h" id="dHead">Application received</h2>
+            <p class="hint" id="dLead"></p>
+            <div class="ref">Ref <span id="dRef"></span></div>
+            <p class="hint num" id="dPlan" style="font-size:.86rem"></p>
+            <div id="dSend" class="hide" style="margin:14px 0 4px">
+              <a class="btn btn-pri" id="dMail" href="#"><svg aria-hidden="true" style="width:18px;height:18px"><use href="#i-mail"/></svg>E-mail my application to Premium Bridge</a>
             </div>
             <ol class="next">
-              <li><span class="n">1</span><span><b>We check the policy</b> and premium with your insurer, and may call you for your ID and the insurer's invoice or renewal notice.</span></li>
+              <li><span class="n">1</span><span><b>We confirm the policy</b> and premium with your insurer, and may call you for your ID and the insurer's invoice or renewal notice.</span></li>
               <li><span class="n">2</span><span><b>You receive your agreement to sign</b> by e-mail, with our bank details for your instalments.</span></li>
-              <li><span class="n">3</span><span><b>We pay your premium in full</b> to your insurer, and your first instalment falls due a month later.</span></li>
+              <li><span class="n">3</span><span><b>We pay your premium in full</b> to your insurer. Your first instalment falls due a month later.</span></li>
             </ol>
-            <button class="btn btn-ghost" style="margin-top:16px" type="button" onclick="resetAll()">Start a new quote</button>
+            <button class="btn btn-sec" style="margin-top:26px" type="button" onclick="resetAll()">Start a new quote</button>
           </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section id="why">
-    <div class="wrap">
-      <div class="band">
-        <div>
-          <h2>Interest on what you owe, <span>not on what you've already paid.</span></h2>
-          <p>A flat-rate plan charges on the whole premium for the whole term, even after most of it is paid back. We charge only on the balance that's left, and the balance falls every month, so the interest does too.</p>
-          <p id="whyLine"></p>
-        </div>
-        <div>
-          <div class="bars" id="whyBars" aria-hidden="true"></div>
-          <div class="bars-cap"><span>Interest in month 1</span><span id="whyLast">in the last month</span></div>
-        </div>
+  <section id="pricing">
+    <div class="wrap pricing">
+      <div>
+        <div class="kicker">Transparent pricing</div>
+        <h2 class="sec-h">One rate, charged only on what you owe.</h2>
+        <p style="color:var(--text-2)">A flat-rate plan charges on the whole premium for the whole term, even after most of it is repaid. We charge only on the balance that is left, and the balance falls every month.</p>
+        <ul class="points">
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b><span class="rateTxt">2%</span> a month on the reducing balance</b><span id="faqApr2"></span></span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>No arrangement or admin fees</b>The cost of financing on your quote is the whole cost.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Settle early, pay less</b>Interest runs only to the day you settle.</span></li>
+          <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Protected if the policy is cancelled</b>The insurer's refund clears your balance first; any surplus is yours.</span></li>
+        </ul>
+      </div>
+      <div class="cmp-card">
+        <table class="cmp">
+          <thead><tr><th></th><th class="us">Premium Bridge<small id="tUsPlan">Balanced, 8 months</small></th><th>Typical flat-rate plan<small><span id="cThemN">11</span> months</small></th></tr></thead>
+          <tbody>
+            <tr><td>Premium financed</td><td class="us">$<span id="tFin">—</span></td><td>$<span id="tFin2">—</span></td></tr>
+            <tr class="key"><td>Monthly payment</td><td class="us">$<span id="cYouPay">—</span></td><td>$<span id="cThemPay">—</span></td></tr>
+            <tr><td>Interest charged on</td><td class="us txt">What you still owe</td><td class="txt">The full premium</td></tr>
+            <tr class="key"><td>Cost of financing</td><td class="us">$<span id="cYouCost">—</span></td><td>$<span id="cThemCost">—</span></td></tr>
+            <tr><td>Total repaid</td><td class="us">$<span id="tYouTotal">—</span></td><td>$<span id="tThemTotal">—</span></td></tr>
+            <tr><td>Rate on the balance owed</td><td class="us"><span id="tYouRate">2.0</span>% / month</td><td>≈ <span id="tThemRate">3.8</span>% / month</td></tr>
+          </tbody>
+        </table>
+        <div class="cmp-note" id="cmpNote"></div>
       </div>
     </div>
   </section>
 
-  <section id="faq">
+  <section id="faq" style="padding-top:24px">
     <div class="wrap faq">
-      <h2 class="sec-h">Questions people ask</h2>
-      <div class="sec-sub">Straight answers, before you apply.</div>
-      <details><summary>What is premium financing?</summary><div class="det-body"><p>A short loan that pays your insurance premium. We pay your insurer the full premium, and you repay us in equal monthly instalments. The policy is yours, in force from its start date, exactly as if you had paid it yourself.</p></div></details>
-      <details><summary>Why is a shorter plan cheaper?</summary><div class="det-body"><p>Interest is charged each month only on what you still owe. A shorter plan pays the balance down faster, so there's less owing each month and less interest overall.</p></div></details>
-      <details><summary>What does 2% a month come to over a year?</summary><div class="det-body"><p id="faqApr">2% a month is 24% a year nominal, or about 26.8% a year effective. But you only borrow for 6 to 10 months, and on a falling balance, so what you actually pay is the cost of financing on your quote, and nothing else.</p></div></details>
-      <details><summary>Can I pay it off early?</summary><div class="det-body"><p>Yes. Because interest runs on the balance, paying early means you pay interest only up to the day you settle. Ask us for a settlement figure.</p></div></details>
-      <details><summary>What do I need to apply?</summary><div class="det-body"><p>Your ID, and the insurer's quotation, invoice or renewal notice for the policy. We'll ask for copies after you submit.</p></div></details>
-      <details><summary>Which policies can be financed?</summary><div class="det-body"><p>Motor, property, marine, liability and most general insurance, and some life and health premiums, from any insurer in Trinidad and Tobago. We confirm with your insurer that the policy can be financed and that unused premium is refundable on cancellation.</p></div></details>
-      <details><summary>I'm a broker or agent. Can I offer this to my clients?</summary><div class="det-body"><p>Yes. Send your client this page, or a link that opens on their premium: add <b>?p=</b> and the amount to the address, for example <b>?p=4500</b>. Their application names you as their contact.</p></div></details>
+      <div>
+        <div class="kicker">Questions</div>
+        <h2 class="sec-h">Straight answers, before you apply.</h2>
+        <p class="contact">Something else? Write to <a id="footMail2" href="#"></a> and we will reply within a working day.</p>
+      </div>
+      <div class="acc">
+        <details><summary>What is premium financing?</summary><div class="det-body"><p>A short loan that pays your insurance premium. We pay your insurer the full premium, and you repay us in equal monthly instalments. The policy is yours, in force from its start date, exactly as if you had paid it yourself.</p></div></details>
+        <details><summary>Why is a shorter plan cheaper?</summary><div class="det-body"><p>Interest is charged each month only on what you still owe. A shorter plan pays the balance down faster, so there is less owing each month and less interest overall.</p></div></details>
+        <details><summary>What does 2% a month come to over a year?</summary><div class="det-body"><p id="faqApr">2% a month is 24% a year nominal, or about 26.8% a year effective. You only borrow for 6 to 10 months, on a falling balance, so what you pay is the cost of financing on your quote, and nothing else.</p></div></details>
+        <details><summary>Can I pay it off early?</summary><div class="det-body"><p>Yes. Because interest runs on the balance, paying early means you pay interest only up to the day you settle. Ask us for a settlement figure.</p></div></details>
+        <details><summary>What do I need to apply?</summary><div class="det-body"><p>Your ID, and the insurer's quotation, invoice or renewal notice for the policy. We will ask for copies after you submit.</p></div></details>
+        <details><summary>Which policies can be financed?</summary><div class="det-body"><p>Motor, property, marine, liability and most general insurance, and some life and health premiums, from any insurer in Trinidad and Tobago. We confirm with your insurer that the policy can be financed and that unused premium is refundable on cancellation.</p></div></details>
+        <details><summary>I am a broker or agent. Can I offer this to my clients?</summary><div class="det-body"><p>Yes. Send your client this page, or a link that opens on their premium: add <span class="num">?p=</span> and the amount to the address, for example <span class="num">?p=4500</span>. Their application names you as their contact.</p></div></details>
+      </div>
     </div>
   </section>
+
+  <div class="wrap close-wrap">
+    <div class="close">
+      <div><h2>Ready to spread your premium?</h2><p>See your monthly payment in seconds. No obligation.</p></div>
+      <a class="btn btn-pri" href="#quote" onclick="goQuote();return false;">Get my quote</a>
+    </div>
+  </div>
 </main>
 
 <footer>
   <div class="wrap">
-    <div class="row">
-      <a class="brand" href="./"><svg viewBox="0 0 64 64" width="30" height="30" aria-hidden="true"><defs><linearGradient id="pbf" x1="0" y1="1" x2="1" y2="0"><stop offset="0" style="stop-color:var(--marka)"/><stop offset="1" style="stop-color:var(--markb)"/></linearGradient></defs><rect width="64" height="64" rx="16" style="fill:var(--marktile)"/><rect x="13" y="39" width="38" height="5" style="fill:var(--markdeck)"/><rect x="21.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><rect x="37.75" y="14" width="4.5" height="29" rx="1" style="fill:var(--markdeck)"/><path d="M11 33Q16 29 24 16Q32 44 40 16Q48 29 53 33" fill="none" style="stroke:var(--markdeck)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><rect x="28.75" y="35.5" width="6.5" height="3.5" rx="1.75" style="fill:var(--markdot)"/><path d="M15 8H49C51.2 8 53 9.8 53 12V31C53 44 44.5 52.5 32 56.5C19.5 52.5 11 44 11 31V12C11 9.8 12.8 8 15 8Z" fill="none" stroke="url(#pbf)" stroke-width="4.5" stroke-linejoin="round"/></svg><span class="wm" style="font-size:1rem">Premium<span>Bridge</span></span></a>
-      <div>Insurance premiums, financed · Trinidad &amp; Tobago · <a id="footMail" href="#"></a></div>
+    <div class="fgrid">
+      <div>
+        <a class="brand" href="./" aria-label="Premium Bridge, home"><svg viewBox="4 20 80 58" aria-hidden="true"><g transform="translate(6,8)" fill="none" stroke="url(#pbm)"><circle cx="26" cy="40" r="24" stroke-width="3.6"/><circle cx="62" cy="25" r="9.5" stroke-width="2.8"/><circle cx="69" cy="51" r="7" stroke-width="2.3"/><circle cx="55" cy="63" r="5" stroke-width="2"/><path d="M26.38 31.59Q28.36 31.59 29.74 32.11Q31.12 32.62 31.85 33.54Q32.58 34.45 32.58 35.65Q32.58 36.49 32.09 37.08Q31.61 37.67 30.81 37.67Q29.9 37.67 29.3 37.16Q28.7 36.64 28.7 35.8V34.73Q28.7 33.65 28.04 32.99Q27.39 32.33 26.22 32.33Q25.42 32.33 24.8 32.64Q24.17 32.95 23.82 33.54Q23.46 34.14 23.46 34.98Q23.46 35.75 23.82 36.38Q24.19 37.01 25.02 37.54Q25.86 38.06 27.29 38.54Q29.39 39.24 30.58 40.06Q31.77 40.88 32.27 41.82Q32.77 42.76 32.77 43.88Q32.77 45.41 31.96 46.55Q31.14 47.69 29.59 48.31Q28.05 48.94 25.89 48.94Q23.77 48.94 22.31 48.4Q20.85 47.86 20.09 46.96Q19.32 46.05 19.32 44.96Q19.32 44.09 19.84 43.52Q20.36 42.96 21.25 42.96Q22.05 42.96 22.61 43.51Q23.17 44.05 23.17 44.95V45.94Q23.17 46.91 23.92 47.54Q24.66 48.16 25.92 48.16Q27.24 48.16 28.03 47.5Q28.82 46.84 28.82 45.73Q28.82 44.56 27.99 43.72Q27.15 42.88 24.9 42.12Q22.94 41.45 21.77 40.66Q20.6 39.88 20.08 38.9Q19.56 37.92 19.56 36.71Q19.56 35.27 20.39 34.11Q21.22 32.95 22.76 32.27Q24.29 31.59 26.38 31.59ZM26.66 39.6H25.86Q25.88 37.67 25.8 36.2Q25.72 34.73 25.64 33.59Q25.55 32.46 25.47 31.59Q25.4 30.72 25.4 30.02Q25.4 29.57 25.64 29.33Q25.89 29.09 26.27 29.09Q26.62 29.09 26.88 29.33Q27.14 29.57 27.14 30.05Q27.14 30.69 27.06 31.54Q26.99 32.39 26.89 33.53Q26.8 34.66 26.73 36.16Q26.66 37.65 26.66 39.6ZM25.57 40.64H26.36Q26.36 42.55 26.43 44.04Q26.5 45.52 26.59 46.66Q26.69 47.79 26.76 48.64Q26.84 49.49 26.84 50.14Q26.84 50.6 26.59 50.84Q26.35 51.08 25.96 51.08Q25.6 51.08 25.35 50.84Q25.1 50.6 25.1 50.12Q25.1 49.42 25.17 48.56Q25.24 47.7 25.33 46.58Q25.42 45.46 25.5 44Q25.57 42.54 25.57 40.64Z" fill="url(#pbm)" stroke="none"/></g></svg><span class="wm">Premium<span>Bridge</span></span></a>
+        <p>Insurance premium financing for households and businesses in Trinidad and Tobago.</p>
+      </div>
+      <div>
+        <h4>Premium Bridge</h4>
+        <ul><li><a href="#how">How it works</a></li><li><a href="#pricing">Pricing</a></li><li><a href="#quote">Get a quote</a></li><li><a href="#faq">Questions</a></li></ul>
+      </div>
+      <div>
+        <h4>Contact</h4>
+        <ul><li><a id="footMail" href="#"></a></li><li>Trinidad &amp; Tobago</li></ul>
+      </div>
     </div>
-    <div class="disc">Indicative figures based on the information you enter. This is not a binding offer or financial advice; final terms are subject to approval, verification of the policy with your insurer and a signed agreement. The comparison with a flat-rate plan is an illustration on the stated assumptions, not a quote from any other lender. Cancellation protection assumes your insurer refunds unearned premium; the refund basis is set by your insurer.</div>
+    <div class="legal">
+      <div id="disc">Indicative figures based on the information you enter. This is not a binding offer or financial advice; final terms are subject to approval, verification of the policy with your insurer and a signed agreement. The comparison with a flat-rate plan is an illustration on the stated assumptions, not a quote from any other lender. Cancellation protection assumes your insurer refunds unearned premium; the refund basis is set by your insurer.</div>
+      <div>© 2026 Premium Bridge. All rights reserved.</div>
+    </div>
   </div>
 </footer>
 
@@ -592,17 +775,16 @@ const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>'
 function financed(){ return r2(S.premium*(1-S.depPct/100)); }
 function planName(n){ return (CONFIG.TERMS.find(t=>t.n===n)||{}).name || n+' months'; }
 
+const ICON = n => `<svg aria-hidden="true"><use href="#i-${n}"/></svg>`;
 function renderPlans(){
   $('plans').innerHTML = CONFIG.TERMS.map(t => `
     <button class="plan${t.n===S.term?' active':''}" type="button" role="radio" aria-checked="${t.n===S.term}" tabindex="${t.n===S.term?0:-1}" data-n="${t.n}">
-      <div class="plan-badge${t.badge?'':' none'}">${t.badge||'.'}</div>
-      <div class="plan-name">${t.name}</div>
-      <div class="plan-sub">${t.n} months</div>
-      <div class="plan-price num">$<span data-pp="${t.n}">—</span><small>/mo</small></div>
+      <div class="ph"><div><div class="plan-name">${t.name}</div><div class="plan-sub">${t.n} monthly payments</div></div><div class="plan-badge${t.badge?'':' none'}">${t.badge}</div></div>
+      <div class="plan-price">$<span data-pp="${t.n}">—</span><small>/ month</small></div>
       <ul class="plan-feat">
-        <li>✓ ${t.line}</li>
-        <li>✓ Cost of financing <b class="num">$<span data-pc="${t.n}">—</span></b></li>
-        <li data-pv="${t.n}">✓ Cancellation cover</li>
+        <li>${ICON('check')}<span>${t.line}</span></li>
+        <li>${ICON('check')}<span>Cost of financing <b>$<span data-pc="${t.n}">—</span></b></span></li>
+        <li data-pv="${t.n}">${ICON('check')}<span>Cancellation cover</span></li>
       </ul>
       <div class="plan-pick">${t.n===S.term?'Selected':'Choose '+t.name}</div>
     </button>`).join('');
@@ -642,22 +824,28 @@ function calc(){
     document.querySelector(`[data-pc="${t.n}"]`).textContent = fmt(sc.cost);
     const pv = document.querySelector(`[data-pv="${t.n}"]`);
     pv.className = pr.ok ? 'ok' : 'no';
-    pv.innerHTML = pr.ok ? '✓ <b>Refund covers you</b> every month' : '! <b>Officer review</b> on cancellation cover';
+    pv.innerHTML = pr.ok ? `${ICON('check')}<span>Refund covers your balance every month</span>` : `${ICON('alert')}<span>Cancellation cover needs a review</span>`;
   });
 
   const sc = schedule(F, S.term), fl = flatPlan(F);
   $('selName').textContent = planName(S.term);
   $('fFin').textContent = fmt(F); $('fCost').textContent = fmt(sc.cost); $('fTotal').textContent = fmt(sc.total);
   const r = CONFIG.RATE_MONTHLY, eff = (Math.pow(1+r,12)-1)*100;
-  $('fRate').textContent = (r*100).toFixed(r*100%1?1:0)+'%';
+  const rateTxt = (r*100).toFixed(r*100%1?1:0)+'%';
+  $('fRate').textContent = rateTxt; document.querySelectorAll('.rateTxt').forEach(e => e.textContent = rateTxt);
   $('fApr').textContent = `reducing balance · ${(eff).toFixed(1)}% a year effective`;
+  $('faqApr2').textContent = `That is ${(r*1200).toFixed(0)}% a year nominal, ${eff.toFixed(1)}% effective, on a balance that falls every month.`;
   $('faqApr').textContent = `${(r*100).toFixed(r*100%1?1:0)}% a month is ${(r*1200).toFixed(0)}% a year nominal, or about ${eff.toFixed(1)}% a year effective. But you only borrow for 6 to 10 months, and on a falling balance, so what you actually pay is the cost of financing shown on your quote, and nothing else.`;
 
   $('cYouPay').textContent = fmt(sc.pay); $('cYouCost').textContent = fmt(sc.cost);
   $('cThemN').textContent = CONFIG.FLAT_MONTHS; $('cThemPay').textContent = fmt(fl.pay); $('cThemCost').textContent = fmt(fl.cost);
   const fr = monthlyRateOf(F, fl.pay, CONFIG.FLAT_MONTHS)*100, save = fl.cost - sc.cost;
+  $('tUsPlan').textContent = `${planName(S.term)}, ${S.term} months`;
+  $('tFin').textContent = fmt(F); $('tFin2').textContent = fmt(F);
+  $('tYouTotal').textContent = fmt(sc.total); $('tThemTotal').textContent = fmt(F + fl.cost);
+  $('tYouRate').textContent = (r*100).toFixed(1); $('tThemRate').textContent = fr.toFixed(1);
   $('cmpNote').textContent = F > 0
-    ? `${save>0 ? 'You would pay $'+fmt(save)+' less in financing on this plan. ' : ''}A flat ${Math.round(CONFIG.FLAT_RATE*100)}% charge over ${CONFIG.FLAT_MONTHS} months works out at about ${fr.toFixed(1)}% a month on what is actually owed. Illustration only, not another lender's quote.`
+    ? `On your quote${save>0 ? ', you would pay $'+fmt(save)+' less in financing' : ''}. The flat-rate plan is ${Math.round(CONFIG.FLAT_RATE*100)}% of the premium repaid over ${CONFIG.FLAT_MONTHS} months, shown for illustration; it is not another lender's quote.`
     : '';
 
   let t = `<tr><th>Month</th><th>Due</th><th>Instalment</th><th>Interest</th><th>Balance after</th></tr>`;
@@ -673,11 +861,11 @@ function calc(){
   $('covBadge').innerHTML = S.term >= S.period
     ? `<div class="cov bad">The plan must end before the policy does. Choose a shorter plan, or an officer will review.</div>`
     : pr.ok
-      ? `<div class="cov ok">✓ The refund covers what you owe in every month, with at least $${fmt(-pr.worst)} to spare.</div>`
+      ? `<div class="cov ok">The refund covers what you owe in every month, with at least $${fmt(-pr.worst)} to spare.</div>`
       : `<div class="cov bad">In the tightest month the refund would fall $${fmt(pr.worst)} short on this basis. A deposit or a shorter plan closes it; an officer will review either way.</div>`;
 
   syncAgreementFigures();
-  heroViz(F, sc);
+  heroCard(F, sc);
 }
 ['premium','deposit','period'].forEach(id => $(id).addEventListener('input', calc));
 $('shortRate').addEventListener('change', calc);
@@ -693,8 +881,11 @@ const PANELS = ['sQuote','sDetails','sAgree','sPay','sDone'];
 function showPanel(id, step){
   PANELS.forEach(p => $(p).classList.toggle('hide', p!==id));
   $('prog').classList.toggle('hide', !step);
-  [1,2,3,4].forEach(i => { $('pg'+i).classList.toggle('on', i<=step); $('pl'+i).classList.toggle('on', i===step); });
-  $('progSr').textContent = step ? `Step ${step} of 4: ${$('pl'+step).textContent}` : '';
+  [1,2,3,4].forEach(i => {
+    $('pl'+i).classList.toggle('on', i===step); $('pl'+i).classList.toggle('past', i<step);
+    if (i>1) $('pg'+i).classList.toggle('past', i<=step);
+  });
+  $('progSr').textContent = step ? `Step ${step} of 4: ${$('pl'+step).querySelector('span').textContent}` : '';
   $('app').scrollIntoView({behavior:MOTION, block:'start'});
   const h = $(id).querySelector('h2') || $('flowHead');
   h.setAttribute('tabindex','-1'); h.focus({preventScroll:true});
@@ -819,7 +1010,7 @@ async function submitApp(){
   const first = esc(p.name.split(/\s+/)[0]);
   $('dRef').textContent = ref;
   $('dPlan').textContent = `${p.plan} · ${p.term} months · $${fmt(p.instalment)} a month · ${p.payMethod}`;
-  $('dIc').textContent = sent ? '✓' : '→'; $('dIc').classList.toggle('wait', !sent);
+  $('dIc').innerHTML = ICON(sent ? 'check' : 'mail'); $('dIc').classList.toggle('wait', !sent);
   $('dHead').textContent = sent ? 'Application received' : 'One more tap to send it';
   $('dLead').innerHTML = sent
     ? `Thank you, <b style="color:var(--text)">${first}</b>. We have your application${copy ? `, and a copy of your quote is on its way to <b style="color:var(--text)">${esc(p.email)}</b>` : ''}.`
@@ -833,19 +1024,13 @@ function resetAll(){
   $('ack').checked = false; $('consent').checked = false; S.ref = ''; backToQuote();
 }
 
-function heroViz(F, sc){
-  $('hvPrem').textContent = fmt(S.premium);
-  $('hvN').textContent = S.term;
-  const tiles = $('hvTiles'), want = sc.rows.length;
-  if (tiles.children.length !== want){
-    tiles.innerHTML = sc.rows.map((x,i) => `<div class="tile" style="animation-delay:${.15+i*.07}s"><b class="num"></b><small>Month ${x.m}</small></div>`).join('');
-  }
-  [...tiles.children].forEach((t,i) => t.querySelector('b').textContent = '$'+Math.round(sc.rows[i].pay).toLocaleString('en-US'));
-  const max = Math.max(...sc.rows.map(x=>x.interest)) || 1;
-  $('whyBars').innerHTML = sc.rows.map(x => `<div style="height:${Math.max(4, x.interest/max*100)}%" title="Month ${x.m}: $${fmt(x.interest)}"></div>`).join('');
-  const a = sc.rows[0], z = sc.rows[sc.rows.length-1];
-  $('whyLast').textContent = 'Month '+z.m;
-  $('whyLine').innerHTML = F > 0 ? `On your quote the interest starts at <b style="color:var(--herotext)">$${fmt(a.interest)}</b> in month 1 and falls to <b style="color:var(--herotext)">$${fmt(z.interest)}</b> in month ${z.m}.` : '';
+function heroCard(F, sc){
+  $('hcPlan').textContent = `${planName(S.term)} · ${S.term} months`;
+  $('hcPay').textContent = fmt(sc.pay); $('hcPrem').textContent = fmt(S.premium);
+  $('hcCost').textContent = fmt(sc.cost); $('hcTotal').textContent = fmt(sc.total);
+  const row = x => `<tr><td>${x.m}</td><td>${addMonths(new Date(),x.m).toLocaleDateString('en-GB',{month:'short',year:'2-digit'})}</td><td>$${fmt(x.pay)}</td><td>$${fmt(x.bal)}</td></tr>`;
+  const rows = sc.rows, show = rows.length > 5 ? [...rows.slice(0,3).map(row), '<tr class="more"><td colspan="4">···</td></tr>', row(rows[rows.length-1])] : rows.map(row);
+  $('hcRows').innerHTML = show.join('');
 }
 
 /* start: a premium in the address (?p=4500&t=6) opens on that quote */
@@ -853,7 +1038,7 @@ function heroViz(F, sc){
   const q = new URLSearchParams(location.search), p = parseFloat(q.get('p')), t = parseInt(q.get('t'));
   if (p > 0) $('premium').value = p;
   if (CONFIG.TERMS.some(x=>x.n===t)) S.term = t;
-  $('footMail').href = 'mailto:'+CONFIG.CONTACT_EMAIL; $('footMail').textContent = CONFIG.CONTACT_EMAIL;
+  ['footMail','footMail2'].forEach(id => { $(id).href = 'mailto:'+CONFIG.CONTACT_EMAIL; $(id).textContent = CONFIG.CONTACT_EMAIL; });
   renderPlans(); calc();
 })();
 </script>
