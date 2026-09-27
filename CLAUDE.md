@@ -1378,21 +1378,29 @@ voice under the new timing and the caption gives it away.
   Do not "correct" one into the other.
 - **Premium Bridge is a third mark, on purpose.** `premium-finance/` is the
   premium financing company's own site, not a branch screen: its own mark
-  (`premium-finance/logo.svg`, a five-piece arch bridge in teal over a deck,
-  an amber dot crossing; `logo.png` is the hosted copy for e-mail), its own
-  palette (ink `#0E1B2C`, teal `#10A58E` / `#0A7564`, mint `#8BE8D2`, amber
-  `#F5A524`, paper `#F6F2E9`) and Plus Jakarta Sans. Asked for on 27
-  September 2026: "a new logo and design — it's a premium finance company,
-  financing insurance premiums". The gold-shield rule does not apply inside
+  (`premium-finance/logo.svg`, a five-piece arch bridge over a deck, a dot
+  part-way across; `logo.png` is the hosted copy for e-mail), its own
+  palette and Plus Jakarta Sans. Asked for on 27 September 2026: "a new
+  logo and design — it's a premium finance company, financing insurance
+  premiums". **The live theme is Trust Blue**, chosen the same day from the
+  seven on `themes.html` ("Trust blue"): ink `#0B1A26` / `#08131C`, blue
+  `#0E7490` for buttons and the wordmark, sky `#38BDF8` / `#7DD3FC` for the
+  mark and highlights, amber `#F59E0B`, paper `#F4F8FB`. The mark files are
+  drawn by `tools/premium-bridge/build-mark.py <theme>` then
+  `node tools/premium-bridge/render-mark.js` (the PNG); run both after any
+  change of THEME, since only the inline mark on the page follows the
+  theme by itself. The gold-shield rule does not apply inside
   that folder, and the shield must not be put back there; the folder is
   self-contained so it can move to its own domain whole. Its backend is
   `apps-script/PremiumFinance.gs`, its own Apps Script project (it has its
   own doGet/doPost). Seven colour themes are built into the page (harbour,
   midnight, trust, emerald, forest, coral, indigo), previewed side by side on
   `premium-finance/themes.html`; `THEME` in the page's first script is the
-  live one and `?theme=` previews another. When one is chosen, redraw
-  `logo.svg`, `favicon.svg` and `logo.png` in its colours, since those files
-  (the favicon and the e-mail logo) do not follow the theme. The page's
+  live one and `?theme=` previews another; the `:root` token block must be
+  the live theme's, so the page is right before the script runs and in
+  print. Changing the theme means: THEME, the `:root` block, `theme-color`,
+  the mark files (above), and the header and wordmark colours in
+  `PremiumFinance.gs`. The page's
   `CONFIG` holds the rate, terms, lender name
   and contact address; the contact is support@rickyrampersadbranch.com
   until the company has its own mailbox.

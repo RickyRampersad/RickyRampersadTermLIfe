@@ -123,7 +123,7 @@ function pfSheet_() {
     sh = ss.insertSheet(PF.TAB);
     sh.appendRow(PF_COLS);
     sh.setFrozenRows(1);
-    sh.getRange(1, 1, 1, PF_COLS.length).setFontWeight('bold').setBackground('#0E1B2C').setFontColor('#8BE8D2');
+    sh.getRange(1, 1, 1, PF_COLS.length).setFontWeight('bold').setBackground('#08131C').setFontColor('#7DD3FC');
   }
   return sh;
 }
@@ -181,7 +181,7 @@ function pfMailClient_(ref, p, c) {
   var first = String(p.name).trim().split(/\s+/)[0];
   var html = '<div style="font-family:Arial,sans-serif;font-size:15px;color:#1d2530;max-width:560px">' +
     '<table cellpadding="0" cellspacing="0"><tr><td><img src="' + PF.LOGO + '" width="44" height="44" alt="" style="display:block;border-radius:11px"></td>' +
-    '<td style="padding-left:10px;font-size:20px;font-weight:800;color:#0E1B2C">Premium<span style="color:#0A7564">Bridge</span></td></tr></table>' +
+    '<td style="padding-left:10px;font-size:20px;font-weight:800;color:#0B1A26">Premium<span style="color:#0E7490">Bridge</span></td></tr></table>' +
     '<p>Thank you, ' + pfEsc_(first) + '. We have your premium financing application.</p>' +
     '<p style="font-size:18px"><b>Ref ' + pfEsc_(ref) + '</b></p>' +
     '<p>' + pfEsc_(p.plan) + ': ' + c.term + ' monthly instalments of <b>' + pfMoney_(c.instalment) + '</b> on a premium of ' +
