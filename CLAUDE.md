@@ -1213,12 +1213,14 @@ voice under the new timing and the caption gives it away.
   `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
   `client_mail_hold` script property that `transitionHoldClientMail` and
   `transitionReleaseClientMail` set (menu items after a Service.gs paste; the
-  editor's Run button until then). While held, nothing automatic goes to a
-  client: the batch (letters, and the reminder pass inside it) stops before
-  the sender, a press by hand included, and logs `held`; the receipts leave
-  every answer unmarked, to be thanked after the go if it is under fourteen
-  days old; the chase still tells the branch and keeps the client's note due.
-  Nothing is marked, so the go picks everything up. Not held: the Test rows
+  editor's Run button until then). While held, the batch (letters, and the
+  reminder pass inside it) stops before the sender, a press by hand included,
+  and logs `held`; the chase still tells the branch and keeps the client's
+  note due. Nothing is marked, so the go picks everything up. **Receipts are
+  not held**, decided the same morning ("if they answer on an old one, one
+  going out is ok and logged"): a client who answers a letter already sent
+  is thanked as usual; `HOLD_RECEIPTS` true would hold those too, thanked
+  after the go if under fourteen days old. Also not held: the Test rows
   (colleagues), the preview to the owner, the digest and the reports, the
   inbox reader, the filing of e-mails taken by phone, and two e-mails from
   Service.gs's `clientMail_` through the deployed web app — the questionnaire
