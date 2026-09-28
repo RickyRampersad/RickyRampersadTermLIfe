@@ -3624,6 +3624,8 @@ function onOpen() {
     .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
     .addItem('Transition: send the receipts now', 'transitionReceipts')
     .addItem('Transition: release the e-mails taken by phone (the go)', 'transitionReleasePhoneEmails')
+    .addItem('Transition: hold all client e-mail', 'transitionHoldClientMail')
+    .addItem('Transition: release client e-mail (the go)', 'transitionReleaseClientMail')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
     .addToUi();
