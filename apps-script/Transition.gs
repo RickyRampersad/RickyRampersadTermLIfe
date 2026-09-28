@@ -723,6 +723,7 @@ function tInbox_() {
   if (!msgs.length) return out;
   var tokens = tTokenMap_(), byMail = {};
   Object.keys(tokens).forEach(function (t) {
+    if (tYes_(tokens[t].Test)) return;   // a Test row is a colleague standing in as a client: their everyday mail is not a reply (28 September)
     var m = tText_(tokens[t].Email).toLowerCase();
     if (m) byMail[m] = byMail[m] ? 'many' : t;                         // one client per address, or nobody
   });
@@ -1242,6 +1243,7 @@ function tChase_() {
     if (!token) continue;
     var isOpen = String(v[7] || '').trim().toLowerCase() === 'open';
     if (!tokens[token]) { if (isOpen) out.skipped++; continue; }     // not this campaign's token: never chased
+    if (tYes_(tokens[token].Test)) continue;                           // a colleague standing in as a client: never chased
     var g = groups[token];
     if (!g) { g = groups[token] = { row: tokens[token], all: [], open: [], did2: false }; order.push(token); }
     var note = String(v[10] || ''), page = String(v[5] || '');
