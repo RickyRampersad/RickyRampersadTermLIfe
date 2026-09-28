@@ -1397,6 +1397,37 @@ voice under the new timing and the caption gives it away.
   (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
   of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
   version, or every screen locks out.
+- **After a call, one press on the board marks the file and can write to the
+  client in the manager's name.** Asked for on 28 September 2026 ("a button
+  where I click so I can update the notes and let them know that I will
+  assign their agent as discussed and will review etc, to create the
+  experience"). An outcome button (Called, Met, No answer, Declined, Closed)
+  opens a panel, not a prompt: the outcome; a note for the file, stamped in
+  the Note cell as before and never seen by the client; and, with the branch
+  code only, "E-mail <first name> a note from you". There are four notes, in `T_NOTES` in
+  Transition.gs: I am matching you with your agent, I am looking into your
+  file myself, Thank you: all noted, and I tried to reach you. The manager
+  can add a line of his own, and the panel shows every word before it goes
+  (`tNotesForBoard_` hands the board the backend's words). It goes from
+  support@ through Graph, signed by the manager (`TRANSITION.MANAGER`), with
+  the branch copied and the confidentiality footer, and never through Gmail.
+  The client's rows are marked `[told d MMM · key]`, and the same note never
+  goes twice in a day. A row that bounced, is held for anything, or has no
+  e-mail gets no note. An e-mail taken by phone and waiting for the go may
+  get one (`tNoteBlock_`). The notes never give a date for the agent,
+  never mention anyone who left, and never advise. Only the manager's press
+  sends one, so the hold on automatic client e-mail does not stop it: the
+  press is his go for that one note.
+  **The Client Support calls Google Sheet is one-way.** It reads the
+  campaign sheet through IMPORTRANGE. Nothing typed on it reaches Client
+  Responses, the board, the reports or the chase: not the callers' Try,
+  Reached? and Outcome columns, and not the manager's "Called on" and
+  "Outcome". On the first day of calls (28 September) the callers typed
+  nine e-mails into the sheet and recorded none on the page, so none could
+  reach a send row. `assign.html#t=<token>&s=<letter>` opens the board on
+  one client, and a HYPERLINK column on the sheet is how a row gets to its
+  outcome buttons. `svc/tell-harness.js` and `svc/assign-panel-test.js` in
+  the session scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

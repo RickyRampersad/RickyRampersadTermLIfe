@@ -84,6 +84,8 @@ var TRANSITION = {
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
           line: 'Ricky Rampersad Branch · Guardian Life of the Caribbean' },
+  /* who signs the note the board sends after a call (T_NOTES): the manager, in his own name */
+  MANAGER: { name: 'Ricky Rampersad', title: 'Branch Manager' },
 };
 
 /* The switch the send is behind. transitionGoLive sets it, transitionPause
@@ -2262,6 +2264,9 @@ function tBoard_(w, all) {
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
       answers: [], taps: [], notes: [], markers: [], needs: [], reach: '', when: '', rows: [], open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
+    /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
+    c.tellWhy = tNoteBlock_(r);
+    c.canTell = !c.tellWhy;
     byTok[tok] = c; order.push(tok);
   });
 
@@ -2365,7 +2370,8 @@ function tBoard_(w, all) {
   }
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
-           mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' } };
+           mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
+           notes: w.role === 'branch' ? tNotesForBoard_() : null };
 }
 
 /** GET action=assign&code=<branch>&tokens=a,b,c&agent=<name>[&brief=0][&intro=1][&note=…].
@@ -2435,10 +2441,13 @@ function transitionAssign_(p) {
   } finally { lock.releaseLock(); }
 }
 
-/** GET action=update&code=…[&who=…]&token=…&status=Called|Met|Declined|Closed|Open|No answer[&note=…].
+/** GET action=update&code=…[&who=…]&token=…&status=Called|Met|Declined|Closed|Open|No answer[&note=…][&tell=…&line=…].
  *  An outcome on every actionable row the client has (Status, and a stamped
  *  note); "No answer" stamps the note and leaves the row Open, so the chase
- *  still watches it. An agent may mark only a client named to them. */
+ *  still watches it. An agent may mark only a client named to them. With
+ *  `tell` (the branch code only), the client is also sent the manager's note
+ *  of that name from T_NOTES, with `line` as a sentence of his own: `note` is
+ *  the file's and never reaches the client. */
 function transitionUpdate_(p) {
   p = p || {};
   var w = tWho_(p.code, p.who);
@@ -2448,16 +2457,22 @@ function transitionUpdate_(p) {
   T_STATUSES.forEach(function (s) { if (s.toLowerCase() === status.toLowerCase()) known = s; });
   if (!tok || (!known && !noAnswer)) return { ok: false, error: 'Choose a client and an outcome.' };
   var extra = String(p.note || '').replace(/[\[\]<>]/g, '').trim().slice(0, 300);
+  var tell = String(p.tell || '').trim().toLowerCase();
+  var line = String(p.line || '').replace(/<[^>]*>/g, '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
+  /* both refusals come before anything is written, so a refused note never leaves half an update behind */
+  if (tell && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
+  if (tell && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can e-mail a client from the board.' };
   var who = w.role === 'branch' ? 'branch' : w.me.name;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
   try {
     var sh = ss_().getSheetByName(SVC.RESP_SHEET), last = sh ? sh.getLastRow() : 0;
     if (!sh || last < 2) return { ok: false, error: 'No responses yet.' };
-    var vals = sh.getRange(2, 1, last - 1, 11).getValues(), any = [], targets = [], assignedTo = '';
+    var vals = sh.getRange(2, 1, last - 1, 11).getValues(), any = [], targets = [], assignedTo = '', notes = '';
     vals.forEach(function (v, i) {
       if (String(v[1] || '').trim() !== tok) return;
       any.push(i + 2);
+      notes += ' ' + String(v[10] || '');
       if (String(v[3] || '').trim() !== 'informed') targets.push(i + 2);
       if (String(v[8] || '').trim()) assignedTo = String(v[8]).trim();
     });
@@ -2471,9 +2486,111 @@ function transitionUpdate_(p) {
       var cell = sh.getRange(rn, 11), note = String(cell.getValue() || '');
       cell.setValue((note ? note + ' ' : '') + marker);
     });
-    log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's'));
-    return { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
+    /* the outcome is on the rows whatever happens to the note: a note that cannot go says why, and nothing is marked sent */
+    var told = null, toldMark = '[told ' + stamp + ' · ' + tell + ']';
+    if (tell) {
+      told = notes.indexOf(toldMark) >= 0 ? { sent: false, why: 'that note already went to them today' }
+        : tTellClient_(tok, tell, noAnswer ? 'No answer' : known, line);
+      if (told.sent) {
+        var first = sh.getRange(targets[0], 11), had = String(first.getValue() || '');
+        first.setValue((had ? had + ' ' : '') + toldMark);
+      }
+    }
+    log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's') +
+         (told ? (told.sent ? ' · note "' + tell + '" e-mailed' : ' · note "' + tell + '" not sent: ' + told.why) : ''));
+    var out = { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
+    if (told) { out.told = told.sent; if (told.sent) out.toldTo = told.to; else out.warning = 'The note did not go: ' + told.why + '.'; }
+    return out;
   } finally { lock.releaseLock(); }
+}
+
+/* ── the manager's own note to the client, sent from the board ────────── */
+/* 28 September 2026: "a button where I click so I can update the notes and let
+   them know that I will assign their agent as discussed and will review etc,
+   to create the experience". Marking a call on the board (transitionUpdate_)
+   can send the client one of these notes, in the manager's own name, with a
+   line of his own if he adds one. It goes from support@ with the branch copied
+   and the confidentiality footer, like every client e-mail, and never through
+   Gmail. The notes never give a date for the agent (24 September: the client is
+   matched to the agent who fits, and nothing says when), never mention anyone
+   who left, and never give advice. Only the manager's click sends one, so the
+   hold on automatic client e-mail (HOLD_CLIENT_MAIL) does not stop it: the
+   click is his go for that one note. The board shows the words before he
+   sends, from tNotesForBoard_, so what he reads is what the client gets. */
+var T_NOTES = {
+  agent:  { label: 'I am matching you with your agent', subject: 'Following our {{what}} today',
+            body: 'As we discussed, I am matching you with the agent on our branch team who best fits your file, and I will introduce them to you in writing. Until then, our branch team looks after your policy.' },
+  review: { label: 'I am looking into your file myself', subject: 'Following our {{what}} today',
+            body: 'As we discussed, I am looking into your file myself, and I will come back to you with what I find. Nothing about your policy changes in the meantime.' },
+  noted:  { label: 'Thank you: all noted', subject: 'Thank you for your time today',
+            body: 'Everything you told me is noted on your file. Nothing about your policy changes, and our branch team keeps looking after it.' },
+  missed: { label: 'I tried to reach you', subject: 'I tried to reach you today',
+            body: 'I tried to reach you today about your answers to our letter. When is a good time for a call? Reply to this e-mail with a day and a time, or call the branch on {{phone}}.' }
+};
+/* the first line follows what happened on the call; the "missed" note has none, and no closing line either */
+var T_NOTE_THANKS = { Called: 'Thank you for speaking with me today.', Met: 'Thank you for meeting with me today.', _: 'Thank you for your time today.' };
+var T_NOTE_CLOSE = 'If anything comes up, reply to this e-mail and it reaches us directly.';
+
+function tBranchPhone_() { return (typeof SVC !== 'undefined' && SVC.AGENT_PHONE) || '(868) 678-5921'; }
+function tNoteSign_() {
+  var m = TRANSITION.MANAGER || {};
+  return { name: m.name || 'Ricky Rampersad', title: (m.title || 'Branch Manager') + ' · Ricky Rampersad Branch', line: 'Guardian Life of the Caribbean' };
+}
+
+/** Why the manager's note cannot go to this Transition Send row, or '' when
+ *  it can: an e-mail that looks like one, and a row not held. An e-mail taken
+ *  by phone waits on the row for the branch's go, and is the client's own,
+ *  spelled back on the call, so the manager's click may use it; anything else
+ *  in Exclude (a bounce, a check, a household, a claim) stops the note. */
+function tNoteBlock_(row) {
+  if (!row) return 'not on the send list';
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(tText_(row.Email))) return 'no e-mail on file';
+  var ex = tHeld_(row.Exclude) ? (tText_(row.Exclude) || 'held') : '';
+  if (ex && !/^hold: e-mail by phone/i.test(ex)) return 'the send row is held (' + ex + ')';
+  return '';
+}
+
+/** The note's words in order: subject, then the paragraphs between "Dear …" and the signature. */
+function tNoteParts_(key, status, line) {
+  var n = T_NOTES[key], paras = [];
+  if (key !== 'missed') paras.push(T_NOTE_THANKS[status] || T_NOTE_THANKS._);
+  paras.push(n.body.replace('{{phone}}', tBranchPhone_()));
+  if (line) paras.push(line);
+  if (key !== 'missed') paras.push(T_NOTE_CLOSE);
+  return { subject: n.subject.replace('{{what}}', status === 'Met' ? 'meeting' : 'call'), paras: paras };
+}
+
+/** What the board needs to offer the notes and show them word for word before they go. */
+function tNotesForBoard_() {
+  return { ready: !!tMsCreds_(), thanks: T_NOTE_THANKS, close: T_NOTE_CLOSE, sign: tNoteSign_(),
+    list: Object.keys(T_NOTES).map(function (k) {
+      var n = T_NOTES[k];
+      return { key: k, label: n.label, subject: n.subject, body: n.body.replace('{{phone}}', tBranchPhone_()) };
+    }) };
+}
+
+function tNoteHtml_(first, parts, rc) {
+  var esc = tEsc_, s = tNoteSign_();
+  return '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
+    '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + esc(first) + ',</p>' +
+    parts.paras.map(function (x) { return '<p style="margin:0 0 12px">' + esc(x) + '</p>'; }).join('') +
+    '<p style="margin:16px 0 0"><b style="display:block">' + esc(s.name) + '</b>' + esc(s.title) + '<br>' + esc(s.line) + '</p>' +
+    tLegal_(rc) + '</div></div>';
+}
+
+/** Sends the note to the client on the Transition Send row for this token.
+ *  { sent: true, to } or { sent: false, why }; never throws. */
+function tTellClient_(tok, key, status, line) {
+  var row = null;
+  try { tRead_().rows.forEach(function (r) { if (!row && tText_(r.Token) === tok) row = r; }); }
+  catch (e) { return { sent: false, why: 'the send list could not be read (' + String(e && e.message ? e.message : e).slice(0, 120) + ')' }; }
+  var why = tNoteBlock_(row);
+  if (why) return { sent: false, why: why };
+  if (!tMsCreds_()) return { sent: false, why: 'Microsoft 365 sending is not set up (MS_TENANT, MS_CLIENT and MS_SECRET)' };
+  var to = tText_(row.Email), parts = tNoteParts_(key, status, line);
+  try { tMsSend_(to, parts.subject, tNoteHtml_(tText_(row['First name']) || 'there', parts, tReceipt_()), tClientOpts_()); }
+  catch (e) { return { sent: false, why: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  return { sent: true, to: to };
 }
 
 /** One internal e-mail to the agent for the batch: every client named to
