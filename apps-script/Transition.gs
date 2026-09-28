@@ -72,6 +72,7 @@ var TRANSITION = {
   WAIT_URGENT: 1,            // the branch's own target for an urgent tap; the client is promised no timeline (24 September)
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most "still on it" notes one chase run sends, whatever the backlog — see tChase_
+  HOLD_CLIENT_MAIL: true,    // 28 September: nothing automatic goes to a client until the manager says so — transitionReleaseClientMail is the go
   RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
@@ -87,6 +88,7 @@ var TRANSITION = {
 /* The switch the send is behind. transitionGoLive sets it, transitionPause
    clears it; until it is set the trigger runs and sends nothing. */
 var T_LIVE = 'transition_live';
+var T_HOLD = 'client_mail_hold';   // 'on' or 'off' once pressed; unset, HOLD_CLIENT_MAIL decides
 
 var T_HEADERS = ['Token', 'Segment', 'First name', 'Email', 'Agent first name', 'Client', 'Agent',
   'Client number', 'first_year', 'years', 'issue_date', 'paid_to', 'days', 'projected_lapse',
@@ -816,6 +818,32 @@ function transitionReceipts() {
  *  letter already sent is left alone. A row held for anything else (an agent, a household, staff, a claim, a check,
  *  nothing held) is never touched. Every row read is marked [filed…] in its Note cell, appended, never re-read. */
 var T_PHONE_HOLD = 'hold: e-mail by phone';
+
+/** Client e-mail on hold, the manager's word on 28 September 2026: "hold any emails going to clients until
+ *  I say so". While it is on, nothing automatic goes to a client — no letter and no reminder (the batch
+ *  stops before it touches a row), no receipt (every answer stays unthanked and is thanked after the go,
+ *  if it is under fourteen days old), no "still on it" note (it stays due). Nothing is lost and nothing is
+ *  marked. What is not a client still goes: the Test rows (colleagues), the preview to the owner, the
+ *  digest and the reports. Reading replies and filing e-mails taken by phone go on as before. */
+function tClientMailHeld_() {
+  var p = '';
+  try { p = String(PropertiesService.getScriptProperties().getProperty(T_HOLD) || ''); } catch (e) {}
+  if (p === 'on') return true;
+  if (p === 'off') return false;
+  return TRANSITION.HOLD_CLIENT_MAIL === true;
+}
+/** The go: letters, reminders, receipts and notes resume on their next runs. */
+function transitionReleaseClientMail() {
+  PropertiesService.getScriptProperties().setProperty(T_HOLD, 'off');
+  log_('transition', 'client-mail', 'released: letters, reminders, receipts and notes resume');
+  return tSay_('Client e-mail released: letters, reminders, receipts and "still on it" notes go on their next runs.');
+}
+/** Hold again, whatever HOLD_CLIENT_MAIL says. */
+function transitionHoldClientMail() {
+  PropertiesService.getScriptProperties().setProperty(T_HOLD, 'on');
+  log_('transition', 'client-mail', 'on hold: nothing automatic goes to a client until transitionReleaseClientMail');
+  return tSay_('Client e-mail on hold: no letters, reminders, receipts or notes go to a client until you release it.');
+}
 function tFilePhoneEmails_() {
   var out = { filed: 0, same: 0, left: 0 };
   var rs, last;
@@ -922,6 +950,7 @@ function tReceipts_() {
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
+  if (tClientMailHeld_()) { out.waiting = order.length; return out; }   // on hold: thanked after the go, if under fourteen days old
   var rc = tReceipt_();
   if (!rc || !rc.json.recap) { log_('transition', 'receipts-held', order.length + ' waiting: receipt.json on the site is missing or old, rebuild the letters'); return out; }
   if (!tMsCreds_()) { log_('transition', 'receipts-held', order.length + ' waiting: ' + T_MS_MISSING); return out; }
@@ -1254,7 +1283,7 @@ function tChase_() {
     if (note.indexOf('[chase2]') >= 0) g.did2 = true;               // the client's note goes once, ever
     if (isOpen && x.received) g.open.push(x);
   }
-  var rc, late = [], budget = TRANSITION.CHASE_MAX_PER_RUN;
+  var rc, late = [], budget = TRANSITION.CHASE_MAX_PER_RUN, hold = tClientMailHeld_();
   var mark = function (x, add) {
     if (x.note.indexOf(add.split(' ')[0]) >= 0) return;
     x.note = (x.note ? x.note + ' ' : '') + add;
@@ -1273,6 +1302,7 @@ function tChase_() {
     });
     due2 = due2 && !g.did2;
     if (due2 && budget <= 0) { out.deferred++; due2 = false; }       // over the cap: the note waits for the next run
+    if (due2 && hold) { out.deferred++; due2 = false; }              // client e-mail on hold: the note stays due
     if (!due1.length && !due2) continue;
     var held = '';
     if (due2) {
@@ -1327,6 +1357,10 @@ function tSendBatch_(force) {
     if (PropertiesService.getScriptProperties().getProperty(T_LIVE) !== 'yes') {
       return tSay_('not live — Transition: go live when the test rows have been checked');
     }
+  }
+  if (tClientMailHeld_()) {                                   // the manager's hold: before any row is touched, a press by hand included
+    log_('transition', 'held', 'client e-mail on hold: no letters or reminders sent');
+    return tSay_('Client e-mail is on hold: no letters or reminders sent. The go is transitionReleaseClientMail.');
   }
   /* the sender before the tab: Microsoft 365 set up and answering, or no row
      is touched — a refused sign-in never marks sixty rows 'error' */

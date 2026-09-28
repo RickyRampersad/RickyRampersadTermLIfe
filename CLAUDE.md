@@ -1208,6 +1208,24 @@ voice under the new timing and the caption gives it away.
   cannot use (no e-mail, no first name, no letter for its segment) is moved
   to Exclude with the reason. The page and the digest show a red banner while
   the send is off, and the last runs with their reasons.
+- **Automatic client e-mail is on hold until the manager's go** (28
+  September 2026: "hold any emails going to clients until I say so").
+  `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
+  `client_mail_hold` script property that `transitionHoldClientMail` and
+  `transitionReleaseClientMail` set (menu items after a Service.gs paste; the
+  editor's Run button until then). While held, nothing automatic goes to a
+  client: the batch (letters, and the reminder pass inside it) stops before
+  the sender, a press by hand included, and logs `held`; the receipts leave
+  every answer unmarked, to be thanked after the go if it is under fourteen
+  days old; the chase still tells the branch and keeps the client's note due.
+  Nothing is marked, so the go picks everything up. Not held: the Test rows
+  (colleagues), the preview to the owner, the digest and the reports, the
+  inbox reader, the filing of e-mails taken by phone, and two e-mails from
+  Service.gs's `clientMail_` through the deployed web app — the questionnaire
+  confirmation, because the reference and access code must reach a client
+  who has just filed, and the board's introduction, which goes only when the
+  manager assigns with the box ticked. `health/hold-harness.js` in the
+  session scratchpad runs the hold in Node.
 - **Every client e-mail goes out as support@rickyrampersadbranch.com,
   never from Gmail.** Decided 23 September: "we need to have
   support@rickyrampersadbranch.com and copy" the sales-support and branch
