@@ -802,7 +802,11 @@ voice under the new timing and the caption gives it away.
   the page files a tap (`Page` = `/reply?q=…`, `Referrer` = `reply <message
   id>`, which is how a message is never filed twice), matches a reply with
   no reference to the client by its sender address and files it as a
-  `question` with `q=wrote`, and puts the client's own words in the Note
+  `question` with `q=wrote` — never by a staff Test row's address, which is
+  matched only through a reference (28 September 2026: a colleague standing
+  in as a client sends everyday work mail that reaches support@, and her
+  e-mails about other clients' renewals were being filed as her "replies",
+  with receipts) — and puts the client's own words in the Note
   cell (`tWords_` strips the pre-written lines in `receipt.json`
   `reply.lines` and anything quoted beneath); the receipt quotes those
   words back. So a client who simply replies to a letter is captured with
@@ -1291,7 +1295,8 @@ voice under the new timing and the caption gives it away.
   look automated (`tLooksAutomated_`, the same test the receipts use: the
   client who wrote on 26 September that she had sent none of her answers
   would otherwise have been told the branch was still on them).
-  `CHASE_MAX_PER_RUN` bounds the notes a run sends.
+  `CHASE_MAX_PER_RUN` bounds the notes a run sends. A staff Test row is
+  never chased.
   `health/chase-harness.js` in the session scratchpad runs it in Node on
   made-up rows, and `chase/sim.js` on a copy of the live sheet.
 - **The chase only ever acts on a token this campaign's own Transition Send
