@@ -1269,15 +1269,31 @@ voice under the new timing and the caption gives it away.
   a client taps, `tAckClient_` (Transition.gs) e-mails them a short
   thank-you naming what happens next, CC'd to `TRANSITION.CC` — asked for
   on 22 September ("are responses coming in
-  and I am to be copied"). `tChase_`, run once a day from `transitionDigest`
+  and I am to be copied"). `tChase_`, run from `transitionDigest`
   (never from `tSummary_`, which the responses page polls every two
-  minutes, so a chase can never double-fire), nudges the branch internally
-  once a tap has been `Open` past its wait (`WAIT_DAYS`, or `WAIT_URGENT`
-  for the urgent tap), and — still open at `WAIT × CHASE_MULT` — sends the
-  client a warm "still on it" note and the branch a second, plainer nudge.
+  minutes, so a chase can never double-fire), tells the branch once a
+  client's answers have been `Open` past the wait (`WAIT_DAYS`, or
+  `WAIT_URGENT` for the urgent tap), and — still open at
+  `WAIT × CHASE_MULT` — sends the client a warm "still on it" note.
   Both stop the moment Status reads anything other than `Open`; the level
-  already sent is recorded in that row's own Note cell, appended rather
+  already sent is recorded in each row's own Note cell, appended rather
   than overwritten, so a human note there survives.
+  **One client, one chase** (28 September 2026). Since the quick checks,
+  every answer is its own row, and the chase worked row by row: run on the
+  first weekend's answers it would have sent 103 clients the note, 54 of
+  them more than once and one fifteen times, and put some eighty "Late:"
+  e-mails a day in the manager's inbox. It now groups by token: one
+  internal e-mail a run listing every client newly late (`tChaseSummary_`),
+  and one note per client, ever, whichever row carries `[chase2]`. The
+  note is never sent, and the rows are marked `[chase2] held: <why>`, when
+  the send row has anything in Exclude (bounced, an e-mail taken by phone
+  awaiting the go, a check), when there is no e-mail, or when the answers
+  look automated (`tLooksAutomated_`, the same test the receipts use: the
+  client who wrote on 26 September that she had sent none of her answers
+  would otherwise have been told the branch was still on them).
+  `CHASE_MAX_PER_RUN` bounds the notes a run sends.
+  `health/chase-harness.js` in the session scratchpad runs it in Node on
+  made-up rows, and `chase/sim.js` on a copy of the live sheet.
 - **The chase only ever acts on a token this campaign's own Transition Send
   tab recognises.** Client Responses has recorded taps from the site's
   original doors since before this campaign — months of rows that still
@@ -1292,7 +1308,7 @@ voice under the new timing and the caption gives it away.
   token is not on it is passed over in silence, and `CHASE_MAX_PER_RUN`
   bounds how much a single run will act on regardless, logging what was
   deferred. Never widen the chase back to "every `Open` row" — that is the
-  exact bug.
+  exact bug — and never back to one chase per row, which is the other.
 - **What comes back is watched on `orphan-transition/responses.html`**
   (opens with the branch code, like the wall; `action=transition`) and in
   the digest from `transitionDigest`, which fires as many times a day as

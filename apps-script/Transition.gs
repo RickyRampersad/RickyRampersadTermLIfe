@@ -71,7 +71,7 @@ var TRANSITION = {
   WAIT_DAYS: 2,              // a tap older than this, still unassigned, is late
   WAIT_URGENT: 1,            // the branch's own target for an urgent tap; the client is promised no timeline (24 September)
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
-  CHASE_MAX_PER_RUN: 40,     // the most one chase run will act on, whatever the backlog — see tChase_
+  CHASE_MAX_PER_RUN: 40,     // the most "still on it" notes one chase run sends, whatever the backlog — see tChase_
   RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
@@ -1144,19 +1144,28 @@ function tTokenMap_() {
   return map;
 }
 
-/** An internal nudge, to the branch (never to the client): what is late, who
- *  it was with, and what it needs. `level` 2 is the second, plainer chase.
- *  Takes the row already looked up — never looks it up itself. */
-function tChaseInternal_(row, r, needs, days, level) {
-  row = row || {};
-  var who = tText_(row.Client) || tText_(row['First name']) || 'a client';
+/** One internal e-mail a run, to the branch (never to a client): every client
+ *  newly past the branch's own target, and every one reaching the second level,
+ *  with what each is still waiting on, who they were with, and whether the
+ *  client was sent the "still on it" note or why not. Until 28 September this
+ *  was one e-mail per open answer; since the quick checks (one row per answer,
+ *  several per client) that would have been some eighty a day in one inbox. */
+function tChaseSummary_(late) {
+  if (!late.length) return;
   var to = TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
-  var subj = (level >= 2 ? 'Still late: ' : 'Late: ') + who + ' — ' + r + ', ' + days + ' working days';
-  var body = who + ' tapped "' + r + '" ' + days + ' working days ago and is still marked Open.\n\n' +
-    'Needs: ' + needs + '\n' + (row.Agent ? 'Was with: ' + tText_(row.Agent) + '\n' : '') +
-    (row.Segment ? 'Letter: ' + tText_(row.Segment) + '\n' : '') +
-    '\nAssign it on the Client Responses tab, or type anything other than "Open" into Status once it is resolved.\n' +
-    'https://rickyrampersadbranch.com/orphan-transition/responses.html\n\n' + T_INTERNAL;
+  var second = late.filter(function (x) { return x.level >= 2; }).length;
+  var subj = 'Late: ' + tN_(late.length, 'client', 'clients') + ' past the branch\'s own target' +
+    (second ? ' (' + second + ' for the second time)' : '');
+  var lines = late.map(function (x) {
+    var row = x.row || {};
+    return '- ' + (tText_(row.Client) || tText_(row['First name']) || 'a client') + ' · letter ' + (tText_(row.Segment) || '?') +
+      (row.Agent ? ' · was with ' + tText_(row.Agent) : '') + ' · ' + tN_(x.days, 'working day', 'working days') + ' · ' + x.items.join(', ') +
+      (x.level >= 2 ? (x.held ? ' · no note to the client: ' + x.held : ' · the client was sent the "still on it" note') : '');
+  });
+  var body = 'Still marked Open on Client Responses, past the branch\'s own target:\n\n' + lines.join('\n') +
+    '\n\nMark each one on the assignment board (Called, Met, Declined, Closed), or type anything other than "Open" into ' +
+    'Status on Client Responses once it is resolved: that stops the chase for that client.\n' +
+    'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
 }
 
@@ -1185,75 +1194,113 @@ function tChaseClient_(row, r, needs) {
   catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); }
 }
 
-/** Chases what a client is still waiting on. Run once a day, from the
- *  digest — not from tSummary_, which the responses page polls every two
- *  minutes, so a chase is never fired twice by a page left open.
+/** Chases what a client is still waiting on. Run from the digest — not from
+ *  tSummary_, which the responses page polls every two minutes, so a chase is
+ *  never fired twice by a page left open.
  *
  *  Client Responses has been recording taps since before this campaign —
  *  the site's original assign/review/question doors, going back months —
  *  and every one of those old rows still reads "Open" because nothing
- *  before today ever looked at that column again. A chase that does not
- *  know the difference is a bug, not a feature: it would nudge the branch,
- *  and eventually reassure a client, about a conversation from months ago
- *  that a person already finished by hand. So the very first check on every
- *  row is whether its token is one this campaign's own Transition Send tab
- *  recognises; the token map is read once, not once per row. Anything else
- *  is passed over in silence — it was never this campaign's to chase.
+ *  before 22 September ever looked at that column again. So the very first
+ *  check on every row is whether its token is one this campaign's own
+ *  Transition Send tab recognises; the token map is read once, not once per
+ *  row. Anything else is passed over in silence — it was never this
+ *  campaign's to chase.
  *
- *  A tap open past WAIT gets one internal nudge; still open past
- *  WAIT × CHASE_MULT it gets a client reassurance and a second, plainer
- *  nudge. Stops the moment Status reads anything other than "Open" — how
- *  the branch marks a concern resolved. Each row is chased once per level:
- *  the level is recorded in its own Note cell, appended, never overwritten,
- *  so a human note already there survives.
+ *  One client, one chase (28 September): since the quick checks every answer
+ *  is its own row, so a client who ticked four things has four Open rows, and
+ *  the chase that worked row by row would have sent that client four "still
+ *  on it" notes and the branch four nudges; run on the first weekend's
+ *  answers it would have e-mailed 103 clients, 54 of them more than once,
+ *  one of them fifteen times, and put some eighty nudges a day in one inbox.
+ *  Now a client whose open answers are past WAIT goes on one internal list
+ *  (tChaseSummary_, one e-mail a run); still open at WAIT × CHASE_MULT, the
+ *  client gets one "still on it" note, once ever, whichever row carries the
+ *  mark. The note is never sent to an address the sheet holds (anything in
+ *  Exclude: bounced, an e-mail taken by phone awaiting the go, a check), to a
+ *  client with no e-mail, or when the answers look automated (the mail
+ *  scanner that ticked every box for a client who wrote in on 26 September
+ *  to say she had sent none of them): those are marked held, with the
+ *  reason, and listed for the branch instead.
  *
- *  CHASE_MAX_PER_RUN bounds the work whatever the backlog, so a large
- *  one-off pile of late taps is worked through over several runs rather
- *  than risking the six-minute execution ceiling — the exact failure a
- *  same-day incident (22 September) turned out to be caused by the very
- *  problem this function guards against above. */
+ *  Stops the moment Status reads anything other than "Open" — how the branch
+ *  marks a concern resolved, and what the assignment board writes. The level
+ *  is recorded in each row's own Note cell, appended, never overwritten, so a
+ *  human note already there survives. CHASE_MAX_PER_RUN bounds the client
+ *  notes one run sends, so a pile of late answers is worked through over
+ *  several runs rather than risking the six-minute ceiling. */
 function tChase_() {
-  var out = { chase1: 0, chase2: 0, skipped: 0, deferred: 0 };
+  var out = { chase1: 0, chase2: 0, held: 0, skipped: 0, deferred: 0 };
   var sh, last;
   try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
   if (!sh || last < 2) return out;
   var vals;
   try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
-  var tokens = tTokenMap_();
-  var now = new Date();
-  var budget = TRANSITION.CHASE_MAX_PER_RUN;
+  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [];
   for (var i = 0; i < vals.length; i++) {
-    var v = vals[i], rowNum = i + 2;
-    var received = v[0] instanceof Date ? v[0] : null;
-    if (!received || String(v[7] || '').trim().toLowerCase() !== 'open') continue;
-    var token = String(v[1] || '').trim();
-    var row = tokens[token];
-    if (!row) { out.skipped++; continue; }               // not this campaign's token: never chased
-    if (budget <= 0) { out.deferred++; continue; }        // over the cap: left for the next run
-    var r = String(v[3] || '').trim(), needs = String(v[4] || '');
-    var note = String(v[10] || '');
-    var wait = r === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS;
-    var days = tWorkingDays_(received, now);
-    var did1 = note.indexOf('[chase1]') >= 0, did2 = note.indexOf('[chase2]') >= 0;
-    if (did1 && did2) continue;
-    if (days < wait) continue;
-    var newNote = note;
-    try {
-      if (!did1) {
-        tChaseInternal_(row, r, needs, days, 1);
-        newNote += (newNote ? ' ' : '') + '[chase1]'; did1 = true; out.chase1++; budget--;
-      }
-      if (!did2 && budget > 0 && days >= wait * TRANSITION.CHASE_MULT) {
-        tChaseClient_(row, r, needs);
-        tChaseInternal_(row, r, needs, days, 2);
-        newNote += ' [chase2]'; out.chase2++; budget--;
-      }
-      if (newNote !== note) sh.getRange(rowNum, 11).setValue(newNote);
-    } catch (e) { log_('transition', 'chase-row-failed', String(e && e.message ? e.message : e)); }
+    var v = vals[i], token = String(v[1] || '').trim();
+    if (!token) continue;
+    var isOpen = String(v[7] || '').trim().toLowerCase() === 'open';
+    if (!tokens[token]) { if (isOpen) out.skipped++; continue; }     // not this campaign's token: never chased
+    var g = groups[token];
+    if (!g) { g = groups[token] = { row: tokens[token], all: [], open: [], did2: false }; order.push(token); }
+    var note = String(v[10] || ''), page = String(v[5] || '');
+    var x = { rowNum: i + 2, received: v[0] instanceof Date ? v[0] : null, r: String(v[3] || '').trim().toLowerCase(),
+              needs: String(v[4] || ''), q: tQOf_(page), note: note,
+              via: String(v[6] || '').indexOf('reply ') === 0, phone: page.indexOf('/your-policy/phone') === 0 };
+    g.all.push(x);
+    if (note.indexOf('[chase2]') >= 0) g.did2 = true;               // the client's note goes once, ever
+    if (isOpen && x.received) g.open.push(x);
   }
-  if (out.chase1 || out.chase2 || out.skipped || out.deferred) {
-    log_('transition', 'chase', out.chase1 + ' internal, ' + out.chase2 + ' client reassured, ' +
-      out.skipped + ' not this campaign, ' + out.deferred + ' left for the next run');
+  var rc, late = [], budget = TRANSITION.CHASE_MAX_PER_RUN;
+  var mark = function (x, add) {
+    if (x.note.indexOf(add.split(' ')[0]) >= 0) return;
+    x.note = (x.note ? x.note + ' ' : '') + add;
+    try { sh.getRange(x.rowNum, 11).setValue(x.note); } catch (e) {}
+  };
+  for (var k = 0; k < order.length; k++) {
+    var g = groups[order[k]];
+    if (!g.open.length) continue;
+    var due1 = [], due2 = false, days = 0;
+    g.open.forEach(function (x) {
+      var wait = x.r === 'urgent' ? TRANSITION.WAIT_URGENT : TRANSITION.WAIT_DAYS, d = tWorkingDays_(x.received, now);
+      if (d < wait) return;
+      days = Math.max(days, d);
+      if (x.note.indexOf('[chase1]') < 0) due1.push(x);
+      if (d >= wait * TRANSITION.CHASE_MULT) due2 = true;
+    });
+    due2 = due2 && !g.did2;
+    if (due2 && budget <= 0) { out.deferred++; due2 = false; }       // over the cap: the note waits for the next run
+    if (!due1.length && !due2) continue;
+    var held = '';
+    if (due2) {
+      if (rc === undefined) rc = tReceipt_() || null;
+      var to = tText_(g.row.Email);
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) held = 'no e-mail on file';
+      else if (tText_(g.row.Exclude)) held = 'the send row is held (' + tText_(g.row.Exclude).slice(0, 40) + ')';
+      else if (rc && tLooksAutomated_(rc, g.all)) held = 'the answers look automated';
+      else if (!tMsCreds_()) held = T_MS_MISSING;
+      if (!held) {
+        var top = g.open.slice().sort(function (a, b) {
+          return ((T_PRIORITY[b.q] || T_PRIORITY[b.r] || 0) - (T_PRIORITY[a.q] || T_PRIORITY[a.r] || 0)) || (a.received - b.received);
+        })[0];
+        try { tChaseClient_(g.row, top.r, top.needs); out.chase2++; budget--; }
+        catch (e) { held = 'the note failed (' + String(e && e.message ? e.message : e).slice(0, 60) + ')'; }
+      }
+      if (held) out.held++;
+      g.open.forEach(function (x) { mark(x, '[chase1]'); mark(x, held ? '[chase2] held: ' + held : '[chase2]'); });
+    } else {
+      due1.forEach(function (x) { mark(x, '[chase1]'); });
+      out.chase1++;
+    }
+    var items = [];
+    g.open.forEach(function (x) { var w = x.q || x.r; if (items.indexOf(w) < 0) items.push(w); });
+    late.push({ row: g.row, days: days, level: due2 ? 2 : 1, held: held, items: items });
+  }
+  tChaseSummary_(late);
+  if (late.length || out.skipped || out.deferred) {
+    log_('transition', 'chase', out.chase1 + ' late (branch told), ' + out.chase2 + ' clients sent the still-on-it note, ' +
+      out.held + ' held from the client, ' + out.skipped + ' not this campaign, ' + out.deferred + ' left for the next run');
   }
   return out;
 }
