@@ -73,6 +73,7 @@ var TRANSITION = {
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most "still on it" notes one chase run sends, whatever the backlog — see tChase_
   HOLD_CLIENT_MAIL: true,    // 28 September: nothing automatic goes to a client until the manager says so — transitionReleaseClientMail is the go
+  HOLD_RECEIPTS: false,      // but a client who answers a letter already sent is thanked as usual, hold or not (the manager, the same morning)
   RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
@@ -820,11 +821,12 @@ function transitionReceipts() {
 var T_PHONE_HOLD = 'hold: e-mail by phone';
 
 /** Client e-mail on hold, the manager's word on 28 September 2026: "hold any emails going to clients until
- *  I say so". While it is on, nothing automatic goes to a client — no letter and no reminder (the batch
- *  stops before it touches a row), no receipt (every answer stays unthanked and is thanked after the go,
- *  if it is under fourteen days old), no "still on it" note (it stays due). Nothing is lost and nothing is
- *  marked. What is not a client still goes: the Test rows (colleagues), the preview to the owner, the
- *  digest and the reports. Reading replies and filing e-mails taken by phone go on as before. */
+ *  I say so". While it is on, no letter and no reminder goes (the batch stops before it touches a row) and no
+ *  "still on it" note (it stays due). Nothing is lost and nothing is marked. The receipt is the exception,
+ *  decided the same morning: a client who answers a letter already sent is thanked as usual, and logged
+ *  ("if they answer on an old one, one going out is ok and logged"); HOLD_RECEIPTS true would hold those
+ *  too. What is not a client still goes: the Test rows (colleagues), the preview to the owner, the digest
+ *  and the reports. Reading replies and filing e-mails taken by phone go on as before. */
 function tClientMailHeld_() {
   var p = '';
   try { p = String(PropertiesService.getScriptProperties().getProperty(T_HOLD) || ''); } catch (e) {}
@@ -835,14 +837,14 @@ function tClientMailHeld_() {
 /** The go: letters, reminders, receipts and notes resume on their next runs. */
 function transitionReleaseClientMail() {
   PropertiesService.getScriptProperties().setProperty(T_HOLD, 'off');
-  log_('transition', 'client-mail', 'released: letters, reminders, receipts and notes resume');
-  return tSay_('Client e-mail released: letters, reminders, receipts and "still on it" notes go on their next runs.');
+  log_('transition', 'client-mail', 'released: letters, reminders and notes resume');
+  return tSay_('Client e-mail released: letters, reminders and "still on it" notes go on their next runs.');
 }
 /** Hold again, whatever HOLD_CLIENT_MAIL says. */
 function transitionHoldClientMail() {
   PropertiesService.getScriptProperties().setProperty(T_HOLD, 'on');
-  log_('transition', 'client-mail', 'on hold: nothing automatic goes to a client until transitionReleaseClientMail');
-  return tSay_('Client e-mail on hold: no letters, reminders, receipts or notes go to a client until you release it.');
+  log_('transition', 'client-mail', 'on hold: no letters, reminders or still-on-it notes until transitionReleaseClientMail; receipts still thank a client who answers');
+  return tSay_('Client e-mail on hold: no letters, reminders or "still on it" notes go until you release it. A client who answers a letter already sent is still thanked.');
 }
 function tFilePhoneEmails_() {
   var out = { filed: 0, same: 0, left: 0 };
@@ -950,7 +952,7 @@ function tReceipts_() {
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
-  if (tClientMailHeld_()) { out.waiting = order.length; return out; }   // on hold: thanked after the go, if under fourteen days old
+  if (TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_()) { out.waiting = order.length; return out; }   // receipts held too only when asked
   var rc = tReceipt_();
   if (!rc || !rc.json.recap) { log_('transition', 'receipts-held', order.length + ' waiting: receipt.json on the site is missing or old, rebuild the letters'); return out; }
   if (!tMsCreds_()) { log_('transition', 'receipts-held', order.length + ' waiting: ' + T_MS_MISSING); return out; }
