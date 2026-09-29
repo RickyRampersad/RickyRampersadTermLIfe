@@ -1428,6 +1428,36 @@ voice under the new timing and the caption gives it away.
   one client, and a HYPERLINK column on the sheet is how a row gets to its
   outcome buttons. `svc/tell-harness.js` and `svc/assign-panel-test.js` in
   the session scratchpad cover it.
+- **Households are numbered, and the board shows the family beside each
+  card.** Asked for on 29 September 2026 ("group by addresses … assign a
+  household number so we can see whom from the household responded"). The
+  **Households** tab (Token, Household, and live Answered columns) is built
+  in the session scratchpad by `hh/build-households.py`, with the
+  reassignment's own rule: the same address, the same phone or the same
+  e-mail. A key shared by more than six clients is an office, not a
+  family, and a departed agent's or a staff member's own contact details
+  never link anyone. It is imported into the campaign sheet as its own tab
+  (File → Import → Insert new sheet, formulas converted); client names
+  never enter the repository. `tHouseholds_` reads it. On the board, each
+  card shows "Family on our list": each member, whether they answered and
+  what mattered most, or where they stand (no e-mail, sharing an inbox and
+  so without a letter of their own, an e-mail waiting for the go, written
+  to with no answer yet). "Select the family" ticks every member, those off
+  the board included, so one Assign names them all. The agent gets one
+  brief, and the introductions go one per inbox, never to a held address.
+  "Family of someone who answered" lists the members still to reach. The
+  rule misses some families: on file, a husband's policy can carry a house
+  number and his wife's a light-pole number on the same street, as Fayad
+  Ali and Nadira Baksh-Ali's do. For those, the update panel's "A family
+  member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
+  branch code only) links the two. It gives them a new number, or joins
+  one household to the other, keeping the older number. **One letter per
+  inbox**: a family sharing one e-mail gets the first member's letter, and
+  the rest are held as `check: same e-mail as row N` (95 clients on 28
+  September). The sender holds them again on every run, so none has a
+  letter of their own until the manager decides how they should go.
+  `svc/household-harness.js` and `svc/assign-household-test.js` in the
+  session scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

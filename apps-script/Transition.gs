@@ -2181,6 +2181,91 @@ var T_PRIORITY = { urgent: 100, contact_yes: 95, approached_yes: 90, review_appr
   callme: 50, stay_talk: 50, rate_better: 50, life_changed: 45, question: 45, wrote: 45, assign: 45,
   pays_confirm: 40, walk_yes: 40, built_yes: 40, more_yes: 40, value_yes: 40 };
 
+/* ── households: the family on our list beside each card ──────────────── */
+/* 29 September 2026: "group by addresses … assign a household number so we can see whom from the household
+   responded". The Households tab (Token, Household, …) is built in the session scratchpad by the reassignment's own
+   rule (build-households.py: same address, same phone or same e-mail; a key more than six clients share is an office,
+   not a family; a departed agent's or a staff member's own contact details never link anyone) and imported into this
+   sheet. The board reads it so a card shows the family on our list and who of them has answered, the family can be
+   named to one agent in one press, and what a client tells us the rule missed is linked from the board
+   (transitionUpdate_ with family=, tLinkFamily_). Addresses on file differ in form (a house number on one policy, a
+   light-pole number on the spouse's), which is why the link exists at all. */
+var T_HH_SHEET = 'Households';
+function tHouseholds_() {
+  var out = {};
+  try {
+    var t = tSheetRows_(T_HH_SHEET), it = -1, ih = -1;
+    t.head.forEach(function (h, i) { var k = String(h).trim().toLowerCase(); if (k === 'token') it = i; if (k === 'household') ih = i; });
+    if (it < 0 || ih < 0) return out;
+    t.rows.forEach(function (v) { var tok = String(v[it] || '').trim(), hh = String(v[ih] || '').trim(); if (tok && hh) out[tok] = hh; });
+  } catch (e) {}
+  return out;
+}
+/** Where a family member who has not answered stands, from their own send row. */
+function tMemberState_(r) {
+  var ex = tText_(r.Exclude), sent = r['Sent at'];
+  if (/^no e-mail/i.test(ex)) return 'no e-mail';
+  if (/^check: same e-mail/i.test(ex)) return 'shares an inbox, no letter of their own';
+  if (ex === T_PHONE_HOLD) return 'e-mail taken by phone, waiting for the go';
+  if (/^bounced/i.test(ex)) return 'letter bounced';
+  if (ex) return 'held: ' + ex.slice(0, 40);
+  if (sent instanceof Date ? !isNaN(sent.getTime()) : tText_(sent)) return 'written to, no answer yet';
+  return 'not written to yet';
+}
+/** The one thing a client said that matters most, for the family line on a card. */
+function tSaid_(c) {
+  var best = null;
+  (c.answers || []).forEach(function (a) { var p = T_PRIORITY[a.code] || 0; if (!best || p > best.p) best = { p: p, t: a.a }; });
+  (c.taps || []).forEach(function (x) { var p = T_PRIORITY[x.tap] || 0; if (!best || p > best.p) best = { p: p, t: x.label }; });
+  return best ? best.t : (c.review ? 'filed a review' : '');
+}
+function tColLetter_(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
+/** Puts two clients in one household on the Households tab: the household either already has, or a new number.
+ *  Two households that turn out to be one keep the older number. Never throws; { ok, hh, name } or { ok: false, why }. */
+function tLinkFamily_(a, b) {
+  try {
+    var ra = tRowByToken_(a), rb = tRowByToken_(b);
+    if (!ra || !rb) return { ok: false, why: 'that family member is not on the send list' };
+    var sh = ss_().getSheetByName(T_HH_SHEET);
+    if (!sh) { sh = ss_().insertSheet(T_HH_SHEET); sh.appendRow(['Token', 'Household', 'Members', 'Client', 'Letter', 'Was with']); }
+    var last = sh.getLastRow(), lastCol = Math.max(6, sh.getLastColumn());
+    var vals = sh.getRange(1, 1, Math.max(1, last), lastCol).getValues();
+    var head = vals[0].map(function (h) { return String(h).trim().toLowerCase(); });
+    var it = head.indexOf('token'), ih = head.indexOf('household');
+    if (it < 0 || ih < 0) return { ok: false, why: 'the Households tab has no Token and Household columns' };
+    var hhA = '', hhB = '', max = 0, rowsOf = {};
+    for (var i = 1; i < vals.length; i++) {
+      var t = String(vals[i][it] || '').trim(), h = String(vals[i][ih] || '').trim(), n = parseInt(h.replace(/\D/g, ''), 10);
+      if (n > max) max = n;
+      if (t === a) hhA = h;
+      if (t === b) hhB = h;
+      if (h) (rowsOf[h] = rowsOf[h] || []).push(i + 1);
+    }
+    var hh = hhA || hhB || ('H' + ('000' + (max + 1)).slice(-4));
+    if (hhA && hhB && hhA !== hhB) {
+      /* two households that are one family: the older number stays, the other's rows take it */
+      var num = function (h) { return parseInt(String(h).replace(/\D/g, ''), 10) || 0; };
+      hh = num(hhA) <= num(hhB) ? hhA : hhB;
+      var drop = hh === hhA ? hhB : hhA;
+      (rowsOf[drop] || []).forEach(function (rn) { sh.getRange(rn, ih + 1).setValue(hh); });
+    }
+    [[a, ra, hhA], [b, rb, hhB]].forEach(function (x) {
+      if (x[2]) return;
+      var row = []; for (var k = 0; k < lastCol; k++) row.push('');
+      var put = function (name, v) { var j = head.indexOf(name); if (j >= 0) row[j] = v; };
+      row[it] = x[0]; row[ih] = hh;
+      put('client', tText_(x[1].Client) || tText_(x[1]['First name'])); put('letter', tText_(x[1].Segment)); put('was with', tText_(x[1].Agent));
+      sh.appendRow(row);
+      /* the tab's own live columns, when it carries them: has this client answered, and how many of the household have */
+      var rn = sh.getLastRow(), ja = head.indexOf('answered'), jh = head.indexOf('household answered');
+      var T = tColLetter_(it + 1), Hc = tColLetter_(ih + 1), A = tColLetter_(ja + 1);
+      if (ja >= 0) sh.getRange(rn, ja + 1).setFormula('=IF(COUNTIFS(\'Client Responses\'!$B:$B,$' + T + rn + ',\'Client Responses\'!$F:$F,"<>/your-policy/phone*")>0,"answered","")');
+      if (jh >= 0 && ja >= 0) sh.getRange(rn, jh + 1).setFormula('=COUNTIFS($' + Hc + ':$' + Hc + ',$' + Hc + rn + ',$' + A + ':$' + A + ',"answered")');
+    });
+    return { ok: true, hh: hh, name: tText_(rb.Client) || tText_(rb['First name']) };
+  } catch (e) { return { ok: false, why: String(e && e.message ? e.message : e).slice(0, 120) }; }
+}
+
 /** The roster off the Agent Skill Bank, with the columns the board needs.
  *  skillBank_ (Service.gs) reads the fixed columns; this also takes a Phone
  *  (or Mobile, WhatsApp, Cell) column and Areas covered if they are there,
@@ -2252,11 +2337,12 @@ function tBoard_(w, all) {
   Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { codeQ[a[2]] = { q: qdef[k][0], a: a[0], tap: a[1] }; }); });
   var tapWords = (rc && rc.json && rc.json.recap && rc.json.recap.taps) || {};
   var fmt = function (d, f) { return d instanceof Date && !isNaN(d.getTime()) ? Utilities.formatDate(d, tz, f || 'd MMM HH:mm') : ''; };
-  var byTok = {}, order = [], sentNoAnswer = 0;
+  var byTok = {}, order = [], sentNoAnswer = 0, sendBy = {};
   t.rows.forEach(function (r) {
     var tok = tText_(r.Token);
     if (!tok) return;
     if (tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client))) return;   // staff standing in as clients
+    sendBy[tok] = r;
     var c = { token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', firstName: tText_(r['First name']),
       no: tText_(r['Client number']), seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), email: tText_(r.Email),
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
@@ -2363,13 +2449,40 @@ function tBoard_(w, all) {
     return { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone,
              open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
+  var answeredBy = {};
+  clients.forEach(function (c) { answeredBy[c.token] = c; });
   if (w.role === 'agent') {
     var me = w.me.name.toLowerCase();
     clients = clients.filter(function (c) { return c.assigned.toLowerCase() === me; });
     silent = [];
   }
+  /* households: for every household with a member on this board, each member and where they stand; and, for the
+     branch, the members of a household where someone answered who are not on the board themselves (no e-mail, an
+     inbox shared with the one who was written to, not yet answered), so the family can be seen and named together */
+  var hhOf = tHouseholds_(), hhMembers = {}, households = {}, family = [], onBoard = {};
+  Object.keys(hhOf).forEach(function (tok) { if (sendBy[tok]) (hhMembers[hhOf[tok]] = hhMembers[hhOf[tok]] || []).push(tok); });
+  clients.concat(silent).forEach(function (c) { c.hh = hhOf[c.token] || ''; onBoard[c.token] = true; });
+  Object.keys(hhMembers).forEach(function (h) {
+    var ms = hhMembers[h];
+    if (ms.length < 2 || !ms.some(function (tok) { return onBoard[tok]; })) return;
+    households[h] = ms.map(function (tok) {
+      var c = answeredBy[tok], r = sendBy[tok];
+      return { token: tok, client: c ? c.client : (tText_(r.Client) || tText_(r['First name']) || 'a client'), seg: tText_(r.Segment).toUpperCase(),
+               state: c ? 'answered' : tMemberState_(r), said: c ? tSaid_(c) : '' };
+    });
+    if (w.role !== 'branch' || !ms.some(function (tok) { return answeredBy[tok]; })) return;
+    ms.forEach(function (tok) {
+      if (onBoard[tok] || answeredBy[tok]) return;
+      var r = sendBy[tok], why = tNoteBlock_(r);
+      family.push({ token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', firstName: tText_(r['First name']), no: tText_(r['Client number']),
+        seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), email: tText_(r.Email), phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '',
+        sent: fmt(r['Sent at'], 'd MMM'), state: 'family', fstate: tMemberState_(r), hh: h, rows: [], canTell: !why, tellWhy: why });
+    });
+  });
+  counts.households = Object.keys(households).filter(function (h) { return households[h].some(function (m) { return m.state === 'answered'; }); }).length;
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
+           households: households, family: family,
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            notes: w.role === 'branch' ? tNotesForBoard_() : null };
 }
@@ -2398,6 +2511,7 @@ function transitionAssign_(p) {
     var b = tBoard_({ ok: true, role: 'branch', me: null }, true), map = {};
     b.clients.forEach(function (c) { map[c.token] = c; });
     b.silent.forEach(function (c) { map[c.token] = c; });
+    (b.family || []).forEach(function (c) { map[c.token] = c; });   // a family member off the board, named with the household
     var sh = ss_().getSheetByName(SVC.RESP_SHEET);
     if (!sh && typeof responseSheet_ === 'function') sh = responseSheet_();
     if (!sh) return { ok: false, error: 'The Client Responses tab is missing.' };
@@ -2430,8 +2544,13 @@ function transitionAssign_(p) {
       catch (e) { warnings.push('The brief to ' + agent.name + ' did not send: ' + String(e && e.message ? e.message : e)); }
     }
     if (done.length && wantIntro) {
+      /* one introduction per inbox in one press (a family sharing an e-mail reads it once), and none to an address
+         the send row holds back: a bounce, a check, an inbox shared with the one already written to */
+      var inboxes = {};
       done.forEach(function (c) {
-        try { if (tIntroMail_(sh, c, agent, stamp)) introduced++; }
+        var mail = String(c.email || '').trim().toLowerCase();
+        if (c.canTell === false || !mail || inboxes[mail]) return;
+        try { if (tIntroMail_(sh, c, agent, stamp)) { introduced++; inboxes[mail] = true; } }
         catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
       });
     }
@@ -2462,6 +2581,10 @@ function transitionUpdate_(p) {
   /* both refusals come before anything is written, so a refused note never leaves half an update behind */
   if (tell && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
   if (tell && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can e-mail a client from the board.' };
+  /* a family member the client told us about (29 September: "Fayad told me for his wife as well"), put in one household */
+  var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  if (fam === tok) fam = '';
+  if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can link a family.' };
   var who = w.role === 'branch' ? 'branch' : w.me.name;
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
@@ -2480,7 +2603,9 @@ function transitionUpdate_(p) {
     if (w.role === 'agent' && assignedTo.toLowerCase() !== w.me.name.toLowerCase()) return { ok: false, refused: true, error: 'That client is not on your list.' };
     if (!targets.length) targets = any;
     var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM');
-    var marker = '[' + (noAnswer ? 'no answer' : known.toLowerCase()) + ' ' + stamp + ' · ' + who + ']' + (extra ? ' ' + extra : '');
+    var linked = fam ? tLinkFamily_(tok, fam) : null;
+    var marker = '[' + (noAnswer ? 'no answer' : known.toLowerCase()) + ' ' + stamp + ' · ' + who + ']' + (extra ? ' ' + extra : '') +
+      (linked && linked.ok ? ' [family: ' + linked.name.replace(/[\[\]]/g, '') + ', ' + linked.hh + ']' : '');
     targets.forEach(function (rn) {
       if (!noAnswer) sh.getRange(rn, 8).setValue(known);
       var cell = sh.getRange(rn, 11), note = String(cell.getValue() || '');
@@ -2497,9 +2622,14 @@ function transitionUpdate_(p) {
       }
     }
     log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's') +
-         (told ? (told.sent ? ' · note "' + tell + '" e-mailed' : ' · note "' + tell + '" not sent: ' + told.why) : ''));
+         (told ? (told.sent ? ' · note "' + tell + '" e-mailed' : ' · note "' + tell + '" not sent: ' + told.why) : '') +
+         (linked ? (linked.ok ? ' · family linked, ' + linked.hh : ' · family not linked: ' + linked.why) : ''));
     var out = { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
     if (told) { out.told = told.sent; if (told.sent) out.toldTo = told.to; else out.warning = 'The note did not go: ' + told.why + '.'; }
+    if (linked) {
+      if (linked.ok) { out.household = linked.hh; out.family = linked.name; }
+      else out.warning = (out.warning ? out.warning + ' ' : '') + 'The family was not linked: ' + linked.why + '.';
+    }
     return out;
   } finally { lock.releaseLock(); }
 }

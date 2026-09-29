@@ -143,6 +143,12 @@
   .gobar button[disabled]{opacity:.55;cursor:default}
   @media(max-width:559px){.gobar button{flex:1 1 100%}}
   .told{margin-top:6px;font-size:13px;color:var(--ok)}
+  /* the family on our list (the Households tab) */
+  .fam{margin-top:8px;font-size:13px;background:#f4f8fb;border:1px solid var(--line);border-radius:9px;padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+  .fam .famh{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .fam b{color:var(--ink);font-weight:600} .fam i{font-style:normal;color:var(--dim)} .fam i.ok{color:var(--ok)}
+  .famsel{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:3px 10px;font:600 12px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .famnow{font-size:12.5px;color:var(--dim);margin:4px 0 0}
   .focusbar{display:inline-block;background:var(--notebg);border:1px solid #a8dfeb;border-radius:9px;padding:6px 11px;color:var(--body)}
   .focusbar a{color:var(--tdark);font-weight:600;cursor:pointer;text-decoration:underline}
 </style>
@@ -180,7 +186,7 @@
       <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
       <label>Letter<select id="fSeg"><option value="">all</option></select></label>
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
-      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option></select></label>
+      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
       <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
       <button type="button" id="fClear">Clear</button>
@@ -296,7 +302,8 @@ function render() {
   var k = d.counts;
   $('lead').innerHTML = manager
     ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. ' +
-      'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first.'
+      'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first.' +
+      (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
     : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.';
   var tiles = manager
     ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok'], ['silent', k.silent, 'not answered yet', '']]
@@ -336,20 +343,39 @@ function readHash() {
 readHash();
 window.addEventListener('hashchange', function () { readHash(); if (D) render(); });
 function ownLink(c) { return 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone'; }
+/* households (the Households tab): the family on our list, and who of them answered */
+function familyOf(c) { return c && c.hh && D && D.households && D.households[c.hh] ? D.households[c.hh] : null; }
+function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function (m) { return m.state === 'answered'; }); }
+function familyLine(c, manager) {
+  var f = familyOf(c), others = f ? f.filter(function (m) { return m.token !== c.token; }) : [];
+  if (!others.length) return '';
+  return '<div class="fam"><span class="famh">Family on our list · ' + esc(c.hh) + '</span>' + others.map(function (m) {
+      return '<span><b>' + esc(m.client) + '</b> <i' + (m.state === 'answered' ? ' class="ok"' : '') + '>' + esc(m.state === 'answered' ? (m.said ? 'answered: ' + m.said : 'answered') : m.state) + '</i></span>';
+    }).join('') + (manager ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') + '</div>';
+}
+/* everyone the board can show: those who answered, those written to who have not (with the box ticked), and the family of
+   someone who answered who are on neither list; one row each */
+function everyone() {
+  var seen = {}, out = [];
+  D.clients.concat(D.silent || [], D.family || []).forEach(function (c) { if (!seen[c.token]) { seen[c.token] = 1; out.push(c); } });
+  return out;
+}
 function matches(c) {
   if (FOCUS) return c.token === FOCUS;
   var s = $('fSearch').value.trim().toLowerCase(), seg = $('fSeg').value, book = $('fBook').value, st = $('fState').value, need = $('fNeed').value;
+  if (st === 'family') { if (!((c.state === 'family' || c.state === 'silent') && familyAnswered(c))) return false; }
+  else if (c.state === 'family') return false;                  // the family rows show under their own filter
   if (s && (c.client + ' ' + (c.no || '')).toLowerCase().indexOf(s) < 0) return false;
   if (seg && c.seg !== seg) return false;
   if (book && c.book !== book) return false;
   if (FILTER.agent && (c.assigned || '').toLowerCase() !== FILTER.agent.toLowerCase()) return false;
-  if (st) { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
+  if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
   if (need && !needsOf(c)[need]) return false;
   return true;
 }
 function list() {
   var d = D, manager = d.role === 'branch';
-  var all = d.clients.concat(d.silent || []), rows = all.filter(matches);
+  var all = everyone().filter(function (c) { return c.state !== 'family' || $('fState').value === 'family' || FOCUS; }), rows = all.filter(matches);
   var n = rows.length, looking = false;
   if (FOCUS) {
     /* not among those who answered: look once among the clients written to who have not */
@@ -358,7 +384,7 @@ function list() {
   } else {
     $('showing').innerHTML = n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's');
   }
-  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' ? silentRow(c, manager) : card(c, manager); }).join('')
+  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
         : 'Nothing is recorded for this client yet, so there is nothing on the board to mark. Record the call on <a href="' + esc(ownLink({ token: FOCUS, seg: FOCUS_SEG })) + '" target="_blank" rel="noopener">their own page</a> first: it files on Client Responses, and the client is here the next time the board refreshes.')
       : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
@@ -370,6 +396,16 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('#list input.sel'), function (el) { el.addEventListener('change', function () { if (el.checked) SEL[el.value] = 1; else delete SEL[el.value]; bar(); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button[data-status]'), function (el) { el.addEventListener('click', function () { mark(el.getAttribute('data-token'), el.getAttribute('data-status'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
+  /* the whole family ticked at once, those not on the list above included, so one press names them all to one agent */
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.famsel'), function (el) {
+    el.addEventListener('click', function () {
+      var hh = el.getAttribute('data-hh'), known = {}, n = 0;
+      everyone().forEach(function (c) { known[c.token] = 1; });
+      (D.households[hh] || []).forEach(function (m) { if (known[m.token]) { SEL[m.token] = 1; n++; } });
+      list(); bar();
+      toast(n + ' of the family selected. Choose the agent in the bar below and press Assign: one brief for all of them, one introduction per inbox.');
+    });
+  });
 }
 function pills(c) {
   var so = stateOf(c);
@@ -416,12 +452,15 @@ function card(c, manager) {
     '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? 'answered ' + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who +
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + familyLine(c, manager) +
     '<div class="acts">' + acts + '</div></div></div>';
 }
 function silentRow(c, manager) {
+  /* a family member of someone who answered: where they stand, and whose family they are */
+  var kin = c.state === 'family' || familyAnswered(c) ? (familyOf(c) || []).filter(function (m) { return m.state === 'answered'; }).map(function (m) { return m.client; }) : [];
   return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
-    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">not answered yet</span>' +
+    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : 'not answered yet') + '</span>' +
+    (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
     (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
     (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') + '</div>';
 }
@@ -465,9 +504,19 @@ function noteLabel(key) {
   return l || 'a note from the branch';
 }
 function findClient(token) {
-  var all = D ? D.clients.concat(D.silent || []) : [];
+  var all = D ? everyone() : [];
   for (var i = 0; i < all.length; i++) if (all[i].token === token) return all[i];
   return null;
+}
+/* the family field: every other client the board knows, as "Name · number · letter · was with", mapped back to a token */
+var FAMOPTS = {};
+function familyOptions(c) {
+  FAMOPTS = {};
+  return everyone().filter(function (x) { return x.token !== c.token; }).map(function (x) {
+    var label = x.client + (x.no ? ' · ' + x.no : '') + (x.seg ? ' · letter ' + x.seg : '') + (x.book ? ' · was with ' + x.book : '');
+    FAMOPTS[label] = x.token;
+    return '<option value="' + esc(label) + '"></option>';
+  }).join('');
 }
 function lineOf() { var el = $('pLine'); return el ? el.value.replace(/<[^>]*>/g, '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300) : ''; }
 /* the same order the backend sends them in (tNoteParts_): the thanks, the note, the manager's line, the closing line */
@@ -508,6 +557,13 @@ function openPanel(token, status) {
         ', or take their e-mail on <a href="' + esc(ownLink(c)) + '" target="_blank" rel="noopener">their page</a>.</div>';
     }
   }
+  if (N) {
+    /* what the client tells us about their family, when the address rule did not see it (29 September: Fayad and his wife) */
+    var fam = familyOf(c), others = fam ? fam.filter(function (m) { return m.token !== c.token; }).map(function (m) { return m.client; }) : [];
+    h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household)</i></label>' +
+      '<input type="text" id="pFam" list="pFamList" autocomplete="off" placeholder="start typing a name"><datalist id="pFamList">' + familyOptions(c) + '</datalist>' +
+      (others.length ? '<p class="famnow">Already one household (' + esc(c.hh) + ') with ' + esc(others.join(', ')) + '.</p>' : '');
+  }
   h += '<div class="gobar"><button type="button" id="pCancel">Cancel</button><button type="button" class="primary" id="pSave">Save</button></div>';
   $('sheet').innerHTML = h;
   Array.prototype.forEach.call(document.querySelectorAll('#pOuts button'), function (b) {
@@ -546,12 +602,18 @@ function savePanel() {
   var p = { action: 'update', code: CODE, token: c.token, status: status, note: $('pNote').value.trim() };
   if (WHO) p.who = WHO;
   if (tell && tell.checked) { p.tell = PN.key; p.line = lineOf(); }
+  var famEl = $('pFam'), famTxt = famEl ? famEl.value.trim() : '';
+  if (famTxt) {
+    if (!FAMOPTS[famTxt]) { toast('Choose the family member from the list as you type their name.', true); return; }
+    p.family = FAMOPTS[famTxt];
+  }
   btn.disabled = true;
   api(p).then(function (r) {
     btn.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
     var msg = 'Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.' +
-      (r.told ? ' Your note is on its way to ' + (c.firstName || c.client) + '.' : '') + (r.warning ? ' ' + r.warning : '');
+      (r.told ? ' Your note is on its way to ' + (c.firstName || c.client) + '.' : '') +
+      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') + (r.warning ? ' ' + r.warning : '');
     toast(msg, !!r.warning);
     closePanel(); load();
   }).catch(function () { btn.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
