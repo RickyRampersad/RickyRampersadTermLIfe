@@ -86,6 +86,7 @@
   .ans li.hot b{color:var(--stop)}
   .taps{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px} .taps i{font-style:normal;background:var(--warnbg);border:1px solid #f1dfae;border-radius:999px;padding:2px 9px;font-size:12px;color:#7a5a12}
   .q{font-style:italic;color:var(--ink);margin:6px 0 0;font-size:13.5px}
+  .fnote{color:var(--dim);margin:6px 0 0;font-size:13px}
   .rev{margin-top:6px;font-size:13px;background:var(--notebg);border:1px solid #a8dfeb;border-radius:8px;padding:6px 10px} .rev span{color:var(--dim)}
   .reach{margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px} .reach a{color:var(--tdark);font-weight:600;text-decoration:none}
   .who{margin-top:8px;font-size:13.5px} .who b{color:var(--ink)}
@@ -705,7 +706,9 @@ function card(c, manager) {
   var need = needsOf(c);
   var ans = (c.answers || []).map(function (a) { return '<li' + (HOT[a.code] ? ' class="hot"' : '') + '><span>' + esc(a.q) + '</span><b>' + esc(a.a) + '</b></li>'; }).join('');
   var taps = (c.taps || []).map(function (t) { return '<i title="' + esc(t.needs) + '">' + esc(t.label) + (t.at ? ' · ' + esc(t.at) : '') + '</i>'; }).join('');
-  var notes = (c.notes || []).map(function (q) { return '<p class="q">“' + esc(q) + '”</p>'; }).join('');
+  var notes = (c.notes || []).map(function (q) { return '<p class="q">“' + esc(q) + '”</p>'; }).join('') +
+    /* what a person noted on the file when marking a call: ours, never quoted as the client's */
+    (c.fileNotes || []).map(function (f) { return '<p class="fnote">📝 ' + esc(f) + '</p>'; }).join('');
   var rev = c.review ? '<div class="rev"><span>Review</span> <b>' + esc(c.review.ref || '') + '</b>' + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + (c.review.status ? ' · ' + esc(c.review.status) : '') +
     (c.review.words || []).map(function (w) { return '<div><span>' + esc(w.q) + '</span> ' + esc(w.a) + '</div>'; }).join('') + '</div>' : '';
   var reach = [];

@@ -799,10 +799,30 @@ function tWords_(text, lines) {
   body.split('\n').some(function (l) {
     var t = l.trim();
     if (stop.test(t)) return true;                                        // the quoted letter beneath: not theirs
-    if (!t || t.charAt(0) === '>' || lines[t.toLowerCase()]) return false;
+    if (!t || t.charAt(0) === '>' || lines[t.toLowerCase()] || T_SIGNATURE.test(t)) return false;
     out.push(t); return false;
   });
   return out.join(' ').replace(/\s+/g, ' ').trim();
+}
+/** The line a phone or a mail app adds under every message: never the client's words. */
+var T_SIGNATURE = /^(sent from my (iphone|ipad|galaxy|samsung[\w ]*|android[\w ]*|huawei[\w ]*|mobile[\w ]*)|get outlook for (ios|android)|sent from yahoo mail[\w ]*|sent from mail for windows[\w ]*)\.?$/i;
+
+/** A client's words in a reply's Note cell: the quoted text transitionInbox put first, without the phone's signature
+ *  that replies filed before 29 September still carry. '' when the reply only tapped. */
+function tNoteWords_(note) {
+  var m = /^\s*"([\s\S]*?)"(?:\s|$)/.exec(String(note || ''));
+  if (!m) return '';
+  return m[1].replace(/\s+/g, ' ').replace(/\s*(sent from my (iphone|ipad|galaxy|samsung[\w ]*|android[\w ]*|huawei[\w ]*|mobile[\w ]*)|get outlook for (ios|android)|sent from yahoo mail[\w ]*|sent from mail for windows[\w ]*)\.?\s*$/i, '').trim();
+}
+/** The notes a person added when marking a client on the board ("[called 28 Sep · Ricky] left a message"), as
+ *  "called 28 Sep · Ricky: left a message". A stamp with nothing added is on the card already, as the mark. */
+function tFileNotes_(note) {
+  var out = [], re = /\[(called|met|declined|closed|open|no answer|assigned) ([^\]·]+?) · ([^\]]+)\]([^\[]*)/g, m;
+  while ((m = re.exec(String(note || '')))) {
+    var extra = m[4].replace(/\s+/g, ' ').trim();
+    if (extra) out.push(m[1] + ' ' + m[2].trim() + ' · ' + m[3].trim() + ': ' + extra.slice(0, 300));
+  }
+  return out;
 }
 
 /** Every five minutes, installed by transitionSetup. The e-mails taken on calls go onto their rows, held, first. */
@@ -827,9 +847,35 @@ function tSameFamily_(a, b) {
   var sa = tSurnames_(a);
   return tSurnames_(b).some(function (x) { return x.length > 1 && sa.indexOf(x) >= 0; });
 }
+/** Whether two send rows sharing an inbox are one person on two client numbers: the same first name and a surname in
+ *  common, a letter out allowed ("Mohamed" and "Mohammed"). On 29 September, 23 of the 95 rows the old rule held had the
+ *  same name as the client already written to at that inbox (Jeffery Boodhoo on 745444 and 745454); the family rule
+ *  would have sent each of them the same letter a second time. A father and son of one name sharing an inbox are held
+ *  too, which is a check for Client Support, never a letter lost. */
+function tSamePerson_(a, b) {
+  var fn = function (r) { return (tText_(r.Client) || tText_(r['First name'])).toLowerCase().replace(/[^a-z\- ]/g, '').split(/[\s-]+/).filter(Boolean); };
+  var na = fn(a), nb = fn(b);
+  if (na.length < 2 || nb.length < 2) return false;
+  var fa = na[0], fb = nb[0];
+  var first = fa === fb || (fa.length >= 4 && fb.length >= 4 && fa.slice(0, 4) === fb.slice(0, 4) && Math.abs(fa.length - fb.length) <= 2);
+  if (!first) return false;
+  var near = function (x, y) {
+    if (x === y) return x.length > 1;
+    if (Math.abs(x.length - y.length) > 1 || Math.min(x.length, y.length) < 4) return false;
+    if (x.length === y.length) { var d = 0; for (var i = 0; i < x.length; i++) if (x[i] !== y[i]) d++; return d <= 1; }
+    var lo = x.length < y.length ? x : y, hi = x.length < y.length ? y : x;
+    for (var j = 0; j < hi.length; j++) if (hi.slice(0, j) + hi.slice(j + 1) === lo) return true;
+    return false;
+  };
+  return na.slice(1).some(function (x) { return nb.slice(1).some(function (y) { return near(x, y); }); });
+}
 /** What a row sharing an inbox under a different surname carries in Exclude until Client Support confirms the address. */
 function tInboxCheck_(f) {
   return ('check: shares an inbox with ' + (tText_(f.Client) || tText_(f['First name']) || 'another client') + ' (row ' + f._row + '), a different surname: confirm the address').slice(0, 160);
+}
+/** What a row carries when the inbox's letter already went to the same person under another client number. */
+function tSameCheck_(f) {
+  return ('check: same name and inbox as ' + (tText_(f.Client) || tText_(f['First name']) || 'another client') + ' (row ' + f._row + '): likely one person on two client numbers, one letter is enough').slice(0, 160);
 }
 /** The families the old one-inbox rule held for good ("check: same e-mail as row N": 95 clients on 28 September),
  *  sorted once under the new rule: a family member's Exclude is cleared, so their own letter goes after the go, one
@@ -838,7 +884,7 @@ function tInboxCheck_(f) {
  *  old way any more. */
 var T_INBOX_SORTED = 'shared_inbox_sorted';
 function tSharedInboxRows_() {
-  var out = { family: 0, confirm: 0 };
+  var out = { family: 0, confirm: 0, same: 0 };
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty(T_INBOX_SORTED) === 'yes') return out;
   var t = tRead_(), byRow = {};
@@ -847,7 +893,12 @@ function tSharedInboxRows_() {
     var m = /^check: same e-mail as row (\d+)/i.exec(tText_(r.Exclude));
     if (!m) return;
     var f = byRow[Number(m[1])];
-    if (f && tSameFamily_(f, r)) {
+    if (f && tSamePerson_(f, r)) {
+      var same = tSameCheck_(f);
+      t.sh.getRange(r._row, t.col.Exclude).setValue(same);
+      t.sh.getRange(r._row, t.col.Status).setValue(same);
+      out.same++;
+    } else if (f && tSameFamily_(f, r)) {
       t.sh.getRange(r._row, t.col.Exclude).setValue('');
       t.sh.getRange(r._row, t.col.Status).setValue('');
       if (t.col.Reason) t.sh.getRange(r._row, t.col.Reason).setValue('shares an inbox with ' + (tText_(f.Client) || 'family') + ' (row ' + f._row + '), family: their own letter after the go, one a day per inbox');
@@ -861,7 +912,7 @@ function tSharedInboxRows_() {
   });
   props.setProperty(T_INBOX_SORTED, 'yes');
   log_('transition', 'shared-inbox', out.family + ' family members freed for their own letter after the go, one a day per inbox; ' +
-       out.confirm + ' held for Client Support to confirm the address');
+       out.confirm + ' held for Client Support to confirm the address; ' + out.same + ' held as one person on two client numbers');
   return out;
 }
 
@@ -1441,11 +1492,12 @@ function tSendBatch_(force) {
      day; someone sharing an inbox under a different surname is held for Client Support to confirm the address, since
      the inbox may be an office's or a relative's, unless a person already confirmed it on a call (the Reason a
      phone e-mail leaves, "e-mail taken by …"). */
-  var firstAt = {}, busy = {};
+  var firstAt = {}, sentTo = {}, busy = {};
   t.rows.forEach(function (r) {
     var mail = tText_(r.Email).toLowerCase(), sa = r['Sent at'];
     if (!mail || !tText_(sa)) return;
     if (!firstAt[mail]) firstAt[mail] = r;
+    (sentTo[mail] = sentTo[mail] || []).push(r);
     if (sa instanceof Date && !isNaN(sa.getTime()) && Utilities.formatDate(sa, tz, 'yyyy-MM-dd') === today) busy[mail] = r._row;
   });
   var due = t.rows.filter(function (r) {
@@ -1459,6 +1511,9 @@ function tSendBatch_(force) {
     var why = tHold_(r, letters);                               // no e-mail, no first name, no letter: out of the queue
     if (why) { tHoldRow_(t, r, why); return false; }
     var mail = tText_(r.Email).toLowerCase();
+    /* the same person under another client number, whoever had the inbox's first letter: that letter was theirs */
+    var twin = (sentTo[mail] || []).filter(function (s) { return s._row !== r._row && tSamePerson_(s, r); })[0];
+    if (twin) { tHoldRow_(t, r, tSameCheck_(twin)); return false; }
     /* a different surname first, so Client Support has the row at once, whatever else the inbox had today */
     var f = firstAt[mail];
     if (f && f._row !== r._row && !tSameFamily_(f, r) && !/^e-mail taken by/i.test(tText_(r.Reason))) {
@@ -2287,6 +2342,7 @@ function tMemberState_(r) {
   if (/^no e-mail/i.test(ex)) return 'no e-mail';
   if (/^check: same e-mail/i.test(ex)) return 'shares an inbox, no letter of their own';
   if (/^check: shares an inbox/i.test(ex)) return 'shares an inbox, address to confirm';
+  if (/^check: same name and inbox/i.test(ex)) return 'the same person as a family member, by name: no second letter';
   if (ex === T_PHONE_HOLD) return 'e-mail taken by phone, waiting for the go';
   if (!ex && /^shares an inbox with/i.test(tText_(r.Reason)) && !(sent instanceof Date ? !isNaN(sent.getTime()) : tText_(sent))) return 'shares an inbox: own letter after the go';
   if (/^bounced/i.test(ex)) return 'letter bounced';
@@ -2431,7 +2487,7 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
-      answers: [], taps: [], notes: [], markers: [], needs: [], reach: '', when: '', rows: [], open: 0, actionable: 0, done: 0, noted: 0,
+      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
     c.tellWhy = tNoteBlock_(r);
@@ -2460,12 +2516,21 @@ function tBoard_(w, all, lite) {
       else if (!c.answers.some(function (x) { return x.code === code; })) c.answers.push({ q: q.q, a: q.a, code: code, at: at });
       if (T_PRIORITY[code]) c.score = Math.max(c.score, T_PRIORITY[code]);
     } else if (type !== 'informed' || code === 'wrote') {
-      if (!c.taps.some(function (x) { return x.tap === type; })) c.taps.push({ tap: type, label: tapWords[type] || type, needs: String(v[4] || ''), at: at });
+      /* a reply with no reference is filed as a 'question' row, q=wrote: it is a reply, not the "My details have
+         changed" tap that shares its type */
+      var tk = code === 'wrote' ? 'wrote' : type;
+      if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? 'Wrote back by e-mail' : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
       if (T_PRIORITY[type]) c.score = Math.max(c.score, T_PRIORITY[type]);
     }
     (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
-    var clean = note.replace(/\[[^\]]*\]/g, '').trim().replace(/^["“]|["”]$/g, '').trim();
-    if (clean && c.notes.indexOf(clean) < 0) c.notes.push(clean.slice(0, 500));
+    /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes. Everything
+       else in a Note cell is ours: the scripts' stamps ("[receipt] by phone: read back on the call") and the notes a
+       person adds when marking a call here, which go on the file, never in the client's mouth. */
+    if (String(v[5] || '').indexOf('/reply') === 0) {
+      var said = tNoteWords_(note);
+      if (said && c.notes.indexOf(said) < 0) c.notes.push(said.slice(0, 500));
+    }
+    tFileNotes_(note).forEach(function (f) { if (c.fileNotes.indexOf(f) < 0) c.fileNotes.push(f); });
     var isOpen = status.toLowerCase() === 'open';
     if (type !== 'informed') {
       c.actionable++;
@@ -3075,6 +3140,7 @@ function tBriefMail_(agent, clients, board) {
     if (c.notes && c.notes.length) lines += '<p style="margin:8px 0 2px"><b>In their words</b></p>' + c.notes.map(function (n) { return '<p style="margin:2px 0;font-style:italic">“' + esc(n) + '”</p>'; }).join('');
     if (c.review) lines += '<p style="margin:8px 0 2px"><b>Their review</b> ' + esc(c.review.ref) + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + '</p>' +
       (c.review.words || []).map(function (x) { return '<p style="margin:2px 0"><span style="color:#64798e">' + esc(x.q) + '</span><br>' + esc(x.a) + '</p>'; }).join('');
+    if (c.fileNotes && c.fileNotes.length) lines += '<p style="margin:8px 0 2px"><b>On the file</b></p>' + c.fileNotes.map(function (n) { return '<p style="margin:2px 0;color:#64798e">' + esc(n) + '</p>'; }).join('');
     /* who they are, what to raise first, and their policies with us, from the Client Book and the Client Profile: a row off
        the board carries the totals alone, so the rest is read here */
     var bpol = c.pol && c.pol.list ? c.pol : (c.no ? tBookFor_(c.no, true) : null), bprof = c.profile || (c.no ? tProfileFor_(c.no) : null);
@@ -3791,7 +3857,10 @@ function tInsightsFor_(pol, prof, today) {
   var s = pol.sum, list = pol.list || [], dob = prof && prof.dob;
   var add = function (k, t, lv) { out.push({ k: k, t: t, lv: lv }); };
   var due = list.filter(function (x) { return x.st === 'overdue'; }).sort(function (a, b) { return b.od - a.od; })[0];
-  if (due && due.od >= 30) add('due', 'Premium due ' + due.od + ' days on ' + (due.name || due.code), due.od >= 60 ? 'hot' : 'warm');
+  /* a paid-to date more than a year gone on a policy the portfolio still calls premium paying is a record to check,
+     not "premium due 2954 days" (50 of the 371 overdue policies in the families on 29 September) */
+  if (due && due.od > 365) add('due', 'Paid to ' + tDmy_(due.paid).replace(/^\d+ /, '') + ' on ' + (due.name || due.code) + ', still shown as premium paying: check the record', 'warm');
+  else if (due && due.od >= 30) add('due', 'Premium due ' + due.od + ' days on ' + (due.name || due.code), due.od >= 60 ? 'hot' : 'warm');
   var soon = null;
   list.forEach(function (x) {
     if (!tBookLive_(x.st) || !x.life) return;

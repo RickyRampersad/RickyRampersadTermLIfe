@@ -1404,7 +1404,15 @@ voice under the new timing and the caption gives it away.
   assign their agent as discussed and will review etc, to create the
   experience"). An outcome button (Called, Met, No answer, Declined, Closed)
   opens a panel, not a prompt: the outcome; a note for the file, stamped in
-  the Note cell as before and never seen by the client; and, with the branch
+  the Note cell as before and never seen by the client (the card and the
+  agent's brief show it as a file note, `tFileNotes_`, never in quotes: a
+  client's own words come only from a reply, `tNoteWords_`, without the
+  phone's "Sent from my iPhone". Until 29 September the card quoted
+  whatever a Note cell held after its stamps, so a phone answer read "by
+  phone: read back on the call" as the client's words, a note the manager
+  typed would have too, and a reply was labelled "My details have
+  changed", the tap its row type shares; it now reads "Wrote back by
+  e-mail"); and, with the branch
   code only, "E-mail <first name> a note from you". There are four notes, in `T_NOTES` in
   Transition.gs: I am matching you with your agent, I am looking into your
   file myself, Thank you: all noted, and I tried to reach you. The manager
@@ -1468,13 +1476,26 @@ voice under the new timing and the caption gives it away.
   an inbox with <name> (row N), a different surname: confirm the address`
   for Client Support. An address a person confirmed on a call (a Reason of
   "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
-  address onto such a row like any other. The 95 were sorted once by
-  `tSharedInboxRows_`, first in the five-minute receipts run after the
-  paste, into 69 family members freed for their own letter after the go
-  and 26 held to confirm. It sets the `shared_inbox_sorted` property and
-  never runs again. Client Support's list for the 26 is built in the
+  address onto such a row like any other. **One person on two client
+  numbers is not a family**: 26 of the 95 had the same name as the client
+  already written to at that inbox (Jeffery Boodhoo on 745444 and
+  745454), and the family rule would have sent each the same letter a
+  second time. `tSamePerson_` (the same first name and a surname in
+  common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
+  "Ricky") holds such a row as `check: same name and inbox as <name> (row
+  N): likely one person on two client numbers, one letter is enough`,
+  compared against every letter the inbox has had, not only the first,
+  and a call that confirmed the address does not lift it. In 7 of the 26
+  the second number carries a different situation (a premium due, a
+  lapsed policy) that the first letter did not mention: a call, not a
+  letter. The 95 were sorted once by `tSharedInboxRows_`, first in the
+  five-minute receipts run after the paste: 43 family members freed for
+  their own letter after the go, 26 held to confirm the address, 26 held
+  as one person. It sets the `shared_inbox_sorted` property and never
+  runs again. Client Support's list for the 26 to confirm is built in the
   scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
-  on every row. `health/shared-inbox-harness.js` there covers it.
+  on every row. `health/shared-inbox-harness.js` there covers it, and
+  `health/shared-inbox-real.js` runs the sort on the latest sheet export.
 - **Each client's policies are on the board, from the live Branch
   Portfolio, rebuilt every morning.** Asked for on 29 September 2026 ("we do
   need to push more data the total cover, plan, tenure, premium etc"). The
@@ -1586,7 +1607,12 @@ voice under the new timing and the caption gives it away.
   issue date), a policy that pays the estate, a beneficiary in the special
   provisions or recorded only as a role, no life cover in force, a lapsed
   policy, life cover against the income on file, a birthday within 30
-  days. Only what the records show; never advice. The policy table gains
+  days. A paid-to date more than a year gone on a policy the portfolio
+  still calls premium paying reads "Paid to Aug 2018 on Evolution to 65,
+  still shown as premium paying: check the record", never "Premium due
+  2954 days" (50 of the 371 overdue policies in the families on 29
+  September; `APLamount` is 0 on every one, so nothing says why). Only
+  what the records show; never advice. The policy table gains
   the cover split, who each policy pays, and who it insures when that is
   someone else. The branch gets a bar of counts over the clients who
   answered, each a filter; the same filter reaches silent rows through the
