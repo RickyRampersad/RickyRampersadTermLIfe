@@ -1471,7 +1471,7 @@ voice under the new timing and the caption gives it away.
   nine e-mails into the sheet and recorded none on the page, so none could
   reach a send row. By the next afternoon it was 107: of 120 new addresses
   the three callers had taken, 13 went through the page, and one caller
-  had typed hers over the Call for column. They were filed from a paste
+  had typed the addresses over the Call for column. They were filed from a paste
   block for Client Responses, built in the scratchpad
   (`sasha/build-fix.py`, checked by running `tFilePhoneEmails_` on a copy
   of the live tabs, `sasha/dry-file.js`), rows exactly as the page writes
