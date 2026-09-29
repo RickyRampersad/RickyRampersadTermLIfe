@@ -1141,6 +1141,18 @@ function transitionReleasePhoneEmails() {
 
 function tQOf_(page) { return (String(page || '').match(/[?&]q=([a-z_]+)/) || [])[1] || ''; }
 
+/* How to reach a client, taken on a call: the e-mail, "no e-mail", a new number or address, and how and when to call.
+   It is the branch's record-keeping, never the client's answer to the letter (29 September 2026: 107 e-mails taken by
+   Client Support were waiting to be filed, and each would have counted as an answer). So a row like this never stops
+   the follow-up (tAnswered_), is never a response in the reports or on the wall (tInsights_, tSummary_), and never
+   makes a card "answered" on the board (tBoard_: state 'reached'). The answers a caller ticks with the client on the
+   line, from the letter's own questions, are answers like any other. */
+var T_CONTACT_Q = /^(email_given|email_none|phone_given|address_given|reach_[a-z]+|when_[a-z]+)$/;
+function tContactRow_(page) {
+  page = String(page || '');
+  return page.indexOf('/your-policy/phone') === 0 && T_CONTACT_Q.test(tQOf_(page));
+}
+
 /** One receipt per client per sitting: every unreceipted tap of a token this
  *  campaign recognises, once the newest is RECEIPT_WAIT_MIN old (a client
  *  ticking four checks gets one e-mail, not four), and once the review is
@@ -1786,11 +1798,16 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
 
 /** Every token that has answered: a row on Client Responses, or a review whose
  *  Link ref carries it. Read once per run. Never throws: a tab that cannot be
- *  read counts nobody as answered, which reminds rather than forgets. */
+ *  read counts nobody as answered, which reminds rather than forgets. An e-mail
+ *  or a number taken on a call is not an answer (tContactRow_): the client it
+ *  reached by phone gets the letter, and the follow-up after it, like anyone. */
 function tAnswered_() {
   var map = {};
   try {
-    tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) { var tok = String(v[1] || '').trim(); if (tok) map[tok] = 1; });
+    tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+      var tok = String(v[1] || '').trim();
+      if (tok && !tContactRow_(v[5])) map[tok] = 1;
+    });
   } catch (e) {}
   try {
     var q = tSheetRows_(SVC.IND_SHEET), qi = {};
@@ -1972,6 +1989,7 @@ function tSummary_() {
     var received = v[0] instanceof Date ? v[0] : null;
     var tok = String(v[1] || '').trim(), r = byTok[tok];
     if (/^preview$/i.test(tok)) return;                         // the manager tapping the preview letters
+    if (tContactRow_(v[5])) return;                             // an e-mail or a number taken on a call: not a tap
     var type = String(v[3] || '').trim();
     if (!type) return;
     var s = String(v[2] || '').trim().toUpperCase();
@@ -2173,6 +2191,7 @@ function tInsights_(windowDays) {
     if (!o) return;                                                       // only this campaign's clients
     var type = String(v[3] || '').trim();
     if (!type) return;
+    if (tContactRow_(v[5])) { if (o.channel === 'call') o.reached = true; return; }   // taken on a call: reached, not an answer
     var received = v[0] instanceof Date ? v[0] : null;
     var m = /[?&]q=([a-z_]+)/.exec(String(v[5] || ''));
     var code = m ? m[1] : '';
@@ -2245,7 +2264,7 @@ function tInsights_(windowDays) {
   Object.keys(byTok).forEach(function (tok) {
     var o = byTok[tok];
     if (o.channel === 'call') {                                            // reached by phone: its own count, and the risk list
-      if (!o.answered) return;
+      if (!o.answered && !o.reached) return;
       calls.reached++; calls.bySegment[o.seg].reached++;
       var capp = o.risk.indexOf('approached_yes') >= 0 || o.risk.indexOf('contact_yes') >= 0 || o.risk.indexOf('review_approached') >= 0;
       if (capp) calls.approached++;
@@ -2683,7 +2702,7 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
-      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], open: 0, actionable: 0, done: 0, noted: 0,
+      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
     c.tellWhy = tNoteBlock_(r);
@@ -2703,6 +2722,7 @@ function tBoard_(w, all, lite) {
     var status = String(v[7] || '').trim(), assigned = String(v[8] || '').trim(), on = v[9] instanceof Date ? v[9] : null, note = String(v[10] || '');
     var at = fmt(rec);
     c.rows.push({ n: i + 2, type: type });
+    if (!tContactRow_(v[5])) c.own++;                                 // the client's own answer, not details taken on a call
     if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
     if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
     if (code && codeQ[code]) {
@@ -2777,17 +2797,20 @@ function tBoard_(w, all, lite) {
       }
       return;
     }
-    c.state = c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
+    /* reached by phone: Client Support took an e-mail or a number, and the client has not answered the letter yet. The card
+       stays, so an agent can be named on them, but it is never counted as an answer (tContactRow_) */
+    c.state = !c.own && !c.review ? 'reached'
+      : c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
     c.first = fmt(c.firstAt); c.last = fmt(c.lastAt);
     delete c.firstAt; delete c.lastAt; delete c.assignedAt;
     clients.push(c);
   });
-  var rank = { open: 0, assigned: 1, done: 2, noted: 3 };
+  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4 };
   clients.sort(function (a, b) {
     return (rank[a.state] - rank[b.state]) || ((b.late ? 1 : 0) - (a.late ? 1 : 0)) || (b.score - a.score) || String(a.first).localeCompare(String(b.first));
   });
-  var counts = { answered: clients.length, open: 0, assigned: 0, done: 0, noted: 0, late: 0, silent: sentNoAnswer };
-  clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; });
+  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, late: 0, silent: sentNoAnswer };
+  clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (c.state !== 'reached') counts.answered++; });
   /* the Client Book (tBook_): each card carries the client's policies; the rows without a card (not answered, family)
      carry the totals alone, and the board fetches the rest when one is opened (transitionBook_) */
   var bk = tBook_();
@@ -2817,7 +2840,7 @@ function tBoard_(w, all, lite) {
     return o;
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
-  clients.forEach(function (c) { answeredBy[c.token] = c; });
+  clients.forEach(function (c) { if (c.state !== 'reached') answeredBy[c.token] = c; });
   if (w.role === 'agent') {
     var me = w.me.name.toLowerCase();
     clients = clients.filter(function (c) { return c.assigned.toLowerCase() === me; });
@@ -2890,13 +2913,13 @@ function tBoard_(w, all, lite) {
   /* what the records say about the clients who answered, for the branch's insight bar and the filter */
   if (branch && bk.ready) {
     counts.insights = {};
-    clients.forEach(function (c) { (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
+    clients.forEach(function (c) { if (c.state !== 'reached') (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
     Object.keys(hhInfo).forEach(function (h) { if (hhInfo[h].gaps.length && households[h].some(function (m) { return m.state === 'answered'; })) counts.insights.hhgap = (counts.insights.hhgap || 0) + 1; });
     /* the book at a glance: over those who answered, and over every client of the books on the send list (not when the
        board is read only to name an agent) */
     var bookNos = [];
     if (!lite) order.forEach(function (tok) { var r = sendBy[tok]; if (!T_NOT_BOOK.test(tText_(r.Exclude))) bookNos.push(tText_(r['Client number'])); });
-    if (!lite) counts.glance = { answered: tGlance_(clients.map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
+    if (!lite) counts.glance = { answered: tGlance_(clients.filter(function (c) { return c.state !== 'reached'; }).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
   if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });

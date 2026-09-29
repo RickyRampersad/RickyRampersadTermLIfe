@@ -942,7 +942,8 @@ voice under the new timing and the caption gives it away.
   `REMIND_DAYS` (**five** since 29 September 2026, when the manager asked
   for the follow-up "in about five days from the date it was sent"; 21
   before) or more ago, still `sent`, whose token has no row on
-  Client Responses and no review (`tAnswered_`), with `sent_on` set so the
+  Client Responses and no review (`tAnswered_`; details taken on a call
+  do not count, see `tContactRow_` below), with `sent_on` set so the
   banner above the greeting says when the first went and the subject reads
   "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
   untouched (it is the first send's date and what keeps the row out of the
@@ -1468,10 +1469,37 @@ voice under the new timing and the caption gives it away.
   Reached? and Outcome columns, and not the manager's "Called on" and
   "Outcome". On the first day of calls (28 September) the callers typed
   nine e-mails into the sheet and recorded none on the page, so none could
-  reach a send row. `assign.html#t=<token>&s=<letter>` opens the board on
-  one client, and a HYPERLINK column on the sheet is how a row gets to its
-  outcome buttons. `svc/tell-harness.js` and `svc/assign-panel-test.js` in
-  the session scratchpad cover it.
+  reach a send row. By the next afternoon it was 107: of 120 new addresses
+  the three callers had taken, 13 went through the page, and one caller
+  had typed hers over the Call for column. They were filed from a paste
+  block for Client Responses, built in the scratchpad
+  (`sasha/build-fix.py`, checked by running `tFilePhoneEmails_` on a copy
+  of the live tabs, `sasha/dry-file.js`), rows exactly as the page writes
+  them (`informed`, `/your-policy/phone?q=email_given`, `call by <name>:
+  <address>`, `Logged`). The same file gives each caller the rows to put
+  right: a Reached? their own notes contradict ("voicemail"), and asks
+  (an agent, a cancellation, a statement) left without a call-back flag,
+  which the Staff call-backs tab never sees. `assign.html#t=<token>&s=<letter>`
+  opens the board on one client, and a HYPERLINK column on the sheet is
+  how a row gets to its outcome buttons. `svc/tell-harness.js` and
+  `svc/assign-panel-test.js` in the session scratchpad cover it.
+  **Details taken on a call are the branch's record, never the client's
+  answer** (`tContactRow_`, 29 September 2026): a `/your-policy/phone` row
+  whose `q` is `email_given`, `email_none`, `phone_given`,
+  `address_given`, `reach_*` or `when_*`. Until then any Client Responses
+  row counted, so every client whose e-mail Client Support took would have
+  been "answered": no five-day follow-up after their first letter, a tap
+  on the wall, an answer in the Monday report, and a card counted among
+  the answers on the board. Now `tAnswered_`, `tSummary_` and `tInsights_`
+  pass those rows over (a no-e-mail client on the call list still counts
+  as reached), and the board shows such a client as **reached by phone**
+  (state `reached`, its own tile and filter, after the answers), still
+  there to be named on, never in "have answered", the glance or the
+  insight counts; in the family line they read as their send row stands
+  ("e-mail taken by phone, waiting for the go"). The letter's own
+  questions ticked on a call (`rate_*`, `contact_*`, `pay_*` …) are
+  answers like any other. `health/contact-rows-harness.js` and
+  `svc/assign-reached-test.js` in the scratchpad cover it.
 - **Households are numbered, and the board shows the family beside each
   card.** Asked for on 29 September 2026 ("group by addresses … assign a
   household number so we can see whom from the household responded"). The
