@@ -110,6 +110,47 @@
   footer{color:var(--dim);font-size:12.5px;margin:36px 0 20px}
   footer a{color:var(--tdark)}
   .rules{background:var(--warnbg);border-left:4px solid var(--gold);border-radius:0 10px 10px 0;padding:10px 14px;font-size:13.5px;margin:12px 0 0}
+  /* the update panel: the outcome, a note for the file and, from the branch, the manager's note to the client */
+  .panel{position:fixed;inset:0;background:rgba(7,19,31,.55);display:flex;align-items:flex-end;justify-content:center;z-index:40}
+  .panel[hidden]{display:none}
+  @media(min-width:700px){.panel{align-items:center;padding:24px}}
+  .sheet{background:var(--card);width:min(640px,100%);max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:18px 18px 16px;box-shadow:0 -8px 40px rgba(0,0,0,.3)}
+  @media(min-width:700px){.sheet{border-radius:16px}}
+  .sheet h3{font-family:var(--f);font-weight:800;font-size:19px;color:var(--ink);margin:0;letter-spacing:-.3px}
+  .sheet .sub2{font-size:13px;color:var(--dim);margin:2px 0 12px}
+  .outs{display:flex;flex-wrap:wrap;gap:6px}
+  .outs button{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:7px 13px;font:600 13px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .outs button.on{background:var(--navy);border-color:var(--navy);color:var(--gold)}
+  .sheet .fl{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);font-weight:700;margin:14px 0 5px}
+  .sheet .fl i{font-style:normal;text-transform:none;letter-spacing:0;font-weight:500}
+  .sheet textarea,.sheet input[type=text],.sheet select{width:100%;font:15px Inter,system-ui,sans-serif;padding:9px 11px;border:1px solid #bfd0da;border-radius:9px;color:var(--ink);background:#fff}
+  .sheet textarea{min-height:64px;resize:vertical}
+  .tellbox{margin-top:16px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:12px 14px;background:#fbfcfd}
+  .tellbox .chk{display:flex;gap:9px;align-items:flex-start;font-weight:600;color:var(--ink);font-size:14.5px;cursor:pointer}
+  .tellbox .chk input{width:18px;height:18px;margin-top:2px;flex:none}
+  .tellbody[hidden]{display:none}
+  .mailprev{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--body)}
+  .mailprev .hd{font-size:12px;color:var(--dim);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px;overflow-wrap:anywhere}
+  .mailprev .hd b{color:var(--ink)}
+  .mailprev p{margin:0 0 8px}
+  .mailprev .sg b{display:block;color:var(--ink)}
+  .tellnote{font-size:12px;color:var(--dim);margin:8px 0 0}
+  .nomail{margin-top:16px;background:var(--warnbg);border:1px solid #f1dfae;border-radius:10px;padding:10px 13px;font-size:13.5px}
+  .nomail a{color:var(--tdark);font-weight:600}
+  .gobar{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+  .gobar button{border-radius:10px;padding:10px 16px;font:700 14px var(--f);cursor:pointer;border:1px solid #bfd0da;background:#fff;color:var(--body)}
+  .gobar .primary{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+  .gobar button[disabled]{opacity:.55;cursor:default}
+  @media(max-width:559px){.gobar button{flex:1 1 100%}}
+  .told{margin-top:6px;font-size:13px;color:var(--ok)}
+  /* the family on our list (the Households tab) */
+  .fam{margin-top:8px;font-size:13px;background:#f4f8fb;border:1px solid var(--line);border-radius:9px;padding:6px 10px;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center}
+  .fam .famh{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+  .fam b{color:var(--ink);font-weight:600} .fam i{font-style:normal;color:var(--dim)} .fam i.ok{color:var(--ok)}
+  .famsel{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:3px 10px;font:600 12px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .famnow{font-size:12.5px;color:var(--dim);margin:4px 0 0}
+  .focusbar{display:inline-block;background:var(--notebg);border:1px solid #a8dfeb;border-radius:9px;padding:6px 11px;color:var(--body)}
+  .focusbar a{color:var(--tdark);font-weight:600;cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -145,7 +186,7 @@
       <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
       <label>Letter<select id="fSeg"><option value="">all</option></select></label>
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
-      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option></select></label>
+      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
       <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
       <button type="button" id="fClear">Clear</button>
@@ -165,6 +206,7 @@
   <button type="button" id="barGo">Assign</button>
   <button type="button" class="ghost" id="barClear">Clear</button>
 </div>
+<div class="panel" id="panel" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="pTitle"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -259,7 +301,9 @@ function render() {
   $('title').innerHTML = manager ? 'Assignments' : 'Your clients, <em>' + esc(d.me.name.split(/\s+/)[0]) + '</em>';
   var k = d.counts;
   $('lead').innerHTML = manager
-    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. Sorted most pressing first.'
+    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. ' +
+      'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first.' +
+      (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
     : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.';
   var tiles = manager
     ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok'], ['silent', k.silent, 'not answered yet', '']]
@@ -290,26 +334,78 @@ function fill(sel, values) {
   var cur = sel.value, html = '<option value="">all</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
   if (sel.innerHTML !== html) { sel.innerHTML = html; sel.value = values.indexOf(cur) >= 0 ? cur : ''; }
 }
+/* #t=TOKEN&s=SEG, the "Update" link on the manager's calls sheet: the board opens on that one client */
+var FOCUS = '', FOCUS_SEG = '', focusTried = false;
+function readHash() {
+  var h = location.hash || '', t = /[#&]t=([A-Za-z0-9_-]{1,64})/.exec(h), s = /[#&]s=([A-Za-z0-9]{1,3})/.exec(h);
+  FOCUS = t ? t[1] : ''; FOCUS_SEG = s ? s[1].toUpperCase() : ''; focusTried = false;
+}
+readHash();
+window.addEventListener('hashchange', function () { readHash(); if (D) render(); });
+function ownLink(c) { return 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone'; }
+/* households (the Households tab): the family on our list, and who of them answered */
+function familyOf(c) { return c && c.hh && D && D.households && D.households[c.hh] ? D.households[c.hh] : null; }
+function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function (m) { return m.state === 'answered'; }); }
+function familyLine(c, manager) {
+  var f = familyOf(c), others = f ? f.filter(function (m) { return m.token !== c.token; }) : [];
+  if (!others.length) return '';
+  return '<div class="fam"><span class="famh">Family on our list · ' + esc(c.hh) + '</span>' + others.map(function (m) {
+      return '<span><b>' + esc(m.client) + '</b> <i' + (m.state === 'answered' ? ' class="ok"' : '') + '>' + esc(m.state === 'answered' ? (m.said ? 'answered: ' + m.said : 'answered') : m.state) + '</i></span>';
+    }).join('') + (manager ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') + '</div>';
+}
+/* everyone the board can show: those who answered, those written to who have not (with the box ticked), and the family of
+   someone who answered who are on neither list; one row each */
+function everyone() {
+  var seen = {}, out = [];
+  D.clients.concat(D.silent || [], D.family || []).forEach(function (c) { if (!seen[c.token]) { seen[c.token] = 1; out.push(c); } });
+  return out;
+}
 function matches(c) {
+  if (FOCUS) return c.token === FOCUS;
   var s = $('fSearch').value.trim().toLowerCase(), seg = $('fSeg').value, book = $('fBook').value, st = $('fState').value, need = $('fNeed').value;
+  if (st === 'family') { if (!((c.state === 'family' || c.state === 'silent') && familyAnswered(c))) return false; }
+  else if (c.state === 'family') return false;                  // the family rows show under their own filter
   if (s && (c.client + ' ' + (c.no || '')).toLowerCase().indexOf(s) < 0) return false;
   if (seg && c.seg !== seg) return false;
   if (book && c.book !== book) return false;
   if (FILTER.agent && (c.assigned || '').toLowerCase() !== FILTER.agent.toLowerCase()) return false;
-  if (st) { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
+  if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
   if (need && !needsOf(c)[need]) return false;
   return true;
 }
 function list() {
   var d = D, manager = d.role === 'branch';
-  var all = d.clients.concat(d.silent || []), rows = all.filter(matches);
-  var n = rows.length;
-  $('showing').innerHTML = n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's');
-  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' ? silentRow(c, manager) : card(c, manager); }).join('')
-    : '<div class="empty">' + (all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
+  var all = everyone().filter(function (c) { return c.state !== 'family' || $('fState').value === 'family' || FOCUS; }), rows = all.filter(matches);
+  var n = rows.length, looking = false;
+  if (FOCUS) {
+    /* not among those who answered: look once among the clients written to who have not */
+    if (!n && manager && !$('fAll').checked && !focusTried) { focusTried = true; $('fAll').checked = true; looking = true; load(); }
+    $('showing').innerHTML = '<span class="focusbar">One client, opened from your sheet · <a id="unfocus">show everyone</a></span>';
+  } else {
+    $('showing').innerHTML = n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's');
+  }
+  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
+    : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
+        : 'Nothing is recorded for this client yet, so there is nothing on the board to mark. Record the call on <a href="' + esc(ownLink({ token: FOCUS, seg: FOCUS_SEG })) + '" target="_blank" rel="noopener">their own page</a> first: it files on Client Responses, and the client is here the next time the board refreshes.')
+      : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
+  if ($('unfocus')) $('unfocus').addEventListener('click', function () {
+    FOCUS = ''; FOCUS_SEG = '';
+    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
+    render();
+  });
   Array.prototype.forEach.call(document.querySelectorAll('#list input.sel'), function (el) { el.addEventListener('change', function () { if (el.checked) SEL[el.value] = 1; else delete SEL[el.value]; bar(); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button[data-status]'), function (el) { el.addEventListener('click', function () { mark(el.getAttribute('data-token'), el.getAttribute('data-status'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
+  /* the whole family ticked at once, those not on the list above included, so one press names them all to one agent */
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.famsel'), function (el) {
+    el.addEventListener('click', function () {
+      var hh = el.getAttribute('data-hh'), known = {}, n = 0;
+      everyone().forEach(function (c) { known[c.token] = 1; });
+      (D.households[hh] || []).forEach(function (m) { if (known[m.token]) { SEL[m.token] = 1; n++; } });
+      list(); bar();
+      toast(n + ' of the family selected. Choose the agent in the bar below and press Assign: one brief for all of them, one introduction per inbox.');
+    });
+  });
 }
 function pills(c) {
   var so = stateOf(c);
@@ -333,7 +429,10 @@ function card(c, manager) {
   if (c.facts && c.facts.appReceived) facts.push('application received ' + esc(c.facts.appReceived));
   var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') + '</div>'
     : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
-  var own = 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone';
+  /* the manager's notes that went to the client, from the [told d MMM · key] stamps */
+  var told = (c.markers || []).map(function (m) { return /^\[told (\d{1,2} [A-Za-z]{3}) · ([a-z]+)\]$/.exec(m); }).filter(Boolean);
+  if (told.length) who += '<div class="told">✉ ' + told.map(function (x) { return 'Note e-mailed ' + esc(x[1]) + ': <b>' + esc(noteLabel(x[2])) + '</b>'; }).join(' · ') + '</div>';
+  var own = ownLink(c);
   var acts = '';
   if (manager) {
     acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">Assign to…</option>' + D.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
@@ -353,12 +452,15 @@ function card(c, manager) {
     '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? 'answered ' + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who +
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + familyLine(c, manager) +
     '<div class="acts">' + acts + '</div></div></div>';
 }
 function silentRow(c, manager) {
+  /* a family member of someone who answered: where they stand, and whose family they are */
+  var kin = c.state === 'family' || familyAnswered(c) ? (familyOf(c) || []).filter(function (m) { return m.state === 'answered'; }).map(function (m) { return m.client; }) : [];
   return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
-    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">not answered yet</span>' +
+    '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : 'not answered yet') + '</span>' +
+    (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
     (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
     (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') + '</div>';
 }
@@ -386,19 +488,138 @@ function assign(tokens, agent, el) {
     load();
   }).catch(function () { if (el) el.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
 }
-function mark(token, status, el) {
-  var note = window.prompt(status + ': a note for the file? (optional)', '');
-  if (note === null) return;
-  if (el) el.disabled = true;
-  var p = { action: 'update', code: CODE, token: token, status: status, note: note };
-  if (WHO) p.who = WHO;
-  api(p).then(function (r) {
-    if (el) el.disabled = false;
-    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
-    toast('Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.');
-    load();
-  }).catch(function () { if (el) el.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
+function mark(token, status) { openPanel(token, status); }
+
+/* ---- the update panel: the outcome, a note for the file and, with the branch code, the manager's note to the client ---- */
+/* 28 September 2026: "a button where I click so I can update the notes and let them know that I will assign their agent as
+   discussed and will review". One press marks the rows (the outcome stops the chase) and, when ticked, e-mails the client one
+   of the notes in T_NOTES (Transition.gs) with a line of the manager's own. The words are the backend's, shown here exactly as
+   the client will read them before anything is sent. */
+var OUTS = ['Called', 'Met', 'No answer', 'Declined', 'Closed'], PN = null;
+function defaultKey(status) { return status === 'No answer' ? 'missed' : (status === 'Called' || status === 'Met') ? 'agent' : 'noted'; }
+function defaultTell(status) { return status === 'Called' || status === 'Met' || status === 'No answer'; }
+function noteLabel(key) {
+  var l = '';
+  ((D && D.notes && D.notes.list) || []).forEach(function (n) { if (n.key === key) l = n.label; });
+  return l || 'a note from the branch';
 }
+function findClient(token) {
+  var all = D ? everyone() : [];
+  for (var i = 0; i < all.length; i++) if (all[i].token === token) return all[i];
+  return null;
+}
+/* the family field: every other client the board knows, as "Name · number · letter · was with", mapped back to a token */
+var FAMOPTS = {};
+function familyOptions(c) {
+  FAMOPTS = {};
+  return everyone().filter(function (x) { return x.token !== c.token; }).map(function (x) {
+    var label = x.client + (x.no ? ' · ' + x.no : '') + (x.seg ? ' · letter ' + x.seg : '') + (x.book ? ' · was with ' + x.book : '');
+    FAMOPTS[label] = x.token;
+    return '<option value="' + esc(label) + '"></option>';
+  }).join('');
+}
+function lineOf() { var el = $('pLine'); return el ? el.value.replace(/<[^>]*>/g, '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300) : ''; }
+/* the same order the backend sends them in (tNoteParts_): the thanks, the note, the manager's line, the closing line */
+function noteParts() {
+  var N = D.notes, n = null;
+  N.list.forEach(function (x) { if (x.key === PN.key) n = x; });
+  if (!n) return null;
+  var paras = [];
+  if (PN.key !== 'missed') paras.push(N.thanks[PN.status] || N.thanks._);
+  paras.push(n.body);
+  if (lineOf()) paras.push(lineOf());
+  if (PN.key !== 'missed') paras.push(N.close);
+  return { subject: n.subject.replace('{{what}}', PN.status === 'Met' ? 'meeting' : 'call'), paras: paras };
+}
+function openPanel(token, status) {
+  var c = findClient(token);
+  if (!c) return;
+  var N = D.role === 'branch' ? D.notes : null, first = c.firstName || 'the client';
+  PN = { c: c, status: status, key: defaultKey(status), keyPicked: false, tellPicked: false };
+  var outs = OUTS.concat(c.mark && c.mark !== 'Open' ? ['Open'] : []);
+  var h = '<h3 id="pTitle">' + esc(c.client) + '</h3><p class="sub2">' + esc(c.no || '') + (c.seg ? ' · letter ' + esc(c.seg) : '') + (c.book ? ' · was with ' + esc(c.book) : '') + '</p>' +
+    '<div class="outs" id="pOuts">' + outs.map(function (s) { return '<button type="button" data-s="' + s + '">' + (s === 'Open' ? 'Reopen' : s) + '</button>'; }).join('') + '</div>' +
+    '<label class="fl" for="pNote">Note for the file <i>(stays on the sheet; the client never sees it)</i></label>' +
+    '<textarea id="pNote" maxlength="300" placeholder="What was said, and what happens next"></textarea>';
+  if (N) {
+    if (N.ready && c.canTell) {
+      h += '<div class="tellbox"><label class="chk"><input type="checkbox" id="pTell"><span>E-mail ' + esc(first) + ' a note from you</span></label>' +
+        '<div class="tellbody" id="pTellBody">' +
+        '<label class="fl" for="pKey">Which note</label><select id="pKey">' + N.list.map(function (n) { return '<option value="' + esc(n.key) + '">' + esc(n.label) + '</option>'; }).join('') + '</select>' +
+        '<label class="fl" for="pLine">A line of your own <i>(optional: the client reads this one)</i></label>' +
+        '<input type="text" id="pLine" maxlength="300" autocomplete="off" placeholder="e.g. I have asked sales support to trace your June payment.">' +
+        '<div class="mailprev" id="pPrev" aria-live="polite"></div>' +
+        '<p class="tellnote">Goes as soon as you press the button, from support@rickyrampersadbranch.com, signed by you, with the branch copied and the confidentiality footer. ' +
+        'Your press is the go for this one note, even while automatic client e-mail is held.</p></div></div>';
+    } else {
+      h += '<div class="nomail">' + (N.ready ? 'No e-mail we can use for ' + esc(first) + ': ' + esc(c.tellWhy || 'none on file') + '.' : 'Microsoft 365 sending is not set up, so the board cannot e-mail a client.') +
+        ' Call instead' + (c.phone ? ' (<a href="tel:' + esc(digits(c.phone)) + '">' + esc(c.phone) + '</a>)' : '') +
+        ', or take their e-mail on <a href="' + esc(ownLink(c)) + '" target="_blank" rel="noopener">their page</a>.</div>';
+    }
+  }
+  if (N) {
+    /* what the client tells us about their family, when the address rule did not see it (29 September: Fayad and his wife) */
+    var fam = familyOf(c), others = fam ? fam.filter(function (m) { return m.token !== c.token; }).map(function (m) { return m.client; }) : [];
+    h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household)</i></label>' +
+      '<input type="text" id="pFam" list="pFamList" autocomplete="off" placeholder="start typing a name"><datalist id="pFamList">' + familyOptions(c) + '</datalist>' +
+      (others.length ? '<p class="famnow">Already one household (' + esc(c.hh) + ') with ' + esc(others.join(', ')) + '.</p>' : '');
+  }
+  h += '<div class="gobar"><button type="button" id="pCancel">Cancel</button><button type="button" class="primary" id="pSave">Save</button></div>';
+  $('sheet').innerHTML = h;
+  Array.prototype.forEach.call(document.querySelectorAll('#pOuts button'), function (b) {
+    b.addEventListener('click', function () { PN.status = b.getAttribute('data-s'); syncPanel(); });
+  });
+  if ($('pTell')) {
+    $('pTell').addEventListener('change', function () { PN.tellPicked = true; syncPanel(); });
+    $('pKey').addEventListener('change', function () { PN.key = $('pKey').value; PN.keyPicked = true; syncPanel(); });
+    $('pLine').addEventListener('input', syncPanel);
+  }
+  $('pCancel').addEventListener('click', closePanel);
+  $('pSave').addEventListener('click', savePanel);
+  syncPanel();
+  $('panel').hidden = false; document.body.style.overflow = 'hidden';
+  try { $('pNote').focus(); } catch (e) {}
+}
+function syncPanel() {
+  Array.prototype.forEach.call(document.querySelectorAll('#pOuts button'), function (b) { b.classList.toggle('on', b.getAttribute('data-s') === PN.status); });
+  var tell = $('pTell'), sending = false;
+  if (tell) {
+    if (!PN.tellPicked) tell.checked = defaultTell(PN.status);
+    if (!PN.keyPicked) { PN.key = defaultKey(PN.status); $('pKey').value = PN.key; }
+    sending = tell.checked;
+    $('pTellBody').hidden = !sending;
+    var parts = noteParts(), s = D.notes.sign;
+    if (parts) $('pPrev').innerHTML = '<div class="hd">To <b>' + esc(PN.c.email) + '</b>, the branch copied<br>Subject: <b>' + esc(parts.subject) + '</b></div>' +
+      '<p>Dear ' + esc(PN.c.firstName || 'there') + ',</p>' + parts.paras.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') +
+      '<div class="sg"><b>' + esc(s.name) + '</b>' + esc(s.title) + '<br>' + esc(s.line) + '</div>';
+  }
+  $('pSave').textContent = sending ? 'Save, and e-mail ' + (PN.c.firstName || 'the client') : 'Save';
+}
+function closePanel() { $('panel').hidden = true; document.body.style.overflow = ''; PN = null; }
+function savePanel() {
+  if (!PN) return;
+  var c = PN.c, status = PN.status, btn = $('pSave'), tell = $('pTell');
+  var p = { action: 'update', code: CODE, token: c.token, status: status, note: $('pNote').value.trim() };
+  if (WHO) p.who = WHO;
+  if (tell && tell.checked) { p.tell = PN.key; p.line = lineOf(); }
+  var famEl = $('pFam'), famTxt = famEl ? famEl.value.trim() : '';
+  if (famTxt) {
+    if (!FAMOPTS[famTxt]) { toast('Choose the family member from the list as you type their name.', true); return; }
+    p.family = FAMOPTS[famTxt];
+  }
+  btn.disabled = true;
+  api(p).then(function (r) {
+    btn.disabled = false;
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
+    var msg = 'Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.' +
+      (r.told ? ' Your note is on its way to ' + (c.firstName || c.client) + '.' : '') +
+      (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') + (r.warning ? ' ' + r.warning : '');
+    toast(msg, !!r.warning);
+    closePanel(); load();
+  }).catch(function () { btn.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
+}
+$('panel').addEventListener('click', function (e) { if (e.target === $('panel')) closePanel(); });
+document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('panel').hidden) closePanel(); });
 ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
 $('fAll').addEventListener('change', function () { if (D) load(); });
 $('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });

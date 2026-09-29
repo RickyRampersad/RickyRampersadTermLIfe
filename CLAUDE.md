@@ -1397,6 +1397,83 @@ voice under the new timing and the caption gives it away.
   (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
   of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
   version, or every screen locks out.
+- **After a call, one press on the board marks the file and can write to the
+  client in the manager's name.** Asked for on 28 September 2026 ("a button
+  where I click so I can update the notes and let them know that I will
+  assign their agent as discussed and will review etc, to create the
+  experience"). An outcome button (Called, Met, No answer, Declined, Closed)
+  opens a panel, not a prompt: the outcome; a note for the file, stamped in
+  the Note cell as before and never seen by the client; and, with the branch
+  code only, "E-mail <first name> a note from you". There are four notes, in `T_NOTES` in
+  Transition.gs: I am matching you with your agent, I am looking into your
+  file myself, Thank you: all noted, and I tried to reach you. The manager
+  can add a line of his own, and the panel shows every word before it goes
+  (`tNotesForBoard_` hands the board the backend's words). It goes from
+  support@ through Graph, signed by the manager (`TRANSITION.MANAGER`), with
+  the branch copied and the confidentiality footer, and never through Gmail.
+  The client's rows are marked `[told d MMM · key]`, and the same note never
+  goes twice in a day. A row that bounced, is held for anything, or has no
+  e-mail gets no note. An e-mail taken by phone and waiting for the go may
+  get one (`tNoteBlock_`). The notes never give a date for the agent,
+  never mention anyone who left, and never advise. Only the manager's press
+  sends one, so the hold on automatic client e-mail does not stop it: the
+  press is his go for that one note.
+  **The Client Support calls Google Sheet is one-way.** It reads the
+  campaign sheet through IMPORTRANGE. Nothing typed on it reaches Client
+  Responses, the board, the reports or the chase: not the callers' Try,
+  Reached? and Outcome columns, and not the manager's "Called on" and
+  "Outcome". On the first day of calls (28 September) the callers typed
+  nine e-mails into the sheet and recorded none on the page, so none could
+  reach a send row. `assign.html#t=<token>&s=<letter>` opens the board on
+  one client, and a HYPERLINK column on the sheet is how a row gets to its
+  outcome buttons. `svc/tell-harness.js` and `svc/assign-panel-test.js` in
+  the session scratchpad cover it.
+- **Households are numbered, and the board shows the family beside each
+  card.** Asked for on 29 September 2026 ("group by addresses … assign a
+  household number so we can see whom from the household responded"). The
+  **Households** tab (Token, Household, and live Answered columns) is built
+  in the session scratchpad by `hh/build-households.py`, with the
+  reassignment's own rule: the same address, the same phone or the same
+  e-mail. A key shared by more than six clients is an office, not a
+  family, and a departed agent's or a staff member's own contact details
+  never link anyone. It is imported into the campaign sheet as its own tab
+  (File → Import → Insert new sheet, formulas converted); client names
+  never enter the repository. `tHouseholds_` reads it. On the board, each
+  card shows "Family on our list": each member, whether they answered and
+  what mattered most, or where they stand (no e-mail, sharing an inbox and
+  so without a letter of their own, an e-mail waiting for the go, written
+  to with no answer yet). "Select the family" ticks every member, those off
+  the board included, so one Assign names them all. The agent gets one
+  brief, and the introductions go one per inbox, never to a held address.
+  "Family of someone who answered" lists the members still to reach. The
+  rule misses some families: on file, a husband's policy can carry a house
+  number and his wife's a light-pole number on the same street, as Fayad
+  Ali and Nadira Baksh-Ali's do. For those, the update panel's "A family
+  member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
+  branch code only) links the two. It gives them a new number, or joins
+  one household to the other, keeping the older number.
+  `svc/household-harness.js` and `svc/assign-household-test.js` in the
+  session scratchpad cover it.
+- **Families sharing one inbox: one letter a day, and a different surname
+  is confirmed first.** Until 29 September 2026, the sender sent a shared
+  inbox the first member's letter and held the rest for good as `check:
+  same e-mail as row N`: 95 clients, re-held on every run. The manager
+  chose the rule that day. A client whose inbox already had a letter gets
+  their own when they share a surname with the client written to. A
+  married name counts on either half ("Baksh-Ali" and "Ali"); a lone
+  initial never does (`tSameFamily_`). They get it on a later day, because
+  an inbox never gets two letters on one day. A different surname may be
+  an office's or a relative's inbox. That client is held as `check: shares
+  an inbox with <name> (row N), a different surname: confirm the address`
+  for Client Support. An address a person confirmed on a call (a Reason of
+  "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
+  address onto such a row like any other. The 95 were sorted once by
+  `tSharedInboxRows_`, first in the five-minute receipts run after the
+  paste, into 69 family members freed for their own letter after the go
+  and 26 held to confirm. It sets the `shared_inbox_sorted` property and
+  never runs again. Client Support's list for the 26 is built in the
+  scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
+  on every row. `health/shared-inbox-harness.js` there covers it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
