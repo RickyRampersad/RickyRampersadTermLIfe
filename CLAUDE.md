@@ -1136,6 +1136,12 @@ voice under the new timing and the caption gives it away.
   to the new one; the same address already sent to is left alone; a row
   held for anything else (an agent, a household, staff, a claim, a check)
   is never touched; each Client Responses row read is marked `[filed…]`.
+  The address a letter bounced from is never filed back onto its row, even
+  when a caller marks it confirmed (29 September 2026: ten bounced
+  addresses kept as they were, two visibly misspelt): a row held
+  `bounced: no such mailbox` or `bad domain` with the same address is
+  marked `[filed: this address bounced …]` and stays held; a full mailbox
+  may be confirmed, since the address is the client's own.
   The branch's go is `transitionReleasePhoneEmails` (menu: "Transition:
   release the e-mails taken by phone (the go)", which needs a Service.gs
   paste; until then the editor's Run button, or clear those Exclude cells

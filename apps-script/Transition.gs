@@ -1096,6 +1096,12 @@ function tFilePhoneEmails_() {
       mark(x, 'row held for "' + ex.slice(0, 40) + '", not changed'); out.left++; return;
     }
     if (old === x.email && sent && !ex) { mark(x, 'same address, the letter went there already'); out.same++; return; }
+    /* the address the letter bounced from, "confirmed" on a call: filing it would clear the hold and send the letter back
+       to a box that does not exist (29 September 2026: ten bounced addresses kept as they were, two of them misspelt).
+       A full mailbox is the client's own address and may have been cleared, so it may be confirmed. */
+    if (old === x.email && /^bounced: (no such mailbox|bad domain)/i.test(ex)) {
+      mark(x, 'this address bounced (' + ex.replace(/^bounced: /i, '') + '), not filed: ask for the right one'); out.left++; return;
+    }
     var took = x.when instanceof Date ? ' on ' + Utilities.formatDate(x.when, tz, 'd MMM') : '';
     var was = sent ? '; the letter of ' + (sentAt instanceof Date ? Utilities.formatDate(sentAt, tz, 'd MMM') : tText_(sentAt)) +
       ' went to ' + (old || 'no address') + ' and goes again on release' : '';
