@@ -804,9 +804,59 @@ function transitionReceipts() {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(20000)) return 'another run is busy';
   try {
+    try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
     return tReceipts_();
   } finally { lock.releaseLock(); }
+}
+
+/* ── families sharing one inbox ──────────────────────────────────── */
+/** Whether two send rows are one family by name: a surname in common, a married name's either half counting
+ *  ("Baksh-Ali" and "Ali"), a lone initial never. */
+function tSurnames_(row) {
+  var t = tText_(row.Client).toLowerCase().replace(/[^a-z\-' ]/g, ' ').replace(/-/g, ' ').split(/\s+/).filter(Boolean);
+  return t.length > 1 ? t.slice(1) : t;
+}
+function tSameFamily_(a, b) {
+  var sa = tSurnames_(a);
+  return tSurnames_(b).some(function (x) { return x.length > 1 && sa.indexOf(x) >= 0; });
+}
+/** What a row sharing an inbox under a different surname carries in Exclude until Client Support confirms the address. */
+function tInboxCheck_(f) {
+  return ('check: shares an inbox with ' + (tText_(f.Client) || tText_(f['First name']) || 'another client') + ' (row ' + f._row + '), a different surname: confirm the address').slice(0, 160);
+}
+/** The families the old one-inbox rule held for good ("check: same e-mail as row N": 95 clients on 28 September),
+ *  sorted once under the new rule: a family member's Exclude is cleared, so their own letter goes after the go, one
+ *  a day per inbox; a different surname is held for Client Support to confirm the address. Runs first in the
+ *  five-minute receipts run, once: the script property it sets stops it after the pass, and no row can be held the
+ *  old way any more. */
+var T_INBOX_SORTED = 'shared_inbox_sorted';
+function tSharedInboxRows_() {
+  var out = { family: 0, confirm: 0 };
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty(T_INBOX_SORTED) === 'yes') return out;
+  var t = tRead_(), byRow = {};
+  t.rows.forEach(function (r) { byRow[r._row] = r; });
+  t.rows.forEach(function (r) {
+    var m = /^check: same e-mail as row (\d+)/i.exec(tText_(r.Exclude));
+    if (!m) return;
+    var f = byRow[Number(m[1])];
+    if (f && tSameFamily_(f, r)) {
+      t.sh.getRange(r._row, t.col.Exclude).setValue('');
+      t.sh.getRange(r._row, t.col.Status).setValue('');
+      if (t.col.Reason) t.sh.getRange(r._row, t.col.Reason).setValue('shares an inbox with ' + (tText_(f.Client) || 'family') + ' (row ' + f._row + '), family: their own letter after the go, one a day per inbox');
+      out.family++;
+    } else {
+      var why = f ? tInboxCheck_(f) : 'check: shares an inbox, a different surname: confirm the address';
+      t.sh.getRange(r._row, t.col.Exclude).setValue(why);
+      t.sh.getRange(r._row, t.col.Status).setValue(why);
+      out.confirm++;
+    }
+  });
+  props.setProperty(T_INBOX_SORTED, 'yes');
+  log_('transition', 'shared-inbox', out.family + ' family members freed for their own letter after the go, one a day per inbox; ' +
+       out.confirm + ' held for Client Support to confirm the address');
+  return out;
 }
 
 /* ── e-mails taken on a call ─────────────────────────────────────── */
@@ -875,7 +925,7 @@ function tFilePhoneEmails_() {
     if (bad) { mark(x, 'address looks wrong (' + bad + '), not filed'); out.left++; return; }
     var ex = tText_(r.Exclude), old = tText_(r.Email).toLowerCase(), sentAt = r['Sent at'];
     var sent = sentAt instanceof Date ? !isNaN(sentAt.getTime()) : !!tText_(sentAt);
-    if (ex && !/^no e-mail/i.test(ex) && !/^bounced/i.test(ex) && ex !== T_PHONE_HOLD) {
+    if (ex && !/^no e-mail/i.test(ex) && !/^bounced/i.test(ex) && ex !== T_PHONE_HOLD && !/^check: shares an inbox/i.test(ex)) {
       mark(x, 'row held for "' + ex.slice(0, 40) + '", not changed'); out.left++; return;
     }
     if (old === x.email && sent && !ex) { mark(x, 'same address, the letter went there already'); out.same++; return; }
@@ -1379,10 +1429,19 @@ function tSendBatch_(force) {
   try { letters = tLetters_(); } catch (err) { return tStop_('letters-unavailable', err); }
 
   var today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
-  /* one address, one letter: a household sharing an e-mail gets the first row
-     this run and the rest held for a person to decide, not three letters at once */
-  var seen = {};
-  t.rows.forEach(function (r) { if (tText_(r['Sent at']) && tText_(r.Email)) seen[tText_(r.Email).toLowerCase()] = r._row; });
+  /* one inbox, one letter a day. Until 29 September 2026 a family sharing an e-mail got the first member's letter and
+     the rest were held for good ("check: same e-mail as row N", which the next run only held again). The manager's
+     choice that day: a family member gets their own letter at the shared inbox on a later day, never two the same
+     day; someone sharing an inbox under a different surname is held for Client Support to confirm the address, since
+     the inbox may be an office's or a relative's, unless a person already confirmed it on a call (the Reason a
+     phone e-mail leaves, "e-mail taken by …"). */
+  var firstAt = {}, busy = {};
+  t.rows.forEach(function (r) {
+    var mail = tText_(r.Email).toLowerCase(), sa = r['Sent at'];
+    if (!mail || !tText_(sa)) return;
+    if (!firstAt[mail]) firstAt[mail] = r;
+    if (sa instanceof Date && !isNaN(sa.getTime()) && Utilities.formatDate(sa, tz, 'yyyy-MM-dd') === today) busy[mail] = r._row;
+  });
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude)) return false;
     if (tText_(r['Sent at'])) return false;
@@ -1394,8 +1453,13 @@ function tSendBatch_(force) {
     var why = tHold_(r, letters);                               // no e-mail, no first name, no letter: out of the queue
     if (why) { tHoldRow_(t, r, why); return false; }
     var mail = tText_(r.Email).toLowerCase();
-    if (seen[mail]) { tHoldRow_(t, r, 'check: same e-mail as row ' + seen[mail]); return false; }
-    seen[mail] = r._row;
+    /* a different surname first, so Client Support has the row at once, whatever else the inbox had today */
+    var f = firstAt[mail];
+    if (f && f._row !== r._row && !tSameFamily_(f, r) && !/^e-mail taken by/i.test(tText_(r.Reason))) {
+      tHoldRow_(t, r, tInboxCheck_(f)); return false;
+    }
+    if (busy[mail]) return false;                                 // this inbox has had its letter today: a later run day, nothing marked
+    busy[mail] = r._row;
     return true;
   });
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
@@ -2206,7 +2270,9 @@ function tMemberState_(r) {
   var ex = tText_(r.Exclude), sent = r['Sent at'];
   if (/^no e-mail/i.test(ex)) return 'no e-mail';
   if (/^check: same e-mail/i.test(ex)) return 'shares an inbox, no letter of their own';
+  if (/^check: shares an inbox/i.test(ex)) return 'shares an inbox, address to confirm';
   if (ex === T_PHONE_HOLD) return 'e-mail taken by phone, waiting for the go';
+  if (!ex && /^shares an inbox with/i.test(tText_(r.Reason)) && !(sent instanceof Date ? !isNaN(sent.getTime()) : tText_(sent))) return 'shares an inbox: own letter after the go';
   if (/^bounced/i.test(ex)) return 'letter bounced';
   if (ex) return 'held: ' + ex.slice(0, 40);
   if (sent instanceof Date ? !isNaN(sent.getTime()) : tText_(sent)) return 'written to, no answer yet';

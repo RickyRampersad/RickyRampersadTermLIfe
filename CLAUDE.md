@@ -1451,13 +1451,29 @@ voice under the new timing and the caption gives it away.
   Ali and Nadira Baksh-Ali's do. For those, the update panel's "A family
   member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
   branch code only) links the two. It gives them a new number, or joins
-  one household to the other, keeping the older number. **One letter per
-  inbox**: a family sharing one e-mail gets the first member's letter, and
-  the rest are held as `check: same e-mail as row N` (95 clients on 28
-  September). The sender holds them again on every run, so none has a
-  letter of their own until the manager decides how they should go.
+  one household to the other, keeping the older number.
   `svc/household-harness.js` and `svc/assign-household-test.js` in the
   session scratchpad cover it.
+- **Families sharing one inbox: one letter a day, and a different surname
+  is confirmed first.** Until 29 September 2026, the sender sent a shared
+  inbox the first member's letter and held the rest for good as `check:
+  same e-mail as row N`: 95 clients, re-held on every run. The manager
+  chose the rule that day. A client whose inbox already had a letter gets
+  their own when they share a surname with the client written to. A
+  married name counts on either half ("Baksh-Ali" and "Ali"); a lone
+  initial never does (`tSameFamily_`). They get it on a later day, because
+  an inbox never gets two letters on one day. A different surname may be
+  an office's or a relative's inbox. That client is held as `check: shares
+  an inbox with <name> (row N), a different surname: confirm the address`
+  for Client Support. An address a person confirmed on a call (a Reason of
+  "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
+  address onto such a row like any other. The 95 were sorted once by
+  `tSharedInboxRows_`, first in the five-minute receipts run after the
+  paste, into 69 family members freed for their own letter after the go
+  and 26 held to confirm. It sets the `shared_inbox_sorted` property and
+  never runs again. Client Support's list for the 26 is built in the
+  scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
+  on every row. `health/shared-inbox-harness.js` there covers it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
