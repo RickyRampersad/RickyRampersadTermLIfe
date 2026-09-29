@@ -2412,7 +2412,7 @@ function transitionBoard_(p) {
  *  client written to as a compact row, so a caller can be named on someone
  *  who has not answered yet. An agent gets the clients named to them and
  *  nothing else. Staff Test rows are never on the board. */
-function tBoard_(w, all) {
+function tBoard_(w, all, lite) {
   var tz = tTz_(), now = new Date();
   var t = tRead_();
   var rc = tReceipt_();
@@ -2631,13 +2631,190 @@ function tBoard_(w, all) {
     counts.insights = {};
     clients.forEach(function (c) { (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
     Object.keys(hhInfo).forEach(function (h) { if (hhInfo[h].gaps.length && households[h].some(function (m) { return m.state === 'answered'; })) counts.insights.hhgap = (counts.insights.hhgap || 0) + 1; });
+    /* the book at a glance: over those who answered, and over every client of the books on the send list (not when the
+       board is read only to name an agent) */
+    var bookNos = [];
+    if (!lite) order.forEach(function (tok) { var r = sendBy[tok]; if (!T_NOT_BOOK.test(tText_(r.Exclude))) bookNos.push(tText_(r['Client number'])); });
+    if (!lite) counts.glance = { answered: tGlance_(clients.map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
+  /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
+  if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
            book: { ready: bk.ready, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            notes: w.role === 'branch' ? tNotesForBoard_() : null };
+}
+
+/* ── who should look after whom: the board's suggestion ────────────────── */
+/* 29 September 2026, evening: "how is the assignment going to be?" Until then the manager chose an agent card by card
+   ("it was just randomly we assign"). The board now suggests one for every client nobody is named on, says why, and
+   names nobody until he presses. In this order:
+   1. the family: someone in the household already has an agent, so the rest go to the same one;
+   2. the plan: the 24 September split, checked with the team (the Assignment Plan tab, one row a client: the agent the
+      plan gives them, the team's own pick beside it, the tenure band and the area). The plan keeps households together
+      and gives every agent an even share of every band. A household on the board takes its head's plan agent, so the
+      two lists' different ideas of a family never split one;
+   3. the lightest list: the active agent with the fewest clients named so far, counting the suggestions already made
+      in this pass, so what is left goes round the roster evenly; a household is suggested once, as one.
+   An agent the plan names who is not on the Agent Skill Bank (Active) is shown as such and never swapped for someone
+   else: the roster is filled first. */
+var T_PLAN = { SHEET: 'Assignment Plan' };
+var T_PLAN_MEMO = null;
+/** The Assignment Plan tab as { ready, by: { client number: { agent, team, band, area, hh } } }. */
+function tPlan_() {
+  if (T_PLAN_MEMO) return T_PLAN_MEMO;
+  var by = {}, n = 0;
+  try {
+    var t = tSheetRows_(T_PLAN.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+    var col = function (v, names) {
+      for (var k = 0; k < names.length; k++) { var i = ix[names[k]]; if (i !== undefined && String(v[i] == null ? '' : v[i]).trim()) return String(v[i]).trim(); }
+      return '';
+    };
+    if (ix['client number'] !== undefined) t.rows.forEach(function (v) {
+      var no = tCno_(v[ix['client number']]), agent = col(v, ['plan agent', 'plan: assign to', 'agent']);
+      if (!no || !agent) return;
+      by[no] = { agent: agent, team: col(v, ["team's pick", 'team: household sits with']), band: col(v, ['band']), area: col(v, ['area']), hh: col(v, ['plan household']) };
+      n++;
+    });
+  } catch (e) {}
+  return (T_PLAN_MEMO = { ready: n > 0, by: by });
+}
+/** The roster agent a name means: the full name, or a first name that only one agent on the roster carries. */
+function tRosterMatch_(roster, name) {
+  var s = String(name || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  if (!s) return null;
+  for (var i = 0; i < roster.length; i++) if (roster[i].name.toLowerCase() === s) return roster[i];
+  var first = s.split(' ')[0], hit = roster.filter(function (a) { return a.name.toLowerCase().split(/\s+/)[0] === first; });
+  return hit.length === 1 ? hit[0] : null;
+}
+/** Puts c.sug = { agent, why, src } (src: family, plan, load; or agent '' with `planned` when the plan names someone not on
+ *  the roster) on every row nobody is named on. Returns the counts for the page: by agent, by source, and off the roster. */
+function tSuggest_(rows, ctx) {
+  var roster = ctx.roster || [], plan = ctx.plan || { by: {} }, load = {}, out = { byAgent: {}, src: { family: 0, plan: 0, load: 0 }, off: 0, offNames: {}, plan: !!plan.ready };
+  if (!roster.length) return out;
+  var first = function (n) { return String(n || '').split(/\s+/)[0]; };
+  roster.forEach(function (a) { load[a.name] = 0; });
+  (ctx.clients || []).forEach(function (c) { var a = c.assigned ? tRosterMatch_(roster, c.assigned) : null; if (a) load[a.name]++; });
+  var planOf = function (no) { return plan.by[tCno_(no)] || null; };
+  /* the family's agent, where someone in it is named already; and the household's plan agent: its head's, else most members' */
+  var famAgent = {}, famPlan = {}, hhPick = {};
+  Object.keys(ctx.households || {}).forEach(function (h) {
+    var list = ctx.households[h], named = {}, votes = {}, head = null;
+    list.forEach(function (m) {
+      var c = m.token ? ctx.answeredBy[m.token] : null, a = c && c.assigned ? tRosterMatch_(roster, c.assigned) : null;
+      if (a) { named[a.name] = named[a.name] || { n: 0, who: m.client }; named[a.name].n++; }
+      var p = planOf(m.no);
+      if (p) { votes[p.agent] = (votes[p.agent] || 0) + 1; if (m.head) head = p.agent; }
+    });
+    var best = Object.keys(named).sort(function (x, y) { return named[y].n - named[x].n; })[0];
+    if (best) famAgent[h] = { agent: best, who: named[best].who };
+    var most = Object.keys(votes).sort(function (x, y) { return votes[y] - votes[x] || x.localeCompare(y); })[0];
+    if (head || most) famPlan[h] = head || most;
+  });
+  var put = function (c, s) {
+    c.sug = s;
+    if (s.agent) { out.byAgent[s.agent] = (out.byAgent[s.agent] || 0) + 1; out.src[s.src]++; load[s.agent] = (load[s.agent] || 0) + 1; }
+    else { out.off++; out.offNames[s.planned] = (out.offNames[s.planned] || 0) + 1; }
+  };
+  rows.forEach(function (c) {
+    if (!c || c.assigned || c.sug) return;
+    var h = c.hh || '', fa = h ? famAgent[h] : null;
+    if (fa) { put(c, { agent: fa.agent, why: 'with the family: ' + fa.who + ' is with ' + first(fa.agent), src: 'family' }); return; }
+    var p = planOf(c.no), pname = (h && famPlan[h]) || (p ? p.agent : '');
+    if (pname) {
+      var a = tRosterMatch_(roster, pname);
+      if (!a) { put(c, { agent: '', planned: pname, why: 'the 24 Sep plan names ' + pname + ', who is not on the Agent Skill Bank yet', src: 'plan' }); return; }
+      var bits = ['the 24 Sep plan'];
+      if (p && p.band) bits.push(p.band);
+      if (p && p.area) bits.push(p.area);
+      if (h && (!p || p.agent.toLowerCase() !== pname.toLowerCase())) bits.push('with the family');
+      else if (p && p.team && p.team.toLowerCase() !== p.agent.toLowerCase()) bits.push('the team\'s own list had ' + p.team);
+      put(c, { agent: a.name, why: bits.join(' · '), src: 'plan' });
+      return;
+    }
+    if (h && hhPick[h]) { put(c, { agent: hhPick[h], why: 'with the family: the lightest list when the first of them was suggested', src: 'load' }); return; }
+    var light = roster.slice().sort(function (x, y) { return (load[x.name] - load[y.name]) || x.name.localeCompare(y.name); })[0];
+    put(c, { agent: light.name, why: 'the lightest list: ' + load[light.name] + ' named or suggested so far', src: 'load' });
+    if (h) hhPick[h] = light.name;
+  });
+  return out;
+}
+
+/* ── the book at a glance: who the clients are, how they pay, what they hold ── */
+/* The branch's panel on the board, over those who answered and over every client of the books on the send list (never the
+   departed agents' own policies, their households, staff, a death claim or a client who holds nothing). Counts only. */
+var T_NOT_BOOK = /^(agent|agent household|agent e-mail|staff e-mail|death claim|nothing held)/i;
+var T_AGE_BANDS = [[0, 30, 'under 30'], [30, 45, '30 to 44'], [45, 60, '45 to 59'], [60, 70, '60 to 69'], [70, 200, '70 and over']];
+var T_YEAR_BANDS = [[0, 2, 'under 2 years'], [2, 5, '2 to 5 years'], [5, 10, '5 to 10 years'], [10, 20, '10 to 20 years'], [20, 1000, '20 years or more']];
+var T_BILL_WORDS = { 'bankers order': 'bankers order', 'direct bill': 'direct bill', 'pre authorized cheque': 'pre-authorised cheque', 'salary deduction': 'salary deduction',
+  'military pay': 'military pay', 'post dated cheque': 'post-dated cheque', 'single premium': 'single premium' };
+function tGlance_(nos) {
+  var g = { n: 0, onBook: 0, prem: 0, cover: 0, ci: 0, due: 0, lapsed: 0, occN: 0, empN: 0, incN: 0, income: 0 };
+  var age = {}, gender = {}, pay = {}, holds = {}, ben = {}, years = {}, occ = {}, emp = {}, occL = {}, empL = {}, inc = [], seen = {};
+  var bump = function (o, k) { o[k] = (o[k] || 0) + 1; };
+  var empKey = function (s) {
+    return s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, ' ').replace(/\b(limited|ltd|company|co|the|of|trinidad|and|tobago|tt)\b/g, ' ').replace(/\s+/g, ' ').trim();
+  };
+  (nos || []).forEach(function (no) {
+    no = tCno_(no);
+    if (!no || seen[no]) return;
+    seen[no] = true;
+    g.n++;
+    var p = tBookFor_(no, true), pf = tProfileFor_(no), band = 'not recorded';
+    if (pf && pf.age !== undefined) T_AGE_BANDS.forEach(function (b) { if (pf.age >= b[0] && pf.age < b[1]) band = b[2]; });
+    bump(age, band);
+    bump(gender, pf && pf.gender ? pf.gender : 'not recorded');
+    if (pf && pf.occ) { var k = pf.occ.toLowerCase().replace(/[^a-z]/g, ''); g.occN++; bump(occ, k); if (!occL[k]) occL[k] = pf.occ; }
+    if (pf && pf.emp) { var e = empKey(pf.emp) || pf.emp.toLowerCase(); g.empN++; bump(emp, e); if (!empL[e]) empL[e] = pf.emp; }
+    if (pf && pf.income > 0) { g.incN++; inc.push(pf.income); }
+    if (!p) { bump(holds, 'nothing on the portfolio'); return; }
+    g.onBook++;
+    var s = p.sum, list = p.list || [], live = list.filter(function (x) { return tBookLive_(x.st); }), cls = {}, bills = {};
+    g.prem += s.prem; g.cover += s.cover; g.ci += s.ci || 0;
+    if (s.due) g.due++;
+    if (s.lapsed) g.lapsed++;
+    live.forEach(function (x) {
+      if (x.cls) cls[x.cls] = true;
+      if (x.st === 'inforce' || x.st === 'overdue') bills[T_BILL_WORDS[String(x.bill || '').toLowerCase()] || (x.bill ? String(x.bill).toLowerCase() : 'not recorded')] = true;
+      bump(ben, { named: 'a named person', estate: 'the estate', provisions: 'the special provisions', role: 'a role only (Proposer, Annuitant)' }[x.benK] || 'not on our file');
+    });
+    Object.keys(bills).forEach(function (k) { bump(pay, k); });
+    if (!live.length) bump(holds, 'nothing in force');
+    else {
+      if (s.cover) bump(holds, 'life cover');
+      if (s.ci || cls['critical illness']) bump(holds, 'critical illness');
+      if (s.acc || cls.accident) bump(holds, 'accident');
+      if (cls.health) bump(holds, 'health');
+      if (cls.savings) bump(holds, 'savings or annuity');
+    }
+    var yb = 'no policy issued yet';
+    if (s.since) T_YEAR_BANDS.forEach(function (b) { if (s.years >= b[0] && s.years < b[1]) yb = b[2]; });
+    bump(years, yb);
+  });
+  var fixed = function (o, order) { return order.filter(function (k) { return o[k]; }).map(function (k) { return [k, o[k]]; }); };
+  var top = function (o, labels, n) { return Object.keys(o).sort(function (a, b) { return o[b] - o[a] || a.localeCompare(b); }).slice(0, n).map(function (k) { return [labels[k] || k, o[k]]; }); };
+  g.prem = Math.round(g.prem); g.cover = Math.round(g.cover); g.ci = Math.round(g.ci);
+  if (inc.length) { inc.sort(function (a, b) { return a - b; }); g.income = inc[Math.floor(inc.length / 2)]; }
+  g.age = fixed(age, T_AGE_BANDS.map(function (b) { return b[2]; }).concat(['not recorded']));
+  g.gender = fixed(gender, ['female', 'male', 'not recorded']);
+  g.pay = top(pay, {}, 10);
+  g.holds = fixed(holds, ['life cover', 'critical illness', 'accident', 'health', 'savings or annuity', 'nothing in force', 'nothing on the portfolio']);
+  g.ben = fixed(ben, ['a named person', 'the special provisions', 'a role only (Proposer, Annuitant)', 'the estate', 'not on our file']);
+  g.years = fixed(years, T_YEAR_BANDS.map(function (b) { return b[2]; }).concat(['no policy issued yet']));
+  g.occ = top(occ, occL, 12);
+  g.emp = top(emp, empL, 10);
+  return g;
+}
+/** The glance over the whole book changes once a day, with the Client Book: kept for ten minutes. */
+function tGlanceCached_(nos) {
+  var key = 'glance-all-' + ((tBook_().built || {}).at || '') + '-' + nos.length, c = null;
+  try { c = CacheService.getScriptCache(); var hit = c.get(key); if (hit) return JSON.parse(hit); } catch (e) { c = null; }
+  var g = tGlance_(nos);
+  try { if (c) c.put(key, JSON.stringify(g), 600); } catch (e) {}
+  return g;
 }
 
 /** GET action=assign&code=<branch>&tokens=a,b,c&agent=<name>[&brief=0][&intro=1][&note=…].
@@ -2661,7 +2838,7 @@ function transitionAssign_(p) {
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
   try {
-    var b = tBoard_({ ok: true, role: 'branch', me: null }, true), map = {};
+    var b = tBoard_({ ok: true, role: 'branch', me: null }, true, true), map = {};
     b.clients.forEach(function (c) { map[c.token] = c; });
     b.silent.forEach(function (c) { map[c.token] = c; });
     (b.family || []).forEach(function (c) { map[c.token] = c; });   // a family member off the board, named with the household
@@ -2691,17 +2868,20 @@ function transitionAssign_(p) {
       c.assigned = agent.name; c.assignedOn = stamp;
       done.push(c);
     });
-    var briefed = false, introduced = 0, warnings = [];
+    var briefed = false, introduced = 0, notAnswered = 0, warnings = [];
     if (done.length && wantBrief) {
       try { tBriefMail_(agent, done, b); briefed = true; }
       catch (e) { warnings.push('The brief to ' + agent.name + ' did not send: ' + String(e && e.message ? e.message : e)); }
     }
     if (done.length && wantIntro) {
       /* one introduction per inbox in one press (a family sharing an e-mail reads it once), and none to an address
-         the send row holds back: a bounce, a check, an inbox shared with the one already written to */
+         the send row holds back: a bounce, a check, an inbox shared with the one already written to. None to a client
+         who has not answered (a silent row, or the family of one who did): the introduction thanks them for answering,
+         and they have asked for nothing; the agent's brief carries them, and the agent calls. */
       var inboxes = {};
       done.forEach(function (c) {
         var mail = String(c.email || '').trim().toLowerCase();
+        if (c.state === 'silent' || c.state === 'family') { notAnswered++; return; }
         if (c.canTell === false || !mail || inboxes[mail]) return;
         try { if (tIntroMail_(sh, c, agent, stamp)) { introduced++; inboxes[mail] = true; } }
         catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
@@ -2709,7 +2889,7 @@ function transitionAssign_(p) {
     }
     log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') +
          (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (missing.length ? ' · ' + missing.length + ' unknown' : ''));
-    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, missing: missing, warnings: warnings };
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, notAnswered: notAnswered, missing: missing, warnings: warnings };
   } finally { lock.releaseLock(); }
 }
 
@@ -2880,6 +3060,7 @@ function tTellClient_(tok, key, status, line) {
  *  them in this press, with everything the branch knows, so the first call
  *  is personal and not cold. From the script owner's account, never to a
  *  client, and it says it is internal. */
+var T_BRIEF_FULL = 25;   // clients shown in full in one brief; a larger batch lists the rest by name, and the board has every one
 function tBriefMail_(agent, clients, board) {
   var F = 'Inter,Arial,sans-serif', esc = tEsc_;
   var to = agent.email || TRANSITION.COPY_TO || SVC.AGENT_EMAIL;
@@ -2920,7 +3101,9 @@ function tBriefMail_(agent, clients, board) {
     '<h2 style="font:800 20px ' + F + ';color:#12202e;margin:0 0 4px">' + esc(agent.name) + ', you have been named on ' + clients.length + ' client' + (clients.length === 1 ? '' : 's') + '.</h2>' +
     '<p style="margin:0 0 12px;color:#64798e">From the transition letters. Each is a call before anything else, at the time the client chose. Mark the outcome on your list: ' +
     '<a href="https://rickyrampersadbranch.com/orphan-transition/assign.html">rickyrampersadbranch.com/orphan-transition/assign.html</a> (your own code, or the branch code and your name).</p>' +
-    clients.map(block).join('') +
+    clients.slice(0, T_BRIEF_FULL).map(block).join('') +
+    (clients.length > T_BRIEF_FULL ? '<p style="margin:14px 0 4px"><b>And ' + (clients.length - T_BRIEF_FULL) + ' more</b> <span style="color:#64798e">(each in full on your list on the board)</span></p>' +
+      '<p style="margin:0;font-size:13.5px">' + clients.slice(T_BRIEF_FULL).map(function (c) { return esc(c.client) + ' <span style="color:#64798e">' + esc(c.no || '') + '</span>'; }).join(' · ') + '</p>' : '') +
     '<div style="background:#fff6df;border-left:4px solid #efc24b;padding:10px 14px;margin:14px 0;font-size:13.5px">' +
     '<b>Three rules.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. ' +
     'Nothing needs to be signed or paid until they have spoken to the branch.</div>' +
@@ -3301,7 +3484,7 @@ function tPlansText_(list, codes) {
 
 /* ── reading it back ── */
 var T_BOOK_MEMO = null, T_CODES_MEMO = null;   // one read of each tab per execution
-function tBookForget_() { T_BOOK_MEMO = null; T_CODES_MEMO = null; T_PROFILE_MEMO = null; }
+function tBookForget_() { T_BOOK_MEMO = null; T_CODES_MEMO = null; T_PROFILE_MEMO = null; T_PLAN_MEMO = null; }
 
 /** The Plan Codes tab as { code: { name, cls, conf } }: read on every request, so a code confirmed at noon counts at noon. */
 function tPlanCodes_() {
@@ -3486,7 +3669,10 @@ function tBookMailHtml_(pol, prof, ins) {
    client number there). Measured on 29 September 2026 over the campaign's live policies: a date of birth on 98 in 100, a
    gender on 93, a beneficiary on every one but a name on barely 1 in 100 (half say "(See Special Provisions)", a third
    "Proposer" or "Annuitant", one in eight the estate), a life figure on 74, critical illness on 38; an occupation on
-   about 1 client in 10 and an income on 1 in 13. The board shows what is there and says nothing about what is not. */
+   about 1 client in 10 and an income on 1 in 13. The board shows what is there and says nothing about what is not.
+   The same evening ("where is the occupation?"): the policy record's Occupation is filled for 7 clients in 100, but the
+   Contact's Title, which the branch has always typed the job into ("TEACHER", "POLICE OFFICER", "CLERK"), is filled
+   for 6 in 10 once the courtesy titles are taken out, so the Occupation column falls back to it (tJobTitle_). */
 var T_PROFILE = { SHEET: 'Client Profile', CHUNK: 200, BUDGET_MS: 150000 };
 var T_PROFILE_HEAD = ['Policy', 'Client number', 'Client', 'Date of birth', 'Gender', 'Smoker', 'Occupation', 'Employer', 'Annual income',
   'Life cover', 'Critical illness cover', 'Accident cover', 'Waiver cover', 'Life cover ends', 'Beneficiary 1', 'Beneficiary 2', 'Beneficiary 3',
@@ -3497,6 +3683,24 @@ var T_EMPLOYER = /\b(ltd|limited|company|co\.|corp|corporation|inc|ministry|bank
 var T_PROFILE_MEMO = null;
 
 function tNumOrNull_(x) { return x === '' || x === null || x === undefined ? null : tNum_(x); }
+/** An occupation or an employer as the board prints it: typed in capitals or in lower case, it is set in title case with the
+ *  small words kept small and the island's own acronyms kept whole (T&TEC, WASA, NGC, TSTT); typed in mixed case, as typed. */
+var T_ACRONYMS = /^(t&tec|ttec|wasa|ngc|tstt|bp|bptt|nlcb|ttps|ttdf|nib|hdc|tcl|rbl|fcb|jmmb|nidco|udecott|plipdeco|erha|nwrha|swrha|crha|trha|tha|it|ceo|hr|ict|uwi|utt)$/i;
+function tNiceLabel_(x) {
+  var s = String(x == null ? '' : x).replace(/\s+/g, ' ').trim();
+  if (!s || (s !== s.toUpperCase() && s !== s.toLowerCase())) return s;
+  return s.toLowerCase().replace(/[^\s\/()-]+/g, function (w, i) {
+    if (T_ACRONYMS.test(w)) return w.toUpperCase();
+    if (i > 0 && /^(of|and|the|for|to|in|on|at|&)$/.test(w)) return w;
+    return w.charAt(0).toUpperCase() + w.slice(1);
+  });
+}
+/** A Contact's Title as an occupation: '' for a courtesy title or a placeholder ("MR", "Mrs.", "UNKNOWN", "NOT ON LIST"). */
+function tJobTitle_(x) {
+  var s = String(x == null ? '' : x).replace(/\s+/g, ' ').trim();
+  if (!s || /^(mr|mrs|ms|miss|mstr|master|dr|rev|sir|madam|hon)\.?$/i.test(s) || /^(unknown|not on list|not known|n\/?a|none|nil|other|-+|\.+|0)$/i.test(s)) return '';
+  return s;
+}
 function tGender_(x) { var s = String(x || '').trim().toLowerCase(); return /^m(ale)?$/.test(s) ? 'male' : /^f(emale)?$/.test(s) ? 'female' : ''; }
 function tTitleCase_(x) {
   var s = String(x || '').replace(/\s+/g, ' ').trim();
@@ -3527,7 +3731,7 @@ function tProfiles_() {
       var txt = function (k) { return String(g(k) == null ? '' : g(k)).replace(/\s+/g, ' ').trim(); };
       var emp = txt('employer');
       by[no] = { dob: tYmd_(g('date of birth'), tz), gender: tGender_(g('gender')), smoker: /^y/i.test(txt('smoker')) ? 'smoker' : '',
-        occ: tTitleCase_(txt('occupation')), emp: T_EMPLOYER.test(emp) && !/\bHH\b/.test(emp) ? tTitleCase_(emp) : '', income: tNum_(g('annual income')),
+        occ: tNiceLabel_(txt('occupation')), emp: T_EMPLOYER.test(emp) && !/\bHH\b/.test(emp) ? tNiceLabel_(emp) : '', income: tNum_(g('annual income')),
         life: tNumOrNull_(g('life cover')), ci: tNumOrNull_(g('critical illness cover')), acc: tNumOrNull_(g('accident cover')), wp: tNumOrNull_(g('waiver cover')),
         ends: tYmd_(g('life cover ends'), tz), ben: [txt('beneficiary 1'), txt('beneficiary 2'), txt('beneficiary 3')].filter(Boolean),
         insured: txt('insured'), owner: txt('owner'), role: tTitleCase_(txt('family role')) };
@@ -3538,9 +3742,11 @@ function tProfiles_() {
 }
 
 /** One client's profile, from the profile rows of their own policies: the date of birth and the age, the gender, the
- *  occupation, an employer that reads as one, the income, a family role; null when nothing is known. */
+ *  occupation, an employer that reads as one, the income, a family role; and, from the Client Book, `pay` when a live
+ *  premium comes through an employer ("salary deduction") or military pay, which says they are employed and by whom
+ *  paid even where Salesforce has no occupation. null when nothing is known. */
 function tProfileFor_(cno) {
-  var P = tProfiles_(), b = tBook_(), recs = P.ready ? (b.by[tCno_(cno)] || []) : [];
+  var P = tProfiles_(), b = tBook_(), all = b.by[tCno_(cno)] || [], recs = P.ready ? all : [];
   var o = { dob: '', gender: '', smoker: '', occ: '', emp: '', income: 0, role: '' }, any = false;
   recs.forEach(function (r) {
     var p = P.by[r.no];
@@ -3549,7 +3755,12 @@ function tProfileFor_(cno) {
     ['dob', 'gender', 'smoker', 'occ', 'emp', 'role'].forEach(function (k) { if (!o[k] && p[k]) o[k] = p[k]; });
     if (p.income > o.income) o.income = p.income;
   });
-  if (!any) return null;
+  all.forEach(function (r) {
+    if (o.pay || (r.st !== 'inforce' && r.st !== 'overdue')) return;
+    if (/military/i.test(r.bill)) o.pay = 'military pay';
+    else if (/salary|payroll/i.test(r.bill)) o.pay = 'salary deduction';
+  });
+  if (!any && !o.pay) return null;
   if (o.dob) {
     var d = o.dob.split('-'), t = b.today.split('-');
     o.age = Number(t[0]) - Number(d[0]) - ((t[1] + t[2]) < (d[1] + d[2]) ? 1 : 0);
@@ -3603,6 +3814,22 @@ function tInsightsFor_(pol, prof, today) {
     add('income', 'Life cover is ' + (mult >= 10 ? Math.round(mult) : Math.round(mult * 10) / 10) + '× the income on file ($' + tMoney_(prof.income) + ' a year)', mult < 5 ? 'warm' : 'info');
   }
   if (prof && prof.bday && prof.bdayIn <= 30) add('birthday', 'Birthday ' + prof.bday + (prof.bdayIn === 0 ? ', today' : ', in ' + tN_(prof.bdayIn, 'day', 'days')) + ' (turns ' + (prof.age + (prof.bdayIn === 0 ? 0 : 1)) + ')', 'info');
+  /* 29 September, evening ("where is the occupation and other insights given the data you have?"): what the book says
+     beyond the cover. A premium taken from the pay packet stops the day the job does; a waiver means the benefit is paying
+     the premium; a surrender before is the client's own history; and an adult with life cover and no critical illness
+     cover on a policy Salesforce has split. Facts off the record, for the licensed agent to raise; never advice. */
+  var payroll = live.filter(function (x) { return (x.st === 'inforce' || x.st === 'overdue') && /salary|payroll|military/i.test(x.bill || ''); });
+  if (payroll.length) {
+    var mil = payroll.some(function (x) { return /military/i.test(x.bill); });
+    add('payroll', (mil ? 'Paid from military pay' : 'Paid by salary deduction') + ' on ' + tN_(payroll.length, 'policy', 'policies') + ': ' +
+      (mil ? 'leaving the service' : 'a change of job') + ' stops the deduction', 'info');
+  }
+  var waived = list.filter(function (x) { return x.st === 'waived'; });
+  if (waived.length) add('waived', 'Premium waived on ' + tN_(waived.length, 'policy', 'policies') + ': the waiver benefit pays it', 'info');
+  var surr = (pol.ended || []).filter(function (e) { return /surrender/i.test(e.what); }).reduce(function (t, e) { return t + e.n; }, 0);
+  if (surr) add('surr', 'Surrendered ' + tN_(surr, 'policy', 'policies') + ' with us before', 'info');
+  if (prof && prof.age >= 18 && prof.age < 65 && s.cover && !s.ci && live.every(function (x) { return x.src === 'sf' && x.cls !== 'critical illness'; }))
+    add('noci', 'Life cover, and no critical illness cover on file', 'info');
   var rank = { hot: 0, warm: 1, info: 2 };
   return out.sort(function (a, b) { return rank[a.lv] - rank[b.lv]; });
 }
@@ -3611,13 +3838,14 @@ function tInsightsFor_(pol, prof, today) {
 var T_SF_FIELDS = ['POLICY__c', 'FIRST_NAME__c', 'LAST_NAME__c', 'Date_Of_Birth__c', 'Occupation__c', 'ANNUAL_INCOME__c', 'Monthly_Income__c',
   'Benificiary_1__c', 'Benificiary_2__c', 'Benificiary_3__c', 'INSURED__c', 'POLICY_OWNER__c', 'Family_Role__c', 'Life_Coverage__c',
   'Critical_Illness_Coverage__c', 'ADDAP_Coverage__c', 'WP_Coverage__c', 'Life_Coverage_Expiry__c', 'Contact__r.Gender__c', 'Contact__r.Smoker__c',
-  'Contact__r.Employer__c', 'Contact__r.Total_Income__c', 'Contact__r.Birthdate'];
-/** One Client Profile row from one CLIENT_PORTFOLIO__c record. */
+  'Contact__r.Employer__c', 'Contact__r.Total_Income__c', 'Contact__r.Birthdate', 'Contact__r.Title'];
+/** One Client Profile row from one CLIENT_PORTFOLIO__c record. The occupation is the policy's own, else the Contact's Title
+ *  when it is a job and not a courtesy title. */
 function tProfileRow_(rec, cno, client) {
   var c = rec.Contact__r || {}, v = function (x) { return x === null || x === undefined ? '' : x; };
   var income = rec.ANNUAL_INCOME__c || (rec.Monthly_Income__c ? rec.Monthly_Income__c * 12 : 0) || c.Total_Income__c || '';
   return [String(rec.POLICY__c || ''), cno || '', client || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.Date_Of_Birth__c || c.Birthdate),
-    v(c.Gender__c), v(c.Smoker__c), v(rec.Occupation__c), v(c.Employer__c), income, v(rec.Life_Coverage__c), v(rec.Critical_Illness_Coverage__c),
+    v(c.Gender__c), v(c.Smoker__c), v(rec.Occupation__c) || tJobTitle_(c.Title), v(c.Employer__c), income, v(rec.Life_Coverage__c), v(rec.Critical_Illness_Coverage__c),
     v(rec.ADDAP_Coverage__c), v(rec.WP_Coverage__c), v(rec.Life_Coverage_Expiry__c), v(rec.Benificiary_1__c), v(rec.Benificiary_2__c), v(rec.Benificiary_3__c),
     v(rec.INSURED__c), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c), 'Salesforce'];
 }

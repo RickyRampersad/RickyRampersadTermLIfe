@@ -1552,13 +1552,24 @@ voice under the new timing and the caption gives it away.
   (numbers from 0000745444) carry no `Client_Number__c` there.
   **What is there, measured on 29 September 2026 over the campaign's live
   policies:** date of birth 98%, gender 93%, a life figure 74%, critical
-  illness 38%, a beneficiary on every one but a name on barely 1%. Half say
-  "(See Special Provisions)", a third "Proposer" or "Annuitant", one in
-  eight the estate. Occupation is recorded for about 1 client in 10 and an
-  income for 1 in 13. `Contact.Employer__c` mostly holds a household's or an
+  illness 38%. Who a policy pays, over every live policy of the books'
+  clients: the estate 33%, "(See Special Provisions)" 30%, a role only
+  ("Proposer", "Annuitant") 24%, a named person 4%, nothing on our file 9%.
+  (A first count over part of the pull said one in eight for the estate; the
+  whole pull says a third.) **Occupation** is on the policy record
+  (`Occupation__c`) for only 7 clients in 100, but the branch has always
+  typed the job into the Contact's **Title** ("TEACHER", "POLICE OFFICER"),
+  so the Occupation column falls back to it once courtesy titles and
+  placeholders are dropped (`tJobTitle_`: never "MR", "Mrs.", "UNKNOWN",
+  "NOT ON LIST"). That raised occupation to 56% of the books' clients
+  (1,312 of 2,333), and to 88 of the 149 who had answered, from 3. The
+  refresh asks for `Contact__r.Title` too. An income is on file for about 1
+  client in 20. `Contact.Employer__c` mostly holds a household's or an
   agent's name ("RAMROACH, KERWYN HH"), so only a value that reads as an
-  employer or a status is shown (`T_EMPLOYER`). The board shows what is
-  there and never guesses the rest.
+  employer or a status is shown (`T_EMPLOYER`), about 1 client in 9. The
+  board shows what is there and never guesses the rest. Occupations and
+  employers typed in capitals or lower case print in title case, with the
+  island's acronyms kept whole (`tNiceLabel_`: T&TEC, WASA, NGC).
   **Life cover now comes from Salesforce's split first** (`tCoverOf_`). The
   portfolio's Sum Assured lumps an Evolution policy's life and critical
   illness together: on 206 of 509 live Evolution policies it equalled
@@ -1607,6 +1618,69 @@ voice under the new timing and the caption gives it away.
   Playwright) and `svc/board-dryrun.js` (the whole board on the latest sheet
   export, the portfolio copy and the pulled profile) in the session
   scratchpad cover it.
+- **The board suggests who looks after whom, and shows the book at a
+  glance.** Asked for on 29 September 2026, late: "Where is the occupation
+  and other insights given the data you have?? Also how is the assignment
+  going to be??" Until then the agent was picked card by card ("it was just
+  randomly we assign").
+  **The suggestion** (`tSuggest_`, branch code only) sits on every client
+  nobody is named on, with the reason, in this order. First the family: if
+  someone in the household already has an agent, the rest go to that agent.
+  Then the plan: the 24 September split as the team checked it, imported as
+  the **Assignment Plan** tab (one row a client: Plan agent, Team's pick,
+  Band, Area, Plan household, Moved; `plan/build-plan.py` in the scratchpad
+  from `Transition-split-checked-24Sep.xlsx`). It covers 1,479 of the 2,333
+  clients of the books; most of the rest have nothing in force (the G
+  letter) or are on the terminated book. A household on the board takes its
+  head's plan agent, so the two lists' different ideas of a family never
+  split one. Last the lightest list: the active agent with the fewest
+  clients named or suggested so far, counted as the pass goes, so what is
+  left goes round the roster evenly, one household at a time. A plan name
+  matches the Agent Skill Bank by full name, or by a first name only one
+  active agent carries. An agent the plan names who is not on the roster is
+  shown as such ("the 24 Sep plan names Narissa, who is not on the Agent
+  Skill Bank yet"), never swapped for someone else, and the note under the
+  roster lists them. **Nothing is named until the press:** "Assign to
+  Narissa" on a card, "Assign" on a row, or tick any number and "Assign each
+  as suggested", which sends one request per agent (40 clients at most per
+  request, as the tokens travel in the address). "Select all N shown" ticks
+  what the filters show, and a "Suggested agent" filter shows one agent's
+  share. The roster chips say how many are suggested to each. On the real
+  data, with the twelve plan agents on a trial roster: 1,050 from the plan,
+  460 to the lightest list, about 125 each, and no household split.
+  **The introduction goes only to a client who answered.** It thanks them
+  for answering, so a silent client, or the family of one who answered, is
+  named and briefed but gets no e-mail (`notAnswered` in the reply; the
+  toast says so). Until 29 September "Select the family" sent it to
+  everyone. **A brief shows 25 clients in full** (`T_BRIEF_FULL`) and names
+  the rest, so a big batch never builds an e-mail too large to send. The
+  board read for an assign skips the glance (`tBoard_(w, all, lite)`).
+  **Four more insights**, from data the book already holds: `payroll`
+  (a live premium by salary deduction or military pay; a change of job, or
+  leaving the service, stops the deduction), `waived` (the waiver benefit
+  pays the premium), `surr` (surrendered a policy with us before), and
+  `noci` (an adult under 65 with life cover and no critical illness cover,
+  only where Salesforce has split every live policy). The profile line says
+  "pays by salary deduction" or "paid from military pay" (`pay` in
+  `tProfileFor_`), which tells the agent the client is employed even where
+  no occupation is recorded. Over those who answered: payroll 12, surr 22,
+  noci 37.
+  **The book at a glance** (`tGlance_`, branch only, folded until opened,
+  with a switch between every client of the books and those who answered):
+  clients, premium a year, life and critical illness cover, a premium due,
+  a lapsed policy; then age bands with the women and men, years with us,
+  what they hold, how they pay, who the policies pay, the top occupations
+  and employers with how many have one on file, and the median income. The
+  whole-book view is cached for ten minutes. The books' clients are the
+  send list's, never a departed agent's own policies, their household,
+  staff, a death claim or someone who holds nothing (`T_NOT_BOOK`).
+  **A card never runs wider than the screen.** A client's reply can carry a
+  250-character link from an e-mail signature; on the real data that pushed
+  the board 1,090 px past a phone's edge. The card column now shrinks and
+  long words wrap.
+  `svc/book-harness.js` (110 checks), `svc/assign-suggest-test.js` (29,
+  Playwright) and `svc/board-dryrun.js` (a trial roster of the twelve plan
+  agents; aggregates only) in the session scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

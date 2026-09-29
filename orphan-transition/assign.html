@@ -69,6 +69,8 @@
   /* the cards */
   .c{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 14px;margin:8px 0;display:grid;grid-template-columns:auto 1fr;gap:10px 12px}
   .c.late{box-shadow:inset 4px 0 0 var(--stop)}
+  /* a client's own words can carry a 250-character link from an e-mail signature: it wraps, and never pushes the card wider than the screen */
+  .c>div{min-width:0} .c,.srow{overflow-wrap:anywhere}
   .c .tick{padding-top:3px} .c .tick input{width:18px;height:18px}
   .c.one{grid-template-columns:1fr}
   .n{font-family:var(--f);font-weight:800;font-size:16px;color:var(--ink);display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
@@ -197,6 +199,44 @@
   .hhm .st{color:var(--dim);font-size:12.5px} .hhm .st.ok{color:var(--ok)} .hhm .cv{font-size:12.5px} .hhm .cv b{color:var(--ink)} .hhm .cv .gap{color:var(--stop);font-weight:600}
   @media(max-width:640px){.hhm{grid-template-columns:1fr}}
   .hh .hhgap{font-size:12.5px;color:var(--stop);margin-top:6px}
+  /* the suggested agent: the family's, the 24 September plan's, or the lightest list; nothing is named until the press */
+  .sug{margin-top:8px;display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center;font-size:13.5px;background:#f1fbf6;border:1px solid #cfe9dc;border-radius:9px;padding:6px 10px}
+  .sug .sl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ok)}
+  .sug b{color:var(--ink)} .sug i{font-style:normal;color:var(--dim);font-size:12.5px}
+  .sug.off{background:var(--warnbg);border-color:#f1dfae;color:#7a5a12;display:block}
+  .sugbtn{background:var(--ok);color:#fff;border:0;border-radius:999px;padding:5px 12px;font:700 12.5px Inter,system-ui,sans-serif;cursor:pointer;margin-left:auto}
+  .sugbtn.sm{margin-left:0;padding:3px 10px;font-size:12px}
+  .sugbtn[disabled]{opacity:.55;cursor:default}
+  .sugtag{font-size:12px;color:var(--ok);font-weight:600;white-space:nowrap} .sugtag.off{color:#7a5a12;font-weight:500}
+  .bar button.alt{background:#dff3e8;color:var(--ok)}
+  .selshown{color:var(--tdark);font-weight:600;cursor:pointer;text-decoration:underline;margin-left:8px}
+  /* the book at a glance: who the clients are, how they pay, what they hold */
+  details.glance{margin-top:18px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:0 16px}
+  details.glance>summary{cursor:pointer;list-style:none;padding:12px 0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline}
+  details.glance>summary::-webkit-details-marker{display:none}
+  details.glance>summary b{font-family:var(--f);font-weight:800;font-size:17px;color:var(--ink);letter-spacing:-.3px}
+  details.glance>summary span{color:var(--dim);font-size:13px}
+  details.glance>summary::after{content:'show';margin-left:auto;font-size:12.5px;font-weight:600;color:var(--tdark)}
+  details.glance[open]>summary::after{content:'hide'}
+  .gltabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  .gltabs button{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:5px 12px;font:600 13px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .gltabs button.on{background:var(--navy);border-color:var(--navy);color:var(--gold)}
+  .gltop{display:grid;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr));margin-bottom:12px}
+  @media(min-width:700px){.gltop{grid-template-columns:repeat(6,minmax(0,1fr))}}
+  .gltop div{background:#fbfcfd;border:1px solid var(--line);border-radius:9px;padding:8px 10px;min-width:0}
+  .gltop b{display:block;font-family:var(--f);font-weight:800;font-size:19px;color:var(--ink);letter-spacing:-.4px;overflow-wrap:anywhere}
+  .gltop span{display:block;font-size:11px;color:var(--dim);line-height:1.3}
+  .gl{display:grid;gap:12px;grid-template-columns:minmax(0,1fr);padding-bottom:14px}
+  @media(min-width:760px){.gl{grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(min-width:1040px){.gl{grid-template-columns:repeat(3,minmax(0,1fr))}}
+  .glb{border:1px solid var(--line);border-radius:10px;padding:10px 12px;min-width:0}
+  .glb h3{font-family:var(--f);font-weight:800;font-size:14px;color:var(--ink);margin:0 0 6px}
+  .glb h3 small{font-family:Inter,system-ui,sans-serif;font-weight:500;color:var(--dim);font-size:11.5px;margin-left:4px}
+  .glr{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12.5px;padding:2px 0}
+  .glr .l{color:var(--body);overflow-wrap:anywhere} .glr .v{color:var(--ink);font-weight:600;white-space:nowrap;text-align:right}
+  .glr .v i{font-style:normal;color:var(--dim);font-weight:500;margin-left:4px}
+  .glr .bb{height:8px;background:#eef3f6;border-radius:99px;overflow:hidden} .glr .bb span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px}
+  .glb.teal .glr .bb span{background:linear-gradient(90deg,#5fdcef,var(--tdark))}
 </style>
 </head>
 <body>
@@ -228,14 +268,22 @@
     <p class="sub" id="lead"></p>
     <div class="tiles" id="tiles"></div>
     <div id="rosterWrap"><h2>The roster <small id="rosterNote"></small></h2><div class="chips" id="roster"></div></div>
+    <p class="pnote" id="sugNote"></p>
     <div id="insWrap" style="display:none"><h2>What the records say <small>about the clients who answered; tap one to see them</small></h2><div class="chips" id="insBar"></div></div>
+    <details class="glance" id="glWrap" style="display:none">
+      <summary><b>The book at a glance</b><span>who the clients are, how they pay, what they hold</span></summary>
+      <div class="gltabs" id="glTabs"><button type="button" data-gl="all">Every client of the books <b id="glAllN"></b></button><button type="button" data-gl="answered">Those who answered <b id="glAnsN"></b></button></div>
+      <div class="gltop" id="glTop"></div>
+      <div class="gl" id="gl"></div>
+    </details>
     <div class="filters" id="filters">
       <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
       <label>Letter<select id="fSeg"><option value="">all</option></select></label>
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
       <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
-      <label>What the records say<select id="fIns"><option value="">anything</option><option value="due">a premium due</option><option value="ends">life cover ends within five years</option><option value="estate">pays the estate</option><option value="provisions">beneficiary in the special provisions</option><option value="role">beneficiary only a role</option><option value="nolife">no life cover in force</option><option value="lapsed">a lapsed policy</option><option value="income">cover against income</option><option value="birthday">a birthday this month</option><option value="hhgap">someone in the family with no life cover</option></select></label>
+      <label>What the records say<select id="fIns"><option value="">anything</option><option value="due">a premium due</option><option value="ends">life cover ends within five years</option><option value="estate">pays the estate</option><option value="provisions">beneficiary in the special provisions</option><option value="role">beneficiary only a role</option><option value="nolife">no life cover in force</option><option value="lapsed">a lapsed policy</option><option value="income">cover against income</option><option value="birthday">a birthday this month</option><option value="hhgap">someone in the family with no life cover</option><option value="payroll">paid through their employer or military pay</option><option value="waived">a premium waived</option><option value="surr">surrendered a policy before</option><option value="noci">life cover, no critical illness cover</option></select></label>
+      <label id="sugWrap">Suggested agent<select id="fSug"><option value="">anyone</option></select></label>
       <label>Order<select id="fOrder"><option value="">most pressing first</option><option value="value">most at stake first</option></select></label>
       <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
       <button type="button" id="fClear">Clear</button>
@@ -254,6 +302,7 @@
   <label><input type="checkbox" id="barBrief" checked> e-mail the agent a brief</label>
   <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail</label>
   <button type="button" id="barGo">Assign</button>
+  <button type="button" class="alt" id="barSug" hidden>Assign each as suggested (<span id="sugN">0</span>)</button>
   <button type="button" class="ghost" id="barClear">Clear</button>
 </div>
 <div class="panel" id="panel" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="pTitle"></div></div>
@@ -276,6 +325,7 @@ function money(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('en-U
 function money2(n) { return '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function short(n) {
   n = Number(n) || 0; var a = Math.abs(n);
+  if (a >= 1e9) return '$' + (n / 1e9).toFixed(1).replace(/\.0$/, '') + 'B';
   if (a >= 1e6) return '$' + (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
   if (a >= 1e3) return '$' + (n / 1e3).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, '') + 'k';
   return '$' + Math.round(n);
@@ -364,7 +414,8 @@ function render() {
   var k = d.counts;
   var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
-    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. ' +
+    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Each one nobody is named on carries a <b>suggested agent</b> and the reason: the family&rsquo;s agent first, then the 24 September plan, then the lightest list. ' +
+      'Press <i>Assign to &hellip;</i> on a card, or tick several and press <i>Assign each as suggested</i>; or choose any agent in the bar. The name goes onto their rows, the agent gets one brief, and a client who answered gets an introduction if you leave that ticked. ' +
       'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first' +
       (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
@@ -380,17 +431,23 @@ function render() {
   Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
   /* the roster */
   $('rosterWrap').style.display = manager ? '' : 'none';
+  SUGN = (manager && d.counts && d.counts.sug && d.counts.sug.byAgent) || {};
   $('allWrap').style.display = manager ? '' : 'none';
   if (manager) {
     $('rosterNote').textContent = d.agents.length ? 'tap a name to see their list' : '';
     $('roster').innerHTML = d.agents.length ? d.agents.map(function (a) {
       return '<span class="chip' + (FILTER.agent === a.name ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' +
-        (a.prem || a.cover ? ' · ≈ ' + esc(short(a.prem)) + ' a year · ' + esc(short(a.cover)) + ' cover' : '') + (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
+        (a.prem || a.cover ? ' · ≈ ' + esc(short(a.prem)) + ' a year · ' + esc(short(a.cover)) + ' cover' : '') + (SUGN[a.name] ? ' · ' + SUGN[a.name] + ' suggested' : '') +
+        (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
     }).join('') : '<div class="empty">No agents on the Agent Skill Bank yet. Add each agent there (name, e-mail, areas covered, Active = Yes, and a Portal code of their own) and they appear here.</div>';
     Array.prototype.forEach.call(document.querySelectorAll('#roster .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = FILTER.agent === n ? '' : n; render(); }); });
     var opts = '<option value="">choose an agent</option>' + d.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + (a.areas ? ' · ' + esc(a.areas) : '') + '</option>'; }).join('');
     if ($('barAgent').innerHTML !== opts) $('barAgent').innerHTML = opts;
+    fillSug(d);
   }
+  $('sugWrap').style.display = manager ? '' : 'none';
+  $('sugNote').innerHTML = manager ? sugNote(d) : '';
+  glance(d, manager);
   /* what the records say about the clients who answered: a chip a finding, the count, and a tap filters the board to them */
   var ic = manager && d.counts && d.counts.insights ? d.counts.insights : null, keys = ic ? Object.keys(INS_WORDS).filter(function (k) { return ic[k]; }) : [];
   $('insWrap').style.display = keys.length ? '' : 'none';
@@ -465,6 +522,7 @@ function profileLine(p) {
   if (p.role) parts.push(esc(p.role));
   if (p.occ) parts.push('<b>' + esc(p.occ) + '</b>');
   if (p.emp) parts.push(esc(p.emp));
+  if (p.pay) parts.push(p.pay === 'military pay' ? 'paid from military pay' : 'pays by salary deduction');
   if (p.income) parts.push('income ' + esc(money(p.income)) + ' a year on file');
   if (p.smoker) parts.push('smoker');
   return parts.length ? '<div class="prof">' + parts.join(' · ') + '</div>' : '';
@@ -484,7 +542,8 @@ function insKeys(c) {
 }
 var INS_WORDS = { due: 'a premium due', ends: 'life cover ends within five years', estate: 'pays the estate', provisions: 'beneficiary in the special provisions',
   role: 'beneficiary only a role', nolife: 'no life cover in force', lapsed: 'a lapsed policy', income: 'cover against income', birthday: 'a birthday this month',
-  hhgap: 'someone in the family with no life cover' };
+  hhgap: 'someone in the family with no life cover', payroll: 'paid through their employer or military pay', waived: 'a premium waived',
+  surr: 'surrendered a policy before', noci: 'life cover, no critical illness cover' };
 /* ---- the client's policies with us (the Client Book) ---- */
 var STW = { inforce: 'in force', overdue: 'premium due', paidup: 'paid up', waived: 'premium waived', annuity: 'annuity in payment', pending: 'application pending', lapsed: 'lapsed' };
 function valueOf(c) { return c && c.pol && c.pol.sum ? Number(c.pol.sum.prem) || 0 : 0; }
@@ -586,6 +645,11 @@ function matches(c) {
   if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
   if (need && !needsOf(c)[need]) return false;
   if (ins && !insKeys(c)[ins]) return false;
+  var sg = $('fSug').value;
+  if (sg) {
+    var cs = !c.assigned && c.sug ? c.sug : null;
+    if (sg === '~none' ? !!cs : sg === '~off' ? !(cs && !cs.agent) : !(cs && cs.agent === sg)) return false;
+  }
   return true;
 }
 function list() {
@@ -601,7 +665,8 @@ function list() {
     $('showing').innerHTML = '<span class="focusbar">One client, opened from your sheet · <a id="unfocus">show everyone</a></span>';
   } else {
     $('showing').innerHTML = (n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's')) +
-      (byValue ? ' · most at stake first' : '');
+      (byValue ? ' · most at stake first' : '') + (manager && n ? '<a class="selshown" id="selShown">select all ' + n + ' shown</a>' : '');
+    SHOWN = rows.map(function (c) { return c.token; });
   }
   $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
@@ -616,6 +681,11 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('#list button[data-status]'), function (el) { el.addEventListener('click', function () { mark(el.getAttribute('data-token'), el.getAttribute('data-status'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button.polbtn'), function (el) { el.addEventListener('click', function () { togglePol(el.getAttribute('data-pol'), el); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.sugbtn'), function (el) { el.addEventListener('click', function () { assign([el.getAttribute('data-token')], el.getAttribute('data-agent'), el); }); });
+  if ($('selShown')) $('selShown').addEventListener('click', function () {
+    SHOWN.forEach(function (t) { SEL[t] = 1; }); list(); bar();
+    toast(SHOWN.length + ' selected. Press Assign each as suggested, or choose one agent for all of them in the bar below.');
+  });
   /* the whole family ticked at once, those not on the list above included, so one press names them all to one agent */
   Array.prototype.forEach.call(document.querySelectorAll('#list button.famsel'), function (el) {
     el.addEventListener('click', function () {
@@ -674,7 +744,7 @@ function card(c, manager) {
     profileLine(c.profile) +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + householdPanel(c, manager) +
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
     '<div class="acts">' + acts + '</div></div></div>';
 }
 function silentRow(c, manager) {
@@ -682,7 +752,7 @@ function silentRow(c, manager) {
   var kin = c.state === 'family' || familyAnswered(c) ? (familyOf(c) || []).filter(function (m) { return m.state === 'answered'; }).map(function (m) { return m.client; }) : [];
   return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
     '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : 'not answered yet') + '</span>' +
-    valuePill(c) + (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
+    valuePill(c) + (manager ? sugTag(c) : '') + (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
     (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
     (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') +
     /* the totals ride on the row; the policies themselves come from the sheet when it is opened (action=book, the branch code) */
@@ -691,14 +761,136 @@ function silentRow(c, manager) {
       (POLS[c.token].pol ? polPanel(POLS[c.token].pol) : '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>') + householdPanel(c, manager) + '</div>' : '') + '</div>';
 }
 
+/* ---- the suggested agent (tSuggest_ in Transition.gs): the family's, the 24 September plan's, or the lightest list ---- */
+/* 29 September 2026, evening: "how is the assignment going to be?" The board suggests; nothing is named until the press. */
+var SUGN = {}, SHOWN = [];
+function firstName(n) { return String(n || '').split(/\s+/)[0]; }
+function sugLine(c) {
+  var s = !c.assigned && c.sug;
+  if (!s) return '';
+  if (!s.agent) return '<div class="sug off">The 24 Sep plan names <b>' + esc(s.planned) + '</b>, who is not on the Agent Skill Bank yet. Add them there (Active = Yes) and this becomes a one-press assign.</div>';
+  return '<div class="sug"><span class="sl">Suggested</span> <b>' + esc(s.agent) + '</b> <i>' + esc(s.why) + '</i>' +
+    '<button type="button" class="sugbtn" data-token="' + esc(c.token) + '" data-agent="' + esc(s.agent) + '">Assign to ' + esc(firstName(s.agent)) + '</button></div>';
+}
+function sugTag(c) {
+  var s = !c.assigned && c.sug;
+  if (!s) return '';
+  if (!s.agent) return '<span class="sugtag off" title="' + esc(s.why) + '">plan: ' + esc(s.planned) + ', not on the roster</span>';
+  return '<span class="sugtag" title="' + esc(s.why) + '">&rarr; ' + esc(firstName(s.agent)) + '</span><button type="button" class="sugbtn sm" data-token="' + esc(c.token) + '" data-agent="' + esc(s.agent) + '" title="' + esc(s.why) + '">Assign</button>';
+}
+function fillSug(d) {
+  var sg = (d.counts && d.counts.sug) || {}, by = sg.byAgent || {};
+  var html = '<option value="">anyone</option>' + d.agents.filter(function (a) { return by[a.name]; }).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + ' (' + by[a.name] + ')</option>'; }).join('') +
+    (sg.off ? '<option value="~off">named by the plan, not on the roster (' + sg.off + ')</option>' : '') + '<option value="~none">no suggestion</option>';
+  var sel = $('fSug'), cur = sel.value;
+  if (sel.innerHTML !== html) { sel.innerHTML = html; sel.value = cur; if (sel.value !== cur) sel.value = ''; }
+}
+function sugNote(d) {
+  var sg = d.counts && d.counts.sug;
+  if (!sg || !d.agents.length) return '';
+  var parts = [], s = sg.src || {}, shown = [];
+  if (s.family) shown.push(s.family + ' with their family&rsquo;s agent');
+  if (s.plan) shown.push(s.plan + ' from the 24 September plan');
+  if (s.load) shown.push(s.load + ' to the lightest list');
+  if (shown.length) parts.push('<b>Suggested on this board:</b> ' + shown.join(' · ') + '.');
+  if (!sg.plan) parts.push('The 24 September plan is not in the sheet yet: import it as the <i>Assignment Plan</i> tab, and each client gets the agent the plan gives them.');
+  var off = Object.keys(sg.offNames || {}).sort();
+  if (off.length) parts.push('<b>' + sg.off + '</b> wait on agents the plan names who are not on the Agent Skill Bank yet: ' + off.map(function (n) { return esc(n) + ' (' + sg.offNames[n] + ')'; }).join(', ') +
+    '. Add each there, Active = Yes, with an e-mail and a portal code.');
+  return parts.join(' ');
+}
+/* the ticked clients, grouped by the agent suggested to each */
+function sugGroups() {
+  var map = {}, g = {}, n = 0, none = 0;
+  if (!D) return { g: g, n: 0, none: 0 };
+  everyone().forEach(function (c) { map[c.token] = c; });
+  Object.keys(SEL).forEach(function (t) {
+    var c = map[t], a = c && !c.assigned && c.sug && c.sug.agent;
+    if (a) { (g[a] = g[a] || []).push(t); n++; } else none++;
+  });
+  return { g: g, n: n, none: none };
+}
+var ASSIGN_CHUNK = 40;   // clients a request: the tokens travel in the address
+function assignSuggested() {
+  var sg = sugGroups(), jobs = [];
+  Object.keys(sg.g).sort().forEach(function (a) { for (var i = 0; i < sg.g[a].length; i += ASSIGN_CHUNK) jobs.push([a, sg.g[a].slice(i, i + ASSIGN_CHUNK)]); });
+  if (!jobs.length) { toast('None of those ticked has a suggested agent: choose one in the bar instead.', true); return; }
+  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, notAns = 0, warn = [];
+  btn.disabled = true; $('barGo').disabled = true;
+  var next = function () {
+    if (!jobs.length) {
+      btn.disabled = false; $('barGo').disabled = false;
+      var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
+        (sg.none ? ' · ' + sg.none + ' left ticked: no suggestion' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
+      load();
+      return;
+    }
+    var j = jobs.shift();
+    toast('Naming ' + j[0] + ' on ' + j[1].length + ' client' + (j[1].length === 1 ? '' : 's') + '… (' + (++step) + ' of ' + total + ')');
+    api({ action: 'assign', code: CODE, tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' }).then(function (r) {
+      if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
+      else {
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; notAns += r.notAnswered || 0;
+        j[1].forEach(function (t) { delete SEL[t]; });
+        (r.warnings || []).forEach(function (x) { warn.push(x); });
+      }
+      next();
+    }).catch(function () { warn.push(j[0] + ': the sheet did not answer; those are still ticked, press again.'); next(); });
+  };
+  next();
+}
+
+/* ---- the book at a glance (the branch): who the clients are, how they pay, what they hold (tGlance_) ---- */
+var GL = 'all';
+try { GL = localStorage.getItem('rrb-assign-glance') || 'all'; } catch (e) {}
+function glance(d, manager) {
+  var gw = $('glWrap'), g = manager && d.counts && d.counts.glance;
+  if (!g || !g.all) { gw.style.display = 'none'; return; }
+  gw.style.display = '';
+  if (!g[GL]) GL = 'all';
+  $('glAllN').textContent = g.all.n.toLocaleString('en-US'); $('glAnsN').textContent = g.answered ? g.answered.n.toLocaleString('en-US') : '';
+  Array.prototype.forEach.call(document.querySelectorAll('#glTabs button'), function (b) { b.className = b.getAttribute('data-gl') === GL ? 'on' : ''; });
+  var x = g[GL], num = function (n) { return Number(n || 0).toLocaleString('en-US'); };
+  var pct = function (n, of) { return of ? Math.round(100 * n / of) + '%' : ''; };
+  $('glTop').innerHTML = [[num(x.n), 'clients'], [short(x.prem), 'premium a year'], [short(x.cover), 'life cover'], [short(x.ci), 'critical illness cover'],
+    [num(x.due), 'with a premium due'], [num(x.lapsed), 'with a lapsed policy']].map(function (t) { return '<div><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>'; }).join('');
+  var block = function (title, note, rows, of, teal) {
+    if (!rows || !rows.length) return '';
+    var max = Math.max.apply(null, rows.map(function (r) { return r[1]; }));
+    return '<div class="glb' + (teal ? ' teal' : '') + '"><h3>' + esc(title) + (note ? ' <small>' + note + '</small>' : '') + '</h3>' + rows.map(function (r) {
+      return '<div class="glr"><span class="l">' + esc(r[0]) + '</span><span class="bb"><span style="width:' + Math.max(2, Math.round(100 * r[1] / max)) + '%"></span></span>' +
+        '<span class="v">' + num(r[1]) + (of ? ' <i>' + pct(r[1], of) + '</i>' : '') + '</span></div>';
+    }).join('') + '</div>';
+  };
+  var gen = {}; (x.gender || []).forEach(function (r) { gen[r[0]] = r[1]; });
+  var fm = (gen.female || 0) + (gen.male || 0), pols = (x.ben || []).reduce(function (t, r) { return t + r[1]; }, 0);
+  $('gl').innerHTML =
+    block('Age', fm ? pct(gen.female || 0, fm) + ' women, ' + pct(gen.male || 0, fm) + ' men' : '', x.age, x.n) +
+    block('With us', 'since their first policy', x.years, x.n, true) +
+    block('What they hold', 'clients with each in force', x.holds, x.n) +
+    block('How they pay', 'clients, by how their premiums come in', x.pay, x.onBook, true) +
+    block('Who the policies pay', 'policies in force, by what our file says', x.ben, pols) +
+    block('Occupation', 'on file for ' + num(x.occN) + ' of ' + num(x.n), x.occ, 0, true) +
+    block('Employer', 'on file for ' + num(x.empN) + ' of ' + num(x.n) + (x.incN ? ' · an income for ' + num(x.incN) + ', median ' + esc(short(x.income)) + ' a year' : ''), x.emp, 0);
+}
+Array.prototype.forEach.call(document.querySelectorAll('#glTabs button'), function (b) {
+  b.addEventListener('click', function () { GL = b.getAttribute('data-gl'); try { localStorage.setItem('rrb-assign-glance', GL); } catch (e) {} if (D) glance(D, D.role === 'branch'); });
+});
+try { if (localStorage.getItem('rrb-assign-glance-open') === '1') $('glWrap').open = true; } catch (e) {}
+$('glWrap').addEventListener('toggle', function () { try { localStorage.setItem('rrb-assign-glance-open', $('glWrap').open ? '1' : '0'); } catch (e) {} });
+
 /* ---- the assign bar and the actions ---- */
 function bar() {
   var n = Object.keys(SEL).length, b = $('bar');
   if (!D || D.role !== 'branch' || !n) { b.hidden = true; return; }
   b.hidden = false; $('selN').textContent = n;
+  var withSug = sugGroups().n;
+  $('barSug').hidden = !withSug; $('sugN').textContent = withSug;
 }
 $('barClear').addEventListener('click', function () { SEL = {}; list(); bar(); });
 $('barGo').addEventListener('click', function () { var a = $('barAgent').value; if (!a) { toast('Choose an agent first.', true); return; } assign(Object.keys(SEL), a, $('barGo')); });
+$('barSug').addEventListener('click', assignSuggested);
 function assign(tokens, agent, el) {
   if (!tokens.length || !agent) return;
   if (el) el.disabled = true;
@@ -708,6 +900,7 @@ function assign(tokens, agent, el) {
     if (el) el.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
     var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+      (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '');
     toast(msg, !!(r.warnings && r.warnings.length));
     tokens.forEach(function (t) { delete SEL[t]; });
@@ -846,12 +1039,12 @@ function savePanel() {
 }
 $('panel').addEventListener('click', function (e) { if (e.target === $('panel')) closePanel(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('panel').hidden) closePanel(); });
-['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fOrder'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
+['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
 /* the order is a way of looking, not a filter: it is kept on this device and Clear leaves it */
 try { var ORD = localStorage.getItem('rrb-assign-order'); if (ORD === 'value') $('fOrder').value = 'value'; } catch (e) {}
 $('fOrder').addEventListener('change', function () { try { localStorage.setItem('rrb-assign-order', $('fOrder').value); } catch (e) {} });
 $('fAll').addEventListener('change', function () { if (D) load(); });
-$('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });
+$('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });
 
 if (CODE) { $('code').value = CODE; $('who').value = WHO; load(); }
 window.RRB_ASSIGN = { load: load, render: render };
