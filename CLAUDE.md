@@ -1369,7 +1369,8 @@ voice under the new timing and the caption gives it away.
   hosting chains never touch. `orphan-transition/assign.html` sits beside the
   dashboard and reads the same sheet through three actions in Service.gs's
   `doGet` (`board`, `assign`, `update`, all in Transition.gs; `ping` answers
-  `campaign: 3` once they are deployed). The branch code opens the whole
+  `campaign: 3` or more once they are deployed, 4 with the Client Book's
+  `book`). The branch code opens the whole
   board: every client who answered, most pressing first (`T_PRIORITY`), with
   their answers, taps, words and review, who is named and where it stands;
   `all=1` adds the clients who have not answered, so a caller can be named on
@@ -1474,6 +1475,212 @@ voice under the new timing and the caption gives it away.
   never runs again. Client Support's list for the 26 is built in the
   scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
   on every row. `health/shared-inbox-harness.js` there covers it.
+- **Each client's policies are on the board, from the live Branch
+  Portfolio, rebuilt every morning.** Asked for on 29 September 2026 ("we do
+  need to push more data the total cover, plan, tenure, premium etc"). The
+  manager chose the live portfolio read daily, the figures on each card, in
+  the agent's brief, in a "most at stake" order and on the roster, and
+  plan and paid-to only for Client Support. `transitionBuildClientBook`
+  (Transition.gs, 6:00 daily, and on the menu) opens the Branch Portfolio
+  by the ID in the `BOOK_SHEET_ID` Script property. The ID is set from the
+  menu ("Transition: set the Branch Portfolio link", which asks for the
+  link) and is never in the code, because the `.gs` files are public. The
+  build reads only the columns it needs, in chunks, and writes every policy
+  of every client on Transition Send to the **Client Book** tab, whole,
+  new rows over old, so the board never reads an empty tab. The board
+  (`tBook_`, `tBookFor_`) gives each card "Their policies with us": life
+  cover, a year's premium, in force and lapsed, the years with us, and a
+  line a policy. Rows without a card carry the totals and fetch the list
+  when opened (`action=book`, branch code only). The roster shows what each
+  agent has been named on; the household line shows the family's total;
+  the agent's brief lists each client's policies.
+  **Where a policy stands comes from Status Description.** Status 0 is also
+  surrendered, matured, expired and never taken. Premium Paying is in force,
+  or "premium due" with Status 2. Paid up, Waiver of Prem and Vested annuity
+  are in force with no premium. Status 3 is an application pending. Tenure
+  starts at the first policy that was ever issued. Not Proceeded With, Not
+  taken, Postponed, Rejected, Declined and File Closed never count.
+  **A year's premium is estimated**, because the portfolio's Mode column is
+  empty. A premium is monthly unless it is 10,000 or more, or 2,000 or more
+  with the paid-to date on the policy's anniversary, and single premiums
+  count as nil. Against the 2,120 policies whose mode the PBI export gives,
+  all but 44 come within half of their true year; the 44 are mostly
+  quarterly and half-yearly payers, which nothing on the sheet shows. The
+  board says how the figure is made.
+  **Life cover adds only confirmed life plans** where Salesforce gives no
+  split (see the Client Profile bullet below, which comes first). The
+  **Plan Codes** tab
+  holds a Plan name, a Class (life, critical illness, accident, health,
+  savings, other) and Confirmed for each code. A sum assured counts only
+  when the class is life and Confirmed is Y. It counts at once, without a
+  rebuild, because the tab is read on every request. An unconfirmed life
+  plan or an unclassified one shows its sum assured as "not counted"; the
+  other classes are listed and never added. The build refreshes the counts
+  and adds any new code with no class. The proposal for sales support
+  (`Plan-codes-to-confirm.xlsx`, `tbook/plan-codes.py` in the scratchpad)
+  takes names and classes from the PBI export's Plan column. It leaves 19
+  codes blank, CR2RP1, CR3RP1 and CR4RP1 among them. For Evolution the
+  portfolio's Sum Assured can include riders; sales support is asked.
+  **Who sees what.** An agent sees the figures for their own clients only:
+  a family's total only when every member is theirs, no other agent's
+  figures, and `book` refuses their code. Client Support sees no money. The build writes two money-free
+  columns onto Transition Send, `Plans on file` ("Econo Life to 65: in
+  force, paid to 21 Sep 2026; …") and `Paid to on file`. The calls sheet's
+  Feed tab already imports `'Transition Send'!A:AZ`, and each caller's tab
+  looks them up by Token. That is a display rule, not a wall: anyone who can
+  edit the calls sheet could IMPORTRANGE the Client Book tab too.
+  `svc/book-harness.js` (mocked tabs) and `svc/assign-book-test.js`
+  (36, Playwright, fixtures written by the harness from the backend) in the
+  session scratchpad cover it.
+- **Each card says who the client is, and the household shows everyone's
+  cover.** Asked for on 29 September 2026: "have the husband as the Fayad
+  Ali household and include the wife cover so we can see the wife and his
+  cover as well anyone else who is covered in the household, we should also
+  have the occupation and incomes etc as well any other data like
+  beneficiary etc to make some insights".
+  **The Client Profile tab** holds, one row a policy, what Salesforce's
+  `CLIENT_PORTFOLIO__c` and its Contact record: date of birth, gender,
+  smoker, occupation, employer, income, the life, critical illness,
+  accident and waiver cover, when the life cover ends, up to three
+  beneficiaries ("Benificiary" there), insured, owner, family role. It is
+  imported once from the scratchpad (`profile/build-profile.py`, from the
+  connector pulls). The morning build rewrites it straight from Salesforce
+  (`tProfileRefresh_`) once this project has the four `SF_*` Script
+  properties that `ServiceSalesforce.gs` uses; until then the imported tab
+  stands, and the build's message says which. The refresh asks by policy
+  number, never by client number: clients opened from about mid-2026
+  (numbers from 0000745444) carry no `Client_Number__c` there.
+  **What is there, measured on 29 September 2026 over the campaign's live
+  policies:** date of birth 98%, gender 93%, a life figure 74%, critical
+  illness 38%. Who a policy pays, over every live policy of the books'
+  clients: the estate 33%, "(See Special Provisions)" 30%, a role only
+  ("Proposer", "Annuitant") 24%, a named person 4%, nothing on our file 9%.
+  (A first count over part of the pull said one in eight for the estate; the
+  whole pull says a third.) **Occupation** is on the policy record
+  (`Occupation__c`) for only 7 clients in 100, but the branch has always
+  typed the job into the Contact's **Title** ("TEACHER", "POLICE OFFICER"),
+  so the Occupation column falls back to it once courtesy titles and
+  placeholders are dropped (`tJobTitle_`: never "MR", "Mrs.", "UNKNOWN",
+  "NOT ON LIST"). That raised occupation to 56% of the books' clients
+  (1,312 of 2,333), and to 88 of the 149 who had answered, from 3. The
+  refresh asks for `Contact__r.Title` too. An income is on file for about 1
+  client in 20. `Contact.Employer__c` mostly holds a household's or an
+  agent's name ("RAMROACH, KERWYN HH"), so only a value that reads as an
+  employer or a status is shown (`T_EMPLOYER`), about 1 client in 9. The
+  board shows what is there and never guesses the rest. Occupations and
+  employers typed in capitals or lower case print in title case, with the
+  island's acronyms kept whole (`tNiceLabel_`: T&TEC, WASA, NGC).
+  **Life cover now comes from Salesforce's split first** (`tCoverOf_`). The
+  portfolio's Sum Assured lumps an Evolution policy's life and critical
+  illness together: on 206 of 509 live Evolution policies it equalled
+  life plus CI. So a policy with Salesforce figures counts its life figure;
+  a savings, accident or health plan never counts as life, whatever its
+  fields say (house rule), and an accident plan's figure shows as accident
+  cover. Without Salesforce figures, the Plan Codes rule above applies.
+  Critical illness is shown and totalled separately, never added to life.
+  **The card** gets a profile line (age, gender, date of birth, and the
+  occupation, employer and income when recorded) and **what the records
+  say** (`tInsightsFor_`), as chips, most pressing first: a premium due 30
+  days or more, life cover ending within five years (Salesforce's date, or
+  the plan's name: "to 65" from the date of birth, "20 years" from the
+  issue date), a policy that pays the estate, a beneficiary in the special
+  provisions or recorded only as a role, no life cover in force, a lapsed
+  policy, life cover against the income on file, a birthday within 30
+  days. Only what the records show; never advice. The policy table gains
+  the cover split, who each policy pays, and who it insures when that is
+  someone else. The branch gets a bar of counts over the clients who
+  answered, each a filter; the same filter reaches silent rows through the
+  keys they carry (`ik`).
+  **The household** holds everyone at the address, phone or e-mail, not
+  only the send list. `hh/build-households2.py` (scratchpad) adds the
+  branch's other clients who share a campaign client's keys, with their
+  client number and current agent. It counts a key shared by more than six
+  clients across the whole portfolio as an office, never links through a
+  departed agent's or staff member's own details, never includes a departed
+  agent, their household, staff or anyone with a death claim, and carries
+  the links the branch has told us about (`MANUAL`: Fayad Ali and Nadira
+  Baksh-Ali, two addresses for one house). The Client Book build reads
+  those members' policies too. **The head** is the member marked Head on the
+  tab, else the adult with the most life cover, then the most premium a
+  year, then the eldest; the household is named after them ("Fayad Ali
+  household"). The panel lists every member, the head first: age and
+  gender, where they stand, and their cover. It totals the family's life
+  cover, critical illness and premium, and names any adult under 65 with no
+  life cover with us.
+  **Who sees what here:** the branch sees every member and figure,
+  including family members with other agents. An agent sees the members on
+  our list by name, age and where they stand, and figures only for their
+  own clients. Never a member with another agent, and a family total only
+  when every member is theirs. The brief carries the client's profile, what
+  to raise first, the cover split, who each policy pays, and the family on
+  our list by name and age.
+  `svc/book-harness.js` (78 checks), `svc/assign-profile-test.js` (29,
+  Playwright) and `svc/board-dryrun.js` (the whole board on the latest sheet
+  export, the portfolio copy and the pulled profile) in the session
+  scratchpad cover it.
+- **The board suggests who looks after whom, and shows the book at a
+  glance.** Asked for on 29 September 2026, late: "Where is the occupation
+  and other insights given the data you have?? Also how is the assignment
+  going to be??" Until then the agent was picked card by card ("it was just
+  randomly we assign").
+  **The suggestion** (`tSuggest_`, branch code only) sits on every client
+  nobody is named on, with the reason, in this order. First the family: if
+  someone in the household already has an agent, the rest go to that agent.
+  Then the plan: the 24 September split as the team checked it, imported as
+  the **Assignment Plan** tab (one row a client: Plan agent, Team's pick,
+  Band, Area, Plan household, Moved; `plan/build-plan.py` in the scratchpad
+  from `Transition-split-checked-24Sep.xlsx`). It covers 1,479 of the 2,333
+  clients of the books; most of the rest have nothing in force (the G
+  letter) or are on the terminated book. A household on the board takes its
+  head's plan agent, so the two lists' different ideas of a family never
+  split one. Last the lightest list: the active agent with the fewest
+  clients named or suggested so far, counted as the pass goes, so what is
+  left goes round the roster evenly, one household at a time. A plan name
+  matches the Agent Skill Bank by full name, or by a first name only one
+  active agent carries. An agent the plan names who is not on the roster is
+  shown as such ("the 24 Sep plan names Narissa, who is not on the Agent
+  Skill Bank yet"), never swapped for someone else, and the note under the
+  roster lists them. **Nothing is named until the press:** "Assign to
+  Narissa" on a card, "Assign" on a row, or tick any number and "Assign each
+  as suggested", which sends one request per agent (40 clients at most per
+  request, as the tokens travel in the address). "Select all N shown" ticks
+  what the filters show, and a "Suggested agent" filter shows one agent's
+  share. The roster chips say how many are suggested to each. On the real
+  data, with the twelve plan agents on a trial roster: 1,050 from the plan,
+  460 to the lightest list, about 125 each, and no household split.
+  **The introduction goes only to a client who answered.** It thanks them
+  for answering, so a silent client, or the family of one who answered, is
+  named and briefed but gets no e-mail (`notAnswered` in the reply; the
+  toast says so). Until 29 September "Select the family" sent it to
+  everyone. **A brief shows 25 clients in full** (`T_BRIEF_FULL`) and names
+  the rest, so a big batch never builds an e-mail too large to send. The
+  board read for an assign skips the glance (`tBoard_(w, all, lite)`).
+  **Four more insights**, from data the book already holds: `payroll`
+  (a live premium by salary deduction or military pay; a change of job, or
+  leaving the service, stops the deduction), `waived` (the waiver benefit
+  pays the premium), `surr` (surrendered a policy with us before), and
+  `noci` (an adult under 65 with life cover and no critical illness cover,
+  only where Salesforce has split every live policy). The profile line says
+  "pays by salary deduction" or "paid from military pay" (`pay` in
+  `tProfileFor_`), which tells the agent the client is employed even where
+  no occupation is recorded. Over those who answered: payroll 12, surr 22,
+  noci 37.
+  **The book at a glance** (`tGlance_`, branch only, folded until opened,
+  with a switch between every client of the books and those who answered):
+  clients, premium a year, life and critical illness cover, a premium due,
+  a lapsed policy; then age bands with the women and men, years with us,
+  what they hold, how they pay, who the policies pay, the top occupations
+  and employers with how many have one on file, and the median income. The
+  whole-book view is cached for ten minutes. The books' clients are the
+  send list's, never a departed agent's own policies, their household,
+  staff, a death claim or someone who holds nothing (`T_NOT_BOOK`).
+  **A card never runs wider than the screen.** A client's reply can carry a
+  250-character link from an e-mail signature; on the real data that pushed
+  the board 1,090 px past a phone's edge. The card column now shrinks and
+  long words wrap.
+  `svc/book-harness.js` (110 checks), `svc/assign-suggest-test.js` (29,
+  Playwright) and `svc/board-dryrun.js` (a trial roster of the twelve plan
+  agents; aggregates only) in the session scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

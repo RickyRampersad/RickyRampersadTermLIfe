@@ -219,7 +219,7 @@ function doGet(e) {
        deployment older than the resp/feedback actions, so the pages show
        their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_(), campaign: 3 });   // 3: the assignment board (board, assign, update) is on this deployment
+                   automation: automationOn_(), campaign: 4 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book)
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -265,6 +265,10 @@ function doGet(e) {
   }
   if (p.action === 'update') {
     return json_(transitionUpdate_(p));
+  }
+  /* one client's policies from the Client Book, for a row on the board that carries only the totals */
+  if (p.action === 'book') {
+    return json_(transitionBook_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -3628,5 +3632,7 @@ function onOpen() {
     .addItem('Transition: release client e-mail (the go)', 'transitionReleaseClientMail')
     .addItem('Transition: e-mail the digest now', 'transitionDigest')
     .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
+    .addItem('Transition: set the Branch Portfolio link (policies on the board)', 'transitionSetBookSource')
+    .addItem('Transition: rebuild the Client Book now', 'transitionBuildClientBook')
     .addToUi();
 }
