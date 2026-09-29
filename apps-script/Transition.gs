@@ -21,6 +21,8 @@
  *                            then (tRemind_) the same letter once more to anyone unanswered after REMIND_DAYS
  *   transitionDigest()       the morning e-mail (DIGEST_HOURS); safe to run by hand
  *   transitionWeekly()       the Monday insight report (WEEKLY_HOUR): what the answers mean; safe to run by hand
+ *   transitionSetBookSource() the Branch Portfolio's link, once (menu); then transitionBuildClientBook() every
+ *                            morning writes each client's policies to the Client Book tab for the board and the briefs
  *
  * The Transition Send tab is built outside the repository from the Branch
  * Portfolio sheet (tools/letters has no client data). One row per client:
@@ -199,7 +201,7 @@ function transitionSetup() {
   tSheet_();
   ScriptApp.getProjectTriggers().forEach(function (t) {
     var f = t.getHandlerFunction();
-    if (f === 'transitionDigest' || f === 'transitionReceipts' || f === 'transitionInbox' || f === 'transitionWeekly') ScriptApp.deleteTrigger(t);
+    if (f === 'transitionDigest' || f === 'transitionReceipts' || f === 'transitionInbox' || f === 'transitionWeekly' || f === 'transitionBuildClientBook') ScriptApp.deleteTrigger(t);
   });
   TRANSITION.DIGEST_HOURS.forEach(function (h) {
     ScriptApp.newTrigger('transitionDigest').timeBased().inTimezone(tTz_()).atHour(h).everyDays(1).create();
@@ -208,9 +210,12 @@ function transitionSetup() {
   ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   tWeeklyTrigger_();
+  /* the Client Book's morning build, once the Branch Portfolio's link is set (transitionSetBookSource) */
+  if (PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP)) tBookTrigger_();
   var msg = '"' + TRANSITION.SHEET + '" is ready and the digest is installed for ' +
     TRANSITION.DIGEST_HOURS.map(function (h) { return h + ':00'; }).join(' and ') +
-    ', the weekly insight report for Monday ' + TRANSITION.WEEKLY_HOUR + ':00, and the replies are read and the receipts sent every five minutes. ' +
+    ', the weekly insight report for Monday ' + TRANSITION.WEEKLY_HOUR + ':00, and the replies are read and the receipts sent every five minutes' +
+    (PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP) ? '; the Client Book rebuilds every morning at ' + T_BOOK.HOUR + ':00' : '') + '. ' +
     'The send stays off until Transition: go live. Import the send list into the tab, run ' +
     'transitionPreviewToMe, then transitionSendTest, read what arrived and check the Exclude column, then go live.';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
@@ -231,6 +236,7 @@ function transitionGoLive() {
   if (!have.transitionInbox) ScriptApp.newTrigger('transitionInbox').timeBased().everyMinutes(5).create();
   if (!have.transitionReceipts) ScriptApp.newTrigger('transitionReceipts').timeBased().everyMinutes(5).create();
   if (!have.transitionWeekly) tWeeklyTrigger_();
+  if (!have.transitionBuildClientBook && PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP)) tBookTrigger_();
   var msg = 'Live. The send is on: up to ' + TRANSITION.BATCH + ' letters ' + tCadence_() + ', ' +
     TRANSITION.HOURS[0] + ':00 to ' + TRANSITION.HOURS[1] + ':00, Monday to Friday. Transition: pause turns it off.';
   log_('transition', 'live', msg);
@@ -2510,10 +2516,24 @@ function tBoard_(w, all) {
   });
   var counts = { answered: clients.length, open: 0, assigned: 0, done: 0, noted: 0, late: 0, silent: sentNoAnswer };
   clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; });
+  /* the Client Book (tBook_): each card carries the client's policies; the rows without a card (not answered, family)
+     carry the totals alone, and the board fetches the rest when one is opened (transitionBook_) */
+  var bk = tBook_();
+  if (bk.ready) {
+    clients.forEach(function (c) { c.pol = tBookFor_(c.no, true); });
+    silent.forEach(function (c) { c.pol = tBookBrief_(c.no); });
+  }
   var agents = tRoster_().map(function (a) {
     var mine = clients.filter(function (c) { return c.assigned.toLowerCase() === a.name.toLowerCase(); });
-    return { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone,
-             open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
+    var o = { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone,
+              open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
+    /* what each agent has been named on, for the branch alone: an agent never sees another's figures */
+    if (w.role === 'branch' && bk.ready) {
+      o.clients = mine.length; o.prem = 0; o.cover = 0;
+      mine.forEach(function (c) { if (c.pol) { o.prem += c.pol.sum.prem; o.cover += c.pol.sum.cover; } });
+      o.prem = Math.round(o.prem);
+    }
+    return o;
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
   clients.forEach(function (c) { answeredBy[c.token] = c; });
@@ -2542,13 +2562,26 @@ function tBoard_(w, all) {
       var r = sendBy[tok], why = tNoteBlock_(r);
       family.push({ token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', firstName: tText_(r['First name']), no: tText_(r['Client number']),
         seg: tText_(r.Segment).toUpperCase(), book: tText_(r.Agent), email: tText_(r.Email), phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '',
-        sent: fmt(r['Sent at'], 'd MMM'), state: 'family', fstate: tMemberState_(r), hh: h, rows: [], canTell: !why, tellWhy: why });
+        sent: fmt(r['Sent at'], 'd MMM'), state: 'family', fstate: tMemberState_(r), hh: h, rows: [], canTell: !why, tellWhy: why, pol: bk.ready ? tBookBrief_(r['Client number']) : null });
     });
   });
   counts.households = Object.keys(households).filter(function (h) { return households[h].some(function (m) { return m.state === 'answered'; }); }).length;
+  /* the family's total on our books, for the branch: every member's policies, whether or not they are on the board */
+  var hhBook = {};
+  if (bk.ready && w.role === 'branch') Object.keys(households).forEach(function (h) {
+    var x = { clients: 0, live: 0, prem: 0, cover: 0 };
+    hhMembers[h].forEach(function (tok) {
+      var p = tBookFor_(sendBy[tok]['Client number'], false);
+      if (!p) return;
+      x.clients++; x.live += p.sum.live; x.prem += p.sum.prem; x.cover += p.sum.cover;
+    });
+    x.prem = Math.round(x.prem);
+    hhBook[h] = x;
+  });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
-           households: households, family: family,
+           households: households, family: family, hhBook: hhBook,
+           book: { ready: bk.ready, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            notes: w.role === 'branch' ? tNotesForBoard_() : null };
 }
@@ -2807,6 +2840,8 @@ function tBriefMail_(agent, clients) {
     if (c.notes && c.notes.length) lines += '<p style="margin:8px 0 2px"><b>In their words</b></p>' + c.notes.map(function (n) { return '<p style="margin:2px 0;font-style:italic">“' + esc(n) + '”</p>'; }).join('');
     if (c.review) lines += '<p style="margin:8px 0 2px"><b>Their review</b> ' + esc(c.review.ref) + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + '</p>' +
       (c.review.words || []).map(function (x) { return '<p style="margin:2px 0"><span style="color:#64798e">' + esc(x.q) + '</span><br>' + esc(x.a) + '</p>'; }).join('');
+    /* their policies with us, from the Client Book: a row off the board carries the totals alone, so the list is read here */
+    lines += tBookMailHtml_(c.pol && c.pol.list ? c.pol : (c.no ? tBookFor_(c.no, true) : null));
     var reach = [];
     if (c.phone) reach.push('<a href="tel:' + esc(String(c.phone).replace(/[^\d+]/g, '')) + '">' + esc(c.phone) + '</a>');
     if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
@@ -2864,4 +2899,457 @@ function tIntroMail_(sh, c, agent, stamp) {
     if (rn) { var cell = sh.getRange(rn, 11), note = String(cell.getValue() || ''); cell.setValue((note ? note + ' ' : '') + mark + ' ' + stamp); }
   } catch (e) {}
   return true;
+}
+
+/* ── the Client Book: each client's policies, from the live Branch Portfolio ── */
+/* 29 September 2026: "we do need to push more data: the total cover, plan, tenure, premium etc … we did have a lot of
+   other data on the workbook". Once a day, before the digest, transitionBuildClientBook opens the Branch Portfolio
+   (its ID is the BOOK_SHEET_ID Script property, set from the menu, never this file, which is public), takes every
+   policy of every client on Transition Send and writes them to the Client Book tab: the plan, where it stands, when
+   it was issued, the premium and how often it is paid, what that comes to in a year, how it is paid, the paid-to date
+   and the sum assured. The board reads that tab (tBook_): each card's "Their policies with us", the order by what is
+   at stake, what each agent has been named on, the family's total; the agent's brief lists the policies. The build
+   refreshes the counts on the Plan Codes tab and adds any code it has not met, with no class. Life cover adds only a
+   plan that tab calls life with Confirmed = Y (the house rule: only life sums assured are life cover; critical
+   illness, accident, health and savings plans are listed and never added in), and it counts on the board the moment
+   it is confirmed, without waiting for the next build. Client Support sees plan and paid-to only: two money-free
+   columns on Transition Send, which their calls sheet already imports. An agent sees the figures for their own
+   clients and nobody else's. */
+var T_BOOK = {
+  PROP: 'BOOK_SHEET_ID',          // the Branch Portfolio's spreadsheet ID: a Script property (transitionSetBookSource), never this file
+  BUILT: 'client_book_built',     // when the last build ran and what it found, as JSON: a Script property
+  SHEET: 'Client Book',
+  CODES: 'Plan Codes',
+  HOUR: 6,                        // the daily build, sheet time zone: before the 8:00 digest
+  CHUNK: 4000,                    // rows per read of the portfolio
+  /* The portfolio's Mode column is empty, so how often a premium is paid is read off the figures: monthly, unless it
+     is YEARLY_ANY or more, or YEARLY_ANNIV or more and paid to the policy's own anniversary (a yearly payer always is).
+     Measured on 29 September 2026 against the 2,120 policies whose mode the PBI export gives: all but 44 come within
+     half of their true year; those 44 are mostly quarterly and half-yearly payers, which nothing on the sheet shows.
+     "A year" is what the client pays in twelve months: the monthly premium times twelve. */
+  YEARLY_ANY: 10000,
+  YEARLY_ANNIV: 2000,
+  SEND_PLANS: 'Plans on file',    // the two money-free columns on Transition Send, for the Client Support calls sheet
+  SEND_PAID: 'Paid to on file',
+};
+var T_BOOK_HEAD = ['Client number', 'Client', 'Policy', 'Plan code', 'Standing', 'Status description', 'Issued', 'Premium',
+  'Pays', 'Premium a year', 'Billing', 'Paid to', 'Sum assured', 'Insurance type', 'Was with'];
+var T_CODES_HEAD = ['Plan code', 'Plan', 'Class', 'Confirmed', 'Insurance type', 'Policies', 'In force', 'PBI plan', 'Note'];
+/* the portfolio's own headers, matched whatever their case; the first name that is there wins */
+var T_BOOK_SRC = { agent: ['agent'], no: ['number', 'policy number'], client: ['client', 'client name'], cno: ['client number'],
+  premium: ['premium'], issued: ['issue date'], status: ['status'], status2: ['status(2)'], itype: ['insurance type'],
+  paid: ['paid to date'], sa: ['sum assured'], code: ['plan code'], bill: ['billing type'], desc: ['status description'] };
+var T_BOOK_NEED = ['cno', 'no', 'code', 'desc', 'premium'];
+/* where a policy stands, from Status (0 in force or ended, 1 lapsed, 2 premium overdue, 3 pending), Status(2) and
+   Status Description, which is the only column that tells a policy in force from one surrendered or never taken */
+var T_STANDING = { inforce: 'in force', overdue: 'premium due', paidup: 'paid up', waived: 'premium waived', annuity: 'annuity in payment',
+  pending: 'application pending', lapsed: 'lapsed', ended: 'ended' };
+var T_ST_ORDER = { inforce: 0, overdue: 1, paidup: 2, waived: 3, annuity: 4, pending: 5, lapsed: 6, ended: 7 };
+var T_LIVE_DESC = { 'premium paying': 'inforce', 'paid up': 'paidup', 'waiver of prem': 'waived', 'vested annuity': 'annuity' };
+var T_NEVER = /^(not proceeded with|not taken|postponed|rejected|declined|file closed)$/i;   // applications that never became a policy: no tenure
+var T_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+function tBookLive_(st) { return st === 'inforce' || st === 'overdue' || st === 'paidup' || st === 'waived' || st === 'annuity'; }
+function tStanding_(status, status2, desc) {
+  var s = String(status == null ? '' : status).trim(), s2 = String(status2 || '').trim().toLowerCase(), d = String(desc || '').trim().toLowerCase();
+  if (s2 === 'pending' || s === '3') return 'pending';
+  if (s2 === 'lapse' || s2 === 'lapsed' || s === '1' || d === 'lapsed') return 'lapsed';
+  var live = T_LIVE_DESC[d];
+  if (live) return live === 'inforce' && (s2 === 'overdue' || s === '2') ? 'overdue' : live;
+  return 'ended';
+}
+/** A class as the Plan Codes tab may write it, in one of the six words; '' when there is none. */
+function tClass_(x) {
+  var s = String(x || '').trim().toLowerCase();
+  if (!s) return '';
+  if (/^life\b/.test(s)) return 'life';
+  if (/critical|^ci$/.test(s)) return 'critical illness';
+  if (/accident|^pa$/.test(s)) return 'accident';
+  if (/health|medical|hospital/.test(s)) return 'health';
+  if (/saving|annuit|pension|invest/.test(s)) return 'savings';
+  return 'other';
+}
+function tNum_(x) {
+  if (typeof x === 'number') return isFinite(x) ? x : 0;
+  var n = parseFloat(String(x == null ? '' : x).replace(/[^0-9.\-]/g, ''));
+  return isFinite(n) ? n : 0;
+}
+/** A client number as both sheets can agree on it: digits, no leading zeros (the PBI export pads them, the sheet does not). */
+function tCno_(x) {
+  if (typeof x === 'number') return isFinite(x) && x > 0 ? String(Math.round(x)) : '';
+  return String(x == null ? '' : x).replace(/\D/g, '').replace(/^0+/, '');
+}
+function tPolNo_(x) { return typeof x === 'number' ? (isFinite(x) ? String(Math.round(x)) : '') : String(x == null ? '' : x).trim(); }
+/** A date as yyyy-MM-dd in the zone it was written in, or '' for anything that is not one. (The portfolio shows
+ *  ########## where a column is too narrow; that is only how it looks, and the cell underneath is a date.) */
+function tYmd_(x, tz) {
+  if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tz, 'yyyy-MM-dd');
+  var s = String(x == null ? '' : x).trim(), m;
+  if (!s) return '';
+  if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(s))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  if ((m = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(s))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);   // day first, the way the branch writes it
+  var t = Date.parse(s);
+  return isNaN(t) ? '' : Utilities.formatDate(new Date(t), tz, 'yyyy-MM-dd');
+}
+function tDmy_(ymd) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || ''); return m ? Number(m[3]) + ' ' + T_MON[Number(m[2]) - 1] + ' ' + m[1] : ''; }
+function tDaysBetween_(a, b) {
+  var pa = String(a).split('-'), pb = String(b).split('-');
+  return Math.round((Date.UTC(+pb[0], +pb[1] - 1, +pb[2]) - Date.UTC(+pa[0], +pa[1] - 1, +pa[2])) / 86400000);
+}
+function tMoney_(n, dp) { return (Number(n) || 0).toFixed(dp || 0).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+/** How often a premium is paid (T_BOOK above says how this is read), and what it comes to in a year while it is being paid. */
+function tPays_(prem, bill, iss, paid) {
+  if (!(prem > 0)) return '';
+  if (/^single/i.test(String(bill || '').trim())) return 'single';
+  var anniv = String(iss).length === 10 && String(paid).length === 10 && iss.slice(5) === paid.slice(5);
+  return prem >= T_BOOK.YEARLY_ANY || (anniv && prem >= T_BOOK.YEARLY_ANNIV) ? 'yearly' : 'monthly';
+}
+function tYearOf_(st, prem, pays) {
+  if (st !== 'inforce' && st !== 'overdue') return 0;
+  return pays === 'monthly' ? Math.round(prem * 1200) / 100 : pays === 'yearly' ? prem : 0;
+}
+
+/* ── the build ── */
+/** Menu: asks for the Branch Portfolio's link, keeps its ID in the Script properties, and builds the Client Book once.
+ *  From then on it rebuilds every morning at T_BOOK.HOUR. */
+function transitionSetBookSource() {
+  var ui = SpreadsheetApp.getUi(), cur = PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP);
+  var res = ui.prompt('The Branch Portfolio', 'Paste the link to the Branch Portfolio sheet: the address in the browser when it is open.' +
+    (cur ? ' A link is already set; a new one replaces it.' : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var txt = String(res.getResponseText() || '').trim(), m = /\/d\/([a-zA-Z0-9_-]{20,})/.exec(txt);
+  var id = m ? m[1] : (/^[a-zA-Z0-9_-]{20,}$/.test(txt) ? txt : '');
+  if (!id) { ui.alert('That is not a link to a Google Sheet. Open the Branch Portfolio, copy the address from the browser, and try again.'); return; }
+  try { SpreadsheetApp.openById(id).getName(); }
+  catch (e) { ui.alert('This account cannot open that sheet (' + String(e && e.message ? e.message : e) + '). Share it with the account that owns this script, or check the link.'); return; }
+  PropertiesService.getScriptProperties().setProperty(T_BOOK.PROP, id);
+  var r = tBuildBook_();
+  ui.alert(r.msg + (r.ok ? ' It rebuilds every morning at ' + T_BOOK.HOUR + ':00.' : ''));
+}
+
+/** What the daily trigger runs, and the menu's "rebuild now". Safe to run at any time: it rewrites the tab whole. */
+function transitionBuildClientBook() { return tSay_(tBuildBook_().msg); }
+
+function tBuildBook_() {
+  var id = String(PropertiesService.getScriptProperties().getProperty(T_BOOK.PROP) || '').trim();
+  if (!id) return { ok: false, msg: 'No Branch Portfolio link yet: in the sheet, Service Questionnaire → Transition: set the Branch Portfolio link.' };
+  var t0 = Date.now();
+  try {
+    var want = {};
+    tRead_().rows.forEach(function (r) { if (tYes_(r.Test)) return; var c = tCno_(r['Client number']); if (c) want[c] = true; });
+    var src = tBookSource_(id), got = tBookRead_(src, want), recs = got.recs;
+    recs.sort(function (a, b) {
+      return a.client.localeCompare(b.client) || a.cno.localeCompare(b.cno) || (T_ST_ORDER[a.st] - T_ST_ORDER[b.st]) || String(b.iss).localeCompare(String(a.iss));
+    });
+    tBookWrite_(recs);
+    var codes = tCodesSync_(recs);
+    tBookForget_();
+    var plans = tSendPlans_(recs, tPlanCodes_());
+    var have = {};
+    recs.forEach(function (r) { have[r.cno] = true; });
+    var missing = Object.keys(want).filter(function (c) { return !have[c]; }).length;
+    var info = { at: new Date().toISOString(), tab: src.tab, rows: got.rows, policies: recs.length, clients: Object.keys(have).length, missing: missing,
+                 added: codes.added, unclassed: codes.unclassed, secs: Math.round((Date.now() - t0) / 1000) };
+    PropertiesService.getScriptProperties().setProperty(T_BOOK.BUILT, JSON.stringify(info));
+    tBookTrigger_();
+    var msg = 'Client Book built: ' + info.policies + ' policies of ' + info.clients + ' clients, read from ' + info.rows + ' rows of "' + src.tab + '"' +
+      (missing ? '; ' + missing + ' client' + (missing === 1 ? '' : 's') + ' on the send list with no policy on the portfolio' : '') +
+      (codes.added ? '; ' + codes.added + ' new plan code' + (codes.added === 1 ? '' : 's') + ' added to Plan Codes' : '') +
+      (codes.unclassed ? '; ' + codes.unclassed + ' plan code' + (codes.unclassed === 1 ? '' : 's') + ' with no class yet (not counted as life cover)' : '') +
+      (plans.error ? '; the Plans on file columns were not written: ' + plans.error : '') + '. ' + info.secs + ' seconds.';
+    log_('transition', 'client book', msg);
+    return { ok: true, msg: msg, info: info };
+  } catch (e) {
+    var bad = 'The Client Book was not built: ' + String(e && e.message ? e.message : e);
+    log_('transition', 'client book', bad);
+    return { ok: false, msg: bad };
+  }
+}
+
+/** The daily build's trigger, installed once: by the first build, by setup and by go live. */
+function tBookTrigger_() {
+  try {
+    if (ScriptApp.getProjectTriggers().some(function (t) { return t.getHandlerFunction() === 'transitionBuildClientBook'; })) return;
+    ScriptApp.newTrigger('transitionBuildClientBook').timeBased().inTimezone(tTz_()).atHour(T_BOOK.HOUR).everyDays(1).create();
+  } catch (e) {}
+}
+
+/** The tab on the portfolio that holds the policies (the first whose header row has Client Number and Plan Code), and where each column is. */
+function tBookSource_(id) {
+  var book = SpreadsheetApp.openById(id), tz = book.getSpreadsheetTimeZone() || tTz_(), found = null;
+  book.getSheets().some(function (s) {
+    var lc = s.getLastColumn();
+    if (!lc || s.getLastRow() < 2) return false;
+    var h = s.getRange(1, 1, 1, lc).getValues()[0].map(function (x) { return String(x).trim().toLowerCase(); });
+    if (h.indexOf('client number') < 0 || h.indexOf('plan code') < 0) return false;
+    found = { sh: s, head: h };
+    return true;
+  });
+  if (!found) throw new Error('the Branch Portfolio has no tab with a Client Number and a Plan Code column');
+  var ix = {}, missing = [];
+  Object.keys(T_BOOK_SRC).forEach(function (k) {
+    var i = -1;
+    T_BOOK_SRC[k].forEach(function (n) { if (i < 0) i = found.head.indexOf(n); });
+    ix[k] = i;
+    if (i < 0 && T_BOOK_NEED.indexOf(k) >= 0) missing.push(T_BOOK_SRC[k][0]);
+  });
+  if (missing.length) throw new Error('the Branch Portfolio tab "' + found.sh.getName() + '" has no ' + missing.join(', ') + ' column');
+  return { sh: found.sh, ix: ix, tz: tz, tab: found.sh.getName() };
+}
+
+/** Every row of the portfolio whose client is on the send list, as a record: read in chunks of T_BOOK.CHUNK rows and
+ *  only as many columns as the policies need, because the portfolio holds the whole branch. */
+function tBookRead_(src, want) {
+  var ix = src.ix, cols = Object.keys(ix).map(function (k) { return ix[k]; }).filter(function (i) { return i >= 0; });
+  var c0 = Math.min.apply(null, cols), c1 = Math.max.apply(null, cols), last = src.sh.getLastRow(), out = [], seen = 0;
+  var at = function (v, k) { return ix[k] >= 0 ? v[ix[k] - c0] : ''; };
+  for (var r = 2; r <= last; r += T_BOOK.CHUNK) {
+    var vals = src.sh.getRange(r, c0 + 1, Math.min(T_BOOK.CHUNK, last - r + 1), c1 - c0 + 1).getValues();
+    vals.forEach(function (v) {
+      var cno = tCno_(at(v, 'cno'));
+      if (!cno) return;
+      seen++;
+      if (want[cno]) out.push(tBookRecord_(function (k) { return at(v, k); }, cno, src.tz));
+    });
+  }
+  return { recs: out, rows: seen };
+}
+
+function tBookRecord_(get, cno, tz) {
+  var iss = tYmd_(get('issued'), tz), paid = tYmd_(get('paid'), tz);
+  var prem = Math.round(tNum_(get('premium')) * 100) / 100, bill = String(get('bill') == null ? '' : get('bill')).trim();
+  var st = tStanding_(get('status'), get('status2'), get('desc')), pays = tPays_(prem, bill, iss, paid);
+  return { cno: cno, client: String(get('client') == null ? '' : get('client')).trim(), no: tPolNo_(get('no')), code: String(get('code') == null ? '' : get('code')).trim(),
+           st: st, desc: String(get('desc') == null ? '' : get('desc')).trim(), iss: iss, prem: prem, pays: pays, yr: tYearOf_(st, prem, pays), bill: bill, paid: paid,
+           sa: tNum_(get('sa')), itype: String(get('itype') == null ? '' : get('itype')).trim(), agent: String(get('agent') == null ? '' : get('agent')).trim() };
+}
+
+/** The Client Book tab, rewritten whole: the new rows over the old, then whatever is left below cleared, so the board
+ *  never reads an empty tab while it is being written. Policy and client numbers are kept as text. */
+function tBookWrite_(recs) {
+  var ss = ss_(), sh = ss.getSheetByName(T_BOOK.SHEET) || ss.insertSheet(T_BOOK.SHEET);
+  var w = T_BOOK_HEAD.length, rows = [T_BOOK_HEAD];
+  recs.forEach(function (r) {
+    rows.push([r.cno, r.client, r.no, r.code, T_STANDING[r.st] || r.st, r.desc, r.iss, r.prem || '', r.pays, r.yr || '', r.bill, r.paid, r.sa || '', r.itype, r.agent]);
+  });
+  if (sh.getMaxRows() < rows.length) sh.insertRowsAfter(sh.getMaxRows(), rows.length - sh.getMaxRows());
+  if (sh.getMaxColumns() < w) sh.insertColumnsAfter(sh.getMaxColumns(), w - sh.getMaxColumns());
+  sh.getRange(1, 1, rows.length, 1).setNumberFormat('@');
+  sh.getRange(1, 3, rows.length, 1).setNumberFormat('@');
+  sh.getRange(1, 1, rows.length, w).setValues(rows);
+  var last = sh.getLastRow();
+  if (last > rows.length) sh.getRange(rows.length + 1, 1, last - rows.length, Math.max(w, sh.getLastColumn())).clearContent();
+  if (rows.length > 1) {
+    [7, 12].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('d mmm yyyy'); });
+    [8, 10].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('#,##0.00'); });
+    sh.getRange(2, 13, rows.length - 1, 1).setNumberFormat('#,##0');
+  }
+  try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, w).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+}
+
+/** The Plan Codes tab: every code keeps what sales support wrote; the counts are refreshed; a code not met before is
+ *  added at the bottom with no class, so nothing new is ever counted as life cover before it is confirmed. */
+function tCodesSync_(recs) {
+  var ss = ss_(), sh = ss.getSheetByName(T_BOOK.CODES);
+  if (!sh) {
+    sh = ss.insertSheet(T_BOOK.CODES);
+    sh.appendRow(T_CODES_HEAD);
+    try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_CODES_HEAD.length).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  var lastCol = Math.max(1, sh.getLastColumn()), last = Math.max(1, sh.getLastRow());
+  var vals = sh.getRange(1, 1, last, lastCol).getValues(), head = vals[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  var ic = head.indexOf('plan code'), icl = head.indexOf('class'), ip = head.indexOf('policies'), il = head.indexOf('in force'), it = head.indexOf('insurance type'), inote = head.indexOf('note');
+  if (ic < 0) return { added: 0, unclassed: 0, error: 'the Plan Codes tab has no Plan code column' };
+  var stats = {};
+  recs.forEach(function (r) {
+    if (!r.code) return;
+    var s = stats[r.code] = stats[r.code] || { n: 0, live: 0, t: {} };
+    s.n++;
+    if (tBookLive_(r.st)) s.live++;
+    s.t[r.itype] = (s.t[r.itype] || 0) + 1;
+  });
+  var have = {}, unclassed = 0;
+  for (var i = 1; i < vals.length; i++) {
+    var code = String(vals[i][ic] || '').trim();
+    if (!code) continue;
+    have[code] = true;
+    if (stats[code] && stats[code].live && icl >= 0 && !tClass_(vals[i][icl])) unclassed++;
+  }
+  if (vals.length > 1) [[ip, 'n'], [il, 'live']].forEach(function (x) {
+    if (x[0] < 0) return;
+    sh.getRange(2, x[0] + 1, vals.length - 1, 1).setValues(vals.slice(1).map(function (v) { var s = stats[String(v[ic] || '').trim()]; return [s ? s[x[1]] : 0]; }));
+  });
+  var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM yyyy');
+  var add = Object.keys(stats).filter(function (c) { return !have[c]; }).sort().map(function (c) {
+    var s = stats[c], row = [], t = Object.keys(s.t).sort(function (a, b) { return s.t[b] - s.t[a]; })[0] || '';
+    for (var k = 0; k < head.length; k++) row.push('');
+    row[ic] = c;
+    if (it >= 0) row[it] = t;
+    if (ip >= 0) row[ip] = s.n;
+    if (il >= 0) row[il] = s.live;
+    if (inote >= 0) row[inote] = 'Found by the Client Book build on ' + stamp + ': name it, give it a class and confirm it.';
+    if (s.live) unclassed++;
+    return row;
+  });
+  if (add.length) sh.getRange(vals.length + 1, 1, add.length, head.length).setValues(add);
+  return { added: add.length, unclassed: unclassed };
+}
+
+/** Plan and paid-to for Client Support, who are not licensed and see no money figures: two columns on Transition
+ *  Send, which their calls sheet imports already (its Feed tab reads 'Transition Send'!A:AZ). The names are the Plan
+ *  Codes tab's at build time. Never throws. */
+function tSendPlans_(recs, codes) {
+  try {
+    var t = tRead_(), sh = t.sh, byNo = {};
+    recs.forEach(function (r) { (byNo[r.cno] = byNo[r.cno] || []).push(r); });
+    var lastCol = sh.getLastColumn(), cp = t.col[T_BOOK.SEND_PLANS], cd = t.col[T_BOOK.SEND_PAID];
+    var grow = (cp ? 0 : 1) + (cd ? 0 : 1);
+    if (grow && sh.getMaxColumns() < lastCol + grow) sh.insertColumnsAfter(sh.getMaxColumns(), lastCol + grow - sh.getMaxColumns());
+    if (!cp) { cp = ++lastCol; sh.getRange(1, cp).setValue(T_BOOK.SEND_PLANS); }
+    if (!cd) { cd = ++lastCol; sh.getRange(1, cd).setValue(T_BOOK.SEND_PAID); }
+    if (!t.rows.length) return { rows: 0 };
+    var plans = [], paid = [];
+    t.rows.forEach(function (r) {
+      var x = tPlansText_(byNo[tCno_(r['Client number'])] || [], codes);
+      plans.push([x.plans]); paid.push([x.paid]);
+    });
+    sh.getRange(2, cp, t.rows.length, 1).setValues(plans);
+    sh.getRange(2, cd, t.rows.length, 1).setNumberFormat('@').setValues(paid);
+    return { rows: t.rows.length };
+  } catch (e) { return { error: String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** "Econo Life to 65: in force, paid to 21 Sep 2026; Evolution to 65: lapsed": no premium, no cover, no sum assured.
+ *  A client whose every policy has ended reads what ended ("Evolution to 65: surrendered"), so a blank means nothing on file. */
+function tPlansText_(list, codes) {
+  var live = list.filter(function (r) { return r.st !== 'ended'; }).sort(function (a, b) { return T_ST_ORDER[a.st] - T_ST_ORDER[b.st]; });
+  if (!live.length) live = list.filter(function (r) { return !T_NEVER.test(r.desc); });
+  var parts = live.slice(0, 4).map(function (r) {
+    var pc = codes[r.code] || {};
+    return (pc.name || r.code || 'a policy') + ': ' + (r.st === 'ended' ? String(r.desc || 'ended').toLowerCase() : (T_STANDING[r.st] || r.st)) +
+      ((r.st === 'inforce' || r.st === 'overdue') && r.paid ? ', paid to ' + tDmy_(r.paid) : '');
+  });
+  if (live.length > 4) parts.push('and ' + (live.length - 4) + ' more');
+  var due = live.filter(function (r) { return (r.st === 'inforce' || r.st === 'overdue') && r.paid; }).map(function (r) { return r.paid; }).sort();
+  return { plans: parts.join('; '), paid: due.length ? tDmy_(due[0]) : '' };
+}
+
+/* ── reading it back ── */
+var T_BOOK_MEMO = null, T_CODES_MEMO = null;   // one read of each tab per execution
+function tBookForget_() { T_BOOK_MEMO = null; T_CODES_MEMO = null; }
+
+/** The Plan Codes tab as { code: { name, cls, conf } }: read on every request, so a code confirmed at noon counts at noon. */
+function tPlanCodes_() {
+  if (T_CODES_MEMO) return T_CODES_MEMO;
+  var out = {};
+  try {
+    var t = tSheetRows_(T_BOOK.CODES), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+    if (ix['plan code'] !== undefined) t.rows.forEach(function (v) {
+      var code = String(v[ix['plan code']] || '').trim();
+      if (!code) return;
+      var cls = ix['class'] !== undefined ? tClass_(v[ix['class']]) : '';
+      out[code] = { name: ix.plan !== undefined ? String(v[ix.plan] || '').trim() : '', cls: cls, conf: !!cls && ix.confirmed !== undefined && tYes_(v[ix.confirmed]) };
+    });
+  } catch (e) {}
+  return (T_CODES_MEMO = out);
+}
+
+/** The Client Book tab as { ready, by: { client number: [records] }, built }. */
+function tBook_() {
+  if (T_BOOK_MEMO) return T_BOOK_MEMO;
+  var by = {}, n = 0, tz = tTz_();
+  try {
+    var t = tSheetRows_(T_BOOK.SHEET), ix = {}, inv = {};
+    t.head.forEach(function (h, i) { ix[h] = i; });
+    Object.keys(T_STANDING).forEach(function (k) { inv[T_STANDING[k]] = k; });
+    if (ix['Client number'] !== undefined && ix.Policy !== undefined) t.rows.forEach(function (v) {
+      var cno = tCno_(v[ix['Client number']]);
+      if (!cno) return;
+      var get = function (h) { return ix[h] !== undefined ? v[ix[h]] : ''; };
+      (by[cno] = by[cno] || []).push({ no: tPolNo_(get('Policy')), code: String(get('Plan code') || '').trim(), st: inv[String(get('Standing')).trim()] || 'ended',
+        desc: String(get('Status description') || '').trim(), iss: tYmd_(get('Issued'), tz), prem: tNum_(get('Premium')), pays: String(get('Pays') || '').trim(),
+        yr: tNum_(get('Premium a year')), bill: String(get('Billing') || '').trim(), paid: tYmd_(get('Paid to'), tz), sa: tNum_(get('Sum assured')) });
+      n++;
+    });
+  } catch (e) {}
+  return (T_BOOK_MEMO = { ready: n > 0, by: by, built: tBookBuilt_(), today: Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd') });
+}
+function tBookBuilt_() {
+  try {
+    var j = JSON.parse(PropertiesService.getScriptProperties().getProperty(T_BOOK.BUILT) || 'null');
+    if (j && j.at) { j.when = Utilities.formatDate(new Date(j.at), tTz_(), 'd MMM HH:mm'); return j; }
+  } catch (e) {}
+  return null;
+}
+
+/** One client's policies: the totals (sum), and with `withList` each policy not ended plus a count of the ended ones.
+ *  Life cover adds a sum assured only on a live policy whose plan is confirmed as life; a life plan not yet confirmed,
+ *  or a plan with no class, shows its sum assured in `unconf`, which the board says is not counted. null when the
+ *  client has nothing on the book. */
+function tBookFor_(cno, withList) {
+  var b = tBook_(), recs = b.by[tCno_(cno)];
+  if (!recs || !recs.length) return null;
+  var codes = tPlanCodes_(), s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, unconf: 0, since: '', years: 0 }, ended = {}, list = [];
+  recs.forEach(function (r) {
+    var pc = codes[r.code] || { name: '', cls: '', conf: false }, live = tBookLive_(r.st), life = live && pc.cls === 'life' && pc.conf ? r.sa : 0;
+    if (live) { s.live++; if (r.st === 'overdue') s.due++; }
+    else if (r.st === 'lapsed') s.lapsed++;
+    else if (r.st === 'pending') s.pending++;
+    else { s.ended++; var k = (r.desc || 'ended').toLowerCase(); ended[k] = (ended[k] || 0) + 1; }
+    s.prem += r.yr || 0;
+    s.cover += life;
+    if (live && r.sa > 0 && !life && (!pc.cls || pc.cls === 'life')) s.unconf += r.sa;
+    if (r.iss && r.st !== 'pending' && !T_NEVER.test(r.desc) && (!s.since || r.iss < s.since)) s.since = r.iss;
+    if (withList && r.st !== 'ended') list.push({ no: r.no, code: r.code, name: pc.name, cls: pc.cls, conf: pc.conf, st: r.st,
+      desc: r.st === 'pending' ? r.desc : '', iss: r.iss, prem: r.prem, pays: r.pays, yr: r.yr, bill: r.bill, paid: r.paid,
+      od: r.st === 'overdue' && r.paid ? Math.max(0, tDaysBetween_(r.paid, b.today)) : 0, sa: r.sa, life: life > 0 });
+  });
+  s.prem = Math.round(s.prem * 100) / 100;
+  if (s.since) s.years = Math.max(0, Math.floor(tDaysBetween_(s.since, b.today) / 365.25));
+  var out = { sum: s };
+  if (withList) {
+    out.list = list.sort(function (a, c) { return (T_ST_ORDER[a.st] - T_ST_ORDER[c.st]) || String(c.iss).localeCompare(String(a.iss)); });
+    out.ended = Object.keys(ended).sort().map(function (k) { return { what: k, n: ended[k] }; });
+  }
+  return out;
+}
+
+/** The three totals a row without a card uses (its pill and its place in the order): with everyone on the board that is
+ *  some 2,700 rows, so nothing more rides on them; the rest comes when the row is opened (transitionBook_). */
+function tBookBrief_(cno) {
+  var p = tBookFor_(cno, false);
+  return p ? { sum: { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live } } : null;
+}
+
+/** GET action=book&code=<branch>&token=…: one client's policies, for a row on the board that carries only the totals
+ *  (a client who has not answered, or the family of one who has). The branch code only: an agent's own clients come
+ *  with their policies on the board itself. */
+function transitionBook_(p) {
+  p = p || {};
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return { ok: false, refused: true, error: w.error };
+  if (w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code opens the policies of a client who is not on your list.' };
+  var tok = String(p.token || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64), row = tok ? tRowByToken_(tok) : null;
+  if (!row || tYes_(row.Test)) return { ok: false, error: 'That client is not on the send list.' };
+  var built = tBook_().built;
+  return { ok: true, token: tok, pol: tBookFor_(row['Client number'], true), bookAt: built ? built.when : '' };
+}
+
+/** The policies in the agent's brief: the totals, then one line a policy. Internal mail, the agent's own clients. */
+function tBookMailHtml_(pol) {
+  if (!pol || !pol.sum) return '';
+  var s = pol.sum, esc = tEsc_, head = [], td = 'padding:3px 10px 3px 0;vertical-align:top';
+  if (s.prem) head.push('≈ $' + tMoney_(s.prem) + ' a year');
+  head.push(s.cover ? '$' + tMoney_(s.cover) + ' life cover' : (s.unconf ? 'life cover: plans still to confirm' : 'no life cover on file'));
+  if (s.since) head.push('with us since ' + s.since.slice(0, 4));
+  var rows = (pol.list || []).map(function (x) {
+    return '<tr><td style="' + td + '"><b>' + esc(x.name || x.code || 'a policy') + '</b><br><span style="color:#64798e;font-size:12px">' + esc(x.no) +
+      (x.cls ? ' · ' + esc(x.cls) + (x.conf ? '' : ', to confirm') : '') + '</span></td>' +
+      '<td style="' + td + '">' + esc(T_STANDING[x.st] || x.st) + (x.od ? ', ' + x.od + ' days' : '') + '</td>' +
+      '<td style="' + td + ';white-space:nowrap">' + (x.prem ? '$' + tMoney_(x.prem, 2) + ' ' + esc(x.pays || '') : '') + '</td>' +
+      '<td style="' + td + ';white-space:nowrap">' + (x.sa ? '$' + tMoney_(x.sa) + (x.life ? ' cover' : ' (not counted)') : '') + '</td>' +
+      '<td style="padding:3px 0;vertical-align:top;white-space:nowrap">' + (x.paid ? 'paid to ' + esc(tDmy_(x.paid)) : '') + '</td></tr>';
+  }).join('');
+  return '<p style="margin:8px 0 2px"><b>Their policies with us</b> <span style="color:#64798e">' + esc(head.join(' · ')) + '</span></p>' +
+    (rows ? '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:13px">' + rows + '</table>' : '');
 }

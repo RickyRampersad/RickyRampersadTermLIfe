@@ -1369,7 +1369,8 @@ voice under the new timing and the caption gives it away.
   hosting chains never touch. `orphan-transition/assign.html` sits beside the
   dashboard and reads the same sheet through three actions in Service.gs's
   `doGet` (`board`, `assign`, `update`, all in Transition.gs; `ping` answers
-  `campaign: 3` once they are deployed). The branch code opens the whole
+  `campaign: 3` or more once they are deployed, 4 with the Client Book's
+  `book`). The branch code opens the whole
   board: every client who answered, most pressing first (`T_PRIORITY`), with
   their answers, taps, words and review, who is named and where it stands;
   `all=1` adds the clients who have not answered, so a caller can be named on
@@ -1474,6 +1475,61 @@ voice under the new timing and the caption gives it away.
   never runs again. Client Support's list for the 26 is built in the
   scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
   on every row. `health/shared-inbox-harness.js` there covers it.
+- **Each client's policies are on the board, from the live Branch
+  Portfolio, rebuilt every morning.** Asked for on 29 September 2026 ("we do
+  need to push more data the total cover, plan, tenure, premium etc"). The
+  manager chose the live portfolio read daily, the figures on each card, in
+  the agent's brief, in a "most at stake" order and on the roster, and
+  plan and paid-to only for Client Support. `transitionBuildClientBook`
+  (Transition.gs, 6:00 daily, and on the menu) opens the Branch Portfolio
+  by the ID in the `BOOK_SHEET_ID` Script property. The ID is set from the
+  menu ("Transition: set the Branch Portfolio link", which asks for the
+  link) and is never in the code, because the `.gs` files are public. The
+  build reads only the columns it needs, in chunks, and writes every policy
+  of every client on Transition Send to the **Client Book** tab, whole,
+  new rows over old, so the board never reads an empty tab. The board
+  (`tBook_`, `tBookFor_`) gives each card "Their policies with us": life
+  cover, a year's premium, in force and lapsed, the years with us, and a
+  line a policy. Rows without a card carry the totals and fetch the list
+  when opened (`action=book`, branch code only). The roster shows what each
+  agent has been named on; the household line shows the family's total;
+  the agent's brief lists each client's policies.
+  **Where a policy stands comes from Status Description.** Status 0 is also
+  surrendered, matured, expired and never taken. Premium Paying is in force,
+  or "premium due" with Status 2. Paid up, Waiver of Prem and Vested annuity
+  are in force with no premium. Status 3 is an application pending. Tenure
+  starts at the first policy that was ever issued. Not Proceeded With, Not
+  taken, Postponed, Rejected, Declined and File Closed never count.
+  **A year's premium is estimated**, because the portfolio's Mode column is
+  empty. A premium is monthly unless it is 10,000 or more, or 2,000 or more
+  with the paid-to date on the policy's anniversary, and single premiums
+  count as nil. Against the 2,120 policies whose mode the PBI export gives,
+  all but 44 come within half of their true year; the 44 are mostly
+  quarterly and half-yearly payers, which nothing on the sheet shows. The
+  board says how the figure is made.
+  **Life cover adds only confirmed life plans.** The **Plan Codes** tab
+  holds a Plan name, a Class (life, critical illness, accident, health,
+  savings, other) and Confirmed for each code. A sum assured counts only
+  when the class is life and Confirmed is Y. It counts at once, without a
+  rebuild, because the tab is read on every request. An unconfirmed life
+  plan or an unclassified one shows its sum assured as "not counted"; the
+  other classes are listed and never added. The build refreshes the counts
+  and adds any new code with no class. The proposal for sales support
+  (`Plan-codes-to-confirm.xlsx`, `tbook/plan-codes.py` in the scratchpad)
+  takes names and classes from the PBI export's Plan column. It leaves 19
+  codes blank, CR2RP1, CR3RP1 and CR4RP1 among them. For Evolution the
+  portfolio's Sum Assured can include riders; sales support is asked.
+  **Who sees what.** An agent sees the figures for their own clients only:
+  no household totals and no other agent's figures, and `book` refuses
+  their code. Client Support sees no money. The build writes two money-free
+  columns onto Transition Send, `Plans on file` ("Econo Life to 65: in
+  force, paid to 21 Sep 2026; …") and `Paid to on file`. The calls sheet's
+  Feed tab already imports `'Transition Send'!A:AZ`, and each caller's tab
+  looks them up by Token. That is a display rule, not a wall: anyone who can
+  edit the calls sheet could IMPORTRANGE the Client Book tab too.
+  `svc/book-harness.js` (50 checks, mocked tabs) and `svc/assign-book-test.js`
+  (36, Playwright, fixtures written by the harness from the backend) in the
+  session scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

@@ -151,6 +151,33 @@
   .famnow{font-size:12.5px;color:var(--dim);margin:4px 0 0}
   .focusbar{display:inline-block;background:var(--notebg);border:1px solid #a8dfeb;border-radius:9px;padding:6px 11px;color:var(--body)}
   .focusbar a{color:var(--tdark);font-weight:600;cursor:pointer;text-decoration:underline}
+  /* the client's policies with us (the Client Book tab, rebuilt every morning from the Branch Portfolio) */
+  .pill.val{background:#fbeec8;color:#7a5a12;text-transform:none;letter-spacing:0;font-size:11.5px}
+  .pol{margin-top:10px;border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:10px;padding:10px 12px;background:#fffdf6;min-width:0}
+  .pol .bh{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+  .ptiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:8px}
+  @media(max-width:560px){.ptiles{grid-template-columns:repeat(2,1fr)}}
+  .ptile{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 9px;min-width:0}
+  .ptile b{display:block;font-family:var(--f);font-weight:800;font-size:17px;color:var(--ink);letter-spacing:-.3px;overflow-wrap:anywhere;line-height:1.2}
+  .ptile span{display:block;font-size:11px;color:var(--dim);line-height:1.3;margin-top:2px}
+  .pt{width:100%;border-collapse:collapse;font-size:13px}
+  .pt th{text-align:left;font:600 11px Inter,system-ui,sans-serif;color:var(--dim);border-bottom:1px solid var(--line);padding:4px 6px}
+  .pt td{padding:6px;border-bottom:1px solid #eef3f6;vertical-align:top}
+  .pt td.r{text-align:right;white-space:nowrap}
+  .pt .pn{color:var(--dim);font-size:11.5px}
+  .pt .due{color:var(--stop);font-weight:600} .pt .gone{color:var(--dim)}
+  @media(max-width:640px){.pt thead{display:none}.pt,.pt tbody,.pt tr,.pt td{display:block;width:100%}.pt tr{border-bottom:1px solid var(--line);padding:6px 0}
+    .pt td{border:0;padding:1px 0}.pt td.r{text-align:left;white-space:normal}.pt td[data-l]::before{content:attr(data-l) ": ";color:var(--dim);font-size:11.5px}
+    .pt td[data-l="Plan"]::before{content:none}}
+  .k{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:1px 6px;border-radius:4px;background:#eef1f4;color:var(--body);white-space:nowrap;vertical-align:1px}
+  .k.life{background:#e6f4ec;color:var(--ok)} .k.risk{background:#fbeec8;color:#7a5a12} .k.sav{background:#d5f4fa;color:var(--tdark)}
+  .k.q{background:#fff;border:1px dashed #bfd0da;color:var(--dim)}
+  .pnote{font-size:11.5px;color:var(--dim);margin-top:6px;line-height:1.45} .pnote b{color:var(--body);font-weight:600}
+  .hhv{flex-basis:100%;font-size:12.5px;color:var(--body)} .hhv b{color:var(--ink);font-weight:700}
+  .polbtn{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:3px 10px;font:600 12px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .polbtn[disabled]{opacity:.6;cursor:default}
+  .srow .polrow{flex-basis:100%;min-width:0}
+  .srow .polrow .pol{margin-top:4px}
 </style>
 </head>
 <body>
@@ -188,10 +215,12 @@
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
       <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
+      <label>Order<select id="fOrder"><option value="">most pressing first</option><option value="value">most at stake first</option></select></label>
       <label class="chk" id="allWrap"><input type="checkbox" id="fAll"> include clients who have not answered yet</label>
       <button type="button" id="fClear">Clear</button>
     </div>
     <p class="showing" id="showing"></p>
+    <p class="pnote" id="bookNote"></p>
     <div id="list"></div>
     <div class="rules" id="rules"><b>Three rules on every call.</b> Nothing about the former agent beyond what the letter said. If the client says the former agent has been in touch, or that they pay in person, thank them, say a person calls before anything else, and do not ask what was said. Nothing needs to be signed or paid until they have spoken to the branch.</div>
   </section>
@@ -220,6 +249,18 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function 
 function digits(p) { return String(p || '').replace(/\D/g, ''); }
 function waLink(p) { var n = digits(p); if (n.length === 7) n = '1868' + n; if (n.length === 10 && n.indexOf('868') === 0) n = '1' + n; return n.length === 11 && n.indexOf('1868') === 0 ? 'https://wa.me/' + n : ''; }
 function toast(msg, bad) { var t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(function () { t.className = 'toast'; }, bad ? 9000 : 5000); }
+/* money and dates as the board prints them; the backend sends dates as yyyy-mm-dd */
+var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+function money(n) { return '$' + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function money2(n) { return '$' + (Number(n) || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function short(n) {
+  n = Number(n) || 0; var a = Math.abs(n);
+  if (a >= 1e6) return '$' + (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+  if (a >= 1e3) return '$' + (n / 1e3).toFixed(a >= 1e5 ? 0 : 1).replace(/\.0$/, '') + 'k';
+  return '$' + Math.round(n);
+}
+function dmy(s) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? Number(m[3]) + ' ' + MON[Number(m[2]) - 1] + ' ' + m[1] : ''; }
+function my(s) { var m = /^(\d{4})-(\d{2})/.exec(s || ''); return m ? MON[Number(m[2]) - 1] + ' ' + m[1] : ''; }
 
 /* ---- the gate ---- */
 function api(params) {
@@ -300,14 +341,20 @@ function render() {
   $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (manager ? '' : ' · ' + esc(d.me.name));
   $('title').innerHTML = manager ? 'Assignments' : 'Your clients, <em>' + esc(d.me.name.split(/\s+/)[0]) + '</em>';
   var k = d.counts;
+  var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
     ? '<b>' + k.answered + '</b> clients have answered a letter so far. Tick the ones to hand to an agent, choose the agent, and press Assign: the name goes onto their rows, the agent gets one brief, and the client an introduction if you leave that ticked. ' +
-      'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first.' +
+      'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first' +
+      (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
-    : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.';
+    : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.' +
+      (bookOn ? ' Each card shows the client&rsquo;s policies with us, so the first call is not a cold one.' : '');
+  /* the note under the filters: how the figures are made, once for the page; or, for the branch, how to switch them on */
+  $('bookNote').innerHTML = bookOn ? bookNote() : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
   var tiles = manager
     ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok'], ['silent', k.silent, 'not answered yet', '']]
     : [['', d.clients.length, 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
+  if (!manager && bookOn) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), 'premium a year on your list', 'gold']);
   $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
   /* the roster */
@@ -316,7 +363,8 @@ function render() {
   if (manager) {
     $('rosterNote').textContent = d.agents.length ? 'tap a name to see their list' : '';
     $('roster').innerHTML = d.agents.length ? d.agents.map(function (a) {
-      return '<span class="chip' + (FILTER.agent === a.name ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' + (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
+      return '<span class="chip' + (FILTER.agent === a.name ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' +
+        (a.prem || a.cover ? ' · ≈ ' + esc(short(a.prem)) + ' a year · ' + esc(short(a.cover)) + ' cover' : '') + (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
     }).join('') : '<div class="empty">No agents on the Agent Skill Bank yet. Add each agent there (name, e-mail, areas covered, Active = Yes, and a Portal code of their own) and they appear here.</div>';
     Array.prototype.forEach.call(document.querySelectorAll('#roster .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = FILTER.agent === n ? '' : n; render(); }); });
     var opts = '<option value="">choose an agent</option>' + d.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + (a.areas ? ' · ' + esc(a.areas) : '') + '</option>'; }).join('');
@@ -349,9 +397,84 @@ function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function 
 function familyLine(c, manager) {
   var f = familyOf(c), others = f ? f.filter(function (m) { return m.token !== c.token; }) : [];
   if (!others.length) return '';
+  /* the family's total with us, for the branch alone (hhBook): an agent sees no figures but their own clients' */
+  var hv = manager && D.hhBook ? D.hhBook[c.hh] : null;
   return '<div class="fam"><span class="famh">Family on our list · ' + esc(c.hh) + '</span>' + others.map(function (m) {
       return '<span><b>' + esc(m.client) + '</b> <i' + (m.state === 'answered' ? ' class="ok"' : '') + '>' + esc(m.state === 'answered' ? (m.said ? 'answered: ' + m.said : 'answered') : m.state) + '</i></span>';
-    }).join('') + (manager ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') + '</div>';
+    }).join('') + (manager ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') +
+    (hv && (hv.prem || hv.cover) ? '<span class="hhv">The family with us: <b>≈ ' + esc(money(hv.prem)) + '</b> a year · <b>' + esc(money(hv.cover)) + '</b> life cover · ' +
+      hv.live + ' polic' + (hv.live === 1 ? 'y' : 'ies') + ' in force</span>' : '') + '</div>';
+}
+/* ---- the client's policies with us (the Client Book) ---- */
+var STW = { inforce: 'in force', overdue: 'premium due', paidup: 'paid up', waived: 'premium waived', annuity: 'annuity in payment', pending: 'application pending', lapsed: 'lapsed' };
+function valueOf(c) { return c && c.pol && c.pol.sum ? Number(c.pol.sum.prem) || 0 : 0; }
+function coverOf(c) { return c && c.pol && c.pol.sum ? Number(c.pol.sum.cover) || 0 : 0; }
+function valuePill(c) {
+  var s = c.pol && c.pol.sum;
+  if (!s) return '';
+  var parts = [];
+  if (s.prem) parts.push('≈ ' + short(s.prem) + ' a year');
+  if (s.cover) parts.push(short(s.cover) + ' cover');
+  if (!parts.length) parts.push(s.live ? s.live + ' in force' : 'nothing in force');
+  return '<span class="pill val" title="A year&rsquo;s premium and life cover, from the Client Book">' + esc(parts.join(' · ')) + '</span>';
+}
+/* the plan's class: confirmed by sales support, or proposed with a question mark, or not yet given */
+function clsChip(x) {
+  if (!x.cls) return '<span class="k q" title="Sales support has not classified this plan yet, so it is not counted as life cover">to confirm</span>';
+  var k = x.cls === 'life' ? 'life' : x.cls === 'savings' ? 'sav' : x.cls === 'other' ? '' : 'risk';
+  return '<span class="k ' + k + (x.conf ? '' : ' q') + '" title="' + (x.conf ? 'Confirmed by sales support' : 'Proposed; sales support has not confirmed it yet') + '">' + esc(x.cls) + (x.conf ? '' : '?') + '</span>';
+}
+function billWords(b) { return String(b || '').toLowerCase().replace('pre authorized', 'pre-authorised'); }
+function polRow(x) {
+  var st = STW[x.st] || x.st;
+  if (x.st === 'overdue' && x.od) st += ', ' + x.od + ' days';
+  if (x.st === 'pending' && x.desc) st += ': ' + x.desc.toLowerCase();
+  var sa = x.sa ? esc(money(x.sa)) + (x.life ? '' : ' <span class="pn">(' + (x.cls && x.cls !== 'life' ? esc(x.cls) + ', not life cover' : 'not counted: plan to confirm') + ')</span>') : '—';
+  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b> ' + clsChip(x) + '<div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') + '</div></td>' +
+    '<td data-l="Stands"' + (x.st === 'overdue' ? ' class="due"' : x.st === 'lapsed' ? ' class="gone"' : '') + '>' + esc(st) + '</td>' +
+    '<td data-l="Issued">' + esc(my(x.iss) || '—') + '</td>' +
+    '<td data-l="Premium">' + esc(x.prem ? money2(x.prem) + (x.pays ? ' ' + x.pays : '') : '—') + (x.bill ? '<div class="pn">' + esc(billWords(x.bill)) + '</div>' : '') + '</td>' +
+    '<td data-l="Sum assured" class="r">' + sa + '</td>' +
+    '<td data-l="Paid to">' + esc(x.paid ? dmy(x.paid) : '—') + '</td></tr>';
+}
+function polPanel(pol) {
+  if (!pol || !pol.sum) return '';
+  var s = pol.sum;
+  var tiles = [s.cover ? [money(s.cover), 'life cover'] : s.unconf ? ['—', 'life cover: plans still to confirm'] : ['$0', 'life cover'],
+    [s.prem ? '≈ ' + money(s.prem) : '$0', 'premium a year'],
+    [s.live + ' in force', (s.due ? s.due + ' with a premium due · ' : '') + s.lapsed + ' lapsed' + (s.pending ? ' · ' + s.pending + ' pending' : '')],
+    [s.since ? s.years + ' year' + (s.years === 1 ? '' : 's') : '—', s.since ? 'with us since ' + s.since.slice(0, 4) : 'no policy issued yet']];
+  var h = '<div class="pol"><div class="bh">Their policies with us</div><div class="ptiles">' +
+    tiles.map(function (t) { return '<div class="ptile"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>'; }).join('') + '</div>';
+  if (pol.list && pol.list.length) h += '<table class="pt"><thead><tr><th>Plan</th><th>Where it stands</th><th>Issued</th><th>Premium</th><th class="r">Sum assured</th><th>Paid to</th></tr></thead><tbody>' +
+    pol.list.map(polRow).join('') + '</tbody></table>';
+  var notes = [];
+  if (pol.ended && pol.ended.length) notes.push('Also on file: ' + pol.ended.map(function (e) { return e.n + ' ' + esc(e.what); }).join(', ') + '.');
+  if (s.unconf) notes.push('<b>' + esc(money(s.unconf)) + '</b> of sum assured sits on plans sales support has not confirmed as life, so it is not in the life cover yet.');
+  return h + (notes.length ? '<div class="pnote">' + notes.join(' ') + '</div>' : '') + '</div>';
+}
+function bookNote() {
+  var b = (D && D.book) || {};
+  return '<b>The figures.</b> Premium a year is what the premiums on the Branch Portfolio come to in twelve months: monthly, unless one is ' + esc(money(b.yearAny || 10000)) + ' or more, or ' +
+    esc(money(b.yearAnniv || 2000)) + ' or more and paid to the policy&rsquo;s anniversary, when it is taken as yearly. Life cover adds only plans sales support has confirmed as life; ' +
+    'critical illness, accident, health and savings plans are listed, never added in.' + (b.at ? ' From the Branch Portfolio as at ' + esc(b.at) + '.' : '');
+}
+/* a row with the totals alone (not answered, or family): its policies, fetched when it is opened */
+var POLS = {}, POL_OPEN = {};
+var NEWBACK = 'The policies need the new backend: paste Service.gs and Transition.gs, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → New version.';
+function togglePol(token, btn) {
+  if (POL_OPEN[token]) { delete POL_OPEN[token]; list(); return; }
+  if (POLS[token]) { POL_OPEN[token] = 1; list(); return; }
+  var reset = function () { btn.disabled = false; btn.textContent = 'Policies'; };
+  btn.disabled = true; btn.textContent = 'Opening…';
+  api({ action: 'book', code: CODE, token: token }).then(function (r) {
+    if (!r || !r.ok) { reset(); toast(r && r.notUpdated ? NEWBACK : ((r && r.error) || 'The sheet did not answer. Try again.'), true); return; }
+    POLS[token] = r.pol || { none: true }; POL_OPEN[token] = 1; list();
+  }).catch(function () {
+    reset();
+    api({ action: 'ping' }).then(function (d) { toast(d && d.ok && Number(d.campaign || 0) < 4 ? NEWBACK : 'The sheet did not answer. Try again in a moment.', true); })
+      .catch(function () { toast('The sheet did not answer. Try again in a moment.', true); });
+  });
 }
 /* everyone the board can show: those who answered, those written to who have not (with the box ticked), and the family of
    someone who answered who are on neither list; one row each */
@@ -376,13 +499,17 @@ function matches(c) {
 function list() {
   var d = D, manager = d.role === 'branch';
   var all = everyone().filter(function (c) { return c.state !== 'family' || $('fState').value === 'family' || FOCUS; }), rows = all.filter(matches);
+  /* most at stake first: the largest premium a year, then the largest life cover; otherwise the backend's order, most pressing first */
+  var byValue = $('fOrder').value === 'value';
+  if (byValue) rows = rows.slice().sort(function (a, b) { return (valueOf(b) - valueOf(a)) || (coverOf(b) - coverOf(a)); });
   var n = rows.length, looking = false;
   if (FOCUS) {
     /* not among those who answered: look once among the clients written to who have not */
     if (!n && manager && !$('fAll').checked && !focusTried) { focusTried = true; $('fAll').checked = true; looking = true; load(); }
     $('showing').innerHTML = '<span class="focusbar">One client, opened from your sheet · <a id="unfocus">show everyone</a></span>';
   } else {
-    $('showing').innerHTML = n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's');
+    $('showing').innerHTML = (n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's')) +
+      (byValue ? ' · most at stake first' : '');
   }
   $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
@@ -396,6 +523,7 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('#list input.sel'), function (el) { el.addEventListener('change', function () { if (el.checked) SEL[el.value] = 1; else delete SEL[el.value]; bar(); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button[data-status]'), function (el) { el.addEventListener('click', function () { mark(el.getAttribute('data-token'), el.getAttribute('data-status'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.polbtn'), function (el) { el.addEventListener('click', function () { togglePol(el.getAttribute('data-pol'), el); }); });
   /* the whole family ticked at once, those not on the list above included, so one press names them all to one agent */
   Array.prototype.forEach.call(document.querySelectorAll('#list button.famsel'), function (el) {
     el.addEventListener('click', function () {
@@ -424,8 +552,9 @@ function card(c, manager) {
   if (c.reach) reach.push('prefers <b>' + esc(c.reach.toLowerCase()) + '</b>');
   if (c.when) reach.push('best in the <b>' + esc(c.when.toLowerCase()) + '</b>');
   var facts = [];
-  if (c.facts && c.facts.since) facts.push('with us since ' + esc(c.facts.since));
-  if (c.facts && c.facts.paidTo) facts.push('paid to ' + esc(c.facts.paidTo));
+  /* the send list's own facts, from the day the letter was built; the policies panel carries the current ones when it is there */
+  if (c.facts && c.facts.since && !c.pol) facts.push('with us since ' + esc(c.facts.since));
+  if (c.facts && c.facts.paidTo && !c.pol) facts.push('paid to ' + esc(c.facts.paidTo));
   if (c.facts && c.facts.appReceived) facts.push('application received ' + esc(c.facts.appReceived));
   var who = c.assigned ? '<div class="who">Named: <b>' + esc(c.assigned) + '</b>' + (c.assignedOn ? ' on ' + esc(c.assignedOn) : '') + (c.mark ? ' · marked <b>' + esc(c.mark) + '</b>' : '') + '</div>'
     : (c.mark ? '<div class="who">Marked <b>' + esc(c.mark) + '</b></div>' : '');
@@ -448,10 +577,10 @@ function card(c, manager) {
   if (c.mark && c.mark !== 'Open') acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="Open">Reopen</button>';
   return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
     (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
-    '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + '</div>' +
+    '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
     '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? 'answered ' + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') +
-    (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev +
+    (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
     (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + familyLine(c, manager) +
     '<div class="acts">' + acts + '</div></div></div>';
 }
@@ -460,9 +589,12 @@ function silentRow(c, manager) {
   var kin = c.state === 'family' || familyAnswered(c) ? (familyOf(c) || []).filter(function (m) { return m.state === 'answered'; }).map(function (m) { return m.client; }) : [];
   return '<div class="srow" id="c-' + esc(c.token) + '">' + (manager ? '<input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '">' : '') +
     '<b>' + esc(c.client) + '</b><span class="no">' + esc(c.no || '') + '</span><span class="pill seg">' + esc(c.seg || '') + '</span><span class="pill silent">' + esc(c.state === 'family' ? c.fstate : 'not answered yet') + '</span>' +
-    (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
+    valuePill(c) + (kin.length ? '<span class="no">family of <b>' + esc(kin.join(', ')) + '</b>, who answered</span>' : '') +
     (c.book ? '<span class="no">was with ' + esc(c.book) + '</span>' : '') + (c.sent ? '<span class="no">written to ' + esc(c.sent) + '</span>' : '') +
-    (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') + '</div>';
+    (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') +
+    /* the totals ride on the row; the policies themselves come from the sheet when it is opened (action=book, the branch code) */
+    (manager && c.pol ? '<button type="button" class="polbtn" data-pol="' + esc(c.token) + '">' + (POL_OPEN[c.token] ? 'Hide policies' : 'Policies') + '</button>' : '') +
+    (POL_OPEN[c.token] && POLS[c.token] ? '<div class="polrow">' + (POLS[c.token].none ? '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>' : polPanel(POLS[c.token])) + '</div>' : '') + '</div>';
 }
 
 /* ---- the assign bar and the actions ---- */
@@ -620,7 +752,10 @@ function savePanel() {
 }
 $('panel').addEventListener('click', function (e) { if (e.target === $('panel')) closePanel(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('panel').hidden) closePanel(); });
-['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
+['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fOrder'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
+/* the order is a way of looking, not a filter: it is kept on this device and Clear leaves it */
+try { var ORD = localStorage.getItem('rrb-assign-order'); if (ORD === 'value') $('fOrder').value = 'value'; } catch (e) {}
+$('fOrder').addEventListener('change', function () { try { localStorage.setItem('rrb-assign-order', $('fOrder').value); } catch (e) {} });
 $('fAll').addEventListener('change', function () { if (D) load(); });
 $('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });
 
