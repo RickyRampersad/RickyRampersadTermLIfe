@@ -17,8 +17,9 @@
  *   transitionSendTest()     the rows marked Test = Y, now, whatever the hour
  *   transitionGoLive()       the send, on — once the test rows have been checked
  *   transitionPause()        the send, off; the test rows still go by hand
- *   transitionSendBatch()    what the send trigger runs; safe to run by hand — the day's new letters,
- *                            then (tRemind_) the same letter once more to anyone unanswered after REMIND_DAYS
+ *   transitionSendBatch()    what the send trigger runs; safe to run by hand — the day's new letters, then the
+ *                            rows ticked in the "Send again" column (tSendAgain_), then (tRemind_) the same letter
+ *                            once more to anyone unanswered after REMIND_DAYS
  *   transitionDigest()       the morning e-mail (DIGEST_HOURS); safe to run by hand
  *   transitionWeekly()       the Monday insight report (WEEKLY_HOUR): what the answers mean; safe to run by hand
  *   transitionSetBookSource() the Branch Portfolio's link, once (menu); then transitionBuildClientBook() every
@@ -80,7 +81,8 @@ var TRANSITION = {
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
   INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
-  REMIND_DAYS: 21,           // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off
+  REMIND_DAYS: 5,            // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off.
+                             // 21 until 29 September 2026, when the manager asked for the follow-up "in about five days from the date it was sent"
   REMIND_MAX_PER_RUN: 30,    // the most reminders one run adds, after the day's new letters and inside the same BATCH
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
@@ -711,8 +713,100 @@ function transitionInbox() {
 
 var T_REF = /Ref:\s*([A-Za-z0-9_-]{6,64})\s+([a-z]+)(?:\s+([a-z_]+))?/;
 
+/* ── letters that bounced ─────────────────────────────────────────── */
+/* Until 29 September 2026 the inbox reader passed over every non-delivery report, so a letter that never arrived
+   left its row reading 'sent': 139 addresses bounced on 25 and 26 September (read by hand off support@ on 27
+   September), not one was marked, and the five-day follow-up would have gone to every one of them again. A report is
+   known by its subject (and a postmaster sender); the address that failed is whichever address in the report's own
+   part (before the original message's headers, which also carry the CC) is on the Transition Send tab, so no one
+   format needs parsing and nobody else's row is touched. The row is held with "bounced: <why> (<date>)" in Exclude,
+   which stops the reminder, the send again, the receipt and the chase, shows on the board as "letter bounced", and is
+   exactly what tFilePhoneEmails_ replaces when a caller takes a working address. */
+var T_BOUNCE_SUBJ = /^(undeliverable|undelivered|delivery status notification \(failure\)|mail delivery failed|delivery has failed|returned mail|failure notice|message not delivered|non-?delivery)/i;
+var T_BOUNCE_LAST = 'bounce_last';     // the newest report already read, as Graph's receivedDateTime; unset until the one-time sweep
+function tIsBounce_(from, subject) {
+  var s = String(subject || '').trim();
+  return T_BOUNCE_SUBJ.test(s) || (/^(postmaster|mailer-daemon|microsoftexchange)/i.test(String(from || '')) && /(undeliver|failure|failed|returned)/i.test(s));
+}
+/** Why a report says the letter failed, in the words Client Support reads. */
+function tBounceWhy_(text) {
+  var s = String(text || '');
+  if (/\b[45]\.2\.2\b|mailbox (is )?full|over ?quota|quota exceeded|out of storage|insufficient storage/i.test(s)) return 'mailbox full';
+  if (/\b5\.4\.(310|312|314|316)\b|\bdns\b|domain[^\n.]{0,40}(does not exist|doesn't exist|couldn't be found|not found)|host (not found|unknown)|no mx/i.test(s)) return 'bad domain';
+  if (/\b5\.1\.(0|1|10)\b|wasn'?t found|was not found|does ?n[o']?t exist|no such (user|mailbox)|user unknown|unknown user|mailbox (not found|unavailable)|no mailbox|address not found|address could(n'?t| not) be found|recipient (not found|rejected)|invalid recipient|address rejected|account (is )?disabled/i.test(s)) return 'no such mailbox';
+  if (/\b4\.4\.7\b|message expired|expired|timed? ?out|no (response|reply) from/i.test(s)) return 'no response';
+  if (/\b5\.7\.\d+\b|blocked|spam|blacklist|block ?list|policy reasons/i.test(s)) return 'blocked';
+  return 'undeliverable';
+}
+/** Holds every row of the tab whose address failed in this report. Returns how many rows it held. */
+function tBounceMark_(t, text, when) {
+  var body = String(text || '');
+  var cut = body.search(/original message headers|-{2,}\s*original message|content-type:\s*message\/rfc822|^\s*received: from/im);
+  if (cut > 0) body = body.slice(0, cut);
+  var found = {};
+  (body.toLowerCase().match(/[a-z0-9._%+'-]+@[a-z0-9-]+(\.[a-z0-9-]+)+/g) || []).forEach(function (a) { found[a.replace(/^[.'-]+|[.]+$/g, '')] = 1; });
+  if (!Object.keys(found).length) return 0;
+  var v = 'bounced: ' + tBounceWhy_(body) + ' (' + Utilities.formatDate(when instanceof Date && !isNaN(when.getTime()) ? when : new Date(), tTz_(), 'd MMM') + ')';
+  var marked = 0;
+  t.rows.forEach(function (r) {
+    var mail = tText_(r.Email).toLowerCase(), ex = tText_(r.Exclude);
+    if (!mail || !found[mail] || tYes_(r.Test)) return;
+    if (/^bounced/i.test(ex) || /^bounced/i.test(tText_(r.Status))) return;                     // once
+    if (ex && !/^check: (same e-mail as row|shares an inbox)/i.test(ex)) return;                  // held for something else: left as it is
+    t.sh.getRange(r._row, t.col.Exclude).setValue(v);
+    t.sh.getRange(r._row, t.col.Status).setValue('bounced');
+    r.Exclude = v; r.Status = 'bounced'; marked++;
+  });
+  return marked;
+}
+/** Once, the first time the reader runs after the paste: every report in the inbox since the campaign's first letter,
+ *  so the bounces of 25 and 26 September are held before any follow-up goes. The property it sets is where the
+ *  five-minute reader carries on from; a sweep that cannot finish leaves it unset and tries again next run. */
+function tBounceSweep_(token) {
+  var props = PropertiesService.getScriptProperties();
+  if (props.getProperty(T_BOUNCE_LAST)) return 0;
+  var t = tRead_(), first = null;
+  t.rows.forEach(function (r) { var d = r['Sent at']; if (d instanceof Date && !isNaN(d.getTime()) && (!first || d < first)) first = d; });
+  var stamp = function (d) { return d.toISOString().replace(/\.\d+Z$/, 'Z'); };
+  if (!first) { props.setProperty(T_BOUNCE_LAST, stamp(new Date())); return 0; }
+  var since = stamp(new Date(Math.max(first.getTime() - 86400000, Date.now() - 60 * 86400000)));
+  var user = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM);
+  var url = user + '/mailFolders/inbox/messages?$select=id,subject,from,receivedDateTime&$orderby=receivedDateTime%20desc&$top=100' +
+    '&$filter=' + encodeURIComponent('receivedDateTime ge ' + since);
+  var hits = [], pages = 0, newest = '';
+  while (url) {
+    if (++pages > 40) return 0;                                             // more than 4,000 messages: leave it for the next run
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token } });
+    if (res.getResponseCode() !== 200) return 0;
+    var j = JSON.parse(res.getContentText());
+    (j.value || []).forEach(function (m) {
+      var from = String(((m.from || {}).emailAddress || {}).address || '').toLowerCase();
+      if (!tIsBounce_(from, m.subject)) return;
+      hits.push(m.id);
+      if (m.receivedDateTime > newest) newest = m.receivedDateTime;
+    });
+    url = j['@odata.nextLink'] || '';
+  }
+  var marked = 0;
+  for (var i = 0; i < hits.length; i += 20) {
+    var reqs = hits.slice(i, i + 20).map(function (id) {
+      return { url: user + '/messages/' + encodeURIComponent(id) + '?$select=body,receivedDateTime', muteHttpExceptions: true,
+               headers: { Authorization: 'Bearer ' + token, Prefer: 'outlook.body-content-type="text"' } };
+    });
+    var got = UrlFetchApp.fetchAll(reqs);
+    for (var k = 0; k < got.length; k++) {
+      if (got[k].getResponseCode() !== 200) return marked;                 // unfinished: the property stays unset, the next run starts again
+      var m = JSON.parse(got[k].getContentText());
+      marked += tBounceMark_(t, (m.body || {}).content, m.receivedDateTime ? new Date(m.receivedDateTime) : null);
+    }
+  }
+  props.setProperty(T_BOUNCE_LAST, newest || since);
+  log_('transition', 'bounces', 'first sweep since ' + since + ': ' + hits.length + ' reports read, ' + marked + ' rows held as bounced');
+  return marked;
+}
+
 function tInbox_() {
-  var out = { filed: 0, seen: 0, skipped: 0 };
+  var out = { filed: 0, seen: 0, skipped: 0, bounced: 0 };
   if (!tMsCreds_()) return out;
   var since = new Date(Date.now() - TRANSITION.INBOX_DAYS * 86400000).toISOString().replace(/\.\d+Z$/, 'Z');
   var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages' +
@@ -720,6 +814,8 @@ function tInbox_() {
     '&$filter=' + encodeURIComponent('receivedDateTime ge ' + since);
   var token;
   try { token = tMsToken_(); } catch (err) { log_('transition', 'inbox-not-ready', String(err && err.message ? err.message : err)); return out; }
+  try { out.bounced += tBounceSweep_(token); } catch (err) { log_('transition', 'bounce-sweep-failed', String(err && err.message ? err.message : err)); }
+  var bProps = PropertiesService.getScriptProperties(), bLast = bProps.getProperty(T_BOUNCE_LAST) || '', bNewest = '', bTab = null;
   var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + token, Prefer: 'outlook.body-content-type="text"' } });
   var code = res.getResponseCode();
   if (code !== 200) {
@@ -748,6 +844,17 @@ function tInbox_() {
     if (!id || filed[id]) { out.seen++; return; }
     var from = String(((m.from || {}).emailAddress || {}).address || '').trim().toLowerCase();
     var subject = String(m.subject || '');
+    if (tIsBounce_(from, subject)) {                                     // a letter that never arrived: the row is held, once
+      var at = String(m.receivedDateTime || '');
+      if (!bLast || at > bLast) {
+        try {
+          bTab = bTab || tRead_();
+          out.bounced += tBounceMark_(bTab, String((m.body || {}).content || ''), at ? new Date(at) : null);
+          if (at > bNewest) bNewest = at;
+        } catch (err) { log_('transition', 'bounce-failed', String(err && err.message ? err.message : err)); }
+      }
+      out.skipped++; return;
+    }
     if (!from || ours[from] || /^(postmaster|mailer-daemon|no-?reply|noreply)/.test(from) ||
         /^(automatic reply|auto:|out of office|undeliverable|delivery status)/i.test(subject)) { out.skipped++; return; }
     var text = String((m.body || {}).content || '').replace(/\r/g, '');
@@ -767,6 +874,8 @@ function tInbox_() {
       filed[id] = 1; out.filed++;
     } catch (err) { log_('transition', 'inbox-row-failed', String(err && err.message ? err.message : err)); }
   });
+  if (bNewest && bNewest > bLast) { try { bProps.setProperty(T_BOUNCE_LAST, bNewest); } catch (e) {} }
+  if (out.bounced) log_('transition', 'bounces', out.bounced + ' rows held as bounced');
   if (out.filed) log_('transition', 'inbox', out.filed + ' filed, ' + out.seen + ' already filed, ' + out.skipped + ' not this campaign');
   return out;
 }
@@ -831,6 +940,7 @@ function transitionReceipts() {
   if (!lock.tryLock(20000)) return 'another run is busy';
   try {
     try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
+    try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
     return tReceipts_();
   } finally { lock.releaseLock(); }
@@ -1528,10 +1638,18 @@ function tSendBatch_(force) {
   var waiting = Math.max(0, due.length - cap) + res.left;
   var msg = res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed, ' + waiting + ' waiting for the next run' +
     (res.left ? ' (' + res.left + ' of this batch left at the five-minute budget)' : '');
-  /* the reminders, with what is left of the run's cap and time: never before the day's
-     new letters, and never able to stop them — a failure here is logged alone */
+  /* the rows a person ticked in "Send again", then the reminders, with what is left of the run's cap and time: never
+     before the day's new letters, and never able to stop them — a failure in either is logged alone */
+  var used = Math.min(cap, due.length);
+  var again = { sent: 0, skipped: 0, failed: 0, waiting: 0 };
+  try { again = res.left ? again : tSendAgain_(t, letters, cap - used, deadline, busy); }
+  catch (err) { log_('transition', 'send-again-failed', String(err && err.message ? err.message : err)); }
+  if (again.sent || again.skipped || again.failed || again.waiting) {
+    msg += '; sent again: ' + again.sent + ' sent, ' + again.skipped + ' held, ' + again.failed + ' failed, ' + again.waiting + ' waiting';
+  }
+  used += again.sent + again.skipped + again.failed;
   var rem = { sent: 0, skipped: 0, failed: 0, waiting: 0 };
-  try { rem = res.left ? rem : tRemind_(t, letters, cap - Math.min(cap, due.length), deadline); }
+  try { rem = (res.left || again.waiting) ? rem : tRemind_(t, letters, cap - used, deadline, busy); }
   catch (err) { log_('transition', 'remind-failed', String(err && err.message ? err.message : err)); }
   if (rem.sent || rem.skipped || rem.failed || rem.waiting) {
     msg += '; reminders: ' + rem.sent + ' sent, ' + rem.skipped + ' held, ' + rem.failed + ' failed, ' + rem.waiting + ' waiting';
@@ -1549,8 +1667,11 @@ function tSendBatch_(force) {
  *  never reminded twice. Sent at is left as it was: it is the first send's date,
  *  and the reason the batch never picks the row up again. Bounded by
  *  REMIND_MAX_PER_RUN. (25 September 2026: a reminder at three to six weeks is
- *  what the FCA's letter trial found lifted response most; see CLAUDE.md.) */
-function tRemind_(t, letters, cap, deadline) {
+ *  what the FCA's letter trial found lifted response most; see CLAUDE.md. 29
+ *  September: the manager chose five days.) Never to an inbox that had a
+ *  letter today (`busy`, the batch's own map), so a family sharing one never
+ *  gets two in a day; a bounced row is held in Exclude and never reminded. */
+function tRemind_(t, letters, cap, deadline, busy) {
   var days = Number(TRANSITION.REMIND_DAYS) || 0;
   cap = Math.min(Number(cap) || 0, TRANSITION.REMIND_MAX_PER_RUN);
   if (cap <= 0 || days <= 0) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
@@ -1558,14 +1679,19 @@ function tRemind_(t, letters, cap, deadline) {
   var tz = tTz_(), now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
   var answered = tAnswered_();
+  busy = busy || {};
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
-    if (tText_(r.Status).toLowerCase() !== 'sent') return false;             // reminded, error, check: not again
+    if (tText_(r.Status).toLowerCase() !== 'sent') return false;             // reminded, sent again, bounced, error, check: not again
     var at = r['Sent at'];
     if (!(at instanceof Date) || isNaN(at.getTime()) || at.getTime() > cutoff.getTime()) return false;
     var tok = tText_(r.Token);
     if (!tok || answered[tok]) return false;
-    return !tHold_(r, letters);
+    if (tHold_(r, letters)) return false;
+    var mail = tText_(r.Email).toLowerCase();
+    if (busy[mail] && busy[mail] !== r._row) return false;                   // that inbox has had its letter today
+    busy[mail] = r._row;
+    return true;
   });
   due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
   var sent = 0, skipped = 0, failed = 0, left = 0;
@@ -1586,6 +1712,76 @@ function tRemind_(t, letters, cap, deadline) {
     tPace_(t0);
   });
   return { sent: sent, skipped: skipped, failed: failed, waiting: Math.max(0, due.length - cap) + left };
+}
+
+/* ── "Send again": a person ticks a row, the next run sends that client's letter once more ── */
+/* Asked for on 29 September 2026: a way, in the tab, to send a client the survey again when nothing came back. The
+   column holds tick boxes; tAgainCol_ adds it the first time the five-minute run finds none. */
+var T_AGAIN = 'Send again';
+/** The column's number, adding it (with tick boxes) at the end of the tab when it is not there. */
+function tAgainCol_() {
+  var sh = tSheet_(), lastCol = sh.getLastColumn();
+  if (!lastCol) return 0;
+  var head = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (h) { return String(h).trim(); });
+  var i = head.indexOf(T_AGAIN);
+  if (i >= 0) return i + 1;
+  if (sh.getMaxColumns() <= lastCol) sh.insertColumnsAfter(sh.getMaxColumns(), 1);
+  var c = lastCol + 1;
+  sh.getRange(1, c).setValue(T_AGAIN);
+  try { sh.getRange(1, c).setFontWeight('bold'); } catch (e) {}
+  try { sh.getRange(2, c, Math.max(1, sh.getMaxRows() - 1), 1).setDataValidation(SpreadsheetApp.newDataValidation().requireCheckbox().build()); } catch (e) {}
+  log_('transition', 'send-again', 'the "' + T_AGAIN + '" column is on ' + TRANSITION.SHEET + ', column ' + c);
+  return c;
+}
+/** The rows a person ticked in "Send again": each client's own letter once more, now, whatever its Send on and
+ *  whether or not the client answered, because a person asked for it. A row sent before goes with the line saying
+ *  when the first went and "Reminder:" in the subject, as tRemind_ sends it; a row never sent goes as its first
+ *  letter. Every hold still stands: the manager's hold on client e-mail (the batch never gets this far), anything in
+ *  Exclude (bounced, a check, an e-mail waiting for the go), a Test row, no letter for the segment, and one letter an
+ *  inbox a day. A held row keeps its tick and goes once the hold is lifted. Sent, the tick is cleared and Status reads
+ *  'sent again <date>', which also keeps the automatic reminder from following it. */
+function tSendAgain_(t, letters, cap, deadline, busy) {
+  var out = { sent: 0, skipped: 0, failed: 0, waiting: 0 };
+  var c = t.col[T_AGAIN];
+  cap = Number(cap) || 0;
+  if (!c || cap <= 0 || (deadline && Date.now() > deadline)) return out;
+  var tz = tTz_(), stamp = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  busy = busy || {};
+  var ticked = t.rows.filter(function (r) { return tYes_(r[T_AGAIN]); });
+  var due = ticked.filter(function (r) {
+    if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
+    if (tHold_(r, letters)) return false;
+    var mail = tText_(r.Email).toLowerCase();
+    if (busy[mail] && busy[mail] !== r._row) return false;          // that inbox has had its letter today
+    busy[mail] = r._row;
+    return true;
+  });
+  due.sort(function (a, b) { return tOrder_(a) - tOrder_(b) || a._row - b._row; });
+  var left = 0;
+  due.slice(0, cap).forEach(function (r) {
+    if (left || (deadline && Date.now() > deadline)) { left++; return; }
+    var t0 = Date.now(), row = {};
+    var before = r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime());
+    try {
+      tEnsureToken_(t, r);
+      for (var k in r) row[k] = r[k];
+      if (before) row.sent_on = Utilities.formatDate(r['Sent at'], tz, 'd MMMM yyyy');
+      var res = tSendRow_(row, letters);
+      if (res === 'sent') {
+        out.sent++;
+        tMark_(t, r, before ? 'sent again ' + stamp : 'sent', !before);   // a first letter is an ordinary send, reminded like any other
+        var untick = r[T_AGAIN] === true ? false : '';                   // a tick box stays a tick box
+        t.sh.getRange(r._row, c).setValue(untick);
+        r[T_AGAIN] = untick;
+      } else { out.skipped++; tMark_(t, r, 'send again held: ' + res, false); }
+    } catch (err) {
+      out.failed++;
+      tMark_(t, r, 'send again error: ' + String(err && err.message ? err.message : err).slice(0, 100), false);
+    }
+    tPace_(t0);
+  });
+  out.waiting = Math.max(0, due.length - cap) + left;
+  return out;
 }
 
 /** Every token that has answered: a row on Client Responses, or a review whose
@@ -3633,7 +3829,7 @@ function tBookFor_(cno, withList) {
     if (live && cv.src === 'plan' && r.sa > 0 && !life && (!pc.cls || pc.cls === 'life')) s.unconf += r.sa;
     if (r.iss && r.st !== 'pending' && !T_NEVER.test(r.desc) && (!s.since || r.iss < s.since)) s.since = r.iss;
     if (withList && r.st !== 'ended') {
-      var ins = pf && pf.insured && r.client && r.client.toLowerCase().indexOf(pf.insured.split(/\s+/)[0].toLowerCase()) < 0 ? tTitleCase_(pf.insured) : '';
+      var ins = pf && tOtherLife_(pf.insured, r.client) ? tTitleCase_(pf.insured) : '';   // the life it covers, when that is someone else's
       list.push({ no: r.no, code: r.code, name: pc.name, cls: pc.cls, conf: pc.conf, st: r.st,
         desc: r.st === 'pending' ? r.desc : '', iss: r.iss, prem: r.prem, pays: r.pays, yr: r.yr, bill: r.bill, paid: r.paid,
         od: r.st === 'overdue' && r.paid ? Math.max(0, tDaysBetween_(r.paid, b.today)) : 0, sa: r.sa,
@@ -3811,10 +4007,25 @@ function tProfiles_() {
  *  occupation, an employer that reads as one, the income, a family role; and, from the Client Book, `pay` when a live
  *  premium comes through an employer ("salary deduction") or military pay, which says they are employed and by whom
  *  paid even where Salesforce has no occupation. null when nothing is known. */
+/** Whether a policy's insured, by name, is someone other than the client who owns it: not the same first name with a
+ *  surname in common (tSamePerson_'s test). A blank or one-word name is never someone else. */
+function tOtherLife_(insured, client) {
+  var a = tText_(insured), b = tText_(client);
+  if (!a || !b || a.split(/\s+/).length < 2 || b.split(/\s+/).length < 2) return false;
+  if (tSamePerson_({ Client: a }, { Client: b })) return false;
+  /* the owner under a looser spelling ("Ramkhelawan", "Ramkilawan"): the same first name and surnames that begin alike */
+  var w = function (s) { return s.toLowerCase().replace(/[^a-z\- ]/g, '').split(/[\s-]+/).filter(Boolean); };
+  var x = w(a), y = w(b);
+  return !(x[0] === y[0] && x[0].length >= 3 && x.slice(1).some(function (p) { return p.length >= 4 && y.slice(1).some(function (q) { return q.slice(0, 4) === p.slice(0, 4); }); }));
+}
 function tProfileFor_(cno) {
   var P = tProfiles_(), b = tBook_(), all = b.by[tCno_(cno)] || [], recs = P.ready ? all : [];
   var o = { dob: '', gender: '', smoker: '', occ: '', emp: '', income: 0, role: '' }, any = false;
-  recs.forEach(function (r) {
+  /* who a person is comes from the policies on their own life: a policy the client took out on a child's life carries the
+     child's date of birth and gender (the board read Ria Ramroop-Brijbassie as 5). A policy whose insured is someone
+     else by name is left out, unless no policy is on the client's own life, when every one is read as before. */
+  var own = recs.filter(function (r) { var p = P.by[r.no]; return p && !tOtherLife_(p.insured, r.client); });
+  (own.length ? own : recs).forEach(function (r) {
     var p = P.by[r.no];
     if (!p) return;
     any = true;
@@ -3916,7 +4127,10 @@ function tProfileRow_(rec, cno, client) {
   return [String(rec.POLICY__c || ''), cno || '', client || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.Date_Of_Birth__c || c.Birthdate),
     v(c.Gender__c), v(c.Smoker__c), v(rec.Occupation__c) || tJobTitle_(c.Title), v(c.Employer__c), income, v(rec.Life_Coverage__c), v(rec.Critical_Illness_Coverage__c),
     v(rec.ADDAP_Coverage__c), v(rec.WP_Coverage__c), v(rec.Life_Coverage_Expiry__c), v(rec.Benificiary_1__c), v(rec.Benificiary_2__c), v(rec.Benificiary_3__c),
-    v(rec.INSURED__c), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c), 'Salesforce'];
+    /* the life insured: INSURED__c is filled on a few policies in a hundred, but the policy record's own name and date of
+       birth are always the insured's — the owner's on most, a child's or a spouse's on a policy the owner took out on
+       someone else's life (29 September 2026: Ria Ramroop-Brijbassie owns two on her daughters' lives) */
+    v(rec.INSURED__c) || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c), 'Salesforce'];
 }
 /** Rewrites the Client Profile tab from Salesforce for these policies, when ServiceSalesforce.gs and its four SF_* Script
  *  properties are there; otherwise leaves the imported tab as it is. Never throws; { rows } or { skipped } or { error }. */

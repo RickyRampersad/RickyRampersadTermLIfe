@@ -937,19 +937,54 @@ voice under the new timing and the caption gives it away.
   happens after you tap" strip (`FLOW`), which the receipt's
   follow-through and the team page repeat, so nothing is promised in one
   place that another does not keep. **The reminder is not a letter of its
-  own**: `tRemind_`, at the end of every hourly batch and inside the same
+  own**: `tRemind_`, at the end of every batch and inside the same
   cap, sends the client's own letter once more to any row sent
-  `REMIND_DAYS` (21) or more ago, still `sent`, whose token has no row on
+  `REMIND_DAYS` (**five** since 29 September 2026, when the manager asked
+  for the follow-up "in about five days from the date it was sent"; 21
+  before) or more ago, still `sent`, whose token has no row on
   Client Responses and no review (`tAnswered_`), with `sent_on` set so the
   banner above the greeting says when the first went and the subject reads
   "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
   untouched (it is the first send's date and what keeps the row out of the
-  batch), at most `REMIND_MAX_PER_RUN` (30) a run, in its own try/catch so
+  batch), never to an inbox that had a letter that day, at most
+  `REMIND_MAX_PER_RUN` (30) a run, which is about 480 a day at a run every
+  thirty minutes from 9 to 5, in its own try/catch so
   it can never stop the day's letters; `REMIND_DAYS` 0 turns it off. The
-  FCA's redress-letter trial (Adams and Hunt 2013) is the reason: a
-  reminder at three to six weeks lifted response more than any change of
-  words. `svc/remind-harness.js` in the session scratchpad runs the pass in
-  Node on a mocked tab.
+  FCA's redress-letter trial (Adams and Hunt 2013) found a reminder at
+  three to six weeks lifted response more than any change of words, which
+  is why it was 21; the manager chose sooner. On 29 September, 1,199 of the
+  1,477 clients e-mailed on 25 September were due it (unanswered, not held,
+  not bounced), all waiting on the hold. `svc/remind-harness.js` in the
+  session scratchpad runs the pass in Node on a mocked tab.
+  **"Send again" is a tick box on Transition Send** (asked for the same
+  day: "a way to run again … to send off a client a survey"). `tAgainCol_`
+  adds the column the first time the five-minute run finds none; a person
+  ticks a row, and the next batch (`tSendAgain_`, after the day's new
+  letters and before the reminders, inside the same cap) sends that
+  client's letter once more — with the "we wrote to you on" line and
+  "Reminder:" when it went before, as its first letter when it never went —
+  whatever its Send on and whether or not the client answered, because a
+  person asked. Every hold still stands: the manager's hold on client
+  e-mail, anything in Exclude, a Test row, one letter an inbox a day; a held
+  row keeps its tick and goes when the hold lifts. Sent, the tick clears
+  and Status reads `sent again <date>`, which also keeps the automatic
+  reminder off it. **Bounced letters are held by themselves.** Until 29
+  September the inbox reader passed over every non-delivery report, so
+  the 139 letters that bounced on 25 and 26 September (read by hand off
+  support@ on 27 September) still read `sent` and would have been followed
+  up. `tInbox_` now knows a report by its subject (`tIsBounce_`), takes the
+  failed address as whichever address in the report's own part — cut
+  before the original message's headers, which also carry the CC — is on
+  the tab, and holds every row at it with `bounced: <no such mailbox,
+  mailbox full, bad domain, no response, blocked> (<date>)` in Exclude and
+  `bounced` in Status (`tBounceMark_`); a row held for anything else is left
+  as it is, and a report about a CC never touches the client. The first run
+  after the paste sweeps the inbox back to the day before the first letter
+  (`tBounceSweep_`, once, remembered in the `bounce_last` property, which
+  the five-minute reader carries on from). That Exclude is exactly what
+  `tFilePhoneEmails_` replaces when Client Support takes a working address
+  on a call, and the letter then goes again after the go.
+  `health/followup-harness.js` in the session scratchpad covers the three.
 - **The Act's own words are on every letter whose situation it speaks to,
   and the days are worked out on the day the letter goes.** 25 September
   2026: "include the insurance act and days to deliver and come across
@@ -1571,6 +1606,23 @@ voice under the new timing and the caption gives it away.
   stands, and the build's message says which. The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
   (numbers from 0000745444) carry no `Client_Number__c` there.
+  **The name and date of birth on a policy record are the life insured's,
+  not the owner's.** The portfolio's client is the owner; a policy a
+  parent took out on a child's life carries the child's name and birth
+  date (Ria Ramroop-Brijbassie owns two on her daughters' lives, issued at
+  3 and at 0, each paying "Proposer - Female", Ria herself). `INSURED__c` is
+  filled on a few policies in a hundred, so the Insured column is
+  `INSURED__c`, else the record's own name (`tProfileRow_`,
+  `Client-Profile-v4.xlsx` in the scratchpad for the import). Who a client
+  is comes only from policies on their own life (`tOtherLife_`: not the
+  same first name with a surname in common or beginning alike), unless
+  none is, when every policy is read as before; until 29 September the
+  board took the first birth date it met and read Ria as 5. On the
+  families' policies that corrected ten ages, and 69 policy lines now say
+  whose life they cover. "Proposer" as the beneficiary is on adults'
+  policies as often as children's (median issue age 33): it means whoever
+  took out the policy, a parent or guardian only where the policy was
+  issued before 18.
   **What is there, measured on 29 September 2026 over the campaign's live
   policies:** date of birth 98%, gender 93%, a life figure 74%, critical
   illness 38%. Who a policy pays, over every live policy of the books'
