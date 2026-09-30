@@ -1965,8 +1965,25 @@ function tSendTest_() {
     return tYes_(r.Test) && !tHeld_(r.Exclude) && tText_(r.Segment);
   });
   if (!rows.length) return tSay_('No rows marked Test = Y.');
+  /* a Test row that had its letter before also gets the reminder version, as the
+     clients written to on 25 September get theirs (30 September 2026: "before
+     anything goes out want to send to the test team"): the first letter's date
+     is read before the send stamps today's */
+  var before = {};
+  rows.forEach(function (r) { if (r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime())) before[r._row] = r['Sent at']; });
   var res = tSendRows_(t, rows, letters);
-  var msg = 'Test: ' + res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed.';
+  var rem = 0, remFailed = 0;
+  rows.forEach(function (r) {
+    if (!before[r._row]) return;
+    var row = {};
+    for (var k in r) row[k] = r[k];
+    row.sent_on = Utilities.formatDate(before[r._row], tTz_(), 'd MMMM yyyy');
+    var t0 = Date.now();
+    try { if (tSendRow_(row, letters) === 'sent') rem++; } catch (err) { remFailed++; }
+    tPace_(t0);
+  });
+  var msg = 'Test: ' + res.sent + ' sent, ' + res.skipped + ' skipped, ' + res.failed + ' failed' +
+    (rem || remFailed ? '; the reminder version to ' + rem + (remFailed ? ' (' + remFailed + ' failed)' : '') : '') + '.';
   log_('transition', 'test', msg);
   return tSay_(msg);
 }
