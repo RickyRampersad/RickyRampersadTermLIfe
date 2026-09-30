@@ -1516,10 +1516,16 @@ function tChaseClient_(row, r, needs) {
     line: 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, and you are welcome to reply here at any time.' };
   /* the client's own next step from receipt.json, never the branch's third-person note */
   var next = (rc && rc.json && rc.json.next && rc.json.next[r]) || needs;
-  var vals = { 'First name': first, next: next, care_name: care.care_name, care_first: care.care_first, care_us: care.care_us, care_Us: care.care_Us, care_line: care.care_line };
+  var vals = { 'First name': first, Token: tText_(row.Token), Segment: tText_(row.Segment), next: next,
+               care_name: care.care_name, care_first: care.care_first, care_us: care.care_us, care_Us: care.care_Us, care_line: care.care_line };
+  /* the words for what this client is waiting on (still.follow, 30 September): a call, a review or an agent
+     gets the invitation to tell us, in their own words and on their own review link, what matters before an
+     agent is named; a payment, a contract or an application gets its own line. An older receipt.json has
+     only still.line. */
+  var text = (still.follow && (still.follow[r] || still.follow['default'])) || still.line;
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
-    '<p style="margin:0 0 12px">' + tFill_(still.line, vals) + '</p>' +
+    '<p style="margin:0 0 12px">' + tFill_(text, vals) + '</p>' +
     '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p>' +
     tLegal_(rc) + '</div></div>';
   if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return; }
@@ -1614,6 +1620,8 @@ function tChase_() {
       var to = tText_(g.row.Email);
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) held = 'no e-mail on file';
       else if (tText_(g.row.Exclude)) held = 'the send row is held (' + tText_(g.row.Exclude).slice(0, 40) + ')';
+      /* a client who wrote to us in their own words is owed a person's reply, not a template beside it (30 September) */
+      else if (g.all.some(function (x) { return x.q === 'wrote'; })) held = 'they wrote to us in their own words: a person replies';
       else if (rc && tLooksAutomated_(rc, g.all)) held = 'the answers look automated';
       else if (!tMsCreds_()) held = T_MS_MISSING;
       if (!held) {

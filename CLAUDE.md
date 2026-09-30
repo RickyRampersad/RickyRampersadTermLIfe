@@ -1462,6 +1462,30 @@ voice under the new timing and the caption gives it away.
   never chased.
   `health/chase-harness.js` in the session scratchpad runs it in Node on
   made-up rows, and `chase/sim.js` on a copy of the live sheet.
+  **The note owns the wait and asks for the client's own words** (30
+  September 2026: "we did thank persons for responding and should we not
+  send a follow up email as these persons are awaiting a response … would
+  like to hear from persons the concerns to ensure the correct agent is
+  assigned"). The first notes were due to clients whose receipt had
+  promised a call "today or tomorrow" four working days before, with
+  nobody yet named. So the note now says it has taken longer than it
+  should. Anyone waiting on a call, a review or an agent is asked what
+  they would like us to know before an agent is named, with a link to
+  their own review: `/your-policy/review.html?from=client&type=individual&t=<token>`.
+  That page is the branch's copy of the donthaveanagent.com form. It reads
+  the token, so the review lands on the client's record. donthaveanagent.com
+  still serves the older copy, which does not. A payment, a contract or an
+  application gets its own line instead (`still.follow` in receipt.json,
+  from `STILL` in build-letters.py). `still.line` is what a Transition.gs
+  older than this reads; with that script the link opens the plain form.
+  A client who wrote to us in their own words gets no note. They are owed
+  a person's reply, and their rows are marked `[chase2] held: they wrote
+  to us in their own words`. A day counts once it is over, so an answer
+  from a Friday reaches four working days the next Friday morning.
+  `health/still-note-harness.js` covers it (14 checks). `chase/sim30.js`
+  ran it on the live sheet on the evening of 30 September: 163 clients
+  over the following week, once each, 75 of them on Friday 2 October, and
+  34 held because they wrote.
 - **The chase only ever acts on a token this campaign's own Transition Send
   tab recognises.** Client Responses has recorded taps from the site's
   original doors since before this campaign — months of rows that still
