@@ -861,7 +861,30 @@ voice under the new timing and the caption gives it away.
   cell (`tWords_` strips the pre-written lines in `receipt.json`
   `reply.lines` and anything quoted beneath); the receipt quotes those
   words back. So a client who simply replies to a letter is captured with
-  what they wrote. The receipt offers the letter's other checks, how to
+  what they wrote. **Every response has a trail, even from an address we do
+  not hold** (30 September 2026: "all response must have the trail").
+  Until then a reply from another address, or from an inbox two clients
+  share, was passed over. Charlene Ramlochansingh asked from her work
+  address to cancel her application, and Ganesh Jhury asked twice to be
+  called from the inbox he shares with Anya Jhury. Neither was filed, and
+  nobody saw them. Now a reply to one of our own e-mails (`T_OUR_SUBJECT`:
+  Re: a letter, a reminder, a receipt, a note) is placed by the first name
+  it greets ("Dear X," in the quoted letter, "Thank you, X." in the
+  subject). At a shared inbox the name is enough. From an address we do
+  not hold, the former agent the subject names must agree too
+  (`tGuessClient_`). Such a reply is filed with `[matched by name]` in the
+  Note. When the name matches no one or several, the reply goes on the
+  **Replies to match** tab, which is made the first time it is needed,
+  with the clients it could be. A person types the token there, and the
+  next five-minute run files it `[matched by hand]`, with the message id
+  in Referrer so it is never filed twice. Mail from our own domains
+  (`T_OUR_DOMAINS`) is never taken for a client's: a colleague answering a
+  client on the thread is not the client. The inbox reader only looks
+  back three days, so the three e-mails missed before this change were
+  filed from a paste block (`Replies-to-file-30Sep.xlsx` in the
+  scratchpad), marked so that no automatic receipt or follow-up goes: a
+  person replies. `health/inbox-match-harness.js` covers it (16 checks).
+  The receipt offers the letter's other checks, how to
   reach them and, once a call is coming, when (`[[more]]`), as page links
   or replies to match. A merge field can never appear inside a reply body,
   since it is URL-encoded: a reply carries QUESTIONS' own words.

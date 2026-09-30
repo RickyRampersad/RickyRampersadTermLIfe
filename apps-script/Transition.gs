@@ -748,6 +748,88 @@ function transitionInbox() {
 
 var T_REF = /Ref:\s*([A-Za-z0-9_-]{6,64})\s+([a-z]+)(?:\s+([a-z_]+))?/;
 
+/* ── replies the address alone cannot place (30 September 2026) ──────
+   "All responses must have the trail." Until then a reply from an address the
+   send tab does not hold, or from an inbox two clients share, was passed over
+   in silence. Charlene Ramlochansingh asked from her work address to cancel her
+   application, and nothing was filed and nothing thanked her. Ganesh Jhury asked
+   twice on 25 September "Can you call me now?" from the inbox he shares with
+   Anya Jhury. A reply to one of our own e-mails (T_OUR_SUBJECT) is now placed by
+   the first name it greets ("Dear X," in the quoted letter, "Thank you, X." or
+   "Still on it, X." in the subject). Among clients at a shared inbox, that name
+   is enough. From an address we do not hold, the former agent the subject names
+   must agree as well. One client left is filed as theirs; none or several go on
+   the Replies to match tab with the clients it could be. A person types the
+   token there and the next run files it. Mail from our own domains is never
+   taken for a client's reply: a colleague answering a client on the thread is
+   not the client. */
+var T_OUR_SUBJECT = /^\s*(?:(?:re|fw|fwd)\s*:\s*)+.*(?:important:|reminder:|thank you,|still on it|has resigned|has moved on|no longer with guardian|meet your agent)/i;
+var T_OUR_DOMAINS = /@(?:[\w-]+\.)*(?:myguardiangroup\.com|rickyrampersadbranch\.com|guardianonline\.onmicrosoft\.com)$/i;
+var T_MATCH_TAB = 'Replies to match';
+var T_MATCH_HEAD = ['Received', 'From', 'Subject', 'Their words', 'Could be', 'Token (type it to file)', 'Filed', 'Message id'];
+
+/** Which client a reply to our own mail is from, when the address alone cannot say. */
+function tGuessClient_(subject, text, from, tokens, shared) {
+  var names = {}, m, re = /\bdear\s+([A-Za-z][A-Za-z'\-]+)\s*,/gi;
+  while ((m = re.exec(String(text || '')))) names[m[1].toLowerCase()] = 1;
+  var bare = String(subject || '').replace(/^\s*(?:(?:re|fw|fwd)\s*:\s*)+/i, '');
+  var s = /(?:thank you|still on it),\s*([A-Za-z][A-Za-z'\-]+)/i.exec(bare);
+  if (s) names[s[1].toLowerCase()] = 1;
+  var atShared = shared[from] && shared[from].length > 1;
+  var ag = /^(?:(?:important|reminder)\s*:\s*)?([A-Za-z][A-Za-z'\-]+)\s+has\s+(?:resigned|moved on)/i.exec(bare);
+  var agFull = /agent\s+([A-Z][A-Za-z'\-]+(?:\s+[A-Z][A-Za-z'\-]+)*)\s+is no longer/.exec(bare);
+  var pool = atShared ? shared[from] : Object.keys(tokens);
+  var cands = pool.filter(function (t) {
+    var r = tokens[t];
+    if (!r || tYes_(r.Test) || !names[tText_(r['First name']).toLowerCase()]) return false;
+    if (atShared) return true;                                         // the inbox is theirs: the name decides
+    if (ag) return tText_(r['Agent first name']).toLowerCase() === ag[1].toLowerCase();
+    if (agFull) return tText_(r.Agent).toLowerCase() === agFull[1].toLowerCase();
+    return true;                                                       // a stranger's address and no book named: listed, never filed
+  });
+  var sure = cands.length === 1 && (atShared || ag || agFull);
+  return { token: sure ? cands[0] : '', candidates: cands.slice(0, 6) };
+}
+
+/** The Replies to match tab, made the first time it is needed; its message ids, so nothing is listed twice. */
+function tMatchTab_() {
+  var ss = ss_(), sh = ss.getSheetByName(T_MATCH_TAB);
+  if (!sh) { sh = ss.insertSheet(T_MATCH_TAB); sh.appendRow(T_MATCH_HEAD); try { sh.setFrozenRows(1); } catch (e) {} }
+  return sh;
+}
+function tMatchIds_() {
+  var ids = {};
+  try {
+    var sh = ss_().getSheetByName(T_MATCH_TAB), last = sh ? sh.getLastRow() : 0;
+    if (sh && last > 1) sh.getRange(2, 8, last - 1, 1).getValues().forEach(function (v) { if (v[0]) ids[String(v[0])] = 1; });
+  } catch (e) {}
+  return ids;
+}
+
+/** Files every reply a person has placed on the Replies to match tab by typing its token: a Client Responses row
+ *  exactly as the reader writes one, with the message id in Referrer, so it is never filed twice. */
+function tFileMatched_(tokens) {
+  var n = 0, sh;
+  try { sh = ss_().getSheetByName(T_MATCH_TAB); } catch (e) { return 0; }
+  if (!sh || sh.getLastRow() < 2) return 0;
+  var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 8).getValues(), resp = null;
+  var spec = (typeof RESPONSES !== 'undefined' && RESPONSES.question) || { needs: 'a reply the same day', status: 'Open' };
+  for (var i = 0; i < vals.length; i++) {
+    var tok = tText_(vals[i][5]), done = tText_(vals[i][6]);
+    if (!tok || /^filed/i.test(done)) continue;
+    if (!tokens[tok]) { if (done !== 'check the token') sh.getRange(i + 2, 7).setValue('check the token'); continue; }
+    try {
+      resp = resp || responseSheet_();
+      resp.appendRow([new Date(), tok, tText_(tokens[tok].Segment).toUpperCase(), 'question', spec.needs, '/reply?q=wrote',
+        ('reply ' + tText_(vals[i][7])).slice(0, 120), spec.status, '', '',
+        (vals[i][3] ? '"' + String(vals[i][3]).slice(0, 300) + '" ' : '') + '[matched by hand]']);
+      sh.getRange(i + 2, 7).setValue('filed ' + Utilities.formatDate(new Date(), tTz_(), 'd MMM HH:mm'));
+      n++;
+    } catch (err) { log_('transition', 'inbox-match-failed', String(err && err.message ? err.message : err)); }
+  }
+  return n;
+}
+
 /* ── letters that bounced ─────────────────────────────────────────── */
 /* Until 29 September 2026 the inbox reader passed over every non-delivery report, so a letter that never arrived
    left its row reading 'sent': 139 addresses bounced on 25 and 26 September (read by hand off support@ on 27
@@ -842,7 +924,7 @@ function tBounceSweep_(token) {
 }
 
 function tInbox_() {
-  var out = { filed: 0, seen: 0, skipped: 0, bounced: 0 };
+  var out = { filed: 0, seen: 0, skipped: 0, bounced: 0, toMatch: 0, byName: 0 };
   if (!tMsCreds_()) return out;
   var since = new Date(Date.now() - TRANSITION.INBOX_DAYS * 86400000).toISOString().replace(/\.\d+Z$/, 'Z');
   var url = 'https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(TRANSITION.MS_FROM) + '/mailFolders/inbox/messages' +
@@ -864,12 +946,14 @@ function tInbox_() {
   var msgs = [];
   try { msgs = JSON.parse(res.getContentText()).value || []; } catch (x) {}
   if (!msgs.length) return out;
-  var tokens = tTokenMap_(), byMail = {};
+  var tokens = tTokenMap_(), byMail = {}, shared = {};
   Object.keys(tokens).forEach(function (t) {
     if (tYes_(tokens[t].Test)) return;   // a Test row is a colleague standing in as a client: their everyday mail is not a reply (28 September)
     var m = tText_(tokens[t].Email).toLowerCase();
-    if (m) byMail[m] = byMail[m] ? 'many' : t;                         // one client per address, or nobody
+    if (m) { byMail[m] = byMail[m] ? 'many' : t; (shared[m] = shared[m] || []).push(t); }   // one client per address, or nobody
   });
+  try { out.filed += tFileMatched_(tokens); } catch (err) { log_('transition', 'inbox-match-failed', String(err && err.message ? err.message : err)); }
+  var matchIds = null;
   var filed = tFiledIds_(), rc = tReceipt_(), lines = {};
   ((rc && rc.json.reply && rc.json.reply.lines) || []).forEach(function (l) { lines[l.trim().toLowerCase()] = 1; });
   var ours = {};
@@ -896,6 +980,22 @@ function tInbox_() {
     var text = String((m.body || {}).content || '').replace(/\r/g, '');
     var ref = T_REF.exec(text) || T_REF.exec(subject);
     var tok = ref ? ref[1] : ((byMail[from] && byMail[from] !== 'many') ? byMail[from] : '');
+    var how = '';
+    if ((!tok || !tokens[tok]) && T_OUR_SUBJECT.test(subject) && !T_OUR_DOMAINS.test(from)) {
+      var g = tGuessClient_(subject, text, from, tokens, shared);
+      if (g.token) { tok = g.token; how = ' [matched by name]'; out.byName++; }
+      else {
+        matchIds = matchIds || tMatchIds_();
+        if (!matchIds[id]) {
+          try {
+            tMatchTab_().appendRow([m.receivedDateTime ? new Date(m.receivedDateTime) : new Date(), from, subject.slice(0, 200),
+              tWords_(text, lines).slice(0, 500), g.candidates.map(function (t) { return tText_(tokens[t].Client) + ': ' + t; }).join('; '), '', '', id]);
+            matchIds[id] = 1; out.toMatch++;
+          } catch (err) { log_('transition', 'inbox-match-failed', String(err && err.message ? err.message : err)); }
+        }
+        return;
+      }
+    }
     if (!tok || !tokens[tok]) { out.skipped++; return; }             // not this campaign's client: the team reads it in the inbox
     var r = ref ? ref[2] : 'question', q = ref ? (ref[3] || '') : 'wrote';
     var specs = (typeof RESPONSES !== 'undefined') ? RESPONSES : {};
@@ -906,13 +1006,14 @@ function tInbox_() {
       sheet = sheet || responseSheet_();
       sheet.appendRow([new Date(), tok, tText_(tokens[tok].Segment).toUpperCase(), r, spec.needs,
         '/reply' + (q ? '?q=' + q : ''), ('reply ' + id).slice(0, 120), spec.status, '', '',
-        words ? '"' + words.slice(0, 300) + '"' : '']);
+        (words ? '"' + words.slice(0, 300) + '"' : '') + how]);
       filed[id] = 1; out.filed++;
     } catch (err) { log_('transition', 'inbox-row-failed', String(err && err.message ? err.message : err)); }
   });
   if (bNewest && bNewest > bLast) { try { bProps.setProperty(T_BOUNCE_LAST, bNewest); } catch (e) {} }
   if (out.bounced) log_('transition', 'bounces', out.bounced + ' rows held as bounced');
-  if (out.filed) log_('transition', 'inbox', out.filed + ' filed, ' + out.seen + ' already filed, ' + out.skipped + ' not this campaign');
+  if (out.filed || out.toMatch) log_('transition', 'inbox', out.filed + ' filed' + (out.byName ? ' (' + out.byName + ' by name)' : '') + ', ' +
+    out.toMatch + ' put on "' + T_MATCH_TAB + '", ' + out.seen + ' already filed, ' + out.skipped + ' not this campaign');
   return out;
 }
 
