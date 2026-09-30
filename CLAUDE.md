@@ -555,16 +555,20 @@ voice under the new timing and the caption gives it away.
   for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
   should persons need to call to confirm"; later the same day, the "head
   office contact"): every letter, T and T1 included, ends its notice card
-  with "To confirm this notice, call Guardian Life on (868) 226-6944"
-  (`CONFIRM`), and the first line of what to do says "call Guardian Life" on
-  the same number, as a `tel:` link a phone dials in one tap. The number was
-  226-2479, Sales Admin at head office, until noon on 30 September, when the
-  manager moved it to 226-6944, the line he calls myGG ("urgently need to
-  change the contact number to 2266944 (mygg)"); the 175 letters sent that
-  morning carry the old one, and Sales Admin still answers it. The letter
-  names the company, not a department: the client hears it from Guardian
-  Life, not from the branch that wrote the letter. Whoever answers the
-  number has to know those calls are coming. The call scripts (`call-script.html`,
+  with "To confirm this notice, call our branch on (868) 226-6461, 226-6464
+  or 226-6465, or Guardian Direct on (868) 226-MYGG (226-6944)" (`CONFIRM`,
+  `BRANCH_TELS`, `DIRECT_TEL`), every number a `tel:` link a phone dials in
+  one tap, and the first line of what to do says "call one of the numbers
+  above". The number was 226-2479, Sales Admin at head office, until noon on
+  30 September; then 226-6944, which is 226-MYGG, Guardian Direct ("urgently
+  need to change the contact number to 2266944 (mygg)"); then the branch's
+  own three lines went in front of it ("add these to the contact numbers for
+  verification … and then the last number is 226 MyGG"). The 295 letters
+  sent before noon that day carry 226-2479, and Sales Admin still answers
+  it. The call scripts give the branch as (868) 226-6461, in place of
+  678-5921. Guardian Direct
+  is last so a client can also hear it from the company itself. Whoever
+  answers those numbers has to know the calls are coming. The call scripts (`call-script.html`,
   `client-support.html`) read the same notice word for word and give the
   same number. When a client repeats something a former agent said, that
   they still act for Guardian Life or anything about the branch, the caller
@@ -700,8 +704,8 @@ voice under the new timing and the caption gives it away.
   subject is `Reminder: <first name> has resigned and is no longer with
   Guardian Life. …`: `tSendRow_` puts "Reminder:" in place of "Important:",
   never both. Its line above the greeting (`REMIND_R`) says it is "an
-  important update on your agent's resignation, with a Guardian Life
-  number to confirm it". T and T1 keep "an important update about your
+  important update on your agent's resignation, with numbers you can
+  call to confirm it". T and T1 keep "an important update about your
   agent" (`REMIND`): that book's agent did not resign.
 - **Quick checks, answered in the e-mail itself.** First two questions on
   24 September — questions that would show a client what nobody had told

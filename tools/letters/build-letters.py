@@ -374,16 +374,18 @@ POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looke
 # included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
 # The same afternoon the manager called it the "head office contact", and the letters name it so: the client
 # hears it from the company's head office, not from the branch that wrote the letter.
-# At noon the same day the number became 226-6944, the line the manager calls myGG ("urgently need to change the contact
-# number to 2266944 (mygg)"), and the notice "we have accepted the resignation effective 21st Sept". The letters name the
-# company, not a department: the client hears it from Guardian Life.
-CONFIRM_TEL, CONFIRM_HREF = '(868) 226-6944', 'tel:+18682266944'
-CONFIRM = 'To confirm this notice, call Guardian Life on [[tel]].'
+# At noon the same day the number became 226-6944, 226-MYGG, which is Guardian Direct, and the notice "we have accepted
+# the resignation effective 21st Sept". Then the branch's own lines went in front of it ("the branches number is
+# 226-6461, 226-6464, 226-6465 … add these to the contact numbers for verification … and then the last number is 226
+# MyGG"): the branch first, Guardian Direct last, every number a link a phone dials in one tap.
+BRANCH_TELS = ['226-6461', '226-6464', '226-6465']
+DIRECT_TEL = ('226-MYGG', '226-6944')
+CONFIRM = 'To confirm this notice, call our branch on [[branch]], or Guardian Direct on [[direct]].'
 # What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
 # and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
 WHAT_NOW_HEAD = 'What this means for you'
 WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check before you sign or pay '
-            'anything: call Guardian Life on [[tel]], or reply to this e-mail. A person reads it the same day.',
+            'anything: call one of the numbers above, or reply to this e-mail. A person reads it the same day.',
             'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
             'anyone outside Guardian Life or our branch.']
 WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
@@ -656,7 +658,7 @@ REMIND = ('We wrote to you on {{sent_on}}.',
 # office contact"). The clients written to on 25 September read "moved on"; the reminder is where they first read the
 # resignation, so it says so above the greeting. T and T1 keep the one above: that book's agent did not resign.
 REMIND_R = ('We wrote to you on {{sent_on}}.',
-            "This is an important update on your agent's resignation, with a Guardian Life number to confirm it. Your "
+            "This is an important update on your agent's resignation, with numbers you can call to confirm it. Your "
             'letter is below again: a minute, one tap each. If you have answered already, thank you.')
 
 
@@ -686,10 +688,15 @@ def remind_block(cfg):
 
 
 def tel(text, plain=False):
-    """The Sales Admin number where [[tel]] stands: a link a phone dials with one tap."""
-    a = (f'<a href="{CONFIRM_HREF}"><b>{CONFIRM_TEL}</b></a>' if plain else
-         f'<a href="{CONFIRM_HREF}" style="color:{INK};font-weight:800;text-decoration:none;white-space:nowrap">{CONFIRM_TEL}</a>')
-    return text.replace('[[tel]]', a)
+    """The branch's lines where [[branch]] stands and Guardian Direct where [[direct]] does: links a phone dials in one tap."""
+    def link(label, digits):
+        href = 'tel:+1868' + digits.replace('-', '')
+        return (f'<a href="{href}"><b>{label}</b></a>' if plain else
+                f'<a href="{href}" style="color:{INK};font-weight:800;text-decoration:none;white-space:nowrap">{label}</a>')
+    b = [link(('(868) ' if i == 0 else '') + n, n) for i, n in enumerate(BRANCH_TELS)]
+    branch = ', '.join(b[:-1]) + ' or ' + b[-1]
+    direct = link(f'(868) {DIRECT_TEL[0]} ({DIRECT_TEL[1]})', DIRECT_TEL[1])
+    return text.replace('[[branch]]', branch).replace('[[direct]]', direct)
 
 
 def confirm_row():
