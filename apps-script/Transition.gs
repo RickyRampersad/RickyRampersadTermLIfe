@@ -1691,6 +1691,11 @@ function tSendBatch_(force) {
     if (!firstAt[mail] || tSentMs_(r) < tSentMs_(firstAt[mail])) firstAt[mail] = r;   // the inbox's first letter by date, however the tab is sorted
     (sentTo[mail] = sentTo[mail] || []).push(r);
     if (sa instanceof Date && !isNaN(sa.getTime()) && Utilities.formatDate(sa, tz, 'yyyy-MM-dd') === today) busy[mail] = r._row;
+    /* a reminder or a letter sent again in an earlier run today counts too: Sent at keeps the first letter's date, so
+       without this two family members at one inbox had their reminders on one day, half an hour apart (the rehearsal
+       of 30 September 2026, on five inboxes of Tricia Baksh's book) */
+    var st = tText_(r.Status);
+    if (/^(reminded|sent again) \d{4}-\d{2}-\d{2}$/i.test(st) && st.slice(-10) === today) busy[mail] = r._row;
   });
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude)) return false;
@@ -1752,7 +1757,11 @@ function tSendBatch_(force) {
  *  what the FCA's letter trial found lifted response most; see CLAUDE.md. 29
  *  September: the manager chose five days.) Never to an inbox that had a
  *  letter today (`busy`, the batch's own map), so a family sharing one never
- *  gets two in a day; a bounced row is held in Exclude and never reminded. */
+ *  gets two in a day; a bounced row is held in Exclude and never reminded.
+ *  Nor is a client who responded any other way since their letter went
+ *  (tRespondedAt_: Client Support spoke to them, or a review came in from
+ *  their address), and a person can stop one by hand by typing anything
+ *  but "sent" in Status. */
 function tRemind_(t, letters, cap, deadline, busy) {
   var days = Number(TRANSITION.REMIND_DAYS) || 0;
   cap = Math.min(Number(cap) || 0, TRANSITION.REMIND_MAX_PER_RUN);
@@ -1760,17 +1769,19 @@ function tRemind_(t, letters, cap, deadline, busy) {
   if (deadline && Date.now() > deadline) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
   var tz = tTz_(), now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
-  var answered = tAnswered_();
+  var answered = tAnswered_(), since = tRespondedAt_();
   busy = busy || {};
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
     if (tText_(r.Status).toLowerCase() !== 'sent') return false;             // reminded, sent again, bounced, error, check: not again
     var at = r['Sent at'];
     if (!(at instanceof Date) || isNaN(at.getTime()) || at.getTime() > cutoff.getTime()) return false;
-    var tok = tText_(r.Token);
+    var tok = tText_(r.Token), mail = tText_(r.Email).toLowerCase();
     if (!tok || answered[tok]) return false;
+    /* responded another way since the letter went: Client Support spoke to them, or a review came in from their address */
+    var spoke = since.spoke[tok], rev = since.review[mail];
+    if ((spoke && spoke.getTime() > at.getTime()) || (rev && rev.getTime() > at.getTime())) return false;
     if (tHold_(r, letters)) return false;
-    var mail = tText_(r.Email).toLowerCase();
     if (busy[mail] && busy[mail] !== r._row) return false;                   // that inbox has had its letter today
     busy[mail] = r._row;
     return true;
@@ -1863,6 +1874,31 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
     tPace_(t0);
   });
   out.waiting = Math.max(0, due.length - cap) + left;
+  return out;
+}
+
+/** The other ways a client responds, for the reminder alone. 30 September 2026, the manager, keeping the five-day
+ *  reminder: "if they have answered or responded please ensure we dont resent". Returns the last time Client Support
+ *  spoke to a client (a contact row, tContactRow_), by token, and the last review filed from an e-mail address, by
+ *  address, for a review filled in without the letter's link. A client who spoke to us, or wrote a review from their
+ *  address, after their letter went has responded, and gets no reminder. A call before the letter (an e-mail taken
+ *  for a client the letter had not reached) is not a response to it: that client's first letter goes, and its
+ *  reminder after it. Never throws: a tab that cannot be read records nobody. */
+function tRespondedAt_() {
+  var out = { spoke: {}, review: {} };
+  var later = function (m, k, d) { if (k && d instanceof Date && !isNaN(d.getTime()) && (!m[k] || d.getTime() > m[k].getTime())) m[k] = d; };
+  try {
+    tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+      if (tContactRow_(v[5])) later(out.spoke, String(v[1] || '').trim(), v[0]);
+    });
+  } catch (e) {}
+  try {
+    var q = tSheetRows_(SVC.IND_SHEET), qi = {};
+    q.head.forEach(function (h, i) { qi[h] = i; });
+    if (qi.Email !== undefined && qi.Timestamp !== undefined) q.rows.forEach(function (v) {
+      later(out.review, String(v[qi.Email] || '').trim().toLowerCase(), v[qi.Timestamp]);
+    });
+  } catch (e) {}
   return out;
 }
 

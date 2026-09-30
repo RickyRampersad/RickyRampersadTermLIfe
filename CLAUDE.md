@@ -957,6 +957,24 @@ voice under the new timing and the caption gives it away.
   1,477 clients e-mailed on 25 September were due it (unanswered, not held,
   not bounced), all waiting on the hold. `svc/remind-harness.js` in the
   session scratchpad runs the pass in Node on a mocked tab.
+  **No reminder to anyone who responded** (30 September 2026, keeping the
+  reminder: "if they have answered or responded please ensure we dont
+  resent"). Besides an answer, a reply or a review on the token, the pass
+  now skips two more kinds of client (`tRespondedAt_`). One is a client
+  Client Support spoke to after their letter went, which is any contact
+  row dated after Sent at. The other is a client who sent a review from
+  their own address after it without the letter's link. A call before the
+  letter is not a response to it: when an e-mail was taken for a client
+  the letter had not reached, their first letter goes, and its reminder
+  after it. On the rehearsal of 30 September this took 121 people who had
+  confirmed their address on a call off the reminder. A person can stop
+  anyone else's reminder by typing anything but "sent" in their Status.
+  **One inbox, one e-mail a day, across runs too.** Sent at keeps the
+  first letter's date, so a reminder sent in the 9:00 run did not make its
+  inbox busy for the 9:30 run. In the rehearsal, five families in Tricia
+  Baksh's book sharing an inbox got both reminders on one day. The batch
+  now also counts a Status of `reminded <today>` or `sent again <today>`
+  (`health/followup-harness.js`).
   **"Send again" is a tick box on Transition Send** (asked for the same
   day: "a way to run again … to send off a client a survey"). `tAgainCol_`
   adds the column the first time the five-minute run finds none; a person
@@ -1277,8 +1295,9 @@ voice under the new timing and the caption gives it away.
   scratchpad) is one formula in the first empty header cell of Transition
   Send. It spills two columns, Answered and Next e-mail, and says for every
   row what the batch will do: "got it 25 Sep: never again, except one
-  reminder if no answer", "next batch: first letter", "held for a check",
-  and so on. It reads the same rows the script reads.
+  reminder if no answer", "nothing more: spoke to us after the letter, no
+  reminder", "next batch: first letter", "held for a check", and so on. It
+  reads the same rows the script reads.
 - **Automatic client e-mail is on hold until the manager's go** (28
   September 2026: "hold any emails going to clients until I say so").
   `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
