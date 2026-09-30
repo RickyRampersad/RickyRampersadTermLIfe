@@ -990,8 +990,10 @@ voice under the new timing and the caption gives it away.
   "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
   untouched (it is the first send's date and what keeps the row out of the
   batch), never to an inbox that had a letter that day, at most
-  `REMIND_MAX_PER_RUN` (30) a run, which is about 480 a day at a run every
-  thirty minutes from 9 to 5, in its own try/catch so
+  `REMIND_MAX_PER_RUN` a run (120 since 30 September 2026, when the manager
+  wanted the whole follow-up out in one day, "another mass email in the
+  next 2 hours"; 30 before, about 480 a day at a run every thirty minutes
+  from 9 to 5, which would have spread it over four days), in its own try/catch so
   it can never stop the day's letters; `REMIND_DAYS` 0 turns it off. The
   FCA's redress-letter trial (Adams and Hunt 2013) found a reminder at
   three to six weeks lifted response more than any change of words, which

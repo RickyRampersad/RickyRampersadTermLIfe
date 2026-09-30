@@ -83,7 +83,7 @@ var TRANSITION = {
   INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
   REMIND_DAYS: 5,            // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off.
                              // 21 until 29 September 2026, when the manager asked for the follow-up "in about five days from the date it was sent"
-  REMIND_MAX_PER_RUN: 30,    // the most reminders one run adds, after the day's new letters and inside the same BATCH
+  REMIND_MAX_PER_RUN: 120,   // the most reminders one run adds, after the day's new letters and inside the same BATCH
   /* who signs the receipts — the team, never an individual — used only when the
      site cannot be fetched: receipt.json beside the letters is the word */
   CARE: { name: 'Client Support Team', us: 'our Client Support team', Us: 'Our Client Support team',
