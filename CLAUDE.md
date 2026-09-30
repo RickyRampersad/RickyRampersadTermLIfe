@@ -1250,6 +1250,35 @@ voice under the new timing and the caption gives it away.
   cannot use (no e-mail, no first name, no letter for its segment) is moved
   to Exclude with the reason. The page and the digest show a red banner while
   the send is off, and the last runs with their reasons.
+- **A sent row never sends twice, even when the tab is sorted mid-run.**
+  The batch picks only rows with an empty Sent at, and stamps Sent at the
+  moment each letter goes. On 30 September 2026 the live tab turned out to
+  have been sorted by Sent at, which moved every row ("i need to ensure
+  that the email will continue in the batches not send again to the ones
+  received"). A run reads the tab once and writes back by row number, so a
+  sort during a batch would have put the stamps on other clients. The
+  client just sent would read unsent and get the letter again next run: 6
+  of 30 in `health/sort-safety-harness.js`, run on the previous script.
+  `tAt_` now checks each row's Token before every write to the tab. When
+  the row has moved, it reads the Token column again and finds every row
+  of the run by its token. That covers the stamp, the hold, the bounce,
+  the phone-filed e-mail, the release and the "Send again" un-tick. A row
+  with no token is written only where it still is, or the run stops and
+  the next one starts fresh. Sorting is still better done in a filter view
+  (Data → Filter views), which moves nothing. **Every check a row faces
+  goes by address and name, never by row number.** The old `check: same
+  e-mail as row N` notes all pointed at the wrong clients after the sort,
+  so `tSharedInboxRows_` finds the inbox's letters by the address. The
+  sender takes an inbox's first letter by its date, not its place in the
+  tab. A hold names a client number (`tWhoRow_`) instead of a row. The
+  rehearsal on the sorted tab (`ops/go-sim2.js` in the scratchpad) found
+  0/92/0 before and 42/24/26 after, the same as on the unsorted copy.
+  **The "Next e-mail" column** (`ops/next-email-formula.txt` in the
+  scratchpad) is one formula in the first empty header cell of Transition
+  Send. It spills two columns, Answered and Next e-mail, and says for every
+  row what the batch will do: "got it 25 Sep: never again, except one
+  reminder if no answer", "next batch: first letter", "held for a check",
+  and so on. It reads the same rows the script reads.
 - **Automatic client e-mail is on hold until the manager's go** (28
   September 2026: "hold any emails going to clients until I say so").
   `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
@@ -1506,6 +1535,24 @@ voice under the new timing and the caption gives it away.
   questions ticked on a call (`rate_*`, `contact_*`, `pay_*` …) are
   answers like any other. `health/contact-rows-harness.js` and
   `svc/assign-reached-test.js` in the scratchpad cover it.
+  **An agent named from the board is the branch's record too**
+  (`tAssignRow_`, 30 September 2026). Naming an agent on a client who has
+  not answered writes an `assign` row with Page `/assign`, so the name has
+  a row to sit on. Every reader took that row for an answer. The receipts
+  run, which the hold on client e-mail does not stop, would have e-mailed
+  "Thank you, <first name>. We have received your response." to a client
+  who never answered. The chase would have sent them "still on it", their reminder
+  would have stopped, and the board would have counted them as answered.
+  Naming them again would have sent the introduction that thanks a client
+  for answering. No such row was on the sheet when it was caught.
+  `tOursRow_` (a contact row or an assign row) is now what `tAnswered_`,
+  `tSummary_` and `tInsights_` pass over, and the receipts run and the
+  chase skip `/assign` rows. The board shows such a client as **named, no
+  answer yet** (state `named`, with its own tile and filter). A client
+  reached by phone or named without answering never gets the
+  introduction (`tHasAnswered_`). `health/assign-rows-harness.js` (12 checks,
+  11 of them failing on the previous script) and `svc/assign-named-test.js`
+  cover it.
 - **Households are numbered, and the board shows the family beside each
   card.** Asked for on 29 September 2026 ("group by addresses … assign a
   household number so we can see whom from the household responded"). The
@@ -1542,7 +1589,7 @@ voice under the new timing and the caption gives it away.
   initial never does (`tSameFamily_`). They get it on a later day, because
   an inbox never gets two letters on one day. A different surname may be
   an office's or a relative's inbox. That client is held as `check: shares
-  an inbox with <name> (row N), a different surname: confirm the address`
+  an inbox with <name> (client N), a different surname: confirm the address`
   for Client Support. An address a person confirmed on a call (a Reason of
   "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
   address onto such a row like any other. **One person on two client
@@ -1551,7 +1598,7 @@ voice under the new timing and the caption gives it away.
   745454), and the family rule would have sent each the same letter a
   second time. `tSamePerson_` (the same first name and a surname in
   common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
-  "Ricky") holds such a row as `check: same name and inbox as <name> (row
+  "Ricky") holds such a row as `check: same name and inbox as <name> (client
   N): likely one person on two client numbers, one letter is enough`,
   compared against every letter the inbox has had, not only the first,
   and a call that confirmed the address does not lift it. In 7 of the 26

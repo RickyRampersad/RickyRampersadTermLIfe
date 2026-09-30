@@ -532,28 +532,62 @@ function tSendRow_(row, letters) {
   return 'sent';
 }
 
-/** Token for a row that came in without one, written back before the send. */
+/** Token for a row that came in without one, written back before the send, on the row where it still is (tAt_). */
 function tEnsureToken_(t, row) {
   if (tText_(row.Token)) return;
+  var n = tAt_(t, row);
   var tok = Utilities.getUuid().replace(/-/g, '').slice(0, 12);
-  t.sh.getRange(row._row, t.col.Token).setValue(tok);
+  t.sh.getRange(n, t.col.Token).setValue(tok);
   row.Token = tok;
+}
+
+/** The sheet row a send row is on now. A run reads the tab once and writes back by row number, and a person may
+ *  sort the tab in between: on 30 September 2026 it was found sorted by Sent at, every row moved. A Sent at written
+ *  by the old number would land on another client: the client just sent would still read unsent and be sent the
+ *  letter again, and someone else would read sent without ever having had it. So the row's own Token is checked
+ *  before every write, and when it has moved, the Token column is read once more and every row of the run found
+ *  again by its token. A row with no token yet (tEnsureToken_ gives it one before its letter) is written only where
+ *  it was read, while its token cell is still empty and its e-mail the same. Throws when the row cannot be found,
+ *  so nothing is ever written to another client; the run stops and the next one reads the tab afresh. */
+function tAt_(t, row) {
+  var tok = tText_(row.Token), c = t.col.Token;
+  if (!c) return row._row;
+  if (!tok) {
+    var tokHere = String(t.sh.getRange(row._row, c).getValue() || '').trim();
+    var mailHere = t.col.Email ? String(t.sh.getRange(row._row, t.col.Email).getValue() || '').trim().toLowerCase() : '';
+    if (!tokHere && mailHere === tText_(row.Email).toLowerCase()) return row._row;
+    throw new Error(TRANSITION.SHEET + ' moved under a row with no token (' + (tText_(row.Client) || 'a client') + '): nothing written for it this run.');
+  }
+  if (String(t.sh.getRange(row._row, c).getValue() || '').trim() === tok) return row._row;
+  var last = t.sh.getLastRow(), at = {};
+  (last >= 2 ? t.sh.getRange(2, c, last - 1, 1).getValues() : []).forEach(function (v, i) {
+    var k = String(v[0] || '').trim();
+    if (k && !at[k]) at[k] = i + 2;
+  });
+  t.rows.forEach(function (r) { var k = tText_(r.Token); if (k && at[k]) r._row = at[k]; });
+  if (!at[tok]) throw new Error('The row for token ' + tok + ' is no longer on ' + TRANSITION.SHEET + ': nothing written for it.');
+  row._row = at[tok];
+  log_('transition', 'rows-moved', TRANSITION.SHEET + ' was sorted or had rows added while a run was going: rows found again by token');
+  return row._row;
 }
 
 /* The columns are checked by tRead_ before any of this runs, so a write that
    fails here throws and stops the run — it never skips quietly and lets the
-   same rows send again next hour. */
+   same rows send again next hour. The row is found by its token first (tAt_),
+   so a tab sorted in the middle of a run is marked on the right clients. */
 function tMark_(t, row, status, sent) {
-  if (sent) t.sh.getRange(row._row, t.col['Sent at']).setValue(new Date());
-  t.sh.getRange(row._row, t.col.Status).setValue(status);
+  var n = tAt_(t, row);
+  if (sent) t.sh.getRange(n, t.col['Sent at']).setValue(new Date());
+  t.sh.getRange(n, t.col.Status).setValue(status);
+  return n;
 }
 
 /** A row the sender cannot use leaves the queue: the reason goes into Exclude,
  *  where tSummary_ counts it under 'held back', and into Status. Clearing the
  *  Exclude cell after the fix puts the row back. */
 function tHoldRow_(t, row, why) {
-  tMark_(t, row, why, false);
-  t.sh.getRange(row._row, t.col.Exclude).setValue(why);
+  var n = tMark_(t, row, why, false);
+  t.sh.getRange(n, t.col.Exclude).setValue(why);
   row.Exclude = why;
 }
 
@@ -580,10 +614,10 @@ function tSendRows_(t, rows, letters, deadline) {
         skipped++; tHoldRow_(t, row, 'no e-mail: ' + why.slice(0, 100));
       } else {
         failed++;
-        tMark_(t, row, 'error: ' + why.slice(0, 120), false);
+        var n = tMark_(t, row, 'error: ' + why.slice(0, 120), false);
         /* try again tomorrow, not every hour */
         var tmr = new Date(); tmr.setDate(tmr.getDate() + 1);
-        t.sh.getRange(row._row, t.col['Send on']).setValue(Utilities.formatDate(tmr, tTz_(), 'yyyy-MM-dd'));
+        t.sh.getRange(n, t.col['Send on']).setValue(Utilities.formatDate(tmr, tTz_(), 'yyyy-MM-dd'));
       }
     }
     if (tried) tPace_(t0);
@@ -753,8 +787,9 @@ function tBounceMark_(t, text, when) {
     if (!mail || !found[mail] || tYes_(r.Test)) return;
     if (/^bounced/i.test(ex) || /^bounced/i.test(tText_(r.Status))) return;                     // once
     if (ex && !/^check: (same e-mail as row|shares an inbox)/i.test(ex)) return;                  // held for something else: left as it is
-    t.sh.getRange(r._row, t.col.Exclude).setValue(v);
-    t.sh.getRange(r._row, t.col.Status).setValue('bounced');
+    var n = tAt_(t, r);
+    t.sh.getRange(n, t.col.Exclude).setValue(v);
+    t.sh.getRange(n, t.col.Status).setValue('bounced');
     r.Exclude = v; r.Status = 'bounced'; marked++;
   });
   return marked;
@@ -979,44 +1014,59 @@ function tSamePerson_(a, b) {
   };
   return na.slice(1).some(function (x) { return nb.slice(1).some(function (y) { return near(x, y); }); });
 }
+/** When a row's letter went, as a number to sort by; a row not sent, or sent on a day typed as text, sorts last. */
+function tSentMs_(r) { var d = r['Sent at']; return d instanceof Date && !isNaN(d.getTime()) ? d.getTime() : Infinity; }
+/** Who another send row is, for a hold's text: the name and the client number. Never the row number: the tab gets
+ *  sorted (30 September 2026, by Sent at), and "row 47" then names someone else. */
+function tWhoRow_(f) {
+  var no = tText_(f['Client number']);
+  return (tText_(f.Client) || tText_(f['First name']) || 'another client') + (no ? ' (client ' + no + ')' : '');
+}
 /** What a row sharing an inbox under a different surname carries in Exclude until Client Support confirms the address. */
 function tInboxCheck_(f) {
-  return ('check: shares an inbox with ' + (tText_(f.Client) || tText_(f['First name']) || 'another client') + ' (row ' + f._row + '), a different surname: confirm the address').slice(0, 160);
+  return ('check: shares an inbox with ' + tWhoRow_(f) + ', a different surname: confirm the address').slice(0, 160);
 }
 /** What a row carries when the inbox's letter already went to the same person under another client number. */
 function tSameCheck_(f) {
-  return ('check: same name and inbox as ' + (tText_(f.Client) || tText_(f['First name']) || 'another client') + ' (row ' + f._row + '): likely one person on two client numbers, one letter is enough').slice(0, 160);
+  return ('check: same name and inbox as ' + tWhoRow_(f) + ': likely one person on two client numbers, one letter is enough').slice(0, 160);
 }
 /** The families the old one-inbox rule held for good ("check: same e-mail as row N": 95 clients on 28 September),
  *  sorted once under the new rule: a family member's Exclude is cleared, so their own letter goes after the go, one
  *  a day per inbox; a different surname is held for Client Support to confirm the address. Runs first in the
  *  five-minute receipts run, once: the script property it sets stops it after the pass, and no row can be held the
- *  old way any more. */
+ *  old way any more. The "row N" in the old note is where the first letter's row stood when the note was written;
+ *  the tab has been sorted since (30 September 2026: all 95 pointed at the wrong client), so the letters the inbox
+ *  has had are found by the address itself, as the sender finds them (tSendBatch_). */
 var T_INBOX_SORTED = 'shared_inbox_sorted';
 function tSharedInboxRows_() {
   var out = { family: 0, confirm: 0, same: 0 };
   var props = PropertiesService.getScriptProperties();
   if (props.getProperty(T_INBOX_SORTED) === 'yes') return out;
-  var t = tRead_(), byRow = {};
-  t.rows.forEach(function (r) { byRow[r._row] = r; });
+  var t = tRead_(), sentTo = {};
   t.rows.forEach(function (r) {
-    var m = /^check: same e-mail as row (\d+)/i.exec(tText_(r.Exclude));
-    if (!m) return;
-    var f = byRow[Number(m[1])];
-    if (f && tSamePerson_(f, r)) {
-      var same = tSameCheck_(f);
-      t.sh.getRange(r._row, t.col.Exclude).setValue(same);
-      t.sh.getRange(r._row, t.col.Status).setValue(same);
+    var mail = tText_(r.Email).toLowerCase();
+    if (mail && tText_(r['Sent at'])) (sentTo[mail] = sentTo[mail] || []).push(r);
+  });
+  Object.keys(sentTo).forEach(function (k) { sentTo[k].sort(function (a, b) { return tSentMs_(a) - tSentMs_(b); }); });
+  t.rows.forEach(function (r) {
+    if (!/^check: same e-mail as row \d+/i.test(tText_(r.Exclude))) return;
+    var had = (sentTo[tText_(r.Email).toLowerCase()] || []).filter(function (s) { return s !== r; });
+    var twin = had.filter(function (s) { return tSamePerson_(s, r); })[0], f = had[0];
+    var n = tAt_(t, r);
+    if (twin) {
+      var same = tSameCheck_(twin);
+      t.sh.getRange(n, t.col.Exclude).setValue(same);
+      t.sh.getRange(n, t.col.Status).setValue(same);
       out.same++;
     } else if (f && tSameFamily_(f, r)) {
-      t.sh.getRange(r._row, t.col.Exclude).setValue('');
-      t.sh.getRange(r._row, t.col.Status).setValue('');
-      if (t.col.Reason) t.sh.getRange(r._row, t.col.Reason).setValue('shares an inbox with ' + (tText_(f.Client) || 'family') + ' (row ' + f._row + '), family: their own letter after the go, one a day per inbox');
+      t.sh.getRange(n, t.col.Exclude).setValue('');
+      t.sh.getRange(n, t.col.Status).setValue('');
+      if (t.col.Reason) t.sh.getRange(n, t.col.Reason).setValue('shares an inbox with ' + tWhoRow_(f) + ', family: their own letter after the go, one a day per inbox');
       out.family++;
     } else {
       var why = f ? tInboxCheck_(f) : 'check: shares an inbox, a different surname: confirm the address';
-      t.sh.getRange(r._row, t.col.Exclude).setValue(why);
-      t.sh.getRange(r._row, t.col.Status).setValue(why);
+      t.sh.getRange(n, t.col.Exclude).setValue(why);
+      t.sh.getRange(n, t.col.Status).setValue(why);
       out.confirm++;
     }
   });
@@ -1105,10 +1155,11 @@ function tFilePhoneEmails_() {
     var took = x.when instanceof Date ? ' on ' + Utilities.formatDate(x.when, tz, 'd MMM') : '';
     var was = sent ? '; the letter of ' + (sentAt instanceof Date ? Utilities.formatDate(sentAt, tz, 'd MMM') : tText_(sentAt)) +
       ' went to ' + (old || 'no address') + ' and goes again on release' : '';
-    t.sh.getRange(r._row, t.col.Email).setValue(x.email);
-    t.sh.getRange(r._row, t.col.Exclude).setValue(T_PHONE_HOLD);
-    if (t.col.Reason) t.sh.getRange(r._row, t.col.Reason).setValue('e-mail taken by ' + (x.by || 'Client Support') + took + was);
-    if (sent) { t.sh.getRange(r._row, t.col['Sent at']).setValue(''); t.sh.getRange(r._row, t.col.Status).setValue(''); r['Sent at'] = ''; }
+    var n = tAt_(t, r);      // the client's own row, found by token: clearing Sent at on another client's row would send them their letter again
+    t.sh.getRange(n, t.col.Email).setValue(x.email);
+    t.sh.getRange(n, t.col.Exclude).setValue(T_PHONE_HOLD);
+    if (t.col.Reason) t.sh.getRange(n, t.col.Reason).setValue('e-mail taken by ' + (x.by || 'Client Support') + took + was);
+    if (sent) { t.sh.getRange(n, t.col['Sent at']).setValue(''); t.sh.getRange(n, t.col.Status).setValue(''); r['Sent at'] = ''; }
     r.Email = x.email; r.Exclude = T_PHONE_HOLD;
     mark(x, ''); out.filed++;
   });
@@ -1139,7 +1190,7 @@ function tEmailProblem_(e) {
 function transitionReleasePhoneEmails() {
   var t = tRead_(), n = 0;
   t.rows.forEach(function (r) {
-    if (tText_(r.Exclude) === T_PHONE_HOLD) { t.sh.getRange(r._row, t.col.Exclude).setValue(''); n++; }
+    if (tText_(r.Exclude) === T_PHONE_HOLD) { t.sh.getRange(tAt_(t, r), t.col.Exclude).setValue(''); n++; }
   });
   log_('transition', 'phone-emails-released', n + ' released');
   return tSay_(n + ' e-mail' + (n === 1 ? '' : 's') + ' taken by phone released: the next batch in sending hours sends those letters.');
@@ -1158,6 +1209,17 @@ function tContactRow_(page) {
   page = String(page || '');
   return page.indexOf('/your-policy/phone') === 0 && T_CONTACT_Q.test(tQOf_(page));
 }
+/* An agent named from the board on a client who has not answered: transitionAssign_ writes an 'assign' row (Page
+   /assign) so the name has a row to sit on. It is the branch's own note, never the client's answer. Until 30
+   September 2026 every reader took it for one: the receipts run would have thanked the client for a response they
+   never gave (and receipts are not held with client e-mail), the chase would have sent them the "still on it" note
+   for a request they never made, their five-day reminder would have stopped, the board would have counted them as
+   answered, and naming them again would have sent the introduction that thanks them for answering. None had been
+   written on the sheet when it was caught. */
+function tAssignRow_(page) { return String(page || '').indexOf('/assign') === 0; }
+/** A row on Client Responses that is the branch's record, not the client's answer: details taken on a call, or an
+ *  agent named from the board. */
+function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page); }
 
 /** One receipt per client per sitting: every unreceipted tap of a token this
  *  campaign recognises, once the newest is RECEIPT_WAIT_MIN old (a client
@@ -1178,6 +1240,7 @@ function tReceipts_() {
     if (!received) continue;
     var token = String(v[1] || '').trim();
     if (!tokens[token]) continue;                                    // not this campaign's token: never touched
+    if (tAssignRow_(v[5])) continue;                                 // an agent named from the board: the branch's note, nothing the client said
     var note = String(v[10] || '');
     if (note.indexOf('[receipt]') >= 0) continue;                    // thanked already
     if (now - received > 14 * 86400000) continue;                    // long before the receipts ran: left alone
@@ -1512,6 +1575,7 @@ function tChase_() {
     var isOpen = String(v[7] || '').trim().toLowerCase() === 'open';
     if (!tokens[token]) { if (isOpen) out.skipped++; continue; }     // not this campaign's token: never chased
     if (tYes_(tokens[token].Test)) continue;                           // a colleague standing in as a client: never chased
+    if (tAssignRow_(v[5])) continue;                                   // an agent named from the board: the client asked nothing, so nothing to chase
     var g = groups[token];
     if (!g) { g = groups[token] = { row: tokens[token], all: [], open: [], did2: false }; order.push(token); }
     var note = String(v[10] || ''), page = String(v[5] || '');
@@ -1624,7 +1688,7 @@ function tSendBatch_(force) {
   t.rows.forEach(function (r) {
     var mail = tText_(r.Email).toLowerCase(), sa = r['Sent at'];
     if (!mail || !tText_(sa)) return;
-    if (!firstAt[mail]) firstAt[mail] = r;
+    if (!firstAt[mail] || tSentMs_(r) < tSentMs_(firstAt[mail])) firstAt[mail] = r;   // the inbox's first letter by date, however the tab is sorted
     (sentTo[mail] = sentTo[mail] || []).push(r);
     if (sa instanceof Date && !isNaN(sa.getTime()) && Utilities.formatDate(sa, tz, 'yyyy-MM-dd') === today) busy[mail] = r._row;
   });
@@ -1789,7 +1853,7 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
         out.sent++;
         tMark_(t, r, before ? 'sent again ' + stamp : 'sent', !before);   // a first letter is an ordinary send, reminded like any other
         var untick = r[T_AGAIN] === true ? false : '';                   // a tick box stays a tick box
-        t.sh.getRange(r._row, c).setValue(untick);
+        t.sh.getRange(tAt_(t, r), c).setValue(untick);
         r[T_AGAIN] = untick;
       } else { out.skipped++; tMark_(t, r, 'send again held: ' + res, false); }
     } catch (err) {
@@ -1805,14 +1869,15 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
 /** Every token that has answered: a row on Client Responses, or a review whose
  *  Link ref carries it. Read once per run. Never throws: a tab that cannot be
  *  read counts nobody as answered, which reminds rather than forgets. An e-mail
- *  or a number taken on a call is not an answer (tContactRow_): the client it
- *  reached by phone gets the letter, and the follow-up after it, like anyone. */
+ *  or a number taken on a call is not an answer, and nor is an agent named from
+ *  the board (tOursRow_): that client gets the letter, and the follow-up after
+ *  it, like anyone. */
 function tAnswered_() {
   var map = {};
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
       var tok = String(v[1] || '').trim();
-      if (tok && !tContactRow_(v[5])) map[tok] = 1;
+      if (tok && !tOursRow_(v[5])) map[tok] = 1;
     });
   } catch (e) {}
   try {
@@ -1995,7 +2060,7 @@ function tSummary_() {
     var received = v[0] instanceof Date ? v[0] : null;
     var tok = String(v[1] || '').trim(), r = byTok[tok];
     if (/^preview$/i.test(tok)) return;                         // the manager tapping the preview letters
-    if (tContactRow_(v[5])) return;                             // an e-mail or a number taken on a call: not a tap
+    if (tOursRow_(v[5])) return;                                // an e-mail or a number taken on a call, an agent named from the board: not a tap
     var type = String(v[3] || '').trim();
     if (!type) return;
     var s = String(v[2] || '').trim().toUpperCase();
@@ -2197,6 +2262,7 @@ function tInsights_(windowDays) {
     if (!o) return;                                                       // only this campaign's clients
     var type = String(v[3] || '').trim();
     if (!type) return;
+    if (tAssignRow_(v[5])) return;                                        // an agent named from the board: the branch's note, not an answer
     if (tContactRow_(v[5])) { if (o.channel === 'call') o.reached = true; return; }   // taken on a call: reached, not an answer
     var received = v[0] instanceof Date ? v[0] : null;
     var m = /[?&]q=([a-z_]+)/.exec(String(v[5] || ''));
@@ -2689,6 +2755,9 @@ function transitionBoard_(p) {
  *  client written to as a compact row, so a caller can be named on someone
  *  who has not answered yet. An agent gets the clients named to them and
  *  nothing else. Staff Test rows are never on the board. */
+/** Whether a client on the board has answered the letter. Never a silent row, a family member off the board, a client
+ *  reached by phone for their details only, or one named from the board with no answer of their own. */
+function tHasAnswered_(c) { return !!c && ['open', 'assigned', 'done', 'noted'].indexOf(c.state) >= 0; }
 function tBoard_(w, all, lite) {
   var tz = tTz_(), now = new Date();
   var t = tRead_();
@@ -2708,7 +2777,7 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
-      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, open: 0, actionable: 0, done: 0, noted: 0,
+      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contact: 0, open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
     c.tellWhy = tNoteBlock_(r);
@@ -2728,7 +2797,8 @@ function tBoard_(w, all, lite) {
     var status = String(v[7] || '').trim(), assigned = String(v[8] || '').trim(), on = v[9] instanceof Date ? v[9] : null, note = String(v[10] || '');
     var at = fmt(rec);
     c.rows.push({ n: i + 2, type: type });
-    if (!tContactRow_(v[5])) c.own++;                                 // the client's own answer, not details taken on a call
+    if (tContactRow_(v[5])) c.contact++;                              // details taken on a call
+    else if (!tAssignRow_(v[5])) c.own++;                             // the client's own answer, not an agent named from the board
     if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
     if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
     if (code && codeQ[code]) {
@@ -2803,20 +2873,22 @@ function tBoard_(w, all, lite) {
       }
       return;
     }
-    /* reached by phone: Client Support took an e-mail or a number, and the client has not answered the letter yet. The card
-       stays, so an agent can be named on them, but it is never counted as an answer (tContactRow_) */
-    c.state = !c.own && !c.review ? 'reached'
+    /* reached by phone: Client Support took an e-mail or a number, and the client has not answered the letter yet. Named:
+       an agent was named from the board on a client who has not answered (tAssignRow_). Either card stays, so an agent can
+       be named or the outcome marked, but neither is ever counted as an answer, and neither is sent the introduction that
+       thanks a client for answering */
+    c.state = !c.own && !c.review ? (c.contact ? 'reached' : 'named')
       : c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
     c.first = fmt(c.firstAt); c.last = fmt(c.lastAt);
     delete c.firstAt; delete c.lastAt; delete c.assignedAt;
     clients.push(c);
   });
-  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4 };
+  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4, named: 5 };
   clients.sort(function (a, b) {
     return (rank[a.state] - rank[b.state]) || ((b.late ? 1 : 0) - (a.late ? 1 : 0)) || (b.score - a.score) || String(a.first).localeCompare(String(b.first));
   });
-  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, late: 0, silent: sentNoAnswer };
-  clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (c.state !== 'reached') counts.answered++; });
+  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, late: 0, silent: sentNoAnswer };
+  clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   /* the Client Book (tBook_): each card carries the client's policies; the rows without a card (not answered, family)
      carry the totals alone, and the board fetches the rest when one is opened (transitionBook_) */
   var bk = tBook_();
@@ -2846,7 +2918,7 @@ function tBoard_(w, all, lite) {
     return o;
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
-  clients.forEach(function (c) { if (c.state !== 'reached') answeredBy[c.token] = c; });
+  clients.forEach(function (c) { if (tHasAnswered_(c)) answeredBy[c.token] = c; });
   if (w.role === 'agent') {
     var me = w.me.name.toLowerCase();
     clients = clients.filter(function (c) { return c.assigned.toLowerCase() === me; });
@@ -2919,13 +2991,13 @@ function tBoard_(w, all, lite) {
   /* what the records say about the clients who answered, for the branch's insight bar and the filter */
   if (branch && bk.ready) {
     counts.insights = {};
-    clients.forEach(function (c) { if (c.state !== 'reached') (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
+    clients.forEach(function (c) { if (tHasAnswered_(c)) (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
     Object.keys(hhInfo).forEach(function (h) { if (hhInfo[h].gaps.length && households[h].some(function (m) { return m.state === 'answered'; })) counts.insights.hhgap = (counts.insights.hhgap || 0) + 1; });
     /* the book at a glance: over those who answered, and over every client of the books on the send list (not when the
        board is read only to name an agent) */
     var bookNos = [];
     if (!lite) order.forEach(function (tok) { var r = sendBy[tok]; if (!T_NOT_BOOK.test(tText_(r.Exclude))) bookNos.push(tText_(r['Client number'])); });
-    if (!lite) counts.glance = { answered: tGlance_(clients.filter(function (c) { return c.state !== 'reached'; }).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
+    if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
   if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
@@ -3166,12 +3238,13 @@ function transitionAssign_(p) {
     if (done.length && wantIntro) {
       /* one introduction per inbox in one press (a family sharing an e-mail reads it once), and none to an address
          the send row holds back: a bounce, a check, an inbox shared with the one already written to. None to a client
-         who has not answered (a silent row, or the family of one who did): the introduction thanks them for answering,
-         and they have asked for nothing; the agent's brief carries them, and the agent calls. */
+         who has not answered (a silent row, the family of one who did, a client reached by phone for their details only,
+         or one named before without an answer: tHasAnswered_): the introduction thanks them for answering, and they have
+         asked for nothing; the agent's brief carries them, and the agent calls. */
       var inboxes = {};
       done.forEach(function (c) {
         var mail = String(c.email || '').trim().toLowerCase();
-        if (c.state === 'silent' || c.state === 'family') { notAnswered++; return; }
+        if (!tHasAnswered_(c)) { notAnswered++; return; }
         if (c.canTell === false || !mail || inboxes[mail]) return;
         try { if (tIntroMail_(sh, c, agent, stamp)) { introduced++; inboxes[mail] = true; } }
         catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
