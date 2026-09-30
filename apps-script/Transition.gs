@@ -765,6 +765,8 @@ var T_REF = /Ref:\s*([A-Za-z0-9_-]{6,64})\s+([a-z]+)(?:\s+([a-z_]+))?/;
    not the client. */
 var T_OUR_SUBJECT = /^\s*(?:(?:re|fw|fwd)\s*:\s*)+.*(?:important:|reminder:|thank you,|still on it|has resigned|has moved on|no longer with guardian|meet your agent)/i;
 var T_OUR_DOMAINS = /@(?:[\w-]+\.)*(?:myguardiangroup\.com|rickyrampersadbranch\.com|guardianonline\.onmicrosoft\.com)$/i;
+/* The reference at the foot of the follow-up note (tChaseClient_), quoted beneath a reply from any address. */
+var T_YOUR_REF = /Your reference:\s*([A-Za-z0-9_-]{6,64})/;
 var T_MATCH_TAB = 'Replies to match';
 var T_MATCH_HEAD = ['Received', 'From', 'Subject', 'Their words', 'Could be', 'Token (type it to file)', 'Filed', 'Message id'];
 
@@ -981,6 +983,14 @@ function tInbox_() {
     var ref = T_REF.exec(text) || T_REF.exec(subject);
     var tok = ref ? ref[1] : ((byMail[from] && byMail[from] !== 'many') ? byMail[from] : '');
     var how = '';
+    /* a reply to the follow-up note carries the client's reference in the quoted note: exact, from any address. One
+       of our own addresses counts only when it is the one that row was written to (a colleague standing in as a
+       client on a Test row); anyone else of ours on the thread is answering the client, not the client */
+    var yours = !tok && T_YOUR_REF.exec(text);
+    if (yours && tokens[yours[1]]) {
+      var mail = tText_(tokens[yours[1]].Email).toLowerCase();
+      if (!T_OUR_DOMAINS.test(from) || mail === from) { tok = yours[1]; how = ' [matched by reference' + (mail === from ? '' : ', from ' + from) + ']'; }
+    }
     if ((!tok || !tokens[tok]) && T_OUR_SUBJECT.test(subject) && !T_OUR_DOMAINS.test(from)) {
       var g = tGuessClient_(subject, text, from, tokens, shared);
       if (g.token) { tok = g.token; how = ' [matched by name]'; out.byName++; }
@@ -1608,9 +1618,9 @@ function tChaseSummary_(late) {
  *  by the team that answers. Takes the row already looked up; a null row
  *  (should not happen, tChase_ filters it out first) is simply skipped. */
 function tChaseClient_(row, r, needs) {
-  if (!row) return;
+  if (!row) return false;
   var to = tText_(row.Email);
-  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return;
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return false;
   var first = tText_(row['First name']) || 'there';
   var rc = tReceipt_(), care = tCare_(rc);
   var still = (rc && rc.json.still) || { subject: 'Still on it, {{first_name}}.',
@@ -1624,14 +1634,16 @@ function tChaseClient_(row, r, needs) {
      agent is named; a payment, a contract or an application gets its own line. An older receipt.json has
      only still.line. */
   var text = (still.follow && (still.follow[r] || still.follow['default'])) || still.line;
+  /* the client's reference at the foot, so a reply from any address carries it back to their record (T_YOUR_REF) */
   var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:520px">' + tHead_() +
     '<div style="padding:18px 4px 0"><p style="margin:0 0 12px">Dear ' + tEsc_(first) + ',</p>' +
     '<p style="margin:0 0 12px">' + tFill_(text, vals) + '</p>' +
     '<p style="margin:16px 0 0"><b style="display:block">' + tEsc_(care.care_name) + '</b>' + tEsc_(care.care_line) + '</p>' +
+    (vals.Token ? '<p style="margin:14px 0 0;font-size:12px;color:#8a97a8">Your reference: ' + tEsc_(vals.Token) + '</p>' : '') +
     tLegal_(rc) + '</div></div>';
-  if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return; }
-  try { tMsSend_(to, tFill_(still.subject, vals).replace(/<[^>]+>/g, ''), html, tClientOpts_()); }
-  catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); }
+  if (!tMsCreds_()) { log_('transition', 'chase-client-held', T_MS_MISSING); return false; }
+  try { tMsSend_(to, tFill_(still.subject, vals).replace(/<[^>]+>/g, ''), html, tClientOpts_()); return true; }
+  catch (e) { log_('transition', 'chase-client-failed', String(e && e.message ? e.message : e)); return false; }
 }
 
 /** Chases what a client is still waiting on. Run from the digest — not from
@@ -1729,8 +1741,11 @@ function tChase_() {
         var top = g.open.slice().sort(function (a, b) {
           return ((T_PRIORITY[b.q] || T_PRIORITY[b.r] || 0) - (T_PRIORITY[a.q] || T_PRIORITY[a.r] || 0)) || (a.received - b.received);
         })[0];
-        try { tChaseClient_(g.row, top.r, top.needs); out.chase2++; budget--; }
+        /* a note Microsoft refused is said so on the branch's list, never counted as sent */
+        var went = false;
+        try { went = tChaseClient_(g.row, top.r, top.needs); }
         catch (e) { held = 'the note failed (' + String(e && e.message ? e.message : e).slice(0, 60) + ')'; }
+        if (went) { out.chase2++; budget--; } else if (!held) held = 'the note did not send (the log says why)';
       }
       if (held) out.held++;
       g.open.forEach(function (x) { mark(x, '[chase1]'); mark(x, held ? '[chase2] held: ' + held : '[chase2]'); });
@@ -2133,6 +2148,42 @@ function transitionPreviewToMe() {
     ', from this Google account: Microsoft 365 is not set up yet, so no client letter can send.');
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
   return msg;
+}
+
+/** The follow-up note to the Test rows, exactly as the chase sends it to a client (30 September 2026: "can i see a
+ *  test"): the same function, sender, CC and subject. Each Test row gets the version its letter most often brings (J
+ *  the contract line, K and T1 the application line, I the payment line, every other letter the invitation to tell
+ *  us in their own words before an agent is named, on a review link carrying that row's token). Nothing is marked on
+ *  any tab and the hold does not apply (the Test rows are colleagues), so it can be pressed again. A reply to it
+ *  files on that Test row through the reference at its foot; a review sent from its link lands on that row's record. */
+var T_STILL_TEST = { J: 'deliver', K: 'finish', T1: 'finish', I: 'paid' };
+function transitionStillTest() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('another send is running');
+  try { return tStillTest_(); } finally { lock.releaseLock(); }
+}
+
+function tStillTest_() {
+  try { tMsToken_(); } catch (err) { return tStop_('sender-not-ready', err); }
+  var rc = tReceipt_();
+  if (!rc || !rc.json.still || !rc.json.still.follow) {
+    return tSay_('The site is still serving the old follow-up words. Merge the branch, give the site two minutes, then run this again.');
+  }
+  var t;
+  try { t = tRead_(); } catch (err) { return tStop_('stopped', err); }
+  var rows = t.rows.filter(function (r) { return tYes_(r.Test) && !tHeld_(r.Exclude) && tText_(r.Segment); });
+  if (!rows.length) return tSay_('No rows marked Test = Y.');
+  var sent = [], failed = 0;
+  rows.forEach(function (r) {
+    var tap = T_STILL_TEST[tText_(r.Segment).toUpperCase()] || 'callme', t0 = Date.now();
+    if (tChaseClient_(r, tap, '')) sent.push(tText_(r['First name']) + ' (' + tText_(r.Segment).toUpperCase() + ')');
+    else failed++;
+    tPace_(t0);
+  });
+  var msg = 'Follow-up note test: sent to ' + sent.length + (sent.length ? ': ' + sent.join(', ') : '') +
+    (failed ? '. ' + failed + ' did not send: the log says why' : '') + '. Nothing was marked on any tab.';
+  log_('transition', 'still-test', msg);
+  return tSay_(msg);
 }
 
 /* ── what comes back ──────────────────────────────────────────────── */

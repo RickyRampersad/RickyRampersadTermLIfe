@@ -1508,7 +1508,19 @@ voice under the new timing and the caption gives it away.
   `health/still-note-harness.js` covers it (14 checks). `chase/sim30.js`
   ran it on the live sheet on the evening of 30 September: 163 clients
   over the following week, once each, 75 of them on Friday 2 October, and
-  34 held because they wrote.
+  34 held because they wrote. The note ends with the client's reference
+  (`Your reference: <token>`, small and grey). A reply that quotes the note
+  files on that client's record from any address (`T_YOUR_REF`, read after
+  the address and before the name). One of our own addresses counts only
+  when it is the one the row was written to, a colleague on a Test row. A
+  note Microsoft refuses is marked `[chase2] held: the note did not send`
+  and listed for the branch, never counted as sent. **`transitionStillTest`**
+  (the editor's Run button; asked for as "can i see a test") sends the
+  Test rows the note exactly as the chase would, each in the version its
+  letter brings: J the contract, K and T1 the application, I the payment,
+  the rest the review link. It marks nothing, and refuses while the site
+  still serves the old words. `health/still-test-harness.js` covers it
+  (29 checks).
 - **The chase only ever acts on a token this campaign's own Transition Send
   tab recognises.** Client Responses has recorded taps from the site's
   original doors since before this campaign — months of rows that still
