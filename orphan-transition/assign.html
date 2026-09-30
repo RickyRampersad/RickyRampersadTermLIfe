@@ -77,7 +77,7 @@
   .n .no{font-family:Inter,system-ui,sans-serif;font-weight:500;color:var(--dim);font-size:13px}
   .pill{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:2px 7px;border-radius:4px;white-space:nowrap;font-family:Inter,system-ui,sans-serif}
   .pill.seg{background:#d5f4fa;color:var(--tdark)} .pill.open{background:#f6dfd8;color:var(--stop)} .pill.assigned{background:#fbeec8;color:#7a5a12}
-  .pill.done{background:#dcefe4;color:var(--ok)} .pill.noted{background:#e5ecf1;color:var(--body)} .pill.silent{background:#eef1f4;color:var(--dim)} .pill.late{background:var(--stop);color:#fff}
+  .pill.done{background:#dcefe4;color:var(--ok)} .pill.noted{background:#e5ecf1;color:var(--body)} .pill.reached{background:#d5f4fa;color:var(--tdark)} .pill.named{background:#fbeec8;color:#7a5a12} .pill.silent{background:#eef1f4;color:var(--dim)} .pill.late{background:var(--stop);color:#fff}
   .meta{font-size:12.5px;color:var(--dim);margin-top:2px}
   .needs{color:var(--stop);font-size:13.5px;margin-top:6px} .needs b{font-weight:700}
   .ans{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:3px 14px;grid-template-columns:1fr}
@@ -86,6 +86,7 @@
   .ans li.hot b{color:var(--stop)}
   .taps{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px} .taps i{font-style:normal;background:var(--warnbg);border:1px solid #f1dfae;border-radius:999px;padding:2px 9px;font-size:12px;color:#7a5a12}
   .q{font-style:italic;color:var(--ink);margin:6px 0 0;font-size:13.5px}
+  .fnote{color:var(--dim);margin:6px 0 0;font-size:13px}
   .rev{margin-top:6px;font-size:13px;background:var(--notebg);border:1px solid #a8dfeb;border-radius:8px;padding:6px 10px} .rev span{color:var(--dim)}
   .reach{margin-top:8px;font-size:13px;display:flex;flex-wrap:wrap;gap:6px 14px} .reach a{color:var(--tdark);font-weight:600;text-decoration:none}
   .who{margin-top:8px;font-size:13.5px} .who b{color:var(--ink)}
@@ -280,7 +281,7 @@
       <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
       <label>Letter<select id="fSeg"><option value="">all</option></select></label>
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
-      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
+      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="reached">reached by phone, no answer yet</option><option value="named">named, no answer yet</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
       <label>What the records say<select id="fIns"><option value="">anything</option><option value="due">a premium due</option><option value="ends">life cover ends within five years</option><option value="estate">pays the estate</option><option value="provisions">beneficiary in the special provisions</option><option value="role">beneficiary only a role</option><option value="nolife">no life cover in force</option><option value="lapsed">a lapsed policy</option><option value="income">cover against income</option><option value="birthday">a birthday this month</option><option value="hhgap">someone in the family with no life cover</option><option value="payroll">paid through their employer or military pay</option><option value="waived">a premium waived</option><option value="surr">surrendered a policy before</option><option value="noci">life cover, no critical illness cover</option></select></label>
       <label id="sugWrap">Suggested agent<select id="fSug"><option value="">anyone</option></select></label>
@@ -404,7 +405,7 @@ function needsOf(c) {
   return s;
 }
 function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
-var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', silent: 'not answered yet' };
+var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet' };
 
 /* ---- render ---- */
 function render() {
@@ -424,7 +425,7 @@ function render() {
   /* the note under the filters: how the figures are made, once for the page; or, for the branch, how to switch them on */
   $('bookNote').innerHTML = bookOn ? bookNote() : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
   var tiles = manager
-    ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok'], ['silent', k.silent, 'not answered yet', '']]
+    ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok']].concat(k.reached ? [['reached', k.reached, 'reached by phone', '']] : [], k.named ? [['named', k.named, 'named, no answer yet', 'gold']] : [], [['silent', k.silent, 'not answered yet', '']])
     : [['', d.clients.length, 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
   if (!manager && bookOn) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), 'premium a year on your list', 'gold']);
   $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
@@ -705,7 +706,9 @@ function card(c, manager) {
   var need = needsOf(c);
   var ans = (c.answers || []).map(function (a) { return '<li' + (HOT[a.code] ? ' class="hot"' : '') + '><span>' + esc(a.q) + '</span><b>' + esc(a.a) + '</b></li>'; }).join('');
   var taps = (c.taps || []).map(function (t) { return '<i title="' + esc(t.needs) + '">' + esc(t.label) + (t.at ? ' · ' + esc(t.at) : '') + '</i>'; }).join('');
-  var notes = (c.notes || []).map(function (q) { return '<p class="q">“' + esc(q) + '”</p>'; }).join('');
+  var notes = (c.notes || []).map(function (q) { return '<p class="q">“' + esc(q) + '”</p>'; }).join('') +
+    /* what a person noted on the file when marking a call: ours, never quoted as the client's */
+    (c.fileNotes || []).map(function (f) { return '<p class="fnote">📝 ' + esc(f) + '</p>'; }).join('');
   var rev = c.review ? '<div class="rev"><span>Review</span> <b>' + esc(c.review.ref || '') + '</b>' + (c.review.priority ? ' · ' + esc(c.review.priority) : '') + (c.review.status ? ' · ' + esc(c.review.status) : '') +
     (c.review.words || []).map(function (w) { return '<div><span>' + esc(w.q) + '</span> ' + esc(w.a) + '</div>'; }).join('') + '</div>' : '';
   var reach = [];
@@ -740,8 +743,13 @@ function card(c, manager) {
   return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
     (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
     '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
-    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? 'answered ' + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
+    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? (c.state === 'reached' ? 'reached by phone ' : c.state === 'named' ? 'named ' : 'answered ') + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
     profileLine(c.profile) +
+    /* reached by phone: Client Support took their details; the client has not answered a letter yet */
+    (c.state === 'reached' ? '<div class="needs">' + (c.held === 'hold: e-mail by phone' ? 'E-mail taken on the call: their letter goes after your go.'
+      : /^no e-?mail/i.test(c.held || '') ? 'No e-mail: a call is the only way to reach them.' : 'Details taken on the call; no answer to the letter yet.') + '</div>' : '') +
+    /* named: an agent was named here on a client who has not answered; the agent calls, and no introduction or receipt goes */
+    (c.state === 'named' ? '<div class="needs">Named here before they answered: the agent calls. No introduction or receipt goes to a client who has not answered.</div>' : '') +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
     (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + (manager ? sugLine(c) : '') + householdPanel(c, manager) +

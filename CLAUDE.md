@@ -530,12 +530,42 @@ in `films.json` **beside itself** (`tools/film/voorph`, git-ignored) — copy
 the new WAV and VTT files there before mixing, or it re-encodes the old
 voice under the new timing and the caption gives it away.
 
-- **Nothing names or characterises anyone who left.** "Your representative
-  has moved on from Guardian Life" is the whole reference — in every letter,
-  page, film line and script. No reason, no tone, and no warning that someone
-  may approach the client: ask whether someone has, never say who might. The
-  one exception is letter T, for a contract Guardian Life terminated in
-  writing: see its own bullet below.
+- **Nothing characterises anyone who left: the letters state Guardian Life's
+  notice and nothing else.** Until 30 September 2026 "Your representative has
+  moved on from Guardian Life" was the whole reference. That day the manager
+  reported that the agents who resigned "are on Facebook and social media and
+  they are telling clients they are still with the company". So every letter
+  except T and T1 now carries Guardian Life's own notice, in letter T's
+  pattern (`NOTICE_R` in build-letters.py): "Guardian Life of the Caribbean
+  accepted the resignation of your agent, <name>, with immediate effect on
+  21 September 2026. <First name> is no longer authorised to conduct any
+  business on behalf of Guardian Life." The agents' own letters said 30
+  September; Guardian Life accepted each with immediate effect on the 21st.
+  The date is the same for all ten agents, Tricia Baksh included, and is
+  `RESIGNED_ON`. Under it goes "What this means for you" (`WHAT_NOW`):
+  check with us before signing or paying anything, pay premiums only to
+  Guardian Life, and on the keep and return letters, nothing needs to
+  change. Every letter asks letter T's `contact` question, "Has your former
+  agent, <first name>, been in touch with you since 21 September?", and a
+  yes brings a call. Still never why anyone left, never where they went,
+  never that anyone is saying otherwise, and no adjective about anyone: the
+  facts answer them. **A client can confirm the notice by telephone**, asked
+  for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
+  should persons need to call to confirm"; later the same day, the "head
+  office contact"): every letter, T and T1 included, ends its notice card
+  with "To confirm this notice, call the Sales Admin Department at Guardian
+  Life's head office in Westmoorings on (868) 226-2479" (`CONFIRM`), and the
+  first line of what to do says "call head office" on the same number, as a
+  `tel:` link a phone dials in one tap. Naming head office matters: the
+  client hears it from the company, not from the branch that wrote the
+  letter. Sales Admin has to know those calls are coming before the letters
+  carry the number. The call scripts (`call-script.html`,
+  `client-support.html`) read the same notice word for word and give the
+  same number. When a client repeats something a former agent said, that
+  they still act for Guardian Life or anything about the branch, the caller
+  answers none of it, gives the number, and notes who, when, how and what,
+  in the client's words. The film and the older site pages still say
+  "moved on". Letter T keeps its own notice: see its bullet below.
 - **Segment counts, client names and per-book figures stay outside the
   repository.** The segment file, merge file, send list, deep-dive report and
   household list are built in the session scratchpad from the Branch
@@ -561,11 +591,12 @@ voice under the new timing and the caption gives it away.
   never a money figure), the client's own record with the branch team (see
   below), the one-tap answers, the film in one line, and the closing.
   **The notice is the second thing the client
-  reads**, straight after "Dear": "Your representative, X, has moved on from
-  Guardian Life. Your policy has not." — asked for in those terms on 22
-  September ("now officially letting them know that the agents have moved
-  on, that important letter"). It is in the shell, once, in the same words
-  on every letter; an opening never repeats it. `{{token}}` and
+  reads**, straight after "Dear", in a gold-edged card headed "Important
+  notice". It was asked for on 22 September ("now officially letting them
+  know that the agents have moved on, that important letter") and made
+  Guardian Life's formal notice on 30 September (see the first bullet). It
+  is in the shell, once, in the same words on every letter; an opening
+  never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
 - **Fourteen letters: five situations, the in-force letter in five tenure
   versions, two check letters, T for a terminated contract (its own
@@ -650,12 +681,23 @@ voice under the new timing and the caption gives it away.
   Microsoft Graph, which needs the Entra app; until then the "wow" is on the
   site and the team page, and the client gets the plain one.
 - **Every subject line is the notice.** Decided 24 September ("on the
-  subject line shall we put the names … more catchy"): `{{agent_or_rep}} has
-  moved on.` and a short tail — "Your policy has not." on the in-force and
-  check letters, the urgent point on the action letters. `{{agent_or_rep}}`
-  is the agent's first name, or "Your representative" when the sheet has
-  none, filled by `fill-plain.py` and by `tFill_` in Transition.gs alike.
-  "Moved on", never "left": the notice's own words, nothing more.
+  subject line shall we put the names … more catchy"). Since 30 September
+  it reads `Important: {{agent_or_rep}} has resigned and is no longer with
+  Guardian Life.` followed by a short tail: "Your policy has not changed."
+  on the in-force and check letters, and the urgent point on the action
+  letters. `{{agent_or_rep}}` is the agent's first name, or "Your
+  representative" when the sheet has none, filled by `fill-plain.py` and by
+  `tFill_` in Transition.gs alike. **The reminder says "resigned" first.**
+  Asked for the same day ("on the reminder email on follow up we can adjust
+  to state resigned and head office contact"): the clients written to on 25
+  September read "moved on", and their reminder, their own letter fetched
+  from the site again, is where they first read the resignation. Its
+  subject is `Reminder: <first name> has resigned and is no longer with
+  Guardian Life. …`: `tSendRow_` puts "Reminder:" in place of "Important:",
+  never both. Its line above the greeting (`REMIND_R`) says it is "an
+  important update on your agent's resignation, with a number at head
+  office to confirm it". T and T1 keep "an important update about your
+  agent" (`REMIND`): that book's agent did not resign.
 - **Quick checks, answered in the e-mail itself.** First two questions on
   24 September — questions that would show a client what nobody had told
   them. A letter may not say or suggest that; it asks what the client
@@ -937,19 +979,75 @@ voice under the new timing and the caption gives it away.
   happens after you tap" strip (`FLOW`), which the receipt's
   follow-through and the team page repeat, so nothing is promised in one
   place that another does not keep. **The reminder is not a letter of its
-  own**: `tRemind_`, at the end of every hourly batch and inside the same
+  own**: `tRemind_`, at the end of every batch and inside the same
   cap, sends the client's own letter once more to any row sent
-  `REMIND_DAYS` (21) or more ago, still `sent`, whose token has no row on
-  Client Responses and no review (`tAnswered_`), with `sent_on` set so the
+  `REMIND_DAYS` (**five** since 29 September 2026, when the manager asked
+  for the follow-up "in about five days from the date it was sent"; 21
+  before) or more ago, still `sent`, whose token has no row on
+  Client Responses and no review (`tAnswered_`; details taken on a call
+  do not count, see `tContactRow_` below), with `sent_on` set so the
   banner above the greeting says when the first went and the subject reads
   "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
   untouched (it is the first send's date and what keeps the row out of the
-  batch), at most `REMIND_MAX_PER_RUN` (30) a run, in its own try/catch so
+  batch), never to an inbox that had a letter that day, at most
+  `REMIND_MAX_PER_RUN` a run (120 since 30 September 2026, when the manager
+  wanted the whole follow-up out in one day, "another mass email in the
+  next 2 hours"; 30 before, about 480 a day at a run every thirty minutes
+  from 9 to 5, which would have spread it over four days), in its own try/catch so
   it can never stop the day's letters; `REMIND_DAYS` 0 turns it off. The
-  FCA's redress-letter trial (Adams and Hunt 2013) is the reason: a
-  reminder at three to six weeks lifted response more than any change of
-  words. `svc/remind-harness.js` in the session scratchpad runs the pass in
-  Node on a mocked tab.
+  FCA's redress-letter trial (Adams and Hunt 2013) found a reminder at
+  three to six weeks lifted response more than any change of words, which
+  is why it was 21; the manager chose sooner. On 29 September, 1,199 of the
+  1,477 clients e-mailed on 25 September were due it (unanswered, not held,
+  not bounced), all waiting on the hold. `svc/remind-harness.js` in the
+  session scratchpad runs the pass in Node on a mocked tab.
+  **No reminder to anyone who responded** (30 September 2026, keeping the
+  reminder: "if they have answered or responded please ensure we dont
+  resent"). Besides an answer, a reply or a review on the token, the pass
+  now skips two more kinds of client (`tRespondedAt_`). One is a client
+  Client Support spoke to after their letter went, which is any contact
+  row dated after Sent at. The other is a client who sent a review from
+  their own address after it without the letter's link. A call before the
+  letter is not a response to it: when an e-mail was taken for a client
+  the letter had not reached, their first letter goes, and its reminder
+  after it. On the rehearsal of 30 September this took 121 people who had
+  confirmed their address on a call off the reminder. A person can stop
+  anyone else's reminder by typing anything but "sent" in their Status.
+  **One inbox, one e-mail a day, across runs too.** Sent at keeps the
+  first letter's date, so a reminder sent in the 9:00 run did not make its
+  inbox busy for the 9:30 run. In the rehearsal, five families in Tricia
+  Baksh's book sharing an inbox got both reminders on one day. The batch
+  now also counts a Status of `reminded <today>` or `sent again <today>`
+  (`health/followup-harness.js`).
+  **"Send again" is a tick box on Transition Send** (asked for the same
+  day: "a way to run again … to send off a client a survey"). `tAgainCol_`
+  adds the column the first time the five-minute run finds none; a person
+  ticks a row, and the next batch (`tSendAgain_`, after the day's new
+  letters and before the reminders, inside the same cap) sends that
+  client's letter once more — with the "we wrote to you on" line and
+  "Reminder:" when it went before, as its first letter when it never went —
+  whatever its Send on and whether or not the client answered, because a
+  person asked. Every hold still stands: the manager's hold on client
+  e-mail, anything in Exclude, a Test row, one letter an inbox a day; a held
+  row keeps its tick and goes when the hold lifts. Sent, the tick clears
+  and Status reads `sent again <date>`, which also keeps the automatic
+  reminder off it. **Bounced letters are held by themselves.** Until 29
+  September the inbox reader passed over every non-delivery report, so
+  the 139 letters that bounced on 25 and 26 September (read by hand off
+  support@ on 27 September) still read `sent` and would have been followed
+  up. `tInbox_` now knows a report by its subject (`tIsBounce_`), takes the
+  failed address as whichever address in the report's own part — cut
+  before the original message's headers, which also carry the CC — is on
+  the tab, and holds every row at it with `bounced: <no such mailbox,
+  mailbox full, bad domain, no response, blocked> (<date>)` in Exclude and
+  `bounced` in Status (`tBounceMark_`); a row held for anything else is left
+  as it is, and a report about a CC never touches the client. The first run
+  after the paste sweeps the inbox back to the day before the first letter
+  (`tBounceSweep_`, once, remembered in the `bounce_last` property, which
+  the five-minute reader carries on from). That Exclude is exactly what
+  `tFilePhoneEmails_` replaces when Client Support takes a working address
+  on a call, and the letter then goes again after the go.
+  `health/followup-harness.js` in the session scratchpad covers the three.
 - **The Act's own words are on every letter whose situation it speaks to,
   and the days are worked out on the day the letter goes.** 25 September
   2026: "include the insurance act and days to deliver and come across
@@ -1100,6 +1198,12 @@ voice under the new timing and the caption gives it away.
   to the new one; the same address already sent to is left alone; a row
   held for anything else (an agent, a household, staff, a claim, a check)
   is never touched; each Client Responses row read is marked `[filed…]`.
+  The address a letter bounced from is never filed back onto its row, even
+  when a caller marks it confirmed (29 September 2026: ten bounced
+  addresses kept as they were, two visibly misspelt): a row held
+  `bounced: no such mailbox` or `bad domain` with the same address is
+  marked `[filed: this address bounced …]` and stays held; a full mailbox
+  may be confirmed, since the address is the client's own.
   The branch's go is `transitionReleasePhoneEmails` (menu: "Transition:
   release the e-mails taken by phone (the go)", which needs a Service.gs
   paste; until then the editor's Run button, or clear those Exclude cells
@@ -1208,6 +1312,36 @@ voice under the new timing and the caption gives it away.
   cannot use (no e-mail, no first name, no letter for its segment) is moved
   to Exclude with the reason. The page and the digest show a red banner while
   the send is off, and the last runs with their reasons.
+- **A sent row never sends twice, even when the tab is sorted mid-run.**
+  The batch picks only rows with an empty Sent at, and stamps Sent at the
+  moment each letter goes. On 30 September 2026 the live tab turned out to
+  have been sorted by Sent at, which moved every row ("i need to ensure
+  that the email will continue in the batches not send again to the ones
+  received"). A run reads the tab once and writes back by row number, so a
+  sort during a batch would have put the stamps on other clients. The
+  client just sent would read unsent and get the letter again next run: 6
+  of 30 in `health/sort-safety-harness.js`, run on the previous script.
+  `tAt_` now checks each row's Token before every write to the tab. When
+  the row has moved, it reads the Token column again and finds every row
+  of the run by its token. That covers the stamp, the hold, the bounce,
+  the phone-filed e-mail, the release and the "Send again" un-tick. A row
+  with no token is written only where it still is, or the run stops and
+  the next one starts fresh. Sorting is still better done in a filter view
+  (Data → Filter views), which moves nothing. **Every check a row faces
+  goes by address and name, never by row number.** The old `check: same
+  e-mail as row N` notes all pointed at the wrong clients after the sort,
+  so `tSharedInboxRows_` finds the inbox's letters by the address. The
+  sender takes an inbox's first letter by its date, not its place in the
+  tab. A hold names a client number (`tWhoRow_`) instead of a row. The
+  rehearsal on the sorted tab (`ops/go-sim2.js` in the scratchpad) found
+  0/92/0 before and 42/24/26 after, the same as on the unsorted copy.
+  **The "Next e-mail" column** (`ops/next-email-formula.txt` in the
+  scratchpad) is one formula in the first empty header cell of Transition
+  Send. It spills two columns, Answered and Next e-mail, and says for every
+  row what the batch will do: "got it 25 Sep: never again, except one
+  reminder if no answer", "nothing more: spoke to us after the letter, no
+  reminder", "next batch: first letter", "held for a check", and so on. It
+  reads the same rows the script reads.
 - **Automatic client e-mail is on hold until the manager's go** (28
   September 2026: "hold any emails going to clients until I say so").
   `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
@@ -1404,7 +1538,15 @@ voice under the new timing and the caption gives it away.
   assign their agent as discussed and will review etc, to create the
   experience"). An outcome button (Called, Met, No answer, Declined, Closed)
   opens a panel, not a prompt: the outcome; a note for the file, stamped in
-  the Note cell as before and never seen by the client; and, with the branch
+  the Note cell as before and never seen by the client (the card and the
+  agent's brief show it as a file note, `tFileNotes_`, never in quotes: a
+  client's own words come only from a reply, `tNoteWords_`, without the
+  phone's "Sent from my iPhone". Until 29 September the card quoted
+  whatever a Note cell held after its stamps, so a phone answer read "by
+  phone: read back on the call" as the client's words, a note the manager
+  typed would have too, and a reply was labelled "My details have
+  changed", the tap its row type shares; it now reads "Wrote back by
+  e-mail"); and, with the branch
   code only, "E-mail <first name> a note from you". There are four notes, in `T_NOTES` in
   Transition.gs: I am matching you with your agent, I am looking into your
   file myself, Thank you: all noted, and I tried to reach you. The manager
@@ -1425,10 +1567,55 @@ voice under the new timing and the caption gives it away.
   Reached? and Outcome columns, and not the manager's "Called on" and
   "Outcome". On the first day of calls (28 September) the callers typed
   nine e-mails into the sheet and recorded none on the page, so none could
-  reach a send row. `assign.html#t=<token>&s=<letter>` opens the board on
-  one client, and a HYPERLINK column on the sheet is how a row gets to its
-  outcome buttons. `svc/tell-harness.js` and `svc/assign-panel-test.js` in
-  the session scratchpad cover it.
+  reach a send row. By the next afternoon it was 107: of 120 new addresses
+  the three callers had taken, 13 went through the page, and one caller
+  had typed the addresses over the Call for column. They were filed from a paste
+  block for Client Responses, built in the scratchpad
+  (`sasha/build-fix.py`, checked by running `tFilePhoneEmails_` on a copy
+  of the live tabs, `sasha/dry-file.js`), rows exactly as the page writes
+  them (`informed`, `/your-policy/phone?q=email_given`, `call by <name>:
+  <address>`, `Logged`). The same file gives each caller the rows to put
+  right: a Reached? their own notes contradict ("voicemail"), and asks
+  (an agent, a cancellation, a statement) left without a call-back flag,
+  which the Staff call-backs tab never sees. `assign.html#t=<token>&s=<letter>`
+  opens the board on one client, and a HYPERLINK column on the sheet is
+  how a row gets to its outcome buttons. `svc/tell-harness.js` and
+  `svc/assign-panel-test.js` in the session scratchpad cover it.
+  **Details taken on a call are the branch's record, never the client's
+  answer** (`tContactRow_`, 29 September 2026): a `/your-policy/phone` row
+  whose `q` is `email_given`, `email_none`, `phone_given`,
+  `address_given`, `reach_*` or `when_*`. Until then any Client Responses
+  row counted, so every client whose e-mail Client Support took would have
+  been "answered": no five-day follow-up after their first letter, a tap
+  on the wall, an answer in the Monday report, and a card counted among
+  the answers on the board. Now `tAnswered_`, `tSummary_` and `tInsights_`
+  pass those rows over (a no-e-mail client on the call list still counts
+  as reached), and the board shows such a client as **reached by phone**
+  (state `reached`, its own tile and filter, after the answers), still
+  there to be named on, never in "have answered", the glance or the
+  insight counts; in the family line they read as their send row stands
+  ("e-mail taken by phone, waiting for the go"). The letter's own
+  questions ticked on a call (`rate_*`, `contact_*`, `pay_*` …) are
+  answers like any other. `health/contact-rows-harness.js` and
+  `svc/assign-reached-test.js` in the scratchpad cover it.
+  **An agent named from the board is the branch's record too**
+  (`tAssignRow_`, 30 September 2026). Naming an agent on a client who has
+  not answered writes an `assign` row with Page `/assign`, so the name has
+  a row to sit on. Every reader took that row for an answer. The receipts
+  run, which the hold on client e-mail does not stop, would have e-mailed
+  "Thank you, <first name>. We have received your response." to a client
+  who never answered. The chase would have sent them "still on it", their reminder
+  would have stopped, and the board would have counted them as answered.
+  Naming them again would have sent the introduction that thanks a client
+  for answering. No such row was on the sheet when it was caught.
+  `tOursRow_` (a contact row or an assign row) is now what `tAnswered_`,
+  `tSummary_` and `tInsights_` pass over, and the receipts run and the
+  chase skip `/assign` rows. The board shows such a client as **named, no
+  answer yet** (state `named`, with its own tile and filter). A client
+  reached by phone or named without answering never gets the
+  introduction (`tHasAnswered_`). `health/assign-rows-harness.js` (12 checks,
+  11 of them failing on the previous script) and `svc/assign-named-test.js`
+  cover it.
 - **Households are numbered, and the board shows the family beside each
   card.** Asked for on 29 September 2026 ("group by addresses … assign a
   household number so we can see whom from the household responded"). The
@@ -1465,16 +1652,29 @@ voice under the new timing and the caption gives it away.
   initial never does (`tSameFamily_`). They get it on a later day, because
   an inbox never gets two letters on one day. A different surname may be
   an office's or a relative's inbox. That client is held as `check: shares
-  an inbox with <name> (row N), a different surname: confirm the address`
+  an inbox with <name> (client N), a different surname: confirm the address`
   for Client Support. An address a person confirmed on a call (a Reason of
   "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
-  address onto such a row like any other. The 95 were sorted once by
-  `tSharedInboxRows_`, first in the five-minute receipts run after the
-  paste, into 69 family members freed for their own letter after the go
-  and 26 held to confirm. It sets the `shared_inbox_sorted` property and
-  never runs again. Client Support's list for the 26 is built in the
+  address onto such a row like any other. **One person on two client
+  numbers is not a family**: 26 of the 95 had the same name as the client
+  already written to at that inbox (Jeffery Boodhoo on 745444 and
+  745454), and the family rule would have sent each the same letter a
+  second time. `tSamePerson_` (the same first name and a surname in
+  common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
+  "Ricky") holds such a row as `check: same name and inbox as <name> (client
+  N): likely one person on two client numbers, one letter is enough`,
+  compared against every letter the inbox has had, not only the first,
+  and a call that confirmed the address does not lift it. In 7 of the 26
+  the second number carries a different situation (a premium due, a
+  lapsed policy) that the first letter did not mention: a call, not a
+  letter. The 95 were sorted once by `tSharedInboxRows_`, first in the
+  five-minute receipts run after the paste: 43 family members freed for
+  their own letter after the go, 26 held to confirm the address, 26 held
+  as one person. It sets the `shared_inbox_sorted` property and never
+  runs again. Client Support's list for the 26 to confirm is built in the
   scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
-  on every row. `health/shared-inbox-harness.js` there covers it.
+  on every row. `health/shared-inbox-harness.js` there covers it, and
+  `health/shared-inbox-real.js` runs the sort on the latest sheet export.
 - **Each client's policies are on the board, from the live Branch
   Portfolio, rebuilt every morning.** Asked for on 29 September 2026 ("we do
   need to push more data the total cover, plan, tenure, premium etc"). The
@@ -1550,6 +1750,23 @@ voice under the new timing and the caption gives it away.
   stands, and the build's message says which. The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
   (numbers from 0000745444) carry no `Client_Number__c` there.
+  **The name and date of birth on a policy record are the life insured's,
+  not the owner's.** The portfolio's client is the owner; a policy a
+  parent took out on a child's life carries the child's name and birth
+  date (Ria Ramroop-Brijbassie owns two on her daughters' lives, issued at
+  3 and at 0, each paying "Proposer - Female", Ria herself). `INSURED__c` is
+  filled on a few policies in a hundred, so the Insured column is
+  `INSURED__c`, else the record's own name (`tProfileRow_`,
+  `Client-Profile-v4.xlsx` in the scratchpad for the import). Who a client
+  is comes only from policies on their own life (`tOtherLife_`: not the
+  same first name with a surname in common or beginning alike), unless
+  none is, when every policy is read as before; until 29 September the
+  board took the first birth date it met and read Ria as 5. On the
+  families' policies that corrected ten ages, and 69 policy lines now say
+  whose life they cover. "Proposer" as the beneficiary is on adults'
+  policies as often as children's (median issue age 33): it means whoever
+  took out the policy, a parent or guardian only where the policy was
+  issued before 18.
   **What is there, measured on 29 September 2026 over the campaign's live
   policies:** date of birth 98%, gender 93%, a life figure 74%, critical
   illness 38%. Who a policy pays, over every live policy of the books'
@@ -1586,7 +1803,12 @@ voice under the new timing and the caption gives it away.
   issue date), a policy that pays the estate, a beneficiary in the special
   provisions or recorded only as a role, no life cover in force, a lapsed
   policy, life cover against the income on file, a birthday within 30
-  days. Only what the records show; never advice. The policy table gains
+  days. A paid-to date more than a year gone on a policy the portfolio
+  still calls premium paying reads "Paid to Aug 2018 on Evolution to 65,
+  still shown as premium paying: check the record", never "Premium due
+  2954 days" (50 of the 371 overdue policies in the families on 29
+  September; `APLamount` is 0 on every one, so nothing says why). Only
+  what the records show; never advice. The policy table gains
   the cover split, who each policy pays, and who it insures when that is
   someone else. The branch gets a bar of counts over the clients who
   answered, each a filter; the same filter reaches silent rows through the

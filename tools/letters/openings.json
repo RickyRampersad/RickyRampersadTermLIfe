@@ -1,12 +1,11 @@
 {
- "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Fourteen letters in four families (\"family\": notice, action, keep, return; 25 September 2026: \"combine and regroup to ensure we scale proper and with a flow\"), and the family is the wave they go in. Five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays, and T and T1 for the book of an agent whose contract Guardian Life terminated. \"act\" and \"plain\" put the Insurance Act's own words on a letter whose situation it speaks to (25 September 2026: \"include the insurance act and days to deliver and come across relevant\"): the quotation, checked against the source text and carrying no section number, and what it means for this client in our words; a letter without one carries the one line on the law after the film instead. The days a letter prints (days_held on J, days_open on K and T1) are worked out on the day it goes, never stored. Every subject line is the notice itself, \"{{agent_or_rep}} has moved on.\" and a short tail (24 September 2026: \"on the subject line shall we put the names … more catchy\"): the agent's first name where the sheet has it, \"Your representative\" where it does not. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers, and tap_text relabels a tap for one letter without changing what it records; \"questions\" are the quick checks (one tap each, answered in the e-mail itself since 24 September 2026: \"would like this as a check in the email! It must be easy for a client\"), and \"more\" adds the one line to the full review for a client who wants to write. Beneath the facts, every letter carries the client's own record with the branch team (24 September 2026: \"they are to see us as from onboarding and a team service\"): documents handled, requests handled, premium reminders and the last birthday note, filled per client by service-record.py, a blank or zero cell cut like a blank fact; \"service\" lists the cells a letter shows, all four unless it says otherwise, and the premium and lapsed letters leave the reminders out. Days, dates and counts only, never a money figure. The notice that the representative has moved on is in the shell, once, on every letter; an opening never repeats it.",
+ "_": "The words of every transition letter, one entry per situation. build-letters.py renders them. Fourteen letters in four families (\"family\": notice, action, keep, return; 25 September 2026: \"combine and regroup to ensure we scale proper and with a flow\"), and the family is the wave they go in. Five for situations (matured, lapsed, premium due, contract undelivered, application in progress); since 23 September 2026, five versions of the in-force letter by how long the client has held their longest policy (F1 under two years to F5 ten years or more), each asking for feedback first; since 24 September 2026, two for clients in force whose cover ended and started again (R1 when the newest restart is inside three years, R2 before that), each offering a free check of the file and of who the policy pays, and T and T1 for the book of an agent whose contract Guardian Life terminated. \"act\" and \"plain\" put the Insurance Act's own words on a letter whose situation it speaks to (25 September 2026: \"include the insurance act and days to deliver and come across relevant\"): the quotation, checked against the source text and carrying no section number, and what it means for this client in our words; a letter without one carries the one line on the law after the film instead. The days a letter prints (days_held on J, days_open on K and T1) are worked out on the day it goes, never stored. Every subject line is the notice itself, \"Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life.\" and a short tail (24 September 2026: \"on the subject line shall we put the names … more catchy\"; the words since 30 September 2026, when the agents who resigned were telling clients they were still with the company): the agent's first name where the sheet has it, \"Your representative\" where it does not. Facts are read off the Branch Portfolio sheet per client at send time; taps are the one-thumb answers, and tap_text relabels a tap for one letter without changing what it records; \"questions\" are the quick checks (one tap each, answered in the e-mail itself since 24 September 2026: \"would like this as a check in the email! It must be easy for a client\"), and \"more\" adds the one line to the full review for a client who wants to write. Beneath the facts, every letter carries the client's own record with the branch team (24 September 2026: \"they are to see us as from onboarding and a team service\"): documents handled, requests handled, premium reminders and the last birthday note, filled per client by service-record.py, a blank or zero cell cut like a blank fact; \"service\" lists the cells a letter shows, all four unless it says otherwise, and the premium and lapsed letters leave the reminders out. Days, dates and counts only, never a money figure. The notice is in the shell, once, on every letter, with \"What this means for you\" beneath it: since 30 September 2026 Guardian Life's own words, that it accepted the agent's resignation with immediate effect on 21 September 2026 and that the agent may no longer act for it (letter T keeps its own). \"policy_line\" is the letter's sentence after it, where a letter needs its own; an opening never repeats the notice.",
  "A": {
   "name": "A policy has matured, or is about to",
-  "subject": "{{agent_or_rep}} has moved on. The money in your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. The money in your policy is still yours.",
   "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
   "headline": "Your policy has <em>matured,</em> or is about to.",
   "open": "It has reached the end of its term, or is about to, and the money is yours. We want it to reach you without delay, and we would like to sit with you and talk through what comes next.",
-  "notice_tail": "The money in your policy has not.",
   "facts": [
    [
     "Matured on",
@@ -31,12 +30,14 @@
   "act": "An agency, brokerage or sales representative that receives a cheque in the name of a consumer from an insurer shall deliver or make reasonable efforts to deliver the cheque to the consumer within five business days from the date on which the cheque was received.",
   "plain": "A cheque in your name must reach you within five business days of anyone receiving it for you. We bring the form, and the money comes to you from Guardian Life directly.",
   "questions": [
+   "contact",
    "checkfirst"
-  ]
+  ],
+  "policy_line": "The money in your policy is not affected: it remains with Guardian Life, looked after by our branch team."
  },
  "F1": {
   "name": "In force — under two years",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
   "headline": "You chose us <em>recently.</em> We are choosing you back.",
   "open": "Your policy is still new, and nothing about it has changed: same cover, same premium, same beneficiaries. We would love to hear how the start has been for you, and what would make it better.",
@@ -57,6 +58,7 @@
    "callme"
   ],
   "questions": [
+   "contact",
    "rating",
    "walk",
    "pays",
@@ -70,7 +72,7 @@
  },
  "F2": {
   "name": "In force — two to three years",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
   "headline": "A couple of years in, and <em>just getting started.</em>",
   "open": "Nothing about your cover has changed. Same policy, same premium, same beneficiaries. This is a good moment to check it still fits your life, so tell us what has changed for you and how we could look after you better.",
@@ -91,6 +93,7 @@
    "callme"
   ],
   "questions": [
+   "contact",
    "rating",
    "life",
    "pays",
@@ -101,7 +104,7 @@
  },
  "F3": {
   "name": "In force — three to five years",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "Everything your policy has built is still yours. We would like your view.",
   "headline": "A few years of cover, <em>still yours.</em>",
   "open": "Everything your policy has built over the last few years is still yours, and nothing about it has changed. We would like to hear how those years have gone for you, and what you want from us next.",
@@ -122,6 +125,7 @@
    "callme"
   ],
   "questions": [
+   "contact",
    "rating",
    "life",
    "built",
@@ -132,7 +136,7 @@
  },
  "F4": {
   "name": "In force — five to ten years",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
   "headline": "Years of cover, and <em>nothing lost.</em>",
   "open": "You have trusted us with your cover for years, and every one of them still counts. Nothing about your policy has changed. Tell us how we have done over that time, and what would make the years ahead better.",
@@ -153,6 +157,7 @@
    "callme"
   ],
   "questions": [
+   "contact",
    "rating",
    "life",
    "pays",
@@ -163,7 +168,7 @@
  },
  "F5": {
   "name": "In force — ten years or more",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "Every year of your cover is still yours. Your view matters most to us.",
   "headline": "More than ten years <em>together.</em> Thank you.",
   "open": "More than a decade of cover, and every year of it is still yours. Nothing about your policy has changed. You have been with us longer than most, so your view matters most: tell us how we have done.",
@@ -184,6 +189,7 @@
    "callme"
   ],
   "questions": [
+   "contact",
    "rating",
    "more",
    "pays",
@@ -197,7 +203,7 @@
  },
  "R1": {
   "name": "In force — cover started again in the last three years",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
   "headline": "A fresh start deserves <em>a careful check.</em>",
   "open": "Our records show cover of yours that ended and started again in the last three years. A new policy starts some of its protections from day one, so we would like to check your file with you, free, and confirm who your policy pays.",
@@ -228,6 +234,7 @@
    ]
   },
   "questions": [
+   "contact",
    "rating",
    "pays",
    "checkfirst",
@@ -237,7 +244,7 @@
  },
  "R2": {
   "name": "In force — cover started again, more than three years ago",
-  "subject": "{{agent_or_rep}} has moved on. Your policy has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
   "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
   "headline": "Years with us, and <em>every one should count.</em>",
   "open": "You have been with Guardian Life for years, and our records show cover of yours that ended and started again along the way. We would like to go through your file together, free: what carried over, what started again, and who your policy pays.",
@@ -268,6 +275,7 @@
    ]
   },
   "questions": [
+   "contact",
    "rating",
    "pays",
    "checkfirst",
@@ -277,11 +285,10 @@
  },
  "G": {
   "name": "Lapsed",
-  "subject": "{{agent_or_rep}} has moved on. Your policy may still hold value.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy may still hold value.",
   "preheader": "A policy that stopped does not always stop being worth something.",
   "headline": "A policy you may have <em>written off.</em>",
   "open": "A policy that stopped being paid does not always stop mattering. Some still hold a value that belongs to you. Some can simply be started again. We would like to sit with you and find out which is true of yours.",
-  "notice_tail": "Whatever your policy still holds is yours.",
   "facts": [
    [
     "Held since",
@@ -301,6 +308,7 @@
   "act": "An ordinary policy shall not be forfeited by reason only of non-payment of any premiums where the surrender value of the policy, calculated as at the day immediately preceding that on which the premium falls due, exceeds the sum of the amount of the debts owing to the insurer under or secured by the policy and the amount of the overdue premium.",
   "plain": "A policy that had built a value does not end the day a premium is missed: the Act keeps it in force from that value first. That is why a policy that stopped being paid can still hold something, and why we would like to check yours, free.",
   "questions": [
+   "contact",
    "life",
    "value",
    "checkfirst"
@@ -310,11 +318,12 @@
    "svc_requests",
    "svc_birthday"
   ],
-  "more": true
+  "more": true,
+  "policy_line": "Whatever your policy still holds is not affected: it remains with Guardian Life, looked after by our branch team."
  },
  "I": {
   "name": "A premium showing as due",
-  "subject": "{{agent_or_rep}} has moved on. A premium is showing as due.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. A premium is showing as due.",
   "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
   "headline": "A premium is showing as <em>due.</em>",
   "open": "Nothing to worry about yet. It is usually one of three simple things: paid and not yet recorded, a change in how you pay, or it simply slipped past. Tap below and tell us which, and we take it from there.",
@@ -342,6 +351,7 @@
   "plain": "A premium you handed to a registered representative counts as paid to Guardian Life. Keep the receipt. And before anything can be forfeited, you must receive a written notice and twenty business days from it.",
   "send": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days.",
   "questions": [
+   "contact",
    "pays",
    "checkfirst",
    "stay"
@@ -354,7 +364,7 @@
  },
  "J": {
   "name": "Contract collected for delivery, never acknowledged",
-  "subject": "{{agent_or_rep}} has moved on. Has your policy contract reached you?",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Has your policy contract reached you?",
   "preheader": "Your policy is in force. We need to be sure the contract itself reached you.",
   "headline": "Your policy is in force. Did your <em>contract</em> reach you?",
   "open": "<!--fact:promised_on-->On {{promised_on}} we wrote to you that your policy contract would be delivered to you personally within 28 days. <!--/fact-->Our record shows it was handed over for delivery and never acknowledged as received. If it has not reached you, that is ours to put right: we bring it to you and go through every page together. If it has, one tap tells us.",
@@ -389,6 +399,7 @@
   "send": "From the Power BI acknowledgement of record and the undelivered-script chase: the contract was dispatched or handed over for delivery (collected_on) and no acknowledgement followed. promised_on is the date of the branch's own delivery-update e-mail to that client (personal delivery within 28 days) where one went, blank where none did, and the sentence goes with it; the days since the hand-over are worked out on the day the letter goes. First wave, and the receiving agent delivers within the week.",
   "questions": [
    "received",
+   "contact",
    "pays",
    "checkfirst",
    "stay"
@@ -397,11 +408,10 @@
  },
  "K": {
   "name": "An application still in progress",
-  "subject": "{{agent_or_rep}} has moved on. Your application has not.",
+  "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your application continues with us.",
   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
   "headline": "Let us finish your application, so your <em>cover can start.</em>",
   "open": "Until your policy is issued, the cover you applied for is not yet in place. So this one is ours to finish, not yours to chase: whatever is still needed, a medical, a document, a signature, we bring to you ourselves.",
-  "notice_tail": "Your application has not.",
   "facts": [
    [
     "Application received",
@@ -423,9 +433,11 @@
   "send": "From the pending list: underwriting incomplete, missing requirements, awaiting settlement. Cover is not in place until the policy is issued, so these go in the first wave and an agent is assigned at once; every file is read before the call. The days in progress are worked out on the day the letter goes.",
   "questions": [
    "outstanding",
+   "contact",
    "checkfirst"
   ],
-  "checks_first": true
+  "checks_first": true,
+  "policy_line": "Your application is not affected: it stays with Guardian Life, and our branch team finishes it with you."
  },
  "T": {
   "name": "The agent's contract was terminated",

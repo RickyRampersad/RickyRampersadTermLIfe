@@ -354,6 +354,36 @@ NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agen
             'with immediate effect on {{terminated_on}}, as a result of an investigation.',
             '{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your policy is '
             'not affected: it remains with Guardian Life, looked after by our branch team.')
+# Every other letter (30 September 2026). Until then the notice said the representative "has moved on", and
+# nothing more. That day the manager: the agents who resigned "are on Facebook and social media and they are
+# telling clients they are still with the company", so the notice became Guardian Life's own, in the pattern of
+# letter T: the resignation, accepted with immediate effect on 21 September 2026 (their own letters said 30
+# September; Guardian Life accepted each with immediate effect on the 21st, the ten agents alike, Tricia Baksh
+# included), and that the agent may no longer act for Guardian Life. Facts only: never why they left, never
+# where they went, never that anyone is saying otherwise. The client is told what to do instead (WHAT_NOW).
+# The name sits between the <!--agent--> marks; without one the notice reads "your agent … Your
+# representative", which is what {{agent_or_rep}} gives.
+RESIGNED_ON = '21 September 2026'
+NOTICE_R = ('Guardian Life of the Caribbean accepted the resignation of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
+            f'with immediate effect on {RESIGNED_ON}.',
+            '{{agent_or_rep}} is no longer authorised to conduct any business on behalf of Guardian Life.')
+POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looked after by our branch team.'
+# A telephone number to confirm the notice (30 September 2026, the manager: "226-2479 is our Sales Admin Department
+# at Westmoorings, should persons need to call to confirm"). A client who is told otherwise can check the notice
+# with the company's own office instead of taking the letter's word for it. It is on every letter, T and T1
+# included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
+# The same afternoon the manager called it the "head office contact", and the letters name it so: the client
+# hears it from the company's head office, not from the branch that wrote the letter.
+CONFIRM_TEL, CONFIRM_HREF = '(868) 226-2479', 'tel:+18682262479'
+CONFIRM = "To confirm this notice, call the Sales Admin Department at Guardian Life's head office in Westmoorings on [[tel]]."
+# What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
+# and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
+WHAT_NOW_HEAD = 'What this means for you'
+WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check before you sign or pay '
+            'anything: call head office on [[tel]], or reply to this e-mail. A person reads it the same day.',
+            'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
+            'anyone outside Guardian Life or our branch.']
+WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
 
 
 MORE_ASK, MORE_LINK = 'Would you rather tell us in your own words?', 'The full review, about five minutes'
@@ -470,9 +500,17 @@ def taps_block(cfg):
 <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
 
 
+# The contact question on every letter but T's (30 September 2026): the agents who resigned were telling clients
+# they were still with the company, so every letter asks what letter T asks, with the date the resignations took
+# effect. The name sits between the agent marks, so a row without one reads "your former agent".
+CONTACT_R = f'Has your former agent<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> been in touch with you since {RESIGNED_ON[:-5]}?'
+
+
 def qtext(cfg, q):
     """A question's words on this letter: the letter's own wording (question_text in openings.json, by band),
     else the letter-only wording with merge fields (LETTER_Q), else the words the page and the receipt use."""
+    if q == 'contact' and cfg.get('notice') != 'terminated':
+        return cfg.get('question_text', {}).get(q) or CONTACT_R
     return cfg.get('question_text', {}).get(q) or LETTER_Q.get(q, QUESTIONS[q][0])
 
 
@@ -610,7 +648,17 @@ FLOW_HEAD = 'What happens after you tap'
 # banner above the greeting; sent_on is set by the sender on that send alone,
 # so on a first send the fact cut removes the banner whole.
 REMIND = ('We wrote to you on {{sent_on}}.',
-          'In case it was missed, here it is again: a minute, one tap each. If you have answered already, thank you, and there is nothing more to do.')
+          'This is an important update about your agent, with your letter again below: a minute, one tap each. If you have answered already, thank you.')
+# The resignation letters' own banner (30 September 2026, the manager: the reminder should "state resigned and head
+# office contact"). The clients written to on 25 September read "moved on"; the reminder is where they first read the
+# resignation, so it says so above the greeting. T and T1 keep the one above: that book's agent did not resign.
+REMIND_R = ('We wrote to you on {{sent_on}}.',
+            "This is an important update on your agent's resignation, with a number at head office to confirm it. Your "
+            'letter is below again: a minute, one tap each. If you have answered already, thank you.')
+
+
+def remind_words(cfg):
+    return REMIND if cfg.get('notice') == 'terminated' else REMIND_R
 
 
 def flow_block():
@@ -626,27 +674,57 @@ def flow_block():
 </td></tr></table>"""
 
 
-def remind_block():
+def remind_block(cfg):
+    words = remind_words(cfg)
     return f"""<!--fact:sent_on--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
     <td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:12px;padding:11px 15px;font:400 13.5px/1.5 {BODY};color:{BODYC}">
-    <b style="color:{INK}">{REMIND[0]}</b> {REMIND[1]}</td></tr></table><!--/fact-->
+    <b style="color:{INK}">{words[0]}</b> {words[1]}</td></tr></table><!--/fact-->
   """
+
+
+def tel(text, plain=False):
+    """The Sales Admin number where [[tel]] stands: a link a phone dials with one tap."""
+    a = (f'<a href="{CONFIRM_HREF}"><b>{CONFIRM_TEL}</b></a>' if plain else
+         f'<a href="{CONFIRM_HREF}" style="color:{INK};font-weight:800;text-decoration:none;white-space:nowrap">{CONFIRM_TEL}</a>')
+    return text.replace('[[tel]]', a)
+
+
+def confirm_row():
+    return (f'<div style="margin-top:10px;padding-top:9px;border-top:1px solid #dbe6ec;font:400 14px/1.5 {BODY};color:{BODYC}">'
+            f'<span style="color:{GOLD};font-weight:800">&#9742;</span>&nbsp; {tel(CONFIRM)}</div>')
+
+
+def what_now_items(cfg, plain=False):
+    """What the client does now: every letter the two lines, and the letters where nothing needs doing the third."""
+    return [tel(t, plain) for t in WHAT_NOW + ([WHAT_NOW_KEEP] if cfg.get('family') in ('keep', 'return') else [])]
+
+
+def what_now_block(cfg):
+    rows = ''.join(f"""<tr><td style="width:20px;vertical-align:top;padding:0 8px 8px 0;font:800 14px/1.5 {HEAD};color:{GOLD}">&#10003;</td>
+      <td style="padding:0 0 8px;font:400 14px/1.5 {BODY};color:{BODYC}">{t}</td></tr>""" for t in what_now_items(cfg))
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
+    <td style="border:1px solid {LINE};border-radius:12px;padding:13px 16px 5px">
+    <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:10px">{WHAT_NOW_HEAD}</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">{rows}</table></td></tr></table>"""
 
 
 def letter_table(seg, cfg, preview=False):
     """The 600px table: the e-mail's body, and what /templates shows."""
-    # The notice is the official word that the representative has moved on, and
-    # the reason the letter exists. It is the second thing the client reads,
-    # once, in the same words on every letter, in a gold-edged card so it is
-    # not missed; the film's own line answers it: the policy has not.
+    # The notice is Guardian Life's own word on the agent, and the reason the
+    # letter exists. It is the second thing the client reads, once, in the same
+    # words on every letter, in a gold-edged card headed "Important notice" so it
+    # is not missed (NOTICE_T for the terminated book, NOTICE_R for the rest),
+    # with what to do now in the box beneath (WHAT_NOW).
     # The name sits between <!--agent--> marks so the sender can drop it when the
-    # row carries none: "Your representative has moved on" still reads.
+    # row carries none: "your agent … Your representative" still reads.
     words = (f'<b style="color:{INK}">{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}' if cfg.get('notice') == 'terminated' else
-             f'<b style="color:{INK}">Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b>\n'
-             f"    {cfg.get('notice_tail', 'Your policy has not.')}")
+             f'<b style="color:{INK}">{NOTICE_R[0]} {NOTICE_R[1]}</b>\n'
+             f"    {cfg.get('policy_line', POLICY_LINE)}")
+    label = '' if cfg.get('notice') == 'terminated' else (
+        f'<b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#9a6a00;margin-bottom:8px">Important notice</b>')
     notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
     <td bgcolor="#f4f8fa" style="background:#f4f8fa;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:12px 16px;font:400 15px/1.55 {BODY};color:{BODYC}">
-    {words}</td></tr></table>"""
+    {label}{words}{confirm_row()}</td></tr></table>{'' if cfg.get('notice') == 'terminated' else what_now_block(cfg)}"""
     headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.
@@ -665,7 +743,7 @@ def letter_table(seg, cfg, preview=False):
 </td></tr>
 
 <tr><td class="pad" style="padding:24px 26px 8px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
-  {remind_block()}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
+  {remind_block(cfg)}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
   {notice}
   <p style="margin:0 0 16px">{cfg['open']}</p>
   {facts_block(cfg)}
@@ -734,7 +812,7 @@ FAMILIES = {
 }
 WAVES = [('Day 1', ['T', 'T1', 'J', 'K', 'I']), ('Day 2', ['F5', 'F4', 'F3']), ('Day 3', ['F2', 'R1', 'R2']),
          ('Day 4', ['F1']), ('Day 8', ['G', 'A'])]
-REMIND_NOTE = 'From day 22: the same letter once more, to anyone who has not answered, with a line above the greeting saying when the first went.'
+REMIND_NOTE = 'Five days on: the same letter once more, to anyone who has not answered or spoken to us, with a line above the greeting saying when the first went.'
 for _seg, _cfg in SEGMENTS.items():
     assert _cfg.get('family') in FAMILIES, f'{_seg}: no family'
     assert any(_seg in w for _, w in WAVES), f'{_seg}: in no wave'
@@ -789,10 +867,12 @@ def plain_service(cfg):
 
 
 def plain_notice(cfg):
+    confirm = f'<p>{tel(CONFIRM, True)}</p>'
     if cfg.get('notice') == 'terminated':
-        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>'
-    return (f'<p><b>Your representative<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> has moved on from Guardian Life.</b> '
-            f'{cfg.get("notice_tail", "Your policy has not.")}</p>')
+        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>{confirm}'
+    items = ''.join(f'<li>{t}</li>' for t in what_now_items(cfg, True))
+    return (f'<p><b>Important notice. {NOTICE_R[0]} {NOTICE_R[1]}</b> {cfg.get("policy_line", POLICY_LINE)}</p>'
+            f'{confirm}<h3>{WHAT_NOW_HEAD}</h3><ul>{items}</ul>')
 
 
 def plain_letter(seg, cfg):
@@ -811,7 +891,8 @@ def plain_letter(seg, cfg):
                                      f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
                                      f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
     flow = f'<h3>{FLOW_HEAD}</h3><ol>' + ''.join(f'<li><b>{t}</b><br>{x}</li>' for t, x in FLOW) + '</ol>'
-    remind = f'<!--fact:sent_on--><p><b>{REMIND[0]}</b> {REMIND[1]}</p><!--/fact-->'
+    words = remind_words(cfg)
+    remind = f'<!--fact:sent_on--><p><b>{words[0]}</b> {words[1]}</p><!--/fact-->'
     return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
             f'<h2>{cfg["headline"]}</h2>{remind}'
             f'<p>Dear {{{{first_name}}}},</p>'
@@ -1026,7 +1107,7 @@ page = f"""<!DOCTYPE html>
 <div class="hero"><div class="wrap">
   <div class="eyebrow">What goes out &middot; read it before any client does</div>
   <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
-  <p class="lead">Every client of a representative who has moved on gets the letter below. Only the opening
+  <p class="lead">Every client of an agent whose resignation Guardian Life accepted gets the letter below. Only the opening
     changes, with what they hold, and the facts in it are read off the sheet for that client. Every letter
     ends in taps they can answer with one thumb. Not one word in any of it is about who left, with one exception:
     letter T carries Guardian Life's own notice that an agent's contract was terminated, in the notice's words and no others.</p>
@@ -1069,7 +1150,7 @@ page = f"""<!DOCTYPE html>
 <section class="band alt" id="letter"><div class="wrap">
   <h2>The letter, in full</h2>
   <p class="sub">This is letter {CORE}, the one most clients receive. Every letter has the same shape: a
-    headline, the notice that the representative has moved on, one paragraph, the facts off the sheet, what
+    headline, Guardian Life's notice of the agent's resignation, one paragraph, the facts off the sheet, what
     the branch team has done for them, the taps, the film in one line, and the sign-off. Only the opening, the
     facts and the taps differ.</p>
   <div class="fields"><b>The curly fields</b> &mdash; {fieldlist} &mdash; are filled per client at send time
