@@ -530,12 +530,27 @@ in `films.json` **beside itself** (`tools/film/voorph`, git-ignored) — copy
 the new WAV and VTT files there before mixing, or it re-encodes the old
 voice under the new timing and the caption gives it away.
 
-- **Nothing names or characterises anyone who left.** "Your representative
-  has moved on from Guardian Life" is the whole reference — in every letter,
-  page, film line and script. No reason, no tone, and no warning that someone
-  may approach the client: ask whether someone has, never say who might. The
-  one exception is letter T, for a contract Guardian Life terminated in
-  writing: see its own bullet below.
+- **Nothing characterises anyone who left: the letters state Guardian Life's
+  notice and nothing else.** Until 30 September 2026 "Your representative has
+  moved on from Guardian Life" was the whole reference. That day the manager
+  reported that the agents who resigned "are on Facebook and social media and
+  they are telling clients they are still with the company". So every letter
+  except T and T1 now carries Guardian Life's own notice, in letter T's
+  pattern (`NOTICE_R` in build-letters.py): "Guardian Life of the Caribbean
+  accepted the resignation of your agent, <name>, with immediate effect on
+  21 September 2026. <First name> is no longer authorised to conduct any
+  business on behalf of Guardian Life." The agents' own letters said 30
+  September; Guardian Life accepted each with immediate effect on the 21st.
+  The date is the same for all ten agents, Tricia Baksh included, and is
+  `RESIGNED_ON`. Under it goes "What this means for you" (`WHAT_NOW`):
+  check with us before signing or paying anything, pay premiums only to
+  Guardian Life, and on the keep and return letters, nothing needs to
+  change. Every letter asks letter T's `contact` question, "Has your former
+  agent, <first name>, been in touch with you since 21 September?", and a
+  yes brings a call. Still never why anyone left, never where they went,
+  never that anyone is saying otherwise, and no adjective about anyone: the
+  facts answer them. The film and the older site pages still say "moved on".
+  Letter T keeps its own notice: see its bullet below.
 - **Segment counts, client names and per-book figures stay outside the
   repository.** The segment file, merge file, send list, deep-dive report and
   household list are built in the session scratchpad from the Branch
@@ -561,11 +576,12 @@ voice under the new timing and the caption gives it away.
   never a money figure), the client's own record with the branch team (see
   below), the one-tap answers, the film in one line, and the closing.
   **The notice is the second thing the client
-  reads**, straight after "Dear": "Your representative, X, has moved on from
-  Guardian Life. Your policy has not." — asked for in those terms on 22
-  September ("now officially letting them know that the agents have moved
-  on, that important letter"). It is in the shell, once, in the same words
-  on every letter; an opening never repeats it. `{{token}}` and
+  reads**, straight after "Dear", in a gold-edged card headed "Important
+  notice". It was asked for on 22 September ("now officially letting them
+  know that the agents have moved on, that important letter") and made
+  Guardian Life's formal notice on 30 September (see the first bullet). It
+  is in the shell, once, in the same words on every letter; an opening
+  never repeats it. `{{token}}` and
   `{{segment}}` travel with every tap so responses read by segment.
 - **Fourteen letters: five situations, the in-force letter in five tenure
   versions, two check letters, T for a terminated contract (its own
@@ -650,12 +666,14 @@ voice under the new timing and the caption gives it away.
   Microsoft Graph, which needs the Entra app; until then the "wow" is on the
   site and the team page, and the client gets the plain one.
 - **Every subject line is the notice.** Decided 24 September ("on the
-  subject line shall we put the names … more catchy"): `{{agent_or_rep}} has
-  moved on.` and a short tail — "Your policy has not." on the in-force and
-  check letters, the urgent point on the action letters. `{{agent_or_rep}}`
-  is the agent's first name, or "Your representative" when the sheet has
-  none, filled by `fill-plain.py` and by `tFill_` in Transition.gs alike.
-  "Moved on", never "left": the notice's own words, nothing more.
+  subject line shall we put the names … more catchy"). Since 30 September
+  it reads `Important: {{agent_or_rep}} is no longer with Guardian Life.`
+  followed by a short tail: "Your policy has not changed." on the in-force
+  and check letters, and the urgent point on the action letters.
+  `{{agent_or_rep}}` is the agent's first name, or "Your representative"
+  when the sheet has none, filled by `fill-plain.py` and by `tFill_` in
+  Transition.gs alike. The reminder's line above the greeting says it is
+  "an important update about your agent".
 - **Quick checks, answered in the e-mail itself.** First two questions on
   24 September — questions that would show a client what nobody had told
   them. A letter may not say or suggest that; it asks what the client

@@ -620,9 +620,11 @@
  },
  "segments": {
   "A": [
+   "contact",
    "checkfirst"
   ],
   "F1": [
+   "contact",
    "rating",
    "walk",
    "pays",
@@ -630,6 +632,7 @@
    "stay"
   ],
   "F2": [
+   "contact",
    "rating",
    "life",
    "pays",
@@ -637,6 +640,7 @@
    "stay"
   ],
   "F3": [
+   "contact",
    "rating",
    "life",
    "built",
@@ -644,6 +648,7 @@
    "stay"
   ],
   "F4": [
+   "contact",
    "rating",
    "life",
    "pays",
@@ -651,6 +656,7 @@
    "stay"
   ],
   "F5": [
+   "contact",
    "rating",
    "more",
    "pays",
@@ -658,35 +664,41 @@
    "stay"
   ],
   "R1": [
+   "contact",
    "rating",
    "pays",
    "checkfirst",
    "stay"
   ],
   "R2": [
+   "contact",
    "rating",
    "pays",
    "checkfirst",
    "stay"
   ],
   "G": [
+   "contact",
    "life",
    "value",
    "checkfirst"
   ],
   "I": [
+   "contact",
    "pays",
    "checkfirst",
    "stay"
   ],
   "J": [
    "received",
+   "contact",
    "pays",
    "checkfirst",
    "stay"
   ],
   "K": [
    "outstanding",
+   "contact",
    "checkfirst"
   ],
   "T": [

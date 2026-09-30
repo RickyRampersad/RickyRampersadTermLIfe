@@ -2200,7 +2200,7 @@ function transitionData_(code) {
    the letters cannot disagree about what was asked. */
 var T_RISK = {
   approached_yes: 'someone has already approached them',
-  contact_yes: 'the terminated agent has been in touch',
+  contact_yes: 'their former agent has been in touch since leaving',   // every letter asks it since 30 September 2026, T's book and the resigned books alike
   review_approached: 'said in the review that someone has been in touch about moving or replacing the policy',
   rate_better: 'rated us "could be better"',
   stay_talk: 'wants to talk it through before staying',
@@ -2436,7 +2436,7 @@ function tInsights_(windowDays) {
     if (response.approached) {
       var top = list('agent', function (a, b) { return b.approached - a.approached; })[0];
       lines.push(response.approached + ' client' + (response.approached === 1 ? '' : 's') + ' say' + (response.approached === 1 ? 's' : '') +
-        ' someone has already approached them' + (told1('contact', 'contact_yes') ? ', or that the terminated agent has been in touch' : '') +
+        ' someone has already approached them' + (told1('contact', 'contact_yes') ? ', or that their former agent has been in touch since leaving' : '') +
         (top && top.approached ? ' — the most from ' + top.key + '\'s former book (' + top.approached + ')' : '') + '. Each is a call before anything else.');
     }
     if (told.rating) {
