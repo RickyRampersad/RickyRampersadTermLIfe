@@ -537,9 +537,11 @@ voice under the new timing and the caption gives it away.
   they are telling clients they are still with the company". So every letter
   except T and T1 now carries Guardian Life's own notice, in letter T's
   pattern (`NOTICE_R` in build-letters.py): "Guardian Life of the Caribbean
-  accepted the resignation of your agent, <name>, with immediate effect on
-  21 September 2026. <First name> is no longer authorised to conduct any
-  business on behalf of Guardian Life." The agents' own letters said 30
+  has accepted the resignation of your agent, <name>, effective 21 September
+  2026. <First name> is no longer authorised to conduct any business on
+  behalf of Guardian Life." (Until noon on 30 September it read "accepted …
+  with immediate effect on 21 September"; the manager: "we have accepted the
+  resignation effective 21st Sept".) The agents' own letters said 30
   September; Guardian Life accepted each with immediate effect on the 21st.
   The date is the same for all ten agents, Tricia Baksh included, and is
   `RESIGNED_ON`. Under it goes "What this means for you" (`WHAT_NOW`):
@@ -553,13 +555,16 @@ voice under the new timing and the caption gives it away.
   for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
   should persons need to call to confirm"; later the same day, the "head
   office contact"): every letter, T and T1 included, ends its notice card
-  with "To confirm this notice, call the Sales Admin Department at Guardian
-  Life's head office in Westmoorings on (868) 226-2479" (`CONFIRM`), and the
-  first line of what to do says "call head office" on the same number, as a
-  `tel:` link a phone dials in one tap. Naming head office matters: the
-  client hears it from the company, not from the branch that wrote the
-  letter. Sales Admin has to know those calls are coming before the letters
-  carry the number. The call scripts (`call-script.html`,
+  with "To confirm this notice, call Guardian Life on (868) 226-6944"
+  (`CONFIRM`), and the first line of what to do says "call Guardian Life" on
+  the same number, as a `tel:` link a phone dials in one tap. The number was
+  226-2479, Sales Admin at head office, until noon on 30 September, when the
+  manager moved it to 226-6944, the line he calls myGG ("urgently need to
+  change the contact number to 2266944 (mygg)"); the 175 letters sent that
+  morning carry the old one, and Sales Admin still answers it. The letter
+  names the company, not a department: the client hears it from Guardian
+  Life, not from the branch that wrote the letter. Whoever answers the
+  number has to know those calls are coming. The call scripts (`call-script.html`,
   `client-support.html`) read the same notice word for word and give the
   same number. When a client repeats something a former agent said, that
   they still act for Guardian Life or anything about the branch, the caller
@@ -695,8 +700,8 @@ voice under the new timing and the caption gives it away.
   subject is `Reminder: <first name> has resigned and is no longer with
   Guardian Life. …`: `tSendRow_` puts "Reminder:" in place of "Important:",
   never both. Its line above the greeting (`REMIND_R`) says it is "an
-  important update on your agent's resignation, with a number at head
-  office to confirm it". T and T1 keep "an important update about your
+  important update on your agent's resignation, with a Guardian Life
+  number to confirm it". T and T1 keep "an important update about your
   agent" (`REMIND`): that book's agent did not resign.
 - **Quick checks, answered in the e-mail itself.** First two questions on
   24 September — questions that would show a client what nobody had told

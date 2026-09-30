@@ -364,8 +364,8 @@ NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agen
 # The name sits between the <!--agent--> marks; without one the notice reads "your agent … Your
 # representative", which is what {{agent_or_rep}} gives.
 RESIGNED_ON = '21 September 2026'
-NOTICE_R = ('Guardian Life of the Caribbean accepted the resignation of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
-            f'with immediate effect on {RESIGNED_ON}.',
+NOTICE_R = ('Guardian Life of the Caribbean has accepted the resignation of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
+            f'effective {RESIGNED_ON}.',
             '{{agent_or_rep}} is no longer authorised to conduct any business on behalf of Guardian Life.')
 POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looked after by our branch team.'
 # A telephone number to confirm the notice (30 September 2026, the manager: "226-2479 is our Sales Admin Department
@@ -374,13 +374,16 @@ POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looke
 # included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
 # The same afternoon the manager called it the "head office contact", and the letters name it so: the client
 # hears it from the company's head office, not from the branch that wrote the letter.
-CONFIRM_TEL, CONFIRM_HREF = '(868) 226-2479', 'tel:+18682262479'
-CONFIRM = "To confirm this notice, call the Sales Admin Department at Guardian Life's head office in Westmoorings on [[tel]]."
+# At noon the same day the number became 226-6944, the line the manager calls myGG ("urgently need to change the contact
+# number to 2266944 (mygg)"), and the notice "we have accepted the resignation effective 21st Sept". The letters name the
+# company, not a department: the client hears it from Guardian Life.
+CONFIRM_TEL, CONFIRM_HREF = '(868) 226-6944', 'tel:+18682266944'
+CONFIRM = 'To confirm this notice, call Guardian Life on [[tel]].'
 # What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
 # and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
 WHAT_NOW_HEAD = 'What this means for you'
 WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check before you sign or pay '
-            'anything: call head office on [[tel]], or reply to this e-mail. A person reads it the same day.',
+            'anything: call Guardian Life on [[tel]], or reply to this e-mail. A person reads it the same day.',
             'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
             'anyone outside Guardian Life or our branch.']
 WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
@@ -653,7 +656,7 @@ REMIND = ('We wrote to you on {{sent_on}}.',
 # office contact"). The clients written to on 25 September read "moved on"; the reminder is where they first read the
 # resignation, so it says so above the greeting. T and T1 keep the one above: that book's agent did not resign.
 REMIND_R = ('We wrote to you on {{sent_on}}.',
-            "This is an important update on your agent's resignation, with a number at head office to confirm it. Your "
+            "This is an important update on your agent's resignation, with a Guardian Life number to confirm it. Your "
             'letter is below again: a minute, one tap each. If you have answered already, thank you.')
 
 
