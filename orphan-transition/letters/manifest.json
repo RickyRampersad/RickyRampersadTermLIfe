@@ -125,7 +125,7 @@
   {
    "segment": "A",
    "name": "A policy has matured, or is about to",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. The money in your policy is still yours.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. The money in your policy is still yours.",
    "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
    "file": "A.html",
    "facts": [
@@ -157,7 +157,7 @@
   {
    "segment": "F1",
    "name": "In force \u2014 under two years",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
    "file": "F1.html",
    "facts": [
@@ -186,7 +186,7 @@
   {
    "segment": "F2",
    "name": "In force \u2014 two to three years",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
    "file": "F2.html",
    "facts": [
@@ -215,7 +215,7 @@
   {
    "segment": "F3",
    "name": "In force \u2014 three to five years",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "Everything your policy has built is still yours. We would like your view.",
    "file": "F3.html",
    "facts": [
@@ -244,7 +244,7 @@
   {
    "segment": "F4",
    "name": "In force \u2014 five to ten years",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
    "file": "F4.html",
    "facts": [
@@ -273,7 +273,7 @@
   {
    "segment": "F5",
    "name": "In force \u2014 ten years or more",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "Every year of your cover is still yours. Your view matters most to us.",
    "file": "F5.html",
    "facts": [
@@ -302,7 +302,7 @@
   {
    "segment": "R1",
    "name": "In force \u2014 cover started again in the last three years",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
    "file": "R1.html",
    "facts": [
@@ -332,7 +332,7 @@
   {
    "segment": "R2",
    "name": "In force \u2014 cover started again, more than three years ago",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy has not changed.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
    "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
    "file": "R2.html",
    "facts": [
@@ -362,7 +362,7 @@
   {
    "segment": "G",
    "name": "Lapsed",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your policy may still hold value.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy may still hold value.",
    "preheader": "A policy that stopped does not always stop being worth something.",
    "file": "G.html",
    "facts": [
@@ -390,7 +390,7 @@
   {
    "segment": "I",
    "name": "A premium showing as due",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. A premium is showing as due.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. A premium is showing as due.",
    "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
    "file": "I.html",
    "facts": [
@@ -421,7 +421,7 @@
   {
    "segment": "J",
    "name": "Contract collected for delivery, never acknowledged",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Has your policy contract reached you?",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Has your policy contract reached you?",
    "preheader": "Your policy is in force. We need to be sure the contract itself reached you.",
    "file": "J.html",
    "facts": [
@@ -453,7 +453,7 @@
   {
    "segment": "K",
    "name": "An application still in progress",
-   "subject": "Important: {{agent_or_rep}} is no longer with Guardian Life. Your application continues with us.",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your application continues with us.",
    "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
    "file": "K.html",
    "facts": [

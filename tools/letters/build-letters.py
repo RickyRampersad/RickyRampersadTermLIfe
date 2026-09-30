@@ -372,13 +372,15 @@ POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looke
 # at Westmoorings, should persons need to call to confirm"). A client who is told otherwise can check the notice
 # with the company's own office instead of taking the letter's word for it. It is on every letter, T and T1
 # included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
+# The same afternoon the manager called it the "head office contact", and the letters name it so: the client
+# hears it from the company's head office, not from the branch that wrote the letter.
 CONFIRM_TEL, CONFIRM_HREF = '(868) 226-2479', 'tel:+18682262479'
-CONFIRM = 'To confirm this notice, call our Sales Admin Department at Westmoorings on [[tel]].'
+CONFIRM = "To confirm this notice, call the Sales Admin Department at Guardian Life's head office in Westmoorings on [[tel]]."
 # What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
 # and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
 WHAT_NOW_HEAD = 'What this means for you'
-WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check with us before you sign or pay '
-            'anything: call [[tel]] or reply to this e-mail. A person reads it the same day.',
+WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check before you sign or pay '
+            'anything: call head office on [[tel]], or reply to this e-mail. A person reads it the same day.',
             'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
             'anyone outside Guardian Life or our branch.']
 WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
@@ -647,6 +649,16 @@ FLOW_HEAD = 'What happens after you tap'
 # so on a first send the fact cut removes the banner whole.
 REMIND = ('We wrote to you on {{sent_on}}.',
           'This is an important update about your agent, with your letter again below: a minute, one tap each. If you have answered already, thank you.')
+# The resignation letters' own banner (30 September 2026, the manager: the reminder should "state resigned and head
+# office contact"). The clients written to on 25 September read "moved on"; the reminder is where they first read the
+# resignation, so it says so above the greeting. T and T1 keep the one above: that book's agent did not resign.
+REMIND_R = ('We wrote to you on {{sent_on}}.',
+            "This is an important update on your agent's resignation, with a number at head office to confirm it. Your "
+            'letter is below again: a minute, one tap each. If you have answered already, thank you.')
+
+
+def remind_words(cfg):
+    return REMIND if cfg.get('notice') == 'terminated' else REMIND_R
 
 
 def flow_block():
@@ -662,10 +674,11 @@ def flow_block():
 </td></tr></table>"""
 
 
-def remind_block():
+def remind_block(cfg):
+    words = remind_words(cfg)
     return f"""<!--fact:sent_on--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
     <td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:12px;padding:11px 15px;font:400 13.5px/1.5 {BODY};color:{BODYC}">
-    <b style="color:{INK}">{REMIND[0]}</b> {REMIND[1]}</td></tr></table><!--/fact-->
+    <b style="color:{INK}">{words[0]}</b> {words[1]}</td></tr></table><!--/fact-->
   """
 
 
@@ -730,7 +743,7 @@ def letter_table(seg, cfg, preview=False):
 </td></tr>
 
 <tr><td class="pad" style="padding:24px 26px 8px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
-  {remind_block()}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
+  {remind_block(cfg)}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
   {notice}
   <p style="margin:0 0 16px">{cfg['open']}</p>
   {facts_block(cfg)}
@@ -878,7 +891,8 @@ def plain_letter(seg, cfg):
                                      f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
                                      f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
     flow = f'<h3>{FLOW_HEAD}</h3><ol>' + ''.join(f'<li><b>{t}</b><br>{x}</li>' for t, x in FLOW) + '</ol>'
-    remind = f'<!--fact:sent_on--><p><b>{REMIND[0]}</b> {REMIND[1]}</p><!--/fact-->'
+    words = remind_words(cfg)
+    remind = f'<!--fact:sent_on--><p><b>{words[0]}</b> {words[1]}</p><!--/fact-->'
     return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
             f'<h2>{cfg["headline"]}</h2>{remind}'
             f'<p>Dear {{{{first_name}}}},</p>'

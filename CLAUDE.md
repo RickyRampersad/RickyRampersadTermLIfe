@@ -551,12 +551,15 @@ voice under the new timing and the caption gives it away.
   never that anyone is saying otherwise, and no adjective about anyone: the
   facts answer them. **A client can confirm the notice by telephone**, asked
   for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
-  should persons need to call to confirm"): every letter, T and T1 included,
-  ends its notice card with "To confirm this notice, call our Sales Admin
-  Department at Westmoorings on (868) 226-2479" (`CONFIRM`), and the first
-  line of what to do gives the same number, as a `tel:` link a phone dials
-  in one tap. Sales Admin has to know those calls are coming before the
-  letters carry the number. The call scripts (`call-script.html`,
+  should persons need to call to confirm"; later the same day, the "head
+  office contact"): every letter, T and T1 included, ends its notice card
+  with "To confirm this notice, call the Sales Admin Department at Guardian
+  Life's head office in Westmoorings on (868) 226-2479" (`CONFIRM`), and the
+  first line of what to do says "call head office" on the same number, as a
+  `tel:` link a phone dials in one tap. Naming head office matters: the
+  client hears it from the company, not from the branch that wrote the
+  letter. Sales Admin has to know those calls are coming before the letters
+  carry the number. The call scripts (`call-script.html`,
   `client-support.html`) read the same notice word for word and give the
   same number. When a client repeats something a former agent said, that
   they still act for Guardian Life or anything about the branch, the caller
@@ -679,13 +682,22 @@ voice under the new timing and the caption gives it away.
   site and the team page, and the client gets the plain one.
 - **Every subject line is the notice.** Decided 24 September ("on the
   subject line shall we put the names … more catchy"). Since 30 September
-  it reads `Important: {{agent_or_rep}} is no longer with Guardian Life.`
-  followed by a short tail: "Your policy has not changed." on the in-force
-  and check letters, and the urgent point on the action letters.
-  `{{agent_or_rep}}` is the agent's first name, or "Your representative"
-  when the sheet has none, filled by `fill-plain.py` and by `tFill_` in
-  Transition.gs alike. The reminder's line above the greeting says it is
-  "an important update about your agent".
+  it reads `Important: {{agent_or_rep}} has resigned and is no longer with
+  Guardian Life.` followed by a short tail: "Your policy has not changed."
+  on the in-force and check letters, and the urgent point on the action
+  letters. `{{agent_or_rep}}` is the agent's first name, or "Your
+  representative" when the sheet has none, filled by `fill-plain.py` and by
+  `tFill_` in Transition.gs alike. **The reminder says "resigned" first.**
+  Asked for the same day ("on the reminder email on follow up we can adjust
+  to state resigned and head office contact"): the clients written to on 25
+  September read "moved on", and their reminder, their own letter fetched
+  from the site again, is where they first read the resignation. Its
+  subject is `Reminder: <first name> has resigned and is no longer with
+  Guardian Life. …`: `tSendRow_` puts "Reminder:" in place of "Important:",
+  never both. Its line above the greeting (`REMIND_R`) says it is "an
+  important update on your agent's resignation, with a number at head
+  office to confirm it". T and T1 keep "an important update about your
+  agent" (`REMIND`): that book's agent did not resign.
 - **Quick checks, answered in the e-mail itself.** First two questions on
   24 September — questions that would show a client what nobody had told
   them. A letter may not say or suggest that; it asks what the client

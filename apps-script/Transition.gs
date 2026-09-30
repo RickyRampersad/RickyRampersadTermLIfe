@@ -521,7 +521,8 @@ function tSendRow_(row, letters) {
   var seg = tText_(row.Segment).toUpperCase();
   var L = letters[seg];
   var subject = tFill_(L.subject, row).replace(/<[^>]+>/g, '');
-  if (tText_(row.sent_on)) subject = 'Reminder: ' + subject;   // the same letter once more (tRemind_)
+  /* the same letter once more (tRemind_, tSendAgain_): "Reminder:" in place of the notice's "Important:", never both */
+  if (tText_(row.sent_on)) subject = 'Reminder: ' + subject.replace(/^Important:\s*/i, '');
   var html = tFill_(L.html, row);
   /* A field this script does not know goes out as {{name}} in the client's own
      letter. That means the letters on the site are newer than this file: stop
