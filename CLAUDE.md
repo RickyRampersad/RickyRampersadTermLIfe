@@ -549,8 +549,20 @@ voice under the new timing and the caption gives it away.
   agent, <first name>, been in touch with you since 21 September?", and a
   yes brings a call. Still never why anyone left, never where they went,
   never that anyone is saying otherwise, and no adjective about anyone: the
-  facts answer them. The film and the older site pages still say "moved on".
-  Letter T keeps its own notice: see its bullet below.
+  facts answer them. **A client can confirm the notice by telephone**, asked
+  for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
+  should persons need to call to confirm"): every letter, T and T1 included,
+  ends its notice card with "To confirm this notice, call our Sales Admin
+  Department at Westmoorings on (868) 226-2479" (`CONFIRM`), and the first
+  line of what to do gives the same number, as a `tel:` link a phone dials
+  in one tap. Sales Admin has to know those calls are coming before the
+  letters carry the number. The call scripts (`call-script.html`,
+  `client-support.html`) read the same notice word for word and give the
+  same number. When a client repeats something a former agent said, that
+  they still act for Guardian Life or anything about the branch, the caller
+  answers none of it, gives the number, and notes who, when, how and what,
+  in the client's words. The film and the older site pages still say
+  "moved on". Letter T keeps its own notice: see its bullet below.
 - **Segment counts, client names and per-book figures stay outside the
   repository.** The segment file, merge file, send list, deep-dive report and
   household list are built in the session scratchpad from the Branch

@@ -368,11 +368,17 @@ NOTICE_R = ('Guardian Life of the Caribbean accepted the resignation of your age
             f'with immediate effect on {RESIGNED_ON}.',
             '{{agent_or_rep}} is no longer authorised to conduct any business on behalf of Guardian Life.')
 POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looked after by our branch team.'
+# A telephone number to confirm the notice (30 September 2026, the manager: "226-2479 is our Sales Admin Department
+# at Westmoorings, should persons need to call to confirm"). A client who is told otherwise can check the notice
+# with the company's own office instead of taking the letter's word for it. It is on every letter, T and T1
+# included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
+CONFIRM_TEL, CONFIRM_HREF = '(868) 226-2479', 'tel:+18682262479'
+CONFIRM = 'To confirm this notice, call our Sales Admin Department at Westmoorings on [[tel]].'
 # What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
 # and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
 WHAT_NOW_HEAD = 'What this means for you'
 WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check with us before you sign or pay '
-            'anything. Reply to this e-mail: a person reads it the same day.',
+            'anything: call [[tel]] or reply to this e-mail. A person reads it the same day.',
             'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
             'anyone outside Guardian Life or our branch.']
 WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
@@ -663,9 +669,21 @@ def remind_block():
   """
 
 
-def what_now_items(cfg):
+def tel(text, plain=False):
+    """The Sales Admin number where [[tel]] stands: a link a phone dials with one tap."""
+    a = (f'<a href="{CONFIRM_HREF}"><b>{CONFIRM_TEL}</b></a>' if plain else
+         f'<a href="{CONFIRM_HREF}" style="color:{INK};font-weight:800;text-decoration:none;white-space:nowrap">{CONFIRM_TEL}</a>')
+    return text.replace('[[tel]]', a)
+
+
+def confirm_row():
+    return (f'<div style="margin-top:10px;padding-top:9px;border-top:1px solid #dbe6ec;font:400 14px/1.5 {BODY};color:{BODYC}">'
+            f'<span style="color:{GOLD};font-weight:800">&#9742;</span>&nbsp; {tel(CONFIRM)}</div>')
+
+
+def what_now_items(cfg, plain=False):
     """What the client does now: every letter the two lines, and the letters where nothing needs doing the third."""
-    return WHAT_NOW + ([WHAT_NOW_KEEP] if cfg.get('family') in ('keep', 'return') else [])
+    return [tel(t, plain) for t in WHAT_NOW + ([WHAT_NOW_KEEP] if cfg.get('family') in ('keep', 'return') else [])]
 
 
 def what_now_block(cfg):
@@ -693,7 +711,7 @@ def letter_table(seg, cfg, preview=False):
         f'<b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#9a6a00;margin-bottom:8px">Important notice</b>')
     notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
     <td bgcolor="#f4f8fa" style="background:#f4f8fa;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:12px 16px;font:400 15px/1.55 {BODY};color:{BODYC}">
-    {label}{words}</td></tr></table>{'' if cfg.get('notice') == 'terminated' else what_now_block(cfg)}"""
+    {label}{words}{confirm_row()}</td></tr></table>{'' if cfg.get('notice') == 'terminated' else what_now_block(cfg)}"""
     headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
     # The branch, not the manager's name: the objective is to reassign every
     # client urgently, so the closing says the match is already under way.
@@ -836,11 +854,12 @@ def plain_service(cfg):
 
 
 def plain_notice(cfg):
+    confirm = f'<p>{tel(CONFIRM, True)}</p>'
     if cfg.get('notice') == 'terminated':
-        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>'
-    items = ''.join(f'<li>{t}</li>' for t in what_now_items(cfg))
+        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>{confirm}'
+    items = ''.join(f'<li>{t}</li>' for t in what_now_items(cfg, True))
     return (f'<p><b>Important notice. {NOTICE_R[0]} {NOTICE_R[1]}</b> {cfg.get("policy_line", POLICY_LINE)}</p>'
-            f'<h3>{WHAT_NOW_HEAD}</h3><ul>{items}</ul>')
+            f'{confirm}<h3>{WHAT_NOW_HEAD}</h3><ul>{items}</ul>')
 
 
 def plain_letter(seg, cfg):
