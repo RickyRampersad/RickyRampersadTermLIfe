@@ -1340,13 +1340,13 @@ function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page); }
  *  Each row it thanks is marked [receipt] in its Note cell, appended, so a
  *  human note there survives and the same tap is never thanked twice. */
 function tReceipts_() {
-  var out = { sent: 0, waiting: 0, held: 0 };
+  var out = { sent: 0, waiting: 0, held: 0, repeat: 0 };
   var sh, last;
   try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
   if (!sh || last < 2) return out;
   var vals;
   try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
-  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [];
+  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [], prior = {};
   for (var i = 0; i < vals.length; i++) {
     var v = vals[i], received = v[0] instanceof Date ? v[0] : null;
     if (!received) continue;
@@ -1354,7 +1354,12 @@ function tReceipts_() {
     if (!tokens[token]) continue;                                    // not this campaign's token: never touched
     if (tAssignRow_(v[5])) continue;                                 // an agent named from the board: the branch's note, nothing the client said
     var note = String(v[10] || '');
-    if (note.indexOf('[receipt]') >= 0) continue;                    // thanked already
+    if (note.indexOf('[receipt]') >= 0) {                            // seen by a run already: what it answered, and whether a receipt thanked it
+      var p = prior[token] || (prior[token] = { thanked: {}, answered: {} }), pq = tQOf_(v[5]);
+      if (pq) p.answered[pq] = 1;
+      if (!/\[receipt\] (held|by phone|no e-mail)/.test(note)) p.thanked[pq || String(v[3] || '').trim().toLowerCase()] = 1;
+      continue;
+    }
     if (now - received > 14 * 86400000) continue;                    // long before the receipts ran: left alone
     if (!groups[token]) { groups[token] = { rows: [], newest: received }; order.push(token); }
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
@@ -1386,6 +1391,16 @@ function tReceipts_() {
     if (formTap) { if (reviews === null) reviews = tReviewMap_(); review = reviews['transition:' + tok] || null; }
     var ageMin = (now - g.newest) / 60000;
     if (ageMin < TRANSITION.RECEIPT_WAIT_MIN || (formTap && !review && ageMin < TRANSITION.RECEIPT_FORM_WAIT_MIN)) { out.waiting++; continue; }
+    /* one receipt per answer, ever (1 October 2026): a client who taps an answer they were already thanked for is not
+       thanked again. Until then 60 of the first 278 clients' receipts did only that, one client four times for the same
+       "No" between 9 pm and 6:30 am. A reply with words of its own, or a tap that opens the form, is never a repeat. */
+    var pr = prior[tok];
+    if (pr && g.rows.every(function (x) { return !x.via && !/^(urgent|review|selfserve)$/.test(x.r) && pr.thanked[x.q || x.r]; })) {
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] repeat: thanked before'); }); } catch (e) {}
+      out.repeat++;
+      continue;
+    }
+    if (pr) g.prior = pr.answered;                                   // so the receipt never offers a question answered before
     if (budget <= 0) { out.held++; continue; }
     var row = tokens[tok], to = tText_(row.Email);
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) {
@@ -1419,7 +1434,8 @@ function tReceipts_() {
       out.sent++; budget--;
     } catch (e) { log_('transition', 'receipt-failed', String(e && e.message ? e.message : e)); }
   }
-  if (out.sent || out.held) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held');
+  if (out.sent || out.held || out.repeat) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
+    (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : ''));
   return out;
 }
 
@@ -1519,6 +1535,7 @@ function tReceiptMail_(rc, row, g, review) {
   if (j.questions && j.reply) {
     var answered = {};
     rows.forEach(function (x) { if (x.q) answered[x.q] = 1; });
+    Object.keys(g.prior || {}).forEach(function (q) { answered[q] = 1; });   // and what they answered before this receipt
     var seg = tText_(row.Segment).toUpperCase(), tokv = tText_(row.Token);
     var keys = ((j.segments || {})[seg] || []).concat(['reach']).concat(rows.some(function (x) { return x.r === 'callme'; }) ? ['when'] : []);
     keys.forEach(function (k) {

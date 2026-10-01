@@ -958,6 +958,19 @@ voice under the new timing and the caption gives it away.
   before the branch's go. A client who tapped the letter and was also
   called gets a receipt for the taps alone. `health/receipt-guard-harness.js`
   in the session scratchpad runs `tReceipts_` in Node on those cases.
+  **One receipt per answer, ever** (1 October 2026). A run used to look
+  only at the taps not yet marked, so a client who tapped an answer again
+  was thanked again for it: 60 of the first 278 clients' receipts did only
+  that. One client had four for the same "No" between 9 pm and 6:30 am. A
+  later receipt could also offer questions answered in an earlier one.
+  `tReceipts_` now remembers what each client was thanked for and what
+  they answered. A batch made only of answers already thanked is marked
+  `[receipt] repeat: thanked before` and sends nothing. A receipt never
+  offers a question answered before (`g.prior`). A reply with words of its
+  own, or a tap that opens the form, is never a repeat. An answer whose
+  receipt was held, or taken on a call, was never thanked, so a genuine
+  tap of it is. `health/receipt-repeat-harness.js` covers it (15 checks,
+  7 of them failing on the previous script).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
