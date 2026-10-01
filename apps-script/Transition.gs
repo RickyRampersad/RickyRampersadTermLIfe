@@ -2972,7 +2972,10 @@ function tLinkFamily_(a, b) {
 /** The roster off the Agent Skill Bank, with the columns the board needs.
  *  skillBank_ (Service.gs) reads the fixed columns; this also takes a Phone
  *  (or Mobile, WhatsApp, Cell) column and Areas covered if they are there,
- *  so an introduction can carry a number. Rows with Active = No stay off. */
+ *  so an introduction can carry a number. A row whose Active reads No, Not
+ *  Active, Inactive, Resigned or Terminated stays off, and its code opens
+ *  nothing: the branch writes "Not Active" (1 October 2026). */
+var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
 function tRoster_() {
   var out = [];
   try {
@@ -2984,7 +2987,7 @@ function tRoster_() {
     };
     t.rows.forEach(function (r) {
       var name = col(r, ['agent']);
-      if (!name || /^no$/i.test(col(r, ['active']))) return;
+      if (!name || T_INACTIVE.test(col(r, ['active']))) return;
       out.push({ name: name, no: col(r, ['agent no.']), email: col(r, ['email', 'e-mail']), phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']),
                  areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']), portal: col(r, ['portal code']) });
     });
@@ -2993,28 +2996,40 @@ function tRoster_() {
 }
 
 /** Who is asking. The branch code: the whole board, or one agent's list when
- *  a name comes with it. An agent's own portal code: their list. Never the
- *  roster's codes back out. */
+ *  an agent's name or number comes with it. An agent: their agent number (or
+ *  name) and their own portal code, both, so a code opens only the list of
+ *  the agent it belongs to (1 October 2026: "agent Number, and name and
+ *  code"). Never the roster's codes back out, and a refusal never says which
+ *  of the two was wrong. */
 function tWho_(code, who) {
   code = String(code || '').trim().toUpperCase();
-  who = String(who || '').trim();
+  who = String(who || '').trim().replace(/\s+/g, ' ');
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
   var roster = tRoster_(), configured = !!(branch || roster.length);
   var refuse = function (msg) { return { ok: false, refused: true, configured: configured, error: msg }; };
-  if (!code) return refuse('Enter the branch code, or your own code from the Agent Skill Bank.');
+  if (!code) return refuse('Enter your agent number and your code, or the branch code.');
   var pick = function (a) { return { name: a.name, email: a.email, phone: a.phone, areas: a.areas }; };
+  var w = who.toLowerCase(), wn = w.replace(/[^a-z0-9]/g, '');
+  var digits = function (s) { return s.replace(/^[a-z]+/, ''); };
+  var isMe = function (a) {                                  // A10024, a10024, 10024 or the name as on the Skill Bank
+    if (!w) return false;
+    if (a.name.toLowerCase().replace(/\s+/g, ' ') === w) return true;
+    var no = String(a.no || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    return !!no && !!wn && (no === wn || (/^\d+$/.test(digits(no)) && digits(no) === digits(wn)));
+  };
   if (branch && code === branch) {
     if (!who) return { ok: true, role: 'branch', me: null, configured: true };
     var named = null;
-    roster.forEach(function (a) { if (a.name.toLowerCase() === who.toLowerCase()) named = a; });
-    if (!named) return refuse('We do not have an agent by that name on the roster. Check the spelling against the Agent Skill Bank.');
+    roster.forEach(function (a) { if (isMe(a)) named = a; });
+    if (!named) return refuse('We do not have an agent by that name or number on the roster. Check it against the Agent Skill Bank.');
     return { ok: true, role: 'agent', me: pick(named), viaBranch: true, configured: true };
   }
+  if (!who) return refuse('Enter your agent number with your code.');
   var mine = null;
-  roster.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) mine = a; });
+  roster.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code && isMe(a)) mine = a; });
   if (mine) return { ok: true, role: 'agent', me: pick(mine), configured: true };
   return refuse(configured
-    ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
+    ? 'That agent number and code do not match. Check both, or ask the branch for your code.'
     : 'Not open yet: set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.');
 }
 

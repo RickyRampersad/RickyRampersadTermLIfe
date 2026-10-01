@@ -251,14 +251,14 @@
   <section id="gate">
     <p class="internal">Internal &middot; client information</p>
     <h1>Who is looking after <em>whom</em></h1>
-    <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. The branch code opens the whole board. An agent&rsquo;s own code from the Agent Skill Bank opens their list; so does the branch code with the agent&rsquo;s name.</p>
+    <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. An agent opens their own list with their agent number and their own code. The branch code opens the whole board, and with an agent&rsquo;s number or name, that agent&rsquo;s list.</p>
     <form class="gatecard" id="gateForm" autocomplete="off">
+      <label for="who">Agent number <span style="font-weight:500;text-transform:none;letter-spacing:0">(blank with the branch code, for the whole board)</span></label>
+      <input id="who" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. A10024">
       <label for="code">Code</label>
-      <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="the branch code, or your own">
-      <label for="who">Your name <span style="font-weight:500;text-transform:none;letter-spacing:0">(agents using the branch code)</span></label>
-      <input id="who" type="text" autocomplete="off" placeholder="as it is on the Agent Skill Bank">
+      <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="your own code, or the branch code">
       <button type="submit">Open</button>
-      <p class="hint">Nothing on this page leaves the sheet. A name written here goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read.</p>
+      <p class="hint">Nothing on this page leaves the sheet. When you mark a call, your name goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read.</p>
       <div class="box" id="gateErr"></div>
     </form>
   </section>

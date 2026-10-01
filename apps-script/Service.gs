@@ -1815,7 +1815,7 @@ function skillBank_() {
              skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
              langs: col(r, 'Languages'), active: col(r, 'Active'),
              portal: col(r, 'Portal code') };
-  }).filter(function (a) { return a.name && !/^no$/i.test(a.active); });
+  }).filter(function (a) { return a.name && !/^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i.test(String(a.active || '').trim()); });
 }
 
 function sendMatchAssignment() {

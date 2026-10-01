@@ -2060,10 +2060,36 @@ voice under the new timing and the caption gives it away.
   a client Salesforce names to an agent is on that agent's list in
   `assign.html`. A client who never answered appears as a "named, no answer
   yet" card. Where the board and Salesforce name different agents, the
-  newer name wins. An agent's code is the Portal code on the Agent Skill
-  Bank. The codes are made in the scratchpad and never enter the
-  repository. The follow-up note holds for a client Salesforce names, as it
-  does for one named on the board. The wall on factfind360.com was
+  newer name wins. An agent opens their list with **their agent number and
+  their own code, both** ("agent Number, and name and code", 1 October
+  2026). The number is the Agent no. on the Agent Skill Bank (A10024,
+  10024, or the name as written there), and the code is that row's Portal
+  code. A code opens only the list of the agent it belongs to, a code with
+  no number opens nothing, and a refusal never says which of the two was
+  wrong. The codes are eight digits, because the gate shows a number pad.
+  They are made in the scratchpad and never enter the repository. **They
+  are not the Branch Portfolio's passwords.** Those run 1 to 33 in list
+  order, and on 1 October that list still showed the departed agents as
+  Active, so one guessed code would show an agent's orphan clients and
+  what they told us. The Skill Bank's Active column locks a person out
+  when it reads No, Not Active, Inactive, Resigned or Terminated
+  (`T_INACTIVE`; until 1 October only "No" did). The follow-up note holds
+  for a client Salesforce names, as it does for one named on the board.
+  **On 1 October 2026 the live web app still answered `campaign: 2`**, so
+  the board, its login included, answered nobody. Its routes are in
+  `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the
+  branch code back into TEAM_CODE, and publish a New version.
+  **The departed agents in Salesforce** are Contacts of record type AGENT.
+  Their Employment Status reads Resigned for nine, set by sales support
+  on 29 September, and Not Active for Jesus Boodhoo and Aidan Eugene.
+  Their Termination Date reads 21 September for the ten who resigned; it
+  was set on 1 October at the manager's word ("the resignation date
+  should be the 21st September"). Before that, nine read 30 September,
+  the date in the agents' own letters, and Jesus Boodhoo's read 25
+  February 2026. Aidan Eugene's contract was terminated, not resigned:
+  his record reads 10 September, and the branch's reports say 9.
+  Salesforce has no separate resignation-date field. Only Kerwyn Ramroach
+  ever had a Salesforce login, and both of his are inactive. The wall on factfind360.com was
   considered and left alone: the two hosting chains never touch.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
