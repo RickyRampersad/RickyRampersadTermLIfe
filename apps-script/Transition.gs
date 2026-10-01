@@ -751,10 +751,9 @@ var T_REF = /Ref:\s*([A-Za-z0-9_-]{6,64})\s+([a-z]+)(?:\s+([a-z_]+))?/;
 /* ── replies the address alone cannot place (30 September 2026) ──────
    "All responses must have the trail." Until then a reply from an address the
    send tab does not hold, or from an inbox two clients share, was passed over
-   in silence. Charlene Ramlochansingh asked from her work address to cancel her
-   application, and nothing was filed and nothing thanked her. Ganesh Jhury asked
-   twice on 25 September "Can you call me now?" from the inbox he shares with
-   Anya Jhury. A reply to one of our own e-mails (T_OUR_SUBJECT) is now placed by
+   in silence. One client asked from a work address to cancel an application, and
+   nothing was filed and nothing thanked her. Another asked twice on 25 September
+   "Can you call me now?" from an inbox shared with a relative. A reply to one of our own e-mails (T_OUR_SUBJECT) is now placed by
    the first name it greets ("Dear X," in the quoted letter, "Thank you, X." or
    "Still on it, X." in the subject). Among clients at a shared inbox, that name
    is enough. From an address we do not hold, the former agent the subject names
@@ -1096,7 +1095,7 @@ function transitionReceipts() {
 
 /* ── families sharing one inbox ──────────────────────────────────── */
 /** Whether two send rows are one family by name: a surname in common, a married name's either half counting
- *  ("Baksh-Ali" and "Ali"), a lone initial never. */
+ *  ("Persad-Singh" and "Singh"), a lone initial never. */
 function tSurnames_(row) {
   var t = tText_(row.Client).toLowerCase().replace(/[^a-z\-' ]/g, ' ').replace(/-/g, ' ').split(/\s+/).filter(Boolean);
   return t.length > 1 ? t.slice(1) : t;
@@ -1107,7 +1106,7 @@ function tSameFamily_(a, b) {
 }
 /** Whether two send rows sharing an inbox are one person on two client numbers: the same first name and a surname in
  *  common, a letter out allowed ("Mohamed" and "Mohammed"). On 29 September, 23 of the 95 rows the old rule held had the
- *  same name as the client already written to at that inbox (Jeffery Boodhoo on 745444 and 745454); the family rule
+ *  same name as the client already written to at that inbox (one man on two consecutive client numbers); the family rule
  *  would have sent each of them the same letter a second time. A father and son of one name sharing an inbox are held
  *  too, which is a check for Client Support, never a letter lost. */
 function tSamePerson_(a, b) {
@@ -1389,7 +1388,7 @@ function tReceipts_() {
     }
     /* a reply in the client's own words is owed a person's reply, never a machine's (1 October 2026: "please ensure
        no duplicates are triggering to the client once they respond"). Until then every client who wrote in was also
-       sent "Thank you, … We have received your response.": 42 clients by that noon, Orissa Rampersad three minutes
+       sent "Thank you, … We have received your response.": 42 clients by that noon, one of them three minutes
        after the manager had answered her himself, and clients who wrote only "Noted, thank you" were thanked for
        it. The words stay on the record for the board, the digest and the late list; taps sent beside them still
        get their one receipt. A reply that answers a question (a Ref line, the reply mode) is a tap, not words. */
@@ -3227,7 +3226,7 @@ function tBoard_(w, all, lite) {
     silent = [];
   }
   /* households (the Households tab): every member, those on our list and the family who hold policies with other agents,
-     what each holds with us, and who heads it ("have the husband as the Fayad Ali household and include the wife cover so
+     what each holds with us, and who heads it ("have the husband as the <name> household and include the wife cover so
      we can see the wife and his cover as well anyone else who is covered in the household", 29 September 2026). The
      branch sees every member and every figure. An agent sees the members on our list, by name and where they stand, and
      the figures of their own clients only; never who else is covered with other agents. */
@@ -3579,7 +3578,7 @@ function transitionUpdate_(p) {
   /* both refusals come before anything is written, so a refused note never leaves half an update behind */
   if (tell && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
   if (tell && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can e-mail a client from the board.' };
-  /* a family member the client told us about (29 September: "Fayad told me for his wife as well"), put in one household */
+  /* a family member the client told us about (29 September: a client who told the manager about his wife), put in one household */
   var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   if (fam === tok) fam = '';
   if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can link a family.' };
@@ -4426,7 +4425,7 @@ function tProfileFor_(cno) {
   var P = tProfiles_(), b = tBook_(), all = b.by[tCno_(cno)] || [], recs = P.ready ? all : [];
   var o = { dob: '', gender: '', smoker: '', occ: '', emp: '', income: 0, role: '' }, any = false;
   /* who a person is comes from the policies on their own life: a policy the client took out on a child's life carries the
-     child's date of birth and gender (the board read Ria Ramroop-Brijbassie as 5). A policy whose insured is someone
+     child's date of birth and gender (the board read one mother as 5). A policy whose insured is someone
      else by name is left out, unless no policy is on the client's own life, when every one is read as before. */
   var own = recs.filter(function (r) { var p = P.by[r.no]; return p && !tOtherLife_(p.insured, r.client); });
   (own.length ? own : recs).forEach(function (r) {
@@ -4533,7 +4532,7 @@ function tProfileRow_(rec, cno, client) {
     v(rec.ADDAP_Coverage__c), v(rec.WP_Coverage__c), v(rec.Life_Coverage_Expiry__c), v(rec.Benificiary_1__c), v(rec.Benificiary_2__c), v(rec.Benificiary_3__c),
     /* the life insured: INSURED__c is filled on a few policies in a hundred, but the policy record's own name and date of
        birth are always the insured's — the owner's on most, a child's or a spouse's on a policy the owner took out on
-       someone else's life (29 September 2026: Ria Ramroop-Brijbassie owns two on her daughters' lives) */
+       someone else's life (29 September 2026: one mother on these books owns two on her daughters' lives) */
     v(rec.INSURED__c) || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c), 'Salesforce'];
 }
 /** Rewrites the Client Profile tab from Salesforce for these policies, when ServiceSalesforce.gs and its four SF_* Script

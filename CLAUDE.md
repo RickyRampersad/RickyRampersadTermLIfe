@@ -865,10 +865,9 @@ voice under the new timing and the caption gives it away.
   receipt bullet below). **Every response has a trail, even from an address we do
   not hold** (30 September 2026: "all response must have the trail").
   Until then a reply from another address, or from an inbox two clients
-  share, was passed over. Charlene Ramlochansingh asked from her work
-  address to cancel her application, and Ganesh Jhury asked twice to be
-  called from the inbox he shares with Anya Jhury. Neither was filed, and
-  nobody saw them. Now a reply to one of our own e-mails (`T_OUR_SUBJECT`:
+  share, was passed over. One client asked from a work address to cancel
+  an application, and another asked twice to be called from an inbox
+  shared with a relative. Neither was filed, and nobody saw them. Now a reply to one of our own e-mails (`T_OUR_SUBJECT`:
   Re: a letter, a reminder, a receipt, a note) is placed by the first name
   it greets ("Dear X," in the quoted letter, "Thank you, X." in the
   subject). At a shared inbox the name is enough. From an address we do
@@ -975,9 +974,9 @@ voice under the new timing and the caption gives it away.
   7 of them failing on the previous script).
   **No receipt for a reply in the client's own words** (1 October 2026,
   noon: "please ensure no duplicates are triggering to the client once
-  they respond"). Orissa Rampersad replied at 12:00, the manager answered
-  her himself at 12:07, and at 12:10 the receipts run sent her "Thank you,
-  Orissa. We have received your response." as well. By then 42 clients who
+  they respond"). A client replied at 12:00, the manager answered her
+  himself at 12:07, and at 12:10 the receipts run sent her "Thank you,
+  <first name>. We have received your response." as well. By then 42 clients who
   wrote in had had one (45 e-mails), some only for writing "Noted, thank you", some
   minutes before or after the manager's own reply. A client who writes is
   owed a person's reply, as with the follow-up note. `tReceipts_` now marks
@@ -1739,8 +1738,8 @@ voice under the new timing and the caption gives it away.
   brief, and the introductions go one per inbox, never to a held address.
   "Family of someone who answered" lists the members still to reach. The
   rule misses some families: on file, a husband's policy can carry a house
-  number and his wife's a light-pole number on the same street, as Fayad
-  Ali and Nadira Baksh-Ali's do. For those, the update panel's "A family
+  number and his wife's a light-pole number on the same street, as one
+  couple's on these books do. For those, the update panel's "A family
   member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
   branch code only) links the two. It gives them a new number, or joins
   one household to the other, keeping the older number.
@@ -1752,7 +1751,7 @@ voice under the new timing and the caption gives it away.
   same e-mail as row N`: 95 clients, re-held on every run. The manager
   chose the rule that day. A client whose inbox already had a letter gets
   their own when they share a surname with the client written to. A
-  married name counts on either half ("Baksh-Ali" and "Ali"); a lone
+  married name counts on either half ("Persad-Singh" and "Singh"); a lone
   initial never does (`tSameFamily_`). They get it on a later day, because
   an inbox never gets two letters on one day. A different surname may be
   an office's or a relative's inbox. That client is held as `check: shares
@@ -1761,8 +1760,8 @@ voice under the new timing and the caption gives it away.
   "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
   address onto such a row like any other. **One person on two client
   numbers is not a family**: 26 of the 95 had the same name as the client
-  already written to at that inbox (Jeffery Boodhoo on 745444 and
-  745454), and the family rule would have sent each the same letter a
+  already written to at that inbox (one man on two consecutive client
+  numbers), and the family rule would have sent each the same letter a
   second time. `tSamePerson_` (the same first name and a surname in
   common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
   "Ricky") holds such a row as `check: same name and inbox as <name> (client
@@ -1837,8 +1836,8 @@ voice under the new timing and the caption gives it away.
   (36, Playwright, fixtures written by the harness from the backend) in the
   session scratchpad cover it.
 - **Each card says who the client is, and the household shows everyone's
-  cover.** Asked for on 29 September 2026: "have the husband as the Fayad
-  Ali household and include the wife cover so we can see the wife and his
+  cover.** Asked for on 29 September 2026: "have the husband as the <name>
+  household and include the wife cover so we can see the wife and his
   cover as well anyone else who is covered in the household, we should also
   have the occupation and incomes etc as well any other data like
   beneficiary etc to make some insights".
@@ -1853,19 +1852,19 @@ voice under the new timing and the caption gives it away.
   properties that `ServiceSalesforce.gs` uses; until then the imported tab
   stands, and the build's message says which. The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
-  (numbers from 0000745444) carry no `Client_Number__c` there.
+  (numbers from about 0000745000) carry no `Client_Number__c` there.
   **The name and date of birth on a policy record are the life insured's,
   not the owner's.** The portfolio's client is the owner; a policy a
   parent took out on a child's life carries the child's name and birth
-  date (Ria Ramroop-Brijbassie owns two on her daughters' lives, issued at
-  3 and at 0, each paying "Proposer - Female", Ria herself). `INSURED__c` is
+  date (one mother on these books owns two on her daughters' lives, issued
+  at 3 and at 0, each paying "Proposer - Female", the mother herself). `INSURED__c` is
   filled on a few policies in a hundred, so the Insured column is
   `INSURED__c`, else the record's own name (`tProfileRow_`,
   `Client-Profile-v4.xlsx` in the scratchpad for the import). Who a client
   is comes only from policies on their own life (`tOtherLife_`: not the
   same first name with a surname in common or beginning alike), unless
   none is, when every policy is read as before; until 29 September the
-  board took the first birth date it met and read Ria as 5. On the
+  board took the first birth date it met and read that mother as 5. On the
   families' policies that corrected ten ages, and 69 policy lines now say
   whose life they cover. "Proposer" as the beneficiary is on adults'
   policies as often as children's (median issue age 33): it means whoever
@@ -1924,12 +1923,12 @@ voice under the new timing and the caption gives it away.
   clients across the whole portfolio as an office, never links through a
   departed agent's or staff member's own details, never includes a departed
   agent, their household, staff or anyone with a death claim, and carries
-  the links the branch has told us about (`MANUAL`: Fayad Ali and Nadira
-  Baksh-Ali, two addresses for one house). The Client Book build reads
+  the links the branch has told us about (`MANUAL`: one husband and wife
+  whose policies carry two addresses for one house). The Client Book build reads
   those members' policies too. **The head** is the member marked Head on the
   tab, else the adult with the most life cover, then the most premium a
-  year, then the eldest; the household is named after them ("Fayad Ali
-  household"). The panel lists every member, the head first: age and
+  year, then the eldest; the household is named after them ("<head's
+  name> household"). The panel lists every member, the head first: age and
   gender, where they stand, and their cover. It totals the family's life
   cover, critical illness and premium, and names any adult under 65 with no
   life cover with us.
@@ -2081,15 +2080,18 @@ voice under the new timing and the caption gives it away.
   branch code back into TEAM_CODE, and publish a New version.
   **The departed agents in Salesforce** are Contacts of record type AGENT.
   Their Employment Status reads Resigned for nine, set by sales support
-  on 29 September, and Not Active for Jesus Boodhoo and Aidan Eugene.
+  on 29 September, and Not Active for the other two.
   Their Termination Date reads 21 September for the ten who resigned; it
   was set on 1 October at the manager's word ("the resignation date
   should be the 21st September"). Before that, nine read 30 September,
-  the date in the agents' own letters, and Jesus Boodhoo's read 25
-  February 2026. Aidan Eugene's contract was terminated, not resigned:
-  his record reads 10 September, and the branch's reports say 9.
-  Salesforce has no separate resignation-date field. Only Kerwyn Ramroach
-  ever had a Salesforce login, and both of his are inactive. The wall on factfind360.com was
+  the date in the agents' own letters, and one read 25 February 2026.
+  The terminated contract is not a resignation: that record reads 10
+  September, and the branch's reports say 9. Salesforce has no separate
+  resignation-date field. Only one of them ever had a Salesforce login,
+  and both of its accounts are inactive. **Client names stay out of these
+  notes and out of code comments**: the site publishes the repository
+  root, CLAUDE.md and the `.gs` files included, so a name written here is
+  on the open web. Describe the case ("one couple", "a client") instead. The wall on factfind360.com was
   considered and left alone: the two hosting chains never touch.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad

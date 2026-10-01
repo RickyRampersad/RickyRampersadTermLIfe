@@ -478,7 +478,7 @@ function ownLink(c) { return 'https://rickyrampersadbranch.com/your-policy/?t=' 
 /* households (the Households tab): the family on our list, and who of them answered */
 function familyOf(c) { return c && c.hh && D && D.households && D.households[c.hh] ? D.households[c.hh] : null; }
 function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function (m) { return m.state === 'answered'; }); }
-/* 29 September 2026: "have the husband as the Fayad Ali household and include the wife cover so we can see the wife and his
+/* 29 September 2026: "have the husband as the <name> household and include the wife cover so we can see the wife and his
    cover as well anyone else who is covered in the household". Every member, the head first (the Head mark on the tab, else the
    adult with the most life cover): age, where they stand, and what they hold with us. The branch sees everyone, the members
    with other agents included; an agent sees the members on our list and the figures of their own clients alone. */
@@ -985,7 +985,7 @@ function openPanel(token, status) {
     }
   }
   if (N) {
-    /* what the client tells us about their family, when the address rule did not see it (29 September: Fayad and his wife) */
+    /* what the client tells us about their family, when the address rule did not see it (29 September: a husband and his wife) */
     var fam = familyOf(c), others = fam ? fam.filter(function (m) { return m.token !== c.token; }).map(function (m) { return m.client; }) : [];
     h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household)</i></label>' +
       '<input type="text" id="pFam" list="pFamList" autocomplete="off" placeholder="start typing a name"><datalist id="pFamList">' + familyOptions(c) + '</datalist>' +
