@@ -691,7 +691,7 @@ function parseLifeBilling(lines){
         else if(/No of Lives:/i.test(l) && above) out.stated.lives = +above[1];
       }
     }
-    // 187  ABDULLAH MUHAMMED ; NADIRA  100,000.00 … 40.00   (name first)
+    // 187  SURNAME FIRSTNAME ; SPOUSE  100,000.00 … 40.00   (name first)
     const r = /^\s*(\d{3})\s+(.+?)\s{2,}([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s+([\d,]+\.\d{2})\s*$/.exec(l);
     if(r) out.members.push({ cert:r[1], name:r[2].replace(/\s+/g,' ').trim(),
       sumAssured:gmoney(r[3]), adndSum:gmoney(r[4]), basic:gmoney(r[5]),

@@ -149,6 +149,21 @@
   .age{font-family:var(--f);font-weight:800;font-size:var(--body);color:var(--stop);font-variant-numeric:tabular-nums;white-space:nowrap;
     max-width:14ch;overflow:hidden;text-overflow:ellipsis}
 
+  /* ── who looks after whom: the assignment slides ─────────────────────── */
+  .pill.fam{background:rgba(0,207,234,.14);border-color:rgba(0,207,234,.55);color:var(--teal)}
+  .pill.next{border-color:rgba(239,194,75,.5);color:var(--gold)}
+  .qw .to{color:var(--teal);font-family:var(--f);font-weight:700}
+  .agrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:clamp(10px,1.2vw,22px);align-items:baseline;
+    padding:clamp(8px,1.3vh,16px) 0;border-bottom:1px solid var(--line)}
+  .agrow:last-child{border-bottom:0}
+  .agrow b{font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .agrow span{font-size:var(--small);color:var(--dim);display:block;margin-top:3px}
+  .agrow em{font-style:normal;font-family:var(--f);font-weight:800;font-size:var(--big);color:var(--teal);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .daystrip{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(0,1fr);gap:4px;align-items:end;height:clamp(40px,8vh,110px);margin-top:clamp(8px,1.4vh,18px)}
+  .daystrip i{display:block;background:var(--teal);border-radius:4px 4px 0 0;min-height:2px;opacity:.85}
+  .daystrip i.zero{background:rgba(255,255,255,.08)}
+  .daylab{display:flex;justify-content:space-between;font-size:var(--label);color:var(--faint);margin-top:4px}
+
   /* ── the promise ──────────────────────────────────────────────────── */
   .steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(10px,1.2vw,22px);margin:clamp(8px,1.6vh,24px) 0;flex:1;min-height:0}
   .step{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:clamp(14px,2.2vh,30px) clamp(12px,1.4vw,26px);min-width:0;
@@ -293,8 +308,50 @@
     </div>
   </section>
 
-  <!-- 6 · the promise -->
+  <!-- 6 · households with an agent (Salesforce and the board, by household) -->
   <section class="slide" id="s6">
+    <div class="eyebrow">Assigning the books <span id="haVia"></span></div>
+    <div class="fill">
+      <div class="hero teal" id="haHero">&mdash;</div>
+      <div class="ofline"><b id="haOf">of &mdash; households</b><span id="haPct">&mdash;</span></div>
+      <div class="meter"><i id="haMeter"></i></div>
+      <div class="facts">
+        <div class="fact good"><b id="haAns">&mdash;</b><span id="haAnsNote">households who answered have an agent</span></div>
+        <div class="fact"><b id="haClients">&mdash;</b><span>clients named to an agent</span></div>
+        <div class="fact"><b id="haPart">&mdash;</b><span>families to finish</span></div>
+      </div>
+      <div class="daystrip" id="haDays"></div>
+      <div class="daylab"><span id="haDay0"></span><span>clients named, by day</span><span id="haDay1"></span></div>
+    </div>
+  </section>
+
+  <!-- 7 · who looks after whom -->
+  <section class="slide" id="s7">
+    <div class="eyebrow">Who looks after whom</div>
+    <div class="two">
+      <div>
+        <div class="hero" id="agN">&mdash;</div>
+        <p class="say" id="agSay"></p>
+        <p class="say" id="agFb"></p>
+      </div>
+      <div class="fill"><h3>Households each one looks after</h3><div id="agList"></div></div>
+    </div>
+  </section>
+
+  <!-- 8 · the next households to assign -->
+  <section class="slide" id="s8">
+    <div class="eyebrow">Next households to assign <span id="nxNote"></span></div>
+    <div class="two">
+      <div>
+        <div class="hero" id="nxN">&mdash;</div>
+        <p class="say" id="nxSay"></p>
+      </div>
+      <div class="fill" id="nxList"></div>
+    </div>
+  </section>
+
+  <!-- 9 · the promise -->
+  <section class="slide" id="s9">
     <div class="eyebrow">The promise</div>
     <h2>What happens after you tap.</h2>
     <div class="steps">
@@ -324,7 +381,7 @@ try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
    TRANSITION.BATCH, SEND_EVERY_MIN, HOURS and WEEKDAYS in apps-script/Transition.gs
    (weekdays as the sheet counts them, Monday = 1 … Sunday = 7). */
 var SEND = { batch: 120, everyMin: 30, hours: [9, 17], weekdays: [1, 2, 3, 4, 5] };
-var SLIDES = 6, HOLD = 12000, POLL = 90000, GATE_RETRY = 15000;   /* a gate that could not reach the sheet tries again by itself, soon */
+var SLIDES = 9, HOLD = 12000, POLL = 90000, GATE_RETRY = 15000;   /* a gate that could not reach the sheet tries again by itself, soon */
 
 /* The letters, by family. The wall never prints what a letter is about — a
    premium due, a lapse, a contract terminated — because the room can read it:
@@ -637,10 +694,86 @@ function paintLate(d, c) {
     : '<div class="empty good">Nobody is waiting</div>';
 }
 
+/* ── who looks after whom: the three assignment slides (1 October 2026) ──
+   From the Household Assignments tab, which Transition.gs keeps current from
+   Salesforce (the Assigned Agent and Date Assigned to Agent on each policy) and
+   from the board. An agent is shown by first name and surname initial, a client
+   or a household by first name only, like everything else on this wall. Until
+   the backend sends the block (an older Transition.gs, or no tab imported yet)
+   the three slides are left out of the cycle rather than shown empty. */
+var SKIP = {};
+function agentLabel(name) {
+  var parts = String(name || '').replace(/’/g, "'").split(/\s+/).filter(Boolean), f = firstName(name);
+  return parts.length > 1 && f !== 'A client' ? f + ' ' + parts[parts.length - 1].charAt(0).toUpperCase() + '.' : f;
+}
+function hhLabel(name, size) {
+  var f = firstName(name);
+  return num(size) > 1 ? (f === 'A client' ? 'A household' : f + '’s household') : f;
+}
+function plural(k, one, many) { return n(k) + ' ' + (num(k) === 1 ? one : many); }
+function paintAssign(d) {
+  var a = isObj(d.assign) && d.assign.tab ? d.assign : null;
+  SKIP[5] = SKIP[6] = SKIP[7] = !a;
+  if (!a) return;
+  var hh = isObj(a.hh) ? a.hh : {}, ans = isObj(a.answered) ? a.answered : {}, cl = isObj(a.clients) ? a.clients : {};
+  var total = num(hh.total), withAgent = num(hh.done) + num(hh.part), pct = total ? 100 * withAgent / total : 0;
+  /* 6 · households with an agent */
+  set('haHero', n(withAgent));
+  set('haOf', 'of ' + n(total) + ' households');
+  set('haPct', total ? (pct >= 10 ? Math.round(pct) : pct.toFixed(1)) + '% have an agent' : 'no households on the tab yet');
+  $('#haMeter').style.width = Math.min(100, pct) + '%';
+  set('haAns', n(ans.named) + ' of ' + n(ans.hh));
+  set('haClients', n(cl.named));
+  set('haPart', n(hh.part));
+  set('haVia', a.synced ? (/^Salesforce$/.test(String(a.via)) ? 'from Salesforce' : 'from the sheet') + ' · ' + a.synced : '');
+  var days = list(a.days), dmax = Math.max(1, Math.max.apply(null, days.map(function (x) { return num(x.clients); }).concat([0])));
+  $('#haDays').innerHTML = days.map(function (x) {
+    var v = num(x.clients);
+    return '<i class="' + (v ? '' : 'zero') + '" style="height:' + (v ? Math.max(6, Math.round(100 * v / dmax)) : 3) + '%" title="' + esc(x.day + ': ' + v) + '"></i>';
+  }).join('');
+  set('haDay0', days.length ? days[0].day : '');
+  set('haDay1', days.length ? days[days.length - 1].day : '');
+  /* 7 · who looks after whom */
+  var ags = list(a.agents);
+  set('agN', n(ags.length));
+  $('#agSay').innerHTML = ags.length
+    ? (ags.length === 1 ? 'agent is' : 'agents are') + ' looking after the <b>' + plural(withAgent, 'household', 'households') + '</b> named so far.'
+    : 'Nobody is named yet. The first name given in Salesforce or on the board appears here.';
+  $('#agFb').innerHTML = num(cl.named) ? '<b>' + n(cl.fb) + '</b> of ' + plural(cl.named, 'client', 'clients') + ' with feedback in Salesforce' : '';
+  $('#agList').innerHTML = ags.length ? ags.slice(0, 7).map(function (x) {
+    return '<div class="agrow"><div><b>' + esc(agentLabel(x.name)) + '</b><span>' + plural(x.clients, 'client', 'clients') +
+      (x.first ? ' · since ' + esc(x.first) : '') + (num(x.fb) ? ' · feedback on ' + n(x.fb) : '') + '</span></div><em>' + n(x.hh) + '</em></div>';
+  }).join('') + (ags.length > 7 ? '<div class="note">and ' + plural(ags.length - 7, 'more agent', 'more agents') + '</div>' : '')
+    : '<div class="empty">No agent named yet.</div>';
+  /* 8 · next households to assign: the families half named first (the rest go to the same agent), then who answered, most pressing first */
+  var fin = list(a.finish), nx = list(a.next), rows = [];
+  fin.forEach(function (f) {
+    var by = Array.isArray(f.named) && f.named.length ? firstName(f.named[0]) : '';   /* named after the member already with the agent */
+    rows.push('<div class="qrow"><span class="pill fam">Family</span><div class="qw"><b>' + esc(by && by !== 'A client' ? by + '’s family' : hhLabel(f.name, f.size)) + '</b><span>' +
+      esc(list((f.left || []).map(function (x) { return { x: x }; })).map(function (o) { return firstName(o.x); }).join(', ')) + ' still to name</span></div>' +
+      '<span class="age" style="color:var(--teal)">to ' + esc(agentLabel(f.agent)) + '</span></div>');
+  });
+  nx.forEach(function (x) {
+    rows.push('<div class="qrow"><span class="pill ' + (x.urgent ? 'urgent' : 'next') + '">' + (x.urgent ? 'Urgent' : 'Next') + '</span>' +
+      '<div class="qw"><b>' + esc(firstName(x.who || x.name)) + '</b><span>' + (num(x.size) > 1 ? esc(hhLabel(x.name, x.size)) + ' of ' + n(x.size) + ' · ' : '') + esc(x.said || 'answered the letter') +
+      (x.sug ? ' · <span class="to">' + (x.why === 'family' ? 'family with ' : 'plan: ') + esc(agentLabel(x.sug)) + '</span>' : '') + '</span></div>' +
+      '<span class="age">' + esc(x.since ? 'since ' + x.since : '') + '</span></div>');
+  });
+  set('nxN', n(ans.waiting));
+  $('#nxSay').innerHTML = num(ans.waiting)
+    ? (num(ans.waiting) === 1 ? 'household has' : 'households have') + ' answered and nobody is named yet.' +
+      (num(hh.part) ? ' First, <b>' + plural(hh.part, 'family', 'families') + '</b> half named: the rest go to the same agent.' : '')
+    : 'Every household that answered has an agent.';
+  set('nxNote', nx.length ? 'the most pressing first' : '');
+  $('#nxList').innerHTML = rows.length ? rows.slice(0, 6).join('') + (rows.length > 6 ? '<div class="note">and ' + n(num(hh.part) + num(ans.waiting) - 6) + ' more after these</div>' : '')
+    : '<div class="empty good">Nobody is waiting for a name</div>';
+}
+
 var D = null;
 function render(d) {
   var c = context(d);
-  paintLetters(d, c); paintAnswers(d, c); paintFeed(d, c); paintBooks(d, c); paintLate(d, c);
+  paintLetters(d, c); paintAnswers(d, c); paintFeed(d, c); paintBooks(d, c); paintLate(d, c); paintAssign(d);
+  showDots();
 }
 /* A payload the page cannot paint is logged and left: the last good picture
    is put back, and the stamp says the refresh did not take. */
@@ -660,11 +793,17 @@ for (let i = 0; i < SLIDES; i++) {
   dot.addEventListener('click', function (e) { e.stopPropagation(); go(i); });
   dots.appendChild(dot);
 }
-function go(k) {
-  at = (k + SLIDES) % SLIDES;
+function go(k, dir) {
+  k = (k + SLIDES) % SLIDES;
+  for (let tries = 0; SKIP[k] && tries < SLIDES; tries++) k = (k + (dir || 1) + SLIDES) % SLIDES;
+  at = k;
   for (let i = 0; i < SLIDES; i++) document.getElementById('s' + (i + 1)).classList.toggle('on', i === at);
   Array.prototype.forEach.call(dots.children, function (dd, i) { dd.classList.toggle('on', i === at); });
   holdStart = Date.now();
+}
+function showDots() {
+  Array.prototype.forEach.call(dots.children, function (dd, i) { dd.style.display = SKIP[i] ? 'none' : ''; });
+  if (SKIP[at] && shown) go(at + 1);
 }
 function setPaused(p) {
   paused = p; holdStart = Date.now();
@@ -674,7 +813,7 @@ deck.addEventListener('click', function () { setPaused(!paused); });
 addEventListener('keydown', function (e) {
   if (!shown) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { go(at + 1); e.preventDefault(); }
-  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { go(at - 1); e.preventDefault(); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { go(at - 1, -1); e.preventDefault(); }
   else if (e.key === ' ') { setPaused(!paused); e.preventDefault(); }
 });
 setInterval(function () {

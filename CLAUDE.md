@@ -859,9 +859,32 @@ voice under the new timing and the caption gives it away.
   e-mails about other clients' renewals were being filed as her "replies",
   with receipts) — and puts the client's own words in the Note
   cell (`tWords_` strips the pre-written lines in `receipt.json`
-  `reply.lines` and anything quoted beneath); the receipt quotes those
-  words back. So a client who simply replies to a letter is captured with
-  what they wrote. The receipt offers the letter's other checks, how to
+  `reply.lines` and anything quoted beneath). So a client who simply
+  replies to a letter is captured with what they wrote, and a person
+  answers them: no receipt goes for a reply in their own words (see the
+  receipt bullet below). **Every response has a trail, even from an address we do
+  not hold** (30 September 2026: "all response must have the trail").
+  Until then a reply from another address, or from an inbox two clients
+  share, was passed over. One client asked from a work address to cancel
+  an application, and another asked twice to be called from an inbox
+  shared with a relative. Neither was filed, and nobody saw them. Now a reply to one of our own e-mails (`T_OUR_SUBJECT`:
+  Re: a letter, a reminder, a receipt, a note) is placed by the first name
+  it greets ("Dear X," in the quoted letter, "Thank you, X." in the
+  subject). At a shared inbox the name is enough. From an address we do
+  not hold, the former agent the subject names must agree too
+  (`tGuessClient_`). Such a reply is filed with `[matched by name]` in the
+  Note. When the name matches no one or several, the reply goes on the
+  **Replies to match** tab, which is made the first time it is needed,
+  with the clients it could be. A person types the token there, and the
+  next five-minute run files it `[matched by hand]`, with the message id
+  in Referrer so it is never filed twice. Mail from our own domains
+  (`T_OUR_DOMAINS`) is never taken for a client's: a colleague answering a
+  client on the thread is not the client. The inbox reader only looks
+  back three days, so the three e-mails missed before this change were
+  filed from a paste block (`Replies-to-file-30Sep.xlsx` in the
+  scratchpad), marked so that no automatic receipt or follow-up goes: a
+  person replies. `health/inbox-match-harness.js` covers it (16 checks).
+  The receipt offers the letter's other checks, how to
   reach them and, once a call is coming, when (`[[more]]`), as page links
   or replies to match. A merge field can never appear inside a reply body,
   since it is URL-encoded: a reply carries QUESTIONS' own words.
@@ -935,6 +958,37 @@ voice under the new timing and the caption gives it away.
   before the branch's go. A client who tapped the letter and was also
   called gets a receipt for the taps alone. `health/receipt-guard-harness.js`
   in the session scratchpad runs `tReceipts_` in Node on those cases.
+  **One receipt per answer, ever** (1 October 2026). A run used to look
+  only at the taps not yet marked, so a client who tapped an answer again
+  was thanked again for it: of the receipts sent to the first 278 clients,
+  60 did only that. One client had four for the same "No" between 9 pm and
+  6:30 am. A
+  later receipt could also offer questions answered in an earlier one.
+  `tReceipts_` now remembers what each client was thanked for and what
+  they answered. A batch made only of answers already thanked is marked
+  `[receipt] repeat: thanked before` and sends nothing. A receipt never
+  offers a question answered before (`g.prior`). A reply with words of its
+  own, or a tap that opens the form, is never a repeat. An answer whose
+  receipt was held, or taken on a call, was never thanked, so a genuine
+  tap of it is. `health/receipt-repeat-harness.js` covers it (15 checks,
+  7 of them failing on the previous script).
+  **No receipt for a reply in the client's own words** (1 October 2026,
+  noon: "please ensure no duplicates are triggering to the client once
+  they respond"). A client replied at 12:00, the manager answered her
+  himself at 12:07, and at 12:10 the receipts run sent her "Thank you,
+  <first name>. We have received your response." as well. By then 42 clients who
+  wrote in had had one (45 e-mails), some only for writing "Noted, thank you", some
+  minutes before or after the manager's own reply. A client who writes is
+  owed a person's reply, as with the follow-up note. `tReceipts_` now marks
+  such a row `[receipt] held: they wrote in their own words: a person
+  replies` and sends nothing for it. Taps sent beside it still get their
+  one receipt, and a reply that answers a question (a Ref line, the reply
+  mode) still counts as a tap. Until then the branch saw each reply
+  through the receipt's copy, so `tWroteAlert_` sends the two `TRANSITION.CC`
+  addresses one internal e-mail a run naming who wrote and their words,
+  with the internal footer. Nothing goes to the client.
+  `health/receipt-wrote-harness.js` covers it (20 checks, 16 of them
+  failing on the previous script).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
@@ -1462,6 +1516,46 @@ voice under the new timing and the caption gives it away.
   never chased.
   `health/chase-harness.js` in the session scratchpad runs it in Node on
   made-up rows, and `chase/sim.js` on a copy of the live sheet.
+  **The note owns the wait and asks for the client's own words** (30
+  September 2026: "we did thank persons for responding and should we not
+  send a follow up email as these persons are awaiting a response … would
+  like to hear from persons the concerns to ensure the correct agent is
+  assigned"). The first notes were due to clients whose receipt had
+  promised a call "today or tomorrow" four working days before, with
+  nobody yet named. So the note now says it has taken longer than it
+  should. Anyone waiting on a call, a review or an agent is asked what
+  they would like us to know before an agent is named, with a link to
+  their own review: `/your-policy/review.html?from=client&type=individual&t=<token>`.
+  That page is the branch's copy of the donthaveanagent.com form. It reads
+  the token, so the review lands on the client's record. donthaveanagent.com
+  still serves the older copy, which does not. A payment, a contract or an
+  application gets its own line instead (`still.follow` in receipt.json,
+  from `STILL` in build-letters.py). `still.line` is what a Transition.gs
+  older than this reads; with that script the link opens the plain form.
+  A client who wrote to us in their own words gets no note. They are owed
+  a person's reply, and their rows are marked `[chase2] held: they wrote
+  to us in their own words`. Nor does a client with an agent already in
+  Assigned to (1 October 2026, when agents began to be named): the note
+  says one is about to be named, so it is held as `[chase2] held: an
+  agent is named (<name>): the agent follows up`, and the branch's late
+  list still shows them until the agent marks the call. A day counts once it is over, so an answer
+  from a Friday reaches four working days the next Friday morning.
+  `health/still-note-harness.js` covers it (14 checks). `chase/sim30.js`
+  ran it on the live sheet on the evening of 30 September: 163 clients
+  over the following week, once each, 75 of them on Friday 2 October, and
+  34 held because they wrote. The note ends with the client's reference
+  (`Your reference: <token>`, small and grey). A reply that quotes the note
+  files on that client's record from any address (`T_YOUR_REF`, read after
+  the address and before the name). One of our own addresses counts only
+  when it is the one the row was written to, a colleague on a Test row. A
+  note Microsoft refuses is marked `[chase2] held: the note did not send`
+  and listed for the branch, never counted as sent. **`transitionStillTest`**
+  (the editor's Run button; asked for as "can i see a test") sends the
+  Test rows the note exactly as the chase would, each in the version its
+  letter brings: J the contract, K and T1 the application, I the payment,
+  the rest the review link. It marks nothing, and refuses while the site
+  still serves the old words. `health/still-test-harness.js` covers it
+  (29 checks).
 - **The chase only ever acts on a token this campaign's own Transition Send
   tab recognises.** Client Responses has recorded taps from the site's
   original doors since before this campaign — months of rows that still
@@ -1644,8 +1738,8 @@ voice under the new timing and the caption gives it away.
   brief, and the introductions go one per inbox, never to a held address.
   "Family of someone who answered" lists the members still to reach. The
   rule misses some families: on file, a husband's policy can carry a house
-  number and his wife's a light-pole number on the same street, as Fayad
-  Ali and Nadira Baksh-Ali's do. For those, the update panel's "A family
+  number and his wife's a light-pole number on the same street, as one
+  couple's on these books do. For those, the update panel's "A family
   member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
   branch code only) links the two. It gives them a new number, or joins
   one household to the other, keeping the older number.
@@ -1657,7 +1751,7 @@ voice under the new timing and the caption gives it away.
   same e-mail as row N`: 95 clients, re-held on every run. The manager
   chose the rule that day. A client whose inbox already had a letter gets
   their own when they share a surname with the client written to. A
-  married name counts on either half ("Baksh-Ali" and "Ali"); a lone
+  married name counts on either half ("Persad-Singh" and "Singh"); a lone
   initial never does (`tSameFamily_`). They get it on a later day, because
   an inbox never gets two letters on one day. A different surname may be
   an office's or a relative's inbox. That client is held as `check: shares
@@ -1666,8 +1760,8 @@ voice under the new timing and the caption gives it away.
   "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
   address onto such a row like any other. **One person on two client
   numbers is not a family**: 26 of the 95 had the same name as the client
-  already written to at that inbox (Jeffery Boodhoo on 745444 and
-  745454), and the family rule would have sent each the same letter a
+  already written to at that inbox (one man on two consecutive client
+  numbers), and the family rule would have sent each the same letter a
   second time. `tSamePerson_` (the same first name and a surname in
   common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
   "Ricky") holds such a row as `check: same name and inbox as <name> (client
@@ -1742,8 +1836,8 @@ voice under the new timing and the caption gives it away.
   (36, Playwright, fixtures written by the harness from the backend) in the
   session scratchpad cover it.
 - **Each card says who the client is, and the household shows everyone's
-  cover.** Asked for on 29 September 2026: "have the husband as the Fayad
-  Ali household and include the wife cover so we can see the wife and his
+  cover.** Asked for on 29 September 2026: "have the husband as the <name>
+  household and include the wife cover so we can see the wife and his
   cover as well anyone else who is covered in the household, we should also
   have the occupation and incomes etc as well any other data like
   beneficiary etc to make some insights".
@@ -1758,19 +1852,19 @@ voice under the new timing and the caption gives it away.
   properties that `ServiceSalesforce.gs` uses; until then the imported tab
   stands, and the build's message says which. The refresh asks by policy
   number, never by client number: clients opened from about mid-2026
-  (numbers from 0000745444) carry no `Client_Number__c` there.
+  (numbers from about 0000745000) carry no `Client_Number__c` there.
   **The name and date of birth on a policy record are the life insured's,
   not the owner's.** The portfolio's client is the owner; a policy a
   parent took out on a child's life carries the child's name and birth
-  date (Ria Ramroop-Brijbassie owns two on her daughters' lives, issued at
-  3 and at 0, each paying "Proposer - Female", Ria herself). `INSURED__c` is
+  date (one mother on these books owns two on her daughters' lives, issued
+  at 3 and at 0, each paying "Proposer - Female", the mother herself). `INSURED__c` is
   filled on a few policies in a hundred, so the Insured column is
   `INSURED__c`, else the record's own name (`tProfileRow_`,
   `Client-Profile-v4.xlsx` in the scratchpad for the import). Who a client
   is comes only from policies on their own life (`tOtherLife_`: not the
   same first name with a surname in common or beginning alike), unless
   none is, when every policy is read as before; until 29 September the
-  board took the first birth date it met and read Ria as 5. On the
+  board took the first birth date it met and read that mother as 5. On the
   families' policies that corrected ten ages, and 69 policy lines now say
   whose life they cover. "Proposer" as the beneficiary is on adults'
   policies as often as children's (median issue age 33): it means whoever
@@ -1829,12 +1923,12 @@ voice under the new timing and the caption gives it away.
   clients across the whole portfolio as an office, never links through a
   departed agent's or staff member's own details, never includes a departed
   agent, their household, staff or anyone with a death claim, and carries
-  the links the branch has told us about (`MANUAL`: Fayad Ali and Nadira
-  Baksh-Ali, two addresses for one house). The Client Book build reads
+  the links the branch has told us about (`MANUAL`: one husband and wife
+  whose policies carry two addresses for one house). The Client Book build reads
   those members' policies too. **The head** is the member marked Head on the
   tab, else the adult with the most life cover, then the most premium a
-  year, then the eldest; the household is named after them ("Fayad Ali
-  household"). The panel lists every member, the head first: age and
+  year, then the eldest; the household is named after them ("<head's
+  name> household"). The panel lists every member, the head first: age and
   gender, where they stand, and their cover. It totals the family's life
   cover, critical illness and premium, and names any adult under 65 with no
   life cover with us.
@@ -1912,6 +2006,96 @@ voice under the new timing and the caption gives it away.
   `svc/book-harness.js` (110 checks), `svc/assign-suggest-test.js` (29,
   Playwright) and `svc/board-dryrun.js` (a trial roster of the twelve plan
   agents; aggregates only) in the session scratchpad cover it.
+- **Assignments made in Salesforce reach the board and the wall, by
+  household.** Asked for on 1 October 2026, for the next morning's branch
+  meeting: "i have started assign through salesfroce so the firlds is date
+  assigned, campaign orphan, the agent name as assigned agent", then "i want
+  this built as some 3 slides on the transition wall, would like to assign
+  the households". The manager names the agent on the policy record
+  (`CLIENT_PORTFOLIO__c`): Assigned Agent (`Assigned_Agent__c`, a Contact),
+  Date Assigned to Agent, Campaign (`Campaign__c`, "Orphan"), and Campaign
+  Feedback Update (`Campain_Feedback_Update__c`, spelt so) for what the
+  agent reports. The first pull that day found 13 policies, 9 client
+  numbers and 8 households, named from 22 to 30 September. Campaign was
+  blank on 5 of the 13, so a Salesforce report filtered on Campaign =
+  Orphan misses them; filter on Date Assigned to Agent. `Orphan_Assigned__c`
+  was blank on all 13. The Contact's `Agent_Assigned__c` and
+  `Date_Assigned__c` have not been used lately. The household Account ("X
+  HH") has only `AGENT__c`, mostly empty and otherwise an old or departed
+  agent, with no date, so an assignment is not recorded there.
+  **The Household Assignments tab** has one row per client of the books:
+  Household, Household name, Members, Token, Client, Client number, Letter,
+  Book, Policies, Agent assigned, Date assigned, Source, Feedback, Suggested
+  agent, Why suggested. It is built in the session scratchpad
+  (`sfassign/build-ha.py`, from the send list, the 29 September households
+  and the policy numbers) and imported once. `tHaSync_` keeps the four agent
+  columns current. It runs inside the five-minute receipts run, at most
+  every fifteen minutes; `transitionSyncAssignments` on the editor's Run
+  button forces it. It reads Salesforce when the `SF_*` properties are set:
+  every assignment dated since 9 September, matched by policy number, else
+  client number, else a name only one row carries. Then it reads the
+  board's Assigned to. It rewrites only a row it wrote itself (Source
+  `Salesforce` or `board`) or one nobody has named, so a name typed by hand
+  under any other Source stays. When Salesforce does not answer, the names
+  it gave last stay. The Token column is read again before any write, as
+  on Transition Send. More than 25 changes are written as four whole
+  columns, so a board assigning by the hundred never runs into the
+  six-minute limit.
+  **Wall slides 6 to 8** come from `tHaWall_`, inside `tSummary_` as
+  `assign`:
+  - *Assigning the books*: households with an agent, out of all of them;
+    answered households with one; the last fortnight by day.
+  - *Who looks after whom*: each agent's households and clients, with the
+    feedback recorded in Salesforce.
+  - *Next households to assign*: families half named first, with the agent
+    the family already has; then answered households with nobody, most
+    pressing first, each with its suggestion.
+
+  Clients appear by first name and agents by first name and initial.
+  Answers marked "look automated" do not count here either. A backend
+  without the block, or a sheet without the tab, leaves the three slides
+  out of the cycle; the promise is slide 9.
+  **An agent logs in to see their assignments.** `tBoard_` reads the tab, so
+  a client Salesforce names to an agent is on that agent's list in
+  `assign.html`. A client who never answered appears as a "named, no answer
+  yet" card. Where the board and Salesforce name different agents, the
+  newer name wins. An agent opens their list with **their agent number and
+  their own code, both** ("agent Number, and name and code", 1 October
+  2026). The number is the Agent no. on the Agent Skill Bank (A10024,
+  10024, or the name as written there), and the code is that row's Portal
+  code. A code opens only the list of the agent it belongs to, a code with
+  no number opens nothing, and a refusal never says which of the two was
+  wrong. The codes are eight digits, because the gate shows a number pad.
+  They are made in the scratchpad and never enter the repository. **They
+  are not the Branch Portfolio's passwords.** Those run 1 to 33 in list
+  order, and on 1 October that list still showed the departed agents as
+  Active, so one guessed code would show an agent's orphan clients and
+  what they told us. The Skill Bank's Active column locks a person out
+  when it reads No, Not Active, Inactive, Resigned or Terminated
+  (`T_INACTIVE`; until 1 October only "No" did). The follow-up note holds
+  for a client Salesforce names, as it does for one named on the board.
+  **On 1 October 2026 the live web app still answered `campaign: 2`**, so
+  the board, its login included, answered nobody. Its routes are in
+  `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the
+  branch code back into TEAM_CODE, and publish a New version.
+  **The departed agents in Salesforce** are Contacts of record type AGENT.
+  Their Employment Status reads Resigned for nine, set by sales support
+  on 29 September, and Not Active for the other two.
+  Their Termination Date reads 21 September for the ten who resigned; it
+  was set on 1 October at the manager's word ("the resignation date
+  should be the 21st September"). Before that, nine read 30 September,
+  the date in the agents' own letters, and one read 25 February 2026.
+  The terminated contract is not a resignation: that record reads 10
+  September, and the branch's reports say 9. Salesforce has no separate
+  resignation-date field. Only one of them ever had a Salesforce login,
+  and both of its accounts are inactive. **Client names stay out of these
+  notes and out of code comments**: the site publishes the repository
+  root, CLAUDE.md and the `.gs` files included, so a name written here is
+  on the open web. Describe the case ("one couple", "a client") instead. The wall on factfind360.com was
+  considered and left alone: the two hosting chains never touch.
+  `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
+  `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
+  cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

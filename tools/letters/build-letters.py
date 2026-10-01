@@ -1376,9 +1376,37 @@ FOLLOW = [
  'Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.',
  'If we are slower than we should be, we tell you so rather than leave you wondering.',
 ]
+# the "still on it" note, four working days after an answer nobody has acted on (tChase_ in Transition.gs).
+# 30 September 2026: the first ones were due the next morning to clients promised a call "today or tomorrow",
+# so it owns the wait instead of repeating the promise, and, for anyone waiting on a call or an agent, asks
+# for their concerns in their own words before an agent is named ("to ensure the correct agent is assigned").
+# The link is the branch's copy of the donthaveanagent.com review form: the same form, and it reads the token,
+# so the review lands on the client's record; the donthaveanagent.com copy still does not. {{token}} is empty
+# under a Transition.gs older than this note, which leaves the plain form. 'line' is what that older script reads.
+REVIEW_OWN_WORDS = ('<a href="https://rickyrampersadbranch.com/your-policy/review.html?from=client&amp;type=individual&amp;t={{token}}" '
+                    'style="color:#0f5c8c;font-weight:700">Tell us in your own words</a>')
+STILL_OPEN = 'Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. '
+STILL_MATCH = (STILL_OPEN + '{{care_Us}} is reading every answer and matching each client with the agent who fits what they told us, '
+               'and yours is in hand. Before we name your agent, is there anything you would like us to know: your family, your plans, '
+               f'anything that went wrong? {REVIEW_OWN_WORDS}. It takes a few minutes, and a person reads every word. '
+               'Or simply reply to this e-mail.')
 STILL = {'subject': 'Still on it, {{first_name}}.',
-         'line': 'You have not been forgotten, and {{care_us}} is still on it. {{next}} We will ask again rather than assume, '
-                 'and you are welcome to reply here at any time.'}
+         'line': STILL_MATCH,
+         'follow': {                        # by what the client is waiting on: the tap their most pressing answer rode
+             'default': STILL_MATCH,
+             'paid': STILL_OPEN + 'We are checking your payment against Guardian Life’s record, and we will come back to you with what '
+                     'we find. If you have a receipt, reply to this e-mail with a photo of it and we will add it to your file.',
+             'pay': STILL_OPEN + 'We will call you to set up paying Guardian Life directly, with Guardian Life’s own receipt every time. '
+                    'If there is a better time to reach you, reply and tell us.',
+             'deliver': STILL_OPEN + 'We are arranging to bring your policy contract to you and go through it with you. If it is easier '
+                        'to collect it at the branch, reply and tell us.',
+             'finish': STILL_OPEN + 'We are gathering what your application still needs, so you do not have to find anything. If '
+                       'something has changed since you applied, reply and tell us.',
+             'stop': STILL_OPEN + 'We are closing your application properly, and we will confirm that nothing is owed.',
+             'claim': STILL_OPEN + 'We are preparing the maturity form to walk through with you. Reply with the best time to reach you.',
+             'question': STILL_OPEN + f'We are updating the details you gave us, and a person will confirm them with you. If anything '
+                         f'else has changed, {REVIEW_OWN_WORDS}, or simply reply to this e-mail.',
+         }}
 # the recap: a quick-check answer is echoed with its question; a bare tap with the words the client tapped
 RECAP = {'tapped': 'You tapped',
          'q': {**{ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH, WHEN] for label, _, ans in answers},
