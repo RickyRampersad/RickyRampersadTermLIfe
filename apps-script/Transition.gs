@@ -1717,7 +1717,7 @@ function tChase_() {
     if (!g) { g = groups[token] = { row: tokens[token], all: [], open: [], did2: false }; order.push(token); }
     var note = String(v[10] || ''), page = String(v[5] || '');
     var x = { rowNum: i + 2, received: v[0] instanceof Date ? v[0] : null, r: String(v[3] || '').trim().toLowerCase(),
-              needs: String(v[4] || ''), q: tQOf_(page), note: note,
+              needs: String(v[4] || ''), q: tQOf_(page), note: note, assigned: String(v[8] || '').trim(),
               via: String(v[6] || '').indexOf('reply ') === 0, phone: page.indexOf('/your-policy/phone') === 0 };
     g.all.push(x);
     if (note.indexOf('[chase2]') >= 0) g.did2 = true;               // the client's note goes once, ever
@@ -1752,6 +1752,8 @@ function tChase_() {
       else if (tText_(g.row.Exclude)) held = 'the send row is held (' + tText_(g.row.Exclude).slice(0, 40) + ')';
       /* a client who wrote to us in their own words is owed a person's reply, not a template beside it (30 September) */
       else if (g.all.some(function (x) { return x.q === 'wrote'; })) held = 'they wrote to us in their own words: a person replies';
+      /* an agent already named: the note says we are about to name one, so it waits on the agent's call instead (1 October) */
+      else if (g.all.some(function (x) { return x.assigned; })) held = 'an agent is named (' + g.all.filter(function (x) { return x.assigned; })[0].assigned + '): the agent follows up';
       else if (rc && tLooksAutomated_(rc, g.all)) held = 'the answers look automated';
       else if (!tMsCreds_()) held = T_MS_MISSING;
       if (!held) {

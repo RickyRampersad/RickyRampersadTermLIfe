@@ -1516,7 +1516,11 @@ voice under the new timing and the caption gives it away.
   older than this reads; with that script the link opens the plain form.
   A client who wrote to us in their own words gets no note. They are owed
   a person's reply, and their rows are marked `[chase2] held: they wrote
-  to us in their own words`. A day counts once it is over, so an answer
+  to us in their own words`. Nor does a client with an agent already in
+  Assigned to (1 October 2026, when agents began to be named): the note
+  says one is about to be named, so it is held as `[chase2] held: an
+  agent is named (<name>): the agent follows up`, and the branch's late
+  list still shows them until the agent marks the call. A day counts once it is over, so an answer
   from a Friday reaches four working days the next Friday morning.
   `health/still-note-harness.js` covers it (14 checks). `chase/sim30.js`
   ran it on the live sheet on the evening of 30 September: 163 clients
