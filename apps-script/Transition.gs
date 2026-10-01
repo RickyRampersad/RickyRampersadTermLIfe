@@ -1340,7 +1340,7 @@ function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page); }
  *  Each row it thanks is marked [receipt] in its Note cell, appended, so a
  *  human note there survives and the same tap is never thanked twice. */
 function tReceipts_() {
-  var out = { sent: 0, waiting: 0, held: 0, repeat: 0 };
+  var out = { sent: 0, waiting: 0, held: 0, repeat: 0, wrote: 0 };
   var sh, last;
   try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
   if (!sh || last < 2) return out;
@@ -1373,7 +1373,7 @@ function tReceipts_() {
   var rc = tReceipt_();
   if (!rc || !rc.json.recap) { log_('transition', 'receipts-held', order.length + ' waiting: receipt.json on the site is missing or old, rebuild the letters'); return out; }
   if (!tMsCreds_()) { log_('transition', 'receipts-held', order.length + ' waiting: ' + T_MS_MISSING); return out; }
-  var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN;
+  var reviews = null, budget = TRANSITION.RECEIPT_MAX_PER_RUN, writers = [];
   for (var k = 0; k < order.length; k++) {
     var tok = order[k], g = groups[tok];
     /* answers a caller ticked with the client on the line were read back on the call (the call script), so
@@ -1384,6 +1384,22 @@ function tReceipts_() {
       try { byPhone.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] by phone: read back on the call'); }); } catch (e) {}
       g.rows = g.rows.filter(function (x) { return !x.phone; });
       if (!g.rows.length) { out.held++; continue; }
+      g.newest = g.rows.reduce(function (m, x) { return x.received > m ? x.received : m; }, g.rows[0].received);
+    }
+    /* a reply in the client's own words is owed a person's reply, never a machine's (1 October 2026: "please ensure
+       no duplicates are triggering to the client once they respond"). Until then every client who wrote in was also
+       sent "Thank you, … We have received your response.": 42 clients by that noon, Orissa Rampersad three minutes
+       after the manager had answered her himself, and clients who wrote only "Noted, thank you" were thanked for
+       it. The words stay on the record for the board, the digest and the late list; taps sent beside them still
+       get their one receipt. A reply that answers a question (a Ref line, the reply mode) is a tap, not words. */
+    var wrote = g.rows.filter(function (x) { return x.via && (x.q === 'wrote' || !x.q); });
+    if (wrote.length) {
+      try { wrote.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: they wrote in their own words: a person replies'); }); } catch (e) {}
+      out.wrote++;
+      writers.push({ row: tokens[tok], words: wrote.map(function (x) { return x.note.replace(/\s*\[[^\]]*\]/g, '').trim(); }).filter(Boolean) });
+      log_('transition', 'receipt-held', tText_((tokens[tok] || {}).Client || (tokens[tok] || {})['First name']) + ' · wrote in their own words: a person replies, no automatic receipt');
+      g.rows = g.rows.filter(function (x) { return wrote.indexOf(x) < 0; });
+      if (!g.rows.length) continue;
       g.newest = g.rows.reduce(function (m, x) { return x.received > m ? x.received : m; }, g.rows[0].received);
     }
     var formTap = g.rows.some(function (x) { return (x.r === 'urgent' || x.r === 'review' || x.r === 'selfserve') && !x.via; });
@@ -1434,9 +1450,31 @@ function tReceipts_() {
       out.sent++; budget--;
     } catch (e) { log_('transition', 'receipt-failed', String(e && e.message ? e.message : e)); }
   }
-  if (out.sent || out.held || out.repeat) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
-    (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : ''));
+  tWroteAlert_(writers);
+  if (out.sent || out.held || out.repeat || out.wrote) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
+    (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : '') +
+    (out.wrote ? ', ' + out.wrote + ' wrote in their own words: a person replies' : ''));
   return out;
+}
+
+/** The branch hears at once when a client writes in their own words, now that no receipt goes to the client
+ *  (1 October 2026). It used to hear through the receipt's own copy; this is that copy without the client: one
+ *  internal e-mail a run, to the two addresses the receipts were copied to, never to anyone outside the branch. */
+function tWroteAlert_(writers) {
+  if (!writers || !writers.length) return;
+  var to = (TRANSITION.CC && TRANSITION.CC.length) ? TRANSITION.CC.join(',') : (TRANSITION.COPY_TO || SVC.AGENT_EMAIL);
+  var name = function (row) { return tText_(row.Client) || tText_(row['First name']) || 'A client'; };
+  var subj = (writers.length === 1 ? name(writers[0].row || {}) + ' wrote in' : tN_(writers.length, 'client', 'clients') + ' wrote in') +
+    ': reply in person, nothing automatic went to them';
+  var lines = writers.map(function (x) {
+    var row = x.row || {};
+    return '- ' + name(row) + ' · letter ' + (tText_(row.Segment) || '?') + (row.Agent ? ' · was with ' + tText_(row.Agent) : '') +
+      (tText_(row.Email) ? ' · ' + tText_(row.Email) : '') + (x.words.length ? '\n  ' + x.words.join('\n  ').slice(0, 1500) : '');
+  });
+  var body = 'A client wrote to support@ in their own words. No receipt went to them: a person replies, from support@ ' +
+    'or with support@ copied.\n\n' + lines.join('\n\n') + '\n\nTheir words are on Client Responses and on the assignment board:\n' +
+    'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
+  try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
 }
 
 /** True when a client's taps answer two or more questions both ways, or tick every option of one.

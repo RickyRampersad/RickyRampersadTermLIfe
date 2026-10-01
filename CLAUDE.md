@@ -859,9 +859,10 @@ voice under the new timing and the caption gives it away.
   e-mails about other clients' renewals were being filed as her "replies",
   with receipts) — and puts the client's own words in the Note
   cell (`tWords_` strips the pre-written lines in `receipt.json`
-  `reply.lines` and anything quoted beneath); the receipt quotes those
-  words back. So a client who simply replies to a letter is captured with
-  what they wrote. **Every response has a trail, even from an address we do
+  `reply.lines` and anything quoted beneath). So a client who simply
+  replies to a letter is captured with what they wrote, and a person
+  answers them: no receipt goes for a reply in their own words (see the
+  receipt bullet below). **Every response has a trail, even from an address we do
   not hold** (30 September 2026: "all response must have the trail").
   Until then a reply from another address, or from an inbox two clients
   share, was passed over. Charlene Ramlochansingh asked from her work
@@ -972,6 +973,23 @@ voice under the new timing and the caption gives it away.
   receipt was held, or taken on a call, was never thanked, so a genuine
   tap of it is. `health/receipt-repeat-harness.js` covers it (15 checks,
   7 of them failing on the previous script).
+  **No receipt for a reply in the client's own words** (1 October 2026,
+  noon: "please ensure no duplicates are triggering to the client once
+  they respond"). Orissa Rampersad replied at 12:00, the manager answered
+  her himself at 12:07, and at 12:10 the receipts run sent her "Thank you,
+  Orissa. We have received your response." as well. By then 42 clients who
+  wrote in had had one (45 e-mails), some only for writing "Noted, thank you", some
+  minutes before or after the manager's own reply. A client who writes is
+  owed a person's reply, as with the follow-up note. `tReceipts_` now marks
+  such a row `[receipt] held: they wrote in their own words: a person
+  replies` and sends nothing for it. Taps sent beside it still get their
+  one receipt, and a reply that answers a question (a Ref line, the reply
+  mode) still counts as a tap. Until then the branch saw each reply
+  through the receipt's copy, so `tWroteAlert_` sends the two `TRANSITION.CC`
+  addresses one internal e-mail a run naming who wrote and their words,
+  with the internal footer. Nothing goes to the client.
+  `health/receipt-wrote-harness.js` covers it (20 checks, 16 of them
+  failing on the previous script).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
