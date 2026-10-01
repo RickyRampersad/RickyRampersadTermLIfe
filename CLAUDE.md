@@ -2007,6 +2007,67 @@ voice under the new timing and the caption gives it away.
   `svc/book-harness.js` (110 checks), `svc/assign-suggest-test.js` (29,
   Playwright) and `svc/board-dryrun.js` (a trial roster of the twelve plan
   agents; aggregates only) in the session scratchpad cover it.
+- **Assignments made in Salesforce reach the board and the wall, by
+  household.** Asked for on 1 October 2026, for the next morning's branch
+  meeting: "i have started assign through salesfroce so the firlds is date
+  assigned, campaign orphan, the agent name as assigned agent", then "i want
+  this built as some 3 slides on the transition wall, would like to assign
+  the households". The manager names the agent on the policy record
+  (`CLIENT_PORTFOLIO__c`): Assigned Agent (`Assigned_Agent__c`, a Contact),
+  Date Assigned to Agent, Campaign (`Campaign__c`, "Orphan"), and Campaign
+  Feedback Update (`Campain_Feedback_Update__c`, spelt so) for what the
+  agent reports. The first pull that day found 13 policies, 9 client
+  numbers and 8 households, named from 22 to 30 September. Campaign was
+  blank on 5 of the 13, so a Salesforce report filtered on Campaign =
+  Orphan misses them; filter on Date Assigned to Agent. `Orphan_Assigned__c`
+  was blank on all 13. The Contact's `Agent_Assigned__c` and
+  `Date_Assigned__c` have not been used lately. The household Account ("X
+  HH") has only `AGENT__c`, mostly empty and otherwise an old or departed
+  agent, with no date, so an assignment is not recorded there.
+  **The Household Assignments tab** has one row per client of the books:
+  Household, Household name, Members, Token, Client, Client number, Letter,
+  Book, Policies, Agent assigned, Date assigned, Source, Feedback, Suggested
+  agent, Why suggested. It is built in the session scratchpad
+  (`sfassign/build-ha.py`, from the send list, the 29 September households
+  and the policy numbers) and imported once. `tHaSync_` keeps the four agent
+  columns current. It runs inside the five-minute receipts run, at most
+  every fifteen minutes; `transitionSyncAssignments` on the editor's Run
+  button forces it. It reads Salesforce when the `SF_*` properties are set:
+  every assignment dated since 9 September, matched by policy number, else
+  client number, else a name only one row carries. Then it reads the
+  board's Assigned to. It rewrites only a row it wrote itself (Source
+  `Salesforce` or `board`) or one nobody has named, so a name typed by hand
+  under any other Source stays. When Salesforce does not answer, the names
+  it gave last stay. The Token column is read again before any write, as
+  on Transition Send. More than 25 changes are written as four whole
+  columns, so a board assigning by the hundred never runs into the
+  six-minute limit.
+  **Wall slides 6 to 8** come from `tHaWall_`, inside `tSummary_` as
+  `assign`:
+  - *Assigning the books*: households with an agent, out of all of them;
+    answered households with one; the last fortnight by day.
+  - *Who looks after whom*: each agent's households and clients, with the
+    feedback recorded in Salesforce.
+  - *Next households to assign*: families half named first, with the agent
+    the family already has; then answered households with nobody, most
+    pressing first, each with its suggestion.
+
+  Clients appear by first name and agents by first name and initial.
+  Answers marked "look automated" do not count here either. A backend
+  without the block, or a sheet without the tab, leaves the three slides
+  out of the cycle; the promise is slide 9.
+  **An agent logs in to see their assignments.** `tBoard_` reads the tab, so
+  a client Salesforce names to an agent is on that agent's list in
+  `assign.html`. A client who never answered appears as a "named, no answer
+  yet" card. Where the board and Salesforce name different agents, the
+  newer name wins. An agent's code is the Portal code on the Agent Skill
+  Bank. The codes are made in the scratchpad and never enter the
+  repository. The follow-up note holds for a client Salesforce names, as it
+  does for one named on the board. The wall on factfind360.com was
+  considered and left alone: the two hosting chains never touch.
+  `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
+  `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
+  cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

@@ -1089,6 +1089,7 @@ function transitionReceipts() {
     try { tSharedInboxRows_(); } catch (e) { log_('transition', 'shared-inbox-failed', String(e && e.message ? e.message : e)); }
     try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
+    try { tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
     return tReceipts_();
   } finally { lock.releaseLock(); }
 }
@@ -1762,6 +1763,9 @@ function tChase_() {
     if (isOpen && x.received) g.open.push(x);
   }
   var rc, late = [], budget = TRANSITION.CHASE_MAX_PER_RUN, hold = tClientMailHeld_();
+  /* an agent named in Salesforce, or typed on the Household Assignments tab, holds the note as the board's name does (1 October) */
+  var haAgent = {};
+  try { var hax = tHaRead_(); if (hax) hax.rows.forEach(function (r) { if (r.token && r.agent) haAgent[r.token] = r.agent; }); } catch (e) {}
   var mark = function (x, add) {
     if (x.note.indexOf(add.split(' ')[0]) >= 0) return;
     x.note = (x.note ? x.note + ' ' : '') + add;
@@ -1792,6 +1796,7 @@ function tChase_() {
       else if (g.all.some(function (x) { return x.q === 'wrote'; })) held = 'they wrote to us in their own words: a person replies';
       /* an agent already named: the note says we are about to name one, so it waits on the agent's call instead (1 October) */
       else if (g.all.some(function (x) { return x.assigned; })) held = 'an agent is named (' + g.all.filter(function (x) { return x.assigned; })[0].assigned + '): the agent follows up';
+      else if (haAgent[order[k]]) held = 'an agent is named (' + haAgent[order[k]] + '): the agent follows up';
       else if (rc && tLooksAutomated_(rc, g.all)) held = 'the answers look automated';
       else if (!tMsCreds_()) held = T_MS_MISSING;
       if (!held) {
@@ -2399,6 +2404,7 @@ function tSummary_() {
     feedback: { people: Object.keys(names).length, verdicts: verdicts, taking: taking },
     waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT,
     armed: tArmed_(), runs: tRuns_(40),   // a day of half-hour batches and their receipts, for the dashboard's timeline (was 6)
+    assign: tHaWallSafe_(byTok, resp.rows, tz, now),   // the wall's three assignment slides (1 October 2026)
   };
 }
 
@@ -3134,10 +3140,20 @@ function tBoard_(w, all, lite) {
     if (ts && (!c.lastAt || ts > c.lastAt)) c.lastAt = ts;
   });
 
+  /* an agent named in Salesforce, or typed on the Household Assignments tab (tHaSync_, 1 October 2026): on the card, in the
+     agent's own list when they log in, and on the roster's counts. The board's own name stands unless Salesforce's is newer. */
+  var haBy = {};
+  try {
+    var hax = tHaRead_();
+    if (hax) hax.rows.forEach(function (r) { if (r.token && r.agent) haBy[r.token] = { agent: r.agent, on: tHaDate_(r.date), via: r.source || 'the tab' }; });
+  } catch (e) {}
   var clients = [], silent = [];
   order.forEach(function (tok) {
-    var c = byTok[tok];
-    if (!c.rows.length && !c.review) {
+    var c = byTok[tok], ha = haBy[tok];
+    if (ha && (!c.assigned || (ha.on && c.assignedAt && ha.on > c.assignedAt))) {
+      c.assigned = ha.agent; c.assignedOn = ha.on ? fmt(ha.on, 'd MMM') : ''; c.assignedVia = ha.via; c.late = false;
+    }
+    if (!c.rows.length && !c.review && !ha) {
       if (c.sent && !c.held) {
         sentNoAnswer++;
         if (all) silent.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email, phone: c.phone, sent: c.sent, state: 'silent', rows: [] });
@@ -4535,4 +4551,250 @@ function tProfileRefresh_(recs, deadline) {
     T_PROFILE_MEMO = null;
     return { rows: rows.length - 1, of: pols.length };
   } catch (e) { return { error: String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+
+/* ── who looks after which household: the wall's assignment slides ─────── */
+/* 1 October 2026. The manager began naming agents in Salesforce, on the policy record (CLIENT_PORTFOLIO__c: Assigned
+   Agent, Date Assigned to Agent, Campaign "Orphan"), and asked for it on the wall, by household, for the branch meeting
+   ("i want this built as some 3 slides on the transition wall, would like to assign the households").
+   The Household Assignments tab is the map: one row a client of the books, with the household (the 29 September build:
+   the same address, phone or e-mail; a key more than six clients share is an office, not a family), the client's
+   policy numbers, the agent and the day they were named, and a suggested agent for the household. It is built in the
+   session scratchpad and imported once. tHaSync_ keeps the agent columns current, inside the five-minute receipts run,
+   at most every EVERY_MIN minutes: from Salesforce when this project has the SF_* properties (every assignment dated
+   since SINCE, matched by policy number, else client number, else a name only one row carries), and from the board's
+   Assigned to. A row whose Source is anything else (a name typed in by hand) is never overwritten. The wall reads the
+   tab through tHaWall_, inside tSummary_, and prints first names only. */
+var T_HA = { SHEET: 'Household Assignments', SINCE: '2026-09-09', EVERY_MIN: 15, PROP: 'ha_synced', NEXT: 8, DAYS: 14 };
+var T_HA_HEAD = ['Household', 'Household name', 'Members', 'Token', 'Client', 'Client number', 'Letter', 'Book', 'Policies',
+  'Agent assigned', 'Date assigned', 'Source', 'Feedback', 'Suggested agent', 'Why suggested'];
+/* what a household that is waiting said, at its most pressing (T_PRIORITY's codes), in the wall's words */
+var T_HA_SAID = { urgent: 'wants an agent now', contact_yes: 'the former agent has been in touch', approached_yes: 'someone has approached them',
+  review_approached: 'someone has approached them', paid: 'paid, and it is not showing', pay_person: 'pays a representative in person',
+  pay: 'pays a representative in person', pay_unsure: 'not sure how the premium is paid', contract_missing: 'the contract never reached them',
+  deliver: 'the contract never reached them', review: 'filed a review', contract_unsure: 'not sure of the contract',
+  k_outstanding: 'wants help to finish the application', finish: 'wants help to finish the application', k_stop: 'no longer wishes to proceed',
+  stop: 'no longer wishes to proceed', k_unsure: 'not sure what the application needs', claim: 'a maturity claim', callme: 'asked for a call',
+  stay_talk: 'wants to talk it through first', rate_better: 'said we could be better', life_changed: 'life has changed',
+  question: 'wrote to us', wrote: 'wrote to us', assign: 'asked for an agent', pays_confirm: 'wants to know what the policy pays',
+  walk_yes: 'wants the policy walked through', built_yes: 'wants to know what the policy has built', more_yes: 'wants to know what more it could do',
+  value_yes: 'wants to know what the policy still holds' };
+
+/** A date cell, a yyyy-MM-dd string or a Date, as a Date at midnight; null for anything else. */
+function tHaDate_(x) {
+  var d = tDay_(x);
+  if (!d) return null;
+  var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d);
+  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
+}
+
+/** The Household Assignments tab, or null when it is not there or has no Household, Token and Agent assigned columns. */
+function tHaRead_() {
+  var sh = ss_().getSheetByName(T_HA.SHEET);
+  if (!sh || sh.getLastRow() < 2) return null;
+  var vals = sh.getRange(1, 1, sh.getLastRow(), Math.max(1, sh.getLastColumn())).getValues(), ix = {};
+  vals[0].forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+  if (ix.household === undefined || ix.token === undefined || ix['agent assigned'] === undefined) return null;
+  var g = function (v, k) { return ix[k] !== undefined ? v[ix[k]] : ''; };
+  var rows = [];
+  for (var i = 1; i < vals.length; i++) {
+    var v = vals[i], tok = String(g(v, 'token') || '').trim(), hh = String(g(v, 'household') || '').trim();
+    if (!tok && !hh) continue;
+    rows.push({ rn: i + 1, hh: hh || 'S' + tok, hhName: String(g(v, 'household name') || '').trim(), token: tok,
+      client: String(g(v, 'client') || '').trim(), cno: tCno_(g(v, 'client number')),
+      pols: String(g(v, 'policies') || '').split(/[\s,;]+/).map(function (p) { return p.trim(); }).filter(Boolean),
+      agent: String(g(v, 'agent assigned') || '').trim(), date: g(v, 'date assigned'), source: String(g(v, 'source') || '').trim(),
+      fb: String(g(v, 'feedback') || '').trim(), sug: String(g(v, 'suggested agent') || '').trim(), why: String(g(v, 'why suggested') || '').trim() });
+  }
+  return { sh: sh, ix: ix, rows: rows, last: vals.length };
+}
+
+/** The editor's Run button: brings the tab up to date now, whatever the clock says. */
+function transitionSyncAssignments() {
+  var r = tHaSync_(true);
+  return tSay_(r.skipped ? 'Nothing synced: ' + r.skipped + '.' : 'Household Assignments: ' + r.changed + ' row' + (r.changed === 1 ? '' : 's') +
+    ' changed; ' + r.named + ' clients named, read from ' + r.via + '.');
+}
+
+/** Brings the agent columns of the Household Assignments tab up to date from Salesforce and the board. Inside the
+ *  five-minute receipts run, which holds the script lock; at most every EVERY_MIN minutes unless forced.
+ *  Never writes when the tab was sorted while it read (the tokens are checked again first). */
+function tHaSync_(force) {
+  var props = PropertiesService.getScriptProperties();
+  var last = Number(props.getProperty(T_HA.PROP) || 0);
+  if (!force && Date.now() - last < T_HA.EVERY_MIN * 60000) return { skipped: 'synced in the last ' + T_HA.EVERY_MIN + ' minutes' };
+  var ha = tHaRead_();
+  if (!ha) return { skipped: 'there is no ' + T_HA.SHEET + ' tab yet (import it from the scratchpad build)' };
+  var norm = function (s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); };
+  var want = {}, sf = null, via;
+  if (typeof svcSfReady_ === 'function' && typeof svcSfQuery_ === 'function' && svcSfReady_()) {
+    try {
+      sf = svcSfQuery_('SELECT POLICY__c, Client_Number__c, FIRST_NAME__c, LAST_NAME__c, Assigned_Agent__r.Name, Date_Assigned_to_Agent__c, ' +
+        'Campain_Feedback_Update__c FROM CLIENT_PORTFOLIO__c WHERE Date_Assigned_to_Agent__c >= ' + T_HA.SINCE +
+        ' AND Assigned_Agent__c != null ORDER BY Date_Assigned_to_Agent__c LIMIT 5000');
+      via = 'Salesforce';
+    } catch (e) { via = 'the board only (Salesforce did not answer: ' + String(e && e.message ? e.message : e).slice(0, 100) + ')'; }
+  } else via = 'the board only (Salesforce is not linked to this project)';
+  if (sf) {
+    var byPol = {}, byCno = {}, byName = {};
+    ha.rows.forEach(function (r) {
+      r.pols.forEach(function (p) { (byPol[p] = byPol[p] || []).push(r); });
+      if (r.cno) (byCno[r.cno] = byCno[r.cno] || []).push(r);
+      var k = norm(r.client); if (k) (byName[k] = byName[k] || []).push(r);
+    });
+    sf.forEach(function (rec) {
+      var agent = rec.Assigned_Agent__r && rec.Assigned_Agent__r.Name ? String(rec.Assigned_Agent__r.Name).trim() : '';
+      var day = tDay_(rec.Date_Assigned_to_Agent__c);
+      if (!agent || !day) return;
+      var hit = byPol[tPolNo_(rec.POLICY__c)] || byCno[tCno_(rec.Client_Number__c)];
+      if (!hit) { var nm = byName[norm(String(rec.FIRST_NAME__c || '') + String(rec.LAST_NAME__c || ''))]; if (nm && nm.length === 1) hit = nm; }
+      (hit || []).forEach(function (r) {
+        var w = want[r.rn];
+        if (!w || day >= w.day) want[r.rn] = { agent: agent, day: day, fb: String(rec.Campain_Feedback_Update__c || '') || (w ? w.fb : ''), source: 'Salesforce' };
+      });
+    });
+  }
+  /* the board: the newest name in Assigned to on the client's rows of Client Responses */
+  var byTok = {};
+  ha.rows.forEach(function (r) { if (r.token) byTok[r.token] = r; });
+  tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+    var r = byTok[String(v[1] || '').trim()], agent = String(v[8] || '').trim();
+    if (!r || !agent || (want[r.rn] && want[r.rn].source === 'Salesforce')) return;
+    var day = tDay_(v[9]) || tDay_(v[0]) || '';
+    if (!want[r.rn] || day >= want[r.rn].day) want[r.rn] = { agent: agent, day: day, fb: '', source: 'board' };
+  });
+  /* what changes: only rows the sync wrote itself, or rows nobody has named yet */
+  var cols = { agent: ha.ix['agent assigned'], date: ha.ix['date assigned'], source: ha.ix.source, fb: ha.ix.feedback };
+  var edits = [];
+  ha.rows.forEach(function (r) {
+    var mine = r.source === 'Salesforce' || r.source === 'board' || (!r.source && !r.agent);
+    if (!mine) return;
+    var w = want[r.rn];
+    if (!w && r.source === 'Salesforce' && !sf) return;            // Salesforce did not answer this time: keep what it said last
+    var next = w || { agent: '', day: '', fb: '', source: '' };
+    if (next.agent === r.agent && next.source === r.source && next.day === (tDay_(r.date) || '') && (next.fb || '') === r.fb) return;
+    edits.push({ rn: r.rn, token: r.token, w: next });
+  });
+  if (edits.length) {
+    /* the tab may have been sorted since it was read: every edited row must still carry its token */
+    var tokCol = ha.ix.token + 1, now = ha.sh.getRange(1, tokCol, ha.sh.getLastRow(), 1).getValues();
+    var moved = edits.some(function (e) { return !now[e.rn - 1] || String(now[e.rn - 1][0] || '').trim() !== e.token; });
+    if (moved) return { changed: 0, named: 0, via: via + ' (the tab moved while it was read: nothing written; the next run tries again)' };
+    var vals = function (e) { return [[cols.agent, e.w.agent], [cols.date, e.w.day ? tHaDate_(e.w.day) : ''], [cols.source, e.w.source], [cols.fb, e.w.fb || '']]; };
+    if (edits.length <= 25) {
+      edits.forEach(function (e) { vals(e).forEach(function (p) { if (p[0] !== undefined) ha.sh.getRange(e.rn, p[0] + 1).setValue(p[1]); }); });
+    } else {
+      /* a board assigning households by the hundred: each column read fresh and written back whole, four calls, not a
+         thousand, so the run never reaches Apps Script's six minutes */
+      var n = now.length - 1, block = {};
+      [cols.agent, cols.date, cols.source, cols.fb].forEach(function (c) { if (c !== undefined && n > 0) block[c] = ha.sh.getRange(2, c + 1, n, 1).getValues(); });
+      edits.forEach(function (e) { vals(e).forEach(function (p) { if (block[p[0]] && block[p[0]][e.rn - 2]) block[p[0]][e.rn - 2][0] = p[1]; }); });
+      Object.keys(block).forEach(function (c) { ha.sh.getRange(2, Number(c) + 1, n, 1).setValues(block[c]); });
+    }
+  }
+  props.setProperty(T_HA.PROP, String(Date.now()));
+  props.setProperty('ha_via', JSON.stringify({ at: new Date().toISOString(), via: via }));
+  var named = 0;
+  Object.keys(want).forEach(function () { named++; });
+  if (edits.length) log_('transition', 'household-assignments', edits.length + ' rows changed, from ' + via);
+  return { changed: edits.length, named: named, via: via };
+}
+
+/** tHaWall_, never able to stop the summary the wall, the dashboard and the responses page all read. */
+function tHaWallSafe_(byTok, rows, tz, now) {
+  try { return tHaWall_(byTok, rows, tz, now); }
+  catch (e) { return { tab: false, error: String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** What the wall's three assignment slides show, from the Household Assignments tab, the answers on Client Responses
+ *  and the board's names. byTok is the send list by token, resp the Client Responses rows (tSummary_ has read both).
+ *  Names go to a page opened with the branch code, and the wall prints first names only. */
+function tHaWall_(byTok, resp, tz, now) {
+  var ha = tHaRead_();
+  if (!ha) return { tab: false };
+  var fmt = function (d) { return d ? Utilities.formatDate(d, tz, 'd MMM') : ''; };
+  /* each client's most pressing answer, and the board's newest name. Answers a mail scanner ticked (the receipts run marks
+     them "answers look automated", tLooksAutomated_) are not answers: three such clients would otherwise head the list. */
+  var ans = {}, board = {}, auto = {};
+  resp.forEach(function (v) {
+    var tok = String(v[1] || '').trim();
+    if (!tok || /^preview$/i.test(tok)) return;
+    if (/look automated/i.test(String(v[10] || ''))) auto[tok] = true;
+    var named = String(v[8] || '').trim();
+    if (named) { var on = tHaDate_(v[9]) || (v[0] instanceof Date ? v[0] : null), b = board[tok]; if (!b || (on && (!b.on || on >= b.on))) board[tok] = { agent: named, on: on }; }
+    if (tOursRow_(v[5])) return;                                  // a detail taken on a call, an agent named from the board: not an answer
+    var type = String(v[3] || '').trim();
+    if (!type) return;
+    var m = /[?&]q=([^&#]+)/.exec(String(v[5] || '')), q = m ? m[1] : '';
+    var pq = T_PRIORITY[q] || 0, pt = T_PRIORITY[type] || 0, pri = Math.max(pq, pt, 1);
+    var a = ans[tok] = ans[tok] || { pri: 0, code: '', first: null };
+    if (pri > a.pri) { a.pri = pri; a.code = pq >= pt && q ? q : type; }
+    var when = v[0] instanceof Date ? v[0] : null;
+    if (when && (!a.first || when < a.first)) a.first = when;
+  });
+  Object.keys(auto).forEach(function (tok) { delete ans[tok]; });
+  /* households */
+  var H = {}, order = [];
+  ha.rows.forEach(function (r) {
+    var s = byTok[r.token];
+    if (s && tYes_(s.Test)) return;
+    var b = board[r.token];
+    var agent = r.agent || (b ? b.agent : ''), on = r.agent ? tHaDate_(r.date) : (b ? b.on : null);
+    if (!H[r.hh]) { H[r.hh] = { id: r.hh, name: r.hhName || r.client, mem: [] }; order.push(r.hh); }
+    H[r.hh].mem.push({ client: r.client, agent: agent, on: on, fb: r.agent ? r.fb : '', ans: ans[r.token] || null, sug: r.sug, why: r.why });
+  });
+  var out = { tab: true, hh: { total: 0, done: 0, part: 0, none: 0 }, answered: { hh: 0, named: 0, waiting: 0 }, clients: { total: 0, named: 0, fb: 0 },
+    agents: [], days: [], finish: [], next: [] };
+  var ag = {}, days = {}, finish = [], next = [];
+  order.forEach(function (id) {
+    var h = H[id], named = h.mem.filter(function (m) { return m.agent; }), answered = h.mem.filter(function (m) { return m.ans; });
+    out.hh.total++;
+    out.clients.total += h.mem.length;
+    out.clients.named += named.length;
+    if (named.length === h.mem.length) out.hh.done++; else if (named.length) out.hh.part++; else out.hh.none++;
+    if (answered.length) { out.answered.hh++; if (named.length) out.answered.named++; else out.answered.waiting++; }
+    named.forEach(function (m) {
+      var a = ag[m.agent] = ag[m.agent] || { name: m.agent, hh: {}, clients: 0, fb: 0, first: null, last: null };
+      a.hh[id] = 1; a.clients++;
+      if (m.fb) { a.fb++; out.clients.fb++; }
+      if (m.on) {
+        if (!a.first || m.on < a.first) a.first = m.on;
+        if (!a.last || m.on > a.last) a.last = m.on;
+        var k = Utilities.formatDate(m.on, tz, 'yyyy-MM-dd'); days[k] = (days[k] || 0) + 1;
+      }
+    });
+    if (named.length && named.length < h.mem.length) {
+      /* a family half named: the rest go to the agent the family already has */
+      var count = {}; named.forEach(function (m) { count[m.agent] = (count[m.agent] || 0) + 1; });
+      var with_ = Object.keys(count).sort(function (a, b) { return count[b] - count[a]; })[0];
+      var left = h.mem.filter(function (m) { return !m.agent; });
+      finish.push({ name: h.name, size: h.mem.length, agent: with_, agents: Object.keys(count).length, named: named.map(function (m) { return m.client; }),
+        left: left.map(function (m) { return m.client; }), answered: left.some(function (m) { return m.ans; }) });
+    } else if (!named.length && answered.length) {
+      var best = null, who = '', first = null, sug = '', why = '';
+      answered.forEach(function (m) {
+        if (!best || m.ans.pri > best.pri) { best = m.ans; who = m.client; }
+        if (m.ans.first && (!first || m.ans.first < first)) first = m.ans.first;
+      });
+      h.mem.some(function (m) { if (m.sug) { sug = m.sug; why = m.why; return true; } return false; });
+      next.push({ name: h.name, who: who, size: h.mem.length, pri: best.pri, said: T_HA_SAID[best.code] || 'answered the letter', first: first,
+        since: fmt(first), urgent: best.pri >= T_PRIORITY.urgent, sug: sug, why: /^family/i.test(why) ? 'family' : why ? 'plan' : '' });
+    }
+  });
+  out.agents = Object.keys(ag).map(function (k) {
+    var a = ag[k];
+    return { name: a.name, hh: Object.keys(a.hh).length, clients: a.clients, fb: a.fb, first: fmt(a.first), last: fmt(a.last) };
+  }).sort(function (a, b) { return b.hh - a.hh || b.clients - a.clients || a.name.localeCompare(b.name); });
+  /* the last DAYS days, oldest first, so the room sees the pace */
+  for (var i = T_HA.DAYS - 1; i >= 0; i--) {
+    var d = new Date(now.getTime() - i * 86400000), k = Utilities.formatDate(d, tz, 'yyyy-MM-dd');
+    out.days.push({ day: Utilities.formatDate(d, tz, 'd MMM'), clients: days[k] || 0 });
+  }
+  out.finish = finish.sort(function (a, b) { return (b.answered ? 1 : 0) - (a.answered ? 1 : 0) || a.name.localeCompare(b.name); }).slice(0, T_HA.NEXT);
+  out.next = next.sort(function (a, b) { return b.pri - a.pri || (a.first ? a.first.getTime() : Infinity) - (b.first ? b.first.getTime() : Infinity); })
+    .slice(0, T_HA.NEXT).map(function (x) { delete x.first; return x; });
+  var last = null;
+  try { last = JSON.parse(PropertiesService.getScriptProperties().getProperty('ha_via') || 'null'); } catch (e) {}
+  out.synced = last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '';
+  out.via = last && last.via ? last.via : 'the tab as imported';
+  return out;
 }
