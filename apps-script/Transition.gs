@@ -291,7 +291,7 @@ function tArmed_() {
 /** Say it on screen when there is a screen (the menu); the return value carries
  *  it when there is not (a trigger). */
 function tSay_(msg) {
-  try { SpreadsheetApp.getUi().alert(msg); } catch (e) {}
+  try { SpreadsheetApp.getUi().alert(msg); } catch (e) { console.log(msg); }   // the editor's Run button has no alert: the execution log
   return msg;
 }
 
