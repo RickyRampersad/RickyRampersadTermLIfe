@@ -2072,8 +2072,15 @@ voice under the new timing and the caption gives it away.
   Active, so one guessed code would show an agent's orphan clients and
   what they told us. The Skill Bank's Active column locks a person out
   when it reads No, Not Active, Inactive, Resigned or Terminated
-  (`T_INACTIVE`; until 1 October only "No" did). The follow-up note holds
-  for a client Salesforce names, as it does for one named on the board.
+  (`T_INACTIVE`; until 1 October only "No" did). **An agent's code never
+  opens the wall, the dashboard or the responses page**: their one answer
+  (`transitionData_`) carries every client's name and answers, so
+  `tCodeOk_` takes the branch code only. Until 1 October any active
+  agent's portal code opened them, which would have shown every agent all
+  the clients the moment the codes were handed out. With TEAM_CODE empty
+  after a Service.gs paste, those pages now say so. The follow-up note
+  holds for a client Salesforce names, as it does for one named on the
+  board.
   **On 1 October 2026 the live web app still answered `campaign: 2`**, so
   the board, its login included, answered nobody. Its routes are in
   `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the

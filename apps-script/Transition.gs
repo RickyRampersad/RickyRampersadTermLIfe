@@ -2250,13 +2250,13 @@ function tStillTest_() {
 /* ── what comes back ──────────────────────────────────────────────── */
 /** Whether a code opens the page, and whether any code could — the branch
  *  code in Service.gs or a Portal code on the Agent Skill Bank. */
+/** The wall, the dashboard and the responses page: the branch code only. Their one answer carries every client's
+ *  name and answers, so an agent's own code never opens it (1 October 2026, when the codes were handed out): an agent
+ *  sees their own clients on the assignment board, with their agent number and code (tWho_). */
 function tCodeOk_(code) {
   code = String(code || '').trim().toUpperCase();
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
-  var ok = !!(branch && code === branch), bank = [];
-  try { bank = skillBank_(); } catch (e) {}
-  bank.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) ok = true; });
-  return { ok: ok, configured: !!(branch || bank.length) };
+  return { ok: !!(branch && code === branch), configured: !!branch };
 }
 
 /** Working days that have fully passed since `from`, as at `to`. The day the
@@ -2411,8 +2411,8 @@ function transitionData_(code) {
   var c = tCodeOk_(code);
   if (!c.ok) {
     return { ok: false, refused: true, error: c.configured
-      ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
-      : 'Not open yet — set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.' };
+      ? 'That code does not open this page. Use the branch code. An agent sees their own clients on the assignment board.'
+      : 'Not open yet: the branch code is not set. Put it into TEAM_CODE in Service.gs, then publish a New version.' };
   }
   /* one answer serves every screen for thirty seconds: the wall, the dashboard and
      the responses page each ask every minute or two, and the summary reads three
