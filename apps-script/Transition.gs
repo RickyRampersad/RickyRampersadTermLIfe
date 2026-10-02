@@ -1346,12 +1346,13 @@ function tReceipts_() {
   if (!sh || last < 2) return out;
   var vals;
   try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
-  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [], prior = {};
+  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [], prior = {}, every = {};
   for (var i = 0; i < vals.length; i++) {
     var v = vals[i], received = v[0] instanceof Date ? v[0] : null;
     if (!received) continue;
     var token = String(v[1] || '').trim();
     if (!tokens[token]) continue;                                    // not this campaign's token: never touched
+    (every[token] || (every[token] = [])).push(v);                   // every row the client has, marked or not: the trail
     if (tAssignRow_(v[5])) continue;                                 // an agent named from the board: the branch's note, nothing the client said
     var note = String(v[10] || '');
     if (note.indexOf('[receipt]') >= 0) {                            // seen by a run already: what it answered, and whether a receipt thanked it
@@ -1365,6 +1366,7 @@ function tReceipts_() {
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
                               q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note,
                               via: String(v[6] || '').indexOf('reply ') === 0,       // filed from a reply: its words are in the Note, no form follows
+                              words: String(v[5] || '').indexOf('/your-policy/words') === 0,   // written on the words page: the same, without the e-mail
                               phone: String(v[5] || '').indexOf('/your-policy/phone') === 0 });   // ticked by a caller on the line
     if (received > groups[token].newest) groups[token].newest = received;
   }
@@ -1392,11 +1394,13 @@ function tReceipts_() {
        after the manager had answered her himself, and clients who wrote only "Noted, thank you" were thanked for
        it. The words stay on the record for the board, the digest and the late list; taps sent beside them still
        get their one receipt. A reply that answers a question (a Ref line, the reply mode) is a tap, not words. */
-    var wrote = g.rows.filter(function (x) { return x.via && (x.q === 'wrote' || !x.q); });
+    var wrote = g.rows.filter(function (x) { return (x.via || x.words) && (x.q === 'wrote' || !x.q); });
     if (wrote.length) {
       try { wrote.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: they wrote in their own words: a person replies'); }); } catch (e) {}
       out.wrote++;
-      writers.push({ row: tokens[tok], words: wrote.map(function (x) { return x.note.replace(/\s*\[[^\]]*\]/g, '').trim(); }).filter(Boolean) });
+      writers.push({ row: tokens[tok], words: wrote.map(function (x) { return x.note.replace(/\s*\[[^\]]*\]/g, '').trim(); }).filter(Boolean),
+                     page: wrote.filter(function (x) { return x.words; }).map(function (x) { return { at: x.received, words: tNoteWords_(x.note) }; }),
+                     rows: every[tok] || [] });
       log_('transition', 'receipt-held', tText_((tokens[tok] || {}).Client || (tokens[tok] || {})['First name']) + ' · wrote in their own words: a person replies, no automatic receipt');
       g.rows = g.rows.filter(function (x) { return wrote.indexOf(x) < 0; });
       if (!g.rows.length) continue;
@@ -1450,7 +1454,16 @@ function tReceipts_() {
       out.sent++; budget--;
     } catch (e) { log_('transition', 'receipt-failed', String(e && e.message ? e.message : e)); }
   }
-  tWroteAlert_(writers);
+  /* words written on the page reach support@ with the trail beneath, the way a reply by e-mail would (2 October 2026:
+     "can this include the trail"); a reply by e-mail already sits in support@ with ours quoted under it, so the
+     branch's alert is enough for those. A trail that cannot go falls back to the alert, so nobody is missed. */
+  var alert = [];
+  writers.forEach(function (w) {
+    if (!w.page.length) { alert.push(w); return; }
+    try { tTrailMail_(w.row, w.page, w.rows, rc); out.trail = (out.trail || 0) + 1; }
+    catch (e) { log_('transition', 'trail-failed', String(e && e.message ? e.message : e)); alert.push(w); }
+  });
+  tWroteAlert_(alert);
   if (out.sent || out.held || out.repeat || out.wrote) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
     (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : '') +
     (out.wrote ? ', ' + out.wrote + ' wrote in their own words: a person replies' : ''));
@@ -1471,10 +1484,112 @@ function tWroteAlert_(writers) {
     return '- ' + name(row) + ' · letter ' + (tText_(row.Segment) || '?') + (row.Agent ? ' · was with ' + tText_(row.Agent) : '') +
       (tText_(row.Email) ? ' · ' + tText_(row.Email) : '') + (x.words.length ? '\n  ' + x.words.join('\n  ').slice(0, 1500) : '');
   });
-  var body = 'A client wrote to support@ in their own words. No receipt went to them: a person replies, from support@ ' +
+  var body = 'A client wrote to us in their own words, in a reply to support@ or on the words page. No receipt went to them: a person replies, from support@ ' +
     'or with support@ copied.\n\n' + lines.join('\n\n') + '\n\nTheir words are on Client Responses and on the assignment board:\n' +
     'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
+}
+
+/** The trail: everything between us and one client, newest first, in the words the client saw (2 October 2026,
+ *  asked of the words page: "can this include the trail"). Ours: the letter and any reminder, the receipt, the
+ *  follow-up note, the manager's notes, the introduction of their agent, a call. Theirs: their answers, on the page
+ *  or on a call, their replies, their words from the page. Nothing internal, no staff names, holds or marks,
+ *  because a reply to the client carries it beneath. rows are the client's Client Responses rows as read, every one. */
+function tTrail_(row, rows, rc) {
+  var j = (rc && rc.json) || {}, recap = j.recap || {}, rq = recap.q || {}, rt = recap.taps || {}, rtt = recap.tap_text || {};
+  var seg = tText_(row.Segment).toUpperCase(), tz = tTz_(), out = [];
+  var add = function (at, who, text, quote) {
+    out.push({ at: (at instanceof Date && !isNaN(at.getTime())) ? at : null, who: who, text: text, quote: quote || '' });
+  };
+  var day = function (d) { return d instanceof Date ? Utilities.formatDate(d, tz, 'yyyy-MM-dd') : ''; };
+  var subj = function (s) { return tFill_(s, row).replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim(); };
+  /* the letter, by its own subject line, and a reminder or the letter sent again */
+  var sentAt = row['Sent at'] instanceof Date ? row['Sent at'] : null;
+  if (sentAt) {
+    var letter = '';
+    try {
+      (JSON.parse(tFetch_('manifest.json')).letters || []).forEach(function (L) { if (String(L.segment).toUpperCase() === seg) letter = subj(L.subject); });
+    } catch (e) {}
+    add(sentAt, 'us', 'Our letter', letter);
+  }
+  var st = /^(reminded|sent again)\s+(\d{4})-(\d{2})-(\d{2})/i.exec(tText_(row.Status));
+  if (st) add(new Date(+st[2], +st[3] - 1, +st[4], 12), 'us', st[1].toLowerCase() === 'reminded' ? 'Our reminder, with the letter again' : 'The letter again');
+  var answers = {}, called = {}, thanked = {}, firstWords = null, chased = false, year = new Date().getFullYear();
+  var MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  rows.forEach(function (v) {
+    var at = v[0] instanceof Date ? v[0] : null, r = String(v[3] || '').trim().toLowerCase(), page = String(v[5] || ''),
+        q = tQOf_(page), note = String(v[10] || ''), d = day(at);
+    if (tAssignRow_(page)) { /* the branch naming an agent: nothing the client said */ }
+    else if (tContactRow_(page)) { if (d && !called[d]) { called[d] = 1; add(at, 'us', 'We spoke with you by phone'); } }
+    else if (page.indexOf('/your-policy/words') === 0) {
+      var w = tNoteWords_(note);
+      if (w) add(at, 'them', 'You wrote on our page', w);
+      if (at && (!firstWords || at < firstWords)) firstWords = at;
+    } else if (page.indexOf('/reply') === 0 && (q === 'wrote' || !q)) {
+      var rw = tNoteWords_(note);
+      if (rw) add(at, 'them', 'You wrote to us', rw);
+    } else {
+      var item = rq[q] ? rq[q][0] + ' ' + rq[q][1] : rt[r] ? ((rtt[seg] && rtt[seg][r]) || rt[r]) : '';
+      var key = d + (page.indexOf('/your-policy/phone') === 0 ? ' phone' : '');
+      if (item && d) {
+        var a = answers[key] || (answers[key] = { at: at, phone: / phone$/.test(key), items: [] });
+        if (a.items.indexOf(item) < 0) a.items.push(item);
+      }
+    }
+    /* a receipt that went, not one held, by phone, or a repeat; once a day */
+    if (at && /\[receipt\](?! (held|by phone|no e-mail|repeat))/.test(note) && !thanked[d]) {
+      thanked[d] = 1; add(new Date(at.getTime() + 60000), 'us', 'Our receipt', subj(j.subject || 'Thank you, {{first_name}}. We have received your response.'));
+    }
+    if (/\[chase2\](?! held)/.test(note)) chased = true;
+    (note.match(/\[told \d{1,2} [A-Z][a-z]{2} · \w+\]/g) || []).forEach(function (m) {
+      var t = /\[told (\d{1,2}) ([A-Z][a-z]{2}) · (\w+)\]/.exec(m), N = T_NOTES[t[3]];
+      if (N && MON[t[2]] !== undefined) add(new Date(year, MON[t[2]], +t[1], 12), 'us', 'A note from ' + tNoteSign_().name, N.label);
+    });
+    var intro = /\[intro ([^\]]+)\]/.exec(note);
+    if (intro) add(v[9] instanceof Date ? v[9] : at, 'us', 'We introduced your agent', intro[1]);
+  });
+  Object.keys(answers).forEach(function (k) {
+    var a = answers[k]; add(a.at, 'them', a.phone ? 'You told us by phone' : 'You answered our letter', a.items.join(' · '));
+  });
+  /* the follow-up note went before the words that answer it; its day is not recorded, so it sits just before them */
+  if (chased) add(firstWords ? new Date(firstWords.getTime() - 60000) : null, 'us', 'Our follow-up note', subj((j.still && j.still.subject) || 'Still on it, {{first_name}}.'));
+  /* a dedupe of what two rows of the same day both say (an intro on every actionable row) */
+  var seen = {};
+  out = out.filter(function (t) { var k = day(t.at) + '|' + t.text + '|' + t.quote; if (seen[k]) return false; seen[k] = 1; return true; });
+  out.sort(function (a, b) { return (b.at ? b.at.getTime() : -1) - (a.at ? a.at.getTime() : -1); });
+  return out;
+}
+
+/** Words written on the page, to support@ with the branch copied and the trail beneath, the way a reply by e-mail
+ *  would arrive. Reply goes to the client (reply-to), so the team answers from the thread; the subject is the note's,
+ *  so it threads with it, here and in the client's own inbox. The reference at the foot files a reply on their record. */
+function tTrailMail_(row, page, rows, rc) {
+  var first = tText_(row['First name']) || 'the client', email = tText_(row.Email), tz = tTz_(), esc = tEsc_;
+  var words = page.map(function (x) { return x.words; }).filter(Boolean);
+  var newest = page.reduce(function (m, x) { return (x.at && (!m || x.at > m)) ? x.at : m; }, null);
+  var trail = tTrail_(row, rows, rc).filter(function (t) { return !(t.text === 'You wrote on our page' && words.indexOf(t.quote) >= 0); });
+  var chased = rows.some(function (v) { return /\[chase2\](?! held)/.test(String(v[10] || '')); });
+  var subject = chased ? 'Re: Still on it, ' + first + '.' : first + ' wrote to us on our page';
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:620px">' +
+    '<p style="margin:0 0 12px;font-size:12.5px;color:#8a97a8">Written on our page' + (newest ? ', ' + esc(Utilities.formatDate(newest, tz, 'EEEE d MMMM, h:mm a')) : '') +
+      '. Reply to answer ' + esc(first) + (email ? ' at ' + esc(email) : '') + '.</p>' +
+    '<p style="margin:0 0 6px;font-weight:800;color:#12202e">' + esc(tText_(row.Client) || first) + ' wrote:</p>' +
+    words.map(function (w) {
+      return '<div style="margin:0 0 12px;padding:8px 12px;border-left:3px solid #efc24b;background:#fffaf0;color:#12202e">' + esc(w) + '</div>';
+    }).join('') +
+    '<p style="margin:20px 0 6px;font-weight:800;color:#12202e">The trail</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%">' +
+    trail.map(function (t) {
+      return '<tr><td style="padding:6px 12px 6px 0;vertical-align:top;white-space:nowrap;font-size:13px;color:#8a97a8">' +
+        (t.at ? esc(Utilities.formatDate(t.at, tz, 'd MMM')) : '') + '</td><td style="padding:6px 0;vertical-align:top;font-size:14px;border-top:1px solid #eef2f5">' +
+        '<b style="color:' + (t.who === 'them' ? '#12202e' : '#5d7186') + '">' + esc(t.text) + '</b>' +
+        (t.quote ? '<br><span style="color:' + (t.who === 'them' ? '#12202e' : '#5d7186') + '">' + (t.who === 'them' ? '“' + esc(t.quote) + '”' : esc(t.quote)) + '</span>' : '') +
+        '</td></tr>';
+    }).join('') + '</table>' +
+    (tText_(row.Token) ? '<p style="margin:14px 0 0;font-size:12px;color:#8a97a8">Your reference: ' + esc(tText_(row.Token)) + '</p>' : '') +
+    '</div>';
+  tMsSend_(TRANSITION.MS_FROM, subject, html, { cc: TRANSITION.CC, replyTo: email || TRANSITION.MS_FROM });
+  log_('transition', 'trail', tText_(row.Client || row['First name']) + ' · words from the page, with the trail, to support@');
 }
 
 /** True when a client's taps answer two or more questions both ways, or tick every option of one.
@@ -2250,13 +2365,13 @@ function tStillTest_() {
 /* ── what comes back ──────────────────────────────────────────────── */
 /** Whether a code opens the page, and whether any code could — the branch
  *  code in Service.gs or a Portal code on the Agent Skill Bank. */
+/** The wall, the dashboard and the responses page: the branch code only. Their one answer carries every client's
+ *  name and answers, so an agent's own code never opens it (1 October 2026, when the codes were handed out): an agent
+ *  sees their own clients on the assignment board, with their agent number and code (tWho_). */
 function tCodeOk_(code) {
   code = String(code || '').trim().toUpperCase();
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
-  var ok = !!(branch && code === branch), bank = [];
-  try { bank = skillBank_(); } catch (e) {}
-  bank.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code) ok = true; });
-  return { ok: ok, configured: !!(branch || bank.length) };
+  return { ok: !!(branch && code === branch), configured: !!branch };
 }
 
 /** Working days that have fully passed since `from`, as at `to`. The day the
@@ -2411,8 +2526,8 @@ function transitionData_(code) {
   var c = tCodeOk_(code);
   if (!c.ok) {
     return { ok: false, refused: true, error: c.configured
-      ? 'That code does not open this page. Use the branch code, or your own code from the Agent Skill Bank.'
-      : 'Not open yet — set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.' };
+      ? 'That code does not open this page. Use the branch code. An agent sees their own clients on the assignment board.'
+      : 'Not open yet: the branch code is not set. Put it into TEAM_CODE in Service.gs, then publish a New version.' };
   }
   /* one answer serves every screen for thirty seconds: the wall, the dashboard and
      the responses page each ask every minute or two, and the summary reads three
@@ -3102,14 +3217,15 @@ function tBoard_(w, all, lite) {
       /* a reply with no reference is filed as a 'question' row, q=wrote: it is a reply, not the "My details have
          changed" tap that shares its type */
       var tk = code === 'wrote' ? 'wrote' : type;
-      if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? 'Wrote back by e-mail' : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
+      if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? (String(v[5] || '').indexOf('/your-policy/words') === 0 ? 'Wrote to us on the page' : 'Wrote back by e-mail') : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
       if (T_PRIORITY[type]) c.score = Math.max(c.score, T_PRIORITY[type]);
     }
     (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
-    /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes. Everything
-       else in a Note cell is ours: the scripts' stamps ("[receipt] by phone: read back on the call") and the notes a
-       person adds when marking a call here, which go on the file, never in the client's mouth. */
-    if (String(v[5] || '').indexOf('/reply') === 0) {
+    /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes, or from the
+       words page, which writes them the same way (2 October 2026). Everything else in a Note cell is ours: the scripts'
+       stamps ("[receipt] by phone: read back on the call") and the notes a person adds when marking a call here, which
+       go on the file, never in the client's mouth. */
+    if (String(v[5] || '').indexOf('/reply') === 0 || String(v[5] || '').indexOf('/your-policy/words') === 0) {
       var said = tNoteWords_(note);
       if (said && c.notes.indexOf(said) < 0) c.notes.push(said.slice(0, 500));
     }

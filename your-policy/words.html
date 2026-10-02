@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>In your own words | Ricky Rampersad Branch</title>
+<!-- "Tell us in your own words": one box, and the words land on the client's own record. Built on 2 October 2026,
+     the morning the follow-up note's link was reported "not working": the note asks what the client would like us to
+     know before an agent is named, and its link opened the six-step review form, under the donthaveanagent.com name,
+     starting with "Do you have your policy number?". This page knows the client by the token the note carries, asks
+     the one question the note asks, and sends the words to the branch: straight to Client Responses when the backend
+     takes them (ping says campaign 5 or more), otherwise through the client's own mail app with a Ref line that
+     transitionInbox files exactly the same way. Either way the row is a 'question' with q=wrote and the words in its
+     Note, so no automatic receipt goes, the branch is alerted, the follow-up note holds and the board shows the words. -->
+<style>
+  :root{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#5d7186;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--tdark:#07606f;--line:#d7e3ea;--paper:#eef4f7;--card:#fff;--okbg:#eef7f2;--ok:#1f6f4a}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  header{background:var(--navy);border-bottom:3px solid var(--gold);padding:12px 16px;display:flex;align-items:center;gap:10px}
+  .mark{width:34px;height:34px;border-radius:9px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+  .mark img{width:100%;height:100%;display:block}
+  .brand{color:#eaf4ff;font-weight:800;font-size:14.5px;line-height:1.25}
+  .brand i{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#8fd8e6}
+  main{width:min(560px,100% - 32px);margin:18px auto 28px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;margin:0 0 14px}
+  .ask{border-top:4px solid var(--gold)}
+  .done{border-top:4px solid var(--gold)}
+  .tick{width:46px;height:46px;border-radius:50%;background:var(--okbg);color:var(--ok);display:grid;place-items:center;font-size:26px;font-weight:800;margin:0 0 8px}
+  h1{margin:0 0 6px;color:var(--ink);font-size:21px;line-height:1.3}
+  p{margin:0 0 10px}
+  .lead{font-size:15.5px}
+  textarea{display:block;width:100%;min-height:180px;resize:vertical;font:inherit;font-size:16px;line-height:1.5;color:var(--ink);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:11px 12px;margin:6px 0 4px}
+  textarea:focus{outline:2px solid var(--teal);outline-offset:1px;border-color:var(--teal)}
+  .count{margin:0;font-size:12.5px;color:var(--dim);text-align:right;min-height:18px}
+  .send{display:block;width:100%;margin:10px 0 4px;font:inherit;font-size:16px;font-weight:800;color:var(--gold);background:var(--navy);border:0;border-radius:12px;padding:14px 16px;cursor:pointer;min-height:50px}
+  .send:disabled{background:var(--okbg);color:var(--ok);cursor:default}
+  .out{margin:8px 0 0;font-size:14.5px;font-weight:700;color:#8a3324;min-height:0}
+  .small{margin:10px 0 0;font-size:13px;color:var(--dim)}
+  .copy{font:inherit;font-size:14.5px;font-weight:700;color:var(--tdark);background:#fff;border:1px solid #bfd9e2;border-radius:10px;padding:9px 13px;cursor:pointer;min-height:44px;margin:4px 0 0}
+  .addr{font-weight:700;color:var(--ink);word-break:break-all}
+  .links{margin:4px 2px 0;font-size:15px;line-height:1.9}
+  .links a{color:var(--tdark);font-weight:700;text-decoration:none}
+  footer{text-align:center;color:var(--dim);font-size:12px;padding:0 16px 24px}
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="mark"><img src="/logo-mark.png" width="34" height="34" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</header>
+<main>
+  <div class="card ask" id="ask">
+    <h1>Tell us in your own words</h1>
+    <p class="lead">Before we name your agent, is there anything you would like us to know: your family, your plans, anything that went wrong?</p>
+    <label for="w" class="small" style="display:block;margin:0">Write as much or as little as you like. If you would like a call, say when suits you.</label>
+    <textarea id="w" maxlength="1500" autocomplete="off" placeholder="Your words"></textarea>
+    <p class="count" id="count"></p>
+    <button id="send" class="send" type="button">Send to the branch</button>
+    <p class="out" id="out"></p>
+    <p class="small">A person at the branch reads every word. Only our branch team sees it, and it is kept with your policy file.</p>
+  </div>
+
+  <div class="card done" id="thanks" hidden>
+    <div class="tick" aria-hidden="true">&#10003;</div>
+    <h1>Thank you. We have your words.</h1>
+    <p>A person at the branch reads them before your agent is named, and replies to you.</p>
+  </div>
+
+  <div class="card done" id="mailed" hidden>
+    <h1>One more tap: press Send in your mail app</h1>
+    <p>Your words are in a new e-mail to <span class="addr" id="addr"></span>. Press Send there and they reach the branch, where a person reads them before your agent is named.</p>
+    <a id="mailgo" class="send" style="text-align:center;text-decoration:none" href="#">Open my e-mail</a>
+    <p class="small">If no e-mail opens, copy your words and reply to the e-mail our link came in.</p>
+    <button id="copy" class="copy" type="button">Copy my words</button>
+    <p class="out" id="copied" style="color:var(--ok)"></p>
+  </div>
+
+  <p class="links">Need us sooner? Call the branch on <a href="tel:+18682266461">(868) 226-6461</a>.</p>
+</main>
+<footer>Ricky Rampersad Branch &middot; Guardian Life of the Caribbean. Nothing here changes your policy.</footer>
+<noscript><p style="text-align:center">Reply to our e-mail with your words, and a person at the branch will answer.</p></noscript>
+
+<script>
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var SUPPORT = 'support@rickyrampersadbranch.com';
+var MAX = 1500;
+var P = new URLSearchParams(location.search);
+var T = (P.get('t') || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);    /* opaque, from the e-mail: never a policy number */
+var S = (P.get('s') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 2);
+/* Mail security (Avanan at Guardian, and others) opens links in a headless browser to check them.
+   It must never write for the client, so a scripted browser sends nothing. */
+var HUMAN = !navigator.webdriver;
+var DRAFT = 'rrb-words-' + T;
+var $ = function (id) { return document.getElementById(id); };
+var ta = $('w'), btn = $('send'), out = $('out'), sent = false;
+
+/* The words as they will be filed: no markup, no runs of blank lines, and never longer than the Note cell takes. */
+function clean(v) {
+  return String(v || '').replace(/[<>]/g, '').replace(/\r/g, '').replace(/[ \t]+/g, ' ')
+    .replace(/\n{3,}/g, '\n\n').trim().slice(0, MAX);
+}
+
+/* Does the backend take the words directly? Only a version that does answers campaign 5 or more. Asked once, on load;
+   a send waits for the answer, four seconds at most, and anything else goes through the client's mail app. */
+var direct = (function () {
+  try {
+    var ask = fetch(SVC + '?action=ping&z=' + Date.now(), { credentials: 'omit' })
+      .then(function (r) { return r.json(); })
+      .then(function (j) { return !!(j && j.ok && Number(j.campaign) >= 5); })
+      .catch(function () { return false; });
+    var late = new Promise(function (res) { setTimeout(function () { res(false); }, 4000); });
+    return Promise.race([ask, late]);
+  } catch (e) { return Promise.resolve(false); }
+})();
+
+function done() {
+  try { localStorage.removeItem(DRAFT); } catch (e) {}
+  $('ask').hidden = true; $('thanks').hidden = false;
+  window.scrollTo(0, 0);
+}
+
+/* The client's own mail app, addressed to the branch, with the words and the line that ties them to this client.
+   transitionInbox reads "Ref: <token> question wrote" and files it as a 'question' row, q=wrote, the words quoted
+   in its Note: the same row the page would have written. A link with no token (an older script left it empty)
+   sends the words alone, and the reader finds the client by the address they write from. */
+function viaMail(words) {
+  var body = words + (T ? '\n\nRef: ' + T + ' question wrote' : '');
+  var href = 'mailto:' + SUPPORT + '?subject=' + encodeURIComponent('In my own words') + '&body=' + encodeURIComponent(body);
+  $('addr').textContent = SUPPORT;
+  $('mailgo').href = href;
+  $('ask').hidden = true; $('mailed').hidden = false;
+  window.scrollTo(0, 0);
+  try { localStorage.removeItem(DRAFT); } catch (e) {}
+  $('copy').onclick = function () {
+    var ok = function () { $('copied').textContent = 'Copied. Paste it into a reply to our e-mail.'; };
+    try { navigator.clipboard.writeText(body).then(ok, function () { $('copied').textContent = words; }); }
+    catch (e) { $('copied').textContent = words; }
+  };
+  location.href = href;
+}
+
+(function () {
+  try { var d = localStorage.getItem(DRAFT); if (d) ta.value = d; } catch (e) {}
+  var count = function () {
+    var n = ta.value.length;
+    $('count').textContent = n > MAX - 200 ? (MAX - n) + ' characters left' : '';
+  };
+  count();
+  ta.addEventListener('input', function () {
+    count(); out.textContent = '';
+    try { localStorage.setItem(DRAFT, ta.value); } catch (e) {}
+  });
+  btn.addEventListener('click', function () {
+    if (sent) return;
+    var words = clean(ta.value);
+    if (words.length < 2) { out.textContent = 'Write a few words first, then send.'; ta.focus(); return; }
+    if (!HUMAN) return;
+    sent = true; btn.disabled = true; btn.textContent = 'Sending…';
+    direct.then(function (ok) {
+      if (!ok || !T) return viaMail(words);
+      /* text/plain, so Apps Script never gets a CORS preflight it cannot answer */
+      return fetch(SVC, {
+        method: 'POST', credentials: 'omit', redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'resp', r: 'question', t: T, s: S, p: '/your-policy/words?q=wrote',
+                               ref: (document.referrer || '').slice(0, 120), w: words })
+      }).then(function (r) { return r.json(); })
+        .then(function (j) { if (j && j.ok) done(); else viaMail(words); })
+        .catch(function () { viaMail(words); });
+    });
+  });
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
