@@ -1544,7 +1544,22 @@ voice under the new timing and the caption gives it away.
   words, so the page opens the client's own mail app instead, addressed
   to support@ with `Ref: <token> question wrote` under the words, which
   the inbox reader files as the same row. A scripted browser sends
-  nothing. `health/words-harness.js`, `svc/words-board-harness.js` and
+  nothing. **The words come with the trail** (asked the same day: "can
+  this include the trail"). A reply by e-mail arrives in support@ with
+  our e-mail quoted under it; words from the page have no thread, so the
+  receipts run sends support@ one e-mail per writer (`tTrailMail_`), the
+  branch copied, reply-to the client, subject `Re: Still on it, <first
+  name>.` so it threads with the note here and in the client's inbox:
+  their words on top, then the trail, newest first (`tTrail_`): our
+  letter by its subject line, a reminder, their answers in the letter's
+  own words, our receipt, a call, their replies, the manager's notes, the
+  introduction of their agent, the follow-up note. It is built from
+  Transition Send and Client Responses in words the client saw, never a
+  staff name, a hold or a mark, because a reply carries it to the client;
+  their reference sits at the foot, so their answer files on their
+  record. Page writers get this in place of the wrote-in alert; if
+  Microsoft refuses it, the alert goes instead. `health/words-harness.js`,
+  `health/trail-harness.js`, `svc/words-board-harness.js` and
   `words/words-test.js` in the session scratchpad cover it. A payment, a
   contract or an application gets its own line instead (`still.follow`
   in receipt.json, from `STILL` in build-letters.py). `still.line` is
