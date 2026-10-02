@@ -193,6 +193,8 @@ function doPost(e) {
   }
 
   try {
+    /* a client's own words from /your-policy/words (2 October 2026): too long for a link, so they come as a POST */
+    if (body.action === 'resp') return json_(clientResponse_(body));
     if (body.action !== 'service') return json_({ ok: false, error: 'Unknown action' });
     return json_(handleSubmission_(body));
   } catch (err) {
@@ -219,7 +221,7 @@ function doGet(e) {
        deployment older than the resp/feedback actions, so the pages show
        their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_(), campaign: 4 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book)
+                   automation: automationOn_(), campaign: 5 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -1640,11 +1642,15 @@ function clientResponse_(p) {
   if (!spec) return { ok: false };
   var token = String(p.t || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   var seg = String(p.s || '').replace(/[^A-Z0-9]/g, '').slice(0, 2);
+  /* A client's own words, from /your-policy/words (2 October 2026), go in the Note cell quoted, exactly as
+     transitionInbox files a reply in their own words, so the receipts, the follow-up note, the board and the
+     branch's alert read the two the same way. A double quote inside would close the quotation early. */
+  var words = String(p.w || '').replace(/[<>]/g, '').replace(/"/g, "'").replace(/\s+/g, ' ').trim().slice(0, 1500);
   try {
     responseSheet_().appendRow([
       new Date(), token, seg, r, spec.needs,
       String(p.p || '').slice(0, 80), String(p.ref || '').slice(0, 120),
-      spec.status, '', '', '']);
+      spec.status, '', '', words ? '"' + words + '"' : '']);
   } catch (e) { return { ok: false }; }
   /* A receipt in their inbox, not only the on-screen thank-you — only for a
      token the transition campaign recognises (Transition.gs, same project).

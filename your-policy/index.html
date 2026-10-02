@@ -137,8 +137,10 @@ function log(r, q, note) {
   try { fetch(u, { mode: 'no-cors', keepalive: true, credentials: 'omit' }); }
   catch (e) { try { (new Image()).src = u; } catch (e2) {} }
 }
+/* via=tap: the full review reached from a letter. Without it, review.html takes a bare from/type/t link for the
+   follow-up note's and sends the client to the one-box words page (2 October 2026). */
 function formUrl(q) {
-  return '/your-policy/review.html?from=client' + (T ? '&t=' + encodeURIComponent(T) : '') + '&type=individual' + (q ? '&q=' + q : '');
+  return '/your-policy/review.html?from=client' + (T ? '&t=' + encodeURIComponent(T) : '') + '&type=individual' + (q ? '&q=' + q : '') + '&via=tap';
 }
 /* The same checks the send list's addresses were put through on 27 September: one address, a full ending,
    and the common slips of a hurried line (gmail.co, hotmial) caught while the client is still on it. */

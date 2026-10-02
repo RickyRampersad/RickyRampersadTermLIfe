@@ -1365,6 +1365,7 @@ function tReceipts_() {
     groups[token].rows.push({ rowNum: i + 2, received: received, r: String(v[3] || '').trim().toLowerCase(),
                               q: tQOf_(v[5]), seg: String(v[2] || '').trim().toUpperCase(), note: note,
                               via: String(v[6] || '').indexOf('reply ') === 0,       // filed from a reply: its words are in the Note, no form follows
+                              words: String(v[5] || '').indexOf('/your-policy/words') === 0,   // written on the words page: the same, without the e-mail
                               phone: String(v[5] || '').indexOf('/your-policy/phone') === 0 });   // ticked by a caller on the line
     if (received > groups[token].newest) groups[token].newest = received;
   }
@@ -1392,7 +1393,7 @@ function tReceipts_() {
        after the manager had answered her himself, and clients who wrote only "Noted, thank you" were thanked for
        it. The words stay on the record for the board, the digest and the late list; taps sent beside them still
        get their one receipt. A reply that answers a question (a Ref line, the reply mode) is a tap, not words. */
-    var wrote = g.rows.filter(function (x) { return x.via && (x.q === 'wrote' || !x.q); });
+    var wrote = g.rows.filter(function (x) { return (x.via || x.words) && (x.q === 'wrote' || !x.q); });
     if (wrote.length) {
       try { wrote.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: they wrote in their own words: a person replies'); }); } catch (e) {}
       out.wrote++;
@@ -1471,7 +1472,7 @@ function tWroteAlert_(writers) {
     return '- ' + name(row) + ' · letter ' + (tText_(row.Segment) || '?') + (row.Agent ? ' · was with ' + tText_(row.Agent) : '') +
       (tText_(row.Email) ? ' · ' + tText_(row.Email) : '') + (x.words.length ? '\n  ' + x.words.join('\n  ').slice(0, 1500) : '');
   });
-  var body = 'A client wrote to support@ in their own words. No receipt went to them: a person replies, from support@ ' +
+  var body = 'A client wrote to us in their own words, in a reply to support@ or on the words page. No receipt went to them: a person replies, from support@ ' +
     'or with support@ copied.\n\n' + lines.join('\n\n') + '\n\nTheir words are on Client Responses and on the assignment board:\n' +
     'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
@@ -3102,14 +3103,15 @@ function tBoard_(w, all, lite) {
       /* a reply with no reference is filed as a 'question' row, q=wrote: it is a reply, not the "My details have
          changed" tap that shares its type */
       var tk = code === 'wrote' ? 'wrote' : type;
-      if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? 'Wrote back by e-mail' : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
+      if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? (String(v[5] || '').indexOf('/your-policy/words') === 0 ? 'Wrote to us on the page' : 'Wrote back by e-mail') : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
       if (T_PRIORITY[type]) c.score = Math.max(c.score, T_PRIORITY[type]);
     }
     (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
-    /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes. Everything
-       else in a Note cell is ours: the scripts' stamps ("[receipt] by phone: read back on the call") and the notes a
-       person adds when marking a call here, which go on the file, never in the client's mouth. */
-    if (String(v[5] || '').indexOf('/reply') === 0) {
+    /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes, or from the
+       words page, which writes them the same way (2 October 2026). Everything else in a Note cell is ours: the scripts'
+       stamps ("[receipt] by phone: read back on the call") and the notes a person adds when marking a call here, which
+       go on the file, never in the client's mouth. */
+    if (String(v[5] || '').indexOf('/reply') === 0 || String(v[5] || '').indexOf('/your-policy/words') === 0) {
       var said = tNoteWords_(note);
       if (said && c.notes.indexOf(said) < 0) c.notes.push(said.slice(0, 500));
     }

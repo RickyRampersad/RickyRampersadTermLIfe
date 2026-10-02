@@ -1380,10 +1380,12 @@ FOLLOW = [
 # 30 September 2026: the first ones were due the next morning to clients promised a call "today or tomorrow",
 # so it owns the wait instead of repeating the promise, and, for anyone waiting on a call or an agent, asks
 # for their concerns in their own words before an agent is named ("to ensure the correct agent is assigned").
-# The link is the branch's copy of the donthaveanagent.com review form: the same form, and it reads the token,
-# so the review lands on the client's record; the donthaveanagent.com copy still does not. {{token}} is empty
-# under a Transition.gs older than this note, which leaves the plain form. 'line' is what that older script reads.
-REVIEW_OWN_WORDS = ('<a href="https://rickyrampersadbranch.com/your-policy/review.html?from=client&amp;type=individual&amp;t={{token}}" '
+# The link opens /your-policy/words.html: one box, under the branch's own name, asking the note's own question,
+# and the words land on the client's record (2 October 2026). Until then it opened the six-step review form,
+# which starts "Do you have your policy number?" under the donthaveanagent.com name, and the branch read that
+# as the link not working; review.html now sends those older links to the words page too. The full review is
+# still a letter's own line. 'line' is what a Transition.gs older than the note reads.
+REVIEW_OWN_WORDS = ('<a href="https://rickyrampersadbranch.com/your-policy/words.html?t={{token}}&amp;s={{segment}}" '
                     'style="color:#0f5c8c;font-weight:700">Tell us in your own words</a>')
 STILL_OPEN = 'Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. '
 STILL_MATCH = (STILL_OPEN + '{{care_Us}} is reading every answer and matching each client with the agent who fits what they told us, '

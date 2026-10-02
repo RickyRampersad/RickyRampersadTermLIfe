@@ -1524,14 +1524,31 @@ voice under the new timing and the caption gives it away.
   promised a call "today or tomorrow" four working days before, with
   nobody yet named. So the note now says it has taken longer than it
   should. Anyone waiting on a call, a review or an agent is asked what
-  they would like us to know before an agent is named, with a link to
-  their own review: `/your-policy/review.html?from=client&type=individual&t=<token>`.
-  That page is the branch's copy of the donthaveanagent.com form. It reads
-  the token, so the review lands on the client's record. donthaveanagent.com
-  still serves the older copy, which does not. A payment, a contract or an
-  application gets its own line instead (`still.follow` in receipt.json,
-  from `STILL` in build-letters.py). `still.line` is what a Transition.gs
-  older than this reads; with that script the link opens the plain form.
+  they would like us to know before an agent is named, with a link,
+  "Tell us in your own words", to **`/your-policy/words.html?t=<token>&s=<letter>`**:
+  one box under the branch's own name, asking the note's own question.
+  Until 2 October 2026 the link opened `/your-policy/review.html`, the
+  six-step review form under the donthaveanagent.com name, which starts
+  "Do you have your policy number?"; the morning the first notes went,
+  the branch reported "the link not working". `review.html` now sends a
+  bare `from=client&type=individual&t=` link (the notes already sent) to
+  the words page, unless it came from our own pages; the letters' answer
+  page adds `via=tap` on its way to the full review, which is still a
+  letter's own line. The words page sends the words to `Service.gs`
+  (`action=resp`, a POST in text/plain, `w=`), which files a `question`
+  row, `Page` `/your-policy/words?q=wrote`, the words quoted in Note
+  exactly as `transitionInbox` files a reply. So no automatic receipt
+  goes, the branch gets the wrote-in alert, the follow-up note holds, and
+  the board shows the words as the client's ("Wrote to us on the page").
+  A backend older than that (ping below `campaign: 5`) cannot take the
+  words, so the page opens the client's own mail app instead, addressed
+  to support@ with `Ref: <token> question wrote` under the words, which
+  the inbox reader files as the same row. A scripted browser sends
+  nothing. `health/words-harness.js`, `svc/words-board-harness.js` and
+  `words/words-test.js` in the session scratchpad cover it. A payment, a
+  contract or an application gets its own line instead (`still.follow`
+  in receipt.json, from `STILL` in build-letters.py). `still.line` is
+  what a Transition.gs older than this reads.
   A client who wrote to us in their own words gets no note. They are owed
   a person's reply, and their rows are marked `[chase2] held: they wrote
   to us in their own words`. Nor does a client with an agent already in
