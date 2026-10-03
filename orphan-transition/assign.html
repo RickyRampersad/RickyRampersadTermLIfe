@@ -246,6 +246,45 @@
   .glr .v i{font-style:normal;color:var(--dim);font-weight:500;margin-left:4px}
   .glr .bb{height:8px;background:#eef3f6;border-radius:99px;overflow:hidden} .glr .bb span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px}
   .glb.teal .glr .bb span{background:linear-gradient(90deg,#5fdcef,var(--tdark))}
+  /* the TT$200 retention claims (the Retention Payments tab): the panel, and a line on each card */
+  details.claims{border-left:4px solid var(--gold)}
+  .cnote{font-size:13px;margin:0 0 10px;padding:8px 11px;border-radius:9px;background:var(--warnbg);border:1px solid #f1dfae;color:#7a5a12}
+  .cnote.rule{background:#f4f8fb;border-color:var(--line);color:var(--body)}
+  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new{color:#7a5a12} .pt .cst.closed{color:var(--dim)}
+  .pt a.cgo{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px dotted #9ab}
+  .claimln{margin-top:8px;font-size:13px;background:#fffaf0;border:1px solid #f1dfae;border-radius:9px;padding:6px 10px}
+  .claimln .cl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a5a12;margin-right:4px}
+  .claimln b{color:var(--ink)} .claimln b.up{color:var(--stop)} .claimln b.pd{color:var(--ok)}
+  /* one client in full: the history, their Salesforce tasks, the comments */
+  .detbtn{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:6px 11px;font:600 12.5px Inter,system-ui,sans-serif;color:var(--navy);cursor:pointer}
+  .detbtn.on{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+  .srow .detrow{flex-basis:100%;min-width:0}
+  .det{margin-top:10px;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:10px;padding:10px 12px;background:#fbfcfd;min-width:0}
+  .det .dh{font-family:var(--f);font-weight:800;font-size:14px;color:var(--ink);margin:14px 0 6px}
+  .det .dh:first-child{margin-top:0}
+  .det .dh small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:11.5px;color:var(--dim);margin-left:6px}
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr);gap:1px 10px;padding:5px 0 5px 8px;border-top:1px solid #e9f0f4;font-size:13px;border-left:3px solid transparent}
+  .hist li.them{border-left-color:var(--gold)} .hist li.us{border-left-color:var(--teal)} .hist li.branch{border-left-color:#bfd0da}
+  .hist .hw{color:var(--dim);font-size:12px} .hist b{color:var(--ink);font-weight:600} .hist .hq{grid-column:2;color:var(--body);white-space:pre-line}
+  @media(max-width:560px){.hist li{grid-template-columns:minmax(0,1fr)}.hist .hq{grid-column:1}}
+  .hkey{font-size:11.5px;color:var(--dim);margin:6px 0 0} .hkey i{font-style:normal;display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 4px 0 8px;vertical-align:0}
+  .task{border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 10px;margin:6px 0;min-width:0}
+  .task.shut{opacity:.8}
+  .task .tt{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center} .task .tt b{color:var(--ink)}
+  .task .tm{font-size:12.5px;color:var(--dim);margin-top:2px} .task .tm b{color:var(--body);font-weight:600} .task .tm a{color:var(--tdark);font-weight:600}
+  .post,.rep,.cmt{margin-top:6px;font-size:13px;background:#f4f8fb;border-radius:8px;padding:6px 9px;min-width:0}
+  .rep{margin-left:14px;background:#eaf5f8}
+  .post p,.rep p,.cmt p{margin:2px 0 0;white-space:pre-line;color:var(--body)}
+  .pw{font-size:11.5px;color:var(--dim)} .pw b{color:var(--ink)}
+  details.more summary,details.tdesc summary{cursor:pointer;font-size:12px;color:var(--tdark);margin-top:5px}
+  details.tdesc p{margin:4px 0 0;font-size:13px;white-space:pre-line}
+  .cmt .csf{display:block;font-size:11px;color:var(--dim);margin-top:3px}
+  .cmtbox{display:block;width:100%;margin-top:8px;font:14px Inter,system-ui,sans-serif;padding:8px 10px;border:1px solid #bfd0da;border-radius:9px;min-height:64px;resize:vertical;color:var(--ink);background:#fff}
+  .cmtbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap} .cmtbar span{font-size:12px;color:var(--dim);margin-right:auto}
+  .cmtgo{background:var(--navy);color:var(--gold);border:0;border-radius:9px;padding:8px 14px;font:700 13px var(--f);cursor:pointer}
+  .cmtgo[disabled]{opacity:.55;cursor:default}
+  .dnone,.dload{font-size:13px;color:var(--dim);margin:4px 0} .derr{font-size:13px;color:var(--stop);margin:4px 0} .derr a{color:var(--tdark);cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -278,6 +317,10 @@
     <div class="tiles" id="tiles"></div>
     <div id="rosterWrap"><h2><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
     <p class="pnote" id="sugNote"></p>
+    <details class="glance claims" id="claimWrap" style="display:none">
+      <summary><b id="claimTitle">Retention claims</b><span id="claimSum"></span></summary>
+      <div id="claimBody"></div>
+    </details>
     <div id="insWrap" style="display:none"><h2>What the records say <small>about the clients who answered; tap one to see them</small></h2><div class="chips" id="insBar"></div></div>
     <details class="glance" id="glWrap" style="display:none">
       <summary><b>The book at a glance</b><span>who the clients are, how they pay, what they hold</span></summary>
@@ -355,6 +398,8 @@ function api(params) {
 function load() {
   clearTimeout(timer); timer = null;
   if (inflight || !CODE) return;
+  /* someone writing a comment: the two-minute refresh waits, so the box is not redrawn under them */
+  if (shown && typing()) { schedule(30000); return; }
   inflight = true;
   if (!shown) { var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block'; }
   var p = { action: 'board', code: CODE };
@@ -392,11 +437,14 @@ function fail(msg, refused) {
   $('gate').style.display = 'block'; $('main').style.display = 'none'; shown = false; D = null;
   if (!refused && CODE) schedule(GATE_RETRY_MS);
 }
-$('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); FILTER.agent = ''; if (CODE) load(); });
+/* what one person opened is never shown to the next on the same device: their filter, the clients they opened in full,
+   a comment not yet saved, the policies fetched for them */
+function forget() { FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; }
+$('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); forget(); if (CODE) load(); });
 $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
   try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {}
-  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; FILTER.agent = ''; clearTimeout(timer);   // the next person on this device starts unfiltered
+  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; forget(); clearTimeout(timer);   // the next person on this device starts afresh
   $('main').style.display = 'none'; $('gate').style.display = 'block'; $('gateErr').style.display = 'none'; $('code').value = ''; $('who').value = ''; $('refresh').style.display = 'none'; $('signout').style.display = 'none'; bar();
 });
 document.addEventListener('visibilitychange', function () { if (!document.hidden && shown && !timer) load(); });
@@ -437,6 +485,8 @@ function render() {
       (bookOn ? ' Each card shows the client&rsquo;s policies with us.' : '')
     : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.' +
       (bookOn ? ' Each card shows the client&rsquo;s policies with us, so the first call is not a cold one.' : '');
+  if (d.detail) $('lead').innerHTML += ' <i>History · tasks · comments</i> on a card opens everything between us and the client, the Salesforce tasks on their policies with who has them, and the team&rsquo;s comments; yours is posted to their open tasks in Salesforce.';
+  claimsPanel(d);
   /* the note under the filters: how the figures are made, once for the page; or, for the branch, how to switch them on */
   $('bookNote').innerHTML = bookOn ? bookNote() : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
   var tiles = manager
@@ -728,6 +778,13 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button.polbtn'), function (el) { el.addEventListener('click', function () { togglePol(el.getAttribute('data-pol'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button.sugbtn'), function (el) { el.addEventListener('click', function () { assign([el.getAttribute('data-token')], el.getAttribute('data-agent'), el); }); });
+  /* one client in full: the history, the Salesforce tasks, the comments */
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.detbtn'), function (el) { el.addEventListener('click', function () { toggleDetail(el.getAttribute('data-det')); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list [data-det-retry]'), function (el) { el.addEventListener('click', function () { loadDetail(el.getAttribute('data-det-retry')); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list textarea.cmtbox'), function (el) { el.addEventListener('input', function () { DRAFT[el.getAttribute('data-cmt')] = el.value; }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.cmtgo'), function (el) { el.addEventListener('click', function () { saveComment(el.getAttribute('data-cmt-go'), el); }); });
+  /* a client opened from a link (#t=…) opens in full, once */
+  if (FOCUS && D.detail && focusDet !== FOCUS && document.getElementById('c-' + FOCUS)) { focusDet = FOCUS; if (!DET_OPEN[FOCUS]) { DET_OPEN[FOCUS] = 1; loadDetail(FOCUS); } }
   if ($('selShown')) $('selShown').addEventListener('click', function () {
     SHOWN.forEach(function (t) { SEL[t] = 1; }); list(); bar();
     toast(SHOWN.length + ' selected. Press Assign each as suggested, or choose one agent for all of them in the bar below.');
@@ -785,6 +842,7 @@ function card(c, manager) {
     acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="' + s + '" class="' + (s === 'Met' || s === 'Called' ? 'ok' : s === 'Declined' ? 'stopb' : '') + '">' + s + '</button>';
   });
   if (c.mark && c.mark !== 'Open') acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="Open">Reopen</button>';
+  acts += detButton(c);
   return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
     (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
     '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
@@ -797,8 +855,8 @@ function card(c, manager) {
     (c.state === 'named' ? '<div class="needs">Named here before they answered: the agent calls. No introduction or receipt goes to a client who has not answered.</div>' : '') +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
-    '<div class="acts">' + acts + '</div></div></div>';
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + claimLine(c) + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
+    '<div class="acts">' + acts + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') + '</div></div>';
 }
 function silentRow(c, manager) {
   /* a family member of someone who answered: where they stand, and whose family they are */
@@ -810,8 +868,144 @@ function silentRow(c, manager) {
     (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') +
     /* the totals ride on the row; the policies themselves come from the sheet when it is opened (action=book, the branch code) */
     (manager && c.pol ? '<button type="button" class="polbtn" data-pol="' + esc(c.token) + '">' + (POL_OPEN[c.token] ? 'Hide policies' : 'Policies') + '</button>' : '') +
+    detButton(c, true) +
     (POL_OPEN[c.token] && POLS[c.token] ? '<div class="polrow">' + profileLine(POLS[c.token].profile) + insChips(POLS[c.token].ins) +
-      (POLS[c.token].pol ? polPanel(POLS[c.token].pol) : '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>') + householdPanel(c, manager) + '</div>' : '') + '</div>';
+      (POLS[c.token].pol ? polPanel(POLS[c.token].pol) : '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>') + householdPanel(c, manager) + '</div>' : '') +
+    (DET_OPEN[c.token] ? '<div class="detrow">' + detPanel(c) + '</div>' : '') + '</div>';
+}
+
+/* ---- the TT$200 retention claims (tClaimsRead_ in Transition.gs): the panel, and the line on a card ---- */
+/* 3 October 2026: "when a questionnaire is recieved the agent is compensated 200.00 as an email goes to retention … to track
+   payments". The branch sees every claim, a unit manager his team's, an agent their own; staff never see one (no money). */
+var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new' };
+function cmoney(n) { return ((D && D.claims && D.claims.cur) || 'TT$') + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function claimPay(v, manager) {
+  if (v.state === 'paid') return v.paid ? (v.future ? 'to be paid ' + v.paid : 'paid ' + v.paid) : 'paid';
+  if (v.state === 'unpaid') return 'unpaid' + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
+  if (manager && v.status && v.state !== 'new') return v.status;
+  return v.state === 'held' || v.state === 'new' ? 'waiting for the branch' : v.state === 'closed' ? 'closed' : CSTATE[v.state] || v.state;
+}
+function claimsPanel(d) {
+  var w = $('claimWrap'), C = d.claims;
+  if (!C) { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var manager = d.role === 'branch', team = d.role === 'unit', s = C.sum || {}, rows = C.rows || [];
+  $('claimTitle').textContent = (manager ? 'Retention claims' : team ? 'Your team’s retention claims' : 'Your retention claims') + ' · ' + cmoney(C.amount) + ' a client';
+  $('claimSum').textContent = rows.length ? [s.unpaid + ' unpaid' + (s.owed ? ' (' + cmoney(s.owed) + ')' : ''), s.paid + ' paid' + (s.paidAmt ? ' (' + cmoney(s.paidAmt) + ')' : ''),
+    s.held ? s.held + (manager ? ' held or to check' : ' waiting') : ''].filter(Boolean).join(' · ') : 'none yet';
+  var h = '';
+  if (manager && !C.live) h += '<p class="cnote"><b>Not started.</b> Claims are found and kept on the <i>Retention Payments</i> tab, held: nothing goes to the Retention unit until you press <i>Transition: start the TT$200 claims</i> on the sheet&rsquo;s menu.</p>';
+  if (manager && !C.sf) h += '<p class="cnote">Salesforce is not linked to this project, so the submission date is not written and payments are not read back. Copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings &rarr; Script properties; until then, type the Paid date on the tab when one is paid.</p>';
+  h += '<p class="cnote rule">A service questionnaire from a client after they were named to an agent earns that agent ' + esc(cmoney(C.amount)) + ', once per client, whoever sent the link. ' +
+    (manager ? 'Each claim is e-mailed to the Retention unit (' + esc(C.to) + ') with you and the agent copied, and every Monday the unpaid ones go again as one list, until Salesforce shows <i>Date Comm Paid</i>.'
+      : 'The branch e-mails each claim to the Retention unit with you copied, and follows it up every Monday until Salesforce shows the payment date.') + '</p>';
+  if (!rows.length) { $('claimBody').innerHTML = h + '<div class="empty">No claim yet. The first service questionnaire from a client after they were named to ' + (manager ? 'an agent' : team ? 'one of your team' : 'you') + ' makes one.</div>'; return; }
+  h += '<table class="pt"><thead><tr><th>Client</th>' + (manager || team ? '<th>Agent</th>' : '') + '<th>Questionnaire</th><th>Sent to Retention</th><th>Followed up</th><th>Payment</th></tr></thead><tbody>' +
+    rows.map(function (v) {
+      return '<tr><td data-l="Client"><a class="cgo" href="#t=' + esc(v.token) + '">' + esc(v.client) + '</a><div class="pn">' + esc(v.id) + (v.named ? ' · named ' + esc(v.named) : '') + '</div></td>' +
+        (manager || team ? '<td data-l="Agent">' + esc(v.agent) + '</td>' : '') +
+        '<td data-l="Questionnaire">' + esc(v.received || '—') + '<div class="pn">' + esc(v.q) + '</div></td>' +
+        '<td data-l="Sent to Retention">' + esc(v.submitted || '—') + (v.byHand ? '<div class="pn">entered by hand</div>' : '') + '</td>' +
+        '<td data-l="Followed up">' + (v.follow ? esc(v.follow + (v.follow === 1 ? ' time' : ' times')) + (v.last ? '<div class="pn">last ' + esc(v.last) + '</div>' : '') : '—') + '</td>' +
+        '<td data-l="Payment"><span class="cst ' + esc(v.state) + '">' + esc(claimPay(v, manager)) + '</span>' + (manager && v.sf ? '<div class="pn">Salesforce: ' + esc(v.sf) + '</div>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  $('claimBody').innerHTML = h;
+  var key = 'rrb-assign-claims-open', open = null;
+  try { open = localStorage.getItem(key); } catch (e) {}
+  if (!w._bound) {
+    w._bound = true;
+    if (open === '1' || (open === null && rows.length <= 6)) w.open = true;
+    w.addEventListener('toggle', function () { try { localStorage.setItem(key, w.open ? '1' : '0'); } catch (e) {} });
+  }
+}
+function claimLine(c) {
+  var v = c.claim;
+  if (!v) return '';
+  var manager = D.role === 'branch';
+  var pay = v.state === 'paid' ? '<b class="pd">' + esc(claimPay(v)) + '</b>' : v.state === 'unpaid' ? '<b class="up">unpaid</b>' : '<b>' + esc(claimPay(v, manager)) + '</b>';
+  return '<div class="claimln"><span class="cl">' + esc(cmoney(v.amount)) + ' claim</span>' + esc(v.id) + (D.role !== 'agent' ? ' · for <b>' + esc(v.agent) + '</b>' : '') +
+    ' · questionnaire ' + esc(v.received) + (v.submitted ? ' · sent to Retention ' + esc(v.submitted) : '') + (v.follow ? ' · followed up ' + v.follow + (v.follow === 1 ? ' time' : ' times') : '') + ' · ' + pay + '</div>';
+}
+
+/* ---- one client in full (transitionDetail_): the history, their Salesforce tasks, the team's comments ---- */
+/* 3 October 2026: "so the agent can see the email and history and tasks opened on salesforce assigned to the staff and a
+   place for their comments". Opened on demand, one client at a time; a comment is kept on the Board Comments tab and posted
+   to the client's open tasks in Salesforce. */
+var DET = {}, DET_OPEN = {}, DRAFT = {}, focusDet = '';
+function typing() { var a = document.activeElement; return !!(a && a.classList && a.classList.contains('cmtbox')); }
+function detButton(c, small) {
+  if (!D || !D.detail) return '';
+  return '<button type="button" class="detbtn' + (DET_OPEN[c.token] ? ' on' : '') + '" data-det="' + esc(c.token) + '">' +
+    (DET_OPEN[c.token] ? 'Hide the history' : small ? 'History' : 'History · tasks · comments') + '</button>';
+}
+function toggleDetail(tok) {
+  if (DET_OPEN[tok]) { delete DET_OPEN[tok]; list(); return; }
+  DET_OPEN[tok] = 1; loadDetail(tok);
+}
+function loadDetail(tok) {
+  var had = DET[tok] && DET[tok].ok ? DET[tok] : null;
+  DET[tok] = had || { loading: true };
+  list();
+  api(signed({ action: 'detail', token: tok })).then(function (r) {
+    if (!r || !r.ok) { DET[tok] = { error: r && r.notUpdated ? 'This needs the new backend: paste Service.gs and Transition.gs, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → New version.' : ((r && r.error) || 'The sheet did not answer.') }; }
+    else DET[tok] = r;
+    if (DET_OPEN[tok]) list();
+  }).catch(function () { DET[tok] = { error: 'The sheet did not answer.' }; if (DET_OPEN[tok]) list(); });
+}
+function histItem(t) {
+  return '<li class="' + esc(t.who) + '"><span class="hw">' + esc(t.when || '') + '</span><b>' + esc(t.text) + '</b>' +
+    (t.quote ? '<span class="hq">' + (t.who === 'them' && !/^[A-Z]{2,4}-\d/.test(t.quote) ? '“' + esc(t.quote) + '”' : esc(t.quote)) + '</span>' : '') + '</li>';
+}
+function postHtml(p, cls) {
+  return '<div class="' + cls + '"><span class="pw"><b>' + esc(p.by || '') + '</b>' + (p.when ? ' · ' + esc(p.when) : '') + '</span><p>' + esc(p.text) + '</p>' +
+    (p.replies || []).map(function (r) { return postHtml(r, 'rep'); }).join('') + '</div>';
+}
+function taskCard(t) {
+  var meta = [t.owner ? 'assigned to <b>' + esc(t.owner) + '</b>' : '', t.due ? 'due ' + esc(t.due) : '', t.opened ? 'opened ' + esc(t.opened) + (t.by ? ' by ' + esc(t.by) : '') : '',
+    t.policy ? 'policy ' + esc(t.policy) : ''].filter(Boolean).join(' · ');
+  var posts = t.posts || [];
+  return '<div class="task' + (t.open ? '' : ' shut') + '"><div class="tt"><b>' + esc(t.subject) + '</b><span class="pill ' + (t.open ? 'open' : 'done') + '">' + esc(t.status || (t.open ? 'open' : 'closed')) + '</span>' +
+    (t.priority && !/^normal$/i.test(t.priority) ? '<span class="pill late">' + esc(t.priority) + '</span>' : '') + '</div>' +
+    '<div class="tm">' + meta + (t.url ? ' · <a href="' + esc(t.url) + '" target="_blank" rel="noopener">open in Salesforce</a>' : '') + '</div>' +
+    (t.desc ? '<details class="tdesc"><summary>What the task says</summary><p>' + esc(t.desc) + '</p></details>' : '') +
+    (posts.length ? postHtml(posts[0], 'post') : '') +
+    (posts.length > 1 ? '<details class="more"><summary>' + (posts.length - 1) + ' earlier post' + (posts.length === 2 ? '' : 's') + '</summary>' + posts.slice(1).map(function (p) { return postHtml(p, 'post'); }).join('') + '</details>' : '') + '</div>';
+}
+function detPanel(c) {
+  var x = DET[c.token];
+  if (!x || (x.loading && !x.ok)) return '<div class="det"><p class="dload">Opening the history, the Salesforce tasks and the comments&hellip; this takes a few seconds.</p></div>';
+  if (x.error) return '<div class="det"><p class="derr">' + esc(x.error) + ' <a data-det-retry="' + esc(c.token) + '">Try again</a></p></div>';
+  var h = '<div class="det"><div class="dh">History <small>newest first' + (x.at ? ' · as at ' + esc(x.at) : '') + '</small></div>';
+  h += (x.history || []).length ? '<ol class="hist">' + x.history.map(histItem).join('') + '</ol>' +
+    '<p class="hkey"><i style="background:var(--gold)"></i>the client<i style="background:var(--teal)"></i>our e-mails to them<i style="background:#bfd0da"></i>the branch</p>'
+    : '<p class="dnone">Nothing recorded yet.</p>';
+  var tasks = x.tasks || [], open = tasks.filter(function (t) { return t.open; }).length;
+  h += '<div class="dh">Salesforce tasks <small>' + (x.sf ? (tasks.length ? open + ' open · ' : '') + 'on their policies and contact record: open, and any changed in the last ' + esc(x.taskDays || 14) + ' days' : '') + '</small></div>';
+  if (x.tasksError) h += '<p class="derr">' + esc(x.tasksError) + '</p>';
+  else if (!x.sf) h += '<p class="dnone">' + esc(x.tasksWhy) + '</p>';
+  else h += tasks.length ? tasks.map(taskCard).join('') : '<p class="dnone">' + esc(x.tasksWhy || 'No task on this client’s policies.') + '</p>';
+  h += '<div class="dh">Comments <small>' + (x.sf ? 'kept here, and posted to the client&rsquo;s open tasks in Salesforce in your name' : 'kept on the Board Comments tab') + '</small></div>' +
+    (x.comments || []).map(function (m) {
+      return '<div class="cmt"><span class="pw"><b>' + esc(m.by) + '</b>' + (m.role ? ' · ' + esc(m.role) : '') + ' · ' + esc(m.when) + '</span><p>' + esc(m.text) + '</p>' +
+        (m.sf ? '<span class="csf">Salesforce: ' + esc(m.sf) + '</span>' : '') + '</div>';
+    }).join('') +
+    '<textarea class="cmtbox" data-cmt="' + esc(c.token) + '" maxlength="800" placeholder="What you did, what you found, what happens next" aria-label="A comment on ' + esc(c.client) + '">' + esc(DRAFT[c.token] || '') + '</textarea>' +
+    '<div class="cmtbar"><span>The team sees it; the client never does.</span><button type="button" class="cmtgo" data-cmt-go="' + esc(c.token) + '">Save comment</button></div>';
+  return h + '</div>';
+}
+function saveComment(tok, btn) {
+  var box = document.querySelector('textarea.cmtbox[data-cmt="' + tok + '"]'), text = String(box ? box.value : (DRAFT[tok] || '')).trim();
+  if (!text) { toast('Write the comment first.', true); return; }
+  DRAFT[tok] = text;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  api(signed({ action: 'comment', token: tok, text: text })).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Save comment';
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Your comment is still in the box: try again.', true); return; }
+    delete DRAFT[tok];
+    if (DET[tok] && DET[tok].ok) DET[tok].comments = [r.comment].concat(DET[tok].comments || []);
+    toast('Comment saved. Salesforce: ' + (r.sf || 'not posted') + '.', !r.posted && /refused|failed|did not|not posted/i.test(r.sf || ''));
+    list();
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Save comment'; toast('The sheet did not answer. Your comment is still in the box: try again in a moment.', true); });
 }
 
 /* ---- the suggested agent (tSuggest_ in Transition.gs): the family's, the 24 September plan's, or the lightest list ---- */

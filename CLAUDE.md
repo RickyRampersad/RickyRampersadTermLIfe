@@ -2179,6 +2179,74 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **A questionnaire after the naming earns the agent TT$200, and the claim
+  is chased until Salesforce has the payment date** (3 October 2026; ping
+  `campaign: 7`). The manager asked: "when a questionnaire is recieved the
+  agent is compensated 200.00 as an email goes to retention email
+  GlocConservationRetentionunit@myguardiangroup.com with the details and to
+  track payments, the email have to be followed up until the payment date is
+  updated on salesforce". He set the rules the same day. A claim needs a
+  service questionnaire received on or after the day the client was named to
+  an agent, whoever sent the link. There is one claim per client. Each claim
+  is e-mailed when it is found, with the manager and the agent copied. Every
+  Monday one list of the unpaid claims goes, oldest first. The machinery is
+  `T_CLAIM` and `tClaimsRun_` in Transition.gs, at the end of the five-minute
+  receipts run. A questionnaire is placed on a client by its Link ref, else by
+  a policy number only that client holds, else by an e-mail only they have.
+  The agent is the one they were named to when it came in: the board's names,
+  the `[assigned …]` stamps that keep the earlier ones, and Salesforce's. A
+  questionnaire from before the naming earns nothing. So do a staff Test row,
+  a departed agent's own policy or household, a TEST policy and the pilot.
+  The agent must be active on the Agent Skill Bank, matched by full name, or
+  the claim is held. Each claim is a row on the **Retention Payments** tab
+  (`RP-yyMMdd-nnn`). The claim e-mail goes from support@ through Graph,
+  signed by the manager, a reply going to him, with the confidentiality line
+  for Guardian Life. **Salesforce already keeps the branch's claims** on the
+  policy record: Date Subm to Retention, Was Agent Paid (Yes or No) and Date
+  Comm Paid, the commission run's date, the 4th of a month. On 3 October it
+  held 250 claims since 2024, some marked Yes with no date. A claim writes the
+  first two the same way on one of the client's policies, in this order of
+  choice: the questionnaire's, the one the agent was named on in Salesforce,
+  then the live one with the largest premium. It never writes over an
+  earlier claim's date. A submission already entered by hand, on or after
+  the naming, is recorded and never e-mailed twice. **The claim is closed**
+  when Date Comm Paid, on or after the naming, is on any of the client's
+  policies; Was Agent Paid is then set to Yes. A date still to come counts,
+  and the board reads it "to be paid". A Paid date typed on the tab also
+  closes a claim, and Void, Declined or Withdrawn in Status stop it. The
+  Monday list goes to the Retention unit with the manager copied, never the
+  agents, because it carries every agent's clients; each agent sees their own
+  claims on the board. **Nothing goes until the manager's go**:
+  `transitionClaimsStart`, on the menu as "Transition: start the TT$200
+  claims". Until then a claim is found, recorded and held. The board shows
+  the branch every claim, a unit manager his team's and an agent their own,
+  by the agent the claim pays. Staff see none. Without the `SF_*` properties
+  the e-mails still go, and the tab says to enter the dates by hand.
+  `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
+  (Playwright, 31) in the scratchpad cover it.
+- **One client in full on the board: the history, their Salesforce tasks,
+  and the team's comments** (3 October 2026, the same request: "so the agent
+  can see the email and history and tasks opened on salesforce assigned to
+  the staff and a place for their comments"). *History · tasks · comments*
+  on a card asks `action=detail`, and the board opens on it from a
+  `#t=` link. **The history** is `tTrail_` read about the client rather than
+  to them: the letter by its subject line, a reminder, their answers and
+  replies, our receipts and notes. Beside it is what the branch did: who they
+  were named to, each call marked with its file note, the questionnaire and
+  the claim. It runs newest first, each line marked whose it is. **The tasks**
+  are every Salesforce task on their policy records or their contact record,
+  open or changed in the last fourteen days. Each shows who it is assigned
+  to, its due date, who opened it and its Chatter, posts and replies, as
+  plain text. A flow's broken subject (`$Record.FirstName`) reads "Birthday
+  e-mail (automatic)". **A comment** is kept on the **Board Comments** tab.
+  It is posted to the Chatter of the client's newest three open tasks, or to
+  a policy record when none is open, headed with the writer's name, since
+  Salesforce shows the integration user as the poster. Who may open a client
+  is who sees the card: the branch and staff anyone, a unit manager his
+  team's, an agent their own. Staff never see the claim. The board's
+  two-minute refresh waits while a comment is being written. Signing out
+  forgets every client opened, every comment not yet saved and every policy
+  fetched, so the next person on the device starts clean.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

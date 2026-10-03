@@ -24,6 +24,10 @@
  *   transitionWeekly()       the Monday insight report (WEEKLY_HOUR): what the answers mean; safe to run by hand
  *   transitionSetBookSource() the Branch Portfolio's link, once (menu); then transitionBuildClientBook() every
  *                            morning writes each client's policies to the Client Book tab for the board and the briefs
+ *   transitionClaimsStart()  the go for the TT$200 retention claims (T_CLAIM): a questionnaire from a client named to an
+ *                            agent is e-mailed to the Retention unit, and the unpaid are listed every Monday until Salesforce
+ *                            has the payment date; transitionClaimsNow() checks at once, transitionClaimsMondayNow() sends
+ *                            the Monday list today, transitionClaimsStop() holds them again
  *
  * The Transition Send tab is built outside the repository from the Branch
  * Portfolio sheet (tools/letters has no client data). One row per client:
@@ -1089,7 +1093,9 @@ function transitionReceipts() {
     try { tAgainCol_(); } catch (e) { log_('transition', 'send-again-column-failed', String(e && e.message ? e.message : e)); }
     try { tFilePhoneEmails_(); } catch (e) { log_('transition', 'phone-emails-failed', String(e && e.message ? e.message : e)); }
     try { tHaSync_(false); } catch (e) { log_('transition', 'household-assignments-failed', String(e && e.message ? e.message : e)); }
-    return tReceipts_();
+    var out = tReceipts_();
+    tClaimsRun_(false);   // the TT$200 retention claims, after the receipts; never throws
+    return out;
   } finally { lock.releaseLock(); }
 }
 
@@ -3503,6 +3509,27 @@ function tBoard_(w, all, lite) {
     counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, late: 0, silent: 0 };
     clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   }
+  /* the TT$200 retention claims (the Retention Payments tab): a line on the card and the payments panel, for the branch every
+     claim, for a unit manager his team's and for an agent their own, by the agent the claim pays; never for staff, who see
+     no money */
+  var claims = null;
+  if (!staff) {
+    var crows = [], today = Utilities.formatDate(now, tz, 'yyyy-MM-dd'), cBy = {};
+    try { crows = tClaimsRead_().rows; } catch (e) {}
+    crows = crows.filter(function (r) { return !onTeam || onTeam(r.agent); });
+    var cview = crows.map(function (r) { return tClaimView_(r, tz, today, w.role === 'branch'); });
+    cview.forEach(function (v) { if (v.token) cBy[v.token] = v; });
+    clients.forEach(function (c) { if (cBy[c.token]) c.claim = cBy[c.token]; });
+    var corder = { check: 0, notsent: 1, held: 2, 'new': 3, unpaid: 4, paid: 5, closed: 6 }, csum = { n: cview.length, unpaid: 0, owed: 0, paid: 0, paidAmt: 0, held: 0 };
+    cview.forEach(function (v) {
+      if (v.state === 'unpaid') { csum.unpaid++; csum.owed += v.amount; }
+      else if (v.state === 'paid') { csum.paid++; csum.paidAmt += v.amount; }
+      else if (v.state !== 'closed') csum.held++;
+    });
+    cview.sort(function (a, b) { return (corder[a.state] - corder[b.state]) || String(b.id).localeCompare(String(a.id)); });
+    claims = { rows: cview, sum: csum, live: tClaimsLive_(), sf: tSfOn_(), amount: T_CLAIM.AMOUNT, cur: T_CLAIM.CUR, minDays: T_CLAIM.MIN_DAYS,
+               to: w.role === 'branch' ? T_CLAIM.TO : '' };
+  }
   /* the branch by unit and person (the Agent Skill Bank's Role and Unit): every unit for the branch, his own for a unit manager */
   var units = w.role === 'branch' || w.role === 'unit' ? tUnits_(w, clients, bk.ready) : null;
   /* households (the Households tab): every member, those on our list and the family who hold policies with other agents,
@@ -3590,7 +3617,8 @@ function tBoard_(w, all, lite) {
            book: { ready: bk.ready && !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false,
-           notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null };
+           notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null,
+           claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
 }
 
 /** The branch by unit and person, from the Agent Skill Bank's Role and Unit columns: each unit under its manager (the Unit
@@ -5153,4 +5181,758 @@ function tHaWall_(byTok, resp, tz, now) {
   out.synced = last && last.at ? Utilities.formatDate(new Date(last.at), tz, 'd MMM HH:mm') : '';
   out.via = last && last.via ? last.via : 'the tab as imported';
   return out;
+}
+
+/* ── Salesforce writes, through ServiceSalesforce.gs's sign-in ──────────── */
+/** Whether this project can reach Salesforce: ServiceSalesforce.gs is in it and its four SF_* Script properties are set. */
+function tSfOn_() {
+  return typeof svcSfReady_ === 'function' && typeof svcSfQuery_ === 'function' && typeof svcSfToken_ === 'function' && svcSfReady_();
+}
+/** Ids or policy numbers as a SOQL list, each quoted and escaped. */
+function tSoqlIn_(list) { return list.map(function (x) { return "'" + svcSoqlLit_(x) + "'"; }).join(','); }
+/** One write to Salesforce (method 'patch' or 'post', path under /services/data/<version>), signed in as ServiceSalesforce.gs
+ *  signs in; a 401 signs in again once. Returns Salesforce's reply ({} for a 204); throws with Salesforce's own reason. */
+function tSfSend_(method, path, payload) {
+  var go = function (tok) {
+    return UrlFetchApp.fetch(tok.instance_url + '/services/data/' + SVCSF.API + path, {
+      method: method, contentType: 'application/json', muteHttpExceptions: true,
+      headers: { Authorization: 'Bearer ' + tok.access_token }, payload: JSON.stringify(payload || {}) });
+  };
+  var res = go(svcSfToken_());
+  if (res.getResponseCode() === 401) { svcSfProps_().deleteProperty('SVC_SF_TOKEN'); res = go(svcSfToken_()); }
+  var code = res.getResponseCode(), text = res.getContentText() || '';
+  if (code >= 300) {
+    var why = 'HTTP ' + code;
+    try { var e = JSON.parse(text); e = e && e[0] ? e[0] : e; if (e && (e.message || e.errorCode)) why = (e.errorCode ? e.errorCode + ': ' : '') + (e.message || ''); } catch (x) {}
+    throw new Error('Salesforce did not take it: ' + why.slice(0, 200));
+  }
+  try { return text ? JSON.parse(text) : {}; } catch (x) { return {}; }
+}
+
+/** A client's policy numbers, the live ones first and the largest premium first: the Client Book's, then the Household
+ *  Assignments tab's (ha, when the caller has read it; read here when it is undefined). */
+function tClientPols_(tok, cno, ha) {
+  var out = [], add = function (p) { p = tPolNo_(p); if (p && out.indexOf(p) < 0) out.push(p); };
+  try {
+    var b = cno ? tBookFor_(cno, true) : null;
+    if (b && b.list) b.list.slice().sort(function (x, y) { return ((tBookLive_(y.st) ? 1 : 0) - (tBookLive_(x.st) ? 1 : 0)) || ((y.yr || 0) - (x.yr || 0)); })
+      .forEach(function (x) { add(x.no); });
+  } catch (e) {}
+  if (ha === undefined) { try { ha = tHaRead_(); } catch (e) { ha = null; } }
+  if (ha && tok) ha.rows.forEach(function (r) { if (r.token === tok) r.pols.forEach(add); });
+  return out;
+}
+
+/* ── the TT$200 retention claim ──────────────────────────────────────── */
+/* 3 October 2026: "when a questionnaire is recieved the agent is compensated 200.00 as an email goes to retention email
+   GlocConservationRetentionunit@myguardiangroup.com with the details and to track payments, the email have to be
+   followed up until the payment date is updated on salesforce". The manager's rules, the same day: a service
+   questionnaire received for a client on or after the day that client was named to an agent, whoever sent the link,
+   earns that agent one claim, once per client; each claim is e-mailed to the Retention unit when it is found, copied to
+   the manager and the agent; and every Monday one e-mail lists every claim still unpaid, oldest first, until Date Comm
+   Paid is filled in Salesforce.
+   Salesforce already keeps the branch's retention claims on the policy record (CLIENT_PORTFOLIO__c): Date Subm to
+   Retention, Was Agent Paid (Yes or No) and Date Comm Paid, the commission run's date, the 4th of a month. On 3 October
+   it held 250 since 2024, some marked paid with no date. A claim here writes the first two the same way on one of the
+   client's policies (the questionnaire's, else the one the agent was named on in Salesforce, else the live one with the
+   largest premium), never over an earlier claim's date; a payment date on or after the day the client was named is what
+   closes it. A claim the branch has already entered by hand (a submission date on or after the naming) is recorded and
+   never e-mailed a second time.
+   Nothing goes until the manager's go (transitionClaimsStart, on the menu): until then a claim found is recorded on the
+   Retention Payments tab, held, and it goes with the go. On the tab a person may type a Paid date (the claim is closed;
+   Salesforce is not touched), or Void, Declined or Withdrawn in Status (never e-mailed or followed up again). */
+var T_CLAIM = {
+  TAB: 'Retention Payments',
+  AMOUNT: 200, CUR: 'TT$',
+  TO: 'GlocConservationRetentionunit@myguardiangroup.com',
+  COPY: '',             // blank = SVC.AGENT_EMAIL, the manager: copied on every claim and every Monday list, and where a reply goes
+  MONDAY_HOUR: 9,       // the Monday list goes in the first five-minute run at or after this hour, sheet time zone
+  MIN_DAYS: 3,          // a claim joins the Monday list once it was sent this many days before
+  PAID_EVERY_MIN: 120,  // how often the unpaid claims are read back from Salesforce
+  SCAN_EVERY_MIN: 15,   // how often the questionnaires are matched again when no new one has come in
+  MAX_PER_RUN: 10,      // the most claims one run e-mails
+  WINDOW_DAYS: 120,     // a questionnaire older than this is never looked at
+  LIVE: 'claims_live',  // the go: 'on' once transitionClaimsStart is pressed
+};
+var T_CLAIM_HEAD = ['Claim', 'Token', 'Client', 'Client number', 'Policy', 'Agent', 'Agent no.', 'Agent e-mail', 'Named on', 'Named via',
+  'Questionnaire', 'Received', 'Amount', 'Submitted', 'Salesforce', 'Follow-ups', 'Last follow-up', 'Paid', 'Status', 'Note'];
+var T_CLAIM_SHUT = /^(paid|void|declined|withdrawn|cancel)/i;   // closed: never e-mailed or followed up again
+var T_CLAIM_RETRY = /^(not sent|held)/i;                       // tried again on the next scan
+var T_CLAIM_FOOT = 'This e-mail carries client information for Guardian Life of the Caribbean’s own use: do not forward it outside the company.';
+
+function tClaimsLive_() { try { return PropertiesService.getScriptProperties().getProperty(T_CLAIM.LIVE) === 'on'; } catch (e) { return false; } }
+
+/** The menu's "start the TT$200 claims": the go. Every claim held for it goes in this run, up to MAX_PER_RUN, the rest in
+ *  the next five-minute runs. */
+function transitionClaimsStart() {
+  PropertiesService.getScriptProperties().setProperty(T_CLAIM.LIVE, 'on');
+  return tSay_('The TT$200 claims are on. ' + tClaimsLocked_(true));
+}
+function transitionClaimsStop() {
+  PropertiesService.getScriptProperties().setProperty(T_CLAIM.LIVE, 'off');
+  return tSay_('The TT$200 claims are off: a claim found is recorded on the ' + T_CLAIM.TAB + ' tab and held until you start them again. Nothing else changes.');
+}
+/** The menu's "check the TT$200 claims now": the scan and the payment check, whatever the clock says. */
+function transitionClaimsNow() { return tSay_(tClaimsLocked_(true)); }
+/** The menu's "send the Monday retention follow-up now": the list of unpaid claims, today, whatever the day. */
+function transitionClaimsMondayNow() {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return tSay_('Another run is busy. Try again in a minute.');
+  try { return tSay_(tClaimsMonday_(true).what); } finally { lock.releaseLock(); }
+}
+function tClaimsLocked_(force) {
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(20000)) return 'Another run is busy. Try again in a minute.';
+  try { return tClaimsSay_(tClaimsRun_(force)); } finally { lock.releaseLock(); }
+}
+function tClaimsSay_(r) {
+  return [r.found ? tN_(r.found, 'new claim', 'new claims') + ' found.' : 'No new claim.',
+    r.sent ? tN_(r.sent, 'claim', 'claims') + ' e-mailed to the Retention unit.' : '',
+    r.held ? tN_(r.held, 'claim is', 'claims are') + ' held: see Status on the ' + T_CLAIM.TAB + ' tab.' : '',
+    r.paid ? tN_(r.paid, 'claim', 'claims') + ' marked paid.' : '', r.monday || '',
+    r.errors && r.errors.length ? 'Problems: ' + r.errors.join('; ') : ''].filter(Boolean).join(' ');
+}
+
+/** Inside the five-minute receipts run, which holds the script lock: new claims found and e-mailed, the unpaid read back
+ *  from Salesforce, and the Monday list. Never throws. */
+function tClaimsRun_(force) {
+  var out = { found: 0, sent: 0, held: 0, paid: 0, monday: '', errors: [] };
+  var why = function (e) { return String(e && e.message ? e.message : e).slice(0, 200); };
+  try { var a = tClaimsFind_(force); out.found = a.found; out.sent = a.sent; out.held = a.held; }
+  catch (e) { out.errors.push('finding: ' + why(e)); log_('transition', 'claims-failed', why(e)); }
+  try { out.paid = tClaimsPaid_(force).paid; }
+  catch (e) { out.errors.push('payments: ' + why(e)); log_('transition', 'claims-paid-failed', why(e)); }
+  try { out.monday = tClaimsMonday_(false).what; }
+  catch (e) { out.errors.push('Monday list: ' + why(e)); log_('transition', 'claims-monday-failed', why(e)); }
+  return out;
+}
+
+/** The Retention Payments tab, made the first time a claim is found. */
+function tClaimTab_() {
+  var ss = ss_(), sh = ss.getSheetByName(T_CLAIM.TAB);
+  if (sh) return sh;
+  sh = ss.insertSheet(T_CLAIM.TAB);
+  sh.getRange(1, 1, 1, T_CLAIM_HEAD.length).setValues([T_CLAIM_HEAD]);
+  try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_CLAIM_HEAD.length).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  return sh;
+}
+
+/** Every claim on the tab, read by its headers (a person may add columns): { sh, ix, rows }; no rows when there is no tab. */
+function tClaimsRead_() {
+  var sh = ss_().getSheetByName(T_CLAIM.TAB), out = { sh: sh, ix: {}, rows: [] };
+  if (!sh || sh.getLastRow() < 2) return out;
+  var vals = sh.getRange(1, 1, sh.getLastRow(), Math.max(1, sh.getLastColumn())).getValues();
+  vals[0].forEach(function (h, i) { h = String(h).trim(); if (h && out.ix[h] === undefined) out.ix[h] = i; });
+  var g = function (v, k) { return out.ix[k] !== undefined ? v[out.ix[k]] : ''; };
+  for (var i = 1; i < vals.length; i++) {
+    var v = vals[i], id = tText_(g(v, 'Claim'));
+    if (!id) continue;
+    out.rows.push({ rn: i + 1, id: id, token: tText_(g(v, 'Token')), client: tText_(g(v, 'Client')), cno: tText_(g(v, 'Client number')),
+      policy: tPolNo_(g(v, 'Policy')), agent: tText_(g(v, 'Agent')), agentNo: tText_(g(v, 'Agent no.')), agentEmail: tText_(g(v, 'Agent e-mail')),
+      named: g(v, 'Named on'), via: tText_(g(v, 'Named via')), q: tText_(g(v, 'Questionnaire')), received: g(v, 'Received'),
+      amount: Number(g(v, 'Amount')) || T_CLAIM.AMOUNT, submitted: g(v, 'Submitted'), sf: tText_(g(v, 'Salesforce')),
+      follow: Number(g(v, 'Follow-ups')) || 0, lastFollow: g(v, 'Last follow-up'), paid: g(v, 'Paid'), status: tText_(g(v, 'Status')), note: tText_(g(v, 'Note')) });
+  }
+  return out;
+}
+
+/** Writes fields onto one claim's row, found by its Claim id (the tab may have been sorted since it was read). Returns ret. */
+function tClaimSet_(c, fields, ret) {
+  try {
+    var sh = ss_().getSheetByName(T_CLAIM.TAB);
+    if (!sh || sh.getLastRow() < 2) return ret;
+    var head = sh.getRange(1, 1, 1, Math.max(1, sh.getLastColumn())).getValues()[0].map(function (h) { return String(h).trim(); });
+    var idc = head.indexOf('Claim');
+    if (idc < 0) return ret;
+    var ids = sh.getRange(1, idc + 1, sh.getLastRow(), 1).getValues(), rn = 0;
+    for (var i = 1; i < ids.length && !rn; i++) if (String(ids[i][0] || '').trim() === c.id) rn = i + 1;
+    if (!rn) return ret;
+    Object.keys(fields).forEach(function (k) { var j = head.indexOf(k); if (j >= 0) sh.getRange(rn, j + 1).setValue(fields[k]); });
+  } catch (e) {}
+  return ret;
+}
+
+/** Who each client was named to, and when, every time, by token, oldest first: [{ agent, day: 'yyyy-MM-dd', via }]. From the
+ *  board (Assigned to on the client's Client Responses rows, and the [assigned d MMM · Name] stamps in their Note cells, which
+ *  keep every name before the latest) and the Household Assignments tab (Salesforce's names, through tHaSync_). */
+function tNamingsAll_(tz, ha) {
+  var by = {}, now = new Date(), year = now.getFullYear(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  var MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  var add = function (tok, agent, day, via) {
+    if (!tok || !agent || !day) return;
+    var a = by[tok] = by[tok] || [];
+    if (!a.some(function (x) { return x.day === day && tNameKey_(x.agent) === tNameKey_(agent); })) a.push({ agent: agent, day: day, via: via });
+  };
+  tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), agent = String(v[8] || '').trim();
+    if (!tok) return;
+    if (agent) add(tok, agent, tDay_(v[9]) || tDay_(v[0]) || '', 'board');
+    var re = /\[assigned (\d{1,2}) ([A-Z][a-z]{2}) · ([^\]]+)\]/g, m, note = String(v[10] || '');
+    while ((m = re.exec(note))) {
+      if (MON[m[2]] === undefined) continue;
+      var d = Utilities.formatDate(new Date(year, MON[m[2]], +m[1], 12), tz, 'yyyy-MM-dd');
+      if (d > today) d = Utilities.formatDate(new Date(year - 1, MON[m[2]], +m[1], 12), tz, 'yyyy-MM-dd');   // a stamp from December, read in January
+      add(tok, m[3].trim(), d, 'board');
+    }
+  });
+  if (ha) ha.rows.forEach(function (r) { if (r.token && r.agent) add(r.token, r.agent, tDay_(r.date) || '', r.source === 'Salesforce' ? 'Salesforce' : 'board'); });
+  Object.keys(by).forEach(function (k) { by[k].sort(function (a, b) { return a.day < b.day ? -1 : a.day > b.day ? 1 : 0; }); });
+  return by;
+}
+
+/** New claims: every service questionnaire from the last WINDOW_DAYS that names a client of the campaign (its Link ref, else
+ *  a policy number only that client holds, else an e-mail only that client has) and came in on or after the day the client
+ *  was named to an agent, once per client; then each new or held claim is tried (tClaimSubmit_). Matched again at once when
+ *  a questionnaire arrives, and otherwise every SCAN_EVERY_MIN minutes, so a name given in Salesforce with an earlier date
+ *  is still seen. */
+function tClaimsFind_(force) {
+  var props = PropertiesService.getScriptProperties(), tz = tTz_(), now = new Date();
+  var q = tSheetRows_(SVC.IND_SHEET), out = { found: 0, sent: 0, held: 0 };
+  var lastN = Number(props.getProperty('claims_q_rows') || -1), lastAt = Number(props.getProperty('claims_scan_at') || 0);
+  if (!force && q.rows.length === lastN && Date.now() - lastAt < T_CLAIM.SCAN_EVERY_MIN * 60000) return out;
+  props.setProperty('claims_q_rows', String(q.rows.length));
+  props.setProperty('claims_scan_at', String(Date.now()));
+  var cl = tClaimsRead_(), qi = {};
+  q.head.forEach(function (h, i) { if (h && qi[h] === undefined) qi[h] = i; });
+  var col = function (v, h) { return qi[h] !== undefined ? v[qi[h]] : ''; };
+  var have = {}, byQ = {}, cut = now.getTime() - T_CLAIM.WINDOW_DAYS * 86400000, fresh = [];
+  cl.rows.forEach(function (r) { if (r.token) have[r.token] = r; if (r.q) byQ[r.q] = r; });
+  q.rows.forEach(function (v) {
+    var at = col(v, 'Timestamp'), ref = tText_(col(v, 'Reference'));
+    if (!ref || byQ[ref] || !(at instanceof Date) || isNaN(at.getTime()) || at.getTime() < cut) return;
+    var pol = tPolNo_(col(v, 'Policy #')), link = tText_(col(v, 'Link ref'));
+    if (/^test/i.test(pol) || /^transition:(pilot|test)\b/i.test(link) || /^(test|void|duplicate|spam)/i.test(tText_(col(v, 'Status')))) return;
+    fresh.push({ ref: ref, at: at, pol: pol, link: link, email: tText_(col(v, 'Email')).toLowerCase() });
+  });
+  var retry = cl.rows.filter(function (r) { return T_CLAIM_RETRY.test(r.status); });
+  if (!fresh.length && !retry.length) return out;
+  /* the clients of the campaign: never a staff Test row, a departed agent's own policy or household, staff, a death claim */
+  var t = tRead_(), byTok = {}, byMail = {};
+  t.rows.forEach(function (r) {
+    var tok = tText_(r.Token);
+    if (!tok || tYes_(r.Test) || /^test:/i.test(tText_(r.Agent)) || /^test\b/i.test(tText_(r.Client)) || T_NOT_BOOK.test(tText_(r.Exclude))) return;
+    byTok[tok] = r;
+    var m = tText_(r.Email).toLowerCase();
+    if (m) (byMail[m] = byMail[m] || []).push(tok);
+  });
+  var ha = null;
+  try { ha = tHaRead_(); } catch (e) {}
+  var polTok = null;
+  var tokOfPol = function (p) {
+    if (!polTok) {
+      polTok = {};
+      var add = function (no, tok) { no = tPolNo_(no); if (!no) return; var a = polTok[no] = polTok[no] || []; if (a.indexOf(tok) < 0) a.push(tok); };
+      if (ha) ha.rows.forEach(function (r) { if (r.token && byTok[r.token]) r.pols.forEach(function (no) { add(no, r.token); }); });
+      var bk = tBook_();
+      if (bk.ready) Object.keys(byTok).forEach(function (tok) { (bk.by[tCno_(byTok[tok]['Client number'])] || []).forEach(function (rec) { add(rec.no, tok); }); });
+    }
+    var a = polTok[p] || [];
+    return a.length === 1 ? a[0] : '';
+  };
+  var names = tNamingsAll_(tz, ha), made = [], ids = {}, seq = Number(props.getProperty('claims_seq') || 0);
+  cl.rows.forEach(function (r) { ids[r.id] = true; });
+  fresh.sort(function (a, b) { return a.at.getTime() - b.at.getTime(); });   // a client's first questionnaire after the naming is the one that claims
+  fresh.forEach(function (c) {
+    var m = /^transition:([A-Za-z0-9_-]+)$/.exec(c.link);
+    var tok = (m && byTok[m[1]] ? m[1] : '') || (c.pol ? tokOfPol(c.pol) : '') || (c.email && (byMail[c.email] || []).length === 1 ? byMail[c.email][0] : '');
+    if (!tok || have[tok]) return;                                            // not a client of the campaign, or claimed once already
+    var day = Utilities.formatDate(c.at, tz, 'yyyy-MM-dd'), nm = null;
+    (names[tok] || []).forEach(function (n) { if (n.day <= day) nm = n; });   // the agent they were named to when it came in
+    if (!nm) return;                                                          // before anyone was named: no claim (the manager's rule)
+    var r = byTok[tok], id;
+    do { seq++; id = 'RP-' + Utilities.formatDate(now, tz, 'yyMMdd') + '-' + ('00' + seq).slice(-3); } while (ids[id]);
+    ids[id] = true;
+    var mine = c.pol && tClientPols_(tok, tText_(r['Client number']), ha).indexOf(c.pol) >= 0;
+    var claim = { id: id, token: tok, client: tText_(r.Client) || tText_(r['First name']) || 'a client', cno: tText_(r['Client number']),
+      policy: mine ? c.pol : '', agent: nm.agent, named: tHaDate_(nm.day), via: nm.via, q: c.ref, received: c.at, amount: T_CLAIM.AMOUNT, status: 'New' };
+    made.push(claim); have[tok] = claim;
+  });
+  props.setProperty('claims_seq', String(seq));
+  if (made.length) {
+    var sh = tClaimTab_(), head = sh.getRange(1, 1, 1, Math.max(sh.getLastColumn(), T_CLAIM_HEAD.length)).getValues()[0].map(function (h) { return String(h).trim(); });
+    var rows = made.map(function (c) {
+      var v = { Claim: c.id, Token: c.token, Client: c.client, 'Client number': c.cno, Policy: c.policy, Agent: c.agent, 'Named on': c.named,
+        'Named via': c.via, Questionnaire: c.q, Received: c.received, Amount: c.amount, 'Follow-ups': 0, Status: 'New' };
+      return head.map(function (h) { return v.hasOwnProperty(h) ? v[h] : ''; });
+    });
+    var start = sh.getLastRow() + 1;
+    ['Token', 'Client number', 'Policy'].forEach(function (h) { var j = head.indexOf(h); if (j >= 0) sh.getRange(start, j + 1, rows.length, 1).setNumberFormat('@'); });
+    sh.getRange(start, 1, rows.length, head.length).setValues(rows);
+    out.found = made.length;
+    log_('transition', 'claims-found', made.map(function (c) { return c.id + ' ' + c.agent + ' · ' + c.client; }).join('; '));
+  }
+  var ctx = { live: tClaimsLive_(), roster: tRoster_(), ha: ha };
+  made.concat(retry).forEach(function (c) {
+    if (out.sent >= T_CLAIM.MAX_PER_RUN) return;
+    var r = tClaimSubmit_(c, ctx);
+    if (r === 'sent') out.sent++;
+    else if (r === 'held' || r === 'not sent') out.held++;
+  });
+  return out;
+}
+
+/** One claim to the Retention unit: the agent off the Agent Skill Bank; held until the go; Salesforce read for a submission
+ *  the branch already entered by hand; then the e-mail and the submission date in Salesforce. Returns 'sent', 'by hand',
+ *  'held' or 'not sent'; the Status cell says the same in words. */
+function tClaimSubmit_(c, ctx) {
+  var k = tNameKey_(c.agent), a = null;
+  ctx.roster.forEach(function (x) { if (!a && tNameKey_(x.name) === k) a = x; });
+  if (!a) return tClaimSet_(c, { Status: 'Held: ' + c.agent + ' is not on the Agent Skill Bank as an active agent' }, 'held');
+  c.agentNo = a.no; c.agentEmail = a.email;
+  var who = { 'Agent no.': a.no, 'Agent e-mail': a.email };
+  if (!ctx.live) return tClaimSet_(c, tMerge_(who, { Status: 'Held: waiting for the go (Transition: start the TT$200 claims)' }), 'held');
+  var pols = tClientPols_(c.token, c.cno, ctx.ha);
+  if (c.policy && pols.indexOf(c.policy) < 0) pols.unshift(c.policy);
+  var sf = tClaimSf_(pols, c);
+  if (sf.byHand) {
+    return tClaimSet_(c, tMerge_(who, { Policy: sf.byHand.no, Submitted: tHaDate_(sf.byHand.day),
+      Salesforce: sf.byHand.id + ' · entered by hand ' + sf.byHand.day + ': not e-mailed again', Status: 'Submitted by hand' }), 'by hand');
+  }
+  c.policy = (sf.rec && sf.rec.no) || c.policy || pols[0] || '';
+  tClaimSet_(c, tMerge_(who, { Policy: c.policy, Status: 'Sending' }));
+  try { tClaimMail_(c); }
+  catch (e) { return tClaimSet_(c, { Status: 'Not sent: ' + String(e && e.message ? e.message : e).slice(0, 160) }, 'not sent'); }
+  var note = tClaimSfWrite_(sf, c);
+  tClaimSet_(c, { Submitted: new Date(), Salesforce: note, Status: 'Submitted' });
+  log_('transition', 'claim', c.id + ' · ' + c.agent + ' · ' + c.client + ' · e-mailed to the Retention unit · Salesforce: ' + note);
+  return 'sent';
+}
+/** Two sets of fields as one. */
+function tMerge_(a, b) { var o = {}; [a, b].forEach(function (x) { Object.keys(x || {}).forEach(function (k) { o[k] = x[k]; }); }); return o; }
+
+/** The client's policies in Salesforce for a claim: { on, rec (the record to write), byHand (a submission on or after the
+ *  day the client was named, already entered), all, why, error }. Never throws. */
+function tClaimSf_(pols, c) {
+  if (!tSfOn_()) return { on: false, why: 'Salesforce is not linked to this project' };
+  if (!pols.length) return { on: true, why: 'no policy number for this client' };
+  try {
+    var recs = svcSfQuery_('SELECT Id, POLICY__c, Assigned_Agent__r.Name, Date_Subm_to_Retention__c, Was_Agent_Paid__c, Date_Comm_Paid__c ' +
+      'FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')');
+    var named = tDay_(c.named) || '', byHand = null;
+    var all = recs.map(function (r) {
+      return { id: r.Id, no: tPolNo_(r.POLICY__c), agent: r.Assigned_Agent__r ? String(r.Assigned_Agent__r.Name || '') : '',
+        sub: String(r.Date_Subm_to_Retention__c || ''), was: String(r.Was_Agent_Paid__c || ''), paid: String(r.Date_Comm_Paid__c || '') };
+    });
+    all.forEach(function (x) { if (x.sub && named && x.sub >= named && (!byHand || x.sub < byHand.sub)) byHand = x; });
+    if (byHand) return { on: true, all: all, byHand: { id: byHand.id, no: byHand.no, day: byHand.sub } };
+    var k = tNameKey_(c.agent), free = all.filter(function (x) { return !x.sub; });
+    free.sort(function (x, y) {
+      return ((x.no === c.policy ? 0 : 1) - (y.no === c.policy ? 0 : 1))                       // the questionnaire's own policy
+        || ((tNameKey_(x.agent) === k ? 0 : 1) - (tNameKey_(y.agent) === k ? 0 : 1))           // the one the agent was named on
+        || (pols.indexOf(x.no) - pols.indexOf(y.no));                                          // the live one with the largest premium
+    });
+    return { on: true, all: all, rec: free[0] || null,
+      why: free.length ? '' : all.length ? 'every policy of this client already carries an earlier retention submission' : 'Salesforce has none of these policies' };
+  } catch (e) { return { on: true, error: String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+
+/** Date Subm to Retention (today) and, when blank, Was Agent Paid = No on the claim's record. Returns the Salesforce cell. */
+function tClaimSfWrite_(sf, c) {
+  if (!sf.on) return 'not linked: enter Date Subm to Retention on policy ' + (c.policy || '(none on file)') + ' by hand';
+  if (sf.error) return 'not read (' + sf.error + '): enter it by hand';
+  if (!sf.rec) return 'not written: ' + (sf.why || 'no record') + '; enter it by hand';
+  var today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'), body = { Date_Subm_to_Retention__c: today };
+  if (!sf.rec.was) body.Was_Agent_Paid__c = 'No';
+  try {
+    tSfSend_('patch', '/sobjects/CLIENT_PORTFOLIO__c/' + sf.rec.id, body);
+    return sf.rec.id + ' · policy ' + sf.rec.no + ': Date Subm to Retention ' + today + (body.Was_Agent_Paid__c ? ', Was Agent Paid No' : '');
+  } catch (e) { return 'failed on policy ' + sf.rec.no + ': ' + String(e && e.message ? e.message : e).slice(0, 160) + '; enter it by hand'; }
+}
+
+/** A date for the e-mails: a Date or a yyyy-MM-dd as "3 October 2026". */
+function tClaimDay_(x) {
+  var d = x instanceof Date ? x : tHaDate_(x);
+  return d && !isNaN(d.getTime()) ? Utilities.formatDate(d, tTz_(), 'd MMMM yyyy') : tText_(x);
+}
+
+/** The claim to the Retention unit, from support@, the manager and the agent copied, a reply going to the manager. */
+function tClaimMail_(c) {
+  var esc = tEsc_, copy = T_CLAIM.COPY || SVC.AGENT_EMAIL, M = TRANSITION.MANAGER || {};
+  var amt = T_CLAIM.CUR + tMoney_(c.amount || T_CLAIM.AMOUNT, 2), agent = c.agent + (c.agentNo ? ' (' + c.agentNo + ')' : '');
+  var rows = [['Agent to be paid', agent], ['Amount', amt], ['Client', c.client + (c.cno ? ' · client number ' + c.cno : '')],
+    ['Policy', c.policy || 'none on file: see the client number'], ['Service questionnaire', c.q + ', received ' + tClaimDay_(c.received)],
+    ['Named to the agent', tClaimDay_(c.named) + (c.via === 'Salesforce' ? ', in Salesforce' : ', on the branch assignment board')], ['Branch reference', c.id]];
+  var subject = 'Retention claim ' + amt + ': ' + agent + ' · ' + c.client + (c.policy ? ', policy ' + c.policy : '');
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:620px">' +
+    '<p style="margin:0 0 12px">Good day,</p>' +
+    '<p style="margin:0 0 12px">Please process the conservation payment below for an orphan policyholder of the Ricky Rampersad Branch. ' +
+    'The client was named to the agent on ' + esc(tClaimDay_(c.named)) + ', and their service questionnaire came in on ' + esc(tClaimDay_(c.received)) + '.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px">' +
+    rows.map(function (r) {
+      return '<tr><td style="padding:6px 14px 6px 0;vertical-align:top;white-space:nowrap;font-size:13px;color:#8a97a8;border-top:1px solid #eef2f5">' + esc(r[0]) +
+        '</td><td style="padding:6px 0;vertical-align:top;font-size:14.5px;color:#12202e;border-top:1px solid #eef2f5"><b>' + esc(r[1]) + '</b></td></tr>';
+    }).join('') + '</table>' +
+    '<p style="margin:0 0 12px">When it is paid, please reply with the payment date, or enter it as <b>Date Comm Paid</b> on the policy in Salesforce. ' +
+    'Until that date is there, this claim is on the list of unpaid claims we send you every Monday.</p>' +
+    '<p style="margin:0 0 14px">Thank you,<br><b style="color:#12202e">' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
+  var cc = [copy];
+  if (c.agentEmail && cc.map(function (x) { return String(x).toLowerCase(); }).indexOf(String(c.agentEmail).toLowerCase()) < 0) cc.push(c.agentEmail);
+  tMsSend_(T_CLAIM.TO, subject, html, { cc: cc, replyTo: copy });
+}
+
+/** Payments: a Paid date typed on the tab closes a claim; with Salesforce linked, every PAID_EVERY_MIN minutes, a Date Comm
+ *  Paid on or after the day the client was named, on the claim's policy or any other of the client's, closes it too, and Was
+ *  Agent Paid is set to Yes on that record when it is not already. A date still to come (the next commission run) counts:
+ *  the date is what the Retention unit was asked for. */
+function tClaimsPaid_(force) {
+  var cl = tClaimsRead_(), out = { paid: 0 };
+  var open = [];
+  cl.rows.forEach(function (r) {
+    if (!/^submitted/i.test(r.status)) return;
+    if (tText_(r.paid)) { tClaimSet_(r, { Status: 'Paid (entered on this tab)' }); out.paid++; return; }
+    open.push(r);
+  });
+  if (!open.length || !tSfOn_()) return out;
+  var props = PropertiesService.getScriptProperties(), last = Number(props.getProperty('claims_paid_at') || 0);
+  if (!force && Date.now() - last < T_CLAIM.PAID_EVERY_MIN * 60000) return out;
+  props.setProperty('claims_paid_at', String(Date.now()));
+  var ha = null;
+  try { ha = tHaRead_(); } catch (e) {}
+  var per = {}, want = {}, recs = {};
+  open.forEach(function (r) {
+    var ps = tClientPols_(r.token, r.cno, ha);
+    if (r.policy) { ps = ps.filter(function (p) { return p !== r.policy; }); ps.unshift(r.policy); }
+    per[r.id] = ps;
+    ps.forEach(function (p) { want[p] = true; });
+  });
+  var nos = Object.keys(want);
+  for (var i = 0; i < nos.length; i += 150) {
+    svcSfQuery_('SELECT Id, POLICY__c, Was_Agent_Paid__c, Date_Comm_Paid__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(nos.slice(i, i + 150)) + ')')
+      .forEach(function (x) { recs[tPolNo_(x.POLICY__c)] = { id: x.Id, was: String(x.Was_Agent_Paid__c || ''), paid: String(x.Date_Comm_Paid__c || '') }; });
+  }
+  open.forEach(function (r) {
+    var named = tDay_(r.named) || '', hit = null;
+    per[r.id].forEach(function (p) { var x = recs[p]; if (!hit && x && x.paid && (!named || x.paid >= named)) hit = { no: p, rec: x }; });
+    if (!hit) return;
+    var note = '[paid ' + hit.rec.paid + ' in Salesforce, policy ' + hit.no + ']';
+    if (hit.rec.was !== 'Yes') {
+      try { tSfSend_('patch', '/sobjects/CLIENT_PORTFOLIO__c/' + hit.rec.id, { Was_Agent_Paid__c: 'Yes' }); note += ' [Was Agent Paid set to Yes]'; }
+      catch (e) { note += ' [Was Agent Paid not set: ' + String(e && e.message ? e.message : e).slice(0, 80) + ']'; }
+    }
+    tClaimSet_(r, { Paid: tHaDate_(hit.rec.paid), Status: 'Paid', Note: (r.note ? r.note + ' ' : '') + note });
+    out.paid++;
+    log_('transition', 'claim-paid', r.id + ' · ' + r.agent + ' · ' + r.client + ' · ' + hit.rec.paid);
+  });
+  return out;
+}
+
+/** The Monday list: one e-mail to the Retention unit with every claim sent at least MIN_DAYS before and still without a
+ *  payment date, oldest first, the manager copied (never the agents: the list carries every agent's clients; each agent
+ *  sees their own claims on the board). Once a Monday, in the first run at or after MONDAY_HOUR; forced from the menu. */
+function tClaimsMonday_(force) {
+  var props = PropertiesService.getScriptProperties(), tz = tTz_(), now = new Date(), today = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  if (!force) {
+    if (!tClaimsLive_() || props.getProperty('claims_monday') === today) return { what: '' };
+    if (Utilities.formatDate(now, tz, 'u') !== '1' || Number(Utilities.formatDate(now, tz, 'H')) < T_CLAIM.MONDAY_HOUR) return { what: '' };
+  }
+  var due = tClaimsRead_().rows.filter(function (r) {
+    var s = tDay_(r.submitted);
+    return /^submitted/i.test(r.status) && !tText_(r.paid) && !!s && (force || tDaysBetween_(s, today) >= T_CLAIM.MIN_DAYS);
+  });
+  if (!due.length) {
+    if (!force) props.setProperty('claims_monday', today);
+    return { what: 'No unpaid claim to follow up.' };
+  }
+  due.sort(function (a, b) { return String(tDay_(a.submitted)).localeCompare(String(tDay_(b.submitted))) || a.id.localeCompare(b.id); });
+  var esc = tEsc_, copy = T_CLAIM.COPY || SVC.AGENT_EMAIL, M = TRANSITION.MANAGER || {};
+  var total = due.reduce(function (s, r) { return s + (r.amount || T_CLAIM.AMOUNT); }, 0), oldest = tDay_(due[0].submitted);
+  var td = 'padding:6px 10px 6px 0;vertical-align:top;font-size:13.5px;color:#12202e;border-top:1px solid #eef2f5';
+  var th = 'padding:4px 10px 4px 0;text-align:left;font-size:11.5px;font-weight:600;color:#8a97a8';
+  var subject = 'Unpaid retention claims: ' + tN_(due.length, 'claim', 'claims') + ', ' + T_CLAIM.CUR + tMoney_(total, 2) + ', the oldest sent ' + tClaimDay_(oldest);
+  var html = '<div style="font:15px/1.6 Inter,Arial,sans-serif;color:#33465a;max-width:760px">' +
+    '<p style="margin:0 0 12px">Good day,</p>' +
+    '<p style="margin:0 0 12px">These conservation payments for orphan policyholders of the Ricky Rampersad Branch were sent to you and still show no payment date in Salesforce. ' +
+    'Please reply with the date each is paid, or enter it as <b>Date Comm Paid</b> on the policy; each one leaves this list when the date is there.</p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;margin:0 0 14px"><tr>' +
+    ['Sent to you', 'Agent', 'Client', 'Policy', 'Questionnaire', 'Amount', 'Asked before'].map(function (h) { return '<th style="' + th + '">' + h + '</th>'; }).join('') + '</tr>' +
+    due.map(function (r) {
+      var s = tDay_(r.submitted), days = tDaysBetween_(s, today);
+      return '<tr><td style="' + td + ';white-space:nowrap">' + esc(tClaimDay_(s)) + '<br><span style="color:#8a97a8;font-size:12px">' + esc(tN_(days, 'day', 'days')) + ' ago</span></td>' +
+        '<td style="' + td + '">' + esc(r.agent) + (r.agentNo ? '<br><span style="color:#8a97a8;font-size:12px">' + esc(r.agentNo) + '</span>' : '') + '</td>' +
+        '<td style="' + td + '">' + esc(r.client) + (r.cno ? '<br><span style="color:#8a97a8;font-size:12px">client ' + esc(r.cno) + '</span>' : '') + '</td>' +
+        '<td style="' + td + '">' + esc(r.policy || '—') + '</td><td style="' + td + '">' + esc(r.q) + '</td>' +
+        '<td style="' + td + ';white-space:nowrap">' + esc(T_CLAIM.CUR + tMoney_(r.amount || T_CLAIM.AMOUNT, 2)) + '</td>' +
+        '<td style="' + td + '">' + esc(r.follow ? tN_(r.follow, 'time', 'times') : 'first time') + '<br><span style="color:#8a97a8;font-size:12px">' + esc(r.id) + '</span></td></tr>';
+    }).join('') + '</table>' +
+    '<p style="margin:0 0 14px">' + esc(tN_(due.length, 'claim', 'claims')) + ', ' + esc(T_CLAIM.CUR + tMoney_(total, 2)) + ' in all. Thank you,<br><b style="color:#12202e">' +
+    esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch</p>' +
+    '<p style="margin:0;font-size:12px;color:#8a97a8">' + esc(T_CLAIM_FOOT) + '</p></div>';
+  tMsSend_(T_CLAIM.TO, subject, html, { cc: [copy], replyTo: copy });
+  due.forEach(function (r) { tClaimSet_(r, { 'Follow-ups': (r.follow || 0) + 1, 'Last follow-up': now }); });
+  if (!force) props.setProperty('claims_monday', today);
+  log_('transition', 'claims-monday', due.length + ' unpaid claims followed up with the Retention unit, ' + T_CLAIM.CUR + tMoney_(total, 2));
+  return { what: 'Followed up ' + tN_(due.length, 'unpaid claim', 'unpaid claims') + ' with the Retention unit (' + T_CLAIM.CUR + tMoney_(total, 2) + ').' };
+}
+
+/** One claim as the board shows it: dates as "3 Oct 2026", where it stands in one word (unpaid, paid, held, notsent, check,
+ *  closed, new), and for the branch the Status and Salesforce cells as written. */
+function tClaimView_(r, tz, today, branch) {
+  var d = function (x) { var y = tDay_(x); return y ? tDmy_(y) : ''; };
+  var sub = tDay_(r.submitted) || '', paid = tDay_(r.paid) || '', st = r.status;
+  var state = /^paid/i.test(st) || (/^submitted/i.test(st) && tText_(r.paid)) ? 'paid' : T_CLAIM_SHUT.test(st) ? 'closed' : /^submitted/i.test(st) ? 'unpaid'
+    : /^held/i.test(st) ? 'held' : /^not sent/i.test(st) ? 'notsent' : /^sending/i.test(st) ? 'check' : 'new';
+  var v = { id: r.id, token: r.token, client: r.client, agent: r.agent, amount: r.amount, q: r.q, received: d(r.received), named: d(r.named), via: r.via,
+    submitted: sub ? tDmy_(sub) : '', days: sub ? tDaysBetween_(sub, today) : null, follow: r.follow, last: d(r.lastFollow),
+    paid: paid ? tDmy_(paid) : (tText_(r.paid) && !paid ? tText_(r.paid) : ''), future: !!paid && paid > today, state: state, byHand: /by hand/i.test(st) };
+  if (branch) { v.status = st; v.sf = r.sf; }
+  return v;
+}
+
+/* ── one client in full: the history, their Salesforce tasks, the team's comments ── */
+/* 3 October 2026: "I would Like updates so the agent can see the email and history and tasks opened on salesforce assigned
+   to the staff and a place for their comments". The board's "History · tasks · comments" opens one client: everything
+   between us and them, newest first (tTrail_, which a reply carries to the client, in the board's words, with what the
+   branch did beside it: the names, the calls, the questionnaire, the claim, the comments); every Salesforce task on their
+   policies or their contact record, open or closed in the last TASK_DAYS days, with who it is assigned to and its Chatter;
+   and the comments. A comment is kept on the Board Comments tab and posted to the Chatter of the client's open tasks (the
+   newest TASKS of them), or to the policy record when none is open, in the name of the person who wrote it. Who may open a
+   client is who sees the card: the branch and staff everyone, a unit manager his team's, an agent their own. */
+var T_CMT = { TAB: 'Board Comments', MAX: 800, TASKS: 3, TASK_DAYS: 14 };
+var T_CMT_HEAD = ['When', 'Token', 'Client', 'Client number', 'By', 'Role', 'Comment', 'Salesforce'];
+/* the trail's lines are in the client's own voice (it goes beneath a reply to them); the board reads them about the client */
+var T_HIST_WORDS = { 'You answered our letter': 'Answered our letter', 'You told us by phone': 'Told us on a call', 'You wrote to us': 'Wrote to us',
+  'You wrote on our page': 'Wrote on our page', 'We spoke with you by phone': 'We spoke with them by phone', 'We introduced your agent': 'We introduced their agent' };
+var T_OUTCOME_WORDS = { called: 'Called', met: 'Met', 'no answer': 'Tried to call: no answer', declined: 'Declined', closed: 'Closed', open: 'Reopened' };
+
+/** The agent a client is on now, the way the board decides it: the Assigned to with the newest Assigned on, unless the
+ *  Household Assignments tab (Salesforce) names someone later. */
+function tNamedNow_(tok, rows, ha) {
+  var name = '', at = null, ar = null;
+  rows.forEach(function (v) {
+    var a = String(v[8] || '').trim(), on = v[9] instanceof Date ? v[9] : null, rec = v[0] instanceof Date ? v[0] : null;
+    if (a && (!at || (on && on > at))) { name = a; at = on || at || rec; }
+  });
+  if (ha) ha.rows.forEach(function (r) { if (r.token === tok && r.agent) ar = r; });
+  if (ar) { var hd = tHaDate_(ar.date); if (!name || (hd && at && hd > at)) { name = ar.agent; at = hd || at; } }
+  return name;
+}
+/** Whether this viewer may open one client: the branch and staff, anyone; a unit manager, his team's; an agent, their own. */
+function tMayOpen_(w, named) {
+  if (w.role === 'branch' || w.role === 'staff') return true;
+  if (w.role === 'unit') return tOnTeam_(w.team)(named);
+  return !!(w.me && w.me.name) && tOnTeam_([w.me.name])(named);
+}
+/** The client a request names, and whether this viewer may open them: { ok, row, rows (their Client Responses rows), ha } or
+ *  a refusal. */
+function tOpenClient_(p, w) {
+  var tok = String(p.token || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64), row = tok ? tRowByToken_(tok) : null;
+  if (!row || tYes_(row.Test)) return { ok: false, error: 'That client is not on the send list.' };
+  var rows = tSheetRows_(SVC.RESP_SHEET).rows.filter(function (v) { return String(v[1] || '').trim() === tok; }), ha = null;
+  try { ha = tHaRead_(); } catch (e) {}
+  if (!tMayOpen_(w, tNamedNow_(tok, rows, ha))) return { ok: false, refused: true, error: w.role === 'unit' ? 'That client is not on your team’s list.' : 'That client is not on your list.' };
+  return { ok: true, tok: tok, row: row, rows: rows, ha: ha };
+}
+
+/** GET action=detail&code=…[&who=…]&token=…: one client's history, Salesforce tasks and comments; the claim too, for anyone
+ *  but staff (Client Support sees no money). */
+function transitionDetail_(p) {
+  p = p || {};
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return { ok: false, refused: true, error: w.error };
+  try {
+    var o = tOpenClient_(p, w);
+    if (!o.ok) return o;
+    var tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd'), staff = w.role === 'staff';
+    var claim = null;
+    var mineC = w.role === 'unit' ? tOnTeam_(w.team) : w.role === 'agent' ? tOnTeam_([w.me.name]) : null;
+    if (!staff) tClaimsRead_().rows.forEach(function (r) { if (r.token === o.tok && (!mineC || mineC(r.agent))) claim = r; });
+    var comments = tCommentsFor_(o.tok);
+    var hist = tHistory_(o.row, o.rows, o.ha, claim, staff);
+    var tasks = tSfTasks_(o.tok, tText_(o.row['Client number']), o.ha);
+    var out = { ok: true, token: o.tok, client: tText_(o.row.Client) || tText_(o.row['First name']), at: Utilities.formatDate(new Date(), tz, 'd MMM HH:mm'),
+      history: hist, tasks: tasks.tasks, tasksWhy: tasks.why || '', tasksError: tasks.error || '', sf: tasks.on, taskDays: T_CMT.TASK_DAYS,
+      comments: comments.map(function (x) { return { when: x.when, by: x.by, role: x.role, text: x.text, sf: x.sf }; }) };
+    if (claim) out.claim = tClaimView_(claim, tz, today, w.role === 'branch');
+    return out;
+  } catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+}
+
+/** Everything between us and one client, newest first: the trail (tTrail_), in the board's words, and what the branch did
+ *  beside it — who they were named to, each call marked, the questionnaire and the claim (not for staff). The comments are
+ *  their own list beside it. [{ when, who: 'them' | 'us' | 'branch', text, quote }]. */
+function tHistory_(row, rows, ha, claim, staff) {
+  var tz = tTz_(), out = [], now = new Date(), year = now.getFullYear();
+  var MON = { Jan: 0, Feb: 1, Mar: 2, Apr: 3, May: 4, Jun: 5, Jul: 6, Aug: 7, Sep: 8, Oct: 9, Nov: 10, Dec: 11 };
+  var stampDay = function (dd, mmm) {
+    if (MON[mmm] === undefined) return null;
+    var d = new Date(year, MON[mmm], +dd, 12);
+    if (d > now) d = new Date(year - 1, MON[mmm], +dd, 12);
+    return d;
+  };
+  var add = function (at, who, text, quote, timed) { out.push({ at: at instanceof Date && !isNaN(at.getTime()) ? at : null, who: who, text: text, quote: quote || '', timed: !!timed }); };
+  try { tTrail_(row, rows, tReceipt_()).forEach(function (t) { add(t.at, t.who, T_HIST_WORDS[t.text] || t.text, t.quote, true); }); } catch (e) {}
+  var seen = {}, tok = tText_(row.Token);
+  rows.forEach(function (v) {
+    var note = String(v[10] || ''), m;
+    var re = /\[assigned (\d{1,2}) ([A-Z][a-z]{2}) · ([^\]]+)\]/g;
+    while ((m = re.exec(note))) { var k = 'a' + m[1] + m[2] + m[3]; if (!seen[k]) { seen[k] = 1; add(stampDay(m[1], m[2]), 'branch', 'Named to ' + m[3].trim(), ''); } }
+    var ro = /\[(called|met|declined|closed|open|no answer) (\d{1,2}) ([A-Z][a-z]{2}) · ([^\]]+)\]([^\[]*)/g;
+    while ((m = ro.exec(note))) {
+      var extra = m[5].replace(/\s+/g, ' ').trim(), k2 = 'o' + m[1] + m[2] + m[3] + m[4] + extra;
+      if (!seen[k2]) { seen[k2] = 1; add(stampDay(m[2], m[3]), 'branch', T_OUTCOME_WORDS[m[1]] + ' · ' + m[4].trim(), extra); }
+    }
+  });
+  if (ha) ha.rows.forEach(function (r) {
+    if (r.token !== tok || !r.agent || r.source !== 'Salesforce') return;
+    add(tHaDate_(r.date), 'branch', 'Named to ' + r.agent + ' in Salesforce', r.fb ? 'Feedback in Salesforce: ' + r.fb : '');
+  });
+  /* the questionnaire: by the letter's link, or under the e-mail the letter went to */
+  try {
+    var q = tSheetRows_(SVC.IND_SHEET), qi = {}, mail = tText_(row.Email).toLowerCase();
+    q.head.forEach(function (h, i) { if (h && qi[h] === undefined) qi[h] = i; });
+    q.rows.forEach(function (v) {
+      var g = function (h) { return qi[h] !== undefined ? v[qi[h]] : ''; };
+      var link = tText_(g('Link ref')), em = tText_(g('Email')).toLowerCase();
+      if (link !== 'transition:' + tok && !(mail && em === mail)) return;
+      add(g('Timestamp'), 'them', 'Filed a service questionnaire', [tText_(g('Reference')), tText_(g('Priority')), tText_(g('Status'))].filter(Boolean).join(' · '), true);
+    });
+  } catch (e) {}
+  if (claim && !staff) {
+    var amt = T_CLAIM.CUR + tMoney_(claim.amount || T_CLAIM.AMOUNT, 0);
+    if (claim.submitted) add(claim.submitted instanceof Date ? claim.submitted : tHaDate_(tDay_(claim.submitted)), 'branch',
+      amt + ' retention claim ' + claim.id + (/by hand/i.test(claim.status) ? ' (entered by hand)' : ' sent to the Retention unit'), 'for ' + claim.agent, claim.submitted instanceof Date);
+    var pd = tDay_(claim.paid);
+    if (pd) add(tHaDate_(pd), 'branch', amt + (pd > Utilities.formatDate(now, tz, 'yyyy-MM-dd') ? ' claim to be paid' : ' claim paid'),
+      /entered on this tab/i.test(claim.status) ? 'the date entered on the ' + T_CLAIM.TAB + ' tab' : 'Date Comm Paid in Salesforce', false);
+  }
+  var dedupe = {};
+  out = out.filter(function (x) { var k = (x.at ? Utilities.formatDate(x.at, tz, 'yyyy-MM-dd') : '') + '|' + x.text + '|' + x.quote; if (dedupe[k]) return false; dedupe[k] = 1; return true; });
+  out.sort(function (a, b) { return (b.at ? b.at.getTime() : -1) - (a.at ? a.at.getTime() : -1); });
+  return out.map(function (x) {
+    return { when: x.at ? Utilities.formatDate(x.at, tz, x.timed ? 'd MMM yyyy, HH:mm' : 'd MMM yyyy') : '', who: x.who, text: x.text, quote: String(x.quote || '').slice(0, 1500) };
+  });
+}
+
+/** Plain text from a Salesforce rich-text field: paragraphs and breaks as new lines, tags dropped, entities read. */
+function tPlain_(s) {
+  return String(s == null ? '' : s).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<\/\s*(p|div|li)\s*>/gi, '\n').replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t ]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+/** A task's subject as a person reads it: a broken flow formula ("Email: Happy Birthday " & $Record.FirstName) reads as what it is. */
+function tTaskSubject_(s) {
+  var t = tPlain_(s).replace(/\s+/g, ' ');
+  if (/\$Record\./.test(t)) return /birthday/i.test(t) ? 'Birthday e-mail (automatic)' : 'Automatic e-mail';
+  return t || '(no subject)';
+}
+
+/** The client's Salesforce records: { on, recs: [{ id, no, contact }] }. */
+function tSfRecs_(pols) {
+  if (!pols.length) return [];
+  return svcSfQuery_('SELECT Id, POLICY__c, Contact__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' + tSoqlIn_(pols.slice(0, 100)) + ')').map(function (r) {
+    return { id: r.Id, no: tPolNo_(r.POLICY__c), contact: r.Contact__c || '' };
+  });
+}
+/** Every Salesforce task on the client's policy records or their contact record, open or changed in the last TASK_DAYS days,
+ *  open first: who it is assigned to, its status and due date, who opened it, and its Chatter (posts and their replies).
+ *  { on, tasks, why, error }. Never throws. */
+function tSfTasks_(tok, cno, ha) {
+  if (!tSfOn_()) return { on: false, tasks: [], why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties.' };
+  try {
+    var pols = tClientPols_(tok, cno, ha);
+    if (!pols.length) return { on: true, tasks: [], why: 'No policy numbers for this client in the Client Book.' };
+    var recs = tSfRecs_(pols), what = [], who = [], polOf = {};
+    recs.forEach(function (r) { if (what.indexOf(r.id) < 0) what.push(r.id); polOf[r.id] = r.no; if (r.contact && who.indexOf(r.contact) < 0) who.push(r.contact); });
+    if (!what.length) return { on: true, tasks: [], why: 'Salesforce has none of this client’s policies.' };
+    var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
+    if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
+    var rows = svcSfQuery_('SELECT Id, Subject, Status, Priority, ActivityDate, IsClosed, Owner.Name, CreatedBy.Name, CreatedDate, LastModifiedDate, Description, WhatId ' +
+      'FROM Task WHERE (' + cond.join(' OR ') + ') AND (IsClosed = false OR LastModifiedDate = LAST_N_DAYS:' + T_CMT.TASK_DAYS + ') ORDER BY CreatedDate DESC LIMIT 25');
+    var feed = {}, inst = '';
+    try { inst = svcSfToken_().instance_url || ''; } catch (e) {}
+    if (rows.length) {
+      svcSfQuery_('SELECT Id, ParentId, Body, CreatedDate, CreatedBy.Name, (SELECT CommentBody, CreatedDate, CreatedBy.Name FROM FeedComments ORDER BY CreatedDate DESC LIMIT 5) ' +
+        'FROM FeedItem WHERE ParentId IN (' + tSoqlIn_(rows.map(function (t) { return t.Id; })) + ") AND Type = 'TextPost' ORDER BY CreatedDate DESC LIMIT 100").forEach(function (f) {
+        (feed[f.ParentId] = feed[f.ParentId] || []).push({ when: tSfWhen_(f.CreatedDate), by: f.CreatedBy ? f.CreatedBy.Name : '', text: tPlain_(f.Body).slice(0, 1500),
+          replies: ((f.FeedComments && f.FeedComments.records) || []).map(function (x) { return { when: tSfWhen_(x.CreatedDate), by: x.CreatedBy ? x.CreatedBy.Name : '', text: tPlain_(x.CommentBody).slice(0, 800) }; }) });
+      });
+    }
+    var tasks = rows.map(function (t) {
+      return { id: t.Id, subject: tTaskSubject_(t.Subject), status: String(t.Status || ''), priority: String(t.Priority || ''), open: !t.IsClosed,
+        due: t.ActivityDate ? tDmy_(String(t.ActivityDate)) : '', owner: t.Owner ? t.Owner.Name : '', by: t.CreatedBy ? t.CreatedBy.Name : '',
+        opened: tSfWhen_(t.CreatedDate), changed: tSfWhen_(t.LastModifiedDate), policy: polOf[t.WhatId] || '',
+        desc: tPlain_(t.Description).slice(0, 700), posts: feed[t.Id] || [], url: inst ? inst + '/' + t.Id : '' };
+    });
+    tasks.sort(function (a, b) { return (b.open ? 1 : 0) - (a.open ? 1 : 0); });
+    return { on: true, tasks: tasks };
+  } catch (e) { return { on: true, tasks: [], error: 'Salesforce did not answer: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
+}
+/** A Salesforce date-time ("2026-10-03T15:18:26.000+0000") as "3 Oct 2026, 11:18" in the sheet's zone. */
+function tSfWhen_(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/.exec(String(s || ''));
+  if (!m) return '';
+  return Utilities.formatDate(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])), tTz_(), 'd MMM yyyy, HH:mm');
+}
+
+/** The Board Comments tab, made the first time someone comments. */
+function tCmtTab_() {
+  var ss = ss_(), sh = ss.getSheetByName(T_CMT.TAB);
+  if (sh) return sh;
+  sh = ss.insertSheet(T_CMT.TAB);
+  sh.getRange(1, 1, 1, T_CMT_HEAD.length).setValues([T_CMT_HEAD]);
+  try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_CMT_HEAD.length).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  return sh;
+}
+/** Every comment, newest first, by token: { tok: [{ at, when, by, role, text, sf }] }. */
+function tCommentsAll_() {
+  var by = {}, tz = tTz_(), t = tSheetRows_(T_CMT.TAB), ix = {};
+  t.head.forEach(function (h, i) { if (h && ix[h] === undefined) ix[h] = i; });
+  if (ix.Token === undefined) return by;
+  t.rows.forEach(function (v) {
+    var tok = String(v[ix.Token] || '').trim(), text = ix.Comment !== undefined ? String(v[ix.Comment] || '').trim() : '';
+    if (!tok || !text) return;
+    var at = ix.When !== undefined && v[ix.When] instanceof Date ? v[ix.When] : null;
+    (by[tok] = by[tok] || []).push({ at: at, when: at ? Utilities.formatDate(at, tz, 'd MMM yyyy, HH:mm') : '', by: ix.By !== undefined ? String(v[ix.By] || '') : '',
+      role: ix.Role !== undefined ? String(v[ix.Role] || '') : '', text: text, sf: ix.Salesforce !== undefined ? String(v[ix.Salesforce] || '') : '' });
+  });
+  Object.keys(by).forEach(function (k) { by[k].sort(function (a, b) { return (b.at ? b.at.getTime() : 0) - (a.at ? a.at.getTime() : 0); }); });
+  return by;
+}
+function tCommentsFor_(tok) { return tCommentsAll_()[tok] || []; }
+
+/** GET action=comment&code=…[&who=…]&token=…&text=…: a comment on one client, by anyone who may open them. Kept on the Board
+ *  Comments tab, and posted to the Chatter of the client's open Salesforce tasks (or the policy record when none is open). */
+function transitionComment_(p) {
+  p = p || {};
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return { ok: false, refused: true, error: w.error };
+  var text = String(p.text || '').replace(/<[^>]*>/g, '').replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F]/g, '').replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim().slice(0, T_CMT.MAX);
+  if (!text) return { ok: false, error: 'Write the comment first.' };
+  var o = tOpenClient_(p, w);
+  if (!o.ok) return o;
+  var by = w.me && w.me.name ? w.me.name : 'The branch', role = w.me ? (w.me.title || '') : '';
+  var lock = LockService.getScriptLock();
+  if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
+  try {
+    var sh = tCmtTab_(), at = new Date(), client = tText_(o.row.Client) || tText_(o.row['First name']);
+    /* a comment beginning = + - or @ would be a formula in the sheet: the apostrophe keeps it text, and the sheet never shows it */
+    sh.appendRow([at, o.tok, client, tText_(o.row['Client number']), by, role, /^[=+\-@]/.test(text) ? "'" + text : text, 'posting to Salesforce…']);
+    var rn = sh.getLastRow(), sf = tCommentToSf_(o, by, role, text, at);
+    sh.getRange(rn, 8).setValue(sf.note);
+    log_('transition', 'comment', by + ' · ' + client + ' · ' + sf.note);
+    return { ok: true, posted: sf.posted, sf: sf.note,
+      comment: { when: Utilities.formatDate(at, tTz_(), 'd MMM yyyy, HH:mm'), by: by, role: role, text: text, sf: sf.note } };
+  } finally { lock.releaseLock(); }
+}
+/** The comment into Salesforce, in the writer's name: on the newest TASKS open tasks of the client, else on a policy record.
+ *  { posted, note }. Never throws. */
+function tCommentToSf_(o, by, role, text, at) {
+  if (!tSfOn_()) return { posted: 0, note: 'not posted: Salesforce is not linked to this project' };
+  try {
+    var pols = tClientPols_(o.tok, tText_(o.row['Client number']), o.ha), recs = tSfRecs_(pols);
+    if (!recs.length) return { posted: 0, note: 'not posted: Salesforce has none of this client’s policies' };
+    var what = recs.map(function (r) { return r.id; }), who = recs.map(function (r) { return r.contact; }).filter(Boolean);
+    var cond = ['WhatId IN (' + tSoqlIn_(what) + ')'];
+    if (who.length) cond.push('WhoId IN (' + tSoqlIn_(who) + ')');
+    var open = svcSfQuery_('SELECT Id, Subject FROM Task WHERE (' + cond.join(' OR ') + ') AND IsClosed = false ORDER BY CreatedDate DESC LIMIT ' + T_CMT.TASKS);
+    var body = 'From the assignment board · ' + by + (role ? ' (' + role + ')' : '') + ', ' + Utilities.formatDate(at, tTz_(), 'd MMM yyyy HH:mm') + ':\n\n' + text;
+    if (open.length) {
+      var n = 0, fails = [];
+      open.forEach(function (t) { try { tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.Id, Body: body }); n++; } catch (e) { fails.push(String(e && e.message ? e.message : e).slice(0, 80)); } });
+      return { posted: n, note: n ? 'posted to ' + tN_(n, 'open task', 'open tasks') + (fails.length ? '; ' + fails.length + ' refused: ' + fails[0] : '') : 'not posted: ' + fails[0] };
+    }
+    tSfSend_('post', '/sobjects/FeedItem', { ParentId: recs[0].id, Body: body });
+    return { posted: 1, note: 'no open task: posted on policy ' + recs[0].no };
+  } catch (e) { return { posted: 0, note: 'not posted: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
 }
