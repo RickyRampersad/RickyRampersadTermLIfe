@@ -137,6 +137,52 @@ from the editor. To see one without anybody being emailed, run
 
 ---
 
+## Who the e-mails say they are from
+
+Every e-mail the tracker sends is signed **Ricky Rampersad Branch**. Nothing to
+set up: it is in the script. To use different wording, add a script property
+called `KPI_FROM_NAME` with the name you want (Project Settings → Script
+properties), and it takes effect on the next send with no paste.
+
+Before 3 October 2026 nothing was set, so Gmail signed every report with the
+name on the Google account that owns the project — a person's name, on a
+branch report. Branch Intelligence had always set its own, which is why the
+client letters read correctly while these did not.
+
+### The address underneath, if you want the branch's own
+
+The name is what a reader sees; the address is still the Google account's, and
+shows if somebody taps the name. Apps Script can send from another address only
+when that address is a verified **Send mail as** alias on the same account —
+the account that owns the script, not anybody else's.
+
+1. Sign in to Gmail as the account that owns the script.
+2. Gear icon → **See all settings** → **Accounts and Import**.
+3. Beside **Send mail as**, click **Add another email address**.
+4. Put the branch name and the branch address in, leave **Treat as an alias**
+   ticked, and click **Next step**.
+5. Gmail asks for the mail server of that address. For an address on
+   `rickyrampersadbranch.com`, which is on Microsoft 365, that is
+   `smtp.office365.com`, port **587**, **TLS**, with the mailbox's own address
+   and password. Microsoft turns **SMTP AUTH** off by default on new mailboxes:
+   if Gmail says the username and password were rejected, an administrator
+   switches it on for that mailbox in the Microsoft 365 admin centre (Users →
+   the mailbox → Mail → Manage email apps → **Authenticated SMTP**), and a
+   mailbox with two-factor sign-in needs an app password rather than the
+   ordinary one.
+6. Gmail sends a code to that address. Open it and confirm.
+7. Back in the script: Project Settings → Script properties → add `KPI_FROM`
+   with that address exactly as Gmail lists it.
+
+The script asks Gmail whether the alias is genuinely verified before it uses
+it. An address that is not verified is refused by Gmail at send time, which
+would stop a report rather than rename it, so until the alias is really there
+the e-mails keep going out as they do now.
+
+**If that is more trouble than it is worth**, leave it. These e-mails go to the
+branch's own staff, who need to know it is the branch writing, and the name
+already says so.
+
 ## Roles come from the Access tab
 
 The **Role** column decides which KPI list a person gets and whether they can
