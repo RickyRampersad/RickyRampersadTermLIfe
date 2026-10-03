@@ -3083,68 +3083,223 @@ function tLinkFamily_(a, b) {
   } catch (e) { return { ok: false, why: String(e && e.message ? e.message : e).slice(0, 120) }; }
 }
 
-/** The roster off the Agent Skill Bank, with the columns the board needs.
- *  skillBank_ (Service.gs) reads the fixed columns; this also takes a Phone
- *  (or Mobile, WhatsApp, Cell) column and Areas covered if they are there,
- *  so an introduction can carry a number. A row whose Active reads No, Not
- *  Active, Inactive, Resigned or Terminated stays off, and its code opens
- *  nothing: the branch writes "Not Active" (1 October 2026). */
+/* ── who is in the branch, who signs in, and what they see ─────────────────
+   The Agent Skill Bank is the roster and the sign-in. Since 3 October 2026 it
+   carries each person's Agent no., Password, Role, Unit and Active, set up by
+   the branch manager ("I did put the agent access in the Service
+   Questionnaire"), with what he asked for: "an agent uses his agent number
+   and password assigned. I am the branch manager so when I log in I can see
+   what's happening in the branch by units and persons that also fall under
+   me. Akaash should see his team as he is a unit manager." So a Branch
+   Manager (or an Assistant Branch Manager) sees the whole board, by unit and
+   person; a Unit Manager the clients named to anyone whose Unit is his own
+   name, himself included; an agent their own; Staff every client who
+   answered, with no money and no policy figures (Client Support sees no
+   money), marking calls in their own name, never naming an agent or writing
+   to a client, and never on the roster to be named themselves. The Agent
+   column reads "A00427 - Ricky Rampersad": the number in front is dropped.
+   The tab has two Active columns; either one reading No, Not Active,
+   Inactive, Resigned or Terminated takes the person off. Three locks,
+   whatever the tab says: a password shorter than eight characters opens
+   nothing (that day every one was one or two digits, most of them the row
+   number, ten of them shared); anyone who was the agent on these books
+   opens nothing and is never on the roster, being the Agent of a row on
+   Transition Send; and ten wrong tries on one agent number close it for
+   fifteen minutes. The old Portal code still signs in someone with no
+   Password. */
 var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
-function tRoster_() {
-  var out = [];
+var T_USERS = { MIN: 8, TRIES: 10, LOCK_S: 900 };
+
+/** A name as a key: letters only, so "Persad-Khan" and "Persad Khan" are one. */
+function tNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+
+/** "A00427 - Ricky Rampersad", "AG-003 - Azariah Griffith": the name without the number in front. */
+function tCleanName_(s) { return String(s || '').replace(/^\s*[A-Za-z]{0,3}\s*-?\s*\d+\s*[-–—:]\s*/, '').replace(/\s+/g, ' ').trim(); }
+
+/** The Role column in one word: bm, abm, um, staff or agent. "Branch Manager Assistant" is staff, never the branch manager. */
+function tRoleOf_(s) {
+  s = String(s || '').toLowerCase();
+  if (/assistant\s*branch\s*manager|\babm\b/.test(s)) return 'abm';
+  if (/\bbma\b|assistant|staff|support|admin|clerk|secretary/.test(s)) return 'staff';
+  if (/branch\s*manager|\bbm\b/.test(s)) return 'bm';
+  if (/unit\s*manager|\bum\b/.test(s)) return 'um';
+  return 'agent';
+}
+
+/** A password as the script keeps it: a SHA-256 digest, never the password itself. */
+function tDigest_(s) {
+  var b = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, 'rrb-board:' + String(s || '').trim().toUpperCase(), Utilities.Charset.UTF_8);
+  return b.map(function (x) { return ('0' + (x & 255).toString(16)).slice(-2); }).join('');
+}
+
+/** Everyone on the Agent Skill Bank: { roles: whether the tab has Role and Unit columns, people: [{ name, no, email, phone,
+ *  areas, avail, role, roleText, unit, active, pw (digest), pwShort, portal }] }. */
+function tTeam_() {
+  var out = { roles: false, people: [] };
   try {
-    var t = tSheetRows_(SVC.TEAM_SHEET), ix = {};
-    t.head.forEach(function (h, i) { ix[h.toLowerCase()] = i; });
-    var col = function (r, names) {
-      for (var k = 0; k < names.length; k++) { var i = ix[names[k]]; if (i !== undefined && String(r[i] || '').trim()) return String(r[i]).trim(); }
-      return '';
+    var t = tSheetRows_(SVC.TEAM_SHEET), idx = {};
+    t.head.forEach(function (h, i) { h = String(h).trim().toLowerCase(); if (h) (idx[h] = idx[h] || []).push(i); });
+    out.roles = !!(idx.role && idx.unit);
+    var cells = function (r, names) {
+      var vals = [];
+      names.forEach(function (n) {
+        (idx[n] || []).forEach(function (i) {
+          var x = r[i];
+          if (x === null || x === undefined) return;
+          x = typeof x === 'number' ? String(Math.round(x)) : String(x).trim();
+          if (x) vals.push(x);
+        });
+      });
+      return vals;
     };
+    var col = function (r, names) { return cells(r, names)[0] || ''; };
     t.rows.forEach(function (r) {
-      var name = col(r, ['agent']);
-      if (!name || T_INACTIVE.test(col(r, ['active']))) return;
-      out.push({ name: name, no: col(r, ['agent no.']), email: col(r, ['email', 'e-mail']), phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']),
-                 areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']), portal: col(r, ['portal code']) });
+      var name = tCleanName_(col(r, ['agent', 'name']));
+      if (!name) return;
+      var pw = col(r, ['password']), roleText = col(r, ['role']);
+      out.people.push({ name: name, no: col(r, ['agent no.', 'agent number', 'agent no']), email: col(r, ['email', 'e-mail']),
+        phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']), areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']),
+        role: tRoleOf_(roleText), roleText: roleText || 'Agent', unit: tCleanName_(col(r, ['unit'])),
+        active: !cells(r, ['active']).some(function (a) { return T_INACTIVE.test(a); }),
+        pw: pw ? tDigest_(pw) : '', pwShort: !!pw && pw.length < T_USERS.MIN, portal: col(r, ['portal code']) });
     });
   } catch (e) {}
   return out;
 }
 
-/** Who is asking. The branch code: the whole board, or one agent's list when
- *  an agent's name or number comes with it. An agent: their agent number (or
- *  name) and their own portal code, both, so a code opens only the list of
- *  the agent it belongs to (1 October 2026: "agent Number, and name and
- *  code"). Never the roster's codes back out, and a refusal never says which
- *  of the two was wrong. */
+/** The roster, with the columns the board needs: everyone on the Agent Skill Bank who is active, is not staff, and was not
+ *  the agent on these books (tFormer_). A Phone (or Mobile, WhatsApp, Cell) column and Areas covered come along if they
+ *  are there, so an introduction can carry a number. The branch writes "Not Active" (1 October 2026). */
+function tRoster_() {
+  var former = tFormer_(), seen = {};
+  return tTeam_().people.filter(function (p) {
+    var k = tNameKey_(p.name);
+    if (!p.active || p.role === 'staff' || former[k] || seen[k]) return false;
+    seen[k] = true;
+    return true;
+  }).map(function (p) {
+    return { name: p.name, no: p.no, email: p.email, phone: p.phone, areas: p.areas, avail: p.avail, portal: p.portal, role: p.role, unit: p.unit };
+  });
+}
+
+/** Everyone who was the agent on these books: the Agent column of Transition Send, staff Test rows aside. Kept ten minutes. */
+function tFormer_() {
+  var cache = null, key = 'former-v1';
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  var out = {}, read = false;
+  try {
+    tRead_().rows.forEach(function (r) {
+      var a = tText_(r.Agent);
+      if (!a || tYes_(r.Test) || /^test\b/i.test(a)) return;
+      out[tNameKey_(a)] = true;
+    });
+    read = true;
+  } catch (e) {}
+  try { if (cache && read) cache.put(key, JSON.stringify(out), 600); } catch (e) {}
+  return out;
+}
+
+/** A unit manager's team: himself, and everyone active on the tab (staff aside) whose Unit is his name. */
+function tUnitOf_(lead, team, former) {
+  var k = tNameKey_(lead), out = [lead];
+  team.people.forEach(function (p) {
+    var pk = tNameKey_(p.name);
+    if (p.active && p.role !== 'staff' && !former[pk] && pk !== k && tNameKey_(p.unit) === k) out.push(p.name);
+  });
+  return out;
+}
+
+/** Whether a name on a client (Assigned to) is one of `names`: the full name, whatever its spacing or hyphens. Never a
+ *  first name alone: two people can share one, and a list must never show someone else's client. */
+function tOnTeam_(names) {
+  var keys = {};
+  (names || []).forEach(function (n) { var k = tNameKey_(n); if (k) keys[k] = true; });
+  return function (assigned) { var k = tNameKey_(assigned); return !!k && !!keys[k]; };
+}
+
+/** Wrong tries on one agent number, kept for fifteen minutes. */
+function tTries_(k) { try { return Number(CacheService.getScriptCache().get(k) || 0); } catch (e) { return 0; } }
+function tTriesAdd_(k) { try { CacheService.getScriptCache().put(k, String(tTries_(k) + 1), T_USERS.LOCK_S); } catch (e) {} }
+function tTriesClear_(k) { try { CacheService.getScriptCache().remove(k); } catch (e) {} }
+
+/** What a person on the tab sees, by their role. Only the branch manager (or the branch code) may e-mail a client a note
+ *  from the board: the notes are signed in his name. */
+function tAs_(p, team, former, viaBranch) {
+  var me = { name: p.name, email: p.email, phone: p.phone, areas: p.areas, title: p.roleText || '' };
+  var w = { ok: true, me: me, user: true, viaBranch: !!viaBranch, configured: true };
+  if (p.role === 'bm' || p.role === 'abm') { w.role = 'branch'; w.canTell = p.role === 'bm'; return w; }
+  if (p.role === 'um') { w.role = 'unit'; w.team = tUnitOf_(p.name, team, former); return w; }
+  w.role = p.role === 'staff' ? 'staff' : 'agent';
+  return w;
+}
+
+/** Who is asking. The branch code: the whole board, or one person's own view when a name or number comes with it. Anyone
+ *  else: their agent number (or name) and their password from the Agent Skill Bank (or, with no Password, their old
+ *  Portal code), both, so a password opens only the view of the person it belongs to (1 October 2026: "agent Number, and
+ *  name and code"). Never a password back out, and a refusal never says which of the two was wrong. */
 function tWho_(code, who) {
   code = String(code || '').trim().toUpperCase();
   who = String(who || '').trim().replace(/\s+/g, ' ');
   var branch = String(SVC.TEAM_CODE || '').trim().toUpperCase();
-  var roster = tRoster_(), configured = !!(branch || roster.length);
+  var team = tTeam_(), former = tFormer_();
+  var configured = !!(branch || team.people.some(function (p) { return p.pw || p.portal; }));
   var refuse = function (msg) { return { ok: false, refused: true, configured: configured, error: msg }; };
-  if (!code) return refuse('Enter your agent number and your code, or the branch code.');
-  var pick = function (a) { return { name: a.name, email: a.email, phone: a.phone, areas: a.areas }; };
+  if (!code) return refuse('Enter your agent number and your password, or the branch code.');
   var w = who.toLowerCase(), wn = w.replace(/[^a-z0-9]/g, '');
   var digits = function (s) { return s.replace(/^[a-z]+/, ''); };
-  var isMe = function (a) {                                  // A10024, a10024, 10024 or the name as on the Skill Bank
-    if (!w) return false;
+  var isMe = function (a) {                                  // A10024, a10024, 10024 or the name as on the tab
+    if (!w || !a.name) return false;
     if (a.name.toLowerCase().replace(/\s+/g, ' ') === w) return true;
     var no = String(a.no || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     return !!no && !!wn && (no === wn || (/^\d+$/.test(digits(no)) && digits(no) === digits(wn)));
   };
+  var person = null;
+  team.people.forEach(function (p) { if (!person && isMe(p)) person = p; });
+  var here = !!person && person.active && !former[tNameKey_(person.name)];
   if (branch && code === branch) {
-    if (!who) return { ok: true, role: 'branch', me: null, configured: true };
-    var named = null;
-    roster.forEach(function (a) { if (isMe(a)) named = a; });
-    if (!named) return refuse('We do not have an agent by that name or number on the roster. Check it against the Agent Skill Bank.');
-    return { ok: true, role: 'agent', me: pick(named), viaBranch: true, configured: true };
+    if (!who) return { ok: true, role: 'branch', me: null, canTell: true, configured: true };
+    if (!here) return refuse('We do not have anyone active by that name or number on the Agent Skill Bank.');
+    return tAs_(person, team, former, true);
   }
-  if (!who) return refuse('Enter your agent number with your code.');
-  var mine = null;
-  roster.forEach(function (a) { if (a.portal && a.portal.toUpperCase() === code && isMe(a)) mine = a; });
-  if (mine) return { ok: true, role: 'agent', me: pick(mine), configured: true };
+  if (!who) return refuse('Enter your agent number with your password.');
+  var tk = 'tries-' + (wn || 'none').slice(0, 40);
+  if (tTries_(tk) >= T_USERS.TRIES) return refuse('Too many tries on that agent number. Wait fifteen minutes, or ask the branch.');
+  if (here) {
+    var hit = person.pw ? tDigest_(code) === person.pw
+      : (!!person.portal && person.portal.length >= T_USERS.MIN && person.portal.toUpperCase() === code);
+    if (hit && person.pwShort) return refuse('Your password is too short to open client records. Ask Ricky for a new one of at least ' + T_USERS.MIN + ' characters.');
+    if (hit) { tTriesClear_(tk); return tAs_(person, team, former, false); }
+  }
+  tTriesAdd_(tk);
   return refuse(configured
-    ? 'That agent number and code do not match. Check both, or ask the branch for your code.'
-    : 'Not open yet: set TEAM_CODE in Service.gs, or add an agent with a portal code to the Agent Skill Bank.');
+    ? 'That agent number and password do not match. Check both, or ask the branch for your password.'
+    : 'Not open yet: set TEAM_CODE in Service.gs, or give each person a Password on the Agent Skill Bank.');
+}
+
+/** The menu's "check the agent access": what the Agent Skill Bank gives the board, in words. Never a password. */
+function transitionUsersCheck() { return tSay_(tUsersCheck_()); }
+function tUsersCheck_() {
+  var team = tTeam_(), former = tFormer_(), roles = {}, weak = 0, none = 0, open = 0, left = 0, units = {};
+  var count = {};
+  team.people.forEach(function (p) { if (p.pw) count[p.pw] = (count[p.pw] || 0) + 1; });
+  var shared = 0;
+  team.people.forEach(function (p) {
+    if (former[tNameKey_(p.name)]) { left++; return; }
+    if (!p.active) return;
+    roles[p.roleText] = (roles[p.roleText] || 0) + 1;
+    if (p.unit && p.role !== 'staff') units[p.unit] = (units[p.unit] || 0) + 1;
+    if (p.pw && count[p.pw] > 1) shared++;
+    if (!p.pw && !(p.portal && p.portal.length >= T_USERS.MIN)) none++;
+    else if (p.pwShort) weak++;
+    else open++;
+  });
+  return 'The Agent Skill Bank: ' + team.people.length + ' people. ' + Object.keys(roles).map(function (r) { return roles[r] + ' ' + r; }).join(', ') + '. ' +
+    (team.roles ? 'Units: ' + Object.keys(units).map(function (u) { return u + ' (' + units[u] + ')'; }).join(', ') + '. ' : 'No Role and Unit columns yet, so everyone signs in as an agent. ') +
+    open + ' can sign in to the assignment board. ' +
+    (weak ? weak + (weak === 1 ? ' has' : ' have') + ' a password shorter than ' + T_USERS.MIN + ' characters, which opens nothing: give each a new one. ' : '') +
+    (shared ? shared + (shared === 1 ? ' shares' : ' share') + ' a password with someone else. ' : '') +
+    (none ? none + (none === 1 ? ' has' : ' have') + ' no password. ' : '') +
+    (left ? left + (left === 1 ? ' was' : ' were') + ' the agent on these books and can never sign in, whatever the tab says.' : '');
 }
 
 /** GET action=board&code=…[&who=…][&all=1]. */
@@ -3322,12 +3477,17 @@ function tBoard_(w, all, lite) {
       if (ik.length) c.ik = ik;
     });
   }
-  var agents = tRoster_().map(function (a) {
-    var mine = clients.filter(function (c) { return c.assigned.toLowerCase() === a.name.toLowerCase(); });
-    var o = { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone,
+  /* who this viewer may see: everyone for the branch and for staff, a unit manager's team (tAs_), an agent alone */
+  var staff = w.role === 'staff';
+  var onTeam = w.role === 'unit' ? tOnTeam_(w.team) : w.role === 'agent' ? tOnTeam_([w.me.name]) : null;
+  var roster = tRoster_();
+  var agents = staff ? [] : roster.filter(function (a) { return !onTeam || onTeam(a.name); }).map(function (a) {
+    var k = tNameKey_(a.name), mine = clients.filter(function (c) { return c.assigned && tNameKey_(c.assigned) === k; });
+    var o = { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone, role: a.role || '', unit: a.unit || '',
               open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
-    /* what each agent has been named on, for the branch alone: an agent never sees another's figures */
-    if (w.role === 'branch' && bk.ready) {
+    /* what each person has been named on: for the branch, and for a unit manager over his own team; an agent never sees
+       another's figures */
+    if ((w.role === 'branch' || w.role === 'unit') && bk.ready) {
       o.clients = mine.length; o.prem = 0; o.cover = 0;
       mine.forEach(function (c) { if (c.pol) { o.prem += c.pol.sum.prem; o.cover += c.pol.sum.cover; } });
       o.prem = Math.round(o.prem);
@@ -3336,11 +3496,15 @@ function tBoard_(w, all, lite) {
   }).sort(function (a, b) { return a.name.localeCompare(b.name); });
   var answeredBy = {};
   clients.forEach(function (c) { if (tHasAnswered_(c)) answeredBy[c.token] = c; });
-  if (w.role === 'agent') {
-    var me = w.me.name.toLowerCase();
-    clients = clients.filter(function (c) { return c.assigned.toLowerCase() === me; });
+  if (onTeam || staff) {
+    if (onTeam) clients = clients.filter(function (c) { return onTeam(c.assigned); });
     silent = [];
+    /* the tiles count this viewer's own list, never the branch's */
+    counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, late: 0, silent: 0 };
+    clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   }
+  /* the branch by unit and person (the Agent Skill Bank's Role and Unit): every unit for the branch, his own for a unit manager */
+  var units = w.role === 'branch' || w.role === 'unit' ? tUnits_(w, clients, bk.ready) : null;
   /* households (the Households tab): every member, those on our list and the family who hold policies with other agents,
      what each holds with us, and who heads it ("have the husband as the <name> household and include the wife cover so
      we can see the wife and his cover as well anyone else who is covered in the household", 29 September 2026). The
@@ -3353,7 +3517,7 @@ function tBoard_(w, all, lite) {
     (hhMembers[m.hh] = hhMembers[m.hh] || []).push(m);
   });
   clients.concat(silent).forEach(function (c) { c.hh = hhOf[c.token] || ''; onBoard[c.token] = true; });
-  clients.forEach(function (c) { own[c.token] = true; });
+  if (!staff) clients.forEach(function (c) { own[c.token] = true; });   // staff: no figures for anyone (Client Support sees no money)
   Object.keys(hhMembers).forEach(function (h) {
     var ms = hhMembers[h];
     if (ms.length < 2 || !ms.some(function (m) { return m.token && onBoard[m.token]; })) return;
@@ -3418,12 +3582,68 @@ function tBoard_(w, all, lite) {
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
   if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
+  /* staff see what each client told us and where it stands, never what they hold or earn: Client Support sees no money */
+  if (staff) clients.forEach(function (c) { delete c.pol; delete c.ins; delete c.profile; delete c.ik; });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
-           book: { ready: bk.ready, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
+           book: { ready: bk.ready && !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
-           notes: w.role === 'branch' ? tNotesForBoard_() : null };
+           units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false,
+           notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null };
+}
+
+/** The branch by unit and person, from the Agent Skill Bank's Role and Unit columns: each unit under its manager (the Unit
+ *  column names him), with what each person has been named on, how many of those answered, are open, late or done, and,
+ *  with the Client Book, the premium a year and the life cover. A unit whose manager has left or is no longer active shows
+ *  as its people under "no unit manager now". Staff are not in a unit. A unit manager gets his own unit only. Null when the
+ *  tab has no Role and Unit columns. */
+function tUnits_(w, clients, bkReady) {
+  var team = tTeam_();
+  if (!team.roles) return null;
+  var former = tFormer_(), live = {}, groups = {}, order = [];
+  team.people.forEach(function (u) { if (u.name && u.active && u.role !== 'staff' && !former[tNameKey_(u.name)]) live[tNameKey_(u.name)] = u; });
+  var stat = function (name, roleText) {
+    var k = tNameKey_(name), mine = clients.filter(function (c) { return c.assigned && tNameKey_(c.assigned) === k; });
+    var o = { name: name, role: roleText || '', named: mine.length, answered: mine.filter(tHasAnswered_).length,
+              open: mine.filter(function (c) { return c.open; }).length, late: mine.filter(function (c) { return c.open && c.late; }).length,
+              done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
+    if (bkReady) {
+      o.prem = 0; o.cover = 0;
+      mine.forEach(function (c) { if (c.pol) { o.prem += c.pol.sum.prem; o.cover += c.pol.sum.cover; } });
+      o.prem = Math.round(o.prem);
+    }
+    return o;
+  };
+  var group = function (key, lead, title) {
+    if (!groups[key]) { groups[key] = { key: key, lead: lead, title: title, people: [] }; order.push(key); }
+    return groups[key];
+  };
+  Object.keys(live).forEach(function (k) {
+    var u = live[k], lead = live[tNameKey_(u.unit)];
+    var g = lead ? group(tNameKey_(lead.name), lead.name, lead.roleText) : group('~none', '', 'No unit manager now');
+    g.people.push(stat(u.name, u.roleText));
+  });
+  var rank = function (g) {
+    if (g.key === '~none') return 3;
+    var r = (live[g.key] || {}).role;
+    return r === 'bm' ? 0 : r === 'abm' ? 1 : 2;
+  };
+  var out = order.map(function (k) { return groups[k]; }).sort(function (a, b) { return (rank(a) - rank(b)) || a.lead.localeCompare(b.lead); });
+  out.forEach(function (g) {
+    var lk = tNameKey_(g.lead);
+    g.people.sort(function (a, b) { return ((tNameKey_(b.name) === lk) - (tNameKey_(a.name) === lk)) || a.name.localeCompare(b.name); });
+    g.total = { people: g.people.length, named: 0, answered: 0, open: 0, late: 0, done: 0 };
+    if (bkReady) { g.total.prem = 0; g.total.cover = 0; }
+    g.people.forEach(function (p) {
+      ['named', 'answered', 'open', 'late', 'done', 'prem', 'cover'].forEach(function (f) { if (g.total[f] !== undefined) g.total[f] += p[f] || 0; });
+    });
+  });
+  if (w.role === 'unit') {
+    var mk = tNameKey_(w.me && w.me.name);
+    out = out.filter(function (g) { return g.key === mk; });
+  }
+  return out;
 }
 
 /* ── who should look after whom: the board's suggestion ────────────────── */
@@ -3603,8 +3823,8 @@ function tGlanceCached_(nos) {
  *  introduction: the "name and a number" the receipt promised. */
 function transitionAssign_(p) {
   p = p || {};
-  var w = tWho_(p.code, '');
-  if (!w.ok || w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can name an agent on a client.' };
+  var w = tWho_(p.code, p.who);
+  if (!w.ok || w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch (the branch code, or a branch manager signed in) can name an agent on a client.' };
   var agentName = String(p.agent || '').trim().slice(0, 80);
   var tokens = String(p.tokens || p.token || '').split(',').map(function (s) { return s.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64); }).filter(Boolean);
   if (!agentName || !tokens.length) return { ok: false, error: 'Choose an agent and at least one client.' };
@@ -3693,12 +3913,12 @@ function transitionUpdate_(p) {
   var line = String(p.line || '').replace(/<[^>]*>/g, '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
   /* both refusals come before anything is written, so a refused note never leaves half an update behind */
   if (tell && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
-  if (tell && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can e-mail a client from the board.' };
+  if (tell && (w.role !== 'branch' || w.canTell === false)) return { ok: false, refused: true, error: 'Only the branch manager can e-mail a client from the board: the notes go in his name.' };
   /* a family member the client told us about (29 September: a client who told the manager about his wife), put in one household */
   var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   if (fam === tok) fam = '';
-  if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch code can link a family.' };
-  var who = w.role === 'branch' ? 'branch' : w.me.name;
+  if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch can link a family.' };
+  var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
   try {
@@ -3713,7 +3933,13 @@ function transitionUpdate_(p) {
       if (String(v[8] || '').trim()) assignedTo = String(v[8]).trim();
     });
     if (!any.length) return { ok: false, error: 'No rows for that client.' };
-    if (w.role === 'agent' && assignedTo.toLowerCase() !== w.me.name.toLowerCase()) return { ok: false, refused: true, error: 'That client is not on your list.' };
+    /* the name on the rows, or the one Salesforce gave (the Household Assignments tab): the board shows the client on that
+       person's list either way, so either lets them mark it */
+    var names = [assignedTo];
+    if (w.role !== 'branch') { try { var hx = tHaRead_(); if (hx) hx.rows.forEach(function (r) { if (r.token === tok && r.agent) names.push(r.agent); }); } catch (e) {} }
+    var mayMark = function (test) { return names.some(function (n) { return test(n); }); };
+    if (w.role === 'agent' && !mayMark(tOnTeam_([w.me.name]))) return { ok: false, refused: true, error: 'That client is not on your list.' };
+    if (w.role === 'unit' && !mayMark(tOnTeam_(w.team))) return { ok: false, refused: true, error: 'That client is not on your team\'s list.' };
     if (!targets.length) targets = any;
     var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM');
     var linked = fam ? tLinkFamily_(tok, fam) : null;

@@ -2113,6 +2113,50 @@ voice under the new timing and the caption gives it away.
   after a Service.gs paste, those pages now say so. The follow-up note
   holds for a client Salesforce names, as it does for one named on the
   board.
+  **Sign-in by role, from the Agent Skill Bank** (3 October 2026; ping
+  `campaign: 6`). The branch manager set up the access on the Agent Skill
+  Bank itself ("I did put the agent access in the Service Questionnaire"):
+  Agent ("A00427 - <name>"), Agent no., **Password**, **Role**, **Unit**,
+  Active, then the old columns, a second Active among them. He asked that
+  "an agent uses his agent number and password assigned. I am the branch
+  manager so when I log in I can see what's happening in the branch by
+  units and persons that also fall under me. Akaash should see his team as
+  he is a unit manager." `tTeam_` reads the tab (the number in front of a
+  name dropped, either Active reading inactive taking the person off) and
+  `tWho_` signs in by agent number and Password, as a digest, never the
+  password itself; the old Portal code still works for anyone with no
+  Password. What each role sees on `assign.html`: a **Branch Manager** (or
+  an Assistant Branch Manager) the whole board, the roster grouped **by
+  unit and person** (`tUnits_`: each unit under the manager its Unit column
+  names, with named, answered, open, late, done and the premium a year;
+  someone whose unit manager has left under "no unit manager now"); a
+  **Unit Manager** his team, himself and everyone whose Unit is his name,
+  their clients and figures, his unit only; an **agent** their own list;
+  **Staff** (Client Support and the manager's assistant) every client who
+  answered with no money, policy or profile figures, marking calls in
+  their own name, with `r=update` links. Only the branch names an agent,
+  only the Branch Manager (or the branch code) e-mails a client a note,
+  because the notes go in his name, and staff are never on the roster to
+  be named. "Branch Manager Assistant" is staff, never the branch manager
+  (`tRoleOf_`). Three locks, whatever the tab says: **a password shorter
+  than eight characters opens nothing** (that day every password on the tab
+  was one or two digits, eighteen of the twenty-three the row number and
+  ten shared); anyone who was the agent on these books (the Agent column of
+  Transition Send, `tFormer_`) never signs in and is never on the roster;
+  and ten wrong tries on one number close it for fifteen minutes. The
+  manager's performance portal keeps its own Users tab with the same
+  scheme; the board does not read it. New eight-digit passwords, the
+  1 October code kept for whoever had one, are built in the scratchpad
+  (`roles/build-passwords.py`) and never enter the repository; the menu's
+  "Transition: check the agent access" says how many can sign in, never a
+  password. `skillBank_` in Service.gs reads the same tab the same way, so
+  the agent portal and the service wall see clean names, no staff, and an
+  eight-character Password as the agent's own code. Until the paste, the
+  live board lists each name with its number in front and the staff as
+  agents: nobody is named from the board before it. `roles/roles-harness.js`
+  (66 checks), `roles/roles-test.js` (Playwright, 27) and
+  `roles/real-check.js` (the real tab with the new passwords) in the
+  scratchpad cover it.
   **On 1 October 2026 the live web app still answered `campaign: 2`**, so
   the board, its login included, answered nobody. Its routes are in
   `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the
