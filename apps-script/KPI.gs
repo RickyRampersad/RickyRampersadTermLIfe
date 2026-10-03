@@ -29,7 +29,7 @@
    So the script now says who it is. Bump this in the same commit as any
    change to this file, and /redeploy will tell whoever did the deployment
    whether it worked, without them having to ask anybody. */
-var SCRIPT_VERSION = '2026-09-19a';
+var SCRIPT_VERSION = '2026-10-03a';
 
 var CONFIG = {
   TZ: 'America/Port_of_Spain',
@@ -2366,6 +2366,66 @@ var MAIL = {
   green: '#2C7A57', amber: '#B0791C', red: '#AE3A33'
 };
 
+/* WHO THE BRANCH'S E-MAIL COMES FROM.
+ *
+ * Every e-mail this file sent went out under whatever name the Google account
+ * that owns the project carries, because MailApp signs with the sender's own
+ * name unless it is told otherwise. So the two o'clock message, the
+ * checkpoint, the close-outs and the block reports all arrived signed by a
+ * person rather than by the branch (3 October 2026: "how do I remove <name>
+ * here and have my branch"). Intelligence.gs has always set this; this file
+ * never did, which is why the client letters read correctly and the branch's
+ * own reports did not.
+ *
+ * The ADDRESS underneath is still the account's own. Apps Script can send as
+ * another address only when it is a verified "Send mail as" alias on that
+ * same account: set one up in Gmail, put it in the KPI_FROM script property,
+ * and every e-mail below goes out from it. Until then the name reads as the
+ * branch and the address stays the account's, which is what a reader sees
+ * first and what was asked for.
+ */
+var MAIL_FROM_NAME = 'Ricky Rampersad Branch';
+
+function fromName_() {
+  try {
+    var p = PropertiesService.getScriptProperties().getProperty('KPI_FROM_NAME');
+    if (p && String(p).trim()) return String(p).trim();
+  } catch (e) {}
+  return MAIL_FROM_NAME;
+}
+
+/** The verified alias to send as, or '' — asked of Gmail once a run, and
+ *  never taken on the word of the property alone: an address Gmail has not
+ *  verified is refused at send time, which would stop a report rather than
+ *  rename it. */
+var _fromAlias = null;
+function fromAlias_() {
+  if (_fromAlias !== null) return _fromAlias;
+  _fromAlias = '';
+  try {
+    var want = String(PropertiesService.getScriptProperties().getProperty('KPI_FROM') || '').trim();
+    if (want && typeof GmailApp !== 'undefined' && GmailApp.getAliases().indexOf(want) > -1) {
+      _fromAlias = want;
+    }
+  } catch (e) { _fromAlias = ''; }
+  return _fromAlias;
+}
+
+/** One way out for everything this file sends, so the branch's name is on all
+ *  of it and no new report has to remember to say so. */
+function rrbMail_(o) {
+  var m = {};
+  Object.keys(o || {}).forEach(function (k) { m[k] = o[k]; });
+  if (!m.name) m.name = fromName_();
+  var alias = fromAlias_();
+  if (alias) {
+    m.from = alias;
+    GmailApp.sendEmail(m.to, m.subject, m.body || ' ', m);
+    return;
+  }
+  MailApp.sendEmail(m);
+}
+
 function esc_(s) {
   return String(s == null ? '' : s)
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -2514,7 +2574,7 @@ function sendCheckpoint(dateOpt) {
   var r = checkpointReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
-  MailApp.sendEmail({
+  rrbMail_({
     to: to.join(','),
     subject: 'RRB 3pm Checkpoint · ' + shortDate_(r.date) + ' · ' +
              r.reported + '/' + r.headcount + ' logged',
@@ -2647,7 +2707,7 @@ function sendWeekly(dateOpt) {
   var r = weeklyReport_(dateOpt);
   var to = managerEmails_();
   if (!to.length) throw new Error('No manager email configured.');
-  MailApp.sendEmail({
+  rrbMail_({
     to: to.join(','),
     subject: 'RRB Weekly Summary · ' + shortDate_(r.weekStart) + ' – ' + shortDate_(r.weekEnd) +
              ' · ' + r.totals.closed + ' closed, ' + r.totals.valueAdds + ' value adds',
@@ -2894,7 +2954,7 @@ function emailBlockReceipt_(staffId, date, blockId, d, payload, done) {
         : 'All four blocks are in for today. Nothing further needed.') +
     '</div>';
 
-  MailApp.sendEmail({
+  rrbMail_({
     to: to,
     subject: 'Your ' + blockLabel_(blockId) + ' report · ' + shortDate_(date) +
              ' · ' + done.length + '/4 blocks in',
@@ -2925,7 +2985,7 @@ function nudge_(staffId, date, missing, heading, message) {
     '</div>';
   }).join('');
 
-  MailApp.sendEmail({
+  rrbMail_({
     to: to,
     subject: heading + ' · ' + shortDate_(date),
     htmlBody: shell_(heading, nameFor_(staffId) + ' · ' + prettyDate_(date),
@@ -4934,7 +4994,7 @@ function sendBranchPulse(dateOpt) {
   var text = branchPulseText_(r);
   var words = text.split(/\s+/).filter(Boolean).length;
 
-  MailApp.sendEmail({
+  rrbMail_({
     to: managerEmails_().join(','),
     subject: 'For the branch group · ' + shortDate_(r.date) + ' · ' + words + ' words',
     htmlBody: shell_('Ready for the group', prettyDate_(r.date) + ' · two o’clock',
@@ -5336,7 +5396,7 @@ function sendCloseout(dateOpt) {
     var state = closeoutFor_(p, day);
     if (!state.of) return;                       // an empty list is not worth an e-mail
     if (state.complete) { clear.push(p.name); return; }
-    MailApp.sendEmail({
+    rrbMail_({
       to: to,
       subject: 'Before you leave · ' + shortDate_(day) + ' · ' + state.left +
                (state.left === 1 ? ' thing left' : ' things left'),
@@ -6313,7 +6373,7 @@ function emailBlockClose_(p, day, b, span, items, act, done, of, pct, at, nothin
         (act.closed.length > 6 ? '<br>and ' + (act.closed.length - 6) + ' more' : '') + '</div>' : '') + '</div>';
   }
 
-  MailApp.sendEmail({
+  rrbMail_({
     to: to,
     subject: lab + ' closed · ' + shortDate_(day) + ' · ' +
              (of ? done + ' of ' + of + ' done' : 'nothing recorded'),
