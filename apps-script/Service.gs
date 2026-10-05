@@ -221,7 +221,7 @@ function doGet(e) {
        deployment older than the resp/feedback actions, so the pages show
        their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_(), campaign: 5 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page
+                   automation: automationOn_(), campaign: 7 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page; 6: sign-in by role from the Users tab; 7: one client's history, Salesforce tasks and comments (detail, comment), and the TT$200 claims
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -271,6 +271,14 @@ function doGet(e) {
   /* one client's policies from the Client Book, for a row on the board that carries only the totals */
   if (p.action === 'book') {
     return json_(transitionBook_(p));
+  }
+  /* one client in full on the board: the history, their Salesforce tasks and the team's comments; and a comment, kept on
+     the Board Comments tab and posted to the client's open tasks in Salesforce */
+  if (p.action === 'detail') {
+    return json_(transitionDetail_(p));
+  }
+  if (p.action === 'comment') {
+    return json_(transitionComment_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -1815,13 +1823,22 @@ function skillBank_() {
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
   var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
   var col = function (r, h) { var i = head.indexOf(h); return i < 0 ? '' : String(r[i] || '').trim(); };
+  /* Since 3 October 2026 the tab also carries Password, Role and Unit (the sign-in for the assignment board, tTeam_ in
+     Transition.gs), the Agent column reads "A00427 - Ricky Rampersad", and there are two Active columns. The name loses the
+     number in front; either Active reading inactive takes the person off; staff are not agents; and a Password of eight
+     characters or more is the agent's own code here too, where no Portal code is set. */
+  var INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
+  var actives = function (r) { var out = []; head.forEach(function (h, i) { if (String(h).trim() === 'Active' && String(r[i] || '').trim()) out.push(String(r[i]).trim()); }); return out; };
+  var isStaff = function (role) { role = String(role || '').toLowerCase(); return !/assistant\s*branch\s*manager/.test(role) && /\bbma\b|assistant|staff|support|admin|clerk|secretary/.test(role); };
   return rows.map(function (r) {
-    return { name: col(r, 'Agent'), no: col(r, 'Agent no.'),
+    var pw = col(r, 'Password');
+    return { name: col(r, 'Agent').replace(/^\s*[A-Za-z]{0,3}\s*-?\s*\d+\s*[-–—:]\s*/, '').replace(/\s+/g, ' ').trim(), no: col(r, 'Agent no.'),
              email: col(r, 'Email'),
              skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
-             langs: col(r, 'Languages'), active: col(r, 'Active'),
-             portal: col(r, 'Portal code') };
-  }).filter(function (a) { return a.name && !/^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i.test(String(a.active || '').trim()); });
+             langs: col(r, 'Languages'), active: actives(r).some(function (a) { return INACTIVE.test(a); }) ? 'No' : col(r, 'Active'),
+             role: col(r, 'Role'), unit: col(r, 'Unit'),
+             portal: col(r, 'Portal code') || (pw.length >= 8 ? pw : '') };
+  }).filter(function (a) { return a.name && !INACTIVE.test(String(a.active || '').trim()) && !isStaff(a.role); });
 }
 
 function sendMatchAssignment() {
@@ -3640,5 +3657,10 @@ function onOpen() {
     .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
     .addItem('Transition: set the Branch Portfolio link (policies on the board)', 'transitionSetBookSource')
     .addItem('Transition: rebuild the Client Book now', 'transitionBuildClientBook')
+    .addItem('Transition: check the agent access (Agent Skill Bank)', 'transitionUsersCheck')
+    .addItem('Transition: start the TT$200 claims (the go)', 'transitionClaimsStart')
+    .addItem('Transition: check the TT$200 claims now', 'transitionClaimsNow')
+    .addItem('Transition: send the Monday retention follow-up now', 'transitionClaimsMondayNow')
+    .addItem('Transition: hold the TT$200 claims', 'transitionClaimsStop')
     .addToUi();
 }

@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Assignments | Ricky Rampersad Branch</title>
-<meta name="description" content="Who answered the transition letters, what they told us, and which agent is named to meet them. The branch code opens the board; an agent's own code opens their list.">
+<meta name="description" content="Who answered the transition letters, what they told us, and which agent is named to meet them. Signed in by agent number and password: the branch sees every unit, a unit manager his team, an agent their own list.">
 <meta name="robots" content="noindex">
 <link rel="icon" href="../logo-mark.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -56,6 +56,14 @@
   .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:5px 12px;font-size:13px;cursor:pointer}
   .chip b{color:var(--ink);font-family:var(--f)} .chip i{font-style:normal;color:var(--dim)}
   .chip.on{border-color:var(--tdark);background:var(--notebg)}
+  .chip .rtag{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#7a5a12;background:#fbeec8;border-radius:4px;padding:1px 6px;margin-left:4px}
+  /* the branch by unit and person (the Users tab): a block a unit, its totals, a chip a person */
+  .unit{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--gold);border-radius:12px;padding:10px 14px;margin:10px 0 0;min-width:0}
+  .unit.none{border-left-color:var(--stop)} .unit.off{border-left-color:#bfd0da}
+  .unit .uh{display:flex;flex-wrap:wrap;gap:2px 10px;align-items:baseline}
+  .unit .uh b{font-family:var(--f);font-size:15px;color:var(--ink)} .unit .uh span{font-size:12.5px;color:var(--dim)}
+  .unit .uh i{font-style:normal;font-size:12.5px;color:var(--body);flex-basis:100%}
+  .unit .chips{margin-top:8px}
   .empty{color:var(--dim);font-size:13.5px;padding:10px 0}
   /* filters */
   .filters{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:flex-end;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:12px 16px;margin-top:14px}
@@ -238,6 +246,45 @@
   .glr .v i{font-style:normal;color:var(--dim);font-weight:500;margin-left:4px}
   .glr .bb{height:8px;background:#eef3f6;border-radius:99px;overflow:hidden} .glr .bb span{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:99px}
   .glb.teal .glr .bb span{background:linear-gradient(90deg,#5fdcef,var(--tdark))}
+  /* the TT$200 retention claims (the Retention Payments tab): the panel, and a line on each card */
+  details.claims{border-left:4px solid var(--gold)}
+  .cnote{font-size:13px;margin:0 0 10px;padding:8px 11px;border-radius:9px;background:var(--warnbg);border:1px solid #f1dfae;color:#7a5a12}
+  .cnote.rule{background:#f4f8fb;border-color:var(--line);color:var(--body)}
+  .pt .cst{font-weight:600;white-space:nowrap} .pt .cst.unpaid,.pt .cst.notsent,.pt .cst.check{color:var(--stop)} .pt .cst.paid{color:var(--ok)} .pt .cst.held,.pt .cst.new{color:#7a5a12} .pt .cst.closed{color:var(--dim)}
+  .pt a.cgo{color:var(--ink);font-weight:600;text-decoration:none;border-bottom:1px dotted #9ab}
+  .claimln{margin-top:8px;font-size:13px;background:#fffaf0;border:1px solid #f1dfae;border-radius:9px;padding:6px 10px}
+  .claimln .cl{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#7a5a12;margin-right:4px}
+  .claimln b{color:var(--ink)} .claimln b.up{color:var(--stop)} .claimln b.pd{color:var(--ok)}
+  /* one client in full: the history, their Salesforce tasks, the comments */
+  .detbtn{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:6px 11px;font:600 12.5px Inter,system-ui,sans-serif;color:var(--navy);cursor:pointer}
+  .detbtn.on{background:var(--navy);color:var(--gold);border-color:var(--navy)}
+  .srow .detrow{flex-basis:100%;min-width:0}
+  .det{margin-top:10px;border:1px solid var(--line);border-left:4px solid var(--navy);border-radius:10px;padding:10px 12px;background:#fbfcfd;min-width:0}
+  .det .dh{font-family:var(--f);font-weight:800;font-size:14px;color:var(--ink);margin:14px 0 6px}
+  .det .dh:first-child{margin-top:0}
+  .det .dh small{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:11.5px;color:var(--dim);margin-left:6px}
+  .hist{list-style:none;margin:0;padding:0}
+  .hist li{display:grid;grid-template-columns:minmax(0,10em) minmax(0,1fr);gap:1px 10px;padding:5px 0 5px 8px;border-top:1px solid #e9f0f4;font-size:13px;border-left:3px solid transparent}
+  .hist li.them{border-left-color:var(--gold)} .hist li.us{border-left-color:var(--teal)} .hist li.branch{border-left-color:#bfd0da}
+  .hist .hw{color:var(--dim);font-size:12px} .hist b{color:var(--ink);font-weight:600} .hist .hq{grid-column:2;color:var(--body);white-space:pre-line}
+  @media(max-width:560px){.hist li{grid-template-columns:minmax(0,1fr)}.hist .hq{grid-column:1}}
+  .hkey{font-size:11.5px;color:var(--dim);margin:6px 0 0} .hkey i{font-style:normal;display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 4px 0 8px;vertical-align:0}
+  .task{border:1px solid var(--line);border-radius:9px;background:#fff;padding:8px 10px;margin:6px 0;min-width:0}
+  .task.shut{opacity:.8}
+  .task .tt{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:center} .task .tt b{color:var(--ink)}
+  .task .tm{font-size:12.5px;color:var(--dim);margin-top:2px} .task .tm b{color:var(--body);font-weight:600} .task .tm a{color:var(--tdark);font-weight:600}
+  .post,.rep,.cmt{margin-top:6px;font-size:13px;background:#f4f8fb;border-radius:8px;padding:6px 9px;min-width:0}
+  .rep{margin-left:14px;background:#eaf5f8}
+  .post p,.rep p,.cmt p{margin:2px 0 0;white-space:pre-line;color:var(--body)}
+  .pw{font-size:11.5px;color:var(--dim)} .pw b{color:var(--ink)}
+  details.more summary,details.tdesc summary{cursor:pointer;font-size:12px;color:var(--tdark);margin-top:5px}
+  details.tdesc p{margin:4px 0 0;font-size:13px;white-space:pre-line}
+  .cmt .csf{display:block;font-size:11px;color:var(--dim);margin-top:3px}
+  .cmtbox{display:block;width:100%;margin-top:8px;font:14px Inter,system-ui,sans-serif;padding:8px 10px;border:1px solid #bfd0da;border-radius:9px;min-height:64px;resize:vertical;color:var(--ink);background:#fff}
+  .cmtbar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap} .cmtbar span{font-size:12px;color:var(--dim);margin-right:auto}
+  .cmtgo{background:var(--navy);color:var(--gold);border:0;border-radius:9px;padding:8px 14px;font:700 13px var(--f);cursor:pointer}
+  .cmtgo[disabled]{opacity:.55;cursor:default}
+  .dnone,.dload{font-size:13px;color:var(--dim);margin:4px 0} .derr{font-size:13px;color:var(--stop);margin:4px 0} .derr a{color:var(--tdark);cursor:pointer;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -251,12 +298,12 @@
   <section id="gate">
     <p class="internal">Internal &middot; client information</p>
     <h1>Who is looking after <em>whom</em></h1>
-    <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. An agent opens their own list with their agent number and their own code. The branch code opens the whole board, and with an agent&rsquo;s number or name, that agent&rsquo;s list.</p>
+    <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. Sign in with your agent number and your password. The branch manager sees the whole branch, by unit and person; a unit manager sees his team; an agent sees their own clients. The branch code still opens the whole board, and with someone&rsquo;s number, their view.</p>
     <form class="gatecard" id="gateForm" autocomplete="off">
       <label for="who">Agent number <span style="font-weight:500;text-transform:none;letter-spacing:0">(blank with the branch code, for the whole board)</span></label>
       <input id="who" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. A10024">
-      <label for="code">Code</label>
-      <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="your own code, or the branch code">
+      <label for="code">Password</label>
+      <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="your password, or the branch code">
       <button type="submit">Open</button>
       <p class="hint">Nothing on this page leaves the sheet. When you mark a call, your name goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read.</p>
       <div class="box" id="gateErr"></div>
@@ -268,8 +315,12 @@
     <h1 id="title">Assignments</h1>
     <p class="sub" id="lead"></p>
     <div class="tiles" id="tiles"></div>
-    <div id="rosterWrap"><h2>The roster <small id="rosterNote"></small></h2><div class="chips" id="roster"></div></div>
+    <div id="rosterWrap"><h2><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
     <p class="pnote" id="sugNote"></p>
+    <details class="glance claims" id="claimWrap" style="display:none">
+      <summary><b id="claimTitle">Retention claims</b><span id="claimSum"></span></summary>
+      <div id="claimBody"></div>
+    </details>
     <div id="insWrap" style="display:none"><h2>What the records say <small>about the clients who answered; tap one to see them</small></h2><div class="chips" id="insBar"></div></div>
     <details class="glance" id="glWrap" style="display:none">
       <summary><b>The book at a glance</b><span>who the clients are, how they pay, what they hold</span></summary>
@@ -335,6 +386,8 @@ function dmy(s) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ''); return m ? 
 function my(s) { var m = /^(\d{4})-(\d{2})/.exec(s || ''); return m ? MON[Number(m[2]) - 1] + ' ' + m[1] : ''; }
 
 /* ---- the gate ---- */
+/* every call after the gate carries who is signed in: the password alone opens nothing */
+function signed(p) { p.code = CODE; if (WHO) p.who = WHO; return p; }
 function api(params) {
   var q = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
   return fetch(SVC + '?' + q + '&z=' + Date.now()).then(function (r) { return r.text(); }).then(function (txt) {
@@ -345,6 +398,8 @@ function api(params) {
 function load() {
   clearTimeout(timer); timer = null;
   if (inflight || !CODE) return;
+  /* someone writing a comment: the two-minute refresh waits, so the box is not redrawn under them */
+  if (shown && typing()) { schedule(30000); return; }
   inflight = true;
   if (!shown) { var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block'; }
   var p = { action: 'board', code: CODE };
@@ -382,11 +437,14 @@ function fail(msg, refused) {
   $('gate').style.display = 'block'; $('main').style.display = 'none'; shown = false; D = null;
   if (!refused && CODE) schedule(GATE_RETRY_MS);
 }
-$('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); if (CODE) load(); });
+/* what one person opened is never shown to the next on the same device: their filter, the clients they opened in full,
+   a comment not yet saved, the policies fetched for them */
+function forget() { FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; }
+$('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); forget(); if (CODE) load(); });
 $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
   try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {}
-  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; clearTimeout(timer);
+  CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; forget(); clearTimeout(timer);   // the next person on this device starts afresh
   $('main').style.display = 'none'; $('gate').style.display = 'block'; $('gateErr').style.display = 'none'; $('code').value = ''; $('who').value = ''; $('refresh').style.display = 'none'; $('signout').style.display = 'none'; bar();
 });
 document.addEventListener('visibilitychange', function () { if (!document.hidden && shown && !timer) load(); });
@@ -409,9 +467,9 @@ var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done:
 
 /* ---- render ---- */
 function render() {
-  var d = D, manager = d.role === 'branch';
-  $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (manager ? '' : ' · ' + esc(d.me.name));
-  $('title').innerHTML = manager ? 'Assignments' : 'Your clients, <em>' + esc(d.me.name.split(/\s+/)[0]) + '</em>';
+  var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', first = d.me ? esc(d.me.name.split(/\s+/)[0]) : '';
+  $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (d.me ? ' · ' + esc(d.me.name) : '');
+  $('title').innerHTML = manager ? 'Assignments' : team ? 'Your team, <em>' + first + '</em>' : staff ? 'Every client who answered, <em>' + first + '</em>' : 'Your clients, <em>' + first + '</em>';
   var k = d.counts;
   var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
@@ -420,28 +478,41 @@ function render() {
       'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first' +
       (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
+    : staff ? 'Every client who answered a letter, what they told us, and who is named on them. When you have made a call, press its outcome on the card: your name goes on the file, and it stops the chase. ' +
+      'No figures here, and no advice on the call: anything about what a policy pays or changing cover goes to a licensed agent. <i>Their page</i> opens your own copy of the client&rsquo;s page.'
+    : team ? 'The clients the branch has named to your team: you and the agents in your unit. Tap a name under <i>Your unit</i> to see one person&rsquo;s list. ' +
+      'Each is a call before anything else, at the time they chose; whoever makes the call marks the outcome here, which stops the chase and shows on the branch pages.' +
+      (bookOn ? ' Each card shows the client&rsquo;s policies with us.' : '')
     : 'The clients the branch has named to you. Each is a call before anything else, at the time they chose. Mark the outcome here when you have spoken to them; it stops the chase and shows on the branch pages.' +
       (bookOn ? ' Each card shows the client&rsquo;s policies with us, so the first call is not a cold one.' : '');
+  if (d.detail) $('lead').innerHTML += ' <i>History · tasks · comments</i> on a card opens everything between us and the client, the Salesforce tasks on their policies with who has them, and the team&rsquo;s comments; yours is posted to their open tasks in Salesforce.';
+  claimsPanel(d);
   /* the note under the filters: how the figures are made, once for the page; or, for the branch, how to switch them on */
   $('bookNote').innerHTML = bookOn ? bookNote() : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
   var tiles = manager
     ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok']].concat(k.reached ? [['reached', k.reached, 'reached by phone', '']] : [], k.named ? [['named', k.named, 'named, no answer yet', 'gold']] : [], [['silent', k.silent, 'not answered yet', '']])
-    : [['', d.clients.length, 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
-  if (!manager && bookOn) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), 'premium a year on your list', 'gold']);
+    : [['', d.clients.length, staff ? 'on the board' : team ? 'on your team’s list' : 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
+  if (!manager && bookOn) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), team ? 'premium a year, your team' : 'premium a year on your list', 'gold']);
   $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
-  /* the roster */
-  $('rosterWrap').style.display = manager ? '' : 'none';
+  /* the roster: by unit and person when the Users tab is linked (the branch sees every unit, a unit manager his own), else
+     the branch's flat list off the Agent Skill Bank */
+  $('rosterWrap').style.display = manager || team ? '' : 'none';
   SUGN = (manager && d.counts && d.counts.sug && d.counts.sug.byAgent) || {};
   $('allWrap').style.display = manager ? '' : 'none';
-  if (manager) {
-    $('rosterNote').textContent = d.agents.length ? 'tap a name to see their list' : '';
+  var byUnit = !!(d.units && d.units.length);
+  $('rosterTitle').textContent = byUnit ? (manager ? 'The branch by unit' : 'Your unit') : 'The roster';
+  $('units').innerHTML = byUnit ? d.units.map(function (g) { return unitBlock(g, d, manager); }).join('') : '';
+  if (manager && !byUnit) {
     $('roster').innerHTML = d.agents.length ? d.agents.map(function (a) {
-      return '<span class="chip' + (FILTER.agent === a.name ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' +
+      return '<span class="chip' + (sameName(FILTER.agent, a.name) ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' +
         (a.prem || a.cover ? ' · ≈ ' + esc(short(a.prem)) + ' a year · ' + esc(short(a.cover)) + ' cover' : '') + (SUGN[a.name] ? ' · ' + SUGN[a.name] + ' suggested' : '') +
         (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
     }).join('') : '<div class="empty">No agents on the Agent Skill Bank yet. Add each agent there (name, e-mail, areas covered, Active = Yes, and a Portal code of their own) and they appear here.</div>';
-    Array.prototype.forEach.call(document.querySelectorAll('#roster .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = FILTER.agent === n ? '' : n; render(); }); });
+  } else $('roster').innerHTML = '';
+  $('rosterNote').textContent = (byUnit || d.agents.length) && (manager || team) ? 'tap a name to see their list' : '';
+  Array.prototype.forEach.call(document.querySelectorAll('#roster .chip, #units .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = sameName(FILTER.agent, n) ? '' : n; render(); }); });
+  if (manager) {
     var opts = '<option value="">choose an agent</option>' + d.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + (a.areas ? ' · ' + esc(a.areas) : '') + '</option>'; }).join('');
     if ($('barAgent').innerHTML !== opts) $('barAgent').innerHTML = opts;
     fillSug(d);
@@ -461,6 +532,28 @@ function render() {
   bar();
 }
 var FILTER = { agent: '' };
+/* one person whatever the spacing or hyphens of their name: "Persad-Khan" and "Persad Khan" (the backend's tNameKey_) */
+function nameKey(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
+function sameName(a, b) { return !!a && !!b && nameKey(a) === nameKey(b); }
+/* a unit on the Users tab: its manager, what the unit has been named on, and a chip a person that opens their list */
+function unitBlock(g, d, manager) {
+  var t = g.total || {}, roster = {}, cls = g.key === '~none' ? ' none' : g.key === '~off' ? ' off' : '';
+  (d.agents || []).forEach(function (a) { roster[nameKey(a.name)] = a; });
+  var line = function (s) {
+    return [s.named + ' named', s.answered + ' answered', s.open + ' open', s.late ? s.late + ' late' : '', s.done + ' done',
+      s.prem || s.cover ? '≈ ' + short(s.prem) + ' a year · ' + short(s.cover) + ' cover' : ''].filter(Boolean).join(' · ');
+  };
+  var head = g.lead ? '<b>' + esc(g.lead) + '</b><span>' + esc(g.title || '') + ' · ' + t.people + (t.people === 1 ? ' person' : ' people') + '</span>'
+    : '<b>' + esc(g.title) + '</b><span>' + t.people + (t.people === 1 ? ' person' : ' people') + '</span>';
+  return '<div class="unit' + cls + '"><div class="uh">' + head + '<i>' + esc(line(t)) + '</i></div><div class="chips">' +
+    g.people.map(function (p) {
+      var a = roster[nameKey(p.name)], tag = p.role && !/^agent$/i.test(p.role) ? '<span class="rtag">' + esc(p.role) + '</span>' : '';
+      var bits = [p.named + ' named', p.open + ' open', p.late ? p.late + ' late' : '', p.done + ' done', p.prem ? '≈ ' + short(p.prem) + ' a year' : '',
+        manager && a && SUGN[a.name] ? SUGN[a.name] + ' suggested' : '', a && !a.email ? 'no e-mail' : ''].filter(Boolean);
+      return '<span class="chip' + (sameName(FILTER.agent, p.name) ? ' on' : '') + '" data-agent="' + esc(a ? a.name : p.name) + '"><b>' + esc(p.name) + '</b>' + tag +
+        ' <i>' + esc(bits.join(' · ')) + '</i></span>';
+    }).join('') + '</div></div>';
+}
 function unique(a) { var s = {}; a.forEach(function (x) { if (x) s[x] = 1; }); return Object.keys(s).sort(); }
 function fill(sel, values) {
   var cur = sel.value, html = '<option value="">all</option>' + values.map(function (v) { return '<option value="' + esc(v) + '">' + esc(v) + '</option>'; }).join('');
@@ -474,7 +567,9 @@ function readHash() {
 }
 readHash();
 window.addEventListener('hashchange', function () { readHash(); if (D) render(); });
-function ownLink(c) { return 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '&r=phone'; }
+/* the client's own page: the licensed agent's copy (r=phone, every check of the letter), or for staff their own copy (r=update:
+   how to reach the client, no policy questions) */
+function ownLink(c) { return 'https://rickyrampersadbranch.com/your-policy/?t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + (D && D.role === 'staff' ? '&r=update' : '&r=phone'); }
 /* households (the Households tab): the family on our list, and who of them answered */
 function familyOf(c) { return c && c.hh && D && D.households && D.households[c.hh] ? D.households[c.hh] : null; }
 function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function (m) { return m.state === 'answered'; }); }
@@ -618,7 +713,7 @@ function togglePol(token, btn) {
   if (POLS[token]) { POL_OPEN[token] = 1; list(); return; }
   var reset = function () { btn.disabled = false; btn.textContent = 'Policies'; };
   btn.disabled = true; btn.textContent = 'Opening…';
-  api({ action: 'book', code: CODE, token: token }).then(function (r) {
+  api(signed({ action: 'book', token: token })).then(function (r) {
     if (!r || !r.ok) { reset(); toast(r && r.notUpdated ? NEWBACK : ((r && r.error) || 'The sheet did not answer. Try again.'), true); return; }
     POLS[token] = { pol: r.pol || null, profile: r.profile || null, ins: r.ins || [] }; POL_OPEN[token] = 1; list();
   }).catch(function () {
@@ -642,7 +737,7 @@ function matches(c) {
   if (s && (c.client + ' ' + (c.no || '')).toLowerCase().indexOf(s) < 0) return false;
   if (seg && c.seg !== seg) return false;
   if (book && c.book !== book) return false;
-  if (FILTER.agent && (c.assigned || '').toLowerCase() !== FILTER.agent.toLowerCase()) return false;
+  if (FILTER.agent && !sameName(c.assigned, FILTER.agent)) return false;
   if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
   if (need && !needsOf(c)[need]) return false;
   if (ins && !insKeys(c)[ins]) return false;
@@ -672,7 +767,7 @@ function list() {
   $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
         : 'Nothing is recorded for this client yet, so there is nothing on the board to mark. Record the call on <a href="' + esc(ownLink({ token: FOCUS, seg: FOCUS_SEG })) + '" target="_blank" rel="noopener">their own page</a> first: it files on Client Responses, and the client is here the next time the board refreshes.')
-      : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
+      : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : d.role === 'unit' ? 'Nothing on your team\u2019s list yet. The branch names your agents on clients from the board or in Salesforce, and they appear here.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
   if ($('unfocus')) $('unfocus').addEventListener('click', function () {
     FOCUS = ''; FOCUS_SEG = '';
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
@@ -683,6 +778,13 @@ function list() {
   Array.prototype.forEach.call(document.querySelectorAll('#list select.quick'), function (el) { el.addEventListener('change', function () { if (el.value) assign([el.getAttribute('data-token')], el.value, el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button.polbtn'), function (el) { el.addEventListener('click', function () { togglePol(el.getAttribute('data-pol'), el); }); });
   Array.prototype.forEach.call(document.querySelectorAll('#list button.sugbtn'), function (el) { el.addEventListener('click', function () { assign([el.getAttribute('data-token')], el.getAttribute('data-agent'), el); }); });
+  /* one client in full: the history, the Salesforce tasks, the comments */
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.detbtn'), function (el) { el.addEventListener('click', function () { toggleDetail(el.getAttribute('data-det')); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list [data-det-retry]'), function (el) { el.addEventListener('click', function () { loadDetail(el.getAttribute('data-det-retry')); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list textarea.cmtbox'), function (el) { el.addEventListener('input', function () { DRAFT[el.getAttribute('data-cmt')] = el.value; }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#list button.cmtgo'), function (el) { el.addEventListener('click', function () { saveComment(el.getAttribute('data-cmt-go'), el); }); });
+  /* a client opened from a link (#t=…) opens in full, once */
+  if (FOCUS && D.detail && focusDet !== FOCUS && document.getElementById('c-' + FOCUS)) { focusDet = FOCUS; if (!DET_OPEN[FOCUS]) { DET_OPEN[FOCUS] = 1; loadDetail(FOCUS); } }
   if ($('selShown')) $('selShown').addEventListener('click', function () {
     SHOWN.forEach(function (t) { SEL[t] = 1; }); list(); bar();
     toast(SHOWN.length + ' selected. Press Assign each as suggested, or choose one agent for all of them in the bar below.');
@@ -734,12 +836,13 @@ function card(c, manager) {
     var wa = waLink(c.phone);
     if (c.phone) acts += '<a class="tel" href="tel:' + esc(digits(c.phone)) + '">Call</a>';
     if (wa) acts += '<a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>';
-    acts += '<a class="own" href="' + esc(own) + '" target="_blank" rel="noopener">Their answer page →</a>';
+    acts += '<a class="own" href="' + esc(own) + '" target="_blank" rel="noopener">' + (D.role === 'staff' ? 'Their page (your copy) →' : 'Their answer page →') + '</a>';
   }
   ['Called', 'Met', 'No answer', 'Declined', 'Closed'].forEach(function (s) {
     acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="' + s + '" class="' + (s === 'Met' || s === 'Called' ? 'ok' : s === 'Declined' ? 'stopb' : '') + '">' + s + '</button>';
   });
   if (c.mark && c.mark !== 'Open') acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="Open">Reopen</button>';
+  acts += detButton(c);
   return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
     (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
     '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
@@ -752,8 +855,8 @@ function card(c, manager) {
     (c.state === 'named' ? '<div class="needs">Named here before they answered: the agent calls. No introduction or receipt goes to a client who has not answered.</div>' : '') +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
-    '<div class="acts">' + acts + '</div></div></div>';
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + claimLine(c) + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
+    '<div class="acts">' + acts + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') + '</div></div>';
 }
 function silentRow(c, manager) {
   /* a family member of someone who answered: where they stand, and whose family they are */
@@ -765,8 +868,144 @@ function silentRow(c, manager) {
     (c.phone ? '<a href="tel:' + esc(digits(c.phone)) + '" style="color:var(--tdark);font-weight:600;text-decoration:none">☎ ' + esc(c.phone) + '</a>' : '') +
     /* the totals ride on the row; the policies themselves come from the sheet when it is opened (action=book, the branch code) */
     (manager && c.pol ? '<button type="button" class="polbtn" data-pol="' + esc(c.token) + '">' + (POL_OPEN[c.token] ? 'Hide policies' : 'Policies') + '</button>' : '') +
+    detButton(c, true) +
     (POL_OPEN[c.token] && POLS[c.token] ? '<div class="polrow">' + profileLine(POLS[c.token].profile) + insChips(POLS[c.token].ins) +
-      (POLS[c.token].pol ? polPanel(POLS[c.token].pol) : '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>') + householdPanel(c, manager) + '</div>' : '') + '</div>';
+      (POLS[c.token].pol ? polPanel(POLS[c.token].pol) : '<div class="pnote">Nothing on the Branch Portfolio for this client.</div>') + householdPanel(c, manager) + '</div>' : '') +
+    (DET_OPEN[c.token] ? '<div class="detrow">' + detPanel(c) + '</div>' : '') + '</div>';
+}
+
+/* ---- the TT$200 retention claims (tClaimsRead_ in Transition.gs): the panel, and the line on a card ---- */
+/* 3 October 2026: "when a questionnaire is recieved the agent is compensated 200.00 as an email goes to retention … to track
+   payments". The branch sees every claim, a unit manager his team's, an agent their own; staff never see one (no money). */
+var CSTATE = { unpaid: 'unpaid', paid: 'paid', held: 'held', notsent: 'not sent', check: 'to check', closed: 'closed', 'new': 'new' };
+function cmoney(n) { return ((D && D.claims && D.claims.cur) || 'TT$') + Math.round(Number(n) || 0).toLocaleString('en-US'); }
+function claimPay(v, manager) {
+  if (v.state === 'paid') return v.paid ? (v.future ? 'to be paid ' + v.paid : 'paid ' + v.paid) : 'paid';
+  if (v.state === 'unpaid') return 'unpaid' + (v.days === 0 ? ', sent today' : v.days ? ', ' + v.days + (v.days === 1 ? ' day' : ' days') : '');
+  if (manager && v.status && v.state !== 'new') return v.status;
+  return v.state === 'held' || v.state === 'new' ? 'waiting for the branch' : v.state === 'closed' ? 'closed' : CSTATE[v.state] || v.state;
+}
+function claimsPanel(d) {
+  var w = $('claimWrap'), C = d.claims;
+  if (!C) { w.style.display = 'none'; return; }
+  w.style.display = '';
+  var manager = d.role === 'branch', team = d.role === 'unit', s = C.sum || {}, rows = C.rows || [];
+  $('claimTitle').textContent = (manager ? 'Retention claims' : team ? 'Your team’s retention claims' : 'Your retention claims') + ' · ' + cmoney(C.amount) + ' a client';
+  $('claimSum').textContent = rows.length ? [s.unpaid + ' unpaid' + (s.owed ? ' (' + cmoney(s.owed) + ')' : ''), s.paid + ' paid' + (s.paidAmt ? ' (' + cmoney(s.paidAmt) + ')' : ''),
+    s.held ? s.held + (manager ? ' held or to check' : ' waiting') : ''].filter(Boolean).join(' · ') : 'none yet';
+  var h = '';
+  if (manager && !C.live) h += '<p class="cnote"><b>Not started.</b> Claims are found and kept on the <i>Retention Payments</i> tab, held: nothing goes to the Retention unit until you press <i>Transition: start the TT$200 claims</i> on the sheet&rsquo;s menu.</p>';
+  if (manager && !C.sf) h += '<p class="cnote">Salesforce is not linked to this project, so the submission date is not written and payments are not read back. Copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings &rarr; Script properties; until then, type the Paid date on the tab when one is paid.</p>';
+  h += '<p class="cnote rule">A service questionnaire from a client after they were named to an agent earns that agent ' + esc(cmoney(C.amount)) + ', once per client, whoever sent the link. ' +
+    (manager ? 'Each claim is e-mailed to the Retention unit (' + esc(C.to) + ') with you and the agent copied, and every Monday the unpaid ones go again as one list, until Salesforce shows <i>Date Comm Paid</i>.'
+      : 'The branch e-mails each claim to the Retention unit with you copied, and follows it up every Monday until Salesforce shows the payment date.') + '</p>';
+  if (!rows.length) { $('claimBody').innerHTML = h + '<div class="empty">No claim yet. The first service questionnaire from a client after they were named to ' + (manager ? 'an agent' : team ? 'one of your team' : 'you') + ' makes one.</div>'; return; }
+  h += '<table class="pt"><thead><tr><th>Client</th>' + (manager || team ? '<th>Agent</th>' : '') + '<th>Questionnaire</th><th>Sent to Retention</th><th>Followed up</th><th>Payment</th></tr></thead><tbody>' +
+    rows.map(function (v) {
+      return '<tr><td data-l="Client"><a class="cgo" href="#t=' + esc(v.token) + '">' + esc(v.client) + '</a><div class="pn">' + esc(v.id) + (v.named ? ' · named ' + esc(v.named) : '') + '</div></td>' +
+        (manager || team ? '<td data-l="Agent">' + esc(v.agent) + '</td>' : '') +
+        '<td data-l="Questionnaire">' + esc(v.received || '—') + '<div class="pn">' + esc(v.q) + '</div></td>' +
+        '<td data-l="Sent to Retention">' + esc(v.submitted || '—') + (v.byHand ? '<div class="pn">entered by hand</div>' : '') + '</td>' +
+        '<td data-l="Followed up">' + (v.follow ? esc(v.follow + (v.follow === 1 ? ' time' : ' times')) + (v.last ? '<div class="pn">last ' + esc(v.last) + '</div>' : '') : '—') + '</td>' +
+        '<td data-l="Payment"><span class="cst ' + esc(v.state) + '">' + esc(claimPay(v, manager)) + '</span>' + (manager && v.sf ? '<div class="pn">Salesforce: ' + esc(v.sf) + '</div>' : '') + '</td></tr>';
+    }).join('') + '</tbody></table>';
+  $('claimBody').innerHTML = h;
+  var key = 'rrb-assign-claims-open', open = null;
+  try { open = localStorage.getItem(key); } catch (e) {}
+  if (!w._bound) {
+    w._bound = true;
+    if (open === '1' || (open === null && rows.length <= 6)) w.open = true;
+    w.addEventListener('toggle', function () { try { localStorage.setItem(key, w.open ? '1' : '0'); } catch (e) {} });
+  }
+}
+function claimLine(c) {
+  var v = c.claim;
+  if (!v) return '';
+  var manager = D.role === 'branch';
+  var pay = v.state === 'paid' ? '<b class="pd">' + esc(claimPay(v)) + '</b>' : v.state === 'unpaid' ? '<b class="up">unpaid</b>' : '<b>' + esc(claimPay(v, manager)) + '</b>';
+  return '<div class="claimln"><span class="cl">' + esc(cmoney(v.amount)) + ' claim</span>' + esc(v.id) + (D.role !== 'agent' ? ' · for <b>' + esc(v.agent) + '</b>' : '') +
+    ' · questionnaire ' + esc(v.received) + (v.submitted ? ' · sent to Retention ' + esc(v.submitted) : '') + (v.follow ? ' · followed up ' + v.follow + (v.follow === 1 ? ' time' : ' times') : '') + ' · ' + pay + '</div>';
+}
+
+/* ---- one client in full (transitionDetail_): the history, their Salesforce tasks, the team's comments ---- */
+/* 3 October 2026: "so the agent can see the email and history and tasks opened on salesforce assigned to the staff and a
+   place for their comments". Opened on demand, one client at a time; a comment is kept on the Board Comments tab and posted
+   to the client's open tasks in Salesforce. */
+var DET = {}, DET_OPEN = {}, DRAFT = {}, focusDet = '';
+function typing() { var a = document.activeElement; return !!(a && a.classList && a.classList.contains('cmtbox')); }
+function detButton(c, small) {
+  if (!D || !D.detail) return '';
+  return '<button type="button" class="detbtn' + (DET_OPEN[c.token] ? ' on' : '') + '" data-det="' + esc(c.token) + '">' +
+    (DET_OPEN[c.token] ? 'Hide the history' : small ? 'History' : 'History · tasks · comments') + '</button>';
+}
+function toggleDetail(tok) {
+  if (DET_OPEN[tok]) { delete DET_OPEN[tok]; list(); return; }
+  DET_OPEN[tok] = 1; loadDetail(tok);
+}
+function loadDetail(tok) {
+  var had = DET[tok] && DET[tok].ok ? DET[tok] : null;
+  DET[tok] = had || { loading: true };
+  list();
+  api(signed({ action: 'detail', token: tok })).then(function (r) {
+    if (!r || !r.ok) { DET[tok] = { error: r && r.notUpdated ? 'This needs the new backend: paste Service.gs and Transition.gs, put the branch code back into TEAM_CODE, then Deploy → Manage deployments → New version.' : ((r && r.error) || 'The sheet did not answer.') }; }
+    else DET[tok] = r;
+    if (DET_OPEN[tok]) list();
+  }).catch(function () { DET[tok] = { error: 'The sheet did not answer.' }; if (DET_OPEN[tok]) list(); });
+}
+function histItem(t) {
+  return '<li class="' + esc(t.who) + '"><span class="hw">' + esc(t.when || '') + '</span><b>' + esc(t.text) + '</b>' +
+    (t.quote ? '<span class="hq">' + (t.who === 'them' && !/^[A-Z]{2,4}-\d/.test(t.quote) ? '“' + esc(t.quote) + '”' : esc(t.quote)) + '</span>' : '') + '</li>';
+}
+function postHtml(p, cls) {
+  return '<div class="' + cls + '"><span class="pw"><b>' + esc(p.by || '') + '</b>' + (p.when ? ' · ' + esc(p.when) : '') + '</span><p>' + esc(p.text) + '</p>' +
+    (p.replies || []).map(function (r) { return postHtml(r, 'rep'); }).join('') + '</div>';
+}
+function taskCard(t) {
+  var meta = [t.owner ? 'assigned to <b>' + esc(t.owner) + '</b>' : '', t.due ? 'due ' + esc(t.due) : '', t.opened ? 'opened ' + esc(t.opened) + (t.by ? ' by ' + esc(t.by) : '') : '',
+    t.policy ? 'policy ' + esc(t.policy) : ''].filter(Boolean).join(' · ');
+  var posts = t.posts || [];
+  return '<div class="task' + (t.open ? '' : ' shut') + '"><div class="tt"><b>' + esc(t.subject) + '</b><span class="pill ' + (t.open ? 'open' : 'done') + '">' + esc(t.status || (t.open ? 'open' : 'closed')) + '</span>' +
+    (t.priority && !/^normal$/i.test(t.priority) ? '<span class="pill late">' + esc(t.priority) + '</span>' : '') + '</div>' +
+    '<div class="tm">' + meta + (t.url ? ' · <a href="' + esc(t.url) + '" target="_blank" rel="noopener">open in Salesforce</a>' : '') + '</div>' +
+    (t.desc ? '<details class="tdesc"><summary>What the task says</summary><p>' + esc(t.desc) + '</p></details>' : '') +
+    (posts.length ? postHtml(posts[0], 'post') : '') +
+    (posts.length > 1 ? '<details class="more"><summary>' + (posts.length - 1) + ' earlier post' + (posts.length === 2 ? '' : 's') + '</summary>' + posts.slice(1).map(function (p) { return postHtml(p, 'post'); }).join('') + '</details>' : '') + '</div>';
+}
+function detPanel(c) {
+  var x = DET[c.token];
+  if (!x || (x.loading && !x.ok)) return '<div class="det"><p class="dload">Opening the history, the Salesforce tasks and the comments&hellip; this takes a few seconds.</p></div>';
+  if (x.error) return '<div class="det"><p class="derr">' + esc(x.error) + ' <a data-det-retry="' + esc(c.token) + '">Try again</a></p></div>';
+  var h = '<div class="det"><div class="dh">History <small>newest first' + (x.at ? ' · as at ' + esc(x.at) : '') + '</small></div>';
+  h += (x.history || []).length ? '<ol class="hist">' + x.history.map(histItem).join('') + '</ol>' +
+    '<p class="hkey"><i style="background:var(--gold)"></i>the client<i style="background:var(--teal)"></i>our e-mails to them<i style="background:#bfd0da"></i>the branch</p>'
+    : '<p class="dnone">Nothing recorded yet.</p>';
+  var tasks = x.tasks || [], open = tasks.filter(function (t) { return t.open; }).length;
+  h += '<div class="dh">Salesforce tasks <small>' + (x.sf ? (tasks.length ? open + ' open · ' : '') + 'on their policies and contact record: open, and any changed in the last ' + esc(x.taskDays || 14) + ' days' : '') + '</small></div>';
+  if (x.tasksError) h += '<p class="derr">' + esc(x.tasksError) + '</p>';
+  else if (!x.sf) h += '<p class="dnone">' + esc(x.tasksWhy) + '</p>';
+  else h += tasks.length ? tasks.map(taskCard).join('') : '<p class="dnone">' + esc(x.tasksWhy || 'No task on this client’s policies.') + '</p>';
+  h += '<div class="dh">Comments <small>' + (x.sf ? 'kept here, and posted to the client&rsquo;s open tasks in Salesforce in your name' : 'kept on the Board Comments tab') + '</small></div>' +
+    (x.comments || []).map(function (m) {
+      return '<div class="cmt"><span class="pw"><b>' + esc(m.by) + '</b>' + (m.role ? ' · ' + esc(m.role) : '') + ' · ' + esc(m.when) + '</span><p>' + esc(m.text) + '</p>' +
+        (m.sf ? '<span class="csf">Salesforce: ' + esc(m.sf) + '</span>' : '') + '</div>';
+    }).join('') +
+    '<textarea class="cmtbox" data-cmt="' + esc(c.token) + '" maxlength="800" placeholder="What you did, what you found, what happens next" aria-label="A comment on ' + esc(c.client) + '">' + esc(DRAFT[c.token] || '') + '</textarea>' +
+    '<div class="cmtbar"><span>The team sees it; the client never does.</span><button type="button" class="cmtgo" data-cmt-go="' + esc(c.token) + '">Save comment</button></div>';
+  return h + '</div>';
+}
+function saveComment(tok, btn) {
+  var box = document.querySelector('textarea.cmtbox[data-cmt="' + tok + '"]'), text = String(box ? box.value : (DRAFT[tok] || '')).trim();
+  if (!text) { toast('Write the comment first.', true); return; }
+  DRAFT[tok] = text;
+  btn.disabled = true; btn.textContent = 'Saving…';
+  api(signed({ action: 'comment', token: tok, text: text })).then(function (r) {
+    btn.disabled = false; btn.textContent = 'Save comment';
+    if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Your comment is still in the box: try again.', true); return; }
+    delete DRAFT[tok];
+    if (DET[tok] && DET[tok].ok) DET[tok].comments = [r.comment].concat(DET[tok].comments || []);
+    toast('Comment saved. Salesforce: ' + (r.sf || 'not posted') + '.', !r.posted && /refused|failed|did not|not posted/i.test(r.sf || ''));
+    list();
+  }).catch(function () { btn.disabled = false; btn.textContent = 'Save comment'; toast('The sheet did not answer. Your comment is still in the box: try again in a moment.', true); });
 }
 
 /* ---- the suggested agent (tSuggest_ in Transition.gs): the family's, the 24 September plan's, or the lightest list ---- */
@@ -836,7 +1075,7 @@ function assignSuggested() {
     }
     var j = jobs.shift();
     toast('Naming ' + j[0] + ' on ' + j[1].length + ' client' + (j[1].length === 1 ? '' : 's') + '… (' + (++step) + ' of ' + total + ')');
-    api({ action: 'assign', code: CODE, tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' }).then(function (r) {
+    api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' })).then(function (r) {
       if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
       else {
         named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; notAns += r.notAnswered || 0;
@@ -902,7 +1141,7 @@ $('barSug').addEventListener('click', assignSuggested);
 function assign(tokens, agent, el) {
   if (!tokens.length || !agent) return;
   if (el) el.disabled = true;
-  var p = { action: 'assign', code: CODE, tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' };
+  var p = signed({ action: 'assign', tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' });
   toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + '…');
   api(p).then(function (r) {
     if (el) el.disabled = false;

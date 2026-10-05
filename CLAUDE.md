@@ -2113,6 +2113,50 @@ voice under the new timing and the caption gives it away.
   after a Service.gs paste, those pages now say so. The follow-up note
   holds for a client Salesforce names, as it does for one named on the
   board.
+  **Sign-in by role, from the Agent Skill Bank** (3 October 2026; ping
+  `campaign: 6`). The branch manager set up the access on the Agent Skill
+  Bank itself ("I did put the agent access in the Service Questionnaire"):
+  Agent ("A00427 - <name>"), Agent no., **Password**, **Role**, **Unit**,
+  Active, then the old columns, a second Active among them. He asked that
+  "an agent uses his agent number and password assigned. I am the branch
+  manager so when I log in I can see what's happening in the branch by
+  units and persons that also fall under me. Akaash should see his team as
+  he is a unit manager." `tTeam_` reads the tab (the number in front of a
+  name dropped, either Active reading inactive taking the person off) and
+  `tWho_` signs in by agent number and Password, as a digest, never the
+  password itself; the old Portal code still works for anyone with no
+  Password. What each role sees on `assign.html`: a **Branch Manager** (or
+  an Assistant Branch Manager) the whole board, the roster grouped **by
+  unit and person** (`tUnits_`: each unit under the manager its Unit column
+  names, with named, answered, open, late, done and the premium a year;
+  someone whose unit manager has left under "no unit manager now"); a
+  **Unit Manager** his team, himself and everyone whose Unit is his name,
+  their clients and figures, his unit only; an **agent** their own list;
+  **Staff** (Client Support and the manager's assistant) every client who
+  answered with no money, policy or profile figures, marking calls in
+  their own name, with `r=update` links. Only the branch names an agent,
+  only the Branch Manager (or the branch code) e-mails a client a note,
+  because the notes go in his name, and staff are never on the roster to
+  be named. "Branch Manager Assistant" is staff, never the branch manager
+  (`tRoleOf_`). Three locks, whatever the tab says: **a password shorter
+  than eight characters opens nothing** (that day every password on the tab
+  was one or two digits, eighteen of the twenty-three the row number and
+  ten shared); anyone who was the agent on these books (the Agent column of
+  Transition Send, `tFormer_`) never signs in and is never on the roster;
+  and ten wrong tries on one number close it for fifteen minutes. The
+  manager's performance portal keeps its own Users tab with the same
+  scheme; the board does not read it. New eight-digit passwords, the
+  1 October code kept for whoever had one, are built in the scratchpad
+  (`roles/build-passwords.py`) and never enter the repository; the menu's
+  "Transition: check the agent access" says how many can sign in, never a
+  password. `skillBank_` in Service.gs reads the same tab the same way, so
+  the agent portal and the service wall see clean names, no staff, and an
+  eight-character Password as the agent's own code. Until the paste, the
+  live board lists each name with its number in front and the staff as
+  agents: nobody is named from the board before it. `roles/roles-harness.js`
+  (66 checks), `roles/roles-test.js` (Playwright, 27) and
+  `roles/real-check.js` (the real tab with the new passwords) in the
+  scratchpad cover it.
   **On 1 October 2026 the live web app still answered `campaign: 2`**, so
   the board, its login included, answered nobody. Its routes are in
   `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the
@@ -2135,6 +2179,74 @@ voice under the new timing and the caption gives it away.
   `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
   `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
   cover it.
+- **A questionnaire after the naming earns the agent TT$200, and the claim
+  is chased until Salesforce has the payment date** (3 October 2026; ping
+  `campaign: 7`). The manager asked: "when a questionnaire is recieved the
+  agent is compensated 200.00 as an email goes to retention email
+  GlocConservationRetentionunit@myguardiangroup.com with the details and to
+  track payments, the email have to be followed up until the payment date is
+  updated on salesforce". He set the rules the same day. A claim needs a
+  service questionnaire received on or after the day the client was named to
+  an agent, whoever sent the link. There is one claim per client. Each claim
+  is e-mailed when it is found, with the manager and the agent copied. Every
+  Monday one list of the unpaid claims goes, oldest first. The machinery is
+  `T_CLAIM` and `tClaimsRun_` in Transition.gs, at the end of the five-minute
+  receipts run. A questionnaire is placed on a client by its Link ref, else by
+  a policy number only that client holds, else by an e-mail only they have.
+  The agent is the one they were named to when it came in: the board's names,
+  the `[assigned …]` stamps that keep the earlier ones, and Salesforce's. A
+  questionnaire from before the naming earns nothing. So do a staff Test row,
+  a departed agent's own policy or household, a TEST policy and the pilot.
+  The agent must be active on the Agent Skill Bank, matched by full name, or
+  the claim is held. Each claim is a row on the **Retention Payments** tab
+  (`RP-yyMMdd-nnn`). The claim e-mail goes from support@ through Graph,
+  signed by the manager, a reply going to him, with the confidentiality line
+  for Guardian Life. **Salesforce already keeps the branch's claims** on the
+  policy record: Date Subm to Retention, Was Agent Paid (Yes or No) and Date
+  Comm Paid, the commission run's date, the 4th of a month. On 3 October it
+  held 250 claims since 2024, some marked Yes with no date. A claim writes the
+  first two the same way on one of the client's policies, in this order of
+  choice: the questionnaire's, the one the agent was named on in Salesforce,
+  then the live one with the largest premium. It never writes over an
+  earlier claim's date. A submission already entered by hand, on or after
+  the naming, is recorded and never e-mailed twice. **The claim is closed**
+  when Date Comm Paid, on or after the naming, is on any of the client's
+  policies; Was Agent Paid is then set to Yes. A date still to come counts,
+  and the board reads it "to be paid". A Paid date typed on the tab also
+  closes a claim, and Void, Declined or Withdrawn in Status stop it. The
+  Monday list goes to the Retention unit with the manager copied, never the
+  agents, because it carries every agent's clients; each agent sees their own
+  claims on the board. **Nothing goes until the manager's go**:
+  `transitionClaimsStart`, on the menu as "Transition: start the TT$200
+  claims". Until then a claim is found, recorded and held. The board shows
+  the branch every claim, a unit manager his team's and an agent their own,
+  by the agent the claim pays. Staff see none. Without the `SF_*` properties
+  the e-mails still go, and the tab says to enter the dates by hand.
+  `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
+  (Playwright, 31) in the scratchpad cover it.
+- **One client in full on the board: the history, their Salesforce tasks,
+  and the team's comments** (3 October 2026, the same request: "so the agent
+  can see the email and history and tasks opened on salesforce assigned to
+  the staff and a place for their comments"). *History · tasks · comments*
+  on a card asks `action=detail`, and the board opens on it from a
+  `#t=` link. **The history** is `tTrail_` read about the client rather than
+  to them: the letter by its subject line, a reminder, their answers and
+  replies, our receipts and notes. Beside it is what the branch did: who they
+  were named to, each call marked with its file note, the questionnaire and
+  the claim. It runs newest first, each line marked whose it is. **The tasks**
+  are every Salesforce task on their policy records or their contact record,
+  open or changed in the last fourteen days. Each shows who it is assigned
+  to, its due date, who opened it and its Chatter, posts and replies, as
+  plain text. A flow's broken subject (`$Record.FirstName`) reads "Birthday
+  e-mail (automatic)". **A comment** is kept on the **Board Comments** tab.
+  It is posted to the Chatter of the client's newest three open tasks, or to
+  a policy record when none is open, headed with the writer's name, since
+  Salesforce shows the integration user as the poster. Who may open a client
+  is who sees the card: the branch and staff anyone, a unit manager his
+  team's, an agent their own. Staff never see the claim. The board's
+  two-minute refresh waits while a comment is being written. Signing out
+  forgets every client opened, every comment not yet saved and every policy
+  fetched, so the next person on the device starts clean.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
