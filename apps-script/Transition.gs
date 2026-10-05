@@ -3487,7 +3487,9 @@ function tBoard_(w, all, lite) {
   var staff = w.role === 'staff';
   var onTeam = w.role === 'unit' ? tOnTeam_(w.team) : w.role === 'agent' ? tOnTeam_([w.me.name]) : null;
   var roster = tRoster_();
-  var agents = staff ? [] : roster.filter(function (a) { return !onTeam || onTeam(a.name); }).map(function (a) {
+  /* the roster: every agent for the branch and for staff (who name agents too since 5 October 2026), a unit manager's
+     team for him, an agent alone; the figures on it for the branch and a unit manager only */
+  var agents = roster.filter(function (a) { return !onTeam || onTeam(a.name); }).map(function (a) {
     var k = tNameKey_(a.name), mine = clients.filter(function (c) { return c.assigned && tNameKey_(c.assigned) === k; });
     var o = { name: a.name, areas: a.areas, avail: a.avail, email: !!a.email, phone: !!a.phone, role: a.role || '', unit: a.unit || '',
               open: mine.filter(function (c) { return c.open; }).length, done: mine.filter(function (c) { return !c.open && c.actionable; }).length };
@@ -3607,8 +3609,8 @@ function tBoard_(w, all, lite) {
     if (!lite) order.forEach(function (tok) { var r = sendBy[tok]; if (!T_NOT_BOOK.test(tText_(r.Exclude))) bookNos.push(tText_(r['Client number'])); });
     if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
-  /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
-  if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
+  /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for whoever may name one */
+  if (tCanAssign_(w)) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
   /* staff see who each client is, what the records say and each policy's plan, where it stands and what it is paid to,
      never a figure: Client Support sees no money (29 September), and the insights are theirs too (5 October 2026: "I do
      need the staff to log in with the insights shared") */
@@ -3624,7 +3626,7 @@ function tBoard_(w, all, lite) {
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
            book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
-           units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false,
+           units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
            notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null,
            claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
 }
@@ -3860,7 +3862,10 @@ function tGlanceCached_(nos) {
 function transitionAssign_(p) {
   p = p || {};
   var w = tWho_(p.code, p.who);
-  if (!w.ok || w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch (the branch code, or a branch manager signed in) can name an agent on a client.' };
+  /* the branch names, and since 5 October 2026 so do staff ("as the branch manager i and the staff has to be given the
+     option of which agent to assign"): a unit manager and an agent still cannot */
+  if (!w.ok || !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch (the branch code, or a branch manager signed in) and the staff can name an agent on a client.' };
+  var byStaff = w.role === 'staff' && w.me && w.me.name ? w.me.name : '';
   var agentName = String(p.agent || '').trim().slice(0, 80);
   var tokens = String(p.tokens || p.token || '').split(',').map(function (s) { return s.trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64); }).filter(Boolean);
   if (!agentName || !tokens.length) return { ok: false, error: 'Choose an agent and at least one client.' };
@@ -3881,11 +3886,14 @@ function transitionAssign_(p) {
     if (!sh && typeof responseSheet_ === 'function') sh = responseSheet_();
     if (!sh) return { ok: false, error: 'The Client Responses tab is missing.' };
     var now = new Date(), stamp = Utilities.formatDate(now, tTz_(), 'd MMM');
-    var marker = '[assigned ' + stamp + ' · ' + agent.name + ']' + (extra ? ' ' + extra : '');
-    var done = [], missing = [], written = 0;
+    /* who named, outside the stamp so the stamp's readers (the claims, the history) still read the agent alone; it shows
+       on the card and in the brief as the file note "assigned 5 Oct · Name: named by …" */
+    var marker = '[assigned ' + stamp + ' · ' + agent.name + ']' + (byStaff ? ' named by ' + byStaff : '') + (extra ? (byStaff ? ': ' : ' ') + extra : '');
+    var done = [], missing = [], written = 0, onBoard = {};
+    if (byStaff) b.clients.forEach(function (c) { onBoard[c.token] = true; });   // staff name only the clients on their own board
     tokens.forEach(function (tok) {
       var c = map[tok];
-      if (!c) { missing.push(tok); return; }
+      if (!c || (byStaff && !onBoard[tok])) { missing.push(tok); return; }
       var targets = (c.rows || []).filter(function (r) { return r.type !== 'informed'; });
       if (!targets.length) targets = c.rows || [];
       if (targets.length) {
@@ -3896,7 +3904,7 @@ function transitionAssign_(p) {
           written++;
         });
       } else {
-        sh.appendRow([now, tok, c.seg || '', 'assign', 'a named agent, from the board', '/assign', 'branch', 'Open', agent.name, now, marker]);
+        sh.appendRow([now, tok, c.seg || '', 'assign', 'a named agent, from the board', '/assign', byStaff ? 'staff: ' + byStaff : 'branch', 'Open', agent.name, now, marker]);
         c.rows = [{ n: sh.getLastRow(), type: 'assign' }];
         written++;
       }
@@ -3923,7 +3931,7 @@ function transitionAssign_(p) {
         catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
       });
     }
-    log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') +
+    log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') + (byStaff ? ' · named by ' + byStaff : '') +
          (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (missing.length ? ' · ' + missing.length + ' unknown' : ''));
     return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, notAnswered: notAnswered, missing: missing, warnings: warnings };
   } finally { lock.releaseLock(); }
@@ -4638,6 +4646,12 @@ function tBookBrief_(cno, more) {
   if (more) { o.ci = p.sum.ci; o.lapsed = p.sum.lapsed; o.due = p.sum.due; o.unconf = p.sum.unconf; }
   return { sum: o };
 }
+
+/** Who may name an agent on a client: the branch (the branch code, or a branch manager signed in) and, since 5 October
+ *  2026, staff ("as the branch manager i and the staff has to be given the option of which agent to assign"). The
+ *  manager chose that a staff member's naming does all the branch's does: the brief to the agent, and the introduction
+ *  to a client who answered. A unit manager and an agent never name. */
+function tCanAssign_(w) { return !!w && !!w.ok && (w.role === 'branch' || w.role === 'staff'); }
 
 /* What staff see (5 October 2026: "I do need the staff to log in with the insights shared"). Client Support sees no money
    (29 September), so a client's policies reach them as each plan, where it stands, when it was issued, what it is paid to

@@ -466,8 +466,11 @@ function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
 var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet' };
 
 /* ---- render ---- */
+/* who may name an agent: the branch, and since 5 October 2026 the staff ("the staff has to be given the option of which
+   agent to assign"). The backend says (canAssign); an older one does not, and then it is the branch alone. */
+function canAssign() { return !!(D && (D.canAssign !== undefined ? D.canAssign : D.role === 'branch')); }
 function render() {
-  var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', first = d.me ? esc(d.me.name.split(/\s+/)[0]) : '';
+  var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', namer = canAssign(), first = d.me ? esc(d.me.name.split(/\s+/)[0]) : '';
   $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (d.me ? ' · ' + esc(d.me.name) : '');
   $('title').innerHTML = manager ? 'Assignments' : team ? 'Your team, <em>' + first + '</em>' : staff ? 'Every client who answered, <em>' + first + '</em>' : 'Your clients, <em>' + first + '</em>';
   var k = d.counts;
@@ -478,7 +481,9 @@ function render() {
       'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first' +
       (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
-    : staff ? 'Every client who answered a letter, what they told us, and who is named on them. When you have made a call, press its outcome on the card: your name goes on the file, and it stops the chase. ' +
+    : staff ? 'Every client who answered a letter, what they told us, and who is named on them. ' +
+      (namer ? 'Each one nobody is named on carries a <b>suggested agent</b> and the reason: the family&rsquo;s agent first, then the 24 September plan, then the lightest list. Press <i>Assign to &hellip;</i> on a card, choose any agent in the card&rsquo;s own list, or tick several and press <i>Assign</i> in the bar: your name goes on the file, the agent gets one brief, and a client who answered gets an introduction if you leave that ticked. ' : '') +
+      'When you have made a call, press its outcome on the card: your name goes on the file, and it stops the chase. ' +
       (bookOn ? 'Each card shows who the client is, what the records say first and their policies with us (each plan, where it stands and what it is paid to), with no money figures. ' : 'No figures here. ') +
       'No advice on the call: anything about what a policy pays or changing cover goes to a licensed agent. <i>Their page</i> opens your own copy of the client&rsquo;s page.'
     : team ? 'The clients the branch has named to your team: you and the agents in your unit. Tap a name under <i>Your unit</i> to see one person&rsquo;s list. ' +
@@ -505,28 +510,28 @@ function render() {
   Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
   /* the roster: by unit and person when the Users tab is linked (the branch sees every unit, a unit manager his own), else
      the branch's flat list off the Agent Skill Bank */
-  $('rosterWrap').style.display = manager || team ? '' : 'none';
-  SUGN = (manager && d.counts && d.counts.sug && d.counts.sug.byAgent) || {};
+  $('rosterWrap').style.display = manager || team || namer ? '' : 'none';
+  SUGN = (namer && d.counts && d.counts.sug && d.counts.sug.byAgent) || {};
   $('allWrap').style.display = manager ? '' : 'none';
   var byUnit = !!(d.units && d.units.length);
   $('rosterTitle').textContent = byUnit ? (manager ? 'The branch by unit' : 'Your unit') : 'The roster';
   $('units').innerHTML = byUnit ? d.units.map(function (g) { return unitBlock(g, d, manager); }).join('') : '';
-  if (manager && !byUnit) {
+  if (namer && !byUnit) {
     $('roster').innerHTML = d.agents.length ? d.agents.map(function (a) {
       return '<span class="chip' + (sameName(FILTER.agent, a.name) ? ' on' : '') + '" data-agent="' + esc(a.name) + '"><b>' + esc(a.name) + '</b> <i>' + a.open + ' open · ' + a.done + ' done' +
         (a.prem || a.cover ? ' · ≈ ' + esc(short(a.prem)) + ' a year · ' + esc(short(a.cover)) + ' cover' : '') + (SUGN[a.name] ? ' · ' + SUGN[a.name] + ' suggested' : '') +
         (a.areas ? ' · ' + esc(a.areas) : '') + (a.email ? '' : ' · no e-mail on the roster') + '</i></span>';
     }).join('') : '<div class="empty">No agents on the Agent Skill Bank yet. Add each agent there (name, e-mail, areas covered, Active = Yes, and a Portal code of their own) and they appear here.</div>';
   } else $('roster').innerHTML = '';
-  $('rosterNote').textContent = (byUnit || d.agents.length) && (manager || team) ? 'tap a name to see their list' : '';
+  $('rosterNote').textContent = (byUnit || d.agents.length) && (manager || team || namer) ? 'tap a name to see their list' : '';
   Array.prototype.forEach.call(document.querySelectorAll('#roster .chip, #units .chip'), function (el) { el.addEventListener('click', function () { var n = el.getAttribute('data-agent'); FILTER.agent = sameName(FILTER.agent, n) ? '' : n; render(); }); });
-  if (manager) {
+  if (namer) {
     var opts = '<option value="">choose an agent</option>' + d.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + (a.areas ? ' · ' + esc(a.areas) : '') + '</option>'; }).join('');
     if ($('barAgent').innerHTML !== opts) $('barAgent').innerHTML = opts;
     fillSug(d);
   }
-  $('sugWrap').style.display = manager ? '' : 'none';
-  $('sugNote').innerHTML = manager ? sugNote(d) : '';
+  $('sugWrap').style.display = namer ? '' : 'none';
+  $('sugNote').innerHTML = namer ? sugNote(d) : '';
   glance(d, manager);
   /* what the records say about the clients who answered: a chip a finding, the count, and a tap filters the board to them */
   var ic = manager && d.counts && d.counts.insights ? d.counts.insights : null, keys = ic ? Object.keys(INS_WORDS).filter(function (k) { return ic[k]; }) : [];
@@ -585,7 +590,8 @@ function familyAnswered(c) { var f = familyOf(c); return !!f && f.some(function 
    cover as well anyone else who is covered in the household". Every member, the head first (the Head mark on the tab, else the
    adult with the most life cover): age, where they stand, and what they hold with us. The branch sees everyone, the members
    with other agents included; an agent sees the members on our list and the figures of their own clients alone. */
-function householdPanel(c, manager) {
+function householdPanel(c, manager, namer) {
+  if (namer === undefined) namer = manager;
   var f = familyOf(c);
   if (!f || f.length < 2) return '';
   var info = (D.hhInfo && D.hhInfo[c.hh]) || {}, t = D.hhBook ? D.hhBook[c.hh] : null;
@@ -612,7 +618,7 @@ function householdPanel(c, manager) {
   if (info.children) extra.push(info.children + ' under 18');
   if (manager && info.elsewhere) extra.push(info.elsewhere + ' with another agent');
   return '<div class="hh"><div class="hht"><b>' + esc(info.name || 'The household') + '</b><i>' + esc(c.hh) + ' · ' + esc(extra.join(' · ')) + '</i>' +
-    (manager ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') + '</div>' +
+    (namer ? '<button type="button" class="famsel" data-hh="' + esc(c.hh) + '">Select the family</button>' : '') + '</div>' +
     (sum ? '<div class="hhsum">' + sum + '</div>' : '') + rows +
     (info.gaps && info.gaps.length ? '<div class="hhgap">No life cover with us: ' + esc(info.gaps.join(', ')) + '</div>' : '') + '</div>';
 }
@@ -781,7 +787,7 @@ function matches(c) {
   return true;
 }
 function list() {
-  var d = D, manager = d.role === 'branch';
+  var d = D, manager = d.role === 'branch', namer = canAssign();
   var all = everyone().filter(function (c) { return c.state !== 'family' || $('fState').value === 'family' || FOCUS; }), rows = all.filter(matches);
   /* most at stake first: the largest premium a year, then the largest life cover; otherwise the backend's order, most pressing first */
   var byValue = $('fOrder').value === 'value';
@@ -793,10 +799,10 @@ function list() {
     $('showing').innerHTML = '<span class="focusbar">One client, opened from your sheet · <a id="unfocus">show everyone</a></span>';
   } else {
     $('showing').innerHTML = (n === all.length ? '<b>' + n + '</b> client' + (n === 1 ? '' : 's') : '<b>' + n + '</b> of ' + all.length + ' client' + (all.length === 1 ? '' : 's')) +
-      (byValue ? ' · most at stake first' : '') + (manager && n ? '<a class="selshown" id="selShown">select all ' + n + ' shown</a>' : '');
+      (byValue ? ' · most at stake first' : '') + (namer && n ? '<a class="selshown" id="selShown">select all ' + n + ' shown</a>' : '');
     SHOWN = rows.map(function (c) { return c.token; });
   }
-  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager); }).join('')
+  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager, namer); }).join('')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
         : 'Nothing is recorded for this client yet, so there is nothing on the board to mark. Record the call on <a href="' + esc(ownLink({ token: FOCUS, seg: FOCUS_SEG })) + '" target="_blank" rel="noopener">their own page</a> first: it files on Client Responses, and the client is here the next time the board refreshes.')
       : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : d.role === 'unit' ? 'Nothing on your team\u2019s list yet. The branch names your agents on clients from the board or in Salesforce, and they appear here.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
@@ -836,7 +842,8 @@ function pills(c) {
   var so = stateOf(c);
   return '<span class="pill seg">' + esc(c.seg || '—') + '</span><span class="pill ' + esc(so) + '">' + esc(STATE_WORDS[so] || so) + '</span>' + (c.late && c.state !== 'open' ? '<span class="pill late">late</span>' : '');
 }
-function card(c, manager) {
+function card(c, manager, namer) {
+  if (namer === undefined) namer = manager;
   var need = needsOf(c);
   var ans = (c.answers || []).map(function (a) { return '<li' + (HOT[a.code] ? ' class="hot"' : '') + '><span>' + esc(a.q) + '</span><b>' + esc(a.a) + '</b></li>'; }).join('');
   var taps = (c.taps || []).map(function (t) { return '<i title="' + esc(t.needs) + '">' + esc(t.label) + (t.at ? ' · ' + esc(t.at) : '') + '</i>'; }).join('');
@@ -862,9 +869,10 @@ function card(c, manager) {
   if (told.length) who += '<div class="told">✉ ' + told.map(function (x) { return 'Note e-mailed ' + esc(x[1]) + ': <b>' + esc(noteLabel(x[2])) + '</b>'; }).join(' · ') + '</div>';
   var own = ownLink(c);
   var acts = '';
-  if (manager) {
+  if (namer) {   // the branch, and staff: name any agent on the roster from the card itself
     acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">Assign to…</option>' + D.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
-  } else {
+  }
+  if (!manager) {
     var wa = waLink(c.phone);
     if (c.phone) acts += '<a class="tel" href="tel:' + esc(digits(c.phone)) + '">Call</a>';
     if (wa) acts += '<a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>';
@@ -875,8 +883,8 @@ function card(c, manager) {
   });
   if (c.mark && c.mark !== 'Open') acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="Open">Reopen</button>';
   acts += detButton(c);
-  return '<div class="c' + (c.late ? ' late' : '') + (manager ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
-    (manager ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
+  return '<div class="c' + (c.late ? ' late' : '') + (namer ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
+    (namer ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
     '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
     '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? (c.state === 'reached' ? 'reached by phone ' : c.state === 'named' ? 'named ' : 'answered ') + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
     profileLine(c.profile) +
@@ -887,7 +895,7 @@ function card(c, manager) {
     (c.state === 'named' ? '<div class="needs">Named here before they answered: the agent calls. No introduction or receipt goes to a client who has not answered.</div>' : '') +
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
-    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + claimLine(c) + (manager ? sugLine(c) : '') + householdPanel(c, manager) +
+    (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + claimLine(c) + (namer ? sugLine(c) : '') + householdPanel(c, manager, namer) +
     '<div class="acts">' + acts + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') + '</div></div>';
 }
 function silentRow(c, manager) {
@@ -1162,7 +1170,7 @@ $('glWrap').addEventListener('toggle', function () { try { localStorage.setItem(
 /* ---- the assign bar and the actions ---- */
 function bar() {
   var n = Object.keys(SEL).length, b = $('bar');
-  if (!D || D.role !== 'branch' || !n) { b.hidden = true; return; }
+  if (!canAssign() || !n) { b.hidden = true; return; }
   b.hidden = false; $('selN').textContent = n;
   var withSug = sugGroups().n;
   $('barSug').hidden = !withSug; $('sugN').textContent = withSug;
