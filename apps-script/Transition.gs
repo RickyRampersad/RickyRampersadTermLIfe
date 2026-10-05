@@ -3609,12 +3609,20 @@ function tBoard_(w, all, lite) {
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for the branch alone */
   if (branch) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
-  /* staff see what each client told us and where it stands, never what they hold or earn: Client Support sees no money */
-  if (staff) clients.forEach(function (c) { delete c.pol; delete c.ins; delete c.profile; delete c.ik; });
+  /* staff see who each client is, what the records say and each policy's plan, where it stands and what it is paid to,
+     never a figure: Client Support sees no money (29 September), and the insights are theirs too (5 October 2026: "I do
+     need the staff to log in with the insights shared") */
+  if (staff) clients.forEach(function (c) {
+    var p = tPolNoMoney_(c.pol), f = tProfileNoMoney_(c.profile);
+    if (p) c.pol = p; else delete c.pol;
+    if (f) c.profile = f; else delete c.profile;
+    if (c.ins) c.ins = c.ins.filter(function (i) { return !T_MONEY_INS[i.k]; });
+    if (c.ik) c.ik = c.ik.filter(function (k) { return !T_MONEY_INS[k]; });
+  });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
            waitDays: TRANSITION.WAIT_DAYS, waitUrgent: TRANSITION.WAIT_URGENT, agents: agents, clients: clients, silent: silent, counts: counts,
            households: households, hhInfo: hhInfo, family: family, hhBook: hhBook, profiles: tProfiles_().ready,
-           book: { ready: bk.ready && !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
+           book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false,
            notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null,
@@ -4629,6 +4637,28 @@ function tBookBrief_(cno, more) {
   var o = { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live };
   if (more) { o.ci = p.sum.ci; o.lapsed = p.sum.lapsed; o.due = p.sum.due; o.unconf = p.sum.unconf; }
   return { sum: o };
+}
+
+/* What staff see (5 October 2026: "I do need the staff to log in with the insights shared"). Client Support sees no money
+   (29 September), so a client's policies reach them as each plan, where it stands, when it was issued, what it is paid to
+   and whose life it insures, and the totals as counts and years; never a premium, a sum assured, cover, a beneficiary or
+   an income. The insight lines are theirs, all but cover against income. */
+var T_MONEY_INS = { income: true };
+function tPolNoMoney_(pol) {
+  if (!pol || !pol.sum) return null;
+  var s = pol.sum;
+  return { noMoney: true,
+    sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0 },
+    list: (pol.list || []).map(function (x) {
+      return { no: x.no, code: x.code, name: x.name, st: x.st, desc: x.desc, od: x.od, iss: x.iss, paid: x.paid, insured: x.insured };
+    }),
+    ended: pol.ended || [] };
+}
+function tProfileNoMoney_(p) {
+  if (!p) return null;
+  var o = {};
+  ['age', 'gender', 'dob', 'bday', 'bdayIn', 'occ', 'emp', 'role', 'pay'].forEach(function (k) { if (p[k] !== undefined && p[k] !== '') o[k] = p[k]; });
+  return Object.keys(o).length ? o : null;
 }
 
 /** GET action=book&code=<branch>&token=…: one client's policies, for a row on the board that carries only the totals
