@@ -1858,7 +1858,9 @@ voice under the new timing and the caption gives it away.
   portfolio's Sum Assured can include riders; sales support is asked.
   **Who sees what.** An agent sees the figures for their own clients only:
   a family's total only when every member is theirs, no other agent's
-  figures, and `book` refuses their code. Client Support sees no money. The build writes two money-free
+  figures, and `book` refuses their code. Client Support sees no money
+  (since 5 October the plans, status and paid-to dates, and the insights,
+  without a figure: see the sign-in bullet below). The build writes two money-free
   columns onto Transition Send, `Plans on file` ("Econo Life to 65: in
   force, paid to 21 Sep 2026; …") and `Paid to on file`. The calls sheet's
   Feed tab already imports `'Transition Send'!A:AZ`, and each caller's tab
@@ -2133,8 +2135,22 @@ voice under the new timing and the caption gives it away.
   **Unit Manager** his team, himself and everyone whose Unit is his name,
   their clients and figures, his unit only; an **agent** their own list;
   **Staff** (Client Support and the manager's assistant) every client who
-  answered with no money, policy or profile figures, marking calls in
-  their own name, with `r=update` links. Only the branch names an agent,
+  answered, marking calls in their own name, with `r=update` links.
+  **Since 5 October 2026 staff get the insights too, still with no
+  money** ("I do need the staff to log in with the insights shared"; the
+  manager chose insights without figures over everything the agents see):
+  `tBoard_` passes their cards through `tPolNoMoney_` and
+  `tProfileNoMoney_`, so a card carries who the client is (age, gender,
+  date of birth, occupation, employer, how they pay), every insight line
+  but cover against income (`T_MONEY_INS`), and each policy as its plan,
+  where it stands, when issued, what it is paid to and whose life it
+  insures, with the totals as counts and years; never a premium, a sum
+  assured, cover, a beneficiary or an income. The page reads
+  `book.money === false` and draws the money-free panel (`polPanelPlain`),
+  hides the order-by-value control, the premium tile and the
+  cover-against-income filter. Until then staff saw no policy or profile
+  at all. `svc/book-harness.js` checks nothing with a figure reaches them
+  and `roles/roles-test.js` that none shows. Only the branch names an agent,
   only the Branch Manager (or the branch code) e-mails a client a note,
   because the notes go in his name, and staff are never on the roster to
   be named. "Branch Manager Assistant" is staff, never the branch manager

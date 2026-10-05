@@ -479,7 +479,8 @@ function render() {
       (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
     : staff ? 'Every client who answered a letter, what they told us, and who is named on them. When you have made a call, press its outcome on the card: your name goes on the file, and it stops the chase. ' +
-      'No figures here, and no advice on the call: anything about what a policy pays or changing cover goes to a licensed agent. <i>Their page</i> opens your own copy of the client&rsquo;s page.'
+      (bookOn ? 'Each card shows who the client is, what the records say first and their policies with us (each plan, where it stands and what it is paid to), with no money figures. ' : 'No figures here. ') +
+      'No advice on the call: anything about what a policy pays or changing cover goes to a licensed agent. <i>Their page</i> opens your own copy of the client&rsquo;s page.'
     : team ? 'The clients the branch has named to your team: you and the agents in your unit. Tap a name under <i>Your unit</i> to see one person&rsquo;s list. ' +
       'Each is a call before anything else, at the time they chose; whoever makes the call marks the outcome here, which stops the chase and shows on the branch pages.' +
       (bookOn ? ' Each card shows the client&rsquo;s policies with us.' : '')
@@ -488,11 +489,18 @@ function render() {
   if (d.detail) $('lead').innerHTML += ' <i>History · tasks · comments</i> on a card opens everything between us and the client, the Salesforce tasks on their policies with who has them, and the team&rsquo;s comments; yours is posted to their open tasks in Salesforce.';
   claimsPanel(d);
   /* the note under the filters: how the figures are made, once for the page; or, for the branch, how to switch them on */
-  $('bookNote').innerHTML = bookOn ? bookNote() : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
+  var noMoney = !!(d.book && d.book.money === false);
+  $('bookNote').innerHTML = bookOn ? (noMoney ? 'Policies from the Branch Portfolio' + (d.book.at ? ' as at ' + esc(d.book.at) : '') + '. This view shows no cover, premium or income.' : bookNote())
+    : (manager && d.book ? 'Policies are not on the board yet: in the sheet, Service Questionnaire &rarr; <i>Transition: set the Branch Portfolio link</i>.' : '');
+  /* no money, nothing to order by value, and no cover-against-income filter */
+  $('fOrder').parentNode.style.display = noMoney ? 'none' : '';
+  if (noMoney) $('fOrder').value = '';
+  var incOpt = $('fIns').querySelector('option[value="income"]');
+  if (incOpt) incOpt.hidden = incOpt.disabled = noMoney;
   var tiles = manager
     ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok']].concat(k.reached ? [['reached', k.reached, 'reached by phone', '']] : [], k.named ? [['named', k.named, 'named, no answer yet', 'gold']] : [], [['silent', k.silent, 'not answered yet', '']])
     : [['', d.clients.length, staff ? 'on the board' : team ? 'on your team’s list' : 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
-  if (!manager && bookOn) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), team ? 'premium a year, your team' : 'premium a year on your list', 'gold']);
+  if (!manager && bookOn && !noMoney) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), team ? 'premium a year, your team' : 'premium a year on your list', 'gold']);
   $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
   /* the roster: by unit and person when the Users tab is linked (the branch sees every unit, a unit manager his own), else
@@ -647,6 +655,7 @@ function coverOf(c) { return c && c.pol && c.pol.sum ? Number(c.pol.sum.cover) |
 function valuePill(c) {
   var s = c.pol && c.pol.sum;
   if (!s) return '';
+  if (c.pol.noMoney) return '<span class="pill val" title="Policies in force, from the Client Book">' + esc(s.live ? s.live + ' in force' : 'nothing in force') + '</span>';
   var parts = [];
   if (s.prem) parts.push('≈ ' + short(s.prem) + ' a year');
   if (s.cover) parts.push(short(s.cover) + ' cover');
@@ -680,8 +689,31 @@ function polRow(x) {
     '<td data-l="Pays">' + (ben ? '<span' + (x.benK === 'named' ? '' : ' class="ben"') + '>' + esc(ben) + '</span>' : '—') + '</td>' +
     '<td data-l="Paid to">' + esc(x.paid ? dmy(x.paid) : '—') + '</td></tr>';
 }
+/* staff (5 October 2026, "the insights shared"): each plan, where it stands, when issued and what it is paid to; no money */
+function polRowPlain(x) {
+  var st = STW[x.st] || x.st;
+  if (x.st === 'overdue' && x.od) st += ', ' + x.od + ' days';
+  if (x.st === 'pending' && x.desc) st += ': ' + x.desc.toLowerCase();
+  return '<tr><td data-l="Plan"><b>' + esc(x.name || x.code || 'a policy') + '</b><div class="pn">' + esc(x.no) + (x.name && x.code ? ' · ' + esc(x.code) : '') +
+      (x.insured ? ' · insures ' + esc(x.insured) : '') + '</div></td>' +
+    '<td data-l="Stands"' + (x.st === 'overdue' ? ' class="due"' : x.st === 'lapsed' ? ' class="gone"' : '') + '>' + esc(st) + '</td>' +
+    '<td data-l="Issued">' + esc(my(x.iss) || '—') + '</td>' +
+    '<td data-l="Paid to">' + esc(x.paid ? dmy(x.paid) : '—') + '</td></tr>';
+}
+function polPanelPlain(pol) {
+  var s = pol.sum;
+  var tiles = [[s.live + ' in force', (s.due ? s.due + ' with a premium due · ' : '') + s.lapsed + ' lapsed' + (s.pending ? ' · ' + s.pending + ' pending' : '')],
+    [s.since ? s.years + ' year' + (s.years === 1 ? '' : 's') : '—', s.since ? 'with us since ' + s.since.slice(0, 4) : 'no policy issued yet']];
+  var h = '<div class="pol"><div class="bh">Their policies with us</div><div class="ptiles">' +
+    tiles.map(function (t) { return '<div class="ptile"><b>' + esc(t[0]) + '</b><span>' + esc(t[1]) + '</span></div>'; }).join('') + '</div>';
+  if (pol.list && pol.list.length) h += '<table class="pt"><thead><tr><th>Plan</th><th>Where it stands</th><th>Issued</th><th>Paid to</th></tr></thead><tbody>' +
+    pol.list.map(polRowPlain).join('') + '</tbody></table>';
+  if (pol.ended && pol.ended.length) h += '<div class="pnote">Also on file: ' + pol.ended.map(function (e) { return e.n + ' ' + esc(e.what); }).join(', ') + '.</div>';
+  return h + '</div>';
+}
 function polPanel(pol) {
   if (!pol || !pol.sum) return '';
+  if (pol.noMoney) return polPanelPlain(pol);
   var s = pol.sum;
   var tiles = [s.cover ? [money(s.cover), 'life cover'] : s.unconf ? ['—', 'life cover: plans still to confirm'] : ['$0', 'life cover'],
     [s.ci ? money(s.ci) : '$0', 'critical illness'],
