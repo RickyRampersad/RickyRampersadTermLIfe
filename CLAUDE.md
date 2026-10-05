@@ -1982,7 +1982,8 @@ voice under the new timing and the caption gives it away.
   and other insights given the data you have?? Also how is the assignment
   going to be??" Until then the agent was picked card by card ("it was just
   randomly we assign").
-  **The suggestion** (`tSuggest_`, branch code only) sits on every client
+  **The suggestion** (`tSuggest_`, for whoever may name: the branch, and
+  since 5 October the staff) sits on every client
   nobody is named on, with the reason, in this order. First the family: if
   someone in the household already has an agent, the rest go to that agent.
   Then the plan: the 24 September split as the team checked it, imported as
@@ -2150,8 +2151,27 @@ voice under the new timing and the caption gives it away.
   hides the order-by-value control, the premium tile and the
   cover-against-income filter. Until then staff saw no policy or profile
   at all. `svc/book-harness.js` checks nothing with a figure reaches them
-  and `roles/roles-test.js` that none shows. Only the branch names an agent,
-  only the Branch Manager (or the branch code) e-mails a client a note,
+  and `roles/roles-test.js` that none shows. **The branch and the staff
+  name an agent; a unit manager and an agent never do** (5 October 2026,
+  later the same day: "as the branch manager i and the staff has to be
+  given the option of which agent to assign"; until then the branch alone).
+  `tCanAssign_` is the one rule, `transitionAssign_` and `tBoard_` both
+  read it, and the page is told (`canAssign`; an older backend says
+  nothing and the page falls back to the branch alone). Staff get the
+  whole roster with no figures on it, the suggestion with its reason on
+  every card nobody is named on, "Assign to …", the tick boxes, the bar,
+  "Select the family" and "Assign each as suggested", and may name only
+  a client on their own board (never a silent row). The manager chose
+  that a staff naming does everything his does: the agent's brief, and
+  the introduction to a client who answered (the tick box stands, so a
+  staff member can untick it for one client). The file says who named:
+  the stamp stays `[assigned d MMM · Agent]` so the claims and the history
+  read it as before, and "named by <staff name>" follows it as the file
+  note the card and the brief show; an assign row made for a client with
+  no row carries `staff: <name>` in Referrer. Akaash, as unit manager,
+  was offered naming within his unit and the manager kept it to himself
+  and the staff. The notes to clients stay the Branch Manager's: only the
+  Branch Manager (or the branch code) e-mails a client a note,
   because the notes go in his name, and staff are never on the roster to
   be named. "Branch Manager Assistant" is staff, never the branch manager
   (`tRoleOf_`). Three locks, whatever the tab says: **a password shorter
