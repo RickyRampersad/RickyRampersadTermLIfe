@@ -284,7 +284,7 @@ function pddSend_(b, session) {
    ────────────────────────────────────────────────────────────────────────── */
 function pddToday() {
   var pool = iSurveyPool_(PDD.STAGE);
-  if (pool.error) return pool.error;
+  if (pool.error) { Logger.log(pool.error); return pool.error; }
   var rows = (pool.rows || []).map(pddRow_);
   rows.sort(function (x, y) { return x.lapseSort - y.lapseSort; });
   var out = ['Day-' + PDD.STAGE + ' line, ' + Utilities.formatDate(iToday_(), iTz_(), 'd MMMM yyyy'),
@@ -298,5 +298,10 @@ function pddToday() {
               r.flags.length ? '** ' + r.flags.length + ' to check' : ''].join('  ·  '));
   });
   if (rows.length > 40) out.push('… and ' + (rows.length - 40) + ' more.');
-  return out.join('\n');
+  /* Logged, not just returned. The Run button shows what a function LOGS; a
+     returned string goes nowhere, so the first run of this spent 77 seconds
+     reading the whole book and printed an empty log. */
+  var text = out.join('\n');
+  Logger.log(text);
+  return text;
 }
