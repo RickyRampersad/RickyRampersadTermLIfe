@@ -312,18 +312,19 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     <!-- sign in -->
     <div id="gate-login">
       <h1>Branch Meeting Builder</h1>
-      <p class="sub">Ricky Rampersad Branch<br>Signing in is the attendance register.</p>
+      <p class="sub">Ricky Rampersad Branch<br>Signing in is the attendance register. If you do not sign in, you are marked absent.</p>
       <div class="field">
         <label for="li-email">Work email</label>
         <input id="li-email" type="email" autocomplete="username" placeholder="you@myguardiangroup.com"/>
       </div>
       <div class="field">
-        <label for="li-pin">Your PIN</label>
-        <input id="li-pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••"/>
+        <label for="li-pin">Your access code</label>
+        <input id="li-pin" type="password" autocomplete="current-password" placeholder="The same code as the agent portal"/>
       </div>
       <button class="btn" id="li-go">Sign in</button>
       <div class="msg" id="li-msg"></div>
-      <div class="switch">First time here? <a id="to-enrol">Set up your PIN</a></div>
+      <div class="switch">Your branch portfolio access code — the one you use for the agent portal.<br>
+        No code yet? <a id="to-enrol">Set up a PIN instead</a></div>
     </div>
 
     <!-- first time -->
@@ -603,16 +604,19 @@ function onSignedIn(res) {
 function doLogin() {
   var email = $("li-email").value.trim();
   var pin = $("li-pin").value.trim();
-  if (!email || !pin) return say("li-msg", "Enter your email and PIN.");
+  if (!email || !pin) return say("li-msg", "Enter your email and your access code.");
   $("li-go").disabled = true;
   say("li-msg", "");
-  apiPost({ action: "login", email: email, pin: pin })
+  // Sent as both: the backend takes the branch portfolio access code or
+  // a PIN set before October 2026, so nobody who already had one is
+  // locked out on the morning of a meeting.
+  apiPost({ action: "login", email: email, code: pin, pin: pin })
     .then(function (res) {
       $("li-go").disabled = false;
       if (res.needsEnrol) {
         showGate("enrol");
         $("en-email").value = email;
-        return say("en-msg", "You have not set a PIN yet — choose one now.", "info");
+        return say("en-msg", "There is no access code on your record yet — set a PIN here, or ask the branch manager to pull your code across.", "info");
       }
       if (!res.ok) return say("li-msg", res.error || "That did not work.");
       onSignedIn(res);
@@ -791,29 +795,36 @@ function nextMeetingBlock(m) {
       '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div>';
   }
 
+  // Apologised: the pack is closed to them, so no "Open the meeting"
+  // button is drawn. Signing in is still offered, because an apology
+  // is not a decision anyone has to live with.
   if (m.me && m.me.status === "excused") {
     return head + '<div class="checkin shut">' +
-      "<h2>You are logged as excused</h2>" +
-      "<p>Reason on the register: " + esc(m.me.reason || "none given") +
-      ". If you make it after all, sign in and the register corrects itself.</p>" +
+      "<h2>You logged that you cannot attend</h2>" +
+      "<p>On the register: <b>" + esc(m.me.reason || "no reason given") + "</b>" +
+      (m.me.note ? " — " + esc(m.me.note) : "") +
+      ". The meeting pack is closed to you. If you make it after all, sign in and it opens.</p>" +
       '<div class="btn-row" style="justify-content:center">' +
-      (m.checkInOpen ? '<button class="btn auto" data-checkin="' + esc(m.id) + '">I am here after all</button>' : "") +
-      '<button class="btn ghost auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
+      (m.checkInOpen ? '<button class="btn auto" data-checkin="' + esc(m.id) + '">I am here after all</button>'
+                     : '<span class="hint">Sign in when check-in opens ' + esc(m.checkInOpensAt || "") + ".</span>") +
+      "</div></div>";
   }
 
   if (m.checkInOpen) {
     return head + '<div class="checkin">' +
       "<h2>Are you here?</h2>" +
       "<p>Pressing this puts you on the attendance register for this meeting, " +
-      "time-stamped. There is nothing else to sign.</p>" +
+      "time-stamped. There is nothing else to sign. If you do not sign in, you are marked absent.</p>" +
       '<button class="btn big-btn" data-checkin="' + esc(m.id) + '">✓ &nbsp;I am here</button>' +
+      '<div class="btn-row" style="justify-content:center;margin-top:10px">' +
+      '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button></div>' +
       '<div class="hint" style="text-align:center">Check-in closes ' + esc(m.checkInClosesAt) + "</div></div>";
   }
 
   return head + '<div class="checkin shut">' +
     "<h2>Check-in opens " + esc(m.checkInOpensAt || "closer to the time") + "</h2>" +
-    "<p>Come back then and sign in — that is the register. If you cannot attend, " +
-    "log it now so the reason is on the record.</p>" +
+    "<p>Come back then and sign in — that is the register, and not signing in is recorded as absent. " +
+    "If you cannot attend, log it now so the reason is on the record.</p>" +
     '<div class="btn-row" style="justify-content:center">' +
     '<button class="btn ghost auto" data-excuse="' + esc(m.id) + '">I cannot attend</button>' +
     '<button class="btn teal auto" data-open="' + esc(m.id) + '">Open the meeting</button></div></div>';
@@ -895,20 +906,57 @@ function confirmModal(title, text, label, onYes) {
   $("m-no").onclick = closeModal;
 }
 
+/*  THE APOLOGY. Picked from a list, never typed.
+ *
+ *  A typed reason gives "personal", "busy" and "sorry", which cannot
+ *  be counted, so the wall could never show which reason is the one
+ *  worth doing something about. The list comes from the backend
+ *  (APOLOGY_REASONS) so the two can never drift apart — a reason this
+ *  page invented would be refused on arrival.
+ *
+ *  The note box only appears for "Something else", because that is
+ *  the only reason the backend accepts free text against.
+ */
+var APOLOGY_FALLBACK = ["With a client", "Client appointment I could not move",
+  "On a medical or hospital visit", "Unwell", "Family or personal emergency",
+  "On leave or out of the country", "Training or an exam",
+  "At head office or another branch", "Travel or transport problem", "Something else"];
+
+function apologyReasons() {
+  return (S.detail && S.detail.apologyReasons && S.detail.apologyReasons.length)
+    ? S.detail.apologyReasons : APOLOGY_FALLBACK;
+}
+function apologyOther() {
+  return (S.detail && S.detail.apologyOther) || "Something else";
+}
+
 function excuseModal(id) {
-  openModal("Log that you cannot attend",
-    "The reason goes on the register beside your name, the way the branch minutes record it.",
+  var reasons = apologyReasons(), other = apologyOther();
+  openModal("I cannot attend this meeting",
+    "Pick the reason. It goes on the register beside your name and is counted on the branch wall. " +
+    "You will not be able to open the meeting pack once this is logged — if that changes, sign in and it opens.",
     '<div class="field"><label for="ex-why">Reason</label>' +
-    '<textarea id="ex-why" placeholder="Sick leave · client appointment · medical · training…"></textarea></div>' +
+    '<select id="ex-why"><option value="">Choose one…</option>' +
+    reasons.map(function (r) { return '<option value="' + esc(r) + '">' + esc(r) + "</option>"; }).join("") +
+    "</select></div>" +
+    '<div class="field" id="ex-note-wrap" style="display:none">' +
+    '<label for="ex-note">Say in a line what it is</label>' +
+    '<textarea id="ex-note" maxlength="300" placeholder="A short line — this is the only reason that takes one."></textarea></div>' +
     '<div class="msg" id="ex-msg"></div>' +
     '<div class="btn-row"><button class="btn auto" id="ex-go">Log it</button>' +
     '<button class="btn ghost auto" id="ex-cancel">Cancel</button></div>');
+
+  $("ex-why").onchange = function () {
+    $("ex-note-wrap").style.display = this.value === other ? "block" : "none";
+  };
   $("ex-cancel").onclick = closeModal;
   $("ex-go").onclick = function () {
-    var why = $("ex-why").value.trim();
-    if (why.length < 3) return say("ex-msg", "Please say why you cannot attend.");
+    var why = $("ex-why").value;
+    var note = $("ex-note") ? $("ex-note").value.trim() : "";
+    if (!why) return say("ex-msg", "Pick the reason you cannot attend.");
+    if (why === other && note.length < 3) return say("ex-msg", "Say in a line what the reason is.");
     $("ex-go").disabled = true;
-    post("excuse", { meetingId: id, reason: why })
+    post("excuse", { meetingId: id, reason: why, note: note, device: navigator.userAgent })
       .then(guard)
       .then(function (res) {
         $("ex-go").disabled = false;
@@ -949,6 +997,31 @@ function drawMeeting() {
     (m.ref ? " · " + esc(m.ref) : "") + "</div>" +
     "<h1>" + esc(m.title) + "</h1>" +
     (m.subtitle ? "<p>" + esc(m.subtitle) + "</p>" : "") + "</div>";
+
+  /*  APOLOGISED: the pack is closed, so this is the whole page.
+   *  Nothing below is drawn — not the agenda, not the materials, not
+   *  the minutes — because the backend has not sent any of it. The
+   *  way back in is to sign in, which is offered right here. */
+  if (d.locked) {
+    out += '<div class="card" style="text-align:center;padding:30px 22px">' +
+      '<div style="font-size:34px;line-height:1;margin-bottom:12px">🔒</div>' +
+      '<h2 style="margin:0 0 8px">You logged that you cannot attend</h2>' +
+      '<p style="color:var(--muted);font-size:13.5px;line-height:1.7;max-width:460px;margin:0 auto">' +
+      "On the register: <b>" + esc((d.apologised && d.apologised.reason) || "no reason given") + "</b>" +
+      (d.apologised && d.apologised.note ? " — " + esc(d.apologised.note) : "") +
+      (d.apologised && d.apologised.at ? ", logged " + esc(d.apologised.at) : "") + ". " +
+      esc(d.lockedMessage || "") + "</p>" +
+      (m.checkInOpen
+        ? '<div class="btn-row" style="justify-content:center;margin-top:18px">' +
+          '<button class="btn auto" data-checkin="' + esc(m.id) + '">I am here after all</button></div>'
+        : '<div class="hint" style="margin-top:14px">Check-in opens ' +
+          esc(m.checkInOpensAt || "closer to the time") + ".</div>") +
+      "</div>";
+    $("view").innerHTML = out;
+    $("go-back").onclick = function () { go("meetings"); };
+    wireCheckIn();
+    return;
+  }
 
   // The facts of the meeting, laid out the way the branch's own
   // agendas head their first table.
@@ -1606,7 +1679,7 @@ function registerStats(r) {
     '<div class="stat amber"><b>' + c.late + "</b><span>Late</span></div>" +
     '<div class="stat teal"><b>' + c.excused + "</b><span>Excused</span></div>" +
     '<div class="stat red"><b>' + c.absent + "</b><span>Absent</span></div>" +
-    '<div class="stat"><b>' + c.noEntry + "</b><span>No entry</span></div>" +
+    '<div class="stat"><b>' + c.noLogin + "</b><span>Of those, never logged in</span></div>" +
     '<div class="stat gold"><b>' + c.rate + "%</b><span>Of the roll</span></div></div>" +
     '<div class="bar"><i style="width:' + c.rate + '%"></i></div>';
 }
@@ -1622,19 +1695,19 @@ function viewRegister() {
       var out = '<div class="page-head"><div class="kicker">Across ' + res.meetings + " meeting" +
         (res.meetings === 1 ? "" : "s") + "</div><h1>Attendance</h1>" +
         "<p>Every active person on the branch list, and what the register says about them. " +
-        "<b>No entry</b> counts the meetings where someone neither signed in nor logged a reason — " +
-        "the observation the Q1 minutes record in its own right.</p></div>";
+        "Signing in is how attendance is recorded, so <b>no login</b> is an absence — the column " +
+        "shows how many of each person's absences were that rather than a correction by hand.</p></div>";
 
       out += '<div class="card"><div class="tbl-scroll"><table><thead><tr>' +
-        "<th>Name</th><th>Role</th><th>Present</th><th>Late</th><th>Excused</th>" +
-        "<th>Absent</th><th>No entry</th><th>Rate</th></tr></thead><tbody>" +
+        "<th>Name</th><th>Role</th><th>Present</th><th>Late</th><th>Apologies</th>" +
+        "<th>Absent</th><th>No login</th><th>Rate</th></tr></thead><tbody>" +
         res.people.map(function (p) {
           var cls = p.rate >= 90 ? "b-green" : p.rate >= 70 ? "b-amber" : "b-red";
           return "<tr><td><b>" + esc(p.name) + "</b>" +
             (p.unit ? '<span class="sub2">' + esc(p.unit) + "</span>" : "") + "</td>" +
             "<td>" + esc(p.role) + "</td><td>" + p.present + "</td><td>" + p.late + "</td>" +
             "<td>" + p.excused + "</td><td>" + p.absent + "</td>" +
-            "<td>" + (p.noEntry ? '<b style="color:var(--red)">' + p.noEntry + "</b>" : "0") + "</td>" +
+            "<td>" + (p.noLogin ? '<b style="color:var(--red)">' + p.noLogin + "</b>" : "0") + "</td>" +
             '<td><span class="badge ' + cls + '">' + p.rate + "%</span></td></tr>";
         }).join("") + "</tbody></table></div></div>";
 
@@ -1663,24 +1736,25 @@ function viewRegister() {
     out += group("Late", r.groups.late, "b-amber", function (p) {
       return p.time + " · " + p.late + " min late" + (p.reason ? " · " + p.reason : "");
     });
-    out += group("Excused", r.groups.excused, "b-all", function (p) { return p.reason || "no reason logged"; });
-    out += group("Absent", r.groups.absent, "b-red", function (p) { return p.reason || "no reason logged"; });
+    out += group("Apologies", r.groups.excused, "b-all", function (p) {
+      return (p.reason || "no reason logged") + (p.note ? " — " + p.note : "");
+    });
+    out += group("Absent", r.groups.absent, "b-red", function (p) {
+      return p.neverLoggedIn ? "did not log in" : (p.reason || "marked absent");
+    });
 
-    out += '<section><div class="section-label">No entry in the register — ' + r.counts.noEntry + "</div>";
-    if (!r.groups.noEntry.length) {
-      out += '<div class="card flat"><div style="font-size:13px;color:var(--green);line-height:1.7">' +
-        "✓ Every active member of the branch engaged with the register for this meeting.</div></div>";
-    } else {
-      out += '<div class="card"><div style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:12px">' +
-        "Neither present, absent, excused nor late. Signing in is the branch standard for a scheduled " +
-        "meeting; where an active person has not engaged with it, that is recorded as a factual " +
-        "observation of the record and carried to the one-on-one with their manager.</div>" +
-        '<div class="chips">' + r.groups.noEntry.map(function (p) {
-          return '<span class="chip red">' + esc(p.name) +
-            (p.unit ? '<span class="t">' + esc(p.unit) + "</span>" : "") + "</span>";
-        }).join("") + "</div></div>";
+    // Why the apologies came in. Counted because they are picked from a
+    // list rather than typed, which is the whole reason for the list.
+    if (r.reasons && r.reasons.length) {
+      out += '<section><div class="section-label">Why they could not come</div><div class="card">' +
+        r.reasons.map(function (x) {
+          var pct = r.counts.excused ? Math.round((x.count / r.counts.excused) * 100) : 0;
+          return '<div style="display:flex;align-items:center;gap:12px;padding:7px 0">' +
+            '<div style="flex:1;font-size:13px">' + esc(x.reason) + "</div>" +
+            '<div style="width:120px"><div class="bar"><i style="width:' + pct + '%"></i></div></div>' +
+            '<div style="width:28px;text-align:right;font-weight:700">' + x.count + "</div></div>";
+        }).join("") + "</div></section>";
     }
-    out += "</section>";
 
     out += '<section><div class="section-label">Correct the register</div>' +
       '<div class="card"><div style="font-size:12.5px;color:var(--muted);line-height:1.7;margin-bottom:14px">' +

@@ -198,8 +198,48 @@ var CONTRIB_KINDS = ['Point', 'Question', 'Answer', 'Decision', 'Concern', 'Comm
 /* Action item statuses, in the branch's own wording. */
 var ACTION_STATUSES = ['Not Started', 'Open', 'In Progress', 'Overdue', 'Standing', 'Complete'];
 
+/*  WHY YOU COULD NOT COME, FROM A LIST RATHER THAN A BOX.
+ *
+ *  Decided 6 October 2026, with the JotForm register disbanded. A
+ *  free-text box gives "personal", "busy" and "sorry" — three words
+ *  that cannot be counted, so nobody ever learns which reason is the
+ *  one worth fixing. A fixed list can be counted on the wall the
+ *  same evening, and after a term the branch can see whether it is
+ *  losing the room to client appointments or to the hour it meets.
+ *
+ *  Keep this list short. Every reason added is a column on a wall
+ *  that has to stay readable from across a room, and a list long
+ *  enough to need scrolling is a list people pick the first item
+ *  from. 'Something else' carries a note so nothing is forced into
+ *  the wrong box, and the note is the only free text an apology has.
+ */
+var APOLOGY_REASONS = [
+  'With a client',
+  'Client appointment I could not move',
+  'On a medical or hospital visit',
+  'Unwell',
+  'Family or personal emergency',
+  'On leave or out of the country',
+  'Training or an exam',
+  'At head office or another branch',
+  'Travel or transport problem',
+  'Something else'
+];
+
+/* The one reason that may carry a note, and the only free text an
+   apology accepts. Everything else is picked, so everything else
+   can be counted. */
+var APOLOGY_OTHER = 'Something else';
+
 var SCHEMA = {
-  People: ['Email', 'Name', 'Role', 'Unit', 'Active', 'PIN Hash', 'Salt', 'Token',
+  /*  Access Code is the agent's own branch portfolio code — the same
+   *  code they already use for the agent portal. The meeting door
+   *  takes it instead of asking them to invent and remember a second
+   *  secret, because a PIN nobody can remember is a person who does
+   *  not sign in, and from 6 October 2026 a person who does not sign
+   *  in is absent. PIN Hash stays for anyone enrolled before that
+   *  and for staff who have no portfolio code. */
+  People: ['Email', 'Name', 'Role', 'Unit', 'Active', 'Access Code', 'PIN Hash', 'Salt', 'Token',
            'Attempts', 'Locked Until', 'Added', 'Added By', 'Last Seen'],
 
   Meetings: ['ID', 'Ref', 'Type', 'Title', 'Subtitle', 'Week', 'Date', 'Start', 'End', 'Format',
@@ -216,8 +256,12 @@ var SCHEMA = {
             'File ID', 'Link', 'Mime', 'Size', 'Visibility', 'Summary', 'Reviewed By',
             'Reviewed At', 'Uploaded'],
 
+  /*  Reason holds one of APOLOGY_REASONS and nothing else, so it can
+   *  be counted. Note is the free text that only 'Something else'
+   *  carries. Keeping them apart is what lets the wall chart the
+   *  reasons without a human reading every row first. */
   Attendance: ['ID', 'Meeting ID', 'Email', 'Name', 'Role', 'Unit', 'Status', 'Method',
-               'Signed In', 'Minutes Late', 'Reason', 'Recorded By', 'Device'],
+               'Signed In', 'Minutes Late', 'Reason', 'Note', 'Recorded By', 'Device'],
 
   Actions: ['ID', 'Meeting ID', 'Item', 'Owner', 'Initiated By', 'Due', 'Status', 'Priority',
             'Notes', 'Origin Meeting', 'Created', 'Created By', 'Updated', 'Completed'],
@@ -471,6 +515,7 @@ function readPeople_() {
       role: low_(r['Role']) || 'agent',
       unit: str_(r['Unit']),
       active: yes_(r['Active']),
+      code: str_(r['Access Code']),
       hash: str_(r['PIN Hash']),
       salt: str_(r['Salt']),
       token: str_(r['Token']),
@@ -627,24 +672,46 @@ function apiEnrol_(body) {
   return { ok: true, token: token, user: publicUser_(p) };
 }
 
+/*  ONE DOOR, AND THE CODE THEY ALREADY HAVE.
+ *
+ *  The box asks for an email and a code, and the code may be either
+ *  the agent's branch portfolio access code or a PIN they set here
+ *  before 6 October 2026. Two doors would mean two ways to fail on
+ *  the way into a meeting that is counting attendance, and a person
+ *  standing outside a meeting they are being marked absent from is
+ *  not going to debug which credential the box wanted.
+ *
+ *  The access code is compared in upper case with spaces stripped,
+ *  because it is read off a portal screen and typed on a phone.
+ */
+function sameCode_(given, held) {
+  var a = str_(given).toUpperCase().replace(/\s+/g, '');
+  var b = str_(held).toUpperCase().replace(/\s+/g, '');
+  return !!a && !!b && a === b;
+}
+
 function apiLogin_(body) {
   var email = low_(body.email);
-  var pin = str_(body.pin);
+  // 'code' is what the box sends now; 'pin' is kept so an older copy
+  // of the page that is still open in somebody's browser keeps working.
+  var pin = str_(body.code || body.pin);
 
   var p = findPersonByEmail_(email);
-  // Same wording whether the email is unknown or the PIN is wrong,
+  // Same wording whether the email is unknown or the code is wrong,
   // so the sign-in box cannot be used to discover who is on staff.
-  var generic = { ok: false, error: 'That email and PIN do not match.' };
+  var generic = { ok: false, error: 'That email and code do not match.' };
   if (!p) return generic;
   if (!p.active) return { ok: false, error: 'Your access has been turned off. Speak to the branch manager.' };
-  if (!p.hash) return { ok: false, error: 'needs-enrol', needsEnrol: true };
+  if (!p.hash && !p.code) return { ok: false, error: 'needs-enrol', needsEnrol: true };
 
   if (p.lockedUntil && p.lockedUntil.getTime() > Date.now()) {
     var mins = Math.ceil((p.lockedUntil.getTime() - Date.now()) / 60000);
     return { ok: false, error: 'Too many wrong tries. Try again in ' + mins + ' minute' + (mins === 1 ? '' : 's') + '.' };
   }
 
-  if (hashPin_(pin, p.salt) !== p.hash) {
+  var byCode = sameCode_(pin, p.code);
+  var byPin = !!p.hash && hashPin_(pin, p.salt) === p.hash;
+  if (!byCode && !byPin) {
     var attempts = p.attempts + 1;
     setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', attempts);
     if (attempts >= MEET.MAX_ATTEMPTS) {
@@ -878,8 +945,35 @@ function apiMeeting_(token, id) {
   var mine = att.filter(function (a) { return low_(a['Email']) === me.email; })[0];
   var myAtt = mine ? {
     status: low_(mine['Status']), signedIn: fmtStamp_(mine['Signed In']),
-    late: num_(mine['Minutes Late']), reason: str_(mine['Reason'])
+    late: num_(mine['Minutes Late']), reason: str_(mine['Reason']),
+    note: str_(mine['Note'])
   } : null;
+
+  /*  AN APOLOGY IS NOT A SIDE DOOR INTO THE PACK. Somebody who has
+   *  logged that they cannot attend gets the card, their own apology
+   *  back, and nothing else — no agenda, no materials, no minutes,
+   *  no floor. They can still change their mind: signing in corrects
+   *  the row and the meeting opens.
+   *
+   *  Staff and the chair are exempt, because they build the agenda
+   *  and write the minutes; locking a chair out of the meeting they
+   *  are minuting would be a rule applied past the point it makes
+   *  sense. Their apology is still recorded and still counted. */
+  var apology = apologised_(m, me, att);
+  if (apology && !isStaff_(me)) {
+    var shut = meetingCard_(m, me, myAtt);
+    return {
+      ok: true, user: publicUser_(me), meeting: shut,
+      apologised: apology,
+      locked: true,
+      lockedMessage: 'You logged that you cannot attend this meeting, so the pack is closed to you. '
+        + 'If that changes, sign in and it opens.',
+      agenda: [], actions: [], minutes: [], contributions: [],
+      minutesPublished: false, sections: SECTIONS, kinds: CONTRIB_KINDS,
+      topicList: [], canRun: false, session: null,
+      apologyReasons: APOLOGY_REASONS, apologyOther: APOLOGY_OTHER
+    };
+  }
 
   var card = meetingCard_(m, me, myAtt);
   card.mission = canSee_(me, 'all') ? str_(m['Mission Statement']) : '';
@@ -973,7 +1067,9 @@ function apiMeeting_(token, id) {
     kinds: CONTRIB_KINDS,
     topicList: topicList_().map(function (t) { return t.name; }),
     canRun: isStaff_(me),
-    maxClipMinutes: MEET.MAX_CLIP_MINUTES
+    maxClipMinutes: MEET.MAX_CLIP_MINUTES,
+    apologyReasons: APOLOGY_REASONS,
+    apologyOther: APOLOGY_OTHER
   };
 
   // The register itself is staff material. An agent sees that they
@@ -1029,13 +1125,23 @@ function actionCard_(x) {
  *  There is no separate attendance register any more. You open the
  *  meeting and press "I'm here" — that writes the row, and the row
  *  IS the register. One place, time-stamped, nothing to reconcile
- *  afterwards.
+ *  afterwards. The JotForm register was disbanded on 6 October 2026
+ *  and nothing else records attendance.
  *
- *  The register reports five groups. The fifth is the one the Q1
- *  minutes went out of their way to record: people who made NO
- *  ENTRY at all — neither present, absent, excused nor late. That
- *  is not the same as being absent, and the branch treats it as a
- *  fact about the record rather than an accusation.
+ *  NO LOGIN IS ABSENT. Until 6 October a person with no row at all
+ *  was reported separately from the absent — "no entry", a fact
+ *  about the record rather than an accusation — because the branch
+ *  had two registers and neither could be trusted. With one register
+ *  and the door open to everybody on the list, there is nothing left
+ *  for a missing row to mean: the branch decided that not signing in
+ *  is being absent, and said so to the room.
+ *
+ *  The distinction survives in the data, not in the count. An absent
+ *  row carries a Method of 'no-login' when nobody ever opened the
+ *  meeting, and 'marked' when staff put it there by hand, so anyone
+ *  reading the sheet in six months can still tell a person who was
+ *  marked absent from a person who simply never appeared. The count
+ *  on the wall is one number, and it is absent.
  */
 
 function register_(m, att) {
@@ -1046,7 +1152,7 @@ function register_(m, att) {
   var byEmail = {};
   att.forEach(function (a) { byEmail[low_(a['Email'])] = a; });
 
-  var groups = { present: [], late: [], excused: [], absent: [], noEntry: [] };
+  var groups = { present: [], late: [], excused: [], absent: [] };
 
   att.forEach(function (a) {
     var entry = {
@@ -1054,18 +1160,34 @@ function register_(m, att) {
       unit: str_(a['Unit']), method: low_(a['Method']),
       signedIn: fmtStamp_(a['Signed In']), time: fmtTime_(a['Signed In']),
       late: num_(a['Minutes Late']), reason: str_(a['Reason']),
-      recordedBy: str_(a['Recorded By'])
+      note: str_(a['Note'] || ''),
+      recordedBy: str_(a['Recorded By']),
+      // Rows written by closeRegister_ when the meeting ended carry
+      // Method 'no-login'. They are read back here so a closed
+      // register says exactly what a live one said.
+      neverLoggedIn: low_(a['Method']) === 'no-login'
     };
     var st = low_(a['Status']);
     if (groups[st]) groups[st].push(entry);
   });
 
-  // Everyone on the branch list with no row at all for this meeting.
+  // Everyone on the branch list who never opened the meeting. Before
+  // the register is closed they have no row at all; afterwards they
+  // have one, and the loop above has already caught them.
+  var noLogin = 0;
   roster_().forEach(function (p) {
     if (!byEmail[p.email]) {
-      groups.noEntry.push({ email: p.email, name: p.name, role: p.role, unit: p.unit });
+      groups.absent.push({
+        email: p.email, name: p.name, role: p.role, unit: p.unit,
+        method: 'no-login', signedIn: '', time: '', late: 0,
+        reason: '', note: '', recordedBy: '', neverLoggedIn: true
+      });
     }
   });
+
+  // Counted off the finished list, so it is the same number whether
+  // the register is still open or was closed with the meeting.
+  noLogin = groups.absent.filter(function (x) { return x.neverLoggedIn; }).length;
 
   var order = function (a, b) { return a.name.localeCompare(b.name); };
   Object.keys(groups).forEach(function (k) { groups[k].sort(order); });
@@ -1073,13 +1195,30 @@ function register_(m, att) {
   var roll = roster_().length;
   var here = groups.present.length + groups.late.length;
 
+  // Why the apologies came in, counted. One row per reason that was
+  // actually used, so the wall never shows an empty column.
+  var byReason = {};
+  groups.excused.forEach(function (e) {
+    var r = e.reason || APOLOGY_OTHER;
+    byReason[r] = (byReason[r] || 0) + 1;
+  });
+  var reasons = Object.keys(byReason).map(function (r) {
+    return { reason: r, count: byReason[r] };
+  }).sort(function (a, b) { return b.count - a.count || a.reason.localeCompare(b.reason); });
+
   return {
     counts: {
       present: groups.present.length, late: groups.late.length,
       excused: groups.excused.length, absent: groups.absent.length,
-      noEntry: groups.noEntry.length, roll: roll, here: here,
-      rate: roll ? Math.round((here / roll) * 100) : 0
+      // Kept as a breakdown of the absent, never as a group of its own:
+      // the branch counts a missing login as an absence.
+      noLogin: noLogin,
+      markedAbsent: groups.absent.length - noLogin,
+      roll: roll, here: here,
+      rate: roll ? Math.round((here / roll) * 100) : 0,
+      accountedFor: roll ? Math.round(((here + groups.excused.length) / roll) * 100) : 0
     },
+    reasons: reasons,
     groups: groups
   };
 }
@@ -1146,15 +1285,34 @@ function apiCheckIn_(body) {
   return { ok: true, status: decided.status, late: decided.late, signedIn: fmtStamp_(now) };
 }
 
-/** Tell the branch in advance that you cannot attend, and why. The
- *  April minutes log reasons against every absence; this is where
- *  they come from now. */
+/*  THE APOLOGY. You still log in; you just do not get the meeting.
+ *
+ *  Decided 6 October 2026. Somebody who cannot come signs in with
+ *  the same code as everybody else and picks a reason from
+ *  APOLOGY_REASONS. That writes an 'excused' row, and from then on
+ *  the meeting itself — agenda, materials, minutes, the floor — is
+ *  closed to them (see apologised_ and apiMeeting_). An apology is
+ *  not a side door into the pack.
+ *
+ *  The reason has to be one of the listed ones. A typed reason is
+ *  refused rather than quietly stored, because the whole point of
+ *  the list is that every apology lands in a box the wall can count.
+ */
 function apiExcuse_(body) {
   var me = requireUser_(body.token);
   var m = findMeeting_(body.meetingId);
   if (!m) return { ok: false, error: 'That meeting no longer exists.' };
+
   var reason = str_(body.reason);
-  if (reason.length < 3) return { ok: false, error: 'Please say why you cannot attend.' };
+  if (!reason) return { ok: false, error: 'Pick the reason you cannot attend.' };
+  if (APOLOGY_REASONS.indexOf(reason) === -1) {
+    return { ok: false, error: 'Pick a reason from the list.' };
+  }
+  var note = str_(body.note).slice(0, 300);
+  if (reason === APOLOGY_OTHER && note.length < 3) {
+    return { ok: false, error: 'Say in a line what the reason is.' };
+  }
+  if (reason !== APOLOGY_OTHER) note = '';
 
   var existing = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
     return str_(a['Meeting ID']) === str_(m['ID']) && low_(a['Email']) === me.email;
@@ -1167,17 +1325,34 @@ function apiExcuse_(body) {
   if (existing) {
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Status', 'excused');
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Reason', reason);
-    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Method', 'self-excused');
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Note', note);
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Method', 'apology');
     setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Signed In', new Date());
+    setCell_(MEET.TAB_ATTENDANCE, existing._row, 'Recorded By', 'self');
   } else {
     appendRow_(MEET.TAB_ATTENDANCE, {
       'ID': uid_('ATT'), 'Meeting ID': str_(m['ID']), 'Email': me.email, 'Name': me.name,
-      'Role': me.role, 'Unit': me.unit, 'Status': 'excused', 'Method': 'self-excused',
-      'Signed In': new Date(), 'Minutes Late': 0, 'Reason': reason, 'Recorded By': 'self'
+      'Role': me.role, 'Unit': me.unit, 'Status': 'excused', 'Method': 'apology',
+      'Signed In': new Date(), 'Minutes Late': 0, 'Reason': reason, 'Note': note,
+      'Recorded By': 'self', 'Device': str_(body.device).slice(0, 120)
     });
   }
-  log_('excused', me.name, me.role, str_(m['Ref']) || str_(m['ID']), reason);
-  return { ok: true };
+  log_('apology', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
+    reason + (note ? ' — ' + note : ''));
+  return { ok: true, reason: reason, note: note };
+}
+
+/** Has this person apologised for this meeting? An apology closes the
+ *  meeting to them, so this is checked before anything is handed over. */
+function apologised_(m, person, att) {
+  if (!m || !person) return null;
+  att = att || readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var mine = att.filter(function (a) { return low_(a['Email']) === person.email; })[0];
+  if (!mine || low_(mine['Status']) !== 'excused') return null;
+  return { reason: str_(mine['Reason']), note: str_(mine['Note']),
+           at: fmtStamp_(mine['Signed In']) };
 }
 
 /** Staff correcting the register by hand — the "was here earlier,
@@ -1252,7 +1427,8 @@ function apiAttendanceHistory_(token) {
   var per = {};
   roster_().forEach(function (p) {
     per[p.email] = { email: p.email, name: p.name, role: p.role, unit: p.unit,
-                     present: 0, late: 0, excused: 0, absent: 0, noEntry: 0, total: meetings.length };
+                     present: 0, late: 0, excused: 0, absent: 0, noLogin: 0,
+                     total: meetings.length };
   });
   var seen = {};
   att.forEach(function (a) {
@@ -1260,10 +1436,16 @@ function apiAttendanceHistory_(token) {
     if (!per[e]) return;
     var st = low_(a['Status']);
     if (per[e][st] !== undefined) per[e][st]++;
+    if (st === 'absent' && low_(a['Method']) === 'no-login') per[e].noLogin++;
     seen[e + '|' + str_(a['Meeting ID'])] = 1;
   });
+  // A meeting with no row at all is an absence, the same as one the
+  // register wrote when it closed. noLogin is the share of those
+  // absences nobody marked by hand, kept for the one-on-one.
   Object.keys(per).forEach(function (e) {
-    meetings.forEach(function (m) { if (!seen[e + '|' + str_(m['ID'])]) per[e].noEntry++; });
+    meetings.forEach(function (m) {
+      if (!seen[e + '|' + str_(m['ID'])]) { per[e].absent++; per[e].noLogin++; }
+    });
     var p = per[e];
     p.rate = p.total ? Math.round(((p.present + p.late) / p.total) * 100) : 0;
   });
@@ -1875,17 +2057,17 @@ function apiMinutesDraft_(body) {
     }).join('\n') : '—') + '\n\n' +
     'ABSENT (' + reg.counts.absent + ')\n' +
     (reg.groups.absent.length ? reg.groups.absent.map(function (p) {
-      return p.name + ' — ' + (p.reason || 'no reason logged');
-    }).join('\n') : '—') + '\n\n' +
-    'NO ENTRY IN THE REGISTER (' + reg.counts.noEntry + ')\n' +
-    names(reg.groups.noEntry) + '\n' +
-    (reg.counts.noEntry
-      ? 'Neither present, absent, excused nor late. Signing in is the branch standard for a ' +
-        'scheduled meeting; where an active agent has not engaged with it, that is recorded as a ' +
-        'factual observation of the record and carried to the one-on-one with their manager.'
-      : 'Every active member of the branch engaged with the register.') + '\n\n' +
+      return p.name + (p.neverLoggedIn ? ' — did not log in'
+                                       : ' — ' + (p.reason || 'marked absent'));
+    }).join('\n') : '—') + '\n' +
+    (reg.counts.noLogin
+      ? reg.counts.noLogin + ' of the absences are people who did not log in to the meeting. ' +
+        'Signing in is how attendance is recorded; a member of the branch who does not sign in ' +
+        'is recorded absent, and that is carried to the one-on-one with their manager.'
+      : 'Every active member of the branch either attended or logged an apology.') + '\n\n' +
     'Roll: ' + reg.counts.roll + '  |  In the room: ' + reg.counts.here +
-    '  |  Engagement: ' + reg.counts.rate + '%';
+    '  |  Attendance: ' + reg.counts.rate + '%' +
+    '  |  Accounted for: ' + reg.counts.accountedFor + '%';
 
   var agenda = readTab_(MEET.TAB_AGENDA)
     .filter(function (a) { return str_(a['Meeting ID']) === str_(m['ID']); })
@@ -2207,9 +2389,49 @@ function apiEndSession_(body) {
   setCell_(MEET.TAB_SESSIONS, sn._row, 'Item Started', '');
 
   setCell_(MEET.TAB_MEETINGS, m._row, 'Status', 'closed');
+
+  // The register is closed with the meeting: everyone who never
+  // opened it gets a real absent row, so the sheet carries the whole
+  // roll rather than leaving the absences to be worked out later by
+  // whoever happens to read it.
+  var marked = closeRegister_(m, me);
+
   log_('session-end', me.name, me.role, str_(m['Ref']) || str_(m['ID']),
-    'Ran ' + ran + ' min against ' + num_(sn['Allotted']) + ' allotted');
-  return { ok: true, ran: ran, allotted: num_(sn['Allotted']) };
+    'Ran ' + ran + ' min against ' + num_(sn['Allotted']) + ' allotted'
+    + (marked ? '; ' + marked + ' marked absent, no login' : ''));
+  return { ok: true, ran: ran, allotted: num_(sn['Allotted']), markedAbsent: marked };
+}
+
+/*  Write the absences down when the meeting closes.
+ *
+ *  register_ works them out live for the screen, but a figure that
+ *  only exists while a function is running is not a record. This
+ *  writes one row per person who never opened the meeting, with
+ *  Method 'no-login' so it stays distinguishable from an absence a
+ *  human marked. It is safe to run twice — anyone with a row already
+ *  is skipped — which matters because a meeting can be closed, re-
+ *  opened to finish an item, and closed again.
+ */
+function closeRegister_(m, by) {
+  var att = readTab_(MEET.TAB_ATTENDANCE).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var seen = {};
+  att.forEach(function (a) { seen[low_(a['Email'])] = true; });
+
+  var now = new Date();
+  var rows = roster_().filter(function (p) { return !seen[p.email]; }).map(function (p) {
+    return {
+      'ID': uid_('ATT'), 'Meeting ID': str_(m['ID']), 'Email': p.email, 'Name': p.name,
+      'Role': p.role, 'Unit': p.unit, 'Status': 'absent', 'Method': 'no-login',
+      'Signed In': '', 'Minutes Late': 0, 'Reason': '', 'Note': '',
+      'Recorded By': 'register closed by ' + (by && by.name ? by.name : 'the system'),
+      'Device': ''
+    };
+  });
+
+  if (rows.length) appendRows_(MEET.TAB_ATTENDANCE, rows);
+  return rows.length;
 }
 
 /** Move the room on to the next item. Everyone's screen follows. */
@@ -3039,26 +3261,33 @@ function seedSampleMeeting() {
   });
   appendRows_(MEET.TAB_AGENDA, agendaRows);
 
-  // ---- the register: present, late, excused, absent, and no entry at all ----
+  // ---- the register: present, late, two apologies, and two who never
+  //      logged in at all, which is what "absent" now means ----
   var att = [], n = agents.length;
   var lateOne = agents[n - 1], excusedOne = agents[n - 2], absentOne = agents[n - 3];
-  // The last two agents are left out entirely, so the no-entry group — the
-  // observation the Q1 minutes record in its own right — is not empty.
-  var noEntry = [agents[n - 4], agents[n - 5]].filter(Boolean);
+  var excusedTwo = agents[n - 6];
+  // Left out of the loop entirely, then written back as absent with
+  // Method 'no-login' — exactly what closeRegister_ does when a real
+  // meeting ends, so the sample shows the rule rather than describing it.
+  var noLogin = [agents[n - 4], agents[n - 5]].filter(Boolean);
 
   people.forEach(function (p) {
-    if (noEntry.some(function (x) { return x.email === p.email; })) return;
+    if (noLogin.some(function (x) { return x.email === p.email; })) return;
 
     var row = { 'ID': uid_('ATT'), 'Meeting ID': meetingId, 'Email': p.email,
       'Name': p.name, 'Role': p.role, 'Unit': p.unit, 'Recorded By': SAMPLE_TAG };
 
     if (excusedOne && p.email === excusedOne.email) {
-      row['Status'] = 'excused'; row['Method'] = 'self-excused';
+      row['Status'] = 'excused'; row['Method'] = 'apology';
       row['Signed In'] = new Date(start.getTime() - 3600000);
-      row['Reason'] = 'Sick leave';
+      row['Reason'] = 'Client appointment I could not move';
+    } else if (excusedTwo && p.email === excusedTwo.email) {
+      row['Status'] = 'excused'; row['Method'] = 'apology';
+      row['Signed In'] = new Date(start.getTime() - 5400000);
+      row['Reason'] = 'On a medical or hospital visit';
     } else if (absentOne && p.email === absentOne.email) {
       row['Status'] = 'absent'; row['Method'] = 'manual';
-      row['Signed In'] = start; row['Reason'] = 'No reason logged';
+      row['Signed In'] = start; row['Reason'] = 'Marked absent by the chair';
     } else if (lateOne && p.email === lateOne.email) {
       row['Status'] = 'late'; row['Method'] = 'login';
       row['Signed In'] = new Date(start.getTime() + 26 * 60000);
@@ -3070,6 +3299,14 @@ function seedSampleMeeting() {
       row['Minutes Late'] = 0;
     }
     att.push(row);
+  });
+  // The two who never opened it, written the way a closed register
+  // writes them.
+  noLogin.forEach(function (p) {
+    att.push({ 'ID': uid_('ATT'), 'Meeting ID': meetingId, 'Email': p.email,
+      'Name': p.name, 'Role': p.role, 'Unit': p.unit, 'Status': 'absent',
+      'Method': 'no-login', 'Signed In': '', 'Minutes Late': 0, 'Reason': '',
+      'Note': '', 'Recorded By': SAMPLE_TAG });
   });
   appendRows_(MEET.TAB_ATTENDANCE, att);
 
@@ -3140,13 +3377,14 @@ function seedSampleMeeting() {
         'EXCUSED (' + reg.counts.excused + ')\n' + (reg.groups.excused.map(function (p) {
           return p.name + ' — ' + p.reason; }).join('\n') || '—') + '\n\n' +
         'ABSENT (' + reg.counts.absent + ')\n' + (reg.groups.absent.map(function (p) {
-          return p.name + ' — ' + p.reason; }).join('\n') || '—') + '\n\n' +
-        'NO ENTRY IN THE REGISTER (' + reg.counts.noEntry + ')\n' + names(reg.groups.noEntry) + '\n' +
-        'Neither present, absent, excused nor late. Signing in is the branch standard for a ' +
-        'scheduled meeting; where an active agent has not engaged with it, that is recorded as a ' +
-        'factual observation of the record and carried to the one-on-one with their manager.\n\n' +
+          return p.name + (p.neverLoggedIn ? ' — did not log in'
+                                           : ' — ' + (p.reason || 'marked absent')); }).join('\n') || '—') + '\n' +
+        reg.counts.noLogin + ' of the absences are people who did not log in to the meeting. ' +
+        'Signing in is how attendance is recorded; a member of the branch who does not sign in ' +
+        'is recorded absent, and that is carried to the one-on-one with their manager.\n\n' +
         'Roll: ' + reg.counts.roll + '  |  In the room: ' + reg.counts.here +
-        '  |  Engagement: ' + reg.counts.rate + '%' },
+        '  |  Attendance: ' + reg.counts.rate + '%' +
+        '  |  Accounted for: ' + reg.counts.accountedFor + '%' },
     { 'ID': uid_('MIN'), 'Meeting ID': meetingId, 'Order': 30, 'Section': 'Persistency',
       'Visibility': 'staff', 'Author': SAMPLE_TAG, 'Updated': new Date(),
       'Body': 'Reviewed on the red / orange / green tracking. A queried 5-year figure is to be ' +
@@ -3168,7 +3406,8 @@ function seedSampleMeeting() {
   var out = 'Sample meeting created.\n' +
     agendaRows.length + ' agenda items · ' + att.length + ' on the register (' +
     reg.counts.present + ' present, ' + reg.counts.late + ' late, ' + reg.counts.excused +
-    ' excused, ' + reg.counts.absent + ' absent, ' + reg.counts.noEntry + ' no entry) · ' +
+    ' excused, ' + reg.counts.absent + ' absent of whom ' + reg.counts.noLogin +
+    ' never logged in) · ' +
     '8 contributions · 5 action items · 5 minute sections.\n\n' +
     'Open the app and it is at the top of the list. Remove it with ' +
     'removeSampleMeeting() or from the Branch Meetings menu.';
@@ -3260,12 +3499,75 @@ function apiHome_(token) {
  *  file that trusts what the browser says about who it is.
  */
 
+/*  THE WALL'S FEED.
+ *
+ *  Opened with the branch code rather than a personal token, the way
+ *  every other wall screen is, because a wall is a screen in a room
+ *  and nobody signs into it. It gives the register for one meeting —
+ *  the one named, or the latest that is running or has run — and
+ *  nothing else: no agenda, no materials, no minutes. A wall that
+ *  could be asked for the pack would be a pack with no password on
+ *  it, mounted where visitors walk past.
+ */
+function apiWall_(code, id) {
+  if (!sameCode_(code, joinCode_())) {
+    return { ok: false, refused: true, error: 'That branch code is not right.' };
+  }
+
+  var rows = readTab_(MEET.TAB_MEETINGS).filter(function (r) {
+    var st = low_(r['Status']);
+    return st !== 'draft' && st !== 'cancelled';
+  });
+  var m = null;
+  if (str_(id)) {
+    m = rows.filter(function (r) { return str_(r['ID']) === str_(id); })[0] || null;
+  } else {
+    // The latest meeting that has actually happened, by date.
+    rows.sort(function (a, b) {
+      var da = asDate_(a['Date']), db = asDate_(b['Date']);
+      return (db ? db.getTime() : 0) - (da ? da.getTime() : 0);
+    });
+    var now = Date.now();
+    m = rows.filter(function (r) {
+      var d = asDate_(r['Date']);
+      return d && d.getTime() <= now + 12 * 3600000;
+    })[0] || rows[0] || null;
+  }
+  if (!m) return { ok: true, meeting: null, branch: MEET.BRANCH };
+
+  var reg = register_(m);
+  return {
+    ok: true,
+    branch: MEET.BRANCH,
+    asOf: fmtStamp_(new Date()),
+    meeting: {
+      id: str_(m['ID']), ref: str_(m['Ref']), type: str_(m['Type']),
+      title: str_(m['Title']), week: str_(m['Week']),
+      date: fmtDate_(m['Date']), start: fmtTime_(atTime_(m['Date'], m['Start'])),
+      status: low_(m['Status']), chair: str_(m['Chair'])
+    },
+    counts: reg.counts,
+    reasons: reg.reasons,
+    groups: {
+      // Names only. The wall never carries an email address: it is a
+      // screen in a room people walk past, including visitors.
+      present: reg.groups.present.map(function (x) { return { name: x.name, unit: x.unit, time: x.time }; }),
+      late: reg.groups.late.map(function (x) { return { name: x.name, unit: x.unit, time: x.time, late: x.late }; }),
+      excused: reg.groups.excused.map(function (x) { return { name: x.name, unit: x.unit, reason: x.reason }; }),
+      absent: reg.groups.absent.map(function (x) {
+        return { name: x.name, unit: x.unit, neverLoggedIn: !!x.neverLoggedIn };
+      })
+    }
+  };
+}
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
   var out;
   try {
     switch (str_(p.action) || 'home') {
       case 'home':       out = apiHome_(p.token); break;
+      case 'wall':       out = apiWall_(p.code, p.id); break;
       case 'meetings':   out = apiMeetings_(p.token); break;
       case 'meeting':    out = apiMeeting_(p.token, p.id); break;
       case 'register':   out = apiRegister_(p.token, p.id); break;
@@ -3369,9 +3671,119 @@ function onOpen() {
     .addItem('🧪  Create a sample meeting', 'seedSampleMeetingFromMenu')
     .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
     .addSeparator()
+    .addItem('🪪  Pull access codes from the Agent Skill Bank', 'promptPullAccessCodes')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
+}
+
+/*  THE CODE THEY ALREADY HAVE, NOT A NEW ONE.
+ *
+ *  The agents' access codes live in the Agent Skill Bank on the
+ *  branch portfolio sheet, which is a different spreadsheet from
+ *  this one. Copying thirty-nine codes across by hand is how a
+ *  roster ends up one letter wrong for two people who then cannot
+ *  get into a meeting that is marking them absent, so this reads
+ *  them straight off that sheet and writes them onto People,
+ *  matching on e-mail.
+ *
+ *  The sheet id goes in a Script Property, never in this file: these
+ *  .gs files are published on the branch site.
+ *
+ *  It only ever fills a blank or replaces a code that has changed,
+ *  and it never creates a person — somebody who is not on the
+ *  meeting roster is reported back rather than added, because who
+ *  belongs in a branch meeting is the manager's call, not the skill
+ *  bank's.
+ */
+function pullAccessCodes(sheetId) {
+  sheetId = str_(sheetId) ||
+    PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
+  if (!sheetId) throw new Error('No Branch Portfolio sheet id set.');
+  // A pasted link works as well as a bare id.
+  var mm = sheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  if (mm) sheetId = mm[1];
+
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sh = null;
+  ss.getSheets().forEach(function (s) {
+    if (low_(s.getName()).indexOf('agent skill bank') > -1) sh = s;
+  });
+  if (!sh) throw new Error('No "Agent Skill Bank" tab on that sheet.');
+
+  var values = sh.getDataRange().getValues();
+  if (values.length < 2) throw new Error('The Agent Skill Bank tab is empty.');
+
+  // Tolerant header matching — the tab has been re-ordered before.
+  var head = values[0].map(function (h) { return low_(h); });
+  var find = function (names) {
+    for (var i = 0; i < head.length; i++) {
+      for (var j = 0; j < names.length; j++) {
+        if (head[i].indexOf(names[j]) > -1) return i;
+      }
+    }
+    return -1;
+  };
+  var cEmail = find(['e-mail', 'email']);
+  var cCode  = find(['portal code', 'access code', 'code']);
+  if (cEmail === -1 || cCode === -1) {
+    throw new Error('That tab has no e-mail column or no portal code column.');
+  }
+
+  var people = readPeople_();
+  var byEmail = {};
+  people.forEach(function (p) { byEmail[p.email] = p; });
+
+  var set = 0, same = 0, missing = [];
+  for (var r = 1; r < values.length; r++) {
+    var email = low_(values[r][cEmail]);
+    var code = str_(values[r][cCode]);
+    if (email.indexOf('@') < 1 || !code) continue;
+    var p = byEmail[email];
+    if (!p) { missing.push(email); continue; }
+    if (sameCode_(code, p.code)) { same++; continue; }
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Access Code', code);
+    set++;
+  }
+
+  PropertiesService.getScriptProperties().setProperty('ROSTER_SHEET_ID', sheetId);
+  log_('access-codes', 'system', 'manager', 'People',
+    set + ' set, ' + same + ' already matched, ' + missing.length + ' not on the meeting roster');
+
+  var msg = set + ' access code' + (set === 1 ? '' : 's') + ' written, '
+    + same + ' already matched.';
+  if (missing.length) {
+    msg += '\n\n' + missing.length + ' on the skill bank are not on the meeting roster '
+      + 'and were skipped:\n' + missing.slice(0, 15).join('\n')
+      + (missing.length > 15 ? '\n…and ' + (missing.length - 15) + ' more' : '');
+  }
+  var blanks = readPeople_().filter(function (p) { return p.active && !p.code && !p.hash; });
+  if (blanks.length) {
+    msg += '\n\n' + blanks.length + ' on the meeting roster still have no code and no PIN, '
+      + 'so they cannot sign in and will be marked absent:\n'
+      + blanks.slice(0, 15).map(function (p) { return p.name + ' (' + p.email + ')'; }).join('\n')
+      + (blanks.length > 15 ? '\n…and ' + (blanks.length - 15) + ' more' : '');
+  }
+  Logger.log(msg);
+  return msg;
+}
+
+function promptPullAccessCodes() {
+  var ui = SpreadsheetApp.getUi();
+  var saved = PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
+  var res = ui.prompt('Pull access codes from the Agent Skill Bank',
+    'Paste the link to the Branch Portfolio spreadsheet that holds the\n' +
+    'Agent Skill Bank tab. Codes are matched to the meeting roster by\n' +
+    'e-mail; nobody is added or removed.' +
+    (saved ? '\n\n(Last used: ' + saved + ')' : ''), ui.ButtonSet.OK_CANCEL);
+  if (res.getSelectedButton() !== ui.Button.OK) return;
+  var id = res.getResponseText().trim() || saved;
+  if (!id) return;
+  try {
+    ui.alert('Access codes', pullAccessCodes(id), ui.ButtonSet.OK);
+  } catch (err) {
+    ui.alert('Access codes', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+  }
 }
 
 function promptImportArchive() {

@@ -18,7 +18,7 @@ Three things were living in three different places:
 
 | Was | Now |
 | --- | --- |
-| Attendance on a JotForm, reconciled against the minutes by hand | The login is the register |
+| Attendance on a JotForm, reconciled against the minutes by hand | The login is the register; no login is absent |
 | Presenters' reports arriving by WhatsApp and email the morning of | Uploaded against the agenda slot, with a due date and a staff check |
 | Minutes as Word files scattered across two Drive folders and two Google accounts | Written in the app, against the meeting, published from there |
 
@@ -88,14 +88,50 @@ Two doors, and they do different jobs.
 `STAFF2026` or `AGENT2026`. It is the front door, exactly as on the rest of
 the site, and it says you belong to the branch.
 
-**Your own email and PIN** is the second, and it cannot be dropped. A shared
-code cannot tell you who walked in, and the whole point of this app is that
-signing in *is* the attendance register. The code gets you to the door; the
-PIN is what puts your name on the record.
+**Your own email and access code** is the second, and it cannot be dropped. A
+shared code cannot tell you who walked in, and the whole point of this app is
+that signing in *is* the attendance register. The branch code gets you to the
+door; your own code is what puts your name on the record.
 
-You set your PIN once, the first time, against an email the branch has already
-put on the People tab. Change the access codes in `managementmeetings/index.html`
-(`DOOR_CODES`) if you ever change them on the portals.
+Your code is **the branch portfolio access code you already use for the agent
+portal** — there is no second secret to invent and no PIN to forget. It lives
+in an `Access Code` column on the People tab, and it is filled from the Agent
+Skill Bank in one go: *Branch Meetings → Pull access codes from the Agent Skill
+Bank*, then paste the link to the Branch Portfolio sheet. Codes are matched by
+email, nobody is added or removed, and the run reports anyone left without a
+code, because a person who cannot sign in is a person who is marked absent.
+
+Anyone who set a PIN here before October 2026 can still use it — the sign-in
+box takes either. Change the branch access codes in
+`managementmeetings/index.html` (`DOOR_CODES`) if you ever change them on the
+portals.
+
+## Attendance, from 6 October 2026
+
+The JotForm register is disbanded. There is one register and it is this app.
+
+- **Signing in is the register.** Open the meeting, press *I am here*. It is
+  time-stamped and there is nothing else to sign.
+- **No login is absent.** Anyone on the branch list who does not sign in is
+  recorded absent — not "no entry", not a blank. When the meeting closes, the
+  app writes those rows itself, marked `no-login`, so the sheet carries the
+  whole roll rather than leaving it to be worked out later.
+- **If you cannot come, you still log in.** You pick a reason from a list and
+  that is your apology. You will **not** get the meeting pack: no agenda, no
+  materials, no minutes, no floor. If it changes, sign in and it opens.
+- **The reason is picked, never typed.** A typed reason gives "personal" and
+  "busy", which cannot be counted. A picked one can be, which is what lets the
+  wall show which reason is the one worth doing something about. Only
+  *Something else* takes a line of free text. The list lives in
+  `APOLOGY_REASONS` in `Meetings.gs` and the app reads it from there, so the
+  two can never drift apart.
+- **The chair can still correct the register.** A correction records who made
+  it, so a person marked absent by hand stays distinguishable from a person who
+  never logged in.
+
+The register is on the wall at `intelligence/wall/register.html` — who is in
+the room, who apologised and why, and who is absent. It opens with the branch
+code, once per device.
 
 ## Who sees what
 
