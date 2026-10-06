@@ -240,7 +240,12 @@ function enter(res) {
 }
 
 /* ── today's line ────────────────────────────────────────────────────── */
-function load() {
+/* `said` is what the desk tells the person after they press send. The repaint
+   that follows a send runs through tally(), which writes to the same line, so
+   the result has to be set AFTER the repaint or it is wiped before it is read.
+   It was: you sent six letters and the desk answered "Tick the ones you have
+   checked." */
+function load(said) {
   call({ action: 'pdd.list', token: TOKEN, stage: 45 }).then(function (r) {
     if (!r.ok) { $('standfirst').textContent = r.error || 'Could not read the line.'; return; }
     STATE = r; ROWS = r.rows || []; PICK = {};
@@ -251,6 +256,7 @@ function load() {
       (r.you.branchWide ? 'You are seeing the whole branch.' : 'You are seeing your own clients.') +
       ' Nothing has been sent.';
     paintState(r); paintRows(); paintFoot(r);
+    if (said) $('said').textContent = said;
   }).catch(function () {
     $('standfirst').textContent = 'Could not reach the branch script.';
   });
@@ -360,10 +366,9 @@ $('send').onclick = function () {
   call({ action: 'pdd.send', token: TOKEN, stage: 45, policies: list }).then(function (res) {
     btn.disabled = false;
     if (!res.ok) { $('said').textContent = res.error || 'That did not go.'; tally(); return; }
-    $('said').textContent = res.says + (res.missed && res.missed.length
-      ? ' ' + res.missed.length + ' were no longer on the line.' : '');
     PICK = {};
-    load();
+    load(res.says + (res.missed && res.missed.length
+      ? ' ' + res.missed.length + ' were no longer on the line.' : ''));
   }).catch(function () {
     btn.disabled = false; $('said').textContent = 'Could not reach the branch script.'; tally();
   });
