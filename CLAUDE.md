@@ -1021,10 +1021,11 @@ voice under the new timing and the caption gives it away.
   own late line (`WAIT_DAYS`), so the alarm and the promise agree, and one
   edit changes every letter, the page, the receipt, the manual and the call
   script together. What stands: the reminder at five days, the manager's
-  notes, the introduction when an agent is named, "Send again" by hand. One
-  client's complaint about the notice itself gets no reply: the manager's
-  decision that morning. `health/three-mails-harness.js` in the session
-  scratchpad covers it (21 checks).
+  notes, the introduction when an agent is named, "Send again" by hand. A
+  complaint about a notice itself is never answered by the system: its rows
+  are held for a person, and the manager decides how it is answered.
+  `health/three-mails-harness.js` in the session scratchpad covers it (21
+  checks).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
