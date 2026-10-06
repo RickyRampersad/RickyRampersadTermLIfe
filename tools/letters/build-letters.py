@@ -130,7 +130,7 @@ TAPS = {
               'Fifteen minutes on your phone. We read every word before we name anyone, then match you to the agent who fits your file.'),
  'review':   ('Tell us more about yourself',
               'A short form on what you hold and what matters to you. A person can go through it with you.'),
- 'callme':   ('Call me', 'Today or tomorrow, at a time you choose.'),
+ 'callme':   ('Call me', 'Within two working days, at a time you choose.'),
  'claim':    ('Help me claim it', 'We bring the form and walk it through with you.'),
  'deliver':  ('Bring me my contract', 'By hand, and we go through it with you.'),
  'finish':   ('Finish my application', 'We bring whatever is still needed to you.'),
@@ -241,6 +241,7 @@ WHEN = ('When suits you best for a call?',
 # (WAIT_DAYS in Transition.gs), so the internal alarm and the client's promise now agree. One edit here
 # changes every letter, the page a tap opens, the receipt and the call script together.
 CALL_WHEN = 'within two working days'
+assert TAPS['callme'][1].lower().startswith(CALL_WHEN), 'the Call me card must make the same promise as CALL_WHEN'
 # what the page says the moment a check is answered: what happens next, nothing more
 SAID_Q = {
  'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
