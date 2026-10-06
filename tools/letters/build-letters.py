@@ -234,12 +234,19 @@ REACH = ('What is the best way to reach you?',
 # asked on the page once a call is coming, so "at the time you chose" is true
 WHEN = ('When suits you best for a call?',
         [('Morning', 'informed', 'when_morning'), ('Afternoon', 'informed', 'when_afternoon'), ('Evening', 'informed', 'when_evening')])
+# What a "call me" earns, in one place. Until 6 October 2026 every line here promised a call "today or
+# tomorrow"; by then 223 clients had tapped it against a Client Support team that reaches about thirty a day,
+# so the promise was broken before the receipt arrived, and a broken promise is what makes an e-mail an
+# irritation. "Within two working days" is what the team can keep, and it is the branch's own late line
+# (WAIT_DAYS in Transition.gs), so the internal alarm and the client's promise now agree. One edit here
+# changes every letter, the page a tap opens, the receipt and the call script together.
+CALL_WHEN = 'within two working days'
 # what the page says the moment a check is answered: what happens next, nothing more
 SAID_Q = {
  'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
  'rate_well':      'Thank you. If there is one thing we could do better, the full review below is the place to say it.',
- 'rate_better':    'Thank you for telling us. Someone from the branch will call you today or tomorrow to hear what we should do better.',
- 'life_changed':   'Thank you. Someone from the branch will call you today or tomorrow to bring your cover up to date with your life.',
+ 'rate_better':    'Thank you for telling us. Someone from the branch will call you ' + CALL_WHEN + ' to hear what we should do better.',
+ 'life_changed':   'Thank you. Someone from the branch will call you ' + CALL_WHEN + ' to bring your cover up to date with your life.',
  'life_same':      'Thank you. Nothing about your policy changes.',
  'pays_confirm':   'Thank you. We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
  'pays_known':     'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
@@ -247,26 +254,26 @@ SAID_Q = {
  'approached_yes': 'Thank you for telling us. A person calls you before you decide anything, so you have the full picture first.',
  'checkfirst_no':  'Understood. The offer stands whenever you want it, free, and nothing about your policy changes.',
  'stay_yes':       'Thank you. Your file stays with our branch team, and the same people keep looking after it.',
- 'stay_talk':      'Of course. Someone from the branch calls you today or tomorrow to talk it through, no pressure.',
+ 'stay_talk':      'Of course. Someone from the branch calls you ' + CALL_WHEN + ' to talk it through, no pressure.',
  'value_yes':      'Thank you. We find out what your policy still holds and call you with the answer.',
  'value_later':    'Understood. Nothing changes, and the door stays open whenever you want to look.',
- 'walk_yes':       'Thank you. Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.',
+ 'walk_yes':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' and walks you through your policy in plain words.',
  'walk_clear':     'Thank you. If a question ever comes up, one tap or one call and we go through it with you.',
- 'built_yes':      'Thank you. Someone from the branch calls you today or tomorrow with what your policy has built so far.',
+ 'built_yes':      'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' with what your policy has built so far.',
  'built_later':    'Understood. It is yours to see whenever you want to.',
- 'more_yes':       'Thank you. Someone from the branch calls you today or tomorrow to talk through what more your cover could do.',
+ 'more_yes':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' to talk through what more your cover could do.',
  'more_later':     'Understood. Nothing about your policy changes, and the door stays open.',
  'contract_have':  'Thank you. That is what we needed to know, and nothing more is required of you.',
  'contract_missing': 'Thank you for telling us. We bring your contract to you by hand and go through it with you.',
- 'contract_unsure': 'Thank you. Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.',
+ 'contract_unsure': 'Thank you. Someone from the branch calls you ' + CALL_WHEN + ', explains what you should have, and brings it if it is missing.',
  'k_outstanding':  'Thank you. We bring whatever is still needed to you, so your cover can start.',
- 'k_unsure':       'Thank you. Someone from the branch calls you today or tomorrow with exactly what is needed, and brings it to you.',
+ 'k_unsure':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' with exactly what is needed, and brings it to you.',
  'k_stop':         'Understood. We close the file properly and confirm that nothing is owed.',
  'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
  'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
  'pay_direct':     'Thank you. Every payment you make carries Guardian Life\'s own receipt, and nothing about your policy changes.',
- 'pay_person':     'Thank you for telling us. Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
- 'pay_unsure':     'Thank you. Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
+ 'pay_person':     'Thank you for telling us. Someone from the branch calls you ' + CALL_WHEN + ' to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Thank you. Someone from the branch calls you ' + CALL_WHEN + ', confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
  'reach_phone':    'Noted: we will call you.',
  'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
  'reach_email':    'Noted: we will write to you by e-mail.',
@@ -277,7 +284,7 @@ SAID_Q = {
 # and for a tap on its own
 TAP_SAID = {
  'informed': 'Noted, with thanks. Nothing about your policy changes.',
- 'callme':   'Someone from the branch will call you, today or tomorrow, at a time you choose.',
+ 'callme':   'Someone from the branch will call you, ' + CALL_WHEN + ', at a time you choose.',
  'urgent':   'We read it before we name anyone, then match you to the agent who fits your file.',
  'review':   'It saves as you go, and a person goes through it with you if you would like one to.',
  'paid':     'We will check the record against your receipt and confirm within two working days.',
@@ -300,7 +307,7 @@ CARE = {'name': 'Client Support Team', 'us': 'our Client Support team', 'Us': 'O
 # what the receipt promises, in the client's own second person, by tap and by
 # quick-check answer; a noted answer (informed) earns no receipt
 NEXT = {
- 'callme':   'Someone from the branch calls you today or tomorrow, at a time you choose.',
+ 'callme':   'Someone from the branch calls you ' + CALL_WHEN + ', at a time you choose.',
  'urgent':   'We read every word you wrote before we name anyone, then match you to the agent who fits your file.',
  'review':   'A person reads your review, then we match you to the agent who fits your file.',
  'paid':     'We check the record against your receipt and confirm within two working days.',
@@ -315,20 +322,20 @@ NEXT = {
  'informed': 'Nothing about your policy changes, and we will ask again rather than assume.',
 }
 NEXT_Q = {
- 'rate_better':    'Someone from the branch calls you today or tomorrow to hear what we should do better.',
- 'life_changed':   'Someone from the branch calls you today or tomorrow to bring your cover up to date with your life.',
+ 'rate_better':    'Someone from the branch calls you ' + CALL_WHEN + ' to hear what we should do better.',
+ 'life_changed':   'Someone from the branch calls you ' + CALL_WHEN + ' to bring your cover up to date with your life.',
  'pays_confirm':   'We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
  'approached_yes': 'A person calls you before you decide anything, so you have the full picture first.',
- 'stay_talk':      'Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.',
+ 'stay_talk':      'Someone from the branch calls you ' + CALL_WHEN + ' to talk through who looks after your policy, and how.',
  'value_yes':      'We find out what your policy still holds, and whether it can simply start again, and call you with the answer.',
- 'walk_yes':       'Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.',
- 'built_yes':      'Someone from the branch calls you today or tomorrow with what your policy has built for you so far.',
- 'more_yes':       'Someone from the branch calls you today or tomorrow to talk through what more your cover could do for you now.',
- 'contract_unsure': 'Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.',
- 'k_unsure':       'Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.',
+ 'walk_yes':       'Someone from the branch calls you ' + CALL_WHEN + ' and walks you through your policy in plain words.',
+ 'built_yes':      'Someone from the branch calls you ' + CALL_WHEN + ' with what your policy has built for you so far.',
+ 'more_yes':       'Someone from the branch calls you ' + CALL_WHEN + ' to talk through what more your cover could do for you now.',
+ 'contract_unsure': 'Someone from the branch calls you ' + CALL_WHEN + ', explains what you should have, and brings it if it is missing.',
+ 'k_unsure':       'Someone from the branch calls you ' + CALL_WHEN + ' with exactly what is still needed, and brings it to you.',
  'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
- 'pay_person':     'Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
- 'pay_unsure':     'Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
+ 'pay_person':     'Someone from the branch calls you ' + CALL_WHEN + ' to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Someone from the branch calls you ' + CALL_WHEN + ', confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
  'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
 }
 BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
@@ -644,7 +651,7 @@ FILM_LINE = f"""
 FLOW = [
  ('Tick what applies, and send', 'One page, about a minute. Nothing to write unless you want to.'),
  ('A receipt in your inbox', 'Within minutes: everything you told us, and what happens next.'),
- ('A call at the time you chose', 'Today or tomorrow, from our Client Support team, whenever you asked for one.'),
+ ('A call at the time you chose', 'Within two working days, from our Client Support team, whenever you asked for one.'),
  ('Matched to the agent who fits', 'A person reads your file first. Then we introduce your agent in writing, with a name and a number.'),
 ]
 FLOW_HEAD = 'What happens after you tap'
@@ -1332,7 +1339,7 @@ def landing_checks():
             'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['checkfirst']},
             'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE,
             # the receipt is automatic only on the Apps Script route; set False if the letters go by hand
-            'receipts': True, 'receipt_line': 'A copy of everything you have told us is on its way to your inbox.'}
+            'receipts': True, 'receipt_line': 'A copy of what you have told us comes to your inbox the first time you answer. After that, you hear from a person.'}
     missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH, WHEN] for a in ans if a[2] not in SAID_Q]
     assert not missing, f'no thank-you line for {missing}'
     return json.dumps(data, ensure_ascii=False)
@@ -1372,10 +1379,14 @@ RECEIPT_HEADS = {'recap': 'What you told us', 'concerns': 'Your concerns, in you
                  'next': 'What happens next', 'more': 'Anything else? One tap each, by reply', 'follow': 'How we follow through'}
 FOLLOW = [
  'A person reads this, not a system. Your file is read before anyone is matched to you.',
- 'If you asked for a call, it comes today or tomorrow, at the time you chose.',
+ 'If you asked for a call, it comes ' + CALL_WHEN + ', at the time you chose.',
  'Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.',
- 'If we are slower than we should be, we tell you so rather than leave you wondering.',
+ 'This is the only automatic e-mail you will get about your answers. From here on, you hear from a person: a call, or a note from the branch.',
 ]
+# Three automatic e-mails, then a person (6 October 2026). The letter, one reminder if it goes unanswered, and
+# one receipt when the client answers: nothing else is sent by a machine. The second receipt and the automatic
+# "still on it" note are gone (Transition.gs: RECEIPTS_PER_CLIENT, STILL_NOTE_AUTO); the note is now a press
+# on the assignment board, by a person who has read the file. The last line of FOLLOW says so to the client.
 # the "still on it" note, four working days after an answer nobody has acted on (tChase_ in Transition.gs).
 # 30 September 2026: the first ones were due the next morning to clients promised a call "today or tomorrow",
 # so it owns the wait instead of repeating the promise, and, for anyone waiting on a call or an agent, asks

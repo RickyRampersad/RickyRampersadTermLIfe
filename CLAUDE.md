@@ -989,6 +989,42 @@ voice under the new timing and the caption gives it away.
   with the internal footer. Nothing goes to the client.
   `health/receipt-wrote-harness.js` covers it (20 checks, 16 of them
   failing on the previous script).
+- **Three automatic e-mails, then a person** (6 October 2026). Measured that
+  morning: the reminder had brought 128 of the 323 clients who answered,
+  84 of them the same day and none after day five; the receipts had gone
+  without a complaint since the 1 October fixes; the "still on it" note had
+  gone to 87 clients and brought 8 of them back in their own words. What
+  clients were writing was not "stop e-mailing me" but "kindly seeking your
+  response" and "why is my policy taking so long": the irritation is in the
+  wait after the e-mails, not in their number. The manager: "it's a human
+  interaction after the third … you don't want to irritate clients with
+  automated emails right through." So a client gets the letter, one reminder
+  if they do not answer, and one receipt when they do, and nothing else from
+  a machine. `ONE_RECEIPT_PER_CLIENT` in Transition.gs: a client who answers
+  again after their receipt is marked `[receipt] held: one receipt per
+  client: a person follows up` and named, with what they answered, in the
+  internal e-mail that names who wrote in (`tWroteAlert_`); a tap that opens
+  the form still brings the questionnaire's own confirmation. `STILL_NOTE_AUTO`
+  false: the chase keeps listing the late clients for the branch and marks
+  them `[chase2] held: automatic notes are off since 6 October: a person
+  sends it from the board`, and the note itself is a press on the assignment
+  board (`tStillClient_`, `tell=still`): open the client, mark the call,
+  tick "Still on it (the team's note, once ever)". The branch and Client
+  Support may press it, because the note is the team's; it goes once ever to
+  a client, is never ticked by default, and carries the same words as before
+  (receipt.json `still`). `RECEIPT_WAIT_MIN` is 15, so the one receipt
+  gathers a slow reader's taps. The receipt's last line tells the client it
+  is the only automatic e-mail they will get about their answers. The call
+  promise is `CALL_WHEN` in build-letters.py, "within two working days"
+  (until then "today or tomorrow", which 223 "call me" taps against a team
+  that reaches thirty clients a day had already broken); it is the branch's
+  own late line (`WAIT_DAYS`), so the alarm and the promise agree, and one
+  edit changes every letter, the page, the receipt, the manual and the call
+  script together. What stands: the reminder at five days, the manager's
+  notes, the introduction when an agent is named, "Send again" by hand. One
+  client's complaint about the notice itself gets no reply: the manager's
+  decision that morning. `health/three-mails-harness.js` in the session
+  scratchpad covers it (21 checks).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
