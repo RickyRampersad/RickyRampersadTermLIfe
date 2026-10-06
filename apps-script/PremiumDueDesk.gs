@@ -105,8 +105,26 @@ function pddScope_(rows, session) {
 /* One row, as the screen needs it. No letter HTML here — that is a separate
    call, because forty rendered letters is a payload nobody asked for. */
 function pddRow_(d) {
-  var lapse = pddDate_(d.lapseDate || d.projectedLapse || '');
+  var lapse = pddDate_(pddLapseMap_()[String(d.policy || '')] || d.lapseDate || '');
   var flags = [];
+  var roster = pddRoster_(), who = iNameKey_(d.agent);
+
+  /* Who the letter is sent in the name of. The branch-wide switch for an agent
+     who has gone is INTEL_EXCLUDE_AGENTS (intelExclude), which takes their book
+     off every wall at once; these two only catch what that switch has not been
+     told about yet, and they show the client rather than hiding them. */
+  if (who && roster.known[who] && !roster.active[who]) {
+    flags.push('Their adviser is marked not active on the access list. Do not ask this client '
+             + 'to rate them \u2014 this is a reassignment call, not a 45-day letter.');
+  }
+  if (d.unit === 'Unassigned') {
+    flags.push('This adviser is not on any unit. Check who looks after this client before '
+             + 'anything goes out in their name.');
+  }
+  if (who && who === iNameKey_(d.client)) {
+    flags.push('The client and the adviser are the same person \u2014 this is the adviser\u2019s own '
+             + 'policy, not a client\u2019s. It should not get a letter asking them to rate themselves.');
+  }
 
   /* The things worth a second's thought before a letter goes. Each one is a
      real pattern in this book, not a hypothetical. */
@@ -138,6 +156,78 @@ function pddRow_(d) {
     subject:  (d.tpl && d.tpl.subject) ? d.tpl.subject(d) : '',
     flags:    flags
   };
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   THE LAPSE DATE
+   ──────────────────────────────────────────────────────────────────────────
+   iSurveyPool_ reads ten columns off the dues tab and the projected lapse
+   date is not one of them, so the desk's first live run showed "no lapse
+   date" against all twenty-two clients while the Branch Portfolio held one
+   for every single row. The letter leads on that date and the desk sorts by
+   it, so an empty one is not cosmetic: it sorts the day by nothing.
+
+   Read here rather than by widening iSurveyPool_, because that function
+   feeds the nightly send too and this file is meant to add nothing to it.
+   One read per run, memoised.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_LAPSE = null;
+function pddLapseMap_() {
+  if (PDD_LAPSE) return PDD_LAPSE;
+  var map = {};
+  try {
+    var sh = iTabDues_();
+    if (sh) {
+      var d = iReadCols_(sh, { number: ['number'], lapse: ['projected lapse date'] });
+      if (d.has('number') && d.has('lapse')) {
+        for (var r = 0; r < d.rows; r++) {
+          /* Keyed exactly as iSurveyPool_ keys its own policy field, because a
+             join that is one trim apart from the thing it joins to silently
+             matches nothing and reads as missing data. */
+          var pol = String(d.get('number', r) || '').replace(/^\s+|\s+$/g, '');
+          var v = d.get('lapse', r);
+          if (!pol || v === '' || v == null) continue;
+          map[pol] = v;
+          var bare = pol.replace(/\.0$/, '');
+          if (bare !== pol && !map[bare]) map[bare] = v;
+        }
+      }
+    }
+  } catch (e) { /* no tab, no column: the desk still works, just without dates */ }
+  return (PDD_LAPSE = map);
+}
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WHO IS STILL HERE
+   ──────────────────────────────────────────────────────────────────────────
+   The access tabs carry an Active column, and the sign-in already refuses
+   anyone it marks no/inactive/disabled/off. The desk has to read it too: a
+   letter asking a client to rate the service they had from an adviser who
+   has resigned is the worst letter this branch could send, and on the first
+   live run six of the twenty-two were exactly that.
+   ────────────────────────────────────────────────────────────────────────── */
+var PDD_ROSTER = null;
+function pddRoster_() {
+  if (PDD_ROSTER) return PDD_ROSTER;
+  var active = {}, known = {};
+  try {
+    iAccessTabs_().forEach(function (sh) {
+      var head = iHeaders_(sh), last = sh.getLastRow();
+      if (last < 2) return;
+      var cName = iCol_(head, ['agent name (exactly as in data)', 'agent', 'name']),
+          cAct  = iCol_(head, ['active']);
+      if (cName < 0) return;
+      sh.getRange(2, 1, last - 1, sh.getLastColumn()).getValues().forEach(function (row) {
+        var k = iNameKey_(row[cName]);
+        if (!k) return;
+        known[k] = 1;
+        var off = cAct >= 0 && /^(no|inactive|disabled|off|resigned|terminated)$/i
+                    .test(String(row[cAct]).replace(/^ +| +$/g, ''));
+        if (!off) active[k] = 1;
+      });
+    });
+  } catch (e) { /* no access tab: everyone reads as known, nothing is flagged */ }
+  return (PDD_ROSTER = { active: active, known: known });
 }
 
 function pddDate_(v) {
@@ -287,15 +377,35 @@ function pddToday() {
   if (pool.error) { Logger.log(pool.error); return pool.error; }
   var rows = (pool.rows || []).map(pddRow_);
   rows.sort(function (x, y) { return x.lapseSort - y.lapseSort; });
+  /* Say whether the joins worked, not just what they produced. "No lapse date"
+     against every client read as a data problem for a day when it was a column
+     this file never asked for; a line that counts the join turns the next one
+     of those into a measurement instead of a guess. */
+  var lapses = pddLapseMap_(), nLapse = 0, roster = pddRoster_(), nKnown = 0, flagged = 0;
+  rows.forEach(function (r) {
+    if (r.lapse) nLapse++;
+    if (roster.known[iNameKey_(r.agent)]) nKnown++;
+    if (r.flags.length) flagged++;
+  });
   var out = ['Day-' + PDD.STAGE + ' line, ' + Utilities.formatDate(iToday_(), iTz_(), 'd MMMM yyyy'),
-             rows.length + ' client' + (rows.length === 1 ? '' : 's') + ' on it.',
+             rows.length + ' client' + (rows.length === 1 ? '' : 's') + ' on it, '
+               + flagged + ' with something to check.',
              'Client mail: ' + iMailState_().clients + '.',
              (iSurveyBlocked_() ? 'WORDING: ' + iSurveyBlocked_() : 'Wording approved by '
-               + (iProp_('INTEL_SURVEY_APPROVED_BY') || '(nobody)')), ''];
+               + (iProp_('INTEL_SURVEY_APPROVED_BY') || '(nobody)')),
+             'Joins: lapse date on ' + nLapse + '/' + rows.length + ' (book holds '
+               + Object.keys(lapses).length + '), adviser on the access list '
+               + nKnown + '/' + rows.length + '.',
+             'Off every report (INTEL_EXCLUDE_AGENTS): '
+               + (String(iProp_('INTEL_EXCLUDE_AGENTS') || '').replace(/^\s+|\s+$/g, '') || 'nobody'),
+             ''];
   rows.slice(0, 40).forEach(function (r) {
     out.push([r.policy, r.client, r.agent, '$' + r.premium, r.billing,
-              r.lapse ? 'lapses ' + r.lapse : 'no lapse date',
-              r.flags.length ? '** ' + r.flags.length + ' to check' : ''].join('  ·  '));
+              r.lapse ? 'lapses ' + r.lapse : 'no lapse date'].join('  ·  '));
+    /* The flags in full. A count tells you something is wrong; it does not tell
+       you the adviser resigned a fortnight ago, which is the bit that stops a
+       letter going out this morning. */
+    r.flags.forEach(function (f) { out.push('        ** ' + f); });
   });
   if (rows.length > 40) out.push('… and ' + (rows.length - 40) + ' more.');
   /* Logged, not just returned. The Run button shows what a function LOGS; a
