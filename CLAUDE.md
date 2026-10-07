@@ -1687,6 +1687,11 @@ voice under the new timing and the caption gives it away.
   FactFind360.** Asked for on 26 September 2026 ("a link for who you are
   going to assign which agent to meet with the client, an agent's login view
   and a manager's login view, on these codes; shall I put FactFind360?").
+  **Its short address is `/orphanmanagement`** (7 October 2026: "a log in
+  so staff can view and log as well agent can do as well"): a stub that
+  forwards to `orphan-transition/assign.html` with the query and the hash,
+  so a `#t=…` link still opens one client. It is a staff address, never one
+  a client holds, which is the only place "orphan" may appear in a URL.
   No: factfind360.com is the fact-find analyzer on Netlify from another
   repository, with no sheet, no codes and none of these clients, and the two
   hosting chains never touch. `orphan-transition/assign.html` sits beside the
