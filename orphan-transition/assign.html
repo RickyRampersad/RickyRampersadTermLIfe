@@ -373,7 +373,7 @@
   <b><span id="selN">0</span> selected</b>
   <span>Assign to</span><select id="barAgent"></select>
   <label><input type="checkbox" id="barBrief" checked> e-mail the agent a brief</label>
-  <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail</label>
+  <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail<span id="barIntroWhy" style="color:var(--dim)"></span></label>
   <button type="button" id="barGo">Assign</button>
   <button type="button" class="alt" id="barSug" hidden>Assign each as suggested (<span id="sugN">0</span>)</button>
   <button type="button" class="ghost" id="barClear">Clear</button>
@@ -387,6 +387,11 @@ var POLL_MS = 120000, RETRY_MS = 30000, GATE_RETRY_MS = 15000;
 var CODE = '', WHO = '';
 try { CODE = localStorage.getItem('rrb-transition-code') || ''; WHO = localStorage.getItem('rrb-assign-who') || ''; } catch (e) {}
 var D = null, SEL = {}, timer = null, inflight = false, shown = false;
+/* the board as this person last saw it (7 October 2026: "logging in as me too long to refresh"): a page opened again on
+   this device paints it at once and the sheet's fresh answer replaces it, as the wall and the dashboard do. Twelve hours
+   at most, only for the person it was read for, gone on sign-out or a refused password; nothing is saved while it shows. */
+var SNAP_KEY = 'rrb-assign-snapshot', SNAP_MAX_MS = 12 * 3600000, STALE = false, AGAIN = false;
+var STALE_MSG = 'One moment: this is the board as you last saw it. It is updating from the sheet; save again when the time at the top changes.';
 var $ = function (id) { return document.getElementById(id); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
 function digits(p) { return String(p || '').replace(/\D/g, ''); }
@@ -410,6 +415,7 @@ function my(s) { var m = /^(\d{4})-(\d{2})/.exec(s || ''); return m ? MON[Number
 /* every call after the gate carries who is signed in: the password alone opens nothing */
 function signed(p) { p.code = CODE; if (WHO) p.who = WHO; return p; }
 function api(params) {
+  if (STALE && /^(assign|update|comment)$/.test(params.action || '')) return Promise.resolve({ ok: false, error: STALE_MSG });
   var q = Object.keys(params).map(function (k) { return k + '=' + encodeURIComponent(params[k]); }).join('&');
   return fetch(SVC + '?' + q + '&z=' + Date.now()).then(function (r) { return r.text(); }).then(function (txt) {
     try { return JSON.parse(txt); }
@@ -418,29 +424,33 @@ function api(params) {
 }
 function load() {
   clearTimeout(timer); timer = null;
-  if (inflight || !CODE) return;
+  if (!CODE) return;
+  /* a save or a filter change while the sheet is still answering: read again as soon as it has, so the change shows
+     (until 7 October the second read was dropped and the change waited for the two-minute refresh) */
+  if (inflight) { AGAIN = true; return; }
   /* someone writing a comment: the two-minute refresh waits, so the box is not redrawn under them */
   if (shown && typing()) { schedule(30000); return; }
-  inflight = true;
+  inflight = true; AGAIN = false; busy(true);
   if (!shown) { var g = $('gateErr'); g.className = 'box'; g.textContent = 'Opening… the sheet is answering. This takes about fifteen seconds.'; g.style.display = 'block'; }
   var p = { action: 'board', code: CODE };
   if (WHO) p.who = WHO;
   if ($('fAll').checked) p.all = '1';
   api(p).then(function (d) {
-    inflight = false;
+    inflight = false; busy(false);
     if (!d || !d.ok) {
+      AGAIN = false;
       if (d && d.notUpdated) { notUpdated(); return; }
       var msg = d && d.error ? String(d.error) : 'The sheet did not answer.';
       fail(msg, !!(d && (d.refused === true || /\bcode\b/i.test(msg))));
       return;
     }
-    shown = true;
+    shown = true; STALE = false;
     $('gate').style.display = 'none'; $('main').style.display = 'block'; $('refresh').style.display = ''; $('signout').style.display = '';
     try { localStorage.setItem('rrb-transition-code', CODE); if (WHO) localStorage.setItem('rrb-assign-who', WHO); else localStorage.removeItem('rrb-assign-who'); } catch (e) {}
-    D = d; render();
-    schedule(POLL_MS);
+    D = d; render(); saveSnap(d);
+    if (AGAIN) load(); else schedule(POLL_MS);
   }).catch(function () {
-    inflight = false;
+    inflight = false; busy(false); AGAIN = false;
     /* a deployment without the board action answers with the form page, which the browser will not hand over:
        ask the ping, which every version answers, before calling it a busy sheet */
     api({ action: 'ping' }).then(function (d) {
@@ -455,16 +465,40 @@ function schedule(ms) { clearTimeout(timer); timer = setTimeout(load, ms); }
 function fail(msg, refused) {
   if (shown && !refused) { $('stamp').textContent += ' · could not refresh, trying again'; schedule(RETRY_MS); return; }
   var e = $('gateErr'); e.className = 'box stop'; e.textContent = msg; e.style.display = 'block';
-  $('gate').style.display = 'block'; $('main').style.display = 'none'; shown = false; D = null;
+  $('gate').style.display = 'block'; $('main').style.display = 'none'; shown = false; D = null; STALE = false;
+  if (refused) dropSnap();   // a password that no longer opens takes its picture with it
   if (!refused && CODE) schedule(GATE_RETRY_MS);
 }
+/* Refresh says it is working: the sheet takes seconds to answer, and a button that does nothing visible gets pressed again */
+function busy(on) { var b = $('refresh'); b.disabled = !!on; b.textContent = on ? 'Updating…' : 'Refresh'; }
+/* whose picture it is, without keeping the password a second time */
+function snapId() { var s = String(WHO) + '|' + String(CODE), h = 5381; for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36) + '.' + s.length; }
+function saveSnap(d) {
+  try { localStorage.setItem(SNAP_KEY, JSON.stringify({ id: snapId(), at: Date.now(), d: d })); }
+  catch (e) { dropSnap(); }   // too big for this browser's storage: no picture rather than an old one
+}
+function dropSnap() { try { localStorage.removeItem(SNAP_KEY); } catch (e) {} }
+function paintSnap() {
+  var s = null;
+  try { s = JSON.parse(localStorage.getItem(SNAP_KEY) || 'null'); } catch (e) { s = null; }
+  if (!s) return;
+  if (!s.d || !s.d.ok || !s.at || s.id !== snapId() || Date.now() - s.at > SNAP_MAX_MS) { dropSnap(); return; }
+  try {
+    D = s.d; STALE = true; shown = true;
+    $('gate').style.display = 'none'; $('main').style.display = 'block'; $('refresh').style.display = ''; $('signout').style.display = '';
+    render();
+  } catch (e) { D = null; STALE = false; shown = false; $('gate').style.display = 'block'; $('main').style.display = 'none'; dropSnap(); }
+}
+/* nothing is saved from the remembered picture: the fresh board is seconds away */
+function notYet() { if (!STALE) return false; toast(STALE_MSG, true); return true; }
 /* what one person opened is never shown to the next on the same device: their filter, the clients they opened in full,
    a comment not yet saved, the policies fetched for them. The search box and the filters too (7 October 2026: a unit
    manager signing in after the branch manager read "0 of 5 clients" under the branch manager's filter, and a client's
    name typed in the search box stayed for whoever came next) */
 function forget() {
+  dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {};
-  SHOW_N = SHOW_STEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true;   // the next person starts on their own view
+  SHOW_N = SHOW_STEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';   // the next person starts on their own view
   ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).value = ''; });
   $('fAll').checked = false;
   var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
@@ -510,7 +544,8 @@ var SHOW_STEP = 60, SHOW_N = SHOW_STEP, DEFAULTED = false, INTRO_SET = false;
 function canAssign() { return !!(D && (D.canAssign !== undefined ? D.canAssign : D.role === 'branch')); }
 function render() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', namer = canAssign(), first = d.me ? esc(d.me.name.split(/\s+/)[0]) : '';
-  $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (d.me ? ' · ' + esc(d.me.name) : '');
+  $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (d.me ? ' · ' + esc(d.me.name) : '') +
+    (STALE ? ' · <i>the board as you last saw it, updating from the sheet&hellip;</i>' : '');
   $('title').innerHTML = manager ? 'Assignments' : team ? 'Your team, <em>' + first + '</em>' : staff ? 'Calls and answers, <em>' + first + '</em>' : 'Your clients, <em>' + first + '</em>';
   var k = d.counts;
   /* the call list (7 October 2026): the rows still to finish, everyone's and this person's own */
@@ -527,10 +562,18 @@ function render() {
     (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">the agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">the agent brief</a>') +
     '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">if they say&hellip;</a>';
   /* automatic client e-mail on hold (transitionHoldClientMail): said on the board, and the introduction box starts unticked */
+  /* since 7 October the hold also stops the receipts and the introductions ("yes"): a backend that says so is believed;
+     an older one still sends an introduction when the box is ticked, and the words say that instead */
+  var introsHeld = !!(d.mailHeld && d.introsHeld);
   $('mailHeld').hidden = !d.mailHeld;
-  $('mailHeld').innerHTML = d.mailHeld ? '<b>Client e-mail is on hold.</b> No letters, reminders or follow-up notes go until the branch releases it. ' +
-    'Naming an agent here sends nothing to the client unless you tick <i>introduce the agent to the client by e-mail</i>.' : '';
+  $('mailHeld').innerHTML = !d.mailHeld ? '' : '<b>Client e-mail is on hold.</b> No letters, reminders' + (d.receiptsHeld ? ', receipts' : '') +
+    ' or follow-up notes go until the branch releases it' + (d.receiptsHeld ? ', and the receipts go after it' : '') + '. ' +
+    (introsHeld ? 'Naming an agent briefs the agent and sends the client nothing. A note you press on the board still goes.'
+      : 'Naming an agent here sends nothing to the client unless you tick <i>introduce the agent to the client by e-mail</i>.');
   if (d.mailHeld && !INTRO_SET) { INTRO_SET = true; $('barIntro').checked = false; }
+  if (introsHeld) $('barIntro').checked = false;
+  $('barIntro').disabled = introsHeld;
+  $('barIntroWhy').textContent = introsHeld ? ' (held: client e-mail is on hold)' : '';
   var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
     ? '<b>Act now</b> opens first: clients still open who asked for an agent now, said the former agent has been in touch, were told to change a policy or have a payment to trace, or have waited past ' + esc(d.waitDays) + ' working days. ' +
@@ -1187,6 +1230,7 @@ function saveComment(tok, btn) {
   var box = document.querySelector('textarea.cmtbox[data-cmt="' + tok + '"]'), text = String(box ? box.value : (DRAFT[tok] || '')).trim();
   if (!text) { toast('Write the comment first.', true); return; }
   DRAFT[tok] = text;
+  if (notYet()) return;
   btn.disabled = true; btn.textContent = 'Saving…';
   api(signed({ action: 'comment', token: tok, text: text })).then(function (r) {
     btn.disabled = false; btn.textContent = 'Save comment';
@@ -1249,16 +1293,17 @@ function sugGroups() {
 }
 var ASSIGN_CHUNK = 40;   // clients a request: the tokens travel in the address
 function assignSuggested() {
+  if (notYet()) return;
   var sg = sugGroups(), jobs = [];
   Object.keys(sg.g).sort().forEach(function (a) { for (var i = 0; i < sg.g[a].length; i += ASSIGN_CHUNK) jobs.push([a, sg.g[a].slice(i, i + ASSIGN_CHUNK)]); });
   if (!jobs.length) { toast('None of those ticked has a suggested agent: choose one in the bar instead.', true); return; }
-  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, notAns = 0, warn = [];
+  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, introHeld = 0, notAns = 0, warn = [];
   btn.disabled = true; $('barGo').disabled = true;
   var next = function () {
     if (!jobs.length) {
       btn.disabled = false; $('barGo').disabled = false;
       var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
-      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
         (sg.none ? ' · ' + sg.none + ' left ticked: no suggestion' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
       load();
       return;
@@ -1268,7 +1313,7 @@ function assignSuggested() {
     api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' })).then(function (r) {
       if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
       else {
-        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; notAns += r.notAnswered || 0;
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; notAns += r.notAnswered || 0;
         j[1].forEach(function (t) { delete SEL[t]; });
         (r.warnings || []).forEach(function (x) { warn.push(x); });
       }
@@ -1329,7 +1374,7 @@ $('barClear').addEventListener('click', function () { SEL = {}; list(); bar(); }
 $('barGo').addEventListener('click', function () { var a = $('barAgent').value; if (!a) { toast('Choose an agent first.', true); return; } assign(Object.keys(SEL), a, $('barGo')); });
 $('barSug').addEventListener('click', assignSuggested);
 function assign(tokens, agent, el) {
-  if (!tokens.length || !agent) return;
+  if (!tokens.length || !agent || notYet()) return;
   if (el) el.disabled = true;
   var p = signed({ action: 'assign', tokens: tokens.join(','), agent: agent, brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' });
   toast('Naming ' + agent + ' on ' + tokens.length + ' client' + (tokens.length === 1 ? '' : 's') + '…');
@@ -1337,6 +1382,7 @@ function assign(tokens, agent, el) {
     if (el) el.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
     var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+      (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '');
     toast(msg, !!(r.warnings && r.warnings.length));
@@ -1474,7 +1520,7 @@ function syncPanel() {
 }
 function closePanel() { $('panel').hidden = true; document.body.style.overflow = ''; PN = null; }
 function savePanel() {
-  if (!PN) return;
+  if (!PN || notYet()) return;
   var c = PN.c, status = PN.status, btn = $('pSave'), tell = $('pTell'), key = PN.key;
   var p = { action: 'update', code: CODE, token: c.token, status: status, note: $('pNote').value.trim() };
   if (WHO) p.who = WHO;
@@ -1504,7 +1550,7 @@ $('fOrder').addEventListener('change', function () { try { localStorage.setItem(
 $('fAll').addEventListener('change', function () { if (D) load(); });
 $('fClear').addEventListener('click', function () { ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug'].forEach(function (id) { $(id).value = ''; }); FILTER.agent = ''; if (D) render(); });
 
-if (CODE) { $('code').value = CODE; $('who').value = WHO; load(); }
+if (CODE) { $('code').value = CODE; $('who').value = WHO; paintSnap(); load(); }
 window.RRB_ASSIGN = { load: load, render: render };
 </script>
 

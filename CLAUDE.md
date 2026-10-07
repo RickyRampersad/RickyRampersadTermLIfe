@@ -1472,18 +1472,33 @@ voice under the new timing and the caption gives it away.
   editor's Run button until then). While held, the batch (letters, and the
   reminder pass inside it) stops before the sender, a press by hand included,
   and logs `held`; the chase still tells the branch and keeps the client's
-  note due. Nothing is marked, so the go picks everything up. **Receipts are
-  not held**, decided the same morning ("if they answer on an old one, one
-  going out is ok and logged"): a client who answers a letter already sent
-  is thanked as usual; `HOLD_RECEIPTS` true would hold those too, thanked
-  after the go if under fourteen days old. Also not held: the Test rows
-  (colleagues), the preview to the owner, the digest and the reports, the
-  inbox reader, the filing of e-mails taken by phone, and two e-mails from
-  Service.gs's `clientMail_` through the deployed web app — the questionnaire
-  confirmation, because the reference and access code must reach a client
-  who has just filed, and the board's introduction, which goes only when the
-  manager assigns with the box ticked. `health/hold-harness.js` in the
-  session scratchpad runs the hold in Node.
+  note due. Nothing is marked, so the go picks everything up. **Since 7
+  October 2026 the receipts and the board's introductions are held too.**
+  That day an introduction went to a client while an agent was being trained
+  on the board. The manager asked to "hold off all auto email for now
+  please!", then said "yes" to the hold stopping both. Until then receipts
+  were not held, decided on 28 September ("if they answer on an old one, one
+  going out is ok and logged"). `HOLD_RECEIPTS` (true) holds only the e-mail
+  to the client. The receipts run still marks what it always marks, still
+  tells the branch who wrote in, and still sends support@ the trail. So a
+  hold never hides a client's own words. A receipt that waited is not
+  marked, and goes once on the first run after the go, if the answer is
+  under fourteen days old. `HOLD_INTROS` (true) has a naming brief the agent
+  and send the client nothing and mark nothing (`introHeld` in the reply).
+  An introduction held does not go by itself after the go, because a naming
+  made in practice would go with it. Until 7 October `HOLD_RECEIPTS` stopped
+  the whole receipts run, alerts included. The board says what is held
+  (`introsHeld`, `receiptsHeld`). The introduce box is then unticked and
+  cannot be ticked, and the hold and release messages name both. Still not
+  held: a note the manager presses on the board (his go for that note), the
+  Test rows (colleagues), the preview to the owner, the digest and the
+  reports, the agent's brief, the inbox reader, the filing of e-mails taken
+  by phone, and the questionnaire confirmation from Service.gs's
+  `clientMail_`, because the reference and access code must reach a client
+  who has just filed. `health/hold-harness.js` in the session scratchpad
+  runs the hold in Node. `hold7oct/receipts-hold.js` (14 checks) and
+  `hold7oct/intro-hold.js` (16, Node and Playwright, the real tabs) cover
+  the 7 October change.
 - **Every client e-mail goes out as support@rickyrampersadbranch.com,
   never from Gmail.** Decided 23 September: "we need to have
   support@rickyrampersadbranch.com and copy" the sales-support and branch
@@ -2350,8 +2365,9 @@ voice under the new timing and the caption gives it away.
   is who sees the card: the branch and staff anyone, a unit manager his
   team's, an agent their own. Staff never see the claim. The board's
   two-minute refresh waits while a comment is being written. Signing out
-  forgets every client opened, every comment not yet saved and every policy
-  fetched, so the next person on the device starts clean.
+  forgets every client opened, every comment not yet saved, every policy
+  fetched and the board kept on the device, so the next person on the
+  device starts clean.
 - **The calls moved onto the board, and the branch opens on what to act on**
   (7 October 2026: "where does staff make their notes and who to call as we
   move from the spreadsheet to data entry when call and can see the scripts",
@@ -2390,7 +2406,9 @@ voice under the new timing and the caption gives it away.
   `agent-brief.html`, `if-they-say.html`) are linked under the title and on
   every call row. While automatic client e-mail is held the board says so and
   the introduce box starts unticked, after an introduction went to a client
-  during training that afternoon. **Households** come from the Household
+  during training that afternoon; with a backend that holds introductions
+  too (see the hold bullet), the box cannot be ticked at all while the hold
+  is on. **Households** come from the Household
   Assignments tab when there is no Households tab (`tHouseholds_`; a family
   link is then made there too, so one linked pair never hides every other
   household), and so does the 24 September suggestion when there is no
@@ -2400,7 +2418,22 @@ voice under the new timing and the caption gives it away.
   from 6.3 to about 2 seconds after the answer arrives; Apps Script itself
   still takes some ten seconds to read the sheet. `slow7oct/calls-harness.js`
   (25 checks, Node, the real tabs) and `slow7oct/board-calls-test.js` (26,
-  Playwright) in the scratchpad cover it.
+  Playwright) in the scratchpad cover it. **The board opens on the last
+  board it showed** (the same afternoon: "logging in as me too long to
+  refresh"). The page keeps it on the device as `rrb-assign-snapshot`, as
+  the wall and the dashboard keep theirs. It is painted at once when the
+  page opens again, and the sheet's answer replaces it seconds later. It is
+  kept twelve hours at most and only for the person it was read for (a hash
+  of the number and password, never the password itself). It goes on
+  sign-out and on a refused password. Nothing is saved from it: an outcome,
+  a naming or a comment waits for the fresh board. Refresh reads
+  "Updating…" while the sheet answers. A reload asked for during another
+  is made straight after it; until then, a save that landed mid-refresh
+  waited two minutes to show. Every tab is read once per board request
+  (`tSheetRows_` under `T_READ_ONCE`), so Household Assignments is read
+  once instead of two or three times. `speed7oct/snap-test.js` (24,
+  Playwright) and `speed7oct/same.js` (the answer byte for byte the same
+  before and after, for every role) in the scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
