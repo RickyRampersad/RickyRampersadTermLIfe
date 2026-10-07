@@ -2598,6 +2598,59 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   is logged on `Group Sends` with the letter itself; without Microsoft 365 it
   opens in the staff member's Outlook and is still logged.
 
+## The Premium Due Desk — checked by a person, sent at ten
+
+`premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
+project (the tracker's: `Intelligence.gs` beside `KPI.gs`, its own `/exec`).
+Asked for on 7 October 2026: "a trigger go out when a client premium is 45 days
+due with built in responses for them to select", then "a staff has to do a
+check mark to ensure due diligence is done, once they check it goes out", then
+"a time at 10am".
+
+- **A tick is a check, recorded on the spot** on the **Premium Due Checks** tab:
+  who, when, the client's address and agent as checked, and any flag on the row
+  they ticked through. The box is enabled only once that client's letter has
+  been opened on the desk; there is no send button and no "tick all". "Do not
+  send" takes a reason and is recorded too. Staff and the branch manager tick;
+  an agent or a unit manager reads the letters and never ticks, because the
+  letter asks the client to rate their agent.
+- **The letters go at ten, Monday to Friday.** Ticked before 10:00, that
+  morning; after, at ten on the next working day. The send runs inside
+  `intelPendingRefresh`, the hourly trigger, from the ten o'clock hour
+  (`pddRun_`): the project is one trigger short of its twenty, so no new
+  trigger. A firing missed at ten is caught up the next hour.
+- **The line is 45 to 51 days** (`iSurveyPool_(45, 6)`; every other caller
+  passes nothing and keeps the 45th day exactly), so a Saturday's 45s and a
+  tick made after ten still go. A client written to at 45 in the episode stays
+  off it, so no one gets two.
+- **The responses are the letter's own**: the 1–5 rating and the five taps
+  under it. Nothing in the letter changed, so the wording approval holds; a
+  new tap would change `iSurveyHash_` and stop live sends until re-approved.
+- **At ten the send reads the line afresh** and sends only a client still on
+  it, with the address and agent that were checked; otherwise "not sent", with
+  the reason, on the desk and in one internal summary to the manager. Live only
+  with client mail live and the wording approved; in test mode each letter goes
+  to the test inbox and the client is not marked as written to; held, ticks wait
+  and a client past 51 days drops off. It logs on Intel Surveys before it sends
+  and takes the log back if the mail fails. It stays inside the day's mail
+  allowance (a consumer Google account: about 100 recipients a day, and each
+  letter copies the agent, every staff member on the access list and the unit
+  manager), oldest first; the rest wait. Every write is conditional on the
+  check still reading what the send saw, under the script lock the tracker's
+  submissions use, held for a write and no longer.
+- **The taps need the web app's `/exec` address**, which a time trigger is
+  not reliably given; the desk notes it from any request (`PDD_EXEC_URL`), and
+  `INTEL_EXEC_URL` wins. Without one the live send holds and the desk names the
+  property to set.
+- **The branch workbook reached Google's ten-million-cell ceiling on 21
+  September 2026** (the nightly build has reported it since; `intel.ping`
+  shows `lastError`). The checks tab goes there when it can and to the
+  tracker's own workbook when a new tab is refused.
+- Install: paste `Intelligence.gs` and `PremiumDueDesk.gs` (all over), then a
+  New version. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
+  `pddToday()`, `pddSendNow()`. `pdd10/` in the session scratchpad holds the
+  harness (`test.js`, 101 checks; `page-test.js`, 33, Playwright).
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

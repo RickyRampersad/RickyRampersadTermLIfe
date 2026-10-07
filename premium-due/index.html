@@ -8,13 +8,13 @@
 <link rel="icon" href="../logo-mark.png">
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   THE 45-DAY LINE, WORKED BY A PERSON
+   THE 45-DAY LINE: CHECKED BY A PERSON, SENT AT TEN
    ──────────────────────────────────────────────────────────────────────────
-   Nothing is sent by opening this page. The desk reads today's line, shows
-   what is known about each client, renders the exact letter that would go,
-   and sends only the rows somebody ticked. Every one of those steps is a
-   separate request, and the server checks the conduct gate again on the way
-   out — the button being enabled is not permission.
+   Nothing is sent from this page. A person reads a client's letter, checks
+   the client, and ticks; the tick is recorded on the spot, with their name.
+   Every ticked letter goes at ten on a working day, from the server, which
+   reads the line again and checks every rule again before anything leaves.
+   A tick made before ten goes that morning; after ten, the next working day.
    ══════════════════════════════════════════════════════════════════════════ */
 :root{
   --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
@@ -28,94 +28,141 @@
   color-scheme:dark;
 }
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--text);font:15px/1.6 var(--sans);
-  padding:0 18px 70px;-webkit-text-size-adjust:100%}
-.shell{max-width:1240px;margin:0 auto}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--text);font:15.5px/1.6 var(--sans);
+  padding:0 16px 70px;-webkit-text-size-adjust:100%;overflow-wrap:anywhere}
+.shell{max-width:1280px;margin:0 auto}
 h1,h2,h3{font-family:var(--disp);text-wrap:balance}
 
-.top{display:flex;align-items:center;gap:13px;padding:20px 0 0}
+.top{display:flex;align-items:center;gap:13px;padding:20px 0 0;flex-wrap:wrap}
 .mark{width:42px;height:42px;border-radius:13px;overflow:hidden;background:#07131f;
   display:grid;place-items:center;flex:0 0 auto}
 .mark img{width:100%;height:100%;display:block}
 .top .who{font:800 14px/1.2 var(--disp);color:var(--gold);letter-spacing:.3px}
-.top .sub{font-size:12px;color:var(--muted)}
-.top .me{margin-left:auto;text-align:right;font-size:12.5px;color:var(--muted)}
-.top .me b{display:block;color:var(--text);font-size:14px}
-.lnk{background:none;border:0;color:var(--teal);font:inherit;font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline}
+.top .sub{font-size:12.5px;color:var(--muted)}
+.top .me{margin-left:auto;text-align:right;font-size:13px;color:var(--muted)}
+.top .me b{display:block;color:var(--text);font-size:14.5px}
+.lnk{background:none;border:0;color:var(--teal);font:inherit;font-size:13px;cursor:pointer;padding:0;text-decoration:underline}
 
 /* sign in */
 .gate{max-width:430px;margin:12vh auto 0;background:var(--card);border:1px solid var(--line);
   border-radius:20px;padding:30px 28px}
 .gate h1{font-size:21px;font-weight:800;margin-bottom:6px}
-.gate p{color:var(--muted);font-size:14px;margin-bottom:20px}
+.gate p{color:var(--muted);font-size:14.5px;margin-bottom:20px}
 label{display:block;font:700 11px var(--sans);letter-spacing:.13em;text-transform:uppercase;
   color:var(--faint);margin:0 0 6px}
-input,select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;
+input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;
   padding:12px 14px;color:var(--text);font:15px var(--sans);margin-bottom:15px}
-input:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:1px}
 button.go{width:100%;background:var(--gold);color:#07131f;border:0;border-radius:11px;
   padding:13px;font:800 15px var(--disp);cursor:pointer}
 button.go:disabled{opacity:.5;cursor:default}
-.err{color:var(--bad);font-size:13.5px;margin-top:10px;min-height:1.2em}
+.err{color:var(--bad);font-size:14px;margin-top:10px;min-height:1.2em}
 
 /* head */
-.hero{padding:26px 0 4px}
+.hero{padding:24px 0 4px}
 .hero h1{font-size:clamp(23px,4vw,33px);font-weight:800;letter-spacing:-.3px}
-.hero p{color:var(--muted);margin-top:8px;max-width:46em}
-
-.state{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
-.pill{font:700 11.5px var(--mono);letter-spacing:.06em;padding:7px 13px;border-radius:99px;
+.hero p{color:var(--muted);margin-top:8px;max-width:52em}
+.state{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 4px}
+.pill{font:700 11.5px var(--mono);letter-spacing:.05em;padding:7px 12px;border-radius:99px;
   border:1px solid var(--line);color:var(--muted);text-transform:uppercase}
 .pill.live{background:rgba(255,122,143,.14);border-color:rgba(255,122,143,.5);color:var(--bad)}
 .pill.test{background:rgba(240,182,74,.14);border-color:rgba(240,182,74,.5);color:var(--warn)}
-.pill.held{background:rgba(53,208,127,.12);border-color:rgba(53,208,127,.45);color:var(--good)}
+.pill.held,.pill.ok{background:rgba(53,208,127,.12);border-color:rgba(53,208,127,.45);color:var(--good)}
+.pill.ten{background:rgba(239,194,75,.13);border-color:rgba(239,194,75,.5);color:var(--gold)}
 .banner{border-left:3px solid var(--bad);background:rgba(255,122,143,.1);border-radius:0 12px 12px 0;
-  padding:14px 17px;margin:16px 0;font-size:14.5px}
+  padding:14px 17px;margin:14px 0;font-size:14.5px}
 .banner.ok{border-left-color:var(--good);background:rgba(53,208,127,.09)}
+.banner.warn{border-left-color:var(--warn);background:rgba(240,182,74,.1)}
+.banner code{font:12.5px var(--mono);background:rgba(0,0,0,.25);padding:2px 6px;border-radius:6px}
 
-/* layout */
-.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
-@media (max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}}
-
+/* layout: the list on the left, the letter beside it and kept in view while
+   the list scrolls; one column on anything narrower than a laptop */
+.cols{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(380px,1fr);gap:18px;margin-top:16px;align-items:start}
+#prevPanel{position:sticky;top:12px}
+#prevPanel .prev{max-height:calc(100vh - 82px);overflow-y:auto}
+@media (max-width:1100px){
+  .cols{grid-template-columns:minmax(0,1fr)}
+  #prevPanel{position:static}
+  #prevPanel .prev{max-height:none;overflow:visible}
+}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0}
 .panel .ph{display:flex;align-items:center;gap:10px;padding:14px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.panel .ph h2{font-size:16px;font-weight:800;margin-right:auto}
-.count{font:700 12px var(--mono);color:var(--gold)}
+.panel .ph h2{font-size:16.5px;font-weight:800;margin-right:auto}
+.count{font:700 12.5px var(--mono);color:var(--gold)}
+button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:10px;
+  padding:9px 14px;font:700 13px var(--sans);cursor:pointer}
+button.ghost:hover{color:var(--text);border-color:rgba(255,255,255,.3)}
+
+.dd{padding:12px 17px;border-bottom:1px solid var(--line);font-size:13.5px;color:var(--muted);background:rgba(0,0,0,.12)}
+.dd b{color:var(--text)}
+.dd ol{margin:6px 0 0 18px;padding:0}
+.dd li{margin:2px 0}
 
 .tw{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:620px}
+table{border-collapse:collapse;width:100%;font-size:14px;overflow-wrap:normal}
+#tbl{min-width:700px}
 th{font:700 10.5px var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
-  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--card)}
-td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.055);vertical-align:top}
-tr:last-child td{border-bottom:none}
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;background:var(--card)}
+td{padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.055);vertical-align:top}
+tr.grp td{background:rgba(0,0,0,.18);font:800 11px var(--sans);letter-spacing:.11em;text-transform:uppercase;
+  color:var(--gold);padding:9px 12px}
 tr.row{cursor:pointer}
 tr.row:hover td{background:var(--card2)}
 tr.row.on td{background:rgba(0,207,234,.1)}
+tr.row.dim td{opacity:.62}
 td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.cl{min-width:190px}
 td.cl b{display:block;font-weight:700}
-td.cl i{font-style:normal;color:var(--faint);font-size:12px}
+td.cl i{display:block;font-style:normal;color:var(--faint);font-size:12.5px;overflow-wrap:anywhere}
+td.pr small{display:block;color:var(--faint);font:12.5px var(--sans);margin-top:2px}
+td.where{min-width:150px}
+td.cl code{font:12px var(--mono);color:var(--muted)}
+.days{display:inline-block;font:700 12.5px var(--mono);padding:2px 8px;border-radius:7px;background:rgba(255,255,255,.07)}
+.days.late{background:rgba(240,182,74,.16);color:var(--warn)}
+.days.end{background:rgba(255,122,143,.16);color:var(--bad)}
 .soon{color:var(--bad);font-weight:700}
 .flag{display:inline-block;background:rgba(240,182,74,.16);border:1px solid rgba(240,182,74,.4);
-  color:var(--warn);border-radius:6px;font:700 10px var(--mono);padding:2px 6px;margin-top:4px}
-input[type=checkbox]{width:17px;height:17px;margin:2px 0 0;accent-color:var(--gold);cursor:pointer}
+  color:var(--warn);border-radius:6px;font:700 10.5px var(--mono);padding:2px 6px;margin-top:4px}
+.st{font-size:13px;line-height:1.45}
+.st.t{color:var(--good)} .st.s{color:var(--faint)} .st.w{color:var(--warn)} .st.o{color:var(--muted)}
+input[type=checkbox]{width:20px;height:20px;margin:1px 0 0;accent-color:var(--gold);cursor:pointer}
+input[type=checkbox]:disabled{cursor:not-allowed;opacity:.45}
 
-.act{display:flex;gap:10px;align-items:center;padding:14px 17px;border-top:1px solid var(--line);flex-wrap:wrap}
-button.send{background:var(--gold);color:#07131f;border:0;border-radius:11px;padding:11px 20px;
-  font:800 14px var(--disp);cursor:pointer}
-button.send:disabled{opacity:.45;cursor:default}
-button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:11px;
-  padding:11px 16px;font:700 13px var(--sans);cursor:pointer}
-.said{font-size:13px;color:var(--muted)}
+.act{display:flex;gap:10px;align-items:center;padding:13px 17px;border-top:1px solid var(--line);flex-wrap:wrap}
+.said{font-size:14px;color:var(--muted)}
+.said.bad{color:var(--bad)}
 
-/* the letter preview — white, because that is what lands in the inbox */
-.prev{padding:16px;max-height:76vh;overflow-y:auto}
-.prevmeta{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.7}
+/* the letter panel */
+.prev{padding:16px}
+.prevmeta{font-size:13px;color:var(--muted);margin-bottom:12px;line-height:1.7}
 .prevmeta b{color:var(--text)}
+.decide{border:1px solid var(--line);border-radius:13px;padding:14px;margin:0 0 14px;background:rgba(0,0,0,.14)}
+.decide .say{font-size:14.5px;margin-bottom:10px}
+.decide .say.t{color:var(--good)} .decide .say.s{color:var(--muted)} .decide .say.w{color:var(--warn)}
+.decide .btns{display:flex;flex-wrap:wrap;gap:9px}
+button.tick{background:var(--gold);color:#07131f;border:0;border-radius:11px;padding:12px 18px;
+  font:800 14.5px var(--disp);cursor:pointer}
+button.tick:disabled{opacity:.5;cursor:default}
+.skipform{margin-top:12px}
+.skipform select,.skipform input{margin-bottom:9px}
 .sheet{background:#fff;color:#16202b;border-radius:11px;padding:20px 18px}
 .sheet img{max-width:100%}
-.empty{padding:34px 20px;text-align:center;color:var(--faint);font-size:14px}
-.foot{margin-top:34px;font-size:12px;color:var(--faint);max-width:60em;line-height:1.7}
+.empty{padding:30px 18px;text-align:center;color:var(--faint);font-size:14.5px}
+.back{display:none;margin-bottom:10px}
+@media (max-width:1100px){.back{display:inline-block}}
+
+.recent{margin-top:18px}
+#rtbl{min-width:640px}
+.ok-t{color:var(--good)} .warn-t{color:var(--warn)} .bad-t{color:var(--bad)}
+.foot{margin-top:30px;font-size:12.5px;color:var(--faint);max-width:64em;line-height:1.7}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+@media (max-width:600px){
+  body{font-size:15px;padding:0 12px 60px}
+  .top .me{margin-left:0;text-align:left;width:100%}
+  .panel .ph{padding:12px 13px}
+  .prev{padding:12px}
+}
 </style>
 </head>
 <body>
@@ -124,7 +171,7 @@ button.ghost{background:none;border:1px solid var(--line);color:var(--muted);bor
 <div class="shell" id="gate">
   <div class="gate">
     <h1>Premium Due Desk</h1>
-    <p>Today's 45-day line. Sign in with the same name and code you use for the
+    <p>The 45-day line. Sign in with the same name and code you use for the
     intelligence wall.</p>
     <label for="who">Your name</label>
     <input id="who" autocomplete="username" placeholder="As the branch has it">
@@ -150,7 +197,7 @@ button.ghost{background:none;border:1px solid var(--line);color:var(--muted);bor
   </div>
 
   <div class="hero">
-    <h1 id="headline">Today's 45-day line</h1>
+    <h1 id="headline">The 45-day line</h1>
     <p id="standfirst">Reading the branch portfolio…</p>
     <div class="state" id="state"></div>
   </div>
@@ -158,30 +205,47 @@ button.ghost{background:none;border:1px solid var(--line);color:var(--muted);bor
   <div id="gateMsg"></div>
 
   <div class="cols">
-    <div class="panel">
+    <div class="panel" id="listPanel">
       <div class="ph">
-        <h2>Due today</h2>
+        <h2>Due for a letter</h2>
         <span class="count" id="tally"></span>
-        <button class="ghost" id="all">Tick all</button>
-        <button class="ghost" id="none">Clear</button>
+        <button class="ghost" id="refresh" title="Read the line again from the Branch Portfolio">Refresh</button>
+      </div>
+      <div class="dd" id="dd">
+        <b>Before you tick a client:</b>
+        <ol>
+          <li>the premium is still unpaid: this line is read from the Branch Portfolio extract,
+              which can be days old, so check Salesforce;</li>
+          <li>the e-mail is the client's own, not an agent's or an office's;</li>
+          <li>the agent named still looks after them;</li>
+          <li>you have read their letter, and anything flagged on the row you know is fine.</li>
+        </ol>
       </div>
       <div class="tw"><table id="tbl">
-        <thead><tr><th style="width:34px"></th><th>Client</th><th>Policy</th><th>Agent</th>
-          <th>Premium</th><th>Collected by</th><th>Lapses</th></tr></thead>
+        <thead><tr><th style="width:44px">Send</th><th>Client</th><th>Days</th><th>Agent</th>
+          <th>Premium</th><th>Lapses</th><th>Where it stands</th></tr></thead>
         <tbody id="body"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
       </table></div>
       <div class="act">
-        <button class="send" id="send" disabled>Send 0 letters</button>
-        <span class="said" id="said">Tick the ones you have checked.</span>
+        <span class="said" id="said">Open a client's letter first. Then tick it once you have checked them.</span>
       </div>
     </div>
 
-    <div class="panel">
-      <div class="ph"><h2>The letter that would go</h2></div>
+    <div class="panel" id="prevPanel">
+      <div class="ph"><h2>The letter</h2></div>
       <div class="prev" id="prev">
-        <div class="empty">Click a client to read the exact letter they would receive.</div>
+        <div class="empty">Click a client to read the exact letter they would get.
+          You can tick a client once you have read their letter.</div>
       </div>
     </div>
+  </div>
+
+  <div class="panel recent">
+    <div class="ph"><h2>What the ten o'clock send did, the last seven days</h2><span class="count" id="rtally"></span></div>
+    <div class="tw"><table id="rtbl">
+      <thead><tr><th>When</th><th>Client</th><th>Agent</th><th>Checked by</th><th>What happened</th></tr></thead>
+      <tbody id="rbody"><tr><td colspan="5" class="empty">Nothing yet.</td></tr></tbody>
+    </table></div>
   </div>
 
   <div class="foot" id="foot"></div>
@@ -190,7 +254,7 @@ button.ghost{background:none;border:1px solid var(--line);color:var(--muted);bor
 <script>
 /* The same deployment every branch screen talks to. */
 var API = 'https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec';
-var TOKEN = null, ROWS = [], PICK = {}, STATE = null;
+var TOKEN = null, ROWS = [], STATE = null, CUR = null, SEEN = {}, BUSY = {}, LOADED = 0;
 
 /* Apps Script answers a simple cross-origin POST but not a preflight, so the
    content type stays text/plain. The body is still JSON. */
@@ -207,8 +271,19 @@ function esc(s) {
 function money(n) {
   return 'TT$' + (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
 }
+function first(client) {
+  var s = String(client || ''), parts = s.split(',');
+  var g = (parts.length > 1 ? parts[1] : parts[0]).trim().split(/\s+/)[0] || '';
+  return /^[A-Za-z'’-]{2,}$/.test(g) ? g.charAt(0).toUpperCase() + g.slice(1).toLowerCase() : 'this client';
+}
 function saveTok(t) { try { sessionStorage.setItem('pdd.t', t || ''); } catch (e) {} }
 function readTok() { try { return sessionStorage.getItem('pdd.t') || ''; } catch (e) { return ''; } }
+/* Which letters this person has opened today, kept for the tab's life so a
+   reload does not make them open every letter again. */
+function seenKey() { return 'pdd.seen.' + new Date().toISOString().slice(0, 10); }
+function loadSeen() { try { SEEN = JSON.parse(sessionStorage.getItem(seenKey()) || '{}') || {}; } catch (e) { SEEN = {}; } }
+function saveSeen() { try { sessionStorage.setItem(seenKey(), JSON.stringify(SEEN)); } catch (e) {} }
+function canTick() { return !!(STATE && STATE.you && STATE.you.canTick && STATE.v); }
 
 /* ── sign in ─────────────────────────────────────────────────────────── */
 $('go').onclick = function () {
@@ -236,151 +311,364 @@ function enter(res) {
   $('gate').hidden = true; $('app').hidden = false;
   $('meName').textContent = res.name || '';
   $('meRole').textContent = res.role || '';
-  load();
+  loadSeen();
+  load(false);
 }
 
-/* ── today's line ────────────────────────────────────────────────────── */
-/* `said` is what the desk tells the person after they press send. The repaint
-   that follows a send runs through tally(), which writes to the same line, so
-   the result has to be set AFTER the repaint or it is wiped before it is read.
-   It was: you sent six letters and the desk answered "Tick the ones you have
-   checked." */
-function load(said) {
-  call({ action: 'intel.pdd.list', token: TOKEN, stage: 45 }).then(function (r) {
-    if (!r.ok) { $('standfirst').textContent = r.error || 'Could not read the line.'; return; }
-    STATE = r; ROWS = r.rows || []; PICK = {};
-    $('headline').textContent = ROWS.length
-      ? ROWS.length + (ROWS.length === 1 ? ' client is' : ' clients are') + ' on the 45-day line'
-      : 'Nobody is on the 45-day line today';
-    $('standfirst').textContent = r.today + '. ' +
-      (r.you.branchWide ? 'You are seeing the whole branch.' : 'You are seeing your own clients.') +
-      ' Nothing has been sent.';
-    paintState(r); paintRows(); paintFoot(r);
-    if (said) $('said').textContent = said;
+/* ── the line ────────────────────────────────────────────────────────── */
+function load(fresh, said) {
+  $('refresh').disabled = true; $('refresh').textContent = 'Reading…';
+  call({ action: 'intel.pdd.list', token: TOKEN, stage: 45, fresh: !!fresh }).then(function (r) {
+    $('refresh').disabled = false; $('refresh').textContent = 'Refresh';
+    if (!r.ok) {
+      $('standfirst').textContent = r.error || 'Could not read the line.';
+      if (/expired|sign in/i.test(r.error || '')) { saveTok(''); setTimeout(function () { location.reload(); }, 1500); }
+      return;
+    }
+    STATE = r; ROWS = r.rows || []; LOADED = Date.now();
+    paintHead(r); paintRows(); paintRecent(r); paintFoot(r);
+    if (CUR) {
+      var again = ROWS.filter(function (x) { return x.policy === CUR.policy; })[0];
+      if (again) { CUR = again; paintDecide(); } else { CUR = null; clearPreview('That client has left the line.'); }
+    }
+    if (said) say(said);
   }).catch(function () {
+    $('refresh').disabled = false; $('refresh').textContent = 'Refresh';
     $('standfirst').textContent = 'Could not reach the branch script.';
   });
 }
+$('refresh').onclick = function () { load(true); };
+/* A desk left open past ten should show what the send did. */
+document.addEventListener('visibilitychange', function () {
+  if (!document.hidden && TOKEN && STATE && Date.now() - LOADED > 5 * 60000) load(false);
+});
 
-function paintState(r) {
-  var m = r.mail || {}, p = [];
-  var c = m.clients === 'live' ? 'live' : m.clients === 'test' ? 'test' : 'held';
-  p.push('<span class="pill ' + c + '">Client mail: ' + esc(m.clients || 'held') + '</span>');
-  p.push('<span class="pill">Day ' + r.stage + '</span>');
-  if (r.approvedBy) p.push('<span class="pill held">Wording approved · ' + esc(r.approvedBy) + '</span>');
+function counts() {
+  var c = { open: 0, ticked: 0, skipped: 0 };
+  ROWS.forEach(function (r) {
+    var k = r.state && r.state.kind;
+    if (k === 'ticked' || k === 'sending') c.ticked++;
+    else if (k === 'skipped') c.skipped++;
+    else c.open++;
+  });
+  return c;
+}
+
+function paintHead(r) {
+  var n = ROWS.length, s = r.send || {}, m = r.mail || {}, c = counts();
+  $('headline').textContent = n
+    ? n + (n === 1 ? ' client is' : ' clients are') + ' due a 45-day letter'
+    : 'Nobody is on the 45-day line today';
+  var how = !r.v
+    ? ' This page is newer than the desk\'s script: see the note below.'
+    : canTick()
+      ? ' Read each client\'s letter, check them, then tick. Every ticked letter goes at ten: ticked before 10:00, this morning; after, at ten on the next working day.'
+      : ' You can read each letter. Staff check the clients and tick them.';
+  $('standfirst').textContent = r.today + '. ' +
+    (r.you.branchWide ? 'The whole branch' : 'Your own clients') + ', from 45 to ' + (r.upTo || 51) + ' days behind.' + how;
+
+  var p = [];
+  var mc = m.clients === 'live' ? 'live' : m.clients === 'test' ? 'test' : 'held';
+  p.push('<span class="pill ' + mc + '">Client mail: ' + esc(m.clients || 'held') + '</span>');
+  if (r.v) {
+    if (s.goneToday && s.last && s.last.when) {
+      p.push('<span class="pill ten">Today\'s send went ' + esc(String(s.last.when).split(', ').pop()) + '</span>');
+    }
+    p.push('<span class="pill ten">Next send: ten o\'clock ' + esc(s.nextWords || '') + '</span>');
+  }
+  if (r.approvedBy) p.push('<span class="pill ok">Wording approved · ' + esc(r.approvedBy) + '</span>');
+  if (r.quota && r.you.branchWide) {
+    p.push('<span class="pill" title="Google lets this script e-mail about a hundred people a day, every copy counted.">'
+      + 'Mail allowance today: ' + esc(r.quota.left) + ' · about ' + esc(r.quota.perLetter) + ' a letter</span>');
+  }
   $('state').innerHTML = p.join('');
 
-  if (r.blocked) {
-    $('gateMsg').innerHTML = '<div class="banner"><b>No letter can go live yet.</b> ' +
-      esc(r.blocked) + '</div>';
-  } else if ((r.mail || {}).clients !== 'live') {
-    $('gateMsg').innerHTML = '<div class="banner ok"><b>Client mail is held.</b> You can work the ' +
-      'list and read the letters. Sending will build and log them without delivering anything, ' +
-      'which is exactly what a first run should do.</div>';
+  var b = [];
+  if (!r.v) {
+    b.push('<div class="banner"><b>The desk\'s script is older than this page.</b> In the tracker\'s Apps Script project, '
+      + 'paste PremiumDueDesk.gs and Intelligence.gs, then Deploy → Manage deployments → New version. '
+      + 'Until then you can read the line, but not tick it.</div>');
+  } else if (r.blocked && m.clients === 'live') {
+    b.push('<div class="banner"><b>No letter can go yet.</b> ' + esc(r.blocked) +
+      ' Ticks are kept; the ten o\'clock send waits until the wording is approved.</div>');
+  } else if (m.clients === 'test') {
+    b.push('<div class="banner warn"><b>Client mail is in test mode.</b> At ten, each ticked letter goes to the '
+      + 'branch\'s test inbox instead of the client, so the branch can read exactly what would have gone. '
+      + 'No client is written to, and the client stays on the line to be ticked again once client mail is live.</div>');
+  } else if (m.clients !== 'live') {
+    b.push('<div class="banner ok"><b>Client mail is held.</b> Ticks are kept, and nothing goes at ten until '
+      + 'client mail is switched on. A ticked client who passes ' + (r.upTo || 51) + ' days meanwhile drops off, '
+      + 'and the desk says so.</div>');
   } else {
-    $('gateMsg').innerHTML = '<div class="banner"><b>Client mail is LIVE.</b> Anything you tick and ' +
-      'send goes to the client, copying their agent, the desk and the unit manager.</div>';
+    b.push('<div class="banner"><b>Client mail is LIVE.</b> At ten, every ticked letter goes to the client, '
+      + 'copying their agent, the desk and the unit manager.</div>');
   }
+  if (r.v && s.base === false && r.you.branchWide && m.clients === 'live') {
+    b.push('<div class="banner warn"><b>The letter\'s buttons need this desk\'s web address.</b> In the tracker\'s '
+      + 'Apps Script project: Project Settings → Script properties → add <code>INTEL_EXEC_URL</code> with the value '
+      + '<code>' + esc(API) + '</code>. Until then the ten o\'clock send holds the letters rather than send buttons that do not open.</div>');
+  }
+  if (s.last && s.last.note && s.goneToday && /held|not approved|not known/.test(s.last.note)) {
+    b.push('<div class="banner warn"><b>This morning\'s send held the letters:</b> ' + esc(s.last.note) + '.</div>');
+  }
+  $('gateMsg').innerHTML = b.join('');
+  $('dd').hidden = !canTick();
+}
+
+function daysChip(r) {
+  var d = Number(r.days) || 45, cls = d >= (STATE.upTo || 51) ? 'end' : d > 45 ? 'late' : '';
+  var tip = d > 45 ? 'Reached 45 days ' + (d - 45) + ' day' + (d - 45 === 1 ? '' : 's') + ' ago' : 'Reached 45 days today';
+  if (d >= (STATE.upTo || 51)) tip += '. Last day on the line: tick before ten or it drops off.';
+  return '<span class="days ' + cls + '" title="' + esc(tip) + '">' + d + '</span>';
+}
+
+function stateText(r) {
+  var s = r.state;
+  if (BUSY[r.policy]) return '<span class="st o">Saving…</span>';
+  if (!s) return '<span class="st o">To check</span>';
+  switch (s.kind) {
+    case 'ticked':
+      return '<span class="st t">&#10003; ' + esc(s.by) + ', ' + esc(s.at) + '<br>' +
+        (s.due ? 'going out in this morning\'s send' : 'goes at ten ' + esc(s.goesWords)) + '</span>' +
+        (s.note ? '<br><span class="st w">' + esc(s.note) + '</span>' : '');
+    case 'sending': return '<span class="st t">Going out now</span>';
+    case 'skipped': return '<span class="st s">Not sending: ' + esc(s.why) + '<br>' + esc(s.by) + ', ' + esc(s.at) + '</span>';
+    case 'tested':  return '<span class="st w">Test copy went ' + esc(s.when) + '; tick again once mail is live</span>';
+    case 'notsent': return '<span class="st w">Not sent at ten: ' + esc(s.why) + '</span>';
+    case 'sent':    return '<span class="st t">Sent ' + esc(s.when) + '</span>';
+  }
+  return '';
+}
+
+function group(r) {
+  var k = r.state && r.state.kind;
+  return k === 'ticked' || k === 'sending' ? 1 : k === 'skipped' ? 2 : 0;
 }
 
 function paintRows() {
   var b = $('body');
   if (!ROWS.length) {
-    b.innerHTML = '<tr><td colspan="7" class="empty">Nothing on the line today. ' +
-      'That is a normal day, not a fault.</td></tr>';
+    b.innerHTML = '<tr><td colspan="7" class="empty">Nobody is on the line. That is a normal day, not a fault.</td></tr>';
     tally(); return;
   }
-  b.innerHTML = ROWS.map(function (r, i) {
-    var flags = r.flags.length
+  var names = ['To check', 'Ticked for ten o\'clock', 'Not sending'], c = counts(), nums = [c.open, c.ticked, c.skipped];
+  var html = [], at = -1;
+  ROWS.forEach(function (r, i) {
+    var g = group(r);
+    if (g !== at) { at = g; html.push('<tr class="grp"><td colspan="7">' + names[g] + ' · ' + nums[g] + '</td></tr>'); }
+    var flags = r.flags && r.flags.length
       ? '<span class="flag" title="' + esc(r.flags.join(' ')) + '">' + r.flags.length + ' to check</span>' : '';
-    var soon = r.lapse ? '<span class="soon">' + esc(r.lapse) + '</span>' : '<span style="color:var(--faint)">not on file</span>';
-    return '<tr class="row" data-i="' + i + '">' +
-      '<td><input type="checkbox" data-p="' + esc(r.policy) + '"' + (PICK[r.policy] ? ' checked' : '') + '></td>' +
-      '<td class="cl"><b>' + esc(r.client) + '</b><i>' + esc(r.email) + '</i>' + flags + '</td>' +
-      '<td class="n">' + esc(r.policy) + '</td>' +
+    var lapse = r.lapse ? '<span class="soon">' + esc(r.lapse) + '</span>' : '<span style="color:var(--faint)">not on file</span>';
+    var k = r.state && r.state.kind, on = k === 'ticked' || k === 'sending';
+    var box = '';
+    if (canTick()) {
+      var dis = BUSY[r.policy] || k === 'sending' || (!on && !SEEN[r.policy]);
+      box = '<input type="checkbox" aria-label="Send ' + esc(first(r.client)) + '\'s letter at ten" data-p="' + esc(r.policy) + '"' +
+        (on ? ' checked' : '') + (dis ? ' disabled' : '') +
+        (!on && !SEEN[r.policy] ? ' title="Open the letter first"' : '') + '>';
+    }
+    html.push('<tr class="row' + (CUR && CUR.policy === r.policy ? ' on' : '') + (g === 2 ? ' dim' : '') + '" data-i="' + i + '">' +
+      '<td>' + box + '</td>' +
+      '<td class="cl"><b>' + esc(r.client) + '</b><i>' + esc(r.email) + '</i><code>' + esc(r.policy) + '</code> ' + flags + '</td>' +
+      '<td>' + daysChip(r) + '</td>' +
       '<td>' + esc(r.agent) + '</td>' +
-      '<td class="n">' + money(r.premium) + '</td>' +
-      '<td>' + esc(r.billing || '—') + '</td>' +
-      '<td class="n">' + soon + '</td></tr>';
-  }).join('');
+      '<td class="n pr">' + money(r.premium) + '<small>' + esc(r.billing || 'no billing route') + '</small></td>' +
+      '<td class="n">' + lapse + '</td>' +
+      '<td class="where">' + stateText(r) + '</td></tr>');
+  });
+  b.innerHTML = html.join('');
 
   b.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
     cb.onclick = function (e) {
       e.stopPropagation();
-      if (cb.checked) PICK[cb.dataset.p] = 1; else delete PICK[cb.dataset.p];
-      tally();
+      var r = ROWS.filter(function (x) { return x.policy === cb.dataset.p; })[0];
+      if (!r) return;
+      e.preventDefault();             // the server's answer decides the box, not the click
+      setTick(r, cb.checked);
     };
   });
   b.querySelectorAll('tr.row').forEach(function (tr) {
-    tr.onclick = function () {
-      b.querySelectorAll('tr.row').forEach(function (x) { x.classList.remove('on'); });
-      tr.classList.add('on');
-      preview(ROWS[Number(tr.dataset.i)]);
-    };
+    tr.onclick = function () { preview(ROWS[Number(tr.dataset.i)]); };
   });
   tally();
 }
 
 function tally() {
-  var n = Object.keys(PICK).length;
-  $('send').textContent = 'Send ' + n + ' letter' + (n === 1 ? '' : 's');
-  $('send').disabled = !n || (STATE && STATE.blocked && (STATE.mail || {}).clients === 'live');
-  $('tally').textContent = ROWS.length ? n + ' of ' + ROWS.length + ' ticked' : '';
-  $('said').textContent = n > (STATE ? STATE.cap : 40)
-    ? 'That is over the ' + STATE.cap + ' cap for one sitting.'
-    : 'Tick the ones you have checked.';
+  var c = counts();
+  $('tally').textContent = ROWS.length ? c.ticked + ' ticked · ' + c.open + ' to check' + (c.skipped ? ' · ' + c.skipped + ' not sending' : '') : '';
 }
+function say(t, bad) { $('said').textContent = t; $('said').className = 'said' + (bad ? ' bad' : ''); }
 
-$('all').onclick = function () { ROWS.forEach(function (r) { PICK[r.policy] = 1; }); paintRows(); };
-$('none').onclick = function () { PICK = {}; paintRows(); };
-
-/* ── the preview ─────────────────────────────────────────────────────── */
+/* ── the letter ──────────────────────────────────────────────────────── */
+function clearPreview(msg) {
+  $('prev').innerHTML = '<div class="empty">' + esc(msg) + '</div>';
+}
 function preview(r) {
-  $('prev').innerHTML = '<div class="empty">Building ' + esc(r.client) + '’s letter…</div>';
+  CUR = r;
+  document.querySelectorAll('tr.row').forEach(function (x) {
+    x.classList.toggle('on', ROWS[Number(x.dataset.i)] && ROWS[Number(x.dataset.i)].policy === r.policy);
+  });
+  $('prev').innerHTML = '<div class="empty">Building ' + esc(first(r.client)) + '’s letter…</div>';
   call({ action: 'intel.pdd.preview', token: TOKEN, stage: 45, policy: r.policy }).then(function (res) {
-    if (!res.ok) { $('prev').innerHTML = '<div class="empty">' + esc(res.error) + '</div>'; return; }
-    var flags = r.flags.length
+    if (!CUR || CUR.policy !== r.policy) return;
+    if (!res.ok) { clearPreview(res.error || 'Could not build that letter.'); return; }
+    SEEN[r.policy] = 1; saveSeen();
+    var flags = r.flags && r.flags.length
       ? '<div style="margin-top:8px;color:var(--warn)">' +
         r.flags.map(function (f) { return '&bull; ' + esc(f); }).join('<br>') + '</div>' : '';
     $('prev').innerHTML =
+      '<button class="ghost back" id="backBtn">&larr; Back to the list</button>' +
       '<div class="prevmeta"><b>To</b> ' + esc(res.to) + '<br>' +
-      '<b>Copying</b> ' + esc(res.cc || 'nobody — check the access list') + '<br>' +
+      '<b>Copying</b> ' + esc(res.cc || 'nobody: check the access list') + '<br>' +
       '<b>Subject</b> ' + esc(res.subject) + flags + '</div>' +
+      '<div id="decide"></div>' +
       '<div class="sheet">' + res.html + '</div>';
-  }).catch(function () {
-    $('prev').innerHTML = '<div class="empty">Could not build that letter.</div>';
+    $('backBtn').onclick = function () { $('listPanel').scrollIntoView({ block: 'start' }); };
+    paintDecide();
+    paintRows();
+    /* On a phone the letter is below the list: take the reader to it. */
+    if (window.matchMedia('(max-width:1100px)').matches) $('prevPanel').scrollIntoView({ block: 'start' });
+    else $('prev').scrollTop = 0;
+  }).catch(function () { clearPreview('Could not build that letter.'); });
+}
+
+/* The decision, beside the letter it is about. */
+function paintDecide() {
+  var box = $('decide');
+  if (!box || !CUR) return;
+  if (!canTick()) { box.innerHTML = ''; return; }
+  var r = CUR, s = r.state, k = s && s.kind, name = first(r.client), tw = (STATE.send || {}).tickWords || 'today';
+  var html = '<div class="decide">';
+  if (k === 'ticked') {
+    html += '<div class="say t">&#10003; Ticked by ' + esc(s.by) + ' at ' + esc(s.at) + '. ' +
+      (s.due ? 'It goes in this morning\'s send.' : 'It goes at ten ' + esc(s.goesWords) + '.') + '</div>' +
+      (s.note ? '<div class="say w">' + esc(s.note) + '</div>' : '') +
+      '<div class="btns"><button class="ghost" id="dUntick">Withdraw it</button></div>';
+  } else if (k === 'sending') {
+    html += '<div class="say t">Going out now.</div>';
+  } else if (k === 'skipped') {
+    html += '<div class="say s">Not sending: ' + esc(s.why) + ' (' + esc(s.by) + ', ' + esc(s.at) + ').</div>' +
+      '<div class="btns"><button class="ghost" id="dUnskip">Undo</button>' +
+      '<button class="tick" id="dTick">Send it after all: at ten ' + esc(tw) + '</button></div>';
+  } else {
+    if (k === 'tested') html += '<div class="say w">A test copy of this letter went ' + esc(s.when) + '. The client was not written to.</div>';
+    if (k === 'notsent') html += '<div class="say w">Not sent at ten: ' + esc(s.why) + '.</div>';
+    html += '<div class="say">Checked ' + esc(name) + '? The letter goes at ten ' + esc(tw) + ', with your name on the record.</div>' +
+      '<div class="btns"><button class="tick" id="dTick">&#10003; I have checked ' + esc(name) + ': send at ten</button>' +
+      '<button class="ghost" id="dSkip">Do not send…</button></div>' +
+      '<div class="skipform" id="skipForm" hidden>' +
+        '<label for="skipWhy">Why not</label>' +
+        '<select id="skipWhy">' +
+          '<option>Paid already</option>' +
+          '<option>The e-mail is not the client\'s</option>' +
+          '<option>The agent will call instead</option>' +
+          '<option>A company or a scheme</option>' +
+          '<option>The adviser has left: reassign first</option>' +
+          '<option value="other">Something else</option>' +
+        '</select>' +
+        '<input id="skipMore" placeholder="Anything to add (optional; required for something else)" maxlength="200">' +
+        '<div class="btns"><button class="tick" id="skipSave">Save: do not send</button>' +
+        '<button class="ghost" id="skipCancel">Cancel</button></div>' +
+      '</div>';
+  }
+  html += '</div>';
+  box.innerHTML = html;
+  if ($('dTick')) $('dTick').onclick = function () { setTick(r, true); };
+  if ($('dUntick')) $('dUntick').onclick = function () { setTick(r, false); };
+  if ($('dUnskip')) $('dUnskip').onclick = function () { setSkip(r, '', true); };
+  if ($('dSkip')) $('dSkip').onclick = function () { $('skipForm').hidden = false; $('dSkip').hidden = true; };
+  if ($('skipCancel')) $('skipCancel').onclick = function () { $('skipForm').hidden = true; $('dSkip').hidden = false; };
+  if ($('skipSave')) $('skipSave').onclick = function () {
+    var sel = $('skipWhy').value, more = ($('skipMore').value || '').trim();
+    if (sel === 'other' && !more) { $('skipMore').focus(); return; }
+    setSkip(r, sel === 'other' ? more : sel + (more ? ': ' + more : ''), false);
+  };
+}
+
+/* ── ticks ───────────────────────────────────────────────────────────── */
+function setTick(r, on) {
+  if (!canTick() || BUSY[r.policy]) return;
+  if (on && !SEEN[r.policy]) { say('Open ' + first(r.client) + '\'s letter first: click the row.', true); return; }
+  if (on && r.flags && r.flags.length &&
+      !window.confirm(first(r.client) + '\'s row is flagged:\n\n• ' + r.flags.join('\n• ') +
+        '\n\nTick it anyway? Your name goes on the record beside these.')) { paintRows(); return; }
+  BUSY[r.policy] = 1; paintRows();
+  call({ action: 'intel.pdd.tick', token: TOKEN, policy: r.policy, on: !!on,
+         client: r.client, clientNo: r.clientNo, email: r.email, agent: r.agent, days: r.days, flags: r.flags })
+    .then(function (res) {
+      delete BUSY[r.policy];
+      if (!res.ok) { say(res.error || 'That did not save.', true); paintRows(); return; }
+      r.state = res.state || null;
+      resort(); paintRows(); paintDecide();
+      var s = r.state;
+      say(on ? (s && s.kind === 'ticked'
+            ? first(r.client) + ' is ticked: the letter goes at ten ' + s.goesWords + '.'
+            : 'Saved.')
+          : first(r.client) + '\'s tick is withdrawn. Nothing will go.');
+    }).catch(function () {
+      delete BUSY[r.policy]; paintRows();
+      say('Could not reach the branch script. Nothing was saved; try again.', true);
+    });
+}
+
+function setSkip(r, why, undo) {
+  if (!canTick() || BUSY[r.policy]) return;
+  BUSY[r.policy] = 1; paintRows();
+  call({ action: 'intel.pdd.skip', token: TOKEN, policy: r.policy, why: why, undo: !!undo,
+         client: r.client, clientNo: r.clientNo, email: r.email, agent: r.agent, days: r.days })
+    .then(function (res) {
+      delete BUSY[r.policy];
+      if (!res.ok) { say(res.error || 'That did not save.', true); paintRows(); return; }
+      r.state = res.state || null;
+      resort(); paintRows(); paintDecide();
+      say(undo ? 'Undone: ' + first(r.client) + ' is back to check.' : 'Recorded: no letter for ' + first(r.client) + '.');
+    }).catch(function () {
+      delete BUSY[r.policy]; paintRows();
+      say('Could not reach the branch script. Nothing was saved; try again.', true);
+    });
+}
+
+/* Same order as the server: still to decide, then ticked, then declined;
+   inside each, the oldest first. */
+function resort() {
+  ROWS.sort(function (x, y) {
+    var a = group(x), b = group(y);
+    if (a !== b) return a - b;
+    if (x.days !== y.days) return y.days - x.days;
+    if (x.lapseSort !== y.lapseSort) return x.lapseSort - y.lapseSort;
+    return y.premium - x.premium;
   });
 }
 
-/* ── sending ─────────────────────────────────────────────────────────── */
-$('send').onclick = function () {
-  var list = Object.keys(PICK);
-  if (!list.length) return;
-  var live = (STATE.mail || {}).clients === 'live';
-  var msg = live
-    ? 'Send ' + list.length + ' letter' + (list.length === 1 ? '' : 's') + ' to clients now?'
-    : 'Build and log ' + list.length + '? Client mail is held, so nothing will be delivered.';
-  if (!window.confirm(msg)) return;
-
-  var btn = this; btn.disabled = true; btn.textContent = 'Sending…';
-  call({ action: 'intel.pdd.send', token: TOKEN, stage: 45, policies: list }).then(function (res) {
-    btn.disabled = false;
-    if (!res.ok) { $('said').textContent = res.error || 'That did not go.'; tally(); return; }
-    PICK = {};
-    load(res.says + (res.missed && res.missed.length
-      ? ' ' + res.missed.length + ' were no longer on the line.' : ''));
-  }).catch(function () {
-    btn.disabled = false; $('said').textContent = 'Could not reach the branch script.'; tally();
-  });
-};
+/* ── what went ───────────────────────────────────────────────────────── */
+function paintRecent(r) {
+  var rows = r.recent || [];
+  $('rtally').textContent = rows.length ? rows.length + ' letter' + (rows.length === 1 ? '' : 's') : '';
+  if (!rows.length) {
+    $('rbody').innerHTML = '<tr><td colspan="5" class="empty">Nothing has gone from the desk in the last seven days.</td></tr>';
+    return;
+  }
+  $('rbody').innerHTML = rows.map(function (x) {
+    var what = x.status === 'sent' ? '<span class="ok-t">Sent</span>'
+      : x.status === 'test copy' ? '<span class="warn-t">Test copy: the client was not written to</span>'
+      : '<span class="bad-t">Not sent:</span> ' + esc(x.note);
+    return '<tr><td class="n">' + esc(x.when) + '</td><td>' + esc(x.client) +
+      '<br><code style="font:12px var(--mono);color:var(--muted)">' + esc(x.policy) + '</code></td>' +
+      '<td>' + esc(x.agent) + '</td><td>' + esc(x.by) + '</td><td>' + what + '</td></tr>';
+  }).join('');
+}
 
 function paintFoot(r) {
   var s = r.skipped || {}, bits = [];
-  Object.keys(s).forEach(function (k) { bits.push(esc(k) + ': ' + esc(String(s[k]))); });
-  $('foot').innerHTML = 'Who is on the line, and who was left off it, is decided by the same code ' +
-    'the nightly run uses — one definition, two doors. Left off today: ' +
-    (bits.length ? bits.join(' &middot; ') : 'nobody') + '. ' +
-    'The letter above is rendered by the same function that sends it, so what you read is what goes.';
+  var words = { noEmail: 'no e-mail', cooldown: 'written to in an earlier episode', tooNew: 'under ninety days old',
+                excluded: 'adviser taken off the books', optedOut: 'asked not to be contacted',
+                openFollowUp: 'waiting on a call from us', alreadyAtStage: 'already written to at 45' };
+  Object.keys(s).forEach(function (k) { if (s[k]) bits.push(esc(words[k] || k) + ': ' + esc(String(s[k]))); });
+  $('foot').innerHTML = 'Who is on the line, and who was left off it, is decided by the same code that sends the ' +
+    'letters: one definition, two doors. Left off the line today: ' + (bits.length ? bits.join(' &middot; ') : 'nobody') + '. ' +
+    'The letter above is rendered by the same function that sends it, so what you read is what goes. At ten the send ' +
+    'reads the line again: a client who has paid, been written to, or changed their e-mail or agent since they were ' +
+    'checked does not get the letter, and this desk says why.' + (r.asOf ? ' Line read at ' + esc(r.asOf) + '.' : '');
 }
 
 /* A reload inside the same tab keeps you signed in; closing it does not. */
