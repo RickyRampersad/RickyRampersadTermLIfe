@@ -2434,6 +2434,81 @@ voice under the new timing and the caption gives it away.
   once instead of two or three times. `speed7oct/snap-test.js` (24,
   Playwright) and `speed7oct/same.js` (the answer byte for byte the same
   before and after, for every role) in the scratchpad cover it.
+- **The board is in tabs, and every card says who the client is, where they
+  live and who they live with** (7 October 2026, evening: "need more data and
+  spaced out properly scaled professionally and need address and occupation
+  and households!", then "there should be tabs re a call list as staff did
+  indicate an urgent call is needed so deep insights for the branch manager to
+  review and assign … very important on the format, fonts for easy reading on
+  any device", then "the orphan data is pulled from the google branch
+  intelligence sheets … there are many sheets with data").
+  **The tabs.** The branch: Urgent, To assign, Call list, In progress, Done,
+  Households, All clients, then Team and Insights. Staff open on Your calls.
+  An agent gets To call, Done and All (Urgent and Claims only when they have
+  some). Each list tab opens with its own numbers, and a tap on one shows that
+  sub-list. Under them are its breakdowns (why they need us, who asked for the
+  call-back, where they live, letter, was with, age, suggested agent, agent
+  named); a tap on any line filters the list. The breakdowns fold away on a
+  phone. **Households** shows each family as one card, with "Assign the 2 to
+  …" for the family's agent or the head's suggestion.
+  **The card** has five blocks:
+  - Reach them: every number once (`tContactFor_`), the e-mail, how and when.
+  - Lives at: the town, then the address.
+  - About: age, gender, occupation, employer, born, how they pay.
+  - With us: since when, in force, the premium a year, cover.
+  - Household: its name and size, who answered, the family's agent.
+
+  The policies and the household open on the card. The base type is 16 px,
+  and long e-mails wrap (`overflow-wrap:anywhere`), so no tab is wider than a
+  phone.
+  **Call-backs.** The calls sheet's Call-back column (136 for a licensed
+  agent, 6 for the branch, 6 do not call) was buried: 98 of the agent
+  call-backs sat among the "reached by phone" cards. It is now a flag on the
+  client (`tBackOf_`). Staff and the branch set one on the board with the
+  outcome (`transitionUpdate_` `back=agent|branch|dnc|clear`), stamped after
+  the note, so the note is its reason (`[call-back agent 7 Oct · Name]`). It
+  stays open until one of these happens:
+  - it is cleared;
+  - the client is marked Met, Closed or Declined;
+  - for a licensed agent's call-back, the agent named on the client marks the
+    call;
+  - for the branch's call-back, the branch manager or an assistant does.
+
+  It is read from the row holding the most stamps (`tSeq_`). Every update
+  writes the same stamps on each of the client's rows, and `c.markers` keeps
+  each stamp once, so a second flag by the same person on the same day would
+  otherwise vanish behind an earlier clear. Do not call is its own state
+  (`dnc`): off every list to call, with no call buttons. Urgent lists the
+  call-backs first (board flags newest first), then the pressing answers,
+  then the late ones.
+  **Where the card's data comes from.**
+  - The Client Profile: Salesforce's address lines with the town apart, the
+    mobile and home numbers, plan, status, paid to and issued. It was
+    imported once from the scratchpad (`Client-Profile-7Oct.xlsx`, built by
+    `board8/build-profile.js` with the script's own `tProfileRow_`). The
+    morning build refreshes it when the `SF_*` properties are set.
+  - The Client Book: the Branch Portfolio, which is the branch intelligence
+    workbook (`INTEL.WORKBOOK`). Its first tab is now the premium-dues
+    extract: that evening it held 1,359 of the campaign's 4,805 policies. So
+    the build also reads the workbook's in-force book tab (Policy Id, Client
+    Id, Plan, Annual Premium …, found by its columns as `iTabInforce_` finds
+    it). It adds every in-force policy of the campaign's clients and takes the
+    plan's name and the premium a year as recorded (`tInforceRead_`). The
+    portfolio's Address runs its lines together, and `tAddrSplit_` puts the
+    commas back.
+  - The Call List, last.
+
+  `tProfileFor_` reads the profile by client number when the Client Book is
+  not built, so the cards say who the client is either way. The page never
+  reads the row numbers, or the old sheet's copy of the address once the
+  contact carries it, so `tBoardSlim_` leaves them out: 1.3 MB for the
+  branch.
+  Tests in the scratchpad:
+  - `board8/board-test.js` (49, Playwright on the real tabs);
+  - `board8/book-build.js` (18, the build on the real first tab and a
+    made-up in-force tab);
+  - `board8/back-harness.js` (23, the call-back rules);
+  - `board8/ported/` (the snapshot test 24, calls 25, the introduction hold 16).
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

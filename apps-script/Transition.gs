@@ -3456,7 +3456,92 @@ function tCalls_() {
  *  carrying only the numbers from the manager's own list is not), not marked done, not under the manager's hold on a book
  *  (7 October 2026: nothing for that book until he lifts it), and nobody the books leave out. */
 function tToCall_(call, held) {
-  return !!call && !!(call.caller || call.why) && !call.done && !/^hold: manager's hold/i.test(held || '') && !T_NOT_BOOK.test(held || '');
+  return !!call && !!(call.caller || call.why) && !call.done && !/^hold: manager's hold/i.test(held || '') && !T_NOT_BOOK.test(held || '') &&
+    tBackKind_(call.back) !== 'dnc';   // a client who asked not to be called is never on anyone's list to call (7 October 2026)
+}
+
+/* ── call-backs: what Client Support asked for on a call ───────────────
+   7 October 2026: "there should be tabs re a call list as staff did indicate an urgent call is needed so deep insights for
+   the branch manager to review and assign". On the old calls sheet the callers marked a Call-back on 142 clients: 136 for
+   a licensed agent, 6 for the branch, and 6 asked not to be called again. The Call List tab carries that column, and 98 of
+   the agent call-backs sat among the "reached by phone" cards with nothing to set them apart. A call-back is now a flag on
+   the client (tBackOf_): from the calls sheet, or set on the board when a call is marked (transitionUpdate_ back=agent,
+   branch, dnc or clear, the branch and staff only), stamped in the Note cell like every outcome ("[call-back agent 7 Oct ·
+   Name]"). It stays open until it is cleared, the client is marked Met, Closed or Declined, or the call it asked for is
+   made: by the agent named on the client for an agent's call-back, by the branch manager (or an assistant) for the
+   branch's. Do not call is a warning, never a call-back, and takes the client off the call list. */
+var T_BACK = { agent: 'a licensed agent', branch: 'the branch', dnc: 'do not call' };
+var T_BACK_RE = /^\[(?:call-back (agent|branch|clear)|(do not call)) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/;
+/** The calls sheet's Call-back column in one word: agent, branch, dnc or ''. */
+function tBackKind_(s) {
+  s = String(s || '').toLowerCase();
+  if (/do\s*not|don.?t\s*call|no\s*calls?\b/.test(s)) return 'dnc';
+  if (/licen[sc]ed|\bagent\b/.test(s)) return 'agent';
+  if (/branch|manager/.test(s)) return 'branch';
+  return '';
+}
+/** A client's call-back: { kind, by, on, why, src, open, done } or null. The calls sheet's flag first, then the board's stamps
+ *  in the order they were written; the last one stands, and a clear after it closes it. `bosses` are the name keys of the
+ *  branch manager and his assistants (and 'branch', the branch code). */
+/** The stamps of one client in the order they were written, repeats kept: every update writes the same stamps on each of the
+ *  client's rows, so the row with the most of them holds the whole history (c.markers keeps each stamp once, and two flags by
+ *  one person on one day read the same). */
+function tSeq_(c, note) {
+  var seq = String(note || '').match(/\[[^\]]*\]/g) || [];
+  if (seq.length > (c.seq ? c.seq.length : 0)) c.seq = seq;
+}
+function tBackOf_(c, call, bosses) {
+  var f = null, at = -1, ms = c.seq || c.markers || [];
+  var k0 = call ? tBackKind_(call.back) : '';
+  if (k0) f = { kind: k0, by: call.caller || '', on: '', why: call.sheet || '', src: 'calls sheet' };
+  ms.forEach(function (mk, i) {
+    var m = T_BACK_RE.exec(mk);
+    if (!m) return;
+    if (m[1] === 'clear') { if (f && !f.done) f.done = 'cleared on ' + m[3] + ' by ' + m[4]; return; }
+    f = { kind: m[1] || 'dnc', by: m[4], on: m[3], why: '', src: 'board' }; at = i;
+  });
+  if (!f) return null;
+  /* the reason set on the board is the note saved with it: the file note of the same day and person */
+  if (f.src === 'board') (c.fileNotes || []).forEach(function (fn) {
+    var x = /^[a-z ]+? (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(fn);
+    if (x && x[1] === f.on && tNameKey_(x[2]) === tNameKey_(f.by)) f.why = x[3];
+  });
+  if (f.kind !== 'dnc' && !f.done) {
+    if (/^(met|closed|declined)$/i.test(c.mark || '')) f.done = 'marked ' + String(c.mark).toLowerCase();
+    else ms.forEach(function (mk, i) {
+      if (f.done || i <= at) return;
+      var m = /^\[(called|met) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk), k = m ? tNameKey_(m[3]) : '';
+      if (!m) return;
+      if ((f.kind === 'agent' && c.assigned && k === tNameKey_(c.assigned)) || (f.kind === 'branch' && bosses[k])) f.done = m[1] + ' on ' + m[2] + ' by ' + m[3];
+    });
+  }
+  f.open = f.kind !== 'dnc' && !f.done;
+  if (!f.done) delete f.done;
+  return f;
+}
+
+/* ── how to reach a client, and where they live ─────────────────────────
+   7 October 2026 ("need address and occupation and households"). The address: Salesforce's (the Client Profile: the policy
+   record's lines, the town apart), else the Branch Portfolio's (the Client Book, its lines split back by tAddrSplit_), else
+   the one the calls sheet held (the Call List). The numbers: the send list's, the call list's, the profile's mobile and
+   home and the portfolio's, each once. The e-mail: the one the letter went to, else the portfolio's. */
+function tContactFor_(c, prof, recs, call) {
+  var pc = (prof && prof.contact) || {}, o = { addr: '', town: '', phones: [], email: c.email || '' }, seen = {};
+  var book = (recs || []).filter(function (r) { return r.addr || r.phone || r.email || r.town; });
+  o.addr = pc.addr || (book.filter(function (r) { return r.addr; })[0] || {}).addr || (call && call.addr) || '';
+  o.town = pc.town || (book.filter(function (r) { return r.town; })[0] || {}).town || '';
+  var add = function (p, what) {
+    var s = String(p == null ? '' : p).trim(), d = s.replace(/\D/g, '');
+    if (d.length < 7 || seen[d.slice(-7)]) return;
+    seen[d.slice(-7)] = true;
+    o.phones.push(what ? { n: s, w: what } : { n: s });
+  };
+  add(c.phone); add(pc.mobile, 'mobile'); add(pc.home, 'home');
+  book.forEach(function (r) { add(r.phone); });
+  if (call && call.other) String(call.other).split(/[;,\/·|]|\bor\b/).forEach(function (p) { add(p); });
+  if (!o.email) { var e = book.filter(function (r) { return /@/.test(r.email); })[0]; if (e) o.email = e.email; }
+  if (!o.email) delete o.email;
+  return o.addr || o.town || o.phones.length || o.email ? o : null;
 }
 
 /* One read of Transition Send serves a whole board request (7 October 2026, "taking too long to log in"): the check of
@@ -3472,9 +3557,22 @@ function transitionBoard_(p) {
   try {
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
-    try { return tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || ''))); }
+    try { return tBoardSlim_(tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || '')))); }
     catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
   } finally { T_READ_ONCE = null; }
+}
+/** The board as the page gets it: what the page never reads is left behind (the row numbers, the old call sheet's copy of
+ *  the address and numbers, which the contact carries, and empty profile fields), so a phone opens it sooner. */
+function tBoardSlim_(d) {
+  if (!d || !d.ok) return d;
+  (d.clients || []).forEach(function (c) {
+    delete c.rows; delete c.contactRows; delete c.seq;
+    if (c.call && c.contact) { delete c.call.addr; delete c.call.other; }
+    if (c.contact && c.contact.email === c.email) delete c.contact.email;
+    if (c.profile) Object.keys(c.profile).forEach(function (k) { var v = c.profile[k]; if (v === '' || v === null || (k === 'income' && !v)) delete c.profile[k]; });
+  });
+  (d.silent || []).concat(d.family || []).forEach(function (c) { delete c.rows; });
+  return d;
 }
 
 /** Every client who answered (a tap, a tick, a reply or a review), what they
@@ -3505,7 +3603,7 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
-      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contact: 0, calls: 0, open: 0, actionable: 0, done: 0, noted: 0,
+      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contactRows: 0, calls: 0, open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
     c.tellWhy = tNoteBlock_(r);
@@ -3536,12 +3634,13 @@ function tBoard_(w, all, lite) {
       c.calls++;
       if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
       if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
+      tSeq_(c, note);
       (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
       tFileNotes_(note).forEach(function (f) { if (c.fileNotes.indexOf(f) < 0) c.fileNotes.push(f); });
       if (status && !/^(open|logged)$/i.test(status)) c.mark = status;
       return;
     }
-    if (tContactRow_(v[5])) c.contact++;                              // details taken on a call
+    if (tContactRow_(v[5])) c.contactRows++;                          // details taken on a call
     else if (!tAssignRow_(v[5])) c.own++;                             // the client's own answer, not an agent named from the board
     if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
     if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
@@ -3558,6 +3657,7 @@ function tBoard_(w, all, lite) {
       if (!c.taps.some(function (x) { return x.tap === tk; })) c.taps.push({ tap: tk, label: tk === 'wrote' ? (String(v[5] || '').indexOf('/your-policy/words') === 0 ? 'Wrote to us on the page' : 'Wrote back by e-mail') : (tapWords[type] || type), needs: String(v[4] || ''), at: at });
       if (T_PRIORITY[type]) c.score = Math.max(c.score, T_PRIORITY[type]);
     }
+    tSeq_(c, note);
     (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
     /* the client's own words come only from a reply, where transitionInbox writes them first, in quotes, or from the
        words page, which writes them the same way (2 October 2026). Everything else in a Note cell is ours: the scripts'
@@ -3630,6 +3730,13 @@ function tBoard_(w, all, lite) {
           phone: c.phone, sent: c.sent, held: c.held, call: c.call, state: 'tocall', rows: [], canTell: c.canTell, tellWhy: c.tellWhy });
         return;
       }
+      /* asked on a call not to be called again (the calls sheet's Do not call): off every list to call, still on the board
+         as a row of its own so the branch knows, never under the manager's hold on a book (7 October 2026) */
+      if (c.call && tBackKind_(c.call.back) === 'dnc' && !/^hold: manager's hold/i.test(c.held || '') && !T_NOT_BOOK.test(c.held || '')) {
+        clients.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email,
+          phone: c.phone, sent: c.sent, held: c.held, call: c.call, state: 'dnc', rows: [], canTell: c.canTell, tellWhy: c.tellWhy });
+        return;
+      }
       if (c.sent && !c.held && all) silent.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email, phone: c.phone, sent: c.sent, state: 'silent', rows: [] });
       return;
     }
@@ -3639,13 +3746,13 @@ function tBoard_(w, all, lite) {
        outcome marked, but none is ever counted as an answer, and none is sent the introduction that thanks a client for
        answering */
     var namedRow = c.assigned || c.rows.some(function (x) { return x.type === 'assign'; });
-    c.state = !c.own && !c.review ? (c.contact ? 'reached' : (c.calls && !namedRow) ? 'called' : 'named')
+    c.state = !c.own && !c.review ? (c.contactRows ? 'reached' : (c.calls && !namedRow) ? 'called' : 'named')
       : c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
     c.first = fmt(c.firstAt); c.last = fmt(c.lastAt);
     delete c.firstAt; delete c.lastAt; delete c.assignedAt;
     clients.push(c);
   });
-  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4, named: 5, called: 6, tocall: 7 };
+  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4, named: 5, called: 6, tocall: 7, dnc: 8 };
   /* the call list in each caller's own order, as it was on their sheet: the terminated book and the action letters first */
   var callOrder = function (c) { return c.call ? [String(c.call.caller || '~'), c.call.order || 1e9] : ['~', 1e9]; };
   clients.sort(function (a, b) {
@@ -3655,25 +3762,40 @@ function tBoard_(w, all, lite) {
     }
     return (rank[a.state] - rank[b.state]) || ((b.late ? 1 : 0) - (a.late ? 1 : 0)) || (b.score - a.score) || String(a.first).localeCompare(String(b.first));
   });
-  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, late: 0, silent: sentNoAnswer };
+  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, dnc: 0, late: 0, silent: sentNoAnswer };
   clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   /* the Client Book (tBook_): each card carries the client's policies; the rows without a card (not answered, family)
      carry the totals alone, and the board fetches the rest when one is opened (transitionBook_) */
   var bk = tBook_();
-  if (bk.ready) {
-    clients.forEach(function (c) {
-      if (c.state === 'tocall') { c.pol = tBookBrief_(c.no); return; }   // a call-list row: the totals, like a row without a card
-      c.pol = tBookFor_(c.no, true);
-      c.profile = tProfileFor_(c.no);
-      c.ins = tInsightsFor_(c.pol, c.profile, bk.today);
-    });
-    /* a row without a card: the totals, and which insights apply (for the filter), nothing more */
-    silent.forEach(function (c) {
-      c.pol = tBookBrief_(c.no);
-      var ik = tInsightsFor_(tBookFor_(c.no, true), tProfileFor_(c.no), bk.today).map(function (i) { return i.k; });
-      if (ik.length) c.ik = ik;
-    });
-  }
+  /* who the client is and how to reach them, on every card and call-list row, from the Client Profile even before the
+     Client Book is built (7 October 2026: "need address and occupation and households"); the call-back Client Support
+     asked for (tBackOf_), read against the branch manager and his assistants */
+  var bosses = { branch: true };
+  tTeam_().people.forEach(function (p) { if (p.role === 'bm' || p.role === 'abm') bosses[tNameKey_(p.name)] = true; });
+  clients.forEach(function (c) {
+    var prof = tProfileFor_(c.no), recs = bk.by[tCno_(c.no)];
+    if (bk.ready) {
+      if (c.state === 'tocall') c.pol = tBookBrief_(c.no);   // a call-list row: the totals, like a row without a card
+      else { c.pol = tBookFor_(c.no, true); c.ins = tInsightsFor_(c.pol, prof, bk.today); }
+    }
+    c.contact = tContactFor_(c, prof, recs, c.call);
+    if (prof) { delete prof.contact; c.profile = prof; }
+    if (!c.phone && c.contact && c.contact.phones.length) c.phone = c.contact.phones[0].n;
+    var bf = tBackOf_(c, c.call, bosses);
+    if (bf) c.back = bf;
+  });
+  /* a row without a card: the totals, which insights apply (for the filter), and the town, age and occupation; the rest
+     comes when it is opened (transitionBook_) */
+  silent.forEach(function (c) {
+    var prof = tProfileFor_(c.no), ct = tContactFor_(c, prof, bk.by[tCno_(c.no)], null);
+    if (ct && ct.town) c.town = ct.town;
+    if (prof && prof.age !== undefined) c.age = prof.age;
+    if (prof && prof.occ) c.occ = prof.occ;
+    if (!bk.ready) return;
+    c.pol = tBookBrief_(c.no);
+    var ik = tInsightsFor_(tBookFor_(c.no, true), prof, bk.today).map(function (i) { return i.k; });
+    if (ik.length) c.ik = ik;
+  });
   /* who this viewer may see: everyone for the branch and for staff, a unit manager's team (tAs_), an agent alone */
   var staff = w.role === 'staff';
   var onTeam = w.role === 'unit' ? tOnTeam_(w.team) : w.role === 'agent' ? tOnTeam_([w.me.name]) : null;
@@ -3699,7 +3821,7 @@ function tBoard_(w, all, lite) {
     if (onTeam) clients = clients.filter(function (c) { return onTeam(c.assigned); });
     silent = [];
     /* the tiles count this viewer's own list, never the branch's */
-    counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, late: 0, silent: 0 };
+    counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, dnc: 0, late: 0, silent: 0 };
     clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   }
   /* the TT$200 retention claims (the Retention Payments tab): a line on the card and the payments panel, for the branch every
@@ -3776,7 +3898,14 @@ function tBoard_(w, all, lite) {
     });
     t.prem = Math.round(t.prem);
     hhInfo[h] = { name: head.client + ' household', size: list.length, gaps: gaps,
-      children: list.filter(function (x) { return x.age !== undefined && x.age < 18; }).length, elsewhere: list.filter(function (x) { return !x.onList; }).length };
+      children: list.filter(function (x) { return x.age !== undefined && x.age < 18; }).length, elsewhere: list.filter(function (x) { return !x.onList; }).length,
+      answered: list.filter(function (x) { return x.state === 'answered'; }).length };
+    /* the agents already named in the family, for whoever names agents (the family keeps one agent: tSuggest_) */
+    if (tCanAssign_(w)) {
+      var fa = {};
+      list.forEach(function (x) { var y = x.token && byTok[x.token]; if (y && y.assigned) fa[y.assigned] = true; });
+      if (Object.keys(fa).length) hhInfo[h].agents = Object.keys(fa).sort();
+    }
     if (seen.length && (branch || seen.length === list.length)) hhBook[h] = t;   // an agent gets the family's total only when every member is theirs
     /* the branch: the members of a household where someone answered who are on our list but not on the board themselves */
     if (!branch || !list.some(function (x) { return x.token && answeredBy[x.token]; })) return;
@@ -3789,13 +3918,33 @@ function tBoard_(w, all, lite) {
     });
   });
   counts.households = Object.keys(households).filter(function (h) { return households[h].some(function (m) { return m.state === 'answered'; }); }).length;
+  /* every row says how many are in its household, one included (7 October 2026: "need … households"); the family rows
+     carry the town, age and occupation like a row without a card */
+  family.forEach(function (c) {
+    var prof = tProfileFor_(c.no), ct = tContactFor_(c, prof, bk.by[tCno_(c.no)], null);
+    if (ct && ct.town) c.town = ct.town;
+    if (prof && prof.age !== undefined) c.age = prof.age;
+    if (prof && prof.occ) c.occ = prof.occ;
+  });
+  clients.concat(silent, family).forEach(function (c) { if (c.hh) c.hhSize = households[c.hh] ? households[c.hh].length : 1; });
+  /* the call-backs Client Support asked for (tBackOf_), over this viewer's list: the urgent tab's count */
+  counts.back = { agent: 0, branch: 0, named: 0, dnc: 0 };
+  clients.forEach(function (c) {
+    var b = c.back;
+    if (!b) return;
+    if (b.kind === 'dnc') counts.back.dnc++;
+    else if (b.open) { counts.back[b.kind]++; if (c.assigned) counts.back.named++; }
+  });
   /* what the records say about the clients who answered, for the branch's insight bar and the filter */
-  if (branch && bk.ready) {
-    counts.insights = {};
-    clients.forEach(function (c) { if (tHasAnswered_(c)) (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
-    Object.keys(hhInfo).forEach(function (h) { if (hhInfo[h].gaps.length && households[h].some(function (m) { return m.state === 'answered'; })) counts.insights.hhgap = (counts.insights.hhgap || 0) + 1; });
+  if (branch && (bk.ready || tProfiles_().ready)) {
+    if (bk.ready) {
+      counts.insights = {};
+      clients.forEach(function (c) { if (tHasAnswered_(c)) (c.ins || []).forEach(function (i) { counts.insights[i.k] = (counts.insights[i.k] || 0) + 1; }); });
+      Object.keys(hhInfo).forEach(function (h) { if (hhInfo[h].gaps.length && households[h].some(function (m) { return m.state === 'answered'; })) counts.insights.hhgap = (counts.insights.hhgap || 0) + 1; });
+    }
     /* the book at a glance: over those who answered, and over every client of the books on the send list (not when the
-       board is read only to name an agent) */
+       board is read only to name an agent); who they are and where they live from the Client Profile alone when the
+       Client Book is not built yet */
     var bookNos = [];
     if (!lite) order.forEach(function (tok) { var r = sendBy[tok]; if (!T_NOT_BOOK.test(tText_(r.Exclude))) bookNos.push(tText_(r['Client number'])); });
     if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
@@ -3823,7 +3972,8 @@ function tBoard_(w, all, lite) {
            calls: { ready: calls.ready }, mailHeld: tClientMailHeld_(),   // the call list is on the board; automatic client e-mail is on hold
            /* what the hold stops besides the letters, reminders and notes (7 October 2026), so the board says it in words */
            introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_(), receiptsHeld: TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_(),
-           claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
+           claims: claims, detail: true,   // detail: this backend answers action=detail and action=comment (ping campaign 7)
+           backs: true };   // backs: this backend reads and takes call-back flags (update back=…), and sends each card's contact (7 October 2026)
 }
 
 /** The branch by unit and person, from the Agent Skill Bank's Role and Unit columns: each unit under its manager (the Unit
@@ -4002,8 +4152,9 @@ var T_YEAR_BANDS = [[0, 2, 'under 2 years'], [2, 5, '2 to 5 years'], [5, 10, '5 
 var T_BILL_WORDS = { 'bankers order': 'bankers order', 'direct bill': 'direct bill', 'pre authorized cheque': 'pre-authorised cheque', 'salary deduction': 'salary deduction',
   'military pay': 'military pay', 'post dated cheque': 'post-dated cheque', 'single premium': 'single premium' };
 function tGlance_(nos) {
-  var g = { n: 0, onBook: 0, prem: 0, cover: 0, ci: 0, due: 0, lapsed: 0, occN: 0, empN: 0, incN: 0, income: 0 };
-  var age = {}, gender = {}, pay = {}, holds = {}, ben = {}, years = {}, occ = {}, emp = {}, occL = {}, empL = {}, inc = [], seen = {};
+  var bk = tBook_();
+  var g = { n: 0, onBook: 0, prem: 0, cover: 0, ci: 0, due: 0, lapsed: 0, occN: 0, empN: 0, incN: 0, income: 0, townN: 0, book: bk.ready };
+  var age = {}, gender = {}, pay = {}, holds = {}, ben = {}, years = {}, occ = {}, emp = {}, occL = {}, empL = {}, inc = [], seen = {}, town = {}, townL = {};
   var bump = function (o, k) { o[k] = (o[k] || 0) + 1; };
   var empKey = function (s) {
     return s.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, ' ').replace(/\b(limited|ltd|company|co|the|of|trinidad|and|tobago|tt)\b/g, ' ').replace(/\s+/g, ' ').trim();
@@ -4013,14 +4164,17 @@ function tGlance_(nos) {
     if (!no || seen[no]) return;
     seen[no] = true;
     g.n++;
-    var p = tBookFor_(no, true), pf = tProfileFor_(no), band = 'not recorded';
+    var p = bk.ready ? tBookFor_(no, true) : null, pf = tProfileFor_(no), band = 'not recorded';
     if (pf && pf.age !== undefined) T_AGE_BANDS.forEach(function (b) { if (pf.age >= b[0] && pf.age < b[1]) band = b[2]; });
     bump(age, band);
     bump(gender, pf && pf.gender ? pf.gender : 'not recorded');
     if (pf && pf.occ) { var k = pf.occ.toLowerCase().replace(/[^a-z]/g, ''); g.occN++; bump(occ, k); if (!occL[k]) occL[k] = pf.occ; }
     if (pf && pf.emp) { var e = empKey(pf.emp) || pf.emp.toLowerCase(); g.empN++; bump(emp, e); if (!empL[e]) empL[e] = pf.emp; }
     if (pf && pf.income > 0) { g.incN++; inc.push(pf.income); }
-    if (!p) { bump(holds, 'nothing on the portfolio'); return; }
+    /* where they live (7 October 2026): the town on the policy record, else the in-force book's */
+    var tw = (pf && pf.contact && pf.contact.town) || ((bk.by[no] || []).filter(function (r) { return r.town; })[0] || {}).town || '';
+    if (tw) { var tk = tw.toLowerCase().replace(/[^a-z]/g, ''); g.townN++; bump(town, tk); if (!townL[tk]) townL[tk] = tw; }
+    if (!p) { if (bk.ready) bump(holds, 'nothing on the portfolio'); return; }
     g.onBook++;
     var s = p.sum, list = p.list || [], live = list.filter(function (x) { return tBookLive_(x.st); }), cls = {}, bills = {};
     g.prem += s.prem; g.cover += s.cover; g.ci += s.ci || 0;
@@ -4056,11 +4210,12 @@ function tGlance_(nos) {
   g.years = fixed(years, T_YEAR_BANDS.map(function (b) { return b[2]; }).concat(['no policy issued yet']));
   g.occ = top(occ, occL, 12);
   g.emp = top(emp, empL, 10);
+  g.town = top(town, townL, 12);
   return g;
 }
 /** The glance over the whole book changes once a day, with the Client Book: kept for ten minutes. */
 function tGlanceCached_(nos) {
-  var key = 'glance-all-' + ((tBook_().built || {}).at || '') + '-' + nos.length, c = null;
+  var key = 'glance-all-v2-' + ((tBook_().built || {}).at || '') + '-' + nos.length, c = null;
   try { c = CacheService.getScriptCache(); var hit = c.get(key); if (hit) return JSON.parse(hit); } catch (e) { c = null; }
   var g = tGlance_(nos);
   try { if (c) c.put(key, JSON.stringify(g), 600); } catch (e) {}
@@ -4183,6 +4338,11 @@ function transitionUpdate_(p) {
   var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   if (fam === tok) fam = '';
   if (fam && w.role !== 'branch') return { ok: false, refused: true, error: 'Only the branch can link a family.' };
+  /* a call-back asked for on the call (7 October 2026): a licensed agent, the branch, do not call, or the flag cleared;
+     the branch and Client Support set it, as they work the calls (tBackOf_) */
+  var back = String(p.back || '').trim().toLowerCase();
+  if (back && !/^(agent|branch|dnc|clear)$/.test(back)) return { ok: false, error: 'That is not a call-back the board knows.' };
+  if (back && !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support flag a call-back.' };
   var who = w.me && w.me.name ? w.me.name : 'branch';
   var lock = LockService.getScriptLock();
   if (!lock.tryLock(15000)) return { ok: false, error: 'The sheet is busy. Try again in a moment.' };
@@ -4218,8 +4378,10 @@ function transitionUpdate_(p) {
     if (!targets.length) targets = any;
     var stamp = Utilities.formatDate(new Date(), tTz_(), 'd MMM');
     var linked = fam ? tLinkFamily_(tok, fam) : null;
+    /* the call-back goes last, after the note, so the note stays the outcome's file note and is read as the call-back's reason */
     var marker = '[' + (noAnswer ? 'no answer' : known.toLowerCase()) + ' ' + stamp + ' · ' + who + ']' + (extra ? ' ' + extra : '') +
-      (linked && linked.ok ? ' [family: ' + linked.name.replace(/[\[\]]/g, '') + ', ' + linked.hh + ']' : '');
+      (linked && linked.ok ? ' [family: ' + linked.name.replace(/[\[\]]/g, '') + ', ' + linked.hh + ']' : '') +
+      (back ? ' [' + (back === 'dnc' ? 'do not call' : 'call-back ' + back) + ' ' + stamp + ' · ' + who + ']' : '');
     targets.forEach(function (rn) {
       if (!noAnswer) sh.getRange(rn, 8).setValue(known);
       var cell = sh.getRange(rn, 11), note = String(cell.getValue() || '');
@@ -4237,9 +4399,11 @@ function transitionUpdate_(p) {
       }
     }
     log_('transition', 'update', who + ' · ' + (noAnswer ? 'no answer' : known) + ' · ' + tok + ' · ' + targets.length + ' row' + (targets.length === 1 ? '' : 's') +
+         (back ? ' · call-back ' + back : '') +
          (told ? (told.sent ? ' · note "' + tell + '" e-mailed' : ' · note "' + tell + '" not sent: ' + told.why) : '') +
          (linked ? (linked.ok ? ' · family linked, ' + linked.hh : ' · family not linked: ' + linked.why) : ''));
     var out = { ok: true, status: noAnswer ? 'Open' : known, rows: targets.length };
+    if (back) out.back = back;
     if (told) { out.told = told.sent; if (told.sent) out.toldTo = told.to; else out.warning = 'The note did not go: ' + told.why + '.'; }
     if (linked) {
       if (linked.ok) { out.household = linked.hh; out.family = linked.name; }
@@ -4427,8 +4591,10 @@ function tBriefMail_(agent, clients, board) {
     var fam = board && c.hh && board.households && board.households[c.hh] ? board.households[c.hh].filter(function (m) { return m.onList && m.token !== c.token; }) : [];
     if (fam.length) lines += '<p style="margin:8px 0 2px"><b>' + esc((board.hhInfo && board.hhInfo[c.hh] && board.hhInfo[c.hh].name) || 'Their household') + '</b> <span style="color:#64798e">' +
       fam.map(function (m) { return esc(m.client) + (m.age !== undefined ? ' (' + m.age + ')' : '') + ': ' + esc(m.state === 'answered' ? 'answered' : m.state); }).join(' · ') + '</span></p>';
-    var reach = [];
-    if (c.phone) reach.push('<a href="tel:' + esc(String(c.phone).replace(/[^\d+]/g, '')) + '">' + esc(c.phone) + '</a>');
+    var reach = [], ct = c.contact || null;
+    /* every number on file, once each (tContactFor_), and the address (7 October 2026) */
+    var phones = ct && ct.phones && ct.phones.length ? ct.phones : (c.phone ? [{ n: c.phone }] : []);
+    phones.forEach(function (p) { reach.push('<a href="tel:' + esc(String(p.n).replace(/[^\d+]/g, '')) + '">' + esc(p.n) + '</a>' + (p.w ? ' (' + esc(p.w) + ')' : '')); });
     if (c.email) reach.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
     if (c.reach) reach.push('prefers ' + esc(c.reach.toLowerCase()));
     if (c.when) reach.push('best in the ' + esc(c.when.toLowerCase()));
@@ -4439,6 +4605,9 @@ function tBriefMail_(agent, clients, board) {
       (c.book ? ' · was with ' + esc(c.book) : '') + (c.sent ? ' · written to ' + esc(c.sent) : '') + (c.first ? ' · answered ' + esc(c.first) : '') + '</span></p>' +
       (c.needs && c.needs.length ? '<p style="margin:6px 0 0;color:#8a3324"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</p>' : '') + lines +
       '<p style="margin:8px 0 0"><b>Reach them:</b> ' + (reach.length ? reach.join(' · ') : 'no phone or e-mail on the sheet: look the client up by number') + '</p>' +
+      (ct && ct.addr ? '<p style="margin:4px 0 0"><b>Address on file:</b> ' + esc(ct.addr) + '</p>' : '') +
+      (c.back && c.back.open ? '<p style="margin:6px 0 0;color:#8a3324"><b>Call-back asked for ' + esc(T_BACK[c.back.kind] || c.back.kind) + '</b>' +
+        (c.back.by ? ' by ' + esc(c.back.by) : '') + (c.back.why ? ': ' + esc(c.back.why) : '') + '</p>' : '') +
       '<p style="margin:6px 0 0;font-size:13px"><a href="' + link + '">Their own answer page</a>: tick anything more they tell you with them on the line, and it lands on the sheet.</p></div>';
   };
   var html = '<div style="font:15px/1.5 ' + F + ';color:#33465a;max-width:640px">' +
@@ -4519,14 +4688,29 @@ var T_BOOK = {
   SEND_PLANS: 'Plans on file',    // the two money-free columns on Transition Send, for the Client Support calls sheet
   SEND_PAID: 'Paid to on file',
 };
+/* 7 October 2026 ("need address and occupation and households", then "the orphan data is pulled from the google branch
+   intelligence sheets … there are many sheets with data"): the Branch Portfolio is the branch intelligence workbook
+   (INTEL.WORKBOOK in Intelligence.gs). Its first tab carries each policy's Address, Phone and email, which the Client
+   Book now keeps. That tab is the premium-dues extract, so its in-force book tab (Policy Id, Client Id, Plan, Annual
+   Premium, Policy Bill Mode, Policy Maturity Date, Fund Value, City: the tab the intelligence reads for maturities) adds
+   every policy in force the first tab does not carry, and gives the plan's name, the premium a year and how often it is
+   paid as the company records them, so a policy found there is no longer estimated (tInforceRead_). The columns after
+   Was with are new; the board reads every column by its name, so a Client Book built before this still reads. */
 var T_BOOK_HEAD = ['Client number', 'Client', 'Policy', 'Plan code', 'Standing', 'Status description', 'Issued', 'Premium',
-  'Pays', 'Premium a year', 'Billing', 'Paid to', 'Sum assured', 'Insurance type', 'Was with'];
+  'Pays', 'Premium a year', 'Billing', 'Paid to', 'Sum assured', 'Insurance type', 'Was with',
+  'Address', 'Phone', 'E-mail', 'Plan', 'Premium a year from', 'Matures', 'Fund value', 'Town'];
 var T_CODES_HEAD = ['Plan code', 'Plan', 'Class', 'Confirmed', 'Insurance type', 'Policies', 'In force', 'PBI plan', 'Note'];
 /* the portfolio's own headers, matched whatever their case; the first name that is there wins */
 var T_BOOK_SRC = { agent: ['agent'], no: ['number', 'policy number'], client: ['client', 'client name'], cno: ['client number'],
   premium: ['premium'], issued: ['issue date'], status: ['status'], status2: ['status(2)'], itype: ['insurance type'],
-  paid: ['paid to date'], sa: ['sum assured'], code: ['plan code'], bill: ['billing type'], desc: ['status description'] };
+  paid: ['paid to date'], sa: ['sum assured'], code: ['plan code'], bill: ['billing type'], desc: ['status description'],
+  addr: ['address'], phone: ['phone', 'phone number', 'telephone'], email: ['email', 'e-mail'] };
 var T_BOOK_NEED = ['cno', 'no', 'code', 'desc', 'premium'];
+/* the in-force book tab of the same workbook, found by its columns as Intelligence.gs finds it (iTabInforce_) */
+var T_INF_SRC = { no: ['policy id'], cno: ['client id'], given: ['given name'], sur: ['surname'], plan: ['plan'], annual: ['annual premium'],
+  modal: ['modal premium'], mode: ['policy bill mode'], bill: ['policy bill type'], issued: ['policy effective date'], matures: ['policy maturity date'],
+  paid: ['policy paid to date'], overdue: ['daysoverdue'], sa: ['sum insured'], fund: ['fund value'], city: ['city'], phone: ['contact 1'],
+  email: ['email'], agent: ['servcing agent name', 'servicing agent name'] };
 /* where a policy stands, from Status (0 in force or ended, 1 lapsed, 2 premium overdue, 3 pending), Status(2) and
    Status Description, which is the only column that tells a policy in force from one surrendered or never taken */
 var T_STANDING = { inforce: 'in force', overdue: 'premium due', paidup: 'paid up', waived: 'premium waived', annuity: 'annuity in payment',
@@ -4627,6 +4811,7 @@ function tBuildBook_() {
     /* and the family on the Households tab who are not on the send list: their cover belongs on the household's line */
     tHouseholds_().rows.forEach(function (m) { if (!m.token && m.no) want[m.no] = true; });
     var src = tBookSource_(id), got = tBookRead_(src, want), recs = got.recs;
+    var inf = tInforceRead_(id, recs, want, src.tz);   // every policy in force, the plan's name and the premium a year as the company records them
     recs.sort(function (a, b) {
       return a.client.localeCompare(b.client) || a.cno.localeCompare(b.cno) || (T_ST_ORDER[a.st] - T_ST_ORDER[b.st]) || String(b.iss).localeCompare(String(a.iss));
     });
@@ -4639,10 +4824,14 @@ function tBuildBook_() {
     recs.forEach(function (r) { have[r.cno] = true; });
     var missing = Object.keys(want).filter(function (c) { return !have[c]; }).length;
     var info = { at: new Date().toISOString(), tab: src.tab, rows: got.rows, policies: recs.length, clients: Object.keys(have).length, missing: missing,
-                 added: codes.added, unclassed: codes.unclassed, secs: Math.round((Date.now() - t0) / 1000) };
+                 added: codes.added, unclassed: codes.unclassed, inforce: inf.found ? inf.n + inf.added : -1, secs: Math.round((Date.now() - t0) / 1000),
+                 addr: recs.filter(function (r) { return r.addr; }).length };
     PropertiesService.getScriptProperties().setProperty(T_BOOK.BUILT, JSON.stringify(info));
     tBookTrigger_();
     var msg = 'Client Book built: ' + info.policies + ' policies of ' + info.clients + ' clients, read from ' + info.rows + ' rows of "' + src.tab + '"' +
+      (src.ix.addr >= 0 ? ', with the address on ' + info.addr : '; that tab has no Address column') +
+      (inf.found ? '; from the in-force book ("' + inf.tab + '"), ' + inf.added + ' polic' + (inf.added === 1 ? 'y' : 'ies') + ' the first tab does not carry, and plan names and the premium a year as recorded on ' + inf.n + ' more'
+        : inf.error ? '; the in-force book was not read: ' + inf.error : '; no in-force book tab (Policy Id, Plan) in that workbook, so every premium a year is estimated') +
       (missing ? '; ' + missing + ' client' + (missing === 1 ? '' : 's') + ' on the send list with no policy on the portfolio' : '') +
       (codes.added ? '; ' + codes.added + ' new plan code' + (codes.added === 1 ? '' : 's') + ' added to Plan Codes' : '') +
       (codes.unclassed ? '; ' + codes.unclassed + ' plan code' + (codes.unclassed === 1 ? '' : 's') + ' with no class yet (not counted as life cover)' : '') +
@@ -4712,9 +4901,99 @@ function tBookRecord_(get, cno, tz) {
   var iss = tYmd_(get('issued'), tz), paid = tYmd_(get('paid'), tz);
   var prem = Math.round(tNum_(get('premium')) * 100) / 100, bill = String(get('bill') == null ? '' : get('bill')).trim();
   var st = tStanding_(get('status'), get('status2'), get('desc')), pays = tPays_(prem, bill, iss, paid);
+  var txt = function (k) { var x = get(k); return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); };
   return { cno: cno, client: String(get('client') == null ? '' : get('client')).trim(), no: tPolNo_(get('no')), code: String(get('code') == null ? '' : get('code')).trim(),
            st: st, desc: String(get('desc') == null ? '' : get('desc')).trim(), iss: iss, prem: prem, pays: pays, yr: tYearOf_(st, prem, pays), bill: bill, paid: paid,
-           sa: tNum_(get('sa')), itype: String(get('itype') == null ? '' : get('itype')).trim(), agent: String(get('agent') == null ? '' : get('agent')).trim() };
+           sa: tNum_(get('sa')), itype: String(get('itype') == null ? '' : get('itype')).trim(), agent: String(get('agent') == null ? '' : get('agent')).trim(),
+           addr: tAddrSplit_(txt('addr')), phone: txt('phone'), email: txt('email').replace(/\s+/g, '').toLowerCase(), yrSrc: pays ? 'estimated' : '' };
+}
+
+/** The portfolio's Address runs the lines together ("#1 Example DriveSecond StreetSome VillageSome Town"): a comma goes
+ *  back where a small letter or a full stop meets a capital ("#1 Example Drive, Second Street, Some Village, Some Town"), never inside
+ *  Mc and Mac, and a line written twice is kept once. An address typed in capitals is left as it is. */
+function tAddrSplit_(s) {
+  s = String(s || '').replace(/\s+/g, ' ').trim();
+  if (!s) return '';
+  var parts = s.replace(/(^|[^A-Za-z])(Ma?c)(?=[A-Z])/g, '$1$2\u0001').replace(/([a-z\.\)])([A-Z])/g, '$1, $2').replace(/\u0001/g, '')
+    .split(/\s*,\s*/).filter(Boolean), out = [];
+  parts.forEach(function (p) { if (!out.length || out[out.length - 1].toLowerCase() !== p.toLowerCase()) out.push(p); });
+  return out.join(', ');
+}
+
+/** How often a premium is paid, from the in-force book's Policy Bill Mode ("Monthly", "Annual", 12, 1 …); '' when it says nothing. */
+function tModeWord_(x) {
+  var s = String(x == null ? '' : x).trim().toLowerCase();
+  if (!s) return '';
+  if (/single/.test(s)) return 'single';
+  if (/month|^12$/.test(s)) return 'monthly';
+  if (/quarter|^4$/.test(s)) return 'quarterly';
+  if (/half|semi|^2$/.test(s)) return 'half-yearly';
+  if (/annual|year|^1$/.test(s)) return 'yearly';
+  return '';
+}
+
+/** The in-force book tab of the Branch Portfolio workbook (7 October 2026). The first tab, which the build reads first, is the
+ *  premium-dues extract: that evening it held 1,359 of the campaign's 4,805 policies. The in-force book holds every policy
+ *  in force, by Policy Id (the policy number) and Client Id (the client number), as Intelligence.gs reads it
+ *  (iClientInforce_). So a policy of a campaign client found there is added to the Client Book when the first tab does not
+ *  have it, and a policy on both takes the in-force book's plan name, premium a year and how often it is paid, maturity,
+ *  fund value and town. Only the columns asked for, one at a time (the tab holds the whole branch). Never throws:
+ *  { found, n (on both), added, tab }. */
+function tInforceRead_(id, recs, want, tz) {
+  try {
+    var book = SpreadsheetApp.openById(id), best = null, bestRows = -1;
+    var has = function (h, n) { return h.some(function (x) { return x === n || x.indexOf(n) === 0; }); };
+    book.getSheets().forEach(function (s) {
+      var lc = s.getLastColumn(), lr = s.getLastRow();
+      if (!lc || lr < 2) return;
+      var h = s.getRange(1, 1, 1, lc).getValues()[0].map(function (x) { return String(x).trim().toLowerCase(); });
+      if (!has(h, 'policy id') || !has(h, 'plan')) return;
+      if (lr > bestRows) { best = { sh: s, head: h }; bestRows = lr; }
+    });
+    if (!best) return { found: false, n: 0, added: 0 };
+    var key = function (v) { var x = String(v == null ? '' : v).trim(), d = x.replace(/\D/g, ''); return d.length >= 6 ? d.replace(/^0+/, '') : x.toUpperCase(); };
+    var byNo = {};
+    recs.forEach(function (r) { var k = key(r.no); if (k) (byNo[k] = byNo[k] || []).push(r); });
+    var rows = best.sh.getLastRow() - 1, col = {};
+    Object.keys(T_INF_SRC).forEach(function (k) {
+      var i = -1;
+      T_INF_SRC[k].forEach(function (n) { if (i < 0) i = best.head.indexOf(n); });
+      if (i < 0) T_INF_SRC[k].forEach(function (n) { if (i < 0) best.head.some(function (h, j) { if (h.indexOf(n) === 0) { i = j; return true; } return false; }); });
+      col[k] = i < 0 ? null : best.sh.getRange(2, i + 1, rows, 1).getValues();
+    });
+    if (!col.no) return { found: false, n: 0, added: 0 };
+    var n = 0, added = 0, cell = function (k, r) { return col[k] ? col[k][r][0] : ''; };
+    var txt = function (k, r) { var x = cell(k, r); return String(x == null ? '' : x).replace(/\s+/g, ' ').trim(); };
+    for (var r = 0; r < rows; r++) {
+      var pk = key(cell('no', r));
+      if (!pk) continue;
+      var hit = byNo[pk], cno = tCno_(cell('cno', r));
+      if (!hit && !(cno && want[cno])) continue;
+      var plan = txt('plan', r), annual = tNum_(cell('annual', r)), mode = tModeWord_(cell('mode', r)), city = txt('city', r), fund = tNum_(cell('fund', r));
+      var matures = tYmd_(cell('matures', r), tz);
+      if (!hit) {
+        /* a policy in force the dues extract does not carry: a record of its own, in the in-force book's words */
+        var bill = txt('bill', r), prem = Math.round(tNum_(cell('modal', r)) * 100) / 100, od = tNum_(cell('overdue', r));
+        var st = /paid\s*up/i.test(bill + ' ' + txt('mode', r)) ? 'paidup' : /waiv/i.test(bill + ' ' + txt('mode', r)) ? 'waived' : od > 0 ? 'overdue' : 'inforce';
+        var rec = { cno: cno, client: tTitleCase_([txt('given', r), txt('sur', r)].filter(Boolean).join(' ')), no: tPolNo_(cell('no', r)), code: '', st: st,
+          desc: '', iss: tYmd_(cell('issued', r), tz), prem: prem, pays: mode || tPays_(prem, bill, '', ''), yr: 0, bill: bill, paid: tYmd_(cell('paid', r), tz),
+          sa: tNum_(cell('sa', r)), itype: '', agent: txt('agent', r), addr: '', phone: txt('phone', r), email: txt('email', r).replace(/\s+/g, '').toLowerCase(), yrSrc: '' };
+        rec.yr = annual > 0 && (st === 'inforce' || st === 'overdue') ? Math.round(annual * 100) / 100 : tYearOf_(st, prem, rec.pays);
+        rec.yrSrc = annual > 0 ? 'in-force book' : (rec.yr ? 'estimated' : '');
+        hit = [rec]; byNo[pk] = hit; recs.push(rec); added++;
+      } else n++;
+      hit.forEach(function (rec) {
+        if (plan) rec.plan = tNiceLabel_(plan);
+        if (matures) rec.matures = matures;
+        if (fund > 0) rec.fund = Math.round(fund * 100) / 100;
+        if (city) rec.town = tNiceLabel_(city);
+        /* the premium a year as the company records it, for a policy that is being paid: no longer estimated */
+        if ((rec.st === 'inforce' || rec.st === 'overdue') && annual > 0) { rec.yr = Math.round(annual * 100) / 100; rec.yrSrc = 'in-force book'; if (mode) rec.pays = mode; }
+        else if (mode && rec.pays !== 'single') rec.pays = mode;
+      });
+    }
+    return { found: true, n: n, added: added, tab: best.sh.getName() };
+  } catch (e) { return { found: false, n: 0, added: 0, error: String(e && e.message ? e.message : e).slice(0, 160) }; }
 }
 
 /** The Client Book tab, rewritten whole: the new rows over the old, then whatever is left below cleared, so the board
@@ -4723,18 +5002,18 @@ function tBookWrite_(recs) {
   var ss = ss_(), sh = ss.getSheetByName(T_BOOK.SHEET) || ss.insertSheet(T_BOOK.SHEET);
   var w = T_BOOK_HEAD.length, rows = [T_BOOK_HEAD];
   recs.forEach(function (r) {
-    rows.push([r.cno, r.client, r.no, r.code, T_STANDING[r.st] || r.st, r.desc, r.iss, r.prem || '', r.pays, r.yr || '', r.bill, r.paid, r.sa || '', r.itype, r.agent]);
+    rows.push([r.cno, r.client, r.no, r.code, T_STANDING[r.st] || r.st, r.desc, r.iss, r.prem || '', r.pays, r.yr || '', r.bill, r.paid, r.sa || '', r.itype, r.agent,
+      r.addr || '', r.phone || '', r.email || '', r.plan || '', r.yr ? (r.yrSrc || 'estimated') : '', r.matures || '', r.fund || '', r.town || '']);
   });
   if (sh.getMaxRows() < rows.length) sh.insertRowsAfter(sh.getMaxRows(), rows.length - sh.getMaxRows());
   if (sh.getMaxColumns() < w) sh.insertColumnsAfter(sh.getMaxColumns(), w - sh.getMaxColumns());
-  sh.getRange(1, 1, rows.length, 1).setNumberFormat('@');
-  sh.getRange(1, 3, rows.length, 1).setNumberFormat('@');
+  [1, 3, 17].forEach(function (c) { sh.getRange(1, c, rows.length, 1).setNumberFormat('@'); });   // client and policy numbers, and phones, as typed
   sh.getRange(1, 1, rows.length, w).setValues(rows);
   var last = sh.getLastRow();
   if (last > rows.length) sh.getRange(rows.length + 1, 1, last - rows.length, Math.max(w, sh.getLastColumn())).clearContent();
   if (rows.length > 1) {
-    [7, 12].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('d mmm yyyy'); });
-    [8, 10].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('#,##0.00'); });
+    [7, 12, 21].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('d mmm yyyy'); });
+    [8, 10, 22].forEach(function (c) { sh.getRange(2, c, rows.length - 1, 1).setNumberFormat('#,##0.00'); });
     sh.getRange(2, 13, rows.length - 1, 1).setNumberFormat('#,##0');
   }
   try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, w).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
@@ -4859,9 +5138,13 @@ function tBook_() {
       var cno = tCno_(v[ix['Client number']]);
       if (!cno) return;
       var get = function (h) { return ix[h] !== undefined ? v[ix[h]] : ''; };
+      var txt = function (h) { return String(get(h) == null ? '' : get(h)).replace(/\s+/g, ' ').trim(); };
       (by[cno] = by[cno] || []).push({ no: tPolNo_(get('Policy')), client: String(get('Client') || '').trim(), code: String(get('Plan code') || '').trim(), st: inv[String(get('Standing')).trim()] || 'ended',
         desc: String(get('Status description') || '').trim(), iss: tYmd_(get('Issued'), tz), prem: tNum_(get('Premium')), pays: String(get('Pays') || '').trim(),
-        yr: tNum_(get('Premium a year')), bill: String(get('Billing') || '').trim(), paid: tYmd_(get('Paid to'), tz), sa: tNum_(get('Sum assured')) });
+        yr: tNum_(get('Premium a year')), bill: String(get('Billing') || '').trim(), paid: tYmd_(get('Paid to'), tz), sa: tNum_(get('Sum assured')),
+        /* since 7 October 2026: the portfolio's address, phone and e-mail, and from the in-force book the plan's name, where the premium a year came from, maturity, fund value and town */
+        addr: txt('Address'), phone: txt('Phone'), email: txt('E-mail'), plan: txt('Plan'), yrSrc: txt('Premium a year from'), matures: tYmd_(get('Matures'), tz),
+        fund: tNum_(get('Fund value')), town: txt('Town') });
       n++;
     });
   } catch (e) {}
@@ -4898,11 +5181,12 @@ function tBookFor_(cno, withList) {
   var b = tBook_(), recs = b.by[tCno_(cno)];
   if (!recs || !recs.length) return null;
   var codes = tPlanCodes_(), P = tProfiles_(), ended = {}, list = [];
-  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0 };
+  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0 };
   recs.forEach(function (r) {
     var pc = codes[r.code] || { name: '', cls: '', conf: false }, live = tBookLive_(r.st), pf = P.by[r.no] || null;
     var cv = tCoverOf_(r, pc, pf), life = live ? cv.life : 0;
-    if (live) { s.live++; if (r.st === 'overdue') s.due++; s.ci += cv.ci; s.acc += cv.acc; }
+    if (live) { s.live++; if (r.st === 'overdue') s.due++; s.ci += cv.ci; s.acc += cv.acc; s.fund += r.fund || 0; }
+    if (r.yr && r.yrSrc !== 'in-force book') s.est++;   // a premium a year read off the figures, not recorded (T_BOOK)
     else if (r.st === 'lapsed') s.lapsed++;
     else if (r.st === 'pending') s.pending++;
     else { s.ended++; var k = (r.desc || 'ended').toLowerCase(); ended[k] = (ended[k] || 0) + 1; }
@@ -4912,14 +5196,16 @@ function tBookFor_(cno, withList) {
     if (r.iss && r.st !== 'pending' && !T_NEVER.test(r.desc) && (!s.since || r.iss < s.since)) s.since = r.iss;
     if (withList && r.st !== 'ended') {
       var ins = pf && tOtherLife_(pf.insured, r.client) ? tTitleCase_(pf.insured) : '';   // the life it covers, when that is someone else's
-      list.push({ no: r.no, code: r.code, name: pc.name, cls: pc.cls, conf: pc.conf, st: r.st,
+      /* the plan's name: sales support's on the Plan Codes tab, else the in-force book's, else Salesforce's */
+      list.push({ no: r.no, code: r.code, name: pc.name || r.plan || (pf && pf.plan) || '', cls: pc.cls, conf: pc.conf, st: r.st,
         desc: r.st === 'pending' ? r.desc : '', iss: r.iss, prem: r.prem, pays: r.pays, yr: r.yr, bill: r.bill, paid: r.paid,
         od: r.st === 'overdue' && r.paid ? Math.max(0, tDaysBetween_(r.paid, b.today)) : 0, sa: r.sa,
         life: cv.life, ci: cv.ci, acc: cv.acc, src: cv.src, counted: life > 0,
-        ben: pf ? pf.ben.map(tTitleCase_) : [], benK: pf ? tBenKind_(pf.ben) : '', ends: pf ? pf.ends : '', insured: ins });
+        ben: pf ? pf.ben.map(tTitleCase_) : [], benK: pf ? tBenKind_(pf.ben) : '', ends: pf ? pf.ends : '', insured: ins,
+        matures: r.matures || '', fund: r.fund || 0, est: !!r.yr && r.yrSrc !== 'in-force book' });
     }
   });
-  s.prem = Math.round(s.prem * 100) / 100;
+  s.prem = Math.round(s.prem * 100) / 100; s.fund = Math.round(s.fund);
   if (s.since) s.years = Math.max(0, Math.floor(tDaysBetween_(s.since, b.today) / 365.25));
   var out = { sum: s };
   if (withList) {
@@ -4957,7 +5243,7 @@ function tPolNoMoney_(pol) {
   return { noMoney: true,
     sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0 },
     list: (pol.list || []).map(function (x) {
-      return { no: x.no, code: x.code, name: x.name, st: x.st, desc: x.desc, od: x.od, iss: x.iss, paid: x.paid, insured: x.insured };
+      return { no: x.no, code: x.code, name: x.name, st: x.st, desc: x.desc, od: x.od, iss: x.iss, paid: x.paid, insured: x.insured, matures: x.matures || '' };
     }),
     ended: pol.ended || [] };
 }
@@ -4979,7 +5265,9 @@ function transitionBook_(p) {
   var tok = String(p.token || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64), row = tok ? tRowByToken_(tok) : null;
   if (!row || tYes_(row.Test)) return { ok: false, error: 'That client is not on the send list.' };
   var b = tBook_(), pol = tBookFor_(row['Client number'], true), prof = tProfileFor_(row['Client number']);
-  return { ok: true, token: tok, pol: pol, profile: prof, ins: tInsightsFor_(pol, prof, b.today), bookAt: b.built ? b.built.when : '' };
+  var contact = tContactFor_({ email: tText_(row.Email), phone: '' }, prof, b.by[tCno_(row['Client number'])], tCalls_().by[tok] || null);
+  if (prof) delete prof.contact;
+  return { ok: true, token: tok, pol: pol, profile: prof, contact: contact, ins: tInsightsFor_(pol, prof, b.today), bookAt: b.built ? b.built.when : '' };
 }
 
 /** What a policy pays, in words: the beneficiaries' names, or what the record says instead. */
@@ -5045,10 +5333,16 @@ function tBookMailHtml_(pol, prof, ins) {
    The same evening ("where is the occupation?"): the policy record's Occupation is filled for 7 clients in 100, but the
    Contact's Title, which the branch has always typed the job into ("TEACHER", "POLICE OFFICER", "CLERK"), is filled
    for 6 in 10 once the courtesy titles are taken out, so the Occupation column falls back to it (tJobTitle_). */
+/* 7 October 2026 ("need address and occupation"): the policy record's address (Address 1 to 3, the Contact's mailing
+   address), its mobile and home numbers, the plan's name and where the policy stands, so the board has who the client is
+   and how to reach them before the Client Book is built, and a town for every card. */
 var T_PROFILE = { SHEET: 'Client Profile', CHUNK: 200, BUDGET_MS: 150000 };
 var T_PROFILE_HEAD = ['Policy', 'Client number', 'Client', 'Date of birth', 'Gender', 'Smoker', 'Occupation', 'Employer', 'Annual income',
   'Life cover', 'Critical illness cover', 'Accident cover', 'Waiver cover', 'Life cover ends', 'Beneficiary 1', 'Beneficiary 2', 'Beneficiary 3',
-  'Insured', 'Owner', 'Family role', 'From'];
+  'Insured', 'Owner', 'Family role', 'Address', 'Town', 'Mobile', 'Home phone', 'Plan', 'Status', 'Paid to', 'Issued', 'From'];
+/* an Address 3 that only names the country, which every client shares */
+var T_COUNTRY = /^(tt|t\s*&\s*t|t\s*and\s*t|trinidad|trinidad\s*(&|and)\s*tobago|trinidad\s*\/\s*tobago|w\.?\s*i\.?|west indies)$/i;
+var T_ADDR_UP = /^(lp|l\.p\.?|po|p\.o\.?|hdc|nha|tt|nw|ne|sw|se|apt|bldg)$/i;
 /* what Contact.Employer__c holds is mostly a household's or an agent's name ("RAMROACH, KERWYN HH"): only a value that reads
    as an employer or a status is shown */
 var T_EMPLOYER = /\b(ltd|limited|company|co\.|corp|corporation|inc|ministry|bank|services|authority|school|hospital|petroleum|board|government|govt|police|defence|regiment|council|university|college|enterprises?|group|agency|association|trust|church|fire service|prison|customs|wasa|tstt|t&tec|ngc|petrotrin|self[- ]employed|retired|pensioner|housewife|homemaker|student|unemployed)\b/i;
@@ -5073,6 +5367,21 @@ function tJobTitle_(x) {
   if (!s || /^(mr|mrs|ms|miss|mstr|master|dr|rev|sir|madam|hon)\.?$/i.test(s) || /^(unknown|not on list|not known|n\/?a|none|nil|other|-+|\.+|0)$/i.test(s)) return '';
   return s;
 }
+/** An address or a town as the board prints it: typed in capitals, in title case with LP, PO and HDC kept whole; a
+ *  line written twice kept once. */
+function tAddrNice_(s) {
+  var out = [];
+  String(s || '').split(/\s*[,\r\n]+\s*/).forEach(function (p) {
+    p = tNiceLabel_(p).replace(/[^\s,]+/g, function (w) { return T_ADDR_UP.test(w) ? w.toUpperCase() : w; });
+    if (p && !out.some(function (q) { return q.toLowerCase() === p.toLowerCase(); })) out.push(p);
+  });
+  return out.join(', ');
+}
+/** A telephone number worth printing: seven digits or more, and never the policy number (Mobile__c holds it on a few records). */
+function tPhoneOk_(x, policy) {
+  var s = String(x == null ? '' : x).trim(), d = s.replace(/\D/g, '');
+  return d.length >= 7 && d.length <= 15 && d !== String(policy || '').replace(/\D/g, '') ? s : '';
+}
 function tGender_(x) { var s = String(x || '').trim().toLowerCase(); return /^m(ale)?$/.test(s) ? 'male' : /^f(emale)?$/.test(s) ? 'female' : ''; }
 function tTitleCase_(x) {
   var s = String(x || '').replace(/\s+/g, ' ').trim();
@@ -5089,10 +5398,11 @@ function tBenKind_(list) {
   return 'named';
 }
 
-/** The Client Profile tab as { ready, by: { policy: {…} } }. */
+/** The Client Profile tab as { ready, by: { policy: {…} }, byCno: { client number: [policy, …] } }. byCno lets the board
+ *  say who a client is when the Client Book has not been built. */
 function tProfiles_() {
   if (T_PROFILE_MEMO) return T_PROFILE_MEMO;
-  var by = {}, n = 0, tz = tTz_();
+  var by = {}, byCno = {}, n = 0, tz = tTz_();
   try {
     var t = tSheetRows_(T_PROFILE.SHEET), ix = {};
     t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
@@ -5101,16 +5411,20 @@ function tProfiles_() {
       if (!no) return;
       var g = function (k) { return ix[k] !== undefined ? v[ix[k]] : ''; };
       var txt = function (k) { return String(g(k) == null ? '' : g(k)).replace(/\s+/g, ' ').trim(); };
-      var emp = txt('employer');
+      var emp = txt('employer'), cno = tCno_(g('client number'));
       by[no] = { dob: tYmd_(g('date of birth'), tz), gender: tGender_(g('gender')), smoker: /^y/i.test(txt('smoker')) ? 'smoker' : '',
         occ: tNiceLabel_(txt('occupation')), emp: T_EMPLOYER.test(emp) && !/\bHH\b/.test(emp) ? tNiceLabel_(emp) : '', income: tNum_(g('annual income')),
         life: tNumOrNull_(g('life cover')), ci: tNumOrNull_(g('critical illness cover')), acc: tNumOrNull_(g('accident cover')), wp: tNumOrNull_(g('waiver cover')),
         ends: tYmd_(g('life cover ends'), tz), ben: [txt('beneficiary 1'), txt('beneficiary 2'), txt('beneficiary 3')].filter(Boolean),
-        insured: txt('insured'), owner: txt('owner'), role: tTitleCase_(txt('family role')) };
+        insured: txt('insured'), owner: txt('owner'), role: tTitleCase_(txt('family role')),
+        /* since 7 October 2026: where they live and how to reach them, the plan's name and where it stands */
+        addr: tAddrNice_(txt('address')), town: tAddrNice_(txt('town')), mobile: tPhoneOk_(txt('mobile'), no), home: tPhoneOk_(txt('home phone'), no),
+        plan: tNiceLabel_(txt('plan')), status: txt('status'), paid: tYmd_(g('paid to'), tz), iss: tYmd_(g('issued'), tz), cno: cno, client: txt('client') };
+      if (cno) (byCno[cno] = byCno[cno] || []).push(no);
       n++;
     });
   } catch (e) {}
-  return (T_PROFILE_MEMO = { ready: n > 0, by: by });
+  return (T_PROFILE_MEMO = { ready: n > 0, by: by, byCno: byCno });
 }
 
 /** One client's profile, from the profile rows of their own policies: the date of birth and the age, the gender, the
@@ -5129,8 +5443,13 @@ function tOtherLife_(insured, client) {
   return !(x[0] === y[0] && x[0].length >= 3 && x.slice(1).some(function (p) { return p.length >= 4 && y.slice(1).some(function (q) { return q.slice(0, 4) === p.slice(0, 4); }); }));
 }
 function tProfileFor_(cno) {
-  var P = tProfiles_(), b = tBook_(), all = b.by[tCno_(cno)] || [], recs = P.ready ? all : [];
-  var o = { dob: '', gender: '', smoker: '', occ: '', emp: '', income: 0, role: '' }, any = false;
+  var P = tProfiles_(), b = tBook_(), key = tCno_(cno), all = b.by[key] || [], recs = P.ready ? all : [];
+  /* no Client Book yet, or none of this client's policies on it (7 October 2026): the profile's own rows for the client
+     number, so the board still says who they are and where they live */
+  if (P.ready && !recs.some(function (r) { return P.by[r.no]; })) {
+    recs = (P.byCno[key] || []).map(function (no) { return { no: no, client: P.by[no].client, st: '', bill: '' }; });
+  }
+  var o = { dob: '', gender: '', smoker: '', occ: '', emp: '', income: 0, role: '' }, any = false, at = { addr: '', town: '', mobile: '', home: '' };
   /* who a person is comes from the policies on their own life: a policy the client took out on a child's life carries the
      child's date of birth and gender (the board read one mother as 5). A policy whose insured is someone
      else by name is left out, unless no policy is on the client's own life, when every one is read as before. */
@@ -5142,6 +5461,12 @@ function tProfileFor_(cno) {
     ['dob', 'gender', 'smoker', 'occ', 'emp', 'role'].forEach(function (k) { if (!o[k] && p[k]) o[k] = p[k]; });
     if (p.income > o.income) o.income = p.income;
   });
+  /* where they live and their numbers: their own policies first, then any of theirs (a household shares an address) */
+  own.concat(recs).forEach(function (r) {
+    var p = P.by[r.no];
+    if (p) Object.keys(at).forEach(function (k) { if (!at[k] && p[k]) at[k] = p[k]; });
+  });
+  if (at.addr || at.town || at.mobile || at.home) o.contact = at;
   all.forEach(function (r) {
     if (o.pay || (r.st !== 'inforce' && r.st !== 'overdue')) return;
     if (/military/i.test(r.bill)) o.pay = 'military pay';
@@ -5228,19 +5553,27 @@ function tInsightsFor_(pol, prof, today) {
 var T_SF_FIELDS = ['POLICY__c', 'FIRST_NAME__c', 'LAST_NAME__c', 'Date_Of_Birth__c', 'Occupation__c', 'ANNUAL_INCOME__c', 'Monthly_Income__c',
   'Benificiary_1__c', 'Benificiary_2__c', 'Benificiary_3__c', 'INSURED__c', 'POLICY_OWNER__c', 'Family_Role__c', 'Life_Coverage__c',
   'Critical_Illness_Coverage__c', 'ADDAP_Coverage__c', 'WP_Coverage__c', 'Life_Coverage_Expiry__c', 'Contact__r.Gender__c', 'Contact__r.Smoker__c',
-  'Contact__r.Employer__c', 'Contact__r.Total_Income__c', 'Contact__r.Birthdate', 'Contact__r.Title'];
+  'Contact__r.Employer__c', 'Contact__r.Total_Income__c', 'Contact__r.Birthdate', 'Contact__r.Title',
+  'Address_1__c', 'Address_2__c', 'Address_3__c', 'Contact__r.MailingStreet', 'Contact__r.MailingCity', 'Mobile__c', 'Home_Phone__c',
+  'Contact__r.MobilePhone', 'Contact__r.HomePhone', 'PLAN_NAME__c', 'Policy_Status_Description__c', 'Paid_To_Date__c', 'ISSUE_DATE__c'];
 /** One Client Profile row from one CLIENT_PORTFOLIO__c record. The occupation is the policy's own, else the Contact's Title
- *  when it is a job and not a courtesy title. */
+ *  when it is a job and not a courtesy title. The address is Address 1 (its lines joined), the town (Address 2, the
+ *  Contact's mailing city) and Address 3 unless it only names the country. */
 function tProfileRow_(rec, cno, client) {
   var c = rec.Contact__r || {}, v = function (x) { return x === null || x === undefined ? '' : x; };
   var income = rec.ANNUAL_INCOME__c || (rec.Monthly_Income__c ? rec.Monthly_Income__c * 12 : 0) || c.Total_Income__c || '';
+  var town = String(v(rec.Address_2__c) || v(c.MailingCity)).replace(/\s+/g, ' ').trim(), a3 = String(v(rec.Address_3__c)).replace(/\s+/g, ' ').trim();
+  var addr = [String(v(rec.Address_1__c) || v(c.MailingStreet)).replace(/\s*[\r\n]+\s*/g, ', '), town, T_COUNTRY.test(a3) ? '' : a3].filter(Boolean).join(', ');
   return [String(rec.POLICY__c || ''), cno || '', client || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.Date_Of_Birth__c || c.Birthdate),
     v(c.Gender__c), v(c.Smoker__c), v(rec.Occupation__c) || tJobTitle_(c.Title), v(c.Employer__c), income, v(rec.Life_Coverage__c), v(rec.Critical_Illness_Coverage__c),
     v(rec.ADDAP_Coverage__c), v(rec.WP_Coverage__c), v(rec.Life_Coverage_Expiry__c), v(rec.Benificiary_1__c), v(rec.Benificiary_2__c), v(rec.Benificiary_3__c),
     /* the life insured: INSURED__c is filled on a few policies in a hundred, but the policy record's own name and date of
        birth are always the insured's — the owner's on most, a child's or a spouse's on a policy the owner took out on
        someone else's life (29 September 2026: one mother on these books owns two on her daughters' lives) */
-    v(rec.INSURED__c) || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c), 'Salesforce'];
+    v(rec.INSURED__c) || [rec.FIRST_NAME__c, rec.LAST_NAME__c].filter(Boolean).join(' '), v(rec.POLICY_OWNER__c), v(rec.Family_Role__c),
+    tAddrNice_(addr), tAddrNice_(town), tPhoneOk_(c.MobilePhone, rec.POLICY__c) || tPhoneOk_(rec.Mobile__c, rec.POLICY__c),
+    tPhoneOk_(rec.Home_Phone__c, rec.POLICY__c) || tPhoneOk_(c.HomePhone, rec.POLICY__c),
+    tNiceLabel_(v(rec.PLAN_NAME__c)), v(rec.Policy_Status_Description__c), v(rec.Paid_To_Date__c), v(rec.ISSUE_DATE__c), 'Salesforce'];
 }
 /** Rewrites the Client Profile tab from Salesforce for these policies, when ServiceSalesforce.gs and its four SF_* Script
  *  properties are there; otherwise leaves the imported tab as it is. Never throws; { rows } or { skipped } or { error }. */
@@ -5265,6 +5598,7 @@ function tProfileRefresh_(recs, deadline) {
     if (sh.getMaxRows() < rows.length) sh.insertRowsAfter(sh.getMaxRows(), rows.length - sh.getMaxRows());
     if (sh.getMaxColumns() < w) sh.insertColumnsAfter(sh.getMaxColumns(), w - sh.getMaxColumns());
     sh.getRange(1, 1, rows.length, 2).setNumberFormat('@');
+    ['Mobile', 'Home phone'].forEach(function (h) { var j = T_PROFILE_HEAD.indexOf(h); if (j >= 0) sh.getRange(1, j + 1, rows.length, 1).setNumberFormat('@'); });   // numbers as typed
     sh.getRange(1, 1, rows.length, w).setValues(rows);
     var last = sh.getLastRow();
     if (last > rows.length) sh.getRange(rows.length + 1, 1, last - rows.length, Math.max(w, sh.getLastColumn())).clearContent();
