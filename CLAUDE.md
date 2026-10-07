@@ -2350,8 +2350,9 @@ voice under the new timing and the caption gives it away.
   is who sees the card: the branch and staff anyone, a unit manager his
   team's, an agent their own. Staff never see the claim. The board's
   two-minute refresh waits while a comment is being written. Signing out
-  forgets every client opened, every comment not yet saved and every policy
-  fetched, so the next person on the device starts clean.
+  forgets every client opened, every comment not yet saved, every policy
+  fetched and the board kept on the device, so the next person on the
+  device starts clean.
 - **The calls moved onto the board, and the branch opens on what to act on**
   (7 October 2026: "where does staff make their notes and who to call as we
   move from the spreadsheet to data entry when call and can see the scripts",
@@ -2400,7 +2401,22 @@ voice under the new timing and the caption gives it away.
   from 6.3 to about 2 seconds after the answer arrives; Apps Script itself
   still takes some ten seconds to read the sheet. `slow7oct/calls-harness.js`
   (25 checks, Node, the real tabs) and `slow7oct/board-calls-test.js` (26,
-  Playwright) in the scratchpad cover it.
+  Playwright) in the scratchpad cover it. **The board opens on the last
+  board it showed** (the same afternoon: "logging in as me too long to
+  refresh"). The page keeps it on the device as `rrb-assign-snapshot`, as
+  the wall and the dashboard keep theirs. It is painted at once when the
+  page opens again, and the sheet's answer replaces it seconds later. It is
+  kept twelve hours at most and only for the person it was read for (a hash
+  of the number and password, never the password itself). It goes on
+  sign-out and on a refused password. Nothing is saved from it: an outcome,
+  a naming or a comment waits for the fresh board. Refresh reads
+  "Updating…" while the sheet answers. A reload asked for during another
+  is made straight after it; until then, a save that landed mid-refresh
+  waited two minutes to show. Every tab is read once per board request
+  (`tSheetRows_` under `T_READ_ONCE`), so Household Assignments is read
+  once instead of two or three times. `speed7oct/snap-test.js` (24,
+  Playwright) and `speed7oct/same.js` (the answer byte for byte the same
+  before and after, for every role) in the scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

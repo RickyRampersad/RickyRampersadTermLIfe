@@ -2493,11 +2493,17 @@ function tRuns_(n) {
 }
 
 function tSheetRows_(name) {
-  var sh = ss_().getSheetByName(name);
-  if (!sh || sh.getLastRow() < 2) return { head: [], rows: [] };
-  var vals = sh.getDataRange().getValues();
-  var head = vals[0].map(function (h) { return String(h).trim(); });
-  return { head: head, rows: vals.slice(1) };
+  /* a board request reads each tab once (transitionBoard_, 7 October 2026): the households, the 24 September plan and the
+     assignments all read Household Assignments, three reads of the same tab on every sign-in */
+  var key = 'rows:' + name;
+  if (T_READ_ONCE && T_READ_ONCE[key]) return T_READ_ONCE[key];
+  var sh = ss_().getSheetByName(name), out = { head: [], rows: [] };
+  if (sh && sh.getLastRow() >= 2) {
+    var vals = sh.getDataRange().getValues();
+    out = { head: vals[0].map(function (h) { return String(h).trim(); }), rows: vals.slice(1) };
+  }
+  if (T_READ_ONCE) T_READ_ONCE[key] = out;
+  return out;
 }
 
 /** Everything the monitor page and the digest show. Names come from the send
@@ -5283,7 +5289,9 @@ function tHaDate_(x) {
 function tHaRead_() {
   var sh = ss_().getSheetByName(T_HA.SHEET);
   if (!sh || sh.getLastRow() < 2) return null;
-  var vals = sh.getRange(1, 1, sh.getLastRow(), Math.max(1, sh.getLastColumn())).getValues(), ix = {};
+  var vals, ix = {};
+  if (T_READ_ONCE) { var once = tSheetRows_(T_HA.SHEET); vals = [once.head].concat(once.rows); }   // a board request: the read the households made
+  else vals = sh.getRange(1, 1, sh.getLastRow(), Math.max(1, sh.getLastColumn())).getValues();
   vals[0].forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
   if (ix.household === undefined || ix.token === undefined || ix['agent assigned'] === undefined) return null;
   var g = function (v, k) { return ix[k] !== undefined ? v[ix[k]] : ''; };
