@@ -2289,6 +2289,61 @@ voice under the new timing and the caption gives it away.
 - Never send the branch a link to any of this before the branch is merged to
   `main`. A 404 in the WhatsApp group has happened once already.
 
+## Group client management — the employers' weekly service report
+
+Built 7 October 2026 ("staff logs in … on the days that we send off clients
+group, they actually see the groups that they assign … when they click send,
+they can preview the template … all of these things are logged … the group
+logs in with the code and sees … the task, but underneath can read the
+comment, verify if it's correct … the manager's login view … the ratios, the
+responses, and the star ratings by staff … it builds into the group
+management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
+
+- **Live, not a weekly static build.** A project built elsewhere generated
+  code-locked pages once a week from a GitHub Action and published them on
+  Netlify. It was replaced the same day: its setup moved
+  rickyrampersadbranch.com to Netlify (which would have taken every other page
+  off the air), its register of group names and contacts was a public file,
+  and a static page cannot show each person their own groups, send and log a
+  letter, or read and post Chatter. `apps-script/GroupClients.gs` does it in
+  the Service Questionnaire project, routed by two lines in `Service.gs`
+  (`gcm.*`), signing staff in through `tWho_` like the assignment board,
+  reading Salesforce through `ServiceSalesforce.gs`, sending through
+  `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
+- **The register is a sheet tab, never a file here.** `Group Register` (group,
+  Salesforce account ids, list bills, match words, assigned to, contact, code)
+  is built in the session scratchpad and imported. Its codes, and the group
+  names, never enter the repository, its comments or its docs.
+- **A group signs in with its list bill and its code, both.** The list bill is
+  printed on every bill and known to the employees, so it is the name, never
+  the password. List bills live on the policy records (`List_Bill__c` on
+  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
+  compared as letters and digits only. The account fields `List_Bill_Life__c`
+  and `List_Bill_Pension__c` are empty on all but one account.
+- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`).
+  Items on its account, its billing records (`TRANSACTIONS__c`) or naming it:
+  shown unless staff untick. Items reached only through an employee's own
+  policy or contact: hidden unless staff tick. Chatter only when staff tick it
+  or write a note for the group from the page. A group's answer goes onto that
+  task's Chatter.
+- **Match words start a word; a single word must end one.** SOQL `LIKE`
+  matched one group's short match word inside a medical term and put another
+  person's medical requirement on that group's page (`gcmNames_`).
+- **Logged e-mails and the birthday flow are not work.** They were 615 of the
+  groups' 1,176 completed tasks in 2026, and 62 of one group's were birthday
+  wishes to its staff; counted, they show an on-time record the work does not
+  have (`GCM_LOGGED`). "On time" counts only tasks with a due date, and the
+  dashboard shows average days beside it because a due date can be moved.
+- **Salesforce takes a subquery only at the top of a WHERE, never inside an
+  OR**, so the refresh asks five ways (account, billing, name, employees'
+  policies, employees' contacts) and keeps a task once. Every query goes
+  through the composite resource (`gcmQuery_`), so a long one never meets URL
+  Fetch's limit on an address. Salesforce ids are unique in their first 15
+  characters; everything is keyed on those.
+- **Tuesday is send day**; the group is asked to answer by Friday. Every letter
+  is logged on `Group Sends` with the letter itself; without Microsoft 365 it
+  opens in the staff member's Outlook and is still logged.
+
 ## Standing rules
 
 - **Client data never enters the repository.** `Orphan-Register.xlsx` and

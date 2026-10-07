@@ -193,6 +193,8 @@ function doPost(e) {
   }
 
   try {
+    /* group client management (GroupClients.gs): a letter sent, a share changed, a group's answers */
+    if (/^gcm\./.test(String(body.action || '')) && typeof gcmDoPost_ === 'function') return json_(gcmDoPost_(body));
     /* a client's own words from /your-policy/words (2 October 2026): too long for a link, so they come as a POST */
     if (body.action === 'resp') return json_(clientResponse_(body));
     if (body.action !== 'service') return json_({ ok: false, error: 'Unknown action' });
@@ -215,6 +217,8 @@ function bad_(msg) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  /* group client management (GroupClients.gs): staff, the manager, a group's own page and the group wall */
+  if (/^gcm\./.test(String(p.action || '')) && typeof gcmDoGet_ === 'function') return json_(gcmDoGet_(p));
   if (p.action === 'ping') {
     /* campaign: the transition pages ask for this before they trust the
        backend with a verdict or a client's tap. It is absent from any
@@ -1634,7 +1638,7 @@ var RESPONSES = {
   /* the taps at the foot of every letter */
   paid:      { needs: 'a receipt check against the file, then a confirmation', status: 'Open' },
   pay:       { needs: 'a call to set up direct payment to Guardian Life',      status: 'Open' },
-  callme:    { needs: 'a call today or tomorrow, at the time they choose',      status: 'Open' },
+  callme:    { needs: 'a call within two working days, at the time they choose', status: 'Open' },
   urgent:    { needs: 'the review read, then a named agent within one working day', status: 'Open' },
   claim:     { needs: 'the maturity claim form brought and walked through',    status: 'Open' },
   deliver:   { needs: 'the contract delivered by hand, acknowledgement signed', status: 'Open' },
