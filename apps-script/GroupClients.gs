@@ -323,7 +323,7 @@ function gcmQuery_(soql) {
 function gcmIn_(list) { return list.map(function (x) { return "'" + svcSoqlLit_(x) + "'"; }).join(','); }
 function gcmName_(rec, key) { var v = rec && rec[key]; return v && typeof v === 'object' ? String(v.Name || '') : ''; }
 /** Who an account's letter goes to: its Contact Person when that contact has an e-mail, else the account's own e-mail
- *  (Email__c, a mailbox with no name, so the letter opens "Dear Sir or Madam"). Greeting: "Ms. Arman", or the name in
+ *  (Email__c, a mailbox with no name, so the letter opens "Dear Sir or Madam"). Greeting: "Ms. Smith", or the name in
  *  full when Salesforce has no salutation. */
 function gcmContactOf_(a) {
   var c = a.Contact_Person__r || {}, em = String(c.Email || '').trim().toLowerCase();
