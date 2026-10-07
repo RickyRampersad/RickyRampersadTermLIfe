@@ -373,7 +373,7 @@
   <b><span id="selN">0</span> selected</b>
   <span>Assign to</span><select id="barAgent"></select>
   <label><input type="checkbox" id="barBrief" checked> e-mail the agent a brief</label>
-  <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail</label>
+  <label><input type="checkbox" id="barIntro" checked> introduce the agent to the client by e-mail<span id="barIntroWhy" style="color:var(--dim)"></span></label>
   <button type="button" id="barGo">Assign</button>
   <button type="button" class="alt" id="barSug" hidden>Assign each as suggested (<span id="sugN">0</span>)</button>
   <button type="button" class="ghost" id="barClear">Clear</button>
@@ -498,7 +498,7 @@ function notYet() { if (!STALE) return false; toast(STALE_MSG, true); return tru
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {};
-  SHOW_N = SHOW_STEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true;   // the next person starts on their own view
+  SHOW_N = SHOW_STEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';   // the next person starts on their own view
   ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).value = ''; });
   $('fAll').checked = false;
   var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
@@ -562,10 +562,18 @@ function render() {
     (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">the agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">the agent brief</a>') +
     '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">if they say&hellip;</a>';
   /* automatic client e-mail on hold (transitionHoldClientMail): said on the board, and the introduction box starts unticked */
+  /* since 7 October the hold also stops the receipts and the introductions ("yes"): a backend that says so is believed;
+     an older one still sends an introduction when the box is ticked, and the words say that instead */
+  var introsHeld = !!(d.mailHeld && d.introsHeld);
   $('mailHeld').hidden = !d.mailHeld;
-  $('mailHeld').innerHTML = d.mailHeld ? '<b>Client e-mail is on hold.</b> No letters, reminders or follow-up notes go until the branch releases it. ' +
-    'Naming an agent here sends nothing to the client unless you tick <i>introduce the agent to the client by e-mail</i>.' : '';
+  $('mailHeld').innerHTML = !d.mailHeld ? '' : '<b>Client e-mail is on hold.</b> No letters, reminders' + (d.receiptsHeld ? ', receipts' : '') +
+    ' or follow-up notes go until the branch releases it' + (d.receiptsHeld ? ', and the receipts go after it' : '') + '. ' +
+    (introsHeld ? 'Naming an agent briefs the agent and sends the client nothing. A note you press on the board still goes.'
+      : 'Naming an agent here sends nothing to the client unless you tick <i>introduce the agent to the client by e-mail</i>.');
   if (d.mailHeld && !INTRO_SET) { INTRO_SET = true; $('barIntro').checked = false; }
+  if (introsHeld) $('barIntro').checked = false;
+  $('barIntro').disabled = introsHeld;
+  $('barIntroWhy').textContent = introsHeld ? ' (held: client e-mail is on hold)' : '';
   var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
     ? '<b>Act now</b> opens first: clients still open who asked for an agent now, said the former agent has been in touch, were told to change a policy or have a payment to trace, or have waited past ' + esc(d.waitDays) + ' working days. ' +
@@ -1289,13 +1297,13 @@ function assignSuggested() {
   var sg = sugGroups(), jobs = [];
   Object.keys(sg.g).sort().forEach(function (a) { for (var i = 0; i < sg.g[a].length; i += ASSIGN_CHUNK) jobs.push([a, sg.g[a].slice(i, i + ASSIGN_CHUNK)]); });
   if (!jobs.length) { toast('None of those ticked has a suggested agent: choose one in the bar instead.', true); return; }
-  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, notAns = 0, warn = [];
+  var btn = $('barSug'), total = jobs.length, step = 0, named = {}, intro = 0, introHeld = 0, notAns = 0, warn = [];
   btn.disabled = true; $('barGo').disabled = true;
   var next = function () {
     if (!jobs.length) {
       btn.disabled = false; $('barGo').disabled = false;
       var who = Object.keys(named).map(function (a) { return firstName(a) + ' ' + named[a]; }).join(' · ');
-      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
+      toast((who ? 'Named: ' + who : 'Nobody was named') + (intro ? ' · ' + intro + ' introduced by e-mail' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') + (notAns ? ' · ' + notAns + ' not introduced: they have not answered' : '') +
         (sg.none ? ' · ' + sg.none + ' left ticked: no suggestion' : '') + (warn.length ? ' · ' + warn.join(' ') : ''), !!warn.length);
       load();
       return;
@@ -1305,7 +1313,7 @@ function assignSuggested() {
     api(signed({ action: 'assign', tokens: j[1].join(','), agent: j[0], brief: $('barBrief').checked ? '1' : '0', intro: $('barIntro').checked ? '1' : '0' })).then(function (r) {
       if (!r || !r.ok) warn.push(j[0] + ': ' + ((r && r.error) || 'the sheet did not take it') + '.');
       else {
-        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; notAns += r.notAnswered || 0;
+        named[r.agent] = (named[r.agent] || 0) + r.assigned; intro += r.introduced || 0; introHeld += r.introHeld || 0; notAns += r.notAnswered || 0;
         j[1].forEach(function (t) { delete SEL[t]; });
         (r.warnings || []).forEach(function (x) { warn.push(x); });
       }
@@ -1374,6 +1382,7 @@ function assign(tokens, agent, el) {
     if (el) el.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
     var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
+      (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
       (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '');
     toast(msg, !!(r.warnings && r.warnings.length));

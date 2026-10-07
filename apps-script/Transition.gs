@@ -80,7 +80,11 @@ var TRANSITION = {
   CHASE_MULT: 2,             // a tap still open at WAIT × this gets a second, client-facing chase
   CHASE_MAX_PER_RUN: 40,     // the most "still on it" notes one chase run sends, whatever the backlog — see tChase_
   HOLD_CLIENT_MAIL: true,    // 28 September: nothing automatic goes to a client until the manager says so — transitionReleaseClientMail is the go
-  HOLD_RECEIPTS: false,      // but a client who answers a letter already sent is thanked as usual, hold or not (the manager, the same morning)
+  /* 7 October 2026, after an introduction went to a client while an agent was being trained on the board: "hold off all
+     auto email for now please!", then "yes" to the hold stopping the receipts and the introductions too. Until then a
+     client who answered a letter already sent was thanked whatever the hold (the manager, 28 September). */
+  HOLD_RECEIPTS: true,       // while held, the receipt waits and goes after the go (answers under fourteen days old)
+  HOLD_INTROS: true,         // while held, naming an agent sends the agent's brief and no introduction to the client
   RECEIPT_WAIT_MIN: 15,      // a receipt goes this many minutes after the client's last tap, so it can recap all of them
                              // (3 until 6 October 2026: with one receipt per client it has to gather a slow reader's taps too)
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
@@ -1222,11 +1226,13 @@ var T_PHONE_HOLD = 'hold: e-mail by phone';
 
 /** Client e-mail on hold, the manager's word on 28 September 2026: "hold any emails going to clients until
  *  I say so". While it is on, no letter and no reminder goes (the batch stops before it touches a row) and no
- *  "still on it" note (it stays due). Nothing is lost and nothing is marked. The receipt is the exception,
- *  decided the same morning: a client who answers a letter already sent is thanked as usual, and logged
- *  ("if they answer on an old one, one going out is ok and logged"); HOLD_RECEIPTS true would hold those
- *  too. What is not a client still goes: the Test rows (colleagues), the preview to the owner, the digest
- *  and the reports. Reading replies and filing e-mails taken by phone go on as before. */
+ *  "still on it" note (it stays due). Nothing is lost and nothing is marked. Since 7 October the receipt waits
+ *  too (HOLD_RECEIPTS) and goes after the go, and naming an agent sends no introduction (HOLD_INTROS); until
+ *  then a client who answered a letter already sent was thanked as usual ("if they answer on an old one, one
+ *  going out is ok and logged"). A note the manager presses on the board is his go for that note and goes.
+ *  What is not a client still goes: the Test rows (colleagues), the preview to the owner, the digest, the
+ *  reports, the agent's brief, and the alert that a client wrote in. Reading replies and filing e-mails taken
+ *  by phone go on as before. */
 function tClientMailHeld_() {
   var p = '';
   try { p = String(PropertiesService.getScriptProperties().getProperty(T_HOLD) || ''); } catch (e) {}
@@ -1237,14 +1243,19 @@ function tClientMailHeld_() {
 /** The go: letters, reminders, receipts and notes resume on their next runs. */
 function transitionReleaseClientMail() {
   PropertiesService.getScriptProperties().setProperty(T_HOLD, 'off');
-  log_('transition', 'client-mail', 'released: letters, reminders and notes resume');
-  return tSay_('Client e-mail released: letters, reminders and "still on it" notes go on their next runs.');
+  log_('transition', 'client-mail', 'released: letters, reminders, receipts and notes resume');
+  return tSay_('Client e-mail released: letters, reminders and "still on it" notes go on their next runs' +
+    (TRANSITION.HOLD_RECEIPTS === true ? ', and the receipts that waited go within five minutes (answers under fourteen days old)' : '') + '.' +
+    (TRANSITION.HOLD_INTROS !== false ? ' Introductions held while an agent was named do not go by themselves.' : ''));
 }
 /** Hold again, whatever HOLD_CLIENT_MAIL says. */
 function transitionHoldClientMail() {
   PropertiesService.getScriptProperties().setProperty(T_HOLD, 'on');
-  log_('transition', 'client-mail', 'on hold: no letters, reminders or still-on-it notes until transitionReleaseClientMail; receipts still thank a client who answers');
-  return tSay_('Client e-mail on hold: no letters, reminders or "still on it" notes go until you release it. A client who answers a letter already sent is still thanked.');
+  var also = (TRANSITION.HOLD_RECEIPTS === true ? ' receipts' : '') + (TRANSITION.HOLD_INTROS !== false ? (TRANSITION.HOLD_RECEIPTS === true ? ' and' : '') + ' introductions' : '');
+  log_('transition', 'client-mail', 'on hold: no letters, reminders or still-on-it notes until transitionReleaseClientMail' + (also ? '; no' + also + ' either' : '; receipts still thank a client who answers'));
+  return tSay_('Client e-mail on hold: no letters, reminders or "still on it" notes go until you release it.' +
+    (TRANSITION.HOLD_RECEIPTS === true ? ' Receipts wait and go after the release.' : ' A client who answers a letter already sent is still thanked.') +
+    (TRANSITION.HOLD_INTROS !== false ? ' Naming an agent briefs the agent and sends the client nothing.' : '') + ' A note you press on the board still goes.');
 }
 function tFilePhoneEmails_() {
   var out = { filed: 0, same: 0, left: 0, updated: 0 }, answered = null;
@@ -1417,7 +1428,10 @@ function tReceipts_() {
     if (received > groups[token].newest) groups[token].newest = received;
   }
   if (!order.length) return out;
-  if (TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_()) { out.waiting = order.length; return out; }   // receipts held too only when asked
+  /* receipts held with the rest of client e-mail (7 October 2026). Only the e-mail to the client waits: the run still
+     marks what it always marks and still tells the branch who wrote in, so a hold never hides a client's own words.
+     A receipt that waited is not marked and goes on the first run after the go. Until then the whole run stopped here. */
+  var holdSend = TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_();
   var rc = tReceipt_();
   if (!rc || !rc.json.recap) { log_('transition', 'receipts-held', order.length + ' waiting: receipt.json on the site is missing or old, rebuild the letters'); return out; }
   if (!tMsCreds_()) { log_('transition', 'receipts-held', order.length + ' waiting: ' + T_MS_MISSING); return out; }
@@ -1502,6 +1516,7 @@ function tReceipts_() {
       log_('transition', 'receipt-held', tText_(row.Client || row['First name']) + ' · answers look automated (' + g.rows.length + ' taps)');
       continue;
     }
+    if (holdSend) { out.onhold = (out.onhold || 0) + 1; continue; }   // client e-mail on hold: this receipt goes after the go
     try {
       var m = tReceiptMail_(rc, row, g, review);
       tMsSend_(to, m.subject, m.html, tClientOpts_());
@@ -1522,6 +1537,7 @@ function tReceipts_() {
   });
   tWroteAlert_(alert, again);
   if (out.sent || out.held || out.repeat || out.wrote || out.again) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
+    (out.onhold ? ', ' + out.onhold + ' waiting for the go: client e-mail is on hold' : '') +
     (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : '') +
     (out.wrote ? ', ' + out.wrote + ' wrote in their own words: a person replies' : '') +
     (out.again ? ', ' + out.again + ' answered again after their receipt: a person follows up' : ''));
@@ -3805,6 +3821,8 @@ function tBoard_(w, all, lite) {
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
            notes: tNotesForBoard_(w),
            calls: { ready: calls.ready }, mailHeld: tClientMailHeld_(),   // the call list is on the board; automatic client e-mail is on hold
+           /* what the hold stops besides the letters, reminders and notes (7 October 2026), so the board says it in words */
+           introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_(), receiptsHeld: TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_(),
            claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
 }
 
@@ -4106,7 +4124,11 @@ function transitionAssign_(p) {
       c.assigned = agent.name; c.assignedOn = stamp;
       done.push(c);
     });
-    var briefed = false, introduced = 0, notAnswered = 0, warnings = [];
+    var briefed = false, introduced = 0, notAnswered = 0, introHeld = 0, warnings = [];
+    /* client e-mail on hold (7 October 2026: an introduction went to a client while an agent was being trained on the
+       board): the agent is named and briefed, and the client is sent nothing and nothing is marked. An introduction
+       held does not go by itself after the go, because a naming made in practice would go with it. */
+    var holdIntro = TRANSITION.HOLD_INTROS !== false && tClientMailHeld_();
     if (done.length && wantBrief) {
       try { tBriefMail_(agent, done, b); briefed = true; }
       catch (e) { warnings.push('The brief to ' + agent.name + ' did not send: ' + String(e && e.message ? e.message : e)); }
@@ -4122,13 +4144,15 @@ function transitionAssign_(p) {
         var mail = String(c.email || '').trim().toLowerCase();
         if (!tHasAnswered_(c)) { notAnswered++; return; }
         if (c.canTell === false || !mail || inboxes[mail]) return;
+        if (holdIntro) { introHeld++; inboxes[mail] = true; return; }
         try { if (tIntroMail_(sh, c, agent, stamp)) { introduced++; inboxes[mail] = true; } }
         catch (e) { warnings.push('The introduction to ' + c.client + ' did not send: ' + String(e && e.message ? e.message : e)); }
       });
     }
     log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') + (byStaff ? ' · named by ' + byStaff : '') +
-         (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (missing.length ? ' · ' + missing.length + ' unknown' : ''));
-    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, notAnswered: notAnswered, missing: missing, warnings: warnings };
+         (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail on hold' : '') +
+         (missing.length ? ' · ' + missing.length + ' unknown' : ''));
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings };
   } finally { lock.releaseLock(); }
 }
 
