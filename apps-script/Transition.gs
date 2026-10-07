@@ -1244,7 +1244,7 @@ function transitionHoldClientMail() {
   return tSay_('Client e-mail on hold: no letters, reminders or "still on it" notes go until you release it. A client who answers a letter already sent is still thanked.');
 }
 function tFilePhoneEmails_() {
-  var out = { filed: 0, same: 0, left: 0 };
+  var out = { filed: 0, same: 0, left: 0, updated: 0 }, answered = null;
   var rs, last;
   try { rs = ss_().getSheetByName(SVC.RESP_SHEET); last = rs ? rs.getLastRow() : 0; } catch (e) { return out; }
   if (!rs || last < 2) return out;
@@ -1281,6 +1281,22 @@ function tFilePhoneEmails_() {
       mark(x, 'this address bounced (' + ex.replace(/^bounced: /i, '') + '), not filed: ask for the right one'); out.left++; return;
     }
     var took = x.when instanceof Date ? ' on ' + Utilities.formatDate(x.when, tz, 'd MMM') : '';
+    /* A client who answered a letter that reached them gets the new address for whatever a person sends next, and never
+       the letter again: clearing Sent at here queued it for the go (7 October 2026: a client who had answered gave her
+       personal address by reply, and recording it would have sent her the letter a second time; the manager, that
+       morning: "client do not get the reminders a second time whom have responded"). A letter that bounced, or a client
+       with no e-mail, never reached them, so theirs still goes after the go. */
+    if (sent && !/^(bounced|no e-mail)/i.test(ex) && ex !== T_PHONE_HOLD) {
+      if (!answered) answered = tAnswered_();
+      if (answered[x.token]) {
+        var n0 = tAt_(t, r);
+        t.sh.getRange(n0, t.col.Email).setValue(x.email);
+        if (t.col.Reason) t.sh.getRange(n0, t.col.Reason).setValue('e-mail taken by ' + (x.by || 'Client Support') + took +
+          '; they answered the letter sent to ' + (old || 'no address') + ', so it does not go again');
+        r.Email = x.email;
+        mark(x, 'answered: address updated, the letter does not go again'); out.updated++; return;
+      }
+    }
     var was = sent ? '; the letter of ' + (sentAt instanceof Date ? Utilities.formatDate(sentAt, tz, 'd MMM') : tText_(sentAt)) +
       ' went to ' + (old || 'no address') + ' and goes again on release' : '';
     var n = tAt_(t, r);      // the client's own row, found by token: clearing Sent at on another client's row would send them their letter again
@@ -1291,8 +1307,9 @@ function tFilePhoneEmails_() {
     r.Email = x.email; r.Exclude = T_PHONE_HOLD;
     mark(x, ''); out.filed++;
   });
-  if (out.filed || out.same || out.left) {
-    log_('transition', 'phone-emails', out.filed + ' filed and held for the go, ' + out.same + ' already sent there, ' + out.left + ' not filed');
+  if (out.filed || out.same || out.left || out.updated) {
+    log_('transition', 'phone-emails', out.filed + ' filed and held for the go, ' + out.updated + ' updated for clients who had answered (no letter again), ' +
+      out.same + ' already sent there, ' + out.left + ' not filed');
   }
   return out;
 }

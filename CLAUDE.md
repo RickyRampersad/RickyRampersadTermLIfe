@@ -1312,7 +1312,12 @@ voice under the new timing and the caption gives it away.
   `hold: e-mail by phone` in Exclude and who took it, and when, in Reason;
   a row whose letter went to another address (bounced, or the client reads
   a different one) has Sent at and Status cleared so the letter goes again
-  to the new one; the same address already sent to is left alone; a row
+  to the new one, except for a client who already answered a letter that
+  reached them (7 October 2026): their address is updated and nothing
+  else, so the letter never goes to them a second time, while a bounced or
+  no-e-mail client's letter still goes after the go
+  (`health/phone-answered-harness.js`, 8 checks); the same address already
+  sent to is left alone; a row
   held for anything else (an agent, a household, staff, a claim, a check)
   is never touched; each Client Responses row read is marked `[filed…]`.
   The address a letter bounced from is never filed back onto its row, even
