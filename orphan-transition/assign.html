@@ -108,6 +108,21 @@
   .acts .own{text-decoration:none;color:var(--tdark);font:600 12.5px Inter,system-ui,sans-serif;padding:6px 4px}
   .srow{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:6px 0;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:13.5px}
   .srow b{color:var(--ink);font-family:var(--f)} .srow .no{color:var(--dim);font-size:12.5px}
+  /* the call list (7 October 2026): who Client Support calls, why, the number, what the old sheet said, and the scripts */
+  .scripts{margin:6px 0 0;font-size:13.5px;color:var(--dim)} .scripts a{color:var(--tdark);font-weight:600;text-decoration:none;margin-right:12px;white-space:nowrap}
+  .mailheld{margin:8px 0 0;padding:8px 12px;border-radius:9px;background:var(--warnbg);border:1px solid #f1dfae;color:#7a5a12;font-size:13.5px}
+  .pill.tocall{background:#e3ecff;color:#2b4a8a} .pill.called{background:#d5f4fa;color:var(--tdark)}
+  .c.tocall{box-shadow:inset 4px 0 0 #8fb0e8}
+  .callinfo{margin-top:6px;font-size:13.5px;color:var(--body)} .callinfo b{color:var(--ink)}
+  .sheetnote{margin-top:4px;font-size:12.5px;color:var(--dim)}
+  .more{display:block;margin:12px auto;background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:9px 18px;font:600 14px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  .qnotes{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px} .qnotes button{background:#fff;border:1px solid #bfd0da;border-radius:999px;padding:4px 10px;font:600 12px Inter,system-ui,sans-serif;color:var(--tdark);cursor:pointer}
+  /* the team's calls and notes, for the branch */
+  .team table{border-collapse:collapse;width:100%;font-size:13.5px;margin:0 0 10px} .team th{text-align:left;font-size:11.5px;color:var(--dim);font-weight:600;padding:4px 10px 4px 0;border-bottom:1px solid var(--line)}
+  .team td{padding:5px 10px 5px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team td b{color:var(--ink)}
+  .team h4{margin:10px 0 4px;font:700 14px var(--f);color:var(--ink)} .team ul{list-style:none;margin:0 0 12px;padding:0;font-size:13.5px}
+  .team li{padding:5px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team li a{color:var(--tdark);font-weight:600;text-decoration:none} .team li i{font-style:normal;color:var(--dim)}
+  .team .allnotes{background:none;border:0;color:var(--tdark);font:600 13px Inter,system-ui,sans-serif;cursor:pointer;padding:0 0 12px}
   /* the assign bar */
   .bar{position:fixed;left:0;right:0;bottom:0;background:var(--navy);color:#eaf4ff;padding:10px 16px;display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;z-index:20;box-shadow:0 -4px 20px rgba(7,19,31,.25)}
   .bar[hidden]{display:none}
@@ -314,7 +329,13 @@
     <p class="internal">Internal &middot; client information</p>
     <h1 id="title">Assignments</h1>
     <p class="sub" id="lead"></p>
+    <p class="scripts" id="scripts"></p>
+    <p class="mailheld" id="mailHeld" hidden></p>
     <div class="tiles" id="tiles"></div>
+    <details class="glance team" id="teamWrap" style="display:none" open>
+      <summary><b>From the team</b><span id="teamSum"></span></summary>
+      <div id="teamBody"></div>
+    </details>
     <div id="rosterWrap"><h2><span id="rosterTitle">The roster</span> <small id="rosterNote"></small></h2><div id="units"></div><div class="chips" id="roster"></div></div>
     <p class="pnote" id="sugNote"></p>
     <details class="glance claims" id="claimWrap" style="display:none">
@@ -332,7 +353,7 @@
       <label>Search<input type="search" id="fSearch" placeholder="name or client number"></label>
       <label>Letter<select id="fSeg"><option value="">all</option></select></label>
       <label>Was with<select id="fBook"><option value="">all</option></select></label>
-      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="reached">reached by phone, no answer yet</option><option value="named">named, no answer yet</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
+      <label>Where it stands<select id="fState"><option value="">all</option><option value="open">open, nobody named</option><option value="late">late</option><option value="assigned">named, still open</option><option value="done">done</option><option value="noted">noted only</option><option value="reached">reached by phone, no answer yet</option><option value="named">named, no answer yet</option><option value="urgent">act now: pressing or late</option><option value="mine">your calls</option><option value="tocall">to call: the call list</option><option value="called">called from the board, no answer yet</option><option value="silent">not answered yet</option><option value="family">family of someone who answered</option></select></label>
       <label>What they need<select id="fNeed"><option value="">anything</option><option value="contact">said the former agent has been in touch</option><option value="pay">pay in person, or a premium not showing</option><option value="approach">someone suggested a change</option><option value="call">a call</option><option value="contract">the contract</option><option value="application">the application</option><option value="review">a review or their concerns</option><option value="wrote">wrote to us</option></select></label>
       <label>What the records say<select id="fIns"><option value="">anything</option><option value="due">a premium due</option><option value="ends">life cover ends within five years</option><option value="estate">pays the estate</option><option value="provisions">beneficiary in the special provisions</option><option value="role">beneficiary only a role</option><option value="nolife">no life cover in force</option><option value="lapsed">a lapsed policy</option><option value="income">cover against income</option><option value="birthday">a birthday this month</option><option value="hhgap">someone in the family with no life cover</option><option value="payroll">paid through their employer or military pay</option><option value="waived">a premium waived</option><option value="surr">surrendered a policy before</option><option value="noci">life cover, no critical illness cover</option></select></label>
       <label id="sugWrap">Suggested agent<select id="fSug"><option value="">anyone</option></select></label>
@@ -443,6 +464,7 @@ function fail(msg, refused) {
    name typed in the search box stayed for whoever came next) */
 function forget() {
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {};
+  SHOW_N = SHOW_STEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true;   // the next person starts on their own view
   ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).value = ''; });
   $('fAll').checked = false;
   var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
@@ -470,7 +492,17 @@ function needsOf(c) {
   return s;
 }
 function stateOf(c) { return c.state === 'open' && c.late ? 'late' : c.state; }
-var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet' };
+var STATE_WORDS = { open: 'nobody named', late: 'late', assigned: 'named', done: 'done', noted: 'noted', reached: 'reached by phone', named: 'named, no answer yet', silent: 'not answered yet',
+  called: 'called, no answer yet', tocall: 'to call' };
+/* act now (7 October 2026: "when you log in where do you see what is to action urgent"): a client still open who said the
+   most pressing things (wants an agent now, the former agent has been in touch, someone suggested a change, a payment not
+   showing, paying in person: T_PRIORITY 80 and above in Transition.gs), or whose answer has waited past the branch's line */
+function urgentOf(c) { return !!c.open && ((c.score || 0) >= 80 || !!c.late); }
+/* the call list: a row on a caller's list that is still to finish, and whose list it is */
+function onCalls(c) { return !!c.call && (c.state === 'tocall' || c.state === 'called'); }
+function myCall(c) { return onCalls(c) && !!(D && D.me) && sameName(c.call.caller, D.me.name); }
+/* cards are drawn sixty at a time, so a board of a thousand opens at once on a phone; "Show more" draws the next */
+var SHOW_STEP = 60, SHOW_N = SHOW_STEP, DEFAULTED = false, INTRO_SET = false;
 
 /* ---- render ---- */
 /* who may name an agent: the branch, and since 5 October 2026 the staff ("the staff has to be given the option of which
@@ -479,16 +511,39 @@ function canAssign() { return !!(D && (D.canAssign !== undefined ? D.canAssign :
 function render() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', staff = d.role === 'staff', namer = canAssign(), first = d.me ? esc(d.me.name.split(/\s+/)[0]) : '';
   $('stamp').innerHTML = 'updated <b>' + esc(d.at) + '</b>' + (d.me ? ' · ' + esc(d.me.name) : '');
-  $('title').innerHTML = manager ? 'Assignments' : team ? 'Your team, <em>' + first + '</em>' : staff ? 'Every client who answered, <em>' + first + '</em>' : 'Your clients, <em>' + first + '</em>';
+  $('title').innerHTML = manager ? 'Assignments' : team ? 'Your team, <em>' + first + '</em>' : staff ? 'Calls and answers, <em>' + first + '</em>' : 'Your clients, <em>' + first + '</em>';
   var k = d.counts;
+  /* the call list (7 October 2026): the rows still to finish, everyone's and this person's own */
+  var callsOn = !!(d.calls && d.calls.ready), toCallN = d.clients.filter(onCalls).length, mineN = d.clients.filter(myCall).length;
+  /* the first time the board is drawn after a sign-in: staff open on their own calls, the branch on what to act on now;
+     any tile or filter changes it, and pressing the tile again shows everyone */
+  var urgentN = d.clients.filter(urgentOf).length;
+  if (!DEFAULTED) {
+    DEFAULTED = true;
+    if (!$('fState').value && !FOCUS) { if (staff && mineN) $('fState').value = 'mine'; else if (manager && urgentN) $('fState').value = 'urgent'; }
+  }
+  /* the scripts, one tap away: Client Support's day and words, the agent's call script, and what to say when a client asks */
+  $('scripts').innerHTML = 'Scripts: ' + (staff || manager ? '<a href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Client Support: the call, step by step</a>' : '') +
+    (staff ? '' : '<a href="/orphan-transition/call-script.html" target="_blank" rel="noopener">the agent&rsquo;s call script</a><a href="/orphan-transition/agent-brief.html" target="_blank" rel="noopener">the agent brief</a>') +
+    '<a href="/orphan-transition/if-they-say.html" target="_blank" rel="noopener">if they say&hellip;</a>';
+  /* automatic client e-mail on hold (transitionHoldClientMail): said on the board, and the introduction box starts unticked */
+  $('mailHeld').hidden = !d.mailHeld;
+  $('mailHeld').innerHTML = d.mailHeld ? '<b>Client e-mail is on hold.</b> No letters, reminders or follow-up notes go until the branch releases it. ' +
+    'Naming an agent here sends nothing to the client unless you tick <i>introduce the agent to the client by e-mail</i>.' : '';
+  if (d.mailHeld && !INTRO_SET) { INTRO_SET = true; $('barIntro').checked = false; }
   var bookOn = !!(d.book && d.book.ready);
   $('lead').innerHTML = manager
-    ? '<b>' + k.answered + '</b> clients have answered a letter so far. Each one nobody is named on carries a <b>suggested agent</b> and the reason: the family&rsquo;s agent first, then the 24 September plan, then the lightest list. ' +
+    ? '<b>Act now</b> opens first: clients still open who asked for an agent now, said the former agent has been in touch, were told to change a policy or have a payment to trace, or have waited past ' + esc(d.waitDays) + ' working days. ' +
+      '<b>From the team</b> shows each person&rsquo;s calls today and their latest notes; a name opens that client. To change an agent, use <i>Reassign to&hellip;</i> on the card: the history keeps both. ' +
+      '<b>' + k.answered + '</b> clients have answered a letter so far. Each one nobody is named on carries a <b>suggested agent</b> and the reason: the family&rsquo;s agent first, then the 24 September plan, then the lightest list. ' +
       'Press <i>Assign to &hellip;</i> on a card, or tick several and press <i>Assign each as suggested</i>; or choose any agent in the bar. The name goes onto their rows, the agent gets one brief, and a client who answered gets an introduction if you leave that ticked. ' +
       'After a call, press Called (or Met, No answer…): a note for the file, and a note to the client in your name if you want one. Sorted most pressing first' +
       (bookOn ? '; <i>Order: most at stake first</i> puts the largest premium a year first, and each card shows the client&rsquo;s policies with us.' : '.') +
       (k.households ? ' <b>' + k.households + '</b> of these families have more than one member on our list: choose <i>family of someone who answered</i> to see who else there is to reach.' : '')
-    : staff ? 'Every client who answered a letter, what they told us, and who is named on them. ' +
+    : staff ? (callsOn ? '<b>Your calls</b> are your list from the old calls sheet, in the same order, with why to call, the number and what you typed there. ' +
+        'After each try, press its outcome on the row (Called, No answer&hellip;) with a note: that is the record now, and nothing typed on the old sheet reaches the board. ' +
+        'Take an e-mail or a new number on <i>Their page (your copy)</i>. ' : '') +
+      'Below your calls: every client who answered a letter, what they told us, and who is named on them. ' +
       (namer ? 'Each one nobody is named on carries a <b>suggested agent</b> and the reason: the family&rsquo;s agent first, then the 24 September plan, then the lightest list. Press <i>Assign to &hellip;</i> on a card, choose any agent in the card&rsquo;s own list, or tick several and press <i>Assign</i> in the bar: your name goes on the file, the agent gets one brief, and a client who answered gets an introduction if you leave that ticked. ' : '') +
       'When you have made a call, press its outcome on the card: your name goes on the file, and it stops the chase. ' +
       (bookOn ? 'Each card shows who the client is, what the records say first and their policies with us (each plan, where it stands and what it is paid to), with no money figures. ' : 'No figures here. ') +
@@ -510,11 +565,13 @@ function render() {
   var incOpt = $('fIns').querySelector('option[value="income"]');
   if (incOpt) incOpt.hidden = incOpt.disabled = noMoney;
   var tiles = manager
-    ? [['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok']].concat(k.reached ? [['reached', k.reached, 'reached by phone', '']] : [], k.named ? [['named', k.named, 'named, no answer yet', 'gold']] : [], [['silent', k.silent, 'not answered yet', '']])
+    ? [['urgent', urgentN, 'act now', 'late'], ['answered', k.answered, '', ''], ['open', k.open, 'nobody named', ''], ['late', k.late, 'late', 'late'], ['assigned', k.assigned, 'named, still open', 'gold'], ['done', k.done, 'done', 'ok']].concat(k.reached ? [['reached', k.reached, 'reached by phone', '']] : [], k.named ? [['named', k.named, 'named, no answer yet', 'gold']] : [], toCallN ? [['tocall', toCallN, 'on the call list', '']] : [], [['silent', k.silent, 'not answered yet', '']])
     : [['', d.clients.length, staff ? 'on the board' : team ? 'on your team’s list' : 'on your list', ''], ['open', d.clients.filter(function (c) { return c.open; }).length, 'still open', 'gold'], ['late', d.clients.filter(function (c) { return c.late; }).length, 'late', 'late'], ['done', d.clients.filter(function (c) { return !c.open && c.actionable; }).length, 'done', 'ok']];
+  if (staff && toCallN) tiles = (mineN ? [['mine', mineN, 'your calls', 'gold']] : []).concat([['tocall', toCallN, 'to call, everyone', '']], k.called ? [['called', k.called, 'called, no answer yet', '']] : [], tiles);
   if (!manager && bookOn && !noMoney) tiles.push(['', short(d.clients.reduce(function (t, c) { return t + valueOf(c); }, 0)), team ? 'premium a year, your team' : 'premium a year on your list', 'gold']);
   $('tiles').innerHTML = tiles.map(function (t) { return '<div class="tile ' + t[3] + (($('fState').value || '') === t[0] && t[0] ? ' on' : '') + '" data-state="' + t[0] + '"><b>' + t[1] + '</b><span>' + esc(t[2] || t[0]) + '</span></div>'; }).join('');
-  Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
+  Array.prototype.forEach.call(document.querySelectorAll('#tiles .tile'), function (el) { el.addEventListener('click', function () { var s = el.getAttribute('data-state'); $('fState').value = ($('fState').value === s) ? '' : s; SHOW_N = SHOW_STEP; if (s === 'silent' && $('fState').value === 'silent' && !$('fAll').checked) { $('fAll').checked = true; load(); return; } render(); }); });
+  teamPanel(d);
   /* the roster: by unit and person when the Users tab is linked (the branch sees every unit, a unit manager his own), else
      the branch's flat list off the Agent Skill Bank */
   $('rosterWrap').style.display = manager || team || namer ? '' : 'none';
@@ -783,7 +840,10 @@ function matches(c) {
   if (seg && c.seg !== seg) return false;
   if (book && c.book !== book) return false;
   if (FILTER.agent && !sameName(c.assigned, FILTER.agent)) return false;
-  if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
+  if (st === 'urgent') { if (!urgentOf(c)) return false; }             // act now: still open, pressing or late
+  else if (st === 'mine') { if (!myCall(c)) return false; }            // your own call list, still to finish
+  else if (st === 'tocall') { if (!onCalls(c)) return false; }         // everyone's call list, still to finish
+  else if (st && st !== 'family') { var so = stateOf(c); if (st === 'open' ? (c.state !== 'open') : st === 'late' ? !c.late : so !== st && c.state !== st) return false; }
   if (need && !needsOf(c)[need]) return false;
   if (ins && !insKeys(c)[ins]) return false;
   var sg = $('fSug').value;
@@ -809,10 +869,14 @@ function list() {
       (byValue ? ' · most at stake first' : '') + (namer && n ? '<a class="selshown" id="selShown">select all ' + n + ' shown</a>' : '');
     SHOWN = rows.map(function (c) { return c.token; });
   }
-  $('list').innerHTML = rows.length ? rows.map(function (c) { return c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager, namer); }).join('')
+  /* sixty at a time: a board of a thousand rows opens at once on a phone, and "Show more" draws the next sixty */
+  var drawn = FOCUS ? rows : rows.slice(0, SHOW_N), rest = rows.length - drawn.length;
+  $('list').innerHTML = rows.length ? drawn.map(function (c) { return c.state === 'tocall' ? callRow(c, manager, namer) : c.state === 'silent' || c.state === 'family' ? silentRow(c, manager) : card(c, manager, namer); }).join('') +
+      (rest > 0 ? '<button type="button" class="more" id="showMore">Show the next ' + Math.min(SHOW_STEP, rest) + ' (' + rest + ' more)</button>' : '')
     : '<div class="empty">' + (FOCUS ? (looking ? 'Looking for this client…'
         : 'Nothing is recorded for this client yet, so there is nothing on the board to mark. Record the call on <a href="' + esc(ownLink({ token: FOCUS, seg: FOCUS_SEG })) + '" target="_blank" rel="noopener">their own page</a> first: it files on Client Responses, and the client is here the next time the board refreshes.')
       : all.length ? 'Nothing matches those filters.' : (manager ? 'No client has answered yet. They appear here the moment one does.' : d.role === 'unit' ? 'Nothing on your team\u2019s list yet. The branch names your agents on clients from the board or in Salesforce, and they appear here.' : 'Nothing on your list yet. The branch names you on a client from the board, and you get an e-mail.')) + '</div>';
+  if ($('showMore')) $('showMore').addEventListener('click', function () { SHOW_N += SHOW_STEP; list(); });
   if ($('unfocus')) $('unfocus').addEventListener('click', function () {
     FOCUS = ''; FOCUS_SEG = '';
     try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; }
@@ -876,14 +940,17 @@ function card(c, manager, namer) {
   if (told.length) who += '<div class="told">✉ ' + told.map(function (x) { return 'Note e-mailed ' + esc(x[1]) + ': <b>' + esc(noteLabel(x[2])) + '</b>'; }).join(' · ') + '</div>';
   var own = ownLink(c);
   var acts = '';
-  if (namer) {   // the branch, and staff: name any agent on the roster from the card itself
-    acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">Assign to…</option>' + D.agents.map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
+  if (namer) {   // the branch, and staff: name any agent on the roster from the card itself, or another one in place of the agent named
+    acts += '<select class="quick" data-token="' + esc(c.token) + '"><option value="">' + (c.assigned ? 'Reassign to…' : 'Assign to…') + '</option>' +
+      D.agents.filter(function (a) { return !sameName(a.name, c.assigned); }).map(function (a) { return '<option value="' + esc(a.name) + '">' + esc(a.name) + '</option>'; }).join('') + '</select>';
   }
   if (!manager) {
     var wa = waLink(c.phone);
     if (c.phone) acts += '<a class="tel" href="tel:' + esc(digits(c.phone)) + '">Call</a>';
     if (wa) acts += '<a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>';
     acts += '<a class="own" href="' + esc(own) + '" target="_blank" rel="noopener">' + (D.role === 'staff' ? 'Their page (your copy) →' : 'Their answer page →') + '</a>';
+    /* the words for the call: Client Support's script for staff and the call list, the agent's for an agent's own client */
+    acts += '<a class="own" href="/orphan-transition/' + (D.role === 'staff' || c.call ? 'client-support.html' : 'call-script.html') + '" target="_blank" rel="noopener">Script</a>';
   }
   ['Called', 'Met', 'No answer', 'Declined', 'Closed'].forEach(function (s) {
     acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="' + s + '" class="' + (s === 'Met' || s === 'Called' ? 'ok' : s === 'Declined' ? 'stopb' : '') + '">' + s + '</button>';
@@ -893,7 +960,8 @@ function card(c, manager, namer) {
   return '<div class="c' + (c.late ? ' late' : '') + (namer ? '' : ' one') + '" id="c-' + esc(c.token) + '">' +
     (namer ? '<div class="tick"><input type="checkbox" class="sel" value="' + esc(c.token) + '"' + (SEL[c.token] ? ' checked' : '') + ' aria-label="select ' + esc(c.client) + '"></div>' : '') +
     '<div><div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + valuePill(c) + '</div>' +
-    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? (c.state === 'reached' ? 'reached by phone ' : c.state === 'named' ? 'named ' : 'answered ') + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
+    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) + ' · ' : '') + (c.first ? (c.state === 'reached' ? 'reached by phone ' : c.state === 'named' ? 'named ' : c.state === 'called' ? 'first called ' : 'answered ') + esc(c.first) : '') + (c.last && c.last !== c.first ? ' → ' + esc(c.last) : '') + (facts.length ? ' · ' + facts.join(' · ') : '') + '</div>' +
+    callInfo(c) +
     profileLine(c.profile) +
     /* reached by phone: Client Support took their details; the client has not answered a letter yet */
     (c.state === 'reached' ? '<div class="needs">' + (c.held === 'hold: e-mail by phone' ? 'E-mail taken on the call: their letter goes after your go.'
@@ -903,6 +971,81 @@ function card(c, manager, namer) {
     (c.needs && c.needs.length ? '<div class="needs"><b>Needs:</b> ' + esc(c.needs.join('; ')) + '</div>' : '') + insChips(c.ins) +
     (ans ? '<ul class="ans">' + ans + '</ul>' : '') + (taps ? '<div class="taps">' + taps + '</div>' : '') + notes + rev + polPanel(c.pol) +
     (reach.length ? '<div class="reach">' + reach.join('') + '</div>' : '') + who + claimLine(c) + (namer ? sugLine(c) : '') + householdPanel(c, manager, namer) +
+    '<div class="acts">' + acts + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') + '</div></div>';
+}
+/* the team's calls and notes, for the branch (7 October 2026: "where do you see … the notes and history staff made
+   organized"): each person's outcomes today and in the last seven days, read from the stamp every outcome leaves on the
+   file ("[no answer 7 Oct · Name]"), and their notes, newest first; a client's name opens that client, and History on
+   the card has the rest */
+var TEAM_ALL = false;
+function dayOf(s) {
+  var m = /^(\d{1,2}) ([A-Za-z]{3})$/.exec(String(s || '').trim()), mi = m ? MON.indexOf(m[2]) : -1;
+  if (mi < 0) return null;
+  var now = new Date(), d = new Date(now.getFullYear(), mi, Number(m[1]));
+  if (d.getTime() > now.getTime() + 86400000) d.setFullYear(d.getFullYear() - 1);   // a stamp from December, read in January
+  return d;
+}
+function teamPanel(d) {
+  if (d.role !== 'branch') { $('teamWrap').style.display = 'none'; return; }
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
+  var people = {}, notes = [];
+  d.clients.forEach(function (c) {
+    (c.markers || []).forEach(function (mk) {
+      var m = /^\[(called|met|no answer|declined|closed) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk), day = m ? dayOf(m[2]) : null;
+      if (!day || day.getTime() < week) return;
+      var p = people[m[3]] = people[m[3]] || { name: m[3], today: 0, reached: 0, noans: 0, week: 0 };
+      p.week++;
+      if (day.getTime() >= today) { p.today++; if (m[1] === 'called' || m[1] === 'met') p.reached++; if (m[1] === 'no answer') p.noans++; }
+    });
+    (c.fileNotes || []).forEach(function (f) {
+      var m = /^(called|met|declined|closed|open|no answer|assigned) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(f);
+      if (!m) return;
+      var day = dayOf(m[2]);
+      notes.push({ kind: m[1], day: m[2], t: day ? day.getTime() : 0, who: m[3], text: m[4], c: c });
+    });
+  });
+  var list = Object.keys(people).map(function (k) { return people[k]; }).sort(function (a, b) { return (b.today - a.today) || (b.week - a.week); });
+  notes.sort(function (a, b) { return b.t - a.t; });
+  var todayN = list.reduce(function (t, p) { return t + p.today; }, 0);
+  $('teamWrap').style.display = list.length || notes.length ? '' : 'none';
+  $('teamSum').textContent = todayN ? todayN + ' outcome' + (todayN === 1 ? '' : 's') + ' logged today by ' + list.filter(function (p) { return p.today; }).length + ' of the team' : 'nothing logged today yet';
+  var KIND = { called: 'Called', met: 'Met', declined: 'Declined', closed: 'Closed', open: 'Reopened', 'no answer': 'No answer', assigned: 'Named' };
+  var shown = TEAM_ALL ? notes : notes.slice(0, 15);
+  $('teamBody').innerHTML = (list.length ? '<table><tr><th>Who</th><th>Today</th><th>Reached today</th><th>No answer today</th><th>Last 7 days</th></tr>' +
+      list.map(function (p) { return '<tr><td><b>' + esc(p.name) + '</b></td><td>' + p.today + '</td><td>' + p.reached + '</td><td>' + p.noans + '</td><td>' + p.week + '</td></tr>'; }).join('') + '</table>' : '') +
+    (notes.length ? '<h4>Their latest notes</h4><ul>' + shown.map(function (n) {
+      return '<li><i>' + esc(n.day) + ' · ' + esc(firstName(n.who)) + ' · ' + esc(KIND[n.kind] || n.kind) + '</i> · <a href="#t=' + encodeURIComponent(n.c.token) + '&s=' + encodeURIComponent(n.c.seg || '') + '">' +
+        esc(n.c.client) + '</a>: ' + esc(n.text) + '</li>';
+    }).join('') + '</ul>' + (notes.length > 15 ? '<button type="button" class="allnotes" id="teamAll">' + (TEAM_ALL ? 'Show the latest 15' : 'Show all ' + notes.length + ' notes') + '</button>' : '') : '');
+  if ($('teamAll')) $('teamAll').addEventListener('click', function () { TEAM_ALL = !TEAM_ALL; teamPanel(D); });
+}
+/* the call list on a card: whose list, why, and what the old calls sheet said (7 October 2026: the calls move onto the board) */
+function callInfo(c) {
+  var cl = c.call;
+  if (!cl) return '';
+  var who = cl.caller ? esc(firstName(cl.caller)) + '&rsquo;s call list' + (cl.order ? ', #' + esc(cl.order) : '') : 'the call list';
+  return '<div class="callinfo">On ' + who + (cl.why ? ': <b>' + esc(cl.why) + '</b>' : '') + (cl.back ? ' · call-back asked: <b>' + esc(cl.back) + '</b>' : '') + '</div>' +
+    (cl.sheet ? '<div class="sheetnote">On the old calls sheet: ' + esc(cl.sheet) + '</div>' : '') +
+    (cl.other ? '<div class="sheetnote">Other numbers: ' + esc(cl.other) + '</div>' : '') +
+    (cl.addr ? '<div class="sheetnote">Address on file: ' + esc(cl.addr) + '</div>' : '');
+}
+/* a client on the call list with nothing recorded yet: why, the number, the old sheet's notes, and a button a try. The first
+   try logged here turns the row into a card (state "called"), where every later try and note goes */
+function callRow(c, manager, namer) {
+  var acts = '', wa = waLink(c.phone);
+  if (c.phone) acts += '<a class="tel" href="tel:' + esc(digits(c.phone)) + '">Call ' + esc(c.phone) + '</a>';
+  if (wa) acts += '<a class="wa" href="' + esc(wa) + '" target="_blank" rel="noopener">WhatsApp</a>';
+  acts += '<a class="own" href="' + esc(ownLink(c)) + '" target="_blank" rel="noopener">' + (D.role === 'staff' ? 'Their page (your copy) →' : 'Their page →') + '</a>';
+  acts += '<a class="own" href="/orphan-transition/client-support.html" target="_blank" rel="noopener">Script</a>';
+  ['Called', 'No answer', 'Declined', 'Closed'].forEach(function (s) {
+    acts += '<button type="button" data-token="' + esc(c.token) + '" data-status="' + s + '" class="' + (s === 'Called' ? 'ok' : s === 'Declined' ? 'stopb' : '') + '">' + s + '</button>';
+  });
+  acts += detButton(c, true);
+  return '<div class="c one tocall" id="c-' + esc(c.token) + '"><div>' +
+    '<div class="n">' + esc(c.client) + ' <span class="no">' + esc(c.no || '') + '</span>' + pills(c) + '</div>' +
+    '<div class="meta">' + (c.book ? 'was with ' + esc(c.book) + ' · ' : '') + (c.sent ? 'written to ' + esc(c.sent) : 'no letter yet') + (c.held ? ' · ' + esc(c.held) : '') + '</div>' +
+    callInfo(c) +
+    (c.phone ? '' : '<div class="needs">No number on file: look the client up in Salesforce before calling.</div>') +
     '<div class="acts">' + acts + '</div>' + (DET_OPEN[c.token] ? detPanel(c) : '') + '</div></div>';
 }
 function silentRow(c, manager) {
@@ -1257,11 +1400,16 @@ function openPanel(token, status) {
   if (!c) return;
   /* the backend says which notes this person may send: the manager's for the branch manager, the team's "still on it" for the branch and Client Support */
   var N = (D.notes && D.notes.list && D.notes.list.length) ? D.notes : null, first = c.firstName || 'the client';
+  /* a client on the call list who has not answered has nothing for the team's "still on it" note to follow up */
+  if (N && onCalls(c)) { var lst = N.list.filter(function (n) { return n.key !== 'still'; }); N = lst.length ? Object.assign({}, N, { list: lst }) : null; }
   PN = { c: c, status: status, key: defaultKey(status), keyPicked: false, tellPicked: false };
   var outs = OUTS.concat(c.mark && c.mark !== 'Open' ? ['Open'] : []);
   var h = '<h3 id="pTitle">' + esc(c.client) + '</h3><p class="sub2">' + esc(c.no || '') + (c.seg ? ' · letter ' + esc(c.seg) : '') + (c.book ? ' · was with ' + esc(c.book) : '') + '</p>' +
     '<div class="outs" id="pOuts">' + outs.map(function (s) { return '<button type="button" data-s="' + s + '">' + (s === 'Open' ? 'Reopen' : s) + '</button>'; }).join('') + '</div>' +
     '<label class="fl" for="pNote">Note for the file <i>(stays on the sheet; the client never sees it)</i></label>' +
+    /* the call list's usual outcomes, a tap each, so a try is logged in two taps (they add to the note; anything can be typed) */
+    (c.call ? '<div class="qnotes" id="pQuick">' + ['Voicemail', 'No answer: try again', 'Wrong number', 'Number not in service', 'Call back later', 'E-mail taken on their page', 'Will not give an e-mail'].map(function (q) {
+      return '<button type="button" data-q="' + esc(q) + '">' + esc(q) + '</button>'; }).join('') + '</div>' : '') +
     '<textarea id="pNote" maxlength="300" placeholder="What was said, and what happens next"></textarea>';
   if (N) {
     if (N.ready && c.canTell) {
@@ -1289,6 +1437,9 @@ function openPanel(token, status) {
   $('sheet').innerHTML = h;
   Array.prototype.forEach.call(document.querySelectorAll('#pOuts button'), function (b) {
     b.addEventListener('click', function () { PN.status = b.getAttribute('data-s'); syncPanel(); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#pQuick button'), function (b) {
+    b.addEventListener('click', function () { var n = $('pNote'), q = b.getAttribute('data-q'); n.value = (n.value.trim() ? n.value.trim() + '; ' : '') + q; n.focus(); });
   });
   if ($('pTell')) {
     $('pTell').addEventListener('change', function () { PN.tellPicked = true; syncPanel(); });
@@ -1346,7 +1497,7 @@ function savePanel() {
 }
 $('panel').addEventListener('click', function (e) { if (e.target === $('panel')) closePanel(); });
 document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !$('panel').hidden) closePanel(); });
-['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { render(); } }); $(id).addEventListener('change', function () { if (D) { render(); } }); });
+['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).addEventListener('input', function () { if (D) { SHOW_N = SHOW_STEP; render(); } }); $(id).addEventListener('change', function () { if (D) { SHOW_N = SHOW_STEP; render(); } }); });
 /* the order is a way of looking, not a filter: it is kept on this device and Clear leaves it */
 try { var ORD = localStorage.getItem('rrb-assign-order'); if (ORD === 'value') $('fOrder').value = 'value'; } catch (e) {}
 $('fOrder').addEventListener('change', function () { try { localStorage.setItem('rrb-assign-order', $('fOrder').value); } catch (e) {} });

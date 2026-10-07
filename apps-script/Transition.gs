@@ -156,6 +156,7 @@ function tSheet_() {
  *  Throws, before anything is sent, if the header row is missing or any of
  *  T_REQUIRED is not on it. */
 function tRead_() {
+  if (T_READ_ONCE && T_READ_ONCE.send) return T_READ_ONCE.send;   // a board request reads the tab once (transitionBoard_)
   var sh = tSheet_();
   var last = sh.getLastRow(), lastCol = sh.getLastColumn();
   if (!lastCol) throw new Error('"' + TRANSITION.SHEET + '" has no header row. Nothing was sent.');
@@ -172,7 +173,9 @@ function tRead_() {
       rows.push(o);
     });
   }
-  return { sh: sh, col: col, rows: rows };
+  var out = { sh: sh, col: col, rows: rows };
+  if (T_READ_ONCE) T_READ_ONCE.send = out;
+  return out;
 }
 
 /* The sheet's own zone: its dates are midnight there, and the branch reads the
@@ -1362,9 +1365,18 @@ function tContactRow_(page) {
    answered, and naming them again would have sent the introduction that thanks them for answering. None had been
    written on the sheet when it was caught. */
 function tAssignRow_(page) { return String(page || '').indexOf('/assign') === 0; }
-/** A row on Client Responses that is the branch's record, not the client's answer: details taken on a call, or an
- *  agent named from the board. */
-function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page); }
+/* A call logged from the board on a client with no row of their own (transitionUpdate_, 7 October 2026: "where does
+   staff make their notes and who to call as we move from the spreadsheet to data entry"). Client Support works the call
+   list on the board now, and a try ("No answer", "Called") needs a row to sit on: Page /call, Response 'call'. Like an
+   assign row it is the branch's record, never the client's answer: never thanked, never chased, never counted as an
+   answer. A call marked Called or Met was a conversation, so it stops the five-day reminder as a contact row does
+   (tRespondedAt_). */
+function tCallRow_(page) { return String(page || '').indexOf('/call') === 0; }
+/** A row on Client Responses that is the branch's record, not the client's answer: details taken on a call, an agent
+ *  named from the board, or a call logged from the board. */
+function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page) || tCallRow_(page); }
+/** A call row whose outcome was a conversation. */
+function tSpokeCall_(page, status) { return tCallRow_(page) && /^(called|met)$/i.test(String(status || '').trim()); }
 
 /** One receipt per client per sitting: every unreceipted tap of a token this
  *  campaign recognises, once the newest is RECEIPT_WAIT_MIN old (a client
@@ -1387,7 +1399,7 @@ function tReceipts_() {
     var token = String(v[1] || '').trim();
     if (!tokens[token]) continue;                                    // not this campaign's token: never touched
     (every[token] || (every[token] = [])).push(v);                   // every row the client has, marked or not: the trail
-    if (tAssignRow_(v[5])) continue;                                 // an agent named from the board: the branch's note, nothing the client said
+    if (tAssignRow_(v[5]) || tCallRow_(v[5])) continue;              // an agent named, or a call logged, from the board: nothing the client said
     var note = String(v[10] || '');
     if (note.indexOf('[receipt]') >= 0) {                            // seen by a run already: what it answered, and whether a receipt thanked it
       var p = prior[token] || (prior[token] = { thanked: {}, answered: {} }), pq = tQOf_(v[5]);
@@ -1578,6 +1590,7 @@ function tTrail_(row, rows, rc) {
     var at = v[0] instanceof Date ? v[0] : null, r = String(v[3] || '').trim().toLowerCase(), page = String(v[5] || ''),
         q = tQOf_(page), note = String(v[10] || ''), d = day(at);
     if (tAssignRow_(page)) { /* the branch naming an agent: nothing the client said */ }
+    else if (tCallRow_(page)) { if (tSpokeCall_(page, v[7]) && d && !called[d]) { called[d] = 1; add(at, 'us', 'We spoke with you by phone'); } }   // a try with no answer is not in the trail
     else if (tContactRow_(page)) { if (d && !called[d]) { called[d] = 1; add(at, 'us', 'We spoke with you by phone'); } }
     else if (page.indexOf('/your-policy/words') === 0) {
       var w = tNoteWords_(note);
@@ -1925,7 +1938,7 @@ function tChase_() {
     var isOpen = String(v[7] || '').trim().toLowerCase() === 'open';
     if (!tokens[token]) { if (isOpen) out.skipped++; continue; }     // not this campaign's token: never chased
     if (tYes_(tokens[token].Test)) continue;                           // a colleague standing in as a client: never chased
-    if (tAssignRow_(v[5])) continue;                                   // an agent named from the board: the client asked nothing, so nothing to chase
+    if (tAssignRow_(v[5]) || tCallRow_(v[5])) continue;                // an agent named, or a call logged, from the board: the client asked nothing, so nothing to chase
     var g = groups[token];
     if (!g) { g = groups[token] = { row: tokens[token], all: [], open: [], did2: false }; order.push(token); }
     var note = String(v[10] || ''), page = String(v[5] || '');
@@ -2256,7 +2269,7 @@ function tRespondedAt_(strict) {
   var later = function (m, k, d) { if (k && d instanceof Date && !isNaN(d.getTime()) && (!m[k] || d.getTime() > m[k].getTime())) m[k] = d; };
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
-      if (tContactRow_(v[5])) later(out.spoke, String(v[1] || '').trim(), v[0]);
+      if (tContactRow_(v[5]) || tSpokeCall_(v[5], v[7])) later(out.spoke, String(v[1] || '').trim(), v[0]);
     });
   } catch (e) { if (strict) throw e; }
   try {
@@ -2721,6 +2734,7 @@ function tInsights_(windowDays) {
     var type = String(v[3] || '').trim();
     if (!type) return;
     if (tAssignRow_(v[5])) return;                                        // an agent named from the board: the branch's note, not an answer
+    if (tCallRow_(v[5])) { if (o.channel === 'call' && tSpokeCall_(v[5], v[7])) o.reached = true; return; }   // a call logged from the board: not an answer
     if (tContactRow_(v[5])) { if (o.channel === 'call') o.reached = true; return; }   // taken on a call: reached, not an answer
     var received = v[0] instanceof Date ? v[0] : null;
     var m = /[?&]q=([a-z_]+)/.exec(String(v[5] || ''));
@@ -3065,20 +3079,29 @@ var T_HH_SHEET = 'Households';
  *  2026 ("include the wife cover … anyone else who is covered in the household") a household also holds the branch's
  *  other clients at the same address, phone or e-mail, who have no token (they are not on the send list) and are known
  *  by client number, with the agent who looks after them in Was with; Head marks the member it is named after. */
+/* 7 October 2026 ("aren't we assigning households?"): the Households tab was never imported into the live sheet, so the
+   board showed no family and "Select the family" never appeared. The Household Assignments tab (T_HA, imported on
+   1 October for the wall) carries the same households, by the same rule, one row a client of the books, so the board
+   reads it when there is no Households tab. It has no family members outside the books, so a household read from it
+   shows the clients on our list only. */
 function tHouseholds_() {
   var out = { byTok: {}, rows: [] };
-  try {
-    var t = tSheetRows_(T_HH_SHEET), ix = {};
-    t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
-    if (ix.household === undefined || (ix.token === undefined && ix['client number'] === undefined)) return out;
-    var g = function (v, k) { return ix[k] !== undefined ? v[ix[k]] : ''; };
-    t.rows.forEach(function (v) {
-      var hh = String(g(v, 'household') || '').trim(), tok = String(g(v, 'token') || '').trim(), no = tCno_(g(v, 'client number'));
-      if (!hh || (!tok && !no)) return;
-      if (tok) out.byTok[tok] = hh;
-      out.rows.push({ hh: hh, token: tok, no: no, client: String(g(v, 'client') || '').trim(), with: String(g(v, 'was with') || '').trim(), head: tYes_(g(v, 'head')) });
-    });
-  } catch (e) {}
+  var read = function (name) {
+    try {
+      var t = tSheetRows_(name), ix = {};
+      t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+      if (ix.household === undefined || (ix.token === undefined && ix['client number'] === undefined)) return;
+      var g = function (v, k) { return ix[k] !== undefined ? v[ix[k]] : ''; };
+      t.rows.forEach(function (v) {
+        var hh = String(g(v, 'household') || '').trim(), tok = String(g(v, 'token') || '').trim(), no = tCno_(g(v, 'client number'));
+        if (!hh || (!tok && !no)) return;
+        if (tok) out.byTok[tok] = hh;
+        out.rows.push({ hh: hh, token: tok, no: no, client: String(g(v, 'client') || '').trim(), with: String(g(v, 'was with') || '').trim(), head: tYes_(g(v, 'head')) });
+      });
+    } catch (e) {}
+  };
+  read(T_HH_SHEET);
+  if (!out.rows.length) read(T_HA.SHEET);
   return out;
 }
 /** Where a family member who has not answered stands, from their own send row. */
@@ -3104,12 +3127,15 @@ function tSaid_(c) {
 }
 function tColLetter_(n) { var s = ''; while (n > 0) { var m = (n - 1) % 26; s = String.fromCharCode(65 + m) + s; n = Math.floor((n - 1) / 26); } return s; }
 /** Puts two clients in one household on the Households tab: the household either already has, or a new number.
- *  Two households that turn out to be one keep the older number. Never throws; { ok, hh, name } or { ok: false, why }. */
+ *  Two households that turn out to be one keep the older number. Never throws; { ok, hh, name } or { ok: false, why }.
+ *  Where there is no Households tab and the board reads the Household Assignments tab (tHouseholds_), the link is made
+ *  there instead: a new Households tab holding only this pair would hide every other household from the board. */
 function tLinkFamily_(a, b) {
   try {
     var ra = tRowByToken_(a), rb = tRowByToken_(b);
     if (!ra || !rb) return { ok: false, why: 'that family member is not on the send list' };
-    var sh = ss_().getSheetByName(T_HH_SHEET);
+    var hhSh = ss_().getSheetByName(T_HH_SHEET), haSh = ss_().getSheetByName(T_HA.SHEET);
+    var sh = hhSh && hhSh.getLastRow() > 1 ? hhSh : (haSh || hhSh);
     if (!sh) { sh = ss_().insertSheet(T_HH_SHEET); sh.appendRow(['Token', 'Household', 'Members', 'Client', 'Letter', 'Was with']); }
     var last = sh.getLastRow(), lastCol = Math.max(6, sh.getLastColumn());
     var vals = sh.getRange(1, 1, Math.max(1, last), lastCol).getValues();
@@ -3205,6 +3231,7 @@ function tDigest_(s) {
 /** Everyone on the Agent Skill Bank: { roles: whether the tab has Role and Unit columns, people: [{ name, no, email, phone,
  *  areas, avail, role, roleText, unit, active, pw (digest), pwShort, portal }] }. */
 function tTeam_() {
+  if (T_READ_ONCE && T_READ_ONCE.team) return T_READ_ONCE.team;   // a board request reads the tab once (transitionBoard_)
   var out = { roles: false, people: [] };
   try {
     var t = tSheetRows_(SVC.TEAM_SHEET), idx = {};
@@ -3234,6 +3261,7 @@ function tTeam_() {
         pw: pw ? tDigest_(pw) : '', pwShort: !!pw && pw.length < T_USERS.MIN, portal: col(r, ['portal code']) });
     });
   } catch (e) {}
+  if (T_READ_ONCE) T_READ_ONCE.team = out;
   return out;
 }
 
@@ -3372,13 +3400,59 @@ function tUsersCheck_() {
     (left ? left + (left === 1 ? ' was' : ' were') + ' the agent on these books and can never sign in, whatever the tab says.' : '');
 }
 
+/* ── the call list: who Client Support calls, on the board ─────────────
+   7 October 2026: "where does staff make their notes and who to call as we move from the spreadsheet to data entry when
+   call and can see the scripts". Until then each caller's list (Sasha, Liz, Azariah) was a tab of the Client Support calls
+   Google Sheet, which only ever read this sheet: nothing typed there reached Client Responses, the board, the reports or
+   the chase. The Call List tab is that list brought into this sheet once (built in the session scratchpad from the calls
+   sheet, calls7oct/build-call-list.py): one row a client, with who calls them, in the caller's own order, why, the
+   numbers, the address, the agent the notice names, and a line of what the caller had typed there. The board reads it: a
+   client on it with nothing on Client Responses shows under "To call" (state 'tocall') with the reason and the number, a
+   caller's own list first, and every try is logged on the board (transitionUpdate_ writes a /call row, tCallRow_). */
+var T_CALLS = { SHEET: 'Call List' };
+var T_CALLS_MEMO = null;
+/** The Call List tab as { ready, by: { token: { caller, order, why, phone, other, email, addr, agent, sheet, back, done } } }. */
+function tCalls_() {
+  if (T_CALLS_MEMO) return T_CALLS_MEMO;
+  var by = {}, n = 0;
+  try {
+    var t = tSheetRows_(T_CALLS.SHEET), ix = {};
+    t.head.forEach(function (h, i) { ix[String(h).trim().toLowerCase()] = i; });
+    if (ix.token !== undefined) t.rows.forEach(function (v) {
+      var g = function (k) { return ix[k] !== undefined ? tText_(v[ix[k]]) : ''; };
+      var tok = g('token');
+      if (!tok) return;
+      by[tok] = { caller: g('caller'), order: Number(ix.order !== undefined ? v[ix.order] : 0) || 0, why: g('call for'), phone: g('phone'),
+                  other: g('other numbers'), email: g('e-mail on file'), addr: g('address on file'), agent: g('notice agent'),
+                  sheet: g('from the calls sheet'), back: g('call-back'), done: g('done') };
+      n++;
+    });
+  } catch (e) {}
+  return (T_CALLS_MEMO = { ready: n > 0, by: by });
+}
+/** Whether a client on the Call List still needs a call from the list: on a caller's list or the no-number list (a row
+ *  carrying only the numbers from the manager's own list is not), not marked done, not under the manager's hold on a book
+ *  (7 October 2026: nothing for that book until he lifts it), and nobody the books leave out. */
+function tToCall_(call, held) {
+  return !!call && !!(call.caller || call.why) && !call.done && !/^hold: manager's hold/i.test(held || '') && !T_NOT_BOOK.test(held || '');
+}
+
+/* One read of Transition Send serves a whole board request (7 October 2026, "taking too long to log in"): the check of
+   who was on these books (tFormer_, when its ten-minute copy has lapsed) and the board itself read the same tab, three to
+   four seconds a read, and the Agent Skill Bank was read four times. Only transitionBoard_ turns this on, and nothing in
+   that request writes to either tab. */
+var T_READ_ONCE = null;
+
 /** GET action=board&code=…[&who=…][&all=1]. */
 function transitionBoard_(p) {
   p = p || {};
-  var w = tWho_(p.code, p.who);
-  if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
-  try { return tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || ''))); }
-  catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+  T_READ_ONCE = {};
+  try {
+    var w = tWho_(p.code, p.who);
+    if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
+    try { return tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || ''))); }
+    catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+  } finally { T_READ_ONCE = null; }
 }
 
 /** Every client who answered (a tap, a tick, a reply or a review), what they
@@ -3392,6 +3466,7 @@ function tHasAnswered_(c) { return !!c && ['open', 'assigned', 'done', 'noted'].
 function tBoard_(w, all, lite) {
   var tz = tTz_(), now = new Date();
   var t = tRead_();
+  var calls = tCalls_();
   var rc = tReceipt_();
   var qdef = (rc && rc.json && rc.json.questions) || {}, codeQ = {};
   Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { codeQ[a[2]] = { q: qdef[k][0], a: a[0], tap: a[1] }; }); });
@@ -3408,11 +3483,17 @@ function tBoard_(w, all, lite) {
       phone: tText_(r.Phone) || tText_(r.Mobile) || tText_(r.Cell) || '', sent: fmt(r['Sent at'], 'd MMM'),
       held: tHeld_(r.Exclude) ? (tText_(r.Exclude) || 'held') : '',
       facts: { since: tText_(r.first_year).replace(/\.0$/, ''), paidTo: tText_(r.paid_to), appReceived: tText_(r.app_received) },
-      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contact: 0, open: 0, actionable: 0, done: 0, noted: 0,
+      answers: [], taps: [], notes: [], fileNotes: [], markers: [], needs: [], reach: '', when: '', rows: [], own: 0, contact: 0, calls: 0, open: 0, actionable: 0, done: 0, noted: 0,
       late: false, assigned: '', assignedOn: '', mark: '', review: null, score: 0, firstAt: null, lastAt: null, assignedAt: null };
     /* whether the board may offer the manager's note (T_NOTES): the same test transitionUpdate_ applies before it sends */
     c.tellWhy = tNoteBlock_(r);
     c.canTell = !c.tellWhy;
+    /* on Client Support's call list (tCalls_): who calls them and why, the numbers, and what the caller typed on the old sheet */
+    var cl = calls.by[tok];
+    if (cl) {
+      c.call = { caller: cl.caller, order: cl.order, why: cl.why, sheet: cl.sheet, back: cl.back, agent: cl.agent, addr: cl.addr, other: cl.other };
+      if (!c.phone) c.phone = cl.phone;
+    }
     byTok[tok] = c; order.push(tok);
   });
 
@@ -3428,6 +3509,16 @@ function tBoard_(w, all, lite) {
     var status = String(v[7] || '').trim(), assigned = String(v[8] || '').trim(), on = v[9] instanceof Date ? v[9] : null, note = String(v[10] || '');
     var at = fmt(rec);
     c.rows.push({ n: i + 2, type: type });
+    if (tCallRow_(v[5])) {
+      /* a call logged from the board on a client with no row of their own: the outcome and the file note, nothing else */
+      c.calls++;
+      if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
+      if (rec && (!c.lastAt || rec > c.lastAt)) c.lastAt = rec;
+      (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
+      tFileNotes_(note).forEach(function (f) { if (c.fileNotes.indexOf(f) < 0) c.fileNotes.push(f); });
+      if (status && !/^(open|logged)$/i.test(status)) c.mark = status;
+      return;
+    }
     if (tContactRow_(v[5])) c.contact++;                              // details taken on a call
     else if (!tAssignRow_(v[5])) c.own++;                             // the client's own answer, not an agent named from the board
     if (rec && (!c.firstAt || rec < c.firstAt)) c.firstAt = rec;
@@ -3509,33 +3600,47 @@ function tBoard_(w, all, lite) {
       c.assigned = ha.agent; c.assignedOn = ha.on ? fmt(ha.on, 'd MMM') : ''; c.assignedVia = ha.via; c.late = false;
     }
     if (!c.rows.length && !c.review && !ha) {
-      if (c.sent && !c.held) {
-        sentNoAnswer++;
-        if (all) silent.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email, phone: c.phone, sent: c.sent, state: 'silent', rows: [] });
+      if (c.sent && !c.held) sentNoAnswer++;
+      /* on Client Support's call list and not yet called from the board: a light row with why, the number and the old
+         sheet's notes, for the branch and for staff (7 October 2026); a try logged on it turns it into a card */
+      if (tToCall_(c.call, c.held)) {
+        clients.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email,
+          phone: c.phone, sent: c.sent, held: c.held, call: c.call, state: 'tocall', rows: [], canTell: c.canTell, tellWhy: c.tellWhy });
+        return;
       }
+      if (c.sent && !c.held && all) silent.push({ token: tok, client: c.client, firstName: c.firstName, no: c.no, seg: c.seg, book: c.book, email: c.email, phone: c.phone, sent: c.sent, state: 'silent', rows: [] });
       return;
     }
     /* reached by phone: Client Support took an e-mail or a number, and the client has not answered the letter yet. Named:
-       an agent was named from the board on a client who has not answered (tAssignRow_). Either card stays, so an agent can
-       be named or the outcome marked, but neither is ever counted as an answer, and neither is sent the introduction that
-       thanks a client for answering */
-    c.state = !c.own && !c.review ? (c.contact ? 'reached' : 'named')
+       an agent was named from the board on a client who has not answered (tAssignRow_). Called: Client Support logged a
+       call on the board and nothing else is recorded yet (tCallRow_). Each card stays, so an agent can be named or the
+       outcome marked, but none is ever counted as an answer, and none is sent the introduction that thanks a client for
+       answering */
+    var namedRow = c.assigned || c.rows.some(function (x) { return x.type === 'assign'; });
+    c.state = !c.own && !c.review ? (c.contact ? 'reached' : (c.calls && !namedRow) ? 'called' : 'named')
       : c.open ? (c.assigned ? 'assigned' : 'open') : (c.actionable ? 'done' : (c.assigned ? 'assigned' : 'noted'));
     c.first = fmt(c.firstAt); c.last = fmt(c.lastAt);
     delete c.firstAt; delete c.lastAt; delete c.assignedAt;
     clients.push(c);
   });
-  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4, named: 5 };
+  var rank = { open: 0, assigned: 1, done: 2, noted: 3, reached: 4, named: 5, called: 6, tocall: 7 };
+  /* the call list in each caller's own order, as it was on their sheet: the terminated book and the action letters first */
+  var callOrder = function (c) { return c.call ? [String(c.call.caller || '~'), c.call.order || 1e9] : ['~', 1e9]; };
   clients.sort(function (a, b) {
+    if (a.state === 'tocall' && b.state === 'tocall') {
+      var x = callOrder(a), y = callOrder(b);
+      return x[0].localeCompare(y[0]) || (x[1] - y[1]);
+    }
     return (rank[a.state] - rank[b.state]) || ((b.late ? 1 : 0) - (a.late ? 1 : 0)) || (b.score - a.score) || String(a.first).localeCompare(String(b.first));
   });
-  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, late: 0, silent: sentNoAnswer };
+  var counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, late: 0, silent: sentNoAnswer };
   clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   /* the Client Book (tBook_): each card carries the client's policies; the rows without a card (not answered, family)
      carry the totals alone, and the board fetches the rest when one is opened (transitionBook_) */
   var bk = tBook_();
   if (bk.ready) {
     clients.forEach(function (c) {
+      if (c.state === 'tocall') { c.pol = tBookBrief_(c.no); return; }   // a call-list row: the totals, like a row without a card
       c.pol = tBookFor_(c.no, true);
       c.profile = tProfileFor_(c.no);
       c.ins = tInsightsFor_(c.pol, c.profile, bk.today);
@@ -3572,7 +3677,7 @@ function tBoard_(w, all, lite) {
     if (onTeam) clients = clients.filter(function (c) { return onTeam(c.assigned); });
     silent = [];
     /* the tiles count this viewer's own list, never the branch's */
-    counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, late: 0, silent: 0 };
+    counts = { answered: 0, open: 0, assigned: 0, done: 0, noted: 0, reached: 0, named: 0, called: 0, tocall: 0, late: 0, silent: 0 };
     clients.forEach(function (c) { counts[c.state]++; if (c.late) counts.late++; if (tHasAnswered_(c)) counts.answered++; });
   }
   /* the TT$200 retention claims (the Retention Payments tab): a line on the card and the payments panel, for the branch every
@@ -3674,7 +3779,8 @@ function tBoard_(w, all, lite) {
     if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for whoever may name one */
-  if (tCanAssign_(w)) counts.sug = tSuggest_(clients.concat(silent, family), { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
+  if (tCanAssign_(w)) counts.sug = tSuggest_(clients.filter(function (c) { return c.state !== 'tocall'; }).concat(silent, family),
+    { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
   /* staff see who each client is, what the records say and each policy's plan, where it stands and what it is paid to,
      never a figure: Client Support sees no money (29 September), and the insights are theirs too (5 October 2026: "I do
      need the staff to log in with the insights shared") */
@@ -3692,6 +3798,7 @@ function tBoard_(w, all, lite) {
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
            notes: tNotesForBoard_(w),
+           calls: { ready: calls.ready }, mailHeld: tClientMailHeld_(),   // the call list is on the board; automatic client e-mail is on hold
            claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
 }
 
@@ -3781,6 +3888,22 @@ function tPlan_() {
       n++;
     });
   } catch (e) {}
+  /* no Assignment Plan tab on the sheet (7 October 2026): the Household Assignments tab carries the same 24 September
+     plan, one suggestion a household, with its reason, which is what the wall's "Next households to assign" shows; the
+     board suggests the same agent */
+  if (!n) {
+    try {
+      var h = tSheetRows_(T_HA.SHEET), hx = {};
+      h.head.forEach(function (x, i) { hx[String(x).trim().toLowerCase()] = i; });
+      if (hx['client number'] !== undefined && hx['suggested agent'] !== undefined) h.rows.forEach(function (v) {
+        var no = tCno_(v[hx['client number']]), agent = String(v[hx['suggested agent']] || '').trim();
+        if (!no || !agent) return;
+        by[no] = { agent: agent, team: '', band: '', area: '', hh: hx.household !== undefined ? String(v[hx.household] || '').trim() : '',
+                   why: hx['why suggested'] !== undefined ? String(v[hx['why suggested']] || '').trim() : '' };
+        n++;
+      });
+    } catch (e) {}
+  }
   return (T_PLAN_MEMO = { ready: n > 0, by: by });
 }
 /** The roster agent a name means: the full name, or a first name that only one agent on the roster carries. */
@@ -3829,6 +3952,8 @@ function tSuggest_(rows, ctx) {
       var a = tRosterMatch_(roster, pname);
       if (!a) { put(c, { agent: '', planned: pname, why: 'the 24 Sep plan names ' + pname + ', who is not on the Agent Skill Bank yet', src: 'plan' }); return; }
       var bits = ['the 24 Sep plan'];
+      /* read from the Household Assignments tab, the plan's own reason ("24 September plan (the household head's)", "family: …") */
+      if (p && p.why && p.agent.toLowerCase() === pname.toLowerCase()) bits = [p.why.replace(/^24 September plan/i, 'the 24 Sep plan')];
       if (p && p.band) bits.push(p.band);
       if (p && p.area) bits.push(p.area);
       if (h && (!p || p.agent.toLowerCase() !== pname.toLowerCase())) bits.push('with the family');
@@ -4042,7 +4167,17 @@ function transitionUpdate_(p) {
       if (String(v[3] || '').trim() !== 'informed') targets.push(i + 2);
       if (String(v[8] || '').trim()) assignedTo = String(v[8]).trim();
     });
-    if (!any.length) return { ok: false, error: 'No rows for that client.' };
+    if (!any.length) {
+      /* a client on the call list with nothing on Client Responses yet (7 October 2026): the try needs a row to sit on, a
+         /call row (tCallRow_), the branch's record, which nothing ever reads as the client's answer. The branch and staff
+         work the call list; an agent's clients always have a row already */
+      if (!tCanAssign_(w)) return { ok: false, error: 'No rows for that client.' };
+      var srow = tRowByToken_(tok);
+      if (!srow || tYes_(srow.Test)) return { ok: false, error: 'That client is not on the send list.' };
+      sh.appendRow([new Date(), tok, tText_(srow.Segment).toUpperCase(), 'call', 'a call from the board', '/call',
+        w.role === 'staff' && w.me ? 'staff: ' + w.me.name : 'branch', 'Open', '', '', '']);
+      any = [sh.getLastRow()]; targets = any.slice();
+    }
     /* the name on the rows, or the one Salesforce gave (the Household Assignments tab): the board shows the client on that
        person's list either way, so either lets them mark it */
     var names = [assignedTo];
@@ -4183,7 +4318,7 @@ function tStillNoteForBoard_() {
 function tStillClient_(tok, vals, sh) {
   var rows = [], open = [], before = false;
   vals.forEach(function (v, i) {
-    if (String(v[1] || '').trim() !== tok || tAssignRow_(v[5])) return;
+    if (String(v[1] || '').trim() !== tok || tAssignRow_(v[5]) || tCallRow_(v[5])) return;
     var note = String(v[10] || '');
     var x = { rowNum: i + 2, received: v[0] instanceof Date ? v[0] : null, r: String(v[3] || '').trim().toLowerCase(),
               needs: String(v[4] || ''), q: tQOf_(v[5]), note: note };
