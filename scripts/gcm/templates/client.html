@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Service review | Ricky Rampersad Branch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --charcoal:#24272C; --ink:#2E3238; --muted:#646B75; --line:#D9DDE1;
+  --bg:#EEF0F1; --paper:#FFFFFF; --amber:#C98A1B; --amber-soft:#F6E7C8;
+  --ok:#2F7A55; --ok-soft:#DCEFE4; --chg:#A86A0C; --chg-soft:#F8EBD2;
+  --no:#A93A3A; --no-soft:#F6DEDE;
+  --font:"Libre Franklin", "Helvetica Neue", Arial, sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:0 20px}
+
+/* masthead */
+.mast{background:var(--charcoal);color:#fff;padding:28px 0 30px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+.mark img{width:100%;height:100%;display:block}
+.brand-name{font-weight:700;font-size:15px;line-height:1.2}
+.brand-sub{font-size:13px;color:#B9BEC6}
+.mast h1{font-size:clamp(26px,6vw,36px);line-height:1.12;font-weight:800;margin:26px 0 8px;letter-spacing:-.01em}
+.mast p{margin:0;color:#D5D8DD;max-width:56ch}
+
+/* gate */
+.gate{max-width:420px;margin:40px auto;background:var(--paper);border-top:4px solid var(--amber);padding:28px 24px}
+.gate h2{margin:0 0 6px;font-size:22px}
+.gate p{margin:0 0 18px;color:var(--muted)}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+.field{width:100%;padding:13px 14px;border:1.5px solid var(--line);background:#fff;border-radius:6px;font-size:17px}
+.code{letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.err{color:var(--no);font-size:14px;min-height:21px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:6px;padding:14px 20px;font-weight:700;cursor:pointer;font-size:16px}
+.btn-primary{background:var(--charcoal);color:#fff;width:100%}
+.btn-primary:hover{background:#000}
+.btn-ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+
+/* summary strip */
+.strip{background:var(--paper);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.strip .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-top:12px;padding-bottom:12px}
+.prog{flex:1}
+.prog-text{font-size:14px;color:var(--muted)}
+.prog-text b{color:var(--ink)}
+.bar{height:6px;background:var(--line);border-radius:3px;margin-top:6px;overflow:hidden}
+.bar span{display:block;height:100%;background:var(--amber);width:0;transition:width .3s ease}
+
+.intro{padding:26px 0 6px}
+.intro p{margin:0 0 10px;max-width:60ch}
+.key{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:14px;color:var(--muted);margin-top:14px}
+.key span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.key .k-ok::before{background:var(--ok)} .key .k-chg::before{background:var(--chg)} .key .k-no::before{background:var(--no)}
+
+/* groups */
+.group{margin:30px 0 0}
+.group-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--charcoal);padding-bottom:8px}
+.group-head h2{margin:0;font-size:20px;font-weight:800}
+.group-head .count{font-size:14px;color:var(--muted)}
+.item{background:var(--paper);border-left:4px solid var(--line);padding:18px 18px 16px;margin-top:12px;transition:border-color .2s}
+.item[data-r="correct"]{border-left-color:var(--ok)}
+.item[data-r="change"]{border-left-color:var(--chg)}
+.item[data-r="notours"]{border-left-color:var(--no)}
+.item h3{margin:0 0 8px;font-size:17px;line-height:1.3;font-weight:700}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:14px;margin:0}
+.meta dt{color:var(--muted)} .meta dd{margin:0}
+.ref{font-variant-numeric:tabular-nums;word-break:break-all}
+.status{display:inline-block;font-size:13px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--amber-soft);color:#6B4A0C}
+.status.ours{background:#E3E7EB;color:var(--ink)}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.choice{border:1.5px solid var(--line);background:#fff;border-radius:6px;padding:11px 6px;font-size:14px;font-weight:600;cursor:pointer;line-height:1.2}
+.choice[aria-pressed="true"].c-ok{background:var(--ok);border-color:var(--ok);color:#fff}
+.choice[aria-pressed="true"].c-chg{background:var(--chg);border-color:var(--chg);color:#fff}
+.choice[aria-pressed="true"].c-no{background:var(--no);border-color:var(--no);color:#fff}
+.note-wrap{margin-top:12px}
+.note-wrap[hidden]{display:none}
+.addnote{background:none;border:0;padding:0;margin-top:10px;color:var(--muted);text-decoration:underline;font-size:14px;cursor:pointer}
+textarea.field{min-height:84px;resize:vertical;font-size:15px}
+.need{font-size:13px;color:var(--chg);margin-top:4px}
+
+/* submit */
+.send{background:var(--paper);margin:36px 0 20px;padding:24px 20px;border-top:4px solid var(--charcoal)}
+.send h2{margin:0 0 4px;font-size:20px}
+.send > p{margin:0 0 18px;color:var(--muted)}
+.row{margin-bottom:14px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.done{background:var(--ok-soft);border-left:4px solid var(--ok);padding:16px 18px;margin-top:16px}
+.done[hidden]{display:none}
+.done p{margin:0 0 10px}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+
+.sample{background:var(--amber);color:#24272C;font-weight:700;font-size:13px;text-align:center;padding:6px 12px}
+.summary{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin:22px 0 4px;border:1px solid var(--line)}
+.summary div{background:var(--paper);padding:14px 12px}
+.summary b{display:block;font-size:28px;font-weight:800;line-height:1.1}
+.summary span{font-size:13px;color:var(--muted)}
+.summary .late b{color:var(--no)}
+.due{font-weight:600}
+.due.late{color:var(--no)} .due.soon{color:var(--chg)} .due.fine{color:var(--ok)}
+.doneline{margin:10px 0 0;padding:10px 12px;background:var(--bg);font-size:14px}
+.doneline b{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-bottom:2px}
+.record{margin:40px 0 0}
+.record h2{margin:0 0 4px;font-size:22px;font-weight:800}
+.record > p{margin:0 0 14px;color:var(--muted)}
+.tablewrap{overflow-x:auto;background:var(--paper)}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:15px}
+th,td{padding:12px 12px;text-align:right;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+thead th{font-size:13px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--charcoal)}
+tfoot td{font-weight:800}
+.pct{display:inline-flex;align-items:center;gap:8px;justify-content:flex-end}
+.minibar{width:54px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.minibar i{display:block;height:100%;background:var(--ok)}
+.rate{background:var(--paper);margin:36px 0 0;padding:24px 20px;border-top:4px solid var(--amber)}
+.rate h2{margin:0 0 4px;font-size:20px}
+.rate > p{margin:0 0 14px;color:var(--muted)}
+.stars{display:flex;gap:6px}
+.star{background:none;border:0;padding:4px;cursor:pointer;line-height:0}
+.star svg{width:40px;height:40px;fill:#fff;stroke:var(--amber);stroke-width:1.5;transition:fill .15s}
+.star[aria-checked="true"] svg{fill:var(--amber)}
+.ratelabel{margin:8px 0 14px;font-weight:600;min-height:24px}
+footer{color:var(--muted);font-size:13px;padding:10px 0 40px}
+@media (max-width:480px){.row2{grid-template-columns:1fr}.choice{font-size:13px}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="mast">
+  <div class="wrap">
+    <div class="brand"><div class="mark"><img src="../logo-mark.png" alt=""></div><div><div class="brand-name">Ricky Rampersad Branch</div><div class="brand-sub">Branch 26000, Chaguanas</div></div></div>
+    <h1 id="title">Your open service items</h1>
+    <p id="subtitle">Enter the access code we sent you to see the items we are working on for your company.</p>
+  </div>
+</header>
+
+<main id="app">
+  <div class="wrap">
+    <form class="gate" id="gate" autocomplete="off">
+      <h2>Access code</h2>
+      <p>Your code was sent to you with this link.</p>
+      <label for="code">Code</label>
+      <input class="field code" id="code" name="code" inputmode="text" autocapitalize="characters" spellcheck="false" placeholder="XXXX-XXXX-XXXX-XXXX" required>
+      <div class="err" id="err" role="alert"></div>
+      <button class="btn btn-primary" type="submit" id="go">Open my items</button>
+    </form>
+  </div>
+</main>
+
+<script>
+const ENC = __PAYLOAD__;
+const STORE_KEY = "rrb-review-__SLUG__";
+let DATA = null, STATE = {};
+
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const norm = s => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function decrypt(code){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(norm(code)), "PBKDF2", false, ["deriveKey"]);
+  const key = await crypto.subtle.deriveKey({name:"PBKDF2", salt:b64(ENC.salt), iterations:ENC.iter, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64(ENC.iv)}, key, b64(ENC.ct));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+
+document.getElementById("gate").addEventListener("submit", async e => {
+  e.preventDefault();
+  const go = document.getElementById("go"), err = document.getElementById("err");
+  err.textContent = ""; go.disabled = true; go.textContent = "Checking code";
+  try { DATA = await decrypt(document.getElementById("code").value); load(); render(); }
+  catch(x){ err.textContent = "That code doesn't match. Check it against the message we sent and try again."; go.disabled = false; go.textContent = "Open my items"; }
+});
+
+/* A client who signed in at client.html arrives with their code in this tab's
+   session storage; use it once and forget it, so it never sits in the address
+   bar or the browser's history. */
+(function(){
+  let c = null;
+  try { c = sessionStorage.getItem("gcm-code"); sessionStorage.removeItem("gcm-code"); } catch(e){}
+  if (c){ document.getElementById("code").value = c; document.getElementById("gate").requestSubmit(); }
+})();
+
+function load(){ try { STATE = JSON.parse(localStorage.getItem(STORE_KEY)) || {}; } catch(e){ STATE = {}; } }
+function save(){ try { localStorage.setItem(STORE_KEY, JSON.stringify(STATE)); } catch(e){} }
+function allItems(){ return DATA.groups.flatMap(g => g.items); }
+
+function render(){
+  document.getElementById("title").textContent = DATA.client;
+  document.getElementById("subtitle").textContent = "Open service items as at " + DATA.asAt + ". Please review each one by " + DATA.respondBy + ".";
+  const total = allItems().length;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const dd = s => Math.round((new Date(s+"T00:00:00") - today)/86400000);
+  const items = allItems(), overdue = items.filter(i => i.dueISO && dd(i.dueISO) < 0).length;
+  const oldest = items.length ? Math.max(...items.map(i => -dd(i.opened))) : 0;
+  let h = (DATA.sample?`<div class="sample">Sample for internal review.</div>`:"") + `<div class="strip"><div class="wrap"><div class="prog"><div class="prog-text" id="progText"></div><div class="bar"><span id="bar"></span></div></div></div></div>
+  <div class="wrap">
+    <section class="intro">
+      <p>These are the items our team currently has open for ${esc(DATA.client)}. For each one, tell us whether it's correct. If something has changed or doesn't belong to you, add a short note and we'll follow it up.</p>
+      <div class="summary"><div><b>${items.length}</b><span>Open items</span></div><div class="${overdue?"late":""}"><b>${overdue}</b><span>Past target date</span></div><div><b>${oldest}</b><span>Days, oldest item</span></div></div>
+      <div class="key"><span class="k-ok">Correct</span><span class="k-chg">Needs a change</span><span class="k-no">Not ours</span></div>
+    </section>`;
+  for (const g of DATA.groups){
+    h += `<section class="group"><div class="group-head"><h2>${esc(g.name)}</h2><span class="count">${g.items.length} item${g.items.length>1?"s":""}</span></div>`;
+    for (const it of g.items){
+      const s = STATE[it.id] || {}, ours = it.status.indexOf("with us") > -1;
+      h += `<article class="item" id="i-${it.id}" data-r="${s.r||""}">
+        <h3>${esc(it.title)}</h3>
+        <dl class="meta">
+          <dt>For</dt><dd>${esc(it.for)}</dd>
+          <dt>Who is on it</dt><dd>${esc(it.by)}</dd>
+          <dt>Opened</dt><dd>${fmt(it.opened)}, ${-dd(it.opened)} days ago</dd>
+          <dt>Target date</dt><dd>${it.dueISO?fmt(it.dueISO)+", "+dueText(dd(it.dueISO)):"Not yet set"}</dd>
+          ${it.ref?`<dt>Reference</dt><dd class="ref">${esc(it.ref)}</dd>`:""}
+          <dt>Status</dt><dd><span class="status ${ours?"ours":""}">${esc(it.status)}</span></dd>
+        </dl>
+        <p class="doneline"><b>What has been done</b>${esc(it.done)}</p>
+        <div class="choices" role="group" aria-label="Is this item correct?">
+          <button type="button" class="choice c-ok" data-id="${it.id}" data-v="correct" aria-pressed="${s.r==="correct"}">Correct</button>
+          <button type="button" class="choice c-chg" data-id="${it.id}" data-v="change" aria-pressed="${s.r==="change"}">Needs a change</button>
+          <button type="button" class="choice c-no" data-id="${it.id}" data-v="notours" aria-pressed="${s.r==="notours"}">Not ours</button>
+        </div>
+        <button type="button" class="addnote" data-id="${it.id}" ${(s.r==="change"||s.r==="notours"||s.n)?"hidden":""}>Add a note</button>
+        <div class="note-wrap" id="nw-${it.id}" ${(s.r==="change"||s.r==="notours"||s.n)?"":"hidden"}>
+          <label for="n-${it.id}">Note</label>
+          <textarea class="field" id="n-${it.id}" data-id="${it.id}" placeholder="What should we know?">${esc(s.n||"")}</textarea>
+          <div class="need" id="need-${it.id}" hidden>Please tell us what needs to change.</div>
+        </div>
+      </article>`;
+    }
+    h += `</section>`;
+  }
+  if (DATA.record && DATA.record.rows.length){
+    const R = DATA.record.rows, tot = R.reduce((a,r)=>({c:a.c+r.completed,o:a.o+r.onTime,d:a.d+r.avgDays*r.completed,n:a.n+r.open}),{c:0,o:0,d:0,n:0});
+    const pc = (a,b) => b ? Math.round(100*a/b) : 0;
+    const cell = (a,b) => !b ? "None yet" : `<span class="pct">${pc(a,b)}%<span class="minibar"><i style="width:${pc(a,b)}%"></i></span></span>`;
+    h += `<section class="record"><h2>Our service record</h2><p>What we have completed for ${esc(DATA.client)}, ${esc(DATA.record.period)}.</p>
+      <div class="tablewrap"><table><thead><tr><th>Service</th><th>Completed</th><th>On time</th><th>Average days</th><th>Open now</th></tr></thead><tbody>
+      ${R.map(r=>`<tr><td>${esc(r.type)}</td><td>${r.completed}</td><td>${cell(r.onTime,r.completed)}</td><td>${r.completed?r.avgDays:"-"}</td><td>${r.open}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td>All services</td><td>${tot.c}</td><td>${cell(tot.o,tot.c)}</td><td>${tot.c?Math.round(tot.d/tot.c):0}</td><td>${tot.n}</td></tr></tfoot></table></div></section>`;
+  }
+  const star = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.9 6 6.6.8-4.9 4.5 1.3 6.5L12 17.3l-5.9 3.1 1.3-6.5L2.5 9.4l6.6-.8z"/></svg>';
+  h += `<section class="rate"><h2>How are we doing?</h2><p>Rate the service you have received from our branch.</p>
+    <div class="stars" role="radiogroup" aria-label="Service rating">${[1,2,3,4,5].map(n=>`<button type="button" class="star" role="radio" data-n="${n}" aria-label="${n} star${n>1?"s":""}" aria-checked="${(STATE._stars||0)>=n}">${star}</button>`).join("")}</div>
+    <div class="ratelabel" id="ratelabel"></div>
+    <label for="rc">What would make it better? (optional)</label><textarea class="field" id="rc" placeholder="Tell us what we did well or what we should change">${esc(STATE._rc||"")}</textarea></section>`;
+  h += `<section class="send" id="send">
+      <h2>Send your responses</h2>
+      <p>Your answers go straight to our team. Anything you mark as needing a change gets a follow-up from us.</p>
+      <div class="row2">
+        <div class="row"><label for="who">Your name</label><input class="field" id="who" value="${esc(STATE._who||"")}" autocomplete="name"></div>
+        <div class="row"><label for="role">Your role</label><input class="field" id="role" value="${esc(STATE._role||"")}" autocomplete="organization-title"></div>
+      </div>
+      <div class="row"><label for="gen">Anything else we should know? (optional)</label><textarea class="field" id="gen" placeholder="New staff, resignations, salary changes, questions about your plan">${esc(STATE._gen||"")}</textarea></div>
+      <div class="err" id="sendErr" role="alert"></div>
+      <button class="btn btn-primary" type="button" id="sendBtn">Send my responses</button>
+      <div class="done" id="done" hidden>
+        <p><b>Your email has been prepared.</b> Press send in your email app to finish. If it didn't open, copy your responses and email them to ${esc(DATA.sendTo)}.</p>
+        <div class="actions"><button class="btn btn-ghost" type="button" id="copyBtn">Copy my responses</button></div>
+      </div>
+    </section>
+    <footer>Ricky Rampersad Branch, Branch 26000. 9-13 Endeavour 1st Street, Chaguanas. Questions: ${esc(DATA.sendTo)}</footer>
+  </div>`;
+  document.getElementById("app").innerHTML = h;
+  window.scrollTo(0,0);
+  bind(); progress();
+}
+
+const MON=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function fmt(s){const [y,m,d]=s.split("-");return `${+d} ${MON[+m-1]} ${y}`;}
+function dueText(n){return n<0?`<span class="due late">${-n} day${n<-1?"s":""} past target</span>`:n===0?`<span class="due soon">due today</span>`:n<=3?`<span class="due soon">due in ${n} day${n>1?"s":""}</span>`:`<span class="due fine">due in ${n} days</span>`;}
+const RL=["","Poor","Below expectations","Satisfactory","Good","Excellent"];
+function stars(){const s=STATE._stars||0;document.querySelectorAll(".star").forEach(b=>b.setAttribute("aria-checked",+b.dataset.n<=s));document.getElementById("ratelabel").textContent=s?`${s} of 5: ${RL[s]}`:"";}
+function bind(){
+  document.querySelectorAll(".star").forEach(b=>b.addEventListener("click",()=>{STATE._stars=+b.dataset.n;save();stars();}));
+  document.getElementById("rc").addEventListener("input",e=>{STATE._rc=e.target.value;save();});
+  stars();
+  document.querySelectorAll(".choice").forEach(b => b.addEventListener("click", () => {
+    const id = b.dataset.id, v = b.dataset.v, s = STATE[id] = STATE[id] || {};
+    s.r = s.r === v ? "" : v;
+    const art = document.getElementById("i-"+id); art.dataset.r = s.r;
+    art.querySelectorAll(".choice").forEach(c => c.setAttribute("aria-pressed", c.dataset.v === s.r));
+    if (s.r === "change" || s.r === "notours"){ document.getElementById("nw-"+id).hidden = false; art.querySelector(".addnote").hidden = true; }
+    save(); progress();
+  }));
+  document.querySelectorAll(".addnote").forEach(b => b.addEventListener("click", () => {
+    b.hidden = true; const w = document.getElementById("nw-"+b.dataset.id); w.hidden = false; w.querySelector("textarea").focus();
+  }));
+  document.querySelectorAll(".note-wrap textarea").forEach(t => t.addEventListener("input", () => {
+    const s = STATE[t.dataset.id] = STATE[t.dataset.id] || {}; s.n = t.value; document.getElementById("need-"+t.dataset.id).hidden = true; save();
+  }));
+  ["who","role","gen"].forEach(f => document.getElementById(f).addEventListener("input", e => { STATE["_"+f] = e.target.value; save(); }));
+  document.getElementById("sendBtn").addEventListener("click", send);
+  document.getElementById("copyBtn").addEventListener("click", async () => {
+    const btn = document.getElementById("copyBtn");
+    try { await navigator.clipboard.writeText(compose()); btn.textContent = "Copied"; }
+    catch(e){ btn.textContent = "Copy didn't work. Select and copy from your email instead."; }
+  });
+}
+
+function progress(){
+  const items = allItems(), n = items.filter(i => STATE[i.id] && STATE[i.id].r).length;
+  document.getElementById("progText").innerHTML = `<b>${n} of ${items.length}</b> items reviewed`;
+  document.getElementById("bar").style.width = (items.length ? 100*n/items.length : 100) + "%";
+}
+
+const LABEL = {correct:"CORRECT", change:"NEEDS A CHANGE", notours:"NOT OURS"};
+function compose(){
+  let t = `SERVICE REVIEW: ${DATA.client}\nItems as at ${DATA.asAt}\nFrom: ${STATE._who||""}${STATE._role?", "+STATE._role:""}\nSent: ${new Date().toLocaleString("en-GB")}\n\n`;
+  for (const g of DATA.groups){
+    t += `${g.name.toUpperCase()}\n`;
+    for (const it of g.items){
+      const s = STATE[it.id] || {};
+      t += `- ${it.title}${it.ref?" ("+it.ref+")":""}: ${LABEL[s.r]||"NOT REVIEWED"}${s.n?"\n  Note: "+s.n.trim():""}\n  [SF ${it.id}]\n`;
+    }
+    t += "\n";
+  }
+  t += `SERVICE RATING: ${STATE._stars?STATE._stars+" of 5 ("+RL[STATE._stars]+")":"Not rated"}\n${STATE._rc?"Comment: "+STATE._rc.trim()+"\n":""}\n`;
+  if (STATE._gen) t += `OTHER NOTES\n${STATE._gen.trim()}\n`;
+  return t;
+}
+
+function send(){
+  const err = document.getElementById("sendErr"); err.textContent = "";
+  if (!STATE._stars){ err.textContent = "Please rate our service before sending."; document.querySelector(".star").focus(); return; }
+  if (!(STATE._who||"").trim()){ err.textContent = "Add your name so we know who sent this."; document.getElementById("who").focus(); return; }
+  let missing = null;
+  for (const it of allItems()){ const s = STATE[it.id]||{}; if ((s.r==="change"||s.r==="notours") && !(s.n||"").trim()){ document.getElementById("need-"+it.id).hidden = false; missing = missing || it.id; } }
+  if (missing){ err.textContent = "Add a note to each item marked as needing a change or not ours."; document.getElementById("n-"+missing).focus(); return; }
+  const n = allItems().filter(i => STATE[i.id] && STATE[i.id].r).length;
+  if (n < allItems().length && !confirm(`You've reviewed ${n} of ${allItems().length} items. Send anyway?`)) return;
+  const subj = `Service review responses: ${DATA.client}`;
+  location.href = `mailto:${DATA.sendTo}?cc=${encodeURIComponent(DATA.cc)}&subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(compose())}`;
+  document.getElementById("done").hidden = false;
+}
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

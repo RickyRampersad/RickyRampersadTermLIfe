@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Group Client Management | Ricky Rampersad Branch</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--charcoal:#24272C;--ink:#2E3238;--muted:#646B75;--line:#D9DDE1;--bg:#EEF0F1;--paper:#fff;--amber:#C98A1B;--amber-soft:#F6E7C8;--ok:#2F7A55;--ok-soft:#DCEFE4;--chg:#A86A0C;--no:#A93A3A;--no-soft:#F6DEDE;
+--font:"Libre Franklin","Helvetica Neue",Arial,sans-serif;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.wrap{max-width:820px;margin:0 auto;padding:0 20px}
+.mast{background:var(--charcoal);color:#fff;padding:22px 0 24px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+.mark img{width:100%;height:100%;display:block}
+.brand-name{font-weight:700;font-size:15px;line-height:1.2}.brand-sub{font-size:13px;color:#B9BEC6}
+.mast h1{font-size:clamp(24px,5.5vw,32px);line-height:1.15;font-weight:800;margin:20px 0 4px}
+.mast p{margin:0;color:#D5D8DD;font-size:15px}
+.gate{max-width:420px;margin:40px auto;background:var(--paper);border-top:4px solid var(--amber);padding:28px 24px}
+.gate h2{margin:0 0 6px;font-size:22px}.gate p{margin:0 0 18px;color:var(--muted)}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:6px}
+.field{width:100%;padding:13px 14px;border:1.5px solid var(--line);background:#fff;border-radius:6px;font-size:17px}
+.code{letter-spacing:.12em;text-transform:uppercase;font-weight:600}
+.err{color:var(--no);font-size:14px;min-height:21px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:6px;padding:13px 18px;font-weight:700;cursor:pointer;font-size:15px;text-decoration:none}
+.btn-primary{background:var(--charcoal);color:#fff}.btn-primary:hover{background:#000}
+.btn-ghost{background:#fff;border:1.5px solid var(--line);color:var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.full{width:100%}
+/* overview */
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);margin:22px 0 8px}
+.totals div{background:var(--paper);padding:14px 12px}.totals b{display:block;font-size:28px;font-weight:800;line-height:1.1}.totals span{font-size:13px;color:var(--muted)}
+.totals .late b{color:var(--no)}
+.list{margin:18px 0 30px}
+.crow{display:grid;grid-template-columns:12px 1fr auto;gap:14px;align-items:center;width:100%;text-align:left;background:var(--paper);border:0;border-bottom:1px solid var(--line);padding:16px 16px;cursor:pointer}
+.crow:hover{background:#F7F8F9}
+.dot{width:12px;height:12px;border-radius:50%}
+.rag-r{background:var(--no)}.rag-a{background:var(--amber)}.rag-g{background:var(--ok)}
+.cname{font-weight:700;font-size:15px;line-height:1.3}
+.cmeta{font-size:13px;color:var(--muted)}
+.cnum{text-align:right;font-size:13px;color:var(--muted);white-space:nowrap}.cnum b{display:block;font-size:20px;color:var(--ink)}
+.cnum.late b{color:var(--no)}
+.listhead{display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--charcoal);padding-bottom:8px}
+.listhead h2{margin:0;font-size:20px;font-weight:800}.listhead span{font-size:13px;color:var(--muted)}
+/* detail */
+.back{background:none;border:0;padding:16px 0 0;font-weight:700;cursor:pointer;color:var(--ink)}
+.group{margin:26px 0 0}
+.group-head{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid var(--charcoal);padding-bottom:8px}
+.group-head h2{margin:0;font-size:19px;font-weight:800}.group-head span{font-size:13px;color:var(--muted)}
+.item{background:var(--paper);border-left:4px solid var(--line);padding:16px 16px 14px;margin-top:10px}
+.item.late{border-left-color:var(--no)}.item.soon{border-left-color:var(--amber)}.item.fine{border-left-color:var(--ok)}
+.item h3{margin:0 0 8px;font-size:16px;line-height:1.3}
+.meta{display:grid;grid-template-columns:auto 1fr;gap:2px 14px;font-size:14px;margin:0}.meta dt{color:var(--muted)}.meta dd{margin:0;word-break:break-word}
+.due{font-weight:600}.due.late{color:var(--no)}.due.soon{color:var(--chg)}.due.fine{color:var(--ok)}
+.doneline{margin:10px 0 0;padding:9px 12px;background:var(--bg);font-size:14px}
+.empty{background:var(--paper);padding:20px;margin-top:10px;color:var(--muted)}
+.tablewrap{overflow-x:auto;background:var(--paper);margin-top:10px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{padding:11px 12px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+thead th{font-size:13px;color:var(--muted);font-weight:600;border-bottom:2px solid var(--charcoal)}tfoot td{font-weight:800}
+.panel{background:var(--paper);margin:30px 0 40px;padding:22px 20px;border-top:4px solid var(--charcoal)}
+.panel h2{margin:0 0 4px;font-size:20px}.panel > p{margin:0 0 16px;color:var(--muted)}
+.kv{display:grid;grid-template-columns:110px 1fr auto;gap:8px 10px;align-items:center;margin-bottom:16px;font-size:15px}
+.kv dt{color:var(--muted);font-size:14px}.kv dd{margin:0;word-break:break-all;font-weight:600}
+.copy{padding:7px 12px;font-size:13px}
+.check{display:flex;gap:12px;align-items:flex-start;background:var(--amber-soft);padding:14px;margin:6px 0 16px;cursor:pointer}
+.check input{width:22px;height:22px;flex:none;margin-top:2px;accent-color:var(--charcoal)}
+.check span{font-size:15px;font-weight:600}
+.warn{background:var(--no-soft);color:#6E2020;padding:12px 14px;font-size:14px;margin-bottom:14px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.sent{background:var(--ok-soft);border-left:4px solid var(--ok);padding:12px 14px;margin-top:14px;font-size:14px}
+.sent[hidden]{display:none}
+footer{color:var(--muted);font-size:13px;padding:0 0 40px}
+@media (max-width:480px){.kv{grid-template-columns:1fr auto}.kv dt{grid-column:1/-1;margin-top:4px}}
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <div class="brand"><div class="mark"><img src="../logo-mark.png" alt=""></div><div><div class="brand-name">Ricky Rampersad Branch</div><div class="brand-sub">Branch 26000, Chaguanas</div></div></div>
+  <h1 id="h1">Group Client Management</h1>
+  <p id="sub">Staff access only. Enter your personal staff code.</p>
+</div></header>
+<main id="app"><div class="wrap">
+  <form class="gate" id="gate" autocomplete="off">
+    <h2>Staff code</h2><p>Your code is personal to you. Do not share it.</p>
+    <label for="code">Code</label>
+    <input class="field code" id="code" autocapitalize="characters" spellcheck="false" required>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn btn-primary full" type="submit" id="go">Sign in</button>
+  </form>
+</div></main>
+<script>
+const ENC = __PAYLOAD__;
+let D = null, WHO = "", TODAY = new Date(); TODAY.setHours(0,0,0,0);
+const b64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const norm = s => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const dd = s => Math.round((new Date(s+"T00:00:00") - TODAY)/86400000);
+const fmt = s => { const [y,m,d] = s.split("-"); return `${+d} ${MON[+m-1]} ${y}`; };
+const dueCls = n => n < 0 ? "late" : n <= 3 ? "soon" : "fine";
+const dueTxt = n => n < 0 ? `${-n} day${n<-1?"s":""} past target` : n === 0 ? "due today" : `due in ${n} day${n>1?"s":""}`;
+
+async function aes(keyBytes, iv, ct){ const k = await crypto.subtle.importKey("raw", keyBytes, "AES-GCM", false, ["decrypt"]); return new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM", iv}, k, ct)); }
+async function derive(code, salt){
+  const base = await crypto.subtle.importKey("raw", new TextEncoder().encode(norm(code)), "PBKDF2", false, ["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2", salt, iterations:ENC.iter, hash:"SHA-256"}, base, 256));
+}
+async function unlock(code){
+  for (const w of ENC.wraps){
+    try {
+      const inner = JSON.parse(new TextDecoder().decode(await aes(await derive(code, b64(w.salt)), b64(w.iv), b64(w.ct))));
+      const pt = await aes(b64(inner.k), b64(ENC.iv), b64(ENC.ct));
+      WHO = inner.who; return JSON.parse(new TextDecoder().decode(pt));
+    } catch(e){}
+  }
+  throw new Error("bad code");
+}
+document.getElementById("gate").addEventListener("submit", async e => {
+  e.preventDefault(); const go = document.getElementById("go"), err = document.getElementById("err");
+  err.textContent = ""; go.disabled = true; go.textContent = "Checking code";
+  try { D = await unlock(document.getElementById("code").value); overview(); }
+  catch(x){ err.textContent = "That code isn't recognised. Check it and try again."; go.disabled = false; go.textContent = "Sign in"; }
+});
+
+function stats(c){
+  const items = c.groups.flatMap(g => g.items);
+  const late = items.filter(i => i.dueISO && dd(i.dueISO) < 0).length;
+  const oldest = items.length ? Math.max(...items.map(i => -dd(i.opened))) : 0;
+  const rag = late ? "r" : oldest > 30 ? "a" : "g";
+  return {items, late, oldest, rag};
+}
+function header(title, sub){ document.getElementById("h1").textContent = title; document.getElementById("sub").textContent = sub; }
+
+function overview(){
+  header("Group Client Management", `Signed in as ${WHO}. Salesforce data as at ${D.builtAt}.`);
+  const cs = D.clients.map(c => ({c, s: stats(c)})).sort((a,b) => b.s.late - a.s.late || b.s.oldest - a.s.oldest);
+  const tOpen = cs.reduce((a,x)=>a+x.s.items.length,0), tLate = cs.reduce((a,x)=>a+x.s.late,0), tRed = cs.filter(x=>x.s.rag==="r").length;
+  let h = `<div class="wrap"><div class="totals"><div><b>${tOpen}</b><span>Open items, all groups</span></div><div class="${tLate?"late":""}"><b>${tLate}</b><span>Past target date</span></div><div class="${tRed?"late":""}"><b>${tRed}</b><span>Groups in red</span></div></div>
+  <div class="list"><div class="listhead"><h2>Group clients</h2><span>${cs.length} groups, most urgent first</span></div>`;
+  cs.forEach(({c,s}, i) => {
+    h += `<button class="crow" data-i="${D.clients.indexOf(c)}"><span class="dot rag-${s.rag}" aria-label="${{r:"Red",a:"Amber",g:"Green"}[s.rag]}"></span>
+      <span><span class="cname">${esc(c.client)}</span><br><span class="cmeta">${s.items.length} open${s.items.length?`, oldest ${s.oldest} days`:""}</span></span>
+      <span class="cnum ${s.late?"late":""}"><b>${s.late}</b>past target</span></button>`;
+  });
+  h += `</div><footer>${esc(D.branch)}. Pages refresh from Salesforce every Monday morning.</footer></div>`;
+  document.getElementById("app").innerHTML = h;
+  document.querySelectorAll(".crow").forEach(b => b.addEventListener("click", () => detail(D.clients[+b.dataset.i])));
+  window.scrollTo(0,0);
+}
+
+function detail(c){
+  const s = stats(c);
+  header(c.client, `${s.items.length} open items, ${s.late} past target. Data as at ${D.builtAt}.`);
+  let h = `<div class="wrap"><button class="back" id="back">&larr; All group clients</button>`;
+  if (!s.items.length) h += `<div class="empty">No open Salesforce tasks for this group.</div>`;
+  for (const g of c.groups){
+    h += `<section class="group"><div class="group-head"><h2>${esc(g.name)}</h2><span>${g.items.length} item${g.items.length>1?"s":""}</span></div>`;
+    for (const it of g.items){
+      const n = it.dueISO ? dd(it.dueISO) : null;
+      h += `<article class="item ${n===null?"":dueCls(n)}"><h3>${esc(it.title)}</h3><dl class="meta">
+        <dt>For</dt><dd>${esc(it.for)||"Not set"}</dd><dt>Who is on it</dt><dd>${esc(it.by)}</dd>
+        <dt>Opened</dt><dd>${fmt(it.opened)}, ${-dd(it.opened)} days ago</dd>
+        <dt>Target date</dt><dd>${n===null?"Not set":`${fmt(it.dueISO)}, <span class="due ${dueCls(n)}">${dueTxt(n)}</span>`}</dd>
+        ${it.ref?`<dt>Reference</dt><dd>${esc(it.ref)}</dd>`:""}<dt>Client sees</dt><dd>${it.private?"Not shown to the client: it names a member's health or a claim":esc(it.status)}</dd></dl>
+        <p class="doneline">${esc(it.done)}</p></article>`;
+    }
+    h += `</section>`;
+  }
+  const R = c.record.rows;
+  if (R.length){
+    const t = R.reduce((a,r)=>({c:a.c+r.completed,o:a.o+r.onTime,d:a.d+r.avgDays*r.completed,n:a.n+r.open}),{c:0,o:0,d:0,n:0});
+    const pc = (a,b) => b ? Math.round(100*a/b)+"%" : "None yet";
+    h += `<section class="group"><div class="group-head"><h2>Service record, ${esc(c.record.period)}</h2></div><div class="tablewrap"><table>
+      <thead><tr><th>Service</th><th>Completed</th><th>On time</th><th>Avg days</th><th>Open</th></tr></thead><tbody>
+      ${R.map(r=>`<tr><td>${esc(r.type)}</td><td>${r.completed}</td><td>${pc(r.onTime,r.completed)}</td><td>${r.completed?r.avgDays:"-"}</td><td>${r.open}</td></tr>`).join("")}
+      </tbody><tfoot><tr><td>All services</td><td>${t.c}</td><td>${pc(t.o,t.c)}</td><td>${t.c?Math.round(t.d/t.c):"-"}</td><td>${t.n}</td></tr></tfoot></table></div></section>`;
+  }
+  const hasTo = c.to && c.to.length;
+  h += `<section class="panel"><h2>Send to client</h2><p>The client receives their personal link and access code by email.</p>
+    <dl class="kv"><dt>Client link</dt><dd>${esc(c.link)}</dd><button class="btn btn-ghost copy" data-copy="${esc(c.link)}">Copy</button>
+    <dt>Access code</dt><dd>${esc(c.code)}</dd><button class="btn btn-ghost copy" data-copy="${esc(c.code)}">Copy</button>
+    <dt>To</dt><dd>${hasTo?esc(c.to.join(", ")):"None set"}</dd><span></span>
+    ${c.ccClient.length?`<dt>Copy to</dt><dd>${esc(c.ccClient.join(", "))}</dd><span></span>`:""}</dl>
+    ${hasTo?"":`<div class="warn">No client contact is set for this group. Add the HR contact in clients.json before this page can be sent.</div>`}
+    <label class="check"><input type="checkbox" id="verify"><span>I have checked every item above against Salesforce and the latest Guardian billing, and it is correct to send.</span></label>
+    <div class="actions"><button class="btn btn-primary" id="send" disabled>Prepare email to client</button><a class="btn btn-ghost" href="${esc(c.link)}" target="_blank" rel="noopener">Open client page</a></div>
+    <div class="sent" id="sent" hidden>Your email app has opened with the message ready. Review it and press send. A copy goes to ${esc(D.responseInbox)} for the record.</div>
+  </section><footer>${esc(D.branch)}</footer></div>`;
+  document.getElementById("app").innerHTML = h; window.scrollTo(0,0);
+  document.getElementById("back").addEventListener("click", overview);
+  document.querySelectorAll("[data-copy]").forEach(b => b.addEventListener("click", async () => { try { await navigator.clipboard.writeText(b.dataset.copy); b.textContent = "Copied"; } catch(e){ b.textContent = "Select and copy"; } }));
+  const v = document.getElementById("verify"), send = document.getElementById("send");
+  v.addEventListener("change", () => { send.disabled = !(v.checked && hasTo); });
+  send.addEventListener("click", () => {
+    const subj = `Your Service Review: ${c.client}`;
+    const body = `Dear ${c.greeting || "Sir/Madam"},
+
+Please find below your private service page from the Ricky Rampersad Branch. It shows every item our team is working on for you: who is handling it, how long it has been open, its target date, and what has been done so far. It also shows our service record for you this year.
+
+Open your service page here:
+${c.link}
+
+Your personal access code: ${c.code}
+
+For each item, tap Correct, Needs a change, or Not ours, and add a note where something needs our attention. At the end, please rate our service and press Send. Your responses come straight to our team, and anything you flag will be followed up.
+
+We would be grateful for your review by ${c.respondBy}.
+
+Thank you for your continued trust in our branch.
+
+Warm regards,
+
+${WHO}
+Ricky Rampersad Branch, Branch 26000
+9-13 Endeavour 1st Street, Chaguanas`;
+    const q = [`subject=${encodeURIComponent(subj)}`, `body=${encodeURIComponent(body)}`, `bcc=${encodeURIComponent(D.responseInbox)}`];
+    if (c.ccClient.length) q.push(`cc=${encodeURIComponent(c.ccClient.join(","))}`);
+    location.href = `mailto:${c.to.join(",")}?${q.join("&")}`;
+    document.getElementById("sent").hidden = false;
+  });
+}
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

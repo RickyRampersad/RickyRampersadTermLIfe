@@ -33,3 +33,8 @@ tools/film/captions-*.ass
 tools/letters/departed.txt
 tools/letters/exclude.txt
 tools/letters/*.csv
+
+# Group Client Management: the register and the access codes are secrets
+# (GCM_CLIENTS, GCM_CODES), never files in this repository.
+scripts/gcm/clients.json
+scripts/gcm/codes*.json
