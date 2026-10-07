@@ -22,15 +22,19 @@
  * ─────────────────────────────────────────────────────────────────────────
  *
  * Setup, once, in this project's Script Properties (Project Settings →
- * Script Properties). These are the same four the KPI tracker uses, but this
- * is a separate Apps Script project so it needs its own copy:
+ * Script Properties). Copy them from the KPI Tracker's own Script Properties:
+ * this is a separate Apps Script project, so it needs its own copy.
  *
- *   SF_KEY     Connected App consumer key
- *   SF_SECRET  Connected App consumer secret
- *   SF_USER    integration username
- *   SF_PASS    that user's password with the security token appended, no space
+ *   SF_KEY        Connected App consumer key
+ *   SF_SECRET     Connected App consumer secret
+ *   SF_LOGIN_URL  the org's My Domain address: client credentials will not
+ *                 sign in at login.salesforce.com
  *
- * Optional: SF_LOGIN_URL (defaults to the production login host).
+ * That is the client credentials flow, the KPI Tracker's (7 October 2026):
+ * the org has retired the username-password flow, so the app signs in as
+ * itself, as the Run As user set on it. SF_USER and SF_PASS (the password
+ * with the security token appended) still work if they are ever set, and
+ * SF_AUTH = password or client_credentials forces one or the other.
  *
  * With none of them set, every function here returns "not configured" and the
  * review carries on exactly as it does today. Nothing breaks; the policy
@@ -154,11 +158,20 @@ function svcHouseholdFor_(accountId) {
 
 function svcSfProps_() { return PropertiesService.getScriptProperties(); }
 
+/** Which way to sign in: SF_AUTH if it says, else the password flow only
+ *  when SF_PASS is set, else client credentials (the KPI Tracker's way). */
+function svcSfAuthMode_() {
+  var p = svcSfProps_(), m = String(p.getProperty('SF_AUTH') || '').trim().toLowerCase();
+  if (m === 'client_credentials' || m === 'password') return m;
+  return p.getProperty('SF_PASS') ? 'password' : 'client_credentials';
+}
+
 /** Is the connection set up at all? Used to keep everything else quiet. */
 function svcSfReady_() {
   var p = svcSfProps_();
-  return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET') &&
-            p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
+  if (!p.getProperty('SF_KEY') || !p.getProperty('SF_SECRET')) return false;
+  if (svcSfAuthMode_() === 'client_credentials') return true;
+  return !!(p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
 }
 
 /**
@@ -185,19 +198,21 @@ function svcSfToken_() {
   var cached = p.getProperty('SVC_SF_TOKEN'), when = Number(p.getProperty('SVC_SF_TOKEN_AT') || 0);
   if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
 
-  var res = UrlFetchApp.fetch((p.getProperty('SF_LOGIN_URL') || SVCSF.LOGIN) + '/services/oauth2/token', {
-    method: 'post', muteHttpExceptions: true,
-    payload: {
-      grant_type: 'password',
-      client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET'),
-      username: p.getProperty('SF_USER'), password: p.getProperty('SF_PASS'),
-    },
-  });
+  var cc = svcSfAuthMode_() === 'client_credentials';
+  var payload = { client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET') };
+  if (cc) payload.grant_type = 'client_credentials';
+  else { payload.grant_type = 'password'; payload.username = p.getProperty('SF_USER'); payload.password = p.getProperty('SF_PASS'); }
+  var login = String(p.getProperty('SF_LOGIN_URL') || SVCSF.LOGIN).trim().replace(/\/+$/, '');
+  var res = UrlFetchApp.fetch(login + '/services/oauth2/token', { method: 'post', muteHttpExceptions: true, payload: payload });
   var body = res.getContentText();
   if (res.getResponseCode() !== 200) {
-    var hint = body.indexOf('invalid_grant') > -1
-      ? '\n\nUsually: SF_PASS must be the password with the security token stuck on the end, no space.' : '';
-    throw new Error('Salesforce login failed: ' + body + hint);
+    var hint = body.indexOf('invalid_client') > -1 ? 'SF_KEY or SF_SECRET is wrong: copy them again from the KPI Tracker.'
+      : body.indexOf('unsupported_grant_type') > -1 ? (cc ? 'SF_LOGIN_URL must be the My Domain address the KPI Tracker uses, not login.salesforce.com.'
+                                                          : 'This org has retired the username-password flow: remove SF_USER and SF_PASS.')
+      : body.indexOf('invalid_grant') > -1 ? (cc ? 'The Connected App needs a Run As user with API access.'
+                                                 : 'SF_PASS must be the password with the security token on the end, no space.')
+      : '';
+    throw new Error('Salesforce login failed: ' + body + (hint ? '\n\n' + hint : ''));
   }
   var tok = JSON.parse(body);
   p.setProperty('SVC_SF_TOKEN', JSON.stringify(tok));
@@ -365,7 +380,7 @@ function svcBlockForAgent_(agentName) {
 function svcSalesforceSelfTest() {
   var ui = SpreadsheetApp.getUi();
   if (!svcSfReady_()) {
-    ui.alert('Salesforce trace', 'Not set up yet.\n\nAdd SF_KEY, SF_SECRET, SF_USER and SF_PASS in ' +
+    ui.alert('Salesforce trace', 'Not set up yet.\n\nAdd SF_KEY, SF_SECRET and SF_LOGIN_URL (from the KPI Tracker) in ' +
       'Project Settings → Script Properties. Until then reviews are filed exactly as they are today, ' +
       'with the policy number left for support to trace by hand.', ui.ButtonSet.OK);
     return;

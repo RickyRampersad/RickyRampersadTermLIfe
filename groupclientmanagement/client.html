@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Group Service Page | Ricky Rampersad Branch</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#07131f; --gold:#efc24b; --gold2:#c9942c; --ink:#1f2933; --muted:#5b6573; --line:#dfe3e8; --bg:#f4f5f7; --paper:#fff;
+  --good:#0ca30c; --goodBg:#e7f6e7; --warn:#fab219; --warnBg:#fff4dc; --bad:#d03b3b; --badBg:#fdecec; --badText:#b3261e; --bar:#1f6fa8;
+  --font:"Libre Franklin","Helvetica Neue",Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--gold2);outline-offset:2px}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px}
+.mast{background:var(--navy);color:#fff;padding:24px 0 26px}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}
+.mark img{width:100%;height:100%;display:block}
+.bname{font-weight:700;font-size:15px;line-height:1.2}.bsub{font-size:13px;color:var(--gold)}
+.mast h1{font-size:clamp(24px,6vw,34px);line-height:1.15;margin:22px 0 6px;font-weight:800}
+.mast p{margin:0;color:#c8d0da}
+.gate{max-width:420px;margin:36px auto;background:var(--paper);border-top:4px solid var(--gold);padding:26px 22px;border-radius:0 0 10px 10px}
+.gate h2{margin:0 0 6px;font-size:21px}.gate p{margin:0 0 14px;color:var(--muted)}
+label{display:block;font-weight:600;font-size:14px;margin:12px 0 6px}
+.field{width:100%;padding:12px 13px;border:1.5px solid var(--line);border-radius:8px;background:#fff;font-size:16px}
+.code{letter-spacing:.1em;text-transform:uppercase;font-weight:600}
+textarea.field{min-height:76px;resize:vertical}
+.err{color:var(--badText);font-size:14px;min-height:20px;margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:8px;padding:14px 20px;font-weight:700;cursor:pointer;background:var(--navy);color:#fff;font-size:16px}
+.btn:hover{background:#000}.btn[disabled]{opacity:.5;cursor:not-allowed}.full{width:100%}
+.what{max-width:420px;margin:0 auto 30px;color:var(--muted);font-size:14px}.what ul{padding-left:18px;margin:6px 0 0}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:18px 0}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.tile b{display:block;font-size:24px;line-height:1.1}.tile span{font-size:12px;color:var(--muted)}
+.tile.alert b{color:var(--badText)}
+h2.sec{font-size:20px;margin:26px 0 4px}.sub{color:var(--muted);margin:0 0 12px;font-size:14px}
+.cat{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+.item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 10px}
+.item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warn)}
+.item h3{margin:0 0 8px;font-size:16px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0 0 10px;font-size:14px}
+dt{color:var(--muted)}dd{margin:0}
+.st{display:inline-block;font-size:12px;font-weight:700;padding:2px 8px;border-radius:99px;background:#eef1f4}
+.st.wait{background:var(--warnBg)}.st.late{background:var(--badBg);color:var(--badText)}
+.done{background:#f8f9fb;border-radius:6px;padding:8px 10px;font-size:14px;margin:0 0 10px}
+.cmt{border-left:3px solid var(--gold2);background:#fbf6ea;padding:8px 10px;border-radius:0 6px 6px 0;font-size:14px;margin:0 0 8px;white-space:pre-wrap}
+.cmt .by{font-weight:700}
+.prev{font-size:13px;color:var(--muted);margin:0 0 8px}
+.choices{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ch{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:10px 6px;font-weight:600;font-size:14px;cursor:pointer}
+.ch[aria-pressed="true"].correct{background:var(--goodBg);border-color:var(--good)}
+.ch[aria-pressed="true"].change{background:var(--warnBg);border-color:var(--warn)}
+.ch[aria-pressed="true"].notours{background:var(--badBg);border-color:var(--bad)}
+.notebox{margin-top:8px}
+table.t{width:100%;border-collapse:collapse;background:var(--paper);border:1px solid var(--line);font-size:14px}
+.t th{text-align:left;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);padding:9px 10px;border-bottom:1px solid var(--line);background:#f8f9fb}
+.t td{padding:9px 10px;border-bottom:1px solid #eef1f4}.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.panel{background:var(--paper);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:0 0 10px 10px;padding:18px;margin:24px 0}
+.stars{display:flex;gap:6px;margin:6px 0}
+.star{background:none;border:0;padding:2px;cursor:pointer}
+.star svg{width:40px;height:40px;fill:#fff;stroke:var(--gold2);stroke-width:1.5}
+.star[aria-checked="true"] svg{fill:var(--gold)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.progress{position:sticky;top:0;background:var(--navy);color:#fff;padding:8px 0;font-size:14px;z-index:2}
+footer{color:var(--muted);font-size:13px;padding:10px 0 40px;text-align:center}
+footer a{color:inherit}
+.hide{display:none!important}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,1fr)}.row2{grid-template-columns:1fr}.ch{font-size:13px}.t th,.t td{padding:8px 6px}.t th{font-size:11px;letter-spacing:0}}
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <div class="brand"><div class="mark"><img src="../logo-mark.png" alt=""></div><div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group client service page</div></div></div>
+  <h1 id="h1">Group client sign in</h1>
+  <p id="hsub">For employers whose group plans our branch looks after.</p>
+</div></header>
+<div class="progress hide" id="prog"><div class="wrap" id="progText"></div></div>
+<main class="wrap" id="app">
+  <form class="gate" id="gate" autocomplete="off">
+    <h2>Sign in</h2>
+    <p>Use the list bill and the access code from our e-mail.</p>
+    <label for="lb">List bill</label>
+    <input class="field code" id="lb" autocapitalize="characters" spellcheck="false" placeholder="e.g. A123" required>
+    <label for="code">Access code</label>
+    <input class="field code" id="code" autocapitalize="characters" spellcheck="false" required>
+    <div class="err" id="err" role="alert"></div>
+    <button class="btn full" type="submit" id="go">Open my service page</button>
+  </form>
+  <div class="what">Your page shows:
+    <ul><li>every item our team has open for your company, who is handling it, how long it has been open and its target date</li>
+    <li>our latest note on each item</li>
+    <li>our service record for you this year</li>
+    <li>a place to confirm each item, flag what needs changing, and rate our service</li></ul>
+  </div>
+</main>
+<footer>Questions? <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> · <a href="../index.html">Ricky Rampersad Branch</a></footer>
+
+<script>
+const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
+const LABEL = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };
+const RATE = ['', 'Poor', 'Below what we expect', 'Fair', 'Good', 'Excellent'];
+let CRED = { lb: '', code: '' }, D = null, A = {};
+/* the code lives only in this tab, never in the address bar or the browser's history */
+try { CRED = JSON.parse(sessionStorage.getItem('rrb-gcm-client') || '{}'); if (!CRED.lb) CRED = { lb: '', code: '' }; } catch (e) {}
+const draftKey = () => 'rrb-gcm-draft-' + (CRED.lb || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+function loadDraft() { try { A = JSON.parse(localStorage.getItem(draftKey()) || '{}') || {}; } catch (e) { A = {}; } }
+function saveDraft() { try { localStorage.setItem(draftKey(), JSON.stringify(A)); } catch (e) {} }
+
+$('gate').addEventListener('submit', e => { e.preventDefault(); CRED = { lb: $('lb').value.trim(), code: $('code').value.trim() }; open_(); });
+async function open_() {
+  const err = $('err'), go = $('go');
+  if (go) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening your page…'; }
+  let d;
+  try {
+    const txt = await (await fetch(SVC + '?action=gcm.client&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text();
+    try { d = JSON.parse(txt); } catch (x) { d = { ok: false, error: 'Our service pages are being updated. Please try again a little later.' }; }
+  } catch (x) { d = { ok: false, error: 'We could not reach our system. Check your connection and try again.' }; }
+  if (!d.ok) { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (x) {} if (!go) { location.reload(); return; } err.textContent = d.error; go.disabled = false; go.textContent = 'Open my service page'; return; }
+  try { sessionStorage.setItem('rrb-gcm-client', JSON.stringify(CRED)); } catch (x) {}
+  D = d; loadDraft(); render();
+}
+
+function render() {
+  $('h1').textContent = D.group;
+  $('hsub').textContent = 'Open service items as at ' + D.asAt + '. Please review each one by ' + dmy(D.respondBy) + '.';
+  const items = D.items, waiting = items.filter(i => /confirmation/i.test(i.status)).length, late = items.filter(i => i.late).length;
+  const cats = [];
+  items.forEach(i => { if (cats.indexOf(i.cat) < 0) cats.push(i.cat); });
+  let h = '<div class="tiles"><div class="tile"><b>' + items.length + '</b><span>open items</span></div><div class="tile' + (waiting ? ' alert' : '') + '"><b>' + waiting + '</b><span>waiting on you</span></div>' +
+    '<div class="tile' + (late ? ' alert' : '') + '"><b>' + late + '</b><span>past target</span></div><div class="tile"><b>' + D.doneWeek + '</b><span>completed this week</span></div></div>' +
+    (D.staff ? '<p class="sub">Your account is looked after by <b>' + esc(D.staff) + '</b> and our branch team.</p>' : '') +
+    '<h2 class="sec">Your open items</h2><p class="sub">For each one, tell us whether it is correct. If something needs our attention, mark it and add a short note: it goes straight onto that item for the person handling it.</p>';
+  if (!items.length) h += '<p>There is nothing open for your company right now.</p>';
+  cats.forEach(c => {
+    h += '<div class="cat">' + esc(c) + '</div>';
+    items.filter(i => i.cat === c).forEach(i => {
+      const a = A[i.id] || {}, cls = i.late ? ' late' : /confirmation/i.test(i.status) ? ' wait' : '';
+      h += '<div class="item' + cls + '"><h3>' + esc(i.title) + '</h3><dl>' +
+        '<dt>Type</dt><dd>' + esc(i.type) + '</dd>' + (i.who ? '<dt>For</dt><dd>' + esc(i.who) + '</dd>' : '') +
+        '<dt>Who is on it</dt><dd>' + esc(i.owner || 'Our branch team') + '</dd>' +
+        '<dt>Opened</dt><dd>' + esc(dmy(i.opened)) + (i.age != null ? ', ' + i.age + ' day' + (i.age === 1 ? '' : 's') + ' ago' : '') + '</dd>' +
+        '<dt>Target date</dt><dd>' + (i.due ? esc(dmy(i.due)) + (i.late ? ' <span class="st late">past target</span>' : '') : 'Not yet set') + '</dd>' +
+        (i.ref ? '<dt>Reference</dt><dd>' + esc(i.ref) + '</dd>' : '') +
+        '<dt>Status</dt><dd><span class="st' + (/confirmation/i.test(i.status) ? ' wait' : '') + '">' + esc(i.status) + '</span></dd></dl>' +
+        '<div class="done"><b>What has been done:</b> ' + esc(i.done) + '</div>' +
+        i.comments.map(c2 => '<div class="cmt"><span class="by">' + esc(c2.by) + '</span> <span style="color:var(--muted)">' + esc(c2.when) + '</span>\n' + esc(c2.text) + '</div>').join('') +
+        (i.answer ? '<p class="prev">You told us on ' + esc(i.answer.at) + ': <b>' + esc(LABEL[i.answer.verdict] || 'a note') + '</b>' + (i.answer.note ? ' “' + esc(i.answer.note) + '”' : '') + '</p>' : '') +
+        '<div class="choices" role="group" aria-label="Is this item correct?">' + ['correct', 'change', 'notours'].map(v => '<button type="button" class="ch ' + v + '" data-i="' + esc(i.id) + '" data-v="' + v + '" aria-pressed="' + (a.v === v) + '">' + LABEL[v] + '</button>').join('') + '</div>' +
+        '<div class="notebox' + (a.v === 'change' || a.v === 'notours' || a.note ? '' : ' hide') + '" id="nb-' + esc(i.id) + '"><label for="n-' + esc(i.id) + '">What needs our attention?</label><textarea class="field" id="n-' + esc(i.id) + '" data-n="' + esc(i.id) + '" maxlength="1500">' + esc(a.note || '') + '</textarea></div></div>';
+    });
+  });
+  if (D.record.length) {
+    const tot = D.record.reduce((x, r) => ({ done: x.done + r.done, open: x.open + r.open }), { done: 0, open: 0 });
+    h += '<h2 class="sec">Our service record for you this year</h2><p class="sub">Completed items, the share done by their target date, and how many days they took on average.</p>' +
+      '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
+      D.record.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + (r.onTimePct == null ? '–' : r.onTimePct + '%') + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') +
+      '<tr><td><b>All services</b></td><td class="num"><b>' + tot.done + '</b></td><td></td><td></td><td class="num"><b>' + tot.open + '</b></td></tr></tbody></table></div>';
+  }
+  h += '<div class="panel"><h2 class="sec" style="margin-top:0">How are we doing?</h2><p class="sub">' + (D.rated ? 'You rated us this week already. You are welcome to rate us again.' : 'Rate the service you have received from our branch.') + '</p>' +
+    '<div class="stars" role="radiogroup" aria-label="Your rating">' + [1, 2, 3, 4, 5].map(n => '<button type="button" class="star" role="radio" data-s="' + n + '" aria-checked="' + ((A._stars || 0) >= n) + '" aria-label="' + n + ' of 5: ' + RATE[n] + '"><svg viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2l-5.7 3.1 1.2-6.4L2.8 9.5l6.4-.8z"/></svg></button>').join('') + '</div>' +
+    '<p id="rl" style="min-height:24px;margin:0 0 6px;font-weight:600">' + (A._stars ? RATE[A._stars] : '') + '</p>' +
+    '<label for="gen">What would make it better? (optional)</label><textarea class="field" id="gen" maxlength="2000">' + esc(A._gen || '') + '</textarea>' +
+    '<div class="row2"><div><label for="nm">Your name</label><input class="field" id="nm" value="' + esc(A._who || '') + '"></div><div><label for="rl2">Your role</label><input class="field" id="rl2" value="' + esc(A._role || '') + '" placeholder="e.g. HR Manager"></div></div>' +
+    '<div class="err" id="serr" role="alert"></div><button class="btn full" type="button" id="send">Send my answers</button>' +
+    '<p class="sub" style="margin-top:10px">Your notes go onto each item for the person handling it, and our branch manager sees every answer.</p></div>' +
+    '<p style="text-align:center"><button class="btn" type="button" id="out" style="background:transparent;color:var(--muted);border:1.5px solid var(--line)">Sign out</button></p>';
+  $('app').innerHTML = h;
+  $('prog').classList.remove('hide');
+  bind(); progress();
+}
+function bind() {
+  document.querySelectorAll('.ch').forEach(b => b.onclick = () => {
+    const id = b.dataset.i, v = b.dataset.v, a = A[id] = A[id] || {};
+    a.v = a.v === v ? '' : v;
+    document.querySelectorAll('.ch[data-i="' + CSS.escape(id) + '"]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === a.v)));
+    $('nb-' + id).classList.toggle('hide', !(a.v === 'change' || a.v === 'notours' || a.note));
+    if (a.v === 'change' || a.v === 'notours') $('n-' + id).focus();
+    saveDraft(); progress();
+  });
+  document.querySelectorAll('[data-n]').forEach(t => t.oninput = () => { (A[t.dataset.n] = A[t.dataset.n] || {}).note = t.value; saveDraft(); });
+  document.querySelectorAll('.star').forEach(s => s.onclick = () => { A._stars = +s.dataset.s; document.querySelectorAll('.star').forEach(x => x.setAttribute('aria-checked', String(+x.dataset.s <= A._stars))); $('rl').textContent = RATE[A._stars]; saveDraft(); });
+  [['gen', '_gen'], ['nm', '_who'], ['rl2', '_role']].forEach(([id, k]) => $(id).oninput = () => { A[k] = $(id).value; saveDraft(); });
+  $('send').onclick = send;
+  $('out').onclick = () => { try { sessionStorage.removeItem('rrb-gcm-client'); } catch (e) {} location.reload(); };
+}
+function progress() {
+  const n = D.items.filter(i => A[i.id] && A[i.id].v).length;
+  $('progText').innerHTML = '<b>' + n + ' of ' + D.items.length + '</b> items reviewed · answers by ' + esc(dmy(D.respondBy));
+}
+async function send() {
+  const err = $('serr'); err.textContent = '';
+  const missing = D.items.find(i => A[i.id] && (A[i.id].v === 'change' || A[i.id].v === 'notours') && !(A[i.id].note || '').trim());
+  if (missing) { err.textContent = 'Add a note to each item marked as needing a change or not ours.'; $('n-' + missing.id).focus(); return; }
+  if (!(A._who || '').trim()) { err.textContent = 'Add your name, so our team knows who answered.'; $('nm').focus(); return; }
+  const items = D.items.filter(i => A[i.id] && (A[i.id].v || (A[i.id].note || '').trim())).map(i => ({ id: i.id, v: A[i.id].v || '', note: A[i.id].note || '' }));
+  if (!items.length && !A._stars && !(A._gen || '').trim()) { err.textContent = 'Mark at least one item, or rate our service, before you send.'; return; }
+  const n = D.items.filter(i => A[i.id] && A[i.id].v).length;
+  if (n < D.items.length && !confirm('You have reviewed ' + n + ' of ' + D.items.length + ' items. Send now?')) return;
+  const b = $('send'); b.disabled = true; b.textContent = 'Sending…';
+  let r;
+  try {
+    const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify({ action: 'gcm.review', lb: CRED.lb, code: CRED.code, name: A._who, role: A._role || '', items: items, rating: A._stars || 0, comment: A._gen || '' }) })).text();
+    try { r = JSON.parse(txt); } catch (x) { r = { ok: false, error: 'Our system did not take it. Please try again in a few minutes.' }; }
+  } catch (x) { r = { ok: false, error: 'We could not reach our system. Your answers are saved on this device: try again shortly.' }; }
+  if (!r.ok) { err.textContent = r.error; b.disabled = false; b.textContent = 'Send my answers'; return; }
+  try { localStorage.removeItem(draftKey()); } catch (x) {}
+  A = {};
+  $('prog').classList.add('hide');
+  $('app').innerHTML = '<div class="panel"><h2 class="sec" style="margin-top:0">Thank you. Your answers are with our team.</h2><p>Every note you added is now on that item for the person handling it, and anything you marked as needing a change will be followed up. ' +
+    (D.staff ? esc(D.staff) + ' will be in touch where needed.' : '') + '</p><p><button class="btn" type="button" onclick="open_()">Back to my items</button></p></div>';
+  window.scrollTo(0, 0);
+}
+if (CRED.lb && CRED.code) { $('lb').value = CRED.lb; open_(); }
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
