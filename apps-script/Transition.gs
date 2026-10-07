@@ -5215,7 +5215,7 @@ function tProfileRow_(rec, cno, client) {
 /** Rewrites the Client Profile tab from Salesforce for these policies, when ServiceSalesforce.gs and its four SF_* Script
  *  properties are there; otherwise leaves the imported tab as it is. Never throws; { rows } or { skipped } or { error }. */
 function tProfileRefresh_(recs, deadline) {
-  if (typeof svcSfReady_ !== 'function' || typeof svcSfQuery_ !== 'function' || !svcSfReady_()) return { skipped: 'Salesforce is not set up in this project (SF_KEY, SF_SECRET, SF_USER, SF_PASS)' };
+  if (typeof svcSfReady_ !== 'function' || typeof svcSfQuery_ !== 'function' || !svcSfReady_()) return { skipped: 'Salesforce is not set up in this project (SF_KEY, SF_SECRET, SF_LOGIN_URL)' };
   try {
     var who = {}, pols = [];
     recs.forEach(function (r) { if (/^\d{6,12}$/.test(r.no) && !who[r.no]) { who[r.no] = r; pols.push(r.no); } });
@@ -6135,7 +6135,7 @@ function tSfRecs_(pols) {
  *  open first: who it is assigned to, its status and due date, who opened it, and its Chatter (posts and their replies).
  *  { on, tasks, why, error }. Never throws. */
 function tSfTasks_(tok, cno, ha) {
-  if (!tSfOn_()) return { on: false, tasks: [], why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties.' };
+  if (!tSfOn_()) return { on: false, tasks: [], why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties.' };
   try {
     var pols = tClientPols_(tok, cno, ha);
     if (!pols.length) return { on: true, tasks: [], why: 'No policy numbers for this client in the Client Book.' };
