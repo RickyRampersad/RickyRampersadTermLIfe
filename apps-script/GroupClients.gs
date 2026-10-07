@@ -91,7 +91,7 @@ var GCM = {
 };
 
 var GCM_HEAD = {
-  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
+  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
@@ -262,6 +262,7 @@ function gcmRegister_() {
       _n: r._n, key: gcmCodeKey_(r.Group), name: gcmText_(r.Group),
       accts: accts.map(gcmId15_), acctsFull: accts, bills: bills, billKeys: bills.map(gcmBillKey_),
       match: gcmList_(r['Match words']), assigned: owner, owner: owner, ownerActive: !/^(n|no|false)$/i.test(gcmText_(r['Owner active'])),
+      ownerEmail: gcmText_(r['Owner e-mail']).toLowerCase(),
       to: gcmList_(r.To), cc: gcmList_(r.Cc), greeting: gcmText_(r.Greeting), code: gcmText_(r.Code), note: gcmText_(r.Note)
     };
   });
@@ -386,8 +387,8 @@ function gcmRefresh_() {
 
   /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active */
   var owners = {};
-  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
-    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), active: !(a.Owner && a.Owner.IsActive === false) };
+  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.Email, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
+    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false) };
   });
 
   /* the employees: every policy on the group's account or carrying its list bill, and the contact behind it */
@@ -453,10 +454,10 @@ function gcmRefresh_() {
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
-  ['Owner in Salesforce', 'Owner active'].forEach(function (h) {
+  ['Owner in Salesforce', 'Owner active', 'Owner e-mail'].forEach(function (h) {
     if (regHead.indexOf(h) < 0) { regSh.getRange(1, regHead.length + 1).setValue(h).setFontWeight('bold'); regHead.push(h); }
   });
-  var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1;
+  var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1, ecol = regHead.indexOf('Owner e-mail') + 1;
   reg.forEach(function (g) {
     /* a group on two accounts takes the first owner still active in Salesforce, else the first owner */
     var cand = g.accts.map(function (a) { return owners[a]; }).filter(function (x) { return x && x.name; });
@@ -464,6 +465,7 @@ function gcmRefresh_() {
     if (!o) return;
     regSh.getRange(g._n, ocol).setValue(o.name);
     regSh.getRange(g._n, acol).setValue(o.active ? 'Y' : 'N');
+    regSh.getRange(g._n, ecol).setValue(o.email);
   });
   var when = gcmWhen_(new Date());
   PropertiesService.getScriptProperties().setProperty('gcm_refreshed', when);
@@ -580,7 +582,34 @@ function gcmWho_(p) {
   if (w.role === 'staff') return { ok: true, role: 'staff', name: w.me.name, email: w.me.email };
   return { ok: false, refused: true, error: 'Group client management is for the branch’s staff and the branch manager.' };
 }
-function gcmMine_(who, g) { return who.role === 'branch' || tNameKey_(g.assigned) === tNameKey_(who.name); }
+/** Whether a group is this person's: the branch sees every group; staff the groups whose account they own in Salesforce,
+ *  matched by e-mail first, then by name. The Agent Skill Bank and Salesforce do not always spell a person the same way
+ *  (on 7 October 2026 one staff member was "SASHA LALLA" on the one and "Sasha Lalla-Jagassar" on the other, and her
+ *  board was empty). */
+function gcmMine_(who, g) {
+  if (who.role === 'branch') return true;
+  var em = String(who.email || '').trim().toLowerCase();
+  if (em && g.ownerEmail && em === g.ownerEmail) return true;
+  return gcmSameName_(g.assigned, who.name);
+}
+/** One person under two spellings: the same first name, and every other part of the shorter name inside the longer
+ *  ("Sasha Lalla" and "Sasha Lalla-Jagassar"). A first name alone matches only itself. */
+function gcmSameName_(a, b) {
+  var t = function (s) { return String(s || '').toLowerCase().split(/[^a-z]+/).filter(String); };
+  var x = t(a), y = t(b);
+  if (!x.length || !y.length) return false;
+  if (x.join(' ') === y.join(' ')) return true;
+  if (x[0] !== y[0] || Math.min(x.length, y.length) < 2) return false;
+  var short = x.length <= y.length ? x : y, long = short === x ? y : x;
+  return short.slice(1).every(function (p) { return long.indexOf(p) > 0; });
+}
+/** The name a letter is signed with: the staff member's own, as Salesforce has it, else as the sign-in gives it, out of
+ *  capitals ("SASHA LALLA" reads "Sasha Lalla"). */
+function gcmSigner_(who, g) {
+  if (who.role === 'staff' && g.assigned && gcmMine_(who, g)) return g.assigned;
+  var n = String(who.name || '').trim();
+  return n === n.toUpperCase() ? n.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); }) : n;
+}
 
 function gcmBoard_(p) {
   var who = gcmWho_(p);
@@ -778,7 +807,7 @@ function gcmPreview_(p) {
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
-  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, who.name, String(p.intro || '').slice(0, 1200));
+  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(p.intro || '').slice(0, 1200));
   return { ok: true, letter: letter, to: g.to, cc: g.cc, copy: GCM.COPY, ready: s.ready, why: s.why, mail: !!tMsCreds_() };
 }
 
@@ -793,7 +822,7 @@ function gcmSend_(b) {
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
   var s = gcmGroupStats_(g, L.today);
   if (!s.ready) return { ok: false, error: s.why + ': nothing was sent.' };
-  var letter = gcmLetter_(g, L.today, who.name, String(b.intro || '').slice(0, 1200));
+  var letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(b.intro || '').slice(0, 1200));
   var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject,
     Items: letter.items.length, 'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000) };
   if (!tMsCreds_() || b.outlook) {
@@ -835,7 +864,7 @@ function gcmShare_(b) {
     if (!text) return { ok: false, error: 'Write the note first.' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
-    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + who.name + ':\n' + text });
+    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text });
     row.Kind = 'post'; row.Value = String(res.id || '') + ' Y';
   } else return { ok: false, error: 'Unknown change.' };
   gcmAppend_(GCM.SHARES, [row]);
@@ -924,7 +953,8 @@ function gcmReview_(b) {
 /** The staff member the group is assigned to, and the branch, hear at once: an internal note, with what changed. */
 function gcmTell_(g, name, rows, rating, comment) {
   var to = [];
-  tTeam_().people.forEach(function (p) { if (tNameKey_(p.name) === tNameKey_(g.assigned) && p.email) to.push(p.email); });
+  if (g.ownerEmail) to.push(g.ownerEmail);
+  else tTeam_().people.forEach(function (p) { if (gcmSameName_(p.name, g.assigned) && p.email) to.push(p.email); });
   if (TRANSITION.CC && TRANSITION.CC.length) to = to.concat(TRANSITION.CC);
   if (!to.length) return;
   var V = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };

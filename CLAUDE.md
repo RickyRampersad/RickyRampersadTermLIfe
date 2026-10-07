@@ -2460,6 +2460,16 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   owner. An owner who is no longer an active user (two groups' owners were, on
   7 October) puts the group first on the manager's "To act on", and the
   group's page never names them.
+  **A staff member is matched to the owner by e-mail, then by name**
+  (`gcmMine_`, `gcmSameName_`). The same afternoon the first staff member to
+  sign in saw an empty board: she is "SASHA LALLA" on the Agent Skill Bank
+  and "Sasha Lalla-Jagassar" in Salesforce, and the names were compared
+  whole. The refresh now writes the owner's Salesforce e-mail onto the
+  register (Owner e-mail), and a name matches on the same first name with
+  every other part of the shorter name inside the longer. A first name
+  alone matches nothing. Letters and Chatter notes are signed with the name
+  as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
+  the owner's Salesforce address.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on

@@ -56,9 +56,12 @@ property and never in the code, since the `.gs` files are public.
    deployment: that changes the address every page uses.
 5. **Staff on the Agent Skill Bank** need a Password of at least eight
    characters and a Role. Staff ("Sales Support", "Staff", "Assistant") see the
-   groups whose Salesforce account they own (matched by name: the name on the
-   Agent Skill Bank must be the same person's name in Salesforce); "Branch Manager" and "Assistant Branch Manager" see
-   every group and the dashboard. Agents and unit managers are refused.
+   groups whose Salesforce account they own, matched by e-mail first (the
+   refresh writes the owner's Salesforce e-mail onto the register as Owner
+   e-mail) and else by name, allowing for capitals and a double-barrelled
+   surname ("SASHA LALLA" on the Skill Bank is "Sasha Lalla-Jagassar" in
+   Salesforce). "Branch Manager" and "Assistant Branch Manager" see every
+   group and the dashboard. Agents and unit managers are refused.
 
 ## The register
 
