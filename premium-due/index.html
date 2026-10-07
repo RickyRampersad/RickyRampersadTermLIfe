@@ -246,7 +246,7 @@ function enter(res) {
    It was: you sent six letters and the desk answered "Tick the ones you have
    checked." */
 function load(said) {
-  call({ action: 'pdd.list', token: TOKEN, stage: 45 }).then(function (r) {
+  call({ action: 'intel.pdd.list', token: TOKEN, stage: 45 }).then(function (r) {
     if (!r.ok) { $('standfirst').textContent = r.error || 'Could not read the line.'; return; }
     STATE = r; ROWS = r.rows || []; PICK = {};
     $('headline').textContent = ROWS.length
@@ -337,7 +337,7 @@ $('none').onclick = function () { PICK = {}; paintRows(); };
 /* ── the preview ─────────────────────────────────────────────────────── */
 function preview(r) {
   $('prev').innerHTML = '<div class="empty">Building ' + esc(r.client) + '’s letter…</div>';
-  call({ action: 'pdd.preview', token: TOKEN, stage: 45, policy: r.policy }).then(function (res) {
+  call({ action: 'intel.pdd.preview', token: TOKEN, stage: 45, policy: r.policy }).then(function (res) {
     if (!res.ok) { $('prev').innerHTML = '<div class="empty">' + esc(res.error) + '</div>'; return; }
     var flags = r.flags.length
       ? '<div style="margin-top:8px;color:var(--warn)">' +
@@ -363,7 +363,7 @@ $('send').onclick = function () {
   if (!window.confirm(msg)) return;
 
   var btn = this; btn.disabled = true; btn.textContent = 'Sending…';
-  call({ action: 'pdd.send', token: TOKEN, stage: 45, policies: list }).then(function (res) {
+  call({ action: 'intel.pdd.send', token: TOKEN, stage: 45, policies: list }).then(function (res) {
     btn.disabled = false;
     if (!res.ok) { $('said').textContent = res.error || 'That did not go.'; tally(); return; }
     PICK = {};

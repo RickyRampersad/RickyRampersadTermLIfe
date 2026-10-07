@@ -6,14 +6,24 @@
  *   1. Apps Script editor → Files → + → Script. Name it: PremiumDueDesk
  *      Delete the myFunction it creates, paste this whole file, Save.
  *
- *   2. In Intelligence.gs, find the authenticated switch in intelRoute_
- *      (it reads "case 'intel.data':") and add these three lines inside it:
+ *   2. In Intelligence.gs, find the authenticated switch in intelRoute_ — the
+ *      one BELOW `var session = iSession_(b.token)`, which reads
+ *      "case 'intel.data':" — and add these three lines inside it:
  *
- *          case 'pdd.list':    return pddList_(b, session);
- *          case 'pdd.preview': return pddPreview_(b, session);
- *          case 'pdd.send':    return pddSend_(b, session);
+ *          case 'intel.pdd.list':    return pddList_(b, session);
+ *          case 'intel.pdd.preview': return pddPreview_(b, session);
+ *          case 'intel.pdd.send':    return pddSend_(b, session);
  *
  *      That is the only edit to an existing file. Nothing else changes.
+ *
+ *      THE NAMES MUST START WITH `intel.`. intelRoute_ opens with
+ *          if (action.indexOf('intel.') !== 0) return null;
+ *      so a bare `pdd.list` never reaches the switch at all: it falls through
+ *      to handle_ in KPI.gs, which owns this project's doPost, and dies there
+ *      on an unknown action. The first cut of this file said `pdd.list`, so
+ *      the three cases were dead code against a live deployment and the desk
+ *      answered "Session expired" to a signed-in user. Probed from outside,
+ *      every pdd.* action returned KPI.gs's own refusal, never this file's.
  *
  * WHY THIS EXISTS. intelSurveySend(45) already finds today's 45-day cohort and
  * writes to all of them at once, from the script editor. That is the right
