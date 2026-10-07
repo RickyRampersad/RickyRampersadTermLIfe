@@ -14,56 +14,64 @@
  *  being serviced, the ratios, the responses, and the star ratings by staff …
  *  it builds into the group management wall."
  *
- *  Three pages, one backend: this file, ALONE in the Apps Script project of the "Group Client Management" Google
- *  Sheet (Extensions → Apps Script from that sheet). Asked for on 7 October 2026: "why don't we just use the group
- *  spreadsheet and build on this, since the only connection is to the Salesforce tasks and group management has its
- *  own access". So it shares nothing with the Service Questionnaire project: its own sign-in tab, its own Salesforce
- *  and Microsoft 365 properties, its own web app address. NEVER paste it into the Service Questionnaire project: it
- *  defines doGet and doPost, and two of each in one project would take the questionnaire, the board and the walls
- *  off the air.
+ *  Four pages, one backend (this file, beside Service.gs, Transition.gs and
+ *  ServiceSalesforce.gs in the Service Questionnaire project):
  *    groupclientmanagement/index.html   staff (their groups) and the manager (every group, the analytics)
  *    groupclientmanagement/client.html  a group signs in with its list bill and its code
- *    groupclientmanagement/wall.html    the group management wall, on the wall code
- *    groupclientmanagement/api.js       the one place the pages keep this project's /exec address
- *  The pages hold no client data: everything comes from here, to a person who signed in, so nothing about a group
- *  ever sits in the public repository.
+ *    groupclientmanagement/wall.html    the group management wall, on the branch code
+ *  The pages hold no client data: everything comes from here, to a person
+ *  who signed in, so nothing about a group ever sits in the public repository.
+ *
+ *  The group tabs live in their own spreadsheet, "Group Client Management" (asked
+ *  for the same day: "if this is the sheet for managing groups why import into
+ *  the service questionnaire"). The script stays in the Service Questionnaire
+ *  project, where the sign-in (Agent Skill Bank), the Salesforce login, the
+ *  support@ mailbox and the web address already are, and opens the group sheet
+ *  by its ID in the GCM_SHEET_ID Script property. The ID is never in this file:
+ *  the .gs files are public. Without the property, the tabs are looked for in
+ *  the Service Questionnaire spreadsheet itself.
  *
  *  Where it reads:
- *    Group Register   the groups: name, Salesforce account(s), list bills, match words, the client contact, the
- *                     group's code. Kept by hand. Who a group is assigned to is NOT here: it is the account's owner in
- *                     Salesforce, read by the refresh (asked for on 7 October 2026: "read who is the account owner in
- *                     Salesforce instead of a spreadsheet").
- *    Group Staff      who may sign in: name, e-mail, role (Staff, Manager, Wall), password. The refresh adds every
- *                     account owner it meets, with the name and e-mail Salesforce has, so a staff member's name here
- *                     is always the name the board matches on; setup gives every row without one a password.
- *    Salesforce       the SF_* Script properties (the same values as the Service Questionnaire project's). gcmRefresh_
- *                     reads every task on a group's account, its billing records, its employees' policies (by account
- *                     or list bill) and their contact records, plus any task naming the group, and writes the Group
- *                     Tasks tab. An hourly trigger keeps it fresh in working hours; staff can refresh by hand. Chatter
- *                     is read live when a group is opened.
+ *    Group Register   the groups: name, Salesforce account(s), list bills,
+ *                     match words, the client contact, the group's code. Kept
+ *                     by hand; imported once. Who a group is assigned to is
+ *                     NOT here: it is the account's owner in Salesforce, read
+ *                     by the refresh (asked for on 7 October 2026: "read who is
+ *                     the account owner in Salesforce instead of a spreadsheet").
+ *    Salesforce       through ServiceSalesforce.gs's sign-in (the SF_* Script
+ *                     properties). gcmRefresh_ reads every task on a group's
+ *                     account, its billing records, its employees' policies
+ *                     (by account or list bill) and their contact records, plus
+ *                     any task naming the group, and writes the Group Tasks tab.
+ *                     An hourly trigger keeps it fresh in working hours; staff
+ *                     can refresh by hand. Chatter is read live when a group is
+ *                     opened.
  *  Where it writes:
  *    Group Tasks      the snapshot above (rewritten whole, never edited by hand)
  *    Group Sends      every letter: when, who, to whom, what it said, which items
  *    Group Responses  every answer a group gives: per item, and the rating
  *    Group Shares     which items and which Chatter comments a group may see
- *    Salesforce       a group's note on an item, and a staff note for the group, are posted to that task's Chatter
+ *    Salesforce       a group's note on an item, and a staff note for the group,
+ *                     are posted to that task's Chatter
  *
  *  Rules that are not optional:
- *    - An employer never sees a member's health or a claim (GCM_PRIVATE): those items stay with staff, whatever is
- *      ticked.
- *    - An item reached only through an employee (their own policy or contact record) is the staff's to see; it reaches
- *      the group only when a person ticks it. Items on the group's own account, its billing, or naming the group are
- *      shown unless a person unticks them.
- *    - A Chatter comment reaches the group only when a person ticks it: Chatter is where staff write to each other.
- *    - A copy of an e-mail Salesforce logged as a task, and the birthday flow's e-mails, are not work and are never
- *      counted (GCM_LOGGED).
- *    - A list bill is printed on every bill, so it is the group's sign-in name, never its password: the group's own
- *      code is the password.
- *    - No ID, password or key is ever in this file: the .gs files are public on the website.
+ *    - An employer never sees a member's health or a claim (GCM_PRIVATE): those
+ *      items stay with staff, whatever is ticked.
+ *    - An item reached only through an employee (their own policy or contact
+ *      record) is the staff's to see; it reaches the group only when a person
+ *      ticks it. Items on the group's own account, its billing, or naming the
+ *      group are shown unless a person unticks them.
+ *    - A Chatter comment reaches the group only when a person ticks it: Chatter
+ *      is where staff write to each other.
+ *    - A copy of an e-mail Salesforce logged as a task, and the birthday flow's
+ *      e-mails, are not work and are never counted (GCM_LOGGED).
+ *    - A list bill is printed on every bill, so it is the group's sign-in name,
+ *      never its password: the group's own code is the password.
  *
- *  Setup (once): GROUP-CLIENTS-SETUP.md. Paste this file into the group sheet's Apps Script; add the SF_* (and MS_*)
- *  Script properties; reload the sheet and use the "Group clients" menu (Set up, then Refresh from Salesforce);
- *  Deploy → New deployment → Web app, execute as me, anyone; the /exec address goes into groupclientmanagement/api.js.
+ *  Setup (once): paste this file into the project; add the two gcm lines to
+ *  Service.gs's doGet and doPost (they are in the repository copy); run
+ *  gcmSetup from the editor; import the Group Register; Deploy → Manage
+ *  deployments → New version. GROUP-CLIENTS-SETUP.md has the steps.
  */
 
 var GCM = {
@@ -72,7 +80,6 @@ var GCM = {
   SENDS: 'Group Sends',
   RESPONSES: 'Group Responses',
   SHARES: 'Group Shares',
-  STAFF: 'Group Staff',
   SEND_DAY: 2,              // Tuesday (1 Monday … 7 Sunday): the day staff send the week's letters
   RESPOND_DAY: 5,           // the letter asks for an answer by Friday of the same week
   SITE: 'https://rickyrampersadbranch.com/groupclientmanagement/',
@@ -80,12 +87,7 @@ var GCM = {
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
   HOURS: [6, 18],           // the hourly refresh runs from 6:00 to 18:00, Monday to Saturday
-  CHUNK: 150,              // ids in one Chatter read
-  MIN_PASS: 8,              // a staff password shorter than this opens nothing
-  SF_LOGIN: 'https://login.salesforce.com', SF_API: 'v60.0',
-  MS_FROM: 'support@rickyrampersadbranch.com', FROM_NAME: 'Ricky Rampersad Branch',
-  /* who hears at once when a group answers, besides the staff member it is assigned to */
-  TELL: ['rickyrampersadsalessupport@myguardiangroup.com', 'Ricky.Rampersad@myguardiangroup.com']
+  CHUNK: 150               // ids in one Chatter read
 };
 
 var GCM_HEAD = {
@@ -93,8 +95,7 @@ var GCM_HEAD = {
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
-  'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By'],
-  'Group Staff':     ['Name', 'E-mail', 'Role', 'Password', 'Active', 'Note']
+  'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By']
 };
 
 /* The order a group's page lists its items in, and the client's words for a status. */
@@ -111,29 +112,12 @@ var GCM_LOGGED = /^\s*(<p>)?\W*(Email|Re|Fwd?)\s*:|\$Record\.|Happy Birthday/i;
 var GCM_EXCLUDE = [/^ACTION THIS MORNING/i, /^HR\s*-/i, /\bINTERNAL\b/i, /release letter to/i];
 var GCM_EXCLUDE_TYPES = ['HR', 'Lic/Staffing/SA/HR'];
 
-/* ── the web app, and the sheet's menu ───────────────────────────── */
-
-function doGet(e) { return gcmJson_(gcmDoGet_((e && e.parameter) || {})); }
-/** The pages POST text/plain, so the browser never asks a CORS preflight Apps Script cannot answer. */
-function doPost(e) {
-  var b;
-  try { b = JSON.parse((e && e.postData && e.postData.contents) || '{}'); } catch (x) { return gcmJson_({ ok: false, error: 'Bad request' }); }
-  return gcmJson_(gcmDoPost_(b || {}));
-}
-function gcmJson_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
-
-function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Group clients')
-    .addItem('Set up (tabs, passwords, the hourly refresh)', 'gcmSetup')
-    .addItem('Refresh from Salesforce now', 'gcmRefresh')
-    .addItem('Who can sign in', 'gcmWhoCanSignIn')
-    .addToUi();
-}
+/* ── routes (Service.gs's doGet and doPost hand every gcm.* action here) ─────────────────── */
 
 function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
-      case 'gcm.ping':    return { ok: true, gcm: 2, salesforce: gcmSfOn_(), mail: !!gcmMsCreds_(), refreshed: gcmRefreshed_() };
+      case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), refreshed: gcmRefreshed_() };
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
       case 'gcm.preview': return gcmPreview_(p);
@@ -162,52 +146,42 @@ function gcmDoPost_(b) {
 
 /* ── setup ──────────────────────────────────────────────────────── */
 
-/** Run once (the menu, or the editor): makes the tabs (touching none that exist), puts the manager and the wall on
- *  Group Staff, gives every row without a password one, and installs the hourly refresh. Safe to run again. */
+/** Run once from the editor: makes the five tabs (touching none that exist) and the hourly refresh. */
 function gcmSetup() {
   Object.keys(GCM_HEAD).forEach(function (n) { gcmSheet_(n); });
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmRefreshTick') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('gcmRefreshTick').timeBased().everyHours(1).create();
-  var staff = gcmStaffRows_(), add = [];
-  if (!staff.some(function (r) { return gcmRoleOf_(r.Role) === 'branch'; }))
-    add.push({ Name: 'Branch Manager', 'E-mail': gcmMe_(), Role: 'Manager', Active: 'Y', Note: 'Put your own name here if you like: it signs the letters you send.' });
-  if (!staff.some(function (r) { return gcmRoleOf_(r.Role) === 'wall'; }))
-    add.push({ Name: 'Wall screen', 'E-mail': 'wall', Role: 'Wall', Active: 'Y', Note: 'The password here is the wall code: it opens the wall and nothing else.' });
-  gcmAppend_(GCM.STAFF, add);
-  var made = gcmPasswords_();
-  var on = gcmSfOn_();
-  return gcmSay_('Group client management is set up in "' + gcmSS_().getName() + '": the Group tabs exist, and the refresh runs every hour from ' +
-    GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday.' +
-    (made ? '\n\n' + made + ' password' + (made === 1 ? ' was' : 's were') + ' made on the Group Staff tab. Give each person their own.' : '') + '\n\n' +
-    (on ? 'Salesforce is linked. Now use Group clients → Refresh from Salesforce: it fills Group Tasks and adds every account owner to Group Staff.'
-        : 'Salesforce is NOT linked yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS (and SF_LOGIN_URL, if it is there) from the Service Questionnaire project into Project Settings → Script properties, then Refresh from Salesforce.') +
-    (gcmMsCreds_() ? '' : '\n\nMicrosoft 365 is not set up (MS_TENANT, MS_CLIENT, MS_SECRET): letters will open in the staff member\'s own Outlook instead, and are still logged.'));
+  var on = tSfOn_(), gs = gcmSS_(), own = gs.getId() === ss_().getId();
+  return tSay_('Group client management is set up in "' + gs.getName() + '"' + (own ? ' (this spreadsheet: set GCM_SHEET_ID to keep the group tabs in a sheet of their own)' : '') +
+    ': the five Group tabs exist and the refresh runs every hour from ' +
+    GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday.\n\n' +
+    (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
+        : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
 }
 
-/** The editor's Run button and the menu. */
-function gcmRefresh() {
-  var r = gcmRefreshLocked_();
-  return gcmSay_(r.ok ? r.said : ('Not refreshed: ' + r.error));
-}
+/** The editor's Run button, and the hourly trigger. */
+function gcmRefresh() { var r = gcmRefreshLocked_(); return tSay_(r.ok ? r.said : ('Not refreshed: ' + r.error)); }
 function gcmRefreshTick() {
-  var tz = gcmTz_(), now = new Date(), h = Number(Utilities.formatDate(now, tz, 'H')), d = Number(Utilities.formatDate(now, tz, 'u'));
+  var tz = tTz_(), now = new Date(), h = Number(Utilities.formatDate(now, tz, 'H')), d = Number(Utilities.formatDate(now, tz, 'u'));
   if (d === 7 || h < GCM.HOURS[0] || h > GCM.HOURS[1]) return;
   gcmRefreshLocked_();
 }
 
-/** Who can sign in, never a password. */
-function gcmWhoCanSignIn() {
-  var lines = gcmStaff_().map(function (x) {
-    var why = !x.active ? 'not active' : x.pass.length < GCM.MIN_PASS ? 'no password of ' + GCM.MIN_PASS + ' or more' : '';
-    return (why ? '✗ ' : '✓ ') + x.name + ' · ' + ({ branch: 'Manager', staff: 'Staff', wall: 'Wall' }[x.role]) + (x.role === 'wall' ? '' : ' · ' + (x.email || 'no e-mail')) + (why ? ' · ' + why : '');
-  });
-  return gcmSay_(lines.length ? lines.join('\n') : 'Nobody is on Group Staff yet: run Set up.');
-}
-
 /* ── sheet plumbing ─────────────────────────────────────────────── */
 
-/** The group sheet: the spreadsheet this project is bound to. */
-function gcmSS_() { return SpreadsheetApp.getActiveSpreadsheet(); }
+/** The group sheet: the spreadsheet whose ID is the GCM_SHEET_ID Script property, else this project's own. Opened once
+ *  a run. */
+var GCM_SS = null;
+function gcmSS_() {
+  if (GCM_SS) return GCM_SS;
+  var id = String(PropertiesService.getScriptProperties().getProperty('GCM_SHEET_ID') || '').trim();
+  var m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(id);   // a whole link pasted in works too
+  if (m) id = m[1];
+  if (!id) return (GCM_SS = ss_());
+  try { GCM_SS = SpreadsheetApp.openById(id); }
+  catch (e) { throw new Error('The group sheet in GCM_SHEET_ID could not be opened (' + String(e && e.message ? e.message : e).slice(0, 120) + '): check the ID, and that the script owner can edit that sheet.'); }
+  return GCM_SS;
+}
 
 function gcmSheet_(name) {
   var ss = gcmSS_(), sh = ss.getSheetByName(name), head = GCM_HEAD[name];
@@ -233,9 +207,8 @@ function gcmRows_(name) {
 
 function gcmAppend_(name, rows) {
   if (!rows.length) return;
-  var sh = gcmSheet_(name), head = GCM_HEAD[name], rg = sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length);
-  if (name === GCM.STAFF) rg.setNumberFormat('@');   // a password of digits stays text, its leading digits and all
-  rg.setValues(rows.map(function (o) {
+  var sh = gcmSheet_(name), head = GCM_HEAD[name];
+  sh.getRange(sh.getLastRow() + 1, 1, rows.length, head.length).setValues(rows.map(function (o) {
     return head.map(function (h) { var v = o[h]; return v === undefined || v === null ? '' : v; });
   }));
 }
@@ -247,9 +220,9 @@ function gcmYes_(x) { return x === true || /^(y|yes|true|1|x)$/i.test(gcmText_(x
 /** A date as yyyy-MM-dd in the sheet's zone; '' for nothing. Takes a Date, a Salesforce date or date-time, or yyyy-MM-dd. */
 function gcmYmd_(x) {
   if (!x) return '';
-  if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, gcmTz_(), 'yyyy-MM-dd');
+  if (x instanceof Date) return isNaN(x.getTime()) ? '' : Utilities.formatDate(x, tTz_(), 'yyyy-MM-dd');
   var s = String(x);
-  if (/T\d{2}:\d{2}/.test(s)) { var d = new Date(s.replace(/\+0000$/, 'Z')); return isNaN(d.getTime()) ? s.slice(0, 10) : Utilities.formatDate(d, gcmTz_(), 'yyyy-MM-dd'); }
+  if (/T\d{2}:\d{2}/.test(s)) { var d = new Date(s.replace(/\+0000$/, 'Z')); return isNaN(d.getTime()) ? s.slice(0, 10) : Utilities.formatDate(d, tTz_(), 'yyyy-MM-dd'); }
   var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
   return m ? m[0] : '';
 }
@@ -265,7 +238,7 @@ function gcmAddDays_(ymd, n) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd); var
 function gcmMonday_(ymd) { return gcmAddDays_(ymd, 1 - gcmDow_(ymd)); }
 function gcmWhen_(x) {   // a date-time as the pages print it
   var d = x instanceof Date ? x : new Date(String(x || '').replace(/\+0000$/, 'Z'));
-  return isNaN(d.getTime()) ? gcmText_(x) : Utilities.formatDate(d, gcmTz_(), 'd MMM yyyy, h:mm a');
+  return isNaN(d.getTime()) ? gcmText_(x) : Utilities.formatDate(d, tTz_(), 'd MMM yyyy, h:mm a');
 }
 
 /** A list bill as a key: letters and digits only, so "TGM 1099" and "TGM1099", "PIND - 067" and "PIND067" are one. */
@@ -296,62 +269,20 @@ function gcmRegister_() {
 
 /* ── Salesforce ─────────────────────────────────────────────────── */
 
-/** Whether this project can reach Salesforce: the four SF_* Script properties, the same values the Service
- *  Questionnaire project holds. */
-function gcmSfOn_() {
-  var p = PropertiesService.getScriptProperties();
-  return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET') && p.getProperty('SF_USER') && p.getProperty('SF_PASS'));
-}
-/** A Salesforce sign-in, kept for most of an hour; `fresh` signs in again (after a 401). */
-function gcmSfToken_(fresh) {
-  var cache = CacheService.getScriptCache();
-  if (!fresh) { var hit = cache.get('gcm-sf-token'); if (hit) return JSON.parse(hit); }
-  var p = PropertiesService.getScriptProperties();
-  var res = UrlFetchApp.fetch((p.getProperty('SF_LOGIN_URL') || GCM.SF_LOGIN) + '/services/oauth2/token', {
-    method: 'post', muteHttpExceptions: true,
-    payload: { grant_type: 'password', client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET'),
-               username: p.getProperty('SF_USER'), password: p.getProperty('SF_PASS') } });
-  var body = res.getContentText();
-  if (res.getResponseCode() !== 200) throw new Error('Salesforce sign-in failed: ' + body.slice(0, 200) +
-    (body.indexOf('invalid_grant') > -1 ? ' (SF_PASS is the password with the security token on the end, no space)' : ''));
-  var tok = JSON.parse(body);
-  try { cache.put('gcm-sf-token', JSON.stringify(tok), 3000); } catch (e) {}
-  return tok;
-}
-/** A SOQL string literal: backslash first, then the quote; the other order lets a quote back out. */
-function gcmSoqlLit_(s) { return String(s == null ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
-/** One write to Salesforce (a Chatter post); a 401 signs in again once. Throws with Salesforce's own reason. */
-function gcmSfSend_(method, path, payload) {
-  var go = function (tok) {
-    return UrlFetchApp.fetch(tok.instance_url + '/services/data/' + GCM.SF_API + path, {
-      method: method, contentType: 'application/json', muteHttpExceptions: true,
-      headers: { Authorization: 'Bearer ' + tok.access_token }, payload: JSON.stringify(payload || {}) });
-  };
-  var res = go(gcmSfToken_());
-  if (res.getResponseCode() === 401) res = go(gcmSfToken_(true));
-  var code = res.getResponseCode(), text = res.getContentText() || '';
-  if (code >= 300) {
-    var why = 'HTTP ' + code;
-    try { var e = JSON.parse(text); e = e && e[0] ? e[0] : e; if (e && (e.message || e.errorCode)) why = (e.errorCode ? e.errorCode + ': ' : '') + (e.message || ''); } catch (x) {}
-    throw new Error('Salesforce did not take it: ' + why.slice(0, 200));
-  }
-  try { return text ? JSON.parse(text) : {}; } catch (x) { return {}; }
-}
-
 /** A SOQL query, every page of it. The first page goes through the composite resource (a POST), so a long query never
  *  meets URL Fetch's limit on the length of an address; the next pages are short addresses Salesforce gives back. */
 function gcmQuery_(soql) {
-  var tok = gcmSfToken_(), out = [];
+  var tok = svcSfToken_(), out = [];
   var go = function (fn) {
     var r = fn(tok);
-    if (r.getResponseCode() === 401) { tok = gcmSfToken_(true); r = fn(tok); }
+    if (r.getResponseCode() === 401) { svcSfProps_().deleteProperty('SVC_SF_TOKEN'); tok = svcSfToken_(); r = fn(tok); }
     return r;
   };
   var res = go(function (t) {
-    return UrlFetchApp.fetch(t.instance_url + '/services/data/' + GCM.SF_API + '/composite', {
+    return UrlFetchApp.fetch(t.instance_url + '/services/data/' + SVCSF.API + '/composite', {
       method: 'post', contentType: 'application/json', muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + t.access_token },
       payload: JSON.stringify({ allOrNone: false, compositeRequest: [{ method: 'GET', referenceId: 'q',
-        url: '/services/data/' + GCM.SF_API + '/query?q=' + encodeURIComponent(soql) }] })
+        url: '/services/data/' + SVCSF.API + '/query?q=' + encodeURIComponent(soql) }] })
     });
   });
   if (res.getResponseCode() !== 200) throw new Error('Salesforce did not answer: HTTP ' + res.getResponseCode());
@@ -371,7 +302,7 @@ function gcmQuery_(soql) {
   }
   return out;
 }
-function gcmIn_(list) { return list.map(function (x) { return "'" + gcmSoqlLit_(x) + "'"; }).join(','); }
+function gcmIn_(list) { return list.map(function (x) { return "'" + svcSoqlLit_(x) + "'"; }).join(','); }
 function gcmName_(rec, key) { var v = rec && rec[key]; return v && typeof v === 'object' ? String(v.Name || '') : ''; }
 
 /** Whether a task names the group: a match word starting a word in its subject or record name. A single match word must
@@ -409,7 +340,7 @@ function gcmCategory_(subject, type) {
 
 /** A task's subject as a group reads it: the billing subjects in words, the group's own name taken out. */
 function gcmTitle_(subject, groupName) {
-  var s = gcmPlain_(subject).replace(/\s+/g, ' ');
+  var s = tPlain_(subject).replace(/\s+/g, ' ');
   var m = /T-\s*(LIFE|HEALTH|PENSIONS)\s*GROUP-?\s*(Renewal|Billing)\s*Date\s*-\s*(\d{1,2})\/(\d{1,2})\/(\d{4})/i.exec(s);
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   if (m) {
@@ -439,7 +370,7 @@ function gcmRefreshLocked_() {
 }
 
 function gcmRefresh_() {
-  if (!gcmSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties.' };
+  if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties.' };
   var reg = gcmRegister_();
   if (!reg.length) return { ok: false, error: 'The Group Register tab has no groups yet.' };
   var byAcct = {}, byBill = {}, accts = [], bills = [];
@@ -455,8 +386,8 @@ function gcmRefresh_() {
 
   /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active */
   var owners = {};
-  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.Email, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
-    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false) };
+  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
+    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), active: !(a.Owner && a.Owner.IsActive === false) };
   });
 
   /* the employees: every policy on the group's account or carrying its list bill, and the contact behind it */
@@ -502,7 +433,7 @@ function gcmRefresh_() {
   var words = [];
   reg.forEach(function (g) { g.match.forEach(function (w) { if (w.trim()) words.push(w.trim()); }); });
   if (words.length) {
-    var like = words.map(function (w) { var l = gcmSoqlLit_(w).replace(/%/g, '\\%').replace(/_/g, '\\_'); return "Subject LIKE '%" + l + "%' OR What.Name LIKE '%" + l + "%'"; }).join(' OR ');
+    var like = words.map(function (w) { var l = svcSoqlLit_(w).replace(/%/g, '\\%').replace(/_/g, '\\_'); return "Subject LIKE '%" + l + "%' OR What.Name LIKE '%" + l + "%'"; }).join(' OR ');
     gcmQuery_('SELECT ' + F + ' FROM Task WHERE (' + like + ')' + W).forEach(function (t) {
       for (var gi = 0; gi < reg.length; gi++) if (gcmNames_(t, reg[gi])) { take(t, gi, 'group'); return; }
     });
@@ -534,28 +465,26 @@ function gcmRefresh_() {
     regSh.getRange(g._n, ocol).setValue(o.name);
     regSh.getRange(g._n, acol).setValue(o.active ? 'Y' : 'N');
   });
-  var joined = gcmStaffSync_(owners);
   var when = gcmWhen_(new Date());
   PropertiesService.getScriptProperties().setProperty('gcm_refreshed', when);
   try { CacheService.getScriptCache().remove('gcm-load'); } catch (e) {}
   var open = rows.filter(function (r) { return r[6] === 'Y'; }).length;
   return { ok: true, tasks: rows.length, open: open, excluded: excluded, refreshed: when,
-    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out.' +
-      (joined.length ? '\n\nAdded to Group Staff, each with a password to give them: ' + joined.join(', ') + '.' : '') };
+    said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out.' };
 }
 function gcmRefreshed_() { return PropertiesService.getScriptProperties().getProperty('gcm_refreshed') || ''; }
 
 /** Chatter on some tasks: { taskId15: [{ id, by, when, text, replies: [...] }] }, newest first. Never throws. */
 function gcmFeed_(ids) {
   var out = {};
-  if (!ids.length || !gcmSfOn_()) return out;
+  if (!ids.length || !tSfOn_()) return out;
   try {
     for (var i = 0; i < ids.length; i += GCM.CHUNK) {
       gcmQuery_('SELECT Id, ParentId, Body, CreatedDate, CreatedBy.Name, (SELECT CommentBody, CreatedDate, CreatedBy.Name FROM FeedComments ORDER BY CreatedDate ASC LIMIT 10) ' +
         'FROM FeedItem WHERE ParentId IN (' + gcmIn_(ids.slice(i, i + GCM.CHUNK)) + ") AND Type = 'TextPost' ORDER BY CreatedDate DESC").forEach(function (f) {
         (out[gcmId15_(f.ParentId)] = out[gcmId15_(f.ParentId)] || []).push({ id: f.Id, by: gcmName_(f, 'CreatedBy'), when: gcmWhen_(f.CreatedDate),
-          text: gcmPlain_(f.Body).slice(0, 1500),
-          replies: ((f.FeedComments && f.FeedComments.records) || []).map(function (c) { return { by: gcmName_(c, 'CreatedBy'), when: gcmWhen_(c.CreatedDate), text: gcmPlain_(c.CommentBody).slice(0, 800) }; }) });
+          text: tPlain_(f.Body).slice(0, 1500),
+          replies: ((f.FeedComments && f.FeedComments.records) || []).map(function (c) { return { by: gcmName_(c, 'CreatedBy'), when: gcmWhen_(c.CreatedDate), text: tPlain_(c.CommentBody).slice(0, 800) }; }) });
       });
     }
   } catch (e) { out._error = String(e && e.message ? e.message : e).slice(0, 200); }
@@ -642,20 +571,16 @@ function gcmGroupStats_(g, today) {
 
 /* ── staff and the manager ───────────────────────────────────────── */
 
-/** Who is asking, by the e-mail and password on Group Staff: a Manager sees every group and the dashboard; staff see
- *  the groups whose Salesforce account they own. Ten wrong passwords on one e-mail close it for fifteen minutes, and a
- *  refusal never says which of the two was wrong. The wall's code opens the wall and nothing else. */
+/** Who is asking, by their agent number and password (or the branch code): the branch manager and the assistant branch
+ *  manager see every group; staff see the groups assigned to them. Agents and unit managers are not this page's. */
 function gcmWho_(p) {
-  var em = String(p.who || '').trim().toLowerCase(), pw = String(p.code || '').trim();
-  if (!em || !pw) return { ok: false, error: 'Enter your e-mail and your password.' };
-  var tk = 'gcm-staff-' + em.replace(/[^a-z0-9@.]/g, '').slice(0, 60);
-  if (gcmTries_(tk) >= 10) return { ok: false, error: 'Too many tries. Wait fifteen minutes.' };
-  var x = gcmStaff_().filter(function (r) { return r.active && r.role !== 'wall' && r.email.toLowerCase() === em && r.pass.length >= GCM.MIN_PASS && r.pass === pw; })[0];
-  if (!x) { gcmTriesAdd_(tk); return { ok: false, error: 'That e-mail and password do not match. Ask the branch manager if you need yours.' }; }
-  gcmTriesClear_(tk);
-  return { ok: true, role: x.role, name: x.name, email: x.email };
+  var w = tWho_(p.code, p.who);
+  if (!w.ok) return w;
+  if (w.role === 'branch') return { ok: true, role: 'branch', name: w.me ? w.me.name : 'Branch', email: w.me ? w.me.email : '' };
+  if (w.role === 'staff') return { ok: true, role: 'staff', name: w.me.name, email: w.me.email };
+  return { ok: false, refused: true, error: 'Group client management is for the branch’s staff and the branch manager.' };
 }
-function gcmMine_(who, g) { return who.role === 'branch' || gcmNameKey_(g.assigned) === gcmNameKey_(who.name); }
+function gcmMine_(who, g) { return who.role === 'branch' || tNameKey_(g.assigned) === tNameKey_(who.name); }
 
 function gcmBoard_(p) {
   var who = gcmWho_(p);
@@ -669,7 +594,7 @@ function gcmBoard_(p) {
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
   groups.sort(function (a, b) { return urgency(b) - urgency(a); });
   var out = { ok: true, role: who.role, me: who.name, today: today, sendDay: GCM.SEND_DAY, dow: gcmDow_(today), refreshed: L.refreshed,
-    salesforce: gcmSfOn_(), mail: !!gcmMsCreds_(), groups: groups };
+    salesforce: tSfOn_(), mail: !!tMsCreds_(), groups: groups };
   if (who.role === 'branch') out.analytics = gcmAnalytics_(L);
   return out;
 }
@@ -678,7 +603,7 @@ function gcmBoard_(p) {
 function gcmAnalytics_(L) {
   var today = L.today, monday = gcmMonday_(today), yearStart = today.slice(0, 4) + '-01-01';
   var staff = {}, types = {}, weeks = [], resp = [], act = [];
-  var S = function (n) { var k = gcmNameKey_(n) || 'unassigned'; return staff[k] = staff[k] || { name: n || 'Not assigned', groups: 0, due: 0, sent: 0, open: 0, late: 0, done: 0, withDue: 0, onTime: 0, days: 0, ratings: 0, ratingSum: 0, verdicts: 0, correct: 0, responses: 0 }; };
+  var S = function (n) { var k = tNameKey_(n) || 'unassigned'; return staff[k] = staff[k] || { name: n || 'Not assigned', groups: 0, due: 0, sent: 0, open: 0, late: 0, done: 0, withDue: 0, onTime: 0, days: 0, ratings: 0, ratingSum: 0, verdicts: 0, correct: 0, responses: 0 }; };
   for (var w = 7; w >= 0; w--) weeks.push({ from: gcmAddDays_(monday, -7 * w), done: 0, withDue: 0, onTime: 0, sent: 0, responses: 0 });
   var weekOf = function (ymd) { for (var i = weeks.length - 1; i >= 0; i--) if (ymd >= weeks[i].from) return weeks[i]; return null; };
   var tot = { groups: L.reg.length, open: 0, late: 0, waiting: 0, done: 0, withDue: 0, onTime: 0, days: 0, sentWeek: 0, dueWeek: 0, responsesWeek: 0, ratings: 0, ratingSum: 0, doneToday: 0 };
@@ -800,7 +725,7 @@ function gcmLetter_(g, today, staffName, intro) {
   var onT = s.onTimePct;
   var respondBy = gcmAddDays_(gcmMonday_(today), GCM.RESPOND_DAY - 1);
   if (respondBy < today) respondBy = gcmAddDays_(respondBy, 7);
-  var dmy = function (ymd) { return gcmDmy_(ymd); };
+  var dmy = function (ymd) { return tDmy_(ymd); };
   var headline = waiting.length ? waiting.length + (waiting.length === 1 ? ' item is' : ' items are') + ' waiting on your confirmation'
     : late.length ? 'Where your ' + late.length + ' longer-running item' + (late.length === 1 ? ' stands' : 's stand')
     : shown.length ? 'Your ' + shown.length + ' open item' + (shown.length === 1 ? '' : 's') + ', and where each one stands'
@@ -820,7 +745,7 @@ function gcmLetter_(g, today, staffName, intro) {
     'Your page: ' + GCM.SITE + 'client.html', 'Sign in with your list bill (' + g.bills[0] + ') and your access code: ' + (g.code || '(not set)'), '',
     'We would be grateful for your answers by ' + dmy(respondBy) + '.', '', 'Warm regards,', staffName, 'Ricky Rampersad Branch, Guardian Life of the Caribbean',
     '9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461'].join('\n').replace(/\n{3,}/g, '\n\n');
-  var E = gcmEsc_;
+  var E = tEsc_;
   var tile = function (n, label, warn) { return '<td style="padding:10px 8px;text-align:center;border:1px solid #e3e6ea;width:25%"><div style="font:700 24px/1.1 Arial,sans-serif;color:' + (warn ? '#b3261e' : '#07131f') + '">' + E(String(n)) + '</div><div style="font:12px/1.3 Arial,sans-serif;color:#5b6573;margin-top:4px">' + E(label) + '</div></td>'; };
   var list = function (arr) { return arr.slice(0, 8).map(function (t) { return '<li style="margin:4px 0">' + E(gcmTitle_(t.subject, g.name)) + (t.owner ? ' <span style="color:#5b6573">· ' + E(t.owner) + '</span>' : '') + '</li>'; }).join('') + (arr.length > 8 ? '<li style="color:#5b6573">and ' + (arr.length - 8) + ' more on your page</li>' : ''); };
   var html = '<div style="background:#f4f5f7;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse">' +
@@ -843,7 +768,7 @@ function gcmLetter_(g, today, staffName, intro) {
     'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
     '<p style="margin:0 0 18px">We would be grateful for your answers by <b>' + E(dmy(respondBy)) + '</b>.</p>' +
     '<p style="margin:0;border-top:2px solid #efc24b;padding-top:12px">Warm regards,<br><b>' + E(staffName) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
-    GCM_LEGAL + '</td></tr></table></div>';
+    tLegal_(null) + '</td></tr></table></div>';
   return { subject: subject, html: html, text: text, headline: headline, items: shown.map(function (t) { return t.id; }), respondBy: respondBy,
     waiting: waiting.length, late: late.length, open: shown.length };
 }
@@ -854,7 +779,7 @@ function gcmPreview_(p) {
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
   var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, who.name, String(p.intro || '').slice(0, 1200));
-  return { ok: true, letter: letter, to: g.to, cc: g.cc, copy: GCM.COPY, ready: s.ready, why: s.why, mail: !!gcmMsCreds_() };
+  return { ok: true, letter: letter, to: g.to, cc: g.cc, copy: GCM.COPY, ready: s.ready, why: s.why, mail: !!tMsCreds_() };
 }
 
 /** Send the week's letter, and log it. The letter is written here again from the sheet, never taken from the page.
@@ -871,18 +796,18 @@ function gcmSend_(b) {
   var letter = gcmLetter_(g, L.today, who.name, String(b.intro || '').slice(0, 1200));
   var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject,
     Items: letter.items.length, 'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000) };
-  if (!gcmMsCreds_() || b.outlook) {
+  if (!tMsCreds_() || b.outlook) {
     row.Via = 'Outlook, by ' + who.name; row.Status = 'opened in Outlook';
     gcmAppend_(GCM.SENDS, [row]);
     return { ok: true, outlook: { to: g.to, cc: g.cc, bcc: GCM.COPY, subject: letter.subject, body: letter.text } };
   }
   try {
-    gcmMsSend_(g.to[0], letter.subject, letter.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: GCM.MS_FROM });
-    row.Via = GCM.MS_FROM; row.Status = 'sent';
+    tMsSend_(g.to[0], letter.subject, letter.html, { cc: g.to.slice(1).concat(g.cc), bcc: GCM.COPY, replyTo: TRANSITION.MS_FROM });
+    row.Via = TRANSITION.MS_FROM; row.Status = 'sent';
     gcmAppend_(GCM.SENDS, [row]);
     return { ok: true, sent: true, at: gcmWhen_(row.When) };
   } catch (e) {
-    row.Via = GCM.MS_FROM; row.Status = 'failed: ' + String(e && e.message ? e.message : e).slice(0, 200);
+    row.Via = TRANSITION.MS_FROM; row.Status = 'failed: ' + String(e && e.message ? e.message : e).slice(0, 200);
     gcmAppend_(GCM.SENDS, [row]);
     return { ok: false, error: row.Status };
   }
@@ -909,8 +834,8 @@ function gcmShare_(b) {
     var text = String(b.text || '').trim().slice(0, 2000);
     if (!text) return { ok: false, error: 'Write the note first.' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
-    if (!gcmSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
-    var res = gcmSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + who.name + ':\n' + text });
+    if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
+    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + who.name + ':\n' + text });
     row.Kind = 'post'; row.Value = String(res.id || '') + ' Y';
   } else return { ok: false, error: 'Unknown change.' };
   gcmAppend_(GCM.SHARES, [row]);
@@ -925,10 +850,10 @@ function gcmClientAuth_(L, lb, code) {
   var bk = gcmBillKey_(lb), ck = gcmCodeKey_(code);
   if (!bk || !ck) return { ok: false, error: 'Enter your list bill and your access code.' };
   var tk = 'gcm-tries-' + bk.slice(0, 30);
-  if (gcmTries_(tk) >= GCM.TRIES) return { ok: false, error: 'Too many tries. Wait fifteen minutes, or ask our sales support team for your code.' };
+  if (tTries_(tk) >= GCM.TRIES) return { ok: false, error: 'Too many tries. Wait fifteen minutes, or ask our sales support team for your code.' };
   var g = L.reg.filter(function (x) { return x.billKeys.indexOf(bk) >= 0 && x.code && gcmCodeKey_(x.code).length >= GCM.MIN_CODE && gcmCodeKey_(x.code) === ck; })[0];
-  if (!g) { gcmTriesAdd_(tk); return { ok: false, error: 'That list bill and access code do not match. Check both against the e-mail we sent.' }; }
-  gcmTriesClear_(tk);
+  if (!g) { tTriesAdd_(tk); return { ok: false, error: 'That list bill and access code do not match. Check both against the e-mail we sent.' }; }
+  tTriesClear_(tk);
   return { ok: true, g: g };
 }
 
@@ -943,7 +868,7 @@ function gcmClient_(p) {
   var respondBy = gcmAddDays_(gcmMonday_(today), GCM.RESPOND_DAY - 1);
   if (respondBy < today) respondBy = gcmAddDays_(respondBy, 7);
   var weekAgo = gcmAddDays_(today, -7);
-  return { ok: true, group: g.name, staff: g.ownerActive ? g.assigned : '', asAt: L.refreshed || gcmDmy_(today), today: today, respondBy: respondBy,
+  return { ok: true, group: g.name, staff: g.ownerActive ? g.assigned : '', asAt: L.refreshed || tDmy_(today), today: today, respondBy: respondBy,
     items: shown.map(function (t) {
       return { id: t.id15, title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, cat: t.cat, status: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us',
         done: gcmDoneText_(t.cat, t.status), owner: t.owner, who: t.who, ref: t.ref, opened: t.opened, age: gcmDays_(t.opened, today), due: t.due,
@@ -979,9 +904,9 @@ function gcmReview_(b) {
     var t = shown[gcmId15_(it.id)], v = V[it.v] ? it.v : '', note = String(it.note || '').trim().slice(0, 1500);
     if (!t || (!v && !note)) return;
     var chatter = '';
-    if (gcmSfOn_()) {
+    if (tSfOn_()) {
       try {
-        var res = gcmSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Group review from ' + name + (role ? ', ' + role : '') + ' (' + g.name + '), on their service page: ' +
+        var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'Group review from ' + name + (role ? ', ' + role : '') + ' (' + g.name + '), on their service page: ' +
           (v ? V[v] : 'a note') + (note ? '\n' + note : '') });
         chatter = String(res.id || ''); posted++;
       } catch (e) { failed++; chatter = 'not posted: ' + String(e && e.message ? e.message : e).slice(0, 120); }
@@ -999,30 +924,25 @@ function gcmReview_(b) {
 /** The staff member the group is assigned to, and the branch, hear at once: an internal note, with what changed. */
 function gcmTell_(g, name, rows, rating, comment) {
   var to = [];
-  gcmStaff_().forEach(function (p) { if (p.active && p.role !== 'wall' && gcmNameKey_(p.name) === gcmNameKey_(g.assigned) && /@/.test(p.email)) to.push(p.email); });
-  GCM.TELL.forEach(function (e) { if (to.indexOf(e) < 0) to.push(e); });
+  tTeam_().people.forEach(function (p) { if (tNameKey_(p.name) === tNameKey_(g.assigned) && p.email) to.push(p.email); });
+  if (TRANSITION.CC && TRANSITION.CC.length) to = to.concat(TRANSITION.CC);
   if (!to.length) return;
   var V = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };
   var flag = rows.filter(function (r) { return r.Verdict === 'change' || r.Verdict === 'notours' || r.Note; });
-  var body = '<p><b>' + gcmEsc_(g.name) + '</b> answered on their service page (' + gcmEsc_(name) + ').</p>' +
-    (rating ? '<p>Rating: <b>' + rating + ' of 5</b>' + (comment ? ' — “' + gcmEsc_(comment) + '”' : '') + '</p>' : (comment ? '<p>“' + gcmEsc_(comment) + '”</p>' : '')) +
-    (flag.length ? '<p>To act on:</p><ul>' + flag.map(function (r) { return '<li>' + gcmEsc_(r.Task) + ': <b>' + (V[r.Verdict] || 'a note') + '</b>' + (r.Note ? ' — “' + gcmEsc_(r.Note) + '”' : '') + '</li>'; }).join('') + '</ul>'
+  var body = '<p><b>' + tEsc_(g.name) + '</b> answered on their service page (' + tEsc_(name) + ').</p>' +
+    (rating ? '<p>Rating: <b>' + rating + ' of 5</b>' + (comment ? ' — “' + tEsc_(comment) + '”' : '') + '</p>' : (comment ? '<p>“' + tEsc_(comment) + '”</p>' : '')) +
+    (flag.length ? '<p>To act on:</p><ul>' + flag.map(function (r) { return '<li>' + tEsc_(r.Task) + ': <b>' + (V[r.Verdict] || 'a note') + '</b>' + (r.Note ? ' — “' + tEsc_(r.Note) + '”' : '') + '</li>'; }).join('') + '</ul>'
       : '<p>Every item they marked is correct.</p>') +
     '<p>Each note is also on the task’s Chatter in Salesforce. <a href="' + GCM.SITE + '">Open group client management</a></p>' +
-    '<p style="color:#777;font-size:12px">' + gcmEsc_(GCM_INTERNAL) + '</p>';
-  MailApp.sendEmail({ to: to.join(','), subject: 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : ''), htmlBody: body, name: GCM.FROM_NAME });
+    '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
+  MailApp.sendEmail({ to: to.join(','), subject: 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
 }
 
-/* ── the wall, on the wall code ──────────────────────────────────── */
+/* ── the wall, on the branch code ────────────────────────────────── */
 
-/** The wall signs in with the password of a Wall row on Group Staff, which opens the wall and nothing else. */
 function gcmWall_(p) {
-  var code = String(p.code || '').trim();
-  var walls = gcmStaff_().filter(function (r) { return r.active && r.role === 'wall' && r.pass.length >= GCM.MIN_PASS; });
-  if (!walls.length) return { ok: false, refused: true, error: 'Not open yet: there is no wall code on Group Staff. Run Group clients → Set up.' };
-  if (gcmTries_('gcm-wall') >= 10) return { ok: false, refused: true, error: 'Too many tries. Wait fifteen minutes.' };
-  if (!code || !walls.some(function (r) { return r.pass === code; })) { gcmTriesAdd_('gcm-wall'); return { ok: false, refused: true, error: 'That is not the wall code.' }; }
-  gcmTriesClear_('gcm-wall');
+  var ok = tCodeOk_(p.code);
+  if (!ok.ok) return { ok: false, refused: ok.configured, error: ok.configured ? 'That is not the branch code.' : 'Not open yet: the branch code is not set in Service.gs (TEAM_CODE).' };
   var L = gcmLoad_(), today = L.today;
   return { ok: true, today: today, dow: gcmDow_(today), sendDay: GCM.SEND_DAY, refreshed: L.refreshed, analytics: gcmAnalytics_(L),
     groups: L.reg.map(function (g) { var s = gcmGroupStats_(g, today); return { name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, open: s.open, late: s.late, waiting: s.waiting, oldest: s.oldest,
@@ -1034,122 +954,3 @@ function gcmRefreshAsked_(p) {
   if (!who.ok) return who;
   return gcmRefreshLocked_();
 }
-
-/* ── Group Staff: who may sign in ────────────────────────────────── */
-
-function gcmStaffRows_() { return gcmRows_(GCM.STAFF); }
-/** A role as this file uses it: 'branch' (Manager, Branch Manager, Assistant Branch Manager), 'wall', else 'staff'. */
-function gcmRoleOf_(r) {
-  r = gcmText_(r).toLowerCase();
-  return /wall/.test(r) ? 'wall' : /manager/.test(r) ? 'branch' : 'staff';
-}
-function gcmStaff_() {
-  return gcmStaffRows_().filter(function (r) { return gcmText_(r.Name) || gcmText_(r['E-mail']); }).map(function (r) {
-    return { _n: r._n, name: gcmText_(r.Name), email: gcmText_(r['E-mail']), role: gcmRoleOf_(r.Role), pass: gcmText_(r.Password),
-      active: !/^(n|no|false|0|inactive|not active|left)$/i.test(gcmText_(r.Active)) };
-  });
-}
-/** Every account owner the refresh met who is not on Group Staff yet joins it as Staff, with Salesforce's name (the
- *  name the board matches on) and e-mail, and a password of their own. An owner no longer active in Salesforce is not
- *  added. Returns the names added. */
-function gcmStaffSync_(owners) {
-  var have = {}, add = [];
-  gcmStaff_().forEach(function (x) { have[gcmNameKey_(x.name)] = true; });
-  Object.keys(owners).forEach(function (k) {
-    var o = owners[k], nk = gcmNameKey_(o.name);
-    if (!o.name || !o.active || have[nk]) return;
-    have[nk] = true;
-    add.push({ Name: o.name, 'E-mail': o.email, Role: 'Staff', Password: gcmNewPass_(), Active: 'Y',
-      Note: 'Added by the refresh on ' + gcmWhen_(new Date()) + ': owns a group account in Salesforce. The name must stay as Salesforce has it.' });
-  });
-  gcmAppend_(GCM.STAFF, add);
-  return add.map(function (x) { return x.Name; });
-}
-/** A password for every row without one (the wall's included). Returns how many were made. */
-function gcmPasswords_() {
-  var sh = gcmSS_().getSheetByName(GCM.STAFF);
-  if (!sh) return 0;
-  var col = GCM_HEAD[GCM.STAFF].indexOf('Password') + 1, made = 0;
-  gcmStaffRows_().forEach(function (r) {
-    if ((gcmText_(r.Name) || gcmText_(r['E-mail'])) && !gcmText_(r.Password)) { sh.getRange(r._n, col).setNumberFormat('@').setValue(gcmNewPass_()); made++; }
-  });
-  return made;
-}
-/** Ten digits (a phone shows a number pad), from a UUID's own digits; never a leading 0, which a sheet would drop. */
-function gcmNewPass_() { var s = ''; while (s.length < 10) { s += Utilities.getUuid().replace(/[^0-9]/g, ''); s = s.replace(/^0+/, ''); } return s.slice(0, 10); }
-function gcmMe_() { try { return Session.getEffectiveUser().getEmail() || ''; } catch (e) { return ''; } }
-
-/* ── small things ─────────────────────────────────────────────────── */
-
-function gcmTz_() {
-  try { var z = gcmSS_().getSpreadsheetTimeZone(); if (z) return z; } catch (e) {}
-  return Session.getScriptTimeZone() || 'America/Port_of_Spain';
-}
-/** Say it on screen when there is one (the menu); the editor's Run button has none, so the execution log. */
-function gcmSay_(msg) { try { SpreadsheetApp.getUi().alert(msg); } catch (e) { console.log(msg); } return msg; }
-function gcmEsc_(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
-/** Plain text from a Salesforce rich-text field: paragraphs and breaks as new lines, tags dropped, entities read. */
-function gcmPlain_(s) {
-  return String(s == null ? '' : s).replace(/<\s*br\s*\/?>/gi, '\n').replace(/<\/\s*(p|div|li)\s*>/gi, '\n').replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'")
-    .replace(/[ \t\u00a0]+/g, ' ').replace(/ *\n */g, '\n').replace(/\n{3,}/g, '\n\n').trim();
-}
-var GCM_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-function gcmDmy_(ymd) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(ymd || ''); return m ? Number(m[3]) + ' ' + GCM_MON[Number(m[2]) - 1] + ' ' + m[1] : ''; }
-function gcmNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
-function gcmTries_(k) { try { return Number(CacheService.getScriptCache().get(k) || 0); } catch (e) { return 0; } }
-function gcmTriesAdd_(k) { try { CacheService.getScriptCache().put(k, String(gcmTries_(k) + 1), GCM.LOCK_S); } catch (e) {} }
-function gcmTriesClear_(k) { try { CacheService.getScriptCache().remove(k); } catch (e) {} }
-
-/* ── Microsoft 365: letters go as support@ (the MS_* Script properties, the same values as the Service
-      Questionnaire project's); without them a letter opens in the staff member's own Outlook ─────────── */
-
-function gcmMsCreds_() {
-  var p = PropertiesService.getScriptProperties();
-  var c = { tenant: p.getProperty('MS_TENANT'), client: p.getProperty('MS_CLIENT'), secret: p.getProperty('MS_SECRET') };
-  return (c.tenant && c.client && c.secret) ? c : null;
-}
-function gcmMsToken_() {
-  var cache = CacheService.getScriptCache(), hit = cache.get('gcm-ms-token');
-  if (hit) return hit;
-  var c = gcmMsCreds_();
-  if (!c) throw new Error('Microsoft 365 is not set up: MS_TENANT, MS_CLIENT and MS_SECRET.');
-  var res = UrlFetchApp.fetch('https://login.microsoftonline.com/' + encodeURIComponent(c.tenant) + '/oauth2/v2.0/token', {
-    method: 'post', muteHttpExceptions: true,
-    payload: { client_id: c.client, client_secret: c.secret, grant_type: 'client_credentials', scope: 'https://graph.microsoft.com/.default' } });
-  var body = {};
-  try { body = JSON.parse(res.getContentText()); } catch (e) {}
-  if (res.getResponseCode() !== 200 || !body.access_token)
-    throw new Error('Microsoft 365 refused the sign-in: ' + String(body.error_description || body.error || ('HTTP ' + res.getResponseCode())).split('\n')[0].slice(0, 200));
-  try { cache.put('gcm-ms-token', body.access_token, Math.max(60, Math.min(3000, (body.expires_in || 3600) - 300))); } catch (e) {}
-  return body.access_token;
-}
-/** One e-mail, sent as support@ and kept in its Sent Items. Throws with Microsoft's reason on anything but "accepted". */
-function gcmMsSend_(to, subject, html, o) {
-  o = o || {};
-  var addr = function (list) { return (list || []).filter(function (a) { return String(a || '').trim(); }).map(function (a) { return { emailAddress: { address: String(a).trim() } }; }); };
-  var msg = { subject: subject, body: { contentType: 'HTML', content: html },
-    from: { emailAddress: { name: GCM.FROM_NAME, address: GCM.MS_FROM } }, toRecipients: addr([to]) };
-  if (o.cc && o.cc.length) msg.ccRecipients = addr(o.cc);
-  if (o.bcc && o.bcc.length) msg.bccRecipients = addr(o.bcc);
-  if (o.replyTo) msg.replyTo = addr([o.replyTo]);
-  var res = UrlFetchApp.fetch('https://graph.microsoft.com/v1.0/users/' + encodeURIComponent(GCM.MS_FROM) + '/sendMail', {
-    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
-    headers: { Authorization: 'Bearer ' + gcmMsToken_() }, payload: JSON.stringify({ message: msg, saveToSentItems: true }) });
-  var code = res.getResponseCode();
-  if (code === 202) return;
-  if (code === 401) { try { CacheService.getScriptCache().remove('gcm-ms-token'); } catch (e) {} }
-  var why = 'HTTP ' + code;
-  try { var err = JSON.parse(res.getContentText()).error; if (err) why = (err.code ? err.code + ': ' : '') + (err.message || ''); } catch (e) {}
-  throw new Error('Microsoft 365 did not send: ' + why.slice(0, 200));
-}
-
-/* the footer every group letter carries, and the line every internal e-mail carries */
-var GCM_LEGAL = '<p style="margin:16px 0 0;font:400 12px/1.5 Arial,sans-serif;color:#64798e"><b style="color:#4a5f74">Confidential.</b> ' +
-  'This e-mail is for the people it is addressed to and concerns your group\'s plans with Guardian Life of the Caribbean. If it has reached you in ' +
-  'error, please tell us by reply and delete it; do not forward it. Information about your plans and your members is handled under the General ' +
-  'Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act 2018 places on everyone ' +
-  'who works for an insurer: it is used only to look after your plans, is never sold, and is never disclosed without consent unless the law requires ' +
-  'it. Any concern about how it has been handled can go to our branch by reply, to Guardian Life of the Caribbean, or to the Office of the ' +
-  'Information Commissioner.</p>';
-var GCM_INTERNAL = 'Internal to the Ricky Rampersad Branch. This e-mail carries client information: do not forward it outside the branch.';

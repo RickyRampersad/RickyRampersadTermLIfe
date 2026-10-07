@@ -7,63 +7,53 @@ how every group is being serviced; the wall shows it to the branch.
 
 | Page | Who | Signs in with |
 |---|---|---|
-| `/groupclientmanagement/` | staff (their groups) and the branch manager (every group, the dashboard) | e-mail and password from the Group Staff tab |
+| `/groupclientmanagement/` | staff (their groups) and the branch manager (every group, the dashboard) | agent number and password from the Agent Skill Bank, or the branch code |
 | `/groupclientmanagement/client.html` | a group (the "Group Client Portal" tile on the home page) | its list bill and its access code |
-| `/groupclientmanagement/wall.html` | the wall screen | the wall code (the Wall row's password) |
+| `/groupclientmanagement/wall.html` | the wall screen | the branch code |
 
-The pages hold no client data. Everything comes from `apps-script/GroupClients.gs`,
-to someone who has signed in.
+The pages hold no client data. Everything comes from `apps-script/GroupClients.gs`
+in the Service Questionnaire project, to someone who has signed in.
 
-**One sheet, one script, nothing shared.** The script lives in the
-**Group Client Management** Google Sheet's own Apps Script project, beside the
-tabs it reads and writes. It has its own sign-in (the Group Staff tab), its own
-copy of the Salesforce and Microsoft 365 properties, and its own web app
-address. It touches nothing in the Service Questionnaire project, and must
-never be pasted there: it defines `doGet` and `doPost`, and two of each in one
-project would take the questionnaire, the assignment board and the walls off
-the air.
+**Two spreadsheets, one script.** The group tabs (the register, the Salesforce
+snapshot, the letters sent, the groups' answers, what is shared) live in their
+own Google Sheet, **Group Client Management**. The script lives in the Service
+Questionnaire project, because that is where the staff sign-in (the Agent Skill
+Bank), the Salesforce login, the support@ mailbox and the web address already
+are; it opens the group sheet by its ID, held in the `GCM_SHEET_ID` Script
+property and never in the code, since the `.gs` files are public.
 
 ## Once
 
-1. **Open the script.** In the Group Client Management sheet: Extensions →
-   Apps Script. Replace whatever is in `Code.gs` with this repository's
-   `apps-script/GroupClients.gs` (or add it as a file of that name and empty
-   `Code.gs`). Save.
-2. **Script properties** (Project Settings, the gear → Script properties). Copy
-   the values from the Service Questionnaire project's own Script properties:
-   - `SF_KEY`, `SF_SECRET`, `SF_USER`, `SF_PASS` (and `SF_LOGIN_URL` if it is
-     there): Salesforce. Without them nothing can be read.
+1. **Paste the scripts.** In the Service Questionnaire Apps Script project (the
+   one with `Service.gs`, `Transition.gs` and `ServiceSalesforce.gs`):
+   - add a new file `GroupClients.gs` and paste this repository's copy;
+   - paste `Service.gs` from this repository. It differs only by two lines, one
+     in `doGet` and one in `doPost`, that hand every `gcm.*` request to
+     `GroupClients.gs`. **Put the branch code back into `TEAM_CODE`**: the
+     repository copy ships it empty.
+2. **Check the Script properties** (Project Settings → Script properties):
+   - `SF_KEY`, `SF_SECRET`, `SF_USER`, `SF_PASS`: the Salesforce sign-in the
+     assignment board already uses. Without them nothing can be read.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
-3. **Reload the sheet.** A **Group clients** menu appears. Choose
-   **Set up** (authorise when asked). It adds the `Group Tasks`, `Group Sends`,
-   `Group Responses`, `Group Shares` and `Group Staff` tabs, puts you (as
-   Manager) and the wall on Group Staff with a password each, and installs the
-   hourly refresh.
-4. **Group clients → Refresh from Salesforce.** It fills Group Tasks, writes
-   each group's account owner onto the register, and adds every account owner
-   to Group Staff with Salesforce's name and e-mail and a password of their own.
-5. **Deploy → New deployment → Web app**: execute as **Me**, who has access
-   **Anyone**. Copy the `/exec` address it gives into
-   `groupclientmanagement/api.js` (or send it to Claude, who will). That is the
-   only time **New deployment** is right: afterwards, every change is Manage
-   deployments → pencil → **New version**, which keeps the address.
-6. **Hand out the passwords** from Group Staff, each to its own person.
-   **Group clients → Who can sign in** lists everyone and why anyone cannot,
-   never a password.
-
-## Group Staff
-
-| Column | What it does |
-|---|---|
-| Name | for staff, the name exactly as Salesforce has it: a staff member sees the groups whose account they own, matched by this name. The refresh writes it, so leave it as it is |
-| E-mail | what they sign in with (any capitals). It also gets the note when one of their groups answers |
-| Role | **Staff** (their own groups), **Manager** (every group and the dashboard), **Wall** (the wall code: opens the wall and nothing else) |
-| Password | at least eight characters, or nothing opens. Set up and the refresh make ten-digit ones; type your own over any of them |
-| Active | N (or No, Inactive, Left) shuts a person out without deleting the row |
-
-Ten wrong passwords on one e-mail close it for fifteen minutes.
+   - `GCM_SHEET_ID`: the ID of the **Group Client Management** sheet (the long
+     part of its address between `/d/` and `/edit`; pasting the whole address
+     works too). That sheet starts with one tab, `Group Register`, built
+     outside the repository: each group's Salesforce account, list bills,
+     match words, contact and code. The script owner must be able to edit it.
+3. **Run `gcmSetup`** from the editor, with `GroupClients.gs` open (authorise
+   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses` and
+   `Group Shares` tabs to the group sheet, says which sheet it used, and
+   installs the hourly refresh. Then **run `gcmRefresh`** once to fill
+   `Group Tasks`.
+4. **Deploy → Manage deployments → pencil → New version.** Never New
+   deployment: that changes the address every page uses.
+5. **Staff on the Agent Skill Bank** need a Password of at least eight
+   characters and a Role. Staff ("Sales Support", "Staff", "Assistant") see the
+   groups whose Salesforce account they own (matched by name: the name on the
+   Agent Skill Bank must be the same person's name in Salesforce); "Branch Manager" and "Assistant Branch Manager" see
+   every group and the dashboard. Agents and unit managers are refused.
 
 ## The register
 
@@ -108,8 +98,7 @@ letter without a To.
   sales support.
 - **The group answers by Friday** (`GCM.RESPOND_DAY`): correct, needs a change,
   or not ours, with a note, which goes onto that task's Chatter; and a rating.
-  The staff member, sales support and the branch manager get an internal
-  e-mail at once.
+  The staff member and the branch get an internal e-mail at once.
 - **The manager's dashboard and the wall** show letters sent against due,
   open and past-target items, completed this year, the share done by its due
   date, average days, answers, ratings and accuracy (the share of items groups
@@ -117,10 +106,8 @@ letter without a To.
 
 ## Tests
 
-The script is tested in Node on its own, nothing else loaded, on made-up
-groups (74 checks: the tabs, Group Staff and the passwords, the refresh, who
-sees what, sharing, the letter, sending, answers, the wall, its own web app),
-and the three pages in Chromium against the same backend (29 checks, including
-what each page says before its address is in `api.js`). The queries the
-refresh builds from the real register were run read-only against Salesforce on
-7 October 2026: every one valid.
+The scripts are tested in Node on made-up groups (61 checks: the refresh, who
+sees what, sharing, the letter, sending, answers, the wall, the routing), and
+the four pages in Chromium against the same backend (26 checks). The queries
+the refresh builds from the real register were run read-only against
+Salesforce on 7 October 2026: every one valid.

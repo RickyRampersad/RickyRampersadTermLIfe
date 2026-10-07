@@ -104,10 +104,8 @@ footer a{color:inherit}
 </main>
 <footer>Questions? <a href="mailto:rickyrampersadsalessupport@myguardiangroup.com">rickyrampersadsalessupport@myguardiangroup.com</a> · <a href="../index.html">Ricky Rampersad Branch</a></footer>
 
-<script src="api.js"></script>
 <script>
-/* the group sheet's own web app: its address is in api.js */
-const SVC = /^https:\/\/script\.google\.com\/.+\/exec$/.test(window.GCM_API || '') ? window.GCM_API : '';
+const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MON = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -126,8 +124,7 @@ async function open_() {
   const err = $('err'), go = $('go');
   if (go) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening your page…'; }
   let d;
-  if (!SVC) d = { ok: false, error: 'Our service pages are being set up. Please try again a little later.' };
-  else try {
+  try {
     const txt = await (await fetch(SVC + '?action=gcm.client&lb=' + encodeURIComponent(CRED.lb) + '&code=' + encodeURIComponent(CRED.code) + '&z=' + Date.now())).text();
     try { d = JSON.parse(txt); } catch (x) { d = { ok: false, error: 'Our service pages are being updated. Please try again a little later.' }; }
   } catch (x) { d = { ok: false, error: 'We could not reach our system. Check your connection and try again.' }; }
