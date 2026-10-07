@@ -75,12 +75,18 @@ property and never in the code, since the `.gs` files are public.
 | List bills | how the group signs in, and how its employees' policies are found (any spelling: "TGM 1099" and "TGM1099" are one) |
 | Match words | words in task subjects that name the group. One word must stand alone ("ACME" never matches "Acmeline"); several words may run on ("ACME & CO" matches "ACME & COMPANY") |
 | Owner in Salesforce, Owner active | written by the refresh, never by hand: the staff member a group is assigned to is its account's owner in Salesforce. To move a group, change the account owner in Salesforce; the next refresh (hourly, or "Refresh from Salesforce") moves it on the board. A group on two accounts takes the first owner still active. An owner who is no longer an active user puts the group at the top of the manager's "To act on" |
-| To, Cc, Greeting | who the letter goes to. A group with no To cannot be sent |
+| Contact in Salesforce, Contact e-mail, Contact greeting | written by the refresh, never by hand: the letter goes to the account's **Contact Person** in Salesforce, or, when it has none, to the account's own e-mail. To change who receives the letter, change the Contact Person in Salesforce and refresh. The greeting is "Ms. Arman" from the salutation and surname, or the name in full |
+| To, Cc, Greeting | To is read only for a group whose account has no contact with an e-mail in Salesforce. Cc is always copied. A Greeting typed here is used instead of Salesforce's |
 | Code | the group's access code. Under ten characters opens nothing |
 | Enabled | N stops a group without deleting it |
 
 A group cannot sign in without a list bill and a code, and cannot be sent a
-letter without a To.
+letter without a contact: a Contact Person with an e-mail on its Salesforce
+account, the account's own e-mail, or, failing both, a To on the register. The
+group page and the preview say who the letter goes to and where that came from,
+and point out a personal mailbox (gmail, hotmail and the like): the letter
+carries the group's access code, and a personal address on an account may
+belong to someone who has since left the company.
 
 ## What a group sees, and what it never sees
 

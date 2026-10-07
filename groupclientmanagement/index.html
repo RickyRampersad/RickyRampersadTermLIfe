@@ -277,7 +277,8 @@ function drawGroup() {
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
     (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
-    ' · Letter goes to ' + (g.to.length ? esc(g.to.join(', ')) + (g.cc.length ? ', copy ' + esc(g.cc.join(', ')) : '') : '<b style="color:var(--badText)">nobody: add the contact on the Group Register</b>') + '</p>' +
+    ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
+    (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
     '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
@@ -339,11 +340,17 @@ async function share(body, el, reload) {
   toast(body.kind === 'note' ? 'Posted to the task’s Chatter, and shown to the group.' : 'Saved.');
   if (reload) openGroup(GROUP.group.key);
 }
+/* who the letter goes to, and where that came from: the account's Contact Person in Salesforce, or the register */
+function toLine(o) {
+  return '<b>' + (o.contact ? esc(o.contact) + ' &lt;' + esc(o.to.join(', ')) + '&gt;' : esc(o.to.join(', '))) + '</b>' +
+    ' <span class="muted">(' + (o.toFrom === 'salesforce' ? (o.contact ? 'the account’s Contact Person in Salesforce' : 'the account’s e-mail in Salesforce') : 'from the Group Register') + ')</span>' +
+    (o.cc && o.cc.length ? ', copy ' + esc(o.cc.join(', ')) : '');
+}
 async function preview() {
   const box = $('pvBox'); box.innerHTML = '<p class="muted">Writing the letter from this group’s numbers…</p>';
   const r = await api({ action: 'gcm.preview', group: GROUP.group.key, intro: $('intro').value });
   if (!r.ok) { box.innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
-  box.innerHTML = '<p class="small" style="margin:12px 0 6px">To <b>' + esc(r.to.join(', ') || 'nobody') + '</b>' + (r.cc.length ? ', copy ' + esc(r.cc.join(', ')) : '') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
+  box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
     '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
     (r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
       (r.mail ? '<button class="btn gold" type="button" id="sd" disabled>Send from support@</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button></div>' +

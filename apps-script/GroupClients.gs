@@ -94,7 +94,8 @@ var GCM = {
 };
 
 var GCM_HEAD = {
-  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
+  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail',
+                      'Contact in Salesforce', 'Contact e-mail', 'Contact greeting', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
@@ -249,6 +250,7 @@ function gcmWhen_(x) {   // a date-time as the pages print it
 /** A list bill as a key: letters and digits only, so "TGM 1099" and "TGM1099", "PIND - 067" and "PIND067" are one. */
 function gcmBillKey_(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 function gcmCodeKey_(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function gcmEmailOk_(s) { return /^[^@\s;,]+@[^@\s;,]+\.[a-z]{2,}$/i.test(String(s || '').trim()); }
 function gcmId15_(s) { return String(s || '').slice(0, 15); }
 
 /* ── the register ───────────────────────────────────────────────── */
@@ -256,20 +258,30 @@ function gcmId15_(s) { return String(s || '').slice(0, 15); }
 /** Every enabled group: { key, name, accts (15-character ids), acctsFull, bills, billKeys, match, assigned, ownerActive,
  *  to, cc, greeting, code, note }. `assigned` is the account's owner in Salesforce, which the refresh writes onto the
  *  register as a mirror: to move a group to someone else, change the account owner in Salesforce. There is no column
- *  that overrides it, so the board and Salesforce can never disagree about who looks after a group. */
+ *  that overrides it, so the board and Salesforce can never disagree about who looks after a group.
+ *  `to` is the account's Contact Person in Salesforce, mirrored the same way (asked for on 7 October 2026: "there is a
+ *  contact on the account with an email"); the register's own To is read only for a group whose account has no
+ *  contact with an e-mail. The register's Greeting, when filled, is how the letter opens; else Salesforce's. */
 function gcmRegister_() {
   return gcmRows_(GCM.REGISTER).filter(function (r) {
     return gcmText_(r.Group) && !/^(n|no|false|0)$/i.test(gcmText_(r.Enabled));
   }).map(function (r) {
     var accts = gcmList_(r['Account Ids']), bills = gcmList_(r['List bills']);
     var owner = gcmText_(r['Owner in Salesforce']);
-    return {
+    var g = {
       _n: r._n, key: gcmCodeKey_(r.Group), name: gcmText_(r.Group),
       accts: accts.map(gcmId15_), acctsFull: accts, bills: bills, billKeys: bills.map(gcmBillKey_),
       match: gcmList_(r['Match words']), assigned: owner, owner: owner, ownerActive: !/^(n|no|false)$/i.test(gcmText_(r['Owner active'])),
       ownerEmail: gcmText_(r['Owner e-mail']).toLowerCase(),
-      to: gcmList_(r.To), cc: gcmList_(r.Cc), greeting: gcmText_(r.Greeting), code: gcmText_(r.Code), note: gcmText_(r.Note)
+      code: gcmText_(r.Code), note: gcmText_(r.Note)
     };
+    var sfTo = gcmText_(r['Contact e-mail']).toLowerCase(), regTo = gcmList_(r.To).filter(gcmEmailOk_);
+    g.to = gcmEmailOk_(sfTo) ? [sfTo] : regTo;
+    g.toFrom = gcmEmailOk_(sfTo) ? 'salesforce' : regTo.length ? 'register' : '';
+    g.contact = g.toFrom === 'salesforce' ? gcmText_(r['Contact in Salesforce']) : '';
+    g.cc = gcmList_(r.Cc).filter(function (a) { return gcmEmailOk_(a) && g.to.indexOf(a.toLowerCase()) < 0; });
+    g.greeting = gcmText_(r.Greeting) || (g.toFrom === 'salesforce' ? gcmText_(r['Contact greeting']) : '');
+    return g;
   });
 }
 
@@ -310,6 +322,18 @@ function gcmQuery_(soql) {
 }
 function gcmIn_(list) { return list.map(function (x) { return "'" + svcSoqlLit_(x) + "'"; }).join(','); }
 function gcmName_(rec, key) { var v = rec && rec[key]; return v && typeof v === 'object' ? String(v.Name || '') : ''; }
+/** Who an account's letter goes to: its Contact Person when that contact has an e-mail, else the account's own e-mail
+ *  (Email__c, a mailbox with no name, so the letter opens "Dear Sir or Madam"). Greeting: "Ms. Arman", or the name in
+ *  full when Salesforce has no salutation. */
+function gcmContactOf_(a) {
+  var c = a.Contact_Person__r || {}, em = String(c.Email || '').trim().toLowerCase();
+  if (gcmEmailOk_(em)) {
+    var sal = String(c.Salutation || '').trim(), last = String(c.LastName || '').trim(), name = String(c.Name || '').trim();
+    return { name: name, email: em, greeting: sal && last ? sal + ' ' + last : name };
+  }
+  em = String(a.Email__c || '').trim().toLowerCase();
+  return gcmEmailOk_(em) ? { name: '', email: em, greeting: '' } : { name: '', email: '', greeting: '' };
+}
 
 /** Whether a task names the group: a match word starting a word in its subject or record name. A single match word must
  *  also end one ("ACME" never matches "Acmeline"); a name of several words may run on ("ACME & CO" matches "ACME &
@@ -390,10 +414,19 @@ function gcmRefresh_() {
     });
   });
 
-  /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active */
-  var owners = {};
-  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.Email, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
+  /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active; and who
+     the letter goes to: the account's Contact Person, else the account's own e-mail */
+  var owners = {}, contacts = {};
+  if (accts.length) gcmQuery_('SELECT Id, Email__c, Owner.Name, Owner.Email, Owner.IsActive, Contact_Person__r.Name, Contact_Person__r.FirstName, ' +
+    'Contact_Person__r.LastName, Contact_Person__r.Salutation, Contact_Person__r.Email FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
     owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false) };
+    contacts[gcmId15_(a.Id)] = gcmContactOf_(a);
+  });
+  reg.forEach(function (g) {
+    /* the first of a group's accounts with a contact; this refresh's e-mails are read against it at once */
+    var c = g.accts.map(function (a) { return contacts[a]; }).filter(function (x) { return x && x.email; })[0];
+    g.sfContact = c || (g.accts.some(function (a) { return contacts[a]; }) ? { name: '', email: '', greeting: '' } : null);
+    if (c) { g.to = [c.email]; g.cc = g.cc.filter(function (a) { return a.toLowerCase() !== c.email; }); }
   });
 
   /* the employees: every policy on the group's account or carrying its list bill, and the contact behind it */
@@ -469,11 +502,19 @@ function gcmRefresh_() {
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
-  ['Owner in Salesforce', 'Owner active', 'Owner e-mail'].forEach(function (h) {
+  ['Owner in Salesforce', 'Owner active', 'Owner e-mail', 'Contact in Salesforce', 'Contact e-mail', 'Contact greeting'].forEach(function (h) {
     if (regHead.indexOf(h) < 0) { regSh.getRange(1, regHead.length + 1).setValue(h).setFontWeight('bold'); regHead.push(h); }
   });
   var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1, ecol = regHead.indexOf('Owner e-mail') + 1;
+  var ccol = regHead.indexOf('Contact in Salesforce') + 1, cecol = regHead.indexOf('Contact e-mail') + 1, cgcol = regHead.indexOf('Contact greeting') + 1;
   reg.forEach(function (g) {
+    /* a contact taken off the account in Salesforce comes off the register too; an account Salesforce did not return
+       (a wrong id on the register) leaves the columns as they were */
+    if (g.sfContact) {
+      regSh.getRange(g._n, ccol).setValue(g.sfContact.name);
+      regSh.getRange(g._n, cecol).setValue(g.sfContact.email);
+      regSh.getRange(g._n, cgcol).setValue(g.sfContact.greeting);
+    }
     /* a group on two accounts takes the first owner still active in Salesforce, else the first owner */
     var cand = g.accts.map(function (a) { return owners[a]; }).filter(function (x) { return x && x.name; });
     var o = cand.filter(function (x) { return x.active; })[0] || cand[0];
@@ -732,7 +773,7 @@ function gcmGroupStats_(g, today) {
   g.resps.forEach(function (r) { if (s.verdicts[r.verdict] !== undefined) s.verdicts[r.verdict]++; });
   s.lastResponse = g.resps.length ? g.resps[g.resps.length - 1].at : '';
   s.ready = !!(g.to.length && g.code && g.bills.length);
-  s.why = !g.to.length ? 'No client contact on the register' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
+  s.why = !g.to.length ? 'No Contact Person with an e-mail on the account in Salesforce' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
   return s;
 }
 
@@ -877,7 +918,8 @@ function gcmGroupView_(p) {
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
   return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '', reasonDays: GCM.REASON_DAYS, ai: !!gcmAiKey_(),
-    group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, greeting: g.greeting, hasCode: !!g.code, note: g.note },
+    group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact,
+      personal: gcmPersonal_(g), greeting: g.greeting, hasCode: !!g.code, note: g.note },
     stats: gcmGroupStats_(g, today), items: items, record: gcmRecord_(g, today),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.done >= weekAgo; }).map(function (t) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
@@ -968,6 +1010,10 @@ function gcmLetter_(g, today, staffName, intro) {
     waiting: waiting.length, late: late.length, open: shown.length };
 }
 
+/** A letter carries the group's access code, so staff are told when it is going to a personal mailbox (gmail, hotmail
+ *  and the like) rather than the company's own: it may be an old employee's. */
+function gcmPersonal_(g) { return g.to.filter(function (a) { return GCM_PUBLIC_MAIL.test(a); }); }
+
 function gcmPreview_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
@@ -975,7 +1021,7 @@ function gcmPreview_(p) {
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
   var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(p.intro || '').slice(0, 1200));
   var need = gcmNeedReasons_(g, L.today);
-  return { ok: true, letter: letter, to: g.to, cc: g.cc, copy: GCM.COPY, ready: s.ready && !need.length, why: s.why || gcmNeedSay_(need), needReason: need, mail: !!tMsCreds_() };
+  return { ok: true, letter: letter, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact, personal: gcmPersonal_(g), copy: GCM.COPY, ready: s.ready && !need.length, why: s.why || gcmNeedSay_(need), needReason: need, mail: !!tMsCreds_() };
 }
 
 /** Send the week's letter, and log it. The letter is written here again from the sheet, never taken from the page.

@@ -2470,6 +2470,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   alone matches nothing. Letters and Chatter notes are signed with the name
   as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
   the owner's Salesforce address.
+- **The letter goes to the account's Contact Person in Salesforce** (7 October
+  2026: "there is a contact on the account with an email, why is it she is not
+  able to send?"). Until then only the register's To was read, and it was
+  filled for two groups of seventeen, so most staff could not send at all. The
+  refresh reads `Contact_Person__r` on each account (else the account's own
+  `Email__c`) and mirrors it onto the register as Contact in Salesforce,
+  Contact e-mail and Contact greeting; the register's To counts only for a
+  group with neither, and its Cc and Greeting still apply. Several accounts'
+  Contact Person carries a personal mailbox, and the letter carries the
+  group's access code, so the page and the preview name the address, say
+  where it came from and point out a personal one; staff tick that they
+  checked before it goes.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on
