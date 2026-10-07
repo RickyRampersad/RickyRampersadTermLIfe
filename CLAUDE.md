@@ -2352,6 +2352,55 @@ voice under the new timing and the caption gives it away.
   two-minute refresh waits while a comment is being written. Signing out
   forgets every client opened, every comment not yet saved and every policy
   fetched, so the next person on the device starts clean.
+- **The calls moved onto the board, and the branch opens on what to act on**
+  (7 October 2026: "where does staff make their notes and who to call as we
+  move from the spreadsheet to data entry when call and can see the scripts",
+  then "as the branch manager when you log in where do you see what is to
+  action urgent, the naotes and history staff mande organized and poae to
+  reassign"). **The Call List tab** is each caller's list from the Client
+  Support calls Google Sheet, imported once (built in the scratchpad by
+  `calls7oct/build-call-list.py`): Token, Caller (the full name on the Agent
+  Skill Bank), Order (the caller's own row number, so the terminated book
+  and the action letters stay first), Letter, Call for, Phone, Other
+  numbers, E-mail on file, Address on file, Notice agent, From the calls
+  sheet (the tries, Reached? and outcome typed there, as one line), Call-back
+  and Done. `tCalls_` reads it. A client on it with nothing on Client
+  Responses is a light "to call" row (`tToCall_`: on a caller's list or the
+  no-number list, not Done, never under the manager's hold on a book, never
+  one the books leave out), for the branch and for staff, never for an agent
+  or a unit manager. Staff open on **your calls** (their own list, matched by
+  full name); the branch opens on **act now**: clients still open whose most
+  pressing answer scores 80 or more in `T_PRIORITY` (an agent now, the former
+  agent in touch, a change suggested, a payment to trace, paying in person) or
+  who are late. **A try is logged on the board.** `transitionUpdate_` on a
+  client with no row writes a `/call` row (Response `call`, Referrer `staff:
+  <name>` or `branch`), the branch and staff only. `tCallRow_` makes it the
+  branch's record everywhere `tAssignRow_` already did: never thanked, never
+  chased, never an answer, never a tap on the wall or in the reports; a call
+  marked Called or Met counts as having spoken to the client, so it stops the
+  five-day reminder (`tSpokeCall_` in `tRespondedAt_`). The card then reads
+  "called, no answer yet" with every stamp and note. The panel offers the
+  usual outcomes as one-tap notes and no "still on it" note for a client who
+  has not answered. Nothing typed on the old calls sheet ever reaches the
+  board: the board is the record now. **From the team** (branch only) counts
+  each person's outcomes today and over seven days from the stamps every
+  outcome leaves, and lists their notes newest first; a name opens that
+  client. **Reassign to…** replaces Assign to… on a card that already has an
+  agent. **Scripts** (`client-support.html`, `call-script.html`,
+  `agent-brief.html`, `if-they-say.html`) are linked under the title and on
+  every call row. While automatic client e-mail is held the board says so and
+  the introduce box starts unticked, after an introduction went to a client
+  during training that afternoon. **Households** come from the Household
+  Assignments tab when there is no Households tab (`tHouseholds_`; a family
+  link is then made there too, so one linked pair never hides every other
+  household), and so does the 24 September suggestion when there is no
+  Assignment Plan tab (`tPlan_`). **Speed:** a board request reads Transition
+  Send and the Agent Skill Bank once (`T_READ_ONCE`), and the page draws sixty
+  cards at a time ("Show the next"): on a phone's CPU the branch board went
+  from 6.3 to about 2 seconds after the answer arrives; Apps Script itself
+  still takes some ten seconds to read the sheet. `slow7oct/calls-harness.js`
+  (25 checks, Node, the real tabs) and `slow7oct/board-calls-test.js` (26,
+  Playwright) in the scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
