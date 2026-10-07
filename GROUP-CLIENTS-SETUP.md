@@ -39,6 +39,9 @@ property and never in the code, since the `.gs` files are public.
      `SF_LOGIN_URL` must be its My Domain address. Without them nothing can be
      read, and ServiceSalesforce.gs must be the repository copy (7 October
      2026 or later) to sign in this way.
+   - `ANTHROPIC_API_KEY`: a Claude API key (console.anthropic.com → API keys),
+     for the "Draft with AI" button. Without it the button does not appear
+     and staff write each reason themselves.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
@@ -92,6 +95,32 @@ letter without a To.
   Chatter is where staff write to each other.
 - Salesforce's logged copies of e-mails and the birthday flow's e-mails are not
   work and are never counted (`GCM_LOGGED`).
+
+## Why an item is still open
+
+Every open item carries its own story, rebuilt at each refresh from
+Salesforce (the `History` and `Mails` columns of `Group Tasks`):
+
+- **Where it stands**, one line: waiting on the group since the last e-mail
+  we sent them, with the person handling it since a date, not started and
+  past its target, and so on. A reply from the group says so.
+- **How it got here**: when it opened, the e-mails filed against it by
+  subject line and date, who it was handed to, when it was last worked on,
+  and the target first set against the target now. The group sees only the
+  e-mails that went to or came from its own contacts (the register's To and
+  Cc, or their company's domain); drafts, forwards and notices between
+  colleagues are staff-only. Staff also see how many times the target moved,
+  and a flag when a payment confirmation was e-mailed but the item is still
+  open.
+- **A reason, written by staff**: an item the group sees that has been open
+  more than 30 days needs a note for the group shared in the last 30 days.
+  Until each one has it, Preview says so and Send stays locked. **Draft with
+  AI** writes a first draft from the item's history, e-mail subject lines and
+  internal Chatter (Claude, `claude-opus-5-5`; server-side fallbacks on).
+  Nothing is shared until a person reads it, edits it and presses Post, which
+  puts it on the task's Chatter and on the group's page. The AI is told never
+  to mention an employee's health or a claim, never to quote internal notes,
+  and never to blame anyone.
 
 ## The week
 

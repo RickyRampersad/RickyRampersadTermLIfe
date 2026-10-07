@@ -2502,6 +2502,30 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **Tuesday is send day**; the group is asked to answer by Friday. Every letter
   is logged on `Group Sends` with the letter itself; without Microsoft 365 it
   opens in the staff member's Outlook and is still logged.
+- **Every open item says why it is still open** (7 October 2026: "when the
+  client sees the opened task shall we not give some history why opened so
+  long, to use intelligence", then "you need to scrub emails with the subject
+  line"). Salesforce's feed tracking is on for tasks: `TaskFeed` with its
+  `FeedTrackedChanges` gives the target date first set, each real move of it
+  (each change is written as three rows: old to new, new to blank, blank to
+  new), the status changes and the hand-overs. Each billing record's
+  `EmailMessage`s are the item's e-mails; on an account, only those with the
+  task's own subject line once Re:, Fw:, DRAFT: and FINAL DRAFT: are set
+  aside (`gcmSameSubject_`). The refresh keeps both per open task in the
+  History and Mails columns (`gcmHistories_`, `gcmMails_`) and `gcmStory_`
+  writes the line and the history. **The group sees only e-mails to or from
+  its own contacts** (`gcmToGroup_`: the register's To and Cc, or their
+  company's domain, never a public one): the branch's own notices, drafts to
+  the manager and forwards stay with staff. The manager chose the target
+  "first set for X, now Y" for the group, never the count of moves, which
+  staff see. **An item the group sees, open more than 30 days, needs a note
+  for the group shared in the last 30 days before the letter goes**
+  (`gcmNeedsReason_`; Preview and Send both refuse until then). **Draft with
+  AI** (`gcmDraft_`, `gcmClaude_`) sends the item's facts, e-mail subject
+  lines and internal Chatter to the Claude API (`claude-opus-5-5`, effort
+  low, `fallbacks: "default"`), at the manager's choice, with the key in the
+  `ANTHROPIC_API_KEY` Script property; the draft is never shared until a
+  person edits it and presses Post. A health or claim item gets no draft.
 
 ## Standing rules
 
