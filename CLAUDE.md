@@ -989,6 +989,43 @@ voice under the new timing and the caption gives it away.
   with the internal footer. Nothing goes to the client.
   `health/receipt-wrote-harness.js` covers it (20 checks, 16 of them
   failing on the previous script).
+- **Three automatic e-mails, then a person** (6 October 2026). Measured that
+  morning: the reminder had brought 128 of the 323 clients who answered,
+  84 of them the same day and none after day five; the receipts had gone
+  without a complaint since the 1 October fixes; the "still on it" note had
+  gone to 87 clients and brought 8 of them back in their own words. What
+  clients were writing was not "stop e-mailing me" but "kindly seeking your
+  response" and "why is my policy taking so long": the irritation is in the
+  wait after the e-mails, not in their number. The manager: "it's a human
+  interaction after the third … you don't want to irritate clients with
+  automated emails right through." So a client gets the letter, one reminder
+  if they do not answer, and one receipt when they do, and nothing else from
+  a machine. `ONE_RECEIPT_PER_CLIENT` in Transition.gs: a client who answers
+  again after their receipt is marked `[receipt] held: one receipt per
+  client: a person follows up` and named, with what they answered, in the
+  internal e-mail that names who wrote in (`tWroteAlert_`); a tap that opens
+  the form still brings the questionnaire's own confirmation. `STILL_NOTE_AUTO`
+  false: the chase keeps listing the late clients for the branch and marks
+  them `[chase2] held: automatic notes are off since 6 October: a person
+  sends it from the board`, and the note itself is a press on the assignment
+  board (`tStillClient_`, `tell=still`): open the client, mark the call,
+  tick "Still on it (the team's note, once ever)". The branch and Client
+  Support may press it, because the note is the team's; it goes once ever to
+  a client, is never ticked by default, and carries the same words as before
+  (receipt.json `still`). `RECEIPT_WAIT_MIN` is 15, so the one receipt
+  gathers a slow reader's taps. The receipt's last line tells the client it
+  is the only automatic e-mail they will get about their answers. The call
+  promise is `CALL_WHEN` in build-letters.py, "within two working days"
+  (until then "today or tomorrow", which 223 "call me" taps against a team
+  that reaches thirty clients a day had already broken); it is the branch's
+  own late line (`WAIT_DAYS`), so the alarm and the promise agree, and one
+  edit changes every letter, the page, the receipt, the manual and the call
+  script together. What stands: the reminder at five days, the manager's
+  notes, the introduction when an agent is named, "Send again" by hand. A
+  complaint about a notice itself is never answered by the system: its rows
+  are held for a person, and the manager decides how it is answered.
+  `health/three-mails-harness.js` in the session scratchpad covers it (21
+  checks).
 - **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
   ("When suits you best for a call?": morning, afternoon, evening) is asked
   on the page a tap opens whenever the tap was `callme`, and appears the
@@ -1076,6 +1113,23 @@ voice under the new timing and the caption gives it away.
   after it. On the rehearsal of 30 September this took 121 people who had
   confirmed their address on a call off the reminder. A person can stop
   anyone else's reminder by typing anything but "sent" in their Status.
+  **A run that cannot read the answers reminds nobody** (7 October 2026,
+  the manager: "client do not get the reminders a second time whom have
+  responded"). `tAnswered_` and `tRespondedAt_` used to count nobody as
+  answered when Client Responses could not be read; on that morning's
+  sheet one such run would have sent 120 reminders, every one to a client
+  who had answered. `tRemind_` now reads them strictly, so the run throws
+  and the batch logs `remind-failed`; every other caller reads them as
+  before. The same morning, before the paste, a one-off script outside the
+  repository set Status to `no reminder: answered` or `no reminder: spoke
+  to us` on the 446 clients who had responded and still read "sent". That
+  is the hand-stop above, so the reminder can never pick them whichever
+  script is pasted. Nothing else reads those words. A whole book can be held
+  the same way, with a mark in Exclude (`hold: manager's hold, <date>`):
+  every client e-mail checks Exclude first (the letter, the reminder, Send
+  again, the receipt, the notes and the introduction), and a mark not in
+  `tFilePhoneEmails_`'s list is never lifted by a call. Answers are still
+  recorded.
   **One inbox, one e-mail a day, across runs too.** Sent at keeps the
   first letter's date, so a reminder sent in the 9:00 run did not make its
   inbox busy for the 9:30 run. In the rehearsal, five families in Tricia
@@ -1258,7 +1312,12 @@ voice under the new timing and the caption gives it away.
   `hold: e-mail by phone` in Exclude and who took it, and when, in Reason;
   a row whose letter went to another address (bounced, or the client reads
   a different one) has Sent at and Status cleared so the letter goes again
-  to the new one; the same address already sent to is left alone; a row
+  to the new one, except for a client who already answered a letter that
+  reached them (7 October 2026): their address is updated and nothing
+  else, so the letter never goes to them a second time, while a bounced or
+  no-e-mail client's letter still goes after the go
+  (`health/phone-answered-harness.js`, 8 checks); the same address already
+  sent to is left alone; a row
   held for anything else (an agent, a household, staff, a claim, a check)
   is never touched; each Client Responses row read is marked `[filed…]`.
   The address a letter bounced from is never filed back onto its row, even
@@ -1633,6 +1692,11 @@ voice under the new timing and the caption gives it away.
   FactFind360.** Asked for on 26 September 2026 ("a link for who you are
   going to assign which agent to meet with the client, an agent's login view
   and a manager's login view, on these codes; shall I put FactFind360?").
+  **Its short address is `/orphanmanagement`** (7 October 2026: "a log in
+  so staff can view and log as well agent can do as well"): a stub that
+  forwards to `orphan-transition/assign.html` with the query and the hash,
+  so a `#t=…` link still opens one client. It is a staff address, never one
+  a client holds, which is the only place "orphan" may appear in a URL.
   No: factfind360.com is the fact-find analyzer on Netlify from another
   repository, with no sheet, no codes and none of these clients, and the two
   hosting chains never touch. `orphan-transition/assign.html` sits beside the
@@ -2174,12 +2238,17 @@ voice under the new timing and the caption gives it away.
   Branch Manager (or the branch code) e-mails a client a note,
   because the notes go in his name, and staff are never on the roster to
   be named. "Branch Manager Assistant" is staff, never the branch manager
-  (`tRoleOf_`). Three locks, whatever the tab says: **a password shorter
-  than eight characters opens nothing** (that day every password on the tab
-  was one or two digits, eighteen of the twenty-three the row number and
-  ten shared); anyone who was the agent on these books (the Agent column of
-  Transition Send, `tFormer_`) never signs in and is never on the roster;
-  and ten wrong tries on one number close it for fifteen minutes. The
+  (`tRoleOf_`). The locks, whatever the tab says: anyone who was the agent
+  on these books (the Agent column of Transition Send, `tFormer_`) never
+  signs in and is never on the roster; and ten wrong tries on one number
+  close it for fifteen minutes. **The passwords are the ones on the tab, at
+  the manager's choice** (7 October 2026: "i still want to keep as is").
+  Until then a password shorter than eight characters opened nothing. That
+  day every password on the tab was one or two digits, eighteen of the
+  twenty-three the row number and several shared, and he was told that a
+  guess from an agent number would open the board, his own view included.
+  `T_USERS.MIN` is 1; raising it brings the rule back and changes nothing
+  else. Do not raise it without him. The
   manager's performance portal keeps its own Users tab with the same
   scheme; the board does not read it. New eight-digit passwords, the
   1 October code kept for whoever had one, are built in the scratchpad
@@ -2283,6 +2352,55 @@ voice under the new timing and the caption gives it away.
   two-minute refresh waits while a comment is being written. Signing out
   forgets every client opened, every comment not yet saved and every policy
   fetched, so the next person on the device starts clean.
+- **The calls moved onto the board, and the branch opens on what to act on**
+  (7 October 2026: "where does staff make their notes and who to call as we
+  move from the spreadsheet to data entry when call and can see the scripts",
+  then "as the branch manager when you log in where do you see what is to
+  action urgent, the naotes and history staff mande organized and poae to
+  reassign"). **The Call List tab** is each caller's list from the Client
+  Support calls Google Sheet, imported once (built in the scratchpad by
+  `calls7oct/build-call-list.py`): Token, Caller (the full name on the Agent
+  Skill Bank), Order (the caller's own row number, so the terminated book
+  and the action letters stay first), Letter, Call for, Phone, Other
+  numbers, E-mail on file, Address on file, Notice agent, From the calls
+  sheet (the tries, Reached? and outcome typed there, as one line), Call-back
+  and Done. `tCalls_` reads it. A client on it with nothing on Client
+  Responses is a light "to call" row (`tToCall_`: on a caller's list or the
+  no-number list, not Done, never under the manager's hold on a book, never
+  one the books leave out), for the branch and for staff, never for an agent
+  or a unit manager. Staff open on **your calls** (their own list, matched by
+  full name); the branch opens on **act now**: clients still open whose most
+  pressing answer scores 80 or more in `T_PRIORITY` (an agent now, the former
+  agent in touch, a change suggested, a payment to trace, paying in person) or
+  who are late. **A try is logged on the board.** `transitionUpdate_` on a
+  client with no row writes a `/call` row (Response `call`, Referrer `staff:
+  <name>` or `branch`), the branch and staff only. `tCallRow_` makes it the
+  branch's record everywhere `tAssignRow_` already did: never thanked, never
+  chased, never an answer, never a tap on the wall or in the reports; a call
+  marked Called or Met counts as having spoken to the client, so it stops the
+  five-day reminder (`tSpokeCall_` in `tRespondedAt_`). The card then reads
+  "called, no answer yet" with every stamp and note. The panel offers the
+  usual outcomes as one-tap notes and no "still on it" note for a client who
+  has not answered. Nothing typed on the old calls sheet ever reaches the
+  board: the board is the record now. **From the team** (branch only) counts
+  each person's outcomes today and over seven days from the stamps every
+  outcome leaves, and lists their notes newest first; a name opens that
+  client. **Reassign to…** replaces Assign to… on a card that already has an
+  agent. **Scripts** (`client-support.html`, `call-script.html`,
+  `agent-brief.html`, `if-they-say.html`) are linked under the title and on
+  every call row. While automatic client e-mail is held the board says so and
+  the introduce box starts unticked, after an introduction went to a client
+  during training that afternoon. **Households** come from the Household
+  Assignments tab when there is no Households tab (`tHouseholds_`; a family
+  link is then made there too, so one linked pair never hides every other
+  household), and so does the 24 September suggestion when there is no
+  Assignment Plan tab (`tPlan_`). **Speed:** a board request reads Transition
+  Send and the Agent Skill Bank once (`T_READ_ONCE`), and the page draws sixty
+  cards at a time ("Show the next"): on a phone's CPU the branch board went
+  from 6.3 to about 2 seconds after the answer arrives; Apps Script itself
+  still takes some ten seconds to read the sheet. `slow7oct/calls-harness.js`
+  (25 checks, Node, the real tabs) and `slow7oct/board-calls-test.js` (26,
+  Playwright) in the scratchpad cover it.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
