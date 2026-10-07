@@ -2322,6 +2322,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   list bills, match words, contact, code) is built in the session scratchpad;
   its codes and the group names never enter the repository, its comments or
   its docs.
+- **Salesforce signs in with client credentials, as the KPI Tracker does.**
+  On 7 October 2026 the KPI Tracker's Script properties held `SF_KEY`,
+  `SF_SECRET` and `SF_LOGIN_URL` and no `SF_USER` or `SF_PASS`: the org has
+  retired the username-password flow. `ServiceSalesforce.gs` signed in only
+  that way, so the Service Questionnaire project could never reach
+  Salesforce. `svcSfAuthMode_` now picks client credentials unless `SF_PASS`
+  is set (`SF_AUTH` forces either), and `svcSfReady_` needs only the key and
+  the secret for it. Copy the three values; the login URL must be the My
+  Domain address. With them, everything in the project that waited for
+  Salesforce switches on (the trace a review runs, the Client Profile
+  refresh, the assignment sync, the board's tasks); the TT$200 claims still
+  write nothing until the go.
 - **Who looks after a group is its account owner in Salesforce, and nothing
   else** (7 October 2026: "read who is the account owner in Salesforce instead
   of a spreadsheet"). The refresh writes Owner in Salesforce and Owner active
