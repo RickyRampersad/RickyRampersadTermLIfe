@@ -156,7 +156,7 @@ function gcmSetup() {
     ': the five Group tabs exist and the refresh runs every hour from ' +
     GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday.\n\n' +
     (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
-        : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
+        : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
 }
 
 /** The editor's Run button, and the hourly trigger. */
@@ -370,7 +370,7 @@ function gcmRefreshLocked_() {
 }
 
 function gcmRefresh_() {
-  if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties.' };
+  if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties.' };
   var reg = gcmRegister_();
   if (!reg.length) return { ok: false, error: 'The Group Register tab has no groups yet.' };
   var byAcct = {}, byBill = {}, accts = [], bills = [];

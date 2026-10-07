@@ -32,8 +32,13 @@ property and never in the code, since the `.gs` files are public.
      `GroupClients.gs`. **Put the branch code back into `TEAM_CODE`**: the
      repository copy ships it empty.
 2. **Check the Script properties** (Project Settings → Script properties):
-   - `SF_KEY`, `SF_SECRET`, `SF_USER`, `SF_PASS`: the Salesforce sign-in the
-     assignment board already uses. Without them nothing can be read.
+   - `SF_KEY`, `SF_SECRET`, `SF_LOGIN_URL`: the Salesforce sign-in, copied
+     from the RRB KPI Tracker's own Script properties. The org has retired the
+     username-password flow, so there is no `SF_USER` or `SF_PASS`: the app
+     signs in with client credentials, as the KPI Tracker does, and
+     `SF_LOGIN_URL` must be its My Domain address. Without them nothing can be
+     read, and ServiceSalesforce.gs must be the repository copy (7 October
+     2026 or later) to sign in this way.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
