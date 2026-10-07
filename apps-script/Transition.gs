@@ -81,8 +81,18 @@ var TRANSITION = {
   CHASE_MAX_PER_RUN: 40,     // the most "still on it" notes one chase run sends, whatever the backlog — see tChase_
   HOLD_CLIENT_MAIL: true,    // 28 September: nothing automatic goes to a client until the manager says so — transitionReleaseClientMail is the go
   HOLD_RECEIPTS: false,      // but a client who answers a letter already sent is thanked as usual, hold or not (the manager, the same morning)
-  RECEIPT_WAIT_MIN: 3,       // a receipt goes this many minutes after the client's last tap, so it can recap all of them
+  RECEIPT_WAIT_MIN: 15,      // a receipt goes this many minutes after the client's last tap, so it can recap all of them
+                             // (3 until 6 October 2026: with one receipt per client it has to gather a slow reader's taps too)
   RECEIPT_FORM_WAIT_MIN: 30, // and waits this long for the review when a tap opened the form, so it can recap that too
+  /* Three automatic e-mails, then a person (6 October 2026, the manager: "a human interaction after the third …
+     you don't want to irritate clients with automated emails right through"). A client gets the letter, one
+     reminder if they do not answer, and one receipt when they do. Nothing else is sent by a machine: a client who
+     answers again after their receipt is listed for a person (tReceipts_), and the "still on it" note is no longer
+     sent by the chase but pressed on the assignment board, once, by a person who has read the file (tStillClient_).
+     The introduction when an agent is named, the manager's notes and the questionnaire's own confirmation are a
+     person's press or the client's own request, and stand. */
+  ONE_RECEIPT_PER_CLIENT: true,
+  STILL_NOTE_AUTO: false,
   RECEIPT_MAX_PER_RUN: 30,   // the most one five-minute run will send
   INBOX_DAYS: 3,             // how far back the inbox reader looks for replies (transitionInbox, every five minutes)
   REMIND_DAYS: 5,            // a letter unanswered this long goes once more, with a line saying when the first went (tRemind_); 0 turns it off.
@@ -1234,7 +1244,7 @@ function transitionHoldClientMail() {
   return tSay_('Client e-mail on hold: no letters, reminders or "still on it" notes go until you release it. A client who answers a letter already sent is still thanked.');
 }
 function tFilePhoneEmails_() {
-  var out = { filed: 0, same: 0, left: 0 };
+  var out = { filed: 0, same: 0, left: 0, updated: 0 }, answered = null;
   var rs, last;
   try { rs = ss_().getSheetByName(SVC.RESP_SHEET); last = rs ? rs.getLastRow() : 0; } catch (e) { return out; }
   if (!rs || last < 2) return out;
@@ -1271,6 +1281,22 @@ function tFilePhoneEmails_() {
       mark(x, 'this address bounced (' + ex.replace(/^bounced: /i, '') + '), not filed: ask for the right one'); out.left++; return;
     }
     var took = x.when instanceof Date ? ' on ' + Utilities.formatDate(x.when, tz, 'd MMM') : '';
+    /* A client who answered a letter that reached them gets the new address for whatever a person sends next, and never
+       the letter again: clearing Sent at here queued it for the go (7 October 2026: a client who had answered gave her
+       personal address by reply, and recording it would have sent her the letter a second time; the manager, that
+       morning: "client do not get the reminders a second time whom have responded"). A letter that bounced, or a client
+       with no e-mail, never reached them, so theirs still goes after the go. */
+    if (sent && !/^(bounced|no e-mail)/i.test(ex) && ex !== T_PHONE_HOLD) {
+      if (!answered) answered = tAnswered_();
+      if (answered[x.token]) {
+        var n0 = tAt_(t, r);
+        t.sh.getRange(n0, t.col.Email).setValue(x.email);
+        if (t.col.Reason) t.sh.getRange(n0, t.col.Reason).setValue('e-mail taken by ' + (x.by || 'Client Support') + took +
+          '; they answered the letter sent to ' + (old || 'no address') + ', so it does not go again');
+        r.Email = x.email;
+        mark(x, 'answered: address updated, the letter does not go again'); out.updated++; return;
+      }
+    }
     var was = sent ? '; the letter of ' + (sentAt instanceof Date ? Utilities.formatDate(sentAt, tz, 'd MMM') : tText_(sentAt)) +
       ' went to ' + (old || 'no address') + ' and goes again on release' : '';
     var n = tAt_(t, r);      // the client's own row, found by token: clearing Sent at on another client's row would send them their letter again
@@ -1281,8 +1307,9 @@ function tFilePhoneEmails_() {
     r.Email = x.email; r.Exclude = T_PHONE_HOLD;
     mark(x, ''); out.filed++;
   });
-  if (out.filed || out.same || out.left) {
-    log_('transition', 'phone-emails', out.filed + ' filed and held for the go, ' + out.same + ' already sent there, ' + out.left + ' not filed');
+  if (out.filed || out.same || out.left || out.updated) {
+    log_('transition', 'phone-emails', out.filed + ' filed and held for the go, ' + out.updated + ' updated for clients who had answered (no letter again), ' +
+      out.same + ' already sent there, ' + out.left + ' not filed');
   }
   return out;
 }
@@ -1346,13 +1373,14 @@ function tOursRow_(page) { return tContactRow_(page) || tAssignRow_(page); }
  *  Each row it thanks is marked [receipt] in its Note cell, appended, so a
  *  human note there survives and the same tap is never thanked twice. */
 function tReceipts_() {
-  var out = { sent: 0, waiting: 0, held: 0, repeat: 0, wrote: 0 };
+  var out = { sent: 0, waiting: 0, held: 0, repeat: 0, wrote: 0, again: 0 };
   var sh, last;
   try { sh = ss_().getSheetByName(SVC.RESP_SHEET); last = sh ? sh.getLastRow() : 0; } catch (e) { return out; }
   if (!sh || last < 2) return out;
   var vals;
   try { vals = sh.getRange(2, 1, last - 1, 11).getValues(); } catch (e) { return out; }
-  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [], prior = {}, every = {};
+  var tokens = tTokenMap_(), now = new Date(), groups = {}, order = [], prior = {}, every = {}, again = [];
+  var row0 = function (r) { return (r || {}).Client || (r || {})['First name']; };
   for (var i = 0; i < vals.length; i++) {
     var v = vals[i], received = v[0] instanceof Date ? v[0] : null;
     if (!received) continue;
@@ -1426,6 +1454,17 @@ function tReceipts_() {
       out.repeat++;
       continue;
     }
+    /* three automatic e-mails, then a person (6 October 2026): the letter, one reminder, one receipt. A client who
+       answers again after their receipt is never written to by a machine again: the rows are marked, the branch
+       hears in the same internal e-mail that names who wrote in, and a person follows up. A tap that opens the form
+       still brings the questionnaire's own confirmation from Service.gs, with the reference and the access code. */
+    if (pr && TRANSITION.ONE_RECEIPT_PER_CLIENT !== false && Object.keys(pr.thanked).length) {
+      try { g.rows.forEach(function (x) { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[receipt] held: one receipt per client: a person follows up'); }); } catch (e) {}
+      out.again++;
+      again.push({ row: tokens[tok], items: g.rows.map(function (x) { return x.q || x.r; }).filter(function (w, i, a) { return a.indexOf(w) === i; }) });
+      log_('transition', 'receipt-held', tText_(row0(tokens[tok])) + ' · answered again after their receipt: a person follows up');
+      continue;
+    }
     if (pr) g.prior = pr.answered;                                   // so the receipt never offers a question answered before
     if (budget <= 0) { out.held++; continue; }
     var row = tokens[tok], to = tText_(row.Email);
@@ -1469,29 +1508,42 @@ function tReceipts_() {
     try { tTrailMail_(w.row, w.page, w.rows, rc); out.trail = (out.trail || 0) + 1; }
     catch (e) { log_('transition', 'trail-failed', String(e && e.message ? e.message : e)); alert.push(w); }
   });
-  tWroteAlert_(alert);
-  if (out.sent || out.held || out.repeat || out.wrote) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
+  tWroteAlert_(alert, again);
+  if (out.sent || out.held || out.repeat || out.wrote || out.again) log_('transition', 'receipts', out.sent + ' sent, ' + out.waiting + ' waiting, ' + out.held + ' held' +
     (out.repeat ? ', ' + out.repeat + ' repeated an answer already thanked: not thanked again' : '') +
-    (out.wrote ? ', ' + out.wrote + ' wrote in their own words: a person replies' : ''));
+    (out.wrote ? ', ' + out.wrote + ' wrote in their own words: a person replies' : '') +
+    (out.again ? ', ' + out.again + ' answered again after their receipt: a person follows up' : ''));
   return out;
 }
 
 /** The branch hears at once when a client writes in their own words, now that no receipt goes to the client
  *  (1 October 2026). It used to hear through the receipt's own copy; this is that copy without the client: one
  *  internal e-mail a run, to the two addresses the receipts were copied to, never to anyone outside the branch. */
-function tWroteAlert_(writers) {
-  if (!writers || !writers.length) return;
+function tWroteAlert_(writers, again) {
+  writers = writers || []; again = again || [];
+  if (!writers.length && !again.length) return;
   var to = (TRANSITION.CC && TRANSITION.CC.length) ? TRANSITION.CC.join(',') : (TRANSITION.COPY_TO || SVC.AGENT_EMAIL);
   var name = function (row) { return tText_(row.Client) || tText_(row['First name']) || 'A client'; };
-  var subj = (writers.length === 1 ? name(writers[0].row || {}) + ' wrote in' : tN_(writers.length, 'client', 'clients') + ' wrote in') +
-    ': reply in person, nothing automatic went to them';
-  var lines = writers.map(function (x) {
+  var who = function (list) { return list.length === 1 ? name(list[0].row || {}) : tN_(list.length, 'client', 'clients'); };
+  var subj = writers.length ? who(writers) + ' wrote in: reply in person, nothing automatic went to them' +
+      (again.length ? ' · ' + who(again) + ' answered again after the receipt' : '')
+    : who(again) + ' answered again after the receipt: a person follows up, nothing automatic went to them';
+  var line = function (x, tail) {
     var row = x.row || {};
     return '- ' + name(row) + ' · letter ' + (tText_(row.Segment) || '?') + (row.Agent ? ' · was with ' + tText_(row.Agent) : '') +
-      (tText_(row.Email) ? ' · ' + tText_(row.Email) : '') + (x.words.length ? '\n  ' + x.words.join('\n  ').slice(0, 1500) : '');
-  });
-  var body = 'A client wrote to us in their own words, in a reply to support@ or on the words page. No receipt went to them: a person replies, from support@ ' +
-    'or with support@ copied.\n\n' + lines.join('\n\n') + '\n\nTheir words are on Client Responses and on the assignment board:\n' +
+      (tText_(row.Email) ? ' · ' + tText_(row.Email) : '') + tail;
+  };
+  var body = '';
+  if (writers.length) {
+    body += 'A client wrote to us in their own words, in a reply to support@ or on the words page. No receipt went to them: a person replies, from support@ ' +
+      'or with support@ copied.\n\n' + writers.map(function (x) { return line(x, x.words.length ? '\n  ' + x.words.join('\n  ').slice(0, 1500) : ''); }).join('\n\n') + '\n\n';
+  }
+  if (again.length) {
+    /* three automatic e-mails, then a person (6 October 2026): the second receipt is a person's call or note */
+    body += 'A client answered again after their receipt. They have had their one receipt, so nothing automatic went to them: a person follows up, ' +
+      'by phone or with a note from the board.\n\n' + again.map(function (x) { return line(x, ' · ' + x.items.join(', ')); }).join('\n') + '\n\n';
+  }
+  body += 'Their words and answers are on Client Responses and on the assignment board:\n' +
     'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
 }
@@ -1785,6 +1837,8 @@ function tChaseSummary_(late) {
   var body = 'Still marked Open on Client Responses, past the branch\'s own target:\n\n' + lines.join('\n') +
     '\n\nMark each one on the assignment board (Called, Met, Declined, Closed), or type anything other than "Open" into ' +
     'Status on Client Responses once it is resolved: that stops the chase for that client.\n' +
+    (TRANSITION.STILL_NOTE_AUTO !== true ? 'Since 6 October the "still on it" note is not sent by the system: a person who has read the file sends it ' +
+      'from the board, once, by opening the client, marking the call, and ticking the note.\n' : '') +
     'https://rickyrampersadbranch.com/orphan-transition/assign.html\n\n' + T_INTERNAL;
   try { MailApp.sendEmail(to, subj, body, { name: TRANSITION.FROM_NAME }); } catch (e) {}
 }
@@ -1918,6 +1972,8 @@ function tChase_() {
       else if (g.all.some(function (x) { return x.assigned; })) held = 'an agent is named (' + g.all.filter(function (x) { return x.assigned; })[0].assigned + '): the agent follows up';
       else if (haAgent[order[k]]) held = 'an agent is named (' + haAgent[order[k]] + '): the agent follows up';
       else if (rc && tLooksAutomated_(rc, g.all)) held = 'the answers look automated';
+      /* three automatic e-mails, then a person (6 October 2026): the note is a person's press on the board now (tStillClient_) */
+      else if (TRANSITION.STILL_NOTE_AUTO !== true) held = 'automatic notes are off since 6 October: a person sends it from the board';
       else if (!tMsCreds_()) held = T_MS_MISSING;
       if (!held) {
         var top = g.open.slice().sort(function (a, b) {
@@ -2076,7 +2132,11 @@ function tRemind_(t, letters, cap, deadline, busy) {
   if (deadline && Date.now() > deadline) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
   var tz = tTz_(), now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
-  var answered = tAnswered_(), since = tRespondedAt_();
+  /* strict: when Client Responses or the reviews cannot be read, this run reminds nobody (the batch logs it as
+     remind-failed) rather than taking everyone for unanswered. 7 October 2026, the manager: clients who responded must
+     never get the reminder; on that morning's sheet one such run would have sent 120, every one to a client who had
+     answered. */
+  var answered = tAnswered_(true), since = tRespondedAt_(true);
   busy = busy || {};
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
@@ -2190,39 +2250,40 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
  *  address, for a review filled in without the letter's link. A client who spoke to us, or wrote a review from their
  *  address, after their letter went has responded, and gets no reminder. A call before the letter (an e-mail taken
  *  for a client the letter had not reached) is not a response to it: that client's first letter goes, and its
- *  reminder after it. Never throws: a tab that cannot be read records nobody. */
-function tRespondedAt_() {
+ *  reminder after it. Never throws unless strict (the reminder asks strictly): a tab that cannot be read records nobody. */
+function tRespondedAt_(strict) {
   var out = { spoke: {}, review: {} };
   var later = function (m, k, d) { if (k && d instanceof Date && !isNaN(d.getTime()) && (!m[k] || d.getTime() > m[k].getTime())) m[k] = d; };
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
       if (tContactRow_(v[5])) later(out.spoke, String(v[1] || '').trim(), v[0]);
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   try {
     var q = tSheetRows_(SVC.IND_SHEET), qi = {};
     q.head.forEach(function (h, i) { qi[h] = i; });
     if (qi.Email !== undefined && qi.Timestamp !== undefined) q.rows.forEach(function (v) {
       later(out.review, String(v[qi.Email] || '').trim().toLowerCase(), v[qi.Timestamp]);
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   return out;
 }
 
 /** Every token that has answered: a row on Client Responses, or a review whose
- *  Link ref carries it. Read once per run. Never throws: a tab that cannot be
- *  read counts nobody as answered, which reminds rather than forgets. An e-mail
- *  or a number taken on a call is not an answer, and nor is an agent named from
- *  the board (tOursRow_): that client gets the letter, and the follow-up after
- *  it, like anyone. */
-function tAnswered_() {
+ *  Link ref carries it. Read once per run. Never throws unless strict: a tab
+ *  that cannot be read counts nobody as answered. The reminder asks strictly
+ *  (tRemind_), so a run that cannot read the answers reminds nobody instead of
+ *  everybody (7 October 2026). An e-mail or a number taken on a call is not an
+ *  answer, and nor is an agent named from the board (tOursRow_): that client
+ *  gets the letter, and the follow-up after it, like anyone. */
+function tAnswered_(strict) {
   var map = {};
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
       var tok = String(v[1] || '').trim();
       if (tok && !tOursRow_(v[5])) map[tok] = 1;
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   try {
     var q = tSheetRows_(SVC.IND_SHEET), qi = {};
     q.head.forEach(function (h, i) { qi[h] = i; });
@@ -2230,7 +2291,7 @@ function tAnswered_() {
       var m = /^transition:(\S+)$/.exec(String(v[qi['Link ref']] || '').trim());
       if (m) map[m[1]] = 1;
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   return map;
 }
 
@@ -3105,16 +3166,19 @@ function tLinkFamily_(a, b) {
    to a client, and never on the roster to be named themselves. The Agent
    column reads "A00427 - Ricky Rampersad": the number in front is dropped.
    The tab has two Active columns; either one reading No, Not Active,
-   Inactive, Resigned or Terminated takes the person off. Three locks,
-   whatever the tab says: a password shorter than eight characters opens
-   nothing (that day every one was one or two digits, most of them the row
-   number, ten of them shared); anyone who was the agent on these books
-   opens nothing and is never on the roster, being the Agent of a row on
-   Transition Send; and ten wrong tries on one agent number close it for
-   fifteen minutes. The old Portal code still signs in someone with no
-   Password. */
+   Inactive, Resigned or Terminated takes the person off. The locks, whatever
+   the tab says: anyone who was the agent on these books opens nothing and
+   is never on the roster, being the Agent of a row on Transition Send; and
+   ten wrong tries on one agent number close it for fifteen minutes. The old
+   Portal code still signs in someone with no Password. Until 7 October
+   2026 a password shorter than eight characters opened nothing as well
+   (every one on the tab was one or two digits, most of them the row number,
+   several shared). That day the manager chose to keep the passwords already
+   on the tab ("i still want to keep as is"), having been told that a guess
+   from an agent number would open the board, so MIN is 1. Raise it again to
+   bring the rule back: nothing else changes. */
 var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
-var T_USERS = { MIN: 8, TRIES: 10, LOCK_S: 900 };
+var T_USERS = { MIN: 1, TRIES: 10, LOCK_S: 900 };
 
 /** A name as a key: letters only, so "Persad-Khan" and "Persad Khan" are one. */
 function tNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }
@@ -3627,7 +3691,7 @@ function tBoard_(w, all, lite) {
            book: { ready: bk.ready, money: !staff, at: bk.built ? bk.built.when : '', yearAny: T_BOOK.YEARLY_ANY, yearAnniv: T_BOOK.YEARLY_ANNIV },
            mail: { intro: (typeof tMsCreds_ === 'function' && !!tMsCreds_()) ? 'support@' : 'gmail' },
            units: units, team: w.role === 'unit' ? w.team : null, canTell: w.role === 'branch' && w.canTell !== false, canAssign: tCanAssign_(w),
-           notes: w.role === 'branch' && w.canTell !== false ? tNotesForBoard_() : null,
+           notes: tNotesForBoard_(w),
            claims: claims, detail: true };   // detail: this backend answers action=detail and action=comment (ping campaign 7)
 }
 
@@ -3956,8 +4020,10 @@ function transitionUpdate_(p) {
   var tell = String(p.tell || '').trim().toLowerCase();
   var line = String(p.line || '').replace(/<[^>]*>/g, '').replace(/[\[\]<>]/g, '').replace(/\s+/g, ' ').trim().slice(0, 300);
   /* both refusals come before anything is written, so a refused note never leaves half an update behind */
-  if (tell && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
-  if (tell && (w.role !== 'branch' || w.canTell === false)) return { ok: false, refused: true, error: 'Only the branch manager can e-mail a client from the board: the notes go in his name.' };
+  if (tell && tell !== T_STILL_KEY && !T_NOTES.hasOwnProperty(tell)) return { ok: false, error: 'That is not one of the notes the board sends.' };
+  /* the "still on it" note is the team's, so the branch and Client Support may press it (6 October 2026); the others are the manager's */
+  if (tell === T_STILL_KEY && !tCanAssign_(w)) return { ok: false, refused: true, error: 'Only the branch and Client Support send the "still on it" note from the board.' };
+  if (tell && tell !== T_STILL_KEY && (w.role !== 'branch' || w.canTell === false)) return { ok: false, refused: true, error: 'Only the branch manager can e-mail a client from the board: the notes go in his name.' };
   /* a family member the client told us about (29 September: a client who told the manager about his wife), put in one household */
   var fam = String(p.family || '').trim().replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
   if (fam === tok) fam = '';
@@ -3998,6 +4064,7 @@ function transitionUpdate_(p) {
     var told = null, toldMark = '[told ' + stamp + ' · ' + tell + ']';
     if (tell) {
       told = notes.indexOf(toldMark) >= 0 ? { sent: false, why: 'that note already went to them today' }
+        : tell === T_STILL_KEY ? tStillClient_(tok, vals, sh)
         : tTellClient_(tok, tell, noAnswer ? 'No answer' : known, line);
       if (told.sent) {
         var first = sh.getRange(targets[0], 11), had = String(first.getValue() || '');
@@ -4073,13 +4140,74 @@ function tNoteParts_(key, status, line) {
   return { subject: n.subject.replace('{{what}}', status === 'Met' ? 'meeting' : 'call'), paras: paras };
 }
 
-/** What the board needs to offer the notes and show them word for word before they go. */
-function tNotesForBoard_() {
-  return { ready: !!tMsCreds_(), thanks: T_NOTE_THANKS, close: T_NOTE_CLOSE, sign: tNoteSign_(),
-    list: Object.keys(T_NOTES).map(function (k) {
-      var n = T_NOTES[k];
-      return { key: k, label: n.label, subject: n.subject, body: n.body.replace('{{phone}}', tBranchPhone_()) };
-    }) };
+/** What the board needs to offer the notes and show them word for word before they go: the manager's notes for
+ *  the branch manager, and the team's "still on it" note for the branch and Client Support (6 October 2026).
+ *  Null when the person may send none. */
+function tNotesForBoard_(w) {
+  var manager = !!w && w.ok && w.role === 'branch' && w.canTell !== false, team = tCanAssign_(w);
+  if (!manager && !team) return null;
+  var list = manager ? Object.keys(T_NOTES).map(function (k) {
+    var n = T_NOTES[k];
+    return { key: k, label: n.label, subject: n.subject, body: n.body.replace('{{phone}}', tBranchPhone_()) };
+  }) : [];
+  if (team) list.push(tStillNoteForBoard_());
+  return { ready: !!tMsCreds_(), thanks: T_NOTE_THANKS, close: T_NOTE_CLOSE, sign: tNoteSign_(), list: list };
+}
+
+/* ── the "still on it" note, pressed by a person ───────────────────────── */
+/* Three automatic e-mails, then a person (6 October 2026). The chase no longer
+   sends the client the "still on it" note (STILL_NOTE_AUTO); it lists the late
+   clients for the branch, and a person who has read the file sends the note
+   from the board, once ever, in the team's name and words (receipt.json
+   `still`, the same e-mail tChaseClient_ always sent), by opening the client,
+   marking the call and ticking the note. The branch and Client Support may
+   press it (tCanAssign_), because the note is the team's, not the manager's. */
+var T_STILL_KEY = 'still';
+function tStillNoteForBoard_() {
+  var rc = null;
+  try { rc = tReceipt_(); } catch (e) {}
+  var care = tCare_(rc), still = rc && rc.json && rc.json.still;
+  var text = (still && still.follow && still.follow['default']) || (still && still.line) ||
+    'Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. {{care_Us}} is still on it.';
+  text = text.replace(/\{\{care_name\}\}/g, care.care_name).replace(/\{\{care_first\}\}/g, care.care_first).replace(/\{\{care_us\}\}/g, care.care_us)
+             .replace(/\{\{care_Us\}\}/g, care.care_Us).replace(/\{\{care_line\}\}/g, care.care_line).replace(/\{\{next\}\}/g, '')
+             .replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  return { key: T_STILL_KEY, label: 'Still on it (the team\'s note, once ever)', subject: 'Still on it, {{first}}.', body: text, plain: true, once: true,
+           sign: { name: care.care_name, title: 'Ricky Rampersad Branch', line: 'Guardian Life of the Caribbean' } };
+}
+
+/** Sends the client the team's "still on it" note on a person's press, once ever: refuses when it already went
+ *  (a sent [chase2] mark on any of the client's rows; a held mark does not count), when the send row cannot be
+ *  written to (tNoteBlock_), or when the note does not send. Marks every row [chase2] so the chase and the trail
+ *  read it as sent. vals and sh are Client Responses as transitionUpdate_ read them. */
+function tStillClient_(tok, vals, sh) {
+  var rows = [], open = [], before = false;
+  vals.forEach(function (v, i) {
+    if (String(v[1] || '').trim() !== tok || tAssignRow_(v[5])) return;
+    var note = String(v[10] || '');
+    var x = { rowNum: i + 2, received: v[0] instanceof Date ? v[0] : null, r: String(v[3] || '').trim().toLowerCase(),
+              needs: String(v[4] || ''), q: tQOf_(v[5]), note: note };
+    rows.push(x);
+    if (/\[chase2\](?!\s*held)/.test(note)) before = true;
+    if (String(v[7] || '').trim().toLowerCase() === 'open' && x.received) open.push(x);
+  });
+  if (!rows.length) return { sent: false, why: 'no answers on record for that client' };
+  if (before) return { sent: false, why: 'the "still on it" note already went to them, and it goes once' };
+  var row = null;
+  try { tRead_().rows.forEach(function (r) { if (!row && tText_(r.Token) === tok) row = r; }); }
+  catch (e) { return { sent: false, why: 'the send list could not be read (' + String(e && e.message ? e.message : e).slice(0, 120) + ')' }; }
+  var why = tNoteBlock_(row);
+  if (why) return { sent: false, why: why };
+  if (!tMsCreds_()) return { sent: false, why: 'Microsoft 365 sending is not set up (MS_TENANT, MS_CLIENT and MS_SECRET)' };
+  var pick = (open.length ? open : rows).slice().sort(function (a, b) {
+    return ((T_PRIORITY[b.q] || T_PRIORITY[b.r] || 0) - (T_PRIORITY[a.q] || T_PRIORITY[a.r] || 0)) || ((a.received || 0) - (b.received || 0));
+  })[0];
+  var went = false;
+  try { went = tChaseClient_(row, pick.r, pick.needs); } catch (e) { return { sent: false, why: String(e && e.message ? e.message : e).slice(0, 200) }; }
+  if (!went) return { sent: false, why: 'the note did not send (the log says why)' };
+  rows.forEach(function (x) { if (x.note.indexOf('[chase2]') >= 0 && !/\[chase2\]\s*held/.test(x.note)) return;
+    try { sh.getRange(x.rowNum, 11).setValue((x.note ? x.note + ' ' : '') + '[chase2]'); } catch (e) {} });
+  return { sent: true, to: tText_(row.Email) };
 }
 
 function tNoteHtml_(first, parts, rc) {

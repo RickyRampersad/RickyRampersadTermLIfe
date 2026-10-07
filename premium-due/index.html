@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Premium Due Desk — Ricky Rampersad Branch</title>
+<link rel="icon" href="../logo-mark.png">
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   THE 45-DAY LINE, WORKED BY A PERSON
+   ──────────────────────────────────────────────────────────────────────────
+   Nothing is sent by opening this page. The desk reads today's line, shows
+   what is known about each client, renders the exact letter that would go,
+   and sends only the rows somebody ticked. Every one of those steps is a
+   separate request, and the server checks the conduct gate again on the way
+   out — the button being enabled is not permission.
+   ══════════════════════════════════════════════════════════════════════════ */
+:root{
+  --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
+  --line:rgba(255,255,255,.11);
+  --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+  --text:#edf4fb; --muted:#a9bbcf; --faint:#7a90a8;
+  --good:#35d07f; --warn:#f0b64a; --bad:#ff7a8f;
+  --sans:'DM Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --disp:'Montserrat',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  --mono:ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.6 var(--sans);
+  padding:0 18px 70px;-webkit-text-size-adjust:100%}
+.shell{max-width:1240px;margin:0 auto}
+h1,h2,h3{font-family:var(--disp);text-wrap:balance}
+
+.top{display:flex;align-items:center;gap:13px;padding:20px 0 0}
+.mark{width:42px;height:42px;border-radius:13px;overflow:hidden;background:#07131f;
+  display:grid;place-items:center;flex:0 0 auto}
+.mark img{width:100%;height:100%;display:block}
+.top .who{font:800 14px/1.2 var(--disp);color:var(--gold);letter-spacing:.3px}
+.top .sub{font-size:12px;color:var(--muted)}
+.top .me{margin-left:auto;text-align:right;font-size:12.5px;color:var(--muted)}
+.top .me b{display:block;color:var(--text);font-size:14px}
+.lnk{background:none;border:0;color:var(--teal);font:inherit;font-size:12.5px;cursor:pointer;padding:0;text-decoration:underline}
+
+/* sign in */
+.gate{max-width:430px;margin:12vh auto 0;background:var(--card);border:1px solid var(--line);
+  border-radius:20px;padding:30px 28px}
+.gate h1{font-size:21px;font-weight:800;margin-bottom:6px}
+.gate p{color:var(--muted);font-size:14px;margin-bottom:20px}
+label{display:block;font:700 11px var(--sans);letter-spacing:.13em;text-transform:uppercase;
+  color:var(--faint);margin:0 0 6px}
+input,select{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:11px;
+  padding:12px 14px;color:var(--text);font:15px var(--sans);margin-bottom:15px}
+input:focus,select:focus{outline:2px solid var(--teal);outline-offset:1px}
+button.go{width:100%;background:var(--gold);color:#07131f;border:0;border-radius:11px;
+  padding:13px;font:800 15px var(--disp);cursor:pointer}
+button.go:disabled{opacity:.5;cursor:default}
+.err{color:var(--bad);font-size:13.5px;margin-top:10px;min-height:1.2em}
+
+/* head */
+.hero{padding:26px 0 4px}
+.hero h1{font-size:clamp(23px,4vw,33px);font-weight:800;letter-spacing:-.3px}
+.hero p{color:var(--muted);margin-top:8px;max-width:46em}
+
+.state{display:flex;flex-wrap:wrap;gap:10px;margin:18px 0 6px}
+.pill{font:700 11.5px var(--mono);letter-spacing:.06em;padding:7px 13px;border-radius:99px;
+  border:1px solid var(--line);color:var(--muted);text-transform:uppercase}
+.pill.live{background:rgba(255,122,143,.14);border-color:rgba(255,122,143,.5);color:var(--bad)}
+.pill.test{background:rgba(240,182,74,.14);border-color:rgba(240,182,74,.5);color:var(--warn)}
+.pill.held{background:rgba(53,208,127,.12);border-color:rgba(53,208,127,.45);color:var(--good)}
+.banner{border-left:3px solid var(--bad);background:rgba(255,122,143,.1);border-radius:0 12px 12px 0;
+  padding:14px 17px;margin:16px 0;font-size:14.5px}
+.banner.ok{border-left-color:var(--good);background:rgba(53,208,127,.09)}
+
+/* layout */
+.cols{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;margin-top:18px;align-items:start}
+@media (max-width:980px){.cols{grid-template-columns:minmax(0,1fr)}}
+
+.panel{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden;min-width:0}
+.panel .ph{display:flex;align-items:center;gap:10px;padding:14px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.panel .ph h2{font-size:16px;font-weight:800;margin-right:auto}
+.count{font:700 12px var(--mono);color:var(--gold)}
+
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:620px}
+th{font:700 10.5px var(--sans);letter-spacing:.09em;text-transform:uppercase;color:var(--faint);
+  text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap;position:sticky;top:0;background:var(--card)}
+td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.055);vertical-align:top}
+tr:last-child td{border-bottom:none}
+tr.row{cursor:pointer}
+tr.row:hover td{background:var(--card2)}
+tr.row.on td{background:rgba(0,207,234,.1)}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+td.cl b{display:block;font-weight:700}
+td.cl i{font-style:normal;color:var(--faint);font-size:12px}
+.soon{color:var(--bad);font-weight:700}
+.flag{display:inline-block;background:rgba(240,182,74,.16);border:1px solid rgba(240,182,74,.4);
+  color:var(--warn);border-radius:6px;font:700 10px var(--mono);padding:2px 6px;margin-top:4px}
+input[type=checkbox]{width:17px;height:17px;margin:2px 0 0;accent-color:var(--gold);cursor:pointer}
+
+.act{display:flex;gap:10px;align-items:center;padding:14px 17px;border-top:1px solid var(--line);flex-wrap:wrap}
+button.send{background:var(--gold);color:#07131f;border:0;border-radius:11px;padding:11px 20px;
+  font:800 14px var(--disp);cursor:pointer}
+button.send:disabled{opacity:.45;cursor:default}
+button.ghost{background:none;border:1px solid var(--line);color:var(--muted);border-radius:11px;
+  padding:11px 16px;font:700 13px var(--sans);cursor:pointer}
+.said{font-size:13px;color:var(--muted)}
+
+/* the letter preview — white, because that is what lands in the inbox */
+.prev{padding:16px;max-height:76vh;overflow-y:auto}
+.prevmeta{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.7}
+.prevmeta b{color:var(--text)}
+.sheet{background:#fff;color:#16202b;border-radius:11px;padding:20px 18px}
+.sheet img{max-width:100%}
+.empty{padding:34px 20px;text-align:center;color:var(--faint);font-size:14px}
+.foot{margin-top:34px;font-size:12px;color:var(--faint);max-width:60em;line-height:1.7}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+</style>
+</head>
+<body>
+
+<!-- ───────────────────────────── sign in ───────────────────────────── -->
+<div class="shell" id="gate">
+  <div class="gate">
+    <h1>Premium Due Desk</h1>
+    <p>Today's 45-day line. Sign in with the same name and code you use for the
+    intelligence wall.</p>
+    <label for="who">Your name</label>
+    <input id="who" autocomplete="username" placeholder="As the branch has it">
+    <label for="secret">Access code</label>
+    <input id="secret" type="password" autocomplete="current-password" placeholder="••••••">
+    <button class="go" id="go">Sign in</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+</div>
+
+<!-- ───────────────────────────── the desk ──────────────────────────── -->
+<div class="shell" id="app" hidden>
+  <div class="top">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div>
+      <div class="who">RICKY RAMPERSAD BRANCH</div>
+      <div class="sub">Premium Due Desk</div>
+    </div>
+    <div class="me">
+      <b id="meName">—</b>
+      <span id="meRole"></span> · <button class="lnk" id="out">sign out</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <h1 id="headline">Today's 45-day line</h1>
+    <p id="standfirst">Reading the branch portfolio…</p>
+    <div class="state" id="state"></div>
+  </div>
+
+  <div id="gateMsg"></div>
+
+  <div class="cols">
+    <div class="panel">
+      <div class="ph">
+        <h2>Due today</h2>
+        <span class="count" id="tally"></span>
+        <button class="ghost" id="all">Tick all</button>
+        <button class="ghost" id="none">Clear</button>
+      </div>
+      <div class="tw"><table id="tbl">
+        <thead><tr><th style="width:34px"></th><th>Client</th><th>Policy</th><th>Agent</th>
+          <th>Premium</th><th>Collected by</th><th>Lapses</th></tr></thead>
+        <tbody id="body"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+      </table></div>
+      <div class="act">
+        <button class="send" id="send" disabled>Send 0 letters</button>
+        <span class="said" id="said">Tick the ones you have checked.</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="ph"><h2>The letter that would go</h2></div>
+      <div class="prev" id="prev">
+        <div class="empty">Click a client to read the exact letter they would receive.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="foot" id="foot"></div>
+</div>
+
+<script>
+/* The same deployment every branch screen talks to. */
+var API = 'https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec';
+var TOKEN = null, ROWS = [], PICK = {}, STATE = null;
+
+/* Apps Script answers a simple cross-origin POST but not a preflight, so the
+   content type stays text/plain. The body is still JSON. */
+function call(p) {
+  return fetch(API, { method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(p) }).then(function (r) { return r.json(); });
+}
+function $(id) { return document.getElementById(id); }
+function esc(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+function money(n) {
+  return 'TT$' + (Number(n) || 0).toLocaleString('en-US', { maximumFractionDigits: 0 });
+}
+function saveTok(t) { try { sessionStorage.setItem('pdd.t', t || ''); } catch (e) {} }
+function readTok() { try { return sessionStorage.getItem('pdd.t') || ''; } catch (e) { return ''; } }
+
+/* ── sign in ─────────────────────────────────────────────────────────── */
+$('go').onclick = function () {
+  var who = ($('who').value || '').trim(), secret = ($('secret').value || '').trim();
+  if (!who || !secret) { $('gateErr').textContent = 'Both your name and your code.'; return; }
+  this.disabled = true; this.textContent = 'Checking…';
+  var btn = this;
+  call({ action: 'intel.signin', who: who, secret: secret }).then(function (res) {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    if (!res.ok) { $('gateErr').textContent = res.error || 'That did not work.'; return; }
+    TOKEN = res.token; saveTok(TOKEN); enter(res);
+  }).catch(function () {
+    btn.disabled = false; btn.textContent = 'Sign in';
+    $('gateErr').textContent = 'Could not reach the branch script. Check the connection and try again.';
+  });
+};
+$('secret').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('go').click(); });
+
+$('out').onclick = function () {
+  call({ action: 'intel.signout', token: TOKEN }).catch(function () {});
+  saveTok(''); location.reload();
+};
+
+function enter(res) {
+  $('gate').hidden = true; $('app').hidden = false;
+  $('meName').textContent = res.name || '';
+  $('meRole').textContent = res.role || '';
+  load();
+}
+
+/* ── today's line ────────────────────────────────────────────────────── */
+/* `said` is what the desk tells the person after they press send. The repaint
+   that follows a send runs through tally(), which writes to the same line, so
+   the result has to be set AFTER the repaint or it is wiped before it is read.
+   It was: you sent six letters and the desk answered "Tick the ones you have
+   checked." */
+function load(said) {
+  call({ action: 'intel.pdd.list', token: TOKEN, stage: 45 }).then(function (r) {
+    if (!r.ok) { $('standfirst').textContent = r.error || 'Could not read the line.'; return; }
+    STATE = r; ROWS = r.rows || []; PICK = {};
+    $('headline').textContent = ROWS.length
+      ? ROWS.length + (ROWS.length === 1 ? ' client is' : ' clients are') + ' on the 45-day line'
+      : 'Nobody is on the 45-day line today';
+    $('standfirst').textContent = r.today + '. ' +
+      (r.you.branchWide ? 'You are seeing the whole branch.' : 'You are seeing your own clients.') +
+      ' Nothing has been sent.';
+    paintState(r); paintRows(); paintFoot(r);
+    if (said) $('said').textContent = said;
+  }).catch(function () {
+    $('standfirst').textContent = 'Could not reach the branch script.';
+  });
+}
+
+function paintState(r) {
+  var m = r.mail || {}, p = [];
+  var c = m.clients === 'live' ? 'live' : m.clients === 'test' ? 'test' : 'held';
+  p.push('<span class="pill ' + c + '">Client mail: ' + esc(m.clients || 'held') + '</span>');
+  p.push('<span class="pill">Day ' + r.stage + '</span>');
+  if (r.approvedBy) p.push('<span class="pill held">Wording approved · ' + esc(r.approvedBy) + '</span>');
+  $('state').innerHTML = p.join('');
+
+  if (r.blocked) {
+    $('gateMsg').innerHTML = '<div class="banner"><b>No letter can go live yet.</b> ' +
+      esc(r.blocked) + '</div>';
+  } else if ((r.mail || {}).clients !== 'live') {
+    $('gateMsg').innerHTML = '<div class="banner ok"><b>Client mail is held.</b> You can work the ' +
+      'list and read the letters. Sending will build and log them without delivering anything, ' +
+      'which is exactly what a first run should do.</div>';
+  } else {
+    $('gateMsg').innerHTML = '<div class="banner"><b>Client mail is LIVE.</b> Anything you tick and ' +
+      'send goes to the client, copying their agent, the desk and the unit manager.</div>';
+  }
+}
+
+function paintRows() {
+  var b = $('body');
+  if (!ROWS.length) {
+    b.innerHTML = '<tr><td colspan="7" class="empty">Nothing on the line today. ' +
+      'That is a normal day, not a fault.</td></tr>';
+    tally(); return;
+  }
+  b.innerHTML = ROWS.map(function (r, i) {
+    var flags = r.flags.length
+      ? '<span class="flag" title="' + esc(r.flags.join(' ')) + '">' + r.flags.length + ' to check</span>' : '';
+    var soon = r.lapse ? '<span class="soon">' + esc(r.lapse) + '</span>' : '<span style="color:var(--faint)">not on file</span>';
+    return '<tr class="row" data-i="' + i + '">' +
+      '<td><input type="checkbox" data-p="' + esc(r.policy) + '"' + (PICK[r.policy] ? ' checked' : '') + '></td>' +
+      '<td class="cl"><b>' + esc(r.client) + '</b><i>' + esc(r.email) + '</i>' + flags + '</td>' +
+      '<td class="n">' + esc(r.policy) + '</td>' +
+      '<td>' + esc(r.agent) + '</td>' +
+      '<td class="n">' + money(r.premium) + '</td>' +
+      '<td>' + esc(r.billing || '—') + '</td>' +
+      '<td class="n">' + soon + '</td></tr>';
+  }).join('');
+
+  b.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+    cb.onclick = function (e) {
+      e.stopPropagation();
+      if (cb.checked) PICK[cb.dataset.p] = 1; else delete PICK[cb.dataset.p];
+      tally();
+    };
+  });
+  b.querySelectorAll('tr.row').forEach(function (tr) {
+    tr.onclick = function () {
+      b.querySelectorAll('tr.row').forEach(function (x) { x.classList.remove('on'); });
+      tr.classList.add('on');
+      preview(ROWS[Number(tr.dataset.i)]);
+    };
+  });
+  tally();
+}
+
+function tally() {
+  var n = Object.keys(PICK).length;
+  $('send').textContent = 'Send ' + n + ' letter' + (n === 1 ? '' : 's');
+  $('send').disabled = !n || (STATE && STATE.blocked && (STATE.mail || {}).clients === 'live');
+  $('tally').textContent = ROWS.length ? n + ' of ' + ROWS.length + ' ticked' : '';
+  $('said').textContent = n > (STATE ? STATE.cap : 40)
+    ? 'That is over the ' + STATE.cap + ' cap for one sitting.'
+    : 'Tick the ones you have checked.';
+}
+
+$('all').onclick = function () { ROWS.forEach(function (r) { PICK[r.policy] = 1; }); paintRows(); };
+$('none').onclick = function () { PICK = {}; paintRows(); };
+
+/* ── the preview ─────────────────────────────────────────────────────── */
+function preview(r) {
+  $('prev').innerHTML = '<div class="empty">Building ' + esc(r.client) + '’s letter…</div>';
+  call({ action: 'intel.pdd.preview', token: TOKEN, stage: 45, policy: r.policy }).then(function (res) {
+    if (!res.ok) { $('prev').innerHTML = '<div class="empty">' + esc(res.error) + '</div>'; return; }
+    var flags = r.flags.length
+      ? '<div style="margin-top:8px;color:var(--warn)">' +
+        r.flags.map(function (f) { return '&bull; ' + esc(f); }).join('<br>') + '</div>' : '';
+    $('prev').innerHTML =
+      '<div class="prevmeta"><b>To</b> ' + esc(res.to) + '<br>' +
+      '<b>Copying</b> ' + esc(res.cc || 'nobody — check the access list') + '<br>' +
+      '<b>Subject</b> ' + esc(res.subject) + flags + '</div>' +
+      '<div class="sheet">' + res.html + '</div>';
+  }).catch(function () {
+    $('prev').innerHTML = '<div class="empty">Could not build that letter.</div>';
+  });
+}
+
+/* ── sending ─────────────────────────────────────────────────────────── */
+$('send').onclick = function () {
+  var list = Object.keys(PICK);
+  if (!list.length) return;
+  var live = (STATE.mail || {}).clients === 'live';
+  var msg = live
+    ? 'Send ' + list.length + ' letter' + (list.length === 1 ? '' : 's') + ' to clients now?'
+    : 'Build and log ' + list.length + '? Client mail is held, so nothing will be delivered.';
+  if (!window.confirm(msg)) return;
+
+  var btn = this; btn.disabled = true; btn.textContent = 'Sending…';
+  call({ action: 'intel.pdd.send', token: TOKEN, stage: 45, policies: list }).then(function (res) {
+    btn.disabled = false;
+    if (!res.ok) { $('said').textContent = res.error || 'That did not go.'; tally(); return; }
+    PICK = {};
+    load(res.says + (res.missed && res.missed.length
+      ? ' ' + res.missed.length + ' were no longer on the line.' : ''));
+  }).catch(function () {
+    btn.disabled = false; $('said').textContent = 'Could not reach the branch script.'; tally();
+  });
+};
+
+function paintFoot(r) {
+  var s = r.skipped || {}, bits = [];
+  Object.keys(s).forEach(function (k) { bits.push(esc(k) + ': ' + esc(String(s[k]))); });
+  $('foot').innerHTML = 'Who is on the line, and who was left off it, is decided by the same code ' +
+    'the nightly run uses — one definition, two doors. Left off today: ' +
+    (bits.length ? bits.join(' &middot; ') : 'nobody') + '. ' +
+    'The letter above is rendered by the same function that sends it, so what you read is what goes.';
+}
+
+/* A reload inside the same tab keeps you signed in; closing it does not. */
+(function () {
+  var t = readTok();
+  if (!t) return;
+  TOKEN = t;
+  call({ action: 'intel.session', token: t }).then(function (r) {
+    if (r && r.ok) enter(r); else saveTok('');
+  }).catch(function () {});
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

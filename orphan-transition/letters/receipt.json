@@ -9,7 +9,7 @@
   "line": "Ricky Rampersad Branch &middot; Guardian Life of the Caribbean"
  },
  "next": {
-  "callme": "Someone from the branch calls you today or tomorrow, at a time you choose.",
+  "callme": "Someone from the branch calls you within two working days, at a time you choose.",
   "urgent": "We read every word you wrote before we name anyone, then match you to the agent who fits your file.",
   "review": "A person reads your review, then we match you to the agent who fits your file.",
   "paid": "We check the record against your receipt and confirm within two working days.",
@@ -24,20 +24,20 @@
   "informed": "Nothing about your policy changes, and we will ask again rather than assume."
  },
  "next_q": {
-  "rate_better": "Someone from the branch calls you today or tomorrow to hear what we should do better.",
-  "life_changed": "Someone from the branch calls you today or tomorrow to bring your cover up to date with your life.",
+  "rate_better": "Someone from the branch calls you within two working days to hear what we should do better.",
+  "life_changed": "Someone from the branch calls you within two working days to bring your cover up to date with your life.",
   "pays_confirm": "We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.",
   "approached_yes": "A person calls you before you decide anything, so you have the full picture first.",
-  "stay_talk": "Someone from the branch calls you today or tomorrow to talk through who looks after your policy, and how.",
+  "stay_talk": "Someone from the branch calls you within two working days to talk through who looks after your policy, and how.",
   "value_yes": "We find out what your policy still holds, and whether it can simply start again, and call you with the answer.",
-  "walk_yes": "Someone from the branch calls you today or tomorrow and walks you through your policy in plain words.",
-  "built_yes": "Someone from the branch calls you today or tomorrow with what your policy has built for you so far.",
-  "more_yes": "Someone from the branch calls you today or tomorrow to talk through what more your cover could do for you now.",
-  "contract_unsure": "Someone from the branch calls you today or tomorrow, explains what you should have, and brings it if it is missing.",
-  "k_unsure": "Someone from the branch calls you today or tomorrow with exactly what is still needed, and brings it to you.",
+  "walk_yes": "Someone from the branch calls you within two working days and walks you through your policy in plain words.",
+  "built_yes": "Someone from the branch calls you within two working days with what your policy has built for you so far.",
+  "more_yes": "Someone from the branch calls you within two working days to talk through what more your cover could do for you now.",
+  "contract_unsure": "Someone from the branch calls you within two working days, explains what you should have, and brings it if it is missing.",
+  "k_unsure": "Someone from the branch calls you within two working days with exactly what is still needed, and brings it to you.",
   "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
-  "pay_person": "Someone from the branch calls you today or tomorrow to set you up to pay Guardian Life directly, with Guardian Life's own receipt every time.",
-  "pay_unsure": "Someone from the branch calls you today or tomorrow, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.",
+  "pay_person": "Someone from the branch calls you within two working days to set you up to pay Guardian Life directly, with Guardian Life's own receipt every time.",
+  "pay_unsure": "Someone from the branch calls you within two working days, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.",
   "wrote": "A person reads your e-mail and replies the same working day."
  },
  "still": {
@@ -63,9 +63,9 @@
  },
  "follow": [
   "A person reads this, not a system. Your file is read before anyone is matched to you.",
-  "If you asked for a call, it comes today or tomorrow, at the time you chose.",
+  "If you asked for a call, it comes within two working days, at the time you chose.",
   "Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.",
-  "If we are slower than we should be, we tell you so rather than leave you wondering."
+  "This is the only automatic e-mail you will get about your answers. From here on, you hear from a person: a call, or a note from the branch."
  ],
  "recap": {
   "tapped": "You tapped",

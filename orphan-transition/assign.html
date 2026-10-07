@@ -438,8 +438,15 @@ function fail(msg, refused) {
   if (!refused && CODE) schedule(GATE_RETRY_MS);
 }
 /* what one person opened is never shown to the next on the same device: their filter, the clients they opened in full,
-   a comment not yet saved, the policies fetched for them */
-function forget() { FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; }
+   a comment not yet saved, the policies fetched for them. The search box and the filters too (7 October 2026: a unit
+   manager signing in after the branch manager read "0 of 5 clients" under the branch manager's filter, and a client's
+   name typed in the search box stayed for whoever came next) */
+function forget() {
+  FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {};
+  ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).value = ''; });
+  $('fAll').checked = false;
+  var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
+}
 $('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); forget(); if (CODE) load(); });
 $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
@@ -1209,6 +1216,12 @@ function noteLabel(key) {
   ((D && D.notes && D.notes.list) || []).forEach(function (n) { if (n.key === key) l = n.label; });
   return l || 'a note from the branch';
 }
+function hasNote(key) { return ((D && D.notes && D.notes.list) || []).some(function (n) { return n.key === key; }); }
+/* the manager's own wording for the standing text under the note; the team's "still on it" note (6 October 2026) has its own */
+var TELL_NOTE_MANAGER = 'Goes as soon as you press the button, from support@rickyrampersadbranch.com, signed by you, with the branch copied and the confidentiality footer. ' +
+  'Your press is the go for this one note, even while automatic client e-mail is held.';
+var TELL_NOTE_TEAM = 'Goes as soon as you press the button, from support@rickyrampersadbranch.com, signed by the Client Support team, with the branch copied and the confidentiality footer. ' +
+  'Nothing automatic sends this note any more: it goes once ever to a client, and your press is the go for it.';
 function findClient(token) {
   var all = D ? everyone() : [];
   for (var i = 0; i < all.length; i++) if (all[i].token === token) return all[i];
@@ -1230,17 +1243,20 @@ function noteParts() {
   var N = D.notes, n = null;
   N.list.forEach(function (x) { if (x.key === PN.key) n = x; });
   if (!n) return null;
+  /* the team's note (still on it): its own words, its own signature, no first line, no line of the sender's */
+  if (n.plain) return { subject: n.subject.replace('{{first}}', PN.c.firstName || 'there'), paras: [n.body], sign: n.sign || N.sign, plain: true };
   var paras = [];
   if (PN.key !== 'missed') paras.push(N.thanks[PN.status] || N.thanks._);
   paras.push(n.body);
   if (lineOf()) paras.push(lineOf());
   if (PN.key !== 'missed') paras.push(N.close);
-  return { subject: n.subject.replace('{{what}}', PN.status === 'Met' ? 'meeting' : 'call'), paras: paras };
+  return { subject: n.subject.replace('{{what}}', PN.status === 'Met' ? 'meeting' : 'call'), paras: paras, sign: N.sign, plain: false };
 }
 function openPanel(token, status) {
   var c = findClient(token);
   if (!c) return;
-  var N = D.role === 'branch' ? D.notes : null, first = c.firstName || 'the client';
+  /* the backend says which notes this person may send: the manager's for the branch manager, the team's "still on it" for the branch and Client Support */
+  var N = (D.notes && D.notes.list && D.notes.list.length) ? D.notes : null, first = c.firstName || 'the client';
   PN = { c: c, status: status, key: defaultKey(status), keyPicked: false, tellPicked: false };
   var outs = OUTS.concat(c.mark && c.mark !== 'Open' ? ['Open'] : []);
   var h = '<h3 id="pTitle">' + esc(c.client) + '</h3><p class="sub2">' + esc(c.no || '') + (c.seg ? ' · letter ' + esc(c.seg) : '') + (c.book ? ' · was with ' + esc(c.book) : '') + '</p>' +
@@ -1252,18 +1268,17 @@ function openPanel(token, status) {
       h += '<div class="tellbox"><label class="chk"><input type="checkbox" id="pTell"><span>E-mail ' + esc(first) + ' a note from you</span></label>' +
         '<div class="tellbody" id="pTellBody">' +
         '<label class="fl" for="pKey">Which note</label><select id="pKey">' + N.list.map(function (n) { return '<option value="' + esc(n.key) + '">' + esc(n.label) + '</option>'; }).join('') + '</select>' +
-        '<label class="fl" for="pLine">A line of your own <i>(optional: the client reads this one)</i></label>' +
-        '<input type="text" id="pLine" maxlength="300" autocomplete="off" placeholder="e.g. I have asked sales support to trace your June payment.">' +
+        '<div id="pLineWrap"><label class="fl" for="pLine">A line of your own <i>(optional: the client reads this one)</i></label>' +
+        '<input type="text" id="pLine" maxlength="300" autocomplete="off" placeholder="e.g. I have asked sales support to trace your June payment."></div>' +
         '<div class="mailprev" id="pPrev" aria-live="polite"></div>' +
-        '<p class="tellnote">Goes as soon as you press the button, from support@rickyrampersadbranch.com, signed by you, with the branch copied and the confidentiality footer. ' +
-        'Your press is the go for this one note, even while automatic client e-mail is held.</p></div></div>';
+        '<p class="tellnote" id="pTellNote">' + TELL_NOTE_MANAGER + '</p></div></div>';
     } else {
       h += '<div class="nomail">' + (N.ready ? 'No e-mail we can use for ' + esc(first) + ': ' + esc(c.tellWhy || 'none on file') + '.' : 'Microsoft 365 sending is not set up, so the board cannot e-mail a client.') +
         ' Call instead' + (c.phone ? ' (<a href="tel:' + esc(digits(c.phone)) + '">' + esc(c.phone) + '</a>)' : '') +
         ', or take their e-mail on <a href="' + esc(ownLink(c)) + '" target="_blank" rel="noopener">their page</a>.</div>';
     }
   }
-  if (N) {
+  if (D.role === 'branch') {
     /* what the client tells us about their family, when the address rule did not see it (29 September: a husband and his wife) */
     var fam = familyOf(c), others = fam ? fam.filter(function (m) { return m.token !== c.token; }).map(function (m) { return m.client; }) : [];
     h += '<label class="fl" for="pFam">A family member on our list <i>(optional: they become one household)</i></label>' +
@@ -1290,21 +1305,26 @@ function syncPanel() {
   Array.prototype.forEach.call(document.querySelectorAll('#pOuts button'), function (b) { b.classList.toggle('on', b.getAttribute('data-s') === PN.status); });
   var tell = $('pTell'), sending = false;
   if (tell) {
-    if (!PN.tellPicked) tell.checked = defaultTell(PN.status);
-    if (!PN.keyPicked) { PN.key = defaultKey(PN.status); $('pKey').value = PN.key; }
+    /* the key first: the team's "still on it" note is never ticked by default, it is a decision after reading the file */
+    if (!PN.keyPicked) { PN.key = defaultKey(PN.status); if (!hasNote(PN.key)) PN.key = D.notes.list[0].key; $('pKey').value = PN.key; }
+    if (!PN.tellPicked) tell.checked = defaultTell(PN.status) && PN.key !== 'still';
     sending = tell.checked;
     $('pTellBody').hidden = !sending;
-    var parts = noteParts(), s = D.notes.sign;
-    if (parts) $('pPrev').innerHTML = '<div class="hd">To <b>' + esc(PN.c.email) + '</b>, the branch copied<br>Subject: <b>' + esc(parts.subject) + '</b></div>' +
-      '<p>Dear ' + esc(PN.c.firstName || 'there') + ',</p>' + parts.paras.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') +
-      '<div class="sg"><b>' + esc(s.name) + '</b>' + esc(s.title) + '<br>' + esc(s.line) + '</div>';
+    var parts = noteParts(), s = parts ? parts.sign : D.notes.sign;
+    if (parts) {
+      $('pPrev').innerHTML = '<div class="hd">To <b>' + esc(PN.c.email) + '</b>, the branch copied<br>Subject: <b>' + esc(parts.subject) + '</b></div>' +
+        '<p>Dear ' + esc(PN.c.firstName || 'there') + ',</p>' + parts.paras.map(function (x) { return '<p>' + esc(x) + '</p>'; }).join('') +
+        '<div class="sg"><b>' + esc(s.name) + '</b>' + esc(s.title) + '<br>' + esc(s.line) + '</div>';
+      $('pLineWrap').hidden = !!parts.plain;
+      $('pTellNote').textContent = parts.plain ? TELL_NOTE_TEAM : TELL_NOTE_MANAGER;
+    }
   }
   $('pSave').textContent = sending ? 'Save, and e-mail ' + (PN.c.firstName || 'the client') : 'Save';
 }
 function closePanel() { $('panel').hidden = true; document.body.style.overflow = ''; PN = null; }
 function savePanel() {
   if (!PN) return;
-  var c = PN.c, status = PN.status, btn = $('pSave'), tell = $('pTell');
+  var c = PN.c, status = PN.status, btn = $('pSave'), tell = $('pTell'), key = PN.key;
   var p = { action: 'update', code: CODE, token: c.token, status: status, note: $('pNote').value.trim() };
   if (WHO) p.who = WHO;
   if (tell && tell.checked) { p.tell = PN.key; p.line = lineOf(); }
@@ -1318,7 +1338,7 @@ function savePanel() {
     btn.disabled = false;
     if (!r || !r.ok) { toast((r && r.error) || 'The sheet did not take it. Try again.', true); return; }
     var msg = 'Marked ' + status + (r.rows ? ' on ' + r.rows + ' row' + (r.rows === 1 ? '' : 's') : '') + '.' +
-      (r.told ? ' Your note is on its way to ' + (c.firstName || c.client) + '.' : '') +
+      (r.told ? (key === 'still' ? ' The team\'s note is on its way to ' : ' Your note is on its way to ') + (c.firstName || c.client) + '.' : '') +
       (r.household ? ' ' + r.family + ' is in one household with ' + c.client + ' (' + r.household + ').' : '') + (r.warning ? ' ' + r.warning : '');
     toast(msg, !!r.warning);
     closePanel(); load();
