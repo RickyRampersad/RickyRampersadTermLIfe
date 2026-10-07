@@ -40,7 +40,8 @@ in the Service Questionnaire project, to someone who has signed in.
    deployment: that changes the address every page uses.
 6. **Staff on the Agent Skill Bank** need a Password of at least eight
    characters and a Role. Staff ("Sales Support", "Staff", "Assistant") see the
-   groups assigned to them; "Branch Manager" and "Assistant Branch Manager" see
+   groups whose Salesforce account they own (matched by name: the name on the
+   Agent Skill Bank must be the same person's name in Salesforce); "Branch Manager" and "Assistant Branch Manager" see
    every group and the dashboard. Agents and unit managers are refused.
 
 ## The register
@@ -51,8 +52,7 @@ in the Service Questionnaire project, to someone who has signed in.
 | Account Ids | the group's Salesforce account(s): exact, so preferred |
 | List bills | how the group signs in, and how its employees' policies are found (any spelling: "TGM 1099" and "TGM1099" are one) |
 | Match words | words in task subjects that name the group. One word must stand alone ("ACME" never matches "Acmeline"); several words may run on ("ACME & CO" matches "ACME & COMPANY") |
-| Assigned to | the staff member; blank = the account owner in Salesforce |
-| Owner in Salesforce | written by the refresh |
+| Owner in Salesforce, Owner active | written by the refresh, never by hand: the staff member a group is assigned to is its account's owner in Salesforce. To move a group, change the account owner in Salesforce; the next refresh (hourly, or "Refresh from Salesforce") moves it on the board. A group on two accounts takes the first owner still active. An owner who is no longer an active user puts the group at the top of the manager's "To act on" |
 | To, Cc, Greeting | who the letter goes to. A group with no To cannot be sent |
 | Code | the group's access code. Under ten characters opens nothing |
 | Enabled | N stops a group without deleting it |

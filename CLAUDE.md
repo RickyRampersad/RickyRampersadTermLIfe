@@ -2311,9 +2311,17 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   reading Salesforce through `ServiceSalesforce.gs`, sending through
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
 - **The register is a sheet tab, never a file here.** `Group Register` (group,
-  Salesforce account ids, list bills, match words, assigned to, contact, code)
-  is built in the session scratchpad and imported. Its codes, and the group
-  names, never enter the repository, its comments or its docs.
+  Salesforce account ids, list bills, match words, contact, code) is built in
+  the session scratchpad and imported. Its codes, and the group names, never
+  enter the repository, its comments or its docs.
+- **Who looks after a group is its account owner in Salesforce, and nothing
+  else** (7 October 2026: "read who is the account owner in Salesforce instead
+  of a spreadsheet"). The refresh writes Owner in Salesforce and Owner active
+  onto the register as a mirror; there is no override column, so the board and
+  Salesforce never disagree. A group on two accounts takes the first active
+  owner. An owner who is no longer an active user (two groups' owners were, on
+  7 October) puts the group first on the manager's "To act on", and the
+  group's page never names them.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on

@@ -24,8 +24,11 @@
  *
  *  Where it reads:
  *    Group Register   the groups: name, Salesforce account(s), list bills,
- *                     match words, who it is assigned to, the client contact,
- *                     the group's code. Kept by hand; imported once.
+ *                     match words, the client contact, the group's code. Kept
+ *                     by hand; imported once. Who a group is assigned to is
+ *                     NOT here: it is the account's owner in Salesforce, read
+ *                     by the refresh (asked for on 7 October 2026: "read who is
+ *                     the account owner in Salesforce instead of a spreadsheet").
  *    Salesforce       through ServiceSalesforce.gs's sign-in (the SF_* Script
  *                     properties). gcmRefresh_ reads every task on a group's
  *                     account, its billing records, its employees' policies
@@ -79,7 +82,7 @@ var GCM = {
 };
 
 var GCM_HEAD = {
-  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Assigned to', 'Owner in Salesforce', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
+  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
   'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
@@ -221,9 +224,10 @@ function gcmId15_(s) { return String(s || '').slice(0, 15); }
 
 /* ── the register ───────────────────────────────────────────────── */
 
-/** Every enabled group: { key, name, accts (15-character ids), acctsFull, bills, billKeys, match, assigned, owner, to, cc,
- *  greeting, code, note }. `assigned` is the person the group is assigned to: the Assigned to column, else the account's
- *  owner in Salesforce (written by the refresh). */
+/** Every enabled group: { key, name, accts (15-character ids), acctsFull, bills, billKeys, match, assigned, ownerActive,
+ *  to, cc, greeting, code, note }. `assigned` is the account's owner in Salesforce, which the refresh writes onto the
+ *  register as a mirror: to move a group to someone else, change the account owner in Salesforce. There is no column
+ *  that overrides it, so the board and Salesforce can never disagree about who looks after a group. */
 function gcmRegister_() {
   return gcmRows_(GCM.REGISTER).filter(function (r) {
     return gcmText_(r.Group) && !/^(n|no|false|0)$/i.test(gcmText_(r.Enabled));
@@ -233,7 +237,7 @@ function gcmRegister_() {
     return {
       _n: r._n, key: gcmCodeKey_(r.Group), name: gcmText_(r.Group),
       accts: accts.map(gcmId15_), acctsFull: accts, bills: bills, billKeys: bills.map(gcmBillKey_),
-      match: gcmList_(r['Match words']), assigned: gcmText_(r['Assigned to']) || owner, owner: owner,
+      match: gcmList_(r['Match words']), assigned: owner, owner: owner, ownerActive: !/^(n|no|false)$/i.test(gcmText_(r['Owner active'])),
       to: gcmList_(r.To), cc: gcmList_(r.Cc), greeting: gcmText_(r.Greeting), code: gcmText_(r.Code), note: gcmText_(r.Note)
     };
   });
@@ -356,9 +360,11 @@ function gcmRefresh_() {
     });
   });
 
-  /* the owners, written onto the register so the board knows who a group is assigned to */
+  /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active */
   var owners = {};
-  if (accts.length) gcmQuery_('SELECT Id, Owner.Name FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) { owners[gcmId15_(a.Id)] = gcmName_(a, 'Owner'); });
+  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
+    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), active: !(a.Owner && a.Owner.IsActive === false) };
+  });
 
   /* the employees: every policy on the group's account or carrying its list bill, and the contact behind it */
   var polWhere = [];
@@ -420,14 +426,20 @@ function gcmRefresh_() {
   }
   var extra = sh.getLastRow() - 1 - rows.length;
   if (extra > 0) sh.getRange(rows.length + 2, 1, extra, head.length).clearContent();
-  /* the owners onto the register */
+  /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = ss_().getSheetByName(GCM.REGISTER);
-  var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(String);
-  var ocol = regHead.indexOf('Owner in Salesforce') + 1;
-  if (ocol > 0) reg.forEach(function (g) {
-    var o = '';
-    g.accts.some(function (a) { o = owners[a] || ''; return !!o; });
-    if (o && o !== g.owner) regSh.getRange(g._n, ocol).setValue(o);
+  var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+  ['Owner in Salesforce', 'Owner active'].forEach(function (h) {
+    if (regHead.indexOf(h) < 0) { regSh.getRange(1, regHead.length + 1).setValue(h).setFontWeight('bold'); regHead.push(h); }
+  });
+  var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1;
+  reg.forEach(function (g) {
+    /* a group on two accounts takes the first owner still active in Salesforce, else the first owner */
+    var cand = g.accts.map(function (a) { return owners[a]; }).filter(function (x) { return x && x.name; });
+    var o = cand.filter(function (x) { return x.active; })[0] || cand[0];
+    if (!o) return;
+    regSh.getRange(g._n, ocol).setValue(o.name);
+    regSh.getRange(g._n, acol).setValue(o.active ? 'Y' : 'N');
   });
   var when = gcmWhen_(new Date());
   PropertiesService.getScriptProperties().setProperty('gcm_refreshed', when);
@@ -552,7 +564,7 @@ function gcmBoard_(p) {
   var L = gcmLoad_(), today = L.today;
   var groups = L.reg.filter(function (g) { return gcmMine_(who, g); }).map(function (g) {
     var s = gcmGroupStats_(g, today);
-    return { key: g.key, name: g.name, assigned: g.assigned, bills: g.bills, stats: s,
+    return { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, stats: s,
       doneToday: g.tasks.filter(function (t) { return !t.open && t.done === today; }).map(function (t) { return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner }; }).slice(0, 12) };
   });
   var urgency = function (x) { return (x.stats.week === 'due' ? 1000 : 0) + x.stats.late * 10 + x.stats.waiting * 5 + Math.min(x.stats.oldest, 99) / 100; };
@@ -603,6 +615,8 @@ function gcmAnalytics_(L) {
     if (s.late) act.push({ group: g.name, what: s.late + ' item' + (s.late > 1 ? 's' : '') + ' past target', who: g.assigned, kind: 'late' });
     if (s.lastRating !== null && s.lastRating <= 3) act.push({ group: g.name, what: 'Rated us ' + s.lastRating + ' of 5', who: g.assigned, kind: 'rating' });
     if (!s.ready) act.push({ group: g.name, what: s.why, who: g.assigned, kind: 'setup' });
+    if (!g.assigned) act.push({ group: g.name, what: 'No account owner in Salesforce: give the account an owner', who: '', kind: 'owner' });
+    else if (!g.ownerActive) act.push({ group: g.name, what: 'Its account owner in Salesforce is no longer an active user: change the account owner', who: g.assigned, kind: 'owner' });
   });
   var pct = function (a, b) { return b ? Math.round(100 * a / b) : null; };
   var avg = function (a, b) { return b ? Math.round(a / b) : null; };
@@ -620,7 +634,7 @@ function gcmAnalytics_(L) {
       .sort(function (a, b) { return (b.done + b.open) - (a.done + a.open); }),
     weeks: weeks.map(function (w) { return { from: w.from, done: w.done, onTimePct: pct(w.onTime, w.withDue), sent: w.sent, responses: w.responses }; }),
     responses: resp.slice(0, 30),
-    act: act.sort(function (a, b) { return ['send', 'rating', 'late', 'setup'].indexOf(a.kind) - ['send', 'rating', 'late', 'setup'].indexOf(b.kind); })
+    act: act.sort(function (a, b) { var o = ['owner', 'send', 'rating', 'late', 'setup']; return o.indexOf(a.kind) - o.indexOf(b.kind); })
   };
 }
 
@@ -644,7 +658,7 @@ function gcmGroupView_(p) {
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
   return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '',
-    group: { key: g.key, name: g.name, assigned: g.assigned, owner: g.owner, bills: g.bills, to: g.to, cc: g.cc, greeting: g.greeting, hasCode: !!g.code, note: g.note },
+    group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, greeting: g.greeting, hasCode: !!g.code, note: g.note },
     stats: gcmGroupStats_(g, today), items: items, record: gcmRecord_(g, today),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.done >= weekAgo; }).map(function (t) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
@@ -830,7 +844,7 @@ function gcmClient_(p) {
   var respondBy = gcmAddDays_(gcmMonday_(today), GCM.RESPOND_DAY - 1);
   if (respondBy < today) respondBy = gcmAddDays_(respondBy, 7);
   var weekAgo = gcmAddDays_(today, -7);
-  return { ok: true, group: g.name, staff: g.assigned, asAt: L.refreshed || tDmy_(today), today: today, respondBy: respondBy,
+  return { ok: true, group: g.name, staff: g.ownerActive ? g.assigned : '', asAt: L.refreshed || tDmy_(today), today: today, respondBy: respondBy,
     items: shown.map(function (t) {
       return { id: t.id15, title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, cat: t.cat, status: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us',
         done: gcmDoneText_(t.cat, t.status), owner: t.owner, who: t.who, ref: t.ref, opened: t.opened, age: gcmDays_(t.opened, today), due: t.due,
@@ -907,7 +921,7 @@ function gcmWall_(p) {
   if (!ok.ok) return { ok: false, refused: ok.configured, error: ok.configured ? 'That is not the branch code.' : 'Not open yet: the branch code is not set in Service.gs (TEAM_CODE).' };
   var L = gcmLoad_(), today = L.today;
   return { ok: true, today: today, dow: gcmDow_(today), sendDay: GCM.SEND_DAY, refreshed: L.refreshed, analytics: gcmAnalytics_(L),
-    groups: L.reg.map(function (g) { var s = gcmGroupStats_(g, today); return { name: g.name, assigned: g.assigned, open: s.open, late: s.late, waiting: s.waiting, oldest: s.oldest,
+    groups: L.reg.map(function (g) { var s = gcmGroupStats_(g, today); return { name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, open: s.open, late: s.late, waiting: s.waiting, oldest: s.oldest,
       week: s.week, rating: s.rating, lastRating: s.lastRating, onTimePct: s.onTimePct, done: s.done }; }) };
 }
 

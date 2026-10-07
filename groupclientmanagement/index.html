@@ -181,7 +181,8 @@ function groupCard(g) {
   return '<button class="card" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
     (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
-    '<div class="small muted">' + (BOARD.role === 'branch' ? 'Assigned to <b>' + esc(g.assigned || 'nobody') + '</b> · ' : '') + 'List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
+    (BOARD.role === 'branch' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
+    '<div class="small muted">' + (BOARD.role === 'branch' ? 'Account owner <b>' + esc(g.assigned || 'nobody') + '</b> · ' : '') + 'List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
     '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
 }
 function render() {
@@ -233,7 +234,7 @@ function dash(a) {
     '<div class="tile"><b>' + t.doneToday + '</b><span>completed today</span></div></div>';
   if (a.act.length) h += '<h2>To act on</h2><ul class="feed">' + a.act.map(x => '<li><span class="chip ' + (x.kind === 'setup' ? 'warn' : 'bad') + '"><i></i>' + esc(x.what) + '</span> <b>' + esc(x.group) + '</b> <span class="muted small">· ' + esc(x.who || 'not assigned') + '</span></li>').join('') + '</ul>';
   const maxDone = Math.max(1, ...a.staff.map(s => s.done));
-  h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow who the group is assigned to; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
+  h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow each group’s account owner in Salesforce; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
     '<div class="scroll"><table class="t"><thead><tr><th>Staff</th><th class="num">Groups</th><th class="num">Letters this week</th><th class="num">Open</th><th class="num">Past target</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th><th>Rating</th><th class="num">Accuracy</th></tr></thead><tbody>' +
     a.staff.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' due</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
       '<td>' + barCell(s.done, maxDone) + '</td><td>' + barCell(s.onTimePct, 100, false, pct(s.onTimePct)) + '</td><td class="num">' + (s.avgDays == null ? '–' : s.avgDays) + '</td>' +
@@ -265,7 +266,7 @@ function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
   let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + '</div>' +
-    '<p class="small muted">Assigned to <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.owner && g.owner !== g.assigned ? ' (Salesforce owner ' + esc(g.owner) + ')' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
+    '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
     ' · Letter goes to ' + (g.to.length ? esc(g.to.join(', ')) + (g.cc.length ? ', copy ' + esc(g.cc.join(', ')) : '') : '<b style="color:var(--badText)">nobody: add the contact on the Group Register</b>') + '</p>' +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
