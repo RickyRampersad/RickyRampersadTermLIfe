@@ -1113,6 +1113,23 @@ voice under the new timing and the caption gives it away.
   after it. On the rehearsal of 30 September this took 121 people who had
   confirmed their address on a call off the reminder. A person can stop
   anyone else's reminder by typing anything but "sent" in their Status.
+  **A run that cannot read the answers reminds nobody** (7 October 2026,
+  the manager: "client do not get the reminders a second time whom have
+  responded"). `tAnswered_` and `tRespondedAt_` used to count nobody as
+  answered when Client Responses could not be read; on that morning's
+  sheet one such run would have sent 120 reminders, every one to a client
+  who had answered. `tRemind_` now reads them strictly, so the run throws
+  and the batch logs `remind-failed`; every other caller reads them as
+  before. The same morning, before the paste, a one-off script outside the
+  repository set Status to `no reminder: answered` or `no reminder: spoke
+  to us` on the 446 clients who had responded and still read "sent". That
+  is the hand-stop above, so the reminder can never pick them whichever
+  script is pasted. Nothing else reads those words. A whole book can be held
+  the same way, with a mark in Exclude (`hold: manager's hold, <date>`):
+  every client e-mail checks Exclude first (the letter, the reminder, Send
+  again, the receipt, the notes and the introduction), and a mark not in
+  `tFilePhoneEmails_`'s list is never lifted by a call. Answers are still
+  recorded.
   **One inbox, one e-mail a day, across runs too.** Sent at keeps the
   first letter's date, so a reminder sent in the 9:00 run did not make its
   inbox busy for the 9:30 run. In the rehearsal, five families in Tricia

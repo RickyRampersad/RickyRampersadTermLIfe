@@ -2115,7 +2115,11 @@ function tRemind_(t, letters, cap, deadline, busy) {
   if (deadline && Date.now() > deadline) return { sent: 0, skipped: 0, failed: 0, waiting: 0 };
   var tz = tTz_(), now = new Date();
   var cutoff = new Date(now.getTime() - days * 86400000);
-  var answered = tAnswered_(), since = tRespondedAt_();
+  /* strict: when Client Responses or the reviews cannot be read, this run reminds nobody (the batch logs it as
+     remind-failed) rather than taking everyone for unanswered. 7 October 2026, the manager: clients who responded must
+     never get the reminder; on that morning's sheet one such run would have sent 120, every one to a client who had
+     answered. */
+  var answered = tAnswered_(true), since = tRespondedAt_(true);
   busy = busy || {};
   var due = t.rows.filter(function (r) {
     if (tHeld_(r.Exclude) || tYes_(r.Test) || !tText_(r.Segment)) return false;
@@ -2229,39 +2233,40 @@ function tSendAgain_(t, letters, cap, deadline, busy) {
  *  address, for a review filled in without the letter's link. A client who spoke to us, or wrote a review from their
  *  address, after their letter went has responded, and gets no reminder. A call before the letter (an e-mail taken
  *  for a client the letter had not reached) is not a response to it: that client's first letter goes, and its
- *  reminder after it. Never throws: a tab that cannot be read records nobody. */
-function tRespondedAt_() {
+ *  reminder after it. Never throws unless strict (the reminder asks strictly): a tab that cannot be read records nobody. */
+function tRespondedAt_(strict) {
   var out = { spoke: {}, review: {} };
   var later = function (m, k, d) { if (k && d instanceof Date && !isNaN(d.getTime()) && (!m[k] || d.getTime() > m[k].getTime())) m[k] = d; };
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
       if (tContactRow_(v[5])) later(out.spoke, String(v[1] || '').trim(), v[0]);
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   try {
     var q = tSheetRows_(SVC.IND_SHEET), qi = {};
     q.head.forEach(function (h, i) { qi[h] = i; });
     if (qi.Email !== undefined && qi.Timestamp !== undefined) q.rows.forEach(function (v) {
       later(out.review, String(v[qi.Email] || '').trim().toLowerCase(), v[qi.Timestamp]);
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   return out;
 }
 
 /** Every token that has answered: a row on Client Responses, or a review whose
- *  Link ref carries it. Read once per run. Never throws: a tab that cannot be
- *  read counts nobody as answered, which reminds rather than forgets. An e-mail
- *  or a number taken on a call is not an answer, and nor is an agent named from
- *  the board (tOursRow_): that client gets the letter, and the follow-up after
- *  it, like anyone. */
-function tAnswered_() {
+ *  Link ref carries it. Read once per run. Never throws unless strict: a tab
+ *  that cannot be read counts nobody as answered. The reminder asks strictly
+ *  (tRemind_), so a run that cannot read the answers reminds nobody instead of
+ *  everybody (7 October 2026). An e-mail or a number taken on a call is not an
+ *  answer, and nor is an agent named from the board (tOursRow_): that client
+ *  gets the letter, and the follow-up after it, like anyone. */
+function tAnswered_(strict) {
   var map = {};
   try {
     tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
       var tok = String(v[1] || '').trim();
       if (tok && !tOursRow_(v[5])) map[tok] = 1;
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   try {
     var q = tSheetRows_(SVC.IND_SHEET), qi = {};
     q.head.forEach(function (h, i) { qi[h] = i; });
@@ -2269,7 +2274,7 @@ function tAnswered_() {
       var m = /^transition:(\S+)$/.exec(String(v[qi['Link ref']] || '').trim());
       if (m) map[m[1]] = 1;
     });
-  } catch (e) {}
+  } catch (e) { if (strict) throw e; }
   return map;
 }
 
