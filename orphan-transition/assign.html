@@ -438,8 +438,15 @@ function fail(msg, refused) {
   if (!refused && CODE) schedule(GATE_RETRY_MS);
 }
 /* what one person opened is never shown to the next on the same device: their filter, the clients they opened in full,
-   a comment not yet saved, the policies fetched for them */
-function forget() { FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; }
+   a comment not yet saved, the policies fetched for them. The search box and the filters too (7 October 2026: a unit
+   manager signing in after the branch manager read "0 of 5 clients" under the branch manager's filter, and a client's
+   name typed in the search box stayed for whoever came next) */
+function forget() {
+  FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {};
+  ['fSearch', 'fSeg', 'fBook', 'fState', 'fNeed', 'fIns', 'fSug', 'fOrder'].forEach(function (id) { $(id).value = ''; });
+  $('fAll').checked = false;
+  var t = $('toast'); clearTimeout(t._t); t.className = 'toast';
+}
 $('gateForm').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('code').value.trim(); WHO = $('who').value.trim(); forget(); if (CODE) load(); });
 $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
