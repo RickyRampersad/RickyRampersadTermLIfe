@@ -2476,7 +2476,10 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
-- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`).
+- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
+  and a health reimbursement is a claim whatever its subject says: the first
+  live refresh carried "Reissue Cheque (health)" with a member's name, which
+  the words medical and claim did not catch.
   Items on its account, its billing records (`TRANSACTIONS__c`) or naming it:
   shown unless staff untick. Items reached only through an employee's own
   policy or contact: hidden unless staff tick. Chatter only when staff tick it

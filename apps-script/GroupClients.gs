@@ -102,8 +102,9 @@ var GCM_HEAD = {
 var GCM_CATS = ['Group Life', 'Group Health', 'Group Pensions', 'Member enrolments', 'Member terminations', 'Claims', 'Audit and confirmations'];
 var GCM_STATUS = { 'waiting on someone else': 'Awaiting your confirmation', 'not started': 'Scheduled',
                    'in progress': 'In progress with us', 'deferred': 'On hold' };
-/* An employer sees its plan's administration, never a member's health. */
-var GCM_PRIVATE = /MEDICAL|CLAIM|DIAGNOS|HOSPITAL|SURGER|CARDIO|\bECG\b|\bLAB\b|BLOOD|PRESCRIPTION|DOCTOR|\bAPS\b|\bPMAR\b|CERTIFICATE OF HEALTH/i;
+/* An employer sees its plan's administration, never a member's health. A health reimbursement is a claim paid to a
+   member, whatever its subject calls it: on 7 October 2026 "Reissue Cheque (health)- <member>" was on a group's tasks. */
+var GCM_PRIVATE = /MEDICAL|CLAIM|DIAGNOS|HOSPITAL|SURGER|CARDIO|\bECG\b|\bLAB\b|BLOOD|PRESCRIPTION|DOCTOR|\bAPS\b|\bPMAR\b|CERTIFICATE OF HEALTH|REIMBURS|RE-?ISSUE\W+CHEQUE|CHEQUE\W*\(?\s*HEALTH/i;
 /* Salesforce logs every e-mail as a closed task, and the birthday flow does the same: they close the moment they are
    logged. In 2026 they were 615 of the groups' 1,176 completed tasks; counted, they show an on-time record the work
    does not have. */
