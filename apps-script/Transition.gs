@@ -3166,16 +3166,19 @@ function tLinkFamily_(a, b) {
    to a client, and never on the roster to be named themselves. The Agent
    column reads "A00427 - Ricky Rampersad": the number in front is dropped.
    The tab has two Active columns; either one reading No, Not Active,
-   Inactive, Resigned or Terminated takes the person off. Three locks,
-   whatever the tab says: a password shorter than eight characters opens
-   nothing (that day every one was one or two digits, most of them the row
-   number, ten of them shared); anyone who was the agent on these books
-   opens nothing and is never on the roster, being the Agent of a row on
-   Transition Send; and ten wrong tries on one agent number close it for
-   fifteen minutes. The old Portal code still signs in someone with no
-   Password. */
+   Inactive, Resigned or Terminated takes the person off. The locks, whatever
+   the tab says: anyone who was the agent on these books opens nothing and
+   is never on the roster, being the Agent of a row on Transition Send; and
+   ten wrong tries on one agent number close it for fifteen minutes. The old
+   Portal code still signs in someone with no Password. Until 7 October
+   2026 a password shorter than eight characters opened nothing as well
+   (every one on the tab was one or two digits, most of them the row number,
+   several shared). That day the manager chose to keep the passwords already
+   on the tab ("i still want to keep as is"), having been told that a guess
+   from an agent number would open the board, so MIN is 1. Raise it again to
+   bring the rule back: nothing else changes. */
 var T_INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
-var T_USERS = { MIN: 8, TRIES: 10, LOCK_S: 900 };
+var T_USERS = { MIN: 1, TRIES: 10, LOCK_S: 900 };
 
 /** A name as a key: letters only, so "Persad-Khan" and "Persad Khan" are one. */
 function tNameKey_(s) { return String(s || '').toLowerCase().replace(/[^a-z]/g, ''); }

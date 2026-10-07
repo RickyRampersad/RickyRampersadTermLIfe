@@ -2238,12 +2238,17 @@ voice under the new timing and the caption gives it away.
   Branch Manager (or the branch code) e-mails a client a note,
   because the notes go in his name, and staff are never on the roster to
   be named. "Branch Manager Assistant" is staff, never the branch manager
-  (`tRoleOf_`). Three locks, whatever the tab says: **a password shorter
-  than eight characters opens nothing** (that day every password on the tab
-  was one or two digits, eighteen of the twenty-three the row number and
-  ten shared); anyone who was the agent on these books (the Agent column of
-  Transition Send, `tFormer_`) never signs in and is never on the roster;
-  and ten wrong tries on one number close it for fifteen minutes. The
+  (`tRoleOf_`). The locks, whatever the tab says: anyone who was the agent
+  on these books (the Agent column of Transition Send, `tFormer_`) never
+  signs in and is never on the roster; and ten wrong tries on one number
+  close it for fifteen minutes. **The passwords are the ones on the tab, at
+  the manager's choice** (7 October 2026: "i still want to keep as is").
+  Until then a password shorter than eight characters opened nothing. That
+  day every password on the tab was one or two digits, eighteen of the
+  twenty-three the row number and several shared, and he was told that a
+  guess from an agent number would open the board, his own view included.
+  `T_USERS.MIN` is 1; raising it brings the rule back and changes nothing
+  else. Do not raise it without him. The
   manager's performance portal keeps its own Users tab with the same
   scheme; the board does not read it. New eight-digit passwords, the
   1 October code kept for whoever had one, are built in the scratchpad
