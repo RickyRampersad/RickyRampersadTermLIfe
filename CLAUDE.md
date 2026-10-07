@@ -2310,10 +2310,18 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   (`gcm.*`), signing staff in through `tWho_` like the assignment board,
   reading Salesforce through `ServiceSalesforce.gs`, sending through
   `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
-- **The register is a sheet tab, never a file here.** `Group Register` (group,
-  Salesforce account ids, list bills, match words, contact, code) is built in
-  the session scratchpad and imported. Its codes, and the group names, never
-  enter the repository, its comments or its docs.
+- **The group tabs have their own spreadsheet, the script does not.** Asked
+  the same day ("if this is the sheet for managing groups why import into the
+  service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
+  `Group Responses` and `Group Shares` live in the **Group Client Management**
+  Google Sheet. The script stays in the Service Questionnaire project, where
+  the sign-in, the Salesforce login, the support@ mailbox and the web address
+  are, and opens the group sheet by the `GCM_SHEET_ID` Script property
+  (`gcmSS_`), never by an ID in the code. Without it, the tabs are looked for
+  in Service Questionnaires. The register (group, Salesforce account ids,
+  list bills, match words, contact, code) is built in the session scratchpad;
+  its codes and the group names never enter the repository, its comments or
+  its docs.
 - **Who looks after a group is its account owner in Salesforce, and nothing
   else** (7 October 2026: "read who is the account owner in Salesforce instead
   of a spreadsheet"). The refresh writes Owner in Salesforce and Owner active

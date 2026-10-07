@@ -22,6 +22,15 @@
  *  The pages hold no client data: everything comes from here, to a person
  *  who signed in, so nothing about a group ever sits in the public repository.
  *
+ *  The group tabs live in their own spreadsheet, "Group Client Management" (asked
+ *  for the same day: "if this is the sheet for managing groups why import into
+ *  the service questionnaire"). The script stays in the Service Questionnaire
+ *  project, where the sign-in (Agent Skill Bank), the Salesforce login, the
+ *  support@ mailbox and the web address already are, and opens the group sheet
+ *  by its ID in the GCM_SHEET_ID Script property. The ID is never in this file:
+ *  the .gs files are public. Without the property, the tabs are looked for in
+ *  the Service Questionnaire spreadsheet itself.
+ *
  *  Where it reads:
  *    Group Register   the groups: name, Salesforce account(s), list bills,
  *                     match words, the client contact, the group's code. Kept
@@ -142,8 +151,9 @@ function gcmSetup() {
   Object.keys(GCM_HEAD).forEach(function (n) { gcmSheet_(n); });
   ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'gcmRefreshTick') ScriptApp.deleteTrigger(t); });
   ScriptApp.newTrigger('gcmRefreshTick').timeBased().everyHours(1).create();
-  var on = tSfOn_();
-  return tSay_('Group client management is set up: the five Group tabs exist and the refresh runs every hour from ' +
+  var on = tSfOn_(), gs = gcmSS_(), own = gs.getId() === ss_().getId();
+  return tSay_('Group client management is set up in "' + gs.getName() + '"' + (own ? ' (this spreadsheet: set GCM_SHEET_ID to keep the group tabs in a sheet of their own)' : '') +
+    ': the five Group tabs exist and the refresh runs every hour from ' +
     GCM.HOURS[0] + ':00 to ' + GCM.HOURS[1] + ':00, Monday to Saturday.\n\n' +
     (on ? 'Salesforce is linked. Run gcmRefresh once now to fill the Group Tasks tab.'
         : 'Salesforce is NOT linked to this project yet: copy SF_KEY, SF_SECRET, SF_USER and SF_PASS from the KPI Tracker into Project Settings → Script properties, then run gcmRefresh.'));
@@ -159,8 +169,22 @@ function gcmRefreshTick() {
 
 /* ── sheet plumbing ─────────────────────────────────────────────── */
 
+/** The group sheet: the spreadsheet whose ID is the GCM_SHEET_ID Script property, else this project's own. Opened once
+ *  a run. */
+var GCM_SS = null;
+function gcmSS_() {
+  if (GCM_SS) return GCM_SS;
+  var id = String(PropertiesService.getScriptProperties().getProperty('GCM_SHEET_ID') || '').trim();
+  var m = /\/d\/([A-Za-z0-9_-]{20,})/.exec(id);   // a whole link pasted in works too
+  if (m) id = m[1];
+  if (!id) return (GCM_SS = ss_());
+  try { GCM_SS = SpreadsheetApp.openById(id); }
+  catch (e) { throw new Error('The group sheet in GCM_SHEET_ID could not be opened (' + String(e && e.message ? e.message : e).slice(0, 120) + '): check the ID, and that the script owner can edit that sheet.'); }
+  return GCM_SS;
+}
+
 function gcmSheet_(name) {
-  var ss = ss_(), sh = ss.getSheetByName(name), head = GCM_HEAD[name];
+  var ss = gcmSS_(), sh = ss.getSheetByName(name), head = GCM_HEAD[name];
   if (!sh) {
     sh = ss.insertSheet(name);
     sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
@@ -171,7 +195,7 @@ function gcmSheet_(name) {
 
 /** A tab as objects keyed by header, each with _n, its sheet row. */
 function gcmRows_(name) {
-  var sh = ss_().getSheetByName(name);
+  var sh = gcmSS_().getSheetByName(name);
   if (!sh || sh.getLastRow() < 2) return [];
   var vals = sh.getDataRange().getValues(), head = vals[0].map(function (h) { return String(h).trim(); });
   return vals.slice(1).map(function (r, i) {
@@ -427,7 +451,7 @@ function gcmRefresh_() {
   var extra = sh.getLastRow() - 1 - rows.length;
   if (extra > 0) sh.getRange(rows.length + 2, 1, extra, head.length).clearContent();
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
-  var regSh = ss_().getSheetByName(GCM.REGISTER);
+  var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
   ['Owner in Salesforce', 'Owner active'].forEach(function (h) {
     if (regHead.indexOf(h) < 0) { regSh.getRange(1, regHead.length + 1).setValue(h).setFontWeight('bold'); regHead.push(h); }

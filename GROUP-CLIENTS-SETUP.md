@@ -14,6 +14,14 @@ how every group is being serviced; the wall shows it to the branch.
 The pages hold no client data. Everything comes from `apps-script/GroupClients.gs`
 in the Service Questionnaire project, to someone who has signed in.
 
+**Two spreadsheets, one script.** The group tabs (the register, the Salesforce
+snapshot, the letters sent, the groups' answers, what is shared) live in their
+own Google Sheet, **Group Client Management**. The script lives in the Service
+Questionnaire project, because that is where the staff sign-in (the Agent Skill
+Bank), the Salesforce login, the support@ mailbox and the web address already
+are; it opens the group sheet by its ID, held in the `GCM_SHEET_ID` Script
+property and never in the code, since the `.gs` files are public.
+
 ## Once
 
 1. **Paste the scripts.** In the Service Questionnaire Apps Script project (the
@@ -29,16 +37,19 @@ in the Service Questionnaire project, to someone who has signed in.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
-3. **Import the Group Register** as a new tab named exactly `Group Register`
-   (File → Import → Upload → Insert new sheet). The file is built outside the
-   repository; it carries each group's Salesforce account, list bills, match
-   words, contact and code.
-4. **Run `gcmSetup`** from the editor (authorise when asked). It makes the
-   `Group Tasks`, `Group Sends`, `Group Responses` and `Group Shares` tabs and
-   the hourly refresh. Then **run `gcmRefresh`** once to fill `Group Tasks`.
-5. **Deploy → Manage deployments → pencil → New version.** Never New
+   - `GCM_SHEET_ID`: the ID of the **Group Client Management** sheet (the long
+     part of its address between `/d/` and `/edit`; pasting the whole address
+     works too). That sheet starts with one tab, `Group Register`, built
+     outside the repository: each group's Salesforce account, list bills,
+     match words, contact and code. The script owner must be able to edit it.
+3. **Run `gcmSetup`** from the editor, with `GroupClients.gs` open (authorise
+   when asked). It adds the `Group Tasks`, `Group Sends`, `Group Responses` and
+   `Group Shares` tabs to the group sheet, says which sheet it used, and
+   installs the hourly refresh. Then **run `gcmRefresh`** once to fill
+   `Group Tasks`.
+4. **Deploy → Manage deployments → pencil → New version.** Never New
    deployment: that changes the address every page uses.
-6. **Staff on the Agent Skill Bank** need a Password of at least eight
+5. **Staff on the Agent Skill Bank** need a Password of at least eight
    characters and a Role. Staff ("Sales Support", "Staff", "Assistant") see the
    groups whose Salesforce account they own (matched by name: the name on the
    Agent Skill Bank must be the same person's name in Salesforce); "Branch Manager" and "Assistant Branch Manager" see
