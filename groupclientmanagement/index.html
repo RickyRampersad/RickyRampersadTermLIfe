@@ -106,20 +106,21 @@ iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radiu
 <main class="wrap" id="app">
   <form class="gate" id="gate" autocomplete="off">
     <h1>Staff sign in</h1>
-    <p>Your agent number and password from the Agent Skill Bank. The branch manager sees every group and the dashboard; staff see the groups assigned to them.</p>
-    <label for="gWho">Agent number</label>
-    <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
-    <label for="gCode">Password, or the branch code</label>
-    <input class="field" id="gCode" type="password" required>
+    <p>Your work e-mail and the password the branch manager gave you. Staff see the groups whose Salesforce account they own; the branch manager sees every group and the dashboard.</p>
+    <label for="gWho">E-mail</label>
+    <input class="field" id="gWho" type="email" autocapitalize="off" spellcheck="false" required>
+    <label for="gCode">Password</label>
+    <input class="field" id="gCode" type="password" inputmode="numeric" required>
     <div class="err" id="gErr" role="alert"></div>
     <button class="btn" type="submit" id="gGo" style="width:100%;margin-top:6px">Sign in</button>
   </form>
 </main>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="api.js"></script>
 <script>
-/* The Service Questionnaire deployment: the same /exec URL the assignment board uses. GroupClients.gs answers every gcm.* action. */
-const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+/* the group sheet's own web app: its address is in api.js */
+const SVC = /^https:\/\/script\.google\.com\/.+\/exec$/.test(window.GCM_API || '') ? window.GCM_API : '';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -130,14 +131,17 @@ let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TA
 try { AUTH.code = localStorage.getItem('rrb-gcm-code') || ''; AUTH.who = localStorage.getItem('rrb-gcm-who') || ''; } catch (e) {}
 
 function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
+const NOT_CONNECTED = { ok: false, error: 'Not connected yet: the group sheet’s web app address goes in groupclientmanagement/api.js.' };
 async function api(params) {
+  if (!SVC) return NOT_CONNECTED;
   const q = Object.entries(Object.assign({}, params, { code: AUTH.code, who: AUTH.who })).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
-  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, notLive: true, error: 'The branch backend is not answering for group client management yet: GroupClients.gs needs pasting and a New version publishing.' }; } }
-  catch (e) { return { ok: false, error: 'Could not reach the branch backend. Check the connection and try again.' }; }
+  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, notLive: true, error: 'The group sheet’s web app is not answering: in its Apps Script, Deploy → Manage deployments → New version.' }; } }
+  catch (e) { return { ok: false, error: 'Could not reach the group sheet. Check the connection and try again.' }; }
 }
 async function post(body) {
+  if (!SVC) return NOT_CONNECTED;
   try { const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({}, body, { code: AUTH.code, who: AUTH.who })) })).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
-  catch (e) { return { ok: false, error: 'Could not reach the branch backend.' }; }
+  catch (e) { return { ok: false, error: 'Could not reach the group sheet.' }; }
 }
 
 /* ---- the gate ---- */

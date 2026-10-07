@@ -2305,23 +2305,31 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   rickyrampersadbranch.com to Netlify (which would have taken every other page
   off the air), its register of group names and contacts was a public file,
   and a static page cannot show each person their own groups, send and log a
-  letter, or read and post Chatter. `apps-script/GroupClients.gs` does it in
-  the Service Questionnaire project, routed by two lines in `Service.gs`
-  (`gcm.*`), signing staff in through `tWho_` like the assignment board,
-  reading Salesforce through `ServiceSalesforce.gs`, sending through
-  `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
-- **The group tabs have their own spreadsheet, the script does not.** Asked
-  the same day ("if this is the sheet for managing groups why import into the
-  service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
-  `Group Responses` and `Group Shares` live in the **Group Client Management**
-  Google Sheet. The script stays in the Service Questionnaire project, where
-  the sign-in, the Salesforce login, the support@ mailbox and the web address
-  are, and opens the group sheet by the `GCM_SHEET_ID` Script property
-  (`gcmSS_`), never by an ID in the code. Without it, the tabs are looked for
-  in Service Questionnaires. The register (group, Salesforce account ids,
-  list bills, match words, contact, code) is built in the session scratchpad;
-  its codes and the group names never enter the repository, its comments or
-  its docs.
+  letter, or read and post Chatter. `apps-script/GroupClients.gs` does it live.
+  The pages under `groupclientmanagement/` hold no client data.
+- **The script lives in the group sheet and shares nothing with the Service
+  Questionnaire project.** Asked the same day, twice: first "if this is the
+  sheet for managing groups why import into the service questionnaire", then
+  "why don't we just use the group spreadsheet and build on this, since the
+  only connection is to the Salesforce tasks and group management has its own
+  access". So `GroupClients.gs` is the whole Apps Script project of the **Group
+  Client Management** Google Sheet: its own `doGet` and `doPost`, its own
+  sign-in tab (**Group Staff**: Name, E-mail, Role Staff, Manager or Wall,
+  Password, Active), its own copy of the `SF_*` and `MS_*` Script properties,
+  its own web app address, kept for the three pages in
+  `groupclientmanagement/api.js`, and a **Group clients** menu (Set up,
+  Refresh from Salesforce, Who can sign in). It never goes into the Service
+  Questionnaire project, where a second `doGet` would take the questionnaire,
+  the board and the walls off the air; no Service.gs paste is needed for it, so
+  `TEAM_CODE` is never blanked by it. Staff sign in with their e-mail and a
+  password of eight or more; the refresh adds every active account owner to
+  Group Staff under Salesforce's own name (the name the board matches on) and
+  e-mail, with a ten-digit password, and setup does the same for the manager
+  and the wall. The wall opens on the Wall row's password and nothing else
+  does. Passwords are never in the repository and the menu never shows one.
+  The register (group, Salesforce account ids, list bills, match words,
+  contact, code) is built in the session scratchpad; its codes and the group
+  names never enter the repository, its comments or its docs.
 - **Who looks after a group is its account owner in Salesforce, and nothing
   else** (7 October 2026: "read who is the account owner in Salesforce instead
   of a spreadsheet"). The refresh writes Owner in Salesforce and Owner active

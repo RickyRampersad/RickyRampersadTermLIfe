@@ -57,28 +57,31 @@ body{margin:0;background:var(--navy);color:var(--ink);font-family:var(--font);ov
 </div>
 <div id="stage">
   <form class="gate" id="gate" autocomplete="off">
-    <h2 style="margin:0 0 8px">Branch code</h2>
-    <p class="muted" style="margin:0 0 14px">The same code that opens the branch’s other walls.</p>
-    <input id="code" type="password" required aria-label="Branch code">
+    <h2 style="margin:0 0 8px">Wall code</h2>
+    <p class="muted" style="margin:0 0 14px">The password on the Wall row of the group sheet’s Group Staff tab. It opens this wall and nothing else.</p>
+    <input id="code" type="password" inputmode="numeric" required aria-label="Wall code">
     <div class="err" id="err" role="alert"></div>
     <button type="submit">Open the wall</button>
   </form>
 </div>
 <div class="foot"><span id="msg">Every number here comes from Salesforce and from the groups’ own answers.</span><div class="dots" id="dots"></div></div>
 
+<script src="api.js"></script>
 <script>
-const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+/* the group sheet's own web app: its address is in api.js */
+const SVC = /^https:\/\/script\.google\.com\/.+\/exec$/.test(window.GCM_API || '') ? window.GCM_API : '';
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const pct = n => n == null ? '–' : n + '%';
 const DAYS = ['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
 const HOLD_MS = 16000, POLL_MS = 300000, KEEP = 'rrb-gcm-wall';
 let CODE = '', D = null, cur = 0, timer = null;
-try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}   // the branch code the other walls keep
+try { CODE = localStorage.getItem('rrb-gcm-wall-code') || ''; } catch (e) {}   // this wall's own code, never the branch code
 
 $('gate').addEventListener('submit', e => { e.preventDefault(); CODE = $('code').value.trim(); load(true); });
 async function load(first) {
   let d;
+  if (!SVC) { const m = 'Not connected yet: the group sheet’s web app address goes in groupclientmanagement/api.js.'; if ($('err')) $('err').textContent = m; $('msg').textContent = m; return; }
   try { const txt = await (await fetch(SVC + '?action=gcm.wall&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())).text(); d = JSON.parse(txt); }
   catch (e) { d = { ok: false, offline: true, error: 'The wall could not reach the sheet. Trying again.' }; }
   if (!d.ok) {
@@ -86,7 +89,7 @@ async function load(first) {
     if (first && $('err')) $('err').textContent = d.error;
     $('msg').textContent = d.error; setTimeout(() => load(false), 15000); return;
   }
-  try { localStorage.setItem('rrb-transition-code', CODE); localStorage.setItem(KEEP, JSON.stringify({ at: Date.now(), d: d })); } catch (e) {}
+  try { localStorage.setItem('rrb-gcm-wall-code', CODE); localStorage.setItem(KEEP, JSON.stringify({ at: Date.now(), d: d })); } catch (e) {}
   D = d; draw();
   clearTimeout(load._t); load._t = setTimeout(() => load(false), POLL_MS);
 }
