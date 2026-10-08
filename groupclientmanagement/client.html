@@ -43,6 +43,10 @@ textarea.field{min-height:76px;resize:vertical}
 .tile.alert b{color:var(--badText)}
 h2.sec{font-size:20px;margin:26px 0 4px}.sub{color:var(--muted);margin:0 0 12px;font-size:14px}
 .cat{font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:18px 0 8px}
+details.hist{margin:8px 0 2px;font-size:14px}
+details.hist summary{cursor:pointer;font-weight:600;color:var(--muted)}
+details.hist ul{margin:6px 0 0;padding-left:18px}
+details.hist li{margin:3px 0}
 .item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:14px 16px;margin:0 0 10px}
 .item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warn)}
 .item h3{margin:0 0 8px;font-size:16px}
@@ -155,7 +159,8 @@ function render() {
         '<dt>Target date</dt><dd>' + (i.due ? esc(dmy(i.due)) + (i.late ? ' <span class="st late">past target</span>' : '') : 'Not yet set') + '</dd>' +
         (i.ref ? '<dt>Reference</dt><dd>' + esc(i.ref) + '</dd>' : '') +
         '<dt>Status</dt><dd><span class="st' + (/confirmation/i.test(i.status) ? ' wait' : '') + '">' + esc(i.status) + '</span></dd></dl>' +
-        '<div class="done"><b>What has been done:</b> ' + esc(i.done) + '</div>' +
+        '<div class="done"><b>Where it stands:</b> ' + esc(i.story ? i.story.why : i.done) + '</div>' +
+        (i.story && i.story.history.length > 1 ? '<details class="hist"><summary>How it got here</summary><ul>' + i.story.history.map(e => '<li>' + (e.d ? esc(dmy(e.d)) + ': ' : '') + esc(e.text) + '</li>').join('') + '</ul></details>' : '') +
         i.comments.map(c2 => '<div class="cmt"><span class="by">' + esc(c2.by) + '</span> <span style="color:var(--muted)">' + esc(c2.when) + '</span>\n' + esc(c2.text) + '</div>').join('') +
         (i.answer ? '<p class="prev">You told us on ' + esc(i.answer.at) + ': <b>' + esc(LABEL[i.answer.verdict] || 'a note') + '</b>' + (i.answer.note ? ' “' + esc(i.answer.note) + '”' : '') + '</p>' : '') +
         '<div class="choices" role="group" aria-label="Is this item correct?">' + ['correct', 'change', 'notours'].map(v => '<button type="button" class="ch ' + v + '" data-i="' + esc(i.id) + '" data-v="' + v + '" aria-pressed="' + (a.v === v) + '">' + LABEL[v] + '</button>').join('') + '</div>' +

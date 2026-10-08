@@ -39,6 +39,9 @@ property and never in the code, since the `.gs` files are public.
      `SF_LOGIN_URL` must be its My Domain address. Without them nothing can be
      read, and ServiceSalesforce.gs must be the repository copy (7 October
      2026 or later) to sign in this way.
+   - `ANTHROPIC_API_KEY`: a Claude API key (console.anthropic.com → API keys),
+     for the "Draft with AI" button. Without it the button does not appear
+     and staff write each reason themselves.
    - `MS_TENANT`, `MS_CLIENT`, `MS_SECRET`: Microsoft 365, so letters go from
      support@. Without them, Send opens the letter in the staff member's own
      Outlook as plain text instead, and still logs it.
@@ -56,9 +59,12 @@ property and never in the code, since the `.gs` files are public.
    deployment: that changes the address every page uses.
 5. **Staff on the Agent Skill Bank** need a Password of at least eight
    characters and a Role. Staff ("Sales Support", "Staff", "Assistant") see the
-   groups whose Salesforce account they own (matched by name: the name on the
-   Agent Skill Bank must be the same person's name in Salesforce); "Branch Manager" and "Assistant Branch Manager" see
-   every group and the dashboard. Agents and unit managers are refused.
+   groups whose Salesforce account they own, matched by e-mail first (the
+   refresh writes the owner's Salesforce e-mail onto the register as Owner
+   e-mail) and else by name, allowing for capitals and a double-barrelled
+   surname ("SASHA LALLA" on the Skill Bank is "Sasha Lalla-Jagassar" in
+   Salesforce). "Branch Manager" and "Assistant Branch Manager" see every
+   group and the dashboard. Agents and unit managers are refused.
 
 ## The register
 
@@ -69,12 +75,18 @@ property and never in the code, since the `.gs` files are public.
 | List bills | how the group signs in, and how its employees' policies are found (any spelling: "TGM 1099" and "TGM1099" are one) |
 | Match words | words in task subjects that name the group. One word must stand alone ("ACME" never matches "Acmeline"); several words may run on ("ACME & CO" matches "ACME & COMPANY") |
 | Owner in Salesforce, Owner active | written by the refresh, never by hand: the staff member a group is assigned to is its account's owner in Salesforce. To move a group, change the account owner in Salesforce; the next refresh (hourly, or "Refresh from Salesforce") moves it on the board. A group on two accounts takes the first owner still active. An owner who is no longer an active user puts the group at the top of the manager's "To act on" |
-| To, Cc, Greeting | who the letter goes to. A group with no To cannot be sent |
+| Contact in Salesforce, Contact e-mail, Contact greeting | written by the refresh, never by hand: the letter goes to the account's **Contact Person** in Salesforce, or, when it has none, to the account's own e-mail. To change who receives the letter, change the Contact Person in Salesforce and refresh. The greeting is "Ms. Smith" from the salutation and surname, or the name in full |
+| To, Cc, Greeting | To is read only for a group whose account has no contact with an e-mail in Salesforce. Cc is always copied. A Greeting typed here is used instead of Salesforce's |
 | Code | the group's access code. Under ten characters opens nothing |
 | Enabled | N stops a group without deleting it |
 
 A group cannot sign in without a list bill and a code, and cannot be sent a
-letter without a To.
+letter without a contact: a Contact Person with an e-mail on its Salesforce
+account, the account's own e-mail, or, failing both, a To on the register. The
+group page and the preview say who the letter goes to and where that came from,
+and point out a personal mailbox (gmail, hotmail and the like): the letter
+carries the group's access code, and a personal address on an account may
+belong to someone who has since left the company.
 
 ## What a group sees, and what it never sees
 
@@ -89,6 +101,32 @@ letter without a To.
   Chatter is where staff write to each other.
 - Salesforce's logged copies of e-mails and the birthday flow's e-mails are not
   work and are never counted (`GCM_LOGGED`).
+
+## Why an item is still open
+
+Every open item carries its own story, rebuilt at each refresh from
+Salesforce (the `History` and `Mails` columns of `Group Tasks`):
+
+- **Where it stands**, one line: waiting on the group since the last e-mail
+  we sent them, with the person handling it since a date, not started and
+  past its target, and so on. A reply from the group says so.
+- **How it got here**: when it opened, the e-mails filed against it by
+  subject line and date, who it was handed to, when it was last worked on,
+  and the target first set against the target now. The group sees only the
+  e-mails that went to or came from its own contacts (the register's To and
+  Cc, or their company's domain); drafts, forwards and notices between
+  colleagues are staff-only. Staff also see how many times the target moved,
+  and a flag when a payment confirmation was e-mailed but the item is still
+  open.
+- **A reason, written by staff**: an item the group sees that has been open
+  more than 30 days needs a note for the group shared in the last 30 days.
+  Until each one has it, Preview says so and Send stays locked. **Draft with
+  AI** writes a first draft from the item's history, e-mail subject lines and
+  internal Chatter (Claude, `claude-opus-5-5`; server-side fallbacks on).
+  Nothing is shared until a person reads it, edits it and presses Post, which
+  puts it on the task's Chatter and on the group's page. The AI is told never
+  to mention an employee's health or a claim, never to quote internal notes,
+  and never to blame anyone.
 
 ## The week
 

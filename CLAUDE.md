@@ -2634,13 +2634,38 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   owner. An owner who is no longer an active user (two groups' owners were, on
   7 October) puts the group first on the manager's "To act on", and the
   group's page never names them.
+  **A staff member is matched to the owner by e-mail, then by name**
+  (`gcmMine_`, `gcmSameName_`). The same afternoon the first staff member to
+  sign in saw an empty board: she is "SASHA LALLA" on the Agent Skill Bank
+  and "Sasha Lalla-Jagassar" in Salesforce, and the names were compared
+  whole. The refresh now writes the owner's Salesforce e-mail onto the
+  register (Owner e-mail), and a name matches on the same first name with
+  every other part of the shorter name inside the longer. A first name
+  alone matches nothing. Letters and Chatter notes are signed with the name
+  as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
+  the owner's Salesforce address.
+- **The letter goes to the account's Contact Person in Salesforce** (7 October
+  2026: "there is a contact on the account with an email, why is it she is not
+  able to send?"). Until then only the register's To was read, and it was
+  filled for two groups of seventeen, so most staff could not send at all. The
+  refresh reads `Contact_Person__r` on each account (else the account's own
+  `Email__c`) and mirrors it onto the register as Contact in Salesforce,
+  Contact e-mail and Contact greeting; the register's To counts only for a
+  group with neither, and its Cc and Greeting still apply. Several accounts'
+  Contact Person carries a personal mailbox, and the letter carries the
+  group's access code, so the page and the preview name the address, say
+  where it came from and point out a personal one; staff tick that they
+  checked before it goes.
 - **A group signs in with its list bill and its code, both.** The list bill is
   printed on every bill and known to the employees, so it is the name, never
   the password. List bills live on the policy records (`List_Bill__c` on
   `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
   compared as letters and digits only. The account fields `List_Bill_Life__c`
   and `List_Bill_Pension__c` are empty on all but one account.
-- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`).
+- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
+  and a health reimbursement is a claim whatever its subject says: the first
+  live refresh carried "Reissue Cheque (health)" with a member's name, which
+  the words medical and claim did not catch.
   Items on its account, its billing records (`TRANSACTIONS__c`) or naming it:
   shown unless staff untick. Items reached only through an employee's own
   policy or contact: hidden unless staff tick. Chatter only when staff tick it
@@ -2663,6 +2688,30 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **Tuesday is send day**; the group is asked to answer by Friday. Every letter
   is logged on `Group Sends` with the letter itself; without Microsoft 365 it
   opens in the staff member's Outlook and is still logged.
+- **Every open item says why it is still open** (7 October 2026: "when the
+  client sees the opened task shall we not give some history why opened so
+  long, to use intelligence", then "you need to scrub emails with the subject
+  line"). Salesforce's feed tracking is on for tasks: `TaskFeed` with its
+  `FeedTrackedChanges` gives the target date first set, each real move of it
+  (each change is written as three rows: old to new, new to blank, blank to
+  new), the status changes and the hand-overs. Each billing record's
+  `EmailMessage`s are the item's e-mails; on an account, only those with the
+  task's own subject line once Re:, Fw:, DRAFT: and FINAL DRAFT: are set
+  aside (`gcmSameSubject_`). The refresh keeps both per open task in the
+  History and Mails columns (`gcmHistories_`, `gcmMails_`) and `gcmStory_`
+  writes the line and the history. **The group sees only e-mails to or from
+  its own contacts** (`gcmToGroup_`: the register's To and Cc, or their
+  company's domain, never a public one): the branch's own notices, drafts to
+  the manager and forwards stay with staff. The manager chose the target
+  "first set for X, now Y" for the group, never the count of moves, which
+  staff see. **An item the group sees, open more than 30 days, needs a note
+  for the group shared in the last 30 days before the letter goes**
+  (`gcmNeedsReason_`; Preview and Send both refuse until then). **Draft with
+  AI** (`gcmDraft_`, `gcmClaude_`) sends the item's facts, e-mail subject
+  lines and internal Chatter to the Claude API (`claude-opus-5-5`, effort
+  low, `fallbacks: "default"`), at the manager's choice, with the key in the
+  `ANTHROPIC_API_KEY` Script property; the draft is never shared until a
+  person edits it and presses Post. A health or claim item gets no draft.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 

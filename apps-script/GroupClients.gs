@@ -87,12 +87,16 @@ var GCM = {
   TRIES: 8, LOCK_S: 900,    // wrong codes on one list bill before it closes for fifteen minutes
   MIN_CODE: 10,             // a group code shorter than this opens nothing
   HOURS: [6, 18],           // the hourly refresh runs from 6:00 to 18:00, Monday to Saturday
-  CHUNK: 150               // ids in one Chatter read
+  CHUNK: 150,              // ids in one Chatter read
+  REASON_DAYS: 30,          // an item open longer than this needs a note for the group, shared in the last REASON_DAYS, before a letter goes
+  MAILS: 12,                // e-mails kept per open item
+  AI_MODEL: 'claude-opus-5-5'   // drafts a reason for staff to approve (ANTHROPIC_API_KEY Script property)
 };
 
 var GCM_HEAD = {
-  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
-  'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private'],
+  'Group Register':  ['Group', 'Account Ids', 'List bills', 'Match words', 'Owner in Salesforce', 'Owner active', 'Owner e-mail',
+                      'Contact in Salesforce', 'Contact e-mail', 'Contact greeting', 'To', 'Cc', 'Greeting', 'Code', 'Enabled', 'Note'],
+  'Group Tasks':     ['Group', 'Task Id', 'Subject', 'Task type', 'Category', 'Status', 'Open', 'Due', 'Opened', 'Completed', 'Owner', 'For', 'Ref', 'Level', 'Private', 'History', 'Mails'],
   'Group Sends':     ['When', 'Group', 'Staff', 'To', 'Cc', 'Subject', 'Items', 'Task Ids', 'Letter', 'Via', 'Status'],
   'Group Responses': ['When', 'Group', 'Name', 'Role', 'Task Id', 'Task', 'Verdict', 'Note', 'Rating', 'Comment', 'Staff', 'Chatter'],
   'Group Shares':    ['When', 'Group', 'Task Id', 'Kind', 'Value', 'By']
@@ -102,8 +106,9 @@ var GCM_HEAD = {
 var GCM_CATS = ['Group Life', 'Group Health', 'Group Pensions', 'Member enrolments', 'Member terminations', 'Claims', 'Audit and confirmations'];
 var GCM_STATUS = { 'waiting on someone else': 'Awaiting your confirmation', 'not started': 'Scheduled',
                    'in progress': 'In progress with us', 'deferred': 'On hold' };
-/* An employer sees its plan's administration, never a member's health. */
-var GCM_PRIVATE = /MEDICAL|CLAIM|DIAGNOS|HOSPITAL|SURGER|CARDIO|\bECG\b|\bLAB\b|BLOOD|PRESCRIPTION|DOCTOR|\bAPS\b|\bPMAR\b|CERTIFICATE OF HEALTH/i;
+/* An employer sees its plan's administration, never a member's health. A health reimbursement is a claim paid to a
+   member, whatever its subject calls it: on 7 October 2026 "Reissue Cheque (health)- <member>" was on a group's tasks. */
+var GCM_PRIVATE = /MEDICAL|CLAIM|DIAGNOS|HOSPITAL|SURGER|CARDIO|\bECG\b|\bLAB\b|BLOOD|PRESCRIPTION|DOCTOR|\bAPS\b|\bPMAR\b|CERTIFICATE OF HEALTH|REIMBURS|RE-?ISSUE\W+CHEQUE|CHEQUE\W*\(?\s*HEALTH/i;
 /* Salesforce logs every e-mail as a closed task, and the birthday flow does the same: they close the moment they are
    logged. In 2026 they were 615 of the groups' 1,176 completed tasks; counted, they show an on-time record the work
    does not have. */
@@ -117,7 +122,8 @@ var GCM_EXCLUDE_TYPES = ['HR', 'Lic/Staffing/SA/HR'];
 function gcmDoGet_(p) {
   try {
     switch (String(p.action || '')) {
-      case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), refreshed: gcmRefreshed_() };
+      case 'gcm.ping':    return { ok: true, gcm: 1, salesforce: tSfOn_(), mail: !!tMsCreds_(), ai: !!gcmAiKey_(), refreshed: gcmRefreshed_() };
+      case 'gcm.draft':   return gcmDraft_(p);
       case 'gcm.board':   return gcmBoard_(p);
       case 'gcm.group':   return gcmGroupView_(p);
       case 'gcm.preview': return gcmPreview_(p);
@@ -244,6 +250,7 @@ function gcmWhen_(x) {   // a date-time as the pages print it
 /** A list bill as a key: letters and digits only, so "TGM 1099" and "TGM1099", "PIND - 067" and "PIND067" are one. */
 function gcmBillKey_(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
 function gcmCodeKey_(s) { return String(s || '').toUpperCase().replace(/[^A-Z0-9]/g, ''); }
+function gcmEmailOk_(s) { return /^[^@\s;,]+@[^@\s;,]+\.[a-z]{2,}$/i.test(String(s || '').trim()); }
 function gcmId15_(s) { return String(s || '').slice(0, 15); }
 
 /* ── the register ───────────────────────────────────────────────── */
@@ -251,19 +258,30 @@ function gcmId15_(s) { return String(s || '').slice(0, 15); }
 /** Every enabled group: { key, name, accts (15-character ids), acctsFull, bills, billKeys, match, assigned, ownerActive,
  *  to, cc, greeting, code, note }. `assigned` is the account's owner in Salesforce, which the refresh writes onto the
  *  register as a mirror: to move a group to someone else, change the account owner in Salesforce. There is no column
- *  that overrides it, so the board and Salesforce can never disagree about who looks after a group. */
+ *  that overrides it, so the board and Salesforce can never disagree about who looks after a group.
+ *  `to` is the account's Contact Person in Salesforce, mirrored the same way (asked for on 7 October 2026: "there is a
+ *  contact on the account with an email"); the register's own To is read only for a group whose account has no
+ *  contact with an e-mail. The register's Greeting, when filled, is how the letter opens; else Salesforce's. */
 function gcmRegister_() {
   return gcmRows_(GCM.REGISTER).filter(function (r) {
     return gcmText_(r.Group) && !/^(n|no|false|0)$/i.test(gcmText_(r.Enabled));
   }).map(function (r) {
     var accts = gcmList_(r['Account Ids']), bills = gcmList_(r['List bills']);
     var owner = gcmText_(r['Owner in Salesforce']);
-    return {
+    var g = {
       _n: r._n, key: gcmCodeKey_(r.Group), name: gcmText_(r.Group),
       accts: accts.map(gcmId15_), acctsFull: accts, bills: bills, billKeys: bills.map(gcmBillKey_),
       match: gcmList_(r['Match words']), assigned: owner, owner: owner, ownerActive: !/^(n|no|false)$/i.test(gcmText_(r['Owner active'])),
-      to: gcmList_(r.To), cc: gcmList_(r.Cc), greeting: gcmText_(r.Greeting), code: gcmText_(r.Code), note: gcmText_(r.Note)
+      ownerEmail: gcmText_(r['Owner e-mail']).toLowerCase(),
+      code: gcmText_(r.Code), note: gcmText_(r.Note)
     };
+    var sfTo = gcmText_(r['Contact e-mail']).toLowerCase(), regTo = gcmList_(r.To).filter(gcmEmailOk_);
+    g.to = gcmEmailOk_(sfTo) ? [sfTo] : regTo;
+    g.toFrom = gcmEmailOk_(sfTo) ? 'salesforce' : regTo.length ? 'register' : '';
+    g.contact = g.toFrom === 'salesforce' ? gcmText_(r['Contact in Salesforce']) : '';
+    g.cc = gcmList_(r.Cc).filter(function (a) { return gcmEmailOk_(a) && g.to.indexOf(a.toLowerCase()) < 0; });
+    g.greeting = gcmText_(r.Greeting) || (g.toFrom === 'salesforce' ? gcmText_(r['Contact greeting']) : '');
+    return g;
   });
 }
 
@@ -304,6 +322,18 @@ function gcmQuery_(soql) {
 }
 function gcmIn_(list) { return list.map(function (x) { return "'" + svcSoqlLit_(x) + "'"; }).join(','); }
 function gcmName_(rec, key) { var v = rec && rec[key]; return v && typeof v === 'object' ? String(v.Name || '') : ''; }
+/** Who an account's letter goes to: its Contact Person when that contact has an e-mail, else the account's own e-mail
+ *  (Email__c, a mailbox with no name, so the letter opens "Dear Sir or Madam"). Greeting: "Ms. Smith", or the name in
+ *  full when Salesforce has no salutation. */
+function gcmContactOf_(a) {
+  var c = a.Contact_Person__r || {}, em = String(c.Email || '').trim().toLowerCase();
+  if (gcmEmailOk_(em)) {
+    var sal = String(c.Salutation || '').trim(), last = String(c.LastName || '').trim(), name = String(c.Name || '').trim();
+    return { name: name, email: em, greeting: sal && last ? sal + ' ' + last : name };
+  }
+  em = String(a.Email__c || '').trim().toLowerCase();
+  return gcmEmailOk_(em) ? { name: '', email: em, greeting: '' } : { name: '', email: '', greeting: '' };
+}
 
 /** Whether a task names the group: a match word starting a word in its subject or record name. A single match word must
  *  also end one ("ACME" never matches "Acmeline"); a name of several words may run on ("ACME & CO" matches "ACME &
@@ -384,10 +414,19 @@ function gcmRefresh_() {
     });
   });
 
-  /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active */
-  var owners = {};
-  if (accts.length) gcmQuery_('SELECT Id, Owner.Name, Owner.IsActive FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
-    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), active: !(a.Owner && a.Owner.IsActive === false) };
+  /* who each group is assigned to: its account's owner in Salesforce, and whether that user is still active; and who
+     the letter goes to: the account's Contact Person, else the account's own e-mail */
+  var owners = {}, contacts = {};
+  if (accts.length) gcmQuery_('SELECT Id, Email__c, Owner.Name, Owner.Email, Owner.IsActive, Contact_Person__r.Name, Contact_Person__r.FirstName, ' +
+    'Contact_Person__r.LastName, Contact_Person__r.Salutation, Contact_Person__r.Email FROM Account WHERE Id IN (' + gcmIn_(accts) + ')').forEach(function (a) {
+    owners[gcmId15_(a.Id)] = { name: gcmName_(a, 'Owner'), email: String((a.Owner && a.Owner.Email) || ''), active: !(a.Owner && a.Owner.IsActive === false) };
+    contacts[gcmId15_(a.Id)] = gcmContactOf_(a);
+  });
+  reg.forEach(function (g) {
+    /* the first of a group's accounts with a contact; this refresh's e-mails are read against it at once */
+    var c = g.accts.map(function (a) { return contacts[a]; }).filter(function (x) { return x && x.email; })[0];
+    g.sfContact = c || (g.accts.some(function (a) { return contacts[a]; }) ? { name: '', email: '', greeting: '' } : null);
+    if (c) { g.to = [c.email]; g.cc = g.cc.filter(function (a) { return a.toLowerCase() !== c.email; }); }
   });
 
   /* the employees: every policy on the group's account or carrying its list bill, and the contact behind it */
@@ -414,7 +453,7 @@ function gcmRefresh_() {
   var W = ' AND (IsClosed = false OR CreatedDate = THIS_YEAR)';
   var polSub = polWhere.length ? '(SELECT Id FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
   var conSub = polWhere.length ? '(SELECT Contact__c FROM CLIENT_PORTFOLIO__c WHERE ' + polWhere.join(' OR ') + ')' : '';
-  var seen = {}, rows = [], excluded = 0;
+  var seen = {}, rows = [], excluded = 0, openRows = [];
   var take = function (t, gi, level) {
     var id = gcmId15_(t.Id);
     if (seen[id] || gi === undefined) return;
@@ -425,7 +464,8 @@ function gcmRefresh_() {
     rows.push([reg[gi].name, t.Id, subject.slice(0, 500), type, cat, String(t.Status || ''), t.IsClosed ? 'N' : 'Y',
       gcmYmd_(t.ActivityDate), gcmYmd_(t.CreatedDate), t.IsClosed ? gcmYmd_(t.CompletedDateTime || t.LastModifiedDate) : '',
       gcmName_(t, 'Owner'), gcmName_(t, 'Who'), gcmName_(t, 'What') && /TRANSACTIONS__c/.test((t.What || {}).Type || '') ? gcmName_(t, 'What') : '',
-      level, GCM_PRIVATE.test(subject) ? 'Y' : '']);
+      level, GCM_PRIVATE.test(subject) ? 'Y' : '', '', '']);
+    if (!t.IsClosed) openRows.push({ i: rows.length - 1, id: t.Id, what: String(t.WhatId || ''), whatType: String((t.What || {}).Type || ''), gi: gi, subject: subject });
   };
   if (accts.length) gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (' + gcmIn_(accts) + ')' + W).forEach(function (t) { take(t, byAcct[gcmId15_(t.WhatId)], 'group'); });
   if (accts.length) gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhatId IN (SELECT Id FROM TRANSACTIONS__c WHERE Account__c IN (' + gcmIn_(accts) + '))' + W)
@@ -443,8 +483,17 @@ function gcmRefresh_() {
     gcmQuery_('SELECT ' + F + ' FROM Task WHERE WhoId IN ' + conSub + W).forEach(function (t) { take(t, contactGroup[gcmId15_(t.WhoId)], 'member'); });
   }
 
-  /* write: the tab whole, new over old, so a reader never meets it empty */
+  /* each open item's story: its own change history, and the e-mails filed against the same record */
+  var hist = gcmHistories_(openRows.map(function (o) { return o.id; }));
+  var mails = gcmMails_(openRows, reg);
+  openRows.forEach(function (o) {
+    rows[o.i][15] = JSON.stringify(hist[gcmId15_(o.id)] || {});
+    rows[o.i][16] = JSON.stringify(mails[gcmId15_(o.id)] || []);
+  });
+
+  /* write: the tab whole, new over old, so a reader never meets it empty (the header too, so new columns arrive) */
   var sh = gcmSheet_(GCM.TASKS), head = GCM_HEAD[GCM.TASKS];
+  sh.getRange(1, 1, 1, head.length).setValues([head]);
   if (rows.length) {
     sh.getRange(2, 1, rows.length, head.length).setNumberFormat('@').setValues(rows);
   }
@@ -453,17 +502,26 @@ function gcmRefresh_() {
   /* the owners onto the register, as a mirror of Salesforce (the two columns are added if the tab lacks them) */
   var regSh = gcmSS_().getSheetByName(GCM.REGISTER);
   var regHead = regSh.getRange(1, 1, 1, regSh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
-  ['Owner in Salesforce', 'Owner active'].forEach(function (h) {
+  ['Owner in Salesforce', 'Owner active', 'Owner e-mail', 'Contact in Salesforce', 'Contact e-mail', 'Contact greeting'].forEach(function (h) {
     if (regHead.indexOf(h) < 0) { regSh.getRange(1, regHead.length + 1).setValue(h).setFontWeight('bold'); regHead.push(h); }
   });
-  var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1;
+  var ocol = regHead.indexOf('Owner in Salesforce') + 1, acol = regHead.indexOf('Owner active') + 1, ecol = regHead.indexOf('Owner e-mail') + 1;
+  var ccol = regHead.indexOf('Contact in Salesforce') + 1, cecol = regHead.indexOf('Contact e-mail') + 1, cgcol = regHead.indexOf('Contact greeting') + 1;
   reg.forEach(function (g) {
+    /* a contact taken off the account in Salesforce comes off the register too; an account Salesforce did not return
+       (a wrong id on the register) leaves the columns as they were */
+    if (g.sfContact) {
+      regSh.getRange(g._n, ccol).setValue(g.sfContact.name);
+      regSh.getRange(g._n, cecol).setValue(g.sfContact.email);
+      regSh.getRange(g._n, cgcol).setValue(g.sfContact.greeting);
+    }
     /* a group on two accounts takes the first owner still active in Salesforce, else the first owner */
     var cand = g.accts.map(function (a) { return owners[a]; }).filter(function (x) { return x && x.name; });
     var o = cand.filter(function (x) { return x.active; })[0] || cand[0];
     if (!o) return;
     regSh.getRange(g._n, ocol).setValue(o.name);
     regSh.getRange(g._n, acol).setValue(o.active ? 'Y' : 'N');
+    regSh.getRange(g._n, ecol).setValue(o.email);
   });
   var when = gcmWhen_(new Date());
   PropertiesService.getScriptProperties().setProperty('gcm_refreshed', when);
@@ -472,6 +530,93 @@ function gcmRefresh_() {
   return { ok: true, tasks: rows.length, open: open, excluded: excluded, refreshed: when,
     said: 'Group Tasks refreshed ' + when + ': ' + rows.length + ' tasks across ' + reg.length + ' groups (' + open + ' open); ' + excluded + ' logged e-mails and internal items left out.' };
 }
+/** What Salesforce's feed tracking recorded on each open task: the target date first set (fd), when it last took its
+ *  present status (ss), the last hand-over (ho: { n, d }), how many times the target moved (mv), and when anyone last
+ *  touched it (lw). Feed tracking writes each change of a date as three rows (old to new, new to blank, blank to new);
+ *  only the real changes are counted. Never throws: a task with no history is told from its own dates. */
+function gcmHistories_(ids) {
+  var out = {};
+  if (!ids.length) return out;
+  try {
+    for (var i = 0; i < ids.length; i += GCM.CHUNK) {
+      gcmQuery_("SELECT ParentId, Type, CreatedDate, (SELECT FieldName, OldValue, NewValue FROM FeedTrackedChanges) FROM TaskFeed WHERE ParentId IN (" +
+        gcmIn_(ids.slice(i, i + GCM.CHUNK)) + ") AND Type IN ('CreateRecordEvent', 'TrackedChange', 'TextPost') ORDER BY CreatedDate ASC").forEach(function (f) {
+        var k = gcmId15_(f.ParentId), h = out[k] = out[k] || { fd: '', ss: '', ho: null, mv: 0, lw: '', st: '' };
+        var d = gcmYmd_(f.CreatedDate);
+        if (d > h.lw) h.lw = d;
+        var ch = (f.FeedTrackedChanges && f.FeedTrackedChanges.records) || [];
+        var due = ch.filter(function (c) { return c.FieldName === 'Task.ActivityDate'; });
+        if (f.Type === 'CreateRecordEvent') {
+          due.forEach(function (c) { if (c.NewValue && !h.fd) h.fd = String(c.NewValue).slice(0, 10); });
+          ch.forEach(function (c) { if (c.FieldName === 'Task.Status' && c.NewValue) { h.st = String(c.NewValue); h.ss = d; } });
+          return;
+        }
+        var real = due.filter(function (c) { return c.OldValue && c.NewValue && c.OldValue !== c.NewValue; })[0];
+        if (real) { if (!h.fd) h.fd = String(real.OldValue).slice(0, 10); h.mv++; }
+        ch.forEach(function (c) {
+          if (c.FieldName === 'Task.Status' && c.NewValue && c.NewValue !== h.st) { h.st = String(c.NewValue); h.ss = d; }
+          if (c.FieldName === 'Task.Owner' && c.NewValue && !/^005[A-Za-z0-9]{12,15}$/.test(String(c.NewValue)) && c.OldValue) h.ho = { n: String(c.NewValue), d: d };
+        });
+      });
+    }
+  } catch (e) { out._error = String(e && e.message ? e.message : e).slice(0, 200); }
+  return out;
+}
+
+/** The e-mails on each open task's record: a billing record's are all its own; on an account, only those whose subject
+ *  line is the task's (Re:, Fw:, DRAFT: and the like set aside). Each is marked c when it went to or came from the
+ *  group's own contacts (the register's To and Cc, or their company's domain): only those reach the group's page; drafts,
+ *  forwards and notices between colleagues stay with staff. Payment confirmations are marked p. Never throws. */
+function gcmMails_(openRows, reg) {
+  var out = {}, byWhat = {};
+  openRows.forEach(function (o) { if (o.what) (byWhat[gcmId15_(o.what)] = byWhat[gcmId15_(o.what)] || []).push(o); });
+  var whats = Object.keys(byWhat).map(function (k) { return byWhat[k][0].what; });
+  if (!whats.length) return out;
+  try {
+    for (var i = 0; i < whats.length; i += GCM.CHUNK) {
+      gcmQuery_('SELECT Subject, MessageDate, Incoming, FromAddress, ToAddress, CcAddress, RelatedToId FROM EmailMessage WHERE RelatedToId IN (' +
+        gcmIn_(whats.slice(i, i + GCM.CHUNK)) + ') AND MessageDate = LAST_N_DAYS:400 ORDER BY MessageDate ASC').forEach(function (m) {
+        var subj = tPlain_(m.Subject || '').replace(/\s+/g, ' ').slice(0, 160);
+        (byWhat[gcmId15_(m.RelatedToId)] || []).forEach(function (o) {
+          if (!/^001/.test(o.what) || gcmSameSubject_(subj, o.subject)) {
+            var g = reg[o.gi], addr = [m.FromAddress, m.ToAddress, m.CcAddress].join(';');
+            var list = out[gcmId15_(o.id)] = out[gcmId15_(o.id)] || [];
+            list.push({ d: gcmYmd_(m.MessageDate), i: !!m.Incoming, s: subj, c: gcmToGroup_(addr, g, m), p: /payment\s+received/i.test(subj) });
+          }
+        });
+      });
+    }
+  } catch (e) { out._error = String(e && e.message ? e.message : e).slice(0, 200); }
+  Object.keys(out).forEach(function (k) { if (k !== '_error') out[k] = out[k].slice(-GCM.MAILS); });
+  return out;
+}
+/** Two subject lines for one matter: the same words once Re:, Fw:, DRAFT:, FINAL DRAFT: and URGENT: are set aside, or
+ *  one holding the other whole. */
+function gcmSameSubject_(a, b) {
+  var n = function (s) {
+    s = String(s || '').toLowerCase();
+    for (var k = 0; k < 4; k++) s = s.replace(/^\s*(re|fw|fwd|final draft|draft|urgent)\s*:\s*/, '');
+    return s.replace(/[^a-z0-9]+/g, ' ').trim();
+  };
+  var x = n(a), y = n(b);
+  if (!x || !y) return false;
+  if (x === y) return true;
+  return Math.min(x.length, y.length) >= 20 && (x.indexOf(y) >= 0 || y.indexOf(x) >= 0);
+}
+var GCM_PUBLIC_MAIL = /@(gmail|yahoo|hotmail|outlook|live|icloud|aol|msn|ymail|me)\./i;
+/** Whether an e-mail went to, or came from, the group itself: the register's To and Cc addresses, or their company's
+ *  domain (never a public one such as gmail, where only the address itself counts). */
+function gcmToGroup_(addr, g, m) {
+  var known = g.to.concat(g.cc).map(function (a) { return String(a).trim().toLowerCase(); }).filter(String);
+  if (!known.length) return false;
+  var domains = known.filter(function (a) { return !GCM_PUBLIC_MAIL.test(a); }).map(function (a) { return a.split('@')[1]; }).filter(String);
+  var side = String(m.Incoming ? m.FromAddress : [m.ToAddress, m.CcAddress].join(';') || '').toLowerCase();
+  return side.split(/[;,\s]+/).some(function (a) {
+    a = a.trim(); if (!a) return false;
+    return known.indexOf(a) >= 0 || domains.indexOf(a.split('@')[1]) >= 0;
+  });
+}
+
 function gcmRefreshed_() { return PropertiesService.getScriptProperties().getProperty('gcm_refreshed') || ''; }
 
 /** Chatter on some tasks: { taskId15: [{ id, by, when, text, replies: [...] }] }, newest first. Never throws. */
@@ -495,14 +640,15 @@ function gcmFeed_(ids) {
 
 function gcmLoad_() {
   var reg = gcmRegister_(), byName = {};
-  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resps = []; g.shares = { show: {}, post: {} }; });
+  reg.forEach(function (g) { byName[g.key] = g; g.tasks = []; g.sends = []; g.resps = []; g.shares = { show: {}, post: {}, postTask: {}, postWhen: {} }; });
   gcmRows_(GCM.TASKS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
     if (!g || !gcmText_(r['Task Id'])) return;
     g.tasks.push({ id: gcmText_(r['Task Id']), id15: gcmId15_(gcmText_(r['Task Id'])), subject: gcmText_(r.Subject), type: gcmText_(r['Task type']),
       cat: gcmText_(r.Category) || 'Other service items', status: gcmText_(r.Status), open: gcmText_(r.Open) === 'Y',
       due: gcmYmd_(r.Due), opened: gcmYmd_(r.Opened), done: gcmYmd_(r.Completed), owner: gcmText_(r.Owner), who: gcmText_(r.For),
-      ref: gcmText_(r.Ref), level: gcmText_(r.Level) || 'group', priv: gcmText_(r.Private) === 'Y' });
+      ref: gcmText_(r.Ref), level: gcmText_(r.Level) || 'group', priv: gcmText_(r.Private) === 'Y',
+      hist: gcmParse_(r.History, {}), mails: gcmParse_(r.Mails, []) });
   });
   gcmRows_(GCM.SENDS).forEach(function (r) {
     var g = byName[gcmCodeKey_(r.Group)];
@@ -518,7 +664,16 @@ function gcmLoad_() {
     if (!g) return;
     var kind = gcmText_(r.Kind), task = gcmId15_(gcmText_(r['Task Id'])), v = gcmText_(r.Value);
     if (kind === 'show') g.shares.show[task] = gcmYes_(v);
-    if (kind === 'post') { var m = /^(\S+)\s+(Y|N)$/.exec(v); if (m) g.shares.post[m[1]] = m[2] === 'Y'; }
+    if (kind === 'post') { var m = /^(\S+)\s+(Y|N)$/.exec(v); if (m) { g.shares.post[m[1]] = m[2] === 'Y'; g.shares.postTask[m[1]] = task; g.shares.postWhen[m[1]] = gcmYmd_(r.When); } }
+  });
+  /* the newest note each task has shared with the group, by the date it was shared */
+  reg.forEach(function (g) {
+    g.noted = {};
+    Object.keys(g.shares.post).forEach(function (id) {
+      if (!g.shares.post[id]) return;
+      var t = g.shares.postTask[id], d = g.shares.postWhen[id];
+      if (t && d > (g.noted[t] || '')) g.noted[t] = d;
+    });
   });
   return { reg: reg, byName: byName, today: gcmToday_(), refreshed: gcmRefreshed_() };
 }
@@ -531,10 +686,62 @@ function gcmShown_(g, t) {
   return s === undefined ? t.level === 'group' : s;
 }
 
+function gcmParse_(x, fallback) { try { var v = JSON.parse(gcmText_(x) || 'null'); return v === null ? fallback : v; } catch (e) { return fallback; } }
+
+/** An item the group sees, open longer than GCM.REASON_DAYS, with no note shared with the group in that time: the letter
+ *  waits for one (asked for on 7 October 2026: when a client sees an item open so long, give the history of why). */
+function gcmNeedsReason_(g, t, today) {
+  if (!t.open || !gcmShown_(g, t)) return false;
+  var age = gcmDays_(t.opened, today);
+  if (age === null || age <= GCM.REASON_DAYS) return false;
+  var noted = g.noted && g.noted[t.id15];
+  return !(noted && gcmDays_(noted, today) <= GCM.REASON_DAYS);
+}
+
+/** Why an item is still open and how it got here, from its own history and its e-mails: for the group (forGroup), only
+ *  the e-mails that went to or came from them and the target first set against the target now; for staff, every e-mail,
+ *  how often the target moved, and what to act on. */
+function gcmStory_(g, t, today, forGroup) {
+  var h = t.hist || {}, D = function (y) { return tDmy_(y); }, owner = t.owner || 'our team';
+  var mails = (t.mails || []).filter(function (m) { return !forGroup || m.c; });
+  var toThem = mails.filter(function (m) { return m.c && !m.i; }), fromThem = mails.filter(function (m) { return m.c && m.i; });
+  var lastOut = toThem.length ? toThem[toThem.length - 1] : null, lastIn = fromThem.length ? fromThem[fromThem.length - 1] : null;
+  var since = h.ss && h.ss >= t.opened ? h.ss : t.opened, st = String(t.status || '').toLowerCase(), why;
+  if (/waiting/.test(st)) {
+    why = lastIn && (!lastOut || lastIn.d >= lastOut.d) ? 'You wrote to us about this on ' + D(lastIn.d) + ', and ' + owner + ' is following it up.'
+      : lastOut ? 'Waiting on your confirmation: we last e-mailed you about it on ' + D(lastOut.d) + '.'
+      : 'Waiting on a confirmation before we can close it, since ' + D(since) + '.';
+  } else if (/progress/.test(st)) why = 'With ' + owner + ' since ' + D(since) + '.' + (h.lw && h.lw > since ? ' Last worked on ' + D(h.lw) + '.' : '');
+  else if (/not started/.test(st)) why = t.due && t.due < today ? 'Not started yet, and past its target date of ' + D(t.due) + '.' : 'Scheduled' + (t.due ? ' for ' + D(t.due) : '') + '.';
+  else if (/deferred/.test(st)) why = 'On hold since ' + D(since) + '.';
+  else why = 'Our team is working on it.';
+  if (t.due && t.due < today && !/past its target/.test(why)) why += ' It has passed its target date.';
+  if (!/waiting/.test(st) && lastIn && (!lastOut || lastIn.d >= lastOut.d)) why += (forGroup ? ' You wrote to us about it on ' : ' The group wrote to us about it on ') + D(lastIn.d) + '.';
+  var ev = [{ d: t.opened, text: 'Opened' }];
+  mails.slice(forGroup ? -5 : -GCM.MAILS).forEach(function (m) {
+    var label = m.c ? (m.i ? (forGroup ? 'You wrote to us' : 'The group wrote to us') : (forGroup ? 'We e-mailed you' : 'We e-mailed the group'))
+      : (m.i ? 'Internal e-mail in' : 'Internal e-mail');
+    ev.push({ d: m.d, text: label + ': “' + m.s + '”', mail: true, internal: !m.c });
+  });
+  if (h.ho && h.ho.n) ev.push({ d: h.ho.d, text: 'Handed to ' + h.ho.n });
+  if (h.lw && h.lw > t.opened) ev.push({ d: h.lw, text: 'Last worked on' });
+  ev.sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  if (h.fd && t.due && h.fd !== t.due) ev.push({ d: '', text: 'Target first set for ' + D(h.fd) + ', now ' + D(t.due) + (forGroup ? '' : ' (moved ' + h.mv + ' time' + (h.mv === 1 ? '' : 's') + ')') });
+  var out = { why: why, history: ev };
+  if (forGroup) return out;
+  var flags = [], paid = (t.mails || []).filter(function (m) { return m.p; }).pop();
+  if (paid) flags.push('A payment confirmation was e-mailed on ' + D(paid.d) + ': can this item be closed in Salesforce?');
+  if (h.mv >= 3) flags.push('Its target date has moved ' + h.mv + ' times');
+  if (/waiting/.test(st) && (!lastOut || gcmDays_(lastOut.d, today) > 14)) flags.push(lastOut ? 'Waiting, and nothing has gone to the group since ' + D(lastOut.d) : 'Waiting, and no e-mail to the group is filed against it');
+  out.flags = flags;
+  out.needReason = gcmNeedsReason_(g, t, today);
+  return out;
+}
+
 /** The numbers for one group, as at today. */
 function gcmGroupStats_(g, today) {
   var monday = gcmMonday_(today), yearStart = today.slice(0, 4) + '-01-01';
-  var s = { open: 0, late: 0, waiting: 0, oldest: 0, done: 0, withDue: 0, onTime: 0, days: 0, doneWeek: 0, doneToday: 0, shown: 0 };
+  var s = { open: 0, late: 0, waiting: 0, oldest: 0, done: 0, withDue: 0, onTime: 0, days: 0, doneWeek: 0, doneToday: 0, shown: 0, needReason: 0 };
   g.tasks.forEach(function (t) {
     if (t.open) {
       s.open++;
@@ -542,6 +749,7 @@ function gcmGroupStats_(g, today) {
       if (/waiting/i.test(t.status)) s.waiting++;
       var age = gcmDays_(t.opened, today); if (age !== null && age > s.oldest) s.oldest = age;
       if (gcmShown_(g, t)) s.shown++;
+      if (gcmNeedsReason_(g, t, today)) s.needReason++;
     } else if (t.done && t.done >= yearStart) {
       s.done++;
       if (t.due) { s.withDue++; if (t.done <= t.due) s.onTime++; }
@@ -565,7 +773,7 @@ function gcmGroupStats_(g, today) {
   g.resps.forEach(function (r) { if (s.verdicts[r.verdict] !== undefined) s.verdicts[r.verdict]++; });
   s.lastResponse = g.resps.length ? g.resps[g.resps.length - 1].at : '';
   s.ready = !!(g.to.length && g.code && g.bills.length);
-  s.why = !g.to.length ? 'No client contact on the register' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
+  s.why = !g.to.length ? 'No Contact Person with an e-mail on the account in Salesforce' : !g.code ? 'No code on the register' : !g.bills.length ? 'No list bill on the register' : '';
   return s;
 }
 
@@ -580,7 +788,34 @@ function gcmWho_(p) {
   if (w.role === 'staff') return { ok: true, role: 'staff', name: w.me.name, email: w.me.email };
   return { ok: false, refused: true, error: 'Group client management is for the branch’s staff and the branch manager.' };
 }
-function gcmMine_(who, g) { return who.role === 'branch' || tNameKey_(g.assigned) === tNameKey_(who.name); }
+/** Whether a group is this person's: the branch sees every group; staff the groups whose account they own in Salesforce,
+ *  matched by e-mail first, then by name. The Agent Skill Bank and Salesforce do not always spell a person the same way
+ *  (on 7 October 2026 one staff member was "SASHA LALLA" on the one and "Sasha Lalla-Jagassar" on the other, and her
+ *  board was empty). */
+function gcmMine_(who, g) {
+  if (who.role === 'branch') return true;
+  var em = String(who.email || '').trim().toLowerCase();
+  if (em && g.ownerEmail && em === g.ownerEmail) return true;
+  return gcmSameName_(g.assigned, who.name);
+}
+/** One person under two spellings: the same first name, and every other part of the shorter name inside the longer
+ *  ("Sasha Lalla" and "Sasha Lalla-Jagassar"). A first name alone matches only itself. */
+function gcmSameName_(a, b) {
+  var t = function (s) { return String(s || '').toLowerCase().split(/[^a-z]+/).filter(String); };
+  var x = t(a), y = t(b);
+  if (!x.length || !y.length) return false;
+  if (x.join(' ') === y.join(' ')) return true;
+  if (x[0] !== y[0] || Math.min(x.length, y.length) < 2) return false;
+  var short = x.length <= y.length ? x : y, long = short === x ? y : x;
+  return short.slice(1).every(function (p) { return long.indexOf(p) > 0; });
+}
+/** The name a letter is signed with: the staff member's own, as Salesforce has it, else as the sign-in gives it, out of
+ *  capitals ("SASHA LALLA" reads "Sasha Lalla"). */
+function gcmSigner_(who, g) {
+  if (who.role === 'staff' && g.assigned && gcmMine_(who, g)) return g.assigned;
+  var n = String(who.name || '').trim();
+  return n === n.toUpperCase() ? n.toLowerCase().replace(/(^|[\s'-])([a-z])/g, function (m, p, c) { return p + c.toUpperCase(); }) : n;
+}
 
 function gcmBoard_(p) {
   var who = gcmWho_(p);
@@ -638,6 +873,7 @@ function gcmAnalytics_(L) {
     if (s.week === 'due') act.push({ group: g.name, what: 'This week’s letter has not gone', who: g.assigned, kind: 'send' });
     if (s.late) act.push({ group: g.name, what: s.late + ' item' + (s.late > 1 ? 's' : '') + ' past target', who: g.assigned, kind: 'late' });
     if (s.lastRating !== null && s.lastRating <= 3) act.push({ group: g.name, what: 'Rated us ' + s.lastRating + ' of 5', who: g.assigned, kind: 'rating' });
+    if (s.needReason) act.push({ group: g.name, what: s.needReason + ' item' + (s.needReason === 1 ? '' : 's') + ' open over ' + GCM.REASON_DAYS + ' days with no reason given to the group', who: g.assigned, kind: 'reason' });
     if (!s.ready) act.push({ group: g.name, what: s.why, who: g.assigned, kind: 'setup' });
     if (!g.assigned) act.push({ group: g.name, what: 'No account owner in Salesforce: give the account an owner', who: '', kind: 'owner' });
     else if (!g.ownerActive) act.push({ group: g.name, what: 'Its account owner in Salesforce is no longer an active user: change the account owner', who: g.assigned, kind: 'owner' });
@@ -658,7 +894,7 @@ function gcmAnalytics_(L) {
       .sort(function (a, b) { return (b.done + b.open) - (a.done + a.open); }),
     weeks: weeks.map(function (w) { return { from: w.from, done: w.done, onTimePct: pct(w.onTime, w.withDue), sent: w.sent, responses: w.responses }; }),
     responses: resp.slice(0, 30),
-    act: act.sort(function (a, b) { var o = ['owner', 'send', 'rating', 'late', 'setup']; return o.indexOf(a.kind) - o.indexOf(b.kind); })
+    act: act.sort(function (a, b) { var o = ['owner', 'send', 'reason', 'rating', 'late', 'setup']; return o.indexOf(a.kind) - o.indexOf(b.kind); })
   };
 }
 
@@ -677,12 +913,13 @@ function gcmGroupView_(p) {
     return { id: t.id, title: gcmTitle_(t.subject, g.name), subject: t.subject, type: t.type || t.cat, cat: t.cat, status: t.status,
       clientStatus: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us', owner: t.owner, who: t.who, ref: t.ref,
       opened: t.opened, age: gcmDays_(t.opened, today), due: t.due, late: !!(t.due && t.due < today), level: t.level, priv: t.priv,
-      shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.shared = !!g.shares.post[f.id]; return f; }),
+      shown: gcmShown_(g, t), posts: (feed[t.id15] || []).map(function (f) { f.shared = !!g.shares.post[f.id]; return f; }), story: gcmStory_(g, t, today, false),
       answer: mine[t.id15] ? { verdict: mine[t.id15].verdict, note: mine[t.id15].note, by: mine[t.id15].name, at: mine[t.id15].at } : null };
   }).sort(function (a, b) { return (b.late - a.late) || ((b.age || 0) - (a.age || 0)); });
   var weekAgo = gcmAddDays_(today, -7);
-  return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '',
-    group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, greeting: g.greeting, hasCode: !!g.code, note: g.note },
+  return { ok: true, role: who.role, me: who.name, today: today, refreshed: L.refreshed, feedError: feed._error || '', reasonDays: GCM.REASON_DAYS, ai: !!gcmAiKey_(),
+    group: { key: g.key, name: g.name, assigned: g.assigned, ownerActive: g.ownerActive, bills: g.bills, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact,
+      personal: gcmPersonal_(g), greeting: g.greeting, hasCode: !!g.code, note: g.note },
     stats: gcmGroupStats_(g, today), items: items, record: gcmRecord_(g, today),
     doneWeek: g.tasks.filter(function (t) { return !t.open && t.done >= weekAgo; }).map(function (t) {
       return { title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, by: t.owner, done: t.done, shown: gcmShown_(g, t) }; }),
@@ -773,13 +1010,18 @@ function gcmLetter_(g, today, staffName, intro) {
     waiting: waiting.length, late: late.length, open: shown.length };
 }
 
+/** A letter carries the group's access code, so staff are told when it is going to a personal mailbox (gmail, hotmail
+ *  and the like) rather than the company's own: it may be an old employee's. */
+function gcmPersonal_(g) { return g.to.filter(function (a) { return GCM_PUBLIC_MAIL.test(a); }); }
+
 function gcmPreview_(p) {
   var who = gcmWho_(p);
   if (!who.ok) return who;
   var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
-  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, who.name, String(p.intro || '').slice(0, 1200));
-  return { ok: true, letter: letter, to: g.to, cc: g.cc, copy: GCM.COPY, ready: s.ready, why: s.why, mail: !!tMsCreds_() };
+  var s = gcmGroupStats_(g, L.today), letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(p.intro || '').slice(0, 1200));
+  var need = gcmNeedReasons_(g, L.today);
+  return { ok: true, letter: letter, to: g.to, cc: g.cc, toFrom: g.toFrom, contact: g.contact, personal: gcmPersonal_(g), copy: GCM.COPY, ready: s.ready && !need.length, why: s.why || gcmNeedSay_(need), needReason: need, mail: !!tMsCreds_() };
 }
 
 /** Send the week's letter, and log it. The letter is written here again from the sheet, never taken from the page.
@@ -793,7 +1035,9 @@ function gcmSend_(b) {
   if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
   var s = gcmGroupStats_(g, L.today);
   if (!s.ready) return { ok: false, error: s.why + ': nothing was sent.' };
-  var letter = gcmLetter_(g, L.today, who.name, String(b.intro || '').slice(0, 1200));
+  var need = gcmNeedReasons_(g, L.today);
+  if (need.length) return { ok: false, needReason: need, error: gcmNeedSay_(need) + ': nothing was sent.' };
+  var letter = gcmLetter_(g, L.today, gcmSigner_(who, g), String(b.intro || '').slice(0, 1200));
   var row = { When: new Date(), Group: g.name, Staff: who.name, To: g.to.join(', '), Cc: g.cc.join(', '), Subject: letter.subject,
     Items: letter.items.length, 'Task Ids': letter.items.join(' ').slice(0, 45000), Letter: letter.text.slice(0, 45000) };
   if (!tMsCreds_() || b.outlook) {
@@ -835,7 +1079,7 @@ function gcmShare_(b) {
     if (!text) return { ok: false, error: 'Write the note first.' };
     if (t.priv) return { ok: false, error: 'This item stays with staff.' };
     if (!tSfOn_()) return { ok: false, error: 'Salesforce is not linked to this project, so the note cannot go onto the task.' };
-    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + who.name + ':\n' + text });
+    var res = tSfSend_('post', '/sobjects/FeedItem', { ParentId: t.id, Body: 'For ' + g.name + ' (shown on their service page), from ' + gcmSigner_(who, g) + ':\n' + text });
     row.Kind = 'post'; row.Value = String(res.id || '') + ' Y';
   } else return { ok: false, error: 'Unknown change.' };
   gcmAppend_(GCM.SHARES, [row]);
@@ -872,6 +1116,7 @@ function gcmClient_(p) {
     items: shown.map(function (t) {
       return { id: t.id15, title: gcmTitle_(t.subject, g.name), type: t.type || t.cat, cat: t.cat, status: GCM_STATUS[t.status.toLowerCase()] || 'In progress with us',
         done: gcmDoneText_(t.cat, t.status), owner: t.owner, who: t.who, ref: t.ref, opened: t.opened, age: gcmDays_(t.opened, today), due: t.due,
+        story: gcmStory_(g, t, today, true),
         late: !!(t.due && t.due < today),
         comments: (feed[t.id15] || []).filter(function (f) { return g.shares.post[f.id]; }).map(gcmShared_),
         answer: mine[t.id15] ? { verdict: mine[t.id15].verdict, note: mine[t.id15].note, at: mine[t.id15].at } : null };
@@ -924,7 +1169,8 @@ function gcmReview_(b) {
 /** The staff member the group is assigned to, and the branch, hear at once: an internal note, with what changed. */
 function gcmTell_(g, name, rows, rating, comment) {
   var to = [];
-  tTeam_().people.forEach(function (p) { if (tNameKey_(p.name) === tNameKey_(g.assigned) && p.email) to.push(p.email); });
+  if (g.ownerEmail) to.push(g.ownerEmail);
+  else tTeam_().people.forEach(function (p) { if (gcmSameName_(p.name, g.assigned) && p.email) to.push(p.email); });
   if (TRANSITION.CC && TRANSITION.CC.length) to = to.concat(TRANSITION.CC);
   if (!to.length) return;
   var V = { correct: 'Correct', change: 'Needs a change', notours: 'Not ours' };
@@ -936,6 +1182,93 @@ function gcmTell_(g, name, rows, rating, comment) {
     '<p>Each note is also on the task’s Chatter in Salesforce. <a href="' + GCM.SITE + '">Open group client management</a></p>' +
     '<p style="color:#777;font-size:12px">' + tEsc_(tInternal_(null)) + '</p>';
   MailApp.sendEmail({ to: to.join(','), subject: 'Group review in: ' + g.name + (rating ? ' · ' + rating + '/5' : '') + (flag.length ? ' · ' + flag.length + ' to act on' : ''), htmlBody: body, name: 'Ricky Rampersad Branch' });
+}
+
+/** The items holding the letter back until someone writes the group a reason. */
+function gcmNeedReasons_(g, today) {
+  return g.tasks.filter(function (t) { return gcmNeedsReason_(g, t, today); })
+    .map(function (t) { return { id: t.id, title: gcmTitle_(t.subject, g.name), age: gcmDays_(t.opened, today) }; });
+}
+function gcmNeedSay_(need) {
+  if (!need.length) return '';
+  return need.length + ' item' + (need.length === 1 ? ' has' : 's have') + ' been open more than ' + GCM.REASON_DAYS + ' days with no note for the group in that time (' +
+    need.slice(0, 4).map(function (n) { return n.title; }).join('; ') + (need.length > 4 ? '; and ' + (need.length - 4) + ' more' : '') + '): write each one a reason first';
+}
+
+/* ── a reason drafted by AI, for staff to approve ────────────────────
+   Asked for on 7 October 2026, with the manager's choice of a draft that staff approve or edit before anything is
+   shared. The task's subject, history, e-mail subject lines and its internal Chatter go to the Claude API to write it;
+   nothing reaches the group until a person presses Post. The key is the ANTHROPIC_API_KEY Script property, never this
+   file. A refusal or an error says so, and staff write the reason themselves. */
+function gcmAiKey_() { return String(PropertiesService.getScriptProperties().getProperty('ANTHROPIC_API_KEY') || '').trim(); }
+
+var GCM_DRAFT_SYSTEM = [
+  'You draft a short note from a branch of Guardian Life of the Caribbean to an employer, a group client, about one open item on its group plans.',
+  'A staff member will read your draft, edit it if needed, and decide whether to share it. The employer reads it on their service page, under the item.',
+  '',
+  'Write one or two plain sentences, under 60 words, in the branch\'s voice ("we"). Say where the item stands and why it is still open, using only the facts provided.',
+  'If the facts do not explain the delay, say what we are waiting on or doing next, in general terms, without inventing a reason.',
+  '',
+  'The employer reads this directly, so:',
+  '- Never mention an employee\'s health, medical details, tests or claims.',
+  '- Do not quote or describe our internal notes or internal e-mails; use them only to understand the situation.',
+  '- Do not blame anyone: the employer, head office or a colleague.',
+  '- Do not name colleagues or internal departments, apart from the staff member handling the item.',
+  '- Do not promise a date unless a current target date is given, and if you mention one, use that date.',
+  '- No greeting and no sign-off. Output only the note.'
+].join('\n');
+
+function gcmDraft_(p) {
+  var who = gcmWho_(p);
+  if (!who.ok) return who;
+  var L = gcmLoad_(), g = L.byName[gcmCodeKey_(p.group)];
+  if (!g || !gcmMine_(who, g)) return { ok: false, error: 'That group is not on your list.' };
+  var t = g.tasks.filter(function (x) { return x.id15 === gcmId15_(p.task) && x.open; })[0];
+  if (!t) return { ok: false, error: 'That item is not open on this group.' };
+  if (t.priv) return { ok: false, error: 'This item names a member’s health or a claim: it stays with staff.' };
+  if (!gcmAiKey_()) return { ok: false, error: 'AI drafts are not set up: add ANTHROPIC_API_KEY under Project Settings → Script properties.' };
+  var today = L.today, h = t.hist || {}, D = function (y) { return y ? tDmy_(y) : 'not recorded'; };
+  var feed = gcmFeed_([t.id])[t.id15] || [];
+  var answer = g.resps.filter(function (r) { return r.task === t.id15 && (r.verdict || r.note); }).pop();
+  var facts = [
+    'Group: ' + g.name,
+    'Item, as the group sees it: ' + gcmTitle_(t.subject, g.name),
+    'Item, as filed in Salesforce: ' + t.subject,
+    'Type: ' + (t.type || t.cat) + ' · Category: ' + t.cat,
+    'Status in Salesforce: ' + t.status + (h.ss ? ', since ' + D(h.ss) : ''),
+    'Handled by: ' + (t.owner || 'our team') + (h.ho ? ' (handed to them on ' + D(h.ho.d) + ')' : ''),
+    'Opened: ' + D(t.opened) + ', ' + gcmDays_(t.opened, today) + ' days ago',
+    'Current target date: ' + D(t.due) + (t.due && t.due < today ? ' (passed)' : ''),
+    'Target first set for: ' + D(h.fd || t.due) + (h.mv ? '; moved ' + h.mv + ' times since' : ''),
+    'Last worked on: ' + D(h.lw),
+    '',
+    'E-mails filed against it (oldest first):'
+  ].concat((t.mails || []).length ? t.mails.map(function (m) {
+    return '- ' + D(m.d) + ', ' + (m.c ? (m.i ? 'from the group' : 'to the group') : (m.i ? 'internal, received' : 'internal, sent')) + ': ' + m.s;
+  }) : ['- none'], ['', 'Internal Chatter on the task (newest first):'], feed.length ? feed.slice(0, 8).map(function (f) {
+    return '- ' + f.when + ', ' + f.by + ': ' + String(f.text).slice(0, 600);
+  }) : ['- none'], answer ? ['', 'The group\'s last answer on its page: ' + ({ correct: 'Correct', change: 'Needs a change', notours: 'Not ours' }[answer.verdict] || 'a note') + (answer.note ? ': ' + answer.note : '')] : []);
+  try {
+    return { ok: true, text: gcmClaude_(GCM_DRAFT_SYSTEM, 'Draft the note for this item.\n\n' + facts.join('\n')) };
+  } catch (e) { return { ok: false, error: String(e && e.message ? e.message : e).slice(0, 300) }; }
+}
+
+/** One request to the Claude API (Messages, raw HTTP: Apps Script has no SDK). Server-side fallbacks retry a declined
+ *  request on another model; a refusal that stands comes back as an error. Returns the text. */
+function gcmClaude_(system, user) {
+  var res = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
+    method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-api-key': gcmAiKey_(), 'anthropic-version': '2023-06-01', 'anthropic-beta': 'server-side-fallback-2026-07-01' },
+    payload: JSON.stringify({ model: GCM.AI_MODEL, max_tokens: 16000, fallbacks: 'default', output_config: { effort: 'low' },
+      system: system, messages: [{ role: 'user', content: user }] })
+  });
+  var code = res.getResponseCode(), body = {};
+  try { body = JSON.parse(res.getContentText()); } catch (e) {}
+  if (code !== 200) throw new Error('The AI did not answer (' + String((body.error && body.error.message) || ('HTTP ' + code)).slice(0, 200) + '). Write the reason yourself.');
+  if (body.stop_reason === 'refusal') throw new Error('The AI declined to draft this one. Write the reason yourself.');
+  var text = (body.content || []).filter(function (b) { return b.type === 'text'; }).map(function (b) { return b.text; }).join('').trim();
+  if (!text) throw new Error('The AI returned nothing. Write the reason yourself.');
+  return text;
 }
 
 /* ── the wall, on the branch code ────────────────────────────────── */

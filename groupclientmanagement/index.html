@@ -75,6 +75,14 @@ table.t{width:100%;border-collapse:collapse;background:var(--paper);border:1px s
 .wk .col{width:70%;max-width:46px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
 .wk b{color:var(--ink);font-size:13px}
 .items{display:flex;flex-direction:column;gap:10px}
+.story{margin:8px 0 4px;font-size:14px}
+.story b{color:var(--ink)}
+.subj{font-size:12px;color:var(--muted);margin-top:4px;word-break:break-word}
+details.hist{margin:6px 0 2px;font-size:13px}
+details.hist summary{cursor:pointer;font-weight:600;color:var(--muted)}
+details.hist ul{margin:6px 0 0;padding-left:18px}
+details.hist li{margin:2px 0}
+details.hist li.int{color:var(--muted)}
 .item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:8px;padding:12px 14px}
 .item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warn)}
 .item h4{margin:0 0 4px;font-size:15px}
@@ -180,7 +188,8 @@ function groupCard(g) {
   const s = g.stats;
   return '<button class="card" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
     '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
-    (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
+    (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') +
+    (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
     (BOARD.role === 'branch' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
     '<div class="small muted">' + (BOARD.role === 'branch' ? 'Account owner <b>' + esc(g.assigned || 'nobody') + '</b> · ' : '') + 'List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
     '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
@@ -189,7 +198,7 @@ function render() {
   VIEW = 'board'; GROUP = null; head();
   const d = BOARD, app = $('app');
   let h = '';
-  if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET, SF_USER and SF_PASS into the project’s Script properties, then run gcmRefresh.</div>';
+  if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
   if (d.dow === d.sendDay) h += '<div class="note"><b>Today is ' + DAYS[d.sendDay] + ': send day.</b> Open each group marked “Letter due”, check every item against Salesforce and the latest billing, preview the letter, then send.</div>';
   if (d.role === 'branch') {
@@ -265,13 +274,16 @@ async function openGroup(key) {
 function drawGroup() {
   const d = GROUP, g = d.group, s = d.stats;
   let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
-    '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + '</div>' +
+    '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
+    (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
     '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
-    ' · Letter goes to ' + (g.to.length ? esc(g.to.join(', ')) + (g.cc.length ? ', copy ' + esc(g.cc.join(', ')) : '') : '<b style="color:var(--badText)">nobody: add the contact on the Group Register</b>') + '</p>' +
+    ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
+    (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
     '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
-    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">This week’s letter</h3>' + (s.week === 'sent' ? '<p class="small">Already sent this week (' + esc(s.sentThisWeek) + '). Sending again sends a second letter.</p>' : '') +
+    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">This week’s letter</h3>' +
+    (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Already sent this week (' + esc(s.sentThisWeek) + '). Sending again sends a second letter.</p>' : '') +
     '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words."></textarea>' +
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
     '<h3>Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span></h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
@@ -285,6 +297,14 @@ function drawGroup() {
   $('app').querySelectorAll('[data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c));
   $('app').querySelectorAll('[data-post]').forEach(c => c.onchange = () => share({ kind: 'post', task: c.dataset.task, post: c.dataset.post, value: c.checked ? 'Y' : 'N' }, c));
   $('app').querySelectorAll('[data-note]').forEach(b => b.onclick = () => { const t = $('n-' + b.dataset.note); if (!t.value.trim()) return toast('Write the note first.', true); share({ kind: 'note', task: b.dataset.note, text: t.value }, b, true); });
+  $('app').querySelectorAll('[data-draft]').forEach(b => b.onclick = async () => {
+    const t = $('n-' + b.dataset.draft); b.disabled = true; b.textContent = 'Drafting…';
+    const r = await api({ action: 'gcm.draft', group: GROUP.group.key, task: b.dataset.draft });
+    b.disabled = false; b.textContent = 'Draft with AI';
+    if (!r.ok) return toast(r.error || 'No draft', true);
+    t.value = r.text; t.focus();
+    toast('Draft ready. Read it, change anything that is not right, then press Post. Nothing is shared until you do.');
+  });
   window.scrollTo(0, 0);
 }
 function itemHtml(it) {
@@ -292,12 +312,20 @@ function itemHtml(it) {
   return '<div class="item' + cls + '"><h4>' + esc(it.title) + '</h4>' +
     '<div class="meta"><b>' + esc(it.type) + '</b> · on it: <b>' + esc(it.owner || '–') + '</b>' + (it.who ? ' · for ' + esc(it.who) : '') + (it.ref ? ' · ' + esc(it.ref) : '') +
     ' · opened ' + esc(dmy(it.opened)) + ' (<b>' + (it.age == null ? '?' : it.age) + ' days</b>) · due ' + (it.due ? esc(dmy(it.due)) + (it.late ? ' <b style="color:var(--badText)">past target</b>' : '') : 'not set') + ' · ' + esc(it.status) + '</div>' +
+    (it.subject && it.subject !== it.title ? '<div class="subj">Salesforce subject: ' + esc(it.subject) + '</div>' : '') +
+    (it.story ? '<div class="story"><b>Why it is still open' + (it.priv ? '' : ' (as the group reads it)') + ':</b> ' + esc(it.story.why) + '</div>' +
+      (it.story.flags.length || it.story.needReason ? '<div class="chips">' + (it.story.needReason ? '<span class="chip bad"><i></i>Needs a reason for the group before the letter goes</span>' : '') +
+        it.story.flags.map(f => '<span class="chip warn"><i></i>' + esc(f) + '</span>').join('') + '</div>' : '') +
+      '<details class="hist"><summary>History and e-mails (' + it.story.history.length + ')</summary><ul>' +
+        it.story.history.map(e => '<li' + (e.internal ? ' class="int"' : '') + '>' + (e.d ? esc(dmy(e.d)) + ' · ' : '') + esc(e.text) + (e.internal ? ' <span class="small">(staff only)</span>' : '') + '</li>').join('') + '</ul></details>' : '') +
     '<div class="chips">' + (it.level === 'member' ? '<span class="chip"><i style="background:#9aa5b1"></i>Employee item: shown only if ticked</span>' : '') +
     (it.priv ? '<span class="chip bad"><i></i>Health or claim: stays with staff</span>' : '<label class="toggle"><input type="checkbox" data-show="' + esc(it.id) + '"' + (it.shown ? ' checked' : '') + '> The group sees this item</label>') +
     (it.answer ? '<span class="chip ' + (it.answer.verdict === 'correct' ? 'good' : 'warn') + '"><i></i>Group said: ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[it.answer.verdict] || 'a note') + (it.answer.note ? ' “' + esc(it.answer.note) + '”' : '') + '</span>' : '') + '</div>' +
     (it.priv ? '' : '<div class="posts">' + (it.posts.length ? it.posts.map(p => '<div class="post' + (p.shared ? ' shared' : '') + '"><label class="toggle" style="float:right"><input type="checkbox" data-task="' + esc(it.id) + '" data-post="' + esc(p.id) + '"' + (p.shared ? ' checked' : '') + '> Share</label><span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>\n' + esc(p.text) +
       (p.replies || []).map(r => '\n  ↳ ' + esc(r.by) + ': ' + esc(r.text)).join('') + '</div>').join('') : '<div class="small muted">No Chatter on this task.</div>') +
-      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap"><input class="field" id="n-' + esc(it.id) + '" placeholder="A note for the group: posted to the task’s Chatter and shown on their page" style="flex:1;min-width:200px;padding:8px 10px"><button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post</button></div></div>') + '</div>';
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:flex-start"><textarea class="field" id="n-' + esc(it.id) + '" rows="2" maxlength="2000" placeholder="' + (it.story && it.story.needReason ? 'Why is this still open? A note for the group: posted to the task’s Chatter and shown on their page' : 'A note for the group: posted to the task’s Chatter and shown on their page') + '" style="flex:1;min-width:200px;min-height:44px;padding:8px 10px"></textarea>' +
+      (GROUP && GROUP.ai ? '<button class="btn ghost" type="button" data-draft="' + esc(it.id) + '">Draft with AI</button>' : '') +
+      '<button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post</button></div></div>') + '</div>';
 }
 function recordHtml(rows) {
   if (!rows.length) return '<p class="muted">Nothing on record yet this year.</p>';
@@ -312,11 +340,17 @@ async function share(body, el, reload) {
   toast(body.kind === 'note' ? 'Posted to the task’s Chatter, and shown to the group.' : 'Saved.');
   if (reload) openGroup(GROUP.group.key);
 }
+/* who the letter goes to, and where that came from: the account's Contact Person in Salesforce, or the register */
+function toLine(o) {
+  return '<b>' + (o.contact ? esc(o.contact) + ' &lt;' + esc(o.to.join(', ')) + '&gt;' : esc(o.to.join(', '))) + '</b>' +
+    ' <span class="muted">(' + (o.toFrom === 'salesforce' ? (o.contact ? 'the account’s Contact Person in Salesforce' : 'the account’s e-mail in Salesforce') : 'from the Group Register') + ')</span>' +
+    (o.cc && o.cc.length ? ', copy ' + esc(o.cc.join(', ')) : '');
+}
 async function preview() {
   const box = $('pvBox'); box.innerHTML = '<p class="muted">Writing the letter from this group’s numbers…</p>';
   const r = await api({ action: 'gcm.preview', group: GROUP.group.key, intro: $('intro').value });
   if (!r.ok) { box.innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
-  box.innerHTML = '<p class="small" style="margin:12px 0 6px">To <b>' + esc(r.to.join(', ') || 'nobody') + '</b>' + (r.cc.length ? ', copy ' + esc(r.cc.join(', ')) : '') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
+  box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
     '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
     (r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
       (r.mail ? '<button class="btn gold" type="button" id="sd" disabled>Send from support@</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button></div>' +
