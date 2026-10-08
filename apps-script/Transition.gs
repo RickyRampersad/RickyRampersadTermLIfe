@@ -3037,6 +3037,380 @@ function tStream_() {
   };
 }
 
+/* ── the daily findings to Head Office ───────────────────────────────────────
+   8 October 2026: Head Office wrote to the branch formally about one client's response, and the manager asked for "a daily
+   update on our findings and frame for him to advise what are they doing, as these are the documented findings from the
+   clients by responses and support staff contacting them; no agents have been on calls as there is a process tracked
+   daily". One e-mail each working day at T_FIND.HOUR: what clients have reported about their former agents, from two
+   places only, the clients' own answers and replies to the letters and the calls Client Support (and the manager) made,
+   each finding with its date, its source and the client's number, never the client's name; then how it was documented;
+   then what the branch asks the Company to advise. The Findings Log tab keeps every finding with the day it first went,
+   so each e-mail lists what is new and attaches everything to date. Client Support's notes are read from their calls
+   sheet (the CALLS_SHEET_ID Script property); nothing there is changed. The address it goes to is the FINDINGS_TO Script
+   property, never in this public file. Nothing goes until transitionFindingsStart; transitionFindingsPreview sends one
+   to the manager alone and marks nothing. The terminated agent's book (letters T and T1) stays out while the branch's own
+   hold on it stands (INCLUDE_HELD): its findings are counted, never listed. A finding is filed by what it is about only
+   when it names that client's own former agent (or "former agent"), so a note about a current agent, or about an agent
+   from years ago, is never read as one; the words themselves always go with it, so the reader judges from the record. */
+var T_FIND = {
+  TAB: 'Findings Log',
+  HEAD: ['First documented', 'Source', 'What it is about', 'Former agent', 'Letter', 'Client number', 'Token', 'As documented', 'Key', 'In the update of'],
+  HOUR: 17, LIST_MAX: 60, INCLUDE_HELD: false,
+  ME: 'Ricky.Rampersad@myguardiangroup.com',
+  P_LIVE: 'findings_live', P_TO: 'FINDINGS_TO', P_GREET: 'FINDINGS_GREETING', P_CALLS: 'CALLS_SHEET_ID', P_SKIP: 'FINDINGS_SKIP',
+};
+/* what a finding is about, most serious first; each needs the client's own former agent named, except a cancellation */
+var T_FIND_KINDS = [
+  ['money', 'Money or a cheque handed to the former agent', /cheque|\bcheck for\b|\bcash\b|gave (?:him|her|\w+) (?:a |the )?(?:money|premium|payment)|collect(?:ed|s|ing)? (?:the |her |his |my |their )?(?:premium|money|payment)/i],
+  ['follow', 'Plans to follow the former agent', /sign (?:me|us|them|her|him) (?:across|over)|move (?:me|us|my|our) (?:\w+ )?(?:over|across)|follow (?:him|her|them)|go(?:ing)? with (?:him|her|them)|wherever (?:he|she|they) (?:go|choose|end)/i],
+  ['docs', 'Meeting or documents to sign with the former agent', /\bsign(?:ing)? (?:the |some |new |his |her )?(?:documents|forms|papers|application)|\bto sign\b|meet (?:her|him|them|the client)\b/i],
+  ['still', 'Told the client they still look after the policy', /still (?:her|his|their|the|your|my)?\s*agent|still (?:be )?(?:manag|in charge|handl|work|with gu|with the company)|(?:is|was) (?:her|his|their|the) agent|(?:he|she) is the agent|(?:he|she|they) (?:will|would) (?:still )?(?:handle|take|be taking|keep|manage|be managing|be handling|continue)|taking (?:his|her|the|their) portfolio|keep (?:him|her) as|manag\w* (?:her|his|their|the|my|our) (?:portfolio|policies|policy)|in charge of/i],
+  ['loyal', 'Wants to stay with the former agent', /(?:good|happy|fine|ok|okay|comfortable) with \w+ (?:being|as) (?:my|our) agent|keep \w+ as (?:my|our) agent|stay(?:ing)? with (?:him|her|\w+ as)|(?:do not|don'?t) (?:wish|want) to change/i],
+  ['wait', 'Holding back until they speak to the former agent', /(?:does not|doesn'?t|won'?t|will not|did not|didn'?t) want to (?:provide|give|share)|until (?:he|she|they|i) (?:speak|talk|communicat|hear)|until communicating/i],
+  ['cancel', 'Asked to cancel or cash in', /cancel|surrender|cash(?:ing)? in/i],
+  ['moved', 'Said where the former agent has gone', /another branch|other branch|moved to|new company|other company|another company|pan.?am|palig|broker|sagicor|maritime|beacon/i],
+];
+var T_FIND_CONTACT = ['contact', 'The former agent has been in touch'];
+var T_FIND_ANSWERS = {
+  contact_yes: ['contact', 'The former agent has been in touch'],
+  approached_yes: ['approached', 'Someone has already suggested changing or replacing the policy'],
+  pay_person: ['paying', 'Pays a representative in person'],
+};
+var T_FIND_ORDER = ['money', 'follow', 'docs', 'still', 'loyal', 'contact', 'approached', 'wait', 'paying', 'moved', 'cancel'];
+
+/** What a note or a client's words are about, or null. `first` is the client's own former agent's first name, `full` the
+ *  whole name (its initials count too, as Client Support write them). */
+function tFindKind_(text, first, full) {
+  var s = String(text || '').trim();
+  if (s.replace(/\W/g, '').length < 4) return null;
+  var f = String(first || '').replace(/[^A-Za-z]/g, ''), ini = String(full || '').trim().split(/\s+/);
+  var named = (f.length >= 3 && new RegExp('\\b' + f + '\\b', 'i').test(s)) || /\bformer agent\b/i.test(s) ||
+    (ini.length > 1 && /^[A-Za-z]/.test(ini[0]) && /^[A-Za-z]/.test(ini[ini.length - 1]) &&
+     new RegExp('\\b' + ini[0].charAt(0).toUpperCase() + ini[ini.length - 1].charAt(0).toUpperCase() + '\\b').test(s));
+  for (var i = 0; i < T_FIND_KINDS.length; i++) {
+    var k = T_FIND_KINDS[i];
+    if ((named || k[0] === 'cancel') && k[2].test(s)) return k;
+  }
+  if (named && /contact|call|spoke|speak|in touch|reach|visit|messag|whatsapp|told|said|came/i.test(s)) return T_FIND_CONTACT;
+  return null;
+}
+/** Everything documented so far: { items, books, held, num }. Reads; writes nothing. */
+function tFindings_() {
+  var tz = tTz_(), now = new Date(), props = PropertiesService.getScriptProperties();
+  var dk = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var today = dk(now), yr = Number(Utilities.formatDate(now, tz, 'yyyy'));
+  var MON = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  var stampDay = function (s) {
+    var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim());
+    if (!m || !MON[m[2]]) return '';
+    var k = yr + '-' + pad(MON[m[2]]) + '-' + pad(Number(m[1]));
+    return k > today ? (yr - 1) + k.slice(4) : k;
+  };
+  var skip = {};
+  String(props.getProperty(T_FIND.P_SKIP) || '').split(/[\s,;]+/).forEach(function (x) { if (x) skip[x] = true; });
+
+  /* the books: who was written to, from whose book, by which letter */
+  var who = {}, books = {}, num = { written: 0, answered: 0, calls: null };
+  tRead_().rows.forEach(function (r) {
+    var tok = tText_(r.Token), seg = tText_(r.Segment).toUpperCase();
+    if (!tok || !seg || tYes_(r.Test) || skip[tok] || T_NOT_BOOK.test(tText_(r.Exclude))) return;
+    var agent = tText_(r.Agent) || '(no agent on the sheet)';
+    var held = /^T/.test(seg) && !T_FIND.INCLUDE_HELD;
+    who[tok] = { seg: seg, agent: agent, first: tText_(r['Agent first name']) || agent.split(/\s+/)[0], cno: tText_(r['Client number']), held: held,
+                 name: tText_(r.Client), given: tText_(r['First name']) };
+    if (!held) (books[agent] = books[agent] || { agent: agent, clients: 0, reported: {}, kinds: {} }).clients++;
+    if (!held && r['Sent at'] instanceof Date) num.written++;
+  });
+  /* a client's name never goes, their own (a reply signed with it) or another's (a husband, a mother): the former agents'
+     own names stay, since they hold policies too and the finding is about them */
+  var agents = {}, others = [];
+  Object.keys(who).forEach(function (k) { agents[who[k].agent.toLowerCase()] = true; });
+  tRead_().rows.forEach(function (r) { var n = tText_(r.Client).replace(/\s+/g, ' '); if (n.split(' ').length > 1 && n.length > 5 && !agents[n.toLowerCase()]) others.push(n); });
+  var rx = function (s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); };
+  var scrub = function (text, w) {
+    var t = String(text || ''), own = (w.name + ' ' + w.given).split(/\s+/).filter(function (x) { return x.replace(/[^A-Za-z]/g, '').length >= 3 && !agents[x.toLowerCase()]; });
+    if (w.name) t = t.replace(new RegExp(rx(w.name), 'gi'), '[the client]');
+    own.forEach(function (x) { if (x.toLowerCase() !== String(w.first).toLowerCase()) t = t.replace(new RegExp('\\b' + rx(x) + '\\b', 'gi'), '[the client]'); });
+    var low = t.toLowerCase();
+    others.forEach(function (n) { if (low.indexOf(n.toLowerCase()) >= 0) { t = t.replace(new RegExp(rx(n), 'gi'), '[another client]'); low = t.toLowerCase(); } });
+    t = t.replace(/<?https?:\/\/\S+>?/gi, '').replace(/\bget outlook for \w+\b/gi, '')
+      .replace(/[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g, '[an e-mail address]')
+      .replace(/(?:\+?1[\s.-]?)?\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}\b|\b\d{3}[\s.-]\d{4}\b/g, '[a phone number]');
+    return t.replace(/(\[the client\]\s*){2,}/g, '[the client] ').replace(/\s+/g, ' ').trim();
+  };
+  var items = [], seen = {}, heldN = {};
+  var add = function (tok, kind, text, source, day) {
+    var w = who[tok];
+    if (!w || !kind) return;
+    var said = scrub(String(text || '').replace(/\s+/g, ' ').trim(), w).slice(0, 500);
+    var key = kind[0] + '|' + tok + '|' + said.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 120);
+    if (seen[key]) return;
+    seen[key] = true;
+    if (w.held) { heldN[tok] = true; return; }
+    items.push({ key: key, tok: tok, kind: kind[0], about: kind[1], said: said, source: source, day: day || '', agent: w.agent, seg: w.seg, cno: w.cno });
+  };
+
+  /* the clients' own answers, replies and words, and the team's notes on the board */
+  var rc = tReceipt_(), qdef = (rc && rc.json && rc.json.questions) || {}, qOf = {};
+  Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { qOf[a[2]] = { q: qdef[k][0], a: a[0] }; }); });
+  var answered = {};
+  tSheetRows_(SVC.RESP_SHEET).rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), w = who[tok];
+    if (!w) return;
+    var page = String(v[5] || ''), ref = String(v[6] || ''), note = String(v[10] || '');
+    var day = v[0] instanceof Date ? dk(v[0]) : '';
+    var ours = tOursRow_(page);
+    if (!ours && String(v[3] || '').trim() && !w.held) answered[tok] = true;
+    var m = /[?&]q=([a-z_]+)/.exec(page), code = m ? m[1] : '';
+    if (T_FIND_ANSWERS[code]) {
+      var qa = qOf[code] || { q: '', a: '' }, byCall = /^\/your-policy\/phone/.test(page), by = /^call by ([^:]+)/.exec(ref);
+      add(tok, T_FIND_ANSWERS[code], (qa.q ? qa.q + ' → ' : '') + qa.a, byCall ? 'Answered on a call' + (by ? ' with ' + tShortName_(by[1]) : '') : 'Their answer to the letter', day);
+    }
+    if (!ours) {
+      var words = tNoteWords_(note);
+      if (words) add(tok, tFindKind_(words, w.first, w.agent), words, /^reply /.test(ref) ? 'Their reply by e-mail' : 'Their own words, on their page', day);
+    }
+    tFileNotes_(note).forEach(function (fn) {
+      var x = /^(called|met|declined|closed|open|no answer) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(fn);
+      if (x) add(tok, tFindKind_(x[4], w.first, w.agent), x[4], 'Call logged on the board by ' + tShortName_(x[3]), stampDay(x[2]));
+    });
+  });
+  num.answered = Object.keys(answered).length;
+
+  /* Client Support's calls sheet: every caller's tab, read only */
+  var cid = props.getProperty(T_FIND.P_CALLS);
+  if (cid) {
+    var C = num.calls = { listed: 0, tried: 0, reached: 0, wrong: 0, noAnswer: 0, backAgent: 0, callers: [] };
+    try {
+      SpreadsheetApp.openById(cid).getSheets().forEach(function (sh) {
+        var name = sh.getName();
+        if (!/calls$/i.test(name)) return;
+        var vals = sh.getDataRange().getValues(), hi = -1, ix = {};
+        for (var i = 0; i < Math.min(15, vals.length) && hi < 0; i++) {
+          var h = vals[i].map(function (x) { return String(x || '').trim().toLowerCase(); });
+          if (h.indexOf('token') >= 0 && (h.indexOf('outcome / notes') >= 0 || h.indexOf('outcome') >= 0)) {
+            hi = i;
+            h.forEach(function (k, j) { if (k && ix[k] === undefined) ix[k] = j; });
+          }
+        }
+        if (hi < 0) return;
+        var boss = /^ricky/i.test(name), caller = boss ? 'the Branch Manager' : name.replace(/\s*calls$/i, '').trim();
+        C.callers.push(caller);
+        var col = function (r, k) { return ix[k] === undefined ? '' : r[ix[k]]; };
+        vals.slice(hi + 1).forEach(function (r) {
+          var tok = String(col(r, 'token') || '').trim(), w = who[tok];
+          if (!w || w.held) return;
+          var reached = String(col(r, 'reached?') || '').trim(), note = String(col(r, 'outcome / notes') || col(r, 'outcome') || '').trim();
+          var on = col(r, 'called on'), tried = /^yes/i.test(String(col(r, 'try 1') || '')) || !!reached || (boss && !!on);
+          C.listed++;
+          if (tried) C.tried++;
+          if (/^yes/i.test(reached) || (boss && on)) C.reached++;
+          if (/wrong/i.test(reached)) C.wrong++;
+          if (/no answer|not reached|call back/i.test(reached)) C.noAnswer++;
+          if (/licen/i.test(String(col(r, 'call-back needed') || ''))) C.backAgent++;
+          if (note) add(tok, tFindKind_(note, w.first, w.agent), note, boss ? 'Call by the Branch Manager' : 'Client Support call (' + caller + ')', on instanceof Date ? dk(on) : '');
+        });
+      });
+    } catch (e) { C.error = 'The calls sheet could not be read: ' + String(e && e.message ? e.message : e).slice(0, 120); }
+  }
+
+  items.forEach(function (it) {
+    var b = books[it.agent];
+    if (!b) return;
+    b.reported[it.tok] = true;
+    (b.kinds[it.kind] = b.kinds[it.kind] || {})[it.tok] = true;
+  });
+  return { at: Utilities.formatDate(now, tz, 'd MMMM yyyy, HH:mm'), today: today, items: items, num: num, held: Object.keys(heldN).length,
+    books: Object.keys(books).map(function (k) { return books[k]; }).filter(function (b) { return Object.keys(b.reported).length; })
+      .sort(function (a, b) { return Object.keys(b.reported).length - Object.keys(a.reported).length; }) };
+}
+/** The Findings Log, made the first time it is needed: { sh, keys: { key: 'yyyy-MM-dd' first documented } }. */
+function tFindLog_(create) {
+  var ss = ss_(), sh = ss.getSheetByName(T_FIND.TAB), keys = {};
+  if (!sh && create) {
+    sh = ss.insertSheet(T_FIND.TAB);
+    sh.getRange(1, 1, 1, T_FIND.HEAD.length).setValues([T_FIND.HEAD]);
+    try { sh.setFrozenRows(1); sh.getRange(1, 1, 1, T_FIND.HEAD.length).setFontWeight('bold'); } catch (e) {}
+  }
+  if (sh && sh.getLastRow() >= 2) sh.getRange(2, 1, sh.getLastRow() - 1, T_FIND.HEAD.length).getValues().forEach(function (v) {
+    var k = String(v[8] || '');
+    if (k) keys[k] = v[0] instanceof Date ? Utilities.formatDate(v[0], tTz_(), 'yyyy-MM-dd') : String(v[0] || '');
+  });
+  return { sh: sh, keys: keys };
+}
+/** The e-mail: the frame, what is new, everything by former agent, how it was documented, what the branch asks. */
+function tFindingsHtml_(F, fresh, preview, greet) {
+  var esc = tEsc_, A = 'font-family:Arial,Helvetica,sans-serif;';
+  var MO = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var day = function (k) { if (!k) return ''; var p = String(k).split('-'); return Number(p[2]) + ' ' + MO[Number(p[1]) - 1]; };
+  var C = function (x) { return String(Math.round(Number(x) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var count = function (kinds) { var s = {}; F.items.forEach(function (it) { if (kinds.indexOf(it.kind) >= 0) s[it.tok] = true; }); return Object.keys(s).length; };
+  var reported = {}; F.items.forEach(function (it) { reported[it.tok] = true; });
+  var nRep = Object.keys(reported).length, calls = F.num.calls;
+  var th = 'padding:7px 10px;border-bottom:2px solid #d6dee6;text-align:left;font-size:12px;color:#5b6b7c;text-transform:uppercase;letter-spacing:.04em';
+  var td = 'padding:7px 10px;border-bottom:1px solid #e6ebf0;vertical-align:top;font-size:13.5px;color:#1d2b3a';
+  var h3 = function (s) { return '<h3 style="' + A + 'font-size:16px;color:#0b1f33;margin:24px 0 8px">' + s + '</h3>'; };
+  var tiles = [[nRep, 'clients have reported something about a former agent'], [fresh.length, 'findings new since the last update'],
+    [calls && !calls.error ? calls.reached : 0, 'clients reached by Client Support'], [F.num.answered, 'clients have answered the letters']];
+  var out = '<div style="' + A + 'font-size:14.5px;line-height:1.55;color:#1d2b3a;max-width:760px">';
+  if (preview) out += '<p style="background:#fff6dc;border:1px solid #efc24b;padding:8px 12px;margin:0 0 14px;font-size:13px">Preview for the Branch Manager. ' +
+    'This is the e-mail Head Office would receive; nothing has been sent to anyone else and nothing has been marked as reported.</p>';
+  out += '<p style="margin:0 0 12px">' + esc(greet || 'Good day,') + '</p>' +
+    '<p style="margin:0 0 12px">This is the branch\'s daily record of what clients have told us about their former agents. It comes from two places only: ' +
+    'the clients\' own answers and replies to the branch\'s letters, and the calls made by Client Support. Client Support are not licensed and give no advice: ' +
+    'they confirm a client\'s contact details and write down what the client says. <b>No agent has been on these calls.</b> Every call is recorded the same day, with who made it.</p>' +
+    '<p style="margin:0 0 16px"><b>I ask you to advise what the Company is doing about what is set out below.</b></p>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:separate;border-spacing:8px 0;margin:0 -8px 8px"><tr>' +
+    tiles.map(function (t) { return '<td style="background:#f2f6f9;border-radius:8px;padding:10px 12px;vertical-align:top;width:25%"><div style="' + A + 'font-size:24px;font-weight:bold;color:#0b1f33">' + C(t[0]) +
+      '</div><div style="' + A + 'font-size:12px;color:#5b6b7c;line-height:1.35">' + esc(t[1]) + '</div></td>'; }).join('') + '</tr></table>';
+
+  /* the words first, every one in full; then the ticks on the letters, which all read the same, as counts */
+  var ticked = function (it) { return /^(Their answer to the letter|Answered on a call)/.test(it.source); };
+  var words = fresh.filter(function (it) { return !ticked(it); }), ticks = fresh.filter(ticked);
+  out += h3('New since the last update, in the clients\' words and Client Support\'s notes' + (words.length > T_FIND.LIST_MAX ? ': the first ' + T_FIND.LIST_MAX + ' of ' + C(words.length) + ', all in the attached file' : ''));
+  if (!words.length) out += '<p style="margin:0;color:#5b6b7c">Nothing new in words since the last update.</p>';
+  else {
+    var list = words.slice().sort(function (a, b) { return T_FIND_ORDER.indexOf(a.kind) - T_FIND_ORDER.indexOf(b.kind) || String(b.day).localeCompare(String(a.day)); }).slice(0, T_FIND.LIST_MAX);
+    out += '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><th style="' + th + '">Date</th><th style="' + th + '">Former agent · client</th>' +
+      '<th style="' + th + '">What it is about</th><th style="' + th + '">As documented</th></tr>' +
+      list.map(function (it) {
+        return '<tr><td style="' + td + ';white-space:nowrap">' + esc(it.day ? day(it.day) : 'by ' + day(F.today)) + '</td>' +
+          '<td style="' + td + '"><b>' + esc(it.agent) + '</b><br><span style="color:#5b6b7c;font-size:12.5px">client ' + esc(it.cno || '(no number)') + ' · letter ' + esc(it.seg) + '</span></td>' +
+          '<td style="' + td + '">' + esc(it.about) + '</td>' +
+          '<td style="' + td + '"><i>"' + esc(it.said) + '"</i><br><span style="color:#5b6b7c;font-size:12.5px">' + esc(it.source) + '</span></td></tr>';
+      }).join('') + '</table>';
+  }
+  if (ticks.length) {
+    var tk = {};
+    ticks.forEach(function (it) { var g = tk[it.about] = tk[it.about] || { n: 0, by: {} }; g.n++; g.by[it.agent] = (g.by[it.agent] || 0) + 1; });
+    out += h3('New since the last update, ticked on the letter');
+    out += '<ul style="margin:0;padding-left:20px">' + Object.keys(tk).map(function (a) {
+      var by = Object.keys(tk[a].by).sort(function (x, y) { return tk[a].by[y] - tk[a].by[x]; }).map(function (x) { return x + ' ' + tk[a].by[x]; }).join(', ');
+      return '<li style="margin:0 0 6px"><b>' + C(tk[a].n) + '</b> ' + (tk[a].n === 1 ? 'client' : 'clients') + ' ticked that ' + esc(a.charAt(0).toLowerCase() + a.slice(1)) + ': ' + esc(by) + '.</li>';
+    }).join('') + '</ul><p style="margin:6px 0 0;font-size:12.5px;color:#5b6b7c">Each is the client\'s own answer to the question on their letter, with the date it came in; all are in the attached file.</p>';
+  }
+
+  out += h3('Everything documented so far, by former agent');
+  if (!F.books.length) out += '<p style="margin:0;color:#5b6b7c">Nothing yet.</p>';
+  else {
+    var cols = [[['still'], 'Says still acts'], [['money', 'docs'], 'Money or documents'], [['follow', 'loyal'], 'Follow or stay'],
+      [['contact', 'approached'], 'In touch'], [['wait', 'paying', 'moved'], 'Other'], [['cancel'], 'Cancel']];
+    cols = cols.filter(function (c) { return count(c[0]) > 0; });
+    var inCol = function (b, kinds) { var s = {}; kinds.forEach(function (k) { Object.keys(b.kinds[k] || {}).forEach(function (t) { s[t] = true; }); }); return Object.keys(s).length; };
+    var thr = th + ';text-align:right;font-size:11px', tdr = td + ';text-align:right';
+    out += '<table cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%"><tr><th style="' + th + '">Former agent</th><th style="' + thr + '">Written to</th>' +
+      '<th style="' + thr + '">Reported</th>' + cols.map(function (c) { return '<th style="' + thr + '">' + esc(c[1]) + '</th>'; }).join('') + '</tr>' +
+      F.books.map(function (b) {
+        return '<tr><td style="' + td + '"><b>' + esc(b.agent) + '</b></td><td style="' + tdr + '">' + C(b.clients) + '</td><td style="' + tdr + '"><b>' + C(Object.keys(b.reported).length) + '</b></td>' +
+          cols.map(function (c) { var n = inCol(b, c[0]); return '<td style="' + tdr + ';color:' + (n ? '#1d2b3a' : '#a8b4c0') + '">' + C(n) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</table>' +
+      '<p style="margin:6px 0 0;font-size:12.5px;color:#5b6b7c">Each column counts clients, and one client can be in more than one. Says still acts: the former agent told the client they still look after the policy. ' +
+      'Money or documents: money or a cheque handed over, or a meeting or documents to sign. Follow or stay: the client plans to follow the former agent, or to stay with them. ' +
+      'In touch: the former agent has contacted them, or someone has suggested changing the policy. Other: holding back until they speak to the former agent, paying a representative in person, or where the former agent has gone. ' +
+      'Every finding is in the attached file with its date, its source and the client\'s number.</p>';
+  }
+
+  out += h3('How it was documented');
+  var how = [];
+  how.push(C(F.num.written) + ' clients were written to by the branch, and ' + C(F.num.answered) + ' have answered: by tapping their answers, by replying, or on a call.');
+  if (calls && !calls.error) {
+    how.push('Client Support has ' + C(calls.listed) + ' clients on its call lists' + (calls.callers.length ? ' (' + calls.callers.join(', ') + ')' : '') + ': ' + C(calls.tried) + ' tried, ' + C(calls.reached) +
+      ' reached, ' + C(calls.noAnswer) + ' not reached yet and ' + C(calls.wrong) + ' wrong numbers.');
+    if (calls.backAgent) how.push(C(calls.backAgent) + ' clients asked on a call to speak to a licensed agent. Client Support records the request; no agent has called them as part of this record.');
+  } else if (calls && calls.error) how.push(calls.error);
+  else how.push('Client Support\'s calls sheet is not linked to this report yet, so only what reached the branch\'s own records is counted.');
+  how.push('A finding is filed under what it is about only when it names that client\'s own former agent. The words are given as they were written or recorded.');
+  if (F.held) how.push('The terminated agent\'s book is on the branch\'s own hold and is not in this update: ' + C(F.held) + ' of its clients have reported something.');
+  out += '<ul style="margin:0;padding-left:20px">' + how.map(function (s) { return '<li style="margin:0 0 6px">' + esc(s) + '</li>'; }).join('') + '</ul>';
+
+  out += h3('What the branch asks the Company to advise');
+  var ask = [], n;
+  if ((n = count(['still']))) ask.push('What the Company is doing about former agents who tell clients they still look after their policies (' + C(n) + ' clients so far), and whether the Company will confirm to those clients, in writing, who now does.');
+  if ((n = count(['follow', 'loyal']))) ask.push('How the Company wants the branch to answer clients who say they will stay with, or follow, a former agent (' + C(n) + ' clients).');
+  if ((n = count(['money', 'docs']))) ask.push('How the Company will trace money, cheques or documents handed to a former agent, and meetings arranged with one, since the resignations (' + C(n) + ' clients).');
+  if ((n = count(['contact', 'approached']))) ask.push('What the Company is doing about former agents contacting its policyholders since they resigned (' + C(n) + ' clients have said so).');
+  ask.push('Whether the Company will issue a public notice and a notice to these clients, and confirm that the Central Bank has been notified of each resignation.');
+  if (calls && calls.backAgent) ask.push('Who the Company wants to call the ' + C(calls.backAgent) + ' clients who asked for a licensed agent.');
+  out += '<ol style="margin:0;padding-left:20px">' + ask.map(function (s) { return '<li style="margin:0 0 6px">' + esc(s) + '</li>'; }).join('') + '</ol>';
+
+  var M = TRANSITION.MANAGER || {};
+  out += '<p style="margin:20px 0 0">Regards,<br><b>' + esc(M.name || 'Ricky Rampersad') + '</b><br>' + esc(M.title || 'Branch Manager') + ', Ricky Rampersad Branch<br>Guardian Life of the Caribbean Limited</p>' +
+    '<p style="margin:18px 0 0;font-size:11.5px;color:#8a97a8">Internal to Guardian Life. This e-mail carries client numbers and what clients said: do not forward it outside the Company. ' +
+    'Read from the branch\'s records at ' + esc(F.at) + '.</p></div>';
+  return out;
+}
+/** Every finding to date as a CSV for the attachment: no names, the client's number. */
+function tFindingsCsv_(F, firstDay) {
+  var q = function (s) { s = String(s == null ? '' : s); return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+  var rows = [['First documented', 'Former agent', 'Client number', 'Letter', 'What it is about', 'As documented', 'Source']];
+  F.items.slice().sort(function (a, b) { return String(a.agent).localeCompare(b.agent) || T_FIND_ORDER.indexOf(a.kind) - T_FIND_ORDER.indexOf(b.kind); }).forEach(function (it) {
+    rows.push([it.day || firstDay[it.key] || F.today, it.agent, it.cno, it.seg, it.about, it.said, it.source]);
+  });
+  return rows.map(function (r) { return r.map(q).join(','); }).join('\r\n');
+}
+/** Build and send. preview: to the manager alone, nothing marked. Returns what happened, in words. */
+function tFindingsSend_(preview) {
+  var props = PropertiesService.getScriptProperties(), to = preview ? T_FIND.ME : String(props.getProperty(T_FIND.P_TO) || '').trim();
+  if (!to) return 'No address: put the Head Office address into the ' + T_FIND.P_TO + ' Script property first.';
+  var F = tFindings_(), log = tFindLog_(!preview), fresh = F.items.filter(function (it) { return !log.keys[it.key]; });
+  var tz = tTz_(), today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var subject = 'Transition: what clients report about their former agents, ' + Utilities.formatDate(new Date(), tz, 'd MMMM') + ' (' + fresh.length + ' new)';
+  var html = tFindingsHtml_(F, fresh, preview, props.getProperty(T_FIND.P_GREET) || '');
+  var csv = Utilities.newBlob(tFindingsCsv_(F, log.keys), 'text/csv', 'Transition-findings-to-' + F.today + '.csv');
+  var cc = preview ? [] : [T_FIND.ME], via = 'Microsoft 365';
+  try { tMsSend_(to, subject, html, { cc: cc, replyTo: T_FIND.ME, attachments: [csv] }); }
+  catch (e) {
+    via = 'the script owner\'s mail';
+    var m = { to: to, replyTo: T_FIND.ME, subject: subject, htmlBody: html, name: TRANSITION.FROM_NAME, attachments: [csv] };
+    if (cc.length) m.cc = cc.join(',');
+    MailApp.sendEmail(m);
+  }
+  if (!preview && fresh.length) {
+    log.sh.getRange(log.sh.getLastRow() + 1, 1, fresh.length, T_FIND.HEAD.length).setValues(fresh.map(function (it) {
+      return [it.day || today, it.source, it.about, it.agent, it.seg, it.cno, it.tok, it.said, it.key, today];
+    }));
+  }
+  var msg = (preview ? 'Preview sent to ' : 'Findings sent to ') + to + ' through ' + via + ': ' + fresh.length + ' new, ' + F.items.length + ' documented in all.';
+  try { log_('transition', preview ? 'findings-preview' : 'findings-sent', msg); } catch (e) {}
+  return msg;
+}
+/** The daily trigger: working days, once a day, only after transitionFindingsStart. */
+function transitionFindings() {
+  var props = PropertiesService.getScriptProperties(), tz = tTz_();
+  if (props.getProperty(T_FIND.P_LIVE) !== 'yes') return 'off';
+  if (Number(Utilities.formatDate(new Date(), tz, 'u')) > 5) return 'weekend';
+  var today = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  if (props.getProperty('findings_last') === today) return 'already sent today';
+  var msg = tFindingsSend_(false);
+  if (/^Findings sent/.test(msg)) props.setProperty('findings_last', today);
+  return msg;
+}
+/** One e-mail to the manager alone, as Head Office would get it; nothing marked. */
+function transitionFindingsPreview() { return tSay_(tFindingsSend_(true)); }
+/** Today's, now, to Head Office: the same e-mail the trigger sends, and it counts as today's. */
+function transitionFindingsNow() {
+  var props = PropertiesService.getScriptProperties(), msg = tFindingsSend_(false);
+  if (/^Findings sent/.test(msg)) props.setProperty('findings_last', Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd'));
+  return tSay_(msg);
+}
+/** The go: the daily trigger at T_FIND.HOUR, working days. Needs FINDINGS_TO. */
+function transitionFindingsStart() {
+  var props = PropertiesService.getScriptProperties();
+  if (!String(props.getProperty(T_FIND.P_TO) || '').trim()) return tSay_('Put the Head Office address into the ' + T_FIND.P_TO + ' Script property first (Project Settings → Script properties).');
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'transitionFindings') ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('transitionFindings').timeBased().everyDays(1).atHour(T_FIND.HOUR).inTimezone(tTz_()).create();
+  props.setProperty(T_FIND.P_LIVE, 'yes');
+  return tSay_('The daily findings go to ' + props.getProperty(T_FIND.P_TO) + ' every working day at ' + T_FIND.HOUR + ':00, copied to you. ' +
+    (props.getProperty(T_FIND.P_CALLS) ? '' : 'The calls sheet is not linked yet: put its ID into the ' + T_FIND.P_CALLS + ' Script property, or only the letters\' answers are read. ') +
+    'Run transitionFindingsNow to send today\'s at once.');
+}
+function transitionFindingsStop() {
+  ScriptApp.getProjectTriggers().forEach(function (t) { if (t.getHandlerFunction() === 'transitionFindings') ScriptApp.deleteTrigger(t); });
+  PropertiesService.getScriptProperties().deleteProperty(T_FIND.P_LIVE);
+  return tSay_('The daily findings are off.');
+}
+
 /* ── the insights: what the answers say, for the digest and the Monday report ── */
 /* Asked for on 25 September 2026 ("I need to have some serious insights"). The
    digest counted sends and taps; this reads what the clients said. Everything

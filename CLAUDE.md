@@ -2677,6 +2677,33 @@ voice under the new timing and the caption gives it away.
     nothing runs off a phone.
   - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
     same code, not here.
+- **The daily findings to Head Office** (8 October 2026). Head Office had written to the branch formally about one
+  client's response. The manager asked for "a daily update on our findings and frame for him to advise what are they
+  doing, as these are the documented findings from the clients by responses and support staff contacting them; no
+  agents have been on calls as there is a process tracked daily".
+  - **What it is.** `tFindings_` and `tFindingsSend_` in Transition.gs send one e-mail each working day at 17:00
+    (`T_FIND.HOUR`). It goes from support@, signed by the manager, copied to him, and replies go to his Guardian address.
+    It sets out what clients have reported about their former agents, from two sources only:
+    - the clients' own answers and replies to the letters;
+    - the calls Client Support and the manager made, read from every caller's tab of the Client Support calls sheet
+      (`CALLS_SHEET_ID` Script property, read only).
+  - **What each finding carries.** Every finding has its date, its source, the former agent and the client's number.
+    It never carries the client's name: the client's own name, any other client's name, phone numbers, e-mail addresses
+    and links are scrubbed from the words.
+  - **How it reads.** First the frame (Client Support are not licensed, give no advice, and no agent has been on these
+    calls). Then what is new: the words in full, and the ticks as counts per former agent. Then everything by former
+    agent, then how it was documented, then what the branch asks the Company to advise. Everything to date travels as a
+    CSV.
+  - **How a finding is filed.** A note is filed under what it is about (`T_FIND_KINDS`) only when it names that client's
+    own former agent. So "Akaash is his agent" or a note about an agent from years ago is never one.
+  - **The Findings Log tab.** It keeps each finding with the day it first went, so each day's e-mail lists only what is
+    new.
+  - **What is left out.** The terminated agent's book (T, T1) stays out while the branch's hold stands
+    (`INCLUDE_HELD`): its findings are counted in one line, never listed. The address is the `FINDINGS_TO` Script
+    property, never in this public repository.
+  - **Switching it on.** Nothing goes until `transitionFindingsStart`. `transitionFindingsPreview` sends one to the
+    manager alone and marks nothing.
+  - **Tests.** `gregg8/findings-run.js` in the scratchpad covers it (32 checks, on the 8 October tabs and calls sheet).
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
