@@ -14,8 +14,8 @@
    a tinted label and never by colour alone. The old names (navy, gold, bar, teal) stay as aliases because the scripts
    below still use some of them. */
 :root{
-  --canvas:#E9EEF5; --paper:#FFFFFF; --sunken:#F5F7FA; --line:#DDE3EC; --line2:#C5CEDB;
-  --ink:#142033; --ink2:#344054; --muted:#5A687D; --faint:#97A1B2;
+  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
+  --ink:#142033; --ink2:#2B374C; --muted:#4B586C; --faint:#97A1B2;
   --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD; --primaryLine:#B8CEF4;
   --bar:#2A78D6; --track:#DCE8F8;
   --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
@@ -92,15 +92,26 @@ table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--pa
 .story{margin:8px 0 4px;font-size:14px}
 .story b{color:var(--ink)}
 .subj{font-size:12px;color:var(--muted);margin-top:4px;word-break:break-word}
-details.hist{margin:6px 0 2px;font-size:13px}
-details.hist summary{cursor:pointer;font-weight:600;color:var(--primary)}
-details.hist ul{margin:6px 0 0;padding-left:18px}
-details.hist li{margin:2px 0}
+/* the history of an open item: a drop-down bar that reads as one, with the dates in their own column */
+details.hist{margin:10px 0 4px;border:1px solid var(--primaryLine);border-radius:8px;background:var(--primarySoft);overflow:hidden}
+details.hist summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;font-weight:600;font-size:14px;color:var(--primary)}
+details.hist summary::-webkit-details-marker{display:none}
+details.hist summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;flex:none}
+details.hist[open] summary::before{transform:rotate(45deg)}
+details.hist summary:hover{background:#DCE8FB}
+details.hist summary .n{margin-left:auto;background:var(--primary);color:#fff;border-radius:99px;font-size:12px;padding:1px 9px}
+details.hist ul{list-style:none;margin:0;padding:4px 12px 8px;background:var(--paper);border-top:1px solid var(--primaryLine)}
+details.hist li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+details.hist li:last-child{border-bottom:0}
+details.hist li .d{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
 details.hist li.int{color:var(--muted)}
+details.hist li .staff{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;background:var(--warnBg);color:var(--warn);border-radius:99px;padding:0 7px}
+.btn.sm{padding:5px 11px;font-size:13px}
+@media (max-width:640px){details.hist li{grid-template-columns:1fr;gap:2px}}
 .item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line2);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
 .item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warnMark)}
-.item h4{margin:0 0 4px;font-size:15px;font-weight:600}
-.meta{font-size:13px;color:var(--muted)}
+.item h4{margin:0 0 6px;font-size:16px;font-weight:600}
+.meta{font-size:13.5px;color:var(--muted)}
 .meta b{color:var(--ink);font-weight:600}
 .toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer}
 .toggle input{accent-color:var(--primary)}
