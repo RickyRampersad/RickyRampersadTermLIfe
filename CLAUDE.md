@@ -2777,6 +2777,23 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   it that way when adding questions. The standards the manual sets that were not set before (an
   acknowledgement within a working day, a call within two working days for a rating of 3 or less, Monday
   follow-up of groups that did not answer) are proposals for the manager to confirm.
+- **The staff film** (8 October 2026: "do a video and a waht app message to guide staff what to do as this is the way
+  forward"). `groupclientmanagement/staff-guide.mp4` (2:42, with the poster `staff-guide.jpg`) is at the top of the
+  training manual. It covers the week: sign in, the test, your groups, check, reasons, what the group sees, preview,
+  Approve for Monday, the 10:00 run, a letter that waits, the group's page, their answers, the branch's view.
+  - **What is on screen.** It is shot from the real pages over a made-up branch: five invented groups and invented
+    people, tagged "Sample groups and figures" on every shot. It shows no client, no real count and no test question.
+  - **Sound.** Narration on `en-US-AndrewNeural` at -12%, the Inspired bed 18 dB under the voice, loudness -14 LUFS.
+    The credit is on the closing card and under the player.
+  - **How it is made.** Everything is in the session scratchpad (`staffvid/`):
+    - `demo-world.js`: the made-up branch;
+    - `shots.js`: screenshots and element boxes;
+    - `lines.json` and `tts.py`: the narration;
+    - `timing.py`: scene times from the audio;
+    - `film.html` with `render.js`: frames rendered one by one, so no capture drift;
+    - `mix.py`: the soundtrack.
+
+    Re-shoot it when the pages change.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 
