@@ -2703,7 +2703,7 @@ voice under the new timing and the caption gives it away.
     property, never in this public repository.
   - **Switching it on.** Nothing goes until `transitionFindingsStart`. `transitionFindingsPreview` sends one to the
     manager alone and marks nothing.
-  - **Tests.** `gregg8/findings-run.js` in the scratchpad covers it (32 checks, on the 8 October tabs and calls sheet).
+  - **Tests.** `findings8/findings-run.js` in the scratchpad covers it (32 checks, on the 8 October tabs and calls sheet).
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
