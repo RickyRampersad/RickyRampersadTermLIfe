@@ -2575,6 +2575,24 @@ voice under the new timing and the caption gives it away.
   - `work8/dash-test.js` in the scratchpad covers it (42 checks, Node and Playwright, the real tabs, made-up Salesforce
     tasks). It serves the site's `receipt.json` and `receipt.html` to the demo backend, which has no network. Without
     them the board has no answers, and every count that reads one, such as "former agent in touch", is 0 in a test.
+- **The board's look: a side menu and one row a client** (8 October 2026, after Client Support's first morning on it:
+  "the interface is so confusing … a much more professional layout … scale properly").
+  - **The bar along the top** has the shield, the board's name, when the sheet was read, Help, Refresh and Sign out.
+  - **On a laptop the lists are a menu down the side**, grouped Yours, Act on, Lists, The branch, under who is signed in
+    and as what, with the scripts beneath. On a phone the menu is a row of pills that stays at the top.
+  - **Each list opens on its title, its count, one line on what to do there, and its numbers.** The breakdowns stay
+    folded until someone opens them (`rrb-assign-breakdowns2`).
+  - **One row a client.** It shows the name and state, why they are on this list, the town, age and occupation, and the
+    last thing on the file (an open call-back first). Beside it are the number to tap and **Log call** (Update for the
+    branch).
+  - **Log call opens the panel with nothing chosen.** "What happened?" comes first, and nothing saves without it.
+  - **The name or Details opens everything else under the row**: the five blocks, what they told us, the notes, the
+    policies, the household, the history, Assign, WhatsApp, their page and the script.
+  - To assign and Urgent carry the suggested agent, with its one-press button, on the row itself.
+  - A phone cell holding two numbers is dialled one number at a time (`phonesOf`); until then the two ran together.
+  - How the board works, the three rules on every call and the scripts are in Help.
+  - `board8/board-test.js` (60) and the work, dashboard, snapshot and introduction-hold tests in the scratchpad cover
+    it, moved to Log call.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
