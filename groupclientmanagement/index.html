@@ -166,7 +166,7 @@ function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage
 function head() {
   $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.role === 'branch' ? 'Branch manager' : 'Staff') +
     (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
-    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
+    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
   $('rf').onclick = refresh;
 }
 async function refresh() {

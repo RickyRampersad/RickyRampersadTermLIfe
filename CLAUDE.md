@@ -2712,6 +2712,22 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
   low, `fallbacks: "default"`), at the manager's choice, with the key in the
   `ANTHROPIC_API_KEY` Script property; the draft is never shared until a
   person edits it and presses Post. A health or claim item gets no draft.
+- **No one sends a group a letter before the manual and the test** (8 October 2026: "a staff manual as well
+  as a test … before they start … with weighting, with building in the performance appraisal, the taking
+  initiative to try to solve things, the follow up … all results logged with a feedback").
+  `groupclientmanagement/training.html` holds the nine-section manual and the test; the staff page links to
+  it. The questions, their answers and their marking guides are in the private **Group Client Training**
+  Google Sheet (`GCM_TRAIN_SHEET_ID`), never in the repository, because the site and the `.gs` files are public:
+  the page gets the questions without answers, and `gcmTrainSubmit_` marks them. Written answers are marked by
+  the Claude API against the Rubric (structured output, the answer fenced as data, never an instruction) and
+  stay provisional until the branch manager confirms them (`gcmTrainMark_`). The competencies are the
+  appraisal's: each question's Points are its weight. A pass needs 80%, every critical question right and no
+  competency under 60%. Every attempt is a row on that sheet's Results tab and an e-mail to the person and the
+  manager (`GCM_TRAIN.TO_MANAGER`), never the sales support inbox, because a result is an appraisal. The bank
+  was written so that the right answer is never the longest option and the answers spread across A to D; keep
+  it that way when adding questions. The standards the manual sets that were not set before (an
+  acknowledgement within a working day, a call within two working days for a rating of 3 or less, Monday
+  follow-up of groups that did not answer) are proposals for the manager to confirm.
 
 ## The Premium Due Desk — checked by a person, sent at ten
 
