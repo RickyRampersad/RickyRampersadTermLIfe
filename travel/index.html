@@ -17,9 +17,11 @@
 <style>
 /* ═══════════════════════════════════════════════════════════════════════════
    TRAVEL INSURANCE PROPOSAL — Guardian General form GG-TIN-PRO-10/2023
-   Every question on the paper form, in the order the form asks it, split into
-   short steps a phone can carry. The rendered proposal reproduces the form's
-   sections so the branch forwards a document Guardian General recognises.
+   Every question on the paper form, in the form's order and words, split into
+   short steps a phone can carry, with a dropdown wherever the answer is one
+   of a list. The printed proposal is Guardian General's own four-page form,
+   reproduced as it is: their header, their numbering, their words, no branch
+   logo on it. The branch look stops at the edge of that sheet.
    ═══════════════════════════════════════════════════════════════════════════ */
 :root{
   --navy:#07131f; --navy2:#0d2137; --navy3:#163553;
@@ -40,7 +42,6 @@ a{color:var(--teal-ink)}
 h1,h2,h3,h4{font-family:var(--disp);line-height:1.2;letter-spacing:-.01em}
 button{font:inherit;color:inherit;cursor:pointer}
 :focus-visible{outline:3px solid var(--teal);outline-offset:2px;border-radius:6px}
-.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
 
 /* header */
 header{position:sticky;top:0;z-index:50;background:rgba(7,19,31,.96);backdrop-filter:blur(12px);color:#edf4fb;border-bottom:1px solid rgba(255,255,255,.08)}
@@ -83,7 +84,7 @@ section.block{padding:40px 0 10px}
 /* packages */
 .pk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:22px}
 @media (max-width:720px){.pk-grid{grid-template-columns:1fr}}
-.pk{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;position:relative;display:flex;flex-direction:column;gap:8px;transition:border-color .18s,box-shadow .18s,transform .18s}
+.pk{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;position:relative;display:flex;flex-direction:column;gap:8px}
 .pk h3{font-size:17px;font-weight:800}
 .pk .tag{font:800 10px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--teal-ink);background:var(--teal-50);border:1px solid #bfeef5;border-radius:999px;padding:4px 10px;align-self:flex-start}
 .pk.elite .tag{color:var(--gold-ink);background:var(--gold-50);border-color:#f3dfa0}
@@ -105,9 +106,11 @@ section.block{padding:40px 0 10px}
 /* progress */
 .prog{position:sticky;top:64px;z-index:40;background:rgba(244,248,251,.96);backdrop-filter:blur(10px);padding:12px 0 10px;margin:0 -16px;border-bottom:1px solid var(--line)}
 .prog .in{max-width:960px;margin:0 auto;padding:0 16px}
-.prog .top{display:flex;align-items:baseline;gap:10px;margin-bottom:7px}
+.prog .top{display:flex;align-items:center;gap:10px;margin-bottom:7px;flex-wrap:wrap}
 .prog .lbl{font:800 12px var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--teal-ink)}
-.prog .cnt{margin-left:auto;font-size:12px;color:var(--muted)}
+.prog .cnt{font-size:12px;color:var(--muted)}
+.prog .see{margin-left:auto;font:700 12px var(--disp);color:var(--navy);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:6px 13px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.prog .see:hover{border-color:var(--navy3)}
 .prog .bar{height:6px;border-radius:99px;background:#dfe8f0;overflow:hidden}
 .prog .fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--teal),#0aa9c0);transition:width .35s cubic-bezier(.4,0,.2,1)}
 .steps-nav{display:flex;align-items:flex-start;gap:6px;overflow-x:auto;scrollbar-width:none;margin-top:9px}
@@ -120,8 +123,10 @@ section.block{padding:40px 0 10px}
 .step{display:none;animation:in .4s cubic-bezier(.16,1,.3,1)}
 .step.on{display:block}
 @keyframes in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.step{animation:none}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px 20px;margin:18px 0;box-shadow:0 4px 14px rgba(14,42,71,.05)}
 .card h3{font-size:18px;font-weight:800;margin-bottom:4px}
+.card h3 small{font:700 11px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:var(--teal-ink);display:block;margin-bottom:4px}
 .card .hint{color:var(--muted);font-size:14px;margin-bottom:14px}
 .card h4{font:800 11.5px var(--disp);letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink);margin:18px 0 10px;padding-top:14px;border-top:1px dashed var(--line)}
 .card h4:first-of-type{border-top:0;padding-top:0;margin-top:6px}
@@ -133,6 +138,7 @@ section.block{padding:40px 0 10px}
 label.l{font:700 12px var(--sans);letter-spacing:.04em;color:#3b4f66}
 label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .f input,.f select,.f textarea{width:100%;font:15px var(--sans);color:var(--ink);background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:11px 13px;transition:border-color .15s,box-shadow .15s}
+.f select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%235B7186' stroke-width='2'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:36px}
 .f input:focus,.f select:focus,.f textarea:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.18)}
 .f textarea{min-height:84px;resize:vertical}
 .f .err{display:none;font-size:12.5px;color:var(--bad)}
@@ -142,18 +148,10 @@ label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .chip{display:inline-block;font:700 11.5px var(--sans);color:var(--teal-ink);background:var(--teal-50);border:1px solid #bfeef5;border-radius:999px;padding:3px 10px;margin-left:8px;vertical-align:middle}
 .chip.warn{color:var(--warn);background:var(--warn-50);border-color:#f4d9b3}
 .chip.file{color:var(--good);background:var(--good-50);border-color:#bfe6cf}
-.lookup{background:linear-gradient(160deg,#0d2137,#163553);color:#edf4fb;border-radius:var(--r2);padding:16px 16px 14px;margin:4px 0 18px}
-.lookup h4{color:var(--gold);border:0;padding:0;margin:0 0 4px}
-.lookup p{font-size:13.5px;color:#b9c9da;margin-bottom:12px}
-.lookup .row{align-items:end}
-.lookup label.l{color:#cfdceb}
-.lookup input{background:#fff;color:var(--ink)}
-.lookup .btn-gold{padding:11px 20px;font-size:14px}
-.lookup .msg{font-size:13.5px;margin-top:10px;min-height:1.2em}
-.lookup .msg.ok{color:#9fe8c1}.lookup .msg.bad{color:#ffb3bf}
-.lookup .found{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13.5px}
-.lookup .found b{color:#fff}
-.lookup .lnk{background:none;border:0;color:var(--teal);font:inherit;font-size:13px;text-decoration:underline;padding:0}
+/* country chips */
+.picks{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.picks span{display:inline-flex;align-items:center;gap:6px;font:600 13px var(--sans);background:var(--navy3);color:#fff;border-radius:999px;padding:5px 6px 5px 12px}
+.picks span button{background:rgba(255,255,255,.18);border:0;color:#fff;width:20px;height:20px;border-radius:50%;font-size:12px;line-height:1;padding:0}
 /* yes/no + choices */
 .seg{display:flex;gap:8px;flex-wrap:wrap}
 .seg label{display:inline-flex;align-items:center;gap:8px;font:600 14px var(--sans);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 15px;cursor:pointer;transition:border-color .15s,background .15s}
@@ -172,6 +170,29 @@ label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .choice span{display:block;font-size:12.8px;color:var(--muted);margin-top:2px}
 .choice:has(input:checked){border-color:var(--navy3);box-shadow:0 0 0 3px rgba(22,53,83,.14)}
 .choice.wide{grid-column:1/-1}
+.choice .sug{position:absolute;top:-9px;right:12px;font:800 10px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:#07131f;background:var(--gold);border-radius:999px;padding:3px 9px}
+/* the adviser */
+.advise{background:linear-gradient(160deg,#0d2137,#163553);color:#edf4fb;border-radius:var(--r2);padding:18px 18px 16px;margin:4px 0 18px}
+.advise .kick{font:800 11px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--teal);margin-bottom:6px}
+.advise h4{color:#fff;border:0;padding:0;margin:0 0 6px;font-size:19px;letter-spacing:-.01em;text-transform:none}
+.advise h4 em{font-style:normal;color:var(--gold)}
+.advise p{font-size:13.8px;color:#b9c9da}
+.advise ul{margin:10px 0 0;padding-left:0;list-style:none;display:grid;gap:6px}
+.advise li{font-size:13.5px;color:#dbe6f1;padding-left:22px;position:relative}
+.advise li::before{content:"✓";position:absolute;left:0;color:var(--gold);font-weight:800}
+.advise li.warn::before{content:"!";color:#ffb3bf}
+.cmp{overflow-x:auto;margin-top:14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12)}
+.cmp table{border-collapse:collapse;width:100%;min-width:560px;font-size:13px}
+.cmp th,.cmp td{padding:8px 10px;text-align:right;border-bottom:1px solid rgba(255,255,255,.1);white-space:nowrap}
+.cmp th:first-child,.cmp td:first-child{text-align:left;color:#b9c9da;font-weight:500;white-space:normal}
+.cmp th{color:#fff;font-family:var(--disp);font-size:12.5px}
+.cmp th .b{display:block;font:700 10px var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gold);margin-top:2px}
+.cmp th .b.dim{color:#9fb3c8}
+.cmp td.hi{color:var(--gold);font-weight:700}
+.cmp tr.tot td{font-weight:800;color:#fff;border-top:1px solid rgba(255,255,255,.25)}
+.cmp tr.step td{color:#9fe8c1;font-size:12.3px;white-space:normal}
+.advise .foot{font-size:12.3px;color:#9fb3c8;margin-top:10px}
+.advise .lnk{color:var(--teal)}
 /* dependants */
 .dep{border:1px solid var(--line);border-radius:var(--r2);padding:14px 15px;margin-top:12px;background:#fbfcfe}
 .dep .dh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -192,6 +213,13 @@ label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .items input{width:100%;font:14.5px var(--sans);border:1.5px solid var(--line);border-radius:10px;padding:10px 12px}
 .items .x{background:#fff;border:1.5px solid var(--line);border-radius:10px;height:42px;color:var(--muted)}
 .add{background:#fff;border:1.5px dashed #b9c9da;border-radius:10px;padding:9px 14px;font:700 13px var(--disp);color:var(--teal-ink);margin-top:10px}
+/* prefill */
+.fileme{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--gold-50);border:1px solid #f3dfa0;border-radius:var(--r2);padding:12px 14px;margin:12px 0 4px;font-size:13.8px}
+.fileme .t{flex:1;min-width:220px}
+.fileme .t b{font-family:var(--disp)}
+.fileme .msg{width:100%;font-size:13px}
+.fileme .msg.ok{color:var(--good)}.fileme .msg.bad{color:var(--bad)}
+.lnk{background:none;border:0;color:var(--teal-ink);font:inherit;font-size:13px;text-decoration:underline;padding:0}
 /* review */
 .sum{display:grid;grid-template-columns:200px 1fr;gap:8px 14px;font-size:14px;margin-top:8px}
 @media (max-width:560px){.sum{grid-template-columns:1fr}.sum dt{margin-top:6px}}
@@ -229,38 +257,44 @@ details.cover[open] summary::after{content:"–"}
 .pv-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 18px;font:700 12px var(--disp);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
 .pv-x{background:none;border:0;font-size:18px;color:var(--muted);padding:4px 8px}
 .pv-scroll{overflow:auto;padding:18px;background:#e9eef4}
-.pv-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg)}
-/* the proposal sheet — reproduces GG-TIN-PRO-10/2023 */
-.sheet{background:#fff;color:#111;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.4;padding:28px 32px;border:1px solid #cfd8e3;box-shadow:0 8px 30px rgba(14,42,71,.12);width:820px;max-width:820px;margin:0 auto;overflow-wrap:normal}
 .pv-hint{font-size:12px;color:var(--muted);text-align:center;margin-bottom:10px}
 @media (min-width:900px){.pv-hint{display:none}}
-.sheet .hd{display:flex;gap:16px;align-items:flex-start;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:12px}
-.sheet .hd .mk{width:44px;height:44px;border-radius:10px;overflow:hidden;background:#07131f;flex:none}
-.sheet .hd .mk img{width:100%;height:100%}
-.sheet .hd .co b{display:block;font-size:14px}
-.sheet .hd .co{font-size:10.5px;color:#333}
-.sheet .hd .rf{margin-left:auto;flex:none;text-align:right;font-size:10.5px;color:#333}
-.sheet .hd .rf b{display:block;font-size:14px;letter-spacing:.08em;color:#07131f}
-.sheet h2{text-align:center;font:bold 15px Arial,sans-serif;letter-spacing:.06em;margin:8px 0 14px}
-.sheet h3{font:bold 12px Arial,sans-serif;margin:14px 0 6px;text-transform:uppercase}
-.sheet .fr{display:flex;flex-wrap:wrap;gap:4px 8px;margin:5px 0;align-items:baseline}
-.sheet .fr .k{flex:0 1 auto;color:#333}
-.sheet .fr .v{flex:1;border-bottom:1px solid #777;min-height:16px;padding:0 4px;font-weight:bold}
-.sheet .g2{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}
-.sheet .yn{font-weight:bold}
-.sheet .yn s{text-decoration:none;color:#999;font-weight:normal}
-.sheet table{border-collapse:collapse;width:100%;margin:6px 0;font-size:11px}
-.sheet th,.sheet td{border:1px solid #777;padding:4px 6px;text-align:left;vertical-align:top}
-.sheet th{background:#eee;font-weight:bold}
-.sheet .fine{font-size:10px;color:#333;margin:4px 0}
-.sheet .ft{display:flex;justify-content:space-between;font-size:9.5px;color:#555;margin-top:18px;border-top:1px solid #999;padding-top:6px}
-.sheet .sig{display:grid;grid-template-columns:1fr 1fr;gap:30px;margin-top:22px;font-size:10.5px;color:#333}
-.sheet .sig div{border-top:1px solid #333;padding-top:4px}
+.pv-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);background:var(--bg)}
+/* ── the proposal: Guardian General's form GG-TIN-PRO-10/2023, as printed ── */
+.gg{width:816px;margin:0 auto 18px;background:#fff;color:#000;font-family:Arial,Helvetica,sans-serif;font-size:11.5px;line-height:1.35;padding:40px 48px 36px;border:1px solid #cfd8e3;box-shadow:0 8px 30px rgba(14,42,71,.12);overflow-wrap:normal;position:relative;min-height:1056px}
+.gg .hd{display:flex;gap:18px;align-items:flex-start;margin-bottom:18px}
+.gg .hd img{width:200px;height:auto;flex:none;border:1px solid #ddd}
+.gg .hd table{font-size:10.5px;border-collapse:collapse}
+.gg .hd td{padding:0 8px 1px 0;vertical-align:top}
+.gg .hd td.k{font-weight:bold;white-space:nowrap}
+.gg h2{text-align:center;font:bold 15px Arial,Helvetica,sans-serif;letter-spacing:.04em;margin:6px 0 16px}
+.gg h3{font:bold 11.5px Arial,Helvetica,sans-serif;margin:12px 0 6px}
+.gg .l{display:flex;gap:6px;align-items:baseline;margin:7px 0;flex-wrap:wrap}
+.gg .l .k{flex:0 1 auto}
+.gg .l .v{flex:1 1 120px;border-bottom:1px solid #000;min-height:15px;padding:0 4px;font-weight:bold;min-width:120px}
+.gg .l .v.s{flex:1 1 90px;min-width:90px}
+.gg .sub{font-size:9px;color:#333;font-style:italic}
+.gg .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 26px}
+.gg .yn{font-weight:bold;white-space:nowrap}
+.gg .bx{display:inline-block;width:11px;height:11px;border:1px solid #000;vertical-align:-1px;margin:0 3px 0 5px;text-align:center;font-size:10px;line-height:10px}
+.gg .pepd{font-weight:bold;font-size:10.5px;margin:4px 0 8px;line-height:1.35}
+.gg .fine{font-size:10.5px;margin:6px 0}
+.gg table.t{border-collapse:collapse;width:100%;margin:6px 0;font-size:10.5px}
+.gg table.t th,.gg table.t td{border:1px solid #000;padding:4px 5px;text-align:left;vertical-align:top}
+.gg table.t th{font-weight:bold}
+.gg table.t th.c{background:#e6e6e6}
+.gg table.pkt td.n{text-align:right;white-space:nowrap}
+.gg .ft{position:absolute;left:48px;right:48px;bottom:16px;display:flex;justify-content:space-between;font-size:9.5px;font-family:'Times New Roman',Times,serif}
+.gg .pg{page-break-after:always;break-after:page}
+.gg .cov th{width:34%;font-weight:bold;text-transform:uppercase}
+.gg .cov ol{margin:4px 0 0 18px;padding:0}
 @media print{
   body *{visibility:hidden}
   #printArea,#printArea *{visibility:visible}
   #printArea{position:absolute;left:0;top:0;width:100%}
-  .sheet{box-shadow:none;border:0;max-width:none;padding:0}
+  .gg{box-shadow:none;border:0;width:auto;max-width:none;margin:0;padding:0.45in 0.5in;min-height:0}
+  .gg .ft{position:static;margin-top:20px}
+  @page{size:letter;margin:0}
 }
 footer{text-align:center;padding:28px 16px 40px;color:var(--faint);font-size:12.5px;line-height:1.7}
 footer a{color:var(--muted)}
@@ -283,13 +317,13 @@ footer a{color:var(--muted)}
   <div class="in">
     <div class="eyebrow">Guardian General · Travel insurance proposal</div>
     <h1>Insure your trip <em>before you pack.</em></h1>
-    <p class="lead">Personal accident, medical expenses abroad, lost baggage and documents, stolen money and tickets, cancellation and missed connections. Choose a package, tell us who is travelling, and we come back with your premium.</p>
+    <p class="lead">Personal accident, medical expenses abroad, lost baggage and documents, stolen money and tickets, cancellation and missed connections. Tell us about the trip, let the page suggest a package, and we come back with your premium.</p>
     <div class="cta">
       <a class="btn btn-gold" href="#start" onclick="startForm(event)">Start my proposal</a>
       <a class="btn btn-ghost" href="#packages">Compare the packages</a>
     </div>
     <div class="promises">
-      <div class="promise"><b>About five minutes</b>Every question on Guardian General's proposal form, one short step at a time. Your answers save as you go.</div>
+      <div class="promise"><b>About five minutes</b>Guardian General's proposal form, question for question, one short step at a time. Your answers save as you go.</div>
       <div class="promise"><b>Up to five travellers</b>Packages cover a maximum of five persons and fourteen days any one trip. Longer or larger trips are quoted on their own.</div>
       <div class="promise"><b>We quote, you decide</b>Nothing is bound today. You get a reference now and your premium from the branch; cover starts when it is paid.</div>
     </div>
@@ -307,28 +341,21 @@ footer a{color:var(--muted)}
 
   <details class="cover">
     <summary>What each benefit covers, in Guardian General's words</summary>
-    <div class="cover-grid">
-      <div class="cv"><b>Personal accident (age limit 5 to 75)</b>Accidental bodily injury resulting in:<ol><li>death, loss of one or more limbs, all sight in one or both eyes, the power of speech or the sense of hearing, or permanent total disablement</li><li>temporary total disablement</li><li>temporary partial disablement</li></ol></div>
-      <div class="cv"><b>Baggage, personal effects and travel documents</b>Your passport, driver's licence, valid forms of identification, trunks, suitcases and similar containers, their contents, what you wear and carry-on luggage (excluding furs, household goods, furniture and the like) against loss or damage by accident or misfortune in transit and at your destination. Up to 10% of the sum insured for immediate necessities bought at your outward destination after 24 hours' loss or misdirection of baggage by the carriers. Any one unspecified item is limited to $1,000; a pair or set of articles is one item.</div>
-      <div class="cv"><b>Additional expenses due to loss of passport or driver's licence</b>Reasonable additional travel or accommodation expenses you have to incur to replace a lost or stolen passport or driver's licence while abroad.</div>
-      <div class="cv"><b>Medical expenses (age limit 5 to 75)</b>Expenses necessarily incurred as a result of accidental bodily injury, sickness or disease:<ol><li>medical, surgical, hospital or nursing-home charges, prescribed drugs, emergency dental or optical charges</li><li>additional accommodation, travel or other expenses, including those of another person required to stay or travel with you</li><li>the cost of conveying your body or ashes to your home address</li></ol></div>
-      <div class="cv"><b>Loss of money and tickets</b>Loss of travel tickets and money, including cash withdrawn from an ATM by a legitimate card, as a result of assault or robbery on the trip within two hours of the withdrawal.</div>
-      <div class="cv"><b>Loss of deposits, curtailment and missed connections (age limit 5 to 75)</b>Loss of deposits paid, or payment for unused accommodation or travel, on cancellation or postponement of the trip due to: (a) your death, bodily injury, sickness or disease; (b) that of any relative or travel companion you have arranged to travel with; (c) you or your relative or travel companion being called for witness or jury service; (d) missing your connecting flight through the carrier's delay from inclement weather or common airline causes, where the delay exceeds five hours.</div>
-    </div>
+    <div class="cover-grid" id="coverGrid"></div>
   </details>
 </section>
 
 <!-- ───────────── the form ───────────── -->
 <section class="block" id="start">
   <h2 class="h2">Your proposal</h2>
-  <p class="lead">The same questions as Guardian General's Travel Insurance Proposal Form (GG-TIN-PRO-10/2023), in order. Fields marked * are needed to quote.</p>
+  <p class="lead">The same questions as Guardian General's Travel Insurance Proposal Form (GG-TIN-PRO-10/2023), in the form's order and words. Fields marked * are needed to quote. "See the form" at any step shows the form filled in so far.</p>
 
   <div id="resume" class="notice info" hidden><b>Welcome back.</b> We kept the answers you started earlier on this device. <button class="edit" onclick="clearDraft()">Start over instead</button></div>
 
   <div id="formArea">
     <div class="prog">
       <div class="in">
-        <div class="top"><span class="lbl" id="progLbl">Step 1 · Your trip</span><span class="cnt" id="progCnt">1 of 7</span></div>
+        <div class="top"><span class="lbl" id="progLbl">Step 1 · Your trip</span><span class="cnt" id="progCnt">1 of 7</span><button class="see" type="button" onclick="openPreview()" title="See the proposal form filled in so far">📄 See the form</button></div>
         <div class="bar"><div class="fill" id="progFill"></div></div>
         <div class="steps-nav" id="stepsNav"></div>
       </div>
@@ -336,87 +363,88 @@ footer a{color:var(--muted)}
 
     <form id="f" novalidate onsubmit="return false">
 
-    <!-- STEP 1 — the trip (form 1(j), 1(k), 1(l), 2) -->
+    <!-- STEP 1 — the trip: form 1(j) (k) (l) and 2 -->
     <div class="step on" data-step="0">
       <div class="card">
-        <h3>Where are you going?</h3>
+        <h3><small>Section 1 (j) to (l)</small>Where are you going?</h3>
         <p class="hint">The period of insurance should run from the day you leave Trinidad and Tobago to the day you return.</p>
         <div class="row">
-          <div class="f full"><label class="l" for="countries">Countries to be visited *</label><input id="countries" data-k="countries" placeholder="e.g. United States, Canada" autocomplete="off"><span class="err">Tell us which countries you will visit.</span></div>
-          <div class="f full"><label class="l" for="purpose">Purpose of trip *</label><input id="purpose" data-k="purpose" placeholder="e.g. Vacation, business, study, medical"><span class="err">What is the trip for?</span></div>
-          <div class="f"><label class="l" for="from">Period of insurance from *</label><input id="from" data-k="from" type="date"><span class="err">When does the trip start?</span></div>
+          <div class="f full"><label class="l" for="countrySel">(j) Countries to be visited * <small>choose each country from the list</small></label>
+            <select id="countrySel"><option value="">Add a country…</option></select>
+            <div class="picks" id="countryPicks"></div>
+            <input type="hidden" id="countries" data-k="countries">
+            <span class="err">Choose at least one country.</span></div>
+          <div class="f"><label class="l" for="purpose">(k) Purpose of trip *</label><select id="purpose" data-k="purpose"><option value="">Choose…</option></select><span class="err">What is the trip for?</span></div>
+          <div class="f" id="purposeOtherF" hidden><label class="l" for="purposeOther">Please say what *</label><input id="purposeOther" data-k="purposeOther"><span class="err">Tell us the purpose.</span></div>
+          <div class="f"><label class="l" for="from">(l) Period of insurance from *</label><input id="from" data-k="from" type="date"><span class="err">When does the trip start?</span></div>
           <div class="f"><label class="l" for="to">to * <span class="chip" id="daysChip" hidden></span></label><input id="to" data-k="to" type="date"><span class="err">The return date must be on or after the start.</span></div>
         </div>
         <div class="notice warn" id="longTrip" hidden><b>More than fourteen days.</b> The packages cover a maximum of fourteen days any one trip. We can still quote this trip, on sums insured of your choosing; choose "Cover outside the packages" at the package step, or send it as it is and we will call you.</div>
-        <h4>Who is travelling with you</h4>
+        <h4>Section 2 · Who is travelling with you</h4>
         <div class="row">
-          <div class="f"><label class="l" for="companions">How many persons will accompany you on the trip? *</label><input id="companions" data-k="companions" type="number" min="0" max="20" inputmode="numeric" placeholder="0"><span class="err">Enter a number; 0 if you travel alone.</span></div>
-          <div class="f" id="coverEachF"><label class="l">Is cover required for each person? *</label><div class="seg"><label><input type="radio" name="coverEach" value="Yes" data-k="coverEach">Yes</label><label><input type="radio" name="coverEach" value="No" data-k="coverEach">No</label></div><span class="err">Choose yes or no.</span></div>
+          <div class="f"><label class="l" for="companions">(a) How many persons will be accompanying you on the trip? *</label><select id="companions" data-k="companions"><option value="">Choose…</option><option value="0">Nobody, I travel alone</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10 or more</option></select><span class="err">Choose a number.</span></div>
+          <div class="f" id="coverEachF"><label class="l">(b) Is cover required for each person? *</label><div class="seg"><label><input type="radio" name="coverEach" value="Yes" data-k="coverEach">Yes</label><label><input type="radio" name="coverEach" value="No" data-k="coverEach">No</label></div><span class="err">Choose yes or no.</span></div>
         </div>
         <div class="notice warn" id="manyPersons" hidden><b>More than five persons.</b> A package covers a maximum of five persons any one trip, yourself included. Give us the details of up to four travelling dependants here; we take the rest when we call.</div>
       </div>
       <div class="actions"><span class="sp"></span><span class="saving" id="sv0"></span><button class="btn btn-navy" type="button" onclick="next()">Continue</button></div>
     </div>
 
-    <!-- STEP 2 — the proposer (form 1(a)–(i)) -->
+    <!-- STEP 2 — the proposer: form 1(a) to (i) -->
     <div class="step" data-step="1">
       <div class="card">
-        <h3>About the proposer</h3>
+        <h3><small>Section 1 (a) to (i)</small>Personal information</h3>
         <p class="hint">The proposer is the person, or the company, taking out the cover.</p>
-        <div class="lookup" id="lookupBox" hidden>
-          <h4>Already a Guardian client with our branch?</h4>
-          <p>Give us any policy number or your client number, and your date of birth, and we fill your details from your file. You can change anything that is out of date.</p>
-          <div class="row">
-            <div class="f"><label class="l" for="lkNo">Policy or client number</label><input id="lkNo" inputmode="numeric" autocomplete="off" placeholder="e.g. 0012345678"></div>
-            <div class="f"><label class="l" for="lkDob">Date of birth</label><input id="lkDob" type="date"></div>
-            <div class="f"><button class="btn btn-gold" type="button" id="lkBtn" onclick="findMe()">Find my details</button></div>
-          </div>
-          <div class="msg" id="lkMsg"></div>
-          <div class="found" id="lkFound" hidden></div>
-        </div>
         <div class="f"><label class="l">Who is proposing? *</label>
           <div class="seg"><label><input type="radio" name="kind" value="person" data-k="kind" checked>A person</label><label><input type="radio" name="kind" value="business" data-k="kind">A company or business</label></div></div>
         <div id="personFields">
-          <h4>Your name</h4>
+          <h4>(a) Names of proposer, in full</h4>
           <div class="row three">
-            <div class="f"><label class="l" for="title">Title *</label><select id="title" data-k="title"><option value="">Choose</option><option>Mr</option><option>Mrs</option><option>Miss</option><option>Ms</option><option>Dr</option><option>Other</option></select><span class="err">Choose a title.</span></div>
+            <div class="f"><label class="l" for="title">Title *</label><select id="title" data-k="title"><option value="">Choose…</option><option>Dr</option><option>Miss</option><option>Mr</option><option>Mrs</option><option>Ms</option><option>Other</option></select><span class="err">Choose a title.</span></div>
             <div class="f"><label class="l" for="first">First name *</label><input id="first" data-k="first" autocomplete="given-name"><span class="err">Your first name.</span></div>
             <div class="f"><label class="l" for="surname">Surname *</label><input id="surname" data-k="surname" autocomplete="family-name"><span class="err">Your surname.</span></div>
           </div>
         </div>
         <div id="bizFields" hidden>
-          <h4>The business</h4>
+          <h4>(a) Name of company, in full</h4>
           <div class="row">
-            <div class="f full"><label class="l" for="company">Name of company (in full) *</label><input id="company" data-k="company" autocomplete="organization"><span class="err">The company's full name.</span></div>
-            <div class="f full"><label class="l">If a business entity, are you a *</label><div class="seg"><label><input type="radio" name="entity" value="Company" data-k="entity">Company</label><label><input type="radio" name="entity" value="Partnership" data-k="entity">Partnership</label><label><input type="radio" name="entity" value="NPO" data-k="entity">NPO</label><label><input type="radio" name="entity" value="Trust, Nominees or Other" data-k="entity">Trust, Nominees or Other</label></div><span class="err">Choose one.</span></div>
+            <div class="f full"><label class="l" for="company">Name of company *</label><input id="company" data-k="company" autocomplete="organization"><span class="err">The company's full name.</span></div>
+            <div class="f full"><label class="l" for="entity">(h) If business entity, are you a *</label><select id="entity" data-k="entity"><option value="">Choose…</option><option>Company</option><option>NPO</option><option>Partnership</option><option>Trust, Nominees or Other</option></select><span class="err">Choose one.</span></div>
           </div>
-          <p class="note" style="font-size:13px;color:var(--muted);margin-top:10px">Where the form asks for a date and place of birth, give the date and place of incorporation. The contact person travelling should be listed as a travelling dependant if they are to be insured.</p>
+          <p class="note" style="font-size:13px;color:var(--muted);margin-top:10px">Where the form asks for a date and place of birth, give the date and place of incorporation. The person travelling for the company is listed as a travelling dependant if they are to be insured.</p>
         </div>
-        <h4 id="dobHead">Date and place of birth</h4>
+        <h4 id="dobHead">(b) Date and place of birth</h4>
         <div class="row">
           <div class="f"><label class="l" for="dob"><span id="dobLbl">Date of birth</span> * <span class="chip" id="ageChip" hidden></span></label><input id="dob" data-k="dob" type="date"><span class="err">We need the date.</span></div>
-          <div class="f"><label class="l" for="pob"><span id="pobLbl">Place of birth</span> *</label><input id="pob" data-k="pob" placeholder="e.g. Port of Spain"><span class="err">Where were you born?</span></div>
-          <div class="f"><label class="l" for="nationality">Nationality *</label><input id="nationality" data-k="nationality" placeholder="e.g. Trinidad and Tobago"><span class="err">Your nationality.</span></div>
-          <div class="f"><label class="l" for="residence">Country of residence *</label><input id="residence" data-k="residence" value="Trinidad and Tobago"><span class="err">Where do you live?</span></div>
-          <div class="f" id="maritalF"><label class="l" for="marital">Marital status *</label><select id="marital" data-k="marital"><option value="">Choose</option><option>Single</option><option>Married</option><option>Common-law</option><option>Divorced</option><option>Widowed</option><option>Separated</option></select><span class="err">Choose one.</span></div>
+          <div class="f"><label class="l" for="pobSel"><span id="pobLbl">Place of birth</span> *</label><select id="pobSel" data-k="pobSel"><option value="">Choose…</option></select><span class="err">Where were you born?</span></div>
+          <div class="f" id="pobOtherF" hidden><label class="l" for="pobOther"><span id="pobOtherLbl">Which place?</span> *</label><input id="pobOther" data-k="pobOther" placeholder="Village or town"><span class="err">Name the place.</span></div>
+          <div class="f" id="pobCountryF" hidden><label class="l" for="pobCountry">Which country? *</label><select id="pobCountry" data-k="pobCountry"><option value="">Choose…</option></select><span class="err">Choose the country.</span></div>
+          <div class="f"><label class="l" for="nationality">Nationality *</label><select id="nationality" data-k="nationality"><option value="">Choose…</option></select><span class="err">Your nationality.</span></div>
+          <div class="f"><label class="l" for="residence">Country of residence *</label><select id="residence" data-k="residence"><option value="">Choose…</option></select><span class="err">Where do you live?</span></div>
+          <div class="f" id="maritalF"><label class="l" for="marital">Marital status *</label><select id="marital" data-k="marital"><option value="">Choose…</option><option>Common-law</option><option>Divorced</option><option>Married</option><option>Separated</option><option>Single</option><option>Widowed</option></select><span class="err">Choose one.</span></div>
         </div>
         <div class="notice warn" id="ageNote" hidden></div>
-        <h4>Address and contact</h4>
+        <div class="fileme" id="fileme" hidden>
+          <div class="t"><b>Already with Guardian through our branch?</b> We can fill the rest from your file, using the name and date of birth above. Check it and change anything out of date.</div>
+          <button class="btn btn-gold btn-sm" type="button" id="fileBtn" onclick="findMe()">Fill from my file</button>
+          <div class="msg" id="fileMsg" hidden></div>
+        </div>
+        <h4>(c) to (e) Address and contact</h4>
         <div class="row">
-          <div class="f full"><label class="l" for="address"><span id="addrLbl">Residential address</span> *</label><input id="address" data-k="address" autocomplete="street-address" placeholder="Street, town"><span class="err">Your address.</span></div>
-          <div class="f full"><label class="l" for="mailing">Mailing address <small>(if different)</small></label><input id="mailing" data-k="mailing"></div>
-          <div class="f"><label class="l" for="phone">Contact number(s) *</label><input id="phone" data-k="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(868) 000-0000"><span class="err">A number we can reach you on.</span></div>
+          <div class="f full"><label class="l" for="address"><span id="addrLbl">(c) Residential address of proposer</span> *</label><input id="address" data-k="address" autocomplete="street-address" placeholder="Street, town"><span class="err">Your address.</span></div>
+          <div class="f full"><label class="l" for="mailing">(d) Mailing address <small>(if different)</small></label><input id="mailing" data-k="mailing"></div>
+          <div class="f"><label class="l" for="phone">(e) Contact number(s) *</label><input id="phone" data-k="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(868) 000-0000"><span class="err">A number we can reach you on.</span></div>
           <div class="f"><label class="l" for="email">Email address *</label><input id="email" data-k="email" type="email" autocomplete="email" placeholder="you@example.com"><span class="err">A valid email, so we can send your reference.</span></div>
         </div>
-        <h4>Occupation</h4>
+        <h4>(f) and (g) Occupation and employer</h4>
         <div class="row">
-          <div class="f"><label class="l" for="occupation">Trade, occupation or profession * <small>(include part-time)</small></label><input id="occupation" data-k="occupation" autocomplete="organization-title"><span class="err">What do you do?</span></div>
-          <div class="f"><label class="l" for="employer">Name of employer, and business activity</label><input id="employer" data-k="employer" placeholder="e.g. WASA · water utility"></div>
+          <div class="f"><label class="l" for="occupation">(f) Trade, occupation, profession * <small>(include part-time)</small></label><input id="occupation" data-k="occupation" list="occList" autocomplete="organization-title" placeholder="Start typing or choose"><span class="err">What do you do?</span></div>
+          <div class="f"><label class="l" for="employer">(g) Name of employer, and business activity</label><input id="employer" data-k="employer" placeholder="e.g. WASA · water utility"></div>
         </div>
-        <h4>Politically exposed person</h4>
+        <h4>(i) Politically exposed person</h4>
         <div class="f" id="pepF">
           <p class="q">Are you a Politically Exposed Person (PEP) or an immediate family member of a PEP? *</p>
-          <div class="def">A PEP is an individual such as a Head of State or Government, senior politician, senior government, judicial or military official, senior executive of a State-owned corporation or important political party official who is or has been entrusted with prominent functions by a foreign country or domestically in the territory; or a person who is or has been entrusted with a prominent function by an international organisation, such as members of senior management, directors and members of the board or equivalent. The category includes immediate family members and close personal and professional associates.</div>
+          <div class="def">A PEP is an Individual such as a Head of State or Government, senior politician, senior government, judicial or military official, senior executive of State-owned corporations and important political party official who is or has been entrusted with prominent functions by a foreign country or domestically in the territory; or A Person who is or has been entrusted with a prominent function by an international organisation which refers to members of senior management such as directors and members of the board or equivalent functions. This category also includes immediate family members close personal and professional associates. If Yes is selected, this Proposal form must be accompanied by a PEP Memorandum.</div>
           <div class="seg"><label><input type="radio" name="pep" value="No" data-k="pep">No</label><label><input type="radio" name="pep" value="Yes" data-k="pep">Yes</label></div>
           <span class="err">Please answer yes or no.</span>
         </div>
@@ -425,25 +453,26 @@ footer a{color:var(--muted)}
       <div class="actions"><button class="btn btn-light" type="button" onclick="back()">Back</button><span class="sp"></span><span class="saving" id="sv1"></span><button class="btn btn-navy" type="button" onclick="next()">Continue</button></div>
     </div>
 
-    <!-- STEP 3 — travelling dependants (form 2) -->
+    <!-- STEP 3 — travelling dependants: form 2 -->
     <div class="step" data-step="2">
       <div class="card">
-        <h3>Travelling dependants</h3>
+        <h3><small>Section 2</small>Travelling dependants</h3>
         <p class="hint" id="depHint">Details of each person travelling with you who is to be insured.</p>
         <div id="depNone" class="notice info" hidden>You told us nobody is accompanying you, or that cover is not required for them. Nothing to add here; continue.</div>
         <div id="deps"></div>
-        <div class="f" id="depDetailsF" hidden style="margin-top:14px"><label class="l" for="depDetails">If "No" to either health question above, please give full details *</label><textarea id="depDetails" data-k="depDetails"></textarea><span class="err">Tell us the details, so the underwriter can consider them.</span></div>
+        <div class="f" id="depDetailsF" hidden style="margin-top:14px"><label class="l" for="depDetails">(c) If "No" to (i) or (ii) above, please provide full details *</label><textarea id="depDetails" data-k="depDetails"></textarea><span class="err">Tell us the details, so the underwriter can consider them.</span></div>
       </div>
       <div class="actions"><button class="btn btn-light" type="button" onclick="back()">Back</button><span class="sp"></span><span class="saving" id="sv2"></span><button class="btn btn-navy" type="button" onclick="next()">Continue</button></div>
     </div>
 
-    <!-- STEP 4 — package (form 3, 4, 5, 6) -->
+    <!-- STEP 4 — package: form 3, 4, 5, 6 -->
     <div class="step" data-step="3">
       <div class="card">
-        <h3>Which package is required?</h3>
-        <p class="hint">Maximum limits per person. Choose one, or set your own sums insured.</p>
+        <h3><small>Sections 3 to 6</small>Which package is required?</h3>
+        <p class="hint">Maximum limits per person. The page weighs your trip and suggests one; the choice is yours.</p>
+        <div class="advise" id="advise"></div>
         <div class="f" id="pkgF">
-          <div class="choice-grid">
+          <div class="choice-grid" id="pkgChoices">
             <label class="choice"><input type="radio" name="pkg" value="economy" data-k="pkg"><b>Economy</b><span>Personal accident $50,000 · medical $10,000</span></label>
             <label class="choice"><input type="radio" name="pkg" value="plus" data-k="pkg"><b>Economy Plus</b><span>Personal accident $100,000 · medical $15,000</span></label>
             <label class="choice"><input type="radio" name="pkg" value="elite" data-k="pkg"><b>Elite</b><span>Personal accident $250,000 · medical $25,000</span></label>
@@ -451,11 +480,13 @@ footer a{color:var(--muted)}
           </div>
           <span class="err">Choose a package, or cover outside the packages.</span>
         </div>
-        <div class="row" style="margin-top:16px">
-          <div class="f full" id="benF"><label class="l" for="beneficiary">Beneficiary in the event of death under Personal Accident cover *</label><input id="beneficiary" data-k="beneficiary" placeholder="Full name and relationship, e.g. Jane Doe, spouse"><span class="err">Name the beneficiary.</span></div>
+        <h4>4. Beneficiary in the event of death under Personal Accident cover</h4>
+        <div class="row">
+          <div class="f"><label class="l" for="benName">Full name *</label><input id="benName" data-k="benName" placeholder="e.g. Jane Doe"><span class="err">Name the beneficiary.</span></div>
+          <div class="f"><label class="l" for="benRel">Relationship to you *</label><select id="benRel" data-k="benRel"><option value="">Choose…</option><option>Brother</option><option>Daughter</option><option>Estate</option><option>Father</option><option>Fiancé(e)</option><option>Friend</option><option>Grandchild</option><option>Grandparent</option><option>Mother</option><option>Nephew</option><option>Niece</option><option>Partner</option><option>Sister</option><option>Son</option><option>Spouse</option><option>Other</option></select><span class="err">Choose the relationship.</span></div>
         </div>
         <div id="customBlock" hidden>
-          <h4>Sums insured: state the maximum limits required</h4>
+          <h4>6. Sums insured: state the maximum limits required</h4>
           <p class="hint">One line per person to be insured. Leave a benefit blank if it is not required.</p>
           <div class="sums"><table id="sumsTbl">
             <thead><tr><th>Proposer and other persons to be insured</th><th>Personal accident</th><th>Beneficiary in the event of death under PA cover</th><th>Baggage, personal effects &amp; travel documents</th><th>Additional expenses: passport &amp; driver's licence</th><th>Medical expenses</th><th>Loss of money</th><th>Loss of tickets</th><th>Loss of deposits, curtailment &amp; missed connections</th></tr></thead>
@@ -466,10 +497,10 @@ footer a{color:var(--muted)}
       <div class="actions"><button class="btn btn-light" type="button" onclick="back()">Back</button><span class="sp"></span><span class="saving" id="sv3"></span><button class="btn btn-navy" type="button" onclick="next()">Continue</button></div>
     </div>
 
-    <!-- STEP 5 — specified items (form 7) -->
+    <!-- STEP 5 — specified items: form 7 -->
     <div class="step" data-step="4">
       <div class="card">
-        <h3>Specified items</h3>
+        <h3><small>Section 7</small>Specified items</h3>
         <p class="hint">Baggage, personal effects and travel documents. Describe any item of jewellery, or any other item of baggage, valued over $1,000. Anything not listed here is limited to $1,000 an item.</p>
         <div class="f"><label class="l">Do you have items over $1,000 to specify?</label><div class="seg"><label><input type="radio" name="hasItems" value="No" data-k="hasItems">No</label><label><input type="radio" name="hasItems" value="Yes" data-k="hasItems">Yes</label></div></div>
         <div class="items" id="itemsBlock" hidden>
@@ -480,15 +511,15 @@ footer a{color:var(--muted)}
       <div class="actions"><button class="btn btn-light" type="button" onclick="back()">Back</button><span class="sp"></span><span class="saving" id="sv4"></span><button class="btn btn-navy" type="button" onclick="next()">Continue</button></div>
     </div>
 
-    <!-- STEP 6 — health (form 8, 9) -->
+    <!-- STEP 6 — health: form 8, 9 -->
     <div class="step" data-step="5">
       <div class="card">
-        <h3>Health</h3>
+        <h3><small>Sections 8 and 9</small>Health</h3>
         <p class="hint">Two questions the underwriter must have answered. An honest "no" with details is far better than a "yes" that is later found otherwise.</p>
-        <div class="f" id="soundF"><p class="q">Are you of sound mental and bodily health and free from physical defects or infirmity? *</p>
+        <div class="f" id="soundF"><p class="q">8. Are you of sound mental and bodily health and free from physical defects or infirmity? *</p>
           <div class="seg"><label><input type="radio" name="sound" value="Yes" data-k="sound">Yes</label><label><input type="radio" name="sound" value="No" data-k="sound">No</label></div><span class="err">Please answer yes or no.</span></div>
         <div class="f" id="soundDetailsF" hidden style="margin-top:12px"><label class="l" for="soundDetails">If "No", please give details *</label><textarea id="soundDetails" data-k="soundDetails"></textarea><span class="err">Please give the details.</span></div>
-        <div class="f" id="contactF" style="margin-top:18px"><p class="q">Have you, or any person accompanying you on the trip, been in known contact within the last 21 days with anyone suffering from an infectious or communicable disease? *</p>
+        <div class="f" id="contactF" style="margin-top:18px"><p class="q">9. Have you and/or any persons accompanying you on the trip been in known contact within the last 21 days with anyone suffering from an infectious or communicable disease? *</p>
           <div class="seg"><label><input type="radio" name="contact" value="No" data-k="contact">No</label><label><input type="radio" name="contact" value="Yes" data-k="contact">Yes</label></div><span class="err">Please answer yes or no.</span></div>
         <div class="f" id="contactDetailsF" hidden style="margin-top:12px"><label class="l" for="contactDetails">If "Yes", please give details *</label><textarea id="contactDetails" data-k="contactDetails"></textarea><span class="err">Please give the details.</span></div>
       </div>
@@ -499,7 +530,7 @@ footer a{color:var(--muted)}
     <div class="step" data-step="6">
       <div class="card">
         <h3>Check and send</h3>
-        <p class="hint">This is what goes to the branch, laid out as Guardian General's form. Tap "Edit" beside anything to change it.</p>
+        <p class="hint">This is what goes to the branch, on Guardian General's own form. Tap "Edit" beside anything to change it.</p>
         <div id="review"></div>
         <div class="notice bad" id="reviewProblems" hidden></div>
         <div style="margin-top:14px"><button class="btn btn-light btn-sm" type="button" onclick="openPreview()">Preview the proposal form</button></div>
@@ -536,6 +567,8 @@ footer a{color:var(--muted)}
 
 </main>
 
+<datalist id="occList"></datalist>
+
 <footer>
   Ricky Rampersad Branch · Guardian Group · Chaguanas, Trinidad and Tobago · (868) 226-6461 · <a href="mailto:support@rickyrampersadbranch.com">support@rickyrampersadbranch.com</a><br>
   Travel insurance is underwritten by Guardian General Insurance Limited. This page collects a proposal; it is not a policy. Cover is subject to acceptance of the proposal and to the policy wording, which governs in all cases.
@@ -544,7 +577,7 @@ footer a{color:var(--muted)}
 <!-- preview overlay -->
 <div id="pv" hidden>
   <div class="pv-frame">
-    <div class="pv-bar"><span>Travel insurance proposal form</span><button class="pv-x" type="button" onclick="closePreview()" aria-label="Close">✕</button></div>
+    <div class="pv-bar"><span>Travel insurance proposal form · GG-TIN-PRO-10/2023</span><button class="pv-x" type="button" onclick="closePreview()" aria-label="Close">✕</button></div>
     <div class="pv-scroll"><p class="pv-hint">The form keeps its paper width: scroll sideways, or print it.</p><div id="printArea"></div></div>
     <div class="pv-actions"><button class="btn btn-light btn-sm" type="button" onclick="closePreview()">Close</button><button class="btn btn-navy btn-sm" type="button" onclick="window.print()">Print or save as PDF</button></div>
   </div>
@@ -562,6 +595,7 @@ const CONFIG = {
   DEMO: false,            // true on the test copy only: canned answers, nothing sent
   SUPPORT: "support@rickyrampersadbranch.com",
   PHONE: "(868) 226-6461",
+  GG_LOGO: "https://rickyrampersadbranch.com/travel/gg-logo.png",
 };
 
 const PACKAGES = {
@@ -574,6 +608,24 @@ const BENEFITS = [
   ["addl", "Additional expenses: loss of passport and/or driver's licence"], ["medical", "Medical expenses"],
   ["money", "Loss of money and tickets"], ["deposits", "Loss of deposits, curtailment and missed connections"],
 ];
+/* the form's own Summary of Cover, word for word */
+const COVER = [
+  ["Personal accident (age limit 5 to 75 years)", "Accidental bodily injury resulting in:", ["death or loss of one or more limbs or all sight in one or both eyes or the power of speech or the sense of hearing or permanent total disablement", "temporary total disablement", "temporary partial disablement"]],
+  ["Baggage, personal effects and travel documents", "Your passport, driver's license, valid forms of identification, trunks, suitcases and other similar containers, their contents, what You wear and carry-on luggage excluding furs, household goods, furniture and the like against loss or damage by any accident or misfortune in transit and while at your destination. In addition, we pay up to 10% of the Sum Insured for immediate necessities purchased at your outward destination following 24 hours loss or misdirection of your baggage by the Carriers. There is a limit of $1,000 for any one unspecified item, a pair or set of articles being deemed a single item.", []],
+  ["Additional expenses due to loss of passport and/or driver's license", "Reasonable additional travel or accommodation expenses You have to incur as a result of You having to replace a lost or stolen passport or driver's license whilst abroad.", []],
+  ["Medical expenses (age limit 5 to 75 years)", "The following expenses necessarily incurred as a result of accidental bodily injury, sickness or disease:", ["medical surgical hospital or nursing home charges, prescribed drugs charges, emergency dental or optical charges", "additional accommodation travel or other expenses including those of another person required to stay or travel with you", "cost of conveying your body or ashes to your home address"]],
+  ["Loss of money and tickets", "Loss of Travel Tickets and Money including cash withdrawn from an Automatic Teller Machine by means of a legitimate card as a result of assault or robbery whilst on the Trip, that occurred within two (2) hours after the transaction.", []],
+  ["Loss of deposits & curtailment & missed connections (age limit 5 to 75 years)", "Loss of deposits paid or payment for unused accommodation or travel on cancellation or postponement of the trip due to:", ["(a) your death, bodily injury, sickness or disease or", "(b) the death, bodily injury, sickness or disease of any Relative or Travel Companion person with whom you have arranged to travel or with whom you are travelling.", "(c) you or your Relative or Travel Companion with whom you have arranged to travel called for witness or jury service.", "(d) You missing Your connecting flight and incurring expenses caused by the carrier's delay due to inclement weather or common airline causes provided that the delay exceeds 5 hours"]],
+];
+/* every list on the page is alphabetical */
+const COUNTRIES = ["Afghanistan","Albania","Algeria","Andorra","Angola","Anguilla","Antigua and Barbuda","Argentina","Armenia","Aruba","Australia","Austria","Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin","Bermuda","Bhutan","Bolivia","Bonaire","Bosnia and Herzegovina","Botswana","Brazil","British Virgin Islands","Brunei","Bulgaria","Burkina Faso","Burundi","Cambodia","Cameroon","Canada","Cape Verde","Cayman Islands","Central African Republic","Chad","Chile","China","Colombia","Comoros","Congo","Congo (Democratic Republic)","Costa Rica","Croatia","Cuba","Curaçao","Cyprus","Czech Republic","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt","El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland","France","French Guiana","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guadeloupe","Guatemala","Guinea","Guinea-Bissau","Guyana","Haiti","Honduras","Hong Kong","Hungary","Iceland","India","Indonesia","Iran","Iraq","Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati","Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein","Lithuania","Luxembourg","Macau","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta","Marshall Islands","Martinique","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia","Montenegro","Montserrat","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand","Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau","Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Puerto Rico","Qatar","Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Martin","Saint Vincent and the Grenadines","Samoa","San Marino","São Tomé and Príncipe","Saudi Arabia","Senegal","Serbia","Seychelles","Sierra Leone","Singapore","Sint Maarten","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa","South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria","Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago","Tunisia","Turkey","Turkmenistan","Turks and Caicos Islands","Tuvalu","Uganda","Ukraine","United Arab Emirates","United Kingdom","United States","United States Virgin Islands","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela","Vietnam","Yemen","Zambia","Zimbabwe"];
+const TT_PLACES = ["Arima","Arouca","Barataria","Belmont","Bethel (Tobago)","Black Rock (Tobago)","Bon Accord (Tobago)","Buccoo (Tobago)","Canaan (Tobago)","Carapichaima","Carenage","Carnbee (Tobago)","Caroni","Castara (Tobago)","Cedros","Chaguanas","Charlieville","Charlotteville (Tobago)","Claxton Bay","Cocorite","Couva","Crown Point (Tobago)","Cumuto","Cunupia","Curepe","D'Abadie","Debe","Diego Martin","El Dorado","Enterprise","Erin","Freeport","Fyzabad","Gasparillo","Glencoe","Guaico","Guayaguayare","La Brea","La Horquetta","Lambeau (Tobago)","Laventille","Longdenville","Malabar","Maloney","Manzanilla","Marabella","Maracas","Maraval","Mason Hall (Tobago)","Matelot","Mayaro","Moriah (Tobago)","Morvant","Mount Hope","Mount Lambert","Oropouche","Palo Seco","Penal","Petit Valley","Piarco","Plymouth (Tobago)","Point Fortin","Pointe-à-Pierre","Port of Spain","Princes Town","Rio Claro","Roxborough (Tobago)","San Fernando","San Juan","Sangre Grande","Santa Cruz","Santa Flora","Scarborough (Tobago)","Siparia","Signal Hill (Tobago)","Speyside (Tobago)","St. Augustine","St. James","St. Joseph","St. Madeleine","Tabaquite","Tacarigua","Talparo","Toco","Trincity","Tunapuna","Valencia","Valsayn","Vistabella","Westmoorings","Williamsville","Woodbrook"];
+const PURPOSES = ["Business","Conference or training","Cruise","Family visit","Medical treatment","Religious pilgrimage","Shopping","Sports or competition","Study","Vacation","Volunteer or mission work","Wedding or honeymoon","Other"];
+const OCCUPATIONS = ["Accountant","Administrative assistant","Architect","Attorney at law","Bank officer","Business owner","Chef","Civil servant","Clerk","Contractor","Customer service representative","Dentist","Doctor","Driver","Electrician","Engineer","Farmer","Fire officer","Hairdresser","Homemaker","Insurance agent","IT professional","Labourer","Lecturer","Manager","Mechanic","Nurse","Pastor or minister","Pensioner","Pharmacist","Pilot","Plumber","Police officer","Real estate agent","Retired","Sales representative","Seafarer","Security officer","Self-employed","Soldier","Student","Supervisor","Teacher","Technician","Welder"];
+/* where a hospital bill is dearest: the adviser's reading of the destinations */
+const COST_HIGH = ["United States","Canada","Switzerland","Japan","Australia","New Zealand","Norway","Iceland","Singapore","Hong Kong","United Arab Emirates","Qatar","Israel","Bermuda","Cayman Islands","Puerto Rico","United States Virgin Islands"];
+const COST_MID = ["United Kingdom","Ireland","France","Germany","Netherlands","Belgium","Luxembourg","Austria","Denmark","Sweden","Finland","Italy","Spain","Portugal","Greece","Monaco","Liechtenstein","South Korea","Taiwan","Bahamas","Aruba","Curaçao","Sint Maarten","Saint Martin","Turks and Caicos Islands","British Virgin Islands","Anguilla","Malta","Cyprus","Czech Republic","Slovenia","Estonia","Saudi Arabia","Kuwait","Bahrain","Oman","Brunei","Macau","Chile","Uruguay","Panama","Costa Rica","Mexico","Brazil","South Africa"];
+
 const STEPS = ["Your trip", "About you", "Travelling with you", "Package", "Specified items", "Health", "Check & send"];
 const MAX_DEPS = 4;
 const DRAFT_KEY = "rrb-travel-draft";
@@ -582,65 +634,22 @@ const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const money = (n) => "$" + Number(n).toLocaleString("en-US");
 const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
+const fmtMDY = (iso) => { const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[2] + "/" + m[3] + "/" + m[1].slice(2) : ""; };   // the form's MM/DD/YY
 const ageOn = (dob, on) => { if (!dob) return null; const a = new Date(dob + "T00:00:00"), b = on ? new Date(on + "T00:00:00") : new Date(); if (isNaN(a) || isNaN(b)) return null; let y = b.getFullYear() - a.getFullYear(); const m = b.getMonth() - a.getMonth(); if (m < 0 || (m === 0 && b.getDate() < a.getDate())) y--; return y; };
+const opts = (list) => list.map((c) => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
 
-let state = { step: 0, deps: [], items: [], sums: {}, existing: null };
+let state = { step: 0, deps: [], items: [], sums: {}, existing: null, countries: [], prefillOn: false };
 
-/* ── the backend ── */
-async function api(payload) {
-  if (CONFIG.DEMO) return demoApi(payload);
-  const res = await fetch(CONFIG.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ siteKey: CONFIG.SITE_KEY }, payload)) });
-  if (!res.ok) throw new Error("The branch's system returned an error (" + res.status + ").");
-  const out = await res.json();
-  if (!out || out.ok === false) throw new Error((out && out.error) || "The request was not accepted.");
-  return out;
-}
-async function pingBackend() {
-  if (CONFIG.DEMO) { $("lookupBox").hidden = false; return; }
-  if (!CONFIG.API_URL) return;
-  try { const r = await (await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "action=ping")).json(); if (r && r.prefill) $("lookupBox").hidden = false; } catch (e) {}
-}
-/* The test copy answers for itself: a sample file for the lookup and a reference for the send. Nothing leaves the page. */
-function demoApi(p) {
-  return new Promise((ok, no) => setTimeout(() => {
-    if (p.action === "lookup") {
-      if (!p.q || !p.dob) return no(new Error("Give both the number and the date of birth."));
-      return ok({ ok: true, prefill: { title: "Mr", first: "Sample", surname: "Client", dob: p.dob, address: "12 Sample Street, Chaguanas", phone: "(868) 555-0100", email: "sample.client@example.com", occupation: "Teacher", employer: "Ministry of Education", nationality: "Trinidad and Tobago", residence: "Trinidad and Tobago" }, clientNumber: "0000123456", policy: String(p.q), policies: 2 });
-    }
-    if (p.action === "propose") return ok({ ok: true, ref: "TRV-" + new Date().toISOString().slice(2, 7).replace("-", "") + "-" + String(Math.floor(1000 + Math.random() * 9000)) });
-    no(new Error("Unknown action"));
-  }, 700));
-}
-const PREFILL_FIELDS = ["title", "first", "surname", "dob", "pob", "nationality", "residence", "marital", "address", "mailing", "phone", "email", "occupation", "employer"];
-async function findMe() {
-  const q = $("lkNo").value.trim(), dob = $("lkDob").value, msg = $("lkMsg"), btn = $("lkBtn");
-  msg.className = "msg"; $("lkFound").hidden = true;
-  if (!q || !dob) { msg.className = "msg bad"; msg.textContent = "Give both the number and your date of birth."; return; }
-  btn.disabled = true; btn.textContent = "Looking…";
-  try {
-    const r = await api({ action: "lookup", q, dob });
-    const filled = applyPrefill(r.prefill || {});
-    state.existing = { clientNumber: r.clientNumber || "", policy: r.policy || q, policies: r.policies || 0, prefilled: filled };
-    msg.className = "msg ok"; msg.textContent = "Found your file. We filled " + filled.length + (filled.length === 1 ? " field" : " fields") + " from it; check them below and change anything that is out of date.";
-    $("lkFound").hidden = false; $("lkFound").innerHTML = "<span>On file as <b>" + esc(proposerName(collect())) + "</b>" + (r.clientNumber ? " · client number <b>" + esc(r.clientNumber) + "</b>" : "") + (r.policies ? " · " + r.policies + (r.policies === 1 ? " policy" : " policies") + " with us" : "") + "</span><button class=\"lnk\" type=\"button\" onclick=\"clearPrefill()\">Not you? Clear these</button>";
-    refresh(); saveDraft();
-  } catch (err) { msg.className = "msg bad"; msg.textContent = (err.message || String(err)) + " You can fill the form in by hand; it only takes a little longer."; }
-  finally { btn.disabled = false; btn.textContent = "Find my details"; }
-}
-function applyPrefill(p) {
-  const filled = [];
-  PREFILL_FIELDS.forEach((k) => {
-    const v = p[k]; if (!v) return;
-    const el = document.querySelector('[data-k="' + k + '"]'); if (!el || el.type === "radio") return;
-    if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === v)) return;
-    el.value = v; filled.push(k); markFromFile(el, true); el.closest(".f") && el.closest(".f").classList.remove("bad");
-  });
-  if (filled.length) setRadioSilent("kind", "person");
-  return filled;
-}
-function markFromFile(el, on) { const lab = el.closest(".f") && el.closest(".f").querySelector("label.l"); if (!lab) return; let c = lab.querySelector(".chip.file"); if (on && !c) { c = document.createElement("span"); c.className = "chip file"; c.textContent = "from your file"; lab.appendChild(c); } if (!on && c) c.remove(); }
-function clearPrefill() { PREFILL_FIELDS.forEach((k) => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.type !== "radio") { el.value = k === "residence" ? "Trinidad and Tobago" : ""; markFromFile(el, false); } }); state.existing = null; $("lkFound").hidden = true; $("lkMsg").textContent = ""; refresh(); saveDraft(); }
-document.addEventListener("input", (e) => { if (e.target.dataset && PREFILL_FIELDS.includes(e.target.dataset.k)) markFromFile(e.target, false); });
+/* ── lists into the dropdowns ── */
+$("countrySel").innerHTML += opts(COUNTRIES);
+$("pobCountry").innerHTML += opts(COUNTRIES.filter((c) => c !== "Trinidad and Tobago"));
+$("nationality").innerHTML += opts(COUNTRIES);
+$("residence").innerHTML += opts(COUNTRIES);
+$("pobSel").innerHTML += opts(TT_PLACES) + '<option value="__tt">Elsewhere in Trinidad and Tobago</option><option value="__abroad">Outside Trinidad and Tobago</option>';
+$("purpose").innerHTML += opts(PURPOSES);
+$("occList").innerHTML = opts(OCCUPATIONS);
+$("residence").value = "Trinidad and Tobago";
+$("nationality").value = "Trinidad and Tobago";
 
 /* ── packages on the landing ── */
 $("pkGrid").innerHTML = Object.keys(PACKAGES).map((k) => {
@@ -654,16 +663,31 @@ $("pkGrid").innerHTML = Object.keys(PACKAGES).map((k) => {
     '<dt>Deposits, curtailment &amp; missed connections</dt><dd>' + money(p.deposits) + '</dd></dl>' +
     '<div style="margin-top:auto;padding-top:12px"><button class="btn btn-navy btn-sm" type="button" onclick="pickPackage(\'' + k + '\')">Choose ' + p.name + '</button></div></div>';
 }).join("");
+$("coverGrid").innerHTML = COVER.map(([t, p, l]) => '<div class="cv"><b>' + esc(t) + "</b>" + esc(p) + (l.length ? "<ol>" + l.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ol>" : "") + "</div>").join("");
 
-function pickPackage(k) { setRadio("pkg", k); startForm(); }
+function pickPackage(k) { setRadioSilent("pkg", k); startForm(); }
 function startForm(e) { if (e) e.preventDefault(); $("start").scrollIntoView({ behavior: "smooth" }); }
+
+/* ── countries picker ── */
+$("countrySel").addEventListener("change", () => { const v = $("countrySel").value; if (v && !state.countries.includes(v)) state.countries.push(v); $("countrySel").value = ""; renderCountries(); refresh(); saveDraft(); });
+function renderCountries() {
+  state.countries.sort((a, b) => a.localeCompare(b));
+  $("countryPicks").innerHTML = state.countries.map((c, i) => "<span>" + esc(c) + '<button type="button" aria-label="Remove ' + esc(c) + '" onclick="dropCountry(' + i + ')">✕</button></span>').join("");
+  $("countries").value = state.countries.join(", ");
+  if (state.countries.length) $("countries").closest(".f").classList.remove("bad");
+}
+function dropCountry(i) { state.countries.splice(i, 1); renderCountries(); refresh(); saveDraft(); }
 
 /* ── state <-> fields ── */
 function val(k) { const el = document.querySelector('[data-k="' + k + '"]'); if (!el) return ""; if (el.type === "radio") { const c = document.querySelector('[data-k="' + k + '"]:checked'); return c ? c.value : ""; } if (el.type === "checkbox") return el.checked; return el.value.trim(); }
-function setRadio(name, v) { const el = document.querySelector('input[name="' + name + '"][value="' + v + '"]'); if (el) { el.checked = true; el.dispatchEvent(new Event("change", { bubbles: true })); } }
+function setRadioSilent(name, v) { const el = document.querySelector('input[name="' + name + '"][value="' + v + '"]'); if (el) el.checked = true; }
 function collect() {
   const o = {};
   document.querySelectorAll("[data-k]").forEach((el) => { o[el.dataset.k] = val(el.dataset.k); });
+  o.countryList = state.countries.slice();
+  o.purposeText = o.purpose === "Other" ? o.purposeOther : o.purpose;
+  o.pob = o.pobSel === "__abroad" ? [o.pobOther, o.pobCountry].filter(Boolean).join(", ") : o.pobSel === "__tt" ? (o.pobOther ? o.pobOther + ", Trinidad and Tobago" : "") : o.pobSel ? o.pobSel.replace(" (Tobago)", ", Tobago") + (o.pobSel.includes("(Tobago)") ? "" : ", Trinidad") : "";
+  o.beneficiary = [o.benName, o.benRel].filter(Boolean).join(", ");
   o.deps = readDeps(); o.items = readItems(); o.sums = readSums();
   return o;
 }
@@ -684,13 +708,64 @@ function loadDraft() {
     else if (el.type === "checkbox") el.checked = false;   // the declaration is never remembered
     else el.value = d[k] || "";
   });
+  state.countries = Array.isArray(d.countryList) ? d.countryList : []; renderCountries();
   state.deps = d.deps || []; state.items = d.items || []; state.sums = d.sums || {}; state.existing = d.existing || null;
   if (state.existing) (state.existing.prefilled || []).forEach((k) => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.value) markFromFile(el, true); });
   state.step = Math.min(Number(d.step) || 0, 5);
   return true;
 }
-function setRadioSilent(name, v) { const el = document.querySelector('input[name="' + name + '"][value="' + v + '"]'); if (el) el.checked = true; }
 function clearDraft() { try { localStorage.removeItem(DRAFT_KEY); } catch (e) {} location.reload(); }
+
+/* ── the backend ── */
+async function api(payload) {
+  if (CONFIG.DEMO) return demoApi(payload);
+  const res = await fetch(CONFIG.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ siteKey: CONFIG.SITE_KEY }, payload)) });
+  if (!res.ok) throw new Error("The branch's system returned an error (" + res.status + ").");
+  const out = await res.json();
+  if (!out || out.ok === false) throw new Error((out && out.error) || "The request was not accepted.");
+  return out;
+}
+async function pingBackend() {
+  if (CONFIG.DEMO) { state.prefillOn = true; refresh(); return; }
+  if (!CONFIG.API_URL) return;
+  try { const r = await (await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "action=ping")).json(); if (r && r.prefill) { state.prefillOn = true; refresh(); } } catch (e) {}
+}
+/* The test copy answers for itself: a sample file for the lookup and a reference for the send. Nothing leaves the page. */
+function demoApi(p) {
+  return new Promise((ok, no) => setTimeout(() => {
+    if (p.action === "lookup") return ok({ ok: true, prefill: { address: "12 Sample Street, Chaguanas", phone: "(868) 555-0100", email: "sample.client@example.com", occupation: "Teacher", employer: "Ministry of Education" }, clientNumber: "0000123456", policies: 2 });
+    if (p.action === "propose") return ok({ ok: true, ref: "TRV-" + new Date().toISOString().slice(2, 7).replace("-", "") + "-" + String(Math.floor(1000 + Math.random() * 9000)) });
+    no(new Error("Unknown action"));
+  }, 700));
+}
+/* Prefill from the file: the name and date of birth already on the form are the key, so the form asks nothing extra. */
+const PREFILL_FIELDS = ["address", "mailing", "phone", "email", "occupation", "employer", "marital", "nationality"];
+function prefillReady() { return state.prefillOn && val("kind") === "person" && val("first") && val("surname") && val("dob"); }
+async function findMe() {
+  const btn = $("fileBtn"), msg = $("fileMsg"); msg.hidden = false; msg.className = "msg";
+  btn.disabled = true; btn.textContent = "Looking…";
+  try {
+    const r = await api({ action: "lookup", first: val("first"), surname: val("surname"), dob: val("dob") });
+    const filled = applyPrefill(r.prefill || {});
+    state.existing = { clientNumber: r.clientNumber || "", policies: r.policies || 0, prefilled: filled };
+    msg.className = "msg ok"; msg.innerHTML = "Found your file" + (r.clientNumber ? " (client number <b>" + esc(r.clientNumber) + "</b>)" : "") + ". We filled " + filled.length + (filled.length === 1 ? " field" : " fields") + " below; check them and change anything out of date. <button class=\"lnk\" type=\"button\" onclick=\"clearPrefill()\">Not you? Clear these</button>";
+    refresh(); saveDraft();
+  } catch (err) { msg.className = "msg bad"; msg.textContent = (err.message || String(err)) + " Carry on by hand; it only takes a little longer."; }
+  finally { btn.disabled = false; btn.textContent = "Fill from my file"; }
+}
+function applyPrefill(p) {
+  const filled = [];
+  PREFILL_FIELDS.forEach((k) => {
+    const v = p[k]; if (!v) return;
+    const el = document.querySelector('[data-k="' + k + '"]'); if (!el) return;
+    if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === v)) return;
+    el.value = v; filled.push(k); markFromFile(el, true); el.closest(".f") && el.closest(".f").classList.remove("bad");
+  });
+  return filled;
+}
+function markFromFile(el, on) { const lab = el.closest(".f") && el.closest(".f").querySelector("label.l"); if (!lab) return; let c = lab.querySelector(".chip.file"); if (on && !c) { c = document.createElement("span"); c.className = "chip file"; c.textContent = "from your file"; lab.appendChild(c); } if (!on && c) c.remove(); }
+function clearPrefill() { PREFILL_FIELDS.forEach((k) => { const el = document.querySelector('[data-k="' + k + '"]'); if (el) { el.value = k === "nationality" ? "Trinidad and Tobago" : ""; markFromFile(el, false); } }); state.existing = null; $("fileMsg").hidden = true; refresh(); saveDraft(); }
+document.addEventListener("input", (e) => { if (e.target.dataset && PREFILL_FIELDS.includes(e.target.dataset.k)) markFromFile(e.target, false); });
 
 /* ── dependants ── */
 function depCount() { const n = Number(val("companions")) || 0; return val("coverEach") === "No" ? 0 : Math.min(n, MAX_DEPS); }
@@ -703,9 +778,9 @@ function renderDeps() {
     return '<div class="dep" data-i="' + i + '"><div class="dh"><span class="n">' + (i + 1) + '</span><b>Travelling dependant ' + (i + 1) + '</b><span class="chip d-age" hidden></span></div>' +
       '<div class="row three"><div class="f"><label class="l">Name *</label><input class="d-name" value="' + esc(d.name) + '"><span class="err">Their name.</span></div>' +
       '<div class="f"><label class="l">Date of birth *</label><input class="d-dob" type="date" value="' + esc(d.dob) + '"><span class="err">Their date of birth.</span></div>' +
-      '<div class="f"><label class="l">Occupation *</label><input class="d-occ" value="' + esc(d.occupation) + '" placeholder="Student, retired, …"><span class="err">What do they do?</span></div></div>' +
-      '<div class="row" style="margin-top:10px"><div class="f"><p class="q" style="font-size:14px">Of sound mental and bodily health? *</p><div class="seg"><label><input type="radio" class="d-health" name="dh' + i + '" value="Yes"' + (d.health === "Yes" ? " checked" : "") + '>Yes</label><label><input type="radio" class="d-health" name="dh' + i + '" value="No"' + (d.health === "No" ? " checked" : "") + '>No</label></div><span class="err">Yes or no.</span></div>' +
-      '<div class="f"><p class="q" style="font-size:14px">Free from physical defects or infirmity? *</p><div class="seg"><label><input type="radio" class="d-def" name="dd' + i + '" value="Yes"' + (d.defects === "Yes" ? " checked" : "") + '>Yes</label><label><input type="radio" class="d-def" name="dd' + i + '" value="No"' + (d.defects === "No" ? " checked" : "") + '>No</label></div><span class="err">Yes or no.</span></div></div></div>';
+      '<div class="f"><label class="l">Occupation *</label><input class="d-occ" list="occList" value="' + esc(d.occupation) + '" placeholder="Student, retired, …"><span class="err">What do they do?</span></div></div>' +
+      '<div class="row" style="margin-top:10px"><div class="f"><p class="q" style="font-size:14px">(i) Of sound mental and bodily health? *</p><div class="seg"><label><input type="radio" class="d-health" name="dh' + i + '" value="Yes"' + (d.health === "Yes" ? " checked" : "") + '>Yes</label><label><input type="radio" class="d-health" name="dh' + i + '" value="No"' + (d.health === "No" ? " checked" : "") + '>No</label></div><span class="err">Yes or no.</span></div>' +
+      '<div class="f"><p class="q" style="font-size:14px">(ii) Free from physical defects or infirmity? *</p><div class="seg"><label><input type="radio" class="d-def" name="dd' + i + '" value="Yes"' + (d.defects === "Yes" ? " checked" : "") + '>Yes</label><label><input type="radio" class="d-def" name="dd' + i + '" value="No"' + (d.defects === "No" ? " checked" : "") + '>No</label></div><span class="err">Yes or no.</span></div></div></div>';
   }).join("");
   $("deps").querySelectorAll(".d-dob").forEach((inp) => { const upd = () => { const a = ageOn(inp.value, trip); const c = inp.closest(".dep").querySelector(".d-age"); c.hidden = a == null; if (a != null) { c.textContent = "age " + a + (a < 5 || a > 75 ? " · outside 5 to 75" : ""); c.className = "chip d-age" + (a < 5 || a > 75 ? " warn" : ""); } }; inp.addEventListener("change", upd); upd(); });
   $("deps").querySelectorAll(".d-health,.d-def").forEach((r) => r.addEventListener("change", depDetailsToggle));
@@ -717,11 +792,11 @@ function depDetailsToggle() { const any = readDeps().some((d) => d.health === "N
 function renderItems() { $("items").innerHTML = ""; (state.items.length ? state.items : [{}]).forEach(addItem); }
 function addItem(it) { it = it && it.desc !== undefined ? it : {}; const r = document.createElement("div"); r.className = "it"; r.innerHTML = '<input class="i-d" placeholder="Describe the item, e.g. gold bracelet, 14k" value="' + esc(it.desc) + '"><input class="i-v" inputmode="decimal" placeholder="Value $" value="' + esc(it.value) + '"><button class="x" type="button" aria-label="Remove">✕</button>'; r.querySelector(".x").onclick = () => { r.remove(); saveDraft(); }; $("items").appendChild(r); }
 
-/* ── custom sums table ── */
+/* ── persons and the custom sums table ── */
 function personsList(d) {
   d = d || collect();
   const me = d.kind === "business" ? (d.company || "Company") : [d.title, d.first, d.surname].filter(Boolean).join(" ") || "Proposer";
-  return [{ role: "Proposer", name: me, dob: d.dob }].concat((d.deps || []).map((d, i) => ({ role: "Dependant " + (i + 1), name: d.name || "Dependant " + (i + 1), dob: d.dob })));
+  return [{ role: "Proposer", name: me, dob: d.dob }].concat((d.deps || []).map((x, i) => ({ role: "Dependant " + (i + 1), name: x.name || "Dependant " + (i + 1), dob: x.dob })));
 }
 function renderSums() {
   const prev = Object.keys(readSums()).length ? readSums() : state.sums;
@@ -732,33 +807,71 @@ function renderSums() {
   }).join("");
 }
 
+/* ── the adviser: reads the trip and says which package fits, and why ── */
+function advise(d) {
+  d = d || collect();
+  const days = d.from && d.to ? Math.round((new Date(d.to) - new Date(d.from)) / 86400000) + 1 : null;
+  const high = d.countryList.filter((c) => COST_HIGH.includes(c)), mid = d.countryList.filter((c) => COST_MID.includes(c));
+  const ages = personsList(d).map((p) => ageOn(p.dob, d.from)).filter((a) => a != null);
+  const persons = 1 + (d.deps || []).length;
+  let score = 0; const why = [], warn = [];
+  if (high.length) { score += 2; why.push("Hospital care in " + high.join(" and ") + " is among the dearest anywhere: the medical limit is the number that matters, and Elite carries $25,000 against Economy's $10,000."); }
+  else if (mid.length) { score += 1; why.push("Medical costs in " + mid.join(" and ") + " run well above home: Economy Plus lifts the medical limit to $15,000 and doubles personal accident cover."); }
+  else if (d.countryList.length) { why.push("For " + d.countryList.join(" and ") + " the Economy limits usually cover a hospital visit and the baggage and documents you travel with."); }
+  if (days) { if (days > 14) { warn.push("At " + days + " days the trip is longer than the fourteen days any package covers: choose cover outside the packages, or we quote it on your own sums insured."); } else if (days > 7) { score += 1; why.push("A trip of " + days + " days gives more time for something to go wrong, which argues for the next limit up."); } else { why.push("A short trip of " + days + " days keeps the exposure low."); } }
+  if (ages.some((a) => a >= 60)) { score += 1; why.push("A traveller aged " + Math.max(...ages) + " is more likely to need treatment abroad, so the medical limit carries more weight."); }
+  if (ages.some((a) => a < 5 || a > 75)) warn.push("A traveller outside the 5 to 75 age limit: personal accident, medical and deposits cover need the underwriter's word. Send the proposal anyway.");
+  if (["Sports or competition", "Medical treatment"].includes(d.purposeText)) { score += 1; why.push(d.purposeText === "Sports or competition" ? "Sport raises the chance of injury: the personal accident and medical limits do the work on this trip." : "Travelling for treatment means medical complications abroad are the risk to insure against."); }
+  if (d.purposeText === "Business" || d.purposeText === "Conference or training") why.push("Travelling for work, the baggage and documents cover is worth noting: a lost laptop or passport costs the trip its purpose.");
+  if (d.purposeText === "Cruise") why.push("On a cruise a missed connection or a cancelled sailing is the common claim: loss of deposits and missed connections is $2,500 on every package.");
+  if (persons > 1) why.push("Every limit is per person, so " + persons + " travellers carry " + persons + " times each figure.");
+  if (persons > 5) warn.push("More than five persons: a package covers five at most, so the rest are quoted separately.");
+  const key = days && days > 14 ? "custom" : score >= 3 ? "elite" : score >= 1 ? "plus" : "economy";
+  return { key, days, persons, why, warn };
+}
+function renderAdvise() {
+  const d = collect(), a = advise(d), pk = PACKAGES[a.key];
+  const tot = (k) => PACKAGES[k].pa + PACKAGES[k].baggage + PACKAGES[k].addl + PACKAGES[k].medical + PACKAGES[k].money + PACKAGES[k].deposits;
+  const stepUp = (from, to) => { const f = PACKAGES[from], t = PACKAGES[to]; return "+" + money(t.medical - f.medical) + " medical, +" + money(t.pa - f.pa) + " accident, +" + money(t.baggage - f.baggage) + " baggage"; };
+  const rows = [["Personal accident", "pa"], ["Medical expenses", "medical"], ["Baggage, personal effects & travel documents", "baggage"], ["Additional expenses: passport or licence", "addl"], ["Loss of money and tickets", "money"], ["Loss of deposits, curtailment & missed connections", "deposits"]];
+  const best = (b) => Math.max(...Object.keys(PACKAGES).map((k) => PACKAGES[k][b]));
+  let h = '<div class="kick">Our reading of your trip</div>';
+  h += "<h4>" + (pk ? "For this trip we suggest <em>" + pk.name + "</em>." : "This trip needs <em>cover outside the packages</em>.") + "</h4>";
+  h += "<p>" + (d.countryList.length ? "" : "Add the countries on step 1 and the suggestion sharpens. ") + "Premiums are quoted by the branch; the suggestion weighs where you are going, for how long, and who is travelling.</p>";
+  if (a.why.length || a.warn.length) h += "<ul>" + a.why.map((w) => "<li>" + esc(w) + "</li>").join("") + a.warn.map((w) => '<li class="warn">' + esc(w) + "</li>").join("") + "</ul>";
+  h += '<div class="cmp"><table><thead><tr><th>Per person, maximum</th>' + Object.keys(PACKAGES).map((k) => "<th>" + PACKAGES[k].name + (k === a.key ? '<span class="b">Suggested</span>' : k === "elite" ? '<span class="b dim">Highest cover</span>' : k === "economy" ? '<span class="b dim">Lowest premium</span>' : "") + "</th>").join("") + "</tr></thead><tbody>";
+  rows.forEach(([l, b]) => { h += "<tr><td>" + l + "</td>" + Object.keys(PACKAGES).map((k) => '<td class="' + (PACKAGES[k][b] === best(b) && b !== "deposits" ? "hi" : "") + '">' + money(PACKAGES[k][b]) + "</td>").join("") + "</tr>"; });
+  h += '<tr class="tot"><td>All benefits together</td>' + Object.keys(PACKAGES).map((k) => "<td>" + money(tot(k)) + "</td>").join("") + "</tr>";
+  h += '<tr class="step"><td>What the step up buys</td><td>—</td><td>' + stepUp("economy", "plus") + "</td><td>" + stepUp("plus", "elite") + "</td></tr>";
+  h += "</tbody></table></div>";
+  h += '<div class="foot">Best value depends on the premium the branch quotes: the step from Economy to Economy Plus doubles the accident cover and adds half as much again in medical, and is usually the better buy for anywhere a hospital bill runs high. Ask for both prices if you are torn.' + (a.key !== "custom" ? ' <button class="lnk" type="button" onclick="setRadioSilent(\'pkg\',\'' + a.key + '\');refresh();saveDraft();renderAdvise()">Choose ' + esc(pk.name) + "</button>" : "") + "</div>";
+  $("advise").innerHTML = h;
+  document.querySelectorAll("#pkgChoices .choice").forEach((c) => { const k = c.querySelector("input").value; let s = c.querySelector(".sug"); if (k === a.key) { if (!s) { s = document.createElement("span"); s.className = "sug"; s.textContent = "Suggested"; c.appendChild(s); } } else if (s) s.remove(); });
+}
+
 /* ── conditional fields ── */
 function refresh() {
-  // trip length
   const f = val("from"), t = val("to"); let days = null;
   if (f && t) { days = Math.round((new Date(t) - new Date(f)) / 86400000) + 1; }
   $("daysChip").hidden = !(days && days > 0); if (days && days > 0) { $("daysChip").textContent = days + (days === 1 ? " day" : " days"); $("daysChip").className = "chip" + (days > 14 ? " warn" : ""); }
   $("longTrip").hidden = !(days && days > 14);
-  // persons
+  $("purposeOtherF").hidden = val("purpose") !== "Other";
   const n = Number(val("companions")) || 0;
   $("coverEachF").hidden = n === 0; $("manyPersons").hidden = !(n > MAX_DEPS && val("coverEach") !== "No");
-  // proposer kind
   const biz = val("kind") === "business";
   $("personFields").hidden = biz; $("bizFields").hidden = !biz; $("maritalF").hidden = biz;
-  $("dobHead").textContent = biz ? "Incorporation" : "Date and place of birth";
+  $("dobHead").textContent = biz ? "(b) Date and place of incorporation" : "(b) Date and place of birth";
   $("dobLbl").textContent = biz ? "Date of incorporation" : "Date of birth";
   $("pobLbl").textContent = biz ? "Place of incorporation" : "Place of birth";
-  $("addrLbl").textContent = biz ? "Registered address of proposer" : "Residential address of proposer";
-  // age
+  $("addrLbl").textContent = biz ? "(c) Registered address of proposer" : "(c) Residential address of proposer";
+  const ps = val("pobSel"); $("pobOtherF").hidden = !(ps === "__tt" || ps === "__abroad"); $("pobCountryF").hidden = ps !== "__abroad";
+  $("pobOtherLbl").textContent = ps === "__abroad" ? "Town or city" : "Which place?";
   const a = biz ? null : ageOn(val("dob"), f); $("ageChip").hidden = a == null; if (a != null) { $("ageChip").textContent = "age " + a + " on departure"; $("ageChip").className = "chip" + (a < 5 || a > 75 ? " warn" : ""); }
   $("ageNote").hidden = !(a != null && (a < 5 || a > 75)); if (!$("ageNote").hidden) $("ageNote").innerHTML = "<b>Outside the age limit.</b> Personal accident, medical expenses and loss of deposits cover persons aged 5 to 75. Send the proposal anyway; the branch will tell you what Guardian General can offer.";
-  // pep
+  $("fileme").hidden = !prefillReady();
   $("pepNote").hidden = val("pep") !== "Yes";
-  // package
   const pk = val("pkg"); $("customBlock").hidden = pk !== "custom"; if (pk === "custom") renderSums();
-  // items
   $("itemsBlock").hidden = val("hasItems") !== "Yes"; if (val("hasItems") === "Yes" && !$("items").children.length) renderItems();
-  // health
   $("soundDetailsF").hidden = val("sound") !== "No"; $("contactDetailsF").hidden = val("contact") !== "Yes";
 }
 document.addEventListener("input", (e) => { if (e.target.closest("#f")) { refresh(); clearBad(e.target); saveDraft(); } });
@@ -772,16 +885,18 @@ function validate(step) {
   let bad = false, first = null;
   const need = (id, cond) => { const b = mark(id, cond); if (b) { bad = true; first = first || ($(id).closest(".f") || $(id)); } };
   if (step === 0) {
-    need("countries", !val("countries")); need("purpose", !val("purpose")); need("from", !val("from"));
-    need("to", !val("to") || (val("from") && val("to") < val("from")));
-    need("companions", val("companions") === "" || Number(val("companions")) < 0);
+    need("countries", !state.countries.length); need("purpose", !val("purpose")); if (val("purpose") === "Other") need("purposeOther", !val("purposeOther"));
+    need("from", !val("from")); need("to", !val("to") || (val("from") && val("to") < val("from")));
+    need("companions", val("companions") === "");
     if (Number(val("companions")) > 0) need("coverEachF", !val("coverEach"));
   }
   if (step === 1) {
     const biz = val("kind") === "business";
     if (biz) { need("company", !val("company")); need("entity", !val("entity")); }
     else { need("title", !val("title")); need("first", !val("first")); need("surname", !val("surname")); need("marital", !val("marital")); }
-    need("dob", !val("dob")); need("pob", !val("pob")); need("nationality", !val("nationality")); need("residence", !val("residence"));
+    need("dob", !val("dob")); need("pobSel", !val("pobSel"));
+    if (val("pobSel") === "__tt" || val("pobSel") === "__abroad") need("pobOther", !val("pobOther")); if (val("pobSel") === "__abroad") need("pobCountry", !val("pobCountry"));
+    need("nationality", !val("nationality")); need("residence", !val("residence"));
     need("address", !val("address")); need("phone", val("phone").replace(/\D/g, "").length < 7); need("email", !emailOk(val("email")));
     need("occupation", !val("occupation")); need("pepF", !val("pep"));
   }
@@ -792,10 +907,7 @@ function validate(step) {
     });
     if (!$("depDetailsF").hidden) need("depDetails", !val("depDetails"));
   }
-  if (step === 3) {
-    need("pkgF", !val("pkg"));
-    need("beneficiary", !val("beneficiary"));
-  }
+  if (step === 3) { need("pkgF", !val("pkg")); need("benName", !val("benName")); need("benRel", !val("benRel")); }
   if (step === 5) {
     need("soundF", !val("sound")); if (val("sound") === "No") need("soundDetails", !val("soundDetails"));
     need("contactF", !val("contact")); if (val("contact") === "Yes") need("contactDetails", !val("contactDetails"));
@@ -811,7 +923,7 @@ function show(n) {
   $("progLbl").textContent = "Step " + (n + 1) + " · " + STEPS[n]; $("progCnt").textContent = (n + 1) + " of " + STEPS.length;
   $("progFill").style.width = Math.round(((n + 1) / STEPS.length) * 100) + "%";
   $("stepsNav").innerHTML = STEPS.map((s, i) => '<b class="' + (i === n ? "cur" : i < n ? "past" : "") + '" onclick="goto(' + i + ')">' + (i + 1) + ". " + s + "</b>").join("");
-  if (n === 2) renderDeps(); if (n === 3) refresh(); if (n === 6) renderReview();
+  if (n === 2) renderDeps(); if (n === 3) { refresh(); renderAdvise(); } if (n === 6) renderReview();
   window.scrollTo({ top: $("start").offsetTop - 70, behavior: "smooth" });
 }
 function next() { if (!validate(state.step)) return; show(Math.min(state.step + 1, STEPS.length - 1)); saveDraft(); }
@@ -826,7 +938,7 @@ function renderReview() {
   const dd = (v) => v ? "<dd>" + esc(v) + "</dd>" : '<dd class="empty">Not given</dd>';
   const sec = (title, step, rows) => '<h4 style="font:800 11.5px var(--disp);letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink);margin:18px 0 6px;display:flex;align-items:center">' + title + '<button class="edit" type="button" onclick="goto(' + step + ')">Edit</button></h4><dl class="sum">' + rows.map(([k, v]) => "<dt>" + k + "</dt>" + dd(v)).join("") + "</dl>";
   const days = d.from && d.to ? Math.round((new Date(d.to) - new Date(d.from)) / 86400000) + 1 : null;
-  let html = sec("The trip", 0, [["Countries to be visited", d.countries], ["Purpose", d.purpose], ["Period of insurance", d.from && d.to ? fmtDate(d.from) + " to " + fmtDate(d.to) + (days ? " (" + days + " days)" : "") : ""], ["Persons accompanying", d.companions === "" ? "" : d.companions + (Number(d.companions) > 0 ? " · cover for each: " + (d.coverEach || "—") : "")]]);
+  let html = sec("The trip", 0, [["Countries to be visited", d.countries], ["Purpose", d.purposeText], ["Period of insurance", d.from && d.to ? fmtDate(d.from) + " to " + fmtDate(d.to) + (days ? " (" + days + " days)" : "") : ""], ["Persons accompanying", d.companions === "" ? "" : d.companions + (Number(d.companions) > 0 ? " · cover for each: " + (d.coverEach || "—") : "")]]);
   html += sec("The proposer", 1, (state.existing && state.existing.clientNumber ? [["Client number", state.existing.clientNumber + " (details from your file)"]] : []).concat(d.kind === "business"
     ? [["Company", d.company], ["Entity", d.entity], ["Incorporated", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Registered address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Business activity", [d.occupation, d.employer].filter(Boolean).join(" · ")], ["PEP", d.pep]]
     : [["Name", proposerName(d)], ["Born", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Marital status", d.marital], ["Residential address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Occupation", d.occupation], ["Employer", d.employer], ["PEP", d.pep]]));
@@ -841,45 +953,98 @@ function renderReview() {
 }
 function validateQuiet(i) { const ok = validate(i); document.querySelectorAll(".f.bad").forEach((f) => f.classList.remove("bad")); return ok; }
 
-/* ── the proposal sheet, as the form lays it out ── */
-function sheetHtml(d, ref) {
-  const yn = (v) => '<span class="yn">YES ' + (v === "Yes" ? "☑" : "☐") + " &nbsp; NO " + (v === "No" ? "☑" : "☐") + "</span>";
-  const fr = (k, v, flex) => '<div class="fr"' + (flex ? ' style="flex:' + flex + '"' : "") + '><span class="k">' + k + '</span><span class="v">' + esc(v) + "</span></div>";
+/* ═══════════════════════════════════════════════════════════════════════════
+   THE PROPOSAL FORM — Guardian General's GG-TIN-PRO-10/2023, as printed.
+   Four pages, their header, their numbering and their words, filled in.
+   Nothing of the branch is on it: the client is proposing to Guardian
+   General, and this is the document their underwriter knows.
+   ═══════════════════════════════════════════════════════════════════════════ */
+function sheetHtml(d, logo) {
+  logo = logo || "gg-logo.png";
   const biz = d.kind === "business";
-  const persons = personsList(d);
-  const pk = PACKAGES[d.pkg];
-  let h = '<div class="sheet"><div class="hd"><div class="mk"><img src="../logo-mark.png" alt=""></div><div class="co"><b>Ricky Rampersad Branch · Guardian Group</b>Travel insurance proposal to Guardian General Insurance Limited<br>Head Office: Newtown Centre, 30-34 Maraval Road, St. Clair, Port of Spain · (868) 226-myGG (6944)</div><div class="rf">Reference<b>' + esc(ref || "pending") + "</b>" + esc(new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })) + (state.existing && state.existing.clientNumber ? "<br>Client no. " + esc(state.existing.clientNumber) : "") + "</div></div>";
-  h += "<h2>TRAVEL INSURANCE PROPOSAL FORM</h2><h3>1. Personal information</h3>";
-  h += fr("(a) Name of proposer(s) / company (in full)", biz ? d.company : proposerName(d));
-  h += '<div class="g2">' + fr("(b) Date of " + (biz ? "incorporation" : "birth"), fmtDate(d.dob)) + fr("Place of " + (biz ? "incorporation" : "birth"), d.pob) + fr("Nationality", d.nationality) + fr("Country of residence", d.residence) + (biz ? "" : fr("Marital status", d.marital)) + "</div>";
-  h += fr("(c) " + (biz ? "Registered" : "Residential") + " address of proposer", d.address) + fr("(d) Mailing address (if different)", d.mailing);
-  h += '<div class="g2">' + fr("(e) Contact no(s)", d.phone) + fr("Email address", d.email) + "</div>";
-  h += fr("(f) Trade, occupation, profession (include part-time)", d.occupation) + fr("(g) Name of employer, and business activity", d.employer);
-  h += '<div class="fr"><span class="k">(h) If business entity, are you?</span><span class="v">' + (biz ? esc(d.entity) : "Not a business entity") + "</span></div>";
-  h += '<div class="fr"><span class="k">(i) Politically Exposed Person, or immediate family member of a PEP?</span>' + yn(d.pep) + "</div>" + (d.pep === "Yes" ? '<p class="fine"><b>PEP Memorandum to accompany this proposal.</b></p>' : "");
-  h += fr("(j) Countries to be visited", d.countries) + fr("(k) Purpose of trip", d.purpose);
-  h += '<div class="g2">' + fr("(l) Period of insurance from", fmtDate(d.from)) + fr("to", fmtDate(d.to)) + "</div>";
-  h += '<p class="fine">If you are unable to complete your trip within the specified period of insurance due to accident, misfortune, injury, sickness or disease, cover will automatically continue without additional premium until such completion, up to a maximum of 30 days.</p>';
-  h += '<h3>2. Persons accompanying you</h3><div class="g2">' + fr("(a) How many persons will be accompanying you on the trip?", d.companions) + '<div class="fr"><span class="k">(b) Is cover required for each person?</span>' + yn(Number(d.companions) > 0 ? d.coverEach : "") + "</div></div>";
-  if (d.deps.length) {
-    h += "<table><tr><th>Travelling dependant</th><th>Name</th><th>Date of birth</th><th>Occupation</th><th>Of sound mental and bodily health</th><th>Free from physical defects or infirmity</th></tr>" + d.deps.map((p, i) => "<tr><td>" + (i + 1) + "</td><td>" + esc(p.name) + "</td><td>" + esc(fmtDate(p.dob)) + "</td><td>" + esc(p.occupation) + "</td><td>" + yn(p.health) + "</td><td>" + yn(p.defects) + "</td></tr>").join("") + "</table>";
-    h += fr("(c) If 'No' to (i) or (ii) above, full details", d.depDetails);
+  const bx = (on) => '<span class="bx">' + (on ? "X" : "") + "</span>";
+  const yn = (v) => '<span class="yn">YES' + bx(v === "Yes") + " NO" + bx(v === "No") + "</span>";
+  const ln = (k, v, short) => '<div class="l"><span class="k">' + k + '</span><span class="v' + (short ? " s" : "") + '">' + esc(v) + "</span></div>";
+  const head = '<div class="hd"><img src="' + esc(logo) + '" alt="Guardian Group · Guardian General Insurance Limited"><table>' +
+    '<tr><td class="k">Head Office:</td><td>Newtown Centre, 30-34 Maraval Road, St.Clair,<br>NEWTOWN, 190133, TRINIDAD &amp; TOBAGO</td></tr>' +
+    '<tr><td class="k">Telephone:</td><td>(868) 226-myGG (6944) &#9642; Fax: (868) 622-9994</td></tr>' +
+    '<tr><td class="k">Branch Office:</td><td>31-33 Independence Avenue,<br>SAN FERNANDO, 600202, TRINIDAD &amp; TOBAGO</td></tr>' +
+    '<tr><td class="k">Telephone:</td><td>(868) 226-myGG (6944) &#9642; Fax: (868) 652-5228</td></tr>' +
+    '<tr><td class="k">Website:</td><td>www.myguardiangroup.com</td></tr></table></div>';
+  const foot = (n) => '<div class="ft"><span>GG-TIN-PRO-10/2023</span><span>' + n + "</span></div>";
+  const persons = personsList(d), custom = d.pkg === "custom";
+  const deps = d.deps || [];
+
+  /* page 1 */
+  let p1 = '<div class="gg pg">' + head + "<h2>TRAVEL INSURANCE PROPOSAL FORM</h2><h3>1. PERSONAL INFORMATION</h3>";
+  p1 += ln("(a) Names of Proposer(s)/Company (in full)", biz ? d.company : proposerName(d)) + '<div class="sub" style="margin:-4px 0 6px 20px">State Mr, Mrs, Miss, Dr or other title &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;First Name &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Surname</div>';
+  p1 += '<div class="g2">' + ln("(b) Date of Birth/ Incorporation", fmtMDY(d.dob), true) + ln("Place of Birth/Incorporation:", d.pob, true) + "</div>" + '<div class="sub" style="margin:-4px 0 4px 160px">MM/DD/YY</div>';
+  p1 += '<div class="g2">' + ln("Nationality:", d.nationality, true) + ln("Country of Residence:", d.residence, true) + "</div>";
+  p1 += ln("Marital Status:", biz ? "" : d.marital, true);
+  p1 += ln("(c) Residential/ Registered Address of Proposer", d.address) + ln("(d) Mailing Address (if different)", d.mailing);
+  p1 += '<div class="g2">' + ln("(e) Contacts No(s)", d.phone, true) + ln("Email Address", d.email, true) + "</div>";
+  p1 += ln("(f) Trade, occupation, profession (include part-time)", d.occupation);
+  p1 += ln("(g) Name of Employer, and Business Activity:", d.employer);
+  const ent = biz ? d.entity : "";
+  p1 += '<div class="l"><span class="k">(h) If Business Entity, are you?</span><span class="yn">Company' + bx(ent === "Company") + " Partnership" + bx(ent === "Partnership") + " NPO" + bx(ent === "NPO") + " Trust, Nominees or Other" + bx(ent === "Trust, Nominees or Other") + "</span></div>";
+  p1 += '<div class="l"><span class="k">(i) Are you a Politically Exposed Person (PEP) or an immediate family member of a PEP?</span>' + yn(d.pep) + "</div>";
+  p1 += '<div class="pepd">A PEP is an Individual such as a Head of State or Government, senior politician, senior government, judicial or military official, senior executive of State-owned corporations and important political party official who is or has been entrusted with prominent functions by a foreign country or domestically in the territory; or A Person who is or has been entrusted with a prominent function by an international organisation which refers to members of senior management such as directors and members of the board or equivalent functions. This category also includes immediate family members close personal and professional associates. If Yes is selected, This Proposal form must be accompanied by a PEP Memorandum.</div>';
+  p1 += ln("(j) Countries to be visited", d.countries) + ln("(k) Purpose of Trip", d.purposeText);
+  p1 += '<div class="g2">' + ln("(l) Period of Insurance from", fmtMDY(d.from), true) + ln("to", fmtMDY(d.to), true) + "</div>" + '<div class="g2 sub" style="margin:-4px 0 6px"><span style="padding-left:150px">MM/DD/YY</span><span style="padding-left:70px">MM/DD/YY</span></div>';
+  p1 += '<p class="fine">If you are unable to complete your trip within the specified period of insurance due to accident misfortune injury sickness or disease, cover will automatically continue without additional premium until such completion up to a maximum of 30 days.</p>';
+  p1 += '<div class="l" style="margin-top:14px"><span class="k"><b>2.</b> &nbsp;a) How many persons will be accompanying you on the trip?</span><span class="v s">' + esc(d.companions === "" ? "" : d.companions === "10" ? "10 or more" : d.companions) + "</span></div>";
+  p1 += '<div class="l"><span class="k">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;b) Is cover required for each person?</span><span style="flex:1"></span>' + yn(Number(d.companions) > 0 ? d.coverEach : "") + "</div>";
+  p1 += foot(1) + "</div>";
+
+  /* page 2 */
+  let p2 = '<div class="gg pg"><p class="fine" style="margin-top:0">If \'YES\' please give details of travelling dependents:</p>';
+  p2 += '<table class="t"><tr><td rowspan="5" style="width:24%;vertical-align:top">Are all the travelling dependents to be insured<br><br><br><br>(i) &nbsp;of sound mental and bodily-health<br><br>(ii) free from physical defects or infirmity</td>' + [0, 1, 2, 3].map((i) => '<td style="width:19%">Name<br><b>' + esc((deps[i] || {}).name || "") + "</b></td>").join("") + "</tr>";
+  p2 += "<tr>" + [0, 1, 2, 3].map((i) => "<td>Date of Birth<br><b>" + esc(fmtMDY((deps[i] || {}).dob)) + "</b></td>").join("") + "</tr>";
+  p2 += "<tr>" + [0, 1, 2, 3].map((i) => "<td>Occupation<br><b>" + esc((deps[i] || {}).occupation || "") + "</b></td>").join("") + "</tr>";
+  p2 += "<tr>" + [0, 1, 2, 3].map((i) => "<td>" + yn((deps[i] || {}).health) + "</td>").join("") + "</tr>";
+  p2 += "<tr>" + [0, 1, 2, 3].map((i) => "<td>" + yn((deps[i] || {}).defects) + "</td>").join("") + "</tr></table>";
+  p2 += ln("c) If 'NO', (to <b>i or ii</b>) above please provide full details", d.depDetails);
+  p2 += '<p class="fine" style="margin-top:16px"><b>PACKAGES:</b> &nbsp;<u>Subject to a maximum number of <b>Five (5)</b> persons and <b>Fourteen (14)</b> days any one trip</u></p>';
+  const pkRows = [["Personal Accident", "pa"], ["Baggage, Personal Effects &amp; Travel Documents", "baggage"], ["Additional expenses due to loss of passport and/or driver's license", "addl"], ["Medical Expenses", "medical"], ["Loss of Money and Tickets", "money"], ["Loss of deposits and curtailment and missed connections", "deposits"]];
+  p2 += '<table class="t pkt"><tr><th class="c" style="text-align:center">ECONOMY</th><th class="c">Max limit per person</th><th class="c" style="text-align:center">ECONOMY PLUS</th><th class="c">Max limit per person</th><th class="c" style="text-align:center">ELITE</th><th class="c">Max limit per person</th></tr>';
+  pkRows.forEach(([l, b]) => { p2 += "<tr><td>" + l + '</td><td class="n">' + money(PACKAGES.economy[b]) + "</td><td>" + l + '</td><td class="n">' + money(PACKAGES.plus[b]) + "</td><td>" + l + '</td><td class="n">' + money(PACKAGES.elite[b]) + "</td></tr>"; });
+  p2 += "</table>";
+  p2 += '<div class="l" style="margin-top:14px"><span class="k"><b>3.</b> &nbsp;Indicate which package is required</span><span class="yn">' + bx(d.pkg === "economy") + " Economy &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + bx(d.pkg === "plus") + " Economy Plus &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;" + bx(d.pkg === "elite") + " Elite</span></div>";
+  p2 += ln("<b>4.</b> &nbsp;State Beneficiary in the event of death under Personal Accident cover", d.beneficiary);
+  p2 += '<div class="l"><span class="k"><b>5.</b> &nbsp;If you require coverage outside of the above listed packages please complete the table below:-</span></div>';
+  p2 += foot(2) + "</div>";
+
+  /* page 3 */
+  let p3 = '<div class="gg pg"><h3 style="margin-top:0">6. &nbsp;SUMS INSURED -STATE MAX LIMITS REQUIRED</h3>';
+  p3 += '<table class="t"><tr><th class="c" style="width:14%">Proposer &amp; Other Persons To Be Insured</th><th class="c">Personal Accident</th><th class="c">Beneficiary in the event of Death under Personal Accident cover</th><th class="c">Baggage &amp; Personal Effects &amp; Travel Documents</th><th class="c">Additional Expenses – Passport &amp; Driver\'s license</th><th class="c">Medical Expenses</th><th class="c">Loss of Money &amp; Tickets<br><br>a) Money &amp;<br>b) Tickets</th><th class="c">Loss of Deposits and Curtailment and Missed Connections</th></tr>';
+  for (let i = 0; i < 5; i++) {
+    const p = custom ? persons[i] : null, s = custom && p ? (d.sums[i] || {}) : {};
+    const $$ = (v) => "$" + (v ? " <b>" + esc(String(v).replace(/^\$/, "")) + "</b>" : "");
+    p3 += "<tr><td>" + (i + 1) + ". " + (p ? "<b>" + esc(p.name) + "</b>" : "") + "</td><td>" + $$(s.pa) + "</td><td>" + (p ? "<b>" + esc(s.ben || (i === 0 ? d.beneficiary : "")) + "</b>" : "") + "</td><td>" + $$(s.baggage) + "</td><td>" + $$(s.addl) + "</td><td>" + $$(s.medical) + "</td><td>a)" + $$(s.money) + "<br>b)" + $$(s.tickets) + "</td><td>" + $$(s.deposits) + "</td></tr>";
   }
-  h += '<h3>3. Package required</h3><div class="fr yn">☐ Economy &nbsp; ☐ Economy Plus &nbsp; ☐ Elite &nbsp; ☐ Cover outside the packages</div>'.replace("☐ " + (pk ? pk.name : "Cover outside the packages"), "☑ " + (pk ? pk.name : "Cover outside the packages"));
-  if (pk) h += '<p class="fine">Maximum limit per person: personal accident ' + money(pk.pa) + "; baggage, personal effects &amp; travel documents " + money(pk.baggage) + "; additional expenses due to loss of passport and/or driver's licence " + money(pk.addl) + "; medical expenses " + money(pk.medical) + "; loss of money and tickets " + money(pk.money) + "; loss of deposits, curtailment and missed connections " + money(pk.deposits) + ". Subject to a maximum of five persons and fourteen days any one trip.</p>";
-  h += fr("4. Beneficiary in the event of death under Personal Accident cover", d.beneficiary);
-  h += "<h3>5 and 6. Sums insured: maximum limits required</h3>";
-  h += "<table><tr><th>Proposer &amp; other persons to be insured</th><th>Personal accident</th><th>Beneficiary (death under PA)</th><th>Baggage, personal effects &amp; travel documents</th><th>Additional expenses: passport &amp; driver's licence</th><th>Medical expenses</th><th>Loss of money &amp; tickets</th><th>Loss of deposits, curtailment &amp; missed connections</th></tr>";
-  h += persons.map((p, i) => { const s = d.pkg === "custom" ? (d.sums[i] || {}) : pk ? { pa: money(pk.pa), ben: i === 0 ? d.beneficiary : "", baggage: money(pk.baggage), addl: money(pk.addl), medical: money(pk.medical), money: money(pk.money), tickets: "incl.", deposits: money(pk.deposits) } : {}; const c = (v) => "<td>" + (v ? esc(String(v).replace(/^\$?/, "$").replace("$incl.", "incl.")) : "") + "</td>"; return "<tr><td>" + (i + 1) + ". " + esc(p.name) + "</td>" + c(s.pa) + "<td>" + esc(s.ben || (i === 0 ? d.beneficiary : "")) + "</td>" + c(s.baggage) + c(s.addl) + c(s.medical) + "<td>" + (s.money ? "a) " + esc(String(s.money).replace(/^\$?/, "$")) : "") + (s.tickets ? "<br>b) " + esc(String(s.tickets).replace(/^\$?/, "$").replace("$incl.", "incl.")) : "") + "</td>" + c(s.deposits) + "</tr>"; }).join("") + "</table>";
-  h += "<h3>7. Specified items</h3>" + (d.items.length ? "<table><tr><th>Item of jewellery or baggage valued over $1,000</th><th>Value</th></tr>" + d.items.map((i) => "<tr><td>" + esc(i.desc) + "</td><td>" + esc(i.value ? "$" + i.value.replace(/^\$/, "") : "") + "</td></tr>").join("") + "</table>" : '<p class="fine">None declared.</p>');
-  h += '<h3>8. Health</h3><div class="fr"><span class="k">Are you of sound mental and bodily health and free from physical defects or infirmity?</span>' + yn(d.sound) + "</div>" + (d.sound === "No" ? fr("If 'No', details", d.soundDetails) : "");
-  h += '<h3>9. Infectious or communicable disease</h3><div class="fr"><span class="k">Have you and/or any persons accompanying you on the trip been in known contact within the last 21 days with anyone suffering from an infectious or communicable disease?</span>' + yn(d.contact) + "</div>" + (d.contact === "Yes" ? fr("If 'Yes', details", d.contactDetails) : "");
-  h += '<p class="fine" style="margin-top:14px"><b>Declaration.</b> I declare that the statements and particulars given above are true and complete to the best of my knowledge and belief, that I have not withheld any material fact, and that this proposal is the basis of the contract between me and Guardian General Insurance Limited.' + (ref ? " Declared online on " + esc(new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })) + " against reference " + esc(ref) + "." : "") + "</p>";
-  h += '<div class="sig"><div>Signature of proposer</div><div>Date</div></div>';
-  h += '<div class="ft"><span>Guardian General Insurance Limited · Travel Insurance Proposal Form GG-TIN-PRO-10/2023 · submitted through rickyrampersadbranch.com/travel</span><span>Ricky Rampersad Branch · (868) 226-6461</span></div></div>';
-  return h;
+  p3 += "</table>";
+  p3 += '<h3>7. &nbsp;SPECIFIED ITEMS <span style="font-weight:normal">(Baggage &amp; Personal Effects &amp; Travel Documents)</span></h3><p class="fine">Describe any item of Jewellry or any other item of baggage valued over $1,000</p>';
+  const items = d.items || [], itemLine = (list) => list.map((i) => i.desc + (i.value ? " ($" + String(i.value).replace(/^\$/, "") + ")" : "")).join("; ");
+  p3 += ln("", itemLine(items.slice(0, 2))) + ln("", itemLine(items.slice(2)));
+  p3 += '<div class="l" style="margin-top:16px"><span class="k"><b>8.</b> &nbsp;Are you of sound mental and bodily health and free from physical defects or infirmity?</span>' + yn(d.sound) + "</div>";
+  p3 += ln("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If 'NO', please give details", d.sound === "No" ? d.soundDetails : "") + ln("", "");
+  p3 += '<div class="l" style="margin-top:16px"><span class="k"><b>9.</b> &nbsp;Have you and/or any persons/s accompanying you on the trip been in known contact within the last 21 days with anyone suffering from an infectious or communicable disease?</span>' + yn(d.contact) + "</div>";
+  p3 += ln("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;If 'YES', please give details", d.contact === "Yes" ? d.contactDetails : "") + ln("", "");
+  p3 += foot(3) + "</div>";
+
+  /* page 4 */
+  let p4 = '<div class="gg"><h3 style="margin-top:0">SUMMARY OF COVER:</h3><table class="t cov">';
+  COVER.forEach(([t, p, l]) => { p4 += "<tr><th>" + esc(t) + "</th><td>" + esc(p) + (l.length ? "<ol>" + l.map((x) => "<li>" + esc(x) + "</li>").join("") + "</ol>" : "") + "</td></tr>"; });
+  p4 += "</table>" + foot(4) + "</div>";
+
+  return p1 + p2 + p3 + p4;
 }
-function openPreview(afterSend) { $("printArea").innerHTML = sheetHtml(afterSend && state.sent ? state.sent : collect(), state.ref); $("pv").hidden = false; document.body.style.overflow = "hidden"; }
+/* the same form as a whole document, for the backend to turn into the PDF */
+function sheetDoc(d) {
+  const css = [...document.styleSheets].flatMap((s) => { try { return [...s.cssRules]; } catch (e) { return []; } }).map((r) => r.cssText).filter((t) => t.startsWith(".gg")).join("\n");
+  return "<html><head><meta charset=\"utf-8\"><style>body{margin:0;background:#fff}" + css + ".gg{box-shadow:none;border:0;width:auto;margin:0;padding:0.45in 0.5in;min-height:0}.gg .ft{position:static;margin-top:20px}</style></head><body>" + sheetHtml(d, CONFIG.GG_LOGO) + "</body></html>";
+}
+function openPreview(afterSend) { $("printArea").innerHTML = sheetHtml(afterSend && state.sent ? state.sent : collect()); $("pv").hidden = false; document.body.style.overflow = "hidden"; }
 function closePreview() { $("pv").hidden = true; document.body.style.overflow = ""; }
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pv").hidden) closePreview(); });
 
@@ -887,11 +1052,12 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pv")
 function payload(d) {
   const pk = PACKAGES[d.pkg];
   const persons = personsList(d).map((p, i) => { const s = d.pkg === "custom" ? (d.sums[i] || {}) : pk ? { pa: pk.pa, baggage: pk.baggage, addl: pk.addl, medical: pk.medical, money: pk.money, tickets: "included", deposits: pk.deposits, ben: i === 0 ? d.beneficiary : "" } : {}; const dep = i ? d.deps[i - 1] : null; return { role: p.role, name: p.name, dob: p.dob, occupation: dep ? dep.occupation : d.occupation, health: dep ? dep.health : d.sound, defects: dep ? dep.defects : d.sound, sums: s }; });
+  const a = advise(d);
   return {
-    action: "propose", page: location.href, formHtml: sheetHtml(d, ""),
-    trip: { countries: d.countries, purpose: d.purpose, from: d.from, to: d.to, companions: d.companions, coverEach: Number(d.companions) > 0 ? d.coverEach : "" },
+    action: "propose", page: location.href, formHtml: sheetDoc(d),
+    trip: { countries: d.countries, purpose: d.purposeText, from: d.from, to: d.to, companions: d.companions, coverEach: Number(d.companions) > 0 ? d.coverEach : "" },
     proposer: { kind: d.kind, title: d.title, first: d.first, surname: d.surname, company: d.company, entity: d.entity, name: proposerName(d), dob: d.dob, pob: d.pob, nationality: d.nationality, residence: d.residence, marital: d.marital, address: d.address, mailing: d.mailing, phone: d.phone, email: d.email, occupation: d.occupation, employer: d.employer, pep: d.pep },
-    deps: d.deps, depDetails: d.depDetails, pkg: d.pkg, pkgName: pkgLabel(d), beneficiary: d.beneficiary, persons,
+    deps: d.deps, depDetails: d.depDetails, pkg: d.pkg, pkgName: pkgLabel(d), suggested: a.key, beneficiary: d.beneficiary, persons,
     items: d.items, health: { sound: d.sound, soundDetails: d.soundDetails, contact: d.contact, contactDetails: d.contactDetails },
     declared: !!d.declare,
     existing: state.existing,
@@ -901,7 +1067,7 @@ function plainText(d) {
   const L = []; const add = (k, v) => { if (v) L.push(k + ": " + v); };
   L.push("TRAVEL INSURANCE PROPOSAL (GG-TIN-PRO-10/2023)", "");
   add("Proposer", proposerName(d)); add("Entity", d.entity); add(d.kind === "business" ? "Incorporated" : "Born", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")); add("Nationality", d.nationality); add("Country of residence", d.residence); add("Marital status", d.marital); add("Address", d.address); add("Mailing address", d.mailing); add("Phone", d.phone); add("Email", d.email); add("Occupation", d.occupation); add("Employer", d.employer); add("PEP", d.pep);
-  L.push(""); add("Countries", d.countries); add("Purpose", d.purpose); add("Period", fmtDate(d.from) + " to " + fmtDate(d.to)); add("Persons accompanying", d.companions); add("Cover for each", d.coverEach);
+  L.push(""); add("Countries", d.countries); add("Purpose", d.purposeText); add("Period", fmtDate(d.from) + " to " + fmtDate(d.to)); add("Persons accompanying", d.companions); add("Cover for each", d.coverEach);
   d.deps.forEach((p, i) => add("Dependant " + (i + 1), [p.name, fmtDate(p.dob), p.occupation, "health " + p.health, "defects-free " + p.defects].join(" · "))); add("Dependant details", d.depDetails);
   L.push(""); add("Package", pkgLabel(d)); add("Beneficiary (PA)", d.beneficiary);
   if (d.pkg === "custom") personsList(d).forEach((p, i) => { const s = d.sums[i] || {}; add(p.name, BENEFITS.map(([b, l]) => b === "money" ? "money " + (s.money || "-") + "/tickets " + (s.tickets || "-") : l.split(":")[0] + " " + (s[b] || "-")).join("; ") + (s.ben ? "; beneficiary " + s.ben : "")); });
@@ -944,8 +1110,8 @@ async function send() {
   renderDeps(); if (state.items.length) renderItems();
   refresh();
   if (had) { $("resume").hidden = false; show(state.step); } else { show(0); }
-  pingBackend();
   const q = new URLSearchParams(location.search); if (q.get("pkg") && PACKAGES[q.get("pkg")]) setRadioSilent("pkg", q.get("pkg"));
+  pingBackend();
   window.scrollTo(0, 0);
 })();
 </script>

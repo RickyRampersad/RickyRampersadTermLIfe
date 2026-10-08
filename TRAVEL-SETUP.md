@@ -62,21 +62,21 @@ open the PDF, then turn test mode OFF.
 
 ## Part 1b — prefill for an existing client (Salesforce)
 
-An existing client need not type what the branch already holds. At the top
-of "About you" the page offers **Already a Guardian client with our
-branch?**: any policy number or the client number, plus the date of birth.
-The backend looks the number up on `CLIENT_PORTFOLIO__c` and hands back the
-proposer's details **only when the date of birth matches the record**: title,
-first name, surname, date of birth, address, phones, e-mail, occupation (the
-policy's own, else the Contact's Title), employer. Five wrong dates on one
-number inside fifteen minutes close it, as on the claims page. Nothing is
-revealed on a miss, not even whether the number exists.
+An existing client need not type what the branch already holds. Once the
+name and date of birth are on the form, a gold panel offers **Fill from my
+file**. The backend looks the name up on `CLIENT_PORTFOLIO__c` (the policy
+record's own name or the Contact's) and hands back the rest **only when the
+date of birth matches the record**: address, phones, e-mail, occupation (the
+policy's own, else the Contact's Title) and employer. The form asks nothing
+extra for it, so it still lines up with Guardian General's form question for
+question. Five wrong dates on one surname inside fifteen minutes close it.
+Nothing is revealed on a miss.
 
 The filled fields carry a green "from your file" chip, the client can change
 any of them, and the proposal row records **Existing client**, **Client
-number**, **Policy on file** and **Prefilled from Salesforce** (the fields
-that came from the file). The branch e-mail and the PDF header carry the
-client number, so the desk knows it is an existing client before it quotes.
+number** and **Prefilled from Salesforce**. The branch e-mail says it is an
+existing client; the printed form carries nothing of this, because it is
+Guardian General's form.
 
 To switch it on, add three Script properties to the Travel project (Project
 Settings → Script properties), the same three the Service Questionnaire
@@ -84,8 +84,40 @@ project holds: **`SF_KEY`**, **`SF_SECRET`** and **`SF_LOGIN_URL`** (the My
 Domain address, not login.salesforce.com). Copy them from the KPI Tracker.
 Then Manage deployments → New version. The page asks the backend on load
 whether prefill is on (`ping` answers `prefill: true`) and shows the panel
-only then; without the properties the panel never appears and the client
-fills the form by hand.
+only then.
+
+## Part 1c — the printed proposal is Guardian General's form
+
+The page renders the completed proposal as **form GG-TIN-PRO-10/2023 as
+printed**: Guardian Group's header (head office, branch office, telephones,
+website, the Guardian General logo lifted from the PDF into
+`travel/gg-logo.png`), the same four pages, the same numbering, the same
+words, dates in the form's MM/DD/YY, the packages table, the sums-insured
+table filled only when cover outside the packages is asked for (as the form
+intends), and the Summary of Cover as page four. Nothing of the branch is on
+it. The client can open it at any step ("See the form" in the progress bar),
+at the review, and after sending, and print or save it as PDF.
+
+The page sends that rendering to the backend with the proposal, and
+`formPdf_` turns it into the PDF that is filed and attached, after cutting
+any script or event attribute and embedding the logo. If the page sends
+nothing usable, the script's own rendering (`proposalPdf_`, the same header
+and sections) stands in.
+
+## Part 1d — the package adviser
+
+At the package step the page reads the trip and suggests a package, with
+reasons, over a comparison of the three: where the medical limit matters
+(the United States, Canada and other countries where a hospital bill runs
+high score two; Europe and the richer Caribbean islands one), the length of
+the trip (over seven days scores one; over fourteen is outside the packages),
+any traveller aged 60 or more, and the purpose (sport or medical treatment).
+Three points or more suggests Elite, one or two Economy Plus, none Economy.
+The table totals each package and says what each step up buys. **No premium
+is shown or invented**; the adviser says plainly that best value depends on
+the premium the branch quotes. The suggestion travels with the proposal
+(**Suggested package** on the sheet) and the branch e-mail flags a client who
+chose differently.
 
 ## Part 2 — what comes in
 
