@@ -2509,6 +2509,32 @@ voice under the new timing and the caption gives it away.
     made-up in-force tab);
   - `board8/back-harness.js` (23, the call-back rules);
   - `board8/ported/` (the snapshot test 24, calls 25, the introduction hold 16).
+- **Everyone sees what they have logged, and signs in with a first name** (8 October 2026: "have you made the log in
+  easy and can staff place the notes in the log in and see what they have done as well managers log in and agents?").
+  - **Your work** is a tab for anyone signed in as themselves: staff, agents and unit managers. It is second for
+    staff, after Your calls, and second for an agent, after To call. It gives today's and the last seven days' counts:
+    clients logged, reached, no answer, call-backs flagged (staff only), and agents named (whoever may name). Under
+    them is every outcome they marked, newest first, one line a client a day, with the call-back flagged and the note
+    they wrote. A name opens the client.
+  - The tab reads the same stamps as the branch's Team tab (`[no answer 8 Oct · Name] note`), matched to the signed-in
+    name, so the two always agree. A naming made by staff is read from its "named by" file note.
+  - Stamps are kept once each, so two tries on one client on one day count as one.
+  - **A unit manager's Team tab** now shows "On your team's clients": the same table and notes the branch sees, over
+    his team's clients.
+  - **Sign-in** (`tWho_`):
+    - A first name alone opens, when exactly one active person on the Agent Skill Bank carries it. Two people with
+      one first name, and neither opens on it: the number or the full name does.
+    - A full name matches whatever its spacing, hyphens or capitals.
+    - Wrong tries count against the person, however they were named (`tries-p-<name>`), never per spelling.
+    - Someone who was the agent on these books still never signs in.
+    - The gate asks for the "agent number or your name" and says the device keeps you signed in until Sign out.
+  - **Signing out clears the client that was open** (`#t=`), so the next person on the device never lands on it.
+  - **A name written on a `/call` row is read** (`tBoard_`). An agent named on a client who never answered, after
+    staff logged a call on them, is written onto the call row, the only row there is. Until 8 October the board
+    returned from a call row before reading Assigned to, so the agent's list missed the client until the assignment
+    sync caught up.
+  - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
+    memory).
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

@@ -264,6 +264,8 @@
   .team td{padding:6px 10px 6px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team td b{color:var(--ink)}
   .team h4{margin:12px 0 6px;font:700 15px var(--fh);color:var(--ink)} .team ul{list-style:none;margin:0 0 12px;padding:0;font-size:14.5px}
   .team li{padding:7px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team li a{color:var(--tdark);font-weight:600;text-decoration:none} .team li i{font-style:normal;color:var(--dim)}
+  .wtally{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:9px 0;border-bottom:1px solid #eef2f5;font-size:15px;color:var(--body)}
+  .wtally b{min-width:100px;color:var(--ink);font:700 15px var(--fh)} .wtally em{font-style:normal;font-weight:800;font-size:18px;color:var(--ink)}
   .team .allnotes{background:none;border:0;color:var(--tdark);font:600 14px var(--fb);cursor:pointer;padding:0 0 12px}
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
   .chip{background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 13px;font-size:14px;cursor:pointer}
@@ -411,12 +413,12 @@
     <h1>Who is looking after <em>whom</em></h1>
     <p class="sub">Every client who answered a transition letter, what they told us, and the agent named to meet them. Sign in with your agent number and your password. The branch manager sees the whole branch, by unit and person; a unit manager sees his team; an agent sees their own clients. The branch code still opens the whole board, and with someone&rsquo;s number, their view.</p>
     <form class="gatecard" id="gateForm" autocomplete="off">
-      <label for="who">Agent number <span style="font-weight:500;text-transform:none;letter-spacing:0">(blank with the branch code, for the whole board)</span></label>
-      <input id="who" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="e.g. A10024">
+      <label for="who">Agent number or your name <span style="font-weight:500;text-transform:none;letter-spacing:0">(blank with the branch code, for the whole board)</span></label>
+      <input id="who" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="e.g. A10024, or Sasha">
       <label for="code">Password</label>
       <input id="code" type="password" inputmode="numeric" autocomplete="off" placeholder="your password, or the branch code">
       <button type="submit">Open</button>
-      <p class="hint">Nothing on this page leaves the sheet. When you mark a call, your name goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read.</p>
+      <p class="hint">Your first name is enough when nobody else on the list shares it. This device keeps you signed in until you press <b>Sign out</b>. Nothing on this page leaves the sheet. When you mark a call, your name goes onto the client&rsquo;s rows on Client Responses, which the responses page, the digest and the chase already read, and the call shows under <b>Your work</b>.</p>
       <div class="box" id="gateErr"></div>
     </form>
   </section>
@@ -469,6 +471,11 @@
       <div class="subs" id="hhSubs"></div>
       <div class="toolbar"><input type="search" id="hSearch" placeholder="Search a name, client number or town" aria-label="Search households"></div>
       <div id="hhList"></div>
+    </div>
+
+    <!-- your work: every call you marked, with your notes, newest first -->
+    <div class="pane" id="paneWork" hidden>
+      <div class="card team" id="workWrap"><div class="panehead"><h2 id="workTitle">Your work</h2><span id="workSum"></span></div><div id="workBody"></div></div>
     </div>
 
     <!-- the team: today's calls and notes, units and the roster -->
@@ -637,6 +644,7 @@ $('refresh').addEventListener('click', function () { load(); });
 $('signout').addEventListener('click', function () {
   try { localStorage.removeItem('rrb-transition-code'); localStorage.removeItem('rrb-assign-who'); } catch (e) {}
   CODE = ''; WHO = ''; D = null; shown = false; SEL = {}; forget(); clearTimeout(timer);   // the next person on this device starts afresh
+  if (FOCUS) unfocus(true);   // and never on the client the last person had open
   $('main').style.display = 'none'; $('gate').style.display = 'block'; $('gateErr').style.display = 'none'; $('code').value = ''; $('who').value = ''; $('refresh').style.display = 'none'; $('signout').style.display = 'none'; bar();
 });
 document.addEventListener('visibilitychange', function () { if (!document.hidden && shown && !timer) load(); });
@@ -707,6 +715,7 @@ var TABDEF = {
   done: { label: 'Done', title: 'Done', test: function (c) { return c.state === 'done'; } },
   households: { label: 'Households', pane: 'paneHouseholds' },
   all: { label: 'All clients', title: 'Every client on the board', test: function () { return true; } },
+  work: { label: 'Your work', pane: 'paneWork' },
   team: { label: 'Team', pane: 'paneTeam', sep: true },
   insights: { label: 'Insights', pane: 'paneInsights' },
   claims: { label: 'Claims', pane: 'paneClaims' }
@@ -714,8 +723,10 @@ var TABDEF = {
 function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
   if (r === 'branch') return ['urgent', 'assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights'];
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(['urgent', 'calls', 'assign', 'progress', 'done', 'households', 'all']);
-  var out = ['open'];
+  /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
+  var work = d.me && d.me.name ? ['work'] : [];
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'calls', 'assign', 'progress', 'done', 'households', 'all']);
+  var out = ['open'].concat(work);
   if (d.clients.some(urgentOf)) out.push('urgent');
   out = out.concat(['done', 'all']);
   if (r === 'unit') out.push('team');
@@ -862,9 +873,10 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
+  else if (pane === 'paneWork') workPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
   else if (pane === 'paneClaims') claimsPanel(D);
@@ -1555,6 +1567,83 @@ function togglePol(token, btn) {
   });
 }
 
+/* ---- the Your work tab ---- */
+/* 8 October 2026: "can staff place the notes in the log in and see what they have done". Everything the signed-in person
+   marked on a client, newest first, one line a client a day: the outcome, the call-back flagged with it, the note they
+   wrote, and, for whoever names agents, the agent they named. Read from the stamps every outcome leaves on the file
+   ("[no answer 7 Oct · Name] Voicemail"), the same ones the branch's Team tab reads, so the two always agree. */
+var WORK_ALL = false;
+var WORK_KIND = { called: 'Called', met: 'Met', declined: 'Declined', closed: 'Closed', open: 'Reopened', 'no answer': 'No answer',
+  'call-back agent': 'Call-back: a licensed agent', 'call-back branch': 'Call-back: the branch', 'do not call': 'Do not call' };
+function workOf(d, me) {
+  var rows = {}, out = [];
+  var row = function (c, day) {
+    var k = c.token + '|' + day;
+    if (!rows[k]) { var t = dayOf(day); rows[k] = { c: c, day: day, t: t ? t.getTime() : 0, kinds: [], notes: [], named: '' }; out.push(rows[k]); }
+    return rows[k];
+  };
+  everyone().forEach(function (c) {
+    (c.markers || []).forEach(function (mk) {
+      var m = /^\[(called|met|no answer|declined|closed|open|call-back agent|call-back branch|do not call) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/.exec(mk);
+      if (!m || !sameName(m[3], me)) return;
+      var r = row(c, m[2]);
+      if (r.kinds.indexOf(m[1]) < 0) r.kinds.push(m[1]);
+    });
+    (c.fileNotes || []).forEach(function (f) {
+      var m = /^(called|met|declined|closed|open|no answer) (\d{1,2} [A-Za-z]{3}) · ([^:]+): ([\s\S]*)$/.exec(f);
+      if (m && sameName(m[3], me)) { row(c, m[2]).notes.push(m[4]); return; }
+      var a = /^assigned (\d{1,2} [A-Za-z]{3}) · ([^:]+): named by (.+?)(?:: ([\s\S]*))?$/.exec(f);   // a naming made by staff
+      if (a && sameName(a[3], me)) { var r = row(c, a[1]); r.named = a[2].trim(); if (a[4]) r.notes.push(a[4]); }
+    });
+  });
+  out.sort(function (a, b) { return (b.t - a.t) || String(a.c.client).localeCompare(String(b.c.client)); });
+  return out;
+}
+function workPane() {
+  var d = D, me = d.me ? d.me.name : '';
+  var rows = me ? workOf(d, me) : [];
+  var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
+  var tally = function (from) {
+    var s = { clients: 0, reached: 0, noans: 0, backs: 0, named: 0 };
+    rows.forEach(function (r) {
+      if (r.t < from) return;
+      s.clients++;
+      if (r.kinds.indexOf('called') >= 0 || r.kinds.indexOf('met') >= 0) s.reached++;
+      if (r.kinds.indexOf('no answer') >= 0) s.noans++;
+      if (r.kinds.some(function (k) { return /^call-back/.test(k); })) s.backs++;
+      if (r.named) s.named++;
+    });
+    return s;
+  };
+  var t = tally(today), w = tally(week), namer = canAssign();
+  $('workTitle').textContent = 'Your work' + (me ? ', ' + firstName(me) : '');
+  $('workSum').textContent = rows.length ? (t.clients ? t.clients + ' client' + (t.clients === 1 ? '' : 's') + ' logged today' : 'nothing logged today yet') +
+    ' · ' + w.clients + ' in the last 7 days' : '';
+  if (!rows.length) {
+    $('workBody').innerHTML = '<div class="empty">Nothing logged yet. Open a client, press <b>Called</b>, <b>Met</b> or <b>No answer</b>, write a line for the file and save: it shows here, newest first, and on the client&rsquo;s card' +
+      (d.role === 'staff' ? ', and the branch sees it under Team.' : '.') + '</div>';
+    return;
+  }
+  /* two lines, not a table: a table of five columns breaks its words on a phone */
+  var staffish = d.role === 'staff' || d.role === 'branch';
+  var line = function (label, s) {
+    var bit = function (n, one, many) { return '<span><em>' + n + '</em> ' + (n === 1 ? one : many) + '</span>'; };
+    return '<div class="wtally"><b>' + label + '</b>' + bit(s.clients, 'client', 'clients') + bit(s.reached, 'reached', 'reached') + bit(s.noans, 'no answer', 'no answer') +
+      (staffish ? bit(s.backs, 'call-back flagged', 'call-backs flagged') : '') + (namer ? bit(s.named, 'agent named', 'agents named') : '') + '</div>';
+  };
+  var shown = WORK_ALL ? rows : rows.slice(0, 40);
+  $('workBody').innerHTML = line('Today', t) + line('Last 7 days', w) +
+    '<h4>What you logged, newest first</h4><ul>' + shown.map(function (r) {
+      var what = r.kinds.map(function (k) { return WORK_KIND[k] || k; });
+      if (r.named) what.push('named ' + r.named);
+      return '<li><i>' + esc(r.day) + ' · ' + esc(what.join(', ') || 'noted') + '</i> · <a href="#t=' + encodeURIComponent(r.c.token) + '&s=' + encodeURIComponent(r.c.seg || '') + '">' +
+        esc(r.c.client) + '</a>' + (r.notes.length ? ': ' + esc(r.notes.join(' · ')) : '') + '</li>';
+    }).join('') + '</ul>' +
+    (rows.length > 40 ? '<button type="button" class="allnotes" id="workAll">' + (WORK_ALL ? 'Show the latest 40' : 'Show all ' + rows.length) + '</button>' : '') +
+    '<p class="pnote">One line a client a day. A name opens the client, with everything on the file.' + (d.role === 'staff' ? ' The branch sees the same under Team.' : '') + '</p>';
+  if ($('workAll')) $('workAll').addEventListener('click', function () { WORK_ALL = !WORK_ALL; workPane(); });
+}
+
 /* ---- the Team tab ---- */
 function teamPane() {
   var d = D, manager = d.role === 'branch', team = d.role === 'unit', namer = canAssign();
@@ -1608,7 +1697,9 @@ function dayOf(s) {
   return d;
 }
 function teamPanel(d) {
-  if (d.role !== 'branch') { $('teamWrap').style.display = 'none'; return; }
+  /* a unit manager reads the same for his team's clients (8 October 2026: "as well managers log in") */
+  if (d.role !== 'branch' && d.role !== 'unit') { $('teamWrap').style.display = 'none'; return; }
+  document.querySelector('#teamWrap h2').textContent = d.role === 'unit' ? 'On your team’s clients' : 'From the team';
   var now = new Date(), today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(), week = today - 6 * 86400000;
   var people = {}, notes = [];
   d.clients.forEach(function (c) {

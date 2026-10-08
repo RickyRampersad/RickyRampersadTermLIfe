@@ -3367,14 +3367,21 @@ function tWho_(code, who) {
   if (!code) return refuse('Enter your agent number and your password, or the branch code.');
   var w = who.toLowerCase(), wn = w.replace(/[^a-z0-9]/g, '');
   var digits = function (s) { return s.replace(/^[a-z]+/, ''); };
-  var isMe = function (a) {                                  // A10024, a10024, 10024 or the name as on the tab
+  var isMe = function (a) {                                  // A10024, a10024, 10024 or the name as on the tab, any spacing or hyphens
     if (!w || !a.name) return false;
-    if (a.name.toLowerCase().replace(/\s+/g, ' ') === w) return true;
+    if (tNameKey_(a.name) && tNameKey_(a.name) === tNameKey_(who) && /[a-z]/.test(w) && !/\d/.test(w)) return true;
     var no = String(a.no || '').toLowerCase().replace(/[^a-z0-9]/g, '');
     return !!no && !!wn && (no === wn || (/^\d+$/.test(digits(no)) && digits(no) === digits(wn)));
   };
   var person = null;
   team.people.forEach(function (p) { if (!person && isMe(p)) person = p; });
+  /* a first name alone, when one active person on the tab carries it (8 October 2026: "have you made the log in easy"):
+     "Sasha" and her password. Two people with that first name, and neither opens on it: the number or the full name does. */
+  if (!person && /^[a-z]+$/.test(wn)) {
+    var firsts = team.people.filter(function (p) { return p.active && !former[tNameKey_(p.name)] && tNameKey_(String(p.name).split(/\s+/)[0]) === wn; });
+    if (firsts.length === 1) person = firsts[0];
+    else if (firsts.length > 1) return refuse('More than one person on the list is called that. Use your agent number or your full name.');
+  }
   var here = !!person && person.active && !former[tNameKey_(person.name)];
   if (branch && code === branch) {
     if (!who) return { ok: true, role: 'branch', me: null, canTell: true, configured: true };
@@ -3382,7 +3389,8 @@ function tWho_(code, who) {
     return tAs_(person, team, former, true);
   }
   if (!who) return refuse('Enter your agent number with your password.');
-  var tk = 'tries-' + (wn || 'none').slice(0, 40);
+  /* wrong tries count against the person, however they were named ("Sasha", her full name, her number), else the words typed */
+  var tk = 'tries-' + (person ? 'p-' + tNameKey_(person.name) : wn || 'none').slice(0, 40);
   if (tTries_(tk) >= T_USERS.TRIES) return refuse('Too many tries on that agent number. Wait fifteen minutes, or ask the branch.');
   if (here) {
     var hit = person.pw ? tDigest_(code) === person.pw
@@ -3638,6 +3646,9 @@ function tBoard_(w, all, lite) {
       (note.match(/\[[^\]]*\]/g) || []).forEach(function (mk) { if (c.markers.indexOf(mk) < 0) c.markers.push(mk); });
       tFileNotes_(note).forEach(function (f) { if (c.fileNotes.indexOf(f) < 0) c.fileNotes.push(f); });
       if (status && !/^(open|logged)$/i.test(status)) c.mark = status;
+      /* an agent named on the client after the call writes onto this row, the only one there is: read the name here too, or
+         the agent's list misses the client until the assignment sync catches up (8 October 2026) */
+      if (assigned && (!c.assignedAt || (on && on > c.assignedAt))) { c.assigned = assigned; c.assignedAt = on || c.assignedAt || rec; c.assignedOn = fmt(on, 'd MMM'); }
       return;
     }
     if (tContactRow_(v[5])) c.contactRows++;                          // details taken on a call
