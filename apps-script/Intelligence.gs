@@ -229,7 +229,7 @@ function iPhone_(v) {
    literally "Email " with a trailing space, and an untrimmed lookup misses it
    — which locks out every person on the tab.                               */
 
-var INTEL_VERSION = '2026-09-17l';
+var INTEL_VERSION = '2026-10-07a';
 
 /* The workbook the intelligence reads: the branch workbook (INTEL.WORKBOOK)
    unless the Script Property INTEL_WORKBOOK_ID says otherwise — another ID,
@@ -5492,7 +5492,26 @@ function intelRebuildGroups()     { return iWallRebuild_('groups',     function 
    The hour can be handed in, so the gate is testable without a clock. */
 function intelPendingRefresh(e, hour) {
   var h = hour === undefined ? Number(Utilities.formatDate(new Date(), iTz_(), 'H')) : Number(hour);
-  if (h % 2 !== 1 || h < 5 || h > 19 || h === 7) return 'pending: not this hour (' + h + ')';
+  /* THE PREMIUM DUE DESK'S TEN O'CLOCK SEND RIDES ON THIS TRIGGER too, like
+     the riders and conversion copies below, and for the same reason: the
+     project is one trigger short of its twenty. Staff tick each 45-day client
+     once they have checked them, and the letters they ticked go at ten on a
+     working day. pddRun_ decides for itself whether this is the hour (ten or
+     later, a working day, today's not yet gone), so a firing Apps Script
+     misses at ten is caught up at eleven, and every other hour costs a
+     property read. It goes first because the letters have a time on them and
+     the pending copy does not; and in an hour it sent letters, the pending
+     copy stands down, as it does for a member of staff filing a block.
+     Only the trigger runs it: a call from the editor with an hour does not. */
+  var desk = null;
+  if (hour === undefined && typeof pddRun_ === 'function') {
+    try { desk = pddRun_({}); } catch (err) { desk = { did: false, text: 'premium due: ' + (err && err.message || err) }; }
+  }
+  var said = desk && desk.text ? desk.text + '\n' : '';
+  if (desk && desk.did && h !== 5 && h < 19) {
+    return said + 'pending: standing down this hour for the ten o\'clock letters';
+  }
+  if (h % 2 !== 1 || h < 5 || h > 19 || h === 7) return said + 'pending: not this hour (' + h + ')';
   /* THE WALL WAITS FOR THE BRANCH, NEVER THE OTHER WAY ROUND.
      This rebuild reads the whole requirements extract and takes about two
      minutes, and the hourly trigger fires at whatever minute Apps Script
@@ -5506,7 +5525,7 @@ function intelPendingRefresh(e, hour) {
      The nightly hours (five, and nineteen after the branch has gone) are
      not gated: nobody is filing then, and the night copy must be built. */
   if (h > 5 && h < 19 && typeof staffWroteWithin_ === 'function' && staffWroteWithin_(4 * 60 * 1000)) {
-    return 'pending: somebody is filing a block just now — standing down, next go at ' +
+    return said + 'pending: somebody is filing a block just now — standing down, next go at ' +
            (h + 2) + ':00';
   }
   var out = [intelRebuildPending()];
@@ -5517,7 +5536,7 @@ function intelPendingRefresh(e, hour) {
     try { out.push(intelRebuildRiders()); } catch (e1) { out.push('riders: ' + (e1 && e1.message || e1)); }
     try { out.push(intelRebuildConversion()); } catch (e2) { out.push('conversion: ' + (e2 && e2.message || e2)); }
   }
-  return out.join('\n');
+  return said + out.join('\n');
 }
 function intelRebuildBook()       { return iWallRebuild_('book',       function () { return iBuildBook_(); }); }
 /* All five from the editor — and it must not simply try all five, because they
@@ -6441,6 +6460,15 @@ function intelRoute_(b) {
 
   var session = iSession_(b.token);
   if (!session) return iErr_('Your session has expired — sign in again.');
+
+  /* The Premium Due Desk (PremiumDueDesk.gs) answers everything under
+     intel.pdd., by prefix, so the desk can add an action without another
+     edit here. Its first install asked for three case lines to be typed into
+     the switch below by hand, and a paste of this file would have lost them. */
+  if (action.indexOf('intel.pdd.') === 0) {
+    return typeof pddRoute_ === 'function' ? pddRoute_(action, b, session)
+      : iErr_('The Premium Due Desk is not in this project: add PremiumDueDesk.gs.');
+  }
 
   switch (action) {
     case 'intel.data':    return iActData_(b, session);
@@ -8926,6 +8954,9 @@ function intelHealth_() {
            workbook: iWorkbook_().how,
            /* The last night that failed, and why — empty when the last one was good. */
            lastError: String(iProp_('INTEL_LAST_ERROR') || ''),
+           /* Which PremiumDueDesk.gs is pasted beside this, '' when none: the
+              answer to "did that paste take" for the second file too. */
+           desk: (typeof PDD !== 'undefined' && PDD && PDD.VERSION) || '',
            /* THE MAIL SWITCHES, VISIBLE. Asked on 17 September — "please ensure
               no auto emails go out to agents in the morning" — and the honest
               answer to "are they off?" should be readable, not remembered.
@@ -11950,12 +11981,19 @@ function iSurveyHistoryLine_(row) {
   return bits.join(' ');
 }
 
-/* Everything already sent to this client in the current arrears episode. */
-function iSurveyHistory_(sh, clientNo, today) {
-  var last = sh.getLastRow();
-  if (last < 2 || !clientNo) return null;
-  var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
-  var vals = sh.getRange(2, 1, last - 1, wide).getValues();
+/* Everything already sent to this client in the current arrears episode.
+   `vals` is the tab already read, when the caller has it: iSurveyPool_ reads
+   it once for the whole line instead of once a client, which on a week's line
+   was the difference between seconds and a minute. */
+function iSurveyHistory_(sh, clientNo, today, vals) {
+  if (!clientNo) return null;
+  if (!vals) {
+    var last = sh.getLastRow();
+    if (last < 2) return null;
+    var wide = Math.max(sh.getLastColumn(), ISCOL.STAGE);
+    vals = sh.getRange(2, 1, last - 1, wide).getValues();
+  }
+  if (!vals.length) return null;
   var DAY = 86400000, best = null;
   for (var r = 0; r < vals.length; r++) {
     if (String(vals[r][ISCOL.CLIENTNO - 1]).trim() !== clientNo) continue;
@@ -11998,10 +12036,19 @@ function iSurveyBase_() {
    Excluded: anybody with no usable e-mail, anybody surveyed inside the
    cooldown, and anybody whose policy has been in force less than 90 days —
    a brand-new client whose first collection failed is a servicing call from
-   their agent, not a letter about how long they have been with us. */
-function iSurveyPool_(stage) {
+   their agent, not a letter about how long they have been with us.
+
+   `late` is how many days past the stage a client may be and still be on the
+   line. Every caller but one passes nothing, which is 0: the stage to the
+   day, as it always was. The Premium Due Desk passes six (45 to 51 days),
+   because its letters go at ten on a working day: a client who reached 45 on
+   a Saturday is never on a weekday's exact line, and one checked after ten
+   goes the next working day, at 46. Nobody is written to twice for it: a
+   letter already sent at this stage in the episode still takes them off. */
+function iSurveyPool_(stage, late) {
   stage = Math.round(iNum_(stage)) || 45;
   if (!ISURVEY_STAGES[stage]) return { error: 'Stage must be 45, 60 or 90.' };
+  late = Math.max(0, Math.round(iNum_(late)) || 0);
   var sh = iTabDues_();
   if (!sh) return { error: 'No dues tab found.' };
   var d = iReadCols_(sh, {
@@ -12028,9 +12075,11 @@ function iSurveyPool_(stage) {
   });
 
   var recent = {}, stopped = {}, sh3 = iSurveyTab_(), last3 = sh3.getLastRow();
-  if (last3 > 1) {
-    var wide3 = Math.max(sh3.getLastColumn(), ISCOL.OPTOUT);
-    sh3.getRange(2, 1, last3 - 1, wide3).getValues().forEach(function (r) {
+  /* Read once, wide enough for the history as well as the cooldown. */
+  var vals3 = last3 > 1
+    ? sh3.getRange(2, 1, last3 - 1, Math.max(sh3.getLastColumn(), ISCOL.STAGE)).getValues() : [];
+  if (vals3.length) {
+    vals3.forEach(function (r) {
       var when = r[ISCOL.SENT - 1], who = String(r[ISCOL.CLIENTNO - 1]).trim();
       if (when instanceof Date && (today - when) / DAY < ISURVEY.COOLDOWN) recent[who] = 1;
       /* "Please do not contact me like this again" has to mean it, on every
@@ -12046,7 +12095,9 @@ function iSurveyPool_(stage) {
   for (var r = 0; r < d.rows; r++) {
     if (String(d.get('status', r)).trim() !== '2') continue;
     var paid = iDate_(d.get('paidTo', r));
-    if (!paid || Math.round((today - paid) / DAY) !== stage) continue;
+    if (!paid) continue;
+    var days = Math.round((today - paid) / DAY);
+    if (days < stage || days > stage + late) continue;
     /* A letter names the agent looking after them. Sending one under the name
        of somebody the branch has taken off its books invites the reply nobody
        wants: "she left months ago, who has my file now?" */
@@ -12059,7 +12110,7 @@ function iSurveyPool_(stage) {
     var clientNo = String(d.get('clientNo', r)).trim();
     if (stopped[clientNo]) { skipped.optedOut++; continue; }
 
-    var hist = iSurveyHistory_(sh3, clientNo, today);
+    var hist = iSurveyHistory_(sh3, clientNo, today, vals3);
     if (hist) {
       /* We owe them a call. Asking them to rate us again while their complaint
          sits open is the worst thing this could do — answer them first. */
@@ -12092,7 +12143,7 @@ function iSurveyPool_(stage) {
          instead of pointing at a number that is not there. Without it the
          wording changes rather than leaving a dangling "see below". */
       branchPhone: iProp_('INTEL_BRANCH_PHONE'),
-      stage: stage, hist: hist,
+      stage: stage, days: days, hist: hist,
       tpl: iSurveyTemplate_(years)
     });
   }

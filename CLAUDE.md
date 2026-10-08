@@ -2434,6 +2434,147 @@ voice under the new timing and the caption gives it away.
   once instead of two or three times. `speed7oct/snap-test.js` (24,
   Playwright) and `speed7oct/same.js` (the answer byte for byte the same
   before and after, for every role) in the scratchpad cover it.
+- **The board is in tabs, and every card says who the client is, where they
+  live and who they live with** (7 October 2026, evening: "need more data and
+  spaced out properly scaled professionally and need address and occupation
+  and households!", then "there should be tabs re a call list as staff did
+  indicate an urgent call is needed so deep insights for the branch manager to
+  review and assign … very important on the format, fonts for easy reading on
+  any device", then "the orphan data is pulled from the google branch
+  intelligence sheets … there are many sheets with data").
+  **The tabs.** The branch: Urgent, To assign, Call list, In progress, Done,
+  Households, All clients, then Team and Insights. Staff open on Your calls.
+  An agent gets To call, Done and All (Urgent and Claims only when they have
+  some). Each list tab opens with its own numbers, and a tap on one shows that
+  sub-list. Under them are its breakdowns (why they need us, who asked for the
+  call-back, where they live, letter, was with, age, suggested agent, agent
+  named); a tap on any line filters the list. The breakdowns fold away on a
+  phone. **Households** shows each family as one card, with "Assign the 2 to
+  …" for the family's agent or the head's suggestion.
+  **The card** has five blocks:
+  - Reach them: every number once (`tContactFor_`), the e-mail, how and when.
+  - Lives at: the town, then the address.
+  - About: age, gender, occupation, employer, born, how they pay.
+  - With us: since when, in force, the premium a year, cover.
+  - Household: its name and size, who answered, the family's agent.
+
+  The policies and the household open on the card. The base type is 16 px,
+  and long e-mails wrap (`overflow-wrap:anywhere`), so no tab is wider than a
+  phone.
+  **Call-backs.** The calls sheet's Call-back column (136 for a licensed
+  agent, 6 for the branch, 6 do not call) was buried: 98 of the agent
+  call-backs sat among the "reached by phone" cards. It is now a flag on the
+  client (`tBackOf_`). Staff and the branch set one on the board with the
+  outcome (`transitionUpdate_` `back=agent|branch|dnc|clear`), stamped after
+  the note, so the note is its reason (`[call-back agent 7 Oct · Name]`). It
+  stays open until one of these happens:
+  - it is cleared;
+  - the client is marked Met, Closed or Declined;
+  - for a licensed agent's call-back, the agent named on the client marks the
+    call;
+  - for the branch's call-back, the branch manager or an assistant does.
+
+  It is read from the row holding the most stamps (`tSeq_`). Every update
+  writes the same stamps on each of the client's rows, and `c.markers` keeps
+  each stamp once, so a second flag by the same person on the same day would
+  otherwise vanish behind an earlier clear. Do not call is its own state
+  (`dnc`): off every list to call, with no call buttons. Urgent lists the
+  call-backs first (board flags newest first), then the pressing answers,
+  then the late ones.
+  **Where the card's data comes from.**
+  - The Client Profile: Salesforce's address lines with the town apart, the
+    mobile and home numbers, plan, status, paid to and issued. It was
+    imported once from the scratchpad (`Client-Profile-7Oct.xlsx`, built by
+    `board8/build-profile.js` with the script's own `tProfileRow_`). The
+    morning build refreshes it when the `SF_*` properties are set.
+  - The Client Book: the Branch Portfolio, which is the branch intelligence
+    workbook (`INTEL.WORKBOOK`). Its first tab is now the premium-dues
+    extract: that evening it held 1,359 of the campaign's 4,805 policies. So
+    the build also reads the workbook's in-force book tab (Policy Id, Client
+    Id, Plan, Annual Premium …, found by its columns as `iTabInforce_` finds
+    it). It adds every in-force policy of the campaign's clients and takes the
+    plan's name and the premium a year as recorded (`tInforceRead_`). The
+    portfolio's Address runs its lines together, and `tAddrSplit_` puts the
+    commas back.
+  - The Call List, last.
+
+  `tProfileFor_` reads the profile by client number when the Client Book is
+  not built, so the cards say who the client is either way. The page never
+  reads the row numbers, or the old sheet's copy of the address once the
+  contact carries it, so `tBoardSlim_` leaves them out: 1.3 MB for the
+  branch.
+  Tests in the scratchpad:
+  - `board8/board-test.js` (49, Playwright on the real tabs);
+  - `board8/book-build.js` (18, the build on the real first tab and a
+    made-up in-force tab);
+  - `board8/back-harness.js` (23, the call-back rules);
+  - `board8/ported/` (the snapshot test 24, calls 25, the introduction hold 16).
+- **Everyone sees what they have logged, and signs in with a first name** (8 October 2026: "have you made the log in
+  easy and can staff place the notes in the log in and see what they have done as well managers log in and agents?").
+  - **Your work** is a tab for anyone signed in as themselves: staff, agents and unit managers. It is second for
+    staff, after Your calls, and second for an agent, after To call. It gives today's and the last seven days' counts:
+    clients logged, reached, no answer, call-backs flagged (staff only), and agents named (whoever may name). Under
+    them is every outcome they marked, newest first, one line a client a day, with the call-back flagged and the note
+    they wrote. A name opens the client.
+  - The tab reads the same stamps as the branch's Team tab (`[no answer 8 Oct · Name] note`), matched to the signed-in
+    name, so the two always agree. A naming made by staff is read from its "named by" file note.
+  - Stamps are kept once each, so two tries on one client on one day count as one.
+  - **A unit manager's Team tab** now shows "On your team's clients": the same table and notes the branch sees, over
+    his team's clients.
+  - **Sign-in** (`tWho_`):
+    - A first name alone opens, when exactly one active person on the Agent Skill Bank carries it. Two people with
+      one first name, and neither opens on it: the number or the full name does.
+    - A full name matches whatever its spacing, hyphens or capitals.
+    - Wrong tries count against the person, however they were named (`tries-p-<name>`), never per spelling.
+    - Someone who was the agent on these books still never signs in.
+    - The gate asks for the "agent number or your name" and says the device keeps you signed in until Sign out.
+  - **Signing out clears the client that was open** (`#t=`), so the next person on the device never lands on it.
+  - **A name written on a `/call` row is read** (`tBoard_`). An agent named on a client who never answered, after
+    staff logged a call on them, is written onto the call row, the only row there is. Until 8 October the board
+    returned from a call row before reading Assigned to, so the agent's list missed the client until the assignment
+    sync caught up.
+  - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
+    memory).
+- **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
+  and % of work completed etc a lot of insights and filter ability").
+  - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after
+    Your work, over his team's clients. Staff and agents have no Dashboard. Their own shares are at the top of Your
+    work: a caller's list tried and reached, or an agent's clients spoken to and completed.
+  - **One filter row scopes every number:** the period (today, 7 days, 30 days, since the letters; remembered on the
+    device), the former agent's book, the letter, the town, one person (a caller or an agent), and one unit (the branch
+    only). Tapping a row in any table narrows the whole page to it.
+  - **The words have fixed meanings** (the page's "How the numbers are made" says them):
+    - *Asked*: a client who answered with something that needs a person, not a note alone.
+    - *Spoken to*: Called, Met or Declined on the board, reached by phone, or "reached: Yes" on the old calls sheet.
+    - *Tried*: any outcome logged, or a try on the sheet.
+    - *Completed*: every answer closed, or Met, Closed or Declined.
+    - *Late*: open past `WAIT_DAYS` with nobody named.
+  - **What it shows:**
+    - One hero figure: the share of the clients who asked that have been spoken to, named or completed.
+    - A stage bar (completed, agent named, spoken to, nobody yet), on an ordered teal ramp checked with the dataviz
+      validator (`#62bfd2`, `#1d8fa6`, `#07606f`), and tiles, the late one in the stop colour with its "!".
+    - The call lists (reached, tried, not tried) and the open call-backs.
+    - The period's numbers.
+    - Two charts by day, answers coming in and clients with a call logged. Each has a column a day, the period in teal
+      and the days before it in grey, a hover or focus value on every column, and every number in a table under them.
+    - "What stands out": computed facts, never advice.
+    - Client Support on the board, the agents (with the clients named more than `WAIT_DAYS` ago and nothing logged),
+      and every book, letter or town.
+  - **Client Support in Salesforce** is the branch's alone (`tSfWork_`, asked for as the board request with
+    `sfwork=1`, so Service.gs needed no new route and no paste). It counts the orphan tasks since 1 October per
+    person:
+    - tasks held and closed;
+    - closed with no note, which means no post or comment by anyone but the branch manager, whose user also posts the
+      routine's instructions;
+    - open and untouched, overdue and due today;
+    - closures and notes in the period.
+
+    It is kept ten minutes, and says how to link Salesforce when the `SF_*` properties are missing. Tasks carry no book
+    or letter, so only the period narrows that table, and the page says so.
+  - Calls written only in Salesforce Chatter are not on the board, so they count only in the Salesforce table.
+  - `work8/dash-test.js` in the scratchpad covers it (42 checks, Node and Playwright, the real tabs, made-up Salesforce
+    tasks). It serves the site's `receipt.json` and `receipt.html` to the demo backend, which has no network. Without
+    them the board has no answers, and every count that reads one, such as "former agent in touch", is 0 in a test.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
@@ -2522,6 +2663,59 @@ management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
 - **Tuesday is send day**; the group is asked to answer by Friday. Every letter
   is logged on `Group Sends` with the letter itself; without Microsoft 365 it
   opens in the staff member's Outlook and is still logged.
+
+## The Premium Due Desk — checked by a person, sent at ten
+
+`premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
+project (the tracker's: `Intelligence.gs` beside `KPI.gs`, its own `/exec`).
+Asked for on 7 October 2026: "a trigger go out when a client premium is 45 days
+due with built in responses for them to select", then "a staff has to do a
+check mark to ensure due diligence is done, once they check it goes out", then
+"a time at 10am".
+
+- **A tick is a check, recorded on the spot** on the **Premium Due Checks** tab:
+  who, when, the client's address and agent as checked, and any flag on the row
+  they ticked through. The box is enabled only once that client's letter has
+  been opened on the desk; there is no send button and no "tick all". "Do not
+  send" takes a reason and is recorded too. Staff and the branch manager tick;
+  an agent or a unit manager reads the letters and never ticks, because the
+  letter asks the client to rate their agent.
+- **The letters go at ten, Monday to Friday.** Ticked before 10:00, that
+  morning; after, at ten on the next working day. The send runs inside
+  `intelPendingRefresh`, the hourly trigger, from the ten o'clock hour
+  (`pddRun_`): the project is one trigger short of its twenty, so no new
+  trigger. A firing missed at ten is caught up the next hour.
+- **The line is 45 to 51 days** (`iSurveyPool_(45, 6)`; every other caller
+  passes nothing and keeps the 45th day exactly), so a Saturday's 45s and a
+  tick made after ten still go. A client written to at 45 in the episode stays
+  off it, so no one gets two.
+- **The responses are the letter's own**: the 1–5 rating and the five taps
+  under it. Nothing in the letter changed, so the wording approval holds; a
+  new tap would change `iSurveyHash_` and stop live sends until re-approved.
+- **At ten the send reads the line afresh** and sends only a client still on
+  it, with the address and agent that were checked; otherwise "not sent", with
+  the reason, on the desk and in one internal summary to the manager. Live only
+  with client mail live and the wording approved; in test mode each letter goes
+  to the test inbox and the client is not marked as written to; held, ticks wait
+  and a client past 51 days drops off. It logs on Intel Surveys before it sends
+  and takes the log back if the mail fails. It stays inside the day's mail
+  allowance (a consumer Google account: about 100 recipients a day, and each
+  letter copies the agent, every staff member on the access list and the unit
+  manager), oldest first; the rest wait. Every write is conditional on the
+  check still reading what the send saw, under the script lock the tracker's
+  submissions use, held for a write and no longer.
+- **The taps need the web app's `/exec` address**, which a time trigger is
+  not reliably given; the desk notes it from any request (`PDD_EXEC_URL`), and
+  `INTEL_EXEC_URL` wins. Without one the live send holds and the desk names the
+  property to set.
+- **The branch workbook reached Google's ten-million-cell ceiling on 21
+  September 2026** (the nightly build has reported it since; `intel.ping`
+  shows `lastError`). The checks tab goes there when it can and to the
+  tracker's own workbook when a new tab is refused.
+- Install: paste `Intelligence.gs` and `PremiumDueDesk.gs` (all over), then a
+  New version. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
+  `pddToday()`, `pddSendNow()`. `pdd10/` in the session scratchpad holds the
+  harness (`test.js`, 101 checks; `page-test.js`, 33, Playwright).
 
 ## Standing rules
 
