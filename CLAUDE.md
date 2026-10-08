@@ -2535,6 +2535,46 @@ voice under the new timing and the caption gives it away.
     sync caught up.
   - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
     memory).
+- **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
+  and % of work completed etc a lot of insights and filter ability").
+  - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after
+    Your work, over his team's clients. Staff and agents have no Dashboard. Their own shares are at the top of Your
+    work: a caller's list tried and reached, or an agent's clients spoken to and completed.
+  - **One filter row scopes every number:** the period (today, 7 days, 30 days, since the letters; remembered on the
+    device), the former agent's book, the letter, the town, one person (a caller or an agent), and one unit (the branch
+    only). Tapping a row in any table narrows the whole page to it.
+  - **The words have fixed meanings** (the page's "How the numbers are made" says them):
+    - *Asked*: a client who answered with something that needs a person, not a note alone.
+    - *Spoken to*: Called, Met or Declined on the board, reached by phone, or "reached: Yes" on the old calls sheet.
+    - *Tried*: any outcome logged, or a try on the sheet.
+    - *Completed*: every answer closed, or Met, Closed or Declined.
+    - *Late*: open past `WAIT_DAYS` with nobody named.
+  - **What it shows:**
+    - One hero figure: the share of the clients who asked that have been spoken to, named or completed.
+    - A stage bar (completed, agent named, spoken to, nobody yet), on an ordered teal ramp checked with the dataviz
+      validator (`#62bfd2`, `#1d8fa6`, `#07606f`), and tiles, the late one in the stop colour with its "!".
+    - The call lists (reached, tried, not tried) and the open call-backs.
+    - The period's numbers.
+    - Two charts by day, answers coming in and clients with a call logged. Each has a column a day, the period in teal
+      and the days before it in grey, a hover or focus value on every column, and every number in a table under them.
+    - "What stands out": computed facts, never advice.
+    - Client Support on the board, the agents (with the clients named more than `WAIT_DAYS` ago and nothing logged),
+      and every book, letter or town.
+  - **Client Support in Salesforce** is the branch's alone (`tSfWork_`, asked for as the board request with
+    `sfwork=1`, so Service.gs needed no new route and no paste). It counts the orphan tasks since 1 October per
+    person:
+    - tasks held and closed;
+    - closed with no note, which means no post or comment by anyone but the branch manager, whose user also posts the
+      routine's instructions;
+    - open and untouched, overdue and due today;
+    - closures and notes in the period.
+
+    It is kept ten minutes, and says how to link Salesforce when the `SF_*` properties are missing. Tasks carry no book
+    or letter, so only the period narrows that table, and the page says so.
+  - Calls written only in Salesforce Chatter are not on the board, so they count only in the Salesforce table.
+  - `work8/dash-test.js` in the scratchpad covers it (42 checks, Node and Playwright, the real tabs, made-up Salesforce
+    tasks). It serves the site's `receipt.json` and `receipt.html` to the demo backend, which has no network. Without
+    them the board has no answers, and every count that reads one, such as "former agent in touch", is 0 in a test.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

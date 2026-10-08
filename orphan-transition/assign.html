@@ -264,6 +264,38 @@
   .team td{padding:6px 10px 6px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team td b{color:var(--ink)}
   .team h4{margin:12px 0 6px;font:700 15px var(--fh);color:var(--ink)} .team ul{list-style:none;margin:0 0 12px;padding:0;font-size:14.5px}
   .team li{padding:7px 0;border-bottom:1px solid #eef2f5;color:var(--body)} .team li a{color:var(--tdark);font-weight:600;text-decoration:none} .team li i{font-style:normal;color:var(--dim)}
+  /* the dashboard: one filter row, tiles, a stage bar, two day-charts, tables (8 October 2026) */
+  .dfil{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin:2px 0 10px}
+  .dper{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+  .dper{max-width:100%} .dper button{border:0;background:none;font:600 14px var(--fb);padding:8px 13px;color:var(--body);cursor:pointer;min-height:38px;white-space:nowrap}
+  .dper button.on{background:var(--navy);color:#fff}
+  .dfil select{font:inherit;font-size:14px;padding:8px 9px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);max-width:190px;min-height:38px}
+  .dfil .dclear{background:none;border:0;color:var(--tdark);font:600 14px var(--fb);cursor:pointer;padding:6px 4px}
+  .dscope{font-size:14px;color:var(--dim);margin:0 0 8px;line-height:1.5} .dscope b{color:var(--body)}
+  .dhero{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;margin:2px 0 6px} .dhero>b{font:800 52px/1 var(--fh);color:var(--ink);letter-spacing:-1px}
+  .dhero span{font-size:15.5px;color:var(--body);max-width:560px;line-height:1.45} .dhero span b{font-weight:700;color:var(--ink)}
+  .dtiles{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(158px,1fr));margin:10px 0 4px}
+  .dtile{background:#fbfcfd;border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0;text-align:left;font:inherit;color:inherit}
+  button.dtile{cursor:pointer} button.dtile:hover{border-color:var(--teal)}
+  .dtile b{display:block;font:800 26px/1.15 var(--fh);color:var(--ink)} .dtile span{display:block;font-size:13.5px;color:var(--body);margin-top:2px}
+  .dtile i{display:block;font-style:normal;font-size:12.5px;color:var(--dim);margin-top:2px}
+  .dtile.crit{background:var(--stopbg);border-color:var(--stopline)} .dtile.crit b{color:var(--stop)} .dtile.crit span::before{content:'! ';font-weight:800;color:var(--stop)}
+  .dstack{display:flex;gap:2px;height:16px;margin:12px 0 6px} .dstack i{display:block;height:100%;min-width:2px} .dstack i:first-child{border-radius:4px 0 0 4px} .dstack i:last-child{border-radius:0 4px 4px 0}
+  .dleg{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:13.5px;color:var(--body);margin:0 0 4px} .dleg span{display:inline-flex;align-items:center;gap:6px}
+  .dleg span::before{content:'';width:10px;height:10px;border-radius:2px;background:var(--sw)} .dleg em{font-style:normal;font-weight:700;color:var(--ink)}
+  .dgrid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr))} .dgrid>.card{margin-top:12px}
+  .dcard h3{font:800 17px var(--fh);color:var(--ink);margin:0 0 2px} .dcard .dsub{font-size:13.5px;color:var(--dim);margin:0 0 6px}
+  .dchart{position:relative} .dchart svg{width:100%;height:auto;display:block;overflow:visible} .dchart .dbar{cursor:default} .dchart .dbar:focus{outline:none} .dchart .dbar:focus rect.m,.dchart .dbar:hover rect.m{opacity:.8}
+  .dtip{position:absolute;pointer-events:none;background:var(--navy);color:#fff;font-size:13px;padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);z-index:5}
+  .dtip b{font-size:15px}
+  .dtw{overflow-x:auto;margin:6px 0 2px} table.dt{border-collapse:collapse;width:100%;font-size:14px} .dt th{text-align:left;font-size:12.5px;color:var(--dim);font-weight:600;padding:6px 12px 6px 0;border-bottom:1px solid var(--line);white-space:nowrap}
+  .dt td{padding:7px 12px 7px 0;border-bottom:1px solid #eef2f5;color:var(--body);white-space:nowrap;font-variant-numeric:tabular-nums} .dt td:first-child{white-space:normal;min-width:120px;color:var(--ink);font-weight:600}
+  .dt tr.go{cursor:pointer} .dt tr.go:hover td{background:#f5fafc} .dt td.bad{color:var(--stop);font-weight:700}
+  .dm{display:inline-flex;align-items:center;gap:7px} .dm i{display:inline-block;width:64px;height:8px;border-radius:4px;background:#d4eef3;overflow:hidden;vertical-align:middle} .dm i s{display:block;height:100%;background:#07606f;text-decoration:none}
+  .dby{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;margin:2px 0 6px} .dby button{border:0;background:none;font:600 13.5px var(--fb);padding:6px 11px;color:var(--body);cursor:pointer} .dby button.on{background:var(--tdark);color:#fff}
+  .dstand{margin:4px 0 0;padding:0;list-style:none} .dstand li{padding:7px 0;border-bottom:1px solid #eef2f5;font-size:14.5px;color:var(--body);line-height:1.5} .dstand li b{color:var(--ink)}
+  details.dnums summary{cursor:pointer;color:var(--tdark);font-weight:600;font-size:13.5px;margin-top:8px}
+  @media (max-width:520px){.dper{display:flex;width:100%} .dper button{flex:1 1 auto;padding:8px 6px;font-size:13px} .dfil select{flex:1 1 140px;max-width:none;min-width:0} .dhero>b{font-size:44px}}
   .wtally{display:flex;flex-wrap:wrap;gap:4px 16px;align-items:baseline;padding:9px 0;border-bottom:1px solid #eef2f5;font-size:15px;color:var(--body)}
   .wtally b{min-width:100px;color:var(--ink);font:700 15px var(--fh)} .wtally em{font-style:normal;font-weight:800;font-size:18px;color:var(--ink)}
   .team .allnotes{background:none;border:0;color:var(--tdark);font:600 14px var(--fb);cursor:pointer;padding:0 0 12px}
@@ -471,6 +503,24 @@
       <div class="subs" id="hhSubs"></div>
       <div class="toolbar"><input type="search" id="hSearch" placeholder="Search a name, client number or town" aria-label="Search households"></div>
       <div id="hhList"></div>
+    </div>
+
+    <!-- the dashboard: where the work stands, what came in, who did what -->
+    <div class="pane" id="paneDash" hidden>
+      <div class="dfil" id="dFil"></div>
+      <p class="dscope" id="dScope"></p>
+      <div class="card dcard"><div class="dhero" id="dHero"></div><div id="dStages"></div><div class="dtiles" id="dTiles"></div></div>
+      <div class="dgrid">
+        <div class="card dcard" id="dCalls"></div>
+        <div class="card dcard" id="dPeriod"></div>
+      </div>
+      <div class="card dcard" id="dDays"></div>
+      <div class="card dcard" id="dStand"></div>
+      <div class="card dcard" id="dStaff"></div>
+      <div class="card dcard" id="dSf"></div>
+      <div class="card dcard" id="dAgents"></div>
+      <div class="card dcard" id="dBy"></div>
+      <p class="pnote" id="dHow"></p>
     </div>
 
     <!-- your work: every call you marked, with your notes, newest first -->
@@ -716,20 +766,21 @@ var TABDEF = {
   households: { label: 'Households', pane: 'paneHouseholds' },
   all: { label: 'All clients', title: 'Every client on the board', test: function () { return true; } },
   work: { label: 'Your work', pane: 'paneWork' },
+  dash: { label: 'Dashboard', pane: 'paneDash' },
   team: { label: 'Team', pane: 'paneTeam', sep: true },
   insights: { label: 'Insights', pane: 'paneInsights' },
   claims: { label: 'Claims', pane: 'paneClaims' }
 };
 function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
-  if (r === 'branch') return ['urgent', 'assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights'];
+  if (r === 'branch') return ['urgent', 'dash', 'assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights'];
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
   if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'calls', 'assign', 'progress', 'done', 'households', 'all']);
   var out = ['open'].concat(work);
   if (d.clients.some(urgentOf)) out.push('urgent');
   out = out.concat(['done', 'all']);
-  if (r === 'unit') out.push('team');
+  if (r === 'unit') { out.splice(out.indexOf('work') + 1, 0, 'dash'); out.push('team'); }
   if (claims) out.push('claims');
   return out;
 }
@@ -873,10 +924,11 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
   else if (pane === 'paneWork') workPane();
+  else if (pane === 'paneDash') dashPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
   else if (pane === 'paneClaims') claimsPanel(D);
@@ -1567,6 +1619,302 @@ function togglePol(token, btn) {
   });
 }
 
+/* ---- the Dashboard tab ---- */
+/* 8 October 2026: "need to have dash analytics and % of work completed etc a lot of insights and filter ability". One row
+   of filters scopes every number under it: the period (what came in and what was logged in it) and who the clients are
+   (the former agent's book, the letter, the town, one person, one unit). Under it: how far the clients who asked us for
+   something have got (spoken to, an agent named, completed), the call lists and the call-backs, what came in and was
+   logged by day, what stands out, Client Support on the board and in Salesforce, the agents, and every book, letter or
+   town. All of it read from what the board already holds, so it always agrees with the lists; the staff's Salesforce tasks
+   come with sfwork=1, for the branch. Facts only: the page never says what anyone should have done. */
+var DF = { per: '7', book: '', seg: '', town: '', who: '', unit: '', by: 'book' };
+try { var DFP = localStorage.getItem('rrb-dash-period'); if (/^(today|7|30|all)$/.test(DFP || '')) DF.per = DFP; } catch (e) {}
+var SFW = null, SFW_AT = 0, SFW_BUSY = false;
+var D_OUT = /^\[(called|met|no answer|declined|closed|open) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/;
+/* the stages, furthest first: an ordered teal ramp (checked light to dark), and the grey track for "not yet" */
+var D_STAGES = [['done', 'Completed', '#07606f'], ['named', 'Agent named', '#1d8fa6'], ['spoken', 'Spoken to', '#62bfd2'], ['waiting', 'Nobody has spoken to them yet', '#e3eaef']];
+var D_PER = [['today', 'Today'], ['7', '7 days'], ['30', '30 days'], ['all', 'Since the letters']];
+function dOuts(c) { return (c.markers || []).map(function (m) { return D_OUT.exec(m); }).filter(Boolean); }
+function dAnswered(c) { return ['open', 'assigned', 'done', 'noted'].indexOf(c.state) >= 0; }
+/* a client who asked us for something: an answer that needs a person, not a note alone */
+function dAsked(c) { return dAnswered(c) && c.state !== 'noted'; }
+/* someone spoke to them: Called, Met or Declined on the board, reached by phone, or "reached: Yes" on the old calls sheet */
+function dSpoken(c) {
+  if (dOuts(c).some(function (m) { return m[1] === 'called' || m[1] === 'met' || m[1] === 'declined'; })) return true;
+  if (/^(called|met|declined)$/i.test(c.mark || '') || c.state === 'reached') return true;
+  return !!(c.call && /reached: yes/i.test(c.call.sheet || ''));
+}
+/* someone tried: any outcome logged, or a try on the old calls sheet */
+function dTried(c) { return dSpoken(c) || dOuts(c).length > 0 || c.state === 'called' || !!(c.call && /tr(?:y|ies) on the sheet|reached: (?:no answer|not reached)/i.test(c.call.sheet || '')); }
+function dDone(c) { return c.state === 'done' || /^(met|closed|declined)$/i.test(c.mark || ''); }
+function dStage(c) { return dDone(c) ? 'done' : c.assigned ? 'named' : dSpoken(c) ? 'spoken' : 'waiting'; }
+function dToday() { var n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(); }
+function dFrom() { return DF.per === 'all' ? 0 : dToday() - ((DF.per === 'today' ? 1 : Number(DF.per)) - 1) * 86400000; }
+function dIn(day) { var x = day ? dayOf(day) : null; return !!x && x.getTime() >= dFrom(); }
+function dAnsDay(c) { var m = /^(\d{1,2} [A-Za-z]{3})/.exec(c.first || ''); return m ? m[1] : ''; }
+function dUnit(u) { var g = (D.units || []).filter(function (x) { return x.key === u; })[0]; return g ? [g.lead].concat((g.people || []).map(function (p) { return p.name; })).filter(Boolean) : []; }
+function dMatch(c) {
+  if (DF.book && c.book !== DF.book) return false;
+  if (DF.seg && c.seg !== DF.seg) return false;
+  if (DF.town && townOf(c) !== DF.town) return false;
+  if (DF.who) {
+    var w = DF.who;
+    if (!(sameName((c.call && c.call.caller) || '', w) || sameName(c.assigned, w) || (c.back && sameName(c.back.by, w)) || dOuts(c).some(function (m) { return sameName(m[3], w); }))) return false;
+  }
+  if (DF.unit && !dUnit(DF.unit).some(function (n) { return sameName(c.assigned, n); })) return false;
+  return true;
+}
+function pc(n, of) { return of ? Math.round(100 * n / of) : 0; }
+function dMeter(n, of) { var p = pc(n, of); return '<span class="dm"><i><s style="width:' + p + '%"></s></i>' + (of ? p + '%' : '–') + '</span>'; }
+function dTile(n, label, note, cls, go) {
+  var inner = '<b>' + n + '</b><span>' + esc(label) + '</span>' + (note ? '<i>' + esc(note) + '</i>' : '');
+  return go ? '<button type="button" class="dtile ' + (cls || '') + '" data-go="' + go + '">' + inner + '</button>' : '<div class="dtile ' + (cls || '') + '">' + inner + '</div>';
+}
+/* a stacked bar, its parts in order with a 2px gap, and its legend with each part's count and share */
+function dStack(parts, total) {
+  if (!total) return '';
+  return '<div class="dstack" role="img" aria-label="' + esc(parts.map(function (p) { return p[1] + ' ' + p[3]; }).join(', ')) + '">' +
+    parts.filter(function (p) { return p[3]; }).map(function (p) { return '<i style="background:' + p[2] + ';flex:' + p[3] + '" title="' + esc(p[1] + ': ' + p[3] + ' (' + pc(p[3], total) + '%)') + '"></i>'; }).join('') + '</div>' +
+    '<div class="dleg">' + parts.map(function (p) { return '<span style="--sw:' + p[2] + '">' + esc(p[1]) + ' <em>' + p[3] + '</em> (' + pc(p[3], total) + '%)</span>'; }).join('') + '</div>';
+}
+/* one series by day: columns of at most 24px with a rounded top on one baseline, the period's days in the accent and the
+   days before it in grey (emphasis), the highest labelled, every column a hover and focus target with its value */
+function dBars(days, vals, label) {
+  var W = 640, H = 150, top = 18, bot = 22, n = days.length, band = W / Math.max(n, 1), bw = Math.min(24, band * 0.62);
+  var max = Math.max.apply(null, vals.concat([1])), ph = H - top - bot, from = dFrom(), hi = vals.indexOf(Math.max.apply(null, vals));
+  var tick = max <= 5 ? max : Math.ceil(max / 5) * 5, y = function (v) { return top + ph - ph * v / tick; };
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label) + ' by day">' +
+    '<line x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="#d5e1e8" stroke-width="1"/>' +
+    '<line x1="0" x2="' + W + '" y1="' + y(tick) + '" y2="' + y(tick) + '" stroke="#eef2f5" stroke-width="1"/>' +
+    '<text x="0" y="' + (y(tick) - 5) + '" font-size="11" fill="#5d7186">' + tick + '</text>';
+  days.forEach(function (d, i) {
+    var v = vals[i], x = band * i + (band - bw) / 2, h = ph * v / tick, yy = y(v), on = d.t >= from, r = Math.min(4, h / 2);
+    var path = v ? 'M' + x + ',' + y(0) + 'V' + (yy + r) + 'Q' + x + ',' + yy + ' ' + (x + r) + ',' + yy + 'H' + (x + bw - r) + 'Q' + (x + bw) + ',' + yy + ' ' + (x + bw) + ',' + (yy + r) + 'V' + y(0) + 'Z' : '';
+    out += '<g class="dbar" tabindex="0" data-tip="' + esc(d.label + ': ' + v) + '" aria-label="' + esc(d.label + ', ' + label + ' ' + v) + '">' +
+      '<rect x="' + (band * i) + '" y="' + top + '" width="' + band + '" height="' + (ph + bot) + '" fill="transparent"/>' +
+      (path ? '<path class="m" d="' + path + '" fill="' + (on ? '#07606f' : '#c3cfd8') + '"/>' : '') +
+      (i === hi && v ? '<text x="' + (x + bw / 2) + '" y="' + (yy - 4) + '" font-size="11.5" font-weight="700" text-anchor="middle" fill="#12202e">' + v + '</text>' : '') +
+      ((n <= 16 || i % Math.ceil(n / 12) === 0 || i === n - 1) ? '<text x="' + (x + bw / 2) + '" y="' + (H - 6) + '" font-size="10.5" text-anchor="middle" fill="#5d7186">' + esc(d.short) + '</text>' : '') + '</g>';
+  });
+  return '<div class="dchart">' + out + '</svg><div class="dtip" hidden></div></div>';
+}
+function dTips(root) {
+  Array.prototype.forEach.call(root.querySelectorAll('.dchart'), function (ch) {
+    var tip = ch.querySelector('.dtip');
+    var show = function (g) {
+      var r = g.getBoundingClientRect(), b = ch.getBoundingClientRect();
+      tip.textContent = g.getAttribute('data-tip'); tip.hidden = false;
+      tip.style.left = (r.left - b.left + r.width / 2) + 'px'; tip.style.top = (r.top - b.top + 14) + 'px';
+    };
+    Array.prototype.forEach.call(ch.querySelectorAll('.dbar'), function (g) {
+      g.addEventListener('mouseenter', function () { show(g); }); g.addEventListener('focus', function () { show(g); });
+      g.addEventListener('mouseleave', function () { tip.hidden = true; }); g.addEventListener('blur', function () { tip.hidden = true; });
+    });
+  });
+}
+function dashFilters() {
+  var d = D, all = everyone(), branch = d.role === 'branch';
+  var opt = function (v, t, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+  var sel = function (id, label, vals, cur, words) {
+    return '<select id="' + id + '" aria-label="' + esc(label) + '">' + opt('', label, cur) + vals.map(function (v) { return opt(v, words ? words(v) : v, cur); }).join('') + '</select>';
+  };
+  var callers = unique(all.map(function (c) { return (c.call && c.call.caller) || ''; }));
+  var agents = unique(all.map(function (c) { return c.assigned || ''; }).concat((d.agents || []).map(function (a) { return a.name; })));
+  var who = '<select id="dWho" aria-label="One person">' + opt('', 'Everyone', DF.who) +
+    (callers.length ? '<optgroup label="Client Support">' + callers.map(function (v) { return opt(v, v, DF.who); }).join('') + '</optgroup>' : '') +
+    (agents.length ? '<optgroup label="Agents">' + agents.map(function (v) { return opt(v, v, DF.who); }).join('') + '</optgroup>' : '') + '</select>';
+  var units = branch && d.units && d.units.length ? sel('dUnit', 'Every unit', d.units.filter(function (u) { return u.lead; }).map(function (u) { return u.key; }), DF.unit,
+    function (k) { var g = d.units.filter(function (u) { return u.key === k; })[0]; return g ? g.lead + '’s unit' : k; }) : '';
+  var nf = ['book', 'seg', 'town', 'who', 'unit'].filter(function (k) { return DF[k]; }).length;
+  $('dFil').innerHTML = '<span class="dper" role="group" aria-label="Period">' + D_PER.map(function (p) { return '<button type="button" data-per="' + p[0] + '" class="' + (DF.per === p[0] ? 'on' : '') + '">' + p[1] + '</button>'; }).join('') + '</span>' +
+    sel('dBook', 'Every book', unique(all.map(function (c) { return c.book || ''; })), DF.book, function (b) { return 'Was with ' + b; }) +
+    sel('dSeg', 'Every letter', unique(all.map(function (c) { return c.seg || ''; })), DF.seg, function (s) { return s + (LETTER_WORDS[s] ? ': ' + LETTER_WORDS[s] : ''); }) +
+    sel('dTown', 'Every town', unique(all.map(townOf)), DF.town) + who + units +
+    (nf ? '<button type="button" class="dclear" id="dClear">Clear ' + nf + ' filter' + (nf === 1 ? '' : 's') + '</button>' : '');
+  each('#dFil [data-per]', function (b) { b.addEventListener('click', function () { DF.per = b.getAttribute('data-per'); try { localStorage.setItem('rrb-dash-period', DF.per); } catch (e) {} dashPane(); }); });
+  [['dBook', 'book'], ['dSeg', 'seg'], ['dTown', 'town'], ['dWho', 'who'], ['dUnit', 'unit']].forEach(function (x) {
+    if ($(x[0])) $(x[0]).addEventListener('change', function () { DF[x[1]] = $(x[0]).value; dashPane(); });
+  });
+  if ($('dClear')) $('dClear').addEventListener('click', function () { DF.book = DF.seg = DF.town = DF.who = DF.unit = ''; dashPane(); });
+}
+function dashPane() {
+  var d = D, branch = d.role === 'branch';
+  dashFilters();
+  var pop = everyone().filter(dMatch), ans = pop.filter(dAnswered), asked = ans.filter(dAsked);
+  var st = { done: 0, named: 0, spoken: 0, waiting: 0 };
+  asked.forEach(function (c) { st[dStage(c)]++; });
+  var spoken = asked.filter(dSpoken).length, named = asked.filter(function (c) { return !!c.assigned; }).length, done = st.done;
+  var late = asked.filter(function (c) { return c.open && c.late && !c.assigned; }).length, acted = asked.length - st.waiting;
+  var per = D_PER.filter(function (p) { return p[0] === DF.per; })[0][1].toLowerCase(), perIn = DF.per === 'today' ? 'today' : DF.per === 'all' ? 'since the letters' : 'in the last ' + per;
+  var nf = ['book', 'seg', 'town', 'who', 'unit'].filter(function (k) { return DF[k]; });
+  $('dScope').innerHTML = '<b>' + ans.length + '</b> clients answered' + (pop.some(function (c) { return c.call; }) ? ' · <b>' + pop.filter(function (c) { return c.call; }).length + '</b> on the call lists' : '') +
+    (nf.length ? ' · narrowed to ' + esc(nf.map(function (k) { return k === 'book' ? 'was with ' + DF.book : k === 'seg' ? 'letter ' + DF.seg : k === 'unit' ? (dUnit(DF.unit)[0] || '') + '’s unit' : DF[k]; }).join(', ')) : '') +
+    ' · activity ' + esc(perIn) + '.';
+  /* the stages */
+  $('dHero').innerHTML = asked.length ? '<b>' + pc(acted, asked.length) + '%</b><span>of the <b>' + asked.length + '</b> clients who asked us for something have been spoken to, have an agent named, or are completed. <b>' + pc(done, asked.length) + '%</b> are completed.</span>'
+    : '<span>Nobody in this view has asked us for anything yet.</span>';
+  $('dStages').innerHTML = dStack(D_STAGES.map(function (s) { return [s[0], s[1], s[2], st[s[0]]]; }), asked.length);
+  $('dTiles').innerHTML = dTile(ans.length, 'Answered the letter', ans.length - asked.length ? (ans.length - asked.length) + ' only noted it' : '') +
+    dTile(pc(spoken, asked.length) + '%', 'Spoken to', spoken + ' of ' + asked.length) +
+    dTile(pc(named, asked.length) + '%', 'Agent named', named + ' of ' + asked.length, '', 'progress') +
+    dTile(pc(done, asked.length) + '%', 'Completed', done + ': met, closed or declined', '', 'done') +
+    dTile(late, 'Late, nobody named', 'waited past ' + (d.waitDays || 2) + ' working days', late ? 'crit' : '', late ? 'late' : '');
+  /* the call lists and the call-backs */
+  var L = pop.filter(function (c) { return !!c.call; }), Lr = L.filter(dSpoken).length, Lt = L.filter(dTried).length, dnc = L.filter(function (c) { return c.state === 'dnc'; }).length;
+  var F = pop.filter(function (c) { return c.back && c.back.kind !== 'dnc'; }), Fo = F.filter(backOpen), Fa = Fo.filter(function (c) { return c.back.kind !== 'branch' && !c.assigned; }).length;
+  $('dCalls').innerHTML = '<h3>The call lists</h3><p class="dsub">Client Support&rsquo;s lists, the board&rsquo;s tries and the old calls sheet together.</p>' +
+    (L.length ? dStack([['r', 'Reached', '#07606f', Lr], ['t', 'Tried, not reached', '#62bfd2', Lt - Lr], ['n', 'Not tried yet', '#e3eaef', L.length - Lt]], L.length) +
+      '<div class="dtiles">' + dTile(pc(Lt, L.length) + '%', 'Tried', Lt + ' of ' + L.length, '', 'calls') + dTile(pc(Lr, L.length) + '%', 'Reached', Lr + ' of ' + L.length) +
+      dTile(Fo.length, 'Call-backs still open', Fa ? Fa + ' for a licensed agent, nobody named' : (F.length ? (F.length - Fo.length) + ' of ' + F.length + ' closed' : ''), Fa ? 'crit' : '', Fo.length ? 'urgent' : '') +
+      (dnc ? dTile(dnc, 'Asked not to be called') : '') + '</div>'
+      : '<p class="dsub">Nobody in this view is on a call list.</p>');
+  /* the period */
+  var inA = ans.filter(function (c) { return dIn(dAnsDay(c)); }).length, logged = {}, loggedN = 0;
+  pop.forEach(function (c) { dOuts(c).forEach(function (m) { if (dIn(m[2]) && !logged[c.token + m[2]]) { logged[c.token + m[2]] = 1; loggedN++; } }); });
+  var namedIn = pop.filter(function (c) { return c.assigned && dIn(c.assignedOn); }).length, backsIn = F.filter(function (c) { return c.back.on ? dIn(c.back.on) : DF.per === 'all'; }).length;
+  var reachedIn = 0;
+  pop.forEach(function (c) { if (dOuts(c).some(function (m) { return (m[1] === 'called' || m[1] === 'met') && dIn(m[2]); })) reachedIn++; });
+  $('dPeriod').innerHTML = '<h3>' + esc(perIn.charAt(0).toUpperCase() + perIn.slice(1)) + '</h3><p class="dsub">What came in, and what was logged on the board.</p><div class="dtiles">' +
+    dTile(inA, 'New answers') + dTile(loggedN, 'Clients with a call logged') + dTile(reachedIn, 'Reached on a call') + dTile(namedIn, 'Agents named') + dTile(backsIn, 'Call-backs flagged') + '</div>';
+  /* by day */
+  var first = null;
+  pop.forEach(function (c) { var x = dayOf(dAnsDay(c)); if (x && (!first || x < first)) first = x; dOuts(c).forEach(function (m) { var y = dayOf(m[2]); if (y && (!first || y < first)) first = y; }); });
+  var days = [], t0 = dToday();
+  if (first) for (var t = first.getTime(); t <= t0; t += 86400000) { var dd = new Date(t); days.push({ t: dd.getTime(), label: dd.getDate() + ' ' + MON[dd.getMonth()], short: dd.getDate() + '' + (dd.getDate() === 1 || t === first.getTime() ? ' ' + MON[dd.getMonth()] : '') }); }
+  days = days.slice(-60);
+  var key = function (s) { var x = dayOf(s); return x ? x.getTime() : 0; };
+  var aBy = {}, oBy = {}, nBy = {}, seenO = {};
+  pop.forEach(function (c) {
+    if (dAnswered(c)) { var k = key(dAnsDay(c)); aBy[k] = (aBy[k] || 0) + 1; }
+    dOuts(c).forEach(function (m) { var k = key(m[2]); if (!seenO[c.token + k]) { seenO[c.token + k] = 1; oBy[k] = (oBy[k] || 0) + 1; } });
+    if (c.assigned && c.assignedOn) { var k2 = key(c.assignedOn); nBy[k2] = (nBy[k2] || 0) + 1; }
+  });
+  var col = function (by) { return days.map(function (x) { return by[x.t] || 0; }); };
+  $('dDays').innerHTML = days.length ? '<h3>By day</h3><p class="dsub">The period&rsquo;s days in teal, the days before it in grey. Hover or tab onto a day for its number.</p>' +
+    '<div class="dgrid"><div><h4 style="margin:8px 0 2px;font:700 14.5px var(--fh);color:var(--ink)">Answers coming in</h4>' + dBars(days, col(aBy), 'answers') + '</div>' +
+    '<div><h4 style="margin:8px 0 2px;font:700 14.5px var(--fh);color:var(--ink)">Clients with a call logged on the board</h4>' + dBars(days, col(oBy), 'calls logged') + '</div></div>' +
+    '<details class="dnums"><summary>Show the numbers</summary><div class="dtw"><table class="dt"><tr><th>Day</th><th>Answers</th><th>Calls logged</th><th>Agents named</th></tr>' +
+    days.slice().reverse().map(function (x) { return '<tr><td>' + esc(x.label) + '</td><td>' + (aBy[x.t] || 0) + '</td><td>' + (oBy[x.t] || 0) + '</td><td>' + (nBy[x.t] || 0) + '</td></tr>'; }).join('') + '</table></div></details>'
+    : '<h3>By day</h3><p class="dsub">Nothing dated in this view yet.</p>';
+  dTips($('dDays'));
+  /* Client Support on the board */
+  var callers = unique(pop.map(function (c) { return (c.call && c.call.caller) || ''; }));
+  var byPerson = function (name) {
+    var s = { logged: 0, reached: 0, backs: 0 }, seen = {};
+    pop.forEach(function (c) {
+      dOuts(c).forEach(function (m) {
+        if (!sameName(m[3], name) || !dIn(m[2])) return;
+        if (!seen[c.token + m[2]]) { seen[c.token + m[2]] = 1; s.logged++; }
+        if ((m[1] === 'called' || m[1] === 'met') && !seen['r' + c.token + m[2]]) { seen['r' + c.token + m[2]] = 1; s.reached++; }
+      });
+      if (c.back && c.back.kind !== 'dnc' && sameName(c.back.by, name) && (c.back.on ? dIn(c.back.on) : DF.per === 'all')) s.backs++;
+    });
+    return s;
+  };
+  $('dStaff').innerHTML = '<h3>Client Support on the board</h3><p class="dsub">Each caller&rsquo;s list as it stands, and what they logged ' + esc(perIn) + '.</p>' +
+    (callers.length ? '<div class="dtw"><table class="dt"><tr><th>Caller</th><th>On their list</th><th>Tried</th><th>Reached</th><th>Logged</th><th>Reached on a call</th><th>Call-backs flagged</th></tr>' +
+      callers.map(function (n) {
+        var mine = pop.filter(function (c) { return c.call && sameName(c.call.caller, n); }), tr = mine.filter(dTried).length, re = mine.filter(dSpoken).length, s = byPerson(n);
+        return '<tr class="go" data-who="' + esc(n) + '"><td>' + esc(n) + '</td><td>' + mine.length + '</td><td>' + dMeter(tr, mine.length) + '</td><td>' + dMeter(re, mine.length) + '</td><td>' + s.logged + '</td><td>' + s.reached + '</td><td>' + s.backs + '</td></tr>';
+      }).join('') + '</table></div>' : '<p class="dsub">No call lists in this view.</p>');
+  /* the agents */
+  var agentNames = unique(pop.map(function (c) { return c.assigned || ''; }));
+  var unitOf = {};
+  (d.units || []).forEach(function (u) { (u.people || []).forEach(function (p) { unitOf[nameKey(p.name)] = u.lead || u.title || ''; }); if (u.lead) unitOf[nameKey(u.lead)] = u.lead; });
+  var wait = (d.waitDays || 2) * 86400000;
+  var arows = agentNames.map(function (n) {
+    var mine = pop.filter(function (c) { return sameName(c.assigned, n); });
+    var theirs = function (c) { return dOuts(c).some(function (m) { return sameName(m[3], n) && (m[1] === 'called' || m[1] === 'met' || m[1] === 'declined'); }) || dDone(c); };
+    var sp = mine.filter(theirs).length, dn = mine.filter(dDone).length;
+    var quiet = mine.filter(function (c) { var on = c.assignedOn ? dayOf(c.assignedOn) : null; return on && dToday() - on.getTime() > wait && !dOuts(c).some(function (m) { return sameName(m[3], n); }) && !dDone(c); }).length;
+    return { n: n, unit: unitOf[nameKey(n)] || '', named: mine.length, sp: sp, dn: dn, quiet: quiet, logged: byPerson(n).logged };
+  }).sort(function (a, b) { return a.unit.localeCompare(b.unit) || b.named - a.named || a.n.localeCompare(b.n); });
+  $('dAgents').innerHTML = '<h3>The agents</h3><p class="dsub">The clients named to each, how many they have spoken to, and the ones named more than ' + (d.waitDays || 2) + ' days ago with nothing logged.</p>' +
+    (arows.length ? '<div class="dtw"><table class="dt"><tr><th>Agent</th>' + (d.units && d.units.length ? '<th>Unit</th>' : '') + '<th>Named</th><th>Spoken to</th><th>Completed</th><th>Nothing logged yet</th><th>Logged</th></tr>' +
+      arows.map(function (a) {
+        return '<tr class="go" data-who="' + esc(a.n) + '"><td>' + esc(a.n) + '</td>' + (d.units && d.units.length ? '<td>' + esc(a.unit ? firstName(a.unit) : '–') + '</td>' : '') + '<td>' + a.named + '</td><td>' + dMeter(a.sp, a.named) + '</td><td>' + a.dn + '</td>' +
+          '<td' + (a.quiet ? ' class="bad"' : '') + '>' + a.quiet + '</td><td>' + a.logged + '</td></tr>';
+      }).join('') + '</table></div>' : '<p class="dsub">No agent is named on anyone in this view yet.</p>');
+  /* by book, letter or town */
+  var BY = { book: ['Was with', function (c) { return c.book; }], seg: ['Letter', function (c) { return c.seg; }], town: ['Town', townOf] };
+  var grp = {}, f = BY[DF.by][1];
+  asked.forEach(function (c) { var k = f(c) || '(not recorded)'; (grp[k] = grp[k] || []).push(c); });
+  var keys = Object.keys(grp).sort(function (a, b) { return grp[b].length - grp[a].length || a.localeCompare(b); }), more = Math.max(0, keys.length - 20);
+  $('dBy').innerHTML = '<h3>Where the work stands, by ' + (DF.by === 'book' ? 'former agent&rsquo;s book' : DF.by === 'seg' ? 'letter' : 'town') + '</h3>' +
+    '<span class="dby" role="group">' + Object.keys(BY).map(function (k) { return '<button type="button" data-by="' + k + '" class="' + (DF.by === k ? 'on' : '') + '">' + (k === 'book' ? 'Book' : k === 'seg' ? 'Letter' : 'Town') + '</button>'; }).join('') + '</span>' +
+    '<p class="dsub">The clients who asked us for something. Tap a row to narrow the whole dashboard to it.</p>' +
+    (keys.length ? '<div class="dtw"><table class="dt"><tr><th>' + BY[DF.by][0] + '</th><th>Asked</th><th>Spoken to</th><th>Agent named</th><th>Completed</th><th>Late</th><th>Former agent in touch</th></tr>' +
+      keys.slice(0, 20).map(function (k) {
+        var g = grp[k], lt = g.filter(function (c) { return c.open && c.late && !c.assigned; }).length, tc = g.filter(function (c) { return needsOf(c).contact; }).length;
+        return '<tr class="go" data-' + DF.by + '="' + esc(k) + '"><td>' + esc(DF.by === 'seg' && LETTER_WORDS[k] ? k + ': ' + LETTER_WORDS[k] : k) + '</td><td>' + g.length + '</td><td>' + dMeter(g.filter(dSpoken).length, g.length) + '</td>' +
+          '<td>' + dMeter(g.filter(function (c) { return !!c.assigned; }).length, g.length) + '</td><td>' + dMeter(g.filter(dDone).length, g.length) + '</td><td' + (lt ? ' class="bad"' : '') + '>' + lt + '</td><td>' + tc + '</td></tr>';
+      }).join('') + '</table></div>' + (more ? '<p class="dsub">and ' + more + ' more.</p>' : '') : '<p class="dsub">Nothing here yet.</p>');
+  /* what stands out: facts, computed, never advice */
+  var lines = [];
+  var waitingLate = asked.filter(function (c) { return dStage(c) === 'waiting' && c.late; }).length;
+  if (st.waiting) lines.push('<b>' + st.waiting + '</b> client' + (st.waiting === 1 ? '' : 's') + ' who asked us for something ' + (st.waiting === 1 ? 'has' : 'have') + ' not been spoken to and ' + (st.waiting === 1 ? 'has' : 'have') + ' no agent' + (waitingLate ? '; <b>' + waitingLate + '</b> of them waited past the line' : '') + '.');
+  if (!DF.book) {
+    var books = {};
+    asked.forEach(function (c) { if (c.book) (books[c.book] = books[c.book] || []).push(c); });
+    var low = Object.keys(books).filter(function (b) { return books[b].length >= 5; }).map(function (b) { return [b, pc(books[b].filter(dSpoken).length, books[b].length), books[b].length]; }).sort(function (a, b) { return a[1] - b[1]; })[0];
+    if (low) lines.push('The lowest share spoken to is on <b>' + esc(low[0]) + '</b>&rsquo;s book: <b>' + low[1] + '%</b> of the ' + low[2] + ' who asked.');
+  }
+  var touch = asked.filter(function (c) { return needsOf(c).contact; }), touchNo = touch.filter(function (c) { return !dSpoken(c); }).length;
+  if (touch.length) lines.push('<b>' + touch.length + '</b> say their former agent has been in touch; <b>' + touchNo + '</b> of them ' + (touchNo === 1 ? 'has' : 'have') + ' not been spoken to.');
+  var quietAll = arows.reduce(function (t, a) { return t + a.quiet; }, 0);
+  if (quietAll) lines.push('<b>' + quietAll + '</b> client' + (quietAll === 1 ? ' was' : 's were') + ' named to an agent more than ' + (d.waitDays || 2) + ' days ago with nothing logged since.');
+  if (L.length && L.length - Lt) lines.push('<b>' + (L.length - Lt) + '</b> on the call lists ' + (L.length - Lt === 1 ? 'has' : 'have') + ' not been tried.');
+  if (Fa) lines.push('<b>' + Fa + '</b> call-back' + (Fa === 1 ? '' : 's') + ' for a licensed agent ' + (Fa === 1 ? 'has' : 'have') + ' nobody named.');
+  if (branch && SFW && SFW.on && SFW.people) {
+    var un = SFW.people.reduce(function (t, p) { return t + p.untouched; }, 0), nn = SFW.people.reduce(function (t, p) { return t + p.closedNoNote; }, 0);
+    if (un || nn) lines.push('In Salesforce, <b>' + un + '</b> orphan task' + (un === 1 ? ' is' : 's are') + ' open and untouched, and <b>' + nn + '</b> ' + (nn === 1 ? 'was' : 'were') + ' closed with no note.');
+  }
+  $('dStand').innerHTML = '<h3>What stands out</h3>' + (lines.length ? '<ul class="dstand">' + lines.map(function (l) { return '<li>' + l + '</li>'; }).join('') + '</ul>' : '<p class="dsub">Nothing out of line in this view.</p>');
+  /* Client Support in Salesforce: the branch alone */
+  $('dSf').hidden = !branch;
+  if (branch) { dSfDraw(); dSfLoad(); }
+  $('dHow').innerHTML = '<b>How the numbers are made.</b> <b>Spoken to</b>: Called, Met or Declined marked on the board, reached by phone, or &ldquo;reached: Yes&rdquo; on the old calls sheet. <b>Completed</b>: every answer closed, or Met, Closed or Declined. ' +
+    '<b>Late</b>: waiting past the branch&rsquo;s line (' + (d.waitDays || 2) + ' working days) with nobody named. Calls written only in Salesforce Chatter are not on the board, so they count only in the Salesforce table. A client logged twice in a day counts once.';
+  /* every tile and row that leads somewhere */
+  each('#paneDash [data-go]', function (b) {
+    b.addEventListener('click', function () {
+      var g = b.getAttribute('data-go');
+      var mine = tabsFor(D), to = g === 'late' ? 'urgent' : g;
+      TAB = mine.indexOf(to) >= 0 ? to : mine.indexOf('all') >= 0 ? 'all' : mine[0]; SUB = g === 'late' && TAB === 'urgent' ? 'late' : '';
+      if (DF.book) $('fBook').value = DF.book; if (DF.seg) $('fSeg').value = DF.seg; if (DF.town) $('fTown').value = DF.town;
+      SHOW_N = SHOW_STEP; drawTabs(tabsFor(D)); showPane();
+    });
+  });
+  each('#paneDash tr.go', function (tr) {
+    tr.addEventListener('click', function () {
+      ['who', 'book', 'seg', 'town'].forEach(function (k) { var v = tr.getAttribute('data-' + k); if (v !== null) DF[k] = v === '(not recorded)' ? '' : v; });
+      dashPane(); try { window.scrollTo({ top: $('tabs').offsetTop, behavior: 'smooth' }); } catch (e) {}
+    });
+  });
+  each('#dBy [data-by]', function (b) { b.addEventListener('click', function () { DF.by = b.getAttribute('data-by'); dashPane(); }); });
+}
+/* the staff's Salesforce orphan tasks (Transition.gs tSfWork_): read when the dashboard opens, again after five minutes */
+function dSfLoad() {
+  if (!D || D.role !== 'branch' || SFW_BUSY || (SFW && Date.now() - SFW_AT < 300000)) return;
+  SFW_BUSY = true;
+  api(signed({ action: 'board', sfwork: '1' })).then(function (r) {
+    SFW_BUSY = false; SFW_AT = Date.now();
+    SFW = r && r.sfwork ? r.sfwork : r && r.ok && r.clients ? { on: false, why: 'This needs the latest Transition.gs: paste it and publish a New version.' } : { on: true, error: (r && r.error) || 'No answer.' };
+    if (TAB === 'dash') dashPane();
+  }).catch(function () { SFW_BUSY = false; SFW = { on: true, error: 'The backend did not answer.' }; SFW_AT = Date.now(); if (TAB === 'dash') dSfDraw(); });
+}
+function dSfDraw() {
+  var head = '<h3>Client Support in Salesforce</h3><p class="dsub">Their orphan tasks since ' + esc((SFW && SFW.since) || '1 Oct') + '. Salesforce tasks carry no book or letter, so only the period narrows this table.' + (SFW && SFW.at ? ' Read at ' + esc(SFW.at) + '.' : '') + '</p>';
+  if (!SFW) { $('dSf').innerHTML = head + '<p class="dsub">Reading Salesforce&hellip;</p>'; return; }
+  if (!SFW.on || SFW.error) { $('dSf').innerHTML = head + '<p class="dsub">' + esc(SFW.why || SFW.error || '') + '</p>'; return; }
+  var inP = function (arr) { var from = dFrom(); return (arr || []).filter(function (s) { var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s); return m && new Date(+m[1], +m[2] - 1, +m[3]).getTime() >= from; }).length; };
+  $('dSf').innerHTML = head + '<div class="dtw"><table class="dt"><tr><th>Person</th><th>Tasks</th><th>Closed</th><th>Closed with no note</th><th>Open, untouched</th><th>Overdue</th><th>Due today</th><th>Closed, period</th><th>Notes, period</th></tr>' +
+    SFW.people.map(function (p) {
+      return '<tr><td>' + esc(p.name) + '</td><td>' + p.held + '</td><td>' + dMeter(p.closed, p.held) + '</td><td' + (p.closedNoNote ? ' class="bad"' : '') + '>' + p.closedNoNote + '</td><td' + (p.untouched ? ' class="bad"' : '') + '>' + p.untouched + '</td>' +
+        '<td' + (p.overdue ? ' class="bad"' : '') + '>' + p.overdue + '</td><td>' + p.dueToday + '</td><td>' + inP(p.closedDays) + '</td><td>' + inP(p.noteDays) + '</td></tr>';
+    }).join('') + '</table></div>';
+}
+
 /* ---- the Your work tab ---- */
 /* 8 October 2026: "can staff place the notes in the log in and see what they have done". Everything the signed-in person
    marked on a client, newest first, one line a client a day: the outcome, the call-back flagged with it, the note they
@@ -1619,8 +1967,18 @@ function workPane() {
   $('workTitle').textContent = 'Your work' + (me ? ', ' + firstName(me) : '');
   $('workSum').textContent = rows.length ? (t.clients ? t.clients + ' client' + (t.clients === 1 ? '' : 's') + ' logged today' : 'nothing logged today yet') +
     ' · ' + w.clients + ' in the last 7 days' : '';
+  /* where their own list stands, as a share (8 October 2026: "% of work completed"): a caller's list, or an agent's clients */
+  var meLine = '';
+  if (me && d.role === 'staff') {
+    var L = everyone().filter(function (c) { return c.call && sameName(c.call.caller, me); }), lt = L.filter(dTried).length, lr = L.filter(dSpoken).length;
+    if (L.length) meLine = '<div class="wtally"><b>Your call list</b><span><em>' + L.length + '</em> clients</span><span><em>' + pc(lt, L.length) + '%</em> tried</span><span><em>' + pc(lr, L.length) + '%</em> reached</span><span><em>' + (L.length - lt) + '</em> still to try</span></div>';
+  } else if (me && (d.role === 'agent' || d.role === 'unit')) {
+    var N = everyone().filter(function (c) { return sameName(c.assigned, me); });
+    var sp = N.filter(function (c) { return dDone(c) || dOuts(c).some(function (m) { return sameName(m[3], me) && (m[1] === 'called' || m[1] === 'met' || m[1] === 'declined'); }); }).length;
+    if (N.length) meLine = '<div class="wtally"><b>Named to you</b><span><em>' + N.length + '</em> clients</span><span><em>' + pc(sp, N.length) + '%</em> spoken to</span><span><em>' + N.filter(dDone).length + '</em> completed</span><span><em>' + (N.length - sp) + '</em> still to call</span></div>';
+  }
   if (!rows.length) {
-    $('workBody').innerHTML = '<div class="empty">Nothing logged yet. Open a client, press <b>Called</b>, <b>Met</b> or <b>No answer</b>, write a line for the file and save: it shows here, newest first, and on the client&rsquo;s card' +
+    $('workBody').innerHTML = meLine + '<div class="empty">Nothing logged yet. Open a client, press <b>Called</b>, <b>Met</b> or <b>No answer</b>, write a line for the file and save: it shows here, newest first, and on the client&rsquo;s card' +
       (d.role === 'staff' ? ', and the branch sees it under Team.' : '.') + '</div>';
     return;
   }
@@ -1632,7 +1990,7 @@ function workPane() {
       (staffish ? bit(s.backs, 'call-back flagged', 'call-backs flagged') : '') + (namer ? bit(s.named, 'agent named', 'agents named') : '') + '</div>';
   };
   var shown = WORK_ALL ? rows : rows.slice(0, 40);
-  $('workBody').innerHTML = line('Today', t) + line('Last 7 days', w) +
+  $('workBody').innerHTML = meLine + line('Today', t) + line('Last 7 days', w) +
     '<h4>What you logged, newest first</h4><ul>' + shown.map(function (r) {
       var what = r.kinds.map(function (k) { return WORK_KIND[k] || k; });
       if (r.named) what.push('named ' + r.named);

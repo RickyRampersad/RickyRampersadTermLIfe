@@ -3565,6 +3565,10 @@ function transitionBoard_(p) {
   try {
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
+    /* the dashboard's Salesforce panel (tSfWork_): the branch alone, since it names every member of staff */
+    if (/^(1|yes|true)$/i.test(String(p.sfwork || ''))) {
+      return { ok: true, sfwork: w.role === 'branch' ? tSfWork_() : { on: false, why: 'The Salesforce figures are for the branch.' } };
+    }
     try { return tBoardSlim_(tBoard_(w, /^(1|yes|true)$/i.test(String(p.all || '')))); }
     catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
   } finally { T_READ_ONCE = null; }
@@ -6547,6 +6551,78 @@ function tSfWhen_(s) {
   var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/.exec(String(s || ''));
   if (!m) return '';
   return Utilities.formatDate(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])), tTz_(), 'd MMM yyyy, HH:mm');
+}
+/** A Salesforce date-time as the day it fell on in the sheet's zone ("2026-10-07"); a bare date as itself. */
+function tSfDay_(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2}))?/.exec(String(s || ''));
+  if (!m) return '';
+  if (m[4] === undefined) return m[1] + '-' + m[2] + '-' + m[3];
+  return Utilities.formatDate(new Date(Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5], +m[6])), tTz_(), 'yyyy-MM-dd');
+}
+
+/* ── what Client Support has done on their Salesforce tasks ─────────────
+   8 October 2026: "need to have dash analytics and % of work completed etc a lot of insights and filter ability". Client
+   Support work the orphan tasks in Salesforce, so the dashboard's staff panel reads them: per person, the tasks they hold,
+   open and closed, closed with no note anywhere (no post or comment by anyone but the branch manager, whose user also posts
+   the routine's instructions), open and never touched, overdue and due today, and the day each closure and each note fell
+   on, so the page counts any period itself. A note is a post or a comment; a tracked change (a status or a date moved)
+   touches a task but is not a note. Read only when the dashboard asks (the board with sfwork=1, the branch alone), kept
+   ten minutes. Never throws. */
+var T_SFWORK = { SINCE: '2026-10-01T00:00:00Z', CACHE_S: 600, CHUNK: 100 };
+function tSfWork_() {
+  if (!tSfOn_()) return { on: false, why: 'Salesforce is not linked to this project yet: copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into Project Settings → Script properties.' };
+  var cache = null, key = 'sfwork-v1';
+  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  try {
+    var mgr = tNameKey_(TRANSITION.MANAGER.name), today = Utilities.formatDate(new Date(), tTz_(), 'yyyy-MM-dd');
+    var tasks = svcSfQuery_("SELECT Id, Status, IsClosed, ActivityDate, CompletedDateTime, LastModifiedDate, Owner.Name FROM Task WHERE Subject LIKE 'Orphan%' AND CreatedDate >= " +
+      T_SFWORK.SINCE + ' LIMIT 2000');
+    var words = {}, touched = {}, people = {};
+    var person = function (n) {
+      var k = tNameKey_(n);
+      return people[k] = people[k] || { name: n, held: 0, open: 0, notStarted: 0, inProgress: 0, waiting: 0, overdue: 0, dueToday: 0, closed: 0, closedNoNote: 0,
+        untouched: 0, closedDays: [], noteDays: [] };
+    };
+    var staffWord = function (pid, by, at) {
+      if (!by || tNameKey_(by) === mgr) return;
+      (words[pid] = words[pid] || []).push(by);
+      person(by).noteDays.push(tSfDay_(at));
+    };
+    for (var i = 0; i < tasks.length; i += T_SFWORK.CHUNK) {
+      var ids = tasks.slice(i, i + T_SFWORK.CHUNK).map(function (t) { return t.Id; });
+      svcSfQuery_('SELECT ParentId, Type, CreatedDate, CreatedBy.Name, (SELECT CreatedDate, CreatedBy.Name FROM FeedComments) FROM FeedItem WHERE ParentId IN (' +
+        tSoqlIn_(ids) + ") AND Type IN ('TextPost','CreateRecordEvent','TrackedChange') LIMIT 2000").forEach(function (f) {
+        var by = f.CreatedBy ? f.CreatedBy.Name : '';
+        if (f.Type === 'TextPost') staffWord(f.ParentId, by, f.CreatedDate);
+        else if (f.Type === 'TrackedChange' && by && tNameKey_(by) !== mgr) touched[f.ParentId] = true;
+        ((f.FeedComments && f.FeedComments.records) || []).forEach(function (x) { staffWord(f.ParentId, x.CreatedBy ? x.CreatedBy.Name : '', x.CreatedDate); });
+      });
+    }
+    tasks.forEach(function (t) {
+      var owner = t.Owner && t.Owner.Name ? t.Owner.Name : '';
+      if (!owner || tNameKey_(owner) === mgr) return;
+      var p = person(owner), st = String(t.Status || '');
+      p.held++;
+      if (t.IsClosed) {
+        p.closed++;
+        if (!words[t.Id]) p.closedNoNote++;
+        p.closedDays.push(tSfDay_(t.CompletedDateTime || t.LastModifiedDate));
+        return;
+      }
+      p.open++;
+      if (st === 'Not Started') { p.notStarted++; if (!words[t.Id] && !touched[t.Id]) p.untouched++; }
+      else if (/^waiting/i.test(st)) p.waiting++;
+      else p.inProgress++;
+      var due = tSfDay_(t.ActivityDate);
+      if (due && due < today) p.overdue++;
+      if (due === today) p.dueToday++;
+    });
+    var out = { on: true, today: today, at: Utilities.formatDate(new Date(), tTz_(), 'd MMM, HH:mm'), since: '1 Oct',
+      people: Object.keys(people).map(function (k) { return people[k]; }).filter(function (p) { return p.held || p.noteDays.length; })
+        .sort(function (a, b) { return b.held - a.held || a.name.localeCompare(b.name); }) };
+    try { if (cache) cache.put(key, JSON.stringify(out), T_SFWORK.CACHE_S); } catch (e) {}
+    return out;
+  } catch (e) { return { on: true, error: 'Salesforce did not answer: ' + String(e && e.message ? e.message : e).slice(0, 160) }; }
 }
 
 /** The Board Comments tab, made the first time someone comments. */
