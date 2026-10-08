@@ -193,6 +193,31 @@ label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .cmp tr.step td{color:#9fe8c1;font-size:12.3px;white-space:normal}
 .advise .foot{font-size:12.3px;color:#9fb3c8;margin-top:10px}
 .advise .lnk{color:var(--teal)}
+/* the price calculator */
+.calc{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:20px 18px;margin-top:18px;box-shadow:0 4px 14px rgba(14,42,71,.05)}
+.calc-h{display:flex;align-items:flex-start;gap:10px;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px}
+.calc .kick{font:800 11px var(--disp);letter-spacing:.14em;text-transform:uppercase;color:var(--teal-ink)}
+.calc h3{font-size:19px;font-weight:800;margin-top:3px}
+.calc-in{display:grid;grid-template-columns:190px 1fr;gap:14px}
+@media (max-width:620px){.calc-in{grid-template-columns:1fr}}
+.ages{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ages .ag{display:flex;align-items:center;gap:4px}
+.ages .ag select{width:auto;min-width:104px}
+.ages .ag button{background:#fff;border:1.5px solid var(--line);border-radius:9px;width:32px;height:42px;color:var(--muted)}
+.ages .add{margin-top:0;height:42px}
+.cout{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+@media (max-width:720px){.cout{grid-template-columns:1fr}}
+.pc{border:1.5px solid var(--line);border-radius:var(--r2);padding:14px 15px;position:relative;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
+.pc.best{border-color:var(--gold2);box-shadow:0 0 0 3px rgba(239,194,75,.22)}
+.pc .nm{font:800 14px var(--disp)}
+.pc .tot{font:900 26px var(--disp);color:var(--navy);line-height:1.15}
+.pc .sm{font-size:12.5px;color:var(--muted)}
+.pc .up{font-size:12.5px;color:var(--good);margin-top:6px}
+.pc .bv{position:absolute;top:-9px;right:12px;font:800 10px var(--disp);letter-spacing:.1em;text-transform:uppercase;color:#07131f;background:var(--gold);border-radius:999px;padding:3px 9px}
+.calc-note{font-size:12.5px;color:var(--muted);margin-top:12px}
+.choice em.est{display:block;font:800 13.5px var(--disp);font-style:normal;color:var(--navy);margin-top:6px;font-variant-numeric:tabular-nums}
+.cmp tr.price td{color:var(--gold);font-weight:800}
+.cmp tr.price td:first-child{color:#fff}
 /* dependants */
 .dep{border:1px solid var(--line);border-radius:var(--r2);padding:14px 15px;margin-top:12px;background:#fbfcfe}
 .dep .dh{display:flex;align-items:center;gap:10px;margin-bottom:10px}
@@ -337,6 +362,15 @@ footer a{color:var(--muted)}
   <h2 class="h2">Three packages. One trip, up to fourteen days.</h2>
   <p class="lead">Maximum limits per person. Pick the one that fits where you are going, or ask for cover outside the packages and set your own sums insured.</p>
   <div class="pk-grid" id="pkGrid"></div>
+  <div class="calc" id="calc" hidden>
+    <div class="calc-h"><div><div class="kick">Price my trip</div><h3>What would each package cost?</h3></div><span class="chip warn" id="calcSample" hidden>Sample rates, not Guardian General's</span></div>
+    <div class="calc-in">
+      <div class="f"><label class="l" for="cDays">Days away</label><select id="cDays"></select></div>
+      <div class="f"><label class="l">Age of each person travelling</label><div class="ages" id="cAges"></div></div>
+    </div>
+    <div id="cOut"></div>
+    <p class="calc-note">An estimate from the rate card for each package, all travellers together. The branch confirms your premium before anything is paid.</p>
+  </div>
   <p class="pk-note"><b>Age limits:</b> personal accident, medical expenses and loss of deposits cover persons aged 5 to 75. <b>Unspecified items</b> in baggage are limited to $1,000 each; a pair or set counts as one item. If you cannot finish your trip within the period of insurance because of accident, injury, sickness or disease, cover continues without additional premium up to 30 more days.</p>
 
   <details class="cover">
@@ -638,6 +672,62 @@ const fmtMDY = (iso) => { const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\
 const ageOn = (dob, on) => { if (!dob) return null; const a = new Date(dob + "T00:00:00"), b = on ? new Date(on + "T00:00:00") : new Date(); if (isNaN(a) || isNaN(b)) return null; let y = b.getFullYear() - a.getFullYear(); const m = b.getMonth() - a.getMonth(); if (m < 0 || (m === 0 && b.getDate() < a.getDate())) y--; return y; };
 const opts = (list) => list.map((c) => '<option value="' + esc(c) + '">' + esc(c) + "</option>").join("");
 
+/* ── the rate card: the branch's Travel Rates tab, sent by the backend on load ── */
+let RATES = null;
+/* For the test copy only, so the calculator can be tried: made-up figures, labelled as such wherever a price shows. */
+const SAMPLE_RATES = { sample: true, currency: "TT$",
+  days: [{ from: 1, to: 4, economy: 95, plus: 140, elite: 210 }, { from: 5, to: 7, economy: 130, plus: 190, elite: 285 }, { from: 8, to: 10, economy: 165, plus: 240, elite: 360 }, { from: 11, to: 14, economy: 210, plus: 300, elite: 450 }],
+  ages: [{ from: 5, to: 17, economy: 0.75, plus: 0.75, elite: 0.75 }, { from: 18, to: 64, economy: 1, plus: 1, elite: 1 }, { from: 65, to: 69, economy: 1.5, plus: 1.5, elite: 1.5 }, { from: 70, to: 75, economy: 2, plus: 2, elite: 2 }],
+  min: { economy: 0, plus: 0, elite: 0 }, fee: { economy: 25, plus: 25, elite: 25 }, tax: { economy: 0, plus: 0, elite: 0 } };
+const PK = ["economy", "plus", "elite"];
+const r2 = (n) => Math.round(n * 100) / 100;
+const ttd = (n) => "TT$" + Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/* the same arithmetic as rateCore_ in Travel.gs, which prices the proposal again on the sheet */
+function rateCore(days, ages, R) {
+  const out = { ok: true, reasons: [], per: [], tot: {} };
+  const db = R.days.find((b) => days >= b.from && days <= b.to);
+  if (!db) { out.ok = false; out.reasons.push(days > 14 ? "a trip of " + days + " days is longer than any package" : "no premium band for " + days + " days"); return out; }
+  PK.forEach((k) => { out.tot[k] = { sub: 0 }; });
+  ages.forEach((a) => {
+    const ab = a == null ? null : R.ages.find((b) => a >= b.from && a <= b.to);
+    if (!ab) { out.ok = false; out.reasons.push(a == null ? "a traveller with no date of birth" : "a traveller aged " + a + ", outside the age bands"); out.per.push(null); return; }
+    const p = {};
+    PK.forEach((k) => { let v = db[k] * ab[k]; if (R.min[k]) v = Math.max(v, R.min[k]); p[k] = r2(v); out.tot[k].sub = r2(out.tot[k].sub + p[k]); });
+    out.per.push(p);
+  });
+  PK.forEach((k) => { const t = out.tot[k]; t.fee = R.fee[k] || 0; t.tax = r2((t.sub + t.fee) * (R.tax[k] || 0) / 100); t.total = r2(t.sub + t.fee + t.tax); t.perDay = r2(t.total / days); });
+  return out;
+}
+const coverOf = (k) => PACKAGES[k].pa + PACKAGES[k].baggage + PACKAGES[k].addl + PACKAGES[k].medical + PACKAGES[k].money + PACKAGES[k].deposits;
+/* best value: the package that buys the most cover for each dollar of premium */
+function bestValue(est, n) { let best = null, low = Infinity; PK.forEach((k) => { const c = est.tot[k].total / (coverOf(k) * n / 1000); if (c < low) { low = c; best = k; } }); return { key: best, per1000: low }; }
+function tripDays(d) { return d.from && d.to ? Math.round((new Date(d.to) - new Date(d.from)) / 86400000) + 1 : null; }
+function rateTrip(d) {
+  if (!RATES) return null;
+  const days = tripDays(d); if (!days || days < 1) return null;
+  const ppl = personsList(d).filter((p, i) => !(i === 0 && d.kind === "business"));
+  const est = rateCore(days, ppl.map((p) => ageOn(p.dob, d.from)), RATES); est.days = days; est.n = ppl.length;
+  return est;
+}
+function setRates(r) { RATES = r && r.days && r.days.length ? r : null; $("calc").hidden = !RATES; $("calcSample").hidden = !(RATES && RATES.sample); if (RATES) renderCalc(); if (state.step === 3) renderAdvise(); }
+
+/* ── the calculator under the packages ── */
+const calcAges = [40];
+$("cDays").innerHTML = Array.from({ length: 14 }, (_, i) => '<option value="' + (i + 1) + '"' + (i === 6 ? " selected" : "") + ">" + (i + 1) + (i ? " days" : " day") + "</option>").join("") + '<option value="15">More than 14 days</option>';
+$("cDays").addEventListener("change", renderCalc);
+function ageOptions(v) { return '<option value="3"' + (v === 3 ? " selected" : "") + ">Under 5</option>" + Array.from({ length: 71 }, (_, i) => i + 5).map((a) => '<option value="' + a + '"' + (a === v ? " selected" : "") + ">" + a + "</option>").join("") + '<option value="80"' + (v === 80 ? " selected" : "") + ">Over 75</option>"; }
+function renderCalc() {
+  $("cAges").innerHTML = calcAges.map((a, i) => '<span class="ag"><select aria-label="Age of traveller ' + (i + 1) + '" data-i="' + i + '">' + ageOptions(a) + "</select>" + (calcAges.length > 1 ? '<button type="button" aria-label="Remove traveller ' + (i + 1) + '" data-x="' + i + '">✕</button>' : "") + "</span>").join("") + (calcAges.length < 5 ? '<button class="add" type="button" id="cAdd">+ Add a traveller</button>' : "");
+  $("cAges").querySelectorAll("select").forEach((s) => s.addEventListener("change", () => { calcAges[+s.dataset.i] = +s.value; renderCalc(); }));
+  $("cAges").querySelectorAll("button[data-x]").forEach((b) => b.addEventListener("click", () => { calcAges.splice(+b.dataset.x, 1); renderCalc(); }));
+  if ($("cAdd")) $("cAdd").addEventListener("click", () => { calcAges.push(40); renderCalc(); });
+  if (!RATES) return;
+  const days = +$("cDays").value, est = rateCore(days, calcAges.slice(), RATES), n = calcAges.length;
+  if (!est.ok) { $("cOut").innerHTML = '<div class="notice warn" style="margin-top:14px"><b>The branch prices this one.</b> ' + esc(est.reasons.join("; ")) + ": outside what the packages price. Send the proposal and we quote it.</div>"; return; }
+  const bv = bestValue(est, n);
+  $("cOut").innerHTML = '<div class="cout">' + PK.map((k, i) => { const t = est.tot[k], prev = i ? PK[i - 1] : null; return '<div class="pc' + (k === bv.key ? " best" : "") + '">' + (k === bv.key ? '<span class="bv">Best value</span>' : "") + '<span class="nm">' + PACKAGES[k].name + '</span><span class="tot">' + ttd(t.total) + '</span><span class="sm">' + (n > 1 ? ttd(t.total / n) + " a person · " : "") + ttd(t.perDay) + " a day</span>" + '<span class="sm">' + ttd(t.total / (coverOf(k) * n / 1000)) + " per $1,000 of cover</span>" + (prev ? '<span class="up">+' + ttd(t.total - est.tot[prev].total) + " over " + PACKAGES[prev].name + " buys +" + money(PACKAGES[k].medical - PACKAGES[prev].medical) + " medical and +" + money(PACKAGES[k].pa - PACKAGES[prev].pa) + " accident, a person</span>" : "") + "</div>"; }).join("") + "</div>";
+}
+
 let state = { step: 0, deps: [], items: [], sums: {}, existing: null, countries: [], prefillOn: false };
 
 /* ── lists into the dropdowns ── */
@@ -726,9 +816,9 @@ async function api(payload) {
   return out;
 }
 async function pingBackend() {
-  if (CONFIG.DEMO) { state.prefillOn = true; refresh(); return; }
+  if (CONFIG.DEMO) { state.prefillOn = true; setRates(SAMPLE_RATES); refresh(); return; }
   if (!CONFIG.API_URL) return;
-  try { const r = await (await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "action=ping")).json(); if (r && r.prefill) { state.prefillOn = true; refresh(); } } catch (e) {}
+  try { const r = await (await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "action=ping")).json(); if (r && r.prefill) { state.prefillOn = true; refresh(); } if (r && r.rates) setRates(r.rates); } catch (e) {}
 }
 /* The test copy answers for itself: a sample file for the lookup and a reference for the send. Nothing leaves the page. */
 function demoApi(p) {
@@ -842,10 +932,25 @@ function renderAdvise() {
   h += '<div class="cmp"><table><thead><tr><th>Per person, maximum</th>' + Object.keys(PACKAGES).map((k) => "<th>" + PACKAGES[k].name + (k === a.key ? '<span class="b">Suggested</span>' : k === "elite" ? '<span class="b dim">Highest cover</span>' : k === "economy" ? '<span class="b dim">Lowest premium</span>' : "") + "</th>").join("") + "</tr></thead><tbody>";
   rows.forEach(([l, b]) => { h += "<tr><td>" + l + "</td>" + Object.keys(PACKAGES).map((k) => '<td class="' + (PACKAGES[k][b] === best(b) && b !== "deposits" ? "hi" : "") + '">' + money(PACKAGES[k][b]) + "</td>").join("") + "</tr>"; });
   h += '<tr class="tot"><td>All benefits together</td>' + Object.keys(PACKAGES).map((k) => "<td>" + money(tot(k)) + "</td>").join("") + "</tr>";
-  h += '<tr class="step"><td>What the step up buys</td><td>—</td><td>' + stepUp("economy", "plus") + "</td><td>" + stepUp("plus", "elite") + "</td></tr>";
+  const est = rateTrip(d), priced = est && est.ok;
+  if (priced) {
+    const n = est.n;
+    h += '<tr class="price"><td>Premium for this trip, ' + n + (n === 1 ? " traveller" : " travellers") + ", " + est.days + " days" + (RATES.sample ? " (sample rates)" : "") + "</td>" + PK.map((k) => "<td>" + ttd(est.tot[k].total) + "</td>").join("") + "</tr>";
+    h += "<tr><td>Per day</td>" + PK.map((k) => "<td>" + ttd(est.tot[k].perDay) + "</td>").join("") + "</tr>";
+    h += "<tr><td>Premium per $1,000 of cover</td>" + PK.map((k) => "<td>" + ttd(est.tot[k].total / (coverOf(k) * n / 1000)) + "</td>").join("") + "</tr>";
+  }
+  const upCost = (a, b) => priced ? "<br>for +" + ttd(est.tot[b].total - est.tot[a].total) : "";
+  h += '<tr class="step"><td>What the step up buys</td><td>—</td><td>' + stepUp("economy", "plus") + upCost("economy", "plus") + "</td><td>" + stepUp("plus", "elite") + upCost("plus", "elite") + "</td></tr>";
   h += "</tbody></table></div>";
-  h += '<div class="foot">Best value depends on the premium the branch quotes: the step from Economy to Economy Plus doubles the accident cover and adds half as much again in medical, and is usually the better buy for anywhere a hospital bill runs high. Ask for both prices if you are torn.' + (a.key !== "custom" ? ' <button class="lnk" type="button" onclick="setRadioSilent(\'pkg\',\'' + a.key + '\');refresh();saveDraft();renderAdvise()">Choose ' + esc(pk.name) + "</button>" : "") + "</div>";
+  let value;
+  if (priced) {
+    const bv = bestValue(est, est.n), sk = a.key !== "custom" ? a.key : null;
+    value = "Best value for money is <b>" + PACKAGES[bv.key].name + "</b>, at " + ttd(bv.per1000) + " of premium for every $1,000 of cover." + (sk && sk !== bv.key ? " The suggestion stays " + PACKAGES[sk].name + ": " + (PK.indexOf(sk) < PK.indexOf(bv.key) ? "it costs " + ttd(est.tot[bv.key].total - est.tot[sk].total) + " less, and its limits fit this trip." : "the extra " + ttd(est.tot[sk].total - est.tot[bv.key].total) + " buys the limits this trip calls for.") : "") + " Prices are estimates; the branch confirms the premium.";
+  } else if (est && !est.ok) value = "Not priced from the rate card: " + esc(est.reasons.join("; ")) + ". The branch quotes this trip.";
+  else value = "Best value depends on the premium the branch quotes: the step from Economy to Economy Plus doubles the accident cover and adds half as much again in medical, and is usually the better buy for anywhere a hospital bill runs high. Ask for both prices if you are torn.";
+  h += '<div class="foot">' + value + (a.key !== "custom" ? ' <button class="lnk" type="button" onclick="setRadioSilent(\'pkg\',\'' + a.key + '\');refresh();saveDraft();renderAdvise()">Choose ' + esc(pk.name) + "</button>" : "") + "</div>";
   $("advise").innerHTML = h;
+  document.querySelectorAll("#pkgChoices .choice").forEach((c) => { const k = c.querySelector("input").value; let e = c.querySelector("em.est"); if (priced && PACKAGES[k]) { if (!e) { e = document.createElement("em"); e.className = "est"; c.appendChild(e); } e.textContent = ttd(est.tot[k].total) + " for this trip" + (RATES.sample ? " (sample)" : ""); } else if (e) e.remove(); });
   document.querySelectorAll("#pkgChoices .choice").forEach((c) => { const k = c.querySelector("input").value; let s = c.querySelector(".sug"); if (k === a.key) { if (!s) { s = document.createElement("span"); s.className = "sug"; s.textContent = "Suggested"; c.appendChild(s); } } else if (s) s.remove(); });
 }
 
@@ -944,7 +1049,8 @@ function renderReview() {
     : [["Name", proposerName(d)], ["Born", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Marital status", d.marital], ["Residential address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Occupation", d.occupation], ["Employer", d.employer], ["PEP", d.pep]]));
   html += sec("Travelling dependants", 2, d.deps.length ? d.deps.map((p, i) => ["Dependant " + (i + 1), [p.name, p.dob ? "born " + fmtDate(p.dob) : "", p.occupation, "health " + (p.health || "—") + " · defects-free " + (p.defects || "—")].filter(Boolean).join(" · ")]).concat(d.depDetails ? [["Details", d.depDetails]] : []) : [["Dependants", "None to insure"]]);
   const sumsRows = d.pkg === "custom" ? personsList(d).map((p, i) => { const s = d.sums[i] || {}; return [p.name, BENEFITS.map(([b, l]) => b === "money" ? (s.money || s.tickets ? "Money " + (s.money || "—") + " / tickets " + (s.tickets || "—") : "") : s[b] ? l.split(":")[0] + " " + s[b] : "").filter(Boolean).join(" · ") + (s.ben ? " · beneficiary " + s.ben : "")]; }) : [];
-  html += sec("Package", 3, [["Package", pkgLabel(d)], ["Beneficiary under personal accident", d.beneficiary]].concat(sumsRows));
+  const est = rateTrip(d), estLine = est && est.ok && PACKAGES[d.pkg] ? ttd(est.tot[d.pkg].total) + " for " + est.n + (est.n === 1 ? " traveller" : " travellers") + ", " + est.days + " days" + (RATES.sample ? " (sample rates)" : "") + ". The branch confirms the premium." : "";
+  html += sec("Package", 3, [["Package", pkgLabel(d)]].concat(estLine ? [["Premium estimate", estLine]] : []).concat([["Beneficiary under personal accident", d.beneficiary]]).concat(sumsRows));
   html += sec("Specified items", 4, d.items.length ? d.items.map((i, n) => ["Item " + (n + 1), i.desc + (i.value ? " · $" + i.value : "")]) : [["Items over $1,000", "None"]]);
   html += sec("Health", 5, [["Sound health, free from defects", d.sound + (d.soundDetails ? " · " + d.soundDetails : "")], ["Contact with infectious disease (21 days)", d.contact + (d.contactDetails ? " · " + d.contactDetails : "")]]);
   $("review").innerHTML = html;
@@ -1052,8 +1158,9 @@ document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("pv")
 function payload(d) {
   const pk = PACKAGES[d.pkg];
   const persons = personsList(d).map((p, i) => { const s = d.pkg === "custom" ? (d.sums[i] || {}) : pk ? { pa: pk.pa, baggage: pk.baggage, addl: pk.addl, medical: pk.medical, money: pk.money, tickets: "included", deposits: pk.deposits, ben: i === 0 ? d.beneficiary : "" } : {}; const dep = i ? d.deps[i - 1] : null; return { role: p.role, name: p.name, dob: p.dob, occupation: dep ? dep.occupation : d.occupation, health: dep ? dep.health : d.sound, defects: dep ? dep.defects : d.sound, sums: s }; });
-  const a = advise(d);
+  const a = advise(d), est = rateTrip(d);
   return {
+    estimate: est && est.ok && PACKAGES[d.pkg] ? est.tot[d.pkg].total : "",
     action: "propose", page: location.href, formHtml: sheetDoc(d),
     trip: { countries: d.countries, purpose: d.purposeText, from: d.from, to: d.to, companions: d.companions, coverEach: Number(d.companions) > 0 ? d.coverEach : "" },
     proposer: { kind: d.kind, title: d.title, first: d.first, surname: d.surname, company: d.company, entity: d.entity, name: proposerName(d), dob: d.dob, pob: d.pob, nationality: d.nationality, residence: d.residence, marital: d.marital, address: d.address, mailing: d.mailing, phone: d.phone, email: d.email, occupation: d.occupation, employer: d.employer, pep: d.pep },
@@ -1087,7 +1194,8 @@ async function send() {
     if (CONFIG.API_URL || CONFIG.DEMO) {
       const out = await api(payload(d));
       ref = out.ref || "";
-      $("doneMsg").textContent = CONFIG.DEMO ? "This is the test copy: nothing was sent. On the live page a copy of the completed proposal form goes to " + d.email + " and the branch comes back with the premium." : "Keep this reference. A copy of your completed proposal form is on its way to " + d.email + ", and the branch comes back to you with your premium.";
+      const est = rateTrip(d), estTxt = est && est.ok && PACKAGES[d.pkg] ? " Your estimate was " + ttd(est.tot[d.pkg].total) + "; the branch confirms the premium." : "";
+      $("doneMsg").textContent = (CONFIG.DEMO ? "This is the test copy: nothing was sent. On the live page a copy of the completed proposal form goes to " + d.email + " and the branch comes back with the premium." : "Keep this reference. A copy of your completed proposal form is on its way to " + d.email + ", and the branch comes back to you with your premium.") + estTxt;
     } else {
       // Not wired yet: the proposal goes by the client's own mail app, and the done screen still gives them the form to print.
       ref = "TRV-" + new Date().toISOString().slice(2, 7).replace("-", "") + "-" + String(Math.floor(1000 + Math.random() * 9000));
@@ -1111,6 +1219,7 @@ async function send() {
   refresh();
   if (had) { $("resume").hidden = false; show(state.step); } else { show(0); }
   const q = new URLSearchParams(location.search); if (q.get("pkg") && PACKAGES[q.get("pkg")]) setRadioSilent("pkg", q.get("pkg"));
+  renderCalc();
   pingBackend();
   window.scrollTo(0, 0);
 })();

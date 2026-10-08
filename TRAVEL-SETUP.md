@@ -119,6 +119,65 @@ the premium the branch quotes. The suggestion travels with the proposal
 (**Suggested package** on the sheet) and the branch e-mail flags a client who
 chose differently.
 
+## Part 1e — the rate card and the price calculator
+
+The page prices every package from **Guardian General's travel rates, which
+the branch keeps on the Travel Rates tab** of the Travel Proposals sheet.
+`setupTravel` lays the tab out; nothing is filled in for you, because the
+repository has no Guardian rates and none are published.
+
+| Type | Band | Economy | Economy Plus | Elite |
+|---|---|---|---|---|
+| Premium | 1 to 4 days | per person, adult rate, TT$ | | |
+| Premium | 5 to 7 days, 8 to 10, 11 to 14 | | | |
+| Age factor | Ages 5 to 17 | the premium is multiplied; 1 = none | | |
+| Age factor | Ages 18 to 64 | 1 (the adult rate) | 1 | 1 |
+| Age factor | Ages 65 to 69, 70 to 75 | | | |
+| Minimum premium | per person | optional | | |
+| Policy fee | per policy | optional | | |
+| Tax % | on premium and fee | optional | | |
+
+Bands can be changed or added: the script reads the two numbers in the Band
+text. Keep them typed as words ("1 to 4 days"), never "1-4", which a sheet
+turns into a date.
+
+**A person's premium** is the premium for the trip's day band times the age
+factor for their age on departure, never below the minimum. **The trip's
+premium** is every insured person's premium, plus the policy fee, plus tax.
+For a company proposer only the travelling dependants are priced. A trip
+over the last day band, or anyone outside the age bands, is not priced: the
+page says the branch quotes it, and the proposal is flagged.
+
+**Nothing shows until the card is complete**: every Premium and every Age
+factor filled. Then **Travel → Check the rate card** says so and prices a
+sample trip (seven days, two adults and a child of ten) to check by eye. The
+card is cached for five minutes, so a change reaches the page within five.
+
+What the client sees once it is filled:
+
+- **Price my trip**, under the packages: days away and the age of each
+  traveller, and the three packages priced side by side, a person and a day,
+  with the premium per $1,000 of cover, the best value marked, and what each
+  step up costs and buys.
+- **At the package step**: the adviser's comparison gains the premium for
+  this trip, per day and per $1,000 of cover, and says which package is best
+  value against the one it suggests. Each package card shows its price.
+- **On the review and the done screen**: the estimate for the chosen package.
+
+The proposal is **priced again on the sheet** from the same tab, never from
+what the page sent: **Premium estimate (TT$)** and **Estimate detail** (each
+traveller, the fee, the tax). The branch e-mail and the client's
+acknowledgement carry it as an estimate. **E-mail the selected client their
+premium** offers the estimate when "Premium quoted (TT$)" is blank. Guardian
+General's printed form has no premium on it, and gets none.
+
+**The rate card becomes public.** The page reads it from the backend, so
+anyone can see it in the browser. If Guardian General treats its travel rates
+as confidential, confirm before filling the tab.
+
+The test copy prices from made-up sample rates, labelled "Sample rates, not
+Guardian General's" wherever a price shows. The live page never uses them.
+
 ## Part 2 — what comes in
 
 **Travel Proposals** has one row per proposal: the reference (`TRV-YYMM-NNNN`),

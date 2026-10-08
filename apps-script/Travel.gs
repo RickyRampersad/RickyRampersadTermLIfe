@@ -59,6 +59,7 @@ var TRAVEL = {
   SHEET: 'Travel Proposals',
   PERSONS_SHEET: 'Travel Persons',
   LOG_SHEET: 'Travel Log',
+  RATES_SHEET: 'Travel Rates',     // the rate card the page prices from; see TRAVEL-SETUP.md Part 1e
 
   // Blank = the script owner's address.
   TEST_INBOX: '',
@@ -95,7 +96,7 @@ var COLUMNS = [
   'Occupation', 'Employer and business activity', 'PEP',
   'Countries to be visited', 'Purpose of trip', 'Period from', 'Period to', 'Days', 'Persons accompanying',
   'Cover for each person', 'Travelling dependants', 'Dependant health details',
-  'Package', 'Suggested package', 'Beneficiary (PA)', 'Sums insured', 'Specified items',
+  'Package', 'Suggested package', 'Premium estimate (TT$)', 'Estimate detail', 'Beneficiary (PA)', 'Sums insured', 'Specified items',
   'Sound health', 'Health details', 'Infectious contact (21 days)', 'Contact details',
   'Declaration', 'Existing client', 'Client number', 'Policy on file', 'Prefilled from Salesforce', 'Flags', 'Premium quoted (TT$)', 'Quoted on', 'Paid on', 'Policy number',
   'Proposal PDF', 'Drive folder', 'Assigned to', 'Internal notes', 'Page',
@@ -232,7 +233,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {}, out;
   try {
     switch (p.action) {
-      case 'ping': out = { ok: true, service: 'travel', version: 2, desk: !!TRAVEL.DESK, prefill: sfReady_(), test: testMode_() }; break;
+      case 'ping': out = { ok: true, service: 'travel', version: 3, desk: !!TRAVEL.DESK, prefill: sfReady_(), rates: readRates_(), test: testMode_() }; break;
       default: out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) { out = { ok: false, error: String(err && err.message ? err.message : err) }; }
@@ -301,6 +302,15 @@ function apiPropose_(b) {
   var ex = b.existing && typeof b.existing === 'object' ? b.existing : null;
   var existing = ex ? { clientNumber: clean_(ex.clientNumber, 20), policy: clean_(ex.policy, 20), prefilled: (ex.prefilled || []).slice(0, 20).map(function (k) { return clean_(k, 20); }) } : null;
 
+  // the estimate, priced here from the rate card and never from what the page sent
+  var est = null, rates = readRates_();
+  if (rates && pkg) {
+    var rated = biz ? persons.filter(function (x, i) { return i > 0; }) : persons;
+    est = rateCore_(days, rated.map(function (x) { var a = ageOn_(x.dob, clean_(t.from, 20)); return a === '' ? null : a; }), rates);
+  }
+  var estTotal = est && est.ok ? est.tot[b.pkg].total : '';
+  if (est && !est.ok) flags.push('Not priced from the rate card: ' + est.reasons.join('; '));
+
   var ref = newReference_();
   var folder = proposalFolder_(ref, name);
 
@@ -314,7 +324,7 @@ function apiPropose_(b) {
     companions: clean_(t.companions, 5), coverEach: clean_(t.coverEach, 5), deps: deps, depDetails: clean_(b.depDetails, 2000),
     pkg: b.pkg, pkgName: pkgName, pkgLimits: pkg, suggested: sugg, beneficiary: clean_(b.beneficiary, 200), persons: persons, items: items,
     sound: clean_(h.sound, 5), soundDetails: clean_(h.soundDetails, 2000), contact: clean_(h.contact, 5), contactDetails: clean_(h.contactDetails, 2000),
-    flags: flags, page: clean_(b.page, 300), folder: folder.getUrl(), existing: existing,
+    flags: flags, page: clean_(b.page, 300), folder: folder.getUrl(), existing: existing, estimate: estTotal,
   };
 
   var row = appendRow_(sheet_(), COLUMNS, {
@@ -327,7 +337,10 @@ function apiPropose_(b) {
     'Purpose of trip': prop.purpose, 'Period from': prop.from, 'Period to': prop.to, 'Days': days, 'Persons accompanying': prop.companions,
     'Cover for each person': prop.coverEach,
     'Travelling dependants': deps.map(function (d) { return [d.name, d.dob ? 'born ' + fmtDate_(d.dob) : '', d.occupation, 'health ' + d.health, 'defects-free ' + d.defects].filter(String).join(' · '); }).join('\n'),
-    'Dependant health details': prop.depDetails, 'Package': pkgName, 'Suggested package': sugg, 'Beneficiary (PA)': prop.beneficiary,
+    'Dependant health details': prop.depDetails, 'Package': pkgName, 'Suggested package': sugg,
+    'Premium estimate (TT$)': estTotal,
+    'Estimate detail': est && est.ok ? estDetail_(est, b.pkg, days) : (est ? 'Not priced: ' + est.reasons.join('; ') : (rates ? 'Cover outside the packages: rate by hand' : 'No rate card on the sheet')),
+    'Beneficiary (PA)': prop.beneficiary,
     'Sums insured': persons.map(function (x) { return x.name + ': PA ' + money_(x.pa) + ' · baggage ' + money_(x.baggage) + ' · passport ' + money_(x.addl) + ' · medical ' + money_(x.medical) + ' · money ' + money_(x.money) + ' · tickets ' + money_(x.tickets) + ' · deposits ' + money_(x.deposits) + (x.ben ? ' · beneficiary ' + x.ben : ''); }).join('\n'),
     'Specified items': items.map(function (i) { return i.desc + (i.value ? ' · ' + money_(i.value) : ''); }).join('\n'),
     'Sound health': prop.sound, 'Health details': prop.soundDetails, 'Infectious contact (21 days)': prop.contact, 'Contact details': prop.contactDetails,
@@ -358,7 +371,7 @@ function apiPropose_(b) {
   try { ackClient_(prop, pdf); } catch (err) { log_(ref, 'client-mail-failed', String(err)); }
   log_(ref, 'received', name + ' · ' + pkgName + ' · ' + prop.countries);
 
-  return { ok: true, ref: ref, flags: flags };
+  return { ok: true, ref: ref, flags: flags, estimate: estTotal };
 }
 
 /* ============================ Salesforce: prefill for an existing client ============================
@@ -585,6 +598,7 @@ function summaryTable_(x) {
     tr_('Period', esc_(fmtDate_(x.from)) + ' to ' + esc_(fmtDate_(x.to)) + (x.days ? ' · ' + x.days + ' days' : '')) +
     tr_('Travellers', (1 + x.deps.length) + ' insured' + (Number(x.companions) ? ' · ' + esc_(x.companions) + ' accompanying, cover for each: ' + esc_(x.coverEach || '—') : '')) +
     tr_('Package', esc_(x.pkgName)) +
+    (x.estimate ? tr_('Premium estimate', '<b>' + esc_(ttd_(x.estimate)) + '</b> from the rate card, to be confirmed by the branch') : '') +
     tr_('Beneficiary (PA)', esc_(x.beneficiary)) +
     (x.items.length ? tr_('Specified items', x.items.map(function (i) { return esc_(i.desc) + (i.value ? ' · ' + esc_(money_(i.value)) : ''); }).join('<br>')) : '') +
     tr_('Health', 'Sound health: ' + esc_(x.sound) + (x.soundDetails ? ' — ' + esc_(x.soundDetails) : '') + '<br>Infectious contact: ' + esc_(x.contact) + (x.contactDetails ? ' — ' + esc_(x.contactDetails) : '')) +
@@ -602,7 +616,7 @@ function notifyBranch_(x, pdf) {
     '<p>A travel insurance proposal came in from the website' + (TRAVEL.DESK ? '' : '. <b>The Guardian General travel desk is not set in this script</b>, so it has gone to the branch alone') + '.</p>' +
     summaryTable_(x) + flags +
     '<p><b>Persons to be insured</b></p><ul style="padding-left:18px">' + x.persons.map(function (p) { var a = ageOn_(p.dob, x.from); return '<li>' + esc_(p.name) + ' (' + esc_(p.role) + (a !== '' ? ', age ' + a : '') + ')' + (p.pa ? ' · PA ' + esc_(money_(p.pa)) + ' · medical ' + esc_(money_(p.medical)) : '') + '</li>'; }).join('') + '</ul>' +
-    '<p><b>Next:</b> rate the trip, reply to the client with the premium, and set the row to <i>Quoted</i> on the sheet. The completed proposal form is attached and filed at <a href="' + esc_(x.folder) + '">the proposal\'s Drive folder</a>.</p>' +
+    '<p><b>Next:</b> ' + (x.estimate ? 'check the estimate, type the premium into "Premium quoted (TT$)" (the quote menu offers the estimate when it is blank), and e-mail it' : 'rate the trip, reply to the client with the premium,') + ' and set the row to <i>Quoted</i> on the sheet. The completed proposal form is attached and filed at <a href="' + esc_(x.folder) + '">the proposal\'s Drive folder</a>.</p>' +
     '<p style="color:#8a97a8;font-size:12px">Internal: carries a client\'s details. Do not forward outside the branch.</p>';
   sendMail_({
     to: to, cc: cc, name: TRAVEL.FROM_NAME, replyTo: x.email,
@@ -618,7 +632,7 @@ function ackClient_(x, pdf) {
     '<p>Your reference is <b style="font-size:17px;letter-spacing:1px">' + esc_(x.ref) + '</b>. Quote it if you call.</p>' +
     summaryTable_(x) +
     '<p><b>What happens next</b></p><ol style="padding-left:18px">' +
-    '<li>The branch rates your trip and sends you the premium, usually the same working day.</li>' +
+    '<li>The branch confirms your premium' + (x.estimate ? ' (the estimate was ' + esc_(ttd_(x.estimate)) + ')' : '') + ', usually the same working day.</li>' +
     '<li>You pay the premium to Guardian General; we tell you how. Cover starts when the premium is paid, never before.</li>' +
     '<li>Your policy and the claims numbers come to this address. Keep them on your phone while you travel.</li></ol>' +
     (x.pep === 'Yes' ? '<p>Because you answered yes to the PEP question, Guardian General asks for a short PEP Memorandum with your proposal. We send it to you to complete; nothing else changes.</p>' : '') +
@@ -647,7 +661,12 @@ function emailQuote() {
   var ref = String(g('Reference')), email = String(g('Email')), premium = g('Premium quoted (TT$)');
   var n = Number(String(premium).replace(/[^0-9.]/g, ''));
   if (!ref || !email) { ui.alert('That row has no reference or e-mail.'); return; }
-  if (!n) { ui.alert('Type the premium in "Premium quoted (TT$)" first.'); return; }
+  if (!n) {
+    var e = Number(String(g('Premium estimate (TT$)')).replace(/[^0-9.]/g, ''));
+    if (!e) { ui.alert('Type the premium in "Premium quoted (TT$)" first.'); return; }
+    if (ui.alert('No premium is typed for ' + ref + '. Quote the rate-card estimate of ' + ttd_(e) + '?', ui.ButtonSet.YES_NO) !== ui.Button.YES) return;
+    n = e; setField_({ sh: sh, row: row, map: map }, 'Premium quoted (TT$)', e);
+  }
   var first = String(g('First name') || g('Proposer'));
   var inner =
     '<p>Hello ' + esc_(first) + ',</p>' +
@@ -665,10 +684,124 @@ function emailQuote() {
   ui.alert('Premium e-mailed to ' + email + ' for ' + ref + '.');
 }
 
+/* ============================ the rate card ============================
+ * The branch keeps Guardian General's travel rates on the "Travel Rates" tab.
+ * The page asks for them on load (ping), prices every package for the trip,
+ * and the proposal is priced again here from the same tab, so the estimate on
+ * the sheet never depends on the page. Nothing is shown until every premium
+ * and every age factor is filled: a half-filled card would quote nonsense.
+ *
+ *   Type             Band               Economy  Economy Plus  Elite
+ *   Premium          1 to 4 days        (per person, adult rate, TT$)
+ *   Premium          5 to 7 days  …     up to 14 days
+ *   Age factor       Ages 5 to 17       (the premium is multiplied; 1 = none)
+ *   Age factor       Ages 18 to 64  …   up to 75
+ *   Minimum premium  per person         (optional)
+ *   Policy fee       per policy         (optional)
+ *   Tax %            on premium and fee (optional)
+ * ======================================================================= */
+
+var RATE_PK = ['economy', 'plus', 'elite'];
+var RATE_HEAD = ['Type', 'Band', 'Economy', 'Economy Plus', 'Elite', 'Notes'];
+
+function round2_(n) { return Math.round(n * 100) / 100; }
+function ttd_(n) { return 'TT$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function rateNum_(v) { if (v === '' || v === null || v === undefined) return null; var n = Number(String(v).replace(/[^0-9.\-]/g, '')); return isNaN(n) ? null : n; }
+
+/** The card from the tab, or null while any premium or age factor is blank. Cached five minutes. */
+function readRates_() {
+  var cache = CacheService.getScriptCache(), hit = cache.get('trv-rates');
+  if (hit) return hit === 'none' ? null : JSON.parse(hit);
+  var out = null;
+  try {
+    var sh = ss_().getSheetByName(TRAVEL.RATES_SHEET);
+    if (sh && sh.getLastRow() > 1) {
+      var vals = sh.getRange(2, 1, sh.getLastRow() - 1, 5).getValues();
+      var r = { currency: 'TT$', days: [], ages: [], min: {}, fee: {}, tax: {} }, complete = true;
+      vals.forEach(function (row) {
+        var type = String(row[0]).trim().toLowerCase(), m = String(row[1]).match(/(\d+)\D+(\d+)/);
+        var nums = {}; RATE_PK.forEach(function (k, i) { nums[k] = rateNum_(row[2 + i]); });
+        if (type === 'premium' || type === 'age factor') {
+          if (!m) return;
+          RATE_PK.forEach(function (k) { if (!(nums[k] > 0)) complete = false; });
+          var band = { from: Number(m[1]), to: Number(m[2]) }; RATE_PK.forEach(function (k) { band[k] = nums[k]; });
+          (type === 'premium' ? r.days : r.ages).push(band);
+        } else if (type === 'minimum premium' || type === 'policy fee' || type === 'tax %') {
+          var key = type === 'minimum premium' ? 'min' : type === 'policy fee' ? 'fee' : 'tax';
+          RATE_PK.forEach(function (k) { r[key][k] = nums[k] || 0; });
+        }
+      });
+      if (complete && r.days.length && r.ages.length) out = r;
+    }
+  } catch (e) { out = null; }
+  cache.put('trv-rates', out ? JSON.stringify(out) : 'none', 300);
+  return out;
+}
+
+/** Price a trip of `days` for travellers of `ages` on every package. The page runs the same function. */
+function rateCore_(days, ages, R) {
+  var out = { ok: true, reasons: [], per: [], tot: {} };
+  var db = null; R.days.forEach(function (b) { if (!db && days >= b.from && days <= b.to) db = b; });
+  if (!db) { out.ok = false; out.reasons.push(days > 14 ? 'a trip of ' + days + ' days is longer than any package' : 'no premium band for ' + days + ' days'); return out; }
+  RATE_PK.forEach(function (k) { out.tot[k] = { sub: 0 }; });
+  ages.forEach(function (a) {
+    var ab = null; if (a !== null) R.ages.forEach(function (b) { if (!ab && a >= b.from && a <= b.to) ab = b; });
+    if (!ab) { out.ok = false; out.reasons.push(a === null ? 'a traveller with no date of birth' : 'a traveller aged ' + a + ', outside the age bands'); out.per.push(null); return; }
+    var p = {};
+    RATE_PK.forEach(function (k) { var v = db[k] * ab[k]; if (R.min[k]) v = Math.max(v, R.min[k]); p[k] = round2_(v); out.tot[k].sub = round2_(out.tot[k].sub + p[k]); });
+    out.per.push(p);
+  });
+  RATE_PK.forEach(function (k) {
+    var t = out.tot[k]; t.fee = R.fee[k] || 0; t.tax = round2_((t.sub + t.fee) * (R.tax[k] || 0) / 100);
+    t.total = round2_(t.sub + t.fee + t.tax); t.perDay = round2_(t.total / days);
+  });
+  return out;
+}
+function estDetail_(est, k, days) {
+  var t = est.tot[k];
+  return est.per.map(function (p, i) { return 'Traveller ' + (i + 1) + ' ' + ttd_(p[k]); }).join(' · ') +
+    (t.fee ? ' · fee ' + ttd_(t.fee) : '') + (t.tax ? ' · tax ' + ttd_(t.tax) : '') + ' · ' + days + ' days';
+}
+
+/** The tab, laid out for the branch to fill. Never overwrites a card already there. */
+function ratesSheet_() {
+  var ss = ss_(), sh = ss.getSheetByName(TRAVEL.RATES_SHEET);
+  if (sh) return sh;
+  sh = ss.insertSheet(TRAVEL.RATES_SHEET);
+  var rows = [RATE_HEAD,
+    ['Premium', '1 to 4 days', '', '', '', 'Per person, adult rate, TT$, from Guardian General'],
+    ['Premium', '5 to 7 days', '', '', '', ''],
+    ['Premium', '8 to 10 days', '', '', '', ''],
+    ['Premium', '11 to 14 days', '', '', '', 'Packages stop at fourteen days'],
+    ['Age factor', 'Ages 5 to 17', '', '', '', 'The premium is multiplied by this; 1 = no loading'],
+    ['Age factor', 'Ages 18 to 64', 1, 1, 1, 'The adult rate'],
+    ['Age factor', 'Ages 65 to 69', '', '', '', ''],
+    ['Age factor', 'Ages 70 to 75', '', '', '', 'Over 75 is referred to the branch'],
+    ['Minimum premium', 'per person', '', '', '', 'Optional'],
+    ['Policy fee', 'per policy', '', '', '', 'Optional'],
+    ['Tax %', 'on premium and fee', '', '', '', 'Optional']];
+  sh.getRange(1, 2, rows.length, 1).setNumberFormat('@');     // "1 to 4" must stay text, never a date
+  sh.getRange(1, 1, rows.length, RATE_HEAD.length).setValues(rows);
+  sh.setFrozenRows(1); sh.getRange(1, 1, 1, RATE_HEAD.length).setFontWeight('bold');
+  sh.setColumnWidth(2, 150); sh.setColumnWidth(6, 360);
+  return sh;
+}
+
+/** Menu: say whether the page can price, and price a sample trip so the card can be checked by eye. */
+function checkRates() {
+  CacheService.getScriptCache().remove('trv-rates');
+  ratesSheet_();
+  var r = readRates_(), ui = SpreadsheetApp.getUi();
+  if (!r) { ui.alert('The rate card is not complete, so the page shows no prices.\n\nFill every Premium and every Age factor on the ' + TRAVEL.RATES_SHEET + ' tab, then check again.'); return; }
+  var e = rateCore_(7, [40, 38, 10], r);
+  ui.alert('The rate card is complete; the page prices from it within five minutes.\n\nCheck by eye: 7 days, two adults and a child of 10\n' +
+    RATE_PK.map(function (k) { return PACKAGES[k].name + ': ' + (e.ok ? ttd_(e.tot[k].total) : e.reasons.join('; ')); }).join('\n'));
+}
+
 /* ============================ setup ============================ */
 
 function setupTravel() {
-  var sh = sheet_(); personsSheet_(); logSheet_();
+  var sh = sheet_(); personsSheet_(); logSheet_(); ratesSheet_();
   var root = rootFolder_();
   var map = headerMap_(sh);
   var rule = SpreadsheetApp.newDataValidation().requireValueInList(TRAVEL.STATUSES, true).build();
@@ -679,7 +812,8 @@ function setupTravel() {
     'Tabs: ' + TRAVEL.SHEET + ', ' + TRAVEL.PERSONS_SHEET + ', ' + TRAVEL.LOG_SHEET + '\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
     'Travel desk: ' + (TRAVEL.DESK || 'not set — proposals go to the branch alone') + '\n' +
-    'Prefill from Salesforce: ' + (sfReady_() ? 'on' : 'off — set SF_KEY, SF_SECRET and SF_LOGIN_URL in Script properties') + '\n\n' +
+    'Prefill from Salesforce: ' + (sfReady_() ? 'on' : 'off — set SF_KEY, SF_SECRET and SF_LOGIN_URL in Script properties') + '\n' +
+    'Rate card: ' + (readRates_() ? 'complete, the page shows prices' : 'not filled yet — fill the ' + TRAVEL.RATES_SHEET + ' tab, then Travel → Check the rate card') + '\n\n' +
     'Next: Deploy → New deployment → Web app (execute as Me, access Anyone), then paste the /exec URL into CONFIG.API_URL in travel/index.html.');
 }
 
@@ -688,6 +822,7 @@ function onOpen() {
     .addItem('1. Set up / repair everything', 'setupTravel')
     .addSeparator()
     .addItem('E-mail the selected client their premium', 'emailQuote')
+    .addItem('Check the rate card', 'checkRates')
     .addItem('Open the proposals Drive folder', 'openTravelFolder')
     .addSeparator()
     .addItem('Turn test mode ON (e-mails only reach you)', 'testModeOn_')
