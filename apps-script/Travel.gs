@@ -64,6 +64,14 @@ var TRAVEL = {
   TEST_INBOX: '',
 
   STATUSES: ['Received', 'Quoted', 'Awaiting payment', 'Bound', 'Declined', 'Withdrawn'],
+
+  /* Salesforce, for prefilling an existing client's details. Three Script
+     properties, the same three the Service Questionnaire project holds:
+     SF_KEY, SF_SECRET and SF_LOGIN_URL (the My Domain address). Nothing in
+     the code, because the .gs files are public. Without them the page never
+     shows the "find my details" panel. */
+  SF_API: 'v60.0',
+  SF_LOGIN: 'https://login.salesforce.com',
 };
 
 var TBRAND = { navy: '#07131f', navy2: '#163553', gold: '#efc24b', teal: '#00CFEA', light: '#e6fafd',
@@ -84,7 +92,7 @@ var COLUMNS = [
   'Cover for each person', 'Travelling dependants', 'Dependant health details',
   'Package', 'Beneficiary (PA)', 'Sums insured', 'Specified items',
   'Sound health', 'Health details', 'Infectious contact (21 days)', 'Contact details',
-  'Declaration', 'Flags', 'Premium quoted (TT$)', 'Quoted on', 'Paid on', 'Policy number',
+  'Declaration', 'Existing client', 'Client number', 'Policy on file', 'Prefilled from Salesforce', 'Flags', 'Premium quoted (TT$)', 'Quoted on', 'Paid on', 'Policy number',
   'Proposal PDF', 'Drive folder', 'Assigned to', 'Internal notes', 'Page',
 ];
 var PERSON_COLUMNS = [
@@ -219,7 +227,7 @@ function doGet(e) {
   var p = (e && e.parameter) || {}, out;
   try {
     switch (p.action) {
-      case 'ping': out = { ok: true, service: 'travel', version: 1, desk: !!TRAVEL.DESK, test: testMode_() }; break;
+      case 'ping': out = { ok: true, service: 'travel', version: 2, desk: !!TRAVEL.DESK, prefill: sfReady_(), test: testMode_() }; break;
       default: out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) { out = { ok: false, error: String(err && err.message ? err.message : err) }; }
@@ -237,6 +245,7 @@ function doPost(e) {
   try {
     switch (body.action) {
       case 'propose': out = apiPropose_(body); break;
+      case 'lookup':  out = apiLookup_(body); break;
       default: out = { ok: false, error: 'Unknown action' };
     }
   } catch (err) { out = { ok: false, error: String(err && err.message ? err.message : err) }; }
@@ -282,6 +291,8 @@ function apiPropose_(b) {
   if (p.pep === 'Yes') flags.push('PEP: memorandum required');
   if (h.sound === 'No' || h.contact === 'Yes' || deps.some(function (d) { return d.health === 'No' || d.defects === 'No'; })) flags.push('Health disclosure: underwriter to consider');
   if (b.pkg === 'custom') flags.push('Sums insured stated by the client: rate individually');
+  var ex = b.existing && typeof b.existing === 'object' ? b.existing : null;
+  var existing = ex ? { clientNumber: clean_(ex.clientNumber, 20), policy: clean_(ex.policy, 20), prefilled: (ex.prefilled || []).slice(0, 20).map(function (k) { return clean_(k, 20); }) } : null;
 
   var ref = newReference_();
   var folder = proposalFolder_(ref, name);
@@ -296,7 +307,7 @@ function apiPropose_(b) {
     companions: clean_(t.companions, 5), coverEach: clean_(t.coverEach, 5), deps: deps, depDetails: clean_(b.depDetails, 2000),
     pkg: b.pkg, pkgName: pkgName, pkgLimits: pkg, beneficiary: clean_(b.beneficiary, 200), persons: persons, items: items,
     sound: clean_(h.sound, 5), soundDetails: clean_(h.soundDetails, 2000), contact: clean_(h.contact, 5), contactDetails: clean_(h.contactDetails, 2000),
-    flags: flags, page: clean_(b.page, 300), folder: folder.getUrl(),
+    flags: flags, page: clean_(b.page, 300), folder: folder.getUrl(), existing: existing,
   };
 
   var row = appendRow_(sheet_(), COLUMNS, {
@@ -313,7 +324,9 @@ function apiPropose_(b) {
     'Sums insured': persons.map(function (x) { return x.name + ': PA ' + money_(x.pa) + ' · baggage ' + money_(x.baggage) + ' · passport ' + money_(x.addl) + ' · medical ' + money_(x.medical) + ' · money ' + money_(x.money) + ' · tickets ' + money_(x.tickets) + ' · deposits ' + money_(x.deposits) + (x.ben ? ' · beneficiary ' + x.ben : ''); }).join('\n'),
     'Specified items': items.map(function (i) { return i.desc + (i.value ? ' · ' + money_(i.value) : ''); }).join('\n'),
     'Sound health': prop.sound, 'Health details': prop.soundDetails, 'Infectious contact (21 days)': prop.contact, 'Contact details': prop.contactDetails,
-    'Declaration': 'Accepted online ' + nowStamp_(), 'Flags': flags.join('\n'), 'Drive folder': prop.folder, 'Page': prop.page,
+    'Declaration': 'Accepted online ' + nowStamp_(), 'Existing client': existing ? 'Yes' : 'No',
+    'Client number': existing ? existing.clientNumber : '', 'Policy on file': existing ? existing.policy : '',
+    'Prefilled from Salesforce': existing ? existing.prefilled.join(', ') : '', 'Flags': flags.join('\n'), 'Drive folder': prop.folder, 'Page': prop.page,
   });
   var hit = { sh: sheet_(), row: row, map: headerMap_(sheet_()) };
 
@@ -341,6 +354,102 @@ function apiPropose_(b) {
   return { ok: true, ref: ref, flags: flags };
 }
 
+/* ============================ Salesforce: prefill for an existing client ============================
+ * A client gives any policy number or their client number plus their date of
+ * birth. Only when the date of birth matches the record is anything handed
+ * back, and five wrong tries on one number close it for fifteen minutes, as
+ * on the claims page. What comes back is what the proposal form asks for:
+ * name, date of birth, address, phones, e-mail, occupation, employer.
+ * =================================================================================================== */
+
+function sfProps_() { return PropertiesService.getScriptProperties(); }
+function sfReady_() { var p = sfProps_(); return !!(p.getProperty('SF_KEY') && p.getProperty('SF_SECRET')); }
+function sfLit_(s) { return String(s === null || s === undefined ? '' : s).replace(/\\/g, '\\\\').replace(/'/g, "\\'"); }
+function sfToken_() {
+  var p = sfProps_();
+  var cached = p.getProperty('TRV_SF_TOKEN'), when = Number(p.getProperty('TRV_SF_TOKEN_AT') || 0);
+  if (cached && (new Date().getTime() - when) < 50 * 60 * 1000) return JSON.parse(cached);
+  var payload = { grant_type: 'client_credentials', client_id: p.getProperty('SF_KEY'), client_secret: p.getProperty('SF_SECRET') };
+  if (p.getProperty('SF_PASS')) { payload.grant_type = 'password'; payload.username = p.getProperty('SF_USER'); payload.password = p.getProperty('SF_PASS'); }
+  var login = String(p.getProperty('SF_LOGIN_URL') || TRAVEL.SF_LOGIN).trim().replace(/\/+$/, '');
+  var res = UrlFetchApp.fetch(login + '/services/oauth2/token', { method: 'post', muteHttpExceptions: true, payload: payload });
+  if (res.getResponseCode() !== 200) throw new Error('Salesforce login failed: ' + res.getContentText().slice(0, 200));
+  var tok = JSON.parse(res.getContentText());
+  p.setProperty('TRV_SF_TOKEN', JSON.stringify(tok)); p.setProperty('TRV_SF_TOKEN_AT', String(new Date().getTime()));
+  return tok;
+}
+function sfQuery_(soql) {
+  var tok = sfToken_();
+  var go = function () { return UrlFetchApp.fetch(tok.instance_url + '/services/data/' + TRAVEL.SF_API + '/query?q=' + encodeURIComponent(soql), { muteHttpExceptions: true, headers: { Authorization: 'Bearer ' + tok.access_token } }); };
+  var res = go();
+  if (res.getResponseCode() === 401) { sfProps_().deleteProperty('TRV_SF_TOKEN'); tok = sfToken_(); res = go(); }
+  if (res.getResponseCode() !== 200) throw new Error('Salesforce query failed: ' + res.getContentText().slice(0, 200));
+  return JSON.parse(res.getContentText()).records || [];
+}
+
+var SF_LOOKUP_FIELDS = [
+  'POLICY__c', 'Client_Number__c', 'FIRST_NAME__c', 'LAST_NAME__c', 'Date_Of_Birth__c', 'Email__c', 'Mobile__c', 'Home_Phone__c',
+  'Occupation__c', 'Address_1__c', 'Address_2__c', 'Address_3__c', 'PLAN_NAME__c', 'Policy_Status_Description__c',
+  'Contact__r.Salutation', 'Contact__r.FirstName', 'Contact__r.LastName', 'Contact__r.Birthdate', 'Contact__r.Email',
+  'Contact__r.MobilePhone', 'Contact__r.HomePhone', 'Contact__r.MailingStreet', 'Contact__r.MailingCity', 'Contact__r.Title', 'Contact__r.Employer__c',
+];
+
+/** Five wrong dates on one number inside fifteen minutes and it stops answering. */
+function lookupThrottle_(key, spend) {
+  var cache = CacheService.getScriptCache(), slot = 'trv-lk-' + key;
+  var used = Number(cache.get(slot) || 0);
+  if (used >= 5) return false;
+  if (spend) cache.put(slot, String(used + 1), 900);
+  return true;
+}
+function dobKey_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, tz_(), 'yyyyMMdd');
+  var m = String(v || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[1] + m[2] + m[3] : '';
+}
+function phoneNice_(v) { var d = String(v || '').replace(/\D/g, ''); if (d.length < 7) return ''; if (d.length === 7) d = '868' + d; if (d.length === 11 && d[0] === '1') d = d.slice(1); return d.length === 10 ? '(' + d.slice(0, 3) + ') ' + d.slice(3, 6) + '-' + d.slice(6) : String(v); }
+function titleCase_(s) { return String(s || '').toLowerCase().replace(/(^|[\s\-'/(])([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }).replace(/\b(T&tec|Wasa|Ngc|Ttps|Ttec)\b/g, function (m) { return m.toUpperCase(); }); }
+function jobTitle_(t) { t = String(t || '').trim(); return /^(mr|mrs|ms|miss|dr|unknown|not on list|n\/a|none)\.?$/i.test(t) ? '' : t; }
+function addrNice_(rec, c) {
+  var v = function (x) { return x === null || x === undefined ? '' : String(x); };
+  var town = v(rec.Address_2__c || c.MailingCity).replace(/\s+/g, ' ').trim(), a3 = v(rec.Address_3__c).replace(/\s+/g, ' ').trim();
+  var a1 = v(rec.Address_1__c || c.MailingStreet).replace(/\s*[\r\n]+\s*/g, ', ').replace(/\s+/g, ' ').trim();
+  return titleCase_([a1, town, /trinidad|tobago|w\.?i\.?$/i.test(a3) ? '' : a3].filter(Boolean).join(', '));
+}
+
+function apiLookup_(b) {
+  if (!sfReady_()) throw new Error('Prefill is not switched on yet.');
+  var q = clean_(b.q, 20).replace(/\s+/g, ''), dob = dobKey_(clean_(b.dob, 20));
+  if (!/^\d{4,15}$/.test(q)) throw new Error('A policy or client number is digits only.');
+  if (dob.length !== 8) throw new Error('Please give your date of birth.');
+  if (!lookupThrottle_(q, false)) throw new Error('Too many tries on that number. Please wait fifteen minutes.');
+  var recs = sfQuery_('SELECT ' + SF_LOOKUP_FIELDS.join(', ') + " FROM CLIENT_PORTFOLIO__c WHERE POLICY__c = '" + sfLit_(q) + "' OR Client_Number__c = '" + sfLit_(q) + "' LIMIT 50");
+  var hits = recs.filter(function (r) { var c = r.Contact__r || {}; var k1 = dobKey_(r.Date_Of_Birth__c), k2 = dobKey_(c.Birthdate); return (k1 && k1 === dob) || (k2 && k2 === dob); });
+  if (!hits.length) {
+    lookupThrottle_(q, true);
+    log_('(lookup)', 'prefill-miss', recs.length ? 'number known, date of birth did not match' : 'number not on file');
+    throw new Error('That did not match what we have on file.');
+  }
+  // the record the client typed, else the newest in force, else the first
+  var rec = hits.filter(function (r) { return String(r.POLICY__c || '') === q; })[0] || hits.filter(function (r) { return /premium paying|paid up|in force/i.test(String(r.Policy_Status_Description__c || '')); })[0] || hits[0];
+  var c = rec.Contact__r || {}, v = function (x) { return x === null || x === undefined ? '' : String(x).trim(); };
+  var first = titleCase_(v(c.FirstName) || v(rec.FIRST_NAME__c)), last = titleCase_(v(c.LastName) || v(rec.LAST_NAME__c));
+  var sal = v(c.Salutation).replace(/\.$/, ''); if (!/^(Mr|Mrs|Miss|Ms|Dr)$/.test(sal)) sal = '';
+  var prefill = {
+    title: sal, first: first, surname: last,
+    dob: (dobKey_(rec.Date_Of_Birth__c) || dobKey_(c.Birthdate)).replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3'),
+    address: addrNice_(rec, c),
+    phone: [phoneNice_(c.MobilePhone || rec.Mobile__c), phoneNice_(rec.Home_Phone__c || c.HomePhone)].filter(function (x, i, a) { return x && a.indexOf(x) === i; }).join(' · '),
+    email: v(rec.Email__c || c.Email).toLowerCase(),
+    occupation: titleCase_(v(rec.Occupation__c) || jobTitle_(c.Title)),
+    employer: titleCase_(jobTitle_(c.Employer__c)),
+    nationality: '', residence: 'Trinidad and Tobago',
+  };
+  var cno = v(rec.Client_Number__c) || v(hits[0].Client_Number__c);
+  log_('(lookup)', 'prefill', 'client ' + (cno || '?') + ' · ' + hits.length + ' record(s)');
+  return { ok: true, prefill: prefill, clientNumber: cno, policy: v(rec.POLICY__c), policies: hits.length };
+}
+
 /* ============================ the PDF: the form, sections 1 to 9 ============================ */
 
 function fr_(k, v) {
@@ -359,7 +468,7 @@ function proposalPdf_(x) {
     '<table width="100%" style="border-collapse:collapse;border-bottom:2px solid #111;margin-bottom:10px"><tr>' +
       '<td style="width:52px;padding:0 0 8px"><img src="' + TBRAND.logo + '" width="44" height="44" style="border-radius:10px"></td>' +
       '<td style="font-size:10.5px;color:#333;padding:0 0 8px"><b style="font-size:13.5px">Ricky Rampersad Branch · Guardian Group</b><br>Travel insurance proposal to Guardian General Insurance Limited<br>Head Office: Newtown Centre, 30-34 Maraval Road, St. Clair, Port of Spain · (868) 226-myGG (6944)</td>' +
-      '<td style="text-align:right;font-size:10.5px;color:#333;padding:0 0 8px">Reference<br><b style="font-size:14px;letter-spacing:1px;color:' + TBRAND.navy + '">' + esc_(x.ref) + '</b><br>' + nowStamp_() + '</td>' +
+      '<td style="text-align:right;font-size:10.5px;color:#333;padding:0 0 8px">Reference<br><b style="font-size:14px;letter-spacing:1px;color:' + TBRAND.navy + '">' + esc_(x.ref) + '</b><br>' + nowStamp_() + (x.existing && x.existing.clientNumber ? '<br>Client no. ' + esc_(x.existing.clientNumber) : '') + '</td>' +
     '</tr></table>' +
     '<div style="text-align:center;font-weight:bold;font-size:15px;letter-spacing:1px;margin:6px 0 12px">TRAVEL INSURANCE PROPOSAL FORM</div>' +
     h3_('1. Personal information') +
@@ -446,6 +555,7 @@ function summaryTable_(x) {
   return '<table style="border-collapse:collapse;width:100%;font-size:13px;margin:10px 0">' +
     tr_('Reference', '<b>' + esc_(x.ref) + '</b>') +
     tr_('Proposer', esc_(x.name) + (x.biz ? ' (' + esc_(x.entity || 'business') + ')' : '')) +
+    (x.existing ? tr_('Existing client', 'Client number ' + esc_(x.existing.clientNumber || '—') + (x.existing.policy ? ' · policy ' + esc_(x.existing.policy) : '') + ' · details prefilled from Salesforce') : '') +
     tr_('Contact', esc_(x.phone) + ' · ' + esc_(x.email)) +
     tr_('Trip', esc_(x.countries) + ' · ' + esc_(x.purpose)) +
     tr_('Period', esc_(fmtDate_(x.from)) + ' to ' + esc_(fmtDate_(x.to)) + (x.days ? ' · ' + x.days + ' days' : '')) +
@@ -544,7 +654,8 @@ function setupTravel() {
     'Travel proposals are ready.\n\n' +
     'Tabs: ' + TRAVEL.SHEET + ', ' + TRAVEL.PERSONS_SHEET + ', ' + TRAVEL.LOG_SHEET + '\n' +
     'Drive folder: ' + root.getUrl() + '\n' +
-    'Travel desk: ' + (TRAVEL.DESK || 'not set — proposals go to the branch alone') + '\n\n' +
+    'Travel desk: ' + (TRAVEL.DESK || 'not set — proposals go to the branch alone') + '\n' +
+    'Prefill from Salesforce: ' + (sfReady_() ? 'on' : 'off — set SF_KEY, SF_SECRET and SF_LOGIN_URL in Script properties') + '\n\n' +
     'Next: Deploy → New deployment → Web app (execute as Me, access Anyone), then paste the /exec URL into CONFIG.API_URL in travel/index.html.');
 }
 

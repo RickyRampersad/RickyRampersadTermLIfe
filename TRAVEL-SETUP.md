@@ -45,6 +45,8 @@ Questionnaire, Claims and renewals projects already use theirs. Do not paste
    builds the three tabs, the Status dropdown and the Drive folder.
 5. **Deploy → New deployment → Web app**: execute as **Me**, who has access
    **Anyone**. Copy the `/exec` URL.
+   (For prefill from Salesforce, set the three `SF_*` properties first; see
+   Part 1b.)
 6. Paste it into `CONFIG.API_URL` in `travel/index.html`, commit, push, merge.
 
 Re-deploying after a change to the script is **Deploy → Manage deployments →
@@ -57,6 +59,33 @@ From the sheet's **Travel** menu, turn **test mode ON**: every e-mail then goes
 to the script owner with a `[TEST]` banner naming the real recipients. Send a
 proposal from the page, read the branch e-mail and the client acknowledgement,
 open the PDF, then turn test mode OFF.
+
+## Part 1b — prefill for an existing client (Salesforce)
+
+An existing client need not type what the branch already holds. At the top
+of "About you" the page offers **Already a Guardian client with our
+branch?**: any policy number or the client number, plus the date of birth.
+The backend looks the number up on `CLIENT_PORTFOLIO__c` and hands back the
+proposer's details **only when the date of birth matches the record**: title,
+first name, surname, date of birth, address, phones, e-mail, occupation (the
+policy's own, else the Contact's Title), employer. Five wrong dates on one
+number inside fifteen minutes close it, as on the claims page. Nothing is
+revealed on a miss, not even whether the number exists.
+
+The filled fields carry a green "from your file" chip, the client can change
+any of them, and the proposal row records **Existing client**, **Client
+number**, **Policy on file** and **Prefilled from Salesforce** (the fields
+that came from the file). The branch e-mail and the PDF header carry the
+client number, so the desk knows it is an existing client before it quotes.
+
+To switch it on, add three Script properties to the Travel project (Project
+Settings → Script properties), the same three the Service Questionnaire
+project holds: **`SF_KEY`**, **`SF_SECRET`** and **`SF_LOGIN_URL`** (the My
+Domain address, not login.salesforce.com). Copy them from the KPI Tracker.
+Then Manage deployments → New version. The page asks the backend on load
+whether prefill is on (`ping` answers `prefill: true`) and shows the panel
+only then; without the properties the panel never appears and the client
+fills the form by hand.
 
 ## Part 2 — what comes in
 

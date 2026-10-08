@@ -141,6 +141,19 @@ label.l small{font-weight:400;color:var(--faint);letter-spacing:0}
 .f .note{font-size:12.5px;color:var(--muted)}
 .chip{display:inline-block;font:700 11.5px var(--sans);color:var(--teal-ink);background:var(--teal-50);border:1px solid #bfeef5;border-radius:999px;padding:3px 10px;margin-left:8px;vertical-align:middle}
 .chip.warn{color:var(--warn);background:var(--warn-50);border-color:#f4d9b3}
+.chip.file{color:var(--good);background:var(--good-50);border-color:#bfe6cf}
+.lookup{background:linear-gradient(160deg,#0d2137,#163553);color:#edf4fb;border-radius:var(--r2);padding:16px 16px 14px;margin:4px 0 18px}
+.lookup h4{color:var(--gold);border:0;padding:0;margin:0 0 4px}
+.lookup p{font-size:13.5px;color:#b9c9da;margin-bottom:12px}
+.lookup .row{align-items:end}
+.lookup label.l{color:#cfdceb}
+.lookup input{background:#fff;color:var(--ink)}
+.lookup .btn-gold{padding:11px 20px;font-size:14px}
+.lookup .msg{font-size:13.5px;margin-top:10px;min-height:1.2em}
+.lookup .msg.ok{color:#9fe8c1}.lookup .msg.bad{color:#ffb3bf}
+.lookup .found{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px;font-size:13.5px}
+.lookup .found b{color:#fff}
+.lookup .lnk{background:none;border:0;color:var(--teal);font:inherit;font-size:13px;text-decoration:underline;padding:0}
 /* yes/no + choices */
 .seg{display:flex;gap:8px;flex-wrap:wrap}
 .seg label{display:inline-flex;align-items:center;gap:8px;font:600 14px var(--sans);background:#fff;border:1.5px solid var(--line);border-radius:999px;padding:9px 15px;cursor:pointer;transition:border-color .15s,background .15s}
@@ -350,6 +363,17 @@ footer a{color:var(--muted)}
       <div class="card">
         <h3>About the proposer</h3>
         <p class="hint">The proposer is the person, or the company, taking out the cover.</p>
+        <div class="lookup" id="lookupBox" hidden>
+          <h4>Already a Guardian client with our branch?</h4>
+          <p>Give us any policy number or your client number, and your date of birth, and we fill your details from your file. You can change anything that is out of date.</p>
+          <div class="row">
+            <div class="f"><label class="l" for="lkNo">Policy or client number</label><input id="lkNo" inputmode="numeric" autocomplete="off" placeholder="e.g. 0012345678"></div>
+            <div class="f"><label class="l" for="lkDob">Date of birth</label><input id="lkDob" type="date"></div>
+            <div class="f"><button class="btn btn-gold" type="button" id="lkBtn" onclick="findMe()">Find my details</button></div>
+          </div>
+          <div class="msg" id="lkMsg"></div>
+          <div class="found" id="lkFound" hidden></div>
+        </div>
         <div class="f"><label class="l">Who is proposing? *</label>
           <div class="seg"><label><input type="radio" name="kind" value="person" data-k="kind" checked>A person</label><label><input type="radio" name="kind" value="business" data-k="kind">A company or business</label></div></div>
         <div id="personFields">
@@ -535,6 +559,7 @@ footer a{color:var(--muted)}
 const CONFIG = {
   API_URL: "",
   SITE_KEY: "rrb-travel-2026",
+  DEMO: false,            // true on the test copy only: canned answers, nothing sent
   SUPPORT: "support@rickyrampersadbranch.com",
   PHONE: "(868) 226-6461",
 };
@@ -559,7 +584,63 @@ const money = (n) => "$" + Number(n).toLocaleString("en-US");
 const fmtDate = (iso) => { if (!iso) return ""; const d = new Date(iso + "T00:00:00"); return isNaN(d) ? iso : d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }); };
 const ageOn = (dob, on) => { if (!dob) return null; const a = new Date(dob + "T00:00:00"), b = on ? new Date(on + "T00:00:00") : new Date(); if (isNaN(a) || isNaN(b)) return null; let y = b.getFullYear() - a.getFullYear(); const m = b.getMonth() - a.getMonth(); if (m < 0 || (m === 0 && b.getDate() < a.getDate())) y--; return y; };
 
-let state = { step: 0, deps: [], items: [], sums: {} };
+let state = { step: 0, deps: [], items: [], sums: {}, existing: null };
+
+/* ── the backend ── */
+async function api(payload) {
+  if (CONFIG.DEMO) return demoApi(payload);
+  const res = await fetch(CONFIG.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ siteKey: CONFIG.SITE_KEY }, payload)) });
+  if (!res.ok) throw new Error("The branch's system returned an error (" + res.status + ").");
+  const out = await res.json();
+  if (!out || out.ok === false) throw new Error((out && out.error) || "The request was not accepted.");
+  return out;
+}
+async function pingBackend() {
+  if (CONFIG.DEMO) { $("lookupBox").hidden = false; return; }
+  if (!CONFIG.API_URL) return;
+  try { const r = await (await fetch(CONFIG.API_URL + (CONFIG.API_URL.includes("?") ? "&" : "?") + "action=ping")).json(); if (r && r.prefill) $("lookupBox").hidden = false; } catch (e) {}
+}
+/* The test copy answers for itself: a sample file for the lookup and a reference for the send. Nothing leaves the page. */
+function demoApi(p) {
+  return new Promise((ok, no) => setTimeout(() => {
+    if (p.action === "lookup") {
+      if (!p.q || !p.dob) return no(new Error("Give both the number and the date of birth."));
+      return ok({ ok: true, prefill: { title: "Mr", first: "Sample", surname: "Client", dob: p.dob, address: "12 Sample Street, Chaguanas", phone: "(868) 555-0100", email: "sample.client@example.com", occupation: "Teacher", employer: "Ministry of Education", nationality: "Trinidad and Tobago", residence: "Trinidad and Tobago" }, clientNumber: "0000123456", policy: String(p.q), policies: 2 });
+    }
+    if (p.action === "propose") return ok({ ok: true, ref: "TRV-" + new Date().toISOString().slice(2, 7).replace("-", "") + "-" + String(Math.floor(1000 + Math.random() * 9000)) });
+    no(new Error("Unknown action"));
+  }, 700));
+}
+const PREFILL_FIELDS = ["title", "first", "surname", "dob", "pob", "nationality", "residence", "marital", "address", "mailing", "phone", "email", "occupation", "employer"];
+async function findMe() {
+  const q = $("lkNo").value.trim(), dob = $("lkDob").value, msg = $("lkMsg"), btn = $("lkBtn");
+  msg.className = "msg"; $("lkFound").hidden = true;
+  if (!q || !dob) { msg.className = "msg bad"; msg.textContent = "Give both the number and your date of birth."; return; }
+  btn.disabled = true; btn.textContent = "Looking…";
+  try {
+    const r = await api({ action: "lookup", q, dob });
+    const filled = applyPrefill(r.prefill || {});
+    state.existing = { clientNumber: r.clientNumber || "", policy: r.policy || q, policies: r.policies || 0, prefilled: filled };
+    msg.className = "msg ok"; msg.textContent = "Found your file. We filled " + filled.length + (filled.length === 1 ? " field" : " fields") + " from it; check them below and change anything that is out of date.";
+    $("lkFound").hidden = false; $("lkFound").innerHTML = "<span>On file as <b>" + esc(proposerName(collect())) + "</b>" + (r.clientNumber ? " · client number <b>" + esc(r.clientNumber) + "</b>" : "") + (r.policies ? " · " + r.policies + (r.policies === 1 ? " policy" : " policies") + " with us" : "") + "</span><button class=\"lnk\" type=\"button\" onclick=\"clearPrefill()\">Not you? Clear these</button>";
+    refresh(); saveDraft();
+  } catch (err) { msg.className = "msg bad"; msg.textContent = (err.message || String(err)) + " You can fill the form in by hand; it only takes a little longer."; }
+  finally { btn.disabled = false; btn.textContent = "Find my details"; }
+}
+function applyPrefill(p) {
+  const filled = [];
+  PREFILL_FIELDS.forEach((k) => {
+    const v = p[k]; if (!v) return;
+    const el = document.querySelector('[data-k="' + k + '"]'); if (!el || el.type === "radio") return;
+    if (el.tagName === "SELECT" && ![...el.options].some((o) => o.value === v)) return;
+    el.value = v; filled.push(k); markFromFile(el, true); el.closest(".f") && el.closest(".f").classList.remove("bad");
+  });
+  if (filled.length) setRadioSilent("kind", "person");
+  return filled;
+}
+function markFromFile(el, on) { const lab = el.closest(".f") && el.closest(".f").querySelector("label.l"); if (!lab) return; let c = lab.querySelector(".chip.file"); if (on && !c) { c = document.createElement("span"); c.className = "chip file"; c.textContent = "from your file"; lab.appendChild(c); } if (!on && c) c.remove(); }
+function clearPrefill() { PREFILL_FIELDS.forEach((k) => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.type !== "radio") { el.value = k === "residence" ? "Trinidad and Tobago" : ""; markFromFile(el, false); } }); state.existing = null; $("lkFound").hidden = true; $("lkMsg").textContent = ""; refresh(); saveDraft(); }
+document.addEventListener("input", (e) => { if (e.target.dataset && PREFILL_FIELDS.includes(e.target.dataset.k)) markFromFile(e.target, false); });
 
 /* ── packages on the landing ── */
 $("pkGrid").innerHTML = Object.keys(PACKAGES).map((k) => {
@@ -591,7 +672,7 @@ function readItems() { return [...document.querySelectorAll("#items .it")].map((
 function readSums() { const o = {}; document.querySelectorAll("#sumsTbl tbody tr").forEach((tr) => { const row = {}; tr.querySelectorAll("input").forEach((i) => { row[i.dataset.b] = i.value.trim(); }); o[tr.dataset.i] = row; }); return o; }
 
 function saveDraft() {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign(collect(), { step: state.step, t: Date.now() }))); } catch (e) {}
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(Object.assign(collect(), { step: state.step, existing: state.existing, t: Date.now() }))); } catch (e) {}
   const s = $("sv" + state.step); if (s) { s.textContent = "Saved on this device"; setTimeout(() => { if (s.textContent === "Saved on this device") s.textContent = ""; }, 1800); }
 }
 function loadDraft() {
@@ -603,7 +684,8 @@ function loadDraft() {
     else if (el.type === "checkbox") el.checked = false;   // the declaration is never remembered
     else el.value = d[k] || "";
   });
-  state.deps = d.deps || []; state.items = d.items || []; state.sums = d.sums || {};
+  state.deps = d.deps || []; state.items = d.items || []; state.sums = d.sums || {}; state.existing = d.existing || null;
+  if (state.existing) (state.existing.prefilled || []).forEach((k) => { const el = document.querySelector('[data-k="' + k + '"]'); if (el && el.value) markFromFile(el, true); });
   state.step = Math.min(Number(d.step) || 0, 5);
   return true;
 }
@@ -745,9 +827,9 @@ function renderReview() {
   const sec = (title, step, rows) => '<h4 style="font:800 11.5px var(--disp);letter-spacing:.12em;text-transform:uppercase;color:var(--teal-ink);margin:18px 0 6px;display:flex;align-items:center">' + title + '<button class="edit" type="button" onclick="goto(' + step + ')">Edit</button></h4><dl class="sum">' + rows.map(([k, v]) => "<dt>" + k + "</dt>" + dd(v)).join("") + "</dl>";
   const days = d.from && d.to ? Math.round((new Date(d.to) - new Date(d.from)) / 86400000) + 1 : null;
   let html = sec("The trip", 0, [["Countries to be visited", d.countries], ["Purpose", d.purpose], ["Period of insurance", d.from && d.to ? fmtDate(d.from) + " to " + fmtDate(d.to) + (days ? " (" + days + " days)" : "") : ""], ["Persons accompanying", d.companions === "" ? "" : d.companions + (Number(d.companions) > 0 ? " · cover for each: " + (d.coverEach || "—") : "")]]);
-  html += sec("The proposer", 1, d.kind === "business"
+  html += sec("The proposer", 1, (state.existing && state.existing.clientNumber ? [["Client number", state.existing.clientNumber + " (details from your file)"]] : []).concat(d.kind === "business"
     ? [["Company", d.company], ["Entity", d.entity], ["Incorporated", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Registered address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Business activity", [d.occupation, d.employer].filter(Boolean).join(" · ")], ["PEP", d.pep]]
-    : [["Name", proposerName(d)], ["Born", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Marital status", d.marital], ["Residential address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Occupation", d.occupation], ["Employer", d.employer], ["PEP", d.pep]]);
+    : [["Name", proposerName(d)], ["Born", [fmtDate(d.dob), d.pob].filter(Boolean).join(", ")], ["Nationality · residence", [d.nationality, d.residence].filter(Boolean).join(" · ")], ["Marital status", d.marital], ["Residential address", d.address], ["Mailing address", d.mailing], ["Contact", [d.phone, d.email].filter(Boolean).join(" · ")], ["Occupation", d.occupation], ["Employer", d.employer], ["PEP", d.pep]]));
   html += sec("Travelling dependants", 2, d.deps.length ? d.deps.map((p, i) => ["Dependant " + (i + 1), [p.name, p.dob ? "born " + fmtDate(p.dob) : "", p.occupation, "health " + (p.health || "—") + " · defects-free " + (p.defects || "—")].filter(Boolean).join(" · ")]).concat(d.depDetails ? [["Details", d.depDetails]] : []) : [["Dependants", "None to insure"]]);
   const sumsRows = d.pkg === "custom" ? personsList(d).map((p, i) => { const s = d.sums[i] || {}; return [p.name, BENEFITS.map(([b, l]) => b === "money" ? (s.money || s.tickets ? "Money " + (s.money || "—") + " / tickets " + (s.tickets || "—") : "") : s[b] ? l.split(":")[0] + " " + s[b] : "").filter(Boolean).join(" · ") + (s.ben ? " · beneficiary " + s.ben : "")]; }) : [];
   html += sec("Package", 3, [["Package", pkgLabel(d)], ["Beneficiary under personal accident", d.beneficiary]].concat(sumsRows));
@@ -766,7 +848,7 @@ function sheetHtml(d, ref) {
   const biz = d.kind === "business";
   const persons = personsList(d);
   const pk = PACKAGES[d.pkg];
-  let h = '<div class="sheet"><div class="hd"><div class="mk"><img src="../logo-mark.png" alt=""></div><div class="co"><b>Ricky Rampersad Branch · Guardian Group</b>Travel insurance proposal to Guardian General Insurance Limited<br>Head Office: Newtown Centre, 30-34 Maraval Road, St. Clair, Port of Spain · (868) 226-myGG (6944)</div><div class="rf">Reference<b>' + esc(ref || "pending") + "</b>" + esc(new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })) + "</div></div>";
+  let h = '<div class="sheet"><div class="hd"><div class="mk"><img src="../logo-mark.png" alt=""></div><div class="co"><b>Ricky Rampersad Branch · Guardian Group</b>Travel insurance proposal to Guardian General Insurance Limited<br>Head Office: Newtown Centre, 30-34 Maraval Road, St. Clair, Port of Spain · (868) 226-myGG (6944)</div><div class="rf">Reference<b>' + esc(ref || "pending") + "</b>" + esc(new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })) + (state.existing && state.existing.clientNumber ? "<br>Client no. " + esc(state.existing.clientNumber) : "") + "</div></div>";
   h += "<h2>TRAVEL INSURANCE PROPOSAL FORM</h2><h3>1. Personal information</h3>";
   h += fr("(a) Name of proposer(s) / company (in full)", biz ? d.company : proposerName(d));
   h += '<div class="g2">' + fr("(b) Date of " + (biz ? "incorporation" : "birth"), fmtDate(d.dob)) + fr("Place of " + (biz ? "incorporation" : "birth"), d.pob) + fr("Nationality", d.nationality) + fr("Country of residence", d.residence) + (biz ? "" : fr("Marital status", d.marital)) + "</div>";
@@ -812,6 +894,7 @@ function payload(d) {
     deps: d.deps, depDetails: d.depDetails, pkg: d.pkg, pkgName: pkgLabel(d), beneficiary: d.beneficiary, persons,
     items: d.items, health: { sound: d.sound, soundDetails: d.soundDetails, contact: d.contact, contactDetails: d.contactDetails },
     declared: !!d.declare,
+    existing: state.existing,
   };
 }
 function plainText(d) {
@@ -835,12 +918,10 @@ async function send() {
   const d = collect(); const btn = $("sendBtn"); btn.disabled = true; btn.textContent = "Sending…";
   try {
     let ref = "";
-    if (CONFIG.API_URL) {
-      const res = await fetch(CONFIG.API_URL, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ siteKey: CONFIG.SITE_KEY }, payload(d))) });
-      if (!res.ok) throw new Error("The branch's system returned an error (" + res.status + ").");
-      const out = await res.json(); if (!out || out.ok === false) throw new Error((out && out.error) || "The proposal was not accepted.");
+    if (CONFIG.API_URL || CONFIG.DEMO) {
+      const out = await api(payload(d));
       ref = out.ref || "";
-      $("doneMsg").textContent = "Keep this reference. A copy of your completed proposal form is on its way to " + d.email + ", and the branch comes back to you with your premium.";
+      $("doneMsg").textContent = CONFIG.DEMO ? "This is the test copy: nothing was sent. On the live page a copy of the completed proposal form goes to " + d.email + " and the branch comes back with the premium." : "Keep this reference. A copy of your completed proposal form is on its way to " + d.email + ", and the branch comes back to you with your premium.";
     } else {
       // Not wired yet: the proposal goes by the client's own mail app, and the done screen still gives them the form to print.
       ref = "TRV-" + new Date().toISOString().slice(2, 7).replace("-", "") + "-" + String(Math.floor(1000 + Math.random() * 9000));
@@ -863,6 +944,7 @@ async function send() {
   renderDeps(); if (state.items.length) renderItems();
   refresh();
   if (had) { $("resume").hidden = false; show(state.step); } else { show(0); }
+  pingBackend();
   const q = new URLSearchParams(location.search); if (q.get("pkg") && PACKAGES[q.get("pkg")]) setRadioSilent("pkg", q.get("pkg"));
   window.scrollTo(0, 0);
 })();
