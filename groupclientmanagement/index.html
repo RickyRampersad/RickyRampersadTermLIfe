@@ -206,9 +206,9 @@ async function refresh() {
 
 /* ---- the board ---- */
 function weekChip(s) {
+  if (s.week === 'queued') return '<span class="chip good"><i></i>Approved · goes ' + esc(s.approved.for) + '</span>';
   if (s.week === 'sent') return '<span class="chip good"><i></i>Sent ' + esc(s.sentThisWeek) + '</span>';
-  if (s.week === 'due') return '<span class="chip bad"><i></i>Letter due this week</span>';
-  return '<span class="chip"><i style="background:#9aa5b1"></i>Next letter ' + DAYS[BOARD.sendDay] + '</span>';
+  return '<span class="chip bad"><i></i>Approve for ' + esc(s.nextSendLabel || 'Monday') + '</span>';
 }
 function groupCard(g) {
   const s = g.stats;
@@ -226,7 +226,7 @@ function render() {
   let h = '';
   if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
   if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
-  if (d.dow === d.sendDay) h += '<div class="note"><b>Today is ' + DAYS[d.sendDay] + ': send day.</b> Open each group marked “Letter due”, check every item against Salesforce and the latest billing, preview the letter, then send.</div>';
+  if (d.nextSend) h += '<div class="note"><b>The letters go out by themselves on ' + esc(d.nextSend) + '.</b> Before then, open each group marked “Approve for Monday”, check every item against Salesforce and the latest billing, preview the letter and approve it. A new item after you approve holds the letter until you look again.</div>';
   if (d.role === 'branch') {
     h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Dashboard</button><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button></div>';
     h += TAB === 'dash' ? dash(d.analytics) : groupsHtml(d);
@@ -239,7 +239,7 @@ function render() {
 function groupsHtml(d) {
   const due = d.groups.filter(g => g.stats.week === 'due').length;
   const today = d.groups.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
-  let h = '<h2>' + (d.role === 'branch' ? 'Every group' : 'Your groups') + ' <span class="muted small">' + d.groups.length + ' · ' + due + ' letter' + (due === 1 ? '' : 's') + ' due this week</span></h2>';
+  let h = '<h2>' + (d.role === 'branch' ? 'Every group' : 'Your groups') + ' <span class="muted small">' + d.groups.length + ' · ' + due + ' to approve for ' + esc(d.nextSend || 'Monday') + '</span></h2>';
   h += d.groups.length ? '<div class="cards">' + d.groups.map(groupCard).join('') + '</div>' : '<p class="muted">No groups are assigned to you on the Group Register yet.</p>';
   h += '<h2>What we’ve done today <span class="muted small">' + today.length + '</span></h2>' + (today.length
     ? '<ul class="feed">' + today.map(x => '<li><b>' + esc(x.group) + '</b>: ' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + (x.by ? ' · ' + esc(x.by) : '') + '</span></li>').join('') + '</ul>'
@@ -258,7 +258,8 @@ function dash(a) {
   const t = a.totals;
   let h = '<div class="tiles">' +
     '<div class="tile"><b>' + t.groups + '</b><span>groups</span></div>' +
-    '<div class="tile' + (t.dueWeek ? ' alert' : '') + '"><b>' + t.sentWeek + ' / ' + (t.sentWeek + t.dueWeek) + '</b><span>letters sent this week</span></div>' +
+    '<div class="tile' + (t.dueWeek ? ' alert' : '') + '"><b>' + (t.queuedWeek || 0) + ' / ' + ((t.queuedWeek || 0) + t.dueWeek) + '</b><span>approved for ' + esc(t.nextSend || 'Monday') + '</span></div>' +
+    '<div class="tile"><b>' + t.sentWeek + '</b><span>letters sent this week</span></div>' +
     '<div class="tile"><b>' + t.open + '</b><span>open items</span></div>' +
     '<div class="tile' + (t.late ? ' alert' : '') + '"><b>' + t.late + '</b><span>past target</span></div>' +
     '<div class="tile"><b>' + t.done + '</b><span>completed this year</span></div>' +
@@ -271,7 +272,7 @@ function dash(a) {
   const maxDone = Math.max(1, ...a.staff.map(s => s.done));
   h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow each group’s account owner in Salesforce; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
     '<div class="scroll"><table class="t"><thead><tr><th>Staff</th><th class="num">Groups</th><th class="num">Letters this week</th><th class="num">Open</th><th class="num">Past target</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th><th>Rating</th><th class="num">Accuracy</th></tr></thead><tbody>' +
-    a.staff.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' due</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
+    a.staff.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.queued ? ' <span class="chip good"><i></i>' + s.queued + ' approved</span>' : '') + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' to approve</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
       '<td>' + barCell(s.done, maxDone) + '</td><td>' + barCell(s.onTimePct, 100, false, pct(s.onTimePct)) + '</td><td class="num">' + (s.avgDays == null ? '–' : s.avgDays) + '</td>' +
       '<td>' + (s.rating == null ? '<span class="muted">none yet</span>' : barCell(s.rating, 5, true, s.rating + '★ · ' + s.ratings)) + '</td><td class="num">' + pct(s.accuracy) + '</td></tr>').join('') + '</tbody></table></div>';
   const maxW = Math.max(1, ...a.weeks.map(w => w.done));
@@ -308,8 +309,9 @@ function drawGroup() {
     (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
     '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
     '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
-    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">This week’s letter</h3>' +
-    (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Already sent this week (' + esc(s.sentThisWeek) + '). Sending again sends a second letter.</p>' : '') +
+    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">Monday’s letter <span class="muted small">goes out by itself ' + esc(s.nextSendLabel || '') + '</span></h3>' +
+    (s.approved ? '<div class="note" style="background:var(--goodBg);border-color:#BFE3CB"><b>Approved by ' + esc(s.approved.by) + '</b> on ' + esc(s.approved.at) + '. It goes ' + esc(s.approved.for) + ', written again from Salesforce at that moment. A new item before then holds it for you to look at. <button class="btn ghost sm" type="button" id="unap">Cancel the approval</button></div>' : '') +
+    (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Sent this week (' + esc(s.sentThisWeek) + '). Approving now sets up next Monday’s letter.</p>' : '') +
     '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words."></textarea>' +
     '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
     '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
@@ -320,6 +322,7 @@ function drawGroup() {
   $('app').innerHTML = h;
   $('bk').onclick = render;
   $('pv').onclick = preview;
+  if ($('unap')) $('unap').onclick = async () => { const r = await post({ action: 'gcm.unapprove', group: GROUP.group.key }); if (!r.ok) return toast(r.error || 'Not cancelled', true); toast('Approval cancelled. Nothing goes on Monday until you approve again.'); openGroup(GROUP.group.key); };
   const ha = $('histAll');
   if (ha) ha.onclick = () => { const all = [...$('app').querySelectorAll('details.hist')], open = all.some(x => !x.open); all.forEach(x => { x.open = open; }); ha.textContent = open ? 'Hide all history' : 'Show all history'; };
   $('app').querySelectorAll('[data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c));
@@ -381,17 +384,26 @@ async function preview() {
   box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
     '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
     (r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
-      (r.mail ? '<button class="btn gold" type="button" id="sd" disabled>Send from support@</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button></div>' +
-      (r.mail ? '' : '<p class="small muted">Microsoft 365 sending is not set up on the backend, so the letter opens in your Outlook as plain text; it is logged when you press the button.</p>')
-      : '<div class="note bad">Cannot send yet: ' + esc(r.why) + '.</div>');
+      '<button class="btn gold" type="button" id="ap" disabled>Approve for ' + esc(r.nextSend) + '</button>' +
+      (r.canSendNow ? (r.mail ? '<button class="btn ghost" type="button" id="sd" disabled>Send now instead</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button>' : '') + '</div>' +
+      '<p class="small muted" style="margin-top:8px">At ' + esc(r.nextSend) + ' the letter is written again from Salesforce and sent from support@. If a new item appears after you approve, it waits and you are told by e-mail.' + (r.canSendNow ? ' Send now is for the branch manager only.' : '') + '</p>'
+      : '<div class="note bad">Cannot approve yet: ' + esc(r.why) + '.</div>');
   box.querySelector('iframe').srcdoc = r.letter.html;
   const ck = $('ck'); if (!ck) return;
-  ck.onchange = () => { if ($('sd')) $('sd').disabled = !ck.checked; $('ol').disabled = !ck.checked; };
+  ck.onchange = () => ['ap', 'sd', 'ol'].map($).filter(Boolean).forEach(b => { b.disabled = !ck.checked; });
+  $('ap').onclick = approve;
   if ($('sd')) $('sd').onclick = () => send(false);
-  $('ol').onclick = () => send(true);
+  if ($('ol')) $('ol').onclick = () => send(true);
+}
+async function approve() {
+  const btns = ['ap', 'sd', 'ol'].map($).filter(Boolean); btns.forEach(b => b.disabled = true);
+  const r = await post({ action: 'gcm.approve', group: GROUP.group.key, intro: $('intro').value, checked: $('ck').checked });
+  if (!r.ok) { toast(r.error || 'Not approved', true); btns.forEach(b => b.disabled = false); return; }
+  toast('Approved. It goes ' + r.for + '.');
+  setTimeout(() => openGroup(GROUP.group.key), 1000);
 }
 async function send(outlook) {
-  const btns = ['sd', 'ol'].map($).filter(Boolean); btns.forEach(b => b.disabled = true);
+  const btns = ['ap', 'sd', 'ol'].map($).filter(Boolean); btns.forEach(b => b.disabled = true);
   const r = await post({ action: 'gcm.send', group: GROUP.group.key, intro: $('intro').value, checked: $('ck').checked, outlook: outlook });
   if (!r.ok) { toast(r.error || 'Not sent', true); btns.forEach(b => b.disabled = false); return; }
   if (r.outlook) {

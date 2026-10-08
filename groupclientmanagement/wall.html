@@ -109,8 +109,8 @@ function draw() {
     '<div class="tile"><b>' + t.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(t.onTimePct) + '</b><span>done by the due date</span></div>' +
     '<div class="tile gold"><b>' + (t.rating == null ? '–' : t.rating + '★') + '</b><span>average rating from groups · ' + t.ratings + ' given</span></div></div>');
   slides.push('<h2>This week’s letters</h2><p class="lede">Every group hears from us once a week. Answers this week: ' + t.responsesWeek + '.</p><div class="list">' +
-    D.groups.slice().sort((x, y) => ({ due: 0, upcoming: 1, sent: 2 }[x.week] - { due: 0, upcoming: 1, sent: 2 }[y.week])).map(g => '<div><span class="g">' + esc(g.name) + '</span> <span class="muted">· ' + esc(g.assigned || 'not assigned') + '</span><br>' +
-      (g.week === 'sent' ? '<span class="chip good"><i></i>Sent</span>' : g.week === 'due' ? '<span class="chip bad"><i></i>Due</span>' : '<span class="chip"><i style="background:#6b7f93"></i>' + DAYS[D.sendDay] + '</span>') +
+    D.groups.slice().sort((x, y) => ({ due: 0, queued: 1, upcoming: 1, sent: 2 }[x.week] - { due: 0, queued: 1, upcoming: 1, sent: 2 }[y.week])).map(g => '<div><span class="g">' + esc(g.name) + '</span> <span class="muted">· ' + esc(g.assigned || 'not assigned') + '</span><br>' +
+      (g.week === 'sent' ? '<span class="chip good"><i></i>Sent</span>' : g.week === 'queued' ? '<span class="chip good"><i></i>Approved for Monday</span>' : g.week === 'due' ? '<span class="chip bad"><i></i>To approve</span>' : '<span class="chip"><i style="background:#6b7f93"></i>' + DAYS[D.sendDay] + '</span>') +
       (g.late ? '<span class="chip bad"><i></i>' + g.late + ' past target</span>' : '') + (g.waiting ? '<span class="chip warn"><i></i>' + g.waiting + ' waiting on them</span>' : '') + '</div>').join('') + '</div>');
   if (staff.length) {
     slides.push('<h2>Service by staff</h2><p class="lede">The share of each person’s group tasks done by the due date this year, with how many and how fast.</p>' +
