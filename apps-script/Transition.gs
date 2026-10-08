@@ -3278,6 +3278,7 @@ function tTeam_() {
       var pw = col(r, ['password']), roleText = col(r, ['role']);
       out.people.push({ name: name, no: col(r, ['agent no.', 'agent number', 'agent no']), email: col(r, ['email', 'e-mail']),
         phone: col(r, ['phone', 'mobile', 'whatsapp', 'cell']), areas: col(r, ['areas covered', 'areas', 'town']), avail: col(r, ['availability']),
+        home: col(r, ['lives in', 'home town', 'home']), years: col(r, ['years with us', 'years']), skills: col(r, ['skills & strengths', 'skills']),
         role: tRoleOf_(roleText), roleText: roleText || 'Agent', unit: tCleanName_(col(r, ['unit'])),
         active: !cells(r, ['active']).some(function (a) { return T_INACTIVE.test(a); }),
         pw: pw ? tDigest_(pw) : '', pwShort: !!pw && pw.length < T_USERS.MIN, portal: col(r, ['portal code']) });
@@ -3298,7 +3299,8 @@ function tRoster_() {
     seen[k] = true;
     return true;
   }).map(function (p) {
-    return { name: p.name, no: p.no, email: p.email, phone: p.phone, areas: p.areas, avail: p.avail, portal: p.portal, role: p.role, unit: p.unit };
+    return { name: p.name, no: p.no, email: p.email, phone: p.phone, areas: p.areas, avail: p.avail, portal: p.portal, role: p.role, unit: p.unit,
+             home: p.home || '', years: p.years || '', skills: p.skills || '' };
   });
 }
 
@@ -3965,8 +3967,15 @@ function tBoard_(w, all, lite) {
     if (!lite) counts.glance = { answered: tGlance_(clients.filter(tHasAnswered_).map(function (c) { return c.no; })), all: tGlanceCached_(bookNos) };
   }
   /* who should look after whom: a suggestion on every client nobody is named on (tSuggest_), for whoever may name one */
-  if (tCanAssign_(w)) counts.sug = tSuggest_(clients.filter(function (c) { return c.state !== 'tocall'; }).concat(silent, family),
-    { roster: tRoster_(), plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy });
+  var match = null;
+  if (tCanAssign_(w)) {
+    var agentPlaces = tAgentPlaces_(roster);
+    counts.sug = tSuggest_(clients.filter(function (c) { return c.state !== 'tocall'; }).concat(silent, family),
+      { roster: roster, plan: tPlan_(), clients: clients, households: households, answeredBy: answeredBy, agentPlaces: agentPlaces });
+    /* the match (8 October 2026): each client's weight, the opportunities on their record, the best-fitting agents, and
+       where everyone is, for the Match view; not when the board is read only to name an agent */
+    if (!lite) match = tMatch_(clients.concat(silent, family), { roster: roster, agentPlaces: agentPlaces, hhInfo: hhInfo, households: households, money: !staff });
+  }
   /* staff see who each client is, what the records say and each policy's plan, where it stands and what it is paid to,
      never a figure: Client Support sees no money (29 September), and the insights are theirs too (5 October 2026: "I do
      need the staff to log in with the insights shared") */
@@ -3975,6 +3984,11 @@ function tBoard_(w, all, lite) {
     if (p) c.pol = p; else delete c.pol;
     if (f) c.profile = f; else delete c.profile;
     if (c.ins) c.ins = c.ins.filter(function (i) { return !T_MONEY_INS[i.k]; });
+    if (c.ik) c.ik = c.ik.filter(function (k) { return !T_MONEY_INS[k]; });
+  });
+  /* and the rows not answered yet, should a staff board ever carry them: their counts and nothing more */
+  if (staff) silent.concat(family).forEach(function (c) {
+    if (c.pol && c.pol.sum) c.pol = { noMoney: true, sum: { live: c.pol.sum.live || 0, mat: c.pol.sum.mat || 0 } };
     if (c.ik) c.ik = c.ik.filter(function (k) { return !T_MONEY_INS[k]; });
   });
   return { ok: true, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), role: w.role, me: w.me || null, viaBranch: !!w.viaBranch,
@@ -3988,6 +4002,7 @@ function tBoard_(w, all, lite) {
            /* what the hold stops besides the letters, reminders and notes (7 October 2026), so the board says it in words */
            introsHeld: TRANSITION.HOLD_INTROS !== false && tClientMailHeld_(), receiptsHeld: TRANSITION.HOLD_RECEIPTS === true && tClientMailHeld_(),
            claims: claims, detail: true,   // detail: this backend answers action=detail and action=comment (ping campaign 7)
+           match: match,   // the Match view (8 October 2026): weights, opportunities, best fits and places; for whoever may name
            backs: true };   // backs: this backend reads and takes call-back flags (update back=…), and sends each card's contact (7 October 2026)
 }
 
@@ -4095,6 +4110,328 @@ function tPlan_() {
   }
   return (T_PLAN_MEMO = { ready: n > 0, by: by });
 }
+/* ── the match: where everyone is, what each client needs, who fits them (8 October 2026) ─────────────────────── */
+/* "scrub agent address and client address and weighting on the client to know who to assign, how many in force
+   policies, lapsed, maturities, spotting opportunities … lives in household and have other policies, pulling from
+   Salesforce and the branch Google sheet". Every client the viewer may name an agent on gets a weight in four parts
+   (urgent, at risk, value, opportunity) that the page can re-balance, the opportunities their own records show, and the
+   agents who fit them best: the nearest with room on their list. Only a town is ever used, the client's and the agent's,
+   never a street. Facts off the record, for a person to act on; never advice. */
+var T_MATCH = {
+  W: { u: 35, r: 25, v: 25, o: 15 },   // the weight's four parts, in per cent: urgent, at risk, value, opportunity
+  NEAR_KM: 25,                          // the nearest agent with room is suggested only within this distance
+  ROOM: 1.2,                            // an agent has room while their list is under 1.2 times the even share
+  TOP: 3,                               // the agents shown as the best fits under a client nobody is named on
+  SF_WRITE: true,                       // a naming on the board writes Assigned Agent, Date Assigned and Campaign in Salesforce
+  CAMPAIGN: 'Orphan',                   // the Campaign the branch writes on a naming in Salesforce (1 October 2026)
+  SF_AGENTS_H: 24 };                    // hours the agents' Salesforce records (Id and mailing town) are kept
+/* Every place the books' addresses name, with its point (OpenStreetMap's place search, Trinidad and Tobago only, checked
+   by hand on 8 October 2026: a town's centre, never its region's; places that could be two are left out), and the
+   spellings the addresses carry for them. Public geography: no client is in it. */
+var T_PLACES = {
+  'aranguez':[10.6409,-61.443],'arima':[10.6372,-61.283],'arouca':[10.635,-61.3399],
+  'bamboo settlement':[10.6199,-61.4283],'barataria':[10.6499,-61.4623],'barrackpore':[10.197,-61.3721],
+  'bejucal':[10.5685,-61.4162],'belle garden':[11.2355,-60.6028],'belmont':[10.6685,-61.5071],
+  'biche':[10.4314,-61.1326],'blanchisseuse':[10.7985,-61.3134],'caledonia':[10.525,-61.4036],
+  'california':[10.4085,-61.4744],'cane farm':[10.6392,-61.353],'caparo':[10.4588,-61.3276],
+  'carapichaima':[10.4798,-61.4492],'carapichima':[10.4764,-61.4403],'carapo':[10.5869,-61.3081],
+  'carenage':[10.6882,-61.5928],'carlsen field':[10.4802,-61.3878],'caroni':[10.6073,-61.3848],
+  'cedros':[10.0928,-61.8602],'chaguanas':[10.5147,-61.4077],'chaguanas west':[10.5227,-61.4251],
+  'champ fleurs':[10.651,-61.4313],'champs fleurs':[10.6505,-61.4287],'chandernagore':[10.4855,-61.4187],
+  'charlieville':[10.5623,-61.4138],'charlotteville':[11.3223,-60.5473],'chatham':[10.0885,-61.7347],
+  'chin chin road':[10.5535,-61.3706],'claxton ba':[10.3534,-61.4569],'claxton bay':[10.3534,-61.4569],
+  'cocorite':[10.6633,-61.5358],'coryal':[10.511,-61.1854],'couva':[10.4223,-61.4587],
+  'couva central':[10.4241,-61.4225],'couva north':[10.4273,-61.4748],'cumuto':[10.584,-61.2207],
+  'cunupia':[10.552,-61.3723],'curepe':[10.6503,-61.4093],'d abadie':[10.629,-61.3109],'debe':[10.2107,-61.4515],
+  'delaford':[11.2665,-60.5551],'diego martin':[10.7139,-61.5794],'dow':[10.4013,-61.4681],
+  'el dorado':[10.6478,-61.3723],'el socorro':[10.6339,-61.4515],'el socorro san juan':[10.63,-61.423],
+  'enterprise':[10.5271,-61.3855],'enterprise longdenville':[10.5324,-61.3802],'esperanza':[10.3951,-61.4378],
+  'febeau':[10.6569,-61.4514],'felicity':[10.5456,-61.4377],'fernando':[10.2807,-61.4646],
+  'foster road':[10.589,-61.1286],'freeport':[10.4611,-61.4116],'fyzabad':[10.1803,-61.5468],
+  'gasparillo':[10.3156,-61.4288],'glencoe':[10.6811,-61.5715],'gonzales':[10.6619,-61.4997],
+  'goodwood':[11.2025,-60.6347],'gopaul':[10.3013,-61.4451],'grad couva':[10.4223,-61.4587],
+  'graham extension':[10.597,-61.1267],'gran couva':[10.4041,-61.3776],'guaico':[10.5863,-61.1446],
+  'guayaguayare':[10.1468,-61.0355],'harrilal':[10.1659,-61.4635],'hololo road':[10.7028,-61.4657],
+  'jerningham':[10.6653,-61.5048],'kelly caroni':[10.552,-61.3967],'la brea':[10.2371,-61.6159],
+  'la horquetta':[10.5973,-61.2754],'la romain':[10.2432,-61.4928],'la romaine':[10.2798,-61.4625],
+  'lambeau':[11.1678,-60.7589],'lange park':[10.5236,-61.4019],'las cuevas':[10.7836,-61.3895],
+  'las lomas':[10.5649,-61.3011],'las lomas no':[10.5657,-61.3182],'laventille':[10.6486,-61.4901],
+  'longdenville':[10.5142,-61.3786],'los bajos':[10.1166,-61.5753],'lower santa cruz':[10.6784,-61.4541],
+  'macoya':[10.6455,-61.3851],'malabar':[10.6196,-61.2775],'malick':[10.6566,-61.4601],'maloney':[10.6222,-61.3178],
+  'mamoral':[10.4481,-61.3054],'manoram rd':[10.6524,-61.3522],'manzanilla':[10.5274,-61.0635],
+  'marabella':[10.3073,-61.4519],'maraval':[10.695,-61.519],'mason hall':[11.2199,-60.7141],
+  'matelot':[10.8204,-61.1269],'matura':[10.674,-61.065],'mausica':[10.633,-61.305],'mayaro':[10.3028,-61.0081],
+  'mc bean':[10.4432,-61.4436],'moruga':[10.0887,-61.28],'morvant':[10.6577,-61.4759],'mount hope':[10.6543,-61.4352],
+  'mt hope':[10.6543,-61.4352],'mt lambert':[10.6487,-61.4371],'new grant':[10.2835,-61.3211],
+  'ojoe road':[10.5862,-61.1286],'orange field road':[10.4767,-61.423],'oropouche':[10.217,-61.5432],
+  'oropouche west':[10.2277,-61.5439],'palmiste':[10.287,-61.445],'palo seco':[10.094,-61.5879],
+  'penal':[10.1685,-61.4527],'penal rock road':[10.168,-61.4581],'petit bourg':[10.651,-61.4356],
+  'petit valley':[10.6479,-61.5115],'phillipine':[10.2311,-61.4622],'piarco':[10.6047,-61.3341],
+  'piparo':[10.3404,-61.3443],'pleasantville':[10.2711,-61.448],'plymouth':[11.22,-60.7738],
+  'point fortin':[10.1759,-61.6827],'pointe a pierre':[10.3229,-61.4453],'port of spain':[10.6573,-61.518],
+  'pos':[10.6549,-61.5019],'princes town':[10.2706,-61.3783],'princess town':[10.2706,-61.3783],
+  'ramharack':[10.5622,-61.2753],'rio claro':[10.3058,-61.1739],'rousillac':[10.2105,-61.5807],
+  'roxborough':[11.2495,-60.5762],'san fernando':[10.2807,-61.4646],'san francique':[10.182,-61.5154],
+  'san juan':[10.6486,-61.4509],'san raphael':[10.5757,-61.2735],'sangre chiquito':[10.5898,-61.0918],
+  'sangre grand':[10.822,-61.1417],'sangre grande':[10.5868,-61.1311],'santa cruz':[10.7102,-61.4742],
+  'santa flora':[10.112,-61.5597],'santa rosa':[10.6208,-61.2622],'scarborough':[11.1853,-60.735],
+  'singh':[10.4495,-61.4194],'siparia':[10.1436,-61.507],'south oropouche':[10.202,-61.5004],
+  'st augustine':[10.6464,-61.4008],'st clair':[10.6679,-61.5207],'st claire':[10.5152,-61.3945],
+  'st helena':[10.5822,-61.3402],'st james':[10.6736,-61.5338],'st joseph':[10.6556,-61.4139],
+  'studley park':[11.1957,-60.6563],'sunrise park':[10.631,-61.3458],'tabaquite':[10.3791,-61.325],
+  'tableland':[10.2778,-61.2575],'tacarigua':[10.6437,-61.3612],'talparo':[10.5166,-61.269],
+  'tamana':[10.4691,-61.1944],'toco':[10.8368,-60.9377],'tortuga':[10.3587,-61.4007],'trincity':[10.6343,-61.3568],
+  'tumpuna road arima':[10.6076,-61.2697],'tunapuna':[10.6427,-61.3893],'valencia':[10.6536,-61.1942],
+  'valsayn':[10.6344,-61.4159],'wallerfield':[10.6232,-61.2387],'waterloo':[10.4789,-61.4675],
+  'whiteland':[10.3444,-61.372],'williamsville':[10.3109,-61.3804],'woodbrook':[10.6625,-61.524],
+  'woodland':[10.6357,-61.3658] };
+var T_PLACE_ALIAS = {
+  'arranguez':'aranguez','bamboo':'bamboo settlement','bamboo sett':'bamboo settlement','barackpore':'barrackpore',
+  'baratari':'barataria','barrackpor':'barrackpore','bartaria':'barataria','belmon':'belmont','califonia':'california',
+  'carapachima':'carapichaima','carapichiama':'carapichaima','chaguaanas':'chaguanas','chaguaans':'chaguanas',
+  'chaguans':'chaguanas','champ fleur':'champs fleurs','chandenagore':'chandernagore','chgauanas':'chaguanas',
+  'cumoto':'cumuto','cunaripo':'sangre grande','cunipia':'cunupia','d ababie':'d abadie','dabadie':'d abadie',
+  'deigo martin':'diego martin','guyama charlievi':'charlieville','la horouetta':'la horquetta',
+  'les efforts east':'san fernando','lower barrackpore':'barrackpore','mendez drive champ fleur':'champs fleurs',
+  'oropouche east':'penal','ower santa cruz':'santa cruz','petit curaca':'st augustine','princestown':'princes town',
+  'sagre chiquito':'sangre chiquito','san ferando':'san fernando','san jaun':'san juan',
+  'sangra grande':'sangre grande','sangre grand':'sangre grande','siewdass road freeport':'freeport',
+  'st agustine':'st augustine','st clair gardens trincity':'trincity','tnapuna':'tunapuna','tobag':'scarborough',
+  'tunpuna':'tunapuna','upper carapichaima':'carapichaima','via cunupia post office':'cunupia',
+  'via sangre grand':'sangre grande' };
+/** The key a town is looked up by: lower case, letters only, without "Proper", "Village", "Junction" or the country. */
+function tPlaceKey_(t) {
+  t = String(t || '').toLowerCase().replace(/&/g, ' and ').replace(/[^a-z ]/g, ' ');
+  t = t.replace(/\b(proper|village|junction|jct|trinidad|tobago|w i|wi|t t)\b/g, ' ');
+  return t.replace(/\s+/g, ' ').trim();
+}
+/** A town's place: { k, lat, lng }, or null. An address line the list does not know is tried by its last words, then its
+ *  first ("Lp 12 Cunupia" is Cunupia); "Tobago" alone is Scarborough. */
+function tPlaceOf_(town) {
+  var raw = String(town || ''), k = tPlaceKey_(raw);
+  var hit = function (x) { x = T_PLACE_ALIAS[x] || x; var p = T_PLACES[x]; return p ? { k: x, lat: p[0], lng: p[1] } : null; };
+  if (!k) return /tobago/i.test(raw) ? hit('scarborough') : null;
+  var p = hit(k);
+  if (p) return p;
+  var w = k.split(' ');
+  for (var n = Math.min(3, w.length - 1); n >= 1; n--) {
+    p = hit(w.slice(-n).join(' ')) || hit(w.slice(0, n).join(' '));
+    if (p) return p;
+  }
+  return null;
+}
+/** A place's name as the page prints it: "Couva", "St Augustine", "D'Abadie". */
+function tPlaceLabel_(k) {
+  return String(k || '').replace(/\b[a-z]/g, function (m) { return m.toUpperCase(); }).replace(/^D Abadie$/, 'D\'Abadie').replace(/^Pos$/, 'Port of Spain');
+}
+/** Kilometres between two places, as the crow flies. */
+function tKm_(a, b) {
+  var r = Math.PI / 180, dla = (b.lat - a.lat) * r, dlo = (b.lng - a.lng) * r;
+  var h = Math.sin(dla / 2) * Math.sin(dla / 2) + Math.cos(a.lat * r) * Math.cos(b.lat * r) * Math.sin(dlo / 2) * Math.sin(dlo / 2);
+  return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+/** The town a row on the board carries: a card's contact, else the row's own. */
+function tRowTown_(c) { return (c && c.contact && c.contact.town) || (c && c.town) || ''; }
+
+/** The branch's agents in Salesforce (Contacts of record type AGENT): each one's Id, for a naming to write, and mailing
+ *  town. Read at most once a day into the sf_agents Script property; { by: nameKey → { id, city }, ready }. Never throws;
+ *  not ready, and nothing asked of Salesforce, until ServiceSalesforce.gs and its SF_* properties are in the project. */
+function tSfAgents_(fresh) {
+  if (!fresh && T_READ_ONCE && T_READ_ONCE.sfAgents) return T_READ_ONCE.sfAgents;
+  var out = { by: {}, ready: false }, props = PropertiesService.getScriptProperties(), now = new Date().getTime();
+  try {
+    var hit = JSON.parse(props.getProperty('sf_agents') || 'null');
+    if (hit && hit.by && !fresh && now - Number(hit.at || 0) < T_MATCH.SF_AGENTS_H * 3600000) out = { by: hit.by, ready: true };
+  } catch (e) {}
+  if (!out.ready && typeof svcSfReady_ === 'function' && svcSfReady_()) {
+    try {
+      var by = {};
+      svcSfQuery_("SELECT Id, Name, MailingCity FROM Contact WHERE RecordType.Name = 'AGENT' LIMIT 2000").forEach(function (r) {
+        var k = tNameKey_(r.Name);
+        if (k && !by[k]) by[k] = { id: String(r.Id || ''), city: String(r.MailingCity || '').trim() };
+      });
+      out = { by: by, ready: true };
+      try { props.setProperty('sf_agents', JSON.stringify({ at: now, by: by })); } catch (e) {}
+    } catch (e) { out.why = String(e && e.message ? e.message : e).slice(0, 200); }
+  }
+  if (T_READ_ONCE) T_READ_ONCE.sfAgents = out;
+  return out;
+}
+/** Where each agent on the roster is based, the town only: a "Lives in" (or "Home town") column on the Agent Skill Bank,
+ *  else the first place in Areas covered, else the mailing town on their Salesforce agent record. With every place in
+ *  Areas covered, for the map. nameKey → { name, pl, src, cover, sfId }. */
+function tAgentPlaces_(roster) {
+  var sf = tSfAgents_(), out = {};
+  (roster || []).forEach(function (a) {
+    var k = tNameKey_(a.name), cover = [], pl = null, src = '', s = sf.by[k] || null;
+    String(a.areas || '').split(/[,;\/\n]|\band\b/i).forEach(function (t) {
+      var p = tPlaceOf_(t);
+      if (p && !cover.some(function (x) { return x.k === p.k; })) cover.push(p);
+    });
+    if (a.home) { pl = tPlaceOf_(a.home); if (pl) src = 'Skill Bank'; }
+    if (!pl && cover.length) { pl = cover[0]; src = 'Areas covered'; }
+    if (!pl && s && s.city) { pl = tPlaceOf_(s.city); if (pl) src = 'Salesforce'; }
+    out[k] = { name: a.name, pl: pl, src: src, cover: cover, sfId: s ? s.id : '' };
+  });
+  return out;
+}
+
+/* The weight's parts. Urgent: how soon the client needs a person, from where they stand (a call-back asked for, an
+   answer that cannot wait, past the branch's line). At risk: what puts the policy in danger of going (the former agent in
+   touch, a change suggested, paying in person, a premium due, surrendered before). Value: what they hold with us against
+   everyone else on the board (the premium a year, the life cover, the policies in force) and the family on our books.
+   Opportunity: what their own record shows a licensed agent could raise (a maturity within the year, a lapsed policy, life
+   cover ending, no life cover, a family member with none, no critical illness cover). */
+var T_URGENT_BY = { open: 55, noted: 25, assigned: 40, reached: 35, named: 30, called: 35, tocall: 30, silent: 15, family: 10, dnc: 0, done: 0 };
+var T_RISK_ANS = { contact_yes: 45, approached_yes: 45, pay_person: 35, pay_unsure: 20, contract_missing: 20, contract_unsure: 10, rate_better: 20, stay_talk: 15 };
+var T_RISK_TAP = { paid: 25, pay: 35 };
+var T_RISK_INS = { surr: [20, 'surrendered a policy with us before'], due: [20, 'a premium due'], lapsed: [10, 'a lapsed policy'], payroll: [10, 'paid from the pay packet'] };
+var T_RISK_WORDS = { contact_yes: 'the former agent has been in touch', approached_yes: 'someone suggested a change', pay_person: 'pays in person',
+  pay_unsure: 'not sure how the premium is paid', contract_missing: 'the contract never reached them', contract_unsure: 'not sure about the contract',
+  rate_better: 'said we could do better', stay_talk: 'wants to talk before staying', paid: 'a premium handed over and not showing', pay: 'pays a representative' };
+var T_OPPS = { mature: [35, 'a policy matures within a year'], lapsed: [25, 'a lapsed policy to reinstate'], ends: [25, 'life cover ends within five years'],
+  nolife: [30, 'no life cover in force'], hhgap: [20, 'someone in the family has no life cover'], noci: [15, 'no critical illness cover'],
+  income: [20, 'life cover low against the income on file'], fund: [15, 'a fund value to review'], estate: [10, 'no beneficiary named on our file'],
+  birthday: [10, 'a birthday this month'] };
+var T_MONEY_OPPS = { income: true, fund: true };   // staff see no money: these two are figures (T_MONEY_INS)
+
+/** The weight, the opportunities and the best-fitting agents for every row the viewer may name an agent on. Puts on each
+ *  row c.pl (its place key), c.w = [total, urgent, at risk, value, opportunity] (each 0 to 100) with c.why (the reasons, a few words each), c.op (the
+ *  opportunity keys) and, on a row nobody is named on, c.mt = [[agent's index in the block's agents, km, fit], …]. Returns
+ *  the page's block: the places used, the agents with their base and their load, the weights. No money leaves it. */
+function tMatch_(rows, ctx) {
+  ctx = ctx || {};
+  var roster = ctx.roster || [], ap = ctx.agentPlaces || {}, hhInfo = ctx.hhInfo || {}, households = ctx.households || {}, money = ctx.money !== false;
+  var places = {}, use = function (p) { if (!p) return ''; if (!places[p.k]) places[p.k] = [p.lat, p.lng, tPlaceLabel_(p.k)]; return p.k; };
+  var asc = function (a, b) { return a - b; }, prems = [], covers = [];
+  rows.forEach(function (c) { var s = c.pol && c.pol.sum; if (s) { prems.push(Number(s.prem) || 0); covers.push(Number(s.cover) || 0); } });
+  prems.sort(asc); covers.sort(asc);
+  /* where a figure sits among everyone's: the share of the rows at or under it */
+  var pct = function (arr, x) {
+    x = Number(x) || 0; if (!arr.length || !x) return 0;
+    var lo = 0, hi = arr.length;
+    while (lo < hi) { var m = (lo + hi) >> 1; if (arr[m] <= x) lo = m + 1; else hi = m; }
+    return Math.round(100 * lo / arr.length);
+  };
+  /* the agents: base, the clients named to them, and those suggested to them on this board */
+  var agents = [], idx = {}, load = {}, sug = {};
+  roster.forEach(function (a) {
+    var k = tNameKey_(a.name), x = ap[k] || {};
+    idx[k] = agents.length; load[k] = 0; sug[k] = 0;
+    agents.push({ name: a.name, pl: use(x.pl), src: x.src || '', cover: (x.cover || []).map(use).filter(Boolean), unit: a.unit || '', sf: !!x.sfId });
+  });
+  rows.forEach(function (c) {
+    var k = c.assigned ? tNameKey_(c.assigned) : '';
+    if (k && load[k] !== undefined) load[k]++;
+    else if (!c.assigned && c.sug && c.sug.agent) { var s = tNameKey_(c.sug.agent); if (sug[s] !== undefined) sug[s]++; }
+  });
+  var total = 0; Object.keys(load).forEach(function (k) { total += load[k] + sug[k]; });
+  var cap = Math.max(1, Math.ceil(T_MATCH.ROOM * total / Math.max(1, agents.length)));
+  agents.forEach(function (a) { var k = tNameKey_(a.name); a.load = load[k]; a.sug = sug[k]; });
+  var placed = agents.filter(function (a) { return a.pl; });
+  var seen = {}, mapped = 0;
+  rows.forEach(function (c) {
+    if (!c || !c.token || seen[c.token]) return;
+    seen[c.token] = true;
+    var pl = tPlaceOf_(tRowTown_(c));
+    c.pl = use(pl);
+    if (c.pl) mapped++;
+    var why = [], keys = {}, s = c.pol && c.pol.sum ? c.pol.sum : null;
+    (c.ins || []).forEach(function (i) { keys[i.k] = i.lv || 'info'; });
+    (c.ik || []).forEach(function (k) { if (!keys[k]) keys[k] = 'info'; });
+    var info = c.hh ? hhInfo[c.hh] : null;
+    if (info && info.gaps && info.gaps.length) keys.hhgap = 'warm';
+    /* urgent */
+    var u = T_URGENT_BY[c.state] !== undefined ? T_URGENT_BY[c.state] : 15;
+    if (c.open && c.score) u = Math.max(u, Math.min(100, c.score));
+    if (c.late) { u = Math.max(u, 80); why.push('waiting past the branch\'s line'); }
+    if (c.back && c.back.open) { u = 100; why.push('a call-back asked for'); }
+    else if (c.open && c.score >= 80) why.push('told us something pressing');
+    if (c.state === 'done' || c.state === 'dnc') u = 0;
+    /* at risk */
+    /* the reasons go strongest first, so the former agent in touch is never pushed out by a smaller one */
+    var r = 0, rw = [], risk = function (pts, words) { r += pts; rw.push([pts, words]); };
+    (c.answers || []).forEach(function (a) { if (T_RISK_ANS[a.code]) risk(T_RISK_ANS[a.code], T_RISK_WORDS[a.code]); });
+    (c.taps || []).forEach(function (t) { if (T_RISK_TAP[t.tap]) risk(T_RISK_TAP[t.tap], T_RISK_WORDS[t.tap]); });
+    if (c.review && (c.review.words || []).some(function (x) { return /been in touch/i.test(x.q) && /^yes/i.test(x.a); })) risk(45, T_RISK_WORDS.contact_yes);
+    Object.keys(T_RISK_INS).forEach(function (k) { if (keys[k]) risk(T_RISK_INS[k][0] + (k === 'due' && keys[k] === 'hot' ? 10 : 0), T_RISK_INS[k][1]); });
+    r = Math.min(100, r);
+    var said = {};
+    rw.sort(function (a, b) { return b[0] - a[0]; }).forEach(function (x) { if (x[1] && !said[x[1]] && Object.keys(said).length < 2) { said[x[1]] = 1; why.push(x[1]); } });
+    /* value: the premium a year and the life cover against everyone's, the policies in force, the family on our books */
+    var v = 0;
+    if (s) {
+      v = Math.round(0.55 * pct(prems, s.prem) + 0.30 * pct(covers, s.cover) + 0.15 * Math.min(100, (Number(s.live) || 0) * 25));
+      if (v >= 75) why.push('among the most held with us');
+    }
+    var fam = c.hh && households[c.hh] ? households[c.hh].length : 1;
+    if (fam > 1) { v = Math.min(100, v + Math.min(15, (fam - 1) * 5)); if (fam >= 3) why.push('a household of ' + fam + ' on our books'); }
+    /* opportunity: what the record itself shows */
+    var op = [];
+    if (s && Number(s.mat) > 0) op.push('mature');
+    ['lapsed', 'ends', 'nolife', 'hhgap', 'noci', 'estate', 'birthday'].forEach(function (k) { if (keys[k]) op.push(k); });
+    if (money && keys.income === 'warm') op.push('income');
+    if (money && s && Number(s.fund) >= 25000) op.push('fund');
+    if (c.profile && c.profile.age >= 65) op = op.filter(function (k) { return k !== 'nolife' && k !== 'noci'; });   // past the age a new life plan is the talk
+    var o = Math.min(100, op.reduce(function (t, k) { return t + T_OPPS[k][0]; }, 0));
+    if (op.length) why.push(T_OPPS[op.sort(function (a, b) { return T_OPPS[b][0] - T_OPPS[a][0]; })[0]][1]);
+    var t = Math.round((T_MATCH.W.u * u + T_MATCH.W.r * r + T_MATCH.W.v * v + T_MATCH.W.o * o) / 100);
+    c.w = [t, u, r, v, o];
+    if (why.length) c.why = why.slice(0, 4);
+    if (op.length) c.op = op;
+    /* the best fits, for a client nobody is named on: the nearest agents with room, nearer counting more than lighter */
+    if (!c.assigned && pl && placed.length && c.state !== 'dnc' && c.state !== 'done') {
+      c.mt = placed.map(function (a) {
+        var k = tNameKey_(a.name), km = tKm_(pl, { lat: places[a.pl][0], lng: places[a.pl][1] }), busy = (load[k] + sug[k]) / cap;
+        var fit = Math.round(100 * (0.65 * Math.max(0, 1 - km / 40) + 0.35 * Math.max(0, 1 - busy)));
+        return [idx[k], Math.round(km * 10) / 10, fit];
+      }).sort(function (a, b) { return b[2] - a[2] || a[1] - b[1]; }).slice(0, T_MATCH.TOP);
+    }
+  });
+  return { places: places, agents: agents, w: T_MATCH.W, cap: cap, mapped: mapped, rows: Object.keys(seen).length, placed: placed.length,
+    nearKm: T_MATCH.NEAR_KM, sf: { linked: typeof svcSfReady_ === 'function' && svcSfReady_(), write: T_MATCH.SF_WRITE } };
+}
+
+/** A naming on the board, written to Salesforce the way the branch names an agent there (1 October 2026): Assigned Agent,
+ *  Date Assigned to Agent and Campaign on each of the client's policies in force (the first on file when none is), so the
+ *  board and Salesforce say the same and a report on Date Assigned sees every naming. Skipped, and said, until
+ *  Salesforce is linked in this project. Never throws: { on, ok, policies, clients, why }. */
+var T_SF_LIVE = /premium paying|paid up|waiver|vested|reduced paid|extended term/i;
+function tSfAssignWrite_(done, agent, now) {
+  if (!T_MATCH.SF_WRITE) return { on: false, why: 'switched off' };
+  if (!done.length || typeof svcSfReady_ !== 'function' || !svcSfReady_()) return { on: false, why: 'Salesforce is not linked in this project yet' };
+  try {
+    var who = tSfAgents_().by[tNameKey_(agent.name)] || tSfAgents_(true).by[tNameKey_(agent.name)];
+    if (!who || !who.id) return { on: true, ok: false, why: 'Salesforce has no agent record named ' + agent.name };
+    var ha = null; try { ha = tHaRead_(); } catch (e) { ha = null; }
+    var want = {}, all = [];
+    done.forEach(function (c) { var p = tClientPols_(c.token, c.no, ha); want[c.token] = p; p.forEach(function (x) { if (all.indexOf(x) < 0) all.push(x); }); });
+    if (!all.length) return { on: true, ok: false, why: 'no policy numbers on file for ' + (done.length === 1 ? 'this client' : 'these clients') };
+    var recs = {};
+    for (var i = 0; i < all.length; i += 100) {
+      svcSfQuery_('SELECT Id, POLICY__c, Policy_Status_Description__c FROM CLIENT_PORTFOLIO__c WHERE POLICY__c IN (' +
+        all.slice(i, i + 100).map(function (p) { return "'" + svcSoqlLit_(p) + "'"; }).join(',') + ')').forEach(function (r) { recs[tPolNo_(r.POLICY__c)] = r; });
+    }
+    var day = Utilities.formatDate(now, tTz_(), 'yyyy-MM-dd'), upd = [], clients = 0, none = 0;
+    done.forEach(function (c) {
+      var mine = want[c.token].map(function (p) { return recs[p]; }).filter(Boolean);
+      if (!mine.length) { none++; return; }
+      var live = mine.filter(function (r) { return T_SF_LIVE.test(r.Policy_Status_Description__c || ''); });
+      (live.length ? live : mine.slice(0, 1)).forEach(function (r) {
+        upd.push({ attributes: { type: 'CLIENT_PORTFOLIO__c' }, id: r.Id, Assigned_Agent__c: who.id, Date_Assigned_to_Agent__c: day, Campaign__c: T_MATCH.CAMPAIGN });
+      });
+      clients++;
+    });
+    var ok = 0, bad = [];
+    for (var j = 0; j < upd.length; j += 200) {
+      var res = tSfSend_('patch', '/composite/sobjects', { allOrNone: false, records: upd.slice(j, j + 200) });
+      (Array.isArray(res) ? res : []).forEach(function (x) { if (x && x.success) ok++; else bad.push(x && x.errors && x.errors[0] ? x.errors[0].message : 'refused'); });
+    }
+    return { on: true, ok: !bad.length && !none, policies: ok, clients: clients, none: none,
+      why: (bad.length ? bad.length + ' polic' + (bad.length === 1 ? 'y' : 'ies') + ' refused: ' + bad[0] : '') + (none ? (bad.length ? '; ' : '') + none + ' client' + (none === 1 ? '' : 's') + ' not found in Salesforce' : '') };
+  } catch (e) { return { on: true, ok: false, why: String(e && e.message ? e.message : e).slice(0, 200) }; }
+}
+
 /** The roster agent a name means: the full name, or a first name that only one agent on the roster carries. */
 function tRosterMatch_(roster, name) {
   var s = String(name || '').replace(/\s+/g, ' ').trim().toLowerCase();
@@ -4103,15 +4440,24 @@ function tRosterMatch_(roster, name) {
   var first = s.split(' ')[0], hit = roster.filter(function (a) { return a.name.toLowerCase().split(/\s+/)[0] === first; });
   return hit.length === 1 ? hit[0] : null;
 }
-/** Puts c.sug = { agent, why, src } (src: family, plan, load; or agent '' with `planned` when the plan names someone not on
- *  the roster) on every row nobody is named on. Returns the counts for the page: by agent, by source, and off the roster. */
+/** Puts c.sug = { agent, why, src } (src: family, plan, near, load; or agent '' with `planned` when the plan names someone
+ *  not on the roster) on every row nobody is named on: the family's agent, then the 24 September plan, then (8 October
+ *  2026) the nearest agent with room on their list within T_MATCH.NEAR_KM, then the lightest list. A household keeps one
+ *  agent whichever step chose them. Returns the counts for the page: by agent, by source, and off the roster. */
 function tSuggest_(rows, ctx) {
-  var roster = ctx.roster || [], plan = ctx.plan || { by: {} }, load = {}, out = { byAgent: {}, src: { family: 0, plan: 0, load: 0 }, off: 0, offNames: {}, plan: !!plan.ready };
+  var roster = ctx.roster || [], plan = ctx.plan || { by: {} }, load = {}, out = { byAgent: {}, src: { family: 0, plan: 0, near: 0, load: 0 }, off: 0, offNames: {}, plan: !!plan.ready };
   if (!roster.length) return out;
   var first = function (n) { return String(n || '').split(/\s+/)[0]; };
   roster.forEach(function (a) { load[a.name] = 0; });
   (ctx.clients || []).forEach(function (c) { var a = c.assigned ? tRosterMatch_(roster, c.assigned) : null; if (a) load[a.name]++; });
   var planOf = function (no) { return plan.by[tCno_(no)] || null; };
+  /* the agents with a base (tAgentPlaces_), and the most a list may hold for the nearest step: 1.2 times the even share of
+     everyone named and everyone to suggest */
+  var ap = ctx.agentPlaces || {}, placed = roster.map(function (a) { var x = ap[tNameKey_(a.name)]; return x && x.pl ? { name: a.name, pl: x.pl } : null; }).filter(Boolean);
+  var todo = rows.filter(function (c) { return c && !c.assigned && !c.sug; }).length, named = 0;
+  Object.keys(load).forEach(function (k) { named += load[k]; });
+  var cap = Math.max(1, Math.ceil(T_MATCH.ROOM * (named + todo) / Math.max(1, roster.length)));
+  out.near = { placed: placed.length, cap: cap };
   /* the family's agent, where someone in it is named already; and the household's plan agent: its head's, else most members' */
   var famAgent = {}, famPlan = {}, hhPick = {};
   Object.keys(ctx.households || {}).forEach(function (h) {
@@ -4150,10 +4496,24 @@ function tSuggest_(rows, ctx) {
       put(c, { agent: a.name, why: bits.join(' · '), src: 'plan' });
       return;
     }
-    if (h && hhPick[h]) { put(c, { agent: hhPick[h], why: 'with the family: the lightest list when the first of them was suggested', src: 'load' }); return; }
+    if (h && hhPick[h]) { put(c, { agent: hhPick[h].agent, why: 'with the family: ' + hhPick[h].why, src: hhPick[h].src }); return; }
+    /* the nearest agent with room (8 October 2026: "persons or clients that live close by our agents"): the town only */
+    var pl = placed.length ? tPlaceOf_(tRowTown_(c)) : null, near = null;
+    if (pl) placed.forEach(function (x) {
+      if (load[x.name] >= cap) return;
+      var km = tKm_(pl, x.pl);
+      if (km > T_MATCH.NEAR_KM) return;
+      if (!near || km < near.km - 0.5 || (Math.abs(km - near.km) <= 0.5 && load[x.name] < load[near.name])) near = { name: x.name, km: km, at: x.pl.k };
+    });
+    if (near) {
+      var nw = 'nearest with room: ' + first(near.name) + ' is based in ' + tPlaceLabel_(near.at) + (near.km < 1 ? ', the same town' : ', ' + Math.round(near.km) + ' km from ' + tPlaceLabel_(pl.k));
+      put(c, { agent: near.name, why: nw, src: 'near' });
+      if (h) hhPick[h] = { agent: near.name, why: 'the nearest with room when the first of them was suggested', src: 'near' };
+      return;
+    }
     var light = roster.slice().sort(function (x, y) { return (load[x.name] - load[y.name]) || x.name.localeCompare(y.name); })[0];
     put(c, { agent: light.name, why: 'the lightest list: ' + load[light.name] + ' named or suggested so far', src: 'load' });
-    if (h) hhPick[h] = light.name;
+    if (h) hhPick[h] = { agent: light.name, why: 'the lightest list when the first of them was suggested', src: 'load' };
   });
   return out;
 }
@@ -4294,6 +4654,9 @@ function transitionAssign_(p) {
       c.assigned = agent.name; c.assignedOn = stamp;
       done.push(c);
     });
+    /* and in Salesforce, the way the branch names an agent there (8 October 2026: "if that is updated there, it updates on
+       the Salesforce backend"): skipped, and said, until Salesforce is linked in this project */
+    var sf = tSfAssignWrite_(done, agent, now);
     var briefed = false, introduced = 0, notAnswered = 0, introHeld = 0, warnings = [];
     /* client e-mail on hold (7 October 2026: an introduction went to a client while an agent was being trained on the
        board): the agent is named and briefed, and the client is sent nothing and nothing is marked. An introduction
@@ -4321,8 +4684,9 @@ function transitionAssign_(p) {
     }
     log_('transition', 'assign', agent.name + ' · ' + done.length + ' client' + (done.length === 1 ? '' : 's') + (byStaff ? ' · named by ' + byStaff : '') +
          (briefed ? ' · briefed' : '') + (introduced ? ' · ' + introduced + ' introduced' : '') + (introHeld ? ' · ' + introHeld + ' introduction' + (introHeld === 1 ? '' : 's') + ' held: client e-mail on hold' : '') +
-         (missing.length ? ' · ' + missing.length + ' unknown' : ''));
-    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings };
+         (missing.length ? ' · ' + missing.length + ' unknown' : '') +
+         (sf.on ? ' · Salesforce: ' + (sf.policies ? sf.policies + ' polic' + (sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (sf.why ? ' (' + sf.why + ')' : '') : ''));
+    return { ok: true, agent: agent.name, assigned: done.length, rows: written, briefed: briefed, introduced: introduced, introHeld: introHeld, notAnswered: notAnswered, missing: missing, warnings: warnings, sf: sf };
   } finally { lock.releaseLock(); }
 }
 
@@ -5196,11 +5560,13 @@ function tBookFor_(cno, withList) {
   var b = tBook_(), recs = b.by[tCno_(cno)];
   if (!recs || !recs.length) return null;
   var codes = tPlanCodes_(), P = tProfiles_(), ended = {}, list = [];
-  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0 };
+  var s = { live: 0, due: 0, lapsed: 0, pending: 0, ended: 0, prem: 0, cover: 0, ci: 0, acc: 0, unconf: 0, since: '', years: 0, fund: 0, est: 0, mat: 0, matOn: '' };
   recs.forEach(function (r) {
     var pc = codes[r.code] || { name: '', cls: '', conf: false }, live = tBookLive_(r.st), pf = P.by[r.no] || null;
     var cv = tCoverOf_(r, pc, pf), life = live ? cv.life : 0;
     if (live) { s.live++; if (r.st === 'overdue') s.due++; s.ci += cv.ci; s.acc += cv.acc; s.fund += r.fund || 0; }
+    /* a policy in force that matures within the year: what happens to the money next is a conversation (8 October 2026) */
+    if (live && r.matures) { var md = tDaysBetween_(b.today, r.matures); if (md > 0 && md <= 365) { s.mat++; if (!s.matOn || r.matures < s.matOn) s.matOn = r.matures; } }
     if (r.yr && r.yrSrc !== 'in-force book') s.est++;   // a premium a year read off the figures, not recorded (T_BOOK)
     else if (r.st === 'lapsed') s.lapsed++;
     else if (r.st === 'pending') s.pending++;
@@ -5236,7 +5602,7 @@ function tBookFor_(cno, withList) {
 function tBookBrief_(cno, more) {
   var p = tBookFor_(cno, false);
   if (!p) return null;
-  var o = { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live };
+  var o = { prem: p.sum.prem, cover: p.sum.cover, live: p.sum.live, mat: p.sum.mat || 0, fund: p.sum.fund || 0 };
   if (more) { o.ci = p.sum.ci; o.lapsed = p.sum.lapsed; o.due = p.sum.due; o.unconf = p.sum.unconf; }
   return { sum: o };
 }
@@ -5256,7 +5622,7 @@ function tPolNoMoney_(pol) {
   if (!pol || !pol.sum) return null;
   var s = pol.sum;
   return { noMoney: true,
-    sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0 },
+    sum: { live: s.live || 0, due: s.due || 0, lapsed: s.lapsed || 0, pending: s.pending || 0, ended: s.ended || 0, since: s.since || '', years: s.years || 0, mat: s.mat || 0, matOn: s.matOn || '' },
     list: (pol.list || []).map(function (x) {
       return { no: x.no, code: x.code, name: x.name, st: x.st, desc: x.desc, od: x.od, iss: x.iss, paid: x.paid, insured: x.insured, matures: x.matures || '' };
     }),

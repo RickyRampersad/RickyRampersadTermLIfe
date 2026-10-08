@@ -2593,6 +2593,51 @@ voice under the new timing and the caption gives it away.
   - How the board works, the three rules on every call and the scripts are in Help.
   - `board8/board-test.js` (60) and the work, dashboard, snapshot and introduction-hold tests in the scratchpad cover
     it, moved to Log call.
+- **Match: who should look after whom, by weight and by town** (8 October 2026: "scrub agent address and client
+  address and weighting on the client to know who to assign, how many in force policies, lapsed, maturities, spotting
+  opportunities … lives in household … a super intelligent and professionally laid out with graphics, interactive and
+  motion"). A tab under Act on, for the branch and for staff (who name agents); never for an agent or a unit manager.
+  - **Every row gets a weight in four parts**, each 0 to 100 (`tMatch_`, `c.w = [total, urgent, at risk, value,
+    opportunity]`):
+    - *urgent*: a call-back, an answer that cannot wait, past the branch's line;
+    - *at risk*: the former agent in touch, a change suggested, paying in person, a premium due, surrendered before;
+    - *value*: the premium a year and the life cover against everyone on the board, the policies in force, the family
+      on our books;
+    - *opportunity*: what the record shows (`T_OPPS`): a policy maturing within the year (`sum.mat`, from the Client
+      Book's Matures), a lapsed policy, life cover ending, no life cover, a family member without, no critical
+      illness cover, no beneficiary, a birthday, and for the branch only cover low for income and a fund value.
+  - The branch weighting is `T_MATCH.W` (35, 25, 25, 15). The page's sliders re-rank the queue live and keep a
+    person's own weighting on their device (`rrb-match-w`).
+  - **Towns only, never a street.** `T_PLACES` is a gazetteer of the places the books' addresses name, looked up on
+    OpenStreetMap on 8 October 2026 and checked by hand: a town's centre, never its region's; ambiguous names left out.
+    `T_PLACE_ALIAS` maps the spellings on file ("Chaguans", "San Ferando") to them. 98.9% of town mentions map.
+  - **An agent's base** (`tAgentPlaces_`): a "Lives in" column on the Agent Skill Bank, else the first place in Areas
+    covered, else the mailing town on their Salesforce agent record (`tSfAgents_`, read once a day into the
+    `sf_agents` property). On 8 October Areas covered was empty for everyone, and 9 of the 15 Salesforce mailing towns
+    read Chaguanas, which may be the branch's own address, so the branch was asked to confirm each agent's town.
+  - **The suggestion is now family, then the 24 September plan, then the nearest agent with room, then the lightest
+    list** (`tSuggest_`). "With room" means under 1.2 times the even share (`T_MATCH.ROOM`), within 25 km
+    (`NEAR_KM`). A household keeps one agent whichever step chose them.
+  - **The best fits under each client nobody is named on** (`c.mt`, up to three) weigh nearness 65 and room 35.
+  - **A naming writes Salesforce** (`tSfAssignWrite_`, from `transitionAssign_`, so the board, Match and staff namings
+    all do). It sets Assigned Agent (the agent's own Contact), Date Assigned to Agent (that day) and Campaign "Orphan"
+    on each of the client's policies in force, else the first on file, in one composite PATCH, `allOrNone` false.
+    Skipped, and said in the answer, until ServiceSalesforce.gs and its SF_* properties are in the project. An agent
+    Salesforce has no record of, or a policy it refuses, is named in the answer; the board naming stands either way.
+  - **Staff see no money here either.** No premium, cover or fund figure on any row or in the block, and no opening
+    that is a figure. The same change strips money from rows not answered yet on a staff board, which no page asked
+    for but the backend would have sent.
+  - **The view**: a navy hero with the numbers counting up, and a dark map of Trinidad with Tobago in an inset (Natural
+    Earth's coastline, smoothed). Each town is a bubble sized by its clients and coloured by their average weight, and
+    pulses when someone there weighs 60 or more. Each agent is a gold pin at their base. A town draws arcs to the
+    agents who fit it; a pin draws the agent's 25 km reach and arcs to their clients. Then the queue (heaviest first,
+    the four parts as bars, the reasons, one press to name the best fit), the openings as tiles, and every agent's
+    list against the share.
+  - **Motion**: everything moves when the view is opened, the queue and the arcs after a tap, nothing on the two-minute
+    refresh (`c-map`, `c-all`), and nothing at all with reduced motion asked for.
+  - The match adds about 9% to the branch board. `match9/match-harness.js` (39, Node, mocked Salesforce) and
+    `match9/match-test.js` (37, Playwright) in the scratchpad cover it, on `match9/tabs9.json`: the real tabs with the
+    Client Book built from the 7 October portfolio export.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.

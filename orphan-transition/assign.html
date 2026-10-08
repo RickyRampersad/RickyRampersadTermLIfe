@@ -462,6 +462,138 @@
   .gobar .primary{background:var(--navy);color:#fff;border-color:var(--navy)}
   .gobar .primary:hover{background:var(--navy2)}
   .gobar button[disabled]{opacity:.55;cursor:default}
+  /* the Match view (8 October 2026): who should look after whom, on a map, in order of weight, with motion */
+  .mhero{position:relative;overflow:hidden;border-radius:16px;padding:22px 24px 20px;color:#e8eef5;box-shadow:var(--sh2);
+    background:radial-gradient(900px 340px at 92% -30%,rgba(0,207,234,.22),transparent 62%),radial-gradient(700px 300px at -10% 130%,rgba(239,194,75,.18),transparent 60%),linear-gradient(135deg,#07131f 0%,#0f2740 100%)}
+  .mhero::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:28px 28px;-webkit-mask-image:linear-gradient(180deg,#000,transparent 85%);mask-image:linear-gradient(180deg,#000,transparent 85%)}
+  .mhero>*{position:relative;z-index:1}
+  .mkick{font:700 11px var(--fb);letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin:0}
+  .mhero h2{font:800 26px/1.2 var(--fh);margin:6px 0 4px;color:#fff;letter-spacing:-.5px}
+  .mhero p.ms{margin:0;color:#a9b8c8;font-size:14.5px;max-width:72ch}
+  .mstats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-top:18px}
+  .mstat{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:11px 13px;animation:rise .5s ease-out both;animation-delay:var(--d,0ms)}
+  .mstat b{display:block;font:800 27px/1.1 var(--fh);color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.6px}
+  .mstat span{display:block;font-size:12.5px;color:#a9b8c8;margin-top:2px;line-height:1.3}
+  .mstat.gold b{color:var(--gold)} .mstat.hot b{color:#ff8a73}
+  .mtop{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;margin-top:14px}
+  .msf{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#cfe0ec;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:5px 11px}
+  .msf::before{content:'';width:8px;height:8px;border-radius:50%;background:#94a3b8}
+  .msf.on::before{background:#3ddc97;box-shadow:0 0 0 3px rgba(61,220,151,.2)}
+  .mseg{display:inline-flex;border:1px solid rgba(255,255,255,.18);border-radius:10px;overflow:hidden}
+  .mseg button{border:0;background:transparent;color:#cfe0ec;font:600 13px var(--fb);padding:7px 12px;cursor:pointer;min-height:34px}
+  .mseg button.on{background:#fff;color:var(--navy)}
+  .mgo{background:var(--gold);color:var(--navy);border:0;border-radius:10px;font:700 13px var(--fb);padding:8px 13px;cursor:pointer;min-height:34px}
+  .mgrid{display:grid;gap:14px;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);margin-top:14px;align-items:start}
+  .mgrid>.card{margin-top:0}
+  .mmap{background:#081521;border-color:#0d2133;color:#d7e3ee;padding:14px 14px 12px;position:sticky;top:12px}
+  .mmap h3,.mq-h h3{font:800 16px var(--fh);margin:0;letter-spacing:-.2px} .mmap h3{color:#fff}
+  .mmap .mhd{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;justify-content:space-between;margin:0 2px 6px}
+  .mmap .mhd span{font-size:12.5px;color:#8fa6ba}
+  .mmapw{position:relative}
+  .mmapsvg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .msea{fill:url(#mSea)} .mgl{stroke:rgba(255,255,255,.045);stroke-width:1}
+  .mland{fill:#10283e;stroke:rgba(0,207,234,.55);stroke-width:1.3;stroke-linejoin:round}
+  .mland.glow{fill:none;stroke:rgba(0,207,234,.18);stroke-width:7;filter:blur(3px)}
+  .minset{fill:rgba(255,255,255,.015);stroke:rgba(255,255,255,.14);stroke-dasharray:4 5}
+  .minl{fill:#6f8aa1;font:700 12px var(--fb);letter-spacing:.12em}
+  .mtown{cursor:pointer}
+  .mtown .dot{fill:var(--tc);fill-opacity:.92;stroke:#081521;stroke-width:1.5;transform-box:fill-box;transform-origin:center;animation:pop .7s cubic-bezier(.2,1.5,.4,1) both;animation-delay:var(--d,0ms)}
+  .mtown .halo{fill:var(--tc);opacity:0;transform-box:fill-box;transform-origin:center}
+  .mtown.hot .halo{animation:pulse 2.6s ease-out infinite;animation-delay:var(--d,0ms)}
+  .mtown .n{fill:#081521;font:800 11px var(--fb);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+  .mtown .lb{fill:#c6d6e4;font:600 12px var(--fb);text-anchor:middle;pointer-events:none;paint-order:stroke;stroke:#081521;stroke-width:3px}
+  .mtown:hover .dot,.mtown.on .dot{stroke:#fff;stroke-width:2.5}
+  .mtown.dim{opacity:.28}
+  .mpin{cursor:pointer}
+  .mpin .pd{fill:var(--gold);stroke:#081521;stroke-width:2;transform-box:fill-box;transform-origin:center;animation:drop .6s cubic-bezier(.2,1.4,.4,1) both;animation-delay:var(--d,0ms)}
+  .mpin text{fill:#081521;font:800 9.5px var(--fb);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+  .mpin:hover .pd,.mpin.on .pd{fill:#fff}
+  .mpin.dim{opacity:.35}
+  .marc{fill:none;stroke:var(--gold);stroke-width:2.2;stroke-linecap:round;opacity:.95;stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw .9s ease-out forwards;animation-delay:var(--d,0ms)}
+  .mrad{fill:rgba(239,194,75,.07);stroke:rgba(239,194,75,.55);stroke-width:1.5;stroke-dasharray:6 6;transform-box:fill-box;transform-origin:center;animation:pop .6s ease-out both}
+  .mtip{position:absolute;z-index:6;pointer-events:none;background:rgba(7,19,31,.96);border:1px solid rgba(0,207,234,.35);color:#e8eef5;border-radius:10px;padding:9px 11px;font-size:13px;line-height:1.45;max-width:260px;box-shadow:0 10px 30px rgba(0,0,0,.4);transform:translate(-50%,calc(-100% - 12px))}
+  .mtip b{color:#fff} .mtip i{font-style:normal;color:var(--gold)}
+  .mleg{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:center;font-size:12.5px;color:#8fa6ba;margin:8px 2px 0}
+  .mleg .ramp{display:inline-block;width:110px;height:8px;border-radius:4px;background:linear-gradient(90deg,#1fb5cc 30%,#efc24b 55%,#ff6347);vertical-align:middle;margin:0 6px}
+  .mleg .pinl{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--gold);vertical-align:-1px;margin-right:5px}
+  .mfocus{display:flex;flex-wrap:wrap;gap:6px;margin:8px 2px 0}
+  .mfocus .achip{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#e8eef5}
+  .mfocus .achip button{color:var(--gold)}
+  .mq-h{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between}
+  .mq-h span{font-size:13px;color:var(--dim)}
+  details.mw{margin:10px 0 2px;border:1px solid var(--line);border-radius:10px;padding:0 12px;background:#fafbfc}
+  details.mw>summary{cursor:pointer;list-style:none;padding:9px 0;font:600 13.5px var(--fb);color:var(--ink);display:flex;flex-wrap:wrap;gap:2px 8px;align-items:baseline}
+  details.mw>summary::-webkit-details-marker{display:none}
+  details.mw>summary::before{content:'▸';color:var(--faint);font-size:12px} details.mw[open]>summary::before{content:'▾'}
+  details.mw>summary i{font-style:normal;font-weight:500;color:var(--dim);font-size:12.5px}
+  .mws{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px 16px;padding:0 0 10px}
+  .mws label{display:grid;grid-template-columns:1fr auto;gap:2px 8px;font-size:12.5px;color:var(--body);font-weight:600}
+  .mws label b{font-variant-numeric:tabular-nums;color:var(--ink)}
+  .mws input{grid-column:1/-1;width:100%;accent-color:var(--navy)}
+  .mws .sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;background:var(--bc)}
+  .mwreset{background:none;border:0;color:var(--tdark);font:600 13px var(--fb);cursor:pointer;padding:0 0 10px}
+  .mq{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;padding:14px 2px 12px;border-top:1px solid var(--line2);animation:rise .45s ease-out both;animation-delay:var(--d,0ms)}
+  .mq:first-of-type{border-top:0}
+  .mring{position:relative;width:50px;height:50px;flex:none}
+  .mring svg{width:50px;height:50px;transform:rotate(-90deg);display:block}
+  .mring .bg{fill:none;stroke:#edf1f5;stroke-width:3.6}
+  .mring .fg{fill:none;stroke:var(--rc);stroke-width:3.6;stroke-linecap:round;animation:ring 1s cubic-bezier(.3,.9,.3,1) both;animation-delay:var(--d,0ms)}
+  .mring b{position:absolute;inset:0;display:grid;place-items:center;font:800 15px var(--fh);color:var(--ink);font-variant-numeric:tabular-nums}
+  .mqn{display:flex;flex-wrap:wrap;gap:3px 8px;align-items:center}
+  .mqn a{font:700 15px var(--fh);color:var(--ink);text-decoration:none} .mqn a:hover{text-decoration:underline}
+  .mqn .cno{font-size:12.5px;color:var(--dim)}
+  .mqs{font-size:13.5px;color:var(--body);margin-top:1px}
+  .mqbars{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px 12px;margin-top:8px;max-width:460px}
+  .mqbar span{display:flex;justify-content:space-between;gap:4px;font-size:11px;color:var(--dim);line-height:1.2;margin-bottom:3px;white-space:nowrap}
+  .mqbar span b{color:var(--body);font-weight:700}
+  .mqbar i{display:block;height:5px;border-radius:3px;background:#edf1f5;overflow:hidden}
+  .mqbar i s{display:block;height:100%;background:var(--bc);border-radius:3px;text-decoration:none;animation:grow .9s cubic-bezier(.3,.9,.3,1) both;animation-delay:var(--d,0ms)}
+  .mchips{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+  .mchip{font-size:12px;border-radius:999px;padding:2px 9px;background:#f1f5f9;color:var(--body);border:1px solid var(--line2)}
+  .mchip.op{background:#ecf8fb;border-color:#b6e3ee;color:var(--tdark);font-weight:600}
+  .mqa{grid-column:2;display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:13px;color:var(--dim);margin-top:6px;padding:8px 10px;background:#f7fafc;border:1px solid var(--line2);border-radius:10px}
+  .mqa .fit{color:var(--body)} .mqa .fit b{color:var(--ink)} .mqa .sugbtn{margin-left:auto}
+  .mqa small{flex-basis:100%;font-size:12px;line-height:1.4}
+  .mqa .named{color:var(--ok);font-weight:600}
+  .mmore{display:block;margin:12px auto 2px}
+  .mopps{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));margin-top:10px}
+  .mopp{position:relative;overflow:hidden;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 13px;cursor:pointer;font:inherit;color:inherit;animation:rise .45s ease-out both;animation-delay:var(--d,0ms);transition:transform .15s,box-shadow .15s}
+  .mopp:hover{transform:translateY(-2px);box-shadow:var(--sh2)}
+  .mopp::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:linear-gradient(90deg,var(--teal),var(--gold))}
+  .mopp b{display:block;font:800 24px/1.1 var(--fh);color:var(--ink);font-variant-numeric:tabular-nums}
+  .mopp span{display:block;font-size:13px;color:var(--ink);font-weight:600;margin-top:3px;line-height:1.3}
+  .mopp i{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+  .mopp.on{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
+  .mags{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));margin-top:10px}
+  .mag{display:flex;gap:11px;align-items:flex-start;text-align:left;background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 12px;cursor:pointer;font:inherit;color:inherit;animation:rise .45s ease-out both;animation-delay:var(--d,0ms)}
+  .mag:hover{border-color:#c5cfdb} .mag.on{border-color:var(--navy);box-shadow:0 0 0 1px var(--navy)}
+  .mag .av{width:36px;height:36px;border-radius:50%;background:var(--navy);color:var(--gold);display:grid;place-items:center;font:800 13px var(--fh);flex:none}
+  .mag.nob .av{background:#e3e9f0;color:var(--dim)}
+  .mag div{min-width:0;flex:1} .mag b{display:block;color:var(--ink);font:700 14px var(--fh)} .mag span{display:block;font-size:12.5px;color:var(--dim)}
+  .mcap{display:flex;height:7px;border-radius:4px;background:#edf1f5;overflow:hidden;margin:7px 0 4px}
+  .mcap i{display:block;height:100%;background:var(--navy);animation:grow .9s ease-out both} .mcap i.s{background:var(--gold)}
+  .mcap.over{box-shadow:0 0 0 1px var(--stop)}
+  .mag small{display:block;font-size:12px;color:var(--body)}
+  .mhow{font-size:13px;color:var(--dim);line-height:1.6;margin-top:12px}
+  .mhow b{color:var(--body)}
+  @keyframes pop{from{transform:scale(0)}to{transform:scale(1)}}
+  @keyframes drop{from{transform:translateY(-14px) scale(.4);opacity:0}to{transform:none;opacity:1}}
+  @keyframes pulse{0%{transform:scale(1);opacity:.45}100%{transform:scale(2.4);opacity:0}}
+  @keyframes draw{to{stroke-dashoffset:0}}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes grow{from{width:0}}
+  @keyframes ring{from{stroke-dasharray:0 100}}
+  @media(min-width:1181px){.mgrid .mqbars{grid-template-columns:repeat(2,minmax(0,1fr));max-width:340px}
+    .mqlist{max-height:calc(100vh - 150px);min-height:560px;overflow:auto;margin:0 -6px;padding:0 6px;scrollbar-width:thin}}
+  @media(max-width:1180px){.mgrid{grid-template-columns:1fr}.mmap{position:relative;top:0}}
+  @media(max-width:640px){.mhero{padding:18px 16px}.mhero h2{font-size:22px}.mstat b{font-size:23px}
+    .mqa{grid-column:1/-1}.mqbars{max-width:none;grid-template-columns:repeat(2,minmax(0,1fr))}}
+  @media(prefers-reduced-motion:reduce){#paneMatch *,#paneMatch *::before{animation:none!important;transition:none!important}.marc{stroke-dashoffset:0}}
+  /* a redraw the person did not ask for (the two-minute refresh) moves nothing; a tap on the map or the queue moves the
+     queue and the arcs only; opening the view moves everything */
+  #paneMatch.c-map .mtown .dot,#paneMatch.c-map .mpin .pd,#paneMatch.c-map .mstat,#paneMatch.c-map .mopp,#paneMatch.c-map .mag,#paneMatch.c-map .mcap i{animation:none}
+  #paneMatch.c-all .mq,#paneMatch.c-all .mring .fg,#paneMatch.c-all .mqbar i s,#paneMatch.c-all .marc,#paneMatch.c-all .mrad{animation:none}
+  #paneMatch.c-all .marc{stroke-dashoffset:0}
   /* a laptop narrower than the menu and the work side by side */
   @media(max-width:1020px){.shell{grid-template-columns:200px minmax(0,1fr);gap:20px}}
   /* a phone or a small tablet: no side menu; the lists become a bar of pills that stays at the top while the list scrolls */
@@ -609,6 +741,18 @@
       <div class="card dcard" id="dAgents"></div>
       <div class="card dcard" id="dBy"></div>
       <p class="pnote" id="dHow"></p>
+    </div>
+
+    <!-- Match: who should look after whom, on a map, in order of weight -->
+    <div class="pane" id="paneMatch" hidden>
+      <section class="mhero" id="mHero"></section>
+      <div class="mgrid">
+        <div class="card mmap" id="mMap"></div>
+        <div class="card" id="mQueue"></div>
+      </div>
+      <div class="card" id="mOpps"></div>
+      <div class="card" id="mAgents"></div>
+      <p class="mhow" id="mHow"></p>
     </div>
 
     <!-- your work: every call you marked, with your notes, newest first -->
@@ -787,6 +931,7 @@ var FILTER_IDS = ['fSearch', 'fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed
 function forget() {
   dropSnap(); STALE = false; AGAIN = false;   // the picture of the last board goes with the person who saw it
   FILTER.agent = ''; DET = {}; DET_OPEN = {}; DRAFT = {}; focusDet = ''; POLS = {}; POL_OPEN = {}; OPENX = {}; EXP = {};
+  M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP }; MW = null;
   TAB = ''; SUB = ''; HSUB = ''; SHOW_N = SHOW_STEP; HSHOW_N = HSTEP; DEFAULTED = false; INTRO_SET = false; $('barIntro').checked = true; $('barIntro').disabled = false; $('barIntroWhy').textContent = '';
   FILTER_IDS.forEach(function (id) { $(id).value = ''; });
   $('fAll').checked = false; $('filters').hidden = true;
@@ -870,6 +1015,7 @@ var TABDEF = {
   all: { label: 'All clients', title: 'All clients', grp: 'lists', test: function () { return true; } },
   work: { label: 'Your work', grp: 'you', pane: 'paneWork' },
   dash: { label: 'Dashboard', grp: 'act', pane: 'paneDash' },
+  match: { label: 'Match', grp: 'act', pane: 'paneMatch' },
   team: { label: 'Team', grp: 'branch', pane: 'paneTeam' },
   insights: { label: 'Insights', grp: 'branch', pane: 'paneInsights' },
   claims: { label: 'Claims', grp: 'you', pane: 'paneClaims' }
@@ -879,10 +1025,12 @@ var GRP_WORDS = { you: 'Yours', act: 'Act on', lists: 'Lists', branch: 'The bran
 var ROLE_WORDS = { branch: 'Branch manager', unit: 'Unit manager', staff: 'Client Support', agent: 'Agent' };
 function tabsFor(d) {
   var r = d.role, claims = !!(d.claims && d.claims.rows && d.claims.rows.length);
-  if (r === 'branch') return ['urgent', 'dash', 'assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights'];
+  /* Match (8 October 2026) for whoever names agents, once the backend sends it */
+  var match = d.match ? ['match'] : [];
+  if (r === 'branch') return ['urgent', 'dash'].concat(match, ['assign', 'calls', 'progress', 'done', 'households', 'all', 'team', 'insights']);
   /* "Your work" for anyone signed in as themselves (8 October 2026: "can staff place the notes … and see what they have done") */
   var work = d.me && d.me.name ? ['work'] : [];
-  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign', 'calls', 'progress', 'done', 'households', 'all']);
+  if (r === 'staff') return (d.clients.some(myCall) ? ['mine'] : []).concat(work, ['urgent', 'assign'], match, ['calls', 'progress', 'done', 'households', 'all']);
   var out = ['open'].concat(work, claims ? ['claims'] : []);
   if (r === 'unit') out.push('dash');
   if (d.clients.some(urgentOf)) out.push('urgent');
@@ -1028,6 +1176,7 @@ function drawTabs(tabs) {
 function pickTab(t, keep) {
   if (TAB !== t || !keep) { SUB = ''; SHOW_N = SHOW_STEP; }
   if (!keep) ['fSeg', 'fTown', 'fBook', 'fCaller', 'fAge', 'fNeed', 'fIns', 'fSug'].forEach(function (id) { $(id).value = ''; });
+  if (t === 'match' && TAB !== 'match') M.anim = 'all';   // opening the Match view moves everything once
   TAB = t;
   if (FOCUS) unfocus(true);
   drawTabs(tabsFor(D)); showPane();
@@ -1035,11 +1184,12 @@ function pickTab(t, keep) {
 }
 function showPane() {
   var def = TABDEF[TAB] || {}, pane = def.pane || 'paneList';
-  ['paneList', 'paneHouseholds', 'paneDash', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
+  ['paneList', 'paneHouseholds', 'paneDash', 'paneMatch', 'paneWork', 'paneTeam', 'paneInsights', 'paneClaims'].forEach(function (p) { $(p).hidden = p !== pane; });
   if (pane === 'paneList') listPane();
   else if (pane === 'paneHouseholds') householdsPane();
   else if (pane === 'paneWork') workPane();
   else if (pane === 'paneDash') dashPane();
+  else if (pane === 'paneMatch') matchPane();
   else if (pane === 'paneTeam') teamPane();
   else if (pane === 'paneInsights') insightsPane();
   else if (pane === 'paneClaims') claimsPanel(D);
@@ -2556,6 +2706,296 @@ each('#glTabs button', function (b) {
   b.addEventListener('click', function () { GL = b.getAttribute('data-gl'); try { localStorage.setItem('rrb-assign-glance', GL); } catch (e) {} if (D) glance(D, D.role === 'branch'); });
 });
 
+/* ---- Match (8 October 2026): who should look after whom ----
+   "a super intelligent and professionally laid out with graphics, interactive and motion". The backend (tMatch_) puts on
+   each row its place, its weight in four parts, the opportunities on its record and the best-fitting agents; this view
+   draws them: the map of where the clients and the agents are, the queue in order of weight (the four parts re-balanced
+   here, live, and kept on this device), the opportunities, every agent's list against their share, and one press to name
+   the best fit. Only towns are ever drawn, never a street. */
+var MAPG = { TR: [-61.93, 10.845, 20, 196, 0.98341], TB: [-60.935, 11.365, 545, 14, 0.98079], K: 767,
+  tr: 'M719.8,307.7C710.8,315.5 709.6,303.1 705.7,305.1C701.9,307.2 699.0,313.6 696.8,319.8C694.6,326.1 693.3,335.3 692.8,342.8C692.2,350.3 691.0,353.4 693.6,364.8C696.2,376.3 705.3,399.9 708.2,411.4C711.2,423.0 714.4,427.2 711.3,434.2C708.1,441.1 693.0,446.3 689.4,453.0C685.9,459.7 689.4,468.6 689.9,474.5C690.4,480.4 690.8,479.1 692.5,488.5C694.2,497.9 698.3,522.0 700.2,530.8C702.2,539.6 702.6,537.9 704.1,541.3C705.6,544.6 706.1,546.0 709.1,551.0C712.2,556.0 715.7,564.4 722.7,571.1C729.6,577.8 749.6,583.7 750.7,591.0C751.7,598.2 734.1,604.0 728.9,614.6C723.6,625.1 721.0,640.2 719.4,654.2C717.7,668.3 718.1,685.1 719.0,699.1C719.8,713.0 726.3,732.2 724.5,738.1C722.7,744.0 714.0,734.2 708.3,734.5C702.6,734.9 696.0,737.4 690.1,740.1C684.2,742.8 678.0,747.0 673.0,750.7C667.9,754.4 664.1,758.7 659.6,762.1C655.2,765.5 651.4,768.5 646.3,771.1C641.2,773.7 637.7,775.1 629.2,777.5C620.7,780.0 602.2,784.2 595.3,785.7C588.3,787.2 590.5,786.1 587.5,786.5C584.4,786.8 586.4,788.6 576.9,787.5C567.5,786.4 541.1,781.0 530.6,780.0C520.2,778.9 524.8,779.6 514.0,781.4C503.3,783.3 483.9,790.2 466.0,790.9C448.1,791.7 427.3,785.7 406.6,785.7C385.9,785.7 352.9,790.1 342.0,790.9C331.1,791.8 346.4,791.7 341.2,790.8C336.1,789.9 317.3,786.3 311.1,785.7C304.9,785.1 308.8,785.7 304.0,787.4C299.3,789.2 287.5,794.5 282.5,796.1C277.5,797.7 278.0,796.3 274.1,797.0C270.2,797.7 263.0,799.8 259.3,800.6C255.5,801.3 254.7,801.6 251.6,801.4C248.6,801.3 244.0,800.7 241.0,799.8C238.0,798.8 235.9,797.3 233.5,795.8C231.1,794.3 229.2,792.4 226.6,790.7C224.0,789.0 221.7,787.2 217.9,785.7C214.1,784.2 208.8,782.5 203.9,781.5C199.0,780.5 201.9,780.0 188.4,779.7C175.0,779.4 137.0,779.3 123.1,779.6C109.2,779.9 110.5,780.3 105.2,781.7C99.9,783.2 95.6,785.8 91.5,788.3C87.4,790.9 84.7,794.1 80.5,797.0C76.2,799.9 70.8,803.3 65.8,805.7C60.8,808.2 55.1,810.6 50.4,811.7C45.6,812.7 42.1,813.7 37.2,811.9C32.3,810.0 22.5,804.4 21.0,800.8C19.5,797.2 23.1,794.3 28.3,790.4C33.6,786.5 48.0,780.2 52.7,777.6C57.3,775.0 54.3,775.6 56.2,774.7C58.2,773.8 59.1,773.4 64.5,772.2C70.0,771.0 84.1,769.1 89.0,767.5C93.9,766.0 91.8,765.4 94.0,762.7C96.1,760.0 98.5,754.6 101.8,751.2C105.1,747.8 109.5,744.7 113.6,742.2C117.7,739.7 114.4,739.9 126.2,736.0C138.0,732.1 174.1,721.8 184.4,718.6C194.7,715.4 182.5,719.5 187.9,716.9C193.3,714.3 208.3,708.6 216.8,703.0C225.4,697.3 235.5,686.4 239.3,683.0C243.1,679.6 239.7,686.6 239.7,682.6C239.6,678.7 237.5,664.2 239.0,659.5C240.5,654.8 245.1,655.3 248.6,654.5C252.1,653.6 251.6,653.2 260.0,654.3C268.4,655.4 287.5,660.1 299.0,661.0C310.4,662.0 323.3,660.1 328.7,659.9C334.0,659.7 329.1,659.9 330.9,659.8C332.7,659.8 336.5,660.1 339.4,659.5C342.2,658.9 344.8,658.1 347.9,656.2C351.0,654.3 354.8,651.1 358.0,648.0C361.2,644.9 364.6,641.0 367.1,637.6C369.6,634.2 371.4,631.9 372.9,627.7C374.3,623.4 375.4,615.9 375.7,612.3C376.1,608.8 375.2,608.7 374.8,606.6C374.4,604.4 374.4,602.7 373.6,599.4C372.7,596.2 370.7,591.5 369.8,587.0C368.8,582.6 368.3,575.7 367.7,572.6C367.2,569.5 367.7,570.1 366.4,568.5C365.0,566.9 361.2,564.4 359.8,562.9C358.3,561.4 357.9,560.8 357.4,559.6C357.0,558.3 356.8,556.3 357.1,555.4C357.4,554.5 358.4,554.5 359.2,554.3C359.9,554.0 361.1,554.2 361.7,553.7C362.4,553.3 362.9,552.8 363.0,551.5C363.1,550.1 363.2,549.0 362.3,545.5C361.4,542.0 359.1,533.9 357.9,530.5C356.7,527.1 355.8,528.0 355.1,525.3C354.3,522.5 353.0,518.6 353.4,514.2C353.9,509.8 355.3,505.6 357.7,499.1C360.1,492.6 365.2,484.1 367.7,475.3C370.2,466.5 371.9,456.0 372.8,446.1C373.6,436.3 374.1,425.7 372.9,416.0C371.6,406.3 369.5,396.4 365.2,387.8C361.0,379.3 349.3,369.4 347.2,364.8C345.1,360.2 356.8,364.3 352.7,360.1C348.6,355.9 330.2,344.1 322.6,339.5C315.1,334.9 313.5,335.3 307.3,332.5C301.2,329.7 292.1,324.8 285.8,322.6C279.5,320.4 278.7,320.2 269.6,319.2C260.5,318.2 238.4,317.2 231.2,316.6C224.0,315.9 227.8,316.0 226.4,315.1C225.0,314.1 224.1,313.1 222.7,310.9C221.3,308.8 212.2,308.0 217.9,302.0C223.7,296.0 248.9,280.1 257.1,274.9C265.4,269.6 260.5,270.9 267.3,270.6C274.2,270.3 287.3,274.1 298.2,273.2C309.2,272.3 324.0,266.4 332.9,265.1C341.9,263.8 348.1,265.3 351.8,265.3C355.5,265.4 353.0,266.1 355.1,265.3C357.2,264.6 362.0,263.0 364.5,261.0C367.1,259.0 368.7,255.1 370.3,253.3C371.9,251.5 372.9,249.1 374.2,250.2C375.5,251.2 376.5,258.1 378.0,259.6C379.6,261.2 382.7,260.1 383.7,259.6C384.6,259.2 383.9,258.8 383.9,257.1C383.9,255.3 382.9,250.5 383.7,249.2C384.4,247.8 387.4,248.5 388.3,249.2C389.2,249.8 388.5,252.0 388.8,253.0C389.1,254.0 389.6,254.4 390.1,255.0C390.6,255.7 391.2,255.9 391.9,256.7C392.5,257.5 394.5,258.2 393.9,259.6C393.4,261.1 388.2,264.6 388.3,265.3C388.4,266.1 392.8,264.7 394.6,263.9C396.3,263.0 397.8,261.5 399.0,260.3C400.2,259.1 401.1,257.5 401.9,256.6C402.7,255.7 401.0,255.2 403.8,254.9C406.5,254.5 415.7,254.4 418.3,254.4C421.0,254.4 418.5,255.7 419.7,254.9C421.0,254.0 422.5,253.0 425.9,249.2C429.3,245.5 437.0,235.9 440.2,232.4C443.4,228.9 442.4,229.1 445.0,228.2C447.5,227.4 453.3,227.5 455.5,227.4C457.7,227.2 451.1,226.4 458.2,227.1C465.3,227.9 476.9,231.1 498.1,232.0C519.4,232.9 570.0,233.1 585.6,232.4C601.3,231.6 588.9,229.9 592.1,227.5C595.2,225.1 595.2,220.4 604.7,217.9C614.1,215.4 639.1,214.4 648.7,212.5C658.3,210.7 643.7,209.6 662.3,206.8C680.8,204.0 738.5,196.6 760.1,195.8C781.6,195.0 791.5,191.6 791.4,202.0C791.3,212.5 771.3,240.9 759.4,258.5C747.4,276.1 728.7,299.9 719.8,307.7Z',
+  tb: 'M849.3,24.7C851.6,24.7 853.8,26.3 854.9,30.4C855.9,34.5 855.9,42.3 855.6,49.4C855.3,56.5 854.4,66.3 853.0,72.9C851.6,79.6 849.7,87.1 847.4,89.5C845.1,92.0 841.2,87.9 839.0,87.5C836.8,87.2 835.9,85.6 834.3,87.5C832.8,89.5 831.6,96.9 829.7,99.1C827.9,101.2 825.5,100.6 823.1,100.3C820.8,100.1 818.1,98.2 815.6,97.8C813.1,97.4 809.7,97.4 808.2,98.0C806.7,98.6 808.9,98.3 806.7,101.3C804.6,104.4 797.8,113.8 795.5,116.4C793.2,119.1 796.2,115.1 792.8,117.0C789.5,118.9 779.2,125.3 775.4,127.9C771.5,130.4 772.2,130.7 769.9,132.3C767.6,133.9 764.5,136.5 761.6,137.4C758.6,138.2 755.1,137.6 752.0,137.3C748.9,136.9 745.6,135.8 742.9,135.4C740.2,135.0 744.6,131.3 735.8,135.1C727.1,138.9 700.2,153.8 690.4,158.1C680.6,162.5 682.6,157.9 677.0,161.3C671.4,164.8 662.2,175.1 656.8,178.9C651.3,182.7 647.1,185.3 644.0,184.1C641.0,182.9 641.5,172.9 638.7,171.8C636.0,170.7 631.1,176.9 627.4,177.5C623.8,178.2 619.7,177.3 617.0,175.7C614.2,174.2 611.5,171.4 610.8,168.2C610.1,165.0 611.2,159.0 612.6,156.6C613.9,154.1 616.1,154.2 618.9,153.3C621.7,152.5 626.0,152.6 629.4,151.7C632.7,150.7 636.8,150.0 639.1,147.7C641.4,145.4 641.4,141.1 643.3,137.7C645.3,134.4 639.0,136.5 650.8,127.8C662.7,119.2 701.6,95.1 714.5,85.9C727.4,76.6 724.5,75.6 728.1,72.4C731.6,69.2 733.0,68.4 735.8,66.6C738.7,64.8 739.7,64.0 745.4,61.6C751.1,59.3 762.4,54.7 770.1,52.5C777.7,50.2 786.3,49.6 791.3,48.0C796.3,46.4 797.2,44.0 800.2,42.9C803.2,41.8 805.8,40.3 809.3,41.2C812.8,42.1 818.4,47.2 821.3,48.3C824.2,49.4 823.5,50.6 826.8,47.6C830.1,44.6 837.4,34.4 841.1,30.6C844.9,26.7 847.0,24.7 849.3,24.7Z' };
+var MW_KEYS = ['u', 'r', 'v', 'o'], MW_WORDS = { u: 'Urgent', r: 'At risk', v: 'Value', o: 'Opportunity' };
+var MW_COLOR = { u: '#b42318', r: '#c9942c', v: '#07606f', o: '#1d8fa6' };
+var OPP_WORDS = { mature: ['Matures within a year', 'what happens to the money next'], lapsed: ['A lapsed policy', 'to reinstate'],
+  ends: ['Life cover ends soon', 'within five years'], nolife: ['No life cover in force', 'an adult under 65'], hhgap: ['Family without cover', 'someone in the household'],
+  noci: ['No critical illness cover', 'life cover only'], income: ['Cover low for income', 'under five times the income on file'],
+  fund: ['A fund value to review', '$25,000 or more'], estate: ['No beneficiary named', 'pays the estate'], birthday: ['Birthday this month', 'a reason to call'] };
+var MSTEP = window.innerWidth < 640 ? 12 : 30;   // a phone draws the queue twelve at a time
+var MW = null, M = { scope: 'open', town: '', agent: -1, opp: '', show: MSTEP };
+function mReduced() { try { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } }
+function mWeights() {
+  if (MW) return MW;
+  var def = (D && D.match && D.match.w) || { u: 35, r: 25, v: 25, o: 15 };
+  try { MW = JSON.parse(localStorage.getItem('rrb-match-w') || 'null'); } catch (e) { MW = null; }
+  if (!MW || MW_KEYS.some(function (k) { return typeof MW[k] !== 'number'; })) MW = { u: def.u, r: def.r, v: def.v, o: def.o };
+  return MW;
+}
+/* a client's weight under the weighting on this device: the backend's four parts, re-balanced */
+function mT(c) {
+  var w = c.w, W = mWeights(), s = W.u + W.r + W.v + W.o;
+  if (!w) return 0;
+  return s ? Math.round((W.u * w[1] + W.r * w[2] + W.v * w[3] + W.o * w[4]) / s) : 0;
+}
+/* teal for a light weight, gold in the middle, coral for the heaviest */
+function mColor(t) {
+  var s = [[0, [31, 181, 204]], [30, [31, 181, 204]], [55, [239, 194, 75]], [100, [255, 99, 71]]], a = s[0], b = s[3];
+  for (var i = 0; i < s.length - 1; i++) if (t >= s[i][0] && t <= s[i + 1][0]) { a = s[i]; b = s[i + 1]; }
+  var f = (t - a[0]) / ((b[0] - a[0]) || 1);
+  return 'rgb(' + [0, 1, 2].map(function (j) { return Math.round(a[1][j] + (b[1][j] - a[1][j]) * f); }).join(',') + ')';
+}
+function mProj(lat, lng) { var f = lat > 11 ? MAPG.TB : MAPG.TR; return [f[2] + (lng - f[0]) * f[4] * MAPG.K, f[3] + (f[1] - lat) * MAPG.K]; }
+function mInitials(n) { var p = String(n || '').split(/\s+/).filter(Boolean); return ((p[0] || '').charAt(0) + (p.length > 1 ? p[p.length - 1].charAt(0) : '')).toUpperCase(); }
+/* who is in scope: nobody named yet (the work), or everyone on the board */
+function mScope(c) { return M.scope === 'all' ? c.state !== 'dnc' : (!c.assigned && c.state !== 'done' && c.state !== 'dnc'); }
+function mRows() { return everyone().filter(function (c) { return c.w && mScope(c); }); }
+function mFit(c, ai) { return (c.mt || []).filter(function (m) { return m[0] === ai; })[0] || null; }
+function mFiltered(rows) {
+  var ag = D.match.agents[M.agent];
+  return rows.filter(function (c) {
+    if (M.town && c.pl !== M.town) return false;
+    if (M.opp && (c.op || []).indexOf(M.opp) < 0) return false;
+    if (ag && !(sameName(c.assigned, ag.name) || (!c.assigned && c.sug && sameName(c.sug.agent, ag.name)) || (!c.assigned && c.mt && c.mt[0] && c.mt[0][0] === M.agent))) return false;
+    return true;
+  });
+}
+function mCount(el, to, fmt) {
+  fmt = fmt || function (x) { return Math.round(x).toLocaleString('en-US'); };
+  if (!M.counting || mReduced() || !window.requestAnimationFrame) { el.textContent = fmt(to); return; }
+  var t0 = null, dur = 900;
+  var step = function (ts) { if (!t0) t0 = ts; var p = Math.min(1, (ts - t0) / dur), e = 1 - Math.pow(1 - p, 3); el.textContent = fmt(to * e); if (p < 1) requestAnimationFrame(step); };
+  requestAnimationFrame(step);
+}
+function matchPane() {
+  var X = D.match;
+  if (!X) return;
+  var all = mRows(), rows = mFiltered(all), money = !(D.book && D.book.money === false) && D.role === 'branch';
+  /* what moves: everything when the view is opened, the queue and the arcs after a tap, nothing on the two-minute refresh */
+  var anim = M.anim || '';
+  $('paneMatch').classList.toggle('c-map', anim !== 'all');
+  $('paneMatch').classList.toggle('c-all', !anim);
+  M.counting = anim === 'all';
+  mHero(X, all, money);
+  mMap(X, all);
+  mQueue(X, rows, money);
+  mOpps(all, money);
+  mAgents(X);
+  mHow(X);
+  M.anim = '';
+}
+/* a tap on the view: the queue re-ranks and the arcs draw, the map stays where it is */
+function mRedraw() { M.anim = 'focus'; matchPane(); }
+function mHero(X, all, money) {
+  var heavy = all.filter(function (c) { return mT(c) >= 60; }).length, ops = 0, prem = 0, placedRows = all.filter(function (c) { return c.pl; }).length;
+  all.forEach(function (c) { ops += (c.op || []).length; if (c.pol && c.pol.sum && c.pol.sum.prem) prem += Number(c.pol.sum.prem) || 0; });
+  var placed = X.agents.filter(function (a) { return a.pl; }).length;
+  var stats = [
+    ['n', all.length, M.scope === 'all' ? 'clients on the board' : 'clients nobody is named on', ''],
+    ['h', heavy, 'weigh 60 or more', 'hot'],
+    ['o', ops, 'opportunities on their records', 'gold'],
+    ['p', all.length ? Math.round(100 * placedRows / all.length) : 0, 'on the map, by town', ''],
+    ['a', placed, 'of ' + X.agents.length + ' agents with a base', '']
+  ];
+  if (money && prem) stats.splice(1, 0, ['m', prem, 'premium a year among them', 'gold']);
+  $('mHero').innerHTML = '<p class="mkick">Match &middot; who should look after whom</p>' +
+    '<h2>The right agent for every client</h2>' +
+    '<p class="ms">Each client is weighed on four things: how urgent, how much at risk, what they hold with us and the openings on their record. The best fit is the nearest agent with room on their list, after the family&rsquo;s agent and the 24 September plan.</p>' +
+    '<div class="mstats">' + stats.map(function (s, i) { return '<div class="mstat ' + s[3] + '" style="--d:' + (i * 70) + 'ms"><b data-k="' + s[0] + '">0</b><span>' + esc(s[2]) + '</span></div>'; }).join('') + '</div>' +
+    '<div class="mtop"><span class="mseg" role="group" aria-label="Who to show"><button type="button" data-ms="open" class="' + (M.scope === 'open' ? 'on' : '') + '">Nobody named yet</button><button type="button" data-ms="all" class="' + (M.scope === 'all' ? 'on' : '') + '">Everyone</button></span>' +
+    (D.role === 'branch' && !$('fAll').checked && D.counts && D.counts.silent ? '<button type="button" class="mgo" id="mAddSilent">Add the ' + D.counts.silent + ' not answered yet</button>' : '') +
+    '<span class="msf' + (X.sf && X.sf.linked && X.sf.write ? ' on' : '') + '">' + (X.sf && X.sf.linked && X.sf.write ? 'Salesforce: every naming writes Assigned Agent and Date Assigned' : 'Salesforce not linked yet: namings stay on the board') + '</span></div>';
+  stats.forEach(function (s) {
+    var el = $('mHero').querySelector('[data-k="' + s[0] + '"]');
+    mCount(el, s[1], s[0] === 'p' ? function (x) { return Math.round(x) + '%'; } : s[0] === 'm' ? function (x) { return short(x); } : null);
+  });
+  each('#mHero [data-ms]', function (b) { b.addEventListener('click', function () { M.scope = b.getAttribute('data-ms'); M.show = MSTEP; mRedraw(); }); });
+  if ($('mAddSilent')) $('mAddSilent').addEventListener('click', function () { $('fAll').checked = true; toast('Adding the clients who have not answered yet: the sheet takes a few seconds.'); load(); });
+}
+/* the map: a bubble a town (its size the clients there, its colour their average weight), a gold pin an agent at their base */
+function mMap(X, all) {
+  var towns = {}, P = X.places;
+  all.forEach(function (c) {
+    if (!c.pl || !P[c.pl]) return;
+    var t = towns[c.pl] || (towns[c.pl] = { k: c.pl, n: 0, w: 0, hot: 0, ops: {} });
+    var w = mT(c); t.n++; t.w += w; if (w >= 60) t.hot++;
+    (c.op || []).forEach(function (o) { t.ops[o] = (t.ops[o] || 0) + 1; });
+  });
+  var list = Object.keys(towns).map(function (k) { return towns[k]; }).sort(function (a, b) { return b.n - a.n; });
+  var labels = {}; list.slice(0, 7).forEach(function (t) { labels[t.k] = 1; });
+  var grid = '';
+  for (var x = 0; x <= 880; x += 55) grid += '<line class="mgl" x1="' + x + '" y1="0" x2="' + x + '" y2="830"/>';
+  for (var y = 0; y <= 830; y += 55) grid += '<line class="mgl" x1="0" y1="' + y + '" x2="880" y2="' + y + '"/>';
+  var townsSvg = list.slice().reverse().map(function (t, i) {
+    var p = mProj(P[t.k][0], P[t.k][1]), r = Math.min(46, 5 + Math.sqrt(t.n) * 3.4), avg = Math.round(t.w / t.n), d = Math.min(1400, (list.length - i) * 12);
+    return '<g class="mtown' + (t.hot ? ' hot' : '') + (M.town === t.k ? ' on' : '') + (M.town && M.town !== t.k ? ' dim' : '') + '" data-pl="' + esc(t.k) + '" style="--tc:' + mColor(avg) + ';--d:' + d + 'ms" transform="translate(' + p[0].toFixed(1) + ',' + p[1].toFixed(1) + ')" tabindex="0" role="button" aria-label="' + esc(P[t.k][2] + ': ' + t.n + ' clients') + '">' +
+      '<circle class="halo" r="' + r.toFixed(1) + '"/><circle class="dot" r="' + r.toFixed(1) + '"/>' + (r >= 11 ? '<text class="n">' + t.n + '</text>' : '') +
+      (labels[t.k] ? '<text class="lb" y="' + (-r - 6).toFixed(1) + '">' + esc(P[t.k][2]) + '</text>' : '') + '</g>';
+  }).join('');
+  /* agents sharing a base sit round it in a small ring, so every pin can be pressed */
+  var byPl = {};
+  X.agents.forEach(function (a, i) { if (a.pl && P[a.pl]) (byPl[a.pl] = byPl[a.pl] || []).push(i); });
+  var pinAt = {}, pins = '';
+  Object.keys(byPl).forEach(function (k) {
+    var ids = byPl[k], c = mProj(P[k][0], P[k][1]), n = ids.length, rr = n > 1 ? 13 + n * 1.6 : 0;
+    ids.forEach(function (ai, j) {
+      var ang = -Math.PI / 2 + 2 * Math.PI * j / n, px = c[0] + rr * Math.cos(ang), py = c[1] + rr * Math.sin(ang);
+      pinAt[ai] = [px, py];
+      pins += '<g class="mpin' + (M.agent === ai ? ' on' : '') + (M.agent >= 0 && M.agent !== ai ? ' dim' : '') + '" data-ai="' + ai + '" transform="translate(' + px.toFixed(1) + ',' + py.toFixed(1) + ')" style="--d:' + (600 + j * 60) + 'ms" tabindex="0" role="button" aria-label="' + esc(X.agents[ai].name) + '">' +
+        '<circle class="pd" r="10.5"/><text>' + esc(mInitials(X.agents[ai].name)) + '</text></g>';
+    });
+  });
+  /* the arcs: from a town to the agents who fit its clients best, or from an agent to the towns of their clients */
+  var arcs = '', rad = '';
+  var arc = function (a, b, i) {
+    var mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2, dx = b[0] - a[0], dy = b[1] - a[1], L = Math.sqrt(dx * dx + dy * dy) || 1;
+    var cx = mx - dy * 0.22, cy = my + dx * 0.22, len = Math.round(L * 1.15 + 10);
+    return '<path class="marc" d="M' + a[0].toFixed(1) + ',' + a[1].toFixed(1) + ' Q' + cx.toFixed(1) + ',' + cy.toFixed(1) + ' ' + b[0].toFixed(1) + ',' + b[1].toFixed(1) + '" style="--len:' + len + ';--d:' + (i * 90) + 'ms"/>';
+  };
+  if (M.town && P[M.town]) {
+    var votes = {}, from = mProj(P[M.town][0], P[M.town][1]);
+    all.forEach(function (c) { if (c.pl === M.town) (c.mt || []).slice(0, 1).forEach(function (m) { votes[m[0]] = (votes[m[0]] || 0) + 1; }); });
+    Object.keys(votes).sort(function (a, b) { return votes[b] - votes[a]; }).slice(0, 4).forEach(function (ai, i) { if (pinAt[ai]) arcs += arc(from, pinAt[ai], i); });
+  } else if (M.agent >= 0 && pinAt[M.agent]) {
+    var ag = X.agents[M.agent], tw = {};
+    all.forEach(function (c) { if (c.pl && (sameName(c.assigned, ag.name) || (!c.assigned && c.sug && sameName(c.sug.agent, ag.name)))) tw[c.pl] = (tw[c.pl] || 0) + 1; });
+    Object.keys(tw).sort(function (a, b) { return tw[b] - tw[a]; }).slice(0, 10).forEach(function (k, i) { if (P[k]) arcs += arc(pinAt[M.agent], mProj(P[k][0], P[k][1]), i); });
+    var kmPx = MAPG.K / 111;   // a kilometre on the map
+    rad = '<circle class="mrad" cx="' + pinAt[M.agent][0].toFixed(1) + '" cy="' + pinAt[M.agent][1].toFixed(1) + '" r="' + (X.nearKm * kmPx).toFixed(1) + '"/>';
+  }
+  var focus = [];
+  if (M.town && P[M.town]) focus.push('<span class="achip">' + esc(P[M.town][2]) + '<button type="button" data-mclear="town" aria-label="show every town">×</button></span>');
+  if (M.agent >= 0 && X.agents[M.agent]) focus.push('<span class="achip">' + esc(X.agents[M.agent].name) + '<button type="button" data-mclear="agent" aria-label="show every agent">×</button></span>');
+  $('mMap').innerHTML = '<div class="mhd"><h3>Where they are</h3><span>' + list.length + ' towns &middot; tap a town or a pin</span></div>' +
+    '<div class="mmapw"><svg class="mmapsvg" viewBox="0 0 880 830" role="img" aria-label="Map of Trinidad and Tobago with the clients by town and the agents at their base">' +
+    '<defs><radialGradient id="mSea" cx="40%" cy="55%" r="75%"><stop offset="0" stop-color="#0d2135"/><stop offset="1" stop-color="#081521"/></radialGradient></defs>' +
+    '<rect class="msea" width="880" height="830" rx="12"/>' + grid +
+    '<rect class="minset" x="540" y="8" width="332" height="192" rx="12"/><text class="minl" x="556" y="190">TOBAGO</text>' +
+    '<path class="mland glow" d="' + MAPG.tr + '"/><path class="mland glow" d="' + MAPG.tb + '"/><path class="mland" d="' + MAPG.tr + '"/><path class="mland" d="' + MAPG.tb + '"/>' +
+    rad + '<g>' + townsSvg + '</g><g>' + arcs + '</g><g>' + pins + '</g></svg><div class="mtip" id="mTip" hidden></div></div>' +
+    '<div class="mleg"><span>weight<span class="ramp"></span>light &rarr; heavy</span><span><span class="pinl"></span>an agent&rsquo;s base</span><span>pulsing: weighs 60 or more</span></div>' +
+    (focus.length ? '<div class="mfocus">' + focus.join('') + '</div>' : '');
+  var svg = $('mMap').querySelector('svg'), tip = $('mTip');
+  var show = function (e, html) {
+    var box = svg.parentNode.getBoundingClientRect(), pt = e.touches ? e.touches[0] : e;
+    tip.innerHTML = html; tip.hidden = false;
+    tip.style.left = Math.max(110, Math.min(box.width - 110, pt.clientX - box.left)) + 'px'; tip.style.top = (pt.clientY - box.top) + 'px';
+  };
+  each('#mMap .mtown', function (g) {
+    var k = g.getAttribute('data-pl'), t = towns[k];
+    var html = '<b>' + esc(P[k][2]) + '</b><br>' + t.n + ' client' + (t.n === 1 ? '' : 's') + ' &middot; average weight <i>' + Math.round(t.w / t.n) + '</i>' +
+      (t.hot ? '<br>' + t.hot + ' weigh 60 or more' : '') + (function () { var o = Object.keys(t.ops).sort(function (a, b) { return t.ops[b] - t.ops[a]; })[0]; return o ? '<br>' + t.ops[o] + ' &middot; ' + esc(OPP_WORDS[o][0].toLowerCase()) : ''; })();
+    g.addEventListener('mousemove', function (e) { show(e, html); });
+    g.addEventListener('mouseleave', function () { tip.hidden = true; });
+    var pick = function () { M.town = M.town === k ? '' : k; M.agent = -1; M.show = MSTEP; tip.hidden = true; mRedraw(); };
+    g.addEventListener('click', pick);
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  each('#mMap .mpin', function (g) {
+    var ai = Number(g.getAttribute('data-ai')), a = X.agents[ai];
+    var html = '<b>' + esc(a.name) + '</b><br>based in ' + esc(P[a.pl] ? P[a.pl][2] : '') + ' <span style="color:#8fa6ba">(' + esc(a.src) + ')</span><br>' + a.load + ' named &middot; ' + a.sug + ' suggested &middot; share ' + X.cap;
+    g.addEventListener('mousemove', function (e) { show(e, html); });
+    g.addEventListener('mouseleave', function () { tip.hidden = true; });
+    var pick = function () { M.agent = M.agent === ai ? -1 : ai; M.town = ''; M.show = MSTEP; tip.hidden = true; mRedraw(); };
+    g.addEventListener('click', pick);
+    g.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+  });
+  each('#mMap [data-mclear]', function (b) { b.addEventListener('click', function () { if (b.getAttribute('data-mclear') === 'town') M.town = ''; else M.agent = -1; mRedraw(); }); });
+}
+/* the queue: the heaviest first under this device's weighting, each with its four parts, why, and the best fit */
+function mQueue(X, rows, money) {
+  var W = mWeights(), sorted = rows.slice().sort(function (a, b) { return mT(b) - mT(a) || (b.w[1] - a.w[1]) || String(a.client).localeCompare(String(b.client)); });
+  var drawn = sorted.slice(0, M.show), namer = canAssign();
+  var sliders = MW_KEYS.map(function (k) {
+    return '<label><span><span class="sw" style="--bc:' + MW_COLOR[k] + '"></span>' + MW_WORDS[k] + '</span><b id="mw-' + k + '">' + W[k] + '</b>' +
+      '<input type="range" min="0" max="60" step="5" value="' + W[k] + '" data-mw="' + k + '" aria-label="' + MW_WORDS[k] + ' weight"></label>';
+  }).join('');
+  var filt = [];
+  if (M.opp) filt.push(OPP_WORDS[M.opp][0].toLowerCase());
+  if (M.town && X.places[M.town]) filt.push('in ' + X.places[M.town][2]);
+  if (M.agent >= 0 && X.agents[M.agent]) filt.push('for ' + X.agents[M.agent].name);
+  var html = '<div class="mq-h"><h3>Who to place first</h3><span>' + rows.length + ' client' + (rows.length === 1 ? '' : 's') + (filt.length ? ' &middot; ' + esc(filt.join(' · ')) : '') + '</span></div>' +
+    '<details class="mw" id="mwBox"' + (M.wOpen ? ' open' : '') + '><summary>Weighting <i>' + MW_KEYS.map(function (k) { return MW_WORDS[k] + ' ' + W[k]; }).join(' · ') + '</i></summary><div class="mws">' + sliders + '</div>' +
+    '<button type="button" class="mwreset" id="mwReset">Back to the branch&rsquo;s weighting</button></details><div class="mqlist" id="mqList">';
+  html += drawn.map(function (c, i) {
+    var t = mT(c), w = c.w, d = Math.min(i, 12) * 45;
+    var bars = MW_KEYS.map(function (k, j) { return '<div class="mqbar"><span>' + MW_WORDS[k] + '<b>' + w[j + 1] + '</b></span><i><s style="width:' + w[j + 1] + '%;--bc:' + MW_COLOR[k] + ';--d:' + d + 'ms"></s></i></div>'; }).join('');
+    var ops = (c.op || []).filter(function (o) { return OPP_WORDS[o]; }), more = Math.max(0, (c.why || []).length - 2) + Math.max(0, ops.length - 3);
+    var chips = (c.why || []).slice(0, 2).map(function (x) { return '<span class="mchip">' + esc(x) + '</span>'; }).join('') +
+      ops.slice(0, 3).map(function (o) { return '<span class="mchip op">' + esc(OPP_WORDS[o][0]) + '</span>'; }).join('') +
+      (more ? '<span class="mchip">+' + more + ' more</span>' : '');
+    /* the town as the map names it, so the queue and the map agree; the address as typed is on the card */
+    var who = [c.pl && X.places[c.pl] ? X.places[c.pl][2] : townOf(c), ageOf(c) !== undefined && ageOf(c) !== '' ? ageOf(c) + (c.profile && c.profile.gender ? ', ' + c.profile.gender : '') : '', c.book ? 'was with ' + c.book : ''].filter(Boolean).join(' · ');
+    var best = (c.mt || [])[0], act = '';
+    if (c.assigned) act = '<span class="named">Named: ' + esc(c.assigned) + '</span>';
+    else {
+      var pick = c.sug && c.sug.agent ? c.sug.agent : best && X.agents[best[0]] ? X.agents[best[0]].name : '';
+      var pm = pick ? (c.mt || []).filter(function (m) { return X.agents[m[0]] && sameName(X.agents[m[0]].name, pick); })[0] : null;
+      act = pick ? '<span class="fit">Best fit <b>' + esc(firstName(pick)) + '</b>' + (pm ? ' &middot; ' + (pm[1] < 1 ? 'same town' : Math.round(pm[1]) + ' km') + ' &middot; fit ' + pm[2] + '%' : '') + '</span>' +
+        (namer ? '<button type="button" class="sugbtn" data-ma="' + esc(c.token) + '" data-agent="' + esc(pick) + '">Assign to ' + esc(firstName(pick)) + '</button>' : '') : '<span>No agent with a base near them yet</span>';
+      var others = (c.mt || []).filter(function (m) { return X.agents[m[0]] && !sameName(X.agents[m[0]].name, pick); }).slice(0, 2);
+      if (others.length) act += '<small>also ' + others.map(function (m) { return esc(firstName(X.agents[m[0]].name)) + ' ' + (m[1] < 1 ? 'same town' : Math.round(m[1]) + ' km'); }).join(', ') + '</small>';
+      if (c.sug && c.sug.why) act += '<small title="why this suggestion">' + esc(c.sug.why) + '</small>';
+    }
+    return '<article class="mq" style="--d:' + d + 'ms" data-t="' + esc(c.token) + '">' +
+      '<div class="mring" style="--rc:' + mColor(t) + ';--d:' + d + 'ms"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="bg" cx="18" cy="18" r="15.915"/><circle class="fg" cx="18" cy="18" r="15.915" stroke-dasharray="' + t + ' 100"/></svg><b>' + t + '</b></div>' +
+      '<div><div class="mqn"><a href="#t=' + encodeURIComponent(c.token) + '&s=' + encodeURIComponent(c.seg || '') + '">' + esc(c.client) + '</a><span class="cno">' + esc(c.no || '') + '</span>' +
+      '<span class="pill ' + esc(stateOf(c)) + '">' + esc(STATE_WORDS[stateOf(c)] || c.state) + '</span></div>' +
+      (who ? '<div class="mqs">' + esc(who) + '</div>' : '') + '<div class="mqbars">' + bars + '</div>' + (chips ? '<div class="mchips">' + chips + '</div>' : '') + '</div>' +
+      '<div class="mqa">' + act + '</div></article>';
+  }).join('');
+  if (!rows.length) html += '<div class="empty">' + (M.scope === 'open' ? 'Everyone here has an agent named. Switch to <b>Everyone</b> to see the whole board.' : 'Nobody matches.') + '</div>';
+  if (sorted.length > drawn.length) html += '<button type="button" class="more mmore" id="mMore">Show the next ' + Math.min(MSTEP, sorted.length - drawn.length) + ' (' + (sorted.length - drawn.length) + ' more)</button>';
+  var keep = $('mqList') ? $('mqList').scrollTop : 0;
+  $('mQueue').innerHTML = html + '</div>';
+  if (M.keepScroll) $('mqList').scrollTop = keep;
+  M.keepScroll = false;
+  $('mwBox').addEventListener('toggle', function () { M.wOpen = $('mwBox').open; });
+  each('#mQueue [data-mw]', function (inp) {
+    inp.addEventListener('input', function () {
+      var k = inp.getAttribute('data-mw'); mWeights()[k] = Number(inp.value); $('mw-' + k).textContent = inp.value;
+      try { localStorage.setItem('rrb-match-w', JSON.stringify(MW)); } catch (e) {}
+      clearTimeout(M.t); M.t = setTimeout(function () { M.wOpen = true; mRedraw(); }, 180);
+    });
+  });
+  $('mwReset').addEventListener('click', function () { MW = null; try { localStorage.removeItem('rrb-match-w'); } catch (e) {} M.wOpen = true; mRedraw(); });
+  each('#mQueue button[data-ma]', function (b) { b.addEventListener('click', function () { assign([b.getAttribute('data-ma')], b.getAttribute('data-agent'), b); }); });
+  if ($('mMore')) $('mMore').addEventListener('click', function () { M.show += MSTEP; M.keepScroll = true; mRedraw(); });
+}
+/* the openings on their records: a tile each, a tap shows those clients in the queue */
+function mOpps(all, money) {
+  var n = {}, prem = {};
+  all.forEach(function (c) { (c.op || []).forEach(function (o) { n[o] = (n[o] || 0) + 1; if (c.pol && c.pol.sum && c.pol.sum.prem) prem[o] = (prem[o] || 0) + (Number(c.pol.sum.prem) || 0); }); });
+  var keys = Object.keys(OPP_WORDS).filter(function (k) { return n[k]; }).sort(function (a, b) { return n[b] - n[a]; });
+  $('mOpps').innerHTML = '<div class="mq-h"><h3>Openings on their records</h3><span>tap one to see those clients in the queue</span></div>' +
+    (keys.length ? '<div class="mopps">' + keys.map(function (k, i) {
+      return '<button type="button" class="mopp' + (M.opp === k ? ' on' : '') + '" data-mo="' + k + '" style="--d:' + (i * 50) + 'ms"><b>' + n[k] + '</b><span>' + esc(OPP_WORDS[k][0]) + '</span><i>' +
+        esc(money && prem[k] ? '≈ ' + short(prem[k]) + ' a year held · ' + OPP_WORDS[k][1] : OPP_WORDS[k][1]) + '</i></button>';
+    }).join('') + '</div>' : '<p class="pnote">' + (D.book && D.book.ready ? 'No openings among these clients.' : 'The openings come from the Client Book: build it from the menu (Transition: set the Branch Portfolio link).') + '</p>');
+  each('#mOpps [data-mo]', function (b) { b.addEventListener('click', function () { var k = b.getAttribute('data-mo'); M.opp = M.opp === k ? '' : k; M.show = MSTEP; mRedraw(); try { $('mQueue').scrollIntoView({ behavior: mReduced() ? 'auto' : 'smooth', block: 'start' }); } catch (e) {} }); });
+}
+/* every agent: their base, and their list against the even share (named, then suggested) */
+function mAgents(X) {
+  var order = X.agents.map(function (a, i) { return i; }).sort(function (a, b) { var A = X.agents[a], B = X.agents[b]; return (B.load + B.sug) - (A.load + A.sug) || A.name.localeCompare(B.name); });
+  var none = X.agents.filter(function (a) { return !a.pl; }).length;
+  $('mAgents').innerHTML = '<div class="mq-h"><h3>The agents</h3><span>each list against the even share of ' + X.cap + ' &middot; tap one to see their clients on the map</span></div>' +
+    '<div class="mags">' + order.map(function (ai, i) {
+      var a = X.agents[ai], cap = X.cap || 1, l = Math.min(100, 100 * a.load / cap), s = Math.min(100 - l, 100 * a.sug / cap);
+      return '<button type="button" class="mag' + (a.pl ? '' : ' nob') + (M.agent === ai ? ' on' : '') + '" data-mag="' + ai + '" style="--d:' + (Math.min(i, 16) * 35) + 'ms"><span class="av">' + esc(mInitials(a.name)) + '</span><div><b>' + esc(a.name) + '</b>' +
+        '<span>' + (a.pl ? 'based in ' + esc(X.places[a.pl] ? X.places[a.pl][2] : a.pl) + ' &middot; from ' + esc(a.src) : 'no base yet: add their town to Areas covered') + '</span>' +
+        '<div class="mcap' + (a.load + a.sug > cap ? ' over' : '') + '"><i style="width:' + l.toFixed(1) + '%"></i><i class="s" style="width:' + s.toFixed(1) + '%"></i></div>' +
+        '<small>' + a.load + ' named &middot; ' + a.sug + ' suggested' + (a.unit ? ' &middot; ' + esc(a.unit) + '&rsquo;s unit' : '') + '</small></div></button>';
+    }).join('') + '</div>' +
+    (none ? '<p class="pnote">' + none + ' agent' + (none === 1 ? ' has' : 's have') + ' no base, so the nearest step passes them by: put their town first in <b>Areas covered</b> on the Agent Skill Bank (or a <b>Lives in</b> column), or link Salesforce, whose agent records carry a mailing town.</p>' : '');
+  each('#mAgents [data-mag]', function (b) { b.addEventListener('click', function () { var ai = Number(b.getAttribute('data-mag')); M.agent = M.agent === ai ? -1 : ai; M.town = ''; M.show = MSTEP; mRedraw(); try { $('mMap').scrollIntoView({ behavior: mReduced() ? 'auto' : 'smooth', block: 'start' }); } catch (e) {} }); });
+}
+function mHow(X) {
+  var W = mWeights();
+  $('mHow').innerHTML = '<b>How the weight is made.</b> Each part runs from 0 to 100. <b>Urgent</b>: a call-back asked for, an answer that cannot wait, past the branch&rsquo;s line. <b>At risk</b>: the former agent in touch, a change suggested, paying in person, a premium due, surrendered before. ' +
+    '<b>Value</b>: the premium a year and the life cover against everyone else on the board, the policies in force, and the family on our books. <b>Opportunity</b>: what their own record shows a licensed agent could raise. ' +
+    'The weight is the four parts at ' + MW_KEYS.map(function (k) { return MW_WORDS[k].toLowerCase() + ' ' + W[k]; }).join(', ') + ' (change them under <i>Weighting</i>; this device keeps your choice). ' +
+    '<b>Best fit</b> is nearness (within ' + X.nearKm + ' km counts most) and room on the agent&rsquo;s list. Towns only, from the client&rsquo;s address and the agent&rsquo;s base; ' + X.mapped + ' of ' + X.rows + ' clients are on the map. Facts off the record, for a person to act on; never advice.';
+}
+
 /* ---- the assign bar and the actions ---- */
 function bar() {
   var n = Object.keys(SEL).length, b = $('bar');
@@ -2578,8 +3018,10 @@ function assign(tokens, agent, el) {
     var msg = r.agent + ' named on ' + r.assigned + ' client' + (r.assigned === 1 ? '' : 's') + (r.briefed ? ' · brief e-mailed' : '') + (r.introduced ? ' · ' + r.introduced + ' introduced by e-mail' : '') +
       (r.introHeld ? ' · ' + r.introHeld + ' introduction' + (r.introHeld === 1 ? '' : 's') + ' held: client e-mail is on hold' : '') +
       (r.notAnswered ? ' · ' + r.notAnswered + ' not introduced: they have not answered' : '') +
-      (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '');
-    toast(msg, !!(r.warnings && r.warnings.length));
+      (r.missing && r.missing.length ? ' · ' + r.missing.length + ' not found' : '') + (r.warnings && r.warnings.length ? ' · ' + r.warnings.join(' ') : '') +
+      /* and Salesforce (8 October 2026): what it took, or why not */
+      (r.sf && r.sf.on ? ' · Salesforce: ' + (r.sf.policies ? r.sf.policies + ' polic' + (r.sf.policies === 1 ? 'y' : 'ies') + ' updated' : 'not updated') + (r.sf.why ? ' (' + r.sf.why + ')' : '') : '');
+    toast(msg, !!(r.warnings && r.warnings.length) || !!(r.sf && r.sf.on && !r.sf.ok));
     tokens.forEach(function (t) { delete SEL[t]; });
     load();
   }).catch(function () { if (el) el.disabled = false; toast('The sheet did not answer. Try again in a moment.', true); });
