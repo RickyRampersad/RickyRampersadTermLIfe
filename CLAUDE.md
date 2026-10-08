@@ -36,6 +36,30 @@ The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
 teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
 what the client letters read.
 
+**A second exception, decided 8 October 2026: group client management** (the
+four pages in `groupclientmanagement/` and the Tuesday letter built by
+`gcmLetter_` in `GroupClients.gs`) has a corporate look and its own mark. The
+mark is `groupclientmanagement/gcm-mark.png`: the same shield and check, white
+on a corporate-blue tile. The manager asked for it in these words:
+- *"change the yellow in the logo background and black"*;
+- then, after six looks were turned down, *"a more corporate look"*;
+- then *"dont like the white space"*.
+
+The look:
+- **Header band:** blue, `#13408F` into `#1D5BC4`.
+- **Actions:** `#1D5BC4`.
+- **Surfaces:** white panels on a grey ground, `#E9EEF5`.
+- **Type:** IBM Plex Sans.
+- **Status:** shown as a tinted label, never by colour alone.
+
+The rest of the site keeps the gold shield. Do not carry this look further
+without being asked.
+
+The letter's logo is the hosted copy at
+`https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
+the branch before pasting a `GroupClients.gs` that carries it, or the letter's
+masthead arrives empty.
+
 **In e-mail the logo must be a hosted PNG**, never SVG and never a `data:` URI —
 Gmail strips the first and blocks the second, so the masthead arrives empty.
 `IBRAND.LOGO` points at `https://rickyrampersadbranch.com/logo-mark.png` for

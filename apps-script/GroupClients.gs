@@ -987,15 +987,15 @@ function gcmLetter_(g, today, staffName, intro) {
     'We would be grateful for your answers by ' + dmy(respondBy) + '.', '', 'Warm regards,', staffName, 'Ricky Rampersad Branch, Guardian Life of the Caribbean',
     '9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461'].join('\n').replace(/\n{3,}/g, '\n\n');
   var E = tEsc_;
-  var tile = function (n, label, warn) { return '<td style="padding:10px 8px;text-align:center;border:1px solid #e3e6ea;width:25%"><div style="font:700 24px/1.1 Arial,sans-serif;color:' + (warn ? '#b3261e' : '#07131f') + '">' + E(String(n)) + '</div><div style="font:12px/1.3 Arial,sans-serif;color:#5b6573;margin-top:4px">' + E(label) + '</div></td>'; };
-  var list = function (arr) { return arr.slice(0, 8).map(function (t) { return '<li style="margin:4px 0">' + E(gcmTitle_(t.subject, g.name)) + (t.owner ? ' <span style="color:#5b6573">· ' + E(t.owner) + '</span>' : '') + '</li>'; }).join('') + (arr.length > 8 ? '<li style="color:#5b6573">and ' + (arr.length - 8) + ' more on your page</li>' : ''); };
-  var html = '<div style="background:#f4f5f7;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse">' +
-    '<tr><td style="background:#07131f;padding:22px 26px"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
-    '<td><img src="https://rickyrampersadbranch.com/logo-mark.png" width="44" height="44" alt="" style="display:block;border-radius:12px"></td>' +
-    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#ffffff">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#efc24b">Group client service report</div></td></tr></table>' +
-    '<div style="font:700 24px/1.25 Arial,sans-serif;color:#ffffff;margin-top:18px">' + E(headline) + '</div>' +
-    '<div style="font:14px/1.4 Arial,sans-serif;color:#c8d0da;margin-top:6px">' + E(g.name) + ' · as at ' + E(dmy(today)) + '</div></td></tr>' +
-    '<tr><td style="padding:22px 26px;font:15px/1.6 Arial,sans-serif;color:#1f2933">' +
+  var tile = function (n, label, warn) { return '<td style="padding:12px 8px;text-align:center;border:1px solid #e2e7ef;width:25%"><div style="font:700 24px/1.1 Arial,sans-serif;color:' + (warn ? '#b42318' : '#142033') + '">' + E(String(n)) + '</div><div style="font:12px/1.3 Arial,sans-serif;color:#5a687d;margin-top:4px">' + E(label) + '</div></td>'; };
+  var list = function (arr) { return arr.slice(0, 8).map(function (t) { return '<li style="margin:4px 0">' + E(gcmTitle_(t.subject, g.name)) + (t.owner ? ' <span style="color:#5a687d">· ' + E(t.owner) + '</span>' : '') + '</li>'; }).join('') + (arr.length > 8 ? '<li style="color:#5a687d">and ' + (arr.length - 8) + ' more on your page</li>' : ''); };
+  var html = '<div style="background:#f3f5f9;padding:20px 0"><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;margin:0 auto;background:#ffffff;border-collapse:collapse;border:1px solid #e2e7ef">' +
+    '<tr><td style="padding:18px 26px;border-bottom:3px solid #1d5bc4"><table role="presentation" cellpadding="0" cellspacing="0"><tr>' +
+    '<td><img src="' + GCM.SITE + 'gcm-mark.png" width="40" height="40" alt="Ricky Rampersad Branch" style="display:block;border-radius:9px"></td>' +
+    '<td style="padding-left:12px;font:700 15px/1.2 Arial,sans-serif;color:#142033">Ricky Rampersad Branch<div style="font:400 12px/1.4 Arial,sans-serif;color:#5a687d">Group client service report</div></td></tr></table></td></tr>' +
+    '<tr><td style="padding:22px 26px 0"><div style="font:700 22px/1.3 Arial,sans-serif;color:#142033">' + E(headline) + '</div>' +
+    '<div style="font:14px/1.4 Arial,sans-serif;color:#5a687d;margin-top:6px">' + E(g.name) + ' · as at ' + E(dmy(today)) + '</div></td></tr>' +
+    '<tr><td style="padding:18px 26px 22px;font:15px/1.6 Arial,sans-serif;color:#142033">' +
     '<p style="margin:0 0 12px">' + E(greet) + '</p>' + (intro ? '<p style="margin:0 0 12px">' + E(intro).replace(/\n/g, '<br>') + '</p>' : '') +
     '<p style="margin:0 0 16px">' + E(lines.join(' ')) + '</p>' +
     '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:0 0 18px"><tr>' +
@@ -1004,11 +1004,11 @@ function gcmLetter_(g, today, staffName, intro) {
     (waiting.length ? '<p style="margin:0 0 4px;font-weight:700">Waiting on your confirmation</p><ul style="margin:0 0 14px;padding-left:20px">' + list(waiting) + '</ul>' : '') +
     (late.length ? '<p style="margin:0 0 4px;font-weight:700">Past target</p><ul style="margin:0 0 14px;padding-left:20px">' + list(late) + '</ul>' : '') +
     '<p style="margin:0 0 16px">Your service page shows every item: what it is, who on our team is handling it, how long it has been open, its target date and our latest note. Tell us whether each one is correct, add a note where something needs our attention, and rate our service.</p>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#07131f;border-radius:6px"><a href="' + GCM.SITE + 'client.html" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
-    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px dashed #c9942c;background:#fbf6ea;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 0 14px"><tr><td style="background:#1d5bc4;border-radius:6px"><a href="' + GCM.SITE + 'client.html" style="display:inline-block;padding:13px 22px;font:700 15px Arial,sans-serif;color:#ffffff;text-decoration:none">Open your service page</a></td></tr></table>' +
+    '<table role="presentation" cellpadding="0" cellspacing="0" style="border:1px solid #b8cef4;background:#ebf2fd;margin:0 0 18px"><tr><td style="padding:10px 14px;font:14px/1.5 Arial,sans-serif">' +
     'List bill: <b>' + E(g.bills[0] || '') + '</b><br>Access code: <b style="letter-spacing:.08em">' + E(g.code || '(not set)') + '</b></td></tr></table>' +
     '<p style="margin:0 0 18px">We would be grateful for your answers by <b>' + E(dmy(respondBy)) + '</b>.</p>' +
-    '<p style="margin:0;border-top:2px solid #efc24b;padding-top:12px">Warm regards,<br><b>' + E(staffName) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
+    '<p style="margin:0;border-top:1px solid #e2e7ef;padding-top:12px">Warm regards,<br><b>' + E(staffName) + '</b><br>Ricky Rampersad Branch, Guardian Life of the Caribbean<br>9-13 Endeavour 1st Street, Chaguanas · (868) 226-6461</p>' +
     tLegal_(null) + '</td></tr></table></div>';
   return { subject: subject, html: html, text: text, headline: headline, items: shown.map(function (t) { return t.id; }), respondBy: respondBy,
     waiting: waiting.length, late: late.length, open: shown.length };
