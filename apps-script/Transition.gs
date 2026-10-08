@@ -2631,19 +2631,48 @@ function transitionData_(code) {
       ? 'That code does not open this page. Use the branch code. An agent sees their own clients on the assignment board.'
       : 'Not open yet: the branch code is not set. Put it into TEAM_CODE in Service.gs, then publish a New version.' };
   }
-  /* one answer serves every screen for thirty seconds: the wall, the dashboard and
-     the responses page each ask every minute or two, and the summary reads three
-     tabs (25 September 2026, the go-live afternoon: seven seconds an answer, and
-     one request in eight lost to the web app's own timeout while several screens
-     polled at once) */
-  var cache = null, key = 'transition:summary';
-  try { cache = CacheService.getScriptCache(); var hit = cache.get(key); if (hit) return JSON.parse(hit); } catch (e) {}
+  /* one answer serves every screen: the wall, the dashboard and the responses page each ask every ninety seconds, and
+     the summary reads five tabs (25 September 2026, the go-live afternoon: seven seconds an answer, and one request in
+     eight lost to the web app's own timeout while several screens polled at once).
+     8 October 2026, "taking too long and not opening": the answer had grown to 166 KB, a cache value holds 100 KB, the
+     put threw and the throw was swallowed, so nothing was ever kept and every screen read the whole sheet on every
+     refresh. It is kept gzipped now (about 17 KB), for two minutes as fresh and six hours as the last good answer: a
+     screen that asks while another is reading the sheet, or when the sheet will not answer, gets that at once. */
+  var cache = null, last = null;
+  try { cache = CacheService.getScriptCache(); last = tCacheGetBig_(cache, T_WALL_CACHE.KEY); } catch (e) { last = null; }
+  if (last && Date.now() - Number(last.t || 0) < T_WALL_CACHE.FRESH_S * 1000) return last.d;
+  try { if (last && cache.get(T_WALL_CACHE.BUSY)) return last.d; } catch (e) {}
+  try { if (cache) cache.put(T_WALL_CACHE.BUSY, '1', T_WALL_CACHE.BUSY_S); } catch (e) {}
   try {
     var out = tSummary_();
-    try { if (cache && out && out.ok) cache.put(key, JSON.stringify(out), 30); } catch (e) {}
+    try { if (cache && out && out.ok) tCachePutBig_(cache, T_WALL_CACHE.KEY, { t: Date.now(), d: out }, T_WALL_CACHE.KEEP_S); } catch (e) {}
     return out;
   }
-  catch (err) { return { ok: false, error: String(err && err.message ? err.message : err) }; }
+  catch (err) {
+    if (last) return last.d;   // carries its own `at`, so the screen shows how old it is
+    return { ok: false, error: String(err && err.message ? err.message : err) };
+  }
+  finally { try { if (cache) cache.remove(T_WALL_CACHE.BUSY); } catch (e) {} }
+}
+var T_WALL_CACHE = { KEY: 'transition:summary:z', BUSY: 'transition:summary:busy', FRESH_S: 120, KEEP_S: 21600, BUSY_S: 60, PIECE: 90000 };
+/** An object in the script cache whatever its size: gzipped, base64, in pieces of 90 KB under one stamp, so a reader
+ *  never joins pieces of two different answers. Throws when it cannot keep it; the caller decides what that costs. */
+function tCachePutBig_(cache, key, obj, ttl) {
+  var z = Utilities.base64Encode(Utilities.gzip(Utilities.newBlob(JSON.stringify(obj), 'application/json')).getBytes());
+  var stamp = String(Date.now()), n = Math.ceil(z.length / T_WALL_CACHE.PIECE), all = {};
+  for (var i = 0; i < n; i++) all[key + '.' + stamp + '.' + i] = z.slice(i * T_WALL_CACHE.PIECE, (i + 1) * T_WALL_CACHE.PIECE);
+  cache.putAll(all, ttl);
+  cache.put(key, stamp + ':' + n, ttl);   // last, so the pointer never names pieces not yet written
+}
+/** What tCachePutBig_ kept, or null when any piece is gone. */
+function tCacheGetBig_(cache, key) {
+  var m = /^(\d+):(\d+)$/.exec(String(cache.get(key) || ''));
+  if (!m) return null;
+  var keys = [];
+  for (var i = 0; i < Number(m[2]); i++) keys.push(key + '.' + m[1] + '.' + i);
+  var got = cache.getAll(keys), z = '';
+  for (var j = 0; j < keys.length; j++) { if (got[keys[j]] == null) return null; z += got[keys[j]]; }
+  return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(z), 'application/x-gzip')).getDataAsString());
 }
 
 /* ── the insights: what the answers say, for the digest and the Monday report ── */

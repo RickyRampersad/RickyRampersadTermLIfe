@@ -1687,11 +1687,21 @@ voice under the new timing and the caption gives it away.
   First on both page and digest: taps waiting more than two working days
   with nobody assigned. The manager's `dashboard.html` and the branch's
   `wall.html` (six big slides, first names only) read the same answer.
-  **All three share one answer**: `transitionData_` caches `tSummary_` for
-  thirty seconds, because on the go-live afternoon the summary took seven
-  seconds a request and one request in eight was lost to the web app's own
-  timeout while several screens polled at once, which read on the screens
-  as "no walls are opening". A gate that could not reach the sheet tries
+  **All three share one answer**: `transitionData_` caches `tSummary_`,
+  because on the go-live afternoon the summary took seven seconds a request
+  and one request in eight was lost to the web app's own timeout while
+  several screens polled at once, which read on the screens as "no walls
+  are opening". **A cache value holds 100 KB, and the answer outgrew it.**
+  On 8 October 2026 it was 166 KB (653 late taps), the put threw, the throw
+  was swallowed, and every screen read the whole sheet on every refresh:
+  "taking too long and not opening". It is now kept gzipped (about 17 KB)
+  by `tCachePutBig_`, in 90 KB pieces under one stamp if it ever needs
+  them: fresh for two minutes (`T_WALL_CACHE`), and kept six hours as the
+  last good answer, which a screen gets at once while another screen is
+  reading the sheet, or when the sheet fails. Anything else cached whole
+  must stay under 100 KB or go through the same pair.
+  `wall8/cache-harness.js` in the scratchpad covers it (24 checks, 3 of
+  them run on the previous script). A gate that could not reach the sheet tries
   again by itself after fifteen seconds; only a refused code (the backend
   says `refused: true`) sends a viewer back to the gate for good. **The wall
   and the dashboard open on their last good answer** (25 September, "have
