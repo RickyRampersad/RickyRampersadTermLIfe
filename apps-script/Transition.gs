@@ -3023,7 +3023,7 @@ function tStream_() {
     ' held for a person and ' + NN(auto.receipts.repeat, 'repeat was', 'repeats were') + ' stopped.');
   lines.push('In the last seven days the team logged ' + NN(peopleOut.week, 'outcome', 'outcomes') + ' on the board, on ' + NN(peopleOut.clientsWeek, 'client', 'clients') +
     ', and reached ' + C(peopleOut.reachedWeek) + (sf.on ? '; in Salesforce they closed ' + NN(sf.people.reduce(function (n, p) { return n + p.closedWeek; }, 0), 'task', 'tasks') + '.' : '.'));
-  if (waits.length) lines.push('A client who asked for something waited a median of ' + median(waits) + ' working day' + (median(waits) === 1 ? '' : 's') + ' for a first call or an agent' +
+  if (waits.length) lines.push('The ' + NN(waits.length, 'client', 'clients') + ' called or named after asking for something waited a median of ' + median(waits) + ' working day' + (median(waits) === 1 ? '' : 's') + ' for it' +
     (still.length ? '; ' + C(still.length) + ' are still waiting.' : '.'));
   if (contact) lines.push('In ' + C(contact) + ' household' + (contact === 1 ? '' : 's') + ' someone says their former agent has been in touch since leaving.');
   if (top) lines.push(NN(wroteN, 'client', 'clients') + ' wrote to us in their own words; after thanks, the commonest subject is ' + top.label.toLowerCase() + ' (' + C(top.clients) + ').');

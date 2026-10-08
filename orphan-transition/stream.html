@@ -342,7 +342,7 @@ var SLIDES = [
       tile(n(p.today), 'outcomes logged today', 'on the board') +
       tile(n(p.reachedWeek), 'clients reached this week', 'called, met or declined') +
       tile(n(p.named.week), 'agents named this week', n(d.agentsNamed) + ' agents so far') +
-      tile(ft.median === null ? '–' : n(ft.median), 'working days to a first call', 'median, from the first answer') +
+      tile(ft.median === null ? '–' : n(ft.median), 'working days to a first call', 'median of ' + plural(ft.n, 'client', 'clients') + ' called or named so far') +
       tile(n(ft.waiting), 'who asked, still waiting', ft.waitingMedian === null ? '' : 'median ' + plural(ft.waitingMedian, 'working day', 'working days'), ft.waiting > 0) +
       tile(n(p.backs.agent + p.backs.branch), 'call-backs open', n(p.backs.agent) + ' agent, ' + n(p.backs.branch) + ' branch') +
       '</div></div><div class="col"><div class="h3">The call list: ' + n(cl.listed) + ' clients</div>' +
