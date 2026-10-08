@@ -2638,23 +2638,28 @@ function transitionData_(code) {
      put threw and the throw was swallowed, so nothing was ever kept and every screen read the whole sheet on every
      refresh. It is kept gzipped now (about 17 KB), for two minutes as fresh and six hours as the last good answer: a
      screen that asks while another is reading the sheet, or when the sheet will not answer, gets that at once. */
+  return tServeCached_(T_WALL_CACHE, function () { return tSummary_(); });
+}
+var T_WALL_CACHE = { KEY: 'transition:summary:z', BUSY: 'transition:summary:busy', FRESH_S: 120, KEEP_S: 21600, BUSY_S: 60, PIECE: 90000 };
+/** One answer for every screen that asks: the kept one while it is fresh; the last good one at once while another request
+ *  is building it (`BUSY`), or when the build fails; otherwise built, kept and returned. `build` never sees a cache. */
+function tServeCached_(c, build) {
   var cache = null, last = null;
-  try { cache = CacheService.getScriptCache(); last = tCacheGetBig_(cache, T_WALL_CACHE.KEY); } catch (e) { last = null; }
-  if (last && Date.now() - Number(last.t || 0) < T_WALL_CACHE.FRESH_S * 1000) return last.d;
-  try { if (last && cache.get(T_WALL_CACHE.BUSY)) return last.d; } catch (e) {}
-  try { if (cache) cache.put(T_WALL_CACHE.BUSY, '1', T_WALL_CACHE.BUSY_S); } catch (e) {}
+  try { cache = CacheService.getScriptCache(); last = tCacheGetBig_(cache, c.KEY); } catch (e) { last = null; }
+  if (last && Date.now() - Number(last.t || 0) < c.FRESH_S * 1000) return last.d;
+  try { if (last && cache.get(c.BUSY)) return last.d; } catch (e) {}
+  try { if (cache) cache.put(c.BUSY, '1', c.BUSY_S); } catch (e) {}
   try {
-    var out = tSummary_();
-    try { if (cache && out && out.ok) tCachePutBig_(cache, T_WALL_CACHE.KEY, { t: Date.now(), d: out }, T_WALL_CACHE.KEEP_S); } catch (e) {}
+    var out = build();
+    try { if (cache && out && out.ok) tCachePutBig_(cache, c.KEY, { t: Date.now(), d: out }, c.KEEP_S); } catch (e) {}
     return out;
   }
   catch (err) {
     if (last) return last.d;   // carries its own `at`, so the screen shows how old it is
     return { ok: false, error: String(err && err.message ? err.message : err) };
   }
-  finally { try { if (cache) cache.remove(T_WALL_CACHE.BUSY); } catch (e) {} }
+  finally { try { if (cache) cache.remove(c.BUSY); } catch (e) {} }
 }
-var T_WALL_CACHE = { KEY: 'transition:summary:z', BUSY: 'transition:summary:busy', FRESH_S: 120, KEEP_S: 21600, BUSY_S: 60, PIECE: 90000 };
 /** An object in the script cache whatever its size: gzipped, base64, in pieces of 90 KB under one stamp, so a reader
  *  never joins pieces of two different answers. Throws when it cannot keep it; the caller decides what that costs. */
 function tCachePutBig_(cache, key, obj, ttl) {
@@ -2673,6 +2678,363 @@ function tCacheGetBig_(cache, key) {
   var got = cache.getAll(keys), z = '';
   for (var j = 0; j < keys.length; j++) { if (got[keys[j]] == null) return null; z += got[keys[j]]; }
   return JSON.parse(Utilities.ungzip(Utilities.newBlob(Utilities.base64Decode(z), 'application/x-gzip')).getDataAsString());
+}
+
+/* ── the stream: the campaign on a screen anyone in the room may see ──────────
+   8 October 2026: "I need to stream the wall without the confidential information and drive further analysis of how the
+   automations and humans are managing and what the clients are saying, group by households". The transition wall shows
+   clients' first names and the board shows everything; the stream (orphan-transition/stream.html) shows counts. Its answer
+   carries no client's name, number, token, address, e-mail, phone, words, policy or money, no household's name and no
+   former agent's name, so neither the screen nor the page's source holds anything about a client. The team appears by
+   first name and initial, because what the people are doing is half of what it shows. A client's own words are read here
+   for their subject only (T_STREAM_THEMES) and never leave the script. Opened with the branch code, through the board's
+   route as action=board&who=stream, so Service.gs needs no paste: a script older than this refuses that name rather than
+   sending the board. The words mean what they mean on the board's Dashboard tab (dSpoken, dTried, dDone, dStage), so the
+   two always agree. */
+var T_STREAM = { KEY: 'transition:stream:z', BUSY: 'transition:stream:busy', FRESH_S: 180, KEEP_S: 21600, BUSY_S: 90, PIECE: 90000, DAYS: 14 };
+var T_STREAM_OUT = /^\[(called|met|no answer|declined|closed|open) (\d{1,2} [A-Za-z]{3}) · ([^\]]+)\]$/;
+var T_STREAM_TAPS = [['callme', 'Call me'], ['urgent', 'An agent, once their concerns are read'], ['review', 'The full review'],
+  ['wrote', 'Wrote to us in their own words'], ['deliver', 'Their contract never reached them'], ['finish', 'Help to finish an application'],
+  ['stop', 'Stop an application'], ['pay', 'Paying a representative in person'], ['paid', 'A payment that is not showing']];
+var T_STREAM_THEMES = [
+  ['pay', 'Premiums and payments', /premium|payment|\bpa(y|id|ying)\b|arrear|\bdue\b|deduct|salary|standing order/i],
+  ['call', 'A call back', /\bcall|phone|contact me|reach me|my number|whatsapp/i],
+  ['agent', 'Who looks after them now', /\bagent|representative|advis[eo]r/i],
+  ['policy', 'What the policy holds or pays', /statement|value|benefit|\bcover|matur|sum assured|bonus|how much/i],
+  ['cancel', 'Cancel, cash in or surrender', /cancel|surrender|cash(ing)? in|terminat|withdraw|refund/i],
+  ['wait', 'Waiting, or a delay', /still (waiting|no)|no (response|reply)|no one|nobody|waiting|delay|taking (so )?long|follow(ed)? up|disappoint|frustrat|unhappy/i],
+  ['details', 'A change of details', /address|e-?mail|new number|changed my|update my|moved/i],
+  ['docs', 'An application, contract or document', /application|contract|document|medical|signature/i],
+  ['loan', 'A policy loan', /\bloan/i],
+  ['benef', 'Who the policy pays', /beneficiar|nominee/i],
+  ['claim', 'A claim', /\bclaim|passed away|death|died|hospital/i],
+  ['thanks', 'Thanks, or noted', /thank|noted|appreciat|well received/i],
+];
+/** GET action=board&who=stream&code=<branch>: the stream's answer, kept three minutes like the wall's. */
+function transitionStream_(code) {
+  var w = tWho_(code, '');
+  if (!w.ok || w.role !== 'branch') {
+    return { ok: false, refused: true, stream: true, configured: w.configured,
+             error: 'The stream opens with the branch code. An agent sees their own clients on the assignment board.' };
+  }
+  return tServeCached_(T_STREAM, function () { return tStream_(); });
+}
+/** A member of the team as the stream names them: first name and the last name's initial ("Sasha L."). */
+function tShortName_(s) {
+  var p = String(s || '').replace(/^[A-Z]{1,3}\s*-?\s*\d+\s*-\s*/i, '').trim().split(/\s+/).filter(Boolean);
+  if (!p.length) return '';
+  var cap = function (x) { return x.charAt(0).toUpperCase() + x.slice(1).toLowerCase(); };
+  return cap(p[0]) + (p.length > 1 ? ' ' + p[p.length - 1].charAt(0).toUpperCase() + '.' : '');
+}
+function tStream_() {
+  var tz = tTz_(), now = new Date(), DAY = 86400000, wait = Number(TRANSITION.WAIT_DAYS) || 2;
+  var dk = function (d) { return Utilities.formatDate(d, tz, 'yyyy-MM-dd'); };
+  var today = dk(now), weekFrom = dk(new Date(now.getTime() - 6 * DAY)), yr = Number(Utilities.formatDate(now, tz, 'yyyy'));
+  var MON = { Jan: 1, Feb: 2, Mar: 3, Apr: 4, May: 5, Jun: 6, Jul: 7, Aug: 8, Sep: 9, Oct: 10, Nov: 11, Dec: 12 };
+  var pad = function (n) { return (n < 10 ? '0' : '') + n; };
+  /* a stamp's "d MMM" as yyyy-MM-dd: this year, or last year when this year's would be after today */
+  var stampDay = function (s) {
+    var m = /^(\d{1,2}) ([A-Za-z]{3})/.exec(String(s || '').trim());
+    if (!m || !MON[m[2]]) return '';
+    var k = yr + '-' + pad(MON[m[2]]) + '-' + pad(Number(m[1]));
+    return k > today ? (yr - 1) + k.slice(4) : k;
+  };
+  var dateOf = function (k) { var p = k.split('-'); return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 12); };
+  var days = [], dayIx = {};
+  for (var i = T_STREAM.DAYS - 1; i >= 0; i--) {
+    var x = new Date(now.getTime() - i * DAY), k0 = dk(x);
+    dayIx[k0] = days.length;
+    days.push({ day: k0, label: Utilities.formatDate(x, tz, 'd MMM'), dow: Utilities.formatDate(x, tz, 'EEE'), letters: 0, reminders: 0, answers: 0, people: 0, reached: 0, named: 0, sfClosed: 0, sfNotes: 0 });
+  }
+  var bump = function (k, f, n) { if (k && dayIx[k] !== undefined) days[dayIx[k]][f] += (n || 1); };
+  var inc = function (o, k, n) { o[k] = (o[k] || 0) + (n || 1); };
+  var setAdd = function (o, k, v) { (o[k] = o[k] || {})[v] = true; };
+  var size = function (o) { return Object.keys(o || {}).length; };
+  var pct = function (n, d) { return d ? Math.round(100 * n / d) : 0; };
+  var median = function (a) { a = a.slice().sort(function (p, q) { return p - q; }); return a.length ? a[Math.floor(a.length / 2)] : null; };
+
+  /* the books, as the board reads them: every client written to or listed to call, staff Test rows never */
+  var B = tBoard_({ ok: true, role: 'branch', me: null, canTell: true, configured: true }, true, true);
+  if (!B || !B.ok) throw new Error((B && B.error) || 'The board could not be read.');
+  var people = (B.clients || []).concat(B.silent || []);
+  var byTok = {};
+  people.forEach(function (c) { if (c.token) byTok[c.token] = c; });
+  var outs = function (c) { return (c.markers || []).map(function (m) { return T_STREAM_OUT.exec(m); }).filter(Boolean); };
+  var answered = function (c) { return ['open', 'assigned', 'done', 'noted'].indexOf(c.state) >= 0; };
+  var asked = function (c) { return answered(c) && c.state !== 'noted'; };
+  var spoken = function (c) {
+    if (outs(c).some(function (m) { return m[1] === 'called' || m[1] === 'met' || m[1] === 'declined'; })) return true;
+    if (/^(called|met|declined)$/i.test(c.mark || '') || c.state === 'reached') return true;
+    return !!(c.call && /reached: yes/i.test(c.call.sheet || ''));
+  };
+  var tried = function (c) { return spoken(c) || outs(c).length > 0 || c.state === 'called' || !!(c.call && /tr(?:y|ies) on the sheet|reached: (?:no answer|not reached)/i.test(c.call.sheet || '')); };
+  var done = function (c) { return c.state === 'done' || /^(met|closed|declined)$/i.test(c.mark || ''); };
+  var stage = function (c) { return done(c) ? 'done' : c.assigned ? 'named' : spoken(c) ? 'spoken' : 'waiting'; };
+  var RANK = { waiting: 0, spoken: 1, named: 2, done: 3 };
+
+  /* the questions, in the letters' own neutral words (receipt.json): never a client's copy of them */
+  var rc = tReceipt_(), qdef = (rc && rc.json && rc.json.questions) || {}, keyOf = {}, labelOf = {};
+  var clean = function (s) { return String(s || '').replace(/\{\{[^}]*\}\}/g, '').replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); };
+  Object.keys(qdef).forEach(function (k) { (qdef[k][1] || []).forEach(function (a) { keyOf[a[2]] = k; labelOf[a[2]] = clean(a[0]); }); });
+
+  /* ── each client, and their household ── */
+  var H = {}, hhOf = function (c) { return c.hh ? 'h:' + c.hh : 't:' + c.token; };
+  var said = {}, saidHh = {}, asks = {}, asksHh = {}, themes = {}, themesHh = {}, risk = {}, riskHh = {};
+  var wroteN = 0, wroteHh = {}, reviews = 0, agents = {}, callList = { listed: 0, tried: 0, reached: 0 }, backs = { agent: 0, branch: 0, dnc: 0 };
+  var stageC = { done: 0, named: 0, spoken: 0, waiting: 0 }, late = 0, lateHh = {}, reachedPhone = 0;
+  people.forEach(function (c) {
+    var hk = hhOf(c), h = H[hk] = H[hk] || { n: 0, ans: 0, asked: 0, reached: 0, stage: null, agents: {}, risk: false, back: false, toReach: 0 };
+    h.n++;
+    var a = answered(c), sp = spoken(c);
+    if (a) h.ans++;
+    if (a || sp) h.reached++;
+    if (c.state === 'reached') reachedPhone++;
+    if (c.assigned) h.agents[tNameKey_(c.assigned)] = true;
+    if (asked(c)) {
+      h.asked++;
+      var st = stage(c);
+      stageC[st]++;
+      if (h.stage === null || RANK[st] < RANK[h.stage]) h.stage = st;   // a household is as far along as its least-served member
+      if (c.late) { late++; lateHh[hk] = true; }
+    }
+    if (c.back) { if (c.back.kind === 'dnc') backs.dnc++; else if (c.back.open) { backs[c.back.kind] = (backs[c.back.kind] || 0) + 1; h.back = true; } }
+    if (c.call && (c.call.caller || c.call.why)) { callList.listed++; if (tried(c)) callList.tried++; if (sp) callList.reached++; }
+    if (c.review) reviews++;
+    /* what they said: each question once a client, their last word on it */
+    var last = {};
+    (c.answers || []).forEach(function (x) { var k = keyOf[x.code]; if (k) last[k] = x.code; });
+    Object.keys(last).forEach(function (k) {
+      var code = last[k];
+      inc(said, code); setAdd(saidHh, code, hk);
+      if (T_RISK[code]) { inc(risk, code); setAdd(riskHh, code, hk); h.risk = true; }
+    });
+    var tapSeen = {};
+    (c.taps || []).forEach(function (t) {
+      var tp = String(t.tap || '');
+      if (!tp || tapSeen[tp]) return;
+      tapSeen[tp] = true;
+      inc(asks, tp); setAdd(asksHh, tp, hk);
+      if (tp === 'urgent') { inc(risk, 'urgent'); setAdd(riskHh, 'urgent', hk); h.risk = true; }
+    });
+    /* their own words, for the subject only */
+    var words = (c.notes || []).join(' \n ');
+    if (words || tapSeen.wrote) { wroteN++; wroteHh[hk] = true; }
+    if (words) T_STREAM_THEMES.forEach(function (th) { if (th[2].test(words)) { inc(themes, th[0]); setAdd(themesHh, th[0], hk); } });
+    /* the agents named, by household */
+    if (c.assigned) {
+      var ak = tNameKey_(c.assigned), ag = agents[ak] = agents[ak] || { name: tShortName_(c.assigned), hh: {}, clients: 0, spoken: 0, done: 0, waiting: 0 };
+      ag.hh[hk] = true; ag.clients++;
+      if (done(c)) ag.done++; else if (sp) ag.spoken++;
+      else {
+        var on = stampDay(c.assignedOn);
+        if (on && tWorkingDays_(dateOf(on), now) >= wait) ag.waiting++;
+      }
+    }
+  });
+  var hhAll = Object.keys(H), hh = { all: hhAll.length, answered: 0, reached: 0, asked: 0, partly: 0, toReach: 0, risk: 0, back: 0,
+    stage: { done: 0, named: 0, spoken: 0, waiting: 0 }, agent: { one: 0, split: 0, none: 0 }, sizes: { '1': 0, '2': 0, '3': 0, '4+': 0 }, family: 0 };
+  hhAll.forEach(function (k) {
+    var h = H[k];
+    hh.sizes[h.n >= 4 ? '4+' : String(h.n)]++;
+    if (h.n > 1) hh.family++;
+    if (h.ans) hh.answered++;
+    if (h.reached) hh.reached++;
+    if (h.ans && h.reached < h.n) { hh.partly++; hh.toReach += h.n - h.reached; }
+    if (h.risk) hh.risk++;
+    if (h.back) hh.back++;
+    if (h.asked) {
+      hh.asked++; hh.stage[h.stage]++;
+      var na = size(h.agents);
+      hh.agent[na === 0 ? 'none' : na === 1 ? 'one' : 'split']++;
+    }
+  });
+
+  /* ── Client Responses: what the machines did, what the people logged, and when ── */
+  var resp = tSheetRows_(SVC.RESP_SHEET);
+  var A = { thanked: {}, rHeld: {}, repeat: {}, byPhone: {}, noteSent: {}, noteHeld: {}, lateAlert: {}, intro: {}, told: {}, filed: {}, matched: {}, replies: {} };
+  var firstAns = {}, ansDay = {}, seen = {}, touch = {};
+  var team = {}; tTeam_().people.forEach(function (p) { team[tNameKey_(p.name)] = p; });
+  var P = {}, person = function (name) {
+    var k = tNameKey_(name), p = team[k], role = p ? p.role : (k === 'branch' ? 'bm' : '');
+    var lbl = role === 'staff' ? 'Client Support' : role === 'bm' || role === 'abm' ? 'Branch' : role ? 'Agent' : 'Branch';
+    return P[k] = P[k] || { name: k === 'branch' ? 'Branch' : tShortName_(p ? p.name : name), role: lbl, today: 0, week: 0, all: 0, reachedWeek: 0, noAnswerWeek: 0, flagsWeek: 0, clientsWeek: {} };
+  };
+  var named = { all: 0, week: 0, today: 0 };
+  resp.rows.forEach(function (v) {
+    var tok = String(v[1] || '').trim(), c = byTok[tok];
+    if (!c) return;                                                  // only this campaign's clients, as the board has them
+    var page = v[5], ref = String(v[6] || ''), note = String(v[10] || '');
+    var received = v[0] instanceof Date ? v[0] : null;
+    if (!tOursRow_(page) && String(v[3] || '').trim()) {             // an answer of the client's own
+      if (received) {
+        if (!firstAns[tok] || received.getTime() < firstAns[tok].getTime()) firstAns[tok] = received;
+        var ad = dk(received);
+        if (!ansDay[tok + ad]) { ansDay[tok + ad] = true; bump(ad, 'answers'); }
+      }
+      if (/^reply /.test(ref)) A.replies[ref] = true;
+    }
+    /* the stamps, each once a client: every update writes the same ones on each of the client's rows */
+    var re = /\[[^\]]*\]/g, m, list = [];
+    while ((m = re.exec(note))) list.push({ s: m[0], after: note.slice(re.lastIndex, re.lastIndex + 60) });
+    list.forEach(function (it) {
+      var s = it.s, after = it.after;
+      if (s === '[receipt]') {
+        if (/^ held:/.test(after)) A.rHeld[tok] = /automated/.test(after) ? 'automated' : /own words/.test(after) ? 'wrote' : /one receipt per client/.test(after) ? 'once' : /excluded/.test(after) ? 'held row' : 'held';
+        else if (/^ repeat/.test(after)) A.repeat[tok] = true;
+        else if (/^ (by phone|no e-mail)/.test(after)) A.byPhone[tok] = true;
+        else A.thanked[tok] = true;
+        return;
+      }
+      if (s === '[chase2]') { if (/^ held:/.test(after)) A.noteHeld[tok] = /own words/.test(after) ? 'wrote' : /automated/.test(after) ? 'automated' : /agent is named/.test(after) ? 'named' : /automatic notes are off/.test(after) ? 'off' : 'held'; else A.noteSent[tok] = true; return; }
+      if (s === '[chase1]') { A.lateAlert[tok] = true; return; }
+      if (/^\[intro /.test(s)) { A.intro[tok] = true; return; }
+      if (/^\[told /.test(s)) { A.told[tok + s] = true; return; }
+      if (/^\[filed/.test(s)) { A.filed[tok] = true; return; }
+      if (/^\[matched by (name|hand)\]$/.test(s)) { A.matched[tok] = true; return; }
+      if (seen[tok + s]) return;
+      if (/^\s*:?\s*(test|terst)\b/i.test(after)) return;            // the board's training clicks
+      var o = T_STREAM_OUT.exec(s), as = /^\[assigned (\d{1,2} [A-Za-z]{3}) · [^\]]+\]$/.exec(s), bk = T_BACK_RE.exec(s);
+      if (!o && !as && !bk) return;
+      seen[tok + s] = true;
+      var day = stampDay(o ? o[2] : as ? as[1] : bk[3]);
+      if (!day) return;
+      if (!touch[tok] || day < touch[tok]) { if (o || as) touch[tok] = day; }
+      if (as) {
+        named.all++; if (day >= weekFrom) named.week++; if (day === today) named.today++;
+        bump(day, 'named');
+        return;
+      }
+      var who = person(o ? o[3] : bk[4]);
+      if (bk) { if (day >= weekFrom && bk[1] !== 'clear') who.flagsWeek++; return; }
+      var reach = o[1] === 'called' || o[1] === 'met' || o[1] === 'declined';
+      who.all++;
+      if (day === today) who.today++;
+      if (day >= weekFrom) { who.week++; who.clientsWeek[tok] = true; if (reach) who.reachedWeek++; if (o[1] === 'no answer') who.noAnswerWeek++; }
+      bump(day, 'people'); if (reach) bump(day, 'reached');
+    });
+  });
+
+  /* how long a client who asked for something waited for a person: from their first answer to the first call or name */
+  var waits = [], still = [];
+  people.forEach(function (c) {
+    if (!asked(c) || !firstAns[c.token]) return;
+    var t0 = firstAns[c.token];
+    if (touch[c.token]) waits.push(Math.max(0, tWorkingDays_(t0, dateOf(touch[c.token]))));
+    else if (!c.assigned && !spoken(c) && !done(c)) still.push(tWorkingDays_(t0, now));
+  });
+
+  /* ── the send list: the letters and the reminders, by day ── */
+  var t = tRead_(), send = { letters: 0, today: 0, week: 0, reminders: 0, remindersWeek: 0, again: 0, afterReminder: 0, waiting: 0,
+    held: { noEmail: 0, bounced: 0, hold: 0, check: 0, other: 0 } };
+  t.rows.forEach(function (r) {
+    if (!tText_(r.Segment) || tYes_(r.Test)) return;
+    var ex = tHeld_(r.Exclude) ? tText_(r.Exclude).toLowerCase() : '', status = tText_(r.Status);
+    var sentAt = r['Sent at'] instanceof Date && !isNaN(r['Sent at'].getTime()) ? r['Sent at'] : null;
+    if (sentAt) {
+      send.letters++;
+      var sd = dk(sentAt);
+      if (sd === today) send.today++;
+      if (sd >= weekFrom) send.week++;
+      bump(sd, 'letters');
+    }
+    var rm = /^reminded (\d{4}-\d{2}-\d{2})/.exec(status), ag = /^sent again (\d{4}-\d{2}-\d{2})/.exec(status);
+    if (rm) {
+      send.reminders++; if (rm[1] >= weekFrom) send.remindersWeek++;
+      bump(rm[1], 'reminders');
+      var tk = tText_(r.Token);
+      if (tk && firstAns[tk] && dk(firstAns[tk]) >= rm[1]) send.afterReminder++;
+    }
+    if (ag) send.again++;
+    if (ex) {
+      var b = /^no e-?mail/.test(ex) ? 'noEmail' : /^bounced/.test(ex) ? 'bounced' : /^hold/.test(ex) ? 'hold' : /^check/.test(ex) ? 'check' : 'other';
+      send.held[b]++;
+    } else if (!sentAt) send.waiting++;
+  });
+
+  /* ── the answer: counts and fixed words only ── */
+  var asList = function (counts, sets) { return function (code) { return { clients: counts[code] || 0, hh: size(sets[code]) }; }; };
+  var sc = asList(said, saidHh);
+  var qorder = T_QORDER.filter(function (k) { return qdef[k]; });
+  var questions = qorder.map(function (k) {
+    var ans = (qdef[k][1] || []).map(function (a) { var n = sc(a[2]); return { code: a[2], label: clean(a[0]), person: a[1] !== 'informed', clients: n.clients, hh: n.hh }; });
+    var n = ans.reduce(function (s, a) { return s + a.clients; }, 0);
+    return { key: k, question: clean(qdef[k][0]), clients: n, answers: ans };
+  }).filter(function (q) { return q.clients > 0; });
+  var tapList = T_STREAM_TAPS.map(function (x) { return { tap: x[0], label: x[1], clients: asks[x[0]] || 0, hh: size(asksHh[x[0]]) }; })
+    .filter(function (x) { return x.clients > 0; }).sort(function (p, q) { return q.clients - p.clients; });
+  var themeList = T_STREAM_THEMES.map(function (th) { return { key: th[0], label: th[1], clients: themes[th[0]] || 0, hh: size(themesHh[th[0]]) }; })
+    .filter(function (x) { return x.clients > 0; }).sort(function (p, q) { return q.clients - p.clients; });
+  var riskList = Object.keys(T_RISK).concat(['urgent']).filter(function (k, i, a) { return a.indexOf(k) === i && risk[k]; })
+    .map(function (k) { return { code: k, label: T_RISK[k], clients: risk[k], hh: size(riskHh[k]) }; })
+    .sort(function (p, q) { return q.hh - p.hh; });
+  var teamList = Object.keys(P).map(function (k) { var p = P[k]; p.clientsWeek = size(p.clientsWeek); return p; })
+    .filter(function (p) { return p.all > 0; }).sort(function (p, q) { return q.week - p.week || q.all - p.all; }).slice(0, 14);
+  var sum = function (f) { return teamList.reduce(function (s, p) { return s + p[f]; }, 0); };
+  var agentList = Object.keys(agents).map(function (k) { var g = agents[k]; g.hh = size(g.hh); return g; })
+    .sort(function (p, q) { return q.hh - p.hh || q.clients - p.clients; });
+  var nAnswered = people.filter(answered).length, nAsked = people.filter(asked).length;
+  var auto = {
+    letters: send.letters, lettersToday: send.today, lettersWeek: send.week, reminders: send.reminders, remindersWeek: send.remindersWeek,
+    sentAgain: send.again, afterReminder: send.afterReminder, waiting: send.waiting, held: send.held,
+    receipts: { thanked: size(A.thanked), held: size(A.rHeld), heldWhy: (function () { var o = {}; Object.keys(A.rHeld).forEach(function (k) { inc(o, A.rHeld[k]); }); return o; })(),
+                repeat: size(A.repeat), byPhone: size(A.byPhone) },
+    notes: { sent: size(A.noteSent), held: size(A.noteHeld), heldWhy: (function () { var o = {}; Object.keys(A.noteHeld).forEach(function (k) { inc(o, A.noteHeld[k]); }); return o; })() },
+    lateAlerts: size(A.lateAlert), introductions: size(A.intro), managerNotes: size(A.told), filed: size(A.filed),
+    replies: size(A.replies), matched: size(A.matched),
+    holds: { mail: !!B.mailHeld, receipts: !!B.receiptsHeld, intros: !!B.introsHeld }, sending: tArmed_(),
+    lifetime: (function () { try { return typeof automationOn_ === 'function' ? !!automationOn_() : null; } catch (e) { return null; } })(),
+  };
+  var peopleOut = {
+    week: sum('week'), today: sum('today'), all: sum('all'), reachedWeek: sum('reachedWeek'), noAnswerWeek: sum('noAnswerWeek'),
+    clientsWeek: teamList.reduce(function (s, p) { return s + p.clientsWeek; }, 0), flagsWeek: sum('flagsWeek'),
+    named: named, team: teamList,
+    firstTouch: { median: median(waits), within2: waits.filter(function (d) { return d <= 2; }).length, n: waits.length, waiting: still.length, waitingMedian: median(still) },
+    callList: { listed: callList.listed, tried: callList.tried, reached: callList.reached, notTried: callList.listed - callList.tried },
+    backs: backs, late: late, lateHh: size(lateHh),
+  };
+  var clients = { all: people.length, answered: nAnswered, asked: nAsked, reachedPhone: reachedPhone, stage: stageC, wrote: wroteN, reviews: reviews };
+
+  /* Client Support's Salesforce tasks (tSfWork_, the Dashboard tab's own figures): most of their work is there, not on the board */
+  var sf = { on: false, why: '' };
+  try {
+    var W = tSfWork_();
+    if (W && W.on && !W.error) {
+      var wk = function (a) { return (a || []).filter(function (d) { return d && d >= weekFrom; }).length; };
+      sf = { on: true, since: W.since, people: (W.people || []).map(function (p) {
+        (p.closedDays || []).forEach(function (d) { bump(d, 'sfClosed'); });
+        (p.noteDays || []).forEach(function (d) { bump(d, 'sfNotes'); });
+        return { name: tShortName_(p.name), held: p.held, open: p.open, closed: p.closed, closedWeek: wk(p.closedDays),
+                 closedToday: (p.closedDays || []).filter(function (d) { return d === today; }).length, notesWeek: wk(p.noteDays),
+                 overdue: p.overdue, dueToday: p.dueToday, untouched: p.untouched, closedNoNote: p.closedNoNote };
+      }).slice(0, 14) };
+    } else if (W && W.error) sf = { on: false, why: 'Salesforce did not answer.' };
+    else sf = { on: false, why: 'Salesforce is not linked to this project yet.' };
+  } catch (e) { sf = { on: false, why: 'Salesforce did not answer.' }; }
+
+  /* what stands out: facts, never advice */
+  var C = function (x) { return String(Math.round(Number(x) || 0)).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var NN = function (k, one, many) { return C(k) + ' ' + (Number(k) === 1 ? one : many); };
+  var lines = [], top = themeList.filter(function (x) { return x.key !== 'thanks'; })[0], contact = risk.contact_yes ? size(riskHh.contact_yes) : 0;
+  lines.push(C(hh.answered) + ' of ' + C(hh.all) + ' households have answered (' + pct(hh.answered, hh.all) + '%)' +
+    (hh.partly ? '; in ' + C(hh.partly) + ' of them ' + C(hh.toReach) + ' more family member' + (hh.toReach === 1 ? ' is' : 's are') + ' still to reach.' : '.'));
+  lines.push('The automations have sent ' + NN(auto.letters, 'letter', 'letters') + ' and ' + NN(auto.reminders, 'reminder', 'reminders') + '; ' +
+    NN(auto.afterReminder, 'client', 'clients') + ' answered after the reminder.');
+  if (auto.receipts.thanked) lines.push(NN(auto.receipts.thanked, 'client was', 'clients were') + ' thanked automatically; ' + NN(auto.receipts.held, 'receipt was', 'receipts were') +
+    ' held for a person and ' + NN(auto.receipts.repeat, 'repeat was', 'repeats were') + ' stopped.');
+  lines.push('In the last seven days the team logged ' + NN(peopleOut.week, 'outcome', 'outcomes') + ' on the board, on ' + NN(peopleOut.clientsWeek, 'client', 'clients') +
+    ', and reached ' + C(peopleOut.reachedWeek) + (sf.on ? '; in Salesforce they closed ' + NN(sf.people.reduce(function (n, p) { return n + p.closedWeek; }, 0), 'task', 'tasks') + '.' : '.'));
+  if (waits.length) lines.push('A client who asked for something waited a median of ' + median(waits) + ' working day' + (median(waits) === 1 ? '' : 's') + ' for a first call or an agent' +
+    (still.length ? '; ' + C(still.length) + ' are still waiting.' : '.'));
+  if (contact) lines.push('In ' + C(contact) + ' household' + (contact === 1 ? '' : 's') + ' someone says their former agent has been in touch since leaving.');
+  if (top) lines.push(NN(wroteN, 'client', 'clients') + ' wrote to us in their own words; after thanks, the commonest subject is ' + top.label.toLowerCase() + ' (' + C(top.clients) + ').');
+  var heldToo = [auto.holds.receipts ? 'receipts' : '', auto.holds.intros ? 'introductions' : ''].filter(Boolean);
+  if (auto.holds.mail) lines.push('Automatic client e-mail is on hold until the manager\'s go' + (heldToo.length ? ', ' + heldToo.join(' and ') + ' too' : '') + '.');
+
+  return {
+    ok: true, stream: 1, at: Utilities.formatDate(now, tz, 'd MMM yyyy HH:mm'), waitDays: wait,
+    clients: clients, hh: hh, auto: auto, people: peopleOut, sf: sf, days: days,
+    said: { questions: questions, asks: tapList, themes: themeList, risk: riskList }, agents: agentList.slice(0, 16), agentsNamed: agentList.length, lines: lines,
+  };
 }
 
 /* ── the insights: what the answers say, for the digest and the Monday report ── */
@@ -3594,6 +3956,9 @@ function transitionBoard_(p) {
   p = p || {};
   T_READ_ONCE = {};
   try {
+    /* the stream (stream.html): counts only, for the branch code. A script older than 8 October 2026 takes "stream" for a
+       person, finds nobody by that name and refuses, so an old backend never sends the stream the board. */
+    if (/^stream$/i.test(String(p.who || '').trim())) return transitionStream_(p.code);
     var w = tWho_(p.code, p.who);
     if (!w.ok) return { ok: false, refused: true, configured: w.configured, error: w.error };
     /* the dashboard's Salesforce panel (tSfWork_): the branch alone, since it names every member of staff */

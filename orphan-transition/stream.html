@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Transition stream | Ricky Rampersad Branch</title>
+<meta name="description" content="The transition campaign in counts: what the automations did, what the team did, what clients are saying, by household. No client details.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#07131f">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap"></noscript>
+<!-- The stream (8 October 2026): "stream the wall without the confidential information and drive further analysis of how the
+     automations and humans are managing and what the clients are saying, group by households". Everything here is a count.
+     The answer this page fetches (Transition.gs tStream_) holds no client's name, number, address, e-mail, phone, words,
+     policy or money, and no household's name, so a shared screen, a lobby television or this page's source shows nothing
+     about any client. The team appears by first name and initial. Opened with the branch code, like the wall. -->
+<style>
+  :root{
+    --navy:#07131f; --surface:#0c1a28; --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+    /* the two data colours, checked for colour-blind readers on this surface: teal for what was noted or done by the system,
+       gold for what needs a person; and the ordered teal ramp for how far a household has got */
+    --d-noted:#159db4; --d-person:#bf8a26;
+    --s-done:#8fe6f2; --s-named:#19b3cc; --s-spoken:#0e7f92; --s-wait:rgba(255,255,255,.13);
+    --good:#34d399; --stop:#f0776a; --stopbg:#5a1a14;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11); --grid:rgba(255,255,255,.09);
+    --f:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+    --eyebrow:clamp(12px,1.1vw,22px);
+    --h2:clamp(24px,2.9vw,56px);
+    --hero:clamp(76px,13vw,250px);
+    --big:clamp(26px,2.9vw,56px);
+    --body:clamp(15px,1.35vw,27px);
+    --small:clamp(13px,1.08vw,21px);
+    --label:clamp(11px,.92vw,18px);
+    --gut:clamp(16px,2.8vw,56px);
+    --ease:cubic-bezier(.16,1,.3,1);
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html,body{height:100%}
+  body{margin:0;background:var(--navy);color:var(--ink);font-family:var(--b);font-size:var(--body);line-height:1.4;
+    overflow:hidden;-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;min-height:100vh;min-height:100dvh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:radial-gradient(1200px 700px at 8% -10%,rgba(239,194,75,.12),transparent 60%),
+               radial-gradient(900px 600px at 96% 4%,rgba(0,207,234,.12),transparent 62%),
+               linear-gradient(165deg,#07131f 0%,#0a1e33 55%,#07131f 100%)}
+  .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+  .tick{position:fixed;top:0;left:0;height:3px;width:0;background:linear-gradient(90deg,var(--gold),var(--gold2));z-index:30}
+
+  header{display:flex;align-items:center;gap:clamp(10px,1vw,18px);padding:clamp(10px,1.4vh,18px) var(--gut);flex:none;min-width:0}
+  .mark{width:clamp(36px,3vw,58px);height:clamp(36px,3vw,58px);flex:none;border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+  .ttl{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.3vw,25px);letter-spacing:-.3px;line-height:1.15;min-width:0}
+  .ttl span{display:block;font-family:var(--b);font-weight:500;font-size:clamp(11px,.85vw,16px);color:var(--dim)}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:clamp(8px,1.1vw,20px);min-width:0}
+  .safe{display:inline-flex;align-items:center;gap:7px;font-family:var(--f);font-weight:800;font-size:var(--label);letter-spacing:.06em;
+    color:var(--good);border:1px solid rgba(52,211,153,.45);border-radius:999px;padding:4px 11px;background:rgba(52,211,153,.08);white-space:nowrap}
+  .safe svg{width:1.1em;height:1.1em}
+  .stamp{font-size:clamp(11px,.9vw,17px);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .stamp.retry{color:var(--gold)}
+  .clk{font-family:var(--f);font-weight:800;font-size:clamp(15px,1.5vw,28px);font-variant-numeric:tabular-nums}
+
+  #deck{flex:1;position:relative;min-height:0}
+  .slide{position:absolute;inset:0;padding:clamp(6px,1.2vh,18px) var(--gut) clamp(10px,2vh,24px);display:flex;flex-direction:column;
+    opacity:0;visibility:hidden;transform:translateY(14px);transition:opacity .55s var(--ease),transform .55s var(--ease),visibility 0s .55s;
+    overflow-x:hidden;overflow-y:auto}
+  .slide.on{opacity:1;visibility:visible;transform:none;transition-delay:0s}
+  .eyebrow{font-family:var(--f);font-weight:800;font-size:var(--eyebrow);letter-spacing:.24em;text-transform:uppercase;color:var(--gold);margin:0 0 clamp(4px,.8vh,10px)}
+  .eyebrow span{color:var(--dim);letter-spacing:.08em;text-transform:none;font-weight:600;margin-left:8px}
+  h2{font-family:var(--f);font-weight:800;font-size:var(--h2);letter-spacing:-.03em;line-height:1.04;margin:0 0 clamp(8px,1.6vh,22px);max-width:46ch}
+  .two{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(16px,3vw,64px);align-items:start;flex:1;min-height:0}
+  .col{min-width:0}
+  .bottom{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.15fr);gap:clamp(16px,3vw,64px);align-items:start;margin-top:clamp(12px,2.2vh,28px)}
+  .hero{font-family:var(--f);font-weight:800;font-size:var(--hero);line-height:.9;letter-spacing:-.05em;color:var(--gold)}
+  @supports (-webkit-background-clip:text) or (background-clip:text){
+    .hero{background:linear-gradient(120deg,var(--gold),var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  }
+  .say{font-size:var(--body);color:var(--dim);max-width:40ch;margin:clamp(6px,1vh,14px) 0 0}
+  .say b{color:var(--ink);font-family:var(--f)}
+  .note{font-size:var(--small);color:var(--dim);margin-top:clamp(6px,1.2vh,14px);max-width:70ch}
+  .h3{font-family:var(--f);font-weight:800;font-size:var(--small);letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:clamp(10px,1.8vh,22px) 0 clamp(6px,1vh,12px)}
+  .h3:first-child{margin-top:0}
+
+  .tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(8px,1.1vw,20px)}
+  .tiles.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .tiles.two2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,1.5vh,20px) clamp(12px,1.3vw,22px);min-width:0}
+  .tile b{display:block;font-family:var(--f);font-weight:800;font-size:var(--big);letter-spacing:-.03em;line-height:1}
+  .tile span{display:block;font-size:var(--small);color:var(--dim);margin-top:6px;line-height:1.3}
+  .tile i{display:block;font-style:normal;font-size:var(--label);color:var(--faint);margin-top:4px;line-height:1.3}
+  .tile.warn{border-color:rgba(240,119,106,.45)} .tile.warn b{color:var(--stop)}
+  .tile.warn b::after{content:" !";font-size:.6em;vertical-align:.35em}
+
+  .chips{display:flex;flex-wrap:wrap;gap:clamp(6px,.7vw,12px);margin-top:clamp(10px,1.6vh,20px)}
+  .chip{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:5px 12px;font-size:var(--small);border:1px solid var(--line);background:var(--card);white-space:nowrap}
+  .chip::before{content:"";width:.6em;height:.6em;border-radius:50%;background:var(--good)}
+  .chip.off::before{background:var(--gold)}
+  .chip.off{border-color:rgba(239,194,75,.4)}
+
+  /* the stage bar: 2px surface gaps between segments, the waiting track grey */
+  .stack{display:flex;gap:2px;height:clamp(18px,3.2vh,40px);border-radius:6px;overflow:hidden;background:var(--surface);margin:clamp(6px,1vh,12px) 0}
+  .stack i{display:block;height:100%;min-width:2px;transition:flex-grow 1s var(--ease)}
+  .legend{display:flex;flex-wrap:wrap;gap:clamp(8px,1.2vw,22px);font-size:var(--small);color:var(--dim)}
+  .legend span{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+  .legend span::before{content:"";width:.85em;height:.85em;border-radius:3px;background:var(--c)}
+  .legend b{color:var(--ink);font-family:var(--f)}
+
+  /* horizontal bars: a row a value, label above, the bar with its count at the end */
+  .bars{display:flex;flex-direction:column;gap:clamp(6px,1vh,12px)}
+  .bar{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:4px 12px;font-size:var(--small)}
+  .bar .lb{color:var(--ink);line-height:1.25;min-width:0}
+  .bar .v{font-family:var(--f);font-weight:800;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .bar .v small{font-family:var(--b);font-weight:500;color:var(--dim);font-size:.85em;margin-left:6px}
+  .bar .tr{grid-column:1/-1;height:clamp(8px,1.3vh,16px);border-radius:0 4px 4px 0;background:rgba(255,255,255,.06);overflow:hidden}
+  .bar .tr i{display:block;height:100%;width:0;background:var(--c,var(--d-noted));border-radius:0 4px 4px 0;transition:width 1s var(--ease)}
+
+  .qgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(12px,1.6vw,30px) clamp(14px,2vw,40px);flex:1;min-height:0;align-content:start}
+  .q{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:clamp(10px,1.5vh,20px) clamp(12px,1.3vw,22px);min-width:0}
+  .q h4{font-family:var(--f);font-weight:800;font-size:var(--body);margin:0;line-height:1.15}
+  .q p{margin:4px 0 clamp(8px,1.2vh,14px);font-size:var(--label);color:var(--faint);line-height:1.3}
+  .key{display:flex;gap:clamp(12px,1.4vw,26px);font-size:var(--small);color:var(--dim);margin:0 0 clamp(8px,1.4vh,16px)}
+  .key span{display:inline-flex;align-items:center;gap:8px}
+  .key span::before{content:"";width:.85em;height:.85em;border-radius:3px;background:var(--c)}
+
+  /* tables, for the team and the agents */
+  table.t{width:100%;border-collapse:collapse;font-size:var(--small)}
+  table.t th{font-family:var(--f);font-weight:700;font-size:var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--dim);text-align:right;
+    padding:0 0 8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
+  table.t th:first-child,table.t td:first-child{text-align:left;padding-left:0}
+  table.t td{padding:clamp(4px,.7vh,9px) 0 clamp(4px,.7vh,9px) 10px;border-bottom:1px solid var(--grid);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  table.t td:first-child{font-family:var(--f);font-weight:700;white-space:normal}
+  table.t td small{font-family:var(--b);font-weight:500;color:var(--faint);font-size:var(--label);margin-left:10px;white-space:nowrap}
+  table.t td.z{color:var(--faint)}
+  table.t td.hot{color:var(--stop);font-weight:700}
+
+  /* the day columns, drawn in SVG */
+  .days{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:clamp(12px,2.4vh,30px) clamp(20px,3vw,64px);min-height:0}
+  .dchart{min-width:0;display:flex;flex-direction:column}
+  .dchart h4{font-family:var(--f);font-weight:800;font-size:var(--body);margin:0}
+  .dchart p{margin:2px 0 clamp(6px,1vh,12px);font-size:var(--small);color:var(--dim)}
+  .dchart p b{color:var(--ink);font-family:var(--f)}
+  .dchart svg{display:block;width:100%;height:auto;overflow:visible}
+  .dchart text{font-family:var(--b);fill:var(--dim)}
+  .dchart text.v{font-family:var(--f);font-weight:800;fill:var(--ink)}
+
+  .lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(10px,1.8vh,22px);max-width:62ch}
+  .lines li{font-size:calc(var(--body) * 1.12);line-height:1.35;padding-left:clamp(16px,1.4vw,26px);position:relative}
+  .lines li::before{content:"";position:absolute;left:0;top:.45em;width:.42em;height:.42em;border-radius:50%;background:var(--gold)}
+  .empty{color:var(--dim);font-size:var(--body);padding:8px 0}
+
+  footer{flex:none;display:flex;align-items:center;gap:clamp(8px,1vw,16px);padding:0 var(--gut) clamp(8px,1.4vh,16px)}
+  .dots{display:flex;gap:6px;flex-wrap:wrap}
+  .dots button{width:clamp(9px,.7vw,13px);height:clamp(9px,.7vw,13px);border-radius:50%;border:0;padding:0;background:rgba(255,255,255,.22);cursor:pointer}
+  .dots button.on{background:var(--gold)}
+  .fname{font-size:var(--small);color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .ctl{margin-left:auto;display:flex;gap:8px}
+  .ctl button{font:600 var(--small) var(--b);color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:6px 14px;cursor:pointer;min-height:36px}
+  .ctl button:focus-visible,.dots button:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+
+  /* the gate */
+  #gate{margin:auto;width:min(460px,calc(100% - 32px));background:var(--card);border:1px solid var(--line);border-radius:20px;padding:clamp(20px,3vh,32px)}
+  #gate h1{font-family:var(--f);font-weight:800;font-size:clamp(22px,2vw,32px);margin:0 0 8px;letter-spacing:-.02em}
+  #gate p{color:var(--dim);font-size:15px;margin:0 0 16px}
+  #gate label{display:block;font-size:13px;color:var(--dim);margin-bottom:6px}
+  #gate input{width:100%;font:600 18px var(--b);color:var(--ink);background:#0b1b2b;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  #gate button{margin-top:14px;width:100%;font:800 16px var(--f);color:#1a1205;background:linear-gradient(120deg,var(--gold),var(--gold2));border:0;border-radius:12px;padding:13px;cursor:pointer}
+  #gateErr{margin-top:12px;font-size:14px;color:var(--stop)}
+  #gateErr.info{color:var(--dim)}
+
+  @media (max-width:900px){
+    body{overflow:auto}
+    .two,.qgrid,.days{grid-template-columns:minmax(0,1fr)}
+    .tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .tiles.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+    header .safe,header .stamp{display:none}
+    table.t th:nth-child(n+5),table.t td:nth-child(n+5){display:none}
+    table.t td small{display:block;margin-left:0}
+    .fname{display:none}
+    table.t th{white-space:normal}
+    .bottom{grid-template-columns:minmax(0,1fr)}
+    .slide{position:relative;inset:auto;display:none;opacity:1;visibility:visible;transform:none;overflow:visible}
+    .slide.on{display:flex}
+    #deck{flex:none}
+  }
+  @media (prefers-reduced-motion:reduce){
+    .slide,.stack i,.bar .tr i{transition:none!important}
+  }
+</style>
+</head>
+<body>
+<div class="tick" id="tick"></div>
+<header>
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="ttl">The transition, as it stands<span>Ricky Rampersad Branch · counts, by household</span></div>
+  <div class="right">
+    <span class="safe" title="This screen and its data hold counts only: no client's name, number, contact details, words, policy or money."><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M8.5 12.5l2.4 2.4 4.6-5"/></svg>No client details</span>
+    <span class="stamp" id="stamp"></span>
+    <span class="clk" id="clk"></span>
+  </div>
+</header>
+
+<form id="gate" autocomplete="off">
+  <h1>The transition stream</h1>
+  <p>Counts only, safe to put on a shared screen or a call: no client's name, contact details, words, policy or money. Opens with the branch code, the one the wall takes.</p>
+  <label for="code">Branch code</label>
+  <input id="code" type="password" autocapitalize="characters" spellcheck="false" autocomplete="off">
+  <button type="submit">Open the stream</button>
+  <div id="gateErr" hidden></div>
+</form>
+
+<main id="deck" hidden aria-live="off"></main>
+
+<footer id="foot" hidden>
+  <div class="dots" id="dots" role="tablist" aria-label="Slides"></div>
+  <div class="fname" id="fname"></div>
+  <div class="ctl">
+    <button type="button" id="prev" aria-label="Previous slide">‹</button>
+    <button type="button" id="pause">Pause</button>
+    <button type="button" id="next" aria-label="Next slide">›</button>
+  </div>
+</footer>
+
+<script>
+(function () {
+'use strict';
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+var q = new URLSearchParams(location.search);
+var HOLD = Math.max(6, Math.min(120, Number(q.get('hold')) || 14)) * 1000, POLL = 120000, GATE_RETRY = 15000, SNAP_MS = 12 * 3600000;
+var PIN = q.has('slide') ? Math.max(1, Number(q.get('slide')) || 1) - 1 : -1;
+var $ = function (s) { return document.querySelector(s); };
+var deck = $('#deck');
+var CODE = '';
+try { CODE = localStorage.getItem('rrb-transition-code') || ''; } catch (e) {}
+var D = null, shown = false, stale = false, retrying = false, updatedAt = null, cur = 0, paused = PIN >= 0, timer = null, cycle = null, inflight = false, tickStart = 0;
+
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function n(x) { return Number(x || 0).toLocaleString('en-US'); }
+function pct(a, b) { return b ? Math.round(100 * a / b) : 0; }
+function plural(k, one, many) { return n(k) + ' ' + (Number(k) === 1 ? one : many); }
+function sumBy(a, f) { return (a || []).reduce(function (s, x) { return s + (Number(x[f]) || 0); }, 0); }
+
+/* ── the pieces ── */
+function tile(v, label, sub, warn) {
+  return '<div class="tile' + (warn ? ' warn' : '') + '"><b>' + v + '</b><span>' + label + '</span>' + (sub ? '<i>' + sub + '</i>' : '') + '</div>';
+}
+function bars(rows, max, valFn, colorFn) {
+  if (!rows.length) return '<div class="empty">Nothing yet.</div>';
+  max = max || Math.max.apply(null, rows.map(valFn).concat([1]));
+  return '<div class="bars">' + rows.map(function (r) {
+    var v = valFn(r);
+    return '<div class="bar"><span class="lb">' + esc(r.label) + '</span><span class="v">' + n(v) + (r.sub ? '<small>' + esc(r.sub) + '</small>' : '') + '</span>' +
+      '<span class="tr"><i data-w="' + (100 * v / max).toFixed(1) + '" style="--c:' + (colorFn ? colorFn(r) : 'var(--d-noted)') + '"></i></span></div>';
+  }).join('') + '</div>';
+}
+function stack(parts, total) {
+  var t = total || parts.reduce(function (s, p) { return s + p[1]; }, 0) || 1;
+  return '<div class="stack" role="img" aria-label="' + esc(parts.map(function (p) { return p[0] + ' ' + p[1]; }).join(', ')) + '">' +
+    parts.map(function (p) { return '<i style="background:' + p[2] + ';flex:' + (p[1] / t) + ' 1 0"></i>'; }).join('') + '</div>' +
+    '<div class="legend">' + parts.map(function (p) { return '<span style="--c:' + p[2] + '">' + esc(p[0]) + ' <b>' + n(p[1]) + '</b></span>'; }).join('') + '</div>';
+}
+/* a day chart: one series, 4px rounded tops on a single baseline, the period's last day and its highest labelled */
+function dayChart(title, sub, days, key, wide) {
+  var vals = days.map(function (d) { return typeof key === 'function' ? key(d) : (d[key] || 0); });
+  var Z = wide === 'half' ? { W: 760, H: 250, b: 210, v: 21, l: 18 } : wide ? { W: 980, H: 210, b: 172, v: 22, l: 19 } : { W: 560, H: 210, b: 176, v: 17, l: 14 };
+  var W = Z.W, Hh = Z.H, top = 30, base = Z.b, max = Math.max.apply(null, vals.concat([1]));
+  var bw = Math.min(24, (W / vals.length) * .62), step = W / vals.length, hiI = vals.indexOf(Math.max.apply(null, vals));
+  var svg = '<svg viewBox="0 0 ' + W + ' ' + Hh + '" role="img" aria-label="' + esc(title) + ', by day">' +
+    '<line x1="0" y1="' + base + '" x2="' + W + '" y2="' + base + '" stroke="rgba(255,255,255,.18)" stroke-width="1"/>';
+  vals.forEach(function (v, i) {
+    var h = v ? Math.max(3, (base - top) * v / max) : 0, x = i * step + (step - bw) / 2, y = base - h, r = Math.min(4, h);
+    if (h) svg += '<path d="M' + x + ' ' + base + 'V' + (y + r) + 'Q' + x + ' ' + y + ' ' + (x + r) + ' ' + y + 'H' + (x + bw - r) + 'Q' + (x + bw) + ' ' + y + ' ' + (x + bw) + ' ' + (y + r) + 'V' + base + 'Z" fill="var(--d-noted)"><title>' + esc(days[i].label) + ': ' + n(v) + '</title></path>';
+    if (v && (i === hiI || i === vals.length - 1)) svg += '<text class="v" x="' + (x + bw / 2) + '" y="' + (y - 7) + '" text-anchor="middle" font-size="' + Z.v + '">' + n(v) + '</text>';
+    if (i % 2 === (vals.length - 1) % 2) svg += '<text x="' + (x + bw / 2) + '" y="' + (base + 22) + '" text-anchor="middle" font-size="' + Z.l + '">' + esc(days[i].label) + '</text>';
+  });
+  svg += '</svg>';
+  var tbl = '<div class="sr"><table><caption>' + esc(title) + '</caption><tr><th>Day</th><th>Count</th></tr>' +
+    days.map(function (d, i) { return '<tr><td>' + esc(d.label) + '</td><td>' + vals[i] + '</td></tr>'; }).join('') + '</table></div>';
+  var total = vals.reduce(function (s, v) { return s + v; }, 0);
+  return '<div class="dchart"><h4>' + esc(title) + '</h4><p>' + sub.replace('{total}', '<b>' + n(total) + '</b>') + '</p>' + svg + tbl + '</div>';
+}
+
+var QSHORT = { rating: 'How we looked after them', stay: 'Keep the branch team?', checkfirst: 'Check any change with us first?', contact: 'Former agent in touch?',
+  pays: 'Confirm what the policy pays?', life: 'Has life moved on?', paying: 'How they pay', received: 'Did the contract reach them?',
+  outstanding: 'Anything outstanding on the application?', walk: 'A plain-words walk-through?', built: 'What the policy has built?',
+  more: 'More from their cover?', value: 'What a lapsed policy still holds?', reach: 'Best way to reach them', when: 'Best time to call' };
+
+/* ── the slides ── */
+var SLIDES = [
+  { name: 'Households', draw: function (d) {
+    var h = d.hh, st = h.stage;
+    return '<div class="eyebrow">Households<span>everyone at one address, phone or e-mail on our books</span></div>' +
+      '<h2>' + n(h.answered) + ' of ' + n(h.all) + ' households have answered.</h2>' +
+      '<div class="two"><div class="col"><div class="hero" data-count="' + pct(h.answered, h.all) + '" data-suffix="%">' + pct(h.answered, h.all) + '%</div>' +
+      '<p class="say"><b>' + n(h.reached) + '</b> households reached, by letter or by phone. <b>' + n(h.family) + '</b> households have more than one member on our list.</p></div>' +
+      '<div class="col"><div class="h3">The ' + n(h.asked) + ' households that asked us for something</div>' +
+      stack([['Completed', st.done, 'var(--s-done)'], ['Agent named', st.named, 'var(--s-named)'], ['Spoken to', st.spoken, 'var(--s-spoken)'], ['Waiting on us', st.waiting, 'var(--s-wait)']], h.asked) +
+      '<p class="note">A household counts as far as the member who has waited longest: one member spoken to and another not is "waiting on us".</p>' +
+      '<div class="tiles two2" style="margin-top:clamp(10px,2vh,24px)">' +
+      tile(n(h.toReach), 'family members still to reach', 'in ' + plural(h.partly, 'household', 'households') + ' where someone answered') +
+      tile(n(h.risk), 'households sending a signal', 'a member says something that needs a person first (see the signals slide)') +
+      tile(n(h.back), 'households with a call-back open', 'Client Support asked for a call back') +
+      tile(n(d.people.lateHh), 'households past the branch\'s line', 'open more than ' + d.waitDays + ' working days with nobody named', d.people.lateHh > 0) +
+      '</div></div></div>';
+  } },
+  { name: 'The automations', draw: function (d) {
+    var a = d.auto, r = a.receipts, why = r.heldWhy || {}, nw = a.notes.heldWhy || {};
+    var chip = function (on, txt) { return '<span class="chip' + (on ? '' : ' off') + '">' + esc(txt) + '</span>'; };
+        return '<div class="eyebrow">The automations<span>what the system did by itself</span></div>' +
+      '<h2>' + n(a.letters) + ' letters and ' + n(a.reminders) + ' reminders went out without anyone pressing send.</h2>' +
+      '<div class="tiles">' +
+      tile(n(a.afterReminder), 'answered after their reminder', 'one reminder, five days on') +
+      tile(n(r.thanked), 'clients thanked automatically', 'one receipt each') +
+      tile(n(r.held + a.notes.held), 'e-mails held for a person', ((why.wrote || 0) + (nw.wrote || 0)) + ' because the client wrote') +
+      tile(n(r.repeat), 'repeat thank-yous stopped', 'nobody is thanked twice') +
+      tile(n(a.replies), 'replies read and filed', 'from the support inbox') +
+      tile(n(a.filed), 'e-mails taken on calls, filed', 'held for the go') +
+      tile(n(a.held.bounced), 'bounced letters caught', 'held for a working address') +
+      tile(n(a.notes.sent), 'follow-up notes sent', 'until 6 Oct; a person now') +
+      '</div><div class="bottom"><div class="col">' +
+      '<div class="h3">What runs now</div><div class="chips">' +
+      chip(!a.holds.mail, a.holds.mail ? 'Client e-mail: on hold for the manager\'s go' : 'Client e-mail: live') +
+      chip(!a.holds.receipts, a.holds.receipts ? 'Receipts: held' : 'Receipts: live') +
+      chip(!a.holds.intros, a.holds.intros ? 'Introductions: held' : 'Introductions: live') +
+      chip(a.sending, a.sending ? 'Letter batches: running' : 'Letter batches: off') +
+      (a.lifetime === null ? '' : chip(a.lifetime, a.lifetime ? 'Six-month and birthday reviews: on' : 'Six-month and birthday reviews: off')) +
+      '</div>' +
+      '<p class="note">Not sent: ' + n(a.held.noEmail) + ' with no e-mail (a call instead), ' + n(a.held.check) + ' to check first, ' + n(a.held.hold) + ' on a hold. ' +
+      'A client gets the letter, one reminder and one receipt from the system; after that, a person.</p></div>' +
+      '<div class="col">' + dayChart('E-mails the system sent', 'Letters and reminders, the last ' + d.days.length + ' days: {total}', d.days, function (x) { return x.letters + x.reminders; }, true) + '</div>' +
+      '</div>';
+  } },
+  { name: 'The people', draw: function (d) {
+    var p = d.people, ft = p.firstTouch, cl = p.callList;
+    var sfWeek = d.sf && d.sf.on ? sumBy(d.sf.people, 'closedWeek') : null;
+    return '<div class="eyebrow">The people<span>what the team logged, last seven days</span></div>' +
+      '<h2>' + plural(p.week, 'outcome', 'outcomes') + ' logged on the board this week' + (sfWeek !== null ? ', and ' + plural(sfWeek, 'task', 'tasks') + ' closed in Salesforce.' : '.') + '</h2>' +
+      '<div class="two"><div class="col"><div class="tiles three">' +
+      tile(n(p.today), 'outcomes logged today', 'on the board') +
+      tile(n(p.reachedWeek), 'clients reached this week', 'called, met or declined') +
+      tile(n(p.named.week), 'agents named this week', n(d.agentsNamed) + ' agents so far') +
+      tile(ft.median === null ? '–' : n(ft.median), 'working days to a first call', 'median, from the first answer') +
+      tile(n(ft.waiting), 'who asked, still waiting', ft.waitingMedian === null ? '' : 'median ' + plural(ft.waitingMedian, 'working day', 'working days'), ft.waiting > 0) +
+      tile(n(p.backs.agent + p.backs.branch), 'call-backs open', n(p.backs.agent) + ' agent, ' + n(p.backs.branch) + ' branch') +
+      '</div></div><div class="col"><div class="h3">The call list: ' + n(cl.listed) + ' clients</div>' +
+      stack([['Reached', cl.reached, 'var(--s-done)'], ['Tried, not reached yet', cl.tried - cl.reached, 'var(--s-spoken)'], ['Not tried yet', cl.notTried, 'var(--s-wait)']], cl.listed) +
+      '<p class="note">Tried counts any outcome on the board or a try on the old calls sheet. Reached means a person spoke to the client.</p>' +
+      '<div style="margin-top:clamp(10px,2vh,24px)">' + dayChart('The team, on the board', 'Outcomes logged, the last ' + d.days.length + ' days: {total}', d.days, 'people', true) + '</div>' +
+      '</div></div>';
+  } },
+  { name: 'Who did what', draw: function (d) {
+    var t = (d.people.team || []).slice(0, 12), sf = d.sf || { on: false };
+    var row = function (x, cells) { return '<tr><td>' + esc(x.name) + '<small>' + esc(x.role || '') + '</small></td>' + cells.map(function (c) { return '<td' + (c === 0 ? ' class="z"' : '') + '>' + n(c) + '</td>'; }).join('') + '</tr>'; };
+    var board = t.length ? '<table class="t"><thead><tr><th>On the board</th><th>Today</th><th>7 days</th><th>Clients</th><th>Reached</th><th>No answer</th></tr></thead><tbody>' +
+      t.map(function (x) { return row(x, [x.today, x.week, x.clientsWeek, x.reachedWeek, x.noAnswerWeek]); }).join('') + '</tbody></table>'
+      : '<div class="empty">Nobody has logged an outcome on the board yet.</div>';
+    var sft = sf.on ? (sf.people.length ? '<table class="t"><thead><tr><th>In Salesforce</th><th>Closed today</th><th>Closed 7 days</th><th>Notes 7 days</th><th>Open</th><th>Overdue</th></tr></thead><tbody>' +
+      sf.people.map(function (x) { return '<tr><td>' + esc(x.name) + '</td><td' + (x.closedToday ? '' : ' class="z"') + '>' + n(x.closedToday) + '</td><td>' + n(x.closedWeek) + '</td><td>' + n(x.notesWeek) + '</td><td>' + n(x.open) + '</td><td' + (x.overdue ? ' class="hot"' : ' class="z"') + '>' + n(x.overdue) + '</td></tr>'; }).join('') + '</tbody></table>'
+      : '<div class="empty">No transition tasks in Salesforce since ' + esc(sf.since || '1 Oct') + '.</div>')
+      : '<div class="empty">' + esc(sf.why || 'Salesforce is not linked to this project yet.') + ' Its task figures show here once it is.</div>';
+    return '<div class="eyebrow">Who did what<span>first name and initial; the last seven days</span></div>' +
+      '<h2>The team, person by person.</h2>' +
+      '<div class="two"><div class="col">' + board + '</div><div class="col">' + sft + '</div></div>';
+  } },
+  { name: 'Day by day', draw: function (d) {
+    var sfOn = d.sf && d.sf.on;
+    return '<div class="eyebrow">Day by day<span>the last ' + d.days.length + ' days</span></div>' +
+      '<h2>The system, the clients and the team, side by side.</h2>' +
+      '<div class="days" style="--n:2">' +
+      dayChart('The system', 'Letters and reminders sent: {total}', d.days, function (x) { return x.letters + x.reminders; }, 'half') +
+      dayChart('The clients', 'Clients answering: {total}', d.days, 'answers', 'half') +
+      dayChart('The team, on the board', 'Outcomes logged: {total}', d.days, 'people', 'half') +
+      (sfOn ? dayChart('The team, in Salesforce', 'Tasks closed: {total}', d.days, 'sfClosed', 'half') : '') +
+      '</div><p class="note">Each chart has its own scale. A client who answers on two days counts on each.</p>';
+  } },
+  { name: 'What clients are saying', draw: function (d) {
+    var qs = (d.said.questions || []).filter(function (x) { return x.key !== 'reach' && x.key !== 'when'; }).slice(0, 6);
+    return '<div class="eyebrow">What clients are saying<span>each client\'s last word on each question</span></div>' +
+      '<h2>' + n(d.clients.answered) + ' clients in ' + n(d.hh.answered) + ' households have answered.</h2>' +
+      '<div class="key"><span style="--c:var(--d-noted)">Noted, nothing needed</span><span style="--c:var(--d-person)">Needs a person</span></div>' +
+      '<div class="qgrid">' + qs.map(function (x) {
+        var rows = x.answers.map(function (a) { return { label: a.label, v: a.clients, sub: pct(a.clients, x.clients) + '%', person: a.person }; });
+        return '<div class="q"><h4>' + esc(QSHORT[x.key] || x.key) + '</h4><p>' + esc(x.question) + ' · ' + plural(x.clients, 'client', 'clients') + '</p>' +
+          bars(rows, x.clients, function (r) { return r.v; }, function (r) { return r.person ? 'var(--d-person)' : 'var(--d-noted)'; }) + '</div>';
+      }).join('') + '</div>';
+  } },
+  { name: 'What they asked for', draw: function (d) {
+    var inHh = function (x) { return x.hh !== x.clients ? 'in ' + plural(x.hh, 'household', 'households') : ''; };
+    var asks = (d.said.asks || []).map(function (x) { return { label: x.label, v: x.clients, sub: inHh(x) }; });
+    var th = (d.said.themes || []).map(function (x) { return { label: x.label, v: x.clients, sub: inHh(x) }; });
+    return '<div class="eyebrow">What they asked for<span>and what the ones who wrote were writing about</span></div>' +
+      '<h2>' + plural(d.clients.wrote, 'client', 'clients') + ' wrote to us in their own words.</h2>' +
+      '<div class="two"><div class="col"><div class="h3">What they tapped · clients</div>' + bars(asks, 0, function (r) { return r.v; }, function () { return 'var(--d-person)'; }) + '</div>' +
+      '<div class="col"><div class="h3">What their words were about · clients</div>' + bars(th, 0, function (r) { return r.v; }) +
+      '<p class="note">Read by the script for the subject only; the words themselves never leave the sheet. A message can be about more than one thing.</p></div></div>';
+  } },
+  { name: 'Signals, by household', draw: function (d) {
+    var rk = (d.said.risk || []).map(function (x) { return { label: x.label.charAt(0).toUpperCase() + x.label.slice(1), v: x.hh, sub: x.clients !== x.hh ? plural(x.clients, 'client', 'clients') : '' }; });
+    var ag = d.hh.agent;
+    return '<div class="eyebrow">Signals, by household<span>something a member said that needs a person first</span></div>' +
+      '<h2>In ' + plural(d.hh.risk, 'household', 'households') + ' someone said something that needs a person first.</h2>' +
+      '<div class="two"><div class="col"><div class="h3">Households, by what was said</div>' + bars(rk, 0, function (r) { return r.v; }, function () { return 'var(--d-person)'; }) + '</div>' +
+      '<div class="col"><div class="h3">The ' + n(d.hh.asked) + ' households that asked: their agent</div>' +
+      stack([['One agent for the family', ag.one, 'var(--s-done)'], ['Split across agents', ag.split, 'var(--s-spoken)'], ['No agent yet', ag.none, 'var(--s-wait)']], d.hh.asked) +
+      '<p class="note">A household is named to one agent, so a family never hears from two.</p>' +
+      '<div class="tiles two2" style="margin-top:clamp(10px,2vh,24px)">' +
+      tile(n(d.hh.sizes['2'] + d.hh.sizes['3'] + d.hh.sizes['4+']), 'families with more than one member', n(d.hh.sizes['2']) + ' of two, ' + n(d.hh.sizes['3']) + ' of three, ' + n(d.hh.sizes['4+']) + ' of four or more') +
+      tile(n(d.hh.toReach), 'members still to reach', 'where someone in the family answered') +
+      '</div></div></div>';
+  } },
+  { name: 'The agents', draw: function (d) {
+    var a = d.agents || [];
+    var tb = a.length ? '<table class="t"><thead><tr><th>Agent</th><th>Households</th><th>Clients</th><th>Spoken to</th><th>Completed</th><th>Past the line</th></tr></thead><tbody>' +
+      a.map(function (x) { return '<tr><td>' + esc(x.name) + '</td><td>' + n(x.hh) + '</td><td>' + n(x.clients) + '</td><td' + (x.spoken ? '' : ' class="z"') + '>' + n(x.spoken) + '</td><td' + (x.done ? '' : ' class="z"') + '>' + n(x.done) + '</td><td' + (x.waiting ? ' class="hot"' : ' class="z"') + '>' + n(x.waiting) + '</td></tr>'; }).join('') + '</tbody></table>'
+      : '<div class="empty">No agent has been named on a client yet.</div>';
+    return '<div class="eyebrow">The agents<span>named on the board or in Salesforce</span></div>' +
+      '<h2>' + plural(d.agentsNamed, 'agent has', 'agents have') + ' been named; ' + plural(d.hh.agent.none, 'household that asked has', 'households that asked have') + ' none yet.</h2>' +
+      tb + '<p class="note">Past the line: named more than ' + d.waitDays + ' working days ago with no call logged since.</p>';
+  } },
+  { name: 'What stands out', draw: function (d) {
+    return '<div class="eyebrow">What stands out<span>facts from the counts, never advice</span></div><h2>In a sentence each.</h2>' +
+      '<ul class="lines">' + (d.lines || []).map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>';
+  } },
+];
+
+/* ── drawing and the cycle ── */
+function build(d) {
+  deck.innerHTML = SLIDES.map(function (s, i) { return '<section class="slide" id="s' + i + '" aria-label="' + esc(s.name) + '"></section>'; }).join('');
+  $('#dots').innerHTML = SLIDES.map(function (s, i) { return '<button type="button" role="tab" aria-label="' + esc(s.name) + '" data-i="' + i + '"></button>'; }).join('');
+  paint(d);
+}
+function paint(d) {
+  if (!deck.children.length) { build(d); return true; }
+  try {
+    SLIDES.forEach(function (s, i) { deck.children[i].innerHTML = s.draw(d); grow(deck.children[i], false); });
+  } catch (e) { return false; }
+  show(cur, true);
+  return true;
+}
+/* bars grow when their slide comes on; a refresh puts the new widths in place without moving anything */
+var STILL = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+function grow(el, animate) {
+  var bs = el.querySelectorAll('.bar .tr i');
+  if (!animate || STILL) { bs.forEach(function (i) { i.style.transition = 'none'; i.style.width = i.dataset.w + '%'; }); return; }
+  bs.forEach(function (i) { i.style.transition = 'none'; i.style.width = '0'; });
+  requestAnimationFrame(function () { requestAnimationFrame(function () { bs.forEach(function (i) { i.style.transition = ''; i.style.width = i.dataset.w + '%'; }); }); });
+}
+function show(i, quiet) {
+  cur = (i + SLIDES.length) % SLIDES.length;
+  Array.prototype.forEach.call(deck.children, function (s, k) { s.classList.toggle('on', k === cur); });
+  Array.prototype.forEach.call($('#dots').children, function (b, k) { b.classList.toggle('on', k === cur); b.setAttribute('aria-selected', k === cur ? 'true' : 'false'); });
+  $('#fname').textContent = (cur + 1) + ' of ' + SLIDES.length + ' · ' + SLIDES[cur].name;
+  if (!quiet) { grow(deck.children[cur], true); restart(); }
+}
+function restart() {
+  clearTimeout(cycle); tickStart = Date.now();
+  if (!paused) cycle = setTimeout(function () { show(cur + 1); }, HOLD);
+}
+function setPaused(p) { paused = p; $('#pause').textContent = p ? 'Play' : 'Pause'; restart(); }
+(function tick() {
+  var w = paused || !shown ? 0 : Math.min(100, 100 * (Date.now() - tickStart) / HOLD);
+  $('#tick').style.width = w + '%';
+  requestAnimationFrame(tick);
+})();
+$('#dots').addEventListener('click', function (e) { var b = e.target.closest('button'); if (b) show(Number(b.dataset.i)); });
+$('#prev').addEventListener('click', function () { show(cur - 1); });
+$('#next').addEventListener('click', function () { show(cur + 1); });
+$('#pause').addEventListener('click', function () { setPaused(!paused); });
+document.addEventListener('keydown', function (e) {
+  if (!shown || e.target.tagName === 'INPUT') return;
+  if (e.key === 'ArrowRight') show(cur + 1); else if (e.key === 'ArrowLeft') show(cur - 1); else if (e.key === ' ') { e.preventDefault(); setPaused(!paused); }
+});
+
+function clock() {
+  var t = new Date();
+  $('#clk').textContent = t.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  var s = $('#stamp');
+  if (!D) { s.textContent = ''; return; }
+  s.className = 'stamp' + (retrying || stale ? ' retry' : '');
+  s.textContent = stale ? 'As you last saw it, updating from the sheet…' : retrying ? 'Read at ' + D.at + ' · the sheet is busy, trying again' : 'Read from the sheet at ' + D.at;
+}
+setInterval(clock, 15000); clock();
+
+/* ── the answer ── */
+function schedule(ms) { clearTimeout(timer); timer = setTimeout(load, ms); }
+function showDeck() { shown = true; $('#gate').hidden = true; deck.hidden = false; $('#foot').hidden = false; }
+function gateMsg(msg, info) { var g = $('#gateErr'); g.className = info ? 'info' : ''; g.textContent = msg; g.hidden = false; }
+/* only the stream's own answer is ever drawn or kept: it says stream 1 and carries counts, never a list of clients */
+function isStream(d) { return !!d && d.ok === true && d.stream === 1 && !Array.isArray(d.clients) && !d.silent && !!d.hh && !!d.days; }
+function load() {
+  clearTimeout(timer); timer = null;
+  if (inflight || !CODE) return;
+  if (document.hidden && shown) return;
+  inflight = true;
+  if (!shown) gateMsg('Opening… the sheet is answering. This takes about fifteen seconds the first time.', true);
+  fetch(SVC + '?action=board&who=stream&code=' + encodeURIComponent(CODE) + '&z=' + Date.now())
+    .then(function (r) { return r.json(); })
+    .then(function (d) {
+      inflight = false;
+      if (d && d.ok === false && d.refused) {
+        try { localStorage.removeItem('rrb-stream-snapshot'); } catch (e) {}
+        shown = false; D = null; deck.hidden = true; $('#foot').hidden = true; $('#gate').hidden = false;
+        gateMsg(d.stream ? (d.error || 'That code does not open the stream.')
+          : 'That did not open the stream. If it is the branch code, the sheet needs the latest Transition.gs: paste it, then Deploy → Manage deployments → New version.');
+        return;
+      }
+      if (!isStream(d)) { fail(d && d.error ? String(d.error) : 'The sheet did not answer.'); return; }
+      var first = !shown;
+      if (first) showDeck();
+      if (!paint(d)) { fail('The sheet answered with something this screen could not read.'); return; }
+      D = d; updatedAt = new Date(); retrying = false; stale = false;
+      try { localStorage.setItem('rrb-transition-code', CODE); } catch (e) {}
+      try { localStorage.setItem('rrb-stream-snapshot', JSON.stringify({ at: Date.now(), d: d })); } catch (e) {}
+      if (first) { show(PIN >= 0 ? PIN % SLIDES.length : 0); setPaused(paused); }
+      schedule(POLL); clock();
+    })
+    .catch(function () { inflight = false; fail('The sheet is busy. Trying again in a moment.'); });
+}
+function fail(msg) {
+  if (shown) { retrying = true; schedule(stale ? GATE_RETRY : POLL); clock(); return; }
+  gateMsg(msg); schedule(GATE_RETRY);
+}
+document.addEventListener('visibilitychange', function () { if (!document.hidden && shown && !inflight) load(); });
+$('#gate').addEventListener('submit', function (e) { e.preventDefault(); CODE = $('#code').value.trim(); if (CODE) load(); });
+if (CODE) {
+  $('#code').value = CODE;
+  var snap = null;
+  try { snap = JSON.parse(localStorage.getItem('rrb-stream-snapshot') || 'null'); } catch (e) { snap = null; }
+  if (snap && snap.at && Date.now() - snap.at < SNAP_MS && isStream(snap.d)) {
+    showDeck();
+    if (paint(snap.d)) { D = snap.d; stale = true; show(PIN >= 0 ? PIN % SLIDES.length : 0); setPaused(paused); clock(); }
+  }
+  load();
+}
+window.RRB_STREAM = { load: load, show: show };   /* for a test to step through */
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

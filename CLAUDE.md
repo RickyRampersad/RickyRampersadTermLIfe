@@ -2648,6 +2648,35 @@ voice under the new timing and the caption gives it away.
   - The match adds about 9% to the branch board. `match9/match-harness.js` (39, Node, mocked Salesforce) and
     `match9/match-test.js` (37, Playwright) in the scratchpad cover it, on `match9/tabs9.json`: the real tabs with the
     Client Book built from the 7 October portfolio export.
+- **The stream: the campaign on a screen anyone in the room may see** (8 October 2026: "I need to stream the wall
+  without the confidential information and drive further analysis of how the automations and humans are managing and
+  what the clients are saying, group by households"). `orphan-transition/stream.html`, ten slides on a cycle:
+  - households: how many answered, how far the ones that asked have got, and the family members still to reach;
+  - the automations: letters, reminders, receipts, what was held for a person, replies filed, bounces, what runs now;
+  - the people, then who did what, on the board and in Salesforce;
+  - day by day;
+  - what clients are saying, and what they asked for and wrote about;
+  - signals by household;
+  - the agents;
+  - what stands out.
+
+  **Its answer carries counts and nothing else.** `tStream_` in Transition.gs builds it, and it holds no client's name,
+  number, token, address, e-mail, phone, words, policy or money, no household's name and no former agent's name. So the
+  screen, a call it is shared on, and the page's source show nothing about any client. A client's own words are read by
+  the script for their subject only (`T_STREAM_THEMES`) and never leave it. The team appears by first name and initial
+  (`tShortName_`), because what the people did is half of what the stream is for.
+  - **Access.** It opens with the branch code, through the board's route as `action=board&who=stream`, so Service.gs
+    needs no paste. A script older than the stream reads "stream" as a person, finds nobody and refuses, so it never
+    sends the board for it. The page then says to paste Transition.gs.
+  - **Definitions.** The words mean what they mean on the board's Dashboard tab (dSpoken, dTried, dDone). A household
+    counts as far along as its least-served member who asked.
+  - **Caching.** The answer is kept like the wall's (`tServeCached_`, three minutes fresh).
+  - **Tests.** `wall8/stream-harness.js` in the scratchpad looks for every client name, first name, surname, token,
+    number, e-mail, phone, address, household name, former agent's name and every piece of client words in the answer
+    on the real tabs (46 checks). `wall8/stream-look.js` (32, Playwright) checks every slide fits a television and
+    nothing runs off a phone.
+  - **Never add a client's anything to it.** If a slide needs a name, it belongs on the wall or the board, behind the
+    same code, not here.
 - **The team sees it first.** `orphan-transition/team-review.html` before any
   letter reaches a client; then the roster of receiving agents by town, from
   the ticks on the Team Feedback tab.
