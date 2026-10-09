@@ -1876,3 +1876,136 @@ function qpChaseReview() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ============================================================================
+   13. THE DEPARTMENT EMAIL IS THE ONE THAT MATTERS
+   ----------------------------------------------------------------------------
+   doPost writes the row and then calls sendRoutedEmail. If that throws, the
+   whole request answers {ok:false} — and the page used to show a success
+   screen anyway, so a client was told their request was with a department
+   that had never heard of it. The page now tells the truth; this side makes
+   the truth less likely to be needed.
+
+   Two jobs:
+
+     - Under quota pressure, shed copies rather than lose the request. A
+       consumer Google account sends about a hundred recipients a day, and one
+       request spends up to six of them: the department, sales support, branch
+       support, the agent and the client. Five of those are courtesy. One is
+       the request. When the account is nearly out, the courtesy copies go and
+       the department still hears.
+
+     - When nothing can be sent, say so in the sheet rather than by email —
+       the quota is the usual reason the send failed, so an alert email would
+       fail with it. A flagged row is a worklist the branch can see.
+   ============================================================================ */
+
+/* Below this many remaining recipients, start shedding copies. One request
+   plus a little headroom, so the last few sends go to departments. */
+var QP_QUOTA_TIGHT = 12;
+var QP_QUOTA_BARE  = 4;
+
+function qpQuotaLeft_() {
+  try { return MailApp.getRemainingDailyQuota(); }
+  catch (e) { return 999; }        // unknown is not a reason to drop copies
+}
+
+/* Trim d.cc in place. Returns a note for the trail, or '' if nothing changed. */
+function qpTrimCcForQuota_(d) {
+  var cc = String(d.cc || '').split(',').map(function (s) { return s.trim(); })
+             .filter(function (s) { return s; });
+  if (!cc.length) return '';
+  var left = qpQuotaLeft_();
+  if (left > QP_QUOTA_TIGHT) return '';
+
+  var kept;
+  if (left <= QP_QUOTA_BARE) {
+    kept = [];                                     // department only
+  } else {
+    /* Keep the client's own copy if we have it — it is the one that stops
+       them wondering — and drop the internal courtesy copies. */
+    var client = String(d.email || '').trim().toLowerCase();
+    kept = cc.filter(function (a) { return a.toLowerCase() === client; });
+  }
+  if (kept.length === cc.length) return '';
+  d.cc = kept.join(',');
+  return 'Sending limit low (' + left + ' left): copies to '
+       + (cc.length - kept.length) + ' address'
+       + (cc.length - kept.length > 1 ? 'es' : '') + ' held back so the '
+       + 'department email could go.';
+}
+
+/* Mark a case whose routed email never left. The note goes in the Comments
+   trail as an internal note — never a sheet column, because columns 23-29 are
+   the autopilot's own (Follow-ups, Last Follow-up, Survey Sent, Score,
+   Feedback, Dept Replied, Assigned To) and a word written into the
+   Follow-ups count would stop the chases dead. No email is sent about it
+   either: the quota is the usual cause and the alert would fail with it. */
+function qpFlagUnsent_(sh, reference, err) {
+  var note = '\u26a0 NOT EMAILED \u2014 logged but the routed email did not send. '
+           + 'Route this one by hand. (' + String(err || '').slice(0, 160) + ')';
+  try {
+    cmtSheet_().appendRow([new Date(), reference, 'System', 'system', note, 'internal']);
+  } catch (e) { Logger.log('qpFlagUnsent_ comment: ' + e); }
+  try {
+    var r = qpRowOf_(sh, reference);
+    if (r > 1) sh.getRange(r, 1, 1, 4).setBackground('#fdeceb');
+  } catch (e) {}
+  Logger.log('ROUTED EMAIL FAILED for ' + reference + ': ' + err);
+}
+
+/* What doPost calls instead of sendRoutedEmail. Must never throw, or a logged
+   case would answer with no reference at all. */
+function qpSendRouted_(d, sh, reference) {
+  var trimmed = '';
+  try { trimmed = qpTrimCcForQuota_(d); } catch (e) {}
+  try {
+    sendRoutedEmail(d);
+    if (trimmed) {
+      try {
+        cmtSheet_().appendRow([new Date(), reference, 'System', 'system', trimmed, 'internal']);
+      } catch (e) {}
+    }
+    return true;
+  } catch (err) {
+    qpFlagUnsent_(sh, reference, err);
+    return false;
+  }
+}
+
+function qpRowOf_(sh, reference) {
+  var last = sh.getLastRow();
+  if (last < 2) return 0;
+  var vals = sh.getRange(1, 1, last, 1).getValues();
+  for (var r = 1; r < vals.length; r++) {
+    if (String(vals[r][0]).trim() === String(reference).trim()) return r + 1;
+  }
+  return 0;
+}
+
+/* Every request that was logged but never routed, and is still open. Run it
+   from the editor on a day the limit was hit, then send those few by hand. */
+function qpUnsentReport() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sh = ss.getSheetByName(SHEET_NAME);
+  var cm = cmtSheet_().getDataRange().getValues();
+  var flagged = {};
+  for (var i = 1; i < cm.length; i++) {
+    if (/NOT EMAILED/i.test(String(cm[i][4] || ''))) flagged[String(cm[i][1]).trim()] = true;
+  }
+  var vals = sh.getDataRange().getValues(), out = [];
+  for (var r = 1; r < vals.length; r++) {
+    var ref = String(vals[r][0]).trim();
+    if (!flagged[ref]) continue;
+    var st = String(vals[r][3] || '').toLowerCase();
+    if (st && st.indexOf('open') === -1) continue;          // already dealt with
+    out.push('  ' + ref + '\n      ' + vals[r][13] + '  <' + vals[r][14] + '>'
+           + '\n      ' + String(vals[r][17] || '').slice(0, 70));
+  }
+  var msg = out.length
+    ? 'LOGGED BUT NEVER ROUTED \u2014 send these ' + out.length + ' by hand:\n\n' + out.join('\n')
+    : 'Nothing is waiting. Every logged request reached its department.';
+  Logger.log(msg);
+  return msg;
+}

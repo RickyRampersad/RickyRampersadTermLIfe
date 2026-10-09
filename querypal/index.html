@@ -2866,6 +2866,30 @@ function submitQuery(){
   const fb=ffValidateAndBuild(state.q);
   if(!fb.ok)return;
 
+  /* The site is public — it was posted on Facebook on 9 October 2026 — and
+     the client path has no sign-in, which is right for a service form. But a
+     consumer Google account sends about a hundred recipients a day and one
+     request spends up to six of them, so a handful of joke submissions can
+     take the branch's whole sending day with it and a real client's request
+     is then the one that fails. A genuine client logs one request, perhaps
+     two. Six from one device in an hour is not a client. Agents and staff are
+     exempt — logging many is their job. */
+  if(state.who==='Client'){
+    try{
+      const hr=Date.now()-3600000;
+      let st=JSON.parse(localStorage.getItem('qprate')||'[]').filter(x=>x>hr);
+      if(st.length>=6){
+        alert('You have logged '+st.length+' requests in the last hour.\n\n'
+          +'So we can give each one proper attention, please call the branch on '
+          +'1-868-665-3279 or email support@rickyrampersadbranch.com for anything further '
+          +'today. Everything you have already sent is safe and being worked on.');
+        return;
+      }
+      st.push(Date.now());
+      localStorage.setItem('qprate',JSON.stringify(st));
+    }catch(e){}
+  }
+
   /* The same request sent twice creates a second case and a second branded
      email to the department. It happens honestly: the webhook runs slow, the
      20s timeout shows success, the agent doubts it and presses Send again.
@@ -2877,7 +2901,8 @@ function submitQuery(){
     const hit=prev[fp];
     if(hit && Date.now()-hit.at<15*60*1000){
       const mins=Math.max(1,Math.round((Date.now()-hit.at)/60000));
-      if(!confirm('This looks identical to a request sent '+mins+' minute'+(mins>1?'s':'')
+      if(hit.failed){ /* the last attempt never reached a department - let it through */ }
+      else if(!confirm('This looks identical to a request sent '+mins+' minute'+(mins>1?'s':'')
         +' ago'+(hit.ref&&hit.ref!=='(assigned)'?' — reference '+hit.ref:'')
         +'.\n\nSend it AGAIN? The department would receive it twice.'))return;
     }
@@ -2905,7 +2930,7 @@ function submitQuery(){
     agentCode:((state.who==='Agent'||state.who==='Staff')&&agentAuth)?agentAuth.code:'',
     ...(fb.attach||{})
   };
-  const finish=(ref)=>{window._sending=false;payload.reference=ref||'(assigned)';window._lastPayload=payload;
+  const finish=(ref,mailed)=>{window._sending=false;payload.reference=ref||'(assigned)';payload._mailed=(mailed!==false);window._lastPayload=payload;
     try{ if(window._dupfp){ const m=JSON.parse(localStorage.getItem('qpsent')||'{}');
       m[window._dupfp]={at:Date.now(),ref:payload.reference};
       const ks=Object.keys(m); if(ks.length>40)ks.slice(0,ks.length-40).forEach(k=>delete m[k]);
@@ -2914,11 +2939,52 @@ function submitQuery(){
   if(SHEET_WEBHOOK_URL){
     const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),20000);
     fetch(SHEET_WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(payload),signal:ctl.signal})
-      .then(r=>r.json()).then(d=>{clearTimeout(to);finish(d&&d.reference);})
-      .catch(()=>{clearTimeout(to);finish();});
+      .then(r=>r.json()).then(d=>{clearTimeout(to);
+        /* The backend answers {ok:false} when it logged the row but could not
+           send - almost always the daily mail quota. Showing "Request sent"
+           then would tell a client their request is with a department that has
+           never heard of it. */
+        if(d&&d.ok===false)return sendFailed(d.error,payload);
+        finish(d&&d.reference, d&&d.mailed);})
+      .catch(()=>{clearTimeout(to);sendFailed('no-answer',payload);});
   }else{setTimeout(()=>finish('RRB/2026/001/'+cleanPart(client)),400);}
 }
 
+/* Logged, but not sent. The client stays on the form, so the card goes above
+   the Send button where they are already looking - not on a success screen
+   they must never be shown for a request no department has received. */
+function sendFailed(why,payload){
+  window._sending=false;
+  const btn=document.getElementById('submitBtn');
+  if(btn){btn.disabled=false;btn.textContent='Try sending again \u2192';}
+
+  /* A failed attempt must not trip the duplicate guard on the retry. */
+  try{ if(window._dupfp){ const m=JSON.parse(localStorage.getItem('qpsent')||'{}');
+    m[window._dupfp]={at:Date.now(),failed:true};
+    localStorage.setItem('qpsent',JSON.stringify(m)); } }catch(e){}
+
+  const quota=/quota|limit|service invoked too many|too many times/i.test(String(why||''));
+  let el=document.getElementById('sendFail');
+  if(!el){
+    el=document.createElement('div'); el.id='sendFail';
+    const acts=btn&&btn.parentNode;
+    if(acts&&acts.parentNode)acts.parentNode.insertBefore(el,acts);
+    else (document.getElementById('s4')||document.body).appendChild(el);
+  }
+  el.innerHTML='<div style="border-left:4px solid #e0483e;background:#fdeceb;border-radius:10px;'
+    +'padding:14px 16px;margin:0 0 14px;font-size:15px;line-height:1.5;color:#3a1512">'
+    +'<b>This did not send. Please do not assume it has gone through.</b><br><br>'
+    +(quota?'Our system has reached its sending limit for today. ':'')
+    +'Nothing you typed is lost \u2014 but the department has <b>not</b> been contacted yet.'
+    +'<br><br>Tap <b>Try sending again</b> first; it often goes on a second attempt. '
+    +'If it still will not send, call the branch on <b><a href="tel:+18686653279" '
+    +'style="color:#b3291f">1-868-665-3279</a></b> or email '
+    +'<a href="mailto:support@rickyrampersadbranch.com?subject=Request%20would%20not%20send" '
+    +'style="color:#b3291f">support@rickyrampersadbranch.com</a> and we will put it through by hand.'
+    +'</div>';
+  el.scrollIntoView({behavior:'smooth',block:'center'});
+  try{toast('Not sent \u2014 please try again');}catch(e){}
+}
 function celebrate(){
   try{const C=['#E4644B','#0b7fd4','#15803d','#e0483e','#6d28d9'];
   for(let i=0;i<34;i++){const s=document.createElement('span');s.className='cfp';
@@ -2928,6 +2994,23 @@ function celebrate(){
 }
 function renderSuccess(p){
   document.getElementById('ticketRef').textContent=p.reference;
+  /* Logged with a real reference, but the routed email did not go - almost
+     always the daily sending limit. The case is safe and the branch has it
+     flagged, so this is a success screen; it just must not claim the
+     department has been contacted when it has not. */
+  try{
+    let w=document.getElementById('notMailed');
+    if(p._mailed===false){
+      if(!w){w=document.createElement('div');w.id='notMailed';
+        const sb=document.getElementById('summBox');sb.parentNode.insertBefore(w,sb);}
+      w.innerHTML='<div style="border-left:4px solid #E4644B;background:#fff4f1;border-radius:10px;'
+        +'padding:13px 15px;margin:0 0 14px;font-size:14.5px;line-height:1.5;color:#3a1512">'
+        +'<b>Logged \u2014 but we still have to pass it on by hand.</b><br>'
+        +'Your reference above is real and the branch can see this request. '
+        +'The department has not been emailed yet, so we will route it manually today. '
+        +'Nothing more is needed from you.</div>';
+    } else if(w){ w.remove(); }
+  }catch(e){}
   try{
     const tl=location.origin+location.pathname.replace(/\/+$/,'')+'/?track='+encodeURIComponent(p.reference);
     let el=document.getElementById('magicLink');
@@ -2944,7 +3027,7 @@ function renderSuccess(p){
     ${p.agent?`<div class="r"><span class="k">Agent</span><span class="v">${esc(p.agent)}</span></div>`:''}
     ${p.policy?`<div class="r"><span class="k">Policy</span><span class="v">${esc(p.policy)}</span></div>`:''}
     ${p.priority&&p.priority!=='Normal'?`<div class="r"><span class="k">Priority</span><span class="v">${esc(p.priority)}</span></div>`:''}
-    <div class="r"><span class="k">Copied to</span><span class="v">You, agent & branch support</span></div>`;
+    <div class="r"><span class="k">Copied to</span><span class="v">${p._mailed===false?'Not yet \u2014 branch will route by hand':'You, agent &amp; branch support'}</span></div>`;
   document.getElementById('sameAgentBtn').style.display=((state.who==='Agent'||state.who==='Staff')&&document.getElementById('f_agent').value.trim())?'':'none';
   window._lastRef=p.reference;goto(5);setStep(5);
 }

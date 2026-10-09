@@ -57,6 +57,24 @@ per value it can carry, and playback only ever joins sentences at full stops.
 `film/wall-voice/embed-wall-voice.py` folds them back in with their text, so
 the subtitle can never drift from what is said.
 
+**The page used to lie when a send failed.** `doPost` writes the row and then
+sends the routed email; if that send throws, the whole request answers
+`{ok:false}` — and the page read `d.reference` without ever checking `d.ok`,
+so it showed the success screen anyway. A client walked away with a reference
+for a request no department had received. The site was posted on Facebook on 9
+October 2026 with 25 of the day's recipients left, which is how close this
+came to happening in public. `tests/send.test.mjs` fails if the `d.ok` check
+is removed again.
+
+**The client path has no sign-in, and that is deliberate** — it is a public
+service form. It does mean a stranger can route a request to a real Guardian
+department, and that each request spends up to six of the day's hundred
+recipients. Two things hold the line: a device that logs six requests in an
+hour is asked to call the branch instead, and under quota pressure the backend
+sheds the courtesy copies (sales support, branch support, the agent) rather
+than lose the department email. `qpUnsentReport()` lists anything that still
+never went.
+
 **The email quota is a real ceiling.** A consumer Google account sends about a
 hundred recipients a day and the autopilot spends them on chases, surveys and
 client updates. When it runs out, follow-ups silently do not go.

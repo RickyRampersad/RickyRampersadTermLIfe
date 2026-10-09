@@ -657,3 +657,42 @@ scores on-time: `row[15]` is still the promise and still what the branch is
 measured against. What changes is when the machine speaks.
 
 Run `qpChaseReview()` from the editor in a month to re-measure.
+
+### 21 — `doPost`: never tell a client a department has it when it has not
+
+**This is the one to do today if you do nothing else.**
+
+`doPost` writes the row and then sends the routed email. If the send throws —
+and the daily sending limit is the usual reason — the whole request answered
+`{ok:false}`, the page showed a success screen anyway, and the client walked
+away with a reference for a request no department had ever received. The page
+is fixed and will now say so honestly. This edit means it rarely has to.
+
+Find, near the end of `doPost`:
+```js
+    if (SEND_EMAIL && d.departmentEmail) sendRoutedEmail(d);
+    return json({ok:true, reference:reference, runNo:runNo});
+```
+Replace with:
+```js
+    var mailed = true;
+    if (SEND_EMAIL && d.departmentEmail) mailed = qpSendRouted_(d, sh, reference);
+    return json({ok:true, reference:reference, runNo:runNo, mailed:mailed});
+```
+
+That is the whole edit. What it buys, from `QueryPalPatch.gs` section 13:
+
+- **Copies are shed before the request is.** One request spends up to six of
+  the day's hundred recipients: the department, sales support, branch support,
+  the agent and the client. Five of those are courtesy; one is the request.
+  Under twelve recipients left, the internal copies are held back and the
+  client's own copy is kept. Under four, the department alone. The request
+  gets through on the last of the quota instead of being the thing that fails.
+- **A case that could not be sent is flagged** as an internal note on its
+  trail — never in a sheet column, because columns 23 to 29 are the
+  autopilot's own and a word written into the Follow-ups count would stop
+  every chase in the branch. No alert email is attempted: the quota is the
+  usual cause, so the alert would fail with it.
+- **`qpUnsentReport()`** lists what is waiting, so those few can go by hand.
+
+Run `qpUnsentReport()` from the editor on any day the limit was reached.
