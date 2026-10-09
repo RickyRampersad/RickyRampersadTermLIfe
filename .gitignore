@@ -33,3 +33,10 @@ tools/film/captions-*.ass
 tools/letters/departed.txt
 tools/letters/exclude.txt
 tools/letters/*.csv
+
+# Internal tools that carry real branch performance data (production figures,
+# income variance, conduct notes against named agents). The site is public and
+# served from this repository, so these must not be committed. Rebuild them
+# against the portal backend, or run them locally.
+recruiting/tracker/
+recruiting/onboarding/

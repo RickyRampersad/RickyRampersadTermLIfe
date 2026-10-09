@@ -77,6 +77,8 @@
   .r-text span{font-size:11.5px;color:var(--muted)}
   .r-arrow{margin-left:auto;color:var(--teal);font-weight:700}
   .row.wide{grid-column:1 / -1}
+  .row.off{opacity:.62;cursor:default;border-style:dashed}
+  .row.off:hover{transform:none}
   .row.gold{border-color:rgba(239,194,75,.28)}
   .row.gold .r-ico{background:rgba(239,194,75,.1);border-color:rgba(239,194,75,.22)}
   .row.gold:hover{border-color:rgba(239,194,75,.55)}
@@ -160,16 +162,14 @@
           <div class="r-text"><b>Branch Portal — recruits &amp; managers</b><span>Your recruits sign in and see their own progress; you sign in and see all of them. Discovery sessions, debriefs, scores and history — shared, not stuck on one laptop.</span></div>
           <span class="r-arrow">→</span>
         </a>
-        <a class="row wide gold" href="tracker/">
+        <div class="row wide off">
           <div class="r-ico">🗂️</div>
-          <div class="r-text"><b>Recruit Tracker v5.6</b><span>The GSAP file for every candidate — first interview through probation. Your data stays in this browser.</span></div>
-          <span class="r-arrow">→</span>
-        </a>
-        <a class="row wide" href="onboarding/">
+          <div class="r-text"><b>Recruit Tracker v5.6</b><span>Not hosted here. The build we have carries real production figures, income variance and written conduct notes against named agents — that cannot sit on a public address, and the access code on this page is only JavaScript. Run it locally, or ask for it to be rebuilt against the portal backend.</span></div>
+        </div>
+        <div class="row wide off">
           <div class="r-ico">🎓</div>
-          <div class="r-text"><b>GSAP V4.2 Manager Onboarding Course</b><span>What the standards require of each role, in the order a recruit actually moves. BM, ABM, UM, TM and BMA.</span></div>
-          <span class="r-arrow">→</span>
-        </a>
+          <div class="r-text"><b>GSAP V4.2 Manager Onboarding Course</b><span>Not hosted here, for the same reason — the course build carries named branch examples. Same two options: run it locally, or have it rebuilt without the seed data.</span></div>
+        </div>
       </div>
     </section>
 
