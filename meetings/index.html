@@ -681,7 +681,8 @@ function drawTabs() {
     var pip = (t.id === "actions" && open) ? '<span class="pip">' + open + "</span>" : "";
     return '<button class="tab' + on + '" data-tab="' + t.id + '">' + esc(t.label) + pip + "</button>";
   }).join("") +
-    '<a class="tab" href="/meetings/framework.html#' + esc(role) + '">How a meeting runs</a>';
+    '<a class="tab" href="/meetings/framework.html#' + esc(role) + '">How a meeting runs</a>' +
+    '<a class="tab" href="/meetings/template.html">The template</a>';
   Array.prototype.forEach.call($("tabs").querySelectorAll("[data-tab]"), function (b) {
     b.onclick = function () { go(b.getAttribute("data-tab")); };
   });

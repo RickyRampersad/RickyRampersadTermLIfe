@@ -115,6 +115,28 @@ skill bank calls everybody an agent, and a pull that quietly took away the
 access of the one person who can put it back would be unrecoverable. And it
 never deletes anybody; taking someone off is done on the People tab.
 
+### Leavers have to be taken off, or the register lies
+
+The pull adds and updates; it never removes. That is deliberate — an automatic
+delete driven by a spreadsheet would be the easiest way to lose somebody's
+history. But it means **a person who has left stays Active here until somebody
+marks them inactive on the People tab**, and under the no-login-is-absent rule
+they are recorded absent every single week. That drags the branch attendance
+rate down with names that should not be on the roll at all, and those names go
+up on the wall.
+
+This is not hypothetical. Salesforce on 9 October 2026 shows **ten agents with
+a termination date of 21 September 2026** and one on 10 September, including
+both the Gary Sookdeo and Kerwyn Ramroach unit heads. Checked against
+`Contact.Employment_Status__c`, the branch's active roll is **28 agents across
+two live units** — 20 in the Ricky Rampersad unit, 7 in Akaash Kalladeen's and
+1 left in Kerwyn Ramroach's. Gary Sookdeo's unit has none.
+
+So: **after every pull, reconcile the People tab against Salesforce** — anyone
+whose `Employment_Status__c` is not `Active` gets `Active` set to `no` here.
+The Agent Skill Bank does not carry employment status, so the pull cannot do
+this for you and no amount of re-pulling will fix it.
+
 Anyone with no agent number can type their work e-mail in the first box
 instead, and anyone who set a PIN here before October 2026 can still use it.
 Agent numbers are matched with punctuation and leading zeros ignored, so
@@ -144,6 +166,29 @@ branch wants one:
 What the app already does: five wrong tries locks the account for fifteen
 minutes, every sign-in is logged with a time, and the meeting sheet stores a
 salted hash rather than the password itself.
+
+## The template — the standing shape of a Wednesday
+
+`meetings/template.html`, served at **`/meetings/template.html`** and linked
+from the app's nav and from the framework page. It is the page to send anybody
+who asks what the new meetings look like.
+
+It carries the standing agenda — **nine slots, 45 minutes, finishing at
+9:45** — with the minutes and the owner against each, the four-week cycle that
+fills the one rotating slot, the arithmetic that holds the chair to 9 of the 45
+minutes, the register rule, and the live unit roster. The four stages of how a
+meeting is run stay on `framework.html`; this page is the shape of the hour
+itself, and the two link to each other.
+
+The cadence colours are the same validated four-colour set as the framework
+page and carry the same guarantee — every cadence is written in words as well,
+so the page reads in greyscale and to a colour-blind reader. On a phone the
+agenda table re-lays itself as a stack of cards, because a sideways-scrolling
+table hides the *who* and *how often* columns and those are the two an agent
+opens the page to read.
+
+Figures on it are dated 9 October 2026. Re-check them against Salesforce before
+quoting them in a later quarter.
 
 ## The rota — so the meeting is not one person's
 

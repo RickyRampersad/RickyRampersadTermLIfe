@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Meeting Template | Ricky Rampersad Branch</title>
+<meta name="description" content="The standing shape of every Wednesday morning — the agenda template, who presents what, how the rotation works, and the register rule.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  /*  Same four stage colours as framework.html, and for the same reason —
+   *  they were validated as a set (OKLCH lightness band, chroma floor, CVD
+   *  separation, 3:1 on the surface), not chosen by eye. Do not substitute.
+   *
+   *  Here they mark CADENCE rather than stage: weekly, monthly, quarterly,
+   *  and the one slot that belongs to everybody. Colour never carries the
+   *  meaning on its own — every cadence is also written in words.          */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --surface:#0d2439;
+    --wk:#2f93c9;   /* every week   */
+    --mo:#bd8a22;   /* every month  */
+    --qt:#8f6bd4;   /* each quarter */
+    --all:#1aa87a;  /* everybody    */
+    --gold:#f5b93b;
+    --r:16px;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1100px 650px at 8% -8%,rgba(47,147,201,.18),transparent 60%),
+      radial-gradient(900px 600px at 95% 0%,rgba(143,107,212,.14),transparent 62%),
+      radial-gradient(900px 700px at 55% 108%,rgba(26,168,122,.10),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:18px 26px 12px;flex-wrap:wrap}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
+  header .nav{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  header .nav a{font-size:12px;color:var(--dim);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:7px 15px;white-space:nowrap}
+  header .nav a:hover{color:var(--ink);border-color:rgba(47,147,201,.55)}
+
+  main{padding:0 26px 60px;max-width:1080px;margin:0 auto}
+
+  .lede{font-size:15.5px;line-height:1.65;color:var(--dim);margin:14px 0 6px;max-width:72ch}
+  .lede strong{color:var(--ink);font-weight:600}
+  .asof{font-size:11.5px;color:var(--faint);margin:0 0 26px}
+
+  section{margin:34px 0 0}
+  h2{font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px;
+    margin:0 0 4px;display:flex;align-items:center;gap:10px}
+  h2 .bar{width:4px;height:19px;border-radius:2px;background:var(--c,var(--gold));flex:none}
+  .note{font-size:13px;color:var(--dim);line-height:1.6;margin:0 0 16px;max-width:76ch}
+  .note strong{color:var(--ink);font-weight:600}
+
+  /* ---- the template table ---- */
+  .tw{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--card)}
+  table{border-collapse:collapse;width:100%;min-width:660px;font-size:13.5px}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);font-weight:600;
+    background:rgba(255,255,255,.03)}
+  tr:last-child td{border-bottom:none}
+  td.t{font-variant-numeric:tabular-nums;color:var(--dim);white-space:nowrap;width:1%}
+  td.m{font-variant-numeric:tabular-nums;text-align:center;color:var(--dim);width:1%}
+  td.item{font-weight:600}
+  td.who{color:var(--dim);white-space:nowrap}
+  .sub2{display:block;font-weight:400;color:var(--faint);font-size:12px;margin-top:3px;line-height:1.5}
+  tr.close td{color:var(--faint);font-weight:400}
+
+  .chip{display:inline-block;font-size:10.5px;font-weight:600;letter-spacing:.04em;
+    padding:3px 9px;border-radius:999px;border:1px solid;white-space:nowrap}
+  .c-wk{color:var(--wk);border-color:color-mix(in srgb,var(--wk) 45%,transparent);
+    background:color-mix(in srgb,var(--wk) 13%,transparent)}
+  .c-mo{color:var(--mo);border-color:color-mix(in srgb,var(--mo) 45%,transparent);
+    background:color-mix(in srgb,var(--mo) 13%,transparent)}
+  .c-qt{color:var(--qt);border-color:color-mix(in srgb,var(--qt) 45%,transparent);
+    background:color-mix(in srgb,var(--qt) 13%,transparent)}
+  .c-all{color:var(--all);border-color:color-mix(in srgb,var(--all) 45%,transparent);
+    background:color-mix(in srgb,var(--all) 13%,transparent)}
+
+  /* ---- cards ---- */
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(232px,1fr))}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:15px 16px}
+  .card h3{margin:0 0 7px;font-family:var(--font-d);font-size:13.5px;font-weight:700;
+    display:flex;align-items:center;gap:8px}
+  .card h3 .dot{width:8px;height:8px;border-radius:50%;background:var(--c,var(--gold));flex:none}
+  .card p{margin:0;font-size:12.5px;line-height:1.6;color:var(--dim)}
+  .card p + p{margin-top:8px}
+  .card strong{color:var(--ink);font-weight:600}
+  .big{font-family:var(--font-d);font-size:25px;font-weight:800;color:var(--ink);
+    line-height:1;display:block;margin-bottom:5px;font-variant-numeric:tabular-nums}
+
+  ol.flow{counter-reset:f;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  ol.flow li{counter-increment:f;position:relative;padding:13px 16px 13px 50px;
+    border:1px solid var(--line);border-radius:13px;background:var(--card);
+    font-size:13px;line-height:1.6;color:var(--dim)}
+  ol.flow li::before{content:counter(f);position:absolute;left:15px;top:13px;
+    width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--font-d);font-size:11.5px;font-weight:800;color:#061c31;
+    background:var(--c,var(--gold))}
+  ol.flow li b{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;font-size:13.5px}
+
+  .rule{border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);
+    background:color-mix(in srgb,var(--gold) 9%,transparent);
+    border-radius:14px;padding:15px 17px;font-size:13.5px;line-height:1.65;color:var(--ink)}
+  .rule b{color:var(--gold)}
+
+  .warn{border:1px solid color-mix(in srgb,#e2574c 42%,transparent);
+    background:color-mix(in srgb,#e2574c 10%,transparent);
+    border-radius:14px;padding:15px 17px;font-size:13px;line-height:1.65;color:var(--ink);margin-top:14px}
+  .warn b{color:#ff9a90}
+
+  footer{margin:44px 0 0;padding-top:18px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--faint);line-height:1.7}
+
+  @media (max-width:640px){
+    header{padding:14px 16px 10px}
+    header .nav{margin-left:0;width:100%}
+    main{padding:0 16px 46px}
+    h2{font-size:16px}
+    .lede{font-size:14.5px}
+
+    /*  The table becomes a stack of cards on a phone.
+     *
+     *  A sideways-scrolling table hides its right-hand columns, and on this
+     *  table those are WHO and HOW OFTEN — the two an agent actually opens
+     *  the page to read. Most of the branch reads this on a phone, so the
+     *  row is re-laid as a card with every field visible at once.          */
+    .tw{overflow-x:visible;border:none;background:transparent;border-radius:0}
+    table{min-width:0;display:block;font-size:13.5px}
+    thead{display:none}
+    tbody{display:block}
+    tr{display:block;border:1px solid var(--line);border-radius:14px;
+      background:var(--card);padding:12px 14px;margin:0 0 10px}
+    td{display:block;border:none;padding:0;width:auto}
+    td.t{display:inline;font-weight:700;color:var(--gold);font-size:13px}
+    td.m{display:inline;width:auto;text-align:left;font-size:13px}
+    td.m::before{content:" \00b7 "}
+    td.m::after{content:" min";color:var(--faint)}
+    td.item{margin-top:6px}
+    td.who{margin-top:9px;white-space:normal}
+    td.who::before{content:"Led by ";color:var(--faint)}
+    td.who:empty{display:none}
+    .sub2{margin-top:4px}
+    tr td:last-child:not(:empty){margin-top:9px}
+    tr.close td.m,tr.close td.who::before{display:none}
+    tr.close td.m::before,tr.close td.m::after{content:""}
+  }
+  @media print{
+    body::before{display:none}
+    body{background:#fff;color:#111}
+    header .nav{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="/logo-mark.png" alt=""></div>
+  <div>
+    <h1>The Meeting Template</h1>
+    <div class="sub">Ricky Rampersad Branch &middot; the standing shape of every Wednesday morning</div>
+  </div>
+  <div class="nav">
+    <a href="/meetings/framework.html">What each role does &rarr;</a>
+    <a href="/meetings/">&larr; The meeting app</a>
+  </div>
+</header>
+
+<main>
+
+  <p class="lede">
+    Every branch meeting from now on runs to the same shape. <strong>45 minutes, Wednesday at 9:00</strong>,
+    the same nine slots in the same order. You know before you walk in what will be asked of you,
+    and the chair does not build the hour out of whatever people brought.
+  </p>
+  <p class="asof">
+    Built from the branch's own meeting record, March to September 2026, and the Salesforce roster
+    as at 9 October 2026. The four stages of how a meeting is run &mdash; before, during, after,
+    follow-up &mdash; are on <a href="/meetings/framework.html" style="color:var(--dim)">the framework page</a>.
+  </p>
+
+  <!-- ============ THE TEMPLATE ============ -->
+  <section style="--c:var(--wk)">
+    <h2><span class="bar"></span>The shape of every Wednesday</h2>
+    <p class="note">
+      Nine slots, 45 minutes, finishing at 9:45. <strong>The chair holds 9 of the 45 minutes.</strong>
+      Everything else belongs to somebody else by name, and the last slot belongs to everyone in the room.
+    </p>
+
+    <div class="tw">
+    <table>
+      <thead>
+        <tr><th>Time</th><th>Item</th><th style="text-align:center">Min</th><th>Who</th><th>How often</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="t">9:00</td>
+          <td class="item">Sign in and open
+            <span class="sub2">The register is already taken &mdash; the app has it. The chair reads the room count and moves on.</span></td>
+          <td class="m">2</td><td class="who">Chair</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:02</td>
+          <td class="item">Carried-forward actions
+            <span class="sub2">Last week's open items, by name and due date. Nothing new is raised until these are spoken to.</span></td>
+          <td class="m">5</td><td class="who">Chair</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:07</td>
+          <td class="item">The pipeline
+            <span class="sub2">Applications in, policies issued, and what is sitting unissued &mdash; with the oldest named.</span></td>
+          <td class="m">7</td><td class="who">Sales support</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:14</td>
+          <td class="item">Unit round &mdash; Ricky Rampersad
+            <span class="sub2">One minute per active agent who has something moving. Not a roll call.</span></td>
+          <td class="m">6</td><td class="who">Unit head</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:20</td>
+          <td class="item">Unit round &mdash; Akaash Kalladeen
+            <span class="sub2">Same shape, same six minutes.</span></td>
+          <td class="m">6</td><td class="who">Unit head</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:26</td>
+          <td class="item">The number that moved
+            <span class="sub2">One figure, up or down, with the reason. Premium owed, renewal days, persistency &mdash; whichever moved most.</span></td>
+          <td class="m">5</td><td class="who">Rotating</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:31</td>
+          <td class="item">What worked for me
+            <span class="sub2">One case. What was actually said and done &mdash; not a summary of results.</span></td>
+          <td class="m">7</td><td class="who">Rotating agent</td>
+          <td><span class="chip c-wk">Every week</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:38</td>
+          <td class="item">The rotating slot
+            <span class="sub2">General insurance, health renewals, recruitment, compliance &mdash; see below for which week.</span></td>
+          <td class="m">5</td><td class="who">Named owner</td>
+          <td><span class="chip c-mo">Monthly</span> <span class="chip c-qt">Quarterly</span></td>
+        </tr>
+        <tr>
+          <td class="t">9:43</td>
+          <td class="item">One client each
+            <span class="sub2">Every person in the room names one client they are calling before Friday. Ten seconds each.</span></td>
+          <td class="m">2</td><td class="who">Everyone</td>
+          <td><span class="chip c-all">Everybody</span></td>
+        </tr>
+        <tr class="close">
+          <td class="t">9:45</td>
+          <td class="item">Close</td>
+          <td class="m">&mdash;</td><td class="who">Chair</td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+
+    <div class="warn">
+      <b>45 is the target and it has not been met once.</b>
+      The branch ran 113 minutes on 7 August, 82 on 21 August and 54 on 11 September.
+      The template is the fix: if an item needs more than its minutes, it comes out of the
+      meeting and goes to a named pair who report back the following week.
+    </div>
+  </section>
+
+  <!-- ============ THE ROTATING SLOT ============ -->
+  <section style="--c:var(--mo)">
+    <h2><span class="bar"></span>What fills the 9:38 slot</h2>
+    <p class="note">
+      One standing five-minute slot, cycling, so these subjects get a hearing without
+      a fixed agenda item that is empty three weeks in four.
+    </p>
+    <div class="grid">
+      <div class="card" style="--c:var(--mo)">
+        <h3><span class="dot"></span>Week 1 &mdash; General insurance</h3>
+        <p>Motor and property renewals, outstanding inspections. <strong>First time this has ever had a standing slot.</strong></p>
+      </div>
+      <div class="card" style="--c:var(--mo)">
+        <h3><span class="dot"></span>Week 2 &mdash; Health renewals</h3>
+        <p>Records outstanding and total days outstanding, with the oldest named and who is clearing it.</p>
+      </div>
+      <div class="card" style="--c:var(--mo)">
+        <h3><span class="dot"></span>Week 3 &mdash; Recruits</h3>
+        <p>Every recruit by name: where they are against licensing, and who is sitting with them this week.</p>
+      </div>
+      <div class="card" style="--c:var(--qt)">
+        <h3><span class="dot"></span>Week 4 &mdash; Compliance and training</h3>
+        <p>One point, not a syllabus. Quarterly this becomes the audit and persistency review and the meeting runs to 60.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ THE CONTRIBUTION RULE ============ -->
+  <section style="--c:var(--all)">
+    <h2><span class="bar"></span>Everybody speaks, and the arithmetic says so</h2>
+    <p class="note">
+      The branch meeting has been one person talking for most of an hour. That is what this template
+      is built to end, and it is enforced by the clock rather than by goodwill.
+    </p>
+    <div class="grid">
+      <div class="card" style="--c:var(--all)">
+        <h3><span class="dot"></span>The chair's share</h3>
+        <p><span class="big">20%</span>9 minutes of 45. If the chair is presenting more than that, an item has lost its owner.</p>
+      </div>
+      <div class="card" style="--c:var(--all)">
+        <h3><span class="dot"></span>Named presenters</h3>
+        <p><span class="big">6</span>slots a week carry somebody else's name. Two are unit heads, two rotate through the whole roster.</p>
+      </div>
+      <div class="card" style="--c:var(--all)">
+        <h3><span class="dot"></span>Everyone in the room</h3>
+        <p><span class="big">1</span>client each, named out loud, before Friday. Nobody leaves the meeting having said nothing.</p>
+      </div>
+    </div>
+    <div class="rule" style="margin-top:14px">
+      <b>The rotation is held by the app, not by memory.</b>
+      The two rotating slots go to whoever is next on the rota and has not presented most recently.
+      Nobody is asked twice before everybody has been asked once, and nobody can quietly never be asked.
+    </div>
+  </section>
+
+  <!-- ============ THE REGISTER ============ -->
+  <section style="--c:var(--wk)">
+    <h2><span class="bar"></span>The register is the login</h2>
+    <ol class="flow" style="--c:var(--wk)">
+      <li><b>You sign in to see the meeting.</b>
+        <code>rickyrampersadbranch.com/meetings</code> &mdash; your agent number and your password.
+        Check-in opens 30 minutes before the start.</li>
+      <li><b>Signing in is the register.</b>
+        There is no sheet going round and no form to fill. Signing in after 9:00 is recorded as late,
+        which is not the same as absent.</li>
+      <li><b>If you cannot come, sign in anyway and pick your reason.</b>
+        You will not get the meeting, but the wall shows you as an apology with the reason beside it
+        rather than as an absence. Do it as soon as you know.</li>
+      <li><b>No login is absent.</b>
+        Not a judgement &mdash; just what the record says when nothing was entered.
+        It takes about eight seconds to not be that.</li>
+    </ol>
+  </section>
+
+  <!-- ============ THE ROSTER ============ -->
+  <section style="--c:var(--qt)">
+    <h2><span class="bar"></span>Who the roster is, as at 9 October 2026</h2>
+    <p class="note">
+      Taken from Salesforce, counting only agents whose employment status is <strong>Active</strong>.
+      Two units carry the branch now.
+    </p>
+    <div class="grid">
+      <div class="card" style="--c:var(--qt)">
+        <h3><span class="dot"></span>Ricky Rampersad unit</h3>
+        <p><span class="big">20</span>active agents, 14 of whom issued business in FY2026.</p>
+      </div>
+      <div class="card" style="--c:var(--qt)">
+        <h3><span class="dot"></span>Akaash Kalladeen unit</h3>
+        <p><span class="big">7</span>active agents, every one of whom issued business in FY2026.</p>
+      </div>
+      <div class="card" style="--c:var(--qt)">
+        <h3><span class="dot"></span>Kerwyn Ramroach unit</h3>
+        <p><span class="big">1</span>active agent. The unit head and the rest of the unit have left.</p>
+      </div>
+      <div class="card" style="--c:var(--qt)">
+        <h3><span class="dot"></span>Gary Sookdeo unit</h3>
+        <p><span class="big">0</span>active agents. The whole unit, unit head included, has gone.</p>
+      </div>
+    </div>
+
+    <div class="warn">
+      <b>The roster has to be kept true or the register lies.</b>
+      Ten agents left on 21 September and one on 10 September. Anybody still carried as active in
+      the meeting app who is not active in Salesforce will be marked <em>absent</em> every single week,
+      which quietly pushes the branch's attendance rate down and puts a name on a wall that should
+      not be there. <b>Run &ldquo;Pull the roster&rdquo; before the first meeting</b> and mark the
+      leavers inactive &mdash; the app never deletes a person, so this will not happen by itself.
+    </div>
+  </section>
+
+  <!-- ============ THE FLOW ============ -->
+  <section style="--c:var(--all)">
+    <h2><span class="bar"></span>The flow around the hour</h2>
+    <p class="note">
+      The meeting is one of four stages. The detail of who does what at each &mdash; chair, presenter,
+      sales support, agent, guest &mdash; is on <a href="/meetings/framework.html" style="color:var(--ink)">the framework page</a>.
+    </p>
+    <ol class="flow" style="--c:var(--all)">
+      <li><b>Before &mdash; the meeting is built, not assembled in the room.</b>
+        The chair publishes the agenda with a clock against every item and a name against every item.
+        Presenters upload and mark Ready. Materials close at 5pm the day before.</li>
+      <li><b>During &mdash; the hour itself, against the clock.</b>
+        Check-in opens at 8:30. Nine slots, 45 minutes. An item that overruns leaves the room with a named pair.</li>
+      <li><b>After &mdash; the record, within two working days.</b>
+        Every action carries a name and a date. The minutes go out whether or not anybody asks for them.</li>
+      <li><b>Follow-up &mdash; until every action is closed.</b>
+        This is the stage the branch has never had. 46 actions were raised across five meetings and one was closed.</li>
+    </ol>
+  </section>
+
+  <footer>
+    Internal to the Ricky Rampersad Branch. Figures are branch production counts from Salesforce and the
+    branch's own meeting record; no client information appears on this page.<br>
+    Roster and production figures as at 9 October 2026. The template takes effect Wednesday 14 October 2026.
+  </footer>
+
+</main>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
