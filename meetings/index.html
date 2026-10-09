@@ -186,6 +186,36 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .live-now{background:rgba(0,0,0,.25);border-radius:11px;padding:11px 14px;margin-top:10px;font-size:12.5px}
   .live-now b{font-family:'Montserrat',sans-serif;font-size:13.5px}
 
+  /*  THE TICKER.
+   *
+   *  The branch's own record is 113, 82 and 54 minutes against a 45-minute
+   *  target, and the reason given in the room is always the same: the item
+   *  ran long because nobody could see it running long. A clock that moves
+   *  once a minute does not change that. This one counts the current item
+   *  down in seconds, in front of everybody, and turns amber then red —
+   *  so the person speaking knows before the chair has to say it.        */
+  .tick{background:rgba(0,0,0,.28);border-radius:13px;padding:14px 16px;margin-top:10px}
+  .tick-head{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;font-size:12.5px;color:var(--muted)}
+  .tick-head .lbl{font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+    font-weight:700;color:var(--red)}
+  .tick-head b{font-family:'Montserrat',sans-serif;font-size:14px;color:var(--text)}
+  .tick-row{display:flex;align-items:flex-end;gap:14px;margin-top:9px;flex-wrap:wrap}
+  .tick-num{font-family:'Montserrat',sans-serif;font-weight:900;font-size:40px;line-height:1;
+    letter-spacing:-1px;color:var(--green);font-variant-numeric:tabular-nums}
+  .tick-num.warn{color:var(--amber)}
+  .tick-num.over{color:var(--red)}
+  .tick-sub{font-size:12px;color:var(--dim);padding-bottom:4px}
+  .tick-bar{height:5px;border-radius:999px;background:rgba(255,255,255,.1);margin-top:11px;overflow:hidden}
+  .tick-bar i{display:block;height:100%;width:0;border-radius:999px;background:var(--green);
+    transition:width .9s linear,background .3s}
+  .tick-bar i.warn{background:var(--amber)}
+  .tick-bar i.over{background:var(--red)}
+  .tick-next{margin-top:10px;font-size:12px;color:var(--dim);
+    border-top:1px solid var(--line);padding-top:9px}
+  .tick-next b{color:var(--muted);font-weight:600}
+  .tick-advance{margin-top:11px}
+  @media (prefers-reduced-motion:reduce){.tick-bar i{transition:none}}
+
   /* ---------- the floor ---------- */
   .said{display:flex;gap:11px;padding:12px 0;border-bottom:1px solid var(--line)}
   .said:last-child{border-bottom:none}
@@ -1208,8 +1238,27 @@ function liveBlock(d) {
       (d.canRun ? '<button class="btn danger auto sm" id="lv-end" style="margin-left:auto">Finish the meeting</button>' : "") +
       "</div>" +
       (sn.currentTitle
-        ? '<div class="live-now">On now: <b>' + esc(sn.currentTitle) + "</b>" +
-          (sn.currentAllotted ? " · " + sn.itemElapsed + " of " + sn.currentAllotted + " min" : "") + "</div>"
+        ? '<div class="tick" id="lv-tick">' +
+            '<div class="tick-head"><span class="lbl">On now</span>' +
+            "<b>" + esc(sn.currentTitle) + "</b>" +
+            (sn.currentPresenter ? "<span>" + esc(sn.currentPresenter) + "</span>" : "") +
+            "</div>" +
+            '<div class="tick-row">' +
+              '<span class="tick-num" id="tk-num">—</span>' +
+              '<span class="tick-sub" id="tk-sub">' +
+              (sn.currentAllotted ? "of " + sn.currentAllotted + " minutes" : "no time set") +
+              "</span></div>" +
+            '<div class="tick-bar"><i id="tk-bar"></i></div>' +
+            (sn.nextTitle
+              ? '<div class="tick-next">Next: <b>' + esc(sn.nextTitle) + "</b>" +
+                (sn.nextPresenter ? " · " + esc(sn.nextPresenter) : "") +
+                (sn.nextAllotted ? " · " + sn.nextAllotted + " min" : "") + "</div>"
+              : '<div class="tick-next">Last item on the agenda.</div>') +
+            (d.canRun && sn.nextAgendaId
+              ? '<button class="btn ghost auto sm tick-advance" id="tk-next">' +
+                "Move on to " + esc(sn.nextTitle) + "</button>"
+              : "") +
+          "</div>"
         : (d.canRun && d.agenda.length
             ? '<div class="live-now">Nothing marked as the current item — press <b>On now</b> beside one.</div>'
             : "")) +
@@ -1275,19 +1324,65 @@ function wireLive(d) {
   var rc = $("lv-rec");
   if (rc) rc.onclick = function () { recordingModal(m.id, sn); };
 
+  var nx = $("tk-next");
+  if (nx) nx.onclick = function () {
+    nx.disabled = true;
+    post({ action: "currentItem", token: S.token, meetingId: m.id,
+           agendaId: sn.nextAgendaId }).then(function () { openMeeting(m.id); });
+  };
+
   // The clock ticks locally so it does not hammer the sheet. Every render
   // clears the previous one, so views never stack up timers.
   if (S.tick) { clearInterval(S.tick); S.tick = null; }
   if (sn && sn.running) {
     var base = sn.elapsed, t0 = Date.now();
+    /*  Seconds for the item, minutes for the meeting. The item is what a
+     *  person can still do something about while they are speaking; the
+     *  meeting total is context. Both come off timestamps the server sent,
+     *  so nothing is polled and the count survives a slow connection.   */
+    var itemT0 = sn.itemStartedISO ? Date.parse(sn.itemStartedISO) : 0;
+    var cap = (sn.currentAllotted || 0) * 60;
+
     S.tick = setInterval(function () {
       var el = $("lv-clock");
       if (!el) { clearInterval(S.tick); S.tick = null; return; }
-      var now = base + Math.floor((Date.now() - t0) / 60000);
-      el.textContent = clockText(now);
-      if (sn.allotted && now > sn.allotted) el.classList.add("over");
-    }, 20000);
+      var mins = base + Math.floor((Date.now() - t0) / 60000);
+      el.textContent = clockText(mins);
+      if (sn.allotted && mins > sn.allotted) el.classList.add("over");
+
+      var num = $("tk-num");
+      if (!num || !itemT0) return;
+      var t = tickState(Math.floor((Date.now() - itemT0) / 1000), cap, sn.currentAllotted);
+      num.textContent = t.text;
+      num.className = "tick-num" + (t.cls ? " " + t.cls : "");
+      var sub = $("tk-sub"); if (sub) sub.textContent = t.sub;
+      var bar = $("tk-bar");
+      if (bar) { bar.style.width = t.pct + "%"; bar.className = t.cls; }
+    }, 1000);
   }
+}
+
+/** Seconds as m:ss — the only place in the app that shows seconds, because
+ *  it is the only place where a second is a thing anybody can act on. */
+function mmss(secs) {
+  var m = Math.floor(secs / 60), s = secs % 60;
+  return m + ":" + String(s).padStart(2, "0");
+}
+
+/*  What the ticker should read, given how long the item has run and how
+ *  long it was given. Pure, so it can be checked without a clock: at a
+ *  minute left it goes amber, past its minutes it counts up in red with a
+ *  plus, and an item with no minutes set shows the time spent rather than
+ *  pretending to count down from nothing.                              */
+function tickState(spent, cap, mins) {
+  if (!cap) return { text: mmss(spent), cls: "", pct: 0, sub: "no time set" };
+  var left = cap - spent, over = left < 0, warn = !over && left <= 60;
+  return {
+    text: (over ? "+" : "") + mmss(Math.abs(left)),
+    cls: over ? "over" : warn ? "warn" : "",
+    pct: Math.min(100, spent / cap * 100),
+    sub: (over ? "over its " : "of ") + mins + " minutes"
+  };
 }
 
 function startSessionModal(id) {

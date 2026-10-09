@@ -291,6 +291,42 @@ walkthrough. Never the Multilingual variant.
 `SSL_CERT_FILE`; appending `/root/.ccr/ca-bundle.crt` to `certifi/cacert.pem`
 fixes it. The WebSocket itself goes through fine.
 
+## The ticker — the item counting down, in front of everybody
+
+The branch's own record is 113, 82 and 54 minutes against its target, and the
+reason given in the room is always the same: the item ran long because nobody
+could see it running long. The old clock moved once every twenty seconds and
+showed whole minutes, which is not something a person speaking can feel.
+
+While a meeting is running, the current item now counts **down in seconds** on
+every screen in the room: the item's name and who is presenting it, the time
+left, a bar, and what is next. At a minute left it turns amber. Past its
+minutes it turns red and counts **up** with a `+`, so an overrun is a number
+rather than an impression. Staff get a *Move on to…* button beside it.
+
+Two pieces make it work:
+
+- `sessionCard_` sends **`itemStartedISO`** as well as `itemElapsed`. The
+  minute count is fine for a card and useless for a clock; a timestamp lets the
+  browser count the seconds itself, so the ticker is smooth and polls nothing.
+- `tickState(spent, cap, mins)` in `meetings/index.html` is pure and decides
+  what the ticker reads. It is pure so it can be checked without waiting for a
+  clock, and it is: 15 tests cover the thresholds, the `+` past the line, the
+  bar stopping at 100%, and an item with no minutes set showing time spent
+  rather than a fake countdown.
+
+## KPI measures carry the wall they are read off
+
+The KPI tab has a **`Link`** column. Put the Intelligence Wall board behind a
+measure there — premium dues, contracts held, delivery standard, the licence
+year, birthdays — and the daily note prints *open the wall* beside the figure.
+A KPI with nothing behind it is a number people argue with; a KPI that opens
+the wall is one they go and work.
+
+`safeLink_` lets only `http` and `https` through to an `href`. That sheet is
+editable by the branch and the daily note is e-mail: a `javascript:` or `data:`
+URL pasted into a cell must never become a live link in twenty-eight inboxes.
+
 ## The rota — so the meeting is not one person's
 
 Read the five meetings on record from 22 July to 11 September and one shape

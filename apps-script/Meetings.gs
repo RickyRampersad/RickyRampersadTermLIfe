@@ -363,8 +363,14 @@ var SCHEMA = {
    *  IMPORTRANGE, or a Salesforce pull. The daily note reads whatever is
    *  here and says nothing when a person has no rows, rather than
    *  inventing a figure to fill a space.                               */
+  /*  Link is the wall this measure is actually read off — one of the five
+   *  Intelligence Wall boards, or any page that shows the working behind
+   *  the number. A KPI with no way to see what sits underneath it is a
+   *  number people argue with; a KPI that opens the wall is one they go
+   *  and work. It is surfaced in the daily note and beside the measure in
+   *  the app, so nobody has to be told the address.                     */
   KPI: ['Agent No', 'Email', 'Name', 'Measure', 'Value', 'Target', 'Unit',
-        'Direction', 'As Of', 'Note', 'Active'],
+        'Direction', 'As Of', 'Note', 'Link', 'Active'],
 
   Rota: ['Order', 'Section', 'Item', 'Detail', 'Minutes', 'Visibility',
          'Cadence', 'Owner', 'Owner Email', 'Backup', 'Backup Email', 'Active', 'Notes'],
@@ -1943,6 +1949,7 @@ function kpiRowsFor_(person) {
     return {
       measure: str_(r['Measure']), value: str_(r['Value']), target: str_(r['Target']),
       unit: str_(r['Unit']), note: str_(r['Note']), asOf: fmtDate_(r['As Of']),
+      link: safeLink_(r['Link']),
       meets: meets
     };
   });
@@ -2002,7 +2009,10 @@ function dailyNoteFor_(person, ctx) {
           '<td style="padding:4px 0;font-weight:700">' + esc_(k.value) +
             (k.unit ? ' ' + esc_(k.unit) : '') + mark + '</td>' +
           '<td style="padding:4px 0 4px 12px;color:#8aa3bb;font-size:12px">' +
-            (k.target ? 'target ' + esc_(k.target) : '') + '</td></tr>';
+            (k.target ? 'target ' + esc_(k.target) : '') +
+            (k.link ? (k.target ? ' &middot; ' : '') +
+              '<a href="' + esc_(k.link) + '" style="color:#00a8c5;text-decoration:none">open the wall</a>'
+              : '') + '</td></tr>';
       }).join('') + '</table>';
   }
 
@@ -2056,6 +2066,15 @@ function dailyNoteFor_(person, ctx) {
 }
 
 function firstName_(n) { return str_(n).split(/\s+/)[0] || str_(n); }
+
+/*  Only http and https ever reach an href. These links come off a sheet
+ *  anybody on the branch can edit, and the daily note is e-mail: a
+ *  javascript: or data: URL pasted into a cell must not become a live
+ *  link in twenty-eight inboxes. */
+function safeLink_(v) {
+  var u = str_(v);
+  return /^https?:\/\//i.test(u) ? u : '';
+}
 function esc_(v) {
   return str_(v).replace(/[&<>"]/g, function (c) {
     return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
@@ -3089,6 +3108,22 @@ function sessionCard_(sn, agenda) {
   }
   var itemStarted = asDate_(sn['Item Started']);
 
+  /*  THE TICKER NEEDS A TIMESTAMP, NOT A COUNT OF MINUTES.
+   *
+   *  itemElapsed below is whole minutes measured on the server, which is
+   *  fine for a card and useless for a clock: the room cannot see a
+   *  countdown that moves once a minute and only when somebody reloads.
+   *  itemStartedISO lets the browser count the seconds itself, so the
+   *  ticker runs smoothly without polling the sheet.                   */
+  var next = null;
+  if (current && agenda) {
+    var curOrder = num_(current['Order']);
+    agenda.forEach(function (a) {
+      if (num_(a['Order']) <= curOrder) return;
+      if (!next || num_(a['Order']) < num_(next['Order'])) next = a;
+    });
+  }
+
   return {
     id: str_(sn['ID']),
     running: running,
@@ -3107,7 +3142,19 @@ function sessionCard_(sn, agenda) {
     currentAgendaId: currentId,
     currentTitle: current ? str_(current['Title']) : '',
     currentAllotted: current ? num_(current['Allotted (min)']) : 0,
-    itemElapsed: itemStarted ? Math.round((Date.now() - itemStarted.getTime()) / 60000) : 0
+    itemElapsed: itemStarted ? Math.round((Date.now() - itemStarted.getTime()) / 60000) : 0,
+    itemStartedISO: iso_(itemStarted),
+    currentPresenter: current ? str_(current['Presenter Name']) : '',
+    currentOrder: current ? num_(current['Order']) : 0,
+    nextTitle: next ? str_(next['Title']) : '',
+    nextPresenter: next ? str_(next['Presenter Name']) : '',
+    nextAllotted: next ? num_(next['Allotted (min)']) : 0,
+    nextAgendaId: next ? str_(next['ID']) : '',
+    /* Every item's minutes, so the ticker can say how much of the meeting
+       is still to come rather than only how long it has run. */
+    plannedTotal: (agenda || []).reduce(function (n, a) {
+      return n + num_(a['Allotted (min)']);
+    }, 0)
   };
 }
 
