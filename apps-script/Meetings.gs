@@ -317,7 +317,7 @@ function setupMeetings() {
     'Materials folder: ' + materialsFolder_().getName() + '\n' +
     'Topics seeded: ' + topicList_().length + '\n\n' +
     'Next: Deploy > New deployment > Web app (Execute as: Me, Access: Anyone), ' +
-    'then paste the /exec URL into CONFIG.API_URL in managementmeetings/index.html.';
+    'then paste the /exec URL into CONFIG.API_URL in meetings/index.html.';
   Logger.log(summary);
   return summary;
 }

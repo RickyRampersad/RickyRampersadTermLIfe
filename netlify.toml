@@ -136,7 +136,7 @@
 # indexed, and not cached on a shared branch machine — the register and the
 # minutes are as sensitive as anything else behind a portal here.
 [[headers]]
-  for = "/managementmeetings/*"
+  for = "/meetings/*"
   [headers.values]
     X-Frame-Options = "DENY"
     X-Content-Type-Options = "nosniff"

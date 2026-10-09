@@ -1,6 +1,6 @@
 # Branch Meeting Builder
 
-Lives at **rickyrampersadbranch.com/managementmeetings**
+Lives at **rickyrampersadbranch.com/meetings**
 
 The whole meeting in one place: the agenda, what each person is presenting,
 who was in the room, the action tracker and the minutes.
@@ -103,7 +103,7 @@ code, because a person who cannot sign in is a person who is marked absent.
 
 Anyone who set a PIN here before October 2026 can still use it — the sign-in
 box takes either. Change the branch access codes in
-`managementmeetings/index.html` (`DOOR_CODES`) if you ever change them on the
+`meetings/index.html` (`DOOR_CODES`) if you ever change them on the
 portals.
 
 ## Attendance, from 6 October 2026
@@ -186,7 +186,7 @@ Points — not for distribution"* section, which staff should not see either.
 5. **Deploy → New deployment → Web app.** Execute as **Me**, access
    **Anyone**. Copy the `/exec` URL.
 6. **Paste that URL** into `CONFIG.API_URL` at the top of
-   `managementmeetings/index.html`, and commit.
+   `meetings/index.html`, and commit.
 7. **Add your people** — the *People* screen in the app, or the *People* tab
    in the Sheet. Email, name, role, unit. Everyone then sets their own PIN
    using the branch code.
@@ -398,7 +398,7 @@ when it is being called overdue.
 | The words of every past meeting, for searching | The `Archive` tab, split across chunk rows past the 50,000-character cell limit |
 | Uploaded material | A private Drive folder, one sub-folder per meeting; past meetings under `Past meetings` |
 | Audit trail — every sign-in, correction, upload and publish | The `Log` tab |
-| This app | `managementmeetings/index.html` in this repository |
+| This app | `meetings/index.html` in this repository |
 
 **Nothing but the program is in this repository.** No names, no attendance, no
 reports, no minutes. The repo is public; the Sheet and the Drive folder are
