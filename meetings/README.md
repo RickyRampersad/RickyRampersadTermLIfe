@@ -233,7 +233,7 @@ a name against every item. The third is the short one for an agent who only
 needs to know how to sign in and what their own slot is for.
 
 **Every figure in the builder film is illustrative and the film says so** — a
-gold *Sample figures* badge sits on every data scene. The MP4s are at public
+azure *Sample figures* badge sits on every data scene. The MP4s are at public
 URLs even though the pages are `noindex`, so no real client name or client
 count goes in one, and agents appear by first name only rather than with a full
 name against a production figure.
@@ -269,7 +269,7 @@ untouched.
 
 Two things this film taught the pipeline, both worth keeping:
 
-- **Fifteen scenes of centred text on one navy background are invisible to a
+- **Fifteen scenes of centred text on one dark background are invisible to a
   frame differencer.** `mixany.py` recovers the capture's timeline from scene
   transitions and refuses to encode when it cannot match enough of them; the
   first cut matched 4 of 15 and was correctly rejected. The fix is the wipe
@@ -290,6 +290,32 @@ walkthrough. Never the Multilingual variant.
 `CERTIFICATE_VERIFY_FAILED` because aiohttp reads certifi's bundle and not
 `SSL_CERT_FILE`; appending `/root/.ccr/ca-bundle.crt` to `certifi/cacert.pem`
 fixes it. The WebSocket itself goes through fine.
+
+## Steel & Azure, from 9 October 2026
+
+The branch moved off navy-and-gold. Everything here is on the new palette: the
+app, the template, the framework page, all three film pages and all three MP4s,
+plus `favicon.svg`, `logo-mark.png` and `IBRAND` in `Intelligence.gs` — the
+letters read that last one, and they pull the same hosted shield, so they had to
+move together or a letter would arrive with an azure mark ruled in gold.
+
+The shield is azure now. `favicon.svg` turned out to be cleanly parameterised —
+one gradient, one tile — so it was recoloured at source and re-rasterised to
+352px rather than the PNG being touched up.
+
+Two things worth keeping:
+
+- **The token names in `meetings/index.html` were renamed.** `--gold` held azure
+  and `--teal` held a mint for about ten minutes, which is exactly the sort of
+  thing that costs somebody an afternoon. They are `--accent`, `--accent-dark`,
+  `--support` and `--support-dark`.
+- **The stage colours are now a ramp, not four hues.** Taking the gold out of a
+  four-colour categorical set is not a swap: a search over 2.27 million
+  combinations found nothing clears all-pairs colour-blind separation on a dark
+  ground without a yellow-orange. Before/during/after/follow-up is a *sequence*,
+  so it takes a single-hue ramp — `#27629F` → `#3F8ADF` → `#73B8F8` → `#B5DBFF`,
+  monotone dark to light, validated. The first replacement second-accent also had
+  to be thrown away: `#8FD6C8` sat at chroma 0.074 and read grey.
 
 ## The ticker — the item counting down, in front of everybody
 

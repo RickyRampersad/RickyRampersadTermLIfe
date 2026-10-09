@@ -7055,11 +7055,20 @@ var ISURVEY_OPTIONS = [
    and every letter still reads correctly with images switched off — which is
    the default in most inboxes — because the branch name sits beside it as
    text, not inside the image. */
+/*  Steel & Azure, October 2026. The branch moved off navy-and-gold, and
+ *  the shield in logo-mark.png went azure with it. These values have to
+ *  move at the same time: LOGO points at that same hosted file, so a
+ *  letterhead left on gold would arrive with an azure shield ruled in a
+ *  colour that is no longer anywhere else on it.
+ *
+ *  GOLD and GOLD2 keep their names only because nine call sites read
+ *  them; they hold the azure accent now. Renaming them is a separate
+ *  change and touches the letter templates. */
 var IBRAND = {
-  NAVY:  '#07131f',
-  GOLD:  '#efc24b',
-  GOLD2: '#c9942c',
-  TEAL:  '#00CFEA',
+  NAVY:  '#121820',
+  GOLD:  '#3B9EFF',
+  GOLD2: '#2C7FD4',
+  TEAL:  '#3FC9B0',
   INK:   '#16202b',
   MUTED: '#5c6b7a',
   RULE:  '#e2e8ee',

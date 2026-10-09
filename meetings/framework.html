@@ -5,61 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Meeting Framework | Ricky Rampersad Branch</title>
 <meta name="description" content="How a branch meeting is built, run, recorded and followed up — and what each role does at each stage.">
-<meta name="theme-color" content="#061c31">
+<meta name="theme-color" content="#121820">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
 <style>
-  /*  THE FOUR STAGE COLOURS ARE NOT A TASTE DECISION.
+  /*  THE FOUR STAGE COLOURS ARE A RAMP, NOT FOUR HUES.
    *
-   *  Four hues had to sit on this navy, stay apart for a colour-blind
-   *  reader, and clear 3:1 against the surface. They were validated as
-   *  a set rather than chosen by eye:
+   *  They used to be four separate hues, one of them gold. Taking the gold
+   *  out turned out to be the hard part: a search over 2.27 million
+   *  four-hue combinations found that NOTHING clears all-pairs CVD
+   *  separation on a dark ground without something in the yellow-orange
+   *  band. The hue wheel simply needs that span.
    *
-   *    before  #2f93c9   during #bd8a22   after #1aa87a   follow #8f6bd4
+   *  The answer was that four hues were the wrong encoding to begin with.
+   *  Before, during, after and follow-up are a SEQUENCE, and a sequence
+   *  takes a single-hue ramp:
    *
-   *    lightness band    all four inside OKLCH L 0.48–0.67 (dark band)
-   *    chroma floor      all four >= 0.1
-   *    CVD separation    worst adjacent pair — after vs during —
-   *                      ΔE 9.6 protan, 13.8 tritan, both clear of the 8 floor
-   *    normal vision     worst adjacent pair ΔE 17.6
-   *    contrast          all four >= 3:1 on #0d2439
+   *    before #27629F   during #3F8ADF   after #73B8F8   follow-up #B5DBFF
    *
-   *  The first pass used the wall's own blue, gold and green straight:
-   *  every one of them failed the lightness band for a dark surface, so
-   *  each was stepped down until the set passed.
+   *    lightness     monotone dark to light, every adjacent gap >= 0.06
+   *    single hue    spread 6 degrees
+   *    dark end      #27629F at 2.49:1 against the card, above the floor
    *
-   *  COLOUR NEVER CARRIES A STAGE ON ITS OWN. Every stage is also
-   *  numbered and named, so the page reads in greyscale, in print, and
-   *  to somebody who cannot tell the green from the gold.             */
+   *  Dark to light rather than light to dark, so the later stages — the two
+   *  the branch has never actually done — are the most prominent on screen.
+   *
+   *  COLOUR STILL NEVER CARRIES A STAGE ON ITS OWN. Every stage is also
+   *  numbered and named, so the page reads in greyscale, in print, and to
+   *  somebody who cannot separate the steps at all.                      */
   :root{
-    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --ink:#EAF0F6; --dim:#9CAEBF; --faint:#6C7E90;
     --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
-    --surface:#0d2439;
-    --s1:#2f93c9;  /* before    */
-    --s2:#bd8a22;  /* during    */
-    --s3:#1aa87a;  /* after     */
-    --s4:#8f6bd4;  /* follow-up */
-    --gold:#f5b93b;
+    --surface:#1C242E;
+    --s1:#27629F;  /* before    */
+    --s2:#3F8ADF;  /* during    */
+    --s3:#73B8F8;  /* after     */
+    --s4:#B5DBFF;  /* follow-up */
+    --gold:#3B9EFF;
     --r:16px; --ease:cubic-bezier(.16,1,.3,1);
     --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
     --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#121820;
     -webkit-font-smoothing:antialiased;min-height:100vh}
   body::before{content:"";position:fixed;inset:0;z-index:-1;
     background:
       radial-gradient(1100px 650px at 8% -8%,rgba(47,147,201,.18),transparent 60%),
       radial-gradient(900px 600px at 95% 0%,rgba(143,107,212,.14),transparent 62%),
       radial-gradient(900px 700px at 55% 108%,rgba(26,168,122,.10),transparent 60%),
-      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+      linear-gradient(165deg,#121820 0%,#1C242E 55%,#0D1217 100%)}
 
   header{display:flex;align-items:center;gap:14px;padding:18px 26px 12px;flex-wrap:wrap}
   header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
-    background:#07131f;display:grid;place-items:center}
+    background:#121820;display:grid;place-items:center}
   header .mark img{width:40px;height:40px;display:block}
   header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
   header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
@@ -83,7 +85,7 @@
   .st:hover{border-color:var(--c)}
   .st[aria-pressed="true"]{background:rgba(255,255,255,.1);border-color:var(--c)}
   .st .n{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:7px;
-    background:var(--c);color:#05161f;font:800 12px var(--font-d);margin-bottom:8px}
+    background:var(--c);color:#0D1217;font:800 12px var(--font-d);margin-bottom:8px}
   .st .t{font-family:var(--font-d);font-weight:800;font-size:15px;letter-spacing:-.2px}
   .st .w{font-size:11.5px;color:var(--faint);margin-top:3px;line-height:1.5}
 
@@ -94,7 +96,7 @@
     border-radius:999px;padding:7px 15px;font:700 12px var(--font-b);cursor:pointer;
     transition:all .22s var(--ease)}
   .chip:hover{border-color:rgba(47,147,201,.5);color:var(--ink)}
-  .chip[aria-pressed="true"]{background:var(--ink);border-color:transparent;color:#07131f}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:transparent;color:#121820}
 
   /* A STAGE BLOCK. The colour is the rail down its left edge and the
      badge on its number — never the body text, which stays ink. */
@@ -103,7 +105,7 @@
   .stage > h2{margin:0;font-family:var(--font-d);font-size:19px;font-weight:800;letter-spacing:-.3px;
     display:flex;align-items:center;gap:10px}
   .stage > h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;
-    background:var(--c);color:#05161f;font:800 13px var(--font-d);flex:none}
+    background:var(--c);color:#0D1217;font:800 13px var(--font-d);flex:none}
   .stage > .when{font-size:12px;color:var(--faint);margin:5px 0 0 36px}
 
   /* WHY THIS STAGE EXISTS — the finding out of the archive that the

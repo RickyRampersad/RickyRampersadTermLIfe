@@ -3,11 +3,14 @@
 Standing decisions for this repository. Read before regenerating narration,
 scoring a film, or adding a product to the fact find.
 
-## The mark — a gold shield with a check
+## The mark — an azure shield with a check
 
-`logo-mark.png` at the repository root, rasterised 4x from `favicon.svg`: a
-**gold shield carrying a white check**, on the branch navy `#07131f`. That is
-the branch's logo. It is not a monogram and there is no "RR" tile.
+`logo-mark.png` at the repository root, rasterised 4x from `favicon.svg`: an
+**azure shield carrying a white check**, on the branch ground `#121820`. That
+is the branch's logo. It is not a monogram and there is no "RR" tile.
+
+**It was a gold shield until 9 October 2026.** Anything still showing gold is
+out of date, not a second valid mark.
 
 **Every screen and every letter uses that file.** Nothing draws a substitute.
 Twice now a new screen has shipped with an invented "RR" on a blue gradient,
@@ -19,13 +22,38 @@ the room notices.
 <div class="mark"><img src="<path>/logo-mark.png" alt=""></div>
 ```
 ```css
-.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark{border-radius:13px;overflow:hidden;background:#121820;display:grid;place-items:center}
 .mark img{width:100%;height:100%;display:block}
 ```
 
-The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
-teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
-what the client letters read.
+### Steel & Azure — the palette, from 9 October 2026
+
+| | |
+|---|---|
+| Ground | `#121820` |
+| Surface / card | `#1C242E` into `#25303C` |
+| Accent | `#3B9EFF` into `#2C7FD4` |
+| Second accent | `#3FC9B0` into `#2FA68F` |
+| Ink | `#EAF0F6` · dim `#9CAEBF` · faint `#6C7E90` |
+| Good / warn / bad | `#3DD68C` · `#E0A458` · `#F0705F` |
+
+Those are the values in `IBRAND` in `Intelligence.gs`, which is what the client
+letters read. `IBRAND.GOLD` and `GOLD2` keep their names only because nine call
+sites read them; **they hold the azure accent now**.
+
+**There is no yellow in the branch any more.** That was the point of the change,
+and it is worth knowing why it is harder than it sounds: a search over 2.27
+million four-hue combinations found that no four-colour categorical set clears
+all-pairs colour-blind separation on a dark ground without something in the
+yellow-orange band. Where four categories were being encoded by hue — the
+before/during/after/follow-up stages — the answer was that a **sequence takes a
+single-hue ramp**, not four hues:
+
+`#27629F` → `#3F8ADF` → `#73B8F8` → `#B5DBFF`, monotone dark to light.
+
+Validate any new categorical set rather than eyeballing it; the dataviz skill
+ships `scripts/validate_palette.js` and it is what caught the first replacement
+second-accent reading grey at chroma 0.074.
 
 **In e-mail the logo must be a hosted PNG**, never SVG and never a `data:` URI —
 Gmail strips the first and blocks the second, so the masthead arrives empty.
@@ -482,7 +510,7 @@ the addendum page, inside the same document.
 - **Branch:** develop and push to `claude/service-questioner-automation-6ihjzn`.
   No pull request unless asked for one.
 - **Two marks, two products, on purpose.** The branch site
-  (rickyrampersadbranch.com) carries the gold shield in `logo-mark.png` — the
+  (rickyrampersadbranch.com) carries the azure shield in `logo-mark.png` — the
   house rule above. donthaveanagent.com carries **The Knot** in Ink & Coral,
   because it is presented as a Ricky Rampersad project that stands on its own.
   Do not "correct" one into the other.

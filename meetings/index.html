@@ -22,10 +22,10 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#07131f; --bg2:#0d2137; --card:#163553; --card2:#1b3d61;
-    --gold:#efc24b; --gold2:#dca530; --text:#edf4fb; --muted:#a9bbcf; --dim:#7a90a8;
-    --line:rgba(255,255,255,.08); --teal:#00CFEA; --teal2:#00A8C5;
-    --green:#35d07f; --amber:#f5a524; --red:#ff7a7a; --violet:#a78bfa;
+    --bg:#121820; --bg2:#1C242E; --card:#25303C; --card2:#2E3B49;
+    --accent:#3B9EFF; --accent-dark:#2C7FD4; --text:#EAF0F6; --muted:#9CAEBF; --dim:#6C7E90;
+    --line:rgba(255,255,255,.08); --support:#3FC9B0; --support-dark:#2FA68F;
+    --green:#3DD68C; --amber:#E0A458; --red:#F0705F; --violet:#9A8BE0;
   }
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -45,27 +45,27 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     border:1px solid var(--line);border-radius:22px;padding:34px 28px}
   /* The branch mark is logo-mark.png — a gold shield carrying a white check.
      Nothing here draws a substitute; see CLAUDE.md. */
-  .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark{border-radius:13px;overflow:hidden;background:#121820;display:grid;place-items:center}
   .mark img{width:100%;height:100%;display:block}
   .gate-card .mark{width:58px;height:58px;margin:0 auto 14px}
-  .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--gold);margin-bottom:6px}
+  .gate-card h1{font-weight:800;font-size:20px;text-align:center;color:var(--accent);margin-bottom:6px}
   .gate-card .sub{font-size:12.5px;color:var(--muted);text-align:center;margin-bottom:22px;line-height:1.6}
   label{display:block;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:700;letter-spacing:1.6px;
-    text-transform:uppercase;color:var(--gold2);margin:0 0 6px}
+    text-transform:uppercase;color:var(--accent-dark);margin:0 0 6px}
   input,select,textarea{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
     background:rgba(0,0,0,.3);color:var(--text);font-size:14.5px;font-family:'DM Sans',sans-serif;outline:none}
   input:focus,select:focus,textarea:focus{border-color:rgba(0,207,234,.55)}
   textarea{resize:vertical;min-height:92px;line-height:1.65}
-  select option{background:#0d2137}
+  select option{background:#1C242E}
   .field{margin-bottom:14px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
   @media(max-width:620px){.row2,.row3{grid-template-columns:1fr}}
 
   button{font-family:'Montserrat',sans-serif;cursor:pointer;border:none;border-radius:11px;font-weight:800}
-  .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1d1503;width:100%}
+  .btn{padding:13px 18px;font-size:13.5px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));color:#06141F;width:100%}
   .btn:disabled{opacity:.45;cursor:not-allowed}
-  .btn.teal{background:linear-gradient(135deg,var(--teal),var(--teal2));color:#04202b}
+  .btn.teal{background:linear-gradient(135deg,var(--support),var(--support-dark));color:#06201C}
   .btn.ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--line)}
   .btn.danger{background:rgba(255,122,122,.14);color:var(--red);border:1px solid rgba(255,122,122,.35)}
   .btn.sm{padding:8px 13px;font-size:12px;width:auto}
@@ -75,10 +75,10 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .msg{border-radius:11px;padding:12px 14px;margin-top:12px;font-size:13px;line-height:1.55;display:none}
   .msg.err{display:block;background:rgba(255,122,122,.12);border:1px solid rgba(255,122,122,.4);color:var(--red)}
   .msg.ok{display:block;background:rgba(53,208,127,.12);border:1px solid rgba(53,208,127,.4);color:var(--green)}
-  .msg.info{display:block;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.3);color:var(--teal)}
+  .msg.info{display:block;background:rgba(0,207,234,.1);border:1px solid rgba(0,207,234,.3);color:var(--support)}
   .hint{font-size:11.5px;color:var(--dim);margin-top:10px;line-height:1.6}
   .switch{text-align:center;margin-top:16px;font-size:12.5px;color:var(--muted)}
-  .switch a{color:var(--teal);text-decoration:none;font-weight:700;cursor:pointer}
+  .switch a{color:var(--support);text-decoration:none;font-weight:700;cursor:pointer}
 
   /* ---------- shell ---------- */
   #app{display:none}
@@ -86,11 +86,11 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .nav-inner{max-width:1060px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:12px;height:60px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto;min-width:0}
   .nav-brand .mark{width:30px;height:30px;flex-shrink:0}
-  .nav-brand b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15;display:block}
+  .nav-brand b{font-family:'Montserrat',sans-serif;font-weight:800;font-size:13.5px;color:var(--accent);line-height:1.15;display:block}
   .nav-brand span{font-size:10.5px;color:var(--dim)}
   .who{display:flex;align-items:center;gap:9px;font-size:12px;color:var(--muted);white-space:nowrap}
-  .avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--gold),var(--gold2));
-    color:#1d1503;display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:12px}
+  .avatar{width:30px;height:30px;border-radius:9px;background:linear-gradient(135deg,var(--accent),var(--accent-dark));
+    color:#06141F;display:grid;place-items:center;font-family:'Montserrat',sans-serif;font-weight:800;font-size:12px}
   .who .out{color:var(--dim);cursor:pointer;text-decoration:none;font-weight:700;font-size:11.5px}
   .who .out:hover{color:var(--red)}
   @media(max-width:600px){.who .nm{display:none}}
@@ -103,18 +103,18 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   /* The framework tab is a link, not a view, so it needs the anchor
      defaults flattened to match the buttons beside it. */
   a.tab{text-decoration:none;display:inline-block;line-height:normal}
-  .tab.on{color:var(--gold);background:rgba(239,194,75,.1);border-color:rgba(239,194,75,.28)}
+  .tab.on{color:var(--accent);background:rgba(239,194,75,.1);border-color:rgba(239,194,75,.28)}
   .tab .pip{display:inline-block;min-width:17px;padding:0 5px;margin-left:6px;border-radius:9px;
     background:rgba(255,122,122,.22);color:var(--red);font-size:10.5px;line-height:17px;text-align:center}
 
   .page-head{padding:26px 0 4px}
   .page-head .kicker{font-family:'Montserrat',sans-serif;font-size:10.5px;letter-spacing:2.6px;
-    text-transform:uppercase;color:var(--gold2);font-weight:700;margin-bottom:7px}
+    text-transform:uppercase;color:var(--accent-dark);font-weight:700;margin-bottom:7px}
   .page-head h1{font-weight:900;font-size:clamp(22px,4.4vw,30px);margin-bottom:7px;line-height:1.2}
   .page-head p{color:var(--muted);font-size:13.5px;max-width:640px;line-height:1.65}
   section{padding:24px 0 4px}
   .section-label{font-family:'Montserrat',sans-serif;font-size:10px;font-weight:700;letter-spacing:2.4px;
-    text-transform:uppercase;color:var(--gold);margin-bottom:13px;display:flex;align-items:center;gap:10px}
+    text-transform:uppercase;color:var(--accent);margin-bottom:13px;display:flex;align-items:center;gap:10px}
   .section-label::after{content:'';flex:1;height:1px;background:rgba(239,194,75,.2)}
 
   .card{background:linear-gradient(160deg,var(--card),var(--card2));border:1px solid var(--line);
@@ -129,8 +129,8 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
 
   .badge{display:inline-block;font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;
     letter-spacing:1.1px;text-transform:uppercase;padding:3px 8px;border-radius:6px;vertical-align:middle}
-  .b-all{background:rgba(0,207,234,.14);color:var(--teal);border:1px solid rgba(0,207,234,.3)}
-  .b-staff{background:rgba(239,194,75,.14);color:var(--gold);border:1px solid rgba(239,194,75,.32)}
+  .b-all{background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.3)}
+  .b-staff{background:rgba(239,194,75,.14);color:var(--accent);border:1px solid rgba(239,194,75,.32)}
   .b-chair{background:rgba(167,139,250,.16);color:var(--violet);border:1px solid rgba(167,139,250,.35)}
   .b-green{background:rgba(53,208,127,.14);color:var(--green);border:1px solid rgba(53,208,127,.32)}
   .b-amber{background:rgba(245,165,36,.14);color:var(--amber);border:1px solid rgba(245,165,36,.32)}
@@ -141,7 +141,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .stat b{display:block;font-family:'Montserrat',sans-serif;font-size:24px;font-weight:900;line-height:1.1}
   .stat span{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1.3px;font-weight:700}
   .stat.green b{color:var(--green)} .stat.amber b{color:var(--amber)}
-  .stat.red b{color:var(--red)} .stat.teal b{color:var(--teal)} .stat.gold b{color:var(--gold)}
+  .stat.red b{color:var(--red)} .stat.teal b{color:var(--support)} .stat.gold b{color:var(--accent)}
 
   .empty{text-align:center;padding:44px 20px;color:var(--dim);font-size:13.5px;line-height:1.7}
   .empty .big{font-size:32px;display:block;margin-bottom:12px;opacity:.55}
@@ -152,7 +152,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
     cursor:pointer;transition:transform .16s,border-color .16s;text-align:left;width:100%;color:inherit}
   .mtg:hover{transform:translateY(-2px);border-color:rgba(239,194,75,.4)}
   .mtg .when{flex-shrink:0;width:56px;text-align:center;border-right:1px solid var(--line);padding-right:12px}
-  .mtg .when b{display:block;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:900;color:var(--gold);line-height:1}
+  .mtg .when b{display:block;font-family:'Montserrat',sans-serif;font-size:20px;font-weight:900;color:var(--accent);line-height:1}
   .mtg .when span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;font-weight:700}
   .mtg .body{flex:1;min-width:0}
   .mtg .body b{font-family:'Montserrat',sans-serif;font-size:14px;font-weight:700;display:block;margin-bottom:3px}
@@ -165,7 +165,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .checkin h2{font-size:17px;font-weight:800;margin-bottom:6px}
   .checkin p{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;max-width:460px;margin-inline:auto}
   .checkin .big-btn{padding:17px 30px;font-size:15px;letter-spacing:.4px;width:auto;min-width:230px;
-    background:linear-gradient(135deg,var(--green),#22a463);color:#04220f}
+    background:linear-gradient(135deg,var(--green),#2BB377);color:#04220f}
   .checkin.done{background:linear-gradient(150deg,rgba(53,208,127,.1),transparent);border-color:rgba(53,208,127,.28)}
   .checkin.shut{background:rgba(255,255,255,.03);border-color:var(--line)}
   .tick{width:52px;height:52px;border-radius:50%;background:rgba(53,208,127,.16);border:2px solid var(--green);
@@ -221,8 +221,8 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .said:last-child{border-bottom:none}
   .said .av{width:32px;height:32px;border-radius:9px;flex-shrink:0;display:grid;place-items:center;
     font-family:'Montserrat',sans-serif;font-weight:800;font-size:11px;
-    background:rgba(0,207,234,.14);color:var(--teal);border:1px solid rgba(0,207,234,.28)}
-  .said .av.staff{background:rgba(239,194,75,.14);color:var(--gold);border-color:rgba(239,194,75,.3)}
+    background:rgba(0,207,234,.14);color:var(--support);border:1px solid rgba(0,207,234,.28)}
+  .said .av.staff{background:rgba(239,194,75,.14);color:var(--accent);border-color:rgba(239,194,75,.3)}
   .said .c{flex:1;min-width:0}
   .said .c .hd{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:4px}
   .said .c .hd b{font-family:'Montserrat',sans-serif;font-size:12.5px}
@@ -231,7 +231,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .said .c .tp{margin-top:6px;display:flex;gap:5px;flex-wrap:wrap}
 
   .rec-btn{display:inline-flex;align-items:center;gap:8px}
-  .rec-btn.on{background:linear-gradient(135deg,#ff7a7a,#d94c4c);color:#2b0808}
+  .rec-btn.on{background:linear-gradient(135deg,#F0705F,#D85445);color:#2b0808}
   .rec-time{font-variant-numeric:tabular-nums;font-weight:800}
 
   .topic-chip{display:inline-block;font-size:11px;padding:3px 9px;border-radius:20px;
@@ -242,7 +242,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   /* ---------- agenda ---------- */
   .ag{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
   .ag:last-child{border-bottom:none}
-  .ag .clock{flex-shrink:0;width:64px;font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;color:var(--gold);padding-top:2px}
+  .ag .clock{flex-shrink:0;width:64px;font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:800;color:var(--accent);padding-top:2px}
   .ag .main{flex:1;min-width:0}
   .ag .main b{font-size:14px;font-weight:700;font-family:'Montserrat',sans-serif;display:block;margin-bottom:3px}
   .ag .main .det{font-size:12.5px;color:var(--muted);line-height:1.65;margin-top:3px;white-space:pre-wrap}
@@ -259,7 +259,7 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .tbl-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px}
   table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:520px}
   th{font-family:'Montserrat',sans-serif;font-size:9.5px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase;
-    color:var(--gold2);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(239,194,75,.22);white-space:nowrap}
+    color:var(--accent-dark);text-align:left;padding:9px 11px;border-bottom:1px solid rgba(239,194,75,.22);white-space:nowrap}
   td{padding:10px 11px;border-bottom:1px solid var(--line);color:var(--text);vertical-align:top;line-height:1.55}
   tr:last-child td{border-bottom:none}
   tbody tr:hover{background:rgba(255,255,255,.025)}
@@ -279,28 +279,28 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
   .modal.on{display:flex}
   .modal-card{width:min(620px,100%);background:linear-gradient(165deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:18px;padding:24px;margin:auto 0}
-  .modal-card h2{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--gold)}
+  .modal-card h2{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--accent)}
   .modal-card .lead{font-size:12.5px;color:var(--muted);margin-bottom:18px;line-height:1.6}
   .modal-close{float:right;background:none;color:var(--dim);font-size:22px;line-height:1;padding:0 4px}
   .modal-close:hover{color:var(--red)}
 
   /* ---------- misc ---------- */
   .bar{height:7px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-top:7px}
-  .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--teal))}
+  .bar i{display:block;height:100%;border-radius:5px;background:linear-gradient(90deg,var(--green),var(--support))}
   .back{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);
     text-decoration:none;cursor:pointer;font-weight:700;font-family:'Montserrat',sans-serif;margin-bottom:4px}
-  .back:hover{color:var(--teal)}
+  .back:hover{color:var(--support)}
   .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.25);
-    border-top-color:var(--gold);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
+    border-top-color:var(--accent);border-radius:50%;animation:sp .7s linear infinite;vertical-align:-2px}
   @keyframes sp{to{transform:rotate(360deg)}}
   .loading{text-align:center;padding:48px;color:var(--dim);font-size:13px}
   footer{margin-top:44px;border-top:1px solid var(--line);background:rgba(0,0,0,.25);padding:24px 0 32px;text-align:center}
   footer p{color:var(--dim);font-size:12px;line-height:1.7}
-  footer a{color:var(--teal2);text-decoration:none}
+  footer a{color:var(--support-dark);text-decoration:none}
   .setup{max-width:720px;margin:60px auto;padding:26px;background:rgba(245,165,36,.08);
     border:1px solid rgba(245,165,36,.34);border-radius:16px;color:var(--text);font-size:13.5px;line-height:1.75}
   .setup h2{color:var(--amber);font-size:16px;margin-bottom:10px}
-  .setup code{background:rgba(0,0,0,.4);padding:2px 7px;border-radius:5px;font-size:12.5px;color:var(--gold)}
+  .setup code{background:rgba(0,0,0,.4);padding:2px 7px;border-radius:5px;font-size:12.5px;color:var(--accent)}
   .setup ol{margin:12px 0 0 20px} .setup li{margin-bottom:7px}
 
   @media print{
@@ -1276,9 +1276,9 @@ function liveBlock(d) {
       "</div>" +
       (sn.recordingLink || sn.transcriptLink
         ? '<div class="live-now">' +
-          (sn.recordingLink ? '<a href="' + esc(sn.recordingLink) + '" target="_blank" rel="noopener" style="color:var(--teal)">▶ Recording</a>' : "") +
+          (sn.recordingLink ? '<a href="' + esc(sn.recordingLink) + '" target="_blank" rel="noopener" style="color:var(--support)">▶ Recording</a>' : "") +
           (sn.recordingLink && sn.transcriptLink ? " &nbsp;·&nbsp; " : "") +
-          (sn.transcriptLink ? '<a href="' + esc(sn.transcriptLink) + '" target="_blank" rel="noopener" style="color:var(--teal)">📄 Transcript</a>' : "") +
+          (sn.transcriptLink ? '<a href="' + esc(sn.transcriptLink) + '" target="_blank" rel="noopener" style="color:var(--support)">📄 Transcript</a>' : "") +
           (sn.recordingNote ? "<br>" + esc(sn.recordingNote) : "") + "</div>"
         : (d.canRun ? '<div class="live-now">No recording linked yet.</div>' : "")) +
       "</div>";
@@ -1481,7 +1481,7 @@ function agendaRow(a) {
   return '<div class="ag"' + (isNow ? ' style="background:rgba(239,194,75,.06);border-radius:10px"' : "") + ">" +
     '<div class="clock">' + esc(a.clock) + (a.minutes ? '<br><span style="color:var(--dim);font-weight:400;font-size:10.5px">' + a.minutes + " min</span>" : "") + "</div>" +
     '<div class="main"><b>' + esc(a.title) + "</b>" +
-    (a.section ? '<div style="font-size:10.5px;color:var(--gold2);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">' + esc(a.section) + "</div>" : "") +
+    (a.section ? '<div style="font-size:10.5px;color:var(--accent-dark);letter-spacing:1.2px;text-transform:uppercase;font-weight:700">' + esc(a.section) + "</div>" : "") +
     (a.detail ? '<div class="det">' + escLines(a.detail) + "</div>" : "") +
     (a.presenter ? '<div class="who2">Presented by <b style="color:var(--text)">' + esc(a.presenter) + "</b></div>" : "") +
     '<div class="tags">' + tags +
@@ -2878,7 +2878,7 @@ function resultCard(x) {
     (x.inTitle ? ' <span class="badge b-green">In the title</span>' : "") + "</div></div>" +
     '<div style="margin-top:11px">' + x.snippets.map(function (sn) {
       return '<div style="font-size:12.5px;line-height:1.75;color:var(--muted);padding:9px 12px;' +
-        'background:rgba(0,0,0,.2);border-left:2px solid var(--gold);border-radius:0 8px 8px 0;' +
+        'background:rgba(0,0,0,.2);border-left:2px solid var(--accent);border-radius:0 8px 8px 0;' +
         'margin-bottom:7px">' + highlight(sn, AR.q) + "</div>";
     }).join("") + "</div>" +
     '<div class="btn-row" style="margin-top:10px">' +
@@ -3144,7 +3144,7 @@ function viewTopic() {
           '<button class="btn ghost sm" data-open="' + esc(t.meeting.id) + '">Open</button></div>' +
           (t.items.length
             ? '<div style="margin-top:11px">' + t.items.map(function (a) {
-                return '<div style="padding:9px 12px;background:rgba(0,0,0,.2);border-left:2px solid var(--gold);' +
+                return '<div style="padding:9px 12px;background:rgba(0,0,0,.2);border-left:2px solid var(--accent);' +
                   'border-radius:0 8px 8px 0;margin-bottom:6px">' +
                   '<b style="font-family:Montserrat;font-size:12.5px">' + esc(a.title) + "</b>" +
                   (a.presenter ? '<span style="color:var(--dim);font-size:11.5px"> · ' + esc(a.presenter) + "</span>" : "") +

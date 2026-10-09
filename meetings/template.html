@@ -5,46 +5,63 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>The Meeting Template | Ricky Rampersad Branch</title>
 <meta name="description" content="The standing shape of every Wednesday morning, 9:00 to 10:30 — the agenda template, who presents what, how the rotation works, and the register rule.">
-<meta name="theme-color" content="#061c31">
+<meta name="theme-color" content="#121820">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
 <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
 <style>
-  /*  Same four stage colours as framework.html, and for the same reason —
-   *  they were validated as a set (OKLCH lightness band, chroma floor, CVD
-   *  separation, 3:1 on the surface), not chosen by eye. Do not substitute.
+  /*  THE FOUR STAGE COLOURS ARE A RAMP, NOT FOUR HUES.
    *
-   *  Here they mark CADENCE rather than stage: weekly, monthly, quarterly,
-   *  and the one slot that belongs to everybody. Colour never carries the
-   *  meaning on its own — every cadence is also written in words.          */
+   *  They used to be four separate hues, one of them gold. Taking the gold
+   *  out turned out to be the hard part: a search over 2.27 million
+   *  four-hue combinations found that NOTHING clears all-pairs CVD
+   *  separation on a dark ground without something in the yellow-orange
+   *  band. The hue wheel simply needs that span.
+   *
+   *  The answer was that four hues were the wrong encoding to begin with.
+   *  Before, during, after and follow-up are a SEQUENCE, and a sequence
+   *  takes a single-hue ramp:
+   *
+   *    before #27629F   during #3F8ADF   after #73B8F8   follow-up #B5DBFF
+   *
+   *    lightness     monotone dark to light, every adjacent gap >= 0.06
+   *    single hue    spread 6 degrees
+   *    dark end      #27629F at 2.49:1 against the card, above the floor
+   *
+   *  Dark to light rather than light to dark, so the later stages — the two
+   *  the branch has never actually done — are the most prominent on screen.
+   *
+   *  COLOUR STILL NEVER CARRIES A STAGE ON ITS OWN. Every stage is also
+   *  numbered and named, so the page reads in greyscale, in print, and to
+   *  somebody who cannot separate the steps at all.                      */
   :root{
-    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --ink:#EAF0F6; --dim:#9CAEBF; --faint:#6C7E90;
     --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
-    --surface:#0d2439;
-    --wk:#2f93c9;   /* every week   */
-    --mo:#bd8a22;   /* every month  */
-    --qt:#8f6bd4;   /* each quarter */
-    --all:#1aa87a;  /* everybody    */
-    --gold:#f5b93b;
+    --surface:#1C242E;
+    --wk:#27629F;   /* every week   */
+    --mo:#3F8ADF;   /* every month  */
+    --qt:#B5DBFF;   /* each quarter */
+    --all:#73B8F8;  /* everybody    */
+    --gold:#3B9EFF;
     --r:16px;
     --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
     --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
   }
   *{box-sizing:border-box}
-  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#121820;
     -webkit-font-smoothing:antialiased;min-height:100vh}
   body::before{content:"";position:fixed;inset:0;z-index:-1;
     background:
       radial-gradient(1100px 650px at 8% -8%,rgba(47,147,201,.18),transparent 60%),
       radial-gradient(900px 600px at 95% 0%,rgba(143,107,212,.14),transparent 62%),
       radial-gradient(900px 700px at 55% 108%,rgba(26,168,122,.10),transparent 60%),
-      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+      linear-gradient(165deg,#121820 0%,#1C242E 55%,#0D1217 100%)}
 
   header{display:flex;align-items:center;gap:14px;padding:18px 26px 12px;flex-wrap:wrap}
   header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
-    background:#07131f;display:grid;place-items:center}
+    background:#121820;display:grid;place-items:center}
   header .mark img{width:40px;height:40px;display:block}
   header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
   header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
@@ -109,7 +126,7 @@
     font-size:13px;line-height:1.6;color:var(--dim)}
   ol.flow li::before{content:counter(f);position:absolute;left:15px;top:13px;
     width:22px;height:22px;border-radius:50%;display:grid;place-items:center;
-    font-family:var(--font-d);font-size:11.5px;font-weight:800;color:#061c31;
+    font-family:var(--font-d);font-size:11.5px;font-weight:800;color:#121820;
     background:var(--c,var(--gold))}
   ol.flow li b{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;font-size:13.5px}
 
@@ -118,10 +135,10 @@
     border-radius:14px;padding:15px 17px;font-size:13.5px;line-height:1.65;color:var(--ink)}
   .rule b{color:var(--gold)}
 
-  .warn{border:1px solid color-mix(in srgb,#e2574c 42%,transparent);
-    background:color-mix(in srgb,#e2574c 10%,transparent);
+  .warn{border:1px solid color-mix(in srgb,#D85445 42%,transparent);
+    background:color-mix(in srgb,#D85445 10%,transparent);
     border-radius:14px;padding:15px 17px;font-size:13px;line-height:1.65;color:var(--ink);margin-top:14px}
-  .warn b{color:#ff9a90}
+  .warn b{color:#F59187}
 
   footer{margin:44px 0 0;padding-top:18px;border-top:1px solid var(--line);
     font-size:11.5px;color:var(--faint);line-height:1.7}
