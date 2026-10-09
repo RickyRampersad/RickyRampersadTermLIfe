@@ -88,41 +88,40 @@ Two doors, and they do different jobs.
 `STAFF2026` or `AGENT2026`. It is the front door, exactly as on the rest of
 the site, and it says you belong to the branch.
 
-**Your own email and access code** is the second, and it cannot be dropped. A
+**Your agent number and password** is the second, and it cannot be dropped. A
 shared code cannot tell you who walked in, and the whole point of this app is
 that signing in *is* the attendance register. The branch code gets you to the
-door; your own code is what puts your name on the record.
+door; your own number is what puts your name on the record.
 
-Your code is **the branch portfolio access code you already use for the agent
-portal** — there is no second secret to invent and no PIN to forget. It lives
-in an `Access Code` column on the People tab, and it is filled from the Agent
-Skill Bank in one go: *Branch Meetings → Pull access codes from the Agent Skill
-Bank*, then paste the link to the Branch Portfolio sheet. Codes are matched by
-email, nobody is added or removed, and the run reports anyone left without a
-code, because a person who cannot sign in is a person who is marked absent.
+Both come from the **Agent Skill Bank** — the same number and password the
+agent and staff portals use. There is no second secret to invent and no PIN to
+forget. Fill the roster in one press: *Branch Meetings → Pull the roster from
+the Agent Skill Bank*, then paste the link to the sheet that holds that tab.
 
-Anyone who set a PIN here before October 2026 can still use it — the sign-in
-box takes either. Change the branch access codes in
-`meetings/index.html` (`DOOR_CODES`) if you ever change them on the
-portals.
+The pull takes across name, agent number, e-mail, role, unit and active, adds
+anybody who is not on the meeting roster yet, and reports who is left without
+a password — because that is exactly who cannot sign in, and under the new
+rule they would be marked absent for a reason that is not theirs.
 
-## How a meeting runs — the framework
+**The password is hashed on the way in and never stored here.** The meeting
+sheet holds a salted SHA-256 hash and no password, so there is no second
+plaintext copy of a credential to keep in step or to leak. Change it on the
+skill bank and pull again; that is what changes it here. A blank password cell
+leaves whatever the person already had, so an empty cell never locks anybody
+out.
 
-`/meetings/framework.html` sets out what each role does at each of four stages:
-**Before** the meeting is built, **During** the hour itself, **After** the
-record goes out, and **Follow-up** until the actions close. Each stage carries
-the finding out of the branch's own meeting record that it answers, so none of
-it reads as policy invented for the sake of a diagram.
+Two things the pull will not do. It never demotes the branch manager — the
+skill bank calls everybody an agent, and a pull that quietly took away the
+access of the one person who can put it back would be unrecoverable. And it
+never deletes anybody; taking someone off is done on the People tab.
 
-The page filters by stage and by role, and it deep-links: `#presenter`,
-`#chair`, `#agent`, `#admin`, `#guest`. The app's own "How a meeting runs" tab
-sends each person to their own part of it. It prints cleanly for the launch.
+Anyone with no agent number can type their work e-mail in the first box
+instead, and anyone who set a PIN here before October 2026 can still use it.
+Agent numbers are matched with punctuation and leading zeros ignored, so
+`0745444`, `745444` and `745-444` are the same person.
 
-Stage colours were validated as a set rather than chosen by eye — all four sit
-inside the OKLCH lightness band for a dark surface, the closest adjacent pair
-separates by ΔE 9.6 for a protan reader, and each clears 3:1 against the page.
-No stage is identified by colour alone; each is numbered and named, so the page
-reads in greyscale and in print.
+Change the branch access codes in `meetings/index.html` (`DOOR_CODES`) if you
+ever change them on the portals.
 
 ## Attendance, from 6 October 2026
 

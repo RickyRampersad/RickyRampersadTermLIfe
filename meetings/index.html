@@ -317,17 +317,18 @@ if (location.protocol === "http:" && location.hostname.indexOf("localhost") === 
       <h1>Branch Meeting Builder</h1>
       <p class="sub">Ricky Rampersad Branch<br>Signing in is the attendance register. If you do not sign in, you are marked absent.</p>
       <div class="field">
-        <label for="li-email">Work email</label>
-        <input id="li-email" type="email" autocomplete="username" placeholder="you@myguardiangroup.com"/>
+        <label for="li-email">Agent number</label>
+        <input id="li-email" type="text" inputmode="numeric" autocomplete="username" placeholder="Your agent number"/>
       </div>
       <div class="field">
-        <label for="li-pin">Your access code</label>
-        <input id="li-pin" type="password" autocomplete="current-password" placeholder="The same code as the agent portal"/>
+        <label for="li-pin">Password</label>
+        <input id="li-pin" type="password" autocomplete="current-password" placeholder="The same password as the portals"/>
       </div>
       <button class="btn" id="li-go">Sign in</button>
       <div class="msg" id="li-msg"></div>
-      <div class="switch">Your branch portfolio access code — the one you use for the agent portal.<br>
-        No code yet? <a id="to-enrol">Set up a PIN instead</a></div>
+      <div class="switch">Your agent number and password, the same ones the agent and staff portals use.<br>
+        No agent number? Use your work e-mail in the first box.<br>
+        Not on the skill bank yet? <a id="to-enrol">Set up a PIN</a></div>
     </div>
 
     <!-- first time -->
@@ -607,19 +608,19 @@ function onSignedIn(res) {
 function doLogin() {
   var email = $("li-email").value.trim();
   var pin = $("li-pin").value.trim();
-  if (!email || !pin) return say("li-msg", "Enter your email and your access code.");
+  if (!email || !pin) return say("li-msg", "Enter your agent number and password.");
   $("li-go").disabled = true;
   say("li-msg", "");
-  // Sent as both: the backend takes the branch portfolio access code or
-  // a PIN set before October 2026, so nobody who already had one is
-  // locked out on the morning of a meeting.
-  apiPost({ action: "login", email: email, code: pin, pin: pin })
+  // 'who' takes the agent number or an e-mail; the older keys go with
+  // it so a backend that has not been pasted yet still answers, and
+  // nobody is locked out on the morning of a meeting.
+  apiPost({ action: "login", who: email, password: pin, email: email, code: pin, pin: pin })
     .then(function (res) {
       $("li-go").disabled = false;
       if (res.needsEnrol) {
         showGate("enrol");
         $("en-email").value = email;
-        return say("en-msg", "There is no access code on your record yet — set a PIN here, or ask the branch manager to pull your code across.", "info");
+        return say("en-msg", "There is no password on your record yet — set a PIN here, or ask the branch manager to pull the roster from the Agent Skill Bank.", "info");
       }
       if (!res.ok) return say("li-msg", res.error || "That did not work.");
       onSignedIn(res);
@@ -3114,7 +3115,10 @@ function boot() {
 
   $("li-go").onclick = doLogin;
   $("en-go").onclick = doEnrol;
-  $("to-enrol").onclick = function () { showGate("enrol"); };
+  // Guarded: this link has been taken off the sign-in box once already,
+  // and an unguarded handler then threw before the page finished wiring
+  // itself up — on the one screen nobody can get past.
+  if ($("to-enrol")) $("to-enrol").onclick = function () { showGate("enrol"); };
   $("to-login").onclick = function () { showGate("login"); };
   $("modal-x").onclick = closeModal;
   $("modal").onclick = function (e) { if (e.target === $("modal")) closeModal(); };

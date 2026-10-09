@@ -274,8 +274,8 @@ var SCHEMA = {
    *  not sign in, and from 6 October 2026 a person who does not sign
    *  in is absent. PIN Hash stays for anyone enrolled before that
    *  and for staff who have no portfolio code. */
-  People: ['Email', 'Name', 'Role', 'Unit', 'Active', 'Access Code', 'PIN Hash', 'Salt', 'Token',
-           'Attempts', 'Locked Until', 'Added', 'Added By', 'Last Seen'],
+  People: ['Agent No', 'Email', 'Name', 'Role', 'Unit', 'Active', 'Access Code', 'PIN Hash', 'Salt',
+           'Token', 'Attempts', 'Locked Until', 'Added', 'Added By', 'Last Seen'],
 
   Meetings: ['ID', 'Ref', 'Type', 'Title', 'Subtitle', 'Week', 'Date', 'Start', 'End', 'Format',
              'Location', 'Chair', 'Guest', 'Status', 'Check-In Opens', 'Check-In Closes',
@@ -545,6 +545,7 @@ function readPeople_() {
   return readTab_(MEET.TAB_PEOPLE).map(function (r) {
     return {
       _row: r._row,
+      agentNo: str_(r['Agent No']),
       email: low_(r['Email']),
       name: str_(r['Name']) || str_(r['Email']),
       role: low_(r['Role']) || 'agent',
@@ -564,6 +565,25 @@ function readPeople_() {
 function findPersonByEmail_(email) {
   email = low_(email);
   return readPeople_().filter(function (p) { return p.email === email; })[0] || null;
+}
+
+/** Agent numbers are typed on a phone, so they are matched with the
+ *  punctuation and leading zeros taken off: 0745444, 745444 and
+ *  745-444 are all the same agent. */
+function normNo_(v) { return str_(v).toUpperCase().replace(/[^A-Z0-9]/g, '').replace(/^0+/, ''); }
+
+function findPersonByAgentNo_(no) {
+  no = normNo_(no);
+  if (!no) return null;
+  return readPeople_().filter(function (p) { return normNo_(p.agentNo) === no; })[0] || null;
+}
+
+/** Who is signing in: an agent number, or an e-mail for anyone who
+ *  has no number on the skill bank. One box takes both. */
+function findSignIn_(who) {
+  who = str_(who);
+  if (who.indexOf('@') > 0) return findPersonByEmail_(who);
+  return findPersonByAgentNo_(who) || findPersonByEmail_(who);
 }
 
 function findPersonByToken_(token) {
@@ -729,17 +749,24 @@ function apiEnrol_(body) {
   return { ok: true, token: token, user: publicUser_(p) };
 }
 
-/*  ONE DOOR, AND THE CODE THEY ALREADY HAVE.
+/*  ONE DOOR: THE AGENT NUMBER AND THE PASSWORD THEY ALREADY HAVE.
  *
- *  The box asks for an email and a code, and the code may be either
- *  the agent's branch portfolio access code or a PIN they set here
- *  before 6 October 2026. Two doors would mean two ways to fail on
- *  the way into a meeting that is counting attendance, and a person
- *  standing outside a meeting they are being marked absent from is
- *  not going to debug which credential the box wanted.
+ *  Decided 9 October 2026. Both live on the Agent Skill Bank, which is
+ *  where the branch already keeps them and where the agent and staff
+ *  portals read them from. Asking for a work e-mail instead meant
+ *  asking a room full of people to type an address on a phone to get
+ *  into a meeting that was marking them absent while they typed. The
+ *  number is shorter, it is on their card, and they know it.
  *
- *  The access code is compared in upper case with spaces stripped,
- *  because it is read off a portal screen and typed on a phone.
+ *  The box still takes an e-mail, because a few staff have no number
+ *  on the skill bank, and it still takes a PIN set here before 6
+ *  October. Two doors would mean two ways to fail on the way into a
+ *  meeting; one box that accepts whichever of them you have is one.
+ *
+ *  THE PASSWORD IS NEVER STORED HERE. pullRoster hashes it on the way
+ *  in — salted, SHA-256 — so the meeting sheet holds no second copy of
+ *  a credential that already exists in one place. Changing it on the
+ *  skill bank and pulling again is what changes it here.
  */
 function sameCode_(given, held) {
   var a = str_(given).toUpperCase().replace(/\s+/g, '');
@@ -748,15 +775,15 @@ function sameCode_(given, held) {
 }
 
 function apiLogin_(body) {
-  var email = low_(body.email);
-  // 'code' is what the box sends now; 'pin' is kept so an older copy
-  // of the page that is still open in somebody's browser keeps working.
-  var pin = str_(body.code || body.pin);
+  // 'who' is the agent number or an e-mail; the older keys are kept so
+  // a copy of the page still open in somebody's browser keeps working.
+  var who = str_(body.who || body.agentNo || body.email);
+  var pin = str_(body.password || body.code || body.pin);
 
-  var p = findPersonByEmail_(email);
-  // Same wording whether the email is unknown or the code is wrong,
-  // so the sign-in box cannot be used to discover who is on staff.
-  var generic = { ok: false, error: 'That email and code do not match.' };
+  var p = findSignIn_(who);
+  // Same wording whether the number is unknown or the password is
+  // wrong, so the box cannot be used to find out who is on the branch.
+  var generic = { ok: false, error: 'That agent number and password do not match.' };
   if (!p) return generic;
   if (!p.active) return { ok: false, error: 'Your access has been turned off. Speak to the branch manager.' };
   if (!p.hash && !p.code) return { ok: false, error: 'needs-enrol', needsEnrol: true };
@@ -3731,7 +3758,7 @@ function onOpen() {
     .addItem('🧪  Create a sample meeting', 'seedSampleMeetingFromMenu')
     .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
     .addSeparator()
-    .addItem('🪪  Pull access codes from the Agent Skill Bank', 'promptPullAccessCodes')
+    .addItem('🪪  Pull the roster from the Agent Skill Bank', 'promptPullAccessCodes')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();
@@ -3756,12 +3783,11 @@ function onOpen() {
  *  belongs in a branch meeting is the manager's call, not the skill
  *  bank's.
  */
-function pullAccessCodes(sheetId) {
+function pullRoster(sheetId) {
   sheetId = str_(sheetId) ||
     PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
   if (!sheetId) throw new Error('No Branch Portfolio sheet id set.');
-  // A pasted link works as well as a bare id.
-  var mm = sheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);
+  var mm = sheetId.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/);   // a pasted link works too
   if (mm) sheetId = mm[1];
 
   var ss = SpreadsheetApp.openById(sheetId);
@@ -3774,75 +3800,140 @@ function pullAccessCodes(sheetId) {
   var values = sh.getDataRange().getValues();
   if (values.length < 2) throw new Error('The Agent Skill Bank tab is empty.');
 
-  // Tolerant header matching — the tab has been re-ordered before.
-  var head = values[0].map(function (h) { return low_(h); });
-  var find = function (names) {
-    for (var i = 0; i < head.length; i++) {
-      for (var j = 0; j < names.length; j++) {
-        if (head[i].indexOf(names[j]) > -1) return i;
-      }
+  /*  The tab carries two columns called Active and two that begin
+   *  "Agent" — the name and the number. A contains-match picks the
+   *  wrong one of each, so every header is matched exactly first and
+   *  only then loosely, and the FIRST hit wins.                    */
+  var head = values[0].map(function (h) { return low_(h).replace(/[^a-z0-9]/g, ''); });
+  var col = function (exact, loose) {
+    for (var i = 0; i < head.length; i++) if (exact.indexOf(head[i]) > -1) return i;
+    if (loose) for (var j = 0; j < head.length; j++) {
+      for (var k = 0; k < loose.length; k++) if (head[j].indexOf(loose[k]) > -1) return j;
     }
     return -1;
   };
-  var cEmail = find(['e-mail', 'email']);
-  var cCode  = find(['portal code', 'access code', 'code']);
-  if (cEmail === -1 || cCode === -1) {
-    throw new Error('That tab has no e-mail column or no portal code column.');
+  var cName  = col(['agent', 'name']);
+  var cNo    = col(['agentno', 'agentnumber', 'no'], ['agentno']);
+  var cPass  = col(['password'], ['password']);
+  var cRole  = col(['role']);
+  var cUnit  = col(['unit']);
+  var cAct   = col(['active']);
+  var cMail  = col(['email', 'email2'], ['mail']);
+  var cCode  = col(['portalcode'], ['portalcode', 'accesscode']);
+  if (cNo === -1 && cMail === -1) {
+    throw new Error('That tab has neither an agent number column nor an e-mail column.');
   }
 
   var people = readPeople_();
-  var byEmail = {};
-  people.forEach(function (p) { byEmail[p.email] = p; });
+  var byNo = {}, byMail = {};
+  people.forEach(function (p) {
+    if (p.agentNo) byNo[normNo_(p.agentNo)] = p;
+    if (p.email) byMail[p.email] = p;
+  });
 
-  var set = 0, same = 0, missing = [];
+  var added = 0, updated = 0, pwset = 0, skipped = [];
+
   for (var r = 1; r < values.length; r++) {
-    var email = low_(values[r][cEmail]);
-    var code = str_(values[r][cCode]);
-    if (email.indexOf('@') < 1 || !code) continue;
-    var p = byEmail[email];
-    if (!p) { missing.push(email); continue; }
-    if (sameCode_(code, p.code)) { same++; continue; }
-    setCell_(MEET.TAB_PEOPLE, p._row, 'Access Code', code);
-    set++;
+    var row = values[r];
+    var name = cName > -1 ? str_(row[cName]) : '';
+    var no   = cNo   > -1 ? str_(row[cNo])   : '';
+    var mail = cMail > -1 ? low_(row[cMail]) : '';
+    var pass = cPass > -1 ? str_(row[cPass]) : '';
+    if (!name && !no && !mail) continue;
+    if (!no && mail.indexOf('@') < 1) { skipped.push(name || '(row ' + (r + 1) + ')'); continue; }
+
+    var role = cRole > -1 ? low_(row[cRole]) : '';
+    if (ROLES.indexOf(role) === -1) role = 'agent';
+    var unit = cUnit > -1 ? str_(row[cUnit]) : '';
+    var active = cAct > -1 ? (yes_(row[cAct]) ? 'Y' : 'N') : 'Y';
+    var code = cCode > -1 ? str_(row[cCode]) : '';
+
+    var p = (no && byNo[normNo_(no)]) || (mail && byMail[mail]) || null;
+
+    if (!p) {
+      var salt0 = Utilities.getUuid();
+      appendRow_(MEET.TAB_PEOPLE, {
+        'Agent No': no, 'Email': mail, 'Name': name || mail || no, 'Role': role,
+        'Unit': unit, 'Active': active, 'Access Code': code,
+        'PIN Hash': pass ? hashPin_(pass, salt0) : '', 'Salt': pass ? salt0 : '',
+        'Added': new Date(), 'Added By': 'Agent Skill Bank'
+      });
+      added++;
+      if (pass) pwset++;
+      continue;
+    }
+
+    if (no   && normNo_(no) !== normNo_(p.agentNo)) setCell_(MEET.TAB_PEOPLE, p._row, 'Agent No', no);
+    if (mail && mail !== p.email)                   setCell_(MEET.TAB_PEOPLE, p._row, 'Email', mail);
+    if (name && name !== p.name)                    setCell_(MEET.TAB_PEOPLE, p._row, 'Name', name);
+    if (unit)                                       setCell_(MEET.TAB_PEOPLE, p._row, 'Unit', unit);
+    setCell_(MEET.TAB_PEOPLE, p._row, 'Active', active);
+    /*  The manager's own role is never demoted by a pull. The skill
+     *  bank calls everybody an agent, and a pull that quietly took the
+     *  branch manager's own access away would lock the one person who
+     *  can put it back.                                             */
+    if (p.role !== 'manager') setCell_(MEET.TAB_PEOPLE, p._row, 'Role', role);
+    if (code) setCell_(MEET.TAB_PEOPLE, p._row, 'Access Code', code);
+
+    /*  The password is hashed here and the plain one is dropped. A
+     *  pull that found no password leaves whatever they already had,
+     *  so a blank cell on the skill bank never locks somebody out.  */
+    if (pass) {
+      var salt = Utilities.getUuid();
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Salt', salt);
+      setCell_(MEET.TAB_PEOPLE, p._row, 'PIN Hash', hashPin_(pass, salt));
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Attempts', 0);
+      setCell_(MEET.TAB_PEOPLE, p._row, 'Locked Until', '');
+      pwset++;
+    }
+    updated++;
   }
 
   PropertiesService.getScriptProperties().setProperty('ROSTER_SHEET_ID', sheetId);
-  log_('access-codes', 'system', 'manager', 'People',
-    set + ' set, ' + same + ' already matched, ' + missing.length + ' not on the meeting roster');
+  log_('pull-roster', 'system', 'manager', 'People',
+    added + ' added, ' + updated + ' updated, ' + pwset + ' passwords set');
 
-  var msg = set + ' access code' + (set === 1 ? '' : 's') + ' written, '
-    + same + ' already matched.';
-  if (missing.length) {
-    msg += '\n\n' + missing.length + ' on the skill bank are not on the meeting roster '
-      + 'and were skipped:\n' + missing.slice(0, 15).join('\n')
-      + (missing.length > 15 ? '\n…and ' + (missing.length - 15) + ' more' : '');
+  var msg = added + ' added, ' + updated + ' updated. ' +
+    pwset + ' password' + (pwset === 1 ? '' : 's') + ' taken across and hashed — ' +
+    'no password is stored in the meeting sheet.';
+  if (skipped.length) {
+    msg += '\n\n' + skipped.length + ' row' + (skipped.length === 1 ? '' : 's') +
+      ' had neither an agent number nor an e-mail and were skipped:\n' +
+      skipped.slice(0, 15).join('\n') +
+      (skipped.length > 15 ? '\n…and ' + (skipped.length - 15) + ' more' : '');
   }
-  var blanks = readPeople_().filter(function (p) { return p.active && !p.code && !p.hash; });
-  if (blanks.length) {
-    msg += '\n\n' + blanks.length + ' on the meeting roster still have no code and no PIN, '
-      + 'so they cannot sign in and will be marked absent:\n'
-      + blanks.slice(0, 15).map(function (p) { return p.name + ' (' + p.email + ')'; }).join('\n')
-      + (blanks.length > 15 ? '\n…and ' + (blanks.length - 15) + ' more' : '');
+  var shut = readPeople_().filter(function (p) { return p.active && !p.hash && !p.code; });
+  if (shut.length) {
+    msg += '\n\n' + shut.length + ' active people still have no password and no code, so they ' +
+      'cannot sign in and will be marked absent:\n' +
+      shut.slice(0, 15).map(function (p) {
+        return p.name + (p.agentNo ? ' (' + p.agentNo + ')' : '');
+      }).join('\n') +
+      (shut.length > 15 ? '\n…and ' + (shut.length - 15) + ' more' : '');
   }
   Logger.log(msg);
   return msg;
 }
 
+/* The old name, kept so anything that called it still works. */
+function pullAccessCodes(sheetId) { return pullRoster(sheetId); }
+
+
 function promptPullAccessCodes() {
   var ui = SpreadsheetApp.getUi();
   var saved = PropertiesService.getScriptProperties().getProperty('ROSTER_SHEET_ID') || '';
-  var res = ui.prompt('Pull access codes from the Agent Skill Bank',
-    'Paste the link to the Branch Portfolio spreadsheet that holds the\n' +
-    'Agent Skill Bank tab. Codes are matched to the meeting roster by\n' +
-    'e-mail; nobody is added or removed.' +
+  var res = ui.prompt('Pull the roster from the Agent Skill Bank',
+    'Paste the link to the spreadsheet that holds the Agent Skill Bank\n' +
+    'tab. Name, agent number, role, unit and active come across; the\n' +
+    'password is hashed on the way in and never stored here.' +
     (saved ? '\n\n(Last used: ' + saved + ')' : ''), ui.ButtonSet.OK_CANCEL);
   if (res.getSelectedButton() !== ui.Button.OK) return;
   var id = res.getResponseText().trim() || saved;
   if (!id) return;
   try {
-    ui.alert('Access codes', pullAccessCodes(id), ui.ButtonSet.OK);
+    ui.alert('The roster', pullRoster(id), ui.ButtonSet.OK);
   } catch (err) {
-    ui.alert('Access codes', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
+    ui.alert('The roster', String(err && err.message ? err.message : err), ui.ButtonSet.OK);
   }
 }
 
