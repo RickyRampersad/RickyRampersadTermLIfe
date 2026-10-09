@@ -132,10 +132,23 @@ both the Gary Sookdeo and Kerwyn Ramroach unit heads. Checked against
 two live units** — 20 in the Ricky Rampersad unit, 7 in Akaash Kalladeen's and
 1 left in Kerwyn Ramroach's. Gary Sookdeo's unit has none.
 
-So: **after every pull, reconcile the People tab against Salesforce** — anyone
-whose `Employment_Status__c` is not `Active` gets `Active` set to `no` here.
-The Agent Skill Bank does not carry employment status, so the pull cannot do
-this for you and no amount of re-pulling will fix it.
+So: **mark the leavers inactive on the Agent Skill Bank, then pull again.**
+That tab carries an `Active` column, `pullRoster` reads it, and it writes
+`Active` onto the People tab for every row it walks. The skill bank is where
+the branch already keeps the roll, so it is the right place to do this and it
+is a one-press fix from there.
+
+Two gaps a pull will not close, and both need a hand:
+
+- **Somebody taken off the skill bank entirely is never touched.** The pull
+  walks the skill bank's rows; a person who is not on it is not visited at all.
+  They stay Active on the People tab until somebody sets `Active` to `no`
+  there. Removing a leaver from the skill bank is therefore the *wrong* way to
+  do it — mark them inactive instead, and leave the row.
+- **The skill bank itself has to be true.** On 9 October 2026 it carried 23
+  rows against Salesforce's 28 active agents, so the two were already out of
+  step in both directions. Reconcile it against `Contact.Employment_Status__c`
+  before the first meeting, not just after a departure.
 
 Anyone with no agent number can type their work e-mail in the first box
 instead, and anyone who set a PIN here before October 2026 can still use it.
