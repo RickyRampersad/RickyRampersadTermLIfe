@@ -229,6 +229,28 @@ section{padding:96px 0;position:relative}
 .gauntlet .close{margin-top:32px;font-size:1.05rem;max-width:680px}
 .gauntlet .close b{color:var(--p)}
 
+/* advisor vs branch administration (note: .roads above is the career
+   path section — different thing, do not merge the two) */
+.tworoads{background:var(--surf)}
+.roadgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+@media(max-width:880px){.roadgrid{grid-template-columns:1fr}}
+.road{display:flex;flex-direction:column;min-width:0;background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:26px 28px;transition:transform .18s,border-color .18s,box-shadow .18s}
+.road:hover{transform:translateY(-4px);border-color:var(--tintRing);box-shadow:0 14px 34px rgba(var(--pDeepRGB),.09)}
+.r-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.r-tag{font-family:'Space Grotesk';font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--onP);background:var(--p);padding:5px 11px;border-radius:999px}
+.r-tag.alt{background:var(--aD);color:#07131f}
+.road h3{font-family:'Playfair Display';font-weight:800;font-size:1.5rem;color:var(--ink)}
+.r-what{font-size:.95rem;line-height:1.65}
+.r-list{list-style:none;margin:16px 0 22px;display:grid;gap:10px}
+.r-list li{font-size:.9rem;line-height:1.6;padding-left:17px;position:relative;min-width:0}
+.r-list li::before{content:"";position:absolute;left:0;top:.6em;width:7px;height:7px;border-radius:50%;background:var(--a)}
+.r-list b{color:var(--ink)}
+.road .btn{margin-top:auto;align-self:flex-start}
+.road .btn-outline{border:1.5px solid var(--p);color:var(--p);background:transparent}
+.road .btn-outline:hover{background:var(--p);color:var(--onP)}
+.tworoads .close{margin-top:30px;font-size:1.02rem;max-width:720px}
+.tworoads .close b{color:var(--p)}
+
 /* quote */
 .quote-sec{background:linear-gradient(140deg,var(--pDeep),var(--pMid) 58%,var(--pSoft));color:var(--heroT);padding:88px 0;position:relative;overflow:hidden}
 .quote-sec::before{content:"";position:absolute;width:460px;height:460px;border-radius:50%;background:rgba(var(--aRGB),.14);filter:blur(80px);right:-120px;top:-160px}
@@ -317,12 +339,12 @@ footer b{color:var(--p)}
     <div>
       <div class="label"><span class="live"></span>Now selecting · Chaguanas, Trinidad</div>
       <h1>The environment <em>decides.</em><br>We select the <span class="swap" id="swap">driven.</span><span class="cursor" aria-hidden="true"></span></h1>
-      <p class="sub">Talent gets you in the game. Environment decides how far you go. This is a <b>23× MDRT branch, 32 years in Trinidad</b> — now opening five seats to proven advisors ready for a branch that backs them, and to sharp newcomers ready to be built properly.</p>
+      <p class="sub">Talent gets you in the game. Environment decides how far you go. This is a <b>23× MDRT branch, 32 years in Trinidad</b> — and we recruit all year round, on two roads: advisors who sell, and the branch staff who hold the place together.</p>
       <div class="hero-cta">
         <a class="btn btn-champ" id="magnet" href="apply.html">Start the Selection</a>
-        <a class="btn btn-outline" href="#quiz">Take the 60-second test</a>
+        <a class="btn btn-outline" href="#roads">Which road is mine?</a>
       </div>
-      <p class="tick"><b>●</b> Confidential for practising advisors &nbsp;·&nbsp; Reviewed within 48 hours &nbsp;·&nbsp; Newcomers fully trained</p>
+      <p class="tick"><b>●</b> No closing date &nbsp;·&nbsp; Reviewed within 48 hours &nbsp;·&nbsp; Advisors and branch administration</p>
     </div>
     <div class="hero-visual" aria-hidden="true">
       <div class="emblem">
@@ -368,9 +390,47 @@ footer b{color:var(--p)}
     <div class="proof rv stag" id="counters">
       <div style="--i:0"><div class="n" data-count="32">0</div><div class="t">Years serving Trinidad</div></div>
       <div style="--i:1"><div class="n" data-count="23" data-suffix="×">0</div><div class="t">MDRT branch — proven excellence</div></div>
-      <div style="--i:2"><div class="n" data-count="5">0</div><div class="t">Seats this intake</div></div>
+      <div style="--i:2"><div class="n" data-count="2">0</div><div class="t">Roads in — advisor, administration</div></div>
       <div style="--i:3"><div class="n" data-count="48" data-suffix="h">0</div><div class="t">Max wait for review</div></div>
     </div>
+  </div>
+</section>
+
+<section class="tworoads" id="roads">
+  <div class="wrap">
+    <div class="sec-head rv">
+      <div class="label">Two Roads</div>
+      <h2>A branch is not <em>only advisors.</em></h2>
+      <p>We recruit on two roads and they never close. They are different jobs, hired different ways, and we would rather you walked into the right one than the one that sounded closest.</p>
+    </div>
+
+    <div class="roadgrid">
+      <div class="road rv">
+        <div class="r-head"><span class="r-tag">Road one</span><h3>Sales advisor</h3></div>
+        <p class="r-what">Licensed, self-employed, paid on commission. You build a book of clients and it stays yours. Uncapped, and slow at the start — most advisors take about ninety days to reach steady income.</p>
+        <ul class="r-list">
+          <li><b>Who it suits</b> — practising advisors who want a branch that backs them, and newcomers willing to be built from zero.</li>
+          <li><b>What you need</b> — to be 18 or over, the education standard, a vehicle, and a household that is behind you.</li>
+          <li><b>How we select</b> — Guardian's own process. Form A, the POP 7.0 assessment, then the branch's five gates.</li>
+          <li><b>How long</b> — first call within 48 hours. Licensed advisors move faster than newcomers.</li>
+        </ul>
+        <a class="btn btn-wine" href="apply.html">Apply as an advisor</a>
+      </div>
+
+      <div class="road rv">
+        <div class="r-head"><span class="r-tag alt">Road two</span><h3>Branch administration</h3></div>
+        <p class="r-what">Salaried branch staff at the Chaguanas Regional Centre. Client service, records, accounts, front desk, Branch Manager Assistant. No licence, no selling, no commission — a wage, and the work that keeps three hundred advisors' files straight.</p>
+        <ul class="r-list">
+          <li><b>Who it suits</b> — organised people who like getting it exactly right, and can hold their nerve with a client who walks in upset.</li>
+          <li><b>What you need</b> — office experience, real Excel, accuracy, and discretion. Insurance background helps and is not required.</li>
+          <li><b>How we select</b> — the branch's own: we read the intake, set a short practical test, then interview. References before any offer.</li>
+          <li><b>How long</b> — read within 48 hours. If there is no vacancy that week we say so, and keep the file for when there is.</li>
+        </ul>
+        <a class="btn btn-outline" href="apply.html">Apply for administration</a>
+      </div>
+    </div>
+
+    <p class="close rv">Not sure? <b>Start the intake and pick on the first screen</b> — the questions change to match, and nothing you answer on one road is read against the other.</p>
   </div>
 </section>
 
@@ -532,8 +592,8 @@ footer b{color:var(--p)}
 
 <section class="final" id="apply">
   <div class="wrap rv">
-    <h2>Five seats.<br><em>Claim yours.</em></h2>
-    <p>Two minutes to apply. Confidential for practising advisors. A career that caps out only where you do — which is nowhere.</p>
+    <h2>We are always selecting.<br><em>Start when you are ready.</em></h2>
+    <p>Two or three minutes to apply, on either road. Confidential for practising advisors. No closing date — but the file is read in the order it arrives.</p>
     <a class="btn btn-wine" href="apply.html">Start the Selection</a>
     <div class="qr-row">
       <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAATgAAAE4CAIAAABAHXg9AAAG5UlEQVR4nO3dMY4kNxJAUY0wB1hfR9J590jr6wa9hlwRAgVSjF/9nqkZZeVU9weNQGT++Pr6+gWY7dfXNwD8PaFCgFAhQKgQIFQIECoECBUCfq7+4Pf//PZv3sc/9t8//veX/333/l9d59Tn7pp2n6vrr0z7Pk9Z3b8TFQKECgFChQChQoBQIUCoECBUCFjOUVd2512n3J7X7c7lbn/uqetMm5dOU/l9dqJCgFAhQKgQIFQIECoECBUChAoB23PUlVd7ibevs3J7Drl7/7f/vaeuX5nHTvt9dqJCgFAhQKgQIFQIECoECBUChAoBx+ao01TmdSuvnuu7cntuvHv9V3ukrzhRIUCoECBUCBAqBAgVAoQKAUKFgI+do77an3z1nN5T93P7+ca7bu/xVjhRIUCoECBUCBAqBAgVAoQKAUKFgGNz1Mr86tXzWm/PV3fV911vm/b77ESFAKFCgFAhQKgQIFQIECoECBUCtueoleflnnoO7e190ZVp91//fnavM40TFQKECgFChQChQoBQIUCoECBUCFjOUaft453yar636/Y+6imv9kh3r1//fXaiQoBQIUCoECBUCBAqBAgVAoQKAcs56qn9w5Xbc8Jpe4+71981be902j7q7f3V2104USFAqBAgVAgQKgQIFQKECgFChYDtfdTbc7ZT93Pq+rfnY6+82mudtr+6ez+n7nP3Ok5UCBAqBAgVAoQKAUKFAKFCgFAh4MfX19fW/1DZO709J5y271rft3ylcv9OVAgQKgQIFQKECgFChQChQoBQIWB7jrry6nm8054fO+363+1zX81Fb/+7nKgQIFQIECoECBUChAoBQoUAoULAsX3UaXMw889/9vd3P/eVynt6d3k/KoQJFQKECgFChQChQoBQIUCoEHBsH3VXZW/w1d+/7dXc1XOe/7T7/ThRIUCoECBUCBAqBAgVAoQKAUKFgOvvR931ar9017T5av39pa/2Zqf9vFacqBAgVAgQKgQIFQKECgFChQChQsD196NOe97stHnjp879dtW//93rm6PCBxIqBAgVAoQKAUKFAKFCgFAh4OftD5j2fNfbXs0Dp805bzv1PVfeE+tEhQChQoBQIUCoECBUCBAqBAgVApZz1Gnv7dz1qfd/e7932v7qq/e17tr93rwfFT6QUCFAqBAgVAgQKgQIFQKECgHL5/pW3ke66/Ye7O3P/W7Ps522B3ubOSqECRUChAoBQoUAoUKAUCFAqBAw7rm+K9Pmnyun9g9PXWfXqX3X2/P2yt6v96PCNyJUCBAqBAgVAoQKAUKFAKFCwHIfdeXV+053vdp7vD1Pq++R3p5PrlT2ge2jQphQIUCoECBUCBAqBAgVAoQKAcee61uZv1VMmz/fnltOe9/pqc+1jwrfiFAhQKgQIFQIECoECBUChAoB15/ru7I7l3u1B/tqX/TVHLLyPtJpP5fd6+xyokKAUCFAqBAgVAgQKgQIFQKECgHj9lF3TXs/6q76Pu207//V83532UeFDyRUCBAqBAgVAoQKAUKFAKFCwPb7UXe9eu/lK9PmeK/e53nqOq/mmdP2n52oECBUCBAqBAgVAoQKAUKFAKFCwLE5amVeOu29ryuV+eptr97LOu3n7kSFAKFCgFAhQKgQIFQIECoECBUCtueo057f+2oeOO1+Vl7NtyvPhd716t/lRIUAoUKAUCFAqBAgVAgQKgQIFQKuvx/1lGl7g7tuP/9213d7fvIpr36OTlQIECoECBUChAoBQoUAoUKAUCHg5+oPTs3NXs39Tl3n1f7kp85dp83nT7l9n05UCBAqBAgVAoQKAUKFAKFCgFAh4Nj7Uae5vW85bX9117R5ZmVu/Oo5xk5UCBAqBAgVAoQKAUKFAKFCgFAhYLmPWtkDfDU3Wzk1h7w9B77991de/V5Ne6/vLicqBAgVAoQKAUKFAKFCgFAhQKgQsJyjrrx6T+a0969O+9xT9/lq33Lavuup65ujwjciVAgQKgQIFQKECgFChQChQsD2HHXl9hzv1HVW91mZ+92+z1ffw6nn+t7+ubzaa3WiQoBQIUCoECBUCBAqBAgVAoQKAcfmqNN8t+fHnvKp+8YrlX1aJyoECBUChAoBQoUAoUKAUCFAqBDwsXPUXafmY9PmkOa3fzo153z1++BEhQChQoBQIUCoECBUCBAqBAgVAo7NUafN627PRV89V/bU829vPz955dUc8tUe6SlOVAgQKgQIFQKECgFChQChQoBQIeDH19fXX/5BZb50+7msp+Z4t+e3r/Y5p703dWXac3pXVvfjRIUAoUKAUCFAqBAgVAgQKgQIFQKWc1RgDicqBAgVAoQKAUKFAKFCgFAhQKgQ8H8ZyMi8C5qS6QAAAABJRU5ErkJggg==" alt="QR code — scan to open the application">
@@ -673,14 +733,14 @@ let bubTimer=null,lastMsg='';
 function say(msg,ms=4200){if(msg===lastMsg&&bub.classList.contains('on'))return;lastMsg=msg;
  bub.innerHTML=msg;bub.classList.add('on');guide.classList.remove('hop');void guide.offsetWidth;guide.classList.add('hop');
  clearTimeout(bubTimer);bubTimer=setTimeout(()=>bub.classList.remove('on'),ms)}
-const lines={hero:"I\u2019m <b>RAI</b> — the branch AI. Five seats. Proven advisors and sharp newcomers — read on.",
+const lines={hero:"I\u2019m <b>RAI</b> — the branch AI. Two roads in, open all year. Advisors, and branch administration.",
  env:"This is the room. <b>The room decides.</b>",
  path:"Two roads up — overrides, offices, management. All written.",
  quiz:"Answer honestly. Especially question five.",
  wins:"Don't take our word. <b>Come meet the qualifiers.</b>",
- gates:"Five gates — same standard for veterans and newcomers.",
+ gates:"Five gates on the advisor road — same standard for veterans and newcomers.",
  faq:"Practising advisors: your enquiry stays confidential.",
- apply:"Five seats. <b>One should be yours.</b> Tap or scan."};
+ apply:"No closing date. <b>Pick your road and start.</b> Tap or scan."};
 const secIO=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting&&lines[e.target.dataset.g])say(lines[e.target.dataset.g])}),{threshold:.3});
 document.getElementById('hero').dataset.g='hero';secIO.observe(document.getElementById('hero'));
 document.querySelector('.env').dataset.g='env';secIO.observe(document.querySelector('.env'));

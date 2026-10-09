@@ -137,9 +137,9 @@ footer{border-top:1px solid var(--line);padding:30px 0;text-align:center;font-fa
 
 <div class="wrap">
   <div class="head">
-    <div class="kicker">Branch intake · 2 minutes</div>
+    <div class="kicker" id="kicker">Branch intake · 2 minutes</div>
     <h1>Before the form, <em>a conversation.</em></h1>
-    <p>Guardian Life's official application asks what Head Office needs. This asks what <b>the branch</b> needs — so the right Recruiting Manager calls you, already knowing who you are. You'll be handed to the official application at the end.</p>
+    <p id="headlede">We recruit advisors and branch administrators, all year round. The first question asks which one you are here for, and everything after it changes to suit. Nothing closes — there is no deadline on either road.</p>
   </div>
 
   <form id="form" novalidate>
@@ -209,6 +209,67 @@ var REFERRAL_PATH = ['Agent referral','Walk-in','Social media','Centre of Influe
 var APPROACH = ['Easily','Fairly easily','With difficulty','Probably not'];  /* market survey scale */
 var REFER_ABILITY = ['Excellent','Good','Fair','Poor'];                     /* market survey scale */
 
+/* ------------------------------------------------------------------
+   Administration road.
+   None of these are Form A rows and none of them are a Guardian
+   standard — Form A, POP 7.0 and GSAP are the advisor selection and do
+   not apply to a salaried branch post. What follows is the branch's own
+   intake, scored by the branch's own rubric (see CAREERS-DATA-MAP.md).
+   ------------------------------------------------------------------ */
+var ADMIN_POSITIONS = [
+  'Branch Manager Assistant (BMA)',
+  'Client Service Representative',
+  'Administrative Assistant',
+  'Front desk / Receptionist',
+  'Accounts and records clerk',
+  'Open to any of these'
+];
+var ADMIN_YEARS = ['None yet','Less than 1 year','1 – 2 years','3 – 5 years','6 – 10 years','More than 10 years'];
+var ADMIN_SOFTWARE = [
+  'Confident in all of it — Word, Excel, Outlook, shared drives',
+  'Comfortable with most, would need a little time on one or two',
+  'Basic — I can do the everyday things',
+  'Limited, but I pick things up quickly'
+];
+var ADMIN_EXCEL = [
+  'Formulas, sorting and filtering, pivot tables',
+  'Formulas, sorting and filtering',
+  'I can enter and format data',
+  'Very little Excel so far'
+];
+var ADMIN_ACCURACY = [
+  'I check my own work against the source every time',
+  'I check anything involving money or dates',
+  'I check when I am unsure',
+  'I would rather someone else checks behind me'
+];
+var ADMIN_VOLUME = [
+  'Yes — I have worked to daily deadlines with a queue',
+  'Yes, though the pace was steadier than that',
+  'Some — mostly in short busy spells',
+  'Not yet'
+];
+var ADMIN_CLIENT_FACING = [
+  'Daily — face to face and on the phone',
+  'Daily — mostly phone or email',
+  'Occasionally',
+  'Not in a work setting yet'
+];
+var ADMIN_WRITING = [
+  'I draft letters and emails that go out without being rewritten',
+  'I draft them and someone checks before they go',
+  'I write short internal notes and emails',
+  'I would want help with this at first'
+];
+var ADMIN_HOURS = ['Full-time, branch hours','Full-time, some flexibility needed','Part-time','Temporary or contract'];
+var ADMIN_NOTICE = ['Available now','1 week','2 weeks','1 month','More than a month'];
+var ADMIN_TRANSPORT = [
+  'Own vehicle',
+  'Public transport — the route works for me',
+  'Dropped off / shared transport',
+  'This is something I would need to sort out'
+];
+
 /* Age band from date of birth — FORM-A labels, en-dashes included */
 function ageBand(dob){
   if(!dob) return '';
@@ -234,14 +295,19 @@ function ageYears(dob){
    STATE
    ============================================================ */
 var S = {
-  ref:'', track:'', name:'', email:'', phone:'', area:'', dob:'', marital:'', education:'',
+  ref:'', role:'', track:'', name:'', email:'', phone:'', area:'', dob:'', marital:'', education:'',
   /* experienced branch */
   expCompany:'', expYears:'', expProduction:'', expLicence:'', expContracted:'', expPortability:'', expWhyLeaving:'',
   /* new-to-industry branch */
   newOccupation:'', newEmployYears:'', newRunway:'', newWhyNow:'',
-  /* everyone */
+  /* advisor — everyone on that road */
   incomeTarget:'', commitment:'', startWhen:'', vehicle:'', byod:'', household:'',
   networkSize:'', networkApproach:'', referAbility:'',
+  /* administration road */
+  admPosition:'', admOtherPosition:'', admIndustry:'', admYears:'', admCurrent:'', admWhyLeaving:'',
+  admNotice:'', admSoftware:'', admExcel:'', admAccuracy:'', admVolume:'', admClientFacing:'',
+  admDifficult:'', admWriting:'', admConfidential:'', admSalary:'', admHours:'', admTransport:'',
+  /* both roads */
   referralPath:'', referralName:'', notes:'', consent:false,
   quiz:null
 };
@@ -268,10 +334,13 @@ function saveDraft(){ try{ localStorage.setItem('rrb-intake-draft', JSON.stringi
    STEPS
    ============================================================ */
 function stepsFor(){
-  var list = ['who','track'];
+  if(S.role === 'admin')
+    return ['role','who','admrole','admexp','admskills','admfit','source','done'];
+  var list = ['role','who','track'];
   list.push(S.track === 'experienced' ? 'exp' : 'new');
   return list.concat(['practical','market','source','done']);
 }
+function isAdmin(){ return S.role === 'admin'; }
 var stepIdx = 0;
 
 var el = function(id){ return document.getElementById(id); };
@@ -312,18 +381,41 @@ function choiceGroup(key,opts,two){
 }
 
 var STEP = {
+  role: {
+    tag:'Step 1', title:'Which kind of role?',
+    lede:'We recruit on two separate roads, all year round. They are different jobs with different selection, so this answer decides every question after it.',
+    html:function(){
+      return choiceGroup('role',[
+        {v:'advisor', t:'Sales advisor',
+         s:'Licensed, self-employed, paid on commission. You build and keep your own book of clients. Selection runs on Guardian’s process — Form A, POP 7.0, then the branch gates.'},
+        {v:'admin', t:'Branch administration',
+         s:'Salaried branch staff — client service, records, accounts, front desk, Branch Manager Assistant. No licence and no selling. Selection is the branch’s own: screening, a practical test, then interview.'}
+      ]) + '<div class="hint" style="margin-top:14px">Both roads are open continuously — there is no closing date on either, and we would rather you applied for the one you actually want than the one that looks easier to get into.</div>';
+    },
+    validate:function(){ return S.role ? {} : {role:'Please pick the one you are applying for.'}; }
+  },
+
   who: {
-    tag:'Step 1', title:'Who we should call',
-    lede:'The basics. A Recruiting Manager reviews every intake personally — this is how they reach you.',
+    tag:'Step 2',
+    title:'Who we should call',
+    lede:function(){ return isAdmin()
+      ? 'The basics. The Branch Manager Assistant reads every administration intake personally — this is how they reach you.'
+      : 'The basics. A Recruiting Manager reviews every intake personally — this is how they reach you.'; },
     html:function(){
       return textField('name','Full name','text','As it appears on your ID',true) +
              textField('email','Email','email','you@example.com',true) +
              textField('phone','Mobile','tel','868 000 0000',true) +
              textField('area','Area you live','text','e.g. Chaguanas, Couva, Arima',true,
-               'We run out of the Chaguanas Regional Centre. Travel time is a real factor in your first year, so we ask early.') +
-             textField('dob','Date of birth','date','',true,'Used for the selection file only.') +
-             selectField('marital','Household status',MARITAL,true,
-               'Guardian’s selection standard weighs household stability. Answer honestly — it is not a filter on its own.');
+               isAdmin()
+                 ? 'The post is based at the Chaguanas Regional Centre, in the office. We ask early because the daily commute is the thing that most often undoes an otherwise good match.'
+                 : 'We run out of the Chaguanas Regional Centre. Travel time is a real factor in your first year, so we ask early.') +
+             textField('dob','Date of birth','date','',true,
+               isAdmin() ? 'For the employment file only.' : 'Used for the selection file only.') +
+             /* Household status is a scored row on Guardian's Form A for advisors.
+                It is not relevant to a salaried post, so the administration road
+                is not asked it. */
+             (isAdmin() ? '' : selectField('marital','Household status',MARITAL,true,
+               'Guardian’s selection standard weighs household stability. Answer honestly — it is not a filter on its own.'));
     },
     validate:function(){
       var e = {};
@@ -333,8 +425,9 @@ var STEP = {
       if(!S.area.trim()) e.area='Which area do you live in?';
       if(!S.dob) e.dob='Please give your date of birth.';
       else if(!ageBand(S.dob)) e.dob='Please check that date.';
-      else if(ageYears(S.dob)!=='' && +ageYears(S.dob) < 18) e.dob='You must be 18 or older to hold a licence.';
-      if(!S.marital) e.marital='Please choose one.';
+      else if(ageYears(S.dob)!=='' && +ageYears(S.dob) < 18)
+        e.dob = isAdmin() ? 'You must be 18 or older.' : 'You must be 18 or older to hold a licence.';
+      if(!isAdmin() && !S.marital) e.marital='Please choose one.';
       return e;
     }
   },
@@ -411,6 +504,113 @@ var STEP = {
     }
   },
 
+  /* ----------------------------------------------------------------
+     ADMINISTRATION ROAD
+     Four steps, and deliberately none of the advisor ones. A salaried
+     branch post is not sold on a network, has no commission runway and
+     is not scored on Form A, so asking about any of that would be both
+     useless to the branch and misleading to the candidate.
+     ---------------------------------------------------------------- */
+  admrole: {
+    tag:'Step 3', title:'Which post?',
+    lede:'Tell us what you are after. We keep every administration intake on file and come back to it when a post opens, so a "no vacancy today" is not a no.',
+    html:function(){
+      return selectField('admPosition','Post you are applying for',ADMIN_POSITIONS,true,
+               'Not sure which fits? Choose the last one — we read the rest of your answers and place you.') +
+             (S.admPosition==='Open to any of these'
+               ? areaField('admOtherPosition','Anything you would particularly like, or rule out?','Optional.')
+               : '') +
+             selectField('admIndustry','Have you worked in insurance or financial services before?',
+               ['Yes — insurance','Yes — banking or other financial services','No, but I have worked with confidential client records','No'],true,
+               'Not a requirement. It changes how long your first month takes, not whether you are considered.') +
+             selectField('admYears','Years of office or administrative experience',ADMIN_YEARS,true) +
+             selectField('education','Highest level of education completed',EDUCATION,true,
+               'Five O’Levels including English is the usual floor for a branch post. Tell us what you have and let us judge it.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.admPosition) e.admPosition='Please choose a post.';
+      if(!S.admIndustry) e.admIndustry='Please choose.';
+      if(!S.admYears) e.admYears='Please choose.';
+      if(!S.education) e.education='Please choose.';
+      return e;
+    }
+  },
+
+  admexp: {
+    tag:'Step 4', title:'Where you are now',
+    lede:'Short answers are fine. We are looking for whether the work you have done lines up with the work there is to do here.',
+    html:function(){
+      return textField('admCurrent','Current or most recent job','text','Job title and employer, or "between roles"',true) +
+             selectField('admNotice','Notice you would have to give',ADMIN_NOTICE,true) +
+             areaField('admWhyLeaving','Why are you looking?','The honest version.',
+               'Asked of everyone at interview. Answering now means we do not open with it.') +
+             selectField('admClientFacing','How often have you dealt with clients or the public?',ADMIN_CLIENT_FACING,true,
+               'A branch office is a front door. Most days somebody walks in upset about a policy they did not understand.') +
+             areaField('admDifficult','Tell us about a difficult client or a mistake you had to put right.',
+               'What happened, and what you did. A few sentences.',
+               'We are reading for how you handle it, not for a perfect record. "I have not had one yet" is an acceptable answer if it is true.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.admCurrent.trim()) e.admCurrent='Please tell us what you do now.';
+      if(!S.admNotice) e.admNotice='Please choose.';
+      if(!S.admWhyLeaving.trim() || S.admWhyLeaving.trim().length<10) e.admWhyLeaving='A sentence or two.';
+      if(!S.admClientFacing) e.admClientFacing='Please choose.';
+      if(!S.admDifficult.trim() || S.admDifficult.trim().length<20) e.admDifficult='A few sentences, in your own words.';
+      return e;
+    }
+  },
+
+  admskills: {
+    tag:'Step 5', title:'The practical skills',
+    lede:'Answer these as they are today, not as you hope to be. There is a short practical test later in the process and it will show either way — and an honest low answer here has never cost anybody a post.',
+    html:function(){
+      return selectField('admSoftware','Day-to-day software',ADMIN_SOFTWARE,true) +
+             selectField('admExcel','Excel, specifically',ADMIN_EXCEL,true,
+               'Premium listings, lapse reports and commission statements all arrive as spreadsheets.') +
+             selectField('admAccuracy','How do you check your own work?',ADMIN_ACCURACY,true,
+               'The single most useful thing to know about an administrator. A wrong policy number costs a client their cover.') +
+             selectField('admVolume','Have you worked somewhere with real volume and deadlines?',ADMIN_VOLUME,true) +
+             selectField('admWriting','Writing — letters and emails to clients',ADMIN_WRITING,true);
+    },
+    validate:function(){
+      var e={};
+      if(!S.admSoftware) e.admSoftware='Please choose.';
+      if(!S.admExcel) e.admExcel='Please choose.';
+      if(!S.admAccuracy) e.admAccuracy='Please choose.';
+      if(!S.admVolume) e.admVolume='Please choose.';
+      if(!S.admWriting) e.admWriting='Please choose.';
+      return e;
+    }
+  },
+
+  admfit: {
+    tag:'Step 6', title:'Hours, pay and one undertaking',
+    lede:'The practical terms, said plainly, so neither of us wastes an interview finding out we were never going to agree.',
+    html:function(){
+      return selectField('admHours','What are you looking for?',ADMIN_HOURS,true) +
+             selectField('startWhen','Earliest you could start',
+               ['Immediately','Within 2 weeks','Within a month','1 – 2 months','More than 2 months'],true) +
+             selectField('admTransport','Getting to Chaguanas each day',ADMIN_TRANSPORT,true) +
+             textField('admSalary','Monthly salary you are looking for','text','TT$ per month',true,
+               'A range is fine. This is a salaried post, not commission — we would rather know now than at offer.') +
+             '<div class="field" style="margin-top:4px"><label class="check"><input type="checkbox" id="f_admConfidential" data-k="admConfidential"'+(S.admConfidential?' checked':'')+'>'+
+             '<span><b>Confidentiality.</b> A branch administrator sees policy files, medical declarations, beneficiaries and what people earn. '+
+             'I understand that none of it may be discussed outside the office, and that this holds after I leave.</span></label>'+
+             '<div class="err" id="e_admConfidential"></div></div>';
+    },
+    validate:function(){
+      var e={};
+      if(!S.admHours) e.admHours='Please choose.';
+      if(!S.startWhen) e.startWhen='Please choose.';
+      if(!S.admTransport) e.admTransport='Please choose.';
+      if(!S.admSalary.trim()) e.admSalary='Please give a figure or a range.';
+      if(!S.admConfidential) e.admConfidential='Please confirm you understand this.';
+      return e;
+    }
+  },
+
   practical: {
     tag:'Step 4', title:'The practical side',
     lede:'Three things decide whether week one runs or stalls. None of them are about talent.',
@@ -471,8 +671,11 @@ var STEP = {
   },
 
   source: {
-    tag:'Step 6', title:'Last thing',
-    lede:'How you found us tells us which of our channels is actually working. Then we hand you to the official application.',
+    tag:'Step 7',
+    title:'Last thing',
+    lede:function(){ return isAdmin()
+      ? 'How you found us tells us which of our channels is actually working. Then your intake goes to the branch.'
+      : 'How you found us tells us which of our channels is actually working. Then we hand you to the official application.'; },
     html:function(){
       return selectField('referralPath','How did you hear about the branch?',REFERRAL_PATH,true) +
         ((S.referralPath==='Agent referral'||S.referralPath==='Internal employee'||S.referralPath==='Centre of Influence')
@@ -480,8 +683,11 @@ var STEP = {
               'They get credit for it — that is how our referral culture stays alive.') : '') +
         areaField('notes','Anything you want the branch to know?','Optional. Constraints, questions, timing, anything.') +
         '<div class="field" style="margin-top:20px"><label class="check"><input type="checkbox" id="f_consent" data-k="consent"'+(S.consent?' checked':'')+'>'+
-        '<span>I confirm these answers are true, and I agree that Ricky Rampersad Branch and Guardian Life of the Caribbean may hold and use them to consider me for an advisor role. '+
-        'I understand this is a branch intake and that my formal application is made on the Guardian Life system on the next screen.</span></label>'+
+        '<span>'+(isAdmin()
+          ? 'I confirm these answers are true, and I agree that Ricky Rampersad Branch and Guardian Life of the Caribbean may hold and use them to consider me for a branch administration post, now or when one opens. '+
+            'I understand there may be no vacancy today, and that I can ask for my details to be removed at any time.'
+          : 'I confirm these answers are true, and I agree that Ricky Rampersad Branch and Guardian Life of the Caribbean may hold and use them to consider me for an advisor role. '+
+            'I understand this is a branch intake and that my formal application is made on the Guardian Life system on the next screen.')+'</span></label>'+
         '<div class="err" id="e_consent"></div></div>';
     },
     validate:function(){
@@ -516,11 +722,33 @@ function render(){
 
   if(key === 'done'){ renderDone(); return; }
 
+  /* The header and the skip link both speak to one road or the other.
+     The skip link goes to the Guardian advisor posting, so it has no
+     business showing to an administrator. */
+  var kick = el('kicker'), lede = el('headlede'), skip = el('skiprow');
+  if(S.role === 'admin'){
+    kick.textContent = 'Branch administration · 3 minutes';
+    lede.textContent = 'This is the branch’s own application for a salaried post at the Chaguanas Regional Centre. It is not the advisor process and nothing here is scored against it.';
+    skip.style.display = 'none';
+  } else if(S.role === 'advisor'){
+    kick.textContent = 'Advisor intake · 2 minutes';
+    lede.innerHTML = 'Guardian Life’s official application asks what Head Office needs. This asks what <b>the branch</b> needs — so the right Recruiting Manager calls you, already knowing who you are. You’ll be handed to the official application at the end.';
+    skip.style.display = '';
+  } else {
+    /* No road chosen yet. The skip link goes to the advisor posting, so
+       offering it here would push administrators down the wrong one. */
+    skip.style.display = 'none';
+  }
+
+  /* Numbered from where the step actually falls, because the two roads are
+     different lengths and the role question sits ahead of both. */
   var st = STEP[key];
+  var total = steps.length - 1;            /* 'done' is not a step you fill in */
+  var val = function(v){ return typeof v === 'function' ? v() : v; };
   el('card').innerHTML =
-    '<div class="step-tag">'+st.tag+' of 6</div>'+
-    '<h2>'+st.title+'</h2>'+
-    '<p class="lede">'+st.lede+'</p>'+
+    '<div class="step-tag">Step '+(stepIdx+1)+' of '+total+'</div>'+
+    '<h2>'+val(st.title)+'</h2>'+
+    '<p class="lede">'+val(st.lede)+'</p>'+
     st.html();
 
   el('nav').innerHTML =
@@ -555,8 +783,9 @@ function wire(){
         n.oninput = function(){ S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft(); };
         n.onchange = function(){
           S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft();
-          /* the referrer-name field appears/disappears with the channel */
-          if(n.getAttribute('data-k')==='referralPath') render();
+          /* fields that appear/disappear with the answer above them */
+          var k = n.getAttribute('data-k');
+          if(k==='referralPath' || k==='admPosition') render();
         };
       }
     })(inputs[i]);
@@ -644,12 +873,28 @@ function buildPayload(){
       referralPath:S.referralPath, referralName:S.referralName,
       landingPage:document.referrer||'', userAgent:navigator.userAgent
     },
+    /* 'advisor' or 'admin'. Everything downstream keys off this: the two
+       roads are separate pipelines with separate stages and separate
+       scoring, and nothing from one is comparable with the other. */
+    role:S.role,
     candidate:{
       name:S.name.trim(), email:S.email.trim().toLowerCase(), phone:S.phone.trim(),
       area:S.area.trim(), dob:S.dob, ageYears:ageYears(S.dob), ageBand:ageBand(S.dob),
-      maritalStatus:S.marital, education:S.education
+      maritalStatus:isAdmin() ? null : S.marital, education:S.education
     },
-    track:S.track,
+    administration: isAdmin() ? {
+      position:S.admPosition, positionNotes:S.admOtherPosition.trim(),
+      industryBackground:S.admIndustry, yearsExperience:S.admYears,
+      currentJob:S.admCurrent.trim(), whyLeaving:S.admWhyLeaving.trim(), notice:S.admNotice,
+      clientFacing:S.admClientFacing, difficultClient:S.admDifficult.trim(),
+      software:S.admSoftware, excel:S.admExcel, accuracy:S.admAccuracy,
+      volume:S.admVolume, writing:S.admWriting,
+      hours:S.admHours, startWhen:S.startWhen, transport:S.admTransport,
+      salaryExpectation:S.admSalary.trim(),
+      confidentialityAccepted:!!S.admConfidential,
+      score:scoreAdmin()
+    } : null,
+    track:isAdmin() ? null : S.track,
     experienced:S.track==='experienced' ? {
       company:S.expCompany.trim(), years:S.expYears, production:S.expProduction,
       licence:S.expLicence, contracted:S.expContracted,
@@ -659,16 +904,54 @@ function buildPayload(){
       occupation:S.newOccupation.trim(), employmentYears:S.newEmployYears,
       runway:S.newRunway, whyNow:S.newWhyNow.trim()
     } : null,
-    practical:{
+    practical: isAdmin() ? null : {
       commitment:S.commitment, startWhen:S.startWhen, vehicle:S.vehicle,
       byod:S.byod, household:S.household, incomeTarget:S.incomeTarget.trim()
     },
-    market:{ networkSize:S.networkSize, approachability:S.networkApproach, referAbility:S.referAbility },
+    market: isAdmin() ? null : { networkSize:S.networkSize, approachability:S.networkApproach, referAbility:S.referAbility },
     selfAssessment:S.quiz || null,
     notes:S.notes.trim(),
     consent:!!S.consent,
-    /* A complete Recruit Tracker candidate record, ready to import as-is. */
-    trackerCandidate:buildTrackerCandidate()
+    /* A complete Recruit Tracker candidate record, ready to import as-is.
+       Advisors only — the tracker holds GSAP files, and an administrator
+       has no GSAP file to hold. */
+    trackerCandidate: isAdmin() ? null : buildTrackerCandidate()
+  };
+}
+
+/* ============================================================
+   ADMINISTRATION SCORE
+   The branch's own rubric, not a Guardian one. Six things the branch can
+   actually read off an intake form, weighted by how often each has
+   decided whether a hire worked out. It sorts a morning's applications;
+   it does not decide them, and the practical test outranks it.
+   ============================================================ */
+function scoreAdmin(){
+  var pick = function(list, val, pts){
+    var i = list.indexOf(val);
+    return i < 0 ? 0 : pts[i];
+  };
+  var parts = {
+    /* Relevant experience — the single best predictor, so it carries most. */
+    experience: pick(ADMIN_YEARS, S.admYears, [0,6,14,20,24,25]),
+    /* Accuracy habits. A wrong policy number costs a client their cover. */
+    accuracy:   pick(ADMIN_ACCURACY, S.admAccuracy, [20,15,7,0]),
+    /* Spreadsheets are most of the job. */
+    excel:      pick(ADMIN_EXCEL, S.admExcel, [20,14,7,2]),
+    /* The branch is a front door. */
+    clientFacing: pick(ADMIN_CLIENT_FACING, S.admClientFacing, [15,12,6,2]),
+    /* Letters that go out without being rewritten save a manager an hour a day. */
+    writing:    pick(ADMIN_WRITING, S.admWriting, [10,7,4,1]),
+    /* Coping with volume. */
+    volume:     pick(ADMIN_VOLUME, S.admVolume, [10,7,4,0])
+  };
+  var total = 0;
+  for(var k in parts) total += parts[k];
+  return {
+    total:total, of:100, parts:parts,
+    /* Bands are a reading order for the BMA's morning, nothing more. */
+    band: total>=75 ? 'Interview' : total>=55 ? 'Worth a call' : total>=35 ? 'Keep on file' : 'Not a fit today',
+    rubric:'branch-admin-v1'
   };
 }
 
@@ -886,6 +1169,8 @@ function renderDone(){
   el('skiprow').style.display='none';
   var first = S.name.trim().split(' ')[0];
 
+  if(isAdmin()){ renderDoneAdmin(first); return; }
+
   el('card').innerHTML =
     '<div class="step-tag">Received</div>'+
     '<h2>Thank you, '+esc(first)+'.</h2>'+
@@ -908,8 +1193,42 @@ function renderDone(){
 
   el('nav').innerHTML = '';
 
-  el('copyref').onclick = function(){
-    var b = el('copyref');
+  wireCopyRef();
+}
+
+/* The administration road ends at the branch. There is no Guardian Life
+   advisor application to hand anyone to, and sending an administrator to
+   the advisor posting would be worse than sending them nowhere. */
+function renderDoneAdmin(first){
+  var post = S.admPosition==='Open to any of these' ? 'a branch administration post' : S.admPosition;
+
+  el('card').innerHTML =
+    '<div class="step-tag">Received</div>'+
+    '<h2>Thank you, '+esc(first)+'.</h2>'+
+    '<p class="lede">Your application for <b>'+esc(post)+'</b> is with the branch. Keep this reference — quote it on any call or email with us.</p>'+
+    '<div class="ref">'+esc(S.ref)+'</div>'+
+    '<div style="margin:22px 0 6px">'+
+      '<div class="next"><div class="n">1</div><div><b>The Branch Manager Assistant reads it</b>'+
+        '<p>Every administration intake is read, and you get an answer either way. If there is no vacancy right now we will tell you that plainly rather than leave you waiting.</p></div></div>'+
+      '<div class="next"><div class="n">2</div><div><b>A short practical test</b>'+
+        '<p>If we take it further: a spreadsheet, a letter to draft and a file to check. About forty minutes, done at the branch. It is the same test for everyone.</p></div></div>'+
+      '<div class="next"><div class="n">3</div><div><b>Interview, then references</b>'+
+        '<p>With the Branch Manager Assistant and the Branch Manager. References are taken before any offer, and we ask before we call anyone.</p></div></div>'+
+    '</div>'+
+    '<div class="row" style="margin-top:8px">'+
+      '<a class="btn btn-gold" href="/careers/">Back to careers</a>'+
+      '<button type="button" class="btn btn-ghost" id="copyref">Copy my reference</button>'+
+    '</div>'+
+    '<p class="note">Nothing else is needed from you today. '+
+      'If you want to add a CV, email it to <a href="mailto:'+esc(CONFIG.BM_EMAIL)+'?subject=Branch%20administration%20'+esc(S.ref)+'">'+esc(CONFIG.BM_EMAIL)+'</a> quoting your reference.</p>';
+
+  el('nav').innerHTML = '';
+  wireCopyRef();
+}
+
+function wireCopyRef(){
+  var b = el('copyref'); if(!b) return;
+  b.onclick = function(){
     var done = function(){ b.textContent='Copied ✓'; setTimeout(function(){ b.textContent='Copy my reference'; },2200); };
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(S.ref).then(done, function(){ prompt('Your reference:', S.ref); });

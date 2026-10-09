@@ -39,13 +39,21 @@ places. Without it you are matching on name spelling, which fails exactly when i
 
 ## 3. The candidate's actual path
 
+The intake opens on a **role** question — *advisor* or *branch administration* —
+and that answer picks one of two pipelines. They share a front door, a reference
+code and a consent step, and nothing else. Part 4 below covers the advisor road;
+Part 5 covers administration.
+
 ```
 Sees the ad
    ↓
-/careers/                      The Selection — hero, two tracks, five gates,
+/careers/                      The Selection — hero, the two roads, five gates,
                                60-second self-test. Test result is remembered.
    ↓
-/careers/apply.html            Branch intake, 6 steps, ~2 minutes.
+/careers/apply.html            Step 1: which road?   ──────┐
+                                                           │
+   ↓ (advisor)                                    (administration) → Part 5
+                               Branch intake, 7 steps, ~2 minutes.
                                → POST to your Apps Script
                                → row in "Branch Careers Intake" sheet
                                → briefing email to you, cc the BMA
@@ -416,3 +424,120 @@ live distribution bars for the four market questions, then every survey with its
 - **agentmgt.com** — still don't know what it is.
 - **Your other Jotforms** are not wired in. This one is rebuilt natively because it runs
   dozens of times per recruit. A form used once per recruit is better left as a link.
+
+---
+---
+
+# Part 5 — The administration road
+
+The branch recruits continuously on two roads. Everything above this line is the
+advisor road. This part is the other one, and the first thing to be clear about
+is how little the two share.
+
+## Why it is a separate pipeline, not a filter on the first
+
+GSAP, Form A and POP 7.0 are **Guardian's advisor selection**. They score things
+that predict whether somebody will survive on commission: network size, runway,
+household backing, car ownership, marital stability. None of that predicts
+whether somebody will be a good Branch Manager Assistant, and some of it is
+simply not a fair question to ask of someone applying for a salaried post.
+
+So the administration road does not touch Form A, does not produce a tracker
+candidate, and is not scored against advisor applicants. A payload with
+`role: "admin"` carries `track`, `practical`, `market`, `trackerCandidate` and
+`candidate.maritalStatus` all as `null`, on purpose. If you ever see an
+administration intake with a Form A attached, something has gone wrong upstream.
+
+## The posts
+
+`Branch Manager Assistant (BMA)` · `Client Service Representative` ·
+`Administrative Assistant` · `Front desk / Receptionist` ·
+`Accounts and records clerk` · `Open to any of these`
+
+"Open to any of these" is the honest default and the form says so. People who
+pick it get a free-text field for anything they would particularly like or rule
+out.
+
+## The four steps
+
+| Step | What it establishes |
+|---|---|
+| **Which post** | Post wanted, insurance/financial background, years of office experience, education |
+| **Where you are now** | Current job, notice period, why looking, how much client contact they have had, and a written account of a difficult client or a mistake they put right |
+| **The practical skills** | Software, Excel specifically, how they check their own work, whether they have coped with volume and deadlines, writing |
+| **Hours, pay, one undertaking** | Full/part-time, start date, transport to Chaguanas, salary expected, and an explicit confidentiality undertaking |
+
+Two of those deserve a note.
+
+**Salary is asked, in money, up front.** A salaried post has a number attached
+and both sides know it. Finding out at offer stage that the figure was never
+going to work wastes an interview and a candidate's afternoon.
+
+**Confidentiality is a tick-box with real words behind it.** A branch
+administrator sees policy files, medical declarations, beneficiaries and what
+people earn. The undertaking says it holds after they leave, and it is recorded
+as `confidentialityAccepted` on the payload.
+
+## The score — `branch-admin-v1`
+
+The branch's own rubric, out of 100, computed on the page and carried on the
+payload as `administration.score`. It is **not** a Guardian instrument and is not
+labelled as one anywhere a candidate can see.
+
+| Weight | Row | Why it carries that much |
+|---|---|---|
+| 25 | Years of relevant experience | The best single predictor, so it carries most |
+| 20 | How they check their own work | A wrong policy number costs a client their cover |
+| 20 | Excel, specifically | Premium listings, lapse reports and commission statements all arrive as spreadsheets |
+| 15 | Client-facing history | The branch is a front door and somebody walks in upset most days |
+| 10 | Writing | Letters that go out without being rewritten save a manager an hour a day |
+| 10 | Coping with volume | Month end does not move |
+
+Bands: **75+** interview · **55–74** worth a call · **35–54** keep on file ·
+**under 35** not a fit today.
+
+The bands are a reading order for the BMA's morning. They are not a decision,
+and the practical test outranks them — someone who scores 58 and then produces a
+clean reconciliation and a well-drafted letter beats someone who scored 80 and
+did not.
+
+## Selection stages
+
+Branch-defined. Not GSAP, and nothing here should be presented to a candidate as
+a Guardian process.
+
+```
+1  Intake read            Every one gets an answer, including a no.
+2  Practical test         ~40 minutes at the branch. A spreadsheet to
+                          reconcile, a letter to draft, a file to check.
+                          The same test for everyone who sits it.
+3  Interview              BMA and the Branch Manager.
+4  References             Taken before any offer, and only after the
+                          candidate has been told who we are calling.
+5  Offer and start
+```
+
+The practical test is the stage that actually decides it, which is why the intake
+tells candidates it exists and tells them an honest low answer on the skills step
+has never cost anybody a post. It is cheaper to find out at step 2 than at month
+three.
+
+## "No vacancy today" is not "no"
+
+Recruiting is continuous but administration posts open irregularly. The intake
+says plainly that a file is kept and revisited, the consent wording covers
+"now or when one opens", and the candidate is told they can ask to be removed.
+Saying this on the form is what makes it true — a file quietly kept without
+saying so is a different thing entirely.
+
+## Still open on this road
+
+- The practical test itself is described but not built. It needs a spreadsheet,
+  a letter brief and a marking sheet, held somewhere the BMA can reuse.
+- `apps-script/careers-intake.gs` needs a branch for `role === 'admin'`: a
+  separate sheet tab, and a digest to the BMA rather than to the Recruiting
+  Managers.
+- The portal has no administration view. A manager signing in sees advisors
+  only.
+- Nothing has been decided about where administration applicants appear on the
+  branch wall, if at all.
