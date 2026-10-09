@@ -65,7 +65,10 @@ label.lab .req{color:var(--gold)}
 .hint{font-size:.8rem;color:var(--mut);margin-top:6px;line-height:1.5}
 input[type=text],input[type=email],input[type=tel],input[type=date],select,textarea{
  width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);background:rgba(0,0,0,.3);
- color:var(--ink);font-family:'Archivo',sans-serif;font-size:15.5px;outline:none;transition:border-color .18s,box-shadow .18s}
+ color:var(--ink);font-family:'Archivo',sans-serif;font-size:16px;outline:none;transition:border-color .18s,box-shadow .18s}
+/* 16px exactly, on every field. iOS Safari zooms the page when a focused
+   input is under 16px, and the zoom does not come back — which is what
+   made this form unusable on a phone. Do not shave this to 15.5 for looks. */
 input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,207,234,.16)}
 select{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 14 14'><path d='M3 5l4 4 4-4' fill='none' stroke='%23a9bbcf' stroke-width='2' stroke-linecap='round'/></svg>");
  background-repeat:no-repeat;background-position:right 14px center;padding-right:38px}
@@ -105,6 +108,25 @@ input.bad,select.bad{border-color:#ff6b7a;box-shadow:0 0 0 3px rgba(255,107,122,
 .check input{width:20px;height:20px;margin-top:2px;flex-shrink:0;accent-color:var(--teal);cursor:pointer}
 .check span{font-size:.88rem;line-height:1.55}
 
+/* multi-select ticks */
+.ticks{display:flex;flex-wrap:wrap;gap:9px}
+.tick{font:inherit;font-size:.83rem;padding:9px 14px;border-radius:999px;border:1.5px solid var(--line);
+ background:rgba(0,0,0,.24);color:var(--body);cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.tick:hover{border-color:rgba(0,207,234,.45)}
+.tick.on{border-color:var(--teal);background:rgba(0,207,234,.14);color:var(--ink);font-weight:600}
+
+/* employment history */
+.jobcard{border:1px solid var(--line);border-radius:14px;padding:18px 18px 4px;margin-bottom:14px;background:rgba(0,0,0,.18)}
+.jc-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.jc-n{font-family:'Montserrat',sans-serif;font-size:.68rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.jc-x{font:inherit;font-size:.78rem;color:var(--mut);background:none;border:0;cursor:pointer;padding:4px 6px;border-radius:7px}
+.jc-x:hover{color:#ff8f7a;background:rgba(255,143,122,.1)}
+.jc-dates{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+.jc-dates .field{margin-bottom:17px;min-width:0}
+.addrow{font:inherit;font-size:.86rem;font-weight:600;color:var(--teal);background:none;cursor:pointer;
+ border:1.5px dashed rgba(0,207,234,.4);border-radius:12px;padding:12px 16px;width:100%;transition:background .15s,border-color .15s}
+.addrow:hover{background:rgba(0,207,234,.08);border-color:var(--teal)}
+
 /* done screen */
 .ref{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:clamp(1.5rem,6vw,2.1rem);letter-spacing:.14em;
  color:var(--gold);text-align:center;padding:18px;border:1.5px dashed rgba(239,194,75,.42);border-radius:14px;
@@ -138,7 +160,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;text-align:center;font-fa
 <div class="wrap">
   <div class="head">
     <div class="kicker" id="kicker">Branch intake · 2 minutes</div>
-    <h1>Before the form, <em>a conversation.</em></h1>
+    <h1 id="headline">Before the form, <em>a conversation.</em></h1>
     <p id="headlede">We recruit advisors and branch administrators, all year round. The first question asks which one you are here for, and everything after it changes to suit. Nothing closes — there is no deadline on either road.</p>
   </div>
 
@@ -216,7 +238,9 @@ var REFER_ABILITY = ['Excellent','Good','Fair','Poor'];                     /* m
    not apply to a salaried branch post. What follows is the branch's own
    intake, scored by the branch's own rubric (see CAREERS-DATA-MAP.md).
    ------------------------------------------------------------------ */
+var GI_POST = 'General Insurance practice manager';
 var ADMIN_POSITIONS = [
+  GI_POST,
   'Branch Manager Assistant (BMA)',
   'Client Service Representative',
   'Administrative Assistant',
@@ -224,6 +248,45 @@ var ADMIN_POSITIONS = [
   'Accounts and records clerk',
   'Open to any of these'
 ];
+
+/* General insurance — asked only of the practice manager post. A general
+   book is renewals, certificates and claims, none of which a life-side
+   intake would think to ask about. */
+var GI_CLASSES = ['Private motor','Commercial motor / fleet','Homeowner / household','Commercial property',
+                  'Liability','Marine / cargo','Contractors all risks / bonds','Group health or personal accident',
+                  'None of these yet'];
+var GI_BOOK = [
+  'Yes — I ran the renewal book and owned the retention number',
+  'Yes — I worked the renewals, someone else owned the number',
+  'I handled renewals as they came, not as a book',
+  'No, my work was new business or claims only',
+  'No general insurance experience yet'
+];
+var GI_RETENTION = ['Above 90%','85 – 90%','80 – 85%','Below 80%','It was never measured','I do not know'];
+var GI_QUOTE = [
+  'I rate and quote myself across several classes',
+  'I rate and quote motor and property',
+  'I prepare quotes from an underwriter’s figures',
+  'I have not done quoting'
+];
+var GI_CLAIMS = [
+  'I take the notification and run it through to settlement',
+  'I take the notification and hand it to the adjuster',
+  'I have helped clients report claims',
+  'Not yet'
+];
+var GI_INSURERS = [
+  'I dealt with several insurers and placed where it fit',
+  'I dealt with one insurer, day to day',
+  'I dealt with underwriters occasionally',
+  'Not yet'
+];
+var GI_QUAL = ['ACII / Dip CII','Cert CII','Other insurance certificate','Studying towards one','None'];
+
+/* Declared here, not beside historyBlock() below, because the draft-restore
+   runs before that point and silently truncated the list to nothing when
+   this was still undefined at that moment. */
+var HISTORY_MAX = 4;
 var ADMIN_YEARS = ['None yet','Less than 1 year','1 – 2 years','3 – 5 years','6 – 10 years','More than 10 years'];
 var ADMIN_SOFTWARE = [
   'Confident in all of it — Word, Excel, Outlook, shared drives',
@@ -303,10 +366,15 @@ var S = {
   /* advisor — everyone on that road */
   incomeTarget:'', commitment:'', startWhen:'', vehicle:'', byod:'', household:'',
   networkSize:'', networkApproach:'', referAbility:'',
-  /* administration road */
+  /* support road */
   admPosition:'', admOtherPosition:'', admIndustry:'', admYears:'', admCurrent:'', admWhyLeaving:'',
   admNotice:'', admSoftware:'', admExcel:'', admAccuracy:'', admVolume:'', admClientFacing:'',
   admDifficult:'', admWriting:'', admConfidential:'', admSalary:'', admHours:'', admTransport:'',
+  /* employment history — "what they worked for in the past" is the thing
+     a single "current job" box never tells you. One entry required, up to four. */
+  history:[{employer:'',title:'',from:'',to:'',duties:'',why:''}],
+  /* general insurance — practice manager post only */
+  giClasses:[], giBook:'', giRetention:'', giQuote:'', giClaims:'', giInsurers:'', giQual:'', giSystems:'',
   /* both roads */
   referralPath:'', referralName:'', notes:'', consent:false,
   quiz:null
@@ -327,6 +395,17 @@ var S = {
     var d = localStorage.getItem('rrb-intake-draft');
     if(d){ var o=JSON.parse(d); for(var k in o){ if(k in S && k!=='quiz') S[k]=o[k]; } }
   }catch(e){}
+  /* A restored draft from an older version of this page — or a corrupted
+     one — must not leave the history list empty or the wrong shape, or the
+     history step renders nothing and the candidate is stuck on a blank. */
+  if(!Array.isArray(S.history) || !S.history.length)
+    S.history = [{employer:'',title:'',from:'',to:'',duties:'',why:''}];
+  S.history = S.history.slice(0,HISTORY_MAX).map(function(r){
+    r = r && typeof r === 'object' ? r : {};
+    return {employer:r.employer||'', title:r.title||'', from:r.from||'',
+            to:r.to||'', duties:r.duties||'', why:r.why||''};
+  });
+  if(!Array.isArray(S.giClasses)) S.giClasses = [];
 })();
 function saveDraft(){ try{ localStorage.setItem('rrb-intake-draft', JSON.stringify(S)); }catch(e){} }
 
@@ -334,8 +413,11 @@ function saveDraft(){ try{ localStorage.setItem('rrb-intake-draft', JSON.stringi
    STEPS
    ============================================================ */
 function stepsFor(){
-  if(S.role === 'admin')
-    return ['role','who','admrole','admexp','admskills','admfit','source','done'];
+  if(S.role === 'admin'){
+    var l = ['role','who','admrole','admhistory'];
+    if(S.admPosition === GI_POST) l.push('gi');     /* only the GI post gets the GI step */
+    return l.concat(['admexp','admskills','admfit','source','done']);
+  }
   var list = ['role','who','track'];
   list.push(S.track === 'experienced' ? 'exp' : 'new');
   return list.concat(['practical','market','source','done']);
@@ -380,6 +462,53 @@ function choiceGroup(key,opts,two){
   return h+'</div><div class="err" id="e_'+key+'"></div>';
 }
 
+/* Tick as many as apply. State is an array on S[key]. */
+function checkGroup(key,opts,hint){
+  var h = '<div class="field"><div class="ticks">';
+  for(var i=0;i<opts.length;i++){
+    var v = opts[i], on = S[key].indexOf(v) >= 0;
+    h += '<button type="button" class="tick'+(on?' on':'')+'" data-tick="'+key+'" data-v="'+esc(v)+'" aria-pressed="'+(on?'true':'false')+'">'+esc(v)+'</button>';
+  }
+  return h+'</div>'+(hint?'<div class="hint">'+hint+'</div>':'')+'<div class="err" id="e_'+key+'"></div></div>';
+}
+
+/* ------------------------------------------------------------------
+   EMPLOYMENT HISTORY
+   One job title and a reason for leaving tells you almost nothing. The
+   shape of a career — what they held, for how long, and what they were
+   actually responsible for — is the thing worth reading, so it is asked
+   as a list rather than a box. HISTORY_MAX is declared up with the other
+   constants — the draft-restore needs it before this point.
+   ------------------------------------------------------------------ */
+function hField(i,f,label,ph,type){
+  var id = 'h_'+i+'_'+f;
+  return '<div class="field"><label class="lab" for="'+id+'">'+label+'</label>'+
+    '<input id="'+id+'" type="'+(type||'text')+'" value="'+esc(S.history[i][f])+'" placeholder="'+esc(ph||'')+'" data-h="'+i+'.'+f+'">'+
+    '<div class="err" id="e_h'+i+f+'"></div></div>';
+}
+function historyBlock(){
+  var h = '';
+  for(var i=0;i<S.history.length;i++){
+    h += '<div class="jobcard">'+
+      '<div class="jc-head"><span class="jc-n">'+(i===0?'Most recent':'Before that')+'</span>'+
+        (i>0 ? '<button type="button" class="jc-x" data-hdel="'+i+'">Remove</button>' : '')+'</div>'+
+      hField(i,'employer','Employer','Company or organisation') +
+      hField(i,'title','Your job title','e.g. Account handler, Client service officer') +
+      '<div class="jc-dates">'+
+        hField(i,'from','From','Year','text') +
+        hField(i,'to','To','Year, or "present"','text') +
+      '</div>'+
+      '<div class="field"><label class="lab" for="h_'+i+'_duties">What were you responsible for?</label>'+
+        '<textarea id="h_'+i+'_duties" data-h="'+i+'.duties" placeholder="The work itself — what landed on your desk and what you owned.">'+esc(S.history[i].duties)+'</textarea>'+
+        '<div class="err" id="e_h'+i+'duties"></div></div>'+
+      hField(i,'why','Why you left','Or "still there"') +
+    '</div>';
+  }
+  if(S.history.length < HISTORY_MAX)
+    h += '<button type="button" class="addrow" id="haddrow">+ Add another role</button>';
+  return h;
+}
+
 var STEP = {
   role: {
     tag:'Step 1', title:'Which kind of role?',
@@ -388,8 +517,8 @@ var STEP = {
       return choiceGroup('role',[
         {v:'advisor', t:'Sales advisor',
          s:'Licensed, self-employed, paid on commission. You build and keep your own book of clients. Selection runs on Guardian’s process — Form A, POP 7.0, then the branch gates.'},
-        {v:'admin', t:'Branch administration',
-         s:'Salaried branch staff — client service, records, accounts, front desk, Branch Manager Assistant. No licence and no selling. Selection is the branch’s own: screening, a practical test, then interview.'}
+        {v:'admin', t:'Branch support and practice roles',
+         s:'Salaried. General Insurance practice manager, Branch Manager Assistant, client service, records, accounts, front desk. No life licence and no selling. Selection is the branch’s own: we read the intake, set a practical test, then interview.'}
       ]) + '<div class="hint" style="margin-top:14px">Both roads are open continuously — there is no closing date on either, and we would rather you applied for the one you actually want than the one that looks easier to get into.</div>';
     },
     validate:function(){ return S.role ? {} : {role:'Please pick the one you are applying for.'}; }
@@ -537,25 +666,80 @@ var STEP = {
     }
   },
 
-  admexp: {
-    tag:'Step 4', title:'Where you are now',
-    lede:'Short answers are fine. We are looking for whether the work you have done lines up with the work there is to do here.',
+  admhistory: {
+    tag:'Step 4', title:'What you have worked at',
+    lede:'Your last few roles, most recent first. This is the part we read most closely — a job title says what you were called, and this says what you actually did.',
     html:function(){
-      return textField('admCurrent','Current or most recent job','text','Job title and employer, or "between roles"',true) +
-             selectField('admNotice','Notice you would have to give',ADMIN_NOTICE,true) +
-             areaField('admWhyLeaving','Why are you looking?','The honest version.',
-               'Asked of everyone at interview. Answering now means we do not open with it.') +
+      return historyBlock() +
+        '<div class="hint" style="margin-top:16px">One role is enough if that is your whole history. Four is the most we need. '+
+        'Gaps are fine and do not count against you — if there is one, say so in the last step rather than stretching a date.</div>';
+    },
+    validate:function(){
+      var e={}, h=S.history[0];
+      if(!h.employer.trim()) e['h0employer']='Who did you work for?';
+      if(!h.title.trim())    e['h0title']='What were you called?';
+      if(!h.from.trim())     e['h0from']='Which year did you start?';
+      if(!h.duties.trim() || h.duties.trim().length<15) e['h0duties']='A sentence or two on what you were responsible for.';
+      /* Later entries are optional, but a half-filled one is worse than none. */
+      for(var i=1;i<S.history.length;i++){
+        var r=S.history[i], any=r.employer.trim()||r.title.trim()||r.duties.trim();
+        if(any){
+          if(!r.employer.trim()) e['h'+i+'employer']='Who did you work for?';
+          if(!r.title.trim())    e['h'+i+'title']='What were you called?';
+        }
+      }
+      return e;
+    }
+  },
+
+  gi: {
+    tag:'Step 5', title:'The general insurance side',
+    lede:'This post runs a general book — motor, property, liability — and that is a different trade from life. These answers tell us which parts of it you have actually done.',
+    html:function(){
+      return '<div class="field"><label class="lab">Which classes have you handled? <span class="req">*</span></label></div>' +
+        checkGroup('giClasses',GI_CLASSES,'Tick everything you have worked on, even briefly. Nothing here is a requirement on its own — if none of it is familiar yet, tick the last one and carry on.') +
+        selectField('giBook','Have you run a renewal book?',GI_BOOK,true,
+          'General insurance lives or dies on renewals. Whether you have carried that number is the most useful thing on this page.') +
+        (S.giBook && S.giBook.indexOf('No') !== 0
+          ? selectField('giRetention','What retention did that book hold?',GI_RETENTION,true,
+              '"I do not know" is a real answer and a common one. Do not guess a figure.')
+          : '') +
+        selectField('giQuote','Quoting and rating',GI_QUOTE,true) +
+        selectField('giClaims','Claims',GI_CLAIMS,true) +
+        selectField('giInsurers','Dealing with underwriters',GI_INSURERS,true) +
+        selectField('giQual','Insurance qualification',GI_QUAL,true,'None is not a bar. We will support study for the right person.') +
+        textField('giSystems','Which systems have you worked on?','text','e.g. an underwriting system, a broker platform, spreadsheets',false,
+          'Naming them honestly helps more than claiming all of them.');
+    },
+    validate:function(){
+      var e={};
+      if(!S.giClasses.length) e.giClasses='Tick at least one. "None of these yet" is one of them.';
+      if(!S.giBook) e.giBook='Please choose.';
+      if(S.giBook && S.giBook.indexOf('No') !== 0 && !S.giRetention) e.giRetention='Please choose.';
+      if(!S.giQuote) e.giQuote='Please choose.';
+      if(!S.giClaims) e.giClaims='Please choose.';
+      if(!S.giInsurers) e.giInsurers='Please choose.';
+      if(!S.giQual) e.giQual='Please choose.';
+      return e;
+    }
+  },
+
+  /* The employer, the title and the reason for leaving are all on the
+     history step now, so this one asks only what that list cannot show. */
+  admexp: {
+    tag:'Step 5', title:'Dealing with people',
+    lede:'Short answers are fine. A branch office is a front door, and most of what goes wrong in these jobs goes wrong in front of a client.',
+    html:function(){
+      return selectField('admNotice','Notice you would have to give',ADMIN_NOTICE,true) +
              selectField('admClientFacing','How often have you dealt with clients or the public?',ADMIN_CLIENT_FACING,true,
-               'A branch office is a front door. Most days somebody walks in upset about a policy they did not understand.') +
+               'Most days somebody walks in upset about a policy they did not understand.') +
              areaField('admDifficult','Tell us about a difficult client or a mistake you had to put right.',
                'What happened, and what you did. A few sentences.',
                'We are reading for how you handle it, not for a perfect record. "I have not had one yet" is an acceptable answer if it is true.');
     },
     validate:function(){
       var e={};
-      if(!S.admCurrent.trim()) e.admCurrent='Please tell us what you do now.';
       if(!S.admNotice) e.admNotice='Please choose.';
-      if(!S.admWhyLeaving.trim() || S.admWhyLeaving.trim().length<10) e.admWhyLeaving='A sentence or two.';
       if(!S.admClientFacing) e.admClientFacing='Please choose.';
       if(!S.admDifficult.trim() || S.admDifficult.trim().length<20) e.admDifficult='A few sentences, in your own words.';
       return e;
@@ -725,12 +909,16 @@ function render(){
   /* The header and the skip link both speak to one road or the other.
      The skip link goes to the Guardian advisor posting, so it has no
      business showing to an administrator. */
-  var kick = el('kicker'), lede = el('headlede'), skip = el('skiprow');
+  var kick = el('kicker'), lede = el('headlede'), skip = el('skiprow'), head = el('headline');
   if(S.role === 'admin'){
-    kick.textContent = 'Branch administration · 3 minutes';
-    lede.textContent = 'This is the branch’s own application for a salaried post at the Chaguanas Regional Centre. It is not the advisor process and nothing here is scored against it.';
+    kick.textContent = S.admPosition === GI_POST
+      ? 'General Insurance practice manager · 4 minutes'
+      : 'Branch support · 3 minutes';
+    head.innerHTML = 'Tell us what you have <em>actually done.</em>';
+    lede.textContent = 'This is the branch’s own application for a salaried post at the Chaguanas Regional Centre. There is no second form after it — it ends here, with us.';
     skip.style.display = 'none';
   } else if(S.role === 'advisor'){
+    head.innerHTML = 'Before the form, <em>a conversation.</em>';
     kick.textContent = 'Advisor intake · 2 minutes';
     lede.innerHTML = 'Guardian Life’s official application asks what Head Office needs. This asks what <b>the branch</b> needs — so the right Recruiting Manager calls you, already knowing who you are. You’ll be handed to the official application at the end.';
     skip.style.display = '';
@@ -746,7 +934,9 @@ function render(){
   var total = steps.length - 1;            /* 'done' is not a step you fill in */
   var val = function(v){ return typeof v === 'function' ? v() : v; };
   el('card').innerHTML =
-    '<div class="step-tag">Step '+(stepIdx+1)+' of '+total+'</div>'+
+    /* No total on the first screen: the two roads are different lengths,
+       so quoting one before the road is chosen means revising it. */
+    '<div class="step-tag">'+(key==='role' ? 'First question' : 'Step '+(stepIdx+1)+' of '+total)+'</div>'+
     '<h2>'+val(st.title)+'</h2>'+
     '<p class="lede">'+val(st.lede)+'</p>'+
     st.html();
@@ -783,12 +973,56 @@ function wire(){
         n.oninput = function(){ S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft(); };
         n.onchange = function(){
           S[n.getAttribute('data-k')] = n.value; clearErr(n.getAttribute('data-k')); saveDraft();
-          /* fields that appear/disappear with the answer above them */
+          /* fields (and, for the post, whole steps) that appear with the
+             answer above them */
           var k = n.getAttribute('data-k');
-          if(k==='referralPath' || k==='admPosition') render();
+          if(k==='referralPath' || k==='admPosition' || k==='giBook') render();
         };
       }
     })(inputs[i]);
+  }
+
+  /* employment-history fields — data-h="<index>.<field>" */
+  var hs = el('card').querySelectorAll('[data-h]');
+  for(var p=0;p<hs.length;p++){
+    (function(n){
+      var parts = n.getAttribute('data-h').split('.'), i = +parts[0], f = parts[1];
+      n.oninput = function(){
+        S.history[i][f] = n.value;
+        clearErr('h'+i+f);
+        saveDraft();
+      };
+    })(hs[p]);
+  }
+  var add = el('haddrow');
+  if(add) add.onclick = function(){
+    if(S.history.length >= HISTORY_MAX) return;
+    S.history.push({employer:'',title:'',from:'',to:'',duties:'',why:''});
+    saveDraft(); render();
+  };
+  var dels = el('card').querySelectorAll('[data-hdel]');
+  for(var d=0;d<dels.length;d++){
+    (function(n){
+      n.onclick = function(){
+        S.history.splice(+n.getAttribute('data-hdel'),1);
+        saveDraft(); render();
+      };
+    })(dels[d]);
+  }
+
+  /* multi-select ticks — data-tick="<key>", state is an array */
+  var ticks = el('card').querySelectorAll('[data-tick]');
+  for(var t=0;t<ticks.length;t++){
+    (function(n){
+      n.onclick = function(){
+        var k = n.getAttribute('data-tick'), v = n.getAttribute('data-v'),
+            arr = S[k], at = arr.indexOf(v);
+        if(at >= 0) arr.splice(at,1); else arr.push(v);
+        n.classList.toggle('on', at < 0);
+        n.setAttribute('aria-pressed', at < 0 ? 'true' : 'false');
+        clearErr(k); saveDraft();
+      };
+    })(ticks[t]);
   }
 }
 
@@ -885,13 +1119,26 @@ function buildPayload(){
     administration: isAdmin() ? {
       position:S.admPosition, positionNotes:S.admOtherPosition.trim(),
       industryBackground:S.admIndustry, yearsExperience:S.admYears,
-      currentJob:S.admCurrent.trim(), whyLeaving:S.admWhyLeaving.trim(), notice:S.admNotice,
+      notice:S.admNotice,
       clientFacing:S.admClientFacing, difficultClient:S.admDifficult.trim(),
       software:S.admSoftware, excel:S.admExcel, accuracy:S.admAccuracy,
       volume:S.admVolume, writing:S.admWriting,
       hours:S.admHours, startWhen:S.startWhen, transport:S.admTransport,
       salaryExpectation:S.admSalary.trim(),
       confidentialityAccepted:!!S.admConfidential,
+      /* Employment history, most recent first. Blank trailing entries the
+         candidate added and did not fill are dropped rather than sent. */
+      history:S.history.filter(function(r){ return r.employer.trim() || r.title.trim(); })
+        .map(function(r){ return {
+          employer:r.employer.trim(), title:r.title.trim(),
+          from:r.from.trim(), to:r.to.trim(),
+          duties:r.duties.trim(), whyLeft:r.why.trim()
+        }; }),
+      generalInsurance: S.admPosition===GI_POST ? {
+        classes:S.giClasses.slice(), renewalBook:S.giBook, retention:S.giRetention||null,
+        quoting:S.giQuote, claims:S.giClaims, underwriters:S.giInsurers,
+        qualification:S.giQual, systems:S.giSystems.trim()
+      } : null,
       score:scoreAdmin()
     } : null,
     track:isAdmin() ? null : S.track,
@@ -947,11 +1194,38 @@ function scoreAdmin(){
   };
   var total = 0;
   for(var k in parts) total += parts[k];
+
+  /* The general insurance post is scored on a second sheet of its own.
+     A practice manager who cannot run a renewal book is not a near miss
+     on this job, so the GI rows sit beside the general ones rather than
+     being averaged into them. */
+  var gi = null;
+  if(S.admPosition === GI_POST){
+    var real = S.giClasses.filter(function(c){ return c !== 'None of these yet'; });
+    var giParts = {
+      classes:    Math.min(real.length,4) * 5,                            /* 0–20 */
+      renewalBook:pick(GI_BOOK, S.giBook, [30,20,10,4,0]),
+      retention:  pick(GI_RETENTION, S.giRetention, [15,12,8,2,0,0]),
+      quoting:    pick(GI_QUOTE, S.giQuote, [15,11,6,0]),
+      claims:     pick(GI_CLAIMS, S.giClaims, [12,8,4,0]),
+      qualification: pick(GI_QUAL, S.giQual, [8,5,3,2,0])
+    };
+    var giTotal = 0;
+    for(var g in giParts) giTotal += giParts[g];
+    gi = {
+      total:giTotal, of:100, parts:giParts,
+      band: giTotal>=70 ? 'Can run the book' : giTotal>=45 ? 'Can run it with support'
+          : giTotal>=25 ? 'General experience, not at practice level' : 'Would be learning the trade here',
+      rubric:'branch-gi-v1'
+    };
+  }
+
   return {
     total:total, of:100, parts:parts,
     /* Bands are a reading order for the BMA's morning, nothing more. */
     band: total>=75 ? 'Interview' : total>=55 ? 'Worth a call' : total>=35 ? 'Keep on file' : 'Not a fit today',
-    rubric:'branch-admin-v1'
+    rubric:'branch-admin-v1',
+    generalInsurance: gi
   };
 }
 

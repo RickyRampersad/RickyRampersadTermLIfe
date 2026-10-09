@@ -20,6 +20,39 @@ If neither asks for it but you need it to decide, the intake owns it.
 
 ---
 
+## 1a. Advertising and hiring are not the same surface
+
+The careers pages are an **advertisement**. The only thing a visitor can do on
+them is apply. Nothing there asks for a credential, because nobody reading an
+advertisement has one.
+
+The hiring tools are a **back office**. The portal and the recruiting hub both
+need a sign-in, and both are reached by their own address — not from the ad.
+
+| Surface | Address | Who | Credential |
+|---|---|---|---|
+| Careers ad | `/careers/` | Anyone | None |
+| Branch intake | `/careers/apply.html` | Anyone | None |
+| Sales page | `/join/` | Anyone | None |
+| Recruiting hub | `/recruiting/` | Branch managers | Access code |
+| Portal | `/portal/` | Recruits in selection, and their managers | Email + PIN |
+| Career path tracker | `/career-path-tracker/` | Contracted agents | Agent number |
+
+This had drifted. The careers ad carried "Sign in" in its top nav, "Track your
+application" in its footer and a "Branch Team" link beside it — three routes
+from an advertisement into a password box, and the middle one was the worst,
+because it invited an applicant to track something and then asked for
+credentials they were never given.
+
+All three are gone. The footer now says plainly that a sign-in comes from your
+Recruiting Manager once you are in selection, and that there is nothing to log
+into before then.
+
+**The recruiting hub is now reached only by typing its address.** That is
+deliberate for an internal tool, and it means `rickyrampersadbranch.com/recruiting`
+is a bookmark the managers need to be given. Do not re-link it from a candidate
+page to make it findable.
+
 ## 2. The join key
 
 Every intake mints a reference like **`RRB-K4M2XP`**. It is the one string that ties the
@@ -450,24 +483,67 @@ administration intake with a Form A attached, something has gone wrong upstream.
 
 ## The posts
 
-`Branch Manager Assistant (BMA)` · `Client Service Representative` ·
-`Administrative Assistant` · `Front desk / Receptionist` ·
-`Accounts and records clerk` · `Open to any of these`
+`General Insurance practice manager` · `Branch Manager Assistant (BMA)` ·
+`Client Service Representative` · `Administrative Assistant` ·
+`Front desk / Receptionist` · `Accounts and records clerk` ·
+`Open to any of these`
+
+The practice manager is first in the list because it is the post actually open.
+It is also the only one that opens an extra step — see below.
 
 "Open to any of these" is the honest default and the form says so. People who
 pick it get a free-text field for anything they would particularly like or rule
 out.
 
-## The four steps
+## The steps
 
 | Step | What it establishes |
 |---|---|
 | **Which post** | Post wanted, insurance/financial background, years of office experience, education |
-| **Where you are now** | Current job, notice period, why looking, how much client contact they have had, and a written account of a difficult client or a mistake they put right |
+| **What you have worked at** | Employment history as a list — see below |
+| **The general insurance side** | *Practice manager only.* See below |
+| **Dealing with people** | Notice period, how much client contact they have had, and a written account of a difficult client or a mistake they put right |
 | **The practical skills** | Software, Excel specifically, how they check their own work, whether they have coped with volume and deadlines, writing |
 | **Hours, pay, one undertaking** | Full/part-time, start date, transport to Chaguanas, salary expected, and an explicit confidentiality undertaking |
 
-Two of those deserve a note.
+So the road is eight steps, or nine for the practice manager. The step counter
+holds off showing a total until the road is picked, because quoting one and
+then revising it reads worse than not quoting one.
+
+### Employment history, as a list
+
+A single "current job" box tells you what somebody is called. It does not tell
+you the shape of a career, which is the thing worth reading. So the support road
+asks for up to four roles, most recent first, each with employer, title, from,
+to, **what they were responsible for**, and why they left.
+
+One entry is required. Later ones are optional, but a half-filled entry is
+rejected — a row with an employer and no title is worse than no row. Entries the
+candidate added and left blank are dropped from the payload rather than sent as
+empties.
+
+Because history covers the current employer and the reason for leaving, those
+two questions were taken off the step that followed. Asking twice makes a form
+feel like it is not being read.
+
+### The general insurance step
+
+Shown only when the post is `General Insurance practice manager`, because a
+general book is a different trade from life and nothing else on the road would
+think to ask about it.
+
+Classes handled (tick as many as apply, including "None of these yet") ·
+whether they have run a **renewal book** and owned the retention number ·
+what retention it held · quoting and rating · claims · dealing with
+underwriters · qualification · systems.
+
+The renewal book question carries the most weight on this step. General
+insurance renews annually and retention is the whole game, so whether somebody
+has carried that number is the most useful thing on the page. The retention
+figure is only asked of people who said they ran a book, and "I do not know" is
+offered as a real answer so nobody has to invent one.
+
+Two of the main steps deserve a note.
 
 **Salary is asked, in money, up front.** A salaried post has a number attached
 and both sides know it. Finding out at offer stage that the figure was never
@@ -495,6 +571,29 @@ labelled as one anywhere a candidate can see.
 
 Bands: **75+** interview · **55–74** worth a call · **35–54** keep on file ·
 **under 35** not a fit today.
+
+### `branch-gi-v1` — the practice manager's second sheet
+
+The practice manager is scored twice. The rubric above still runs, and a second
+one scores the general insurance step, carried on the payload as
+`administration.score.generalInsurance`.
+
+| Weight | Row |
+|---|---|
+| 30 | Has run a renewal book and owned the retention number |
+| 20 | Breadth of classes handled (5 points each, capped at four) |
+| 15 | Retention the book held |
+| 15 | Quoting and rating |
+| 12 | Claims |
+| 8 | Qualification |
+
+Bands: **70+** can run the book · **45–69** can run it with support ·
+**25–44** general experience but not at practice level · **under 25** would be
+learning the trade here.
+
+The two scores sit side by side rather than being averaged. Someone can be an
+excellent administrator and still not be able to run a general book, and
+averaging would hide exactly that — which is the one thing this hire turns on.
 
 The bands are a reading order for the BMA's morning. They are not a decision,
 and the practical test outranks them — someone who scores 58 and then produces a
@@ -533,7 +632,12 @@ saying so is a different thing entirely.
 ## Still open on this road
 
 - The practical test itself is described but not built. It needs a spreadsheet,
-  a letter brief and a marking sheet, held somewhere the BMA can reuse.
+  a letter brief and a marking sheet, held somewhere the BMA can reuse. The
+  practice manager's version should be a real renewal list to work, not a
+  generic reconciliation.
+- Nothing yet asks the practice manager for the **size** of the book they ran,
+  only the retention on it. Worth adding once there is a view on what size
+  matters here.
 - `apps-script/careers-intake.gs` needs a branch for `role === 'admin'`: a
   separate sheet tab, and a digest to the BMA rather than to the Recruiting
   Managers.

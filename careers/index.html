@@ -240,6 +240,9 @@ section{padding:96px 0;position:relative}
 .r-tag{font-family:'Space Grotesk';font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--onP);background:var(--p);padding:5px 11px;border-radius:999px}
 .r-tag.alt{background:var(--aD);color:#07131f}
 .road h3{font-family:'Playfair Display';font-weight:800;font-size:1.5rem;color:var(--ink)}
+.r-open{font-size:.84rem;font-weight:600;color:var(--ink);background:rgba(var(--aRGB),.12);border:1px solid rgba(var(--aRGB),.3);
+ border-radius:10px;padding:9px 13px;margin-bottom:13px}
+.r-open b{color:var(--aD)}
 .r-what{font-size:.95rem;line-height:1.65}
 .r-list{list-style:none;margin:16px 0 22px;display:grid;gap:10px}
 .r-list li{font-size:.9rem;line-height:1.6;padding-left:17px;position:relative;min-width:0}
@@ -330,7 +333,10 @@ footer b{color:var(--p)}
   <a class="nav-link opt" href="/">Main Site</a>
   <a class="nav-link opt" href="/#quotes">Quotes</a>
   <a class="nav-link opt" href="#quiz">The Test</a>
-  <a class="nav-link opt" href="/portal/">Sign in</a>
+  <!-- No sign-in on this page. It is an advertisement: the only thing a
+       visitor can do here is apply. The portal and the recruiting tools both
+       need credentials nobody reading this ad has yet, and putting them in
+       the nav sent applicants to a password box. -->
   <a class="cta-mini" href="apply.html">Apply — 2 min</a>
 </nav>
 
@@ -418,15 +424,16 @@ footer b{color:var(--p)}
       </div>
 
       <div class="road rv">
-        <div class="r-head"><span class="r-tag alt">Road two</span><h3>Branch administration</h3></div>
-        <p class="r-what">Salaried branch staff at the Chaguanas Regional Centre. Client service, records, accounts, front desk, Branch Manager Assistant. No licence, no selling, no commission — a wage, and the work that keeps three hundred advisors' files straight.</p>
+        <div class="r-head"><span class="r-tag alt">Road two</span><h3>Branch support and practice roles</h3></div>
+        <p class="r-open"><b>Open now:</b> General Insurance practice manager</p>
+        <p class="r-what">Salaried, at the Chaguanas Regional Centre. The practice manager runs the general book — motor, property, liability — end to end: quoting, renewals, certificates, claims. Alongside it: Branch Manager Assistant, client service, records, accounts, front desk. No life licence, no selling, no commission.</p>
         <ul class="r-list">
           <li><b>Who it suits</b> — organised people who like getting it exactly right, and can hold their nerve with a client who walks in upset.</li>
-          <li><b>What you need</b> — office experience, real Excel, accuracy, and discretion. Insurance background helps and is not required.</li>
-          <li><b>How we select</b> — the branch's own: we read the intake, set a short practical test, then interview. References before any offer.</li>
+          <li><b>What you need</b> — for the practice manager, general insurance behind you and ideally a renewal book you have carried. For the rest, office experience, real Excel, accuracy and discretion.</li>
+          <li><b>How we select</b> — the branch's own: we read your work history closely, set a short practical test, then interview. References before any offer.</li>
           <li><b>How long</b> — read within 48 hours. If there is no vacancy that week we say so, and keep the file for when there is.</li>
         </ul>
-        <a class="btn btn-outline" href="apply.html">Apply for administration</a>
+        <a class="btn btn-outline" href="apply.html">Apply for a support role</a>
       </div>
     </div>
 
@@ -612,9 +619,8 @@ footer b{color:var(--p)}
       <a href="/#quotes">Quotes</a>
       <a href="/#clients">Client Services</a>
       <a href="apply.html">Apply</a>
-      <a href="/portal/">Track your application</a>
-      <a href="/recruiting/">Branch Team</a>
     </div>
+    <div class="f-meta">Already in selection with us? Your sign-in comes from your Recruiting Manager — there is nothing to log into before then.</div>
     <div class="f-meta">Ricky.Rampersad@myguardiangroup.com · 678-5821<br>© 2026 Ricky Rampersad Branch. All rights reserved.</div>
   </div>
 </footer>
