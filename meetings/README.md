@@ -145,6 +145,50 @@ What the app already does: five wrong tries locks the account for fifteen
 minutes, every sign-in is logged with a time, and the meeting sheet stores a
 salted hash rather than the password itself.
 
+## The rota — so the meeting is not one person's
+
+Read the five meetings on record from 22 July to 11 September and one shape
+comes out of all of them. "Branch Manager's Presentation" is a standing
+section that is the manager's alone, and it carried fourteen distinct topics
+across those five sessions. The whole Key Person Insurance workshop on
+7 August was his. The opening, the correspondence, the compliance section and
+the closing are his every time. Admin carry the operational reports. **Agents
+presented twice in five meetings** — Rajiv on 21 August, Felicia on 7 August —
+and both were "share your approach" slots rather than items anybody owned.
+
+The seeder used to put that in code: of twelve standing items, six defaulted
+to the chair and six were left blank for whoever ended up holding them, which
+in practice was the chair again.
+
+**The Rota tab is the fix.** Fifteen standing items, each with an owner, a
+backup and a cadence:
+
+| Cadence | Who presents it |
+| --- | --- |
+| **fixed** | The named owner, every time. Their item, not a favour. |
+| **rotate** | The agent who has presented least recently — so it comes round the room instead of landing on whoever volunteers. |
+| **chair** | The chair of that meeting. Only the opening and the closing. |
+
+Set it up once: *Branch Meetings → Set up the standing rota*, then put an
+Owner Email against each item. Every meeting built after that arrives already
+owned. Two items need no owner at all because they rotate by themselves:
+**What worked for me this month** and **Training — one point, taught by one of
+us**. Those two are the whole point; they are how an agent presents without
+being asked.
+
+**Backup matters more than it looks.** On 7 August a report was "presented on
+her behalf" because its owner was away and nobody else held it. Naming a
+backup is how that stops being a surprise on the morning.
+
+### The load meter
+
+A rota drifts back to one person quietly — an owner is away, an item is added
+in a hurry, and a year later it is a broadcast again. So the meeting page
+counts it every time it is opened: what share of the minutes is the chair's,
+how many people are presenting, and how many items nobody owns. Over about a
+third and it says so in words. The point is that the drift is arguable on the
+day rather than in next year's minutes.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.

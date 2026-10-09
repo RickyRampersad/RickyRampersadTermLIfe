@@ -130,6 +130,7 @@ var MEET = {
   TAB_SESSIONS:   'Sessions',
   TAB_CONTRIB:    'Contributions',
   TAB_TOPICS:     'Topics',
+  TAB_ROTA:       'Rota',
   TAB_LOG:        'Log',
 
   /* An audio clip recorded in the app. Apps Script has to hold the whole
@@ -321,6 +322,23 @@ var SCHEMA = {
    *  be counted. Note is the free text that only 'Something else'
    *  carries. Keeping them apart is what lets the wall chart the
    *  reasons without a human reading every row first. */
+  /*  WHO OWNS WHICH STANDING ITEM, SO THE CHAIR DOES NOT.
+   *
+   *  Cadence says how the presenter is decided each time a meeting is
+   *  built:
+   *    fixed    the named Owner, every time
+   *    rotate   the next agent in the rotation — whoever has presented
+   *             least recently, so it comes round the room rather than
+   *             landing on whoever is willing
+   *    chair    the chair of that meeting
+   *
+   *  Backup is who takes it when the owner apologises. On 7 August a
+   *  report was "presented on her behalf" because its owner was away
+   *  and nobody else held it; naming a backup is how that stops being
+   *  a surprise on the day.                                          */
+  Rota: ['Order', 'Section', 'Item', 'Detail', 'Minutes', 'Visibility',
+         'Cadence', 'Owner', 'Owner Email', 'Backup', 'Backup Email', 'Active', 'Notes'],
+
   Attendance: ['ID', 'Meeting ID', 'Email', 'Name', 'Role', 'Unit', 'Status', 'Method',
                'Signed In', 'Minutes Late', 'Reason', 'Note', 'Recorded By', 'Device'],
 
@@ -361,8 +379,15 @@ function setupMeetings() {
   var people = readPeople_();
   var admin = String(MEET.ADMIN_EMAIL || '').trim().toLowerCase();
   if (admin && !people.some(function (p) { return p.email === admin; })) {
-    tab_(MEET.TAB_PEOPLE).appendRow([admin, MEET.ADMIN_NAME, 'manager', 'Branch', 'Y',
-      '', '', '', 0, '', new Date(), 'setup', '']);
+    /*  Written by header, never by position. This was a positional
+     *  appendRow until the Agent No column went in front of Email, at
+     *  which point it would have put the manager's address in the
+     *  agent-number cell and locked out the one person who can fix
+     *  it. appendRow_ maps to the headers as they actually are.     */
+    appendRow_(MEET.TAB_PEOPLE, {
+      'Email': admin, 'Name': MEET.ADMIN_NAME, 'Role': 'manager', 'Unit': 'Branch',
+      'Active': 'Y', 'Attempts': 0, 'Added': new Date(), 'Added By': 'setup'
+    });
   }
 
   log_('setup', 'system', '', 'Meeting Builder set up', 'Tabs, Drive folder and manager seeded');
@@ -1252,6 +1277,9 @@ function apiMeeting_(token, id) {
   if (isStaff_(me)) {
     out.register = register_(m, att);
     out.floor = floorStats_(contributions, out.register);
+    // Who is carrying this meeting. Counted every time it is opened, so
+    // a rota drifting back to one person shows on the day.
+    out.load = loadOf_(m, agenda);
   }
   else out.presentCount = att.filter(function (a) {
     return ['present', 'late'].indexOf(low_(a['Status'])) > -1;
@@ -1795,6 +1823,191 @@ function apiReorderAgenda_(body) {
 
 /** Copy the standing agenda the branch runs every week, so building
  *  next week's meeting is a matter of filling in, not typing out. */
+/* ======================== the rota ======================== */
+/*
+ *  WHY THIS EXISTS. Read the five meetings on record from 22 July to
+ *  11 September and one shape comes out of all of them: the branch
+ *  manager presents most of the meeting. "Branch Manager's
+ *  Presentation" is a standing section that is his alone and carried
+ *  fourteen distinct topics across those five sessions; the whole Key
+ *  Person Insurance workshop on 7 August was his; the opening, the
+ *  correspondence, the compliance section and the closing are his
+ *  every time. Admin carry the operational reports. Agents presented
+ *  twice in five meetings — Rajiv on 21 August, Felicia on 7 August —
+ *  and both were "share your approach" slots rather than items anybody
+ *  owned.
+ *
+ *  The seeder used to put that in code: of twelve standing items, six
+ *  defaulted to the chair and six were left blank for whoever ended up
+ *  holding them, which in practice was the chair again. The rota is
+ *  the fix. Every standing item has an owner who is not the chair, a
+ *  backup for the day they apologise, and the two items that should
+ *  move round the room rotate by themselves.
+ */
+
+function rotaRows_() {
+  return readTab_(MEET.TAB_ROTA)
+    .filter(function (r) { return yes_(r['Active']) && str_(r['Item']); })
+    .sort(function (a, b) { return num_(a['Order']) - num_(b['Order']); });
+}
+
+/*  Whoever has presented least recently, so a rotating slot comes round
+ *  the room instead of landing on whoever volunteers. Never presented
+ *  at all sorts first — which is most of the branch, and the point.
+ *
+ *  `skip` is who has already been given a slot in the meeting being
+ *  built right now. Without it both rotating items land on the same
+ *  person: the rotation reads the Agenda tab to see who presented
+ *  last, and during a build that tab has not been written yet, so
+ *  every call inside one build returns the same name.               */
+function nextInRotation_(exclude, skip) {
+  exclude = low_(exclude || '');
+  skip = skip || {};
+  var lastSeen = {};
+  readTab_(MEET.TAB_AGENDA).forEach(function (a) {
+    var e = low_(a['Presenter Email']);
+    if (!e) return;
+    var when = asDate_(a['Created']);
+    var t = when ? when.getTime() : 0;
+    if (!(e in lastSeen) || t > lastSeen[e]) lastSeen[e] = t;
+  });
+  var pool = roster_().filter(function (p) {
+    return p.role === 'agent' && p.email !== exclude && !skip[p.email];
+  });
+  if (!pool.length) return null;
+  pool.sort(function (a, b) {
+    var la = (a.email in lastSeen) ? lastSeen[a.email] : -1;
+    var lb = (b.email in lastSeen) ? lastSeen[b.email] : -1;
+    return la - lb || a.name.localeCompare(b.name);
+  });
+  return pool[0];
+}
+
+/** Who presents one rota item at this meeting. */
+function presenterFor_(item, m, chairEmail, taken) {
+  var cadence = low_(item['Cadence']) || 'fixed';
+  if (cadence === 'chair') {
+    var c = findPersonByEmail_(chairEmail);
+    return c ? { name: c.name, email: c.email } : { name: str_(m['Chair']), email: low_(m['Chair']) };
+  }
+  if (cadence === 'rotate') {
+    var nxt = nextInRotation_(chairEmail, taken);
+    return nxt ? { name: nxt.name, email: nxt.email } : { name: '', email: '' };
+  }
+  var owner = findPersonByEmail_(item['Owner Email']);
+  if (owner && owner.active) return { name: owner.name, email: owner.email };
+  var backup = findPersonByEmail_(item['Backup Email']);
+  if (backup && backup.active) return { name: backup.name, email: backup.email };
+  return { name: str_(item['Owner']), email: low_(item['Owner Email']) };
+}
+
+/*  HOW MUCH OF THIS MEETING IS ONE PERSON'S.
+ *
+ *  A rota drifts back to the chair quietly — an owner is away, an item
+ *  gets added in a hurry, and six months later it is one person's
+ *  broadcast again. This counts it every time the meeting is opened so
+ *  the drift is visible on the day rather than in a year's minutes.
+ */
+var LOAD_TARGET = 0.34;   /* no one person over about a third */
+
+function loadOf_(m, agenda) {
+  agenda = agenda || readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var mins = 0, items = 0, by = {}, unowned = 0;
+  agenda.forEach(function (a) {
+    var min = num_(a['Allotted (min)']);
+    mins += min; items++;
+    var e = low_(a['Presenter Email']) || '';
+    var n = str_(a['Presenter Name']);
+    if (!e && !n) { unowned++; return; }
+    var k = e || low_(n);
+    if (!by[k]) by[k] = { name: n || e, email: e, items: 0, minutes: 0 };
+    by[k].items++; by[k].minutes += min;
+  });
+  var list = Object.keys(by).map(function (k) {
+    var x = by[k];
+    x.shareItems = items ? Math.round((x.items / items) * 100) : 0;
+    x.shareMinutes = mins ? Math.round((x.minutes / mins) * 100) : 0;
+    return x;
+  }).sort(function (a, b) { return b.minutes - a.minutes || b.items - a.items; });
+
+  var chairEmail = low_(m['Chair']);
+  var chair = list.filter(function (x) { return x.email === chairEmail; })[0] || null;
+  var chairShare = chair && mins ? chair.minutes / mins : 0;
+
+  return {
+    items: items, minutes: mins, unowned: unowned,
+    people: list,
+    presenters: list.length,
+    chair: chair,
+    chairShare: Math.round(chairShare * 100),
+    target: Math.round(LOAD_TARGET * 100),
+    overTarget: chairShare > LOAD_TARGET,
+    // Said in words, because a percentage on its own gets argued with.
+    note: !items ? 'No agenda yet.'
+      : chairShare > LOAD_TARGET
+        ? 'The chair is presenting ' + Math.round(chairShare * 100) + '% of this meeting. '
+          + 'Give an item away on the Rota tab and it stays given away.'
+        : list.length < 3
+          ? 'Only ' + list.length + ' people are presenting. A meeting the room takes part in '
+            + 'needs more hands than that.'
+          : 'Spread across ' + list.length + ' presenters'
+            + (unowned ? ', with ' + unowned + ' item' + (unowned === 1 ? '' : 's') + ' nobody owns yet.' : '.')
+  };
+}
+
+/*  The standing order, taken from the branch's own agendas. Owners are
+ *  set by the branch on the Rota tab; what is seeded here is the shape
+ *  and the cadence — in particular WHICH items are the chair's, which
+ *  is now three of fourteen rather than six of twelve, and which come
+ *  round the room.                                                   */
+function seedRota() {
+  var sh = tab_(MEET.TAB_ROTA);
+  if (sh.getLastRow() > 1) {
+    var msg = 'The Rota tab already has rows — left alone. Clear it first to re-seed.';
+    Logger.log(msg);
+    return msg;
+  }
+  var rows = [
+    [0, 'Opening | Mission Statement | Moment of Silence', 5, 'all', 'chair', 'Standard opening'],
+    [0, 'Attendance Register Check', 3, 'all', 'fixed', 'Everyone logs in before we open. The app is the register.'],
+    [0, 'Review of Minutes & Action Items Tracker', 10, 'all', 'fixed', 'Carry-forward items first, with what closed since.'],
+    [1, 'Correspondence & Administrative Reminders', 8, 'all', 'fixed', 'Circulars, deadlines, cut-off dates.'],
+    [2, 'Outstanding Requirements Report', 8, 'staff', 'fixed', 'By product and value. 5-day turnaround, 20-day file closure.'],
+    [2, 'Persistency — 2-Year & 5-Year', 8, 'staff', 'fixed', 'Red / orange / green. Branch target 90% against the 75% threshold.'],
+    [2, 'Licensing & CPD Report', 5, 'staff', 'fixed', 'Central Bank approvals by renewal month.'],
+    [2, 'Scripts & Clawback Report', 6, 'staff', 'fixed', 'Dispatch inside the 20-business-day window.'],
+    [2, 'Contract Delivery — past the 10-day line', 6, 'staff', 'fixed', 'Undelivered contracts and who holds them.'],
+    [2, '85-Day Premium Due & Lapse Activity', 8, 'staff', 'fixed', 'Standing item at every branch meeting.'],
+    [3, 'What worked for me this month', 7, 'all', 'rotate', 'One agent, one case, what they actually did. Comes round the room.'],
+    [5, 'Training — one point, taught by one of us', 10, 'all', 'rotate', 'Not the manager. A product, an objection, a system.'],
+    [4, 'Digital Innovation Update', 8, 'all', 'fixed', 'Fact Find 360 and branch automation.'],
+    [6, 'Other Items', 5, 'all', 'fixed', ''],
+    [7, 'Closing Remarks', 4, 'all', 'chair', '']
+  ];
+  appendRows_(MEET.TAB_ROTA, rows.map(function (r, i) {
+    return {
+      'Order': (i + 1) * 10, 'Section': SECTIONS[r[0]], 'Item': r[1],
+      'Detail': r[5], 'Minutes': r[2], 'Visibility': r[3], 'Cadence': r[4],
+      'Owner': '', 'Owner Email': '', 'Backup': '', 'Backup Email': '',
+      'Active': 'Y', 'Notes': ''
+    };
+  }));
+  var out = rows.length + ' standing items written to the Rota tab.\n\n' +
+    'Put an Owner Email against each one. Two items rotate by themselves and ' +
+    'need no owner. Only the opening and the closing are the chair’s.\n\n' +
+    'Any item left without an owner is seeded unowned, and the meeting will ' +
+    'say so when it is opened.';
+  Logger.log(out);
+  return out;
+}
+
+function seedRotaFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The rota', seedRota(), ui.ButtonSet.OK);
+}
+
 function apiSeedAgenda_(body) {
   var me = requireStaff_(body.token);
   var m = findMeeting_(body.meetingId);
@@ -1806,31 +2019,39 @@ function apiSeedAgenda_(body) {
   if (existing.length) return { ok: false, error: 'This meeting already has an agenda.' };
 
   var chair = str_(m['Chair']) || me.email;
-  var chairPerson = findPersonByEmail_(chair);
-  var chairName = chairPerson ? chairPerson.name : MEET.ADMIN_NAME;
 
-  // The standing order, taken from the branch's own agendas.
-  var standing = [
-    { s: 0, t: 'Opening | Mission Statement | Moment of Silence', m: 5, p: chairName, d: 'Standard opening', v: 'all' },
-    { s: 0, t: 'Attendance Register Check', m: 5, p: chairName, d: 'Everyone logs in before we open. The app is the register.', v: 'all' },
-    { s: 0, t: 'Review of Minutes & Action Items Tracker', m: 10, p: chairName, d: 'Carry-forward items first.', v: 'all' },
-    { s: 1, t: 'Correspondence & Administrative Reminders', m: 10, p: '', d: 'Circulars, deadlines, cut-off dates.', v: 'all' },
-    { s: 2, t: 'Outstanding Requirements Report', m: 8, p: '', d: 'By product and value. 5-day turnaround, 20-day file closure.', v: 'staff' },
-    { s: 2, t: 'Persistency — 2-Year & 5-Year', m: 8, p: '', d: 'Red / orange / green. Branch target 90% against the 75% threshold.', v: 'staff' },
-    { s: 2, t: 'Licensing Report', m: 5, p: '', d: 'Central Bank approvals by renewal month.', v: 'staff' },
-    { s: 2, t: 'Scripts & Clawback Report', m: 6, p: '', d: 'Dispatch inside the 20-business-day window.', v: 'staff' },
-    { s: 2, t: '85-Day Premium Due & Lapse Activity', m: 8, p: '', d: 'Standing item at every branch meeting.', v: 'staff' },
-    { s: 3, t: 'Performance & Community Management', m: 8, p: chairName, d: 'Weekly pulse, one-on-one cadence, tenure-band tracker.', v: 'staff' },
-    { s: 4, t: 'Digital Innovation Update', m: 10, p: chairName, d: 'Fact Find 360 and branch automation.', v: 'all' },
-    { s: 6, t: 'Other Items', m: 5, p: '', d: '', v: 'all' },
-    { s: 7, t: 'Closing Remarks', m: 5, p: chairName, d: '', v: 'all' }
-  ];
+  /*  The agenda is built from the Rota tab, so a new meeting arrives
+   *  already owned by other people. The hard-coded list that used to
+   *  live here gave six of twelve items to the chair by default and
+   *  left the rest blank, which in practice meant the chair again. */
+  var rota = rotaRows_();
+  if (!rota.length) {
+    return { ok: false, error: 'There is no rota yet. Run "Set up the standing rota" from the ' +
+                               'Branch Meetings menu, then put an owner against each item.' };
+  }
+
+  // One rotating slot per person per meeting: handed to presenterFor_
+  // so the rotation itself skips anybody already given one today.
+  var taken = {};
+  var standing = rota.map(function (r) {
+    var who = presenterFor_(r, m, chair, taken);
+    if (low_(r['Cadence']) === 'rotate' && who.email) taken[who.email] = true;
+    return {
+      section: str_(r['Section']) || SECTIONS[0],
+      t: str_(r['Item']),
+      d: str_(r['Detail']),
+      m: num_(r['Minutes']) || 5,
+      v: cleanVisibility_(r['Visibility']),
+      pName: who.name,
+      pEmail: who.email
+    };
+  });
 
   standing.forEach(function (item, i) {
     appendRow_(MEET.TAB_AGENDA, {
       'ID': uid_('AGD'), 'Meeting ID': str_(m['ID']), 'Order': (i + 1) * 10,
-      'Section': SECTIONS[item.s], 'Title': item.t, 'Detail': item.d,
-      'Presenter Name': item.p, 'Presenter Email': item.p === chairName ? chair : '',
+      'Section': item.section, 'Title': item.t, 'Detail': item.d,
+      'Presenter Name': item.pName, 'Presenter Email': item.pEmail,
       'Allotted (min)': item.m, 'Visibility': item.v,
       'Materials Required': item.v === 'staff' ? 'Y' : 'N',
       'Ready': 'N', 'Status': 'Planned', 'Created By': me.email, 'Created': new Date()
@@ -3852,6 +4073,7 @@ function onOpen() {
     .addItem('🗑️  Remove the sample meeting', 'removeSampleMeetingFromMenu')
     .addSeparator()
     .addItem('🪪  Pull the roster from the Agent Skill Bank', 'promptPullAccessCodes')
+    .addItem('🔁  Set up the standing rota', 'seedRotaFromMenu')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();

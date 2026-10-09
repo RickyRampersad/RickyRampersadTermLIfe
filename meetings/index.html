@@ -1079,6 +1079,35 @@ function drawMeeting() {
   // ---- the floor ----
   out += floorSection(d);
 
+  /* ---- who is carrying this meeting ----
+     A rota drifts back to one person quietly: an owner is away, an item
+     is added in a hurry, and a year later it is one person's broadcast
+     again. Counting it on the page is what makes the drift arguable on
+     the day rather than in next year's minutes. */
+  if (d.load && d.load.items) {
+    var L = d.load;
+    out += '<section><div class="section-label">Who is carrying this meeting</div><div class="card">' +
+      '<div class="grid3" style="margin-bottom:12px">' +
+      '<div class="stat' + (L.overTarget ? " red" : " green") + '"><b>' + L.chairShare +
+        "%</b><span>Is the chair&rsquo;s</span></div>" +
+      '<div class="stat"><b>' + L.presenters + "</b><span>Presenting</span></div>" +
+      '<div class="stat' + (L.unowned ? " amber" : "") + '"><b>' + L.unowned +
+        "</b><span>Nobody owns</span></div></div>" +
+      '<div style="font-size:12.5px;color:' + (L.overTarget ? "var(--red)" : "var(--muted)") +
+        ';line-height:1.7;margin-bottom:12px">' + esc(L.note) + "</div>" +
+      L.people.map(function (x) {
+        return '<div style="display:flex;align-items:center;gap:11px;padding:5px 0;font-size:12.5px">' +
+          '<div style="flex:1;color:var(--muted)">' + esc(x.name) + "</div>" +
+          '<div style="width:110px"><div class="bar"><i style="width:' + x.shareMinutes + '%"></i></div></div>' +
+          '<div style="width:74px;text-align:right;color:var(--muted)">' + x.items + " item" +
+          (x.items === 1 ? "" : "s") + "</div>" +
+          '<div style="width:52px;text-align:right;font-weight:700">' + x.minutes + " min</div></div>";
+      }).join("") +
+      '<div class="hint" style="margin-top:10px">Owners are set once on the <b>Rota</b> tab and ' +
+      'every meeting built after that carries them. Two items come round the room by themselves.</div>' +
+      "</div></section>";
+  }
+
   // ---- attendance ----
   if (d.register) {
     out += '<section><div class="section-label">Who is in the room' +
