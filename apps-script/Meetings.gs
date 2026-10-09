@@ -198,6 +198,41 @@ var CONTRIB_KINDS = ['Point', 'Question', 'Answer', 'Decision', 'Concern', 'Comm
 /* Action item statuses, in the branch's own wording. */
 var ACTION_STATUSES = ['Not Started', 'Open', 'In Progress', 'Overdue', 'Standing', 'Complete'];
 
+/*  EVERYBODY IN THE ROOM HOLDS A ROLE.
+ *
+ *  Three of these are standing roles on the People tab. The fourth,
+ *  presenter, is not stored anywhere: you hold it for one meeting
+ *  because the agenda names you against an item, and you stop holding
+ *  it when that meeting closes. Storing it would mean maintaining it,
+ *  and a stored list of presenters goes stale the first time an item
+ *  changes hands.
+ *
+ *  GUEST is a standing role and is deliberately NOT on the roll.
+ *  Head office visitors sat in the 30 July meeting — the President and
+ *  two VPs — and a guest who does not sign in has not missed a branch
+ *  meeting they were contracted to attend. roster_() is the
+ *  denominator the register is measured against, and letting guests
+ *  into it would mark three executives absent and quietly drop the
+ *  branch's attendance rate for a month.
+ */
+var ROLES = ['manager', 'staff', 'agent', 'guest'];
+
+/** The role a person holds FOR ONE MEETING, which is not always the
+ *  role on their People row. The chair of this meeting and a presenter
+ *  on this agenda both need their own view of it. */
+function roleInMeeting_(m, person, agenda) {
+  if (!person) return '';
+  if (m && low_(m['Chair']) === person.email) return 'chair';
+  agenda = agenda || readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  });
+  var presents = agenda.some(function (a) {
+    return low_(a['Presenter Email']) === person.email;
+  });
+  if (presents) return 'presenter';
+  return person.role;
+}
+
 /*  WHY YOU COULD NOT COME, FROM A LIST RATHER THAN A BOX.
  *
  *  Decided 6 October 2026, with the JotForm register disbanded. A
@@ -538,8 +573,20 @@ function findPersonByToken_(token) {
 }
 
 /** Everyone who should be at a branch meeting — the denominator
- *  the register is measured against. */
+ *  the register is measured against.
+ *
+ *  Guests are excluded on purpose. The roll is who the branch expects,
+ *  and a visiting executive who does not sign in has not missed a
+ *  meeting they were contracted to attend. They can still sign in,
+ *  and when they do they are counted present like anybody else; they
+ *  are simply never counted absent for staying away. */
 function roster_() {
+  return readPeople_().filter(function (p) { return p.active && p.role !== 'guest'; });
+}
+
+/** Everyone who may sign in, guests included — used where the question
+ *  is "may this person be here", not "was this person expected". */
+function everyone_() {
   return readPeople_().filter(function (p) { return p.active; });
 }
 
@@ -604,6 +651,16 @@ function canOpenMeeting_(person, m) {
 
   var status = low_(m['Status']) || 'draft';
   if ((status === 'draft' || status === 'cancelled') && !isStaff_(person)) return false;
+
+  // A GUEST IS INVITED TO ONE MEETING, NOT TO THE BRANCH. Without this
+  // a visitor given a sign-in for one session could open every branch
+  // meeting ever held, including the minutes of the ones they were not
+  // at. They get the meeting that names them and nothing else.
+  if (person.role === 'guest') {
+    return low_(m['Guest']).indexOf(person.email) > -1 ||
+           low_(m['Guest']).indexOf(low_(person.name)) > -1 ||
+           isParticipant_(m, person);
+  }
 
   switch (cleanScope_(m['Scope'])) {
     case 'staff':
@@ -802,7 +859,7 @@ function apiSavePerson_(body) {
   var email = low_(body.email);
   if (email.indexOf('@') < 1) return { ok: false, error: 'Enter a valid email address.' };
   var role = low_(body.role);
-  if (['manager', 'staff', 'agent'].indexOf(role) === -1) role = 'agent';
+  if (ROLES.indexOf(role) === -1) role = 'agent';
 
   var existing = findPersonByEmail_(email);
   if (existing) {
@@ -1069,7 +1126,10 @@ function apiMeeting_(token, id) {
     canRun: isStaff_(me),
     maxClipMinutes: MEET.MAX_CLIP_MINUTES,
     apologyReasons: APOLOGY_REASONS,
-    apologyOther: APOLOGY_OTHER
+    apologyOther: APOLOGY_OTHER,
+    // The role held for THIS meeting, which the chair and a presenter
+    // need in order to be shown their own part of the framework.
+    myRole: roleInMeeting_(m, me, agenda)
   };
 
   // The register itself is staff material. An agent sees that they

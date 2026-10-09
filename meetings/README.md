@@ -106,6 +106,24 @@ box takes either. Change the branch access codes in
 `meetings/index.html` (`DOOR_CODES`) if you ever change them on the
 portals.
 
+## How a meeting runs — the framework
+
+`/meetings/framework.html` sets out what each role does at each of four stages:
+**Before** the meeting is built, **During** the hour itself, **After** the
+record goes out, and **Follow-up** until the actions close. Each stage carries
+the finding out of the branch's own meeting record that it answers, so none of
+it reads as policy invented for the sake of a diagram.
+
+The page filters by stage and by role, and it deep-links: `#presenter`,
+`#chair`, `#agent`, `#admin`, `#guest`. The app's own "How a meeting runs" tab
+sends each person to their own part of it. It prints cleanly for the launch.
+
+Stage colours were validated as a set rather than chosen by eye — all four sit
+inside the OKLCH lightness band for a dark surface, the closest adjacent pair
+separates by ΔE 9.6 for a protan reader, and each clears 3:1 against the page.
+No stage is identified by colour alone; each is numbered and named, so the page
+reads in greyscale and in print.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
@@ -139,18 +157,33 @@ Roles are assigned by the branch on the **People** tab. Nobody picks their own
 role when they enrol, so an agent cannot make themselves staff and open the
 persistency report.
 
-| | Agent | Staff | Branch Manager |
-| --- | :-: | :-: | :-: |
-| Sign in, be counted present | ● | ● | ● |
-| Agenda items marked **Everyone** | ● | ● | ● |
-| Material marked **Everyone** | ● | ● | ● |
-| Published minutes (Everyone sections) | ● | ● | ● |
-| Action items naming them, or *All Agents* | ● | ● | ● |
-| Items marked **Staff only** — persistency red zones, licensing, clawback, unit performance | | ● | ● |
-| The register: who was present, late, excused, absent, no entry | | ● | ● |
-| Build meetings, write and publish minutes | | ● | ● |
-| Items marked **Chair only** — the branch manager's talking points | | | ● |
-| Add people and set roles | | | ● |
+| | Guest | Agent | Staff | Branch Manager |
+| --- | :-: | :-: | :-: | :-: |
+| Sign in, be counted present | ● | ● | ● | ● |
+| Make a contribution to the meeting | ● | ● | ● | ● |
+| Agenda items marked **Everyone** | ● | ● | ● | ● |
+| Material marked **Everyone** | ● | ● | ● | ● |
+| Published minutes (Everyone sections) | ● | ● | ● | ● |
+| Action items naming them, or *All Agents* | | ● | ● | ● |
+| Every branch meeting, not just the one they were invited to | | ● | ● | ● |
+| Counted on the roll, and marked absent for not signing in | | ● | ● | ● |
+| Items marked **Staff only** — persistency red zones, licensing, clawback, unit performance | | | ● | ● |
+| The register: who was present, late, who apologised, who is absent | | | ● | ● |
+| Build meetings, write and publish minutes | | | ● | ● |
+| Items marked **Chair only** — the branch manager's talking points | | | | ● |
+| Add people and set roles | | | | ● |
+
+**A guest is invited to one meeting, not to the branch.** They sign in with the
+rest of the room and are counted present when they do, but they are not on the
+roll, so they are never marked absent for staying away — the 30 July meeting
+had the President and two VPs in it, and a roll that counted them would have
+dropped the branch's attendance rate for a month. They see the meeting that
+names them and nothing else.
+
+**Presenter is a fifth role, and it is not on the People tab.** You hold it for
+one meeting because the agenda names you against an item, and you stop holding
+it when that meeting closes. Storing it would mean maintaining it, and a stored
+list of presenters goes stale the first time an item changes hands.
 
 Every one of those checks runs **on the server**. Material an agent may not see
 is never sent to their browser, so there is nothing to find by poking at the
