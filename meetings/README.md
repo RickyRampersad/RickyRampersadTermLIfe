@@ -291,6 +291,42 @@ walkthrough. Never the Multilingual variant.
 `SSL_CERT_FILE`; appending `/root/.ccr/ca-bundle.crt` to `certifi/cacert.pem`
 fixes it. The WebSocket itself goes through fine.
 
+## What the branch already had, and what this duplicated
+
+Worth reading before adding anything else here. The Meeting Builder was built as
+if the branch had nothing, and the branch has about 32,000 lines of Apps Script
+across seventeen files.
+
+**`KPI.gs` (4,873 lines) already runs daily blocks.** `SCHEDULE` gives every
+staff member four named blocks a day — `KPI1` 8–10, `KPI2` 10–12, `PM1` 1–3,
+`PM2` 3–4 — each with a `focus` in the team's own words and the matching entry
+from that person's KPI list pre-selected, and `BLOCK_DUE_HOUR` says when each one
+is due. **The `Activity` module in `Meetings.gs` is a second, thinner version of
+this.** Two blocks instead of four, invented categories instead of the role KPI
+lists. It should be folded into `KPI.gs` rather than kept alongside it; what it
+adds that `KPI.gs` does not have is the one-tap e-mail route and the personal
+half of the day.
+
+**Every role already has its KPI list and job description** — `SSA_ONLY`,
+`BM_ONLY`, `ABM_ONLY`, `UM_ONLY`, `BMA_ONLY`, `PA_ONLY` in `KPI.gs`, with
+`REPORTS_TO` for the reporting lines and an appraisal model behind them (weighted
+goals, eight competencies, 70-20-10, 80/20 against a minimum of 72). The daily
+note's KPI tab should read from these, not from a tab somebody fills in by hand.
+
+**There are walls already.** `WallBoard.gs` serves `/wall/` from Salesforce,
+cached, with client names reduced to first name and last initial so the feed is
+safe on a public URL. `Intelligence.gs` is 8,130 lines behind the five
+Intelligence Wall boards. `Production.gs` serves the production report.
+Query Pal is a standing KPI for two staff. The meeting should be linking to
+these — that is what the KPI `Link` column is for — rather than restating
+numbers.
+
+**General insurance is not a branch subject.** It is in no role's KPI list and
+not in `SEED_TOPICS`. The 9:59 rotating slot had it as week 1; that was invented
+here and is now gone. The four weeks are production against quota, persistency
+and conservation, recruitment and licensing, and goal plans and one-to-ones —
+each of which *is* in `SEED_TOPICS` and in the role lists.
+
 ## Steel & Azure, from 9 October 2026
 
 The branch moved off navy-and-gold. Everything here is on the new palette: the
