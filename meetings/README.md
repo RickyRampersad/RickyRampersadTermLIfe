@@ -123,6 +123,28 @@ Agent numbers are matched with punctuation and leading zeros ignored, so
 Change the branch access codes in `meetings/index.html` (`DOOR_CODES`) if you
 ever change them on the portals.
 
+### One known weakness, recorded on purpose
+
+The passwords on the Agent Skill Bank are short and sequential, and some
+repeat between people. Because the sign-in *is* the attendance register, a
+person who guesses a colleague's number and password can sign in as them and
+mark them present — which is the one thing the register exists to prevent.
+
+The branch decided on 9 October 2026 to launch as it stands and revisit this,
+so it is written down here rather than left to be rediscovered. Nothing in the
+app depends on it staying that way, and there are two cheap fixes whenever the
+branch wants one:
+
+- **Force a change on first sign-in.** The skill-bank password gets them in
+  once, then the app makes them set their own. Nothing to re-type on the skill
+  bank. The enrol flow that does this already exists.
+- **Replace the passwords on the skill bank** with proper ones and pull again.
+  No code change at all.
+
+What the app already does: five wrong tries locks the account for fifteen
+minutes, every sign-in is logged with a time, and the meeting sheet stores a
+salted hash rather than the password itself.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
@@ -348,14 +370,36 @@ at all for a given person, which is a different question.
 
 | Scope | Who it exists for |
 | --- | --- |
-| **Branch** | Everyone. The weekly branch meeting. |
+| **Branch** | Everyone on the roll. The weekly branch meeting. |
+| **Unit** | One unit, named in the meeting's **Unit** box, plus staff and the manager. Akaash's unit meeting is not Gary's unit's business and never appears in their list. |
 | **Staff** | Staff and the manager. An agent does not see the meeting, the register, or that it happened. |
+| **Invited** | Only the people named in **Participants**, plus the chair and the manager. A working group, a panel, anything that is nobody else's. |
 | **One-to-one** | The two people in the room, plus the branch manager. A manager reviewing an agent's persistency is not branch business. |
 | **Client** | The agent whose client it is, plus the branch manager. Not other agents, and not branch staff. |
 
 A meeting outside your scope returns the same "no longer exists" as one that
 was deleted — telling someone a meeting exists but is not for them tells them
 it happened.
+
+**The type sets the scope unless you change it.** A Managers Meeting and a
+Staff Meeting default to *staff*, a One-on-One to *one-to-one*, a Client
+Meeting to *client*, everything else to *branch*. Nobody has to remember a
+second dropdown for a meeting to be closed to the people it is not for.
+
+**Scope also decides the roll, and this is the part that matters.** The
+register is measured against who was *expected*, not against the whole branch.
+Closing a unit meeting of eight against the full roll would write a permanent,
+false absence onto the twenty-five people who were never invited — so a unit
+meeting marks its unit, a staff meeting marks staff, and an invited meeting
+marks the people named. Only a branch meeting is measured against everybody.
+
+A unit meeting with no unit set opens for staff only and marks staff only. It
+deliberately does *not* fall back to the whole branch: an empty box should
+close a meeting, never throw it open.
+
+Units are matched loosely, because they are typed by hand on two sheets —
+"Akaash Kalladeen", "akaash" and "Akaash's unit" are one unit. Participants
+may be listed by e-mail or by agent number.
 
 Only branch meetings count toward an attendance rate. A one-to-one is not
 something the rest of the branch failed to attend.

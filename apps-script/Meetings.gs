@@ -174,9 +174,15 @@ var MEETING_TYPES = ['Branch Meeting', 'Staff Meeting', 'Managers Meeting',
  *  agenda. Visibility controls a single item; scope controls whether the
  *  meeting exists at all for a given person.
  *
- *    branch      Everyone. The weekly branch meeting.
+ *    branch      Everyone on the roll. The weekly branch meeting.
+ *    unit        One unit only, named in the meeting's Unit column, plus
+ *                staff and the manager. Akaash's unit meeting is not
+ *                Gary's unit's business and never appears in their list.
  *    staff       Staff and the manager. Agents never see it — not the
  *                meeting, not the register, not that it happened.
+ *    invited     Only the people named in Participants, plus the chair
+ *                and the manager. The scope for a working group, a
+ *                disciplinary, or anything else that is nobody else's.
  *    one-to-one  The two people in the room, plus the branch manager. A
  *                manager reviewing an agent's persistency is not branch
  *                business.
@@ -184,8 +190,28 @@ var MEETING_TYPES = ['Branch Meeting', 'Staff Meeting', 'Managers Meeting',
  *                These carry client detail, and the branch's standing rule
  *                is that client information travels no further than it has
  *                to.
+ *
+ *  SCOPE ALSO DECIDES THE ROLL. rosterFor_ reads it to work out who was
+ *  expected, and the register is measured against that — so closing a
+ *  unit meeting of eight marks eight people, not the twenty-five who
+ *  were never invited. Getting this wrong would have written a false
+ *  absence onto most of the branch every time a unit met.
  */
-var MEETING_SCOPES = ['branch', 'staff', 'one-to-one', 'client'];
+var MEETING_SCOPES = ['branch', 'unit', 'staff', 'invited', 'one-to-one', 'client'];
+
+/*  A meeting's type implies its scope, so the chair does not have to set
+ *  both and cannot forget the second. It is a DEFAULT, applied only when
+ *  no scope has been chosen — never a lock. */
+var SCOPE_BY_TYPE = {
+  'managers meeting': 'staff',
+  'staff meeting': 'staff',
+  'one-on-one': 'one-to-one',
+  'client meeting': 'client'
+};
+
+function defaultScopeFor_(type) {
+  return SCOPE_BY_TYPE[low_(type)] || 'branch';
+}
 
 function cleanScope_(v) {
   v = low_(v);
@@ -281,7 +307,7 @@ var SCHEMA = {
              'Location', 'Chair', 'Guest', 'Status', 'Check-In Opens', 'Check-In Closes',
              'Late After (min)', 'Materials Due', 'Pre-Read', 'Anchor Document', 'Mission Statement',
              'Purpose', 'Minutes Status', 'Archive Link', 'Scope', 'Participants',
-             'Client Ref', 'Topics', 'Created By', 'Created', 'Updated'],
+             'Client Ref', 'Topics', 'Unit', 'Created By', 'Created', 'Updated'],
 
   Agenda: ['ID', 'Meeting ID', 'Order', 'Section', 'Title', 'Detail', 'Presenter Email',
            'Presenter Name', 'Allotted (min)', 'Visibility', 'Materials Required', 'Ready',
@@ -685,21 +711,83 @@ function canOpenMeeting_(person, m) {
   switch (cleanScope_(m['Scope'])) {
     case 'staff':
       return isStaff_(person);
+    case 'unit':
+      // The named unit, plus staff. A unit meeting with no unit set
+      // would otherwise open for the whole branch, so an unset unit
+      // closes it to everyone but staff rather than opening it to all.
+      if (isStaff_(person)) return true;
+      return !!str_(m['Unit']) && sameUnit_(m['Unit'], person.unit);
+    case 'invited':
     case 'one-to-one':
     case 'client':
-      // Only the people actually in the room. The branch manager is
-      // already through, above.
+      // Only the people actually named. The branch manager is already
+      // through, above.
       return low_(m['Chair']) === person.email || isParticipant_(m, person);
     default:
       return true;
   }
 }
 
+/** Units are typed by hand on two different sheets, so they are
+ *  compared loosely: "Akaash Kalladeen", "akaash" and "Akaash's unit"
+ *  are one unit. */
+function sameUnit_(a, b) {
+  // A possessive is dropped before the punctuation is, or "Gary's unit"
+  // becomes "garys" and stops matching "Gary Sookdeo".
+  var tidy = function (v) {
+    return low_(v).replace(/[\u2019']s\b/g, '')
+                  .replace(/[^a-z0-9 ]/g, ' ')
+                  .replace(/\bunit\b/g, '')
+                  .replace(/\s+/g, ' ').trim();
+  };
+  a = tidy(a);
+  b = tidy(b);
+  if (!a || !b) return false;
+  if (a === b) return true;
+  // One is a first name and the other the full name of the same person.
+  var fa = a.split(/\s+/)[0], fb = b.split(/\s+/)[0];
+  return fa === fb && fa.length > 2;
+}
+
+/*  WHO WAS EXPECTED AT THIS MEETING — the register's denominator.
+ *
+ *  roster_() is the whole branch, which is right for a branch meeting
+ *  and wrong for everything else. Closing a unit meeting of eight
+ *  against the whole roll would have written a false absence onto the
+ *  twenty-five people who were never invited to it, and those rows are
+ *  permanent once the register closes.
+ */
+function rosterFor_(m) {
+  var all = roster_();
+  switch (cleanScope_(m && m['Scope'])) {
+    case 'staff':
+      return all.filter(function (p) { return isStaff_(p); });
+    case 'unit':
+      if (!str_(m['Unit'])) return all.filter(function (p) { return isStaff_(p); });
+      return all.filter(function (p) {
+        return sameUnit_(m['Unit'], p.unit) || isStaff_(p);
+      });
+    case 'invited':
+    case 'one-to-one':
+    case 'client':
+      return all.filter(function (p) {
+        return low_(m['Chair']) === p.email || isParticipant_(m, p);
+      });
+    default:
+      return all;
+  }
+}
+
 /** The Participants cell is a comma-separated list of emails. */
 function isParticipant_(m, person) {
-  return str_(m['Participants']).toLowerCase()
+  var want = str_(m['Participants']).toLowerCase()
     .split(/[,;]/).map(function (x) { return x.trim(); })
-    .indexOf(person.email) > -1;
+    .filter(function (x) { return !!x; });
+  if (!want.length) return false;
+  if (want.indexOf(person.email) > -1) return true;
+  // People think in agent numbers now, so a list may be written in them.
+  var no = normNo_(person.agentNo);
+  return !!no && want.some(function (x) { return normNo_(x) === no; });
 }
 
 var VISIBILITIES = ['all', 'staff', 'chair'];
@@ -1262,7 +1350,8 @@ function register_(m, att) {
   // the register is closed they have no row at all; afterwards they
   // have one, and the loop above has already caught them.
   var noLogin = 0;
-  roster_().forEach(function (p) {
+  var expected = rosterFor_(m);
+  expected.forEach(function (p) {
     if (!byEmail[p.email]) {
       groups.absent.push({
         email: p.email, name: p.name, role: p.role, unit: p.unit,
@@ -1279,7 +1368,7 @@ function register_(m, att) {
   var order = function (a, b) { return a.name.localeCompare(b.name); };
   Object.keys(groups).forEach(function (k) { groups[k].sort(order); });
 
-  var roll = roster_().length;
+  var roll = expected.length;
   var here = groups.present.length + groups.late.length;
 
   // Why the apologies came in, counted. One row per reason that was
@@ -1582,10 +1671,14 @@ function apiSaveMeeting_(body) {
     'Anchor Document': str_(body.anchor),
     'Mission Statement': str_(body.mission),
     'Purpose': str_(body.purpose),
-    'Scope': cleanScope_(body.scope),
+    // No scope chosen takes the one its type implies, so a Managers
+    // Meeting is never left open to the branch because somebody did not
+    // look at a second dropdown.
+    'Scope': str_(body.scope) ? cleanScope_(body.scope) : defaultScopeFor_(type),
     'Participants': str_(body.participants),
     'Client Ref': str_(body.clientRef),
     'Topics': str_(body.topics),
+    'Unit': str_(body.unit),
     'Updated': new Date()
   };
 
@@ -2507,7 +2600,7 @@ function closeRegister_(m, by) {
   att.forEach(function (a) { seen[low_(a['Email'])] = true; });
 
   var now = new Date();
-  var rows = roster_().filter(function (p) { return !seen[p.email]; }).map(function (p) {
+  var rows = rosterFor_(m).filter(function (p) { return !seen[p.email]; }).map(function (p) {
     return {
       'ID': uid_('ATT'), 'Meeting ID': str_(m['ID']), 'Email': p.email, 'Name': p.name,
       'Role': p.role, 'Unit': p.unit, 'Status': 'absent', 'Method': 'no-login',
