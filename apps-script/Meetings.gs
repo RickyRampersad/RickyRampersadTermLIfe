@@ -389,6 +389,17 @@ var SCHEMA = {
 
   Topics: ['ID', 'Name', 'Category', 'Description', 'Active', 'Created By', 'Created'],
 
+  /*  ONE ROW PER PERSON PER BLOCK PER DAY. Two rows a day each, so a
+   *  branch of 28 writes about 280 rows a week — long and thin on
+   *  purpose, because the categories change and a column per activity
+   *  is a shape nobody maintains.
+   *
+   *  Items is a comma-joined list of activity keys. Went Well and In
+   *  The Way are the only free text, capped at 500 characters each,
+   *  and they are the part a human reads before a Wednesday.        */
+  Activity: ['ID', 'Day', 'Block', 'Email', 'Name', 'Role', 'Unit', 'Token',
+             'Sent', 'Opened', 'Answered', 'Items', 'Went Well', 'In The Way'],
+
   Log: ['Timestamp', 'Actor', 'Role', 'Action', 'Target', 'Details']
 };
 
@@ -4322,8 +4333,615 @@ function apiWall_(code, id) {
   };
 }
 
+
+/* ===================================================================
+ *  THE DAILY TIME BLOCKS
+ *
+ *  Two notes a day, one at 10:00 and one at 15:00, each asking one
+ *  question: what did you actually do since the last one. The morning
+ *  note covers 3pm yesterday to 10am today; the afternoon note covers
+ *  10am to 3pm. Between them they cover the working day without ever
+ *  asking anybody to remember more than five hours back, which is the
+ *  only window people answer honestly.
+ *
+ *  WHY THE E-MAIL CARRIES ONE BUTTON AND NOT ONE LINK PER ACTIVITY.
+ *
+ *  The obvious design is a grid of links in the e-mail — tap
+ *  "Prospecting" and it is logged, never open a page. It cannot be
+ *  built that way. Microsoft Defender and most corporate mail
+ *  gateways FETCH every link in a message to check it before the
+ *  recipient sees it, and this branch is on Microsoft 365. A link
+ *  that records an activity would be recorded by the scanner, for
+ *  everybody, every morning, and the branch's first time-use model
+ *  would be made of work nobody did.
+ *
+ *  So the e-mail holds one link to a page, and the clicking happens
+ *  there. A scanner that follows it marks the row opened and nothing
+ *  else. It is still one tap from the e-mail to the chips.
+ *
+ *  Everything on that page is a GET, including the save, because an
+ *  HtmlService page is served from a different origin than /exec and
+ *  a POST from it is a CORS problem with no good answer. A plain form
+ *  with method="get" has none of that and needs no JavaScript, which
+ *  also means it works in the in-app browser of every mail client.
+ * =================================================================== */
+
+var ACTIVITY = {
+  TAB: 'Activity',
+
+  /*  Who is asked. Staff keep their own KPI block and are not asked
+   *  these questions yet — add 'staff' here when that changes. */
+  SEND_TO: ['agent', 'manager'],
+
+  /*  A person may answer a block until this many hours after it
+   *  opened. After that the row stands as it is, so a week's figures
+   *  stop moving once the week is over. */
+  OPEN_HOURS: 20,
+
+  /*  Categories in these groups are never reported against a named
+   *  person to anybody but that person. See activityStats_. */
+  PRIVATE_GROUPS: ['life']
+};
+
+/*  The two blocks. `from` and `to` are read as hours on a 24h clock;
+ *  `backDays` says how far back the window starts. */
+var ACTIVITY_BLOCKS = [
+  { key: 'morning',   hour: 10, from: 15, backDays: 1, to: 10,
+    label: 'Morning check', window: 'since 3pm yesterday' },
+  { key: 'afternoon', hour: 15, from: 10, backDays: 0, to: 15,
+    label: 'Afternoon check', window: 'since 10 this morning' }
+];
+
+/*  THE ACTIVITIES.
+ *
+ *  Short, concrete, and things a person either did or did not do —
+ *  never a judgement of how well. Keep this list under about a dozen
+ *  per role: a list long enough to need scrolling is a list people
+ *  stop reading and start tapping the first three of.
+ *
+ *  `group` drives the roll-up and the privacy rule, not the colour.  */
+var ACTIVITY_SETS = {
+  agent: [
+    { k: 'prospect', label: 'Prospecting',        group: 'work' },
+    { k: 'calls',    label: 'Calls made',          group: 'work' },
+    { k: 'seen',     label: 'Seen a client',       group: 'work' },
+    { k: 'factfind', label: 'Fact find',           group: 'work' },
+    { k: 'leads',    label: 'Followed up leads',   group: 'work' },
+    { k: 'app',      label: 'Application in',      group: 'work' },
+    { k: 'service',  label: 'Serviced a client',   group: 'service' },
+    { k: 'quote',    label: 'Quote or proposal',   group: 'work' },
+    { k: 'admin',    label: 'Paperwork and admin', group: 'admin' },
+    { k: 'training', label: 'Training or study',   group: 'growth' },
+    { k: 'team',     label: 'Branch or team time', group: 'admin' }
+  ],
+  manager: [
+    { k: 'portfolio', label: 'My own portfolio',    group: 'work' },
+    { k: 'coach',     label: 'Coaching an agent',   group: 'growth' },
+    { k: 'recruit',   label: 'Recruiting',          group: 'growth' },
+    { k: 'seen',      label: 'Seen a client',       group: 'work' },
+    { k: 'calls',     label: 'Calls made',          group: 'work' },
+    { k: 'service',   label: 'Serviced a client',   group: 'service' },
+    { k: 'branch',    label: 'Branch admin',        group: 'admin' },
+    { k: 'head',      label: 'Head office',         group: 'admin' },
+    { k: 'training',  label: 'Training or study',   group: 'growth' },
+    { k: 'team',      label: 'Branch or team time', group: 'admin' }
+  ],
+  staff: [
+    { k: 'sq',       label: 'Service questionnaires', group: 'work' },
+    { k: 'claims',   label: 'Claims and servicing',   group: 'work' },
+    { k: 'renewals', label: 'Renewals chased',        group: 'work' },
+    { k: 'client',   label: 'Client calls',           group: 'work' },
+    { k: 'admin',    label: 'Paperwork and admin',    group: 'admin' },
+    { k: 'training', label: 'Training or study',      group: 'growth' },
+    { k: 'team',     label: 'Branch or team time',    group: 'admin' }
+  ]
+};
+
+/*  Asked of everybody, whatever their role. This is the half of the
+ *  picture that the branch has never had: a day is not only selling,
+ *  and a model built on work categories alone says a person who spent
+ *  the morning at a funeral did nothing. */
+var ACTIVITY_LIFE = [
+  { k: 'family',     label: 'Family time',     group: 'life' },
+  { k: 'personal',   label: 'Personal time',   group: 'life' },
+  { k: 'recreation', label: 'Recreation',      group: 'life' },
+  { k: 'rest',       label: 'Rest or unwell',  group: 'life' },
+  { k: 'travel',     label: 'Travelling',      group: 'life' }
+];
+
+function activityBlock_(key) {
+  for (var i = 0; i < ACTIVITY_BLOCKS.length; i++) {
+    if (ACTIVITY_BLOCKS[i].key === key) return ACTIVITY_BLOCKS[i];
+  }
+  return null;
+}
+
+/** The chips a given role is shown: their own set, then the life set. */
+function activityMenuFor_(role) {
+  var set = ACTIVITY_SETS[low_(role)] || ACTIVITY_SETS.agent;
+  return set.concat(ACTIVITY_LIFE);
+}
+
+function activityLabel_(role, k) {
+  var menu = activityMenuFor_(role);
+  for (var i = 0; i < menu.length; i++) if (menu[i].k === k) return menu[i].label;
+  return k;
+}
+
+function activityGroup_(role, k) {
+  var menu = activityMenuFor_(role);
+  for (var i = 0; i < menu.length; i++) if (menu[i].k === k) return menu[i].group;
+  return '';
+}
+
+function isPrivateGroup_(g) { return ACTIVITY.PRIVATE_GROUPS.indexOf(g) > -1; }
+
+/** The date key a row is filed under — local date, not UTC, so a 3pm
+ *  block never lands on the next day for a branch four hours west. */
+function dayKey_(d) {
+  return Utilities.formatDate(d || new Date(), tz_(), 'yyyy-MM-dd');
+}
+
+function activityRows_() { return readTab_(ACTIVITY.TAB); }
+
+function findActivity_(day, blockKey, email) {
+  var rows = activityRows_(), e = low_(email);
+  for (var i = 0; i < rows.length; i++) {
+    if (str_(rows[i]['Day']) === day &&
+        str_(rows[i]['Block']) === blockKey &&
+        low_(rows[i]['Email']) === e) return rows[i];
+  }
+  return null;
+}
+
+function findActivityByToken_(token) {
+  var t = str_(token);
+  if (!t) return null;
+  var rows = activityRows_();
+  for (var i = 0; i < rows.length; i++) {
+    if (str_(rows[i]['Token']) === t) return rows[i];
+  }
+  return null;
+}
+
+function itemsOf_(row) {
+  var raw = str_(row && row['Items']);
+  if (!raw) return [];
+  return raw.split(',').map(function (s) { return s.trim(); })
+            .filter(function (s) { return !!s; });
+}
+
+/* ------------------------- the e-mail ------------------------- */
+
+function activityEmail_(person, row, block, url) {
+  var first = firstName_(person.name);
+  var link = url + '?action=act&t=' + encodeURIComponent(str_(row['Token']));
+  var done = itemsOf_(row).length;
+
+  var subject = block.label + ' — ' + (done ? 'add to your answer' : 'what did you get done?');
+
+  var html =
+    '<div style="font-family:Inter,Segoe UI,Arial,sans-serif;background:#07131f;padding:26px 16px">' +
+    '<div style="max-width:520px;margin:0 auto;background:#0d2439;border-radius:16px;overflow:hidden;' +
+    'border:1px solid rgba(255,255,255,.11)">' +
+
+    '<div style="padding:20px 24px 4px">' +
+    '<img src="' + IBRAND_LOGO_() + '" width="38" height="38" alt="" ' +
+    'style="border-radius:11px;display:block;margin-bottom:12px">' +
+    '<div style="color:#f5b93b;font-size:11px;letter-spacing:.09em;text-transform:uppercase;' +
+    'font-weight:700">' + esc_(block.label) + '</div>' +
+    '<div style="color:#eaf4ff;font-size:19px;font-weight:700;margin-top:5px">' +
+    esc_(first) + ', what did you get done ' + esc_(block.window) + '?</div>' +
+    '<div style="color:#9dbdd8;font-size:13.5px;line-height:1.6;margin-top:9px">' +
+    'Tap through and pick what you did. It takes about fifteen seconds and there is ' +
+    'nothing to type unless you want to.' +
+    '</div>' +
+    '</div>' +
+
+    '<div style="padding:18px 24px 24px">' +
+    '<a href="' + esc_(link) + '" ' +
+    'style="display:block;text-align:center;background:#f5b93b;color:#07131f;text-decoration:none;' +
+    'font-weight:700;font-size:15px;padding:14px 18px;border-radius:11px">' +
+    (done ? 'Add to my answer' : 'Pick what I did') + '</a>' +
+    (done
+      ? '<div style="color:#6d8ba6;font-size:12px;margin-top:11px;text-align:center">' +
+        'You have ' + done + ' logged for this block already.</div>'
+      : '') +
+    '</div>' +
+
+    '<div style="padding:14px 24px 20px;border-top:1px solid rgba(255,255,255,.09);' +
+    'color:#6d8ba6;font-size:11.5px;line-height:1.65">' +
+    'Your personal time is yours. Family, rest and recreation are counted for the branch as a ' +
+    'whole and are never shown against your name.' +
+    '</div>' +
+
+    '</div></div>';
+
+  return { subject: subject, html: html };
+}
+
+/*  The branch mark, hosted. In e-mail it must be a hosted PNG — Gmail
+ *  strips SVG and blocks data: URIs, and the masthead arrives empty. */
+function IBRAND_LOGO_() { return 'https://rickyrampersadbranch.com/logo-mark.png'; }
+
+/* ------------------------- sending ------------------------- */
+
+/** Open one block and write to everybody it is for. Safe to run twice:
+ *  a person who already has a row for this block keeps it, token and
+ *  answers intact, and is simply written to again. */
+function activityCheck_(blockKey) {
+  var block = activityBlock_(blockKey);
+  if (!block) throw new Error('No such block: ' + blockKey);
+
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no check.'); return 'Weekend — no check.'; }
+
+  var url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (err) { url = ''; }
+  if (!url) throw new Error('The web app is not deployed yet, so there is no link to send.');
+
+  var day = dayKey_(now);
+  var sent = 0, skipped = 0, failed = 0;
+
+  everyone_().forEach(function (p) {
+    if (!p.email) { skipped++; return; }
+    if (ACTIVITY.SEND_TO.indexOf(low_(p.role)) === -1) { skipped++; return; }
+
+    var row = findActivity_(day, block.key, p.email);
+    if (!row) {
+      var id = uid_('act');
+      appendRow_(ACTIVITY.TAB, {
+        'ID': id, 'Day': day, 'Block': block.key, 'Email': p.email, 'Name': p.name,
+        'Role': p.role, 'Unit': p.unit, 'Token': makeToken_(), 'Sent': now, 'Items': ''
+      });
+      row = findActivity_(day, block.key, p.email);
+      if (!row) { failed++; return; }
+    } else {
+      setCell_(ACTIVITY.TAB, row._row, 'Sent', now);
+    }
+
+    var mail = activityEmail_(p, row, block, url);
+    try {
+      MailApp.sendEmail({ to: p.email, subject: mail.subject, htmlBody: mail.html,
+                          name: MEET.BRANCH });
+      sent++;
+    } catch (err) {
+      failed++;
+      Logger.log('Could not write to ' + p.email + ': ' + err);
+    }
+  });
+
+  var msg = block.label + ': ' + sent + ' sent, ' + skipped + ' not asked, ' + failed + ' failed.';
+  log_('activity-check', 'system', '', block.key, msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/*  Two named handlers, because a time trigger cannot carry an
+ *  argument. */
+function activityMorning()   { return activityCheck_('morning'); }
+function activityAfternoon() { return activityCheck_('afternoon'); }
+
+/** Install both daily triggers. Safe to run again — it clears its own
+ *  first, so pressing the menu item twice never doubles the notes. */
+function installActivityChecks() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    var f = t.getHandlerFunction();
+    if (f === 'activityMorning' || f === 'activityAfternoon') ScriptApp.deleteTrigger(t);
+  });
+  ACTIVITY_BLOCKS.forEach(function (b) {
+    ScriptApp.newTrigger(b.key === 'morning' ? 'activityMorning' : 'activityAfternoon')
+      .timeBased().atHour(b.hour).everyDays(1).create();
+  });
+  var msg = 'Time blocks are on: a note at about ' + ACTIVITY_BLOCKS[0].hour + ':00 and ' +
+    'another at about ' + ACTIVITY_BLOCKS[1].hour + ':00, weekdays only. ' +
+    'Asked of: ' + ACTIVITY.SEND_TO.join(' and ') + '.';
+  Logger.log(msg);
+  return msg;
+}
+
+function installActivityChecksFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The daily time blocks', installActivityChecks(), ui.ButtonSet.OK);
+}
+
+/** Send yourself the next block, to read it before the branch does. */
+function previewActivityCheck() {
+  var me = findPersonByEmail_(MEET.ADMIN_EMAIL) || readPeople_()[0];
+  if (!me) throw new Error('Nobody on the People tab yet.');
+  var url = ScriptApp.getService().getUrl() || '';
+  if (!url) throw new Error('The web app is not deployed yet, so there is no link to send.');
+
+  var block = new Date().getHours() < 13 ? ACTIVITY_BLOCKS[0] : ACTIVITY_BLOCKS[1];
+  var day = dayKey_(new Date());
+  var row = findActivity_(day, block.key, me.email);
+  if (!row) {
+    appendRow_(ACTIVITY.TAB, {
+      'ID': uid_('act'), 'Day': day, 'Block': block.key, 'Email': me.email, 'Name': me.name,
+      'Role': me.role, 'Unit': me.unit, 'Token': makeToken_(), 'Sent': new Date(), 'Items': ''
+    });
+    row = findActivity_(day, block.key, me.email);
+  }
+  var mail = activityEmail_(me, row, block, url);
+  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + mail.subject,
+                      htmlBody: mail.html, name: MEET.BRANCH });
+  return 'Sent to ' + me.email + '.';
+}
+
+/* ------------------------- the page ------------------------- */
+
+/*  Served as HTML, not JSON, because this is the one place in the app
+ *  a person arrives from their inbox rather than from the meeting
+ *  front end. Every control on it is a GET for the reason in the
+ *  header comment. */
+function activityPage_(p) {
+  var row = findActivityByToken_(p.token || p.t);
+  if (!row) return activityShell_('That link has expired',
+    'Ask for the next check, or open the meeting app and log it there.', '');
+
+  var block = activityBlock_(str_(row['Block'])) || ACTIVITY_BLOCKS[0];
+  var role = low_(row['Role']) || 'agent';
+  var menu = activityMenuFor_(role);
+
+  /*  A block closes so that last week's figures cannot move after the
+   *  week is counted. */
+  var sent = asDate_(row['Sent']);
+  var hours = sent ? (new Date().getTime() - sent.getTime()) / 36e5 : 0;
+  var closed = hours > ACTIVITY.OPEN_HOURS;
+
+  var items = itemsOf_(row);
+  var changed = false;
+
+  if (!closed) {
+    var add = str_(p.k), drop = str_(p.x);
+    if (add) {
+      var known = false;
+      for (var i = 0; i < menu.length; i++) if (menu[i].k === add) known = true;
+      if (known && items.indexOf(add) === -1) { items.push(add); changed = true; }
+    }
+    if (drop && items.indexOf(drop) > -1) {
+      items.splice(items.indexOf(drop), 1); changed = true;
+    }
+    if (changed) setCell_(ACTIVITY.TAB, row._row, 'Items', items.join(','));
+
+    if ('well' in p || 'blocker' in p) {
+      setCell_(ACTIVITY.TAB, row._row, 'Went Well', str_(p.well).slice(0, 500));
+      setCell_(ACTIVITY.TAB, row._row, 'In The Way', str_(p.blocker).slice(0, 500));
+      changed = true;
+    }
+    if (changed || !row['Answered']) {
+      setCell_(ACTIVITY.TAB, row._row, 'Answered', new Date());
+      row['Answered'] = new Date();
+    }
+  }
+  if (!row['Opened']) setCell_(ACTIVITY.TAB, row._row, 'Opened', new Date());
+
+  var url = '';
+  try { url = ScriptApp.getService().getUrl() || ''; } catch (err) { url = ''; }
+  var base = url + '?action=act&t=' + encodeURIComponent(str_(row['Token']));
+
+  /* --- the chips --- */
+  var work = [], life = [];
+  menu.forEach(function (a) {
+    var on = items.indexOf(a.k) > -1;
+    var href = base + (on ? '&x=' : '&k=') + encodeURIComponent(a.k);
+    var chip =
+      '<a class="chip' + (on ? ' on' : '') + '" href="' + esc_(href) + '">' +
+      (on ? '<span class="tick">&#10003;</span>' : '') + esc_(a.label) + '</a>';
+    if (a.group === 'life') life.push(chip); else work.push(chip);
+  });
+
+  var body =
+    '<div class="eyebrow">' + esc_(block.label) + '</div>' +
+    '<h1>What did you get done ' + esc_(block.window) + '?</h1>' +
+    (closed
+      ? '<p class="closed">This block has closed, so it cannot be changed now. ' +
+        'What is below is what was recorded.</p>'
+      : '<p class="lede">Tap everything that applies. It saves as you go &mdash; ' +
+        'there is no button to press at the end.</p>') +
+
+    '<div class="group"><h2>Your work</h2><div class="chips">' + work.join('') + '</div></div>' +
+
+    '<div class="group"><h2>Your time</h2>' +
+    '<p class="priv">Counted for the branch as a whole. Never shown against your name.</p>' +
+    '<div class="chips">' + life.join('') + '</div></div>';
+
+  if (!closed) {
+    body +=
+      '<form class="group" method="get" action="' + esc_(url) + '">' +
+      '<input type="hidden" name="action" value="act">' +
+      '<input type="hidden" name="t" value="' + esc_(str_(row['Token'])) + '">' +
+      '<h2>Anything worth saying?</h2>' +
+      '<label>What went well</label>' +
+      '<input type="text" name="well" maxlength="500" autocomplete="off" ' +
+      'value="' + esc_(str_(row['Went Well'])) + '" placeholder="One line. Optional.">' +
+      '<label>What is in the way</label>' +
+      '<input type="text" name="blocker" maxlength="500" autocomplete="off" ' +
+      'value="' + esc_(str_(row['In The Way'])) + '" placeholder="One line. Optional.">' +
+      '<button type="submit">Save these two lines</button>' +
+      '</form>';
+  } else if (str_(row['Went Well']) || str_(row['In The Way'])) {
+    body += '<div class="group"><h2>What you said</h2>' +
+      (str_(row['Went Well']) ? '<p class="said">' + esc_(str_(row['Went Well'])) + '</p>' : '') +
+      (str_(row['In The Way']) ? '<p class="said">' + esc_(str_(row['In The Way'])) + '</p>' : '') +
+      '</div>';
+  }
+
+  var count = items.length;
+  body += '<div class="done">' +
+    (count ? count + ' logged for this block. You can close this page.'
+           : 'Nothing logged yet — a block with nothing in it is recorded as nothing done.') +
+    '</div>';
+
+  return activityShell_('Your ' + block.label.toLowerCase(), '', body);
+}
+
+/** The page frame. Inline styles only: an HtmlService page cannot
+ *  reach the branch stylesheet, and a web font is one more thing to
+ *  fail on a phone with one bar. */
+function activityShell_(title, message, body) {
+  var html =
+    '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<title>' + esc_(title) + '</title><style>' +
+    '*{box-sizing:border-box}' +
+    'body{margin:0;background:#07131f;color:#eaf4ff;padding:22px 16px 44px;' +
+    'font-family:Inter,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;-webkit-font-smoothing:antialiased}' +
+    '.wrap{max-width:520px;margin:0 auto}' +
+    '.eyebrow{color:#f5b93b;font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:700}' +
+    'h1{font-size:21px;line-height:1.3;margin:7px 0 10px;font-weight:700}' +
+    'h2{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6d8ba6;' +
+    'margin:0 0 10px;font-weight:700}' +
+    '.lede,.closed{color:#9dbdd8;font-size:14px;line-height:1.6;margin:0 0 20px}' +
+    '.closed{color:#ffb4ab}' +
+    '.priv{color:#6d8ba6;font-size:12px;line-height:1.55;margin:-4px 0 10px}' +
+    '.group{margin:26px 0 0}' +
+    '.chips{display:flex;flex-wrap:wrap;gap:8px}' +
+    '.chip{display:inline-block;text-decoration:none;font-size:14px;font-weight:600;' +
+    'padding:11px 15px;border-radius:999px;border:1px solid rgba(255,255,255,.17);' +
+    'color:#eaf4ff;background:rgba(255,255,255,.055);line-height:1}' +
+    '.chip.on{background:#f5b93b;border-color:#f5b93b;color:#07131f}' +
+    '.tick{margin-right:6px;font-weight:800}' +
+    'label{display:block;font-size:12.5px;color:#9dbdd8;margin:12px 0 5px}' +
+    'input[type=text]{width:100%;padding:12px 13px;border-radius:11px;font-size:15px;' +
+    'border:1px solid rgba(255,255,255,.17);background:rgba(255,255,255,.055);color:#eaf4ff}' +
+    'input::placeholder{color:#5d7b96}' +
+    'button{margin-top:14px;width:100%;padding:13px;border:none;border-radius:11px;' +
+    'background:#f5b93b;color:#07131f;font-size:15px;font-weight:700}' +
+    '.done{margin:30px 0 0;padding-top:16px;border-top:1px solid rgba(255,255,255,.11);' +
+    'color:#6d8ba6;font-size:12.5px;line-height:1.6}' +
+    '.said{color:#9dbdd8;font-size:14px;line-height:1.6;margin:0 0 8px}' +
+    '.msg{color:#9dbdd8;font-size:15px;line-height:1.6}' +
+    '</style></head><body><div class="wrap">' +
+    (body || ('<h1>' + esc_(title) + '</h1><p class="msg">' + esc_(message) + '</p>')) +
+    '</div></body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setTitle(title);
+}
+
+/* ------------------------- the intelligence ------------------------- */
+
+/*  WHAT THIS DELIBERATELY WILL NOT DO.
+ *
+ *  Personal time is asked for so that a day adds up, not so that it
+ *  can be read back to a manager. Anything in ACTIVITY.PRIVATE_GROUPS
+ *  is counted for the branch and stripped from every per-person
+ *  figure unless the person asking IS that person. Take that rule out
+ *  and the honest answers go with it: people do not log family time
+ *  twice a day for a system that reports it upwards.              */
+function activityStats_(days, viewerEmail) {
+  days = num_(days) || 7;
+  var cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  var cutKey = dayKey_(cutoff);
+  var viewer = low_(viewerEmail);
+
+  var rows = activityRows_().filter(function (r) { return str_(r['Day']) >= cutKey; });
+
+  var byPerson = {}, catCount = {}, groupCount = {};
+  var asked = 0, answered = 0, notes = [];
+
+  rows.forEach(function (r) {
+    var email = low_(r['Email']);
+    var role = low_(r['Role']) || 'agent';
+    var items = itemsOf_(r);
+    var did = items.length > 0;
+
+    asked++;
+    if (did) answered++;
+
+    if (!byPerson[email]) {
+      byPerson[email] = { email: email, name: str_(r['Name']), unit: str_(r['Unit']),
+                          role: role, asked: 0, answered: 0, items: 0, top: {} };
+    }
+    var P = byPerson[email];
+    P.asked++;
+    if (did) P.answered++;
+
+    items.forEach(function (k) {
+      var g = activityGroup_(role, k);
+      var label = activityLabel_(role, k);
+
+      /* Branch totals count everything, including personal time. */
+      catCount[label] = (catCount[label] || 0) + 1;
+      groupCount[g] = (groupCount[g] || 0) + 1;
+
+      /* Per-person totals never carry a private group to anybody
+         but its owner. */
+      if (isPrivateGroup_(g) && email !== viewer) return;
+      P.items++;
+      P.top[label] = (P.top[label] || 0) + 1;
+    });
+
+    var well = str_(r['Went Well']), inway = str_(r['In The Way']);
+    if (well)  notes.push({ when: str_(r['Day']), block: str_(r['Block']),
+                            name: str_(r['Name']), kind: 'well', body: well });
+    if (inway) notes.push({ when: str_(r['Day']), block: str_(r['Block']),
+                            name: str_(r['Name']), kind: 'blocker', body: inway });
+  });
+
+  var people = Object.keys(byPerson).map(function (e) {
+    var P = byPerson[e];
+    P.rate = P.asked ? Math.round(P.answered / P.asked * 100) : 0;
+    P.top = Object.keys(P.top).map(function (l) { return { label: l, n: P.top[l] }; })
+      .sort(function (a, b) { return b.n - a.n; }).slice(0, 4);
+    return P;
+  }).sort(function (a, b) { return b.answered - a.answered || a.name.localeCompare(b.name); });
+
+  var categories = Object.keys(catCount).map(function (l) { return { label: l, n: catCount[l] }; })
+    .sort(function (a, b) { return b.n - a.n; });
+
+  var workish = (groupCount.work || 0) + (groupCount.service || 0) +
+                (groupCount.admin || 0) + (groupCount.growth || 0);
+
+  return {
+    days: days,
+    from: cutKey,
+    to: dayKey_(new Date()),
+    asked: asked,
+    answered: answered,
+    rate: asked ? Math.round(answered / asked * 100) : 0,
+    silent: people.filter(function (p) { return !p.answered; })
+                  .map(function (p) { return p.name || p.email; }),
+    people: people,
+    categories: categories,
+    groups: groupCount,
+    split: { work: workish, life: groupCount.life || 0 },
+    notes: notes.sort(function (a, b) { return a.when < b.when ? 1 : -1; }).slice(0, 40)
+  };
+}
+
+/** The app's view. An agent sees their own; staff and the manager see
+ *  the branch, with personal time in the totals and in nobody's row. */
+function apiActivity_(token, days) {
+  var me = requireUser_(token);
+  var stats = activityStats_(days, me.email);
+  if (!isStaff_(me)) {
+    stats.people = stats.people.filter(function (p) { return p.email === me.email; });
+    stats.notes = stats.notes.filter(function (n) { return n.name === me.name; });
+    stats.silent = [];
+  }
+  return { ok: true, me: publicUser_(me), activity: stats };
+}
+
+
 function doGet(e) {
   var p = (e && e.parameter) || {};
+
+  /*  The activity check is served as a PAGE and must return before the
+   *  JSON switch below. It is the one route a person reaches from
+   *  their inbox rather than from the meeting front end, so it answers
+   *  in HTML a phone can read, not in JSON. */
+  if (str_(p.action) === 'act') {
+    try { return activityPage_(p); }
+    catch (err) {
+      return activityShell_('Something went wrong',
+        String(err && err.message ? err.message : err), '');
+    }
+  }
+
   var out;
   try {
     switch (str_(p.action) || 'home') {
@@ -4343,6 +4961,7 @@ function doGet(e) {
       case 'search':     out = apiArchiveSearch_(p.token, p.q, p.year, p.type); break;
       case 'document':   out = apiArchiveDoc_(p.token, p.id); break;
       case 'log':        out = apiLog_(p.token, p.limit); break;
+      case 'activity':   out = apiActivity_(p.token, p.days); break;
       case 'ping':       out = { ok: true, app: 'Branch Meeting Builder', branch: MEET.BRANCH }; break;
       default:           out = { ok: false, error: 'Unknown action.' };
     }
@@ -4437,6 +5056,9 @@ function onOpen() {
     .addSeparator()
     .addItem('📨  Turn on the daily note', 'installDailyNoteFromMenu')
     .addItem('👁  Send me today\u2019s note to read', 'previewDailyNote')
+    .addSeparator()
+    .addItem('⏱  Turn on the daily time blocks', 'installActivityChecksFromMenu')
+    .addItem('👁  Send me a time-block check to read', 'previewActivityCheck')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();

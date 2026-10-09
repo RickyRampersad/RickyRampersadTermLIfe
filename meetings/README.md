@@ -313,6 +313,82 @@ the live org:
   own figures, not from this field.
 - **Premium owing: no.** `PREMIUM_OWING__c` aggregates to null across the org.
 
+## The daily time blocks — two notes a day, fifteen seconds each
+
+Separate from the daily note, and answering a different question. The note
+tells a person what is owed before Wednesday. The time blocks ask what they
+actually did.
+
+**Two sends a day, weekdays only.** 10:00 asks about *3pm yesterday to 10am
+today*; 15:00 asks about *10am to 3pm*. Nobody is ever asked to remember more
+than five hours back, which is the only window people answer honestly. Menu →
+*Turn on the daily time blocks*, and *Send me a time-block check to read* to
+see one first.
+
+**Asked of agents and the manager.** Staff keep their own KPI block and are not
+asked these questions yet; add `'staff'` to `ACTIVITY.SEND_TO` when that
+changes. The staff category set is already written.
+
+### Why the e-mail carries one button and not one link per activity
+
+The obvious design is a grid of links in the message — tap *Prospecting* and it
+is logged without opening anything. **It cannot be built that way.** Microsoft
+Defender and most corporate mail gateways fetch every link in a message to
+check it before the recipient sees it, and this branch is on Microsoft 365. A
+link that recorded an activity would be recorded by the scanner, for everybody,
+every morning, and the branch's first time-use model would be made of work
+nobody did.
+
+So the e-mail holds one link to a page and the clicking happens there, where a
+tap is a person. A scanner that follows it marks the row opened and nothing
+else. It is still one tap from the inbox to the chips.
+
+Everything on that page is a `GET`, including the save. An HtmlService page is
+served from a different origin than `/exec`, so a `POST` from it is a CORS
+problem with no good answer; a plain `method="get"` form has none of that and
+needs no JavaScript, which is also why it works inside the in-app browser of
+every mail client.
+
+### What is asked
+
+Eleven work chips for an agent, ten for the manager — prospecting, calls, seen
+a client, fact find, leads, application in, serviced a client, and so on. Then
+**five asked of everybody**: family time, personal time, recreation, rest or
+unwell, travelling. Then two optional one-line boxes: *what went well* and
+*what is in the way*.
+
+The life chips are the half the branch has never had. A model built on work
+categories alone says a person who spent the morning at a funeral did nothing.
+
+### The rule that makes the answers worth having
+
+**Personal time is counted for the branch and never shown against a name.**
+Anything in a group listed in `ACTIVITY.PRIVATE_GROUPS` is stripped from every
+per-person figure unless the person asking *is* that person. The branch total
+still includes it, so the work/life split is real; what nobody gets is a list of
+who rested on Tuesday.
+
+This is not decoration and it is tested — `activityStats_` is the only way in,
+and it filters on the way out. Take the rule away and the honest answers go with
+it: people do not log family time twice a day for a system that reports it
+upwards. If the branch ever does want per-person personal time, say so out loud
+to the branch first; do not do it by deleting a line in a config.
+
+### Reading it back
+
+`activityStats_(days, viewerEmail)` returns the response rate, who has been
+silent, the branch's category totals, the work/life split, each person's own top
+categories, and the free-text notes. `?action=activity&token=…` serves it: an
+agent sees only their own row and no silent list; staff and the manager see the
+branch.
+
+**A block closes after `ACTIVITY.OPEN_HOURS` (20).** After that the row stands,
+so last week's figures cannot move once the week is counted.
+
+The tab is long and thin — one row per person per block per day, about 280 rows
+a week for a branch of 28 — because the categories will change and a column per
+activity is a shape nobody maintains.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
