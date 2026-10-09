@@ -461,6 +461,16 @@ const INDIVIDUAL = [
               "I never had an agent — I bought it directly", "I genuinely don't know"], required: true,
     note: { kind: "tip", text: "<b>Whatever the answer, your policy is unaffected.</b> Your contract is with the insurance company, not with an individual. Premiums, servicing and claims all continue exactly as before." } },
 
+  /* Asked whether, never who might: the question, not a warning. The Act's
+     protection is shown only to someone who says yes. */
+  { id: "approached", label: "Has anyone been in touch with you about moving or replacing this policy?", type: "choice",
+    options: ["No", "Yes", "I'd rather not say"], required: true },
+  { id: "approachedBy", label: "Who was it?", type: "choice", showIf: { id: "approached", is: "Yes" },
+    options: ["An agent or a broker", "Another insurance company", "I'd rather not say"] },
+  { id: "approachedTalk", label: "Would you like us to go through it with you before you decide anything?", type: "yesno",
+    showIf: { id: "approached", is: "Yes" }, flag: "retention",
+    note: { kind: "tip", text: "<b>Moving a policy means ending this one and starting again at your age now.</b> Whoever suggests it, whether an agent, a broker or another company, must set out the advantages and the disadvantages for you first. <a href=\"/your-policy/protected\" target=\"_blank\" rel=\"noopener\">Your protections under the Insurance Act</a>" } },
+
   { id: "lastContact", label: "When did somebody last review this policy with you?", type: "choice",
     options: ["Within the last year", "1–3 years ago", "3–5 years ago", "More than 5 years ago", "Never — not once"],
     required: true },
@@ -528,6 +538,20 @@ const INDIVIDUAL = [
     showIf: { id: "otherGuardian", not: "No" }, flag: "records",
     placeholder: "A type, a number, roughly when — anything you remember." },
 
+  /* The household pair. The question above asks what else is yours; this one
+     asks who else is in the house — a different thing, and the one nobody has
+     ever been asked. The records hold no household at all, so the client is
+     the only source there is. Flagged "household", not "records": it is not a
+     correction to process, it decides who looks after this family. */
+  { id: "householdOther", label: "Does anyone else in your home hold a policy with this same company?",
+    type: "yesnona", flag: "household",
+    help: "A husband or wife, a parent, a grown child at the same address — a policy of their own, not yours.",
+    note: { kind: "tip", text: "<b>Why we ask.</b> Households get split across three different agents, and then nobody sees the whole picture — three calls to one address, and three people who each know a third of it. If yours is looked after together, one person knows what the family holds." } },
+  { id: "householdWho", label: "Who, and how are they related to you?", type: "textarea",
+    showIf: { id: "householdOther", not: "No" }, flag: "household",
+    placeholder: "A first name and the relationship is plenty — \"my wife Anne\", \"my son\". No policy numbers needed.",
+    help: "Enough for us to keep the household together when we decide who looks after you." },
+
   { id: "otherPolicies", label: "Do you think there are other policies you've lost track of?", type: "yesnona",
     help: "Old work policies, something a parent took out for you, a policy from a company that has since been bought.",
     note: { kind: "tip", text: "<b>Worth asking.</b> Under section 197 of the Insurance Act 2018, money payable but unclaimed for seven years after maturity is reported to the Central Bank as unclaimed monies. A matured policy nobody told you about is exactly how that happens." } },
@@ -553,7 +577,7 @@ const INDIVIDUAL = [
 
 /* ── coverage: AGENT-SENT ONLY ─────────────────────────────────────── */
 { step: "The bigger picture", title: "While we're here", showIf: AGENT_ONLY,
-  blurb: "Your agent asked for a full review, so these are the questions that find the gaps. Answer what you like — \"not sure\" is a perfectly good answer, and skipping is fine." },
+  blurb: "These are the questions that find the gaps. Answer what you like — \"not sure\" is a perfectly good answer, and skipping is fine." },
 
   { id: "lifeChanges", label: "Has any of this happened since you took the policy out?", type: "multi", showIf: AGENT_ONLY,
     options: ["Married or moved in together", "New baby or adopted a child", "Bought a home", "Moved house",
@@ -853,7 +877,7 @@ const P = new URLSearchParams(location.search);
 const state = {
   kind: "", origin: "", answers: {}, step: 0, startedAt: null, submitting: false,
   agentMode: P.get("agent") === "1",
-  ref: P.get("k") || "",
+  ref: P.get("k") || (P.get("t") ? "transition:" + P.get("t") : ""),   /* a letter's token lands in Link ref, so the review is read against the send */
   sentBy: { name: P.get("agentname") || "", email: P.get("agentemail") || "" },
 };
 let SCHEMA = [], STEPS = [];
@@ -940,6 +964,9 @@ function sellMode(origin) {
   const p = P.get("sell");
   if (p === "1" || p === "yes") return "yes";
   if (p === "0" || p === "no") return "no";
+  /* A client who came from one of the branch's letters was written to by the
+     branch, and the branch asked for the fuller picture (23 September). */
+  if (P.get("t")) return "yes";
   return origin === "agent" ? "yes" : "no";
 }
 
@@ -975,6 +1002,8 @@ function prefill() {
   Object.keys(map).forEach((k) => { if (P.get(k) && !state.answers[map[k]]) state.answers[map[k]] = P.get(k); });
   if (P.get("policy")) state.answers.knowsPolicy = "Yes, I have it";
   if (P.get("insurer")) state.answers.insurer = P.get("insurer");
+  /* the letter's question, already answered with one tap */
+  if (P.get("q") === "approached_yes" && !state.answers.approached) state.answers.approached = "Yes";
   SCHEMA.forEach((q) => { if (q.prefill && !state.answers[q.id]) state.answers[q.id] = q.prefill; });
 }
 function showForm() {

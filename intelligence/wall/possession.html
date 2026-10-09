@@ -127,20 +127,35 @@
   .row.zero{opacity:.35;cursor:default}
 
   .agents{grid-column:1/3}
+  /* A column is never narrower than a name and its five figures. Without the
+     floor the grid squeezed extra columns into the card rather than
+     overflowing it, so every name became an ellipsis and the page's measuring,
+     which trims the list to what is inside the card, saw nothing to trim.
+     With it a column that does not fit hangs off the edge, is measured, and
+     comes out. */
   .alist{display:grid;grid-auto-flow:column;grid-template-rows:repeat(9,auto);
+    grid-auto-columns:minmax(270px,1fr);
     gap:0 26px;overflow:hidden;flex:1;align-content:start}
-  .arow{display:grid;grid-template-columns:1fr 30px 48px;align-items:baseline;gap:8px;
+  /* Five figures a row, not two: since 16 September the build tallies every
+     state per person, so a name reads cabinet · given · out · signed · oldest.
+     The columns are fixed so the figures line up down the list; the name takes
+     what is left and ellipsises. */
+  .arow{display:grid;grid-template-columns:1fr 30px 30px 30px 30px 44px;align-items:baseline;gap:5px;
     padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:12.5px}
   .arow .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .arow .nm em{font-style:normal;font-size:10.5px;color:var(--faint);display:block}
   .arow .n{font-family:var(--font-d);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
   .arow .d{text-align:right;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
-  .arow.top .n{color:var(--gold)}
+  .arow.top .n.out{color:var(--gold)}
   /* An agent with nothing outstanding still belongs on the wall — dimmed, so
      the eye lands on the rows that need somebody without pretending the clean
      ones do not exist. */
   .arow.quiet{opacity:.5} .arow.quiet .n{color:var(--faint)}
   .arow .n.hot{color:var(--gold)}
+  /* The figures that are not the point of this wall sit back; a zero sits
+     right back, so the eye reads the row as its non-zero columns. */
+  .arow .n.soft{color:var(--dim);font-weight:600} .arow .n.nil{color:var(--faint);font-weight:500}
+  .arow .n.ok{color:var(--good)}
   .two{display:grid;grid-template-columns:1fr 1fr;gap:18px;flex:1;min-height:0}
   .two > div{display:flex;flex-direction:column;min-height:0}
   .two h4{margin:0 0 2px;font:700 11px var(--font-b);letter-spacing:.14em;
@@ -221,7 +236,7 @@
   <div class="mark"><img src="../../logo-mark.png" alt=""></div>
   <div>
     <h1>Whose Hands Is It In</h1>
-    <div class="sub">Contracts received <span id="hYear">2026</span> · active agents · Ricky Rampersad Branch, Chaguanas</div>
+    <div class="sub">Contracts received <span id="hYear">2026</span> · active agents</div>
   </div>
   <div class="right">
     <div id="chip" onclick="clearFilter()"><b id="chipTxt"></b><span>✕</span></div>
@@ -263,7 +278,7 @@
     <p class="cap">Received from head office, no agent has collected it. This one is ours.</p>
     <div class="rows" id="rCab"></div></section>
 
-  <section class="card agents"><h3>By agent</h3>
+  <section class="card agents"><h3>By agent, every state</h3>
     <p class="cap" id="agentCap"></p>
     <div class="alist" id="aList"></div></section>
 
@@ -288,7 +303,7 @@
 
    No baked-in snapshot, for the same reason as the licence wall: this counts
    named agents against a compliance obligation, and the repository is public. */
-var POSS_URL = "https://script.google.com/macros/s/AKfycbxehQUxHeTntM3K7x1GFIJ5bX66QVurol0rSQvIBTRBQpFT3LwvClCAOm6jiTW5tflDdg/exec";
+var POSS_URL = "https://script.google.com/macros/s/AKfycbzb9gzh3TldhLCQA7MCz3vdyWLAWTHpR9X7M3uvPNtqJbnnYRMcDSkm0D1C8SgENvn44g/exec";
 var POSS = { configured:false, error:"No feed. Paste the Apps Script /exec URL into POSS_URL above." };
 
 function $(s){return document.querySelector(s)}
@@ -324,6 +339,49 @@ function bars(host,list,dim,tone){
       FILTER={dim:el.dataset.dim,key:el.dataset.key}; paint();
     };
   });
+}
+
+
+/* SHOW EVERY AGENT THAT FITS, MEASURED RATHER THAN GUESSED. The list is a
+   column-major grid of nine rows, clipped at the card's edge, and the page
+   used to slice it at eighteen and say "top 18 shown" whatever the screen —
+   and the build capped it at 24 before that, so the wall could never show the
+   whole branch. So the whole list is drawn, each row is measured against the
+   card and the fold, and the ones past either edge are taken back out. The
+   count is what the caption reports. A card with no size yet — a hidden
+   frame, a print — shows everything rather than nothing. */
+function fitList(host, items, render){
+  function draw(list){ host.innerHTML=list.map(render).join(""); }
+  host.style.gridTemplateRows="";
+  draw(items);
+  var box=host.getBoundingClientRect();
+  if(!box.width||!box.height||!items.length) return items.length;
+  /* A wall never scrolls, so its fold is the bottom of the screen; a phone
+     scrolls, so its only edge is the card's own. */
+  var wall=getComputedStyle(document.body).overflowY==="hidden";
+  function floor(){ return wall?Math.min(box.bottom,window.innerHeight):box.bottom; }
+  var kids=host.children;
+  /* Column-major: the first column is the leading run of items, and the rows
+     that fit are the ones of it above the fold. Fewer rows than the stylesheet
+     asks for means the grid is re-cut to that many, so a short screen loses
+     agents off the end of the list rather than off the foot of every column. */
+  if(getComputedStyle(host).gridAutoFlow.indexOf("column")===0){
+    var rows=getComputedStyle(host).gridTemplateRows.split(" ").length, fit=0;
+    for(var i=0;i<kids.length&&i<rows;i++){
+      if(kids[i].getBoundingClientRect().bottom<=floor()+1) fit=i+1; else break;
+    }
+    if(fit&&fit<rows){ host.style.gridTemplateRows="repeat("+fit+",auto)"; draw(items); box=host.getBoundingClientRect(); }
+  }
+  var n=0;
+  for(var j=0;j<kids.length;j++){
+    var r=kids[j].getBoundingClientRect();
+    if(r.right<=box.right+1 && r.bottom<=floor()+1) n=j+1; else break;
+  }
+  /* A card entirely past the fold can show nobody, and "top 0 shown" is not
+     a sentence anyone should read: it is drawn whole and left to the fold. */
+  if(!n){ draw(items); return items.length; }
+  if(n<items.length) draw(items.slice(0,n));
+  return n;
 }
 
 function paint(){
@@ -383,18 +441,10 @@ function paint(){
 
   bars($("#rAge"), D.agentAgeing, "age", "gold");
   bars($("#rUnit"), D.byUnit, "unit", "gold");
-  bars($("#rCab"), D.cabinetBy, "cab", "accent");
+  /* Eight bars is what the panel holds; the build no longer slices, so the
+     page does. */
+  bars($("#rCab"), (D.cabinetBy||[]).slice(0,8), "cab", "accent");
 
-  var ag=D.byAgent.filter(function(x){ return !FILTER||FILTER.dim!=="unit"||true; }).slice(0,18);
-  $("#agentCap").innerHTML=D.byAgent.length+' agents are holding a contract the client has not '
-    + 'signed for'+(D.byAgent.length>18?', top 18 shown':'')
-    + '. <b style="color:var(--dim)">held</b> · <b style="color:var(--dim)">oldest</b>';
-  $("#aList").innerHTML=ag.map(function(x,i){
-    return '<div class="arow'+(i<3?' top':'')+'"><div class="nm">'+esc(x.k)
-      + '<em>'+(x.over90?x.over90+' of them past 90 days':'none past 90 days')+'</em></div>'
-      + '<div class="n'+(x.over90?' hot':'')+'">'+x.n+'</div>'
-      + '<div class="d">'+x.oldest+'d</div></div>';
-  }).join("");
 
   /* WHERE THE DELAY IS. The branch's half and the agent's half, measured apart,
      because the whole argument of this wall rests on which one is slow. */
@@ -424,9 +474,53 @@ function paint(){
     + '<p class="note">Those bars are the <b>'+C.n+'</b> still in our cabinet, by age — the '
     + 'part that is ours to fix today. '+(D.excluded.notActive
         ? '<b>'+D.excluded.notActive+'</b> more belong to agents who are no longer active and are '
-          + 'not counted against anyone.' : '')
+          + 'not counted against anyone. ' : '')
+    /* An exclusion is a decision to hand a book to somebody, not a way to make
+       it disappear — so the wall says what it left off, every time. */
+    + (D.excluded.rows
+        ? '<b>'+D.excluded.rows+'</b> contract'+(D.excluded.rows===1?'':'s')+' from '
+          + D.excluded.agents+' excluded agent'+(D.excluded.agents===1?'':'s')+' '
+          + (D.excluded.rows===1?'is':'are')+' left off this wall and counted nowhere on it.' : '')
     + '</p>';
+
+  /* THE LIST IS MEASURED LAST. The card beside it is filled first, and when
+     that one is the taller of the two the grid row grows and the row above
+     gives way, which moves this card on the screen. Measuring before that
+     happened counted rows against a fold that then moved, and at 720 high
+     two rows were drawn that nobody could see. */
+  /* EVERY STATE, PER PERSON. byAgentFull carries every agent with a contract
+     received this year, in all four states, outstanding first — so a name
+     with two unsigned reads beside how many that same person has already got
+     signed. byAgent (unsigned only) is what the older build published and is
+     kept for the bars; the list is the fuller one. */
+  var ag=(D.byAgentFull||[]).filter(function(x){ return !FILTER||FILTER.dim!=="unit"||x.unit===FILTER.key; });
+  var holding=ag.filter(function(x){ return x.outstanding; }).length;
+  var ST=D.states||{};
+  function fig(v,cls){ return '<div class="n '+(v?cls:'nil')+'">'+(v||'·')+'</div>'; }
+  var shown=fitList($("#aList"), ag, function(x,i){
+    return '<div class="arow'+(x.outstanding&&i<3?' top':'')+(x.outstanding?'':' quiet')+'">'
+      + '<div class="nm">'+esc(x.k)+'<em>'+esc(x.unit||"")
+      + (x.over90?' · '+x.over90+' past 90 days':'')+'</em></div>'
+      + fig(x.cabinet,'soft') + fig(x.given,'soft')
+      + '<div class="n out'+(x.over90?' hot':'')+'">'+(x.outstanding||'·')+'</div>'
+      + fig(x.acknowledged,'ok')
+      + '<div class="d">'+(x.oldest?x.oldest+'d':'—')+'</div></div>';
+  });
+  /* Two lines at most — every line here is a row the list cannot show. */
+  $("#agentCap").innerHTML=holding+' of '+ag.length+' agents with a contract this year hold one '
+    + 'unsigned'+(shown<ag.length?', top '+shown+' shown':'')
+    + '. Branch: <b style="color:var(--dim)">'+(ST.cabinet||0)+' cabinet · '+(ST.given||0)
+    + ' given · '+(ST.outstanding||0)+' out · '+(ST.acknowledged||0)+' signed</b>. '
+    + 'Per name: <b style="color:var(--dim)">cabinet</b> · <b style="color:var(--dim)">given</b> · '
+    + '<b style="color:var(--gold)">out</b> · <b style="color:var(--good)">signed</b> · '
+    + '<b style="color:var(--dim)">oldest out</b>';
 }
+/* The agent list is measured against the card, so a frame that changes size
+   has to be measured again — and so does one whose webfont arrives after the
+   first paint, since the rows are a little taller in it. */
+var refit=null;
+window.addEventListener("resize",function(){ clearTimeout(refit); refit=setTimeout(paint,150); });
+if(document.fonts&&document.fonts.ready) document.fonts.ready.then(function(){ paint(); });
 
 function tick(){ $("#clock").textContent=new Date().toLocaleTimeString("en-GB",
   {hour:"2-digit",minute:"2-digit"}) }
@@ -436,8 +530,11 @@ function boot(){
   paint();
   if(!POSS.configured) return;
   $("#hYear").textContent=POSS.fromYear;
+  var ex=POSS.excluded||{};
   $("#src").textContent="Salesforce client portfolio · contracts received "+POSS.fromYear
-    + " onward · built "+POSS.generatedAt+" · active agents only · aggregates, no client detail";
+    + " onward · built "+POSS.generatedAt+" · active agents only · aggregates, no client detail"
+    + (ex.rows ? " · "+ex.rows+" contract"+(ex.rows===1?"":"s")+" from "+ex.agents
+        + " excluded agent"+(ex.agents===1?"":"s")+" left off" : "");
 }
 /* ONE MISSED READ USED TO COST HALF AN HOUR. Seven screens post to the same
    Apps Script within seconds of each other when the wall boots and again on

@@ -28,7 +28,12 @@ const server = http.createServer((req, res) => {
 });
 let fails = 0;
 const ok = (what, cond, extra) => { console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : '')); if (!cond) fails++; };
-const ORDER = ['day.html', 'blocks.html', 'index.html', 'possession.html', 'delivery.html', 'licence.html', 'book.html'];
+const ORDER = ['day.html', 'blocks.html', 'pending.html', 'reqs.html', 'increases.html',
+               'codes.html',
+               'index.html', 'lapses.html',
+               'possession.html', 'delivery.html', 'licence.html', 'book.html',
+               'conversion.html', 'riders.html'];
+const LAST_TAB = 'Riders on a clock';    // the rail label of ORDER's last stop
 
 async function open(b, query) {
   const ctx = await b.newContext({ viewport:{ width:1920, height:1080 } });
@@ -49,6 +54,10 @@ async function open(b, query) {
   await page.goto(`http://localhost:${PORT}/intelligence/wall/all.html${query || ''}`, { waitUntil:'domcontentloaded' });
   return { page, ctx, errors };
 }
+// Derived, never typed: the order above is the only place a stop's number
+// lives, so adding a screen does not silently rewrite every index below.
+const at = file => ORDER.indexOf(file);
+const LAST = () => ORDER.length - 1;
 const visible = page => page.evaluate(() => [...document.querySelectorAll('iframe.slide')].map((f, i) => f.classList.contains('on') ? i : -1).filter(i => i > -1));
 const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.slide')].map(f => (f.getAttribute('src') || '').split('/').pop()));
 
@@ -59,12 +68,34 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   console.log('\nFive stories, one at a time:\n');
   let s = await open(b, '?secs=5');
   await s.page.waitForTimeout(1200);
-  ok('seven frames on the stage', await s.page.locator('iframe.slide').count() === 7);
+  ok(ORDER.length + ' frames on the stage', await s.page.locator('iframe.slide').count() === ORDER.length,
+     String(await s.page.locator('iframe.slide').count()));
   ok('the first is showing and only the first', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   ok('and the boot card has cleared', await s.page.evaluate(() => document.getElementById('boot').classList.contains('gone')));
-  const t0 = await s.page.locator('body').innerText();
-  ok('seven named stops on the rail, the branch\'s own day first', /1\. The day so far/.test(t0) && /2\. The day in blocks/.test(t0) && /7\. Birthdays today/.test(t0));
-  await s.page.waitForTimeout(16000);          // stagger is 2.5s apart: all seven assigned by 15s
+  /* THE STOPS ARE NUMBERS SINCE 16 SEPTEMBER 2026. The chrome is one line
+     across the top now, and fourteen names needed two rows at 1366px — a rail
+     on two rows is not a line. The name of each stop moved to its title, and
+     the name of the one you are ON is spelled out in #state beside them. So
+     what is checked here is the same thing by its new shape: fourteen stops,
+     in the film's order, the branch's own day first and the riders last. */
+  const stops = await s.page.evaluate(() => [...document.querySelectorAll('#dots .dot')]
+    .map(d => ({ n: d.textContent.trim(), name: d.getAttribute('title') || '' })));
+  ok(ORDER.length + ' stops on the line', stops.length === ORDER.length, String(stops.length));
+  ok('  numbered 1 to ' + ORDER.length + ' in order',
+     stops.every((d, i) => d.n === String(i + 1)), JSON.stringify(stops.map(d => d.n)));
+  ok('  the branch\'s own day first', stops[0] && stops[0].name === 'The day so far',
+     stops[0] && stops[0].name);
+  /* The pending wall is two stops since 17 September 2026, so the fourth is
+     its own second half rather than the dues line. */
+  ok('  the pending wall\'s requirements fourth', stops[3] && /requirements/i.test(stops[3].name),
+     stops[3] && stops[3].name);
+  ok('  and ' + LAST_TAB + ' last',
+     stops[ORDER.length - 1] && stops[ORDER.length - 1].name === LAST_TAB,
+     stops[ORDER.length - 1] && stops[ORDER.length - 1].name);
+  ok('  the story you are on is named beside them',
+     /The day so far/.test(await s.page.locator('#state').innerText()),
+     await s.page.locator('#state').innerText());
+  await s.page.waitForTimeout(20000);          // stagger is 1.5s apart: every frame assigned inside this
   ok('every story is loaded in its own frame, in the film\'s order', JSON.stringify(await srcs(s.page)) === JSON.stringify(ORDER), JSON.stringify(await srcs(s.page)));
   const first = await s.page.frames().filter(f => f.url().endsWith('/day.html')).length;
   ok('the first story really rendered inside its frame', first === 1);
@@ -79,49 +110,79 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await e.ctx.close();
 
   console.log('\nThe keys:\n');
-  await s.page.keyboard.press('7');  await s.page.waitForTimeout(300);
-  ok('a number jumps to that story', JSON.stringify(await visible(s.page)) === '[6]');
+  await s.page.keyboard.press('8');  await s.page.waitForTimeout(300);
+  ok('a number jumps to that story', JSON.stringify(await visible(s.page)) === '[7]',
+     JSON.stringify(await visible(s.page)));
+  // Past nine screens a single keypress cannot reach the rest, and the rail
+  // is how anybody gets there — so that is how the wrap is tested.
+  await s.page.mouse.move(600, 600);
+  await s.page.locator('#dots .dot[title="' + LAST_TAB + '"]').click(); await s.page.waitForTimeout(300);
+  ok('the rail reaches a stop no key can', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']',
+     JSON.stringify(await visible(s.page)));
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
   ok('right from the last wraps to the first', JSON.stringify(await visible(s.page)) === '[0]');
   await s.page.keyboard.press('ArrowLeft'); await s.page.waitForTimeout(300);
-  ok('left from the first wraps to the last', JSON.stringify(await visible(s.page)) === '[6]');
+  ok('left from the first wraps to the last', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']');
   await s.page.keyboard.press(' ');
   const before = (await visible(s.page))[0];
   await s.page.waitForTimeout(6500);
   ok('space holds the story past its dwell', (await visible(s.page))[0] === before && /paused/.test(await s.page.locator('#state').innerText()));
   await s.page.keyboard.press(' ');
   await s.page.mouse.move(600, 600);
-  await s.page.locator('.dot', { hasText: 'With the agent' }).click(); await s.page.waitForTimeout(300);
-  ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[4]');
+  await s.page.locator('#dots .dot[title="With the agent"]').click(); await s.page.waitForTimeout(300);
+  ok('a stop on the rail goes there', JSON.stringify(await visible(s.page)) === '[' + at('delivery.html') + ']',
+     JSON.stringify(await visible(s.page)));
 
   console.log('\nThe timer is on every slide, and so is the line:\n');
-  const hudBox = () => s.page.evaluate(() => { const r = document.getElementById('hud').getBoundingClientRect();
-    const cs = getComputedStyle(document.getElementById('hud'));
-    return { in: r.right <= innerWidth && r.bottom <= innerHeight && r.width > 80, op: cs.opacity, vis: cs.visibility }; });
-  await s.page.mouse.move(5, 5); await s.page.waitForTimeout(4600);        // the rail has faded by now
-  ok('the rail has faded', await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide')));
-  let hb = await hudBox();
-  ok('but the timer is still on screen', hb.in && hb.op === '1' && hb.vis === 'visible', JSON.stringify(hb));
+  /* THE LINE DOES NOT FADE ANY MORE. It used to, because it was laid over the
+     foot of the slide. Since 16 September 2026 it has a strip of its own that
+     no slide draws into, so there is nothing to hide from — and a wall whose
+     controls appear only if you wave at it is a wall nobody can find the
+     controls on. What is checked now is that it is there, whole, all the time. */
+  const lineBox = () => s.page.evaluate(() => {
+    const el = document.getElementById('chrome'), r = el.getBoundingClientRect(), cs = getComputedStyle(el);
+    const st = document.getElementById('state').getBoundingClientRect();
+    return { in: r.right <= innerWidth && r.bottom <= innerHeight && r.width > 80,
+             top: Math.round(r.top), op: cs.opacity, vis: cs.visibility,
+             stateIn: st.right <= innerWidth && st.width > 60 }; });
+  await s.page.mouse.move(5, 5); await s.page.waitForTimeout(4600);        // long enough for the old fade
+  let hb = await lineBox();
+  ok('the line has not faded', hb.op === '1' && hb.vis === 'visible' && hb.top === 0, JSON.stringify(hb));
+  ok('and the timer is on it, on screen', hb.in && hb.stateIn, JSON.stringify(hb));
   const hudText = () => s.page.locator('#state').innerText();
-  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'Premium dues', 'In our possession',
-                       'With the agent', 'The licence year', 'Birthdays today'];
+  const SLIDE_NAMES = ['The day so far', 'The day in blocks', 'What is pending', 'Premium dues',
+                       'Lapses', 'In our possession', 'With the agent', 'The licence year',
+                       'Birthdays today', 'Conversions', LAST_TAB];
   // Not pinned to one slide: the rail takes four seconds to fade and the dwell
   // here is five, so the wall may legitimately have turned by now. What must
   // hold is the shape — which story of how many, named, and the seconds left.
   const hudNow = await hudText();
   ok('it says which story and how long is left',
-     /\b[1-7] of 7\b/.test(await hudText()) && /next in \d+s/.test(await hudText()) &&
+     new RegExp('\\b([1-9]|[12]\\d) of ' + ORDER.length + '\\b').test(await hudText()) && /next in \d+s/.test(await hudText()) &&
      SLIDE_NAMES.some(nm => (hudNow || '').indexOf(nm) > -1), await hudText());
   const barH = await s.page.evaluate(() => parseFloat(getComputedStyle(document.getElementById('bar')).height));
   ok('the line across the top is thick enough to see', barH >= 5, barH + 'px');
   await s.page.keyboard.press('4'); await s.page.waitForTimeout(300);     // a fresh turn, so the line is near its start
   const w1 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
   await s.page.waitForTimeout(1000);
-  const w2 = await s.page.evaluate(() => parseFloat(document.getElementById('bar').style.width));
-  const f2 = await s.page.evaluate(() => parseFloat(document.getElementById('fill').style.width));
-  ok('and it runs, in step with the timer\'s own track', w2 > w1 && Math.abs(w2 - f2) < 2, w1 + ' -> ' + w2 + ' / ' + f2);
-  await s.page.keyboard.press('7'); await s.page.waitForTimeout(300);
-  ok('on the last story it still shows', /7 of 7/.test(await hudText()) && /Birthdays today/.test(await hudText()) && (await hudBox()).in);
+  /* BOTH IN ONE EVALUATE. Read in two round trips these drifted by the time
+     between them — 4% on a loaded machine with thirteen slides loading — and
+     the test failed on a wall that was perfectly in step. One trip, one
+     moment, and the assertion measures the thing it claims to. */
+  const both = await s.page.evaluate(() => ({
+    bar: parseFloat(document.getElementById('bar').style.width),
+    fill: parseFloat(document.getElementById('fill').style.width)
+  }));
+  ok('and it runs, in step with the timer\'s own track',
+     both.bar > w1 && Math.abs(both.bar - both.fill) < 2,
+     w1 + ' -> ' + both.bar + ' / ' + both.fill);
+  // No key reaches past the ninth stop, so the rail is how the last one is
+  // reached — which is also how a person on the floor would do it.
+  await s.page.mouse.move(600, 600);
+  await s.page.locator('#dots .dot[title="' + LAST_TAB + '"]').click(); await s.page.waitForTimeout(300);
+  ok('on the last story it still shows',
+     new RegExp(ORDER.length + ' of ' + ORDER.length).test(await hudText()) &&
+     new RegExp(LAST_TAB).test(await hudText()) && (await lineBox()).in, await hudText());
 
   console.log('\nPlay and pause, on the rail, on every slide:\n');
   await s.page.mouse.move(600, 600); await s.page.waitForTimeout(200);
@@ -130,14 +191,14 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   const held = (await visible(s.page))[0];
   await s.page.waitForTimeout(6500);
   ok('pause holds the story past its dwell', (await visible(s.page))[0] === held && /paused/.test(await hudText()), await hudText());
-  ok('and the rail stays while paused', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
+  ok('and the line is still there while paused', (await lineBox()).op === '1');
   ok('the button now offers play', /Play/.test(await s.page.locator('#pp').innerText()));
   await s.page.locator('#pp').click(); await s.page.waitForTimeout(200);
   ok('play goes on', !/paused/.test(await hudText()) && /Pause/.test(await s.page.locator('#pp').innerText()));
   await s.page.locator('#next').click(); await s.page.waitForTimeout(300);
   ok('next moves on', JSON.stringify(await visible(s.page)) === '[0]', JSON.stringify(await visible(s.page)));
   await s.page.locator('#prev').click(); await s.page.waitForTimeout(300);
-  ok('previous goes back', JSON.stringify(await visible(s.page)) === '[6]', JSON.stringify(await visible(s.page)));
+  ok('previous goes back', JSON.stringify(await visible(s.page)) === '[' + LAST() + ']', JSON.stringify(await visible(s.page)));
 
   console.log('\nA story that speaks holds the wall:\n');
   await s.page.keyboard.press('1'); await s.page.waitForTimeout(300);
@@ -173,12 +234,14 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   ok('and goes when there is nobody', (await cakeText()) === '');
 
   console.log('\nThe keys reach the wall from inside a story:\n');
-  await s.page.keyboard.press('4'); await s.page.waitForTimeout(300);
+  // Whichever stop possession is now — the number is read off the order.
+  await s.page.locator('#dots .dot[title=\"' + 'In our possession' + '\"]').click(); await s.page.waitForTimeout(300);
   const inside = s.page.frames().find(f => f.url().endsWith('/possession.html'));
   await inside.locator('body').click({ position: { x: 300, y: 500 } });       // focus is now inside the frame
   await s.page.keyboard.press('ArrowRight'); await s.page.waitForTimeout(300);
-  ok('a key pressed inside a story still turns the wall', JSON.stringify(await visible(s.page)) === '[4]', JSON.stringify(await visible(s.page)));
-  ok('and a mouse inside a story wakes the rail', !(await s.page.evaluate(() => document.getElementById('rail').classList.contains('hide'))));
+  ok('a key pressed inside a story still turns the wall',
+     JSON.stringify(await visible(s.page)) === '[' + (at('possession.html') + 1) + ']', JSON.stringify(await visible(s.page)));
+  ok('and the line is still there after a mouse inside a story', (await lineBox()).op === '1');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));
   await s.ctx.close();
 
@@ -188,8 +251,20 @@ const srcs = page => page.evaluate(() => [...document.querySelectorAll('iframe.s
   await s.page.waitForTimeout(13500);          // past its grace, and a few turns
   // sampled well inside the dwell, or the samples alias to the turning and see the same story every time
   const seen = new Set();
-  for (let i = 0; i < 26; i++) { seen.add((await visible(s.page))[0]); await s.page.waitForTimeout(500); }
-  ok('the silent one is skipped and the other six keep turning', !seen.has(5) && seen.size === 6, [...seen].join(','));
+  for (let i = 0; i < 30; i++) { seen.add((await visible(s.page))[0]); await s.page.waitForTimeout(500); }
+  // Wherever licence.html sits in the order, that stop is the silent one and
+  // every other stop has to keep going round it.
+  const dead = at('licence.html');
+  /* The strict half is the one that matters: the silent story is NEVER put
+     on the wall. The other half is deliberately loose — this run sets the
+     grace to one second, so every screen that has not painted inside a
+     second is struck through and asked for again, and which of them happen
+     to be ready during any thirty seconds of that is not a fact about the
+     player. What has to hold is that it keeps turning through most of them. */
+  ok('the silent one is never shown', !seen.has(dead),
+     'saw ' + [...seen].sort((a, b) => a - b).join(',') + ' · silent is ' + dead);
+  ok('and the wall keeps turning through the rest', seen.size >= 6,
+     seen.size + ' of ' + (ORDER.length - 1) + ' seen');
   ok('and it is struck through on the rail', await s.page.locator('.dot.dead').count() === 1);
   ok('and asked for again rather than given up on for the day', hungAsks >= 2, 'asked ' + hungAsks + ' time(s)');
   ok('no javascript errors', s.errors.length === 0, s.errors.join(' | '));

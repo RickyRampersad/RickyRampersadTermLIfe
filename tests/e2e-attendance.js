@@ -84,7 +84,7 @@ async function session(b, who, attendance, rowsAttendance, absents, outs) {
   console.log('\nA second sign-in opens on the day:\n');
   s = await session(b, P, { first:false, at:'08:04', lastSeen:'11:30', status:'in', reason:'', late:0 }, {}, absents);
   t = await s.page.locator('body').innerText();
-  ok('it lands on the day, not the plan', /Submit each block as it ends/.test(t) && !/Set the day before it starts/.test(t));
+  ok('it lands on the day, not the plan', /Each block closes itself at its end time/.test(t) && !/Set the day before it starts/.test(t));
   await s.page.click('button:has-text("Plan the day")');
   await s.page.waitForTimeout(500);
   t = await s.page.locator('body').innerText();

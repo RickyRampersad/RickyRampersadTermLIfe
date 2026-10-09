@@ -18,6 +18,15 @@ the room notices.
 ```html
 <div class="mark"><img src="<path>/logo-mark.png" alt=""></div>
 ```
+
+**One exception, decided 17 September 2026**: the Branch Pending Wall slides
+(`intelligence/wall/pending.html`, `intelligence/wall/reqs.html`,
+`intelligence/wall/increases.html`, `intelligence/wall/codes.html`) carry a gold **nameplate** instead — `<div class="plate"><b>PENDING</b><span>wall</span></div>`
+— because that is the one wall the branch stands in front of and argues from,
+it runs over several slides, and the room has to know which wall it is watching.
+Asked for in those words: *"remove the shield in this wall so persons will know
+what wall they are watching."* A nameplate is a slide's name, not a substitute
+logo; the rule against inventing a mark stands everywhere, this one included.
 ```css
 .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
 .mark img{width:100%;height:100%;display:block}
@@ -26,6 +35,30 @@ the room notices.
 The palette that goes with it: navy `#07131f`, gold `#efc24b` into `#c9942c`,
 teal `#00CFEA`. Those are the values in `IBRAND` in `Intelligence.gs`, which is
 what the client letters read.
+
+**A second exception, decided 8 October 2026: group client management** (the
+four pages in `groupclientmanagement/` and the Tuesday letter built by
+`gcmLetter_` in `GroupClients.gs`) has a corporate look and its own mark. The
+mark is `groupclientmanagement/gcm-mark.png`: the same shield and check, white
+on a corporate-blue tile. The manager asked for it in these words:
+- *"change the yellow in the logo background and black"*;
+- then, after six looks were turned down, *"a more corporate look"*;
+- then *"dont like the white space"*.
+
+The look:
+- **Header band:** blue, `#13408F` into `#1D5BC4`.
+- **Actions:** `#1D5BC4`.
+- **Surfaces:** white panels on a grey ground, `#E9EEF5`.
+- **Type:** IBM Plex Sans.
+- **Status:** shown as a tinted label, never by colour alone.
+
+The rest of the site keeps the gold shield. Do not carry this look further
+without being asked.
+
+The letter's logo is the hosted copy at
+`https://rickyrampersadbranch.com/groupclientmanagement/gcm-mark.png`. Merge
+the branch before pasting a `GroupClients.gs` that carries it, or the letter's
+masthead arrives empty.
 
 **In e-mail the logo must be a hosted PNG**, never SVG and never a `data:` URI —
 Gmail strips the first and blocks the second, so the masthead arrives empty.
@@ -405,6 +438,19 @@ libass**, Playwright with Chromium, numpy.
 `getUi()`, so it must be created from the Sheet (Extensions → Apps Script). A
 standalone project returns null and throws.
 
+**The project is three files, not one:** `Service.gs`, `Transition.gs` and
+`ServiceSalesforce.gs` (the Salesforce trace a review runs before it files).
+On 23 September the live project had only the first two, and every review
+and questionnaire from the website failed on the backend with
+"svcSplitName_ is not defined" — the client saw a done screen and nothing
+was filed. `Service.gs` now guards those calls, but the file belongs in the
+project. After any paste, submit one test review and read the reply: a
+reference from the server, not the page's local fallback.
+
+**A full paste of `Service.gs` blanks `TEAM_CODE`** (the repository copy
+ships it empty because the file is public). Re-enter it after every paste,
+or the wall and the responses page lock everyone out.
+
 **Re-deploying:** Deploy → Manage deployments → pencil → New version. Using
 *New deployment* instead issues a fresh `/exec` URL and every front end has to
 be re-wired.
@@ -426,7 +472,10 @@ Service — until it is set, everything routes to the branch alone and says so),
 
 **Sheet tabs used as the datastore:** Service Questionnaires, Group Service
 Questionnaires, Agent Skill Bank, Link Activity, Callback Requests, Service
-Activity.
+Activity — plus two that create themselves on first write: **Client Responses**
+(a client's one-click answer to a transition letter, `action=resp`) and
+**Team Feedback** (an agent's verdict on a letter or the film from the team
+review page, `action=feedback`).
 
 ### The campaign is the wall's first two slides
 
@@ -471,6 +520,2291 @@ about 1302. Anything added to page 1 has to be measured. Extra questions go on
 the addendum page, inside the same document.
 
 ---
+
+## The transition campaign — when agents leave
+
+Built in September 2026 for nine books whose agents resigned together. The
+manual is `orphan-transition/index.html`; the client-facing pieces are
+`orphan-video/` (the film and the two doors) and `orphan-video/protected.html`
+(the Insurance Act's policyholder protections, quoted and explained). **The
+letters link to `/your-policy/` and `/your-policy/protected`**, two stubs that
+forward to those pages with the query string intact — "orphan" is the trade's
+word for these clients and must not appear in an address a client holds.
+`/vid/` is the film alone, for WhatsApp, and `/templates/` is the one page
+for the team: the film, letter F in full, every opening and one verdict
+form, with all the letters folded away beneath — generated by
+`build-letters.py` with the letters, never edited by hand (run `chapters.py`
+after it, to mark the film's chapters there); `tools/film/chapters.py` walks
+`/vid/`, `/templates/` and
+`orphan-transition/` too, matching the film by file name, so a re-timing
+reaches every page that embeds it.
+
+**The branch film is built from one file.** `tools/film/orphan-lines.json`
+carries, per scene, the spoken line, the words on screen and the visual
+(`title`, `statement`, `keeps`, `keeps-off`, `keeps-find`, `pivot`, `lock`,
+`act`, `creds`, `click`, `close`); `build-orphanfilm.py` renders the page from
+it, and `voice-lines.py orphan-lines.json <vox> --changed-only --timing
+orphan-timing.json --films films.json --key orphan` voices only the lines
+whose words changed, keeps every other recording, and times the scenes from
+the audio (line plus 1.15 s of air, plus `extra` where a scene asks for it).
+Then `build-orphanfilm.py`, `sfx.py`, `usetrack.py <track> orphan`,
+`record.js` (alone on the machine, with the poster path so the poster is
+re-shot), `mixany.py`, `chapters.py`. The mixer reads the vox directory named
+in `films.json` **beside itself** (`tools/film/voorph`, git-ignored) — copy
+the new WAV and VTT files there before mixing, or it re-encodes the old
+voice under the new timing and the caption gives it away.
+
+- **Nothing characterises anyone who left: the letters state Guardian Life's
+  notice and nothing else.** Until 30 September 2026 "Your representative has
+  moved on from Guardian Life" was the whole reference. That day the manager
+  reported that the agents who resigned "are on Facebook and social media and
+  they are telling clients they are still with the company". So every letter
+  except T and T1 now carries Guardian Life's own notice, in letter T's
+  pattern (`NOTICE_R` in build-letters.py): "Guardian Life of the Caribbean
+  has accepted the resignation of your agent, <name>, effective 21 September
+  2026. <First name> is no longer authorised to conduct any business on
+  behalf of Guardian Life." (Until noon on 30 September it read "accepted …
+  with immediate effect on 21 September"; the manager: "we have accepted the
+  resignation effective 21st Sept".) The agents' own letters said 30
+  September; Guardian Life accepted each with immediate effect on the 21st.
+  The date is the same for all ten agents, Tricia Baksh included, and is
+  `RESIGNED_ON`. Under it goes "What this means for you" (`WHAT_NOW`):
+  check with us before signing or paying anything, pay premiums only to
+  Guardian Life, and on the keep and return letters, nothing needs to
+  change. Every letter asks letter T's `contact` question, "Has your former
+  agent, <first name>, been in touch with you since 21 September?", and a
+  yes brings a call. Still never why anyone left, never where they went,
+  never that anyone is saying otherwise, and no adjective about anyone: the
+  facts answer them. **A client can confirm the notice by telephone**, asked
+  for the same day ("226-2479 is our Sales Admin Department at Westmoorings,
+  should persons need to call to confirm"; later the same day, the "head
+  office contact"): every letter, T and T1 included, ends its notice card
+  with "To confirm this notice, call our branch on (868) 226-6461, 226-6464
+  or 226-6465, or Guardian Direct on (868) 226-MYGG (226-6944)" (`CONFIRM`,
+  `BRANCH_TELS`, `DIRECT_TEL`), every number a `tel:` link a phone dials in
+  one tap, and the first line of what to do says "call one of the numbers
+  above". The number was 226-2479, Sales Admin at head office, until noon on
+  30 September; then 226-6944, which is 226-MYGG, Guardian Direct ("urgently
+  need to change the contact number to 2266944 (mygg)"); then the branch's
+  own three lines went in front of it ("add these to the contact numbers for
+  verification … and then the last number is 226 MyGG"). The 295 letters
+  sent before noon that day carry 226-2479, and Sales Admin still answers
+  it. The call scripts give the branch as (868) 226-6461, in place of
+  678-5921. Guardian Direct
+  is last so a client can also hear it from the company itself. Whoever
+  answers those numbers has to know the calls are coming. The call scripts (`call-script.html`,
+  `client-support.html`) read the same notice word for word and give the
+  same number. When a client repeats something a former agent said, that
+  they still act for Guardian Life or anything about the branch, the caller
+  answers none of it, gives the number, and notes who, when, how and what,
+  in the client's words. The film and the older site pages still say
+  "moved on". Letter T keeps its own notice: see its bullet below.
+- **Segment counts, client names and per-book figures stay outside the
+  repository.** The segment file, merge file, send list, deep-dive report and
+  household list are built in the session scratchpad from the Branch
+  Portfolio sheet. Branch-wide activity counts (birthday notes, reminders) are
+  fine on an internal page; per-book client counts are not.
+- **Every Act quotation on `protected.html` was checked against the source
+  text** (`act2018.dec.txt`, decoded from the published PDF — lowercase, no
+  spaces, digits garbled). **No section numbers anywhere**: the PDF's font does
+  not yield them reliably, and an invented one is worse than none. Compliance
+  supplies them if they are ever wanted.
+- The Act binds "an agent, agency, broker, brokerage or a sales
+  representative" in one sentence. Wherever the material says what an agent
+  may not do, say broker too — that is where departing agents go.
+- **The letters are generated** by `tools/letters/build-letters.py` from the
+  words in `tools/letters/openings.json`. Edit those two, never a letter. One
+  run writes the letters, `/templates/`, and the letter cards and merge-field
+  table on the manual and the team page (between `<!-- letters:start -->` and
+  `<!-- fields:start -->` markers). The shell is compact on purpose, decided
+  22 September 2026 ("a much more catchy, condensed letter"): a headline, one
+  paragraph of under 45 words, a strip of facts read off the Branch Portfolio
+  sheet for that client (`{{paid_to}}`, `{{days}}`, `{{projected_lapse}}`,
+  `{{first_year}}`, `{{issue_date}}`, `{{app_received}}` — days and dates,
+  never a money figure), the client's own record with the branch team (see
+  below), the one-tap answers, the film in one line, and the closing.
+  **The notice is the second thing the client
+  reads**, straight after "Dear", in a gold-edged card headed "Important
+  notice". It was asked for on 22 September ("now officially letting them
+  know that the agents have moved on, that important letter") and made
+  Guardian Life's formal notice on 30 September (see the first bullet). It
+  is in the shell, once, in the same words on every letter; an opening
+  never repeats it. `{{token}}` and
+  `{{segment}}` travel with every tap so responses read by segment.
+- **Fourteen letters: five situations, the in-force letter in five tenure
+  versions, two check letters, T for a terminated contract (its own
+  bullet below) and T1 for a client of that book whose application is
+  still in progress (the terminated notice, then the application letter's
+  own words and question, because cover is not in place until the policy
+  is issued; T1 sorts with T, and `tHold_` holds it like T without an
+  agent name or a date).** Condensed to six on 22 September ("condense the amount of
+  letters so we will be focused"); on 23 September the in-force letter was
+  split by how long the client has held their longest in-force policy —
+  "we have banded 5 so each is different, wanting feedback with a catchy
+  line" — F1 under two years, F2 two to three, F3 three to five, F4 five to
+  ten, F5 ten or more, the same bands as the reassignment workbook. Each
+  version has its own headline and opening and puts the feedback tap
+  (`review`) first; the fixed notice and the shell are the same on all.
+  The situations: A (matured, or maturing within six months), G (lapsed),
+  I (a premium due: a row the sheet flags `Overdue` in Status(2) with more
+  than sixty on its Days column — the days outstanding and the projected
+  lapse date are printed, so the letter need not say how far behind),
+  J (contract not delivered), K (application in progress). Paid up, waiver
+  and payroll clients take their tenure version. Nothing-held clients are
+  not written to. On 24 September, asked for because clients on these books
+  had cover ended and restarted ("the only person that suffered was the
+  client"), an in-force client with a policy that lapsed or was surrendered
+  between six months before and a year after another began gets **R1**
+  (newest such start inside three years) or **R2** (before that) instead of
+  a tenure version: a free check of the file and of who the policy pays.
+  Its "with us since" counts every policy ever issued, ended ones too.
+  The letter states only what the client's own record shows — cover that
+  ended and started again — never how, never by whom; the rule about
+  anyone who left holds here more than anywhere. Do not grow the set beyond
+  this without being asked: the team reads one page, and the taps carry the
+  difference. A letter can reword a tap for itself (`tap_text` in
+  openings.json — R1 and R2 call `callme` "Check my file with me") without
+  changing what the tap records, so no backend change is needed for it.
+- **Letter T names the agent, and it is the one letter that does.** Decided
+  24 September 2026 on Guardian Life's own written notice that it had
+  terminated an agent's contract with immediate effect following an
+  investigation: every client on that book must know who may no longer act
+  for Guardian Life ("his clients get a notification he was terminated with
+  immediate effect … and is not authorised to conduct any business on behalf
+  of Guardian Life"). The notice card and the subject carry the company's
+  notice and nothing else: the contract was terminated, on a date, as a
+  result of an investigation, and the agent is not authorised to act. Never
+  why, never the grounds, never anyone else's name. `{{agent_name}}` and
+  `{{terminated_on}}` are filled from the sheet (the Agent column and a
+  `terminated_on` column, letter T only), so neither the name nor the date
+  is in the repository; a T row without either is held. The name in the
+  notice sits between the `<!--agent-->` marks like the standard notice's,
+  because `tLetters_` refuses any letter that carries `{{agent_first_name}}`
+  without them (the first cut of T did not, and the Test run stopped with
+  "carries no agent markers" before it sent a row). The letter asks
+  whether the agent has been in touch since that date (`contact`: the agent
+  is named on the letter through `LETTER_Q`, and the page and the receipt
+  ask it in neutral words, because a merge field inside the recap would
+  stop the receipt); "Yes" brings a call before anything else. It carries a
+  `paid` tap for a premium handed over that is not showing, its checks sit
+  above the taps (`checks_first`), and its rows sort first (`ORDER`). The
+  subject says "no longer with Guardian Life", not "no longer with us",
+  which reads as a death. Compliance sees the words before that batch goes.
+  The rule that nothing characterises anyone who left holds everywhere
+  else, and this letter goes only to a book whose agent Guardian Life
+  itself terminated in writing.
+- **The branded letter is the design; the plain letter is what the connector
+  can carry.** Design pass of 24 September ("polish up the fonts and make it
+  more appealing and graphical, a wow template"): a navy hero with the
+  brand, the headline and the preheader as its subline; the notice in a
+  gold-edged card; the facts strip; the service record as stat tiles; the
+  checks as pills; the first tap a navy card with a gold title, the rest
+  white; the film as a picture with a play badge (`orphan-video/film-card.jpg`,
+  rendered by `tools/letters/film-card.js` from `film-card.html`, committed
+  because the letters link to the hosted copy) over a navy caption bar; the
+  signature on a gold rule. Fonts: the branch face where a mail app loads the
+  `<link>` (Apple Mail, iOS Mail), the phone's own face elsewhere (San
+  Francisco, Segoe UI, Roboto); Arial last. All tables, inline styles and
+  two hosted images, so any mail app can show it. **None of it reaches a
+  client through the Microsoft 365 connector**: that route accepts tags
+  only (p, br, a[href], b, i, lists, h1–h6, table, hr, div) and rejects any
+  attribute, image or style outright (checked with a draft on 24 September).
+  The plain letters carry the same words with headings for structure and
+  nothing else. The branded letter goes out only from Transition.gs through
+  Microsoft Graph, which needs the Entra app; until then the "wow" is on the
+  site and the team page, and the client gets the plain one.
+- **Every subject line is the notice.** Decided 24 September ("on the
+  subject line shall we put the names … more catchy"). Since 30 September
+  it reads `Important: {{agent_or_rep}} has resigned and is no longer with
+  Guardian Life.` followed by a short tail: "Your policy has not changed."
+  on the in-force and check letters, and the urgent point on the action
+  letters. `{{agent_or_rep}}` is the agent's first name, or "Your
+  representative" when the sheet has none, filled by `fill-plain.py` and by
+  `tFill_` in Transition.gs alike. **The reminder says "resigned" first.**
+  Asked for the same day ("on the reminder email on follow up we can adjust
+  to state resigned and head office contact"): the clients written to on 25
+  September read "moved on", and their reminder, their own letter fetched
+  from the site again, is where they first read the resignation. Its
+  subject is `Reminder: <first name> has resigned and is no longer with
+  Guardian Life. …`: `tSendRow_` puts "Reminder:" in place of "Important:",
+  never both. Its line above the greeting (`REMIND_R`) says it is "an
+  important update on your agent's resignation, with numbers you can
+  call to confirm it". T and T1 keep "an important update about your
+  agent" (`REMIND`): that book's agent did not resign.
+- **Quick checks, answered in the e-mail itself.** First two questions on
+  24 September — questions that would show a client what nobody had told
+  them. A letter may not say or suggest that; it asks what the client
+  knows, and an honest "not sure" makes the point by itself: *Do you know
+  who your policy pays today?* and *Has anyone suggested you cancel, cash in
+  or replace a policy?* Then, the same evening, after the staff test ("when
+  click on this it taking too long to open and would like this as a check in
+  the email! It must be easy for a client!"), the long review behind "Tell
+  us more about yourself" became checks too: *How have we looked after you
+  so far?* and *Has anything changed for you since you took out your
+  policy?* The in-force letters ask all four, and ask them before the taps,
+  because the rating is the letter's feedback; R1 and R2 ask the rating and
+  the two originals; G asks the life change and the approach; the action
+  letters keep the originals under their taps. Every answer shows as a box
+  to tick (☐) and rides an existing tap — `informed` for a noted answer,
+  `callme` for "Could be better", "Yes: family, home or work" and "Not
+  sure", `urgent` for "Yes, talk to me first" — with the answer itself in
+  `q=`, which lands in the Page column of Client Responses
+  (`/your-policy/?q=rate_better`), so the backend needs nothing new. The
+  full review is one line under the taps ("Would you rather tell us in your
+  own words?"), not a tap. `QUESTIONS` in build-letters.py is the one list:
+  the letters, and the page a tap opens, are both written from it.
+- **The questions are offers, not check-ups.** Rewritten the evening of 24
+  September 2026 after the manager read them as a client would: "asking if
+  they advise to cash in is not a nice question, as the objective is to
+  have them stay and not go with the agent, and want a review … deep dive
+  and research very appealing questions that will give great responses as
+  well as show our service levels". The principles applied (customer
+  research on question wording: positive framing, help inside the
+  question, the caring answer as the easy first option, "your policy"
+  throughout, an easy question first and the commitment last): `rating`
+  (unchanged, the feedback, first); `life` ("has life moved on: a new
+  home, a new job, someone new in the family?" → "Yes, update my cover"
+  brings a call); `pays` ("would you like us to confirm, in plain words,
+  exactly what your policy pays and to whom?"); `checkfirst` ("if anyone
+  ever suggests you change or replace your policy, would you like us to
+  check it with you first, free?" → "Yes, always check with me first",
+  "Someone already has. Call me", which is how a rival approach is heard
+  without a question that sounds like suspicion, or "I will decide
+  myself", the polite way out, because a question with no soft exit
+  lowers response; the old `approached` question is gone); `stay`, last
+  on every in-force letter ("Would you
+  like our branch team to keep looking after your policy?", the letter's
+  own version naming the year since which the team has looked after it,
+  `LETTER_Q`, the year between fact markers so an application reads
+  without it); `value` on the lapsed letter (the free look at what the
+  policy still holds, as a question). Every "yes" that asks something of
+  us is a `callme`; nothing on a check opens the form any more. The
+  service record panel above the questions is the evidence the questions
+  lean on; the questions never quote a count themselves, because a blank
+  cell would break the sentence. **Modelled by band** (25 September: "did
+  you model it by age bands … our biggest is the under 5 years"): F1
+  swaps the life question for `walk` (a plain-words walk-through of what
+  the policy does, since under two years it may never have been
+  explained) and asks the rating "since you joined us"; F3 swaps `pays`
+  for `built` (what the policy has built so far); F5 swaps the life
+  question for `more` (what more the cover could do now: family,
+  retirement, health) and asks the rating "after all these years"; a
+  letter's own wording of a question is `question_text` in openings.json.
+  **The two letters with a hard question first** (`checks_first`): J,
+  "Has your policy contract reached you?" (`received`: "No, it never
+  reached me" is the `deliver` tap itself; "Not sure what I should have"
+  a call), because the record says the contract was collected for
+  delivery and never acknowledged, and the letter says exactly that; and
+  K, "Is anything you were asked for still outstanding: a medical, a
+  document, a signature?" (`outstanding`: "Yes, help me finish it" is the
+  `finish` tap, "I no longer wish to proceed" the `stop` tap), with the
+  opening now saying plainly that the cover applied for is not in place
+  until the policy is issued, because that is the truth that makes a
+  client finish. T carries `received` too, since a third of that book's
+  contracts were never acknowledged.
+- **Who gets letter J: the contracts the Power BI export shows dispatched
+  and never acknowledged, dispatched in the last two years.** The
+  conservation export from Power BI (`pbi-conservation.xlsx` in the
+  session scratchpad) carries, per policy, `Dispatch Date`,
+  `Acknowledgement Date` and `Delivery Category` ("Undelivered" when the
+  acknowledgement is blank); it is the acknowledgement of record. A first
+  cut on 25 September read "no acknowledgement" off Salesforce and the
+  Log Book instead and put four hundred-odd clients on J; the export
+  showed all but a handful of them acknowledged, so never infer
+  non-delivery from the Log Book, which records a fifth of
+  acknowledgements at best. Salesforce adds two things: the "Guardian
+  Life Policy Delivery Update and Next Steps: Policy Contract Received
+  for <client> Policy Number <n>" e-mail task, dated the day the contract
+  was given to the agent to deliver (that date is `collected_on`, a
+  column on the send list and a fact on J and T, with the PBI dispatch
+  date as the fallback), and the "Undelivered Script <client> <policy>"
+  tasks, sales admin's chase, which stand in for a policy the export
+  does not carry. Older undelivered contracts (dispatched before the
+  two-year cut, some as far back as 2003) are not written to about a
+  contract the client has plainly lived with: they go to the team as a
+  call list. A client already on I, K, A, G or T keeps that letter and
+  gains the contract date; the rest move to J, first wave. The pending
+  applications are the rows the sheet flags `Pending` in Status(2)
+  (every one of them reads "Underwriting incomplete", "Missing Reqts" or
+  "Awaiting Settlement" in Status Description, which is the rule
+  sendlist.py applies), and the team gets them as a list too, with the
+  status description, for assignment. Counts stay outside the repository. The research behind the shape, checked
+  on 25 September 2026: a positive frame rates better on identical facts
+  (Levin, Schneider and Gaeth 1998); asking a customer how they were
+  looked after cuts defection for a year afterwards (Dholakia and Morwitz
+  2002); "your policy" is worth more to its owner than to anyone else
+  (Kahneman, Knetsch and Thaler 1990); two or three options beat a list
+  (Iyengar, Huberman and Jiang 2004); easy questions first and the
+  commitment last (Dillman); a gift given before the ask lifts response
+  far more than one promised after it (Church 1993), which is what the
+  free checks inside the questions are; and the FCA's redress letters
+  trial (Adams and Hunt 2013) found short bullets, "takes five minutes"
+  and a reminder at three to six weeks lifted response, while a
+  big-name signature lowered it. Words to keep out of a client's letter:
+  orphan, reassigned, lapse, book, and "verify" or "confirm your
+  details", which read as phishing. There is no controlled study of
+  orphaned policyholders; the industry figures (Capgemini and LIMRA's
+  World Life Insurance Report 2027: nearly forty per cent rarely or never
+  hear from insurer or agent after buying; J.D. Power 2025: any contact
+  in the past year lifts satisfaction) argue for the six-month and
+  birthday reviews the branch promises, and for a second letter to
+  anyone who has not answered in three to six weeks.
+- **Every answer opens the page; the reply mode is built, tested and
+  switched off.** Three decisions in an hour on the evening of 24
+  September 2026, after the first Test letters were read on a phone. "When
+  you are clicking on the question its opening the browser and this is not
+  supposed to be happening, its supposed to be inside the email for easy
+  use", then "for all it should not open any browsers": so every check and
+  tap became a `mailto:` to support@ (`reply_link` in build-letters.py: the
+  answer as the subject, the question and the answer as the first lines of
+  the body, a spare line for anything more, `Ref: <token> <tap> <answer>`
+  on the last line; the two questionnaire doors as replies whose body asks
+  for the client's words, `REPLY_LINES`). Then the first reply was tried:
+  "when i check the question and answer it moved to the email reply!!! its
+  supposed to allow me to answer all the questions and capture the
+  responses", which only the page does. Offered the three ways there are
+  (the page; one reply per answer; one reply listing every question with
+  an X to type), the manager chose the page. `ANSWER_MODE` in
+  build-letters.py is `'page'`; `'reply'` rebuilds the letters the other
+  way, and `receipt.json` `reply.mode` and `reply.form_taps` (every tap in
+  page mode) tell the receipt and the test which way the letters were
+  built, so Transition.gs needs no paste for a switch. `transitionInbox`
+  (Transition.gs, every five minutes, installed by setup and go live)
+  stays on in either mode: it reads the support@ inbox through Graph
+  (application permission **Mail.Read**, admin consent, on the same Entra
+  app), changes nothing in the mailbox (a reply stays unread for the
+  team), files a reply carrying a reference on Client Responses exactly as
+  the page files a tap (`Page` = `/reply?q=…`, `Referrer` = `reply <message
+  id>`, which is how a message is never filed twice), matches a reply with
+  no reference to the client by its sender address and files it as a
+  `question` with `q=wrote` — never by a staff Test row's address, which is
+  matched only through a reference (28 September 2026: a colleague standing
+  in as a client sends everyday work mail that reaches support@, and her
+  e-mails about other clients' renewals were being filed as her "replies",
+  with receipts) — and puts the client's own words in the Note
+  cell (`tWords_` strips the pre-written lines in `receipt.json`
+  `reply.lines` and anything quoted beneath). So a client who simply
+  replies to a letter is captured with what they wrote, and a person
+  answers them: no receipt goes for a reply in their own words (see the
+  receipt bullet below). **Every response has a trail, even from an address we do
+  not hold** (30 September 2026: "all response must have the trail").
+  Until then a reply from another address, or from an inbox two clients
+  share, was passed over. One client asked from a work address to cancel
+  an application, and another asked twice to be called from an inbox
+  shared with a relative. Neither was filed, and nobody saw them. Now a reply to one of our own e-mails (`T_OUR_SUBJECT`:
+  Re: a letter, a reminder, a receipt, a note) is placed by the first name
+  it greets ("Dear X," in the quoted letter, "Thank you, X." in the
+  subject). At a shared inbox the name is enough. From an address we do
+  not hold, the former agent the subject names must agree too
+  (`tGuessClient_`). Such a reply is filed with `[matched by name]` in the
+  Note. When the name matches no one or several, the reply goes on the
+  **Replies to match** tab, which is made the first time it is needed,
+  with the clients it could be. A person types the token there, and the
+  next five-minute run files it `[matched by hand]`, with the message id
+  in Referrer so it is never filed twice. Mail from our own domains
+  (`T_OUR_DOMAINS`) is never taken for a client's: a colleague answering a
+  client on the thread is not the client. The inbox reader only looks
+  back three days, so the three e-mails missed before this change were
+  filed from a paste block (`Replies-to-file-30Sep.xlsx` in the
+  scratchpad), marked so that no automatic receipt or follow-up goes: a
+  person replies. `health/inbox-match-harness.js` covers it (16 checks).
+  The receipt offers the letter's other checks, how to
+  reach them and, once a call is coming, when (`[[more]]`), as page links
+  or replies to match. A merge field can never appear inside a reply body,
+  since it is URL-encoded: a reply carries QUESTIONS' own words.
+  `tap-test.js` checks whichever mode the letters were built in;
+  `svc/inbox-harness.js` in the session scratchpad runs the reader's
+  parsing on sample replies.
+- **A tap opens one small page, at once.** `/your-policy/` with `r=` in the
+  address is the whole journey: it records the answer, says what happens
+  next, and offers the letter's other checks and *What is the best way to
+  reach you?* one tap each on the page, without loading the film page or the
+  form. Only `urgent` (and "talk to me first") and the full review go on to
+  the form, a quarter of a second later. Before this a tap loaded the stub,
+  the film page with its fonts and poster, waited 900 ms, then loaded the
+  108 KB form — behind the mail scanner's own check. Without `r=` (the film
+  line) it forwards to `/orphan-video/` as it always did. **A scripted
+  browser records nothing** (`navigator.webdriver`): mail security, Avanan
+  at Guardian among them, opens links in a headless browser, and it must
+  never answer for the client. `tools/letters/tap-test.js` follows every
+  link in every letter on a local copy of the site, with the beacons
+  intercepted; run it after any change to the letters or the page.
+- **The receipt: one e-mail, a few minutes after the client's last tap,
+  that recaps everything they told us.** Asked for on 24 September ("recap
+  the concerns and a bit more … Thank you, client name, we have received
+  your response … a wow experience, and follow through"). `tAckClient_` no
+  longer sends anything; `transitionReceipts` runs every five minutes
+  (installed by `transitionSetup`, made sure of by `transitionGoLive`,
+  also on the menu) and, for every token this campaign recognises with
+  taps not yet marked `[receipt]` in their Note cell, waits until the
+  newest is `RECEIPT_WAIT_MIN` old (three minutes, so a client ticking
+  four checks gets one e-mail) — and, when a tap opened the form, until the
+  review is filed or `RECEIPT_FORM_WAIT_MIN` (thirty) has passed — then
+  sends one receipt and marks the rows. The e-mail: "Thank you,
+  {{first_name}}. We have received your response."; when it reached us;
+  **What you told us** (each quick-check answer with its question, a bare
+  tap in the words the client tapped on that letter); **Your concerns, in
+  your words** (the review filed under `Link ref` `transition:<token>`,
+  the questions in `REVIEW_RECAP` that were answered, quoted); **What
+  happens next** (one line per thing asked of us, the most pressing first,
+  never the same line twice, the review's reference first when there is
+  one); **How we follow through** (`FOLLOW`); the reply line; signed by
+  the Client Support Team. Every word is in build-letters.py and travels
+  in `receipt.json` (`recap`, `review`, `tpl`); the blocks arrive in
+  `receipt.html` as `[[recap]]`, `[[concerns]]`, `[[next]]`, `[[follow]]`,
+  unescaped, and `<!--recap-->` / `<!--concerns-->` are cut when empty.
+  The review's own confirmation ("your service questionnaire is in", with
+  the reference and access code) still goes from Service.gs as before, so
+  a client who fills the review gets both. A noted answer ("Very well") is
+  thanked too, with "nothing about your policy changes". The page a tap
+  opens says a copy is on its way (`receipts: True` in the page's CHECKS,
+  written by build-letters.py): **set it False if the letters go by hand
+  through the connector**, where nothing sends a receipt on its own.
+  `tools/letters/…/svc/receipt-harness.js` in the session scratchpad runs
+  `tReceiptMail_` in Node on sample taps and a sample review.
+  **A receipt is held when the answers look automated** (`tLooksAutomated_`):
+  two or more letter questions answered both ways, or every option of one
+  ticked. Mail security that is not a scripted browser opens every link
+  in a letter, and on 26 September a client wrote in to say she had sent
+  none of the answers her receipt thanked her for. The rows stay recorded
+  and are marked `[receipt] held: answers look automated`; a person who
+  changes one answer, or how and when to call, still gets a receipt.
+  Checked against all 120 clients who had answered by 27 September: it
+  holds exactly the two the branch had identified by hand.
+  **No receipt ever goes from an answer taken on a call, or to a held
+  row.** Answers ticked on an `r=phone` link are marked `[receipt] by
+  phone: read back on the call` the moment the receipts run sees them, and
+  a row with anything in Exclude (bounced, a recovered address awaiting the
+  go, a check, a claim) is marked `[receipt] held: row excluded (…)`. Until
+  27 September a receipt went to whatever address the send row held, so a
+  phone answer from a bounced client would have gone to the dead address,
+  and a recovered address pasted in under a hold would have been written to
+  before the branch's go. A client who tapped the letter and was also
+  called gets a receipt for the taps alone. `health/receipt-guard-harness.js`
+  in the session scratchpad runs `tReceipts_` in Node on those cases.
+  **One receipt per answer, ever** (1 October 2026). A run used to look
+  only at the taps not yet marked, so a client who tapped an answer again
+  was thanked again for it: of the receipts sent to the first 278 clients,
+  60 did only that. One client had four for the same "No" between 9 pm and
+  6:30 am. A
+  later receipt could also offer questions answered in an earlier one.
+  `tReceipts_` now remembers what each client was thanked for and what
+  they answered. A batch made only of answers already thanked is marked
+  `[receipt] repeat: thanked before` and sends nothing. A receipt never
+  offers a question answered before (`g.prior`). A reply with words of its
+  own, or a tap that opens the form, is never a repeat. An answer whose
+  receipt was held, or taken on a call, was never thanked, so a genuine
+  tap of it is. `health/receipt-repeat-harness.js` covers it (15 checks,
+  7 of them failing on the previous script).
+  **No receipt for a reply in the client's own words** (1 October 2026,
+  noon: "please ensure no duplicates are triggering to the client once
+  they respond"). A client replied at 12:00, the manager answered her
+  himself at 12:07, and at 12:10 the receipts run sent her "Thank you,
+  <first name>. We have received your response." as well. By then 42 clients who
+  wrote in had had one (45 e-mails), some only for writing "Noted, thank you", some
+  minutes before or after the manager's own reply. A client who writes is
+  owed a person's reply, as with the follow-up note. `tReceipts_` now marks
+  such a row `[receipt] held: they wrote in their own words: a person
+  replies` and sends nothing for it. Taps sent beside it still get their
+  one receipt, and a reply that answers a question (a Ref line, the reply
+  mode) still counts as a tap. Until then the branch saw each reply
+  through the receipt's copy, so `tWroteAlert_` sends the two `TRANSITION.CC`
+  addresses one internal e-mail a run naming who wrote and their words,
+  with the internal footer. Nothing goes to the client.
+  `health/receipt-wrote-harness.js` covers it (20 checks, 16 of them
+  failing on the previous script).
+- **Three automatic e-mails, then a person** (6 October 2026). Measured that
+  morning: the reminder had brought 128 of the 323 clients who answered,
+  84 of them the same day and none after day five; the receipts had gone
+  without a complaint since the 1 October fixes; the "still on it" note had
+  gone to 87 clients and brought 8 of them back in their own words. What
+  clients were writing was not "stop e-mailing me" but "kindly seeking your
+  response" and "why is my policy taking so long": the irritation is in the
+  wait after the e-mails, not in their number. The manager: "it's a human
+  interaction after the third … you don't want to irritate clients with
+  automated emails right through." So a client gets the letter, one reminder
+  if they do not answer, and one receipt when they do, and nothing else from
+  a machine. `ONE_RECEIPT_PER_CLIENT` in Transition.gs: a client who answers
+  again after their receipt is marked `[receipt] held: one receipt per
+  client: a person follows up` and named, with what they answered, in the
+  internal e-mail that names who wrote in (`tWroteAlert_`); a tap that opens
+  the form still brings the questionnaire's own confirmation. `STILL_NOTE_AUTO`
+  false: the chase keeps listing the late clients for the branch and marks
+  them `[chase2] held: automatic notes are off since 6 October: a person
+  sends it from the board`, and the note itself is a press on the assignment
+  board (`tStillClient_`, `tell=still`): open the client, mark the call,
+  tick "Still on it (the team's note, once ever)". The branch and Client
+  Support may press it, because the note is the team's; it goes once ever to
+  a client, is never ticked by default, and carries the same words as before
+  (receipt.json `still`). `RECEIPT_WAIT_MIN` is 15, so the one receipt
+  gathers a slow reader's taps. The receipt's last line tells the client it
+  is the only automatic e-mail they will get about their answers. The call
+  promise is `CALL_WHEN` in build-letters.py, "within two working days"
+  (until then "today or tomorrow", which 223 "call me" taps against a team
+  that reaches thirty clients a day had already broken); it is the branch's
+  own late line (`WAIT_DAYS`), so the alarm and the promise agree, and one
+  edit changes every letter, the page, the receipt, the manual and the call
+  script together. What stands: the reminder at five days, the manager's
+  notes, the introduction when an agent is named, "Send again" by hand. A
+  complaint about a notice itself is never answered by the system: its rows
+  are held for a person, and the manager decides how it is answered.
+  `health/three-mails-harness.js` in the session scratchpad covers it (21
+  checks).
+- **Once a call is coming, the page asks when.** `WHEN` in build-letters.py
+  ("When suits you best for a call?": morning, afternoon, evening) is asked
+  on the page a tap opens whenever the tap was `callme`, and appears the
+  moment an on-page answer brings a call, so the receipt's "at the time you
+  chose" is true. The answer rides `informed` with `q=when_*` and is
+  recapped like any other.
+- **The review's own e-mails go from support@ too, once Microsoft 365 is set
+  up.** `clientMail_` in Service.gs sends the questionnaire confirmation
+  ("your service questionnaire is in", with the reference and access code)
+  and the "Meet your agent" introduction through `tMsSend_` — which now
+  takes Blob attachments for the PDFs — when the three Script properties
+  exist, and from the script owner's account as before when they do not,
+  because the reference and access code must always reach the client. The
+  introduction is copied to `TRANSITION.CC`: it is the follow-through the
+  receipt promises in writing.
+- **The send goes in four families, one wave a day, and the reminder runs
+  by itself from day 22.** Decided 25 September 2026 ("combine and regroup
+  to ensure we scale proper and with a flow"). Every letter carries
+  `family` in `openings.json` — *notice* (T, T1), *action* (J, K, I),
+  *keep* (F1–F5, R1, R2), *return* (G, A) — and the family is the wave, so
+  Client Support reads one day's responses before the next day's letters
+  go: day 1 the notice and the action letters, day 2 F5, F4 and F3, day 3
+  F2 with R1 and R2, day 4 F1, day 8 G and A, in working days from the
+  go-live day (`WAVE` in `sendlist.py`, `WAVES` and `FAMILIES` in
+  `build-letters.py`). The `Send on` column carries the dates; moving a
+  wave is editing that column. **On the go-live morning, 25 September
+  2026, every date was set to that day** ("so i need all to go out in
+  batches today"; then "the run should be every 30 mins"): the whole list
+  in one day, in batches of up to 120 every thirty minutes (`BATCH` and
+  `SEND_EVERY_MIN` in Transition.gs; `transitionGoLive` replaces the send
+  trigger with the configured cadence every time it is pressed, so a
+  change is a paste and a press, never a second trigger beside the first).
+  Three ceilings sit under that: Microsoft 365 takes thirty a minute from
+  one mailbox, so a letter never follows the last inside `PACE_MS` (2.15 s,
+  counted from when the last began, `tPace_`), which makes 120 a run four
+  and a half minutes of the six a run is allowed, and a row is marked the
+  moment it is sent, so a run cut short never sends a row twice — but a
+  run Apps Script kills at six minutes writes no log line and shows no
+  alert, which is what the first batch of the go-live morning did at 106
+  letters (holding 95 same-address rows first cost it a minute and a
+  half), so `RUN_BUDGET_MS` (five minutes) now stops the sending inside
+  the run, says how many of the batch were left, and the next run takes
+  them; and the
+  script owner is a consumer Google account, whose triggers may run about
+  ninety minutes a day in all — fourteen hundred letters take some fifty
+  of them, the five-minute reads and receipts the rest — so on a heavy day
+  the menu's "send a batch now" is the relief valve: a run started by hand
+  is not counted. The team page opens on the four families and the path a
+  tap follows, and the letter cards on the manual and the team page are
+  grouped the same way. Every letter ends in the same four-step "What
+  happens after you tap" strip (`FLOW`), which the receipt's
+  follow-through and the team page repeat, so nothing is promised in one
+  place that another does not keep. **The reminder is not a letter of its
+  own**: `tRemind_`, at the end of every batch and inside the same
+  cap, sends the client's own letter once more to any row sent
+  `REMIND_DAYS` (**five** since 29 September 2026, when the manager asked
+  for the follow-up "in about five days from the date it was sent"; 21
+  before) or more ago, still `sent`, whose token has no row on
+  Client Responses and no review (`tAnswered_`; details taken on a call
+  do not count, see `tContactRow_` below), with `sent_on` set so the
+  banner above the greeting says when the first went and the subject reads
+  "Reminder:", and marks Status `reminded <date>` — never twice, `Sent at`
+  untouched (it is the first send's date and what keeps the row out of the
+  batch), never to an inbox that had a letter that day, at most
+  `REMIND_MAX_PER_RUN` a run (120 since 30 September 2026, when the manager
+  wanted the whole follow-up out in one day, "another mass email in the
+  next 2 hours"; 30 before, about 480 a day at a run every thirty minutes
+  from 9 to 5, which would have spread it over four days), in its own try/catch so
+  it can never stop the day's letters; `REMIND_DAYS` 0 turns it off. The
+  FCA's redress-letter trial (Adams and Hunt 2013) found a reminder at
+  three to six weeks lifted response more than any change of words, which
+  is why it was 21; the manager chose sooner. On 29 September, 1,199 of the
+  1,477 clients e-mailed on 25 September were due it (unanswered, not held,
+  not bounced), all waiting on the hold. `svc/remind-harness.js` in the
+  session scratchpad runs the pass in Node on a mocked tab.
+  **No reminder to anyone who responded** (30 September 2026, keeping the
+  reminder: "if they have answered or responded please ensure we dont
+  resent"). Besides an answer, a reply or a review on the token, the pass
+  now skips two more kinds of client (`tRespondedAt_`). One is a client
+  Client Support spoke to after their letter went, which is any contact
+  row dated after Sent at. The other is a client who sent a review from
+  their own address after it without the letter's link. A call before the
+  letter is not a response to it: when an e-mail was taken for a client
+  the letter had not reached, their first letter goes, and its reminder
+  after it. On the rehearsal of 30 September this took 121 people who had
+  confirmed their address on a call off the reminder. A person can stop
+  anyone else's reminder by typing anything but "sent" in their Status.
+  **A run that cannot read the answers reminds nobody** (7 October 2026,
+  the manager: "client do not get the reminders a second time whom have
+  responded"). `tAnswered_` and `tRespondedAt_` used to count nobody as
+  answered when Client Responses could not be read; on that morning's
+  sheet one such run would have sent 120 reminders, every one to a client
+  who had answered. `tRemind_` now reads them strictly, so the run throws
+  and the batch logs `remind-failed`; every other caller reads them as
+  before. The same morning, before the paste, a one-off script outside the
+  repository set Status to `no reminder: answered` or `no reminder: spoke
+  to us` on the 446 clients who had responded and still read "sent". That
+  is the hand-stop above, so the reminder can never pick them whichever
+  script is pasted. Nothing else reads those words. A whole book can be held
+  the same way, with a mark in Exclude (`hold: manager's hold, <date>`):
+  every client e-mail checks Exclude first (the letter, the reminder, Send
+  again, the receipt, the notes and the introduction), and a mark not in
+  `tFilePhoneEmails_`'s list is never lifted by a call. Answers are still
+  recorded.
+  **One inbox, one e-mail a day, across runs too.** Sent at keeps the
+  first letter's date, so a reminder sent in the 9:00 run did not make its
+  inbox busy for the 9:30 run. In the rehearsal, five families in Tricia
+  Baksh's book sharing an inbox got both reminders on one day. The batch
+  now also counts a Status of `reminded <today>` or `sent again <today>`
+  (`health/followup-harness.js`).
+  **"Send again" is a tick box on Transition Send** (asked for the same
+  day: "a way to run again … to send off a client a survey"). `tAgainCol_`
+  adds the column the first time the five-minute run finds none; a person
+  ticks a row, and the next batch (`tSendAgain_`, after the day's new
+  letters and before the reminders, inside the same cap) sends that
+  client's letter once more — with the "we wrote to you on" line and
+  "Reminder:" when it went before, as its first letter when it never went —
+  whatever its Send on and whether or not the client answered, because a
+  person asked. Every hold still stands: the manager's hold on client
+  e-mail, anything in Exclude, a Test row, one letter an inbox a day; a held
+  row keeps its tick and goes when the hold lifts. Sent, the tick clears
+  and Status reads `sent again <date>`, which also keeps the automatic
+  reminder off it. **Bounced letters are held by themselves.** Until 29
+  September the inbox reader passed over every non-delivery report, so
+  the 139 letters that bounced on 25 and 26 September (read by hand off
+  support@ on 27 September) still read `sent` and would have been followed
+  up. `tInbox_` now knows a report by its subject (`tIsBounce_`), takes the
+  failed address as whichever address in the report's own part — cut
+  before the original message's headers, which also carry the CC — is on
+  the tab, and holds every row at it with `bounced: <no such mailbox,
+  mailbox full, bad domain, no response, blocked> (<date>)` in Exclude and
+  `bounced` in Status (`tBounceMark_`); a row held for anything else is left
+  as it is, and a report about a CC never touches the client. The first run
+  after the paste sweeps the inbox back to the day before the first letter
+  (`tBounceSweep_`, once, remembered in the `bounce_last` property, which
+  the five-minute reader carries on from). That Exclude is exactly what
+  `tFilePhoneEmails_` replaces when Client Support takes a working address
+  on a call, and the letter then goes again after the go.
+  `health/followup-harness.js` in the session scratchpad covers the three.
+- **The Act's own words are on every letter whose situation it speaks to,
+  and the days are worked out on the day the letter goes.** 25 September
+  2026: "include the insurance act and days to deliver and come across
+  relevant … the agents who left hate you and your team". `act` and `plain`
+  in `openings.json` put a teal card above the answers: the quotation, and
+  what it means for this client in our words. J quotes the premium rule (a
+  premium handed to a representative is deemed received by the insurer, so
+  anything paid when the contract was brought counts and the receipt is
+  Guardian Life's) and states the branch's own standard, personal delivery
+  within 28 days — the words of the branch's delivery-update e-mail, sent
+  to a client whenever a contract is ready since September 2025; K and T1
+  quote the issue rule (an individual life policy is issued within twenty
+  business days of acceptance of the risk); T quotes the revocation of a
+  registration on notice of a termination, and says the Act requires the
+  insurer to notify the Central Bank within five business days and that a
+  premium handed to the agent while registered counts as paid; A the cheque
+  rule (five business days); G the non-forfeiture rule (a policy whose
+  surrender value covers the overdue premium is not forfeited); I as
+  before. Under the check-first question on every letter, one line
+  (`Q_NOTE`): no agent or broker may cause a policyholder to discontinue or
+  replace a policy without first discussing the advantages and the
+  disadvantages. **Every quotation was checked against `act2018.dec.txt`**
+  with the capitals dropped and a hyphen read as `b`, which is how the
+  decoded PDF garbles them (the check lives in the session scratchpad);
+  still no section numbers anywhere. The days: `days_held` (J, from
+  `collected_on`) and `days_open` (K and T1, from `app_received`) are
+  derived at send time by `tDerive_` in Transition.gs and `derive()` in
+  `fill-plain.py`, never stored on the sheet (`T_DERIVED`). `promised_on`
+  (J) is the date of the branch's delivery-update e-mail to that client,
+  taken from the Salesforce task by policy number, and the sentence "On
+  {{promised_on}} we wrote to you that your policy contract would be
+  delivered to you personally within 28 days" sits between fact markers
+  inside the opening, so a client who got no such e-mail reads the letter
+  without it. T also asks how the client pays today (`paying`: "in person,
+  to a representative" is the `pay` tap, the one exposure after a
+  termination). The send list is now 30 columns (`promised_on` after
+  `collected_on`), and **Transition.gs must be pasted before any send, the
+  Test rows included**: every letter now carries `{{sent_on}}` for the
+  reminder banner, and the previous script stops each row with "carries
+  {{sent_on}}, which this script cannot fill" rather than send it.
+- **Two reports: the digest twice a day, and the Monday insight report.**
+  Asked for on 25 September 2026 ("I need to have some serious insights").
+  `transitionDigest` goes at the hours in `DIGEST_HOURS` (8 and 12, sheet
+  time; Apps Script fires within the hour) to `DIGEST_TO` (blank = the
+  script owner): tiles (sent, waiting, taps, reviews, late), then the
+  insight block for the last day, by letter, taps, the late list, reviews,
+  verdicts, last runs. `transitionWeekly` goes every Monday within
+  `WEEKLY_HOUR` (7) to `WEEKLY_TO` (blank = `DIGEST_TO`; several addresses
+  comma-separated): the week to that day, read for what it means.
+  `tInsights_(days)` computes everything on the fly from the three tabs,
+  staff Test rows never counted, and `tInsightHtml_` lays it out — tiles;
+  "What it means" in sentences written only where there is data (response
+  and how fast it comes, approaches by former book, the rating, who wants
+  the pays check, stay or talk, contracts missing, applications, in-person
+  payers, reviews, open and late answers with the median working days to a
+  name, reminders and the answers after them, failed sends); by family; by
+  letter; every question with each answer's count, share and bar (the words
+  from receipt.json, so report and letters agree); by former agent's book
+  sorted by approaches (the poaching map); when the first answer comes,
+  from the day the letter went; taps by type; follow-through; the "to act
+  on" list (clients whose answer is in `T_RISK`, open first, with who is
+  named); the next seven days and the reminders due. Installed by
+  `transitionSetup` and by `transitionGoLive` (`tWeeklyTrigger_`); the
+  menu item "Transition: e-mail the weekly insight report now" needs a
+  Service.gs paste, and until then the editor's Run button on
+  `transitionWeekly` does the same. `svc/insights-harness.js` in the
+  session scratchpad runs both on a mocked campaign.
+- **Every client e-mail ends in the confidentiality footer, and every
+  internal one says it is internal.** Asked for on 25 September 2026 ("the
+  proper disclaimer … in the event of confidentiality you can take action
+  and you are protected; review the laws in Trinidad under data
+  protection"). `LEGAL` in build-letters.py is the one text: on the branded
+  and plain letters, the receipt, and in receipt.json (`legal`), from which
+  `tLegal_` in Transition.gs puts it on the "still on it" note and
+  `clientMail_` in Service.gs on the questionnaire confirmation and the
+  introduction, with the same words as a fallback in the script. The law
+  it rests on, checked that day: the Data Protection Act 2011 (Chap.
+  22:04) is only partly in force — Part I with the General Privacy
+  Principles and the sections establishing the Office of the Information
+  Commissioner came into operation on 6 January 2012; the private-sector
+  obligations and penalties have not been proclaimed — so the footer
+  commits the branch to the Principles by name, never to a section, and
+  names the Commissioner's office as the authority the Act establishes,
+  not as a court; the confidentiality duty is the Insurance Act 2018's own
+  (no registrant, officer, employee or agent may disclose a policyholder's
+  affairs without express consent unless the law compels it), quoted on
+  protected.html. What it promises the client: the e-mail is for them
+  alone; tell us and delete it if it came in error; their information is
+  used only to look after the policy, never sold, never disclosed without
+  express consent; they may ask what we hold and have it corrected; a
+  concern can go to the branch, to Guardian Life or to the Commissioner's
+  office, and raising it never changes how the policy is looked after.
+  Compliance sees the wording. The digest, the Monday report and the
+  internal chase carry `INTERNAL` ("do not forward outside the branch")
+  because they carry client names.
+- **The clients with no e-mail are a call list, and a phone answer is
+  recorded on the client's own link.** Asked for on 25 September 2026
+  ("persons who don't have email: the call list to get in touch with, how
+  to handle"). The send list holds them with `no e-mail` in Exclude; the
+  call list is built beside it in the session scratchpad from those rows,
+  with the letter they would have had, the facts off the sheet, the phone
+  and address off the portfolio, one line on why we are calling, and the
+  client's own `/your-policy/?t=…&s=…&r=phone` link. `orphan-transition/call-script.html`
+  is the call: the letter spoken, in the same order, with the same
+  questions, and the caller ticks the answers on that link with the client
+  on the line, so they land on Client Responses and in the reports like a
+  tap. **The link must end in `r=phone`.** Without an `r=` the address is
+  the film line and opens `/orphan-video/`, which is what the first call
+  list (25 September), the agent's brief and the board all did until 27
+  September. `r=phone` is the caller's copy of the page: every check of the
+  letter plus how and when to reach them, nothing ticked, nothing recorded
+  until Send, and each answer filed with `Page` = `/your-policy/phone?q=…`
+  so a phone answer is never read as a tap. `tInsights_` counts them on their own (`calls`: listed, reached,
+  approached, by letter; the risk list marks them "by phone"), never among
+  the letters sent, so the response rate stays the letters' rate;
+  `tReceipts_` marks every answer taken by phone `[receipt] by phone`
+  rather than e-mailing it, because on that call the caller is the
+  receipt. Never call a row the list holds for a person to check first.
+  **Client Support calls before any agent is named, and they update
+  records; they never advise** (27 September: "remember they are not
+  licensed agents, so they should not be giving any sort of advice, but
+  asking questions. The objective is to get the data cleaned, the correct
+  email, then send off the email … to have it on record"). Sasha, Liz and
+  Azariah split the call list, whole households together, most urgent
+  first: everyone the letter could not reach (no e-mail, or bounced) and
+  the terminated book and action letters that went unanswered.
+  `orphan-transition/client-support.html` is their day from 7:00, the six
+  steps of the call in words, what to say when a client asks something
+  (anything about the policy is a call-back from a licensed agent), and
+  what they never do. Their links end in **`r=update`**, the staff copy of
+  the page: no policy questions at all (letters T and T1 keep the two
+  factual ones, whether the agent has been in touch and how the premium is
+  paid), only how best to reach them, the e-mail, spelled back and ticked
+  as read back (it refuses one that looks cut off, like `gmail.co`, or
+  misspelt, like `hotmial`), or "no e-mail", a new number or address only
+  if changed, and the caller's own name, kept on the device. `r=phone`
+  stays the licensed agent's copy, with every check of the letter. Each
+  detail is filed as its own row under `/your-policy/phone` —
+  `q=email_given` (or `email_none`), `phone_given`, `address_given` — with
+  the Referrer cell reading `call by <name>: <value>`, and every other
+  answer from that call reads `call by <name>`, so nothing is retyped.
+  **The e-mail files itself onto the send row, held for the go.**
+  `tFilePhoneEmails_`, first thing in the five-minute receipts run, writes
+  each `email_given` address onto the client's Transition Send row with
+  `hold: e-mail by phone` in Exclude and who took it, and when, in Reason;
+  a row whose letter went to another address (bounced, or the client reads
+  a different one) has Sent at and Status cleared so the letter goes again
+  to the new one, except for a client who already answered a letter that
+  reached them (7 October 2026): their address is updated and nothing
+  else, so the letter never goes to them a second time, while a bounced or
+  no-e-mail client's letter still goes after the go
+  (`health/phone-answered-harness.js`, 8 checks); the same address already
+  sent to is left alone; a row
+  held for anything else (an agent, a household, staff, a claim, a check)
+  is never touched; each Client Responses row read is marked `[filed…]`.
+  The address a letter bounced from is never filed back onto its row, even
+  when a caller marks it confirmed (29 September 2026: ten bounced
+  addresses kept as they were, two visibly misspelt): a row held
+  `bounced: no such mailbox` or `bad domain` with the same address is
+  marked `[filed: this address bounced …]` and stays held; a full mailbox
+  may be confirmed, since the address is the client's own.
+  The branch's go is `transitionReleasePhoneEmails` (menu: "Transition:
+  release the e-mails taken by phone (the go)", which needs a Service.gs
+  paste; until then the editor's Run button, or clear those Exclude cells
+  by hand), and the ordinary batch sends the letters. A new number or
+  address stays on Client Responses for Salesforce. The staff lists are
+  built in the session scratchpad (`calls/build-staff2.py`) and never
+  enter the repository; `health/file-emails-harness.js` there runs the
+  filing and the release in Node.
+- **Every letter shows the client their own record with the branch team.**
+  Asked for on 24 September ("they are to see us as from onboarding and a
+  team service, as we have all the data on service levels"). A gold panel
+  under the facts, "Handled for you by our branch team", one cell per count:
+  documents handled (the Log Book, by policy number), requests handled
+  (completed Salesforce service tasks), premium reminders, and the month of
+  the last birthday note. `tools/letters/service-record.py` writes them onto
+  the send list as `svc_docs`, `svc_requests`, `svc_reminders` and
+  `svc_birthday`; run it after `sendlist.py`, on the same copies, outside the
+  repository. A zero or a blank cuts its cell like a blank fact, and a client
+  with nothing on record reads one line about the team instead (between
+  `<!--nosvc-->` marks). The premium and lapsed letters leave the reminders
+  out: a count of reminders beside a premium still unpaid reads as a
+  reproach. **Only precise links count**, because the client reads the
+  numbers: their own portfolio record, their policy numbers, a contact whose
+  name is theirs, never an Account, which would lend one client a
+  household's or an employer's history. Every service task in the branch's
+  Salesforce was created by the branch team (sales support, the manager's
+  assistant, the personal assistants, the manager), none by an agent, which
+  is what lets the panel say "our branch team". Tasks begin in 2025 and the
+  Log Book in 2023, so a count understates a long relationship and never
+  overstates one. The pace line ("most within a working day") is the Log
+  Book's own: three documents in four went on to Guardian Life within one
+  working day in the twelve months to September 2026. Measure it again
+  before changing those words. The panel says what the team did, never what
+  anyone else would not do.
+- **Transition.gs stops a run on an unfilled field.** A letter on the site
+  carrying a `{{field}}` the pasted script does not know would reach the
+  client as `{{svc_docs}}`, so the send throws before the first one. The
+  copy in the project predates the service record: paste the current
+  `Transition.gs` before any send from Apps Script. Import the send list
+  with "Convert text to numbers, dates and formulas" ticked: the dates then
+  print long, and the birthday month, which the import also reads as a date,
+  is printed back as a month ("August 2026", never "1 August 2026").
+- **The `review` tap opens the form.** It is the full review line now, not a
+  card; the page a tap opens logs it and carries the client into the
+  review, like `urgent`. Until 24 September it showed a thank-you and dimmed
+  the review door, so the first tap on every in-force letter led nowhere.
+- **Team verdicts on any letter are accepted.** `FEEDBACK_ITEMS` in
+  Service.gs used to list the six original letters, and the backend
+  dropped every verdict on F1–F5 in silence (the page still said logged).
+  It now takes any letter key, one capital and an optional digit.
+- **The `urgent` tap is the questionnaire door.** "I want an agent now. Let
+  me tell you my concerns first" is on every letter (a card where it is one
+  of the taps, a line beneath them where it is not). The client page logs it
+  with the token and then forwards to the review, so the client states what
+  went wrong before anyone is named and the branch reads it before it
+  assigns. **No timeline is promised for the agent**, decided 24 September
+  ("don't commit to assign an agent … their concerns will be reviewed and
+  we will assign the appropriate agent, don't give a timeline"): every
+  letter, tap, page line and receipt says the concerns are read by a
+  person first and then the client is matched to the agent who fits, and
+  nothing says when. "Next working day" and "within two working days" are
+  gone from the campaign's client-facing words; `WAIT_URGENT` and
+  `WAIT_DAYS` in Transition.gs are the branch's own targets for the chase
+  and are never shown to a client. What is still promised is what Client
+  Support controls itself: a call today or tomorrow, a receipt checked
+  within two working days, a document on to Guardian Life mostly within a
+  working day. The film's own line ("be matched, within two working days")
+  and the donthaveanagent.com pages still carry the standing two-day
+  promise; changing the film means re-voicing one line.
+- **The pages are wired to the Service Questionnaire deployment** (the same
+  `/exec` URL the six front ends hold) and ask it `action=ping` on load. Only
+  a version carrying the `resp`/`feedback` actions answers with
+  `campaign: 2`, so the team pages keep their amber "not recording yet"
+  notice until Manage deployments → New version is published, then clear it
+  themselves. Nothing to paste. Client taps fire regardless; against an old
+  version they fall through to the form redirect and are lost, which is why
+  no letter goes out before the notice has cleared.
+- **The send runs from `apps-script/Transition.gs`**, a second file in the
+  same container-bound project as `Service.gs`. It fetches the six generated
+  letters from the site, fills the `{{fields}}` from the **Transition Send**
+  tab, cuts a blank fact out between the `<!--fact:key-->` markers the
+  generator writes, and sends it through Microsoft 365 as
+  support@rickyrampersadbranch.com from a trigger every `SEND_EVERY_MIN`
+  minutes (thirty), working hours only, up to `BATCH` (120) a run, the
+  notice and the action letters first. A projected lapse date already gone by is cut at
+  send time (`tDerive_`, and `derive()` in `fill-plain.py`): the sheet still
+  flags the policy `Overdue`, so the projection did not happen, and
+  "Projected lapse 18 August 2012" is not a fact a client can use — 88 of
+  the first day's rows carried one; Paid to and Days outstanding still
+  print. Forty of the I rows were more than a year past their paid-to date
+  (the sheet's `Overdue`, most likely an automatic premium loan); the count
+  was put to the manager before the first batch. No letter
+  text lives in the script: rebuild the letters and the next batch carries
+  the change. `transitionSetup` makes the tab and the 8:00 digest only;
+  `transitionPreviewToMe` sends one of each to the owner;
+  `transitionSendTest` sends the rows marked `Test = Y`, live or not, and
+  sends them all again on every press, sent before or not (24 September,
+  evening: the branch could not find the Sent at cells to clear) — and a
+  Test row is always a team member standing in as a client, never a client's
+  own row, because that button sends whatever carries the mark;
+  `transitionGoLive` (menu: "Transition: go live") sets the `transition_live`
+  script property and installs the hourly trigger, and `transitionPause`
+  clears both — until go live, the hourly run sends nothing, however long the
+  list sits in the tab. A row with anything in Exclude never sends; a row with
+  no Send on date is held; a sent row never sends twice; a row the sender
+  cannot use (no e-mail, no first name, no letter for its segment) is moved
+  to Exclude with the reason. The page and the digest show a red banner while
+  the send is off, and the last runs with their reasons.
+- **A sent row never sends twice, even when the tab is sorted mid-run.**
+  The batch picks only rows with an empty Sent at, and stamps Sent at the
+  moment each letter goes. On 30 September 2026 the live tab turned out to
+  have been sorted by Sent at, which moved every row ("i need to ensure
+  that the email will continue in the batches not send again to the ones
+  received"). A run reads the tab once and writes back by row number, so a
+  sort during a batch would have put the stamps on other clients. The
+  client just sent would read unsent and get the letter again next run: 6
+  of 30 in `health/sort-safety-harness.js`, run on the previous script.
+  `tAt_` now checks each row's Token before every write to the tab. When
+  the row has moved, it reads the Token column again and finds every row
+  of the run by its token. That covers the stamp, the hold, the bounce,
+  the phone-filed e-mail, the release and the "Send again" un-tick. A row
+  with no token is written only where it still is, or the run stops and
+  the next one starts fresh. Sorting is still better done in a filter view
+  (Data → Filter views), which moves nothing. **Every check a row faces
+  goes by address and name, never by row number.** The old `check: same
+  e-mail as row N` notes all pointed at the wrong clients after the sort,
+  so `tSharedInboxRows_` finds the inbox's letters by the address. The
+  sender takes an inbox's first letter by its date, not its place in the
+  tab. A hold names a client number (`tWhoRow_`) instead of a row. The
+  rehearsal on the sorted tab (`ops/go-sim2.js` in the scratchpad) found
+  0/92/0 before and 42/24/26 after, the same as on the unsorted copy.
+  **The "Next e-mail" column** (`ops/next-email-formula.txt` in the
+  scratchpad) is one formula in the first empty header cell of Transition
+  Send. It spills two columns, Answered and Next e-mail, and says for every
+  row what the batch will do: "got it 25 Sep: never again, except one
+  reminder if no answer", "nothing more: spoke to us after the letter, no
+  reminder", "next batch: first letter", "held for a check", and so on. It
+  reads the same rows the script reads.
+- **Automatic client e-mail is on hold until the manager's go** (28
+  September 2026: "hold any emails going to clients until I say so").
+  `HOLD_CLIENT_MAIL` (true) in Transition.gs, overridden by the
+  `client_mail_hold` script property that `transitionHoldClientMail` and
+  `transitionReleaseClientMail` set (menu items after a Service.gs paste; the
+  editor's Run button until then). While held, the batch (letters, and the
+  reminder pass inside it) stops before the sender, a press by hand included,
+  and logs `held`; the chase still tells the branch and keeps the client's
+  note due. Nothing is marked, so the go picks everything up. **Since 7
+  October 2026 the receipts and the board's introductions are held too.**
+  That day an introduction went to a client while an agent was being trained
+  on the board. The manager asked to "hold off all auto email for now
+  please!", then said "yes" to the hold stopping both. Until then receipts
+  were not held, decided on 28 September ("if they answer on an old one, one
+  going out is ok and logged"). `HOLD_RECEIPTS` (true) holds only the e-mail
+  to the client. The receipts run still marks what it always marks, still
+  tells the branch who wrote in, and still sends support@ the trail. So a
+  hold never hides a client's own words. A receipt that waited is not
+  marked, and goes once on the first run after the go, if the answer is
+  under fourteen days old. `HOLD_INTROS` (true) has a naming brief the agent
+  and send the client nothing and mark nothing (`introHeld` in the reply).
+  An introduction held does not go by itself after the go, because a naming
+  made in practice would go with it. Until 7 October `HOLD_RECEIPTS` stopped
+  the whole receipts run, alerts included. The board says what is held
+  (`introsHeld`, `receiptsHeld`). The introduce box is then unticked and
+  cannot be ticked, and the hold and release messages name both. Still not
+  held: a note the manager presses on the board (his go for that note), the
+  Test rows (colleagues), the preview to the owner, the digest and the
+  reports, the agent's brief, the inbox reader, the filing of e-mails taken
+  by phone, and the questionnaire confirmation from Service.gs's
+  `clientMail_`, because the reference and access code must reach a client
+  who has just filed. `health/hold-harness.js` in the session scratchpad
+  runs the hold in Node. `hold7oct/receipts-hold.js` (14 checks) and
+  `hold7oct/intro-hold.js` (16, Node and Playwright, the real tabs) cover
+  the 7 October change.
+- **Every client e-mail goes out as support@rickyrampersadbranch.com,
+  never from Gmail.** Decided 23 September: "we need to have
+  support@rickyrampersadbranch.com and copy" the sales-support and branch
+  manager's Guardian addresses. The letters, the receipts and the "still on
+  it" notes go through Microsoft Graph (`tMsSend_`), carry both Guardian
+  addresses in **visible** CC (`TRANSITION.CC`, the manager's choice), take
+  replies at support@, and land in its Sent Items. The sign-in is an Entra
+  app registration with the Graph **Mail.Send** application permission, held
+  in three Script properties — `MS_TENANT`, `MS_CLIENT`, `MS_SECRET` — and
+  never in the code, because the `.gs` files are public on the website.
+  Until they are set nothing client-facing sends: no fallback to MailApp,
+  which sends from the personal Google account that owns the script and
+  allows about a hundred recipients a day, every CC counted — two copies on
+  every letter would have held the send to some twenty-five letters a day.
+  The mailbox's display name read "querymypolicy.com" until 24 September
+  2026, when it was renamed "Ricky Rampersad Branch" (Microsoft 365 admin →
+  Users → Active users → Edit user → Display name); the address did not
+  change and must not — the letters send from it.
+  **Until the Entra app exists, the letters go through the Claude Microsoft
+  365 connector instead** (24 September 2026: "I don't know how to do the
+  Entra, it's complicated, can you just work with what we have"). The
+  connector is signed in as support@; it could only read mail until the
+  admin granted it consent through the admin-consent link for its app, which
+  added Mail.Send and Mail.ReadWrite. It sends from support@, saves to Sent
+  Items and keeps the visible CC, but it accepts only p, br, a, b/strong,
+  i/em, lists, headings, tables, hr and div — no logo, no colours — so it
+  sends the plain letters `build-letters.py` writes to
+  `orphan-transition/letters/plain/`, filled per row by
+  `tools/letters/fill-plain.py` (run in a scratch directory; it holds the
+  same rows the sender would hold and checks every body against that
+  allowlist). A Claude session sends them one by one; nothing is automatic
+  on this route, and client receipts go only when a session sends them. The
+  eight staff tests went this way on 24 September; no client letter goes
+  without the manager's word. Internal mail (the digest,
+  the late nudges) still goes through MailApp. The older service e-mails in
+  `Service.gs` (the daily follow-up's "still on it" notes, the six-month and
+  birthday reviews) still send from Gmail, so the `dailyServiceFollowUp`
+  trigger stays off until they are moved over too.
+- **The send list is built by `tools/letters/sendlist.py` outside the
+  repository**, on a copy of the Branch Portfolio sheet, with the departed
+  agents' names in the git-ignored `departed.txt` beside it. It fills the
+  exclusions before it picks a letter: the agents' own policies (full-name
+  match), their households (same surname and the same address, phone or
+  e-mail as the agent's own rows), staff addresses, death claims. A shared
+  surname alone in the agent's own book, a matured policy and a postponed
+  application are `check`, never auto-sent. Asked for on 22 September:
+  "exclude the agents' policies who left … and his family, etc."
+  **The Days column is days past the paid-to date only on a row the sheet
+  flags `Overdue` (Status(2)).** On every other row it means something else,
+  often days since issue. The first list read it bare and put 665 clients
+  who owed nothing on the premium letter, printing a false "days
+  outstanding"; caught on 23 September before any client letter went out.
+  Test with the flag, never with Days alone. And the tool never marks a
+  row `Test`: the Test rows are team members standing in as clients.
+  **Two more exclusions, added 23 September ("not sending to the agents or
+  their direct families"):** a client whose e-mail on file is one of the
+  departed agents' own addresses (two rows would otherwise have mailed an
+  agent directly), and anyone sharing a home address, phone or e-mail with a
+  departed agent's own policy whatever their surname — a spouse or child
+  under another name. An address, phone or e-mail shared by more than six
+  clients is an office line, not a family, and does not count.
+- **Every response gets a receipt, and the branch gets a copy.** The moment
+  a client taps, `tAckClient_` (Transition.gs) e-mails them a short
+  thank-you naming what happens next, CC'd to `TRANSITION.CC` — asked for
+  on 22 September ("are responses coming in
+  and I am to be copied"). `tChase_`, run from `transitionDigest`
+  (never from `tSummary_`, which the responses page polls every two
+  minutes, so a chase can never double-fire), tells the branch once a
+  client's answers have been `Open` past the wait (`WAIT_DAYS`, or
+  `WAIT_URGENT` for the urgent tap), and — still open at
+  `WAIT × CHASE_MULT` — sends the client a warm "still on it" note.
+  Both stop the moment Status reads anything other than `Open`; the level
+  already sent is recorded in each row's own Note cell, appended rather
+  than overwritten, so a human note there survives.
+  **One client, one chase** (28 September 2026). Since the quick checks,
+  every answer is its own row, and the chase worked row by row: run on the
+  first weekend's answers it would have sent 103 clients the note, 54 of
+  them more than once and one fifteen times, and put some eighty "Late:"
+  e-mails a day in the manager's inbox. It now groups by token: one
+  internal e-mail a run listing every client newly late (`tChaseSummary_`),
+  and one note per client, ever, whichever row carries `[chase2]`. The
+  note is never sent, and the rows are marked `[chase2] held: <why>`, when
+  the send row has anything in Exclude (bounced, an e-mail taken by phone
+  awaiting the go, a check), when there is no e-mail, or when the answers
+  look automated (`tLooksAutomated_`, the same test the receipts use: the
+  client who wrote on 26 September that she had sent none of her answers
+  would otherwise have been told the branch was still on them).
+  `CHASE_MAX_PER_RUN` bounds the notes a run sends. A staff Test row is
+  never chased.
+  `health/chase-harness.js` in the session scratchpad runs it in Node on
+  made-up rows, and `chase/sim.js` on a copy of the live sheet.
+  **The note owns the wait and asks for the client's own words** (30
+  September 2026: "we did thank persons for responding and should we not
+  send a follow up email as these persons are awaiting a response … would
+  like to hear from persons the concerns to ensure the correct agent is
+  assigned"). The first notes were due to clients whose receipt had
+  promised a call "today or tomorrow" four working days before, with
+  nobody yet named. So the note now says it has taken longer than it
+  should. Anyone waiting on a call, a review or an agent is asked what
+  they would like us to know before an agent is named, with a link,
+  "Tell us in your own words", to **`/your-policy/words.html?t=<token>&s=<letter>`**:
+  one box under the branch's own name, asking the note's own question.
+  Until 2 October 2026 the link opened `/your-policy/review.html`, the
+  six-step review form under the donthaveanagent.com name, which starts
+  "Do you have your policy number?"; the morning the first notes went,
+  the branch reported "the link not working". `review.html` now sends a
+  bare `from=client&type=individual&t=` link (the notes already sent) to
+  the words page, unless it came from our own pages; the letters' answer
+  page adds `via=tap` on its way to the full review, which is still a
+  letter's own line. The words page sends the words to `Service.gs`
+  (`action=resp`, a POST in text/plain, `w=`), which files a `question`
+  row, `Page` `/your-policy/words?q=wrote`, the words quoted in Note
+  exactly as `transitionInbox` files a reply. So no automatic receipt
+  goes, the branch gets the wrote-in alert, the follow-up note holds, and
+  the board shows the words as the client's ("Wrote to us on the page").
+  A backend older than that (ping below `campaign: 5`) cannot take the
+  words, so the page opens the client's own mail app instead, addressed
+  to support@ with `Ref: <token> question wrote` under the words, which
+  the inbox reader files as the same row. A scripted browser sends
+  nothing. **The words come with the trail** (asked the same day: "can
+  this include the trail"). A reply by e-mail arrives in support@ with
+  our e-mail quoted under it; words from the page have no thread, so the
+  receipts run sends support@ one e-mail per writer (`tTrailMail_`), the
+  branch copied, reply-to the client, subject `Re: Still on it, <first
+  name>.` so it threads with the note here and in the client's inbox:
+  their words on top, then the trail, newest first (`tTrail_`): our
+  letter by its subject line, a reminder, their answers in the letter's
+  own words, our receipt, a call, their replies, the manager's notes, the
+  introduction of their agent, the follow-up note. It is built from
+  Transition Send and Client Responses in words the client saw, never a
+  staff name, a hold or a mark, because a reply carries it to the client;
+  their reference sits at the foot, so their answer files on their
+  record. Page writers get this in place of the wrote-in alert; if
+  Microsoft refuses it, the alert goes instead. `health/words-harness.js`,
+  `health/trail-harness.js`, `svc/words-board-harness.js` and
+  `words/words-test.js` in the session scratchpad cover it. A payment, a
+  contract or an application gets its own line instead (`still.follow`
+  in receipt.json, from `STILL` in build-letters.py). `still.line` is
+  what a Transition.gs older than this reads.
+  A client who wrote to us in their own words gets no note. They are owed
+  a person's reply, and their rows are marked `[chase2] held: they wrote
+  to us in their own words`. Nor does a client with an agent already in
+  Assigned to (1 October 2026, when agents began to be named): the note
+  says one is about to be named, so it is held as `[chase2] held: an
+  agent is named (<name>): the agent follows up`, and the branch's late
+  list still shows them until the agent marks the call. A day counts once it is over, so an answer
+  from a Friday reaches four working days the next Friday morning.
+  `health/still-note-harness.js` covers it (14 checks). `chase/sim30.js`
+  ran it on the live sheet on the evening of 30 September: 163 clients
+  over the following week, once each, 75 of them on Friday 2 October, and
+  34 held because they wrote. The note ends with the client's reference
+  (`Your reference: <token>`, small and grey). A reply that quotes the note
+  files on that client's record from any address (`T_YOUR_REF`, read after
+  the address and before the name). One of our own addresses counts only
+  when it is the one the row was written to, a colleague on a Test row. A
+  note Microsoft refuses is marked `[chase2] held: the note did not send`
+  and listed for the branch, never counted as sent. **`transitionStillTest`**
+  (the editor's Run button; asked for as "can i see a test") sends the
+  Test rows the note exactly as the chase would, each in the version its
+  letter brings: J the contract, K and T1 the application, I the payment,
+  the rest the review link. It marks nothing, and refuses while the site
+  still serves the old words. `health/still-test-harness.js` covers it
+  (29 checks).
+- **The chase only ever acts on a token this campaign's own Transition Send
+  tab recognises.** Client Responses has recorded taps from the site's
+  original doors since before this campaign — months of rows that still
+  read `Open` because nothing before 22 September ever looked at that
+  column again. The first version of `tChase_` did not know the
+  difference, tried to chase all of it in one run — up to three per-row
+  full re-reads of the Transition Send tab, times however many rows had
+  piled up — and timed out at Apps Script's six-minute ceiling with an
+  unknown number of internal nudges and client "still on it" notes already
+  sent to people who had nothing to do with this campaign. Fixed the same
+  day: the token map is read once per run (`tTokenMap_`), any row whose
+  token is not on it is passed over in silence, and `CHASE_MAX_PER_RUN`
+  bounds how much a single run will act on regardless, logging what was
+  deferred. Never widen the chase back to "every `Open` row" — that is the
+  exact bug — and never back to one chase per row, which is the other.
+- **What comes back is watched on `orphan-transition/responses.html`**
+  (opens with the branch code, like the wall; `action=transition`) and in
+  the digest from `transitionDigest`, which fires as many times a day as
+  `TRANSITION.DIGEST_HOURS` lists (`[8, 12]` by default — the noon run was
+  asked for on 22 September, for a lunchtime VP meeting).
+  `transitionSetup` tears down and rebuilds the digest triggers from that
+  list every time it runs, so changing the hours is just running it again.
+  First on both page and digest: taps waiting more than two working days
+  with nobody assigned. The manager's `dashboard.html` and the branch's
+  `wall.html` (six big slides, first names only) read the same answer.
+  **All three share one answer**: `transitionData_` caches `tSummary_` for
+  thirty seconds, because on the go-live afternoon the summary took seven
+  seconds a request and one request in eight was lost to the web app's own
+  timeout while several screens polled at once, which read on the screens
+  as "no walls are opening". A gate that could not reach the sheet tries
+  again by itself after fifteen seconds; only a refused code (the backend
+  says `refused: true`) sends a viewer back to the gate for good. **The wall
+  and the dashboard open on their last good answer** (25 September, "have
+  the wall a little faster"): each keeps it in `localStorage`
+  (`rrb-wall-snapshot`, `rrb-dash-snapshot`, twelve hours at most), paints
+  it the moment the page loads with "updating from the sheet…" on the
+  stamp, and swaps in the fresh answer when it arrives, so a wall switched
+  on again or a phone opening the page a second time never waits on the
+  gate; the first open on a new device still waits for the sheet, and a
+  refused code clears the saved picture. The branch code is `TEAM_CODE` in
+  Service.gs, never in the repository.
+- **Who is looking after whom is decided on the assignment board, not in
+  FactFind360.** Asked for on 26 September 2026 ("a link for who you are
+  going to assign which agent to meet with the client, an agent's login view
+  and a manager's login view, on these codes; shall I put FactFind360?").
+  **Its short address is `/orphanmanagement`** (7 October 2026: "a log in
+  so staff can view and log as well agent can do as well"): a stub that
+  forwards to `orphan-transition/assign.html` with the query and the hash,
+  so a `#t=…` link still opens one client. It is a staff address, never one
+  a client holds, which is the only place "orphan" may appear in a URL.
+  No: factfind360.com is the fact-find analyzer on Netlify from another
+  repository, with no sheet, no codes and none of these clients, and the two
+  hosting chains never touch. `orphan-transition/assign.html` sits beside the
+  dashboard and reads the same sheet through three actions in Service.gs's
+  `doGet` (`board`, `assign`, `update`, all in Transition.gs; `ping` answers
+  `campaign: 3` or more once they are deployed, 4 with the Client Book's
+  `book`). The branch code opens the whole
+  board: every client who answered, most pressing first (`T_PRIORITY`), with
+  their answers, taps, words and review, who is named and where it stands;
+  `all=1` adds the clients who have not answered, so a caller can be named on
+  them too. An agent's own portal code from the Agent Skill Bank opens their
+  list alone, and so does the branch code with the agent's name, the way the
+  agent portal works. Nothing is a new column: `assign` writes the agent into
+  Assigned to and Assigned on on the client's actionable rows of Client
+  Responses (a new `assign` row for a client with none), which the responses
+  page, the digest, the chase and the reports already read; `update` writes
+  the outcome into Status (Called, Met, Declined, Closed, Open; "No answer"
+  is a stamped note only), which is what stops the chase. Every write is
+  stamped in the Note cell (`[assigned 28 Sep · Name]`, `[met 28 Sep ·
+  Name]`), appended, never overwritten. Assigning sends the agent one
+  internal brief for the batch (MailApp, to the roster's e-mail, with the
+  internal footer) and, when the box is left ticked, the client the
+  introduction the receipt promised ("Meet your agent: Name", through
+  `clientMail_`, so from support@ when the Entra properties exist), once per
+  client per agent, marked `[intro Name]`. The roster is the Agent Skill
+  Bank: name, e-mail, Areas covered, Active, Portal code, and a Phone column
+  if one is added, which the introduction then carries; the sheet has no
+  client phone numbers unless a Phone column is added to Transition Send
+  (built from the portfolio copy in the scratchpad), and the board and the
+  brief read it when it is there. Codes never come back out of the backend.
+  `svc/assign-harness.js` (Node, mocked tabs) and `svc/assign-test.js`
+  (Playwright, mocked endpoint) in the session scratchpad cover it. A paste
+  of Service.gs blanks `TEAM_CODE`: put the branch code back before the New
+  version, or every screen locks out.
+- **After a call, one press on the board marks the file and can write to the
+  client in the manager's name.** Asked for on 28 September 2026 ("a button
+  where I click so I can update the notes and let them know that I will
+  assign their agent as discussed and will review etc, to create the
+  experience"). An outcome button (Called, Met, No answer, Declined, Closed)
+  opens a panel, not a prompt: the outcome; a note for the file, stamped in
+  the Note cell as before and never seen by the client (the card and the
+  agent's brief show it as a file note, `tFileNotes_`, never in quotes: a
+  client's own words come only from a reply, `tNoteWords_`, without the
+  phone's "Sent from my iPhone". Until 29 September the card quoted
+  whatever a Note cell held after its stamps, so a phone answer read "by
+  phone: read back on the call" as the client's words, a note the manager
+  typed would have too, and a reply was labelled "My details have
+  changed", the tap its row type shares; it now reads "Wrote back by
+  e-mail"); and, with the branch
+  code only, "E-mail <first name> a note from you". There are four notes, in `T_NOTES` in
+  Transition.gs: I am matching you with your agent, I am looking into your
+  file myself, Thank you: all noted, and I tried to reach you. The manager
+  can add a line of his own, and the panel shows every word before it goes
+  (`tNotesForBoard_` hands the board the backend's words). It goes from
+  support@ through Graph, signed by the manager (`TRANSITION.MANAGER`), with
+  the branch copied and the confidentiality footer, and never through Gmail.
+  The client's rows are marked `[told d MMM · key]`, and the same note never
+  goes twice in a day. A row that bounced, is held for anything, or has no
+  e-mail gets no note. An e-mail taken by phone and waiting for the go may
+  get one (`tNoteBlock_`). The notes never give a date for the agent,
+  never mention anyone who left, and never advise. Only the manager's press
+  sends one, so the hold on automatic client e-mail does not stop it: the
+  press is his go for that one note.
+  **The Client Support calls Google Sheet is one-way.** It reads the
+  campaign sheet through IMPORTRANGE. Nothing typed on it reaches Client
+  Responses, the board, the reports or the chase: not the callers' Try,
+  Reached? and Outcome columns, and not the manager's "Called on" and
+  "Outcome". On the first day of calls (28 September) the callers typed
+  nine e-mails into the sheet and recorded none on the page, so none could
+  reach a send row. By the next afternoon it was 107: of 120 new addresses
+  the three callers had taken, 13 went through the page, and one caller
+  had typed the addresses over the Call for column. They were filed from a paste
+  block for Client Responses, built in the scratchpad
+  (`sasha/build-fix.py`, checked by running `tFilePhoneEmails_` on a copy
+  of the live tabs, `sasha/dry-file.js`), rows exactly as the page writes
+  them (`informed`, `/your-policy/phone?q=email_given`, `call by <name>:
+  <address>`, `Logged`). The same file gives each caller the rows to put
+  right: a Reached? their own notes contradict ("voicemail"), and asks
+  (an agent, a cancellation, a statement) left without a call-back flag,
+  which the Staff call-backs tab never sees. `assign.html#t=<token>&s=<letter>`
+  opens the board on one client, and a HYPERLINK column on the sheet is
+  how a row gets to its outcome buttons. `svc/tell-harness.js` and
+  `svc/assign-panel-test.js` in the session scratchpad cover it.
+  **Details taken on a call are the branch's record, never the client's
+  answer** (`tContactRow_`, 29 September 2026): a `/your-policy/phone` row
+  whose `q` is `email_given`, `email_none`, `phone_given`,
+  `address_given`, `reach_*` or `when_*`. Until then any Client Responses
+  row counted, so every client whose e-mail Client Support took would have
+  been "answered": no five-day follow-up after their first letter, a tap
+  on the wall, an answer in the Monday report, and a card counted among
+  the answers on the board. Now `tAnswered_`, `tSummary_` and `tInsights_`
+  pass those rows over (a no-e-mail client on the call list still counts
+  as reached), and the board shows such a client as **reached by phone**
+  (state `reached`, its own tile and filter, after the answers), still
+  there to be named on, never in "have answered", the glance or the
+  insight counts; in the family line they read as their send row stands
+  ("e-mail taken by phone, waiting for the go"). The letter's own
+  questions ticked on a call (`rate_*`, `contact_*`, `pay_*` …) are
+  answers like any other. `health/contact-rows-harness.js` and
+  `svc/assign-reached-test.js` in the scratchpad cover it.
+  **An agent named from the board is the branch's record too**
+  (`tAssignRow_`, 30 September 2026). Naming an agent on a client who has
+  not answered writes an `assign` row with Page `/assign`, so the name has
+  a row to sit on. Every reader took that row for an answer. The receipts
+  run, which the hold on client e-mail does not stop, would have e-mailed
+  "Thank you, <first name>. We have received your response." to a client
+  who never answered. The chase would have sent them "still on it", their reminder
+  would have stopped, and the board would have counted them as answered.
+  Naming them again would have sent the introduction that thanks a client
+  for answering. No such row was on the sheet when it was caught.
+  `tOursRow_` (a contact row or an assign row) is now what `tAnswered_`,
+  `tSummary_` and `tInsights_` pass over, and the receipts run and the
+  chase skip `/assign` rows. The board shows such a client as **named, no
+  answer yet** (state `named`, with its own tile and filter). A client
+  reached by phone or named without answering never gets the
+  introduction (`tHasAnswered_`). `health/assign-rows-harness.js` (12 checks,
+  11 of them failing on the previous script) and `svc/assign-named-test.js`
+  cover it.
+- **Households are numbered, and the board shows the family beside each
+  card.** Asked for on 29 September 2026 ("group by addresses … assign a
+  household number so we can see whom from the household responded"). The
+  **Households** tab (Token, Household, and live Answered columns) is built
+  in the session scratchpad by `hh/build-households.py`, with the
+  reassignment's own rule: the same address, the same phone or the same
+  e-mail. A key shared by more than six clients is an office, not a
+  family, and a departed agent's or a staff member's own contact details
+  never link anyone. It is imported into the campaign sheet as its own tab
+  (File → Import → Insert new sheet, formulas converted); client names
+  never enter the repository. `tHouseholds_` reads it. On the board, each
+  card shows "Family on our list": each member, whether they answered and
+  what mattered most, or where they stand (no e-mail, sharing an inbox and
+  so without a letter of their own, an e-mail waiting for the go, written
+  to with no answer yet). "Select the family" ticks every member, those off
+  the board included, so one Assign names them all. The agent gets one
+  brief, and the introductions go one per inbox, never to a held address.
+  "Family of someone who answered" lists the members still to reach. The
+  rule misses some families: on file, a husband's policy can carry a house
+  number and his wife's a light-pole number on the same street, as one
+  couple's on these books do. For those, the update panel's "A family
+  member on our list" field (`transitionUpdate_` `family=`, `tLinkFamily_`,
+  branch code only) links the two. It gives them a new number, or joins
+  one household to the other, keeping the older number.
+  `svc/household-harness.js` and `svc/assign-household-test.js` in the
+  session scratchpad cover it.
+- **Families sharing one inbox: one letter a day, and a different surname
+  is confirmed first.** Until 29 September 2026, the sender sent a shared
+  inbox the first member's letter and held the rest for good as `check:
+  same e-mail as row N`: 95 clients, re-held on every run. The manager
+  chose the rule that day. A client whose inbox already had a letter gets
+  their own when they share a surname with the client written to. A
+  married name counts on either half ("Persad-Singh" and "Singh"); a lone
+  initial never does (`tSameFamily_`). They get it on a later day, because
+  an inbox never gets two letters on one day. A different surname may be
+  an office's or a relative's inbox. That client is held as `check: shares
+  an inbox with <name> (client N), a different surname: confirm the address`
+  for Client Support. An address a person confirmed on a call (a Reason of
+  "e-mail taken by …") passes. `tFilePhoneEmails_` files a confirmed
+  address onto such a row like any other. **One person on two client
+  numbers is not a family**: 26 of the 95 had the same name as the client
+  already written to at that inbox (one man on two consecutive client
+  numbers), and the family rule would have sent each the same letter a
+  second time. `tSamePerson_` (the same first name and a surname in
+  common, a letter out allowed: "Mohamed" and "Mohammed", "Ricki" and
+  "Ricky") holds such a row as `check: same name and inbox as <name> (client
+  N): likely one person on two client numbers, one letter is enough`,
+  compared against every letter the inbox has had, not only the first,
+  and a call that confirmed the address does not lift it. In 7 of the 26
+  the second number carries a different situation (a premium due, a
+  lapsed policy) that the first letter did not mention: a call, not a
+  letter. The 95 were sorted once by `tSharedInboxRows_`, first in the
+  five-minute receipts run after the paste: 43 family members freed for
+  their own letter after the go, 26 held to confirm the address, 26 held
+  as one person. It sets the `shared_inbox_sorted` property and never
+  runs again. Client Support's list for the 26 to confirm is built in the
+  scratchpad (`calls/Shared-inbox-confirm.xlsx`), with the `r=update` link
+  on every row. `health/shared-inbox-harness.js` there covers it, and
+  `health/shared-inbox-real.js` runs the sort on the latest sheet export.
+- **Each client's policies are on the board, from the live Branch
+  Portfolio, rebuilt every morning.** Asked for on 29 September 2026 ("we do
+  need to push more data the total cover, plan, tenure, premium etc"). The
+  manager chose the live portfolio read daily, the figures on each card, in
+  the agent's brief, in a "most at stake" order and on the roster, and
+  plan and paid-to only for Client Support. `transitionBuildClientBook`
+  (Transition.gs, 6:00 daily, and on the menu) opens the Branch Portfolio
+  by the ID in the `BOOK_SHEET_ID` Script property. The ID is set from the
+  menu ("Transition: set the Branch Portfolio link", which asks for the
+  link) and is never in the code, because the `.gs` files are public. The
+  build reads only the columns it needs, in chunks, and writes every policy
+  of every client on Transition Send to the **Client Book** tab, whole,
+  new rows over old, so the board never reads an empty tab. The board
+  (`tBook_`, `tBookFor_`) gives each card "Their policies with us": life
+  cover, a year's premium, in force and lapsed, the years with us, and a
+  line a policy. Rows without a card carry the totals and fetch the list
+  when opened (`action=book`, branch code only). The roster shows what each
+  agent has been named on; the household line shows the family's total;
+  the agent's brief lists each client's policies.
+  **Where a policy stands comes from Status Description.** Status 0 is also
+  surrendered, matured, expired and never taken. Premium Paying is in force,
+  or "premium due" with Status 2. Paid up, Waiver of Prem and Vested annuity
+  are in force with no premium. Status 3 is an application pending. Tenure
+  starts at the first policy that was ever issued. Not Proceeded With, Not
+  taken, Postponed, Rejected, Declined and File Closed never count.
+  **A year's premium is estimated**, because the portfolio's Mode column is
+  empty. A premium is monthly unless it is 10,000 or more, or 2,000 or more
+  with the paid-to date on the policy's anniversary, and single premiums
+  count as nil. Against the 2,120 policies whose mode the PBI export gives,
+  all but 44 come within half of their true year; the 44 are mostly
+  quarterly and half-yearly payers, which nothing on the sheet shows. The
+  board says how the figure is made.
+  **Life cover adds only confirmed life plans** where Salesforce gives no
+  split (see the Client Profile bullet below, which comes first). The
+  **Plan Codes** tab
+  holds a Plan name, a Class (life, critical illness, accident, health,
+  savings, other) and Confirmed for each code. A sum assured counts only
+  when the class is life and Confirmed is Y. It counts at once, without a
+  rebuild, because the tab is read on every request. An unconfirmed life
+  plan or an unclassified one shows its sum assured as "not counted"; the
+  other classes are listed and never added. The build refreshes the counts
+  and adds any new code with no class. The proposal for sales support
+  (`Plan-codes-to-confirm.xlsx`, `tbook/plan-codes.py` in the scratchpad)
+  takes names and classes from the PBI export's Plan column. It leaves 19
+  codes blank, CR2RP1, CR3RP1 and CR4RP1 among them. For Evolution the
+  portfolio's Sum Assured can include riders; sales support is asked.
+  **Who sees what.** An agent sees the figures for their own clients only:
+  a family's total only when every member is theirs, no other agent's
+  figures, and `book` refuses their code. Client Support sees no money
+  (since 5 October the plans, status and paid-to dates, and the insights,
+  without a figure: see the sign-in bullet below). The build writes two money-free
+  columns onto Transition Send, `Plans on file` ("Econo Life to 65: in
+  force, paid to 21 Sep 2026; …") and `Paid to on file`. The calls sheet's
+  Feed tab already imports `'Transition Send'!A:AZ`, and each caller's tab
+  looks them up by Token. That is a display rule, not a wall: anyone who can
+  edit the calls sheet could IMPORTRANGE the Client Book tab too.
+  `svc/book-harness.js` (mocked tabs) and `svc/assign-book-test.js`
+  (36, Playwright, fixtures written by the harness from the backend) in the
+  session scratchpad cover it.
+- **Each card says who the client is, and the household shows everyone's
+  cover.** Asked for on 29 September 2026: "have the husband as the <name>
+  household and include the wife cover so we can see the wife and his
+  cover as well anyone else who is covered in the household, we should also
+  have the occupation and incomes etc as well any other data like
+  beneficiary etc to make some insights".
+  **The Client Profile tab** holds, one row a policy, what Salesforce's
+  `CLIENT_PORTFOLIO__c` and its Contact record: date of birth, gender,
+  smoker, occupation, employer, income, the life, critical illness,
+  accident and waiver cover, when the life cover ends, up to three
+  beneficiaries ("Benificiary" there), insured, owner, family role. It is
+  imported once from the scratchpad (`profile/build-profile.py`, from the
+  connector pulls). The morning build rewrites it straight from Salesforce
+  (`tProfileRefresh_`) once this project has the four `SF_*` Script
+  properties that `ServiceSalesforce.gs` uses; until then the imported tab
+  stands, and the build's message says which. The refresh asks by policy
+  number, never by client number: clients opened from about mid-2026
+  (numbers from about 0000745000) carry no `Client_Number__c` there.
+  **The name and date of birth on a policy record are the life insured's,
+  not the owner's.** The portfolio's client is the owner; a policy a
+  parent took out on a child's life carries the child's name and birth
+  date (one mother on these books owns two on her daughters' lives, issued
+  at 3 and at 0, each paying "Proposer - Female", the mother herself). `INSURED__c` is
+  filled on a few policies in a hundred, so the Insured column is
+  `INSURED__c`, else the record's own name (`tProfileRow_`,
+  `Client-Profile-v4.xlsx` in the scratchpad for the import). Who a client
+  is comes only from policies on their own life (`tOtherLife_`: not the
+  same first name with a surname in common or beginning alike), unless
+  none is, when every policy is read as before; until 29 September the
+  board took the first birth date it met and read that mother as 5. On the
+  families' policies that corrected ten ages, and 69 policy lines now say
+  whose life they cover. "Proposer" as the beneficiary is on adults'
+  policies as often as children's (median issue age 33): it means whoever
+  took out the policy, a parent or guardian only where the policy was
+  issued before 18.
+  **What is there, measured on 29 September 2026 over the campaign's live
+  policies:** date of birth 98%, gender 93%, a life figure 74%, critical
+  illness 38%. Who a policy pays, over every live policy of the books'
+  clients: the estate 33%, "(See Special Provisions)" 30%, a role only
+  ("Proposer", "Annuitant") 24%, a named person 4%, nothing on our file 9%.
+  (A first count over part of the pull said one in eight for the estate; the
+  whole pull says a third.) **Occupation** is on the policy record
+  (`Occupation__c`) for only 7 clients in 100, but the branch has always
+  typed the job into the Contact's **Title** ("TEACHER", "POLICE OFFICER"),
+  so the Occupation column falls back to it once courtesy titles and
+  placeholders are dropped (`tJobTitle_`: never "MR", "Mrs.", "UNKNOWN",
+  "NOT ON LIST"). That raised occupation to 56% of the books' clients
+  (1,312 of 2,333), and to 88 of the 149 who had answered, from 3. The
+  refresh asks for `Contact__r.Title` too. An income is on file for about 1
+  client in 20. `Contact.Employer__c` mostly holds a household's or an
+  agent's name ("RAMROACH, KERWYN HH"), so only a value that reads as an
+  employer or a status is shown (`T_EMPLOYER`), about 1 client in 9. The
+  board shows what is there and never guesses the rest. Occupations and
+  employers typed in capitals or lower case print in title case, with the
+  island's acronyms kept whole (`tNiceLabel_`: T&TEC, WASA, NGC).
+  **Life cover now comes from Salesforce's split first** (`tCoverOf_`). The
+  portfolio's Sum Assured lumps an Evolution policy's life and critical
+  illness together: on 206 of 509 live Evolution policies it equalled
+  life plus CI. So a policy with Salesforce figures counts its life figure;
+  a savings, accident or health plan never counts as life, whatever its
+  fields say (house rule), and an accident plan's figure shows as accident
+  cover. Without Salesforce figures, the Plan Codes rule above applies.
+  Critical illness is shown and totalled separately, never added to life.
+  **The card** gets a profile line (age, gender, date of birth, and the
+  occupation, employer and income when recorded) and **what the records
+  say** (`tInsightsFor_`), as chips, most pressing first: a premium due 30
+  days or more, life cover ending within five years (Salesforce's date, or
+  the plan's name: "to 65" from the date of birth, "20 years" from the
+  issue date), a policy that pays the estate, a beneficiary in the special
+  provisions or recorded only as a role, no life cover in force, a lapsed
+  policy, life cover against the income on file, a birthday within 30
+  days. A paid-to date more than a year gone on a policy the portfolio
+  still calls premium paying reads "Paid to Aug 2018 on Evolution to 65,
+  still shown as premium paying: check the record", never "Premium due
+  2954 days" (50 of the 371 overdue policies in the families on 29
+  September; `APLamount` is 0 on every one, so nothing says why). Only
+  what the records show; never advice. The policy table gains
+  the cover split, who each policy pays, and who it insures when that is
+  someone else. The branch gets a bar of counts over the clients who
+  answered, each a filter; the same filter reaches silent rows through the
+  keys they carry (`ik`).
+  **The household** holds everyone at the address, phone or e-mail, not
+  only the send list. `hh/build-households2.py` (scratchpad) adds the
+  branch's other clients who share a campaign client's keys, with their
+  client number and current agent. It counts a key shared by more than six
+  clients across the whole portfolio as an office, never links through a
+  departed agent's or staff member's own details, never includes a departed
+  agent, their household, staff or anyone with a death claim, and carries
+  the links the branch has told us about (`MANUAL`: one husband and wife
+  whose policies carry two addresses for one house). The Client Book build reads
+  those members' policies too. **The head** is the member marked Head on the
+  tab, else the adult with the most life cover, then the most premium a
+  year, then the eldest; the household is named after them ("<head's
+  name> household"). The panel lists every member, the head first: age and
+  gender, where they stand, and their cover. It totals the family's life
+  cover, critical illness and premium, and names any adult under 65 with no
+  life cover with us.
+  **Who sees what here:** the branch sees every member and figure,
+  including family members with other agents. An agent sees the members on
+  our list by name, age and where they stand, and figures only for their
+  own clients. Never a member with another agent, and a family total only
+  when every member is theirs. The brief carries the client's profile, what
+  to raise first, the cover split, who each policy pays, and the family on
+  our list by name and age.
+  `svc/book-harness.js` (78 checks), `svc/assign-profile-test.js` (29,
+  Playwright) and `svc/board-dryrun.js` (the whole board on the latest sheet
+  export, the portfolio copy and the pulled profile) in the session
+  scratchpad cover it.
+- **The board suggests who looks after whom, and shows the book at a
+  glance.** Asked for on 29 September 2026, late: "Where is the occupation
+  and other insights given the data you have?? Also how is the assignment
+  going to be??" Until then the agent was picked card by card ("it was just
+  randomly we assign").
+  **The suggestion** (`tSuggest_`, for whoever may name: the branch, and
+  since 5 October the staff) sits on every client
+  nobody is named on, with the reason, in this order. First the family: if
+  someone in the household already has an agent, the rest go to that agent.
+  Then the plan: the 24 September split as the team checked it, imported as
+  the **Assignment Plan** tab (one row a client: Plan agent, Team's pick,
+  Band, Area, Plan household, Moved; `plan/build-plan.py` in the scratchpad
+  from `Transition-split-checked-24Sep.xlsx`). It covers 1,479 of the 2,333
+  clients of the books; most of the rest have nothing in force (the G
+  letter) or are on the terminated book. A household on the board takes its
+  head's plan agent, so the two lists' different ideas of a family never
+  split one. Last the lightest list: the active agent with the fewest
+  clients named or suggested so far, counted as the pass goes, so what is
+  left goes round the roster evenly, one household at a time. A plan name
+  matches the Agent Skill Bank by full name, or by a first name only one
+  active agent carries. An agent the plan names who is not on the roster is
+  shown as such ("the 24 Sep plan names Narissa, who is not on the Agent
+  Skill Bank yet"), never swapped for someone else, and the note under the
+  roster lists them. **Nothing is named until the press:** "Assign to
+  Narissa" on a card, "Assign" on a row, or tick any number and "Assign each
+  as suggested", which sends one request per agent (40 clients at most per
+  request, as the tokens travel in the address). "Select all N shown" ticks
+  what the filters show, and a "Suggested agent" filter shows one agent's
+  share. The roster chips say how many are suggested to each. On the real
+  data, with the twelve plan agents on a trial roster: 1,050 from the plan,
+  460 to the lightest list, about 125 each, and no household split.
+  **The introduction goes only to a client who answered.** It thanks them
+  for answering, so a silent client, or the family of one who answered, is
+  named and briefed but gets no e-mail (`notAnswered` in the reply; the
+  toast says so). Until 29 September "Select the family" sent it to
+  everyone. **A brief shows 25 clients in full** (`T_BRIEF_FULL`) and names
+  the rest, so a big batch never builds an e-mail too large to send. The
+  board read for an assign skips the glance (`tBoard_(w, all, lite)`).
+  **Four more insights**, from data the book already holds: `payroll`
+  (a live premium by salary deduction or military pay; a change of job, or
+  leaving the service, stops the deduction), `waived` (the waiver benefit
+  pays the premium), `surr` (surrendered a policy with us before), and
+  `noci` (an adult under 65 with life cover and no critical illness cover,
+  only where Salesforce has split every live policy). The profile line says
+  "pays by salary deduction" or "paid from military pay" (`pay` in
+  `tProfileFor_`), which tells the agent the client is employed even where
+  no occupation is recorded. Over those who answered: payroll 12, surr 22,
+  noci 37.
+  **The book at a glance** (`tGlance_`, branch only, folded until opened,
+  with a switch between every client of the books and those who answered):
+  clients, premium a year, life and critical illness cover, a premium due,
+  a lapsed policy; then age bands with the women and men, years with us,
+  what they hold, how they pay, who the policies pay, the top occupations
+  and employers with how many have one on file, and the median income. The
+  whole-book view is cached for ten minutes. The books' clients are the
+  send list's, never a departed agent's own policies, their household,
+  staff, a death claim or someone who holds nothing (`T_NOT_BOOK`).
+  **A card never runs wider than the screen.** A client's reply can carry a
+  250-character link from an e-mail signature; on the real data that pushed
+  the board 1,090 px past a phone's edge. The card column now shrinks and
+  long words wrap.
+  `svc/book-harness.js` (110 checks), `svc/assign-suggest-test.js` (29,
+  Playwright) and `svc/board-dryrun.js` (a trial roster of the twelve plan
+  agents; aggregates only) in the session scratchpad cover it.
+- **Assignments made in Salesforce reach the board and the wall, by
+  household.** Asked for on 1 October 2026, for the next morning's branch
+  meeting: "i have started assign through salesfroce so the firlds is date
+  assigned, campaign orphan, the agent name as assigned agent", then "i want
+  this built as some 3 slides on the transition wall, would like to assign
+  the households". The manager names the agent on the policy record
+  (`CLIENT_PORTFOLIO__c`): Assigned Agent (`Assigned_Agent__c`, a Contact),
+  Date Assigned to Agent, Campaign (`Campaign__c`, "Orphan"), and Campaign
+  Feedback Update (`Campain_Feedback_Update__c`, spelt so) for what the
+  agent reports. The first pull that day found 13 policies, 9 client
+  numbers and 8 households, named from 22 to 30 September. Campaign was
+  blank on 5 of the 13, so a Salesforce report filtered on Campaign =
+  Orphan misses them; filter on Date Assigned to Agent. `Orphan_Assigned__c`
+  was blank on all 13. The Contact's `Agent_Assigned__c` and
+  `Date_Assigned__c` have not been used lately. The household Account ("X
+  HH") has only `AGENT__c`, mostly empty and otherwise an old or departed
+  agent, with no date, so an assignment is not recorded there.
+  **The Household Assignments tab** has one row per client of the books:
+  Household, Household name, Members, Token, Client, Client number, Letter,
+  Book, Policies, Agent assigned, Date assigned, Source, Feedback, Suggested
+  agent, Why suggested. It is built in the session scratchpad
+  (`sfassign/build-ha.py`, from the send list, the 29 September households
+  and the policy numbers) and imported once. `tHaSync_` keeps the four agent
+  columns current. It runs inside the five-minute receipts run, at most
+  every fifteen minutes; `transitionSyncAssignments` on the editor's Run
+  button forces it. It reads Salesforce when the `SF_*` properties are set:
+  every assignment dated since 9 September, matched by policy number, else
+  client number, else a name only one row carries. Then it reads the
+  board's Assigned to. It rewrites only a row it wrote itself (Source
+  `Salesforce` or `board`) or one nobody has named, so a name typed by hand
+  under any other Source stays. When Salesforce does not answer, the names
+  it gave last stay. The Token column is read again before any write, as
+  on Transition Send. More than 25 changes are written as four whole
+  columns, so a board assigning by the hundred never runs into the
+  six-minute limit.
+  **Wall slides 6 to 8** come from `tHaWall_`, inside `tSummary_` as
+  `assign`:
+  - *Assigning the books*: households with an agent, out of all of them;
+    answered households with one; the last fortnight by day.
+  - *Who looks after whom*: each agent's households and clients, with the
+    feedback recorded in Salesforce.
+  - *Next households to assign*: families half named first, with the agent
+    the family already has; then answered households with nobody, most
+    pressing first, each with its suggestion.
+
+  Clients appear by first name and agents by first name and initial.
+  Answers marked "look automated" do not count here either. A backend
+  without the block, or a sheet without the tab, leaves the three slides
+  out of the cycle; the promise is slide 9.
+  **An agent logs in to see their assignments.** `tBoard_` reads the tab, so
+  a client Salesforce names to an agent is on that agent's list in
+  `assign.html`. A client who never answered appears as a "named, no answer
+  yet" card. Where the board and Salesforce name different agents, the
+  newer name wins. An agent opens their list with **their agent number and
+  their own code, both** ("agent Number, and name and code", 1 October
+  2026). The number is the Agent no. on the Agent Skill Bank (A10024,
+  10024, or the name as written there), and the code is that row's Portal
+  code. A code opens only the list of the agent it belongs to, a code with
+  no number opens nothing, and a refusal never says which of the two was
+  wrong. The codes are eight digits, because the gate shows a number pad.
+  They are made in the scratchpad and never enter the repository. **They
+  are not the Branch Portfolio's passwords.** Those run 1 to 33 in list
+  order, and on 1 October that list still showed the departed agents as
+  Active, so one guessed code would show an agent's orphan clients and
+  what they told us. The Skill Bank's Active column locks a person out
+  when it reads No, Not Active, Inactive, Resigned or Terminated
+  (`T_INACTIVE`; until 1 October only "No" did). **An agent's code never
+  opens the wall, the dashboard or the responses page**: their one answer
+  (`transitionData_`) carries every client's name and answers, so
+  `tCodeOk_` takes the branch code only. Until 1 October any active
+  agent's portal code opened them, which would have shown every agent all
+  the clients the moment the codes were handed out. With TEAM_CODE empty
+  after a Service.gs paste, those pages now say so. The follow-up note
+  holds for a client Salesforce names, as it does for one named on the
+  board.
+  **Sign-in by role, from the Agent Skill Bank** (3 October 2026; ping
+  `campaign: 6`). The branch manager set up the access on the Agent Skill
+  Bank itself ("I did put the agent access in the Service Questionnaire"):
+  Agent ("A00427 - <name>"), Agent no., **Password**, **Role**, **Unit**,
+  Active, then the old columns, a second Active among them. He asked that
+  "an agent uses his agent number and password assigned. I am the branch
+  manager so when I log in I can see what's happening in the branch by
+  units and persons that also fall under me. Akaash should see his team as
+  he is a unit manager." `tTeam_` reads the tab (the number in front of a
+  name dropped, either Active reading inactive taking the person off) and
+  `tWho_` signs in by agent number and Password, as a digest, never the
+  password itself; the old Portal code still works for anyone with no
+  Password. What each role sees on `assign.html`: a **Branch Manager** (or
+  an Assistant Branch Manager) the whole board, the roster grouped **by
+  unit and person** (`tUnits_`: each unit under the manager its Unit column
+  names, with named, answered, open, late, done and the premium a year;
+  someone whose unit manager has left under "no unit manager now"); a
+  **Unit Manager** his team, himself and everyone whose Unit is his name,
+  their clients and figures, his unit only; an **agent** their own list;
+  **Staff** (Client Support and the manager's assistant) every client who
+  answered, marking calls in their own name, with `r=update` links.
+  **Since 5 October 2026 staff get the insights too, still with no
+  money** ("I do need the staff to log in with the insights shared"; the
+  manager chose insights without figures over everything the agents see):
+  `tBoard_` passes their cards through `tPolNoMoney_` and
+  `tProfileNoMoney_`, so a card carries who the client is (age, gender,
+  date of birth, occupation, employer, how they pay), every insight line
+  but cover against income (`T_MONEY_INS`), and each policy as its plan,
+  where it stands, when issued, what it is paid to and whose life it
+  insures, with the totals as counts and years; never a premium, a sum
+  assured, cover, a beneficiary or an income. The page reads
+  `book.money === false` and draws the money-free panel (`polPanelPlain`),
+  hides the order-by-value control, the premium tile and the
+  cover-against-income filter. Until then staff saw no policy or profile
+  at all. `svc/book-harness.js` checks nothing with a figure reaches them
+  and `roles/roles-test.js` that none shows. **The branch and the staff
+  name an agent; a unit manager and an agent never do** (5 October 2026,
+  later the same day: "as the branch manager i and the staff has to be
+  given the option of which agent to assign"; until then the branch alone).
+  `tCanAssign_` is the one rule, `transitionAssign_` and `tBoard_` both
+  read it, and the page is told (`canAssign`; an older backend says
+  nothing and the page falls back to the branch alone). Staff get the
+  whole roster with no figures on it, the suggestion with its reason on
+  every card nobody is named on, "Assign to …", the tick boxes, the bar,
+  "Select the family" and "Assign each as suggested", and may name only
+  a client on their own board (never a silent row). The manager chose
+  that a staff naming does everything his does: the agent's brief, and
+  the introduction to a client who answered (the tick box stands, so a
+  staff member can untick it for one client). The file says who named:
+  the stamp stays `[assigned d MMM · Agent]` so the claims and the history
+  read it as before, and "named by <staff name>" follows it as the file
+  note the card and the brief show; an assign row made for a client with
+  no row carries `staff: <name>` in Referrer. Akaash, as unit manager,
+  was offered naming within his unit and the manager kept it to himself
+  and the staff. The notes to clients stay the Branch Manager's: only the
+  Branch Manager (or the branch code) e-mails a client a note,
+  because the notes go in his name, and staff are never on the roster to
+  be named. "Branch Manager Assistant" is staff, never the branch manager
+  (`tRoleOf_`). The locks, whatever the tab says: anyone who was the agent
+  on these books (the Agent column of Transition Send, `tFormer_`) never
+  signs in and is never on the roster; and ten wrong tries on one number
+  close it for fifteen minutes. **The passwords are the ones on the tab, at
+  the manager's choice** (7 October 2026: "i still want to keep as is").
+  Until then a password shorter than eight characters opened nothing. That
+  day every password on the tab was one or two digits, eighteen of the
+  twenty-three the row number and several shared, and he was told that a
+  guess from an agent number would open the board, his own view included.
+  `T_USERS.MIN` is 1; raising it brings the rule back and changes nothing
+  else. Do not raise it without him. The
+  manager's performance portal keeps its own Users tab with the same
+  scheme; the board does not read it. New eight-digit passwords, the
+  1 October code kept for whoever had one, are built in the scratchpad
+  (`roles/build-passwords.py`) and never enter the repository; the menu's
+  "Transition: check the agent access" says how many can sign in, never a
+  password. `skillBank_` in Service.gs reads the same tab the same way, so
+  the agent portal and the service wall see clean names, no staff, and an
+  eight-character Password as the agent's own code. Until the paste, the
+  live board lists each name with its number in front and the staff as
+  agents: nobody is named from the board before it. `roles/roles-harness.js`
+  (66 checks), `roles/roles-test.js` (Playwright, 27) and
+  `roles/real-check.js` (the real tab with the new passwords) in the
+  scratchpad cover it.
+  **On 1 October 2026 the live web app still answered `campaign: 2`**, so
+  the board, its login included, answered nobody. Its routes are in
+  `Service.gs`. The fix is to paste Service.gs and Transition.gs, put the
+  branch code back into TEAM_CODE, and publish a New version.
+  **The departed agents in Salesforce** are Contacts of record type AGENT.
+  Their Employment Status reads Resigned for nine, set by sales support
+  on 29 September, and Not Active for the other two.
+  Their Termination Date reads 21 September for the ten who resigned; it
+  was set on 1 October at the manager's word ("the resignation date
+  should be the 21st September"). Before that, nine read 30 September,
+  the date in the agents' own letters, and one read 25 February 2026.
+  The terminated contract is not a resignation: that record reads 10
+  September, and the branch's reports say 9. Salesforce has no separate
+  resignation-date field. Only one of them ever had a Salesforce login,
+  and both of its accounts are inactive. **Client names stay out of these
+  notes and out of code comments**: the site publishes the repository
+  root, CLAUDE.md and the `.gs` files included, so a name written here is
+  on the open web. Describe the case ("one couple", "a client") instead. The wall on factfind360.com was
+  considered and left alone: the two hosting chains never touch.
+  `sfassign/ha-harness.js` (Node, mocked tabs and Salesforce) and
+  `sfassign/wall-test.js` (Playwright, the real summary) in the scratchpad
+  cover it.
+- **A questionnaire after the naming earns the agent TT$200, and the claim
+  is chased until Salesforce has the payment date** (3 October 2026; ping
+  `campaign: 7`). The manager asked: "when a questionnaire is recieved the
+  agent is compensated 200.00 as an email goes to retention email
+  GlocConservationRetentionunit@myguardiangroup.com with the details and to
+  track payments, the email have to be followed up until the payment date is
+  updated on salesforce". He set the rules the same day. A claim needs a
+  service questionnaire received on or after the day the client was named to
+  an agent, whoever sent the link. There is one claim per client. Each claim
+  is e-mailed when it is found, with the manager and the agent copied. Every
+  Monday one list of the unpaid claims goes, oldest first. The machinery is
+  `T_CLAIM` and `tClaimsRun_` in Transition.gs, at the end of the five-minute
+  receipts run. A questionnaire is placed on a client by its Link ref, else by
+  a policy number only that client holds, else by an e-mail only they have.
+  The agent is the one they were named to when it came in: the board's names,
+  the `[assigned …]` stamps that keep the earlier ones, and Salesforce's. A
+  questionnaire from before the naming earns nothing. So do a staff Test row,
+  a departed agent's own policy or household, a TEST policy and the pilot.
+  The agent must be active on the Agent Skill Bank, matched by full name, or
+  the claim is held. Each claim is a row on the **Retention Payments** tab
+  (`RP-yyMMdd-nnn`). The claim e-mail goes from support@ through Graph,
+  signed by the manager, a reply going to him, with the confidentiality line
+  for Guardian Life. **Salesforce already keeps the branch's claims** on the
+  policy record: Date Subm to Retention, Was Agent Paid (Yes or No) and Date
+  Comm Paid, the commission run's date, the 4th of a month. On 3 October it
+  held 250 claims since 2024, some marked Yes with no date. A claim writes the
+  first two the same way on one of the client's policies, in this order of
+  choice: the questionnaire's, the one the agent was named on in Salesforce,
+  then the live one with the largest premium. It never writes over an
+  earlier claim's date. A submission already entered by hand, on or after
+  the naming, is recorded and never e-mailed twice. **The claim is closed**
+  when Date Comm Paid, on or after the naming, is on any of the client's
+  policies; Was Agent Paid is then set to Yes. A date still to come counts,
+  and the board reads it "to be paid". A Paid date typed on the tab also
+  closes a claim, and Void, Declined or Withdrawn in Status stop it. The
+  Monday list goes to the Retention unit with the manager copied, never the
+  agents, because it carries every agent's clients; each agent sees their own
+  claims on the board. **Nothing goes until the manager's go**:
+  `transitionClaimsStart`, on the menu as "Transition: start the TT$200
+  claims". Until then a claim is found, recorded and held. The board shows
+  the branch every claim, a unit manager his team's and an agent their own,
+  by the agent the claim pays. Staff see none. Without the `SF_*` properties
+  the e-mails still go, and the tab says to enter the dates by hand.
+  `claims/claims-harness.js` (68 checks) and `claims/claims-test.js`
+  (Playwright, 31) in the scratchpad cover it.
+- **One client in full on the board: the history, their Salesforce tasks,
+  and the team's comments** (3 October 2026, the same request: "so the agent
+  can see the email and history and tasks opened on salesforce assigned to
+  the staff and a place for their comments"). *History · tasks · comments*
+  on a card asks `action=detail`, and the board opens on it from a
+  `#t=` link. **The history** is `tTrail_` read about the client rather than
+  to them: the letter by its subject line, a reminder, their answers and
+  replies, our receipts and notes. Beside it is what the branch did: who they
+  were named to, each call marked with its file note, the questionnaire and
+  the claim. It runs newest first, each line marked whose it is. **The tasks**
+  are every Salesforce task on their policy records or their contact record,
+  open or changed in the last fourteen days. Each shows who it is assigned
+  to, its due date, who opened it and its Chatter, posts and replies, as
+  plain text. A flow's broken subject (`$Record.FirstName`) reads "Birthday
+  e-mail (automatic)". **A comment** is kept on the **Board Comments** tab.
+  It is posted to the Chatter of the client's newest three open tasks, or to
+  a policy record when none is open, headed with the writer's name, since
+  Salesforce shows the integration user as the poster. Who may open a client
+  is who sees the card: the branch and staff anyone, a unit manager his
+  team's, an agent their own. Staff never see the claim. The board's
+  two-minute refresh waits while a comment is being written. Signing out
+  forgets every client opened, every comment not yet saved, every policy
+  fetched and the board kept on the device, so the next person on the
+  device starts clean.
+- **The calls moved onto the board, and the branch opens on what to act on**
+  (7 October 2026: "where does staff make their notes and who to call as we
+  move from the spreadsheet to data entry when call and can see the scripts",
+  then "as the branch manager when you log in where do you see what is to
+  action urgent, the naotes and history staff mande organized and poae to
+  reassign"). **The Call List tab** is each caller's list from the Client
+  Support calls Google Sheet, imported once (built in the scratchpad by
+  `calls7oct/build-call-list.py`): Token, Caller (the full name on the Agent
+  Skill Bank), Order (the caller's own row number, so the terminated book
+  and the action letters stay first), Letter, Call for, Phone, Other
+  numbers, E-mail on file, Address on file, Notice agent, From the calls
+  sheet (the tries, Reached? and outcome typed there, as one line), Call-back
+  and Done. `tCalls_` reads it. A client on it with nothing on Client
+  Responses is a light "to call" row (`tToCall_`: on a caller's list or the
+  no-number list, not Done, never under the manager's hold on a book, never
+  one the books leave out), for the branch and for staff, never for an agent
+  or a unit manager. Staff open on **your calls** (their own list, matched by
+  full name); the branch opens on **act now**: clients still open whose most
+  pressing answer scores 80 or more in `T_PRIORITY` (an agent now, the former
+  agent in touch, a change suggested, a payment to trace, paying in person) or
+  who are late. **A try is logged on the board.** `transitionUpdate_` on a
+  client with no row writes a `/call` row (Response `call`, Referrer `staff:
+  <name>` or `branch`), the branch and staff only. `tCallRow_` makes it the
+  branch's record everywhere `tAssignRow_` already did: never thanked, never
+  chased, never an answer, never a tap on the wall or in the reports; a call
+  marked Called or Met counts as having spoken to the client, so it stops the
+  five-day reminder (`tSpokeCall_` in `tRespondedAt_`). The card then reads
+  "called, no answer yet" with every stamp and note. The panel offers the
+  usual outcomes as one-tap notes and no "still on it" note for a client who
+  has not answered. Nothing typed on the old calls sheet ever reaches the
+  board: the board is the record now. **From the team** (branch only) counts
+  each person's outcomes today and over seven days from the stamps every
+  outcome leaves, and lists their notes newest first; a name opens that
+  client. **Reassign to…** replaces Assign to… on a card that already has an
+  agent. **Scripts** (`client-support.html`, `call-script.html`,
+  `agent-brief.html`, `if-they-say.html`) are linked under the title and on
+  every call row. While automatic client e-mail is held the board says so and
+  the introduce box starts unticked, after an introduction went to a client
+  during training that afternoon; with a backend that holds introductions
+  too (see the hold bullet), the box cannot be ticked at all while the hold
+  is on. **Households** come from the Household
+  Assignments tab when there is no Households tab (`tHouseholds_`; a family
+  link is then made there too, so one linked pair never hides every other
+  household), and so does the 24 September suggestion when there is no
+  Assignment Plan tab (`tPlan_`). **Speed:** a board request reads Transition
+  Send and the Agent Skill Bank once (`T_READ_ONCE`), and the page draws sixty
+  cards at a time ("Show the next"): on a phone's CPU the branch board went
+  from 6.3 to about 2 seconds after the answer arrives; Apps Script itself
+  still takes some ten seconds to read the sheet. `slow7oct/calls-harness.js`
+  (25 checks, Node, the real tabs) and `slow7oct/board-calls-test.js` (26,
+  Playwright) in the scratchpad cover it. **The board opens on the last
+  board it showed** (the same afternoon: "logging in as me too long to
+  refresh"). The page keeps it on the device as `rrb-assign-snapshot`, as
+  the wall and the dashboard keep theirs. It is painted at once when the
+  page opens again, and the sheet's answer replaces it seconds later. It is
+  kept twelve hours at most and only for the person it was read for (a hash
+  of the number and password, never the password itself). It goes on
+  sign-out and on a refused password. Nothing is saved from it: an outcome,
+  a naming or a comment waits for the fresh board. Refresh reads
+  "Updating…" while the sheet answers. A reload asked for during another
+  is made straight after it; until then, a save that landed mid-refresh
+  waited two minutes to show. Every tab is read once per board request
+  (`tSheetRows_` under `T_READ_ONCE`), so Household Assignments is read
+  once instead of two or three times. `speed7oct/snap-test.js` (24,
+  Playwright) and `speed7oct/same.js` (the answer byte for byte the same
+  before and after, for every role) in the scratchpad cover it.
+- **The board is in tabs, and every card says who the client is, where they
+  live and who they live with** (7 October 2026, evening: "need more data and
+  spaced out properly scaled professionally and need address and occupation
+  and households!", then "there should be tabs re a call list as staff did
+  indicate an urgent call is needed so deep insights for the branch manager to
+  review and assign … very important on the format, fonts for easy reading on
+  any device", then "the orphan data is pulled from the google branch
+  intelligence sheets … there are many sheets with data").
+  **The tabs.** The branch: Urgent, To assign, Call list, In progress, Done,
+  Households, All clients, then Team and Insights. Staff open on Your calls.
+  An agent gets To call, Done and All (Urgent and Claims only when they have
+  some). Each list tab opens with its own numbers, and a tap on one shows that
+  sub-list. Under them are its breakdowns (why they need us, who asked for the
+  call-back, where they live, letter, was with, age, suggested agent, agent
+  named); a tap on any line filters the list. The breakdowns fold away on a
+  phone. **Households** shows each family as one card, with "Assign the 2 to
+  …" for the family's agent or the head's suggestion.
+  **The card** has five blocks:
+  - Reach them: every number once (`tContactFor_`), the e-mail, how and when.
+  - Lives at: the town, then the address.
+  - About: age, gender, occupation, employer, born, how they pay.
+  - With us: since when, in force, the premium a year, cover.
+  - Household: its name and size, who answered, the family's agent.
+
+  The policies and the household open on the card. The base type is 16 px,
+  and long e-mails wrap (`overflow-wrap:anywhere`), so no tab is wider than a
+  phone.
+  **Call-backs.** The calls sheet's Call-back column (136 for a licensed
+  agent, 6 for the branch, 6 do not call) was buried: 98 of the agent
+  call-backs sat among the "reached by phone" cards. It is now a flag on the
+  client (`tBackOf_`). Staff and the branch set one on the board with the
+  outcome (`transitionUpdate_` `back=agent|branch|dnc|clear`), stamped after
+  the note, so the note is its reason (`[call-back agent 7 Oct · Name]`). It
+  stays open until one of these happens:
+  - it is cleared;
+  - the client is marked Met, Closed or Declined;
+  - for a licensed agent's call-back, the agent named on the client marks the
+    call;
+  - for the branch's call-back, the branch manager or an assistant does.
+
+  It is read from the row holding the most stamps (`tSeq_`). Every update
+  writes the same stamps on each of the client's rows, and `c.markers` keeps
+  each stamp once, so a second flag by the same person on the same day would
+  otherwise vanish behind an earlier clear. Do not call is its own state
+  (`dnc`): off every list to call, with no call buttons. Urgent lists the
+  call-backs first (board flags newest first), then the pressing answers,
+  then the late ones.
+  **Where the card's data comes from.**
+  - The Client Profile: Salesforce's address lines with the town apart, the
+    mobile and home numbers, plan, status, paid to and issued. It was
+    imported once from the scratchpad (`Client-Profile-7Oct.xlsx`, built by
+    `board8/build-profile.js` with the script's own `tProfileRow_`). The
+    morning build refreshes it when the `SF_*` properties are set.
+  - The Client Book: the Branch Portfolio, which is the branch intelligence
+    workbook (`INTEL.WORKBOOK`). Its first tab is now the premium-dues
+    extract: that evening it held 1,359 of the campaign's 4,805 policies. So
+    the build also reads the workbook's in-force book tab (Policy Id, Client
+    Id, Plan, Annual Premium …, found by its columns as `iTabInforce_` finds
+    it). It adds every in-force policy of the campaign's clients and takes the
+    plan's name and the premium a year as recorded (`tInforceRead_`). The
+    portfolio's Address runs its lines together, and `tAddrSplit_` puts the
+    commas back.
+  - The Call List, last.
+
+  `tProfileFor_` reads the profile by client number when the Client Book is
+  not built, so the cards say who the client is either way. The page never
+  reads the row numbers, or the old sheet's copy of the address once the
+  contact carries it, so `tBoardSlim_` leaves them out: 1.3 MB for the
+  branch.
+  Tests in the scratchpad:
+  - `board8/board-test.js` (49, Playwright on the real tabs);
+  - `board8/book-build.js` (18, the build on the real first tab and a
+    made-up in-force tab);
+  - `board8/back-harness.js` (23, the call-back rules);
+  - `board8/ported/` (the snapshot test 24, calls 25, the introduction hold 16).
+- **Everyone sees what they have logged, and signs in with a first name** (8 October 2026: "have you made the log in
+  easy and can staff place the notes in the log in and see what they have done as well managers log in and agents?").
+  - **Your work** is a tab for anyone signed in as themselves: staff, agents and unit managers. It is second for
+    staff, after Your calls, and second for an agent, after To call. It gives today's and the last seven days' counts:
+    clients logged, reached, no answer, call-backs flagged (staff only), and agents named (whoever may name). Under
+    them is every outcome they marked, newest first, one line a client a day, with the call-back flagged and the note
+    they wrote. A name opens the client.
+  - The tab reads the same stamps as the branch's Team tab (`[no answer 8 Oct · Name] note`), matched to the signed-in
+    name, so the two always agree. A naming made by staff is read from its "named by" file note.
+  - Stamps are kept once each, so two tries on one client on one day count as one.
+  - **A unit manager's Team tab** now shows "On your team's clients": the same table and notes the branch sees, over
+    his team's clients.
+  - **Sign-in** (`tWho_`):
+    - A first name alone opens, when exactly one active person on the Agent Skill Bank carries it. Two people with
+      one first name, and neither opens on it: the number or the full name does.
+    - A full name matches whatever its spacing, hyphens or capitals.
+    - Wrong tries count against the person, however they were named (`tries-p-<name>`), never per spelling.
+    - Someone who was the agent on these books still never signs in.
+    - The gate asks for the "agent number or your name" and says the device keeps you signed in until Sign out.
+  - **Signing out clears the client that was open** (`#t=`), so the next person on the device never lands on it.
+  - **A name written on a `/call` row is read** (`tBoard_`). An agent named on a client who never answered, after
+    staff logged a call on them, is written onto the call row, the only row there is. Until 8 October the board
+    returned from a call row before reading Assigned to, so the agent's list missed the client until the assignment
+    sync caught up.
+  - `work8/work-test.js` in the scratchpad covers it (36 checks, Node and Playwright, the real tabs, test passwords in
+    memory).
+- **The Dashboard tab: how far the work has got, as shares, with filters** (8 October 2026: "need to have dash analytics
+  and % of work completed etc a lot of insights and filter ability").
+  - **Who sees it.** The branch has it second, after Urgent, which stays the opening tab. A unit manager has it after
+    Your work, over his team's clients. Staff and agents have no Dashboard. Their own shares are at the top of Your
+    work: a caller's list tried and reached, or an agent's clients spoken to and completed.
+  - **One filter row scopes every number:** the period (today, 7 days, 30 days, since the letters; remembered on the
+    device), the former agent's book, the letter, the town, one person (a caller or an agent), and one unit (the branch
+    only). Tapping a row in any table narrows the whole page to it.
+  - **The words have fixed meanings** (the page's "How the numbers are made" says them):
+    - *Asked*: a client who answered with something that needs a person, not a note alone.
+    - *Spoken to*: Called, Met or Declined on the board, reached by phone, or "reached: Yes" on the old calls sheet.
+    - *Tried*: any outcome logged, or a try on the sheet.
+    - *Completed*: every answer closed, or Met, Closed or Declined.
+    - *Late*: open past `WAIT_DAYS` with nobody named.
+  - **What it shows:**
+    - One hero figure: the share of the clients who asked that have been spoken to, named or completed.
+    - A stage bar (completed, agent named, spoken to, nobody yet), on an ordered teal ramp checked with the dataviz
+      validator (`#62bfd2`, `#1d8fa6`, `#07606f`), and tiles, the late one in the stop colour with its "!".
+    - The call lists (reached, tried, not tried) and the open call-backs.
+    - The period's numbers.
+    - Two charts by day, answers coming in and clients with a call logged. Each has a column a day, the period in teal
+      and the days before it in grey, a hover or focus value on every column, and every number in a table under them.
+    - "What stands out": computed facts, never advice.
+    - Client Support on the board, the agents (with the clients named more than `WAIT_DAYS` ago and nothing logged),
+      and every book, letter or town.
+  - **Client Support in Salesforce** is the branch's alone (`tSfWork_`, asked for as the board request with
+    `sfwork=1`, so Service.gs needed no new route and no paste). It counts the orphan tasks since 1 October per
+    person:
+    - tasks held and closed;
+    - closed with no note, which means no post or comment by anyone but the branch manager, whose user also posts the
+      routine's instructions;
+    - open and untouched, overdue and due today;
+    - closures and notes in the period.
+
+    It is kept ten minutes, and says how to link Salesforce when the `SF_*` properties are missing. Tasks carry no book
+    or letter, so only the period narrows that table, and the page says so.
+  - Calls written only in Salesforce Chatter are not on the board, so they count only in the Salesforce table.
+  - `work8/dash-test.js` in the scratchpad covers it (42 checks, Node and Playwright, the real tabs, made-up Salesforce
+    tasks). It serves the site's `receipt.json` and `receipt.html` to the demo backend, which has no network. Without
+    them the board has no answers, and every count that reads one, such as "former agent in touch", is 0 in a test.
+- **The team sees it first.** `orphan-transition/team-review.html` before any
+  letter reaches a client; then the roster of receiving agents by town, from
+  the ticks on the Team Feedback tab.
+- Never send the branch a link to any of this before the branch is merged to
+  `main`. A 404 in the WhatsApp group has happened once already.
+
+## Group client management — the employers' weekly service report
+
+Built 7 October 2026 ("staff logs in … on the days that we send off clients
+group, they actually see the groups that they assign … when they click send,
+they can preview the template … all of these things are logged … the group
+logs in with the code and sees … the task, but underneath can read the
+comment, verify if it's correct … the manager's login view … the ratios, the
+responses, and the star ratings by staff … it builds into the group
+management wall"). `GROUP-CLIENTS-SETUP.md` has the steps.
+
+- **Live, not a weekly static build.** A project built elsewhere generated
+  code-locked pages once a week from a GitHub Action and published them on
+  Netlify. It was replaced the same day: its setup moved
+  rickyrampersadbranch.com to Netlify (which would have taken every other page
+  off the air), its register of group names and contacts was a public file,
+  and a static page cannot show each person their own groups, send and log a
+  letter, or read and post Chatter. `apps-script/GroupClients.gs` does it in
+  the Service Questionnaire project, routed by two lines in `Service.gs`
+  (`gcm.*`), signing staff in through `tWho_` like the assignment board,
+  reading Salesforce through `ServiceSalesforce.gs`, sending through
+  `tMsSend_`. The pages under `groupclientmanagement/` hold no client data.
+- **The group tabs have their own spreadsheet, the script does not.** Asked
+  the same day ("if this is the sheet for managing groups why import into the
+  service questionnaire"): `Group Register`, `Group Tasks`, `Group Sends`,
+  `Group Responses` and `Group Shares` live in the **Group Client Management**
+  Google Sheet. The script stays in the Service Questionnaire project, where
+  the sign-in, the Salesforce login, the support@ mailbox and the web address
+  are, and opens the group sheet by the `GCM_SHEET_ID` Script property
+  (`gcmSS_`), never by an ID in the code. Without it, the tabs are looked for
+  in Service Questionnaires. The register (group, Salesforce account ids,
+  list bills, match words, contact, code) is built in the session scratchpad;
+  its codes and the group names never enter the repository, its comments or
+  its docs.
+- **Salesforce signs in with client credentials, as the KPI Tracker does.**
+  On 7 October 2026 the KPI Tracker's Script properties held `SF_KEY`,
+  `SF_SECRET` and `SF_LOGIN_URL` and no `SF_USER` or `SF_PASS`: the org has
+  retired the username-password flow. `ServiceSalesforce.gs` signed in only
+  that way, so the Service Questionnaire project could never reach
+  Salesforce. `svcSfAuthMode_` now picks client credentials unless `SF_PASS`
+  is set (`SF_AUTH` forces either), and `svcSfReady_` needs only the key and
+  the secret for it. Copy the three values; the login URL must be the My
+  Domain address. With them, everything in the project that waited for
+  Salesforce switches on (the trace a review runs, the Client Profile
+  refresh, the assignment sync, the board's tasks); the TT$200 claims still
+  write nothing until the go.
+- **Who looks after a group is its account owner in Salesforce, and nothing
+  else** (7 October 2026: "read who is the account owner in Salesforce instead
+  of a spreadsheet"). The refresh writes Owner in Salesforce and Owner active
+  onto the register as a mirror; there is no override column, so the board and
+  Salesforce never disagree. A group on two accounts takes the first active
+  owner. An owner who is no longer an active user (two groups' owners were, on
+  7 October) puts the group first on the manager's "To act on", and the
+  group's page never names them.
+  **A staff member is matched to the owner by e-mail, then by name**
+  (`gcmMine_`, `gcmSameName_`). The same afternoon the first staff member to
+  sign in saw an empty board: she is "SASHA LALLA" on the Agent Skill Bank
+  and "Sasha Lalla-Jagassar" in Salesforce, and the names were compared
+  whole. The refresh now writes the owner's Salesforce e-mail onto the
+  register (Owner e-mail), and a name matches on the same first name with
+  every other part of the shorter name inside the longer. A first name
+  alone matches nothing. Letters and Chatter notes are signed with the name
+  as Salesforce has it (`gcmSigner_`), and a group's answer is e-mailed to
+  the owner's Salesforce address.
+- **The letter goes to the account's Contact Person in Salesforce** (7 October
+  2026: "there is a contact on the account with an email, why is it she is not
+  able to send?"). Until then only the register's To was read, and it was
+  filled for two groups of seventeen, so most staff could not send at all. The
+  refresh reads `Contact_Person__r` on each account (else the account's own
+  `Email__c`) and mirrors it onto the register as Contact in Salesforce,
+  Contact e-mail and Contact greeting; the register's To counts only for a
+  group with neither, and its Cc and Greeting still apply. Several accounts'
+  Contact Person carries a personal mailbox, and the letter carries the
+  group's access code, so the page and the preview name the address, say
+  where it came from and point out a personal one; staff tick that they
+  checked before it goes.
+- **A group signs in with its list bill and its code, both.** The list bill is
+  printed on every bill and known to the employees, so it is the name, never
+  the password. List bills live on the policy records (`List_Bill__c` on
+  `CLIENT_PORTFOLIO__c`), typed several ways ("TGM 1099", "TGM1099"):
+  compared as letters and digits only. The account fields `List_Bill_Life__c`
+  and `List_Bill_Pension__c` are empty on all but one account.
+- **What a group sees.** Never a member's health or a claim (`GCM_PRIVATE`),
+  and a health reimbursement is a claim whatever its subject says: the first
+  live refresh carried "Reissue Cheque (health)" with a member's name, which
+  the words medical and claim did not catch.
+  Items on its account, its billing records (`TRANSACTIONS__c`) or naming it:
+  shown unless staff untick. Items reached only through an employee's own
+  policy or contact: hidden unless staff tick. Chatter only when staff tick it
+  or write a note for the group from the page. A group's answer goes onto that
+  task's Chatter.
+- **Match words start a word; a single word must end one.** SOQL `LIKE`
+  matched one group's short match word inside a medical term and put another
+  person's medical requirement on that group's page (`gcmNames_`).
+- **Logged e-mails and the birthday flow are not work.** They were 615 of the
+  groups' 1,176 completed tasks in 2026, and 62 of one group's were birthday
+  wishes to its staff; counted, they show an on-time record the work does not
+  have (`GCM_LOGGED`). "On time" counts only tasks with a due date, and the
+  dashboard shows average days beside it because a due date can be moved.
+- **Salesforce takes a subquery only at the top of a WHERE, never inside an
+  OR**, so the refresh asks five ways (account, billing, name, employees'
+  policies, employees' contacts) and keeps a task once. Every query goes
+  through the composite resource (`gcmQuery_`), so a long one never meets URL
+  Fetch's limit on an address. Salesforce ids are unique in their first 15
+  characters; everything is keyed on those.
+- **Tuesday is send day**; the group is asked to answer by Friday. Every letter
+  is logged on `Group Sends` with the letter itself; without Microsoft 365 it
+  opens in the staff member's Outlook and is still logged.
+- **Every open item says why it is still open** (7 October 2026: "when the
+  client sees the opened task shall we not give some history why opened so
+  long, to use intelligence", then "you need to scrub emails with the subject
+  line"). Salesforce's feed tracking is on for tasks: `TaskFeed` with its
+  `FeedTrackedChanges` gives the target date first set, each real move of it
+  (each change is written as three rows: old to new, new to blank, blank to
+  new), the status changes and the hand-overs. Each billing record's
+  `EmailMessage`s are the item's e-mails; on an account, only those with the
+  task's own subject line once Re:, Fw:, DRAFT: and FINAL DRAFT: are set
+  aside (`gcmSameSubject_`). The refresh keeps both per open task in the
+  History and Mails columns (`gcmHistories_`, `gcmMails_`) and `gcmStory_`
+  writes the line and the history. **The group sees only e-mails to or from
+  its own contacts** (`gcmToGroup_`: the register's To and Cc, or their
+  company's domain, never a public one): the branch's own notices, drafts to
+  the manager and forwards stay with staff. The manager chose the target
+  "first set for X, now Y" for the group, never the count of moves, which
+  staff see. **An item the group sees, open more than 30 days, needs a note
+  for the group shared in the last 30 days before the letter goes**
+  (`gcmNeedsReason_`; Preview and Send both refuse until then). **Draft with
+  AI** (`gcmDraft_`, `gcmClaude_`) sends the item's facts, e-mail subject
+  lines and internal Chatter to the Claude API (`claude-opus-5-5`, effort
+  low, `fallbacks: "default"`), at the manager's choice, with the key in the
+  `ANTHROPIC_API_KEY` Script property; the draft is never shared until a
+  person edits it and presses Post. A health or claim item gets no draft.
+- **No one sends a group a letter before the manual and the test** (8 October 2026: "a staff manual as well
+  as a test … before they start … with weighting, with building in the performance appraisal, the taking
+  initiative to try to solve things, the follow up … all results logged with a feedback").
+  `groupclientmanagement/training.html` holds the nine-section manual and the test; the staff page links to
+  it. The questions, their answers and their marking guides are in the private **Group Client Training**
+  Google Sheet (`GCM_TRAIN_SHEET_ID`), never in the repository, because the site and the `.gs` files are public:
+  the page gets the questions without answers, and `gcmTrainSubmit_` marks them. Written answers are marked by
+  the Claude API against the Rubric (structured output, the answer fenced as data, never an instruction) and
+  stay provisional until the branch manager confirms them (`gcmTrainMark_`). The competencies are the
+  appraisal's: each question's Points are its weight. A pass needs 80%, every critical question right and no
+  competency under 60%. Every attempt is a row on that sheet's Results tab and an e-mail to the person and the
+  manager (`GCM_TRAIN.TO_MANAGER`), never the sales support inbox, because a result is an appraisal. The bank
+  was written so that the right answer is never the longest option and the answers spread across A to D; keep
+  it that way when adding questions. The standards the manual sets that were not set before (an
+  acknowledgement within a working day, a call within two working days for a rating of 3 or less, Monday
+  follow-up of groups that did not answer) are proposals for the manager to confirm.
+
+## The Premium Due Desk — checked by a person, sent at ten
+
+`premium-due/` and `apps-script/PremiumDueDesk.gs`, in the Branch Intelligence
+project (the tracker's: `Intelligence.gs` beside `KPI.gs`, its own `/exec`).
+Asked for on 7 October 2026: "a trigger go out when a client premium is 45 days
+due with built in responses for them to select", then "a staff has to do a
+check mark to ensure due diligence is done, once they check it goes out", then
+"a time at 10am".
+
+- **A tick is a check, recorded on the spot** on the **Premium Due Checks** tab:
+  who, when, the client's address and agent as checked, and any flag on the row
+  they ticked through. The box is enabled only once that client's letter has
+  been opened on the desk; there is no send button and no "tick all". "Do not
+  send" takes a reason and is recorded too. Staff and the branch manager tick;
+  an agent or a unit manager reads the letters and never ticks, because the
+  letter asks the client to rate their agent.
+- **The letters go at ten, Monday to Friday.** Ticked before 10:00, that
+  morning; after, at ten on the next working day. The send runs inside
+  `intelPendingRefresh`, the hourly trigger, from the ten o'clock hour
+  (`pddRun_`): the project is one trigger short of its twenty, so no new
+  trigger. A firing missed at ten is caught up the next hour.
+- **The line is 45 to 51 days** (`iSurveyPool_(45, 6)`; every other caller
+  passes nothing and keeps the 45th day exactly), so a Saturday's 45s and a
+  tick made after ten still go. A client written to at 45 in the episode stays
+  off it, so no one gets two.
+- **The responses are the letter's own**: the 1–5 rating and the five taps
+  under it. Nothing in the letter changed, so the wording approval holds; a
+  new tap would change `iSurveyHash_` and stop live sends until re-approved.
+- **At ten the send reads the line afresh** and sends only a client still on
+  it, with the address and agent that were checked; otherwise "not sent", with
+  the reason, on the desk and in one internal summary to the manager. Live only
+  with client mail live and the wording approved; in test mode each letter goes
+  to the test inbox and the client is not marked as written to; held, ticks wait
+  and a client past 51 days drops off. It logs on Intel Surveys before it sends
+  and takes the log back if the mail fails. It stays inside the day's mail
+  allowance (a consumer Google account: about 100 recipients a day, and each
+  letter copies the agent, every staff member on the access list and the unit
+  manager), oldest first; the rest wait. Every write is conditional on the
+  check still reading what the send saw, under the script lock the tracker's
+  submissions use, held for a write and no longer.
+- **The taps need the web app's `/exec` address**, which a time trigger is
+  not reliably given; the desk notes it from any request (`PDD_EXEC_URL`), and
+  `INTEL_EXEC_URL` wins. Without one the live send holds and the desk names the
+  property to set.
+- **The branch workbook reached Google's ten-million-cell ceiling on 21
+  September 2026** (the nightly build has reported it since; `intel.ping`
+  shows `lastError`). The checks tab goes there when it can and to the
+  tracker's own workbook when a new tab is refused.
+- Install: paste `Intelligence.gs` and `PremiumDueDesk.gs` (all over), then a
+  New version. `intel.ping` answers `version` and `desk`. Editor: `pddStatus()`,
+  `pddToday()`, `pddSendNow()`. `pdd10/` in the session scratchpad holds the
+  harness (`test.js`, 101 checks; `page-test.js`, 33, Playwright).
 
 ## Standing rules
 

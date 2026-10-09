@@ -1,0 +1,554 @@
+// The S.E.A. practice app, at /sea/.
+//
+// The mock paper is the part that has to be right. A student who sits it is
+// spending seventy-five minutes on the strength of a claim — that this is the
+// shape of the real Mathematics paper. The Assessment Framework fixes that
+// shape: 40 items, 75 marks, sections of 20/16/4 items worth 20/39/16 marks,
+// and 19/6/9/6 items across Number, Geometry, Measurement and Statistics.
+// The generator shuffles and swaps to hit those numbers, so it is checked here
+// on real papers rather than on the blueprint it was written from.
+//
+// The rest is the promise the page makes. To a child working alone: a paper
+// answered correctly scores full marks, a blank one scores nothing and hands
+// back every worked explanation, and nothing typed is lost on reload.
+//
+// And the promise made to whoever is paying for it — that a student is helped
+// before they are told. The answer rung must be shut until the child has
+// actually tried, and must open the moment they do, right or wrong. A parent
+// or a teacher signing in sees everything at once. If the student gate ever
+// springs open on its own, the app is an answer key with a clock on it.
+//
+// Run: node tests/e2e-sea.js   (needs playwright + a chromium on disk)
+const { chromium } = require('playwright');
+const http = require('http'), fs = require('fs'), path = require('path');
+
+const ROOT = path.join(__dirname, '..');
+const CHROME = process.env.CHROME_PATH || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+const TYPES = { '.html':'text/html', '.js':'application/javascript', '.css':'text/css',
+                '.json':'application/json', '.png':'image/png', '.svg':'image/svg+xml' };
+const PORT = 8797;
+
+const server = http.createServer((req, res) => {
+  let f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+  if (fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');
+  if (!fs.existsSync(f)) { res.writeHead(404); return res.end('no'); }
+  res.writeHead(200, { 'Content-Type': TYPES[path.extname(f)] || 'application/octet-stream' });
+  fs.createReadStream(f).pipe(res);
+});
+
+let fails = 0;
+const ok = (what, cond, extra) => {
+  console.log((cond ? '  ok   ' : '  FAIL ') + what + (extra && !cond ? '  — ' + extra : ''));
+  if (!cond) fails++;
+};
+
+(async () => {
+  server.listen(PORT);
+  const b = await chromium.launch({ executablePath: CHROME });
+  const page = await b.newPage({ viewport: { width: 1180, height: 900 } });
+
+  const errs = [];
+  page.on('pageerror', e => errs.push('page error: ' + e.message));
+  page.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+  page.on('response', r => { if (r.status() >= 400) errs.push(r.status() + ' ' + r.url()); });
+
+  const URL = `http://localhost:${PORT}/sea/`;
+  // The page now ships with a real backend address. The first half of this
+  // file exercises the code gate, so ask for no backend explicitly — an
+  // empty override has to beat the deployed address, not fall back to it.
+  await page.addInitScript(() => { window.ACADEMY_API_OVERRIDE = ''; });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+
+  // ---- the gate ------------------------------------------------------------
+  ok('the app is behind the gate until somebody signs in', await page.isHidden('#app'));
+  await page.fill('#gateCode', 'NOPE');
+  await page.click('#gateGo');
+  ok('a wrong code is refused', (await page.textContent('#gateErr')).length > 0 && await page.isHidden('#app'));
+  const signIn = async (roleName, code, placeIn = 6) => {
+    await page.evaluate(() => { sessionStorage.clear(); });
+    await page.goto(URL, { waitUntil: 'networkidle' });
+    await page.click(`#roles .role[data-role="${roleName}"]`);
+    await page.fill('#gateCode', code);
+    await page.click('#gateGo');
+    await page.waitForSelector('#app:not([hidden])');
+    if (placeIn !== null && await page.$('#levelPick [data-li]')) await page.click(`#levelPick [data-li="${placeIn}"]`);
+  };
+  // ---- seven years, one destination ------------------------------------------
+  await signIn('student', 'RRB2027', null);
+  ok('the student code opens the app', await page.isVisible('#app') &&
+     (await page.textContent('#rolePill')).startsWith('Student'));
+  ok('a student who has not been placed is asked which class they are in',
+     (await page.$$eval('#levelPick [data-li]', n => n.length)) === 12);
+  ok('the journey shows all twelve classes, with the S.E.A. and CSEC marked as the destinations',
+     (await page.$$eval('#journey .step', n => n.length)) === 12 &&
+     (await page.$$eval('#journey .step.sea', n => n.map(x => x.textContent))).join(' ').includes('S.E.A.') &&
+     /CSEC/.test(await page.textContent('#journey .step:last-child')));
+  await page.click('#levelPick [data-li="4"]');            // Standard 3
+  const cap = () => page.textContent('#journeyCap');
+  ok('picking Standard 3 places the child and names the S.E.A. year',
+     /Standard 3/.test(await cap()) && /S\.E\.A\. in \d{4}/.test(await cap()) && /two more classes after this one/.test(await cap()));
+  ok('the pill says the class', /Standard 3/.test(await page.textContent('#rolePill')));
+  ok('an earlier class is not offered the S.E.A. mock paper', (await page.$('#nav button[data-view="exam"]')) === null);
+  await page.click('#nav button[data-view="practice"]');
+  ok("practice opens on the child's own class",
+     (await page.$eval('#pLevel .chip[aria-pressed="true"]', b => b.dataset.li)) === '4' &&
+     /Standard 3 · question 1 of \d+/.test(await page.textContent('#pCount')));
+  const std3Ids = await page.evaluate(() => pList.map(q => q.id));
+  ok('and it is that class\'s own bank plus the S.E.A. questions suited to it, nothing from the infants',
+     std3Ids.filter(id => /^S3-/.test(id)).length === 7 && std3Ids.every(id => /^S3-/.test(id) || /^[NGMS]\d\d$/.test(id)));
+  await page.click('#pLevel .chip[data-li="0"]');
+  ok('Infant 1 has its own questions', await page.evaluate(() => pList.length >= 6 && pList.every(q => /^I1-/.test(q.id))));
+  await page.click('#nav button[data-view="home"]');
+  await page.click('#levelChange');
+  ok('the class can be changed if it was picked wrong', (await page.$$eval('#levelPick [data-li]', n => n.length)) === 12);
+  await page.click('#levelPick [data-li="9"]');            // Form 3
+  ok('a Form 3 student is told the CSEC year and the forms still to come',
+     /Form 3/.test(await cap()) && /CSEC in \d{4}/.test(await cap()) && /two more forms after this one/.test(await cap()));
+  ok('a secondary student is not offered the S.E.A. mock paper', (await page.$('#nav button[data-view="exam"]')) === null);
+  await page.click('#nav button[data-view="practice"]');
+  ok("Form 3 practice is Form 3's own bank, and Algebra is now a strand",
+     await page.evaluate(() => pList.length >= 6 && pList.every(q => /^F3-/.test(q.id))) &&
+     (await page.$('#pStrand .chip[data-s="Algebra"]')) !== null);
+  await page.click('#nav button[data-view="home"]');
+  await page.click('#levelChange');
+  await page.click('#levelPick [data-li="6"]');            // Standard 5
+  ok('Standard 5 gets the mock paper', (await page.$('#nav button[data-view="exam"]')) !== null && /this is the year/.test(await cap()));
+  await page.click('#nav button[data-view="practice"]');
+  const std5Ids = await page.evaluate(() => pList.map(q => q.id));
+  ok('Standard 5 practice is the whole S.E.A. bank and nothing from the infants',
+     std5Ids.length === 71 && std5Ids.every(id => /^[NGMS]\d\d$/.test(id)));
+  await page.click('#nav button[data-view="home"]');
+
+  // ---- every section opens -------------------------------------------------
+  for (const v of ['practice', 'exam', 'writing', 'papers', 'syllabus', 'home']) {
+    await page.click(`#nav button[data-view="${v}"]`);
+    ok(`the ${v} section opens`, await page.isVisible(`#v-${v}`));
+  }
+  ok('a student is not offered the answer key',
+     (await page.$('#nav button[data-view="key"]')) === null);
+  await page.goto(URL + '#key', { waitUntil: 'networkidle' });
+  ok('a student typing the answer key straight into the address bar lands on Home',
+     await page.isVisible('#v-home') && await page.isHidden('#v-key'));
+
+  // ---- the mock paper keeps the Ministry's shape, three papers running ------
+  page.on('dialog', d => d.accept());
+  const shapes = [];
+  for (let run = 0; run < 3; run++) {
+    await page.click('#nav button[data-view="exam"]');
+    if (await page.isVisible('#examAgain')) await page.click('#examAgain');
+    await page.check('#examUntimed');
+    await page.click('#examStart');
+    await page.waitForSelector('#examHost .examq');
+    shapes.push(await page.evaluate(() => {
+      const by = {}, sec = { 1:0, 2:0, 3:0 }, secMarks = { 1:0, 2:0, 3:0 };
+      let marks = 0;
+      for (const q of exam.items) {
+        by[q.strand] = (by[q.strand] || 0) + 1;
+        sec[q.sec]++; secMarks[q.sec] += q.marks; marks += q.marks;
+      }
+      return { n: exam.items.length, marks, by, sec, secMarks,
+               onPage: document.querySelectorAll('#examHost .examq').length,
+               ids: exam.items.map(q => q.id) };
+    }));
+    if (run < 2) await page.click('#examSubmit');
+  }
+  const shaped = s =>
+    s.n === 40 && s.onPage === 40 && s.marks === 75 &&
+    s.sec[1] === 20 && s.sec[2] === 16 && s.sec[3] === 4 &&
+    s.secMarks[1] === 20 && s.secMarks[2] === 39 && s.secMarks[3] === 16 &&
+    s.by.Number === 19 && s.by.Geometry === 6 && s.by.Measurement === 9 && s.by.Statistics === 6;
+  ok('three generated papers each hold 40 items and 75 marks in the right split',
+     shapes.every(shaped),
+     shapes.map(s => `${s.n}i/${s.marks}m ${s.sec[1]}-${s.sec[2]}-${s.sec[3]} ` +
+                     `(${s.secMarks[1]}-${s.secMarks[2]}-${s.secMarks[3]})`).join(' | '));
+  ok('no paper repeats a question', shapes.every(s => new Set(s.ids).size === s.ids.length));
+  ok('two papers are not the same paper', shapes[0].ids.join() !== shapes[1].ids.join());
+
+  // ---- a correct paper scores full marks -----------------------------------
+  await page.evaluate(() => exam.items.forEach((q, i) => {
+    const el = document.getElementById('ea' + (i + 1));
+    el.value = q.a[0]; el.dispatchEvent(new Event('input', { bubbles: true }));
+  }));
+  ok('the progress counter follows the answers', (await page.textContent('#examProg')) === '40 / 40');
+  await page.click('#examSubmit');
+  await page.waitForSelector('#examResult h1');
+  ok('a paper answered from the bank scores 75 out of 75',
+     (await page.textContent('#examResult h1')).trim() === '75 out of 75');
+
+  // ---- a blank paper scores nothing and explains all forty ------------------
+  await page.click('#examAgain');
+  await page.click('#examStart');
+  await page.waitForSelector('#examHost .examq');
+  await page.click('#examSubmit');
+  await page.waitForSelector('#examResult h1');
+  ok('a blank paper scores 0 out of 75',
+     (await page.textContent('#examResult h1')).trim() === '0 out of 75');
+  ok('every missed question comes back with all four rungs',
+     (await page.$$eval('#examResult .hint', n => n.length)) === 40 * 4);
+
+  // ---- the ladder: helped before told --------------------------------------
+  await page.click('#nav button[data-view="practice"]');
+  const rungState = () => page.$$eval('#pRungs .rung',
+    n => n.map(b => ({ k: b.dataset.k, locked: b.disabled })));
+  let rungs = await rungState();
+  ok('the ladder offers four rungs', rungs.length === 4);
+  ok('the pointer is open from the start', !rungs.find(r => r.k === 'ask').locked);
+  ok('the answer is shut before any attempt', rungs.find(r => r.k === 'ans').locked);
+  ok('the working is shut before any attempt', rungs.find(r => r.k === 'work').locked);
+  ok('a locked ladder says what to do about it',
+     (await page.textContent('#pLocked')).length > 20);
+
+  await page.click('#pRungs .rung[data-k="ask"]');
+  ok('the pointer opens without giving a number', await page.isVisible('#pHints .hint'));
+  rungs = await rungState();
+  ok('reading the pointer unlocks the first step', !rungs.find(r => r.k === 'step').locked);
+  ok('reading the pointer does NOT unlock the answer', rungs.find(r => r.k === 'ans').locked);
+
+  await page.fill('#pAns', 'definitely not the answer');
+  await page.click('#pCheck');
+  ok('a wrong answer is marked wrong', await page.isVisible('#pVerdict .verdict.no'));
+  rungs = await rungState();
+  ok('a real attempt — even a wrong one — opens the working and the answer',
+     !rungs.find(r => r.k === 'work').locked && !rungs.find(r => r.k === 'ans').locked);
+  await page.click('#pRungs .rung[data-k="ans"]');
+  ok('the answer rung then shows the answer',
+     (await page.$$eval('#pHints .hint', n => n.length)) >= 2);
+
+  // Moving on must re-lock — otherwise one attempt unlocks the whole bank.
+  await page.click('#pNext');
+  rungs = await rungState();
+  ok('the next question starts locked again', rungs.find(r => r.k === 'ans').locked);
+
+  await page.click('#pStrand .chip[data-s="Geometry"]');
+  ok('the strand filter narrows the set',
+     /of \d+ in this set/.test(await page.textContent('#pCount')) &&
+     (await page.$$eval('#pStrand .chip[aria-pressed="true"]', n => n.length)) === 1);
+
+  // ---- the essay is not lost -----------------------------------------------
+  await page.click('#nav button[data-view="writing"]');
+  await page.fill('#wEssay', 'The lights went out just as the music started.');
+  ok('the word count is live', (await page.textContent('#wWords')) === '9');
+  await page.click('#wType .chip[data-k="expository"]');
+  ok('an expository set offers three prompts',
+     (await page.$$eval('#wPrompts .prompt', n => n.length)) === 3);
+  await page.reload({ waitUntil: 'networkidle' });
+  ok('the essay survives a reload',
+     (await page.inputValue('#wEssay')) === 'The lights went out just as the music started.');
+
+  // ---- the papers are linked, never re-hosted ------------------------------
+  await page.click('#nav button[data-view="papers"]');
+  const links = await page.$$eval('#paperList a.dl', a => a.map(x => x.href));
+  ok(`${links.length} past papers are listed`, links.length === 23);
+  ok('every past paper link leaves for the Ministry',
+     links.every(u => /moe\.gov\.tt|wpuploadstorageaccount\.blob\.core\.windows\.net/.test(u)),
+     links.filter(u => !/moe\.gov\.tt|wpuploadstorageaccount/.test(u)).join(' '));
+
+  // ---- parent and teacher see everything at once ---------------------------
+  await signIn('parent', 'RRBPARENT');
+  ok('the parent code opens the app', (await page.textContent('#rolePill')).startsWith('Parent'));
+  await page.click('#nav button[data-view="practice"]');
+  const parentRungs = await page.$$eval('#pRungs .rung', n => n.map(b => b.disabled));
+  ok('a parent has the whole ladder open without attempting anything',
+     parentRungs.every(d => d === false));
+  await page.click('#nav button[data-view="key"]');
+  ok('a parent gets the answer key', await page.isVisible('#v-key') &&
+     (await page.$$eval('#kHost .hint', n => n.length)) > 200);
+  ok('a parent is not given the mock exam', (await page.$('#nav button[data-view="exam"]')) === null);
+
+  await signIn('teacher', 'RRBTEACHER');
+  ok('the teacher code opens the app', (await page.textContent('#rolePill')).startsWith('Teacher'));
+  ok('a teacher is not asked which class they are in', (await page.$('#levelPick [data-li]')) === null);
+  const tViews = await page.$$eval('#nav button', n => n.map(b => b.dataset.view));
+  ok('a teacher gets every section including the key',
+     ['home','practice','exam','writing','papers','syllabus','key'].every(v => tViews.includes(v)),
+     tViews.join(','));
+  await page.click('#nav button[data-view="exam"]');
+  ok('only the teacher is offered a printable blank paper', await page.isVisible('#examPrint'));
+
+  // Every question in the key must carry all four rungs.
+  await page.click('#nav button[data-view="key"]');
+  const total = await page.evaluate(() => QUESTIONS.length);
+  const keyBlocks = await page.$$eval('#kHost > .card > div', n => n.length);
+  const keyHints  = await page.$$eval('#kHost .hint', n => n.length);
+  ok(`the key holds every question with four rungs each (${keyBlocks} blocks, ${keyHints} rungs)`,
+     keyBlocks === total && keyHints === total * 4);
+
+  // ---- the branch mark, on screen ------------------------------------------
+  const marks = await page.$$eval('.mark img', n => n.map(i => ({ src: i.getAttribute('src'), w: i.naturalWidth })));
+  ok(`the branch mark file loads everywhere it is used (${marks.length} places)`,
+     marks.length >= 2 && marks.every(m => /logo-mark\.png$/.test(m.src) && m.w > 0),
+     JSON.stringify(marks));
+
+  await signIn('student', 'RRB2027');
+
+  // ---- a phone has to be able to use it ------------------------------------
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.click('#nav button[data-view="home"]');
+  const spill = await page.evaluate(() =>
+    document.documentElement.scrollWidth - document.documentElement.clientWidth);
+  ok('nothing spills sideways at 390px', spill <= 1, spill + 'px');
+
+  // ---- sponsors: the strip, and its absence ----------------------------------
+  // Free to families means sponsors pay for reach. The strip has to be where a
+  // parent looks and nowhere a child works, and the page must never phone the
+  // sponsor — a children's app that beacons is a children's app that tracks.
+  await page.setViewportSize({ width: 1180, height: 900 });
+  ok('with no sponsor configured, nothing sponsor-shaped is on the page',
+     (await page.$$eval('.sponsor', n => n.length)) === 0);
+  const sponsorHits = [];
+  page.on('request', r => { if (/example-bookstore\.tt/.test(r.url())) sponsorHits.push(r.url()); });
+  await page.addInitScript(() => { window.SPONSORS_OVERRIDE = [
+    { slot: 'title',  name: 'Example Bookstore', tag: 'Books for the S.E.A. year', url: 'https://example-bookstore.tt/',
+      logo: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>' },
+    { slot: 'papers', name: 'Example Bookstore', tag: 'The printed booklets', url: 'https://example-bookstore.tt/papers' } ]; });
+  await page.evaluate(() => sessionStorage.clear());
+  await page.goto(URL, { waitUntil: 'networkidle' });
+  ok('the title sponsor is on the sign-in screen', await page.isVisible('#gateSponsor .sponsor[data-slot="title"]'));
+  await page.fill('#gateCode', 'RRB2027'); await page.click('#gateGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('and on Home, introduced as the reason the app is free', /thanks to/i.test(await page.textContent('#homeSponsor')));
+  await page.click('#nav button[data-view="papers"]');
+  ok('the papers sponsor sits above the papers', await page.isVisible('#papersSponsor .sponsor[data-slot="papers"]'));
+  const rels = await page.$$eval('.sponsor a', a => a.map(x => [x.getAttribute('rel'), x.getAttribute('target')]));
+  ok('every sponsor link is marked sponsored and opens in a new tab',
+     rels.length >= 2 && rels.every(([r, t]) => /sponsored/.test(r) && /noopener/.test(r) && t === '_blank'));
+  await page.click('#nav button[data-view="practice"]');
+  ok('no sponsor appears inside a question', (await page.$$eval('#pHost .sponsor', n => n.length)) === 0);
+  ok('the page never called the sponsor on its own', sponsorHits.length === 0, sponsorHits.join(' '));
+
+  // ---- signing in against the Academy sheet ------------------------------
+  // A fake of apps-script/Academy.gs, in memory, behind page.route. The real
+  // one is tested in test-academy.js; this is the page's half of the promise —
+  // that a family the Academy added by e-mail can choose a password and get
+  // in, that progress goes up and comes back, and that a parent lands on the
+  // child's progress rather than their own.
+  await page.setViewportSize({ width: 1180, height: 900 });
+  const FAKE = 'https://academy.test/exec';
+  const users = {
+    'aisha@example.com': { name: 'Aisha Ali', role: 'student', hash: null, student: '', seaYear: 2029 },
+    'dad@example.com':   { name: 'Imran Ali', role: 'parent',  hash: null, student: 'aisha@example.com' },
+    'off@example.com':   { name: 'Off',       role: 'student', hash: null, status: 'disabled' },
+    'boss@example.com':  { name: 'Ricky Rampersad', role: 'academy', hash: 'branch-and-shield', student: '' }
+  };
+  const progress = {}, calls = [], registered = [];
+  const state = u => !u ? 'unknown' : u.status === 'disabled' ? 'disabled' : !u.hash ? 'new' : 'active';
+  const session = email => {
+    const u = users[email];
+    const out = { ok: true, token: 'tok-' + email, progress: progress[email] || null, child: null,
+      user:{email,name:u.name,role:u.role,seaYear:u.seaYear||null, student: u.student ? { email: u.student, name: users[u.student].name } : null } };
+    if (u.role === 'parent' && u.student) out.child={name:users[u.student].name,email:u.student,seaYear:users[u.student].seaYear||null, progress: progress[u.student] || null };
+    return out;
+  };
+  await page.route(FAKE, async route => {
+    const b = JSON.parse(route.request().postData()); calls.push(b.action);
+    const email = String(b.email || '').toLowerCase(), u = users[email]; let out;
+    const who = () => String(b.token || '').replace('tok-', '');
+    if (b.action === 'lookup') out = { ok: true, state: state(u), name: u ? u.name : '' };
+    else if (b.action === 'setpassword') {
+      if (state(u) !== 'new') out = { ok: false, error: 'This account already has a password.' };
+      else if (String(b.password || '').length < 8) out = { ok: false, error: 'Choose a password of at least 8 characters.' };
+      else { u.hash = b.password; out = session(email); }
+    } else if (b.action === 'signin') {
+      if (state(u) !== 'active') out = { ok: false, error: 'not active' };
+      else if (u.hash !== b.password) out = { ok: false, error: 'That password is not right.' };
+      else out = session(email);
+    } else if (b.action === 'load') out = users[who()] ? session(who()) : { ok: false, error: 'Sign in again.' };
+    else if (b.action === 'save') { progress[b.for || who()] = b.progress; out = { ok: true, updated: 'now' }; }
+    else if (b.action === 'register') {
+      const pe = String(b.parentEmail || '').toLowerCase();
+      if (users[pe]) out = { ok: false, error: 'That e-mail is already registered.' };
+      else {
+        registered.push(b);
+        if (b.role === 'teacher') {
+          users[pe] = { name: b.parentName, role: 'teacher', hash: b.password, student: '', school: b.school };
+        } else {
+          const cid = 'child:' + registered.length;
+          users[cid] = { name: b.childName, role: 'student', hash: null, student: '', seaYear: b.seaYear, school: b.school };
+          users[pe] = { name: b.parentName, role: 'parent', hash: b.password, student: cid, consent: !!b.consent };
+        }
+        out = session(pe);
+      }
+    }
+    else if (b.action === 'dashboard') {
+      out = users[who()] && users[who()].role === 'academy'
+        ? { ok: true, activeDays: 30, stats: { families: 2, children: 3, activeFamilies: 2, teachers: 1,
+            byClass: { '2031': 2, '2033': 1 }, bySchool: { 'St Joseph Boys RC': 2 }, byMonth: { '2026-09': 2 },
+            attempted: 14, papers: 1, bestPaper: 51, practising: 2, schoolsGiven: 2, interestedCount: 1,
+            horizon: { '7': 2, '9': 1 },
+            interested: [{ name: 'Dev Persad', email: 'dev@example.com', school: 'Chaguanas Government', seaYear: 2033, at: '2026-09-13' }] } }
+        : { ok: false, error: 'The dashboard is for the Academy.' };
+    }
+    else out = { ok: false, error: 'Unknown action.' };
+    await route.fulfill({ contentType: 'application/json', body: JSON.stringify(out) });
+  });
+  await page.addInitScript(() => { window.ACADEMY_API_OVERRIDE = 'https://academy.test/exec'; });
+  await page.evaluate(() => { localStorage.clear(); sessionStorage.clear(); });
+  await page.goto(URL, { waitUntil: 'networkidle' });
+
+  ok('with a backend set, the gate asks for an e-mail and hides the codes',
+     await page.isVisible('#gateAccount') && await page.isHidden('#gateCodes') && await page.isHidden('#app'));
+  const before = calls.length;
+  await page.fill('#gEmail', 'not-an-email'); await page.click('#gGo');
+  ok('something that is not an e-mail is stopped before it reaches the sheet',
+     calls.length === before && (await page.textContent('#gateErr')).length > 0);
+  await page.fill('#gEmail', 'nobody@example.com'); await page.click('#gGo');
+  await page.waitForFunction(() => document.querySelector('#gateErr').textContent.length > 0);
+  ok('an e-mail the Academy has not added is told so',
+     /not on the Academy list/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.fill('#gEmail', 'off@example.com'); await page.click('#gGo');
+  await page.waitForFunction(() => /switched off/.test(document.querySelector('#gateErr').textContent));
+  ok('a switched-off family is told so', true);
+
+  await page.fill('#gEmail', 'Aisha@Example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gCreateRow:not([hidden])');
+  ok('a fresh e-mail is asked to choose a password, by name',
+     await page.isVisible('#gPass1') && /Hello, Aisha/.test(await page.textContent('#gWho')));
+  await page.fill('#gPass1', 'mango-tree-2027'); await page.fill('#gPass2', 'mango-tree-2028'); await page.click('#gGo');
+  ok('two passwords that differ are refused', /do not match/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.fill('#gPass1', 'short'); await page.fill('#gPass2', 'short'); await page.click('#gGo');
+  ok('a short password is refused', /Eight/.test(await page.textContent('#gateErr')));
+  await page.fill('#gPass1', 'mango-tree-2027'); await page.fill('#gPass2', 'mango-tree-2027'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('choosing a password signs the student in, by name',
+     (await page.textContent('#rolePill')) .startsWith('Student · Aisha') && (await page.$('#nav button[data-view="key"]')) === null);
+  ok('and is placed by the sheet, so is not asked for a class',
+     /Standard 3/.test(await page.textContent('#rolePill')) && (await page.$('#levelPick [data-li]')) === null);
+
+  // Progress goes up after a change, and comes back on the next device.
+  await page.click('#nav button[data-view="practice"]');
+  const right = await page.evaluate(() => pList[pIdx].a[0]);
+  await page.fill('#pAns', right); await page.click('#pCheck');
+  await page.waitForFunction(() => document.querySelector('#syncDot').textContent === 'saved', null, { timeout: 8000 });
+  ok('an answer is pushed to the sheet a moment later',
+     calls.includes('save') && progress['aisha@example.com'] && Object.keys(progress['aisha@example.com'].seen).length === 1);
+  await page.reload({ waitUntil: 'networkidle' });
+  ok('reloading resumes the session from the token, without the gate',
+     await page.isVisible('#app') && calls.filter(c => c === 'load').length >= 1);
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  ok('signing out returns to the gate and forgets the token',
+     await page.isHidden('#app') && (await page.evaluate(() => localStorage.getItem('rrb.sea.token'))) === null);
+
+  await page.fill('#gEmail', 'aisha@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gPassRow:not([hidden])');
+  ok('the second time, the e-mail is asked for its password, not a new one',
+     await page.isVisible('#gPass') && await page.isHidden('#gPass1'));
+  await page.fill('#gPass', 'wrong-one'); await page.click('#gGo');
+  await page.waitForFunction(() => /not right/.test(document.querySelector('#gateErr').textContent));
+  ok('a wrong password is refused', await page.isHidden('#app'));
+  await page.fill('#gPass', 'mango-tree-2027'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the right one is in, and the earlier progress came back with it',
+     (await page.textContent('#hA')) === '1');
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+
+  // The parent.
+  await page.fill('#gEmail', 'dad@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gCreateRow:not([hidden])');
+  await page.fill('#gPass1', 'doubles-and-chutney'); await page.fill('#gPass2', 'doubles-and-chutney'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the parent is in, by name, with the key and without the mock exam',
+     (await page.textContent('#rolePill')).startsWith('Parent · Imran') &&
+     (await page.$('#nav button[data-view="key"]')) !== null && (await page.$('#nav button[data-view="exam"]')) === null);
+  ok('the parent is placed where the child is', /Aisha is in <b>Standard 3<\/b>/.test(await page.innerHTML('#journeyCap')));
+  ok("the parent's home is the child's progress, by the child's name",
+     /Aisha's progress/.test(await page.textContent('#homeKicker')) && (await page.textContent('#hA')) === '1');
+  ok('a parent cannot clear the child\'s progress', await page.isHidden('#resetBtn'));
+
+  // ---- registering a child, and the bargain that makes it free ---------------
+  // A free practice app asks for what it needs to teach and nothing it could
+  // sell. The marketing box is off until a parent turns it on, and what the
+  // app never asks for is as much the product as what it does.
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  ok('the sign-in screen offers to register a child', await page.isVisible('#gToReg'));
+  ok('and carries a privacy notice before anybody types anything',
+     await page.isVisible('#privacyNotice') && /never ask for/i.test(await page.textContent('#privacyNotice summary')));
+  const notice = await page.textContent('#privacyNotice');
+  ok('the notice says plainly that occupation and employer are never asked for',
+     /occupation/i.test(notice) && /employer/i.test(notice) && /surname/i.test(notice));
+  ok('and that sponsors never see a name', /[Ss]ponsors see a monthly total/.test(notice));
+
+  await page.click('#gToReg');
+  await page.waitForSelector('#gateRegister:not([hidden])');
+  const regFields = await page.$$eval('#gateRegister input, #gateRegister select',
+    n => n.map(x => (x.getAttribute('aria-label') || x.id).toLowerCase()));
+  ok('registration asks for a first name, a class, an optional school, and nothing to sell against',
+     regFields.some(f => /child's first name/.test(f)) && regFields.some(f => /child's class/.test(f)) &&
+     regFields.some(f => /school/.test(f)) &&
+     !regFields.some(f => /occupation|employer|income|salary|address|birth|surname|phone/.test(f)));
+  ok('the class list offers all twelve classes',
+     (await page.$$eval('#rChildClass option', n => n.length)) === 13);   // twelve, plus the prompt
+  ok('registration asks which of the two is signing up, with parent first',
+     (await page.$$eval('#rRoles .role', n => n.map(b => b.dataset.r))).join() === 'parent,teacher' &&
+     (await page.$eval('#rRoles .role[data-r="parent"]', b => b.getAttribute('aria-pressed'))) === 'true');
+  ok('the marketing box exists and is NOT ticked',
+     await page.isVisible('#rConsent') && (await page.isChecked('#rConsent')) === false);
+  await page.click('#rRoles .role[data-r="teacher"]');
+  ok('a teacher is asked for no child and shown no marketing box',
+     await page.isHidden('#rChildRow') && await page.isHidden('#rOptin') &&
+     /teacher/i.test(await page.textContent('#rWho')));
+  await page.click('#rRoles .role[data-r="parent"]');
+  ok('going back to parent brings the child and the box back',
+     await page.isVisible('#rChildRow') && await page.isVisible('#rOptin'));
+  ok('and it says who would be contacting them, and that the app is free either way',
+     /Guardian Life/.test(await page.textContent('.optin')) && /free either way/.test(await page.textContent('.optin')));
+
+  await page.fill('#rParentName', 'Nalini Baksh');
+  await page.fill('#rParentEmail', 'nalini@example.com');
+  await page.fill('#rChildName', 'Rohan');
+  await page.click('#rGo');
+  ok('registering without a class is refused',
+     /Choose the class/.test(await page.textContent('#gateErr')) && await page.isHidden('#app'));
+  await page.selectOption('#rChildClass', { index: 4 });      // Standard 2
+  await page.fill('#rSchool', 'St Joseph Boys RC');
+  await page.fill('#rPass1', 'pommerac-season'); await page.fill('#rPass2', 'pommerac-seasonX');
+  await page.click('#rGo');
+  ok('two passwords that differ are refused at registration', /do not match/.test(await page.textContent('#gateErr')));
+  await page.fill('#rPass2', 'pommerac-season');
+  await page.click('#rGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the parent is registered and straight into the app, placed where the child is',
+     (await page.textContent('#rolePill')).startsWith('Parent · Nalini') &&
+     /Rohan is in <b>Standard 2<\/b>/.test(await page.innerHTML('#journeyCap')));
+  const sent = registered[registered.length - 1];
+  ok('what reached the Academy is the first name, the class, the school and nothing else',
+     sent.childName === 'Rohan' && sent.seaYear > 2000 && sent.school === 'St Joseph Boys RC' &&
+     !('occupation' in sent) && !('employer' in sent) && !('dob' in sent) && !('address' in sent));
+  ok('an untouched box is sent as a plain no', sent.consent === false);
+
+  // ---- the dashboard is the Academy's alone ----------------------------------
+  ok('a parent is not offered the dashboard', (await page.$('#nav button[data-view="dash"]')) === null);
+  await page.goto(URL + '#dash', { waitUntil: 'networkidle' });
+  ok('a parent typing the dashboard into the address bar lands on Home',
+     await page.isVisible('#v-home') && await page.isHidden('#v-dash'));
+  await page.click('#signOut');
+  await page.waitForSelector('#gateAccount:not([hidden])');
+  await page.fill('#gEmail', 'boss@example.com'); await page.click('#gGo');
+  await page.waitForSelector('#gPassRow:not([hidden])');
+  await page.fill('#gPass', 'branch-and-shield'); await page.click('#gGo');
+  await page.waitForSelector('#app:not([hidden])');
+  ok('the Academy signs in, and the dashboard is first in the nav',
+     (await page.textContent('#rolePill')).startsWith('Academy') &&
+     (await page.$eval('#nav button', b => b.dataset.view)) === 'dash');
+  await page.click('#nav button[data-view="dash"]');
+  await page.waitForSelector('#dashHost .stat');
+  const dashText = await page.textContent('#dashHost');
+  ok('it shows families, children, practice and papers', /Families/.test(dashText) && /14/.test(dashText));
+  ok('it ranks classes and schools rather than listing children',
+     /St Joseph Boys RC/.test(dashText) && (await page.$$eval('#dashHost .rank .row', n => n.length)) >= 4);
+  ok('the only names on it are parents who ticked the box',
+     /Dev Persad/.test(dashText) && /ticked the box/.test(dashText) && !/Rohan|Aisha|Anya/.test(dashText));
+  ok('it works out when the university fees start, from the class alone',
+     /[Yy]ears until university/.test(dashText) && /7 years/.test(dashText) &&
+     /nobody was asked a birthday/.test(dashText));
+
+  ok('no errors in the console', errs.length === 0, errs.join(' | '));
+
+  await b.close();
+  server.close();
+  console.log();
+  console.log(fails ? `  ${fails} failed` : '  all good');
+  process.exit(fails ? 1 : 0);
+})().catch(e => { console.error(e); process.exit(1); });

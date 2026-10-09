@@ -1,0 +1,548 @@
+{
+ "fields": {
+  "first_name": "Client \u2014 first name only",
+  "agent_first_name": "Agent \u2014 first name only",
+  "agent_or_rep": "Agent \u2014 first name only, or \"Your representative\" when the sheet has none (the subject line)",
+  "first_year": "Issue Date \u2014 the year",
+  "years": "Issue Date \u2014 whole years held",
+  "issue_date": "Issue Date",
+  "paid_to": "Paid To Date",
+  "days": "Days \u2014 days outstanding",
+  "projected_lapse": "Projected Lapse Date",
+  "app_received": "App Received Date",
+  "collected_on": "Salesforce \u2014 the day the contract was collected for delivery (the delivery-update task); letter J only",
+  "matured_on": "policy admin \u2014 not on the portfolio sheet",
+  "maturity_date": "the intelligence sheet or policy admin \u2014 not on the portfolio sheet",
+  "token": "the send list \u2014 opaque, never a policy number",
+  "segment": "the send list \u2014 the letter's own key",
+  "svc_docs": "service-record.py \u2014 documents on their policies in the Log Book, checked and sent on by the document team",
+  "svc_requests": "service-record.py \u2014 Salesforce service tasks the branch team completed for them",
+  "svc_reminders": "service-record.py \u2014 premium reminders sent to them",
+  "svc_birthday": "service-record.py \u2014 the month of their last birthday note",
+  "agent_name": "Agent \u2014 the full name as the sheet spells it; letter T only, in the subject and the notice",
+  "terminated_on": "the send list \u2014 the date Guardian Life terminated the contract, from its own notice; letter T only",
+  "promised_on": "Salesforce \u2014 the day the branch wrote to the client that the contract would be delivered within 28 days (the delivery-update e-mail); letter J only, blank where no such e-mail went",
+  "days_held": "worked out at send time \u2014 days from collected_on to the day the letter goes; letter J only",
+  "days_open": "worked out at send time \u2014 days from app_received to the day the letter goes; letters K and T1",
+  "sent_on": "set by the sender on a reminder only \u2014 the day the first letter went; blank on a first send, which cuts the banner above the greeting"
+ },
+ "taps": {
+  "urgent": "I want an agent now. Let me tell you my concerns first",
+  "review": "Tell us more about yourself",
+  "callme": "Call me",
+  "claim": "Help me claim it",
+  "deliver": "Bring me my contract",
+  "finish": "Finish my application",
+  "paid": "I have already paid",
+  "pay": "Set me up to pay Guardian Life directly",
+  "stop": "I would rather not proceed",
+  "informed": "All good, keep my details",
+  "question": "My details have changed"
+ },
+ "reply_to": "support@rickyrampersadbranch.com",
+ "families": {
+  "notice": {
+   "name": "Notice",
+   "who": "the terminated book",
+   "letters": [
+    "T",
+    "T1"
+   ]
+  },
+  "action": {
+   "name": "Action",
+   "who": "something to finish",
+   "letters": [
+    "I",
+    "J",
+    "K"
+   ]
+  },
+  "keep": {
+   "name": "Keep",
+   "who": "in force",
+   "letters": [
+    "F1",
+    "F2",
+    "F3",
+    "F4",
+    "F5",
+    "R1",
+    "R2"
+   ]
+  },
+  "return": {
+   "name": "Return",
+   "who": "lapsed or matured",
+   "letters": [
+    "A",
+    "G"
+   ]
+  }
+ },
+ "waves": [
+  {
+   "day": "Day 1",
+   "letters": [
+    "T",
+    "T1",
+    "J",
+    "K",
+    "I"
+   ]
+  },
+  {
+   "day": "Day 2",
+   "letters": [
+    "F5",
+    "F4",
+    "F3"
+   ]
+  },
+  {
+   "day": "Day 3",
+   "letters": [
+    "F2",
+    "R1",
+    "R2"
+   ]
+  },
+  {
+   "day": "Day 4",
+   "letters": [
+    "F1"
+   ]
+  },
+  {
+   "day": "Day 8",
+   "letters": [
+    "G",
+    "A"
+   ]
+  }
+ ],
+ "letters": [
+  {
+   "segment": "A",
+   "name": "A policy has matured, or is about to",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. The money in your policy is still yours.",
+   "preheader": "The money is yours. We want it to reach you on time, with what comes next talked through.",
+   "file": "A.html",
+   "facts": [
+    "matured_on",
+    "maturity_date",
+    "first_year"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "return",
+   "wave": "Day 8",
+   "act": true,
+   "taps": [
+    "claim",
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "claim": "Help me claim it",
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "Matured files first, then anything maturing within six months. The maturity date comes from policy admin, not the sheet; a blank date drops out of the strip. Most of this group is a phone call, and it is the one call nobody resents."
+  },
+  {
+   "segment": "F1",
+   "name": "In force \u2014 under two years",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "Nothing about your cover has changed. Tell us how the start has been.",
+   "file": "F1.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 4",
+   "act": false,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "In force, and the client's longest-held policy is under two years old. The newest relationships, with the least built up: the letter is about service and a named person, and asks how the start has been."
+  },
+  {
+   "segment": "F2",
+   "name": "In force \u2014 two to three years",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "Same policy, same premium, same beneficiaries. Your view on the first years, in two minutes.",
+   "file": "F2.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "In force, longest-held policy two to three years old. Early enough that life has usually moved on since the policy was bought: the letter asks what has changed."
+  },
+  {
+   "segment": "F3",
+   "name": "In force \u2014 three to five years",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "Everything your policy has built is still yours. We would like your view.",
+   "file": "F3.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "In force, longest-held policy three to five years old. Value is building: the letter says it is still theirs and asks what they want next."
+  },
+  {
+   "segment": "F4",
+   "name": "In force \u2014 five to ten years",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "Same cover, same premium, same beneficiaries. Tell us how we have done.",
+   "file": "F4.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "In force, longest-held policy five to ten years old. Starting again elsewhere would cost these clients most of what they have built: the letter says every year still counts."
+  },
+  {
+   "segment": "F5",
+   "name": "In force \u2014 ten years or more",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "Every year of your cover is still yours. Your view matters most to us.",
+   "file": "F5.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 2",
+   "act": false,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "In force, longest-held policy ten years or more. Most of the fund value sits here: the letter thanks them first and asks for their view."
+  },
+  {
+   "segment": "R1",
+   "name": "In force \u2014 cover started again in the last three years",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "A free check of what you hold today, what carried over, and who your policy pays.",
+   "file": "R1.html",
+   "facts": [
+    "first_year",
+    "issue_date",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
+   "taps": [
+    "callme",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Check my file with me",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "In force, and a policy of theirs lapsed or was surrendered within six months before, or a year after, another began, the newest such start inside the last three years. The new cover is still inside its first three years: the letter offers a free check of the file and of who the policy pays, and asks nothing about how it happened."
+  },
+  {
+   "segment": "R2",
+   "name": "In force \u2014 cover started again, more than three years ago",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy has not changed.",
+   "preheader": "A free look at your file: what you hold, what carried over, and who your policy pays.",
+   "file": "R2.html",
+   "facts": [
+    "first_year",
+    "issue_date",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "keep",
+   "wave": "Day 3",
+   "act": false,
+   "taps": [
+    "callme",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Check my file with me",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "In force, with a policy that lapsed or was surrendered close to the start of another, more than three years ago. A long relationship with a break in it: the letter recognises the years, and offers the same free check of the file and of who the policy pays."
+  },
+  {
+   "segment": "G",
+   "name": "Lapsed",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your policy may still hold value.",
+   "preheader": "A policy that stopped does not always stop being worth something.",
+   "file": "G.html",
+   "facts": [
+    "first_year",
+    "paid_to"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "family": "return",
+   "wave": "Day 8",
+   "act": true,
+   "taps": [
+    "urgent",
+    "callme"
+   ],
+   "tap_labels": {
+    "urgent": "I want an agent now. Let me tell you my concerns first",
+    "callme": "Call me"
+   },
+   "send_note": "A week behind the others."
+  },
+  {
+   "segment": "I",
+   "name": "A premium showing as due",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. A premium is showing as due.",
+   "preheader": "Already paid it? Tell us and we put the record right. Not yet? Nothing is lost.",
+   "file": "I.html",
+   "facts": [
+    "paid_to",
+    "days",
+    "projected_lapse"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
+   "taps": [
+    "paid",
+    "pay",
+    "callme"
+   ],
+   "tap_labels": {
+    "paid": "I have already paid",
+    "pay": "Set me up to pay Guardian Life directly",
+    "callme": "Call me"
+   },
+   "send_note": "More than sixty on the Days column, after the paid-to date is checked against cash and the deduction file. Direct bill first. The days outstanding and the projected lapse date are printed from the sheet, so one letter serves every band; the receiving agent calls anyone over 180 days within two days."
+  },
+  {
+   "segment": "J",
+   "name": "Contract collected for delivery, never acknowledged",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Has your policy contract reached you?",
+   "preheader": "Your policy is in force. We need to be sure the contract itself reached you.",
+   "file": "J.html",
+   "facts": [
+    "issue_date",
+    "collected_on",
+    "days_held"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
+   "taps": [
+    "deliver",
+    "paid",
+    "callme"
+   ],
+   "tap_labels": {
+    "deliver": "Bring me my contract",
+    "paid": "I paid a premium that is not showing",
+    "callme": "Call me"
+   },
+   "send_note": "From the Power BI acknowledgement of record and the undelivered-script chase: the contract was dispatched or handed over for delivery (collected_on) and no acknowledgement followed. promised_on is the date of the branch's own delivery-update e-mail to that client (personal delivery within 28 days) where one went, blank where none did, and the sentence goes with it; the days since the hand-over are worked out on the day the letter goes. First wave, and the receiving agent delivers within the week."
+  },
+  {
+   "segment": "K",
+   "name": "An application still in progress",
+   "subject": "Important: {{agent_or_rep}} has resigned and is no longer with Guardian Life. Your application continues with us.",
+   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
+   "file": "K.html",
+   "facts": [
+    "app_received",
+    "days_open"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_reminders",
+    "svc_birthday"
+   ],
+   "family": "action",
+   "wave": "Day 1",
+   "act": true,
+   "taps": [
+    "finish",
+    "callme",
+    "stop"
+   ],
+   "tap_labels": {
+    "finish": "Finish my application",
+    "callme": "Call me",
+    "stop": "I would rather not proceed"
+   },
+   "send_note": "From the pending list: underwriting incomplete, missing requirements, awaiting settlement. Cover is not in place until the policy is issued, so these go in the first wave and an agent is assigned at once; every file is read before the call. The days in progress are worked out on the day the letter goes."
+  },
+  {
+   "segment": "T",
+   "name": "The agent's contract was terminated",
+   "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life.",
+   "preheader": "Your policy is unaffected. Please read what has changed, and tell us if you have been contacted.",
+   "file": "T.html",
+   "facts": [
+    "first_year",
+    "paid_to",
+    "days",
+    "projected_lapse",
+    "app_received"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "family": "notice",
+   "wave": "Day 1",
+   "act": true,
+   "taps": [
+    "callme",
+    "paid",
+    "urgent"
+   ],
+   "tap_labels": {
+    "callme": "Call me about my policy",
+    "paid": "I have paid a premium that is not showing",
+    "urgent": "I want an agent now. Let me tell you my concerns first"
+   },
+   "send_note": "Every client on the book of an agent whose contract Guardian Life terminated, whatever they hold; the name and the date are read off the sheet (Agent, terminated_on). Goes before every other letter. The notice is in Guardian Life's own words and says nothing about why; Compliance reads it before the batch."
+  },
+  {
+   "segment": "T1",
+   "name": "The agent's contract was terminated: application still in progress",
+   "subject": "Your Guardian Life agent {{agent_name}} is no longer with Guardian Life. Let us finish your application.",
+   "preheader": "The cover you applied for starts when the policy is issued. Whatever is still needed, we bring to you.",
+   "file": "T1.html",
+   "facts": [
+    "app_received",
+    "days_open"
+   ],
+   "service": [
+    "svc_docs",
+    "svc_requests",
+    "svc_birthday"
+   ],
+   "family": "notice",
+   "wave": "Day 1",
+   "act": true,
+   "taps": [
+    "finish",
+    "callme",
+    "stop"
+   ],
+   "tap_labels": {
+    "finish": "Finish my application",
+    "callme": "Call me",
+    "stop": "I would rather not proceed"
+   },
+   "send_note": "The terminated book's clients whose application is still in progress: the notice that the contract was terminated, then the application letter's own words and question, because cover is not in place until the policy is issued. Goes first of all, with T."
+  }
+ ]
+}

@@ -143,11 +143,11 @@ env.resetRequestMemo_();
 env.installTriggers();
 let installed = env.ScriptApp.getProjectTriggers();
 const handlers = installed.map(t => t.getHandlerFunction()).sort().join();
-ok('seven are installed', installed.length === 7, String(installed.length));
-ok('one of each', handlers === 'keepWarm,remindCheckpoint,remindMidday,sendBranchPulse,sendCheckpoint,sendCloseout,sendWeekly', handlers);
+ok('eight are installed', installed.length === 8, String(installed.length));
+ok('one of each', handlers === 'closeBlocks,keepWarm,remindCheckpoint,remindMidday,sendBranchPulse,sendCheckpoint,sendCloseout,sendWeekly', handlers);
 ok('the checkpoint and the two nudges run daily', installed.filter(t => /everyDays\(1\)/.test(t.chain.join()) && /remind|sendCheckpoint/.test(t.getHandlerFunction())).length === 3);
 env.installTriggers();
-ok('running the installer again leaves seven, not fourteen', env.ScriptApp.getProjectTriggers().length === 7);
+ok('running the installer again leaves eight, not sixteen', env.ScriptApp.getProjectTriggers().length === 8);
 
 console.log('\nThe branch works around the clock, so the day\'s record decides, not the calendar:\n');
 const mailBefore = () => env.__calls.mail;

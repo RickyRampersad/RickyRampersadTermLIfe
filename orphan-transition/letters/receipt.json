@@ -1,0 +1,762 @@
+{
+ "subject": "Thank you, {{first_name}}. We have received your response.",
+ "file": "receipt.html",
+ "plain": "plain/receipt.html",
+ "care": {
+  "name": "Client Support Team",
+  "us": "our Client Support team",
+  "Us": "Our Client Support team",
+  "line": "Ricky Rampersad Branch &middot; Guardian Life of the Caribbean"
+ },
+ "next": {
+  "callme": "Someone from the branch calls you within two working days, at a time you choose.",
+  "urgent": "We read every word you wrote before we name anyone, then match you to the agent who fits your file.",
+  "review": "A person reads your review, then we match you to the agent who fits your file.",
+  "paid": "We check the record against your receipt and confirm within two working days.",
+  "pay": "We call to set up payment to Guardian Life directly, with Guardian Life's own receipt every time.",
+  "claim": "We bring the maturity form and walk it through with you.",
+  "deliver": "We bring your contract and go through it with you. The only signature it needs is the acknowledgement.",
+  "finish": "We bring whatever is still needed to finish your application. You do not have to find anything.",
+  "stop": "We close the file properly and confirm that nothing is owed.",
+  "question": "A person answers your question the same day.",
+  "assign": "We match you to the agent who fits your file, and introduce you.",
+  "selfserve": "Take your time with the review. It saves as you go, and a person reads it the day you send it.",
+  "informed": "Nothing about your policy changes, and we will ask again rather than assume."
+ },
+ "next_q": {
+  "rate_better": "Someone from the branch calls you within two working days to hear what we should do better.",
+  "life_changed": "Someone from the branch calls you within two working days to bring your cover up to date with your life.",
+  "pays_confirm": "We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.",
+  "approached_yes": "A person calls you before you decide anything, so you have the full picture first.",
+  "stay_talk": "Someone from the branch calls you within two working days to talk through who looks after your policy, and how.",
+  "value_yes": "We find out what your policy still holds, and whether it can simply start again, and call you with the answer.",
+  "walk_yes": "Someone from the branch calls you within two working days and walks you through your policy in plain words.",
+  "built_yes": "Someone from the branch calls you within two working days with what your policy has built for you so far.",
+  "more_yes": "Someone from the branch calls you within two working days to talk through what more your cover could do for you now.",
+  "contract_unsure": "Someone from the branch calls you within two working days, explains what you should have, and brings it if it is missing.",
+  "k_unsure": "Someone from the branch calls you within two working days with exactly what is still needed, and brings it to you.",
+  "contact_yes": "A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.",
+  "pay_person": "Someone from the branch calls you within two working days to set you up to pay Guardian Life directly, with Guardian Life's own receipt every time.",
+  "pay_unsure": "Someone from the branch calls you within two working days, confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.",
+  "wrote": "A person reads your e-mail and replies the same working day."
+ },
+ "still": {
+  "subject": "Still on it, {{first_name}}.",
+  "line": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. {{care_Us}} is reading every answer and matching each client with the agent who fits what they told us, and yours is in hand. Before we name your agent, is there anything you would like us to know: your family, your plans, anything that went wrong? <a href=\"https://rickyrampersadbranch.com/your-policy/words.html?t={{token}}&amp;s={{segment}}\" style=\"color:#0f5c8c;font-weight:700\">Tell us in your own words</a>. It takes a few minutes, and a person reads every word. Or simply reply to this e-mail.",
+  "follow": {
+   "default": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. {{care_Us}} is reading every answer and matching each client with the agent who fits what they told us, and yours is in hand. Before we name your agent, is there anything you would like us to know: your family, your plans, anything that went wrong? <a href=\"https://rickyrampersadbranch.com/your-policy/words.html?t={{token}}&amp;s={{segment}}\" style=\"color:#0f5c8c;font-weight:700\">Tell us in your own words</a>. It takes a few minutes, and a person reads every word. Or simply reply to this e-mail.",
+   "paid": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are checking your payment against Guardian Life’s record, and we will come back to you with what we find. If you have a receipt, reply to this e-mail with a photo of it and we will add it to your file.",
+   "pay": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We will call you to set up paying Guardian Life directly, with Guardian Life’s own receipt every time. If there is a better time to reach you, reply and tell us.",
+   "deliver": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are arranging to bring your policy contract to you and go through it with you. If it is easier to collect it at the branch, reply and tell us.",
+   "finish": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are gathering what your application still needs, so you do not have to find anything. If something has changed since you applied, reply and tell us.",
+   "stop": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are closing your application properly, and we will confirm that nothing is owed.",
+   "claim": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are preparing the maturity form to walk through with you. Reply with the best time to reach you.",
+   "question": "Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. We are updating the details you gave us, and a person will confirm them with you. If anything else has changed, <a href=\"https://rickyrampersadbranch.com/your-policy/words.html?t={{token}}&amp;s={{segment}}\" style=\"color:#0f5c8c;font-weight:700\">Tell us in your own words</a>, or simply reply to this e-mail."
+  }
+ },
+ "heads": {
+  "recap": "What you told us",
+  "concerns": "Your concerns, in your words",
+  "next": "What happens next",
+  "more": "Anything else? One tap each, by reply",
+  "follow": "How we follow through"
+ },
+ "follow": [
+  "A person reads this, not a system. Your file is read before anyone is matched to you.",
+  "If you asked for a call, it comes within two working days, at the time you chose.",
+  "Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.",
+  "This is the only automatic e-mail you will get about your answers. From here on, you hear from a person: a call, or a note from the branch."
+ ],
+ "recap": {
+  "tapped": "You tapped",
+  "q": {
+   "rate_verywell": [
+    "How have we looked after you so far?",
+    "Very well"
+   ],
+   "rate_well": [
+    "How have we looked after you so far?",
+    "Well"
+   ],
+   "rate_better": [
+    "How have we looked after you so far?",
+    "Could be better"
+   ],
+   "life_changed": [
+    "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+    "Yes, update my cover"
+   ],
+   "life_same": [
+    "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+    "No, all the same"
+   ],
+   "pays_confirm": [
+    "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+    "Yes, please confirm it"
+   ],
+   "pays_known": [
+    "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+    "I know it, thank you"
+   ],
+   "checkfirst_yes": [
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "Yes, always check with me first"
+   ],
+   "approached_yes": [
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "Someone already has. Call me"
+   ],
+   "checkfirst_no": [
+    "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+    "I will decide myself"
+   ],
+   "stay_yes": [
+    "Would you like our branch team to keep looking after your policy?",
+    "Yes, keep looking after it"
+   ],
+   "stay_talk": [
+    "Would you like our branch team to keep looking after your policy?",
+    "Let's talk it through first"
+   ],
+   "value_yes": [
+    "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+    "Yes, find out for me"
+   ],
+   "value_later": [
+    "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+    "Not now, thank you"
+   ],
+   "walk_yes": [
+    "Would you like a plain-words walk-through of what your policy does for you?",
+    "Yes, walk me through it"
+   ],
+   "walk_clear": [
+    "Would you like a plain-words walk-through of what your policy does for you?",
+    "I am clear on it, thank you"
+   ],
+   "built_yes": [
+    "Would you like to know what your policy has built for you so far?",
+    "Yes, show me"
+   ],
+   "built_later": [
+    "Would you like to know what your policy has built for you so far?",
+    "Not now, thank you"
+   ],
+   "more_yes": [
+    "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+    "Yes, let us talk"
+   ],
+   "more_later": [
+    "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+    "Not now, thank you"
+   ],
+   "contract_have": [
+    "Has your policy contract reached you?",
+    "Yes, I have it"
+   ],
+   "contract_missing": [
+    "Has your policy contract reached you?",
+    "No, it never reached me"
+   ],
+   "contract_unsure": [
+    "Has your policy contract reached you?",
+    "Not sure what I should have"
+   ],
+   "k_outstanding": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "Yes, help me finish it"
+   ],
+   "k_unsure": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "I am not sure what is needed"
+   ],
+   "k_stop": [
+    "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+    "I no longer wish to proceed"
+   ],
+   "contact_no": [
+    "Has your former agent been in touch with you since their contract ended?",
+    "No"
+   ],
+   "contact_yes": [
+    "Has your former agent been in touch with you since their contract ended?",
+    "Yes, call me"
+   ],
+   "pay_direct": [
+    "How do you pay your premium today?",
+    "Directly to Guardian Life"
+   ],
+   "pay_person": [
+    "How do you pay your premium today?",
+    "In person, to a representative"
+   ],
+   "pay_unsure": [
+    "How do you pay your premium today?",
+    "Not sure"
+   ],
+   "reach_phone": [
+    "What is the best way to reach you?",
+    "Phone call"
+   ],
+   "reach_whatsapp": [
+    "What is the best way to reach you?",
+    "WhatsApp"
+   ],
+   "reach_email": [
+    "What is the best way to reach you?",
+    "E-mail"
+   ],
+   "when_morning": [
+    "When suits you best for a call?",
+    "Morning"
+   ],
+   "when_afternoon": [
+    "When suits you best for a call?",
+    "Afternoon"
+   ],
+   "when_evening": [
+    "When suits you best for a call?",
+    "Evening"
+   ],
+   "wrote": [
+    "You wrote to us",
+    "Your e-mail, quoted below"
+   ]
+  },
+  "taps": {
+   "urgent": "I want an agent now. Let me tell you my concerns first",
+   "review": "The full review, in your own words",
+   "callme": "Call me",
+   "claim": "Help me claim it",
+   "deliver": "Bring me my contract",
+   "finish": "Finish my application",
+   "paid": "I have already paid",
+   "pay": "Set me up to pay Guardian Life directly",
+   "stop": "I would rather not proceed",
+   "informed": "All good, keep my details",
+   "question": "My details have changed",
+   "selfserve": "The full review, in your own words",
+   "assign": "Match me to an agent"
+  },
+  "tap_text": {
+   "R1": {
+    "callme": "Check my file with me"
+   },
+   "R2": {
+    "callme": "Check my file with me"
+   },
+   "J": {
+    "paid": "I paid a premium that is not showing"
+   },
+   "T": {
+    "callme": "Call me about my policy",
+    "paid": "I have paid a premium that is not showing"
+   }
+  }
+ },
+ "review": [
+  "What happened to the agent who sold you this?",
+  "Has anyone been in touch with you about moving or replacing this policy?",
+  "Who was it?",
+  "Would you like us to go through it with you before you decide anything?",
+  "When did somebody last review this policy with you?",
+  "How well do you feel you understand what you own?",
+  "Do you know what your policy would pay, and to whom?",
+  "When you have asked about this policy, were you happy with the answer you got?",
+  "What were you not given a straight answer on?",
+  "Are you still paying premiums on it?",
+  "What happened with the premiums?",
+  "Is there anything outstanding that was never sorted out?",
+  "Tell us what happened",
+  "How urgent is it?",
+  "Anything you'd like to say about how you've been treated?",
+  "What would you like help with?",
+  "Is there something specific you want to ask?",
+  "How often would you like your agent to check in with you?",
+  "How would you like to be looked after?",
+  "What matters most to you in an agent?",
+  "Anything else your ideal agent should know about you?"
+ ],
+ "reply": {
+  "to": "support@rickyrampersadbranch.com",
+  "more": "You can add anything you would like us to know here.",
+  "mode": "page",
+  "page": "https://rickyrampersadbranch.com/your-policy/",
+  "form_taps": [
+   "urgent",
+   "review",
+   "callme",
+   "claim",
+   "deliver",
+   "finish",
+   "paid",
+   "pay",
+   "stop",
+   "informed",
+   "question"
+  ],
+  "lines": [
+   "Afternoon",
+   "All good, keep my details.",
+   "Bring me my contract.",
+   "Call me about my policy.",
+   "Call me.",
+   "Check my file with me.",
+   "Could be better",
+   "Directly to Guardian Life",
+   "E-mail",
+   "Evening",
+   "Finish my application.",
+   "Has your former agent been in touch with you since their contract ended?",
+   "Has your policy contract reached you?",
+   "Help me claim it.",
+   "How do you pay your premium today?",
+   "How have we looked after you so far?",
+   "I am clear on it, thank you",
+   "I am not sure what is needed",
+   "I have already paid.",
+   "I have paid a premium that is not showing.",
+   "I know it, thank you",
+   "I no longer wish to proceed",
+   "I paid a premium that is not showing.",
+   "I want an agent now. Let me tell you my concerns first.",
+   "I will decide myself",
+   "I would rather not proceed.",
+   "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+   "In person, to a representative",
+   "In your own words: what you hold with us, who your policy pays, what has changed in your life, and what matters most to you in an agent. A person reads it, and goes through it with you if you would like.",
+   "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+   "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+   "Let's talk it through first",
+   "Morning",
+   "My details have changed.",
+   "No",
+   "No, all the same",
+   "No, it never reached me",
+   "Not now, thank you",
+   "Not sure",
+   "Not sure what I should have",
+   "Phone call",
+   "Set me up to pay Guardian Life directly.",
+   "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+   "Someone already has. Call me",
+   "Tell us more about yourself.",
+   "Very well",
+   "Well",
+   "What is the best way to reach you?",
+   "WhatsApp",
+   "When suits you best for a call?",
+   "Would you like a plain-words walk-through of what your policy does for you?",
+   "Would you like our branch team to keep looking after your policy?",
+   "Would you like to know what your policy has built for you so far?",
+   "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+   "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+   "Write your concerns here, in your own words. A person reads every word before anyone is named:",
+   "Yes, I have it",
+   "Yes, always check with me first",
+   "Yes, call me",
+   "Yes, find out for me",
+   "Yes, help me finish it",
+   "Yes, keep looking after it",
+   "Yes, let us talk",
+   "Yes, please confirm it",
+   "Yes, show me",
+   "Yes, update my cover",
+   "Yes, walk me through it",
+   "You can add anything you would like us to know here."
+  ]
+ },
+ "questions": {
+  "rating": [
+   "How have we looked after you so far?",
+   [
+    [
+     "Very well",
+     "informed",
+     "rate_verywell"
+    ],
+    [
+     "Well",
+     "informed",
+     "rate_well"
+    ],
+    [
+     "Could be better",
+     "callme",
+     "rate_better"
+    ]
+   ]
+  ],
+  "life": [
+   "Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?",
+   [
+    [
+     "Yes, update my cover",
+     "callme",
+     "life_changed"
+    ],
+    [
+     "No, all the same",
+     "informed",
+     "life_same"
+    ]
+   ]
+  ],
+  "pays": [
+   "Would you like us to confirm, in plain words, exactly what your policy pays and to whom?",
+   [
+    [
+     "Yes, please confirm it",
+     "callme",
+     "pays_confirm"
+    ],
+    [
+     "I know it, thank you",
+     "informed",
+     "pays_known"
+    ]
+   ]
+  ],
+  "checkfirst": [
+   "If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?",
+   [
+    [
+     "Yes, always check with me first",
+     "informed",
+     "checkfirst_yes"
+    ],
+    [
+     "Someone already has. Call me",
+     "callme",
+     "approached_yes"
+    ],
+    [
+     "I will decide myself",
+     "informed",
+     "checkfirst_no"
+    ]
+   ]
+  ],
+  "stay": [
+   "Would you like our branch team to keep looking after your policy?",
+   [
+    [
+     "Yes, keep looking after it",
+     "informed",
+     "stay_yes"
+    ],
+    [
+     "Let's talk it through first",
+     "callme",
+     "stay_talk"
+    ]
+   ]
+  ],
+  "value": [
+   "Would you like us to find out, free, what your policy still holds and whether it can simply start again?",
+   [
+    [
+     "Yes, find out for me",
+     "callme",
+     "value_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "value_later"
+    ]
+   ]
+  ],
+  "walk": [
+   "Would you like a plain-words walk-through of what your policy does for you?",
+   [
+    [
+     "Yes, walk me through it",
+     "callme",
+     "walk_yes"
+    ],
+    [
+     "I am clear on it, thank you",
+     "informed",
+     "walk_clear"
+    ]
+   ]
+  ],
+  "built": [
+   "Would you like to know what your policy has built for you so far?",
+   [
+    [
+     "Yes, show me",
+     "callme",
+     "built_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "built_later"
+    ]
+   ]
+  ],
+  "more": [
+   "Is there anything more you would like your cover to do for you now: family, retirement, health?",
+   [
+    [
+     "Yes, let us talk",
+     "callme",
+     "more_yes"
+    ],
+    [
+     "Not now, thank you",
+     "informed",
+     "more_later"
+    ]
+   ]
+  ],
+  "received": [
+   "Has your policy contract reached you?",
+   [
+    [
+     "Yes, I have it",
+     "informed",
+     "contract_have"
+    ],
+    [
+     "No, it never reached me",
+     "deliver",
+     "contract_missing"
+    ],
+    [
+     "Not sure what I should have",
+     "callme",
+     "contract_unsure"
+    ]
+   ]
+  ],
+  "outstanding": [
+   "Is anything you were asked for still outstanding: a medical, a document, a signature?",
+   [
+    [
+     "Yes, help me finish it",
+     "finish",
+     "k_outstanding"
+    ],
+    [
+     "I am not sure what is needed",
+     "callme",
+     "k_unsure"
+    ],
+    [
+     "I no longer wish to proceed",
+     "stop",
+     "k_stop"
+    ]
+   ]
+  ],
+  "contact": [
+   "Has your former agent been in touch with you since their contract ended?",
+   [
+    [
+     "No",
+     "informed",
+     "contact_no"
+    ],
+    [
+     "Yes, call me",
+     "callme",
+     "contact_yes"
+    ]
+   ]
+  ],
+  "paying": [
+   "How do you pay your premium today?",
+   [
+    [
+     "Directly to Guardian Life",
+     "informed",
+     "pay_direct"
+    ],
+    [
+     "In person, to a representative",
+     "pay",
+     "pay_person"
+    ],
+    [
+     "Not sure",
+     "callme",
+     "pay_unsure"
+    ]
+   ]
+  ],
+  "reach": [
+   "What is the best way to reach you?",
+   [
+    [
+     "Phone call",
+     "informed",
+     "reach_phone"
+    ],
+    [
+     "WhatsApp",
+     "informed",
+     "reach_whatsapp"
+    ],
+    [
+     "E-mail",
+     "informed",
+     "reach_email"
+    ]
+   ]
+  ],
+  "when": [
+   "When suits you best for a call?",
+   [
+    [
+     "Morning",
+     "informed",
+     "when_morning"
+    ],
+    [
+     "Afternoon",
+     "informed",
+     "when_afternoon"
+    ],
+    [
+     "Evening",
+     "informed",
+     "when_evening"
+    ]
+   ]
+  ]
+ },
+ "segments": {
+  "A": [
+   "contact",
+   "checkfirst"
+  ],
+  "F1": [
+   "contact",
+   "rating",
+   "walk",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "F2": [
+   "contact",
+   "rating",
+   "life",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "F3": [
+   "contact",
+   "rating",
+   "life",
+   "built",
+   "checkfirst",
+   "stay"
+  ],
+  "F4": [
+   "contact",
+   "rating",
+   "life",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "F5": [
+   "contact",
+   "rating",
+   "more",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "R1": [
+   "contact",
+   "rating",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "R2": [
+   "contact",
+   "rating",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "G": [
+   "contact",
+   "life",
+   "value",
+   "checkfirst"
+  ],
+  "I": [
+   "contact",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "J": [
+   "received",
+   "contact",
+   "pays",
+   "checkfirst",
+   "stay"
+  ],
+  "K": [
+   "outstanding",
+   "contact",
+   "checkfirst"
+  ],
+  "T": [
+   "contact",
+   "paying",
+   "received",
+   "checkfirst",
+   "pays",
+   "stay"
+  ],
+  "T1": [
+   "contact",
+   "outstanding",
+   "checkfirst"
+  ],
+  "_": [
+   "checkfirst"
+  ]
+ },
+ "legal": {
+  "head": "Confidential",
+  "text": "This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in error, please tell us by reply and delete it; do not forward it. Your personal information is handled under the General Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act 2018 places on everyone who works for an insurer: it is used only to look after your policy, is never sold, and is never disclosed without your express consent unless the law requires it. You may ask at any time what we hold about you and have it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian Life of the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never changes how your policy is looked after.",
+  "html": "<p style=\"margin:8px 0 0;font:400 12px/1.5 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#64798e\"><b style=\"color:#4a5f74\">Confidential.</b> This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in error, please tell us by reply and delete it; do not forward it. Your personal information is handled under the General Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act 2018 places on everyone who works for an insurer: it is used only to look after your policy, is never sold, and is never disclosed without your express consent unless the law requires it. You may ask at any time what we hold about you and have it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian Life of the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never changes how your policy is looked after.</p>",
+  "plain": "<p><i><b>Confidential.</b> This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in error, please tell us by reply and delete it; do not forward it. Your personal information is handled under the General Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act 2018 places on everyone who works for an insurer: it is used only to look after your policy, is never sold, and is never disclosed without your express consent unless the law requires it. You may ask at any time what we hold about you and have it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian Life of the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never changes how your policy is looked after.</i></p>",
+  "internal": "Internal to the Ricky Rampersad Branch. This e-mail carries client information: do not forward it outside the branch."
+ },
+ "tpl": {
+  "items": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\" style=\"margin-top:4px\">{items}</table>",
+  "item": "<tr><td style=\"padding:8px 0 7px;border-top:1px solid #e0eaef;font:400 13px/1.45 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5d7186\">{q}<div style=\"font:700 15px/1.4 'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e;margin-top:2px\">{a}</div></td></tr>",
+  "quote": "<p style=\"margin:0 0 11px;font:400 14.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\"><span style=\"display:block;font:400 12.5px/1.4 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#5d7186;margin-bottom:2px\">{q}</span>&ldquo;{a}&rdquo;</p>",
+  "bullets": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "bullet": "<tr><td style=\"padding:3px 0;font:400 14.5px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\"><span style=\"color:#c9942c;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>",
+  "bullets_dark": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "bullet_dark": "<tr><td style=\"padding:4px 0;font:400 14px/1.55 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#dbe7f1\"><span style=\"color:#efc24b;font-weight:800\">&#9656;</span>&nbsp; {a}</td></tr>",
+  "more": "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">{items}</table>",
+  "more_q": "<tr><td style=\"padding:6px 0 4px;font:600 13.5px/1.45 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#12202e\">{q}<div style=\"margin-top:6px\">{links}</div></td></tr>",
+  "more_a": "<a href=\"{href}\" style=\"display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:#07606f;font:700 13px/1.2 Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;text-decoration:none;white-space:nowrap\">&#9744;&nbsp;{a}</a>"
+ },
+ "tpl_plain": {
+  "items": "<ul>{items}</ul>",
+  "item": "<li>{q}<br><b>{a}</b></li>",
+  "quote": "<p>{q}<br><i>&ldquo;{a}&rdquo;</i></p>",
+  "bullets": "<ul>{items}</ul>",
+  "bullet": "<li>{a}</li>",
+  "bullets_dark": "<ul>{items}</ul>",
+  "bullet_dark": "<li>{a}</li>",
+  "more": "<ul>{items}</ul>",
+  "more_q": "<li><b>{q}</b><br>{links}</li>",
+  "more_a": "<a href=\"{href}\">&#9744;&nbsp;{a}</a> &nbsp; "
+ }
+}

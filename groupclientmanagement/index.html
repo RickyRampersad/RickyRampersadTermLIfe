@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Group Client Management | Ricky Rampersad Branch</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* The corporate look (8 October 2026): white surfaces on a cool grey, one corporate blue for actions, status carried by
+   a tinted label and never by colour alone. The old names (navy, gold, bar, teal) stay as aliases because the scripts
+   below still use some of them. */
+:root{
+  --canvas:#D9E1EB; --paper:#F4F7FA; --sunken:#E8EDF4; --line:#CBD4E0; --line2:#B5C1D0;
+  --ink:#142033; --ink2:#2B374C; --muted:#4B586C; --faint:#97A1B2;
+  --primary:#1D5BC4; --primaryHover:#174CA6; --primarySoft:#EBF2FD; --primaryLine:#B8CEF4;
+  --bar:#2A78D6; --track:#DCE8F8;
+  --good:#067647; --goodBg:#E8F5EC; --warn:#A64B05; --warnBg:#FDF1E1; --warnMark:#E0891B; --bad:#D03B3B; --badBg:#FCEBE9; --badText:#B42318;
+  --navy:var(--ink); --navy2:var(--ink2); --gold:var(--primary); --gold2:var(--primary); --teal:var(--bar); --bg:var(--canvas);
+  --shadow:0 1px 2px rgba(16,24,40,.05); --shadowLg:0 24px 48px -16px rgba(16,24,40,.22);
+  --font:"IBM Plex Sans","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+a{color:var(--primary)}
+.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
+header.mast{background:linear-gradient(120deg,#13408F,#1D5BC4 55%,#2A6FD8);color:#fff;padding:14px 0}
+.mrow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.mark{width:38px;height:38px;border-radius:9px;overflow:hidden;display:grid;place-items:center;flex:none;box-shadow:0 0 0 2px rgba(255,255,255,.35)}
+.mark img{width:100%;height:100%;display:block}
+.bname{font-weight:600;line-height:1.2}.bsub{font-size:13px;color:rgba(255,255,255,.8)}
+.mright{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:13px;color:rgba(255,255,255,.85)}
+.mright a{color:#fff}
+.btn{border:1px solid var(--primary);border-radius:8px;padding:9px 16px;font-weight:600;cursor:pointer;background:var(--primary);color:#fff;box-shadow:var(--shadow);transition:background-color .15s,border-color .15s}
+.btn:hover{background:var(--primaryHover);border-color:var(--primaryHover)}.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.gold{background:var(--primary);color:#fff}.btn.gold:hover{background:var(--primaryHover)}
+.btn.ghost{background:var(--paper);border:1px solid var(--line2);color:var(--ink)}
+.btn.ghost:hover{background:var(--sunken);border-color:var(--ink2)}
+.mast .btn,.mast .btn.ghost{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4);color:#fff;box-shadow:none}
+.mast .btn:hover,.mast .btn.ghost:hover{background:rgba(255,255,255,.22);border-color:rgba(255,255,255,.6)}
+.gate{max-width:420px;margin:48px auto;background:var(--paper);border:1px solid var(--line);padding:28px 26px;border-radius:12px;box-shadow:var(--shadowLg)}
+.gate h1{font-size:22px;font-weight:600;margin:0 0 4px}.gate p{color:var(--muted);margin:0 0 16px}
+label{display:block;font-weight:500;font-size:14px;margin:12px 0 6px;color:var(--ink2)}
+.field{width:100%;padding:11px 12px;border:1px solid var(--line2);border-radius:8px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.field:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px var(--primarySoft)}
+textarea.field{min-height:84px;resize:vertical}
+.err{color:var(--badText);font-size:14px;min-height:20px;margin-top:8px}
+.note{background:var(--warnBg);border:1px solid #F3D7B0;padding:10px 14px;border-radius:8px;margin:14px 0;font-size:14px}
+.note.bad{background:var(--badBg);border-color:#F2C4BF}
+h2{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:28px 0 10px}h3{font-size:16px;font-weight:600;margin:18px 0 8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin:14px 0}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow)}
+.tile b{display:block;font-size:28px;font-weight:600;letter-spacing:-.02em;line-height:1.1;font-variant-numeric:tabular-nums}.tile span{color:var(--muted);font-size:13px}
+.tile.alert b{color:var(--badText)}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 16px;cursor:pointer;text-align:left;width:100%;box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--primaryLine);box-shadow:0 8px 20px -10px rgba(16,24,40,.2)}
+.card h4{margin:0 0 6px;font-size:16px;font-weight:600}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:3px 9px;border-radius:99px;background:var(--sunken);border:1px solid var(--line);color:var(--ink2)}
+.chip i{width:7px;height:7px;border-radius:50%;display:inline-block}
+.chip.good{background:var(--goodBg);border-color:transparent;color:var(--good)}.chip.good i{background:var(--good)}
+.chip.warn{background:var(--warnBg);border-color:transparent;color:var(--warn)}.chip.warn i{background:var(--warnMark)}
+.chip.bad{background:var(--badBg);border-color:transparent;color:var(--badText)}.chip.bad i{background:var(--bad)}
+.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;font-size:13px;color:var(--muted);margin-top:8px}
+.kv b{display:block;color:var(--ink);font-size:17px;font-weight:600}
+.tabs{display:flex;gap:4px;margin:18px 0 0;border-bottom:1px solid var(--line);overflow-x:auto;-webkit-overflow-scrolling:touch}
+.tab{border:0;background:none;padding:10px 14px;font-weight:600;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--primary);border-color:var(--primary)}
+table.t{width:100%;border-collapse:separate;border-spacing:0;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:14px;box-shadow:var(--shadow)}
+.t th{text-align:left;font-size:12px;font-weight:600;color:var(--muted);background:var(--sunken);padding:10px 12px;border-bottom:1px solid var(--line)}
+.t td{padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:middle}
+.t tr:last-child td{border-bottom:0}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.bar{display:flex;align-items:center;gap:8px;min-width:120px}
+.bar .track{flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden}
+.bar .fill{height:100%;background:var(--bar);border-radius:4px}
+.bar .fill.gold{background:var(--primary)}
+.bar em{font-style:normal;font-variant-numeric:tabular-nums;font-size:13px;min-width:38px;text-align:right}
+.weeks{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;align-items:end;height:170px;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:14px 12px 8px;box-shadow:var(--shadow)}
+.wk{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:12px;color:var(--muted)}
+.wk .col{width:60%;max-width:24px;background:var(--bar);border-radius:4px 4px 0 0;min-height:2px}
+.wk b{color:var(--ink);font-size:13px;font-weight:600}
+.items{display:flex;flex-direction:column;gap:10px}
+.story{margin:8px 0 4px;font-size:14px}
+.story b{color:var(--ink)}
+.subj{font-size:12px;color:var(--muted);margin-top:4px;word-break:break-word}
+/* the history of an open item: a drop-down bar that reads as one, with the dates in their own column */
+details.hist{margin:10px 0 4px;border:1px solid var(--primaryLine);border-radius:8px;background:var(--primarySoft);overflow:hidden}
+details.hist summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:9px 12px;font-weight:600;font-size:14px;color:var(--primary)}
+details.hist summary::-webkit-details-marker{display:none}
+details.hist summary::before{content:"";width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);transition:transform .2s;flex:none}
+details.hist[open] summary::before{transform:rotate(45deg)}
+details.hist summary:hover{background:#DCE8FB}
+details.hist summary .n{margin-left:auto;background:var(--primary);color:#fff;border-radius:99px;font-size:12px;padding:1px 9px}
+details.hist ul{list-style:none;margin:0;padding:4px 12px 8px;background:var(--paper);border-top:1px solid var(--primaryLine)}
+details.hist li{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+details.hist li:last-child{border-bottom:0}
+details.hist li .d{font-weight:600;color:var(--ink);font-variant-numeric:tabular-nums}
+details.hist li.int{color:var(--muted)}
+details.hist li .staff{display:inline-block;margin-left:6px;font-size:11.5px;font-weight:600;background:var(--warnBg);color:var(--warn);border-radius:99px;padding:0 7px}
+.btn.sm{padding:5px 11px;font-size:13px}
+@media (max-width:640px){details.hist li{grid-template-columns:1fr;gap:2px}}
+.item{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line2);border-radius:10px;padding:12px 14px;box-shadow:var(--shadow)}
+.item.late{border-left-color:var(--bad)}.item.wait{border-left-color:var(--warnMark)}
+.item h4{margin:0 0 6px;font-size:16px;font-weight:600}
+.meta{font-size:13.5px;color:var(--muted)}
+.meta b{color:var(--ink);font-weight:600}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;cursor:pointer}
+.toggle input{accent-color:var(--primary)}
+.posts{margin-top:8px;border-top:1px solid var(--line);padding-top:8px}
+.post{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--sunken);margin:6px 0;white-space:pre-wrap}
+.post.shared{background:var(--goodBg);border:1px solid #BFE3CB}
+.post .who{font-weight:600}
+.feed li{margin:6px 0}
+.drawer{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:16px;margin:16px 0;box-shadow:var(--shadowLg)}
+iframe.preview{width:100%;height:560px;border:1px solid var(--line);border-radius:10px;background:#fff}
+.back{background:none;border:0;color:var(--primary);font-weight:600;cursor:pointer;padding:0;margin:16px 0 0}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:8px;box-shadow:var(--shadowLg);opacity:0;pointer-events:none;transition:opacity .2s;max-width:92vw;z-index:9}
+.toast.on{opacity:1}.toast.bad{background:var(--badText)}
+.muted{color:var(--muted)}.small{font-size:13px}
+.hide{display:none!important}
+@media (max-width:640px){.kv{grid-template-columns:repeat(2,1fr)}.weeks{height:140px;gap:4px;padding:10px 6px 6px}iframe.preview{height:460px}}
+</style>
+</head>
+<body>
+<header class="mast"><div class="wrap mrow">
+  <div class="mark"><img src="gcm-mark.png" alt=""></div>
+  <div><div class="bname">Ricky Rampersad Branch</div><div class="bsub">Group Client Management</div></div>
+  <div class="mright" id="who"></div>
+</div></header>
+
+<main class="wrap" id="app">
+  <form class="gate" id="gate" autocomplete="off">
+    <h1>Staff sign in</h1>
+    <p>Your agent number and password from the Agent Skill Bank. The branch manager sees every group and the dashboard; staff see the groups assigned to them.</p>
+    <label for="gWho">Agent number</label>
+    <input class="field" id="gWho" autocapitalize="characters" spellcheck="false" placeholder="A00427">
+    <label for="gCode">Password, or the branch code</label>
+    <input class="field" id="gCode" type="password" required>
+    <div class="err" id="gErr" role="alert"></div>
+    <button class="btn" type="submit" id="gGo" style="width:100%;margin-top:6px">Sign in</button>
+  </form>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+/* The Service Questionnaire deployment: the same /exec URL the assignment board uses. GroupClients.gs answers every gcm.* action. */
+const SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const DAYS = ['','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+const dmy = s => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s || ''); return m ? (+m[3]) + ' ' + MON[+m[2] - 1] + ' ' + m[1] : ''; };
+const pct = n => n == null ? '–' : n + '%';
+let AUTH = { code: '', who: '' }, BOARD = null, VIEW = 'board', GROUP = null, TAB = 'dash';
+try { AUTH.code = localStorage.getItem('rrb-gcm-code') || ''; AUTH.who = localStorage.getItem('rrb-gcm-who') || ''; } catch (e) {}
+
+function toast(msg, bad) { const t = $('toast'); t.textContent = msg; t.className = 'toast on' + (bad ? ' bad' : ''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast', bad ? 8000 : 4000); }
+async function api(params) {
+  const q = Object.entries(Object.assign({}, params, { code: AUTH.code, who: AUTH.who })).map(([k, v]) => k + '=' + encodeURIComponent(v)).join('&');
+  try { const txt = await (await fetch(SVC + '?' + q + '&z=' + Date.now())).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, notLive: true, error: 'The branch backend is not answering for group client management yet: GroupClients.gs needs pasting and a New version publishing.' }; } }
+  catch (e) { return { ok: false, error: 'Could not reach the branch backend. Check the connection and try again.' }; }
+}
+async function post(body) {
+  try { const txt = await (await fetch(SVC, { method: 'POST', body: JSON.stringify(Object.assign({}, body, { code: AUTH.code, who: AUTH.who })) })).text(); try { return JSON.parse(txt); } catch (e) { return { ok: false, error: 'The backend answered with a page instead of data.' }; } }
+  catch (e) { return { ok: false, error: 'Could not reach the branch backend.' }; }
+}
+
+/* ---- the gate ---- */
+$('gate').addEventListener('submit', e => { e.preventDefault(); AUTH = { code: $('gCode').value.trim(), who: $('gWho').value.trim() }; open_(); });
+async function open_() {
+  const err = $('gErr'), go = $('gGo');
+  if (err) { err.textContent = ''; go.disabled = true; go.textContent = 'Opening… the sheet is answering'; }
+  const d = await api({ action: 'gcm.board' });
+  if (!d.ok) {
+    if (!$('gate')) { location.reload(); return; }
+    err.textContent = d.error || 'Not opened.'; go.disabled = false; go.textContent = 'Sign in'; return;
+  }
+  try { localStorage.setItem('rrb-gcm-code', AUTH.code); localStorage.setItem('rrb-gcm-who', AUTH.who); } catch (e) {}
+  BOARD = d; render();
+}
+function signOut() { try { localStorage.removeItem('rrb-gcm-code'); localStorage.removeItem('rrb-gcm-who'); } catch (e) {} location.reload(); }
+
+function head() {
+  $('who').innerHTML = esc(BOARD.me) + ' · ' + (BOARD.role === 'branch' ? 'Branch manager' : 'Staff') +
+    (BOARD.refreshed ? ' · Salesforce as at ' + esc(BOARD.refreshed) : '') +
+    ' <button class="btn ghost" id="rf" type="button">Refresh from Salesforce</button> <a class="btn ghost" href="training.html">Training</a> <button class="btn ghost" type="button" onclick="signOut()">Sign out</button>';
+  $('rf').onclick = refresh;
+}
+async function refresh() {
+  const b = $('rf'); b.disabled = true; b.textContent = 'Refreshing… about a minute';
+  const r = await api({ action: 'gcm.refresh' });
+  if (!r.ok) { toast(r.error || 'Not refreshed', true); b.disabled = false; b.textContent = 'Refresh from Salesforce'; return; }
+  toast(r.said || 'Refreshed');
+  const d = await api({ action: 'gcm.board' }); if (d.ok) BOARD = d;
+  if (VIEW === 'group' && GROUP) openGroup(GROUP.group.key); else render();
+}
+
+/* ---- the board ---- */
+function weekChip(s) {
+  if (s.week === 'sent') return '<span class="chip good"><i></i>Sent ' + esc(s.sentThisWeek) + '</span>';
+  if (s.week === 'due') return '<span class="chip bad"><i></i>Letter due this week</span>';
+  return '<span class="chip"><i style="background:#9aa5b1"></i>Next letter ' + DAYS[BOARD.sendDay] + '</span>';
+}
+function groupCard(g) {
+  const s = g.stats;
+  return '<button class="card" type="button" data-g="' + esc(g.key) + '"><h4>' + esc(g.name) + '</h4>' +
+    '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') +
+    (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') + (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') +
+    (!s.ready ? '<span class="chip warn"><i></i>' + esc(s.why) + '</span>' : '') + '</div>' +
+    (BOARD.role === 'branch' && (!g.assigned || !g.ownerActive) ? '<div class="chips"><span class="chip bad"><i></i>' + (g.assigned ? 'Owner ' + esc(g.assigned) + ' is inactive in Salesforce' : 'No owner in Salesforce') + '</span></div>' : '') +
+    '<div class="small muted">' + (BOARD.role === 'branch' ? 'Account owner <b>' + esc(g.assigned || 'nobody') + '</b> · ' : '') + 'List bill ' + esc(g.bills.join(', ') || 'none') + '</div>' +
+    '<div class="kv"><div><b>' + s.open + '</b>open</div><div><b>' + (s.oldest || 0) + 'd</b>oldest</div><div><b>' + pct(s.onTimePct) + '</b>on time</div><div><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b>rating</div></div></button>';
+}
+function render() {
+  VIEW = 'board'; GROUP = null; head();
+  const d = BOARD, app = $('app');
+  let h = '';
+  if (!d.salesforce) h += '<div class="note bad">Salesforce is not linked to the backend yet, so no tasks can be read. Copy SF_KEY, SF_SECRET and SF_LOGIN_URL from the KPI Tracker into the project’s Script properties, then run gcmRefresh.</div>';
+  if (!d.refreshed && d.salesforce) h += '<div class="note">The Group Tasks tab has not been filled yet: press “Refresh from Salesforce”.</div>';
+  if (d.dow === d.sendDay) h += '<div class="note"><b>Today is ' + DAYS[d.sendDay] + ': send day.</b> Open each group marked “Letter due”, check every item against Salesforce and the latest billing, preview the letter, then send.</div>';
+  if (d.role === 'branch') {
+    h += '<div class="tabs" role="tablist"><button class="tab" role="tab" data-t="dash" aria-selected="' + (TAB === 'dash') + '">Dashboard</button><button class="tab" role="tab" data-t="groups" aria-selected="' + (TAB === 'groups') + '">Groups</button></div>';
+    h += TAB === 'dash' ? dash(d.analytics) : groupsHtml(d);
+  } else h += groupsHtml(d);
+  app.innerHTML = h;
+  app.querySelectorAll('[data-g]').forEach(b => b.onclick = () => openGroup(b.dataset.g));
+  app.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { TAB = b.dataset.t; render(); });
+  window.scrollTo(0, 0);
+}
+function groupsHtml(d) {
+  const due = d.groups.filter(g => g.stats.week === 'due').length;
+  const today = d.groups.flatMap(g => g.doneToday.map(x => Object.assign({ group: g.name }, x)));
+  let h = '<h2>' + (d.role === 'branch' ? 'Every group' : 'Your groups') + ' <span class="muted small">' + d.groups.length + ' · ' + due + ' letter' + (due === 1 ? '' : 's') + ' due this week</span></h2>';
+  h += d.groups.length ? '<div class="cards">' + d.groups.map(groupCard).join('') + '</div>' : '<p class="muted">No groups are assigned to you on the Group Register yet.</p>';
+  h += '<h2>What we’ve done today <span class="muted small">' + today.length + '</span></h2>' + (today.length
+    ? '<ul class="feed">' + today.map(x => '<li><b>' + esc(x.group) + '</b>: ' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + (x.by ? ' · ' + esc(x.by) : '') + '</span></li>').join('') + '</ul>'
+    : '<p class="muted">Nothing completed on these groups in Salesforce yet today.</p>');
+  return h;
+}
+
+/* ---- the manager's dashboard ---- */
+function barCell(v, max, gold, label) {
+  if (v == null) return '<span class="muted">–</span>';
+  const w = max && v ? Math.max(2, Math.round(100 * v / max)) : 0;
+  return '<div class="bar" title="' + esc(label || v) + '"><div class="track"><div class="fill' + (gold ? ' gold' : '') + '" style="width:' + w + '%"></div></div><em>' + esc(label || v) + '</em></div>';
+}
+function dash(a) {
+  if (!a) return '';
+  const t = a.totals;
+  let h = '<div class="tiles">' +
+    '<div class="tile"><b>' + t.groups + '</b><span>groups</span></div>' +
+    '<div class="tile' + (t.dueWeek ? ' alert' : '') + '"><b>' + t.sentWeek + ' / ' + (t.sentWeek + t.dueWeek) + '</b><span>letters sent this week</span></div>' +
+    '<div class="tile"><b>' + t.open + '</b><span>open items</span></div>' +
+    '<div class="tile' + (t.late ? ' alert' : '') + '"><b>' + t.late + '</b><span>past target</span></div>' +
+    '<div class="tile"><b>' + t.done + '</b><span>completed this year</span></div>' +
+    '<div class="tile"><b>' + pct(t.onTimePct) + '</b><span>on time (done by its due date)</span></div>' +
+    '<div class="tile"><b>' + (t.avgDays == null ? '–' : t.avgDays + 'd') + '</b><span>average days to complete</span></div>' +
+    '<div class="tile"><b>' + t.responsesWeek + '</b><span>group answers this week</span></div>' +
+    '<div class="tile"><b>' + (t.rating == null ? '–' : t.rating + '★') + '</b><span>average rating · ' + t.ratings + ' given</span></div>' +
+    '<div class="tile"><b>' + t.doneToday + '</b><span>completed today</span></div></div>';
+  if (a.act.length) h += '<h2>To act on</h2><ul class="feed">' + a.act.map(x => '<li><span class="chip ' + (x.kind === 'setup' ? 'warn' : 'bad') + '"><i></i>' + esc(x.what) + '</span> <b>' + esc(x.group) + '</b> <span class="muted small">· ' + esc(x.who || 'not assigned') + '</span></li>').join('') + '</ul>';
+  const maxDone = Math.max(1, ...a.staff.map(s => s.done));
+  h += '<h2>By staff</h2><p class="small muted">Letters and ratings follow each group’s account owner in Salesforce; completed work and on-time follow who owns each task in Salesforce. “On time” counts only tasks with a due date, and a due date can be moved: average days cannot. Accuracy is the share of items groups marked correct.</p>' +
+    '<div class="scroll"><table class="t"><thead><tr><th>Staff</th><th class="num">Groups</th><th class="num">Letters this week</th><th class="num">Open</th><th class="num">Past target</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th><th>Rating</th><th class="num">Accuracy</th></tr></thead><tbody>' +
+    a.staff.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td class="num">' + s.groups + '</td><td class="num">' + s.sent + (s.due ? ' <span class="chip bad"><i></i>' + s.due + ' due</span>' : '') + '</td><td class="num">' + s.open + '</td><td class="num">' + s.late + '</td>' +
+      '<td>' + barCell(s.done, maxDone) + '</td><td>' + barCell(s.onTimePct, 100, false, pct(s.onTimePct)) + '</td><td class="num">' + (s.avgDays == null ? '–' : s.avgDays) + '</td>' +
+      '<td>' + (s.rating == null ? '<span class="muted">none yet</span>' : barCell(s.rating, 5, true, s.rating + '★ · ' + s.ratings)) + '</td><td class="num">' + pct(s.accuracy) + '</td></tr>').join('') + '</tbody></table></div>';
+  const maxW = Math.max(1, ...a.weeks.map(w => w.done));
+  h += '<h2>Week by week <span class="muted small">completed items, the last eight weeks</span></h2><div class="weeks">' + a.weeks.map(w =>
+    '<div class="wk" title="Week of ' + esc(dmy(w.from)) + ': ' + w.done + ' completed, ' + pct(w.onTimePct) + ' on time, ' + w.sent + ' letters, ' + w.responses + ' answers"><b>' + w.done + '</b><div class="col" style="height:' + Math.round(100 * w.done / maxW) + '%"></div><span>' + esc(dmy(w.from).replace(/ \d{4}$/, '')) + '</span></div>').join('') + '</div>' +
+    '<div class="scroll" style="margin-top:8px"><table class="t"><thead><tr><th>Week of</th>' + a.weeks.map(w => '<th class="num">' + esc(dmy(w.from).replace(/ \d{4}$/, '')) + '</th>').join('') + '</tr></thead><tbody>' +
+    '<tr><td>Completed</td>' + a.weeks.map(w => '<td class="num">' + w.done + '</td>').join('') + '</tr><tr><td>On time</td>' + a.weeks.map(w => '<td class="num">' + pct(w.onTimePct) + '</td>').join('') + '</tr>' +
+    '<tr><td>Letters sent</td>' + a.weeks.map(w => '<td class="num">' + w.sent + '</td>').join('') + '</tr><tr><td>Group answers</td>' + a.weeks.map(w => '<td class="num">' + w.responses + '</td>').join('') + '</tr></tbody></table></div>';
+  const maxT = Math.max(1, ...a.types.map(t => t.done));
+  h += '<h2>By task type</h2><div class="scroll"><table class="t"><thead><tr><th>Task type</th><th class="num">Open</th><th>Completed this year</th><th>On time</th><th class="num">Avg days</th></tr></thead><tbody>' +
+    a.types.map(t => '<tr><td>' + esc(t.type) + '</td><td class="num">' + t.open + '</td><td>' + barCell(t.done, maxT) + '</td><td>' + barCell(t.onTimePct, 100, false, pct(t.onTimePct)) + '</td><td class="num">' + (t.avgDays == null ? '–' : t.avgDays) + '</td></tr>').join('') + '</tbody></table></div>';
+  h += '<h2>What groups told us <span class="muted small">the last 30 days: changes, “not ours”, ratings of 3 or less, and every comment</span></h2>' + (a.responses.length
+    ? '<ul class="feed">' + a.responses.map(r => '<li><b>' + esc(r.group) + '</b> <span class="muted small">' + esc(r.at) + ' · ' + esc(r.name) + ' · ' + esc(r.staff) + '</span><br>' +
+      (r.rating ? '<b>' + r.rating + '★</b> ' : '') + (r.verdict ? esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.task) + ' ' : '') + (r.note ? '“' + esc(r.note) + '”' : '') + (r.comment ? '“' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>'
+    : '<p class="muted">No answers needing attention yet.</p>');
+  return h;
+}
+
+/* ---- one group ---- */
+async function openGroup(key) {
+  $('app').innerHTML = '<p class="muted" style="margin:30px 0">Opening the group, with every task’s Chatter from Salesforce…</p>';
+  const d = await api({ action: 'gcm.group', group: key });
+  if (!d.ok) { toast(d.error || 'Not opened', true); render(); return; }
+  VIEW = 'group'; GROUP = d; drawGroup();
+}
+function drawGroup() {
+  const d = GROUP, g = d.group, s = d.stats;
+  let h = '<button class="back" type="button" id="bk">← All groups</button><h2 style="margin-top:8px">' + esc(g.name) + '</h2>' +
+    '<div class="chips">' + weekChip(s) + (s.waiting ? '<span class="chip warn"><i></i>' + s.waiting + ' waiting on them</span>' : '') + (s.late ? '<span class="chip bad"><i></i>' + s.late + ' past target</span>' : '') +
+    (s.needReason ? '<span class="chip bad"><i></i>' + s.needReason + ' need' + (s.needReason === 1 ? 's' : '') + ' a reason for the group</span>' : '') + '</div>' +
+    '<p class="small muted">Account owner in Salesforce <b>' + esc(g.assigned || 'nobody') + '</b>' + (g.assigned && !g.ownerActive ? ' <b style="color:var(--badText)">(no longer active: change the owner in Salesforce)</b>' : '') + ' · List bill ' + esc(g.bills.join(', ') || 'none') +
+    ' · Letter goes to ' + (g.to.length ? toLine(g) : '<b style="color:var(--badText)">nobody: give the account a Contact Person with an e-mail in Salesforce, then Refresh</b>') + '</p>' +
+    (g.personal && g.personal.length ? '<div class="note warn">' + esc(g.personal.join(', ')) + ' is a personal mailbox, and the letter carries the group’s access code. Make sure it is still the group’s contact; if not, change the account’s Contact Person in Salesforce.</div>' : '') +
+    (d.feedError ? '<div class="note bad">Chatter could not be read: ' + esc(d.feedError) + '</div>' : '') +
+    '<div class="tiles"><div class="tile"><b>' + s.open + '</b><span>open, ' + s.shown + ' shown to the group</span></div><div class="tile"><b>' + (s.oldest || 0) + 'd</b><span>oldest item</span></div>' +
+    '<div class="tile"><b>' + s.done + '</b><span>completed this year</span></div><div class="tile"><b>' + pct(s.onTimePct) + '</b><span>on time</span></div><div class="tile"><b>' + (s.rating == null ? '–' : s.rating + '★') + '</b><span>rating</span></div></div>' +
+    '<div class="drawer" id="sendBox"><h3 style="margin-top:0">This week’s letter</h3>' +
+    (s.needReason ? '<div class="note bad">The letter can go once every item open more than ' + d.reasonDays + ' days has a note for the group, written in the last ' + d.reasonDays + ' days: ' + s.needReason + ' still need' + (s.needReason === 1 ? 's' : '') + ' one. Each is marked below' + (d.ai ? ', with “Draft with AI” to start you off' : '') + '.</div>' : '') + (s.week === 'sent' ? '<p class="small">Already sent this week (' + esc(s.sentThisWeek) + '). Sending again sends a second letter.</p>' : '') +
+    '<label for="intro">Your own opening line (optional)</label><textarea class="field" id="intro" maxlength="1200" placeholder="Anything you want to say first, in your own words."></textarea>' +
+    '<div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" type="button" id="pv">Preview the letter</button></div><div id="pvBox"></div></div>' +
+    '<h3 style="display:flex;flex-wrap:wrap;align-items:center;gap:8px">Open items <span class="muted small">' + d.items.length + ' · tick what the group sees; share the Chatter comments they should read</span>' + (d.items.length ? '<button class="btn ghost sm" type="button" id="histAll" style="margin-left:auto">Show all history</button>' : '') + '</h3><div class="items">' + d.items.map(itemHtml).join('') + (d.items.length ? '' : '<p class="muted">Nothing open.</p>') + '</div>' +
+    '<h3>Completed in the last seven days</h3>' + (d.doneWeek.length ? '<ul class="feed">' + d.doneWeek.map(x => '<li>' + esc(x.title) + ' <span class="muted small">· ' + esc(x.type) + ' · ' + esc(x.by) + ' · ' + esc(dmy(x.done)) + (x.shown ? '' : ' · not shown to the group') + '</span></li>').join('') + '</ul>' : '<p class="muted">Nothing completed this week.</p>') +
+    '<h3>Service record this year <span class="muted small">what the group sees</span></h3>' + recordHtml(d.record) +
+    '<h3>Letters sent</h3>' + (d.sends.length ? '<ul class="feed">' + d.sends.map(x => '<li>' + esc(x.at) + ' · ' + esc(x.staff) + ' · ' + x.items + ' items · ' + esc(x.status) + ' <span class="muted small">(' + esc(x.via) + ')</span></li>').join('') + '</ul>' : '<p class="muted">None yet.</p>') +
+    '<h3>What the group told us</h3>' + (d.responses.length ? '<ul class="feed">' + d.responses.map(r => '<li>' + esc(r.at) + ' · <b>' + esc(r.name) + '</b>' + (r.rating ? ' · ' + r.rating + '★' : '') + (r.verdict ? ' · ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[r.verdict]) + ': ' + esc(r.title) : '') + (r.note ? ' “' + esc(r.note) + '”' : '') + (r.comment ? ' “' + esc(r.comment) + '”' : '') + '</li>').join('') + '</ul>' : '<p class="muted">No answers yet.</p>');
+  $('app').innerHTML = h;
+  $('bk').onclick = render;
+  $('pv').onclick = preview;
+  const ha = $('histAll');
+  if (ha) ha.onclick = () => { const all = [...$('app').querySelectorAll('details.hist')], open = all.some(x => !x.open); all.forEach(x => { x.open = open; }); ha.textContent = open ? 'Hide all history' : 'Show all history'; };
+  $('app').querySelectorAll('[data-show]').forEach(c => c.onchange = () => share({ kind: 'show', task: c.dataset.show, value: c.checked ? 'Y' : 'N' }, c));
+  $('app').querySelectorAll('[data-post]').forEach(c => c.onchange = () => share({ kind: 'post', task: c.dataset.task, post: c.dataset.post, value: c.checked ? 'Y' : 'N' }, c));
+  $('app').querySelectorAll('[data-note]').forEach(b => b.onclick = () => { const t = $('n-' + b.dataset.note); if (!t.value.trim()) return toast('Write the note first.', true); share({ kind: 'note', task: b.dataset.note, text: t.value }, b, true); });
+  $('app').querySelectorAll('[data-draft]').forEach(b => b.onclick = async () => {
+    const t = $('n-' + b.dataset.draft); b.disabled = true; b.textContent = 'Drafting…';
+    const r = await api({ action: 'gcm.draft', group: GROUP.group.key, task: b.dataset.draft });
+    b.disabled = false; b.textContent = 'Draft with AI';
+    if (!r.ok) return toast(r.error || 'No draft', true);
+    t.value = r.text; t.focus();
+    toast('Draft ready. Read it, change anything that is not right, then press Post. Nothing is shared until you do.');
+  });
+  window.scrollTo(0, 0);
+}
+function itemHtml(it) {
+  const cls = it.late ? ' late' : /waiting/i.test(it.status) ? ' wait' : '';
+  return '<div class="item' + cls + '"><h4>' + esc(it.title) + '</h4>' +
+    '<div class="meta"><b>' + esc(it.type) + '</b> · on it: <b>' + esc(it.owner || '–') + '</b>' + (it.who ? ' · for ' + esc(it.who) : '') + (it.ref ? ' · ' + esc(it.ref) : '') +
+    ' · opened ' + esc(dmy(it.opened)) + ' (<b>' + (it.age == null ? '?' : it.age) + ' days</b>) · due ' + (it.due ? esc(dmy(it.due)) + (it.late ? ' <b style="color:var(--badText)">past target</b>' : '') : 'not set') + ' · ' + esc(it.status) + '</div>' +
+    (it.subject && it.subject !== it.title ? '<div class="subj">Salesforce subject: ' + esc(it.subject) + '</div>' : '') +
+    (it.story ? '<div class="story"><b>Why it is still open' + (it.priv ? '' : ' (as the group reads it)') + ':</b> ' + esc(it.story.why) + '</div>' +
+      (it.story.flags.length || it.story.needReason ? '<div class="chips">' + (it.story.needReason ? '<span class="chip bad"><i></i>Needs a reason for the group before the letter goes</span>' : '') +
+        it.story.flags.map(f => '<span class="chip warn"><i></i>' + esc(f) + '</span>').join('') + '</div>' : '') +
+      '<details class="hist"><summary>History and e-mails <span class="n">' + it.story.history.length + '</span></summary><ul>' +
+        (it.story.history.length ? it.story.history.map(e => '<li' + (e.internal ? ' class="int"' : '') + '><span class="d">' + (e.d ? esc(dmy(e.d)) : '–') + '</span><span>' + esc(e.text) + (e.internal ? '<span class="staff">staff only</span>' : '') + '</span></li>').join('') : '<li><span class="d">–</span><span>Nothing recorded in Salesforce yet.</span></li>') + '</ul></details>' : '') +
+    '<div class="chips">' + (it.level === 'member' ? '<span class="chip"><i style="background:#9aa5b1"></i>Employee item: shown only if ticked</span>' : '') +
+    (it.priv ? '<span class="chip bad"><i></i>Health or claim: stays with staff</span>' : '<label class="toggle"><input type="checkbox" data-show="' + esc(it.id) + '"' + (it.shown ? ' checked' : '') + '> The group sees this item</label>') +
+    (it.answer ? '<span class="chip ' + (it.answer.verdict === 'correct' ? 'good' : 'warn') + '"><i></i>Group said: ' + esc({ change: 'Needs a change', notours: 'Not ours', correct: 'Correct' }[it.answer.verdict] || 'a note') + (it.answer.note ? ' “' + esc(it.answer.note) + '”' : '') + '</span>' : '') + '</div>' +
+    (it.priv ? '' : '<div class="posts">' + (it.posts.length ? it.posts.map(p => '<div class="post' + (p.shared ? ' shared' : '') + '"><label class="toggle" style="float:right"><input type="checkbox" data-task="' + esc(it.id) + '" data-post="' + esc(p.id) + '"' + (p.shared ? ' checked' : '') + '> Share</label><span class="who">' + esc(p.by) + '</span> <span class="muted">' + esc(p.when) + '</span>\n' + esc(p.text) +
+      (p.replies || []).map(r => '\n  ↳ ' + esc(r.by) + ': ' + esc(r.text)).join('') + '</div>').join('') : '<div class="small muted">No Chatter on this task.</div>') +
+      '<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;align-items:flex-start"><textarea class="field" id="n-' + esc(it.id) + '" rows="2" maxlength="2000" placeholder="' + (it.story && it.story.needReason ? 'Why is this still open? A note for the group: posted to the task’s Chatter and shown on their page' : 'A note for the group: posted to the task’s Chatter and shown on their page') + '" style="flex:1;min-width:200px;min-height:44px;padding:8px 10px"></textarea>' +
+      (GROUP && GROUP.ai ? '<button class="btn ghost" type="button" data-draft="' + esc(it.id) + '">Draft with AI</button>' : '') +
+      '<button class="btn ghost" type="button" data-note="' + esc(it.id) + '">Post</button></div></div>') + '</div>';
+}
+function recordHtml(rows) {
+  if (!rows.length) return '<p class="muted">Nothing on record yet this year.</p>';
+  return '<div class="scroll"><table class="t"><thead><tr><th>Service</th><th class="num">Completed</th><th class="num">On time</th><th class="num">Avg days</th><th class="num">Open</th></tr></thead><tbody>' +
+    rows.map(r => '<tr><td>' + esc(r.type) + '</td><td class="num">' + r.done + '</td><td class="num">' + pct(r.onTimePct) + '</td><td class="num">' + (r.avgDays == null ? '–' : r.avgDays) + '</td><td class="num">' + r.open + '</td></tr>').join('') + '</tbody></table></div>';
+}
+async function share(body, el, reload) {
+  el.disabled = true;
+  const r = await post(Object.assign({ action: 'gcm.share', group: GROUP.group.key }, body));
+  el.disabled = false;
+  if (!r.ok) { toast(r.error || 'Not saved', true); if (el.type === 'checkbox') el.checked = !el.checked; return; }
+  toast(body.kind === 'note' ? 'Posted to the task’s Chatter, and shown to the group.' : 'Saved.');
+  if (reload) openGroup(GROUP.group.key);
+}
+/* who the letter goes to, and where that came from: the account's Contact Person in Salesforce, or the register */
+function toLine(o) {
+  return '<b>' + (o.contact ? esc(o.contact) + ' &lt;' + esc(o.to.join(', ')) + '&gt;' : esc(o.to.join(', '))) + '</b>' +
+    ' <span class="muted">(' + (o.toFrom === 'salesforce' ? (o.contact ? 'the account’s Contact Person in Salesforce' : 'the account’s e-mail in Salesforce') : 'from the Group Register') + ')</span>' +
+    (o.cc && o.cc.length ? ', copy ' + esc(o.cc.join(', ')) : '');
+}
+async function preview() {
+  const box = $('pvBox'); box.innerHTML = '<p class="muted">Writing the letter from this group’s numbers…</p>';
+  const r = await api({ action: 'gcm.preview', group: GROUP.group.key, intro: $('intro').value });
+  if (!r.ok) { box.innerHTML = '<div class="note bad">' + esc(r.error) + '</div>'; return; }
+  box.innerHTML = '<p class="small" style="margin:12px 0 6px">To ' + (r.to.length ? toLine(r) : '<b>nobody</b>') + ' · hidden copy to ' + esc(r.copy.join(', ')) + ' · subject <b>' + esc(r.letter.subject) + '</b></p>' +
+    '<iframe class="preview" title="Letter preview" sandbox=""></iframe>' +
+    (r.ready ? '<label class="toggle" style="margin:12px 0"><input type="checkbox" id="ck"> I have checked every item against Salesforce and the latest billing</label><div style="display:flex;gap:8px;flex-wrap:wrap">' +
+      (r.mail ? '<button class="btn gold" type="button" id="sd" disabled>Send from support@</button>' : '') + '<button class="btn ghost" type="button" id="ol" disabled>Open in Outlook instead</button></div>' +
+      (r.mail ? '' : '<p class="small muted">Microsoft 365 sending is not set up on the backend, so the letter opens in your Outlook as plain text; it is logged when you press the button.</p>')
+      : '<div class="note bad">Cannot send yet: ' + esc(r.why) + '.</div>');
+  box.querySelector('iframe').srcdoc = r.letter.html;
+  const ck = $('ck'); if (!ck) return;
+  ck.onchange = () => { if ($('sd')) $('sd').disabled = !ck.checked; $('ol').disabled = !ck.checked; };
+  if ($('sd')) $('sd').onclick = () => send(false);
+  $('ol').onclick = () => send(true);
+}
+async function send(outlook) {
+  const btns = ['sd', 'ol'].map($).filter(Boolean); btns.forEach(b => b.disabled = true);
+  const r = await post({ action: 'gcm.send', group: GROUP.group.key, intro: $('intro').value, checked: $('ck').checked, outlook: outlook });
+  if (!r.ok) { toast(r.error || 'Not sent', true); btns.forEach(b => b.disabled = false); return; }
+  if (r.outlook) {
+    const o = r.outlook, q = ['subject=' + encodeURIComponent(o.subject), 'body=' + encodeURIComponent(o.body)];
+    if (o.cc.length) q.push('cc=' + encodeURIComponent(o.cc.join(',')));
+    if (o.bcc.length) q.push('bcc=' + encodeURIComponent(o.bcc.join(',')));
+    location.href = 'mailto:' + o.to.join(',') + '?' + q.join('&');
+    toast('Opened in Outlook and logged. Press Send there.');
+  } else toast('Sent from support@ and logged, ' + r.at + '.');
+  setTimeout(() => openGroup(GROUP.group.key), 1200);
+}
+
+if (AUTH.code) { $('gWho').value = AUTH.who; $('gCode').value = AUTH.code; open_(); }
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orphan Servicing Process | Ricky Rampersad Branch</title>
+<meta name="description" content="How the branch services orphan policyholders — the client is asked how they want to be looked after before anyone is assigned.">
+<meta name="theme-color" content="#07131f">
+<!-- Internal process page. Reachable by anyone holding the link, so the
+     book-level findings behind this process are deliberately NOT here — they
+     live in the working document the team comments on. -->
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* Branch system: navy and gold, the same shield as every other branch
+     screen. Dark masthead, light reading body — this is a document, not a
+     wall, and eight sections of process on a dark ground is unreadable. */
+  :root{
+    --navy:#07131f; --navy2:#0d2035; --ink:#12202e; --body:#33465a; --dim:#64798e;
+    --gold:#efc24b; --gold2:#c9942c; --teal:#00CFEA;
+    --paper:#fbfcfd; --card:#ffffff; --line:#e3e9ef;
+    --warn:#8a5a10; --warnbg:#fdf6e6; --good:#166c4a; --goodbg:#eef7f2;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--body);font:16px/1.66 var(--font-b)}
+
+  header{background:var(--navy);color:#eaf4ff;padding:18px 0;
+    border-bottom:3px solid var(--gold)}
+  header .in{width:min(880px,100% - 40px);margin:0 auto;display:flex;align-items:center;gap:14px}
+  header .mark{width:44px;height:44px;flex:none;border-radius:13px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:44px;height:44px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:18px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:12px;color:#9dbdd8;margin-top:2px}
+  header .tag{margin-left:auto;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+    font-weight:700;color:var(--navy);background:var(--gold);border-radius:4px;padding:5px 11px;white-space:nowrap}
+
+  .shell{width:min(880px,100% - 40px);margin:0 auto;padding-block:34px 72px}
+  h2{font-family:var(--font-d);font-size:clamp(19px,2.4vw,24px);color:var(--ink);
+    margin:44px 0 6px;letter-spacing:-.4px;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+  h3{font-family:var(--font-d);font-size:16px;color:var(--ink);margin:24px 0 6px}
+  p{margin:11px 0}
+  .lede{font-size:17.5px;color:var(--ink)}
+  b,strong{color:var(--ink)}
+  a{color:#0b6ea8}
+
+  .stage{display:inline-block;font-family:var(--font-d);font-size:11px;font-weight:800;
+    letter-spacing:.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:2px}
+
+  .box{border-radius:10px;padding:15px 19px;margin:16px 0 0;border:1px solid var(--line);background:var(--card)}
+  .box h3{margin-top:0}
+  .box.warn{background:var(--warnbg);border-color:#e8d5a8;border-left:4px solid var(--gold2)}
+  .box.warn h3{color:var(--warn)}
+  .box.good{background:var(--goodbg);border-color:#c8e3d6;border-left:4px solid var(--good)}
+  .box.good h3{color:var(--good)}
+
+  .tw{overflow-x:auto;margin:14px 0 0;border:1px solid var(--line);border-radius:10px;background:var(--card)}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:480px}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim);
+    font-weight:700;background:#f3f6f9}
+  tr:last-child td{border-bottom:0}
+  code{background:#eef2f6;border-radius:5px;padding:1px 6px;font-size:13.5px;color:var(--ink)}
+  ul,ol{margin:9px 0 0;padding-left:21px} li{margin:6px 0}
+  .fine{color:var(--dim);font-size:13.5px}
+
+  .flow{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 0}
+  .flow div{flex:1 1 118px;background:var(--card);border:1px solid var(--line);border-top:3px solid var(--gold);
+    border-radius:9px;padding:11px 13px;font-size:13.5px;line-height:1.4}
+  .flow div b{display:block;font-family:var(--font-d);font-size:10.5px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold2);margin-bottom:3px}
+
+  .cta{background:var(--navy);color:#eaf4ff;border-radius:14px;padding:22px 26px;margin:40px 0 0}
+  .cta h3{color:#fff;margin-top:0}
+  .cta p{color:#b9d2e6}
+  .cta a.btn{display:inline-block;background:linear-gradient(120deg,var(--gold),var(--gold2));
+    color:var(--navy);text-decoration:none;font-weight:800;font-family:var(--font-d);
+    border-radius:9px;padding:12px 22px;margin-top:8px}
+
+  footer{border-top:1px solid var(--line);margin-top:48px;padding-top:16px;color:var(--dim);font-size:13px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="in">
+    <div class="mark"><img src="../logo-mark.png" alt=""></div>
+    <div>
+      <h1>Orphan Servicing Process</h1>
+      <div class="sub">Ricky Rampersad Branch &middot; Guardian Life of the Caribbean</div>
+    </div>
+    <span class="tag">Internal &middot; draft</span>
+  </div>
+</header>
+
+<div class="shell">
+
+  <p class="lede"><b>We ask orphan policyholders how they want to be looked after before we assign anyone to
+  them.</b> That inversion is the whole process. The client's answer decides the assignment rather than
+  following it.</p>
+
+  <p>It is only possible because the data is clean. Almost every orphan policyholder on our books has a
+  current e-mail address on file — far above what the wider database carries — so one send reaches nearly all
+  of them, and the answers come back inside a week. That is years of the branch keeping records properly,
+  finally spendable.</p>
+
+  <p>The second return is a record. Every filed review is evidence of what a client was told, what they
+  understood, and how they felt they were treated. That is a market-conduct trail we have never been able to
+  produce at this scale.</p>
+
+  <div class="box good">
+    <h3>The short version</h3>
+    <p style="margin:0">Verify the book. Check the money. Find the contract. Ask the client. File the review.
+    Assign the household. Keep the promise. Seven stages, in that order, and the order is the point.</p>
+  </div>
+
+  <div class="flow">
+    <div><b>Stage 1</b>Verify the book</div>
+    <div><b>Stage 2</b>Check the money</div>
+    <div><b>Stage 3</b>Find the contract</div>
+    <div><b>Stage 4</b>Ask the client</div>
+    <div><b>Stage 5</b>File the review</div>
+    <div><b>Stage 6</b>Assign the household</div>
+    <div><b>Stage 7</b>Keep the promise</div>
+  </div>
+
+  <h2>The unit of work is the household</h2>
+  <p>We assign households, not policyholders. A household is its head — the Account record named
+  <code>SURNAME, FIRSTNAME HH</code> — and everyone under it goes to one agent.</p>
+  <p>This is not new. The company already holds thousands of household accounts. What is new is that we use
+  them: most currently carry a single member, so families sit in the system as unrelated strangers. We have
+  found one address holding four clients on four separate household accounts — which under the old process is
+  three agents calling one house in the same week, each knowing a quarter of the picture.</p>
+
+  <h3>Three signals, and we use all three</h3>
+  <ol>
+    <li><b>The household account</b> — what the branch has already recorded.</li>
+    <li><b>The address, normalised.</b> Addresses are typed freehand, so the same house is rarely spelled the
+      same way twice. Matching on house number and street name finds several times more shared addresses than
+      matching the text exactly.</li>
+    <li><b>A shared e-mail inbox</b> — the cleanest of the three, because an inbox either matches or it does
+      not.</li>
+  </ol>
+  <p>Where they disagree, that is the record worth a person's attention. <b>None of them is an automatic
+  merge.</b> People share an address without being one family, and a tenant reads the same as a spouse.
+  Confirm before you merge.</p>
+
+  <h2><span class="stage">Stage 1</span><br>Verify the book before anyone touches it</h2>
+  <p>One afternoon of checking prevents most of what goes wrong later.</p>
+  <ul>
+    <li><b>Contactability.</b> Who has an e-mail, who has only a phone, who has neither.</li>
+    <li><b>Staff addresses on client records.</b> A branch address in a client's e-mail field means that
+      client has never received anything we sent.</li>
+    <li><b>Catch-all accounts.</b> Some policies hang off a corporate account rather than a household. Any
+      household logic built without excluding them produces nonsense.</li>
+    <li><b>Duplicate contacts.</b> Same person, two records — they get written to twice. Match on e-mail.</li>
+    <li><b>Households.</b> Reconcile the three signals above.</li>
+    <li><b>Blanks that matter.</b> A client with no town cannot be routed to a territory.</li>
+  </ul>
+  <p class="fine">What you may not rely on from the CRM: premium amounts and product names. Those come from
+  policy administration.</p>
+
+  <h2><span class="stage">Stage 2</span><br>Check the money before anyone is called</h2>
+  <div class="box warn">
+    <h3>No orphan client is contacted about premium until the arrears have been checked against cash</h3>
+    <p style="margin:0">An arrears figure in the CRM has two possible explanations and they need opposite
+    responses. Either the client stopped paying — in which case it is conservation work — or the premium was
+    paid and not applied, in which case telling a client they are behind, to someone holding receipts, does
+    damage an apology will not undo.</p>
+    <p style="margin:10px 0 0">We cannot tell which from the system. Someone checks the cash first.</p>
+  </div>
+  <p>Until that check is done, the opening contact <b>verifies and listens</b>. It does not chase, it does not
+  quote a balance, and it does not ask why they stopped paying.</p>
+  <p>Everything else carries on. Stages 1, 3 and 5 run without touching the money question, so the check does
+  not hold up the work — it holds up one sentence.</p>
+
+  <h2><span class="stage">Stage 3</span><br>Find the contract</h2>
+  <p>Before we ask an orphan client anything else, we establish whether they actually hold their policy
+  document. Two fields answer it: one records the branch releasing the document, the other records the signed
+  receipt coming back. The gap between them is the problem.</p>
+  <div class="tw"><table>
+    <tr><th>Position</th><th>Meaning</th><th>What we do</th></tr>
+    <tr><td>Released, receipt returned</td><td>The client has it</td><td>Normal outreach</td></tr>
+    <tr><td>Released, <b>no receipt</b></td><td>We do not know where it is</td><td>Search first, then write</td></tr>
+    <tr><td>Never released</td><td>Still in the building</td><td>We can offer it today</td></tr>
+  </table></div>
+  <h3>Two rules that came out of this</h3>
+  <ul>
+    <li><b>Never tell a client we hold their document unless someone has physically seen it.</b> For the
+      never-released group that is safe. For the released-with-no-receipt group it is not — the document left
+      with an agent, and where it is now is exactly what we do not know.</li>
+    <li><b>A missing receipt is not proof of non-delivery.</b> Some clients have their document and the
+      paperwork was simply never returned. So we ask; we do not assert.</li>
+  </ul>
+
+  <h2><span class="stage">Stage 4</span><br>Ask the client</h2>
+  <p>One letter does not fit an orphan book. What we say depends on what Stage 3 found.</p>
+  <div class="tw"><table>
+    <tr><th>Segment</th><th>What the letter says</th></tr>
+    <tr><td>Has their document</td><td>Your agent has left, your policy is unaffected, tell us how you were looked after</td></tr>
+    <tr><td>Document unaccounted for</td><td>We have no receipt for your document — do you have it, and how shall we put it right?</td></tr>
+    <tr><td>Document still with us</td><td>We are holding it — how would you like to receive it?</td></tr>
+  </table></div>
+  <div class="box warn">
+    <h3>The page asks; the e-mail tells</h3>
+    <p style="margin:0">A client's own policy position — what they hold, what is paid to when — goes in the
+    <b>e-mail</b>, addressed to their address of record, exactly as a premium notice would be. It never
+    appears on a web page. The review page is public and unauthenticated by design, and a forwarded link must
+    never expose somebody's policy.</p>
+  </div>
+  <h3>Sending rules</h3>
+  <ul>
+    <li>One send per mailbox. Where two clients share an inbox, name both rather than sending twice.</li>
+    <li>Small segments first, in batches, with someone watching the replies.</li>
+    <li>A client with a phone and no e-mail gets a call, not a link.</li>
+    <li>Offer only what the branch can deliver every time. A second broken promise is worse than a narrower
+      first one.</li>
+  </ul>
+
+  <h2><span class="stage">Stage 5</span><br>File the review</h2>
+  <p><b>A conversation nobody files does not count.</b> The filed review is the unit of work, because it is
+  the only thing the system sees end to end — and it protects the agent as much as the client.</p>
+  <p>The client gives their name, date of birth and e-mail. That traces them against the portfolio
+  automatically, so the agent picks up the phone already knowing what the client holds — without the client
+  having to find a policy number.</p>
+  <p><b>None of what the trace finds goes back to the client's screen.</b> It reaches the worklist, the agent
+  brief and Customer Service. That boundary is deliberate.</p>
+  <p>Beyond the printed questions, the review asks whether they hold their document, whether anyone else in
+  their home holds a policy with us, whether anything was left outstanding, and how they were actually
+  treated. That last one is not a courtesy — a low score there is the most useful thing a client can tell us,
+  and we do not defend the industry when it deserves the criticism.</p>
+  <p class="fine">The review produces form 2000-03-147 exactly as printed, with anything the shorter review
+  did not ask named in the addendum — so a blank is never mistaken for a client who declined to answer.</p>
+
+  <h2><span class="stage">Stage 6</span><br>Assign the household</h2>
+  <p>Getting this wrong is easy and hard to undo. <b>The original agent stays on the record. The new one goes
+  in a different field.</b></p>
+  <div class="tw"><table>
+    <tr><th>Field</th><th>Action</th></tr>
+    <tr><td><code>Assigned Agent</code></td><td><b>Write the new servicing agent here.</b> This is what the orphan process uses</td></tr>
+    <tr><td><code>Orphan Assigned</code></td><td>Set to <code>Yes</code></td></tr>
+    <tr><td><code>Date Assigned to Agent</code></td><td>Set to the date of assignment</td></tr>
+    <tr><td><code>AGENT</code></td><td><b>Leave untouched</b> — it records who held the book</td></tr>
+    <tr><td><code>Writing Agent</code></td><td>Leave untouched — it holds an agent code, not a name</td></tr>
+    <tr><td><code>Was Agent Paid for Orphan?</code></td><td>Leave to whoever handles commission</td></tr>
+  </table></div>
+  <p>This is not a new convention — every genuine reassignment in the system already works this way.</p>
+  <p><b>Assign whole households in one pass</b>, so a partial run cannot split a family. And set the
+  assignment date: it is barely maintained company-wide, and setting it consistently is what will let us
+  measure a handover for the first time.</p>
+
+  <h2><span class="stage">Stage 7</span><br>Keep the promise</h2>
+  <p>What we tell an orphan client is simple: <b>a review every six months and every birthday month, for
+  life.</b> It is on eight pages and in every film, so it has to be true.</p>
+  <p>All of it runs off one daily trigger, which also chases us when we miss our own deadline. If it stops,
+  nothing fails loudly — the promise quietly stops being kept and nobody notices for months. That is why the
+  branch wall shows a red banner across the bottom when it is off. <b>If you ever see that banner, say so the
+  same day.</b></p>
+  <p>The birthday month comes from the date of birth the client gives in their own review — their correction
+  wins over whatever we held. One more reason the review has to be filed rather than simply had.</p>
+  <p><b>For an agent holding an orphan household:</b> two contacts a year you do not have to think about, both
+  arriving with a reason to call. That is the return on doing Stages 1 to 6 properly.</p>
+
+  <div class="cta">
+    <h3>This is a draft. Argue with it.</h3>
+    <p>Six things are still open — how many households per agent, who takes the heaviest arrears, whether we
+    name the departing agent in the client letter, what we offer for document delivery, who checks the cash,
+    and what counts as one review for the campaign number.</p>
+    <p>The working document takes comments inline. Mark up anything, including the wording.</p>
+    <!-- The working document takes inline comments. It must be SHARED with the
+         branch for this link to open for anyone but its owner. -->
+    <a class="btn" href="https://claude.ai/code/artifact/cb309bdc-a201-4538-a7d2-6357a467d700">Comment on the working document &rarr;</a>
+    <p class="fine" style="color:#8fadc6;margin-top:12px">Or bring it to the branch meeting, or send it to the
+    branch manager directly — whichever is easier.</p>
+  </div>
+
+  <footer>
+    Internal working document, Ricky Rampersad Branch. Not for client circulation.<br>
+    The findings behind this process, and the client-level detail, are held separately and are not published
+    on this site.
+  </footer>
+
+</div>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

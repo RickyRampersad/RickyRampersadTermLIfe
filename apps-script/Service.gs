@@ -147,6 +147,21 @@ var SVC = {
      were on. Answering these fast is the whole point of them.            */
   CALL_SHEET:  'Callback Requests',
 
+  /* A client's one-click answer to the transition letter. The letter carries
+     an opaque token and a segment letter; the click carries them back with
+     which door was chosen. No name and no policy number travels in the URL —
+     the token is resolved against the send list held outside this sheet.
+     Two of the four answers open a task for the branch; two only log.       */
+  RESP_SHEET:  'Client Responses',
+
+  /* The branch's own feedback on the transition letters and the film, from
+     the team review page, before anything goes to a client. Name, what they
+     looked at, a verdict and a comment. No client details travel this road.
+     Its own key: TEAM_SHEET above is the roster, and a second TEAM_SHEET here
+     silently won, so the skill bank, the wall and the agent portal were all
+     reading this tab and finding no agents. */
+  FEEDBACK_SHEET: 'Team Feedback',
+
   /* One code the whole branch shares to open the agent portal — the code you
      hand out at a branch meeting or keep in the agent fact-find sheet, so
      nobody is locked out waiting for a personal code. An agent still types
@@ -178,6 +193,10 @@ function doPost(e) {
   }
 
   try {
+    /* group client management (GroupClients.gs): a letter sent, a share changed, a group's answers */
+    if (/^gcm\./.test(String(body.action || '')) && typeof gcmDoPost_ === 'function') return json_(gcmDoPost_(body));
+    /* a client's own words from /your-policy/words (2 October 2026): too long for a link, so they come as a POST */
+    if (body.action === 'resp') return json_(clientResponse_(body));
     if (body.action !== 'service') return json_({ ok: false, error: 'Unknown action' });
     return json_(handleSubmission_(body));
   } catch (err) {
@@ -198,9 +217,15 @@ function bad_(msg) {
 
 function doGet(e) {
   var p = (e && e.parameter) || {};
+  /* group client management (GroupClients.gs): staff, the manager, a group's own page and the group wall */
+  if (/^gcm\./.test(String(p.action || '')) && typeof gcmDoGet_ === 'function') return json_(gcmDoGet_(p));
   if (p.action === 'ping') {
+    /* campaign: the transition pages ask for this before they trust the
+       backend with a verdict or a client's tap. It is absent from any
+       deployment older than the resp/feedback actions, so the pages show
+       their amber notice until a New version of this code is published. */
     return json_({ ok: true, service: 'Service Questionnaire', configured: !!SVC.CS_EMAIL,
-                   automation: automationOn_() });
+                   automation: automationOn_(), campaign: 7 });   // 3: the assignment board (board, assign, update); 4: the Client Book (book); 5: a client's own words from the words page; 6: sign-in by role from the Users tab; 7: one client's history, Salesforce tasks and comments (detail, comment), and the TT$200 claims
   }
   if (p.action === 'status') {
     return json_(statusFor_(p.ref, p.code));
@@ -222,6 +247,42 @@ function doGet(e) {
   }
   if (p.action === 'callback') {
     return json_(callbackRequest_(p));
+  }
+  /* a client answering the transition letter — one click, fire-and-forget,
+     must never block the page that sent it */
+  if (p.action === 'resp') {
+    return json_(clientResponse_(p));
+  }
+  /* an agent's verdict on a letter or the film, from the team review page */
+  if (p.action === 'feedback') {
+    return json_(teamFeedback_(p));
+  }
+  /* the transition campaign's own wall: sends, taps, reviews, verdicts — see Transition.gs */
+  if (p.action === 'transition') {
+    return json_(transitionData_(p.code));
+  }
+  /* the assignment board (orphan-transition/assign.html): who answered and who is named on it, an agent's
+     own list, a name written onto the client's rows, an outcome marked — see Transition.gs */
+  if (p.action === 'board') {
+    return json_(transitionBoard_(p));
+  }
+  if (p.action === 'assign') {
+    return json_(transitionAssign_(p));
+  }
+  if (p.action === 'update') {
+    return json_(transitionUpdate_(p));
+  }
+  /* one client's policies from the Client Book, for a row on the board that carries only the totals */
+  if (p.action === 'book') {
+    return json_(transitionBook_(p));
+  }
+  /* one client in full on the board: the history, their Salesforce tasks and the team's comments; and a comment, kept on
+     the Board Comments tab and posted to the client's open tasks in Salesforce */
+  if (p.action === 'detail') {
+    return json_(transitionDetail_(p));
+  }
+  if (p.action === 'comment') {
+    return json_(transitionComment_(p));
   }
   /* Anyone who lands on the /exec URL directly gets pointed at the form. */
   return HtmlService.createHtmlOutput(
@@ -673,6 +734,27 @@ function handleSubmission_(body) {
   var accessCode = accessCode_();
   var now = new Date();
 
+  /* 0 — trace the policy against CLIENT_PORTFOLIO__c while we have the client's
+     own name, date of birth and email in hand. See ServiceSalesforce.gs: what
+     this finds goes to the worklist, the agent brief and Customer Service, and
+     never back to the browser. The returned payload below carries a reference
+     and an access code, and nothing else — that is deliberate.
+     A Salesforce outage returns { ok:false } and the review files regardless. */
+  var raw0 = rawById_(body);
+  /* The trace lives in ServiceSalesforce.gs. A project without that file must
+     still file the review: on 23 September it was missing from the live
+     project and every submission from the website failed on this line. */
+  if (typeof svcSplitName_ === 'function' && typeof svcTraceReview_ === 'function') {
+    var nm = svcSplitName_(core.clientName || raw0.lifeAssured || '');
+    body.trace = svcTraceReview_({
+      dob: core.dob || raw0.dob || '',
+      email: core.email || raw0.email || '',
+      firstName: nm.firstName, lastName: nm.lastName,
+    });
+  } else {
+    body.trace = { ok: false, configured: false, why: 'ServiceSalesforce.gs is not in this project' };
+  }
+
   /* 1 — file it */
   saveRow_(isGroup, ref, priority, now, body, accessCode);
 
@@ -814,6 +896,17 @@ function sheetFor_(isGroup) {
     sh.appendRow(['Reference', 'Timestamp', 'Priority', 'Status', 'Handled by', 'Handled on',
                   'Client', 'Company', 'Email', 'Phone', 'Insurer', 'Policy #', 'Score', 'Minutes taken',
                   'Source', 'Arrived via', 'Sent by', 'Link ref', 'Needs tracing',
+                  // Traced from CLIENT_PORTFOLIO__c on arrival, so an agent picks
+                  // up the phone already knowing what the client holds. Never
+                  // shown to the client — see ServiceSalesforce.gs.
+                  'Traced', 'Policy #s (traced)', 'Cover traced', 'Premium owing',
+                  'Agent on record',
+                  // Who else is in the house. Three columns, three sources, on
+                  // purpose: what the client said, what the branch has already
+                  // built on the Account, and the address they share. Sort a
+                  // book by these before splitting it between agents. All read
+                  // and capture only — nothing is written back to Salesforce.
+                  'Household', 'Household (on file)', 'Address key',
                   // Compliance record. These four are the auditable trail for a
                   // registered agent: what the client declared, what they agreed
                   // we could do with it, whether they opted into marketing, and
@@ -858,6 +951,28 @@ function teamBankSheet_() {
 }
 
 /**
+ * Who else lives in this house, in one sortable cell.
+ *
+ * Assignment is the entire reason it exists. A household split across three
+ * agents is three calls to one address and nobody holding the whole picture,
+ * and the records cannot prevent that: Relationship_Groups__c has been empty
+ * since 2017, and surnames alone guess wrong in both directions. The client
+ * is the only reliable source, so we ask them and we write down what they say.
+ *
+ * Capture only — this is never written back to Salesforce, and it is never
+ * shown to the client. Asking who is in a household is fine; telling somebody
+ * who holds an unauthenticated link what we know about their relatives is not.
+ */
+function householdSummary_(body) {
+  var a = answersById_(body);
+  var said = String(a.householdOther || '').trim();
+  if (!said) return '';
+  if (/^no\b/i.test(said)) return 'No';
+  var who = String(a.householdWho || '').replace(/\s+/g, ' ').trim();
+  return (/not sure/i.test(said) ? 'Not sure' : 'Yes') + (who ? ' — ' + who.slice(0, 200) : '');
+}
+
+/**
  * One row per submission, one column per question — and if the form grows a
  * new question tomorrow, the column appears on its own. That is the whole
  * reason the front end sends labels along with answers: nobody has to keep
@@ -867,6 +982,7 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
   var sh = sheetFor_(isGroup);
   var c = body.core || {};
   var av0 = answersById_(body);
+  var t = body.trace || {};                 // the Salesforce trace, or {} if it never ran
 
   var vals = {
     'Reference': ref,
@@ -896,6 +1012,28 @@ function saveRow_(isGroup, ref, priority, now, body, accessCode) {
     'Sent by': (body.sentBy && body.sentBy.name) || '',
     'Link ref': body.linkRef || '',
     'Needs tracing': c.needsTracing ? 'YES — no policy number' : '',
+
+    /* What the Salesforce trace found, if it is set up. Blank means it is not
+       configured or nothing matched, and support traces by hand exactly as
+       before — the review is never held up for it. */
+    'Traced': !t.configured ? '' : (t.found ? t.found + ' found · ' + t.how : 'no match'),
+    'Policy #s (traced)': t.policyNumbers || '',
+    'Cover traced': t.coverTraced || '',
+    'Premium owing': t.premiumOwing || '',
+    'Agent on record': t.agentOnRecord || '',
+
+    /* Three views of the same question, kept apart so they can disagree.
+       "Household" is what the client just told us. "Household (on file)" is
+       the Account the branch already built — 14,041 of them exist, named
+       "SURNAME, FIRSTNAME HH", though only about 4% carry more than one
+       member. "Address key" is the normalised street, which in one book found
+       14 shared addresses where exact matching found 3. Where the three
+       disagree, that is the row worth a person's attention. */
+    'Household': householdSummary_(body),
+    'Household (on file)': t.householdName
+      ? t.householdName + (t.householdMembers > 1 ? ' · ' + t.householdMembers + ' members' : ' · 1 member')
+      : '',
+    'Address key': t.addressKey || '',
 
     /* Who the client chose to be looked after by — the in-house team direct,
        or an agent matched to the brief they wrote. Drives the assignment. */
@@ -1258,14 +1396,29 @@ function sendClientThanks_(ref, priority, body, formPdf, letterPdf, accessCode, 
   if (letterPdf) atts.push(letterPdf);
   if (locatorPdf) atts.push(locatorPdf);
 
-  MailApp.sendEmail({
-    to: c.email,
-    name: SVC.FROM_NAME,
-    replyTo: SVC.AGENT_EMAIL,
-    subject: id.subject + ' (' + ref + ')',
-    htmlBody: html,
-    attachments: atts,
-  });
+  clientMail_({ to: c.email, subject: id.subject + ' (' + ref + ')', htmlBody: html, attachments: atts });
+}
+
+/** A client-facing e-mail: as support@rickyrampersadbranch.com through Microsoft
+ *  365 once Transition.gs is set up for it (every client e-mail goes out as the
+ *  branch mailbox, never from Gmail — 23 September 2026), else from the script
+ *  owner's account as before, so the reference and access code always reach
+ *  the client. `o`: to, subject, htmlBody, attachments (Blobs), cc. */
+function clientMail_(o) {
+  /* the confidentiality footer every client e-mail ends in (Transition.gs, from receipt.json on the site) */
+  try { if (typeof tLegal_ === 'function' && o.htmlBody && o.htmlBody.indexOf('Data Protection Act') < 0) o.htmlBody += tLegal_(); } catch (e) {}
+  try {
+    if (typeof tMsSend_ === 'function' && typeof tMsCreds_ === 'function' && tMsCreds_()) {
+      tMsSend_(o.to, o.subject, o.htmlBody, {
+        cc: o.cc || [], attachments: o.attachments || [],
+        replyTo: (typeof TRANSITION !== 'undefined' && TRANSITION.MS_FROM) || SVC.AGENT_EMAIL,
+      });
+      return 'support@';
+    }
+  } catch (e) { log_('mail', 'ms-failed', String(e && e.message ? e.message : e)); }
+  MailApp.sendEmail({ to: o.to, name: SVC.FROM_NAME, replyTo: SVC.AGENT_EMAIL, subject: o.subject,
+                      htmlBody: o.htmlBody, attachments: o.attachments || [] });
+  return 'gmail';
 }
 
 
@@ -1318,6 +1471,11 @@ function routeToService_(ref, priority, now, body, attachments, clientEmailed) {
     if (f.flag === 'agent')   actions.push(badge_('AGENT', '#1B2A44') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'lead')    actions.push(badge_('FOLLOW-UP', '#a05e03') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
     if (f.flag === 'service') actions.push(badge_('REPLY', '#455a75') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
+    /* Not an action to process — a fact about who this client is. It rides
+       here because the brief is what an agent actually reads before calling,
+       and calling one half of a household without knowing about the other
+       half is the mistake this question exists to stop. */
+    if (f.flag === 'household') actions.push(badge_('HOUSEHOLD', '#6B7C96') + '<b>' + esc_(f.label) + '</b> — ' + esc_(f.value));
   });
 
   var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
@@ -1453,6 +1611,106 @@ function logHit_(agent, ev, ref) {
   return { ok: true };
 }
 
+/** Where a client's answer to the transition letter lands. Created on demand
+ *  so the existing spreadsheet picks it up without re-running setup. The
+ *  Status, Assigned to and Assigned on columns are the branch's to fill:
+ *  the row is the task, and it is not done until an agent is named on it. */
+function responseSheet_() {
+  var sh = ss_().getSheetByName(SVC.RESP_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.RESP_SHEET);
+    sh.appendRow(['Received', 'Token', 'Segment', 'Response', 'Needs', 'Page', 'Referrer',
+                  'Status', 'Assigned to', 'Assigned on', 'Note']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 11).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** The four doors on the transition page, and what each one asks of us.
+ *  Anything else in the query string is not recorded. */
+var RESPONSES = {
+  selfserve: { needs: 'nothing yet — watch for the review',  status: 'Logged' },
+  assign:    { needs: 'a named agent within two working days', status: 'Open' },
+  review:    { needs: 'their review read, then an agent',     status: 'Open' },
+  question:  { needs: 'a reply the same day',                 status: 'Open' },
+  informed:  { needs: 'nothing — ask again in six months',    status: 'Logged' },
+  /* the taps at the foot of every letter */
+  paid:      { needs: 'a receipt check against the file, then a confirmation', status: 'Open' },
+  pay:       { needs: 'a call to set up direct payment to Guardian Life',      status: 'Open' },
+  callme:    { needs: 'a call within two working days, at the time they choose', status: 'Open' },
+  urgent:    { needs: 'the review read, then a named agent within one working day', status: 'Open' },
+  claim:     { needs: 'the maturity claim form brought and walked through',    status: 'Open' },
+  deliver:   { needs: 'the contract delivered by hand, acknowledgement signed', status: 'Open' },
+  finish:    { needs: 'the outstanding requirement brought to them',           status: 'Open' },
+  stop:      { needs: 'the file closed properly, nothing owed confirmed',      status: 'Open' },
+};
+
+/** One click from a client. Fire-and-forget: it answers ok whatever happens,
+ *  because the page that sent it must never be blocked by the sheet. */
+function clientResponse_(p) {
+  var r = String(p.r || '').trim().toLowerCase();
+  var spec = RESPONSES[r];
+  if (!spec) return { ok: false };
+  var token = String(p.t || '').replace(/[^A-Za-z0-9_-]/g, '').slice(0, 64);
+  var seg = String(p.s || '').replace(/[^A-Z0-9]/g, '').slice(0, 2);
+  /* A client's own words, from /your-policy/words (2 October 2026), go in the Note cell quoted, exactly as
+     transitionInbox files a reply in their own words, so the receipts, the follow-up note, the board and the
+     branch's alert read the two the same way. A double quote inside would close the quotation early. */
+  var words = String(p.w || '').replace(/[<>]/g, '').replace(/"/g, "'").replace(/\s+/g, ' ').trim().slice(0, 1500);
+  try {
+    responseSheet_().appendRow([
+      new Date(), token, seg, r, spec.needs,
+      String(p.p || '').slice(0, 80), String(p.ref || '').slice(0, 120),
+      spec.status, '', '', words ? '"' + words + '"' : '']);
+  } catch (e) { return { ok: false }; }
+  /* A receipt in their inbox, not only the on-screen thank-you — only for a
+     token the transition campaign recognises (Transition.gs, same project).
+     Never blocks the click that triggered it. */
+  try { if (typeof tAckClient_ === 'function') tAckClient_(token, r, spec.needs, String(p.p || '')); } catch (e) {}
+  return { ok: true, needs: spec.needs };
+}
+
+/** Where the team's feedback on the letters and the film lands. Created on
+ *  demand, like Client Responses. One row per verdict; the branch reads it
+ *  down before the send and answers every "change" and "hold" by name. */
+function teamSheet_() {
+  var sh = ss_().getSheetByName(SVC.FEEDBACK_SHEET);
+  if (!sh) {
+    sh = ss_().insertSheet(SVC.FEEDBACK_SHEET);
+    sh.appendRow(['Received', 'Name', 'Town', 'Item', 'Verdict', 'Comment', 'Taking assignments',
+                  'Answered by', 'Answered on']);
+    sh.setFrozenRows(1);
+    try { sh.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground(SB.light); } catch (e) {}
+  }
+  return sh;
+}
+
+/** What the team can look at, and the three things they can say about it.
+ *  Any letter counts: one capital, and a digit where the letter has versions
+ *  (F1 to F5, R1, R2) — a fixed list silently dropped every verdict on a
+ *  letter added after it was written. */
+var FEEDBACK_ITEMS = { film: 1, page: 1, protected: 1, script: 1, whole: 1 };
+function feedbackItem_(item) { return !!FEEDBACK_ITEMS[item] || /^[A-Z][1-9]?$/.test(item); }
+var FEEDBACK_VERDICTS = { send: 'Send it as it is', change: 'Send it, with a change', hold: 'Hold it' };
+
+/** One verdict from one agent. Fire-and-forget, same as a client click: the
+ *  page must never wait on the sheet. Nothing here is a client detail. */
+function teamFeedback_(p) {
+  var item = String(p.i || '').trim();
+  var verdict = String(p.v || '').trim().toLowerCase();
+  if (!feedbackItem_(item) || !FEEDBACK_VERDICTS[verdict]) return { ok: false };
+  var name = String(p.n || '').replace(/[<>]/g, '').trim().slice(0, 60);
+  if (!name) return { ok: false, error: 'name' };
+  var town = String(p.town || '').replace(/[<>]/g, '').trim().slice(0, 40);
+  var comment = String(p.c || '').replace(/[<>]/g, '').trim().slice(0, 600);
+  var taking = String(p.a || '') === '1' ? 'yes' : '';
+  try {
+    teamSheet_().appendRow([new Date(), name, town, item, FEEDBACK_VERDICTS[verdict], comment, taking, '', '']);
+  } catch (e) { return { ok: false }; }
+  return { ok: true };
+}
+
 /** The agent taps "I sent this" in their portal — the one event we cannot
  *  observe, because the sending happens in WhatsApp. Code-protected. */
 function logSend_(agent, code, note) {
@@ -1569,13 +1827,22 @@ function skillBank_() {
   var head = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(String);
   var rows = sh.getRange(2, 1, sh.getLastRow() - 1, sh.getLastColumn()).getValues();
   var col = function (r, h) { var i = head.indexOf(h); return i < 0 ? '' : String(r[i] || '').trim(); };
+  /* Since 3 October 2026 the tab also carries Password, Role and Unit (the sign-in for the assignment board, tTeam_ in
+     Transition.gs), the Agent column reads "A00427 - Ricky Rampersad", and there are two Active columns. The name loses the
+     number in front; either Active reading inactive takes the person off; staff are not agents; and a Password of eight
+     characters or more is the agent's own code here too, where no Portal code is set. */
+  var INACTIVE = /^(no|n|not\s*active|inactive|false|0|resigned|terminated|left|suspended|transferred)$/i;
+  var actives = function (r) { var out = []; head.forEach(function (h, i) { if (String(h).trim() === 'Active' && String(r[i] || '').trim()) out.push(String(r[i]).trim()); }); return out; };
+  var isStaff = function (role) { role = String(role || '').toLowerCase(); return !/assistant\s*branch\s*manager/.test(role) && /\bbma\b|assistant|staff|support|admin|clerk|secretary/.test(role); };
   return rows.map(function (r) {
-    return { name: col(r, 'Agent'), no: col(r, 'Agent no.'),
+    var pw = col(r, 'Password');
+    return { name: col(r, 'Agent').replace(/^\s*[A-Za-z]{0,3}\s*-?\s*\d+\s*[-–—:]\s*/, '').replace(/\s+/g, ' ').trim(), no: col(r, 'Agent no.'),
              email: col(r, 'Email'),
              skills: col(r, 'Skills & strengths'), avail: col(r, 'Availability'),
-             langs: col(r, 'Languages'), active: col(r, 'Active'),
-             portal: col(r, 'Portal code') };
-  }).filter(function (a) { return a.name && !/^no$/i.test(a.active); });
+             langs: col(r, 'Languages'), active: actives(r).some(function (a) { return INACTIVE.test(a); }) ? 'No' : col(r, 'Active'),
+             role: col(r, 'Role'), unit: col(r, 'Unit'),
+             portal: col(r, 'Portal code') || (pw.length >= 8 ? pw : '') };
+  }).filter(function (a) { return a.name && !INACTIVE.test(String(a.active || '').trim()) && !isStaff(a.role); });
 }
 
 function sendMatchAssignment() {
@@ -1685,14 +1952,9 @@ function matchAssignmentForRow_(sh, row, agentName, agentNo, why) {
     sig_(),
     'Your agent is appointed', id);
 
-  MailApp.sendEmail({
-    to: email,
-    name: SVC.FROM_NAME,
-    replyTo: SVC.AGENT_EMAIL,
-    subject: 'Meet your agent: ' + agentName + ' (' + ref + ')',
-    htmlBody: html,
-    attachments: letter ? [letter] : [],
-  });
+  /* the introduction the receipt promised, in writing, from support@ with the branch copied */
+  clientMail_({ to: email, subject: 'Meet your agent: ' + agentName + ' (' + ref + ')', htmlBody: html,
+                attachments: letter ? [letter] : [], cc: (typeof TRANSITION !== 'undefined' && TRANSITION.CC) || [] });
 
   /* the sheet reflects the assignment, and the right chase arms itself */
   var set = function (h, val) {
@@ -3384,5 +3646,25 @@ function onOpen() {
     .addSeparator()
     .addItem('Install daily follow-up watchdog', 'installServiceTriggers')
     .addItem('Run follow-up check now', 'dailyServiceFollowUp')
+    .addSeparator()
+    .addItem('Transition: set up (tab, 8:00 digest)', 'transitionSetup')
+    .addItem('Transition: preview the letters to me', 'transitionPreviewToMe')
+    .addItem('Transition: send the Test rows now', 'transitionSendTest')
+    .addItem('Transition: go live (hourly send on)', 'transitionGoLive')
+    .addItem('Transition: pause the hourly send', 'transitionPause')
+    .addItem('Transition: send a batch now (asks first)', 'transitionSendBatchNow')
+    .addItem('Transition: send the receipts now', 'transitionReceipts')
+    .addItem('Transition: release the e-mails taken by phone (the go)', 'transitionReleasePhoneEmails')
+    .addItem('Transition: hold all client e-mail', 'transitionHoldClientMail')
+    .addItem('Transition: release client e-mail (the go)', 'transitionReleaseClientMail')
+    .addItem('Transition: e-mail the digest now', 'transitionDigest')
+    .addItem('Transition: e-mail the weekly insight report now', 'transitionWeekly')
+    .addItem('Transition: set the Branch Portfolio link (policies on the board)', 'transitionSetBookSource')
+    .addItem('Transition: rebuild the Client Book now', 'transitionBuildClientBook')
+    .addItem('Transition: check the agent access (Agent Skill Bank)', 'transitionUsersCheck')
+    .addItem('Transition: start the TT$200 claims (the go)', 'transitionClaimsStart')
+    .addItem('Transition: check the TT$200 claims now', 'transitionClaimsNow')
+    .addItem('Transition: send the Monday retention follow-up now', 'transitionClaimsMondayNow')
+    .addItem('Transition: hold the TT$200 claims', 'transitionClaimsStop')
     .addToUi();
 }

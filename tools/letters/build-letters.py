@@ -1,0 +1,1560 @@
+#!/usr/bin/env python3
+"""Generate the transition letters as sendable e-mail HTML, and the team's page.
+
+One compact shell, one opening per situation. The words live in
+openings.json beside this script; the shell lives here. Every letter is: a
+headline, one short paragraph, the facts read off the Branch Portfolio sheet
+for that client, what the branch team has done for them (their own record,
+from service-record.py), the answers they can give with one tap, the film in
+one line, and the sign-off. Generated, not hand-typed, so a change to the
+shell reaches every letter in one run.
+
+E-mail rules: 600px table, every style inline, the logo a hosted PNG — Gmail
+strips SVG and blocks data: URIs, so anything else arrives as an empty box.
+
+Merge fields are {{double_braces}}, filled per client at send time from the
+sheet; FIELDS below says which column each one reads. No client data lives
+here; the merge file is built outside the repository. No money figure ever
+appears: days and dates only.
+
+  python3 build-letters.py     → orphan-transition/letters/*.html, templates/index.html
+"""
+import html, json, pathlib
+from urllib.parse import quote
+
+HERE = pathlib.Path(__file__).resolve().parent
+ROOT = HERE.parent.parent
+OUT = ROOT / 'orphan-transition' / 'letters'
+OUT.mkdir(parents=True, exist_ok=True)
+
+LOGO = 'https://rickyrampersadbranch.com/logo-mark.png'
+# The addresses a client sees. /your-policy/ forwards to /orphan-video/ with
+# the token and segment intact — nothing in a client's hand carries the word
+# "orphan", which is the trade's word for them and not one to hand a rival.
+FILM = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}'
+PROTECT = 'https://rickyrampersadbranch.com/your-policy/protected?t={{token}}&s={{segment}}'
+# One tap: the answer travels as r= and the page logs it on arrival. The
+# 'urgent' tap is logged and then carried straight into the questionnaire,
+# so the client states their concerns before anyone is named.
+TAP = 'https://rickyrampersadbranch.com/your-policy/?t={{token}}&s={{segment}}&r='
+
+# ── how an answer travels: the page, or a reply ──────────────────────
+# 24 September 2026, evening, three decisions in an hour. First: "when you are
+# clicking on the question its opening the browser and this is not supposed
+# to be happening, its supposed to be inside the email for easy use", then
+# "for all it should not open any browsers". An e-mail cannot record a tap by
+# itself, so every check and tap became a pre-written reply to support@
+# (reply_link below), filed from the inbox by Transition.gs (transitionInbox).
+# Then the first reply was tried on a phone: "when i check the question and
+# answer it moved to the email reply!!! its supposed to allow me to answer all
+# the questions and capture the responses" — which only the page can do: every
+# box ticks in place, all the questions on one screen, recorded at once,
+# nothing to send. Offered the three ways there are (the page; one reply per
+# answer; one reply with every question and an X to type), the manager chose
+# the page. So ANSWER_MODE is 'page', the reply mode is kept complete and
+# switchable, and the inbox reader stays on regardless: a client who simply
+# replies to the letter is filed too, with their words.
+ANSWER_MODE = 'page'   # 'page': every box and tap opens /your-policy/ (recorded on arrival) · 'reply': a mailto to support@
+REPLY_TO = 'support@rickyrampersadbranch.com'
+REPLY_MORE = 'You can add anything you would like us to know here.'
+FORM_TAPS = ()   # none: every tap is a reply. Kept so the receipt and the test know the rule.
+# the two doors that used to open the questionnaire: the reply asks for the words instead
+REPLY_LINES = {
+ 'urgent': ['Write your concerns here, in your own words. A person reads every word before anyone is named:'],
+ 'review': ['In your own words: what you hold with us, who your policy pays, what has changed in your life, and what '
+            'matters most to you in an agent. A person reads it, and goes through it with you if you would like.'],
+}
+_TOK = 'XRRBTOKENX'   # stands in for {{token}} while the body is URL-encoded, so the braces survive for the sender
+
+
+def reply_link(subject, lines, r, q='', more=True):
+    """A mailto: the subject is the answer, the body its question and answer, a line for anything more, and the reference."""
+    body = '\n'.join(lines) + ('\n\n' + REPLY_MORE if more else '\n\n\n') + '\n\nRef: ' + _TOK + ' ' + r + (' ' + q if q else '')
+    return f'mailto:{REPLY_TO}?subject={quote(subject, safe="")}&body={quote(body, safe="").replace(_TOK, "{{token}}")}'
+
+
+def tap_href(cfg, r):
+    """Where a tap goes: the page (ANSWER_MODE 'page'), or a reply. In reply mode the two doors that ask for
+    words carry their own prompt instead of the spare line."""
+    if ANSWER_MODE == 'page' or r in FORM_TAPS:
+        return TAP + r
+    label = tap(cfg, r)[0]
+    if r in REPLY_LINES:
+        return reply_link(label, [label + '.', ''] + REPLY_LINES[r], r, more=False)
+    return reply_link(label, [label + '.'], r)
+
+
+def answer_href(q, label, tapkey, ans):
+    """Where a check's answer goes: the page, which records it on arrival and offers the rest, or in reply mode a
+    reply carrying QUESTIONS' own words, never a merge field, since a URL-encoded body cannot carry one."""
+    if ANSWER_MODE == 'page' or tapkey in FORM_TAPS:
+        return TAP + tapkey + '&q=' + ans
+    if tapkey in REPLY_LINES:
+        return reply_link(label, [QUESTIONS[q][0], label, ''] + REPLY_LINES[tapkey], tapkey, ans, more=False)
+    return reply_link(label, [QUESTIONS[q][0], label], tapkey, ans)
+
+# ── what a letter can read off the sheet ─────────────────────────────
+# merge field → where the send-list builder takes it from. A blank field
+# drops that fact from the strip; it never prints as an empty cell.
+FIELDS = {
+ 'first_name':       'Client — first name only',
+ 'agent_first_name': 'Agent — first name only',
+ 'agent_or_rep':     'Agent — first name only, or "Your representative" when the sheet has none (the subject line)',
+ 'first_year':       'Issue Date — the year',
+ 'years':            'Issue Date — whole years held',
+ 'issue_date':       'Issue Date',
+ 'paid_to':          'Paid To Date',
+ 'days':             'Days — days outstanding',
+ 'projected_lapse':  'Projected Lapse Date',
+ 'app_received':     'App Received Date',
+ 'collected_on':     'Salesforce — the day the contract was collected for delivery (the delivery-update task); letter J only',
+ 'matured_on':       'policy admin — not on the portfolio sheet',
+ 'maturity_date':    'the intelligence sheet or policy admin — not on the portfolio sheet',
+ 'token':            'the send list — opaque, never a policy number',
+ 'segment':          'the send list — the letter\'s own key',
+ 'svc_docs':         'service-record.py — documents on their policies in the Log Book, checked and sent on by the document team',
+ 'svc_requests':     'service-record.py — Salesforce service tasks the branch team completed for them',
+ 'svc_reminders':    'service-record.py — premium reminders sent to them',
+ 'svc_birthday':     'service-record.py — the month of their last birthday note',
+ 'agent_name':       'Agent — the full name as the sheet spells it; letter T only, in the subject and the notice',
+ 'terminated_on':    'the send list — the date Guardian Life terminated the contract, from its own notice; letter T only',
+ 'promised_on':      'Salesforce — the day the branch wrote to the client that the contract would be delivered within 28 days (the delivery-update e-mail); letter J only, blank where no such e-mail went',
+ 'days_held':        'worked out at send time — days from collected_on to the day the letter goes; letter J only',
+ 'days_open':        'worked out at send time — days from app_received to the day the letter goes; letters K and T1',
+ 'sent_on':          'set by the sender on a reminder only — the day the first letter went; blank on a first send, which cuts the banner above the greeting',
+}
+
+# ── the taps a letter can offer ───────────────────────────────────────
+TAPS = {
+ 'urgent':   ('I want an agent now. Let me tell you my concerns first',
+              'Fifteen minutes on your phone. We read every word before we name anyone, then match you to the agent who fits your file.'),
+ 'review':   ('Tell us more about yourself',
+              'A short form on what you hold and what matters to you. A person can go through it with you.'),
+ 'callme':   ('Call me', 'Within two working days, at a time you choose.'),
+ 'claim':    ('Help me claim it', 'We bring the form and walk it through with you.'),
+ 'deliver':  ('Bring me my contract', 'By hand, and we go through it with you.'),
+ 'finish':   ('Finish my application', 'We bring whatever is still needed to you.'),
+ 'paid':     ('I have already paid', 'We check the record against your receipt and confirm within two working days.'),
+ 'pay':      ('Set me up to pay Guardian Life directly', 'One call, and every payment from then on carries Guardian Life\'s own receipt.'),
+ 'stop':     ('I would rather not proceed', 'We close the file properly and confirm that nothing is owed.'),
+ 'informed': ('All good, keep my details', 'We will ask again rather than assume.'),
+ 'question': ('My details have changed', 'Reply to this letter with the change and we put it right.'),
+}
+
+SEGMENTS = {k: v for k, v in json.loads((HERE / 'openings.json').read_text(encoding='utf-8')).items() if not k.startswith('_')}
+
+# ── two questions, one tap each ───────────────────────────────────────
+# Asked for on 24 September: "questions that ... show their agent did not even
+# tell them". A letter may never say or suggest that; it may ask what the client
+# knows, and an honest "not sure" makes the point on its own. Each answer rides
+# an existing tap (so no backend change) with the answer itself in q=, which the
+# client page puts in the Page column of Client Responses; a letter lists the
+# questions it asks under "questions" in openings.json.
+QUESTIONS = {
+ # 24 September, after the first staff test: "when click on this it taking too long to open and would
+ # like this as a check in the email! It must be easy for a client!" The review form behind "Tell us
+ # more about yourself" became these checks, answered in the e-mail itself; the form stays one line
+ # away (the letter's "more" line) for a client who wants to write. Each answer is an ordinary tap,
+ # so a "could be better" or a change in their life reaches a person as a callme.
+ # Rewritten the evening of 24 September 2026, after the manager read them as a client would: "asking if
+ # they advise to cash in is not a nice question … the objective is to have them stay … and want a review".
+ # So every question is an offer, not a check-up: it puts help inside the question, makes the caring
+ # answer the easy first option, and leads to a call or a review. The client's policy is "your policy"
+ # throughout; nothing asks about anyone who left; the one question that covers a rival approach asks
+ # whether the client would like a change checked with us first, free, and lets "someone already has"
+ # be said without accusing anyone. Order on a letter: the feedback first (easy, positive), the offers
+ # in the middle, the commitment to stay last.
+ 'rating':     ('How have we looked after you so far?',
+                [('Very well', 'informed', 'rate_verywell'), ('Well', 'informed', 'rate_well'),
+                 ('Could be better', 'callme', 'rate_better')]),
+ 'life':       ('Since you took out your policy, has life moved on: a new home, a new job, someone new in the family?',
+                [('Yes, update my cover', 'callme', 'life_changed'), ('No, all the same', 'informed', 'life_same')]),
+ 'pays':       ('Would you like us to confirm, in plain words, exactly what your policy pays and to whom?',
+                [('Yes, please confirm it', 'callme', 'pays_confirm'), ('I know it, thank you', 'informed', 'pays_known')]),
+ # the third answer is the polite way out: a question with no soft exit lowers response (Dillman's Tailored
+ # Design; Tourangeau & Yan 2007 on intrusive questions), and a client who keeps the choice keeps reading
+ 'checkfirst': ('If anyone ever suggests you change or replace your policy, would you like us to check it with you first, free?',
+                [('Yes, always check with me first', 'informed', 'checkfirst_yes'), ('Someone already has. Call me', 'callme', 'approached_yes'),
+                 ('I will decide myself', 'informed', 'checkfirst_no')]),
+ 'stay':       ('Would you like our branch team to keep looking after your policy?',
+                [('Yes, keep looking after it', 'informed', 'stay_yes'), ('Let\'s talk it through first', 'callme', 'stay_talk')]),
+ # the lapsed letter: the free look at what the policy still holds, offered as a question
+ 'value':      ('Would you like us to find out, free, what your policy still holds and whether it can simply start again?',
+                [('Yes, find out for me', 'callme', 'value_yes'), ('Not now, thank you', 'informed', 'value_later')]),
+ # by tenure band (25 September: "did you model it by age bands … our biggest is the under 5 years"). Under
+ # two years the relationship is new and the policy may never have been explained: the walk-through. Three
+ # to five years, value is building: what it has built so far. Ten years or more: what more the cover could
+ # do now. The bands between keep the life question, and every band keeps the feedback, the pays, the
+ # check-first and the stay.
+ 'walk':       ('Would you like a plain-words walk-through of what your policy does for you?',
+                [('Yes, walk me through it', 'callme', 'walk_yes'), ('I am clear on it, thank you', 'informed', 'walk_clear')]),
+ 'built':      ('Would you like to know what your policy has built for you so far?',
+                [('Yes, show me', 'callme', 'built_yes'), ('Not now, thank you', 'informed', 'built_later')]),
+ 'more':       ('Is there anything more you would like your cover to do for you now: family, retirement, health?',
+                [('Yes, let us talk', 'callme', 'more_yes'), ('Not now, thank you', 'informed', 'more_later')]),
+ # the contract letter (J): the record says the contract was collected for delivery and never acknowledged,
+ # so the one question that matters is whether it reached the client; "no" is the deliver tap itself
+ 'received':   ('Has your policy contract reached you?',
+                [('Yes, I have it', 'informed', 'contract_have'), ('No, it never reached me', 'deliver', 'contract_missing'),
+                 ('Not sure what I should have', 'callme', 'contract_unsure')]),
+ # the application letter (K): cover is not in place until the policy is issued, so what is outstanding is
+ # the question; "yes" is the finish tap, "no longer" the stop tap, so the file is closed properly either way
+ 'outstanding': ('Is anything you were asked for still outstanding: a medical, a document, a signature?',
+                 [('Yes, help me finish it', 'finish', 'k_outstanding'), ('I am not sure what is needed', 'callme', 'k_unsure'),
+                  ('I no longer wish to proceed', 'stop', 'k_stop')]),
+ # letter T only (24 September 2026): whether the agent whose contract was terminated has been in touch
+ # since. The page a tap opens and the receipt ask it in these words; the letter names the agent and the
+ # date (LETTER_Q). "Yes" brings a call, and the call comes before anything else.
+ 'contact':    ('Has your former agent been in touch with you since their contract ended?',
+                [('No', 'informed', 'contact_no'), ('Yes, call me', 'callme', 'contact_yes')]),
+ # letter T (25 September 2026): after a termination the one exposure is a premium still handed over in
+ # person, so the letter asks how the client pays today; "in person" is the pay tap itself, and the call
+ # sets up payment to Guardian Life directly, with Guardian Life's own receipt
+ 'paying':     ('How do you pay your premium today?',
+                [('Directly to Guardian Life', 'informed', 'pay_direct'), ('In person, to a representative', 'pay', 'pay_person'),
+                 ('Not sure', 'callme', 'pay_unsure')]),
+}
+# A question's words on the letter alone, where a merge field may appear. The page a tap opens cannot fill
+# one, and a field inside the receipt's recap would stop the receipt (Transition.gs refuses to send one with a
+# field left), so everything that reaches the page or the receipt stays in QUESTIONS' own words. The year in
+# the stay question sits between fact markers, so a row with no first year (an application) reads without it.
+LETTER_Q = {'contact': 'Has {{agent_first_name}} been in touch with you since {{terminated_on}}?',
+            'stay': 'Our branch team has looked after your policy<!--fact:first_year--> since {{first_year}}<!--/fact-->. '
+                    'Would you like the same team to keep looking after it?'}
+# One line under a question, on the letter alone (25 September 2026: "include the insurance act … come
+# across relevant"): the Act's own rule behind the check-first offer, so the question reads as a right the
+# client already has, not a favour asked of us. The words follow the Act (an agent or broker "shall not …
+# cause a policyholder to discontinue an insurance policy without first discussing the advantages and
+# disadvantages", and the same for replacing a long-term policy), checked against the source text.
+Q_NOTE = {'checkfirst': 'The Insurance Act says no agent or broker may cause you to discontinue or replace a policy without '
+                        'first discussing the advantages and the disadvantages with you.'}
+# asked only on the page a tap opens, where the answer helps the agent who calls
+REACH = ('What is the best way to reach you?',
+         [('Phone call', 'informed', 'reach_phone'), ('WhatsApp', 'informed', 'reach_whatsapp'), ('E-mail', 'informed', 'reach_email')])
+# asked on the page once a call is coming, so "at the time you chose" is true
+WHEN = ('When suits you best for a call?',
+        [('Morning', 'informed', 'when_morning'), ('Afternoon', 'informed', 'when_afternoon'), ('Evening', 'informed', 'when_evening')])
+# What a "call me" earns, in one place. Until 6 October 2026 every line here promised a call "today or
+# tomorrow"; by then 223 clients had tapped it against a Client Support team that reaches about thirty a day,
+# so the promise was broken before the receipt arrived, and a broken promise is what makes an e-mail an
+# irritation. "Within two working days" is what the team can keep, and it is the branch's own late line
+# (WAIT_DAYS in Transition.gs), so the internal alarm and the client's promise now agree. One edit here
+# changes every letter, the page a tap opens, the receipt and the call script together.
+CALL_WHEN = 'within two working days'
+assert TAPS['callme'][1].lower().startswith(CALL_WHEN), 'the Call me card must make the same promise as CALL_WHEN'
+# what the page says the moment a check is answered: what happens next, nothing more
+SAID_Q = {
+ 'rate_verywell':  'Thank you. That is good to hear, and the same team keeps looking after you.',
+ 'rate_well':      'Thank you. If there is one thing we could do better, the full review below is the place to say it.',
+ 'rate_better':    'Thank you for telling us. Someone from the branch will call you ' + CALL_WHEN + ' to hear what we should do better.',
+ 'life_changed':   'Thank you. Someone from the branch will call you ' + CALL_WHEN + ' to bring your cover up to date with your life.',
+ 'life_same':      'Thank you. Nothing about your policy changes.',
+ 'pays_confirm':   'Thank you. We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
+ 'pays_known':     'Thank you. If who it pays ever needs to change, tell us and we put it right the same week.',
+ 'checkfirst_yes': 'Thank you. Whenever a change is put to you, one tap or one call and we check it with you, free, before you decide.',
+ 'approached_yes': 'Thank you for telling us. A person calls you before you decide anything, so you have the full picture first.',
+ 'checkfirst_no':  'Understood. The offer stands whenever you want it, free, and nothing about your policy changes.',
+ 'stay_yes':       'Thank you. Your file stays with our branch team, and the same people keep looking after it.',
+ 'stay_talk':      'Of course. Someone from the branch calls you ' + CALL_WHEN + ' to talk it through, no pressure.',
+ 'value_yes':      'Thank you. We find out what your policy still holds and call you with the answer.',
+ 'value_later':    'Understood. Nothing changes, and the door stays open whenever you want to look.',
+ 'walk_yes':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' and walks you through your policy in plain words.',
+ 'walk_clear':     'Thank you. If a question ever comes up, one tap or one call and we go through it with you.',
+ 'built_yes':      'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' with what your policy has built so far.',
+ 'built_later':    'Understood. It is yours to see whenever you want to.',
+ 'more_yes':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' to talk through what more your cover could do.',
+ 'more_later':     'Understood. Nothing about your policy changes, and the door stays open.',
+ 'contract_have':  'Thank you. That is what we needed to know, and nothing more is required of you.',
+ 'contract_missing': 'Thank you for telling us. We bring your contract to you by hand and go through it with you.',
+ 'contract_unsure': 'Thank you. Someone from the branch calls you ' + CALL_WHEN + ', explains what you should have, and brings it if it is missing.',
+ 'k_outstanding':  'Thank you. We bring whatever is still needed to you, so your cover can start.',
+ 'k_unsure':       'Thank you. Someone from the branch calls you ' + CALL_WHEN + ' with exactly what is needed, and brings it to you.',
+ 'k_stop':         'Understood. We close the file properly and confirm that nothing is owed.',
+ 'contact_no':     'Thank you. Nothing about your policy changes, and we will ask again rather than assume.',
+ 'contact_yes':    'Thank you for telling us. A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
+ 'pay_direct':     'Thank you. Every payment you make carries Guardian Life\'s own receipt, and nothing about your policy changes.',
+ 'pay_person':     'Thank you for telling us. Someone from the branch calls you ' + CALL_WHEN + ' to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Thank you. Someone from the branch calls you ' + CALL_WHEN + ', confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
+ 'reach_phone':    'Noted: we will call you.',
+ 'reach_whatsapp': 'Noted: we will reach you on WhatsApp.',
+ 'reach_email':    'Noted: we will write to you by e-mail.',
+ 'when_morning':   'Noted: we call in the morning.',
+ 'when_afternoon': 'Noted: we call in the afternoon.',
+ 'when_evening':   'Noted: we call in the evening.',
+}
+# and for a tap on its own
+TAP_SAID = {
+ 'informed': 'Noted, with thanks. Nothing about your policy changes.',
+ 'callme':   'Someone from the branch will call you, ' + CALL_WHEN + ', at a time you choose.',
+ 'urgent':   'We read it before we name anyone, then match you to the agent who fits your file.',
+ 'review':   'It saves as you go, and a person goes through it with you if you would like one to.',
+ 'paid':     'We will check the record against your receipt and confirm within two working days.',
+ 'pay':      'We will call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'claim':    'We will bring the maturity form and walk it through with you.',
+ 'deliver':  'We will bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
+ 'finish':   'We will bring whatever is still needed to finish your application. You do not have to find anything.',
+ 'stop':     'Understood. We will close the file properly and confirm that nothing is owed.',
+ 'question': 'Reply to the e-mail this link came from and tell us the question. It reaches us the same day.',
+}
+# ── who answers ──────────────────────────────────────────────────────
+# The receipt a tap earns, the "still on it" note and the page a tap opens
+# all say who has the client's answer, so it reads as people, not a queue.
+# Decided 24 September 2026: "this should be the Ricky Rampersad Branch
+# Client Support team" — the team signs, never an individual (a first draft
+# carried a person's name that turned out not to exist). `us` is the phrase
+# mid-sentence, `Us` at the start of one, `name` the signature.
+CARE = {'name': 'Client Support Team', 'us': 'our Client Support team', 'Us': 'Our Client Support team',
+        'line': 'Ricky Rampersad Branch &middot; Guardian Life of the Caribbean'}
+# what the receipt promises, in the client's own second person, by tap and by
+# quick-check answer; a noted answer (informed) earns no receipt
+NEXT = {
+ 'callme':   'Someone from the branch calls you ' + CALL_WHEN + ', at a time you choose.',
+ 'urgent':   'We read every word you wrote before we name anyone, then match you to the agent who fits your file.',
+ 'review':   'A person reads your review, then we match you to the agent who fits your file.',
+ 'paid':     'We check the record against your receipt and confirm within two working days.',
+ 'pay':      'We call to set up payment to Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'claim':    'We bring the maturity form and walk it through with you.',
+ 'deliver':  'We bring your contract and go through it with you. The only signature it needs is the acknowledgement.',
+ 'finish':   'We bring whatever is still needed to finish your application. You do not have to find anything.',
+ 'stop':     'We close the file properly and confirm that nothing is owed.',
+ 'question': 'A person answers your question the same day.',
+ 'assign':   'We match you to the agent who fits your file, and introduce you.',
+ 'selfserve': 'Take your time with the review. It saves as you go, and a person reads it the day you send it.',
+ 'informed': 'Nothing about your policy changes, and we will ask again rather than assume.',
+}
+NEXT_Q = {
+ 'rate_better':    'Someone from the branch calls you ' + CALL_WHEN + ' to hear what we should do better.',
+ 'life_changed':   'Someone from the branch calls you ' + CALL_WHEN + ' to bring your cover up to date with your life.',
+ 'pays_confirm':   'We confirm what your policy pays and to whom, and go through it with you by phone once we have confirmed it is you.',
+ 'approached_yes': 'A person calls you before you decide anything, so you have the full picture first.',
+ 'stay_talk':      'Someone from the branch calls you ' + CALL_WHEN + ' to talk through who looks after your policy, and how.',
+ 'value_yes':      'We find out what your policy still holds, and whether it can simply start again, and call you with the answer.',
+ 'walk_yes':       'Someone from the branch calls you ' + CALL_WHEN + ' and walks you through your policy in plain words.',
+ 'built_yes':      'Someone from the branch calls you ' + CALL_WHEN + ' with what your policy has built for you so far.',
+ 'more_yes':       'Someone from the branch calls you ' + CALL_WHEN + ' to talk through what more your cover could do for you now.',
+ 'contract_unsure': 'Someone from the branch calls you ' + CALL_WHEN + ', explains what you should have, and brings it if it is missing.',
+ 'k_unsure':       'Someone from the branch calls you ' + CALL_WHEN + ' with exactly what is still needed, and brings it to you.',
+ 'contact_yes':    'A person from the branch calls you before anything else. Nothing needs to be signed or paid until you have spoken to us.',
+ 'pay_person':     'Someone from the branch calls you ' + CALL_WHEN + ' to set you up to pay Guardian Life directly, with Guardian Life\'s own receipt every time.',
+ 'pay_unsure':     'Someone from the branch calls you ' + CALL_WHEN + ', confirms how your premium reaches Guardian Life, and sets up direct payment if you would like it.',
+ 'wrote':          'A person reads your e-mail and replies the same working day.',   # a reply in the client's own words, no tap
+}
+BOX = '&#9744;'   # ☐ — an answer reads as a box to tick, which is what the client is doing
+
+
+def checks_head(qs):
+    return 'A few quick questions, one tap each.' if len(qs) > 1 else 'One quick question, one tap.'
+
+
+def checks_first(cfg):
+    """The checks above the taps where the letter's point is a question: the feedback letters (rating) and letter T."""
+    return 'rating' in cfg.get('questions', []) or bool(cfg.get('checks_first'))
+
+
+# Letter T (24 September 2026): the one letter that names an agent, because Guardian Life terminated the
+# contract for cause and the client has to know who may no longer act for it. The words are the company's
+# own notice — terminated, with immediate effect, on a date, as a result of an investigation, not authorised —
+# and nothing about why. The name and the date come off the sheet at send time; neither lives here.
+# The name sits between the <!--agent--> marks like the standard notice's, because tLetters_ in
+# Transition.gs refuses any letter that carries {{agent_first_name}} without them; a T row with no
+# agent name is held by tHold_ before the cut could ever apply.
+NOTICE_T = ('Guardian Life of the Caribbean terminated the contract of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
+            'with immediate effect on {{terminated_on}}, as a result of an investigation.',
+            '{{agent_first_name}} is no longer authorised to conduct any business on behalf of Guardian Life. Your policy is '
+            'not affected: it remains with Guardian Life, looked after by our branch team.')
+# Every other letter (30 September 2026). Until then the notice said the representative "has moved on", and
+# nothing more. That day the manager: the agents who resigned "are on Facebook and social media and they are
+# telling clients they are still with the company", so the notice became Guardian Life's own, in the pattern of
+# letter T: the resignation, accepted with immediate effect on 21 September 2026 (their own letters said 30
+# September; Guardian Life accepted each with immediate effect on the 21st, the ten agents alike, Tricia Baksh
+# included), and that the agent may no longer act for Guardian Life. Facts only: never why they left, never
+# where they went, never that anyone is saying otherwise. The client is told what to do instead (WHAT_NOW).
+# The name sits between the <!--agent--> marks; without one the notice reads "your agent … Your
+# representative", which is what {{agent_or_rep}} gives.
+RESIGNED_ON = '21 September 2026'
+NOTICE_R = ('Guardian Life of the Caribbean has accepted the resignation of your agent<!--agent-->, {{agent_name}},<!--/agent--> '
+            f'effective {RESIGNED_ON}.',
+            '{{agent_or_rep}} is no longer authorised to conduct any business on behalf of Guardian Life.')
+POLICY_LINE = 'Your policy is not affected: it remains with Guardian Life, looked after by our branch team.'
+# A telephone number to confirm the notice (30 September 2026, the manager: "226-2479 is our Sales Admin Department
+# at Westmoorings, should persons need to call to confirm"). A client who is told otherwise can check the notice
+# with the company's own office instead of taking the letter's word for it. It is on every letter, T and T1
+# included: at the foot of the notice card, and in the first line of what to do. [[tel]] is the link.
+# The same afternoon the manager called it the "head office contact", and the letters name it so: the client
+# hears it from the company's head office, not from the branch that wrote the letter.
+# At noon the same day the number became 226-6944, 226-MYGG, which is Guardian Direct, and the notice "we have accepted
+# the resignation effective 21st Sept". Then the branch's own lines went in front of it ("the branches number is
+# 226-6461, 226-6464, 226-6465 … add these to the contact numbers for verification … and then the last number is 226
+# MyGG"): the branch first, Guardian Direct last, every number a link a phone dials in one tap.
+BRANCH_TELS = ['226-6461', '226-6464', '226-6465']
+DIRECT_TEL = ('226-MYGG', '226-6944')
+CONFIRM = 'To confirm this notice, call our branch on [[branch]], or Guardian Direct on [[direct]].'
+# What the client does now, right under the notice: the facts above are what answers anyone who says otherwise,
+# and this is how the client checks. Two lines on every letter, a third where nothing needs doing.
+WHAT_NOW_HEAD = 'What this means for you'
+WHAT_NOW = ['If anyone tells you they still act for Guardian Life on your policy, check before you sign or pay '
+            'anything: call one of the numbers above, or reply to this e-mail. A person reads it the same day.',
+            'Pay your premium only to Guardian Life, by your usual method. Never hand cash, a cheque or a signed form to '
+            'anyone outside Guardian Life or our branch.']
+WHAT_NOW_KEEP = 'Nothing needs to be signed or changed. Your cover carries on as it is.'
+
+
+MORE_ASK, MORE_LINK = 'Would you rather tell us in your own words?', 'The full review, about five minutes'
+
+# ── the confidentiality footer, on every client e-mail ────────────────
+# Asked for on 25 September 2026: "on every email the proper disclaimer …
+# in the event of confidentiality you can take action and you are
+# protected; review the laws in Trinidad under data protection". The law it
+# rests on, checked that day: the Data Protection Act 2011 (Chap. 22:04) is
+# only partly in force — Part I, which carries the General Privacy
+# Principles (an organisation is responsible for the personal information
+# under its control; the purpose is identified at collection; knowledge and
+# consent for use and disclosure; the individual may challenge compliance),
+# and the sections that establish the Office of the Information
+# Commissioner, came into operation on 6 January 2012; the private-sector
+# obligations and penalties have not been proclaimed. So the footer commits
+# the branch to the Principles by name, never to a section, and names the
+# Commissioner's office as the authority the Act establishes, not as a
+# court. The confidentiality duty is the Insurance Act 2018's own, quoted on
+# protected.html: no registrant, officer, employee or agent who receives
+# information about a policyholder's affairs may disclose it unless the
+# policyholder expressly consents or the law compels it. The same words go
+# on the letters, the receipt, the "still on it" note (through receipt.json)
+# and the questionnaire e-mails in Service.gs. Compliance sees the wording.
+LEGAL_HEAD = 'Confidential'
+LEGAL = ('This e-mail is for you alone and concerns your policy with Guardian Life of the Caribbean. If it has reached you in '
+         'error, please tell us by reply and delete it; do not forward it. Your personal information is handled under the General '
+         'Privacy Principles of the Data Protection Act 2011 of Trinidad and Tobago and the confidentiality duty the Insurance Act '
+         '2018 places on everyone who works for an insurer: it is used only to look after your policy, is never sold, and is never '
+         'disclosed without your express consent unless the law requires it. You may ask at any time what we hold about you and have '
+         'it corrected. Any concern about how your information has been handled can go to our branch by reply, to Guardian Life of '
+         'the Caribbean, or to the Office of the Information Commissioner, the authority the Act establishes, and raising it never '
+         'changes how your policy is looked after.')
+# internal mail: the digest, the Monday report and the chase carry names, so they say so
+INTERNAL = 'Internal to the Ricky Rampersad Branch. This e-mail carries client information: do not forward it outside the branch.'
+
+
+def legal_html(size='11.5px'):
+    return (f'<p style="margin:8px 0 0;font:400 {size}/1.5 {BODY};color:#64798e"><b style="color:#4a5f74">{LEGAL_HEAD}.</b> {LEGAL}</p>')
+
+
+LEGAL_PLAIN = f'<p><i><b>{LEGAL_HEAD}.</b> {LEGAL}</i></p>'
+
+
+def tap(cfg, r):
+    """A tap's words on this letter: its own tap_text when it has one, else the
+    shared wording. Only the words change; the tap records the same answer."""
+    return tuple(cfg.get('tap_text', {}).get(r) or TAPS[r])
+
+
+for _seg, _cfg in SEGMENTS.items():
+    if len(_cfg['open'].split()) >= 45:
+        print(f'  ! {_seg}: the opening runs to {len(_cfg["open"].split())} words; the shell is built for under 45')
+
+# ── the shell ─────────────────────────────────────────────────────────
+# Inline styles throughout: e-mail clients strip <style> blocks unpredictably.
+# The design pass of 24 September 2026 ("polish up the fonts and make it more
+# appealing and graphical, a wow template"): a navy hero carrying the headline
+# and the brand, the notice in a gold-edged card, the service record as stat
+# tiles, the checks as pills, the taps as one navy and one white card, and the
+# film as a picture with a play badge. All of it tables, inline styles and
+# hosted images, which is what an e-mail can carry; nothing here needs a
+# script or a stylesheet to read.
+#
+# The fonts: the branch face (Plus Jakarta Sans, Inter) where a mail app will
+# load it — Apple Mail and iOS Mail honour the <link> in the head — and the
+# phone's own face everywhere else: San Francisco, Segoe UI, Roboto. Arial is
+# the last resort, not the first, as it was before.
+HEAD = "'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+BODY = "Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif"
+FONTS = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@700;800&family=Inter:wght@400;600;700&display=swap'
+NAVY, GOLD, GOLD2, TEAL, TDARK = '#07131f', '#efc24b', '#c9942c', '#00CFEA', '#07606f'
+INK, BODYC, DIM, LINE = '#12202e', '#33465a', '#5d7186', '#cfe3ea'
+# the film card: one picture, rendered by tools/letters/film-card.js from film-card.html
+FILM_CARD = 'https://rickyrampersadbranch.com/orphan-video/film-card.jpg'
+
+
+def facts_block(cfg):
+    """The strip of facts. The comment markers are for the sender (Transition.gs):
+    a cell whose field is blank for that client is cut out between its
+    <!--fact:key--> marks, and the strip goes with the last cell."""
+    if not cfg.get('facts'):
+        return ''
+    cells = ''.join(f"""<!--fact:{val.strip('{}')}--><td style="padding:0 22px 0 0;vertical-align:top">
+      <div style="font:700 9.5px/1.2 {HEAD};letter-spacing:.16em;text-transform:uppercase;color:{TDARK}">{label}</div>
+      <div style="font:800 16px/1.3 {HEAD};color:{INK};margin-top:4px">{val}</div></td><!--/fact-->""" for label, val in cfg['facts'])
+    return f"""
+<!--facts--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td bgcolor="#f4f8fa" style="background:#f4f8fa;border-radius:12px;padding:13px 18px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>{cells}</tr></table>
+</td></tr></table><!--/facts-->"""
+
+
+def taps_block(cfg):
+    """The one-thumb answers: the first as a navy card with a gold title, the
+    rest white, so the eye lands on the one that matters most on that letter."""
+    rows = ''
+    for i, r in enumerate(cfg['taps']):
+        bg, border, title, text = (NAVY, NAVY, GOLD, '#c6d6e4') if i == 0 else ('#ffffff', LINE, INK, DIM)
+        rows += f"""
+<tr><td style="padding:0 0 9px">
+  <a href="{tap_href(cfg, r)}" style="display:block;text-decoration:none;background:{bg};border:1.5px solid {border};border-radius:13px;padding:14px 17px">
+    <div style="font:800 16px/1.3 {HEAD};color:{title}">{tap(cfg, r)[0]}&nbsp;&rarr;</div>
+    <div style="font:400 13px/1.5 {BODY};color:{text};margin-top:3px">{tap(cfg, r)[1]}</div>
+  </a>
+</td></tr>"""
+    # every letter carries the door into the questionnaire, as a card where it
+    # is one of the taps and as a single line where it is not
+    urgent_line = '' if 'urgent' in cfg['taps'] else f"""
+<p style="margin:0 0 14px;font:400 13px/1.5 {BODY};color:{DIM}">Would you rather have an agent of your own?
+  <a href="{tap_href(cfg, 'urgent')}" style="color:{TDARK};font-weight:700;text-decoration:none">Tell us your concerns first, and we match you to the one who fits&nbsp;&rarr;</a></p>"""
+    return f"""
+<p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">One tap tells us what you would like. We do the rest.</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 12px">{rows}</table>{urgent_line}"""
+
+
+# The contact question on every letter but T's (30 September 2026): the agents who resigned were telling clients
+# they were still with the company, so every letter asks what letter T asks, with the date the resignations took
+# effect. The name sits between the agent marks, so a row without one reads "your former agent".
+CONTACT_R = f'Has your former agent<!--agent-->, {{{{agent_first_name}}}},<!--/agent--> been in touch with you since {RESIGNED_ON[:-5]}?'
+
+
+def qtext(cfg, q):
+    """A question's words on this letter: the letter's own wording (question_text in openings.json, by band),
+    else the letter-only wording with merge fields (LETTER_Q), else the words the page and the receipt use."""
+    if q == 'contact' and cfg.get('notice') != 'terminated':
+        return cfg.get('question_text', {}).get(q) or CONTACT_R
+    return cfg.get('question_text', {}).get(q) or LETTER_Q.get(q, QUESTIONS[q][0])
+
+
+def questions_block(cfg):
+    """The quick checks: each answer a pill with a box to tick, and a reply behind it."""
+    qs = cfg.get('questions', [])
+    if not qs:
+        return ''
+    link = lambda q, label, tapkey, ans: (f'<a href="{answer_href(q, label, tapkey, ans)}" style="display:inline-block;margin:0 8px 8px 0;padding:9px 14px;'
+                                          f'border:1.5px solid #b9d6df;border-radius:999px;background:#f7fbfc;color:{TDARK};'
+                                          f'font:700 14px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{label}</a>')
+    note = lambda q: (f'<div style="margin:2px 0 7px;font:400 12.5px/1.5 {BODY};color:{DIM}">{Q_NOTE[q]}</div>' if q in Q_NOTE else '')
+    rows = ''.join(f"""
+<tr><td style="padding:0 0 8px;font:600 14.5px/1.45 {BODY};color:{INK}">{qtext(cfg, q)}{note(q)}<div style="margin-top:{'2' if q in Q_NOTE else '7'}px">{''.join(link(q, *a) for a in QUESTIONS[q][1])}</div></td></tr>""" for q in qs)
+    return f"""
+<p style="margin:4px 0 10px;font:800 15px/1.4 {HEAD};color:{INK}">{checks_head(qs)}</p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 10px">{rows}</table>"""
+
+
+def more_line(cfg):
+    """The full review, one line away, for a client who would rather write."""
+    if not cfg.get('more'):
+        return ''
+    return f"""
+<p style="margin:0 0 16px;font:400 13px/1.5 {BODY};color:{DIM}">{MORE_ASK}
+  <a href="{tap_href(cfg, 'review')}" style="color:{TDARK};font-weight:700;text-decoration:none">{MORE_LINK}&nbsp;&rarr;</a></p>"""
+
+
+ACT_HEAD = 'The Insurance Act &middot; Trinidad and Tobago'
+ACT_MORE = 'Everything else the law gives you'
+
+
+def act_block(cfg):
+    """The Act's own words, right above the answers, on every letter whose situation the Act speaks to.
+    Until 25 September 2026 only the premium letter carried one; asked for then ("include the insurance
+    act … come across relevant"): the contract letter (a premium handed over counts as paid), the
+    application letters (issued within twenty business days of acceptance), the terminated notice (the
+    registration is revoked on the notice), the matured letter (a cheque reaches you within five business
+    days) and the lapsed letter (a policy with a value is not forfeited). `act` is the quotation, checked
+    against the source text and carrying no section number; `plain` is what it means for this client, in
+    our words, and may carry merge fields."""
+    if not cfg.get('act'):
+        return ''
+    return f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td bgcolor="#f3fbfd" style="background:#f3fbfd;border-left:4px solid {TEAL};border-radius:0 12px 12px 0;padding:13px 16px;font:400 13px/1.55 {BODY};color:{BODYC}">
+  <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:7px">{ACT_HEAD}</b>
+  <span style="display:block;font:700 13.5px/1.5 {HEAD};color:{INK}">&ldquo;{cfg['act']}&rdquo;</span>
+  <span style="display:block;margin-top:7px">{cfg['plain']} <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">{ACT_MORE}&nbsp;&rarr;</a></span>
+</td></tr></table>"""
+
+
+def law_line(cfg):
+    """One line on the law, on every letter without an Act card of its own, after the film."""
+    if cfg.get('act'):
+        return ''
+    return f"""
+<p style="margin:0 0 14px;font:400 13px/1.55 {BODY};color:#64798e">A life policy cannot be transferred. Anyone who suggests a change must
+  set out the advantages <i>and</i> the disadvantages for you first, so ask for it in writing.
+  <a href="{PROTECT}" style="color:{TDARK};font-weight:700;text-decoration:none">How the law protects you&nbsp;&rarr;</a></p>"""
+
+
+# ── the service record: what the branch team has done for this client ─
+# Asked for on 24 September 2026: the client should see a team that has been
+# there since the application, and the proof is in the branch's own records.
+# tools/letters/service-record.py fills one count per cell from the Log Book
+# and Salesforce, precise links only; a blank or zero cell is cut like a blank
+# fact, and the panel goes with its last cell. The panel says what the team did
+# and how fast it works, never what anyone else would or would not do. When a
+# client has nothing on record, the plain line between the <!--nosvc--> marks
+# stands in, and it claims nothing about that client in particular.
+# The pace is the Log Book's: in the twelve months to September 2026 three
+# documents in four went on to Guardian Life within one working day of reaching
+# the branch. Measure it again before changing the words.
+SVC_CELLS = {'svc_docs': 'Documents handled', 'svc_requests': 'Requests handled',
+             'svc_reminders': 'Premium reminders', 'svc_birthday': 'Last birthday note'}
+SVC_HEAD = 'Handled for you by our branch team'
+SVC_PACE = ('Every form you send is checked by our document team before it goes to Guardian Life, most within a working day. '
+            'The same team keeps your file today.')
+SVC_NONE = ('Your file is kept by our branch team. Every form you send is checked by our document team before it goes to '
+            'Guardian Life, most within a working day, and a person answers when you call.')
+
+
+def svc_keys(cfg):
+    """The cells a letter shows. The premium and lapsed letters leave the reminders out: a count of
+    reminders beside a premium still unpaid reads as a reproach, whatever it means."""
+    return cfg.get('service', list(SVC_CELLS))
+
+
+def service_block(cfg, preview=False):
+    """The stat tiles. preview: the team's page shows the panel alone, not the line that stands in for it."""
+    cells = ''.join(f"""<!--fact:{k}--><td style="padding:0 18px 0 0;vertical-align:top">
+      <div style="font:800 21px/1.1 {HEAD};color:{INK};letter-spacing:-.3px">{{{{{k}}}}}</div>
+      <div style="font:700 9.5px/1.3 {HEAD};letter-spacing:.12em;text-transform:uppercase;color:#8a6420;margin-top:5px">{SVC_CELLS[k]}</div></td><!--/fact-->""" for k in svc_keys(cfg))
+    return f"""
+<!--facts--><!--svcpanel--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:14px;padding:14px 18px 13px">
+  <table role="presentation" cellpadding="0" cellspacing="0"><tr>
+    <td style="width:22px;padding-right:8px"><img src="{LOGO}" width="22" height="22" alt="" style="display:block;border-radius:5px"></td>
+    <td style="font:800 13.5px/1.3 {HEAD};color:{INK}">{SVC_HEAD}</td></tr></table>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:11px"><tr>{cells}</tr></table>
+  <div style="font:400 12.5px/1.5 {BODY};color:{DIM};margin-top:11px;padding-top:9px;border-top:1px solid #f0dca6">{SVC_PACE}</div>
+</td></tr></table><!--/facts-->""" + ('' if preview else f"""<!--nosvc-->
+<p style="margin:0 0 16px;font:400 13.5px/1.55 {BODY};color:{BODYC}">{SVC_NONE}</p><!--/nosvc-->""")
+
+
+# The film, as a picture with a play badge and a navy caption bar. The picture
+# is the one hosted image besides the logo; when a mail app holds images back,
+# the caption still carries the link and the alt text says what it is.
+FILM_LINE = f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px">
+<tr><td style="line-height:0;border-radius:14px 14px 0 0;overflow:hidden"><a href="{FILM}" style="display:block;line-height:0">
+  <img src="{FILM_CARD}" width="556" alt="The film: two minutes on what carries on either way, and what is already inside your policy" style="display:block;width:100%;max-width:556px;height:auto;border:0;border-radius:14px 14px 0 0"></a></td></tr>
+<tr><td bgcolor="{NAVY}" style="background:{NAVY};padding:11px 16px;border-radius:0 0 14px 14px"><a href="{FILM}" style="text-decoration:none;font:700 13.5px/1.45 {BODY};color:#eaf4ff">
+  <span style="color:{GOLD}">&#9654;</span>&nbsp; Watch: two minutes on what carries on either way, and what is already inside your policy&nbsp;<span style="color:{GOLD}">&rarr;</span></a></td></tr>
+</table>"""
+
+
+# ── what happens after a tap: the same four steps on every letter ─────
+# 25 September 2026 ("combine and regroup … with a flow"): the client sees the
+# whole path before they answer, in four lines, and the receipt's own
+# "how we follow through" and the team page keep to the same four, so nothing
+# is promised in one place that another does not keep. No timeline for the
+# agent (24 September); the receipt within minutes is true on the Apps Script
+# route, which is the one the letters go by.
+FLOW = [
+ ('Tick what applies, and send', 'One page, about a minute. Nothing to write unless you want to.'),
+ ('A receipt in your inbox', 'Within minutes: everything you told us, and what happens next.'),
+ ('A call at the time you chose', 'Within two working days, from our Client Support team, whenever you asked for one.'),
+ ('Matched to the agent who fits', 'A person reads your file first. Then we introduce your agent in writing, with a name and a number.'),
+]
+FLOW_HEAD = 'What happens after you tap'
+# The reminder: not a letter of its own. A client who has not answered in
+# REMIND_DAYS (Transition.gs) gets their own letter once more, with this
+# banner above the greeting; sent_on is set by the sender on that send alone,
+# so on a first send the fact cut removes the banner whole.
+REMIND = ('We wrote to you on {{sent_on}}.',
+          'This is an important update about your agent, with your letter again below: a minute, one tap each. If you have answered already, thank you.')
+# The resignation letters' own banner (30 September 2026, the manager: the reminder should "state resigned and head
+# office contact"). The clients written to on 25 September read "moved on"; the reminder is where they first read the
+# resignation, so it says so above the greeting. T and T1 keep the one above: that book's agent did not resign.
+REMIND_R = ('We wrote to you on {{sent_on}}.',
+            "This is an important update on your agent's resignation, with numbers you can call to confirm it. Your "
+            'letter is below again: a minute, one tap each. If you have answered already, thank you.')
+
+
+def remind_words(cfg):
+    return REMIND if cfg.get('notice') == 'terminated' else REMIND_R
+
+
+def flow_block():
+    steps = ''.join(f"""
+<tr><td style="width:26px;padding:0 10px 9px 0;vertical-align:top"><div style="width:24px;height:24px;border-radius:12px;background:{GOLD};color:{NAVY};font:800 12.5px/24px {HEAD};text-align:center">{i}</div></td>
+    <td style="padding:0 0 9px;vertical-align:top"><div style="font:800 14px/1.35 {HEAD};color:{INK}">{title}</div>
+    <div style="font:400 12.5px/1.5 {BODY};color:{DIM};margin-top:1px">{text}</div></td></tr>""" for i, (title, text) in enumerate(FLOW, 1))
+    return f"""
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px">
+<tr><td style="border:1px solid {LINE};border-radius:14px;padding:14px 16px 6px">
+  <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:11px">{FLOW_HEAD}</div>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%">{steps}</table>
+</td></tr></table>"""
+
+
+def remind_block(cfg):
+    words = remind_words(cfg)
+    return f"""<!--fact:sent_on--><table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
+    <td bgcolor="#fff8e6" style="background:#fff8e6;border:1px solid #f0dca6;border-radius:12px;padding:11px 15px;font:400 13.5px/1.5 {BODY};color:{BODYC}">
+    <b style="color:{INK}">{words[0]}</b> {words[1]}</td></tr></table><!--/fact-->
+  """
+
+
+def tel(text, plain=False):
+    """The branch's lines where [[branch]] stands and Guardian Direct where [[direct]] does: links a phone dials in one tap."""
+    def link(label, digits):
+        href = 'tel:+1868' + digits.replace('-', '')
+        return (f'<a href="{href}"><b>{label}</b></a>' if plain else
+                f'<a href="{href}" style="color:{INK};font-weight:800;text-decoration:none;white-space:nowrap">{label}</a>')
+    b = [link(('(868) ' if i == 0 else '') + n, n) for i, n in enumerate(BRANCH_TELS)]
+    branch = ', '.join(b[:-1]) + ' or ' + b[-1]
+    direct = link(f'(868) {DIRECT_TEL[0]} ({DIRECT_TEL[1]})', DIRECT_TEL[1])
+    return text.replace('[[branch]]', branch).replace('[[direct]]', direct)
+
+
+def confirm_row():
+    return (f'<div style="margin-top:10px;padding-top:9px;border-top:1px solid #dbe6ec;font:400 14px/1.5 {BODY};color:{BODYC}">'
+            f'<span style="color:{GOLD};font-weight:800">&#9742;</span>&nbsp; {tel(CONFIRM)}</div>')
+
+
+def what_now_items(cfg, plain=False):
+    """What the client does now: every letter the two lines, and the letters where nothing needs doing the third."""
+    return [tel(t, plain) for t in WHAT_NOW + ([WHAT_NOW_KEEP] if cfg.get('family') in ('keep', 'return') else [])]
+
+
+def what_now_block(cfg):
+    rows = ''.join(f"""<tr><td style="width:20px;vertical-align:top;padding:0 8px 8px 0;font:800 14px/1.5 {HEAD};color:{GOLD}">&#10003;</td>
+      <td style="padding:0 0 8px;font:400 14px/1.5 {BODY};color:{BODYC}">{t}</td></tr>""" for t in what_now_items(cfg))
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
+    <td style="border:1px solid {LINE};border-radius:12px;padding:13px 16px 5px">
+    <div style="font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{TDARK};margin-bottom:10px">{WHAT_NOW_HEAD}</div>
+    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">{rows}</table></td></tr></table>"""
+
+
+def letter_table(seg, cfg, preview=False):
+    """The 600px table: the e-mail's body, and what /templates shows."""
+    # The notice is Guardian Life's own word on the agent, and the reason the
+    # letter exists. It is the second thing the client reads, once, in the same
+    # words on every letter, in a gold-edged card headed "Important notice" so it
+    # is not missed (NOTICE_T for the terminated book, NOTICE_R for the rest),
+    # with what to do now in the box beneath (WHAT_NOW).
+    # The name sits between <!--agent--> marks so the sender can drop it when the
+    # row carries none: "your agent … Your representative" still reads.
+    words = (f'<b style="color:{INK}">{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}' if cfg.get('notice') == 'terminated' else
+             f'<b style="color:{INK}">{NOTICE_R[0]} {NOTICE_R[1]}</b>\n'
+             f"    {cfg.get('policy_line', POLICY_LINE)}")
+    label = '' if cfg.get('notice') == 'terminated' else (
+        f'<b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:#9a6a00;margin-bottom:8px">Important notice</b>')
+    notice = f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 16px"><tr>
+    <td bgcolor="#f4f8fa" style="background:#f4f8fa;border-left:4px solid {GOLD};border-radius:0 12px 12px 0;padding:12px 16px;font:400 15px/1.55 {BODY};color:{BODYC}">
+    {label}{words}{confirm_row()}</td></tr></table>{'' if cfg.get('notice') == 'terminated' else what_now_block(cfg)}"""
+    headline = cfg['headline'].replace('<em>', f'<span style="color:{GOLD}">').replace('</em>', '</span>')
+    # The branch, not the manager's name: the objective is to reassign every
+    # client urgently, so the closing says the match is already under way.
+    closing = f"""<p style="margin:0 0 6px;font:400 14.5px/1.6 {BODY};color:{BODYC}">Your policy is looked after by the branch. Whatever you tell us is
+    read by a person first, and then we match you to the agent who fits your file.</p>"""
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
+
+<tr><td bgcolor="{NAVY}" class="hero" style="background:{NAVY};background-image:linear-gradient(150deg,#0c2434 0%,{NAVY} 55%,#040d16 100%);padding:20px 26px 22px;border-bottom:3px solid {GOLD}">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td style="width:38px;padding-right:11px"><img src="{LOGO}" width="38" height="38" alt="" style="display:block;border-radius:9px"></td>
+    <td style="font:800 14.5px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br>
+      <span style="font:500 11px/1.3 {BODY};color:#8fd8e6;letter-spacing:.02em">Guardian Life of the Caribbean</span></td>
+  </tr></table>
+  <h1 class="h1" style="font:800 27px/1.2 {HEAD};color:#ffffff;margin:22px 0 8px;letter-spacing:-.5px">{headline}</h1>
+  <p style="margin:0;font:400 14px/1.5 {BODY};color:#9dbdd8">{cfg['preheader']}</p>
+</td></tr>
+
+<tr><td class="pad" style="padding:24px 26px 8px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
+  {remind_block(cfg)}<p style="margin:0 0 12px">Dear {{{{first_name}}}},</p>
+  {notice}
+  <p style="margin:0 0 16px">{cfg['open']}</p>
+  {facts_block(cfg)}
+  {service_block(cfg, preview)}
+  {act_block(cfg)}
+  {(questions_block(cfg) + taps_block(cfg)) if checks_first(cfg) else (taps_block(cfg) + questions_block(cfg))}
+  {more_line(cfg)}
+  {flow_block()}
+  {FILM_LINE}
+  {law_line(cfg)}
+  {closing}
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 4px"><tr>
+    <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
+      <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">Ricky Rampersad</b>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</td></tr></table>
+</td></tr>
+
+<tr><td bgcolor="#f4f8fa" class="pad" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
+  Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are
+  deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.
+  {legal_html()}
+</td></tr>
+</table>"""
+
+
+def shell(seg, cfg):
+    """The e-mail document: preheader, grey ground, the letter table centred."""
+    return f'''<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>{html.escape(cfg['subject'])}</title>
+<!-- segment {seg} · {html.escape(cfg['name'])} · generated by tools/letters/build-letters.py from openings.json -->
+<link href="{FONTS}" rel="stylesheet">
+<style>
+  @media only screen and (max-width:480px) {{
+    .h1 {{ font-size:23px !important; }}
+    .hero, .pad {{ padding-left:18px !important; padding-right:18px !important; }}
+  }}
+</style>
+</head>
+<body style="margin:0;padding:0;background:#eef4f7">
+<div style="display:none;max-height:0;overflow:hidden;font-size:1px;line-height:1px;color:#eef4f7">{html.escape(cfg['preheader'])}</div>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#eef4f7"><tr><td align="center" style="padding:24px 12px">
+{letter_table(seg, cfg)}
+</td></tr></table>
+</body></html>
+'''
+
+
+# ── the families, and the order they go in ────────────────────────────
+# 25 September 2026: "combine and regroup to ensure we scale proper and with a
+# flow". Fourteen letters, four families, one path. The family is the wave:
+# the notice and the action letters on the first day, the in-force letters
+# over the next three by tenure (the longest first, the newest last), the
+# return letters a week on. The reminder is not a letter of its own: a client
+# who has not answered in REMIND_DAYS (Transition.gs) gets their own letter
+# again, with the banner above the greeting saying when the first went.
+FAMILIES = {
+ 'notice': ('Notice', 'the terminated book',
+            "Guardian Life's own notice, before any other letter, to every client of an agent whose contract it terminated."),
+ 'action': ('Action', 'something to finish',
+            'A contract that never reached them, an application not yet issued, a premium showing as due: what the Act says, the days, and the fix.'),
+ 'keep':   ('Keep', 'in force',
+            'The feedback letter, by how long the client has held their longest policy, and the free check for cover that ended and started again.'),
+ 'return': ('Return', 'lapsed or matured',
+            'What is still theirs: the value a stopped policy may hold, the money a matured one owes them.'),
+}
+WAVES = [('Day 1', ['T', 'T1', 'J', 'K', 'I']), ('Day 2', ['F5', 'F4', 'F3']), ('Day 3', ['F2', 'R1', 'R2']),
+         ('Day 4', ['F1']), ('Day 8', ['G', 'A'])]
+REMIND_NOTE = 'Five days on: the same letter once more, to anyone who has not answered or spoken to us, with a line above the greeting saying when the first went.'
+for _seg, _cfg in SEGMENTS.items():
+    assert _cfg.get('family') in FAMILIES, f'{_seg}: no family'
+    assert any(_seg in w for _, w in WAVES), f'{_seg}: in no wave'
+WAVE_OF = {seg: day for day, segs in WAVES for seg in segs}
+FAMILY_SEGS = {f: [seg for seg, cfg in SEGMENTS.items() if cfg.get('family') == f] for f in FAMILIES}
+
+manifest = {'fields': FIELDS, 'taps': {k: v[0] for k, v in TAPS.items()}, 'reply_to': REPLY_TO,
+            'families': {f: {'name': v[0], 'who': v[1], 'letters': FAMILY_SEGS[f]} for f, v in FAMILIES.items()},
+            'waves': [{'day': d, 'letters': s} for d, s in WAVES], 'letters': []}
+for seg, cfg in SEGMENTS.items():
+    path = OUT / f'{seg}.html'
+    path.write_text(shell(seg, cfg), encoding='utf-8')
+    manifest['letters'].append({'segment': seg, 'name': cfg['name'], 'subject': cfg['subject'], 'preheader': cfg['preheader'],
+                                'file': path.name, 'facts': [v.strip('{}') for _, v in cfg.get('facts', [])],
+                                'service': svc_keys(cfg), 'family': cfg['family'], 'wave': WAVE_OF[seg], 'act': bool(cfg.get('act')),
+                                'taps': cfg['taps'], 'tap_labels': {r: tap(cfg, r)[0] for r in cfg['taps']},
+                                'send_note': cfg['send']})
+    print(f'  {seg:<3} {cfg["name"]:<38} → {path.name}')
+(OUT / 'manifest.json').write_text(json.dumps(manifest, indent=1), encoding='utf-8')
+print(f'wrote {len(manifest["letters"])} letters + manifest.json to {OUT}')
+
+
+# ── the plain letters: the same words, for the Microsoft 365 connector ─
+# The connector that sends as support@ accepts p, br, a[href], b/strong, i/em,
+# lists, headings, tables, hr and div, and nothing else: no images, no style=,
+# no span. So the logo and the colours cannot travel that way, and these carry
+# the letter's words, facts, taps and links in those tags only (24 September
+# 2026, when the Entra app for the branded send was not yet set up). Same
+# fact and agent markers as the branded letters, so tools/letters/fill-plain.py
+# fills them exactly as Transition.gs fills the others.
+PLAIN = OUT / 'plain'
+PLAIN.mkdir(exist_ok=True)
+
+
+def plain_questions(cfg):
+    qs = cfg.get('questions', [])
+    if not qs:
+        return ''
+    items = ''.join(f'<li><b>{qtext(cfg, q)}</b><br>' + (f'<i>{Q_NOTE[q]}</i><br>' if q in Q_NOTE else '') +
+                    ' &nbsp; '.join(f'<a href="{answer_href(q, label, t, a)}">{BOX}&nbsp;{label}</a>' for label, t, a in QUESTIONS[q][1]) + '</li>'
+                    for q in qs)
+    return f'<h3>{checks_head(qs)}</h3><ul>{items}</ul>'
+
+
+# Lists, not tables: the connector allows no cellpadding or style, so a table's
+# cells run together ("Held since Paid to") in every mail app. A list reads
+# cleanly on a phone and cuts cleanly, one item per fact.
+def plain_service(cfg):
+    items = ''.join(f'<!--fact:{k}--><li>{SVC_CELLS[k]}: <b>{{{{{k}}}}}</b></li><!--/fact-->' for k in svc_keys(cfg))
+    return (f'<!--facts--><!--svcpanel--><h3>{SVC_HEAD}</h3><ul>{items}</ul><p><i>{SVC_PACE}</i></p><!--/facts-->'
+            f'<!--nosvc--><p>{SVC_NONE}</p><!--/nosvc-->')
+
+
+def plain_notice(cfg):
+    confirm = f'<p>{tel(CONFIRM, True)}</p>'
+    if cfg.get('notice') == 'terminated':
+        return f'<p><b>{NOTICE_T[0]}</b> {cfg.get("notice_tail", NOTICE_T[1])}</p>{confirm}'
+    items = ''.join(f'<li>{t}</li>' for t in what_now_items(cfg, True))
+    return (f'<p><b>Important notice. {NOTICE_R[0]} {NOTICE_R[1]}</b> {cfg.get("policy_line", POLICY_LINE)}</p>'
+            f'{confirm}<h3>{WHAT_NOW_HEAD}</h3><ul>{items}</ul>')
+
+
+def plain_letter(seg, cfg):
+    facts = ''
+    if cfg.get('facts'):
+        items = ''.join(f'<!--fact:{v.strip("{}")}--><li>{label}: <b>{v}</b></li><!--/fact-->' for label, v in cfg['facts'])
+        facts = f'<!--facts--><ul>{items}</ul><!--/facts-->'
+    facts += plain_service(cfg)
+    act = (f'<h3>{ACT_HEAD}</h3><p><i>&ldquo;{cfg["act"]}&rdquo;</i><br>{cfg["plain"]} '
+           f'<a href="{PROTECT}">{ACT_MORE}&nbsp;&rarr;</a></p>') if cfg.get('act') else ''
+    taps = ''.join(f'<li><a href="{tap_href(cfg, r)}"><b>{tap(cfg, r)[0]}&nbsp;&rarr;</b></a><br>{tap(cfg, r)[1]}</li>' for r in cfg['taps'])
+    urgent = '' if 'urgent' in cfg['taps'] else (f'<p>Would you rather have an agent of your own? <a href="{tap_href(cfg, "urgent")}"><b>Tell us your '
+                                                 f'concerns first, and we match you to the one who fits&nbsp;&rarr;</b></a></p>')
+    tapsblock = f'<h3>One tap tells us what you would like. We do the rest.</h3><ul>{taps}</ul>{urgent}'
+    law = '' if cfg.get('act') else (f'<p>A life policy cannot be transferred. Anyone who suggests a change must set out the '
+                                     f'advantages <i>and</i> the disadvantages for you first, so ask for it in writing. '
+                                     f'<a href="{PROTECT}">How the law protects you&nbsp;&rarr;</a></p>')
+    flow = f'<h3>{FLOW_HEAD}</h3><ol>' + ''.join(f'<li><b>{t}</b><br>{x}</li>' for t, x in FLOW) + '</ol>'
+    words = remind_words(cfg)
+    remind = f'<!--fact:sent_on--><p><b>{words[0]}</b> {words[1]}</p><!--/fact-->'
+    return (f'<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
+            f'<h2>{cfg["headline"]}</h2>{remind}'
+            f'<p>Dear {{{{first_name}}}},</p>'
+            f'{plain_notice(cfg)}'
+            f'<p>{cfg["open"]}</p>{facts}{act}'
+            + (plain_questions(cfg) + tapsblock if checks_first(cfg) else tapsblock + plain_questions(cfg))
+            + (f'<p>{MORE_ASK} <a href="{tap_href(cfg, "review")}">{MORE_LINK}&nbsp;&rarr;</a></p>' if cfg.get('more') else '') + flow +
+            f'<p><a href="{FILM}">&#9654;&nbsp; Two minutes on what carries on either way, and what is already inside your policy&nbsp;&rarr;</a></p>'
+            f'{law}'
+            f'<p>Your policy is looked after by the branch. Whatever you tell us is read by a person first, and then we match you '
+            f'to the agent who fits your file.</p>'
+            f'<p><b>Ricky Rampersad</b><br>Branch Manager &middot; Ricky Rampersad Branch<br>Guardian Life of the Caribbean</p><hr>'
+            f'<p><i>Sent because you hold, or held, a policy serviced by this branch. Policy numbers and personal details are '
+            f'deliberately kept out of this e-mail. Prefer post or a phone call? Just reply. It reaches a person the same day.</i></p>'
+            f'{LEGAL_PLAIN}\n')
+
+
+for seg, cfg in SEGMENTS.items():
+    (PLAIN / f'{seg}.html').write_text(plain_letter(seg, cfg), encoding='utf-8')
+print(f'wrote {len(SEGMENTS)} plain letters to {PLAIN}')
+
+# ── /templates: the one page for the team ────────────────────────────
+# One letter in full, every opening, the film above, one verdict form
+# beneath, the full set folded away. Generated with the letters so it can
+# never drift from them; who gets which letter is said in words, never as a
+# count, because the page is public once merged. Run tools/film/chapters.py
+# afterwards to mark the film's chapters.
+TPL = ROOT / 'templates' / 'index.html'
+CORE = 'F1'   # the in-force version most clients on the nine books receive
+WORDS = {4: 'four', 5: 'five', 6: 'six', 7: 'seven', 8: 'eight', 9: 'nine', 10: 'ten', 11: 'eleven', 12: 'twelve', 13: 'thirteen', 14: 'fourteen'}
+NOPEN = WORDS.get(len(SEGMENTS), str(len(SEGMENTS)))
+
+
+def show(s):
+    """A subject or an opening as the team's page prints it: the merge fields in brackets."""
+    return (s.replace('{{agent_or_rep}}', '[Agent’s first name]').replace('{{agent_first_name}}', '[Agent’s first name]')
+             .replace('{{agent_name}}', '[Agent’s name]').replace('{{terminated_on}}', '[date]'))
+WHO = {'A': 'a client with a policy that has matured, or matures within six months',
+       'F1': 'a client in force whose longest-held policy is under two years old',
+       'F2': 'a client in force whose longest-held policy is two to three years old',
+       'F3': 'a client in force whose longest-held policy is three to five years old',
+       'F4': 'a client in force whose longest-held policy is five to ten years old',
+       'F5': 'a client in force whose longest-held policy is ten years old or more',
+       'R1': 'a client in force with a policy that lapsed or was surrendered close to the start of another, the newest such start in the last three years',
+       'R2': 'a client in force with a policy that lapsed or was surrendered close to the start of another, more than three years ago',
+       'G': 'a client whose policy lapsed',
+       'I': 'a client with a premium due more than sixty days, by the Days column',
+       'J': 'a client whose policy is in force but whose contract has not reached them',
+       'K': 'a client whose application is still in progress',
+       'T': 'every client on the book of an agent whose contract Guardian Life terminated, whatever they hold',
+       'T1': 'a client on that book whose application is still in progress, so cover is not yet in place'}
+GLAD = {'A': 'the money is theirs, and it will reach them on time',
+        'F1': 'their new policy is unchanged, and someone is looking after it from the start',
+        'F2': 'nothing has changed, and it is a good moment to check the cover still fits their life',
+        'F3': 'everything the policy has built over those years is still theirs',
+        'F4': 'every year of cover still counts, and nothing is lost',
+        'F5': 'more than a decade of cover is still theirs, and their view is the one that matters most',
+        'R1': 'someone will check, free, that the fresh start cost them nothing it did not have to, and who the policy pays',
+        'R2': 'their years with Guardian Life are recognised, and someone will check what carried over and who the policy pays',
+        'G': 'a policy they wrote off may still hold value',
+        'I': 'nothing is lost, a payment to a representative counts as paid, and nothing can be forfeited without notice',
+        'J': 'the policy is in force, and the branch is bringing the contract',
+        'K': 'the file is being finished for them, not chased',
+        'T': 'their policy is unaffected, the branch team handles everything directly, and a person calls first if they have been contacted',
+        'T1': 'the branch finishes the application for them and brings whatever is still needed, so the cover they applied for can start'}
+def opening_card(seg, cfg):
+    return f"""
+  <div class="op" id="{seg}">
+    <div class="k"><b>{seg}</b><span>{html.escape(cfg['name'])}</span><i>{WAVE_OF[seg]}</i><em>goes to {WHO[seg]}</em></div>
+    <div class="subj">{html.escape(show(cfg['subject']))}</div>
+    <div class="glad">What they are glad to hear: {GLAD[seg]}.</div>
+    <div class="ps"><p>{show(cfg['open'])}</p></div>
+    <div class="facts">{'Reads off the sheet: ' + ', '.join(l.lower() for l, _ in cfg['facts']) + '.' if cfg.get('facts') else 'Reads nothing off the sheet.'}{' The Act, quoted.' if cfg.get('act') else ''}</div>
+    <div class="taps">Taps: {' &middot; '.join(tap(cfg, r)[0] for r in cfg['taps'])}{(' &middot; Asks: ' + ' / '.join(QUESTIONS[q][0] for q in cfg.get('questions', []))) if cfg.get('questions') else ''}</div>
+    <a class="more" href="#full-{seg}">Read letter {seg} in full &rarr;</a>
+  </div>"""
+
+
+# the openings, grouped by family, in the order the families go
+openings = ''.join(f"""
+  <div class="famhead" id="fam-{f}"><b>{FAMILIES[f][0]}</b> &middot; {FAMILIES[f][1]} <span>{', '.join(FAMILY_SEGS[f])}</span></div>""" +
+                   ''.join(opening_card(seg, SEGMENTS[seg]) for seg in FAMILY_SEGS[f]) for f in FAMILIES)
+fams = ''.join(f"""
+    <a class="fam {f}" href="#fam-{f}"><b>{FAMILIES[f][0]}</b><i>{FAMILIES[f][1]}</i><span>{FAMILIES[f][2]}</span>
+      <em>{' &middot; '.join(f'<code>{seg}</code>' for seg in FAMILY_SEGS[f])}</em></a>""" for f in FAMILIES)
+waves = ''.join(f'<li><b>{d}</b> {", ".join(s)}</li>' for d, s in WAVES) + f'<li><b>Day 22 on</b> {REMIND_NOTE}</li>'
+flow_steps = ''.join(f'<li><b>{t}</b>{x}</li>' for t, x in FLOW)
+full = ''.join(f"""
+  <details class="tpl" id="full-{seg}">
+    <summary><b>Letter {seg}</b> &middot; {html.escape(cfg['name'])} &mdash; <i>{html.escape(show(cfg['subject']))}</i></summary>
+    <div class="mail"><div class="in">{letter_table(seg, cfg, True)}</div></div>
+  </details>""" for seg, cfg in SEGMENTS.items())
+opts = ''.join(f'<option value="{seg}">Letter {seg} &middot; {html.escape(cfg["name"])}</option>' for seg, cfg in SEGMENTS.items())
+fieldlist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in ('first_name', 'first_year', 'issue_date', 'paid_to', 'days', 'projected_lapse', 'agent_first_name'))
+svclist = ', '.join(f'<code>{{{{{k}}}}}</code>' for k in SVC_CELLS)
+page = f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>What goes out | Ricky Rampersad Branch</title>
+<meta name="description" content="The film, the letter, the openings, and one question — for the branch, before any client sees it.">
+<meta name="robots" content="noindex">
+<meta property="og:title" content="What goes out — read it before any client does">
+<meta property="og:description" content="One letter, {NOPEN} openings, one film. Say send, change, or hold.">
+<meta property="og:image" content="https://rickyrampersadbranch.com/orphan-video/poster.jpg">
+<link rel="icon" href="../logo-mark.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{{--navy:#07131f;--ink:#12202e;--body:#33465a;--dim:#64798e;--gold:#efc24b;--gold2:#c9942c;--teal:#00CFEA;--teal2:#0aa8bf;--tdark:#07606f;
+    --paper:#eef4f7;--card:#fff;--line:#d7e3ea;--notebg:#eafaFD;--okbg:#eef7f2;--ok:#1f6f4a;--warnbg:#fff6df;--f:'Plus Jakarta Sans',Inter,system-ui,sans-serif}}
+  *{{box-sizing:border-box}}
+  html{{scroll-behavior:smooth}}
+  body{{margin:0;background:var(--paper);color:var(--body);font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}}
+  .wrap{{width:min(900px,100% - 34px);margin:0 auto}}
+  header{{background:var(--navy);color:#eaf4ff;border-bottom:3px solid transparent;border-image:linear-gradient(90deg,var(--gold),var(--teal)) 1}}
+  header .wrap{{display:flex;align-items:center;gap:12px;padding:16px 0}}
+  .mark{{width:40px;height:40px;border-radius:11px;overflow:hidden;background:#07131f;display:grid;place-items:center;flex:none}}
+  .mark img{{width:100%;height:100%;display:block}}
+  .brand{{font-family:var(--f);font-weight:800;font-size:15px;letter-spacing:-.2px;line-height:1.25}}
+  .brand i{{display:block;font-style:normal;font-weight:500;font-size:11.5px;color:#9dbdd8;letter-spacing:.03em}}
+  .hero{{background:radial-gradient(900px 520px at 88% -24%,rgba(0,207,234,.22),transparent 60%),
+    radial-gradient(1100px 600px at 8% -18%,rgba(239,194,75,.15),transparent 62%),
+    linear-gradient(168deg,#0a2330 0%,var(--navy) 58%,#040d16 100%);color:#eaf4ff;padding:32px 0 40px}}
+  .eyebrow{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}}
+  h1{{font-family:var(--f);font-weight:800;font-size:clamp(25px,4.6vw,38px);line-height:1.16;letter-spacing:-.6px;margin:10px 0 10px;color:#fff}}
+  h1 em{{font-style:normal;color:var(--gold)}}
+  .lead{{color:#9dbdd8;max-width:60ch;margin:0;font-size:16.5px}}
+  .steps{{display:grid;gap:8px;margin:18px 0 0;max-width:640px}}
+  @media(min-width:640px){{.steps{{grid-template-columns:repeat(3,1fr)}}}}
+  .steps a{{display:block;background:rgba(255,255,255,.06);border:1px solid rgba(0,207,234,.3);border-radius:11px;padding:11px 13px;color:#eaf4ff;text-decoration:none;font-size:14px}}
+  .steps a b{{display:block;font-family:var(--f);color:var(--teal);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;margin-bottom:3px}}
+  h2{{font-family:var(--f);font-weight:800;font-size:clamp(20px,3vw,26px);color:var(--ink);letter-spacing:-.4px;margin:0 0 6px}}
+  .sub{{color:var(--dim);margin:0 0 16px;font-size:15.5px}}
+  section.band{{padding:34px 0}}
+  section.band.alt{{background:var(--card);border-block:1px solid var(--line)}}
+  .vwrap{{--dp-accent:var(--gold);position:relative;margin:0;border-radius:15px;overflow:hidden;background:#000;box-shadow:0 26px 70px rgba(4,13,22,.35);aspect-ratio:16/9}}
+  .vwrap video{{width:100%;height:100%;display:block;object-fit:contain;background:#000}}
+  .vcover{{position:absolute;inset:0;background-size:cover;background-position:center;display:grid;place-items:center;cursor:pointer;z-index:4}}
+  .vcover::after{{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(4,13,22,.34),rgba(4,13,22,.62))}}
+  .vcover .pl{{position:relative;z-index:2;display:flex;align-items:center;gap:13px;background:linear-gradient(135deg,var(--teal),var(--teal2));
+    color:#fff;border-radius:13px;padding:15px 25px;font-family:var(--f);font-weight:800;font-size:18px;box-shadow:0 20px 48px rgba(0,207,234,.34)}}
+  .vcover .pl svg{{width:19px;height:19px}}
+  .vnote{{color:var(--dim);font-size:13.5px;margin:10px 0 0;text-align:center}}
+  .mail{{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:22px 12px}}
+  .mail .in{{max-width:600px;margin:0 auto}}
+  .fields{{background:#fff7e3;border:1px solid #efd9a0;border-left:4px solid var(--gold2);border-radius:10px;padding:11px 15px;margin:0 0 14px;font-size:14px}}
+  .fields b{{color:#8a6420}}
+  .ops{{display:grid;gap:12px}}
+  @media(min-width:720px){{.ops{{grid-template-columns:1fr 1fr}}}}
+  .op{{background:var(--card);border:1px solid var(--line);border-top:3px solid var(--teal);border-radius:13px;padding:15px 17px;scroll-margin-top:16px}}
+  .op .k{{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}}
+  .op .k b{{display:inline-grid;place-items:center;min-width:28px;height:28px;padding:0 7px;border-radius:14px;background:linear-gradient(180deg,var(--gold),var(--gold2));color:#07131f;font-family:var(--f);font-weight:900;font-size:13px}}
+  .op .k span{{font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark)}}
+  .op .k em{{font-style:normal;color:var(--dim);font-size:13px;flex-basis:100%}}
+  .op .k i{{font-style:normal;margin-left:auto;font-family:var(--f);font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#8a6420;background:#fff7e3;border:1px solid #efd9a0;border-radius:999px;padding:3px 9px}}
+  .famhead{{grid-column:1/-1;margin:10px 0 -2px;padding:0 0 6px;border-bottom:2px solid var(--gold);font-family:var(--f);font-size:14px;color:var(--ink)}}
+  .famhead:first-child{{margin-top:0}} .famhead b{{font-size:17px;letter-spacing:-.2px}} .famhead span{{float:right;color:var(--dim);font-weight:600;font-size:13px}}
+  .fams{{display:grid;gap:10px;margin:16px 0 22px}} @media(min-width:720px){{.fams{{grid-template-columns:repeat(4,1fr)}}}}
+  .fam{{display:block;background:var(--card);border:1px solid var(--line);border-top:4px solid var(--gold);border-radius:13px;padding:14px 15px;text-decoration:none;color:var(--body);font-size:13.5px}}
+  .fam.notice{{border-top-color:#b4232f}} .fam.action{{border-top-color:var(--gold2)}} .fam.keep{{border-top-color:var(--teal)}} .fam.return{{border-top-color:#1f6f4a}}
+  .fam b{{display:block;font-family:var(--f);font-weight:800;font-size:18px;color:var(--ink);letter-spacing:-.3px}}
+  .fam i{{display:block;font-style:normal;font-family:var(--f);font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--tdark);margin:2px 0 8px}}
+  .fam span{{display:block;color:var(--dim);font-size:13px;line-height:1.5}} .fam em{{display:block;font-style:normal;margin-top:9px}}
+  .fam code{{background:var(--paper);border:1px solid var(--line);border-radius:6px;padding:1px 6px;font-size:12.5px;color:var(--ink)}}
+  .path{{display:grid;gap:10px}} @media(min-width:720px){{.path{{grid-template-columns:1fr 1fr}}}}
+  .path ol,.path ul{{margin:0;padding-left:0;list-style:none}} .path li{{background:var(--card);border:1px solid var(--line);border-radius:11px;padding:11px 14px;margin:0 0 8px;font-size:14px;color:var(--body)}}
+  .path ol{{counter-reset:s}} .path ol li{{counter-increment:s;padding-left:44px;position:relative}}
+  .path ol li::before{{content:counter(s);position:absolute;left:12px;top:11px;width:22px;height:22px;border-radius:11px;background:var(--gold);color:var(--navy);font-family:var(--f);font-weight:800;font-size:12px;text-align:center;line-height:22px}}
+  .path li b{{display:block;font-family:var(--f);color:var(--ink);font-size:14.5px}} .path h3{{font-family:var(--f);font-size:14px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:0 0 8px}}
+  .op .subj{{font-family:var(--f);font-weight:800;font-size:15.5px;color:var(--ink);margin:8px 0 4px;letter-spacing:-.2px}}
+  .op .glad{{font-size:13.5px;color:var(--tdark);font-weight:600;margin:0 0 8px}}
+  .op .ps p{{margin:0 0 8px;font-size:14px;color:var(--body);padding-left:12px;border-left:3px solid var(--line)}}
+  .op .facts,.op .taps{{font-size:12.5px;color:var(--dim);margin-top:5px}}
+  .op .more{{display:inline-block;margin-top:9px;font-family:var(--f);font-weight:800;font-size:13px;color:var(--tdark);text-decoration:none}}
+  details.tpl{{scroll-margin-top:14px}}
+  form{{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px 22px}}
+  label{{display:block;font-family:var(--f);font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tdark);margin:12px 0 5px}}
+  input[type=text],select,textarea{{width:100%;font:15px/1.5 Inter,system-ui,sans-serif;color:var(--ink);background:#fff;border:1px solid #bfd0da;border-radius:9px;padding:10px 12px}}
+  textarea{{min-height:80px;resize:vertical}}
+  input:focus,select:focus,textarea:focus{{outline:2px solid var(--teal);border-color:var(--teal)}}
+  .row2{{display:grid;gap:0 14px}} @media(min-width:640px){{.row2{{grid-template-columns:1fr 1fr}}}}
+  .verdicts{{display:grid;gap:8px}} @media(min-width:640px){{.verdicts{{grid-template-columns:repeat(3,1fr)}}}}
+  .verdicts label{{margin:0;display:flex;align-items:center;gap:9px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 13px;cursor:pointer;text-transform:none;letter-spacing:0;font-size:14.5px;color:var(--ink)}}
+  .verdicts label:has(input:checked){{border-color:var(--teal);background:var(--notebg)}}
+  .verdicts input{{width:auto;margin:0}}
+  .check{{display:flex;align-items:center;gap:9px;margin-top:14px;font-size:15px;color:var(--ink);text-transform:none;letter-spacing:0;font-family:Inter,system-ui,sans-serif;font-weight:500}}
+  .check input{{width:18px;height:18px;margin:0}}
+  button{{margin-top:16px;background:linear-gradient(135deg,var(--teal),var(--teal2));color:#fff;border:0;border-radius:11px;padding:13px 22px;font-family:var(--f);font-weight:800;font-size:15.5px;cursor:pointer;box-shadow:0 14px 34px rgba(0,207,234,.26)}}
+  .box{{border-radius:10px;padding:13px 16px;margin:14px 0 0;border:1px solid}}
+  .box.ok{{background:var(--okbg);border-color:#c8e3d6;border-left:4px solid var(--ok)}} .box.ok b{{color:var(--ok)}}
+  .box.warn{{background:var(--warnbg);border-color:#efd9a0;border-left:4px solid var(--gold2);margin:0 0 14px}} .box.warn b{{color:#8a6420}}
+  #logged,#unwired{{display:none}}
+  details.tpl{{background:var(--card);border:1px solid var(--line);border-radius:12px;margin:0 0 10px;overflow:hidden}}
+  details.tpl summary{{padding:13px 17px;cursor:pointer;font-size:15px;color:var(--ink)}} details.tpl summary i{{color:var(--dim);font-style:normal}}
+  details.tpl .mail{{border:0;border-top:1px solid var(--line);border-radius:0}}
+  .links{{display:grid;gap:10px;margin-top:6px}} @media(min-width:640px){{.links{{grid-template-columns:1fr 1fr}}}}
+  .links a{{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;text-decoration:none;color:var(--body);font-size:14px}}
+  .links a b{{display:block;font-family:var(--f);color:var(--ink);font-size:15px;margin-bottom:3px}}
+  footer{{background:var(--navy);color:#7e97ae;padding:22px 0;font-size:13px}} footer b{{color:#eaf4ff}}
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <div class="mark"><img src="../logo-mark.png" alt=""></div>
+  <div class="brand">Ricky Rampersad Branch<i>Guardian Life of the Caribbean</i></div>
+</div></header>
+
+<div class="hero"><div class="wrap">
+  <div class="eyebrow">What goes out &middot; read it before any client does</div>
+  <h1>One letter. {NOPEN.capitalize()} openings. <em>One film.</em></h1>
+  <p class="lead">Every client of an agent whose resignation Guardian Life accepted gets the letter below. Only the opening
+    changes, with what they hold, and the facts in it are read off the sheet for that client. Every letter
+    ends in taps they can answer with one thumb. Not one word in any of it is about who left, with one exception:
+    letter T carries Guardian Life's own notice that an agent's contract was terminated, in the notice's words and no others.</p>
+  <div class="steps">
+    <a href="#flow"><b>1 &middot; one minute</b>Four families, one flow</a>
+    <a href="#film"><b>2 &middot; two minutes</b>The film</a>
+    <a href="#letter"><b>3 &middot; three minutes</b>The letter, and the {NOPEN} openings</a>
+    <a href="#verdict"><b>4 &middot; one minute</b>Send, change, or hold</a>
+  </div>
+</div></div>
+
+<section class="band alt" id="flow"><div class="wrap">
+  <h2>Four families, one flow</h2>
+  <p class="sub">Every client gets one letter, picked by their situation. The family is the order the letters go
+    in, and every answer, from any letter, follows the same path.</p>
+  <div class="fams">{fams}
+  </div>
+  <div class="path">
+    <div><h3>What a client sees after one tap</h3><ol>{flow_steps}</ol></div>
+    <div><h3>The waves, in batches through the day</h3><ul>{waves}</ul></div>
+  </div>
+</div></section>
+
+<section class="band" id="film"><div class="wrap">
+  <h2>The film</h2>
+  <p class="sub">Under two minutes. It settles the client first, then what they already own, then the law as
+    their right, then the agent. Every figure on screen is illustrative.</p>
+  <div class="vwrap">
+    <video id="filmv" playsinline preload="metadata" poster="../orphan-video/poster.jpg">
+      <source src="../orphan-video/rrb-orphan-video.mp4" type="video/mp4">
+    </video>
+    <div class="vcover" style="background-image:url(../orphan-video/poster.jpg)">
+      <div class="pl"><svg viewBox="0 0 24 24" fill="#fff" aria-hidden="true"><path d="M7 4l13 8-13 8z"/></svg>Watch the film</div>
+    </div>
+  </div>
+  <p class="vnote">Sound on. Tap the picture to pause. The client sees it beneath the two doors at
+    <a href="../your-policy/">rickyrampersadbranch.com/your-policy</a>.</p>
+</div></section>
+
+<section class="band alt" id="letter"><div class="wrap">
+  <h2>The letter, in full</h2>
+  <p class="sub">This is letter {CORE}, the one most clients receive. Every letter has the same shape: a
+    headline, Guardian Life's notice of the agent's resignation, one paragraph, the facts off the sheet, what
+    the branch team has done for them, the taps, the film in one line, and the sign-off. Only the opening, the
+    facts and the taps differ.</p>
+  <div class="fields"><b>The curly fields</b> &mdash; {fieldlist} &mdash; are filled per client at send time
+    from the Branch Portfolio sheet. Days and dates only, never a figure. A blank field drops its fact from the
+    strip. <b>The gold panel</b> &mdash; {svclist} &mdash; is the client's own record with the branch team, from
+    the Log Book and Salesforce: a blank or zero drops its cell, and a client with nothing on record reads one
+    line about the team instead. The logo loads from the site once the page is live.</div>
+  <div class="mail"><div class="in">{letter_table(CORE, SEGMENTS[CORE], True)}</div></div>
+</div></section>
+
+<section class="band" id="openings"><div class="wrap">
+  <h2>The {NOPEN} openings</h2>
+  <p class="sub">What changes, who gets which, what each reads off the sheet, and the taps it offers. Each leads
+    with the thing the client is glad to hear.</p>
+  <div class="ops">{openings}
+  </div>
+</div></section>
+
+<section class="band alt" id="verdict"><div class="wrap">
+  <h2>Your verdict</h2>
+  <p class="sub">One question. It lands on the branch sheet under your name, and every &ldquo;change&rdquo; and
+    &ldquo;hold&rdquo; gets an answer before the send.</p>
+  <div class="box warn" id="unwired"><b>Not recording yet.</b> The sheet is not wired to this page, so send your
+    verdict to the branch manager on WhatsApp instead until this notice disappears.</div>
+  <form id="fb" autocomplete="on">
+    <div class="row2">
+      <div><label for="n">Your name</label><input type="text" id="n" name="n" maxlength="60" required placeholder="As it appears on your licence"></div>
+      <div><label for="town">Your town, or the towns you cover</label><input type="text" id="town" name="town" maxlength="40" placeholder="Sangre Grande, Chaguanas, Penal &hellip;"></div>
+    </div>
+    <label>Verdict on the set</label>
+    <div class="verdicts">
+      <label><input type="radio" name="v" value="send" required> Send it as it is</label>
+      <label><input type="radio" name="v" value="change"> Send it, with a change</label>
+      <label><input type="radio" name="v" value="hold"> Hold it</label>
+    </div>
+    <label for="i">If one piece in particular</label>
+    <select id="i" name="i"><option value="whole">The whole set</option><option value="film">The film</option>{opts}</select>
+    <label for="c">What you would change, or why it should wait</label>
+    <textarea id="c" name="c" maxlength="600" placeholder="Quote the line if you can."></textarea>
+    <label class="check"><input type="checkbox" id="a" name="a" value="1"> I am taking assignments &mdash; match clients in my town to me</label>
+    <button type="submit">Log my verdict</button>
+    <div class="box ok" id="logged"><b>Logged, thank you.</b> <span id="loggedtxt"></span></div>
+  </form>
+</div></section>
+
+<section class="band" id="more"><div class="wrap">
+  <h2>If you want the rest</h2>
+  <p class="sub">Nothing here is required before you answer. It is where the detail lives.</p>
+  <div class="links">
+    <a href="../orphan-transition/team-review.html"><b>The team page</b>What the branch has done this year, four things to check, and how we come across on the first call.</a>
+    <a href="../orphan-transition/if-they-say.html"><b>If a client says&hellip;</b>What a client may repeat, what is simply true, and the one warm sentence that answers it.</a>
+    <a href="../your-policy/protected"><b>How the law protects you</b>The Insurance Act's protections, quoted, as the client reads them.</a>
+    <a href="../orphan-transition/"><b>The manual</b>The segments, the feedback loop, the call list and the run sheet.</a>
+  </div>
+  <h2 style="margin-top:30px">All {NOPEN} letters, in full</h2>
+  <p class="sub">Folded away. Open any one to read it as the client will.</p>
+  {full}
+</div></section>
+
+<footer><div class="wrap">
+  <b>Ricky Rampersad Branch</b> &middot; Guardian Life of the Caribbean &middot; internal, not for clients.
+</div></footer>
+
+<script src="../orphan-video/player.js"></script>
+<script>
+/* "Read letter X in full" unfolds that letter before scrolling to it */
+function unfold() {{
+  var h = location.hash || '';
+  if (h.indexOf('#full-') !== 0) return;
+  var d = document.getElementById(h.slice(1));
+  if (d && d.tagName === 'DETAILS') {{ d.open = true; d.scrollIntoView({{ behavior: 'smooth', block: 'start' }}); }}
+}}
+window.addEventListener('hashchange', unfold); unfold();
+/* Verdicts go to the Service Questionnaire backend, action=feedback, and land
+   on the Team Feedback tab. Until the placeholder is replaced with the
+   deployed /exec URL the page says so, instead of losing them quietly. */
+var SVC = 'https://script.google.com/macros/s/AKfycbxdW5mVcK6DZbq4qnCj1l1cJvjsTYWZ9UMH91H6yC_NrElNYpGd1vRyJH1W_1mcu61woQ/exec';
+/* wired = the deployed backend knows the campaign actions. Only the
+   version carrying resp/feedback answers the ping with campaign:2, so
+   the notice stays up until a New version is published, then clears. */
+var wired = false;
+var unwiredBox = document.getElementById('unwired');
+unwiredBox.style.display = 'block';
+fetch(SVC + '?action=ping&z=' + Date.now()).then(function (r) {{ return r.json(); }})
+  .then(function (j) {{ if (j && j.campaign) {{ wired = true; unwiredBox.style.display = 'none'; }} }})
+  .catch(function () {{}});
+var form = document.getElementById('fb');
+form.addEventListener('submit', function (e) {{
+  e.preventDefault();
+  var f = new FormData(form);
+  var v = f.get('v'), i = f.get('i') || 'whole', n = (f.get('n') || '').trim();
+  if (!n || !v) return;
+  var url = SVC + '?action=feedback&n=' + encodeURIComponent(n) +
+    '&town=' + encodeURIComponent((f.get('town') || '').trim()) +
+    '&i=' + encodeURIComponent(i) + '&v=' + encodeURIComponent(v) +
+    '&c=' + encodeURIComponent((f.get('c') || '').trim()) +
+    '&a=' + (f.get('a') ? '1' : '0') + '&z=' + Date.now();
+  if (wired) {{ try {{ (new Image()).src = url; }} catch (err) {{}} }}
+  document.getElementById('loggedtxt').textContent = wired
+    ? 'Change the piece and log again if you have more to say.'
+    : 'Recorded on this screen only — send the same words to the branch manager on WhatsApp.';
+  var box = document.getElementById('logged'); box.style.display = 'block';
+  box.scrollIntoView({{ behavior: 'smooth', block: 'center' }});
+  document.getElementById('c').value = '';
+}});
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){{var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}}catch(e){{}}}})();
+</script>
+</body>
+</html>
+"""
+TPL.parent.mkdir(parents=True, exist_ok=True)
+TPL.write_text(page, encoding='utf-8')
+print(f'wrote {TPL} ({len(page)} bytes) — the film, the letter, the {NOPEN} openings, one verdict')
+
+
+# ── the letter cards on the manual and the team page ─────────────────
+# Both pages list the letters by subject. Hand-typed, they drift the first
+# time a subject changes; so the generator rewrites the block between the
+# markers, and the merge-field table on the manual with it.
+def splice(rel, tag, body):
+    p = ROOT / rel
+    src = p.read_text(encoding='utf-8')
+    a, b = f'<!-- {tag}:start -->', f'<!-- {tag}:end -->'
+    i, j = src.find(a), src.find(b)
+    if i < 0 or j < 0 or j < i:
+        print(f'  ! {rel}: no {tag} markers, left alone'); return
+    out = src[:i + len(a)] + '\n' + body + '  ' + src[j:]
+    if out != src:
+        p.write_text(out, encoding='utf-8'); print(f'  {rel}: {tag} block rewritten')
+
+
+def card(seg, cfg, note, blank):
+    tgt = ' target="_blank"' if blank else ''
+    return (f'    <a class="letter" href="letters/{seg}.html"{tgt}><div class="s">{seg} &middot; {html.escape(cfg["name"])} &middot; {WAVE_OF[seg].lower()}</div>'
+            f'<b>{html.escape(show(cfg["subject"]))}</b><span>{html.escape(note)}</span></a>\n')
+
+
+def cards(note):
+    """The letter cards, grouped by family; the family line spans the grid on both pages."""
+    return ''.join(f'    <div style="grid-column:1/-1;margin:8px 0 -2px;padding-bottom:5px;border-bottom:2px solid #efc24b;font-family:\'Plus Jakarta Sans\',Inter,system-ui,sans-serif;color:#12202e">'
+                   f'<b style="font-size:16px">{FAMILIES[f][0]}</b> &middot; {FAMILIES[f][1]} <span style="float:right;color:#64798e;font-size:13px">{", ".join(FAMILY_SEGS[f])}</span></div>\n'
+                   + ''.join(card(seg, SEGMENTS[seg], note(seg, SEGMENTS[seg]), note is not manual_note) for seg in FAMILY_SEGS[f]) for f in FAMILIES)
+
+
+def manual_note(seg, cfg):
+    return cfg['send']
+
+
+splice('orphan-transition/index.html', 'letters', cards(manual_note))
+splice('orphan-transition/index.html', 'fields',
+       ''.join(f'    <tr><td><code>{{{{{k}}}}}</code></td><td>{html.escape(v)}</td></tr>\n' for k, v in FIELDS.items()))
+splice('orphan-transition/team-review.html', 'letters', cards(lambda seg, cfg: f'What they are glad to hear: {GLAD[seg]}.'))
+
+
+# ── the page a tap opens: /your-policy/ ──────────────────────────────
+# Records the answer at once and offers the letter's other checks, one tap
+# each. Its questions, and what it says after each answer, are written here
+# from the same QUESTIONS the letters use, so the page and the e-mails cannot
+# disagree about what was asked.
+def landing_checks():
+    data = {'questions': {**{k: [q, [list(a) for a in ans]] for k, (q, ans) in QUESTIONS.items()},
+                          'reach': [REACH[0], [list(a) for a in REACH[1]]], 'when': [WHEN[0], [list(a) for a in WHEN[1]]]},
+            'segments': {**{seg: cfg.get('questions', []) for seg, cfg in SEGMENTS.items()}, '_': ['checkfirst']},
+            'said': SAID_Q, 'tap_said': TAP_SAID, 'care': CARE,
+            # the receipt is automatic only on the Apps Script route; set False if the letters go by hand
+            'receipts': True, 'receipt_line': 'A copy of what you have told us comes to your inbox the first time you answer. After that, you hear from a person.'}
+    missing = [a[2] for _, ans in list(QUESTIONS.values()) + [REACH, WHEN] for a in ans if a[2] not in SAID_Q]
+    assert not missing, f'no thank-you line for {missing}'
+    return json.dumps(data, ensure_ascii=False)
+
+
+LANDING = ROOT / 'your-policy' / 'index.html'
+_src = LANDING.read_text(encoding='utf-8')
+_a, _b = '/* checks:start', '/* checks:end */'
+_i, _j = _src.find(_a), _src.find(_b)
+if _i < 0 or _j < _i:
+    print('  ! your-policy/index.html: no checks markers, left alone')
+else:
+    _line_end = _src.index('\n', _i)
+    _out = _src[:_line_end + 1] + f'var CHECKS = {landing_checks()};\n' + _src[_j:]
+    if _out != _src:
+        LANDING.write_text(_out, encoding='utf-8'); print('  your-policy/index.html: checks rewritten')
+
+
+# ── the receipt: what a response earns in the inbox ───────────────────
+# Sent by Transition.gs (transitionReceipts, every five minutes) a few
+# minutes after a client's last tap, from support@ with the branch copied:
+# one e-mail that recaps everything they told us — every quick check, the
+# tap they chose and, if they filled the review, their concerns in their
+# own words — then what happens next and how we follow through. Asked for
+# on 24 September 2026 ("recap the concerns and a bit more … Thank you,
+# client name, we have received your response … a wow experience, and
+# follow through"). The words are here; receipt.json carries them to the
+# script, which holds none of its own. Fields: {{first_name}}, {{time}}
+# (the last tap, sheet time), {{care_*}}; the built blocks arrive as
+# [[recap]], [[concerns]], [[next]] and [[follow]], unescaped, and the
+# <!--recap--> and <!--concerns--> blocks are cut when empty. The plain
+# one is for a receipt sent by hand through the connector.
+RECEIPT_SUBJECT = 'Thank you, {{first_name}}. We have received your response.'
+RECEIPT_OPEN = 'We have received your response. It reached us at {{time}}, and it is with {{care_us}} now: a person, not a queue.'
+RECEIPT_REPLY = 'Reply to this e-mail at any time. It reaches {{care_us}} directly.'
+RECEIPT_HEADS = {'recap': 'What you told us', 'concerns': 'Your concerns, in your words',
+                 'next': 'What happens next', 'more': 'Anything else? One tap each, by reply', 'follow': 'How we follow through'}
+FOLLOW = [
+ 'A person reads this, not a system. Your file is read before anyone is matched to you.',
+ 'If you asked for a call, it comes ' + CALL_WHEN + ', at the time you chose.',
+ 'Once your file has been read, we introduce the agent who fits it, in writing, with a name and a number.',
+ 'This is the only automatic e-mail you will get about your answers. From here on, you hear from a person: a call, or a note from the branch.',
+]
+# Three automatic e-mails, then a person (6 October 2026). The letter, one reminder if it goes unanswered, and
+# one receipt when the client answers: nothing else is sent by a machine. The second receipt and the automatic
+# "still on it" note are gone (Transition.gs: RECEIPTS_PER_CLIENT, STILL_NOTE_AUTO); the note is now a press
+# on the assignment board, by a person who has read the file. The last line of FOLLOW says so to the client.
+# the "still on it" note, four working days after an answer nobody has acted on (tChase_ in Transition.gs).
+# 30 September 2026: the first ones were due the next morning to clients promised a call "today or tomorrow",
+# so it owns the wait instead of repeating the promise, and, for anyone waiting on a call or an agent, asks
+# for their concerns in their own words before an agent is named ("to ensure the correct agent is assigned").
+# The link opens /your-policy/words.html: one box, under the branch's own name, asking the note's own question,
+# and the words land on the client's record (2 October 2026). Until then it opened the six-step review form,
+# which starts "Do you have your policy number?" under the donthaveanagent.com name, and the branch read that
+# as the link not working; review.html now sends those older links to the words page too. The full review is
+# still a letter's own line. 'line' is what a Transition.gs older than the note reads.
+REVIEW_OWN_WORDS = ('<a href="https://rickyrampersadbranch.com/your-policy/words.html?t={{token}}&amp;s={{segment}}" '
+                    'style="color:#0f5c8c;font-weight:700">Tell us in your own words</a>')
+STILL_OPEN = 'Thank you for answering our letter. It has taken us longer than it should, and we are sorry for the wait. '
+STILL_MATCH = (STILL_OPEN + '{{care_Us}} is reading every answer and matching each client with the agent who fits what they told us, '
+               'and yours is in hand. Before we name your agent, is there anything you would like us to know: your family, your plans, '
+               f'anything that went wrong? {REVIEW_OWN_WORDS}. It takes a few minutes, and a person reads every word. '
+               'Or simply reply to this e-mail.')
+STILL = {'subject': 'Still on it, {{first_name}}.',
+         'line': STILL_MATCH,
+         'follow': {                        # by what the client is waiting on: the tap their most pressing answer rode
+             'default': STILL_MATCH,
+             'paid': STILL_OPEN + 'We are checking your payment against Guardian Life’s record, and we will come back to you with what '
+                     'we find. If you have a receipt, reply to this e-mail with a photo of it and we will add it to your file.',
+             'pay': STILL_OPEN + 'We will call you to set up paying Guardian Life directly, with Guardian Life’s own receipt every time. '
+                    'If there is a better time to reach you, reply and tell us.',
+             'deliver': STILL_OPEN + 'We are arranging to bring your policy contract to you and go through it with you. If it is easier '
+                        'to collect it at the branch, reply and tell us.',
+             'finish': STILL_OPEN + 'We are gathering what your application still needs, so you do not have to find anything. If '
+                       'something has changed since you applied, reply and tell us.',
+             'stop': STILL_OPEN + 'We are closing your application properly, and we will confirm that nothing is owed.',
+             'claim': STILL_OPEN + 'We are preparing the maturity form to walk through with you. Reply with the best time to reach you.',
+             'question': STILL_OPEN + f'We are updating the details you gave us, and a person will confirm them with you. If anything '
+                         f'else has changed, {REVIEW_OWN_WORDS}, or simply reply to this e-mail.',
+         }}
+# the recap: a quick-check answer is echoed with its question; a bare tap with the words the client tapped
+RECAP = {'tapped': 'You tapped',
+         'q': {**{ans: [q, label] for q, answers in list(QUESTIONS.values()) + [REACH, WHEN] for label, _, ans in answers},
+               'wrote': ['You wrote to us', 'Your e-mail, quoted below']},   # a reply in their own words, filed by transitionInbox
+         'taps': {**{r: v[0] for r, v in TAPS.items()}, 'review': 'The full review, in your own words',
+                  'selfserve': 'The full review, in your own words', 'assign': 'Match me to an agent'},
+         'tap_text': {seg: {r: v[0] for r, v in cfg.get('tap_text', {}).items()} for seg, cfg in SEGMENTS.items() if cfg.get('tap_text')}}
+# the review's own questions the receipt echoes, as the sheet heads its columns (the label, cut at 120)
+REVIEW_RECAP = [
+ 'What happened to the agent who sold you this?',
+ 'Has anyone been in touch with you about moving or replacing this policy?',
+ 'Who was it?',
+ 'Would you like us to go through it with you before you decide anything?',
+ 'When did somebody last review this policy with you?',
+ 'How well do you feel you understand what you own?',
+ 'Do you know what your policy would pay, and to whom?',
+ 'When you have asked about this policy, were you happy with the answer you got?',
+ 'What were you not given a straight answer on?',
+ 'Are you still paying premiums on it?',
+ 'What happened with the premiums?',
+ 'Is there anything outstanding that was never sorted out?',
+ 'Tell us what happened',
+ 'How urgent is it?',
+ "Anything you'd like to say about how you've been treated?",
+ 'What would you like help with?',
+ 'Is there something specific you want to ask?',
+ 'How often would you like your agent to check in with you?',
+ 'How would you like to be looked after?',
+ 'What matters most to you in an agent?',
+ 'Anything else your ideal agent should know about you?',
+]
+RECEIPT_TPL = {
+ 'items': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:4px">{items}</table>',
+ 'item': f'<tr><td style="padding:8px 0 7px;border-top:1px solid #e0eaef;font:400 13px/1.45 {BODY};color:{DIM}">{{q}}'
+         f'<div style="font:700 15px/1.4 {HEAD};color:{INK};margin-top:2px">{{a}}</div></td></tr>',
+ 'quote': f'<p style="margin:0 0 11px;font:400 14.5px/1.55 {BODY};color:{INK}"><span style="display:block;font:400 12.5px/1.4 {BODY};color:{DIM};margin-bottom:2px">{{q}}</span>&ldquo;{{a}}&rdquo;</p>',
+ 'bullets': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'bullet': f'<tr><td style="padding:3px 0;font:400 14.5px/1.55 {BODY};color:{INK}"><span style="color:{GOLD2};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
+ 'bullets_dark': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'bullet_dark': f'<tr><td style="padding:4px 0;font:400 14px/1.55 {BODY};color:#dbe7f1"><span style="color:{GOLD};font-weight:800">&#9656;</span>&nbsp; {{a}}</td></tr>',
+ # the letter's other checks, offered again in the receipt as replies, like the letter's own
+ 'more': '<table role="presentation" cellpadding="0" cellspacing="0" width="100%">{items}</table>',
+ 'more_q': f'<tr><td style="padding:6px 0 4px;font:600 13.5px/1.45 {BODY};color:{INK}">{{q}}<div style="margin-top:6px">{{links}}</div></td></tr>',
+ 'more_a': (f'<a href="{{href}}" style="display:inline-block;margin:0 6px 6px 0;padding:7px 12px;border:1.5px solid #b9d6df;border-radius:999px;'
+            f'background:#f7fbfc;color:{TDARK};font:700 13px/1.2 {BODY};text-decoration:none;white-space:nowrap">{BOX}&nbsp;{{a}}</a>'),
+}
+RECEIPT_TPL_PLAIN = {'items': '<ul>{items}</ul>', 'item': '<li>{q}<br><b>{a}</b></li>', 'quote': '<p>{q}<br><i>&ldquo;{a}&rdquo;</i></p>',
+                     'bullets': '<ul>{items}</ul>', 'bullet': '<li>{a}</li>', 'bullets_dark': '<ul>{items}</ul>', 'bullet_dark': '<li>{a}</li>',
+                     'more': '<ul>{items}</ul>', 'more_q': '<li><b>{q}</b><br>{links}</li>', 'more_a': f'<a href="{{href}}">{BOX}&nbsp;{{a}}</a> &nbsp; '}
+
+
+def receipt_card(bg, border, eyebrow_colour, head, body, dark=False):
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 14px"><tr>
+    <td bgcolor="{bg}" style="background:{bg};border-left:4px solid {border};border-radius:0 12px 12px 0;padding:13px 16px 11px">
+    <b style="display:block;font:800 9.5px/1 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{eyebrow_colour};margin-bottom:6px">{head}</b>{body}</td></tr></table>"""
+
+
+def receipt_table():
+    H = RECEIPT_HEADS
+    return f"""<table role="presentation" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;width:100%;background:#ffffff;border-radius:16px;overflow:hidden">
+<tr><td bgcolor="{NAVY}" style="background:{NAVY};padding:16px 26px;border-bottom:3px solid {GOLD}">
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%"><tr>
+    <td style="width:34px;padding-right:10px"><img src="{LOGO}" width="34" height="34" alt="" style="display:block;border-radius:8px"></td>
+    <td style="font:800 14px/1.25 {HEAD};color:#eaf4ff">Ricky Rampersad Branch<br><span style="font:500 11px/1.3 {BODY};color:#8fd8e6">Guardian Life of the Caribbean</span></td>
+    <td align="right" style="font:800 9.5px/1.5 {HEAD};letter-spacing:.18em;text-transform:uppercase;color:{GOLD};white-space:nowrap">Received<br><span style="font:700 13px/1.3 {HEAD};letter-spacing:0;text-transform:none;color:#eaf4ff">{{{{time}}}}</span></td>
+  </tr></table>
+</td></tr>
+<tr><td style="padding:24px 26px 20px;font:400 15.5px/1.6 {BODY};color:{BODYC}">
+  <h1 style="font:800 25px/1.2 {HEAD};color:{INK};margin:0 0 10px;letter-spacing:-.4px">Thank you, {{{{first_name}}}}.</h1>
+  <p style="margin:0 0 16px">{RECEIPT_OPEN}</p>
+  <!--recap-->{receipt_card('#f4f8fa', GOLD, '#8a6420', H['recap'], '[[recap]]')}<!--/recap-->
+  <!--concerns-->{receipt_card('#ffffff', TEAL, TDARK, H['concerns'], '[[concerns]]')}<!--/concerns-->
+  {receipt_card('#fff8e6', GOLD, '#8a6420', H['next'], '[[next]]')}
+  <!--more-->{receipt_card('#f3fbfd', TEAL, TDARK, H['more'], '[[more]]')}<!--/more-->
+  {receipt_card(NAVY, GOLD, GOLD, H['follow'], '[[follow]]', dark=True)}
+  <p style="margin:0 0 6px">{RECEIPT_REPLY}</p>
+  <table role="presentation" cellpadding="0" cellspacing="0" style="margin:16px 0 0"><tr>
+    <td style="border-left:3px solid {GOLD};padding:2px 0 2px 12px;font:400 13.5px/1.5 {BODY};color:{DIM}">
+      <b style="display:block;font:800 15.5px/1.3 {HEAD};color:{INK}">{{{{care_name}}}}</b>{{{{care_line}}}}</td></tr></table>
+</td></tr>
+<tr><td bgcolor="#f4f8fa" style="background:#f4f8fa;padding:12px 26px;border-top:1px solid #e0eaef;font:400 11.5px/1.55 {BODY};color:#64798e">
+  Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.
+  {legal_html()}
+</td></tr>
+</table>"""
+
+
+def receipt_doc():
+    return f"""<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="supported-color-schemes" content="light">
+<title>{html.escape(RECEIPT_SUBJECT)}</title>
+<!-- the receipt a response earns · generated by tools/letters/build-letters.py -->
+<link href="{FONTS}" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#eef4f7">
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#eef4f7"><tr><td align="center" style="padding:24px 12px">
+{receipt_table()}
+</td></tr></table>
+</body></html>
+"""
+
+
+PLAIN_RECEIPT = ('<p><b>Ricky Rampersad Branch</b><br>Guardian Life of the Caribbean</p><hr>'
+                 '<h2>Thank you, {{first_name}}.</h2>'
+                 f'<p>{RECEIPT_OPEN}</p>'
+                 f'<!--recap--><h3>{RECEIPT_HEADS["recap"]}</h3>[[recap]]<!--/recap-->'
+                 f'<!--concerns--><h3>{RECEIPT_HEADS["concerns"]}</h3>[[concerns]]<!--/concerns-->'
+                 f'<h3>{RECEIPT_HEADS["next"]}</h3>[[next]]'
+                 f'<!--more--><h3>{RECEIPT_HEADS["more"]}</h3>[[more]]<!--/more-->'
+                 f'<h3>{RECEIPT_HEADS["follow"]}</h3>[[follow]]'
+                 f'<p>{RECEIPT_REPLY}</p>'
+                 '<p><b>{{care_name}}</b><br>{{care_line}}</p><hr>'
+                 '<p><i>Sent because you answered our letter. Policy numbers and personal details are deliberately kept out of this e-mail.</i></p>'
+                 f'{LEGAL_PLAIN}\n')
+
+(OUT / 'receipt.html').write_text(receipt_doc(), encoding='utf-8')
+(PLAIN / 'receipt.html').write_text(PLAIN_RECEIPT, encoding='utf-8')
+# the replies: what the inbox reader strips from a reply to find the client's own words (every pre-written
+# line a reply can carry), and what the receipt needs to offer the other checks as replies of its own
+_ALL_Q = list(QUESTIONS.values()) + [REACH, WHEN]
+# form_taps: the taps whose answers the receipt's own "anything else" block sends to the page rather than to a
+# reply — every tap in page mode, so the block matches the letters without the script needing to know the mode
+REPLY = {'to': REPLY_TO, 'more': REPLY_MORE, 'mode': ANSWER_MODE, 'page': 'https://rickyrampersadbranch.com/your-policy/',
+         'form_taps': list(TAPS) if ANSWER_MODE == 'page' else list(FORM_TAPS),
+         'lines': sorted({REPLY_MORE} | {q for q, _ in _ALL_Q} | {label for _, answers in _ALL_Q for label, _, _ in answers}
+                         | {v[0] + '.' for v in TAPS.values()} | {t[0] + '.' for cfg in SEGMENTS.values() for t in cfg.get('tap_text', {}).values()}
+                         | {l for ls in REPLY_LINES.values() for l in ls})}
+_checks = json.loads(landing_checks())
+(OUT / 'receipt.json').write_text(json.dumps({'subject': RECEIPT_SUBJECT, 'file': 'receipt.html', 'plain': 'plain/receipt.html',
+                                              'care': CARE, 'next': NEXT, 'next_q': NEXT_Q, 'still': STILL, 'heads': RECEIPT_HEADS,
+                                              'follow': FOLLOW, 'recap': RECAP, 'review': REVIEW_RECAP,
+                                              'reply': REPLY, 'questions': _checks['questions'], 'segments': _checks['segments'],
+                                              'legal': {'head': LEGAL_HEAD, 'text': LEGAL, 'html': legal_html('12px'), 'plain': LEGAL_PLAIN, 'internal': INTERNAL},
+                                              'tpl': RECEIPT_TPL, 'tpl_plain': RECEIPT_TPL_PLAIN}, indent=1, ensure_ascii=False),
+                                  encoding='utf-8')
+print(f'wrote the receipt: {OUT / "receipt.html"}, {PLAIN / "receipt.html"}, {OUT / "receipt.json"}')
