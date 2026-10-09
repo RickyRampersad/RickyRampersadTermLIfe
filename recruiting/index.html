@@ -32,7 +32,7 @@
     background:linear-gradient(160deg,var(--card),var(--card2));
     border:1px solid var(--line);border-radius:22px;padding:36px 28px;
   }
-  .lock-card svg{width:64px;height:64px;margin:0 auto 16px}
+  .lock-card .mark{width:64px;height:64px;margin:0 auto 16px}
   .lock-card h1{font-family:'Montserrat',sans-serif;font-weight:800;font-size:20px;margin-bottom:6px;color:var(--gold)}
   .lock-card p{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
   .lock-card input{
@@ -55,7 +55,9 @@
   .nav{position:sticky;top:0;z-index:100;background:rgba(6,17,29,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
   .nav-inner{max-width:980px;margin:0 auto;padding:0 16px;display:flex;align-items:center;gap:14px;height:64px}
   .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
-  .nav-brand svg{width:34px;height:34px}
+  .mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+  .mark img{width:100%;height:100%;display:block}
+  .nav-brand .mark{width:34px;height:34px;flex:none}
   .nav-brand span{font-family:'Montserrat',sans-serif;font-weight:800;font-size:15px;color:var(--gold);line-height:1.1}
   .nav a.link{text-decoration:none;color:var(--muted);font-family:'Montserrat',sans-serif;font-size:12.5px;font-weight:600;padding:8px 12px;border-radius:10px}
   .nav a.link:hover{color:var(--text);background:rgba(255,255,255,.06)}
@@ -103,15 +105,7 @@
 <!-- LOCK SCREEN -->
 <div id="lock">
   <div class="lock-card">
-    <svg viewBox="0 0 88 88" aria-hidden="true">
-      <defs><linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#5be4f5"/><stop offset="60%" stop-color="#00CFEA"/><stop offset="100%" stop-color="#00738a"/>
-      </linearGradient></defs>
-      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#g1)"/>
-      <rect x="32" y="38" width="24" height="19" rx="4" fill="#07131f"/>
-      <path d="M37 38v-5a7 7 0 0114 0v5" stroke="#07131f" stroke-width="4.5" fill="none"/>
-      <circle cx="44" cy="47" r="3" fill="#00CFEA"/>
-    </svg>
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
     <h1>Recruiting &amp; Selection</h1>
     <p>For branch managers, unit managers and the BMA.<br>Enter your recruiting access code.</p>
     <input id="code" type="password" placeholder="ACCESS CODE" autocomplete="off"/>
@@ -126,14 +120,7 @@
   <nav class="nav">
     <div class="nav-inner">
       <a class="nav-brand" href="/">
-        <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="gn" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#gn)"/>
-          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M28 44L39 55L60 31" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <div class="mark"><img src="/logo-mark.png" alt=""></div>
         <span>Ricky Rampersad<br>Branch</span>
       </a>
       <a class="link" href="/">Main Site</a>
@@ -275,6 +262,12 @@
     if (e.key === 'Enter') unlock();
   });
   if (sessionStorage.getItem(KEY) === '1') showPortal();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>

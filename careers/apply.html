@@ -31,7 +31,9 @@ a{color:var(--teal)}
 .brand{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:.86rem;letter-spacing:.12em;text-transform:uppercase;
  color:var(--ink);display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
 .brand b{color:var(--teal)}
-.brand svg{width:22px;height:25px;flex-shrink:0}
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+.brand .mark{width:30px;height:30px;flex:none}
 .nav-link{font-family:'Montserrat',sans-serif;font-size:13px;font-weight:700;color:var(--body);text-decoration:none;
  padding:8px 10px;border-radius:9px;transition:.18s}
 .nav-link:hover{color:var(--ink);background:rgba(255,255,255,.06)}
@@ -126,11 +128,7 @@ footer{border-top:1px solid var(--line);padding:30px 0;text-align:center;font-fa
 
 <nav class="topbar">
   <a class="brand" href="index.html">
-    <svg viewBox="0 0 100 112" aria-hidden="true">
-      <path d="M50 4 L92 20 V52 C92 80 72 98 50 107 C28 98 8 80 8 52 V20 Z" fill="#dca530"/>
-      <path d="M50 10 L86 24 V52 C86 76 69 92 50 100 C31 92 14 76 14 52 V24 Z" fill="#efc24b"/>
-      <path d="M31 54 L45 68 L71 38" fill="none" stroke="#07131f" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
     RICKY <b>RAMPERSAD</b> BRANCH
   </a>
   <a class="nav-link" href="index.html">← Careers</a>
@@ -932,6 +930,12 @@ document.getElementById('form').addEventListener('keydown', function(ev){
 });
 
 render();
+</script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
 </script>
 </body>
 </html>

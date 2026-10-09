@@ -32,7 +32,7 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 #login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:22px}
 .lcard{width:min(400px,100%);background:linear-gradient(160deg,var(--card),var(--card2));
  border:1px solid var(--line);border-radius:22px;padding:34px 28px;text-align:center;box-shadow:0 26px 70px rgba(0,0,0,.5)}
-.lcard svg{width:58px;height:58px;margin:0 auto 16px;display:block}
+.lcard .mark{width:58px;height:58px;margin:0 auto 16px}
 .lcard h1{font-size:21px;font-weight:800;color:var(--gold);margin-bottom:6px}
 .lcard .lsub{font-size:13px;color:var(--mut);margin-bottom:22px;line-height:1.6}
 .lcard label{display:block;text-align:left;font-family:var(--mont);font-size:10.5px;font-weight:700;
@@ -67,7 +67,9 @@ button,input,select,textarea{font-family:inherit;font-size:inherit}
 .nav{position:sticky;top:0;z-index:60;background:rgba(6,17,29,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
 .nav-in{max-width:1080px;margin:0 auto;padding:0 18px;display:flex;align-items:center;gap:13px;height:62px}
 .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none;margin-right:auto}
-.nav-brand svg{width:30px;height:30px}
+.mark{border-radius:13px;overflow:hidden;background:#07131f;display:grid;place-items:center}
+.mark img{width:100%;height:100%;display:block}
+.nav-brand .mark{width:30px;height:30px;flex:none}
 .nav-brand span{font-family:var(--mont);font-weight:800;font-size:13.5px;color:var(--gold);line-height:1.15}
 .whobox{text-align:right;line-height:1.25}
 .whobox b{display:block;font-family:var(--mont);font-size:13px;color:var(--ink);font-weight:700}
@@ -420,13 +422,7 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
 <!-- LOGIN -->
 <div id="login" hidden>
   <form class="lcard" id="loginForm">
-    <svg viewBox="0 0 88 88" aria-hidden="true">
-      <defs><linearGradient id="lg" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-      </linearGradient></defs>
-      <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#lg)"/>
-      <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
+    <div class="mark"><img src="/logo-mark.png" alt=""></div>
     <h1>Branch Portal</h1>
     <p class="lsub">Recruits and managers, one door.<br>Sign in with the email and PIN your branch gave you.</p>
 
@@ -458,13 +454,7 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
   <nav class="nav">
     <div class="nav-in">
       <a class="nav-brand" href="/">
-        <svg viewBox="0 0 88 88" aria-hidden="true">
-          <defs><linearGradient id="ng" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#f0c448"/><stop offset="60%" stop-color="#c9942c"/><stop offset="100%" stop-color="#7a5810"/>
-          </linearGradient></defs>
-          <path d="M44 5L77 19V41C77 63 63 76 44 83C25 76 11 63 11 41V19Z" fill="url(#ng)"/>
-          <path d="M28 44L39 55L60 31" stroke="#07131f" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <div class="mark"><img src="/logo-mark.png" alt=""></div>
         <span>Ricky Rampersad<br>Branch</span>
       </a>
       <div class="whobox"><b id="who"></b><span id="whoRole"></span></div>
@@ -490,5 +480,11 @@ textarea:disabled,input:disabled{opacity:.75;cursor:default}
 <script src="survey-ui.js"></script>
 <script src="api.js"></script>
 <script src="app.js"></script>
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
 </body>
 </html>
