@@ -581,3 +581,79 @@ which has no entry in the `DEPT` map in `index.html` — so that request type
 currently shows the raw email address as its department name. Adding
 `'GGILPCClaims@myguardiangroup.com':'GGIL P&C Claims',` to that map fixes it.
 The patch file already carries the name for the emails it sends.
+
+---
+
+### 20 — `autoSweep`: chase on what the department actually needs
+
+Four small edits, all inside `autoSweep`. Together they stop the autopilot
+chasing work that was never going to be done in the time we promised, and
+turn the three wasted emails into one phone call.
+
+**20a — the chase point is not the client's promise.**
+
+Find:
+```js
+    var due = deadlineAt_(logged, row[15]);
+```
+Replace with:
+```js
+    var due = qpChaseDue_(logged, row);   // measured; row[15] stays the client's promise
+```
+
+**20b — two chases, then a person calls.**
+
+Find:
+```js
+    if (count >= (sup ? FOLLOWUP_MAX_SUPPORT : FOLLOWUP_MAX)) {
+```
+Replace with:
+```js
+    if (count >= qpChaseCap_(row)) {
+```
+
+**20c — stop the daily chase on health and claims.** It was the biggest
+single source of wasted volume: one case had thirteen.
+
+Find:
+```js
+    if (now <= due) {                                    // not overdue yet…
+      // …but support cases demand a reply: chase from the next working day if the thread is silent
+      if (!(sup && workedDaysSince_(logged) >= 1 && !extAt)) continue;
+    }
+```
+Replace with:
+```js
+    if (now <= due) continue;   // the measured point has not passed yet
+```
+
+**20d — our own desk gets a list, not an email each.**
+
+Find:
+```js
+    try {
+      sendFollowUp_(row, count + 1, due, sup);
+      sh.getRange(r + 1, 23).setValue(count + 1);
+      sh.getRange(r + 1, 24).setValue(now);
+    } catch (fe) {}
+  }
+}
+```
+Replace with:
+```js
+    try {
+      if (qpInternalDesk_(row)) qpDeskQueue_(row, count + 1, due);
+      else sendFollowUp_(row, count + 1, due, sup);
+      sh.getRange(r + 1, 23).setValue(count + 1);
+      sh.getRange(r + 1, 24).setValue(now);
+    } catch (fe) {}
+  }
+  qpDeskFlush_();            // one worklist for Sales Support, not an email a case
+}
+```
+
+Nothing here changes what the client is told, and nothing changes how the wall
+scores on-time: `row[15]` is still the promise and still what the branch is
+measured against. What changes is when the machine speaks.
+
+Run `qpChaseReview()` from the editor in a month to re-measure.

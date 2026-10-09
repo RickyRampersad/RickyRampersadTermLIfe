@@ -1,0 +1,897 @@
+{
+"note": "Shape only, for tests/chase.sim.mjs. No client names, references or request text.",
+"captured": "2026-10-09",
+"rows": [
+{
+"tsIso": "2026-09-30T16:05:13.265Z",
+"days": "",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "5 days",
+"qtype": "Change of Beneficiary - Life and Pension",
+"fu": 0,
+"status": "Open"
+},
+{
+"tsIso": "2026-09-29T09:44:10.818Z",
+"days": "1",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Premium Histories (Old & New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-29T09:40:15.341Z",
+"days": "1",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "10 days",
+"qtype": "Surrenders",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-18T19:37:10.847Z",
+"days": "12",
+"dept": "Premiums Application Unit",
+"tat": "5 days",
+"qtype": "Misallocation of premium payments",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-18T15:50:56.002Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Premium Histories (Old & New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-18T15:08:10.160Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-18T15:06:42.327Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-18T14:51:35.773Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-17T16:16:00.554Z",
+"days": "0",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Premium Overdue - Conservation Follow-up",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-17T16:06:47.901Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Premium Histories (Old & New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-17T15:26:00.691Z",
+"days": "",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 3,
+"status": "Open"
+},
+{
+"tsIso": "2026-09-17T13:23:05.904Z",
+"days": "14",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-16T16:30:55.868Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-15T19:10:33.066Z",
+"days": "1",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Scripts Undelivered",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-15T12:27:10.452Z",
+"days": "1",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Premium Overdue - Conservation Follow-up",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-14T22:59:02.365Z",
+"days": "21",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Change of Payment Method - Life and Pension",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-14T19:46:06.334Z",
+"days": "2",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-10T23:53:00.555Z",
+"days": "6",
+"dept": "GLOC Phone CSRs",
+"tat": "5 days",
+"qtype": "Online Customer Portal (New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-10T23:44:58.105Z",
+"days": "5",
+"dept": "GLOC Phone CSRs",
+"tat": "5 days",
+"qtype": "Online Customer Portal (New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-10T23:38:47.781Z",
+"days": "4",
+"dept": "GLOC Phone CSRs",
+"tat": "5 days",
+"qtype": "Online Customer Portal (New)",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-09T19:43:20.051Z",
+"days": "5",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "10 days",
+"qtype": "Surrenders",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-09T15:48:36.456Z",
+"days": "5",
+"dept": "Premiums Application Unit",
+"tat": "5 days",
+"qtype": "Missing Premiums Individual Life and Pensions",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-09T14:29:51.168Z",
+"days": "1",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-09T14:11:10.851Z",
+"days": "5",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-08T22:17:16.828Z",
+"days": "2",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20701",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20700",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20700",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20700",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20700",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "1970-01-01T00:00:00.000Z",
+"days": "20700",
+"dept": "",
+"tat": "",
+"qtype": "",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-06-26T00:23:28.908Z",
+"days": "20",
+"dept": "Recurring Credit Card Unit",
+"tat": "3 days",
+"qtype": "Recurring Credit Card Set up and Update",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-06-26T14:24:47.427Z",
+"days": "12",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-07T21:51:51.364Z",
+"days": "1",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Status of policies or value",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-08T01:48:10.014Z",
+"days": "3",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-08T02:49:00.728Z",
+"days": "69",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 13,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-08T21:52:44.804Z",
+"days": "14",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Pending Cases that should have settled",
+"fu": 5,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-08T23:14:28.785Z",
+"days": "2",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "2 days",
+"qtype": "Change of Address - Life and Pension",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-09T00:36:47.992Z",
+"days": "7",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Quote Rated Cases",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-09T13:24:20.518Z",
+"days": "42",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Query on value of policy or paid to date etc.",
+"fu": 5,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-09T14:08:11.699Z",
+"days": "8",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-09T19:43:45.410Z",
+"days": "12",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Status of policies or value",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-10T00:30:31.307Z",
+"days": "20",
+"dept": "Premiums Application Unit",
+"tat": "5 days",
+"qtype": "Missing Premiums Individual Life and Pensions",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-10T02:15:59.179Z",
+"days": "",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-10T15:38:13.464Z",
+"days": "20",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Request Info",
+"fu": 4,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-10T19:05:49.861Z",
+"days": "0",
+"dept": "GLOC Premium Query",
+"tat": "1 day",
+"qtype": "Direct Debit payment not actioned.",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-13T14:05:40.174Z",
+"days": "10",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Motor or Home Claim - Follow-up",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-13T21:07:23.638Z",
+"days": "8",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Status of policies or value",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-14T18:30:17.717Z",
+"days": "9",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Premium Overdue - Conservation Follow-up",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-15T13:06:46.743Z",
+"days": "9",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-15T23:34:36.914Z",
+"days": "13",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-16T14:24:33.316Z",
+"days": "25",
+"dept": "Premiums Application Unit",
+"tat": "5 days",
+"qtype": "Missing Premiums Individual Life and Pensions",
+"fu": 4,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-17T18:05:40.211Z",
+"days": "11",
+"dept": "GLOC Premium Query",
+"tat": "1 day",
+"qtype": "Direct Debit payment not actioned.",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-21T12:21:49.135Z",
+"days": "51",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 5,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-21T12:40:39.058Z",
+"days": "34",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 4,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-21T16:02:03.894Z",
+"days": "43",
+"dept": "Individual Life Claims",
+"tat": "3 days",
+"qtype": "Claims Life&Pension - Submission",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-22T01:04:03.194Z",
+"days": "10",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-22T13:49:59.292Z",
+"days": "2",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-23T14:27:54.555Z",
+"days": "10",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "5 days",
+"qtype": "Change of Beneficiary - Life and Pension",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-24T11:08:04.769Z",
+"days": "21",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 6,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-24T14:06:56.312Z",
+"days": "0",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-28T21:30:44.581Z",
+"days": "0",
+"dept": "GLOC IT/MO Requests",
+"tat": "5 days",
+"qtype": "MPOS",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-28T22:02:54.711Z",
+"days": "1",
+"dept": "GLOC IT/MO Requests",
+"tat": "5 days",
+"qtype": "MPOS",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-29T11:38:24.629Z",
+"days": "16",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-30T18:33:47.048Z",
+"days": "11",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-31T16:55:51.642Z",
+"days": "41",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-07-31T19:41:34.607Z",
+"days": "14",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Health Termination",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-03T11:21:41.363Z",
+"days": "0",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Scripts Undelivered",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-03T14:58:56.238Z",
+"days": "6",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Withdrawals",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-03T18:33:06.647Z",
+"days": "7",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "5 days",
+"qtype": "Confirmation of Funds",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-04T14:42:38.444Z",
+"days": "57",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Group Health - Corporate & Conversions",
+"fu": 12,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-04T17:45:13.828Z",
+"days": "6",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Premium Histories (Old & New)",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-11T14:02:01.471Z",
+"days": "28",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "2 days",
+"qtype": "Assignment And Release",
+"fu": 4,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-11T14:37:54.748Z",
+"days": "3",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Withdrawals",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-12T12:41:24.785Z",
+"days": "1",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-14T14:54:35.535Z",
+"days": "6",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "5 days",
+"qtype": "Refund Cheques",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-17T14:22:26.698Z",
+"days": "23",
+"dept": "Group Insurance Administration",
+"tat": "5",
+"qtype": "Group Life & Group Health Termination",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-17T19:54:10.386Z",
+"days": "3",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-17T19:58:52.116Z",
+"days": "3",
+"dept": "EB Customer Care",
+"tat": "7 days",
+"qtype": "Query - Health Claim",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-18T14:25:08.227Z",
+"days": "2",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Quote - Life Insurance",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-18T14:46:21.200Z",
+"days": "2",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-18T15:08:46.679Z",
+"days": "2",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-19T16:01:24.502Z",
+"days": "8",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Request Info",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-21T16:08:18.681Z",
+"days": "6",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-24T19:17:07.793Z",
+"days": "3",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Projection Maturity Annuity",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-25T14:58:29.659Z",
+"days": "2",
+"dept": "Recurring Credit Card Unit",
+"tat": "3 days",
+"qtype": "Recurring Credit Card Set up and Update",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-08-26T02:24:11.402Z",
+"days": "7",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Withdrawals",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-01T17:39:26.616Z",
+"days": "8",
+"dept": "Premiums Application Unit",
+"tat": "5 days",
+"qtype": "Missing Premiums Individual Life and Pensions",
+"fu": 1,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-02T10:31:23.761Z",
+"days": "2",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-02T13:36:54.013Z",
+"days": "0",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "10 days",
+"qtype": "Surrenders",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-02T13:48:53.073Z",
+"days": "8",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "3 days",
+"qtype": "Withdrawals",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-02T15:16:32.955Z",
+"days": "5",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-02T15:56:04.556Z",
+"days": "12",
+"dept": "GLOC Phone CSRs",
+"tat": "5 days",
+"qtype": "Online Customer Portal (New)",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-03T20:48:35.284Z",
+"days": "14",
+"dept": "GLOC Premium Query",
+"tat": "5 days",
+"qtype": "Future Payments - Recurring Credit Card",
+"fu": 2,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-07T13:55:49.392Z",
+"days": "0",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-07T14:46:53.903Z",
+"days": "23",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 3,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-07T19:14:47.001Z",
+"days": "0",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-08T10:06:48.032Z",
+"days": "2",
+"dept": "RR Branch Sales Support",
+"tat": "1 day",
+"qtype": "Statements \u2013 tax and csv",
+"fu": 0,
+"status": "Closed"
+},
+{
+"tsIso": "2026-09-08T15:31:40.677Z",
+"days": "7",
+"dept": "Customer Service \u2013 Chaguanas",
+"tat": "1 day",
+"qtype": "Status of policies or value",
+"fu": 2,
+"status": "Closed"
+}
+]
+}

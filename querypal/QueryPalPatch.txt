@@ -1711,3 +1711,168 @@ function qpHealth() {
   Logger.log(msg);
   return msg;
 }
+
+
+/* ══════════════════ 12. THE FOLLOW-UPS, MEASURED ══════════════════
+   Read off all 99 cases on 9 October 2026: 141 chases had gone out, and 58%
+   of closed cases had breached the turnaround promised to the client. Not
+   because departments were slow — because the promises were never real.
+   Customer Service promises 1 day and takes 5. Sales Support promises 1 day
+   and takes 5. Group Insurance Administration promises 5 and takes 23. So
+   nearly every case went overdue on schedule and started chasing work that
+   was always going to take that long, and a chase stopped meaning anything.
+
+   The fix is NOT to lengthen the promise. A client told "10 days" for a
+   statement is a worse answer than the problem, and a target nobody has to
+   reach stops being a target. So the promise and the chase trigger become two
+   different numbers:
+
+     row[15]  the turnaround  — what the client is told, what the wall scores
+                                on-time against, unchanged and still hard
+     below    the chase point — what the department has actually proved it
+                                needs, after which silence is abnormal
+
+   The branch keeps measuring itself against the standard it wants. The
+   autopilot only speaks up when something is genuinely wrong.                */
+
+/* Working days after logging at which silence becomes abnormal. These are the
+   p75 of each department's own closed cases — three in four land inside — so
+   a chase past this point is answering a real delay. Only departments with
+   enough closed cases to mean anything are listed; everything else falls back
+   to the promise plus a grace. Re-measure with qpChaseReview(). */
+var QP_CHASE_AFTER = {
+  'Customer Service – Chaguanas':   10,   // 30 cases, promise 1d, actual 5d
+  'RR Branch Sales Support':        10,   // 30 cases, promise 1d, actual 5d
+  'Group Insurance Administration': 20,   //  7 cases, promise 5d, actual 23d
+  'EB Customer Care':               20,   //  6 cases, promise 7d, actual 6d
+  'Premiums Application Unit':      20,   //  5 cases, promise 5d, actual 12d
+  'GLOC Phone CSRs':                 7,   //  4 cases
+  'GLOC Premium Query':             15,   //  3 cases, thin
+  'Recurring Credit Card Unit':     20    //  2 cases, thin
+};
+var QP_CHASE_GRACE_WD = 3;   // no measured history yet: the promise, plus this
+var QP_CHASE_MAX      = 2;   // then a person calls — see below
+
+/* When the autopilot should start chasing this case. Never the client's
+   promise: deadlineAt_ on row[15] is what the client was told. */
+function qpChaseDue_(logged, row) {
+  var dept = String(row[13] || '').trim();
+  var days = QP_CHASE_AFTER[dept];
+  if (days == null) {
+    var tat = parseInt(row[15]);
+    if (isNaN(tat)) tat = 5;
+    days = tat + QP_CHASE_GRACE_WD;
+  }
+  return deadlineAt_(logged, String(days));
+}
+
+/* Two chases, then stop. The branch's own figures: cases never chased close
+   in 2 days, cases chased three or more times take 20. The third, fourth and
+   fifth email do not move anything — they are what the department learns to
+   filter. Hitting the cap is what makes stuckNotify_ raise it for a phone
+   call, which is the thing that actually works. Health and claims cases used
+   to chase daily up to ten times; that is where most of the wasted volume
+   was. */
+function qpChaseCap_(row) { return QP_CHASE_MAX; }
+
+/* Our own desk is not a department. 55 of the 141 chases went to RR Branch
+   Sales Support — the branch's own people, sitting in the branch, on a 1-day
+   target they have never met. Emailing them one case at a time spends the
+   daily quota on the one group that could simply be handed a list. */
+var QP_INTERNAL_DESKS = ['rickyrampersadsalessupport@myguardiangroup.com'];
+function qpInternalDesk_(row) {
+  var to = String(row[14] || '').toLowerCase();
+  for (var i = 0; i < QP_INTERNAL_DESKS.length; i++) {
+    if (to.indexOf(QP_INTERNAL_DESKS[i]) > -1) return true;
+  }
+  return false;
+}
+
+/* Collected through the sweep, sent once at the end: one list instead of one
+   email per case. */
+var QP_DESK_QUEUE = [];
+function qpDeskQueue_(row, n, due) {
+  QP_DESK_QUEUE.push({
+    ref: String(row[0] || ''), client: String(row[5] || ''),
+    qtype: String(row[12] || ''), agent: String(row[9] || ''),
+    asg: String(row[28] || ''), n: n, due: due,
+    replied: !!row[27]
+  });
+}
+function qpDeskFlush_() {
+  var q = QP_DESK_QUEUE;
+  QP_DESK_QUEUE = [];
+  if (!q.length) return;
+  var F = 'font-family:Segoe UI,Helvetica,Arial,sans-serif;';
+  var tz = Session.getScriptTimeZone() || 'America/Port_of_Spain';
+  q.sort(function (a, b) { return a.due - b.due; });
+  var rows = q.map(function (x) {
+    return '<tr>'
+      + '<td style="padding:8px 10px;border-top:1px solid #eef4f9;' + F + 'font-size:12px;">'
+        + '<b>' + esc(x.client) + '</b><br><span style="color:#5e7a93;">' + esc(x.qtype) + '</span><br>'
+        + '<span style="font-family:Consolas,monospace;font-size:10px;color:#0b6ab4;">' + esc(x.ref) + '</span></td>'
+      + '<td style="padding:8px 10px;border-top:1px solid #eef4f9;' + F + 'font-size:12px;">' + esc(x.asg || x.agent || '—') + '</td>'
+      + '<td style="padding:8px 10px;border-top:1px solid #eef4f9;text-align:center;' + F + 'font-size:12px;white-space:nowrap;">'
+        + Utilities.formatDate(x.due, tz, 'd MMM') + '</td>'
+      + '<td style="padding:8px 10px;border-top:1px solid #eef4f9;text-align:center;' + F + 'font-size:12px;">'
+        + (x.replied ? '<span style="color:#15803d;">replied</span>' : '—') + '</td></tr>';
+  }).join('');
+  var html = '<div style="background:#eef6fc;padding:26px 12px;' + F + '">'
+    + '<div style="max-width:640px;margin:0 auto;background:#fff;border-radius:16px;overflow:hidden;border:1px solid #e1ebf4;">'
+    + '<div style="background:linear-gradient(128deg,#0a2f4f,#0b6ab4);padding:16px 22px;color:#fff;">'
+    + '<div style="' + F + 'font-size:15px;font-weight:800;">Sales Support worklist — ' + q.length + ' case' + (q.length > 1 ? 's' : '') + '</div>'
+    + '<div style="' + F + 'font-size:11px;color:#bfe0ff;margin-top:2px;">past the point where these normally close</div></div>'
+    + '<div style="padding:16px 22px;' + F + 'font-size:12.5px;color:#5e7a93;line-height:1.6;">'
+    + 'These are ours, not a department\'s — so they come as one list rather than '
+    + 'an email each. Nothing here has been chased by email.</div>'
+    + '<table cellpadding="0" cellspacing="0" style="width:100%;">'
+    + '<tr style="background:#f6fafd;">'
+    + ['Case', 'Desk', 'Due', 'Dept'].map(function (h) {
+        return '<th style="' + F + 'font-size:9px;font-weight:800;color:#8fa6ba;letter-spacing:.1em;'
+          + 'text-transform:uppercase;text-align:left;padding:7px 10px;">' + h + '</th>'; }).join('')
+    + '</tr>' + rows + '</table>'
+    + '<div style="background:#f6fafd;border-top:1px solid #e4eef6;padding:12px 22px;text-align:center;'
+    + F + 'font-size:10.5px;color:#8fa6ba;">Query Pal · internal</div>'
+    + '</div></div>';
+  try {
+    MailApp.sendEmail({
+      to: TEST_MODE ? TEST_EMAIL : BRANCH_SUPPORT,
+      replyTo: BRANCH_SUPPORT, name: 'RR Branch Query Pal',
+      subject: (TEST_MODE ? '[TEST] ' : '') + 'Sales Support worklist — ' + q.length + ' case' + (q.length > 1 ? 's' : ''),
+      htmlBody: html,
+      body: q.map(function (x) { return x.client + ' · ' + x.qtype + ' · ' + x.ref; }).join('\n')
+    });
+  } catch (e) {}
+}
+
+/* Re-measure the chase points against what the branch is actually delivering.
+   Run it from the editor every month or so; it prints the table to paste back
+   into QP_CHASE_AFTER. It changes nothing by itself. */
+function qpChaseReview() {
+  var sh = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+  if (!sh || sh.getLastRow() < 2) return 'No cases logged yet.';
+  var wide = Math.min(29, sh.getMaxColumns());
+  var data = sh.getRange(2, 1, sh.getLastRow() - 1, wide).getValues();
+  var by = {};
+  for (var r = 0; r < data.length; r++) {
+    var row = data[r];
+    if (!row[0] || !/closed|resolved|completed/i.test(String(row[3] || ''))) continue;
+    var d = parseInt(row[21]); if (isNaN(d)) continue;
+    var k = String(row[13] || '').trim(); if (!k) continue;
+    (by[k] = by[k] || []).push(d);
+  }
+  var out = ['CHASE POINTS — measured from closed cases', ''];
+  for (var k in by) {
+    var v = by[k].sort(function (a, b) { return a - b; });
+    var p75 = v[Math.min(v.length - 1, Math.ceil(0.75 * v.length) - 1)];
+    var now = QP_CHASE_AFTER[k];
+    var note = v.length < 5 ? '  (thin — ' + v.length + ' cases)' : '';
+    out.push('  ' + k + ': p75 ' + p75 + 'd, currently ' + (now == null ? 'unset' : now + 'd') + note);
+  }
+  out.push('');
+  out.push('Raise a number only where the department has genuinely proved it needs');
+  out.push('the time. Lowering one makes the autopilot speak sooner.');
+  var msg = out.join('\n');
+  Logger.log(msg);
+  return msg;
+}
