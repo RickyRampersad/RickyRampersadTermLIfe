@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Register</title>
+<meta name="description" content="Who signed in to the branch meeting, who apologised and why, and who did not log in at all.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  /* THE REGISTER. One screen, on all meeting day, in the room the
+     branch meets in. Signing in to the meeting app is the whole
+     register now — the JotForm was disbanded on 6 October 2026 — so
+     this screen is the only place the room sees the roll.
+
+     Colours are the wall's own: blue #37b1ec is the accent, gold
+     #f5b93b is what is coming or what is broken, grey #5b7590 is
+     de-emphasis. Every bar is direct-labelled. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#f5b93b; --grey:#5b7590;
+    --good:#34d399; --red:#f0756a;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    overflow:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 10% -8%,rgba(55,177,236,.20),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      radial-gradient(800px 700px at 55% 108%,rgba(245,185,59,.09),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:14px 26px 10px}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:1px}
+  header .right{margin-left:auto;display:flex;align-items:center;gap:14px}
+  .live{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--faint)}
+  .live i{width:7px;height:7px;border-radius:50%;background:var(--grey)}
+  .live.on i{background:var(--good);box-shadow:0 0 8px rgba(52,211,153,.8)}
+
+  main{display:grid;gap:clamp(8px,1.2vh,14px);padding:0 26px clamp(10px,2vh,20px);
+    grid-template-columns:1.15fr 1fr 1fr;grid-template-rows:auto minmax(0,1fr);
+    height:calc(100vh - 64px);min-height:0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:clamp(10px,1.5vh,15px) 17px;display:flex;flex-direction:column;min-height:0}
+  .card h3{margin:0 0 2px;font:800 clamp(10px,1.2vh,11.5px) var(--font-b);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:clamp(10.5px,1.25vh,11.5px);color:var(--faint);margin:0 0 clamp(5px,1vh,9px);line-height:1.5}
+
+  .tiles{grid-column:1 / span 3;display:grid;grid-template-columns:repeat(4,1fr);
+    gap:clamp(8px,1.2vh,14px)}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:clamp(9px,1.4vh,15px) 17px}
+  .tile .v{font-family:var(--font-d);font-weight:800;font-size:clamp(30px,5.2vh,60px);line-height:.92;
+    letter-spacing:-2.4px;background:var(--grad);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .tile.warn .v{background:var(--grad-gold);-webkit-background-clip:text;background-clip:text}
+  .tile .k{font:800 clamp(9.5px,1.1vh,10.5px) var(--font-b);letter-spacing:.13em;
+    text-transform:uppercase;color:var(--blue);margin-top:7px}
+  .tile.warn .k{color:var(--gold)}
+  .tile .d{font-size:clamp(10px,1.2vh,11.5px);color:var(--faint);margin-top:4px;line-height:1.45}
+
+  .scroll{flex:1 1 auto;min-height:0;overflow:hidden}
+  .chips{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{display:inline-flex;align-items:baseline;gap:6px;border-radius:999px;
+    padding:5px 11px;font-size:clamp(11px,1.3vh,12.5px);font-weight:600;
+    background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--dim)}
+  .chip.red{background:rgba(240,117,106,.13);border-color:rgba(240,117,106,.38);color:#ffd9d4}
+  .chip.gold{background:rgba(245,185,59,.12);border-color:rgba(245,185,59,.36);color:#ffe9bd}
+  .chip .t{font-size:10px;font-weight:500;color:var(--faint)}
+
+  .rows{display:flex;flex-direction:column;gap:7px}
+  .rw{display:flex;align-items:center;gap:11px;font-size:clamp(11px,1.3vh,12.5px)}
+  .rw .lab{flex:1;min-width:0;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rw .barw{width:clamp(70px,13vw,150px);flex:none}
+  .bar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:5px;background:var(--grad-gold)}
+  .rw .n{width:26px;text-align:right;font-family:var(--font-d);font-weight:800;
+    font-variant-numeric:tabular-nums}
+
+  .note{margin-top:auto;padding-top:clamp(6px,1vh,10px);border-top:1px solid var(--line);
+    font-size:clamp(10px,1.2vh,11.5px);color:var(--faint);line-height:1.55}
+  .note b{color:var(--dim)}
+  .good{color:var(--good)}
+
+  /* The branch code, asked once and kept. A wall screen has no
+     keyboard most days, so it is never asked twice on the same
+     device unless the backend refuses the code. */
+  #gate{position:fixed;inset:0;display:none;place-items:center;z-index:9;
+    background:rgba(4,16,28,.93);backdrop-filter:blur(6px)}
+  #gate .box{background:#0b2238;border:1px solid var(--line);border-radius:18px;
+    padding:28px 26px;width:min(380px,90vw);text-align:center}
+  #gate h2{margin:0 0 6px;font-family:var(--font-d);font-size:18px}
+  #gate p{margin:0 0 16px;font-size:12.5px;color:var(--faint);line-height:1.6}
+  #gate input{width:100%;padding:12px 14px;border-radius:11px;border:1px solid var(--line);
+    background:rgba(255,255,255,.05);color:var(--ink);font-size:15px;text-align:center;
+    letter-spacing:.08em}
+  #gate button{width:100%;margin-top:11px;padding:12px;border-radius:11px;border:0;
+    background:var(--grad);color:#042033;font-weight:800;font-size:14px;cursor:pointer}
+  #gate .err{margin-top:10px;font-size:12px;color:#ffb4ab;min-height:16px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <div>
+    <h1>The Register</h1>
+    <div class="sub" id="sub">Ricky Rampersad Branch</div>
+  </div>
+  <div class="right">
+    <span class="live" id="live"><i></i><span id="liveTxt">waiting</span></span>
+  </div>
+</header>
+
+<main>
+  <section class="tiles">
+    <div class="tile"><div class="v" id="t-here">—</div>
+      <div class="k">In the room</div>
+      <div class="d" id="d-here">Signed in</div></div>
+    <div class="tile"><div class="v" id="t-rate">—</div>
+      <div class="k">Of the roll</div>
+      <div class="d" id="d-rate">&nbsp;</div></div>
+    <div class="tile warn"><div class="v" id="t-apol">—</div>
+      <div class="k">Apologies</div>
+      <div class="d" id="d-apol">Logged in and told us why</div></div>
+    <div class="tile warn"><div class="v" id="t-abs">—</div>
+      <div class="k">Absent</div>
+      <div class="d" id="d-abs">&nbsp;</div></div>
+  </section>
+
+  <section class="card">
+    <h3>In the room</h3>
+    <p class="cap">Everyone who signed in. The sign-in is the register — there is nothing else to sign.</p>
+    <div class="scroll"><div class="chips" id="here-list"></div></div>
+    <div class="note" id="here-note"></div>
+  </section>
+
+  <section class="card">
+    <h3>Apologies, and why</h3>
+    <p class="cap">Logged from the meeting app. The reason is picked from a list, which is how it can be counted.</p>
+    <div class="scroll"><div class="rows" id="why"></div></div>
+    <div class="note" id="who-apol"></div>
+  </section>
+
+  <section class="card">
+    <h3>Absent</h3>
+    <p class="cap" id="abs-cap">Signing in is the register. Anyone who does not sign in is absent.</p>
+    <div class="scroll"><div class="chips" id="abs-list"></div></div>
+    <div class="note" id="abs-note"></div>
+  </section>
+</main>
+
+<div id="gate">
+  <div class="box">
+    <h2>Branch code</h2>
+    <p>This screen reads the meeting register. Ask the branch manager for the code — it is asked once on this device.</p>
+    <input id="g-code" type="password" autocomplete="off" placeholder="Branch code"/>
+    <button id="g-go">Open the register</button>
+    <div class="err" id="g-err"></div>
+  </div>
+</div>
+
+<script>
+/* The meeting app's web app. Same deployment the sign-in page uses;
+   this screen asks it for action=wall, which returns the register for
+   one meeting and nothing else — no agenda, no materials, no minutes.
+   A wall hangs in a room visitors walk through. */
+var API = "https://script.google.com/macros/s/AKfycbxSSMiXYI1A2dEAr-sOBH0rs8T81jENFnQSNqh0sM6jTOe4ANhI4xxoytPR5TGLAARf/exec";
+var KEY_CODE = "rrb-meet-code";
+var KEY_SNAP = "rrb-register-snapshot";
+
+function $(s){ return document.querySelector(s) }
+function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c] }) }
+function store(k, v){ try { localStorage.setItem(k, v) } catch(e){} }
+function recall(k){ try { return localStorage.getItem(k) || "" } catch(e){ return "" } }
+
+document.addEventListener("keydown", function(e){
+  if (e.key === "f" || e.key === "F") {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen();
+  }
+});
+
+function paint(d){
+  if (!d || !d.meeting) {
+    $("#sub").textContent = "No meeting has opened yet.";
+    return;
+  }
+  var c = d.counts, m = d.meeting;
+  $("#sub").textContent = [m.date, m.ref || m.type, m.title].filter(Boolean).join(" · ");
+
+  $("#t-here").textContent = c.here;
+  $("#d-here").textContent = c.present + " on time, " + c.late + " late · roll of " + c.roll;
+  $("#t-rate").textContent = c.rate + "%";
+  $("#d-rate").textContent = c.accountedFor + "% accounted for, counting apologies";
+  $("#t-apol").textContent = c.excused;
+  $("#t-abs").textContent = c.absent;
+  $("#d-abs").textContent = c.noLogin + " of them never logged in"
+    + (c.markedAbsent ? ", " + c.markedAbsent + " marked by the chair" : "");
+
+  // In the room, named, late ones marked. The room's own first
+  // question, and the reason the screen is worth looking at while the
+  // meeting is still filling up.
+  var here = (d.groups.present || []).map(function(p){ return { name: p.name, late: 0, t: p.time } })
+    .concat((d.groups.late || []).map(function(p){ return { name: p.name, late: p.late, t: p.time } }));
+  here.sort(function(a, b){ return a.name.localeCompare(b.name) });
+  $("#here-list").innerHTML = here.length
+    ? here.map(function(p){
+        return '<span class="chip' + (p.late ? " gold" : "") + '">' + esc(p.name) +
+          '<span class="t">' + (p.late ? p.late + " min late" : esc(p.t || "in")) + "</span></span>";
+      }).join("")
+    : '<span class="chip">Nobody has signed in yet.</span>';
+  $("#here-note").innerHTML = c.late
+    ? "<b>" + c.late + "</b> signed in after the start."
+    : (c.here ? "<span class=\"good\">Everyone in the room was on time.</span>" : "&nbsp;");
+
+  // Absent, named. The chip says which kind of absence it is, because
+  // somebody the chair marked absent and somebody who never opened the
+  // meeting are not the same conversation.
+  var abs = d.groups.absent || [];
+  $("#abs-list").innerHTML = abs.length
+    ? abs.map(function(p){
+        return '<span class="chip red">' + esc(p.name) +
+          '<span class="t">' + (p.neverLoggedIn ? "no login" : "marked") + "</span></span>";
+      }).join("")
+    : '<span class="chip"><span class="good">Nobody is absent.</span></span>';
+  $("#abs-note").innerHTML = abs.length
+    ? "<b>" + c.noLogin + "</b> did not log in to the meeting at all. Signing in is how attendance "
+      + "is recorded; there is nothing else to sign."
+    : "<span class=\"good\">Every active member of the branch either attended or logged an apology.</span>";
+
+  // Why. Counted straight off the picked reasons.
+  var rs = d.reasons || [];
+  var top = rs.length ? rs[0].count : 0;
+  $("#why").innerHTML = rs.length
+    ? rs.map(function(x){
+        var w = top ? Math.round((x.count / top) * 100) : 0;
+        return '<div class="rw"><div class="lab">' + esc(x.reason) + "</div>" +
+          '<div class="barw"><div class="bar"><i style="width:' + w + '%"></i></div></div>' +
+          '<div class="n">' + x.count + "</div></div>";
+      }).join("")
+    : '<div class="rw"><div class="lab">No apologies logged for this meeting.</div></div>';
+
+  var ap = d.groups.excused || [];
+  $("#who-apol").innerHTML = ap.length
+    ? ap.map(function(p){ return esc(p.name); }).join(" · ")
+    : "&nbsp;";
+}
+
+function openGate(msg){
+  $("#gate").style.display = "grid";
+  $("#g-err").textContent = msg || "";
+  setTimeout(function(){ $("#g-code").focus(); }, 60);
+}
+
+function load(){
+  var code = recall(KEY_CODE);
+  if (!code) { openGate(); return; }
+
+  fetch(API + "?action=wall&code=" + encodeURIComponent(code), { cache: "no-store" })
+    .then(function(r){ return r.json() })
+    .then(function(j){
+      // Only a refused code sends the screen back to the gate for good.
+      // Anything else is a bad minute on branch wifi, and the wall keeps
+      // showing the last good answer rather than an empty room.
+      if (j && j.refused) { store(KEY_CODE, ""); openGate("That code was refused."); return; }
+      if (!j || !j.ok) throw new Error("bad feed");
+      $("#gate").style.display = "none";
+      store(KEY_SNAP, JSON.stringify({ at: Date.now(), d: j }));
+      paint(j);
+      $("#live").classList.add("on");
+      $("#liveTxt").textContent = "live";
+    })
+    .catch(function(){
+      $("#live").classList.remove("on");
+      $("#liveTxt").textContent = "last known";
+    });
+}
+
+/* Paint the last good answer the moment the page opens, so a wall
+   switched on again never waits on the network to show a room. */
+(function boot(){
+  var raw = recall(KEY_SNAP);
+  if (raw) {
+    try {
+      var s = JSON.parse(raw);
+      if (s && s.d && Date.now() - s.at < 12 * 3600000) {
+        paint(s.d);
+        $("#liveTxt").textContent = "updating…";
+      }
+    } catch(e){}
+  }
+  $("#g-go").onclick = function(){
+    var v = $("#g-code").value.trim();
+    if (!v) return;
+    store(KEY_CODE, v);
+    $("#g-err").textContent = "Checking…";
+    load();
+  };
+  $("#g-code").addEventListener("keydown", function(e){
+    if (e.key === "Enter") $("#g-go").click();
+  });
+  load();
+  setInterval(load, 60 * 1000);
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

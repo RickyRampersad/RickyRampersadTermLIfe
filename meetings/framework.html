@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Meeting Framework | Ricky Rampersad Branch</title>
+<meta name="description" content="How a branch meeting is built, run, recorded and followed up — and what each role does at each stage.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  /*  THE FOUR STAGE COLOURS ARE NOT A TASTE DECISION.
+   *
+   *  Four hues had to sit on this navy, stay apart for a colour-blind
+   *  reader, and clear 3:1 against the surface. They were validated as
+   *  a set rather than chosen by eye:
+   *
+   *    before  #2f93c9   during #bd8a22   after #1aa87a   follow #8f6bd4
+   *
+   *    lightness band    all four inside OKLCH L 0.48–0.67 (dark band)
+   *    chroma floor      all four >= 0.1
+   *    CVD separation    worst adjacent pair — after vs during —
+   *                      ΔE 9.6 protan, 13.8 tritan, both clear of the 8 floor
+   *    normal vision     worst adjacent pair ΔE 17.6
+   *    contrast          all four >= 3:1 on #0d2439
+   *
+   *  The first pass used the wall's own blue, gold and green straight:
+   *  every one of them failed the lightness band for a dark surface, so
+   *  each was stepped down until the set passed.
+   *
+   *  COLOUR NEVER CARRIES A STAGE ON ITS OWN. Every stage is also
+   *  numbered and named, so the page reads in greyscale, in print, and
+   *  to somebody who cannot tell the green from the gold.             */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --surface:#0d2439;
+    --s1:#2f93c9;  /* before    */
+    --s2:#bd8a22;  /* during    */
+    --s3:#1aa87a;  /* after     */
+    --s4:#8f6bd4;  /* follow-up */
+    --gold:#f5b93b;
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1100px 650px at 8% -8%,rgba(47,147,201,.18),transparent 60%),
+      radial-gradient(900px 600px at 95% 0%,rgba(143,107,212,.14),transparent 62%),
+      radial-gradient(900px 700px at 55% 108%,rgba(26,168,122,.10),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:18px 26px 12px;flex-wrap:wrap}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
+  header .back{margin-left:auto;font-size:12px;color:var(--dim);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:7px 15px}
+  header .back:hover{color:var(--ink);border-color:rgba(47,147,201,.55)}
+
+  main{padding:0 26px 50px;max-width:1500px;margin:0 auto}
+
+  .lede{background:var(--card);border:1px solid var(--line);border-radius:var(--r);
+    padding:16px 19px;margin-bottom:16px;font-size:13.5px;line-height:1.7;color:var(--dim)}
+  .lede b{color:var(--ink)}
+
+  /* THE RAIL. Four stages, in order, each its own colour and its own
+     number. Clicking one shows that stage alone. */
+  .rail{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+  .st{position:relative;background:var(--card);border:1px solid var(--line);
+    border-radius:var(--r);padding:14px 16px 14px 18px;cursor:pointer;text-align:left;
+    color:inherit;font:inherit;transition:all .25s var(--ease);overflow:hidden}
+  .st::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+  .st:hover{border-color:var(--c)}
+  .st[aria-pressed="true"]{background:rgba(255,255,255,.1);border-color:var(--c)}
+  .st .n{display:inline-grid;place-items:center;width:23px;height:23px;border-radius:7px;
+    background:var(--c);color:#05161f;font:800 12px var(--font-d);margin-bottom:8px}
+  .st .t{font-family:var(--font-d);font-weight:800;font-size:15px;letter-spacing:-.2px}
+  .st .w{font-size:11.5px;color:var(--faint);margin-top:3px;line-height:1.5}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px;align-items:center}
+  .chips .who{font:800 10.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
+    color:var(--faint);margin-right:4px}
+  .chip{background:var(--card);border:1px solid var(--line);color:var(--dim);
+    border-radius:999px;padding:7px 15px;font:700 12px var(--font-b);cursor:pointer;
+    transition:all .22s var(--ease)}
+  .chip:hover{border-color:rgba(47,147,201,.5);color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--ink);border-color:transparent;color:#07131f}
+
+  /* A STAGE BLOCK. The colour is the rail down its left edge and the
+     badge on its number — never the body text, which stays ink. */
+  .stage{margin-bottom:22px;border-left:4px solid var(--c);padding-left:18px}
+  .stage.hide{display:none}
+  .stage > h2{margin:0;font-family:var(--font-d);font-size:19px;font-weight:800;letter-spacing:-.3px;
+    display:flex;align-items:center;gap:10px}
+  .stage > h2 .n{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;
+    background:var(--c);color:#05161f;font:800 13px var(--font-d);flex:none}
+  .stage > .when{font-size:12px;color:var(--faint);margin:5px 0 0 36px}
+
+  /* WHY THIS STAGE EXISTS — the finding out of the archive that the
+     stage is answering. Tinted with the stage colour so it reads as
+     part of the stage, with the text in ink. */
+  .why{margin:12px 0 14px;border-radius:12px;padding:11px 14px;font-size:12.5px;line-height:1.65;
+    color:var(--dim);background:color-mix(in srgb,var(--c) 12%,transparent);
+    border:1px solid color-mix(in srgb,var(--c) 38%,transparent)}
+  .why b{color:var(--ink)}
+  .why .tag{font:800 9.5px var(--font-b);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink);opacity:.8;display:block;margin-bottom:4px}
+
+  .roles{display:grid;grid-template-columns:repeat(auto-fit,minmax(252px,1fr));gap:12px}
+  .role{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+  .role.hide{display:none}
+  .role .rh{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .role .dot{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
+  .role .rn{font:800 10.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;color:var(--ink)}
+  .role ol{margin:0;padding-left:17px}
+  .role li{font-size:12.5px;line-height:1.6;color:var(--dim);margin-bottom:8px}
+  .role li:last-child{margin-bottom:0}
+  .role li b{color:var(--ink)}
+  .role li code{background:rgba(255,255,255,.08);border-radius:4px;padding:1px 5px;font-size:11.5px}
+
+  .foot{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--faint);line-height:1.7}
+  .foot b{color:var(--dim)}
+
+  @media (max-width:1000px){ .rail{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:620px){
+    header{padding:14px 16px 10px} header .back{margin-left:0}
+    main{padding:0 16px 40px}
+    .rail{grid-template-columns:1fr}
+    .stage{padding-left:13px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    body::before{display:none}
+    .rail,.chips,header .back{display:none}
+    .stage.hide,.role.hide{display:block !important}
+    .card,.role,.lede{border-color:#ccc;background:#fff}
+    .role li,.lede,.why{color:#333}
+    .stage > h2,.role .rn,.role li b{color:#000}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="/logo-mark.png" alt=""></div>
+  <div>
+    <h1>The Meeting Framework</h1>
+    <div class="sub">Ricky Rampersad Branch &middot; what each role does before, during and after a meeting &mdash; and until the actions close</div>
+  </div>
+  <a class="back" href="/meetings/template.html" style="margin-left:auto">The meeting template &rarr;</a>
+  <a class="back" href="/meetings/" style="margin-left:8px">&larr; The meeting app</a>
+</header>
+
+<main>
+
+  <p class="lede">
+    <b>Everybody who comes to a branch meeting holds a role, and every role has something to do at each of
+    four stages.</b> The stages are the meeting's own life in the app: a meeting is built, it runs, it is
+    recorded, and its actions are chased until they close. Nothing below is new policy invented for the sake
+    of a diagram &mdash; each stage answers something the branch's own meeting record from March to September
+    2026 shows going wrong, and the finding is printed beside it.
+  </p>
+
+  <div class="rail" id="rail">
+    <button class="st" data-stage="s1" aria-pressed="false" style="--c:var(--s1)">
+      <span class="n">1</span>
+      <div class="t">Before</div>
+      <div class="w">The meeting is built, not assembled in the room</div>
+    </button>
+    <button class="st" data-stage="s2" aria-pressed="false" style="--c:var(--s2)">
+      <span class="n">2</span>
+      <div class="t">During</div>
+      <div class="w">The hour itself, against a clock</div>
+    </button>
+    <button class="st" data-stage="s3" aria-pressed="false" style="--c:var(--s3)">
+      <span class="n">3</span>
+      <div class="t">After</div>
+      <div class="w">The record, within two working days</div>
+    </button>
+    <button class="st" data-stage="s4" aria-pressed="false" style="--c:var(--s4)">
+      <span class="n">4</span>
+      <div class="t">Follow-up</div>
+      <div class="w">Until every action is closed</div>
+    </button>
+  </div>
+
+  <div class="chips" id="chips">
+    <span class="who">Show me</span>
+    <button class="chip" data-role="all" aria-pressed="true">Everyone</button>
+    <button class="chip" data-role="chair" aria-pressed="false">Chair</button>
+    <button class="chip" data-role="presenter" aria-pressed="false">Presenter</button>
+    <button class="chip" data-role="admin" aria-pressed="false">Sales support &amp; admin</button>
+    <button class="chip" data-role="agent" aria-pressed="false">Agent</button>
+    <button class="chip" data-role="guest" aria-pressed="false">Guest</button>
+  </div>
+
+  <!-- ===================== 1 · BEFORE ===================== -->
+  <section class="stage" data-stage="s1" style="--c:var(--s1)">
+    <h2><span class="n">1</span> Before</h2>
+    <div class="when">From the chair opening the meeting in the app to the room sitting down.</div>
+
+    <div class="why">
+      <span class="tag">Why this stage exists</span>
+      The branch meeting ran <b>113 minutes on 7 August, 82 on 21 August and 54 on 11 September</b> against its
+      own stated target of 45. A meeting assembled in the room takes the room's time to assemble. Everything
+      here happens before anybody sits down.
+    </div>
+
+    <div class="roles">
+      <div class="role" data-role="chair">
+        <div class="rh"><span class="dot"></span><span class="rn">Chair</span></div>
+        <ol>
+          <li><b>Build the meeting in the app</b> &mdash; date, start, and the minutes allowed for each item. The agenda prints a clock against every item from those minutes.</li>
+          <li><b>Put the carried-forward actions on first.</b> Not new business. Last quarter's open items are what the room has not finished.</li>
+          <li><b>Name a presenter against every item.</b> An item with nobody's name on it is yours by default.</li>
+          <li><b>Set the materials-due date</b> on the meeting, and set who may see each item: everyone, staff, or chair only.</li>
+          <li><b>Publish it</b> &mdash; move it from <code>draft</code> to <code>scheduled</code>. Until you do, only staff can see it exists.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="presenter">
+        <div class="rh"><span class="dot"></span><span class="rn">Presenter</span></div>
+        <ol>
+          <li><b>Your item appears on your Prepare screen</b> the moment the chair assigns it. You do not need to be told.</li>
+          <li><b>Upload what you are presenting</b> before the materials-due date. An item marked <i>materials required</i> is not ready until a file is on it.</li>
+          <li><b>Mark it Ready.</b> The chair sees what is ready and what is not, so nobody has to chase you and you are never chased for something already in.</li>
+          <li><b>Say in one line what the item is for</b> &mdash; a decision, a report, or a training point. The room should know what it is being asked for.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="admin">
+        <div class="rh"><span class="dot"></span><span class="rn">Sales support &amp; admin</span></div>
+        <ol>
+          <li><b>One number per report, as at the Friday before.</b> Not a figure read live off a screen in the middle of the meeting.</li>
+          <li><b>Review each presenter's material</b> and mark it reviewed, so the chair knows it has been looked at by somebody other than its author.</li>
+          <li><b>Check the roster.</b> Everyone active needs an access code; without one they cannot sign in, and they will be marked absent for a reason that is not theirs.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="agent">
+        <div class="rh"><span class="dot"></span><span class="rn">Agent</span></div>
+        <ol>
+          <li><b>Read the agenda before you come.</b> It is on your phone from the moment it is published.</li>
+          <li><b>If you cannot come, log it</b> &mdash; sign in and pick the reason. Do it as soon as you know, not on the morning.</li>
+          <li><b>Bring your own numbers</b> for anything standing against your name.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="guest">
+        <div class="rh"><span class="dot"></span><span class="rn">Guest</span></div>
+        <ol>
+          <li><b>You are added to one meeting, not to the branch.</b> You see that meeting and nothing else.</li>
+          <li><b>You see the agenda and whatever is shared with the room.</b> Branch reports stay with staff.</li>
+          <li><b>Send anything you are presenting to the chair</b> and it goes on the agenda under your name.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 2 · DURING ===================== -->
+  <section class="stage" data-stage="s2" style="--c:var(--s2)">
+    <h2><span class="n">2</span> During</h2>
+    <div class="when">Check-in opens 30 minutes before the start and closes 90 minutes after it. Signing in after the start is recorded as late.</div>
+
+    <div class="why">
+      <span class="tag">Why this stage exists</span>
+      Attendance was raised at <b>four meetings running</b> and not one of them has a list the minutes stand
+      behind &mdash; 30 July recommends a sign-in sheet, 21 August could not confirm a list from the audio,
+      11 September records a significant decrease and sends the roll to a form the minutes do not carry.
+      The sign-in <i>is</i> the register now, so the question cannot come up again.
+    </div>
+
+    <div class="roles">
+      <div class="role" data-role="chair">
+        <div class="rh"><span class="dot"></span><span class="rn">Chair</span></div>
+        <ol>
+          <li><b>Start the session in the app.</b> The room follows the current item on their own screens.</li>
+          <li><b>Keep the clock.</b> Each item has its minutes; the app shows them running.</li>
+          <li><b>Every action gets an owner and a date before you move on.</b> Not "we will look at it".</li>
+          <li><b>Close the session when you finish.</b> That stamps the register and writes the absences &mdash; it is the one press that closes the roll.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="presenter">
+        <div class="rh"><span class="dot"></span><span class="rn">Presenter</span></div>
+        <ol>
+          <li><b>Present off the wall, not off a transcript.</b> Figures read from a screen the branch built do not need to be verified afterwards.</li>
+          <li><b>Your item is time-boxed</b> &mdash; the clock on the agenda is the time you have.</li>
+          <li><b>Log the decision your item produced</b>, not the discussion that got there.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="admin">
+        <div class="rh"><span class="dot"></span><span class="rn">Sales support &amp; admin</span></div>
+        <ol>
+          <li><b>Minute it as it goes</b>, in the app, under the branch's own sections.</li>
+          <li><b>Record every correction to the register</b> &mdash; who you marked present by hand, and why. A correction keeps your name on it.</li>
+          <li><b>Capture each action with an owner and a date</b> as it is agreed, not from memory afterwards.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="agent">
+        <div class="rh"><span class="dot"></span><span class="rn">Agent</span></div>
+        <ol>
+          <li><b>Sign in. That is the register.</b> If you do not sign in you are marked absent &mdash; there is nothing else to sign.</li>
+          <li><b>Make a contribution</b> &mdash; a point, a question, an answer, a concern or a commitment. It is logged against your name and it is what "attended" means.</li>
+          <li><b>Phones away.</b> Asked for on 21 August, and by the President on 30 July, who said disengagement in a meeting reads as disrespect to whoever is presenting.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="guest">
+        <div class="rh"><span class="dot"></span><span class="rn">Guest</span></div>
+        <ol>
+          <li><b>Sign in like everybody else.</b> You are counted present when you do, and never counted absent when you do not &mdash; you are not on the branch roll.</li>
+          <li><b>Contribute like anybody in the room.</b> Your points are logged under your name.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 3 · AFTER ===================== -->
+  <section class="stage" data-stage="s3" style="--c:var(--s3)">
+    <h2><span class="n">3</span> After</h2>
+    <div class="when">The record, published within two working days of the meeting.</div>
+
+    <div class="why">
+      <span class="tag">Why this stage exists</span>
+      Each of the last four sets of minutes <b>opens by disclaiming itself</b> &mdash; the audio was unclear,
+      the figures should be verified. And one meeting has been filed up to five times across two folders and
+      two accounts, so nobody can say which copy counts. One meeting, one record, one place.
+    </div>
+
+    <div class="roles">
+      <div class="role" data-role="chair">
+        <div class="rh"><span class="dot"></span><span class="rn">Chair</span></div>
+        <ol>
+          <li><b>Read the draft and publish it.</b> Until you publish, agents see no minutes at all.</li>
+          <li><b>Check every action has an owner and a date</b> before you publish. An action without both is not an action.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="presenter">
+        <div class="rh"><span class="dot"></span><span class="rn">Presenter</span></div>
+        <ol>
+          <li><b>Confirm your item was minuted the way you meant it.</b> You are the one who knows.</li>
+          <li><b>Your material stays attached to the item</b> &mdash; nobody has to go looking for the deck you showed.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="admin">
+        <div class="rh"><span class="dot"></span><span class="rn">Sales support &amp; admin</span></div>
+        <ol>
+          <li><b>Publish within two working days.</b> Minutes that arrive the week after are read by nobody.</li>
+          <li><b>Minute the decision, not the figure.</b> Figures belong on the wall, where they are live and do not need a verification note under them.</li>
+          <li><b>File nothing a second time.</b> The app is the record &mdash; there is no second copy to keep in step.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="agent">
+        <div class="rh"><span class="dot"></span><span class="rn">Agent</span></div>
+        <ol>
+          <li><b>Read the minutes</b> &mdash; they are on your phone as soon as they are published.</li>
+          <li><b>Check the actions that name you.</b> You see yours and the ones owned by all agents.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="guest">
+        <div class="rh"><span class="dot"></span><span class="rn">Guest</span></div>
+        <ol>
+          <li><b>You see the minutes of the meeting you attended</b>, once the chair publishes them, and only the parts shared with the room.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 · FOLLOW-UP ===================== -->
+  <section class="stage" data-stage="s4" style="--c:var(--s4)">
+    <h2><span class="n">4</span> Follow-up</h2>
+    <div class="when">From the minutes going out to the action being closed. This is the stage the branch has never had.</div>
+
+    <div class="why">
+      <span class="tag">Why this stage exists</span>
+      Across the last five meetings <b>46 action items were raised and one was marked complete</b> &mdash; and
+      that one was done inside the meeting it was raised in. Two of the five sets of minutes carry no status
+      column at all, so nothing could be closed even if it had been. This is a tracking failure, not an effort
+      failure, and it is the cheapest thing on this page to fix.
+    </div>
+
+    <div class="roles">
+      <div class="role" data-role="chair">
+        <div class="rh"><span class="dot"></span><span class="rn">Chair</span></div>
+        <ol>
+          <li><b>Carry every open action forward to the next meeting</b>, as its first item. The app carries them for you.</li>
+          <li><b>An action with no movement across two meetings is done, dead or blocked</b> &mdash; make it say which. Nothing stays "Open" by default.</li>
+          <li><b>Watch the standing threads.</b> Five of them were on the agenda every time the branch met from July to September: scripts and clawback, 75-day premium responses, licensing and CPD, contracts past the 10-day handling period, and fact find before recommendation.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="presenter">
+        <div class="rh"><span class="dot"></span><span class="rn">Presenter</span></div>
+        <ol>
+          <li><b>An action your item created is yours until it closes</b>, whether or not you present again.</li>
+          <li><b>Come back to the next meeting with what happened</b>, not with the plan to make it happen.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="admin">
+        <div class="rh"><span class="dot"></span><span class="rn">Sales support &amp; admin</span></div>
+        <ol>
+          <li><b>Every set of minutes carries a status column.</b> Not Started, Open, In Progress, Overdue, Standing, Complete.</li>
+          <li><b>Bring a closed list to each meeting</b> &mdash; what was finished since the last one, with the date each closed.</li>
+          <li><b>Flag anything overdue before the meeting</b>, so the room spends its time on why rather than on discovering it.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="agent">
+        <div class="rh"><span class="dot"></span><span class="rn">Agent</span></div>
+        <ol>
+          <li><b>Your actions are on your own screen.</b> You do not have to read the whole tracker to find them.</li>
+          <li><b>Move your own item</b> to In Progress or Complete. Nobody can do that for you.</li>
+          <li><b>If you are blocked, say so on the item</b> rather than letting it sit. A blocked action somebody knows about is not a late one.</li>
+        </ol>
+      </div>
+
+      <div class="role" data-role="guest">
+        <div class="rh"><span class="dot"></span><span class="rn">Guest</span></div>
+        <ol>
+          <li><b>An action against your name follows you</b> like anyone else's, and the chair will carry it forward until it closes.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">
+    <b>Where the findings come from.</b> The branch's own meeting record in Drive &mdash; 28 files covering
+    13 meeting dates, 16 March to 11 September 2026 &mdash; read alongside the meeting app's own settings.
+    Check-in windows, late thresholds, action statuses and the agenda sections above are the values the app
+    runs on, not suggestions. The two-working-day publishing target and the carried-forward-first rule are
+    this framework's proposals, and they are the chair's to set.
+    <br><br>
+    <b>Stage colours</b> were validated as a set for a dark surface rather than chosen by eye: all four sit
+    inside the OKLCH lightness band, the closest adjacent pair separates by &Delta;E 9.6 for a protan reader,
+    and every one clears 3:1 against the page. No stage is identified by colour alone &mdash; each is numbered
+    and named, so this page reads in greyscale and in print.
+  </p>
+
+</main>
+
+<script>
+/*  Two filters that compose: a stage and a role. Both default to
+    everything, because the page's first job is to be read straight
+    through at the launch. A second press on an active stage clears
+    it, so nobody gets stuck inside one stage with no way back. */
+(function(){
+  var rail = document.getElementById("rail");
+  var chips = document.getElementById("chips");
+  var stages = [].slice.call(document.querySelectorAll(".stage"));
+  var roles = [].slice.call(document.querySelectorAll(".role"));
+  var stage = null, role = "all";
+
+  function paint(){
+    stages.forEach(function(s){
+      s.classList.toggle("hide", !!stage && s.getAttribute("data-stage") !== stage);
+    });
+    roles.forEach(function(r){
+      r.classList.toggle("hide", role !== "all" && r.getAttribute("data-role") !== role);
+    });
+    [].forEach.call(rail.querySelectorAll(".st"), function(b){
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-stage") === stage));
+    });
+    [].forEach.call(chips.querySelectorAll(".chip"), function(b){
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-role") === role));
+    });
+  }
+
+  rail.addEventListener("click", function(e){
+    var b = e.target.closest(".st"); if (!b) return;
+    var s = b.getAttribute("data-stage");
+    stage = (stage === s) ? null : s;   // press again to see them all
+    paint();
+  });
+  chips.addEventListener("click", function(e){
+    var b = e.target.closest(".chip"); if (!b) return;
+    role = b.getAttribute("data-role");
+    paint();
+  });
+
+  /* /meetings/framework#presenter opens on that role, so the app can
+     link a presenter straight to their own part of it. */
+  var h = (location.hash || "").replace("#", "").toLowerCase();
+  if (h && chips.querySelector('[data-role="' + h + '"]')) role = h;
+  paint();
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>

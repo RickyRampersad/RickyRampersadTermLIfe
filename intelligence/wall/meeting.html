@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The First Meeting of the Year</title>
+<meta name="description" content="What carried into FY2027 from the branch meeting record, and how each person prepares for the first meeting of the new financial year.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<!-- Non-blocking webfont, as on every wall page: a plain stylesheet link holds
+     the screen blank until it answers, and branch wifi is exactly where that
+     happens. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  /* THIS WALL SCROLLS, AND THAT IS DELIBERATE. Every other wall page is
+     overflow:hidden because it is a live figure on a screen nobody touches.
+     This one is also read at a desk the day before the meeting, by somebody
+     working down their own prep list. The glance row is sized to land inside
+     one screen so it still works on the wall; everything below it is for the
+     person preparing.
+
+     Colours are the wall's own: blue #37b1ec is the accent, gold #f5b93b is
+     what is coming or what is broken, grey #5b7590 is de-emphasis. Every bar
+     is direct-labelled, so nothing rests on colour alone. */
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --blue:#37b1ec; --blue2:#0b7fd4; --gold:#f5b93b; --grey:#5b7590;
+    --good:#34d399; --red:#f0756a;
+    --grad:linear-gradient(120deg,#37b1ec,#0b7fd4);
+    --grad-gold:linear-gradient(120deg,#f5b93b,#e08b1e);
+    --r:16px; --ease:cubic-bezier(.16,1,.3,1);
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1200px 700px at 10% -8%,rgba(55,177,236,.20),transparent 60%),
+      radial-gradient(900px 600px at 94% 2%,rgba(11,127,212,.18),transparent 62%),
+      radial-gradient(800px 700px at 55% 108%,rgba(245,185,59,.09),transparent 60%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:16px 26px 12px;flex-wrap:wrap}
+  /* The branch mark, not an invented monogram. */
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:19px;font-weight:800;letter-spacing:-.4px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
+  header .when{margin-left:auto;text-align:right;font-size:11.5px;color:var(--faint);line-height:1.5}
+  header .when b{color:var(--gold);font-family:var(--font-d);font-weight:800;font-size:13px}
+
+  main{padding:0 26px 46px;max-width:1500px;margin:0 auto}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px}
+  .card h3{margin:0 0 3px;font:800 11px var(--font-b);letter-spacing:.14em;
+    text-transform:uppercase;color:var(--gold)}
+  .cap{font-size:11.5px;color:var(--faint);margin:0 0 12px;line-height:1.5}
+
+  /* THE GLANCE ROW — four numbers the room should not have to be told twice. */
+  .glance{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:15px 17px}
+  .tile .v{font-family:var(--font-d);font-weight:800;font-size:clamp(34px,4.4vw,54px);line-height:.92;
+    letter-spacing:-2.4px;background:var(--grad-gold);-webkit-background-clip:text;
+    background-clip:text;color:transparent}
+  .tile .v.blue{background:var(--grad);-webkit-background-clip:text;background-clip:text}
+  .tile .k{font:800 10.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
+    color:var(--gold);margin-top:9px}
+  .tile .k.blue{color:var(--blue)}
+  .tile .d{font-size:11.5px;color:var(--faint);margin-top:5px;line-height:1.5}
+
+  .row{display:grid;gap:14px;margin-bottom:14px}
+  .row.two{grid-template-columns:1.45fr 1fr}
+  .row.three{grid-template-columns:repeat(3,1fr)}
+
+  /* THE CARRIED-OVER TABLE. One row per thread the meetings keep returning to,
+     with the last number the record carries and how many meetings it has run.
+     Sorted by how long it has been running, because that is the argument. */
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  thead th{text-align:left;font:800 10px var(--font-b);letter-spacing:.12em;text-transform:uppercase;
+    color:var(--faint);padding:0 8px 7px;border-bottom:1px solid var(--line);white-space:nowrap}
+  thead th.num{text-align:right}
+  tbody td{padding:9px 8px;border-bottom:1px solid rgba(255,255,255,.055);vertical-align:top;line-height:1.45}
+  tbody tr:last-child td{border-bottom:0}
+  td.thread{color:var(--ink);font-weight:600}
+  td.thread small{display:block;color:var(--faint);font-weight:400;font-size:11px;margin-top:2px;line-height:1.45}
+  td.fig{text-align:right;font-family:var(--font-d);font-weight:800;font-size:15px;
+    font-variant-numeric:tabular-nums;white-space:nowrap}
+  td.fig small{display:block;font-family:var(--font-b);font-weight:400;font-size:10.5px;
+    color:var(--faint);margin-top:2px}
+  td.runs{text-align:right;white-space:nowrap}
+  .pips{display:inline-flex;gap:3px;vertical-align:middle}
+  .pip{width:7px;height:7px;border-radius:2px;background:var(--grey);opacity:.45}
+  .pip.on{background:var(--gold);opacity:1}
+  .runs b{font-family:var(--font-d);font-weight:800;font-size:13px;margin-left:7px;
+    font-variant-numeric:tabular-nums;color:var(--gold)}
+
+  /* BAR STRIPS. Two of them: lapses by month, and how long the meeting ran. */
+  .strip{display:grid;gap:8px;align-items:end;height:148px;margin-top:4px}
+  .bcol{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+  .bcol .n{flex:none;font:800 13px var(--font-d);font-variant-numeric:tabular-nums;line-height:1;margin-bottom:5px}
+  .bcol .box{flex:1 1 auto;min-height:0;width:100%;display:flex;align-items:flex-end}
+  .bcol .bar{width:100%;border-radius:4px 4px 2px 2px;background:var(--grad-gold);min-height:2px}
+  .bcol .bar.blue{background:var(--grad)}
+  .bcol .bar.grey{background:var(--grey);opacity:.55}
+  .bcol .lab{flex:none;font-size:10.5px;color:var(--faint);margin-top:6px;text-align:center;line-height:1.3}
+  .note{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--faint);line-height:1.55}
+  .note b{color:var(--dim)}
+
+  .warn{background:rgba(245,185,59,.1);border:1px solid rgba(245,185,59,.34);
+    border-radius:12px;padding:11px 13px;font-size:12px;color:var(--dim);line-height:1.55;margin-top:12px}
+  .warn b{color:var(--gold)}
+
+  ul.plain{margin:0;padding:0;list-style:none}
+  ul.plain li{padding:8px 0;border-bottom:1px solid rgba(255,255,255,.055);
+    font-size:12.5px;line-height:1.5;color:var(--dim)}
+  ul.plain li:last-child{border-bottom:0}
+  ul.plain li b{color:var(--ink)}
+  ul.plain li .tag{display:inline-block;font:800 9.5px var(--font-b);letter-spacing:.1em;
+    text-transform:uppercase;color:var(--gold);margin-right:7px;vertical-align:1px}
+
+  /* HOW TO PREPARE. Role chips filter the list, because nobody needs to read
+     four people's homework to find their own — but every row is in the DOM, so
+     "all" is one tap away and the wall can simply show everything. */
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+  .chip{background:var(--card);border:1px solid var(--line);color:var(--dim);
+    border-radius:999px;padding:7px 15px;font:700 12px var(--font-b);cursor:pointer;
+    transition:all .25s var(--ease)}
+  .chip:hover{border-color:rgba(55,177,236,.5);color:var(--ink)}
+  .chip[aria-pressed="true"]{background:var(--grad);border-color:transparent;color:#032033}
+  .prep{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .prep .card{display:flex;flex-direction:column}
+  .prep .card.hide{display:none}
+  .prep ol{margin:0;padding-left:18px}
+  .prep ol li{font-size:12.5px;line-height:1.55;color:var(--dim);margin-bottom:9px}
+  .prep ol li:last-child{margin-bottom:0}
+  .prep ol li b{color:var(--ink)}
+  .prep .who{font:800 10.5px var(--font-b);letter-spacing:.13em;text-transform:uppercase;
+    color:var(--blue);margin-bottom:9px}
+
+  .foot{margin-top:22px;font-size:11px;color:var(--faint);line-height:1.6;text-align:center}
+  .foot b{color:var(--dim)}
+
+  @media (max-width:1180px){
+    .glance{grid-template-columns:repeat(2,1fr)}
+    .row.two,.row.three{grid-template-columns:1fr}
+    .prep{grid-template-columns:repeat(2,1fr)}
+  }
+  @media (max-width:680px){
+    header{padding:14px 16px 10px}
+    header .when{margin-left:0;text-align:left;width:100%}
+    main{padding:0 16px 40px}
+    .glance,.prep{grid-template-columns:1fr}
+    table{font-size:12px}
+    thead th:nth-child(3),tbody td:nth-child(3){display:none}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="../../logo-mark.png" alt=""></div>
+  <div>
+    <h1>The First Meeting of the Year</h1>
+    <div class="sub">Ricky Rampersad Branch &middot; read from 28 meeting files covering 13 meeting dates, March&ndash;September 2026</div>
+  </div>
+  <div class="when">
+    Financial year <b>FY2027</b> opened 1 October 2026<br>
+    Last meeting on file: 11 September 2026
+  </div>
+</header>
+
+<main>
+
+  <!-- THE GLANCE ROW -->
+  <section class="glance">
+    <div class="tile">
+      <div class="v">5</div>
+      <div class="k">Weeks between meetings</div>
+      <div class="d">11 September to next week&rsquo;s session. The financial year ended inside that gap. The last one like it was nine weeks, 6 May to 8 July.</div>
+    </div>
+    <div class="tile">
+      <div class="v">46 &rarr; 1</div>
+      <div class="k">Actions raised, actions closed</div>
+      <div class="d">Across the last five meetings. The one closed item was done inside the meeting it was raised in.</div>
+    </div>
+    <div class="tile">
+      <div class="v">0</div>
+      <div class="k">Verified attendance lists</div>
+      <div class="d">Four meetings running have flagged attendance. Not one has a list the minutes stand behind.</div>
+    </div>
+    <div class="tile">
+      <div class="v blue">54<span style="font-size:.42em;letter-spacing:0"> min</span></div>
+      <div class="k blue">Length of the last meeting</div>
+      <div class="d">Down from 113 minutes on 7 August and 82 on 21 August. Halved in five weeks.</div>
+    </div>
+  </section>
+
+  <!-- WHAT CARRIED OVER -->
+  <section class="row two">
+    <div class="card">
+      <h3>What carried into the new year</h3>
+      <p class="cap">Every thread below was raised in more than one meeting and was still open when the financial year closed. The figure is the last one the minutes record; the pips are the meetings it has run through, July to September.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Thread</th>
+            <th class="num">Last figure on record</th>
+            <th class="num">Meetings running</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="thread">Contracts past the branch&rsquo;s own 10-day handling period
+              <small>133 of them beyond 90 days; 40 sitting with agents, undelivered; 26 dispatched and not on file</small></td>
+            <td class="fig">253<small>11 Sep</small></td>
+            <td class="runs"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i></span><b>3</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Scripts outstanding and subject to clawback
+              <small>AS400 not updated by the Scanning Team is the usual cause, not a missing script</small></td>
+            <td class="fig">83<small>7 Aug &middot; 91 on 30 Jul</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i></span><b>4</b></td>
+          </tr>
+          <tr>
+            <td class="thread">75-day premium-due responses outstanding
+              <small>Pipelines stay halted until the agent answers; manager contact is mandatory even if the client has paid</small></td>
+            <td class="fig">23<small>30 Jul &middot; up 5 on the week</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i></span><b>4</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Licence renewals and CPD pending submission
+              <small>Renewals fall due September through December; November and December submissions are the ones that run late</small></td>
+            <td class="fig">11<small>22 Jul &middot; agents</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i></span><b>5</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Lapses, year to date
+              <small>240 policies on 22 July, 254 eight days later &mdash; fourteen more policies in eight days</small></td>
+            <td class="fig">254<small>30 Jul &middot; ~TT$1.75m</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></span><b>2</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Applications keyed with no premium received
+              <small>Cases at 75 days and beyond were flagged; the branch rule closes them past 10 days</small></td>
+            <td class="fig">37<small>30 Jul</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i><i class="pip"></i></span><b>3</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Digital fact-find quality score
+              <small>Target is 100%; required fields still being left incomplete</small></td>
+            <td class="fig">68%<small>7 Aug</small></td>
+            <td class="runs"><span class="pips"><i class="pip"></i><i class="pip"></i><i class="pip on"></i><i class="pip on"></i><i class="pip"></i></span><b>2</b></td>
+          </tr>
+          <tr>
+            <td class="thread">Fact find must precede the recommendation
+              <small>Insurance Act and Market Conduct, not a process preference. Raised in every meeting on file since July</small></td>
+            <td class="fig">&mdash;<small>standing</small></td>
+            <td class="runs"><span class="pips"><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i><i class="pip on"></i></span><b>5</b></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="warn"><b>Read the right-hand column first.</b> Nothing here is new business. Five of these eight have been on the agenda every time the branch has met since July, and the two that carry a week-on-week movement &mdash; 75-day pendings and lapses &mdash; both moved the wrong way.</div>
+    </div>
+
+    <div>
+      <div class="card" style="margin-bottom:14px">
+        <h3>Lapses by month, 2026</h3>
+        <p class="cap">The conservation position the branch set against CSM. June was the worst month of the year on the record available.</p>
+        <div class="strip" style="grid-template-columns:repeat(6,1fr)">
+          <div class="bcol"><div class="n">40</div><div class="box"><div class="bar" style="height:73%"></div></div><div class="lab">Jan</div></div>
+          <div class="bcol"><div class="n">26</div><div class="box"><div class="bar" style="height:47%"></div></div><div class="lab">Feb</div></div>
+          <div class="bcol"><div class="n">23</div><div class="box"><div class="bar" style="height:42%"></div></div><div class="lab">Mar</div></div>
+          <div class="bcol"><div class="n">38</div><div class="box"><div class="bar" style="height:69%"></div></div><div class="lab">Apr</div></div>
+          <div class="bcol"><div class="n">34</div><div class="box"><div class="bar" style="height:62%"></div></div><div class="lab">May</div></div>
+          <div class="bcol"><div class="n">55</div><div class="box"><div class="bar" style="height:100%"></div></div><div class="lab">Jun</div></div>
+        </div>
+        <div class="note"><b>July onwards is not on this strip</b> because no meeting since has reported the month. That is itself worth a question: the branch stopped reporting the number it said drives profitability.</div>
+      </div>
+
+      <div class="card">
+        <h3>How long the meeting ran</h3>
+        <p class="cap">Minutes, from the recording duration in each set of minutes.</p>
+        <div class="strip" style="grid-template-columns:repeat(4,1fr);height:116px">
+          <div class="bcol"><div class="n">75</div><div class="box"><div class="bar blue" style="height:66%"></div></div><div class="lab">22 Jul</div></div>
+          <div class="bcol"><div class="n">113</div><div class="box"><div class="bar blue" style="height:100%"></div></div><div class="lab">7 Aug</div></div>
+          <div class="bcol"><div class="n">82</div><div class="box"><div class="bar blue" style="height:73%"></div></div><div class="lab">21 Aug</div></div>
+          <div class="bcol"><div class="n">54</div><div class="box"><div class="bar" style="height:48%"></div></div><div class="lab">11 Sep</div></div>
+        </div>
+        <div class="note">The branch&rsquo;s own target, stated on 21 August, is <b>45 minutes</b> with phones away. The meeting is now close to it &mdash; but it arrived there as attendance fell, not by cutting the agenda.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHERE THE RECORD BREAKS -->
+  <section class="row three">
+    <div class="card">
+      <h3>Attendance is not recorded anywhere</h3>
+      <p class="cap">Four meetings running, in the minutes&rsquo; own words.</p>
+      <ul class="plain">
+        <li><span class="tag">22 Jul</span>Two agents named absent &mdash; the only meeting with a usable list, and it lists only who was missing.</li>
+        <li><span class="tag">30 Jul</span><b>&ldquo;Turnout was smaller than usual.&rdquo;</b> The minutes recommend a physical sign-in sheet so late arrivals can be captured.</li>
+        <li><span class="tag">21 Aug</span><b>&ldquo;A complete attendee list could not be confirmed from the audio.&rdquo;</b> Five names recorded as not logged.</li>
+        <li><span class="tag">11 Sep</span><b>&ldquo;Significant decrease in attendance.&rdquo;</b> Contractual obligation restated. Attendance pushed to a JotForm report that the minutes do not carry.</li>
+      </ul>
+      <div class="warn">The branch has been raising attendance for two months without ever being able to say who was in the room. <b>A login that is the register closes this on the first meeting it is used.</b></div>
+    </div>
+
+    <div class="card">
+      <h3>Every set of minutes disclaims itself</h3>
+      <p class="cap">Each of the last four carries a verification note before the first agenda item.</p>
+      <ul class="plain">
+        <li><b>11 Sep</b> &mdash; &ldquo;Portions of the source audio were unclear or garbled &hellip; names and figures should be verified.&rdquo;</li>
+        <li><b>21 Aug</b> &mdash; &ldquo;Should be verified before wider circulation.&rdquo;</li>
+        <li><b>7 Aug</b> &mdash; &ldquo;Best-available interpretations.&rdquo;</li>
+        <li><b>30 Jul</b> &mdash; &ldquo;The recording does not capture specific names or arrival times.&rdquo;</li>
+      </ul>
+      <div class="note">Decisions are being taken from a record the branch has written down that it does not trust. Numbers read off the wall instead of off a transcript do not need that disclaimer &mdash; which is an argument for presenting from the wall and minuting the decision, not the figure.</div>
+    </div>
+
+    <div class="card">
+      <h3>One meeting, filed up to five times</h3>
+      <p class="cap">28 files, 13 meeting dates, two Drive folders, two Google accounts.</p>
+      <ul class="plain">
+        <li><b>22 April</b> &mdash; five files: a FINAL, a DEEP DIVE, an agenda and two numbered copies.</li>
+        <li><b>21 August</b> &mdash; three files, in both folders, under both accounts.</li>
+        <li><b>6 May &middot; 29 April</b> &mdash; three files each.</li>
+        <li><b>Action status</b> &mdash; two of the last five meetings carried no status column at all, so nothing could be marked closed even if it had been.</li>
+      </ul>
+      <div class="note">Nobody can say which copy is the one that counts. <b>One meeting, one record, one place</b> is the whole reason the meeting app exists &mdash; and next week is the first meeting that can start that way.</div>
+    </div>
+  </section>
+
+  <!-- HOW TO PREPARE -->
+  <section class="card">
+    <h3>How to prepare for next week</h3>
+    <p class="cap">Everything below is drawn from an item that is still open in the record. Bring the answer, not the plan to answer. Tap a role to show only that list.</p>
+    <div class="chips" id="chips">
+      <button class="chip" data-role="all" aria-pressed="true">Everyone</button>
+      <button class="chip" data-role="agent" aria-pressed="false">Agents</button>
+      <button class="chip" data-role="unit" aria-pressed="false">Unit managers</button>
+      <button class="chip" data-role="admin" aria-pressed="false">Sales support &amp; admin</button>
+      <button class="chip" data-role="chair" aria-pressed="false">The chair</button>
+    </div>
+    <div class="prep" id="prep">
+      <div class="card" data-role="agent">
+        <div class="who">Every agent</div>
+        <ol>
+          <li><b>Log in to the meeting page.</b> Your login is the attendance register now &mdash; there is no separate sheet to sign.</li>
+          <li><b>Your 75-day responses, submitted.</b> Your portal pipeline stays halted until they are in, and the branch total went up, not down, the last time it was counted.</li>
+          <li><b>Your outstanding scripts, cleared or queried.</b> If one is not on the report, confirm with Sales Support before escalating &mdash; it usually means AS400 has not been updated.</li>
+          <li><b>Contracts out of your hands.</b> 40 were sitting with agents on 11 September. Bring the count you still hold and the date each goes out.</li>
+          <li><b>Your licence renewal documents in</b>, if yours falls between now and December.</li>
+          <li><b>Your own fact-find count and quality score</b>, against the branch benchmark. The branch score was 68% against a target of 100%.</li>
+        </ol>
+      </div>
+      <div class="card" data-role="unit">
+        <div class="who">Unit managers</div>
+        <ol>
+          <li><b>Your 75-day manager responses.</b> Thirteen were outstanding across managers on 7 August. The client contact is mandatory even where the client has already paid.</li>
+          <li><b>Your fact-find approval queue, cleared.</b> After three days the client is told automatically that it is still waiting on you.</li>
+          <li><b>Your red-zone five-year persistency agents</b> &mdash; with what has been done since August, not what is planned. One agent disputed their banding on 21 August and the recheck is still open.</li>
+          <li><b>Your unit&rsquo;s lapse count for July, August and September.</b> No meeting since July has reported the monthly number.</li>
+        </ol>
+      </div>
+      <div class="card" data-role="admin">
+        <div class="who">Sales support &amp; admin</div>
+        <ol>
+          <li><b>One number per report, as at the Friday before.</b> Not a figure read live off a screen mid-meeting.</li>
+          <li><b>A closed column.</b> Which items from 11 September are done, with the date each closed. Two of the last five meetings had no status column at all.</li>
+          <li><b>The Salesforce contract-received refresh</b> &mdash; open since 11 September, and the reason a contract can read outstanding when it is not.</li>
+          <li><b>The fact-find signing and PDF routing fault</b>, raised on 11 September and still unresolved.</li>
+          <li><b>MPOS devices</b> &mdash; how many are still out, by name.</li>
+        </ol>
+      </div>
+      <div class="card" data-role="chair">
+        <div class="who">The chair</div>
+        <ol>
+          <li><b>Open on closing FY2026, not on new business.</b> Eight threads crossed the year end; the room has not met since they did.</li>
+          <li><b>One owner and one date on every action</b>, and a status column on every set of minutes from here. 46 raised and 1 closed is a tracking failure, not an effort failure.</li>
+          <li><b>Say what the 25% quota reduction means now the year has turned</b> &mdash; whether it carries into FY2027 or lapses with FY2026.</li>
+          <li><b>Set the cadence in the room.</b> Two gaps this year, nine weeks and five weeks, and the week numbering hides them: W20 to W22 is labelled two weeks and is twelve.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">
+    Built from the branch meeting record in Drive &mdash; <b>28 files, 13 meeting dates, 16 March to 11 September 2026</b>.
+    Figures are the last ones each set of minutes carries; the minutes themselves note that auto-transcribed figures should be
+    verified against the wall where precision matters. No client information appears on this page.
+  </p>
+
+</main>
+
+<script>
+(function(){
+  var chips = document.getElementById('chips');
+  var cards = Array.prototype.slice.call(document.querySelectorAll('#prep > .card'));
+  if (!chips || !cards.length) return;
+  chips.addEventListener('click', function(e){
+    var btn = e.target.closest('.chip');
+    if (!btn) return;
+    var role = btn.getAttribute('data-role');
+    Array.prototype.forEach.call(chips.querySelectorAll('.chip'), function(c){
+      c.setAttribute('aria-pressed', String(c === btn));
+    });
+    cards.forEach(function(card){
+      var show = (role === 'all') || (card.getAttribute('data-role') === role);
+      card.classList.toggle('hide', !show);
+    });
+  });
+})();
+</script>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
