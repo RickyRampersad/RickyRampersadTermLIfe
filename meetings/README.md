@@ -212,14 +212,25 @@ template and the framework page.
 
 | Film | Source page | MP4 | Length |
 |---|---|---|---|
+| Inside Wednesday | `wednesday-film.html` | `rrb-inside-wednesday.mp4` | 2:39 |
 | How a week becomes a meeting | `builder-film.html` | `rrb-meeting-builder.mp4` | 2:12 |
 | What you do | `meeting-film.html` | `rrb-meeting-walkthrough.mp4` | 1:33 |
 
-The first is the Meeting Builder itself: the two daily checks, the 7am
+**Inside Wednesday is the one that shows the meeting running.** The builder film
+answers *where did this agenda come from*; it names who holds each slot but not
+what is in it, which is a different question and was the gap. This one runs the
+clock from 8:30 to 10:30 across the top of every scene and shows the screen at
+each slot: the three carried-forward actions with two closed and one slipped
+twice, the pipeline figures with the oldest application named, an agent saying
+he is waiting on an underwriter and that becoming an action before he finishes,
+the premium-owed question put to the room and somebody taking it, Neil's case in
+his own words, a point raised on the open floor turning into a dated action, the
+twenty-one names, the actions read back, and the minutes already written.
+
+The second is the Meeting Builder itself: the two daily checks, the 7am
 Salesforce read, what sales support files, and how those become an agenda with
-a name against every item — then Wednesday, role by role, ending on the round
-where everybody names a client. The second is the short one for an agent who
-only needs to know how to sign in and what their own slot is for.
+a name against every item. The third is the short one for an agent who only
+needs to know how to sign in and what their own slot is for.
 
 **Every figure in the builder film is illustrative and the film says so** — a
 gold *Sample figures* badge sits on every data scene. The MP4s are at public
@@ -238,11 +249,16 @@ goes anywhere public, establish what the track is licensed for; if it will not
 clear, rebuild the bed from the Kevin MacLeod track with
 `python3 usetrack.py audio/inspired-kevin-macleod.mp3` and re-run `mixany.py`.
 
-A 28-second bed under a 132-second film loops about five times. `usetrack.py`
+**`usetrack.py` names the bed after the films.json KEY, not the `music` field** —
+key `wednesday` writes `bed-wednesday.wav`, so a config saying `bed-wed.wav`
+fails to find it. Name them to match.
+
+A 28-second bed under a 132-second film loops about five times, and about six
+under the 159-second one. `usetrack.py`
 crossfades each lap at 1.2s, but it is audible; a longer cue would sit better.
 
-Both source pages are recorded rather than served. Build config is the
-`meetingwalk` and `builder` entries in `tools/film/films.json`; the pipeline and
+All three source pages are recorded rather than served. Build config is the
+`meetingwalk`, `builder` and `wednesday` entries in `tools/film/films.json`; the pipeline and
 its traps are in the root `CLAUDE.md`.
 
 **A caption reads back whatever was fed to the voice.** The BME line was
