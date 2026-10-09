@@ -713,7 +713,13 @@ function drawTabs() {
   }).join("") +
     '<a class="tab" href="/meetings/framework.html#' + esc(role) + '">How a meeting runs</a>' +
     '<a class="tab" href="/meetings/template.html">The template</a>' +
-    '<a class="tab" href="/meetings/walkthrough.html">Watch the walkthrough</a>';
+    '<a class="tab" href="/meetings/walkthrough.html">Watch the walkthrough</a>' +
+    /*  The branch's own walls, in the nav rather than in somebody's memory.
+     *  Both take the SAME agent number and access code as this app, so a
+     *  person who is signed in here is one tap from the board their numbers
+     *  are actually on. */
+    '<a class="tab" href="https://factfind360.com/wall" target="_blank" rel="noopener">The Fact Find wall &#8599;</a>' +
+    '<a class="tab" href="https://factfind360.com/goals" target="_blank" rel="noopener">My FY27 flight plan &#8599;</a>';
   Array.prototype.forEach.call($("tabs").querySelectorAll("[data-tab]"), function (b) {
     b.onclick = function () { go(b.getAttribute("data-tab")); };
   });

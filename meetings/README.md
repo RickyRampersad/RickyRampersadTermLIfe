@@ -291,6 +291,46 @@ walkthrough. Never the Multilingual variant.
 `SSL_CERT_FILE`; appending `/root/.ccr/ca-bundle.crt` to `certifi/cacert.pem`
 fixes it. The WebSocket itself goes through fine.
 
+## Fact Find 360 is the branch's production wall — the meeting reads it
+
+`fact-find-analyzer` on Netlify, at factfind360.com. It is not in this
+repository and it is a long way from a prototype: `wall.html` alone is 534 KB.
+**It signs in with the same agent number and access code as the meeting app**,
+so anybody signed in here is one tap from the board their own numbers are on.
+
+| | |
+|---|---|
+| `factfind360.com/wall` | The branch wall |
+| `factfind360.com/goals` | The FY27 Flight Plan |
+| `factfind360.com/ffproject` | Every fact find and its state (**lowercase** — see the root `CLAUDE.md`) |
+| `factfind360.com/insights` | |
+| `factfind360.com/leads` | |
+
+All six were 200 and byte-identical to the repository when checked on 9 October
+2026, so unlike donthaveanagent.com the live site is current.
+
+**What the wall carries**, and therefore what the meeting must stop rebuilding:
+protection identified this month, cover recommended and monthly premium month to
+date, a weekly advisor leaderboard, momentum over fourteen days, the review queue
+with the oldest case and anything past the three-day standard, **how managers are
+managing** — median days from submitted to decided, approved against sent back —
+the producer board by week, month and year across need found, cover recommended,
+cover sold, API recommended and API picked up, working rhythm by day, persistency
+at two, three and five years, and **each advisor's client star rating**, averaged
+from ratings collected on every draft and banded at 4.5 and 4.0.
+
+**`goals.html` is the FY27 Flight Plan** — 1 October 2026 to 30 September 2027,
+the same financial year this meeting runs on. Seven stages, about fifteen
+minutes: what the year costs, the API that pays for it, how the person will
+work. The API goal then sits on the branch wall against their progress, and
+there is already a Friday check-in behind it. It cites Locke and Latham (2002)
+and Harkin (2016) for why it is written down.
+
+So: the 9:10 pipeline slot is **read off the Fact Find wall**, week 1 of the
+rotating slot is the producer board, and week 4 is the Flight Plan. The wall and
+the plan are both in the app's nav, because a board nobody opens is a board
+nobody built.
+
 ## What the branch already had, and what this duplicated
 
 Worth reading before adding anything else here. The Meeting Builder was built as
