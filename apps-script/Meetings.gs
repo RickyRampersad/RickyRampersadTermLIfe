@@ -131,7 +131,23 @@ var MEET = {
   TAB_CONTRIB:    'Contributions',
   TAB_TOPICS:     'Topics',
   TAB_ROTA:       'Rota',
+  TAB_KPI:        'KPI',
   TAB_LOG:        'Log',
+
+  /*  THE BRANCH MEETS ON A WEDNESDAY MORNING. 0 is Sunday, so 3 is
+   *  Wednesday. The daily note counts down to the next one and changes
+   *  what it asks for as the day gets closer. */
+  MEETING_DAY: 3,
+  MEETING_TIME: '9:00 AM',
+
+  /*  Materials are due the evening before, which is the only deadline
+   *  that has ever worked: a deadline on the morning of a meeting is a
+   *  deadline nobody can act on once they have missed it. */
+  MATERIALS_DUE_DAYS_BEFORE: 1,
+
+  /*  The daily note goes out on working mornings only. A note on a
+   *  Saturday is a note that teaches people to ignore the notes. */
+  NOTE_HOUR: 7,
 
   /* An audio clip recorded in the app. Apps Script has to hold the whole
      thing in memory as base64, so this is deliberately short: it is for a
@@ -336,6 +352,20 @@ var SCHEMA = {
    *  report was "presented on her behalf" because its owner was away
    *  and nobody else held it; naming a backup is how that stops being
    *  a surprise on the day.                                          */
+  /*  ONE ROW PER PERSON PER MEASURE. Deliberately long and thin rather
+   *  than a column per KPI, because the branch's measures change — the
+   *  minutes from July to September alone talk about fact finds,
+   *  persistency, scripts, contracts, 75-day responses and licensing —
+   *  and a shape that needs a new column every time one changes is a
+   *  shape nobody maintains.
+   *
+   *  Filled from wherever the branch already has the number: a paste, an
+   *  IMPORTRANGE, or a Salesforce pull. The daily note reads whatever is
+   *  here and says nothing when a person has no rows, rather than
+   *  inventing a figure to fill a space.                               */
+  KPI: ['Agent No', 'Email', 'Name', 'Measure', 'Value', 'Target', 'Unit',
+        'Direction', 'As Of', 'Note', 'Active'],
+
   Rota: ['Order', 'Section', 'Item', 'Detail', 'Minutes', 'Visibility',
          'Cadence', 'Owner', 'Owner Email', 'Backup', 'Backup Email', 'Active', 'Notes'],
 
@@ -1823,6 +1853,336 @@ function apiReorderAgenda_(body) {
 
 /** Copy the standing agenda the branch runs every week, so building
  *  next week's meeting is a matter of filling in, not typing out. */
+/* ==================== the daily note ==================== */
+/*
+ *  WHAT THIS IS, AND WHAT IT DELIBERATELY IS NOT.
+ *
+ *  The branch meets on a Wednesday morning. This sends each person one
+ *  short note on each working morning that counts down to it and asks
+ *  for the one thing only they can bring. By Wednesday the meeting has
+ *  been built by everybody rather than assembled by the chair on the
+ *  night before.
+ *
+ *  IT IS NOT A DAILY PRODUCTION CHASE, and that is a design decision
+ *  taken against the evidence rather than a preference. Chung,
+ *  Narayandas and Chang (Management Science, 2021) ran daily against
+ *  monthly quotas in a field experiment: daily quotas lifted the bottom
+ *  quartile 11.7%, and pushed the top performers toward low-ticket
+ *  business so their sales fell 8.1% and firm profit with it. A daily
+ *  number shouted at a room of agents makes the weakest a little better
+ *  and the strongest worse. The common practitioner rule — operational
+ *  measures daily, strategic ones weekly — points the same way.
+ *
+ *  So the daily note carries what a person CONTROLS THAT DAY: their
+ *  item for Wednesday, whether their material is in, their open
+ *  actions, and their own measures with no league table and nobody
+ *  else's figures. The strategy argument happens once a week, in the
+ *  room, which is what the meeting is for.
+ *
+ *  Every note ends with the same ask, because "all have to contribute"
+ *  has to be something a person can do in ten seconds from a phone.
+ */
+
+function nextMeetingDay_(from) {
+  var d = new Date(from || new Date());
+  d.setHours(0, 0, 0, 0);
+  var delta = (MEET.MEETING_DAY - d.getDay() + 7) % 7;
+  d.setDate(d.getDate() + delta);
+  return d;
+}
+
+/** The meeting the notes are counting down to: the next one scheduled,
+ *  or the next meeting day if none has been built yet. */
+function upcomingMeeting_(from) {
+  var now = from || new Date();
+  var soon = meetingRows_().filter(function (m) {
+    var st = low_(m['Status']);
+    if (st === 'cancelled' || st === 'closed') return false;
+    var d = asDate_(m['Date']);
+    return d && d.getTime() >= new Date(now).setHours(0, 0, 0, 0);
+  }).sort(function (a, b) {
+    return asDate_(a['Date']).getTime() - asDate_(b['Date']).getTime();
+  });
+  return soon[0] || null;
+}
+
+function workingDaysBetween_(a, b) {
+  var d = new Date(a); d.setHours(0,0,0,0);
+  var end = new Date(b); end.setHours(0,0,0,0);
+  var n = 0;
+  while (d.getTime() < end.getTime()) {
+    d.setDate(d.getDate() + 1);
+    var w = d.getDay();
+    if (w !== 0 && w !== 6) n++;
+  }
+  return n;
+}
+
+function kpiRowsFor_(person) {
+  var no = normNo_(person.agentNo);
+  return readTab_(MEET.TAB_KPI).filter(function (r) {
+    if (!yes_(r['Active'])) return false;
+    if (!str_(r['Measure'])) return false;
+    if (person.email && low_(r['Email']) === person.email) return true;
+    return !!no && normNo_(r['Agent No']) === no;
+  }).map(function (r) {
+    var v = num_(r['Value']), t = num_(r['Target']);
+    var dir = low_(r['Direction']) || 'up';   // 'up' = higher is better
+    var meets = !str_(r['Target']) ? null : (dir === 'down' ? v <= t : v >= t);
+    return {
+      measure: str_(r['Measure']), value: str_(r['Value']), target: str_(r['Target']),
+      unit: str_(r['Unit']), note: str_(r['Note']), asOf: fmtDate_(r['As Of']),
+      meets: meets
+    };
+  });
+}
+
+/*  THE NOTE, BUILT NOT SENT. Kept pure so what a person actually
+ *  receives can be checked without a mailbox, and so the wording can
+ *  be argued about without anybody being e-mailed. */
+function dailyNoteFor_(person, ctx) {
+  var m = ctx.meeting;
+  var days = ctx.daysToMeeting;
+  var when = days === 0 ? 'this morning'
+           : days === 1 ? 'tomorrow'
+           : 'in ' + days + ' days';
+
+  var lines = [], must = [], subjectBits = [];
+
+  // 1. Your item on Wednesday.
+  (ctx.myItems || []).forEach(function (it) {
+    if (it.required && !it.ready) {
+      must.push('Your material for <b>' + esc_(it.title) + '</b> is not in yet.');
+      subjectBits.push('material due');
+    } else if (!it.ready) {
+      must.push('Mark <b>' + esc_(it.title) + '</b> ready when you are.');
+    } else {
+      lines.push('<b>' + esc_(it.title) + '</b> — ready. ' + it.minutes + ' minutes, ' +
+                 (it.clock ? 'at ' + esc_(it.clock) : 'on the running order') + '.');
+    }
+  });
+  if (!(ctx.myItems || []).length) {
+    lines.push('You are not presenting on Wednesday.');
+  }
+
+  // 2. Your actions.
+  if (ctx.overdue && ctx.overdue.length) {
+    must.push('<b>' + ctx.overdue.length + '</b> of your action items ' +
+      (ctx.overdue.length === 1 ? 'is' : 'are') + ' past the date: ' +
+      ctx.overdue.slice(0, 3).map(function (a) { return esc_(a.item); }).join('; ') +
+      (ctx.overdue.length > 3 ? '…' : '') + '.');
+    subjectBits.push(ctx.overdue.length + ' overdue');
+  } else if (ctx.openActions && ctx.openActions.length) {
+    lines.push('<b>' + ctx.openActions.length + '</b> open action' +
+      (ctx.openActions.length === 1 ? '' : 's') + ', none overdue.');
+  } else {
+    lines.push('No action items against your name.');
+  }
+
+  // 3. Your own measures. No league table, no one else's figures.
+  var kpi = ctx.kpi || [];
+  var kpiHtml = '';
+  if (kpi.length) {
+    kpiHtml = '<table style="border-collapse:collapse;margin:10px 0;width:100%">' +
+      kpi.map(function (k) {
+        var mark = k.meets === null ? '' : (k.meets ? ' ✓' : ' —');
+        return '<tr>' +
+          '<td style="padding:4px 10px 4px 0;color:#49637d">' + esc_(k.measure) + '</td>' +
+          '<td style="padding:4px 0;font-weight:700">' + esc_(k.value) +
+            (k.unit ? ' ' + esc_(k.unit) : '') + mark + '</td>' +
+          '<td style="padding:4px 0 4px 12px;color:#8aa3bb;font-size:12px">' +
+            (k.target ? 'target ' + esc_(k.target) : '') + '</td></tr>';
+      }).join('') + '</table>';
+  }
+
+  // 4. The ask. The same one every day, because it has to be a habit.
+  var ask = ctx.contributedThisWeek
+    ? 'You have already put something on Wednesday&rsquo;s agenda. Add another if it matters.'
+    : '<b>Add one thing to Wednesday&rsquo;s agenda</b> — a question, a concern, or something that worked. '
+      + 'It takes ten seconds and it is the difference between a meeting you attend and one you are in.';
+
+  var subject = days === 0
+    ? 'Branch meeting this morning' + (subjectBits.length ? ' — ' + subjectBits[0] : '')
+    : (subjectBits.length
+        ? 'Wednesday ' + when + ': ' + subjectBits.join(', ')
+        : 'Wednesday ' + when);
+
+  var html =
+    '<div style="font-family:-apple-system,Segoe UI,Roboto,Arial,sans-serif;max-width:560px;' +
+      'color:#0b2238;line-height:1.6">' +
+    '<p style="margin:0 0 4px;font-size:13px;color:#8aa3bb">' + esc_(MEET.BRANCH) + '</p>' +
+    '<h2 style="margin:0 0 2px;font-size:19px">Good morning, ' + esc_(firstName_(person.name)) + '.</h2>' +
+    '<p style="margin:0 0 14px;font-size:14px;color:#49637d">' +
+      (m ? esc_(str_(m['Title']) || 'Branch meeting') + ' is ' + when +
+           (str_(m['Start']) ? ', ' + esc_(fmtTime_(atTime_(m['Date'], m['Start']))) : '') + '.'
+         : 'The branch meeting is ' + when + '.') + '</p>' +
+    (must.length
+      ? '<div style="background:#fff5e6;border:1px solid #f0c674;border-radius:10px;padding:11px 13px;margin:0 0 14px">' +
+        '<p style="margin:0 0 6px;font-weight:700;font-size:13px">Before Wednesday</p>' +
+        '<ul style="margin:0;padding-left:18px;font-size:13.5px">' +
+        must.map(function (x) { return '<li style="margin-bottom:4px">' + x + '</li>'; }).join('') +
+        '</ul></div>'
+      : '') +
+    (lines.length
+      ? '<ul style="margin:0 0 14px;padding-left:18px;font-size:13.5px;color:#49637d">' +
+        lines.map(function (x) { return '<li style="margin-bottom:4px">' + x + '</li>'; }).join('') +
+        '</ul>'
+      : '') +
+    (kpiHtml ? '<p style="margin:14px 0 2px;font-size:11px;letter-spacing:.12em;' +
+       'text-transform:uppercase;color:#8aa3bb">Yours' +
+       (kpi[0] && kpi[0].asOf ? ', as at ' + esc_(kpi[0].asOf) : '') + '</p>' + kpiHtml : '') +
+    '<p style="margin:16px 0 14px;font-size:13.5px">' + ask + '</p>' +
+    '<p style="margin:0 0 18px"><a href="' + esc_(ctx.appUrl || 'https://rickyrampersadbranch.com/meetings/') +
+      '" style="background:#0b2238;color:#efc24b;text-decoration:none;padding:10px 18px;' +
+      'border-radius:9px;font-weight:700;font-size:13.5px;display:inline-block">Open the meeting</a></p>' +
+    '<p style="margin:0;font-size:11.5px;color:#8aa3bb">Signing in on Wednesday is the attendance register. ' +
+      'If you do not sign in you are marked absent; if you cannot come, log it and pick a reason.</p>' +
+    '<p style="margin:14px 0 0;font-size:11px;color:#a8bccf">Internal — Ricky Rampersad Branch. ' +
+      'Your own figures only; nobody else receives yours.</p>' +
+    '</div>';
+
+  return { subject: subject, html: html, must: must.length, hasKpi: kpi.length > 0 };
+}
+
+function firstName_(n) { return str_(n).split(/\s+/)[0] || str_(n); }
+function esc_(v) {
+  return str_(v).replace(/[&<>"]/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+  });
+}
+
+/** Everything one person's note needs, read once per run rather than
+ *  per person — a per-person read of six tabs would not finish. */
+function dailyNoteContext_(now) {
+  now = now || new Date();
+  var m = upcomingMeeting_(now);
+  var target = m ? asDate_(m['Date']) : nextMeetingDay_(now);
+  var agenda = m ? readTab_(MEET.TAB_AGENDA).filter(function (a) {
+    return str_(a['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var uploads = m ? readTab_(MEET.TAB_UPLOADS).filter(function (u) {
+    return str_(u['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var actions = readTab_(MEET.TAB_ACTIONS);
+  var contribs = m ? readTab_(MEET.TAB_CONTRIB).filter(function (c) {
+    return str_(c['Meeting ID']) === str_(m['ID']);
+  }) : [];
+  var clock = m ? atTime_(m['Date'], m['Start']) : null;
+  agenda.sort(function (a, b) { return num_(a['Order']) - num_(b['Order']); });
+  agenda.forEach(function (a) {
+    a._clock = clock ? Utilities.formatDate(clock, tz_(), 'h:mm a') : '';
+    if (clock) clock = new Date(clock.getTime() + (num_(a['Allotted (min)']) || 0) * 60000);
+  });
+  return {
+    now: now, meeting: m, target: target,
+    daysToMeeting: Math.max(0, workingDaysBetween_(now, target)),
+    agenda: agenda, uploads: uploads, actions: actions, contribs: contribs,
+    appUrl: 'https://rickyrampersadbranch.com/meetings/'
+  };
+}
+
+function noteContextFor_(person, ctx) {
+  var mine = ctx.agenda.filter(function (a) {
+    return low_(a['Presenter Email']) === person.email;
+  }).map(function (a) {
+    var files = ctx.uploads.filter(function (u) { return str_(u['Agenda ID']) === str_(a['ID']); });
+    return {
+      title: str_(a['Title']), minutes: num_(a['Allotted (min)']), clock: a._clock,
+      required: yes_(a['Materials Required']) && str_(a['Materials Required']).toUpperCase() !== 'N',
+      ready: str_(a['Ready']).toUpperCase() === 'Y' || files.length > 0
+    };
+  });
+  var mineActions = ctx.actions.filter(function (x) {
+    var owner = low_(x['Owner']);
+    return owner && (owner.indexOf(person.email) > -1 ||
+      (person.name && owner.indexOf(low_(person.name)) > -1));
+  }).filter(function (x) { return low_(x['Status']) !== 'complete'; });
+  var today = new Date(ctx.now); today.setHours(0,0,0,0);
+  return {
+    meeting: ctx.meeting,
+    daysToMeeting: ctx.daysToMeeting,
+    appUrl: ctx.appUrl,
+    myItems: mine,
+    openActions: mineActions.map(function (x) { return { item: str_(x['Item']) }; }),
+    overdue: mineActions.filter(function (x) {
+      var due = asDate_(x['Due']);
+      return due && due.getTime() < today.getTime();
+    }).map(function (x) { return { item: str_(x['Item']) }; }),
+    kpi: kpiRowsFor_(person),
+    contributedThisWeek: ctx.contribs.some(function (c) { return low_(c['Email']) === person.email; })
+  };
+}
+
+/*  The trigger. Working mornings only, and it says nothing at all on a
+ *  day when there is nothing to say — a note that arrives every day
+ *  whether or not it carries anything is a note people filter.       */
+function dailyMeetingNote() {
+  var now = new Date();
+  var w = now.getDay();
+  if (w === 0 || w === 6) { Logger.log('Weekend — no note.'); return 'Weekend — no note.'; }
+
+  var ctx = dailyNoteContext_(now);
+  if (!ctx.meeting && ctx.daysToMeeting > 2) {
+    Logger.log('No meeting within two working days — no note.');
+    return 'No meeting within two working days — no note.';
+  }
+
+  var sent = 0, quiet = 0;
+  everyone_().forEach(function (p) {
+    if (!p.email) return;
+    var per = noteContextFor_(p, ctx);
+    var note = dailyNoteFor_(p, per);
+    // Nothing owed, nothing open, no measures, and the meeting is still
+    // days away: say nothing rather than train them to ignore it.
+    if (!note.must && !note.hasKpi && per.daysToMeeting > 1 &&
+        !per.myItems.length && !per.openActions.length) { quiet++; return; }
+    try {
+      MailApp.sendEmail({ to: p.email, subject: note.subject, htmlBody: note.html,
+                          name: MEET.BRANCH });
+      sent++;
+    } catch (err) {
+      Logger.log('Could not write to ' + p.email + ': ' + err);
+    }
+  });
+
+  var msg = sent + ' note' + (sent === 1 ? '' : 's') + ' sent, ' + quiet + ' had nothing to say.';
+  log_('daily-note', 'system', '', ctx.meeting ? str_(ctx.meeting['Ref']) : '', msg);
+  Logger.log(msg);
+  return msg;
+}
+
+/** Install the morning trigger. Safe to run again — it clears its own
+ *  first, so pressing the menu item twice never doubles the notes. */
+function installDailyNote() {
+  ScriptApp.getProjectTriggers().forEach(function (t) {
+    if (t.getHandlerFunction() === 'dailyMeetingNote') ScriptApp.deleteTrigger(t);
+  });
+  ScriptApp.newTrigger('dailyMeetingNote').timeBased()
+    .atHour(MEET.NOTE_HOUR).everyDays(1).create();
+  var msg = 'Daily note installed for about ' + MEET.NOTE_HOUR + ':00 each morning. ' +
+    'It stays quiet at weekends and when there is nothing to say.';
+  Logger.log(msg);
+  return msg;
+}
+
+function installDailyNoteFromMenu() {
+  var ui = SpreadsheetApp.getUi();
+  ui.alert('The daily note', installDailyNote(), ui.ButtonSet.OK);
+}
+
+/** Send yourself today's note, to read it before the branch does. */
+function previewDailyNote() {
+  var me = findPersonByEmail_(MEET.ADMIN_EMAIL) || readPeople_()[0];
+  if (!me) throw new Error('Nobody on the People tab yet.');
+  var ctx = dailyNoteContext_(new Date());
+  var note = dailyNoteFor_(me, noteContextFor_(me, ctx));
+  MailApp.sendEmail({ to: me.email, subject: '[Preview] ' + note.subject,
+                      htmlBody: note.html, name: MEET.BRANCH });
+  var msg = 'Preview sent to ' + me.email + '.';
+  Logger.log(msg);
+  return msg;
+}
+
 /* ======================== the rota ======================== */
 /*
  *  WHY THIS EXISTS. Read the five meetings on record from 22 July to
@@ -4074,6 +4434,9 @@ function onOpen() {
     .addSeparator()
     .addItem('🪪  Pull the roster from the Agent Skill Bank', 'promptPullAccessCodes')
     .addItem('🔁  Set up the standing rota', 'seedRotaFromMenu')
+    .addSeparator()
+    .addItem('📨  Turn on the daily note', 'installDailyNoteFromMenu')
+    .addItem('👁  Send me today\u2019s note to read', 'previewDailyNote')
     .addItem('🔑  Set the branch code', 'promptBranchCode')
     .addItem('🔗  Show the app URL', 'showAppUrl')
     .addToUi();

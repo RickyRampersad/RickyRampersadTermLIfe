@@ -189,6 +189,72 @@ how many people are presenting, and how many items nobody owns. Over about a
 third and it says so in words. The point is that the drift is arguable on the
 day rather than in next year's minutes.
 
+## The daily note — how Wednesday gets built
+
+The branch meets **Wednesday morning**. On each working morning the app sends
+every person one short note that counts down to it and asks for the one thing
+only they can bring:
+
+- **Your item on Wednesday** — and whether your material is in. An item marked
+  *materials required* is not ready until a file is on it.
+- **Your action items** — open, and which are past the date.
+- **Your own measures**, from the KPI tab.
+- **One ask, every day:** add something to Wednesday's agenda. A question, a
+  concern, something that worked.
+
+Turn it on once: *Branch Meetings → Turn on the daily note*. Read it before the
+branch does with *Send me today's note*.
+
+**It stays quiet when it has nothing to say.** No notes at weekends, none when
+the meeting is more than two working days off, and none to a person who owes
+nothing, has no open actions and no measures. A note that arrives every morning
+regardless is a note people filter.
+
+### Why it is not a daily production chase
+
+This was decided against the evidence rather than by preference. Chung,
+Narayandas and Chang (*Management Science*, 2021) ran daily against monthly
+quotas as a field experiment: daily quotas lifted the **bottom quartile by
+11.7%**, and pushed **top performers toward low-ticket business so their sales
+fell 8.1%** — and firm profit with them. A daily number shouted at a room of
+agents makes the weakest a little better and the strongest worse.
+
+So the daily note carries only what a person controls that day, with **no
+league table and nobody else's figures in it**. The strategy argument happens
+once a week, in the room. That split — operational daily, strategic weekly — is
+also the standard practitioner recommendation.
+
+### The KPI tab
+
+One row per person per measure, not a column per KPI. The branch's measures
+move — July to September alone the minutes talk about fact finds, persistency,
+scripts, contracts, 75-day responses and licensing — and a shape needing a new
+column each time is a shape nobody maintains.
+
+| Column | |
+| --- | --- |
+| **Agent No** or **Email** | Either matches a person |
+| **Measure** | "Fact finds this month" |
+| **Value**, **Target**, **Unit** | Target may be blank |
+| **Direction** | `up` (higher is better) or `down` |
+| **As Of**, **Note**, **Active** | `Active = N` hides a row without deleting it |
+
+Fill it from wherever the branch already has the number — a paste, an
+IMPORTRANGE, or a Salesforce pull. A person with no rows simply gets no figures
+rather than an invented one.
+
+**What Salesforce can and cannot give you**, checked on 9 October 2026 against
+the live org:
+
+- **Book and tenure: yes.** `CLIENT_PORTFOLIO__c` holds 55,165 policies with
+  `AGENT__c` well populated — book size per agent, and `ISSUE_DATE__c` gives
+  the tenure of that book.
+- **New business by agent: no.** `Writing_Agent__c` is filled for two agents
+  and nine policies since October 2025, against the 496 applications the
+  minutes report for January to June. Production has to come from the branch's
+  own figures, not from this field.
+- **Premium owing: no.** `PREMIUM_OWING__c` aggregates to null across the org.
+
 ## Attendance, from 6 October 2026
 
 The JotForm register is disbanded. There is one register and it is this app.
