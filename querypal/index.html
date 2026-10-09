@@ -1998,17 +1998,25 @@ function dashFetch(){
   const list=document.getElementById('dashList');
   list.innerHTML='<div class="trackcard">Loading the list…</div>';
   document.getElementById('dashSum').textContent='';
-  const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),15000);
-  fetch(SHEET_WEBHOOK_URL+'?action=myqueries&code='+encodeURIComponent(agentAuth.code),{signal:ctl.signal})
-    .then(r=>r.json()).then(d=>{
-      clearTimeout(to);_dashBusy=false;
-      if(d&&d.ok===true&&Array.isArray(d.rows)){dashData=d;dashSetup();dashRender();}
-      else dashErr(list);
-    })
-    .catch(()=>{clearTimeout(to);_dashBusy=false;dashErr(list);});
+  /* Reading the whole log is the slowest call the app makes - on a busy
+     sheet it can run past a minute. Fifteen seconds gave up on a request
+     that was still coming, so wait properly and retry once on the way. */
+  const attempt=(triesLeft)=>{
+    const ctl=new AbortController();const to=setTimeout(()=>ctl.abort(),40000);
+    fetch(SHEET_WEBHOOK_URL+'?action=myqueries&code='+encodeURIComponent(agentAuth.code),{signal:ctl.signal})
+      .then(r=>r.json()).then(d=>{
+        clearTimeout(to);_dashBusy=false;
+        if(d&&d.ok===true&&Array.isArray(d.rows)){dashData=d;dashSetup();dashRender();}
+        else dashErr(list);
+      })
+      .catch(()=>{clearTimeout(to);
+        if(triesLeft>0){list.innerHTML='<div class="trackcard">Still loading - the sheet is waking up…</div>';attempt(triesLeft-1);return;}
+        _dashBusy=false;dashErr(list);});
+  };
+  attempt(1);
 }
 function dashErr(list){
-  list.innerHTML='<div class="trackcard"><b>Couldn\'t load the list.</b><br>This view needs the upgraded Apps Script (QueryPal_Backend_v6.gs). If that\'s already installed, check your connection and tap Refresh.</div>';
+  list.innerHTML='<div class="trackcard"><b>The list didn\'t load.</b><br>This is usually the sheet taking a moment to wake up. Tap Refresh to try again - nothing is lost.</div>';
 }
 function dashSetup(){
   const role=dashData.role||'agent';
@@ -3858,8 +3866,8 @@ function ffValidateAndBuild(q){
    1. LOCAL BRAIN (always on): answers from the full query catalogue — intent
       detection via the same scorer as smart search, prep lists, turnarounds,
       and a "Start this request" button that loads the wizard directly.
-   2. LIVE CLAUDE (optional): flip RAI_LIVE to true AFTER upgrading the Apps
-      Script to v2 (see QueryPal_Backend_v6.gs). RAI then POSTs the chat to
+   2. LIVE CLAUDE (optional): flip RAI_LIVE to true once the Apps Script carries the
+      rai action (it does: raiProxy_ in Code.gs). RAI then POSTs the chat to
       the same webhook, which proxies Claude with your API key. If the live
       call fails for any reason, RAI silently falls back to the local brain. */
 const RAI_LIVE = false;                 // ← set true once Apps Script v2 is deployed

@@ -118,14 +118,32 @@ chase — the chasers doing their job without anyone is the point.
 
 ## Query Pal
 
-Static front end on Netlify (`querymypolicies.netlify.app`), Google Apps Script
-backend writing to Google Sheets. Production script is `v10.2-CLIENT-PORTAL`;
-`querypal/QueryPalPatch.gs` plus the find-and-replace edits in
-`querypal/PATCH-INSTRUCTIONS.md` take it to `v10.3-HARDENED`. **Never replace
-`Code.gs` wholesale** — it is the source of truth and it stays the branch's.
+Static front end on Netlify (project `querymypolicies`, live at
+**querymypolicy.com**), Google Apps Script backend writing to Google Sheets.
+Production script is `v10.2-CLIENT-PORTAL`; `querypal/QueryPalPatch.gs` plus
+the find-and-replace edits in `querypal/PATCH-INSTRUCTIONS.md` take it to
+`v10.3-HARDENED`. **Never replace `Code.gs` wholesale** — it is the source of
+truth and it stays the branch's.
 
 Routes: `/` the app, `/wall` the branch board (open, no sign-in), `/story` the
 film.
+
+**The Netlify site is drag-and-drop, not linked to this repository**, so a
+push publishes nothing: deploying is dragging the whole `querypal/` folder
+onto Netlify → Deploys, and a drag-and-drop deploy replaces every file, so it
+must be the whole folder every time. **`querypal/` is not on `main`** — a
+checkout of the default branch looks as though the site has no source at all;
+it has, on this branch. Look here before rebuilding anything, and check the
+live files against it (they matched byte for byte on 9 October 2026).
+`querypal/README.md` has the rest.
+
+**A slow Apps Script is not a broken one.** Reading the whole log can run past
+a minute on a busy sheet. The sign-in and the dashboard each used to give up
+after ten and fifteen seconds and then tell the branch to install
+`QueryPal_Backend_v6.gs`, a file that has never existed here; a morning was
+lost to that advice before anyone doubted the message. Both now wait, retry
+once, and say something true. `querypal/tests/dashboard.browser.test.mjs`
+fails if a timeout is shortened again.
 
 Rules that do not bend:
 - Never send test email to a real department — `TEST_MODE = true` sends to
