@@ -205,15 +205,51 @@ opens the page to read.
 Figures on it are dated 9 October 2026. Re-check them against Salesforce before
 quoting them in a later quarter.
 
-## The walkthrough film
+## The two films
 
-`meetings/walkthrough.html` plays **`rrb-meeting-walkthrough.mp4`** — 93 seconds,
-narrated, the film to send anybody who asks how the new meeting works. Linked
-from the app's nav, the template and the framework page.
+`meetings/walkthrough.html` plays both, and is linked from the app's nav, the
+template and the framework page.
 
-Source page: `meetings/meeting-film.html`, recorded rather than served. Build
-config is the `meetingwalk` entry in `tools/film/films.json`; the pipeline and
+| Film | Source page | MP4 | Length |
+|---|---|---|---|
+| How a week becomes a meeting | `builder-film.html` | `rrb-meeting-builder.mp4` | 2:12 |
+| What you do | `meeting-film.html` | `rrb-meeting-walkthrough.mp4` | 1:33 |
+
+The first is the Meeting Builder itself: the two daily checks, the 7am
+Salesforce read, what sales support files, and how those become an agenda with
+a name against every item — then Wednesday, role by role, ending on the round
+where everybody names a client. The second is the short one for an agent who
+only needs to know how to sign in and what their own slot is for.
+
+**Every figure in the builder film is illustrative and the film says so** — a
+gold *Sample figures* badge sits on every data scene. The MP4s are at public
+URLs even though the pages are `noindex`, so no real client name or client
+count goes in one, and agents appear by first name only rather than with a full
+name against a production figure.
+
+### The music in the builder film is not cleared
+
+The bed is built from a track the branch supplied (`Music_Motivation.m4a`,
+28 seconds, looped with crossfades). **Its licence is unknown**, so unlike
+`tools/film/audio/inspired-kevin-macleod.mp3` it is deliberately NOT committed
+here — the repository root is published, and putting unlicensed music on the
+web is a different thing from using it in an internal film. Before this film
+goes anywhere public, establish what the track is licensed for; if it will not
+clear, rebuild the bed from the Kevin MacLeod track with
+`python3 usetrack.py audio/inspired-kevin-macleod.mp3` and re-run `mixany.py`.
+
+A 28-second bed under a 132-second film loops about five times. `usetrack.py`
+crossfades each lap at 1.2s, but it is audible; a longer cue would sit better.
+
+Both source pages are recorded rather than served. Build config is the
+`meetingwalk` and `builder` entries in `tools/film/films.json`; the pipeline and
 its traps are in the root `CLAUDE.md`.
+
+**A caption reads back whatever was fed to the voice.** The BME line was
+narrated as `B M E` so the letters are spelled, which put *"The B M E"* on
+screen. The fix is to edit the word in the scene's `.vtt` and re-mix — the VTT
+carries the caption text and the timing, never the audio, so the narration is
+untouched.
 
 Two things this film taught the pipeline, both worth keeping:
 

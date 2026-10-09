@@ -289,5 +289,43 @@
   "start": 28,
   "dark": [],
   "sfx": "sfx-meetingwalk.wav"
+ },
+ "builder": {
+  "cap": "cap-builder",
+  "vox": "vobuild",
+  "music": "bed-builder.wav",
+  "mix": "builder-mix.wav",
+  "ass": "captions-builder.ass",
+  "dur": 132.0,
+  "durs": [
+   7.3,
+   3.9,
+   4.8,
+   7.5,
+   6.4,
+   8.8,
+   6.3,
+   4.7,
+   5.5,
+   4.7,
+   4.9,
+   6.1,
+   5.9,
+   4.8,
+   6.6,
+   5.8,
+   3.9,
+   4.7,
+   5.5,
+   6.0,
+   5.3,
+   5.0
+  ],
+  "out": "rrb-meeting-builder.mp4",
+  "musicgain": 1.23,
+  "duck": 0.86,
+  "start": 0,
+  "dark": [],
+  "sfx": "sfx-builder.wav"
  }
 }
