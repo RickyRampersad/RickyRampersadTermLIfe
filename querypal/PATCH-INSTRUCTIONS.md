@@ -696,3 +696,62 @@ That is the whole edit. What it buys, from `QueryPalPatch.gs` section 13:
 - **`qpUnsentReport()`** lists what is waiting, so those few can go by hand.
 
 Run `qpUnsentReport()` from the editor on any day the limit was reached.
+
+---
+
+## URGENT — rotate the branch master codes
+
+**Do this today, and do it before anything else on this page.**
+
+Until 9 October 2026 the two branch master codes sat in plain text in
+`index.html` (an offline sign-in bypass) and in `404.html` (a stale copy of
+the whole app). Both pages are public. The backend honoured the codes
+completely:
+
+```
+…/exec?action=agentauth&num=<code>   -> {"ok":true,"name":"Ricky Rampersad","role":"branch"}
+…/exec?action=myqueries&code=<code>  -> all 99 cases, every client name and request
+```
+
+Anyone who opened View Source on querymypolicy.com could read the branch's
+entire case log. The site was posted on Facebook that morning.
+
+The pages are fixed. **That is only half of it** — the codes were published,
+so they must be treated as known to strangers. Removing them from the page
+does not un-publish them: they are in anyone's browser cache, in archive
+crawls, and in the page anybody saved.
+
+In `Code.gs`, find the sign-in map near line 79:
+
+```js
+  '260026':  ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
+  'RRB2026': ['Rampersad Branch', '', 'branch'],                    // shared branch master
+```
+
+Replace **both** codes with new ones, then redeploy (Deploy → Manage
+deployments → pencil → New version):
+
+```js
+  '<new six digits>': ['Ricky Rampersad', 'ricky.rampersad@myguardiangroup.com', 'branch'],
+  '<new word+digits>': ['Rampersad Branch', '', 'branch'],
+```
+
+Pick something not derived from the branch number or the year — `260026` is
+the branch number and `RRB2026` the branch and year, so both were guessable
+even without reading the page.
+
+Then:
+
+- **Tell the team the new code by WhatsApp or in person, never by email.**
+- The shared `RRB2026`-style code is worth retiring rather than replacing. A
+  code everyone knows is a code that ends up written down; the per-agent codes
+  in the Agent Codes sheet already do this job and say who did what.
+- Six test files under `tests/` still hold the old code and will fail after
+  the rotation. They are not published — the `_redirects` catch-all swallows
+  that folder — so this is tidying, not exposure.
+- `tests/secrets.test.mjs` fails if a sign-in literal is ever published
+  again. Run it before a deploy.
+
+There is no sign the codes were used by anyone outside the branch — the log
+shows 99 cases and no unexplained sign-ins — but that is not something the
+system can prove either way, which is the reason to rotate rather than hope.

@@ -57,6 +57,17 @@ per value it can carry, and playback only ever joins sentences at full stops.
 `film/wall-voice/embed-wall-voice.py` folds them back in with their text, so
 the subtitle can never drift from what is said.
 
+**A credential in the page is a published credential.** The branch master
+codes used to sit in plain text in `index.html`, as an offline sign-in bypass
+so a slow Apps Script could never lock the branch out, and in `404.html`, a
+stale 310 KB copy of the whole app that was still being served. The backend
+honoured them fully — `action=myqueries` with that code returned all 99 cases,
+every client name and every request. Anyone who opened View Source on a public
+insurance site had the branch's case log. Sign-in is the server's job alone;
+the branch now waits for the retry like everybody else.
+`tests/secrets.test.mjs` fails if a sign-in literal is ever published again,
+and `404.html` is a 404 page now, not a second app.
+
 **The page used to lie when a send failed.** `doPost` writes the row and then
 sends the routed email; if that send throws, the whole request answers
 `{ok:false}` — and the page read `d.reference` without ever checking `d.ok`,

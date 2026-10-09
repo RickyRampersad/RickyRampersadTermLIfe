@@ -2500,9 +2500,15 @@ function gateFail(out){
 }
 function gateOffline(code,out){
   /* The sign-in service really did not answer — usually Google waking the
-     script up, and a second try lands. The master codes keep working offline
-     so the branch is never locked out by a slow morning. */
-  if(code.toUpperCase()==='260026'||code.toUpperCase()==='RRB2026'){gatePass(code,'','','branch');return;}
+     script up, and a second try lands.
+
+     There used to be a master-code bypass here, so a slow morning could never
+     lock the branch out. It cost far too much: the codes had to sit in this
+     file in plain text, and this file is public. Anyone who opened View
+     Source could sign in as the branch and read every client's name and
+     request. A credential in the page is a published credential, whatever it
+     is guarding — so sign-in is the server's job alone. The branch waits for
+     the retry like everyone else. */
   out.innerHTML='<div class="trackcard"><b>The sign-in service didn\'t answer just now.</b><br>This is usually Google waking the script up — wait a few seconds and press Sign in again. If it keeps happening, email the branch.</div>';
 }
 
