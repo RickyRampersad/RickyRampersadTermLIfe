@@ -109,7 +109,15 @@ for i in range(len(det)):
             for l in range(j+1, len(sched)):
                 if sched[l] == sched[j]: continue
                 stretch = (det[k]-det[i]) / (sched[l]-sched[j])
-                if not (1.05 <= stretch <= 1.25): continue      # what this recorder does
+                # What this recorder does — and it depends on the machine.
+                # The original pipeline's captures ran ~1.13; a 2026 container
+                # with a quieter CPU captures at very nearly real time and the
+                # true slope came out 1.017, outside the old 1.05 floor, so a
+                # film whose 15 transitions ALL matched was rejected for having
+                # the wrong slope. The floor is the search window, not the
+                # quality gate: the residual check below is what actually
+                # refuses a corrupted recording, and it is unchanged.
+                if not (0.97 <= stretch <= 1.25): continue
                 lead = det[i] - stretch*sched[j]
                 if not (0.5 <= lead <= 4.5): continue
                 pairs = [(s_, min(det, key=lambda t: abs(t-(stretch*s_+lead))))

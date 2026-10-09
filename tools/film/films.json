@@ -258,5 +258,36 @@
   "duck": 0.3,
   "dark": [],
   "sfx": "sfx-work.wav"
+ },
+ "meetingwalk": {
+  "cap": "cap-meetingwalk",
+  "vox": "vomeet",
+  "music": "bed-meetingwalk.wav",
+  "mix": "meetingwalk-mix.wav",
+  "ass": "captions-meetingwalk.ass",
+  "dur": 93.0,
+  "durs": [
+   4.6,
+   5.5,
+   4.3,
+   4.4,
+   7.6,
+   5.4,
+   5.5,
+   6.3,
+   6.3,
+   5.7,
+   6.5,
+   5.3,
+   5.4,
+   6.9,
+   6.0
+  ],
+  "out": "rrb-meeting-walkthrough.mp4",
+  "musicgain": 0.55,
+  "duck": 0.86,
+  "start": 28,
+  "dark": [],
+  "sfx": "sfx-meetingwalk.wav"
  }
 }

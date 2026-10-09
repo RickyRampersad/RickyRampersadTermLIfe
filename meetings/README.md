@@ -186,10 +186,12 @@ salted hash rather than the password itself.
 from the app's nav and from the framework page. It is the page to send anybody
 who asks what the new meetings look like.
 
-It carries the standing agenda — **nine slots, 45 minutes, finishing at
-9:45** — with the minutes and the owner against each, the four-week cycle that
-fills the one rotating slot, the arithmetic that holds the chair to 9 of the 45
-minutes, the register rule, and the live unit roster. The four stages of how a
+It carries the standing agenda — **eleven slots, 9:00 to 10:30** — with the
+minutes and the owner against each, the four-week cycle that fills the one
+rotating slot, the arithmetic that holds the chair to 15 of the 90 minutes,
+the register rule, and the live unit roster. Sixteen of those ninety minutes
+belong to the room rather than to anybody on the agenda: the open floor, and
+one client each. The four stages of how a
 meeting is run stay on `framework.html`; this page is the shape of the hour
 itself, and the two link to each other.
 
@@ -202,6 +204,40 @@ opens the page to read.
 
 Figures on it are dated 9 October 2026. Re-check them against Salesforce before
 quoting them in a later quarter.
+
+## The walkthrough film
+
+`meetings/walkthrough.html` plays **`rrb-meeting-walkthrough.mp4`** — 93 seconds,
+narrated, the film to send anybody who asks how the new meeting works. Linked
+from the app's nav, the template and the framework page.
+
+Source page: `meetings/meeting-film.html`, recorded rather than served. Build
+config is the `meetingwalk` entry in `tools/film/films.json`; the pipeline and
+its traps are in the root `CLAUDE.md`.
+
+Two things this film taught the pipeline, both worth keeping:
+
+- **Fifteen scenes of centred text on one navy background are invisible to a
+  frame differencer.** `mixany.py` recovers the capture's timeline from scene
+  transitions and refuses to encode when it cannot match enough of them; the
+  first cut matched 4 of 15 and was correctly rejected. The fix is the wipe
+  that crosses the frame on every cut — it is in the stylesheet with a note
+  saying so. Do not take it out to tidy the film without re-running the mix.
+- **The capture is not always stretched.** The pipeline was written against a
+  recorder that ran about 1.13× real time, and `mixany.py` only searched slopes
+  from 1.05 up. This container captures at very nearly real time: the true fit
+  was `video_t = 1.95 + 1.017 × film_t`, matching all 15 transitions with a
+  0.03s residual, and it was rejected only for having a slope below the search
+  floor. The floor is now 0.97. **The residual check is untouched** — that is
+  the guard that actually catches a corrupted recording, and this was not one.
+
+Narrated on `en-US-AndrewNeural` at `-12%`, the house voice and rate for a
+walkthrough. Never the Multilingual variant.
+
+**edge-tts needs the proxy CA on a fresh container.** It fails with
+`CERTIFICATE_VERIFY_FAILED` because aiohttp reads certifi's bundle and not
+`SSL_CERT_FILE`; appending `/root/.ccr/ca-bundle.crt` to `certifi/cacert.pem`
+fixes it. The WebSocket itself goes through fine.
 
 ## The rota — so the meeting is not one person's
 

@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How our meeting works | Ricky Rampersad Branch</title>
+<meta name="description" content="A ninety-second walkthrough: how to sign in to the branch meeting, what you will see, and the contribution everybody makes.">
+<meta name="theme-color" content="#061c31">
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" media="print" onload="this.media='all';this.onload=null">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap"></noscript>
+<style>
+  :root{
+    --ink:#eaf4ff; --dim:#9dbdd8; --faint:#6d8ba6;
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.11);
+    --gold:#f5b93b; --teal:#00CFEA;
+    --r:16px;
+    --font-d:'Plus Jakarta Sans',Inter,system-ui,sans-serif;
+    --font-b:Inter,system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:var(--font-b);color:var(--ink);background:#061c31;
+    -webkit-font-smoothing:antialiased;min-height:100vh}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;
+    background:
+      radial-gradient(1100px 650px at 8% -8%,rgba(0,207,234,.14),transparent 60%),
+      radial-gradient(900px 600px at 95% 0%,rgba(245,185,59,.12),transparent 62%),
+      linear-gradient(165deg,#061c31 0%,#08243f 55%,#061a2d 100%)}
+
+  header{display:flex;align-items:center;gap:14px;padding:18px 26px 12px;flex-wrap:wrap}
+  header .mark{width:40px;height:40px;flex:none;border-radius:12px;overflow:hidden;
+    background:#07131f;display:grid;place-items:center}
+  header .mark img{width:40px;height:40px;display:block}
+  header h1{margin:0;font-family:var(--font-d);font-size:20px;font-weight:800;letter-spacing:-.4px}
+  header .sub{font-size:11.5px;color:var(--dim);margin-top:2px}
+  header .nav{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+  header .nav a{font-size:12px;color:var(--dim);text-decoration:none;
+    border:1px solid var(--line);border-radius:999px;padding:7px 15px;white-space:nowrap}
+  header .nav a:hover{color:var(--ink);border-color:rgba(0,207,234,.55)}
+
+  main{padding:0 26px 60px;max-width:900px;margin:0 auto}
+
+  .lede{font-size:16px;line-height:1.65;color:var(--dim);margin:14px 0 22px;max-width:70ch}
+  .lede strong{color:var(--ink);font-weight:600}
+
+  /*  Native controls are switched on deliberately. A film nobody can pause
+   *  is a film nobody finishes, and the branch's other films on this site
+   *  are embedded the same way. */
+  .vwrap{position:relative;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);
+    background:#07131f;box-shadow:0 30px 70px rgba(0,0,0,.45)}
+  .vwrap video{display:block;width:100%;height:auto;background:#07131f}
+  .meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--faint)}
+
+  section{margin:38px 0 0}
+  h2{font-family:var(--font-d);font-size:17px;font-weight:800;letter-spacing:-.3px;
+    margin:0 0 14px;display:flex;align-items:center;gap:10px}
+  h2 .bar{width:4px;height:19px;border-radius:2px;background:var(--gold);flex:none}
+
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:10px}
+  ol.steps li{counter-increment:s;position:relative;padding:14px 17px 14px 52px;
+    border:1px solid var(--line);border-radius:13px;background:var(--card);
+    font-size:13.5px;line-height:1.6;color:var(--dim)}
+  ol.steps li::before{content:counter(s);position:absolute;left:16px;top:14px;
+    width:23px;height:23px;border-radius:50%;display:grid;place-items:center;
+    font-family:var(--font-d);font-size:12px;font-weight:800;color:#061c31;background:var(--gold)}
+  ol.steps li b{color:var(--ink);font-weight:700;display:block;margin-bottom:2px;font-size:14px}
+  ol.steps code{background:rgba(255,255,255,.08);padding:2px 6px;border-radius:5px;
+    font-size:12.5px;color:var(--ink)}
+
+  .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));margin-top:4px}
+  .card{border:1px solid var(--line);border-radius:14px;background:var(--card);padding:16px}
+  .card .n{font-family:var(--font-d);font-size:30px;font-weight:800;color:var(--gold);line-height:1}
+  .card .n.teal{color:var(--teal)}
+  .card .l{font-size:12.5px;color:var(--dim);margin-top:8px;line-height:1.55}
+
+  .rule{border:1px solid color-mix(in srgb,var(--gold) 40%,transparent);
+    background:color-mix(in srgb,var(--gold) 9%,transparent);
+    border-radius:14px;padding:15px 17px;font-size:13.5px;line-height:1.65;color:var(--ink);margin-top:14px}
+  .rule b{color:var(--gold)}
+
+  footer{margin:44px 0 0;padding-top:18px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--faint);line-height:1.7}
+
+  @media (max-width:640px){
+    header{padding:14px 16px 10px}
+    header .nav{margin-left:0;width:100%}
+    main{padding:0 16px 46px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark"><img src="/logo-mark.png" alt=""></div>
+  <div>
+    <h1>How our meeting works</h1>
+    <div class="sub">Ricky Rampersad Branch &middot; ninety seconds, start to finish</div>
+  </div>
+  <div class="nav">
+    <a href="/meetings/template.html">The template &rarr;</a>
+    <a href="/meetings/framework.html">Each role &rarr;</a>
+    <a href="/meetings/">&larr; The meeting app</a>
+  </div>
+</header>
+
+<main>
+
+  <p class="lede">
+    Our meeting has changed. It is no longer one person at the front for an hour and a half &mdash;
+    it is a <strong>working meeting, and everybody in the room contributes</strong>.
+    Watch this once and you will know how to sign in, what you will be asked, and what your
+    own two minutes are for.
+  </p>
+
+  <div class="vwrap">
+    <video controls playsinline preload="metadata"
+           poster="/meetings/meeting-walkthrough-poster.jpg">
+      <source src="/meetings/rrb-meeting-walkthrough.mp4" type="video/mp4">
+      Your browser cannot play this film. The same ground is covered on
+      <a href="/meetings/template.html">the template page</a>.
+    </video>
+  </div>
+  <div class="meta">
+    <span>1 minute 33</span><span>&middot;</span>
+    <span>Sound on &mdash; it is narrated, and captioned either way</span>
+  </div>
+
+  <section>
+    <h2><span class="bar"></span>What to do, in four steps</h2>
+    <ol class="steps">
+      <li><b>Go to the meeting</b>
+        <code>rickyrampersadbranch.com/meetings</code> &mdash; from your phone is fine.
+        Check-in opens at 8:30.</li>
+      <li><b>Sign in with your agent number and password</b>
+        The ones you already have from the branch portfolio. Nothing new to remember.
+        <strong>Signing in is the register</strong> &mdash; there is no sheet going round.</li>
+      <li><b>Read the agenda before Wednesday</b>
+        Every item has a name against it. If one of them is yours, it is already on your
+        Prepare screen &mdash; upload what you are presenting and mark it ready.</li>
+      <li><b>Bring your one client</b>
+        At 10:17 every person in the room names one client they are calling before Friday.
+        That is the contribution, and it is about twenty seconds.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="bar"></span>The shape of it</h2>
+    <div class="grid">
+      <div class="card"><div class="n">9:00</div><div class="l">to 10:30, every Wednesday</div></div>
+      <div class="card"><div class="n">11</div><div class="l">items, each with an owner</div></div>
+      <div class="card"><div class="n">15</div><div class="l">of the 90 minutes are the chair&rsquo;s</div></div>
+      <div class="card"><div class="n teal">16</div><div class="l">minutes belong to the room</div></div>
+    </div>
+    <div class="rule">
+      <b>If you cannot come, sign in anyway and choose your reason.</b>
+      You will show as an apology, not an absence &mdash; and the wall shows the reason beside
+      your name rather than a blank. Not signing in at all is what counts as absent.
+    </div>
+  </section>
+
+  <footer>
+    Internal to the Ricky Rampersad Branch. Every figure on screen is a branch count; no client
+    information appears in this film.<br>
+    Narrated walkthrough, recorded 9 October 2026. The template takes effect Wednesday 14 October 2026.
+  </footer>
+
+</main>
+
+<!-- rrb-views -->
+<script>
+(function(){var u='RRB_VIEWS_URL';if(u.indexOf('http')!==0)return;try{
+(new Image()).src=u+'?p='+encodeURIComponent(location.pathname)+'&r='+encodeURIComponent((document.referrer||'').slice(0,200))+'&z='+Date.now();
+}catch(e){}})();
+</script>
+</body>
+</html>
